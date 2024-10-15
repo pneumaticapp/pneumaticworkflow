@@ -8,7 +8,6 @@ Pneumatic is an open-source, cloud-native workflow management system that empowe
 * Integration-Friendly: Connect with third-party applications and services through APIs.
 * Real-Time Monitoring: Track workflow progress and performance with dashboards and analytics.
 * Role-Based Access Control: Secure your workflows with customizable user permissions.
-# Community-Driven Enhancements: Benefit from features and improvements contributed by a global community.
 ## Getting Started
 ### Prerequisites
 * Operating System: Linux, macOS, or Windows
