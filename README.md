@@ -15,7 +15,8 @@ Pneumatic is an open-source, cloud-native workflow management system that empowe
 * Database: PostgreSQL
 * Git: For cloning the repository
 # Installation
-* Clone the Repository
+Clone the Repository
+
 git clone https://github.com/pneumatic/pneumaticworkflow.git
 
 cd pneumatic-workflow
