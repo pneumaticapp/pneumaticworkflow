@@ -1,0 +1,162 @@
+/* stylelint-disable selector-max-compound-selectors */
+.container * {
+  margin: 0;
+  max-width: 100%;
+  font-size: inherit;
+  line-height: inherit;
+  white-space: pre-wrap;
+}
+
+.container {
+  overflow-wrap: anywhere;
+
+  hr {
+    margin: 16px 0;
+    max-width: 370px;
+  }
+
+  a {
+    color: var(--pneumatic-color-link-dark);
+    transition: color 0.1s ease-in-out;
+
+    &:hover {
+      color: var(--pneumatic-color-link-hover);
+    }
+  }
+
+  ul,
+  ol {
+    padding-left: 32px;
+    list-style-position: inside;
+
+    li::marker {
+      font-weight: bold;
+    }
+
+    p:first-of-type {
+      display: inline;
+    }
+  }
+
+  ul li {
+    list-style-type: disc;
+  }
+
+  ul ul li {
+    list-style-type: circle;
+  }
+
+  ul ul ul li {
+    list-style-type: square;
+  }
+
+  ol li {
+    list-style-type: decimal;
+  }
+
+  ol ol li {
+    list-style-type: lower-latin;
+  }
+
+  ol ol ol li {
+    list-style-type: lower-roman;
+  }
+
+  img {
+    display: block;
+    width: auto;
+    max-height: 500px;
+    cursor: pointer;
+  }
+}
+
+.mention {
+  font-weight: bold;
+  color: var(--pneumatic-color-black72);
+}
+
+.video {
+  /* stylelint-disable-next-line property-no-unknown */
+  aspect-ratio: 16 / 9;
+  width: 100%;
+}
+
+.loading-image {
+  width: 100%;
+  min-height: 64px;
+  pointer-events: none;
+  background-color: #f6f6f6;
+  background-image: linear-gradient(90deg, #f6f6f6, white, #f6f6f6);
+  background-repeat: no-repeat;
+  background-size: 200px 100%;
+  border-radius: 4px;
+  animation: loading-animation 1.8s ease-in-out infinite;
+}
+
+@keyframes loading-animation {
+  0% {
+    background-position: -200px 0;
+  }
+  100% {
+    background-position: calc(200px + 100%) 0;
+  }
+}
+
+.checklist {
+  margin: 16px 32px;
+
+  @media (--mobile) {
+    margin: 16px 0;
+  }
+}
+
+.checklist_interactive {
+  color: var(--pneumatic-color-black100);
+}
+
+.checkbox-wrapper {
+  display: flex;
+  min-height: 20px;
+
+  &:not(:last-child) {
+    margin-bottom: 8px;
+  }
+}
+
+.checkbox {
+  display: flex;
+}
+
+.checkbox-label {
+  padding: 0;
+}
+
+.checkbox-content {
+  margin-left: 28px;
+}
+
+.progressbar-container {
+  margin-bottom: 6px;
+}
+
+.progressbar {
+  display: flex;
+  align-items: center;
+}
+
+.progressbar-hint {
+  margin-left: 8px;
+}
+
+.progressbar-hint-icon {
+  display: flex;
+}
+
+.checkbox-fake-placeholder {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  background-color: transparent;
+  border: 1px solid var(--pneumatic-color-black16);
+  border-radius: 4px;
+}

@@ -1,0 +1,11 @@
+.step {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--pneumatic-color-black72);
+}
+
+.tooltip {
+  display: flex;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

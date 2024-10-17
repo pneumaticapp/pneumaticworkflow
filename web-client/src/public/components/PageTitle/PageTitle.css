@@ -1,0 +1,26 @@
+/* stylelint-disable declaration-no-important */
+.container {
+  margin-bottom: 32px;
+}
+
+.container.is-mb-sm {
+  margin-bottom: 16px;
+}
+
+.page-title {
+  display: inline-flex;
+  align-items: center;
+}
+
+.tooltip-container {
+  margin-left: 8px;
+}
+
+.tooltip-icon {
+  display: flex;
+}
+
+.learn-more {
+  display: block;
+  text-align: center;
+}

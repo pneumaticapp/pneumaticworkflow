@@ -1,0 +1,140 @@
+.comment-attachments {
+  position: relative;
+  margin-top: 16px;
+  display: flex;
+  flex-flow: column;
+  width: 100%;
+}
+
+.comment-attachments_loading {
+  pointer-events: none;
+  opacity: 0.5;
+}
+
+.comment-attachments__images-list {
+  margin: -4px;
+  display: flex;
+  flex-flow: row wrap;
+  width: 100%;
+}
+
+.comment-attachments__images-list {
+  margin-bottom: 16px;
+}
+
+.images-list__image-container {
+  position: relative;
+  margin: 4px;
+  display: flex;
+  width: 80px;
+  height: 80px;
+  background: white;
+  border-radius: 8px;
+  justify-content: center;
+  align-items: center;
+}
+
+.images-list__image-container:last-child {
+  margin-right: 0;
+}
+
+.images-list__image-container_loading {
+  pointer-events: none;
+  opacity: 0.5;
+}
+
+.image__link {
+  all: unset;
+  width: 80px;
+  height: 80px;
+}
+
+.image {
+  width: 100%;
+  height: 100%;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.image__delete-button {
+  all: unset;
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: flex;
+  cursor: pointer;
+  color: var(--pneumatic-color-black88);
+  transition: 0.1s ease-in-out fill;
+
+  &:hover {
+    color: var(--pneumatic-color-link-hover);
+  }
+}
+
+.comment-attachments__documents-list {
+  display: flex;
+  flex-flow: column;
+}
+
+.documents-list__document-container {
+  margin-bottom: 8px;
+  display: inline-flex;
+  align-items: center;
+  flex-flow: row nowrap;
+  max-width: 100%;
+}
+
+.documents-list__document-container:last-child {
+  margin-bottom: 0;
+}
+
+.documents-list__document-container_loading {
+  pointer-events: none;
+  opacity: 0.5;
+}
+
+.document {
+  margin-right: 10px;
+  display: flex;
+  max-width: calc(100% - 30px);
+  white-space: pre-wrap;
+  word-break: break-word;
+  cursor: pointer;
+  color: var(--pneumatic-color-link-dark);
+  transition: color 0.1s ease-in-out;
+}
+.document_not-clickable {
+  cursor: default;
+  pointer-events: none;
+}
+
+.document:hover {
+  color: var(--pneumatic-color-link-hover);
+}
+
+.document__filename {
+  overflow: hidden;
+  font-family: Nunito, sans-serif;
+  font-size: 15px;
+  line-height: 20px;
+  text-align: left;
+  text-overflow: ellipsis;
+  direction: rtl;
+}
+
+.document .document__icon {
+  flex-shrink: 0;
+  margin-right: 8px;
+}
+
+.document__delete-button {
+  all: unset;
+  display: flex;
+  cursor: pointer;
+  color: var(--pneumatic-color-black88);
+  transition: 0.1s ease-in-out fill;
+
+  &:hover {
+    color: var(--pneumatic-color-link-hover);
+  }
+}

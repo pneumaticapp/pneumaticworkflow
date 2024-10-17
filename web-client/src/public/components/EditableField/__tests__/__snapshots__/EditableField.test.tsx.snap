@@ -1,0 +1,23 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`EditableField корректно рендерится 1`] = `
+<span
+  className="edit"
+  id="test-id"
+>
+  <span
+    className="edit-field"
+    contentEditable={false}
+    onBlur={[Function]}
+    onInput={[Function]}
+    onKeyDown={[Function]}
+    suppressContentEditableWarning={true}
+  >
+    test
+  </span>
+  <i
+    className="simple-icon-pencil edit-icon"
+    onClick={[Function]}
+  />
+</span>
+`;

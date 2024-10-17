@@ -1,0 +1,10 @@
+{
+  "host": "https://dev.pneumatic.app/",
+  "formSubdomain": "form-dev.pneumatic.app",
+  "api": {
+    "privateUrl": "http://192.168.200.6/",
+    "publicUrl": "https://api-dev.pneumatic.app/",
+    "wsPublicUrl": "wss://api-dev.pneumatic.app/"
+  },
+  "reсaptchaSecret": "6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI"
+}

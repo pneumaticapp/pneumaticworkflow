@@ -1,0 +1,36 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`GoogleProfile корректно рендерится со всеми данными 1`] = `
+<div
+  className="d-flex mb-4"
+>
+  <div
+    className="d-flex align-items-center mr-3"
+  >
+    <Avatar
+      className="avatar"
+      user={
+        {
+          "email": "google@pneumatic.app",
+          "firstName": "Google",
+          "lastName": "Profile",
+          "photo": "/mock/google/photo.jpg",
+          "status": "registration",
+        }
+      }
+    />
+  </div>
+  <div
+    className="d-flex flex-column"
+  >
+    <span>
+      Google
+       
+      Profile
+    </span>
+    <span>
+      google@pneumatic.app
+    </span>
+  </div>
+</div>
+`;

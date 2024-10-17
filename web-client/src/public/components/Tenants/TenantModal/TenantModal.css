@@ -1,0 +1,36 @@
+.tenant-modal {
+  &__title {
+    margin-bottom: 16px;
+  }
+
+  &__description {
+    margin-bottom: 16px;
+    font-size: 15px;
+    line-height: 20px;
+    color: var(--pneumatic-color-black72);
+
+    a {
+      color: var(--pneumatic-color-link-dark);
+    }
+  }
+
+  &__footnote {
+    margin-bottom: 16px;
+    font-size: 15px;
+    font-weight: bold;
+    line-height: 20px;
+  }
+
+  &__description + &__footnote {
+    margin-top: 20px;
+  }
+
+  &__footer {
+    margin-top: 32px;
+    display: flex;
+
+    > * + * {
+      margin-left: 16px;
+    }
+  }
+}

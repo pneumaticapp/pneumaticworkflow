@@ -1,0 +1,6 @@
+.container {
+  position: relative;
+  display: flex;
+  flex-flow: column;
+  width: 100%;
+}

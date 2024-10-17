@@ -1,0 +1,27 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Menu Icon корректно рендерится 1`] = `
+<svg
+  viewBox="0 0 26 17"
+  xmlns="http://www.w3.org/2000/svg"
+>
+  <rect
+    height="1"
+    width="25"
+    x="0.5"
+    y="0.5"
+  />
+  <rect
+    height="1"
+    width="25"
+    x="0.5"
+    y="7.5"
+  />
+  <rect
+    height="1"
+    width="25"
+    x="0.5"
+    y="15.5"
+  />
+</svg>
+`;

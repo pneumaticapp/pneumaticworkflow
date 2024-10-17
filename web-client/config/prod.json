@@ -1,0 +1,23 @@
+{
+  "host": "https://my.pneumatic.app/",
+  "formSubdomain": "form.pneumatic.app",
+  "api": {
+    "privateUrl": "http://192.168.199.2/",
+    "publicUrl": "https://api.pneumatic.app/",
+    "wsPublicUrl": "wss://api.pneumatic.app/"
+  },
+  "analyticsId": "DXgZhrfDHuNCll4clI8X1gpYXXSv8FAe",
+  "reсaptchaSecret": "6LenL90aAAAAANNtgPNID3XMFIkVl9C5bMNLDIKj",
+  "firebase": {
+    "vapidKey": "BCaO0DArJ4VHXXAp0qgyYZ163Y6n41SOToG-YSYtcBk2d6bN9kcadP6KTjc8DcJE4lsxf1bQ1kF-_htzR1-IMao",
+    "config": {
+      "apiKey": "AIzaSyD9oZ0nnEp6L_vw6NoTorDrDHNawqxaE4c",
+      "authDomain": "pneumatic-production.firebaseapp.com",
+      "projectId": "pneumatic-production",
+      "storageBucket": "pneumatic-production.appspot.com",
+      "messagingSenderId": "382785551804",
+      "appId": "1:382785551804:web:07401bf8bb013f5ebcbfb9",
+      "measurementId": "G-EC8R9CGXB1"
+    }
+  }
+}

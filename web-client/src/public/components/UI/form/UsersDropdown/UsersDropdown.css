@@ -1,0 +1,27 @@
+.invite-user-option {
+  display: flex;
+  align-items: center;
+  font-weight: bold;
+  color: var(--pneumatic-color-black100);
+
+  &__icon {
+    margin-right: 8px;
+  }
+}
+
+.user-option {
+  &__content {
+    display: flex;
+    align-items: center;
+
+    p {
+      @mixin text-overflow;
+
+      margin: 0;
+    }
+  }
+
+  &__avatar {
+    margin-right: 0.8rem;
+  }
+}

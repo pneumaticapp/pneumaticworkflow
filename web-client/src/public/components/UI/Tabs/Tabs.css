@@ -1,0 +1,32 @@
+.container {
+  display: flex;
+  height: 32px;
+  font-size: 13px;
+  font-weight: bold;
+  line-height: 16px;
+  color: var(--pneumatic-color-black100);
+  background: white;
+  border-radius: 16px;
+
+  @media (--mobile) {
+    justify-content: space-between;
+  }
+}
+
+.tab {
+  all: unset;
+  padding: 8px 16px;
+  flex-grow: 1;
+  text-align: center;
+  transition: color 0.1s ease-in-out;
+
+  &:not(.tab_active):hover {
+    color: var(--pneumatic-color-link-hover);
+  }
+}
+
+.tab_active {
+  color: white;
+  background: var(--pneumatic-color-link-hover);
+  border-radius: 16px;
+}

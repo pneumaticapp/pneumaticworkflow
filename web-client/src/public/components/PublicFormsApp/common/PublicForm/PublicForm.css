@@ -1,0 +1,139 @@
+/* stylelint-disable selector-pseudo-class-no-unknown, declaration-no-important, selector-max-compound-selectors */
+
+.name {
+  margin: 0;
+  padding: 0;
+}
+
+.description {
+  margin: 32px 0;
+  font-size: 15px;
+  line-height: 20px;
+  color: var(--pneumatic-color-black72);
+}
+
+.kikcoff-form {
+  position: relative;
+  padding: 80px 0;
+  overflow: visible;
+  color: var(--pneumatic-color-black100);
+  background-color: white;
+  border-radius: 24px;
+  transition: box-shadow 0.2s ease-in-out;
+
+  &.embedded {
+    padding: 32px;
+    border-radius: 0;
+
+    .name {
+      font-size: 28px;
+
+      @media (max-width: 639px) {
+        font-size: 24px;
+      }
+    }
+  }
+}
+
+.kikcoff-form__inner {
+  position: relative;
+  z-index: 1;
+  margin: 32px 0 0;
+  margin-top: 32px;
+  padding: 32px;
+
+  &::before {
+    position: absolute;
+    z-index: -1;
+    top: 0;
+    right: 0;
+    left: 0;
+    bottom: 0;
+    content: '';
+    background: var(--pneumatic-color-beige);
+    border-radius: 24px;
+  }
+
+  &.embedded {
+    @media (--mobile) {
+      padding: 32px;
+    }
+
+    &::before {
+      @media (--mobile) {
+        right: 0;
+        left: 0;
+      }
+    }
+  }
+}
+
+.output__field {
+  :global .react-datepicker-wrapper input {
+    padding: 14px 50px 14px 16px !important;
+    width: 100% !important;
+    font-family: Nunito, sans-serif !important;
+    font-size: 15px !important;
+    line-height: 20px !important;
+    color: #262522 !important;
+    background: var(--pneumatic-color-beige) !important;
+    border: 1px solid #dcdcdb !important;
+    border-radius: 8px !important;
+    outline: none !important;
+    transition: 0.15s ease-in border-color !important;
+
+    &:focus {
+      border-color: #979795 !important;
+    }
+
+    &::placeholder {
+      color: var(--default-placeholder-color) !important;
+    }
+  }
+}
+
+.submit-button {
+  margin-top: 32px;
+  width: 100%;
+}
+
+.notification {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.notification.embedded {
+  height: 100%;
+}
+
+.notification__image {
+  margin-bottom: 32px;
+}
+
+.notification__title {
+  margin: 0 0 16px;
+  padding: 0;
+}
+
+.notification__text {
+  margin-bottom: 32px;
+  max-width: 400px;
+  font-size: 15px;
+  line-height: 20px;
+  text-align: center;
+
+  + .copyright {
+    margin: 0;
+  }
+}
+
+.captcha {
+  margin-top: 16px;
+}
+
+.copyright {
+  margin-top: 16px;
+}

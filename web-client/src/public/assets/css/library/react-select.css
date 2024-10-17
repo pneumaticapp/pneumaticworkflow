@@ -1,0 +1,86 @@
+.react-select {
+  .react-select__control .react-select__indicators {
+    transition: transform 0.3s;
+    transform: rotate(0deg);
+  }
+
+  .react-select__control--menu-is-open .react-select__indicators {
+    transition: transform 0.3s;
+    transform: rotate(180deg);
+  }
+
+  .react-select__control {
+    background: transparent;
+    outline: initial;
+    box-shadow: none;
+    border-color: var(--separator-color);
+    padding: 0.7rem 1.6rem;
+    border-radius: 0.8rem;
+    cursor: pointer;
+
+    &--menu-is-open {
+      cursor: text;
+    }
+
+    &:hover,
+    &--is-focused,
+    &--is-focused:hover {
+      border-color: var(--pneumatic-color-black48) !important;
+    }
+  }
+
+  .react-select__input {
+    pointer-events: none;
+  }
+
+  .react-select__placeholder {
+    @mixin text-overflow;
+  }
+
+  .react-select__input-container,
+  .react-select__single-value,
+  .react-select__value-container,
+  .react-select__placeholder {
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .react-select__menu {
+    width: 100%;
+    z-index: 2 !important;
+    margin: 0 !important;
+    padding: 0.4rem !important;
+    border: none !important;
+    box-shadow: 0px 0.8rem 1.6rem rgba(98, 98, 95, 0.08) !important;
+    border-radius: 0.8rem !important;
+    overflow: hidden !important;
+  }
+
+  .react-select__menu-list.is-sm {
+    position: absolute;
+    min-width: 30.4rem !important;
+  }
+
+  .react-select__group-heading {
+    color: var(--pneumatic-color-black48) !important;
+    font-weight: 700 !important;
+    font-size: 1.1rem !important;
+    line-height: 1.6rem !important;
+    letter-spacing: 0.05em !important;
+    text-transform: uppercase !important;
+  }
+
+  .react-select__option {
+    color: var(--pneumatic-color-black100) !important;
+    background: var(--pneumatic-color-white) !important;
+    padding: 0.6rem 1.2rem !important;
+    display: flex !important;
+    cursor: pointer !important;
+    overflow: hidden !important;
+
+    &:hover {
+      background-color: var(--pneumatic-color-beige) !important;
+      border-radius: 0.4rem;
+    }
+  }
+}

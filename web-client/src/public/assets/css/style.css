@@ -1,0 +1,91 @@
+// ===================
+// Table of Contents
+// -------------------
+// 00. Variables
+// 01. Library
+// 02. Reset style
+// 03. Base style
+// 04. Fix
+// ===================
+
+// ===================
+// 00. Variables
+// ===================
+
+@import './variables/color';
+
+// ===================
+// 01. Library
+// ===================
+
+// ===================
+// 02. Reset style
+// ===================
+
+button {
+  border: none;
+  margin: 0;
+  padding: 0;
+  width: auto;
+  overflow: visible;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  line-height: normal;
+  -webkit-font-smoothing: inherit;
+  -moz-osx-font-smoothing: inherit;
+  -webkit-appearance: none;
+}
+
+ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+// ===================
+// 03. Base style
+// ===================
+
+html {
+  width: 100%;
+  height: 100%;
+  overflow-x: hidden;
+  font-size: 62.5%;
+}
+
+body {
+  @mixin text-base;
+  font-family: 'Nunito', sans-serif;
+  color: var(--pneumatic-color-black100);
+  background: var(--background-color);
+  min-width: 320px;
+  overflow: auto;
+  height: 100%;
+
+  &.background {
+    height: 100%;
+
+    main {
+      margin: 0 !important;
+      height: 100%;
+
+      .container {
+        height: 100%;
+      }
+    }
+  }
+}
+
+svg {
+  display: block;
+}
+
+// ===================
+// 04. Fix
+// ===================
+
+/* Fix bootstrap style */
+.form-control {
+  font-size: 1.5rem !important;
+}

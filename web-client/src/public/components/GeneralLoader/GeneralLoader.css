@@ -1,0 +1,31 @@
+.container {
+  position: fixed;
+  z-index: 2000;
+  top: 0;
+  right: 0;
+  left: 0;
+  bottom: 0;
+  display: flex;
+  text-align: center;
+  background-color: #f6f6f6;
+  opacity: 0.72;
+  align-items: center;
+  justify-content: center;
+}
+
+.loader {
+  max-width: 8em;
+  background: #f6f6f6;
+  border-radius: 3px;
+  fill: none;
+  stroke: var(--pneumatic-color-beige);
+  stroke-linecap: round;
+  stroke-width: 8%;
+
+  use {
+    animation: a 1s linear infinite;
+    stroke: var(--pneumatic-color-link);
+  }
+}
+
+@keyframes a { to { stroke-dashoffset: 0; } }

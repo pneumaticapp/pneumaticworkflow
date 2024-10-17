@@ -1,0 +1,18 @@
+.badge.specifity {
+  margin-bottom: 1px;
+  padding: 1px 8px;
+  display: inline-block;
+  overflow: hidden;
+  max-width: 20ch;
+  font-family: Nunito, sans-serif;
+  font-size: 13px;
+  font-weight: normal;
+  line-height: 16px;
+  vertical-align: middle;
+  white-space: nowrap;
+  text-transform: capitalize;
+  text-overflow: ellipsis;
+  color: var(--pneumatic-color-black100);
+  background: rgba(240, 219, 195, 1);
+  border-radius: 4px;
+}

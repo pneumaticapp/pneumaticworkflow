@@ -1,0 +1,11 @@
+/node_modules/
+/artifacts/
+/dist/
+/public/
+/config/common.json
+.vscode
+.idea
+.DS_Store
+
+*storybook.log
+.env
