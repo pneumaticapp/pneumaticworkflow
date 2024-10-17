@@ -1,0 +1,3 @@
+Hey, {{name}}!
+
+Your profile on Pneumatic was deactivated :(

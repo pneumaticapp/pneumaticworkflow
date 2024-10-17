@@ -1,0 +1,23 @@
+version: '3'
+
+services:
+  pneumatic_postgres:
+    container_name: pneumatic_postgres
+    image: postgres:15-alpine
+    environment:
+        POSTGRES_USER:     pneumatic
+        POSTGRES_PASSWORD: pneumatic
+        POSTGRES_DB:       pneumatic
+        POSTGRES_PORT:     5432
+        PGDATA:            /var/lib/postgresql/data
+    volumes:
+      - ./data:/var/lib/postgresql/data:rw
+      - ./backups:/backups:rw
+    ports:
+      - 5433:5432
+    restart: always
+    networks:
+      - localhost
+
+networks:
+  localhost:
