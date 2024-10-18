@@ -1,0 +1,37 @@
+.edit-button-wrapper {
+  white-space: nowrap;
+}
+
+.edit-button {
+  position: relative;
+  left: 8px;
+  cursor: pointer;
+  color: var(--pneumatic-color-link);
+  transition: color 0.1s ease-in-out;
+
+  &:hover {
+    color: var(--pneumatic-color-link-hover);
+  }
+}
+
+.text {
+  padding-bottom: 1px;
+  display: flex;
+  word-break: break-word;
+
+  svg {
+    display: inline-block;
+  }
+}
+
+.textarea {
+  padding: 0;
+  display: block;
+  width: 100%;
+  font-weight: inherit;
+  letter-spacing: inherit;
+  resize: none;
+  background-color: transparent;
+  border: 0;
+  outline: none;
+}

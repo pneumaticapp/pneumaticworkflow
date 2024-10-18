@@ -1,0 +1,51 @@
+.plan-details-progress {
+  margin-bottom: 8px;
+  display: flex;
+  flex-flow: row;
+  align-items: center;
+
+  &:last-child {
+    margin-bottom: 16px;
+  }
+
+  .description {
+    margin-left: 8px;
+    font-family: Nunito, sans-serif;
+    font-size: 11px;
+    font-weight: bold;
+    font-style: normal;
+    line-height: 16px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: #b9b9b8;
+  }
+}
+
+.plan-details-progress-text {
+  position: absolute;
+  width: 80px;
+  font-size: 13px;
+  font-weight: normal;
+  text-align: center;
+  white-space: pre-line;
+  color: #979795;
+}
+
+@media (--mobile) {
+  .plan-details-progress {
+    padding: 0 15px;
+    flex-flow: column;
+
+    &:last-child {
+      margin-bottom: 8px;
+    }
+
+    & > div {
+      margin-bottom: 8px;
+    }
+
+    .description {
+      margin-left: 0;
+    }
+  }
+}

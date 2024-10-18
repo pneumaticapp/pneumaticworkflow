@@ -1,0 +1,150 @@
+.kickoff-create-field-container {
+  flex-grow: 1;
+  max-width: calc(100% - 40px);
+
+  .measure {
+    position: absolute;
+    top: -99999px;
+    left: -99999px;
+    font-family: Nunito, sans-serif;
+    font-size: 15.04px;
+    line-height: 16px;
+  }
+}
+
+.kickoff-create-field-name {
+  position: relative;
+  display: inline-flex;
+  max-width: 100%;
+}
+
+.kickoff-create-field-name-input {
+  padding: 0 4px 0 0;
+  max-width: calc(100% - 5px);
+  line-height: 20px;
+  border: none;
+
+  &:focus {
+    outline: none;
+  }
+
+  &:disabled {
+    cursor: text;
+    background: white;
+  }
+}
+
+.kickoff-create-field-name-input_error::placeholder {
+  color: #fc5b67;
+}
+
+.kickoff-create-field-container__error-message {
+  margin-top: 4px;
+  margin-bottom: 0;
+  display: block;
+  font-family: Nunito, sans-serif;
+  font-size: 13px;
+  line-height: 16px;
+  color: #fc5b67;
+}
+
+.kickoff-create-field-options {
+  margin: 0;
+  margin-top: 8px;
+  padding: 0;
+  list-style: none;
+}
+
+.kickoff-create-field-options {
+  margin: 0;
+  margin-top: 8px;
+  padding: 0;
+  list-style: none;
+}
+
+.kickoff-create-field-option {
+  margin: 0 0 8px;
+  display: flex;
+  flex-flow: column;
+  align-items: flex-start;
+}
+
+.kickoff-create-field-option__labeled-checkbox {
+  display: flex;
+  width: 100%;
+  flex-flow: row nowrap;
+  align-items: center;
+}
+
+.labeled-checkbox__remove-icon {
+  cursor: pointer;
+}
+
+.labeled-checkbox__input {
+  width: 95px;
+  max-width: calc(100% - 50px);
+  border: none;
+
+  &:focus {
+    outline: none;
+  }
+
+  &:disabled {
+    cursor: text;
+    background: white;
+  }
+}
+
+.kickoff-create-field-add-option {
+  margin: 0;
+  padding: 0;
+  overflow: visible;
+  width: auto;
+  color: #fec336;
+  background: transparent;
+  border: none;
+}
+
+.kickoff-set-field-container {
+  display: block;
+}
+
+.kickoff-set-field-name {
+  position: relative;
+  margin-bottom: 8px;
+  padding-right: 4px;
+  display: inline-block;
+  color: var(--pneumatic-color-black72);
+}
+
+.kickoff-set-field-options {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.kickoff-set-field-option {
+  margin: 0 0 8px;
+  display: flex;
+  align-items: flex-start;
+  flex-flow: column;
+}
+
+.kickoff-set-field-option__error-text {
+  margin-top: 4px;
+  margin-bottom: 0;
+  font-family: Nunito, sans-serif;
+  font-size: 13px;
+  line-height: 16px;
+  color: #fc5b67;
+}
+
+.edit-name-button {
+  position: relative;
+  top: -2px;
+}
+
+.connected_radio {
+  position: relative;
+  bottom: 15px;
+}

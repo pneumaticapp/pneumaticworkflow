@@ -1,0 +1,90 @@
+/* stylelint-disable declaration-no-important */
+.dropdown-wrapper {
+  display: inline-block;
+}
+
+.btn-wrapper {
+  margin-left: auto;
+}
+
+.btn-dropdown {
+  display: flex;
+  width: 40px;
+  height: 40px;
+  color: var(--pneumatic-color-link);
+  background: var(--pneumatic-color-black100);
+  border: none;
+  border-radius: 50%;
+  transition: 0.1s ease-in-out all;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-dropdown:not(:disabled):hover,
+.btn-dropdown_active {
+  color: white;
+  background: var(--pneumatic-color-link-hover);
+}
+
+.btn-dropdown:disabled {
+  opacity: var(--pneumatic-button-opacity);
+}
+
+.btn-dropdown span {
+  margin: 2px;
+  display: inline-block;
+}
+
+.dropdown-item {
+  padding: 4px 12px !important;
+  text-align: right !important;
+  color: var(--pneumatic-color-link) !important;
+  background: var(--pneumatic-color-black100) !important;
+  border-radius: 4px;
+
+  &:hover {
+    color: white !important;
+    background: var(--pneumatic-color-black72) !important;
+    border-radius: 4px !important;
+  }
+
+  @media (--mobile) {
+    padding-top: 5px;
+    padding-bottom: 5px;
+    width: 240px;
+    white-space: pre-wrap;
+  }
+}
+
+.dropdown-item__header {
+  margin: 0;
+  font-size: 15px;
+  font-weight: bold;
+  line-height: 20px;
+}
+
+.dropdown-item__hint {
+  margin: 0;
+  font-size: 13px;
+  line-height: 16px;
+}
+
+.dropdown-menu {
+  position: relative;
+  margin-top: 8px !important;
+  padding: 10px 4px !important;
+  white-space: pre-wrap;
+  color: var(--pneumatic-color-link) !important;
+  background: var(--pneumatic-color-black100) !important;
+  border-radius: 8px !important;
+
+  &::before {
+    position: absolute;
+    top: -8px;
+    right: 8px;
+    width: 24px;
+    height: 8px;
+    content: '';
+    background-image: url("data:image/svg+xml,%0A%3Csvg width='24' height='8' viewBox='0 0 24 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 8L12 8L12 0C12 4.41828 6.62741 8 0 8Z' fill='%23262522'/%3E%3Cpath d='M24 8L12 8L12 0C12 4.41828 17.3726 8 24 8Z' fill='%23262522'/%3E%3C/svg%3E%0A");
+  }
+}

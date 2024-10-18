@@ -1,0 +1,71 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`SelectMenu корректно рендерится 1`] = `
+<Dropdown
+  a11y={true}
+  active={false}
+  addonType={false}
+  className="container dropdown-menu-right dropdown"
+  direction="down"
+  inNavbar={false}
+  isOpen={false}
+  nav={false}
+  setActiveFromChild={false}
+  toggle={[Function]}
+>
+  <DropdownToggle
+    aria-haspopup={true}
+    className="active-value"
+    color="secondary"
+    tag="button"
+  >
+    <ForwardRef
+      id="sorting.date-desc"
+    >
+      <Component />
+    </ForwardRef>
+    <ExpandIcon
+      className="expand-icon"
+    />
+  </DropdownToggle>
+  <DropdownMenu
+    className="dropdown-menu"
+    flip={true}
+    tag="div"
+  >
+    <DropdownItem
+      className="dropdown-item-sm value-item"
+      key="date-asc"
+      onClick={[Function]}
+      tag="button"
+      toggle={false}
+    >
+      <ForwardRef
+        id="sorting.date-asc"
+      />
+    </DropdownItem>
+    <DropdownItem
+      className="dropdown-item-sm value-item undefined"
+      key="date-desc"
+      onClick={[Function]}
+      tag="button"
+      toggle={false}
+    >
+      <ForwardRef
+        id="sorting.date-desc"
+      />
+    </DropdownItem>
+    <DropdownItem
+      className="dropdown-item-sm value-item"
+      key="overdue"
+      onClick={[Function]}
+      tag="button"
+      toggle={false}
+    >
+      <ForwardRef
+        id="sorting.overdue"
+      />
+    </DropdownItem>
+  </DropdownMenu>
+</Dropdown>
+`;

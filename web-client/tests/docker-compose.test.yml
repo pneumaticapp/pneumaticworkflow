@@ -1,0 +1,13 @@
+version: '3'
+
+services:
+  tests:
+    networks:
+      - pneumatic_frontend
+    build:
+      context: ..
+      dockerfile: ./tests/Dockerfile.test
+    container_name: pneumatic_frontend_tests
+
+networks:
+  pneumatic_frontend:

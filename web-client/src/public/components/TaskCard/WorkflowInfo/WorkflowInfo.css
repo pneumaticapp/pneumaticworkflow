@@ -1,0 +1,61 @@
+.process-info-general-info {
+  margin-bottom: 16px;
+}
+
+.process-info-pretitle {
+  margin-bottom: 8px;
+  font-size: 15px;
+  line-height: 20px;
+  color: var(--pneumatic-color-black100);
+}
+
+.process-info-title {
+  margin-bottom: 8px;
+  overflow-wrap: break-word;
+}
+
+.process-info-description {
+  font-size: 15px;
+  line-height: 20px;
+  white-space: pre-line;
+  word-break: break-word;
+  color: var(--pneumatic-color-black72);
+}
+
+.section-title {
+  margin: 16px 0;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 16px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #b9b9b8;
+}
+
+.process-info-workflow-name {
+  margin-bottom: 16px;
+
+  span {
+    display: block;
+    font-size: 15px;
+    line-height: 20px;
+    word-break: break-word;
+    color: #262522;
+  }
+}
+
+.performer {
+  align-items: center;
+  padding: 6px 8px;
+  display: inline-flex;
+  font-size: 13px;
+  line-height: 16px;
+  color: var(--pneumatic-color-black100);
+  background: var(--pneumatic-color-beige);
+  border-radius: 16px;
+  justify-content: space-between;
+}
+
+.performer__avatar {
+  margin-right: 4px;
+}

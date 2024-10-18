@@ -1,0 +1,527 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Team rendered correctly 1`] = `
+<div
+  className="container"
+>
+  <[object Object] />
+  <AddGuestsBanner />
+  <div
+    className="search"
+  >
+    <SearchLargeIcon
+      className="search__icon"
+    />
+    <InputField
+      className="search-field__input"
+      containerClassName="search-field"
+      fieldSize="md"
+      onChange={[Function]}
+      onClear={[Function]}
+      placeholder="Search user"
+      value=""
+    />
+  </div>
+  <button
+    className="invite-button"
+    onClick={[Function]}
+    type="button"
+  >
+    <RoundPlusIcon
+      className="invite-button__icon"
+    />
+    <ForwardRef
+      id="team.invite-team-large-btn"
+    >
+      <Component />
+    </ForwardRef>
+  </button>
+  <div
+    className="cards"
+  >
+    <TeamUser
+      handleToggleAdmin={[Function]}
+      isCurrentUser={true}
+      key="0"
+      openModal={[Function]}
+      resendInvite={[Function]}
+      user={
+        {
+          "email": "stas@boreckiy_0.app",
+          "firstName": "Stas",
+          "id": 0,
+          "isAccountOwner": undefined,
+          "lastName": undefined,
+          "phone": "88005553535",
+          "photo": "/img/avatar0.png",
+          "status": "active",
+          "type": "user",
+        }
+      }
+    />
+    <TeamUser
+      handleToggleAdmin={[Function]}
+      isCurrentUser={false}
+      key="1"
+      openModal={[Function]}
+      resendInvite={[Function]}
+      user={
+        {
+          "email": "stas@boreckiy_1.app",
+          "firstName": "Stas",
+          "id": 1,
+          "isAccountOwner": undefined,
+          "lastName": "Boreckiy",
+          "phone": "88005553535",
+          "photo": "/img/avatar1.png",
+          "status": "active",
+          "type": "user",
+        }
+      }
+    />
+    <TeamUser
+      handleToggleAdmin={[Function]}
+      isCurrentUser={false}
+      key="2"
+      openModal={[Function]}
+      resendInvite={[Function]}
+      user={
+        {
+          "email": "stas@boreckiy_2.app",
+          "firstName": "Stas",
+          "id": 2,
+          "isAccountOwner": undefined,
+          "lastName": "Careckiy",
+          "phone": "88005553535",
+          "photo": "/img/avatar2.png",
+          "status": "active",
+          "type": "user",
+        }
+      }
+    />
+    <TeamUser
+      handleToggleAdmin={[Function]}
+      isCurrentUser={false}
+      key="3"
+      openModal={[Function]}
+      resendInvite={[Function]}
+      user={
+        {
+          "email": "stas@boreckiy_3.app",
+          "firstName": "Stas",
+          "id": 3,
+          "isAccountOwner": undefined,
+          "lastName": "Tvoreckiy",
+          "phone": "88005553535",
+          "photo": "/img/avatar3.png",
+          "status": "active",
+          "type": "user",
+        }
+      }
+    />
+    <TeamUser
+      handleToggleAdmin={[Function]}
+      isCurrentUser={false}
+      key="4"
+      openModal={[Function]}
+      resendInvite={[Function]}
+      user={
+        {
+          "email": "stas@boreckiy_4.app",
+          "firstName": "Stas",
+          "id": 4,
+          "isAccountOwner": undefined,
+          "lastName": "Skvoreckiy",
+          "phone": "88005553535",
+          "photo": "/img/avatar4.png",
+          "status": "active",
+          "type": "user",
+        }
+      }
+    />
+    <TeamUser
+      handleToggleAdmin={[Function]}
+      isCurrentUser={false}
+      key="5"
+      openModal={[Function]}
+      resendInvite={[Function]}
+      user={
+        {
+          "email": "stas@boreckiy_5.app",
+          "firstName": "Stas",
+          "id": 5,
+          "isAccountOwner": undefined,
+          "lastName": "",
+          "phone": "88005553535",
+          "photo": "/img/avatar5.png",
+          "status": "active",
+          "type": "user",
+        }
+      }
+    />
+    <TeamUser
+      handleToggleAdmin={[Function]}
+      isCurrentUser={false}
+      key="6"
+      openModal={[Function]}
+      resendInvite={[Function]}
+      user={
+        {
+          "email": "stas@boreckiy_6.app",
+          "firstName": "Stas",
+          "id": 6,
+          "isAccountOwner": undefined,
+          "lastName": "Boreckiy",
+          "phone": "88005553535",
+          "photo": "/img/avatar6.png",
+          "status": "active",
+          "type": "user",
+        }
+      }
+    />
+    <TeamUser
+      handleToggleAdmin={[Function]}
+      isCurrentUser={false}
+      key="7"
+      openModal={[Function]}
+      resendInvite={[Function]}
+      user={
+        {
+          "email": "stas@boreckiy_7.app",
+          "firstName": "Stas",
+          "id": 7,
+          "isAccountOwner": undefined,
+          "lastName": "Careckiy",
+          "phone": "88005553535",
+          "photo": "/img/avatar7.png",
+          "status": "active",
+          "type": "user",
+        }
+      }
+    />
+    <TeamUser
+      handleToggleAdmin={[Function]}
+      isCurrentUser={false}
+      key="8"
+      openModal={[Function]}
+      resendInvite={[Function]}
+      user={
+        {
+          "email": "stas@boreckiy_8.app",
+          "firstName": "Stas",
+          "id": 8,
+          "isAccountOwner": undefined,
+          "lastName": "Tvoreckiy",
+          "phone": "88005553535",
+          "photo": "/img/avatar8.png",
+          "status": "active",
+          "type": "user",
+        }
+      }
+    />
+    <TeamUser
+      handleToggleAdmin={[Function]}
+      isCurrentUser={false}
+      key="9"
+      openModal={[Function]}
+      resendInvite={[Function]}
+      user={
+        {
+          "email": "stas@boreckiy_9.app",
+          "firstName": "Stas",
+          "id": 9,
+          "isAccountOwner": undefined,
+          "lastName": "Skvoreckiy",
+          "phone": "88005553535",
+          "photo": "/img/avatar9.png",
+          "status": "active",
+          "type": "user",
+        }
+      }
+    />
+    <TeamUser
+      handleToggleAdmin={[Function]}
+      isCurrentUser={false}
+      key="10"
+      openModal={[Function]}
+      resendInvite={[Function]}
+      user={
+        {
+          "email": "stas@boreckiy_10.app",
+          "firstName": "Stas",
+          "id": 10,
+          "isAccountOwner": undefined,
+          "lastName": "",
+          "phone": "88005553535",
+          "photo": "/img/avatar10.png",
+          "status": "active",
+          "type": "user",
+        }
+      }
+    />
+  </div>
+</div>
+`;
+
+exports[`Team rendered correctly with descending sorting 1`] = `
+<div
+  className="container"
+>
+  <[object Object] />
+  <AddGuestsBanner />
+  <div
+    className="search"
+  >
+    <SearchLargeIcon
+      className="search__icon"
+    />
+    <InputField
+      className="search-field__input"
+      containerClassName="search-field"
+      fieldSize="md"
+      onChange={[Function]}
+      onClear={[Function]}
+      placeholder="Search user"
+      value=""
+    />
+  </div>
+  <button
+    className="invite-button"
+    onClick={[Function]}
+    type="button"
+  >
+    <RoundPlusIcon
+      className="invite-button__icon"
+    />
+    <ForwardRef
+      id="team.invite-team-large-btn"
+    >
+      <Component />
+    </ForwardRef>
+  </button>
+  <div
+    className="cards"
+  >
+    <TeamUser
+      handleToggleAdmin={[Function]}
+      isCurrentUser={true}
+      key="0"
+      openModal={[Function]}
+      resendInvite={[Function]}
+      user={
+        {
+          "email": "stas@boreckiy_0.app",
+          "firstName": "Stas",
+          "id": 0,
+          "isAccountOwner": undefined,
+          "lastName": undefined,
+          "phone": "88005553535",
+          "photo": "/img/avatar0.png",
+          "status": "active",
+          "type": "user",
+        }
+      }
+    />
+    <TeamUser
+      handleToggleAdmin={[Function]}
+      isCurrentUser={false}
+      key="1"
+      openModal={[Function]}
+      resendInvite={[Function]}
+      user={
+        {
+          "email": "stas@boreckiy_1.app",
+          "firstName": "Stas",
+          "id": 1,
+          "isAccountOwner": undefined,
+          "lastName": "Boreckiy",
+          "phone": "88005553535",
+          "photo": "/img/avatar1.png",
+          "status": "active",
+          "type": "user",
+        }
+      }
+    />
+    <TeamUser
+      handleToggleAdmin={[Function]}
+      isCurrentUser={false}
+      key="2"
+      openModal={[Function]}
+      resendInvite={[Function]}
+      user={
+        {
+          "email": "stas@boreckiy_2.app",
+          "firstName": "Stas",
+          "id": 2,
+          "isAccountOwner": undefined,
+          "lastName": "Careckiy",
+          "phone": "88005553535",
+          "photo": "/img/avatar2.png",
+          "status": "active",
+          "type": "user",
+        }
+      }
+    />
+    <TeamUser
+      handleToggleAdmin={[Function]}
+      isCurrentUser={false}
+      key="3"
+      openModal={[Function]}
+      resendInvite={[Function]}
+      user={
+        {
+          "email": "stas@boreckiy_3.app",
+          "firstName": "Stas",
+          "id": 3,
+          "isAccountOwner": undefined,
+          "lastName": "Tvoreckiy",
+          "phone": "88005553535",
+          "photo": "/img/avatar3.png",
+          "status": "active",
+          "type": "user",
+        }
+      }
+    />
+    <TeamUser
+      handleToggleAdmin={[Function]}
+      isCurrentUser={false}
+      key="4"
+      openModal={[Function]}
+      resendInvite={[Function]}
+      user={
+        {
+          "email": "stas@boreckiy_4.app",
+          "firstName": "Stas",
+          "id": 4,
+          "isAccountOwner": undefined,
+          "lastName": "Skvoreckiy",
+          "phone": "88005553535",
+          "photo": "/img/avatar4.png",
+          "status": "active",
+          "type": "user",
+        }
+      }
+    />
+    <TeamUser
+      handleToggleAdmin={[Function]}
+      isCurrentUser={false}
+      key="5"
+      openModal={[Function]}
+      resendInvite={[Function]}
+      user={
+        {
+          "email": "stas@boreckiy_5.app",
+          "firstName": "Stas",
+          "id": 5,
+          "isAccountOwner": undefined,
+          "lastName": "",
+          "phone": "88005553535",
+          "photo": "/img/avatar5.png",
+          "status": "active",
+          "type": "user",
+        }
+      }
+    />
+    <TeamUser
+      handleToggleAdmin={[Function]}
+      isCurrentUser={false}
+      key="6"
+      openModal={[Function]}
+      resendInvite={[Function]}
+      user={
+        {
+          "email": "stas@boreckiy_6.app",
+          "firstName": "Stas",
+          "id": 6,
+          "isAccountOwner": undefined,
+          "lastName": "Boreckiy",
+          "phone": "88005553535",
+          "photo": "/img/avatar6.png",
+          "status": "active",
+          "type": "user",
+        }
+      }
+    />
+    <TeamUser
+      handleToggleAdmin={[Function]}
+      isCurrentUser={false}
+      key="7"
+      openModal={[Function]}
+      resendInvite={[Function]}
+      user={
+        {
+          "email": "stas@boreckiy_7.app",
+          "firstName": "Stas",
+          "id": 7,
+          "isAccountOwner": undefined,
+          "lastName": "Careckiy",
+          "phone": "88005553535",
+          "photo": "/img/avatar7.png",
+          "status": "active",
+          "type": "user",
+        }
+      }
+    />
+    <TeamUser
+      handleToggleAdmin={[Function]}
+      isCurrentUser={false}
+      key="8"
+      openModal={[Function]}
+      resendInvite={[Function]}
+      user={
+        {
+          "email": "stas@boreckiy_8.app",
+          "firstName": "Stas",
+          "id": 8,
+          "isAccountOwner": undefined,
+          "lastName": "Tvoreckiy",
+          "phone": "88005553535",
+          "photo": "/img/avatar8.png",
+          "status": "active",
+          "type": "user",
+        }
+      }
+    />
+    <TeamUser
+      handleToggleAdmin={[Function]}
+      isCurrentUser={false}
+      key="9"
+      openModal={[Function]}
+      resendInvite={[Function]}
+      user={
+        {
+          "email": "stas@boreckiy_9.app",
+          "firstName": "Stas",
+          "id": 9,
+          "isAccountOwner": undefined,
+          "lastName": "Skvoreckiy",
+          "phone": "88005553535",
+          "photo": "/img/avatar9.png",
+          "status": "active",
+          "type": "user",
+        }
+      }
+    />
+    <TeamUser
+      handleToggleAdmin={[Function]}
+      isCurrentUser={false}
+      key="10"
+      openModal={[Function]}
+      resendInvite={[Function]}
+      user={
+        {
+          "email": "stas@boreckiy_10.app",
+          "firstName": "Stas",
+          "id": 10,
+          "isAccountOwner": undefined,
+          "lastName": "",
+          "phone": "88005553535",
+          "photo": "/img/avatar10.png",
+          "status": "active",
+          "type": "user",
+        }
+      }
+    />
+  </div>
+</div>
+`;

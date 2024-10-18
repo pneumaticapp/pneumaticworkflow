@@ -1,0 +1,139 @@
+/* stylelint-disable selector-max-compound-selectors */
+/* stylelint-disable selector-class-pattern */
+/* stylelint-disable selector-pseudo-class-no-unknown */
+/* stylelint-disable declaration-no-important */
+
+.editor-wrapper {
+  position: relative;
+}
+
+.editor-wrapper_with-title {
+  padding-top: 8px;
+}
+
+.editor-wrapper_hide-placeholder {
+  :global {
+    .public-DraftEditorPlaceholder-root {
+      display: none;
+    }
+  }
+}
+
+.title {
+  position: absolute;
+  z-index: 1;
+  top: 0;
+  left: 12px;
+  padding: 0 4px;
+  font-size: 13px;
+  line-height: 16px;
+  color: var(--pneumatic-color-black72);
+}
+
+.editor {
+  position: relative;
+  padding: 10px 16px;
+  box-sizing: border-box;
+  width: 100%;
+  cursor: text;
+  background: transparent;
+  border: 1px solid var(--pneumatic-color-black16);
+  border-radius: 8px;
+  transition: 0.1s ease-in-out border-color;
+
+  &:focus-within {
+    border-color: var(--pneumatic-color-black48);
+  }
+
+  &::placeholder {
+    color: var(--default-placeholder-color);
+  }
+}
+
+.editor_loading {
+  pointer-events: none;
+}
+
+.editor :global {
+  .DraftEditor-root {
+    z-index: 0;
+  }
+
+  .public-DraftEditor-content {
+    overflow-wrap: anywhere !important;
+  }
+
+  .public-DraftEditorPlaceholder-root {
+    color: var(--default-placeholder-color);
+  }
+
+  figure {
+    margin: 0;
+  }
+
+  a {
+    color: var(--pneumatic-color-link-dark);
+    transition: color 0.1s ease-in-out;
+
+    &:hover {
+      color: var(--pneumatic-color-link-hover);
+    }
+  }
+}
+
+.editor_multiline :global {
+  .public-DraftEditor-content {
+    min-height: 74px;
+  }
+}
+
+.editor-common :global {
+  line-height: 20px;
+
+  ul,
+  ol {
+    padding-left: 32px;
+
+    li {
+      margin: 0 0 8px;
+    }
+
+    li::before {
+      font-weight: bold;
+    }
+  }
+
+  ::selection {
+    background: var(--pneumatic-color-selection);
+  }
+}
+
+.controls-wrapper {
+  display: flex;
+  align-items: center;
+}
+
+.controls {
+  display: flex;
+  width: 100%;
+  pointer-events: none;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.controls__send-button {
+  pointer-events: all;
+
+  &:disabled {
+    pointer-events: none;
+    opacity: 0.5;
+  }
+}
+
+.controls__send-button + .controls__send-button {
+  margin-left: 8px;
+}
+
+.actions {
+  margin-left: auto;
+}

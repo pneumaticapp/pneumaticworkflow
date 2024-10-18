@@ -1,0 +1,25 @@
+version: '3.2'
+
+services:
+  pneumatic_redis:
+    # Newest version not working on old linux kernels
+    image: redis:6.2.6
+    container_name: pneumatic_redis
+    command: >
+      redis-server
+      --loglevel warning
+      --databases 2
+      --dbfilename dump.rdb
+      --dir /data
+      --requirepass VacTkXJf9YgzU2ZVh4M5p83NAnsFRBL7epOarmd1
+      --save 20 1 300 100 60 10000
+    volumes:
+      - ./data:/data
+    ports:
+      - 6380:6379
+    restart: always
+    networks:
+      - localhost
+
+networks:
+  localhost:

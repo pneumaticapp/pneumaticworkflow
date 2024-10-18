@@ -1,0 +1,63 @@
+/* stylelint-disable declaration-no-important */
+
+.header {
+  margin-bottom: 32px;
+  padding: 0;
+  display: block;
+  text-align: center;
+}
+
+.avatar {
+  margin-bottom: 32px;
+  display: flex;
+  justify-content: center;
+}
+
+.profile-form {
+  padding: 80px;
+  background: white;
+  border-radius: 24px;
+  align-self: auto;
+
+  @media (--mobile) {
+    padding: 80px 32px;
+  }
+}
+
+.fields-group {
+  margin-bottom: 32px;
+}
+
+.fields-group__title {
+  margin-bottom: 16px;
+}
+
+.field:not(:last-child) {
+  margin-bottom: 8px;
+}
+
+.submit-button {
+  width: 100%;
+}
+
+.avatar-controller {
+  margin-bottom: 32px;
+}
+
+.change-pass {
+  display: flex;
+  color: var(--pneumatic-color-link-dark);
+  transition: all 0.2s;
+
+  &:hover {
+    color: var(--pneumatic-color-link-hover);
+  }
+
+  svg {
+    margin-right: 0.8rem;
+  }
+
+  p {
+    margin: 0;
+  }
+}

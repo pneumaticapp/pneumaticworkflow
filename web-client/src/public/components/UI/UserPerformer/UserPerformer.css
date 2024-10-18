@@ -1,0 +1,38 @@
+.user-performer {
+  padding: 0.6rem 0.8rem;
+  display: inline-flex;
+  align-items: center;
+  border-radius: 16px;
+
+  &.is-white {
+    background-color: white;
+  }
+
+  &.is-light {
+    background-color: #f6f6f6;
+  }
+
+  &.is-orange {
+    background-color: #fdf7ee;
+  }
+
+  &__avatar {
+    margin-right: 0.4rem;
+  }
+
+  &__name {
+    @mixin text-small;
+
+    margin: 0;
+  }
+
+  &__close {
+    margin-left: 0.4rem;
+    color: var(--pneumatic-color-black16);
+    transition: all 0.1s ease;
+
+    &:hover {
+      color: var(--pneumatic-color-link-hover);
+    }
+  }
+}

@@ -1,0 +1,27 @@
+.container {
+  position: relative;
+  height: 100%;
+}
+
+.integraions-list {
+  margin: 0 -16px;
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.integraion-card {
+  margin: 0 16px 32px;
+  width: calc(50% - 32px);
+
+  @media (max-width: 992px) {
+    width: calc(100% - 32px);
+  }
+
+  @media (--mobile) {
+    width: calc(50% - 32px);
+  }
+
+  @media (max-width: 480px) {
+    width: calc(100% - 32px);
+  }
+}

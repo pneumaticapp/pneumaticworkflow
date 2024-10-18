@@ -1,0 +1,34 @@
+.container {
+  margin: 0 auto;
+  display: flex;
+  max-width: 1088px;
+
+  @media (--mobile) {
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  @media (min-width: 1600px) {
+    max-width: 1312px;
+  }
+}
+
+.common {
+  margin-right: 64px;
+  width: 272px;
+  flex-shrink: 0;
+
+  @media (--mobile) {
+    margin-right: 0;
+    margin-bottom: 32px;
+    width: 100%;
+  }
+
+  @media (min-width: 1600px) {
+    width: 384px;
+  }
+}
+
+.content {
+  flex-grow: 1;
+}

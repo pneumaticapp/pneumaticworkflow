@@ -1,0 +1,14 @@
+.title_required {
+  &::after {
+    content: '*';
+    color: var(--pneumatic-color-warning);
+  }
+}
+
+.title_foreground-white {
+  background-color: white;
+}
+
+.title_foreground-beige {
+  background-color: var(--pneumatic-color-beige);
+}

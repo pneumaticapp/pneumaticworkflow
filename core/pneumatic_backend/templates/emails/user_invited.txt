@@ -1,0 +1,2 @@
+Hey{% if first_name %}, {{first_name}}{% endif %}! You've just been invited to Pneumatic account of {{account_name}}!
+To sign in, please, follow link: {{login_url}}

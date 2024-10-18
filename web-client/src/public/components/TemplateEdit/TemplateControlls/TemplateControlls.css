@@ -1,0 +1,139 @@
+
+.settings-block {
+  margin-bottom: 16px;
+}
+
+.info-control {
+  display: flex;
+  align-items: center;
+  height: 16px;
+}
+
+.info-control:not(:last-child) {
+  margin-bottom: 8px;
+}
+
+.info-controls-switch {
+  margin-bottom: 32px;
+  display: flex;
+  flex-flow: column;
+}
+
+.switch-label {
+  font-size: 11px;
+  font-weight: bold;
+  line-height: 16px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.info-controls .info-control_switch {
+  margin-right: 12px;
+  margin-left: auto;
+}
+
+.more-setting {
+  all: unset;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  color: var(--pneumatic-color-black72);
+  transition: color 0.1s ease-in-out;
+
+  &:hover {
+    color: var(--pneumatic-color-link-hover);
+  }
+}
+
+.more-setting:not(:last-child) {
+  margin-bottom: 8px;
+}
+
+.more-setting_warning {
+  color: var(--pneumatic-color-warning);
+}
+
+.more-setting__icon {
+  margin-right: 8px;
+}
+
+.more-setting__text {
+  all: unset;
+  font-size: 13px;
+  font-weight: bold;
+  line-height: 16px;
+}
+
+.control-buttons {
+  margin-top: 16px;
+}
+
+.control-button {
+  margin-bottom: 16px;
+  overflow: hidden;
+  width: 100%;
+  white-space: nowrap;
+}
+
+.control-buttons_adjacents {
+  display: flex;
+
+  > * {
+    align-self: flex-start;
+  }
+}
+
+.enable-button {
+  flex-shrink: 0;
+  transition: width 0.25s ease-in-out;
+}
+
+.enable-button_enable {
+  width: 100%;
+}
+
+.enable-button_disable {
+  margin-right: 8px;
+  width: 40px;
+}
+
+.run-button {
+  flex-grow: 1;
+}
+
+.run-button_non-active {
+  display: none;
+}
+
+.external-links-warning {
+  margin-bottom: 16px;
+  display: flex;
+  align-items: flex-start;
+}
+
+.external-links-warning__icon {
+  width: 40px;
+  height: 40px;
+  color: #f44336;
+  flex-shrink: 0;
+}
+
+.external-links-warning__text {
+  margin: 0 0 0 8px;
+  font-size: 15px;
+  line-height: 20px;
+  color: #f44336;
+}
+
+.more_disabled {
+  pointer-events: none;
+  opacity: 0.32;
+}
+
+.keep-draf-button {
+  margin: 0 0 0 8px;
+
+  @media (--mobile) {
+    margin: 8px 0 0;
+  }
+}

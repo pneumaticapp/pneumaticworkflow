@@ -1,0 +1,62 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2024-06-29 10:00+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: notifications/messages.py:6
+msgid "Reacted {reaction} to your comment"
+msgstr "Reagierte mit {reaction} auf deinen Kommentar"
+
+#: notifications/messages.py:9
+msgid "You have a new task"
+msgstr "Sie haben eine neue Aufgabe."
+
+#: notifications/messages.py:10
+msgid "Task was returned"
+msgstr "Aufgabe wurde zurückgegeben"
+
+#: notifications/messages.py:11
+msgid "Your task is overdue"
+msgstr "Ihre Aufgabe ist überfällig."
+
+#: notifications/messages.py:12
+msgid "You have been mentioned"
+msgstr "Sie wurden erwähnt"
+
+#: notifications/messages.py:13
+msgid "You have a new comment"
+msgstr "Sie haben einen neuen Kommentar."
+
+#: notifications/messages.py:14
+msgid "Workflow was snoozed"
+msgstr "Arbeitsablauf wurde pausiert"
+
+#: notifications/messages.py:15
+msgid "Workflow was resumed"
+msgstr "Arbeitsablauf wurde fortgesetzt"
+
+#: notifications/messages.py:16
+msgid "Task due date was changed"
+msgstr "Fälligkeitsdatum der Aufgabe wurde geändert"
+
+#: notifications/messages.py:23
+msgid ""
+"Workflow: {workflow_name}\n"
+"Task: {task_name}"
+msgstr ""
+"Arbeitsablauf: {workflow_name}\n"
+"Aufgabe: {task_name}"

@@ -1,0 +1,71 @@
+/* stylelint-disable selector-pseudo-class-no-unknown */
+/* stylelint-disable declaration-no-important */
+.dropdown {
+  margin: 16px 0;
+
+  :global .react-select__control {
+    min-height: 40px !important;
+  }
+}
+
+.dropdown-user {
+  display: flex;
+  align-items: center;
+  max-width: 100%;
+}
+
+.dropdown-user__avatar {
+  margin-right: 8px;
+}
+
+.dropdown-user__name {
+  overflow: hidden;
+  min-width: 0;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.user {
+  position: relative;
+  margin: 8px 0;
+  display: flex;
+  align-items: center;
+
+  &:hover {
+    .user-delete {
+      opacity: 1;
+    }
+  }
+}
+
+.user-info {
+  margin: 0 28px 0 8px;
+  display: flex;
+  overflow: hidden;
+  flex-direction: column;
+  font-size: 15px;
+  line-height: 20px;
+}
+
+.user-role {
+  color: var(--pneumatic-color-black48);
+}
+
+.user-name {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: var(--pneumatic-color-black100);
+}
+
+.user-delete {
+  position: absolute;
+  right: 0;
+  cursor: pointer;
+  color: #dcdcdb;
+  opacity: 0;
+
+  &:hover {
+    color: #e79a26;
+  }
+}

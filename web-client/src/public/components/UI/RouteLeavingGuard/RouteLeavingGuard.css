@@ -1,0 +1,25 @@
+.message {
+  margin: 16px 0 0;
+  font-size: 15px;
+  line-height: 20px;
+  color: var(--pneumatic-color-black72);
+}
+
+.controlls {
+  margin-top: 32px;
+  display: flex;
+
+  > *:not(:last-child) {
+    margin-right: 8px;
+
+    @media (--mobile) {
+      margin-right: 0;
+      margin-bottom: 8px;
+      width: 100%;
+    }
+  }
+
+  @media (--mobile) {
+    flex-direction: column;
+  }
+}

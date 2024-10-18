@@ -1,0 +1,105 @@
+importScripts('https://www.gstatic.com/firebasejs/8.2.2/firebase-app.js');
+importScripts('https://www.gstatic.com/firebasejs/8.2.2/firebase-messaging.js');
+
+const vapidKey = '<%= vapidKey %>';
+const firebaseConfig = {
+  apiKey: '<%= config.apiKey %>',
+  authDomain: '<%= config.authDomain %>',
+  projectId: '<%= config.projectId %>',
+  storageBucket: '<%= config.storageBucket %>',
+  messagingSenderId: '<%= config.messagingSenderId %>',
+  appId: '<%= config.appId %>',
+  measurementId: '<%= config.measurementId %>',
+};
+
+if (!firebase.apps.length) {
+  try {
+    firebase.initializeApp(firebaseConfig);
+  } catch (error) {
+    console.log('sw error', error);
+  }
+}
+
+class CustomPushEvent extends Event {
+  constructor(data) {
+    super('push');
+
+    Object.assign(this, data);
+    this.custom = true;
+  }
+}
+
+/*
+ * Overrides push notification data, to avoid having 'notification' key and firebase blocking
+ * the message handler from being called
+ */
+self.addEventListener('push', (e) => {
+  // Skip if event is our own custom event
+  if (e.custom) return;
+
+  // Kep old event data to override
+  const oldData = e.data;
+
+  // Create a new event to dispatch, pull values from notification key and put it in data key,
+  // and then remove notification key
+  const newEvent = new CustomPushEvent({
+    data: {
+      ehheh: oldData.json(),
+      json() {
+        const newData = oldData.json();
+        newData.data = {
+          ...newData.data,
+          ...newData.notification,
+        };
+        delete newData.notification;
+        return newData;
+      },
+    },
+    waitUntil: e.waitUntil.bind(e),
+  });
+
+  // Stop event propagation
+  e.stopImmediatePropagation();
+
+  // Dispatch the new wrapped event
+  dispatchEvent(newEvent);
+});
+
+const messaging = firebase.messaging();
+
+messaging.onBackgroundMessage(function (payload) {
+  const notificationTitle = payload.data.title;
+  const notificationBody = payload.data.body;
+
+  const notificationOptions = {
+    body: notificationBody,
+  };
+
+  self.addEventListener('notificationclick', function (event) {
+    const taskId = payload.data.task_id;
+    if (!taskId) {
+      return;
+    }
+
+    let url = `<%= host %>tasks/${taskId}/`;
+    event.notification.close(); // Android needs explicit close.
+    event.waitUntil(
+      clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
+        // Check if there is already a window/tab open with the target URL
+        for (var i = 0; i < windowClients.length; i++) {
+          var client = windowClients[i];
+          // If so, just focus it.
+          if (client.url === url && 'focus' in client) {
+            return client.focus();
+          }
+        }
+        // If not, then open the target URL in a new window/tab.
+        if (clients.openWindow) {
+          return clients.openWindow(url);
+        }
+      }),
+    );
+  });
+
+  return self.registration.showNotification(notificationTitle, notificationOptions);
+});

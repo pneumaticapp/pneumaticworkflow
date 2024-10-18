@@ -1,0 +1,102 @@
+/* stylelint-disable selector-class-pattern */
+/* stylelint-disable  declaration-no-important */
+
+.mention {
+  display: inline-block;
+  font-family: var(--pneumatic-font-sans);
+  font-size: var(--pneumatic-font-sans);
+  font-weight: bold;
+  color: var(--pneumatic-color-black100);
+
+  &:hover {
+    color: var(--pneumatic-color-black100);
+  }
+}
+
+.mentionSuggestions {
+  position: absolute;
+  z-index: 2;
+  margin-top: 0.4em;
+  padding: 5px 4px;
+  display: flex;
+  overflow: auto;
+  flex-direction: column;
+  box-sizing: border-box;
+  width: 192px;
+  max-height: 210px;
+  cursor: pointer;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 8px 16px rgba(98, 98, 95, 0.08);
+  transform: scale(0);
+
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: var(--pneumatic-color-black16);
+    border-radius: 2px;
+  }
+}
+
+/* stylelint-disable-next-line */
+.mentionSuggestionsEntryContainer {
+}
+
+/* stylelint-disable-next-line */
+.mentionSuggestionsEntryContainerRight {
+}
+
+.mentionSuggestionsEntry {
+  color: var(--pneumatic-color-black100);
+}
+
+.mentionSuggestionsEntry,
+.mentionSuggestionsEntryFocused {
+  padding: 5px 12px;
+  overflow-x: clip;
+  max-width: 192px;
+  height: 32px !important;
+  font-size: 15px;
+  text-overflow: ellipsis;
+  transition: background-color 0.4s cubic-bezier(0.27, 1.27, 0.48, 0.56);
+}
+
+/* stylelint-disable-next-line */
+.mentionSuggestionsEntry:active {
+}
+
+.mentionSuggestionsEntryFocused {
+  position: relative;
+  color: var(--pneumatic-color-link-hover);
+
+  &::before {
+    position: absolute;
+    z-index: -1;
+    top: -1px;
+    right: 0;
+    left: 0;
+    bottom: -1px;
+    content: '';
+    background-color: #fdf7ee;
+  }
+}
+
+.mentionSuggestionsEntryText,
+.mentionSuggestionsEntryTitle {
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+/* stylelint-disable-next-line */
+.mentionSuggestionsEntryText {
+}
+
+/* stylelint-disable-next-line */
+.mentionSuggestionsEntryTitle {
+}
+
+/* stylelint-disable-next-line */
+.mentionSuggestionsEntryAvatar {
+}

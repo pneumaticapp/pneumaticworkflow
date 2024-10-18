@@ -1,0 +1,44 @@
+.line {
+  all: unset;
+  margin: 16px 0;
+  border-top: 1px solid var(--pneumatic-color-black16);
+}
+
+.button {
+  margin-top: 16px;
+  align-self: flex-start;
+}
+
+.warning-title {
+  margin: 0 0 8px;
+  font-size: 15px;
+  font-weight: bold;
+  line-height: 20px;
+  color: var(--pneumatic-color-black72);
+}
+
+.warning-description {
+  margin-bottom: 16px;
+  font-size: 15px;
+  line-height: 20px;
+  color: var(--pneumatic-color-black72);
+}
+
+.warning-list {
+  margin: 0;
+}
+
+.warning-item:not(:last-child) {
+  margin-bottom: 8px;
+}
+
+.warning-link {
+  all: unset;
+  cursor: pointer;
+  color: var(--pneumatic-color-link-dark);
+  transition: color 0.1s ease-in-out;
+
+  &:hover {
+    color: var(--pneumatic-color-link-hover);
+  }
+}

@@ -1,0 +1,111 @@
+/* =========== */
+/* Ai Generate */
+/* =========== */
+
+.ai-generate {
+  &__title {
+    margin-bottom: 16px;
+    text-align: center;
+  }
+
+  &__caption {
+    margin-bottom: 32px;
+    font-size: 15px;
+    line-height: 20px;
+    text-align: center;
+    color: var(--pneumatic-color-black72);
+  }
+
+  &__loader {
+    display: flex;
+    justify-content: center;
+  }
+
+  &__container {
+    margin: 32px -80px -80px;
+    padding: 32px 80px 80px;
+    background: #f6f6f6;
+    border-radius: 32px;
+
+    @media (--mobile) {
+      margin: 32px -32px -80px;
+      padding: 32px 32px 80px;
+    }
+  }
+
+  &__data {
+    margin: 32px 0;
+    transition: height 0.2s ease;
+  }
+
+  &__cta {
+    width: 100%;
+  }
+}
+
+/* ================ */
+/* Form Ai Generate */
+/* ================ */
+
+.form-ai-generate {
+  display: flex;
+
+  @media (--mobile) {
+    display: block;
+  }
+
+  &__input {
+    @media (--mobile) {
+      margin-bottom: 8px;
+    }
+  }
+
+  &__button {
+    margin-top: 8px;
+    width: 100%;
+
+    @media (--desktop) {
+      margin-top: 0;
+      margin-left: 8px;
+      width: initial;
+    }
+  }
+}
+
+/* ==== */
+/* Task */
+/* ==== */
+
+.task {
+  padding: 32px;
+  background: white;
+  border-radius: 24px;
+  animation-name: bounceIn;
+  animation-duration: 0.4s;
+
+  & + & {
+    margin-top: 8px;
+  }
+
+  &__name {
+    margin-bottom: 8px;
+  }
+
+  &__description {
+    margin-bottom: 0;
+    font-size: 15px;
+    line-height: 20px;
+    color: var(--pneumatic-color-black72);
+  }
+}
+
+@keyframes bounceIn {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

@@ -1,0 +1,114 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2024-06-29 10:00+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: payment/messages.py:5
+msgid "Token is expired."
+msgstr "Токен истек."
+
+#: payment/messages.py:6
+msgid "Products list cannot be empty."
+msgstr "Список продуктов не может быть пустым."
+
+#: payment/messages.py:8
+msgid "Price with code(s) {code} not found."
+msgstr "Цена с кодом {code} не найдена."
+
+#: payment/messages.py:14
+msgid "Please, contact our support for a downgrade options."
+msgstr "Пожалуйста, свяжитесь с нашей поддержкой для вариантов понижения тарифа."
+
+#: payment/messages.py:15
+msgid "Subscription not exist."
+msgstr "Подписка не существует."
+
+#: payment/messages.py:16
+msgid "Multiple subscriptions not allowed."
+msgstr "Несколько подписок не разрешены."
+
+#: payment/messages.py:17
+msgid "The request data does not change the subscription state."
+msgstr "Данные запроса не изменяют состояние подписки."
+
+#: payment/messages.py:19
+msgid "Current payment method is unavailable. Specify a new payment method to complete the action."
+msgstr "Текущий способ оплаты недоступен. Укажите новый способ оплаты, чтобы завершить действие."
+
+#: payment/messages.py:23
+msgid "Payment failed. Check your payment method and balance or contact support."
+msgstr "Платеж не прошел. Проверьте ваш способ оплаты и баланс или свяжитесь со службой поддержки."
+
+#: payment/messages.py:26
+msgid "You can only use your subscription's currency to make purchases."
+msgstr "Вы можете использовать только валюту вашей подписки для совершения покупок."
+
+#: payment/messages.py:30
+msgid "You cannot purchase more than {quantity} unit(s) of the \"{product}\" subscription."
+msgstr "Вы не можете приобрести более {quantity} единиц подписки \"{product}\"."
+
+#: payment/messages.py:38
+msgid "You cannot purchase less than {quantity} unit(s) of the \"{product}\" subscription."
+msgstr "Вы не можете приобрести менее {quantity} единиц подписки \"{product}\"."
+
+#: payment/messages.py:45
+msgid "You cannot purchase more than {quantity} unit(s) of the \"{product}\"."
+msgstr "Вы не можете приобрести более {quantity} единиц \"{product}\"."
+
+#: payment/messages.py:50
+msgid "You cannot purchase less than {quantity} unit(s) of the \"{product}\"."
+msgstr "Вы не можете приобрести менее {quantity} единиц \"{product}\"."
+
+#: payment/messages.py:54
+msgid "Unsupported subscription plan."
+msgstr "Неподдерживаемый тарифный план подписки."
+
+#: payment/messages.py:55
+msgid "Purchase at the archive price is disallowed."
+msgstr "Покупка по архивной цене запрещена."
+
+#: payment/messages.py:56
+msgid "No account found for this subscription."
+msgstr "Аккаунт для этой подписки не найден."
+
+#: payment/messages.py:57
+msgid "Billing is disabled, contact support to change the plan."
+msgstr "Биллинг отключен, свяжитесь со службой поддержки для изменения тарифного плана."
+
+#: payment/messages.py:58
+msgid "Webhook account not found."
+msgstr "Аккаунт вебхука не найден."
+
+#: payment/messages.py:59
+msgid "Webhook account owner not found."
+msgstr "Владелец аккаунт вебхука не найден"
+
+#: payment/messages.py:60
+msgid "Payments API is disabled in this project."
+msgstr "Биллинг API отключено."
+
+#: payment/messages.py:62
+msgid "Downgrade is not available while there is an active subscription."
+msgstr "Понижение тарифа недоступно при наличии активной подписки."
+
+#: payment/messages.py:64
+msgid "Account not found."
+msgstr "Аккаунт не найден."
+
+#: payment/messages.py:65
+msgid "Master account not found for tenant."
+msgstr "Мастер-аккаунт не найден для тенанта."

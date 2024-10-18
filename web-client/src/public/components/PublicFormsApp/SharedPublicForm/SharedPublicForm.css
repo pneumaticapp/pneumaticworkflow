@@ -1,0 +1,21 @@
+/* stylelint-disable selector-pseudo-class-no-unknown */
+:global {
+  body {
+    margin: 0;
+    padding: 0 16px;
+  }
+}
+
+.container {
+  margin: 0 auto;
+  padding-bottom: 32px;
+  display: flex;
+  flex-direction: column;
+  max-width: 640px;
+  min-height: 100%;
+
+  @media (--mobile) {
+    margin: 0 32px;
+    max-width: 100%;
+  }
+}

@@ -1,0 +1,20 @@
+.container {
+  width: 120px;
+}
+
+.loader {
+  max-width: 8em;
+  background: transparent;
+  border-radius: 3px;
+  fill: none;
+  stroke: white;
+  stroke-linecap: round;
+  stroke-width: 8%;
+
+  use {
+    animation: a 1s linear infinite;
+    stroke: var(--pneumatic-color-link);
+  }
+}
+
+@keyframes a { to { stroke-dashoffset: 0; } }

@@ -1,0 +1,22 @@
+.card-users {
+  margin-right: 5px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.card-user {
+  margin-left: -4px;
+
+  &:first-child {
+    margin-left: 0;
+  }
+}
+
+.card-users__more {
+  margin-left: 8px;
+  font-size: 13px;
+  line-height: 16px;
+  color: #979795;
+}

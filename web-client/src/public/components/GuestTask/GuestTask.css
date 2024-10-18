@@ -1,0 +1,31 @@
+.container {
+  margin: 0 auto;
+  padding-bottom: 32px;
+  display: flex;
+  flex-direction: column;
+  max-width: 640px;
+  min-height: 100%;
+
+  @media (--mobile) {
+    margin: 0 32px;
+    max-width: 100%;
+  }
+}
+
+.logo {
+  margin-bottom: 32px;
+  display: flex;
+  justify-content: center;
+}
+
+.copyright {
+  margin: 32px 0 0;
+  font-size: 15px;
+  line-height: 20px;
+  text-align: center;
+  color: var(--pneumatic-color-black48);
+}
+
+.copyright__link {
+  color: var(--pneumatic-color-link-dark);
+}

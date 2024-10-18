@@ -1,0 +1,21 @@
+:global {
+  .checkable-list-item {
+    list-style: none;
+    transform: translateX(-1.5em);
+  }
+}
+
+.checkable-list-item-block {
+  margin-bottom: 8px;
+  display: flex;
+}
+
+.checkable-list-item-block__checkbox {
+  z-index: 1;
+  cursor: default;
+  pointer-events: none;
+}
+
+.checkable-list-item-block__checkbox-inner {
+  display: flex;
+}

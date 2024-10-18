@@ -1,0 +1,49 @@
+.show_more {
+  all: unset;
+  display: flex;
+  cursor: pointer;
+  user-select: none;
+  align-items: center;
+}
+
+.show_more__toggle-text {
+  font-family: Nunito, sans-serif;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 16px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--pneumatic-color-black100);
+}
+
+.show_more-icon-wrapper {
+  margin: 0 8px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 16px;
+  height: 16px;
+  color: var(--pneumatic-color-black32);
+  transition: transform 0.3s;
+}
+
+.show_more-icon {
+  flex-shrink: 0;
+}
+
+.container--visible {
+  .show_more-icon-wrapper {
+    transform: rotate(180deg);
+  }
+
+  .content {
+    overflow: visible;
+    max-height: none;
+  }
+}
+
+.content {
+  margin-top: 16px;
+  overflow: hidden;
+  max-height: 0;
+}

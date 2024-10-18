@@ -1,0 +1,17 @@
+.editor_xl {
+  padding: 13px 98px 13px 16px;
+}
+
+.editor_lg {
+  padding: 9px 98px 9px 16px;
+}
+
+.variables {
+  position: absolute;
+  z-index: 2;
+  top: 0;
+  right: 16px;
+  bottom: 0;
+  display: flex;
+  transition: all 0.15s ease-in 0s;
+}

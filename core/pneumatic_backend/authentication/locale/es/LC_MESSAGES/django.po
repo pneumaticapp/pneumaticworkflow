@@ -1,0 +1,75 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2024-06-29 10:00+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: authentication/messages.py:5
+msgid "Access token not found for the user."
+msgstr "Token de acceso no encontrado para el usuario."
+
+#: authentication/messages.py:8
+msgid "Your account has not been verified. A new verification link was sent to {email}."
+msgstr "Su cuenta no ha sido verificada. Se ha enviado un nuevo enlace de verificación a {email}."
+
+#: authentication/messages.py:13
+msgid "Invalid login or password."
+msgstr "Inicio de sesión o contraseña no válidos."
+
+#. Translators: Microsoft account doesn't contain email
+#: authentication/messages.py:15
+msgid "Email is not listed in profile."
+msgstr "El correo electrónico no está listado en el perfil."
+
+#: authentication/messages.py:16
+msgid "Error while retrieving Microsoft profile data."
+msgstr "Error al recuperar los datos del perfil de Microsoft."
+
+#: authentication/messages.py:18
+msgid "Phone number must be entered in the format: \"+99999999999\". Up to 15 digits allowed."
+msgstr "El número de teléfono debe ingresarse en el formato: \"+99999999999\". Se permiten hasta 15 dígitos."
+
+#. Translators: Guest authentication
+#: authentication/messages.py:22
+msgid "Authorization header contain spaces."
+msgstr "El encabezado de autorización contiene espacios."
+
+#: authentication/messages.py:23
+msgid "Token is invalid."
+msgstr "El token no es válido."
+
+#: authentication/messages.py:24
+msgid "Token is expired."
+msgstr "El token ha expirado."
+
+#. Translators: Guest authentication
+#: authentication/messages.py:26
+msgid "Given token not valid for guest token type."
+msgstr "El token proporcionado no es válido para el tipo de token de invitado."
+
+#. Translators: Guest authentication
+#: authentication/messages.py:28
+msgid "Token contained no recognizable user identification."
+msgstr "El token no contiene una identificación de usuario reconocible."
+
+#. Translators: Change password from profile
+#: authentication/messages.py:30
+msgid "The current password is incorrect."
+msgstr "La contraseña actual es incorrecta."
+
+#: authentication/messages.py:31
+msgid "The new password and its confirmation don't match."
+msgstr "La nueva contraseña y su confirmación no coinciden."

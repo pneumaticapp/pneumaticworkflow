@@ -1,0 +1,79 @@
+.container {
+  padding: 16px;
+  min-height: 88px;
+  cursor: pointer;
+  background-color: var(--pneumatic-color-beige);
+  border-radius: 16px;
+  transition: all 0.2s ease-out;
+
+  &:hover,
+  &.active {
+    background-color: white;
+
+    .workflow-name {
+      color: var(--pneumatic-color-link-hover);
+    }
+  }
+}
+
+.container_completed {
+  background-color: #eef7ee;
+}
+
+.container_urgent {
+  border: 1px solid var(--pneumatic-notification-1);
+
+  &.container_completed {
+    border: 0;
+  }
+}
+
+.top {
+  display: flex;
+  justify-content: space-between;
+}
+
+.task-name {
+  margin: 0;
+  overflow: hidden;
+  font-size: 13px;
+  line-height: 16px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: var(--pneumatic-color-black48);
+}
+
+.due-in {
+  flex-shrink: 0;
+  margin: 0 0 0 8px;
+  font-size: 13px;
+  line-height: 16px;
+  color: var(--pneumatic-color-black100);
+}
+
+.due-in_overdue {
+  color: #fc5b67;
+}
+
+.workflow-name {
+  margin: 0;
+  overflow: hidden;
+  font-size: 15px;
+  font-weight: bold;
+  line-height: 20px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: var(--pneumatic-color-black100);
+  transition: all 0.2s ease-in-out;
+
+  @supports (-webkit-line-clamp: 2) {
+    /* stylelint-disable-next-line property-no-vendor-prefix, value-no-vendor-prefix */
+    display: -webkit-box;
+    overflow: hidden;
+    white-space: initial;
+    text-overflow: ellipsis;
+    -webkit-line-clamp: 2;
+    /* stylelint-disable-next-line property-no-vendor-prefix */
+    -webkit-box-orient: vertical;
+  }
+}

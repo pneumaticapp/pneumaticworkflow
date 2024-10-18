@@ -1,0 +1,114 @@
+/* stylelint-disable selector-max-compound-selectors */
+/* stylelint-disable declaration-no-important */
+.container {
+  position: relative;
+  margin: 0;
+  display: block;
+  width: 100%;
+}
+
+.container_disabled {
+  background: white;
+  opacity: 0.32;
+}
+
+.container_with-title {
+  padding-top: 8px;
+}
+
+.title {
+  position: absolute;
+  z-index: 0;
+  top: 0;
+  left: 12px;
+  padding: 0 4px;
+  font-size: 13px;
+  line-height: 16px;
+  color: var(--pneumatic-color-black72);
+}
+
+.input-field {
+  width: 100%;
+
+  :global .react-datepicker-wrapper input {
+    width: 100% !important;
+    font-family: Nunito, sans-serif !important;
+    font-size: 15px !important;
+    line-height: 20px !important;
+    color: var(--pneumatic-color-black100) !important;
+    background: var(--pneumatic-color-beige) !important;
+    background-color: trasnparent;
+    border: 1px solid var(--pneumatic-color-black16) !important;
+    border-radius: 8px !important;
+    outline: none !important;
+    transition: 0.1s ease-in-out border-color !important;
+
+    &:focus {
+      border-color: var(--pneumatic-color-black48) !important;
+    }
+
+    &::placeholder {
+      color: var(--pneumatic-color-black32) !important;
+    }
+  }
+}
+
+.input-field_error {
+  :global .react-datepicker-wrapper input {
+    border-color: var(--pneumatic-color-warning) !important;
+  }
+}
+
+.container_lg {
+  :global .react-datepicker-wrapper input {
+    padding: 0 16px !important;
+    height: 48px;
+    border-radius: 8px;
+  }
+}
+
+.container_md {
+  :global .react-datepicker-wrapper input {
+    padding: 0 16px !important;
+    height: 40px;
+    border-radius: 8px;
+  }
+}
+
+.container_sm {
+  :global .react-datepicker-wrapper input {
+    padding: 0 16px !important;
+    height: 32px;
+    border-radius: 16px;
+  }
+}
+
+.input-field_with-icon {
+  :global .react-datepicker-wrapper input {
+    padding-right: 50px;
+  }
+}
+
+.input-with-rigt-content-wrapper {
+  position: relative;
+}
+
+.icon {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  width: 50px;
+  pointer-events: none;
+  color: var(--pneumatic-color-black16);
+  justify-content: center;
+  align-items: center;
+}
+
+.error-text {
+  margin: 4px 0 0;
+  font-size: 13px;
+  line-height: 16px;
+  color: var(--pneumatic-color-warning);
+}

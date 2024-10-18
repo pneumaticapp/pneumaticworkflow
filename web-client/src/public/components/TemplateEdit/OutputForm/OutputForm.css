@@ -1,0 +1,15 @@
+.components {
+  display: flex;
+  flex-flow: row nowrap;
+  overflow-x: scroll;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.components::-webkit-scrollbar {
+  display: none;
+}
+
+.fields > *:first-child {
+  margin-top: 40px;
+}

@@ -1,0 +1,46 @@
+.scrollbar {
+  margin-top: 32px;
+  /* stylelint-disable-next-line declaration-no-important */
+  margin-right: -32px !important;
+  margin-left: -32px;
+  /* stylelint-disable-next-line declaration-no-important */
+  padding-right: 32px !important;
+  padding-left: 32px;
+  padding-bottom: 32px;
+}
+
+.form {
+  display: flex;
+  align-items: flex-start;
+}
+
+.add-btn {
+  margin-left: 8px;
+}
+
+.invite {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  &:not(:last-child) {
+    margin-bottom: 16px;
+  }
+}
+
+.invite__email {
+  overflow: hidden;
+  font-size: 15px;
+  line-height: 20px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.invite__status {
+  margin-left: 8px;
+  display: flex;
+}
+
+.loader {
+  display: flex;
+}

@@ -1,0 +1,14 @@
+version: '3'
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: pneumatic_frontend
+    command: [ "pm2-runtime", "start", "pm2.json" ]
+    ports:
+      - "8000:8000"
+    environment:
+      - MCS_RUN_ENV=${MCS_RUN_ENV}
+

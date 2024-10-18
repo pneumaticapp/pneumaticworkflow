@@ -1,0 +1,19 @@
+.skeleton {
+  margin-bottom: 16px;
+  overflow: visible;
+  width: 100%;
+  background-color: white;
+}
+
+.skeleton__data {
+  position: relative;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  flex-flow: column;
+  background-color: white;
+
+  @media (--mobile) {
+    padding-bottom: 12px;
+  }
+}

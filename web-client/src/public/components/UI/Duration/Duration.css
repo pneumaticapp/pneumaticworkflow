@@ -1,0 +1,48 @@
+/* stylelint-disable declaration-no-important */
+
+.container {
+  margin: -4px;
+  display: flex;
+  flex-flow: row nowrap;
+
+  @media screen and (max-width: 1200px) {
+    flex-direction: column;
+  }
+}
+
+.field {
+  padding: 13px 15px !important;
+  padding-right: 70px !important;
+  height: 40px !important;
+  font-size: 1.5rem !important;
+  line-height: 20px !important;
+  border-color: #dcdcdb !important;
+  border-radius: 8px !important;
+
+  &:focus {
+    border-color: #979795 !important;
+  }
+}
+
+.field_default-value {
+  color: var(--pneumatic-color-black32) !important;
+}
+
+.field-label {
+  position: relative;
+  margin: 4px;
+  flex-grow: 1;
+
+  span {
+    position: absolute;
+    top: 0;
+    right: 16px;
+    bottom: 0;
+    display: flex;
+    font-size: 15px;
+    line-height: 20px;
+    text-align: right;
+    color: var(--pneumatic-color-black32);
+    align-items: center;
+  }
+}

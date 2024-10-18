@@ -1,0 +1,34 @@
+/* stylelint-disable declaration-no-important */
+.webhook + .webhook {
+  margin-top: 16px;
+}
+
+.webhook-title {
+  margin-bottom: 16px;
+  font-size: 15px;
+  font-weight: bold;
+  line-height: 20px;
+}
+
+.webhook-container {
+  display: flex;
+
+  @media (--mobile) {
+    flex-direction: column;
+  }
+}
+
+.webhooks-button {
+  margin: 0 0 0 8px;
+  padding: 10px 24px !important;
+  font-size: 15px !important;
+  font-weight: bold;
+  line-height: 20px;
+  white-space: nowrap;
+  align-self: flex-start;
+
+  @media (--mobile) {
+    margin: 8px 0 0;
+    width: 100%;
+  }
+}

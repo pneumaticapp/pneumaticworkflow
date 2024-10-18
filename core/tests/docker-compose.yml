@@ -1,0 +1,48 @@
+version: '3'
+
+services:
+  pneumatic_postgres:
+    image: postgres:15-alpine
+    container_name: pneumatic_postgres
+    networks:
+      - localhost
+    environment:
+        POSTGRES_USER: pneumatic
+        POSTGRES_PASSWORD: pneumatic
+        POSTGRES_DB: pneumatic
+
+  pneumatic_backend:
+    build:
+      context: ..
+      dockerfile: ./tests/Dockerfile
+    container_name: pneumatic_backend
+    depends_on:
+      - pneumatic_postgres
+    healthcheck:
+      test: [ "CMD", "pg_isready", "-h", cappa-db ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - localhost
+    volumes:
+      - ..:/pneumatic_backend:ro
+    command: >
+      sh -c "pycodestyle pneumatic_backend/ --config=codestyle.ini &&
+             pylint pneumatic_backend/ --rcfile=.pylintrc &&
+             pytest pneumatic_backend/"
+    environment:
+      PYTHONUNBUFFERED: 1
+      AUTH_REDIS_URL: redis://127.0.0.1:6379/
+      DJANGO_SETTINGS_MODULE: pneumatic_backend.settings
+      DJANGO_FRONTEND_HOST: http://local.pneumatic.com:8000
+      ENVIRONMENT: Development
+      DJANGO_SECRET_KEY: a7uq)(kz1kyf9m5kt_72x3+co-brb2x)^g#_(1r=mwv=fl11pd
+      POSTGRES_USER: pneumatic
+      POSTGRES_DB: pneumatic
+      POSTGRES_PASSWORD: pneumatic
+      POSTGRES_HOST: pneumatic_postgres
+      DJANGO_CONFIGURATION: Development
+
+networks:
+  localhost:

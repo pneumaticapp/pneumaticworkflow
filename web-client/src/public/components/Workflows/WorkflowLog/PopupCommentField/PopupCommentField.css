@@ -1,0 +1,55 @@
+.comment-field {
+  position: relative;
+  display: flex;
+  width: 100%;
+  flex-flow: row nowrap;
+  align-items: center;
+}
+
+.comment-field__workarea {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+
+  @media (--mobile) {
+    max-width: 100%;
+  }
+}
+
+.comment-field__avatar-container {
+  margin-right: 16px;
+  align-self: flex-start;
+
+  @media (--mobile) {
+    display: none;
+  }
+}
+
+.comment-field__avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+
+  @media (--mobile) {
+    width: 32px;
+    height: 32px;
+  }
+}
+
+.comment-field__icon {
+  margin-top: 10px;
+  align-self: flex-start;
+  cursor: pointer;
+  transition: 0.1s ease-in-out fill;
+  transform: scale(0.67);
+}
+
+.comment-field__icon_disabled {
+  cursor: none;
+  pointer-events: none;
+  fill: #62625f;
+}
+
+.editor {
+  min-height: 125px;
+}

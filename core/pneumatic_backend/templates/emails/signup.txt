@@ -1,0 +1,3 @@
+Hey, {{name}}!
+
+Your company {% if company_name %}"{{company_name}}" {% endif %}was successfully registered on Pneumatic. You can use this password to sign in: {{password}}.

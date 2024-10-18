@@ -1,0 +1,60 @@
+.scrollbar {
+  margin-top: 32px;
+  /* stylelint-disable-next-line declaration-no-important */
+  margin-right: -32px !important;
+  margin-left: -32px;
+  /* stylelint-disable-next-line declaration-no-important */
+  padding-right: 32px !important;
+  padding-left: 32px;
+  padding-bottom: 32px;
+}
+
+.user {
+  display: flex;
+  align-items: center;
+
+  &:not(:last-child) {
+    margin-bottom: 16px;
+  }
+}
+
+.user__avatar {
+  margin-right: 16px;
+}
+
+.user-info {
+  overflow: hidden;
+  line-height: 20px;
+}
+
+.user-info__name {
+  margin: 0;
+  overflow: hidden;
+  line-height: inherit;
+  text-overflow: ellipsis;
+  color: white;
+}
+
+.user-info__email {
+  margin: 0;
+  overflow: hidden;
+  line-height: inherit;
+  text-overflow: ellipsis;
+  color: var(--pneumatic-color-black48);
+}
+
+.user__add {
+  margin-left: auto;
+}
+
+.empty-list-placeholder {
+  position: absolute;
+  z-index: -1;
+  top: 0;
+  right: 0;
+  left: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

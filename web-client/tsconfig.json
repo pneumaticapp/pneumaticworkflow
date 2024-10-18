@@ -1,0 +1,45 @@
+{
+  "compileOnSave": false,
+  "compilerOptions": {
+    "module": "esnext",
+    "allowJs": false,
+    "outDir": "dist",
+    "noImplicitAny": true,
+    "lib": [
+      "dom",
+      "es2016",
+      "es2017",
+      "es2019",
+      "es2020.string",
+      "es2021",
+    ],
+    "types": [
+      "@types/moment-duration-format",
+      "jest",
+      "@testing-library/jest-dom"
+    ],
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitReturns": true,
+    "noImplicitThis": true,
+    "noUnusedLocals": true,
+    "sourceMap": true,
+    "strictNullChecks": true,
+    "target": "es5",
+    "jsx": "react",
+    "experimentalDecorators": false,
+    "downlevelIteration": true,
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "allowSyntheticDefaultImports": true,
+  },
+  "include": [
+    "src/**/*.ts"
+  ],
+  "ts-node": {
+    // these options are overrides used only by ts-node
+    // same as the --compilerOptions flag and the TS_NODE_COMPILER_OPTIONS environment variable
+    "compilerOptions": {
+      "module": "commonjs"
+    }
+  }
+}

@@ -1,0 +1,59 @@
+@keyframes brighten {
+  from { opacity: 0; }
+  to { opacity: 0.72; }
+}
+
+.container {
+  position: fixed;
+  z-index: 2000;
+  top: 16px;
+  right: 79px;
+  left: 79px;
+  bottom: 16px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  pointer-events: none;
+
+  @media (--mobile) and (orientation: portrait) {
+    top: 64px;
+    right: 8px;
+    left: 8px;
+    bottom: 8px;
+  }
+}
+
+.image-container {
+  display: flex;
+  max-width: 100%;
+  max-height: 100%;
+}
+
+.image {
+  margin: 0 auto;
+  max-height: 100%;
+  pointer-events: all;
+}
+
+.image.image_disable-zoom {
+  cursor: default;
+}
+
+.close {
+  position: fixed;
+  z-index: 2000;
+  top: 16px;
+  right: 16px;
+}
+
+.backdrop {
+  position: fixed;
+  z-index: 1990;
+  top: 0;
+  right: 0;
+  left: 0;
+  bottom: 0;
+  background-color: var(--pneumatic-color-black72);
+  opacity: 0.72;
+  animation: brighten 150ms ease-out;
+}

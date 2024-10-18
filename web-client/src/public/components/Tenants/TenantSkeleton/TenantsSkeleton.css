@@ -1,0 +1,29 @@
+.skeleton {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+
+  @media (--mobile) {
+    margin: 0 auto;
+  }
+
+  &__names {
+    flex-grow: 1;
+    margin-right: 16px;
+    max-width: 536px;
+  }
+
+  &__counters {
+    margin: 0 -4px;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  &__counters-item {
+    margin: 0 4px;
+    display: inline-block;
+    width: 40px;
+    height: 40px;
+  }
+}

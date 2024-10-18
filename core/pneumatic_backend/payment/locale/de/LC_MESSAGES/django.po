@@ -1,0 +1,114 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2024-06-29 10:00+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: payment/messages.py:5
+msgid "Token is expired."
+msgstr "Token ist abgelaufen."
+
+#: payment/messages.py:6
+msgid "Products list cannot be empty."
+msgstr "Die Produktliste darf nicht leer sein."
+
+#: payment/messages.py:8
+msgid "Price with code(s) {code} not found."
+msgstr "Preis mit Code(s) {code} nicht gefunden."
+
+#: payment/messages.py:14
+msgid "Please, contact our support for a downgrade options."
+msgstr "Bitte kontaktieren Sie unseren Support für Downgrade-Optionen."
+
+#: payment/messages.py:15
+msgid "Subscription not exist."
+msgstr "Abonnement existiert nicht."
+
+#: payment/messages.py:16
+msgid "Multiple subscriptions not allowed."
+msgstr "Mehrfache Abonnements sind nicht erlaubt."
+
+#: payment/messages.py:17
+msgid "The request data does not change the subscription state."
+msgstr "Die Anfragedaten ändern den Abonnementstatus nicht."
+
+#: payment/messages.py:19
+msgid "Current payment method is unavailable. Specify a new payment method to complete the action."
+msgstr "Aktuelle Zahlungsmethode ist nicht verfügbar. Bitte geben Sie eine neue Zahlungsmethode an, um die Aktion abzuschließen."
+
+#: payment/messages.py:23
+msgid "Payment failed. Check your payment method and balance or contact support."
+msgstr "Zahlung fehlgeschlagen. Überprüfen Sie Ihre Zahlungsmethode und Ihr Guthaben oder kontaktieren Sie den Support."
+
+#: payment/messages.py:26
+msgid "You can only use your subscription's currency to make purchases."
+msgstr "Sie können nur die Währung Ihres Abonnements für Käufe verwenden."
+
+#: payment/messages.py:30
+msgid "You cannot purchase more than {quantity} unit(s) of the \"{product}\" subscription."
+msgstr "Sie können nicht mehr als {quantity} Einheit(en) des Abonnements \"{product}\" kaufen."
+
+#: payment/messages.py:38
+msgid "You cannot purchase less than {quantity} unit(s) of the \"{product}\" subscription."
+msgstr "Sie können nicht weniger als {quantity} Einheit(en) des \"{product}\" Abonnements kaufen."
+
+#: payment/messages.py:45
+msgid "You cannot purchase more than {quantity} unit(s) of the \"{product}\"."
+msgstr "Sie können nicht mehr als {quantity} Einheit(en) von \"{product}\" kaufen."
+
+#: payment/messages.py:50
+msgid "You cannot purchase less than {quantity} unit(s) of the \"{product}\"."
+msgstr "Sie können weniger als {quantity} Einheit(en) des \"{product}\" nicht kaufen."
+
+#: payment/messages.py:54
+msgid "Unsupported subscription plan."
+msgstr "Nicht unterstützter Abonnementplan."
+
+#: payment/messages.py:55
+msgid "Purchase at the archive price is disallowed."
+msgstr "Der Kauf zum Archivpreis ist nicht erlaubt."
+
+#: payment/messages.py:56
+msgid "No account found for this subscription."
+msgstr "Kein Konto für dieses Abonnement gefunden."
+
+#: payment/messages.py:57
+msgid "Billing is disabled, contact support to change the plan."
+msgstr "Die Abrechnung ist deaktiviert. Wenden Sie sich an den Support, um den Plan zu ändern."
+
+#: payment/messages.py:58
+msgid "Webhook account not found."
+msgstr "Webhook-Konto nicht gefunden."
+
+#: payment/messages.py:59
+msgid "Webhook account owner not found."
+msgstr "Webhook-Kontoinhaber nicht gefunden."
+
+#: payment/messages.py:60
+msgid "Payments API is disabled in this project."
+msgstr "Zahlungs-API ist in diesem Projekt deaktiviert."
+
+#: payment/messages.py:62
+msgid "Downgrade is not available while there is an active subscription."
+msgstr "Herabstufung ist nicht möglich, solange ein aktives Abonnement besteht."
+
+#: payment/messages.py:64
+msgid "Account not found."
+msgstr "Konto nicht gefunden."
+
+#: payment/messages.py:65
+msgid "Master account not found for tenant."
+msgstr "Hauptkonto für Mieter nicht gefunden."

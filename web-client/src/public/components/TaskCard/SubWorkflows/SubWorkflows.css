@@ -1,0 +1,67 @@
+.embeded-workflows {
+  margin-top: 32px;
+  border-top: 1px solid var(--pneumatic-color-black16);
+  border-bottom: 1px solid var(--pneumatic-color-black16);
+
+  &__item + &__item {
+    border-top: 1px solid var(--pneumatic-color-black16);
+  }
+}
+
+.workflow-embeded {
+  padding: 16px 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  &__more {
+    color: var(--pneumatic-color-black32);
+  }
+
+  &__more.is-active {
+    color: var(--pneumatic-color-link-hover);
+  }
+
+  &__content {
+    display: flex;
+    align-items: center;
+  }
+
+  &__dropdown {
+    margin-right: 16px;
+  }
+
+  &__urgent {
+    position: relative;
+    top: -2px;
+    margin-right: 16px;
+    min-width: 20px;
+  }
+
+  &__title {
+    margin-right: 16px;
+
+    button {
+      padding: 0;
+      /* stylelint-disable-next-line value-no-vendor-prefix */
+      display: -webkit-box;
+      overflow: hidden;
+
+      /* stylelint-disable-next-line property-no-vendor-prefix */
+      -webkit-box-orient: vertical;
+      font-weight: bold;
+      text-align: left;
+      text-overflow: ellipsis;
+      -webkit-line-clamp: 1;
+      line-clamp: 1;
+      background-color: transparent;
+      border: none;
+      outline: none;
+    }
+  }
+
+  &__progress {
+    width: 80px;
+    min-width: 80px;
+  }
+}

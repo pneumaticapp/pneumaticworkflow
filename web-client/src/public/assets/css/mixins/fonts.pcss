@@ -1,0 +1,112 @@
+@define-mixin font-title {
+  font-family: "Abhaya Libre", serif;
+}
+
+@define-mixin font-text {
+  font-family: 'Nunito', sans-serif;
+}
+
+@define-mixin hxl {
+  font-size: 5.6rem;
+  line-height: 6rem;
+
+  @media (--mobile) {
+    font-size: 5.2rem;
+    line-height: 5.6rem;
+  }
+}
+
+@define-mixin h1 {
+  font-size: 4rem;
+  line-height: 4.4rem;
+
+  @media (--mobile) {
+    font-size: 3.6rem;
+    line-height: 4rem;
+  }
+}
+
+@define-mixin h2 {
+  font-size: 3.6rem;
+  line-height: 4rem;
+
+  @media (--mobile) {
+    font-size: 3.2rem;
+    line-height: 3.6rem;
+  }
+}
+
+@define-mixin h3 {
+  font-size: 3.2rem;
+  line-height: 3.6rem;
+
+  @media (--mobile) {
+    font-size: 2.8rem;
+    line-height: 3.2rem;
+  }
+}
+
+@define-mixin h4 {
+  font-size: 2.8rem;
+  line-height: 3.2rem;
+
+  @media (--mobile) {
+    font-size: 2.4rem;
+    line-height: 2.8rem;
+  }
+}
+
+@define-mixin h5 {
+  font-size: 2.4rem;
+  line-height: 2.8rem;
+
+  @media (--mobile) {
+    font-size: 2rem;
+    line-height: 2.4rem;
+  }
+}
+
+@define-mixin h6 {
+  font-size: 2rem;
+  line-height: 2.4rem;
+
+  @media (--mobile) {
+    font-size: 1.8rem;
+    line-height: 2.4rem;
+  }
+}
+
+@define-mixin text-big $weight: normal {
+  font-size: 1.7rem;
+  line-height: 2.4rem;
+  font-weight: $weight;
+}
+
+@define-mixin text-base $weight: normal {
+  font-size: 1.5rem;
+  line-height: 2rem;
+  font-weight: $weight;
+}
+
+@define-mixin text-small $weight: normal {
+  font-size: 1.3rem;
+  line-height: 1.6rem;
+  font-weight: $weight;
+}
+
+@define-mixin text-small-extra $weight: normal {
+  font-size: 1.1rem;
+  line-height: 1.6rem;
+  font-weight: $weight;
+}
+
+@define-mixin text-overflow $line: 1 {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  -webkit-line-clamp: $line;
+  line-clamp: $line;
+  text-wrap: wrap;
+  word-break: break-all;
+}

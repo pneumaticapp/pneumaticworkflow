@@ -1,0 +1,16 @@
+.card-skeleton {
+  margin-bottom: 1rem;
+  overflow: visible;
+  background-color: white;
+  border-radius: 24px;
+}
+
+.card-skeleton__inner {
+  position: relative;
+  padding: 16px;
+  display: flex;
+  overflow: hidden;
+  flex-flow: column;
+  background-color: white;
+  border-radius: 24px;
+}

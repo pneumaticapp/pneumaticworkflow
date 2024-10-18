@@ -1,0 +1,8 @@
+.focused,
+.unfocused {
+  border-radius: 8px;
+}
+
+.focused {
+  box-shadow: 0 0 0 1px var(--pneumatic-color-black100);
+}

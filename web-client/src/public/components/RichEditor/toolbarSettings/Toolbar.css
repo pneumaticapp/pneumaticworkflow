@@ -1,0 +1,11 @@
+.toolbar {
+  display: flex;
+  align-items: center;
+}
+
+.separator {
+  margin: 0 4px;
+  width: 1px;
+  height: 24px;
+  background-color: var(--pneumatic-color-black16);
+}

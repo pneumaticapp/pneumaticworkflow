@@ -1,0 +1,31 @@
+/* stylelint-disable selector-max-compound-selectors */
+.container {
+  :global {
+    .react-select .react-select__control {
+      min-height: 40px;
+    }
+  }
+}
+
+.rule {
+  margin-top: 8px;
+  display: flex;
+
+  @media (--mobile) {
+    flex-direction: column;
+  }
+}
+
+.rule-preposition {
+  margin-right: 8px;
+  width: 166px;
+
+  @media (--mobile) {
+    margin-bottom: 8px;
+    width: 100%;
+  }
+}
+
+.rule-target {
+  flex-grow: 1;
+}

@@ -1,0 +1,188 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2024-06-29 10:00+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: accounts/messages.py:5
+msgid "Saving files is not available, file storage does't configured. Contact support."
+msgstr "L'enregistrement des fichiers n'est pas disponible, le stockage des fichiers n'est pas configuré. Veuillez contacter le support."
+
+#. Translators: Create invite form validation
+#: accounts/messages.py:9
+msgid "The \"type\" or \"invited_from\" field must be specified."
+msgstr "Le champ \"type\" ou \"invited_from\" doit être spécifié."
+
+#: accounts/messages.py:10
+msgid "Logo change is not allowed for this account."
+msgstr "La modification du logo n'est pas autorisée pour ce compte."
+
+#: accounts/messages.py:13
+msgid "You can't assign workflows to the same user. Please choose another one."
+msgstr "Vous ne pouvez pas attribuer des flux de travail au même utilisateur. Veuillez en choisir un autre."
+
+#: accounts/messages.py:15
+msgid "There is already a registered user with these email."
+msgstr "Il existe déjà un utilisateur enregistré avec cet e-mail."
+
+#: accounts/messages.py:17
+msgid "You have reached limit on invitations. Contact Support to invite more users."
+msgstr "Vous avez atteint la limite d'invitations. Contactez le support pour inviter plus d'utilisateurs."
+
+#: accounts/messages.py:20
+msgid "Invite is already accepted."
+msgstr "L'invitation a déjà été acceptée."
+
+#: accounts/messages.py:21
+msgid "Token is invalid."
+msgstr "Le jeton est invalide."
+
+#: accounts/messages.py:22
+msgid "Token is expired."
+msgstr "Le jeton a expiré."
+
+#: accounts/messages.py:23
+msgid "The user with the specified credentials not found."
+msgstr "L'utilisateur avec les identifiants spécifiés est introuvable."
+
+#: accounts/messages.py:26
+msgid "You can't delete a user without assigning their tasks to a different user."
+msgstr "Vous ne pouvez pas supprimer un utilisateur sans attribuer ses tâches à un autre utilisateur."
+
+#: accounts/messages.py:29
+msgid "Reassign user does not exist."
+msgstr "Réaffecter l'utilisateur n'existe pas."
+
+#: accounts/messages.py:30
+msgid "Token is invalid or expired."
+msgstr "Le jeton est invalide ou a expiré."
+
+#. Translators: Unsubscribe from any mailing or digest
+#: accounts/messages.py:32
+msgid "You have successfully unsubscribed."
+msgstr "Vous vous êtes désabonné avec succès."
+
+#: accounts/messages.py:33
+msgid "Email"
+msgstr "E-mail"
+
+#: accounts/messages.py:34
+msgid "First name"
+msgstr "Prénom"
+
+#: accounts/messages.py:35
+msgid "Password"
+msgstr "Mot de passe"
+
+#: accounts/messages.py:36
+msgid "Password confirmation"
+msgstr "Confirmation du mot de passe"
+
+#. Translators: Signup form help text
+#: accounts/messages.py:38
+msgid "Enter the same password as before, for verification."
+msgstr "Entrez le même mot de passe qu'auparavant, pour vérification."
+
+#: accounts/messages.py:39
+msgid "User info"
+msgstr "Informations utilisateur"
+
+#: accounts/messages.py:40
+msgid "Status"
+msgstr "Statut"
+
+#: accounts/messages.py:41
+msgid "Permissions"
+msgstr "Autorisations"
+
+#: accounts/messages.py:42
+msgid "Important dates"
+msgstr "Dates importantes"
+
+#: accounts/messages.py:43
+msgid "This field is required."
+msgstr "Ce champ est requis."
+
+#. Translators: Create tenant from admin
+#: accounts/messages.py:45
+msgid "\"Master account\" does not exists."
+msgstr "Le message suivant en français serait : \"Le compte principal\" n'existe pas."
+
+#. Translators: Create tenant from admin
+#: accounts/messages.py:47
+msgid "\"Master account\" is not subscribed."
+msgstr "Le \"compte principal\" n'est pas abonné."
+
+#: accounts/messages.py:49
+msgid "Moving tenants between master accounts is not currently supported."
+msgstr "Le déplacement des locataires entre les comptes principaux n'est actuellement pas pris en charge."
+
+#: accounts/messages.py:51
+msgid "\"Master Account\" must be blank for a non-tenant account."
+msgstr "Le champ \"Compte principal\" doit être vide pour un compte non-locataire."
+
+#: accounts/messages.py:52
+msgid "The \"Master account\" required for the lease level \"tenant\"."
+msgstr "Le \"Compte principal\" est requis pour le niveau de location \"locataire\"."
+
+#: accounts/messages.py:55
+msgid "Converting from \"{prev}\" to \"{new}\" is not currently supported."
+msgstr "Conversion de \"{prev}\" à \"{new}\" n'est actuellement pas prise en charge."
+
+#. Translators: Primary account data in the admin
+#: accounts/messages.py:60
+msgid "Primary"
+msgstr "Primaire"
+
+#. Translators: Subscription account data in the admin
+#: accounts/messages.py:62
+msgid "Subscription"
+msgstr "Abonnement"
+
+#. Translators: Account tenants list in the admin
+#: accounts/messages.py:64
+msgid "Tenants"
+msgstr "Locataires"
+
+#. Translators: Aborting to delete account from admin if tenants exists
+#: accounts/messages.py:66
+msgid "Deletion not allowed while the account contains tenants."
+msgstr "Suppression non autorisée tant que le compte contient des locataires."
+
+#: accounts/messages.py:68
+msgid "Your subscription has already expired. Renew subscription or downgrade to Freemium plan."
+msgstr "Votre abonnement a déjà expiré. Renouvelez votre abonnement ou passez au plan Freemium."
+
+#. Translators: Account owner permission
+#: accounts/messages.py:72
+msgid "Only the account owner is allowed to perform this action."
+msgstr "Seul le propriétaire du compte est autorisé à effectuer cette action."
+
+#: accounts/messages.py:75
+msgid "The user count is over your plan limit. Please upgrade your plan or delete some users."
+msgstr "Le nombre d'utilisateurs dépasse la limite de votre forfait. Veuillez mettre à niveau votre forfait ou supprimer des utilisateurs."
+
+#: accounts/messages.py:80
+msgid "Granular access control is included in the Premium Plan. Upgrade your plan to access this functionality."
+msgstr "Le contrôle d'accès granulaire est inclus dans le Plan Premium. Mettez à jour votre plan pour accéder à cette fonctionnalité."
+
+#: accounts/messages.py:84
+msgid "The list of group members contains a non-existent group identifier"
+msgstr "La liste des membres du groupe contient un identifiant de groupe inexistant"
+
+#: accounts/messages.py:86
+msgid "The list of groups contains a non-existent group identifier"
+msgstr "La liste des groupes contient un identifiant de groupe inexistant"

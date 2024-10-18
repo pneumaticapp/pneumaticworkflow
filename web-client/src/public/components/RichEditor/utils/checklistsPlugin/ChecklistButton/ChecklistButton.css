@@ -1,0 +1,34 @@
+.checkable-list-item-button {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  text-align: center;
+  cursor: pointer;
+  border-radius: 3px;
+  opacity: 0.4;
+
+  &.active {
+    opacity: 1;
+  }
+
+  &__inner {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    text-align: center;
+    border-radius: 3px;
+  }
+
+  &__body {
+    display: inline-block;
+    width: 100%;
+    height: 100%;
+    line-height: 1;
+    vertical-align: middle;
+
+    > * {
+      max-width: 100%;
+      height: auto;
+    }
+  }
+}

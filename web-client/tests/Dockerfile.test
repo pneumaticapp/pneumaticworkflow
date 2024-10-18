@@ -1,0 +1,14 @@
+FROM node:18-alpine
+
+ENV PROJECT_NAME "pneumatic_frontend"
+ENV MCS_RUN_ENV=$MCS_RUN_ENV
+
+RUN mkdir /${PROJECT_NAME}
+WORKDIR /${PROJECT_NAME}
+ADD package-lock.json /${PROJECT_NAME}/package-lock.json
+ADD package.json /${PROJECT_NAME}/package.json
+RUN npm ci --legacy-peer-deps
+
+ADD . /${PROJECT_NAME}/
+
+RUN npm run check

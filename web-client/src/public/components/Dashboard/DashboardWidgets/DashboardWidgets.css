@@ -1,0 +1,5 @@
+.widgets {
+  &__item + &__item {
+    margin-top: 32px;
+  }
+}

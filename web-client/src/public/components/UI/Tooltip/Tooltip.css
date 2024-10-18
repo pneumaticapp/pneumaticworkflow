@@ -1,0 +1,216 @@
+/* stylelint-disable declaration-no-important */
+/* stylelint-disable selector-max-specificity */
+/* stylelint-disable selector-max-compound-selectors */
+/* stylelint-disable selector-pseudo-class-no-unknown */
+
+.tooltip_md {
+  :global {
+    .tippy-content {
+      padding: 4px 8px;
+    }
+  }
+
+  .content {
+    font-size: 13px !important;
+    font-weight: normal;
+    font-style: normal;
+    line-height: 16px !important;
+    text-align: center;
+  }
+}
+
+.tooltip_lg {
+  :global {
+    .tippy-content {
+      padding: 32px;
+    }
+
+    .tippy-box {
+      border-radius: 24px;
+    }
+
+    .tippy-box[data-placement^=top] > .tippy-svg-arrow {
+      bottom: -8px;
+      width: 16px;
+      height: 8px;
+    }
+
+    .tippy-box[data-placement^=bottom] > .tippy-svg-arrow {
+      top: -8px;
+      width: 16px;
+      height: 8px;
+    }
+
+    .tippy-box[data-placement^=left] > .tippy-svg-arrow {
+      right: -8px;
+      width: 8px;
+      height: 16px;
+    }
+
+    .tippy-box[data-placement^=right] > .tippy-svg-arrow {
+      left: -8px;
+      width: 8px;
+      height: 16px;
+    }
+  }
+}
+
+.tooltip_dark {
+  :global {
+    .tippy-box {
+      background-color: var(--pneumatic-color-black88);
+    }
+  }
+}
+
+:global {
+  .tippy-box[data-animation=fade][data-state=hidden] {
+    opacity: 0;
+  }
+
+  [data-tippy-root] {
+    max-width: calc(100vw - 10px);
+  }
+
+  .tippy-box {
+    position: relative;
+    font-family: Nunito, sans-serif;
+    font-size: 13px;
+    line-height: 16px;
+    white-space: normal;
+    color: var(--pneumatic-color-beige);
+    background-color: var(--pneumatic-color-black72);
+    border-radius: 8px;
+    outline: 0;
+    transition-property: transform, visibility, opacity;
+  }
+
+  .tippy-box[data-placement^=top] > .tippy-arrow {
+    bottom: 0;
+  }
+
+  .tippy-box[data-placement^=top] > .tippy-arrow::before {
+    left: 0;
+    bottom: -7px;
+    border-width: 8px 8px 0;
+    border-top-color: initial;
+    transform-origin: center top;
+  }
+
+  .tippy-box[data-placement^=bottom] > .tippy-arrow {
+    top: 0;
+  }
+
+  .tippy-box[data-placement^=bottom] > .tippy-arrow::before {
+    top: -7px;
+    left: 0;
+    border-width: 0 8px 8px;
+    border-bottom-color: initial;
+    transform-origin: center bottom;
+  }
+
+  .tippy-box[data-placement^=left] > .tippy-arrow {
+    right: 0;
+  }
+
+  .tippy-box[data-placement^=left] > .tippy-arrow::before {
+    right: -7px;
+    border-width: 8px 0 8px 8px;
+    border-left-color: initial;
+    transform-origin: center left;
+  }
+
+  .tippy-box[data-placement^=right] > .tippy-arrow {
+    left: 0;
+  }
+
+  .tippy-box[data-placement^=right] > .tippy-arrow::before {
+    left: -7px;
+    border-width: 8px 8px 8px 0;
+    border-right-color: initial;
+    transform-origin: center right;
+  }
+
+  .tippy-box[data-inertia][data-state=visible] {
+    transition-timing-function: cubic-bezier(0.54, 1.5, 0.38, 1.11);
+  }
+
+  .tippy-arrow {
+    width: 16px;
+    height: 16px;
+    color: var(--pneumatic-color-black72);
+  }
+
+  .tippy-arrow::before {
+    position: absolute;
+    content: '';
+    border-style: solid;
+    border-color: transparent;
+  }
+
+  .tippy-content {
+    position: relative;
+    z-index: 1;
+
+    a {
+      color: var(--pneumatic-color-link);
+      transition: color 0.1s ease-in-out;
+
+      &:hover {
+        color: var(--pneumatic-color-link-hover);
+      }
+    }
+  }
+
+  /* Arrow */
+  .tippy-svg-arrow {
+    display: flex;
+    text-align: initial;
+    justify-content: center;
+    align-items: center;
+
+    > svg {
+      flex-shrink: 0;
+    }
+  }
+
+  .tippy-box[data-placement^=top] > .tippy-svg-arrow {
+    bottom: -4px;
+    width: 12px;
+    height: 4px;
+
+    > svg {
+      transform: rotate(180deg);
+    }
+  }
+
+  .tippy-box[data-placement^=bottom] > .tippy-svg-arrow {
+    top: -4px;
+    width: 12px;
+    height: 4px;
+
+    > svg {
+      transform: rotate(0);
+    }
+  }
+
+  .tippy-box[data-placement^=left] > .tippy-svg-arrow {
+    right: -4px;
+    width: 4px;
+    height: 12px;
+
+    > svg {
+      transform: rotate(90deg);
+    }
+  }
+
+  .tippy-box[data-placement^=right] > .tippy-svg-arrow {
+    left: -4px;
+    width: 4px;
+    height: 12px;
+
+    > svg {
+      transform: rotate(-90deg);
+    }
+  }
+}

@@ -1,0 +1,141 @@
+.container {
+  position: relative;
+  line-height: 20px;
+}
+
+.dropdown-toggle {
+  all: unset;
+  display: flex;
+}
+
+.dropdown-menu {
+  z-index: 1000;
+  padding: 5px 0;
+  display: none;
+  width: 192px;
+  font-size: 15px;
+  font-weight: initial;
+  background: white;
+  border: none;
+  border-radius: 8px;
+  box-shadow: 0 8px 16px rgb(98 98 95 / 8%);
+}
+
+.dropdown-menu_wide {
+  width: 304px;
+}
+
+.dropdown-menu_show {
+  display: block;
+}
+
+.dropdown-item {
+  position: relative;
+  z-index: 1;
+  padding: 5px 16px;
+  display: flex;
+  width: 100%;
+  text-align: inherit;
+  white-space: nowrap;
+  background-color: transparent;
+  border: 0;
+  align-items: center;
+
+  &::before {
+    position: absolute;
+    z-index: -1;
+    top: -1px;
+    right: 4px;
+    left: 4px;
+    bottom: -1px;
+    content: '';
+    background: var(--pneumatic-color-beige);
+    border-radius: 4px;
+    opacity: 0;
+  }
+
+  &:hover {
+    color: var(--pneumatic-color-link-hover);
+
+    &::before {
+      opacity: 1;
+    }
+  }
+}
+
+.dropdown-menu .dropdown-item_black {
+  color: var(--pneumatic-color-black100);
+}
+
+.dropdown-item_green {
+  /* stylelint-disable-next-line declaration-no-important */
+  color: #4caf50 !important;
+
+  &:hover {
+    color: currentColor;
+  }
+
+  .dropdown-item-icon {
+    color: currentColor;
+  }
+}
+
+.dropdown-item_red {
+  /* stylelint-disable-next-line declaration-no-important */
+  color: #f44336 !important;
+
+  &:hover {
+    color: currentColor;
+  }
+
+  .dropdown-item-icon {
+    color: currentColor;
+  }
+}
+
+.dropdown-item_orange {
+  /* stylelint-disable-next-line declaration-no-important */
+  color: var(--pneumatic-color-link-dark) !important;
+
+  &:hover {
+    color: currentColor;
+  }
+
+  .dropdown-item-icon {
+    color: currentColor;
+  }
+}
+
+.dropdown-item-icon {
+  margin-left: auto;
+  color: var(--pneumatic-color-black72);
+}
+
+.line {
+  all: unset;
+  margin: 5px 12px;
+  display: block;
+  border: 0;
+  border-top: 1px solid var(--pneumatic-color-black16);
+}
+
+.dropdown-confirm {
+  font-weight: normal;
+  color: var(--pneumatic-color-black32);
+}
+
+.dropdown-confirm-option {
+  all: unset;
+  color: #f44336;
+  transition: all 0.1s ease-in-out;
+
+  &:hover {
+    color: var(--pneumatic-color-link-hover);
+  }
+}
+
+.label {
+  overflow: hidden;
+  min-width: 0;
+  text-overflow: ellipsis;
+}

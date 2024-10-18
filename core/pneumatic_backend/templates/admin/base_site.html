@@ -1,0 +1,18 @@
+{% extends "admin/base_site.html" %}
+
+{% block extrahead %}
+    {{ block.super }}
+    <style>
+        form .aligned ul {
+            margin-left: 0;
+            padding-left: 0;
+        }
+
+        .field-workflow_json .readonly {
+            white-space: pre-wrap;
+            line-height: 1.5;
+            font-family: monospace,"Roboto","Lucida Grande","DejaVu Sans","Bitstream Vera Sans",Verdana,Arial,sans-serif;
+        }
+    </style>
+{% endblock %}
+

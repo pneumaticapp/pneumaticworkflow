@@ -1,0 +1,143 @@
+/* stylelint-disable declaration-no-important */
+.container {
+  position: relative;
+  z-index: 0;
+  margin-bottom: -80px;
+  padding-bottom: 80px;
+
+  @media (--mobile) {
+    margin-right: -15px;
+    margin-left: -15px;
+  }
+}
+
+.table-wrapper {
+  margin: 0 auto;
+  padding: 32px;
+  max-width: 1088px;
+  background-color: white;
+  border-radius: 24px;
+
+  @media (--mobile) {
+    overflow: auto;
+    border-radius: 0;
+  }
+}
+
+.table {
+  overflow-x: auto;
+  width: 100%;
+  table-layout: fixed;
+  white-space: nowrap;
+
+  td,
+  th {
+    padding: 0 16px;
+    box-sizing: content-box;
+  }
+
+  th {
+    padding-bottom: 32px;
+  }
+
+  td:first-child,
+  th:first-child {
+    padding-left: 0;
+  }
+
+  td:last-child,
+  th:last-child {
+    padding-right: 0;
+  }
+}
+
+.loader {
+  margin-top: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.thead {
+  border-bottom: 1px solid #dcdcdb;
+}
+
+.column-header {
+  font-size: 11px;
+  font-weight: bold;
+  font-style: normal;
+  line-height: 16px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--pneumatic-color-black48);
+}
+
+.row {
+  height: 52px;
+  font-size: 15px;
+  border-bottom: 1px solid #dcdcdb;
+}
+
+.table-scoll {
+  margin: 0 -15px;
+  padding: 0 15px;
+  overflow: visible !important;
+}
+
+.search {
+  position: relative;
+}
+
+.search__icon {
+  position: absolute;
+  top: 50%;
+  color: var(--pneumatic-color-black72);
+  transform: translateY(-50%);
+}
+
+.search-field__input {
+  padding-left: 28px !important;
+  height: 20px !important;
+  background-color: var(----background-color);
+  border: 0;
+  border-radius: 8px;
+}
+
+.empty-list-placeholder {
+  margin-top: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.header-filter {
+  font-size: 11px;
+  font-weight: bold;
+  line-height: 16px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.header-filter__arrow {
+  margin-left: 0 !important;
+}
+
+.filter-container {
+  padding: 0 !important;
+  width: 100%;
+}
+
+.user {
+  display: flex;
+  align-items: center;
+}
+
+.user-avatar {
+  flex-shrink: 0;
+}
+
+.user-name {
+  margin: 0 8px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

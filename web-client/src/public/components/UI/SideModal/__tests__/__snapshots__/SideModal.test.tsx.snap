@@ -1,0 +1,31 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`SideModal rendered correctly 1`] = `
+<Portal
+  containerInfo={<body />}
+>
+  <OutsideClickHandler
+    disabled={false}
+    display="block"
+    onOutsideClick={[Function]}
+    useCapture={true}
+  >
+    <div
+      className="side-modal side-modal_opened"
+    >
+      <button
+        aria-label="Close modal"
+        className="side-modal_close"
+        data-test-id="close"
+        onClick={[MockFunction]}
+        type="button"
+      >
+        <ClearIcon />
+      </button>
+      <div
+        className="side-modal-parts"
+      />
+    </div>
+  </OutsideClickHandler>
+</Portal>
+`;

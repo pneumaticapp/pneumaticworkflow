@@ -1,0 +1,135 @@
+/* stylelint-disable declaration-no-important */
+.container {
+  position: relative;
+  padding: 32px;
+  width: 100%;
+  background: white;
+  border-radius: 24px;
+}
+
+.header {
+  padding-right: 30px;
+  display: flex;
+  align-items: center;
+}
+
+.header-title {
+  width: 100%;
+  transition: color 0.1s ease-in-out;
+
+  &:hover {
+    color: var(--pneumatic-color-link-hover);
+  }
+}
+
+.toggle {
+  margin-right: 16px;
+}
+
+.contents {
+  margin-top: 32px;
+}
+
+.tabs-labels {
+  margin-bottom: 16px;
+  overflow-x: scroll;
+  background: var(--pneumatic-color-beige);
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+.tabs-labels__item {
+  white-space: nowrap;
+}
+
+.tab-description {
+  margin-bottom: 32px;
+  font-size: 15px;
+  line-height: 20px;
+  color: var(--pneumatic-color-black72);
+}
+
+.code {
+  position: relative;
+  padding: 10px 4px;
+  font-family: 'Courier New';
+  font-size: 15px;
+  font-weight: bold;
+  font-style: normal;
+  line-height: 20px;
+  white-space: pre-wrap;
+  color: var(--pneumatic-color-black100);
+  background: var(--pneumatic-color-black4);
+  border-radius: 8px;
+}
+
+.code-inner {
+  padding: 0 12px;
+  overflow: auto;
+  max-height: 400px;
+
+  &::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: var(--pneumatic-color-black48);
+    border-radius: 2px;
+    opacity: 0.32;
+  }
+
+  &::-webkit-scrollbar-corner {
+    background: var(--pneumatic-color-black4);
+  }
+}
+
+.copy-button {
+  all: unset;
+  font-family: Nunito, sans-serif;
+  font-size: 11px;
+  font-weight: bold;
+  font-style: normal;
+  line-height: 16px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  cursor: pointer;
+  color: var(--pneumatic-color-link-dark);
+  transition: color 0.1s ease-in-out;
+
+  &:hover {
+    color: var(--pneumatic-color-link-hover);
+  }
+}
+
+.code-copy-button {
+  position: absolute;
+  right: 16px;
+  bottom: 10px;
+}
+
+.api-key-copy-button {
+  position: absolute;
+  right: 16px;
+  bottom: 12px;
+}
+
+.api-key {
+  margin-top: 16px;
+}
+
+.api-key__title {
+  margin-bottom: 16px;
+  font-size: 15px;
+  font-weight: bold;
+  line-height: 20px;
+}
+
+.api-key__control {
+  position: relative;
+  display: flex;
+}

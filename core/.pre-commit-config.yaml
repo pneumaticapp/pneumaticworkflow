@@ -1,0 +1,27 @@
+# pipenv commands must not be use in entry phrase because
+# "entry: pipenv run <command>" much slower than "entry: python -m <command>.__main__"
+default_stages: [commit]
+default_language_version:
+  python: python3.7
+repos:
+  - repo: local
+    hooks:
+      - id: py_linter
+        name: py_linter
+        types: [python]
+        language: system
+        entry: poetry run pylint pneumatic_backend --rcfile=.pylintrc
+        args:
+          - pneumatic_backend/
+          - --rcfile=.pylintrc
+  - repo: local
+    hooks:
+      - id: py_codestyle
+        name: py_codestyle
+        types: [python]
+        language: system
+        entry: poetry run pycodestyle pneumatic_backend --config=codestyle.ini
+        args:
+          - pneumatic_backend/
+          - --config=codestyle.ini
+        exclude: 'migrations|settings.py|messages.py|wsgi.py|asgi.py'

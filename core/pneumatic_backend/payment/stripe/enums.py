@@ -1,0 +1,5 @@
+
+
+class TokenType:
+
+    CONFIRM = 'confirm'

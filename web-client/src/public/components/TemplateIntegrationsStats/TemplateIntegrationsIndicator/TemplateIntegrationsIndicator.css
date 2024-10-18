@@ -1,0 +1,12 @@
+.indicator-tooltip {
+  font-family: var(--pneumatic-font-sans);
+  font-size: 13px;
+  font-weight: normal;
+  line-height: 16px;
+  text-align: center;
+  white-space: pre-line;
+}
+
+.indicator-tooltip__link {
+  text-align: center;
+}

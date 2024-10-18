@@ -1,0 +1,96 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2024-08-28 17:17+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: generics/messages.py:6
+#, python-brace-format
+msgid "'{choice}' is an invalid value for the filter"
+msgstr "'{choice}' n'est pas une valeur valide pour le filtre."
+
+#. Translators: AccountPrimaryKeyRelatedField incorrect init
+#: generics/messages.py:10
+msgid "Account or queryset not provided"
+msgstr "Compte ou ensemble de requêtes non fourni"
+
+#: generics/messages.py:11
+msgid "Value should be a list of integers."
+msgstr "La valeur doit être une liste d'entiers."
+
+#: generics/messages.py:13
+msgid "The \"raise_validation_error\" method should be used only after calling the \"is_valid\" method"
+msgstr "La méthode \"raise_validation_error\" ne doit être utilisée qu'après avoir appelé la méthode \"is_valid\"."
+
+#: generics/messages.py:17
+msgid "You need to set a \"Meta.fields\" value before using AdditionalValidationMixin"
+msgstr "Vous devez définir une valeur \"Meta.fields\" avant d'utiliser AdditionalValidationMixin."
+
+#: generics/messages.py:20
+msgid "Payment method required."
+msgstr "Mode de paiement requis."
+
+#: generics/messages.py:21
+msgid "Numeric type expected."
+msgstr "Type numérique attendu."
+
+#: generics/messages.py:23
+msgid "Jan"
+msgstr "Jan"
+
+#: generics/messages.py:24
+msgid "Feb"
+msgstr "Fév"
+
+#: generics/messages.py:25
+msgid "Mar"
+msgstr "Mar"
+
+#: generics/messages.py:26
+msgid "Apr"
+msgstr "Avr"
+
+#: generics/messages.py:27
+msgid "May"
+msgstr "Mai"
+
+#: generics/messages.py:28
+msgid "Jun"
+msgstr "Jun"
+
+#: generics/messages.py:29
+msgid "Jul"
+msgstr "Jul"
+
+#: generics/messages.py:30
+msgid "Aug"
+msgstr "Aoû"
+
+#: generics/messages.py:31
+msgid "Sep"
+msgstr "Sep"
+
+#: generics/messages.py:32
+msgid "Oct"
+msgstr "Oct"
+
+#: generics/messages.py:33
+msgid "Nov"
+msgstr "Nov"
+
+#: generics/messages.py:34
+msgid "Dec"
+msgstr "Déc"

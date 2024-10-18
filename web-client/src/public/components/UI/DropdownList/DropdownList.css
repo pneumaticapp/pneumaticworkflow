@@ -1,0 +1,87 @@
+/* stylelint-disable declaration-no-important */
+
+.dropdownlist__scrollbar {
+  margin-right: 0 !important;
+  padding-right: 0 !important;
+  max-height: 300px;
+}
+
+.dropdownlist-sm {
+  &__control {
+    padding: 0.6rem 0.8rem;
+    display: flex;
+    background-color: var(--pneumatic-color-black4);
+    border-radius: 16px;
+    align-items: center;
+
+    &:hover .dropdownlist-sm__value,
+    &.is-open .dropdownlist-sm__value {
+      color: var(--pneumatic-color-link-hover);
+    }
+  }
+
+  &__value {
+    @mixin text-small bold;
+
+    margin: 0;
+    color: var(--pneumatic-color-black72);
+    transition: color 0.1s ease-in-out;
+  }
+
+  &__arrow {
+    margin-left: 4px;
+    color: var(--pneumatic-color-black16);
+
+    &.is-open {
+      transform: rotate(180deg);
+    }
+  }
+
+  &__search {
+    margin-bottom: 0.4rem;
+    border-bottom: 0.1rem solid var(--pneumatic-color-black16);
+
+    input {
+      padding: 1rem 1.6rem;
+      padding-right: 4rem;
+      display: block;
+      width: 100%;
+    }
+  }
+
+  &__clear {
+    position: absolute;
+    top: 1rem;
+    right: 1.6rem;
+    color: var(--pneumatic-color-black16);
+    transition: all 0.3s ease;
+
+    &:hover {
+      color: var(--pneumatic-color-link-hover);
+    }
+  }
+}
+
+.dropdownlist-lg {
+  &__control.is-label {
+    position: relative;
+    padding-top: 0.8rem;
+
+    :global .react-select__control {
+      padding-top: 1.1rem !important;
+      padding-bottom: 1.1rem !important;
+    }
+  }
+
+  &__label {
+    @mixin text-small;
+
+    position: absolute;
+    z-index: 1;
+    top: 0;
+    left: 1.2rem;
+    padding: 0 0.4rem;
+    color: var(--pneumatic-color-black72);
+    background-color: var(--pneumatic-color-white);
+  }
+}

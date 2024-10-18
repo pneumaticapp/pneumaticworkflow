@@ -1,0 +1,21 @@
+.card-more-container {
+  position: absolute;
+  top: 32px;
+  right: 32px;
+}
+
+.card-more {
+  cursor: pointer;
+  color: var(--pneumatic-color-black16);
+  transition: color 0.1s ease-in-out;
+
+  &.card-more_active,
+  &:hover {
+    color: var(--pneumatic-color-link-hover);
+  }
+}
+
+.disabled-option {
+  pointer-events: none;
+  opacity: 0.5;
+}

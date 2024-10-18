@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, shrink-to-fit=no, user-scalable=0"
+    />
+
+    <title>Pneumatic</title>
+  </head>
+  <body>
+    <div id="pneumatic-frontend"></div>
+
+    <script type="text/javascript">
+      window.__pneumaticConfig = {
+        env: "<%= env %>",
+        config: <%- config %>,
+        user:  <%- user %>,
+      };
+    </script>
+  </body>
+</html>

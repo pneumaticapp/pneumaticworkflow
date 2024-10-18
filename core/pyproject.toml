@@ -1,0 +1,76 @@
+[tool.poetry]
+name = "pneumatic-backend"
+version = "0.1.0"
+description = ""
+authors = ["azat.zakirov <zakirmalay@gmail.com>"]
+readme = "README.md"
+packages = [{include = "pneumatic_backend"}]
+
+[tool.poetry.dependencies]
+python = "^3.7.5"
+django = "2.2"
+djangorestframework = "3.13.1"
+recurly = {git = "https://github.com/recurly/recurly-client-python.git", rev = "f4a4e146116bd223f8811493ca9607f7b0a3b566"}
+requests = "2.22.0"
+dj-database-url = "0.5.0"
+django-configurations = "2.1"
+django-extensions = "2.1.7"
+psycopg2-binary = "2.8.5"
+gunicorn = "19.9.0"
+whitenoise = "4.1.2"
+django-cors-headers = "3.6.0"
+djangorestframework-simplejwt = "4.3.0"
+ibm-cos-sdk = "2.5.5"
+django-celery-email = "2.0.2"
+django-json-widget = "0.2.0"
+xmltodict = "0.12.0"
+django-filter = "2.2.0"
+python-slugify = "4.0.0"
+google-cloud-storage = "1.28.1"
+slackclient = "2.6.2"
+analytics-python = "1.2.9"
+django-celery-beat = "2.0.0"
+django-redis = "4.12.1"
+django-rest-hooks = {git = "https://github.com/zapier/django-rest-hooks.git", rev = "d21a070b9a099b5e9c755b2afa6b81c9d8b26e7c"}
+user-agents = "^2.2.0"
+django-tinymce = "3.1.0"
+celery = "4.4.7"
+channels = "3.0.2"
+uvloop = [{version = "0.14.0", platform = 'darwin'}, {version = "0.14.0", platform = 'linux'},]
+httptools = "0.1.1"
+uvicorn = "0.13.1"
+channels-redis = "3.2.0"
+pyjwt = "1.7.1"
+drf-recaptcha = "2.0.4"
+twisted = "20.3.0"
+daphne = "3.0.1"
+typing-extensions = "4.7.1"
+sentry-sdk = "1.5.0"
+defusedxml = "0.7.1"
+iso8601 = "1.0.2"
+customerio = "1.4"
+firebase-admin = "4.5.3"
+openai = "^0.27.2"
+importlib-metadata = "4.11.3"
+websockets = "8.1"
+stripe = "7.0.0"
+msal = "^1.24.1"
+
+
+[tool.poetry.group.dev.dependencies]
+isort = "4.3.21"
+pytest = "6.1.2"
+pytest-django = "3.5.1"
+pylint = "2.3.0"
+pylint-django = "2.3.0"
+py = "1.9.0"
+mock = "4.0.3"
+pytest-mock = "3.3.1"
+pycodestyle = "2.5.0"
+pytest-asyncio = "0.14.0"
+pre-commit = "2.19.0"
+pytest-cov = "3.0.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

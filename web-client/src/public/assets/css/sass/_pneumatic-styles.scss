@@ -1,0 +1,109 @@
+@import "./pneumatic-variables.scss";
+@import "./mixins";
+@import "./gogo.style";
+
+.active {
+  @include responsive-scale(0.98, $isButton: false);
+}
+
+.dropdown-menu_dark {
+  background: $pneumatic-color-black100;
+}
+
+.dropdown-item_dark {
+  color: $pneumatic-color-link;
+  font-size: 15px;
+  line-height: 20px;
+}
+
+.dropdown-item_dark:hover,
+.dropdown-item_dark:focus {
+  background-color: $pneumatic-color-black72;
+  border-radius: $border-radius;
+  color: $pneumatic-color-link
+}
+
+.cancel-button {
+  color: $pneumatic-color-link-dark;
+  padding: 0 !important;
+  border: none;
+  font-weight: 800;
+  font-size: 11px;
+  line-height: 16px;
+  letter-spacing: 0.05em;
+  background: none;
+  text-transform: uppercase;
+  transition: 0.1s ease-in-out all;
+
+  @include responsive-scale(0.98, false);
+}
+
+.cancel-button:hover {
+  color: $pneumatic-color-link-hover;
+  background-color: transparent;
+}
+
+.cancel-button:disabled {
+  opacity: $pneumatic-button-opacity;
+  pointer-events: none;
+}
+
+.clickable-item {
+  transition: color 0.1s ease-in-out;
+
+  @include responsive-scale(0.98, false);
+
+  &:active,
+  &:hover {
+    color: $pneumatic-color-link-hover;
+  }
+}
+
+.tab-button {
+  padding: 0;
+  font-size: 11px;
+  font-weight: bold;
+  line-height: 16px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: $pneumatic-color-link-dark;
+  background: transparent;
+  border: none;
+  transition: color 0.1s ease-in-out;
+
+  &:hover {
+    color: $pneumatic-color-link-hover;
+  }
+}
+
+.tab-button_active {
+  position: relative;
+  pointer-events: none;
+  color: $pneumatic-color-black100;
+
+  &::after {
+    position: absolute;
+    bottom: -8px;
+    left: 0;
+    width: 100%;
+    content: '';
+    border-bottom: 2px solid $pneumatic-color-black100;
+    border-radius: 1px;
+  }
+}
+
+.tab-button_yellow {
+  color: $pneumatic-color-link;
+
+  &:hover {
+    color: white;
+  }
+}
+
+.tab-button_active.tab-button_yellow {
+  color: white;
+
+  &::after {
+    border-color: white;
+  }
+}

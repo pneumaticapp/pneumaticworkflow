@@ -1,0 +1,59 @@
+{
+  "root": true,
+  "extends": [
+    "airbnb",
+    "airbnb-typescript",
+    "prettier"
+  ],
+  "parser": "@typescript-eslint/parser",
+  "parserOptions": {
+    "project": [
+      "./tsconfig.json"
+    ]
+  },
+  "plugins": [
+    "import",
+    "@typescript-eslint",
+    "prettier"
+  ],
+  "rules": {
+    "@typescript-eslint/dot-notation": "off",
+    "@typescript-eslint/default-param-last": "off",
+    "@typescript-eslint/no-use-before-define": "off",
+    "@typescript-eslint/strict-boolean-expressions": "off",
+    "import/no-cycle": "off",
+    "import/prefer-default-export": "off",
+    "arrow-body-style": "off",
+    "prefer-arrow-callback": "off",
+    "no-console": "off",
+    "indent": "error",
+    "no-param-reassign": "off",
+    "max-len": [
+      "error",
+      {
+        "code": 140
+      }
+    ],
+    "react/self-closing-comp": "off",
+    "react/jsx-props-no-spreading": "off",
+    "react/function-component-definition": "off",
+    "react/prefer-stateless-function": "off",
+    "react/static-property-placement": "off",
+    "react/prop-types": "off",
+    "react/require-default-props": "off",
+    "react/state-in-constructor": "off",
+    "react/no-unused-prop-types": "off"
+  },
+  "ignorePatterns": [
+    "/*",
+    "!src",
+    "src/**/PerformerIcon.tsx",
+    "src/**/forms.tsx",
+    "src/**/browser.tsx",
+    "src/**/AccountGenericTemplate.tsx",
+    "src/**/menu.tsx",
+    "src/**/*.test.ts",
+    "src/**/*.test.tsx",
+    "src/frontend/generated/*"
+  ]
+}

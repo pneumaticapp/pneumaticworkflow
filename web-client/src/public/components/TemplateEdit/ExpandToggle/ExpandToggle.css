@@ -1,0 +1,21 @@
+.toggle {
+  all: unset;
+  display: flex;
+  width: 40px;
+  height: 40px;
+  background: var(--pneumatic-color-black4);
+  border-radius: 8px;
+  justify-content: center;
+  align-items: center;
+}
+
+.toggle_is-expanded {
+  .arrow {
+    transform: rotate(180deg);
+  }
+}
+
+.arrow {
+  color: var(--pneumatic-color-black48);
+  transition: all 0.2s ease-in-out;
+}

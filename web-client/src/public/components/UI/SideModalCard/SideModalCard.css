@@ -1,0 +1,37 @@
+.card-container {
+  padding: 16px;
+  display: flex;
+  overflow: hidden;
+  background: #fdf7ee;
+  border: none;
+  border-radius: 16px;
+  transition: 0.1s ease-in-out background;
+  flex-flow: column;
+}
+
+.card-container:hover {
+  background: white;
+
+  .card__title {
+    color: currencolor;
+  }
+}
+
+.card__title {
+  overflow: hidden;
+  font-family: 'Abhaya Libre', 'Times New Roman', Arial;
+  font-size: 20px;
+  font-weight: 800;
+  line-height: 24px;
+  text-overflow: ellipsis;
+  word-break: break-word;
+  color: #262522;
+}
+
+.card__footer {
+  margin-top: auto;
+  font-family: Nunito, sans-serif;
+  font-size: 13px;
+  line-height: 16px;
+  color: #979795;
+}
