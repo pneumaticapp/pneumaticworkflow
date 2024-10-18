@@ -1,18 +1,18 @@
 # Pneumatic frontend
 
-##### Для запуска:
+##### Launch commands:
 * `npm ci`
 * `npm local`
 
-##### Для запуска prod версии любой из 3 вариантов:
+##### The prod version can be launched by any one of the following three commands:
 * `npm ci && npm start:prod`
 * `pm2 start pm2.json`
 * `bash .build.sh` (через докер)
 
-##### Запуск тестов:
+##### The command to launc tests is as follows:
 * `npm t`
 
 ##### Config:
-* Конфиг разделен на `common.json`, `dev.json` и `prod.json`
-* `dev` и `prod` используются для окружений `staging` и `prod`
-* всё, что определено в `dev` и `prod` переопределяет конфиг `common`, который используется для локальной разработки
+* The configuration is divided into`common.json`, `dev.json` and `prod.json`
+* `dev` and `prod` are used for the `staging` and `prod` environments
+* everything defined in `dev` and `prod` redefines the `common` configuration that is used for local development
