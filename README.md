@@ -38,6 +38,6 @@ Our team will shortly be releasing a full containerized solution that will be av
 All you'll need to do will be get this repo, go into the home folder and run docker compose up -d.
 
 ### Prerequisites
-* Operating System: Linux, macOS, or Windows
+* Operating System: Linux, macOS or Windows
 * Docker Engine to run your locally hosted version of Pneumatic
 * Git: For cloning the repository
