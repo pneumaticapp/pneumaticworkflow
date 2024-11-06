@@ -1,0 +1,56 @@
+$separator-color-light: #f3f3f3;
+$separator-color: #dcdcdb;
+$background-color: #f6f6f6;
+$navbar-background-color: rgba(246, 246, 246, 0.7);
+$foreground-color : white;
+$input-background: white;
+
+$dark-btn-background: #262522;
+$light-btn-background: #fec336;
+
+$button-text-color: #fff;
+$button-text-color-2: #62625f;
+
+$menu-color: #FDF7EE;
+$dropdown-text-color: #212529;
+
+$theme-color-1: #fec336;
+$theme-color-2: #e95440;
+$theme-color-3: #d8a97b;
+$theme-color-4: #dda272;
+$theme-color-5: #fff6e6;
+$theme-color-6: #d8cfcc;
+$theme-color-7: #fec336;
+$theme-color-8: #e79a26;
+
+$notification-color-success: #eefcf8;
+$notification-color-fail: #fff2f3;
+$notification-color-neutral: #eff7fb;
+$notification-color-question: #fffdf2;
+$notification-color-1: #f44336;
+
+$black-color-32: #b9b9b8;
+
+$primary-color: #262522;
+$secondary-color: #8f8f8f;
+$muted-color: #909090;
+
+$gradient-color-1 : #ff9e39;
+$gradient-color-2 : #d36114;
+$gradient-color-3 : #fba752;
+
+$shadowOffsetsTop : 1 3 10 14 19;
+$shadowBlursTop: 1.5 5 10 14 19;
+$shadowOpacitiesTop: 0.04 0.1 0.19 0.25 0.3;
+
+$shadowOffsetsBottom : 1 3 6 10 15;
+$shadowBlursBottom: 3 6 6 5 6;
+$shadowOpacitiesBottom: 0.04 0.1 0.2 0.22 0.22;
+
+$logoPath: "/assets/img/pneumatic_logo_h_b.png";
+$logoPathMobile: "/assets/img/logo_p_color.png";
+
+@import "../_pneumatic-variables.scss";
+@import "../_pneumatic-styles.scss";
+@import "../_mixins.scss";
+@import "../_gogo.style.scss";

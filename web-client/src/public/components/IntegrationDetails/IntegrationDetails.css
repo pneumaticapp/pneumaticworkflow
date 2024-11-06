@@ -1,0 +1,46 @@
+/* stylelint-disable declaration-no-important */
+
+.container {
+  position: relative;
+  height: 100%;
+}
+
+.integraion {
+  padding: 80px;
+  background-color: white;
+  border-radius: 24px;
+  box-shadow: 0 8px 24px rgba(98, 98, 95, 0.08);
+}
+
+.logo-container {
+  margin-bottom: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 80px;
+}
+
+.logo {
+  max-width: 100%;
+  max-height: 100%;
+}
+
+.description {
+  margin-bottom: 32px;
+  font-size: 15px;
+  line-height: 20px;
+  color: #262522;
+}
+
+.description p,
+.description ul {
+  font-size: 15px;
+}
+
+.description ul {
+  padding-left: 17px;
+}
+
+.description ul li {
+  margin-bottom: 8px;
+}

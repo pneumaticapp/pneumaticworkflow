@@ -1,0 +1,4 @@
+Hello!
+
+You have been invited to Pneumatic.
+Click here to accept: {{url}}

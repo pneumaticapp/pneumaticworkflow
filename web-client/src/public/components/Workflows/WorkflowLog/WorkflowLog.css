@@ -1,0 +1,121 @@
+/* stylelint-disable selector-pseudo-class-no-unknown, selector-max-compound-selectors, declaration-no-important */
+.popup-body__no-events {
+  font-family: var(--pneumatic-font-serif);
+  font-size: 20px;
+  font-weight: 800;
+  line-height: 24px;
+  text-align: center;
+  color: var(--pneumatic-color-black32);
+}
+
+.popup-body__close-button {
+  margin-bottom: 32px;
+  margin-left: auto;
+  padding: 0;
+  background: none;
+  border: none;
+}
+
+.close-button__icon {
+  color: #dcdcdb;
+  transition: color 0.1s ease-in-out;
+
+  &:hover {
+    color: #b9b9b8;
+  }
+}
+
+.popup-body-controls {
+  padding-bottom: 32px;
+}
+
+.popup-body-controls__inner {
+  margin: -8px 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+
+  @media (--mobile) {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+.popup-body-controls-general {
+  margin-right: 8px;
+  display: flex;
+  flex-wrap: wrap;
+
+  @media (--mobile) {
+    margin: 0;
+    flex-direction: column;
+    width: 100%;
+  }
+}
+
+.popup-body-controls-general__item {
+  margin: 8px 0;
+}
+
+.popup-body-controls-general__item_beige {
+  background: var(--pneumatic-color-beige);
+}
+
+.popup-body-controls-general__item:not(:last-child) {
+  margin-right: 8px;
+
+  @media (--mobile) {
+    margin: 0;
+  }
+}
+
+.switch-container {
+  margin: 8px 0;
+  display: flex;
+  flex-flow: row;
+  align-items: center;
+
+  @media (--mobile) {
+    width: 100%;
+  }
+}
+
+.switch-container__label {
+  font-family: Nunito, sans-serif;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 15px;
+  text-align: right;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--pneumatic-color-black100);
+}
+
+.switch-container__button {
+  margin-left: 8px;
+
+  @media (--mobile) {
+    margin-left: auto;
+  }
+}
+
+.popup-body-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+
+  @media (--mobile) {
+    width: 32px;
+    height: 32px;
+  }
+}
+
+.process-log-item:not(:last-child) {
+  margin-bottom: 16px;
+}
+
+.comment-field {
+  margin-bottom: 32px;
+  padding: 0;
+}

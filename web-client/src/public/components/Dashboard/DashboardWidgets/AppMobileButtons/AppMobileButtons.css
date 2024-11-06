@@ -1,0 +1,25 @@
+.store {
+  &__title {
+    margin-bottom: 16px;
+    font-family: Nunito;
+    text-align: center;
+
+    @media (--mobile) {
+      br {
+        display: none;
+      }
+    }
+  }
+
+  &__item a {
+    color: var(--pneumatic-color-black72);
+
+    &:hover {
+      color: var(--pneumatic-color-link-hover);
+    }
+  }
+
+  &__item + &__item {
+    margin-top: 8px;
+  }
+}

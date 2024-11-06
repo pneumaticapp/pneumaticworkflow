@@ -1,0 +1,115 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`RichText RichText and loom link in text flag return text with loom iframe 1`] = `
+<div
+  class="container"
+>
+  <p>
+    test1 
+  </p>
+  <div>
+    <iframe
+      allowfullscreen=""
+      class="video"
+      frameborder="0"
+      mozallowfullscreen=""
+      src="https://www.useloom.com/embed/7f68fa7f01e349cab91b0c36168f68c3"
+      webkitallowfullscreen=""
+    />
+  </div>
+  <p />
+  
+
+</div>
+`;
+
+exports[`RichText RichText and youtube and loom link in text flag return text with youtube and loom iframe 1`] = `
+<div
+  class="container"
+>
+  <p>
+    test1 
+  </p>
+  <div>
+    <iframe
+      allowfullscreen=""
+      class="video"
+      frameborder="0"
+      mozallowfullscreen=""
+      src="https://www.useloom.com/embed/7f68fa7f01e349cab91b0c36168f68c3"
+      webkitallowfullscreen=""
+    />
+  </div>
+   
+  <div>
+    <iframe
+      allowfullscreen=""
+      class="video"
+      frameborder="0"
+      mozallowfullscreen=""
+      src="//www.youtube.com/embed/jNQXAC9IVRw"
+      webkitallowfullscreen=""
+    />
+  </div>
+  <p />
+  
+
+</div>
+`;
+
+exports[`RichText RichText and youtube in text flag return text with youtube iframe 1`] = `
+<div
+  class="container"
+>
+  <p>
+    test1 
+  </p>
+  <div>
+    <iframe
+      allowfullscreen=""
+      class="video"
+      frameborder="0"
+      mozallowfullscreen=""
+      src="//www.youtube.com/embed/jNQXAC9IVRw"
+      webkitallowfullscreen=""
+    />
+  </div>
+  <p />
+  
+
+</div>
+`;
+
+exports[`RichText renderes correct html for mentions and links 1`] = `
+<RichText
+  isMarkdownMode={true}
+  text="Hello, [Jyoti Puri|3], look here: link: http://pneumatic.app/"
+>
+  <div
+    className="container"
+    dangerouslySetInnerHTML={
+      {
+        "__html": "<p>Hello, <span class='mention'>@Jyoti Puri</span>, look here: link: <a href="http://pneumatic.app/" target="_blank">http://pneumatic.app/<a/></p>
+",
+      }
+    }
+  />
+</RichText>
+`;
+
+exports[`RichText renderes correct html for plain text 1`] = `
+<RichText
+  isMarkdownMode={true}
+  text="Some plain text"
+>
+  <div
+    className="container"
+    dangerouslySetInnerHTML={
+      {
+        "__html": "<p>Some plain text</p>
+",
+      }
+    }
+  />
+</RichText>
+`;

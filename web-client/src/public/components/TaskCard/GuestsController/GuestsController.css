@@ -1,0 +1,27 @@
+.container {
+  width: 272px;
+}
+
+.form {
+  display: flex;
+  align-items: flex-start;
+}
+
+.add-btn {
+  margin-left: 8px;
+}
+
+.help {
+  margin-bottom: 16px;
+  line-height: 20px;
+  text-align: center;
+  color: var(--pneumatic-color-black48);
+}
+
+.link {
+  color: var(--pneumatic-color-link-dark);
+
+  &:hover {
+    color: var(--pneumatic-color-link-hover);
+  }
+}

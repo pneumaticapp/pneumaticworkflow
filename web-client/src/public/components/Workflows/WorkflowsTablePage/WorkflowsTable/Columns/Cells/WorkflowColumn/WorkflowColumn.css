@@ -1,0 +1,54 @@
+.container {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+}
+
+.dropdown-wrapper {
+  margin-right: 16px;
+  width: 20px;
+  flex-shrink: 0;
+}
+
+.urgent-wrapper {
+  margin-right: 16px;
+  display: flex;
+  width: 20px;
+  flex-shrink: 0;
+}
+
+.card-more {
+  cursor: pointer;
+  color: var(--pneumatic-color-black32);
+  transition: color 0.1s ease-in-out;
+
+  &.card-more_active,
+  &:hover {
+    color: var(--pneumatic-color-link-hover);
+  }
+}
+
+.workflow-link-tooltip {
+  display: flex;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.workflow-link-tooltip__content {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.workflow-link {
+  overflow: hidden;
+  font-size: 15px;
+  font-weight: bold;
+  line-height: 20px;
+  text-overflow: ellipsis;
+  color: var(--pneumatic-color-black100);
+  transition: color 0.1s ease-in-out;
+
+  &:hover {
+    color: var(--pneumatic-color-link-hover);
+  }
+}

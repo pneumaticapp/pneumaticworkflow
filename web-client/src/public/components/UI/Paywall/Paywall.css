@@ -1,0 +1,19 @@
+
+.paywall {
+  h1 {
+    @mixin h6;
+  }
+
+  hr {
+    margin: 1.6rem 0;
+  }
+
+  p {
+    margin: 0;
+    color: var(--pneumatic-color-black72);
+  }
+
+  p + p {
+    margin-top: 0.8rem;
+  }
+}

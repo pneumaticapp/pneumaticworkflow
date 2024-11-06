@@ -1,0 +1,70 @@
+.process-highlights-feed__container {
+  /* stylelint-disable-next-line declaration-no-important */
+  max-width: 856px !important;
+}
+
+.loading {
+  /* stylelint-disable declaration-no-important */
+  position: absolute !important;
+  top: 0 !important;
+  right: 0 !important;
+  left: 0 !important;
+  bottom: 0 !important;
+  /* stylelint-enable declaration-no-important */
+  margin: auto;
+  opacity: 1;
+}
+
+.process-highlights-feed__container_disabled {
+  pointer-events: none;
+}
+
+.filters__title {
+  margin-bottom: 16px;
+  font-family: 'Abhaya Libre', 'Times New Roman', Arial;
+  font-size: 36px;
+  font-weight: 800;
+  line-height: 40px;
+  letter-spacing: -0.01em;
+  color: #262522;
+}
+
+.filters__separator {
+  margin-bottom: 32px;
+  border-top: 2px solid #262522;
+}
+
+.filters__buttons {
+  display: flex;
+  flex-flow: row wrap;
+  align-items: center;
+}
+
+.button_save-container {
+  margin-right: 16px;
+}
+
+.button_clear-container {
+  padding: 12px 0;
+}
+
+.feed__spinner {
+  /* stylelint-disable-next-line declaration-no-important */
+  position: absolute !important;
+  align-self: center;
+  /* stylelint-disable-next-line declaration-no-important */
+  top: 100% !important;
+}
+
+.feed {
+  position: relative;
+  display: flex;
+  /* height: 100%; */
+  flex-flow: column;
+  /* The min height is needed for the infinite scroll to work properly  */
+  min-height: 10px;
+
+  @media (--desktop) {
+    padding-left: 24px;
+  }
+}

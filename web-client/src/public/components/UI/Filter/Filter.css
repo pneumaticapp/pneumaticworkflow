@@ -1,0 +1,130 @@
+.show-more__toggle {
+  margin-top: 8px;
+  padding: 0;
+  font-family: Nunito, sans-serif;
+  font-size: 13px;
+  line-height: 16px;
+  color: var(--pneumatic-color-link-dark);
+  background: none;
+  border: none;
+  transition: all 0.1s ease-in-out;
+
+  &:active {
+    scale: 0.98;
+  }
+
+  &:hover {
+    color: var(--pneumatic-color-link-hover);
+  }
+}
+
+.search-field {
+  margin-bottom: 16px;
+}
+
+.search-field__input {
+  background-color: var(----background-color);
+}
+
+.placeholder {
+  font-family: Nunito, sans-serif;
+  font-size: 15px;
+  line-height: 20px;
+  color: var(--pneumatic-color-black72);
+}
+
+.loader-wrapper {
+  position: relative;
+  height: 30px;
+}
+
+.option-container {
+  &:not(:last-child) {
+    margin-bottom: 8px;
+  }
+}
+
+.option {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  &:hover {
+    .toggle-sub-options-btn {
+      opacity: 1;
+    }
+  }
+}
+
+.option__controller {
+  display: flex;
+  min-width: 0;
+  flex-grow: 1;
+  align-items: center;
+}
+
+.option__controller-label {
+  max-width: 100%;
+}
+.option__controller-title {
+  overflow: hidden;
+  max-width: 100%;
+  font-style: 15px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+
+  > * {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+.toggle-sub-options-btn {
+  all: unset;
+  margin-left: 8px;
+  display: flex;
+  color: var(--pneumatic-color-black88);
+  opacity: 0;
+  transition: all 0.1s ease-in-out;
+
+  &:hover {
+    color: var(--pneumatic-color-link-hover);
+  }
+
+  @media (hover: none) {
+    opacity: 1;
+  }
+}
+
+.toggle-sub-options-btn_expanded {
+  opacity: 1;
+  transform: rotate(180deg);
+}
+
+.sub-options {
+  margin: 8px 0 0 28px;
+}
+
+.sub-option {
+  color: var(--pneumatic-color-black72);
+}
+
+.option__count {
+  margin-left: 8px;
+  padding: 2px 4px;
+  font-size: 11px;
+  font-weight: bold;
+  line-height: 16px;
+  text-align: center;
+  letter-spacing: 0.05em;
+  color: var(--pneumatic-color-black48);
+  background: white;
+  border-radius: 12px;
+}
+
+.sub-options-loader {
+  margin-top: 8px;
+  display: flex;
+  justify-content: center;
+}

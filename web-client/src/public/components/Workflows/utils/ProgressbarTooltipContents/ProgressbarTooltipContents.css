@@ -1,0 +1,11 @@
+.tooltip-header {
+  margin: 0;
+  font-weight: bold;
+  line-height: 16px;
+}
+
+.tooltip-content {
+  margin: 0;
+  line-height: 16px;
+  white-space: pre-line;
+}

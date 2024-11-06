@@ -1,0 +1,21 @@
+.loader {
+  display: inline-block;
+  width: 100%;
+  line-height: 1;
+  pointer-events: none;
+  background-color: #f6f6f6;
+  background-image: linear-gradient(90deg, #f6f6f6, white, #f6f6f6);
+  background-repeat: no-repeat;
+  background-size: 200px 100%;
+  border-radius: 4px;
+  animation: loading-animation 1.8s ease-in-out infinite;
+}
+
+@keyframes loading-animation {
+  0% {
+    background-position: -200px 0;
+  }
+  100% {
+    background-position: calc(200px + 100%) 0;
+  }
+}

@@ -1,0 +1,561 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2024-06-29 10:00+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: processes/messages/template.py:5
+msgid "You can't pass \"snooze\" for the first step."
+msgstr "Вы не можете пропустить или приостановить первую задачу в процессе."
+
+#: processes/messages/template.py:7
+msgid "You should set task performers before setting template to active."
+msgstr "Нужно указать исполнителей задач перед там как активировать шаблон."
+
+#: processes/messages/template.py:9
+msgid "One or more performers are repeated."
+msgstr "Один или несколько исполнителей повторяются."
+
+#: processes/messages/template.py:11
+msgid "Some fields in the task \"{name}\" conditions don't exist or are used before assignment."
+msgstr "Некоторые поля в условиях задачи \"{name}\" не существуют или используются до назначения."
+
+#: processes/messages/template.py:14
+msgid "Selections can't be empty on radio or checkbox fields."
+msgstr "Значения в полях радио или чекбоксов не могут быть пустыми."
+
+#: processes/messages/template.py:15
+msgid "A field with a type 'User' should be required."
+msgstr "Поле с типом \"Пользователь\" должно быть обязательным."
+
+#: processes/messages/template.py:16
+msgid "Workflow template name is empty."
+msgstr "Не задано имя шаблона."
+
+#: processes/messages/template.py:18
+msgid "Some of fields in \"workflow template name\" field(s) don't exist."
+msgstr "Некоторые поля в поле \"имя шаблона процесса\" не существуют."
+
+#: processes/messages/template.py:22
+msgid "If a \"workflow template name\" contains only an output fields,at least one of the fields must be required."
+msgstr "Если \"имя шаблона процесса\" содержит только значения полей, хотя бы одно из полей должно быть обязательным."
+
+#: processes/messages/template.py:25
+msgid "Kickoff form data not provided."
+msgstr "Не предоставлены входные данные процесса."
+
+#: processes/messages/template.py:26
+msgid "Kickoff form 'id' has incorrect value."
+msgstr "Переданно неправильное значение поля 'id' для формы входных данных процесса."
+
+#: processes/messages/template.py:27
+msgid "Kickoff 'id' not provided."
+msgstr "Не предоставлено поле 'id' для формы входных данных процесса."
+
+#: processes/messages/template.py:28
+msgid "Tasks data not provided, one task required."
+msgstr "Данные о задачах не предоставлены, нужна, как минимум, одна задача."
+
+#: processes/messages/template.py:29
+msgid "Incorrect tasks order."
+msgstr "Неправильный порядок задач."
+
+#: processes/messages/template.py:32
+msgid "The free plan allows {count} enabled templates.Please upgrade your plan or disable some unwanted templates."
+msgstr "На бесплатном плане может быть {count} включенных шаблонов. Пожалуйста, обновите ваш план или дезактивируйте ненужные шаблоны."
+
+#: processes/messages/template.py:37
+msgid "You should set 'template owners' value."
+msgstr "Необходимо указать 'владельцев шаблона'."
+
+#: processes/messages/template.py:39
+msgid "You have to upgrade your plan to the Premium, if you want to change template ownership."
+msgstr "Вы должны обновить свой план до Премиум, если хотите изменить владельца шаблона."
+
+#: processes/messages/template.py:42
+msgid "You cannot remove yourself from template owners."
+msgstr "Вы не можете удалить себя из владельцев шаблона."
+
+#: processes/messages/template.py:43
+msgid "One or more template owners are incorrect."
+msgstr "Один или несколько владельцев шаблона неверны."
+
+#: processes/messages/template.py:45
+msgid "Public success url is available only for customers on Premium plan."
+msgstr "Альтернативный URL успешного запуска процесса доступен только для клиентов на Премиум плане."
+
+#: processes/messages/template.py:47
+msgid "\"Public success url\" is an invalid format."
+msgstr "Поле \"Публичный URL успешного запуска процесса\" имеет недопустимый формат."
+
+#: processes/messages/template.py:49
+msgid "Filters 'with_tasks_in_progress' and 'workflows_status'cannot be used at the same time."
+msgstr "Фильтры 'with_tasks_in_progress' и 'workflows_status' не могут быть использованы одновременно"
+
+#: processes/messages/template.py:52
+msgid "Permission denied. You are not a template owner."
+msgstr "Доступ запрещен. Вы не являетесь владельцем шаблона."
+
+#: processes/messages/template.py:54
+msgid "Inconsistent permission! Should use only for \"workflow detail\" actions."
+msgstr "Противоречие в правах доступа! Следует использовать только для запросов к конкретному процессу."
+
+#: processes/messages/template.py:56
+msgid "The limit for creating a public id has been exceeded."
+msgstr "Превышен лимит на создание \"публичного идентификатора\" шаблона"
+
+#: processes/messages/template.py:57
+msgid "The limit for creating a embed id has been exceeded."
+msgstr "Превышен лимит на создание \"встраиваемого идентификатора\" шаблона"
+
+#. Translators: Template due date editor
+#: processes/messages/template.py:59
+msgid "Expected date field api_name."
+msgstr "Ожидается api_name поля типа дата."
+
+#: processes/messages/template.py:62
+msgid "Only the date fields from previous steps can be used in a due date."
+msgstr "Можно использовать только поля типа дата из предыдущих шагов в качестве Дедлайна."
+
+#. Translators: Template due date editor
+#: processes/messages/template.py:65
+msgid "Expected task api_name."
+msgstr "Ожидается api_name задачи."
+
+#: processes/messages/template.py:66
+msgid "Only previous steps are allowed for a rule."
+msgstr "В правиле могут использоваться только предыдущие шаги."
+
+#: processes/messages/template.py:67
+msgid "Only previous and current steps are allowed for a rule."
+msgstr "В правиле могут использоваться только предыдущие и текущий шаги."
+
+#: processes/messages/template.py:70
+msgid "You should set the user id for performer with the type \"user\"."
+msgstr "Вы должны установить идентификатор пользователя для исполнителя с типом \"user\""
+
+#: processes/messages/template.py:72
+msgid "Performer \"id\" should be a number."
+msgstr "Идентификатор исполнителя \"id\" должен быть числом."
+
+#: processes/messages/template.py:73
+msgid "One or more performers are incorrect."
+msgstr "Один или несколько исполнителей неверны."
+
+#: processes/messages/template.py:75
+msgid "A template with \"Workflow starter\" in the list of performers can not be shared. Please replace the \"workflow starter\" with another team member."
+msgstr "Шаблон с «Инициатором процесса» в списке исполнителей не может быть общедоступным. Пожалуйста, замените «инициатора процесса» другим членом команды."
+
+#: processes/messages/template.py:80
+msgid "You should set the field api_name for performer with the type \"field\"."
+msgstr "Вы должны установить имя поля api для исполнителя с типом \"field\""
+
+#: processes/messages/template.py:84
+msgid "Step {number}: Some fields in the step description don't exist or are used before assignment."
+msgstr "Шаг {number}: Некоторые поля в описании шага не существуют или используются до назначения."
+
+#: processes/messages/template.py:91
+msgid "Step {number}: Field in step name don't exist or are used before assignment."
+msgstr "Шаг {number}: Поле в имени шага не существует или используется до назначения."
+
+#: processes/messages/template.py:98
+msgid "Step {number}: If a step name contains only an output fields, at least one of the fields must be required."
+msgstr "Шаг {number}: Если имя шага содержит только выходные поля, хотя бы одно из полей должно быть обязательным."
+
+#: processes/messages/template.py:103
+msgid "Checklist items not exists or invalid."
+msgstr "Пункты чек-листа не существуют или указанны некорректно."
+
+#: processes/messages/template.py:106
+msgid "You can't change api_name of an existing object. Old value: \"{old}\", new value: \"{new}\"."
+msgstr "Вы не можете изменить api_name существующего объекта. Старое значеие: \"{old}\", новое значение: \"{new}\""
+
+#: processes/messages/template.py:113
+msgid "Workflow conditions are available only for customers on Premium plan."
+msgstr "Только клиенты на Премиум плане могут добавлять правила в задачи."
+
+#: processes/messages/template.py:118
+msgid "Task \"{task}\": user id \"{user_id}\" doesn't exist or can't be used in this condition."
+msgstr "Задача \"{task}\": id пользователя \"{user_id}\" не существует или не может быть использовано в этом правиле."
+
+#: processes/messages/template.py:127
+msgid "Task \"{task}\": operator \"{operator}\" can't be use with type of field \"{field_type}\"."
+msgstr "Задача \"{task}\": оператор \"{operator}\" не может быть использован с типом поля \"{field_type}\"."
+
+#: processes/messages/template.py:136
+msgid "Task \"{task}\": selection \"{selection_api_name}\" doesn't exist or can't be used in this condition."
+msgstr "Задача \"{task}\": значение поля \"{selection_api_name}\" не существует или не может быть использовано в этом правиле."
+
+#: processes/messages/template.py:144
+msgid "Task \"{task}\": operator \"{operator}\" should have some value."
+msgstr "Задача \"{task}\": Требуется передать значение для выполнения действия с оператором \"{operator}\"."
+
+#: processes/messages/template.py:150
+msgid "Step \"{step_name}\": checklist contains a non-unique api_name \"{api_name}\". Recreate checklist or change it's api_name."
+msgstr "Шаг \"{step_name}\": чек-лист содержит неуникальное имя API \"{api_name}\". Пересоздайте чек-лист или измените его имя API."
+
+#: processes/messages/template.py:159
+msgid "Step \"{step_name}\": checklist item contains a non-unique api_name \"{api_name}\". Recreate checklist item or change it's api_name."
+msgstr "Шаг \"{step_name}\": элемент чек-листа содержит неуникальное имя API \"{api_name}\". Пересоздайте элемент чек-листа или измените его имя API."
+
+#: processes/messages/template.py:168
+msgid "Step \"{step_name}\": condition contains a non-unique api_name \"{api_name}\". Recreate condition or change it's api_name."
+msgstr "Шаг \"{step_name}\": правило содержит неуникальное имя API \"{api_name}\". Пересоздайте правило или измените его имя API."
+
+#: processes/messages/template.py:177
+msgid "{step_name}: output field \"{name}\" contains a non-unique api_name \"{api_name}\". Change the api_name or recreate output field."
+msgstr "{step_name}: выходное поле \"{name}\" содержит неуникальное имя API \"{api_name}\". Измените имя API или пересоздайте выходное поле."
+
+#: processes/messages/template.py:187
+msgid "Step \"{step_name}\": condition predicate contains a non-unique api_name \"{api_name}\". Recreate condition predicate or change it's api_name."
+msgstr "Шаг \"{step_name}\": условный предикат содержит неуникальное имя API \"{api_name}\". Пересоздайте условный предикат или измените его имя API."
+
+#: processes/messages/template.py:196
+msgid "Step \"{step_name}\": due date contains a non-unique api_name \"{api_name}\". Recreate due date or change it's api_name."
+msgstr "Шаг \"{step_name}\": дата выполнения содержит неуникальное имя API \"{api_name}\". Пересоздайте дату выполнения или измените имя API."
+
+#: processes/messages/template.py:205
+msgid "Step \"{step_name}\": condition rule contains a non-unique api_name \"{api_name}\". Recreate condition rule or change it's api_name."
+msgstr "Шаг \"{step_name}\": правило содержит неуникальное имя API \"{api_name}\". Пересоздайте правило или измените его имя API."
+
+#: processes/messages/template.py:214
+msgid "{step_name}: output field \"{name}\" option \"{value}\" contains a non-unique api_name \"{api_name}\". Change the api_name or recreate option."
+msgstr "{step_name}: выходное поле \"{name}\" опция \"{value}\" содержит неуникальное api_name \"{api_name}\". Измените api_name или пересоздайте опцию."
+
+#: processes/messages/template.py:225
+msgid "Step \"{step_name}\": contains a non-unique api_name \"{api_name}\". Recreate step or change it's api_name."
+msgstr "Шаг \"{step_name}\": содержит неуникальное api_name \"{api_name}\". Пересоздайте шаг или измените его api_name."
+
+#: processes/messages/workflow.py:5
+msgid "Saving files is not available, file storage does't configured. Contact support."
+msgstr "Невозможно сохранить файл, Файловое хранилище не настроенно. Обратитесь в поддержку."
+
+#: processes/messages/workflow.py:9
+msgid "Only \"snoozed\" workflows can be resumed."
+msgstr "Только «отложенные» процессы могут быть возобновлены"
+
+#: processes/messages/workflow.py:10
+msgid "You need to resume the workflow before completing the task."
+msgstr "Вам нужно возобновить процесс перед выполнением задачи."
+
+#: processes/messages/workflow.py:11
+msgid "Task is skipped and cannot be completed."
+msgstr "Пропущенная задача не может быть завершена."
+
+#: processes/messages/workflow.py:13
+msgid "Check off all the items in the checklist before completing the task."
+msgstr "Отметьте все элементы в чек-листе, прежде чем завершить задачу."
+
+#: processes/messages/workflow.py:15
+msgid "You have already completed this task."
+msgstr "Вы уже завершили эту задачу."
+
+#: processes/messages/workflow.py:16
+msgid "You have already completed this workflow."
+msgstr "Вы уже завершили этот процесс."
+
+#: processes/messages/workflow.py:17
+msgid "You are not allowed to finish this workflow."
+msgstr "У вас нет прав для завершения данного процесса."
+
+#: processes/messages/workflow.py:18
+msgid "Task already completed."
+msgstr "Задача уже завершена."
+
+#: processes/messages/workflow.py:19
+msgid "You don't have permission for complete the task."
+msgstr "У вас нет прав для завершения задачи."
+
+#: processes/messages/workflow.py:20
+msgid "The task cannot be returned."
+msgstr "Задача не может быть возвращена."
+
+#. Translators: Task return api
+#: processes/messages/workflow.py:22
+msgid "The supplied task number is incorrect."
+msgstr "Предоставлен неверный номер задачи."
+
+#. Translators: Create / delete task performer action
+#: processes/messages/workflow.py:24
+msgid "The user with the specified credentials not found."
+msgstr "Пользователь с указанными учетными данными не найден."
+
+#: processes/messages/workflow.py:27
+msgid "You have reached the limit of the number of guest performers."
+msgstr "Вы достигли лимита числа гостей."
+
+#. Translators: Create / delete task performer action
+#: processes/messages/workflow.py:30
+msgid "Deleting the last performer is not allowed."
+msgstr "Последний исполнитель не может быть удален."
+
+#: processes/messages/workflow.py:31
+msgid "Completed workflow cannot be changed."
+msgstr "Завершенный процесс не может быть изменен."
+
+#. Translators: Create / delete task performer or fill checklist actions
+#: processes/messages/workflow.py:33
+msgid "Available for current task only."
+msgstr "Доступно только для текущей задачи."
+
+#: processes/messages/workflow.py:35
+msgid "You need to be added to the task as a performer to check off this checklist item."
+msgstr "Вы должны быть добавлены к задаче как исполнитель, чтобы отметить этот элемент чек-листа."
+
+#: processes/messages/workflow.py:39
+msgid "You need to resume the workflow before check off this checklist item."
+msgstr "Вам нужно возобновить процесс, прежде чем отмечать этот элемент чек-листа."
+
+#: processes/messages/workflow.py:41
+msgid "Permission denied."
+msgstr "Доступ запрещен."
+
+#: processes/messages/workflow.py:44
+msgid "Filters 'with_tasks_in_progress' and 'is_running_workflows' cannot be used at the same time."
+msgstr "Фильтры 'with_tasks_in_progress' и 'is_running_workflows' не могут быть использованы одновременно."
+
+#. Translators:
+#: processes/messages/workflow.py:48
+msgid "Please fill in the required fields."
+msgstr "Пожалуйста, заполните обязательные поля."
+
+#: processes/messages/workflow.py:50
+msgid "Wrong argument format: \"{arg}\"."
+msgstr "Неверный формат аргумента: \"{arg}\"."
+
+#. Translators: String field validation
+#: processes/messages/workflow.py:54
+msgid "Value should be a string."
+msgstr "Значение должно быть строкой."
+
+#: processes/messages/workflow.py:57
+msgid "The value of the field exceeds the limit of {limit} characters."
+msgstr "Значение поля превысило лимит в {limit} символов."
+
+#. Translators: Dropdown / radio / checkbox selections validation
+#: processes/messages/workflow.py:63
+msgid "Selection with the given id does not exist."
+msgstr "Значение поля с указнным id не существует."
+
+#. Translators: Checkbox selections validation
+#: processes/messages/workflow.py:65
+msgid "Checkbox value should be a list."
+msgstr "Значение поля \"чекбокс\" должно быть списоком."
+
+#. Translators: Checkbox selections validation
+#: processes/messages/workflow.py:67
+msgid "Checkbox value contains invalid selections."
+msgstr "В поле \"чекбокс\" указазны некорректные значения"
+
+#. Translators: Checkbox selections validation
+#: processes/messages/workflow.py:69
+msgid "Checkbox value contains non existent selections."
+msgstr "В поле \"чекбокс\" выбраны несуществующие значения."
+
+#. Translators: Date field validation
+#: processes/messages/workflow.py:71
+msgid "Date value should be a string. Format: MM/DD/YYYY."
+msgstr "Значение в поле \"дата\" должно быть строкой. Формат: ММ/ДД/ГГГГ."
+
+#. Translators: Date field validation
+#: processes/messages/workflow.py:73
+msgid "Invalid date format. Should be MM/DD/YYYY."
+msgstr "Неверный формат даты. Должен быть ММ/ДД/ГГГГ."
+
+#. Translators: URL field validation
+#: processes/messages/workflow.py:75
+msgid "URL field value should be a string."
+msgstr "Значение в поле \"URL\" должно быть строкой."
+
+#. Translators: URL field validation
+#: processes/messages/workflow.py:77
+msgid "The URL is invalid."
+msgstr "Указан некорректный URL."
+
+#. Translators: File field validation
+#: processes/messages/workflow.py:79
+msgid "File value should be a list of integers."
+msgstr "Значение поля \"Файл\" должно быть массивом целых чисел."
+
+#. Translators: File field validation
+#: processes/messages/workflow.py:81
+msgid "Attachment not found."
+msgstr "Вложение не найдено."
+
+#. Translators: User field validation
+#: processes/messages/workflow.py:83
+msgid "The value must be the ID of an existing account user."
+msgstr "Значение должно быть идентификатором существующего пользователя."
+
+#: processes/messages/workflow.py:84
+msgid "Account user with given id does not exist."
+msgstr "Пользователь с данным идентификатором не существует в данной учетной записи."
+
+#: processes/messages/workflow.py:85
+msgid "Save attachments failed. Service unavailable."
+msgstr "Сохранение вложения невозможно. Сервис недоступен."
+
+#: processes/messages/workflow.py:86
+msgid "Blob object doesn't exist."
+msgstr "Объект \"Blob\" не существует."
+
+#: processes/messages/workflow.py:87
+msgid "AI service is temporarily unavailable."
+msgstr "ИИ сервис временно недоступен."
+
+#. Translators: AI template generation
+#: processes/messages/workflow.py:89
+msgid "Could not create template from given description."
+msgstr "Не удалось создать шаблон из данного описания."
+
+#: processes/messages/workflow.py:91
+msgid "You've reached the limit for free AI powered template generation requests, sign up for a premium account to get unlimited access."
+msgstr "Вы достигли лимита бесплатных запросов на генерацию шаблонов с помощью ИИ, подпишитесь на премиум-аккаунт для получения неограниченного доступа."
+
+#: processes/messages/workflow.py:96
+msgid "Something seems to be wrong with your input, please try re phrasing your process name and description."
+msgstr "Что-то не так с вашим промытом, пожалуйста, попробуйте переформулировать название и описание вашего процесса"
+
+#: processes/messages/workflow.py:101
+msgid "You need to set up a system prompt for template generation. Contact administrator."
+msgstr "Необходимо настроить системный запрос для генерации шаблона. Свяжитесь с администратором."
+
+#. Translators: Comment create validation
+#: processes/messages/workflow.py:105
+msgid "You need to specify the comment text or attachments."
+msgstr "Необходимо указать текст или вложение комментария."
+
+#: processes/messages/workflow.py:106
+msgid "You cannot write a comment on a completed workflow."
+msgstr "Вы не можете написать комментарий к завершенному процессу."
+
+#: processes/messages/workflow.py:107
+msgid "You cannot change a deleted comment."
+msgstr "Вы не можете изменить удаленный комментарий."
+
+#: processes/messages/workflow.py:109
+msgid "The size limit for attachments is {mb} Mb."
+msgstr "Лимит размера вложений составляет {mb} Мб."
+
+#. Translators: Set task / workflow due date
+#: processes/messages/workflow.py:113
+msgid "Due date should be greater than current."
+msgstr "Дата выполнения должна быть больше текущей."
+
+#. Translators: Starting workflow. Validate user field
+#: processes/messages/workflow.py:115
+msgid "Field with type \"User\" should be required."
+msgstr "Поле с типом \"User\" должно быть обязательным."
+
+#: processes/messages/workflow.py:118
+msgid "The default value for a field with type \"User\" should be an integer."
+msgstr "Значение по умолчанию для поля с типом \"User\" должно быть целым числом."
+
+#: processes/messages/workflow.py:120
+msgid "The user for a field with type \"User\" does not exist."
+msgstr "Не найден пользователь указанный в поле с типом \"User\"."
+
+#. Translators: Starting workflow. Validate dropdown / radio / checkbox
+#: processes/messages/workflow.py:122
+msgid "Field selections not provided."
+msgstr "Элементы поля не указаны."
+
+#: processes/messages/workflow.py:123
+msgid "Checklist element length limit exceeded. Limit 2000 chars."
+msgstr "Превышен лимит длины элемента чек-листа. Лимит 2000 символов."
+
+#. Translators: Task list filter by performer
+#: processes/messages/workflow.py:125
+msgid "Filter by \"assigned_to\" is only allowed for the admin."
+msgstr "Фильтр по \"assigned_to\" разрешен только для роли администратора."
+
+#: processes/messages/workflow.py:126
+msgid "Checklist item with given id not found."
+msgstr "Элемент чек-листа с данным идентификатором не найден."
+
+#. Translators: System template creation validation
+#: processes/messages/workflow.py:128
+msgid "You can't pass the `id` field."
+msgstr "Нельзя применять поле \"id\"."
+
+#. Translators: System template creation validation
+#: processes/messages/workflow.py:130
+msgid "Radio and checkbox fields must have non-empty selections."
+msgstr "Поля с радиокнопками и флажками должны иметь непустые значения."
+
+#. Translators: System template kickoff creation validation
+#: processes/messages/workflow.py:132
+msgid "Value should be a object."
+msgstr "Значение должно быть объектом."
+
+#. Translators: System template fields creation validation
+#: processes/messages/workflow.py:134
+msgid "Value should be a list."
+msgstr "Значение должно быть списком."
+
+#. Translators: System template tasks creation validation
+#: processes/messages/workflow.py:136
+msgid "Incorrect order of tasks."
+msgstr "Неверный порядок задач."
+
+#: processes/messages/workflow.py:140
+msgid "Some fields in tasks descriptions don't exist or are used before assignment. Tasks number(s): {tasks_numbers}."
+msgstr "Некоторые поля в описаниях задач не существуют или используются до назначения. Задача: {tasks_numbers}"
+
+#. Translators: System template creation validation
+#: processes/messages/workflow.py:149
+msgid "You must pass an \"api_name\" into every field you declare."
+msgstr "Вы должны передать 'api_name' в каждое поле, которое вы объявляете."
+
+#: processes/messages/workflow.py:151
+msgid "Your template is disabled. Please, enable this template before running."
+msgstr "Ваш шаблон отключен. Пожалуйста, включите этот шаблон перед запуском."
+
+#: processes/messages/workflow.py:154
+msgid "Only \"in-progress\" workflows can be filtered by current performer."
+msgstr "Только процессы в статусе \"в процессе\" могут быть отфильтрованы по текущему исполнителю."
+
+#: processes/messages/workflow.py:156
+msgid "You can't snooze the first task in a workflow."
+msgstr "Вы не можете поставить на паузу первую задачу в процессе."
+
+#: processes/messages/workflow.py:157
+msgid "You should provide \"due_date\" or \"due_date_tsp\" field."
+msgstr "Вам следует указать поле \"due_date\" или \"due_date_tsp\"."
+
+#: processes/messages/workflow.py:159
+msgid "The task can't be completed until all the embedded workflows are done."
+msgstr "Задача не может быть завершена до завершения всех встроенных процессов."
+
+#: processes/messages/workflow.py:162
+msgid "The task can't be returned until all the embedded workflows are done."
+msgstr "Задача не может быть возвращена, пока все встроенные рабочие процессы не завершены."
+
+#: processes/messages/workflow.py:164
+msgid "Snoozed workflow cannot be changed."
+msgstr "Отложенный рабочий процесс не может быть изменен."
+
+#: processes/messages/workflow.py:165
+msgid "Completed task cannot be changed."
+msgstr "Выполненная задача не может быть изменена."
+
+#: processes/messages/workflow.py:167
+msgid "Creation of a embedded workflows is available only to the current task of workflow."
+msgstr "Создание встроенных процессов доступно только для текущей задачи рабочего процесса."
+
+#: processes/messages/workflow.py:171
+msgid "You need to be added to the task as a performer in order to create a embedded workflows."
+msgstr "Вам необходимо быть исполнителем в задаче, чтобы создать встроенные процессы."
