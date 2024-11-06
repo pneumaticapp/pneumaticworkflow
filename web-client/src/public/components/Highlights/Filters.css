@@ -1,0 +1,119 @@
+.filter-container:not(:last-child) {
+  margin-bottom: 16px;
+}
+
+.datepicker__input {
+  transition: 0.1s ease-in-out all;
+}
+
+.datepicker__calendar_end-date {
+  @media screen and (max-width: 585px) {
+    right: 130px;
+  }
+}
+
+.checkbox__label {
+  display: block;
+  overflow: hidden;
+  max-width: 100%;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.filter__button-show-all {
+  padding: 0;
+  background: none;
+  border: none;
+  transition: 0.1s ease-in-out all;
+
+  &:active {
+    scale: 0.98;
+  }
+
+  &:hover {
+    span {
+      color: #e79a26;
+    }
+  }
+
+  &:disabled {
+    pointer-events: none;
+    opacity: 0.5;
+  }
+
+  span {
+    font-family: Nunito, sans-serif;
+    font-size: 13px;
+    line-height: 16px;
+    color: #fec336;
+  }
+}
+
+/* stylelint-disable-next-line selector-pseudo-class-no-unknown */
+:global {
+  .react-datepicker-wrapper {
+    /* stylelint-disable-next-line selector-max-compound-selectors */
+    .react-datepicker__input-container input:focus {
+      /* stylelint-disable-next-line declaration-no-important */
+      border-color: #979795 !important;
+    }
+  }
+}
+
+.filter__input {
+  margin-bottom: 16px;
+  padding: 9px 16px;
+  box-sizing: border-box;
+  width: 100%;
+  font-family: Nunito, sans-serif;
+  font-size: 15px;
+  line-height: 20px;
+  background: #f6f6f6;
+  border: 1px solid #dcdcdb;
+  border-radius: 6px;
+  outline: none;
+  transition: 0.1s ease-in-out all;
+
+  &:focus {
+    border-color: #979795;
+  }
+
+  &:disabled {
+    pointer-events: none;
+    opacity: 0.5;
+  }
+}
+
+.workflows-filter__placeholder {
+  font-family: Nunito, sans-serif;
+  font-size: 15px;
+  line-height: 20px;
+  color: #62625f;
+}
+
+.filter__checkboxes_disabled {
+  pointer-events: none;
+  opacity: 0.5;
+}
+
+.filter__spinner {
+  /* stylelint-disable-next-line declaration-no-important */
+  position: absolute !important;
+  left: 50%;
+}
+
+.mr-1 {
+  margin-right: 10px;
+}
+
+.mb-1 {
+  margin-bottom: 7px;
+}
+
+.mb-2 {
+  margin-bottom: 12px;
+}
+
+.mb-4 {
+  margin-bottom: 24px;
+}

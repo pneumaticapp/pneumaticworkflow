@@ -1,0 +1,23 @@
+.circ-progress-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: max-content;
+
+  .bg,
+  .progress {
+    transform: rotate(108deg);
+    transform-origin: center;
+  }
+
+  .text {
+    position: absolute;
+    font-family: 'Abhaya Libre', serif;
+    font-size: 20px;
+    font-weight: 800;
+    font-style: normal;
+    line-height: 24px;
+    text-align: center;
+    color: #b9b9b8;
+  }
+}

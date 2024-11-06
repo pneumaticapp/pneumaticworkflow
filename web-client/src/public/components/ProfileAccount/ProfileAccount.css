@@ -1,0 +1,38 @@
+/* stylelint-disable declaration-no-important */
+.header {
+  margin-bottom: 32px;
+  padding: 0;
+  display: block;
+  text-align: center;
+}
+
+.settings-form {
+  padding: 80px;
+  width: inherit;
+  background: white;
+  border-radius: 24px;
+  align-self: auto;
+
+  @media (--mobile) {
+    padding: 32px;
+  }
+}
+
+.fields-group {
+  &:not(:last-child) {
+    margin-bottom: 32px;
+  }
+}
+
+.fields-group__title {
+  margin-bottom: 16px;
+}
+
+.submit-button {
+  margin-top: 32px;
+  width: 100%;
+}
+
+.field {
+  margin-bottom: 32px;
+}

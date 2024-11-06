@@ -1,0 +1,70 @@
+/* stylelint-disable declaration-no-important */
+.container {
+  position: relative;
+}
+
+.kickoff__title {
+  font-family: Nunito, sans-serif;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 16px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #b9b9b8;
+}
+
+.kickoff__description {
+  margin: 0 0 16px;
+  font-family: Nunito, sans-serif;
+  font-size: 15px;
+  line-height: 20px;
+  word-break: break-word;
+  color: #262522;
+}
+
+.kickoff__field {
+  margin: 0 0 20px;
+
+  /* stylelint-disable-next-line */
+  :global .react-datepicker-wrapper input {
+    padding: 14px 50px 14px 16px !important;
+    width: 100% !important;
+    font-family: Nunito, sans-serif !important;
+    font-size: 15px !important;
+    line-height: 20px !important;
+    color: #262522 !important;
+    background: white !important;
+    border: 1px solid #dcdcdb !important;
+    border-radius: 8px !important;
+    outline: none !important;
+    transition: 0.15s ease-in border-color !important;
+
+    /* stylelint-disable-next-line selector-max-compound-selectors */
+    &:focus {
+      border-color: #979795 !important;
+    }
+
+    /* stylelint-disable-next-line selector-max-compound-selectors */
+    &::placeholder {
+      color: var(--default-placeholder-color) !important;
+    }
+  }
+
+  /* stylelint-disable-next-line */
+  :global .extra-field-name {
+    background: white !important;
+  }
+}
+
+.kickoff-buttons {
+  display: flex;
+
+  @media (--mobile) {
+    flex-flow: column;
+    align-items: center;
+  }
+}
+
+.kickoff-buttons__cancel {
+  margin-left: 16px;
+}

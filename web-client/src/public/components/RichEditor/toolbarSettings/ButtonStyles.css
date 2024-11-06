@@ -1,0 +1,23 @@
+/* stylelint-disable selector-class-pattern */
+.buttonWrapper {
+  margin: 0 4px;
+  width: 24px;
+  height: 24px;
+  align-items: center;
+  justify-content: center;
+}
+
+.button {
+  all: unset;
+  color: var(--pneumatic-color-black32);
+}
+
+.button:hover,
+.button:focus {
+  color: var(--pneumatic-color-link-hover);
+  outline: 0;
+}
+
+.active {
+  color: var(--pneumatic-color-link-hover);
+}

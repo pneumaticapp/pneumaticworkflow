@@ -1,0 +1,84 @@
+/* stylelint-disable selector-max-compound-selectors */
+.due-date {
+  all: unset;
+  display: inline;
+}
+
+.due-date__inner {
+  margin: 0 -4px;
+  display: inline-flex;
+  align-items: center;
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 16px;
+  color: #4caf50;
+  transition: color 0.1s ease-in-out;
+
+  @media (--mobile) {
+    flex-flow: row-reverse;
+  }
+
+  .icon {
+    color: #4caf50;
+  }
+
+  &.overdue {
+    color: var(--error-color);
+
+    .icon {
+      color: var(--error-color);
+    }
+  }
+
+  &.not-set {
+    color: var(--pneumatic-color-link-dark);
+
+    .icon {
+      color: var(--pneumatic-color-black72);
+    }
+  }
+
+  &:hover {
+    color: var(--pneumatic-color-link-hover);
+  }
+}
+
+.due-date__status {
+  margin: 0 4px;
+}
+
+.icon {
+  margin: 0 4px;
+}
+
+.datepicker-controls {
+  display: flex;
+}
+
+.datepicker-controls__remove {
+  margin-left: 16px;
+}
+
+.tooltip-label {
+  white-space: nowrap;
+}
+
+.time-block {
+  margin-bottom: 16px;
+
+  .time-block__input {
+    padding-right: 50px;
+    text-overflow: ellipsis;
+  }
+
+  .time-block__hint {
+    position: absolute;
+    top: 0;
+    right: 16px;
+    display: flex;
+    height: 40px;
+    align-items: center;
+    font-size: 15px;
+    color: var(--pneumatic-color-black16);
+  }
+}

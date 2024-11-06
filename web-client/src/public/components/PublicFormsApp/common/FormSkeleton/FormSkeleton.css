@@ -1,0 +1,37 @@
+.form-skeleton {
+  margin-bottom: 1rem;
+  overflow: visible;
+  width: 100%;
+  background-color: white;
+  border-radius: 24px;
+}
+
+.form-skeleton__data {
+  position: relative;
+  padding: 32px 32px 0;
+  display: flex;
+  overflow: hidden;
+  flex-flow: column;
+  background-color: white;
+  border-radius: 24px;
+
+  @media (--mobile) {
+    padding-bottom: 12px;
+  }
+}
+
+.form-skeleton__links {
+  padding: 0 32px 22px;
+  display: flex;
+  align-items: center;
+  min-height: 32px;
+
+  @media (--mobile) {
+    padding-bottom: 28px;
+  }
+}
+
+.form-skeleton__button {
+  margin-left: auto;
+  display: inline-block;
+}

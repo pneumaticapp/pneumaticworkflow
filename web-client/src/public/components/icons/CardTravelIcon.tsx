@@ -1,0 +1,13 @@
+/* eslint-disable */
+/* prettier-ignore */
+import * as React from 'react';
+
+export type TCardTravelIconProps = React.SVGAttributes<SVGElement>;
+
+export function CardTravelIcon({fill= 'currentColor', ...rest}: TCardTravelIconProps) {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="26" viewBox="0 0 28 26" fill={fill} {...rest}>
+      <path fillRule="evenodd" clipRule="evenodd" d="M20.667 6.00008H24.667C26.147 6.00008 27.3337 7.18675 27.3337 8.66675V23.3334C27.3337 24.8134 26.147 26.0001 24.667 26.0001H3.33366C1.85366 26.0001 0.666992 24.8134 0.666992 23.3334V8.66675C0.666992 7.18675 1.85366 6.00008 3.33366 6.00008H7.33366V3.33341C7.33366 1.85341 8.52033 0.666748 10.0003 0.666748H18.0003C19.4803 0.666748 20.667 1.85341 20.667 3.33341V6.00008ZM18.0003 3.33341H10.0003V6.00008H18.0003V3.33341ZM24.667 23.3334H3.33366V20.6667H24.667V23.3334ZM3.33366 16.6667H24.667V8.66675H20.667V11.3334H18.0003V8.66675H10.0003V11.3334H7.33366V8.66675H3.33366V16.6667Z"/>
+    </svg>
+  );
+}

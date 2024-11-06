@@ -1,0 +1,4 @@
+Hey {{name}}!
+
+Task "{{task_name}}" on process "{{process_name}}" waits for your solution.
+Here is your tasks board: {{tasks_url}}

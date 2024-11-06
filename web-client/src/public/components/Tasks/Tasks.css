@@ -1,0 +1,143 @@
+/* stylelint-disable declaration-no-important */
+.container {
+  margin: 0 auto;
+  display: flex;
+  max-width: 1088px;
+  min-height: 100%;
+
+  @media (--mobile) {
+    flex-direction: column;
+    width: 100%;
+  }
+}
+
+.page-title {
+  display: block;
+  color: var(--pneumatic-color-black100);
+}
+
+.container--loading {
+  pointer-events: none;
+}
+
+.left-area {
+  margin-right: 64px;
+  width: 272px;
+  flex-shrink: 0;
+
+  @media (--mobile) {
+    margin-right: 0;
+    width: 100%;
+  }
+}
+
+.left-area__inner {
+  position: fixed;
+  top: 104px;
+  width: 272px;
+
+  &.left-area__inner_with-paywall {
+    top: 128px;
+  }
+
+  @media (--mobile) {
+    position: static;
+    width: 100%;
+  }
+}
+
+.right-area {
+  flex-grow: 1;
+  min-width: 100px;
+  flex-basis: 0;
+}
+
+.task {
+  @media (--mobile) {
+    display: none;
+  }
+}
+
+.cards {
+  margin-top: 16px;
+  margin-right: -8px;
+  overflow: auto;
+  height: calc(100vh - 265px);
+
+  @media (--mobile) {
+    width: 100%;
+    height: auto;
+  }
+
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: #dcdcdb;
+    border-radius: 2px;
+  }
+}
+
+.cards__item {
+  width: 272px;
+
+  &:not(:last-child) {
+    margin-bottom: 8px;
+  }
+
+  @media (--mobile) {
+    width: 100%;
+  }
+}
+
+.search-field {
+  /* stylelint-disable-next-line */
+  height: 40px !important;
+  /* stylelint-disable-next-line */
+  background: transparent !important;
+}
+
+.search-field__label {
+  margin-bottom: 0;
+  width: 100%;
+}
+
+.empty-list-placeholder {
+  margin-top: 16px;
+  display: block;
+  font-family: var(--pneumatic-font-serif);
+  font-size: 20px;
+  font-weight: 800;
+  line-height: 24px;
+  text-align: center;
+  color: var(--pneumatic-color-black32);
+}
+
+.placeholder {
+  @media (--mobile) {
+    margin-top: 32px;
+  }
+}
+
+.placeholder-footer {
+  display: flex;
+  flex-direction: column;
+}
+
+.placeholder-footer__run-workflow {
+  margin-bottom: 16px;
+}
+
+.placeholder__link {
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 16px;
+  text-align: center;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--pneumatic-color-link-dark);
+  background: none;
+  border: none;
+  transition: 0.1s ease-in-out all;
+}

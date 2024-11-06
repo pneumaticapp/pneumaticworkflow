@@ -1,0 +1,11 @@
+.close-button {
+  position: absolute;
+  top: 50%;
+  right: 37px;
+  padding: 0;
+  cursor: pointer;
+  color: inherit;
+  background-color: transparent;
+  border: 0;
+  transform: translateY(-50%);
+}

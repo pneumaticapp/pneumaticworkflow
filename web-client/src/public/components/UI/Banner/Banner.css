@@ -1,0 +1,37 @@
+.banner {
+  margin-bottom: 32px;
+  padding: 32px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: var(--pneumatic-color-beige);
+  border-radius: 24px;
+
+  @media (--mobile) {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  &__text {
+    flex-shrink: 1;
+    margin: 0;
+    margin-right: 16px;
+    font-size: 15px;
+    font-weight: bold;
+    line-height: 20px;
+    color: var(--pneumatic-color-black100);
+
+    @media (--mobile) {
+      margin-right: 0;
+      margin-bottom: 16px;
+    }
+  }
+
+  &__btn {
+    flex-shrink: 0;
+
+    @media (--mobile) {
+      width: 100%;
+    }
+  }
+}

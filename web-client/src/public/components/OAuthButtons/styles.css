@@ -1,0 +1,37 @@
+.button {
+  &.is-google {
+    color: var(--google-color);
+    background: var(--google-color-light);
+    border-color: var(--google-color-light);
+
+    &:hover {
+      color: white;
+      background: var(--google-color);
+      border-color: var(--google-color);
+    }
+  }
+
+  &.is-microsoft {
+    color: var(--microsoft-color);
+    background: var(--microsoft-color-light);
+    border-color: var(--microsoft-color-light);
+
+    &:hover {
+      color: white;
+      background: var(--microsoft-color);
+      border-color: var(--microsoft-color);
+    }
+  }
+
+  &.is-sso {
+    color: var(--pneumatic-color-black72);
+    background: var(--pneumatic-color-black4);
+    border-color: var(--pneumatic-color-black4);
+
+    &:hover {
+      color: white;
+      background: var(--pneumatic-color-black72);
+      border-color: var(--pneumatic-color-black72);
+    }
+  }
+}

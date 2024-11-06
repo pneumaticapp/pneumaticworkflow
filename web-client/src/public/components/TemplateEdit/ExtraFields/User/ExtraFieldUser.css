@@ -1,0 +1,92 @@
+.dropdown-container {
+  position: relative;
+  width: 100%;
+
+  /* stylelint-disable selector-pseudo-class-no-unknown, declaration-no-important  */
+  :global .react-select__control {
+    padding-top: 1.1rem !important;
+    padding-bottom: 1.1rem !important;
+    font-family: Nunito, sans-serif;
+    font-size: 15px;
+    line-height: 20px;
+    color: #262522;
+    border-color: #dcdcdb !important;
+    border-radius: 8px !important;
+    outline: none;
+    transition: 0.15s ease-in border-color;
+
+    &:focus {
+      border-color: #979795 !important;
+    }
+
+    &:focus-within {
+      border-color: #979795 !important;
+      border-bottom-color: #b9b9b8 !important;
+    }
+
+    &:disabled {
+      cursor: text;
+      color: #b9b9b8 !important;
+      background-color: white;
+    }
+
+    &::placeholder {
+      color: var(--default-placeholder-color) !important;
+    }
+  }
+
+  :global .react-select__multi-value__label {
+    color: #262522 !important;
+  }
+  :global .react-select__single-value {
+    color: #262522 !important;
+  }
+  /* stylelint-enable */
+}
+.kickoff-create-field-container {
+  flex-grow: 1;
+  max-width: calc(100% - 40px);
+
+  .measure {
+    position: absolute;
+    top: -99999px;
+    left: -99999px;
+    font-family: Nunito, sans-serif;
+    font-size: 15.04px;
+    line-height: 16px;
+  }
+}
+
+.kickoff-create-field-name {
+  position: relative;
+  display: inline-block;
+  max-width: 100%;
+}
+
+.kickoff-create-field-name-input {
+  margin-bottom: 8px;
+  max-width: calc(100% - 5px);
+  border: none;
+
+  &:focus {
+    outline: none;
+  }
+
+  &:disabled {
+    cursor: text;
+    background: white;
+  }
+}
+
+.kickoff-dropdown-field {
+  margin-bottom: 8px;
+}
+
+.kickoff-create-field__error-text {
+  margin-top: 4px;
+  margin-bottom: 0;
+  font-family: Nunito, sans-serif;
+  font-size: 13px;
+  line-height: 16px;
+  color: #fc5b67;
+}

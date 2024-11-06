@@ -1,0 +1,36 @@
+/* stylelint-disable declaration-no-important */
+
+.container {
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 340px;
+  background-color: white;
+  border-radius: 24px;
+  transition: box-shadow 0.2s ease-in-out;
+
+  &:hover {
+    box-shadow: 0 8px 24px rgba(98, 98, 95, 0.08);
+  }
+}
+
+.card-image-wrapper {
+  padding: 32px 0 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 176px;
+}
+
+.card-image {
+  max-width: 100%;
+  max-height: 100%;
+}
+
+.card-description {
+  margin: 0;
+  font-size: 15px;
+  text-align: center;
+  color: #62625f;
+}

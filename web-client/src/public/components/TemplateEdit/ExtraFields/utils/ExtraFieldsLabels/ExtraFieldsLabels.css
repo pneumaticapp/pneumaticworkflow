@@ -1,0 +1,23 @@
+.extra-field-label {
+  margin: 0 8px 8px 0;
+  padding: 1px 8px;
+  display: inline-block;
+  overflow: hidden;
+  max-width: 20ch;
+  font-size: 13px;
+  line-height: 16px;
+  vertical-align: middle;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  user-select: all;
+  color: var(--pneumatic-color-black48);
+  background: #f6f6f6;
+  border: 0;
+  border-radius: 14px;
+  justify-content: space-between;
+}
+
+.extra-field-label_clickable {
+  cursor: pointer;
+  user-select: none;
+}

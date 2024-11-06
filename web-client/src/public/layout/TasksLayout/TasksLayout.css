@@ -1,0 +1,35 @@
+.navbar-left__content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  @media (--mobile) {
+    width: 100%;
+    justify-content: center;
+    flex-flow: column nowrap;
+  }
+}
+
+.filters {
+  display: flex;
+  align-items: center;
+
+  @media (--mobile) {
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+  }
+
+  & > *:not(:last-child) {
+    margin-right: 8px;
+
+    @media (--mobile) {
+      margin-right: 0;
+      margin-bottom: 8px;
+    }
+  }
+
+  button {
+    white-space: nowrap;
+  }
+}

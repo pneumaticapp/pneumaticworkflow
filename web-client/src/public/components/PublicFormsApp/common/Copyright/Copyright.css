@@ -1,0 +1,16 @@
+.copyright {
+  margin: 0;
+  font-size: 15px;
+  line-height: 20px;
+  text-align: center;
+  color: var(--pneumatic-color-black32);
+}
+
+.copyright__link {
+  color: var(--pneumatic-color-link-dark);
+  transition: color 0.1s ease-in-out;
+
+  &:hover {
+    color: var(--pneumatic-color-link-hover);
+  }
+}

@@ -1,0 +1,108 @@
+/* stylelint-disable selector-max-specificity */
+
+.checkbox {
+  margin: 0;
+  padding: 0;
+  display: flex;
+  cursor: pointer;
+
+  &__input {
+    display: none;
+  }
+
+  &__box {
+    position: relative;
+    margin-right: 0.8rem;
+    box-sizing: border-box;
+    width: 2rem;
+    height: 2rem;
+    background-color: transparent;
+    border: 0.1rem solid var(--pneumatic-color-black16);
+    border-radius: 0.4rem;
+    flex-shrink: 0;
+    transition: all 0.1s ease;
+
+    &::before,
+    &::after {
+      display: block;
+      content: '';
+      opacity: 0;
+    }
+
+    /* check symbol */
+    &::before {
+      width: 2rem;
+      height: 2rem;
+      background: url("data:image/svg+xml,%0A%3Csvg width='16' height='16' viewBox='0 0 16 16' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M5.81818 10.7166L2.95455 7.79121L2 8.76633L5.81818 12.6668L14 4.30862L13.0455 3.3335L5.81818 10.7166Z' fill='%23262522'/%3E%3C/svg%3E%0A") no-repeat center center / 1.6rem;
+    }
+
+    /* indeterminate symbol */
+    &::after {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 1.2rem;
+      height: 0.2rem;
+      background-color: var(--pneumatic-color-black100);
+      transform: translate(-50%, -50%);
+    }
+  }
+
+  &__title {
+    margin: 0;
+  }
+
+  &:hover {
+    .checkbox__input:not(:disabled):not(:checked):not(:indeterminate) + .checkbox__box,
+    .checkbox__input:focus-visible + .checkbox__box {
+      border-color: var(--pneumatic-color-black48);
+    }
+
+    /* Checked and hovered/focused */
+    .checkbox__input:not(:disabled):checked + .checkbox__box,
+    .checkbox__input:checked:focus-visible + .checkbox__box {
+      background-color: var(--pneumatic-color-link-hover);
+
+      &::before {
+        background-image: url("data:image/svg+xml,%0A%3Csvg width='16' height='16' viewBox='0 0 16 16' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M5.81818 10.7166L2.95455 7.79121L2 8.76633L5.81818 12.6668L14 4.30862L13.0455 3.3335L5.81818 10.7166Z' fill='white'/%3E%3C/svg%3E%0A");
+        opacity: 1;
+      }
+    }
+
+    /* Indeterminate and hovered/focused */
+    .checkbox__input:not(:disabled):indeterminate + .checkbox__box,
+    .checkbox__input:indeterminate:focus-visible + .checkbox__box {
+      background-color: var(--pneumatic-color-link-hover);
+
+      &::after {
+        background-color: white;
+        opacity: 1;
+      }
+    }
+  }
+
+  /* Checked */
+  .checkbox__input:checked + .checkbox__box {
+    background-color: var(--pneumatic-color-link);
+    border: 0;
+
+    &::before {
+      opacity: 1;
+    }
+  }
+
+  /* Indeterminate */
+  .checkbox__input:indeterminate + .checkbox__box {
+    background-color: var(--pneumatic-color-link);
+    border: 0;
+
+    &::after {
+      opacity: 1;
+    }
+  }
+
+  /* Disabled */
+  .checkbox__input:disabled + .checkbox__box {
+    opacity: 0.32;
+  }
+}

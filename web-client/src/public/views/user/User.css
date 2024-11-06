@@ -1,0 +1,89 @@
+.title {
+  margin-bottom: 32px;
+  text-align: center;
+}
+
+.oauth {
+  margin: -4px;
+  display: flex;
+
+  @media (--mobile) {
+    flex-direction: column;
+  }
+
+  &__button {
+    margin: 4px;
+    width: 100%;
+  }
+}
+
+.divider {
+  position: relative;
+  margin: 16px 0;
+  text-align: center;
+
+  &::before {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    width: 100%;
+    content: '';
+    border-top: 1px solid var(--pneumatic-color-black16);
+  }
+
+  p {
+    position: relative;
+    margin: 0;
+    padding: 0 8px;
+    display: inline-block;
+    color: var(--pneumatic-color-black48);
+    background: white;
+  }
+}
+
+.form {
+  &__field + &__field {
+    margin-top: 8px;
+  }
+
+  &__captcha {
+    margin-top: 8px;
+    max-width: 100%;
+  }
+
+  &__terms {
+    margin: 16px 0 0;
+    font-size: 15px;
+    line-height: 20px;
+    text-align: center;
+  }
+
+  &__settings {
+    margin: 16px 0;
+    display: flex;
+    line-height: 20px;
+    justify-content: space-between;
+  }
+
+  &__submit {
+    margin-top: 16px;
+    width: 100%;
+  }
+}
+
+.footnote {
+  margin-top: 32px;
+  line-height: 20px;
+  text-align: center;
+  color: var(--pneumatic-color-black72);
+}
+
+.link {
+  line-height: 20px;
+  color: var(--pneumatic-color-link-dark);
+  transition: color 0.1s ease-in-out;
+
+  &:hover {
+    color: var(--pneumatic-color-link-hover);
+  }
+}

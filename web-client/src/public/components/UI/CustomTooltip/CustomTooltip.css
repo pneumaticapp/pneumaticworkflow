@@ -1,0 +1,67 @@
+/* stylelint-disable declaration-no-important */
+
+.tooltip {
+  .inner {
+    padding: 4px 8px;
+    white-space: pre-line;
+    background: #62625f;
+    border: none;
+    border-radius: 8px;
+
+    a {
+      color: var(--pneumatic-color-link);
+
+      &:hover {
+        color: var(--pneumatic-color-link-hover) !important;
+      }
+    }
+
+    p {
+      margin-bottom: 0;
+      display: block;
+      font-family: Nunito, sans-serif;
+      font-size: 13px;
+      line-height: 16px;
+      text-align: center;
+      color: #fdf7ee;
+    }
+
+    span,
+    b {
+      display: block;
+    }
+  }
+
+  .title {
+    font-weight: bold;
+  }
+
+  .custom-arrow {
+    &::after,
+    &::before {
+      display: none !important;
+    }
+
+    width: 12px !important;
+    height: 4px !important;
+    background: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTIiIGhlaWdodD0iNCIgdmlld0JveD0iMCAwIDEyIDQiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxwYXRoIGQ9Ik0xMiAwSDZWNEM2IDEuNzkwODYgOC42ODYyOSAwIDEyIDBaIiBmaWxsPSIjNjI2MjVGIi8+CjxwYXRoIGQ9Ik0wIDBINlY0QzYgMS43OTA4NiAzLjMxMzcxIDAgMCAwWiIgZmlsbD0iIzYyNjI1RiIvPgo8L3N2Zz4K');
+    border: none !important;
+  }
+
+  .custom-arrow_top {
+    top: 2px !important;
+    transform: rotate(180deg);
+  }
+
+  .custom-arrow_bottom {
+    bottom: 3px !important;
+  }
+}
+
+.tooltip_md {
+  max-width: 192px;
+}
+
+.tooltip_lg {
+  max-width: 304px;
+}
