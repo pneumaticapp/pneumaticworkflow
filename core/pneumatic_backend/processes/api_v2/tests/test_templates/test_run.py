@@ -25,6 +25,8 @@ from pneumatic_backend.processes.tests.fixtures import (
     create_test_account,
     create_test_workflow,
     create_test_guest,
+    create_wf_created_webhook,
+    create_wf_completed_webhook,
 )
 from pneumatic_backend.processes.api_v2.serializers.workflow.events import (
     TaskEventJsonSerializer
@@ -70,12 +72,18 @@ pytestmark = pytest.mark.django_db
 
 def test_run__all__ok(api_client, mocker):
     # arrange
-
+    webhook_payload = mocker.Mock()
+    mocker.patch(
+        'pneumatic_backend.processes.models.workflows.workflow.Workflow'
+        '.webhook_payload',
+        return_value=webhook_payload
+    )
     mocker.patch(
         'pneumatic_backend.processes.services.workflow_action.'
         'WorkflowEventService.workflow_run_event'
     )
     user = create_test_user()
+    create_wf_created_webhook(user)
     finalizable = True
     template_name = 'Some template'
     is_active = True
@@ -345,7 +353,8 @@ def test_run__all__ok(api_client, mocker):
     )
     send_workflow_started_webhook_mock.assert_called_once_with(
         user_id=user.id,
-        instance_id=workflow.id
+        account_id=user.account_id,
+        payload=webhook_payload
     )
 
 
@@ -1284,6 +1293,12 @@ def test_skip_delayed_task__fields_is_empty(mocker, api_client):
 def test_run__end_workflow_condition_true__end_workflow(api_client, mocker):
 
     # arrange
+    webhook_payload = mocker.Mock()
+    mocker.patch(
+        'pneumatic_backend.processes.models.workflows.workflow.Workflow'
+        '.webhook_payload',
+        return_value=webhook_payload
+    )
     send_workflow_started_webhook_mock = mocker.patch(
         'pneumatic_backend.processes.api_v2.services.workflows.workflow.'
         'send_workflow_started_webhook.delay'
@@ -1297,6 +1312,8 @@ def test_run__end_workflow_condition_true__end_workflow(api_client, mocker):
         'WorkflowEventService.workflow_run_event'
     )
     user = create_test_user()
+    create_wf_created_webhook(user)
+    create_wf_completed_webhook(user)
     api_client.token_authenticate(user)
 
     template = create_test_template(
@@ -1363,17 +1380,25 @@ def test_run__end_workflow_condition_true__end_workflow(api_client, mocker):
     assert workflow.status == WorkflowStatus.DONE
     send_workflow_started_webhook_mock.assert_called_once_with(
         user_id=user.id,
-        instance_id=workflow.id
+        account_id=user.account_id,
+        payload=webhook_payload
     )
     send_workflow_completed_webhook_mock.assert_called_once_with(
         user_id=user.id,
-        instance_id=workflow.id
+        account_id=user.account_id,
+        payload=webhook_payload
     )
 
 
 def test_run__start_task_condition_false__skip_task(api_client, mocker):
     # arrange
 
+    webhook_payload = mocker.Mock()
+    mocker.patch(
+        'pneumatic_backend.processes.models.workflows.workflow.Workflow'
+        '.webhook_payload',
+        return_value=webhook_payload
+    )
     send_workflow_started_webhook_mock = mocker.patch(
         'pneumatic_backend.processes.api_v2.services.workflows.workflow.'
         'send_workflow_started_webhook.delay'
@@ -1383,6 +1408,7 @@ def test_run__start_task_condition_false__skip_task(api_client, mocker):
         'WorkflowEventService.workflow_run_event'
     )
     user = create_test_user()
+    create_wf_created_webhook(user)
     api_client.token_authenticate(user)
 
     template = create_test_template(
@@ -1449,7 +1475,8 @@ def test_run__start_task_condition_false__skip_task(api_client, mocker):
     assert workflow.current_task == 2
     send_workflow_started_webhook_mock.assert_called_once_with(
         user_id=user.id,
-        instance_id=workflow.id
+        account_id=user.account_id,
+        payload=webhook_payload
     )
 
 

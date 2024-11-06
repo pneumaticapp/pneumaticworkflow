@@ -83,7 +83,7 @@ class EmailService(NotificationService):
         client.send_email(request)
         if self.logging:
             AccountLogService().email_message(
-                path=f'Email to: {user_email}: {title}',
+                title=f'Email to: {user_email}: {title}',
                 body=data,
                 account_id=self.account_id,
                 status=AccountEventStatus.SUCCESS,

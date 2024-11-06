@@ -23,6 +23,7 @@ from pneumatic_backend.processes.tests.fixtures import (
     create_test_user,
     create_test_template,
     create_test_account,
+    create_task_returned_webhook,
 )
 from pneumatic_backend.processes.messages import workflow as messages
 from pneumatic_backend.utils.validation import ErrorCode
@@ -45,7 +46,9 @@ class TestReturnTo:
     def test_return_to__ok(self, mocker, api_client):
 
         # arrange
+
         user = create_test_user()
+        create_task_returned_webhook(user)
         workflow = create_test_workflow(user, tasks_count=3)
         api_client.token_authenticate(user)
 
@@ -76,9 +79,23 @@ class TestReturnTo:
             'pneumatic_backend.processes.services.workflow_action.'
             'send_new_task_notification.delay'
         )
-        revert_webhook_mock = mocker.patch(
+        mocker.patch(
             'pneumatic_backend.processes.tasks.webhooks.'
-            'send_task_webhook.delay',
+            'send_workflow_started_webhook.delay',
+        )
+        mocker.patch(
+            'pneumatic_backend.processes.tasks.webhooks.'
+            'send_task_completed_webhook.delay'
+        )
+        webhook_payload = mocker.Mock()
+        mocker.patch(
+            'pneumatic_backend.processes.models.workflows.task.Task'
+            '.webhook_payload',
+            return_value=webhook_payload
+        )
+        revert_task_webhook_mock = mocker.patch(
+            'pneumatic_backend.processes.tasks.webhooks.'
+            'send_task_returned_webhook.delay',
         )
         revert_workflow_event_mock = mocker.patch(
             'pneumatic_backend.processes.serializers.workflow.'
@@ -131,10 +148,10 @@ class TestReturnTo:
         delete_task_guest_cache_mock.assert_called_once_with(
             task_id=task_1.id
         )
-        revert_webhook_mock.assert_called_once_with(
-            event_name='task_returned',
+        revert_task_webhook_mock.assert_called_once_with(
             user_id=user.id,
-            instance_id=task_1.id
+            account_id=user.account_id,
+            payload=webhook_payload
         )
         task_3 = workflow.tasks.get(number=3)
         revert_workflow_event_mock.assert_called_once_with(
@@ -145,11 +162,24 @@ class TestReturnTo:
 
     def test_return_to__task_with_delay__reset_delay(
         self,
+        mocker,
         api_client,
     ):
         """ https://trello.com/c/8rbbGOcp """
 
         # arrange
+        mocker.patch(
+            'pneumatic_backend.processes.tasks.webhooks.'
+            'send_workflow_started_webhook.delay',
+        )
+        mocker.patch(
+            'pneumatic_backend.processes.tasks.webhooks.'
+            'send_task_completed_webhook.delay'
+        )
+        mocker.patch(
+            'pneumatic_backend.processes.tasks.webhooks.'
+            'send_task_returned_webhook.delay',
+        )
         user = create_test_user()
         workflow = create_test_workflow(user)
         task_1 = workflow.tasks.get(number=1)
@@ -194,11 +224,11 @@ class TestReturnTo:
         # arrange
         mocker.patch(
             'pneumatic_backend.processes.tasks.webhooks.'
-            'send_workflow_webhook.delay',
+            'send_workflow_started_webhook.delay',
         )
         mocker.patch(
             'pneumatic_backend.processes.tasks.webhooks.'
-            'send_task_webhook.delay',
+            'send_task_returned_webhook.delay',
         )
         user = create_test_user()
         template = create_test_template(user, is_active=True)
@@ -286,6 +316,15 @@ class TestReturnTo:
         api_client.token_authenticate(user)
         first_task = workflow.tasks.get(number=1)
 
+        mocker.patch(
+            'pneumatic_backend.processes.tasks.webhooks.'
+            'send_task_returned_webhook.delay',
+        )
+        mocker.patch(
+            'pneumatic_backend.processes.tasks.webhooks.'
+            'send_task_completed_webhook.delay',
+        )
+
         response_complete = api_client.post(
             f'/workflows/{workflow.id}/task-complete',
             data={'task_id': first_task.id}
@@ -303,10 +342,6 @@ class TestReturnTo:
         mocker.patch(
             'pneumatic_backend.authentication.services.'
             'GuestJWTAuthService.delete_task_guest_cache'
-        )
-        mocker.patch(
-            'pneumatic_backend.processes.tasks.webhooks.'
-            'send_task_webhook.delay',
         )
         date = timezone.now() + timedelta(days=1)
 
@@ -347,7 +382,14 @@ class TestReturnTo:
         workflow = create_test_workflow(user, tasks_count=2)
         api_client.token_authenticate(user)
         first_task = workflow.tasks.get(number=1)
-
+        mocker.patch(
+            'pneumatic_backend.processes.tasks.webhooks.'
+            'send_task_returned_webhook.delay',
+        )
+        mocker.patch(
+            'pneumatic_backend.processes.tasks.webhooks.'
+            'send_task_completed_webhook.delay',
+        )
         response_complete = api_client.post(
             f'/workflows/{workflow.id}/task-complete',
             data={'task_id': first_task.id}
@@ -365,10 +407,6 @@ class TestReturnTo:
         mocker.patch(
             'pneumatic_backend.authentication.services.'
             'GuestJWTAuthService.delete_task_guest_cache'
-        )
-        mocker.patch(
-            'pneumatic_backend.processes.tasks.webhooks.'
-            'send_task_webhook.delay',
         )
         date = timezone.now() + timedelta(days=1)
 
@@ -409,11 +447,11 @@ class TestReturnTo:
         # arrange
         mocker.patch(
             'pneumatic_backend.processes.tasks.webhooks.'
-            'send_workflow_webhook.delay',
+            'send_workflow_started_webhook.delay',
         )
         mocker.patch(
             'pneumatic_backend.processes.tasks.webhooks.'
-            'send_task_webhook.delay',
+            'send_task_returned_webhook.delay',
         )
         mocker.patch(
             'pneumatic_backend.processes.services.websocket.WSSender.'
@@ -539,6 +577,7 @@ class TestReturnTo:
 
         # arrange
         user = create_test_user()
+        create_task_returned_webhook(user)
         workflow = create_test_workflow(user, tasks_count=1)
         first_task = workflow.tasks.get(number=1)
 
@@ -559,9 +598,19 @@ class TestReturnTo:
             'pneumatic_backend.processes.services.workflow_action.'
             'send_new_task_notification.delay'
         )
-        revert_webhook_mock = mocker.patch(
+        mocker.patch(
             'pneumatic_backend.processes.tasks.webhooks.'
-            'send_task_webhook.delay',
+            'send_workflow_started_webhook.delay',
+        )
+        webhook_payload = mocker.Mock()
+        mocker.patch(
+            'pneumatic_backend.processes.models.workflows.task.Task'
+            '.webhook_payload',
+            return_value=webhook_payload
+        )
+        revert_task_webhook_mock = mocker.patch(
+            'pneumatic_backend.processes.tasks.webhooks.'
+            'send_task_returned_webhook.delay',
         )
         send_removed_task_notification_mock = mocker.patch(
             'pneumatic_backend.processes.services.websocket.WSSender.'
@@ -590,7 +639,7 @@ class TestReturnTo:
         send_removed_task_notification_mock.assert_not_called()
         send_new_task_notification_mock.assert_called_once()
         delete_task_guest_cache_mock.assert_called_once()
-        revert_webhook_mock.assert_called_once()
+        revert_task_webhook_mock.assert_called_once()
 
     @pytest.mark.parametrize('status', WorkflowStatus.RUNNING_STATUSES)
     def test_return_to__sub_workflow_incompleted__validation_error(
@@ -680,6 +729,7 @@ class TestRevert:
 
         # arrange
         user = create_test_user()
+        create_task_returned_webhook(user)
         workflow = create_test_workflow(user, tasks_count=2)
         api_client.token_authenticate(user)
         first_task = workflow.tasks.get(number=1)
@@ -705,9 +755,15 @@ class TestRevert:
             'pneumatic_backend.authentication.services.'
             'GuestJWTAuthService.delete_task_guest_cache'
         )
-        revert_webhook_mock = mocker.patch(
+        webhook_payload = mocker.Mock()
+        mocker.patch(
+            'pneumatic_backend.processes.models.workflows.task.Task'
+            '.webhook_payload',
+            return_value=webhook_payload
+        )
+        revert_task_webhook_mock = mocker.patch(
             'pneumatic_backend.processes.tasks.webhooks.'
-            'send_task_webhook.delay',
+            'send_task_returned_webhook.delay',
         )
         analytics_mock = mocker.patch(
             'pneumatic_backend.analytics.services.AnalyticService.'
@@ -755,10 +811,10 @@ class TestRevert:
             is_superuser=False,
             auth_type=AuthTokenType.USER
         )
-        revert_webhook_mock.assert_called_once_with(
-            event_name='task_returned',
+        revert_task_webhook_mock.assert_called_once_with(
             user_id=user.id,
-            instance_id=first_task.id
+            account_id=user.account_id,
+            payload=webhook_payload
         )
         task_revert_event_mock.assert_called_once_with(
             task=first_task,
@@ -801,11 +857,15 @@ class TestRevert:
         # arrange
         mocker.patch(
             'pneumatic_backend.processes.tasks.webhooks.'
-            'send_workflow_webhook.delay',
+            'send_workflow_started_webhook.delay',
         )
         mocker.patch(
             'pneumatic_backend.processes.tasks.webhooks.'
-            'send_task_webhook.delay',
+            'send_task_completed_webhook.delay',
+        )
+        mocker.patch(
+            'pneumatic_backend.processes.tasks.webhooks.'
+            'send_task_returned_webhook.delay',
         )
         user = create_test_user()
         template = create_test_template(
@@ -916,11 +976,15 @@ class TestRevert:
         # arrange
         mocker.patch(
             'pneumatic_backend.processes.tasks.webhooks.'
-            'send_workflow_webhook.delay',
+            'send_workflow_started_webhook.delay',
         )
         mocker.patch(
             'pneumatic_backend.processes.tasks.webhooks.'
-            'send_task_webhook.delay',
+            'send_task_completed_webhook.delay',
+        )
+        mocker.patch(
+            'pneumatic_backend.processes.tasks.webhooks.'
+            'send_task_returned_webhook.delay',
         )
         mocker.patch(
             'pneumatic_backend.processes.services.websocket.WSSender.'
@@ -1041,11 +1105,11 @@ class TestRevert:
         # arrange
         mocker.patch(
             'pneumatic_backend.processes.tasks.webhooks.'
-            'send_workflow_webhook.delay',
+            'send_workflow_started_webhook.delay',
         )
         mocker.patch(
             'pneumatic_backend.processes.tasks.webhooks.'
-            'send_task_webhook.delay',
+            'send_task_returned_webhook.delay',
         )
         user = create_test_user()
         template = create_test_template(user, is_active=True)
@@ -1107,11 +1171,11 @@ class TestRevert:
         # arrange
         mocker.patch(
             'pneumatic_backend.processes.tasks.webhooks.'
-            'send_workflow_webhook.delay',
+            'send_workflow_started_webhook.delay',
         )
         mocker.patch(
             'pneumatic_backend.processes.tasks.webhooks.'
-            'send_task_webhook.delay',
+            'send_task_returned_webhook.delay',
         )
         user = create_test_user()
         template = create_test_template(user, is_active=True)
@@ -1192,6 +1256,18 @@ class TestRevert:
         api_client
     ):
         # arrange
+        mocker.patch(
+            'pneumatic_backend.processes.tasks.webhooks.'
+            'send_workflow_started_webhook.delay',
+        )
+        mocker.patch(
+            'pneumatic_backend.processes.tasks.webhooks.'
+            'send_task_completed_webhook.delay'
+        )
+        mocker.patch(
+            'pneumatic_backend.processes.tasks.webhooks.'
+            'send_task_returned_webhook.delay',
+        )
         user = create_test_user()
         user_performer = create_test_user(
             email='t@t.t',
@@ -1349,11 +1425,11 @@ class TestRevert:
         # arrange
         mocker.patch(
             'pneumatic_backend.processes.tasks.webhooks.'
-            'send_workflow_webhook.delay',
+            'send_workflow_started_webhook.delay',
         )
         mocker.patch(
             'pneumatic_backend.processes.tasks.webhooks.'
-            'send_task_webhook.delay',
+            'send_task_returned_webhook.delay',
         )
         account = create_test_account(plan=BillingPlanType.PREMIUM)
         user = create_test_user(account=account)
@@ -1467,10 +1543,15 @@ class TestRevert:
     def test_revert__sub_workflow_completed__ok(
         self,
         status,
+        mocker,
         api_client,
     ):
 
         # arrange
+        mocker.patch(
+            'pneumatic_backend.processes.tasks.webhooks.'
+            'send_task_returned_webhook.delay',
+        )
         user = create_test_user()
         workflow = create_test_workflow(user=user, tasks_count=2)
         workflow.current_task = 2

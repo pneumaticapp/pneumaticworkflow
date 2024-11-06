@@ -17,6 +17,7 @@ class AccountLogService(BaseModelService):
     def _create_instance(
         self,
         event_type: AccountEventType,
+        title: Optional[str] = None,
         path: Optional[str] = None,
         method: Optional[str] = None,
         scheme: Optional[str] = None,
@@ -36,6 +37,7 @@ class AccountLogService(BaseModelService):
 
         self.instance = AccountEvent.objects.create(
             event_type=event_type,
+            title=title,
             ip=ip,
             user_agent=user_agent,
             auth_token=auth_token,
@@ -63,6 +65,7 @@ class AccountLogService(BaseModelService):
         auth_token: str,
         scheme: str,
         method: str,
+        title: str,
         path: str,
         http_status: int,
         direction: RequestDirection = RequestDirection.RECEIVED,
@@ -84,6 +87,7 @@ class AccountLogService(BaseModelService):
             auth_token=auth_token,
             scheme=scheme,
             method=method,
+            title=title,
             path=path,
             body=body,
             http_status=http_status,
@@ -97,7 +101,7 @@ class AccountLogService(BaseModelService):
 
     def push_notification(
         self,
-        path: str,
+        title: str,
         body: dict,
         account_id: int,
         status: AccountEventStatus,
@@ -105,7 +109,7 @@ class AccountLogService(BaseModelService):
     ):
         self.create(
             event_type=AccountEventType.API,
-            path=path,
+            title=title,
             body=body,
             status=status,
             account_id=account_id,
@@ -116,7 +120,7 @@ class AccountLogService(BaseModelService):
 
     def email_message(
         self,
-        path: str,
+        title: str,
         body: dict,
         account_id: int,
         contractor: str,
@@ -125,11 +129,35 @@ class AccountLogService(BaseModelService):
     ):
         self.create(
             event_type=AccountEventType.API,
-            path=path,
+            title=title,
             body=body,
             status=status,
             account_id=account_id,
             error=error,
             direction=RequestDirection.SENT,
             contractor=contractor,
+        )
+
+    def webhook(
+        self,
+        title: str,
+        path: str,
+        body: dict,
+        account_id: int,
+        status: AccountEventStatus,
+        http_status: int,
+        error: Optional[dict] = None,
+        user_id: Optional[int] = None
+    ):
+        self.create(
+            event_type=AccountEventType.WEBHOOK,
+            title=title,
+            path=path,
+            body=body,
+            http_status=http_status,
+            status=status,
+            account_id=account_id,
+            error=error,
+            direction=RequestDirection.SENT,
+            user_id=user_id,
         )

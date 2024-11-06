@@ -19,9 +19,10 @@ from pneumatic_backend.processes.models import (
     Delay,
 )
 from pneumatic_backend.processes.tasks.webhooks import (
-    send_task_webhook,
+    send_task_completed_webhook,
     send_workflow_completed_webhook,
 )
+from pneumatic_backend.webhooks.models import WebHook
 from pneumatic_backend.processes.services.condition_check.service import (
     ConditionCheckService,
 )
@@ -327,10 +328,13 @@ class WorkflowActionService:
                 task=task,
                 user_ids=user_ids
             )
-        send_workflow_completed_webhook.delay(
-            user_id=user.id,
-            instance_id=workflow.id
-        )
+        acc_id = user.account_id
+        if WebHook.objects.on_account(acc_id).wf_completed().exists():
+            send_workflow_completed_webhook.delay(
+                user_id=user.id,
+                account_id=user.account_id,
+                payload=workflow.webhook_payload()
+            )
 
     def skip_task(
         self,
@@ -657,12 +661,13 @@ class WorkflowActionService:
                     workflow_name=workflow.name,
                     logo_lg=task.account.logo_lg,
                 )
-
-            send_task_webhook.delay(
-                event_name='task_completed_v2',
-                user_id=self.user.id,
-                instance_id=task.id
-            )
+            acc_id = self.user.account.id
+            if WebHook.objects.on_account(acc_id).task_completed().exists():
+                send_task_completed_webhook.delay(
+                    user_id=self.user.id,
+                    account_id=self.user.account_id,
+                    payload=task.webhook_payload()
+                )
             if task.number == workflow.tasks_count:
                 self.end_process(
                     workflow=workflow,

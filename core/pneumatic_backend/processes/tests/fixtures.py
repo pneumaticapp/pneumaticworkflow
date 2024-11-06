@@ -47,6 +47,9 @@ from pneumatic_backend.processes.models import (
 )
 from pneumatic_backend.processes.api_v2.services.task.task import TaskService
 from pneumatic_backend.accounts.models import UserGroup
+from pneumatic_backend.webhooks.models import WebHook
+from pneumatic_backend.webhooks.enums import HookEvent
+
 
 UserModel = get_user_model()
 
@@ -472,3 +475,39 @@ def create_test_group(
         group.users.set(users)
     group.save()
     return group
+
+
+def create_wf_created_webhook(user: UserModel):
+    return WebHook.objects.create(
+        user_id=user.id,
+        event=HookEvent.WORKFLOW_STARTED,
+        account_id=user.account.id,
+        target='http://test.test'
+    )
+
+
+def create_wf_completed_webhook(user: UserModel):
+    return WebHook.objects.create(
+        user_id=user.id,
+        event=HookEvent.WORKFLOW_COMPLETED,
+        account_id=user.account.id,
+        target='http://test.test'
+    )
+
+
+def create_task_completed_webhook(user: UserModel):
+    return WebHook.objects.create(
+        user_id=user.id,
+        event=HookEvent.TASK_COMPLETED,
+        account_id=user.account.id,
+        target='http://test.test'
+    )
+
+
+def create_task_returned_webhook(user: UserModel):
+    return WebHook.objects.create(
+        user_id=user.id,
+        event=HookEvent.TASK_RETURNED,
+        account_id=user.account.id,
+        target='http://test.test'
+    )

@@ -606,9 +606,17 @@ class TestFields:
         assert response.status_code == 200
         assert response.data['results'] == []
 
-    def test_fields__pagination__ok(self, api_client):
+    def test_fields__pagination__ok(self, api_client, mocker):
 
         # arrange
+        mocker.patch(
+            'pneumatic_backend.processes.tasks.webhooks.'
+            'send_workflow_started_webhook.delay',
+        )
+        mocker.patch(
+            'pneumatic_backend.processes.tasks.webhooks.'
+            'send_task_completed_webhook.delay'
+        )
         user = create_test_user()
         template = create_test_template(
             user,

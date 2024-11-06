@@ -89,8 +89,17 @@ def test__ordering__ok(api_client):
     assert response.data[0]['type'] == WorkflowEventType.COMMENT
 
 
-def test__return_task__ok(api_client):
+def test__return_task__ok(api_client, mocker):
+
     # arrange
+    mocker.patch(
+        'pneumatic_backend.processes.tasks.webhooks.'
+        'send_task_completed_webhook.delay'
+    )
+    mocker.patch(
+        'pneumatic_backend.processes.tasks.webhooks.'
+        'send_task_returned_webhook.delay',
+    )
     account = create_test_account()
     create_test_user(
         email='owner@test.test',
@@ -128,8 +137,17 @@ def test__return_task__ok(api_client):
     assert type(event_data['created_tsp']) is float
 
 
-def test__return_to_task__ok(api_client):
+def test__return_to_task__ok(api_client, mocker):
+
     # arrange
+    mocker.patch(
+        'pneumatic_backend.processes.tasks.webhooks.'
+        'send_task_completed_webhook.delay'
+    )
+    mocker.patch(
+        'pneumatic_backend.processes.tasks.webhooks.'
+        'send_task_returned_webhook.delay',
+    )
     account = create_test_account()
     create_test_user(
         email='owner@test.test',

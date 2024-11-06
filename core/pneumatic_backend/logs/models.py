@@ -20,6 +20,7 @@ class AccountEvent(
     class Meta:
         ordering = ('-date_created', 'account')
 
+    title = models.CharField(max_length=500, blank=True, null=True)
     user = models.ForeignKey(
         UserModel,
         on_delete=models.SET_NULL,
@@ -62,4 +63,4 @@ class AccountEvent(
         return self.direction == RequestDirection.SENT
 
     def __str__(self):
-        return f'{self.method} {self.path}'
+        return self.title

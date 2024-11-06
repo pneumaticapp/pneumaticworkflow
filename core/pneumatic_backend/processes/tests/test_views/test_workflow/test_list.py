@@ -1931,9 +1931,17 @@ def test_list__legacy_template_on_premium__ok(api_client):
     assert len(response.data['results']) == 1
 
 
-def test_list__filter_task_template__ok(api_client):
+def test_list__filter_task_template__ok(api_client, mocker):
 
     # arrange
+    mocker.patch(
+        'pneumatic_backend.processes.tasks.webhooks.'
+        'send_workflow_started_webhook.delay',
+    )
+    mocker.patch(
+        'pneumatic_backend.processes.tasks.webhooks.'
+        'send_task_completed_webhook.delay'
+    )
     account = create_test_account()
     user = create_test_user(account=account)
     api_client.token_authenticate(user)
@@ -1968,9 +1976,13 @@ def test_list__filter_task_template__ok(api_client):
     assert response.data['results'][0]['id'] == running_workflow.id
 
 
-def test_list__filter_multiple_task_template__ok(api_client):
+def test_list__filter_multiple_task_template__ok(api_client, mocker):
 
     # arrange
+    mocker.patch(
+        'pneumatic_backend.processes.tasks.webhooks.'
+        'send_task_completed_webhook.delay'
+    )
     account = create_test_account()
     user = create_test_user(account=account)
     api_client.token_authenticate(user)

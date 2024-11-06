@@ -224,8 +224,13 @@ class TestTaskView:
         # assert
         assert response.status_code == 403
 
-    def test_retrieve__delayed_task__not_found(self, api_client):
+    def test_retrieve__delayed_task__not_found(self, api_client, mocker):
+
         # arrange
+        mocker.patch(
+            'pneumatic_backend.processes.tasks.webhooks.'
+            'send_task_completed_webhook.delay'
+        )
         user = create_test_user()
         workflow = create_test_workflow(user)
         tasks = workflow.tasks.order_by('number')
@@ -260,6 +265,14 @@ class TestTaskView:
         """ Caused by bug: https://my.pneumatic.app/workflows/11741"""
 
         # arrange
+        mocker.patch(
+            'pneumatic_backend.processes.tasks.webhooks.'
+            'send_workflow_started_webhook.delay',
+        )
+        mocker.patch(
+            'pneumatic_backend.processes.tasks.webhooks.'
+            'send_task_completed_webhook.delay'
+        )
         user = create_test_user()
         api_client.token_authenticate(user)
         request_data = {
@@ -336,8 +349,13 @@ class TestTaskView:
         # assert
         assert response.status_code == 200
 
-    def test_retrieve__completed_task__ok(self, api_client):
+    def test_retrieve__completed_task__ok(self, api_client, mocker):
+
         # arrange
+        mocker.patch(
+            'pneumatic_backend.processes.tasks.webhooks.'
+            'send_task_completed_webhook.delay'
+        )
         user = create_test_user()
         workflow = create_test_workflow(user)
         tasks = workflow.tasks.order_by('number')
@@ -373,10 +391,15 @@ class TestTaskView:
 
     def test_retrieve__user_completed_task__return_as_completed(
         self,
+        mocker,
         api_client,
     ):
         """ https://trello.com/c/75aESAb0 """
         # arrange
+        mocker.patch(
+            'pneumatic_backend.processes.tasks.webhooks.'
+            'send_task_completed_webhook.delay'
+        )
         user = create_test_user()
         another_user = create_test_user(
             email='another_user@test.com',
@@ -407,9 +430,21 @@ class TestTaskView:
         assert response.data['is_completed'] is True
         assert task.is_completed is False
 
-    def test_retrieve__revert_delayed_task__not_found(self, api_client):
+    def test_retrieve__revert_delayed_task__not_found(
+        self,
+        mocker,
+        api_client
+    ):
 
         # arrange
+        mocker.patch(
+            'pneumatic_backend.processes.tasks.webhooks.'
+            'send_task_completed_webhook.delay'
+        )
+        mocker.patch(
+            'pneumatic_backend.processes.tasks.webhooks.'
+            'send_task_returned_webhook.delay',
+        )
         user = create_test_user()
         api_client.token_authenticate(user)
         workflow = create_test_workflow(
@@ -448,9 +483,17 @@ class TestTaskView:
         assert response4.status_code == 404
         assert current_task.id == second_task.id
 
-    def test_retrieve__reverted_task__ok(self, api_client):
+    def test_retrieve__reverted_task__ok(self, mocker, api_client):
 
         # arrange
+        mocker.patch(
+            'pneumatic_backend.processes.tasks.webhooks.'
+            'send_task_completed_webhook.delay'
+        )
+        mocker.patch(
+            'pneumatic_backend.processes.tasks.webhooks.'
+            'send_task_returned_webhook.delay',
+        )
         user = create_test_user()
         api_client.token_authenticate(user)
         workflow = create_test_workflow(

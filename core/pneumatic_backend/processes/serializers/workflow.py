@@ -57,8 +57,9 @@ from pneumatic_backend.generics.fields import (
     TimeStampField,
 )
 from pneumatic_backend.analytics.services import AnalyticService
+from pneumatic_backend.webhooks.models import WebHook
 from pneumatic_backend.processes.tasks.webhooks import (
-    send_task_webhook,
+    send_task_returned_webhook,
 )
 from pneumatic_backend.processes.utils.common import (
     contains_fields_vars,
@@ -473,11 +474,13 @@ class WorkflowRevertSerializer(
             is_superuser=self.context['is_superuser'],
             auth_type=self.context['auth_type']
         )
-        send_task_webhook.delay(
-            event_name='task_returned',
-            user_id=user.id,
-            instance_id=previous_task.id
-        )
+        acc_id = user.account_id
+        if WebHook.objects.on_account(acc_id).task_returned().exists():
+            send_task_returned_webhook.delay(
+                user_id=user.id,
+                account_id=acc_id,
+                payload=previous_task.webhook_payload()
+            )
         return instance
 
 
@@ -585,11 +588,13 @@ class WorkflowReturnToTaskSerializer(
                 is_reverted=True,
                 by_condition=by_cond,
             )
-        send_task_webhook.delay(
-            event_name='task_returned',
-            user_id=user.id,
-            instance_id=revert_to_task.id
-        )
+        acc_id = user.account_id
+        if WebHook.objects.on_account(acc_id).task_returned().exists():
+            send_task_returned_webhook.delay(
+                user_id=user.id,
+                account_id=user.account_id,
+                payload=revert_to_task.webhook_payload()
+            )
         return instance
 
 

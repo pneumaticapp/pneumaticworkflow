@@ -251,7 +251,10 @@ class TestWorkflowUpdate:
             template=template
         )
         task = workflow.tasks.get(number=1)
-
+        mocker.patch(
+            'pneumatic_backend.processes.tasks.webhooks.'
+            'send_task_completed_webhook.delay'
+        )
         deactivate_cache_mock = mocker.patch(
             'pneumatic_backend.authentication.services.'
             'GuestJWTAuthService.deactivate_task_guest_cache'

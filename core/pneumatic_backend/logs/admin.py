@@ -1,14 +1,24 @@
+import json
 from django.contrib import admin
+from django.utils.safestring import mark_safe
 from pneumatic_backend.logs.models import AccountEvent
 from pneumatic_backend.logs.enums import AccountEventStatus
 from pneumatic_backend.utils.dates import date_to_user_fmt
 from pneumatic_backend.logs.filters import AccountAdminFilter
+from pygments import highlight
+from pygments.lexers import get_lexer_by_name
+from pygments.formatters import get_formatter_by_name
+
+
+json_lexer = get_lexer_by_name('json')
+formatter = get_formatter_by_name('html', style='colorful')
 
 
 @admin.register(AccountEvent)
 class AccountEventAdmin(admin.ModelAdmin):
 
     list_display = (
+        'title',
         'path',
         'method',
         'date_created_tz',
@@ -31,6 +41,7 @@ class AccountEventAdmin(admin.ModelAdmin):
     )
 
     search_fields = (
+        'title',
         'path',
         'body',
     )
@@ -39,6 +50,7 @@ class AccountEventAdmin(admin.ModelAdmin):
         (
             None, {
                 'fields': (
+                    'title',
                     'status',
                     'date_created_tz',
                     'event_type',
@@ -53,9 +65,9 @@ class AccountEventAdmin(admin.ModelAdmin):
                     'scheme',
                     'method',
                     'path',
-                    'body',
+                    'formatted_body',
                     'http_status',
-                    'error'
+                    'formatted_error'
                 )
             }
         ),
@@ -72,6 +84,7 @@ class AccountEventAdmin(admin.ModelAdmin):
     )
 
     readonly_fields = (
+        'title',
         'date_created_tz',
         'event_type',
         'http_status',
@@ -80,11 +93,11 @@ class AccountEventAdmin(admin.ModelAdmin):
         'path',
         'user',
         'account',
-        'body',
+        'formatted_body',
         'ip',
         'auth_token',
         'user_agent',
-        'error',
+        'formatted_error',
         'event_type',
         'direction',
         'contractor',
@@ -116,3 +129,33 @@ class AccountEventAdmin(admin.ModelAdmin):
 
     def has_add_permission(self, request):
         return False
+
+    def formatted_body(self, instance):
+        if instance.body:
+            response = json.dumps(
+                instance.body,
+                sort_keys=True,
+                indent=2,
+                ensure_ascii=False
+            )
+            response = highlight(response, json_lexer, formatter)
+            style = "<style>" + formatter.get_style_defs() + "</style><br>"
+            return mark_safe(style + response)
+        else:
+            return '-'
+    formatted_body.short_description = 'body'
+
+    def formatted_error(self, instance):
+        if instance.error:
+            response = json.dumps(
+                instance.error,
+                sort_keys=True,
+                indent=2,
+                ensure_ascii=False
+            )
+            response = highlight(response, json_lexer, formatter)
+            style = "<style>" + formatter.get_style_defs() + "</style><br>"
+            return mark_safe(style + response)
+        else:
+            return '-'
+    formatted_error.short_description = 'error'

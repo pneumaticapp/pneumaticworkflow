@@ -7,10 +7,12 @@ from pneumatic_backend.accounts.enums import BillingPlanType
 from pneumatic_backend.processes.models import (
     TaskPerformer
 )
-from pneumatic_backend.reports.tests.fixtures import (
-    create_test_user,
+from pneumatic_backend.processes.tests.fixtures import (
     create_test_template,
     create_test_workflow,
+)
+from pneumatic_backend.reports.tests.fixtures import (
+    create_test_user,
     create_test_account,
 )
 from pneumatic_backend.processes.enums import (
@@ -37,9 +39,14 @@ class TestDashboardMyTasksOverview:
 
     def test_my_tasks__ok(
         self,
+        mocker,
         api_client
     ):
         # arrange
+        mocker.patch(
+            'pneumatic_backend.processes.tasks.webhooks.'
+            'send_task_completed_webhook.delay'
+        )
         account = create_test_account()
         create_test_user(
             email='owner@test.test',
@@ -156,9 +163,14 @@ class TestDashboardMyTasksOverview:
 
     def test_my_tasks__legacy_template__count_tasks(
         self,
+        mocker,
         api_client
     ):
         # arrange
+        mocker.patch(
+            'pneumatic_backend.processes.tasks.webhooks.'
+            'send_task_completed_webhook.delay'
+        )
         account = create_test_account(plan=BillingPlanType.PREMIUM)
         create_test_user(
             email='owner@test.test',
@@ -263,10 +275,15 @@ class TestDashboardMyTasksOverview:
 
     def test_my_tasks__require_completion_by_all__partly_completed(
         self,
+        mocker,
         api_client,
     ):
         """ caused by: https://my.pneumatic.app/workflows/12359 """
         # arrange
+        mocker.patch(
+            'pneumatic_backend.processes.tasks.webhooks.'
+            'send_task_completed_webhook.delay'
+        )
         account = create_test_account(plan=BillingPlanType.PREMIUM)
         create_test_user(
             email='owner@test.test',
@@ -340,9 +357,14 @@ class TestDashboardMyTasksOverview:
 
     def test_my_tasks__now__ok(
         self,
+        mocker,
         api_client
     ):
         # arrange
+        mocker.patch(
+            'pneumatic_backend.processes.tasks.webhooks.'
+            'send_task_completed_webhook.delay'
+        )
         account = create_test_account(plan=BillingPlanType.PREMIUM)
         create_test_user(
             email='owner@test.test',
@@ -457,9 +479,14 @@ class TestDashboardMyTasksBreakdown:
 
     def test_my_tasks_breakdown__ok(
         self,
+        mocker,
         api_client
     ):
         # arrange
+        mocker.patch(
+            'pneumatic_backend.processes.tasks.webhooks.'
+            'send_task_completed_webhook.delay'
+        )
         account = create_test_account(plan=BillingPlanType.PREMIUM)
         create_test_user(
             email='owner@test.test',
@@ -590,10 +617,15 @@ class TestDashboardMyTasksBreakdown:
 
     def test_my_tasks_breakdown__require_completion_by_all__partly_completed(
         self,
+        mocker,
         api_client,
     ):
         """ caused by: https://my.pneumatic.app/workflows/12359 """
         # arrange
+        mocker.patch(
+            'pneumatic_backend.processes.tasks.webhooks.'
+            'send_task_completed_webhook.delay'
+        )
         account = create_test_account(plan=BillingPlanType.PREMIUM)
         create_test_user(
             email='owner@test.test',
@@ -699,9 +731,14 @@ class TestDashboardMyTasksBreakdown:
 
     def test_my_tasks_breakdown__overdue_tasks(
         self,
+        mocker,
         api_client
     ):
         # arrange
+        mocker.patch(
+            'pneumatic_backend.processes.tasks.webhooks.'
+            'send_task_completed_webhook.delay'
+        )
         account = create_test_account(plan=BillingPlanType.PREMIUM)
         create_test_user(
             email='owner@test.test',
@@ -783,9 +820,14 @@ class TestDashboardMyTasksBreakdown:
 
     def test_my_tasks_breakdown_now(
         self,
+        mocker,
         api_client
     ):
         # arrange
+        mocker.patch(
+            'pneumatic_backend.processes.tasks.webhooks.'
+            'send_task_completed_webhook.delay'
+        )
         account = create_test_account()
         create_test_user(
             email='owner@test.test',
@@ -911,9 +953,14 @@ class TestDashboardMyTasksBreakdownBySteps:
 
     def test_my_tasks_breakdown_by_steps__ok(
         self,
+        mocker,
         api_client
     ):
         # arrange
+        mocker.patch(
+            'pneumatic_backend.processes.tasks.webhooks.'
+            'send_task_completed_webhook.delay'
+        )
         account = create_test_account(plan=BillingPlanType.PREMIUM)
         create_test_user(
             email='owner@test.test',
@@ -1049,10 +1096,15 @@ class TestDashboardMyTasksBreakdownBySteps:
 
     def test_my_tasks_breakdown__require_completion_by_all__partly_completed(
         self,
+        mocker,
         api_client,
     ):
         """ caused by: https://my.pneumatic.app/workflows/12359 """
         # arrange
+        mocker.patch(
+            'pneumatic_backend.processes.tasks.webhooks.'
+            'send_task_completed_webhook.delay'
+        )
         account = create_test_account(plan=BillingPlanType.PREMIUM)
         create_test_user(
             email='owner@test.test',
@@ -1252,9 +1304,14 @@ class TestDashboardMyTasksBreakdownBySteps:
 
     def test_my_tasks_breakdown__now__ok(
         self,
+        mocker,
         api_client
     ):
         # arrange
+        mocker.patch(
+            'pneumatic_backend.processes.tasks.webhooks.'
+            'send_task_completed_webhook.delay'
+        )
         account = create_test_account(plan=BillingPlanType.PREMIUM)
         create_test_user(
             email='owner@test.test',

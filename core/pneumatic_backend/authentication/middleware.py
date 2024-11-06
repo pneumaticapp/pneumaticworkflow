@@ -89,6 +89,7 @@ class AuthMiddleware(
                         auth_token=token,
                         scheme=request.scheme,
                         method=request.method,
+                        title='API request',
                         path=request.path,
                         body=body,
                         http_status=response.status_code,

@@ -9,6 +9,8 @@ from pneumatic_backend.processes.tests.fixtures import (
     create_test_workflow,
     create_test_guest,
     create_test_account,
+    create_task_completed_webhook,
+    create_wf_completed_webhook,
 )
 from pneumatic_backend.authentication.enums import AuthTokenType
 from pneumatic_backend.processes.api_v2.services import WorkflowEventService
@@ -1222,6 +1224,7 @@ def test_end_process__disable_urgent__ok(mocker):
 
     # arrange
     user = create_test_user()
+    create_wf_completed_webhook(user)
     workflow = create_test_workflow(user, tasks_count=1, is_urgent=True)
     current_task = workflow.current_task_instance
     service = WorkflowActionService(user=user)
@@ -1232,6 +1235,12 @@ def test_end_process__disable_urgent__ok(mocker):
     workflow_ended_by_condition_event = mocker.patch(
         'pneumatic_backend.processes.services.workflow_action.'
         'WorkflowEventService.workflow_ended_by_condition_event'
+    )
+    webhook_payload = mocker.Mock()
+    mocker.patch(
+        'pneumatic_backend.processes.models.workflows.workflow.Workflow'
+        '.webhook_payload',
+        return_value=webhook_payload
     )
     send_workflow_completed_webhook_mock = mocker.patch(
         'pneumatic_backend.processes.services.workflow_action.'
@@ -1261,7 +1270,8 @@ def test_end_process__disable_urgent__ok(mocker):
     )
     send_workflow_completed_webhook_mock.assert_called_once_with(
         user_id=user.id,
-        instance_id=workflow.id
+        account_id=user.account_id,
+        payload=webhook_payload
     )
 
 
@@ -1278,6 +1288,7 @@ def test_complete_task__performer_complete_current_task__ok(mocker):
         is_account_owner=False,
         account=account
     )
+    create_task_completed_webhook(user)
     deleted_user = create_test_user(
         is_account_owner=False,
         email="deleted@test.test",
@@ -1307,6 +1318,12 @@ def test_complete_task__performer_complete_current_task__ok(mocker):
         attribute='__init__',
         return_value=None
     )
+    webhook_payload = mocker.Mock()
+    mocker.patch(
+        'pneumatic_backend.processes.models.workflows.task.Task'
+        '.webhook_payload',
+        return_value=webhook_payload
+    )
     current_date = timezone.now()
     mocker.patch('django.utils.timezone.now', return_value=current_date)
     task_service_update_mock = mocker.patch(
@@ -1318,7 +1335,8 @@ def test_complete_task__performer_complete_current_task__ok(mocker):
         '.send_removed_task_notification'
     )
     complete_task_webhook_mock = mocker.patch(
-        'pneumatic_backend.processes.tasks.webhooks.send_task_webhook.delay'
+        'pneumatic_backend.processes.tasks.webhooks.'
+        'send_task_completed_webhook.delay'
     )
     send_complete_task_notification_mock = mocker.patch(
         'pneumatic_backend.notifications.'
@@ -1377,9 +1395,9 @@ def test_complete_task__performer_complete_current_task__ok(mocker):
         logging=account.log_api_requests,
     )
     complete_task_webhook_mock.assert_called_once_with(
-        event_name='task_completed_v2',
         user_id=user.id,
-        instance_id=task.id
+        account_id=user.account_id,
+        payload=webhook_payload
     )
     end_workflow_mock.assert_not_called()
     next_task = workflow.tasks.get(number=2)
@@ -1405,6 +1423,7 @@ def test_complete_task__last__end_workflow(mocker):
         is_account_owner=False,
         account=account
     )
+    create_task_completed_webhook(user)
     workflow = create_test_workflow(user=user, tasks_count=1)
     task = workflow.current_task_instance
     task.performers.remove(account_owner)
@@ -1424,8 +1443,15 @@ def test_complete_task__last__end_workflow(mocker):
         'pneumatic_backend.processes.services.websocket.WSSender'
         '.send_removed_task_notification'
     )
+    webhook_payload = mocker.Mock()
+    mocker.patch(
+        'pneumatic_backend.processes.models.workflows.task.Task'
+        '.webhook_payload',
+        return_value=webhook_payload
+    )
     complete_task_webhook_mock = mocker.patch(
-        'pneumatic_backend.processes.tasks.webhooks.send_task_webhook.delay'
+        'pneumatic_backend.processes.tasks.webhooks.'
+        'send_task_completed_webhook.delay'
     )
     send_complete_task_notification_mock = mocker.patch(
         'pneumatic_backend.notifications.'
@@ -1474,9 +1500,9 @@ def test_complete_task__last__end_workflow(mocker):
         sync=True
     )
     complete_task_webhook_mock.assert_called_once_with(
-        event_name='task_completed_v2',
         user_id=user.id,
-        instance_id=task.id
+        account_id=user.account_id,
+        payload=webhook_payload
     )
     end_workflow_mock.assert_called_once_with(
         workflow=workflow,
@@ -1492,6 +1518,7 @@ def test_complete_task__before_current__skip_actions(mocker):
 
     # arrange
     user = create_test_user()
+    create_task_completed_webhook(user)
     workflow = create_test_workflow(user=user, tasks_count=2)
     workflow.current_task = 2
     workflow.save(update_fields=['current_task'])
@@ -1513,7 +1540,8 @@ def test_complete_task__before_current__skip_actions(mocker):
         '.send_removed_task_notification'
     )
     complete_task_webhook_mock = mocker.patch(
-        'pneumatic_backend.processes.tasks.webhooks.send_task_webhook.delay'
+        'pneumatic_backend.processes.tasks.webhooks.'
+        'send_task_completed_webhook.delay'
     )
     send_complete_task_notification_mock = mocker.patch(
         'pneumatic_backend.notifications.'
@@ -1567,6 +1595,7 @@ def test_complete_task__before_current__not_started__ok(mocker):
 
     # arrange
     user = create_test_user()
+    create_task_completed_webhook(user)
     workflow = create_test_workflow(user=user, tasks_count=2)
     workflow.current_task = 2
     workflow.save(update_fields=['current_task'])
@@ -1590,7 +1619,8 @@ def test_complete_task__before_current__not_started__ok(mocker):
         '.send_removed_task_notification'
     )
     complete_task_webhook_mock = mocker.patch(
-        'pneumatic_backend.processes.tasks.webhooks.send_task_webhook.delay'
+        'pneumatic_backend.processes.tasks.webhooks.'
+        'send_task_completed_webhook.delay'
     )
     send_complete_task_notification_mock = mocker.patch(
         'pneumatic_backend.notifications.'
@@ -1645,6 +1675,7 @@ def test_complete_task__after_current__skip(mocker):
 
     # arrange
     user = create_test_user()
+    create_task_completed_webhook(user)
     workflow = create_test_workflow(user=user, tasks_count=2)
     task = workflow.tasks.get(number=2)
 
@@ -1664,7 +1695,8 @@ def test_complete_task__after_current__skip(mocker):
         '.send_removed_task_notification'
     )
     complete_task_webhook_mock = mocker.patch(
-        'pneumatic_backend.processes.tasks.webhooks.send_task_webhook.delay'
+        'pneumatic_backend.processes.tasks.webhooks.'
+        'send_task_completed_webhook.delay'
     )
     send_complete_task_notification_mock = mocker.patch(
         'pneumatic_backend.notifications.'
@@ -1720,7 +1752,7 @@ def test_complete_task__unsubscribed_performer__not_sent(mocker):
         email="performer@test.test",
         account=account
     )
-
+    create_task_completed_webhook(user)
     workflow = create_test_workflow(user=user, tasks_count=2)
     task = workflow.current_task_instance
     task.performers.add(account_owner)
@@ -1739,8 +1771,15 @@ def test_complete_task__unsubscribed_performer__not_sent(mocker):
         'pneumatic_backend.processes.services.websocket.WSSender'
         '.send_removed_task_notification'
     )
+    webhook_payload = mocker.Mock()
+    mocker.patch(
+        'pneumatic_backend.processes.models.workflows.task.Task'
+        '.webhook_payload',
+        return_value=webhook_payload
+    )
     complete_task_webhook_mock = mocker.patch(
-        'pneumatic_backend.processes.tasks.webhooks.send_task_webhook.delay'
+        'pneumatic_backend.processes.tasks.webhooks.'
+        'send_task_completed_webhook.delay'
     )
     send_complete_task_notification_mock = mocker.patch(
         'pneumatic_backend.notifications.'
@@ -1790,9 +1829,9 @@ def test_complete_task__unsubscribed_performer__not_sent(mocker):
         sync=True
     )
     complete_task_webhook_mock.assert_called_once_with(
-        event_name='task_completed_v2',
         user_id=user.id,
-        instance_id=task.id
+        account_id=user.account_id,
+        payload=webhook_payload
     )
     end_workflow_mock.assert_not_called()
     next_task = workflow.tasks.get(number=2)

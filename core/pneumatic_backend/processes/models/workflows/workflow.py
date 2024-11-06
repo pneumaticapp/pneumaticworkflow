@@ -81,8 +81,7 @@ class Workflow(
     def current_task_instance(self):
         return self.tasks.get(number=self.current_task)
 
-    def as_json(self):
-        wf = self.template
+    def webhook_payload(self):
         kickoff = self.kickoff_instance
         current_task = self.current_task_instance
         current_task_performers = [
@@ -93,77 +92,68 @@ class Workflow(
             } for x in current_task.performers.exclude_directly_deleted()
         ]
         return {
-            'id': self.id,
-            'name': self.name,
-            'status': self.status,
-            'date_created': self.date_created,
-            'date_created_tsp': (
-                self.date_created.timestamp()
-                if self.date_created else None
-            ),
-            'template': {
-                'id': wf.id,
-                'name': wf.name
-            } if wf else None,
-            'current_task': {
-                'id': current_task.id,
-                'name': current_task.name,
-                'number': current_task.number,
-                'description': current_task.description,
-                'date_started': current_task.date_started,
-                'date_started_tsp': (
-                    current_task.date_started.timestamp()
-                    if current_task.date_started else None
+            'workflow': {
+                'id': self.id,
+                'name': self.name,
+                'status': self.status,
+                'date_created_tsp': (
+                    self.date_created.timestamp()
+                    if self.date_created else None
                 ),
-                'date_completed': current_task.date_completed,
-                'date_completed_tsp': (
-                    current_task.date_completed.timestamp()
-                    if current_task.date_completed else None
-                ),
-                'due_date': current_task.due_date,
-                'due_date_tsp': (
-                    current_task.due_date.timestamp()
-                    if current_task.due_date else None
-                ),
-                'performers': current_task_performers
-            },
-            'kickoff': {
-                'id': kickoff.id,
-                'description': kickoff.description,
-                'output': [
-                    {
-                        'id': field.id,
-                        'type': field.type,
-                        'is_required': field.is_required,
-                        'name': field.name,
-                        'description': field.description,
-                        'api_name': field.api_name,
-                        'value': field.value,
-                        'user_id': field.user_id,
-                        'selections': [
-                            {
-                                'id': selection.id,
-                                'value': selection.value,
-                                'is_selected': selection.is_selected,
-                            } for selection in field.selections.all()
-                        ],
-                        'attachments': [
-                            {
-                                'id': attachment.id,
-                                'name': attachment.name,
-                                'url': attachment.url,
-                            } for attachment in field.attachments.all()
-                        ]
-                    } for field in kickoff.output.all()
-                ]
+                'template': {
+                    'id': self.template.id,
+                    'name': self.template.name
+                } if self.template else None,
+                'current_task': {
+                    'id': current_task.id,
+                    'name': current_task.name,
+                    'api_name': current_task.api_name,
+                    'number': current_task.number,
+                    'description': current_task.description,
+                    'date_started_tsp': (
+                        current_task.date_started.timestamp()
+                        if current_task.date_started else None
+                    ),
+                    'date_completed_tsp': (
+                        current_task.date_completed.timestamp()
+                        if current_task.date_completed else None
+                    ),
+                    'due_date_tsp': (
+                        current_task.due_date.timestamp()
+                        if current_task.due_date else None
+                    ),
+                    'performers': current_task_performers
+                },
+                'kickoff': {
+                    'output': [
+                        {
+                            'id': field.id,
+                            'type': field.type,
+                            'is_required': field.is_required,
+                            'name': field.name,
+                            'description': field.description,
+                            'api_name': field.api_name,
+                            'value': field.value,
+                            'user_id': field.user_id,
+                            'selections': [
+                                {
+                                    'id': selection.id,
+                                    'api_name': selection.api_name,
+                                    'value': selection.value,
+                                    'is_selected': selection.is_selected,
+                                } for selection in field.selections.all()
+                            ],
+                            'attachments': [
+                                {
+                                    'id': attachment.id,
+                                    'name': attachment.name,
+                                    'url': attachment.url,
+                                } for attachment in field.attachments.all()
+                            ]
+                        } for field in kickoff.output.all()
+                    ]
+                }
             }
-        }
-
-    def serialize_hook(self, hook):
-        hook_dict = hook.dict()
-        return {
-            'hook': hook_dict,
-            'workflow': self.as_json()
         }
 
     def __str__(self):
