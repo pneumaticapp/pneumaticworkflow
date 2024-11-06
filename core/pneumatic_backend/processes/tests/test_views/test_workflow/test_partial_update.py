@@ -374,6 +374,7 @@ class TestPartialUpdateWorkflow:
 
     def test_partial_update__field__update_current_task_due_date__ok(
         self,
+        mocker,
         api_client
     ):
 
@@ -437,10 +438,19 @@ class TestPartialUpdateWorkflow:
 
     def test_partial_update__field__not_update_completed_task_due_date__ok(
         self,
+        mocker,
         api_client
     ):
 
         # arrange
+        mocker.patch(
+            'pneumatic_backend.processes.tasks.webhooks.'
+            'send_workflow_started_webhook.delay',
+        )
+        mocker.patch(
+            'pneumatic_backend.processes.tasks.webhooks.'
+            'send_task_completed_webhook.delay'
+        )
         user = create_test_user()
         template = create_test_template(
             user=user,
@@ -742,10 +752,19 @@ class TestPartialUpdateWorkflow:
 
     def test_partial_update__task_body_with_self_output__ok(
         self,
+        mocker,
         api_client
     ):
 
         # arrange
+        mocker.patch(
+            'pneumatic_backend.processes.tasks.webhooks.'
+            'send_workflow_started_webhook.delay',
+        )
+        mocker.patch(
+            'pneumatic_backend.processes.tasks.webhooks.'
+            'send_task_completed_webhook.delay'
+        )
         user = create_test_user()
         template = create_test_template(
             user=user,
@@ -1667,11 +1686,20 @@ class TestUpdatePerformer:
 
     def test_update__user_field__not_completed_tasks_performers_updated__ok(
         self,
+        mocker,
         api_client
     ):
         """ More about case in https://trello.com/c/9ahwuoL0 """
 
         # arrange
+        mocker.patch(
+            'pneumatic_backend.processes.tasks.webhooks.'
+            'send_workflow_started_webhook.delay',
+        )
+        mocker.patch(
+            'pneumatic_backend.processes.tasks.webhooks.'
+            'send_task_completed_webhook.delay'
+        )
         account = create_test_account(plan=BillingPlanType.PREMIUM)
         user = create_test_user(account=account)
         user2 = create_test_user(
@@ -1801,11 +1829,20 @@ class TestUpdatePerformer:
 
     def test_update__user_field__next_task_performer_updated(
         self,
+        mocker,
         api_client
     ):
         """ More about case in https://trello.com/c/9ahwuoL0 """
 
         # arrange
+        mocker.patch(
+            'pneumatic_backend.processes.tasks.webhooks.'
+            'send_workflow_started_webhook.delay',
+        )
+        mocker.patch(
+            'pneumatic_backend.processes.tasks.webhooks.'
+            'send_task_completed_webhook.delay'
+        )
         account = create_test_account(plan=BillingPlanType.PREMIUM)
         user = create_test_user(account=account, first_name='First')
         user2 = create_test_user(
@@ -1909,11 +1946,24 @@ class TestUpdatePerformer:
 
     def test_update__user_field_in_reverted_task__performer_updated(
         self,
+        mocker,
         api_client
     ):
         """ More about case in https://trello.com/c/9ahwuoL0 """
 
         # arrange
+        mocker.patch(
+            'pneumatic_backend.processes.tasks.webhooks.'
+            'send_workflow_started_webhook.delay',
+        )
+        mocker.patch(
+            'pneumatic_backend.processes.tasks.webhooks.'
+            'send_task_completed_webhook.delay'
+        )
+        mocker.patch(
+            'pneumatic_backend.processes.tasks.webhooks.'
+            'send_task_returned_webhook.delay',
+        )
         account = create_test_account(plan=BillingPlanType.PREMIUM)
         user = create_test_user(account=account)
         user2 = create_test_user(

@@ -77,7 +77,7 @@ class TestWorkflowRevert:
         assert task.is_completed is False
         assert completed_performer.exists() is False
 
-    def test_revert_multiple_performers__ok(self):
+    def test_revert_multiple_performers__ok(self, mocker):
         user = create_test_user()
         invited = create_invited_user(user)
         workflow = create_test_workflow(user)
@@ -93,7 +93,10 @@ class TestWorkflowRevert:
         workflow.current_task += 1
         workflow.save(update_fields=['current_task'])
         current_task = workflow.current_task
-
+        mocker.patch(
+            'pneumatic_backend.processes.tasks.webhooks.'
+            'send_task_returned_webhook.delay',
+        )
         serializer = WorkflowRevertSerializer(
             instance=workflow,
             data={},
@@ -117,6 +120,7 @@ class TestWorkflowRevert:
         assert performers_completed.exists() is False
 
     def test_revert_revert_task_notification__sended(self, mocker):
+
         user = create_test_user()
         workflow = create_test_workflow(user)
         task = workflow.tasks.get(number=workflow.current_task)
@@ -133,7 +137,10 @@ class TestWorkflowRevert:
             'django.conf.settings.CONFIGURATION_CURRENT',
             settings.CONFIGURATION_STAGING
         )
-
+        mocker.patch(
+            'pneumatic_backend.processes.tasks.webhooks.'
+            'send_task_returned_webhook.delay',
+        )
         serializer = WorkflowRevertSerializer(
             instance=workflow,
             data={},

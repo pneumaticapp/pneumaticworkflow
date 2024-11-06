@@ -6,13 +6,16 @@ from pneumatic_backend.accounts.services import AccountService
 from pneumatic_backend.reports.tests.fixtures import (
     create_test_user,
     create_invited_user,
-    create_test_template,
-    create_test_workflow,
     create_test_account,
 )
 from pneumatic_backend.processes.enums import (
     WorkflowStatus,
 )
+from pneumatic_backend.processes.tests.fixtures import (
+    create_test_template,
+    create_test_workflow,
+)
+
 from pneumatic_backend.accounts.enums import BillingPlanType
 
 
@@ -49,7 +52,7 @@ class TestDashboardOverview:
         account_service.update_active_templates()
         create_test_template(user)
 
-        first_workflow = create_test_workflow(user, first_template)
+        first_workflow = create_test_workflow(user, template=first_template)
         first_workflow.status = WorkflowStatus.DONE
         date_created = first_workflow.date_created - timedelta(days=2)
         first_workflow.date_created = date_created
@@ -60,7 +63,7 @@ class TestDashboardOverview:
             'date_created',
         ])
 
-        overdue_workflow = create_test_workflow(user, first_template)
+        overdue_workflow = create_test_workflow(user, template=first_template)
         task = overdue_workflow.tasks.get(number=1)
         date_started = timezone.now() - timedelta(seconds=2)
         task.date_started = date_started
@@ -82,16 +85,16 @@ class TestDashboardOverview:
             'date_created'
         ])
 
-        second_workflow = create_test_workflow(user, first_template)
+        second_workflow = create_test_workflow(user, template=first_template)
         second_workflow.status = WorkflowStatus.RUNNING
         second_workflow.save(update_fields=['status'])
 
-        fourth_workflow = create_test_workflow(user, second_template)
+        fourth_workflow = create_test_workflow(user, template=second_template)
         fourth_workflow.status = WorkflowStatus.DONE
         fourth_workflow.date_completed = timezone.now()
         fourth_workflow.save(update_fields=['status', 'date_completed'])
 
-        uncount_workflow = create_test_workflow(user, fourth_template)
+        uncount_workflow = create_test_workflow(user, template=fourth_template)
         uncount_workflow.status = WorkflowStatus.DONE
         date_created = uncount_workflow.date_created - timedelta(days=2)
         uncount_workflow.date_created = date_created
@@ -102,7 +105,7 @@ class TestDashboardOverview:
             'date_created',
         ])
 
-        seventh_workflow = create_test_workflow(user, fourth_template)
+        seventh_workflow = create_test_workflow(user, template=fourth_template)
         seventh_workflow.status = WorkflowStatus.DELAYED
         seventh_workflow.save(update_fields=['status'])
 
@@ -143,26 +146,26 @@ class TestDashboardOverview:
         account_service.update_active_templates()
         create_test_template(user)
 
-        first_workflow = create_test_workflow(user, first_template)
+        first_workflow = create_test_workflow(user, template=first_template)
         first_workflow.status = WorkflowStatus.DONE
         first_workflow.date_completed = timezone.now()
         first_workflow.save(update_fields=['status', 'date_completed'])
 
-        second_workflow = create_test_workflow(user, first_template)
+        second_workflow = create_test_workflow(user, template=first_template)
         second_workflow.status = WorkflowStatus.RUNNING
         second_workflow.save(update_fields=['status'])
 
-        fourth_workflow = create_test_workflow(user, second_template)
+        fourth_workflow = create_test_workflow(user, template=second_template)
         fourth_workflow.status = WorkflowStatus.DONE
         fourth_workflow.date_completed = timezone.now()
         fourth_workflow.save(update_fields=['status', 'date_completed'])
 
-        sixth_workflow = create_test_workflow(user, fourth_template)
+        sixth_workflow = create_test_workflow(user, template=fourth_template)
         sixth_workflow.status = WorkflowStatus.DONE
         sixth_workflow.date_completed = timezone.now()
         sixth_workflow.save(update_fields=['status', 'date_completed'])
 
-        seventh_workflow = create_test_workflow(user, fourth_template)
+        seventh_workflow = create_test_workflow(user, template=fourth_template)
         seventh_workflow.status = WorkflowStatus.DELAYED
         seventh_workflow.save(update_fields=['status'])
 
@@ -194,21 +197,21 @@ class TestDashboardOverview:
         second_template = create_test_template(user, is_active=True)
         fourth_template = create_test_template(user, is_active=True)
 
-        first_workflow = create_test_workflow(user, first_template)
+        first_workflow = create_test_workflow(user, template=first_template)
         first_workflow.status = WorkflowStatus.RUNNING
         first_workflow.save(update_fields=['status'])
 
-        second_workflow = create_test_workflow(user, second_template)
+        second_workflow = create_test_workflow(user, template=second_template)
         second_workflow.status = WorkflowStatus.DONE
         second_workflow.date_completed = timezone.now()
         second_workflow.save(update_fields=['status', 'date_completed'])
 
-        fourth_workflow = create_test_workflow(user, fourth_template)
+        fourth_workflow = create_test_workflow(user, template=fourth_template)
         fourth_workflow.status = WorkflowStatus.DONE
         fourth_workflow.date_completed = timezone.now()
         fourth_workflow.save(update_fields=['status', 'date_completed'])
 
-        fifth_workflow = create_test_workflow(user, fourth_template)
+        fifth_workflow = create_test_workflow(user, template=fourth_template)
         fifth_workflow.status = WorkflowStatus.DELAYED
         fifth_workflow.save(update_fields=['status'])
 
@@ -247,7 +250,7 @@ class TestDashboardOverview:
         account_service.update_active_templates()
         create_test_template(user)
 
-        first_workflow = create_test_workflow(user, first_template)
+        first_workflow = create_test_workflow(user, template=first_template)
         first_workflow.status = WorkflowStatus.DONE
         date_created = first_workflow.date_created - timedelta(days=2)
         first_workflow.date_created = date_created
@@ -258,7 +261,7 @@ class TestDashboardOverview:
             'date_created',
         ])
 
-        overdue_workflow = create_test_workflow(user, first_template)
+        overdue_workflow = create_test_workflow(user, template=first_template)
         task = overdue_workflow.tasks.get(number=1)
 
         date_started = timezone.now() - timedelta(seconds=2)
@@ -275,16 +278,16 @@ class TestDashboardOverview:
         overdue_workflow.save(update_fields=['date_created'])
         api_client.token_authenticate(user)
 
-        second_workflow = create_test_workflow(user, first_template)
+        second_workflow = create_test_workflow(user, template=first_template)
         second_workflow.status = WorkflowStatus.RUNNING
         second_workflow.save(update_fields=['status'])
 
-        fourth_workflow = create_test_workflow(user, second_template)
+        fourth_workflow = create_test_workflow(user, template=second_template)
         fourth_workflow.status = WorkflowStatus.DONE
         fourth_workflow.date_completed = timezone.now()
         fourth_workflow.save(update_fields=['status', 'date_completed'])
 
-        uncount_workflow = create_test_workflow(user, fourth_template)
+        uncount_workflow = create_test_workflow(user, template=fourth_template)
         uncount_workflow.status = WorkflowStatus.DONE
         date_created = uncount_workflow.date_created - timedelta(days=2)
         uncount_workflow.date_created = date_created
@@ -295,7 +298,7 @@ class TestDashboardOverview:
             'date_created',
         ])
 
-        seventh_workflow = create_test_workflow(user, fourth_template)
+        seventh_workflow = create_test_workflow(user, template=fourth_template)
         seventh_workflow.status = WorkflowStatus.DELAYED
         seventh_workflow.save(update_fields=['status'])
 
@@ -443,11 +446,16 @@ class TestDashboardOverview:
         assert response.data['in_progress'] == 1
         assert response.data['overdue'] == 1
 
-    def test_overview__now__not_overdue_afert_overdue__task_returned__ok(
+    def test_overview__now__not_overdue_after_overdue__task_returned__ok(
         self,
+        mocker,
         api_client
     ):
         # arrange
+        mocker.patch(
+            'pneumatic_backend.processes.tasks.webhooks.'
+            'send_task_completed_webhook.delay'
+        )
         account = create_test_account()
         create_test_user(
             email='owner@test.test',
@@ -519,7 +527,7 @@ class TestDashboardWorkflowBreakdown:
         account_service.update_active_templates()
         draft_template = create_test_template(user)
 
-        first_workflow = create_test_workflow(user, first_template)
+        first_workflow = create_test_workflow(user, template=first_template)
         first_workflow.status = WorkflowStatus.DONE
         date_created = first_workflow.date_created - timedelta(days=2)
         first_workflow.date_created = date_created
@@ -530,7 +538,7 @@ class TestDashboardWorkflowBreakdown:
             'date_created',
         ])
 
-        overdue_workflow = create_test_workflow(user, first_template)
+        overdue_workflow = create_test_workflow(user, template=first_template)
         task = overdue_workflow.tasks.get(number=1)
         date_started = timezone.now() - timedelta(seconds=2)
         task.date_started = date_started
@@ -551,7 +559,7 @@ class TestDashboardWorkflowBreakdown:
             'date_created'
         ])
 
-        second_workflow = create_test_workflow(user, first_template)
+        second_workflow = create_test_workflow(user, template=first_template)
         second_workflow.status = WorkflowStatus.RUNNING
         second_workflow.save(update_fields=['status'])
 
@@ -578,12 +586,12 @@ class TestDashboardWorkflowBreakdown:
             update_fields=['date_created', 'date_completed', 'status'],
         )
 
-        fourth_workflow = create_test_workflow(user, second_template)
+        fourth_workflow = create_test_workflow(user, template=second_template)
         fourth_workflow.status = WorkflowStatus.DONE
         fourth_workflow.date_completed = timezone.now()
         fourth_workflow.save(update_fields=['status', 'date_completed'])
 
-        uncount_workflow = create_test_workflow(user, fourth_template)
+        uncount_workflow = create_test_workflow(user, template=fourth_template)
         uncount_workflow.status = WorkflowStatus.DONE
         date_created = uncount_workflow.date_created - timedelta(days=2)
         uncount_workflow.date_created = date_created
@@ -594,7 +602,7 @@ class TestDashboardWorkflowBreakdown:
             'date_created',
         ])
 
-        seventh_workflow = create_test_workflow(user, fourth_template)
+        seventh_workflow = create_test_workflow(user, template=fourth_template)
         seventh_workflow.status = WorkflowStatus.DELAYED
         seventh_workflow.save(update_fields=['status'])
 
@@ -666,7 +674,7 @@ class TestDashboardWorkflowBreakdown:
         )
         account_service.update_active_templates()
 
-        first_workflow = create_test_workflow(user, first_template)
+        first_workflow = create_test_workflow(user, template=first_template)
         first_workflow.status = WorkflowStatus.DONE
         date_created = first_workflow.date_created - timedelta(days=2)
         first_workflow.date_created = date_created
@@ -677,7 +685,7 @@ class TestDashboardWorkflowBreakdown:
             'date_created',
         ])
 
-        overdue_workflow = create_test_workflow(user, first_template)
+        overdue_workflow = create_test_workflow(user, template=first_template)
         task = overdue_workflow.tasks.get(number=1)
         date_started = timezone.now() - timedelta(seconds=2)
         task.date_started = date_started
@@ -698,11 +706,11 @@ class TestDashboardWorkflowBreakdown:
             'date_created'
         ])
 
-        second_workflow = create_test_workflow(user, first_template)
+        second_workflow = create_test_workflow(user, template=first_template)
         second_workflow.status = WorkflowStatus.RUNNING
         second_workflow.save(update_fields=['status'])
 
-        fourth_workflow = create_test_workflow(user, second_template)
+        fourth_workflow = create_test_workflow(user, template=second_template)
         fourth_workflow.status = WorkflowStatus.DONE
         fourth_workflow.date_completed = timezone.now()
         fourth_workflow.save(update_fields=['status', 'date_completed'])
@@ -763,7 +771,7 @@ class TestDashboardWorkflowBreakdown:
             name='draft'
         )
 
-        first_workflow = create_test_workflow(user, first_template)
+        first_workflow = create_test_workflow(user, template=first_template)
         first_workflow.status = WorkflowStatus.DONE
         date_created = first_workflow.date_created - timedelta(days=2)
         first_workflow.date_created = date_created
@@ -774,7 +782,7 @@ class TestDashboardWorkflowBreakdown:
             'date_created',
         ])
 
-        overdue_workflow = create_test_workflow(user, first_template)
+        overdue_workflow = create_test_workflow(user, template=first_template)
         task = overdue_workflow.tasks.get(number=1)
         date_started = timezone.now() - timedelta(seconds=2)
         task.date_started = date_started
@@ -792,7 +800,7 @@ class TestDashboardWorkflowBreakdown:
             'date_created'
         ])
 
-        second_workflow = create_test_workflow(user, first_template)
+        second_workflow = create_test_workflow(user, template=first_template)
         second_workflow.status = WorkflowStatus.RUNNING
         second_workflow.save(update_fields=['status'])
 
@@ -818,12 +826,12 @@ class TestDashboardWorkflowBreakdown:
             update_fields=['date_created', 'date_completed', 'status'],
         )
 
-        fourth_workflow = create_test_workflow(user, second_template)
+        fourth_workflow = create_test_workflow(user, template=second_template)
         fourth_workflow.status = WorkflowStatus.DONE
         fourth_workflow.date_completed = timezone.now()
         fourth_workflow.save(update_fields=['status', 'date_completed'])
 
-        uncount_workflow = create_test_workflow(user, fourth_template)
+        uncount_workflow = create_test_workflow(user, template=fourth_template)
         uncount_workflow.status = WorkflowStatus.DONE
         date_created = uncount_workflow.date_created - timedelta(days=2)
         uncount_workflow.date_created = date_created
@@ -835,7 +843,7 @@ class TestDashboardWorkflowBreakdown:
         ])
 
         # not count
-        seventh_workflow = create_test_workflow(user, fourth_template)
+        seventh_workflow = create_test_workflow(user, template=fourth_template)
         seventh_workflow.status = WorkflowStatus.DELAYED
         seventh_workflow.save(update_fields=['status'])
 
@@ -1231,9 +1239,14 @@ class TestWorkflowBreakdownByTasks:
 
     def test_workflow_breakdown__ok(
         self,
+        mocker,
         api_client
     ):
         # arrange
+        mocker.patch(
+            'pneumatic_backend.processes.tasks.webhooks.'
+            'send_task_completed_webhook.delay'
+        )
         account = create_test_account()
         create_test_user(
             email='owner@test.test',
@@ -1249,14 +1262,14 @@ class TestWorkflowBreakdownByTasks:
         )
         account_service.update_active_templates()
 
-        first_workflow = create_test_workflow(user, first_template)
+        first_workflow = create_test_workflow(user, template=first_template)
         api_client.token_authenticate(user)
         api_client.post(
             f'/workflows/{first_workflow.id}/task-complete',
             data={'task_id': first_workflow.current_task_instance.id},
         )
 
-        overdue_workflow = create_test_workflow(user, first_template)
+        overdue_workflow = create_test_workflow(user, template=first_template)
         task = overdue_workflow.tasks.get(number=1)
         date_started = overdue_workflow.date_created - timedelta(days=2)
         task.date_started = date_started
@@ -1278,11 +1291,11 @@ class TestWorkflowBreakdownByTasks:
             data={'task_id': overdue_workflow.tasks.get(number=2).id},
         )
 
-        second_workflow = create_test_workflow(user, first_template)
+        second_workflow = create_test_workflow(user, template=first_template)
         second_workflow.status = WorkflowStatus.RUNNING
         second_workflow.save(update_fields=['status'])
 
-        fourth_workflow = create_test_workflow(user, second_template)
+        fourth_workflow = create_test_workflow(user, template=second_template)
         fourth_workflow.status = WorkflowStatus.DONE
         fourth_workflow.date_completed = timezone.now()
         fourth_workflow.save(update_fields=['status', 'date_completed'])
@@ -1332,7 +1345,7 @@ class TestWorkflowBreakdownByTasks:
         )
         user = create_test_user(account=account, is_account_owner=False)
         first_template = create_test_template(user, is_active=True)
-        create_test_workflow(user, first_template)
+        create_test_workflow(user, template=first_template)
         another_user = create_test_user(
             account=user.account,
             email='test@test.test'
@@ -1350,10 +1363,15 @@ class TestWorkflowBreakdownByTasks:
 
     def test_workflow_breakdown__now__ok(
         self,
+        mocker,
         api_client
     ):
 
         # arrange
+        mocker.patch(
+            'pneumatic_backend.processes.tasks.webhooks.'
+            'send_task_completed_webhook.delay'
+        )
         account = create_test_account()
         create_test_user(
             email='owner@test.test',
@@ -1369,14 +1387,14 @@ class TestWorkflowBreakdownByTasks:
         )
         account_service.update_active_templates()
 
-        first_workflow = create_test_workflow(user, first_template)
+        first_workflow = create_test_workflow(user, template=first_template)
         api_client.token_authenticate(user)
         api_client.post(
             f'/workflows/{first_workflow.id}/task-complete',
             data={'task_id': first_workflow.current_task_instance.id},
         )
 
-        second_workflow = create_test_workflow(user, first_template)
+        second_workflow = create_test_workflow(user, template=first_template)
         api_client.post(
             f'/workflows/{second_workflow.id}/task-complete',
             data={'task_id': second_workflow.current_task_instance.id},
@@ -1386,11 +1404,11 @@ class TestWorkflowBreakdownByTasks:
             data={'task_id': second_workflow.tasks.get(number=2).id},
         )
 
-        third_workflow = create_test_workflow(user, first_template)
+        third_workflow = create_test_workflow(user, template=first_template)
         third_workflow.status = WorkflowStatus.RUNNING
         third_workflow.save(update_fields=['status'])
 
-        fifth_workflow = create_test_workflow(user, second_template)
+        fifth_workflow = create_test_workflow(user, template=second_template)
         fifth_workflow.status = WorkflowStatus.DONE
         fifth_workflow.date_completed = timezone.now()
         fifth_workflow.save(update_fields=['status', 'date_completed'])

@@ -1,3 +1,5 @@
+import json
+import requests
 from typing import Optional
 from django.db import transaction
 from django.contrib.auth import get_user_model
@@ -8,6 +10,14 @@ from pneumatic_backend.webhooks import exceptions
 from pneumatic_backend.processes.api_v2.services.templates\
     .integrations import TemplateIntegrationsService
 from pneumatic_backend.analytics.services import AnalyticService
+from pneumatic_backend.utils.logging import (
+    capture_sentry_message,
+    SentryLogLevel
+)
+from pneumatic_backend.logs.service import AccountLogService
+from pneumatic_backend.logs.enums import (
+    AccountEventStatus,
+)
 
 
 UserModel = get_user_model()
@@ -120,6 +130,75 @@ class WebhookService:
         for hook in WebHook.objects.on_account(self.account.id):
             data[hook.event]['url'] = hook.target
         return list(data.values())
+
+
+class WebhookDeliverer:
+
+    def send(
+        self,
+        event: HookEvent.LITERALS,
+        user_id: int,
+        account_id: int,
+        payload: dict,
+    ):
+
+        hooks = WebHook.objects.on_account(account_id).for_event(event)
+        for hook in hooks:
+            status = AccountEventStatus.SUCCESS
+            error = {}
+            hook_payload = {'hook': hook.dict(), **payload}
+            http_status = None
+            try:
+                response = requests.post(
+                    url=hook.target,
+                    data=json.dumps(hook_payload),
+                    headers={'Content-Type': 'application/json'}
+                )
+            except ConnectionError as e:
+                capture_sentry_message(
+                    message='HttpException sending webhook',
+                    data={
+                        'request_url': hook.target,
+                        'exception': str(e)
+                    },
+                    level=SentryLogLevel.INFO
+                )
+                status = AccountEventStatus.FAILED
+                error['ConnectionError'] = str(e)
+            else:
+                http_status = response.status_code
+                if not response.ok:
+                    data = {
+                        'request_url': hook.target,
+                        'response_status': response.status_code
+                    }
+                    if response.status_code != 404:
+                        content_type = response.headers.get('content-type', '')
+                        if 'text' in content_type:
+                            data['response_text'] = response.text
+                        elif 'application/json' in content_type:
+                            data['response_json'] = response.json()
+                    capture_sentry_message(
+                        message='Error sending webhook',
+                        data=data,
+                        level=SentryLogLevel.INFO
+                    )
+                    status = AccountEventStatus.FAILED
+                    http_status = response.status_code
+                    error['response'] = data
+                if response.status_code >= 500:
+                    response.raise_for_status()
+            finally:
+                AccountLogService().webhook(
+                    title=f'Webhook: {hook.event}',
+                    path=hook.target,
+                    body=hook_payload,
+                    account_id=account_id,
+                    status=status,
+                    http_status=http_status,
+                    error=error,
+                    user_id=user_id
+                )
 
 
 class WebhookBufferService(DefaultClsCacheMixin):

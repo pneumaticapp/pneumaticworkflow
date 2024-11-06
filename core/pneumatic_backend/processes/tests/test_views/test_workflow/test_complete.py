@@ -26,7 +26,9 @@ from pneumatic_backend.processes.tests.fixtures import (
     create_test_workflow,
     create_invited_user,
     create_test_template,
-    create_test_account
+    create_test_account,
+    create_wf_created_webhook,
+    create_task_completed_webhook,
 )
 from pneumatic_backend.processes.models import WorkflowEvent
 from pneumatic_backend.processes.api_v2.serializers.workflow.events import (
@@ -86,6 +88,10 @@ def test_complete__fields_values__ok(
         attribute='__init__',
         return_value=None
     )
+    mocker.patch(
+        'pneumatic_backend.processes.tasks.webhooks.'
+        'send_task_completed_webhook.delay'
+    )
     complete_current_task_by_user_mock = mocker.patch(
         'pneumatic_backend.processes.services.'
         'workflow_action.WorkflowActionService.'
@@ -141,6 +147,10 @@ def test_complete__not_fields_values__ok(
         attribute='__init__',
         return_value=None
     )
+    mocker.patch(
+        'pneumatic_backend.processes.tasks.webhooks.'
+        'send_task_completed_webhook.delay'
+    )
     complete_current_task_by_user_mock = mocker.patch(
         'pneumatic_backend.processes.services.'
         'workflow_action.WorkflowActionService.'
@@ -193,6 +203,10 @@ def test_complete__snoozed_workflow__validation_error(
         'workflow_action.WorkflowActionService.'
         'complete_current_task_for_user'
     )
+    mocker.patch(
+        'pneumatic_backend.processes.tasks.webhooks.'
+        'send_task_completed_webhook.delay'
+    )
     api_client.token_authenticate(user)
 
     # act
@@ -233,6 +247,10 @@ def test_complete__ended_workflow__validation_error(
         'workflow_action.WorkflowActionService.'
         'complete_current_task_for_user'
     )
+    mocker.patch(
+        'pneumatic_backend.processes.tasks.webhooks.'
+        'send_task_completed_webhook.delay'
+    )
     api_client.token_authenticate(user)
 
     # act
@@ -270,6 +288,10 @@ def test_complete__not_current_task__validation_error(
         'pneumatic_backend.processes.services.'
         'workflow_action.WorkflowActionService.'
         'complete_current_task_for_user'
+    )
+    mocker.patch(
+        'pneumatic_backend.processes.tasks.webhooks.'
+        'send_task_completed_webhook.delay'
     )
     api_client.token_authenticate(user)
 
@@ -314,6 +336,10 @@ def test_complete__checklist_incompleted__validation_error(
         'workflow_action.WorkflowActionService.'
         'complete_current_task_for_user'
     )
+    mocker.patch(
+        'pneumatic_backend.processes.tasks.webhooks.'
+        'send_task_completed_webhook.delay'
+    )
     api_client.token_authenticate(user)
 
     # act
@@ -357,6 +383,10 @@ def test_complete__sub_workflows_incompleted__validation_error(
         'pneumatic_backend.processes.services.'
         'workflow_action.WorkflowActionService.'
         'complete_current_task_for_user'
+    )
+    mocker.patch(
+        'pneumatic_backend.processes.tasks.webhooks.'
+        'send_task_completed_webhook.delay'
     )
     api_client.token_authenticate(user)
 
@@ -404,6 +434,10 @@ def test_complete__not_performer__validation_error(
         'workflow_action.WorkflowActionService.'
         'complete_current_task_for_user'
     )
+    mocker.patch(
+        'pneumatic_backend.processes.tasks.webhooks.'
+        'send_task_completed_webhook.delay'
+    )
     api_client.token_authenticate(not_performer)
 
     # act
@@ -449,6 +483,10 @@ def test_complete__performer_already_complete__validation_error(
         'pneumatic_backend.processes.services.'
         'workflow_action.WorkflowActionService.'
         'complete_current_task_for_user'
+    )
+    mocker.patch(
+        'pneumatic_backend.processes.tasks.webhooks.'
+        'send_task_completed_webhook.delay'
     )
     api_client.token_authenticate(performer)
 
@@ -496,7 +534,10 @@ class TestCompleteWorkflow:
             'pneumatic_backend.processes.services.workflow_action.'
             'send_new_task_notification.delay'
         )
-
+        mocker.patch(
+            'pneumatic_backend.processes.tasks.webhooks.'
+            'send_task_completed_webhook.delay'
+        )
         data = {
             'task_id': workflow.current_task_instance.id
         }
@@ -545,6 +586,14 @@ class TestCompleteWorkflow:
         mocker,
     ):
         # arrange
+        mocker.patch(
+            'pneumatic_backend.processes.tasks.webhooks.'
+            'send_workflow_started_webhook.delay',
+        )
+        mocker.patch(
+            'pneumatic_backend.processes.tasks.webhooks.'
+            'send_task_completed_webhook.delay'
+        )
         user = create_test_user()
         template = create_test_template(
             user=user,
@@ -667,6 +716,10 @@ class TestCompleteWorkflow:
             'pneumatic_backend.processes.services.'
             'workflow_action.AnalyticService.workflow_completed'
         )
+        mocker.patch(
+            'pneumatic_backend.processes.tasks.webhooks.'
+            'send_task_completed_webhook.delay'
+        )
 
         api_client.token_authenticate(user)
 
@@ -726,6 +779,10 @@ class TestCompleteWorkflow:
             'pneumatic_backend.processes.services.'
             'workflow_action.AnalyticService.workflow_completed'
         )
+        mocker.patch(
+            'pneumatic_backend.processes.tasks.webhooks.'
+            'send_task_completed_webhook.delay'
+        )
 
         # act
         response = api_client.post(
@@ -775,6 +832,10 @@ class TestCompleteWorkflow:
         task_complete_analytics_mock = mocker.patch(
             'pneumatic_backend.processes.services.'
             'workflow_action.AnalyticService.task_completed'
+        )
+        mocker.patch(
+            'pneumatic_backend.processes.tasks.webhooks.'
+            'send_task_completed_webhook.delay'
         )
         api_client.token_authenticate(user)
 
@@ -838,6 +899,10 @@ class TestCompleteWorkflow:
             'pneumatic_backend.processes.services.'
             'workflow_action.AnalyticService.task_completed'
         )
+        mocker.patch(
+            'pneumatic_backend.processes.tasks.webhooks.'
+            'send_task_completed_webhook.delay'
+        )
         api_client.token_authenticate(user)
 
         # act
@@ -881,6 +946,10 @@ class TestCompleteWorkflow:
             'pneumatic_backend.processes.services.'
             'workflow_action.AnalyticService.task_completed'
         )
+        mocker.patch(
+            'pneumatic_backend.processes.tasks.webhooks.'
+            'send_task_completed_webhook.delay'
+        )
 
         # act
         response = api_client.post(
@@ -906,9 +975,14 @@ class TestCompleteWorkflow:
 
     def test_task__complete__not_performer__permission_denied(
         self,
+        mocker,
         api_client,
     ):
         # arrange
+        mocker.patch(
+            'pneumatic_backend.processes.tasks.webhooks.'
+            'send_task_completed_webhook.delay'
+        )
         user = create_test_user(is_account_owner=False)
         api_client.token_authenticate(user)
         invited = create_invited_user(user, email='test0@pneumatic.app')
@@ -929,6 +1003,14 @@ class TestCompleteWorkflow:
     def test_complete__output_type_user__ok(self, mocker, api_client):
 
         # arrange
+        mocker.patch(
+            'pneumatic_backend.processes.tasks.webhooks.'
+            'send_workflow_started_webhook.delay',
+        )
+        mocker.patch(
+            'pneumatic_backend.processes.tasks.webhooks.'
+            'send_task_completed_webhook.delay'
+        )
         user = create_test_user()
         api_client.token_authenticate(user)
         template = create_test_template(
@@ -985,6 +1067,10 @@ class TestCompleteWorkflow:
     ):
 
         # arrange
+        mocker.patch(
+            'pneumatic_backend.processes.tasks.webhooks.'
+            'send_task_completed_webhook.delay'
+        )
         user = create_test_user()
         invited = create_invited_user(user, is_admin=True)
         template = create_test_template(invited)
@@ -1045,15 +1131,22 @@ class TestCompleteWorkflow:
         mocker,
     ):
         # arrange
-        send_workflow_started_webhook_mock = mocker.patch(
+        webhook_payload = mocker.Mock()
+        mocker.patch(
+            'pneumatic_backend.processes.models.workflows.task.Task'
+            '.webhook_payload',
+            return_value=webhook_payload
+        )
+        mocker.patch(
             'pneumatic_backend.processes.tasks.webhooks.'
             'send_workflow_started_webhook.delay',
         )
-        send_task_webhook_mock = mocker.patch(
+        send_task_completed_webhook_mock = mocker.patch(
             'pneumatic_backend.processes.tasks.webhooks.'
-            'send_task_webhook.delay',
+            'send_task_completed_webhook.delay',
         )
         user = create_test_user()
+        create_task_completed_webhook(user)
         template = create_test_template(
             user=user,
             is_active=True
@@ -1147,17 +1240,11 @@ class TestCompleteWorkflow:
         workflow.refresh_from_db()
 
         assert workflow.current_task == 2
-        send_workflow_started_webhook_mock.assert_called_once_with(
+        send_task_completed_webhook_mock.assert_called_once_with(
             user_id=user.id,
-            instance_id=workflow.id
+            account_id=user.account_id,
+            payload=webhook_payload,
         )
-        send_task_webhook_mock.assert_has_calls([
-            mocker.call(
-                event_name='task_completed_v2',
-                user_id=user.id,
-                instance_id=workflow.tasks.order_by('number').first().id,
-            )
-        ])
 
     def test_complete__skip_task_condition_true__goto_next_task(
         self,
@@ -1165,15 +1252,28 @@ class TestCompleteWorkflow:
         mocker,
     ):
         # arrange
+        webhook_payload = mocker.Mock()
+        mocker.patch(
+            'pneumatic_backend.processes.models.workflows.task.Task'
+            '.webhook_payload',
+            return_value=webhook_payload
+        )
+        mocker.patch(
+            'pneumatic_backend.processes.models.workflows.workflow.Workflow'
+            '.webhook_payload',
+            return_value=webhook_payload
+        )
         send_workflow_started_webhook_mock = mocker.patch(
             'pneumatic_backend.processes.tasks.webhooks.'
             'send_workflow_started_webhook.delay',
         )
-        send_task_webhook_mock = mocker.patch(
+        send_task_completed_webhook_mock = mocker.patch(
             'pneumatic_backend.processes.tasks.webhooks.'
-            'send_task_webhook.delay',
+            'send_task_completed_webhook.delay',
         )
         user = create_test_user()
+        create_wf_created_webhook(user)
+        create_task_completed_webhook(user)
         template = create_test_template(
             user=user,
             is_active=True
@@ -1279,15 +1379,14 @@ class TestCompleteWorkflow:
         )
         send_workflow_started_webhook_mock.assert_called_once_with(
             user_id=user.id,
-            instance_id=workflow.id
+            account_id=user.account_id,
+            payload=webhook_payload
         )
-        send_task_webhook_mock.assert_has_calls([
-            mocker.call(
-                event_name='task_completed_v2',
-                user_id=user.id,
-                instance_id=workflow.tasks.order_by('number').first().id,
-            )
-        ])
+        send_task_completed_webhook_mock.assert_called_once_with(
+            user_id=user.id,
+            account_id=user.account_id,
+            payload=webhook_payload
+        )
 
     def test_complete__skip_task__correct_notifications(
         self,
@@ -1297,11 +1396,11 @@ class TestCompleteWorkflow:
         # arrange
         mocker.patch(
             'pneumatic_backend.processes.tasks.webhooks.'
-            'send_workflow_webhook.delay',
+            'send_workflow_started_webhook.delay',
         )
         mocker.patch(
             'pneumatic_backend.processes.tasks.webhooks.'
-            'send_task_webhook.delay',
+            'send_task_completed_webhook.delay',
         )
         account = create_test_account(plan=BillingPlanType.PREMIUM)
         template_owner = create_test_user(account=account)
@@ -2436,11 +2535,15 @@ class TestCompleteWorkflow:
         # arrange
         mocker.patch(
             'pneumatic_backend.processes.tasks.webhooks.'
-            'send_workflow_webhook.delay',
+            'send_workflow_started_webhook.delay',
         )
         mocker.patch(
             'pneumatic_backend.processes.tasks.webhooks.'
-            'send_task_webhook.delay',
+            'send_task_returned_webhook.delay',
+        )
+        mocker.patch(
+            'pneumatic_backend.processes.tasks.webhooks.'
+            'send_task_completed_webhook.delay',
         )
         mocker.patch(
             'pneumatic_backend.processes.services.websocket.WSSender.'
@@ -2576,11 +2679,15 @@ class TestCompleteWorkflow:
         # arrange
         mocker.patch(
             'pneumatic_backend.processes.tasks.webhooks.'
-            'send_workflow_webhook.delay',
+            'send_workflow_started_webhook.delay',
         )
         mocker.patch(
             'pneumatic_backend.processes.tasks.webhooks.'
-            'send_task_webhook.delay',
+            'send_task_returned_webhook.delay',
+        )
+        mocker.patch(
+            'pneumatic_backend.processes.tasks.webhooks.'
+            'send_task_completed_webhook.delay',
         )
         mocker.patch(
             'pneumatic_backend.processes.services.websocket.WSSender.'
@@ -2701,10 +2808,23 @@ class TestCompleteWorkflow:
 
     def test_complete__clear_attachment_field__delete_attachment(
         self,
+        mocker,
         api_client
     ):
 
         # arrange
+        mocker.patch(
+            'pneumatic_backend.processes.tasks.webhooks.'
+            'send_workflow_started_webhook.delay',
+        )
+        mocker.patch(
+            'pneumatic_backend.processes.tasks.webhooks.'
+            'send_task_completed_webhook.delay'
+        )
+        mocker.patch(
+            'pneumatic_backend.processes.tasks.webhooks.'
+            'send_task_returned_webhook.delay',
+        )
         user = create_test_user()
         api_client.token_authenticate(user)
         template = create_test_template(
@@ -2792,6 +2912,18 @@ class TestCompleteWorkflow:
     ):
 
         # arrange
+        mocker.patch(
+            'pneumatic_backend.processes.tasks.webhooks.'
+            'send_workflow_started_webhook.delay',
+        )
+        mocker.patch(
+            'pneumatic_backend.processes.tasks.webhooks.'
+            'send_task_completed_webhook.delay'
+        )
+        mocker.patch(
+            'pneumatic_backend.processes.tasks.webhooks.'
+            'send_task_returned_webhook.delay',
+        )
         user = create_test_user()
         api_client.token_authenticate(user)
         template = create_test_template(

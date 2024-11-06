@@ -13,7 +13,6 @@ import os
 from os import environ as env
 from configurations import Configuration, values
 from corsheaders.defaults import default_headers
-from pneumatic_backend.webhooks.enums import HookEvent
 
 
 class Common(Configuration):
@@ -127,9 +126,6 @@ class Common(Configuration):
         'django_filters',
         'django_celery_beat',
         'drf_recaptcha',
-
-        'rest_hooks',
-
         'pneumatic_backend.accounts',
         'pneumatic_backend.authentication',
         'pneumatic_backend.applications',
@@ -317,16 +313,6 @@ class Common(Configuration):
     ANALYTICS_WRITE_KEY = env.get('ANALYTICS_WRITE_KEY')
     ANALYTICS_DEBUG = env.get('ANALYTICS_DEBUG') == 'yes'
 
-    # WebHooks
-    HOOK_CUSTOM_MODEL = 'webhooks.models.WebHook'
-    HOOK_FINDER = 'pneumatic_backend.webhooks.utils.find_and_fire_hook'
-    HOOK_EVENTS = {
-        HookEvent.WORKFLOW_COMPLETED: None,
-        HookEvent.WORKFLOW_STARTED: None,
-        HookEvent.TASK_STARTED: None,
-        HookEvent.TASK_RETURNED: None
-    }
-
     # Attachments
     ATTACHMENT_SIGNED_URL_LIFETIME_MIN = 15
     ATTACHMENT_MAX_SIZE_BYTES = 104857600  # bites = 100 Mb
@@ -347,7 +333,6 @@ class Common(Configuration):
         'pneumatic_backend.processes.tasks.tasks',
         'pneumatic_backend.processes.tasks.update_workflow',
         'pneumatic_backend.processes.tasks.webhooks',
-        'pneumatic_backend.webhooks.tasks',
         'pneumatic_backend.services.tasks',
     ]
 
@@ -515,9 +500,6 @@ class Staging(Common):
             'KEY_PREFIX': '',
         },
     }
-
-    # WebHooks
-    HOOK_DELIVERER = 'pneumatic_backend.webhooks.tasks.deliver_hook_wrapper'
 
     # Channels
     CHANNEL_LAYERS = {

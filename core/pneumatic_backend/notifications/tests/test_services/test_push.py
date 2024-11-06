@@ -354,7 +354,7 @@ class TestPushNotificationService:
         send_mock.assert_called_once_with(message_mock)
         log_service_init_mock.assert_called_once()
         log_push_mock.assert_called_once_with(
-            path=f'Push to browser: {user.email}: {data["title"]}',
+            title=f'Push to browser: {user.email}: {data["title"]}',
             body=data,
             account_id=account.id,
             status=AccountEventStatus.SUCCESS,
@@ -574,7 +574,7 @@ class TestPushNotificationService:
         assert counter.count_unread_push_in_ios_app == 2
         log_service_init_mock.assert_called_once()
         log_push_mock.assert_called_once_with(
-            path=f'Push to app: {user.email}: {data["title"]}',
+            title=f'Push to app: {user.email}: {data["title"]}',
             body=data,
             account_id=account.id,
             status=AccountEventStatus.SUCCESS,
@@ -1005,7 +1005,7 @@ class TestPushNotificationService:
         assert Device.objects.filter(token=broken_device.token).exists()
         log_service_init_mock.assert_called_once()
         log_push_mock.assert_called_once_with(
-            path=f'Push to browser {user.email}: {data["title"]}',
+            title=f'Push to browser {user.email}: {data["title"]}',
             body=data,
             account_id=user.account_id,
             status=AccountEventStatus.FAILED,

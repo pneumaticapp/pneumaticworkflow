@@ -37,7 +37,7 @@ def replica_mock(mocker):
     yield
 
 
-def test_list__default_ordering__ok(api_client):
+def test_list__default_ordering__ok(mocker, api_client):
 
     # arrange
     user = create_test_user()
@@ -54,6 +54,10 @@ def test_list__default_ordering__ok(api_client):
     task_11.save(update_fields=['due_date'])
 
     completed_workflow = create_test_workflow(user, tasks_count=1)
+    mocker.patch(
+        'pneumatic_backend.processes.tasks.webhooks.'
+        'send_task_completed_webhook.delay'
+    )
     api_client.post(
         f'/workflows/{completed_workflow.id}/task-complete',
         data={
@@ -1008,13 +1012,17 @@ def test_list__ordering_by_reversed_date__ok(api_client):
     assert response.data[1]['id'] == task_11.id
 
 
-def test_list__ordering_by_completed__ok(api_client):
+def test_list__ordering_by_completed__ok(mocker, api_client):
 
     # arrange
     user = create_test_user()
     api_client.token_authenticate(user=user)
     workflow_1 = create_test_workflow(user, tasks_count=1)
     task_11 = workflow_1.tasks.get(number=1)
+    mocker.patch(
+        'pneumatic_backend.processes.tasks.webhooks.'
+        'send_task_completed_webhook.delay'
+    )
     complete_response_1 = api_client.post(
         f'/workflows/{workflow_1.id}/task-complete',
         data={'task_id': task_11.id}
@@ -1056,13 +1064,17 @@ def test_list__ordering_by_completed__ok(api_client):
     assert response.data[1]['date_completed'] is not None
 
 
-def test_list__ordering_by_reversed_completed__ok(api_client):
+def test_list__ordering_by_reversed_completed__ok(mocker, api_client):
 
     # arrange
     user = create_test_user()
     api_client.token_authenticate(user=user)
     workflow_1 = create_test_workflow(user, tasks_count=1)
     task_11 = workflow_1.tasks.get(number=1)
+    mocker.patch(
+        'pneumatic_backend.processes.tasks.webhooks.'
+        'send_task_completed_webhook.delay'
+    )
     api_client.post(
         f'/workflows/{workflow_1.id}/task-complete',
         data={'task_id': task_11.id}
@@ -1088,6 +1100,7 @@ def test_list__ordering_by_reversed_completed__ok(api_client):
 
 
 def test_list__ordering_by_completed_required_completion_by_all__ok(
+    mocker,
     api_client
 ):
 
@@ -1105,6 +1118,10 @@ def test_list__ordering_by_completed_required_completion_by_all__ok(
 
     workflow_1 = create_test_workflow(user, template=template)
     task_11 = workflow_1.tasks.get(number=1)
+    mocker.patch(
+        'pneumatic_backend.processes.tasks.webhooks.'
+        'send_task_completed_webhook.delay'
+    )
     api_client.token_authenticate(user=user)
     api_client.post(
         f'/workflows/{workflow_1.id}/task-complete',
@@ -1150,6 +1167,7 @@ def test_list__ordering_by_completed_required_completion_by_all__ok(
 
 
 def test_list__ordering_by_completed_reversed_required_completion_by_all__ok(
+    mocker,
     api_client
 ):
 
@@ -1166,6 +1184,10 @@ def test_list__ordering_by_completed_reversed_required_completion_by_all__ok(
 
     workflow_1 = create_test_workflow(user, template=template)
     task_11 = workflow_1.tasks.get(number=1)
+    mocker.patch(
+        'pneumatic_backend.processes.tasks.webhooks.'
+        'send_task_completed_webhook.delay'
+    )
     api_client.token_authenticate(user=user)
     api_client.post(
         f'/workflows/{workflow_1.id}/task-complete',
@@ -1192,10 +1214,15 @@ def test_list__ordering_by_completed_reversed_required_completion_by_all__ok(
 
 
 def test_list__completed__non_completed_performers__not_view_in_list(
+    mocker,
     api_client
 ):
 
     # arrange
+    mocker.patch(
+        'pneumatic_backend.processes.tasks.webhooks.'
+        'send_task_completed_webhook.delay'
+    )
     user = create_test_user(is_account_owner=True)
     user_2 = create_test_user(
         email='test@test.test',
@@ -1392,10 +1419,15 @@ def test_list__filter_is_completed_false__running_wf__ok(api_client):
 
 
 def test_list__filter_is_completed_false__running_wf_completed_task__ok(
+    mocker,
     api_client
 ):
 
     # arrange
+    mocker.patch(
+        'pneumatic_backend.processes.tasks.webhooks.'
+        'send_task_completed_webhook.delay'
+    )
     user = create_test_user()
     workflow = create_test_workflow(
         name='Workflow with completed task',
@@ -1441,7 +1473,10 @@ def test_list__filter_is_completed_false__another_user_task__not_found(
     assert len(response.data) == 0
 
 
-def test_list__filter_is_completed_false__done_wf__not_found(api_client):
+def test_list__filter_is_completed_false__done_wf__not_found(
+    mocker,
+    api_client
+):
 
     # arrange
     user = create_test_user()
@@ -1464,9 +1499,16 @@ def test_list__filter_is_completed_false__done_wf__not_found(api_client):
     assert len(response.data) == 0
 
 
-def test_list__filter_is_completed_false_delayed_wf__not_found(api_client):
+def test_list__filter_is_completed_false_delayed_wf__not_found(
+    mocker,
+    api_client
+):
 
     # arrange
+    mocker.patch(
+        'pneumatic_backend.processes.tasks.webhooks.'
+        'send_task_completed_webhook.delay'
+    )
     user = create_test_user()
     workflow = create_test_workflow(
         name='Delayed workflow',
@@ -1489,9 +1531,16 @@ def test_list__filter_is_completed_false_delayed_wf__not_found(api_client):
     assert len(response.data) == 0
 
 
-def test_list__filter_is_completed_false_terminated_wf__not_found(api_client):
+def test_list__filter_is_completed_false_terminated_wf__not_found(
+    mocker,
+    api_client
+):
 
     # arrange
+    mocker.patch(
+        'pneumatic_backend.processes.tasks.webhooks.'
+        'send_task_completed_webhook.delay'
+    )
     user = create_test_user()
     workflow = create_test_workflow(
         name='Terminated workflow',
@@ -1515,9 +1564,16 @@ def test_list__filter_is_completed_false_terminated_wf__not_found(api_client):
     assert len(response.data) == 0
 
 
-def test_list__filter_is_completed_false_ended_wf__not_found(api_client):
+def test_list__filter_is_completed_false_ended_wf__not_found(
+    mocker,
+    api_client
+):
 
     # arrange
+    mocker.patch(
+        'pneumatic_backend.processes.tasks.webhooks.'
+        'send_task_completed_webhook.delay'
+    )
     user = create_test_user()
     workflow = create_test_workflow(
         name='Ended workflow',
@@ -1584,10 +1640,15 @@ def test_list__filter_is_completed_true__running_wf__not_found(api_client):
 
 
 def test_list__filter_is_completed_true__running_wf_completed_task__ok(
+    mocker,
     api_client
 ):
 
     # arrange
+    mocker.patch(
+        'pneumatic_backend.processes.tasks.webhooks.'
+        'send_task_completed_webhook.delay'
+    )
     user = create_test_user()
     workflow = create_test_workflow(
         name='Workflow with completed task',
@@ -1611,10 +1672,15 @@ def test_list__filter_is_completed_true__running_wf_completed_task__ok(
 
 
 def test_list__filter_is_completed_true__another_user_task__not_found(
+    mocker,
     api_client
 ):
 
     # arrange
+    mocker.patch(
+        'pneumatic_backend.processes.tasks.webhooks.'
+        'send_task_completed_webhook.delay'
+    )
     user = create_test_user()
     user_2 = create_test_user(email='test@test.test')
     workflow = create_test_workflow(
@@ -1637,9 +1703,16 @@ def test_list__filter_is_completed_true__another_user_task__not_found(
     assert len(response.data) == 0
 
 
-def test_list__filter_is_completed_true__done_wf__ok(api_client):
+def test_list__filter_is_completed_true__done_wf__ok(
+    mocker,
+    api_client
+):
 
     # arrange
+    mocker.patch(
+        'pneumatic_backend.processes.tasks.webhooks.'
+        'send_task_completed_webhook.delay'
+    )
     user = create_test_user()
     workflow = create_test_workflow(
         name='Completed workflow',
@@ -1662,9 +1735,16 @@ def test_list__filter_is_completed_true__done_wf__ok(api_client):
     assert response.data[0]['id'] == task.id
 
 
-def test_list__filter_is_completed_true__delayed_wf__ok(api_client):
+def test_list__filter_is_completed_true__delayed_wf__ok(
+    mocker,
+    api_client
+):
 
     # arrange
+    mocker.patch(
+        'pneumatic_backend.processes.tasks.webhooks.'
+        'send_task_completed_webhook.delay'
+    )
     user = create_test_user()
     workflow = create_test_workflow(
         name='Delayed workflow',
@@ -1690,9 +1770,16 @@ def test_list__filter_is_completed_true__delayed_wf__ok(api_client):
     assert response.data[0]['id'] == task.id
 
 
-def test_list__filter_is_completed_true_terminated_wf__not_found(api_client):
+def test_list__filter_is_completed_true_terminated_wf__not_found(
+    mocker,
+    api_client
+):
 
     # arrange
+    mocker.patch(
+        'pneumatic_backend.processes.tasks.webhooks.'
+        'send_task_completed_webhook.delay'
+    )
     user = create_test_user()
     workflow = create_test_workflow(
         name='Terminated workflow',
@@ -1716,9 +1803,16 @@ def test_list__filter_is_completed_true_terminated_wf__not_found(api_client):
     assert len(response.data) == 0
 
 
-def test_list__filter_is_completed_true_ended_wf__ok(api_client):
+def test_list__filter_is_completed_true_ended_wf__ok(
+    mocker,
+    api_client
+):
 
     # arrange
+    mocker.patch(
+        'pneumatic_backend.processes.tasks.webhooks.'
+        'send_task_completed_webhook.delay'
+    )
     user = create_test_user()
     workflow = create_test_workflow(
         name='Ended workflow',

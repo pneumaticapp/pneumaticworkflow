@@ -51,9 +51,14 @@ class TestTaskView:
 
     def test_complete__validation_error_required_output_user_field(
         self,
+        mocker,
         api_client
     ):
         # arrange
+        mocker.patch(
+            'pneumatic_backend.processes.tasks.webhooks.'
+            'send_task_completed_webhook.delay'
+        )
         user = create_test_user()
         api_client.token_authenticate(user)
         workflow = self._create_workflow(user=user, api_client=api_client)
@@ -78,9 +83,14 @@ class TestTaskView:
 
     def test_complete__validation_error_output_user_field_wrong_type(
         self,
+        mocker,
         api_client
     ):
         # arrange
+        mocker.patch(
+            'pneumatic_backend.processes.tasks.webhooks.'
+            'send_task_completed_webhook.delay'
+        )
         user = create_test_user()
         api_client.token_authenticate(user)
         workflow = self._create_workflow(user=user, api_client=api_client)
@@ -107,9 +117,15 @@ class TestTaskView:
 
     def test_complete__validation_error_output_user_field_not_exist(
         self,
+        mocker,
         api_client
     ):
         # arrange
+        mocker.patch(
+            'pneumatic_backend.processes.tasks.webhooks.'
+            'send_task_completed_webhook.delay'
+        )
+
         user = create_test_user()
         api_client.token_authenticate(user)
         workflow = self._create_workflow(user=user, api_client=api_client)
@@ -136,9 +152,14 @@ class TestTaskView:
 
     def test_complete__validation_error_output_user_field_not_exist2(
         self,
+        mocker,
         api_client
     ):
         # arrange
+        mocker.patch(
+            'pneumatic_backend.processes.tasks.webhooks.'
+            'send_task_completed_webhook.delay'
+        )
         user = create_test_user()
         another_account_user = create_test_user(email='test2@pneumatic.app')
         api_client.token_authenticate(user)
@@ -166,9 +187,18 @@ class TestTaskView:
 
     def test_complete__insert_output_user_through_task__ok(
         self,
+        mocker,
         api_client
     ):
         # arrange
+        mocker.patch(
+            'pneumatic_backend.processes.tasks.webhooks.'
+            'send_workflow_started_webhook.delay',
+        )
+        mocker.patch(
+            'pneumatic_backend.processes.tasks.webhooks.'
+            'send_task_completed_webhook.delay'
+        )
         user = create_test_user()
         user2 = create_test_user(
             email='test2@pneumatic.app',
@@ -227,10 +257,15 @@ class TestRecentTaskView:
 
     def test_list__status_completed__return_recent_completed(
         self,
+        mocker,
         api_client
     ):
 
         # arrange
+        mocker.patch(
+            'pneumatic_backend.processes.tasks.webhooks.'
+            'send_task_completed_webhook.delay'
+        )
         user = create_test_user()
         workflow = create_test_workflow(user)
         api_client.token_authenticate(user)
@@ -253,9 +288,14 @@ class TestRecentTaskView:
 
     def test_list__status_running__return_recent_running(
         self,
+        mocker,
         api_client
     ):
         # arrange
+        mocker.patch(
+            'pneumatic_backend.processes.tasks.webhooks.'
+            'send_task_completed_webhook.delay'
+        )
         user = create_test_user()
         workflow = create_test_workflow(user)
         create_test_workflow(user)
@@ -276,9 +316,14 @@ class TestRecentTaskView:
 
     def test_list__default__return_recent_running(
         self,
+        mocker,
         api_client
     ):
         # arrange
+        mocker.patch(
+            'pneumatic_backend.processes.tasks.webhooks.'
+            'send_task_completed_webhook.delay'
+        )
         user = create_test_user()
         workflow = create_test_workflow(user)
         create_test_workflow(user)

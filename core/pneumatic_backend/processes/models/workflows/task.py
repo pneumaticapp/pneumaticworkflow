@@ -139,8 +139,7 @@ class Task(
             delay.save()
         return delay
 
-    def serialize_hook(self, hook):
-        hook_dict = hook.dict()
+    def webhook_payload(self):
         performers = [
             {
                 'id': x.id,
@@ -149,29 +148,25 @@ class Task(
             } for x in self.performers.exclude_directly_deleted()
         ]
         obj = {
-            'hook': hook_dict,
             'task': {
                 'id': self.id,
+                'api_name': self.api_name,
                 'name': self.name,
+                'number': self.number,
                 'description': self.description,
-                'date_started': self.date_started,
                 'date_started_tsp': (
                     self.date_started.timestamp()
                     if self.date_started else None
                 ),
-                'date_completed': self.date_completed,
                 'date_completed_tsp': (
                     self.date_completed.timestamp()
                     if self.date_completed else None
                 ),
-                'due_date': self.due_date,
                 'due_date_tsp': (
                     self.due_date.timestamp()
                     if self.due_date else None
                 ),
                 'performers': performers,
-                'workflow': self.workflow.as_json(),
-                'number': self.number,
                 'output': [
                     {
                         'id': field.id,
@@ -187,6 +182,7 @@ class Task(
                                 'id': selection.id,
                                 'value': selection.value,
                                 'is_selected': selection.is_selected,
+                                'api_name': selection.api_name,
                             } for selection in field.selections.all()
                         ],
                         'attachments': [
@@ -197,7 +193,8 @@ class Task(
                             } for attachment in field.attachments.all()
                         ]
                     } for field in self.output.all()
-                ]
+                ],
+                **self.workflow.webhook_payload(),
             }
         }
         return obj

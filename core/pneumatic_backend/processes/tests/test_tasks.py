@@ -102,6 +102,14 @@ class TestContinueDelayedWorkflows:
     ):
 
         # arrange
+        mocker.patch(
+            'pneumatic_backend.processes.tasks.webhooks.'
+            'send_workflow_started_webhook.delay',
+        )
+        mocker.patch(
+            'pneumatic_backend.processes.tasks.webhooks.'
+            'send_task_completed_webhook.delay'
+        )
         user = create_test_user()
         api_client.token_authenticate(user)
 
@@ -189,6 +197,14 @@ class TestContinueDelayedWorkflows:
     ):
 
         # arrange
+        mocker.patch(
+            'pneumatic_backend.processes.tasks.webhooks.'
+            'send_workflow_started_webhook.delay',
+        )
+        mocker.patch(
+            'pneumatic_backend.processes.tasks.webhooks.'
+            'send_task_completed_webhook.delay'
+        )
         user = create_test_user()
         api_client.token_authenticate(user)
 
@@ -265,7 +281,16 @@ class TestContinueDelayedWorkflows:
 class TestSendDigest:
 
     def test_send(self, mocker, api_client, email_service_digest):
+
         # arrange
+        mocker.patch(
+            'pneumatic_backend.processes.tasks.webhooks.'
+            'send_workflow_started_webhook.delay',
+        )
+        mocker.patch(
+            'pneumatic_backend.processes.tasks.webhooks.'
+            'send_task_completed_webhook.delay'
+        )
         user = create_test_user()
         user.is_account_owner = True
         user.save()
@@ -321,7 +346,8 @@ class TestSendDigest:
 
         for task in second_workflow.tasks.order_by('number').all():
             api_client.post(
-                f'/workflows/{second_workflow.id}/task-complete', data={
+                f'/workflows/{second_workflow.id}/task-complete',
+                data={
                     'task_id': task.id
                 }
             )
@@ -383,6 +409,14 @@ class TestSendDigest:
         template_data = get_workflow_create_data(user)
         template_data['is_active'] = True
         now = timezone.now()
+        mocker.patch(
+            'pneumatic_backend.processes.tasks.webhooks.'
+            'send_workflow_started_webhook.delay',
+        )
+        mocker.patch(
+            'pneumatic_backend.processes.tasks.webhooks.'
+            'send_task_completed_webhook.delay'
+        )
         datetime_patch = mocker.patch(
             'pneumatic_backend.processes.tasks.digest.'
             'timezone.now'
@@ -539,6 +573,14 @@ class TestSendDigest:
         email_service_digest,
     ):
         # arrange
+        mocker.patch(
+            'pneumatic_backend.processes.tasks.webhooks.'
+            'send_workflow_started_webhook.delay',
+        )
+        mocker.patch(
+            'pneumatic_backend.processes.tasks.webhooks.'
+            'send_task_completed_webhook.delay'
+        )
         user = create_test_user()
         user.account.billing_plan = BillingPlanType.PREMIUM
         user.account.save()
@@ -603,7 +645,8 @@ class TestSendDigest:
 
         for task in second_workflow.tasks.order_by('number').all():
             api_client.post(
-                f'/workflows/{second_workflow.id}/task-complete', data={
+                f'/workflows/{second_workflow.id}/task-complete',
+                data={
                     'task_id': task.id
                 }
             )
@@ -687,7 +730,16 @@ class TestSendDigest:
 class TestSendTasksDigest:
 
     def test_send(self, mocker, api_client, email_service_tasks_digest):
+
         # arrange
+        mocker.patch(
+            'pneumatic_backend.processes.tasks.webhooks.'
+            'send_workflow_started_webhook.delay',
+        )
+        mocker.patch(
+            'pneumatic_backend.processes.tasks.webhooks.'
+            'send_task_completed_webhook.delay'
+        )
         user = create_test_user(is_account_owner=True)
         template_data = get_workflow_create_data(user)
         template_data['is_active'] = True
@@ -918,6 +970,14 @@ class TestSendTasksDigest:
         email_service_tasks_digest,
     ):
         # arrange
+        mocker.patch(
+            'pneumatic_backend.processes.tasks.webhooks.'
+            'send_workflow_started_webhook.delay',
+        )
+        mocker.patch(
+            'pneumatic_backend.processes.tasks.webhooks.'
+            'send_task_completed_webhook.delay'
+        )
         now = timezone.now()
         user = create_test_user()
         user.is_account_owner = True
@@ -963,7 +1023,8 @@ class TestSendTasksDigest:
 
         for task in second_workflow.tasks.order_by('number').all():
             api_client.post(
-                f'/workflows/{second_workflow.id}/task-complete', data={
+                f'/workflows/{second_workflow.id}/task-complete',
+                data={
                     'task_id': task.id
                 }
             )
@@ -1085,6 +1146,14 @@ class TestSendTasksDigest:
         email_service_tasks_digest,
     ):
         # arrange
+        mocker.patch(
+            'pneumatic_backend.processes.tasks.webhooks.'
+            'send_workflow_started_webhook.delay',
+        )
+        mocker.patch(
+            'pneumatic_backend.processes.tasks.webhooks.'
+            'send_task_completed_webhook.delay'
+        )
         user = create_test_user()
         user.account.billing_plan = BillingPlanType.PREMIUM
         user.account.save()
@@ -1151,7 +1220,8 @@ class TestSendTasksDigest:
 
         for task in second_workflow.tasks.order_by('number').all():
             api_client.post(
-                f'/workflows/{second_workflow.id}/task-complete', data={
+                f'/workflows/{second_workflow.id}/task-complete',
+                data={
                     'task_id': task.id
                 }
             )
