@@ -1,7 +1,6 @@
-/* eslint-disable */
-/* prettier-ignore */
-/* tslint:disable:max-file-line-count */
 import uniqBy from 'lodash.uniqby';
+import { EventChannel } from 'redux-saga';
+
 import {
   all,
   fork,
@@ -61,7 +60,6 @@ import { getTemplateSteps } from '../../api/getTemplateSteps';
 import { parseCookies } from '../../utils/cookie';
 import { getBrowserConfigEnv } from '../../utils/getConfig';
 import { mergePaths } from '../../utils/urls';
-import { EventChannel } from 'redux-saga';
 import { createWebSocketChannel } from '../utils/createWebSocketChannel';
 import { getTaskListWithNewTask } from './utils/getTaskListWithNewTask';
 import { checkShouldInsertNewTask } from './utils/checkShouldInsertNewTask';
@@ -246,7 +244,7 @@ function* handleShiftTaskList({ payload: { currentTaskId } }: TShiftTaskList) {
 }
 
 export function* watchFetchTaskList() {
-  yield takeEvery(ETaskListActions.LoadTaskList, function* ({ payload: offset }: TLoadTaskList) {
+  yield takeEvery(ETaskListActions.LoadTaskList, function* loadTask({ payload: offset }: TLoadTaskList) {
     yield fetchTaskList(offset, ETaskListStatus.Loading);
   });
 }

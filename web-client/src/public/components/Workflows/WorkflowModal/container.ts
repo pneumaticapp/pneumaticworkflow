@@ -22,6 +22,7 @@ export type TStoreProps = Pick<
   | 'sorting'
   | 'isCommentsShown'
   | 'isOnlyAttachmentsShown'
+  | 'isLogLoading'
   | 'workflow'
   | 'items'
   | 'canEdit'
@@ -47,7 +48,7 @@ export type TDispatchProps = Pick<
 export function mapStateToProps({
   authUser: { id: currentUserId, isAccountOwner, timezone, dateFmt, language },
   workflows: {
-    workflowLog: { workflowId, isCommentsShown, isOnlyAttachmentsShown, isOpen, items, sorting },
+    workflowLog: { workflowId, isCommentsShown, isOnlyAttachmentsShown, isOpen, items, sorting, isLoading: isLogLoading },
     isWorkflowLoading,
     workflow,
     workflowEdit,
@@ -70,6 +71,7 @@ export function mapStateToProps({
     canEdit,
     workflowEdit,
     isCommentsShown,
+    isLogLoading,
     isOnlyAttachmentsShown,
     isLoading: isWorkflowLoading,
     isOpen,

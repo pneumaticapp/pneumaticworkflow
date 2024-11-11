@@ -4,11 +4,8 @@ import {
   setTaskCompleted,
   setTaskReverted,
   setWorkflowFinished,
-  changeWorkflowLogViewSettings,
-  sendWorkflowLogComments,
   ETaskStatus,
   setCurrentTask,
-  changeWorkflowLog,
   clearWorkflow,
   addTaskPerformer,
   removeTaskPerformer,
@@ -16,6 +13,9 @@ import {
   setCurrentTaskDueDate,
   deleteCurrentTaskDueDate,
   openSelectTemplateModal,
+  changeTaskWorkflowLogViewSettings,
+  changeTaskWorkflowLog,
+  sendTaskWorkflowLogComments,
 } from '../../redux/actions';
 import { IApplicationState } from '../../types/redux';
 import { getNotDeletedUsers } from '../../utils/users';
@@ -29,10 +29,10 @@ type TDispatchProps = Pick<
   | 'setTaskCompleted'
   | 'setTaskReverted'
   | 'setWorkflowFinished'
-  | 'changeWorkflowLogViewSettings'
-  | 'sendWorkflowLogComments'
+  | 'changeTaskWorkflowLogViewSettings'
+  | 'sendTaskWorkflowLogComments'
   | 'setCurrentTask'
-  | 'changeWorkflowLog'
+  | 'changeTaskWorkflowLog'
   | 'clearWorkflow'
   | 'addTaskPerformer'
   | 'removeTaskPerformer'
@@ -43,9 +43,8 @@ type TDispatchProps = Pick<
 >;
 
 export function mapStateToProps({
-  workflows: { workflowLog, workflow, isWorkflowLoading },
   authUser,
-  task: { data: task, status },
+  task: { data: task, status, workflowLog, workflow, isWorkflowLoading },
   accounts: { users },
 }: IApplicationState): TStoreProps {
   const taskStatus = task?.isCompleted ? ETaskStatus.Completed : status;
@@ -66,10 +65,10 @@ export const mapDispatchToProps: TDispatchProps = {
   setTaskCompleted,
   setTaskReverted,
   setWorkflowFinished,
-  changeWorkflowLogViewSettings,
-  sendWorkflowLogComments,
+  changeTaskWorkflowLogViewSettings,
+  sendTaskWorkflowLogComments,
   setCurrentTask,
-  changeWorkflowLog,
+  changeTaskWorkflowLog,
   clearWorkflow,
   addTaskPerformer,
   removeTaskPerformer,

@@ -1,6 +1,5 @@
 /* eslint-disable */
 /* prettier-ignore */
-// tslint:disable: max-file-line-count
 import {
   all,
   fork,
@@ -12,6 +11,7 @@ import {
   ActionPattern,
   ActionChannelEffect,
   actionChannel,
+  takeLatest,
 } from 'redux-saga/effects';
 import {
   ETaskActions,
@@ -32,6 +32,9 @@ import {
   TSetChecklistsHandling,
   TSetCurrentTaskDueDate,
   patchCurrentTask,
+  changeTaskWorkflow,
+  changeTaskWorkflowLog,
+  setTaskWorkflowIsLoading,
 } from './actions';
 import { getTask } from '../../api/getTask';
 import { ITaskAPI } from '../../types/tasks';
@@ -44,9 +47,11 @@ import { revertTask } from '../../api/revertTask';
 import {
   changeWorkflowLogViewSettings,
   ETaskListActions,
-  loadWorkflow,
   patchTaskInList,
+  setGeneralLoaderVisibility,
   shiftTaskList,
+  TChangeWorkflowLogViewSettings,
+  TSendWorkflowLogComment,
   usersFetchFinished,
 } from '../actions';
 import { getErrorMessage } from '../../utils/getErrorMessage';
@@ -61,18 +66,22 @@ import { removeTaskPerformer } from '../../api/removeTaskPerformer';
 import { addTaskGuest } from '../../api/addTaskGuest';
 import { removeTaskGuest } from '../../api/removeTaskGuest';
 import { TUserListItem } from '../../types/user';
-import { getWorkflowLog } from '../selectors/workflows';
+import { getTaskStore } from '../selectors/workflows';
 import { EResponseStatuses } from '../../constants/defaultValues';
 import { getNormalizedTask, getTaskChecklist, getTaskChecklistItem } from '../../utils/tasks';
 import { markChecklistItem } from '../../api/markChecklistItem';
 import { unmarkChecklistItem } from '../../api/unmarkChecklistItem';
 import { deleteTaskDueDate } from '../../api/deleteTaskDueDate';
 import { changeTaskDueDate } from '../../api/changeTaskDueDate';
+import { IStoreTask } from '../../types/redux';
+import { getWorkflow } from '../../api/getWorkflow';
+import { getWorkflowLog } from '../../api/getWorkflowLog';
+import { EWorkflowsLogSorting, IWorkflowDetails, IWorkflowLogItem } from '../../types/workflow';
+import { sendWorkflowComment } from '../../api/sendWorkflowComment';
+import { mapFilesToRequest } from '../../utils/workflows';
 
 function* fetchTask({ payload: { taskId, viewMode } }: TLoadCurrentTask) {
-  const { sorting, isCommentsShown, isOnlyAttachmentsShown }: ReturnType<typeof getWorkflowLog> = yield select(
-    getWorkflowLog,
-  );
+  const { workflowLog: { sorting, isCommentsShown, isOnlyAttachmentsShown } }: IStoreTask = yield select(getTaskStore);
   const prevTask: ReturnType<typeof getCurrentTask> = yield select(getCurrentTask);
   yield put(setCurrentTask(null));
 
@@ -91,17 +100,16 @@ function* fetchTask({ payload: { taskId, viewMode } }: TLoadCurrentTask) {
 
     yield put(setCurrentTask(normalizedTask));
 
-    const action =
-      viewMode !== ETaskCardViewMode.Guest
-        ? loadWorkflow(task.workflow.id)
-        : changeWorkflowLogViewSettings({
-            id: task.workflow.id,
-            sorting,
-            comments: isCommentsShown,
-            isOnlyAttachmentsShown,
-          });
-
-    yield put(action);
+    if (viewMode !== ETaskCardViewMode.Guest) {
+      yield loadTaskWorkflow(task.workflow.id)
+    } else {
+      yield put(changeWorkflowLogViewSettings({
+        id: task.workflow.id,
+        sorting,
+        comments: isCommentsShown,
+        isOnlyAttachmentsShown,
+      }));
+    }
   } catch (error) {
     yield put(setCurrentTask(prevTask));
 
@@ -125,6 +133,91 @@ function* fetchTask({ payload: { taskId, viewMode } }: TLoadCurrentTask) {
     }
   } finally {
     yield put(setCurrentTaskStatus(ETaskStatus.WaitingForAction));
+  }
+}
+
+function* loadTaskWorkflow(workflowId: number) {
+  const { workflowLog: { isCommentsShown, sorting } }: IStoreTask = yield select(getTaskStore);
+
+  try {
+    yield put(setTaskWorkflowIsLoading(true));
+
+    const [workflow, workflowLog]: [IWorkflowDetails, IWorkflowLogItem[]] = yield all([
+      getWorkflow(workflowId),
+      getWorkflowLog({
+        workflowId,
+        sorting,
+        comments: isCommentsShown,
+      }),
+    ]);
+
+    yield put(changeTaskWorkflow(workflow));
+    yield put(changeTaskWorkflowLog({ items: workflowLog, workflowId }));
+  } catch (error) {
+    logger.info('fetch prorcess error : ', error);
+    throw error;
+  } finally {
+    yield put(setTaskWorkflowIsLoading(false));
+  }
+}
+
+function* loadTaskWorkflowLog({
+  payload: { id, sorting, comments, isOnlyAttachmentsShown },
+}: TChangeWorkflowLogViewSettings) {
+  yield put(changeTaskWorkflowLog({ isLoading: true }));
+
+  try {
+    const fetchedProcessLog: IWorkflowLogItem[] = yield getWorkflowLog({
+      workflowId: id,
+      sorting,
+      comments,
+      isOnlyAttachmentsShown,
+    });
+    yield put(changeTaskWorkflowLog({ workflowId: id, items: fetchedProcessLog }));
+  } catch (error) {
+    logger.info('fetch process log error : ', error);
+    NotificationManager.error({ message: 'workflows.fetch-in-work-process-log-fail' });
+  } finally {
+    yield put(changeTaskWorkflowLog({ isLoading: false }));
+  }
+}
+
+
+function* saveWorkflowLogComment({ payload: { text, attachments } }: TSendWorkflowLogComment) {
+  const {workflowLog: {
+    items,
+    workflowId: processId,
+    sorting,
+  }}: ReturnType<typeof getTaskStore> = yield select(getTaskStore);
+
+  if (!processId) {
+    return;
+  }
+
+  const normalizedAttachments = mapFilesToRequest(attachments);
+
+  try {
+    yield put(setGeneralLoaderVisibility(true));
+    const newComment: IWorkflowLogItem = yield sendWorkflowComment({
+      id: processId,
+      text,
+      attachments: normalizedAttachments,
+    });
+
+    const preLoadedProcessLogMap = {
+      [EWorkflowsLogSorting.New]: [newComment, ...items],
+      [EWorkflowsLogSorting.Old]: [...items, newComment],
+    };
+
+    const preLoadedProcessLog = preLoadedProcessLogMap[sorting];
+
+    yield put(changeTaskWorkflowLog({ items: preLoadedProcessLog }));
+  } catch (error) {
+    logger.info('send process log comment error:', error);
+    NotificationManager.error({ message: 'workflows.send-process-log-comment-fail' });
+    yield put(changeTaskWorkflowLog({ items }));
+  } finally {
+    yield put(setGeneralLoaderVisibility(false));
   }
 }
 
@@ -413,6 +506,14 @@ export function* watchDeleteCurrentTaskDueDate() {
   yield takeEvery(ETaskActions.DeleteCurrentTaskDueDate, deleteCurrentTaskDueDateSaga);
 }
 
+export function* watchChangeTaskWorkflowLogViewSettings() {
+  yield takeLatest(ETaskActions.ChangeTaskWorkflowLogViewSettings, loadTaskWorkflowLog);
+}
+
+export function* watchSendWorkflowLogComment() {
+  yield takeEvery(ETaskActions.SendTaskWorkflowLogComment, saveWorkflowLogComment);
+}
+
 export function* rootSaga() {
   yield all([
     fork(watchLoadCurrentTask),
@@ -424,5 +525,7 @@ export function* rootSaga() {
     fork(watchUnmarkChecklistItem),
     fork(watchSetCurrentTaskDueDate),
     fork(watchDeleteCurrentTaskDueDate),
+    fork(watchChangeTaskWorkflowLogViewSettings),
+    fork(watchSendWorkflowLogComment),
   ]);
 }

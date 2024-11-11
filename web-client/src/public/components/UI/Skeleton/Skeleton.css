@@ -9,6 +9,11 @@
   background-size: 200px 100%;
   border-radius: 4px;
   animation: loading-animation 1.8s ease-in-out infinite;
+
+  &.is-white {
+    background-color: white;
+    background-image: linear-gradient(90deg, white, white, white);
+  }
 }
 
 @keyframes loading-animation {

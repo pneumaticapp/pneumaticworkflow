@@ -16,7 +16,6 @@ import { EMPTY_DURATION, DEFAULT_TEMPLATE_NAME } from './constants';
 import { getVariables } from './TaskForm/utils/getTaskVariables';
 import { TemplateIntegrations } from './Integrations';
 import { TemplateControllsContainer } from './TemplateControlls';
-
 import { NAVBAR_HEIGHT } from '../../constants/defaultValues';
 import { TemplateLastUpdateInfo } from './TemplateLastUpdateInfo';
 import { ERoutes } from '../../constants/routes';
@@ -29,15 +28,47 @@ import { NotificationManager } from '../UI/Notifications';
 import { isArrayWithItems } from '../../utils/helpers';
 import { createTaskApiName, createUUID } from '../../utils/createId';
 import { EMoveDirections } from '../../types/workflow';
-import { ITemplate, ITemplateTask } from '../../types/template';
+import { ETaskPerformerType, ITemplate, ITemplateTask } from '../../types/template';
 import { EditableText } from '../UI/EditableText';
 import { TLoadTemplateVariablesSuccessPayload } from '../../redux/actions';
 import { ETemplateStatus, IAuthUser } from '../../types/redux';
-import { createEmptyDueDate } from '../../utils/dueDate/createEmptyDueDate';
-
-import styles from './TemplateEdit.css';
+import { createStartedTaskDueDate } from '../../utils/dueDate/createStartedTaskDueDate';
 import { usePrevious } from '../../hooks/usePrevious';
 import { ConditionsBanner } from './ConditionsBanner';
+import { getUserFullName } from '../../utils/users';
+
+import styles from './TemplateEdit.css';
+
+export interface ITemplateEditProps {
+  match: any;
+  location: any;
+  authUser: IAuthUser;
+  template: ITemplate;
+  aiTemplate: ITemplate | null;
+  templateStatus: ETemplateStatus;
+  users: TUserListItem[];
+  isSubscribed: boolean;
+  loadTemplate(id: number): void;
+  loadTemplateFromSystem(id: string): void;
+  resetTemplateStore(): void;
+  saveTemplate(): void;
+  setTemplate(payload: ITemplate): void;
+  setTemplateStatus(status: ETemplateStatus): void;
+  loadTemplateVariablesSuccess(payload: TLoadTemplateVariablesSuccessPayload): void;
+}
+
+export type TTemplateEditProps = ITemplateEditProps & RouteComponentProps;
+
+export interface ITemplateEditParams {
+  id: string;
+}
+
+export interface ITemplateEditState {
+  isInfoWarningsModaOpen: boolean;
+  infoWarnings: ((props: IInfoWarningProps) => JSX.Element)[];
+  openedTasks: { [key: string]: boolean };
+  openedDelays: { [key: string]: boolean };
+}
 
 export function TemplateEdit({
   match,
@@ -156,20 +187,28 @@ export function TemplateEdit({
   };
 
   const sortedTasks = () => [...tasks].sort((a, b) => a.number - b.number);
-
   const getNewTask = (templateTask?: Partial<ITemplateTask>): ITemplateTask => {
+    const taskApiName = createTaskApiName();
+
     return {
-      apiName: createTaskApiName(),
+      apiName: taskApiName,
       delay: null,
       description: '',
       name: 'New Step',
       number: 1,
       fields: [],
-      rawPerformers: [],
+      rawPerformers: [
+        {
+          id: authUser.id,
+          label: getUserFullName(authUser),
+          type: ETaskPerformerType.User,
+          sourceId: String(authUser.id),
+        },
+      ],
       uuid: createUUID(),
-      requireCompletionByAll: true,
+      requireCompletionByAll: false,
       conditions: getEmptyConditions(isSubscribed),
-      rawDueDate: createEmptyDueDate(),
+      rawDueDate: createStartedTaskDueDate(taskApiName),
       checklists: [],
       ...templateTask,
     };
@@ -463,35 +502,4 @@ export function TemplateEdit({
       </div>
     </div>
   );
-}
-
-export interface ITemplateEditProps {
-  match: any;
-  location: any;
-  authUser: IAuthUser;
-  template: ITemplate;
-  aiTemplate: ITemplate | null;
-  templateStatus: ETemplateStatus;
-  users: TUserListItem[];
-  isSubscribed: boolean;
-  loadTemplate(id: number): void;
-  loadTemplateFromSystem(id: string): void;
-  resetTemplateStore(): void;
-  saveTemplate(): void;
-  setTemplate(payload: ITemplate): void;
-  setTemplateStatus(status: ETemplateStatus): void;
-  loadTemplateVariablesSuccess(payload: TLoadTemplateVariablesSuccessPayload): void;
-}
-
-export type TTemplateEditProps = ITemplateEditProps & RouteComponentProps;
-
-export interface ITemplateEditParams {
-  id: string;
-}
-
-export interface ITemplateEditState {
-  isInfoWarningsModaOpen: boolean;
-  infoWarnings: ((props: IInfoWarningProps) => JSX.Element)[];
-  openedTasks: { [key: string]: boolean };
-  openedDelays: { [key: string]: boolean };
 }

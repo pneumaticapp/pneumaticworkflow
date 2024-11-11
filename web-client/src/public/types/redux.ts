@@ -162,6 +162,9 @@ export interface IAccounts {
 
 export interface IStoreTask {
   data: ITask | null;
+  workflow: IWorkflowDetails | null;
+  isWorkflowLoading: boolean;
+  workflowLog: IWorkflowLog;
   status: ETaskStatus;
 }
 
@@ -204,16 +207,14 @@ export interface IIntegrationsStore {
 }
 
 export interface IStoreWorkflows {
-  isUrgent: boolean;
-  saving?: boolean;
-  workflow: IWorkflowDetails | null;
-  isWorkflowLoading: boolean;
-  workflowEdit: IWorkflowEdit;
-  workflowsSearchText: string;
-  workflowLog: IWorkflowLog;
-  workflowsList: IWorkflowsList;
-  workflowsSettings: IWorkflowsSettings;
   workflowsLoadingStatus: EWorkflowsLoadingStatus;
+  isWorkflowLoading: boolean;
+  workflow: IWorkflowDetails | null;
+  workflowLog: IWorkflowLog;
+  workflowEdit: IWorkflowEdit;
+  workflowsSettings: IWorkflowsSettings;
+  workflowsSearchText: string;
+  workflowsList: IWorkflowsList;
 }
 
 export interface IStoreTasks {

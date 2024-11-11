@@ -1,7 +1,7 @@
 import * as React from 'react';
 import produce from 'immer';
 import { useIntl } from 'react-intl';
-import * as classnames from 'classnames';
+import classnames from 'classnames';
 
 import { isArrayWithItems } from '../../../../utils/helpers';
 import { DropdownList } from '../../../UI/DropdownList';

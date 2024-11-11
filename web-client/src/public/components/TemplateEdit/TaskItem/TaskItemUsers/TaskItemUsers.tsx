@@ -59,7 +59,7 @@ export function TaskItemUsers({ task, maxUsers = MAX_SHOW_USERS, onClick }: ITas
       },
     };
 
-    return performerRenderMap[performer.type](performer);
+    return performer.type && performerRenderMap[performer.type](performer);
   };
 
   return (

@@ -1,6 +1,6 @@
 /* eslint-disable */
 import * as React from 'react';
-import * as classnames from 'classnames';
+import classnames from 'classnames';
 import { IntlShape } from 'react-intl';
 
 import { EWorkflowStatus, IWorkflow } from '../../../../types/workflow';
@@ -67,17 +67,13 @@ export class WorkflowCard extends React.PureComponent<IWorkflowCardProps> {
     const progress = getWorkflowProgress({ currentTask, tasksCount, status });
 
     const getSnoozedText = () => {
-      if (!delay) {
-        return '';
-      }
+      if (!delay) return '';
 
       return formatMessage({ id: 'task.log-delay' }, { date: getSnoozedUntilDate(delay) });
     };
 
     const renderCardFooter = () => {
-      if (status !== EWorkflowStatus.Running) {
-        return null;
-      }
+      if (status !== EWorkflowStatus.Running) return null;
 
       return (
         <div className={styles['footer-users-and-links']}>

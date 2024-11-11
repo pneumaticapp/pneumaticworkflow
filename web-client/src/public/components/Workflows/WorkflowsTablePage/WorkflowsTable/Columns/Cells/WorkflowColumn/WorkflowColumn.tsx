@@ -1,5 +1,5 @@
 import * as React from 'react';
-import * as classnames from 'classnames';
+import classnames from 'classnames';
 import { CellProps } from 'react-table';
 import { Link } from 'react-router-dom';
 

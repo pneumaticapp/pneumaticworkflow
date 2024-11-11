@@ -50,6 +50,7 @@ export const INIT_STATE: IStoreTasks = {
 
 export const reducer = (state = INIT_STATE, action: TTaskListActions | TGeneralActions): IStoreTasks => {
   switch (action.type) {
+
     case ETaskListActions.SetTaskListStatus:
       return { ...state, taskListStatus: action.payload };
 

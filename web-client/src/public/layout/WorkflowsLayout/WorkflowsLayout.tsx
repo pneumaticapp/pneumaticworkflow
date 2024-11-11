@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useIntl } from 'react-intl';
+import { useDispatch } from 'react-redux';
 
-import { TRemoveWorkflowFromListPayload } from '../../redux/actions';
+import { loadWorkflowsList, TRemoveWorkflowFromListPayload } from '../../redux/actions';
 import { TopNavContainer } from '../../components/TopNav';
 import { ERoutes } from '../../constants/routes';
 import { history } from '../../utils/history';
@@ -55,6 +56,7 @@ export function WorkflowsLayoutComponent({
   updateWorkflowsTemplateStepsCounters,
   updateWorkflowStartersCounters,
 }: IWorkflowsLayoutComponentProps) {
+  const dispatch = useDispatch();
   const { formatMessage } = useIntl();
   const [isLoadSteps, setIsLoadSteps] = useState(false);
 
@@ -224,10 +226,10 @@ export function WorkflowsLayoutComponent({
 
         <WorkflowModalContainer
           onClose={handleCloseWorkflowLogPopup}
-          onWorkflowEnded={() => removeWorkflowFromList({ workflowId })}
+          onWorkflowEnded={() => {
+            dispatch(loadWorkflowsList(0));
+          }}
           onWorkflowDeleted={() => removeWorkflowFromList({ workflowId })}
-          onWorkflowSnoozed={() => removeWorkflowFromList({ workflowId })}
-          onWorkflowResumed={() => removeWorkflowFromList({ workflowId })}
         />
       </main>
     </>

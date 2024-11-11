@@ -66,7 +66,7 @@ export function Dropdown({
   };
 
   const renderOptions = (items: TDropdownOption[], level = 0): React.ReactNode => {
-    const renderedOptions = items.map((option) => {
+    const renderedOptions = items.map((option, index) => {
       const {
         label,
         color,
@@ -80,9 +80,7 @@ export function Dropdown({
         onClick,
       } = option;
 
-      if (isHidden) {
-        return null;
-      }
+      if (isHidden) return null;
 
       const renderOptionContent = () => {
         if (typeof label === 'string') {
@@ -99,8 +97,10 @@ export function Dropdown({
       };
 
       if (!isArrayWithItems(subOptions)) {
+        const stringLabel = typeof label === 'string' ? label : index;
+
         return (
-          <div key={label?.toString()}>
+          <div key={stringLabel}>
             {withUpperline && <hr className={styles['line']} />}
             <ConfirmableDropdownItem
               {...(onClick && { onClick: () => onClick?.(() => setIsOpen(false)) })}

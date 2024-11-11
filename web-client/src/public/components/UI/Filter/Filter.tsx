@@ -5,7 +5,7 @@ import * as React from 'react';
 // tslint:disable-next-line: no-duplicate-imports
 import { useCallback, useMemo, useState, useEffect } from 'react';
 import { useIntl } from 'react-intl';
-import * as classnames from 'classnames';
+import classnames from 'classnames';
 
 import { Checkbox, InputField, Loader, RadioButton, TCheckboxTriState } from '..';
 import { isArrayWithItems } from '../../../utils/helpers';
@@ -247,7 +247,7 @@ export function Filter<IdKey extends string, LabelKey extends string, TOption ex
           const subOptionId = subOption[optionIdKey];
 
           return (
-            <div className={styles['option-container']}>
+            <div key={optionId} className={styles['option-container']}>
               <div className={styles['option']}>
                 <Checkbox
                   checked={selectedSubOptions?.includes(subOptionId)}
@@ -326,7 +326,7 @@ export function Filter<IdKey extends string, LabelKey extends string, TOption ex
         )}
         <div role="list" className={styles['options']}>
           {optionsToShow.map((option) => (
-            <div className={styles['option-container']}>
+            <div key={option[optionLabelKey]} className={styles['option-container']}>
               <div className={styles['option']}>
                 <OptionController
                   key={option[optionIdKey]}

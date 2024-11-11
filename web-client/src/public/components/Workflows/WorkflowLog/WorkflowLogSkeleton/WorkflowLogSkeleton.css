@@ -2,7 +2,6 @@
   margin-bottom: 16px;
   overflow: visible;
   width: 100%;
-  background-color: white;
 }
 
 .skeleton__data {
@@ -11,7 +10,10 @@
   align-items: center;
   overflow: hidden;
   flex-flow: column;
-  background-color: white;
+
+  &.is-white {
+    background-color: red;
+  }
 
   @media (--mobile) {
     padding-bottom: 12px;

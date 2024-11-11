@@ -232,10 +232,8 @@ export function WorkflowsTable({
         Cell: (props) => (
           <ColumnCells.WorkflowColumn
             {...props}
-            onWorkflowEnded={() => removeWorkflowFromList({ workflowId: props.value.id })}
-            onWorkflowSnoozed={() => removeWorkflowFromList({ workflowId: props.value.id })}
+            onWorkflowEnded={() => loadWorkflowsList(0)}
             onWorkflowDeleted={() => removeWorkflowFromList({ workflowId: props.value.id })}
-            onWorkflowResumed={() => removeWorkflowFromList({ workflowId: props.value.id })}
             handleOpenModal={() =>
               openWorkflowLogPopup({
                 workflowId: props.value.id,

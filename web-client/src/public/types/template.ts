@@ -71,10 +71,11 @@ export type TOutputChecklistItem = {
 };
 
 export interface ITemplateTaskPerformer {
-  id?: number;
   label: string;
   type: ETaskPerformerType;
   sourceId: string | null;
+  apiName?: string;
+  id?: number;
 }
 
 export enum ETaskPerformerType {
