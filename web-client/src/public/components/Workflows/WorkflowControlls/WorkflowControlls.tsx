@@ -129,6 +129,7 @@ export function WorkflowControllsComponents({
     setIsUrgent(isChecked);
     dispatch(
       editWorkflow({
+        typeChange: 'control',
         isUrgent: isChecked,
         workflowId,
       }),

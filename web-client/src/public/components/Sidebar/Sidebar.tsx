@@ -2,7 +2,7 @@
 /* prettier-ignore */
 import React, { useEffect, useState } from 'react';
 import { RouteComponentProps } from 'react-router-dom';
-import * as classnames from 'classnames';
+import classnames from 'classnames';
 import PerfectScrollbar from 'react-perfect-scrollbar';
 import { IntlShape } from 'react-intl';
 

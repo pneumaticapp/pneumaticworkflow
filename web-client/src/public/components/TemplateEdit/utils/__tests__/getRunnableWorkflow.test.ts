@@ -23,12 +23,14 @@ const templateResponseMock: ITemplateResponse = {
           sourceId: '306',
           type: ETaskPerformerType.User,
           label: 'Yevgeniy Tsymbalyuk',
+          apiName: 'raw-performer-024t43'
         },
         {
           id: 10060,
           sourceId: null,
           type: ETaskPerformerType.WorkflowStarter,
           label: 'Workflow starter',
+          apiName: 'raw-performer-024t43'
         },
       ],
       checklists: [],
@@ -60,6 +62,7 @@ const templateResponseMock: ITemplateResponse = {
           sourceId: '306',
           type: ETaskPerformerType.User,
           label: 'Yevgeniy Tsymbalyuk',
+          apiName: 'raw-performer-024t43'
         },
       ],
       checklists: [],
@@ -81,6 +84,7 @@ const templateResponseMock: ITemplateResponse = {
           sourceId: '306',
           type: ETaskPerformerType.User,
           label: 'Yevgeniy Tsymbalyuk',
+          apiName: 'raw-performer-024t43'
         },
       ],
       checklists: [],
@@ -102,6 +106,7 @@ const templateResponseMock: ITemplateResponse = {
           sourceId: '306',
           type: ETaskPerformerType.User,
           label: 'Yevgeniy Tsymbalyuk',
+          apiName: 'raw-performer-024t43'
         },
       ],
       checklists: [],
@@ -124,6 +129,7 @@ const templateResponseMock: ITemplateResponse = {
           sourceId: '306',
           type: ETaskPerformerType.User,
           label: 'Yevgeniy Tsymbalyuk',
+          apiName: 'raw-performer-024t43'
         },
       ],
       checklists: [],

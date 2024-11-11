@@ -1,9 +1,10 @@
 import React, { useEffect } from 'react';
 import { matchPath } from 'react-router-dom';
 import { useIntl } from 'react-intl';
+import { useDispatch } from 'react-redux';
 
 import { TasksSortingContainer } from './TasksSortingContainer';
-import { TLoadTasksFilterStepsPayload } from '../../redux/actions';
+import { loadWorkflowsList, TLoadTasksFilterStepsPayload } from '../../redux/actions';
 import { TopNavContainer } from '../../components/TopNav';
 import { ERoutes } from '../../constants/routes';
 import { FilterIcon } from '../../components/icons';
@@ -65,6 +66,7 @@ export function TasksLayoutComponent({
   clearFilters,
   changeTasksSorting,
 }: TTasksLayoutProps) {
+  const dispatch = useDispatch();
   const { formatMessage } = useIntl();
   const renderTaskDetailLeftContent = () => {
     return (
@@ -236,7 +238,10 @@ export function TasksLayoutComponent({
         </div>
       </main>
       <WorkflowModalContainer
-        onWorkflowEnded={closeWorkflowLogPopup}
+        onWorkflowEnded={() => {
+          dispatch(loadWorkflowsList(0));
+          closeWorkflowLogPopup()
+        }}
         onWorkflowSnoozed={() => {
           closeWorkflowLogPopup();
 

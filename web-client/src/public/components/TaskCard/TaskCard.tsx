@@ -79,12 +79,12 @@ export interface ITaskCardProps {
   authUser: IAuthUser;
   addTaskPerformer(payload: TAddTaskPerformerPayload): void;
   removeTaskPerformer(payload: TRemoveTaskPerformerPayload): void;
-  changeWorkflowLog(value: Partial<IWorkflowLog>): void;
+  changeTaskWorkflowLog(value: Partial<IWorkflowLog>): void;
   setTaskCompleted(payload: TSetTaskCompletedPayload): void;
   setTaskReverted(payload: TSetTaskRevertedPayload): void;
   setWorkflowFinished(payload: TSetWorkflowFinishedPayload): void;
-  sendWorkflowLogComments(payload: ISendWorkflowLogComment): void;
-  changeWorkflowLogViewSettings(payload: IChangeWorkflowLogViewSettingsPayload): void;
+  sendTaskWorkflowLogComments(payload: ISendWorkflowLogComment): void;
+  changeTaskWorkflowLogViewSettings(payload: IChangeWorkflowLogViewSettingsPayload): void;
   setCurrentTask(task: ITask | null): void;
   clearWorkflow(): void;
   openWorkflowLogPopup(payload: TOpenWorkflowLogPopupPayload): void;
@@ -103,12 +103,12 @@ export function TaskCard({
   accountId,
   users,
   authUser,
-  changeWorkflowLog,
+  changeTaskWorkflowLog,
   setCurrentTask,
   setTaskCompleted,
   setTaskReverted,
-  sendWorkflowLogComments,
-  changeWorkflowLogViewSettings,
+  sendTaskWorkflowLogComments,
+  changeTaskWorkflowLogViewSettings,
   clearWorkflow,
   addTaskPerformer,
   removeTaskPerformer,
@@ -490,21 +490,21 @@ export function TaskCard({
           isCommentsShown={workflowLog.isCommentsShown}
           isOnlyAttachmentsShown={workflowLog.isOnlyAttachmentsShown}
           workflowId={workflowLog.workflowId}
-          changeWorkflowLogViewSettings={changeWorkflowLogViewSettings}
           includeHeader
-          sendComment={sendWorkflowLogComments}
           currentTask={workflow?.currentTask}
           isLogMinimized={isLogMinimized && viewMode !== ETaskCardViewMode.Guest}
           areTasksClickable={viewMode === ETaskCardViewMode.Single}
+          minimizedLogMaxEvents={MINIMIZED_LOG_MAX_EVENTS}
+          isCommentFieldHidden={viewMode === ETaskCardViewMode.Guest && status === ETaskStatus.Completed}
+          isToggleCommentHidden={viewMode === ETaskCardViewMode.Guest}
+          sendComment={sendTaskWorkflowLogComments}
+          changeWorkflowLogViewSettings={changeTaskWorkflowLogViewSettings}
           onUnmount={() =>
-            changeWorkflowLog({
+            changeTaskWorkflowLog({
               isOnlyAttachmentsShown: false,
               sorting: EWorkflowsLogSorting.New,
             })
           }
-          minimizedLogMaxEvents={MINIMIZED_LOG_MAX_EVENTS}
-          isCommentFieldHidden={viewMode === ETaskCardViewMode.Guest && status === ETaskStatus.Completed}
-          isToggleCommentHidden={viewMode === ETaskCardViewMode.Guest}
         />
         {isWorkflowInfoVisible && (
           <div className={styles['workflow-info']}>

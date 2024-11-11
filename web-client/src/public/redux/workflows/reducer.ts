@@ -71,7 +71,6 @@ export const INIT_STATE: IStoreWorkflows = {
       performersCounters: [],
     },
   },
-  isUrgent: false,
 };
 
 export const reducer = (state = INIT_STATE, action: TWorkflowsActions | TGeneralActions): IStoreWorkflows => {
@@ -148,10 +147,6 @@ export const reducer = (state = INIT_STATE, action: TWorkflowsActions | TGeneral
         ...state,
         workflowsLoadingStatus: EWorkflowsLoadingStatus.Loaded,
       };
-    case EWorkflowsActions.EditWorkflow:
-      return { ...state, saving: true };
-    case EWorkflowsActions.EditWorkflowSuccess:
-      return { ...state, saving: false };
     case EWorkflowsActions.LoadFilterTemplates:
       return produce(state, (draftState) => {
         draftState.workflowsSettings.templateList.isLoading = true;

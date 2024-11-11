@@ -20,6 +20,7 @@ export const createFieldSelectionApiName = () => createUniqueId('selection-xxxyx
 export const createСhecklistApiName = () => createUniqueId('clist-xxxyxx');
 export const createСhecklistSelectionApiName = () => createUniqueId('citem-xxxyxx');
 export const createConditionApiName = () => createUniqueId('condition-xxxyxx');
+export const createPerformerApiName = () => createUniqueId('raw-performer-xxxyxx');
 export const createConditionRuleApiName = () => createUniqueId('rule-xxxyxx');
 export const createConditionPredicateApiName = () => createUniqueId('predicate-xxxyxx');
 export const createDueDateApiName = () => createUniqueId('due-date-xxxyxx');

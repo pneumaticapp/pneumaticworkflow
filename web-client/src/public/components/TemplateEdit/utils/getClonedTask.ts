@@ -3,6 +3,7 @@ import {
   IExtraField,
   IExtraFieldSelection,
   ITemplateTask,
+  ITemplateTaskPerformer,
   TOutputChecklist,
   TOutputChecklistItem,
 } from '../../../types/template';
@@ -17,6 +18,7 @@ import {
   createСhecklistApiName,
   createСhecklistSelectionApiName,
   createDueDateApiName,
+  createPerformerApiName,
 } from '../../../utils/createId';
 import { omit } from '../../../utils/helpers';
 import { ICondition, TConditionRule } from '../TaskForm/Conditions';
@@ -115,12 +117,20 @@ export function getClonedTask(task: ITemplateTask) {
     };
   };
 
+  const cloneRawPerformers = (rawPerformers: ITemplateTaskPerformer[]): ITemplateTaskPerformer[] => {
+    return rawPerformers.map((performer) => ({
+      ...omit(performer, ['apiName']),
+      apiName: createPerformerApiName(),
+    }));
+  };
+
   const clonedChecklist = cloneChecklists(task.checklists);
   const clonedDescription = cloneDescription(task.description);
   const clonedRawDueDate = cloneRawDueDate(task.rawDueDate);
 
+
   const clonedTask: ITemplateTask = {
-    ...omit(task, ['id', 'apiName', 'uuid', 'fields', 'conditions', 'delay', 'name', 'description', 'rawDueDate']),
+    ...omit(task, ['id', 'apiName', 'uuid', 'fields', 'conditions', 'delay', 'name', 'description', 'rawDueDate', 'rawPerformers']),
     name: `${task.name} (Clone)`,
     checklists: clonedChecklist,
     description: clonedDescription,
@@ -129,7 +139,8 @@ export function getClonedTask(task: ITemplateTask) {
     fields: cloneFields(task.fields),
     conditions: cloneConditions(task.conditions),
     delay: null,
-    rawDueDate: clonedRawDueDate
+    rawDueDate: clonedRawDueDate,
+    rawPerformers: cloneRawPerformers(task.rawPerformers),
   };
 
   return clonedTask;

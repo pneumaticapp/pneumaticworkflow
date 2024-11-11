@@ -28,7 +28,9 @@ import {
   loadWorkflowsFilterStepsSuccess,
   ETaskListActions,
   setGeneralLoaderVisibility,
-  loadCurrentTask,
+  setCurrentTask,
+  patchTaskInList,
+  updateTaskWorkflowLogItem,
 } from '../actions';
 
 import {
@@ -105,6 +107,7 @@ import { deleteReactionComment } from '../../api/workflows/deleteReactionComment
 import { createReactionComment } from '../../api/workflows/createReactionComment';
 import { watchedComment } from '../../api/workflows/watchedComment';
 import { envWssURL } from '../../constants/enviroment';
+import { getCurrentTask } from '../selectors/task';
 
 function* handleLoadWorkflow({ workflowId, showLoader = true }: { workflowId: number; showLoader?: boolean }) {
   const {
@@ -140,25 +143,6 @@ function* handleLoadWorkflow({ workflowId, showLoader = true }: { workflowId: nu
 function* fetchWorkflow({ payload: id }: TLoadWorkflow) {
   try {
     yield fork(handleLoadWorkflow, { workflowId: id });
-  } catch (error) {
-    NotificationManager.error({ message: getErrorMessage(error) });
-  }
-}
-
-// Just to update the task when changing the subprocess
-function* handleCloseWorkflowLogPopup() {
-  try {
-    if (history.location.pathname.includes('/tasks/')) {
-      const {workflow}: ReturnType<typeof getWorkflowsStore> = yield select(getWorkflowsStore);
-      const {data: task}: ReturnType<typeof getTaskStore> = yield select(getTaskStore);
-
-      if (!task || !workflow) return;
-
-      if (task.id && task.id === workflow.ancestorTaskId) {
-        yield put(loadCurrentTask({taskId: task.id}))
-      }
-    }
-
   } catch (error) {
     NotificationManager.error({ message: getErrorMessage(error) });
   }
@@ -234,7 +218,7 @@ function* fetchWorkflowsList({ payload: offset = 0 }: TLoadWorkflowsList) {
       searchText,
     });
 
-    const items = offset > 0 ? uniqBy([...workflowsList.items, ...results], 'id') : results;
+    const items = offset > 0 ? uniqBy([...workflowsList.items, ...results], ['id']) : results;
     yield put(changeWorkflowsList({ count, offset, items }));
   } catch (error) {
     logger.info('fetch workflows list error : ', error);
@@ -283,26 +267,18 @@ function* saveWorkflowLogComment({ payload: { text, attachments } }: TSendWorkfl
 
 function* editWorkflowInWork({ payload }: TEditWorkflow) {
   const {
-    workflowsList: { items, count, offset },
-    workflow
+    workflowsList: { items, count, offset }
   }: ReturnType<typeof getWorkflowsStore> = yield select(getWorkflowsStore);
-  const { name, kickoff, isUrgent, dueDate, workflowId } = payload;
+  const { name, kickoff, isUrgent, dueDate} = payload;
 
-  if (workflowId !== workflow?.id) {
-    return;
-  }
-
-  if (name) {
-    yield put(setIsSavingWorkflowName(true));
-  }
-
-  if (kickoff) {
-    yield put(setIsSavingKickoff(true));
-  }
+  if (name) yield put(setIsSavingWorkflowName(true));
+  if (kickoff) yield put(setIsSavingKickoff(true));
 
   yield deleteRemovedFilesFromFields(payload.kickoff?.fields);
 
   try {
+    yield put(setGeneralLoaderVisibility(true));
+
     const changedFields = {
       ...(typeof isUrgent !== 'undefined' && { isUrgent }),
       ...(typeof name !== 'undefined' && { name }),
@@ -330,8 +306,14 @@ function* editWorkflowInWork({ payload }: TEditWorkflow) {
       kickoff: getEditKickoff(editedWorkflow.kickoff),
     };
 
+    const task: ReturnType<typeof getCurrentTask> = yield select(getCurrentTask);
     yield put(setWorkflowEdit(newEditingProcess));
     yield put(changeWorkflow(editedWorkflow));
+    if (payload.workflowId === task?.workflow.id && task && typeof isUrgent !== 'undefined') {
+      yield put(setCurrentTask({...task, isUrgent}));
+      yield put(patchTaskInList({taskId: task.id, task: {...task, isUrgent}}));
+    }
+    yield put(loadWorkflowsList(0));
     yield updateDetailedWorkflow(payload.workflowId);
 
     if (typeof isUrgent === 'undefined') {
@@ -358,6 +340,7 @@ function* editWorkflowInWork({ payload }: TEditWorkflow) {
     yield put(setIsSavingWorkflowName(false));
     yield put(setIsSavingKickoff(false));
     yield put(editWorkflowSuccess());
+    yield put(setGeneralLoaderVisibility(false));
   }
 }
 
@@ -638,10 +621,6 @@ export function* watchOpenWorkflowLogPopup() {
   yield takeEvery(EWorkflowsActions.OpenWorkflowLogPopup, handleOpenWorkflowLogPopup);
 }
 
-export function* watchCloseWorkflowLogPopup() {
-  yield takeEvery(EWorkflowsActions.CloseWorkflowLogPopup, handleCloseWorkflowLogPopup);
-}
-
 export function* watchFetchWorkflow() {
   yield takeLatest(EWorkflowsActions.LoadWorkflow, fetchWorkflow);
 }
@@ -674,6 +653,7 @@ export function* deleteCommentSaga({ payload: { id } }: TDeleteComment) {
     yield put(setGeneralLoaderVisibility(true));
     const updateComment: IWorkflowLogItem = yield deleteComment({ id });
     yield put(updateWorkflowLogItem(updateComment));
+    yield put(updateTaskWorkflowLogItem(updateComment));
   } catch (err) {
     NotificationManager.error({ message: getErrorMessage(err) });
   } finally {
@@ -686,6 +666,7 @@ export function* editCommentSaga({ payload: { id, text, attachments } }: TEditCo
     yield put(setGeneralLoaderVisibility(true));
     const updateComment: IWorkflowLogItem = yield editComment({ id, text, attachments });
     yield put(updateWorkflowLogItem(updateComment));
+    yield put(updateTaskWorkflowLogItem(updateComment));
   } catch (err) {
     NotificationManager.error({ message: getErrorMessage(err) });
   } finally {
@@ -705,10 +686,10 @@ export function* watchNewWorkflowsEvent() {
     const {
       data,
     }: IStoreTask = yield select(getTaskStore);
-    const dataWorkflow: IStoreWorkflows = yield select(getWorkflowsStore);
 
-    if (newEvent.task?.id === data?.id || dataWorkflow.workflow?.currentTask.id === newEvent.task?.id) {
+    if (newEvent.task?.id === data?.id) {
       yield put(updateWorkflowLogItem(newEvent));
+      yield put(updateTaskWorkflowLogItem(newEvent));
     }
   }
 }
@@ -827,7 +808,6 @@ export function* rootSaga() {
     fork(watchCloneWorkflow),
     fork(watchLoadFilterSteps),
     fork(watchOpenWorkflowLogPopup),
-    fork(watchCloseWorkflowLogPopup),
     fork(watchUpdateCurrentPerformersCounters),
     fork(watchUpdateWorkflowStartersCounters),
     fork(watchSearchTextChanged),
@@ -835,7 +815,6 @@ export function* rootSaga() {
     fork(watchSnoozeWorkflow),
     fork(watchDeleteComment),
     fork(watchEditComment),
-
     fork(watchWatchedComment),
     fork(watchCreateReactionComment),
     fork(watchDeleteReactionComment),

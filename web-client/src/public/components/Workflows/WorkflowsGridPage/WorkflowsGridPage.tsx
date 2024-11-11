@@ -26,7 +26,7 @@ import { WorkflowsFiltersContainer } from './WorkflowsFilters';
 
 import styles from './WorkflowsGridPage.css';
 
-export const WorkflowsGridPage = React.memo(function Workflows({
+export const WorkflowsGridPage = function Workflows({
   workflowsLoadingStatus,
   workflowsList: { count, items },
   templatesFilter,
@@ -122,7 +122,7 @@ export const WorkflowsGridPage = React.memo(function Workflows({
   const renderContent = () => {
     if (workflowsLoadingStatus === EWorkflowsLoadingStatus.LoadingList) {
       const INIT_SKELETION_QUANTITY = 16;
-      const loader = Array(INIT_SKELETION_QUANTITY).fill(<WorkflowCardLoader />);
+      const loader = Array(INIT_SKELETION_QUANTITY).map((item) => <WorkflowCardLoader key={item} />);
 
       return <div className={styles['cards']}>{loader}</div>;
     }
@@ -130,7 +130,7 @@ export const WorkflowsGridPage = React.memo(function Workflows({
     const SCROLL_LOADERS_QUANTITY = 2;
     const isListFullLoaded =
       count === items.length && workflowsLoadingStatus !== EWorkflowsLoadingStatus.LoadingNextPage;
-    const loader = Array(SCROLL_LOADERS_QUANTITY).fill(<WorkflowCardLoader />);
+    const loader = Array(SCROLL_LOADERS_QUANTITY).map((item) => <WorkflowCardLoader key={item} />);
 
     return (
       <InfiniteScroll
@@ -146,10 +146,8 @@ export const WorkflowsGridPage = React.memo(function Workflows({
             key={item.id}
             workflow={item}
             onCardClick={handleOpenPopup(item.id)}
-            onWorkflowEnded={() => removeWorkflowFromList({ workflowId: item.id })}
-            onWorkflowSnoozed={() => removeWorkflowFromList({ workflowId: item.id })}
+            onWorkflowEnded={() => loadWorkflowsList(0)}
             onWorkflowDeleted={() => removeWorkflowFromList({ workflowId: item.id })}
-            onWorkflowResumed={() => removeWorkflowFromList({ workflowId: item.id })}
           />
         ))}
       </InfiniteScroll>
@@ -170,7 +168,7 @@ export const WorkflowsGridPage = React.memo(function Workflows({
           <SearchLargeIcon className={styles['search__icon']} />
           <InputField
             value={searchQuery}
-            onChange={e => setSearchQuery(e.currentTarget.value)}
+            onChange={(e) => setSearchQuery(e.currentTarget.value)}
             containerClassName={styles['search-field']}
             className={styles['search-field__input']}
             placeholder={formatMessage({ id: 'workflows.search' })}
@@ -183,4 +181,4 @@ export const WorkflowsGridPage = React.memo(function Workflows({
       </div>
     </div>
   );
-});
+};

@@ -60,6 +60,7 @@ export interface IWorkflowModalStoreProps {
   workflowEdit: IWorkflowEdit;
   items: IWorkflowLogItem[];
   isLoading?: boolean;
+  isLogLoading: boolean;
   canEdit: boolean;
   isRunWorkflowOpen: boolean;
   isFullscreenImageOpen: boolean;
@@ -326,6 +327,7 @@ export class WorkflowModal extends React.Component<IWorkflowModalProps> {
       isLoading,
       changeWorkflowLogViewSettings,
       sendWorkflowLogComments,
+      isLogLoading
     } = this.props;
 
     if (isLoading) {
@@ -336,9 +338,7 @@ export class WorkflowModal extends React.Component<IWorkflowModalProps> {
       );
     }
 
-    if (!workflow) {
-      return null;
-    }
+    if (!workflow) return <div></div>;
 
     return (
       <>
@@ -372,6 +372,7 @@ export class WorkflowModal extends React.Component<IWorkflowModalProps> {
             theme="white"
             items={items}
             sorting={sorting}
+            isLoading={isLogLoading}
             isCommentsShown={isCommentsShown}
             isOnlyAttachmentsShown={isOnlyAttachmentsShown}
             workflowId={workflowId}

@@ -88,11 +88,11 @@ export const WorkflowLog = ({
               values={[
                 {
                   id: EWorkflowLogAttachmentsModes.Timeline,
-                  label: formatMessage({id: 'sorting.timeline'}),
+                  label: formatMessage({ id: 'sorting.timeline' }),
                 },
                 {
                   id: EWorkflowLogAttachmentsModes.Attachments,
-                  label: formatMessage({id: 'sorting.attachments'}),
+                  label: formatMessage({ id: 'sorting.attachments' }),
                 },
               ]}
               onChange={toggleAttachments}
@@ -190,7 +190,7 @@ export const WorkflowLog = ({
     }
 
     if (isLoading) {
-      return <WorkflowLogSkeleton />;
+      return <WorkflowLogSkeleton theme={theme} />;
     }
 
     const normalizedItems = isLogMinimized && minimizedLogMaxEvents ? items.slice(0, minimizedLogMaxEvents) : items;

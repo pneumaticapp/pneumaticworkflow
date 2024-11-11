@@ -1,23 +1,14 @@
-import * as React from 'react';
-import { Provider } from 'react-redux';
-import ReactDOMServer from 'react-dom/server';
-
-import { store } from '../redux/store';
-
-export function reactElementToText(element: JSX.Element) {
-  if (typeof element === 'string') {
-    return element;
-  }
-
-  const htmlMarkup = ReactDOMServer.renderToStaticMarkup(<Provider store={store}>{element}</Provider>);
-
-  return removeTags(htmlMarkup);
-}
-
-function removeTags(str: string) {
-  if (!str) {
+export function reactElementToText(elem: JSX.Element): any {
+  if (!elem) {
     return '';
   }
+  if (typeof elem === 'string') {
+    return elem;
+  }
 
-  return str.replace(/(<([^>]+)>)/gi, '');
+  const children = elem.props && elem.props.children;
+  if (children instanceof Array) {
+    return children.map(reactElementToText).join('');
+  }
+  return reactElementToText(children);
 }

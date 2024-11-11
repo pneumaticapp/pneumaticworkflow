@@ -89,30 +89,29 @@ export function MainLayout({
 
   const accountOwner = users.filter((localUser) => localUser.isAccountOwner)[0] as IUnsavedUser;
   const isPlanExpired =
-    pendingActions.includes(EPlanActions.ChoosePlan) &&
-    !checkSomeRouteIsActive(...EXPIRED_TRIAL_PERMITTED_ROUTES);
+    pendingActions.includes(EPlanActions.ChoosePlan) && !checkSomeRouteIsActive(...EXPIRED_TRIAL_PERMITTED_ROUTES);
 
   React.useEffect(() => {
-    if (user.account.paymentCardProvided) {
-      loadNotificationsList();
-      watchUserWSEventsAction();
-      loadTasksCount();
-      loadUsers();
-      loadActiveUsersCount();
-      generateMenu();
-      loadPlan();
+    // if (user.account.paymentCardProvided) {
+    loadNotificationsList();
+    watchUserWSEventsAction();
+    loadTasksCount();
+    loadUsers();
+    loadActiveUsersCount();
+    generateMenu();
+    loadPlan();
 
-      if (isEnvPush) initFirebaseMessaging();
+    if (isEnvPush) initFirebaseMessaging();
 
-      if (
-        user.isAdmin &&
-        user.account.leaseLevel !== 'tenant' &&
-        user.account.billingPlan !== ESubscriptionPlan.Free &&
-        user.account.isSubscribed
-      ) {
-        loadTenantsCount();
-      }
+    if (
+      user.isAdmin &&
+      user.account.leaseLevel !== 'tenant' &&
+      user.account.billingPlan !== ESubscriptionPlan.Free &&
+      user.account.isSubscribed
+    ) {
+      loadTenantsCount();
     }
+    // }
   }, [user.id, user.account.paymentCardProvided]);
 
   React.useLayoutEffect(() => {

@@ -130,6 +130,7 @@ export const editWorkflowSuccess: (payload?: void) => TEditWorkflowSuccess = act
 >(EWorkflowsActions.EditWorkflowSuccess);
 
 export type TEditWorkflowPayload = {
+  typeChange?: string;
   name?: string;
   kickoff?: IKickoff | null;
   isUrgent?: boolean;

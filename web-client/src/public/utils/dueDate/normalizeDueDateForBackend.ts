@@ -2,7 +2,7 @@ import { EMPTY_DURATION } from '../../components/TemplateEdit/constants';
 import { IDueDate, IDueDateAPI } from '../../types/template';
 
 export const normalizeDueDateForBackend = (dueDate: IDueDate): IDueDateAPI | null => {
-  if (!dueDate.ruleTarget) {
+  if (!dueDate.duration && !dueDate.durationMonths) {
     return null;
   }
 

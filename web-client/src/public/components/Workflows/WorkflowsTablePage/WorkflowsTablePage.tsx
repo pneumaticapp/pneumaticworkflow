@@ -17,6 +17,7 @@ export const WorkflowsTablePage = function Workflows({
   openWorkflowLogPopup,
   removeWorkflowFromList,
 }: IWorkflowsProps) {
+
   return (
     <>
       <div className={styles['container']}>

@@ -1,14 +1,20 @@
-/* eslint-disable */
-/* prettier-ignore */
-import { ITypedReduxAction } from '../../types/redux';
+import { ITypedReduxAction, IWorkflowLog } from '../../types/redux';
 import { actionGenerator } from '../../utils/redux';
 import { IExtraField } from '../../types/template';
 import { ITask } from '../../types/tasks';
 import { ETaskCardViewMode } from '../../components/TaskCard';
+import { IWorkflowDetails, IWorkflowLogItem } from '../../types/workflow';
+import { IChangeWorkflowLogViewSettingsPayload, ISendWorkflowLogComment } from '../actions';
 
 export const enum ETaskActions {
   LoadCurrentTask = 'LOAD_CURRENT_TASK',
   SetCurrentTask = 'SET_CURRENT_TASK',
+  ChangeTaskWorkflowLog = 'CHANGE_TASK_WORKFLOW_LOG',
+  ChangeTaskWorkflow = 'CHANGE_TASK_WORKFLOW',
+  SetTaskWorkflowIsLoading = 'SET_TASK_WORKFLOW_IS_LOADING',
+  ChangeTaskWorkflowLogViewSettings = 'CHANGE_TASK_WORKFLOW_LOG_VIEW_SETTINGS',
+  SendTaskWorkflowLogComment = 'SEND_TASK_WORKFLOW_LOG_COMMENT',
+  UpdateTaskWorkflowLogItem = 'UPDATE_TASK_WORKFLOW_LOG_ITEM',
   PatchCurrentTask = 'PATCH_CURRENT_TASK',
   SetTaskCompleted = 'SET_TASK_COMPLETED',
   SetTaskReverted = 'SET_TASK_REVERTED',
@@ -40,6 +46,35 @@ export const setCurrentTask: (payload: ITask | null) => TSetCurrentTask = action
   ETaskActions.SetCurrentTask,
   ITask | null
 >(ETaskActions.SetCurrentTask);
+
+export type TChangeTaskWorkflow = ITypedReduxAction<ETaskActions.ChangeTaskWorkflow, IWorkflowDetails>;
+export const changeTaskWorkflow: (payload: IWorkflowDetails) => TChangeTaskWorkflow = actionGenerator<
+  ETaskActions.ChangeTaskWorkflow,
+  IWorkflowDetails
+>(ETaskActions.ChangeTaskWorkflow);
+
+export type TChangeTaskWorkflowLog = ITypedReduxAction<ETaskActions.ChangeTaskWorkflowLog, Partial<IWorkflowLog>>;
+export const changeTaskWorkflowLog: (payload: Partial<IWorkflowLog>) => TChangeTaskWorkflowLog = actionGenerator<
+  ETaskActions.ChangeTaskWorkflowLog,
+  Partial<IWorkflowLog>
+>(ETaskActions.ChangeTaskWorkflowLog);
+
+export type TSetTaskWorkflowIsLoading = ITypedReduxAction<ETaskActions.SetTaskWorkflowIsLoading, boolean>;
+export const setTaskWorkflowIsLoading: (payload: boolean) => TSetTaskWorkflowIsLoading = actionGenerator<
+  ETaskActions.SetTaskWorkflowIsLoading,
+  boolean
+>(ETaskActions.SetTaskWorkflowIsLoading);
+
+export type TChangeTaskWorkflowLogViewSettings = ITypedReduxAction<
+  ETaskActions.ChangeTaskWorkflowLogViewSettings,
+  IChangeWorkflowLogViewSettingsPayload
+>;
+export const changeTaskWorkflowLogViewSettings: (
+  payload: IChangeWorkflowLogViewSettingsPayload,
+) => TChangeTaskWorkflowLogViewSettings = actionGenerator<
+  ETaskActions.ChangeTaskWorkflowLogViewSettings,
+  IChangeWorkflowLogViewSettingsPayload
+>(ETaskActions.ChangeTaskWorkflowLogViewSettings);
 
 export type TPatchCurrentTask = ITypedReduxAction<ETaskActions.PatchCurrentTask, Partial<ITask>>;
 export const patchCurrentTask: (payload: Partial<ITask>) => TPatchCurrentTask = actionGenerator<
@@ -166,8 +201,33 @@ export const setChecklistsHandling: (payload: boolean) => TSetChecklistsHandling
   boolean
 >(ETaskActions.SetChecklistsHandling);
 
+export type TSendTaskWorkflowLogComment = ITypedReduxAction<
+ETaskActions.SendTaskWorkflowLogComment,
+  ISendWorkflowLogComment
+>;
+
+export const sendTaskWorkflowLogComments: (payload: ISendWorkflowLogComment) => TSendTaskWorkflowLogComment = actionGenerator<
+ETaskActions.SendTaskWorkflowLogComment,
+  ISendWorkflowLogComment
+>(ETaskActions.SendTaskWorkflowLogComment);
+
+export type TUpdateTaskWorkflowLogItemPayload = IWorkflowLogItem;
+export type TUpdateTaskWorkflowLogItem = ITypedReduxAction<
+ETaskActions.UpdateTaskWorkflowLogItem,
+TUpdateTaskWorkflowLogItemPayload
+>;
+export const updateTaskWorkflowLogItem: (payload: TUpdateTaskWorkflowLogItemPayload) => TUpdateTaskWorkflowLogItem =
+  actionGenerator<ETaskActions.UpdateTaskWorkflowLogItem, TUpdateTaskWorkflowLogItemPayload>(
+    ETaskActions.UpdateTaskWorkflowLogItem,
+  );
+
+
 export type TTaskActions =
   | TLoadCurrentTask
+  | TChangeTaskWorkflow
+  | TChangeTaskWorkflowLog
+  | TSetTaskWorkflowIsLoading
+  | TChangeTaskWorkflowLogViewSettings
   | TSetCurrentTask
   | TPatchCurrentTask
   | TSetCurrentTaskDueDate
@@ -180,6 +240,8 @@ export type TTaskActions =
   | TChangeTaskPerformers
   | TAddTaskGuest
   | TChangeChecklistItem
+  | TUpdateTaskWorkflowLogItem
   | TMarkChecklistItem
+  | TSendTaskWorkflowLogComment
   | TUnmarkChecklistItem
   | TSetChecklistsHandling;
