@@ -1,7 +1,7 @@
 
 # Pneumatic: All Workflows all the Time
 
-<div width="80%>
+
 
 
 **Pneumatic** is an open-source SaaS workflow management system designed to streamline and organize workflows in businesses of any size. Originally developed as a cloud-based platform, Pneumatic empowers teams by enabling them to set up, run, and optimize workflows collaboratively, tracking each stage as tasks move from team to team.
@@ -67,4 +67,4 @@ All you'll need to do will be get this repo, go into the home folder and run doc
 * Docker Engine to run your locally hosted version of Pneumatic
 * Git: For cloning the repository
 
-  </div>
+
