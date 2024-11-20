@@ -68,7 +68,6 @@ def test_list__ok(api_client):
     assert data['date_joined'] == user.date_joined.strftime(date_format)
     assert data['date_joined_tsp'] == user.date_joined.timestamp()
     assert data['is_admin'] == user.is_admin
-    assert data['is_staff'] == user.is_admin
     assert data['is_account_owner'] == user.is_account_owner
     assert data['language'] == user.language
     assert data['timezone'] == user.timezone

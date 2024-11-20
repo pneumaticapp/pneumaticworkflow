@@ -343,7 +343,7 @@ class TestWorkflowUpdate:
                 }
             }
         )
-        workflow = Workflow.objects.get(id=response.data['workflow_id'])
+        workflow = Workflow.objects.get(id=response.data['id'])
 
         api_client.post(
             f'/workflows/{workflow.id}/task-complete',
@@ -1210,7 +1210,7 @@ class TestWorkflowUpdate:
 
         api_client.token_authenticate(user)
         response = api_client.post(f'/templates/{template.id}/run')
-        workflow = Workflow.objects.get(id=response.data['workflow_id'])
+        workflow = Workflow.objects.get(id=response.data['id'])
 
         first_task = template.tasks.get(number=1)
         first_task.add_raw_performer(invited)
@@ -1271,7 +1271,7 @@ class TestWorkflowUpdate:
 
         api_client.token_authenticate(user)
         response = api_client.post(f'/templates/{template.id}/run')
-        workflow = Workflow.objects.get(id=response.data['workflow_id'])
+        workflow = Workflow.objects.get(id=response.data['id'])
 
         first_task.delete_raw_performer(user_2)
         template.version += 1
@@ -1371,7 +1371,7 @@ class TestWorkflowUpdate:
                 }
             }
         )
-        workflow = Workflow.objects.get(id=response_run.data['workflow_id'])
+        workflow = Workflow.objects.get(id=response_run.data['id'])
         task_1 = workflow.tasks.get(number=1)
         checklist_1 = task_1.checklists.get(api_name='first-checklist')
         selection_11 = checklist_1.selections.get(
@@ -1512,7 +1512,7 @@ class TestWorkflowUpdate:
                 }
             }
         )
-        workflow = Workflow.objects.get(id=response_run.data['workflow_id'])
+        workflow = Workflow.objects.get(id=response_run.data['id'])
 
         task_1 = workflow.tasks.get(number=1)
         checklist_1 = task_1.checklists.get(api_name='first-checklist')
@@ -1632,7 +1632,7 @@ class TestWorkflowUpdate:
                 }
             }
         )
-        workflow = Workflow.objects.get(id=response_run.data['workflow_id'])
+        workflow = Workflow.objects.get(id=response_run.data['id'])
 
         task_2 = workflow.tasks.get(number=2)
         checklist_1 = task_2.checklists.get(api_name='first-checklist')
@@ -2065,7 +2065,7 @@ class TestMoveToCorrectStep:
             f'/templates/{template.id}/run',
             data={'name': 'Workflow'}
         )
-        workflow = Workflow.objects.get(id=response_run.data['workflow_id'])
+        workflow = Workflow.objects.get(id=response_run.data['id'])
         task_1 = workflow.current_task_instance
         response_complete = api_client.post(
             f'/workflows/{workflow.id}/task-complete',
@@ -2218,7 +2218,7 @@ class TestMoveToCorrectStep:
             f'/templates/{template.id}/run',
             data={'name': 'Workflow'}
         )
-        workflow = Workflow.objects.get(id=response_run.data['workflow_id'])
+        workflow = Workflow.objects.get(id=response_run.data['id'])
         task_1 = workflow.current_task_instance
         response_complete = api_client.post(
             f'/workflows/{workflow.id}/task-complete',

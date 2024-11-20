@@ -8,6 +8,7 @@ import {
   ITemplateTaskRequest,
   ITemplateResponse,
   ITemplateTaskResponse,
+  ITemplateTaskPerformer,
 } from '../types/template';
 import { getUrlParams } from './getUrlParams';
 import { DEFAULT_TEMPLATE_NAME } from '../components/TemplateEdit/constants';
@@ -56,13 +57,28 @@ export const getNormalizedTemplate = (
     .map((task, index, tasks) => getNormalizedTask(task, isSubscribed, tasks[index - 1]));
 
   const normalizedTemplateOwners = getNormalizedTemplateOwners(template.templateOwners, isSubscribed, users);
+  const performersCount = setPerformersCounts(normalizedTasks);
 
   return {
     ...template,
+    tasksCount: normalizedTasks.length,
+    performersCount,
     kickoff: normalizedKickoff,
     tasks: normalizedTasks,
     templateOwners: normalizedTemplateOwners,
   };
+};
+
+export const setPerformersCounts = <T extends { rawPerformers: ITemplateTaskPerformer[] }>(tasks: T[]): number => {
+  const uniqueSourceIdSet = new Set();
+  tasks.forEach((task) => {
+    task.rawPerformers.forEach((item) => {
+      if (item.type === 'user') {
+        uniqueSourceIdSet.add(item.sourceId);
+      }
+    });
+  });
+  return uniqueSourceIdSet.size;
 };
 
 export const getNormalizedTemplateOwners = (

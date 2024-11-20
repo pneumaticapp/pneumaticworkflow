@@ -2,8 +2,6 @@
 /* prettier-ignore */
 import * as React from 'react';
 import classnames from 'classnames';
-import { format, parse } from 'date-fns';
-
 import { getFieldValidator } from '../utils/getFieldValidator';
 import { getInputNameBackground } from '../utils/getInputNameBackground';
 import { EExtraFieldMode } from '../../../../types/template';
@@ -15,15 +13,7 @@ import { IWorkflowExtraFieldProps } from '..';
 import fieldStyles from './ExtraFieldDate.css';
 import { DatePicker } from '../../../UI/form/DatePicker/container';
 import styles from '../../KickoffRedux/KickoffRedux.css';
-
-const DATE_STRING_TEMPLATE = 'MM/dd/yyyy';
-
-const getStringFromDate = (date: Date) => format(date, DATE_STRING_TEMPLATE);
-const getDateFromString = (dateStr: string | null) => {
-  if (!dateStr) return null;
-
-  return parse(dateStr, DATE_STRING_TEMPLATE, new Date());
-};
+import { toDate, toDateString } from '../../../../utils/dateTime';
 
 export function ExtraFieldDate({
   field,
@@ -50,17 +40,16 @@ export function ExtraFieldDate({
     },
     [editField],
   );
+  const [selectedDate, setSelectedDate] = React.useState<Date | null>(toDate(value as number | string | null));
 
-  const [selectedDate, setSelectedDate] = React.useState<Date | null>(getDateFromString(value as string | null));
   const handleChangeDate = (date: Date) => {
     if (!date) {
       editField({ value: '' });
       setSelectedDate(null);
-
       return;
     }
 
-    const strDate = getStringFromDate(date);
+    const strDate = toDateString(date);
     editField({ value: strDate });
     setSelectedDate(date);
   };

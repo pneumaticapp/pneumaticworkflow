@@ -591,7 +591,6 @@ def test_customer_subscription_created__ok(mocker):
     )
     account_service_create_mock.assert_called_once_with(
         details=subscription_details_mock,
-        payment_card_provided=True
     )
 
 
@@ -828,7 +827,6 @@ def test_customer_subscription_created__tenant__ok(mocker):
     )
     account_service_create_mock.assert_called_once_with(
         details=subscription_details_mock,
-        payment_card_provided=True
     )
 
 

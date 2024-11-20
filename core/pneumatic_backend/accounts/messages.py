@@ -84,3 +84,4 @@ MSG_A_0039 = _(
     'The list of group members contains a non-existent group identifier'
 )
 MSG_A_0040 = _('The list of groups contains a non-existent group identifier')
+MSG_A_0041 = _('Select a plan to complete the signup')

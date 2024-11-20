@@ -68,24 +68,24 @@ export const enum EWorkflowsActions {
   SetWorkflowsView = 'SET_WORKFLOWS_VIEW',
   UpdateWorkflowLogItem = 'UPDATE_WORKFLOW_LOG_ITEM',
 
-  SetFilterPerformers =                   'SET_WORKFLOWS_FILTER_PERFORMERS',
-  UpdateCurrentPerformersCounters =       'UPDATE_CURRENT_PERFORMERS_COUNTERS',
-  SetCurrentPerformersCounters =          'SET_CURRENT_PERFORMERS_COUNTERS',
+  SetFilterPerformers = 'SET_WORKFLOWS_FILTER_PERFORMERS',
+  UpdateCurrentPerformersCounters = 'UPDATE_CURRENT_PERFORMERS_COUNTERS',
+  SetCurrentPerformersCounters = 'SET_CURRENT_PERFORMERS_COUNTERS',
 
-  SetFilterTemplateSteps =                'SET_WORKFLOWS_FILTER_TEMPLATE_STEPS',
-  LoadFilterSteps =                       'LOAD_WORKFLOWS_FITLER_STEPS',
-  LoadFilterStepsSuccess =                'LOAD_WORKFLOWS_FITLER_STEPS_SUCCESS',
-  LoadFilterStepsFailed =                 'LOAD_WORKFLOWS_FITLER_STEPS_FAILED',
-  SetWorkflowsTemplateStepsCounters =     'SET_WORKFLOW_TEMPLATE_STEPS_COUNTERS',
-  UpdateWorkflowsTemplateStepsCounters =  'UPDATE_WORKFLOW_TEMPLATE_STEPS_COUNTERS',
+  SetFilterTemplateSteps = 'SET_WORKFLOWS_FILTER_TEMPLATE_STEPS',
+  LoadFilterSteps = 'LOAD_WORKFLOWS_FITLER_STEPS',
+  LoadFilterStepsSuccess = 'LOAD_WORKFLOWS_FITLER_STEPS_SUCCESS',
+  LoadFilterStepsFailed = 'LOAD_WORKFLOWS_FITLER_STEPS_FAILED',
+  SetWorkflowsTemplateStepsCounters = 'SET_WORKFLOW_TEMPLATE_STEPS_COUNTERS',
+  UpdateWorkflowsTemplateStepsCounters = 'UPDATE_WORKFLOW_TEMPLATE_STEPS_COUNTERS',
 
-  SetLoadingWorkflowLogComments =         'SET_LOADING_WORKFLOW_LOG_COMMENTS',
-  SendWorkflowLogComment =                'SEND_WORKFLOW_LOG_COMMENT',
-  DeleteComment =                         'DELETE_COMMENT',
-  EditComment =                           'EDIT_COMMENT',
-  WatchedComment =                        'WATCHED_COMMENT',
-  CreateReactionComment =                 'CREATE_REACTION_COMMENT',
-  DeleteReactionComment =                 'DELETE_REACTION_COMMENT',
+  SetLoadingWorkflowLogComments = 'SET_LOADING_WORKFLOW_LOG_COMMENTS',
+  SendWorkflowLogComment = 'SEND_WORKFLOW_LOG_COMMENT',
+  DeleteComment = 'DELETE_COMMENT',
+  EditComment = 'EDIT_COMMENT',
+  WatchedComment = 'WATCHED_COMMENT',
+  CreateReactionComment = 'CREATE_REACTION_COMMENT',
+  DeleteReactionComment = 'DELETE_REACTION_COMMENT',
 }
 
 export type TDeleteReactionComment = ITypedReduxAction<EWorkflowsActions.DeleteReactionComment, IDeleteReaction>;
@@ -114,7 +114,7 @@ export interface IStartWorkflowPayload {
   } | null;
   ancestorTaskId?: number;
   isUrgent?: boolean;
-  dueDate?: string;
+  dueDateTsp?: number | null;
 }
 
 export type TSetWorkflowIsLoading = ITypedReduxAction<EWorkflowsActions.SetWorkflowIsLoading, boolean>;
@@ -136,6 +136,7 @@ export type TEditWorkflowPayload = {
   isUrgent?: boolean;
   dueDate?: string | null;
   workflowId: number;
+  dueDateTsp?: number | null;
 };
 export type TEditWorkflow = ITypedReduxAction<EWorkflowsActions.EditWorkflow, TEditWorkflowPayload>;
 export const editWorkflow: (payload: TEditWorkflowPayload) => TEditWorkflow = actionGenerator<

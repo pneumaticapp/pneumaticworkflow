@@ -11,13 +11,13 @@ from rest_framework.viewsets import GenericViewSet
 from pneumatic_backend.analytics.services import AnalyticService
 from pneumatic_backend.accounts.permissions import (
     UserIsAdminOrAccountOwner,
-    SubscriptionPermission,
     MasterAccountPermission,
     MasterAccountAccessPermission,
+    ExpiredSubscriptionPermission,
+    BillingPlanPermission,
 )
 from pneumatic_backend.generics.permissions import (
     UserIsAuthenticated,
-    PaymentCardPermission,
 )
 from pneumatic_backend.generics.mixins.views import (
     CustomViewSetMixin,
@@ -64,25 +64,28 @@ class TenantsViewSet(
     serializer_class = TenantSerializer
 
     def get_permissions(self):
-        if self.action in (
-            'list',
-            'create',
-            'count'
-        ):
+        if self.action == 'create':
             return (
                 UserIsAuthenticated(),
-                UserIsAdminOrAccountOwner(),
+                BillingPlanPermission(),
+                ExpiredSubscriptionPermission(),
                 MasterAccountPermission(),
-                SubscriptionPermission(),
-                PaymentCardPermission(),
+                UserIsAdminOrAccountOwner(),
+            )
+        elif self.action in ('list', 'count'):
+            return (
+                UserIsAuthenticated(),
+                ExpiredSubscriptionPermission(),
+                MasterAccountPermission(),
+                UserIsAdminOrAccountOwner(),
             )
         else:
             return (
                 UserIsAuthenticated(),
-                UserIsAdminOrAccountOwner(),
+                BillingPlanPermission(),
+                ExpiredSubscriptionPermission(),
                 MasterAccountAccessPermission(),
-                SubscriptionPermission(),
-                PaymentCardPermission(),
+                UserIsAdminOrAccountOwner(),
             )
 
     def get_queryset(self):
@@ -90,11 +93,13 @@ class TenantsViewSet(
 
     def perform_destroy(self, instance: Account):
         master_account = self.request.user.account
+        billing_enabled = (
+            instance.billing_sync and settings.PROJECT_CONF['BILLING']
+        )
         with transaction.atomic():
             if (
-                master_account.billing_plan != BillingPlanType.PREMIUM
-                and master_account.billing_sync
-                and settings.PROJECT_CONF['BILLING']
+                instance.billing_plan == BillingPlanType.UNLIMITED
+                and billing_enabled
             ):
                 try:
                     stripe_service = StripeService(
@@ -115,9 +120,8 @@ class TenantsViewSet(
             )
             account_service.update_users_counts()
             if (
-                master_account.billing_plan == BillingPlanType.PREMIUM
-                and master_account.billing_sync
-                and settings.PROJECT_CONF['BILLING']
+                instance.billing_plan == BillingPlanType.PREMIUM
+                and billing_enabled
             ):
                 increase_plan_users.delay(
                     account_id=master_account.id,
@@ -185,34 +189,37 @@ class TenantsViewSet(
                 service = SystemWorkflowService(user=tenant_user)
                 service.create_onboarding_templates()
                 service.create_activated_templates()
-                if (
+                billing_enabled = (
                     settings.PROJECT_CONF['BILLING']
                     and master_account.billing_sync
+                )
+                if (
+                    tenant_account.billing_plan == BillingPlanType.PREMIUM
+                    and billing_enabled
                 ):
-                    if master_account.billing_plan == BillingPlanType.PREMIUM:
-                        increase_plan_users.delay(
-                            account_id=master_account.id,
+                    increase_plan_users.delay(
+                        account_id=master_account.id,
+                        is_superuser=request.is_superuser,
+                        auth_type=request.token_type,
+                    )
+                elif tenant_account.billing_plan is None:
+                    try:
+                        stripe_service = StripeService(
+                            user=request.user,
+                            subscription_account=tenant_account,
                             is_superuser=request.is_superuser,
                             auth_type=request.token_type,
                         )
-                    else:
-                        try:
-                            stripe_service = StripeService(
-                                user=request.user,
-                                subscription_account=tenant_account,
-                                is_superuser=request.is_superuser,
-                                auth_type=request.token_type,
-                            )
-                            stripe_service.create_off_session_subscription(
-                                products=[
-                                    {
-                                        'code': 'unlimited_month',
-                                        'quantity': 1
-                                    }
-                                ]
-                            )
-                        except StripeServiceException as ex:
-                            raise_validation_error(message=ex.message)
+                        stripe_service.create_off_session_subscription(
+                            products=[
+                                {
+                                    'code': 'unlimited_month',
+                                    'quantity': 1
+                                }
+                            ]
+                        )
+                    except StripeServiceException as ex:
+                        raise_validation_error(message=ex.message)
 
                 AnalyticService.tenants_added(
                     master_user=request.user,

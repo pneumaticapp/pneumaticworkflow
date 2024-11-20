@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-08-28 17:17+0000\n"
+"POT-Creation-Date: 2024-11-13 13:45+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -40,61 +40,57 @@ msgid "You need to set a \"Meta.fields\" value before using AdditionalValidation
 msgstr "Перед использованием AdditionalValidationMixin следует задать значение \"Meta.fields\""
 
 #: generics/messages.py:20
-msgid "Payment method required."
-msgstr "Требуется указать способ оплаты."
-
-#: generics/messages.py:21
 msgid "Numeric type expected."
 msgstr "Ожидается числовой тип."
 
-#: generics/messages.py:23
+#: generics/messages.py:22
 msgid "Jan"
 msgstr "Янв"
 
-#: generics/messages.py:24
+#: generics/messages.py:23
 msgid "Feb"
 msgstr "Фев"
 
-#: generics/messages.py:25
+#: generics/messages.py:24
 msgid "Mar"
 msgstr "Мар"
 
-#: generics/messages.py:26
+#: generics/messages.py:25
 msgid "Apr"
 msgstr "Апр"
 
-#: generics/messages.py:27
+#: generics/messages.py:26
 msgid "May"
 msgstr "Май"
 
-#: generics/messages.py:28
+#: generics/messages.py:27
 msgid "Jun"
 msgstr "Июн"
 
-#: generics/messages.py:29
+#: generics/messages.py:28
 msgid "Jul"
 msgstr "Июл"
 
-#: generics/messages.py:30
+#: generics/messages.py:29
 msgid "Aug"
 msgstr "Авг"
 
-#: generics/messages.py:31
+#: generics/messages.py:30
 msgid "Sep"
 msgstr "Сен"
 
-#: generics/messages.py:32
+#: generics/messages.py:31
 msgid "Oct"
 msgstr "Окт"
 
-#: generics/messages.py:33
+#: generics/messages.py:32
 msgid "Nov"
 msgstr "Ноя"
 
-#: generics/messages.py:34
+#: generics/messages.py:33
 msgid "Dec"
 msgstr "Дек"
 
-#: generics/messages.py:37
+#: generics/messages.py:36
 msgid "An incorrect value has been passed in; a timestamp format is expected."
 msgstr "Передано некорректное значение, ожидается значение в формате timestamp."

@@ -41,3 +41,11 @@ def date_to_user_fmt(
     with translation.override(user.language):
         str_date = str_date.replace(month, str(month_abbreviation))
     return str_date
+
+
+def date_tsp_to_user_fmt(
+    date_tsp: str,
+    user: UserModel
+) -> str:
+    utc_date = datetime.fromtimestamp(float(date_tsp))
+    return date_to_user_fmt(date=utc_date, user=user)

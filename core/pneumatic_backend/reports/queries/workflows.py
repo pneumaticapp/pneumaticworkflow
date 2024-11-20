@@ -310,8 +310,7 @@ class WorkflowDigestQuery(
           pt.type IN {self.template_types} AND
           pw.is_deleted IS FALSE AND
           au.is_deleted IS FALSE AND
-          au.status = %(active_user)s AND
-          aa.payment_card_provided=True
+          au.status = %(active_user)s
           {self._get_subscriber_where()}
           {self._get_user_where()}
         GROUP BY au.id, pt.id

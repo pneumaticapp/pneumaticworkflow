@@ -8,6 +8,7 @@ import { ELocale } from '../../../../types/redux';
 
 import 'react-datepicker/dist/react-datepicker.css';
 import '../../../../assets/css/library/react-datepicker.css';
+import { DATE_STRING_FNS_TEMPLATE } from '../../../../utils/dateTime';
 
 export type IDatePickerProps = DatePickerProps & {
   language: string;
@@ -27,13 +28,17 @@ export function DatePickerComponent({ dateFdw, language, timezone, selected, onC
       {...props}
       locale={mapLocale[language]}
       selected={
-        // Removing the timezone so that the library does not format the date in the time zone set by the browser
         selected ? (moment(selected).tz(timezone, false).format('YYYY-MM-DDTHH:mm:ss') as unknown as Date) : null
       }
+      dateFormat={DATE_STRING_FNS_TEMPLATE}
       calendarStartDay={dateFdw}
       utcOffset={timezone}
-      // Setting the selected date as the time zone date set by the user
-      onChange={(value: any) => onChange(value ? moment(value).tz(timezone, true).format() : null)}
+      onChange={(value: any) => {
+        const mDate = moment(value);
+        const endOfDay = mDate.isSame(mDate.clone().startOf('day'));
+        const adjustedDate = endOfDay ? mDate.set({ hour: 23, minute: 59, second: 59 }) : mDate;
+        onChange(adjustedDate ? adjustedDate.toDate() : null);
+      }}
     />
   );
 }

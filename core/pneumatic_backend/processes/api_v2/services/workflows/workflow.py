@@ -106,7 +106,7 @@ class WorkflowService(
         )
         self.instance = Workflow.objects.create(
             template_id=instance_template.id,
-            tasks_count=instance_template.tasks_count,
+            tasks_count=instance_template.tasks.count(),
             name=name,
             name_template=name,
             description=instance_template.description,

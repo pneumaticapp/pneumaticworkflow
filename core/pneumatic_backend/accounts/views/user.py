@@ -22,12 +22,12 @@ from pneumatic_backend.processes.models import (
     Task
 )
 from pneumatic_backend.accounts.permissions import (
-    ExpiredSubscriptionPermission
+    ExpiredSubscriptionPermission,
+    BillingPlanPermission,
 )
 from pneumatic_backend.generics.permissions import (
     IsAuthenticated,
     UserIsAuthenticated,
-    PaymentCardPermission,
 )
 from pneumatic_backend.analytics.mixins import BaseIdentifyMixin
 from pneumatic_backend.analytics.services import AnalyticService
@@ -59,18 +59,18 @@ class UserViewSet(
         if self.action is None and method == 'PUT':
             return (
                 UserIsAuthenticated(),
-                PaymentCardPermission(),
+                BillingPlanPermission(),
                 ExpiredSubscriptionPermission(),
             )
         elif self.action == 'list':
             return (
                 IsAuthenticated(),
-                PaymentCardPermission(),
+                BillingPlanPermission(),
             )
         else:
             return (
                 UserIsAuthenticated(),
-                PaymentCardPermission(),
+                BillingPlanPermission(),
             )
 
     def get_queryset(self):

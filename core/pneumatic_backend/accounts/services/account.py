@@ -41,45 +41,78 @@ class AccountService(
     cache_key_prefix = 'account'
     serializer_cls = AccountCacheSerializer
 
+    def _create_tenant(
+        self,
+        master_account: Account,
+        tenant_name: str,
+    ) -> Account:
+
+        billing_enabled = (
+            settings.PROJECT_CONF['BILLING'] and master_account.billing_sync
+        )
+        account = Account(
+            is_verified=True,
+            name='Company name',
+            billing_sync=master_account.billing_sync,
+            master_account=master_account,
+            tenant_name=tenant_name,
+            lease_level=LeaseLevel.TENANT,
+            logo_lg=master_account.logo_lg,
+            logo_sm=master_account.logo_sm,
+        )
+        if master_account.billing_plan == BillingPlanType.PREMIUM:
+            account.max_users = master_account.max_users
+            account.billing_plan = master_account.billing_plan
+            account.billing_period = master_account.billing_period
+            account.plan_expiration = master_account.plan_expiration
+            account.trial_start = master_account.trial_start
+            account.trial_end = master_account.trial_end
+            account.trial_ended = master_account.trial_ended
+        elif master_account.billing_plan in (
+            BillingPlanType.FRACTIONALCOO,
+            BillingPlanType.FREEMIUM
+        ):
+            account.billing_plan = BillingPlanType.FREEMIUM
+        elif master_account.billing_plan == BillingPlanType.UNLIMITED:
+            if billing_enabled:
+                # Need buy
+                account.billing_plan = None
+            else:
+                account.max_users = master_account.max_users
+                account.billing_plan = master_account.billing_plan
+                account.billing_period = master_account.billing_period
+                account.plan_expiration = master_account.plan_expiration
+                account.trial_start = master_account.trial_start
+                account.trial_end = master_account.trial_end
+                account.trial_ended = master_account.trial_ended
+        account.save()
+        return account
+
     def _create_instance(
         self,
         is_verified: bool = True,
         name: Optional[str] = None,
-        tenant_name:  Optional[str] = None,
+        tenant_name: Optional[str] = None,
         master_account: Optional[Account] = None,
         billing_sync: bool = True,
         **kwargs
     ) -> Account:
 
-        self.instance = Account(
-            is_verified=is_verified,
-            name=name or 'Company name',
-            billing_sync=billing_sync
-        )
         if master_account:
-            self.instance.master_account = master_account
-            self.instance.billing_sync = master_account.billing_sync
-            self.instance.tenant_name = tenant_name
-            self.instance.lease_level = LeaseLevel.TENANT
-            self.instance.logo_lg = master_account.logo_lg
-            self.instance.logo_sm = master_account.logo_sm
-            self.instance.payment_card_provided = (
-                master_account.payment_card_provided
+            self.instance = self._create_tenant(
+                master_account=master_account,
+                tenant_name=tenant_name
             )
-            if (
-                master_account.billing_plan == BillingPlanType.PREMIUM
-                or not master_account.billing_sync
-            ):
-                self.instance.max_users = master_account.max_users
-                self.instance.billing_plan = master_account.billing_plan
-                self.instance.billing_period = master_account.billing_period
-                self.instance.plan_expiration = master_account.plan_expiration
-                self.instance.trial_start = master_account.trial_start
-                self.instance.trial_end = master_account.trial_end
-                self.instance.trial_ended = master_account.trial_ended
         else:
-            self.instance.billing_sync = billing_sync
-        self.instance.save()
+            billing_enabled = settings.PROJECT_CONF['BILLING'] and billing_sync
+            self.instance = Account(
+                is_verified=is_verified,
+                name=name or 'Company name',
+                billing_sync=billing_sync
+            )
+            if not billing_enabled:
+                self.instance.billing_plan = BillingPlanType.FREEMIUM
+            self.instance.save()
         return self.instance
 
     def _create_related(
@@ -141,15 +174,6 @@ class AccountService(
             value=self.instance
         )
 
-    def update_active_templates(self):
-        self.partial_update(
-            active_templates=(
-                self.instance.template_set.active(
-                ).exclude_onboarding().count()
-            ),
-            force_save=True
-        )
-
     def _update_tenants(self):
         if self.instance.billing_plan == BillingPlanType.PREMIUM:
             self.instance.tenants.only_tenants().update(
@@ -162,13 +186,11 @@ class AccountService(
                 trial_start=self.instance.trial_start,
                 trial_end=self.instance.trial_end,
                 trial_ended=self.instance.trial_ended,
-                payment_card_provided=self.instance.payment_card_provided
             )
         else:
             self.instance.tenants.only_tenants().update(
                 logo_lg=self.instance.logo_lg,
                 logo_sm=self.instance.logo_sm,
-                payment_card_provided=self.instance.payment_card_provided,
                 billing_sync=self.instance.billing_sync
             )
 

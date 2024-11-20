@@ -90,9 +90,9 @@ export function MainLayout({
   const accountOwner = users.filter((localUser) => localUser.isAccountOwner)[0] as IUnsavedUser;
   const isPlanExpired =
     pendingActions.includes(EPlanActions.ChoosePlan) && !checkSomeRouteIsActive(...EXPIRED_TRIAL_PERMITTED_ROUTES);
+  const { isSubscribed, billingPlan } = user.account;
 
   React.useEffect(() => {
-    // if (user.account.paymentCardProvided) {
     loadNotificationsList();
     watchUserWSEventsAction();
     loadTasksCount();
@@ -111,8 +111,7 @@ export function MainLayout({
     ) {
       loadTenantsCount();
     }
-    // }
-  }, [user.id, user.account.paymentCardProvided]);
+  }, [user.id]);
 
   React.useLayoutEffect(() => {
     if (!user.isSupermode) {
@@ -125,10 +124,9 @@ export function MainLayout({
   }, [user.id, user.isSupermode]);
 
   React.useEffect(() => {
-    if (!user.account.paymentCardProvided) {
+    if (!isSubscribed && !(billingPlan === ESubscriptionPlan.Free)) {
       return undefined;
     }
-
     unregisterHistoryListener.current = history.listen((listener) => {
       const newLocation = listener.pathname;
       if (newLocation !== prevLocation) {
@@ -142,7 +140,7 @@ export function MainLayout({
     return () => {
       unregisterHistoryListener.current?.();
     };
-  }, [user.account.paymentCardProvided]);
+  }, [isSubscribed, billingPlan, ESubscriptionPlan.Free]);
 
   const shouldRenderNotifications = useDelayUnmount(isNotificationsListOpen, 150);
 
@@ -152,7 +150,10 @@ export function MainLayout({
         {children}
         <SidebarContainer />
       </div>
-      {isPlanExpired && <Paywall currentUser={user} owner={accountOwner} />}
+      {((!isSubscribed && !(billingPlan === ESubscriptionPlan.Free)) || isPlanExpired) && (
+        <Paywall currentUser={user} owner={accountOwner} />
+      )}
+
       {isGeneralLoaderVisible && <GeneralLoader />}
       {shouldRenderNotifications && <NotificationsListContainer isClosing={!isNotificationsListOpen} />}
       {isRunWorkflowModalOpen && <WorkflowEditPopupContainer />}

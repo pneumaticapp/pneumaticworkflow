@@ -3,13 +3,13 @@ from rest_framework.decorators import action
 from rest_framework.viewsets import GenericViewSet
 from pneumatic_backend.generics.permissions import (
     IsAuthenticated,
-    PaymentCardPermission,
 )
 from pneumatic_backend.processes.permissions import (
     GuestTaskPermission,
 )
 from pneumatic_backend.accounts.permissions import (
     ExpiredSubscriptionPermission,
+    BillingPlanPermission,
 )
 from pneumatic_backend.generics.mixins.views import (
     CustomViewSetMixin,
@@ -40,8 +40,8 @@ class CheckListViewSet(
     serializer_class = CheckListSerializer
     permission_classes = (
         IsAuthenticated,
-        PaymentCardPermission,
         ExpiredSubscriptionPermission,
+        BillingPlanPermission,
         GuestTaskPermission,
     )
 

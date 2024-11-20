@@ -607,6 +607,12 @@ class TestCompleteWorkflow:
             task=task,
             template=template,
         )
+        output_date = FieldTemplate.objects.create(
+            type=FieldType.DATE,
+            name='Date field',
+            task=task,
+            template=template,
+        )
         output_file = FieldTemplate.objects.create(
             type=FieldType.FILE,
             name='File field',
@@ -621,8 +627,12 @@ class TestCompleteWorkflow:
         second_task.save()
         third_task = template.tasks.order_by('number')[2]
         third_task.description = (
-            'His name is... {{ %s }}!!! Third link {{ %s }}'
-            % (output_field.api_name, output_file.api_name)
+            'His name is... {{ %s }}!!! Third link {{ %s }} {{ %s }}'
+            % (
+                output_field.api_name,
+                output_file.api_name,
+                output_date.api_name
+            )
         )
         third_task.save()
 
@@ -650,7 +660,8 @@ class TestCompleteWorkflow:
             'task_id': workflow.current_task_instance.id,
             'output': {
                 output_field.api_name: 'JOHN CENA',
-                output_file.api_name: [first_file.id, second_file.id]
+                output_file.api_name: [first_file.id, second_file.id],
+                output_date.api_name: 1685161332
             }
         }
 
@@ -685,7 +696,8 @@ class TestCompleteWorkflow:
         assert current_task.description == (
             'His name is... JOHN CENA!!! Third link '
             f'[{output_file.name}](https://john.cena/john.cena)\n'
-            f'[{output_file.name}](https://john.cena/john1.cena)'
+            f'[{output_file.name}](https://john.cena/john1.cena) '
+            f'May 27, 2023, 04:22AM'
         )
 
     def test_complete__last_task__ok(

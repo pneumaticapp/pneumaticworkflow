@@ -302,9 +302,9 @@ def test_titles__with_tasks_in_progress_true__ended_wf__not_found(
         user=user,
         template=template,
     )
-    WorkflowActionService().end_process(
+    service = WorkflowActionService(user=user)
+    service.end_process(
         workflow=workflow,
-        user=user,
         by_condition=False,
     )
     api_client.token_authenticate(user)
@@ -533,9 +533,9 @@ def test_titles__with_tasks_in_progress_false__ended_wf__ok(
         data={'task_id': workflow.current_task_instance.id}
     )
     workflow.refresh_from_db()
-    WorkflowActionService().end_process(
+    service = WorkflowActionService(user=user)
+    service.end_process(
         workflow=workflow,
-        user=user,
         by_condition=False,
     )
 
@@ -817,9 +817,9 @@ def test_titles__workflows_status_running__ended_workflow__not_found(
         user=user,
         template=template,
     )
-    WorkflowActionService().end_process(
+    service = WorkflowActionService(user=user)
+    service.end_process(
         workflow=workflow,
-        user=user,
         by_condition=False,
     )
     api_client.token_authenticate(user)
@@ -1047,9 +1047,9 @@ def test_titles__workflows_status_done__ended_workflow__not_found(
         user=user,
         template=template,
     )
-    WorkflowActionService().end_process(
+    service = WorkflowActionService(user=user)
+    service.end_process(
         workflow=workflow,
-        user=user,
         by_condition=False,
     )
     api_client.token_authenticate(user)

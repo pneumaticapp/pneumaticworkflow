@@ -90,23 +90,23 @@ import { ITemplate } from '../../types/template';
 import { watchNewWorkflowsEvent } from '../workflows/saga';
 import { removeLocalStorage } from '../../utils/localStorage';
 
-import { isEnvBilling } from '../../constants/enviroment';
-
-export function* authenticateUser(redirectUrl?: string) {
+export function* authenticateUser(redirectUrl?: string, isRegister: boolean = false) {
   try {
     const user: TAuthUserResult = yield call(auth.getUser);
+    const {
+      account: { isSubscribed, billingPlan, billingSync },
+    } = user;
     yield put(authUserSuccess(user));
 
-    if (isEnvBilling && !user.account.paymentCardProvided) {
-      if (user.account.isSubscribed) {
-        yield call(changePaymentDetailsSaga);
-        return;
-      }
-
-      history.push(ERoutes.CollectPaymentDetails);
+    if ((billingSync && isRegister) || (billingSync && !isSubscribed && !billingPlan)) {
+      yield call(collectPaymentDetailsSaga);
       return;
     }
 
+    if (!isSubscribed || !billingSync) {
+      history.push(ERoutes.Main);
+      return;
+    }
     if (redirectUrl) {
       history.replace(redirectUrl);
     }
@@ -221,11 +221,12 @@ export function* registerWithEmailPassword({ payload: { user, captcha, onStart, 
       setJwtCookie(registerUser.token);
 
       const [id, type] = [getOAuthId(), getOAuthType()];
+
       if (id && type) {
         setOAuthRegistrationCompleted(id, type).catch((error) => error);
       }
 
-      yield authenticateUser(ERoutes.Templates);
+      yield call(authenticateUser, undefined, true);
     } else {
       console.info('register failed :', registerUser.message);
       NotificationManager.error({
@@ -482,18 +483,6 @@ export function handleSetRedirectUrl({ payload: redirectUrl }: TSetRedirectUrl) 
 }
 
 export function* collectPaymentDetailsSaga() {
-  const {
-    authUser: {
-      account: { paymentCardProvided },
-    },
-  }: ReturnType<typeof getAuthUser> = yield select(getAuthUser);
-
-  if (paymentCardProvided) {
-    history.push(ERoutes.Tasks);
-
-    return;
-  }
-
   yield put(
     makeStripePayment({
       successUrl: getAbsolutePath(ERoutes.AfterPaymentDetailsProvided, { after_registration: 'true' }),
@@ -543,7 +532,6 @@ export function* makeStripePaymentSaga({
 
     if (response.paymentLink) {
       window.location.replace(response.paymentLink);
-
       return;
     }
 

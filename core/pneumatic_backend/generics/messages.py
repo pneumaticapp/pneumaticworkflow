@@ -17,7 +17,6 @@ MSG_GE_0005 = _(
     'You need to set a "Meta.fields" value before using '
     'AdditionalValidationMixin'
 )
-MSG_GE_0006 = _('Payment method required.')
 MSG_GE_0007 = _('Numeric type expected.')
 
 MSG_GE_0008 = _('Jan')

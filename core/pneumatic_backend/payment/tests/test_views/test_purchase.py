@@ -1,5 +1,4 @@
 import pytest
-from django.conf import settings
 from django.contrib.auth import get_user_model
 from pneumatic_backend.payment.enums import PriceStatus
 from pneumatic_backend.payment.tests.fixtures import (
@@ -33,7 +32,7 @@ def test_purchase__payment_link__ok(
     success_url = 'http://localhost/success/'
     cancel_url = 'http://localhost/cancel/'
     price = create_test_recurring_price()
-    quantity = settings.PAYWALL_MIN_USERS
+    quantity = 1
     payment_link = 'checkout.stripe.com'
 
     service_init_mock = mocker.patch.object(
@@ -164,7 +163,7 @@ def test_purchase__archived_price__ok(
     price = create_test_recurring_price(
         status=PriceStatus.ARCHIVED
     )
-    quantity = settings.PAYWALL_MIN_USERS
+    quantity = 1
     payment_link = 'checkout.stripe.com'
 
     mocker.patch.object(
@@ -214,7 +213,7 @@ def test_purchase__service_exception__validation_error(
     success_url = 'http://localhost/success/'
     cancel_url = 'http://localhost/cancel/'
     price = create_test_recurring_price()
-    quantity = settings.PAYWALL_MIN_USERS
+    quantity = 1
     message = 'some error'
     service_init_mock = mocker.patch.object(
         StripeService,
@@ -692,7 +691,7 @@ def test_purchase__disable_billing__permission_denied(
     success_url = 'http://localhost/success/'
     cancel_url = 'http://localhost/cancel/'
     price = create_test_recurring_price()
-    quantity = settings.PAYWALL_MIN_USERS
+    quantity = 1
     payment_link = 'checkout.stripe.com'
 
     service_init_mock = mocker.patch.object(

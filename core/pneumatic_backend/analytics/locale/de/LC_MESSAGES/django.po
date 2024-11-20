@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-06-29 10:00+0000\n"
+"POT-Creation-Date: 2024-11-13 13:45+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -23,6 +23,7 @@ msgid "You must specify \"user_id\" or \"anonymous_id\""
 msgstr "Sie müssen \"user_id\" oder \"anonymous_id\" angeben."
 
 #: analytics/messages.py:8
+#, python-brace-format
 msgid "Missing handler for metric \"{metric}\""
 msgstr "Fehlender Handler für Metrik \"{metric}\""
 
@@ -31,5 +32,6 @@ msgid "The user with the specified credentials was not found."
 msgstr "Der Benutzer mit den angegebenen Anmeldedaten wurde nicht gefunden."
 
 #: analytics/messages.py:13
+#, python-brace-format
 msgid "Data format error. Key error: {error}"
 msgstr "Datenformatfehler. Schlüssel-Fehler: {error}"

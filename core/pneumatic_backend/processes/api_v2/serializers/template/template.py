@@ -11,17 +11,16 @@ from rest_framework.serializers import (
     IntegerField,
     DateTimeField,
     CharField,
-    ReadOnlyField,
     ValidationError,
     ChoiceField,
     ListField,
+    ReadOnlyField,
 )
 from django.utils import timezone
 from django.contrib.auth import get_user_model
 from django.core.exceptions import (
     ValidationError as ValidationCoreError
 )
-from pneumatic_backend.accounts.services import AccountService
 from pneumatic_backend.processes.models import (
     Kickoff,
     Template,
@@ -58,7 +57,6 @@ from pneumatic_backend.processes.services.versioning.versioning import (
     TemplateVersioningService,
 )
 from pneumatic_backend.processes.messages import template as messages
-from pneumatic_backend.accounts.validators import PayWallValidator
 from pneumatic_backend.generics.validators import NoSchemaURLValidator
 from pneumatic_backend.processes.enums import (
     PerformerType,
@@ -119,8 +117,6 @@ class TemplateSerializer(
             'updated_by',
             'date_updated',
             'date_updated_tsp',
-            'tasks_count',
-            'performers_count'
         )
         create_or_update_fields = {
             'name',
@@ -136,8 +132,6 @@ class TemplateSerializer(
             'version',
             'type',
             'generic_name',
-            'tasks_count',
-            'performers_count',
             'account',
         }
 
@@ -151,8 +145,6 @@ class TemplateSerializer(
     )
     kickoff = KickoffSerializer(required=False)
     tasks = TaskTemplateSerializer(many=True, required=False)
-    performers_count = ReadOnlyField()
-    tasks_count = ReadOnlyField()
     public_url = CharField(read_only=True)
     embed_url = CharField(read_only=True)
     public_success_url = CharField(allow_null=True, required=False)
@@ -203,6 +195,8 @@ class TemplateSerializer(
                         if source_id:
                             performers_ids.add(int(source_id))
                             raw_performer['source_id'] = str(source_id)
+                    if raw_performer.get('type') == PerformerType.GROUP:
+                        pass
         except (TypeError, ValueError, AttributeError):
             pass  # Will be raised in performer serializer
         return performers_ids
@@ -247,8 +241,6 @@ class TemplateSerializer(
             TEMPLATE_NAME_LENGTH
         )
         performers_ids = self._get_template_performers_ids(validated_data)
-        validated_data['tasks_count'] = len(validated_data['tasks'])
-        validated_data['performers_count'] = len(performers_ids)
         if instance:
             validated_data['version'] = instance.version + 1
         else:
@@ -330,34 +322,11 @@ class TemplateSerializer(
                 name='tasks'
             )
 
-    def additional_validate(self, data: Dict[str, Any], **kwargs):
-        if data.get('is_active'):
-            user = self.context['user']
-            account = user.account
-            payment_required = (
-                PayWallValidator.is_active_templates_limit_reached(
-                    account=account
-                )
-            )
-            if payment_required:
-                self.raise_validation_error(
-                    message=messages.MSG_PT_0015(account.max_active_templates),
-                )
-        super().additional_validate(data)
-
     def additional_validate_template_owners(self, *args, **kwargs):
 
         if not self.new_template_owners_ids:
             self.raise_validation_error(
                 message=messages.MSG_PT_0016,
-                name='template_owners'
-            )
-        if (
-            self.context['account'].is_free
-            and not self.template_owners_all_users
-        ):
-            self.raise_validation_error(
-                message=messages.MSG_PT_0017,
                 name='template_owners'
             )
         if self.context['user'].id not in self.new_template_owners_ids:
@@ -379,11 +348,6 @@ class TemplateSerializer(
     ):
 
         if value:
-            if self.context['account'].is_free:
-                self.raise_validation_error(
-                    message=messages.MSG_PT_0020,
-                    name='public_success_url'
-                )
             try:
                 NoSchemaURLValidator()(value)
             except ValidationCoreError:
@@ -444,8 +408,6 @@ class TemplateSerializer(
         with transaction.atomic():
             user = self.context['user']
             data = self.initial_data
-            tasks = data.get('tasks', [])
-            performers_ids = self._get_template_performers_ids(data)
             data['name'] = data.get('name', '')
             data['is_public'] = bool(data.get('is_public'))
             data['is_embedded'] = bool(data.get('is_embedded'))
@@ -476,8 +438,6 @@ class TemplateSerializer(
             data['date_updated_tsp'] = date_now.timestamp()
             data['updated_by'] = user.id
             data['id'] = self.instance.id
-            data['tasks_count'] = len(tasks)
-            data['performers_count'] = len(performers_ids)
             Kickoff.objects.get_or_create(
                 template_id=self.instance.id,
                 defaults={'account_id': self.instance.account_id}
@@ -486,11 +446,6 @@ class TemplateSerializer(
                 data=data.get('kickoff')
             )
             self._update_draft(data=data)
-            account_service = AccountService(
-                instance=self.context['account'],
-                user=user
-            )
-            account_service.update_active_templates()
             return self.instance
 
     def _set_constances(self, data: Dict[str, Any]):
@@ -503,9 +458,6 @@ class TemplateSerializer(
             self.context['account'].get_user_ids(
                 include_invited=True,
             )
-        )
-        self.template_owners_all_users = (
-            self.new_template_owners_ids == self.in_account_user_ids
         )
         self.undefined_user_ids = (
             self.new_template_owners_ids - self.in_account_user_ids
@@ -610,11 +562,6 @@ class TemplateSerializer(
         with transaction.atomic():
             instance = super().save(**kwargs)
             self._update_draft(data=self.data)
-            account_service = AccountService(
-                instance=self.context['account'],
-                user=self.context['user']
-            )
-            account_service.update_active_templates()
             return instance
 
     def discard_changes(self):
@@ -622,11 +569,6 @@ class TemplateSerializer(
             self.instance.is_active = True
             self.instance.save(update_fields=['is_active'])
             self._update_draft(data=self.data)
-            account_service = AccountService(
-                instance=self.context['account'],
-                user=self.context['user']
-            )
-            account_service.update_active_templates()
 
     def get_analytics_counters(self) -> dict:
         data = self.initial_data
@@ -695,7 +637,6 @@ class TemplateListSerializer(ModelSerializer):
             'wf_name_template',
             'tasks_count',
             'template_owners',
-            'performers_count',
             'name',
             'is_active',
             'is_public',
@@ -706,6 +647,7 @@ class TemplateListSerializer(ModelSerializer):
 
     template_owners = ListField(child=IntegerField())
     kickoff = KickoffListSerializer()
+    tasks_count = ReadOnlyField()
 
 
 class TemplateOnlyFieldsSerializer(ModelSerializer):

@@ -54,7 +54,7 @@ def test_list__any_premium_plan__ok(
     )
 
 
-def test_list__free__permission_denied(
+def test_list__free__ok(
     api_client,
 ):
     # arrange
@@ -63,13 +63,32 @@ def test_list__free__permission_denied(
         lease_level=LeaseLevel.STANDARD
     )
     master_account_owner = create_test_user(account=master_account)
+    tenant_account = create_test_account(
+        name='tenant',
+        plan=BillingPlanType.FREEMIUM,
+        lease_level=LeaseLevel.TENANT,
+        master_account=master_account
+    )
+    create_test_user(
+        account=tenant_account,
+        email='tenant_owner@test.test'
+    )
     api_client.token_authenticate(master_account_owner)
 
     # act
     response = api_client.get('/tenants')
 
     # assert
-    assert response.status_code == 403
+    assert response.status_code == 200
+    assert len(response.data) == 1
+    assert response.data[0]['id'] == tenant_account.id
+    assert response.data[0]['tenant_name'] == tenant_account.tenant_name
+    assert response.data[0]['date_joined'] == (
+        tenant_account.date_joined.strftime(date_format)
+    )
+    assert response.data[0]['date_joined_tsp'] == (
+        tenant_account.date_joined.timestamp()
+    )
 
 
 def test_list__tenant__permission_denied(

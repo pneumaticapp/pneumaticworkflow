@@ -1,4 +1,3 @@
-from datetime import datetime
 from typing import List, Any, Union, Optional, Iterable, Set
 from django.db.models import ObjectDoesNotExist
 from django.contrib.auth import get_user_model
@@ -181,20 +180,12 @@ class TaskFieldService(BaseWorkflowService):
             return ', '.join(selections_values)
 
     def _get_valid_date_value(self, raw_value: Any, **kwargs) -> str:
-        if not isinstance(raw_value, str):
+        if not isinstance(raw_value, (int, float)):
             raise TaskFieldException(
                 api_name=self.instance.api_name,
                 message=messages.MSG_PW_0032
             )
-        try:
-            datetime.strptime(raw_value, '%m/%d/%Y')
-        except ValueError:
-            raise TaskFieldException(
-                api_name=self.instance.api_name,
-                message=messages.MSG_PW_0033
-            )
-        else:
-            return raw_value
+        return str(raw_value)
 
     def _get_valid_url_value(self, raw_value: Any, **kwargs) -> str:
         if not isinstance(raw_value, str):

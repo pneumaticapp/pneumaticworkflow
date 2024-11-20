@@ -19,6 +19,7 @@ from pneumatic_backend.accounts.filters import (
 )
 from pneumatic_backend.accounts.permissions import (
     ExpiredSubscriptionPermission,
+    BillingPlanPermission,
 )
 from pneumatic_backend.accounts.serializers.notifications import (
     NotificationsSerializer,
@@ -26,7 +27,6 @@ from pneumatic_backend.accounts.serializers.notifications import (
 from pneumatic_backend.generics.filters import PneumaticFilterBackend
 from pneumatic_backend.generics.permissions import (
     UserIsAuthenticated,
-    PaymentCardPermission,
 )
 from pneumatic_backend.generics.mixins.views import (
     CustomViewSetMixin,
@@ -44,16 +44,23 @@ class NotificationsViewSet(
     GenericViewSet
 ):
     pagination_class = LimitOffsetPagination
-    permission_classes = (
-        ExpiredSubscriptionPermission,
-        UserIsAuthenticated,
-        PaymentCardPermission,
-    )
     serializer_class = NotificationsSerializer
     filterset_class = NotificationFilter
     filter_backends = [OrderingFilter, PneumaticFilterBackend]
     ordering_fields = ['datetime']
     ordering = ['-datetime']
+
+    def get_permissions(self):
+        if self.action in 'destroy':
+            return (
+                UserIsAuthenticated(),
+                BillingPlanPermission(),
+                ExpiredSubscriptionPermission(),
+            )
+        else:
+            return (
+                UserIsAuthenticated(),
+            )
 
     def get_queryset(self):
         return self.request.user.notifications
@@ -77,10 +84,13 @@ class NotificationsReadView(
     CreateAPIView,
     BaseResponseMixin,
 ):
+
+    # TODO Move to NotificationsViewSet
+
     permission_classes = (
-        ExpiredSubscriptionPermission,
         UserIsAuthenticated,
-        PaymentCardPermission,
+        ExpiredSubscriptionPermission,
+        BillingPlanPermission,
     )
 
     def get_queryset(self):

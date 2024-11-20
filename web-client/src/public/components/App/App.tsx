@@ -1,3 +1,4 @@
+import moment from 'moment';
 import * as React from 'react';
 import { IntlProvider } from 'react-intl';
 import classnames from 'classnames';
@@ -16,7 +17,6 @@ import { useFaviconUpdater } from './useFaviconUpdater';
 
 import styles from './App.css';
 
-
 import '../../assets/css/vendor/bootstrap.min.css';
 import 'react-perfect-scrollbar/dist/css/styles.css';
 import 'react-phone-number-input/style.css';
@@ -25,8 +25,6 @@ import '../../assets/fonts/iconsmind-s/css/iconsminds.css';
 import '../../assets/fonts/simple-line-icons/css/simple-line-icons.css';
 import '../../assets/css/sass/themes/gogo.light.yellow.scss';
 import '../../assets/css/style.css';
-
-
 
 export interface IAppProps {
   user: IAuthUser;
@@ -59,15 +57,15 @@ export function App({
   }, []);
 
   const currentAppLocale = AppLocale[locale];
+  React.useEffect(() => {
+    moment.locale(currentAppLocale.locale);
+  }, [currentAppLocale.locale]);
 
   return (
     <div className={classnames(styles['pneumatic-frontend-main-wrapper'], 'rounded')}>
       <IntlProvider locale={currentAppLocale.locale} messages={currentAppLocale.messages}>
         <NotificationContainer />
-        <AppRoutes
-          user={user}
-          containerClassnames={containerClassnames}
-        />
+        <AppRoutes user={user} containerClassnames={containerClassnames} />
       </IntlProvider>
 
       {isFullscreenImageOpen && <FullscreenImageContainer />}

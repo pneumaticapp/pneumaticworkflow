@@ -6,6 +6,7 @@ from pneumatic_backend.generics.mixins.views import (
 )
 from pneumatic_backend.accounts.permissions import (
     UserIsAdminOrAccountOwner,
+    BillingPlanPermission,
     ExpiredSubscriptionPermission
 )
 from pneumatic_backend.webhooks.services import (
@@ -27,8 +28,9 @@ class WebHookEventViewSet(
     lookup_field = 'event'
     permission_classes = (
         UserIsAuthenticated,
+        BillingPlanPermission,
+        ExpiredSubscriptionPermission,
         UserIsAdminOrAccountOwner,
-        ExpiredSubscriptionPermission
     )
 
     def list(self, request, *args, **kwargs):

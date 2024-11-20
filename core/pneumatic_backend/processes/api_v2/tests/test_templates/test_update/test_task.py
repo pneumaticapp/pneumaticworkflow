@@ -381,7 +381,7 @@ class TestUpdateTemplateTask:
                 'name': 'Test template'
             }
         )
-        workflow_id = response.data['workflow_id']
+        workflow_id = response.data['id']
 
         template_first_task = template.tasks.first()
         raw_performer_1 = template_first_task.raw_performers.get(user=user)
@@ -702,7 +702,7 @@ class TestUpdateTemplateTask:
             }
         )
 
-        workflow_id = response.data['workflow_id']
+        workflow_id = response.data['id']
         workflow = Workflow.objects.get(id=workflow_id)
 
         api_client.post(
@@ -856,7 +856,7 @@ class TestUpdateTemplateTask:
             }
         )
 
-        workflow_id = response.data['workflow_id']
+        workflow_id = response.data['id']
         workflow = Workflow.objects.get(id=workflow_id)
         task_template = template.tasks.first()
         mocker.patch(
@@ -987,7 +987,7 @@ class TestUpdateTemplateTask:
             }
         )
 
-        workflow_id = response.data['workflow_id']
+        workflow_id = response.data['id']
         workflow = Workflow.objects.get(id=workflow_id)
         api_client.post(
             f'/workflows/{workflow.id}/task-complete',
@@ -1121,7 +1121,7 @@ class TestUpdateTemplateTask:
             }
         )
 
-        workflow_id = response.data['workflow_id']
+        workflow_id = response.data['id']
         workflow = Workflow.objects.get(id=workflow_id)
         template_first_task = template.tasks.first()
         template_second_task = template.tasks.last()
@@ -1234,7 +1234,7 @@ class TestUpdateTemplateTask:
                 }
             }
         )
-        workflow_1 = Workflow.objects.get(id=response.data['workflow_id'])
+        workflow_1 = Workflow.objects.get(id=response.data['id'])
 
         response = api_client.post(
             f'/templates/{template.id}/run',
@@ -1245,7 +1245,7 @@ class TestUpdateTemplateTask:
                 }
             }
         )
-        workflow_2 = Workflow.objects.get(id=response.data['workflow_id'])
+        workflow_2 = Workflow.objects.get(id=response.data['id'])
 
         task_template = template.tasks.first()
         mocker.patch(
@@ -1336,7 +1336,7 @@ class TestUpdateTemplateTask:
                 'name': 'Test workflow'
             }
         )
-        workflow = Workflow.objects.get(id=response.data['workflow_id'])
+        workflow = Workflow.objects.get(id=response.data['id'])
 
         # 2. Add user-field to kickoff and second task as field performer
         field_template = FieldTemplate.objects.create(
@@ -2303,7 +2303,7 @@ class TestUpdateTemplateRawPerformer:
                 }
             }
         )
-        workflow = Workflow.objects.get(id=response.data['workflow_id'])
+        workflow = Workflow.objects.get(id=response.data['id'])
         mocker.patch(
             'pneumatic_backend.processes.api_v2.services.templates.'
             'integrations.TemplateIntegrationsService.template_updated'

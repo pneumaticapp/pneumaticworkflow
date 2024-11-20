@@ -80,9 +80,9 @@ def test_titles_by_events__ended_workflow__ok(
     template = create_test_template(user=user, is_active=True)
     workflow = create_test_workflow(user=user, template=template)
     create_test_event(workflow=workflow, user=user)
-    WorkflowActionService().end_process(
+    service = WorkflowActionService(user=user)
+    service.end_process(
         workflow=workflow,
-        user=user,
         by_condition=False,
     )
 

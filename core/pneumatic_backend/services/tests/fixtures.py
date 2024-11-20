@@ -88,7 +88,7 @@ def create_test_workflow(account, user=None):
         name=template.name,
         account=account,
         template=template,
-        tasks_count=template.tasks_count,
+        tasks_count=template.tasks.count(),
         status_updated=timezone.now(),
         workflow_starter=user,
     )

@@ -6,8 +6,8 @@ from pneumatic_backend.processes.tests.fixtures import (
     create_test_template,
     create_test_account,
     create_invited_user,
+    create_test_group,
 )
-from pneumatic_backend.accounts.services import AccountService
 from pneumatic_backend.processes.models import (
     Template,
     FieldTemplate,
@@ -16,6 +16,7 @@ from pneumatic_backend.processes.models import (
     ConditionTemplate,
     RuleTemplate,
     FieldTemplateSelection,
+    RawPerformerTemplate
 )
 from pneumatic_backend.utils.validation import ErrorCode
 from pneumatic_backend.processes.messages import template as messages
@@ -103,8 +104,6 @@ def test_create__only_required_fields__defaults_ok(
     assert response_data['is_public'] is False
     assert response_data['public_url'] is not None
     assert response_data['finalizable'] is False
-    assert response_data['tasks_count'] == 1
-    assert response_data['performers_count'] == 1
     assert response_data['wf_name_template'] is None
     template = Template.objects.get(id=response_data['id'])
     assert template.tasks.first().account_id == user.account_id
@@ -115,7 +114,6 @@ def test_create__only_required_fields__defaults_ok(
     assert template.finalizable is False
     assert template.wf_name_template is None
     account.refresh_from_db()
-    assert user.account.active_templates == 1
     create_integrations_mock.assert_called_with(
         template=template
     )
@@ -304,8 +302,6 @@ def test_create__all_fields__ok(
     assert response_data['public_url'] is not None
     assert response_data['embed_url'] is not None
     assert response_data['finalizable'] == request_data['finalizable']
-    assert response_data['tasks_count'] == 3
-    assert response_data['performers_count'] == 1
     assert response_data['updated_by'] == user.id
     assert response_data.get('date_updated')
 
@@ -326,7 +322,6 @@ def test_create__all_fields__ok(
     assert template.kickoff_instance is not None
     assert template.tasks.exists()
     account.refresh_from_db()
-    assert account.active_templates == 1
 
     template_create_mock.assert_called_once_with(
         user=user,
@@ -404,8 +399,6 @@ def test_create__draft__ok(
     assert response_data['embed_url'] is not None
     assert response_data['updated_by'] == user.id
     assert response_data.get('date_updated')
-    assert response_data['tasks_count'] == 0
-    assert response_data['performers_count'] == 0
     assert response_data['tasks'] == request_data['tasks']
 
     template = Template.objects.get(id=response_data['id'])
@@ -428,7 +421,6 @@ def test_create__draft__ok(
     assert template_draft.draft['is_embedded'] is False
     assert template_draft.draft['public_url'] is not None
     assert template_draft.draft['embed_url'] is not None
-    assert user.account.active_templates == 0
 
     template_create_mock.assert_called_once_with(
         user=user,
@@ -702,57 +694,6 @@ def test_create__public_success_url_invalid__validation_error(
     kickoff_create_mock.assert_not_called()
 
 
-def test_create__public_success_url__paid_feature__validation_error(
-    mocker,
-    api_client
-):
-
-    # arrange
-    template_create_mock = mocker.patch(
-        'pneumatic_backend.processes.api_v2.views.template.'
-        'AnalyticService.templates_created'
-    )
-    kickoff_create_mock = mocker.patch(
-        'pneumatic_backend.processes.api_v2.views.template.'
-        'AnalyticService.templates_kickoff_created'
-    )
-    user = create_test_user()
-    api_client.token_authenticate(user)
-
-    # act
-    response = api_client.post(
-        path='/templates',
-        data={
-            'name': 'Template',
-            'template_owners': [user.id],
-            'is_active': True,
-            'is_public': True,
-            'public_success_url': 'my.pneumatic.app',
-            'kickoff': {},
-            'tasks': [
-                {
-                    'number': 1,
-                    'name': 'First step',
-                    'raw_performers': [
-                        {
-                            'type': PerformerType.USER,
-                            'source_id': user.id
-                        }
-                    ]
-                }
-            ]
-        }
-    )
-
-    # assert
-    assert response.status_code == 400
-    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
-    assert response.data['message'] == messages.MSG_PT_0020
-    assert response.data['details']['name'] == 'public_success_url'
-    template_create_mock.assert_not_called()
-    kickoff_create_mock.assert_not_called()
-
-
 def test_create__name_is_required__validation_error(
     mocker,
     api_client
@@ -902,128 +843,6 @@ def test_create__name_is_required_two_errors__validation_error(
     assert 'api_name' not in response.data['details']
     template_create_mock.assert_not_called()
     kickoff_create_mock.assert_not_called()
-
-
-def test_create__validate_limit_active_templates__validation_error(
-    mocker,
-    api_client
-):
-
-    # arrange
-    template_create_mock = mocker.patch(
-        'pneumatic_backend.processes.api_v2.views.template.'
-        'AnalyticService.templates_created'
-    )
-    kickoff_create_mock = mocker.patch(
-        'pneumatic_backend.processes.api_v2.views.template.'
-        'AnalyticService.templates_kickoff_created'
-    )
-    user = create_test_user()
-    api_client.token_authenticate(user)
-    for _ in range(settings.PAYWALL_MAX_ACTIVE_TEMPLATES):
-        create_test_template(
-            user=user,
-            is_active=True,
-            tasks_count=1
-        )
-    account_service = AccountService(
-        instance=user.account,
-        user=user
-    )
-    account_service.update_active_templates()
-
-    request_data = {
-        'name': 'Template',
-        'template_owners': [user.id],
-        'is_active': True,
-        'kickoff': {},
-        'tasks': [
-            {
-                'number': 1,
-                'name': 'First step',
-                'raw_performers': [
-                    {
-                        'type': PerformerType.USER,
-                        'source_id': user.id
-                    }
-                ]
-            }
-        ]
-    }
-
-    # act
-    response = api_client.post(
-        path='/templates',
-        data=request_data
-    )
-
-    # assert
-    assert response.status_code == 400
-    template_create_mock.assert_not_called()
-    kickoff_create_mock.assert_not_called()
-
-
-def test_create__unlimited_drafts_for_account__ok(
-    mocker,
-    api_client
-):
-
-    # arrange
-    template_create_mock = mocker.patch(
-        'pneumatic_backend.processes.api_v2.views.template.'
-        'AnalyticService.templates_created'
-    )
-    kickoff_create_mock = mocker.patch(
-        'pneumatic_backend.processes.api_v2.views.template.'
-        'AnalyticService.templates_kickoff_created'
-    )
-    user = create_test_user()
-    api_client.token_authenticate(user)
-    for _ in range(settings.PAYWALL_MAX_ACTIVE_TEMPLATES):
-        create_test_template(
-            user=user,
-            is_active=True,
-            tasks_count=1
-        )
-    account_service = AccountService(
-        instance=user.account,
-        user=user
-    )
-    account_service.update_active_templates()
-    mocker.patch(
-        'pneumatic_backend.processes.api_v2.services.templates.'
-        'integrations.TemplateIntegrationsService.'
-        'create_integrations_for_template'
-    )
-    request_data = {
-        'name': 'Template',
-        'template_owners': [user.id],
-        'is_active': False,
-        'kickoff': {},
-        'tasks': [
-            {
-                'number': 1,
-                'name': 'First step',
-                'raw_performers': [
-                    {
-                        'type': PerformerType.USER,
-                        'source_id': user.id
-                    }
-                ]
-            }
-        ]
-    }
-
-    # act
-    response = api_client.post(
-        path='/templates',
-        data=request_data
-    )
-
-    # assert
-    assert response.status_code == 200
-    template_create_mock.assert_called_once()
-    kickoff_create_mock.assert_called_once()
 
 
 def test_create__user_field_in_public_task__ok(
@@ -1460,62 +1279,6 @@ def test_create__template_owners_without_current_user__validation_error(
     assert response.data['code'] == ErrorCode.VALIDATION_ERROR
     assert response.data['message'] == messages.MSG_PT_0018
     assert response.data['details']['reason'] == messages.MSG_PT_0018
-    assert response.data['details']['name'] == 'template_owners'
-    template_create_mock.assert_not_called()
-    kickoff_create_mock.assert_not_called()
-
-
-def test_create__template_owners_not_all_user_unsub_acc__validation_error(
-    mocker,
-    api_client
-):
-
-    # arrange
-    template_create_mock = mocker.patch(
-        'pneumatic_backend.processes.api_v2.views.template.'
-        'AnalyticService.templates_created'
-    )
-    kickoff_create_mock = mocker.patch(
-        'pneumatic_backend.processes.api_v2.views.template.'
-        'AnalyticService.templates_kickoff_created'
-    )
-    user = create_test_user()
-    create_test_user(
-        is_admin=False,
-        email='not_admin@test.test'
-    )
-    api_client.token_authenticate(user)
-    create_invited_user(user)
-
-    # act
-    response = api_client.post(
-        '/templates',
-        data={
-            'name': 'Template',
-            'template_owners': [user.id],
-            'is_active': True,
-            'description': '',
-            'kickoff': {},
-            'tasks': [
-                {
-                    'name': 'First step',
-                    'number': 1,
-                    'raw_performers': [
-                        {
-                            'type': PerformerType.USER,
-                            'source_id': user.id
-                        }
-                    ]
-                }
-            ]
-        }
-    )
-
-    # assert
-    assert response.status_code == 400
-    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
-    assert response.data['message'] == messages.MSG_PT_0017
-    assert response.data['details']['reason'] == messages.MSG_PT_0017
     assert response.data['details']['name'] == 'template_owners'
     template_create_mock.assert_not_called()
     kickoff_create_mock.assert_not_called()
@@ -2570,3 +2333,69 @@ def test_create__wf_name_template__blank_value__ok(
     assert template.wf_name_template == wf_name_template
     template_create_mock.assert_called_once()
     kickoff_create_mock.assert_called_once()
+
+
+def test_create__raw_performers_group__ok(
+    mocker,
+    api_client
+):
+
+    # arrange
+    account = create_test_account()
+    user = create_test_user(account=account)
+    group = create_test_group(user=user, users=[user, ])
+    api_client.token_authenticate(user)
+    mocker.patch(
+        'pneumatic_backend.processes.api_v2.services.templates.'
+        'integrations.TemplateIntegrationsService.'
+        'create_integrations_for_template'
+    )
+    mocker.patch(
+        'pneumatic_backend.processes.api_v2.services.templates.'
+        'integrations.TemplateIntegrationsService.api_request',
+    )
+    mocker.patch(
+        'pneumatic_backend.processes.api_v2.views.template.'
+        'AnalyticService.templates_created'
+    )
+    mocker.patch(
+        'pneumatic_backend.processes.api_v2.views.template.'
+        'AnalyticService.templates_kickoff_created'
+    )
+    request_data = {
+        'name': 'Template',
+        'template_owners': [user.id],
+        'is_active': True,
+        'kickoff': {},
+        'tasks': [
+            {
+                'number': 1,
+                'name': 'First step',
+                'raw_performers': [
+                    {
+                        'type': PerformerType.GROUP,
+                        'source_id': group.id
+                    }
+                ]
+            }
+        ]
+    }
+
+    # act
+    response = api_client.post(
+        path='/templates',
+        data=request_data
+    )
+
+    # assert
+    assert response.status_code == 200
+    task = response.json()['tasks'][0]
+    raw_performers_data = task['raw_performers'][0]
+    assert raw_performers_data['type'] == PerformerType.GROUP
+    assert raw_performers_data['source_id'] == str(group.id)
+    assert RawPerformerTemplate.objects.get(
+        account=account,
+        task=task['id'],
+        type=PerformerType.GROUP,
+        group=group,
+    )

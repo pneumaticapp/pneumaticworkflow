@@ -52,7 +52,6 @@ from pneumatic_backend.processes.enums import (
 )
 from pneumatic_backend.analytics.services import AnalyticService
 from pneumatic_backend.processes.messages import template as messages
-from pneumatic_backend.utils.validation import raise_validation_error
 
 
 UserModel = get_user_model()
@@ -261,11 +260,6 @@ class TaskTemplateSerializer(
         value: Optional[List[Dict[str, Any]]],
         data: Dict[str, Any],
     ):
-        if value and self.context['account'].is_free:
-            raise_validation_error(
-                message=messages.MSG_PT_0042,
-                api_name=data.get('api_name')
-            )
 
         if isinstance(value, list):
             # TODO move validation to PredicateTemplateSerializer

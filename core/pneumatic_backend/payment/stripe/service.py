@@ -73,7 +73,9 @@ class StripeService(StripeMixin):
         )
         self.customer = self._get_or_create_customer()
         self.subscription = self._get_current_subscription()
-        self.payment_method = self._get_current_payment_method()
+        self.payment_method = self._get_current_payment_method(
+            customer=self.customer
+        )
 
     def _get_or_create_customer(self) -> stripe.Customer:
 
@@ -115,27 +117,12 @@ class StripeService(StripeMixin):
             if subscription and not self.subscription_account.is_subscribed:
                 self.subscription_service.create(
                     details=self.get_subscription_details(subscription),
-                    payment_card_provided=self.account.payment_card_provided,
                 )
             elif not subscription and self.subscription_account.is_subscribed:
                 self.subscription_service.expired(
                     plan_expiration=timezone.now()
                 )
         return subscription
-
-    def _get_current_payment_method(
-        self,
-        *args,
-        **kwargs
-    ) -> Optional[stripe.PaymentMethod]:
-
-        method = super()._get_current_payment_method(customer=self.customer)
-        if self.account.billing_sync:
-            if method and not self.account.payment_card_provided:
-                self.subscription_service.payment_card_provided(value=True)
-            elif not method and self.account.payment_card_provided:
-                self.subscription_service.payment_card_provided(value=False)
-        return method
 
     def _get_confirm_token(
         self,
@@ -244,7 +231,6 @@ class StripeService(StripeMixin):
         )
         self.subscription_service.create(
             details=self.get_subscription_details(self.subscription),
-            payment_card_provided=True,
         )
 
     def _update_subscription(
@@ -727,7 +713,6 @@ class StripeService(StripeMixin):
             activate subscription changes immediately """
 
         data = {
-            'payment_card_provided': True,
             'force_save': True
         }
 
@@ -799,17 +784,6 @@ class StripeService(StripeMixin):
             )
             details = self.get_subscription_details(self.subscription)
             self.subscription_service.cancel(details.plan_expiration)
-
-    def terminate_subscription(self):
-
-        """ Terminate current subscription.
-            Prorates a refund based on the amount of time remaining
-            in the current bill cycle."""
-
-        if self.subscription:
-            self.subscription.cancel()
-        # downgrade to fee plan anyway
-        self.subscription_service.downgrade_to_free()
 
     def get_payment_method(self) -> Optional[CardDetails]:
         if self.payment_method:

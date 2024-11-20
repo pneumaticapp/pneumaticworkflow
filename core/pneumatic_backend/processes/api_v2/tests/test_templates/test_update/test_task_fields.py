@@ -319,7 +319,7 @@ class TestUpdateTaskFields:
                 'name': 'Test name'
             }
         )
-        workflow = Workflow.objects.get(id=response.data['workflow_id'])
+        workflow = Workflow.objects.get(id=response.data['id'])
         mocker.patch(
             'pneumatic_backend.processes.api_v2.services.templates.'
             'integrations.TemplateIntegrationsService.template_updated'

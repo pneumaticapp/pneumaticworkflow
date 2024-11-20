@@ -415,7 +415,7 @@ class WorkflowRevertSerializer(
     def validate(self, attrs):
         current_task = self.instance.current_task_instance
         if (
-            not current_task.is_returnable or
+            not current_task.is_returnable(user=self.context['user']) or
             self.instance.status != WorkflowStatus.RUNNING
         ):
             raise ValidationError(messages.MSG_PW_0012)
@@ -428,7 +428,7 @@ class WorkflowRevertSerializer(
         """ TODO Move to WorkflowActionService.return_to in
               https://my.pneumatic.app/workflows/23046/ """
 
-        user = self.context.get('user')
+        user = self.context['user']
         current_task = instance.current_task_instance
         previous_task = current_task.prev
         with transaction.atomic():
@@ -456,7 +456,11 @@ class WorkflowRevertSerializer(
                 workflow=instance,
                 current_task=current_task,
             )
-            workflow_action_service = WorkflowActionService()
+            workflow_action_service = WorkflowActionService(
+                user=user,
+                is_superuser=self.context['is_superuser'],
+                auth_type=self.context['auth_type'],
+            )
             action_method, by_cond = workflow_action_service.execute_condition(
                 previous_task
             )
@@ -622,9 +626,13 @@ class WorkflowFinishSerializer(
         self.additional_validate(validated_data)
 
         with transaction.atomic():
-            WorkflowActionService().end_process(
-                workflow=instance,
+            workflow_action_service = WorkflowActionService(
                 user=self.context['user'],
+                is_superuser=self.context['is_superuser'],
+                auth_type=self.context['auth_type'],
+            )
+            workflow_action_service.end_process(
+                workflow=instance,
                 by_condition=False,
                 by_complete_task=False,
             )

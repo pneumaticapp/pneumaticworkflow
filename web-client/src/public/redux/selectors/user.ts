@@ -58,5 +58,6 @@ export const getUsers = (state: IApplicationState): TUserListItem[] => state.acc
 
 export const getUserApiKey = (state: IApplicationState) => state.integrations.apiKey;
 
-export const getLanguage = ({ authUser }: IApplicationState) => (authUser.language);
+export const getUserTimezone = (state: IApplicationState): string => state.authUser.timezone;
 
+export const getLanguage = ({ authUser }: IApplicationState) => authUser.language;

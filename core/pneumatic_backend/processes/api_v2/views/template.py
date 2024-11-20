@@ -8,10 +8,10 @@ from pneumatic_backend.accounts.permissions import (
     UserIsAdminOrAccountOwner,
     UsersOverlimitedPermission,
     ExpiredSubscriptionPermission,
+    BillingPlanPermission,
 )
 from pneumatic_backend.executor import RawSqlExecutor
 from pneumatic_backend.services.permissions import AIPermission
-from pneumatic_backend.accounts.services import AccountService
 from pneumatic_backend.generics.filters import PneumaticFilterBackend
 from pneumatic_backend.processes.api_v2.serializers.template. \
     integrations import TemplateIntegrationsFilterSerializer
@@ -64,6 +64,7 @@ from pneumatic_backend.processes.queries import (
 )
 from pneumatic_backend.processes.permissions import (
     TemplateOwnerPermission,
+    TemplateWorkflowMemberPermission,
 )
 from pneumatic_backend.analytics.services import AnalyticService
 from pneumatic_backend.processes.api_v2.services import (
@@ -72,7 +73,6 @@ from pneumatic_backend.processes.api_v2.services import (
 )
 from pneumatic_backend.generics.permissions import (
     UserIsAuthenticated,
-    PaymentCardPermission,
 )
 from pneumatic_backend.processes.api_v2.services.templates.ai import (
     OpenAiService
@@ -124,48 +124,54 @@ class TemplateViewSet(
         ):
             return (
                 UserIsAuthenticated(),
-                PaymentCardPermission(),
+                ExpiredSubscriptionPermission(),
+                BillingPlanPermission(),
                 UsersOverlimitedPermission(),
                 UserIsAdminOrAccountOwner(),
                 TemplateOwnerPermission(),
-                ExpiredSubscriptionPermission(),
             )
         elif self.action == 'run':
             return (
                 UserIsAuthenticated(),
-                PaymentCardPermission(),
+                ExpiredSubscriptionPermission(),
+                BillingPlanPermission(),
                 UsersOverlimitedPermission(),
                 TemplateOwnerPermission(),
-                ExpiredSubscriptionPermission(),
             )
         elif self.action in (
             'list',
-            'fields',
             'titles',
             'titles_by_events',
             'steps',
         ):
             return (
                 UserIsAuthenticated(),
-                PaymentCardPermission(),
-                ExpiredSubscriptionPermission()
+                ExpiredSubscriptionPermission(),
+                BillingPlanPermission(),
+            )
+        elif self.action == 'fields':
+            return (
+                UserIsAuthenticated(),
+                TemplateWorkflowMemberPermission(),
+                ExpiredSubscriptionPermission(),
+                BillingPlanPermission(),
             )
         elif self.action == 'ai':
             return (
                 AIPermission(),
                 UserIsAuthenticated(),
-                PaymentCardPermission(),
+                ExpiredSubscriptionPermission(),
+                BillingPlanPermission(),
                 UsersOverlimitedPermission(),
                 UserIsAdminOrAccountOwner(),
-                ExpiredSubscriptionPermission(),
             )
         else:
             return (
                 UserIsAuthenticated(),
-                PaymentCardPermission(),
+                ExpiredSubscriptionPermission(),
+                BillingPlanPermission(),
                 UsersOverlimitedPermission(),
                 UserIsAdminOrAccountOwner(),
-                ExpiredSubscriptionPermission(),
             )
 
     @property
@@ -181,7 +187,7 @@ class TemplateViewSet(
         if self.action == 'steps':
             if not self.request.user.is_account_owner:
                 qst = qst.with_template_owners(user.id)
-        elif self.action in {'list', 'fields'}:
+        elif self.action == 'list':
             qst = qst.with_template_owners(user.id)
         return qst
 
@@ -383,18 +389,8 @@ class TemplateViewSet(
             auth_type=request.token_type
         )
         workflow_action_service.start_workflow(workflow)
-
-        # TODO Deprecated
-        first_task = workflow.current_task_instance
         slz = WorkflowDetailsSerializer(instance=workflow)
-        response_data = slz.data
-        response_data['workflow_id'] = workflow.id
-        response_data['first_task_performers'] = list(
-            first_task.performers.exclude_directly_deleted().values_list(
-                'id', flat=True
-            )
-        )
-        return self.response_ok(response_data)
+        return self.response_ok(slz.data)
 
     def destroy(self, request, *args, **kwargs):
 
@@ -405,11 +401,6 @@ class TemplateViewSet(
                 legacy_template_name=template.name,
             )
             template.delete()
-            account_service = AccountService(
-                instance=request.user.account,
-                user=request.user
-            )
-            account_service.update_active_templates()
         AnalyticService.templates_deleted(
             user=request.user,
             template=template,
@@ -577,7 +568,7 @@ class TemplateViewSet(
     @action(methods=['POST'], detail=True, url_path='discard-changes')
     def discard_changes(self, request, pk, *args, **kwargs):
         template = self.get_object()
-        if template.tasks_count != 0:
+        if template.tasks.all().count() != 0:
             slz = self.get_serializer(instance=template)
             slz.discard_changes()
             return self.response_ok()
@@ -592,8 +583,8 @@ class TemplateIntegrationsViewSet(
     permission_classes = (
         UserIsAuthenticated,
         UserIsAdminOrAccountOwner,
-        PaymentCardPermission,
         ExpiredSubscriptionPermission,
+        BillingPlanPermission,
         UsersOverlimitedPermission,
     )
 

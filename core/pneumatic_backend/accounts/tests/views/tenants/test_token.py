@@ -163,35 +163,58 @@ def test_token__tenant__permission_denied(
     tenants_accessed_mock.assert_not_called()
 
 
-def test_token__free_plan__permission_denied(
+def test_token__free_plan__ok(
     mocker,
     api_client,
 ):
     # arrange
-    account = create_test_account(plan=BillingPlanType.FREEMIUM)
-    account_owner = create_test_user(account=account)
+    master_account = create_test_account(
+        plan=BillingPlanType.FREEMIUM,
+        lease_level=LeaseLevel.STANDARD
+    )
+    master_account_owner = create_test_user(account=master_account)
     tenant_account = create_test_account(
         name='tenant',
-        plan=BillingPlanType.UNLIMITED,
+        plan=BillingPlanType.FREEMIUM,
         lease_level=LeaseLevel.TENANT,
-        master_account=account
+        master_account=master_account
     )
-    create_test_user(
+    tenant_account_owner = create_test_user(
         account=tenant_account,
         email='tenant_owner@test.test'
     )
-    api_client.token_authenticate(account_owner)
+    api_client.token_authenticate(master_account_owner)
+    token_data = {
+        'token': 'some token'
+    }
     authenticate_mock = mocker.patch(
         'pneumatic_backend.authentication.services.AuthService'
         '.get_auth_token',
+        return_value=token_data
+    )
+    tenants_accessed_mock = mocker.patch(
+        'pneumatic_backend.analytics.services.AnalyticService.'
+        'tenants_accessed'
     )
 
     # act
     response = api_client.get(f'/tenants/{tenant_account.id}/token')
 
     # assert
-    assert response.status_code == 403
-    authenticate_mock.assert_not_called()
+    assert response.data['token']
+    assert response.status_code == 200
+    tenants_accessed_mock.assert_called_once_with(
+        master_user=master_account_owner,
+        tenant_account=tenant_account,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER
+    )
+    authenticate_mock.assert_called_once_with(
+        user=tenant_account_owner,
+        user_agent='Firefox',
+        user_ip='192.168.0.1',
+        superuser_mode=True,
+    )
 
 
 def test_token__expired_subscription__permission_denied(

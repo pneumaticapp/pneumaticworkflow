@@ -20,6 +20,7 @@ from pneumatic_backend.accounts.enums import UserType
 from pneumatic_backend.processes.queries import (
     WorkflowCurrentTaskUserPerformerQuery,
     TaskWorkflowMemberQuery,
+    TemplateWorkflowMemberQuery,
 )
 from pneumatic_backend.executor import RawSqlExecutor
 
@@ -41,6 +42,21 @@ class TemplateOwnerPermission(BasePermission):
                 template_owners=request.user,
                 account_id=request.user.account_id
             ).exists()
+
+
+class TemplateWorkflowMemberPermission(BasePermission):
+
+    def has_permission(self, request, view):
+        try:
+            template_id = int(view.kwargs.get('pk'))
+        except (ValueError, TypeError):
+            return False
+        else:
+            query = TemplateWorkflowMemberQuery(
+                user=request.user,
+                template_id=template_id
+            )
+            return RawSqlExecutor.exists(*query.get_sql())
 
 
 class WorkflowTemplateOwnerPermission(BasePermission):

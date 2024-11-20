@@ -48,13 +48,13 @@ def test_get_task_due_date__rule_before_field__prev_task_field__ok():
 
     duration = timedelta(days=1)
     end_date = timezone.now() + timedelta(days=3)
-    str_end_date = end_date.strftime('%m/%d/%Y')
+    tsp_end_date = end_date.timestamp()
     field = TaskField.objects.create(
         task=task_1,
         name='date',
         api_name='date-1',
         type=FieldType.DATE,
-        value=str_end_date,
+        value=tsp_end_date,
         workflow=workflow
     )
     RawDueDate.objects.create(
@@ -71,9 +71,7 @@ def test_get_task_due_date__rule_before_field__prev_task_field__ok():
     due_date = service.get_task_due_date()
 
     # assert
-    assert due_date == (
-        datetime.strptime(str_end_date, '%m/%d/%Y') - duration
-    )
+    assert due_date == datetime.fromtimestamp(tsp_end_date) - duration
 
 
 def test_get_task_due_date__rule_after_field__prev_task_field__ok():
@@ -86,13 +84,13 @@ def test_get_task_due_date__rule_after_field__prev_task_field__ok():
 
     duration = timedelta(days=1)
     end_date = timezone.now() + timedelta(days=3)
-    str_end_date = end_date.strftime('%m/%d/%Y')
+    tsp_end_date = end_date.timestamp()
     field = TaskField.objects.create(
         task=task_1,
         name='date',
         api_name='date-1',
         type=FieldType.DATE,
-        value=str_end_date,
+        value=tsp_end_date,
         workflow=workflow
     )
     RawDueDate.objects.create(
@@ -110,9 +108,7 @@ def test_get_task_due_date__rule_after_field__prev_task_field__ok():
     due_date = service.get_task_due_date()
 
     # assert
-    assert due_date == (
-        datetime.strptime(str_end_date, '%m/%d/%Y') + duration
-    )
+    assert due_date == datetime.fromtimestamp(tsp_end_date) + duration
 
 
 def test_get_task_due_date__rule_after_field__kickoff_field__ok():
@@ -124,13 +120,13 @@ def test_get_task_due_date__rule_after_field__kickoff_field__ok():
 
     duration = timedelta(days=1)
     end_date = timezone.now() + timedelta(days=3)
-    str_end_date = end_date.strftime('%m/%d/%Y')
+    tsp_end_date = end_date.timestamp()
     field = TaskField.objects.create(
         kickoff=workflow.kickoff_instance,
         name='date',
         api_name='date-1',
         type=FieldType.DATE,
-        value=str_end_date,
+        value=tsp_end_date,
         workflow=workflow
     )
     RawDueDate.objects.create(
@@ -148,9 +144,7 @@ def test_get_task_due_date__rule_after_field__kickoff_field__ok():
     due_date = service.get_task_due_date()
 
     # assert
-    assert due_date == (
-        datetime.strptime(str_end_date, '%m/%d/%Y') + duration
-    )
+    assert due_date == datetime.fromtimestamp(tsp_end_date) + duration
 
 
 @pytest.mark.parametrize('rule', DueDateRule.FIELD_RULES)

@@ -85,7 +85,6 @@ def test_update__all_fields__ok(mocker, api_client):
     assert data['date_joined'] == user.date_joined.strftime(date_format)
     assert data['date_joined_tsp'] == user.date_joined.timestamp()
     assert data['is_admin'] == user.is_admin
-    assert data['is_staff'] == user.is_admin
     assert data['is_account_owner'] == user.is_account_owner
     assert data['language'] == request_data['language']
     assert data['timezone'] == request_data['timezone']
@@ -1118,47 +1117,6 @@ def test_update__guest__permission_denied(mocker, api_client):
         path='/accounts/user',
         data={'date_fdw': UserFirstDayWeek.THURSDAY},
         **{'X-Guest-Authorization': str_token}
-    )
-
-    # assert
-    assert response.status_code == 403
-    identify_mock.assert_not_called()
-    analytics_mock.assert_not_called()
-    stripe_service_init_mock.assert_not_called()
-    update_customer_mock.assert_not_called()
-
-
-def test_update__payment_card_not_provided__permission_denied(
-    mocker,
-    api_client
-):
-
-    # arrange
-    analytics_mock = mocker.patch(
-        'pneumatic_backend.accounts.views.user.AnalyticService.'
-        'users_digest'
-    )
-    identify_mock = mocker.patch(
-        'pneumatic_backend.accounts.views.user'
-        '.UserViewSet.identify'
-    )
-    account = create_test_account(payment_card_provided=False)
-    user = create_test_user(is_account_owner=True, account=account)
-    stripe_service_init_mock = mocker.patch.object(
-        StripeService,
-        attribute='__init__',
-        return_value=None
-    )
-    update_customer_mock = mocker.patch(
-        'pneumatic_backend.payment.stripe.service.StripeService.'
-        'update_customer'
-    )
-    api_client.token_authenticate(user)
-
-    # act
-    response = api_client.put(
-        path='/accounts/user',
-        data={'date_fdw': UserFirstDayWeek.THURSDAY},
     )
 
     # assert

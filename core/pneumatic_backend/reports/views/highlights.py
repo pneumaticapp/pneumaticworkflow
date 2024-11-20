@@ -2,6 +2,7 @@ from rest_framework.generics import ListAPIView
 from pneumatic_backend.accounts.permissions import (
     UserIsAdminOrAccountOwner,
     ExpiredSubscriptionPermission,
+    BillingPlanPermission,
 )
 from pneumatic_backend.processes.models import WorkflowEvent
 from pneumatic_backend.reports.serializers import (
@@ -11,7 +12,6 @@ from pneumatic_backend.reports.serializers import (
 from pneumatic_backend.generics.mixins.views import BasePrefetchMixin
 from pneumatic_backend.generics.permissions import (
     UserIsAuthenticated,
-    PaymentCardPermission,
 )
 
 
@@ -22,9 +22,9 @@ class HighlightsView(
     serializer_class = EventHighlightsSerializer
     permission_classes = (
         UserIsAuthenticated,
+        ExpiredSubscriptionPermission,
+        BillingPlanPermission,
         UserIsAdminOrAccountOwner,
-        PaymentCardPermission,
-        ExpiredSubscriptionPermission
     )
 
     def get_queryset(self):
@@ -35,16 +35,20 @@ class HighlightsView(
 
         templates = filter_serializer.validated_data.get('templates')
         users = filter_serializer.validated_data.get('users')
-        date_before = filter_serializer.validated_data.get('date_before')
-        date_after = filter_serializer.validated_data.get('date_after')
+        date_before_tsp = filter_serializer.validated_data.get(
+            'date_before_tsp'
+        )
+        date_after_tsp = filter_serializer.validated_data.get(
+            'date_after_tsp'
+        )
 
         queryset = WorkflowEvent.objects.highlights(
             self.request.user.account.id,
             user_id=self.request.user.id,
             templates=templates,
             users=users,
-            date_before=date_before,
-            date_after=date_after
+            date_before_tsp=date_before_tsp,
+            date_after_tsp=date_after_tsp
         )
         queryset = self.prefetch_queryset(queryset)
         return queryset

@@ -1,11 +1,12 @@
 /* eslint-disable */
 /* prettier-ignore */
+// import moment from 'moment';
 import { EExtraFieldType, IExtraField, TExtraFieldValue } from '../../../../types/template';
 import { isArrayWithItems } from '../../../../utils/helpers';
+import { getEndOfDayTsp } from '../../../../utils/dateTime';
 
 type TFieldDispatchRecord = {
-  [key in EExtraFieldType]:
-  (field: IExtraField) => IExtraField | null;
+  [key in EExtraFieldType]: (field: IExtraField) => IExtraField | null;
 };
 
 export class ExtraFieldsHelper {
@@ -20,30 +21,41 @@ export class ExtraFieldsHelper {
   public normalizeFieldsValues() {
     return this.fields
       .filter(({ apiName }) => apiName)
-      .map(({ apiName, value, type }) => ({
-        [apiName as string]: type === 'url' ? (value as string).replace(new RegExp(' ', 'gi'), '%20') : value,
-      }));
+      .map(({ apiName, value, type }) => {
+        if (type === 'url') {
+          return { [apiName as string]: (value as string).replace(new RegExp(' ', 'gi'), '%20') };
+        } else if (type === 'date' && typeof value === 'string') {
+          return { [apiName as string]: getEndOfDayTsp(value) };
+        } else {
+          return { [apiName as string]: value };
+        }
+      });
   }
 
   public normalizeFieldsValuesAsObject() {
     return this.fields
       .filter(({ apiName }) => apiName)
-      .reduce((acc, { apiName, value, type }) =>
-        Object.assign(acc, {
-          [apiName]: type === 'url' ? (value as string).replace(new RegExp(' ', 'gi'), '%20') : value,
-        }), {});
+      .reduce(
+        (acc, { apiName, value, type }) =>
+          Object.assign(acc, {
+            [apiName]: type === 'url' ? (value as string).replace(new RegExp(' ', 'gi'), '%20') : value,
+          }),
+        {},
+      );
   }
 
   public getFieldsWithValues() {
-    return this.fields.map(field => {
-      const renderField = this.fieldValuesDispatch[field.type];
+    return this.fields
+      .map((field) => {
+        const renderField = this.fieldValuesDispatch[field.type];
 
-      if (!renderField) {
-        return null;
-      }
+        if (!renderField) {
+          return null;
+        }
 
-      return renderField(field);
-    }).filter(Boolean) as IExtraField[];
+        return renderField(field);
+      })
+      .filter(Boolean) as IExtraField[];
   }
 
   private getStorageField = (fieldApiName: string) => {
@@ -51,7 +63,7 @@ export class ExtraFieldsHelper {
       return null;
     }
 
-    return this.storageOutput.find(field => field.apiName === fieldApiName);
+    return this.storageOutput.find((field) => field.apiName === fieldApiName);
   };
 
   private getFieldValue = (
@@ -79,9 +91,10 @@ export class ExtraFieldsHelper {
       const initialAttachments = isNoInitialAttachments
         ? null
         : field.attachments?.filter(({ isRemoved }) => !isRemoved);
-      const storageAttachments = this.getStorageField(field.apiName)
-        ?.attachments?.filter(({ isRemoved }) => !isRemoved);
-      const attachments =  storageAttachments || initialAttachments || [];
+      const storageAttachments = this.getStorageField(field.apiName)?.attachments?.filter(
+        ({ isRemoved }) => !isRemoved,
+      );
+      const attachments = storageAttachments || initialAttachments || [];
       const value = attachments.map(({ id }) => String(id));
 
       return {

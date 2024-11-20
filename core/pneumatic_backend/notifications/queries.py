@@ -83,7 +83,6 @@ class UsersWithOverdueTaskQuery(SqlQueryObject):
               AND pt.due_date <= NOW()
               AND ptp.is_completed IS FALSE
               AND ptp.directly_status != %(directly_status)s
-              AND aa.payment_card_provided=True
         ) result INNER JOIN accounts_user au
           ON au.id = result.workflow_starter_id
         INNER JOIN accounts_account aa

@@ -200,13 +200,14 @@ class UserInviteService(
 
         """ Account active users should be less than limit """
 
-        account_invites_limit = (
-            self.account.max_invites
-            if self.account.max_invites > self.account.max_users else
-            self.account.max_users
-        )
-        if self.account.active_users >= account_invites_limit:
-            raise UsersLimitInvitesException()
+        if self.account.billing_plan == BillingPlanType.PREMIUM:
+            account_invites_limit = (
+                self.account.max_invites
+                if self.account.max_invites > self.account.max_users else
+                self.account.max_users
+            )
+            if self.account.active_users >= account_invites_limit:
+                raise UsersLimitInvitesException()
 
     def _user_transfer_actions(
         self,

@@ -51,5 +51,5 @@ class Comparator:
         return a < b
 
     @classmethod
-    def completed(cls, a):
-        return True
+    def completed(cls, a: bool):
+        return a

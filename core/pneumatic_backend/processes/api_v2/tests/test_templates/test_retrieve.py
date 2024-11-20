@@ -6,6 +6,7 @@ from pneumatic_backend.processes.tests.fixtures import (
     create_test_template,
     create_test_account,
     create_invited_user,
+    create_test_group,
 )
 
 from pneumatic_backend.processes.models import (
@@ -531,3 +532,52 @@ class TestRetrieveTemplate:
         # assert
         assert response.status_code == 403
         assert response.data['detail'] == messages.MSG_PT_0023
+
+    def test_retrieve__raw_performers_group__ok(self, api_client, mocker):
+
+        # arrange
+        user = create_test_user()
+        user2 = create_test_user(
+            email='user2@pneumaticapp',
+            account=user.account
+        )
+        group = create_test_group(user=user, users=[user, user2])
+        api_client.token_authenticate(user)
+        request_template_owners = [user.id, user2.id]
+        request_data = {
+            'name': 'Template',
+            'template_owners': request_template_owners,
+            'is_active': True,
+            'kickoff': {},
+            'tasks': [
+                {
+                    'number': 1,
+                    'name': 'First step',
+                    'raw_performers': [
+                        {
+                            'type': PerformerType.GROUP,
+                            'source_id': group.id
+                        }
+                    ],
+                }
+            ]
+        }
+        response = api_client.post(
+            path='/templates',
+            data=request_data
+        )
+        template = Template.objects.get(id=response.data['id'])
+        mocker.patch(
+            'pneumatic_backend.processes.api_v2.services.templates.'
+            'integrations.TemplateIntegrationsService.api_request',
+        )
+
+        # act
+        response = api_client.get(f'/templates/{template.id}')
+
+        # assert
+        assert response.status_code == 200
+        raw_performers_data = response.json()['tasks'][0]['raw_performers']
+        assert len(raw_performers_data) == 1
+        assert raw_performers_data[0]['type'] == PerformerType.GROUP
+        assert raw_performers_data[0]['source_id'] == str(group.id)

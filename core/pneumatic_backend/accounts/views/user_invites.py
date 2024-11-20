@@ -8,6 +8,7 @@ from pneumatic_backend.accounts.models import UserInvite
 from pneumatic_backend.accounts.permissions import (
     UserIsAdminOrAccountOwner,
     ExpiredSubscriptionPermission,
+    BillingPlanPermission,
 )
 from pneumatic_backend.accounts.serializers.user_invites import (
     UserInviteSerializer,
@@ -26,7 +27,6 @@ from pneumatic_backend.accounts.throttling import (
 )
 from pneumatic_backend.generics.permissions import (
     UserIsAuthenticated,
-    PaymentCardPermission,
 )
 from pneumatic_backend.accounts.services.exceptions import (
     UsersLimitInvitesException,
@@ -56,13 +56,7 @@ class UserInviteViewSet(
     GenericViewSet,
     BaseIdentifyMixin
 ):
-    permission_classes = (
-        UserIsAuthenticated,
-        UserIsAdminOrAccountOwner,
-        PrivateApiPermission,
-        ExpiredSubscriptionPermission,
-        PaymentCardPermission,
-    )
+
     action_serializer_classes = {
         'create': InviteUsersSerializer,
         'accept': AcceptInviteSerializer,
@@ -101,20 +95,13 @@ class UserInviteViewSet(
             return (
                 AllowAny(),
             )
-        elif self.action == 'decline':
+        else:
             return (
                 UserIsAuthenticated(),
+                BillingPlanPermission(),
+                ExpiredSubscriptionPermission(),
                 UserIsAdminOrAccountOwner(),
-                PaymentCardPermission(),
             )
-        elif self.action == 'resend':
-            return (
-                UserIsAuthenticated(),
-                UserIsAdminOrAccountOwner(),
-                PrivateApiPermission(),
-                PaymentCardPermission(),
-            )
-        return super(UserInviteViewSet, self).get_permissions()
 
     def get_serializer_context(self, **kwargs):
         context = super().get_serializer_context(**kwargs)

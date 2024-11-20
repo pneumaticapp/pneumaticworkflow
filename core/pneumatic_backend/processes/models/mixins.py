@@ -4,6 +4,7 @@ from django.contrib.auth import get_user_model
 from django.db.models.query import QuerySet
 from django.core.validators import MinValueValidator
 from django.db import models
+from pneumatic_backend.accounts.models import UserGroup
 from pneumatic_backend.processes.enums import PerformerType
 from pneumatic_backend.processes.enums import (
     FieldType,
@@ -26,6 +27,11 @@ class RawPerformerMixin(models.Model):
     )
     user = models.ForeignKey(
         UserModel,
+        on_delete=models.CASCADE,
+        null=True
+    )
+    group = models.ForeignKey(
+        UserGroup,
         on_delete=models.CASCADE,
         null=True
     )
@@ -100,11 +106,15 @@ class WorkflowMixin(models.Model):
             {field.api_name: str} """
 
         fields = self.get_kickoff_output_fields()
-        values = {field.api_name: field.value for field in fields}
+        values = {
+            field.api_name: field.markdown_value(user=self.workflow_starter)
+            for field in fields
+        }
         return values
 
     def get_fields_markdown_values(
         self,
+        user: Optional[UserModel],
         tasks_filter_kwargs: Optional[Dict] = None,
         fields_filter_kwargs: Optional[Dict] = None
     ) -> Dict[str, str]:
@@ -116,7 +126,9 @@ class WorkflowMixin(models.Model):
             tasks_filter_kwargs=tasks_filter_kwargs,
             fields_filter_kwargs=fields_filter_kwargs
         )
-        values = {field.api_name: field.markdown_value for field in fields}
+        values = {
+            field.api_name: field.markdown_value(user=user) for field in fields
+        }
         return values
 
 

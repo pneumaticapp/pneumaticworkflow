@@ -229,90 +229,9 @@ def test_highlights_start_workflow(api_client):
     assert response.data[1]['workflow']['is_external'] is False
 
 
-def test_highlights_date_range(api_client):
-    account = create_test_account()
-    create_test_user(
-        email='owner@test.test',
-        account=account,
-        is_account_owner=True
-    )
-    user = create_test_user(
-        account=account,
-        is_account_owner=False
-    )
-
-    workflow = create_test_workflow(user)
-    WorkflowEventService.workflow_run_event(workflow)
-    task = workflow.tasks.order_by('number').first()
-    WorkflowEventService.task_started_event(
-        task=task,
-        after_create_actions=False
-    )
-    task.is_completed = True
-    task.date_completed = timezone.now()
-    task.save()
-
-    WorkflowEventService.task_complete_event(
-        task=task,
-        user=user,
-        after_create_actions=False
-    )
-    second_task = task.next
-    WorkflowEventService.task_started_event(
-        task=second_task,
-        after_create_actions=False
-    )
-    second_task.date_started = timezone.now() - timedelta(days=2)
-    second_task.save(update_fields=['date_started'])
-    WorkflowEventService.comment_created_event(
-        text='Revert',
-        workflow=workflow,
-        user=user,
-        after_create_actions=False
-    )
-    workflow_new = create_test_workflow(user)
-    task = workflow_new.tasks.order_by('number').first()
-    WorkflowEventService.task_started_event(
-        task=task,
-        after_create_actions=False
-    )
-    task.is_completed = True
-    task.date_completed = timezone.now()
-    task.save()
-    event = WorkflowEvent.objects.get(
-        type=WorkflowEventType.TASK_START,
-        task_json__id=task.id
-    )
-    event.created = timezone.now() - timedelta(days=2)
-    event.save()
-    WorkflowEventService.task_complete_event(
-        task=task,
-        user=user,
-        after_create_actions=False
-    )
-
-    date_after = event.created.isoformat()
-    date_before = (
-        timezone.now() + timedelta(days=1)
-    ).isoformat()
-    api_client.token_authenticate(user)
-
-    response = api_client.get(
-        '/reports/highlights',
-        data={
-            'date_after': date_after,
-            'date_before': date_before,
-        }
-    )
-
-    assert response.status_code == 200
-    assert len(response.data) == 2
-    assert response.data[0]['type'] == WorkflowEventType.TASK_COMPLETE
-    assert response.data[1]['type'] == WorkflowEventType.COMMENT
-
-
 def test_highlights__used_tsp__ok(api_client):
     user = create_test_user()
+
     workflow = create_test_workflow(user)
     WorkflowEventService.workflow_run_event(workflow)
     task = workflow.tasks.order_by('number').first()
@@ -323,13 +242,11 @@ def test_highlights__used_tsp__ok(api_client):
     task.is_completed = True
     task.date_completed = timezone.now() + timedelta(hours=11)
     task.save()
-
     WorkflowEventService.task_complete_event(
         task=task,
         user=user,
         after_create_actions=False
     )
-
     second_task = task.next
     WorkflowEventService.task_started_event(
         task=second_task,
@@ -353,7 +270,6 @@ def test_highlights__used_tsp__ok(api_client):
     task.is_completed = True
     task.date_completed = timezone.now() + timedelta(hours=7)
     task.save()
-
     event = WorkflowEvent.objects.get(
         type=WorkflowEventType.TASK_START,
         task_json__id=task.id
@@ -366,15 +282,38 @@ def test_highlights__used_tsp__ok(api_client):
         after_create_actions=False
     )
 
-    date_after = timezone.now() - timedelta(hours=1)
-    date_before = timezone.now() + timedelta(hours=1)
+    date_end_period = timezone.now()
+
+    workflow_outside = create_test_workflow(user)
+    task = workflow_outside.tasks.order_by('number').first()
+    WorkflowEventService.task_started_event(
+        task=task,
+        after_create_actions=False
+    )
+    task.is_completed = True
+    task.date_completed = timezone.now() + timedelta(hours=7)
+    task.save()
+    event = WorkflowEvent.objects.get(
+        type=WorkflowEventType.TASK_START,
+        task_json__id=task.id
+    )
+    event.created = timezone.now() + timedelta(hours=7)
+    event.save()
+    WorkflowEventService.task_complete_event(
+        task=task,
+        user=user,
+        after_create_actions=False
+    )
+
+    date_after_tsp = (timezone.now() - timedelta(hours=1)).timestamp()
+    date_before_tsp = date_end_period.timestamp()
     api_client.token_authenticate(user)
 
     response = api_client.get(
         '/reports/highlights',
         data={
-            'date_after_tsp': date_after.timestamp(),
-            'date_before_tsp': date_before.timestamp(),
+            'date_after_tsp': date_after_tsp,
+            'date_before_tsp': date_before_tsp,
         }
     )
 
@@ -924,7 +863,7 @@ def test__kickoff_field_type_user__ok(api_client):
             }
         }
     )
-    workflow = Workflow.objects.get(id=response.data['workflow_id'])
+    workflow = Workflow.objects.get(id=response.data['id'])
     field = workflow.kickoff_instance.output.first()
     api_client.token_authenticate(user)
 

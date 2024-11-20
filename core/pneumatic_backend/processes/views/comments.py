@@ -5,6 +5,7 @@ from rest_framework.decorators import action
 from pneumatic_backend.utils.validation import raise_validation_error
 from pneumatic_backend.accounts.permissions import (
     UsersOverlimitedPermission,
+    BillingPlanPermission,
     ExpiredSubscriptionPermission,
 )
 from pneumatic_backend.processes.models import (
@@ -20,7 +21,6 @@ from pneumatic_backend.processes.api_v2.serializers.workflow.events import (
 from pneumatic_backend.generics.mixins.views import CustomViewSetMixin
 from pneumatic_backend.generics.permissions import (
     IsAuthenticated,
-    PaymentCardPermission,
 )
 
 from pneumatic_backend.processes.permissions import (
@@ -53,7 +53,7 @@ class CommentViewSet(
         ):
             return (
                 IsAuthenticated(),
-                PaymentCardPermission(),
+                BillingPlanPermission(),
                 ExpiredSubscriptionPermission(),
                 UsersOverlimitedPermission(),
                 CommentEditPermission(),
@@ -65,7 +65,7 @@ class CommentViewSet(
         ):
             return (
                 IsAuthenticated(),
-                PaymentCardPermission(),
+                BillingPlanPermission(),
                 ExpiredSubscriptionPermission(),
                 UsersOverlimitedPermission(),
                 CommentReactionPermission(),

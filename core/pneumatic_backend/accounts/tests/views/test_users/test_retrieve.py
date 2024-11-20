@@ -5,7 +5,6 @@ from pneumatic_backend.accounts.enums import (
 from pneumatic_backend.accounts.tests.fixtures import (
     create_test_user,
     create_test_group,
-    create_test_account,
 )
 
 
@@ -45,7 +44,6 @@ def test_retrieve__ok(api_client):
     assert data['date_joined'] == user.date_joined.strftime(date_format)
     assert data['date_joined_tsp'] == user.date_joined.timestamp()
     assert data['is_admin'] == user.is_admin
-    assert data['is_staff'] == user.is_admin
     assert data['is_account_owner'] == user.is_account_owner
     assert data['language'] == user.language
     assert data['timezone'] == user.timezone
@@ -86,17 +84,3 @@ def test_retrieve__not_authenticated__unauthorized(api_client):
 
     # assert
     assert response.status_code == 401
-
-
-def test_retrieve__payment_card_not_provided__permission_denied(api_client):
-
-    # arrange
-    account = create_test_account(payment_card_provided=False)
-    user = create_test_user(is_account_owner=True, account=account)
-    api_client.token_authenticate(user)
-
-    # act
-    response = api_client.get(path='/accounts/user')
-
-    # assert
-    assert response.status_code == 403

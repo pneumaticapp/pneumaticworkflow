@@ -9,6 +9,9 @@ from pneumatic_backend.navigation.models import Menu, MenuItem
 from pneumatic_backend.generics.permissions import (
     IsAuthenticated
 )
+from pneumatic_backend.accounts.permissions import (
+    BillingPlanPermission,
+)
 
 
 class MenuViewSet(
@@ -18,7 +21,10 @@ class MenuViewSet(
 
     lookup_field = 'slug'
     queryset = Menu.objects.all()
-    permission_classes = (IsAuthenticated,)
+    permission_classes = (
+        IsAuthenticated,
+        BillingPlanPermission,
+    )
     serializer_class = MenuSerializer
 
     def prefetch_queryset(

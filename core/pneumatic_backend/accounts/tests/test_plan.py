@@ -67,14 +67,10 @@ def test_plan__freemium__ok(api_client):
     assert response.data['plan_expiration_tsp'] is None
     assert response.data['trial_ended'] is False
     assert response.data['trial_is_active'] is False
-    assert response.data['active_templates'] == 1
     assert response.data['active_users'] == 2
     assert response.data['tenants_active_users'] == 0
     assert response.data['is_subscribed'] is False
-    assert response.data['max_templates'] == (
-        settings.PAYWALL_MAX_ACTIVE_TEMPLATES
-    )
-    assert response.data['max_users'] == settings.FREEMIUM_MAX_USERS
+    assert response.data['max_users'] == settings.DEFAULT_MAX_USERS
 
 
 def test_plan__premium__ok(api_client):
@@ -107,12 +103,10 @@ def test_plan__premium__ok(api_client):
     assert response.data['plan_expiration_tsp'] == plan_expiration.timestamp()
     assert response.data['trial_ended'] is False
     assert response.data['trial_is_active'] is False
-    assert response.data['active_templates'] == 0
     assert response.data['active_users'] == 1
     assert response.data['tenants_active_users'] == 0
     assert response.data['is_subscribed'] is True
-    assert response.data['max_templates'] is None
-    assert response.data['max_users'] == settings.FREEMIUM_MAX_USERS
+    assert response.data['max_users'] == settings.DEFAULT_MAX_USERS
 
 
 def test_plan__premium_with_tenants__ok(api_client):
@@ -153,12 +147,10 @@ def test_plan__premium_with_tenants__ok(api_client):
     assert response.data['plan_expiration_tsp'] == plan_expiration.timestamp()
     assert response.data['trial_ended'] is False
     assert response.data['trial_is_active'] is False
-    assert response.data['active_templates'] == 0
     assert response.data['active_users'] == 1
     assert response.data['tenants_active_users'] == 1
     assert response.data['is_subscribed'] is True
-    assert response.data['max_templates'] is None
-    assert response.data['max_users'] == settings.FREEMIUM_MAX_USERS
+    assert response.data['max_users'] == settings.DEFAULT_MAX_USERS
 
 
 def test_plan__premium_trial__ok(api_client):
@@ -194,12 +186,10 @@ def test_plan__premium_trial__ok(api_client):
     assert response.data['plan_expiration_tsp'] == plan_expiration.timestamp()
     assert response.data['trial_ended'] is False
     assert response.data['trial_is_active'] is True
-    assert response.data['active_templates'] == 0
     assert response.data['active_users'] == 1
     assert response.data['tenants_active_users'] == 0
     assert response.data['is_subscribed'] is True
-    assert response.data['max_templates'] is None
-    assert response.data['max_users'] == settings.FREEMIUM_MAX_USERS
+    assert response.data['max_users'] == settings.DEFAULT_MAX_USERS
 
 
 def test_plan__partner__ok(api_client):
@@ -238,11 +228,9 @@ def test_plan__partner__ok(api_client):
     )
     assert response.data['trial_ended'] is False
     assert response.data['trial_is_active'] is False
-    assert response.data['active_templates'] == 0
     assert response.data['active_users'] == 1
     assert response.data['tenants_active_users'] == 1
     assert response.data['is_subscribed'] is True
-    assert response.data['max_templates'] is None
     assert response.data['max_users'] == 3
 
 
@@ -281,11 +269,9 @@ def test_plan__tenant__ok(api_client):
     )
     assert response.data['trial_ended'] is False
     assert response.data['trial_is_active'] is False
-    assert response.data['active_templates'] == 0
     assert response.data['active_users'] == 1
     assert response.data['tenants_active_users'] == 0
     assert response.data['is_subscribed'] is True
-    assert response.data['max_templates'] is None
     assert response.data['max_users'] == 2
 
 

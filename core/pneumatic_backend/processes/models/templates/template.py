@@ -94,8 +94,6 @@ class Template(
         related_name='performers',
         verbose_name='All performers for all tasks in the template',
     )
-    performers_count = models.IntegerField(default=0)
-    tasks_count = models.IntegerField(default=0)
     type = models.CharField(
         choices=TemplateType.CHOICES,
         default=TemplateType.CUSTOM,

@@ -9,7 +9,6 @@ from pneumatic_backend.accounts.views.public.account import (
 from pneumatic_backend.accounts.views import (
     UsersViewSet,
     UserInviteViewSet,
-    UpdateUserProfileView,
     AccountView,
     UserViewSet,
     UnsubscribeDigestView,
@@ -36,7 +35,6 @@ router.register(
 )
 
 urlpatterns = [
-    path('profile', UpdateUserProfileView.as_view(), name='profile'),
     path('account', AccountView.as_view()),
     path('api-key', APIKeyView.as_view()),
     # TODO: Deprecated api. Remove in https://my.pneumatic.app/workflows/13920

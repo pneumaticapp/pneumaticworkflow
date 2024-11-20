@@ -58,42 +58,69 @@ class AccountLLConverter:
             user=self.user
         )
         master_account = self.instance.master_account
-        service.partial_update(
-            logo_lg=master_account.logo_lg,
-            logo_sm=master_account.logo_sm,
-            max_users=master_account.max_users,
-            billing_plan=master_account.billing_plan,
-            billing_period=master_account.billing_period,
-            plan_expiration=master_account.plan_expiration,
-            trial_start=master_account.trial_start,
-            trial_end=master_account.trial_end,
-            trial_ended=master_account.trial_ended,
-            payment_card_provided=master_account.payment_card_provided,
-            force_save=True
+        billing_enabled = (
+            settings.PROJECT_CONF['BILLING'] and master_account.billing_sync
         )
-        if master_account.billing_sync and settings.PROJECT_CONF['BILLING']:
-            if master_account.billing_plan == BillingPlanType.PREMIUM:
-                increase_plan_users.delay(
-                    account_id=master_account.id,
-                    increment=False,
-                    is_superuser=True,
-                    auth_type=AuthTokenType.USER
-                )
+        update_kwargs = {
+            'logo_lg': master_account.logo_lg,
+            'logo_sm': master_account.logo_sm,
+            'max_users': master_account.max_users,
+            'force_save': True
+        }
+        if master_account.billing_plan == BillingPlanType.PREMIUM:
+            update_kwargs['max_users'] = master_account.max_users
+            update_kwargs['billing_plan'] = master_account.billing_plan
+            update_kwargs['billing_period'] = master_account.billing_period
+            update_kwargs['plan_expiration'] = master_account.plan_expiration
+            update_kwargs['trial_start'] = master_account.trial_start
+            update_kwargs['trial_end'] = master_account.trial_end
+            update_kwargs['trial_ended'] = master_account.trial_ended
+        elif master_account.billing_plan in (
+            BillingPlanType.FRACTIONALCOO,
+            BillingPlanType.FREEMIUM
+        ):
+            update_kwargs['billing_plan'] = BillingPlanType.FREEMIUM
+        elif master_account.billing_plan == BillingPlanType.UNLIMITED:
+            if billing_enabled:
+                # Need buy
+                update_kwargs['billing_plan'] = None
             else:
-                stripe_service = StripeService(
-                    user=master_account.get_owner(),
-                    subscription_account=self.instance,
-                    is_superuser=True,
-                    auth_type=AuthTokenType.USER
+                update_kwargs['max_users'] = master_account.max_users
+                update_kwargs['billing_plan'] = master_account.billing_plan
+                update_kwargs['billing_period'] = master_account.billing_period
+                update_kwargs['plan_expiration'] = (
+                    master_account.plan_expiration
                 )
-                stripe_service.create_off_session_subscription(
-                    products=[
-                        {
-                            'code': 'unlimited_month',
-                            'quantity': 1
-                        }
-                    ]
-                )
+                update_kwargs['trial_start'] = master_account.trial_start
+                update_kwargs['trial_end'] = master_account.trial_end
+                update_kwargs['trial_ended'] = master_account.trial_ended
+
+        service.partial_update(**update_kwargs)
+        if (
+            update_kwargs['billing_plan'] == BillingPlanType.PREMIUM
+            and billing_enabled
+        ):
+            increase_plan_users.delay(
+                account_id=master_account.id,
+                increment=False,
+                is_superuser=True,
+                auth_type=AuthTokenType.USER
+            )
+        elif update_kwargs['billing_plan'] is None:
+            stripe_service = StripeService(
+                user=master_account.get_owner(),
+                subscription_account=self.instance,
+                is_superuser=True,
+                auth_type=AuthTokenType.USER
+            )
+            stripe_service.create_off_session_subscription(
+                products=[
+                    {
+                        'code': 'unlimited_month',
+                        'quantity': 1
+                    }
+                ]
+            )
 
     def _tenant_to_partner(self):
         pass

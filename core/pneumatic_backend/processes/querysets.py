@@ -1,3 +1,4 @@
+import datetime
 from typing import List, Optional, Union, Iterable
 from django.conf import settings
 from django.db import transaction
@@ -63,8 +64,6 @@ class TasksBaseQuerySet(BaseQuerySet):
 
 
 class TaskTemplateQuerySet(TasksBaseQuerySet):
-    def active_templates(self):
-        return self.filter(template__is_active=True)
 
     def on_account(self, account_id: int):
         return self.filter(template__account_id=account_id)
@@ -570,8 +569,8 @@ class WorkflowEventQuerySet(AccountBaseQuerySet):
         user_id: int,
         templates: str = None,
         users: str = None,
-        date_before: str = None,
-        date_after: str = None,
+        date_before_tsp: datetime = None,
+        date_after_tsp: datetime = None,
     ):
         # TODO refactoring need
 
@@ -581,8 +580,8 @@ class WorkflowEventQuerySet(AccountBaseQuerySet):
             user_id=user_id,
             templates=templates,
             users=users,
-            date_before=date_before,
-            date_after=date_after
+            date_before_tsp=date_before_tsp,
+            date_after_tsp=date_after_tsp
         )
         return self.execute_raw(query, using=settings.REPLICA)
 

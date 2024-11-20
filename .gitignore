@@ -5,3 +5,4 @@ rabbitmq_data
 rabbitmq_logs
 web-client/config/dev.json
 web-client/config/prod.json
+web-client/config/how

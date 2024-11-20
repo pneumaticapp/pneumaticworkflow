@@ -1,6 +1,7 @@
 import pytest
 from rest_framework.exceptions import ValidationError
 
+from pneumatic_backend.authentication.enums import AuthTokenType
 from pneumatic_backend.utils.validation import ErrorCode
 from pneumatic_backend.processes.messages import workflow as messages
 from pneumatic_backend.processes.enums import WorkflowStatus
@@ -30,7 +31,9 @@ class TestWorkflowCloseSerializer:
             instance=workflow,
             data={},
             context={
-                'user': user
+                'user': user,
+                'is_superuser': False,
+                'auth_type': AuthTokenType.USER
             }
         )
         serializer.is_valid(raise_exception=True)
@@ -47,7 +50,9 @@ class TestWorkflowCloseSerializer:
             instance=workflow,
             data={},
             context={
-                'user': user
+                'user': user,
+                'is_superuser': False,
+                'auth_type': AuthTokenType.USER
             }
         )
         serializer.is_valid(raise_exception=True)
@@ -65,7 +70,9 @@ class TestWorkflowCloseSerializer:
             instance=workflow,
             data={},
             context={
-                'user': user
+                'user': user,
+                'is_superuser': False,
+                'auth_type': AuthTokenType.USER
             }
         )
         serializer.is_valid(raise_exception=True)
@@ -82,7 +89,9 @@ class TestWorkflowCloseSerializer:
             instance=workflow,
             data={},
             context={
-                'user': user
+                'user': user,
+                'is_superuser': False,
+                'auth_type': AuthTokenType.USER
             }
         )
         serializer.is_valid(raise_exception=True)
@@ -114,7 +123,9 @@ class TestWorkflowCloseSerializer:
             instance=workflow,
             data={},
             context={
-                'user': invited
+                'user': invited,
+                'is_superuser': False,
+                'auth_type': AuthTokenType.USER
             }
         )
         serializer.is_valid(raise_exception=True)

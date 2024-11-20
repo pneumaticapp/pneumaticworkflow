@@ -104,7 +104,6 @@ class WebhookService(StripeMixin):
             )
             subscription_service.create(
                 details=subscription_details,
-                payment_card_provided=True
             )
 
     def _customer_subscription_updated(self, event: stripe.Event):

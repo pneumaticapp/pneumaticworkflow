@@ -1,4 +1,4 @@
-import { getTspFromOther } from '../utils/dateTime';
+import { toTspDate } from '../utils/dateTime';
 import { commonRequest } from './commonRequest';
 import { getBrowserConfigEnv } from '../utils/getConfig';
 import { ITemplateTitle } from '../types/template';
@@ -28,8 +28,8 @@ export function getHighlightsTitles(config: IGetHighlightsTitlesRequesConfig = {
 
 export function getHighlightsTitlesQueryString({ eventDateFrom, eventDateTo }: IGetHighlightsTitlesRequesConfig = {}) {
   const params = [
-    eventDateFrom && `date_from_tsp=${getTspFromOther(eventDateFrom)}`,
-    eventDateTo && `date_to_tsp=${getTspFromOther(eventDateTo)}`,
+    eventDateFrom && `date_from_tsp=${toTspDate(eventDateFrom)}`,
+    eventDateTo && `date_to_tsp=${toTspDate(eventDateTo)}`,
   ]
     .filter(Boolean)
     .join('&');

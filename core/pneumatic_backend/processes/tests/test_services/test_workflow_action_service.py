@@ -183,9 +183,10 @@ def test_delay_workflow__ok(mocker):
         'pneumatic_backend.processes.api_v2.services.events.'
         'WorkflowEventService.workflow_delay_event'
     )
+    service = WorkflowActionService(user=user)
 
     # act
-    WorkflowActionService().delay_workflow(
+    service.delay_workflow(
         workflow=workflow,
         delay=delay
     )
@@ -723,7 +724,10 @@ def test_continue_task__current_task_not_started__ok(mocker):
         'GuestJWTAuthService.delete_task_guest_cache'
     )
     sync = True
-    service = WorkflowActionService(sync=sync)
+    service = WorkflowActionService(
+        user=user,
+        sync=sync
+    )
 
     # act
     service.continue_task(
@@ -843,7 +847,10 @@ def test_continue_task__current_started__ok(mocker):
         'GuestJWTAuthService.delete_task_guest_cache'
     )
     sync = True
-    service = WorkflowActionService(sync=sync)
+    service = WorkflowActionService(
+        user=user,
+        sync=sync
+    )
 
     # act
     service.continue_task(
@@ -929,7 +936,10 @@ def test_continue_task__current_started_task_1_with_performer_and_guest__ok(
         'send_new_task_notification.delay'
     )
     sync = True
-    service = WorkflowActionService(sync=sync)
+    service = WorkflowActionService(
+        user=user,
+        sync=sync
+    )
 
     # act
     service.continue_task(
@@ -990,7 +1000,10 @@ def test_continue_task__returned_task_1_with_performer_and_guest__ok(mocker):
         'send_new_task_notification.delay'
     )
     sync = True
-    service = WorkflowActionService(sync=sync)
+    service = WorkflowActionService(
+        user=user,
+        sync=sync
+    )
 
     # act
     service.continue_task(
@@ -1067,7 +1080,10 @@ def test_continue_task__returned_task__ok(mocker):
         'GuestJWTAuthService.delete_task_guest_cache'
     )
     sync = True
-    service = WorkflowActionService(sync=sync)
+    service = WorkflowActionService(
+        user=user,
+        sync=sync
+    )
 
     # act
     service.continue_task(
@@ -1140,7 +1156,10 @@ def test_continue_task__legacy_workflow__ok(mocker):
         'GuestJWTAuthService.delete_task_guest_cache'
     )
     sync = True
-    service = WorkflowActionService(sync=sync)
+    service = WorkflowActionService(
+        user=user,
+        sync=sync
+    )
 
     # act
     service.continue_task(
@@ -1193,7 +1212,10 @@ def test_continue_task__external_workflow__ok(mocker):
         'GuestJWTAuthService.delete_task_guest_cache'
     )
     sync = True
-    service = WorkflowActionService(sync=sync)
+    service = WorkflowActionService(
+        user=user,
+        sync=sync
+    )
 
     # act
     service.continue_task(
@@ -1248,10 +1270,7 @@ def test_end_process__disable_urgent__ok(mocker):
     )
 
     # act
-    service.end_process(
-        workflow=workflow,
-        user=user
-    )
+    service.end_process(workflow=workflow)
 
     # assert
     workflow.refresh_from_db()
@@ -1506,7 +1525,6 @@ def test_complete_task__last__end_workflow(mocker):
     )
     end_workflow_mock.assert_called_once_with(
         workflow=workflow,
-        user=user,
         by_condition=False,
         by_complete_task=True
     )
@@ -1896,7 +1914,7 @@ def test_complete_current_task_by_account_owner__ok(mocker):
         '.TaskFieldService.partial_update'
     )
     analytics_mock = mocker.patch(
-        'pneumatic_backend.accounts.views.users.AnalyticService.'
+        'pneumatic_backend.analytics.services.AnalyticService.'
         'task_completed'
     )
     complete_task_mock = mocker.patch(
@@ -2005,7 +2023,7 @@ def test_complete_current_task_by_user_performer__ok(mocker):
         '.TaskFieldService.partial_update'
     )
     analytics_mock = mocker.patch(
-        'pneumatic_backend.accounts.views.users.AnalyticService.'
+        'pneumatic_backend.analytics.services.AnalyticService.'
         'task_completed'
     )
     complete_task_mock = mocker.patch(
@@ -2095,7 +2113,7 @@ def test_complete_current_task_by_user__rc_by_all__first__ok(mocker):
         '.TaskFieldService.partial_update'
     )
     analytics_mock = mocker.patch(
-        'pneumatic_backend.accounts.views.users.AnalyticService.'
+        'pneumatic_backend.analytics.services.AnalyticService.'
         'task_completed'
     )
     complete_task_mock = mocker.patch(
@@ -2176,7 +2194,7 @@ def test_complete_current_task_by_user__rc_by_all__last__ok(mocker):
         '.TaskFieldService.partial_update'
     )
     analytics_mock = mocker.patch(
-        'pneumatic_backend.accounts.views.users.AnalyticService.'
+        'pneumatic_backend.analytics.services.AnalyticService.'
         'task_completed'
     )
     complete_task_mock = mocker.patch(
@@ -2253,7 +2271,7 @@ def test_complete_current_task_by_guest_performer__ok(mocker):
         '.TaskFieldService.partial_update'
     )
     analytics_mock = mocker.patch(
-        'pneumatic_backend.accounts.views.users.AnalyticService.'
+        'pneumatic_backend.analytics.services.AnalyticService.'
         'task_completed'
     )
     complete_task_mock = mocker.patch(
@@ -2337,7 +2355,7 @@ def test_complete_current_task_by_guest__rcba_first_completion__ok(mocker):
         '.TaskFieldService.partial_update'
     )
     analytics_mock = mocker.patch(
-        'pneumatic_backend.accounts.views.users.AnalyticService.'
+        'pneumatic_backend.analytics.services.AnalyticService.'
         'task_completed'
     )
     complete_task_mock = mocker.patch(
@@ -2416,7 +2434,7 @@ def test_complete_current_task__by_guest_rcba_last_completion__ok(mocker):
         '.TaskFieldService.partial_update'
     )
     analytics_mock = mocker.patch(
-        'pneumatic_backend.accounts.views.users.AnalyticService.'
+        'pneumatic_backend.analytics.services.AnalyticService.'
         'task_completed'
     )
     task_complete_event_mock = mocker.patch(
@@ -2491,7 +2509,7 @@ def test_complete_current_task__task_rcba_and_first_completion__ok(mocker):
     current_date = timezone.now()
     mocker.patch('django.utils.timezone.now', return_value=current_date)
     analytics_mock = mocker.patch(
-        'pneumatic_backend.accounts.views.users.AnalyticService.'
+        'pneumatic_backend.analytics.services.AnalyticService.'
         'task_completed'
     )
     task_complete_event_mock = mocker.patch(
@@ -2590,7 +2608,7 @@ def test_complete_current_task__task_rcba_and_last_completion__ok(mocker):
     current_date = timezone.now()
     mocker.patch('django.utils.timezone.now', return_value=current_date)
     analytics_mock = mocker.patch(
-        'pneumatic_backend.accounts.views.users.AnalyticService.'
+        'pneumatic_backend.analytics.services.AnalyticService.'
         'task_completed'
     )
     task_complete_event_mock = mocker.patch(

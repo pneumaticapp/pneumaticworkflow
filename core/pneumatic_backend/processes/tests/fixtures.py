@@ -56,17 +56,15 @@ UserModel = get_user_model()
 
 def create_test_account(
     name: Optional[str] = 'Test Company',
-    max_users: int = settings.FREEMIUM_MAX_USERS,
+    max_users: int = settings.DEFAULT_MAX_USERS,
     lease_level: LeaseLevel.LITERALS = LeaseLevel.STANDARD,
     logo_sm: str = None,
     logo_lg: str = None,
     master_account: Optional[Account] = None,
-    plan: BillingPlanType = BillingPlanType.FREEMIUM,
+    plan: Optional[BillingPlanType] = BillingPlanType.FREEMIUM,
     period: Optional[BillingPeriod.LITERALS] = None,
     plan_expiration: Optional[datetime] = None,
-    payment_card_provided: bool = True,
     stripe_id: str = None,
-    active_templates: int = 0,
     trial_ended: bool = False,
     trial_start: Optional[datetime] = None,
     trial_end: Optional[datetime] = None,
@@ -93,7 +91,6 @@ def create_test_account(
                 plan_expiration=plan_expiration,
                 period=period,
                 name='master',
-                payment_card_provided=payment_card_provided,
                 billing_sync=billing_sync
             )
             plan = master_account.billing_plan
@@ -112,8 +109,6 @@ def create_test_account(
         logo_lg=logo_lg,
         master_account=master_account,
         stripe_id=stripe_id,
-        payment_card_provided=payment_card_provided,
-        active_templates=active_templates,
         trial_ended=trial_ended,
         trial_start=trial_start,
         trial_end=trial_end,
@@ -245,7 +240,6 @@ def create_test_template(
         is_public=is_public,
         is_embedded=is_embedded,
         type=type_,
-        tasks_count=tasks_count,
         wf_name_template=wf_name_template,
     )
     if kickoff is None:
@@ -325,7 +319,7 @@ def create_test_workflow(
         name_template=name_template,
         description=template.description,
         account=template.account,
-        tasks_count=template.tasks_count,
+        tasks_count=template.tasks.count(),
         template=template,
         status=status,
         status_updated=timezone.now(),

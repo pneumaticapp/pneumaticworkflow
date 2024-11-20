@@ -63,13 +63,16 @@ class Account(SoftDeleteModel):
     )
     billing_plan = models.CharField(
         max_length=255,
-        default=BillingPlanType.FREEMIUM
+        null=True,
+        blank=True,
+        default=None,
     )
     billing_period = models.CharField(
         max_length=255,
         choices=BillingPeriod.CHOICES,
+        null=True,
+        blank=True,
         default=None,
-        null=True
     )
     plan_expiration = models.DateTimeField(blank=True, null=True)
     trial_ended = models.BooleanField(
@@ -78,23 +81,18 @@ class Account(SoftDeleteModel):
     )
     trial_start = models.DateTimeField(null=True, blank=True)
     trial_end = models.DateTimeField(null=True, blank=True)
-    payment_card_provided = models.BooleanField(default=False)
     stripe_id = models.CharField(max_length=255, null=True)
     system_templates = models.ManyToManyField(
         'processes.SystemTemplate',
         related_name='account_system_template',
         through='AccountSystemTemplate',
     )
-    max_users = models.IntegerField(default=settings.FREEMIUM_MAX_USERS)
+    max_users = models.IntegerField(default=settings.DEFAULT_MAX_USERS)
     max_invites = models.IntegerField(default=settings.MAX_INVITES)
-    max_active_templates = models.IntegerField(
-        default=settings.PAYWALL_MAX_ACTIVE_TEMPLATES
-    )
     ai_templates_generations = models.PositiveIntegerField(default=0)
     max_ai_templates_generations = models.IntegerField(default=1000)
     active_users = models.IntegerField(default=1)
     tenants_active_users = models.IntegerField(default=0)
-    active_templates = models.IntegerField(default=0)
     is_verified = models.BooleanField(default=True)
     lease_level = models.CharField(
         choices=LeaseLevel.CHOICES,
@@ -149,7 +147,8 @@ class Account(SoftDeleteModel):
     def is_paid(self):
 
         """ Return True if the user is paying for a subscription now """
-
+        if self.billing_plan is None:
+            return False
         if self.billing_plan == BillingPlanType.FREEMIUM:
             # Free plan
             return False
@@ -196,16 +195,8 @@ class Account(SoftDeleteModel):
         return r
 
     @property
-    def is_free(self):
-        return self.billing_plan == BillingPlanType.FREEMIUM
-
-    @property
     def total_active_users(self) -> int:
         return self.active_users + self.tenants_active_users
-
-    @property
-    def is_blocked(self):
-        return self.total_active_users > self.max_users
 
     def get_active_paid_templates(self, **kwargs):
         return self.template_set.active().paid()
@@ -636,17 +627,18 @@ class Contact(
         return self.name
 
 
-class UserGroup(
-    SoftDeleteModel,
-    AccountBaseMixin
-):
+class UserGroup(SoftDeleteModel):
     class Meta:
         ordering = ['name']
 
     name = models.CharField(max_length=255)
     photo = models.URLField(max_length=1024, null=True, blank=True)
     users = models.ManyToManyField(User, related_name='user_groups')
-
+    account = models.ForeignKey(
+        Account,
+        on_delete=models.CASCADE,
+        related_name='user_groups',
+    )
     objects = BaseSoftDeleteManager.from_queryset(GroupQuerySet)()
 
     def __str__(self):

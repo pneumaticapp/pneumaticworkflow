@@ -68,6 +68,14 @@ class TestRunPublicTemplate:
             is_required=True,
             template=template,
         )
+        date_field_template = FieldTemplate.objects.create(
+            order=3,
+            name='Date',
+            type=FieldType.DATE,
+            kickoff=template.kickoff_instance,
+            is_required=True,
+            template=template,
+        )
         user_ip = '127.0.0.1'
         mocker.patch(
             'pneumatic_backend.processes.api_v2.views.public.template.'
@@ -107,7 +115,8 @@ class TestRunPublicTemplate:
                 'captcha': 'skip',
                 'fields': {
                     text_field_template.api_name: 'text',
-                    user_field_template.api_name: str(user.id)
+                    user_field_template.api_name: str(user.id),
+                    date_field_template.api_name: 1596561916,
                 }
             },
             **{'X-Public-Authorization': auth_header_value}
@@ -122,8 +131,8 @@ class TestRunPublicTemplate:
         assert workflow.is_external is True
         assert workflow.is_urgent is False
         assert workflow.workflow_starter is None
-        assert workflow.kickoff_instance.output.all().count() == 2
-        assert workflow.tasks.count() == template.tasks_count
+        assert workflow.kickoff_instance.output.all().count() == 3
+        assert workflow.tasks.count() == template.tasks.count()
 
         field = workflow.kickoff_instance.output.all().order_by(
             'order'
@@ -312,7 +321,7 @@ class TestRunPublicTemplate:
         assert workflow.is_urgent is False
         assert workflow.workflow_starter is None
         assert workflow.current_task_instance.output.all().count() == 2
-        assert workflow.tasks.count() == template.tasks_count
+        assert workflow.tasks.count() == template.tasks.count()
 
         text_field = workflow.current_task_instance.output.all().order_by(
             'order'

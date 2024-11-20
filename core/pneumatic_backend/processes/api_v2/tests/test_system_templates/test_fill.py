@@ -146,7 +146,7 @@ def test_fill__ok(api_client):
     assert task_2['api_name']
     assert task_2['raw_performers'][0]['type'] == PerformerType.USER
     assert task_2['raw_performers'][0]['label'] == user.name_by_status
-    assert task_2['raw_performers'][0]['source_id'] == str(user.id)
+    assert task_2['raw_performers'][0]['source_id'] == user.id
     assert len(task_2['fields']) == 1
 
     assert task_3['api_name']
@@ -364,7 +364,7 @@ def test_create_public__ok(api_client):
     assert task_1['raw_performers'][0]['label'] == 'Client name'
 
     assert task_2['raw_performers'][0]['type'] == PerformerType.USER
-    assert task_2['raw_performers'][0]['source_id'] == str(user.id)
+    assert task_2['raw_performers'][0]['source_id'] == user.id
     assert task_2['raw_performers'][0]['label'] == user.name_by_status
     assert len(task_2['fields']) == 1
 

@@ -1233,5 +1233,6 @@ export const enMessages = {
   'due-date.time': 'time',
   'due-date.time.12': '10:01am',
   'due-date.time.24': '18:01',
-  'due-date.time-invalid': 'Enter time in 12-hour format (e.g., 10:00am)',
+  'due-date.time-invalid.12': 'Enter time in 12-hour format (e.g., 10:00am)',
+  'due-date.time-invalid.24': 'Enter time in 24-hour format (e.g., 18:01)',
 };

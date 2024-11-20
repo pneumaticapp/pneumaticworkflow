@@ -380,8 +380,7 @@ def _send_unread_notifications():
     timeout = timedelta(seconds=settings.UNREAD_NOTIFICATIONS_TIMEOUT)
     not_read_timeout_date = (timezone.now() - timeout)
     users = (
-        UserModel.objects.select_related('account')
-        .filter(account__payment_card_provided=True)
+        UserModel.objects
         .select_related('account')
         .active()
         .is_comments_mentions_subscriber()

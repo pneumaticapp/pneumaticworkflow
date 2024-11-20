@@ -26,12 +26,6 @@ from pneumatic_backend.payment.models import (
     Product
 )
 from pneumatic_backend.payment.tasks import handle_webhook
-from pneumatic_backend.payment.services.exceptions import (
-    AccountServiceException
-)
-from pneumatic_backend.payment.services.account import (
-    AccountSubscriptionService
-)
 from pneumatic_backend.payment.stripe.service import StripeService
 from pneumatic_backend.payment.stripe.exceptions import (
     StripeServiceException,
@@ -216,21 +210,6 @@ class SubscriptionViewSet(
             raise_validation_error(message=ex.message)
         else:
             return self.response_ok()
-
-    @action(methods=('POST',), detail=False, url_path='downgrade-to-free')
-    def downgrade_to_free(self, request):
-        if not request.user.account.billing_sync:
-            raise_validation_error(message=messages.MSG_BL_0018)
-        service = AccountSubscriptionService(
-            instance=request.user.account,
-            user=request.user,
-            is_superuser=request.is_superuser,
-        )
-        try:
-            service.downgrade_to_free()
-        except AccountServiceException as ex:
-            raise_validation_error(message=ex.message)
-        return self.response_ok()
 
 
 class StripeViewSet(

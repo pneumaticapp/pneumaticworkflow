@@ -189,48 +189,6 @@ class TestAccountModels:
         # assert
         assert count == 1
 
-    def test_is_blocked__limit_reached__not_block(self):
-
-        # arrange
-        account = create_test_account()
-        account.active_users = 3
-        account.tenants_active_users = 2
-        account.max_users = 5
-
-        # act
-        result = account.is_blocked
-
-        # assert
-        assert result is False
-
-    def test_is_blocked__limit_exceed__block(self):
-
-        # arrange
-        account = create_test_account()
-        account.active_users = 3
-        account.tenants_active_users = 2
-        account.max_users = 4
-
-        # act
-        result = account.is_blocked
-
-        # assert
-        assert result is True
-
-    def test_is_blocked__limit_not_reached__ok(self):
-
-        # arrange
-        account = create_test_account()
-        account.active_users = 3
-        account.tenants_active_users = 2
-        account.max_users = 6
-
-        # act
-        result = account.is_blocked
-
-        # assert
-        assert result is False
-
 
 class TestUser:
 

@@ -285,11 +285,9 @@ class TaskService(
                 ).first()
                 if field and field.value:
                     if rule == DueDateRule.AFTER_FIELD:
-                        start_date = datetime.strptime(
-                            field.value, '%m/%d/%Y'
-                        )
+                        start_date = datetime.fromtimestamp(float(field.value))
                     if rule == DueDateRule.BEFORE_FIELD:
-                        end_date = datetime.strptime(field.value, '%m/%d/%Y')
+                        end_date = datetime.fromtimestamp(float(field.value))
             elif rule == DueDateRule.AFTER_WORKFLOW_STARTED:
                 start_date = self.instance.workflow.date_created
 

@@ -1,10 +1,9 @@
-from pneumatic_backend.analytics.services import AnalyticService
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.http import Http404
 from rest_framework.serializers import ValidationError
 from rest_framework.decorators import action
-from rest_framework.generics import get_object_or_404, GenericAPIView
+from rest_framework.generics import get_object_or_404
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.permissions import AllowAny
 from rest_framework.viewsets import GenericViewSet
@@ -20,9 +19,9 @@ from pneumatic_backend.accounts.models import (
     UserInvite,
 )
 from pneumatic_backend.accounts.permissions import (
-    SubscribedToggleAdminPermission,
     UserIsAdminOrAccountOwner,
     ExpiredSubscriptionPermission,
+    BillingPlanPermission,
 )
 from pneumatic_backend.accounts.queries import (
     CountTemplatesByUserQuery,
@@ -47,7 +46,6 @@ from pneumatic_backend.accounts.services.reassign import (
 from pneumatic_backend.generics.permissions import (
     UserIsAuthenticated,
     IsAuthenticated,
-    PaymentCardPermission,
 )
 from pneumatic_backend.accounts.services.exceptions import (
     AlreadyAcceptedInviteException,
@@ -58,10 +56,6 @@ from pneumatic_backend.accounts.enums import (
     UserInviteStatus
 )
 from pneumatic_backend.utils.validation import raise_validation_error
-from pneumatic_backend.payment.stripe.service import StripeService
-from pneumatic_backend.payment.stripe.exceptions import StripeServiceException
-from rest_framework.response import Response
-
 
 UserModel = get_user_model()
 
@@ -86,46 +80,17 @@ class UsersViewSet(
     def get_permissions(self):
         if self.action == 'transfer':
             return (AllowAny(),)
-        elif self.action == 'list':
+        elif self.action in {'list', 'active_count'}:
             return (
                 IsAuthenticated(),
-                PaymentCardPermission(),
+                BillingPlanPermission(),
             )
-        elif self.action == 'delete':
-            return (
-                UserIsAuthenticated(),
-                UserIsAdminOrAccountOwner(),
-                ExpiredSubscriptionPermission(),
-                PaymentCardPermission(),
-            )
-        elif self.action == 'toggle_admin':
-            return (
-                UserIsAuthenticated(),
-                UserIsAdminOrAccountOwner(),
-                SubscribedToggleAdminPermission(),
-                PaymentCardPermission(),
-            )
-        elif self.action == 'reassign':
-            return (
-                UserIsAuthenticated(),
-                UserIsAdminOrAccountOwner(),
-                ExpiredSubscriptionPermission(),
-                PaymentCardPermission(),
-            )
-        elif self.action == 'count_workflows':
-            return (
-                UserIsAuthenticated(),
-                UserIsAdminOrAccountOwner(),
-                ExpiredSubscriptionPermission(),
-                PaymentCardPermission(),
-            )
-        elif self.action == 'active_count':
-            return (IsAuthenticated(),)
         else:
             return (
                 UserIsAuthenticated(),
+                BillingPlanPermission(),
+                ExpiredSubscriptionPermission(),
                 UserIsAdminOrAccountOwner(),
-                PaymentCardPermission(),
             )
 
     def get_serializer_context(self, **kwargs):
@@ -273,6 +238,10 @@ class UsersViewSet(
         url_path='count-workflows',
     )
     def count_workflows(self, request, pk=None):
+
+        # Used before deleting a user to know
+        # if the reassign request needs to be executed.
+
         try:
             user = self.get_queryset().get(id=pk)
         except UserModel.DoesNotExist:
@@ -304,53 +273,3 @@ class UsersViewSet(
             request.user.account_id
         )
         return self.response_ok(data=account_data)
-
-
-class UpdateUserProfileView(
-    GenericAPIView,
-    BaseIdentifyMixin
-):
-
-    # TODO Deprecated, remove in https://my.pneumatic.app/workflows/34238/
-
-    serializer_class = UserSerializer
-    permission_classes = (
-        ExpiredSubscriptionPermission,
-        PaymentCardPermission,
-    )
-
-    def get_object(self):
-        return self.request.user
-
-    def put(self, request, *args, **kwargs):
-        instance = self.get_object()
-        serializer = self.get_serializer(
-            instance=instance,
-            data=request.data,
-            partial=False
-        )
-        serializer.is_valid(raise_exception=True)
-        user = serializer.save()
-        if (
-            not user.account.is_tenant
-            and user.is_account_owner
-            and user.account.billing_sync
-        ):
-            try:
-                service = StripeService(
-                    user=self.request.user,
-                    auth_type=self.request.token_type,
-                    is_superuser=self.request.is_superuser
-                )
-                service.update_customer()
-            except StripeServiceException as ex:
-                raise_validation_error(message=ex.message)
-
-        if serializer.data.get('is_digest_subscriber') is False:
-            AnalyticService.users_digest(
-                user=user,
-                auth_type=self.request.token_type,
-                is_superuser=self.request.is_superuser
-            )
-        self.identify(user)
-        return Response(serializer.data)

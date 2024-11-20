@@ -107,7 +107,17 @@ import { deleteReactionComment } from '../../api/workflows/deleteReactionComment
 import { createReactionComment } from '../../api/workflows/createReactionComment';
 import { watchedComment } from '../../api/workflows/watchedComment';
 import { envWssURL } from '../../constants/enviroment';
+
+import {
+  mapBackandworkflowLogToRedux,
+  mapBackendWorkflowToRedux,
+  mapBackendNewEventToRedux,
+  formatDueDateToEditWorkflow,
+} from '../../utils/mappers';
+import { getUserTimezone } from '../selectors/user';
+
 import { getCurrentTask } from '../selectors/task';
+import { toISOStringFromTsp } from '../../utils/dateTime';
 
 function* handleLoadWorkflow({ workflowId, showLoader = true }: { workflowId: number; showLoader?: boolean }) {
   const {
@@ -127,9 +137,12 @@ function* handleLoadWorkflow({ workflowId, showLoader = true }: { workflowId: nu
         comments: isCommentsShown,
       }),
     ]);
+    const timezone: ReturnType<typeof getUserTimezone> = yield select(getUserTimezone);
+    const formattedWorkflow = mapBackendWorkflowToRedux(workflow, timezone);
+    const formattedWorkflowLog = mapBackandworkflowLogToRedux(workflowLog, timezone);
 
-    yield put(changeWorkflow(workflow));
-    yield put(changeWorkflowLog({ items: workflowLog, workflowId }));
+    yield put(changeWorkflow(formattedWorkflow));
+    yield put(changeWorkflowLog({ items: formattedWorkflowLog, workflowId }));
   } catch (error) {
     logger.info('fetch prorcess error : ', error);
     throw error;
@@ -180,13 +193,16 @@ function* fetchWorkflowLog({
   yield put(changeWorkflowLog({ isLoading: true }));
 
   try {
+    const timezone: ReturnType<typeof getUserTimezone> = yield select(getUserTimezone);
     const fetchedProcessLog: IWorkflowLogItem[] = yield getWorkflowLog({
       workflowId: id,
       sorting,
       comments,
       isOnlyAttachmentsShown,
     });
-    yield put(changeWorkflowLog({ workflowId: id, items: fetchedProcessLog }));
+    const formattedFetchedProcessLog = mapBackandworkflowLogToRedux(fetchedProcessLog, timezone);
+
+    yield put(changeWorkflowLog({ workflowId: id, items: formattedFetchedProcessLog }));
   } catch (error) {
     logger.info('fetch process log error : ', error);
     NotificationManager.error({ message: 'workflows.fetch-in-work-process-log-fail' });
@@ -267,9 +283,9 @@ function* saveWorkflowLogComment({ payload: { text, attachments } }: TSendWorkfl
 
 function* editWorkflowInWork({ payload }: TEditWorkflow) {
   const {
-    workflowsList: { items, count, offset }
+    workflowsList: { items, count, offset },
   }: ReturnType<typeof getWorkflowsStore> = yield select(getWorkflowsStore);
-  const { name, kickoff, isUrgent, dueDate} = payload;
+  const { name, kickoff, isUrgent, dueDate } = payload;
 
   if (name) yield put(setIsSavingWorkflowName(true));
   if (kickoff) yield put(setIsSavingKickoff(true));
@@ -299,19 +315,21 @@ function* editWorkflowInWork({ payload }: TEditWorkflow) {
       }),
     );
 
-    const editedWorkflow: IEditWorkflowResponse = yield editWorkflow(payload);
+    const formattedPayload = formatDueDateToEditWorkflow(payload);
+    const editedWorkflow: IEditWorkflowResponse = yield editWorkflow(formattedPayload);
+    const formattedEditedWorkflow = toISOStringFromTsp(editedWorkflow);
 
     const newEditingProcess = {
-      name: editedWorkflow.name,
-      kickoff: getEditKickoff(editedWorkflow.kickoff),
+      name: formattedEditedWorkflow.name,
+      kickoff: getEditKickoff(formattedEditedWorkflow.kickoff),
     };
 
     const task: ReturnType<typeof getCurrentTask> = yield select(getCurrentTask);
     yield put(setWorkflowEdit(newEditingProcess));
-    yield put(changeWorkflow(editedWorkflow));
+    yield put(changeWorkflow(formattedEditedWorkflow));
     if (payload.workflowId === task?.workflow.id && task && typeof isUrgent !== 'undefined') {
-      yield put(setCurrentTask({...task, isUrgent}));
-      yield put(patchTaskInList({taskId: task.id, task: {...task, isUrgent}}));
+      yield put(setCurrentTask({ ...task, isUrgent }));
+      yield put(patchTaskInList({ taskId: task.id, task: { ...task, isUrgent } }));
     }
     yield put(loadWorkflowsList(0));
     yield updateDetailedWorkflow(payload.workflowId);
@@ -332,7 +350,7 @@ function* editWorkflowInWork({ payload }: TEditWorkflow) {
     const errorMessage = getErrorMessage(error);
 
     NotificationManager.warning({
-      message: errorMessage
+      message: errorMessage,
     });
 
     yield put(changeWorkflowsList({ items, count, offset }));
@@ -426,7 +444,7 @@ export function* returnWorkflowToTaskSaga({ payload: { workflowId, taskId, onSuc
   } catch (err) {
     NotificationManager.warning({
       id: 'workflows.card-return-failed',
-      message: getErrorMessage(err)
+      message: getErrorMessage(err),
     });
   } finally {
     yield put(setGeneralLoaderVisibility(false));
@@ -678,18 +696,21 @@ export function* watchNewWorkflowsEvent() {
   const {
     api: { wsPublicUrl, urls },
   } = getBrowserConfigEnv();
-  const url = mergePaths(envWssURL || wsPublicUrl, `${urls.wsWorkflowsEvent}?auth_token=${parseCookies(document.cookie).token}`);
+  const url = mergePaths(
+    envWssURL || wsPublicUrl,
+    `${urls.wsWorkflowsEvent}?auth_token=${parseCookies(document.cookie).token}`,
+  );
   const channel: EventChannel<IWorkflowLogItem> = yield call(createWebSocketChannel, url);
 
   while (true) {
     const newEvent: IWorkflowLogItem = yield take(channel);
-    const {
-      data,
-    }: IStoreTask = yield select(getTaskStore);
+    const { data }: IStoreTask = yield select(getTaskStore);
+    const timezone: ReturnType<typeof getUserTimezone> = yield select(getUserTimezone);
 
     if (newEvent.task?.id === data?.id) {
-      yield put(updateWorkflowLogItem(newEvent));
-      yield put(updateTaskWorkflowLogItem(newEvent));
+      const formattedNewEvent: IWorkflowLogItem = mapBackendNewEventToRedux(newEvent, timezone);
+      yield put(updateWorkflowLogItem(formattedNewEvent));
+      yield put(updateTaskWorkflowLogItem(formattedNewEvent));
     }
   }
 }

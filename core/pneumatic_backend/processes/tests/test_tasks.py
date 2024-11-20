@@ -686,46 +686,6 @@ class TestSendDigest:
             logo_lg=None,
         )
 
-    def test_send__payment_card_not_provided__not_sent(
-        self,
-        mocker,
-        api_client,
-        email_service_digest
-    ):
-        # arrange
-        account = create_test_account(
-            payment_card_provided=False
-        )
-        user = create_test_user(
-            is_account_owner=True,
-            account=account
-        )
-
-        now = timezone.now()
-        current_week_monday = (now - timedelta(days=now.weekday())).date()
-        date_from = current_week_monday - timedelta(days=7)
-        date_to = current_week_monday
-        token_patch = mocker.patch(
-            'pneumatic_backend.accounts.tokens.UnsubscribeEmailToken.'
-            'create_token'
-        )
-        token_patch.return_value = '12345'
-        api_client.token_authenticate(user)
-        second_workflow = create_test_workflow(user=user)
-        Workflow.objects.on_account(user.account_id).update(
-            date_created=date_from + timedelta(days=2),
-        )
-        second_workflow.refresh_from_db()
-        second_workflow.status_updated = date_from + timedelta(days=2)
-        second_workflow.date_completed = date_to - timedelta(days=1)
-        second_workflow.save()
-
-        # act
-        send_digest()
-
-        # assert
-        email_service_digest.assert_not_called()
-
 
 class TestSendTasksDigest:
 
@@ -1289,30 +1249,6 @@ class TestSendTasksDigest:
             },
             logo_lg=None,
         )
-
-    def test_send__payment_card_not_provided__not_sent(
-        self,
-        api_client,
-        email_service_tasks_digest,
-    ):
-        # arrange
-        account = create_test_account(
-            payment_card_provided=False
-        )
-        user = create_test_user(
-            account=account,
-            is_account_owner=True
-        )
-        template_data = get_workflow_create_data(user)
-        template_data['is_active'] = True
-        create_test_workflow(user=user)
-        api_client.token_authenticate(user)
-
-        # act
-        send_tasks_digest(fetch_size=1)
-
-        # assert
-        email_service_tasks_digest.assert_not_called()
 
 
 class TestUpdateWorkflow:

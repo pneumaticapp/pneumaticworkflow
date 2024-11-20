@@ -76,6 +76,5 @@ class BaseIdentifyMixin:
                     'plan': account.billing_plan,
                     'billing_plan': account.billing_plan,
                     'lease_level': account.lease_level,
-                    'payment_card_provided': account.payment_card_provided
                 }
             )

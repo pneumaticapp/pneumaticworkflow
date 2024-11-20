@@ -72,7 +72,6 @@ def create_test_template(
         description='Test desc',
         is_active=is_active,
         is_public=is_public,
-        tasks_count=tasks_count
     )
     kickoff = Kickoff.objects.create(
         account_id=account.id,
@@ -126,7 +125,7 @@ def create_test_workflow(
         name=template.name,
         account=account,
         template=template,
-        tasks_count=template.tasks_count,
+        tasks_count=template.tasks.count(),
         status_updated=timezone.now(),
     )
     workflow.members.add(
@@ -150,14 +149,12 @@ def create_test_workflow(
 def create_test_account(
     name: str = 'Pneumatic',
     plan: BillingPlanType.LITERALS = BillingPlanType.FREEMIUM,
-    payment_card_provided: bool = True,
     billing_sync: bool = True
 ):
     account = Account.objects.create(
         name=name,
         billing_plan=plan,
         billing_sync=billing_sync,
-        payment_card_provided=payment_card_provided,
         plan_expiration=(
             timezone.now() + timedelta(days=1)
             if plan in BillingPlanType.PAYMENT_PLANS else

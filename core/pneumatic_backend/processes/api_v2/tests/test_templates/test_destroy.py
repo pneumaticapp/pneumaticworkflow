@@ -47,7 +47,6 @@ class TestDestroyTemplate:
         assert response.status_code == 204
         assert not Template.objects.filter(id=template.id).exists()
         account.refresh_from_db()
-        assert account.active_templates == 0
         workflow.refresh_from_db()
         assert workflow.is_legacy_template is True
         assert workflow.legacy_template_name == template.name

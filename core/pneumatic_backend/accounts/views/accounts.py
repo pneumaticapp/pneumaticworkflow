@@ -5,6 +5,7 @@ from rest_framework.generics import (
 from pneumatic_backend.accounts.permissions import (
     UserIsAdminOrAccountOwner,
     ExpiredSubscriptionPermission,
+    BillingPlanPermission,
 )
 from pneumatic_backend.accounts.services import AccountService
 from pneumatic_backend.accounts.serializers.accounts import (
@@ -16,7 +17,6 @@ from pneumatic_backend.generics.mixins.views import (
 )
 from pneumatic_backend.generics.permissions import (
     UserIsAuthenticated,
-    PaymentCardPermission,
 )
 
 UserModel = get_user_model()
@@ -33,14 +33,15 @@ class AccountView(
         if self.request.method == 'GET':
             return (
                 UserIsAuthenticated(),
+                BillingPlanPermission(),
                 ExpiredSubscriptionPermission(),
             )
         else:
             return (
                 UserIsAuthenticated(),
+                BillingPlanPermission(),
                 UserIsAdminOrAccountOwner(),
                 ExpiredSubscriptionPermission(),
-                PaymentCardPermission(),
             )
 
     def get_object(self):
@@ -70,7 +71,10 @@ class AccountPlanView(
     GenericAPIView,
     BaseResponseMixin
 ):
-    permission_classes = (UserIsAuthenticated,)
+    permission_classes = (
+        UserIsAuthenticated,
+        BillingPlanPermission,
+    )
     serializer_class = AccountPlanSerializer
 
     def get(self, request, *args, **kwargs):

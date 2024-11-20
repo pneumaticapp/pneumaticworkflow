@@ -123,8 +123,6 @@ class TemplateService(BaseModelService):
             'finalizable': initial_data.get('finalizable', True),
             'is_public': initial_data.get('is_public', False),
             'template_owners': [self.user.id],
-            'tasks_count': len(initial_data.get('tasks', [])),
-            'performers_count': 1,
             'kickoff': {
                 'description': initial_kickoff_data.get('description', ''),
                 'fields': initial_kickoff_data.get('fields', [])
@@ -252,12 +250,7 @@ class TemplateService(BaseModelService):
                 self.account.id
             ).order_by('id').values_list('id', flat=True)
         )
-        if not self.account.is_free:
-            template_data['is_active'] = True
-        elif self.account.active_templates < self.account.max_active_templates:
-            template_data['is_active'] = True
-        else:
-            template_data['is_active'] = False
+        template_data['is_active'] = True
 
         for task_data in template_data['tasks']:
             if not task_data.get('api_name'):
