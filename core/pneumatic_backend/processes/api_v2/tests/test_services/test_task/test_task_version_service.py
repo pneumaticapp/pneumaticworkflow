@@ -120,6 +120,7 @@ class TestTaskUpdateVersionService:
         # assert
         fields_values_mock.assert_called_once_with(
             tasks_filter_kwargs={'number__lt': data['number']},
+            user=user
         )
         create_or_update_instance_mock.assert_called_once_with(
             data=data,
@@ -281,6 +282,7 @@ class TestTaskUpdateVersionService:
         # assert
         fields_values_mock.assert_called_once_with(
             tasks_filter_kwargs={'number__lt': data['number']},
+            user=user
         )
         create_or_update_instance_mock.assert_called_once_with(
             data=data,

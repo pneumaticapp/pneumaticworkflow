@@ -24,6 +24,8 @@ export interface ITemplate {
   isEmbedded: boolean;
   embedUrl: string | null;
   wfNameTemplate: string | null;
+  tasksCount: number;
+  performersCount: number;
 }
 
 export interface ITemplateTask {
@@ -85,7 +87,7 @@ export enum ETaskPerformerType {
   UserGroup = 'group',
 }
 
-export interface ITemplateResponse extends Omit<ITemplate, 'id' | 'tasks'> {
+export interface ITemplateResponse extends Omit<ITemplate, 'id' | 'tasks' | 'tasksCount' | 'performersCount'> {
   id: number;
   tasks: ITemplateTaskResponse[];
 }
@@ -168,11 +170,11 @@ export interface IExtraField {
   order: number;
 }
 
-export type TExtraFieldValue = TExtraFieldSingleValue | TExtraFieldMultipleValue | null;
+export type TExtraFieldValue = TExtraFieldSingleValue | TExtraFieldMultipleValue | TExtraFieldTimestampValue | null;
 
 export type TExtraFieldSingleValue = string;
 export type TExtraFieldMultipleValue = string[];
-
+export type TExtraFieldTimestampValue = number;
 export interface IExtraFieldSelection {
   id?: number;
   apiName: string;

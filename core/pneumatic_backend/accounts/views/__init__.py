@@ -21,7 +21,6 @@ from pneumatic_backend.accounts.views.user import (
 )
 from pneumatic_backend.accounts.views.users import (
     UsersViewSet,
-    UpdateUserProfileView,
 )
 from pneumatic_backend.accounts.views.tenants import (
     TenantsViewSet

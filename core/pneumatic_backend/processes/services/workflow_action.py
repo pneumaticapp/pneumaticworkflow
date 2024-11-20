@@ -52,11 +52,15 @@ class WorkflowActionService:
 
     def __init__(
         self,
-        user: UserModel = None,
+        user: UserModel,
         is_superuser: bool = False,
         auth_type: AuthTokenType = AuthTokenType.USER,
         sync: bool = False
     ):
+        if user is None:
+            raise Exception(
+                'Specify user before initialization WorkflowActionService'
+            )
         self.user = user
         self.is_superuser = is_superuser
         self.auth_type = auth_type
@@ -270,14 +274,11 @@ class WorkflowActionService:
     def end_process(
         self,
         workflow: Workflow,
-        user: Optional[UserModel],
         by_condition: bool = True,
         by_complete_task: bool = False,
         **kwargs
     ):
-        """ User may be None if the external workflow ends in first step """
 
-        user = user or workflow.account.get_owner()
         task = workflow.current_task_instance
         if workflow.status == WorkflowStatus.DELAYED:
             Delay.objects.current_task_delay_qst(
@@ -300,15 +301,15 @@ class WorkflowActionService:
         if by_condition:
             WorkflowEventService.workflow_ended_by_condition_event(
                 workflow=workflow,
-                user=user,
+                user=self.user,
             )
         elif by_complete_task:
             WorkflowEventService.workflow_complete_event(
                 workflow=workflow,
-                user=user
+                user=self.user,
             )
             AnalyticService.workflow_completed(
-                user=user,
+                user=self.user,
                 is_superuser=self.is_superuser,
                 auth_type=self.auth_type,
                 workflow=workflow
@@ -319,7 +320,7 @@ class WorkflowActionService:
             # if workflow force ended
             WorkflowEventService.workflow_ended_event(
                 workflow=workflow,
-                user=user,
+                user=self.user,
             )
             user_ids = TaskPerformer.objects.filter(
                 task_id=task.id,
@@ -328,11 +329,11 @@ class WorkflowActionService:
                 task=task,
                 user_ids=user_ids
             )
-        acc_id = user.account_id
+        acc_id = self.user.account_id
         if WebHook.objects.on_account(acc_id).wf_completed().exists():
             send_workflow_completed_webhook.delay(
-                user_id=user.id,
-                account_id=user.account_id,
+                user_id=self.user.id,
+                account_id=self.user.account_id,
                 payload=workflow.webhook_payload()
             )
 
@@ -340,7 +341,6 @@ class WorkflowActionService:
         self,
         workflow: Workflow,
         task: Task,
-        user: UserModel,
         is_reverted: Optional[bool] = None,
         need_insert_fields_values: bool = True,
         **kwargs,
@@ -352,6 +352,7 @@ class WorkflowActionService:
             )
             fields_values = workflow.get_fields_markdown_values(
                 tasks_filter_kwargs={'number__lt': task.number},
+                user=self.user or workflow.account.get_owner()
             )
             task_service.insert_fields_values(fields_values=fields_values)
 
@@ -370,7 +371,6 @@ class WorkflowActionService:
                 action_method(
                     workflow=workflow,
                     task=next_task,
-                    user=user,
                     is_reverted=is_reverted,
                 )
             else:
@@ -378,7 +378,6 @@ class WorkflowActionService:
         else:
             self.end_process(
                 workflow=workflow,
-                user=user,
                 by_condition=False
             )
 
@@ -407,7 +406,6 @@ class WorkflowActionService:
         else:
             self.end_process(
                 workflow=workflow,
-                user=user,
                 by_condition=False
             )
 
@@ -434,12 +432,10 @@ class WorkflowActionService:
         workflow: Workflow
     ):
         task = workflow.current_task_instance
-        task_service = TaskService(
-            instance=task,
-            user=self.user or workflow.account.get_owner()
-        )
+        task_service = TaskService(instance=task, user=self.user)
         fields_values = workflow.get_fields_markdown_values(
             tasks_filter_kwargs={'number__lt': task.number},
+            user=self.user
         )
         # Workflow run event need task with inserted vars
         task_service.insert_fields_values(fields_values=fields_values)
@@ -579,6 +575,7 @@ class WorkflowActionService:
             )
             fields_values = workflow.get_fields_markdown_values(
                 tasks_filter_kwargs={'number__lt': task.number},
+                user=self.user or workflow.account.get_owner()
             )
             task_service.insert_fields_values(fields_values=fields_values)
         task.update_performers(restore_performers=True)
@@ -671,7 +668,6 @@ class WorkflowActionService:
             if task.number == workflow.tasks_count:
                 self.end_process(
                     workflow=workflow,
-                    user=self.user,
                     by_condition=False,
                     by_complete_task=True
                 )

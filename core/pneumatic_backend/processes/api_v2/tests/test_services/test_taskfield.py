@@ -1765,3 +1765,49 @@ def test_get_valid_checkbox_value__wrong_api_name_type__raise_exception(
 #     # assert
 #     assert ex.value.message == messages.MSG_PW_0031
 #     assert ex.value.api_name == task_field.api_name
+
+
+@pytest.mark.parametrize('raw_value', (176516132, 176516132.00))
+def test_get_valid_date_value__valid_value__ok(raw_value):
+
+    # arrange
+    service = TaskFieldService()
+
+    # act
+    result = service._get_valid_date_value(raw_value=raw_value)
+
+    # assert
+    assert result == str(raw_value)
+
+
+@pytest.mark.parametrize('raw_value', ('176516132', '176516132.00', ' '))
+def test_get_valid_date_value__invalid_value__ok(raw_value):
+    # arrange
+    user = create_test_user()
+    template = create_test_template(user=user, tasks_count=1)
+    template_task = template.tasks.first()
+    field_template = FieldTemplate.objects.create(
+        task=template_task,
+        type=FieldType.DATE,
+        name='Date field',
+        template=template,
+        api_name='api-name-1',
+    )
+    workflow = create_test_workflow(user=user, template=template)
+    task = workflow.current_task_instance
+    task_field = TaskField.objects.create(
+        task=task,
+        api_name=field_template.api_name,
+        is_required=field_template.is_required,
+        type=field_template.type,
+        workflow=workflow,
+    )
+    service = TaskFieldService(instance=task_field)
+
+    # act
+    with pytest.raises(TaskFieldException) as ex:
+        service._get_valid_date_value(raw_value=raw_value)
+
+    # assert
+    assert ex.value.api_name == task_field.api_name
+    assert ex.value.message == messages.MSG_PW_0032

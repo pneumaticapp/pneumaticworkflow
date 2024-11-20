@@ -59,7 +59,7 @@
       "declineInvite": "api/accounts/invites/decline",
       "resendInvite": "/api/accounts/invites/:id/resend",
       "editAccount": "/accounts/account",
-      "editProfile": "/accounts/profile",
+      "editProfile": "/accounts/user",
       "template": "/templates/:id",
       "aiTemplate": "/templates/ai",
       "templateByName": "/templates/by-name",

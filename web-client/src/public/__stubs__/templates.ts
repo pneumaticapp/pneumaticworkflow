@@ -82,6 +82,8 @@ const DEFAULT_TEMPLATE: ITemplate = {
   isEmbedded: false,
   embedUrl: null,
   wfNameTemplate: null,
+  tasksCount: 1,
+  performersCount: 1,
 };
 
 export const mockComments: Array<ITaskCommentItem> = [

@@ -16,10 +16,10 @@ export interface IUnsavedUser {
   invite?: IUserInviteItem;
   isAdmin?: boolean;
   type: TUserType;
-  language: string,
-  timezone: string,
-  dateFmt: string,
-  dateFdw: string,
+  language: string;
+  timezone: string;
+  dateFmt: string;
+  dateFdw: string;
 }
 
 export type TGoogleAuthUserInfo = Partial<
@@ -43,6 +43,7 @@ export interface IAccount {
   dateJoined?: string;
   name: string;
   isSubscribed: boolean;
+  billingSync: boolean;
   isBlocked?: boolean;
   isVerified?: boolean;
   tenantName: string;
@@ -52,7 +53,6 @@ export interface IAccount {
   leaseLevel: TAccountLeaseLevel;
   logoSm: string | null;
   logoLg: string | null;
-  paymentCardProvided: boolean;
   trialEnded: boolean;
   trialIsActive: boolean;
 }

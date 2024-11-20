@@ -55,7 +55,7 @@ import {
   usersFetchFinished,
 } from '../actions';
 import { getErrorMessage } from '../../utils/getErrorMessage';
-import { getAuthUser, getUsers } from '../selectors/user';
+import { getAuthUser, getUsers, getUserTimezone } from '../selectors/user';
 import { removeOutputFromLocalStorage } from '../../components/TaskCard/utils/storageOutputs';
 import { ETaskCardViewMode } from '../../components/TaskCard';
 import { deleteRemovedFilesFromFields } from '../../api/deleteRemovedFilesFromFields';
@@ -73,6 +73,15 @@ import { markChecklistItem } from '../../api/markChecklistItem';
 import { unmarkChecklistItem } from '../../api/unmarkChecklistItem';
 import { deleteTaskDueDate } from '../../api/deleteTaskDueDate';
 import { changeTaskDueDate } from '../../api/changeTaskDueDate';
+
+import {
+  mapBackandworkflowLogToRedux,
+  mapBackendGetTackToRedux,
+  mapBackendWorkflowToRedux,
+  mapOutputToCompleteTask,
+} from '../../utils/mappers';
+import { toTspDate } from '../../utils/dateTime';
+
 import { IStoreTask } from '../../types/redux';
 import { getWorkflow } from '../../api/getWorkflow';
 import { getWorkflowLog } from '../../api/getWorkflowLog';
@@ -81,8 +90,11 @@ import { sendWorkflowComment } from '../../api/sendWorkflowComment';
 import { mapFilesToRequest } from '../../utils/workflows';
 
 function* fetchTask({ payload: { taskId, viewMode } }: TLoadCurrentTask) {
-  const { workflowLog: { sorting, isCommentsShown, isOnlyAttachmentsShown } }: IStoreTask = yield select(getTaskStore);
+  const {
+    workflowLog: { sorting, isCommentsShown, isOnlyAttachmentsShown },
+  }: IStoreTask = yield select(getTaskStore);
   const prevTask: ReturnType<typeof getCurrentTask> = yield select(getCurrentTask);
+  const timezone: ReturnType<typeof getUserTimezone> = yield select(getUserTimezone);
   yield put(setCurrentTask(null));
 
   try {
@@ -97,18 +109,21 @@ function* fetchTask({ payload: { taskId, viewMode } }: TLoadCurrentTask) {
 
     const task: ITaskAPI = yield getTask(taskId);
     const normalizedTask = getNormalizedTask(task);
+    const formattedTask = mapBackendGetTackToRedux(normalizedTask, timezone);
 
-    yield put(setCurrentTask(normalizedTask));
+    yield put(setCurrentTask(formattedTask));
 
     if (viewMode !== ETaskCardViewMode.Guest) {
-      yield loadTaskWorkflow(task.workflow.id)
+      yield loadTaskWorkflow(task.workflow.id);
     } else {
-      yield put(changeWorkflowLogViewSettings({
-        id: task.workflow.id,
-        sorting,
-        comments: isCommentsShown,
-        isOnlyAttachmentsShown,
-      }));
+      yield put(
+        changeWorkflowLogViewSettings({
+          id: task.workflow.id,
+          sorting,
+          comments: isCommentsShown,
+          isOnlyAttachmentsShown,
+        }),
+      );
     }
   } catch (error) {
     yield put(setCurrentTask(prevTask));
@@ -137,8 +152,10 @@ function* fetchTask({ payload: { taskId, viewMode } }: TLoadCurrentTask) {
 }
 
 function* loadTaskWorkflow(workflowId: number) {
-  const { workflowLog: { isCommentsShown, sorting } }: IStoreTask = yield select(getTaskStore);
-
+  const {
+    workflowLog: { isCommentsShown, sorting },
+  }: IStoreTask = yield select(getTaskStore);
+  const timezone: ReturnType<typeof getUserTimezone> = yield select(getUserTimezone);
   try {
     yield put(setTaskWorkflowIsLoading(true));
 
@@ -150,9 +167,11 @@ function* loadTaskWorkflow(workflowId: number) {
         comments: isCommentsShown,
       }),
     ]);
+    const formattedWorkflow = mapBackendWorkflowToRedux(workflow, timezone);
+    const formattedWorkflowLog = mapBackandworkflowLogToRedux(workflowLog, timezone);
 
-    yield put(changeTaskWorkflow(workflow));
-    yield put(changeTaskWorkflowLog({ items: workflowLog, workflowId }));
+    yield put(changeTaskWorkflow(formattedWorkflow));
+    yield put(changeTaskWorkflowLog({ items: formattedWorkflowLog, workflowId }));
   } catch (error) {
     logger.info('fetch prorcess error : ', error);
     throw error;
@@ -167,13 +186,16 @@ function* loadTaskWorkflowLog({
   yield put(changeTaskWorkflowLog({ isLoading: true }));
 
   try {
+    const timezone: ReturnType<typeof getUserTimezone> = yield select(getUserTimezone);
     const fetchedProcessLog: IWorkflowLogItem[] = yield getWorkflowLog({
       workflowId: id,
       sorting,
       comments,
       isOnlyAttachmentsShown,
     });
-    yield put(changeTaskWorkflowLog({ workflowId: id, items: fetchedProcessLog }));
+    const formattedFetchedProcessLog = mapBackandworkflowLogToRedux(fetchedProcessLog, timezone);
+
+    yield put(changeTaskWorkflowLog({ workflowId: id, items: formattedFetchedProcessLog }));
   } catch (error) {
     logger.info('fetch process log error : ', error);
     NotificationManager.error({ message: 'workflows.fetch-in-work-process-log-fail' });
@@ -182,13 +204,10 @@ function* loadTaskWorkflowLog({
   }
 }
 
-
 function* saveWorkflowLogComment({ payload: { text, attachments } }: TSendWorkflowLogComment) {
-  const {workflowLog: {
-    items,
-    workflowId: processId,
-    sorting,
-  }}: ReturnType<typeof getTaskStore> = yield select(getTaskStore);
+  const {
+    workflowLog: { items, workflowId: processId, sorting },
+  }: ReturnType<typeof getTaskStore> = yield select(getTaskStore);
 
   if (!processId) {
     return;
@@ -265,7 +284,8 @@ export function* setTaskCompleted({ payload: { taskId, workflowId, output, viewM
   try {
     yield deleteRemovedFilesFromFields(output);
 
-    yield completeTask(workflowId, currentUserId, taskId, output);
+    const mappedOutput = mapOutputToCompleteTask(output);
+    yield completeTask(workflowId, currentUserId, taskId, mappedOutput);
     NotificationManager.success({ title: 'tasks.task-success-complete' });
 
     removeOutputFromLocalStorage(taskId);
@@ -448,7 +468,9 @@ export function* setCurrentTaskDueDateSaga({ payload: dueDate }: TSetCurrentTask
   try {
     yield put(patchCurrentTask({ dueDate }));
     yield put(patchTaskInList({ taskId: task.id, task: { dueDate } }));
-    yield call(changeTaskDueDate, task.id, dueDate);
+
+    const dueDateTsp = toTspDate(dueDate);
+    yield call(changeTaskDueDate, task.id, dueDateTsp);
   } catch (error) {
     NotificationManager.warning({ message: getErrorMessage(error) });
     logger.info('failed to change task due date: ', error);

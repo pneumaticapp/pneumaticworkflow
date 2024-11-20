@@ -4,6 +4,7 @@ from rest_framework.generics import (
 )
 from pneumatic_backend.accounts.permissions import (
     UserIsAdminOrAccountOwner,
+    BillingPlanPermission,
     ExpiredSubscriptionPermission,
 )
 from pneumatic_backend.authentication.permissions import PrivateApiPermission
@@ -12,7 +13,6 @@ from pneumatic_backend.generics.mixins.views import (
 )
 from pneumatic_backend.generics.permissions import (
     UserIsAuthenticated,
-    PaymentCardPermission,
 )
 
 
@@ -25,11 +25,11 @@ class APIKeyView(
 ):
 
     permission_classes = (
-        UserIsAuthenticated,
-        UserIsAdminOrAccountOwner,
         PrivateApiPermission,
+        UserIsAuthenticated,
+        BillingPlanPermission,
+        UserIsAdminOrAccountOwner,
         ExpiredSubscriptionPermission,
-        PaymentCardPermission,
     )
 
     def list(self, request, *args, **kwargs):

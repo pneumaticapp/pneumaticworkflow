@@ -12,6 +12,7 @@ from pneumatic_backend.accounts.permissions import (
     UsersOverlimitedPermission,
     UserIsAdminOrAccountOwner,
     ExpiredSubscriptionPermission,
+    BillingPlanPermission,
 )
 from pneumatic_backend.analytics.actions import (
     WorkflowActions
@@ -52,7 +53,6 @@ from pneumatic_backend.generics.mixins.views import CustomViewSetMixin
 from pneumatic_backend.generics.permissions import (
     UserIsAuthenticated,
     IsAuthenticated,
-    PaymentCardPermission,
 )
 from pneumatic_backend.processes.filters import (
     WorkflowFieldsFilter,
@@ -143,14 +143,14 @@ class WorkflowViewSet(
         if self.action in ('list', 'fields'):
             return (
                 UserIsAuthenticated(),
-                UserIsAdminOrAccountOwner(),
-                PaymentCardPermission(),
+                BillingPlanPermission(),
                 ExpiredSubscriptionPermission(),
+                UserIsAdminOrAccountOwner(),
             )
         elif self.action == 'retrieve':
             return (
                 UserIsAuthenticated(),
-                PaymentCardPermission(),
+                BillingPlanPermission(),
                 ExpiredSubscriptionPermission(),
                 WorkflowMemberPermission(),
             )
@@ -164,16 +164,16 @@ class WorkflowViewSet(
         ):
             return (
                 UserIsAuthenticated(),
-                UserIsAdminOrAccountOwner(),
-                PaymentCardPermission(),
+                BillingPlanPermission(),
                 ExpiredSubscriptionPermission(),
+                UserIsAdminOrAccountOwner(),
                 WorkflowTemplateOwnerPermission(),
                 UsersOverlimitedPermission(),
             )
         elif self.action == 'partial_update':
             return (
                 UserIsAuthenticated(),
-                PaymentCardPermission(),
+                BillingPlanPermission(),
                 ExpiredSubscriptionPermission(),
                 WorkflowTemplateOwnerPermission(),
                 UsersOverlimitedPermission(),
@@ -181,7 +181,7 @@ class WorkflowViewSet(
         elif self.action == 'comment':
             return (
                 IsAuthenticated(),
-                PaymentCardPermission(),
+                BillingPlanPermission(),
                 ExpiredSubscriptionPermission(),
                 UsersOverlimitedPermission(),
                 GuestWorkflowPermission(),
@@ -190,7 +190,7 @@ class WorkflowViewSet(
         elif self.action == 'complete':
             return (
                 IsAuthenticated(),
-                PaymentCardPermission(),
+                BillingPlanPermission(),
                 ExpiredSubscriptionPermission(),
                 UsersOverlimitedPermission(),
                 GuestTaskCompletePermission(),
@@ -199,7 +199,7 @@ class WorkflowViewSet(
         elif self.action == 'revert':
             return (
                 UserIsAuthenticated(),
-                PaymentCardPermission(),
+                BillingPlanPermission(),
                 ExpiredSubscriptionPermission(),
                 UsersOverlimitedPermission(),
                 UserTaskCompletePermission(),
@@ -207,7 +207,7 @@ class WorkflowViewSet(
         elif self.action == 'events':
             return (
                 IsAuthenticated(),
-                PaymentCardPermission(),
+                BillingPlanPermission(),
                 ExpiredSubscriptionPermission(),
                 GuestWorkflowPermission(),
                 WorkflowMemberPermission(),

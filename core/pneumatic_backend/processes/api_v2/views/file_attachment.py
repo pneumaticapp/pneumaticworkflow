@@ -5,10 +5,10 @@ from rest_framework.decorators import action
 from pneumatic_backend.processes.permissions import StoragePermission
 from pneumatic_backend.accounts.permissions import (
     ExpiredSubscriptionPermission,
+    BillingPlanPermission,
 )
 from pneumatic_backend.generics.permissions import (
     IsAuthenticated,
-    PaymentCardPermission,
 )
 from pneumatic_backend.generics.mixins.views import (
     CustomViewSetMixin,
@@ -108,8 +108,8 @@ class FileAttachmentViewSet(
     permission_classes = (
         StoragePermission,
         IsAuthenticated,
-        PaymentCardPermission,
         ExpiredSubscriptionPermission,
+        BillingPlanPermission,
     )
 
     def get_account(self) -> Account:

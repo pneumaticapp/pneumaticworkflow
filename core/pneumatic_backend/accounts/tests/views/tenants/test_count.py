@@ -66,19 +66,32 @@ def test_count__tenant__permission_denied(
     assert response.status_code == 403
 
 
-def test_count__not_subscribed__permission_denied(
+def test_count__free_plan__ok(
     api_client,
 ):
     # arrange
-    account = create_test_account(plan=BillingPlanType.FREEMIUM)
-    account_owner = create_test_user(account=account)
-    api_client.token_authenticate(account_owner)
+    master_account = create_test_account(plan=BillingPlanType.FREEMIUM)
+    master_account_owner = create_test_user(account=master_account)
+    create_test_account(
+        name='tenant 1',
+        plan=BillingPlanType.FREEMIUM,
+        lease_level=LeaseLevel.TENANT,
+        master_account=master_account
+    )
+    create_test_account(
+        name='tenant 2',
+        plan=BillingPlanType.FREEMIUM,
+        lease_level=LeaseLevel.TENANT,
+        master_account=master_account
+    )
+    api_client.token_authenticate(master_account_owner)
 
     # act
     response = api_client.get('/tenants/count')
 
     # assert
-    assert response.status_code == 403
+    assert response.status_code == 200
+    assert response.data['count'] == 2
 
 
 def test_count__expired_subscription__permission_denied(

@@ -83,14 +83,43 @@ class TestExpiredSubscriptionPermission:
 
 class TestUsersOverlimitedPermission:
 
+    @pytest.mark.parametrize(
+        'plan',
+        (
+            BillingPlanType.FREEMIUM,
+            BillingPlanType.UNLIMITED,
+            BillingPlanType.FRACTIONALCOO,
+        )
+    )
+    def test__overlimit__plan_not_premium__skip(self, plan, mocker):
+
+        # arrange
+        account = create_test_account(
+            max_users=5,
+            plan=plan
+        )
+        account.active_users = 6
+        account.save()
+        user = create_test_user(account=account)
+        request = mocker.Mock(user=user)
+        view = mocker.Mock()
+        permission = UsersOverlimitedPermission()
+
+        # act
+        result = permission.has_permission(request, view)
+
+        # assert
+        assert result is True
+
     def test__overlimit__permission_denied(self, mocker):
 
         # arrange
-        account = create_test_account()
-        mocker.patch(
-            'pneumatic_backend.accounts.models.Account.is_blocked',
-            True
+        account = create_test_account(
+            max_users=5,
+            plan=BillingPlanType.PREMIUM
         )
+        account.active_users = 6
+        account.save()
         user = create_test_user(account=account)
         request = mocker.Mock(user=user)
         view = mocker.Mock()
@@ -105,11 +134,12 @@ class TestUsersOverlimitedPermission:
     def test__limit_not_reached__ok(self, mocker):
 
         # arrange
-        account = create_test_account()
-        mocker.patch(
-            'pneumatic_backend.accounts.models.Account.is_blocked',
-            False
+        account = create_test_account(
+            max_users=5,
+            plan=BillingPlanType.PREMIUM
         )
+        account.active_users = 5
+        account.save()
         user = create_test_user(account=account)
 
         request = mocker.Mock(user=user)

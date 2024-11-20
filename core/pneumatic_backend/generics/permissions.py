@@ -2,7 +2,6 @@ from django.conf import settings
 from rest_framework.permissions import BasePermission
 from rest_framework.request import Request
 from pneumatic_backend.accounts.enums import UserType
-from pneumatic_backend.generics.messages import MSG_GE_0006
 
 
 class BaseAuthPermission(BasePermission):
@@ -41,11 +40,3 @@ class StagingPermission(BasePermission):
             settings.CONFIGURATION_TESTING,
             settings.CONFIGURATION_STAGING,
         }
-
-
-class PaymentCardPermission(BasePermission):
-
-    message = MSG_GE_0006
-
-    def has_permission(self, request, view):
-        return request.user.account.payment_card_provided

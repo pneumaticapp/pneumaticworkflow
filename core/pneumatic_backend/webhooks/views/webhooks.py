@@ -5,6 +5,7 @@ from pneumatic_backend.generics.mixins.views import (
 )
 from pneumatic_backend.accounts.permissions import (
     UserIsAdminOrAccountOwner,
+    BillingPlanPermission,
     ExpiredSubscriptionPermission
 )
 from pneumatic_backend.webhooks.services import (
@@ -24,8 +25,9 @@ class WebHookViewSet(
 ):
     permission_classes = (
         UserIsAuthenticated,
+        BillingPlanPermission,
+        ExpiredSubscriptionPermission,
         UserIsAdminOrAccountOwner,
-        ExpiredSubscriptionPermission
     )
 
     @action(methods=('POST',), detail=False)

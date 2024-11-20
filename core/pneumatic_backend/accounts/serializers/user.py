@@ -41,7 +41,6 @@ class UserSerializer(
             'photo',
             'status',
             'is_admin',
-            'is_staff',
             'date_joined',
             'date_joined_tsp',
             'is_account_owner',
@@ -66,7 +65,6 @@ class UserSerializer(
             'invite',
             'status',
             'is_admin',
-            'is_staff',
             'is_account_owner',
             'groups'
         )
@@ -83,8 +81,6 @@ class UserSerializer(
     )
     date_fmt = DateFormatField(required=False)
     invite = serializers.SerializerMethodField(allow_null=True, read_only=True)
-    # TODO remove in https://my.pneumatic.app/workflows/34238/
-    is_staff = serializers.BooleanField(source='is_admin', read_only=True)
 
     def get_invite(self, instance: UserModel):
         if instance.status_invited and instance.invite:

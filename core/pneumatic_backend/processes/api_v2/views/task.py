@@ -9,7 +9,6 @@ from pneumatic_backend.analytics.services import AnalyticService
 from pneumatic_backend.generics.permissions import (
     UserIsAuthenticated,
     IsAuthenticated,
-    PaymentCardPermission,
 )
 from pneumatic_backend.accounts.enums import UserType
 from pneumatic_backend.processes.permissions import (
@@ -21,6 +20,7 @@ from pneumatic_backend.accounts.permissions import (
     UsersOverlimitedPermission,
     UserIsAdminOrAccountOwner,
     ExpiredSubscriptionPermission,
+    BillingPlanPermission,
 )
 from pneumatic_backend.generics.mixins.views import (
     CustomViewSetMixin,
@@ -68,8 +68,8 @@ class TasksListView(ListAPIView):
     serializer_class = TaskListSerializer
     permission_classes = (
         UserIsAuthenticated,
-        PaymentCardPermission,
         ExpiredSubscriptionPermission,
+        BillingPlanPermission,
     )
 
     def list(self, request, *args, **kwargs):
@@ -110,8 +110,8 @@ class TaskViewSet(
         if self.action == 'retrieve':
             return (
                 IsAuthenticated(),
-                PaymentCardPermission(),
                 ExpiredSubscriptionPermission(),
+                BillingPlanPermission(),
                 TaskWorkflowMemberPermission(),
                 GuestTaskPermission(),
             )
@@ -124,11 +124,11 @@ class TaskViewSet(
         ):
             return (
                 UserIsAuthenticated(),
+                ExpiredSubscriptionPermission(),
+                BillingPlanPermission(),
                 UserIsAdminOrAccountOwner(),
                 TaskTemplateOwnerPermission(),
-                PaymentCardPermission(),
                 UsersOverlimitedPermission(),
-                ExpiredSubscriptionPermission(),
             )
         return super().get_permissions()
 

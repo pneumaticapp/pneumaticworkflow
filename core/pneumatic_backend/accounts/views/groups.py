@@ -4,13 +4,12 @@ from pneumatic_backend.accounts.serializers.group import (
     GroupRequestSerializer,
 )
 from pneumatic_backend.accounts.permissions import (
+    BillingPlanPermission,
     UserIsAdminOrAccountOwner,
+    ExpiredSubscriptionPermission,
 )
 from pneumatic_backend.generics.permissions import (
     UserIsAuthenticated,
-)
-from pneumatic_backend.accounts.permissions import (
-    SubscriptionPermission,
 )
 from pneumatic_backend.accounts.models import UserGroup
 from pneumatic_backend.generics.mixins.views import (
@@ -47,13 +46,15 @@ class GroupViewSet(
         if self.action in ('list', 'retrieve'):
             return (
                 UserIsAuthenticated(),
+                BillingPlanPermission(),
                 UserIsAdminOrAccountOwner(),
             )
         else:
             return (
                 UserIsAuthenticated(),
+                BillingPlanPermission(),
                 UserIsAdminOrAccountOwner(),
-                SubscriptionPermission(),
+                ExpiredSubscriptionPermission(),
             )
 
     def get_queryset(self):

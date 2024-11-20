@@ -1198,7 +1198,8 @@ export const ruMessages = {
   'due-date.tooltip-set-up': 'Установите срок исполнения',
   'due-date.tooltip-due-date': 'Срок сдачи',
   'due-date.time': 'время',
-  'due-date.time-invalid': 'Введите время в 12-часовом формате (например, 10:00am)',
+  'due-date.time-invalid.12': 'Введите время в 12-часовом формате (например, 10:00am)',
+  'due-date.time-invalid.24': 'Введите время в 24-часовом формате (например, 18:01)',
   'due-date.time.12': '10:01am',
   'due-date.time.24': '18:01',
 };

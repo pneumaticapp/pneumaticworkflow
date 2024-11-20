@@ -427,7 +427,6 @@ def test_get_current_subscription__ok(mocker):
     account = create_test_account(
         plan=BillingPlanType.UNLIMITED,
         plan_expiration=timezone.now() + timedelta(days=10),
-        payment_card_provided=True
     )
     user = create_test_user(account=account)
     is_superuser = True
@@ -487,11 +486,9 @@ def test_get_current_subscription__create__ok(mocker):
 
     # arrange
     # init
-    payment_card_provided = True
     account = create_test_account(
         plan=BillingPlanType.UNLIMITED,
         plan_expiration=timezone.now() - timedelta(days=10),
-        payment_card_provided=payment_card_provided
     )
     user = create_test_user(account=account)
     is_superuser = True
@@ -554,7 +551,6 @@ def test_get_current_subscription__create__ok(mocker):
     )
     account_subscription_service_create_mock.assert_called_once_with(
         details=subscription_details_mock,
-        payment_card_provided=payment_card_provided
     )
     account_subscription_service_expired_mock.assert_not_called()
 
@@ -566,7 +562,6 @@ def test_get_current_subscription__expire__ok(mocker):
     account = create_test_account(
         plan=BillingPlanType.UNLIMITED,
         plan_expiration=timezone.now() + timedelta(days=10),
-        payment_card_provided=True
     )
     user = create_test_user(account=account)
     is_superuser = True
@@ -644,7 +639,6 @@ def test_get_current_subscription__tenant_create__ok(mocker):
         tenant_name=tenant_name,
         plan=BillingPlanType.UNLIMITED,
         plan_expiration=timezone.now() - timedelta(days=10),
-        payment_card_provided=True
     )
     is_superuser = True
     auth_type = AuthTokenType.API
@@ -704,7 +698,6 @@ def test_get_current_subscription__tenant_create__ok(mocker):
     )
     account_subscription_service_create_mock.assert_called_once_with(
         details=subscription_details_mock,
-        payment_card_provided=master_account.payment_card_provided,
     )
     account_subscription_service_expired_mock.assert_not_called()
 
@@ -714,7 +707,6 @@ def test_get_current_payment_method__ok(mocker):
     # arrange
     # init
     account = create_test_account(
-        payment_card_provided=True
     )
     user = create_test_user(account=account)
     is_superuser = True
@@ -744,10 +736,6 @@ def test_get_current_payment_method__ok(mocker):
         'StripeMixin._get_current_payment_method',
         return_value=payment_method_mock
     )
-    payment_card_provided_mock = mocker.patch(
-        'pneumatic_backend.payment.stripe.service.'
-        'AccountSubscriptionService.payment_card_provided'
-    )
 
     # act
     service = StripeService(
@@ -761,7 +749,6 @@ def test_get_current_payment_method__ok(mocker):
     get_current_payment_method_mock.assert_called_once_with(
         customer=customer_mock,
     )
-    payment_card_provided_mock.assert_not_called()
 
 
 def test_get_current_payment_method__enable__ok(mocker):
@@ -769,7 +756,6 @@ def test_get_current_payment_method__enable__ok(mocker):
     # arrange
     # init
     account = create_test_account(
-        payment_card_provided=False
     )
     user = create_test_user(account=account)
     is_superuser = True
@@ -799,10 +785,6 @@ def test_get_current_payment_method__enable__ok(mocker):
         'StripeMixin._get_current_payment_method',
         return_value=payment_method_mock
     )
-    payment_card_provided_mock = mocker.patch(
-        'pneumatic_backend.payment.stripe.service.'
-        'AccountSubscriptionService.payment_card_provided'
-    )
 
     # act
     service = StripeService(
@@ -816,7 +798,6 @@ def test_get_current_payment_method__enable__ok(mocker):
     get_current_payment_method_mock.assert_called_once_with(
         customer=customer_mock,
     )
-    payment_card_provided_mock.assert_called_once_with(value=True)
 
 
 def test_get_current_payment_method__disable__ok(mocker):
@@ -824,7 +805,6 @@ def test_get_current_payment_method__disable__ok(mocker):
     # arrange
     # init
     account = create_test_account(
-        payment_card_provided=True
     )
     user = create_test_user(account=account)
     is_superuser = True
@@ -852,10 +832,6 @@ def test_get_current_payment_method__disable__ok(mocker):
         'pneumatic_backend.payment.stripe.mixins.'
         'StripeMixin._get_current_payment_method',
         return_value=None
-    )
-    payment_card_provided_mock = mocker.patch(
-        'pneumatic_backend.payment.stripe.service.'
-        'AccountSubscriptionService.payment_card_provided'
     )
 
     # act
@@ -870,7 +846,6 @@ def test_get_current_payment_method__disable__ok(mocker):
     get_current_payment_method_mock.assert_called_once_with(
         customer=customer_mock,
     )
-    payment_card_provided_mock.assert_called_once_with(value=False)
 
 
 def test_get_confirm_token__ok(mocker):
@@ -1158,7 +1133,6 @@ def test_create_subscription__trial_not_ended__ok(mocker):
     get_subscription_details_mock.assert_called_once_with(subscription_mock)
     service.subscription_service.create.assert_called_once_with(
         details=subscription_details_mock,
-        payment_card_provided=True,
     )
 
 
@@ -1257,7 +1231,6 @@ def test_create_subscription__trial_ended__ok(mocker):
     get_subscription_details_mock.assert_called_once_with(subscription_mock)
     service.subscription_service.create.assert_called_once_with(
         details=subscription_details_mock,
-        payment_card_provided=True,
     )
 
 
@@ -1383,7 +1356,6 @@ def test_create_subscription__tenant_subscription__ok(mocker):
     get_subscription_details_mock.assert_called_once_with(subscription_mock)
     service.subscription_service.create.assert_called_once_with(
         details=subscription_details_mock,
-        payment_card_provided=True,
     )
 
 
@@ -4510,7 +4482,7 @@ def test_confirm__ok(mocker):
     )
     # end mock init
 
-    account = create_test_account(payment_card_provided=False)
+    account = create_test_account()
     user = create_test_user(account=account)
 
     account_service_init_mock = mocker.patch.object(
@@ -4536,7 +4508,6 @@ def test_confirm__ok(mocker):
         auth_type=AuthTokenType.USER
     )
     account_service_update_mock.assert_called_once_with(
-        payment_card_provided=True,
         force_save=True,
     )
 
@@ -4562,7 +4533,6 @@ def test_confirm__activate_subscription__from_freemium__ok(mocker):
     account = create_test_account(
         plan=BillingPlanType.FREEMIUM,
         plan_expiration=None,
-        payment_card_provided=False,
     )
     user = create_test_user(account=account)
 
@@ -4614,7 +4584,6 @@ def test_confirm__activate_subscription__from_freemium__ok(mocker):
         trial_start=now_datetime,
         billing_plan=product_code,
         trial_end=now_datetime + timedelta(days=trial_days),
-        payment_card_provided=True,
         tmp_subscription=True,
         force_save=True,
     )
@@ -4641,7 +4610,6 @@ def test_confirm__activate_subscription__from_premium__ok(mocker):
     account = create_test_account(
         plan=BillingPlanType.PREMIUM,
         plan_expiration=timezone.now() - timedelta(days=1),
-        payment_card_provided=False,
     )
     user = create_test_user(account=account)
 
@@ -4693,7 +4661,6 @@ def test_confirm__activate_subscription__from_premium__ok(mocker):
         trial_start=now_datetime,
         trial_end=now_datetime + timedelta(days=trial_days),
         billing_plan=product_code,
-        payment_card_provided=True,
         tmp_subscription=True,
         force_save=True,
     )
@@ -4720,7 +4687,6 @@ def test_confirm__subscription_already_activated__skip(mocker):
     account = create_test_account(
         plan=BillingPlanType.PREMIUM,
         plan_expiration=timezone.now() + timedelta(days=7),
-        payment_card_provided=False,
     )
     user = create_test_user(account=account)
 
@@ -4751,7 +4717,6 @@ def test_confirm__subscription_already_activated__skip(mocker):
         auth_type=AuthTokenType.USER
     )
     account_service_update_mock.assert_called_once_with(
-        payment_card_provided=True,
         force_save=True,
     )
 
@@ -4788,7 +4753,6 @@ def test_increase_subscription__ok(mocker):
     old_plan = BillingPlanType.PREMIUM
     new_plan_expiration = timezone.now() + timedelta(days=30)
     account = create_test_account(
-        payment_card_provided=False,
         plan=old_plan,
         plan_expiration=new_plan_expiration
     )
@@ -5053,76 +5017,6 @@ def test_cancel_subscription__not_subscription__skip(mocker):
     account_subs_service_cancel.assert_not_called()
 
 
-def test_terminate_subscription__ok(mocker):
-
-    # arrange
-    # mock init
-    mocker.patch(
-        'pneumatic_backend.payment.stripe.service.'
-        'StripeService._get_or_create_customer',
-    )
-    mocker.patch(
-        'pneumatic_backend.payment.stripe.service.'
-        'StripeService._get_current_payment_method',
-    )
-    subscription_mock = mocker.Mock()
-    mocker.patch(
-        'pneumatic_backend.payment.stripe.service.'
-        'StripeService._get_current_subscription',
-        return_value=subscription_mock
-    )
-    # end mock init
-
-    account = create_test_account()
-    user = create_test_user(account=account)
-    account_subs_service_downgrade_to_free_mock = mocker.patch(
-        'pneumatic_backend.payment.stripe.service.'
-        'AccountSubscriptionService.downgrade_to_free'
-    )
-    service = StripeService(user=user)
-
-    # act
-    service.terminate_subscription()
-
-    # assert
-    subscription_mock.cancel.assert_called_once()
-    account_subs_service_downgrade_to_free_mock.assert_called_once()
-
-
-def test_terminate_subscription__not_subscription__ok(mocker):
-
-    # arrange
-    # mock init
-    mocker.patch(
-        'pneumatic_backend.payment.stripe.service.'
-        'StripeService._get_or_create_customer',
-    )
-    mocker.patch(
-        'pneumatic_backend.payment.stripe.service.'
-        'StripeService._get_current_payment_method',
-    )
-    mocker.patch(
-        'pneumatic_backend.payment.stripe.service.'
-        'StripeService._get_current_subscription',
-        return_value=None
-    )
-    # end mock init
-
-    account = create_test_account()
-    user = create_test_user(account=account)
-    account_subs_service_terminate_mock = mocker.patch(
-        'pneumatic_backend.payment.stripe.service.'
-        'AccountSubscriptionService.downgrade_to_free'
-    )
-    service = StripeService(user=user)
-
-    # act
-    service.terminate_subscription()
-
-    # assert
-    account_subs_service_terminate_mock.assert_called_once()
-
-
 def test_get_payment_method__ok(mocker):
 
     # arrange
@@ -5152,7 +5046,7 @@ def test_get_payment_method__ok(mocker):
     )
     # end mock init
 
-    account = create_test_account(payment_card_provided=False)
+    account = create_test_account()
     user = create_test_user(account=account)
     service = StripeService(user=user)
 
@@ -5343,7 +5237,7 @@ def test_get_checkout_session_url__create__ok(mocker):
         'StripeService._get_idempotency_key',
         return_value=idempotency_key
     )
-    account = create_test_account(payment_card_provided=False)
+    account = create_test_account()
     user = create_test_user(account=account)
     service = StripeService(user=user)
 
@@ -5435,7 +5329,7 @@ def test_get_checkout_session_url__duplicate__return_existent(mocker):
         'pneumatic_backend.payment.stripe.service.'
         'stripe.checkout.Session.create'
     )
-    account = create_test_account(payment_card_provided=False)
+    account = create_test_account()
     user = create_test_user(account=account)
     service = StripeService(user=user)
 

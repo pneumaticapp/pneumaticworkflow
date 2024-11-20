@@ -6,6 +6,7 @@ from pneumatic_backend.processes.queries import (
 )
 from pneumatic_backend.accounts.permissions import (
     ExpiredSubscriptionPermission,
+    BillingPlanPermission,
 )
 
 from pneumatic_backend.processes.serializers.workflow_counts import (
@@ -27,6 +28,7 @@ class WorkflowCountsViewSet(
 ):
     permission_classes = (
         UserIsAuthenticated,
+        BillingPlanPermission,
         ExpiredSubscriptionPermission,
     )
 

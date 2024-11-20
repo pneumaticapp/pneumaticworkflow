@@ -52,7 +52,6 @@ def test_list__ok(api_client):
     assert data['date_joined'] == user.date_joined.strftime(date_format)
     assert data['date_joined_tsp'] == user.date_joined.timestamp()
     assert data['is_admin'] == user.is_admin
-    assert data['is_staff'] == user.is_admin
     assert data['is_account_owner'] == user.is_account_owner
     assert data['language'] == user.language
     assert data['timezone'] == user.timezone
@@ -114,7 +113,6 @@ def test_list__guest__ok(api_client):
     assert data['date_joined'] == guest.date_joined.strftime(date_format)
     assert data['date_joined_tsp'] == guest.date_joined.timestamp()
     assert data['is_admin'] == guest.is_admin
-    assert data['is_staff'] == guest.is_admin
     assert data['is_account_owner'] == guest.is_account_owner
     assert data['language'] == guest.language
     assert data['timezone'] == guest.timezone
@@ -145,20 +143,6 @@ def test_list__not_authenticated__unauthorized(api_client):
 
     # assert
     assert response.status_code == 401
-
-
-def test_list__payment_card_not_provided__permission_denied(api_client):
-
-    # arrange
-    account = create_test_account(payment_card_provided=False)
-    user = create_test_user(is_account_owner=True, account=account)
-    api_client.token_authenticate(user)
-
-    # act
-    response = api_client.get(path='/accounts/user')
-
-    # assert
-    assert response.status_code == 403
 
 
 def test_list__expired_subscription__ok(api_client):

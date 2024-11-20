@@ -538,7 +538,7 @@ def test_validate_already_accepted__status_invited__ok():
 def test_validate_limit_invites__active_users_less_then_max_users__ok():
 
     # arrange
-    account = create_test_account()
+    account = create_test_account(plan=BillingPlanType.PREMIUM)
     request_user = create_test_user(account=account)
     account.max_invites = 3
     account.max_users = 5
@@ -559,7 +559,7 @@ def test_validate_limit_invites__active_users_less_then_max_users__ok():
 def test_validate_limit_invites__active_users_less_then_max_invites__ok():
 
     # arrange
-    account = create_test_account()
+    account = create_test_account(plan=BillingPlanType.PREMIUM)
     request_user = create_test_user(account=account)
     account.max_invites = 5
     account.max_users = 3
@@ -580,7 +580,7 @@ def test_validate_limit_invites__active_users_less_then_max_invites__ok():
 def test_validate_limit_invites__account_invites_limit__raise_exception():
 
     # arrange
-    account = create_test_account()
+    account = create_test_account(plan=BillingPlanType.PREMIUM)
     request_user = create_test_user(account=account)
     account.max_invites = 5
     account.max_users = 5
@@ -597,6 +597,35 @@ def test_validate_limit_invites__account_invites_limit__raise_exception():
     # act
     with pytest.raises(UsersLimitInvitesException):
         service._validate_limit_invites()
+
+
+@pytest.mark.parametrize(
+    'plan',
+    (
+        BillingPlanType.FREEMIUM,
+        BillingPlanType.UNLIMITED,
+        BillingPlanType.FRACTIONALCOO,
+    )
+)
+def test_validate_limit_invites__not_premium_plan__not_raise(plan):
+
+    # arrange
+    account = create_test_account(plan=plan)
+    request_user = create_test_user(account=account)
+    account.max_invites = 6
+    account.max_users = 5
+    account.active_users = 10
+    account.save()
+    current_url = 'http://current.test'
+    is_superuser = False
+    service = UserInviteService(
+        current_url=current_url,
+        is_superuser=is_superuser,
+        request_user=request_user
+    )
+
+    # act
+    service._validate_limit_invites()
 
 
 def test__user_invite_actions__ok(mocker):

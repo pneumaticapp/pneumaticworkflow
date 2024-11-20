@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-06-29 10:00+0000\n"
+"POT-Creation-Date: 2024-11-13 13:45+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -139,6 +139,7 @@ msgid "The \"Master account\" required for the lease level \"tenant\"."
 msgstr "Le \"Compte principal\" est requis pour le niveau de location \"locataire\"."
 
 #: accounts/messages.py:55
+#, python-brace-format
 msgid "Converting from \"{prev}\" to \"{new}\" is not currently supported."
 msgstr "Conversion de \"{prev}\" à \"{new}\" n'est actuellement pas prise en charge."
 
@@ -186,3 +187,7 @@ msgstr "La liste des membres du groupe contient un identifiant de groupe inexist
 #: accounts/messages.py:86
 msgid "The list of groups contains a non-existent group identifier"
 msgstr "La liste des groupes contient un identifiant de groupe inexistant"
+
+#: accounts/messages.py:87
+msgid "Select a plan to complete the signup"
+msgstr "Sélectionnez un plan pour compléter l'inscription"

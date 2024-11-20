@@ -18,6 +18,7 @@ from pneumatic_backend.processes.tests.fixtures import (
 )
 from pneumatic_backend.processes.enums import (
     FieldType,
+    PredicateType,
     PredicateOperator
 )
 
@@ -454,3 +455,97 @@ class TestConditionCheckService:
 
         # assert
         assert response is result
+
+    def test_check__task_completed__return_true(self):
+
+        # arrange
+        user = create_test_user()
+        workflow = create_test_workflow(user, tasks_count=2)
+        task_1 = workflow.tasks.get(number=1)
+        task_1.is_completed = True
+        task_1.save()
+        task_2 = workflow.tasks.get(number=2)
+        condition = Condition.objects.create(
+            task=task_2,
+            action=Condition.SKIP_TASK,
+            order=1,
+            template_id=1,
+        )
+        rule = Rule.objects.create(
+            condition=condition,
+            template_id=1,
+        )
+        Predicate.objects.create(
+            rule=rule,
+            operator=PredicateOperator.COMPLETED,
+            field_type=PredicateType.TASK,
+            field=task_1.api_name,
+            value=None,
+        )
+
+        # act
+        response = ConditionCheckService.check(condition, workflow.id)
+
+        # assert
+        assert response is True
+
+    def test_check__task_not_completed__return_false(self):
+
+        # arrange
+        user = create_test_user()
+        workflow = create_test_workflow(user, tasks_count=2)
+        task_1 = workflow.tasks.get(number=1)
+        task_2 = workflow.tasks.get(number=2)
+        condition = Condition.objects.create(
+            task=task_2,
+            action=Condition.SKIP_TASK,
+            order=1,
+            template_id=1,
+        )
+        rule = Rule.objects.create(
+            condition=condition,
+            template_id=1,
+        )
+        Predicate.objects.create(
+            rule=rule,
+            operator=PredicateOperator.COMPLETED,
+            field_type=PredicateType.TASK,
+            field=task_1.api_name,
+            value=None,
+        )
+
+        # act
+        response = ConditionCheckService.check(condition, workflow.id)
+
+        # assert
+        assert response is False
+
+    def test_check__kickoff_completed__return_true(self):
+
+        # arrange
+        user = create_test_user()
+        workflow = create_test_workflow(user, tasks_count=1)
+        task_1 = workflow.tasks.get(number=1)
+        condition = Condition.objects.create(
+            task=task_1,
+            action=Condition.SKIP_TASK,
+            order=1,
+            template_id=1,
+        )
+        rule = Rule.objects.create(
+            condition=condition,
+            template_id=1,
+        )
+        Predicate.objects.create(
+            rule=rule,
+            operator=PredicateOperator.COMPLETED,
+            field_type=PredicateType.KICKOFF,
+            field=None,
+            value=None,
+        )
+
+        # act
+        response = ConditionCheckService.check(condition, workflow.id)
+
+        # assert
+        assert response is True

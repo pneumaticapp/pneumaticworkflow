@@ -27,23 +27,9 @@ MSG_PT_0011 = _('Kickoff form \'id\' has incorrect value.')
 MSG_PT_0012 = _('Kickoff \'id\' not provided.')
 MSG_PT_0013 = _('Tasks data not provided, one task required.')
 MSG_PT_0014 = _('Incorrect tasks order.')
-MSG_PT_0015 = lambda count: format_lazy(
-    _(
-        'The free plan allows {count} enabled templates.'
-        'Please upgrade your plan or disable some unwanted templates.'
-    ),
-    count=count
-)
 MSG_PT_0016 = _('You should set \'template owners\' value.')
-MSG_PT_0017 = _(
-    'You have to upgrade your plan to the Premium, '
-    'if you want to change template ownership.'
-)
 MSG_PT_0018 = _('You cannot remove yourself from template owners.')
 MSG_PT_0019 = _('One or more template owners are incorrect.')
-MSG_PT_0020 = _(
-    'Public success url is available only for customers on Premium plan.'
-)
 MSG_PT_0021 = _('"Public success url" is an invalid format.')
 MSG_PT_0022 = _(
     "Filters 'with_tasks_in_progress' and 'workflows_status'"
@@ -109,9 +95,7 @@ MSG_PT_0041 = lambda old_api_name, new_api_name: format_lazy(
     old=old_api_name,
     new=new_api_name
 )
-MSG_PT_0042 = _(
-    'Workflow conditions are available only for customers on Premium plan.'
-)
+
 # Translators: Add user field value in condition with not allowed user
 MSG_PT_0043 = lambda task, user_id: format_lazy(
     _(

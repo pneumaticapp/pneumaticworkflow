@@ -5,6 +5,9 @@ from pneumatic_backend.generics.permissions import UserIsAuthenticated
 from pneumatic_backend.faq.serializers import (
     FaqIemSerializer
 )
+from pneumatic_backend.accounts.permissions import (
+    BillingPlanPermission,
+)
 from pneumatic_backend.faq.models import FaqItem
 
 
@@ -15,5 +18,8 @@ class FaqViewSet(
 ):
 
     queryset = FaqItem.objects.active()
-    permission_classes = (UserIsAuthenticated,)
+    permission_classes = (
+        UserIsAuthenticated,
+        BillingPlanPermission,
+    )
     serializer_class = FaqIemSerializer

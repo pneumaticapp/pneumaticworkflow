@@ -485,8 +485,6 @@ def test_get_template_data__model_gpt4__ok(mocker):
         'finalizable': True,
         'is_public': False,
         'template_owners': [user.id],
-        'tasks_count': 2,
-        'performers_count': 1,
         'kickoff': {
             'description': '',
             'fields': []
@@ -592,8 +590,6 @@ def test_get_template_data_model_gpt3__ok(mocker):
         'finalizable': True,
         'is_public': False,
         'template_owners': [user.id],
-        'tasks_count': 2,
-        'performers_count': 1,
         'kickoff': {
             'description': '',
             'fields': []

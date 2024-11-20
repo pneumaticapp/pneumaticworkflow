@@ -1586,9 +1586,9 @@ def test_list__filter_is_completed_false_ended_wf__not_found(
         data={'task_id': workflow.current_task_instance.id}
     )
     workflow.refresh_from_db()
-    WorkflowActionService().end_process(
+    service = WorkflowActionService(user=user)
+    service.end_process(
         workflow=workflow,
-        user=user,
         by_condition=False,
     )
 
@@ -1825,9 +1825,9 @@ def test_list__filter_is_completed_true_ended_wf__ok(
         data={'task_id': workflow.current_task_instance.id}
     )
     workflow.refresh_from_db()
-    WorkflowActionService().end_process(
+    service = WorkflowActionService(user=user)
+    service.end_process(
         workflow=workflow,
-        user=user,
         by_condition=False,
     )
     task = workflow.tasks.get(number=1)

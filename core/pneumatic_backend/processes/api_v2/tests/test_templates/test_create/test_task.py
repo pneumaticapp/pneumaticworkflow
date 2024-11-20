@@ -1042,7 +1042,7 @@ class TestCreateTemplateTask:
             path=f'/templates/{template_id}/run',
             data={'name': 'Test template'}
         )
-        workflow_id = response_run.data['workflow_id']
+        workflow_id = response_run.data['id']
         workflow = Workflow.objects.get(id=workflow_id)
 
         response_complete = api_client.post(
@@ -2287,4 +2287,3 @@ class TestCreateTemplateRawPerformer:
 
         # assert
         assert response.status_code == 200
-        assert response.data['performers_count'] == 0

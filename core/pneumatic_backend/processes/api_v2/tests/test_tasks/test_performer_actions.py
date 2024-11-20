@@ -734,7 +734,6 @@ class TestCreateGuestPerformer:
         assert response.data['photo'] == guest_user.photo
         assert response.data['status'] == guest_user.status
         assert response.data['status'] == guest_user.status
-        assert response.data['is_staff'] == guest_user.is_admin
         assert response.data['is_admin'] == guest_user.is_admin
         assert response.data['is_account_owner'] == (
             guest_user.is_account_owner

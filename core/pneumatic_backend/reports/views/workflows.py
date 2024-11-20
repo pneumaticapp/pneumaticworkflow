@@ -5,6 +5,7 @@ from rest_framework.viewsets import GenericViewSet
 from pneumatic_backend.accounts.permissions import (
     UserIsAdminOrAccountOwner,
     ExpiredSubscriptionPermission,
+    BillingPlanPermission,
 )
 from pneumatic_backend.executor import RawSqlExecutor
 from pneumatic_backend.processes.models import Template
@@ -24,7 +25,6 @@ from pneumatic_backend.reports.serializers import (
 from pneumatic_backend.generics.mixins.views import CustomViewSetMixin
 from pneumatic_backend.generics.permissions import (
     UserIsAuthenticated,
-    PaymentCardPermission,
 )
 
 
@@ -35,9 +35,9 @@ class WorkflowsDashboardViewSet(
     pagination_class = LimitOffsetPagination
     permission_classes = (
         UserIsAuthenticated,
+        ExpiredSubscriptionPermission,
+        BillingPlanPermission,
         UserIsAdminOrAccountOwner,
-        PaymentCardPermission,
-        ExpiredSubscriptionPermission
     )
     action_serializer_classes = {
         'overview': AccountDashboardOverviewSerializer,

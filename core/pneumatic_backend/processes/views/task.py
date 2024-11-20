@@ -6,6 +6,7 @@ from rest_framework.pagination import LimitOffsetPagination
 
 from pneumatic_backend.accounts.permissions import (
     ExpiredSubscriptionPermission,
+    BillingPlanPermission,
 )
 from pneumatic_backend.processes.filters import RecentTaskFilter
 from pneumatic_backend.processes.models import (
@@ -35,6 +36,7 @@ class RecentTaskView(ListAPIView):
     serializer_class = RecentTaskSerializer
     permission_classes = (
         UserIsAuthenticated,
+        BillingPlanPermission,
         ExpiredSubscriptionPermission,
     )
     pagination_class = OneItemPagination

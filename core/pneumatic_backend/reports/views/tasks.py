@@ -5,6 +5,7 @@ from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.viewsets import GenericViewSet
 from pneumatic_backend.accounts.permissions import (
     ExpiredSubscriptionPermission,
+    BillingPlanPermission,
 )
 from pneumatic_backend.executor import RawSqlExecutor
 from pneumatic_backend.processes.models import Template
@@ -22,7 +23,6 @@ from pneumatic_backend.reports.serializers import (
 )
 from pneumatic_backend.generics.permissions import (
     UserIsAuthenticated,
-    PaymentCardPermission,
 )
 from pneumatic_backend.generics.mixins.views import CustomViewSetMixin
 
@@ -34,8 +34,8 @@ class TasksDashboardViewSet(
     pagination_class = LimitOffsetPagination
     permission_classes = (
         UserIsAuthenticated,
-        PaymentCardPermission,
-        ExpiredSubscriptionPermission
+        ExpiredSubscriptionPermission,
+        BillingPlanPermission,
     )
 
     @action(methods=['get'], detail=False)

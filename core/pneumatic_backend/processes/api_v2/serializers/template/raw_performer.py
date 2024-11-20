@@ -1,5 +1,6 @@
 from typing import Dict, Any
 from django.contrib.auth import get_user_model
+from django.core.exceptions import ObjectDoesNotExist
 from rest_framework.serializers import (
     Serializer,
     IntegerField,
@@ -59,6 +60,7 @@ class RawPerformerSerializer(
             'label',
             'api_name',
             'user_id',
+            'group_id',
         }
 
     id = IntegerField(required=False)
@@ -93,10 +95,8 @@ class RawPerformerSerializer(
         data: Dict[str, Any]
     ):
 
-        all_user_ids = []
         account = self.context['account']
         task = self.context['task']
-
         user_id = data.get('source_id')
         if not user_id:
             self.raise_validation_error(
@@ -104,20 +104,17 @@ class RawPerformerSerializer(
                 api_name=task.api_name
             )
         try:
-            all_user_ids.append(int(user_id))
+            user_id = int(user_id)
         except (ValueError, TypeError):
             self.raise_validation_error(
                 message=MSG_PT_0033,
                 api_name=task.api_name
             )
-
-        unique_user_ids = set(all_user_ids)
         account_user_ids = (
             self.context.get('account_user_ids') or
             account.get_user_ids(include_invited=True)
         )
-        undefined_ids = unique_user_ids - account_user_ids
-        if undefined_ids:
+        if user_id not in account_user_ids:
             self.raise_validation_error(
                 message=MSG_PT_0034,
                 api_name=task.api_name
@@ -132,6 +129,32 @@ class RawPerformerSerializer(
         if template.is_public or template.is_embedded:
             self.raise_validation_error(
                 message=MSG_PT_0035,
+                api_name=task.api_name
+            )
+
+    def additional_validate_raw_performers_type_group(
+        self,
+        data: Dict[str, Any]
+    ):
+        account = self.context['account']
+        task = self.context['task']
+
+        group_id = data.get('source_id')
+        if not group_id:
+            self.raise_validation_error(
+                message=MSG_PT_0032,
+                api_name=task.api_name
+            )
+        try:
+            account.user_groups.get(id=int(group_id))
+        except ObjectDoesNotExist:
+            self.raise_validation_error(
+                message=MSG_PT_0034,
+                api_name=task.api_name
+            )
+        except (ValueError, TypeError):
+            self.raise_validation_error(
+                message=MSG_PT_0033,
                 api_name=task.api_name
             )
 
@@ -160,6 +183,9 @@ class RawPerformerSerializer(
             elif instance.type == PerformerType.WORKFLOW_STARTER:
                 data['source_id'] = None
                 data['label'] = 'Workflow starter'
+            elif instance.type == PerformerType.GROUP:
+                data['source_id'] = str(instance.group_id)
+                data['label'] = instance.group.name
             data['id'] = instance.id
         return data
 
@@ -175,6 +201,8 @@ class RawPerformerSerializer(
             raw_performer_data['api_name'] = validated_data['api_name']
         if validated_data['type'] == PerformerType.USER:
             raw_performer_data['user_id'] = validated_data['source_id']
+        elif validated_data['type'] == PerformerType.GROUP:
+            raw_performer_data['group_id'] = validated_data['source_id']
         elif validated_data['type'] == PerformerType.FIELD:
             api_name = validated_data['source_id']
             field = FieldTemplate.objects.get(
@@ -202,6 +230,8 @@ class RawPerformerSerializer(
             raw_performer_data['api_name'] = validated_data['api_name']
         if validated_data['type'] == PerformerType.USER:
             raw_performer_data['user_id'] = validated_data['source_id']
+        elif validated_data['type'] == PerformerType.GROUP:
+            raw_performer_data['group_id'] = validated_data['source_id']
         elif validated_data['type'] == PerformerType.FIELD:
             api_name = validated_data['source_id']
             field = FieldTemplate.objects.get(

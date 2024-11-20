@@ -167,6 +167,57 @@ class TestFields:
         assert selections_data[0]['value'] == selection.value
         assert selections_data[0]['is_selected'] is True
 
+    def test_fields__type_date__ok(
+        self,
+        api_client,
+    ):
+        # arrange
+        user = create_test_user()
+        workflow = create_test_workflow(user, tasks_count=1)
+        task = workflow.tasks.first()
+        field = TaskField.objects.create(
+            order=1,
+            type=FieldType.DATE,
+            name='date',
+            task=task,
+            value=6513131,
+            workflow=workflow
+        )
+        non_selected_workflow = create_test_workflow(user, tasks_count=1)
+        non_selected_task = non_selected_workflow.tasks.first()
+        TaskField.objects.create(
+            order=1,
+            type=FieldType.DATE,
+            name='date',
+            task=non_selected_task,
+            value=6513131,
+            workflow=non_selected_workflow
+        )
+        api_client.token_authenticate(user)
+
+        # act
+        response = api_client.get(
+            '/workflows/fields',
+            data={
+                'template_id': workflow.template.id
+            }
+        )
+
+        # assert
+        assert response.status_code == 200
+        assert len(response.data['results']) == 1
+        fields_data = response.data['results'][0]['fields']
+        assert len(fields_data) == 1
+        assert fields_data[0]['id'] == field.id
+        assert fields_data[0]['task_id'] == task.id
+        assert fields_data[0]['kickoff_id'] is None
+        assert fields_data[0]['type'] == FieldType.DATE
+        assert fields_data[0]['api_name'] == field.api_name
+        assert fields_data[0]['name'] == field.name
+        assert fields_data[0]['value'] == str(field.value)
+        assert fields_data[0]['selections'] == []
+        assert fields_data[0]['attachments'] == []
+
     def test_fields__type_file__ok(
         self,
         api_client,

@@ -2,13 +2,13 @@ from pneumatic_backend.authentication.permissions import (
     StaffPermission
 )
 from pneumatic_backend.accounts.permissions import (
+    BillingPlanPermission,
     UserIsAdminOrAccountOwner,
     UsersOverlimitedPermission,
     ExpiredSubscriptionPermission,
 )
 from pneumatic_backend.generics.permissions import (
     UserIsAuthenticated,
-    PaymentCardPermission,
 )
 from pneumatic_backend.processes.filters import (
     SystemTemplateFilter
@@ -55,10 +55,10 @@ class SystemTemplateViewSet(
     def get_permissions(self):
         return (
             UserIsAuthenticated(),
-            UserIsAdminOrAccountOwner(),
+            BillingPlanPermission(),
             ExpiredSubscriptionPermission(),
+            UserIsAdminOrAccountOwner(),
             UsersOverlimitedPermission(),
-            PaymentCardPermission(),
         )
 
     def get_queryset(self):
@@ -102,6 +102,8 @@ class SystemTemplatesImportViewSet(
     parser_classes = [ImportSystemTemplateParser]
     permission_classes = (
         UserIsAuthenticated,
+        BillingPlanPermission,
+        ExpiredSubscriptionPermission,
         StaffPermission,
     )
     serializer_class = LibraryTemplateImportSerializer

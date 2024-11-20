@@ -947,9 +947,9 @@ class TemplateListQuery(
             pt.is_embedded,
             pt.type,
             pt.search_content,
-            pt.performers_count,
             {self.get_workflows_select()}
-            pt.tasks_count
+            COUNT(ptt.id) as tasks_count
+
         FROM processes_template pt
         LEFT JOIN processes_tasktemplate ptt ON (
           ptt.template_id = pt.id AND
@@ -1204,6 +1204,43 @@ class TaskWorkflowMemberQuery(SqlQueryObject):
         return query, self.params
 
 
+class TemplateWorkflowMemberQuery(SqlQueryObject):
+
+    def __init__(
+        self,
+        user: User,
+        template_id: int
+    ):
+        self.params = {
+            'account_id': user.account.id,
+            'user_id': user.id,
+            'template_id': template_id
+        }
+
+    def get_sql(self):
+        query = """
+            SELECT t.id
+            FROM processes_template t
+              LEFT JOIN processes_workflow pw
+                ON pw.template_id = t.id AND pw.is_deleted IS FALSE
+              LEFT JOIN processes_template_template_owners pto
+                ON pto.template_id = t.id
+              LEFT JOIN processes_workflow_members pwm
+                ON pwm.workflow_id = pw.id
+            WHERE
+              t.id = %(template_id)s
+              AND t.is_deleted IS FALSE
+              AND t.account_id = %(account_id)s
+              AND (
+                pto.user_id = %(user_id)s
+                OR pwm.user_id = %(user_id)s
+              )
+            LIMIT 1
+        """
+
+        return query, self.params
+
+
 class HighlightsQuery(SqlQueryObject):
 
     event_types = (
@@ -1230,8 +1267,8 @@ class HighlightsQuery(SqlQueryObject):
         user_id,
         templates=None,
         users=None,
-        date_before: Optional[datetime] = None,
-        date_after: Optional[datetime] = None,
+        date_before_tsp: Optional[datetime] = None,
+        date_after_tsp: Optional[datetime] = None,
     ):
 
         # TODO Refactoring need
@@ -1254,11 +1291,11 @@ class HighlightsQuery(SqlQueryObject):
             except (SyntaxError, ValueError):
                 raise ValidationError(MSG_PW_0024('users'))
 
-        if date_before is not None:
-            self.date_before = date_before
+        if date_before_tsp is not None:
+            self.date_before_tsp = date_before_tsp
 
-        if date_after is not None:
-            self.date_after = date_after
+        if date_after_tsp is not None:
+            self.date_after_tsp = date_after_tsp
 
     def get_sql(self):
         subquery = f"""
@@ -1311,13 +1348,13 @@ class HighlightsQuery(SqlQueryObject):
                 f'workflow.template_id in {result}'
             )
 
-        if hasattr(self, 'date_before'):
-            self.sql_params['date_before'] = self.date_before
-            where.append(f'we.created <= %(date_before)s')
+        if hasattr(self, 'date_before_tsp'):
+            self.sql_params['date_before_tsp'] = self.date_before_tsp
+            where.append(f'we.created <= %(date_before_tsp)s')
 
-        if hasattr(self, 'date_after'):
-            self.sql_params['date_after'] = self.date_after
-            where.append(f'we.created >= %(date_after)s')
+        if hasattr(self, 'date_after_tsp'):
+            self.sql_params['date_after_tsp'] = self.date_after_tsp
+            where.append(f'we.created >= %(date_after_tsp)s')
 
         if additional_where:
             additional_where = ' AND '.join(additional_where)

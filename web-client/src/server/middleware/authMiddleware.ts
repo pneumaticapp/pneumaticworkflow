@@ -7,7 +7,7 @@ import { identifyAppPartOnServer } from '../../public/utils/identifyAppPart/iden
 import { EAppPart } from '../../public/utils/identifyAppPart/types';
 import { getUser } from './utils/getUser';
 import { IAuthenticatedUser } from '../utils/types';
-// import { isEnvBilling } from '../../public/constants/enviroment';
+import { isEnvBilling } from '../../public/constants/enviroment';
 
 const UNSIGNED_USER_ROUTES = [
   ERoutes.Login,
@@ -19,8 +19,7 @@ const UNSIGNED_USER_ROUTES = [
   ERoutes.ExpiredInvite,
 ];
 
-// const PAYMENT_ROUTES = [ERoutes.CollectPaymentDetails, ERoutes.AfterPaymentDetailsProvided];
-
+const PAYMENT_ROUTES = [ERoutes.CollectPaymentDetails, ERoutes.AfterPaymentDetailsProvided];
 const EXCLUDED_ROUTES = ['/assets/', '/static/', ERoutes.Iframes];
 
 export async function authMiddleware(req: Request, res: Response, next: NextFunction) {
@@ -37,13 +36,12 @@ export async function authMiddleware(req: Request, res: Response, next: NextFunc
 
   const { mobile_app_token: mobileAppToken } = req.query || '';
   const token = (mobileAppToken as string) || parseCookies(req.get('cookie')).token;
-
   if (mobileAppToken) {
     setAuthCookie(req, res, { token: req.query.mobile_app_token as string });
   }
 
   const isUnsignedUserRoute = UNSIGNED_USER_ROUTES.some((route) => req.url.includes(route));
-  // const isPaymentDetailsRoute = PAYMENT_ROUTES.some((route) => req.url.includes(route));
+  const isPaymentDetailsRoute = PAYMENT_ROUTES.some((route) => req.url.includes(route));
 
   if (!token) {
     return isUnsignedUserRoute ? next() : res.redirect(getLoginUrl(req));
@@ -52,18 +50,23 @@ export async function authMiddleware(req: Request, res: Response, next: NextFunc
   try {
     const user = await getUser(req, token, req.headers['user-agent']);
     res.locals.user = { ...user, token };
-    // const paymentDetailsProvided = user.account.payment_card_provided;
 
-    // if (isEnvBilling && !paymentDetailsProvided) {
-    //   return isUnsignedUserRoute || isPaymentDetailsRoute ? next() : res.redirect(ERoutes.CollectPaymentDetails);
-    // }
+    const isSubscribed = user.account.is_subscribed;
+    const billingPlan = user.account.billing_plan;
 
-    return isUnsignedUserRoute ? redirectToUserDefaulRoute(user, res) : next();
+    if ((isSubscribed || billingPlan === 'free') && isUnsignedUserRoute) {
+      return redirectToUserDefaulRoute(user, res);
+    }
+
+    if (isEnvBilling && !billingPlan) {
+      return isUnsignedUserRoute || isPaymentDetailsRoute ? next() : res.redirect(ERoutes.CollectPaymentDetails);
+    }
+
+    return next();
   } catch (err) {
     resetCookie('token', req, res);
 
     res.locals.user = { token };
-
     return isUnsignedUserRoute ? next() : res.redirect(ERoutes.Login);
   }
 }

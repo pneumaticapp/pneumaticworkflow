@@ -408,7 +408,6 @@ class TasksDigestQuery(
           tt.is_deleted IS FALSE AND
           au.is_deleted IS FALSE AND
           au.status = %(active_user)s AND
-          aa.payment_card_provided = TRUE AND
           ptp.directly_status != %(directly_status)s
           {self._get_subscriber_where()}
           {self._get_user_where()}

@@ -31,17 +31,17 @@ const EMPTY_USER_DATA: IUnsavedUser = {
     leaseLevel: 'standard',
     logoSm: null,
     logoLg: null,
-    paymentCardProvided: true,
     trialEnded: false,
     trialIsActive: false,
-    isSubscribed: false
+    isSubscribed: false,
+    billingSync: true
   },
   photo: '',
   type: 'user',
   language: '',
   timezone: '',
   dateFmt: '',
-  dateFdw: ''
+  dateFdw: '',
 };
 
 class AuthCreator {

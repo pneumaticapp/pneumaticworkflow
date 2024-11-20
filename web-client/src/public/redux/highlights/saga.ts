@@ -16,6 +16,8 @@ import {
   TLoadHighlightsTemplatesTitles,
 } from './actions';
 import { getHighlightsTitles } from '../../api/getHighlightsTitles';
+import { mapWorkflowsForSetHighlights } from '../../utils/mappers';
+import { getUserTimezone } from '../selectors/user';
 
 function* fetchTemplatesTitles({ payload: { eventDateFrom, eventDateTo } }: TLoadHighlightsTemplatesTitles) {
   try {
@@ -42,6 +44,7 @@ export function* fetchHighlights({ payload: { limit, offset, onScroll } }: TLoad
       users: filters.usersFilter.map(String),
       templates: filters.templatesFilter.map(String),
     };
+    const timezone: ReturnType<typeof getUserTimezone> = yield select(getUserTimezone);
 
     if (onScroll) {
       yield put(setIsFeedLoading(true));
@@ -51,8 +54,10 @@ export function* fetchHighlights({ payload: { limit, offset, onScroll } }: TLoad
         offset,
         filters: normalizedFilters,
       });
+
+      const formattedResults = mapWorkflowsForSetHighlights(results, timezone);
       yield put(setIsFeedLoading(false));
-      yield put(setHighlights({ count, next, previous, results: [...items, ...results] }));
+      yield put(setHighlights({ count, next, previous, results: [...items, ...formattedResults] }));
 
       return;
     }
@@ -67,8 +72,9 @@ export function* fetchHighlights({ payload: { limit, offset, onScroll } }: TLoad
         filters: normalizedFilters,
       });
 
+      const formattedResults = mapWorkflowsForSetHighlights(results, timezone);
       yield put(setIsFeedLoading(false));
-      yield put(setHighlights({ count, next, previous, results }));
+      yield put(setHighlights({ count, next, previous, results: formattedResults }));
     }
   } catch (error) {
     NotificationManager.error({ id: 'process-highlights.fetch-failed' });

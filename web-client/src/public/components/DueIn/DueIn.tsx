@@ -69,7 +69,11 @@ export function DueIn({
       onSave(dateWithTime);
       dropdownRef.current?.closeDropdown();
     } catch (error) {
-      setTimeError(formatMessage({ id: 'due-date.time-invalid' }));
+      setTimeError(
+        dateFmt.split(', ')[2] === 'p'
+          ? formatMessage({ id: 'due-date.time-invalid.12' })
+          : formatMessage({ id: 'due-date.time-invalid.24' }),
+      );
     }
   };
 

@@ -1,7 +1,5 @@
 from datetime import datetime
 from django.utils import timezone
-from django.db import transaction
-from django.conf import settings
 from django.contrib.auth import get_user_model
 
 from pneumatic_backend.analytics.services import AnalyticService
@@ -12,9 +10,6 @@ from pneumatic_backend.accounts.enums import (
 from pneumatic_backend.accounts.models import Account
 from pneumatic_backend.authentication.enums import AuthTokenType
 from pneumatic_backend.analytics.mixins import BaseIdentifyMixin
-from pneumatic_backend.payment.services.exceptions import (
-    DowngradeException
-)
 from pneumatic_backend.payment.entities import (
     SubscriptionDetails,
 )
@@ -53,7 +48,6 @@ class AccountSubscriptionService(BaseIdentifyMixin):
     def _create(
         self,
         details: SubscriptionDetails,
-        payment_card_provided: bool,
     ):
         if self.instance.tmp_subscription:
             # The webhook is late and a temporary subscription is active now
@@ -72,7 +66,6 @@ class AccountSubscriptionService(BaseIdentifyMixin):
             'billing_period': details.billing_period,
             'plan_expiration': details.plan_expiration,
             'max_users': details.max_users,
-            'payment_card_provided': payment_card_provided,
             'tmp_subscription': False,
             'force_save': True
         }
@@ -90,7 +83,6 @@ class AccountSubscriptionService(BaseIdentifyMixin):
     def create(
         self,
         details: SubscriptionDetails,
-        payment_card_provided: bool,
     ):
 
         """ Create account subscription """
@@ -99,7 +91,6 @@ class AccountSubscriptionService(BaseIdentifyMixin):
         if plan_changed:
             self._create(
                 details=details,
-                payment_card_provided=payment_card_provided,
             )
 
     def _update(
@@ -124,7 +115,6 @@ class AccountSubscriptionService(BaseIdentifyMixin):
             billing_period=details.billing_period,
             plan_expiration=details.plan_expiration,
             max_users=details.max_users,
-            payment_card_provided=True,
             tmp_subscription=False,
             trial_ended=True,
             force_save=True
@@ -170,57 +160,3 @@ class AccountSubscriptionService(BaseIdentifyMixin):
 
         self.expired(plan_expiration)
         AnalyticService.subscription_canceled(self.user)
-
-    def downgrade_to_free(self):
-
-        """ Downgrade to free plan if current plan expired """
-
-        # TODO the method does not decrease the number of active
-        #  users according to the freemium limit
-
-        account = self.instance
-        if account.is_free:
-            return
-        if not account.is_expired:
-            raise DowngradeException()
-        with transaction.atomic():
-            active_templates = account.active_templates
-            if account.active_templates > account.max_active_templates:
-                account.template_set.update(is_active=False)
-                active_templates = 0
-            else:
-                active_paid_templates = account.get_active_paid_templates()
-                count = active_paid_templates.count()
-                active_paid_templates.update(is_active=False)
-                active_templates -= count
-
-            account_service = AccountService(
-                instance=self.instance,
-                user=self.user,
-                auth_type=self.auth_type,
-                is_superuser=self.is_superuser
-            )
-            data = {
-                'billing_plan': BillingPlanType.FREEMIUM,
-                'billing_period': None,
-                'plan_expiration': None,
-                'active_templates': active_templates,
-                'max_users': settings.FREEMIUM_MAX_USERS,
-                'trial_ended': True,
-                'force_save': True
-            }
-            account_service.partial_update(**data)
-            AnalyticService.subscription_canceled(self.user)
-
-    def payment_card_provided(self, value: bool):
-        account_service = AccountService(
-            instance=self.instance,
-            user=self.user,
-            auth_type=self.auth_type,
-            is_superuser=self.is_superuser,
-        )
-        account_service.partial_update(
-            payment_card_provided=value,
-            force_save=True
-        )
-        self.identify(self.user)

@@ -2,7 +2,6 @@ import pytest
 from datetime import timedelta
 from django.contrib.auth import get_user_model
 from django.utils import timezone
-from pneumatic_backend.accounts.services import AccountService
 from pneumatic_backend.reports.tests.fixtures import (
     create_test_user,
     create_invited_user,
@@ -45,11 +44,6 @@ class TestDashboardOverview:
         second_template = create_test_template(user, is_active=True)
         create_test_template(user, is_active=True)
         fourth_template = create_test_template(user, is_active=True)
-        account_service = AccountService(
-            instance=user.account,
-            user=user
-        )
-        account_service.update_active_templates()
         create_test_template(user)
 
         first_workflow = create_test_workflow(user, template=first_template)
@@ -139,11 +133,6 @@ class TestDashboardOverview:
         second_template = create_test_template(user)
         fourth_template = create_test_template(user)
         create_test_template(user, is_active=True)
-        account_service = AccountService(
-            instance=user.account,
-            user=user
-        )
-        account_service.update_active_templates()
         create_test_template(user)
 
         first_workflow = create_test_workflow(user, template=first_template)
@@ -243,11 +232,6 @@ class TestDashboardOverview:
         first_template = create_test_template(user)
         second_template = create_test_template(user, is_active=True)
         fourth_template = create_test_template(user, is_active=True)
-        account_service = AccountService(
-            instance=user.account,
-            user=user
-        )
-        account_service.update_active_templates()
         create_test_template(user)
 
         first_workflow = create_test_workflow(user, template=first_template)
@@ -520,11 +504,6 @@ class TestDashboardWorkflowBreakdown:
         second_template = create_test_template(user, is_active=True)
         third_template = create_test_template(user, is_active=True)
         fourth_template = create_test_template(user, is_active=True)
-        account_service = AccountService(
-            instance=user.account,
-            user=user
-        )
-        account_service.update_active_templates()
         draft_template = create_test_template(user)
 
         first_workflow = create_test_workflow(user, template=first_template)
@@ -668,11 +647,6 @@ class TestDashboardWorkflowBreakdown:
         user = create_test_user(account=account, is_account_owner=False)
         first_template = create_test_template(user)
         second_template = create_test_template(user, is_active=True)
-        account_service = AccountService(
-            instance=user.account,
-            user=user
-        )
-        account_service.update_active_templates()
 
         first_workflow = create_test_workflow(user, template=first_template)
         first_workflow.status = WorkflowStatus.DONE
@@ -760,11 +734,6 @@ class TestDashboardWorkflowBreakdown:
             is_active=True,
             name='fourth'
         )
-        account_service = AccountService(
-            instance=user.account,
-            user=user
-        )
-        account_service.update_active_templates()
         draft_template = create_test_template(
             user,
             is_active=False,
@@ -1256,11 +1225,6 @@ class TestWorkflowBreakdownByTasks:
         user = create_test_user(account=account, is_account_owner=False)
         first_template = create_test_template(user)
         second_template = create_test_template(user, is_active=True)
-        account_service = AccountService(
-            instance=user.account,
-            user=user
-        )
-        account_service.update_active_templates()
 
         first_workflow = create_test_workflow(user, template=first_template)
         api_client.token_authenticate(user)
@@ -1381,11 +1345,6 @@ class TestWorkflowBreakdownByTasks:
         user = create_test_user(account=account, is_account_owner=False)
         first_template = create_test_template(user)
         second_template = create_test_template(user, is_active=True)
-        account_service = AccountService(
-            instance=user.account,
-            user=user
-        )
-        account_service.update_active_templates()
 
         first_workflow = create_test_workflow(user, template=first_template)
         api_client.token_authenticate(user)

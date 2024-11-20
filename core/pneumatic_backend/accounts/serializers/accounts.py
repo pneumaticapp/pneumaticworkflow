@@ -2,9 +2,6 @@ from django.contrib.auth import get_user_model
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from pneumatic_backend.accounts.models import Account
-from pneumatic_backend.accounts.enums import (
-    BillingPlanType,
-)
 from pneumatic_backend.generics.serializers import CustomValidationErrorMixin
 from pneumatic_backend.accounts.messages import MSG_A_0003
 from pneumatic_backend.generics.fields import TimeStampField
@@ -81,8 +78,6 @@ class AccountPlanSerializer(serializers.ModelSerializer):
             'active_users',
             'tenants_active_users',
             'max_users',
-            'max_templates',
-            'active_templates',
             'billing_sync',
             'billing_plan',
             'billing_period',
@@ -92,13 +87,7 @@ class AccountPlanSerializer(serializers.ModelSerializer):
             'trial_ended',
         )
 
-    max_templates = serializers.SerializerMethodField()
     plan_expiration_tsp = TimeStampField(
         read_only=True,
         source='plan_expiration'
     )
-
-    def get_max_templates(self, instance: Account):
-        if instance.billing_plan != BillingPlanType.FREEMIUM:
-            return None
-        return instance.max_active_templates

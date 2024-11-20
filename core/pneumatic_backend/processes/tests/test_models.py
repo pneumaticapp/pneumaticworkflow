@@ -177,7 +177,7 @@ class TestTemplate:
             name=template.name,
             description=template.description,
             account_id=template.account_id,
-            tasks_count=template.tasks_count,
+            tasks_count=template.tasks.count(),
             template=template,
             status_updated=timezone.now(),
         )
@@ -209,7 +209,7 @@ class TestTemplate:
             name=template.name,
             description=template.description,
             account_id=template.account_id,
-            tasks_count=template.tasks_count,
+            tasks_count=template.tasks.count(),
             template=template,
             status_updated=timezone.now(),
         )
@@ -277,6 +277,28 @@ class TestWorkflow:
         assert task_list[0].is_deleted is True
         assert task_list[1].is_deleted is True
         assert task_list[2].is_deleted is True
+
+    def test_get_kickoff_fields_values__ok(self, mocker):
+        # arrange
+        user = create_test_user()
+        workflow = create_test_workflow(user=user)
+        markdown_value_mock = mocker.Mock(return_value='test')
+        field_mock = mocker.Mock(
+            api_name='field-template',
+            markdown_value=markdown_value_mock
+        )
+        kickoff_output_fields_mock = mocker.patch(
+            'pneumatic_backend.processes.models.Workflow.'
+            'get_kickoff_output_fields',
+            return_value=[field_mock]
+        )
+
+        # act
+        workflow.get_kickoff_fields_values()
+
+        # assert
+        kickoff_output_fields_mock.assert_called_once()
+        markdown_value_mock.assert_called_once_with(user=user)
 
 
 class TestSystemTemplate:

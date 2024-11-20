@@ -65,9 +65,9 @@ MSG_PW_0030 = _('Checkbox value contains invalid selections.')
 # Translators: Checkbox selections validation
 MSG_PW_0031 = _('Checkbox value contains non existent selections.')
 # Translators: Date field validation
-MSG_PW_0032 = _('Date value should be a string. Format: MM/DD/YYYY.')
-# Translators: Date field validation
-MSG_PW_0033 = _('Invalid date format. Should be MM/DD/YYYY.')
+MSG_PW_0032 = _(
+    'The date value must be an integer or a floating-point number.'
+)
 # Translators: URL field validation
 MSG_PW_0034 = _('URL field value should be a string.')
 # Translators: URL field validation

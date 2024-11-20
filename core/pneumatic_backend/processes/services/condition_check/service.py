@@ -1,28 +1,32 @@
 from typing import List
 
 from pneumatic_backend.processes.models import Condition, Rule, Predicate
-from .resolvers import (
+from pneumatic_backend.processes.services.condition_check.resolvers import (
     DateResolver,
     StringResolver,
     UserResolver,
     FileResolver,
     DropdownResolver,
     CheckboxResolver,
+    TaskResolver,
+    KickoffResolver,
 )
-from pneumatic_backend.processes.enums import FieldType
+from pneumatic_backend.processes.enums import PredicateType
 
 
 class ConditionCheckService:
     RESOLVERS = {
-        FieldType.STRING: StringResolver,
-        FieldType.TEXT: StringResolver,
-        FieldType.URL: StringResolver,
-        FieldType.FILE: FileResolver,
-        FieldType.DROPDOWN: DropdownResolver,
-        FieldType.RADIO: DropdownResolver,
-        FieldType.CHECKBOX: CheckboxResolver,
-        FieldType.USER: UserResolver,
-        FieldType.DATE: DateResolver,
+        PredicateType.STRING: StringResolver,
+        PredicateType.TEXT: StringResolver,
+        PredicateType.URL: StringResolver,
+        PredicateType.FILE: FileResolver,
+        PredicateType.DROPDOWN: DropdownResolver,
+        PredicateType.RADIO: DropdownResolver,
+        PredicateType.CHECKBOX: CheckboxResolver,
+        PredicateType.USER: UserResolver,
+        PredicateType.DATE: DateResolver,
+        PredicateType.TASK: TaskResolver,
+        PredicateType.KICKOFF: KickoffResolver,
     }
 
     @classmethod

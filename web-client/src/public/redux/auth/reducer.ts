@@ -26,10 +26,10 @@ const EMPTY_USER: IAuthUser = {
     leaseLevel: 'standard',
     logoSm: null,
     logoLg: null,
-    paymentCardProvided: true,
     trialEnded: false,
     trialIsActive: false,
-    isSubscribed: false
+    isSubscribed: false,
+    billingSync: true,
   },
   id: -1,
   isAdmin: false,
@@ -54,7 +54,7 @@ const EMPTY_USER: IAuthUser = {
   language: '',
   timezone: moment.tz.guess(),
   dateFmt: '',
-  dateFdw: ''
+  dateFdw: '',
 };
 
 export const INIT_STATE: IAuthUser = {

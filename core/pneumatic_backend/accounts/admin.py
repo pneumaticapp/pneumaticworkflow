@@ -507,7 +507,6 @@ class AccountAdmin(ModelAdmin):
                 'fields': (
                     'billing_sync',
                     'stripe_id',
-                    'payment_card_provided',
                     'trial_ended',
                     'trial_is_active',
                     'trial_start',
@@ -518,8 +517,6 @@ class AccountAdmin(ModelAdmin):
                     'max_users',
                     'active_users',
                     'tenants_active_users',
-                    'max_active_templates',
-                    'active_templates',
                     'max_invites',
                     'ai_templates_generations',
                     'max_ai_templates_generations',
@@ -540,7 +537,6 @@ class AccountAdmin(ModelAdmin):
         'active_users',
         'tenants_active_users',
         'max_users',
-        'active_templates',
         'list_tenants',
         'ai_templates_generations',
         'trial_is_active',
@@ -607,7 +603,7 @@ class AccountAdmin(ModelAdmin):
             if obj.billing_plan == BillingPlanType.PREMIUM:
                 max_users = obj.get_paid_users_count()
             elif obj.billing_plan == BillingPlanType.FREEMIUM:
-                max_users = settings.FREEMIUM_MAX_USERS
+                max_users = settings.DEFAULT_MAX_USERS
             else:
                 max_users = 1000
             obj = service.partial_update(
@@ -625,10 +621,8 @@ class AccountAdmin(ModelAdmin):
                 logo_sm=obj.logo_sm,
                 logo_lg=obj.logo_lg,
                 max_users=max_users,
-                max_active_templates=obj.max_active_templates,
                 max_invites=obj.max_invites,
                 max_ai_templates_generations=obj.max_ai_templates_generations,
-                payment_card_provided=obj.payment_card_provided,
                 log_api_requests=obj.log_api_requests,
                 force_save=True
             )

@@ -281,10 +281,7 @@ class Common(Configuration):
     else:
         STRIPE_WEBHOOK_IP_WHITELIST = []
 
-    # Pay Wall
-    PAYWALL_MAX_ACTIVE_TEMPLATES = 5
-    PAYWALL_MIN_USERS = 1
-    FREEMIUM_MAX_USERS = 5
+    DEFAULT_MAX_USERS = 5
 
     # Account verification
     VERIFICATION_CHECK = env.get('VERIFICATION_CHECK') == 'yes'

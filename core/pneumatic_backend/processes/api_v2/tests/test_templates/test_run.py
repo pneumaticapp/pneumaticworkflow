@@ -49,7 +49,10 @@ from pneumatic_backend.accounts.services import (
 )
 from pneumatic_backend.accounts.enums import (
     SourceType,
-    BillingPlanType, Language, UserDateFormat, Timezone,
+    BillingPlanType,
+    Language,
+    UserDateFormat,
+    Timezone,
 )
 from pneumatic_backend.authentication.enums import AuthTokenType
 from pneumatic_backend.processes.enums import DirectlyStatus
@@ -158,7 +161,7 @@ def test_run__all__ok(api_client, mocker):
     task = template.tasks.order_by('number').first()
     task.name = 'Test name {{ %s }}' % kickoff_field.api_name
     task.description = (
-        '{{%s}}His name is... {{%s}}{{%s}} link {{%s}}.{{%s}}' %
+        '{{%s}}His name is... {{%s}} {{%s}} link {{%s}}.{{%s}}' %
         (
             kickoff_field_2.api_name,
             kickoff_field.api_name,
@@ -208,6 +211,7 @@ def test_run__all__ok(api_client, mocker):
             'kickoff': {
                 kickoff_field.api_name: 'JOHN CENA',
                 kickoff_field_2.api_name: None,
+                kickoff_field_3.api_name: 6351521536,
                 kickoff_field_4.api_name: [str(attach_1.id), str(attach_2.id)],
                 kickoff_field_5.api_name: [
                     str(selection_1.id),
@@ -284,12 +288,9 @@ def test_run__all__ok(api_client, mocker):
     assert selection_1_data['api_name'] == selection_1.api_name
     assert selection_1_data['value'] == selection_1.value
     assert selection_1_data['is_selected'] is True
-
     assert len(data['passed_tasks']) == 0
-
-    # TODO Remove in https://my.pneumatic.app/workflows/34876/
-    assert data['workflow_id'] == workflow.id
-    assert data['first_task_performers'] == [user.id]
+    assert data['id'] == workflow.id
+    assert data['current_task']['performers'] == [user.id]
 
     # Check created workflow
     assert workflow.name == workflow_name
@@ -297,7 +298,8 @@ def test_run__all__ok(api_client, mocker):
     first_task = workflow.current_task_instance
     assert first_task.name == 'Test name JOHN CENA'
     assert first_task.description == (
-        'His name is... JOHN CENA link '
+        'His name is... JOHN CENA '
+        'Apr 09, 2171, 11:32PM link '
         f'[{kickoff_field_4.name}]'
         f'(https://link.to/first_file.png)\n'
         f'[{kickoff_field_4.name}]'
@@ -305,7 +307,7 @@ def test_run__all__ok(api_client, mocker):
         'selection 1, selection 2'
     )
     assert first_task.description_template == (
-        '{{%s}}His name is... {{%s}}{{%s}} link {{%s}}.{{%s}}' %
+        '{{%s}}His name is... {{%s}} {{%s}} link {{%s}}.{{%s}}' %
         (
             kickoff_field_2.api_name,
             kickoff_field.api_name,
@@ -603,8 +605,8 @@ def test_run__users_overlimit__permission_denied(mocker, api_client):
         'pneumatic_backend.processes.services.workflow_action.'
         'WorkflowEventService.workflow_run_event'
     )
-    user = create_test_user()
-    account = user.account
+    account = create_test_account(plan=BillingPlanType.PREMIUM)
+    user = create_test_user(account=account)
     account.active_users = account.max_users + 1
     account.save()
     template = create_test_template(
@@ -2744,6 +2746,249 @@ def test_run__task_name_with_field__ok(mocker, api_client):
     assert task.name == f'Text {value_1} - {value_2}'
 
 
+def test_run__task_name_with_kickoff_data_value_int__ok(mocker, api_client):
+
+    # arrange
+    mocker.patch(
+        'pneumatic_backend.processes.services.websocket.WSSender.'
+        'send_new_task_notification'
+    )
+    mocker.patch(
+        'pneumatic_backend.processes.services.workflow_action.'
+        'WorkflowEventService.workflow_run_event'
+    )
+    user = create_test_user()
+    api_client.token_authenticate(user)
+    api_name = 'date-field-1'
+    kickoff_data = 1726012800
+    task_name = '{{%s}} - test name' % api_name
+
+    # act
+    response_create = api_client.post(
+        path='/templates',
+        data={
+            'name': 'Template',
+            'is_active': True,
+            'template_owners': [user.id],
+            'kickoff': {
+                'fields': [
+                    {
+                        'order': 1,
+                        'name': 'Date field',
+                        'type': FieldType.DATE,
+                        'is_required': False,
+                        'api_name': api_name,
+                    },
+                ]
+            },
+            'tasks': [
+                {
+                    'number': 1,
+                    'name': task_name,
+                    'api_name': 'task-1',
+                    'raw_performers': [
+                        {
+                            'type': PerformerType.USER,
+                            'source_id': user.id
+                        }
+                    ]
+                }
+            ]
+        }
+    )
+    template = Template.objects.get(id=response_create.data['id'])
+
+    mocker.patch(
+        'pneumatic_backend.analytics.services.AnalyticService.'
+        'workflows_started'
+    )
+    mocker.patch(
+        'pneumatic_backend.processes.api_v2.services.templates.'
+        'integrations.TemplateIntegrationsService.api_request',
+    )
+
+    # act
+    response = api_client.post(
+        path=f'/templates/{template.id}/run',
+        data={
+            'kickoff': {
+                api_name: kickoff_data,
+            }
+        }
+    )
+
+    # assert
+    assert response_create.status_code == 200
+    assert response.status_code == 200
+    assert response.data['kickoff']['output'][0]['value'] == str(kickoff_data)
+    workflow = Workflow.objects.get(id=response.data['id'])
+    task = workflow.current_task_instance
+    assert task.name == 'Sep 11, 2024, 12:00AM - test name'
+
+
+def test_run__task_name_with_kickoff_data_value_float__ok(mocker, api_client):
+
+    # arrange
+    mocker.patch(
+        'pneumatic_backend.processes.services.websocket.WSSender.'
+        'send_new_task_notification'
+    )
+    mocker.patch(
+        'pneumatic_backend.processes.services.workflow_action.'
+        'WorkflowEventService.workflow_run_event'
+    )
+    user = create_test_user()
+    api_client.token_authenticate(user)
+    api_name = 'date-field-1'
+    kickoff_data = 1726012800.21
+    task_name = '{{%s}} - test name' % api_name
+
+    # act
+    response_create = api_client.post(
+        path='/templates',
+        data={
+            'name': 'Template',
+            'is_active': True,
+            'template_owners': [user.id],
+            'kickoff': {
+                'fields': [
+                    {
+                        'order': 1,
+                        'name': 'Date field',
+                        'type': FieldType.DATE,
+                        'is_required': False,
+                        'api_name': api_name,
+                    },
+                ]
+            },
+            'tasks': [
+                {
+                    'number': 1,
+                    'name': task_name,
+                    'api_name': 'task-1',
+                    'raw_performers': [
+                        {
+                            'type': PerformerType.USER,
+                            'source_id': user.id
+                        }
+                    ]
+                }
+            ]
+        }
+    )
+    template = Template.objects.get(id=response_create.data['id'])
+
+    mocker.patch(
+        'pneumatic_backend.analytics.services.AnalyticService.'
+        'workflows_started'
+    )
+    mocker.patch(
+        'pneumatic_backend.processes.api_v2.services.templates.'
+        'integrations.TemplateIntegrationsService.api_request',
+    )
+
+    # act
+    response = api_client.post(
+        path=f'/templates/{template.id}/run',
+        data={
+            'kickoff': {
+                api_name: kickoff_data,
+            }
+        }
+    )
+
+    # assert
+    assert response_create.status_code == 200
+    assert response.status_code == 200
+    assert response.data['kickoff']['output'][0]['value'] == str(kickoff_data)
+    workflow = Workflow.objects.get(id=response.data['id'])
+    task = workflow.current_task_instance
+    assert task.name == 'Sep 11, 2024, 12:00AM - test name'
+
+
+@pytest.mark.parametrize('kickoff_data', (' ', '136166546'))
+def test_run__task_name_with_invalid_kickoff_data_value__validation_error(
+    mocker, api_client, kickoff_data,
+):
+
+    # arrange
+    mocker.patch(
+        'pneumatic_backend.processes.services.websocket.WSSender.'
+        'send_new_task_notification'
+    )
+    mocker.patch(
+        'pneumatic_backend.processes.services.workflow_action.'
+        'WorkflowEventService.workflow_run_event'
+    )
+    user = create_test_user()
+    api_client.token_authenticate(user)
+    api_name = 'date-field-1'
+    kickoff_data = kickoff_data
+    task_name = '{{%s}} - test name' % api_name
+
+    # act
+    response_create = api_client.post(
+        path='/templates',
+        data={
+            'name': 'Template',
+            'is_active': True,
+            'template_owners': [user.id],
+            'kickoff': {
+                'fields': [
+                    {
+                        'order': 1,
+                        'name': 'Date field',
+                        'type': FieldType.DATE,
+                        'is_required': False,
+                        'api_name': api_name,
+                    },
+                ]
+            },
+            'tasks': [
+                {
+                    'number': 1,
+                    'name': task_name,
+                    'api_name': 'task-1',
+                    'raw_performers': [
+                        {
+                            'type': PerformerType.USER,
+                            'source_id': user.id
+                        }
+                    ]
+                }
+            ]
+        }
+    )
+    template = Template.objects.get(id=response_create.data['id'])
+
+    mocker.patch(
+        'pneumatic_backend.analytics.services.AnalyticService.'
+        'workflows_started'
+    )
+    mocker.patch(
+        'pneumatic_backend.processes.api_v2.services.templates.'
+        'integrations.TemplateIntegrationsService.api_request',
+    )
+
+    # act
+    response = api_client.post(
+        path=f'/templates/{template.id}/run',
+        data={
+            'kickoff': {
+                api_name: kickoff_data,
+            }
+        }
+    )
+
+    # assert
+    assert response_create.status_code == 200
+    assert response.status_code == 400
+    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
+    assert response.data['message'] == messages.MSG_PW_0032
+    assert response.data['details']['reason'] == messages.MSG_PW_0032
+    assert response.data['details']['api_name'] == api_name
+
+
 def test_run__task_name_with_field_2__ok(mocker, api_client):
 
     # arrange
@@ -2846,7 +3091,7 @@ def test_run__task_name_with_field_2__ok(mocker, api_client):
                     str(selection_1.id),
                     str(selection_2.id)
                 ],
-                api_name_2: "02/14/2024",
+                api_name_2: 1726012800,
                 api_name_3: str(user.id),
             }
         }
@@ -2857,7 +3102,9 @@ def test_run__task_name_with_field_2__ok(mocker, api_client):
     assert response.status_code == 200
     workflow = Workflow.objects.get(id=response.data['id'])
     task = workflow.current_task_instance
-    assert task.name == f'Frontend, Fast track:02/14/2024 [{user.name}]'
+    assert task.name == (
+        f'Frontend, Fast track:Sep 11, 2024, 12:00AM [{user.name}]'
+    )
 
 
 def test_run__wf_name_template_with_system_vars__only__ok(

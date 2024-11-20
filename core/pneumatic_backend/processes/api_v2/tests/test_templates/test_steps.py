@@ -333,9 +333,9 @@ def test_steps__with_tasks_in_progress_false__ended_wf__ok(
         path=f'/workflows/{workflow.id}/task-complete',
         data={'task_id': workflow.current_task_instance.id},
     )
-    WorkflowActionService().end_process(
+    service = WorkflowActionService(user=user)
+    service.end_process(
         workflow=workflow,
-        user=user,
         by_condition=False,
     )
 
@@ -557,9 +557,9 @@ def test_steps__with_tasks_in_progress_true__ended_wf__not_found(
         user=user,
         template=template,
     )
-    WorkflowActionService().end_process(
+    service = WorkflowActionService(user=user)
+    service.end_process(
         workflow=workflow,
-        user=user,
         by_condition=False,
     )
     api_client.token_authenticate(user)

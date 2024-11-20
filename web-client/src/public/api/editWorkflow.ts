@@ -4,24 +4,29 @@ import { getBrowserConfigEnv } from '../utils/getConfig';
 import { TEditWorkflowPayload } from '../redux/workflows/actions';
 import { IWorkflowDetails } from '../types/workflow';
 
-export interface IEditWorkflowResponse extends IWorkflowDetails {}
+export interface IEditWorkflowResponse extends Omit<IWorkflowDetails, 'due_date'> {
+  dueDateTsp: number | null;
+}
 
-export function editWorkflow({ name, kickoff, workflowId, isUrgent, dueDate }: TEditWorkflowPayload) {
-  const { api: { urls }} = getBrowserConfigEnv();
+export function editWorkflow({ name, kickoff, workflowId, isUrgent, dueDateTsp }: TEditWorkflowPayload) {
+  const {
+    api: { urls },
+  } = getBrowserConfigEnv();
   const url = urls.workflow.replace(':id', String(workflowId));
 
   const newProcess = {
     ...(name && { name }),
     ...(kickoff && { kickoff: getNormalizedKickoff(kickoff) }),
     ...(typeof isUrgent !== 'undefined' && { isUrgent }),
-    ...(typeof dueDate !== 'undefined' && { dueDate }),
+    ...(typeof dueDateTsp !== 'undefined' && { dueDateTsp }),
   };
 
-  return commonRequest<IEditWorkflowResponse>(url,
+  return commonRequest<IEditWorkflowResponse>(
+    url,
     {
       method: 'PATCH',
       body: mapRequestBody(newProcess, 'default', {
-        ignorePropertyMapToSnakeCase: ['kickoff']
+        ignorePropertyMapToSnakeCase: ['kickoff'],
       }),
     },
     {

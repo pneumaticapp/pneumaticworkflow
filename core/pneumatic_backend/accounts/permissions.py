@@ -5,25 +5,9 @@ from pneumatic_backend.accounts.messages import (
     MSG_A_0035,
     MSG_A_0036,
     MSG_A_0037,
-    MSG_A_0038,
+    MSG_A_0041,
 )
 from pneumatic_backend.accounts.enums import BillingPlanType
-
-
-class SubscriptionPermission(BaseAuthPermission):
-
-    """ Active subscription required """
-
-    def has_permission(self, request, view):
-        return bool(
-            self._user_is_authenticated(request)
-            and request.user.account.is_subscribed
-        )
-
-
-class SubscribedToggleAdminPermission(SubscriptionPermission):
-
-    message = MSG_A_0038
 
 
 class ExpiredSubscriptionPermission(BaseAuthPermission):
@@ -45,6 +29,16 @@ class ExpiredSubscriptionPermission(BaseAuthPermission):
         return True
 
 
+class BillingPlanPermission(BaseAuthPermission):
+
+    message = MSG_A_0041
+
+    def has_permission(self, request, view):
+        if request.user:
+            return request.user.account.billing_plan is not None
+        return True
+
+
 class AccountOwnerPermission(BaseAuthPermission):
 
     message = MSG_A_0036
@@ -61,7 +55,10 @@ class UsersOverlimitedPermission(BasePermission):
     message = MSG_A_0037
 
     def has_permission(self, request, view):
-        return not request.user.account.is_blocked
+        account = request.user.account
+        if account.billing_plan == BillingPlanType.PREMIUM:
+            return account.max_users >= account.total_active_users
+        return True
 
 
 class UserIsAdminOrAccountOwner(BasePermission):
@@ -73,11 +70,7 @@ class UserIsAdminOrAccountOwner(BasePermission):
 class MasterAccountPermission(BasePermission):
 
     def has_permission(self, request, view):
-        account = request.user.account
-        return (
-            not account.is_tenant
-            and account.is_subscribed
-        )
+        return not request.user.account.is_tenant
 
 
 class MasterAccountAccessPermission(BasePermission):
@@ -91,7 +84,6 @@ class MasterAccountAccessPermission(BasePermission):
             account = request.user.account
             return (
                 not account.is_tenant
-                and account.is_subscribed
                 and account.tenants.filter(id=tenant_pk).exists()
             )
 

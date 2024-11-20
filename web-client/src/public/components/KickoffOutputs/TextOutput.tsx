@@ -1,5 +1,4 @@
 import * as React from 'react';
-
 import { RichText } from '../RichText';
 import { IExtraField } from '../../types/template';
 

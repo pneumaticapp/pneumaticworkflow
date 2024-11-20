@@ -31,13 +31,11 @@ def test_context__ok(api_client):
     # arrange
     timezone = pytz.timezone('America/Anchorage')
     logo_lg = 'https://some-site/lg.jpg'
-    payment_card_provided = False
     plan = BillingPlanType.UNLIMITED
     period = BillingPeriod.WEEKLY
     tenant_name = 'Some tenant'
     account = create_test_account(
         logo_lg=logo_lg,
-        payment_card_provided=payment_card_provided,
         plan=plan,
         period=period,
         tenant_name=tenant_name
@@ -97,7 +95,6 @@ def test_context__ok(api_client):
     assert data['account']['date_joined_tsp'] == (
         account.date_joined.timestamp()
     )
-    assert data['account']['is_blocked'] == account.is_blocked
     assert data['account']['is_verified'] == account.is_verified
     assert data['account']['lease_level'] == LeaseLevel.STANDARD
     assert data['account']['logo_lg'] == logo_lg
@@ -105,9 +102,6 @@ def test_context__ok(api_client):
     assert data['account']['active_users'] == 1
     assert data['account']['tenants_active_users'] == 0
     assert data['account']['max_users'] == account.max_users
-    assert data['account']['max_templates'] is None
-    assert data['account']['active_templates'] == 0
-    assert data['account']['payment_card_provided'] is False
     assert data['account']['is_subscribed'] is True
     assert data['account']['billing_plan'] == plan
     assert data['account']['billing_sync'] is True

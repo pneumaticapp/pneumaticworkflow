@@ -1,8 +1,8 @@
 import pytest
-from django.conf import settings
 from pneumatic_backend.processes.tests.fixtures import (
     create_test_user,
     create_test_account,
+    create_test_group
 )
 from pneumatic_backend.accounts.enums import BillingPlanType
 from pneumatic_backend.processes.models import (
@@ -10,6 +10,7 @@ from pneumatic_backend.processes.models import (
     Template,
 )
 from pneumatic_backend.processes.enums import PerformerType
+
 
 pytestmark = pytest.mark.django_db
 
@@ -76,7 +77,6 @@ class TestCopyTemplate:
             'Wf template name {{ date }}'
         )
         assert response_2_data['description'] == request_data['description']
-        assert response_2_data['performers_count'] == 1
         assert response_2_data['is_active'] is False
         assert response_2_data['is_public'] is True
         assert response_2_data['public_url'] is not None
@@ -137,7 +137,6 @@ class TestCopyTemplate:
             "template_owners": [user.id],
             "tasks_count": 7,
             "date_updated": "",
-            "performers_count": 0
         }
         api_client.token_authenticate(user)
 
@@ -161,46 +160,6 @@ class TestCopyTemplate:
             data=data
         )
 
-        assert response.status_code == 200
-
-    def test_clone__validate_limit_is_reached__ok(
-        self,
-        api_client
-    ):
-
-        # arrange
-        user = create_test_user()
-        api_client.token_authenticate(user)
-        for _ in range(settings.PAYWALL_MAX_ACTIVE_TEMPLATES):
-            request_data = {
-                'name': 'Template',
-                'template_owners': [user.id],
-                'is_active': True,
-                'kickoff': {},
-                'tasks': [
-                    {
-                        'number': 1,
-                        'name': 'First step',
-                        'raw_performers': [
-                            {
-                                'type': PerformerType.USER,
-                                'source_id': user.id
-                            }
-                        ]
-                    }
-                ]
-            }
-            api_client.post(
-                path='/templates',
-                data=request_data
-            )
-
-        # act
-        response = api_client.post(
-            f'/templates/{Template.objects.first().id}/clone'
-        )
-
-        # assert
         assert response.status_code == 200
 
     @pytest.mark.parametrize('is_active', [True, False])
@@ -244,3 +203,56 @@ class TestCopyTemplate:
         assert response.data['is_active'] is False
         assert response.data['is_embedded'] is True
         assert response.data['embed_url'] is not None
+
+    def test_clone__raw_performers_group__ok(
+        self,
+        mocker,
+        api_client
+    ):
+
+        # arrange
+        user = create_test_user()
+        group = create_test_group(user=user, users=[user, ])
+        api_client.token_authenticate(user)
+
+        request_data = {
+            'name': 'Template',
+            'is_active': True,
+            'template_owners': [user.id],
+            'kickoff': {},
+            'tasks': [
+                {
+                    'number': 1,
+                    'name': 'First step',
+                    'raw_performers': [
+                        {
+                            'type': PerformerType.GROUP,
+                            'source_id': group.id
+                        }
+                    ]
+                }
+            ]
+        }
+
+        response = api_client.post(
+            path='/templates',
+            data=request_data
+        )
+        template = Template.objects.get(id=response.data['id'])
+        mocker.patch(
+            'pneumatic_backend.processes.api_v2.services.templates.'
+            'integrations.TemplateIntegrationsService.'
+            'create_integrations_for_template'
+        )
+
+        # act
+        response = api_client.post(
+            f'/templates/{template.id}/clone'
+        )
+
+        # assert
+        assert response.status_code == 200
+        raw_performers_data = response.json()['tasks'][0]['raw_performers']
+        assert len(raw_performers_data) == 1
+        assert raw_performers_data[0]['type'] == PerformerType.GROUP
+        assert raw_performers_data[0]['source_id'] == str(group.id)

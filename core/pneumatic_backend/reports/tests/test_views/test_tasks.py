@@ -2,7 +2,6 @@ from datetime import timedelta
 import pytest
 from django.contrib.auth import get_user_model
 from django.utils import timezone
-from pneumatic_backend.accounts.services import AccountService
 from pneumatic_backend.accounts.enums import BillingPlanType
 from pneumatic_backend.processes.models import (
     TaskPerformer
@@ -65,11 +64,6 @@ class TestDashboardMyTasksOverview:
         )
         first_template = create_test_template(template_owner)
         second_template = create_test_template(template_owner, is_active=True)
-        account_service = AccountService(
-            instance=template_owner.account,
-            user=template_owner
-        )
-        account_service.update_active_templates()
         first_task = first_template.tasks.get(number=1)
         first_task.add_raw_performer(user)
 
@@ -187,11 +181,6 @@ class TestDashboardMyTasksOverview:
         )
         first_template = create_test_template(template_owner)
         second_template = create_test_template(template_owner, is_active=True)
-        account_service = AccountService(
-            instance=template_owner.account,
-            user=template_owner
-        )
-        account_service.update_active_templates()
         first_task = first_template.tasks.get(number=1)
         first_task.add_raw_performer(user)
 
@@ -299,11 +288,6 @@ class TestDashboardMyTasksOverview:
             account=template_owner.account,
         )
         first_template = create_test_template(template_owner, is_active=True)
-        account_service = AccountService(
-            instance=template_owner.account,
-            user=template_owner
-        )
-        account_service.update_active_templates()
 
         first_task = first_template.tasks.get(number=1)
         first_task.require_completion_by_all = True
@@ -381,11 +365,6 @@ class TestDashboardMyTasksOverview:
         )
         first_template = create_test_template(template_owner)
         second_template = create_test_template(template_owner, is_active=True)
-        account_service = AccountService(
-            instance=template_owner.account,
-            user=template_owner
-        )
-        account_service.update_active_templates()
 
         first_task = first_template.tasks.get(number=1)
         first_task.add_raw_performer(user)
@@ -504,11 +483,6 @@ class TestDashboardMyTasksBreakdown:
         first_template = create_test_template(template_owner)
         second_template = create_test_template(template_owner, is_active=True)
         third_template = create_test_template(template_owner, is_active=True)
-        account_service = AccountService(
-            instance=template_owner.account,
-            user=template_owner
-        )
-        account_service.update_active_templates()
 
         first_task = first_template.tasks.get(number=1)
         first_task.add_raw_performer(user)
@@ -641,11 +615,6 @@ class TestDashboardMyTasksBreakdown:
             account=template_owner.account,
         )
         first_template = create_test_template(template_owner, is_active=True)
-        account_service = AccountService(
-            instance=template_owner.account,
-            user=template_owner
-        )
-        account_service.update_active_templates()
 
         first_task = first_template.tasks.get(number=1)
         first_task.require_completion_by_all = True
@@ -754,11 +723,6 @@ class TestDashboardMyTasksBreakdown:
             account=template_owner.account,
         )
         first_template = create_test_template(template_owner)
-        account_service = AccountService(
-            instance=template_owner.account,
-            user=template_owner
-        )
-        account_service.update_active_templates()
 
         first_task = first_template.tasks.get(number=1)
         first_task.add_raw_performer(user)
@@ -847,11 +811,6 @@ class TestDashboardMyTasksBreakdown:
         first_template = create_test_template(template_owner)
         second_template = create_test_template(template_owner, is_active=True)
         third_template = create_test_template(template_owner, is_active=True)
-        account_service = AccountService(
-            instance=template_owner.account,
-            user=template_owner
-        )
-        account_service.update_active_templates()
 
         first_task = first_template.tasks.get(number=1)
         first_task.add_raw_performer(user)
@@ -977,11 +936,6 @@ class TestDashboardMyTasksBreakdownBySteps:
         )
         first_template = create_test_template(template_owner)
         second_template = create_test_template(template_owner, is_active=True)
-        account_service = AccountService(
-            instance=template_owner.account,
-            user=template_owner
-        )
-        account_service.update_active_templates()
 
         first_task = first_template.tasks.get(number=1)
         first_task.add_raw_performer(user)
@@ -1120,11 +1074,6 @@ class TestDashboardMyTasksBreakdownBySteps:
             account=template_owner.account,
         )
         first_template = create_test_template(template_owner, is_active=True)
-        account_service = AccountService(
-            instance=template_owner.account,
-            user=template_owner
-        )
-        account_service.update_active_templates()
 
         first_task = first_template.tasks.get(number=1)
         first_task.require_completion_by_all = True
@@ -1328,11 +1277,6 @@ class TestDashboardMyTasksBreakdownBySteps:
         )
         first_template = create_test_template(template_owner)
         second_template = create_test_template(template_owner, is_active=True)
-        account_service = AccountService(
-            instance=template_owner.account,
-            user=template_owner
-        )
-        account_service.update_active_templates()
 
         first_task = first_template.tasks.get(number=1)
         first_task.add_raw_performer(user)

@@ -18,9 +18,11 @@ def test_list_ok(api_client):
 
     # arrange
     account = create_test_account(plan=BillingPlanType.UNLIMITED)
-    user_1 = create_test_user(account=account)
+    user_1 = create_test_user(account=account, first_name='Ajo')
     user_2 = create_test_user(email='1@test.com', account=account)
-    user_3 = create_test_user(email='2@test.com', account=account)
+    user_3 = create_test_user(
+        email='2@test.com', account=account, first_name='Bjo'
+    )
     create_test_user(email='3@test.com', account=account)
     api_client.token_authenticate(user_1)
     group_1 = create_test_group(user=user_1, users=[user_1, user_3])

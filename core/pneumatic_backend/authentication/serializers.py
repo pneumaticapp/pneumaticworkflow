@@ -5,10 +5,7 @@ from django.core.validators import RegexValidator
 from pneumatic_backend.accounts.models import Account
 from pneumatic_backend.generics.fields import TimeStampField, DateFormatField
 from pneumatic_backend.generics.serializers import CustomValidationErrorMixin
-from pneumatic_backend.accounts.enums import (
-    BillingPlanType,
-    Language,
-)
+from pneumatic_backend.accounts.enums import Language
 from pneumatic_backend.authentication.messages import (
     MSG_AU_0013,
     MSG_AU_0012,
@@ -130,9 +127,6 @@ class ContextAccountSerializer(serializers.ModelSerializer):
             'active_users',
             'tenants_active_users',
             'max_users',
-            'max_templates',
-            'active_templates',
-            'payment_card_provided',
             'is_subscribed',
             'billing_plan',
             'billing_sync',
@@ -143,17 +137,15 @@ class ContextAccountSerializer(serializers.ModelSerializer):
             'trial_ended',
         )
 
-    max_templates = serializers.SerializerMethodField()
     date_joined_tsp = TimeStampField(source='date_joined', read_only=True)
     plan_expiration_tsp = TimeStampField(
         source='plan_expiration',
         read_only=True
     )
+    is_blocked = serializers.SerializerMethodField()
 
-    def get_max_templates(self, instance: Account):
-        if instance.billing_plan != BillingPlanType.FREEMIUM:
-            return None
-        return instance.max_active_templates
+    def get_is_blocked(self, instance):
+        return False
 
 
 class ContextUserSerializer(serializers.ModelSerializer):
@@ -169,7 +161,6 @@ class ContextUserSerializer(serializers.ModelSerializer):
             'email',
             'phone',
             'photo',
-            'is_staff',
             'is_admin',
             'date_joined',
             'date_joined_tsp',
@@ -191,8 +182,6 @@ class ContextUserSerializer(serializers.ModelSerializer):
         )
 
     account = ContextAccountSerializer()
-    # TODO Remove in https://my.pneumatic.app/workflows/34238/
-    is_staff = serializers.BooleanField(source='is_admin', read_only=True)
     is_supermode = serializers.BooleanField(required=False)
     date_joined_tsp = TimeStampField(source='date_joined', read_only=True)
     date_fmt = DateFormatField(read_only=True)

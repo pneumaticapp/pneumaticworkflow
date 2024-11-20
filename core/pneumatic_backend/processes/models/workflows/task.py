@@ -109,18 +109,17 @@ class Task(
         except Task.DoesNotExist:
             return None
 
-    @property
-    def is_returnable(self):
+    def is_returnable(self, user: UserModel):
         from pneumatic_backend.processes.services.workflow_action import (
             WorkflowActionService,
         )
         if self.number == 1:
             return False
-        workflow_action_service = WorkflowActionService()
+        workflow_action_service = WorkflowActionService(user=user)
         action_method, _ = workflow_action_service.execute_condition(self.prev)
         # pylint: disable=comparison-with-callable
         if action_method == workflow_action_service.skip_task:
-            return self.prev.is_returnable
+            return self.prev.is_returnable(user=user)
 
         return True
 

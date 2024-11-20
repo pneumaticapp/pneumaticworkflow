@@ -29,6 +29,7 @@ from pneumatic_backend.utils.validation import ErrorCode
 from pneumatic_backend.processes.messages.workflow import (
     MSG_PW_0023,
     MSG_PW_0051,
+    MSG_PW_0032,
 )
 from pneumatic_backend.generics.messages import MSG_GE_0007
 from pneumatic_backend.processes.enums import (
@@ -299,6 +300,14 @@ class TestPartialUpdateWorkflow:
             value='RADIO 2',
             template=template,
         )
+        kickoff_field_4 = FieldTemplate.objects.create(
+            name='Date field',
+            type=FieldType.DATE,
+            is_required=False,
+            kickoff=template.kickoff_instance,
+            order=9,
+            template=template,
+        )
         task = template.tasks.order_by('number').first()
         task.description = (
             '{{ %s }}His name is... {{%s}}{{%s}}!!!' %
@@ -325,13 +334,13 @@ class TestPartialUpdateWorkflow:
                     ],
                     kickoff_field_3.api_name: (
                         kickoff_field_3_select_2.api_name
-                    )
+                    ),
+                    kickoff_field_4.api_name: 1726012800,
                 }
             }
         )
         workflow_id = response.data['id']
         workflow = Workflow.objects.get(pk=workflow_id)
-
         kickoff_output_2 = workflow.kickoff_instance.output.get(
             type=FieldType.CHECKBOX,
         )
@@ -357,6 +366,7 @@ class TestPartialUpdateWorkflow:
                     kickoff_field.api_name: 'DWAYNE THE ROCK JOHNSON',
                     kickoff_field_2.api_name: [kickoff_output_2_selections[0]],
                     kickoff_field_3.api_name: kickoff_output_3_selections[1],
+                    kickoff_field_4.api_name: 1726020000,
                 }
             }
         )
@@ -366,11 +376,13 @@ class TestPartialUpdateWorkflow:
         first_output = response.data['kickoff']['output'][0]
         second_output = response.data['kickoff']['output'][1]
         third_output = response.data['kickoff']['output'][2]
-        assert first_output['selections'][0]['is_selected'] is False
-        assert first_output['selections'][1]['is_selected'] is True
-        assert second_output['selections'][0]['is_selected'] is True
-        assert second_output['selections'][1]['is_selected'] is False
-        assert third_output['value'] == 'DWAYNE THE ROCK JOHNSON'
+        fourth_output = response.data['kickoff']['output'][3]
+        assert first_output['value'] == '1726020000'
+        assert second_output['selections'][0]['is_selected'] is False
+        assert second_output['selections'][1]['is_selected'] is True
+        assert third_output['selections'][0]['is_selected'] is True
+        assert third_output['selections'][1]['is_selected'] is False
+        assert fourth_output['value'] == 'DWAYNE THE ROCK JOHNSON'
 
     def test_partial_update__field__update_current_task_due_date__ok(
         self,
@@ -408,30 +420,26 @@ class TestPartialUpdateWorkflow:
             f'/templates/{template.id}/run',
             data={
                 'kickoff': {
-                    date_field.api_name: field_value.strftime(
-                        date_field_format
-                    )
+                    date_field.api_name: field_value.timestamp()
                 }
             }
         )
         workflow_id = response.data['id']
         new_field_value = timezone.now() + timedelta(days=2)
-        str_new_field_value = new_field_value.strftime(date_field_format)
+        tsp_new_field_value = new_field_value.timestamp()
         # act
         response = api_client.patch(
             f'/workflows/{workflow_id}',
             data={
                 'kickoff': {
-                    date_field.api_name: str_new_field_value
+                    date_field.api_name: tsp_new_field_value
                 }
             }
         )
 
         # assert
         assert response.status_code == 200
-        task_due_date = datetime.strptime(
-            str_new_field_value, date_field_format
-        ) + duration
+        task_due_date = datetime.fromtimestamp(tsp_new_field_value) + duration
         assert response.data['current_task']['due_date'] == (
             task_due_date.strftime(date_format)
         )
@@ -476,12 +484,12 @@ class TestPartialUpdateWorkflow:
         )
         field_value = timezone.now() + timedelta(days=1, milliseconds=1)
         api_client.token_authenticate(user)
-        field_value_str = field_value.strftime(date_field_format)
+        field_value_tsp = field_value.timestamp()
         response = api_client.post(
             f'/templates/{template.id}/run',
             data={
                 'kickoff': {
-                    date_field.api_name: field_value_str
+                    date_field.api_name: field_value_tsp
                 }
             }
         )
@@ -494,7 +502,7 @@ class TestPartialUpdateWorkflow:
         )
 
         new_field_value = timezone.now() + timedelta(days=2)
-        str_new_field_value = new_field_value.strftime(date_field_format)
+        tsp_new_field_value = new_field_value.timestamp()
         prev_due_date = task_1.due_date
 
         # act
@@ -502,7 +510,7 @@ class TestPartialUpdateWorkflow:
             f'/workflows/{workflow_id}',
             data={
                 'kickoff': {
-                    date_field.api_name: str_new_field_value
+                    date_field.api_name: tsp_new_field_value
                 }
             }
         )
@@ -512,6 +520,57 @@ class TestPartialUpdateWorkflow:
         task_1.refresh_from_db()
         assert task_1.is_completed
         assert task_1.due_date == prev_due_date
+
+    @pytest.mark.parametrize(
+        'kickoff_data', (' ', '136166546')
+    )
+    def test_partial_update__invalid_kickoff_data_value__validation_error(
+        self,
+        api_client,
+        kickoff_data,
+    ):
+        # arrange
+        user = create_test_user()
+        template = create_test_template(
+            user=user,
+            is_active=True
+        )
+        kickoff_field = FieldTemplate.objects.create(
+            name='Date field',
+            type=FieldType.DATE,
+            is_required=False,
+            kickoff=template.kickoff_instance,
+            order=9,
+            template=template,
+        )
+
+        api_client.token_authenticate(user)
+        response = api_client.post(
+            f'/templates/{template.id}/run',
+            data={
+                'kickoff': {
+                    kickoff_field.api_name: 1726012800
+                }
+            }
+        )
+        workflow_id = response.data['id']
+
+        # act
+        response = api_client.patch(
+            f'/workflows/{workflow_id}',
+            data={
+                'kickoff': {
+                    kickoff_field.api_name: kickoff_data
+                }
+            }
+        )
+
+        # assert
+        assert response.status_code == 400
+        assert response.data['code'] == ErrorCode.VALIDATION_ERROR
+        assert response.data['message'] == MSG_PW_0032
+        assert response.data['details']['reason'] == MSG_PW_0032
+        assert response.data['details']['api_name'] == kickoff_field.api_name
 
     def test_partial_update__required_field__validation_error(
         self,

@@ -664,3 +664,61 @@
 #         assert workflow.tasks_count == template.tasks_count
 #         assert task.description_template == first_task.description
 #         assert task.performers.first() == user
+
+import pytest
+from pneumatic_backend.processes.models import FieldTemplate
+from pneumatic_backend.processes.tests.fixtures import (
+    create_test_user,
+    create_test_template,
+)
+from pneumatic_backend.processes.enums import FieldType
+from pneumatic_backend.authentication.enums import AuthTokenType
+from pneumatic_backend.processes.api_v2.services import WorkflowService
+
+pytestmark = pytest.mark.django_db
+
+
+def test_create_instance___wf_name_with_kickoff_date__ok():
+
+    # arrange
+    user = create_test_user()
+    field_api_name = 'field-123'
+    template = create_test_template(
+        user=user,
+        is_active=True,
+        tasks_count=1,
+        wf_name_template='Feedback from {{%s}}' % field_api_name
+    )
+    FieldTemplate.objects.create(
+        name='User',
+        type=FieldType.DATE,
+        is_required=True,
+        kickoff=template.kickoff_instance,
+        template=template,
+        api_name=field_api_name
+    )
+    service = WorkflowService(
+        user=user,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+    )
+
+    # act
+    workflow = service.create(
+        instance_template=template,
+        kickoff_fields_data={field_api_name: 1729624335},
+        workflow_starter=user,
+        user_provided_name=None,
+        is_external=False,
+        is_urgent=False,
+        due_date=None,
+        ancestor_task=None,
+        user_agent='Firefox'
+    )
+
+    # assert
+    formatted_date = 'Oct 22, 2024, 07:12PM'
+    assert workflow.name == f'Feedback from {formatted_date}'
+    assert workflow.name_template == (
+        'Feedback from {{%s}}'
+    ) % field_api_name

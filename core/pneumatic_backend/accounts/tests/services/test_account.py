@@ -32,13 +32,20 @@ pytestmark = pytest.mark.django_db
 UserModel = get_user_model()
 
 
-def test_create_instance__tenant__premium__ok():
+@pytest.mark.parametrize('billing_sync', (True, False))
+def test_create_tenant__master_account_on_premium__inherit_plan(
+    billing_sync,
+    mocker
+):
 
     # arrange
+    settings_mock = mocker.patch(
+        'pneumatic_backend.accounts.services.account.settings'
+    )
+    settings_mock.PROJECT_CONF = {'BILLING': True}
     trial_start = timezone.now() - timedelta(days=30)
     trial_end = timezone.now() - timedelta(days=23)
     trial_ended = True
-    payment_card_provided = True
     master_account = create_test_account(
         logo_lg='https://some.logo/image1.png',
         logo_sm='https://some.logo/image2.png',
@@ -48,19 +55,19 @@ def test_create_instance__tenant__premium__ok():
         trial_ended=trial_ended,
         trial_end=trial_end,
         trial_start=trial_start,
-        payment_card_provided=payment_card_provided,
-        billing_sync=False
+        billing_sync=billing_sync
     )
     tenant_name = 'test tenant name'
     service = AccountService()
 
     # act
-    tenant_account = service._create_instance(
+    tenant_account = service._create_tenant(
         tenant_name=tenant_name,
         master_account=master_account
     )
 
     # assert
+    assert tenant_account.id
     assert tenant_account.is_verified is True
     assert tenant_account.name == 'Company name'
     assert tenant_account.master_account == master_account
@@ -69,25 +76,127 @@ def test_create_instance__tenant__premium__ok():
     assert tenant_account.logo_lg == master_account.logo_lg
     assert tenant_account.logo_sm == master_account.logo_sm
     assert tenant_account.max_users == master_account.max_users
+    assert tenant_account.billing_sync == master_account.billing_sync
+
     assert tenant_account.billing_plan == master_account.billing_plan
     assert tenant_account.billing_period == master_account.billing_period
-    assert tenant_account.billing_sync == master_account.billing_sync
     assert tenant_account.plan_expiration == master_account.plan_expiration
     assert tenant_account.trial_start == trial_start
     assert tenant_account.trial_end == trial_end
     assert tenant_account.trial_ended == trial_ended
-    assert tenant_account.payment_card_provided == (
-        master_account.payment_card_provided
-    )
 
 
-def test_create_instance__tenant__disable_billing_sync__ok():
+def test_create_tenant__master_account_on_fractionalcoo__set_plan_freemium(
+    mocker
+):
 
     # arrange
+    settings_mock = mocker.patch(
+        'pneumatic_backend.accounts.services.account.settings'
+    )
+    settings_mock.PROJECT_CONF = {'BILLING': True}
     trial_start = timezone.now() - timedelta(days=30)
     trial_end = timezone.now() - timedelta(days=23)
     trial_ended = True
-    payment_card_provided = True
+    master_account = create_test_account(
+        logo_lg='https://some.logo/image1.png',
+        logo_sm='https://some.logo/image2.png',
+        max_users=10,
+        plan=BillingPlanType.FRACTIONALCOO,
+        period=BillingPeriod.MONTHLY,
+        trial_ended=trial_ended,
+        trial_end=trial_end,
+        trial_start=trial_start,
+        billing_sync=True
+    )
+    tenant_name = 'test tenant name'
+    service = AccountService()
+
+    # act
+    tenant_account = service._create_tenant(
+        tenant_name=tenant_name,
+        master_account=master_account
+    )
+
+    # assert
+    assert tenant_account.id
+    assert tenant_account.is_verified is True
+    assert tenant_account.name == 'Company name'
+    assert tenant_account.master_account == master_account
+    assert tenant_account.tenant_name == tenant_name
+    assert tenant_account.lease_level == LeaseLevel.TENANT
+    assert tenant_account.logo_lg == master_account.logo_lg
+    assert tenant_account.logo_sm == master_account.logo_sm
+    assert tenant_account.max_users == settings.DEFAULT_MAX_USERS
+    assert tenant_account.billing_sync == master_account.billing_sync
+
+    assert tenant_account.billing_plan == BillingPlanType.FREEMIUM
+    assert tenant_account.billing_period is None
+    assert tenant_account.plan_expiration is None
+    assert tenant_account.trial_start is None
+    assert tenant_account.trial_end is None
+    assert tenant_account.trial_ended is False
+
+
+def test_create_tenant__master_account_on_freemium__set_plan_freemium(
+    mocker
+):
+
+    # arrange
+    settings_mock = mocker.patch(
+        'pneumatic_backend.accounts.services.account.settings'
+    )
+    settings_mock.PROJECT_CONF = {'BILLING': True}
+    master_account = create_test_account(
+        logo_lg='https://some.logo/image1.png',
+        logo_sm='https://some.logo/image2.png',
+        max_users=10,
+        plan=BillingPlanType.FREEMIUM,
+        period=None,
+        trial_ended=False,
+        trial_end=None,
+        trial_start=None,
+        billing_sync=True
+    )
+    tenant_name = 'test tenant name'
+    service = AccountService()
+
+    # act
+    tenant_account = service._create_tenant(
+        tenant_name=tenant_name,
+        master_account=master_account
+    )
+
+    # assert
+    assert tenant_account.id
+    assert tenant_account.is_verified is True
+    assert tenant_account.name == 'Company name'
+    assert tenant_account.master_account == master_account
+    assert tenant_account.tenant_name == tenant_name
+    assert tenant_account.lease_level == LeaseLevel.TENANT
+    assert tenant_account.logo_lg == master_account.logo_lg
+    assert tenant_account.logo_sm == master_account.logo_sm
+    assert tenant_account.max_users == settings.DEFAULT_MAX_USERS
+    assert tenant_account.billing_sync == master_account.billing_sync
+
+    assert tenant_account.billing_plan == BillingPlanType.FREEMIUM
+    assert tenant_account.billing_period is None
+    assert tenant_account.plan_expiration is None
+    assert tenant_account.trial_start is None
+    assert tenant_account.trial_end is None
+    assert tenant_account.trial_ended is False
+
+
+def test_create_tenant__master_account_on_unlimited__set_plan_is_null(mocker):
+
+    # arrange
+    settings_mock = mocker.patch(
+        'pneumatic_backend.accounts.services.account.settings'
+    )
+    settings_mock.PROJECT_CONF = {'BILLING': True}
+    trial_start = timezone.now() - timedelta(days=30)
+    trial_end = timezone.now() - timedelta(days=23)
+    trial_ended = True
     master_account = create_test_account(
         logo_lg='https://some.logo/image1.png',
         logo_sm='https://some.logo/image2.png',
@@ -97,19 +206,67 @@ def test_create_instance__tenant__disable_billing_sync__ok():
         trial_ended=trial_ended,
         trial_end=trial_end,
         trial_start=trial_start,
-        payment_card_provided=payment_card_provided,
-        billing_sync=False
+        billing_sync=True
     )
     tenant_name = 'test tenant name'
     service = AccountService()
 
     # act
-    tenant_account = service._create_instance(
+    tenant_account = service._create_tenant(
         tenant_name=tenant_name,
         master_account=master_account
     )
 
     # assert
+    assert tenant_account.id
+    assert tenant_account.is_verified is True
+    assert tenant_account.name == 'Company name'
+    assert tenant_account.master_account == master_account
+    assert tenant_account.tenant_name == tenant_name
+    assert tenant_account.lease_level == LeaseLevel.TENANT
+    assert tenant_account.logo_lg == master_account.logo_lg
+    assert tenant_account.logo_sm == master_account.logo_sm
+    assert tenant_account.max_users == settings.DEFAULT_MAX_USERS
+    assert tenant_account.billing_sync == master_account.billing_sync
+
+    assert tenant_account.billing_plan is None
+    assert tenant_account.billing_period is None
+    assert tenant_account.plan_expiration is None
+    assert tenant_account.trial_start is None
+    assert tenant_account.trial_end is None
+    assert tenant_account.trial_ended is False
+
+
+def test_create_tenant__master_account_on_unlimited_bs_disabled__inherit_plan(
+    mocker
+):
+
+    # arrange
+    settings_mock = mocker.patch(
+        'pneumatic_backend.accounts.services.account.settings'
+    )
+    settings_mock.PROJECT_CONF = {'BILLING': False}
+    trial_ended = True
+    master_account = create_test_account(
+        logo_lg='https://some.logo/image1.png',
+        logo_sm='https://some.logo/image2.png',
+        max_users=10,
+        plan=BillingPlanType.UNLIMITED,
+        period=BillingPeriod.MONTHLY,
+        trial_ended=trial_ended,
+        billing_sync=True
+    )
+    tenant_name = 'test tenant name'
+    service = AccountService()
+
+    # act
+    tenant_account = service._create_tenant(
+        tenant_name=tenant_name,
+        master_account=master_account
+    )
+
+    # assert
+    assert tenant_account.id
     assert tenant_account.is_verified is True
     assert tenant_account.name == 'Company name'
     assert tenant_account.master_account == master_account
@@ -118,37 +275,26 @@ def test_create_instance__tenant__disable_billing_sync__ok():
     assert tenant_account.logo_lg == master_account.logo_lg
     assert tenant_account.logo_sm == master_account.logo_sm
     assert tenant_account.max_users == master_account.max_users
+    assert tenant_account.billing_sync == master_account.billing_sync
+
     assert tenant_account.billing_plan == master_account.billing_plan
     assert tenant_account.billing_period == master_account.billing_period
-    assert tenant_account.billing_sync is False
     assert tenant_account.plan_expiration == master_account.plan_expiration
-    assert tenant_account.trial_start == trial_start
-    assert tenant_account.trial_end == trial_end
+    assert tenant_account.trial_start == master_account.trial_start
+    assert tenant_account.trial_end == master_account.trial_end
     assert tenant_account.trial_ended == trial_ended
-    assert tenant_account.payment_card_provided == (
-        master_account.payment_card_provided
-    )
 
 
-def test_create_instance__tenant__unlimited__ok():
+def test_create_instance__tenant__ok(mocker):
 
     # arrange
-
-    trial_start = timezone.now() - timedelta(days=30)
-    trial_end = timezone.now() - timedelta(days=23)
-    trial_ended = True
-    payment_card_provided = True
-    master_account = create_test_account(
-        logo_lg='https://some.logo/image1.png',
-        logo_sm='https://some.logo/image2.png',
-        max_users=10,
-        plan=BillingPlanType.FRACTIONALCOO,
-        period=BillingPeriod.WEEKLY,
-        trial_ended=trial_ended,
-        trial_end=trial_end,
-        trial_start=trial_start,
-        payment_card_provided=payment_card_provided,
+    tenant_account_mock = mocker.Mock()
+    create_tenant_mock = mocker.patch(
+        'pneumatic_backend.accounts.services.account.AccountService.'
+        '_create_tenant',
+        return_value=tenant_account_mock
     )
+    master_account = create_test_account()
     tenant_name = 'test tenant name'
     service = AccountService()
 
@@ -159,30 +305,56 @@ def test_create_instance__tenant__unlimited__ok():
     )
 
     # assert
-    assert tenant_account.is_verified is True
-    assert tenant_account.name == 'Company name'
-    assert tenant_account.master_account == master_account
-    assert tenant_account.tenant_name == tenant_name
-    assert tenant_account.lease_level == LeaseLevel.TENANT
-    assert tenant_account.logo_lg == master_account.logo_lg
-    assert tenant_account.logo_sm == master_account.logo_sm
-
-    assert tenant_account.max_users == settings.FREEMIUM_MAX_USERS
-    assert tenant_account.billing_sync == master_account.billing_sync
-    assert tenant_account.billing_plan == BillingPlanType.FREEMIUM
-    assert tenant_account.billing_period is None
-    assert tenant_account.plan_expiration is None
-    assert tenant_account.trial_start is None
-    assert tenant_account.trial_end is None
-    assert tenant_account.trial_ended is False
-    assert tenant_account.payment_card_provided == (
-        master_account.payment_card_provided
+    assert tenant_account == tenant_account_mock
+    create_tenant_mock.assert_called_once_with(
+        master_account=master_account,
+        tenant_name=tenant_name
     )
 
 
-def test_create_instance__default_name__ok():
+def test_create_instance__ok(mocker):
 
     # arrange
+    create_tenant_mock = mocker.patch(
+        'pneumatic_backend.accounts.services.account.AccountService.'
+        '_create_tenant',
+    )
+    settings_mock = mocker.patch(
+        'pneumatic_backend.accounts.services.account.settings'
+    )
+    settings_mock.PROJECT_CONF = {'BILLING': True}
+    company_name = 'Name'
+    service = AccountService()
+
+    # act
+    account = service._create_instance(
+        is_verified=True,
+        name=company_name,
+        billing_sync=True
+    )
+
+    # assert
+    assert account.id
+    assert account.is_verified is True
+    assert account.name == company_name
+    assert account.master_account is None
+    assert account.billing_plan is None
+    assert account.billing_period is None
+    assert account.plan_expiration is None
+    assert account.trial_start is None
+    assert account.trial_end is None
+    assert account.trial_ended is False
+    create_tenant_mock.assert_not_called()
+    create_tenant_mock.assert_not_called()
+
+
+def test_create_instance__default_name__ok(mocker):
+
+    # arrange
+    create_tenant_mock = mocker.patch(
+        'pneumatic_backend.accounts.services.account.AccountService.'
+        '_create_tenant',
+    )
     service = AccountService()
 
     # act
@@ -192,24 +364,81 @@ def test_create_instance__default_name__ok():
     )
 
     # assert
+    assert account.id
     assert account.is_verified is False
     assert account.name == 'Company name'
     assert account.master_account is None
-    assert account.payment_card_provided is False
+    create_tenant_mock.assert_not_called()
 
 
-def test_create_instance__disable_billing_sync__ok():
+def test_create_instance__disable_billing_sync__set_freemium_plan(mocker):
 
     # arrange
+    create_tenant_mock = mocker.patch(
+        'pneumatic_backend.accounts.services.account.AccountService.'
+        '_create_tenant',
+    )
+    settings_mock = mocker.patch(
+        'pneumatic_backend.accounts.services.account.settings'
+    )
+    settings_mock.PROJECT_CONF = {'BILLING': True}
+    company_name = 'Company'
     service = AccountService()
 
     # act
     account = service._create_instance(
+        is_verified=False,
+        name=company_name,
         billing_sync=False,
     )
 
     # assert
+    assert account.id
     assert account.billing_sync is False
+    assert account.name == company_name
+    assert account.is_verified is False
+    assert account.billing_plan == BillingPlanType.FREEMIUM
+    assert account.billing_period is None
+    assert account.plan_expiration is None
+    assert account.trial_start is None
+    assert account.trial_end is None
+    assert account.trial_ended is False
+    create_tenant_mock.assert_not_called()
+
+
+def test_create_instance__disable_global_billing__set_freemium_plan(mocker):
+
+    # arrange
+    create_tenant_mock = mocker.patch(
+        'pneumatic_backend.accounts.services.account.AccountService.'
+        '_create_tenant',
+    )
+    settings_mock = mocker.patch(
+        'pneumatic_backend.accounts.services.account.settings'
+    )
+    settings_mock.PROJECT_CONF = {'BILLING': False}
+    company_name = 'Company'
+    service = AccountService()
+
+    # act
+    account = service._create_instance(
+        is_verified=False,
+        name=company_name,
+        billing_sync=True,
+    )
+
+    # assert
+    assert account.id
+    assert account.billing_sync is True
+    assert account.name == company_name
+    assert account.is_verified is False
+    assert account.billing_plan == BillingPlanType.FREEMIUM
+    assert account.billing_period is None
+    assert account.plan_expiration is None
+    assert account.trial_start is None
+    assert account.trial_end is None
+    assert account.trial_ended is False
+    create_tenant_mock.assert_not_called()
 
 
 def test_create_related__not_utm__ok():
@@ -735,7 +964,6 @@ def test_update_tenants__premium__ok():
     trial_start = timezone.now() - timedelta(days=30)
     trial_end = timezone.now() - timedelta(days=23)
     trial_ended = True
-    payment_card_provided = True
     logo_lg = 'http://site.com/logo_lg.img'
     logo_sm = 'http://site.com/logo_sm.img'
     account = create_test_account(
@@ -748,7 +976,6 @@ def test_update_tenants__premium__ok():
         trial_ended=trial_ended,
         trial_end=trial_end,
         trial_start=trial_start,
-        payment_card_provided=payment_card_provided,
     )
     tenant_account = create_test_account(
         lease_level=LeaseLevel.TENANT,
@@ -785,7 +1012,6 @@ def test_update_tenants__premium__ok():
     assert tenant_account.trial_end == trial_end
     assert tenant_account.trial_ended == trial_ended
     assert tenant_account.max_users == max_users
-    assert tenant_account.payment_card_provided is True
 
     not_tenant_account_1.refresh_from_db()
     assert not_tenant_account_1.logo_lg is None
@@ -817,7 +1043,6 @@ def test_update_tenants__unlimited__ok(plan):
     trial_start = timezone.now() - timedelta(days=30)
     trial_end = timezone.now() - timedelta(days=23)
     trial_ended = True
-    payment_card_provided = True
     logo_lg = 'http://site.com/logo_lg.img'
     logo_sm = 'http://site.com/logo_sm.img'
     master_account = create_test_account(
@@ -830,7 +1055,6 @@ def test_update_tenants__unlimited__ok(plan):
         trial_ended=trial_ended,
         trial_end=trial_end,
         trial_start=trial_start,
-        payment_card_provided=payment_card_provided,
     )
     user = create_test_user(account=master_account)
     tenant_account = create_test_account(
@@ -862,10 +1086,9 @@ def test_update_tenants__unlimited__ok(plan):
     tenant_account.refresh_from_db()
     assert tenant_account.logo_lg == logo_lg
     assert tenant_account.logo_sm == logo_sm
-    assert tenant_account.payment_card_provided is True
 
     assert tenant_account.billing_plan == BillingPlanType.FREEMIUM
-    assert tenant_account.max_users == settings.FREEMIUM_MAX_USERS
+    assert tenant_account.max_users == settings.DEFAULT_MAX_USERS
     assert tenant_account.billing_period is None
     assert tenant_account.plan_expiration is None
     assert tenant_account.trial_start is None

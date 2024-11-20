@@ -45,7 +45,6 @@ class WorkflowUpdateVersionService(BaseUpdateVersionService):
         )
         action_service.end_process(
             workflow=self.instance,
-            user=self.user,
             by_condition=False,
             by_complete_task=True
         )
@@ -117,9 +116,14 @@ class WorkflowUpdateVersionService(BaseUpdateVersionService):
 
         self.complete_up_to_task(self.instance.tasks_count + 1)
         self.instance.current_task = self.instance.tasks_count
-        WorkflowActionService().end_process(
-            workflow=self.instance,
+        service = WorkflowActionService(
             user=self.user,
+            is_superuser=self.is_superuser,
+            auth_type=self.auth_type,
+            sync=self.sync
+        )
+        service.end_process(
+            workflow=self.instance,
             by_condition=False,
             by_complete_task=True
         )
