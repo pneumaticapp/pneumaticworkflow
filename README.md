@@ -1,17 +1,39 @@
-![Pneumatic](https://downloads.intercomcdn.com/i/o/348923885/eead981291a58644d8e60f87/IMG_4.png)
-# Pneumatic: All Workflows all the Time
-Pneumatic is an open-source, cloud-native workflow management system that empowers businesses to automate and streamline their processes with ease.
-Access to the source code under the Apache 2.0 License ensures companies can customize Pneumatic anyway they see fit to ensure it meets their unique needs and requirements.
-![Pneumatic Dashboard](https://downloads.intercomcdn.com/i/o/409119207/c0482f118210603738f5c5dd/IMG_1.png)
 
-## Features
-* Visual Workflow Designer: Create and modify workflows using an intuitive drag-and-drop interface.
-* Automated Task Management: Automate routine tasks and approvals to increase efficiency.
-* Scalable Architecture: Built to handle enterprise-level workloads with ease.
-* Integration-Friendly: Connect with third-party applications and services through APIs.
-* Real-Time Monitoring: Track workflow progress and performance with dashboards and analytics.
-* Role-Based Access Control: Secure your workflows with customizable user permissions.
-  
+# Pneumatic: All Workflows all the Time
+
+
+
+
+**Pneumatic** is an open-source SaaS workflow management system designed to streamline and organize workflows in businesses of any size. Originally developed as a cloud-based platform, Pneumatic empowers teams by enabling them to set up, run, and optimize workflows collaboratively, tracking each stage as tasks move from team to team.
+
+## Key Features
+
+**Workflow Templates:** Create custom workflow templates and reuse them for repetitive processes. Templates define a series of steps that can be used across multiple workflows.
+
+<div align="left">
+  <img src="https://github.com/user-attachments/assets/34d4f694-2cd6-472c-b8d0-54fddb8d81a7" alt="Pneumatic Templates" width="700">
+</div>
+
+
+**Multi-Workflow Management:** Once templates are set, create multiple workflows from each template and run them in parallel, adapting them as needed.
+
+<div align="left">
+  <img src="https://github.com/user-attachments/assets/5cab0de1-1fee-45f8-999e-f1fcb2b395f9" alt="Pneumatic Workflows" width="700">
+</div>
+
+
+**Task Buckets for Staff:** Pneumatic focuses on individual task management, giving each staff member their own bucket of tasks. Staffers can complete tasks efficiently by emptying their buckets one by one.
+
+<div align="left">
+  <img src="https://github.com/user-attachments/assets/297d9dcd-c3a1-4a56-9371-72185e0886d7" alt="Pneumatic Tasks" width="700">
+</div>
+
+**Automated Workflow Tracking:** With automated tracking, Pneumatic provides real-time insight into each workflow’s stage and automates handoffs between teams as tasks progress from step to step.
+
+<div align="left">
+  <img src="https://github.com/user-attachments/assets/439f85cd-cb22-4a9b-b43d-8be144f792dd" alt="Pneumatic Tasks" width="700">
+</div>
+
 
 ## Find out more about how Pneumatic works by watching our video presentations:
 [:tv: Product Overview (< 5 min)](https://www.youtube.com/watch?v=GC67ocuOFfE)
@@ -24,7 +46,10 @@ Access to the source code under the Apache 2.0 License ensures companies can cus
 
 As a cloud native solution Pneumatic easily integrates with other SaaS systems, either directly through its public API or via third party integration solutions like Zapier
 
-![Zapier Integrations](https://downloads.intercomcdn.com/i/o/352871191/a5bf5daf795b2263755869b6/IMG_2.png)
+<div align="left">
+  <img src="https://downloads.intercomcdn.com/i/o/352871191/a5bf5daf795b2263755869b6/IMG_2.png" alt="Pneumatic Zapier" width="800">
+</div>
+
 
 ## Documentation
 For more in-depth treatment of Pneumatic's features consult the support center: [Pneumatic Support Center](https://support.pneumatic.app/en/)
@@ -41,3 +66,5 @@ All you'll need to do will be get this repo, go into the home folder and run doc
 * Operating System: Linux, macOS or Windows
 * Docker Engine to run your locally hosted version of Pneumatic
 * Git: For cloning the repository
+
+
