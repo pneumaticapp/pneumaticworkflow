@@ -1,6 +1,8 @@
 
-# Pneumatic: All Workflows all the Time
+<img width="1000" alt="Heading" src="https://github.com/user-attachments/assets/58e20d4e-3da7-4c05-a6a4-3b3e20e129e1">
 
+
+# Pneumatic: All Workflows all the Time
 
 
 
@@ -10,29 +12,25 @@
 
 **Workflow Templates:** Create custom workflow templates and reuse them for repetitive processes. Templates define a series of steps that can be used across multiple workflows.
 
-<div align="left">
-  <img src="https://github.com/user-attachments/assets/34d4f694-2cd6-472c-b8d0-54fddb8d81a7" alt="Pneumatic Templates" width="700">
-</div>
+<img width="783" alt="Screenshot 2024-11-28 at 2 01 39 PM" src="https://github.com/user-attachments/assets/d1f84c5d-4bd4-4f04-83f3-8a2b8ee64458">
 
 
 **Multi-Workflow Management:** Once templates are set, create multiple workflows from each template and run them in parallel, adapting them as needed.
 
-<div align="left">
-  <img src="https://github.com/user-attachments/assets/5cab0de1-1fee-45f8-999e-f1fcb2b395f9" alt="Pneumatic Workflows" width="700">
-</div>
+<img width="789" alt="Screenshot 2024-11-28 at 2 02 11 PM" src="https://github.com/user-attachments/assets/9e0c5e5f-cd74-4abc-9ae7-40998516f8b5">
 
 
 **Task Buckets for Staff:** Pneumatic focuses on individual task management, giving each staff member their own bucket of tasks. Staffers can complete tasks efficiently by emptying their buckets one by one.
 
-<div align="left">
-  <img src="https://github.com/user-attachments/assets/297d9dcd-c3a1-4a56-9371-72185e0886d7" alt="Pneumatic Tasks" width="700">
-</div>
+<img width="786" alt="Screenshot 2024-11-28 at 2 03 08 PM" src="https://github.com/user-attachments/assets/11d518bf-44a0-462c-b347-508f6773dc4c">
+
 
 **Automated Workflow Tracking:** With automated tracking, Pneumatic provides real-time insight into each workflow’s stage and automates handoffs between teams as tasks progress from step to step.
 
-<div align="left">
-  <img src="https://github.com/user-attachments/assets/439f85cd-cb22-4a9b-b43d-8be144f792dd" alt="Pneumatic Tasks" width="700">
-</div>
+
+
+<<img width="781" alt="Screenshot 2024-11-28 at 2 03 31 PM" src="https://github.com/user-attachments/assets/4a64ea2d-4a66-4743-87b2-1ad119cc3254">
+
 
 
 ## Find out more about how Pneumatic works by watching our video presentations:
