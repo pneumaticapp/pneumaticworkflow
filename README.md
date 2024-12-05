@@ -8,6 +8,8 @@
 
 **Pneumatic** is an open-source SaaS workflow management system designed to streamline and organize workflows in businesses of any size. Originally developed as a cloud-based platform, Pneumatic empowers teams by enabling them to set up, run, and optimize workflows collaboratively, tracking each stage as tasks move from team to team.
 
+[:tv: Product Overview (< 5 min)](https://www.youtube.com/watch?v=GC67ocuOFfE)
+
 ## Key Features
 
 **Workflow Templates:** Create custom workflow templates and reuse them for repetitive processes. Templates define a series of steps that can be used across multiple workflows.
@@ -34,11 +36,13 @@
 
 
 ## Find out more about how Pneumatic works by watching our video presentations:
-[:tv: Product Overview (< 5 min)](https://www.youtube.com/watch?v=GC67ocuOFfE)
+[:tv: Getting Started with Workflow Templates (< 5 min)](https://youtu.be/sgDbMDyxWoY)
 
-[:tv: Intro to Workflows (< 5 min)](https://www.youtube.com/watch?v=zqL9krZawl4)
+[:tv: Working with Workflows (< 5 min)](https://youtu.be/4FIqPVQrxtI)
 
-[:tv: Intro to Workflow Templates (< 5 min)](https://www.youtube.com/watch?v=sgDbMDyxWoY&t=10s)
+[:tv: Working with Tasks (< 5 min)](https://youtu.be/9ZokwLdoVjY)
+
+[:tv: Information Flow via Data Fields (< 5 min)](https://youtu.be/eITtZEciQnk)
 
 ## Integrations
 
