@@ -30,7 +30,7 @@
 **Automated Workflow Tracking:** With automated tracking, Pneumatic provides real-time insight into each workflow’s stage and automates handoffs between teams as tasks progress from step to step.
 
 
-<<img width="1000" alt="Screenshot 2024-11-28 at 2 03 31 PM" src="https://github.com/user-attachments/assets/df6f2082-32d4-441a-a243-683ebe9d283b">
+<img width="1000" alt="Screenshot 2024-11-28 at 2 03 31 PM" src="https://github.com/user-attachments/assets/df6f2082-32d4-441a-a243-683ebe9d283b">
 
 
 
