@@ -1,5 +1,5 @@
 
-<img width="1000" alt="Heading" src="https://github.com/user-attachments/assets/58e20d4e-3da7-4c05-a6a4-3b3e20e129e1">
+<img width="1000" alt="Heading" src="https://github.com/user-attachments/assets/57e9d9df-24bf-42fe-a843-6f9c9b00bfac">
 
 
 # Pneumatic: All Workflows all the Time
@@ -12,24 +12,24 @@
 
 **Workflow Templates:** Create custom workflow templates and reuse them for repetitive processes. Templates define a series of steps that can be used across multiple workflows.
 
-<img width="783" alt="Screenshot 2024-11-28 at 2 01 39 PM" src="https://github.com/user-attachments/assets/d1f84c5d-4bd4-4f04-83f3-8a2b8ee64458">
+<img width="1000" alt="Screenshot 2024-11-28 at 2 01 39 PM" src="https://github.com/user-attachments/assets/b7494c37-fd72-4cb0-8202-3e0ccb3ea402">
 
 
 **Multi-Workflow Management:** Once templates are set, create multiple workflows from each template and run them in parallel, adapting them as needed.
 
-<img width="789" alt="Screenshot 2024-11-28 at 2 02 11 PM" src="https://github.com/user-attachments/assets/9e0c5e5f-cd74-4abc-9ae7-40998516f8b5">
+<img width="1000" alt="Screenshot 2024-11-28 at 2 02 11 PM" src="https://github.com/user-attachments/assets/b93e080b-21ab-43e7-b25f-09887afd74f2">
 
 
 **Task Buckets for Staff:** Pneumatic focuses on individual task management, giving each staff member their own bucket of tasks. Staffers can complete tasks efficiently by emptying their buckets one by one.
 
-<img width="786" alt="Screenshot 2024-11-28 at 2 03 08 PM" src="https://github.com/user-attachments/assets/11d518bf-44a0-462c-b347-508f6773dc4c">
+<img width="1000" alt="Screenshot 2024-11-28 at 2 03 08 PM" src="https://github.com/user-attachments/assets/eb798843-50d9-4758-932f-de51061053e9">
 
 
 **Automated Workflow Tracking:** With automated tracking, Pneumatic provides real-time insight into each workflow’s stage and automates handoffs between teams as tasks progress from step to step.
 
 
+<<img width="1000" alt="Screenshot 2024-11-28 at 2 03 31 PM" src="https://github.com/user-attachments/assets/df6f2082-32d4-441a-a243-683ebe9d283b">
 
-<<img width="781" alt="Screenshot 2024-11-28 at 2 03 31 PM" src="https://github.com/user-attachments/assets/4a64ea2d-4a66-4743-87b2-1ad119cc3254">
 
 
 
@@ -45,7 +45,8 @@
 As a cloud native solution Pneumatic easily integrates with other SaaS systems, either directly through its public API or via third party integration solutions like Zapier
 
 <div align="left">
-  <img src="https://downloads.intercomcdn.com/i/o/352871191/a5bf5daf795b2263755869b6/IMG_2.png" alt="Pneumatic Zapier" width="800">
+  <img width="1000" src="https://github.com/user-attachments/assets/dce1d41f-aa1f-4afc-9355-6aa306cf715c">
+  
 </div>
 
 
