@@ -1,6 +1,4 @@
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Docker](https://img.shields.io/docker/pulls/pneumatic/pneumatic)](https://hub.docker.com/r/pneumatic/pneumatic)
-[![Documentation Status](https://readthedocs.org/projects/pneumatic/badge/?version=latest)](https://pneumatic.readthedocs.io)
+[![Documentation](https://img.shields.io/badge/docs-support.pneumatic.app-blue)](https://support.pneumatic.app/en/)
 
 
 <img width="1000" alt="Heading" src="https://github.com/user-attachments/assets/57e9d9df-24bf-42fe-a843-6f9c9b00bfac">
