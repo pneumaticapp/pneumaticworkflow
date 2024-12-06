@@ -15,6 +15,19 @@
 
 [:tv: Product Overview (< 5 min)](https://www.youtube.com/watch?v=GC67ocuOFfE)
 
+## Table of Contents
+- [Key Features](#key-features)
+- [Quick Start](#quick-start)
+- [Installation](#installation)
+- [Documentation](#documentation)
+- [Video Tutorials](#video-tutorials)
+- [System Requirements](#system-requirements)
+- [Integration Options](#integration-options)
+- [Contributing](#contributing)
+- [Support](#support)
+- [License](#license)
+
+
 ## Key Features
 
 **Workflow Templates:** Create custom workflow templates and reuse them for repetitive processes. Templates define a series of steps that can be used across multiple workflows.
