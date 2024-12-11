@@ -77,7 +77,7 @@ For more in-depth treatment of Pneumatic's features consult the support center: 
 
 ## Getting Started
 
-You can grab your own copy of Pneumatic by cloning this repository.
+You can grab your own copy of Pneumatic by cloning this repository and self-host it on your machine. Here's a quick start guide:
 
 
 ### Prerequisites
