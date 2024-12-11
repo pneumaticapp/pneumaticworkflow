@@ -65,52 +65,16 @@ For more in-depth treatment of Pneumatic's features consult the support center: 
 
 ## Getting Started
 
-You can grab your own copy of Pneumatic by cloning this repository and self-host it on your machine. Here's a quick start guide:
+You can grab your own copy of Pneumatic by cloning this repository.
 
+Our team will shortly be releasing a full containerized solution that will be available from here.
+
+All you'll need to do will be get this repo, go into the home folder and run docker compose up -d.
 
 ### Prerequisites
-* Operating System: Linux(Ubuntu/Debian), macOS or Windows(install and run at your own risk)[^1]
-* Git version 2.0 or above
-* Docker version 2.27 or above
-* Docker compose version 27.0 or above
-  
-[^1]: The current version of Pneumatic is being developed, tested and deployed on Ubuntu/Debian. We're currently working to offer support for Mac and Windows, but at this point we can't guarantee you won't run into issues on those systems.
-
-
-### Add the following lines to your hosts file 
-
-On Linux you can use the following command to edit your hosts file:
-
-``` 
-sudo gedit /etc/hosts on linux) 
-```
-
-```
-127.0.0.1 localhost
-
-127.0.0.1 api-localhost
-
-127.0.0.1 form-localhost
-```
-
-### Clone the repository
-
-git clone https://github.com/pneumaticapp/pneumaticworkflow.git
-
-### Run Pneumatic
-
-in order to run Pneumatic cd into the project's directory and run the command
-
-```
-docker compose up -d
-```
-
-Alternatively, you can run the Pneumatic containers from Docker Desktop.
-
-### Open Pneumatic and register a free account
-
-Once the containers are up and running go to http://localhost in your browser, register a free account and you're good to go.
-
+* Operating System: Linux, macOS or Windows
+* Docker Engine to run your locally hosted version of Pneumatic
+* Git: For cloning the repository
 
 
 ## License
@@ -131,4 +95,3 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
-
