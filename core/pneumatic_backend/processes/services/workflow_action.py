@@ -352,7 +352,6 @@ class WorkflowActionService:
             )
             fields_values = workflow.get_fields_markdown_values(
                 tasks_filter_kwargs={'number__lt': task.number},
-                user=self.user or workflow.account.get_owner()
             )
             task_service.insert_fields_values(fields_values=fields_values)
 
@@ -435,7 +434,6 @@ class WorkflowActionService:
         task_service = TaskService(instance=task, user=self.user)
         fields_values = workflow.get_fields_markdown_values(
             tasks_filter_kwargs={'number__lt': task.number},
-            user=self.user
         )
         # Workflow run event need task with inserted vars
         task_service.insert_fields_values(fields_values=fields_values)
@@ -575,7 +573,6 @@ class WorkflowActionService:
             )
             fields_values = workflow.get_fields_markdown_values(
                 tasks_filter_kwargs={'number__lt': task.number},
-                user=self.user or workflow.account.get_owner()
             )
             task_service.insert_fields_values(fields_values=fields_values)
         task.update_performers(restore_performers=True)

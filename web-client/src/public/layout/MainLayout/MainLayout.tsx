@@ -21,11 +21,10 @@ import { ESubscriptionPlan } from '../../types/account';
 import { ERoutes } from '../../constants/routes';
 import { EPlanActions } from '../../utils/getPlanPendingActions';
 import { Paywall } from '../../components/UI/Paywall';
-
-import styles from './MainLayout.css';
+import { isEnvAnalytics, isEnvPush } from '../../constants/enviroment';
 import { IUnsavedUser, TUserListItem } from '../../types/user';
 
-import { isEnvAnalytics, isEnvPush } from '../../constants/enviroment';
+import styles from './MainLayout.css';
 
 export interface IMainLayoutComponentStoreProps {
   user: IAuthUser;
@@ -106,8 +105,7 @@ export function MainLayout({
     if (
       user.isAdmin &&
       user.account.leaseLevel !== 'tenant' &&
-      user.account.billingPlan !== ESubscriptionPlan.Free &&
-      user.account.isSubscribed
+      (user.account.isSubscribed || billingPlan === ESubscriptionPlan.Free)
     ) {
       loadTenantsCount();
     }

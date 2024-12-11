@@ -15,6 +15,7 @@ export interface IDocumentAttachment extends Pick<TUploadedFile, 'name' | 'url'>
   className?: string;
   isClickable?: boolean;
   deleteFile?(): void;
+  hideIcon?: boolean;
 }
 
 export function DocumentAttachment({
@@ -25,6 +26,7 @@ export function DocumentAttachment({
   url,
   className,
   isClickable = true,
+  hideIcon,
 }: IDocumentAttachment) {
   const onDeleteIconClick: React.MouseEventHandler<HTMLButtonElement> = (event) => {
     event.stopPropagation();
@@ -35,9 +37,7 @@ export function DocumentAttachment({
     }
   };
 
-  const Icon = getAttachmentTypeByFilename(name) === 'video'
-    ? VideoInfoIcon
-    : DocumentInfoIcon;
+  const Icon = getAttachmentTypeByFilename(name) === 'video' ? VideoInfoIcon : DocumentInfoIcon;
 
   return (
     <span
@@ -51,19 +51,16 @@ export function DocumentAttachment({
         href={url}
         target="_blank"
         className={classnames(styles['document'], !isClickable && styles['document_not-clickable'])}
-        onClick={event => !isClickable && event.preventDefault()}
+        onClick={(event) => !isClickable && event.preventDefault()}
       >
-        <Icon className={styles['document__icon']} />
+        {!hideIcon && <Icon className={styles['document__icon']} />}
         <span className={styles['document__filename']}>{name}</span>
       </a>
-      {isEdit &&
-        <button
-          className={styles['document__delete-button']}
-          onClick={onDeleteIconClick}
-        >
+      {isEdit && (
+        <button className={styles['document__delete-button']} onClick={onDeleteIconClick}>
           <DeleteBoldIcon />
         </button>
-      }
+      )}
     </span>
   );
 }

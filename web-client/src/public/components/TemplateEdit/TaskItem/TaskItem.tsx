@@ -18,6 +18,8 @@ import { getKickoff, getTemplateTasks } from '../../../redux/selectors/template'
 import { RichText } from '../../RichText';
 
 import styles from '../TemplateEdit.css';
+import { getSubscriptionPlan } from '../../../redux/selectors/user';
+import { ESubscriptionPlan } from '../../../types/account';
 
 export interface ITaskItemProps {
   task: ITemplateTask;
@@ -34,6 +36,9 @@ export const TaskItem = ({ task, isSubscribed, toggleIsOpenTask, setScrollTarget
   const kickoff = useSelector(getKickoff);
   const tasks = useSelector(getTemplateTasks);
   const allVariables = getVariables({ kickoff, tasks });
+  const billingPlan = useSelector(getSubscriptionPlan);
+  const isFreePlan = billingPlan === ESubscriptionPlan.Free;
+  const accessConditions = isSubscribed || isFreePlan;
 
   const handleClickOnClock = () => {
     setScrollTarget(ETaskFormParts.DueIn);
@@ -92,7 +97,7 @@ export const TaskItem = ({ task, isSubscribed, toggleIsOpenTask, setScrollTarget
       );
     }
 
-    if (!isSubscribed) {
+    if (!accessConditions) {
       return (
         <span className={styles['task_view__conditions-gold']} role="button" onClick={handleClickOnConditions}>
           {conditionsInfoText}

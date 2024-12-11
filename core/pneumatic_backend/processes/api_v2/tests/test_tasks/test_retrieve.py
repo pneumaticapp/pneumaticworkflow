@@ -78,9 +78,6 @@ class TestTaskView:
         )
         assert response.data['date_completed'] is None
         assert response.data['date_completed_tsp'] is None
-        assert response.data['due_date'] == (
-            task.due_date.strftime(date_format)
-        )
         assert response.data['due_date_tsp'] == task.due_date.timestamp()
         assert response.data['delay'] is None
         assert response.data['sub_workflows'] == []
@@ -133,7 +130,6 @@ class TestTaskView:
         )
         assert response.data['date_completed'] is None
         assert response.data['date_completed_tsp'] is None
-        assert response.data['due_date'] is None
         assert response.data['due_date_tsp'] is None
         delay_data = response.data['delay']
         assert delay_data['id'] == delay.id
@@ -523,7 +519,6 @@ class TestTaskView:
         assert response.data['date_started_tsp'] is None
         assert response.data['date_completed'] is None
         assert response.data['date_completed_tsp'] is None
-        assert response.data['due_date'] is None
         assert response.data['due_date_tsp'] is None
         workflow_data = response.data['workflow']
         assert workflow_data['id'] == workflow.id
@@ -1226,7 +1221,6 @@ class TestTaskView:
             sub_wf.date_created.strftime(date_format)
         )
         assert data['date_created_tsp'] == sub_wf.date_created.timestamp()
-        assert data['due_date'] == sub_wf.due_date.strftime(date_format)
         assert data['due_date_tsp'] == sub_wf.due_date.timestamp()
         assert data['tasks_count'] == 3
         assert data['is_external'] is False
@@ -1252,9 +1246,6 @@ class TestTaskView:
         assert current_task['id'] == task_3.id
         assert current_task['name'] == task_3.name
         assert current_task['number'] == 3
-        assert current_task['due_date'] == (
-            task_3.due_date.strftime(date_format)
-        )
         assert current_task['due_date_tsp'] == task_3.due_date.timestamp()
         assert current_task['date_started'] == (
             task_3.date_started.strftime(date_format)

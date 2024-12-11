@@ -918,8 +918,6 @@ def test__due_date_changed__ok(api_client):
     assert data['task']['number'] == task.number
     assert data['task']['description'] == task.description
     assert data['task']['performers'] == [user.id]
-    str_due_date = due_date.strftime(datetime_format)
-    assert data['task']['due_date'] == str_due_date
     assert data['task']['due_date_tsp'] == due_date.timestamp()
     assert data['workflow']['id'] == workflow.id
     assert data['workflow']['template']['id'] == workflow.template.id
@@ -1017,9 +1015,6 @@ def test__sub_workflow_run__ok(api_client):
     assert task_data['number'] == ancestor_task.number
     assert task_data['description'] == ancestor_task.description
     assert task_data['performers'] == [user.id]
-    assert task_data['due_date'] == (
-        ancestor_task.due_date.strftime(datetime_format)
-    )
     assert task_data['due_date_tsp'] == ancestor_task.due_date.timestamp()
 
     assert task_data['sub_workflow']['id'] == sub_workflow.id
@@ -1032,9 +1027,6 @@ def test__sub_workflow_run__ok(api_client):
     )
     assert task_data['sub_workflow']['date_created_tsp'] == (
         sub_workflow.date_created.timestamp()
-    )
-    assert task_data['sub_workflow']['due_date'] == (
-        sub_workflow.due_date.strftime(datetime_format)
     )
     assert task_data['sub_workflow']['due_date_tsp'] == (
         sub_workflow.due_date.timestamp()

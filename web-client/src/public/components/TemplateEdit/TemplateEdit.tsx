@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import classnames from 'classnames';
+import { useSelector } from 'react-redux';
 import TextareaAutosize from 'react-textarea-autosize';
 import { useIntl } from 'react-intl';
 import { RouteComponentProps } from 'react-router-dom';
@@ -36,6 +37,8 @@ import { createStartedTaskDueDate } from '../../utils/dueDate/createStartedTaskD
 import { usePrevious } from '../../hooks/usePrevious';
 import { ConditionsBanner } from './ConditionsBanner';
 import { getUserFullName } from '../../utils/users';
+import { getSubscriptionPlan } from '../../redux/selectors/user';
+import { ESubscriptionPlan } from '../../types/account';
 
 import styles from './TemplateEdit.css';
 
@@ -96,6 +99,9 @@ export function TemplateEdit({
     tasks,
     templateOwners,
   } = template;
+  const billingPlan = useSelector(getSubscriptionPlan);
+  const isFreePlan = billingPlan === ESubscriptionPlan.Free;
+  const accessConditions = isSubscribed || isFreePlan;
 
   const prevUsers = usePrevious(users);
   const prevLocation = usePrevious(location);
@@ -141,7 +147,7 @@ export function TemplateEdit({
     }
 
     if (users.length !== prevUsers?.length) {
-      const newTemplateOwners = getNormalizedTemplateOwners(templateOwners, isSubscribed, users);
+      const newTemplateOwners = getNormalizedTemplateOwners(templateOwners, accessConditions, users);
       setTemplate({ ...template, templateOwners: newTemplateOwners });
     }
   }, [prevTemplate, prevLocation, prevUsers]);
@@ -207,7 +213,7 @@ export function TemplateEdit({
       ],
       uuid: createUUID(),
       requireCompletionByAll: false,
-      conditions: getEmptyConditions(isSubscribed),
+      conditions: getEmptyConditions(accessConditions),
       rawDueDate: createStartedTaskDueDate(taskApiName),
       checklists: [],
       ...templateTask,
@@ -222,7 +228,7 @@ export function TemplateEdit({
       tasks: [getNewTask({ name: 'First Step', number: 1 })],
       isActive: false,
       finalizable: false,
-      templateOwners: getNormalizedTemplateOwners([authUser.id], isSubscribed, users),
+      templateOwners: getNormalizedTemplateOwners([authUser.id], accessConditions, users),
       wfNameTemplate: '{{date}} — {{template-name}}',
     } as ITemplate;
   };
@@ -482,7 +488,7 @@ export function TemplateEdit({
           </StickyBox>
         </div>
         <div className={styles['template-wrapper__tasks']}>
-          <ConditionsBanner />
+          {!accessConditions && <ConditionsBanner />}
           <div className={styles['tasks']}>
             <div className={styles['kickoff-wrapper']}>
               <KickoffReduxContainer setKickoff={handleChangeTemplateField('kickoff')} />

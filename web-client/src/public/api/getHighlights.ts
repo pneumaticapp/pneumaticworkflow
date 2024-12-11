@@ -2,6 +2,7 @@ import { commonRequest } from './commonRequest';
 import { getBrowserConfigEnv } from '../utils/getConfig';
 import { IHighlightsItem } from '../types/highlights';
 import { isArrayWithItems } from '../utils/helpers';
+import { toTspDate } from '../utils/dateTime';
 
 export interface IGetHighlightsResponse {
   count: number;
@@ -50,25 +51,10 @@ export function getHighlightsQueryString({ limit, offset, filters }: IGetHighlig
   let usersQuery: TFiltersQuery = null;
   let templatesQuery: TFiltersQuery = null;
 
-  if (dateAfter) {
-    const formattedDateAfterTsp =
-      typeof dateAfter === 'string' ? new Date(dateAfter).getTime() / 1000 : dateAfter.getTime() / 1000;
-    dateAfterQuery = `date_after_tsp=${formattedDateAfterTsp}`;
-  }
-
-  if (dateBefore) {
-    const formattedDateBeforeTsp =
-      typeof dateBefore === 'string' ? new Date(dateBefore).getTime() / 1000 : dateBefore.getTime() / 1000;
-    dateBeforeQuery = `date_before_tsp=${formattedDateBeforeTsp}`;
-  }
-
-  if (isArrayWithItems(users)) {
-    usersQuery = `users=${users.join(',')}`;
-  }
-
-  if (isArrayWithItems(templates)) {
-    templatesQuery = `templates=${templates.join(',')}`;
-  }
+  if (dateAfter) dateAfterQuery = `date_after_tsp=${toTspDate(dateAfter)}`;
+  if (dateBefore) dateBeforeQuery = `date_before_tsp=${toTspDate(dateBefore)}`;
+  if (isArrayWithItems(users)) usersQuery = `users=${users.join(',')}`;
+  if (isArrayWithItems(templates)) templatesQuery = `templates=${templates.join(',')}`;
 
   return [`limit=${limit}`, `offset=${offset}`, dateAfterQuery, dateBeforeQuery, usersQuery, templatesQuery]
     .filter(Boolean)

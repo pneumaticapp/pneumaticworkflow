@@ -300,10 +300,8 @@ def test_run__all__ok(api_client, mocker):
     assert first_task.description == (
         'His name is... JOHN CENA '
         'Apr 09, 2171, 11:32PM link '
-        f'[{kickoff_field_4.name}]'
-        f'(https://link.to/first_file.png)\n'
-        f'[{kickoff_field_4.name}]'
-        f'(https://link.to/sec_file.docx).'
+        f'[{attach_1.name}]({attach_1.url}), '
+        f'[{attach_2.name}]({attach_2.url}).'
         'selection 1, selection 2'
     )
     assert first_task.description_template == (
@@ -2405,47 +2403,13 @@ def test_run__due_date_more_than_current__ok(api_client, mocker):
         path=f'/templates/{template.id}/run',
         data={
             'name': 'Test name',
-            'due_date': due_date,
+            'due_date_tsp': due_date.timestamp(),
         }
     )
 
     # assert
     assert response.status_code == 200
-    workflow = Workflow.objects.get(id=response.data['id'])
-    assert workflow.due_date == due_date
-
-
-def test_run__due_date_tsp_more_than_current__ok(api_client, mocker):
-
-    # arrange
-    mocker.patch(
-        'pneumatic_backend.analytics.services.AnalyticService.'
-        'workflows_started'
-    )
-    mocker.patch(
-        'pneumatic_backend.processes.services.workflow_action.'
-        'WorkflowEventService.workflow_run_event'
-    )
-    user = create_test_user()
-    api_client.token_authenticate(user)
-    template = create_test_template(
-        user=user,
-        is_active=True
-    )
-    due_date = timezone.now() + timedelta(days=1)
-    due_date_tsp = due_date.timestamp()
-
-    # act
-    response = api_client.post(
-        path=f'/templates/{template.id}/run',
-        data={
-            'name': 'Test name',
-            'due_date_tsp': due_date_tsp,
-        }
-    )
-
-    # assert
-    assert response.status_code == 200
+    assert response.data['due_date_tsp'] == due_date.timestamp()
     workflow = Workflow.objects.get(id=response.data['id'])
     assert workflow.due_date == due_date
 
@@ -2509,19 +2473,20 @@ def test_run__due_date_less_then_current__validation_error(
         tasks_count=1
     )
     due_date = timezone.now() - timedelta(hours=1)
-    due_date_str = due_date.strftime(date_format)
 
     # act
     response = api_client.post(
         path=f'/templates/{template.id}/run',
-        data={'due_date': due_date_str}
+        data={
+            'due_date_tsp': due_date.timestamp(),
+        }
     )
 
     # assert
     assert response.status_code == 400
     assert response.data['code'] == ErrorCode.VALIDATION_ERROR
     assert response.data['message'] == messages.MSG_PW_0051
-    assert response.data['details']['name'] == 'due_date'
+    assert response.data['details']['name'] == 'due_date_tsp'
     assert response.data['details']['reason'] == messages.MSG_PW_0051
     send_new_task_notification_ws_mock.assert_not_called()
     send_new_task_notification_mock.assert_not_called()

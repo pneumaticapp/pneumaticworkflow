@@ -84,7 +84,7 @@ class EmailService(NotificationService):
         if self.logging:
             AccountLogService().email_message(
                 title=f'Email to: {user_email}: {title}',
-                body=data,
+                request_data=data,
                 account_id=self.account_id,
                 status=AccountEventStatus.SUCCESS,
                 contractor='Customer.io'

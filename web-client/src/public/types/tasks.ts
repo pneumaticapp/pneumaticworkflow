@@ -1,9 +1,16 @@
 import { IWorkflow } from './workflow';
-import { IExtraField , ITemplateTitle } from './template';
+import { IExtraField, ITemplateTitle } from './template';
 
 export type TTaskWorkflow = Pick<IWorkflow, 'id' | 'name' | 'currentTask' | 'status' | 'dateCompleted'> & {
   templateName: string;
 };
+
+export type TFormatTaskDates = {
+  output?: IExtraField[];
+  subWorkflow?: (Omit<IWorkflow, 'dueDate'> & { dueDateTsp: number | null }) | null;
+  dueDateTsp?: number | null;
+};
+
 export interface ITask {
   id: number;
   name: string;
@@ -29,7 +36,7 @@ export interface ITask {
 
 export type TTaskChecklists = {
   [apiName in string]: TTaskChecklist;
-}
+};
 
 export type TTaskChecklist = {
   id: number;
@@ -41,7 +48,7 @@ export type TTaskChecklist = {
 
 export type TTaskChecklistsItems = {
   [apiName in string]: TTaskChecklistsItem;
-}
+};
 
 export type TTaskChecklistsItem = {
   id: number;
@@ -59,7 +66,10 @@ export interface ITaskAPI extends Omit<ITask, 'checklists' | 'areChecklistsHandl
       isSelected: boolean;
     }[];
   }[];
+  dueDateTsp: number | null;
 }
+
+export type TTaskListItemResponse = Omit<ITaskListItem, 'dueDate'> & { dueDateTsp: number | null };
 
 export interface ITaskListItem {
   id: number;

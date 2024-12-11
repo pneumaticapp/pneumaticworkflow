@@ -1,5 +1,3 @@
-/* eslint-disable */
-/* prettier-ignore */
 import produce from 'immer';
 
 import { ITemplate, ITemplateTask } from '../../types/template';

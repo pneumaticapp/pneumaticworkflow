@@ -448,7 +448,6 @@ def test_update__admin__ok(api_client, mocker):
     assert response.data['updated_tsp'] == event.updated.timestamp()
     assert response.data['status'] == CommentStatus.CREATED
     assert response.data['task']['id'] == workflow.current_task_instance.id
-    assert response.data['task']['due_date'] is None
     assert response.data['task']['due_date_tsp'] is None
     assert response.data['text'] == event.text
     assert response.data['type'] == event.type

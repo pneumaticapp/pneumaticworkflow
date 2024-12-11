@@ -36,7 +36,6 @@ class WorkflowCurrentTaskSerializer(serializers.ModelSerializer):
             'name',
             'number',
             'delay',
-            'due_date',
             'due_date_tsp',
             'date_started',
             'date_started_tsp',
@@ -123,7 +122,6 @@ class WorkflowInfoSerializer(serializers.ModelSerializer):
             'passed_tasks',
             'date_completed',
             'date_completed_tsp',
-            'due_date',
             'due_date_tsp',
             'date_created',
             'date_created_tsp',
@@ -176,7 +174,6 @@ class TaskSerializer(serializers.ModelSerializer):
             'is_completed',
             'date_completed',
             'date_completed_tsp',
-            'due_date',
             'due_date_tsp',
             'performers',
             'is_urgent',
@@ -197,7 +194,6 @@ class TaskSerializer(serializers.ModelSerializer):
     checklists_marked = serializers.IntegerField(read_only=True)
     checklists_total = serializers.IntegerField(read_only=True)
     checklists = CheckListSerializer(many=True, read_only=True)
-    due_date = serializers.DateTimeField(read_only=True, allow_null=True)
     due_date_tsp = TimeStampField(source='due_date')
     sub_workflows = WorkflowInfoSerializer(many=True, read_only=True)
 
@@ -241,7 +237,6 @@ class TaskListSerializer(serializers.ModelSerializer):
             'id',
             'name',
             'workflow_name',
-            'due_date',
             'due_date_tsp',
             'date_started',
             'date_started_tsp',

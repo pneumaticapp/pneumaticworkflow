@@ -282,10 +282,9 @@ class TestWorkflow:
         # arrange
         user = create_test_user()
         workflow = create_test_workflow(user=user)
-        markdown_value_mock = mocker.Mock(return_value='test')
         field_mock = mocker.Mock(
             api_name='field-template',
-            markdown_value=markdown_value_mock
+            markdown_value='test'
         )
         kickoff_output_fields_mock = mocker.patch(
             'pneumatic_backend.processes.models.Workflow.'
@@ -298,7 +297,6 @@ class TestWorkflow:
 
         # assert
         kickoff_output_fields_mock.assert_called_once()
-        markdown_value_mock.assert_called_once_with(user=user)
 
 
 class TestSystemTemplate:

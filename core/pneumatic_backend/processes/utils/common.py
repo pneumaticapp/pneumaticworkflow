@@ -106,6 +106,7 @@ def insert_fields_values_to_text(
 
     if contains_vars(text):
         for api_name, value in fields_values.items():
+            value = '' if value is None else value
             field_variable_pattern = VAR_PATTERN_TEMPLATE % api_name
             text = re.sub(field_variable_pattern, value, text)
     return text

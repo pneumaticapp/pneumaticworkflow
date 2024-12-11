@@ -112,7 +112,7 @@ class AttachmentService:
         attachment = cls._create_attachment(
             url=public_url,
             thumbnail_url=thumb_public_url,
-            name=unique_filename,
+            name=filename,
             size=size,
             account_id=account_id,
         )

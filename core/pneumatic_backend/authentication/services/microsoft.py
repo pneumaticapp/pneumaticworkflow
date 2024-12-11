@@ -15,6 +15,7 @@ from pneumatic_backend.authentication.entities import UserData
 from pneumatic_backend.authentication.models import AccessToken
 from pneumatic_backend.generics.mixins.services import CacheMixin
 from pneumatic_backend.storage.google_cloud import GoogleCloudService
+from pneumatic_backend.logs.service import AccountLogService
 from pneumatic_backend.authentication.services import exceptions
 from pneumatic_backend.utils.logging import (
     capture_sentry_message,
@@ -440,26 +441,54 @@ class MicrosoftAuthService(
 
         """ Save all organization users in contacts """
 
-        access_token = self._get_access_token(user.id)
-        users_data = self._get_users(access_token)
-        for user_profile in users_data['value']:
-            email = self._get_user_profile_email(user_profile)
-            if email and email != user.email:
-                photo = self._get_user_photo(
-                    access_token=access_token,
-                    user_id=user_profile['id']
-                )
-                first_name = user_profile['givenName'] or email.split('@')[0]
-                Contact.objects.update_or_create(
-                    account=user.account,
+        response_data = {'created_contacts': [], 'updated_contacts': []}
+        path = f'{self.api_url}{self.users_path}'
+        title = f'Contacts request: {user.email}'
+        http_status = 200
+        try:
+            access_token = self._get_access_token(user.id)
+            users_data = self._get_users(access_token)
+            response_data['users_data'] = users_data
+            for user_profile in users_data['value']:
+                email = self._get_user_profile_email(user_profile)
+                if email and email != user.email:
+                    photo = self._get_user_photo(
+                        access_token=access_token,
+                        user_id=user_profile['id']
+                    )
+                    first_name = (
+                        user_profile['givenName'] or email.split('@')[0]
+                    )
+                    _, created = Contact.objects.update_or_create(
+                        account=user.account,
+                        user=user,
+                        source=SourceType.MICROSOFT,
+                        email=email,
+                        defaults={
+                            'photo': photo,
+                            'first_name': first_name,
+                            'last_name': user_profile['surname'],
+                            'job_title': user_profile['jobTitle'],
+                            'source_id': user_profile['id'],
+                        }
+                    )
+                    if created:
+                        response_data['created_contacts'].append(email)
+                    else:
+                        response_data['updated_contacts'].append(email)
+
+        except Exception as ex:
+            http_status = 400
+            response_data['message'] = str(ex)
+            response_data['exception_type'] = type(ex)
+            response_data['details'] = getattr(ex, 'details')
+        finally:
+            if user.account.log_api_requests:
+                AccountLogService().contacts_request(
                     user=user,
-                    source=SourceType.MICROSOFT,
-                    email=email,
-                    defaults={
-                        'photo': photo,
-                        'first_name': first_name,
-                        'last_name': user_profile['surname'],
-                        'job_title': user_profile['jobTitle'],
-                        'source_id': user_profile['id'],
-                    }
+                    path=path,
+                    title=title,
+                    http_status=http_status,
+                    response_data=response_data,
+                    contractor='Microsoft Graph API',
                 )

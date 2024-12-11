@@ -105,7 +105,7 @@ def test_comment_created_event__ok(mocker):
     assert event.task_json['name'] == task.name
     assert event.task_json['description'] == task.description
     assert event.task_json['performers'] == [user.id]
-    assert event.task_json['due_date'] is None
+    assert event.task_json['due_date_tsp'] is None
     assert event.task_json['output'] is None
     after_create_actions_mock.assert_called_once_with(event)
 
@@ -170,9 +170,6 @@ def test_sub_workflow_run_event__ok(mocker):
     )
     assert sub_workflow_data['date_created_tsp'] == (
         sub_workflow.date_created.timestamp()
-    )
-    assert sub_workflow_data['due_date'] == (
-        sub_workflow.due_date.strftime(date_format)
     )
     assert sub_workflow_data['due_date_tsp'] == (
         sub_workflow.due_date.timestamp()

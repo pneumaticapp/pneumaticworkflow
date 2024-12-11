@@ -13,7 +13,6 @@ import {
 import { ERoutes } from './routes';
 import { HelpIcon } from '../components/icons/HelpIcon';
 import { IAuthUser } from '../types/redux';
-import { ESubscriptionPlan } from '../types/account';
 
 export type TMenuCounter = {
   id: IMenuItem['id'];
@@ -83,7 +82,7 @@ export const getUserMenuItems = (user: IAuthUser, counters?: TMenuCounter[]): IM
       to: ERoutes.Tenants,
       label: 'menu.tenants',
       iconComponent: TenantsIcon,
-      isHidden: !user.isAdmin || user.account.billingPlan === ESubscriptionPlan.Free || user.account.leaseLevel === 'tenant',
+      isHidden: !user.isAdmin || user.account.leaseLevel === 'tenant',
     },
   ];
 

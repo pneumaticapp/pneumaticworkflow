@@ -113,7 +113,7 @@ def test_create__not_another_performers__ok(mocker):
         workflow=workflow,
         text=text,
         clear_text=clear_text,
-        attachments=None
+        attachments=[]
     )
     send_notifications_mock.assert_called_once_with()
     update_attachments_mock.assert_not_called()
@@ -209,7 +209,7 @@ def test_create__notified_users__ok(mocker):
         workflow=workflow,
         text=text,
         clear_text=clear_text,
-        attachments=None
+        attachments=[]
     )
     send_notifications_mock.assert_called_once_with()
     update_attachments_mock.assert_not_called()
@@ -318,7 +318,7 @@ def test_create_mentioned_users__ok(mocker):
         workflow=workflow,
         text=text,
         clear_text=clear_text,
-        attachments=None
+        attachments=[]
     )
     send_notifications_mock.assert_called_once_with()
     update_attachments_mock.assert_not_called()
@@ -437,6 +437,243 @@ def test_create__with_attachments__ok(mocker):
     )
     send_notifications_mock.assert_called_once_with()
     update_attachments_mock.assert_called_once_with(attachments)
+    comment_added_analytics_mock.assert_not_called()
+    send_comment_notification_mock.assert_not_called()
+    mention_created_analytics_mock.assert_not_called()
+    send_mention_notification_mock.assert_not_called()
+    task.refresh_from_db()
+    assert task.contains_comments is True
+
+
+@pytest.mark.parametrize(
+    'data',
+    (
+        (
+            '(![avatar.jpg](https://storage.com/dev/avatar.jpg '
+            '"attachment_id:3349 entityType:image")',
+            [3349]
+        ),
+        (
+            '[file.txt](http://file.txt "attachment_id:4187 entityType:file")',
+            [4187]
+        ),
+        (
+            '[video.mp4](https://video.mp4 "attachment_id:4188 '
+            'entityType:video")',
+            [4188]
+        ),
+        (
+            'some [video.mp4](https://video.mp4 "attachment_id:4188 '
+            'entityType:video") text \n(![avatar.jpg]'
+            '(https://storage.com/dev/avatar.jpg '
+            '"attachment_id:3349 entityType:image")',
+            [4188, 3349]
+        ),
+        (
+            '[ZIP-папка.zip](https://storage.zip "attachment_id:2482")',
+            [2482]
+        ),
+        (
+            '[ZIP-папка.zip](https://storage.zip \"attachment_id:2482\")',
+            [2482]
+        )
+
+    )
+)
+def test_create__find_attachments_in_text__ok(data, mocker):
+
+    # arrange
+    media, attachment_ids = data
+    account = create_test_account()
+    account_owner = create_test_user(is_account_owner=True, account=account)
+    user = create_test_user(
+        account=account,
+        email='user@test.test',
+        is_account_owner=False,
+        is_admin=True
+    )
+    workflow = create_test_workflow(account_owner, tasks_count=1)
+    task = workflow.current_task_instance
+    task.performers.add(user)
+
+    text = f"text {media}\n some text"
+    clear_text = 'clear text'
+    is_superuser = True
+    auth_type = AuthTokenType.API
+
+    event = WorkflowEvent.objects.create(
+        account=account,
+        type=WorkflowEventType.COMMENT,
+        text=text,
+        with_attachments=False,
+        workflow=workflow,
+        task=workflow.current_task_instance,
+        user=account_owner,
+    )
+    comment_created_event_mock = mocker.patch(
+        'pneumatic_backend.processes.api_v2.services.events.'
+        'WorkflowEventService.comment_created_event',
+        return_value=event
+    )
+    clear_text_mock = mocker.patch(
+        'pneumatic_backend.processes.api_v2.services.events.'
+        'MarkdownService.clear',
+        return_value=clear_text
+    )
+    update_attachments_mock = mocker.patch(
+        'pneumatic_backend.processes.api_v2.services.events.'
+        'CommentService._update_attachments'
+    )
+    send_notifications_mock = mocker.patch(
+        'pneumatic_backend.processes.api_v2.services.events.'
+        'CommentService._get_new_comment_recipients',
+        return_value=((), ())
+    )
+    send_comment_notification_mock = mocker.patch(
+        'pneumatic_backend.processes.api_v2.services.events.'
+        'send_comment_notification.delay'
+    )
+    send_mention_notification_mock = mocker.patch(
+        'pneumatic_backend.processes.api_v2.services.events.'
+        'send_mention_notification.delay'
+    )
+    comment_added_analytics_mock = mocker.patch(
+        'pneumatic_backend.processes.api_v2.services.events.'
+        'AnalyticService.comment_added'
+    )
+    mention_created_analytics_mock = mocker.patch(
+        'pneumatic_backend.processes.api_v2.services.events.'
+        'AnalyticService.mentions_created'
+    )
+    service = CommentService(
+        user=account_owner,
+        is_superuser=is_superuser,
+        auth_type=auth_type
+    )
+
+    # act
+    result = service.create(
+        workflow=workflow,
+        text=text,
+    )
+
+    # assert
+    assert result == event
+    clear_text_mock.assert_called_once_with(text)
+    comment_created_event_mock.assert_called_once_with(
+        user=account_owner,
+        workflow=workflow,
+        text=text,
+        clear_text=clear_text,
+        attachments=attachment_ids
+    )
+    send_notifications_mock.assert_called_once_with()
+    update_attachments_mock.assert_called_once_with(attachment_ids)
+    comment_added_analytics_mock.assert_not_called()
+    send_comment_notification_mock.assert_not_called()
+    mention_created_analytics_mock.assert_not_called()
+    send_mention_notification_mock.assert_not_called()
+    task.refresh_from_db()
+    assert task.contains_comments is True
+
+
+@pytest.mark.parametrize(
+    'text',
+    (
+        '([avatar.jpg](https://storage.com/dev/avatar.jpg)',
+        '[file.txt](http://file.txt "attachment_id:4187 entityType:music")',
+        '[video.mp4] (https://v.mp4 "attachment_id:4188 entityType:video")',
+        '[video.mp4](ftp://video.mp4 "attachment_id:4188 entityType:video")',
+    )
+)
+def test_create__not_found_attachments_in_text__ok(text, mocker):
+
+    # arrange
+    account = create_test_account()
+    account_owner = create_test_user(is_account_owner=True, account=account)
+    user = create_test_user(
+        account=account,
+        email='user@test.test',
+        is_account_owner=False,
+        is_admin=True
+    )
+    workflow = create_test_workflow(account_owner, tasks_count=1)
+    task = workflow.current_task_instance
+    task.performers.add(user)
+
+    text = f"text {text}\n some text"
+    clear_text = 'clear text'
+    is_superuser = True
+    auth_type = AuthTokenType.API
+
+    event = WorkflowEvent.objects.create(
+        account=account,
+        type=WorkflowEventType.COMMENT,
+        text=text,
+        with_attachments=False,
+        workflow=workflow,
+        task=workflow.current_task_instance,
+        user=account_owner,
+    )
+    comment_created_event_mock = mocker.patch(
+        'pneumatic_backend.processes.api_v2.services.events.'
+        'WorkflowEventService.comment_created_event',
+        return_value=event
+    )
+    clear_text_mock = mocker.patch(
+        'pneumatic_backend.processes.api_v2.services.events.'
+        'MarkdownService.clear',
+        return_value=clear_text
+    )
+    update_attachments_mock = mocker.patch(
+        'pneumatic_backend.processes.api_v2.services.events.'
+        'CommentService._update_attachments'
+    )
+    send_notifications_mock = mocker.patch(
+        'pneumatic_backend.processes.api_v2.services.events.'
+        'CommentService._get_new_comment_recipients',
+        return_value=((), ())
+    )
+    send_comment_notification_mock = mocker.patch(
+        'pneumatic_backend.processes.api_v2.services.events.'
+        'send_comment_notification.delay'
+    )
+    send_mention_notification_mock = mocker.patch(
+        'pneumatic_backend.processes.api_v2.services.events.'
+        'send_mention_notification.delay'
+    )
+    comment_added_analytics_mock = mocker.patch(
+        'pneumatic_backend.processes.api_v2.services.events.'
+        'AnalyticService.comment_added'
+    )
+    mention_created_analytics_mock = mocker.patch(
+        'pneumatic_backend.processes.api_v2.services.events.'
+        'AnalyticService.mentions_created'
+    )
+    service = CommentService(
+        user=account_owner,
+        is_superuser=is_superuser,
+        auth_type=auth_type
+    )
+
+    # act
+    result = service.create(
+        workflow=workflow,
+        text=text,
+    )
+
+    # assert
+    assert result == event
+    clear_text_mock.assert_called_once_with(text)
+    comment_created_event_mock.assert_called_once_with(
+        user=account_owner,
+        workflow=workflow,
+        text=text,
+        clear_text=clear_text,
+        attachments=[]
+    )
+    send_notifications_mock.assert_called_once_with()
+    update_attachments_mock.assert_not_called()
     comment_added_analytics_mock.assert_not_called()
     send_comment_notification_mock.assert_not_called()
     mention_created_analytics_mock.assert_not_called()
@@ -1231,6 +1468,7 @@ def test_update__text__ok(mocker):
         clear_text=clear_text,
         status=CommentStatus.UPDATED,
         updated=date_updated,
+        with_attachments=False,
         force_save=True
     )
     send_mention_notification_mock.assert_not_called()
@@ -1326,9 +1564,255 @@ def test_update__attachments__ok(mocker):
         with_attachments=True,
         status=CommentStatus.UPDATED,
         updated=date_updated,
+        text=None,
+        clear_text=None,
         force_save=True
     )
     clear_text_mock.assert_not_called()
+    comment_edited_analytics_mock.assert_called_once_with(
+        user=account_owner,
+        is_superuser=is_superuser,
+        auth_type=auth_type,
+        workflow=workflow
+    )
+    send_mention_notification_mock.assert_not_called()
+
+
+@pytest.mark.parametrize(
+    'data',
+    (
+        (
+            '(![avatar.jpg](https://storage.com/dev/avatar.jpg '
+            '"attachment_id:3349 entityType:image")',
+            [3349]
+        ),
+        (
+            '[file.txt](http://file.txt "attachment_id:4187 entityType:file")',
+            [4187]
+        ),
+        (
+            '[video.mp4](https://video.mp4 "attachment_id:4188 '
+            'entityType:video")',
+            [4188]
+        ),
+        (
+            'some [video.mp4](https://video.mp4 "attachment_id:4188 '
+            'entityType:video") text \n(![avatar.jpg]'
+            '(https://storage.com/dev/avatar.jpg '
+            '"attachment_id:3349 entityType:image")',
+            [4188, 3349]
+        ),
+        (
+            '[ZIP-папка.zip](https://storage.zip "attachment_id:2482")',
+            [2482]
+        ),
+        (
+            '[ZIP-папка.zip](https://storage.zip \"attachment_id:2482\")',
+            [2482]
+        )
+    )
+)
+def test_update__find_attachments_in_text__ok(data, mocker):
+
+    # arrange
+    media, attachment_ids = data
+    account = create_test_account()
+    account_owner = create_test_user(is_account_owner=True, account=account)
+    workflow = create_test_workflow(account_owner, tasks_count=1)
+
+    is_superuser = True
+    auth_type = AuthTokenType.API
+
+    event = WorkflowEvent.objects.create(
+        account=account,
+        type=WorkflowEventType.COMMENT,
+        text='Old text',
+        with_attachments=False,
+        workflow=workflow,
+        task=workflow.current_task_instance,
+        user=account_owner,
+    )
+    validate_comment_action_mock = mocker.patch(
+        'pneumatic_backend.processes.api_v2.services.events.'
+        'CommentService._validate_comment_action'
+    )
+    update_attachments_mock = mocker.patch(
+        'pneumatic_backend.processes.api_v2.services.events.'
+        'CommentService._update_attachments'
+    )
+    get_updated_comment_recipients_mock = mocker.patch(
+        'pneumatic_backend.processes.api_v2.services.events.'
+        'CommentService._get_updated_comment_recipients',
+        return_value=()
+    )
+    send_workflow_event_mock = mocker.patch(
+        'pneumatic_backend.processes.api_v2.services.events.'
+        'CommentService._send_workflow_event'
+    )
+    date_updated = timezone.now()
+    mocker.patch(
+        'pneumatic_backend.processes.api_v2.services.events.'
+        'timezone.now',
+        return_value=date_updated
+    )
+    partial_update_mock = mocker.patch(
+        'pneumatic_backend.processes.api_v2.services.events.'
+        'BaseModelService.partial_update',
+        return_value=event
+    )
+    clear_text = 'clear text'
+    clear_text_mock = mocker.patch(
+        'pneumatic_backend.processes.api_v2.services.events.'
+        'MarkdownService.clear',
+        return_value=clear_text
+    )
+    comment_edited_analytics_mock = mocker.patch(
+        'pneumatic_backend.processes.api_v2.services.events.'
+        'AnalyticService.comment_edited'
+    )
+    send_mention_notification_mock = mocker.patch(
+        'pneumatic_backend.processes.api_v2.services.events.'
+        'send_mention_notification.delay'
+    )
+
+    text = f'*text* \n -(123) {media}text'
+    service = CommentService(
+        instance=event,
+        user=account_owner,
+        is_superuser=is_superuser,
+        auth_type=auth_type
+    )
+
+    # act
+    result = service.update(
+        text=text,
+        force_save=True
+    )
+
+    # assert
+    assert result == event
+    validate_comment_action_mock.assert_called_once()
+    get_updated_comment_recipients_mock.assert_called_once()
+    send_workflow_event_mock.assert_called_once()
+    update_attachments_mock.assert_called_once_with(attachment_ids)
+    partial_update_mock.assert_called_once_with(
+        with_attachments=True,
+        status=CommentStatus.UPDATED,
+        updated=date_updated,
+        text=text,
+        clear_text=clear_text,
+        force_save=True
+    )
+    clear_text_mock.assert_called_once_with(text)
+    comment_edited_analytics_mock.assert_called_once_with(
+        user=account_owner,
+        is_superuser=is_superuser,
+        auth_type=auth_type,
+        workflow=workflow
+    )
+    send_mention_notification_mock.assert_not_called()
+
+
+@pytest.mark.parametrize(
+    'text',
+    (
+        '([avatar.jpg](https://storage.com/dev/avatar.jpg)',
+        '[file.txt](http://file.txt "attachment_id:4187 entityType:music")',
+        '[video.mp4] (https://v.mp4 "attachment_id:4188 entityType:video")',
+        '[video.mp4](ftp://video.mp4 "attachment_id:4188 entityType:video")',
+    )
+)
+def test_update__not_found_attachments_in_text__ok(text, mocker):
+
+    # arrange
+    account = create_test_account()
+    account_owner = create_test_user(is_account_owner=True, account=account)
+    workflow = create_test_workflow(account_owner, tasks_count=1)
+
+    is_superuser = True
+    auth_type = AuthTokenType.API
+
+    event = WorkflowEvent.objects.create(
+        account=account,
+        type=WorkflowEventType.COMMENT,
+        text='Old text',
+        with_attachments=False,
+        workflow=workflow,
+        task=workflow.current_task_instance,
+        user=account_owner,
+    )
+    validate_comment_action_mock = mocker.patch(
+        'pneumatic_backend.processes.api_v2.services.events.'
+        'CommentService._validate_comment_action'
+    )
+    update_attachments_mock = mocker.patch(
+        'pneumatic_backend.processes.api_v2.services.events.'
+        'CommentService._update_attachments'
+    )
+    get_updated_comment_recipients_mock = mocker.patch(
+        'pneumatic_backend.processes.api_v2.services.events.'
+        'CommentService._get_updated_comment_recipients',
+        return_value=()
+    )
+    send_workflow_event_mock = mocker.patch(
+        'pneumatic_backend.processes.api_v2.services.events.'
+        'CommentService._send_workflow_event'
+    )
+    date_updated = timezone.now()
+    mocker.patch(
+        'pneumatic_backend.processes.api_v2.services.events.'
+        'timezone.now',
+        return_value=date_updated
+    )
+    partial_update_mock = mocker.patch(
+        'pneumatic_backend.processes.api_v2.services.events.'
+        'BaseModelService.partial_update',
+        return_value=event
+    )
+    clear_text = 'clear text'
+    clear_text_mock = mocker.patch(
+        'pneumatic_backend.processes.api_v2.services.events.'
+        'MarkdownService.clear',
+        return_value=clear_text
+    )
+    comment_edited_analytics_mock = mocker.patch(
+        'pneumatic_backend.processes.api_v2.services.events.'
+        'AnalyticService.comment_edited'
+    )
+    send_mention_notification_mock = mocker.patch(
+        'pneumatic_backend.processes.api_v2.services.events.'
+        'send_mention_notification.delay'
+    )
+
+    text = f'*text* \n -(123) {text}text'
+    service = CommentService(
+        instance=event,
+        user=account_owner,
+        is_superuser=is_superuser,
+        auth_type=auth_type
+    )
+
+    # act
+    result = service.update(
+        text=text,
+        force_save=True
+    )
+
+    # assert
+    assert result == event
+    validate_comment_action_mock.assert_called_once()
+    get_updated_comment_recipients_mock.assert_called_once()
+    send_workflow_event_mock.assert_called_once()
+    update_attachments_mock.assert_not_called()
+    partial_update_mock.assert_called_once_with(
+        with_attachments=False,
+        status=CommentStatus.UPDATED,
+        updated=date_updated,
+        text=text,
+        clear_text=clear_text,
+        force_save=True
+    )
+    clear_text_mock.assert_called_once_with(text)
     comment_edited_analytics_mock.assert_called_once_with(
         user=account_owner,
         is_superuser=is_superuser,
@@ -1546,6 +2030,7 @@ def test_update__mentioned_users__ok(mocker):
         clear_text=clear_text,
         status=CommentStatus.UPDATED,
         updated=date_updated,
+        with_attachments=False,
         force_save=True
     )
     assert workflow.members.filter(id=user.id).exists()
@@ -1614,10 +2099,12 @@ def test_update__remove_text__ok(mocker):
         instance=event,
         user=account_owner,
     )
+    attachments = [1, 2]
 
     # act
     result = service.update(
         text=None,
+        attachments=attachments,
         force_save=True
     )
 
@@ -1626,12 +2113,13 @@ def test_update__remove_text__ok(mocker):
     validate_comment_action_mock.assert_called_once()
     get_updated_comment_recipients_mock.assert_called_once()
     send_workflow_event_mock.assert_called_once()
-    update_attachments_mock.assert_not_called()
+    update_attachments_mock.assert_called_once_with(attachments)
     partial_update_mock.assert_called_once_with(
         text=None,
         clear_text=None,
         status=CommentStatus.UPDATED,
         updated=date_updated,
+        with_attachments=True,
         force_save=True
     )
     clear_text_mock.assert_not_called()
@@ -1687,14 +2175,17 @@ def test_update__remove_attachments__ok(mocker):
         'BaseModelService.partial_update',
         return_value=event
     )
+    clear_text = 'clear text'
     clear_text_mock = mocker.patch(
         'pneumatic_backend.processes.api_v2.services.events.'
-        'MarkdownService.clear'
+        'MarkdownService.clear',
+        return_value=clear_text
     )
     comment_edited_analytics_mock = mocker.patch(
         'pneumatic_backend.processes.api_v2.services.events.'
         'AnalyticService.comment_edited'
     )
+    text = 'text'
 
     service = CommentService(
         instance=event,
@@ -1703,7 +2194,7 @@ def test_update__remove_attachments__ok(mocker):
 
     # act
     result = service.update(
-        text=None,
+        text=text,
         force_save=True
     )
 
@@ -1713,12 +2204,13 @@ def test_update__remove_attachments__ok(mocker):
     get_updated_comment_recipients_mock.assert_called_once_with()
     send_workflow_event_mock.assert_called_once()
     update_attachments_mock.assert_not_called()
-    clear_text_mock.assert_not_called()
+    clear_text_mock.assert_called_once_with(text)
     partial_update_mock.assert_called_once_with(
-        text=None,
-        clear_text=None,
+        text=text,
+        clear_text=clear_text,
         status=CommentStatus.UPDATED,
         updated=date_updated,
+        with_attachments=False,
         force_save=True
     )
     comment_edited_analytics_mock.assert_called_once_with(

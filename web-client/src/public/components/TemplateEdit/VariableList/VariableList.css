@@ -35,8 +35,8 @@
   overflow: hidden;
   max-width: 100%;
   font-family: Nunito, sans-serif;
-  font-size: 13px;
-  line-height: 16px;
+  font-size: 15px;
+  line-height: 20px;
   text-align: left;
   white-space: nowrap;
   text-overflow: ellipsis;
@@ -44,22 +44,15 @@
   color: #262522;
 
   &:hover {
-    color: #e79a26;
     background-color: #fdf7ee;
     border-radius: 0.25rem;
-  }
-
-  span {
-    display: block;
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
   }
 }
 
 .variable-list__inner {
   padding: 4px !important;
-  width: 192px !important;
+  width: 304px !important;
+  max-width: 304px !important;
   border: none !important;
   border-radius: 8px !important;
   box-shadow: 0 8px 16px rgba(98, 98, 95, 0.08);
@@ -69,14 +62,26 @@
   font-size: 15px;
   font-weight: 800;
   line-height: 20px;
+
+  @mixin text-overflow 1;
 }
 
 .variable-list-item__task-name {
   color: var(--pneumatic-color-black48);
+
+  div {
+    overflow: hidden;
+    width: 100%;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    span {
+      display: inline !important;
+    }
+  }
 }
 
 .variable-list__scrollbar {
   margin-right: 0 !important;
   padding-right: 0 !important;
-  max-height: 304px !important;
+  max-height: 352px !important;
 }

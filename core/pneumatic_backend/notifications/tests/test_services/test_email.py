@@ -150,7 +150,7 @@ def test_send_email_via_customerio__enable_logging__ok(mocker):
     client_mock.send_email.assert_called_once_with(request_mock)
     create_account_log_mock.assert_called_once_with(
         title=f'Email to: {email}: {title}',
-        body=data,
+        request_data=data,
         account_id=account_id,
         status=AccountEventStatus.SUCCESS,
         contractor='Customer.io'

@@ -54,7 +54,7 @@ def test_partial_update__free_plan_name__ok(
     assert account.name == new_name
 
 
-def test_partial_update__free_plan_change_logo_lg__validation_error(
+def test_partial_update__free_plan_change_logo_lg__ok(
     api_client,
 ):
 
@@ -72,14 +72,21 @@ def test_partial_update__free_plan_change_logo_lg__validation_error(
         }
     )
 
-    assert response.status_code == 400
-    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
-    assert response.data['details']['name'] == 'logo_lg'
-    assert response.data['message'] == MSG_A_0003
-    assert response.data['details']['reason'] == MSG_A_0003
+    # assert
+    assert response.status_code == 200
+    assert response.data['id'] == account.id
+    assert response.data['name'] == account.name
+    assert response.data['date_joined'] is not None
+    assert response.data['plan_expiration'] is None
+    assert response.data['lease_level'] == LeaseLevel.STANDARD
+    assert response.data['logo_lg'] == logo_lg
+    assert response.data['logo_sm'] is None
+
+    account.refresh_from_db()
+    assert account.logo_lg == logo_lg
 
 
-def test_partial_update__free_plan_change_logo_sm__validation_error(
+def test_partial_update__free_plan_change_logo_sm__ok(
     api_client,
 ):
     # arrange
@@ -96,11 +103,18 @@ def test_partial_update__free_plan_change_logo_sm__validation_error(
         }
     )
 
-    assert response.status_code == 400
-    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
-    assert response.data['details']['name'] == 'logo_sm'
-    assert response.data['message'] == MSG_A_0003
-    assert response.data['details']['reason'] == MSG_A_0003
+    # assert
+    assert response.status_code == 200
+    assert response.data['id'] == account.id
+    assert response.data['name'] == account.name
+    assert response.data['date_joined'] is not None
+    assert response.data['plan_expiration'] is None
+    assert response.data['lease_level'] == LeaseLevel.STANDARD
+    assert response.data['logo_lg'] is None
+    assert response.data['logo_sm'] == logo_sm
+
+    account.refresh_from_db()
+    assert account.logo_sm == logo_sm
 
 
 def test_partial_update__tenant__name__ok(

@@ -71,9 +71,7 @@ class NotificationsSerializer(serializers.ModelSerializer):
                 result['delay'] = DelaySerializer(instance=delay).data
             elif instance.type == NotificationType.DUE_DATE_CHANGED:
                 if instance.task.due_date:
-                    result['due_date'] = instance.task.due_date.strftime(
-                        datetime_format
-                    )
+                    result['due_date_tsp'] = instance.task.due_date.timestamp()
                 else:
-                    result['due_date'] = None
-        return result
+                    result['due_date_tsp'] = None
+            return result

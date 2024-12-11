@@ -51,5 +51,6 @@ jest.mock('react-redux', () => {
     }),
     Provider: ({ children }) => children,
     useDispatch: jest.fn(),
+    useSelector: (callback) => jest.fn(callback)
   }
 });

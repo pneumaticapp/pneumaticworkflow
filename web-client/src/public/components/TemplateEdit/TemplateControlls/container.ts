@@ -3,7 +3,7 @@ import { connect } from 'react-redux';
 import { IApplicationState } from '../../../types/redux';
 
 import { ITemplateControllsProps, TemplateControlls } from './TemplateControlls';
-import { 
+import {
   patchTemplate,
   cloneTemplate,
   deleteTemplate,

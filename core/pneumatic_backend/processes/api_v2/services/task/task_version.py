@@ -289,7 +289,6 @@ class TaskUpdateVersionService(
         workflow = kwargs['workflow']
         prev_tasks_fields_values = workflow.get_fields_markdown_values(
             tasks_filter_kwargs={'number__lt': data['number']},
-            user=self.user
         )
         self._create_or_update_instance(
             data=data,

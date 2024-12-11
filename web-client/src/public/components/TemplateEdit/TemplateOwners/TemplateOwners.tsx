@@ -8,10 +8,11 @@ import { UserData } from '../../UserData';
 import { getNotDeletedUsers, getUserFullName } from '../../../utils/users';
 import { DeleteIcon } from '../../icons';
 import { ITemplate } from '../../../types/template';
-import { getIsUserSubsribed, getUsers } from '../../../redux/selectors/user';
+import { getIsUserSubsribed, getSubscriptionPlan, getUsers } from '../../../redux/selectors/user';
 import { EOptionTypes, TUsersDropdownOption, UsersDropdown } from '../../UI/form/UsersDropdown';
 
 import styles from './TemplateOwners.css';
+import { ESubscriptionPlan } from '../../../types/account';
 
 interface ITemplateOwnersProps {
   templateOwners: ITemplate['templateOwners'];
@@ -23,6 +24,7 @@ export function TemplateOwners({ templateOwners = [], onChangeTemplateOwners }: 
 
   const users = getNotDeletedUsers(useSelector(getUsers));
   const isSubscribed = useSelector(getIsUserSubsribed);
+  const billingPlan = useSelector(getSubscriptionPlan);
 
   const mapUsersDropdownValue = users.filter((user) => templateOwners.find((id) => user.id === id));
 
@@ -49,7 +51,7 @@ export function TemplateOwners({ templateOwners = [], onChangeTemplateOwners }: 
   };
 
   const handleAddTemplateOwners = ({ id }: Pick<TUsersDropdownOption, 'id'>) => {
-    if (!isSubscribed) return;
+    if (!isSubscribed && billingPlan !== ESubscriptionPlan.Free) return;
 
     onChangeTemplateOwners([...templateOwners, id]);
   };

@@ -151,7 +151,6 @@ MSG_PW_0067 = _(
     'Only "in-progress" workflows can be filtered by current performer.'
 )
 MSG_PW_0068 = _('You can\'t snooze the first task in a workflow.')
-MSG_PW_0069 = _('You should provide "due_date" or "due_date_tsp" field.')
 MSG_PW_0070 = _(
     'The task can\'t be completed until all the embedded workflows are done.'
 )

@@ -1,8 +1,5 @@
-/* eslint-disable */
-/* prettier-ignore */
 import * as React from 'react';
 import classnames from 'classnames';
-import { format, parse } from 'date-fns';
 import { useIntl } from 'react-intl';
 
 import { DropdownList } from '../../../../UI/DropdownList';
@@ -15,6 +12,7 @@ import { getUserFullName } from '../../../../../utils/users';
 import { EConditionOperators, TConditionRule } from '../types';
 import { OPERATORS_WITHOUT_VALUE } from '..';
 import { DatePicker } from '../../../../UI/form/DatePicker';
+import { toTspDate } from '../../../../../utils/dateTime';
 
 import styles from '../Conditions.css';
 
@@ -35,15 +33,11 @@ export function ConditionValueField({
   isDisabled,
   changeRuleValue,
 }: IConditionValueFieldProps) {
-  if (!variable || !operator) {
-    return null;
-  }
+  if (!variable || !operator) return null;
 
   const isNoValueOperator = OPERATORS_WITHOUT_VALUE.includes(operator);
 
-  if (isNoValueOperator) {
-    return null;
-  }
+  if (isNoValueOperator) return null;
 
   const { formatMessage } = useIntl();
 
@@ -125,18 +119,7 @@ export function ConditionValueField({
   }
 
   function renderDateField() {
-    const DATE_STRING_TEMPLATE = 'MM/dd/yyyy';
-
-    const getStringFromDate = (date: Date) => format(date, DATE_STRING_TEMPLATE);
-    const getDateFromString = (dateStr: string | null) => {
-      if (!dateStr) {
-        return null;
-      }
-
-      return parse(dateStr, DATE_STRING_TEMPLATE, new Date());
-    };
-
-    const [selectedDate, setSelectedDate] = React.useState<Date | null>(getDateFromString(rule.value as string | null));
+    const [selectedDate, setSelectedDate] = React.useState<number | null>(rule.value as number);
 
     const handleChangeDate = (date: Date) => {
       if (!date) {
@@ -146,9 +129,10 @@ export function ConditionValueField({
         return;
       }
 
-      const strDate = getStringFromDate(date);
-      changeRuleValue(strDate);
-      setSelectedDate(date);
+      const unixTime = toTspDate(date);
+
+      changeRuleValue(unixTime);
+      setSelectedDate(unixTime);
     };
 
     return (
@@ -156,7 +140,7 @@ export function ConditionValueField({
         disabled={isDisabled}
         onChange={handleChangeDate}
         placeholderText={formatMessage({ id: 'templates.conditions.value-placeholder' })}
-        selected={selectedDate}
+        selected={selectedDate && selectedDate * 1000}
         showPopperArrow={false}
       />
     );
@@ -164,9 +148,7 @@ export function ConditionValueField({
 
   const conditionValueField = renderMap[variable.type]();
 
-  if (!conditionValueField) {
-    return null;
-  }
+  if (!conditionValueField) return null;
 
   return (
     <div className={classnames(styles['condition-rule__setting'], styles['condition-rule__value'])}>

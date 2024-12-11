@@ -27,7 +27,6 @@ class SubWorkflowEventSerializer(serializers.ModelSerializer):
             'description',
             'date_created',
             'date_created_tsp',
-            'due_date',
             'due_date_tsp',
             'is_urgent',
         )
@@ -68,7 +67,6 @@ class TaskEventJsonSerializer(serializers.ModelSerializer):
             'name',
             'description',
             'performers',
-            'due_date',
             'due_date_tsp',
             'output',
             'sub_workflow',

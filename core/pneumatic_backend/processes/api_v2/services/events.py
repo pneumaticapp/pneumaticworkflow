@@ -38,7 +38,10 @@ from pneumatic_backend.notifications.tasks import send_workflow_event
 from pneumatic_backend.processes.api_v2.serializers.workflow.events import (
     WorkflowEventSerializer,
 )
-from pneumatic_backend.services.markdown import MarkdownService
+from pneumatic_backend.services.markdown import (
+    MarkdownService,
+    MarkdownPatterns
+)
 
 
 UserModel = get_user_model()
@@ -626,6 +629,12 @@ class CommentService(BaseModelService):
         if not text and not attachments:
             raise CommentTextRequired()
         clear_text = MarkdownService.clear(text) if text else None
+        if not attachments:
+            # find attachment ids in the text
+            pattern = MarkdownPatterns.MEDIA_PATTERN
+            attachments = pattern.findall(text)
+            if attachments:
+                attachments = [int(e) for e in attachments]
         with transaction.atomic():
             self.instance = WorkflowEventService.comment_created_event(
                 user=self.user,
@@ -681,41 +690,35 @@ class CommentService(BaseModelService):
     def update(
         self,
         force_save=False,
-        **update_kwargs,
+        text: Optional[str] = None,
+        attachments: Optional[List[int]] = None,
     ) -> WorkflowEvent:
 
         self._validate_comment_action()
-        if (
-            not update_kwargs.get('text', self.instance.text)
-            and not update_kwargs.get(
-                'attachments',
-                self.instance.with_attachments
-            )
-        ):
+        if not text and not attachments:
             raise CommentTextRequired()
-
+        clear_text = MarkdownService.clear(text) if text else None
+        if not attachments:
+            # find attachment ids in the text
+            pattern = MarkdownPatterns.MEDIA_PATTERN
+            attachments = pattern.findall(text)
+            if attachments:
+                attachments = [int(e) for e in attachments]
         kwargs = {
             'status': CommentStatus.UPDATED,
             'updated': timezone.now(),
+            'with_attachments': bool(attachments),
+            'text': text,
+            'clear_text': clear_text
         }
-        if 'text' in update_kwargs:
-            kwargs['text'] = update_kwargs['text']
-            if update_kwargs['text']:
-                kwargs['clear_text'] = MarkdownService.clear(
-                    update_kwargs['text']
-                )
-            else:
-                kwargs['clear_text'] = None
-        if 'attachments' in update_kwargs:
-            kwargs['with_attachments'] = True
 
         with transaction.atomic():
             self.instance = self.partial_update(
                 force_save=force_save,
                 **kwargs
             )
-            if 'attachments' in update_kwargs:
-                self._update_attachments(update_kwargs['attachments'])
+            if attachments:
+                self._update_attachments(attachments)
             new_mentioned_users_ids = self._get_updated_comment_recipients()
             if new_mentioned_users_ids:
                 self.instance.workflow.members.add(*new_mentioned_users_ids)

@@ -93,7 +93,7 @@ class PushNotificationService(NotificationService):
                         title=(
                             f'Push to browser: {user_email}: {data["title"]}'
                         ),
-                        body=data,
+                        request_data=data,
                         account_id=self.account_id,
                         status=AccountEventStatus.SUCCESS,
                     )
@@ -148,7 +148,7 @@ class PushNotificationService(NotificationService):
                 if self.logging:
                     AccountLogService().push_notification(
                         title=f'Push to app: {user_email}: {data["title"]}',
-                        body=data,
+                        request_data=data,
                         account_id=self.account_id,
                         status=AccountEventStatus.SUCCESS,
                     )
@@ -200,10 +200,10 @@ class PushNotificationService(NotificationService):
         if self.logging:
             AccountLogService().push_notification(
                 title=f'Push to {device} {user_email}: {data["title"]}',
-                body=data,
+                request_data=data,
                 account_id=self.account_id,
                 status=AccountEventStatus.FAILED,
-                error={
+                response_data={
                     'user_id': user_id,
                     'user_email': user_email,
                     'device_token': token,

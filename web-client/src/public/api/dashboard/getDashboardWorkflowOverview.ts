@@ -1,6 +1,7 @@
 import { commonRequest } from '../commonRequest';
 import { getBrowserConfigEnv } from '../../utils/getConfig';
 import { TDashboardTimeRangeDates } from '../../types/dashboard';
+import { toTspDate } from '../../utils/dateTime';
 
 export interface IGetDashboardOverviewResponse {
   completed: number;
@@ -29,8 +30,8 @@ export function getDashboardWorkflowOverviewApi(params: TDashboardTimeRangeDates
 
 export function getDashboardOverviewQueryString({ startDate, endDate, now }: TDashboardTimeRangeDates) {
   const params = [
-    startDate && `date_from_tsp=${startDate.getTime() / 1000}`,
-    endDate && `date_to_tsp=${endDate.getTime() / 1000}`,
+    startDate && `date_from_tsp=${toTspDate(startDate)}`,
+    endDate && `date_to_tsp=${toTspDate(endDate)}`,
     now && 'now=true',
   ]
     .filter(Boolean)

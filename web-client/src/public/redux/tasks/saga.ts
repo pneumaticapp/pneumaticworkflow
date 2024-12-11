@@ -54,7 +54,7 @@ import {
   getTotalTasksCount,
 } from '../selectors/tasks';
 import { loadCurrentTask } from '../task/actions';
-import { ETaskListCompletionStatus, ITaskListItem, ITemplateStep } from '../../types/tasks';
+import { ETaskListCompletionStatus, ITaskListItem, ITemplateStep, TTaskListItemResponse } from '../../types/tasks';
 import { getErrorMessage } from '../../utils/getErrorMessage';
 import { getTemplateSteps } from '../../api/getTemplateSteps';
 import { parseCookies } from '../../utils/cookie';
@@ -70,7 +70,7 @@ import { ETaskListStatus } from '../../components/Tasks/types';
 import { setCurrentTask } from '../actions';
 import { getCurrentTask } from '../selectors/task';
 import { envWssURL } from '../../constants/enviroment';
-
+import { mapBackendToISOStringToRedux } from '../../utils/mappers';
 
 export function* setDetailedTask(taskId: number) {
   yield put(setTaskListDetailedTaskId(taskId));
@@ -138,7 +138,7 @@ function* fetchTaskList(offset: number, nextStatus: ETaskListStatus) {
   yield put(setTaskListStatus(nextStatus));
 
   try {
-    const { count, results } = yield getUserTasks({
+    const { count, results }: { count: number; results: TTaskListItemResponse[] } = yield getUserTasks({
       id: isAdmin ? id : 0,
       offset,
       sorting,
@@ -147,8 +147,11 @@ function* fetchTaskList(offset: number, nextStatus: ETaskListStatus) {
       templateStepId: stepIdFilter,
       status: completionStatus,
     });
+    const formattedResults = mapBackendToISOStringToRedux(results);
 
-    const items: ITaskListItem[] = !isEmptyList ? uniqBy([...taskList.items, ...results], 'id') : results;
+    const items: ITaskListItem[] = !isEmptyList
+      ? uniqBy([...taskList.items, ...formattedResults], 'id')
+      : formattedResults;
 
     const withSettings = templateIdFilter || stepIdFilter || searchText;
     const emptyListStatus = withSettings ? ETaskListStatus.EmptySearchResult : ETaskListStatus.NoTasks;
@@ -277,7 +280,10 @@ export function* watchNewTask() {
   const {
     api: { wsPublicUrl, urls },
   } = getBrowserConfigEnv();
-  const url = mergePaths(envWssURL || wsPublicUrl, `${urls.wsNewTask}?auth_token=${parseCookies(document.cookie).token}`);
+  const url = mergePaths(
+    envWssURL || wsPublicUrl,
+    `${urls.wsNewTask}?auth_token=${parseCookies(document.cookie).token}`,
+  );
   const channel: EventChannel<ITaskListItem> = yield call(createWebSocketChannel, url);
 
   while (true) {
@@ -321,7 +327,10 @@ export function* watchRemoveTask() {
   const {
     api: { wsPublicUrl, urls },
   } = getBrowserConfigEnv();
-  const url = mergePaths(envWssURL || wsPublicUrl, `${urls.wsRemovedTask}?auth_token=${parseCookies(document.cookie).token}`);
+  const url = mergePaths(
+    envWssURL || wsPublicUrl,
+    `${urls.wsRemovedTask}?auth_token=${parseCookies(document.cookie).token}`,
+  );
   const channel: EventChannel<ITaskListItem> = yield call(createWebSocketChannel, url);
 
   while (true) {

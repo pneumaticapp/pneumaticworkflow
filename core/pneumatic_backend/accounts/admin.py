@@ -135,6 +135,38 @@ class GroupInline(StackedInline):
         return field
 
 
+class ContactInline(StackedInline):
+
+    model = Contact
+    extra = 0
+    verbose_name = 'Contact'
+    verbose_name_plural = 'Contacts'
+    show_change_link = True
+    fields = (
+        'email',
+        'first_name',
+        'last_name',
+        'photo',
+        'job_title',
+        'source',
+        'source_id',
+        'status',
+    )
+    readonly_fields = (
+        'email',
+        'first_name',
+        'last_name',
+        'photo',
+        'job_title',
+        'source',
+        'source_id',
+        'status',
+    )
+
+    def has_add_permission(self, request):
+        return False
+
+
 class UsersAdmin(UserAdmin, SignUpMixin):
 
     add_fieldsets = (
@@ -151,7 +183,7 @@ class UsersAdmin(UserAdmin, SignUpMixin):
             ),
         }),
     )
-    inlines = [GroupInline]
+    inlines = [GroupInline, ContactInline]
     fieldsets = (
         (
             messages.MSG_A_0020,

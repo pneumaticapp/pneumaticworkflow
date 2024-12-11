@@ -1,7 +1,6 @@
 from typing import List
 from django.contrib.auth import get_user_model
 from rest_framework.decorators import action
-from rest_framework.filters import OrderingFilter
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.generics import (
     CreateAPIView,
@@ -46,9 +45,7 @@ class NotificationsViewSet(
     pagination_class = LimitOffsetPagination
     serializer_class = NotificationsSerializer
     filterset_class = NotificationFilter
-    filter_backends = [OrderingFilter, PneumaticFilterBackend]
-    ordering_fields = ['datetime']
-    ordering = ['-datetime']
+    filter_backends = [PneumaticFilterBackend]
 
     def get_permissions(self):
         if self.action in 'destroy':

@@ -10,10 +10,10 @@ import { Header } from '../UI/Typeography/Header';
 import { ESettingsTabs } from '../../types/profile';
 import { AttachmentField, SectionTitle } from '../UI';
 import { TUploadedFile } from '../../utils/uploadFiles';
-
-import styles from './ProfileAccount.css';
 import { TAccountLeaseLevel } from '../../types/user';
 import { ESubscriptionPlan } from '../../types/account';
+
+import styles from './ProfileAccount.css';
 
 export interface IProfileAccountProps {
   accountId?: number;
@@ -79,16 +79,14 @@ export function ProfileAccount({
         <InputField
           title={formatMessage({ id: 'user.company-name' })}
           value={state.name}
-          onChange={e => changeField('name')(e.currentTarget.value)}
+          onChange={(e) => changeField('name')(e.currentTarget.value)}
           errorMessage={validateCompanyName(state.name)}
           disabled={!isAdmin}
           containerClassName={styles['field']}
         />
       </div>
 
-      {(leaseLevel !== 'tenant' &&
-        billingPlan &&
-        billingPlan !== ESubscriptionPlan.Free) && (
+      {leaseLevel !== 'tenant' && billingPlan && (
         <div className={styles['fields-group']}>
           <SectionTitle className={styles['fields-group__title']}>
             {formatMessage({ id: 'user-info.personalization' })}
@@ -98,7 +96,7 @@ export function ProfileAccount({
             title={formatMessage({ id: 'user-info.logo-sm' })}
             accountId={accountId!}
             uploadedFiles={logoSm ? [getFileByUrl(logoSm)] : []}
-            setUploadedFiles={files => changeField('logoSm')(getUrlByFile(files[0]))}
+            setUploadedFiles={(files) => changeField('logoSm')(getUrlByFile(files[0]))}
             description={formatMessage({ id: 'user-info.logo-sm-desc' })}
             containerClassName={styles['field']}
             acceptedType="image"
@@ -110,7 +108,7 @@ export function ProfileAccount({
             title={formatMessage({ id: 'user-info.logo-lg' })}
             accountId={accountId!}
             uploadedFiles={logoLg ? [getFileByUrl(logoLg)] : []}
-            setUploadedFiles={files => changeField('logoLg')(getUrlByFile(files[0]))}
+            setUploadedFiles={(files) => changeField('logoLg')(getUrlByFile(files[0]))}
             description={formatMessage({ id: 'user-info.logo-lg-desc' })}
             containerClassName={styles['field']}
             acceptedType="image"
@@ -120,7 +118,7 @@ export function ProfileAccount({
         </div>
       )}
 
-      {isAdmin &&
+      {isAdmin && (
         <Button
           disabled={!isDirty}
           label={formatMessage({ id: 'user-info.change-submit' })}
@@ -131,7 +129,7 @@ export function ProfileAccount({
           buttonStyle="yellow"
           className={styles['submit-button']}
         />
-      }
+      )}
     </div>
   );
 }
@@ -145,9 +143,7 @@ function isContentChanged(initialState: TEditableFields, state: TEditableFields)
 }
 
 function isValidState({ name }: TEditableFields) {
-  return !(
-    validateCompanyName(name)
-  );
+  return !validateCompanyName(name);
 }
 
 const getFileByUrl = (url: string): TUploadedFile => {
@@ -158,7 +154,7 @@ const getFileByUrl = (url: string): TUploadedFile => {
     name: '',
     size: 0,
   };
-}
+};
 
 const getUrlByFile = (file?: TUploadedFile): string | null => {
   if (!file || file.isRemoved) {
@@ -166,4 +162,4 @@ const getUrlByFile = (file?: TUploadedFile): string | null => {
   }
 
   return file.url;
-}
+};

@@ -233,7 +233,8 @@ export function WorkflowLogTaskComment({
               accountId={userId as number}
             />
           ))}
-        <Attachments attachments={attachments} isEdit={false} />
+
+        {isOnlyAttachmentsShown && <Attachments attachments={attachments} isEdit={false} />}
       </>
     );
   };

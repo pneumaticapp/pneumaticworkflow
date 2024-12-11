@@ -273,7 +273,7 @@ class TaskViewSet(
                 data=request.data
             )
             request_slz.is_valid(raise_exception=True)
-            due_date = request_slz.validated_data['due_date']
+            due_date = request_slz.validated_data['due_date_tsp']
         else:
             due_date = None
         service = TaskService(user=request.user, instance=task)

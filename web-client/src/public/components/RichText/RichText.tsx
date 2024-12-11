@@ -40,6 +40,7 @@ export interface IRichTextProps {
   variables?: TTaskVariable[];
   renderExtensions?: React.ReactNode[];
   interactiveChecklists?: boolean;
+  hideIcon?: boolean;
 }
 
 const MAX_VARIABLE_LENGTH = 20;
@@ -51,6 +52,7 @@ export function RichText({
   variables,
   renderExtensions,
   interactiveChecklists,
+  hideIcon,
 }: IRichTextProps) {
   if (!text) {
     return null;
@@ -68,7 +70,7 @@ export function RichText({
   })
     .use(checklistsRemarkablePlugin)
     .use(linkify)
-    .use(attachmnetRenderer(embedVideos))
+    .use(attachmnetRenderer(embedVideos, hideIcon))
     .use(
       createChecklistRenderer({
         renderCheck: (listApiName, itemApiName) => {
@@ -186,7 +188,7 @@ export function RichText({
   );
 }
 
-const attachmnetRenderer = (embedVideoLinks: boolean) => {
+const attachmnetRenderer = (embedVideoLinks: boolean, hideIcon?: boolean) => {
   const renderLink = (url: string, name: string) => {
     const defaultLinkHtml = `<a href="${url}" target="_blank">${name}<a/>`;
     if (!embedVideoLinks) {
@@ -244,7 +246,7 @@ const attachmnetRenderer = (embedVideoLinks: boolean) => {
         [ECustomEditorEntities.Image]: `<img src=${url} />`,
         [ECustomEditorEntities.Video]: ReactDOMServer.renderToStaticMarkup(<video src={url} preload="auto" controls />),
         [ECustomEditorEntities.File]: ReactDOMServer.renderToStaticMarkup(
-          <DocumentAttachment name={name} url={url} isEdit={false} />,
+          <DocumentAttachment name={name} url={url} isEdit={false} hideIcon={hideIcon} />,
         ),
         [ECustomEditorEntities.Variable]: '',
         [ECustomEditorEntities.Mention]: '',

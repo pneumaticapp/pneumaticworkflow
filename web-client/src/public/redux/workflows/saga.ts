@@ -41,9 +41,11 @@ import {
   TUserCounter,
   TTemplateStepCounter,
   EWorkflowStatus,
+  TWorkflowResponse,
+  TWorkflowDetailsResponse,
 } from '../../types/workflow';
 import { ERoutes } from '../../constants/routes';
-import { getWorkflowsStore, getWorkflowsSearchText, getWorkflowsStatus, getTaskStore } from '../selectors/workflows';
+import { getWorkflowsStore, getWorkflowsSearchText, getWorkflowsStatus } from '../selectors/workflows';
 import { getEditKickoff, mapFilesToRequest } from '../../utils/workflows';
 import { getErrorMessage } from '../../utils/getErrorMessage';
 import { getWorkflows } from '../../api/getWorkflows';
@@ -51,7 +53,7 @@ import { getWorkflow } from '../../api/getWorkflow';
 import { getWorkflowLog } from '../../api/getWorkflowLog';
 import { returnWorkflowToTask } from '../../api/returnWorkflowToTask';
 import { history } from '../../utils/history';
-import { IStoreTask, IStoreWorkflows } from '../../types/redux';
+import { IStoreWorkflows } from '../../types/redux';
 import { logger } from '../../utils/logger';
 import { NotificationManager } from '../../components/UI/Notifications';
 import { sendWorkflowComment } from '../../api/sendWorkflowComment';
@@ -107,17 +109,16 @@ import { deleteReactionComment } from '../../api/workflows/deleteReactionComment
 import { createReactionComment } from '../../api/workflows/createReactionComment';
 import { watchedComment } from '../../api/workflows/watchedComment';
 import { envWssURL } from '../../constants/enviroment';
-
 import {
   mapBackandworkflowLogToRedux,
   mapBackendWorkflowToRedux,
   mapBackendNewEventToRedux,
   formatDueDateToEditWorkflow,
+  mapBackendToISOStringToRedux,
 } from '../../utils/mappers';
 import { getUserTimezone } from '../selectors/user';
-
 import { getCurrentTask } from '../selectors/task';
-import { toISOStringFromTsp } from '../../utils/dateTime';
+import { formatDateToISOInObject } from '../../utils/dateTime';
 
 function* handleLoadWorkflow({ workflowId, showLoader = true }: { workflowId: number; showLoader?: boolean }) {
   const {
@@ -129,7 +130,7 @@ function* handleLoadWorkflow({ workflowId, showLoader = true }: { workflowId: nu
       yield put(setWorkflowIsLoading(true));
     }
 
-    const [workflow, workflowLog]: [IWorkflowDetails, IWorkflowLogItem[]] = yield all([
+    const [workflow, workflowLog]: [TWorkflowDetailsResponse, IWorkflowLogItem[]] = yield all([
       getWorkflow(workflowId),
       getWorkflowLog({
         workflowId,
@@ -137,11 +138,14 @@ function* handleLoadWorkflow({ workflowId, showLoader = true }: { workflowId: nu
         comments: isCommentsShown,
       }),
     ]);
+
     const timezone: ReturnType<typeof getUserTimezone> = yield select(getUserTimezone);
-    const formattedWorkflow = mapBackendWorkflowToRedux(workflow, timezone);
     const formattedWorkflowLog = mapBackandworkflowLogToRedux(workflowLog, timezone);
 
-    yield put(changeWorkflow(formattedWorkflow));
+    const formattedKickoffWorkflow = mapBackendWorkflowToRedux(workflow, timezone);
+    const formattedDueDateWorkflow = formatDateToISOInObject(formattedKickoffWorkflow);
+
+    yield put(changeWorkflow(formattedDueDateWorkflow));
     yield put(changeWorkflowLog({ items: formattedWorkflowLog, workflowId }));
   } catch (error) {
     logger.info('fetch prorcess error : ', error);
@@ -223,7 +227,7 @@ function* fetchWorkflowsList({ payload: offset = 0 }: TLoadWorkflowsList) {
   const searchText: ReturnType<typeof getWorkflowsSearchText> = yield select(getWorkflowsSearchText);
 
   try {
-    const { count, results } = yield getWorkflows({
+    const { count, results }: { count: number; results: TWorkflowResponse[] } = yield getWorkflows({
       offset,
       sorting,
       statusFilter,
@@ -233,8 +237,9 @@ function* fetchWorkflowsList({ payload: offset = 0 }: TLoadWorkflowsList) {
       workflowStartersIdsFilter,
       searchText,
     });
+    const formattedResults = mapBackendToISOStringToRedux(results);
 
-    const items = offset > 0 ? uniqBy([...workflowsList.items, ...results], ['id']) : results;
+    const items = offset > 0 ? uniqBy([...workflowsList.items, ...formattedResults], 'id') : formattedResults;
     yield put(changeWorkflowsList({ count, offset, items }));
   } catch (error) {
     logger.info('fetch workflows list error : ', error);
@@ -317,7 +322,7 @@ function* editWorkflowInWork({ payload }: TEditWorkflow) {
 
     const formattedPayload = formatDueDateToEditWorkflow(payload);
     const editedWorkflow: IEditWorkflowResponse = yield editWorkflow(formattedPayload);
-    const formattedEditedWorkflow = toISOStringFromTsp(editedWorkflow);
+    const formattedEditedWorkflow = formatDateToISOInObject(editedWorkflow);
 
     const newEditingProcess = {
       name: formattedEditedWorkflow.name,
@@ -459,12 +464,12 @@ export function* cloneWorkflowSaga({ payload: { workflowId, workflowName, templa
       throw new Error('no template id');
     }
 
-    const [workflowDetails, template]: [IWorkflowDetails, ITemplateResponse] = yield all([
+    const [workflowDetails, template]: [TWorkflowDetailsResponse, ITemplateResponse] = yield all([
       getWorkflow(workflowId),
       getTemplate(templateId),
     ]);
-
-    if (!workflowDetails || !template) {
+    const formattedworkflowDetails = formatDateToISOInObject(workflowDetails);
+    if (!formattedworkflowDetails || !template) {
       throw new Error('failed to prepare runnable workflow object');
     }
 
@@ -473,7 +478,7 @@ export function* cloneWorkflowSaga({ payload: { workflowId, workflowName, templa
       return;
     }
 
-    const kickoff: IKickoff = yield getClonedKickoff(workflowDetails.kickoff, template.kickoff);
+    const kickoff: IKickoff = yield getClonedKickoff(formattedworkflowDetails.kickoff, template.kickoff);
 
     yield put(
       openRunWorkflowModal({
@@ -704,14 +709,11 @@ export function* watchNewWorkflowsEvent() {
 
   while (true) {
     const newEvent: IWorkflowLogItem = yield take(channel);
-    const { data }: IStoreTask = yield select(getTaskStore);
     const timezone: ReturnType<typeof getUserTimezone> = yield select(getUserTimezone);
 
-    if (newEvent.task?.id === data?.id) {
-      const formattedNewEvent: IWorkflowLogItem = mapBackendNewEventToRedux(newEvent, timezone);
-      yield put(updateWorkflowLogItem(formattedNewEvent));
-      yield put(updateTaskWorkflowLogItem(formattedNewEvent));
-    }
+    const formattedNewEvent: IWorkflowLogItem = mapBackendNewEventToRedux(newEvent, timezone);
+    yield put(updateWorkflowLogItem(formattedNewEvent));
+    yield put(updateTaskWorkflowLogItem(formattedNewEvent));
   }
 }
 

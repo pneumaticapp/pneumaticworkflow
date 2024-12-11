@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import classnames from 'classnames';
 import { useIntl } from 'react-intl';
 
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { TemplateOwners } from '../TemplateOwners';
 import { ActivityIcon, BoxesIcon, EnableIcon, TrashIcon, UnionIcon, WarningIcon } from '../../icons';
 import { IntlMessages } from '../../IntlMessages';
@@ -14,7 +14,12 @@ import { getLinkToHighlightsByTemplate } from '../../../utils/routes/getLinkToHi
 import { Button } from '../../UI/Buttons/Button';
 import { IntegrateButton } from '../../IntegrateButton';
 import { ITemplate } from '../../../types/template';
-import { TCloneTemplatePayload, TDeleteTemplatePayload, TPatchTemplatePayload, discardTemplateChanges } from '../../../redux/actions';
+import {
+  TCloneTemplatePayload,
+  TDeleteTemplatePayload,
+  TPatchTemplatePayload,
+  discardTemplateChanges,
+} from '../../../redux/actions';
 import { getRunnableWorkflow } from '../utils/getRunnableWorkflow';
 import { ETemplateStatus } from '../../../types/redux';
 import { IRunWorkflow } from '../../WorkflowEditPopup/types';
@@ -30,6 +35,8 @@ import { useTemplateIntegrationsList } from '../../TemplateIntegrationsStats';
 import { checkShowDraftTemplateWarning } from '../../Templates';
 
 import styles from './TemplateControlls.css';
+import { getSubscriptionPlan } from '../../../redux/selectors/user';
+import { ESubscriptionPlan } from '../../../types/account';
 
 export interface ITemplateControllsProps {
   template: ITemplate;
@@ -55,6 +62,9 @@ export function TemplateControlls({
   const intl = useIntl();
   const { formatMessage } = intl;
   const dispatch = useDispatch();
+  const billingPlan = useSelector(getSubscriptionPlan);
+  const isFreePlan = billingPlan === ESubscriptionPlan.Free;
+  const accessConditions = isSubscribed || isFreePlan;
 
   const templateIntegrations = useTemplateIntegrationsList(template.id);
   const [showDraftWarning, setShowDraftWarning] = useState(
@@ -93,7 +103,7 @@ export function TemplateControlls({
       return;
     }
 
-    const { commonWarnings, infoWarnings } = validateTemplate(template, isSubscribed, intl);
+    const { commonWarnings, infoWarnings } = validateTemplate(template, accessConditions, intl);
     if (isArrayWithItems(infoWarnings)) {
       setInfoWarnings(infoWarnings);
       return;
@@ -187,7 +197,11 @@ export function TemplateControlls({
                 />
               )}
 
-              <button type="button" className={classnames('cancel-button', styles['keep-draf-button'])} onClick={reject}>
+              <button
+                type="button"
+                className={classnames('cancel-button', styles['keep-draf-button'])}
+                onClick={reject}
+              >
                 {formatMessage({ id: 'templates.keep-draft' })}
               </button>
             </>
@@ -247,6 +261,7 @@ export function TemplateControlls({
     <>
       {renderDeleteTemplateModal()}
       {templateId && renderLeavingGuard()}
+
       <div className={styles['settings-block']}>
         <ShowMore label={formatMessage({ id: 'template.owners' })} isInitiallyVisible={isCreateTemplate()}>
           <TemplateOwners
@@ -265,10 +280,7 @@ export function TemplateControlls({
         >
           {templateId && (
             <>
-              <Link
-                to={getLinkToWorkflows({ templateId })}
-                className={styles['more-setting']}
-              >
+              <Link to={getLinkToWorkflows({ templateId })} className={styles['more-setting']}>
                 <BoxesIcon className={styles['more-setting__icon']} />
                 <p className={styles['more-setting__text']}>{formatMessage({ id: 'template.more-show-workflows' })}</p>
               </Link>

@@ -3,6 +3,7 @@ import { TUploadedFile } from '../utils/uploadFiles';
 import { ITask, ITemplateStep } from './tasks';
 import { IKickoff, IExtraField, ITemplateTitle } from './template';
 
+export type TWorkflowDetailsResponse = Omit<IWorkflowDetails, 'dueDate'> & { dueDateTsp: number | null };
 export interface IWorkflowDetails {
   id: number;
   ancestorTaskId?: number;
@@ -80,6 +81,8 @@ export type TWorkflowTask = Pick<
   delay: IWorkflowDelay | null;
   number: number;
 };
+
+export type TWorkflowResponse = Omit<IWorkflow, 'dueDate'> & { dueDateTsp: number | null };
 export interface IWorkflow {
   id: number;
   name: string;
@@ -99,6 +102,7 @@ export interface IWorkflow {
   finalizable: boolean;
   workflowStarter: number | null;
   dueDate: string | null;
+  dueDateTsp?: number | null;
 }
 
 export interface IPassedTask {

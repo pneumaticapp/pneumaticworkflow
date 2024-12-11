@@ -152,6 +152,8 @@
     position: relative;
     z-index: 1;
 
+    @mixin text-wrap;
+
     a {
       color: var(--pneumatic-color-link);
       transition: color 0.1s ease-in-out;

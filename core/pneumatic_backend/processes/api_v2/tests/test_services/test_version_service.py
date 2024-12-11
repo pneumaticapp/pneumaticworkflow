@@ -972,7 +972,9 @@ class TestWorkflowUpdate:
             kickoff=workflow.kickoff_instance,
             template_id=kickoff_field_one.id,
             workflow=workflow,
-            value='http://file.png'
+            value='http://file.png',
+            clear_value='http://clear-file.png',
+            markdown_value='[attachment](http://file.png)',
         )
         attachment = FileAttachment.objects.create(
             name='attachment',
@@ -982,7 +984,7 @@ class TestWorkflowUpdate:
             account_id=user.account_id,
         )
 
-        first_task = template.tasks.order_by('number').first()
+        first_task = template.tasks.get(number=1)
         first_task.description = (
             'Screenshot: {{ %s }}' % kickoff_field_one.api_name
         )
@@ -1010,8 +1012,7 @@ class TestWorkflowUpdate:
             'Screenshot: {{ %s }}' % kickoff_field_one.api_name
         )
         expected = (
-            f'Screenshot: [{kickoff_field_one.name}]'
-            f'({attachment.url})'
+            f'Screenshot: [{attachment.name}]({attachment.url})'
         )
         assert first_task.description == expected
 

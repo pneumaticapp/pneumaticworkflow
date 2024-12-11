@@ -44,8 +44,8 @@ def date_to_user_fmt(
 
 
 def date_tsp_to_user_fmt(
-    date_tsp: str,
+    date_tsp: float,
     user: UserModel
 ) -> str:
-    utc_date = datetime.fromtimestamp(float(date_tsp))
+    utc_date = datetime.fromtimestamp(date_tsp)
     return date_to_user_fmt(date=utc_date, user=user)

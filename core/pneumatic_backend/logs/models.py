@@ -8,6 +8,7 @@ from pneumatic_backend.logs.enums import (
     AccountEventStatus,
     RequestDirection,
 )
+from django.core.serializers.json import DjangoJSONEncoder
 
 UserModel = get_user_model()
 
@@ -28,14 +29,22 @@ class AccountEvent(
         blank=True
     )
     date_created = models.DateTimeField(auto_now_add=True)
-    error = JSONField(blank=True, null=True)
+    response_data = JSONField(
+        blank=True,
+        null=True,
+        encoder=DjangoJSONEncoder
+    )
     ip = models.CharField(max_length=50, blank=True, null=True)
     user_agent = models.CharField(max_length=500, blank=True, null=True)
     auth_token = models.CharField(max_length=50, blank=True, null=True)
     scheme = models.CharField(max_length=50, blank=True, null=True)
     method = models.CharField(max_length=100, blank=True, null=True)
     path = models.CharField(max_length=500, blank=True, null=True)
-    body = JSONField(blank=True, null=True)
+    request_data = JSONField(
+        blank=True,
+        null=True,
+        encoder=DjangoJSONEncoder
+    )
     http_status = models.IntegerField(blank=True, null=True)
     event_type = models.CharField(
         max_length=100,

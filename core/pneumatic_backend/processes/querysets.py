@@ -407,9 +407,6 @@ class FileAttachmentQuerySet(AccountBaseQuerySet):
     def on_workflow(self, workflow_id: int):
         return self.filter(workflow_id=workflow_id)
 
-    def only_urls(self):
-        return self.values_list('url', flat=True)
-
     def ids_set(self):
         qst = self.values_list('id', flat=True)
         return set(elem for elem in qst)

@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { useIntl } from 'react-intl';
+import { useSelector } from 'react-redux';
 
 import { TeamUserSkeleton } from './TeamUserSkeleton';
 import { TeamUser } from './TeamUser';
@@ -20,6 +21,8 @@ import { NotificationManager } from '../UI/Notifications';
 import { trackInviteTeamInPage } from '../../utils/analytics';
 import { RoundPlusIcon, SearchLargeIcon } from '../icons';
 import { Header, InputField } from '../UI';
+import { getSubscriptionPlan } from '../../redux/selectors/user';
+import { ESubscriptionPlan } from '../../types/account';
 
 import styles from './Team.css';
 
@@ -39,9 +42,13 @@ export function Team({
   openModal,
   openTeamInvitesPopup,
   setGeneralLoaderVisibility,
-  loadMicrosoftInvites
+  loadMicrosoftInvites,
 }: ITeamProps) {
   const { formatMessage } = useIntl();
+
+  const billingPlan = useSelector(getSubscriptionPlan);
+  const isFreePlan = billingPlan === ESubscriptionPlan.Free;
+  const accessConditions = isSubscribed || isFreePlan;
 
   const [searchQuery, setSearchQuery] = React.useState('');
 
@@ -79,9 +86,7 @@ export function Team({
   };
 
   const renderUsers = () => {
-    if (isLoading) {
-      return renderSkeleton();
-    }
+    if (isLoading) return renderSkeleton();
 
     return getFilteredUsers().map((user) => {
       return (
@@ -89,7 +94,7 @@ export function Team({
           key={user.id}
           resendInvite={resendInviteHandler(user.id)}
           isCurrentUser={currentUserId === user.id}
-          isSubscribed={isSubscribed}
+          isSubscribed={accessConditions}
           handleToggleAdmin={handleToggleUserAdmin}
           openModal={() => openModal({ user })}
           user={{ ...user, isAccountOwner: user.isAccountOwner && !user.invite }}

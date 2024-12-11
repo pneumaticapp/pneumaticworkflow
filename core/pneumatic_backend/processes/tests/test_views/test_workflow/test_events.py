@@ -465,7 +465,6 @@ def test_retrieve__task_started__ok(api_client):
     assert task_data['number'] == current_task.number
     assert len(task_data['performers']) == 1
     assert task_data['performers'] == [user.id]
-    assert task_data['due_date'] == due_date.strftime(datetime_format)
     assert task_data['due_date_tsp'] == due_date.timestamp()
 
 
@@ -567,7 +566,7 @@ def test_retrieve__performer_created__ok(api_client):
     assert task_data['description'] == task.description
     assert task_data['name'] == task.name
     assert task_data['number'] == task.number
-    assert task_data['due_date'] is None
+    assert task_data['due_date_tsp'] is None
     assert len(task_data['performers']) == 2
     assert len(task_data['performers'])
     assert user.id in task_data['performers']
@@ -626,7 +625,7 @@ def test_retrieve__performer_deleted__ok(api_client):
     assert task_data['description'] == task.description
     assert task_data['name'] == task.name
     assert task_data['number'] == task.number
-    assert task_data['due_date'] is None
+    assert task_data['due_date_tsp'] is None
     assert len(task_data['performers']) == 1
     assert len(task_data['performers'])
     assert user.id in task_data['performers']
@@ -806,7 +805,7 @@ def test_retrieve__complete_task__field_user__ok(api_client):
     assert task_data['description'] == task.description
     assert task_data['name'] == task.name
     assert task_data['number'] == task.number
-    assert task_data['due_date'] is None
+    assert task_data['due_date_tsp'] is None
     assert task_data['performers'] == [user.id]
 
     assert len(task_data['output']) == 1
@@ -938,7 +937,7 @@ def test_retrieve__complete_task__field_date__ok(api_client):
     assert task_data['description'] == task.description
     assert task_data['name'] == task.name
     assert task_data['number'] == task.number
-    assert task_data['due_date'] is None
+    assert task_data['due_date_tsp'] is None
     assert task_data['performers'] == [user.id]
 
     assert len(task_data['output']) == 1
@@ -1056,7 +1055,6 @@ def test_retrieve__task__due_date_changed__ok(api_client):
     assert task_data['name'] == task.name
     assert task_data['number'] == task.number
     assert task_data['description'] == task.description
-    assert task_data['due_date'] == due_date.strftime(datetime_format)
     assert task_data['due_date_tsp'] == due_date.timestamp()
 
 
@@ -1139,8 +1137,6 @@ def test_retrieve__comment__with_attachment__ok(api_client):
     assert data['task']['description'] == task.description
     assert data['task']['name'] == task.name
     assert data['task']['number'] == task.number
-    str_due_date = due_date.strftime(datetime_format)
-    assert data['task']['due_date'] == str_due_date
     assert data['task']['due_date_tsp'] == due_date.timestamp()
     assert data['task']['performers'] == [user.id]
     assert data['task']['output'] is None
@@ -1266,9 +1262,6 @@ def test_retrieve__run_sub_workflow__ok(api_client):
     assert task_data['description'] == ancestor_task.description
     assert task_data['name'] == ancestor_task.name
     assert task_data['number'] == ancestor_task.number
-    assert task_data['due_date'] == (
-        ancestor_task.due_date.strftime(datetime_format)
-    )
     assert task_data['due_date_tsp'] == ancestor_task.due_date.timestamp()
     assert task_data['performers'] == [user.id]
 
@@ -1280,9 +1273,6 @@ def test_retrieve__run_sub_workflow__ok(api_client):
     )
     assert task_data['sub_workflow']['date_created_tsp'] == (
         sub_workflow.date_created.timestamp()
-    )
-    assert task_data['sub_workflow']['due_date'] == (
-        sub_workflow.due_date.strftime(datetime_format)
     )
     assert task_data['sub_workflow']['due_date_tsp'] == (
         sub_workflow.due_date.timestamp()
