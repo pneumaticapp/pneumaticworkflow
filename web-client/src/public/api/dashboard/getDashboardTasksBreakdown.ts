@@ -2,6 +2,7 @@ import { commonRequest } from '../commonRequest';
 import { getBrowserConfigEnv } from '../../utils/getConfig';
 import { TDashboardTimeRangeDates } from '../../types/dashboard';
 import { TDashboardBreakdownItemResponse } from '../../types/redux';
+import { toTspDate } from '../../utils/dateTime';
 
 export function getDashboardTasksBreakdown(params: TDashboardTimeRangeDates) {
   const {
@@ -23,8 +24,8 @@ export function getDashboardTasksBreakdown(params: TDashboardTimeRangeDates) {
 
 export function getDashboardTasksQueryString({ startDate, endDate, now }: TDashboardTimeRangeDates) {
   const params = [
-    startDate && `date_from_tsp=${startDate.getTime() / 1000}`,
-    endDate && `date_to_tsp=${endDate.getTime() / 1000}`,
+    startDate && `date_from_tsp=${toTspDate(startDate)}`,
+    endDate && `date_to_tsp=${toTspDate(endDate)}`,
     now && 'now=true',
   ]
     .filter(Boolean)

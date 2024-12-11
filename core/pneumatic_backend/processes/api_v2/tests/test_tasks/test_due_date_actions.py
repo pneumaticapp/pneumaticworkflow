@@ -39,39 +39,6 @@ def test_create__ok(
         'TaskService.set_due_date_directly'
     )
     due_date = timezone.now() + timedelta(days=1)
-
-    # act
-    response = api_client.post(
-        f'/v2/tasks/{task.id}/due-date',
-        data={'due_date': due_date}
-    )
-
-    # assert
-    assert response.status_code == 204
-    service_init_mock.assert_called_once_with(user=user, instance=task)
-    set_due_date_mock.assert_called_once_with(value=due_date)
-
-
-def test_create__due_date_tsp__ok(
-    mocker,
-    api_client
-):
-
-    # arrange
-    user = create_test_user()
-    workflow = create_test_workflow(user)
-    task = workflow.current_task_instance
-    api_client.token_authenticate(user)
-    service_init_mock = mocker.patch.object(
-        TaskService,
-        attribute='__init__',
-        return_value=None
-    )
-    set_due_date_mock = mocker.patch(
-        'pneumatic_backend.processes.api_v2.services.task.task.'
-        'TaskService.set_due_date_directly'
-    )
-    due_date = timezone.now() + timedelta(days=1)
     due_date_tsp = due_date.timestamp()
 
     # act
@@ -154,7 +121,7 @@ def test_create__workflow_starter_in_legacy_workflow__ok(
     # act
     response = api_client.post(
         f'/v2/tasks/{task.id}/due-date',
-        data={'due_date': due_date}
+        data={'due_date_tsp': due_date.timestamp()}
     )
 
     # assert
@@ -188,7 +155,7 @@ def test_create__request_user_is_not_account_user__not_found(
     # act
     response = api_client.post(
         f'/v2/tasks/{task.id}/due-date',
-        data={'due_date': due_date}
+        data={'due_date_tsp': due_date.timestamp()}
     )
 
     # assert
@@ -220,7 +187,7 @@ def test_create__request_user_is_not_authenticated__permission_denied(
     # act
     response = api_client.post(
         f'/v2/tasks/{task.id}/due-date',
-        data={'due_date': due_date}
+        data={'due_date_tsp': due_date.timestamp()}
     )
 
     # assert
@@ -265,7 +232,7 @@ def test_create__request_user_is_not_admin__permission_denied(
     # act
     response = api_client.post(
         f'/v2/tasks/{task.id}/due-date',
-        data={'due_date': due_date}
+        data={'due_date_tsp': due_date.timestamp()}
     )
 
     # assert
@@ -311,7 +278,7 @@ def test_create__request_user_is_not_template_owner__permission_denied(
     # act
     response = api_client.post(
         f'/v2/tasks/{task.id}/due-date',
-        data={'due_date': due_date}
+        data={'due_date_tsp': due_date.timestamp()}
     )
 
     # assert
@@ -342,7 +309,7 @@ def test_create__not_exist_task_id__not_found(
     # act
     response = api_client.post(
         f'/v2/tasks/{999}/due-date',
-        data={'due_date': due_date}
+        data={'due_date_tsp': due_date.timestamp()}
     )
 
     # assert
@@ -374,7 +341,7 @@ def test_create__due_date_is_null__validation_error(
     # act
     response = api_client.post(
         f'/v2/tasks/{task.id}/due-date',
-        data={'due_date': None}
+        data={'due_date_tsp': None}
     )
 
     # assert
@@ -383,48 +350,7 @@ def test_create__due_date_is_null__validation_error(
     assert response.data['code'] == ErrorCode.VALIDATION_ERROR
     assert response.data['message'] == message
     assert response.data['details']['reason'] == message
-    assert response.data['details']['name'] == 'due_date'
-    service_init_mock.assert_not_called()
-    set_due_date_mock.assert_not_called()
-
-
-def test_create__due_date_is_blank__validation_error(
-    mocker,
-    api_client
-):
-
-    # arrange
-    user = create_test_user()
-    workflow = create_test_workflow(user)
-    task = workflow.current_task_instance
-    api_client.token_authenticate(user)
-    service_init_mock = mocker.patch.object(
-        TaskService,
-        attribute='__init__',
-        return_value=None
-    )
-    set_due_date_mock = mocker.patch(
-        'pneumatic_backend.processes.api_v2.services.task.task.'
-        'TaskService.set_due_date_directly'
-    )
-
-    # act
-    response = api_client.post(
-        f'/v2/tasks/{task.id}/due-date',
-        data={'due_date': ''}
-    )
-
-    # assert
-    assert response.status_code == 400
-    message = (
-        'Datetime has wrong format. '
-        'Use one of these formats instead: '
-        'YYYY-MM-DDThh:mm[:ss[.uuuuuu]][+HH:MM|-HH:MM|Z].'
-    )
-    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
-    assert response.data['message'] == message
-    assert response.data['details']['reason'] == message
-    assert response.data['details']['name'] == 'due_date'
+    assert response.data['details']['name'] == 'due_date_tsp'
     service_init_mock.assert_not_called()
     set_due_date_mock.assert_not_called()
 
@@ -465,51 +391,8 @@ def test_create__due_date_tsp_is_blank__validation_error(
     set_due_date_mock.assert_not_called()
 
 
-@pytest.mark.parametrize('value', ([], 'asdasd', 123, '01/02/2023'))
-def test_create__due_date_invalid_value__validation_error(
-    value,
-    mocker,
-    api_client
-):
-
-    # arrange
-    user = create_test_user()
-    workflow = create_test_workflow(user)
-    task = workflow.current_task_instance
-    api_client.token_authenticate(user)
-    service_init_mock = mocker.patch.object(
-        TaskService,
-        attribute='__init__',
-        return_value=None
-    )
-    set_due_date_mock = mocker.patch(
-        'pneumatic_backend.processes.api_v2.services.task.task.'
-        'TaskService.set_due_date_directly'
-    )
-
-    # act
-    response = api_client.post(
-        f'/v2/tasks/{task.id}/due-date',
-        data={'due_date': value}
-    )
-
-    # assert
-    assert response.status_code == 400
-    message = (
-        'Datetime has wrong format. '
-        'Use one of these formats instead: '
-        'YYYY-MM-DDThh:mm[:ss[.uuuuuu]][+HH:MM|-HH:MM|Z].'
-    )
-    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
-    assert response.data['message'] == message
-    assert response.data['details']['reason'] == message
-    assert response.data['details']['name'] == 'due_date'
-    service_init_mock.assert_not_called()
-    set_due_date_mock.assert_not_called()
-
-
 @pytest.mark.parametrize('value', ([], 'undefined', '01/02/2023'))
-def test_create__due_date_tsp_invalid_value__validation_error(
+def test_create__invalid_value__validation_error(
     value,
     mocker,
     api_client
@@ -569,7 +452,7 @@ def test_create__due_date_less_then_current__validation_error(
     # act
     response = api_client.post(
         f'/v2/tasks/{task.id}/due-date',
-        data={'due_date': due_date}
+        data={'due_date_tsp': due_date.timestamp()}
     )
 
     # assert
@@ -577,7 +460,7 @@ def test_create__due_date_less_then_current__validation_error(
     assert response.data['code'] == ErrorCode.VALIDATION_ERROR
     assert response.data['message'] == messages.MSG_PW_0051
     assert response.data['details']['reason'] == messages.MSG_PW_0051
-    assert response.data['details']['name'] == 'due_date'
+    assert response.data['details']['name'] == 'due_date_tsp'
     service_init_mock.assert_not_called()
     set_due_date_mock.assert_not_called()
 
@@ -609,7 +492,7 @@ def test_create__service_exception__validation_error(
     # act
     response = api_client.post(
         f'/v2/tasks/{task.id}/due-date',
-        data={'due_date': due_date}
+        data={'due_date_tsp': due_date.timestamp()}
     )
 
     # assert
@@ -618,38 +501,3 @@ def test_create__service_exception__validation_error(
     assert response.data['message'] == error_message
     service_init_mock.assert_called_once_with(user=user, instance=task)
     set_due_date_mock.assert_called_once_with(value=due_date)
-
-
-def test_create__skip_due_date_fields__validation_error(
-    mocker,
-    api_client
-):
-
-    # arrange
-    user = create_test_user()
-    workflow = create_test_workflow(user)
-    task = workflow.current_task_instance
-    api_client.token_authenticate(user)
-    service_init_mock = mocker.patch.object(
-        TaskService,
-        attribute='__init__',
-        return_value=None
-    )
-    set_due_date_mock = mocker.patch(
-        'pneumatic_backend.processes.api_v2.services.task.task.'
-        'TaskService.set_due_date_directly'
-    )
-
-    # act
-    response = api_client.post(
-        f'/v2/tasks/{task.id}/due-date',
-        data={}
-    )
-
-    # assert
-    assert response.status_code == 400
-    message = messages.MSG_PW_0069
-    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
-    assert response.data['message'] == message
-    service_init_mock.assert_not_called()
-    set_due_date_mock.assert_not_called()

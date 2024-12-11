@@ -3,14 +3,14 @@
 import Switch from 'rc-switch';
 import * as React from 'react';
 import { useIntl } from 'react-intl';
-import * as classnames from 'classnames';
+import classnames from 'classnames';
 import { useDispatch, useSelector } from 'react-redux';
 import { default as TextareaAutosize } from 'react-textarea-autosize';
+import { useMemo, useState } from 'react';
 
-import { useMemo } from 'react';
 import { patchTemplate } from '../../../../redux/actions';
 import { getTemplateData } from '../../../../redux/selectors/template';
-import { getIsUserSubsribed } from '../../../../redux/selectors/user';
+import { getIsUserSubsribed, getSubscriptionPlan } from '../../../../redux/selectors/user';
 import { copyToClipboard } from '../../../../utils/helpers';
 import { NotificationManager } from '../../../UI/Notifications';
 import { Button, InputField, Loader, Tabs } from '../../../UI';
@@ -20,6 +20,7 @@ import { noop } from '../../../../utils/noop';
 import { trackShareKickoffForm } from '../../../../utils/analytics';
 import { TPublicFormType } from '../../../../types/publicForms';
 import { generateEmbedCode } from './utils/generateEmbedCode';
+import { ESubscriptionPlan } from '../../../../types/account';
 
 import styles from './KickoffShareForm.css';
 
@@ -31,6 +32,8 @@ export function KickoffShareForm({ className }: IKickoffShareFormProps) {
   const dispatch = useDispatch();
   const { formatMessage } = useIntl();
   const isSubscribed = useSelector(getIsUserSubsribed);
+  const subcriptionPlan = useSelector(getSubscriptionPlan);
+  const accessSharedForm = isSubscribed || subcriptionPlan === ESubscriptionPlan.Free;
   const { publicUrl, isPublic, publicSuccessUrl, embedUrl, isEmbedded } = useSelector(getTemplateData);
 
   const TABS: { id: TPublicFormType; label: string }[] = useMemo(
@@ -47,15 +50,13 @@ export function KickoffShareForm({ className }: IKickoffShareFormProps) {
     [formatMessage],
   );
 
-  const [isSuccessUrlEnabled, setIsSuccessUrlEnabled] = React.useState(Boolean(publicSuccessUrl));
-  const [successUrlState, setSuccessUrlState] = React.useState(publicSuccessUrl || '');
-  const [isShared, setIsShared] = React.useState(isPublic || isEmbedded);
-  const [activeTab, setActiveTab] = React.useState<TPublicFormType>('shared');
+  const [isSuccessUrlEnabled, setIsSuccessUrlEnabled] = useState(Boolean(publicSuccessUrl));
+  const [successUrlState, setSuccessUrlState] = useState(publicSuccessUrl || '');
+  const [isShared, setIsShared] = useState(isPublic || isEmbedded);
+  const [activeTab, setActiveTab] = useState<TPublicFormType>('shared');
 
-  const embedCode = React.useMemo(() => {
-    if (!embedUrl) {
-      return null;
-    }
+  const embedCode = useMemo(() => {
+    if (!embedUrl) return null;
 
     return generateEmbedCode(embedUrl);
   }, [embedUrl]);
@@ -67,6 +68,8 @@ export function KickoffShareForm({ className }: IKickoffShareFormProps) {
   useDidUpdateEffect(() => {
     if (!isSuccessUrlEnabled) {
       editTemplate({ publicSuccessUrl: null });
+    } else {
+      editTemplate({ publicSuccessUrl: successUrlState });
     }
   }, [isSuccessUrlEnabled]);
 
@@ -78,13 +81,9 @@ export function KickoffShareForm({ className }: IKickoffShareFormProps) {
     const newIsShared = !isShared;
 
     setIsShared(newIsShared);
-
     updateIsFormPublic(newIsShared);
     updateIsFormEmbedded(newIsShared);
-
-    if (newIsShared) {
-      trackShareKickoffForm();
-    }
+    if (newIsShared) trackShareKickoffForm();
   };
 
   const updateIsFormPublic = (isPublic: boolean) => {
@@ -97,9 +96,7 @@ export function KickoffShareForm({ className }: IKickoffShareFormProps) {
   };
 
   const updateIsFormEmbedded = (isEmbedded: boolean) => {
-    if (!isSubscribed) {
-      return;
-    }
+    if (!accessSharedForm) return;
 
     editTemplate({
       isEmbedded,
@@ -116,18 +113,11 @@ export function KickoffShareForm({ className }: IKickoffShareFormProps) {
   };
 
   const renderTabs = () => {
-    if (!isShared) {
-      return null;
-    }
+    if (!isShared) return null;
 
     const onChangeTab = (tabType: TPublicFormType) => {
-      if (!publicUrl) {
-        updateIsFormPublic(true);
-      }
-
-      if (!embedUrl) {
-        updateIsFormEmbedded(true);
-      }
+      if (!publicUrl) updateIsFormPublic(true);
+      if (!embedUrl) updateIsFormEmbedded(true);
 
       setActiveTab(tabType);
     };
@@ -149,10 +139,7 @@ export function KickoffShareForm({ className }: IKickoffShareFormProps) {
   const renderActiveTab = () => {
     const renderSharedFormTab = () => {
       const handleCopyShareLink = () => {
-        if (!publicUrl) {
-          return;
-        }
-
+        if (!publicUrl) return;
         copyToClipboard(publicUrl);
         NotificationManager.success({ message: 'kickoff.share-link-copied' });
       };
@@ -212,7 +199,7 @@ export function KickoffShareForm({ className }: IKickoffShareFormProps) {
     };
 
     const renderEmbeddedFormTab = () => {
-      if (!isSubscribed) {
+      if (!accessSharedForm) {
         return null;
       }
 

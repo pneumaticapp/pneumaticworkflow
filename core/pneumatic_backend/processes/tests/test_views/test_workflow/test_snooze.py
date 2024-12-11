@@ -75,7 +75,7 @@ def test_snooze__account_owner__ok(
     assert response.data['current_task']['id'] == task.id
     assert response.data['current_task']['name'] == task.name
     assert response.data['current_task']['number'] == task.number
-    assert response.data['current_task']['due_date'] is None
+    assert response.data['current_task']['due_date_tsp'] is None
     assert response.data['current_task']['date_started'] is not None
     assert response.data['current_task']['performers'] == [user.id]
     assert response.data['current_task']['checklists_total'] == 0

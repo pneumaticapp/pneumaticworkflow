@@ -2,7 +2,7 @@
 # pylint:disable=unused-argument
 import pytest
 import pytz
-from datetime import timedelta, datetime
+from datetime import timedelta
 from django.utils import timezone
 from pneumatic_backend.processes.api_v2.services import (
     WorkflowEventService,
@@ -52,7 +52,6 @@ from pneumatic_backend.utils.dates import date_format
 
 
 pytestmark = pytest.mark.django_db
-date_field_format = '%m/%d/%Y'
 
 
 class TestPartialUpdateWorkflow:
@@ -120,8 +119,6 @@ class TestPartialUpdateWorkflow:
         field_value = 'edited text 2'
         is_urgent = True
         due_date = timezone.now() + timedelta(days=1)
-        due_date_str = due_date.strftime(date_format)
-        due_date_tsp = due_date.timestamp()
 
         # act
         response = api_client.patch(
@@ -132,7 +129,7 @@ class TestPartialUpdateWorkflow:
                     field.api_name: field_value,
                 },
                 'is_urgent': is_urgent,
-                'due_date_tsp': due_date_tsp
+                'due_date_tsp': due_date.timestamp()
             }
         )
 
@@ -143,7 +140,7 @@ class TestPartialUpdateWorkflow:
         assert response.data['name'] == name
         assert response.data['is_urgent'] == is_urgent
         assert response.data['kickoff']['output'][0]['value'] == field_value
-        assert response.data['due_date'] == due_date_str
+        assert response.data['due_date_tsp'] == due_date.timestamp()
 
     def test_update__task_markdown_description__ok(
         self,
@@ -243,7 +240,7 @@ class TestPartialUpdateWorkflow:
         assert response.status_code == 200
         workflow.refresh_from_db()
         assert workflow.due_date == due_date
-        assert response.data['due_date'] == due_date.strftime(date_format)
+        assert response.data['due_date_tsp'] == due_date.timestamp()
 
     def test_partial_update__kickoff__ok(
         self,
@@ -386,7 +383,6 @@ class TestPartialUpdateWorkflow:
 
     def test_partial_update__field__update_current_task_due_date__ok(
         self,
-        mocker,
         api_client
     ):
 
@@ -426,23 +422,22 @@ class TestPartialUpdateWorkflow:
         )
         workflow_id = response.data['id']
         new_field_value = timezone.now() + timedelta(days=2)
-        tsp_new_field_value = new_field_value.timestamp()
+
         # act
         response = api_client.patch(
             f'/workflows/{workflow_id}',
             data={
                 'kickoff': {
-                    date_field.api_name: tsp_new_field_value
+                    date_field.api_name: new_field_value.timestamp()
                 }
             }
         )
 
         # assert
         assert response.status_code == 200
-        task_due_date = datetime.fromtimestamp(tsp_new_field_value) + duration
-        assert response.data['current_task']['due_date'] == (
-            task_due_date.strftime(date_format)
-        )
+        assert response.data['current_task']['due_date_tsp'] == (
+            new_field_value + duration
+        ).timestamp()
 
     def test_partial_update__field__not_update_completed_task_due_date__ok(
         self,
@@ -685,8 +680,8 @@ class TestPartialUpdateWorkflow:
         first_workflow_task = workflow.tasks.order_by('number').first()
         second_workflow_task = workflow.tasks.order_by('number')[1]
         assert first_workflow_task.description == (
-            f'His name is... [{file_field.name}]'
-            f'(https://jo.hn/ce.na)!!!'
+            f'His name is... [{first_attach.name}]'
+            f'({first_attach.url})!!!'
         )
         assert second_workflow_task.description == (
             '{{%s}} His name is...!!!' % file_field.api_name
@@ -709,8 +704,7 @@ class TestPartialUpdateWorkflow:
         # assert
         assert response.status_code == 200
         assert first_workflow_task.description == (
-            f'His name is... [{file_field.name}]'
-            f'(https://an.ec/nh.oj)!!!'
+            f'His name is... [{second_attach.name}]({second_attach.url})!!!'
         )
         assert second_workflow_task.description == (
             '{{%s}} His name is...!!!' % file_field.api_name
@@ -776,7 +770,7 @@ class TestPartialUpdateWorkflow:
         first_workflow_task = workflow.tasks.order_by('number').first()
         second_workflow_task = workflow.tasks.order_by('number')[1]
         assert first_workflow_task.description == (
-            f'His name is... [{file_field.name}]'
+            f'His name is... [{first_attach.name}]'
             f'({first_attach.url})!!!'
         )
         assert second_workflow_task.description == (
@@ -800,10 +794,8 @@ class TestPartialUpdateWorkflow:
         assert response.status_code == 200
         assert first_workflow_task.description == (
             'His name is... '
-            f'[{file_field.name}]'
-            f'({first_attach.url})\n'
-            f'[{file_field.name}]'
-            f'({second_attach.url})!!!'
+            f'[{first_attach.name}]({first_attach.url}), '
+            f'[{second_attach.name}]({second_attach.url})!!!'
         )
         assert second_workflow_task.description == (
             '{{%s}} His name is...!!!' % file_field.api_name
@@ -1347,7 +1339,7 @@ class TestPartialUpdateWorkflow:
         response = api_client.patch(
             f'/workflows/{workflow.id}',
             data={
-                'due_date': None
+                'due_date_tsp': None
             }
         )
 
@@ -1355,7 +1347,7 @@ class TestPartialUpdateWorkflow:
         assert response.status_code == 200
         workflow.refresh_from_db()
         assert workflow.due_date is None
-        assert response.data['due_date'] is None
+        assert response.data['due_date_tsp'] is None
 
     def test_update__due_date_tsp_to_null__remove_due_date(
         self,
@@ -1385,7 +1377,7 @@ class TestPartialUpdateWorkflow:
         assert response.status_code == 200
         workflow.refresh_from_db()
         assert workflow.due_date is None
-        assert response.data['due_date'] is None
+        assert response.data['due_date_tsp'] is None
 
     def test_update__due_date_tsp__ok(
         self,
@@ -1394,8 +1386,6 @@ class TestPartialUpdateWorkflow:
         # arrange
         user = create_test_user()
         due_date = timezone.now() + timedelta(days=1)
-        due_date_tsp = due_date.timestamp()
-        due_date_str = due_date.strftime(date_format)
 
         workflow = create_test_workflow(
             user=user,
@@ -1407,7 +1397,7 @@ class TestPartialUpdateWorkflow:
         response = api_client.patch(
             f'/workflows/{workflow.id}',
             data={
-                'due_date_tsp': due_date_tsp
+                'due_date_tsp': due_date.timestamp()
             }
         )
 
@@ -1415,7 +1405,7 @@ class TestPartialUpdateWorkflow:
         assert response.status_code == 200
         workflow.refresh_from_db()
         assert workflow.due_date == due_date
-        assert response.data['due_date'] == due_date_str
+        assert response.data['due_date_tsp'] == due_date.timestamp()
 
     def test_update__due_date_tsp_to_null__ok(
         self,
@@ -1443,7 +1433,7 @@ class TestPartialUpdateWorkflow:
         assert response.status_code == 200
         workflow.refresh_from_db()
         assert workflow.due_date is None
-        assert response.data['due_date'] is None
+        assert response.data['due_date_tsp'] is None
 
     def test_update__due_date_tsp_invalid_type__validation_error(
         self,
@@ -1481,7 +1471,6 @@ class TestPartialUpdateWorkflow:
         # arrange
         user = create_test_user()
         due_date = timezone.now() - timedelta(hours=1)
-        due_date_tsp = due_date.timestamp()
 
         workflow = create_test_workflow(
             user=user,
@@ -1493,7 +1482,7 @@ class TestPartialUpdateWorkflow:
         response = api_client.patch(
             f'/workflows/{workflow.id}',
             data={
-                'due_date_tsp': due_date_tsp
+                'due_date_tsp': due_date.timestamp()
             }
         )
 

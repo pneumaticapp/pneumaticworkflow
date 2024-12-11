@@ -695,8 +695,8 @@ class TestCompleteWorkflow:
         assert workflow.current_task == first_task + 2
         assert current_task.description == (
             'His name is... JOHN CENA!!! Third link '
-            f'[{output_file.name}](https://john.cena/john.cena)\n'
-            f'[{output_file.name}](https://john.cena/john1.cena) '
+            f'[{first_file.name}]({first_file.url}), '
+            f'[{second_file.name}]({second_file.url}) '
             f'May 27, 2023, 04:22AM'
         )
 
@@ -1386,8 +1386,8 @@ class TestCompleteWorkflow:
         assert workflow.current_task == 3
         assert current_task.description == (
             'His name is... JOHN CENA!!! Third link '
-            f'[{output_file.name}](https://john.cena/john.cena)\n'
-            f'[{output_file.name}](https://john.cena/john1.cena)'
+            f'[{first_file.name}]({first_file.url}), '
+            f'[{second_file.name}]({second_file.url})'
         )
         send_workflow_started_webhook_mock.assert_called_once_with(
             user_id=user.id,

@@ -58,13 +58,13 @@ class AccountSerializer(
 
     def validate_logo_lg(self, value):
         if value:
-            if not self.instance.is_subscribed or self.instance.is_tenant:
+            if self.instance.is_tenant:
                 raise ValidationError(MSG_A_0003)
         return value
 
     def validate_logo_sm(self, value):
         if value:
-            if not self.instance.is_subscribed or self.instance.is_tenant:
+            if self.instance.is_tenant:
                 raise ValidationError(MSG_A_0003)
         return value
 

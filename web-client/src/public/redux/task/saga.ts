@@ -35,6 +35,7 @@ import {
   changeTaskWorkflow,
   changeTaskWorkflowLog,
   setTaskWorkflowIsLoading,
+  changeTaskWorkflowLogViewSettings,
 } from './actions';
 import { getTask } from '../../api/getTask';
 import { ITaskAPI } from '../../types/tasks';
@@ -45,7 +46,6 @@ import { history } from '../../utils/history';
 import { completeTask } from '../../api/completeTask';
 import { revertTask } from '../../api/revertTask';
 import {
-  changeWorkflowLogViewSettings,
   ETaskListActions,
   patchTaskInList,
   setGeneralLoaderVisibility,
@@ -76,7 +76,7 @@ import { changeTaskDueDate } from '../../api/changeTaskDueDate';
 
 import {
   mapBackandworkflowLogToRedux,
-  mapBackendGetTackToRedux,
+  formatTaskDatesForRedux,
   mapBackendWorkflowToRedux,
   mapOutputToCompleteTask,
 } from '../../utils/mappers';
@@ -85,9 +85,10 @@ import { toTspDate } from '../../utils/dateTime';
 import { IStoreTask } from '../../types/redux';
 import { getWorkflow } from '../../api/getWorkflow';
 import { getWorkflowLog } from '../../api/getWorkflowLog';
-import { EWorkflowsLogSorting, IWorkflowDetails, IWorkflowLogItem } from '../../types/workflow';
+import { EWorkflowsLogSorting, IWorkflowLogItem, TWorkflowDetailsResponse } from '../../types/workflow';
 import { sendWorkflowComment } from '../../api/sendWorkflowComment';
 import { mapFilesToRequest } from '../../utils/workflows';
+import { formatDateToISOInObject } from '../../utils/dateTime';
 
 function* fetchTask({ payload: { taskId, viewMode } }: TLoadCurrentTask) {
   const {
@@ -109,7 +110,7 @@ function* fetchTask({ payload: { taskId, viewMode } }: TLoadCurrentTask) {
 
     const task: ITaskAPI = yield getTask(taskId);
     const normalizedTask = getNormalizedTask(task);
-    const formattedTask = mapBackendGetTackToRedux(normalizedTask, timezone);
+    const formattedTask = formatTaskDatesForRedux(normalizedTask, timezone);
 
     yield put(setCurrentTask(formattedTask));
 
@@ -117,7 +118,7 @@ function* fetchTask({ payload: { taskId, viewMode } }: TLoadCurrentTask) {
       yield loadTaskWorkflow(task.workflow.id);
     } else {
       yield put(
-        changeWorkflowLogViewSettings({
+        changeTaskWorkflowLogViewSettings({
           id: task.workflow.id,
           sorting,
           comments: isCommentsShown,
@@ -155,11 +156,13 @@ function* loadTaskWorkflow(workflowId: number) {
   const {
     workflowLog: { isCommentsShown, sorting },
   }: IStoreTask = yield select(getTaskStore);
+
   const timezone: ReturnType<typeof getUserTimezone> = yield select(getUserTimezone);
+
   try {
     yield put(setTaskWorkflowIsLoading(true));
 
-    const [workflow, workflowLog]: [IWorkflowDetails, IWorkflowLogItem[]] = yield all([
+    const [workflow, workflowLog]: [TWorkflowDetailsResponse, IWorkflowLogItem[]] = yield all([
       getWorkflow(workflowId),
       getWorkflowLog({
         workflowId,
@@ -167,10 +170,12 @@ function* loadTaskWorkflow(workflowId: number) {
         comments: isCommentsShown,
       }),
     ]);
-    const formattedWorkflow = mapBackendWorkflowToRedux(workflow, timezone);
+
+    const formattedKickoffWorkflow = mapBackendWorkflowToRedux(workflow, timezone);
+    const formattedDueDateWorkflow = formatDateToISOInObject(formattedKickoffWorkflow);
     const formattedWorkflowLog = mapBackandworkflowLogToRedux(workflowLog, timezone);
 
-    yield put(changeTaskWorkflow(formattedWorkflow));
+    yield put(changeTaskWorkflow(formattedDueDateWorkflow));
     yield put(changeTaskWorkflowLog({ items: formattedWorkflowLog, workflowId }));
   } catch (error) {
     logger.info('fetch prorcess error : ', error);

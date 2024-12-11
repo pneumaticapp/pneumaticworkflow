@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React, { useEffect } from 'react';
 import classnames from 'classnames';
 import { useIntl } from 'react-intl';
 import { IExtraField, EExtraFieldMode, IKickoff } from '../../types/template';
@@ -31,22 +31,17 @@ export function EditKickoff({
   onSave,
   onCancel,
 }: IEditKickoffProps) {
-  if (!kickoff || !isArrayWithItems(kickoff.fields)) {
-    return null;
-  }
+  if (!kickoff || !isArrayWithItems(kickoff.fields)) return null;
 
   const { formatMessage } = useIntl();
-
   const wrapperRef = React.useRef<HTMLFormElement>(null);
 
-  React.useEffect(() => {
+  useEffect(() => {
     autoFocusFirstField(wrapperRef.current);
   }, []);
 
   const renderButtons = () => {
-    if (!onSave && !onCancel) {
-      return null;
-    }
+    if (!onSave && !onCancel) return null;
 
     return (
       <div className={styles['kickoff-buttons']}>

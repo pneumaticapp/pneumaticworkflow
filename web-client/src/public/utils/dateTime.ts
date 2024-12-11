@@ -13,11 +13,10 @@ import {
   isAfter,
 } from 'date-fns';
 
-import { IWorkflowDelay, IWorkflowDetails } from '../types/workflow';
+import { IWorkflowDelay } from '../types/workflow';
 import { EHighlightsDateFilter } from '../types/highlights';
 
 import { getDate } from './strings';
-import { IEditWorkflowResponse } from '../api/editWorkflow';
 
 export const SEC_IN_DAY = 24 * 60 * 60;
 export const SEC_IN_HOUR = 60 * 60;
@@ -196,10 +195,16 @@ export const toTspDate = (date?: string | Date | null): number | null => {
   return momentDate.unix();
 };
 
-export const toISOStringFromTsp = (resWitTsp: IEditWorkflowResponse): IWorkflowDetails => {
-  const dueDate = resWitTsp.dueDateTsp;
+export const formatDateToISOInObject = <T extends { dueDateTsp: number | null }>(
+  resWitTsp: T,
+): Omit<T, 'dueDateTsp'> & { dueDate: string | null } => {
+  const { dueDateTsp, ...rest } = resWitTsp;
   return {
-    ...resWitTsp,
-    dueDate: dueDate ? moment.unix(dueDate).utc().format('YYYY-MM-DDTHH:mm:ss[Z]') : null,
+    ...rest,
+    dueDate: dueDateTsp ? toISOStringFromTsp(dueDateTsp) : null,
   };
 };
+
+export function toISOStringFromTsp(dueDateTsp: number) {
+  return moment.unix(dueDateTsp).utc().format('YYYY-MM-DDTHH:mm:ss[Z]');
+}

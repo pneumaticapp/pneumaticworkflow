@@ -67,7 +67,7 @@ def test_send__ok(mocker):
     webhook_log_mock.assert_called_once_with(
         title=f'Webhook: {event}',
         path=webhook.target,
-        body={
+        request_data={
             'hook': {
                 'id': webhook.id,
                 'event': event,
@@ -78,7 +78,7 @@ def test_send__ok(mocker):
         account_id=account.id,
         status=AccountEventStatus.SUCCESS,
         http_status=204,
-        error={},
+        response_data={},
         user_id=user.id
     )
     capture_sentry_mock.assert_not_called()
@@ -193,7 +193,7 @@ def test_send__connection_error__create_log(mocker):
     webhook_log_mock.assert_called_once_with(
         title=f'Webhook: {event}',
         path=webhook.target,
-        body={
+        request_data={
             'hook': {
                 'id': webhook.id,
                 'event': event,
@@ -204,7 +204,7 @@ def test_send__connection_error__create_log(mocker):
         account_id=account.id,
         status=AccountEventStatus.FAILED,
         http_status=None,
-        error={'ConnectionError': str(ex)},
+        response_data={'ConnectionError': str(ex)},
         user_id=user.id
     )
     capture_sentry_mock.assert_called_once()
@@ -265,7 +265,7 @@ def test_send__bad_request_content_type_json__ok(mocker):
     webhook_log_mock.assert_called_once_with(
         title=f'Webhook: {event}',
         path=webhook.target,
-        body={
+        request_data={
             'hook': {
                 'id': webhook.id,
                 'event': event,
@@ -276,7 +276,7 @@ def test_send__bad_request_content_type_json__ok(mocker):
         account_id=account.id,
         status=AccountEventStatus.FAILED,
         http_status=400,
-        error={
+        response_data={
             'response': {
                 'request_url': webhook.target,
                 'response_status': 400,
@@ -343,7 +343,7 @@ def test_send__permission_denied_type_text__ok(mocker):
     webhook_log_mock.assert_called_once_with(
         title=f'Webhook: {event}',
         path=webhook.target,
-        body={
+        request_data={
             'hook': {
                 'id': webhook.id,
                 'event': event,
@@ -354,7 +354,7 @@ def test_send__permission_denied_type_text__ok(mocker):
         account_id=account.id,
         status=AccountEventStatus.FAILED,
         http_status=403,
-        error={
+        response_data={
             'response': {
                 'request_url': webhook.target,
                 'response_status': 403,
@@ -421,7 +421,7 @@ def test_send__not_found__ok(mocker):
     webhook_log_mock.assert_called_once_with(
         title=f'Webhook: {event}',
         path=webhook.target,
-        body={
+        request_data={
             'hook': {
                 'id': webhook.id,
                 'event': event,
@@ -432,7 +432,7 @@ def test_send__not_found__ok(mocker):
         account_id=account.id,
         status=AccountEventStatus.FAILED,
         http_status=404,
-        error={
+        response_data={
             'response': {
                 'request_url': webhook.target,
                 'response_status': 404,

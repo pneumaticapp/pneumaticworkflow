@@ -1,7 +1,5 @@
-/* eslint-disable */
-/* prettier-ignore */
 import React, { useState } from 'react';
-import * as classnames from 'classnames';
+import classnames from 'classnames';
 import { Tooltip, TooltipProps } from 'reactstrap';
 import { IntlMessages } from '../IntlMessages';
 
@@ -32,11 +30,11 @@ export const SubMenuTooltip = ({
     return null;
   }
 
-  let [activeSubmenu, setActiveSubmenu] = useState(false);
+  const [activeSubmenu, setActiveSubmenu] = useState(false);
 
-  let timeDelayHideShowSubMenu = containerClassName.includes('main-hidden') ? 200 : 0;
+  const timeDelayHideShowSubMenu = containerClassName.includes('main-hidden') ? 200 : 0;
   let styleHideSubMenu = '';
-  let targetCurrent = document.querySelector(`#${target}`)!;
+  const targetCurrent = document.querySelector(`#${target}`)!;
   const planClassNameMap = {
     [ESubscriptionPlan.Unknown]: s['plan-free'],
     [ESubscriptionPlan.Free]: s['plan-free'],
@@ -60,6 +58,7 @@ export const SubMenuTooltip = ({
                 href={item.to}
                 rel="noopener noreferrer"
                 target="_blank"
+                aria-label={item.label}
               >
                 <IntlMessages id={item.label} />
               </a>
@@ -86,13 +85,13 @@ export const SubMenuTooltip = ({
   }
 
   return (
-    <div onMouseOver={handleMouseLeave} onMouseLeave={handleMouseOver}>
+    <div onMouseOver={handleMouseLeave} onFocus={handleMouseLeave} onMouseLeave={handleMouseOver}>
       <Tooltip
         arrowClassName={s['sub-menu__arrow']}
         className={classnames(s['sub-menu'], planClassNameMap[plan], styleHideSubMenu)}
         innerClassName={s['sub-menu__inner']}
         isOpen={activeSubmenu}
-        placement={'right'}
+        placement="right"
         target={target}
       >
         {renderSubMenuItems()}

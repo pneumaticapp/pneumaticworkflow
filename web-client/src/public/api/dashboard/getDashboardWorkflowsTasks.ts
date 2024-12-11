@@ -1,6 +1,7 @@
 import { commonRequest } from '../commonRequest';
 import { getBrowserConfigEnv } from '../../utils/getConfig';
 import { IDashboardTask } from '../../types/redux';
+import { toTspDate } from '../../utils/dateTime';
 
 export type IWorkflowsByTasksRequestConfig = {
   templateId: string;
@@ -35,8 +36,8 @@ export function getDashboardWorkflowsTasksQueryString({
 }: IWorkflowsByTasksRequestConfig) {
   const params = [
     `template_id=${templateId}`,
-    startDate && `date_from_tsp=${startDate.getTime() / 1000}`,
-    endDate && `date_to_tsp=${endDate.getTime() / 1000}`,
+    startDate && `date_from_tsp=${toTspDate(startDate)}`,
+    endDate && `date_to_tsp=${toTspDate(endDate)}`,
     now && 'now=true',
   ]
     .filter(Boolean)

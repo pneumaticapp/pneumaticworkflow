@@ -114,7 +114,7 @@ def test__get_request_with_data__ok(api_client, mocker):
         status=AccountEventStatus.SUCCESS,
         http_status=200,
         direction=RequestDirection.RECEIVED,
-        body=params,
+        request_data=params,
     )
 
 
@@ -153,7 +153,7 @@ def test__get_request_with_query_string__ok(api_client, mocker):
         status=AccountEventStatus.SUCCESS,
         http_status=200,
         direction=RequestDirection.RECEIVED,
-        body={'key_1': 'Value1,Value2', 'key_2': '123'},
+        request_data={'key_1': 'Value1,Value2', 'key_2': '123'},
     )
 
 
@@ -194,8 +194,8 @@ def test__post_request_with_data__ok(api_client, mocker):
         direction=RequestDirection.RECEIVED,
         http_status=204,
     )
-    assert event.body == data
-    assert event.error is None
+    assert event.request_data == data
+    assert event.response_data is None
 
 
 def test__head_request__skip(api_client, mocker):
@@ -311,8 +311,10 @@ def test__bad_request__save_error(api_client, mocker):
         direction=RequestDirection.RECEIVED,
         http_status=400,
     )
-    assert event.body == data
-    assert event.error['code'] == 'validation_error'
-    assert event.error['message'] == 'This field is required.'
-    assert event.error['details']['name'] == 'name'
-    assert event.error['details']['reason'] == 'This field is required.'
+    assert event.request_data == data
+    assert event.response_data['code'] == 'validation_error'
+    assert event.response_data['message'] == 'This field is required.'
+    assert event.response_data['details']['name'] == 'name'
+    assert event.response_data['details']['reason'] == (
+        'This field is required.'
+    )

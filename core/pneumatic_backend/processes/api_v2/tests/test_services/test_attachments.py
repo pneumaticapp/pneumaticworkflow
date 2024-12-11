@@ -248,7 +248,7 @@ def test_create__ok(mocker):
     create_attachment_mock.assert_called_once_with(
         url=public_url,
         thumbnail_url=None,
-        name=unique_filename,
+        name=filename,
         size=size,
         account_id=user.account_id,
     )
@@ -315,7 +315,7 @@ def test_create__thumbnail__ok(mocker):
     create_attachment_mock.assert_called_once_with(
         url=public_url,
         thumbnail_url=public_url,
-        name=unique_filename,
+        name=filename,
         size=size,
         account_id=user.account_id,
     )

@@ -1,4 +1,11 @@
-import { ITask, ITaskAPI, TTaskChecklists, TTaskChecklistsItems, TTaskChecklistsItem, TTaskChecklist } from '../types/tasks';
+import {
+  ITask,
+  ITaskAPI,
+  TTaskChecklists,
+  TTaskChecklistsItems,
+  TTaskChecklistsItem,
+  TTaskChecklist,
+} from '../types/tasks';
 
 export const getNormalizedTask = (task: ITaskAPI): ITask => {
   const normalizedChecklists: TTaskChecklists = {};
@@ -11,8 +18,8 @@ export const getNormalizedTask = (task: ITaskAPI): ITask => {
     });
 
     const totalItems = checklist.selections.length;
-    const checkedItems = checklist.selections.reduce((acc, item) => item.isSelected ? acc + 1 : acc, 0);
-  
+    const checkedItems = checklist.selections.reduce((acc, item) => (item.isSelected ? acc + 1 : acc), 0);
+
     normalizedChecklists[checklist.apiName] = {
       ...checklist,
       items: normalizedItems,
@@ -23,11 +30,7 @@ export const getNormalizedTask = (task: ITaskAPI): ITask => {
 
   return { ...task, checklists: normalizedChecklists, areChecklistsHandling: false };
 };
-
-export const getTaskChecklist = (
-  task: ITask,
-  listApiName: string,
-): TTaskChecklist | null => {
+export const getTaskChecklist = (task: ITask, listApiName: string): TTaskChecklist | null => {
   return task.checklists[listApiName] || null;
 };
 

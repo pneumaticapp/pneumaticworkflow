@@ -93,7 +93,6 @@ def test_list__workflow_due_date__ok(api_client):
     assert wf_data['date_completed_tsp'] == (
         workflow.date_completed.timestamp()
     )
-    assert wf_data['due_date'] == due_date.strftime(date_format)
     assert wf_data['due_date_tsp'] == due_date.timestamp()
     assert wf_data['status_updated'] == (
         workflow.status_updated.strftime(date_format)
@@ -113,7 +112,7 @@ def test_list__workflow_due_date__ok(api_client):
     assert task_data['date_started'] == task.date_started
     assert task_data['date_started_tsp'] == task.date_started.timestamp()
     assert task_data['delay'] is None
-    assert task_data['due_date'] is None
+    assert task_data['due_date_tsp'] is None
     assert task_data['performers'] == [user.id]
 
 
@@ -1310,7 +1309,6 @@ def test_list__task_due_date__ok(api_client):
     # assert
     assert response.status_code == 200
     response_task = response.data['results'][0]['task']
-    assert response_task['due_date'] == due_date
     assert response_task['due_date_tsp'] == due_date_tsp
 
 

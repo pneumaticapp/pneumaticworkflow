@@ -23,7 +23,6 @@ from pneumatic_backend.consumers import PneumaticBaseConsumer
 
 
 pytestmark = pytest.mark.django_db
-datetime_format = '%Y-%m-%dT%H:%M:%S.%fZ'
 
 
 def test_get_serialized_notification__type_mention__ok():
@@ -132,8 +131,7 @@ def test_get_serialized_notification__type_due_date__ok():
     # assert
     assert data['id'] == notification.id
     assert data['type'] == NotificationType.DUE_DATE_CHANGED
-    str_due_date = task.due_date.strftime(datetime_format)
-    assert data['task']['due_date'] == str_due_date
+    assert data['task']['due_date_tsp'] == task.due_date.timestamp()
 
 
 def test_async_send__ok(mocker):

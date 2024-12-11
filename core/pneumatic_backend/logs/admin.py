@@ -43,7 +43,6 @@ class AccountEventAdmin(admin.ModelAdmin):
     search_fields = (
         'title',
         'path',
-        'body',
     )
 
     fieldsets = (
@@ -65,9 +64,9 @@ class AccountEventAdmin(admin.ModelAdmin):
                     'scheme',
                     'method',
                     'path',
-                    'formatted_body',
+                    'formatted_request_data',
                     'http_status',
-                    'formatted_error'
+                    'formatted_response_data'
                 )
             }
         ),
@@ -93,11 +92,11 @@ class AccountEventAdmin(admin.ModelAdmin):
         'path',
         'user',
         'account',
-        'formatted_body',
+        'formatted_request_data',
         'ip',
         'auth_token',
         'user_agent',
-        'formatted_error',
+        'formatted_response_data',
         'event_type',
         'direction',
         'contractor',
@@ -130,10 +129,10 @@ class AccountEventAdmin(admin.ModelAdmin):
     def has_add_permission(self, request):
         return False
 
-    def formatted_body(self, instance):
-        if instance.body:
+    def formatted_request_data(self, instance):
+        if instance.request_data:
             response = json.dumps(
-                instance.body,
+                instance.request_data,
                 sort_keys=True,
                 indent=2,
                 ensure_ascii=False
@@ -143,12 +142,12 @@ class AccountEventAdmin(admin.ModelAdmin):
             return mark_safe(style + response)
         else:
             return '-'
-    formatted_body.short_description = 'body'
+    formatted_request_data.short_description = 'request_data'
 
-    def formatted_error(self, instance):
-        if instance.error:
+    def formatted_response_data(self, instance):
+        if instance.response_data:
             response = json.dumps(
-                instance.error,
+                instance.response_data,
                 sort_keys=True,
                 indent=2,
                 ensure_ascii=False
@@ -158,4 +157,4 @@ class AccountEventAdmin(admin.ModelAdmin):
             return mark_safe(style + response)
         else:
             return '-'
-    formatted_error.short_description = 'error'
+    formatted_response_data.short_description = 'response_data'

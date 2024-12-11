@@ -355,7 +355,7 @@ class TestPushNotificationService:
         log_service_init_mock.assert_called_once()
         log_push_mock.assert_called_once_with(
             title=f'Push to browser: {user.email}: {data["title"]}',
-            body=data,
+            request_data=data,
             account_id=account.id,
             status=AccountEventStatus.SUCCESS,
         )
@@ -575,7 +575,7 @@ class TestPushNotificationService:
         log_service_init_mock.assert_called_once()
         log_push_mock.assert_called_once_with(
             title=f'Push to app: {user.email}: {data["title"]}',
-            body=data,
+            request_data=data,
             account_id=account.id,
             status=AccountEventStatus.SUCCESS,
         )
@@ -1006,10 +1006,10 @@ class TestPushNotificationService:
         log_service_init_mock.assert_called_once()
         log_push_mock.assert_called_once_with(
             title=f'Push to browser {user.email}: {data["title"]}',
-            body=data,
+            request_data=data,
             account_id=user.account_id,
             status=AccountEventStatus.FAILED,
-            error={
+            response_data={
                 'user_id': user.id,
                 'user_email': user.email,
                 'device_token': broken_device.token,

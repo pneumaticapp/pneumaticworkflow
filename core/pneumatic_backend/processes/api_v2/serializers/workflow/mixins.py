@@ -36,7 +36,6 @@ class WorkflowSerializerMixin:
         elif update_fields_values:
             fields_values = self.instance.get_fields_markdown_values(
                 tasks_filter_kwargs={'number__lt': self.instance.current_task},
-                user=self.instance.workflow_starter
             )
             for task in tasks:
                 task_service = TaskService(

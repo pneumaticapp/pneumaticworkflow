@@ -43,7 +43,7 @@ import {
   TStopAITemplateGeneration,
 } from './actions';
 
-import { getIsUserSubsribed, getUsers } from '../selectors/user';
+import { getIsUserSubsribed, getSubscriptionPlan, getUsers } from '../selectors/user';
 import { createTemplate } from '../../api/createTemplate';
 import { ERoutes } from '../../constants/routes';
 import { getTemplateData } from '../selectors/template';
@@ -68,9 +68,10 @@ import { discardTemplateChanges } from '../../api/discardTemplateChanges';
 
 function* setTemplateByTemplateResponse(template: ITemplateResponse) {
   const isSubscribed: ReturnType<typeof getIsUserSubsribed> = yield select(getIsUserSubsribed);
+  const billingPlan: ReturnType<typeof getSubscriptionPlan> = yield select(getSubscriptionPlan);
   const users: ReturnType<typeof getUsers> = yield select(getUsers);
 
-  const normalizedTemplate = getNormalizedTemplate(template, isSubscribed, users);
+  const normalizedTemplate = getNormalizedTemplate(template, isSubscribed, users, billingPlan);
   yield put(setTemplate(normalizedTemplate));
 }
 
@@ -101,7 +102,7 @@ function* patchTemplateSaga({ payload: { changedFields, onSuccess, onFailed } }:
 
   yield put(setTemplateStatus(ETemplateStatus.Saving));
 
-  const nonDeactivativeFields: (keyof ITemplate)[] = ['isActive', 'isPublic', 'publicUrl', 'publicSuccessUrl'];
+  const nonDeactivativeFields: (keyof ITemplate)[] = ['isActive', 'isPublic', 'publicUrl'];
   let shouldDeactivateTemplate = Object.keys(changedFields).some(
     (key) => !nonDeactivativeFields.includes(key as keyof ITemplate),
   );
@@ -140,8 +141,9 @@ function* fetchTemplateFromSystem({ payload: id }: TLoadTemplateFromSystem) {
   try {
     const systemTemplate: ITemplateResponse = yield getSystemTemplate(id);
     const isSubscribed: ReturnType<typeof getIsUserSubsribed> = yield select(getIsUserSubsribed);
+    const billingPlan: ReturnType<typeof getSubscriptionPlan> = yield select(getSubscriptionPlan);
     const users: ReturnType<typeof getUsers> = yield select(getUsers);
-    const normalizedTemplate = getNormalizedTemplate(systemTemplate, isSubscribed, users);
+    const normalizedTemplate = getNormalizedTemplate(systemTemplate, isSubscribed, users, billingPlan);
     yield put(setTemplate(normalizedTemplate));
     yield put(loadFromSystemSuccess());
   } catch (error) {
@@ -159,8 +161,9 @@ function* createOrUpdateTemplate(template: ITemplateRequest, isSubscribed: boole
   try {
     const saveTemplatePromise = !template.id ? createTemplate(template) : updateTemplate(template.id, template);
     const result: ITemplateResponse = yield saveTemplatePromise;
+    const billingPlan: ReturnType<typeof getSubscriptionPlan> = yield select(getSubscriptionPlan);
 
-    return getNormalizedTemplate(result, isSubscribed, users);
+    return getNormalizedTemplate(result, isSubscribed, users, billingPlan);
   } catch (error) {
     if (isPaidFeatureError(error)) {
       yield put(saveTemplateCanceled());
@@ -285,6 +288,7 @@ function* generateAITemplateSaga(action: TGenerateAITemplate | TStopAITemplateGe
   } = action;
 
   const isSubscribed: ReturnType<typeof getIsUserSubsribed> = yield select(getIsUserSubsribed);
+  const billingPlan: ReturnType<typeof getSubscriptionPlan> = yield select(getSubscriptionPlan);
   const users: ReturnType<typeof getUsers> = yield select(getUsers);
 
   const abortController = new AbortController();
@@ -292,7 +296,7 @@ function* generateAITemplateSaga(action: TGenerateAITemplate | TStopAITemplateGe
   try {
     yield put(setAITemplateGenerationStatus('generating'));
     const generatedTemplate: ITemplateResponse = yield generateAITemplate(templateDescription, abortController.signal);
-    yield put(setAITemplateData({ template: getNormalizedTemplate(generatedTemplate, isSubscribed, users) }));
+    yield put(setAITemplateData({ template: getNormalizedTemplate(generatedTemplate, isSubscribed, users, billingPlan) }));
     yield put(setAITemplateGenerationStatus('generated'));
   } catch (error) {
     yield put(setAITemplateGenerationStatus('initial'));

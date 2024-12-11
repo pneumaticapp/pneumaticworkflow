@@ -24,6 +24,7 @@ import { TUserListItem } from '../types/user';
 import { getNotDeletedUsers } from './users';
 import { normalizeDueDateForFrontend } from './dueDate/normalizeDueDateForFrontend';
 import { normalizeDueDateForBackend } from './dueDate/normalizeDueDateForBackend';
+import { ESubscriptionPlan } from '../types/account';
 
 export function getTemplateIdFromUrl(url: string) {
   if (!url) {
@@ -50,14 +51,18 @@ export const getNormalizedTemplate = (
   template: ITemplateResponse,
   isSubscribed: boolean,
   users: TUserListItem[],
+  billingPlan: ESubscriptionPlan,
 ): ITemplate => {
   const normalizedKickoff = template.kickoff || getEmptyKickoff();
   const normalizedTasks = [...template.tasks]
     .sort((a, b) => a.number - b.number)
     .map((task, index, tasks) => getNormalizedTask(task, isSubscribed, tasks[index - 1]));
 
-  const normalizedTemplateOwners = getNormalizedTemplateOwners(template.templateOwners, isSubscribed, users);
   const performersCount = setPerformersCounts(normalizedTasks);
+  const normalizedTemplateOwners =
+    !isSubscribed && billingPlan !== ESubscriptionPlan.Free
+      ? getNormalizedTemplateOwners(template.templateOwners, isSubscribed, users)
+      : template.templateOwners;
 
   return {
     ...template,

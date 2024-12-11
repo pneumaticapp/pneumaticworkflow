@@ -91,7 +91,7 @@ class AuthMiddleware(
                         method=request.method,
                         title='API request',
                         path=request.path,
-                        body=body,
+                        request_data=body,
                         http_status=response.status_code,
                         response_data=response_data
                     )

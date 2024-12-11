@@ -1,5 +1,5 @@
 import * as React from 'react';
-import * as classnames from 'classnames';
+import classnames from 'classnames';
 import Switch from 'rc-switch';
 import { debounce } from 'throttle-debounce';
 import { useIntl } from 'react-intl';
@@ -120,8 +120,9 @@ export function TeamUser(props: ITeamUserProps) {
                   'custom-switch custom-switch-primary custom-switch-small',
                   styles['card-admin__switch'],
                 )}
+                disabled={!isSubscribed}
                 onChange={handleToggleAdmin(user)}
-                checked={isSubscribed ? isAdmin : true}
+                checked={isAdmin}
                 checkedChildren={null}
                 unCheckedChildren={null}
               />

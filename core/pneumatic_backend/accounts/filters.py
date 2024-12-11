@@ -29,7 +29,17 @@ class NotificationFilter(FilterSet):
 
     class Meta:
         model = Notification
-        fields = ('status', )
+        fields = (
+            'status',
+            'ordering',
+        )
+
+    ordering = DefaultOrderingFilter(
+        fields=(
+            ('datetime', 'datetime'),
+        ),
+        default=('-datetime',)
+    )
 
 
 class UsersListFilterSet(FilterSet):

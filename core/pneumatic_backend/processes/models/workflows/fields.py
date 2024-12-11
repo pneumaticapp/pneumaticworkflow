@@ -1,5 +1,4 @@
 from django.db import models
-from typing import Optional
 from django.contrib.auth import get_user_model
 from django.contrib.postgres.search import SearchVectorField
 from pneumatic_backend.generics.managers import BaseSoftDeleteManager
@@ -15,8 +14,7 @@ from pneumatic_backend.processes.querysets import (
 from pneumatic_backend.processes.models.workflows.task import Task
 from pneumatic_backend.processes.models.workflows.workflow import Workflow
 from pneumatic_backend.processes.models.workflows.kickoff import KickoffValue
-from pneumatic_backend.processes.enums import FieldType
-from pneumatic_backend.utils.dates import date_tsp_to_user_fmt
+
 
 UserModel = get_user_model()
 
@@ -30,11 +28,19 @@ class TaskField(
     class Meta:
         ordering = ['-order', 'id']
 
-    value = models.TextField(blank=True)
+    value = models.TextField(
+        blank=True,
+        help_text='Human readable value'
+    )
     clear_value = models.TextField(
         null=True,
         blank=True,
         help_text='Does not contains markdown'
+    )
+    markdown_value = models.TextField(
+        null=True,
+        blank=True,
+        help_text='Contains markdown representation'
     )
     task = models.ForeignKey(
         Task,
@@ -58,29 +64,6 @@ class TaskField(
     )
     search_content = SearchVectorField(null=True)
     objects = BaseSoftDeleteManager.from_queryset(TaskFieldQuerySet)()
-
-    def markdown_value(
-        self,
-        user: Optional[UserModel] = None
-    ):
-        if self.value:
-            if self.type == FieldType.DATE:
-                return date_tsp_to_user_fmt(
-                    date_tsp=self.value,
-                    user=user,
-                )
-            if self.type == FieldType.URL:
-                return f'[{self.name}]({self.value})'
-            elif self.type == FieldType.FILE:
-                if self.value.find(',') > 0:
-                    urls = [
-                        f'[{self.name}]({url})'
-                        for url in self.value.split(', ')
-                    ]
-                    return '\n'.join(urls)
-                else:
-                    return f'[{self.name}]({self.value})'
-        return self.value
 
 
 class FieldSelection(

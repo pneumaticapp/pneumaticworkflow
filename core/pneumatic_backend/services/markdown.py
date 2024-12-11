@@ -3,6 +3,19 @@ import re
 
 class MarkdownPatterns:
 
+    """
+    Example MEDIA_PATTERN:
+    ![hand.png](https://hand.png "attachment_id:4186 entityType:image")
+     [file.txt](http://file.txt "attachment_id:4187 entityType:file")
+     [video.mp4](https://video.mp4 "attachment_id:4188 entityType:video")
+     [ZIP-папка.zip](https://storage.zip \"attachment_id:2482\")
+    """
+    MEDIA_PATTERN = re.compile(
+        r'\[(?:[^\]\(]+)\]\((?:http[s]?:\/\/\S*)\s'
+        r'[\\]?"attachment_id:(?P<attachment_id>\d+)'
+        r'(?:\sentityType:(?:file|image|video))?[\\]?"\)'
+    )
+
     MENTION_PATTERN = re.compile(
         r'\[(?P<name>[^]]+)\|(?P<user_id>\d+)\]'
     )

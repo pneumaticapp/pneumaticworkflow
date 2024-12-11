@@ -376,7 +376,7 @@ class TemplateViewSet(
                 user_provided_name=data.get('name'),
                 is_external=False,
                 is_urgent=data['is_urgent'],
-                due_date=data['due_date'],
+                due_date=data.get('due_date_tsp'),
                 ancestor_task=data.get('ancestor_task_id'),
                 user_agent=get_user_agent(request)
             )

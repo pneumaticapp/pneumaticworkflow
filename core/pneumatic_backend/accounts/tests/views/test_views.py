@@ -399,8 +399,7 @@ class TestUserNotifications:
         assert data['status'] == NotificationStatus.NEW
         assert data['task']['id'] == task.id
         assert data['task']['name'] == task.name
-        str_due_date = task.due_date.strftime(date_format)
-        assert data['task']['due_date'] == str_due_date
+        assert data['task']['due_date_tsp'] == task.due_date.timestamp()
         assert data['workflow']['id'] == workflow.id
         assert data['workflow']['name'] == workflow.name
 

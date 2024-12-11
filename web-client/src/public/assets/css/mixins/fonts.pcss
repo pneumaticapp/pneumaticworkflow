@@ -1,5 +1,5 @@
 @define-mixin font-title {
-  font-family: "Abhaya Libre", serif;
+  font-family: 'Abhaya Libre', serif;
 }
 
 @define-mixin font-text {
@@ -109,4 +109,11 @@
   line-clamp: $line;
   text-wrap: wrap;
   word-break: break-all;
+}
+
+@define-mixin text-wrap {
+  white-space: normal;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  word-break: break-word;
 }

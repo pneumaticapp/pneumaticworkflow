@@ -75,7 +75,6 @@ def test_list__default_ordering__ok(mocker, api_client):
     task_21_data = response.data[0]
     assert task_21_data['id'] == task_21.id
     assert task_21_data['name'] == task_21.name
-    assert task_21_data['due_date'] is None
     assert task_21_data['due_date_tsp'] is None
     assert task_21_data['date_started'] == task_21.date_started.strftime(
         datetime_format
@@ -89,9 +88,6 @@ def test_list__default_ordering__ok(mocker, api_client):
 
     task_11_data = response.data[1]
     assert task_11_data['id'] == task_11.id
-    assert task_11_data['due_date'] == (
-        task_11.due_date.strftime(datetime_format)
-    )
     assert task_11_data['due_date_tsp'] == task_11.due_date.timestamp()
 
 
@@ -1276,17 +1272,10 @@ def test_list__ordering_by_overdue__ok(api_client):
     assert response.status_code == 200
     assert len(response.data) == 3
     assert response.data[0]['id'] == task_11.id
-    assert response.data[0]['due_date'] == (
-        task_11.due_date.strftime(datetime_format)
-    )
     assert response.data[0]['due_date_tsp'] == task_11.due_date.timestamp()
     assert response.data[1]['id'] == task_21.id
-    assert response.data[1]['due_date'] == (
-        task_21.due_date.strftime(datetime_format)
-    )
     assert response.data[1]['due_date_tsp'] == task_21.due_date.timestamp()
     assert response.data[2]['id'] == task_31.id
-    assert response.data[2]['due_date'] is None
     assert response.data[2]['due_date_tsp'] is None
 
 

@@ -18,55 +18,45 @@ import { EHighlightsDateFilter } from '../../types/highlights';
 import { getActiveUsers } from '../../utils/users';
 
 type THighlightsFeedStoreProps = Pick<
-IHighlightsFeedProps,
-'count'
-| 'items'
-| 'isWorkflowLogPopupLoading'
-| 'workflowId'
-| 'isFeedLoading'
-| 'templatesTitles'
-| 'users'
-| 'isTemplatesTitlesLoading'
-| 'timeRange'
-| 'startDate'
-| 'endDate'
-| 'usersFilter'
-| 'templatesFilter'
-| 'filtersChanged'
+  IHighlightsFeedProps,
+  | 'count'
+  | 'items'
+  | 'isWorkflowLogPopupLoading'
+  | 'workflowId'
+  | 'isFeedLoading'
+  | 'templatesTitles'
+  | 'users'
+  | 'isTemplatesTitlesLoading'
+  | 'timeRange'
+  | 'startDate'
+  | 'endDate'
+  | 'usersFilter'
+  | 'templatesFilter'
+  | 'filtersChanged'
 >;
 
 type THighlightsFeedDispatchProps = Pick<
-IHighlightsFeedProps,
-| 'openWorkflowLogPopup'
-| 'loadHighlights'
-| 'resetHightlightsStore'
-| 'loadTemplatesTitles'
-| 'setFilters'
-| 'setFiltersChanged'
+  IHighlightsFeedProps,
+  | 'openWorkflowLogPopup'
+  | 'loadHighlights'
+  | 'resetHightlightsStore'
+  | 'loadTemplatesTitles'
+  | 'setFilters'
+  | 'setFiltersChanged'
 >;
 
 export function mapStateToProps({
-  accounts: {
-    users,
+  accounts: { users },
+  workflows: {
+    workflowLog: { isLoading, workflowId },
   },
-  workflows: { workflowLog: {
-    isLoading,
-    workflowId,
-  } },
   highlights: {
     count,
     isFeedLoading,
     isTemplatesTitlesLoading,
     items,
     templatesTitles,
-    filters: {
-      timeRange,
-      startDate,
-      endDate,
-      usersFilter,
-      templatesFilter,
-      filtersChanged,
-    },
+    filters: { timeRange, startDate, endDate, usersFilter, templatesFilter, filtersChanged },
   },
 }: IApplicationState): THighlightsFeedStoreProps {
   return {
@@ -102,14 +92,18 @@ const SyncedHiglights = withSyncedQueryString<THighlightsFeedStoreProps>([
     queryParamName: 'time-range',
     defaultAction: setFilters({ timeRange: EHighlightsDateFilter.Today }),
     createAction: (timeRange: EHighlightsDateFilter) => setFilters({ timeRange }),
-    getQueryParamByProp: value => value,
+    getQueryParamByProp: (value) => value,
   },
   {
     propName: 'startDate',
     queryParamName: 'start-date',
     defaultAction: setFilters({ startDate: startOfToday() }),
     createAction: (startDateQuery: string) => {
-      const startDate = new Date(startDateQuery);
+      const formattedDateQuery = startDateQuery
+        .replace(/\(.*?\)/, '')
+        .replace('GMT ', 'GMT+')
+        .trim();
+      const startDate = new Date(formattedDateQuery);
 
       if (!isValid(startDate)) {
         return { type: 'EMPTY_ACTION' } as AnyAction;
@@ -124,7 +118,11 @@ const SyncedHiglights = withSyncedQueryString<THighlightsFeedStoreProps>([
     queryParamName: 'end-date',
     defaultAction: setFilters({ endDate: endOfToday() }),
     createAction: (endDateQuery: string) => {
-      const endDate = new Date(endDateQuery);
+      const formattedendDateQuery = endDateQuery
+        .replace(/\(.*?\)/, '')
+        .replace('GMT ', 'GMT+')
+        .trim();
+      const endDate = new Date(formattedendDateQuery);
 
       if (!isValid(endDate)) {
         return { type: 'EMPTY_ACTION' } as AnyAction;
@@ -138,23 +136,23 @@ const SyncedHiglights = withSyncedQueryString<THighlightsFeedStoreProps>([
     propName: 'usersFilter',
     queryParamName: 'users',
     defaultAction: setFilters({ usersFilter: [] }),
-    createAction: usersQuery => {
+    createAction: (usersQuery) => {
       const usersFilter = usersQuery.split(',').map(Number);
 
       return setFilters({ usersFilter });
     },
-    getQueryParamByProp: users => users.join(','),
+    getQueryParamByProp: (users) => users.join(','),
   },
   {
     propName: 'templatesFilter',
     queryParamName: 'templates',
     defaultAction: setFilters({ templatesFilter: [] }),
-    createAction: templatesQuery => {
+    createAction: (templatesQuery) => {
       const templatesFilter = templatesQuery.split(',').map(Number);
 
       return setFilters({ templatesFilter });
     },
-    getQueryParamByProp: templates => templates.join(','),
+    getQueryParamByProp: (templates) => templates.join(','),
   },
 ])(HighlightsFeed);
 

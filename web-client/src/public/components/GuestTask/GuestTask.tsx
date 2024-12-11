@@ -1,5 +1,3 @@
-/* eslint-disable */
-/* prettier-ignore */
 import * as React from 'react';
 import { useIntl } from 'react-intl';
 import { useDispatch } from 'react-redux';
@@ -13,7 +11,9 @@ import { useWhiteBackground } from '../../hooks/useWhiteBackground';
 import styles from './GuestTask.css';
 
 export function GuestTask() {
-  const { config: { mainPage } } = getBrowserConfig();
+  const {
+    config: { mainPage },
+  } = getBrowserConfig();
   const dispatch = useDispatch();
   const { formatMessage } = useIntl();
   useWhiteBackground();
@@ -31,11 +31,7 @@ export function GuestTask() {
           { id: 'public-form.copyright' },
           {
             link: (
-              <a
-                className={styles['copyright__link']}
-                href={mainPage}
-                target="_blank"
-              >
+              <a className={styles['copyright__link']} href={mainPage} target="_blank" rel="noreferrer">
                 {formatMessage({ id: 'public-form.pneumatic' })}
               </a>
             ),

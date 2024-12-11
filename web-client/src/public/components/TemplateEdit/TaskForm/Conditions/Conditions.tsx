@@ -2,6 +2,7 @@ import * as React from 'react';
 import produce from 'immer';
 import { useIntl } from 'react-intl';
 import classnames from 'classnames';
+import { useSelector } from 'react-redux';
 
 import { isArrayWithItems } from '../../../../utils/helpers';
 import { DropdownList } from '../../../UI/DropdownList';
@@ -18,8 +19,10 @@ import { getEmptyConditions } from './utils/getEmptyConditions';
 import { getEmptyRule } from './utils/getEmptyRule';
 import { getDropdownOperators, IDropdownOperator } from './utils/getDropdownOperators';
 import { setRulesApiNamesAndIds } from './utils/setRulesApiNames';
+import { getSubscriptionPlan } from '../../../../redux/selectors/user';
 
 import styles from './Conditions.css';
+import { ESubscriptionPlan } from '../../../../types/account';
 
 export interface IConditionsProps {
   conditions: ICondition[];
@@ -38,6 +41,9 @@ export const OPERATORS_WITHOUT_VALUE = [EConditionOperators.Exist, EConditionOpe
 
 export function Conditions({ conditions, variables, users, isSubscribed, onEdit }: IConditionsProps) {
   const { messages, formatMessage } = useIntl();
+  const billingPlan = useSelector(getSubscriptionPlan);
+  const isFreePlan = billingPlan === ESubscriptionPlan.Free;
+  const accessConditions = isSubscribed || isFreePlan;
 
   const prevVariables = usePrevious(variables);
 
@@ -73,7 +79,7 @@ export function Conditions({ conditions, variables, users, isSubscribed, onEdit 
 
   const handleAddNewRule = () => {
     if (!isArrayWithItems(conditions)) {
-      const newConditions = getEmptyConditions(isSubscribed);
+      const newConditions = getEmptyConditions(accessConditions);
       onEdit(newConditions);
 
       return;
@@ -154,7 +160,7 @@ export function Conditions({ conditions, variables, users, isSubscribed, onEdit 
                   <div className={styles['condition-rule__logic-operation']}>
                     {rule.logicOperation && (
                       <SelectMenu
-                        isDisabled={!isSubscribed}
+                        isDisabled={!accessConditions}
                         hideSelectedOption
                         activeValue={rule.logicOperation}
                         containerClassName={styles['select']}
@@ -169,12 +175,12 @@ export function Conditions({ conditions, variables, users, isSubscribed, onEdit 
                   <div
                     className={classnames(
                       styles['condition-rule__settings-inner'],
-                      !isSubscribed && styles['condition-rule__settings_disabled'],
+                      !accessConditions && styles['condition-rule__settings_disabled'],
                     )}
                   >
                     <div className={classnames(styles['condition-rule__setting'], styles['condition-rule__field'])}>
                       <DropdownList
-                        isDisabled={!isSubscribed}
+                        isDisabled={!accessConditions}
                         placeholder={formatMessage({ id: 'templates.conditions.field-placeholder' })}
                         isSearchable={false}
                         value={selectedVariable}
@@ -196,7 +202,7 @@ export function Conditions({ conditions, variables, users, isSubscribed, onEdit 
 
                     <div className={classnames(styles['condition-rule__setting'], styles['condition-rule__operator'])}>
                       <DropdownList
-                        isDisabled={!isSubscribed}
+                        isDisabled={!accessConditions}
                         placeholder={formatMessage({ id: 'templates.conditions.operator-placeholder' })}
                         isSearchable={false}
                         value={selectedOperator}
@@ -217,7 +223,7 @@ export function Conditions({ conditions, variables, users, isSubscribed, onEdit 
                       />
                     </div>
                     <ConditionValueField
-                      isDisabled={!isSubscribed}
+                      isDisabled={!accessConditions}
                       variable={selectedVariable}
                       operator={selectedOperator?.operator}
                       rule={rule}
@@ -240,7 +246,7 @@ export function Conditions({ conditions, variables, users, isSubscribed, onEdit 
           })}
         </div>
         <SelectMenu
-          isDisabled={!isSubscribed}
+          isDisabled={!accessConditions}
           hideSelectedOption
           activeValue={condition.action}
           containerClassName={styles['select']}
@@ -256,7 +262,7 @@ export function Conditions({ conditions, variables, users, isSubscribed, onEdit 
     <div className={styles['container']}>
       {renderConditions()}
 
-      {isSubscribed && (
+      {accessConditions && (
         <button type="button" onClick={handleAddNewRule} className={styles['condition__add-rule']}>
           {formatMessage({ id: 'templates.conditions.add-new-rule' })}
         </button>

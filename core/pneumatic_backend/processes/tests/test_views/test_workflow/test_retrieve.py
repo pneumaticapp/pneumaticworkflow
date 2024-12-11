@@ -32,7 +32,6 @@ class TestRetrieveWorkflow:
         api_client.token_authenticate(user)
         workflow = create_test_workflow(user=user, tasks_count=1)
         due_date = timezone.now() + timedelta(hours=24)
-        due_date_str = due_date.strftime(date_format)
         due_date_tsp = due_date.timestamp()
         task = workflow.tasks.first()
         task.due_date = due_date
@@ -49,7 +48,6 @@ class TestRetrieveWorkflow:
         assert response.data['name'] == workflow.name
         assert response.data['is_external'] is False
         assert response.data['is_urgent'] is False
-        assert response.data['due_date'] is None
         assert response.data['due_date_tsp'] is None
         assert response.data['date_created'] == (
             workflow.date_created.strftime(date_format)
@@ -69,7 +67,6 @@ class TestRetrieveWorkflow:
         assert task_data['name'] == current_task.name
         assert task_data['number'] == current_task.number
         assert task_data['delay'] is None
-        assert task_data['due_date'] == due_date_str
         assert task_data['due_date_tsp'] == due_date_tsp
         assert task_data['date_started'] == (
             task.date_started.strftime(date_format)
@@ -96,7 +93,6 @@ class TestRetrieveWorkflow:
         api_client.token_authenticate(user)
 
         due_date = timezone.now() + timedelta(hours=1)
-        due_date_str = due_date.strftime(date_format)
         due_date_tsp = due_date.timestamp()
         workflow = create_test_workflow(
             user=user,
@@ -110,7 +106,6 @@ class TestRetrieveWorkflow:
         # assert
         assert response.status_code == 200
         assert response.data['id'] == workflow.id
-        assert response.data['due_date'] == due_date_str
         assert response.data['due_date_tsp'] == due_date_tsp
         assert response.data['date_created'] == (
             workflow.date_created.strftime(date_format)

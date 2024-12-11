@@ -65,6 +65,7 @@ export function DateFilter({
       type: EHighlightsDateFilter.Custom,
     },
   ];
+  const startDay = true;
 
   return (
     <ShowMore
@@ -91,6 +92,7 @@ export function DateFilter({
             selected={startDate}
             showPopperArrow={false}
             wrapperClassName={classnames(styles['mr-1'], styles['datepicker'])}
+            startDay={startDay}
           />
           <DatePicker
             calendarClassName={styles['datepicker__calendar_end-date']}

@@ -91,7 +91,6 @@ class WorkflowListSerializer(serializers.ModelSerializer):
             'workflow_starter',
             'status_updated',
             'status_updated_tsp',
-            'due_date',
             'due_date_tsp',
             'date_created',
             'date_created_tsp',
@@ -140,7 +139,6 @@ class WorkflowListSerializer(serializers.ModelSerializer):
             'id': instance.task_id,
             'name': instance.task_name,
             'number': instance.task_number,
-            'due_date': instance.task_due_date,
             'due_date_tsp': (
                 instance.task_due_date.timestamp() if
                 instance.task_due_date else None
@@ -195,7 +193,6 @@ class WorkflowCreateSerializer(
             'name',
             'is_urgent',
             'kickoff',
-            'due_date',
             'due_date_tsp',
             'ancestor_task_id',
         )
@@ -207,7 +204,6 @@ class WorkflowCreateSerializer(
         allow_empty=True,
         allow_null=True
     )
-    due_date = serializers.DateTimeField(required=False, allow_null=True)
     due_date_tsp = TimeStampField(required=False, allow_null=True)
     ancestor_task_id = AccountPrimaryKeyRelatedField(
         required=False,
@@ -250,7 +246,6 @@ class WorkflowCreateSerializer(
         if not template.is_active and not onboarding_workflow:
             raise ValidationError(messages.MSG_PW_0066)
         data['kickoff'] = data.get('kickoff', {}) or {}
-        data['due_date'] = data.get('due_date_tsp', data.get('due_date'))
         return data
 
 
@@ -267,7 +262,6 @@ class WorkflowUpdateSerializer(
             'name',
             'is_urgent',
             'kickoff',
-            'due_date',
             'due_date_tsp',
         )
 
@@ -278,7 +272,6 @@ class WorkflowUpdateSerializer(
         allow_empty=True,
     )
     is_urgent = serializers.BooleanField(required=False)
-    due_date = serializers.DateTimeField(required=False, allow_null=True)
     due_date_tsp = TimeStampField(required=False, allow_null=True)
 
     def validate_due_date(self, value):
@@ -315,11 +308,6 @@ class WorkflowUpdateSerializer(
             and validated_data['due_date_tsp'] != self.instance.due_date
         ):
             update_instance_kwargs['due_date'] = validated_data['due_date_tsp']
-        elif (
-            'due_date' in validated_data
-            and validated_data['due_date'] != self.instance.due_date
-        ):
-            update_instance_kwargs['due_date'] = validated_data['due_date']
 
         if is_urgent_changed:
             update_instance_kwargs['is_urgent'] = is_urgent
@@ -661,7 +649,6 @@ class WorkflowDetailsSerializer(serializers.ModelSerializer):
             'passed_tasks',
             'date_completed',
             'date_completed_tsp',
-            'due_date',
             'due_date_tsp',
             'date_created',
             'date_created_tsp',

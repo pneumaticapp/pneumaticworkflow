@@ -19,6 +19,7 @@ from pneumatic_backend.authentication.services import exceptions
 from pneumatic_backend.utils.logging import SentryLogLevel
 from pneumatic_backend.processes.tests.fixtures import (
     create_test_user,
+    create_test_account,
 )
 
 
@@ -1202,7 +1203,8 @@ class TestMicrosoftAuthService:
     def test_update_user_contacts__default_first_name__ok(self, mocker):
 
         # arrange
-        user = create_test_user()
+        account = create_test_account(log_api_requests=True)
+        user = create_test_user(account=account)
         client_mock = mocker.Mock()
         get_auth_client_mock = mocker.patch(
             'pneumatic_backend.authentication.services.microsoft.'
@@ -1222,18 +1224,19 @@ class TestMicrosoftAuthService:
             'surname': None,
             'jobTitle': None,
         }
+        get_users_response = {
+            '@odata.context': (
+                'https://graph.microsoft.com/v1.0/$metadata'
+                '#users(id,givenName,surname,jobTitle,mail)'
+            ),
+            'value': [
+                user_profile
+            ]
+        }
         get_users_mock = mocker.patch(
             'pneumatic_backend.authentication.services.microsoft.'
             'MicrosoftAuthService._get_users',
-            return_value={
-                '@odata.context': (
-                    'https://graph.microsoft.com/v1.0/$metadata'
-                    '#users(id,givenName,surname,jobTitle,mail)'
-                ),
-                'value': [
-                    user_profile
-                ]
-            }
+            return_value=get_users_response
         )
         get_user_profile_email_mock = mocker.patch(
             'pneumatic_backend.authentication.services.microsoft.'
@@ -1245,6 +1248,10 @@ class TestMicrosoftAuthService:
             'pneumatic_backend.authentication.services.microsoft.'
             'MicrosoftAuthService._get_user_photo',
             return_value=photo_url
+        )
+        log_mock = mocker.patch(
+            'pneumatic_backend.authentication.services.microsoft.'
+            'AccountLogService.contacts_request'
         )
         google_contact = Contact.objects.create(
             account=user.account,
@@ -1287,11 +1294,27 @@ class TestMicrosoftAuthService:
             job_title=None,
             source_id=user_profile['id'],
         )
+        log_mock.assert_called_once_with(
+            user=user,
+            path=(
+                'https://graph.microsoft.com/v1.0/users?$select=id,'
+                'givenName,surname,jobTitle,mail,userPrincipalName,'
+                'userType,creationType'
+            ),            title=f'Contacts request: {user.email}',
+            http_status=200,
+            response_data={
+                'created_contacts': ['login@domain.com'],
+                'updated_contacts': [],
+                'users_data': get_users_response,
+            },
+            contractor='Microsoft Graph API',
+        )
 
     def test_update_user_contacts__update_contact__ok(self, mocker):
 
         # arrange
-        user = create_test_user()
+        account = create_test_account(log_api_requests=True)
+        user = create_test_user(account=account)
         email = 'test_1@test.test'
         contact = Contact.objects.create(
             account=user.account,
@@ -1324,18 +1347,19 @@ class TestMicrosoftAuthService:
             'surname': 'last name',
             'jobTitle': 'job_title',
         }
+        get_users_response = {
+            '@odata.context': (
+                'https://graph.microsoft.com/v1.0/$metadata'
+                '#users(id,givenName,surname,jobTitle,mail)'
+            ),
+            'value': [
+                user_profile
+            ]
+        }
         get_users_mock = mocker.patch(
             'pneumatic_backend.authentication.services.microsoft.'
             'MicrosoftAuthService._get_users',
-            return_value={
-                '@odata.context': (
-                    'https://graph.microsoft.com/v1.0/$metadata'
-                    '#users(id,givenName,surname,jobTitle,mail)'
-                ),
-                'value': [
-                    user_profile
-                ]
-            }
+            return_value=get_users_response
         )
         get_user_profile_email_mock = mocker.patch(
             'pneumatic_backend.authentication.services.microsoft.'
@@ -1347,6 +1371,10 @@ class TestMicrosoftAuthService:
             'pneumatic_backend.authentication.services.microsoft.'
             'MicrosoftAuthService._get_user_photo',
             return_value=photo_url
+        )
+        log_mock = mocker.patch(
+            'pneumatic_backend.authentication.services.microsoft.'
+            'AccountLogService.contacts_request'
         )
         service = MicrosoftAuthService()
 
@@ -1368,6 +1396,22 @@ class TestMicrosoftAuthService:
         assert contact.last_name == user_profile['surname']
         assert contact.job_title == user_profile['jobTitle']
         assert contact.source_id == user_profile['id']
+        log_mock.assert_called_once_with(
+            user=user,
+            path=(
+                'https://graph.microsoft.com/v1.0/users?$select=id,'
+                'givenName,surname,jobTitle,mail,userPrincipalName,'
+                'userType,creationType'
+            ),
+            title=f'Contacts request: {user.email}',
+            http_status=200,
+            response_data={
+                'created_contacts': [],
+                'updated_contacts': [email],
+                'users_data': get_users_response,
+            },
+            contractor='Microsoft Graph API',
+        )
 
     def test_update_user_contacts__email_not_found__skip(self, mocker):
 
@@ -1408,6 +1452,10 @@ class TestMicrosoftAuthService:
             'pneumatic_backend.authentication.services.microsoft.'
             'MicrosoftAuthService._get_user_photo'
         )
+        log_mock = mocker.patch(
+            'pneumatic_backend.authentication.services.microsoft.'
+            'AccountLogService.contacts_request'
+        )
         google_contact = Contact.objects.create(
             account=user.account,
             user_id=user.id,
@@ -1435,6 +1483,7 @@ class TestMicrosoftAuthService:
         assert google_contact.status == UserStatus.ACTIVE
         ms_contact.refresh_from_db()
         assert ms_contact.status == UserStatus.ACTIVE
+        log_mock.assert_not_called()
 
     def test_update_user_contacts__exclude_current_user__ok(self, mocker):
 
@@ -1477,6 +1526,10 @@ class TestMicrosoftAuthService:
             'pneumatic_backend.authentication.services.microsoft.'
             'MicrosoftAuthService._get_user_photo'
         )
+        log_mock = mocker.patch(
+            'pneumatic_backend.authentication.services.microsoft.'
+            'AccountLogService.contacts_request'
+        )
         service = MicrosoftAuthService()
 
         # act
@@ -1494,3 +1547,82 @@ class TestMicrosoftAuthService:
             source=SourceType.MICROSOFT,
             email=user.email,
         ).exists()
+        log_mock.assert_not_called()
+
+    def test_update_user_contacts__service_exception__ok(self, mocker):
+
+        # arrange
+        account = create_test_account(log_api_requests=True)
+        user = create_test_user(account=account)
+        client_mock = mocker.Mock()
+        get_auth_client_mock = mocker.patch(
+            'pneumatic_backend.authentication.services.microsoft.'
+            'MicrosoftAuthService._build_msal_app',
+            return_value=client_mock
+        )
+        access_token = '!@#!@#@!wqww23'
+        get_access_token_mock = mocker.patch(
+            'pneumatic_backend.authentication.services.microsoft.'
+            'MicrosoftAuthService._get_access_token',
+            return_value=access_token
+        )
+        user_profile = {
+            'id': '111',
+            'mail': 'login@domain.com',
+            'givenName': None,
+            'surname': None,
+            'jobTitle': None,
+        }
+        error_message = 'Some message'
+        error_details = {'error_details': 'Error details'}
+        ex = exceptions.GraphApiRequestError(
+            message=error_message,
+            details=error_details
+        )
+        get_users_mock = mocker.patch(
+            'pneumatic_backend.authentication.services.microsoft.'
+            'MicrosoftAuthService._get_users',
+            side_effect=ex
+        )
+        get_user_profile_email_mock = mocker.patch(
+            'pneumatic_backend.authentication.services.microsoft.'
+            'MicrosoftAuthService._get_user_profile_email',
+            return_value=user_profile['mail']
+        )
+        get_user_photo_mock = mocker.patch(
+            'pneumatic_backend.authentication.services.microsoft.'
+            'MicrosoftAuthService._get_user_photo'
+        )
+        log_mock = mocker.patch(
+            'pneumatic_backend.authentication.services.microsoft.'
+            'AccountLogService.contacts_request'
+        )
+        service = MicrosoftAuthService()
+
+        # act
+        service.update_user_contacts(user)
+
+        # assert
+        get_auth_client_mock.assert_called_once()
+        get_access_token_mock.assert_called_once_with(user.id)
+        get_users_mock.assert_called_once_with(access_token)
+        get_user_profile_email_mock.assert_not_called()
+        get_user_photo_mock.assert_not_called()
+        log_mock.assert_called_once_with(
+            user=user,
+            path=(
+                'https://graph.microsoft.com/v1.0/users?$select=id,'
+                'givenName,surname,jobTitle,mail,userPrincipalName,'
+                'userType,creationType'
+            ),
+            title=f'Contacts request: {user.email}',
+            http_status=400,
+            response_data={
+                'created_contacts': [],
+                'updated_contacts': [],
+                'message': error_message,
+                'details': error_details,
+                'exception_type': type(ex)
+            },
+            contractor='Microsoft Graph API',
+        )

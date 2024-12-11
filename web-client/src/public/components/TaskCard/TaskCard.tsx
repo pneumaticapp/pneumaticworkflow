@@ -538,6 +538,7 @@ export function TaskCard({
           text={task.description}
           interactiveChecklists
           renderExtensions={[...createChecklistExtension(task), ...createProgressbarExtension(task)]}
+          hideIcon
         />
       </p>
       <div className={styles['info']}>
@@ -546,7 +547,7 @@ export function TaskCard({
           {renderPerformers()}
         </div>
 
-        <DueIn
+        {viewMode !== ETaskCardViewMode.Guest && <DueIn
           withTime
           timezone={authUser.timezone}
           dateFmt={authUser.dateFmt}
@@ -554,7 +555,7 @@ export function TaskCard({
           onSave={setDueDate}
           onRemove={deleteDueDate}
           containerClassName={styles['due-in']}
-        />
+        />}
       </div>
 
       <div className={styles['complete-form']}>

@@ -14,6 +14,10 @@ class BaseServiceException(Exception):
         super().__init__()
         self.message = message
 
+    def __str__(self):
+        # Convert translation string from type proxy to str
+        return str(self.message)
+
 
 class BaseApiNameException(BaseServiceException):
 

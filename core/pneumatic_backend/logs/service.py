@@ -24,11 +24,11 @@ class AccountLogService(BaseModelService):
         auth_token: Optional[str] = None,
         user_agent: Optional[str] = None,
         ip: Optional[str] = None,
-        body: Optional[dict] = None,
+        request_data: Optional[dict] = None,
         http_status: Optional[int] = None,
         user_id: Optional[int] = None,
         account_id: Optional[int] = None,
-        error: Optional[dict] = None,
+        response_data: Optional[dict] = None,
         contractor: str = None,
         status: AccountEventStatus = AccountEventStatus.PENDING,
         direction: RequestDirection = RequestDirection.RECEIVED,
@@ -44,11 +44,11 @@ class AccountLogService(BaseModelService):
             scheme=scheme,
             method=method,
             path=path,
-            body=body,
+            request_data=request_data,
             http_status=http_status,
             user_id=user_id,
             account_id=account_id,
-            error=error,
+            response_data=response_data,
             status=status,
             direction=direction,
             contractor=contractor,
@@ -69,17 +69,14 @@ class AccountLogService(BaseModelService):
         path: str,
         http_status: int,
         direction: RequestDirection = RequestDirection.RECEIVED,
-        body: Optional[dict] = None,
+        request_data: Optional[dict] = None,
         response_data: Optional[dict] = None,
         contractor: Optional[str] = None
     ):
         if 200 <= http_status < 300:
             status = AccountEventStatus.SUCCESS
-            error = None
         else:
             status = AccountEventStatus.FAILED
-            error = response_data
-
         self.create(
             event_type=AccountEventType.API,
             ip=ip,
@@ -89,12 +86,12 @@ class AccountLogService(BaseModelService):
             method=method,
             title=title,
             path=path,
-            body=body,
+            request_data=request_data,
             http_status=http_status,
             status=status,
             user_id=user.id,
             account_id=user.account_id,
-            error=error,
+            response_data=response_data,
             direction=direction,
             contractor=contractor,
         )
@@ -102,18 +99,18 @@ class AccountLogService(BaseModelService):
     def push_notification(
         self,
         title: str,
-        body: dict,
+        request_data: dict,
         account_id: int,
         status: AccountEventStatus,
-        error: Optional[dict] = None,
+        response_data: Optional[dict] = None,
     ):
         self.create(
             event_type=AccountEventType.API,
             title=title,
-            body=body,
+            request_data=request_data,
             status=status,
             account_id=account_id,
-            error=error,
+            response_data=response_data,
             direction=RequestDirection.SENT,
             contractor='Firebase',
         )
@@ -121,19 +118,19 @@ class AccountLogService(BaseModelService):
     def email_message(
         self,
         title: str,
-        body: dict,
+        request_data: dict,
         account_id: int,
         contractor: str,
         status: AccountEventStatus,
-        error: Optional[dict] = None,
+        response_data: Optional[dict] = None,
     ):
         self.create(
             event_type=AccountEventType.API,
             title=title,
-            body=body,
+            request_data=request_data,
             status=status,
             account_id=account_id,
-            error=error,
+            response_data=response_data,
             direction=RequestDirection.SENT,
             contractor=contractor,
         )
@@ -142,22 +139,51 @@ class AccountLogService(BaseModelService):
         self,
         title: str,
         path: str,
-        body: dict,
+        request_data: dict,
         account_id: int,
         status: AccountEventStatus,
         http_status: int,
-        error: Optional[dict] = None,
+        response_data: Optional[dict] = None,
         user_id: Optional[int] = None
     ):
         self.create(
             event_type=AccountEventType.WEBHOOK,
             title=title,
             path=path,
-            body=body,
+            request_data=request_data,
             http_status=http_status,
             status=status,
             account_id=account_id,
-            error=error,
+            response_data=response_data,
             direction=RequestDirection.SENT,
             user_id=user_id,
+        )
+
+    def contacts_request(
+        self,
+        user: UserModel,
+        title: str,
+        path: str,
+        http_status: int,
+        response_data: Optional[dict] = None,
+        contractor: Optional[str] = None
+    ):
+        if 200 <= http_status < 300:
+            status = AccountEventStatus.SUCCESS
+        else:
+            status = AccountEventStatus.FAILED
+
+        self.create(
+            event_type=AccountEventType.API,
+            scheme='https',
+            method='GET',
+            title=title,
+            path=path,
+            http_status=http_status,
+            status=status,
+            user_id=user.id,
+            account_id=user.account_id,
+            response_data=response_data,
+            direction=RequestDirection.SENT,
+            contractor=contractor,
         )

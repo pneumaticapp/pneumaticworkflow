@@ -192,11 +192,11 @@ class WebhookDeliverer:
                 AccountLogService().webhook(
                     title=f'Webhook: {hook.event}',
                     path=hook.target,
-                    body=hook_payload,
+                    request_data=hook_payload,
                     account_id=account_id,
                     status=status,
                     http_status=http_status,
-                    error=error,
+                    response_data=error,
                     user_id=user_id
                 )
 

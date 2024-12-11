@@ -11,6 +11,7 @@ export function getPaywallType(billingPlan: ESubscriptionPlan, isBlocked?: boole
   }
 
   const noPaywallPlans = [
+    ESubscriptionPlan.Free,
     ESubscriptionPlan.Unlimited,
     ESubscriptionPlan.FractionalCOO,
     ESubscriptionPlan.Premium,

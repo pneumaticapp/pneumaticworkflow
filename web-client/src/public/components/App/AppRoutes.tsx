@@ -23,7 +23,6 @@ import { TenantsView } from '../../views/Tenants';
 import { ELoggedState, IAuthUser } from '../../types/redux';
 import { CollectPaymentDetails } from '../CollectPaymentDetails';
 import { AfterPaymentDetailsProvided } from '../AfterPaymentDetailsProvided';
-import { ESubscriptionPlan } from '../../types/account';
 
 export interface IAppRoutesProps {
   user: IAuthUser;
@@ -68,45 +67,41 @@ export function AppRoutes({ containerClassnames, user }: IAppRoutesProps) {
             <Route path={ERoutes.CollectPaymentDetails} component={CollectPaymentDetails} />
             <Route path={ERoutes.AfterPaymentDetailsProvided} component={AfterPaymentDetailsProvided} />
             <Route path={ERoutes.Settings} component={Settings} />
-            <ProtectedRoute path={ERoutes.Workflows} hasAccess={Boolean(user.isAdmin)}>
+            <ProtectedRoute path={ERoutes.Workflows} hasAccess={user.isAdmin}>
               <WorkflowsView />
             </ProtectedRoute>
-            <ProtectedRoute path={ERoutes.WorkflowDetail} hasAccess={Boolean(user.isAdmin)}>
+            <ProtectedRoute path={ERoutes.WorkflowDetail} hasAccess={user.isAdmin}>
               <WorkflowsView />
             </ProtectedRoute>
-            <ProtectedRoute path={ERoutes.TemplatesCreate} hasAccess={Boolean(user.isAdmin)}>
+            <ProtectedRoute path={ERoutes.TemplatesCreate} hasAccess={user.isAdmin}>
               <TemplateView />
             </ProtectedRoute>
-            <ProtectedRoute path={ERoutes.TemplateView} hasAccess={Boolean(user.isAdmin)}>
+            <ProtectedRoute path={ERoutes.TemplateView} hasAccess={user.isAdmin}>
               <TemplateView />
             </ProtectedRoute>
-            <ProtectedRoute path={ERoutes.TemplatesEdit} hasAccess={Boolean(user.isAdmin)}>
+            <ProtectedRoute path={ERoutes.TemplatesEdit} hasAccess={user.isAdmin}>
               <TemplateView />
             </ProtectedRoute>
-            <ProtectedRoute path={ERoutes.Templates} hasAccess={Boolean(user.isAdmin)}>
+            <ProtectedRoute path={ERoutes.Templates} hasAccess={user.isAdmin}>
               <TemplatesView />
             </ProtectedRoute>
             <Route path={ERoutes.Tasks} component={TasksView} />
-            <ProtectedRoute path={ERoutes.Highlights} hasAccess={Boolean(user.isAdmin)}>
+            <ProtectedRoute path={ERoutes.Highlights} hasAccess={user.isAdmin}>
               <HighlightsView />
             </ProtectedRoute>
-            <ProtectedRoute path={ERoutes.Team} hasAccess={Boolean(user.isAdmin)}>
+            <ProtectedRoute path={ERoutes.Team} hasAccess={user.isAdmin}>
               <TeamView />
             </ProtectedRoute>
-            <ProtectedRoute path={ERoutes.IntegrationsDetail} hasAccess={Boolean(user.isAdmin)}>
+            <ProtectedRoute path={ERoutes.IntegrationsDetail} hasAccess={user.isAdmin}>
               <IntegrationDetailsView />
             </ProtectedRoute>
-            <ProtectedRoute exact path={ERoutes.Integrations} hasAccess={Boolean(user.isAdmin)}>
+            <ProtectedRoute exact path={ERoutes.Integrations} hasAccess={user.isAdmin}>
               <IntegrationsView />
             </ProtectedRoute>
             <ProtectedRoute
               exact
               path={ERoutes.Tenants}
-              hasAccess={Boolean(
-                user.isAdmin &&
-                  user.account.billingPlan !== ESubscriptionPlan.Free &&
-                  user.account.leaseLevel !== 'tenant',
-              )}
+              hasAccess={user.isAdmin && user.account.leaseLevel !== 'tenant'}
             >
               <TenantsView />
             </ProtectedRoute>

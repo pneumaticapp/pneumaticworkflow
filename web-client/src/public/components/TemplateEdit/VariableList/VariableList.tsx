@@ -13,6 +13,7 @@ import { ExpandIcon } from '../../icons';
 import { ELearnMoreLinks } from '../../../constants/defaultValues';
 import { CustomTooltip } from '../../UI';
 import { TTaskVariable } from '../types';
+import { useCheckDevice } from '../../../hooks/useCheckDevice';
 
 export interface IVariableListProps {
   variables: TTaskVariable[];
@@ -33,6 +34,7 @@ export const VariableList = ({
 }: IVariableListProps) => {
   const [isOpen, setIsOpen] = React.useState(false);
   const [isTooltipOpen, setIsTooltipOpen] = React.useState(false);
+  const { isDesktop } = useCheckDevice();
   const buttonRef = React.useRef<HTMLButtonElement>(null);
   const { formatMessage } = useIntl();
   const handleOutsideClick = () => {
@@ -78,8 +80,8 @@ export const VariableList = ({
         innerClassName={styles['variable-list__inner']}
         className={styles['variable-list']}
         isOpen={isOpen}
-        placement="bottom-end"
         target={buttonRef.current!}
+        {...(isDesktop && { placement: 'bottom-end' })}
       >
         <OutsideClickHandler onOutsideClick={handleOutsideClick}>
           <ScrollBar
