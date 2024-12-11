@@ -15,18 +15,6 @@
 
 [:tv: Product Overview (< 5 min)](https://www.youtube.com/watch?v=GC67ocuOFfE)
 
-## Table of Contents
-- [Key Features](#key-features)
-- [Quick Start](#quick-start)
-- [Installation](#installation)
-- [Documentation](#documentation)
-- [Video Tutorials](#video-tutorials)
-- [System Requirements](#system-requirements)
-- [Integration Options](#integration-options)
-- [Contributing](#contributing)
-- [Support](#support)
-- [License](#license)
-
 
 ## Key Features
 
