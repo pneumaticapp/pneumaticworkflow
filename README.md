@@ -82,7 +82,7 @@ You can grab your own copy of Pneumatic by cloning this repository and self-host
 On Linux you can use the following command to edit your hosts file:
 
 ``` 
-sudo gedit /etc/hosts on linux) 
+sudo gedit /etc/hosts
 ```
 
 ```
@@ -95,7 +95,9 @@ sudo gedit /etc/hosts on linux)
 
 ### Clone the repository
 
+```
 git clone https://github.com/pneumaticapp/pneumaticworkflow.git
+```
 
 ### Run Pneumatic
 
