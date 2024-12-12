@@ -1,6 +1,4 @@
 .idea
-web-client/config/dev.json
-web-client/config/prod.json
 web-client/config/how
 postgres/data
 postgres/backups
