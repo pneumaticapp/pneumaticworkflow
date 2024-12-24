@@ -1,8 +1,10 @@
 .idea
-postgresql_data
-redis_data
-rabbitmq_data
-rabbitmq_logs
-web-client/config/dev.json
-web-client/config/prod.json
 web-client/config/how
+postgres/data
+postgres/backups
+redis/data
+rabbitmq/data
+rabbitmq/logs
+nginx/logs
+nginx/keys
+web-client/logs

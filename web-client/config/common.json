@@ -1,12 +1,12 @@
 {
   "port": 8000,
   "host": "http://localhost:8000/",
-  "mainPage": "http://localhost/",
-  "formSubdomain": "form.localhost",
+  "mainPage": "https://www.pneumatic.app/",
+  "formSubdomain": "form-localhost",
   "api": {
-    "privateUrl": "http://127.0.0.1/",
-    "publicUrl": "http://localhost:9000/",
-    "wsPublicUrl": "wss://localhost:9000/",
+    "privateUrl": "http://api-localhost/",
+    "publicUrl": "http://api-localhost/",
+    "wsPublicUrl": "wss://api-localhost/",
     "urls": {
       "getInvites": "/accounts/user/contacts",
       "getPages": "/pages/public",

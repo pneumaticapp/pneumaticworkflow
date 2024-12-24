@@ -1,0 +1,155 @@
+# version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-bookworm
+    container_name: pneumatic-postgres
+    env_file:
+      - ./postgres/default.env
+    volumes:
+      - ./postgres/data:/var/lib/postgresql/data:rw
+      - ./postgres/backups:/backups:rw
+    expose:
+      - 5432
+    networks:
+      - pneumatic
+    restart: always
+
+  redis:
+    # Newest version not working on old linux kernels
+    image: redis:6.2.6
+    container_name: pneumatic-redis
+    command: >
+      redis-server
+      --loglevel warning
+      --databases 16
+      --dbfilename dump.rdb
+      --dir /data
+      --requirepass redis_password
+      --save 20 1 300 100 60 10000
+    volumes:
+      - ./redis/data:/data
+    expose:
+      - 6379
+    networks:
+      - pneumatic
+    restart: always
+
+  rabbitmq:
+    container_name: pneumatic-rabbitmq
+    image: rabbitmq:3.13-management
+    expose:
+      - 5672    # broker url
+    ports:
+      - 15672:15672  # admin panel
+    volumes:
+      - ./rabbitmq/data/:/var/lib/rabbitmq/
+      - ./rabbitmq/log/:/var/log/rabbitmq
+    env_file:
+      - ./rabbitmq/default.env
+    networks:
+      - pneumatic
+
+  pneumatic-backend:
+    build:
+      context: ./core
+    container_name: pneumatic-backend
+    command: >
+      sh -c "python manage.py migrate &&
+             python manage.py collectstatic --no-input &&
+             python manage.py compilemessages &&
+             gunicorn pneumatic_backend.asgi:application --workers 2 -k uvicorn.workers.UvicornWorker --worker-tmp-dir /dev/shm --bind unix:/tmp/gunicorn/pneumatic-backend.sock --timeout 200"
+    env_file:
+      - ./default-project.env
+      - ./postgres/default.env
+      - ./core/default.env
+    volumes:
+      - pneumatic-backend-socket:/tmp/gunicorn/
+      - pneumatic-backend-staticfiles:/pneumatic_backend/staticfiles
+    depends_on:
+      - postgres
+      - rabbitmq
+      - redis
+    healthcheck:
+      test: ["CMD", "pg_isready", "-h", postgres]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - pneumatic
+    restart: always
+
+  celery:
+    build:
+      context: ./core
+    container_name: pneumatic-celery
+    env_file:
+      - ./default-project.env
+      - ./postgres/default.env
+      - ./core/default.env
+    command: >
+      sh -c "celery -A pneumatic_backend worker -l warning"
+    depends_on:
+      - postgres
+      - rabbitmq
+      - redis
+    networks:
+      - pneumatic
+    restart: always
+
+  celery-beat:
+    build:
+      context: ./core
+    container_name: pneumatic-celery-beat
+    env_file:
+      - ./default-project.env
+      - ./postgres/default.env
+      - ./core/default.env
+    command: celery --pidfile= -A pneumatic_backend beat -l warning -S django
+    depends_on:
+      - postgres
+      - rabbitmq
+      - redis
+    networks:
+      - pneumatic
+    restart: always
+
+  pneumatic-frontend:
+    build:
+      context: ./web-client
+    container_name: pneumatic-frontend
+    command: [ "pm2-runtime", "start", "pm2.json" ]
+    expose:
+      - 8000
+    volumes:
+      - ./web-client/logs/:/tmp/logs/
+    networks:
+      - pneumatic
+    restart: always
+
+  nginx:
+    image: nginx:1.25.4
+    container_name: pneumatic-nginx
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/logs/:/var/log/nginx/
+      - ./nginx/keys/:/etc/keys/:ro
+      - ./nginx/www/:/var/www/:ro
+      - pneumatic-backend-socket:/tmp/gunicorn/
+      - pneumatic-backend-staticfiles:/tmp/pneumatic-backend-staticfiles/
+    ports:
+      - 80:80
+      - 443:443
+    networks:
+      - pneumatic
+    depends_on:
+      - pneumatic-backend
+      - pneumatic-frontend
+    restart: always
+
+networks:
+  pneumatic:
+
+volumes:
+  pneumatic-backend-socket:
+  pneumatic-backend-staticfiles:
