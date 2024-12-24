@@ -82,7 +82,7 @@ You can grab your own copy of Pneumatic by cloning this repository and self-host
 On Linux you can use the following command to edit your hosts file:
 
 ``` 
-sudo gedit /etc/hosts
+sudo nano /etc/hosts
 ```
 
 ```
