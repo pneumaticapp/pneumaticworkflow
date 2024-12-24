@@ -33,6 +33,15 @@ class ValidationUtilsMixin:
     """ Methods for common validation functionality"""
 
     @staticmethod
+    def get_valid_list_strings(raw_value: str) -> List[str]:
+        if isinstance(raw_value, str):
+            items = [
+                item.strip() for item in raw_value.split(',') if item.strip()
+            ]
+            return items
+        return []
+
+    @staticmethod
     def get_valid_list_integers(raw_value: str) -> List[int]:
 
         """ Validates and returns list of integers

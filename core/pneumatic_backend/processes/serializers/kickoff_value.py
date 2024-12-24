@@ -68,7 +68,6 @@ class KickoffValueSerializer(
             clear_description = None
         instance = KickoffValue.objects.create(
             workflow=validated_data['workflow'],
-            template_id=kickoff.id,
             account_id=validated_data['account_id'],
             description=description,
             clear_description=clear_description

@@ -18,12 +18,9 @@ from pneumatic_backend.processes.models import (
 
 class SelectionSchemaV1(serializers.ModelSerializer):
 
-    # TODO deprecate id
-
     class Meta:
         model = FieldTemplateSelection
         fields = (
-            'id',
             'value',
             'api_name',
         )
@@ -31,12 +28,9 @@ class SelectionSchemaV1(serializers.ModelSerializer):
 
 class FieldSchemaV1(serializers.ModelSerializer):
 
-    # TODO deprecate id
-
     class Meta:
         model = FieldTemplate
         fields = (
-            'id',
             'name',
             'type',
             'description',
@@ -60,7 +54,6 @@ class KickoffSchemaV1(serializers.ModelSerializer):
     class Meta:
         model = Kickoff
         fields = (
-            'id',
             'description',
             'clear_description',
             'fields',
@@ -75,12 +68,9 @@ class KickoffSchemaV1(serializers.ModelSerializer):
 
 class PredicateSchemaV1(serializers.ModelSerializer):
 
-    # TODO deprecate id
-
     class Meta:
         model = PredicateTemplate
         fields = (
-            'id',
             'operator',
             'field',
             'field_type',
@@ -91,12 +81,9 @@ class PredicateSchemaV1(serializers.ModelSerializer):
 
 class RuleSchemaV1(serializers.ModelSerializer):
 
-    # TODO deprecate id
-
     class Meta:
         model = RuleTemplate
         fields = (
-            'id',
             'predicates',
             'api_name',
         )
@@ -106,12 +93,9 @@ class RuleSchemaV1(serializers.ModelSerializer):
 
 class ConditionSchemaV1(serializers.ModelSerializer):
 
-    # TODO deprecate id
-
     class Meta:
         model = ConditionTemplate
         fields = (
-            'id',
             'action',
             'rules',
             'order',
@@ -131,12 +115,9 @@ class RawPerformerTemplateFieldSchemaV1(serializers.ModelSerializer):
 
 class RawPerformerTemplateSchemaV1(serializers.ModelSerializer):
 
-    # TODO deprecate id
-
     class Meta:
         model = RawPerformerTemplate
         fields = (
-            'id',
             'type',
             'user_id',
             'api_name',
@@ -183,12 +164,9 @@ class RawDueDateTemplateSchemaV1(serializers.ModelSerializer):
 
 class TaskSchemaV1(serializers.ModelSerializer):
 
-    # TODO deprecate id
-
     class Meta:
         model = TaskTemplate
         fields = (
-            'id',
             'api_name',
             'name',
             'description',

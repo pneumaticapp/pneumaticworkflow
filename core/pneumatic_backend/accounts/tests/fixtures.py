@@ -134,7 +134,7 @@ def create_test_workflow(
     for task_template in template.tasks.all():
         task = Task.objects.create(
             account=workflow.account,
-            template_id=task_template.id,
+            api_name=task_template.api_name,
             name=task_template.name,
             number=task_template.number,
             workflow=workflow,

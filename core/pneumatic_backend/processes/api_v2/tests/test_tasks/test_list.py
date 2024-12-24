@@ -84,7 +84,7 @@ def test_list__default_ordering__ok(mocker, api_client):
     assert task_21_data['date_completed_tsp'] is None
     assert task_21_data['workflow_name'] == workflow_2.name
     assert task_21_data['template_id'] == workflow_2.template_id
-    assert task_21_data['template_task_id'] == task_21.template_id
+    assert task_21_data['template_task_api_name'] == task_21.api_name
 
     task_11_data = response.data[1]
     assert task_11_data['id'] == task_11.id
@@ -1872,46 +1872,54 @@ def test_list__filter_template_id_not_number__validation_error(api_client):
     assert response.data['details']['name'] == 'template_id'
 
 
-def test_list__filter_template_task_id__ok(api_client):
+def test_list__filter_template_task_api_name__ok(api_client):
 
     # arrange
     user = create_test_user()
     api_client.token_authenticate(user=user)
-    template = create_test_template(user, is_active=True)
-    template_task = template.tasks.get(number=1)
+    template_1 = create_test_template(user, is_active=True)
     template_2 = create_test_template(user, is_active=True)
 
-    workflow = create_test_workflow(user, template=template, tasks_count=1)
-    task = workflow.tasks.get(number=1)
+    workflow_1 = create_test_workflow(user, template=template_1, tasks_count=1)
+    task_11 = workflow_1.tasks.get(number=1)
+    workflow_2 = create_test_workflow(user, template=template_1, tasks_count=1)
+    task_21 = workflow_2.tasks.get(number=1)
     create_test_workflow(user, template=template_2, tasks_count=1)
 
     # act
-    response = api_client.get(f'/v3/tasks?template_task_id={template_task.id}')
+    response = api_client.get(
+        path='/v3/tasks',
+        data={
+            'template_task_api_name': task_11.api_name,
+        }
+    )
 
     # assert
     assert response.status_code == 200
-    assert len(response.data) == 1
-    assert response.data[0]['id'] == task.id
+    assert len(response.data) == 2
+    assert response.data[0]['id'] == task_21.id
+    assert response.data[1]['id'] == task_11.id
 
 
-def test_list__filter_template_task_id_not_number__validation_error(
-    api_client
-):
+def test_list__filter_template_task_api_name__not_found(api_client):
 
     # arrange
     user = create_test_user()
     api_client.token_authenticate(user=user)
+    template_1 = create_test_template(user, is_active=True)
+    create_test_workflow(user, template=template_1, tasks_count=1)
 
     # act
-    response = api_client.get(f'/v3/tasks?template_task_id=null')
+    response = api_client.get(
+        path='/v3/tasks',
+        data={
+            'template_task_api_name': 'not_found',
+        }
+    )
 
     # assert
-    message = 'A valid integer is required.'
-    assert response.status_code == 400
-    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
-    assert response.data['message'] == message
-    assert response.data['details']['reason'] == message
-    assert response.data['details']['name'] == 'template_task_id'
+    assert response.status_code == 200
+    assert len(response.data) == 0
 
 
 def test_list__pagination__ok(api_client):

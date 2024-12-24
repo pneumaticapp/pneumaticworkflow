@@ -67,7 +67,7 @@ class WorkflowUpdateVersionService(BaseUpdateVersionService):
                 data=task_data
             )
         self.instance.tasks.exclude(
-            template_id__in={elem['id'] for elem in data}
+            api_name__in={elem['api_name'] for elem in data}
         ).delete()
 
     def _get_current_task_from_version(
@@ -77,34 +77,34 @@ class WorkflowUpdateVersionService(BaseUpdateVersionService):
 
         # TODO Split to two functions when current task changed and not
 
-        task_template_ids = {elem['id'] for elem in data}
+        task_template_api_names = {elem['api_name'] for elem in data}
         current_task = self.instance.current_task_instance
         is_deleted_current_task = (
-            current_task.template_id not in task_template_ids
+            current_task.api_name not in task_template_api_names
         )
-        last_template_id = None
-        current_template_id = current_task.template_id
+        last_template_api_name = None
+        current_template_api_name = current_task.api_name
 
         if is_deleted_current_task:
             last_completed = self.instance.tasks.filter(
-                template_id__in=task_template_ids
+                api_name__in=task_template_api_names
             ).completed().order_by(
                 'number'
             ).last()
-            last_template_id = (
-                last_completed.template_id
+            last_template_api_name = (
+                last_completed.api_name
                 if last_completed else
                 None
             )
 
-        template_id = (
-            last_template_id if is_deleted_current_task else
-            current_template_id
+        template_api_name = (
+            last_template_api_name if is_deleted_current_task else
+            current_template_api_name
         )
 
         number = 1
         for task_data in data:
-            if template_id == task_data['id']:
+            if template_api_name == task_data['api_name']:
                 if is_deleted_current_task:
                     number = task_data['number'] + 1
                     break

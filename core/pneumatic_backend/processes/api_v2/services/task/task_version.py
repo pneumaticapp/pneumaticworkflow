@@ -60,10 +60,9 @@ class TaskUpdateVersionService(
                         selection, __ = (
                             FieldSelection.objects.update_or_create(
                                 field=field,
-                                template_id=selection_data['id'],
+                                api_name=selection_data['api_name'],
                                 defaults={
                                     'value': selection_data['value'],
-                                    'api_name': selection_data['api_name'],
                                 }
                             )
                         )
@@ -110,7 +109,7 @@ class TaskUpdateVersionService(
                 Condition(
                     action=condition_data['action'],
                     order=condition_data['order'],
-                    template_id=condition_data['id'],
+                    api_name=condition_data['api_name'],
                     task=self.instance,
                 )
             )
@@ -124,13 +123,13 @@ class TaskUpdateVersionService(
                         field_type=predicate_template['field_type'],
                         value=predicate_template['value'],
                         field=predicate_template['field'],
-                        template_id=predicate_template['id'],
+                        api_name=predicate_template['api_name'],
                     ))
                 rules_tree.append((
-                    Rule(template_id=rule_template['id']),
+                    Rule(api_name=rule_template['api_name']),
                     predicates
                 ))
-            conditions_tree[condition_data['id']] = rules_tree
+            conditions_tree[condition_data['api_name']] = rules_tree
         conditions = Condition.objects.bulk_create(conditions)
         self.create_rules(conditions, conditions_tree)
 
@@ -140,13 +139,12 @@ class TaskUpdateVersionService(
 
         return TaskField.objects.update_or_create(
             task=self.instance,
-            template_id=template['id'],
+            api_name=template['api_name'],
             defaults={
                 'name': template['name'],
                 'description': template['description'],
                 'type': template['type'],
                 'is_required': template['is_required'],
-                'api_name': template['api_name'],
                 'order': template['order'],
                 'workflow': self.instance.workflow
             }
@@ -237,7 +235,7 @@ class TaskUpdateVersionService(
             ),
             'description_template': data['description'],
             'is_urgent': workflow.is_urgent,
-            'template_id': data['id']  # deprecated
+
         }
         if data['number'] > workflow.current_task:
             # Uncomplete tasks after current

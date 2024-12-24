@@ -322,29 +322,18 @@ def test_run__all__ok(api_client, mocker):
     )
 
     kickoff_value = KickoffValue.objects.get(workflow=workflow)
-    assert kickoff_value.template_id == template.kickoff_instance.id
     assert kickoff_value.output.count() == 5
-    assert kickoff_value.output.get(
-        workflow=workflow,
-        api_name=kickoff_field.api_name
-    ).template_id == kickoff_field.id
     kv_selections = kickoff_value.output.get(
         api_name=kickoff_field_5.api_name
     ).selections
 
     kv_selection_1 = kv_selections.get(api_name=selection_1.api_name)
     kv_selection_2 = kv_selections.get(api_name=selection_2.api_name)
-    assert kv_selection_1.template_id == selection_1.id
     assert kv_selection_1.value == selection_1.value
     assert kv_selection_1.is_selected
-    assert kv_selection_2.template_id == selection_2.id
     assert kv_selection_2.value == selection_2.value
     assert kv_selection_2.is_selected
 
-    assert first_task.output.get(
-        workflow=workflow,
-        api_name=output_field.api_name,
-    ).template_id == output_field.id
     analytics_mock.assert_called_once_with(
         workflow=workflow,
         auth_type=AuthTokenType.USER,
@@ -792,10 +781,10 @@ def test_run__create_conditions__ok(mocker, api_client):
     assert last_task.conditions.count() == 1
     condition = last_task.conditions.get()
     assert condition.rules.count() == 2
-    assert Predicate.objects.filter(template_id__in=[
-        predicate_1.id,
-        predicate_2.id,
-        predicate_3.id,
+    assert Predicate.objects.filter(api_name__in=[
+        predicate_1.api_name,
+        predicate_2.api_name,
+        predicate_3.api_name,
     ]).count() == 3
 
 

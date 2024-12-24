@@ -1382,7 +1382,7 @@ def test_list__filter_status_delayed_and_active_tasks__not_found(api_client):
     response = api_client.get(
         path='/workflows',
         data={
-            'template_task_id': template_task_1.id,
+            'template_task_api_name': template_task_1.api_name,
             'status': WorkflowApiStatus.DELAYED
         }
     )
@@ -1390,6 +1390,60 @@ def test_list__filter_status_delayed_and_active_tasks__not_found(api_client):
     # assert
     assert response.status_code == 200
     assert len(response.data['results']) == 0
+
+
+def test_list__filter_template_task_api_name__ok(api_client):
+
+    # arrange
+    user = create_test_user()
+    api_client.token_authenticate(user)
+
+    template = create_test_template(user, tasks_count=2)
+    template_task_1 = template.tasks.get(number=1)
+    create_test_workflow(user, template=template)
+    workflow_delayed = create_test_workflow(user, template=template)
+    workflow_delayed.current_task = 2
+    workflow_delayed.status = WorkflowStatus.DELAYED
+    workflow_delayed.save(update_fields=['status', 'current_task'])
+
+    # act
+    response = api_client.get(
+        path='/workflows',
+        data={
+            'template_task_api_name': template_task_1.api_name,
+        }
+    )
+
+    # assert
+    assert response.status_code == 200
+    assert len(response.data['results']) == 1
+
+
+def test_list__filter_template_task_id__ok(api_client):
+
+    # arrange
+    user = create_test_user()
+    api_client.token_authenticate(user)
+
+    template = create_test_template(user, tasks_count=2)
+    template_task_1 = template.tasks.get(number=1)
+    create_test_workflow(user, template=template)
+    workflow_delayed = create_test_workflow(user, template=template)
+    workflow_delayed.current_task = 2
+    workflow_delayed.status = WorkflowStatus.DELAYED
+    workflow_delayed.save(update_fields=['status', 'current_task'])
+
+    # act
+    response = api_client.get(
+        path='/workflows',
+        data={
+            'template_task_id': template_task_1.id,
+        }
+    )
+
+    # assert
+    assert response.status_code == 200
+    assert len(response.data['results']) == 1
 
 
 def test_list__filter_status_done__ok(api_client):
@@ -1927,116 +1981,6 @@ def test_list__legacy_template_on_premium__ok(api_client):
     # assert
     assert response.status_code == 200
     assert len(response.data['results']) == 1
-
-
-def test_list__filter_task_template__ok(api_client, mocker):
-
-    # arrange
-    mocker.patch(
-        'pneumatic_backend.processes.tasks.webhooks.'
-        'send_workflow_started_webhook.delay',
-    )
-    mocker.patch(
-        'pneumatic_backend.processes.tasks.webhooks.'
-        'send_task_completed_webhook.delay'
-    )
-    account = create_test_account()
-    user = create_test_user(account=account)
-    api_client.token_authenticate(user)
-    template = create_test_template(
-        user=user,
-        is_active=True,
-        finalizable=True
-    )
-    template_task_2 = template.tasks.get(number=2)
-    running_workflow = create_test_workflow(user=user, template=template)
-    finished_workflow = create_test_workflow(user=user, template=template)
-    create_test_workflow(user=user)
-
-    response_complete = api_client.post(
-        f'/workflows/{running_workflow.id}/task-complete',
-        data={'task_id': running_workflow.current_task_instance.id}
-    )
-    response_finish = api_client.post(
-        f'/workflows/{finished_workflow.id}/finish',
-    )
-
-    # act
-    response = api_client.get(
-        f'/workflows?template_task_id={template_task_2.id}'
-    )
-
-    # assert
-    assert response_complete.status_code == 204
-    assert response_finish.status_code == 204
-    assert response.status_code == 200
-    assert len(response.data['results']) == 1
-    assert response.data['results'][0]['id'] == running_workflow.id
-
-
-def test_list__filter_multiple_task_template__ok(api_client, mocker):
-
-    # arrange
-    mocker.patch(
-        'pneumatic_backend.processes.tasks.webhooks.'
-        'send_task_completed_webhook.delay'
-    )
-    account = create_test_account()
-    user = create_test_user(account=account)
-    api_client.token_authenticate(user)
-    template = create_test_template(
-        user=user,
-        is_active=True,
-        finalizable=True
-    )
-    template_task_1 = template.tasks.get(number=1)
-    template_task_2 = template.tasks.get(number=2)
-    running_workflow_1 = create_test_workflow(user=user, template=template)
-    running_workflow_2 = create_test_workflow(user=user, template=template)
-    deleted_workflow = create_test_workflow(user=user, template=template)
-    deleted_workflow.delete()
-    create_test_workflow(user=user)
-
-    response_complete = api_client.post(
-        f'/workflows/{running_workflow_2.id}/task-complete',
-        data={'task_id': running_workflow_2.current_task_instance.id}
-    )
-
-    # act
-    data = {
-        'template_task_id': f'{template_task_1.id},{template_task_2.id}'
-    }
-    response = api_client.get(path='/workflows', data=data)
-
-    # assert
-    assert response_complete.status_code == 204
-    assert response.status_code == 200
-    assert len(response.data['results']) == 2
-    response_ids = {
-        response.data['results'][0]['id'],
-        response.data['results'][1]['id'],
-    }
-    assert running_workflow_1.id in response_ids
-    assert running_workflow_2.id in response_ids
-
-
-def test_list__filter_invalid_task_template__validation_error(api_client):
-
-    # arrange
-    account = create_test_account()
-    user = create_test_user(account=account)
-    api_client.token_authenticate(user)
-
-    # act
-    response = api_client.get(f'/workflows?template_task_id=undefined')
-
-    # assert
-    assert response.status_code == 400
-    message = 'Value should be a list of integers.'
-    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
-    assert response.data['message'] == message
-    assert response.data['details']['reason'] == message
-    assert response.data['details']['name'] == 'template_task_id'
 
 
 def test_list__deleted_current_task_performers__ok(

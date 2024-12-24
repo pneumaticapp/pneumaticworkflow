@@ -191,5 +191,23 @@
 }
 
 .rich-label {
-  display: flex;
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  div {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+
+    span {
+      display: inline !important;
+    }
+  }
+}
+
+.variable-title {
+  font-weight: bold;
+}
+.variable-richsubtitle {
+  color: var(--pneumatic-color-black48);
 }

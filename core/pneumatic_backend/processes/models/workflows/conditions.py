@@ -22,8 +22,6 @@ class Condition(
         on_delete=models.CASCADE,
         related_name='conditions',
     )
-    # TODO deprecate template_id, use api_name
-    template_id = models.IntegerField(null=True)
 
 
 class Rule(
@@ -36,8 +34,6 @@ class Rule(
         on_delete=models.CASCADE,
         related_name='rules'
     )
-    # TODO deprecate template_id, use api_name
-    template_id = models.IntegerField(null=True)
 
 
 class Predicate(
@@ -51,5 +47,3 @@ class Predicate(
         on_delete=models.CASCADE,
         related_name='predicates',
     )
-    # TODO deprecate template_id, use api_name
-    template_id = models.IntegerField(null=True)

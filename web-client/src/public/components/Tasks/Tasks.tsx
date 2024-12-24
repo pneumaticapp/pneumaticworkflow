@@ -229,7 +229,7 @@ export function Tasks({
           next={() => loadTaskList(items.length)}
           loader={loader}
           hasMore={!isListFullLoaded || taskListStatus === ETaskListStatus.Loading}
-          {...(!isMobile && { scrollableTarget: 'scrollableDiv' })}
+          scrollableTarget={!isMobile ? 'scrollableDiv' : 'app-container'}
         >
           {items.map((task) => (
             <div key={task.id} className={styles['cards__item']}>

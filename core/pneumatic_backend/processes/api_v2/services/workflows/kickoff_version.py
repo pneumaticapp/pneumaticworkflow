@@ -16,13 +16,12 @@ class KickoffUpdateVersionService(BaseUpdateVersionService):
 
         return TaskField.objects.update_or_create(
             kickoff=self.instance,
-            template_id=template['id'],
+            api_name=template['api_name'],
             defaults={
                 'name': template['name'],
                 'description': template['description'],
                 'type': template['type'],
                 'is_required': template['is_required'],
-                'api_name': template['api_name'],
                 'order': template['order'],
                 'workflow': self.instance.workflow
             }
@@ -44,10 +43,9 @@ class KickoffUpdateVersionService(BaseUpdateVersionService):
                 for selection_data in field_data['selections']:
                     selection, __ = FieldSelection.objects.update_or_create(
                         field=field,
-                        template_id=selection_data['id'],
+                        api_name=selection_data['api_name'],
                         defaults={
                             'value': selection_data['value'],
-                            'api_name': selection_data['api_name'],
                         }
                     )
                     selection_ids.add(selection.id)

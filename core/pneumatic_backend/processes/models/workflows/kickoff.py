@@ -27,9 +27,6 @@ class KickoffValue(
         related_name='kickoff',
         on_delete=models.CASCADE,
     )
-    template_id = models.IntegerField(
-        null=True,
-    )
     description = models.TextField(null=True, blank=True)
     clear_description = models.TextField(
         null=True,

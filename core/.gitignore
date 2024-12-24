@@ -92,6 +92,7 @@ db.sqlite3
 *.sql
 database/backups
 database/data
+database/postgres_data
 staticfiles/
 
 # pyenv

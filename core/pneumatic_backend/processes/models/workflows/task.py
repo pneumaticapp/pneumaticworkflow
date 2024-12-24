@@ -48,10 +48,6 @@ class Task(
         on_delete=models.CASCADE,
         related_name='tasks',
     )
-    # TODO deprecate template_id, use api_name
-    template_id = models.IntegerField(
-        null=True,
-    )
     performers = models.ManyToManyField(
         UserModel,
         through='TaskPerformer'
@@ -211,7 +207,6 @@ class Task(
         user: Optional[UserModel] = None,
         user_id: Optional[int] = None,
         field=None,  # Optional[TaskField]
-        template_id: int = None
     ):  # -> RawPerformer
 
         """ Returns new a raw performer object with given data """
@@ -226,7 +221,6 @@ class Task(
             field=field,
             api_name=api_name,
             type=performer_type,
-            template_id=template_id
         )
         if user:
             result.user = user
@@ -241,7 +235,6 @@ class Task(
         field=None,
         api_name: Optional[str] = None,
         performer_type: PerformerType = PerformerType.USER,
-        template_id: Optional[int] = None,
     ):  # -> RawPerformer
 
         """ Creates and returns a raw performer for a task with given data
@@ -259,7 +252,6 @@ class Task(
             user=user,
             user_id=user_id,
             field=field,
-            template_id=template_id
         )
         raw_performer.save()
         return raw_performer
@@ -281,15 +273,15 @@ class Task(
                 )
         return user
 
-    def _get_raw_performers_template_ids(self) -> set:
+    def _get_raw_performers_api_names(self) -> set:
         return set(
-            self.raw_performers.values_list('template_id', flat=True)
+            self.raw_performers.values_list('api_name', flat=True)
         )
 
     def _get_raw_performers_fields_dict(
         self,
         raw_performers_templates: List[dict],
-        existent_raw_performer_template_ids: Set[int]
+        existent_raw_performer_api_names: Set[int]
     ) -> dict:
 
         """ For presented RawPerformerTemplates with type Field
@@ -300,8 +292,8 @@ class Task(
         api_names = set()
         fields_dict = {}
         for raw_performer_template in raw_performers_templates:
-            if raw_performer_template['id'] not in (
-                existent_raw_performer_template_ids
+            if raw_performer_template['api_name'] not in (
+                existent_raw_performer_api_names
             ):
                 if raw_performer_template['type'] == PerformerType.FIELD:
                     api_names.add(raw_performer_template['field']['api_name'])
@@ -350,33 +342,33 @@ class Task(
             } for e in raw_performers_templates]
         elif isinstance(task_template, dict):
             raw_performers_templates = task_template['raw_performers']
-        elif self.template_id:
+        elif self.api_name:
             task_template = TaskTemplate.objects.by_id(
-                self.template_id
+                self.api_name
             ).first()
             if task_template:
                 raw_performers_templates = (
                     task_template.raw_performers.values()
                 )
 
-        existent_raw_performer_template_ids = (
-            self._get_raw_performers_template_ids()
+        existent_raw_performer_api_names = (
+            self._get_raw_performers_api_names()
         )
         fields_dict = self._get_raw_performers_fields_dict(
             raw_performers_templates,
-            existent_raw_performer_template_ids
+            existent_raw_performer_api_names
         )
 
         new_raw_performers = []
-        deleted_raw_performer_template_ids = (
-            existent_raw_performer_template_ids.copy()
+        deleted_raw_performer_api_names = (
+            existent_raw_performer_api_names.copy()
         )
         for raw_performer_template in raw_performers_templates:
-            if raw_performer_template['id'] in (
-                existent_raw_performer_template_ids
+            if raw_performer_template['api_name'] in (
+                existent_raw_performer_api_names
             ):
-                deleted_raw_performer_template_ids.remove(
-                    raw_performer_template['id']
+                deleted_raw_performer_api_names.remove(
+                    raw_performer_template['api_name']
                 )
             else:
                 if raw_performer_template['type'] == PerformerType.FIELD:
@@ -390,15 +382,14 @@ class Task(
                         performer_type=raw_performer_template['type'],
                         user_id=raw_performer_template['user_id'],
                         field=field,
-                        template_id=raw_performer_template['id'],
                         api_name=raw_performer_template['api_name'],
                     )
                 )
         if new_raw_performers:
             RawPerformer.objects.bulk_create(new_raw_performers)
-        if deleted_raw_performer_template_ids:
+        if deleted_raw_performer_api_names:
             RawPerformer.objects.filter(
-                template_id__in=deleted_raw_performer_template_ids
+                api_name__in=deleted_raw_performer_api_names
             ).delete()
 
     def update_performers(
@@ -589,7 +580,9 @@ class TaskForList(
     date_completed = models.DateTimeField(null=True)
     date_completed_tsp = models.FloatField(null=True)
     template_id = models.IntegerField(null=True)
+    # TODO Remove in https://my.pneumatic.app/workflows/36988/
     template_task_id = models.IntegerField(null=True)
+    template_task_api_name = models.CharField(max_length=100, null=True)
     is_urgent = models.BooleanField()
     due_date = models.DateTimeField(null=True)
     due_date_tsp = models.FloatField(null=True)

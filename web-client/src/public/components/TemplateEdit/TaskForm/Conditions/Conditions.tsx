@@ -69,10 +69,11 @@ export function Conditions({ conditions, variables, users, isSubscribed, onEdit 
 
   const dropdownVariables: IDropdownVariable[] = variables.map((variable) => ({
     ...variable,
-    label: `${variable.subtitle}: ${variable.title}`,
+    label: `${variable.subtitle} ${variable.title}`,
     richLabel: (
       <div className={styles['rich-label']}>
-        {variable.richSubtitle}: {variable.title}
+        <div className={styles['variable-title']}>{variable.title}</div>
+        <div className={styles['variable-richsubtitle']}>{variable.richSubtitle}</div>
       </div>
     ),
   }));
@@ -149,6 +150,14 @@ export function Conditions({ conditions, variables, users, isSubscribed, onEdit 
           {rules.map((rule, ruleIndex) => {
             const changeCurrentRule = handleChangeRule(conditionIndex, ruleIndex);
             const selectedVariable = dropdownVariables.find((variable) => variable.apiName === rule.field) || null;
+            const displayedVariable = selectedVariable && {
+              ...selectedVariable,
+              richLabel: (
+                <div className={styles['rich-label']}>
+                  <div>{selectedVariable?.title}</div>
+                </div>
+              ),
+            };
             const dropdownOperators = selectedVariable
               ? getDropdownOperators(selectedVariable.type, messages as Record<string, string>)
               : [];
@@ -183,7 +192,7 @@ export function Conditions({ conditions, variables, users, isSubscribed, onEdit 
                         isDisabled={!accessConditions}
                         placeholder={formatMessage({ id: 'templates.conditions.field-placeholder' })}
                         isSearchable={false}
-                        value={selectedVariable}
+                        value={displayedVariable}
                         getOptionLabel={(option: IDropdownVariable) => option.richLabel}
                         onChange={(option: IDropdownVariable) => {
                           if (option.apiName === rule.field) return;

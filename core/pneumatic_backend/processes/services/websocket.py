@@ -84,7 +84,9 @@ class WSSender:
                 if task.due_date else None
             ),
             workflow_name=task.workflow.name,
-            template_task_id=task.template_id,
+            # TODO Remove in https://my.pneumatic.app/workflows/36988/
+            template_task_id=task.workflow.template_id,
+            template_task_api_name=task.api_name,
             template_id=task.workflow.template_id,
             is_urgent=task.is_urgent
         )
