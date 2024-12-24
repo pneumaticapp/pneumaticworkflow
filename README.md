@@ -69,12 +69,11 @@ You can grab your own copy of Pneumatic by cloning this repository and self-host
 
 
 ### Prerequisites
-* Operating System: Linux(Ubuntu/Debian), macOS or Windows(install and run at your own risk)[^1]
+* Operating System: Linux(Ubuntu/Debian), macOS or Windows(install and run at your own risk)
 * Git version 2.0 or above
 * Docker version 2.27 or above
 * Docker compose version 27.0 or above
   
-[^1]: The current version of Pneumatic is being developed, tested and deployed on Ubuntu/Debian. We're currently working to offer support for Mac and Windows, but at this point we can't guarantee you won't run into issues on those systems.
 
 
 ### Add the following lines to your hosts file 
