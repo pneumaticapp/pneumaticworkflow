@@ -33,8 +33,6 @@ class RawPerformer(
         related_name='raw_performers',
         null=True
     )
-    # TODO deprecate template_id, use api_name
-    template_id = models.IntegerField(null=True)
     task_performer_id = models.IntegerField(blank=True, null=True)
 
     objects = BaseSoftDeleteManager.from_queryset(TaskPerformerQuerySet)()

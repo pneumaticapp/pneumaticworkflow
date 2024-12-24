@@ -139,6 +139,7 @@ export const WorkflowsGridPage = function Workflows({
         loader={loader}
         hasMore={!isListFullLoaded}
         className={styles['cards']}
+        scrollableTarget="app-container"
       >
         {renderRunWorkflowButton()}
         {items.map((item) => (

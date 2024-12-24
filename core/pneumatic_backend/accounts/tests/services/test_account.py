@@ -429,7 +429,7 @@ def test_create_instance__disable_global_billing__set_freemium_plan(mocker):
 
     # assert
     assert account.id
-    assert account.billing_sync is True
+    assert account.billing_sync is False
     assert account.name == company_name
     assert account.is_verified is False
     assert account.billing_plan == BillingPlanType.FREEMIUM

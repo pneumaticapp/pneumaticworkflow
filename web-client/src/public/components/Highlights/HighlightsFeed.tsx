@@ -7,11 +7,7 @@ import InfiniteScroll from 'react-infinite-scroll-component';
 import { useIntl } from 'react-intl';
 
 import { ERoutes } from '../../constants/routes';
-import {
-  EHighlightsDateFilter,
-  EHighlightsFilterType,
-  IHighlightsItem,
-} from '../../types/highlights';
+import { EHighlightsDateFilter, EHighlightsFilterType, IHighlightsItem } from '../../types/highlights';
 import { TITLES } from '../../constants/titles';
 import { history } from '../../utils/history';
 import { PROCESS_HIGHLIGHTS_DATE_RANGE_MAP } from '../../utils/dateTime';
@@ -109,19 +105,15 @@ export function HighlightsFeed({
     setUsersSearchText(e.target.value);
   };
 
-  const isListFullyFetched = useMemo(
-    () => items.length === count && !isFirstFetch,
-    [count, items, isFirstFetch],
-  );
+  const isListFullyFetched = useMemo(() => items.length === count && !isFirstFetch, [count, items, isFirstFetch]);
 
-  const isFeedEmpty = useMemo(
-    () => !isArrayWithItems(items) && !isFirstFetch,
-    [items, isFirstFetch],
-  );
+  const isFeedEmpty = useMemo(() => !isArrayWithItems(items) && !isFirstFetch, [items, isFirstFetch]);
 
-  const handleChangeFilterList = (type: EHighlightsFilterType) => (id: number) =>
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const { target: { checked } } = e;
+  const handleChangeFilterList =
+    (type: EHighlightsFilterType) => (id: number) => (e: React.ChangeEvent<HTMLInputElement>) => {
+      const {
+        target: { checked },
+      } = e;
 
       const filterListMap = {
         [EHighlightsFilterType.Templates]: {
@@ -145,7 +137,7 @@ export function HighlightsFeed({
       }
 
       if (shouldDelete) {
-        setFilterList([...filterList.filter(x => x !== id)]);
+        setFilterList([...filterList.filter((x) => x !== id)]);
       }
     };
 
@@ -154,12 +146,11 @@ export function HighlightsFeed({
       return;
     }
 
-    const filterList = type === EHighlightsFilterType.Templates
-      ? templatesFilter
-      : usersFilter;
-    const setFilterList = type === EHighlightsFilterType.Templates
-      ? (value: number[]) => setFilters({ templatesFilter: value })
-      : (value: number[]) => setFilters({ usersFilter: value });
+    const filterList = type === EHighlightsFilterType.Templates ? templatesFilter : usersFilter;
+    const setFilterList =
+      type === EHighlightsFilterType.Templates
+        ? (value: number[]) => setFilters({ templatesFilter: value })
+        : (value: number[]) => setFilters({ usersFilter: value });
     const isSelected = filterList.includes(id);
 
     if (isSelected) {
@@ -172,19 +163,22 @@ export function HighlightsFeed({
     loadHighlights({});
   };
 
-  const handleChangeSelectedDateFilter = useCallback((selectedTimeRange: EHighlightsDateFilter) => () => {
-    if (selectedTimeRange === timeRange) {
-      return;
-    }
+  const handleChangeSelectedDateFilter = useCallback(
+    (selectedTimeRange: EHighlightsDateFilter) => () => {
+      if (selectedTimeRange === timeRange) {
+        return;
+      }
 
-    setFilters({ timeRange: selectedTimeRange });
+      setFilters({ timeRange: selectedTimeRange });
 
-    if (selectedTimeRange !== EHighlightsDateFilter.Custom) {
-      const { startDate, endDate } = PROCESS_HIGHLIGHTS_DATE_RANGE_MAP[selectedTimeRange];
+      if (selectedTimeRange !== EHighlightsDateFilter.Custom) {
+        const { startDate, endDate } = PROCESS_HIGHLIGHTS_DATE_RANGE_MAP[selectedTimeRange];
 
-      setFilters({ startDate, endDate });
-    }
-  }, [timeRange]);
+        setFilters({ startDate, endDate });
+      }
+    },
+    [timeRange],
+  );
 
   const handleApplyFilters = () => {
     loadHighlights({});
@@ -204,11 +198,12 @@ export function HighlightsFeed({
   };
 
   const [workflowLogWorkflowId, setWorkflowLogWorkflowId] = useState<number | null>(null);
-  const handleOpenWorkflowLogPopup = useCallback((workflowId: number) => () => {
-    setWorkflowLogWorkflowId(workflowId);
-    openWorkflowLogPopup({ workflowId });
-  },
-  [workflowLogWorkflowId],
+  const handleOpenWorkflowLogPopup = useCallback(
+    (workflowId: number) => () => {
+      setWorkflowLogWorkflowId(workflowId);
+      openWorkflowLogPopup({ workflowId });
+    },
+    [workflowLogWorkflowId],
   );
 
   const handleRedirectToTemplate = (templateId?: number) => () => {
@@ -306,8 +301,9 @@ export function HighlightsFeed({
               next={onScroll}
               dataLength={items.length}
               loader={<div className={classnames('loading', styles['feed__spinner'])} />}
+              scrollableTarget="app-container"
             >
-              {items.map(item => (
+              {items.map((item) => (
                 <FeedItem
                   {...item}
                   item={item}

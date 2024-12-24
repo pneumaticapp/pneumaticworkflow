@@ -112,6 +112,7 @@ class AccountService(
             )
             if not billing_enabled:
                 self.instance.billing_plan = BillingPlanType.FREEMIUM
+                self.instance.billing_sync = False
             self.instance.save()
         return self.instance
 

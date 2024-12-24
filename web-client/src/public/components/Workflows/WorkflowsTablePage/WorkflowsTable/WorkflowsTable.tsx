@@ -66,11 +66,11 @@ export function WorkflowsTable({
     debounceOnSearch(searchQuery);
   }, [searchQuery]);
 
-  React.useEffect(()=>{
+  React.useEffect(() => {
     if (workflowsLoadingStatus === EWorkflowsLoadingStatus.EmptyList && stepsIdsFilter.length) {
       setStepsFilter([]);
     }
-  }, [workflowsLoadingStatus])
+  }, [workflowsLoadingStatus]);
 
   const workflowStartersOptions = React.useMemo(() => {
     const usersWithExternal = [EXTERNAL_USER, ...users];
@@ -368,6 +368,7 @@ export function WorkflowsTable({
           hasMore={!isListFullLoaded}
           scrollThreshold="150px"
           className={styles['table-scoll']}
+          scrollableTarget="app-container"
         >
           {renderTable()}
         </InfiniteScroll>

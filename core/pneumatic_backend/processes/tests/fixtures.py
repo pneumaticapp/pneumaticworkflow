@@ -336,7 +336,6 @@ def create_test_workflow(
     )
     KickoffValue.objects.create(
         workflow=workflow,
-        template_id=template.kickoff_instance.id,
         account=workflow.account
     )
     for task_template in template.tasks.all():

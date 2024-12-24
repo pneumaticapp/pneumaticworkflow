@@ -21,6 +21,7 @@ from pneumatic_backend.processes.models import (
     TaskPerformer,
     Task,
     Delay,
+    TaskTemplate,
 )
 from pneumatic_backend.processes.enums import (
     WorkflowStatus,
@@ -710,6 +711,8 @@ class WorkflowListFilterSerializer(
         choices=WorkflowApiStatus.CHOICES
     )
     template_id = serializers.CharField(required=False)
+    template_task_api_name = serializers.CharField(required=False)
+    # TODO Remove in https://my.pneumatic.app/workflows/36988/
     template_task_id = serializers.CharField(required=False)
     current_performer = serializers.CharField(required=False)
     workflow_starter = serializers.CharField(required=False)
@@ -727,6 +730,10 @@ class WorkflowListFilterSerializer(
     def validate_template_id(self, value):
         return self.get_valid_list_integers(value)
 
+    def validate_template_task_api_name(self, value):
+        return self.get_valid_list_strings(value)
+
+    # TODO Remove in https://my.pneumatic.app/workflows/36988/
     def validate_template_task_id(self, value):
         return self.get_valid_list_integers(value)
 
@@ -742,6 +749,15 @@ class WorkflowListFilterSerializer(
         return clear_text if clear_text else None
 
     def validate(self, data):
+        # TODO Remove in https://my.pneumatic.app/workflows/36988/
+        template_task_ids = data.get('template_task_id')
+        if template_task_ids:
+            data['template_task_api_name'] = (
+                TaskTemplate.objects.
+                filter(id__in=template_task_ids)
+                .values_list('api_name', flat=True)
+            )
+        data.pop('template_task_id', None)
         status = data.get('status')
         current_performer = data.get('current_performer')
         if current_performer and status in WorkflowApiStatus.NOT_RUNNING:

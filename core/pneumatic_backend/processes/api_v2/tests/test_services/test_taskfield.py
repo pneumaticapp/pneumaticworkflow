@@ -840,7 +840,6 @@ def test_update_selections__radio_dropdown__not_value__ok(
     selection = FieldSelection.objects.create(
         field=task_field,
         value=selection_template.value,
-        template_id=selection_template.id,
         api_name=selection_template.api_name,
         is_selected=False,
     )
@@ -904,7 +903,6 @@ def test_update_selections__checkbox__not_value__ok(
     selection = FieldSelection.objects.create(
         field=task_field,
         value=selection_template.value,
-        template_id=selection_template.id,
         api_name=selection_template.api_name,
         is_selected=False,
     )
@@ -983,14 +981,12 @@ def test_update_selections__checkbox_id__ok(
     selection_1 = FieldSelection.objects.create(
         field=task_field,
         value=selection_template_1.value,
-        template_id=selection_template_1.id,
         api_name=selection_template_1.api_name,
         is_selected=True,
     )
     selection_2 = FieldSelection.objects.create(
         field=task_field,
         value=selection_template_2.value,
-        template_id=selection_template_2.id,
         api_name=selection_template_2.api_name,
         is_selected=True,
     )
@@ -1068,14 +1064,12 @@ def test_update_selections__checkbox_api_name__ok(
     selection_1 = FieldSelection.objects.create(
         field=task_field,
         value=selection_template_1.value,
-        template_id=selection_template_1.id,
         api_name=selection_template_1.api_name,
         is_selected=True,
     )
     selection_2 = FieldSelection.objects.create(
         field=task_field,
         value=selection_template_2.value,
-        template_id=selection_template_2.id,
         api_name=selection_template_2.api_name,
         is_selected=True,
     )
@@ -1156,14 +1150,12 @@ def test_update_selections__radio_dropdown_id__ok(
     selection_1 = FieldSelection.objects.create(
         field=task_field,
         value=selection_template_1.value,
-        template_id=selection_template_1.id,
         api_name=selection_template_1.api_name,
         is_selected=False,
     )
     selection_2 = FieldSelection.objects.create(
         field=task_field,
         value=selection_template_2.value,
-        template_id=selection_template_2.id,
         api_name=selection_template_2.api_name,
         is_selected=True,
     )
@@ -1243,14 +1235,12 @@ def test_update_selections__radio_dropdown_api_name__ok(
     selection_1 = FieldSelection.objects.create(
         field=task_field,
         value=selection_template_1.value,
-        template_id=selection_template_1.id,
         api_name=selection_template_1.api_name,
         is_selected=False,
     )
     selection_2 = FieldSelection.objects.create(
         field=task_field,
         value=selection_template_2.value,
-        template_id=selection_template_2.id,
         api_name=selection_template_2.api_name,
         is_selected=True,
     )
@@ -1460,7 +1450,6 @@ def test_get_valid_radio_value__id__ok():
     selection = FieldSelection.objects.create(
         field=task_field,
         value=selection_template.value,
-        template_id=selection_template.id,
         api_name=selection_template.api_name,
         is_selected=True,
     )
@@ -1508,7 +1497,6 @@ def test_get_valid_radio_value__api_name__ok():
     selection = FieldSelection.objects.create(
         field=task_field,
         value=selection_template.value,
-        template_id=selection_template.id,
         api_name=selection_template.api_name,
         is_selected=True,
     )
@@ -1656,7 +1644,6 @@ def test_get_valid_checkbox_value__one_id__ok():
     selection = FieldSelection.objects.create(
         field=task_field,
         value=selection_template.value,
-        template_id=selection_template.id,
         api_name=selection_template.api_name,
         is_selected=True,
     )
@@ -1712,13 +1699,11 @@ def test_get_valid_checkbox_value__many_ids__ok():
     FieldSelection.objects.create(
         field=task_field,
         value=selection_template_1.value,
-        template_id=selection_template_1.id,
         api_name=selection_template_1.api_name,
     )
     FieldSelection.objects.create(
         field=task_field,
         value=selection_template_2.value,
-        template_id=selection_template_2.id,
         api_name=selection_template_2.api_name,
     )
     service = TaskFieldService(instance=task_field)
@@ -1773,7 +1758,6 @@ def test_get_valid_checkbox_value__one_api_name__ok():
     selection = FieldSelection.objects.create(
         field=task_field,
         value=selection_template.value,
-        template_id=selection_template.id,
         api_name=selection_template.api_name,
         is_selected=True,
     )
@@ -1827,13 +1811,11 @@ def test_get_valid_checkbox_value__many_api_names__ok():
     FieldSelection.objects.create(
         field=task_field,
         value=selection_template_1.value,
-        template_id=selection_template_1.id,
         api_name=selection_template_1.api_name,
     )
     FieldSelection.objects.create(
         field=task_field,
         value=selection_template_2.value,
-        template_id=selection_template_2.id,
         api_name=selection_template_2.api_name,
     )
     service = TaskFieldService(instance=task_field)

@@ -78,11 +78,9 @@ class TestConditionCheckService:
             task=second_task,
             action=Condition.SKIP_TASK,
             order=1,
-            template_id=1,
         )
         first_rule = Rule.objects.create(
             condition=condition,
-            template_id=1,
         )
         Predicate.objects.create(
             rule=first_rule,
@@ -139,11 +137,9 @@ class TestConditionCheckService:
             task=second_task,
             action=Condition.SKIP_TASK,
             order=1,
-            template_id=1,
         )
         first_rule = Rule.objects.create(
             condition=condition,
-            template_id=1,
         )
         Predicate.objects.create(
             rule=first_rule,
@@ -215,11 +211,9 @@ class TestConditionCheckService:
             task=second_task,
             action=Condition.SKIP_TASK,
             order=1,
-            template_id=1,
         )
         first_rule = Rule.objects.create(
             condition=condition,
-            template_id=1,
         )
         Predicate.objects.create(
             rule=first_rule,
@@ -298,11 +292,9 @@ class TestConditionCheckService:
             task=second_task,
             action=Condition.SKIP_TASK,
             order=1,
-            template_id=1,
         )
         first_rule = Rule.objects.create(
             condition=condition,
-            template_id=1,
         )
         Predicate.objects.create(
             rule=first_rule,
@@ -361,11 +353,9 @@ class TestConditionCheckService:
             task=second_task,
             action=Condition.SKIP_TASK,
             order=1,
-            template_id=1,
         )
         first_rule = Rule.objects.create(
             condition=condition,
-            template_id=1,
         )
         Predicate.objects.create(
             rule=first_rule,
@@ -436,11 +426,9 @@ class TestConditionCheckService:
             task=second_task,
             action=Condition.SKIP_TASK,
             order=1,
-            template_id=1,
         )
         first_rule = Rule.objects.create(
             condition=condition,
-            template_id=1,
         )
         Predicate.objects.create(
             rule=first_rule,
@@ -469,11 +457,9 @@ class TestConditionCheckService:
             task=task_2,
             action=Condition.SKIP_TASK,
             order=1,
-            template_id=1,
         )
         rule = Rule.objects.create(
             condition=condition,
-            template_id=1,
         )
         Predicate.objects.create(
             rule=rule,
@@ -500,11 +486,9 @@ class TestConditionCheckService:
             task=task_2,
             action=Condition.SKIP_TASK,
             order=1,
-            template_id=1,
         )
         rule = Rule.objects.create(
             condition=condition,
-            template_id=1,
         )
         Predicate.objects.create(
             rule=rule,
@@ -530,11 +514,9 @@ class TestConditionCheckService:
             task=task_1,
             action=Condition.SKIP_TASK,
             order=1,
-            template_id=1,
         )
         rule = Rule.objects.create(
             condition=condition,
-            template_id=1,
         )
         Predicate.objects.create(
             rule=rule,

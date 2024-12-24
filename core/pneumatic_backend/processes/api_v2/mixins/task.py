@@ -21,11 +21,10 @@ class ConditionMixin:
         rules = []
         rules_tree = {}
         for condition in conditions:
-            rules_by_condition = conditions_tree[condition.template_id]
-            for rule, predicates in rules_by_condition:
+            for rule, predicates in conditions_tree[condition.api_name]:
                 rule.condition = condition
                 rules.append(rule)
-                rules_tree[rule.template_id] = predicates
+                rules_tree[rule.api_name] = predicates
 
         rules = Rule.objects.bulk_create(rules)
         ConditionMixin._create_predicates(rules, rules_tree)
@@ -40,7 +39,7 @@ class ConditionMixin:
 
         predicates = []
         for rule in rules:
-            predicates_by_rule = rules_tree[rule.template_id]
+            predicates_by_rule = rules_tree[rule.api_name]
             for predicate in predicates_by_rule:
                 predicate.rule = rule
                 predicates.append(predicate)

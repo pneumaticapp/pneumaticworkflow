@@ -68,7 +68,8 @@ class TestWSSender:
                 'date_completed': None,
                 'date_completed_tsp': None,
                 'template_id': workflow.template_id,
-                'template_task_id': task.template_id,
+                'template_task_id': workflow.template_id,
+                'template_task_api_name': task.api_name,
                 'is_urgent': True,
             }
         )
@@ -159,7 +160,8 @@ class TestWSSender:
                 'date_completed': None,
                 'date_completed_tsp': None,
                 'template_id': workflow.template_id,
-                'template_task_id': task.template_id,
+                'template_task_id': workflow.template_id,
+                'template_task_api_name': task.api_name,
                 'is_urgent': False,
             }
         )

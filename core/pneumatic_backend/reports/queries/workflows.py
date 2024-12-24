@@ -353,7 +353,8 @@ class WorkflowBreakdownByTasksQuery(
             SELECT
               id,
               name,
-              number
+              number,
+              api_name
             FROM processes_tasktemplate
             WHERE is_deleted IS FALSE
               AND template_id = %(template_id)s
@@ -375,7 +376,7 @@ class WorkflowBreakdownByTasksQuery(
               ) AS overdue
             FROM template_tasks tt
             JOIN processes_task pt
-              ON pt.template_id = tt.id
+              ON pt.api_name = tt.api_name
               AND pt.is_deleted IS FALSE
             JOIN processes_workflow pw
               ON pt.workflow_id = pw.id
@@ -427,7 +428,7 @@ class WorkflowBreakdownByTasksNowQuery(
           ) AS overdue
         FROM processes_task pt
         JOIN processes_workflow pw ON pt.workflow_id = pw.id
-        JOIN processes_tasktemplate tt ON pt.template_id = tt.id
+        JOIN processes_tasktemplate tt ON pt.api_name = tt.api_name
         WHERE
           pt.is_deleted IS FALSE AND
           tt.is_deleted IS FALSE AND

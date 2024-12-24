@@ -42,7 +42,7 @@ class WorkflowListQuery(
         status: Optional[str] = None,
         ordering: Optional[WorkflowOrdering.LITERALS] = None,
         template: Optional[List[int]] = None,
-        template_task: Optional[List[int]] = None,
+        template_task_api_name: Optional[List[str]] = None,
         current_performer: Optional[List[int]] = None,
         workflow_starter: Optional[List[int]] = None,
         is_external: Optional[bool] = None,
@@ -57,7 +57,7 @@ class WorkflowListQuery(
         }
         self.ordering = ordering
         self.template = template
-        self.template_task = template_task
+        self.template_task_api_name = template_task_api_name
         self.current_performer = current_performer
         self.workflow_starter = workflow_starter
         self.is_external = is_external
@@ -88,11 +88,11 @@ class WorkflowListQuery(
 
     def _get_template_task(self):
         result, params = self._to_sql_list(
-            values=self.template_task,
-            prefix='template_task'
+            values=self.template_task_api_name,
+            prefix='template_task_api_name'
         )
         self.params.update(params)
-        return f"pt.template_id in {result}"
+        return f"pt.api_name in {result}"
 
     def _get_current_performer(self):
         result, params = self._to_sql_list(
@@ -127,7 +127,7 @@ class WorkflowListQuery(
         if self.template:
             where = f'{where} AND {self._get_template()}'
 
-        if self.template_task:
+        if self.template_task_api_name:
             where = f'{where} AND {self._get_template_task()}'
 
         if self.current_performer:
@@ -375,7 +375,7 @@ class WorkflowCountsByCPerformerQuery(
         status: Optional[str] = None,
         is_external: Optional[bool] = None,
         template_ids: Optional[List[int]] = None,
-        template_task_ids: Optional[List[int]] = None,
+        template_task_api_names: Optional[List[int]] = None,
         workflow_starter_ids: Optional[List[int]] = None
     ):
         self.status = WorkflowStatus.RUNNING
@@ -388,7 +388,7 @@ class WorkflowCountsByCPerformerQuery(
         self.is_external = is_external
         # Works for running workflows only
         self.template_ids = template_ids
-        self.template_task_ids = template_task_ids
+        self.template_task_api_names = template_task_api_names
         self.workflow_starter_ids = workflow_starter_ids
 
     def _get_template_ids(self):
@@ -399,13 +399,13 @@ class WorkflowCountsByCPerformerQuery(
         self.params.update(params)
         return f"pw.template_id in {result}"
 
-    def _get_template_task_ids(self):
+    def _get_template_task_api_names(self):
         result, params = self._to_sql_list(
-            values=self.template_task_ids,
-            prefix='template_task_id'
+            values=self.template_task_api_names,
+            prefix='template_task_api_names'
         )
         self.params.update(params)
-        return f"pt.template_id in {result}"
+        return f"pt.api_name in {result}"
 
     def _get_workflow_starter_ids(self):
         result, params = self._to_sql_list(
@@ -430,11 +430,12 @@ class WorkflowCountsByCPerformerQuery(
         if self.template_ids:
             where = f'{where} AND {self._get_template_ids()}'
 
-        if self.template_task_ids:
+        if self.template_task_api_names:
             where = (
-                f'{where} AND {self._get_template_task_ids()}'
+                f'{where} AND {self._get_template_task_api_names()}'
                 f'AND pt.is_deleted IS FALSE'
             )
+
         if self.workflow_starter_ids and self.is_external:
             where = (
                 f'{where} AND ('
@@ -606,6 +607,7 @@ class WorkflowCountsByTemplateTaskQuery(
           template_tasks AS (
             SELECT
               tt.id,
+              tt.api_name,
               tt.number
             FROM processes_template t
               INNER JOIN processes_tasktemplate tt
@@ -619,26 +621,27 @@ class WorkflowCountsByTemplateTaskQuery(
           ),
           result AS (
             SELECT
-              template_task_id,
+              template_task_api_name,
               COUNT(workflow_id) AS workflows_count
             FROM (
               SELECT
-                pt.template_id AS template_task_id,
+                pt.api_name AS template_task_api_name,
                 pw.id AS workflow_id
               {self._get_from()}
               {self._get_inner_where()}
               GROUP BY
                 pw.id,
-                pt.template_id
+                pt.api_name
             ) wf_by_template_tasks
-            GROUP BY template_task_id
+            GROUP BY template_task_api_name
           )
 
         SELECT
           tt.id AS template_task_id,
+          tt.api_name AS template_task_api_name,
           COALESCE(result.workflows_count, 0) AS workflows_count
         FROM template_tasks tt
-          LEFT JOIN result ON tt.id = result.template_task_id
+          LEFT JOIN result ON tt.api_name = result.template_task_api_name
         ORDER BY tt.id ASC """
 
     def get_sql(self):
@@ -657,7 +660,7 @@ class TaskListQuery(
         self,
         user: UserModel,
         template_id: Optional[int] = None,
-        template_task_id: Optional[int] = None,
+        template_task_api_name: Optional[str] = None,
         ordering: Optional[TaskOrdering] = None,
         assigned_to: Optional[int] = None,
         search: Optional[str] = None,
@@ -668,7 +671,7 @@ class TaskListQuery(
         """ Search string should be validated """
 
         self.template_id = template_id
-        self.template_task_id = template_task_id
+        self.template_task_api_name = template_task_api_name
         self.ordering = ordering
         self.is_completed = bool(is_completed)
         self.assigned_to = user.id if assigned_to is None else assigned_to
@@ -713,9 +716,9 @@ class TaskListQuery(
                 AND pw.status = %(wf_status)s
             """
 
-    def _get_template_task_id(self):
-        self.params['template_task_id'] = self.template_task_id
-        return 'pt.template_id = %(template_task_id)s'
+    def _get_template_task_api_name(self):
+        self.params['template_task_api_name'] = self.template_task_api_name
+        return 'pt.api_name = %(template_task_api_name)s'
 
     def _get_template_id(self):
         self.params['template_id'] = self.template_id
@@ -733,8 +736,9 @@ class TaskListQuery(
         if self.search_text:
             where += f' AND {self._get_search()}'
 
-        if self.template_task_id:
-            where += f' AND {self._get_template_task_id()}'
+        if self.template_task_api_name:
+            where += f' AND {self._get_template_task_api_name()}'
+
         if self.template_id:
             where += f' AND {self._get_template_id()}'
         return where
@@ -785,6 +789,7 @@ class TaskListQuery(
         return result
 
     def _get_inner_sql(self):
+        # TODO Remove in https://my.pneumatic.app/workflows/36988/
         return f"""
             SELECT DISTINCT ON (pt.id) pt.id,
                 pt.name,
@@ -802,7 +807,8 @@ class TaskListQuery(
                   EPOCH FROM pt.date_completed AT TIME ZONE 'UTC'
                 ) AS date_completed_tsp,
                 pw.template_id as template_id,
-                pt.template_id as template_task_id,
+                pt.id as template_task_id,
+                pt.api_name as template_task_api_name,
                 pt.is_urgent
             {self._get_tables()}
             {self._get_inner_where()}
@@ -1052,7 +1058,7 @@ class TemplateStepsQuery(
         ):
             join += """
                 JOIN processes_task pt
-                  ON ptt.id = pt.template_id
+                  ON ptt.api_name = pt.api_name
                 JOIN processes_workflow pw
                   ON pt.workflow_id = pw.id """
 

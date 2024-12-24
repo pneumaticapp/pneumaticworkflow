@@ -208,10 +208,10 @@ class TestWorkflowUpdate:
         assert first_task.conditions.count() == 1
         condition = first_task.conditions.get()
         assert condition.rules.count() == 2
-        assert Predicate.objects.filter(template_id__in=[
-            predicate_1.id,
-            predicate_2.id,
-            predicate_3.id,
+        assert Predicate.objects.filter(api_name__in=[
+            predicate_1.api_name,
+            predicate_2.api_name,
+            predicate_3.api_name,
         ]).count() == 3
         assert task_text_field.exists() is True
         assert task_text_field.first().name == field_one.name
@@ -396,7 +396,6 @@ class TestWorkflowUpdate:
             api_name=field_one.api_name,
             is_required=True,
             task=workflow_task,
-            template_id=field_one.id,
             workflow=workflow
         )
 
@@ -686,7 +685,6 @@ class TestWorkflowUpdate:
             api_name=field_one.api_name,
             is_required=True,
             task=workflow_task,
-            template_id=field_one.id,
             workflow=workflow
         )
         field_two = FieldTemplate.objects.create(
@@ -701,15 +699,14 @@ class TestWorkflowUpdate:
             api_name=field_two.api_name,
             is_required=True,
             task=workflow_task,
-            template_id=field_two.id,
             workflow=workflow
         )
-        selection_one = FieldTemplateSelection.objects.create(
+        FieldTemplateSelection.objects.create(
             value='first',
             field_template=field_two,
             template=template,
         )
-        selection_two = FieldTemplateSelection.objects.create(
+        FieldTemplateSelection.objects.create(
             value='second',
             field_template=field_two,
             template=template,
@@ -717,12 +714,10 @@ class TestWorkflowUpdate:
         FieldSelection.objects.create(
             value='first',
             field=second_workflow_field,
-            template_id=selection_one.id,
         )
         FieldSelection.objects.create(
             value='old',
             field=second_workflow_field,
-            template_id=selection_two.id,
         )
         kickoff_field_one = FieldTemplate.objects.create(
             type=FieldType.TEXT,
@@ -736,7 +731,6 @@ class TestWorkflowUpdate:
             api_name=kickoff_field_one.api_name,
             kickoff=workflow.kickoff_instance,
             is_required=True,
-            template_id=kickoff_field_one.id,
             workflow=workflow
         )
         kickoff_field_two = FieldTemplate.objects.create(
@@ -970,7 +964,6 @@ class TestWorkflowUpdate:
             name='Old name',
             api_name=kickoff_field_one.api_name,
             kickoff=workflow.kickoff_instance,
-            template_id=kickoff_field_one.id,
             workflow=workflow,
             value='http://file.png',
             clear_value='http://clear-file.png',

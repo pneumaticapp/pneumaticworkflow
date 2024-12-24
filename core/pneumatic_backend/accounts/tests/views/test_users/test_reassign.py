@@ -745,11 +745,9 @@ def test_reassign__condition__ok(api_client):
         task=first_task,
         action=Condition.SKIP_TASK,
         order=1,
-        template_id=template.id,
     )
     first_rule = Rule.objects.create(
-        condition=condition,
-        template_id=template.id,
+        condition=condition
     )
     predicate = Predicate.objects.create(
         rule=first_rule,
@@ -794,11 +792,9 @@ def test_reassign__new_user_is_used_in_condition__ok(api_client):
         task=first_task,
         action=Condition.SKIP_TASK,
         order=1,
-        template_id=template.id,
     )
     first_rule = Rule.objects.create(
         condition=condition,
-        template_id=template.id,
     )
     Predicate.objects.create(
         rule=first_rule,
@@ -806,7 +802,6 @@ def test_reassign__new_user_is_used_in_condition__ok(api_client):
         field_type=FieldType.USER,
         field='hero-1',
         value=old_user.id,
-        template_id=template.id,
     )
     Predicate.objects.create(
         rule=first_rule,
@@ -814,7 +809,6 @@ def test_reassign__new_user_is_used_in_condition__ok(api_client):
         field_type=FieldType.USER,
         field='hero-1',
         value=new_user.id,
-        template_id=template.id,
     )
 
     # act
@@ -855,21 +849,17 @@ def test_reassign__new_user_from_another_conditions__ok(api_client):
         task=task_1,
         action=Condition.SKIP_TASK,
         order=1,
-        template_id=template.id,
     )
     condition_2 = Condition.objects.create(
         task=task_2,
         action=Condition.SKIP_TASK,
         order=1,
-        template_id=template.id,
     )
     rule_1 = Rule.objects.create(
         condition=condition_1,
-        template_id=template.id,
     )
     rule_2 = Rule.objects.create(
         condition=condition_2,
-        template_id=template.id,
     )
     Predicate.objects.create(
         rule=rule_1,
@@ -927,11 +917,9 @@ def test_reassign__another_operator_in_condition__ok(api_client):
         task=first_task,
         action=Condition.SKIP_TASK,
         order=1,
-        template_id=template.id,
     )
     rule = Rule.objects.create(
         condition=condition,
-        template_id=template.id,
     )
     predicate_1 = Predicate.objects.create(
         rule=rule,
@@ -992,11 +980,9 @@ def test_reassign__user_another_account_in_condition__validation_error(
         task=first_task,
         action=Condition.SKIP_TASK,
         order=1,
-        template_id=template.id,
     )
     first_rule = Rule.objects.create(
         condition=condition,
-        template_id=template.id,
     )
     Predicate.objects.create(
         rule=first_rule,
@@ -1046,11 +1032,9 @@ def test_reassign__another_field_type_in_condition__ok(api_client):
         task=first_task,
         action=Condition.SKIP_TASK,
         order=1,
-        template_id=template.id,
     )
     first_rule = Rule.objects.create(
         condition=condition,
-        template_id=template.id,
     )
     predicate = Predicate.objects.create(
         rule=first_rule,

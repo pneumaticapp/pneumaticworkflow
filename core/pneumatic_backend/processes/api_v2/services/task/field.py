@@ -333,7 +333,6 @@ class TaskFieldService(BaseWorkflowService):
             description=instance_template.description,
             api_name=instance_template.api_name,
             order=instance_template.order,
-            template_id=instance_template.id,
             workflow_id=kwargs['workflow_id']
         )
         if not kwargs.get('skip_value'):

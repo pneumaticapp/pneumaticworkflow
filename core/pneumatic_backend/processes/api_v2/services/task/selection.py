@@ -28,7 +28,6 @@ class SelectionService(BaseWorkflowService):
         self.instance = FieldSelection.objects.create(
             field_id=kwargs['field_id'],
             value=instance_template.value,
-            template_id=instance_template.id,
             api_name=instance_template.api_name,
             is_selected=kwargs['is_selected'],
         )

@@ -69,7 +69,6 @@ class TaskService(
             clear_description=clear_description,
             description_template=instance_template.description,
             number=instance_template.number,
-            template_id=instance_template.id,
             require_completion_by_all=(
                 instance_template.require_completion_by_all
             ),
@@ -163,7 +162,7 @@ class TaskService(
                         action=template.action,
                         order=template.order,
                         task=self.instance,
-                        template_id=template.id,
+                        api_name=template.api_name,
                     )
                 )
                 rules_tree = []
@@ -175,13 +174,13 @@ class TaskService(
                             field_type=predicate_template.field_type,
                             value=predicate_template.value,
                             field=predicate_template.field,
-                            template_id=predicate_template.id,
+                            api_name=predicate_template.api_name,
                         ))
                     rules_tree.append((
-                        Rule(template_id=rule_template.id),
+                        Rule(api_name=rule_template.api_name),
                         predicates
                     ))
-                conditions_tree[template.id] = rules_tree
+                conditions_tree[template.api_name] = rules_tree
             conditions = Condition.objects.bulk_create(conditions)
             self.create_rules(conditions, conditions_tree)
 

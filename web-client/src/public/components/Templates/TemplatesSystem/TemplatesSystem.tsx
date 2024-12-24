@@ -112,6 +112,7 @@ export function TemplatesSystem({
         loader={skeleton}
         hasMore={!isListFullLoaded || isLoading}
         className={styles['cards-wrapper']}
+        scrollableTarget="app-container"
       >
         {items.map((template: ISystemTemplate) => {
           const categoryLocal = categories.filter(

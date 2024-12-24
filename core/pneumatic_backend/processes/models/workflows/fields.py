@@ -48,8 +48,6 @@ class TaskField(
         related_name='output',
         null=True,
     )
-    # TODO deprecate template_id, use api_name
-    template_id = models.IntegerField(null=True)
     user_id = models.IntegerField(null=True)
     kickoff = models.ForeignKey(
         KickoffValue,
@@ -78,10 +76,6 @@ class FieldSelection(
         TaskField,
         on_delete=models.CASCADE,
         related_name='selections'
-    )
-    # TODO deprecate template_id, use api_name
-    template_id = models.IntegerField(
-        null=True,
     )
     is_selected = models.BooleanField(default=False)
     value = models.CharField(max_length=200)
