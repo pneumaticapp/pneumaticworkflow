@@ -58,14 +58,17 @@ services:
       sh -c "python manage.py migrate &&
              python manage.py collectstatic --no-input &&
              python manage.py compilemessages &&
-             gunicorn pneumatic_backend.asgi:application --workers 2 -k uvicorn.workers.UvicornWorker --worker-tmp-dir /dev/shm --bind unix:/tmp/gunicorn/pneumatic-backend.sock --timeout 200"
+             gunicorn pneumatic_backend.asgi:application --workers 2 -k uvicorn.workers.UvicornWorker --worker-tmp-dir /dev/shm --bind 0.0.0.0:5000 --timeout 200"
+    expose:
+      - 5000
     env_file:
       - ./default-project.env
       - ./postgres/default.env
       - ./core/default.env
     volumes:
-      - pneumatic-backend-socket:/tmp/gunicorn/
       - pneumatic-backend-staticfiles:/pneumatic_backend/staticfiles
+    ports:
+      - "5000:5000"
     depends_on:
       - postgres
       - rabbitmq
@@ -153,3 +156,4 @@ networks:
 volumes:
   pneumatic-backend-socket:
   pneumatic-backend-staticfiles:
+
