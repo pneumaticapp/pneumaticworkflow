@@ -21,6 +21,7 @@ from pneumatic_backend.processes.models import (
 from pneumatic_backend.processes.tasks.webhooks import (
     send_task_completed_webhook,
     send_workflow_completed_webhook,
+    send_task_returned_webhook,
 )
 from pneumatic_backend.webhooks.models import WebHook
 from pneumatic_backend.processes.services.condition_check.service import (
@@ -43,6 +44,7 @@ from pneumatic_backend.notifications.tasks import (
 from pneumatic_backend.processes.api_v2.services.task.field import (
     TaskFieldService
 )
+from pneumatic_backend.processes.messages import workflow as messages
 
 
 UserModel = get_user_model()
@@ -186,9 +188,9 @@ class WorkflowActionService:
         """ Resume delayed workflow by timeout
             or after remove delay in template """
 
-        if workflow.status == WorkflowStatus.RUNNING:
+        if workflow.is_running:
             return
-        elif workflow.status in WorkflowStatus.END_STATUSES:
+        elif workflow.is_completed:
             raise exceptions.ResumeNotDelayedWorkflow()
 
         with transaction.atomic():
@@ -211,9 +213,9 @@ class WorkflowActionService:
 
         """ Resume delayed workflow before the timeout """
 
-        if workflow.status == WorkflowStatus.RUNNING:
+        if workflow.is_running:
             return
-        elif workflow.status in WorkflowStatus.END_STATUSES:
+        elif workflow.is_completed:
             raise exceptions.ResumeNotDelayedWorkflow()
 
         with transaction.atomic():
@@ -771,3 +773,177 @@ class WorkflowActionService:
             # account owner force completion
             # not complete performers, but send ws remove task
             self.complete_task(task=task)
+
+    def _task_is_returnable(self, task: Task):
+        service = WorkflowActionService(user=self.user)
+        action_method, _ = service.execute_condition(task)
+        if action_method.__name__ == 'skip_task':
+            if task.number == 1:
+                return False
+            return self._task_is_returnable(task=task.prev)
+        return True
+
+    def _return_workflow_to_task(
+        self,
+        workflow: Workflow,
+        revert_from_task: Task,
+        revert_to_task: Task,
+        is_revert: bool = False
+    ):
+
+        """ Return workflow to specific task """
+
+        with transaction.atomic():
+            if is_revert:
+                WorkflowEventService.task_revert_event(
+                    task=revert_to_task,
+                    user=self.user
+                )
+            else:
+                WorkflowEventService.workflow_revert_event(
+                    task=revert_from_task,
+                    user=self.user,
+                )
+            next_tasks = workflow.tasks.filter(
+                number__gt=revert_to_task.number
+            )
+            next_tasks.update(
+                date_started=None,
+                date_completed=None,
+                is_completed=False,
+                is_skipped=False
+            )
+            (
+                TaskPerformer.objects
+                .with_tasks_after(revert_to_task)
+                .by_workflow(workflow.id)
+                .exclude_directly_deleted()
+                .update(is_completed=False, date_completed=None)
+            )
+            Delay.objects.filter(
+                task__in=next_tasks,
+                directly_status=DirectlyStatus.NO_STATUS
+            ).update(
+                start_date=None,
+                end_date=None,
+                estimated_end_date=None,
+            )
+            workflow_is_running = workflow.is_running
+
+            # update workflow logic
+            update_fields = ['current_task']
+            if workflow.status == WorkflowStatus.DELAYED:
+                delay = revert_from_task.get_active_delay()
+                if delay:
+                    delay.end_date = timezone.now()
+                    if delay.directly_status:
+                        delay.save(update_fields=['end_date'])
+                    else:
+                        revert_from_task.reset_delay(delay)
+            if not workflow.is_running:
+                workflow.date_completed = None
+                workflow.status = WorkflowStatus.RUNNING
+                update_fields.append('status')
+                update_fields.append('date_completed')
+
+            workflow.current_task -= 1
+
+            if revert_to_task is not None:
+                workflow.current_task = revert_to_task.number
+
+            workflow.save(update_fields=update_fields)
+            if workflow_is_running:
+                WSSender.send_removed_task_notification(revert_from_task)
+
+            # end update workflow logic
+            action_method, by_cond = self.execute_condition(revert_to_task)
+            action_method(
+                workflow=workflow,
+                task=revert_to_task,
+                user=self.user,
+                is_reverted=True,
+                by_condition=by_cond,
+            )
+
+        if is_revert:
+            AnalyticService.task_returned(
+                user=self.user,
+                task=revert_from_task,
+                is_superuser=self.is_superuser,
+                auth_type=self.auth_type
+            )
+        else:
+            AnalyticService.workflow_returned(
+                user=self.user,
+                task=revert_to_task,
+                workflow=workflow,
+                is_superuser=self.is_superuser,
+                auth_type=self.auth_type,
+            )
+        acc_id = self.user.account_id
+        if WebHook.objects.on_account(acc_id).task_returned().exists():
+            send_task_returned_webhook.delay(
+                user_id=self.user.id,
+                account_id=acc_id,
+                payload=revert_to_task.webhook_payload()
+            )
+
+    def revert(self, workflow: Workflow):
+
+        """ Can only be applied to a running workflow """
+
+        revert_from_task = workflow.current_task_instance
+        if revert_from_task.number == 1:
+            raise exceptions.FirstTaskCannotBeReverted()
+        revert_to_task = revert_from_task.prev
+        if workflow.is_running:
+            if revert_from_task.sub_workflows.running().exists():
+                raise exceptions.BlockedBySubWorkflows()
+        elif workflow.is_delayed:
+            raise exceptions.DelayedWorkflowCannotBeChanged()
+        elif workflow.is_completed:
+            raise exceptions.CompletedWorkflowCannotBeChanged()
+
+        action_method, _ = self.execute_condition(revert_to_task)
+        if action_method.__name__ == 'skip_task':
+            if revert_to_task.number == 1:
+                raise exceptions.WorkflowActionServiceException(
+                    messages.MSG_PW_0079(revert_to_task.name)
+                )
+            if not self._task_is_returnable(revert_to_task.prev):
+                raise exceptions.WorkflowActionServiceException(
+                    messages.MSG_PW_0080(revert_to_task.name)
+                )
+        self._return_workflow_to_task(
+            workflow=workflow,
+            revert_from_task=revert_from_task,
+            revert_to_task=revert_to_task,
+            is_revert=True
+        )
+
+    def return_to(
+        self,
+        workflow: Workflow,
+        revert_to_task: Optional[Task] = None,
+    ):
+
+        revert_from_task = workflow.current_task_instance
+        if workflow.is_running:
+            if revert_from_task.sub_workflows.running().exists():
+                raise exceptions.BlockedBySubWorkflows()
+            if revert_to_task.number >= revert_from_task.number:
+                raise exceptions.ReturnToFutureTask()
+        else:
+            if revert_to_task.number > revert_from_task.number:
+                raise exceptions.ReturnToFutureTask()
+
+        action_method, _ = self.execute_condition(revert_to_task)
+        if action_method.__name__ == 'skip_task':
+            raise exceptions.WorkflowActionServiceException(
+                messages.MSG_PW_0079(revert_to_task.name)
+            )
+        self._return_workflow_to_task(
+            workflow=workflow,
+            revert_from_task=revert_from_task,
+            revert_to_task=revert_to_task,
+        )

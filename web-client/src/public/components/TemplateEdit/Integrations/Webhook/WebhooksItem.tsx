@@ -1,26 +1,13 @@
-/* eslint-disable */
-/* prettier-ignore */
+import { useIntl } from 'react-intl';
 import React, { useEffect, useState } from 'react';
 import { useDispatch } from 'react-redux';
-import {
-  addWebhooks,
-  removeWebhooks,
-} from '../../../../redux/webhooks/actions';
-import {
-  EWebhooksSubscriberStatus,
-  EWebhooksTypeEvent,
-  IWebhookUrl,
-} from '../../../../types/webhooks';
-import {
-  isEmpty,
-  isInvalidUrlWithProtocol,
-  validateFieldCreator,
-} from '../../../../utils/validators';
+import { addWebhooks, removeWebhooks } from '../../../../redux/webhooks/actions';
+import { EWebhooksSubscriberStatus, EWebhooksTypeEvent, IWebhookUrl } from '../../../../types/webhooks';
+import { isEmpty, isInvalidUrlWithProtocol, validateFieldCreator } from '../../../../utils/validators';
 import { InputField } from '../../../UI/Fields/InputField/InputField';
 import { Button } from '../../../UI/Buttons/Button/Button';
 
 import styles from './WebhooksItem.css';
-import { useIntl } from 'react-intl';
 
 export interface IWebhookItemProps {
   url: IWebhookUrl;
@@ -85,23 +72,16 @@ export function WebhookItem({ event, url, status }: IWebhookItemProps) {
     dispatch(removeWebhooks({ event }));
   };
 
-  const onKeyPress: React.DOMAttributes<HTMLInputElement>['onKeyPress'] = (
-    event,
-  ) => {
-    if (
-      event.key === 'Enter' &&
-      status !== EWebhooksSubscriberStatus.Subscribed
-    ) {
+  const onKeyPress: React.DOMAttributes<HTMLInputElement>['onKeyPress'] = (e) => {
+    if (e.key === 'Enter' && status !== EWebhooksSubscriberStatus.Subscribed) {
       onSubscribe();
     }
   };
 
-  const onChangeWebhookUrl = (event: React.FormEvent<HTMLInputElement>) => {
-    if (status !== EWebhooksSubscriberStatus.NotSubscribed) {
-      return;
-    }
+  const onChangeWebhookUrl = (e: React.FormEvent<HTMLInputElement>) => {
+    if (status !== EWebhooksSubscriberStatus.NotSubscribed) return;
     setWebhookUrlError('');
-    setWebhookUrlState(event.currentTarget.value);
+    setWebhookUrlState(e.currentTarget.value);
   };
 
   useEffect(() => {
@@ -115,7 +95,7 @@ export function WebhookItem({ event, url, status }: IWebhookItemProps) {
         <InputField
           fieldSize="md"
           value={value}
-          placeholder={'URL'}
+          placeholder="URL"
           errorMessage={webhookUrlError}
           onKeyPress={onKeyPress}
           onChange={onChangeWebhookUrl}
@@ -127,17 +107,13 @@ export function WebhookItem({ event, url, status }: IWebhookItemProps) {
           label={
             status === EWebhooksSubscriberStatus.Subscribed
               ? formatMessage({
-                  id: 'template.intergrations-webhook-unsubscribe',
-                })
+                id: 'template.intergrations-webhook-unsubscribe',
+              })
               : formatMessage({
-                  id: 'template.intergrations-webhook-subscribe',
-                })
+                id: 'template.intergrations-webhook-subscribe',
+              })
           }
-          onClick={
-            status === EWebhooksSubscriberStatus.Subscribed
-              ? onUnsubscribe
-              : onSubscribe
-          }
+          onClick={status === EWebhooksSubscriberStatus.Subscribed ? onUnsubscribe : onSubscribe}
           isLoading={[
             EWebhooksSubscriberStatus.Loading,
             EWebhooksSubscriberStatus.Subscribing,

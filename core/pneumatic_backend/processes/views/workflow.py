@@ -36,7 +36,6 @@ from pneumatic_backend.processes.serializers.comments import (
 from pneumatic_backend.processes.serializers.workflow import (
     WorkflowDetailsSerializer,
     WorkflowCompleteSerializer,
-    WorkflowRevertSerializer,
     WorkflowReturnToTaskSerializer,
     WorkflowFinishSerializer,
     WorkflowUpdateSerializer,
@@ -89,7 +88,6 @@ class WorkflowViewSet(
         'retrieve': WorkflowDetailsSerializer,
         'comment': CommentCreateSerializer,
         'complete': WorkflowCompleteSerializer,
-        'revert': WorkflowRevertSerializer,
         'return_to': WorkflowReturnToTaskSerializer,
         'finish': WorkflowFinishSerializer,
         'partial_update': WorkflowUpdateSerializer,
@@ -337,26 +335,38 @@ class WorkflowViewSet(
 
     @action(methods=['post'], detail=True, url_path='task-revert')
     def revert(self, request, pk=None):
-        queryset = self.get_queryset().running()
-        workflow = get_object_or_404(queryset, id=pk)
-        serializer = self.get_serializer(
-            instance=workflow,
-            data=request.data
+        workflow = self.get_object()
+        service = WorkflowActionService(
+            user=request.user,
+            auth_type=request.token_type,
+            is_superuser=request.is_superuser
         )
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
+        try:
+            service.revert(workflow)
+        except WorkflowActionServiceException as ex:
+            raise_validation_error(message=ex.message)
         return self.response_ok()
 
     @action(methods=['post'], detail=True, url_path='return-to')
-    def return_to(self, request, pk=None):
-        queryset = self.get_queryset()
-        workflow = get_object_or_404(queryset, id=pk)
+    def return_to(self, request, **kwargs):
+        workflow = self.get_object()
         serializer = self.get_serializer(
-            instance=workflow,
-            data=request.data
+            data=request.data,
+            extra_fields={'workflow': workflow}
         )
         serializer.is_valid(raise_exception=True)
-        serializer.save()
+        service = WorkflowActionService(
+            user=request.user,
+            auth_type=request.token_type,
+            is_superuser=request.is_superuser
+        )
+        try:
+            service.return_to(
+                workflow=workflow,
+                revert_to_task=serializer.validated_data['task']
+            )
+        except WorkflowActionServiceException as ex:
+            raise_validation_error(message=ex.message)
         return self.response_ok()
 
     def destroy(self, request, *args, **kwargs):

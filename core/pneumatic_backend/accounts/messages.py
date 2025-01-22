@@ -66,7 +66,7 @@ MSG_A_0033 = _('Tenants')
 MSG_A_0034 = _('Deletion not allowed while the account contains tenants.')
 MSG_A_0035 = _(
     'Your subscription has already expired. '
-    'Renew subscription or downgrade to Freemium plan.'
+    'Renew subscription or contact support.'
 )
 # Translators: Account owner permission
 MSG_A_0036 = _('Only the account owner is allowed to perform this action.')

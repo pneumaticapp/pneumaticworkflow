@@ -7,7 +7,6 @@ from pneumatic_backend.processes.models import (
 )
 from pneumatic_backend.processes.enums import (
     DirectlyStatus,
-    WorkflowStatus
 )
 from pneumatic_backend.processes.api_v2.services.task.exceptions import (
     PerformersServiceException
@@ -73,7 +72,7 @@ class BasePerformersService:
     ):
 
         workflow = task.workflow
-        if workflow.status in WorkflowStatus.END_STATUSES:
+        if workflow.is_completed:
             raise PerformersServiceException(MSG_PW_0017)
         if task.number != workflow.current_task:
             raise PerformersServiceException(MSG_PW_0018)

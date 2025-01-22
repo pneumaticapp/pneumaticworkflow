@@ -63,7 +63,7 @@
   line-height: 20px;
   white-space: nowrap;
   text-overflow: ellipsis;
-  word-break: break-all;
+  word-break: break-word;
   color: var(--pneumatic-color-black100);
   transition: all 0.2s ease-in-out;
 

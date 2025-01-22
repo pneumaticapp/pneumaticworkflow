@@ -463,7 +463,7 @@ class TestTaskView:
             f'/workflows/{workflow.id}/task-complete',
             data={'task_id': second_task.id}
         )
-        response3 = api_client.post(
+        response_revert = api_client.post(
             f'/workflows/{workflow.id}/task-revert',
         )
         workflow.refresh_from_db()
@@ -475,7 +475,7 @@ class TestTaskView:
         # assert
         assert response1.status_code == 204
         assert response2.status_code == 400
-        assert response3.status_code == 400
+        assert response_revert.status_code == 400
         assert response4.status_code == 404
         assert current_task.id == second_task.id
 

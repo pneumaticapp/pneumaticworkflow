@@ -1,6 +1,3 @@
-/* eslint-disable */
-/* prettier-ignore */
-
 import produce from 'immer';
 import { TWebhooksActions, EWebhooksActions } from './actions';
 import { EWebhooksSubscriberStatus, EWebhooksTypeEvent } from '../../types/webhooks';
@@ -28,15 +25,20 @@ const initialWebhooks: IWebhookStore = {
 export const reducer = (state = initialWebhooks, action: TWebhooksActions): IWebhookStore => {
   switch (action.type) {
     case EWebhooksActions.SetWebhooksUrl:
-      return produce(state, draftState => {
-        draftState[action.payload.event].url = action.payload.url;
+      return produce(state, (draftState) => {
+        if (draftState[action.payload.event]) {
+          draftState[action.payload.event].url = action.payload.url;
+        }
       });
 
     case EWebhooksActions.SetWebhooksStatus:
-      return produce(state, draftState => {
-        draftState[action.payload.event].status = action.payload.status;
+      return produce(state, (draftState) => {
+        if (draftState[action.payload.event]) {
+          draftState[action.payload.event].status = action.payload.status;
+        }
       });
 
-  default: return state;
+    default:
+      return state;
   }
 };
