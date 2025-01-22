@@ -195,6 +195,7 @@ export const ruMessages = {
   'user-info.tasks-digest': 'Еженедельный Дайджест Задач',
   'user-info.title': 'Мой профиль',
   'user-info.personalization': 'Персонализация',
+  'user-info.logo-placeholder': 'Выбрать файл',
   'user-info.logo-sm': 'Основной логотип',
   'user-info.logo-sm-desc':
     'Это логотип, который ваши клиенты увидят в приложении. Изображение в формате PNG, JPG или SVG размером 80x80 пикселей и до 5 МБ.',

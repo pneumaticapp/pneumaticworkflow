@@ -2,13 +2,11 @@
 import re
 from typing import Dict, Any
 from django.contrib.auth import get_user_model
+from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django.utils import timezone
 from rest_framework import serializers
 from rest_framework.serializers import ValidationError
-from pneumatic_backend.processes.api_v2.services import (
-    WorkflowEventService,
-)
 from pneumatic_backend.processes.messages import workflow as messages
 from pneumatic_backend.generics.mixins.serializers import (
     CustomValidationErrorMixin,
@@ -20,14 +18,12 @@ from pneumatic_backend.processes.models import (
     Workflow,
     TaskPerformer,
     Task,
-    Delay,
     TaskTemplate,
 )
 from pneumatic_backend.processes.enums import (
     WorkflowStatus,
     WorkflowApiStatus,
     WorkflowOrdering,
-    DirectlyStatus,
 )
 from pneumatic_backend.processes.serializers.kickoff_value import (
     KickoffValueInfoSerializer,
@@ -38,7 +34,6 @@ from pneumatic_backend.processes.serializers.template import (
 from pneumatic_backend.processes.serializers.task_field import (
     WorkflowTaskFieldSerializer,
 )
-from pneumatic_backend.processes.services.websocket import WSSender
 from pneumatic_backend.processes.services.workflow_action import (
     WorkflowActionService,
 )
@@ -48,7 +43,6 @@ from pneumatic_backend.processes.api_v2.serializers.workflow.task import (
 )
 from pneumatic_backend.processes.api_v2.serializers.workflow.mixins import (
     WorkflowSerializerMixin,
-    BaseWorkflowRevertSerializerMixin
 )
 from pneumatic_backend.processes.services.urgent import (
     UrgentService
@@ -56,11 +50,6 @@ from pneumatic_backend.processes.services.urgent import (
 from pneumatic_backend.generics.fields import (
     AccountPrimaryKeyRelatedField,
     TimeStampField,
-)
-from pneumatic_backend.analytics.services import AnalyticService
-from pneumatic_backend.webhooks.models import WebHook
-from pneumatic_backend.processes.tasks.webhooks import (
-    send_task_returned_webhook,
 )
 from pneumatic_backend.processes.utils.common import (
     contains_fields_vars,
@@ -350,7 +339,8 @@ class WorkflowCompleteSerializer(
     serializers.Serializer
 ):
 
-    task_id = serializers.IntegerField()
+    task_id = serializers.IntegerField(required=False)
+    task_api_name = serializers.CharField(required=False)
     output = serializers.DictField(
         write_only=True,
         allow_empty=True,
@@ -362,13 +352,19 @@ class WorkflowCompleteSerializer(
         workflow = self.context['workflow']
         if workflow.status == WorkflowStatus.DELAYED:
             raise ValidationError(messages.MSG_PW_0004)
-        elif workflow.status in WorkflowStatus.END_STATUSES:
+        elif workflow.is_completed:
             raise ValidationError(messages.MSG_PW_0008)
 
         task = workflow.current_task_instance
-        if task.id != attrs['task_id']:
+        task_id = attrs.get('task_id')
+        task_api_name = attrs.get('task_api_name')
+        if not (task_id or task_api_name):
+            raise ValidationError(messages.MSG_PW_0076)
+        if task_id and task.id != task_id:
             raise ValidationError(messages.MSG_PW_0018)
-        elif not task.checklists_completed:
+        if task_api_name and task.api_name != task_api_name:
+            raise ValidationError(messages.MSG_PW_0018)
+        if not task.checklists_completed:
             raise ValidationError(messages.MSG_PW_0006)
         elif task.sub_workflows.running().exists():
             raise ValidationError(messages.MSG_PW_0070)
@@ -391,204 +387,29 @@ class WorkflowCompleteSerializer(
         return attrs
 
 
-class WorkflowRevertSerializer(
-    CustomValidationErrorMixin,
-    serializers.ModelSerializer,
-    BaseWorkflowRevertSerializerMixin,
-):
-
-    class Meta:
-        model = Workflow
-        fields = ()
-
-    def validate(self, attrs):
-        current_task = self.instance.current_task_instance
-        if (
-            not current_task.is_returnable(user=self.context['user']) or
-            self.instance.status != WorkflowStatus.RUNNING
-        ):
-            raise ValidationError(messages.MSG_PW_0012)
-        if current_task.sub_workflows.running().exists():
-            raise ValidationError(messages.MSG_PW_0071)
-        return attrs
-
-    def update(self, instance: Workflow, validated_data):
-
-        """ TODO Move to WorkflowActionService.return_to in
-              https://my.pneumatic.app/workflows/23046/ """
-
-        user = self.context['user']
-        current_task = instance.current_task_instance
-        previous_task = current_task.prev
-        with transaction.atomic():
-            current_task.date_started = None
-            current_task.date_completed = None
-            current_task.is_completed = False
-            current_task.is_skipped = False
-            current_task.save(
-                update_fields=[
-                    'date_started',
-                    'date_completed',
-                    'is_completed',
-                    'is_skipped'
-                ]
-            )
-            current_task.taskperformer_set.exclude_directly_deleted().update(
-                is_completed=False,
-                date_completed=None
-            )
-            WorkflowEventService.task_revert_event(
-                task=previous_task,
-                user=user
-            )
-            self._update_workflow(
-                workflow=instance,
-                current_task=current_task,
-            )
-            workflow_action_service = WorkflowActionService(
-                user=user,
-                is_superuser=self.context['is_superuser'],
-                auth_type=self.context['auth_type'],
-            )
-            action_method, by_cond = workflow_action_service.execute_condition(
-                previous_task
-            )
-            action_method(
-                workflow=instance,
-                task=previous_task,
-                user=user,
-                is_reverted=True,
-                by_condition=by_cond,
-            )
-        WSSender.send_removed_task_notification(current_task)
-        AnalyticService.task_returned(
-            user=user,
-            task=current_task,
-            is_superuser=self.context['is_superuser'],
-            auth_type=self.context['auth_type']
-        )
-        acc_id = user.account_id
-        if WebHook.objects.on_account(acc_id).task_returned().exists():
-            send_task_returned_webhook.delay(
-                user_id=user.id,
-                account_id=acc_id,
-                payload=previous_task.webhook_payload()
-            )
-        return instance
-
-
 class WorkflowReturnToTaskSerializer(
     CustomValidationErrorMixin,
-    serializers.ModelSerializer,
-    BaseWorkflowRevertSerializerMixin,
+    serializers.Serializer
 ):
 
-    class Meta:
-        model = Workflow
-        fields = ('task',)
+    task = serializers.IntegerField(required=False)
+    task_api_name = serializers.CharField(required=False)
 
-    task = AccountPrimaryKeyRelatedField(queryset=Task.objects.all())
+    def validate(self, data):
+        workflow = self.context['workflow']
+        task_id = data.get('task')
+        task_api_name = data.get('task_api_name')
 
-    def validate(self, attrs):
-        if (
-            self.instance.current_task == 1 and
-            self.instance.status != WorkflowStatus.DONE
-        ):
-            raise ValidationError(messages.MSG_PW_0012)
-        current_task = self.instance.current_task_instance
-        if current_task.sub_workflows.running().exists():
-            raise ValidationError(messages.MSG_PW_0071)
-        return attrs
-
-    def validate_task(self, value):
-
-        revert_to_task = value
-        if self.instance.current_task < revert_to_task.number or (
-            self.instance.current_task == revert_to_task.number and
-            self.instance.status != WorkflowStatus.DONE
-        ):
-            raise ValidationError(messages.MSG_PW_0013)
-        return value
-
-    def update(self, instance: Workflow, validated_data):
-
-        """ TODO Move to WorkflowActionService.return_to in
-              https://my.pneumatic.app/workflows/23046/ """
-
-        user = self.context.get('user')
-        revert_to_task = validated_data['task']
-
-        task_revert_from = instance.current_task_instance
-        next_tasks = instance.tasks.filter(number__gt=revert_to_task.number)
-
-        workflow_action_service = WorkflowActionService(
-            user=user,
-            auth_type=self.context['auth_type'],
-            is_superuser=self.context['is_superuser']
-        )
-        action_method, by_cond = workflow_action_service.execute_condition(
-            revert_to_task
-        )
-        if action_method == workflow_action_service.skip_task:
-            self.raise_validation_error(message=messages.MSG_PW_0012)
-
-        with transaction.atomic():
-            WorkflowEventService.workflow_revert_event(
-                task=task_revert_from,
-                user=user,
-            )
-            next_tasks.update(
-                date_started=None,
-                date_completed=None,
-                is_completed=False,
-                is_skipped=False
-            )
-            TaskPerformer.objects.with_tasks_after(
-                revert_to_task
-            ).by_workflow(
-                instance.id
-            ).exclude_directly_deleted().update(
-                is_completed=False,
-                date_completed=None
-            )
-            Delay.objects.filter(
-                task__in=next_tasks,
-                directly_status=DirectlyStatus.NO_STATUS
-            ).update(
-                start_date=None,
-                end_date=None,
-                estimated_end_date=None,
-            )
-            workflow_is_running = instance.is_running
-            self._update_workflow(
-                workflow=instance,
-                current_task=task_revert_from,
-                reverted_to=revert_to_task.number
-            )
-            if workflow_is_running:
-                WSSender.send_removed_task_notification(task_revert_from)
-            AnalyticService.workflow_returned(
-                user=user,
-                task=revert_to_task,
-                workflow=self.instance,
-                is_superuser=self.context['is_superuser'],
-                auth_type=self.context['auth_type'],
-            )
-            action_method(
-                workflow=instance,
-                task=revert_to_task,
-                user=user,
-                is_reverted=True,
-                by_condition=by_cond,
-            )
-        acc_id = user.account_id
-        if WebHook.objects.on_account(acc_id).task_returned().exists():
-            send_task_returned_webhook.delay(
-                user_id=user.id,
-                account_id=user.account_id,
-                payload=revert_to_task.webhook_payload()
-            )
-        return instance
+        if not (task_id or task_api_name):
+            raise ValidationError(messages.MSG_PW_0076)
+        try:
+            if task_id:
+                data['task'] = workflow.tasks.get(id=task_id)
+            else:
+                data['task'] = workflow.tasks.get(api_name=task_api_name)
+        except ObjectDoesNotExist:
+            raise ValidationError(messages.MSG_PW_0077)
+        return data
 
 
 class WorkflowFinishSerializer(
@@ -602,7 +423,7 @@ class WorkflowFinishSerializer(
         fields = ()
 
     def additional_validate(self, data: Dict[str, Any], **kwargs):
-        if self.instance.status in WorkflowStatus.END_STATUSES:
+        if self.instance.is_completed:
             self.raise_validation_error(message=messages.MSG_PW_0008)
 
         if not self.instance.finalizable:

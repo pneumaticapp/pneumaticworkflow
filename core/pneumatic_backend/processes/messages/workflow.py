@@ -16,7 +16,6 @@ MSG_PW_0008 = _('You have already completed this workflow.')
 MSG_PW_0009 = _('You are not allowed to finish this workflow.')
 MSG_PW_0010 = _('Task already completed.')  # TODO Not used
 MSG_PW_0011 = _('You don\'t have permission for complete the task.')
-MSG_PW_0012 = _('The task cannot be returned.')
 # Translators: Task return api
 MSG_PW_0013 = _('The supplied task number is incorrect.')
 # Translators: Create / delete task performer action
@@ -167,3 +166,22 @@ MSG_PW_0075 = _(
     'You need to be added to the task as a performer '
     'in order to create a embedded workflows.'
 )
+MSG_PW_0076 = _('You need to pass in a "task_id", or a "task api_name".')
+MSG_PW_0077 = _('The passed in task was not found in the workflow.')
+MSG_PW_0078 = _('You can\'t revert from the first task.')
+MSG_PW_0079 = lambda task_name: format_lazy(
+    _(
+        'Unable return to "{task_name}" '
+        'because it was skipped by a condition.'
+    ),
+    task_name=task_name
+)
+MSG_PW_0080 = lambda task_name: format_lazy(
+    _(
+        'Unable return to "{task_name}", '
+        'because it was skipped by a condition '
+        '(as were all the tasks before it).'
+    ),
+    task_name=task_name
+)
+MSG_PW_0081 = _("A workflow can't return to a later task.")

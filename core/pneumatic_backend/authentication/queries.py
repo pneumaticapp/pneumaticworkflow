@@ -28,7 +28,7 @@ class GetGuestQuery(SqlQueryObject):
 
     def _get_wf_filter(self):
         result, params = self._to_sql_list(
-            values=WorkflowStatus.END_STATUSES,
+            values=WorkflowStatus.DONE,
             prefix='wf_status'
         )
         self.params.update(params)

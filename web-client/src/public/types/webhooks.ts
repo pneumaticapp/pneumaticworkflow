@@ -8,7 +8,7 @@ export type IWebhookUrl = string | null;
 export enum EWebhooksTypeEvent {
   workflowStarted = 'workflow_started',
   workflowCompleted = 'workflow_completed',
-  taskCompleted = 'task_completed_v2',
+  taskCompleted = 'task_completed',
   taskReturned = 'task_returned',
 }
 

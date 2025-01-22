@@ -201,6 +201,7 @@ export const enMessages = {
   'user-info.tasks-digest': 'Tasks Weekly Digest',
   'user-info.title': 'My profile',
   'user-info.personalization': 'Personalization',
+  'user-info.logo-placeholder': 'Select file',
   'user-info.logo-sm': 'Small logo',
   'user-info.logo-sm-desc':
     'This is the logo your clients will see in the app. An 80x80px PNG, JPG, or SVG picture up to 5 MB in size.',
