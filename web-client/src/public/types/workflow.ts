@@ -47,7 +47,6 @@ export interface IWorkflowDetailsKickoff {
 
 export interface IWorkflowLogItem {
   id: number;
-  workflowId: number;
   created: string;
   status: string;
   task: IWorkflowLogTask | null;

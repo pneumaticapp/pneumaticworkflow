@@ -40,6 +40,7 @@ export const setCookie = (
       cookieExpires = expires.toUTCString();
     }
   }
+
   document.cookie =
     // tslint:disable-next-line:prefer-template
     `${name}=${encodeURIComponent(value)}; ` +

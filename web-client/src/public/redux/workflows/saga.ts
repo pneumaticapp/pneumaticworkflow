@@ -45,7 +45,7 @@ import {
   TWorkflowDetailsResponse,
 } from '../../types/workflow';
 import { ERoutes } from '../../constants/routes';
-import { getWorkflowsStore, getWorkflowsSearchText, getWorkflowsStatus, getTaskStore } from '../selectors/workflows';
+import { getWorkflowsStore, getWorkflowsSearchText, getWorkflowsStatus } from '../selectors/workflows';
 import { getEditKickoff, mapFilesToRequest } from '../../utils/workflows';
 import { getErrorMessage } from '../../utils/getErrorMessage';
 import { getWorkflows } from '../../api/getWorkflows';
@@ -53,7 +53,7 @@ import { getWorkflow } from '../../api/getWorkflow';
 import { getWorkflowLog } from '../../api/getWorkflowLog';
 import { returnWorkflowToTask } from '../../api/returnWorkflowToTask';
 import { history } from '../../utils/history';
-import { IStoreTask, IStoreWorkflows } from '../../types/redux';
+import { IStoreWorkflows } from '../../types/redux';
 import { logger } from '../../utils/logger';
 import { NotificationManager } from '../../components/UI/Notifications';
 import { sendWorkflowComment } from '../../api/sendWorkflowComment';
@@ -710,15 +710,10 @@ export function* watchNewWorkflowsEvent() {
   while (true) {
     const newEvent: IWorkflowLogItem = yield take(channel);
     const timezone: ReturnType<typeof getUserTimezone> = yield select(getUserTimezone);
-    const { data }: IStoreTask = yield select(getTaskStore);
-    const { workflow }: IStoreTask = yield select(getWorkflowsStore);
 
     const formattedNewEvent: IWorkflowLogItem = mapBackendNewEventToRedux(newEvent, timezone);
-
-    if (newEvent.workflowId === data?.workflow.id || newEvent?.workflowId === workflow?.id) {
-      yield put(updateWorkflowLogItem(formattedNewEvent));
-      yield put(updateTaskWorkflowLogItem(formattedNewEvent));
-    }
+    yield put(updateWorkflowLogItem(formattedNewEvent));
+    yield put(updateTaskWorkflowLogItem(formattedNewEvent));
   }
 }
 

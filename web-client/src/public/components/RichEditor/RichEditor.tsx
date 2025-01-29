@@ -3,15 +3,7 @@
 // tslint:disable: match-default-export-name max-file-line-count
 import * as React from 'react';
 import classnames from 'classnames';
-import {
-  EditorState,
-  ContentState,
-  EditorProps,
-  getDefaultKeyBinding,
-  RichUtils,
-  ContentBlock,
-  Modifier,
-} from 'draft-js';
+import { EditorState, ContentState, EditorProps, getDefaultKeyBinding, RichUtils, ContentBlock } from 'draft-js';
 import Editor, { composeDecorators } from '@draft-js-plugins/editor';
 import createAttachmentPlugin from './utils/AttachmentsPlugin';
 import createLinkifyPlugin from '@draft-js-plugins/linkify';
@@ -109,7 +101,7 @@ export interface IRichEditorProps {
   title?: string;
   decorators?: React.ComponentProps<typeof Editor>['decorators'];
   foregroundColor?: TForegroundColor;
-  stripPastedFormatting?: boolean;
+
   submitIcon?: React.ReactNode;
   cancelIcon?: React.ReactNode;
 
@@ -357,18 +349,9 @@ export class RichEditor extends React.Component<IRichEditorProps, IRichEditorSta
     return ECommandState.NotHandled;
   };
 
-  private handlePastedText = (text: string, e: React.ClipboardEvent) => {
-    if (this.props.stripPastedFormatting) {
-      const { editorState } = this.state;
-      const selection = editorState.getSelection();
-      const contentState = editorState.getCurrentContent();
-      const newContentState = Modifier.replaceText(contentState, selection, text);
-
-      const newEditorState = EditorState.push(editorState, newContentState, 'insert-characters');
-      this.onChange(newEditorState);
-      return 'handled';
-    }
+  private handlePastedText = (text: string) => {
     trackAddVideo(text);
+
     return false;
   };
 

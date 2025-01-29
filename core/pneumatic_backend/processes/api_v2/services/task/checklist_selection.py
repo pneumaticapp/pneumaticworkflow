@@ -95,7 +95,7 @@ class ChecklistSelectionService(BaseWorkflowService):
         if not user_permission:
             raise exceptions.ChecklistServiceException(MSG_PW_0019)
         workflow = task.workflow
-        if workflow.is_completed:
+        if workflow.status in WorkflowStatus.END_STATUSES:
             raise exceptions.ChecklistServiceException(MSG_PW_0017)
         if workflow.status == WorkflowStatus.DELAYED:
             raise exceptions.ChecklistServiceException(MSG_PW_0020)

@@ -67,114 +67,6 @@ from pneumatic_backend.processes.services.workflow_action import (
 pytestmark = pytest.mark.django_db
 
 
-def test_complete__task_id__ok(
-    mocker,
-    api_client
-):
-
-    # arrange
-    account = create_test_account()
-    user = create_test_user(account=account)
-    performer = create_test_user(
-        account=account,
-        email='test@test.test',
-        is_account_owner=False
-    )
-    workflow = create_test_workflow(user, tasks_count=1)
-    task = workflow.current_task_instance
-    task.performers.add(performer)
-    service_init_mock = mocker.patch.object(
-        WorkflowActionService,
-        attribute='__init__',
-        return_value=None
-    )
-    mocker.patch(
-        'pneumatic_backend.processes.tasks.webhooks.'
-        'send_task_completed_webhook.delay'
-    )
-    complete_current_task_by_user_mock = mocker.patch(
-        'pneumatic_backend.processes.services.'
-        'workflow_action.WorkflowActionService.'
-        'complete_current_task_for_user'
-    )
-    api_client.token_authenticate(performer)
-
-    # act
-    response = api_client.post(
-        f'/workflows/{workflow.id}/task-complete',
-        data={
-            'task_id': workflow.current_task_instance.id
-        }
-    )
-
-    # assert
-    assert response.status_code == 204
-    workflow.refresh_from_db()
-    service_init_mock.assert_called_once_with(
-        user=performer,
-        auth_type=AuthTokenType.USER,
-        is_superuser=False
-    )
-    complete_current_task_by_user_mock.assert_called_once_with(
-        workflow=workflow,
-        fields_values={}
-    )
-
-
-def test_complete__task_api_name__ok(
-    mocker,
-    api_client
-):
-
-    # arrange
-    account = create_test_account()
-    user = create_test_user(account=account)
-    performer = create_test_user(
-        account=account,
-        email='test@test.test',
-        is_account_owner=False
-    )
-    workflow = create_test_workflow(user, tasks_count=1)
-    task = workflow.current_task_instance
-    task.performers.add(performer)
-    service_init_mock = mocker.patch.object(
-        WorkflowActionService,
-        attribute='__init__',
-        return_value=None
-    )
-    mocker.patch(
-        'pneumatic_backend.processes.tasks.webhooks.'
-        'send_task_completed_webhook.delay'
-    )
-    complete_current_task_by_user_mock = mocker.patch(
-        'pneumatic_backend.processes.services.'
-        'workflow_action.WorkflowActionService.'
-        'complete_current_task_for_user'
-    )
-    api_client.token_authenticate(performer)
-
-    # act
-    response = api_client.post(
-        f'/workflows/{workflow.id}/task-complete',
-        data={
-            'task_api_name': workflow.current_task_instance.api_name
-        }
-    )
-
-    # assert
-    assert response.status_code == 204
-    workflow.refresh_from_db()
-    service_init_mock.assert_called_once_with(
-        user=performer,
-        auth_type=AuthTokenType.USER,
-        is_superuser=False
-    )
-    complete_current_task_by_user_mock.assert_called_once_with(
-        workflow=workflow,
-        fields_values={}
-    )
-
-
 def test_complete__fields_values__ok(
     mocker,
     api_client
@@ -234,6 +126,60 @@ def test_complete__fields_values__ok(
     )
 
 
+def test_complete__not_fields_values__ok(
+    mocker,
+    api_client
+):
+
+    # arrange
+    account = create_test_account()
+    user = create_test_user(account=account)
+    performer = create_test_user(
+        account=account,
+        email='test@test.test',
+        is_account_owner=False
+    )
+    workflow = create_test_workflow(user, tasks_count=1)
+    task = workflow.current_task_instance
+    task.performers.add(performer)
+    service_init_mock = mocker.patch.object(
+        WorkflowActionService,
+        attribute='__init__',
+        return_value=None
+    )
+    mocker.patch(
+        'pneumatic_backend.processes.tasks.webhooks.'
+        'send_task_completed_webhook.delay'
+    )
+    complete_current_task_by_user_mock = mocker.patch(
+        'pneumatic_backend.processes.services.'
+        'workflow_action.WorkflowActionService.'
+        'complete_current_task_for_user'
+    )
+    api_client.token_authenticate(performer)
+
+    # act
+    response = api_client.post(
+        f'/workflows/{workflow.id}/task-complete',
+        data={
+            'task_id': workflow.current_task_instance.id
+        }
+    )
+
+    # assert
+    assert response.status_code == 204
+    workflow.refresh_from_db()
+    service_init_mock.assert_called_once_with(
+        user=performer,
+        auth_type=AuthTokenType.USER,
+        is_superuser=False
+    )
+    complete_current_task_by_user_mock.assert_called_once_with(
+        workflow=workflow,
+        fields_values={}
+    )
+
+
 def test_complete__snoozed_workflow__validation_error(
     mocker,
     api_client
@@ -280,7 +226,9 @@ def test_complete__snoozed_workflow__validation_error(
     complete_current_task_by_user_mock.assert_not_called()
 
 
+@pytest.mark.parametrize('status', WorkflowStatus.END_STATUSES)
 def test_complete__ended_workflow__validation_error(
+    status,
     mocker,
     api_client
 ):
@@ -288,7 +236,7 @@ def test_complete__ended_workflow__validation_error(
     # arrange
     account = create_test_account()
     user = create_test_user(account=account)
-    workflow = create_test_workflow(user, status=WorkflowStatus.DONE)
+    workflow = create_test_workflow(user, status=status)
     service_init_mock = mocker.patch.object(
         WorkflowActionService,
         attribute='__init__',
