@@ -1,11 +1,19 @@
 from typing import Optional, Dict, Any
+from django.utils import timezone
 from django.contrib.auth import get_user_model
 from pneumatic_backend.processes.consts import WORKFLOW_NAME_LENGTH
+from pneumatic_backend.processes.models import (
+    Workflow,
+    Task,
+)
 from pneumatic_backend.processes.utils.common import (
     string_abbreviation,
 )
 from pneumatic_backend.processes.serializers.kickoff_value import (
     KickoffValueSerializer
+)
+from pneumatic_backend.processes.enums import (
+    WorkflowStatus,
 )
 from pneumatic_backend.processes.api_v2.services.task.task import TaskService
 
@@ -77,3 +85,37 @@ class WorkflowSerializerMixin:
         if update_fields:
             self.instance.save(update_fields=update_fields)
         return self.instance
+
+
+class BaseWorkflowRevertSerializerMixin:
+
+    def _update_workflow(
+        self,
+        workflow: Workflow,
+        current_task: Task,
+        reverted_to: int = None,
+    ) -> None:
+
+        # TODO Move to WorkflowActionService
+
+        update_fields = ['current_task']
+        if workflow.status == WorkflowStatus.DELAYED:
+            delay = current_task.get_active_delay()
+            delay.end_date = timezone.now()
+            if delay.directly_status:
+                delay.save(update_fields=['end_date'])
+            else:
+                current_task.reset_delay(delay)
+        if workflow.status in [WorkflowStatus.DELAYED, WorkflowStatus.DONE]:
+            if workflow.status == WorkflowStatus.DONE:
+                workflow.date_completed = None
+                update_fields.append('date_completed')
+            workflow.status = WorkflowStatus.RUNNING
+            update_fields.append('status')
+
+        workflow.current_task -= 1
+
+        if reverted_to is not None:
+            workflow.current_task = reverted_to
+
+        workflow.save(update_fields=update_fields)

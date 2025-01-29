@@ -208,7 +208,8 @@ class TestBasePerformersService:
         # assert
         assert ex.value.message == messages.MSG_PW_0021
 
-    def test_validate__workflow_ended__exception(self):
+    @pytest.mark.parametrize('status',  WorkflowStatus.END_STATUSES)
+    def test_validate__workflow_ended__exception(self, status):
 
         # arrange
         account = create_test_account()
@@ -223,7 +224,7 @@ class TestBasePerformersService:
             is_account_owner=False,
         )
         workflow = create_test_workflow(request_user)
-        workflow.status = WorkflowStatus.DONE
+        workflow.status = status
         workflow.save()
         task = workflow.current_task_instance
 

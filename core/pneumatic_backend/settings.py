@@ -67,6 +67,8 @@ class Common(Configuration):
     UNSUBSCRIBE_TOKEN_IN_DAYS = 7
     USER_TRANSFER_TOKEN_LIFETIME_IN_DAYS = 7
 
+    USE_X_FORWARDED_HOST=True
+
     ALLOWED_HOSTS = env.get("ALLOWED_HOSTS")
     if ALLOWED_HOSTS:
         ALLOWED_HOSTS = ALLOWED_HOSTS.split(' ')
@@ -390,6 +392,29 @@ class Common(Configuration):
         'SENTRY_DSN': env.get('SENTRY_DSN'),
     }
 
+    LOGGING = {
+        'version': 1,
+        'disable_existing_loggers': True,
+        'handlers': {
+            'console': {
+                'level': 'DEBUG',
+                'class': 'logging.StreamHandler',
+            },
+            'logfile': {
+                'level':'DEBUG',
+                'class':'logging.handlers.RotatingFileHandler',
+                'filename': 'debug.log',
+                'maxBytes': 1024*1024*100, # 100 MB
+                'backupCount': 5,
+            },
+        },
+        'loggers': {
+            'django': {
+                'level': 'DEBUG',
+                'handlers': ['console', 'logfile']
+            }
+        },
+    }
 
 class Development(Common):
 

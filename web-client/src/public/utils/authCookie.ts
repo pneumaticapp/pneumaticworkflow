@@ -12,8 +12,8 @@ export function setJwtCookie(token: string, rememberMeMode: boolean = true) {
   const COOKIE_OPTIONS: ICookieOptions = {
     domain: window.location.hostname,
     expires: COOKIE_EXPIRES,
-    samesite: 'none',
-    secure: true
+    samesite: undefined,
+    secure: false
   };
 
   setCookie('token', token, COOKIE_OPTIONS);
