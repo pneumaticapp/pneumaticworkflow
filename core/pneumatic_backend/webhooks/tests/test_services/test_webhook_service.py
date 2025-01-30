@@ -337,7 +337,6 @@ def test_get_private_events__ok():
         'workflow_completed',
         'workflow_started',
         'task_completed',
-        'task_completed_v2',
         'task_returned'
     }
 

@@ -67,6 +67,8 @@ class Common(Configuration):
     UNSUBSCRIBE_TOKEN_IN_DAYS = 7
     USER_TRANSFER_TOKEN_LIFETIME_IN_DAYS = 7
 
+    USE_X_FORWARDED_HOST=True
+
     ALLOWED_HOSTS = env.get("ALLOWED_HOSTS")
     if ALLOWED_HOSTS:
         ALLOWED_HOSTS = ALLOWED_HOSTS.split(' ')

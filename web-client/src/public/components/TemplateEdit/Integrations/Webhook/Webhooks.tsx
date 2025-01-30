@@ -1,5 +1,3 @@
-/* eslint-disable */
-/* prettier-ignore */
 import React from 'react';
 import { useSelector } from 'react-redux';
 import { WebhookItem } from './WebhooksItem';

@@ -106,6 +106,7 @@ export async function commonRequest<T>(
 function getRequestHeaders() {
   const appPart = identifyAppPartOnClient();
 
+
   const { userAgent } = window.navigator;
   const token = getCurrentToken();
 

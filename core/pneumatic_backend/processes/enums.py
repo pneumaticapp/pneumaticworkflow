@@ -12,7 +12,6 @@ class WorkflowStatus:
         (DONE, 'Workflow done'),
         (DELAYED, 'Workflow delayed'),
     )
-    END_STATUSES = {DONE}
     RUNNING_STATUSES = {RUNNING, DELAYED}
 
 

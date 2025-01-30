@@ -164,8 +164,8 @@ msgid "Deletion not allowed while the account contains tenants."
 msgstr "Löschen nicht erlaubt, solange das Konto Mieter enthält."
 
 #: accounts/messages.py:68
-msgid "Your subscription has already expired. Renew subscription or downgrade to Freemium plan."
-msgstr "Ihr Abonnement ist bereits abgelaufen. Erneuern Sie das Abonnement oder wechseln Sie zum Freemium-Plan."
+msgid "Your subscription has already expired. Renew subscription or contact support."
+msgstr "Ihr Abonnement ist abgelaufen. Bitte verlängern Sie Ihr Abonnement oder kontaktieren Sie den Support."
 
 #. Translators: Account owner permission
 #: accounts/messages.py:72

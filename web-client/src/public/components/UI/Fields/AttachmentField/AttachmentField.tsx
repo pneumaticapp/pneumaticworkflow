@@ -7,7 +7,7 @@ import { TForegroundColor } from '../common/types';
 import { getForegroundClass } from '../common/utils/getForegroundClass';
 import { FolderIcon } from '../../../icons';
 import { TUploadedFile, uploadFiles } from '../../../../utils/uploadFiles';
-import { NotificationManager } from "../../Notifications";
+import { NotificationManager } from '../../Notifications';
 import { logger } from '../../../../utils/logger';
 import { ExtraFieldFilesGrid } from '../../../TemplateEdit/ExtraFields/File/ExtraFieldFilesGrid';
 import { TAttachmentType } from '../../../../types/attachments';
@@ -89,16 +89,6 @@ export function AttachmentField({
     }
   }, [filesToUploadState]);
 
-  const fileName = React.useMemo(() => {
-    if (isMultiple) {
-      return '';
-    }
-
-    return filesToUploadState.some(file => !file.isRemoved)
-      ? filesToUploadState[0].name
-      : '';
-  }, [filesToUploadState[0]]);
-
   const handleOpenUploadWindow = () => {
     if (!uploadFieldRef.current) {
       return;
@@ -126,7 +116,7 @@ export function AttachmentField({
                 height,
                 expectedWidth: expectedImageWidth,
                 expectedHeight: expectedImageHeight,
-              }
+              },
             );
           }
 
@@ -134,16 +124,23 @@ export function AttachmentField({
         } catch (error) {
           return error.message;
         }
-      }
+      },
     ];
 
     try {
       setUploadingState(true);
       const newUploadedFiles = await uploadFiles(files, accountId, validators);
+      const newFileWithThumbnailUrl = newUploadedFiles.map((item) => {
+        return {
+          ...item,
+          thumbnailUrl: `${item.url}`,
+        };
+      });
 
-      const allFiles = isMultiple || !isArrayWithItems(newUploadedFiles)
-        ? [...filesToUploadState, ...newUploadedFiles as TUploadedFile[]]
-        : [...newUploadedFiles];
+      const allFiles =
+        isMultiple || !isArrayWithItems(newFileWithThumbnailUrl)
+          ? [...filesToUploadState, ...(newFileWithThumbnailUrl as TUploadedFile[])]
+          : [...newFileWithThumbnailUrl];
       setFilesToUploadState(allFiles);
       setUploadedFiles(allFiles);
     } catch (error) {
@@ -155,7 +152,7 @@ export function AttachmentField({
   };
 
   const handleDeleteFile = (id: number) => async () => {
-    const newUploadedFiles = filesToUploadState.map(file => file.id === id ? { ...file, isRemoved: true } : file);
+    const newUploadedFiles = filesToUploadState.map((file) => (file.id === id ? { ...file, isRemoved: true } : file));
     setFilesToUploadState(newUploadedFiles);
     setUploadedFiles(newUploadedFiles);
   };
@@ -176,20 +173,23 @@ export function AttachmentField({
           className={inputClassName}
           disabled
           data-testid="input-field"
-          value={fileName}
+          placeholder={formatMessage({ id: 'user-info.logo-placeholder' })}
           {...props}
         />
       </button>
     );
 
     const renderRightContent = () => {
-      return <div className={styles['icon']}><FolderIcon /></div>
-    }
+      return (
+        <div className={styles['icon']}>
+          <FolderIcon />
+        </div>
+      );
+    };
 
     return (
       <div className={styles['input-with-rigt-content-wrapper']}>
         {input}
-
         {renderRightContent()}
       </div>
     );
@@ -219,22 +219,9 @@ export function AttachmentField({
         accept={acceptedType ? inputAcceptedTypesMap[acceptedType] : undefined}
       />
       {renderInput()}
-      {title && (
-        <span className={titleClassNames}>
-          {title}
-        </span>
-      )}
-      {normalizedErrorMessage && (
-        <p className={styles['error-text']}>
-          {normalizedErrorMessage}
-        </p>
-      )}
-
-      {description && (
-        <p className={styles['field-description']}>
-          {description}
-        </p>
-      )}
+      {title && <span className={titleClassNames}>{title}</span>}
+      {normalizedErrorMessage && <p className={styles['error-text']}>{normalizedErrorMessage}</p>}
+      {description && <p className={styles['field-description']}>{description}</p>}
 
       <ExtraFieldFilesGrid
         attachments={filesToUploadState}
