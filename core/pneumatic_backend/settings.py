@@ -392,29 +392,6 @@ class Common(Configuration):
         'SENTRY_DSN': env.get('SENTRY_DSN'),
     }
 
-    LOGGING = {
-        'version': 1,
-        'disable_existing_loggers': True,
-        'handlers': {
-            'console': {
-                'level': 'DEBUG',
-                'class': 'logging.StreamHandler',
-            },
-            'logfile': {
-                'level':'DEBUG',
-                'class':'logging.handlers.RotatingFileHandler',
-                'filename': 'debug.log',
-                'maxBytes': 1024*1024*100, # 100 MB
-                'backupCount': 5,
-            },
-        },
-        'loggers': {
-            'django': {
-                'level': 'DEBUG',
-                'handlers': ['console', 'logfile']
-            }
-        },
-    }
 
 class Development(Common):
 
