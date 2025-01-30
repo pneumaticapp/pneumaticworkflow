@@ -34,8 +34,8 @@
   }
 
   .react-select__placeholder {
-   color: var(--pneumatic-color-black32); 
-   @mixin text-overflow;
+    color: var(--pneumatic-color-black32);
+    @mixin text-overflow;
   }
 
   .react-select__input-container,
@@ -48,7 +48,7 @@
 
   .react-select__menu {
     width: 100%;
-    z-index: 2 !important;
+    z-index: 3 !important;
     margin: 0 !important;
     padding: 0.4rem !important;
     border: none !important;

@@ -20,7 +20,6 @@ from pneumatic_backend.processes.enums import (
     WorkflowEventType,
     WorkflowEventActionType,
     CommentStatus,
-    WorkflowStatus,
 )
 from pneumatic_backend.processes.api_v2.services.exceptions import (
     AttachmentNotFound,
@@ -610,7 +609,7 @@ class CommentService(BaseModelService):
     def _validate_comment_action(self):
         if self.instance.status == CommentStatus.DELETED:
             raise CommentIsDeleted()
-        if self.instance.workflow.status in WorkflowStatus.END_STATUSES:
+        if self.instance.workflow.is_completed:
             raise CommentedWorkflowNotRunning()
 
     def create(
@@ -624,7 +623,7 @@ class CommentService(BaseModelService):
             then only a notification about a new comment
             will be sent to him """
 
-        if workflow.status in WorkflowStatus.END_STATUSES:
+        if workflow.is_completed:
             raise CommentedWorkflowNotRunning()
         if not text and not attachments:
             raise CommentTextRequired()

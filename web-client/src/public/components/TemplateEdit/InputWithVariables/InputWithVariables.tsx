@@ -5,6 +5,7 @@ import { TTaskVariable } from '../types';
 
 import { variablesDecorator } from '../utils/variablesDecorator';
 import { addVariableEntityToEditor } from '../utils/addVariableEntityToEditor';
+import { escapeMarkdown } from '../../../utils/escapeMarkdown';
 import { VariableList } from '../VariableList';
 import { getInitialEditorState } from '../../RichEditor/utils/сonverters';
 import { RichEditor, RichEditorContainer } from '../../RichEditor';
@@ -19,8 +20,8 @@ export interface IEditorWithVariablesProps {
   title?: string;
   className?: string;
   toolipText: string;
-  foregroundColor?: React.ComponentProps<typeof RichEditor>['foregroundColor'],
-  size?: 'xl' | 'lg',
+  foregroundColor?: React.ComponentProps<typeof RichEditor>['foregroundColor'];
+  size?: 'xl' | 'lg';
   onChange: React.ComponentProps<typeof RichEditor>['handleChange'];
 }
 export const InputWithVariables: React.FC<IEditorWithVariablesProps> = ({
@@ -36,6 +37,7 @@ export const InputWithVariables: React.FC<IEditorWithVariablesProps> = ({
   onChange,
 }) => {
   const editor = React.useRef<RichEditor>(null);
+  const formattedValue = escapeMarkdown(value);
 
   const handleInsertVariable = (apiName?: string) => (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -59,13 +61,14 @@ export const InputWithVariables: React.FC<IEditorWithVariablesProps> = ({
       ref={editor}
       title={title}
       placeholder={placeholder}
-      initialState={getInitialEditorState(value, templateVariables)}
+      initialState={getInitialEditorState(formattedValue, templateVariables)}
       handleChange={onChange}
       decorators={[variablesDecorator]}
       withToolbar={false}
       multiline={false}
       className={classnames(size === 'xl' ? styles['editor_xl'] : styles['editor_lg'], className)}
       foregroundColor={foregroundColor}
+      stripPastedFormatting
     >
       <VariableList
         variables={listVariables}
@@ -77,4 +80,3 @@ export const InputWithVariables: React.FC<IEditorWithVariablesProps> = ({
     </RichEditorContainer>
   );
 };
-

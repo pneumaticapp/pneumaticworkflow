@@ -189,11 +189,9 @@ class TestGuestJWTAuthService:
         # assert
         assert user is None
 
-    @pytest.mark.parametrize('wf_status', WorkflowStatus.END_STATUSES)
     def test_authenticate__workflow_ended__raise_exception(
         self,
         mocker,
-        wf_status,
     ):
 
         # arrange
@@ -205,7 +203,7 @@ class TestGuestJWTAuthService:
         )
         guest = create_test_guest(account=account)
         workflow = create_test_workflow(account_owner, tasks_count=1)
-        workflow.status = wf_status
+        workflow.status = WorkflowStatus.DONE
         workflow.save()
         task = workflow.tasks.first()
         TaskPerformer.objects.create(

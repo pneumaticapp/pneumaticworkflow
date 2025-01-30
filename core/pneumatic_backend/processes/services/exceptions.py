@@ -26,3 +26,28 @@ class ResumeNotDelayedWorkflow(WorkflowActionServiceException):
 class UserNotPerformer(WorkflowActionServiceException):
 
     default_message = pw_messages.MSG_PW_0011
+
+
+class DelayedWorkflowCannotBeChanged(WorkflowActionServiceException):
+
+    default_message = pw_messages.MSG_PW_0072
+
+
+class CompletedWorkflowCannotBeChanged(WorkflowActionServiceException):
+
+    default_message = pw_messages.MSG_PW_0017
+
+
+class BlockedBySubWorkflows(WorkflowActionServiceException):
+
+    default_message = pw_messages.MSG_PW_0071
+
+
+class FirstTaskCannotBeReverted(WorkflowActionServiceException):
+
+    default_message = pw_messages.MSG_PW_0078
+
+
+class ReturnToFutureTask(WorkflowActionServiceException):
+
+    default_message = pw_messages.MSG_PW_0081

@@ -682,8 +682,7 @@ def test_create__not_found_attachments_in_text__ok(text, mocker):
     assert task.contains_comments is True
 
 
-@pytest.mark.parametrize('status', WorkflowStatus.END_STATUSES)
-def test_create__workflow_ended__raise_exception(mocker, status):
+def test_create__workflow_ended__raise_exception(mocker):
 
     # arrange
     account = create_test_account()
@@ -697,7 +696,7 @@ def test_create__workflow_ended__raise_exception(mocker, status):
     workflow = create_test_workflow(
         account_owner,
         tasks_count=1,
-        status=status
+        status=WorkflowStatus.DONE
     )
     task = workflow.current_task_instance
     task.performers.add(user)
@@ -1351,14 +1350,13 @@ def test_validate_comment_action__deleted__raise_exception():
     assert ex.value.message == messages.MSG_PW_0049
 
 
-@pytest.mark.parametrize('status', WorkflowStatus.END_STATUSES)
-def test_validate_comment__workflow_ended__raise_exception(status):
+def test_validate_comment__workflow_ended__raise_exception():
 
     # arrange
     user = create_test_user()
     workflow = create_test_workflow(
         user=user,
-        status=status
+        status=WorkflowStatus.DONE
     )
     event = WorkflowEvent.objects.create(
         account=user.account,
