@@ -1,0 +1,50 @@
+.taskform__basket-visibility {
+  &:hover {
+    .taskform__remove-rule {
+      opacity: 1;
+    }
+  }
+}
+
+.taskform__box {
+  [class*='condition-rule__settings-inner'] {
+    &:hover {
+      .taskform__remove-rule {
+        opacity: 1;
+      }
+    }
+  }
+
+  .taskform__add-rule {
+    padding: 0;
+    font-size: 1.3rem;
+    line-height: 1.6rem;
+    color: var(--pneumatic-color-link-dark);
+    background: none;
+    border: none;
+    transition: 0.1s ease-in-out all;
+
+    &:hover {
+      color: var(--pneumatic-color-link-hover);
+    }
+
+    &:active {
+      transform: scale(0.98);
+    }
+  }
+
+  .taskform__remove-rule {
+    position: absolute;
+    top: 1.2rem;
+    right: 0.4rem;
+    padding: 0;
+    color: var(--pneumatic-color-notification1);
+    background: transparent;
+    border: 0;
+    opacity: 0;
+
+    @media (hover: none) {
+      opacity: 1;
+    }
+  }
+}

@@ -5,7 +5,7 @@ import { useIntl } from 'react-intl';
 import { useSelector } from 'react-redux';
 
 import { getPluralNoun } from '../../../utils/helpers';
-import { formatDuration, formatDurationMonths, isEmptyDuration } from '../../../utils/dateTime';
+import { formatDuration, formatDurationMonths, getZeroDuration } from '../../../utils/dateTime';
 import { ITemplateTask } from '../../../types/template';
 import { getConditionsCount } from './utlils/getConditionsCount';
 import { ClockIcon } from '../../icons';
@@ -46,16 +46,15 @@ export const TaskItem = ({ task, isSubscribed, toggleIsOpenTask, setScrollTarget
   };
 
   const renderDueIn = () => {
-    const { duration, durationMonths, ruleTarget } = task.rawDueDate;
-    const isNoDuration = (!duration || isEmptyDuration(duration)) && !durationMonths;
+    const { duration, durationMonths } = task.rawDueDate;
 
-    if (isNoDuration || !ruleTarget) {
+    if (duration === null && durationMonths === null) {
       return null;
     }
 
     const durationFormat = formatDuration(duration, DUE_IN_TEMPLATE);
     const durationMonthsFormat = formatDurationMonths(durationMonths);
-    const totalDuration = `${durationMonthsFormat} ${durationFormat}`;
+    const totalDuration = getZeroDuration(duration, durationMonths) || `${durationMonthsFormat} ${durationFormat}`;
 
     return (
       <span className={styles['task-preview-due-in']} onClick={handleClickOnClock}>

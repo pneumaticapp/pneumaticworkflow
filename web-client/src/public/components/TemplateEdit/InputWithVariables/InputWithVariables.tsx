@@ -7,7 +7,7 @@ import { variablesDecorator } from '../utils/variablesDecorator';
 import { addVariableEntityToEditor } from '../utils/addVariableEntityToEditor';
 import { escapeMarkdown } from '../../../utils/escapeMarkdown';
 import { VariableList } from '../VariableList';
-import { getInitialEditorState } from '../../RichEditor/utils/сonverters';
+import { getInitialEditorState } from '../../RichEditor/utils/converters';
 import { RichEditor, RichEditorContainer } from '../../RichEditor';
 
 import styles from './InputWithVariables.css';

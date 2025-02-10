@@ -135,7 +135,7 @@ export function PublicForm({ type }: IPublicFormsAppProps) {
     }
 
     const {
-      config: { reсaptchaSecret },
+      config: { recaptchaSecret },
     } = getPublicFormConfig();
 
     return (
@@ -158,7 +158,7 @@ export function PublicForm({ type }: IPublicFormsAppProps) {
         {isEnvCaptcha && publicForm?.showCaptcha && (
           <div className={styles['captcha']}>
             <ReCAPTCHA
-              sitekey={reсaptchaSecret}
+              sitekey={recaptchaSecret}
               onChange={(token: string | null) => token && setCaptcha(token)}
               theme="light"
             />

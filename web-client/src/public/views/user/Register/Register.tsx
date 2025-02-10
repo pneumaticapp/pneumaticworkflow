@@ -39,7 +39,7 @@ const INITIAL_VALUES_FORMIK: TRegisterValues = {
 
 export function Register({ registerUser }: IRegisterProps) {
   const { formatMessage } = useIntl();
-  const { reсaptchaSecret } = getBrowserConfigEnv();
+  const { recaptchaSecret } = getBrowserConfigEnv();
   const [showCaptcha, setShowCaptcha] = useState(false);
   const defaultOffset = moment().utcOffset();
 
@@ -207,7 +207,7 @@ export function Register({ registerUser }: IRegisterProps) {
             {(isEnvCaptcha && showCaptcha) && (
               <div className={styles['form__captcha']}>
                 <ReCAPTCHA
-                  sitekey={reсaptchaSecret}
+                  sitekey={recaptchaSecret}
                   onChange={(captcha: string | null) => captcha && setFieldValue('captcha', captcha)}
                   theme="light"
                 />

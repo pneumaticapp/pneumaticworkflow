@@ -9,32 +9,14 @@
 } */
 
 .condition {
-  margin-bottom: 8px;
-}
-
-.condition__add-rule {
-  padding: 0;
-  font-size: 13px;
-  line-height: 16px;
-  color: var(--pneumatic-color-link);
-  background: none;
-  border: none;
-  transition: 0.1s ease-in-out all;
-
-  &:hover {
-    color: var(--pneumatic-color-link-hover);
-  }
-
-  &:active {
-    transform: scale(0.98);
-  }
+  margin-bottom: 0.8rem;
 }
 
 .paywall-text {
   margin: 0;
-  padding-right: 40px;
-  font-size: 15px;
-  line-height: 20px;
+  padding-right: 4rem;
+  font-size: 1.5rem;
+  line-height: 2rem;
   text-align: center;
   color: var(--pneumatic-color-black32);
 }
@@ -54,13 +36,13 @@
 }
 
 .condition-rule__settings {
-  margin-bottom: 8px;
+  margin-bottom: 0.8rem;
 }
 
 .condition-rule__settings-inner {
   position: relative;
-  margin: -4px;
-  padding-right: 40px;
+  margin: -0.4rem;
+  padding-right: 4rem;
   display: flex;
   flex-wrap: wrap;
 
@@ -68,23 +50,17 @@
     position: absolute;
     z-index: 1;
     top: 0;
-    right: 40px;
+    right: 4rem;
     left: 0;
     bottom: 0;
     pointer-events: none;
     content: '';
-    background: white;
+    background: var(--pneumatic-color-white);
     opacity: 0.68;
   }
 
-  &:hover {
-    .condition-rule__remove {
-      opacity: 1;
-    }
-  }
-
   .condition-rule__setting {
-    margin: 4px;
+    margin: 0.4rem;
 
     @media (max-width: 1000px) {
       width: 100%;
@@ -93,27 +69,27 @@
 
   :global {
     .react-select .react-select__control {
-      min-height: 40px;
+      min-height: 4rem;
     }
 
     .react-datepicker-wrapper {
       .react-datepicker__input-container {
         input {
-          padding: 14px 50px 14px 16px !important;
+          padding: 1.4rem 5rem 1.4rem 1.6rem !important;
           width: 100% !important;
-          height: 40px;
+          height: 4rem;
           font-family: Nunito, sans-serif !important;
-          font-size: 15px !important;
-          line-height: 20px !important;
-          color: #262522 !important;
-          background: white !important;
-          border: 1px solid #dcdcdb !important;
-          border-radius: 8px !important;
+          font-size: 1.5rem !important;
+          line-height: 2rem !important;
+          color: var(--pneumatic-color-black100) !important;
+          background: var(--pneumatic-color-white) !important;
+          border: 0.1rem solid var(--pneumatic-color-black16) !important;
+          border-radius: 0.8rem !important;
           outline: none !important;
           transition: 0.15s ease-in border-color !important;
 
           &:focus {
-            border-color: #979795 !important;
+            border-color: var(--pneumatic-color-black48) !important;
           }
 
           &::placeholder {
@@ -137,7 +113,7 @@
   width: 24%;
 
   @media (max-width: 1150px) {
-    width: calc(50% - 8px);
+    width: calc(50% - 0.8rem);
   }
 }
 
@@ -147,8 +123,8 @@
 }
 
 .condition-rule__logic-operation {
-  margin-bottom: 8px;
-  width: 100px;
+  margin-bottom: 0.8rem;
+  width: 10rem;
 }
 
 .select {
@@ -162,31 +138,12 @@
   text-transform: uppercase;
 }
 
-.condition-rule__remove {
-  position: absolute;
-  top: 0;
-  right: 4px;
-  padding: 0;
-  color: var(--pneumatic-color-link);
-  background: transparent;
-  border: 0;
-  opacity: 0;
-
-  &:hover {
-    color: var(--pneumatic-color-link-hover);
-  }
-
-  @media (hover: none) {
-    opacity: 1;
-  }
-}
-
 .text-field {
   margin: 0;
   width: 100%;
 
   input {
-    height: 40px;
+    height: 4rem;
   }
 }
 

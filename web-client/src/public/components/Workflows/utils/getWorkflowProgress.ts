@@ -3,11 +3,11 @@ import { getPercent } from '../../../utils/helpers';
 import { countCompletedTasks } from './countCompletedTasks';
 
 export interface IGetgWorkflowProgressConfig {
-  currentTask: number;
-  tasksCount: number;
+  activeCurrentTask: number;
+  activeTasksCount: number;
   status: EWorkflowStatus;
 }
 
 export function getWorkflowProgress(config: IGetgWorkflowProgressConfig) {
-  return getPercent(countCompletedTasks(config.currentTask, config.status), config.tasksCount);
+  return getPercent(countCompletedTasks(config.activeCurrentTask, config.status), config.activeTasksCount);
 }

@@ -138,12 +138,14 @@ class GuestPerformersService(BasePerformersService):
             user_id=user.id
         )
         AnalyticService.users_guest_invite_sent(
+            task=task,
             invite_from=request_user,
             invite_to=user,
             current_url=current_url,
             is_superuser=is_superuser
         )
         AnalyticService.users_guest_invited(
+            invite_from=request_user,
             invite_to=user,
             is_superuser=is_superuser
         )

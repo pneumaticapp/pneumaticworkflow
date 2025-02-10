@@ -1,5 +1,5 @@
 import * as React from 'react';
-import * as classnames from 'classnames';
+import classnames from 'classnames';
 import Switch from 'rc-switch';
 import { useIntl } from 'react-intl';
 

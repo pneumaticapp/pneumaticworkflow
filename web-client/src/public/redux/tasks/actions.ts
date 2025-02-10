@@ -16,7 +16,7 @@ export const enum ETaskListActions {
   ResetTasks = 'RESET_TASKS',
   ResetTasksFilters = 'RESET_TASKS_FILTERS',
   ChangeTaskListSorting = 'CHANGE_TASK_LIST_SORTING',
-  ChangeTaskListСompletionStatus = 'CHANGE_TASK_LIST_COMPLETION_STATUS',
+  ChangeTaskListCompletionStatus = 'CHANGE_TASK_LIST_COMPLETION_STATUS',
   ChangeTasksCount = 'CHANGE_TASKS_COUNT',
   LoadTasksCount = 'LOAD_TASKS_COUNT',
   LoadTaskList = 'LOAD_TASK_LIST',
@@ -44,10 +44,10 @@ export const changeTasksSorting: (payload: ETaskListSorting) => TChangeTaskListS
   actionGenerator<ETaskListActions.ChangeTaskListSorting, ETaskListSorting>(ETaskListActions.ChangeTaskListSorting);
 
 export type TChangeTaskListCompletionStatus =
-  ITypedReduxAction<ETaskListActions.ChangeTaskListСompletionStatus, ETaskListCompletionStatus>;
+  ITypedReduxAction<ETaskListActions.ChangeTaskListCompletionStatus, ETaskListCompletionStatus>;
 export const changeTasksCompleteStatus: (payload: ETaskListCompletionStatus) => TChangeTaskListCompletionStatus =
-  actionGenerator<ETaskListActions.ChangeTaskListСompletionStatus, ETaskListCompletionStatus>
-  (ETaskListActions.ChangeTaskListСompletionStatus);
+  actionGenerator<ETaskListActions.ChangeTaskListCompletionStatus, ETaskListCompletionStatus>
+  (ETaskListActions.ChangeTaskListCompletionStatus);
 
 export type TResetTasks = ITypedReduxAction<ETaskListActions.ResetTasks, void>;
 export const resetTasks: (payload?: void) => TResetTasks =

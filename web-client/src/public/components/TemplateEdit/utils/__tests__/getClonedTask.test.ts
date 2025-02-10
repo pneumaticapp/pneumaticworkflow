@@ -1,16 +1,16 @@
 import { EExtraFieldType, ITemplateTask } from '../../../../types/template';
-import { createEmptyDueDate } from '../../../../utils/dueDate/createEmptyDueDate';
+import { createEmptyTaskDueDate } from '../../../../utils/dueDate/createEmptyTaskDueDate';
 import { omit } from '../../../../utils/helpers';
 import { EConditionAction, EConditionLogicOperations, EConditionOperators } from '../../TaskForm/Conditions';
 import { getClonedTask } from '../getClonedTask';
 
 describe('getClonedTask', () => {
-  it('returns initial task\'s copy', () => {
+  it("returns initial task's copy", () => {
     const mockTask: ITemplateTask = {
       id: 3048,
       apiName: 'task-1',
       name: 'Task 1',
-      description: 'Check data on correct. If it\'s not - requesting for actualisation to user.',
+      description: "Check data on correct. If it's not - requesting for actualisation to user.",
       number: 1,
       requireCompletionByAll: true,
       fields: [
@@ -26,7 +26,7 @@ describe('getClonedTask', () => {
       ],
       rawPerformers: [],
       delay: null,
-      rawDueDate: createEmptyDueDate(),
+      rawDueDate: createEmptyTaskDueDate(),
       conditions: [
         {
           apiName: 'condition-40a910',
@@ -82,7 +82,16 @@ describe('getClonedTask', () => {
 
     const clonedTask = getClonedTask(mockTask);
 
-    const diffFields: (keyof ITemplateTask)[] = ['id', 'apiName', 'uuid', 'fields', 'conditions', 'delay', 'name', 'rawDueDate'];
+    const diffFields: (keyof ITemplateTask)[] = [
+      'id',
+      'apiName',
+      'uuid',
+      'fields',
+      'conditions',
+      'delay',
+      'name',
+      'rawDueDate',
+    ];
     expect(omit(clonedTask, diffFields)).toStrictEqual(omit(mockTask, diffFields));
     expect(clonedTask.name).toBe(`${mockTask.name} (Clone)`);
     expect(clonedTask.id).toBe(undefined);

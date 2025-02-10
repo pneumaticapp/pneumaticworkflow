@@ -314,12 +314,14 @@ def create_test_workflow(
         date_completed = timezone.now() + timedelta(hours=1)
     else:
         date_completed = None
+    tasks_count = template.tasks.count()
     workflow = Workflow.objects.create(
         name=name or template.name,
         name_template=name_template,
         description=template.description,
         account=template.account,
-        tasks_count=template.tasks.count(),
+        tasks_count=tasks_count,
+        active_tasks_count=tasks_count,
         template=template,
         status=status,
         status_updated=timezone.now(),

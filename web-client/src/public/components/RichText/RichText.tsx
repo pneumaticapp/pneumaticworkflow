@@ -23,7 +23,7 @@ import {
   linksRemarkablePlugin,
   checklistsRemarkablePlugin,
   TCustomLinkToken,
-} from '../RichEditor/utils/сonverters/customMarkdownPlugins';
+} from '../RichEditor/utils/converters/customMarkdownPlugins';
 import { LinkCloseToken } from 'remarkable/lib';
 import { ECustomEditorEntities } from '../RichEditor/utils/types';
 import { createChecklistRenderer } from '../TaskCard/checklist/createChecklistRenderer';

@@ -61,6 +61,8 @@ class TestRetrieveWorkflow:
         assert response.data['is_legacy_template'] is False
         assert response.data['legacy_template_name'] is None
         assert response.data['ancestor_task_id'] is None
+        assert response.data['active_tasks_count'] == 1
+        assert response.data['active_current_task'] == 1
 
         task_data = response.data['current_task']
         assert task_data['id'] == current_task.id

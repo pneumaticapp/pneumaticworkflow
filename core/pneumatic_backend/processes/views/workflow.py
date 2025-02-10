@@ -224,7 +224,7 @@ class WorkflowViewSet(
         search_text = filter_slz.validated_data.get('search')
         if search_text:
             AnalyticService.search_search(
-                user_id=request.user.id,
+                user=request.user,
                 page='processes',
                 search_text=search_text,
                 is_superuser=getattr(request, 'is_superuser', False),
@@ -263,14 +263,14 @@ class WorkflowViewSet(
             workflow=workflow,
             auth_type=request.token_type,
             is_superuser=request.is_superuser,
-            user_id=request.user.id,
+            user=request.user,
         )
         if is_urgent_changed:
             AnalyticService.workflows_urgent(
                 workflow=workflow,
                 auth_type=request.token_type,
                 is_superuser=request.is_superuser,
-                user_id=request.user.id,
+                user=request.user,
                 action=(
                     WorkflowActions.marked if is_urgent else
                     WorkflowActions.unmarked

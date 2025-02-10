@@ -1,18 +1,14 @@
 /* eslint-disable */
-/* prettier-ignore */
 import * as classnames from 'classnames';
 import * as React from 'react';
 import { useIntl } from 'react-intl';
 
 import { scrollToElement } from '../../../utils/helpers';
-import {
-  DELAY_TITLE_TEMPLATE,
-  formatDuration,
-} from '../../../utils/dateTime';
+import { DELAY_TITLE_TEMPLATE, formatDuration } from '../../../utils/dateTime';
 import { IntlMessages } from '../../IntlMessages';
 import { EditIcon, MoreIcon, TrashIcon } from '../../icons';
 import { Duration } from '../../UI/Duration';
-import { EMPTY_DURATION } from '../constants';
+import { START_DURATION } from '../constants';
 import { Dropdown, TDropdownOption } from '../../UI';
 
 import styles from './Delay.css';
@@ -25,13 +21,7 @@ export interface IDelayProps {
   toggleDelay(): void;
 }
 
-export function Delay({
-  taskDelay,
-  isDelayOpen,
-  deleteDelay,
-  editDelay,
-  toggleDelay,
-}: IDelayProps) {
+export function Delay({ taskDelay, isDelayOpen, deleteDelay, editDelay, toggleDelay }: IDelayProps) {
   if (!taskDelay) {
     return null;
   }
@@ -59,7 +49,7 @@ export function Delay({
   }, [isDelayOpen]);
 
   const getDelayTitle = () => {
-    const isFullDelayShown = taskDelay !== EMPTY_DURATION && !isDelayOpen;
+    const isFullDelayShown = taskDelay !== START_DURATION && !isDelayOpen;
 
     if (isFullDelayShown) {
       const delayFor = formatMessage({ id: 'template.delay-for' });
@@ -71,7 +61,7 @@ export function Delay({
     return formatMessage({ id: 'template.delay' });
   };
 
-  const handleOptionClick = (handler: () => void) =>  (closeDropdown: () => void) => {
+  const handleOptionClick = (handler: () => void) => (closeDropdown: () => void) => {
     closeDropdown();
     handler();
   };
@@ -81,13 +71,13 @@ export function Delay({
       label: formatMessage({ id: 'template.delay-edit' }),
       onClick: handleOptionClick(toggleDelay),
       Icon: EditIcon,
-      size: "sm",
+      size: 'sm',
       isHidden: isDelayOpen,
     },
     {
       label: formatMessage({ id: 'template.delay-close' }),
       onClick: handleOptionClick(toggleDelay),
-      size: "sm",
+      size: 'sm',
       isHidden: !isDelayOpen,
     },
     {
@@ -98,7 +88,7 @@ export function Delay({
       size: 'sm',
       withConfirmation: true,
       withUpperline: true,
-    }
+    },
   ];
 
   return (
@@ -109,16 +99,14 @@ export function Delay({
 
       <div className={styles['card-more-container']}>
         <Dropdown
-          renderToggle={isOpen => (
-            <MoreIcon
-              className={classnames(styles['card-more'], isOpen && styles['card-more_active'])}
-            />
+          renderToggle={(isOpen) => (
+            <MoreIcon className={classnames(styles['card-more'], isOpen && styles['card-more_active'])} />
           )}
           options={dropdownOptions}
         />
       </div>
 
-      {isDelayOpen &&
+      {isDelayOpen && (
         <>
           <div className={styles['delay__body']}>
             <p className={styles['body__hint']}>
@@ -127,7 +115,7 @@ export function Delay({
             <Duration duration={taskDelay} onEditDuration={editDelay} />
           </div>
         </>
-      }
+      )}
     </div>
   );
 }

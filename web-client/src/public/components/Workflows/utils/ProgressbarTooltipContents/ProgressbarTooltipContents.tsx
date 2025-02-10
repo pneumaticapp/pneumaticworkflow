@@ -18,8 +18,8 @@ export function ProgressbarTooltipContents({
     statusUpdated,
     status,
     task: { checklistsMarked, checklistsTotal, dueDate: taskDueDate, dateStarted, delay },
-    currentTask,
-    tasksCount,
+    activeCurrentTask,
+    activeTasksCount,
     dueDate,
   },
 }: IProgressbarTooltipContentsProps) {
@@ -62,7 +62,7 @@ export function ProgressbarTooltipContents({
   return (
     <>
       <p className={styles['tooltip-header']}>
-        {formatMessage({ id: 'workflows.tooltip-header' }, { currentTask, tasksCount })}
+        {formatMessage({ id: 'workflows.tooltip-header' }, { activeCurrentTask, activeTasksCount })}
       </p>
       <p className={styles['tooltip-content']}>{tooltipTextMap[status]}</p>
       {checklistsTotal !== 0 && (

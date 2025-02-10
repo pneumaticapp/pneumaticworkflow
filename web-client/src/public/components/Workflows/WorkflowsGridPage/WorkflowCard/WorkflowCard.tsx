@@ -50,8 +50,8 @@ export class WorkflowCard extends React.PureComponent<IWorkflowCardProps> {
       workflow,
       workflow: {
         name: workflowName,
-        tasksCount,
-        currentTask,
+        activeCurrentTask,
+        activeTasksCount,
         status,
         template,
         isLegacyTemplate,
@@ -64,7 +64,7 @@ export class WorkflowCard extends React.PureComponent<IWorkflowCardProps> {
 
     const { isCardPending } = this.state;
 
-    const progress = getWorkflowProgress({ currentTask, tasksCount, status });
+    const progress = getWorkflowProgress({ activeCurrentTask, activeTasksCount, status });
 
     const getSnoozedText = () => {
       if (!delay) return '';

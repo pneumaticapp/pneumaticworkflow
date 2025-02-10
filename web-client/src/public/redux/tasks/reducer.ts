@@ -59,7 +59,7 @@ export const reducer = (state = INIT_STATE, action: TTaskListActions | TGeneralA
         draftState.tasksSettings.sorting = action.payload;
       });
 
-    case ETaskListActions.ChangeTaskListСompletionStatus:
+    case ETaskListActions.ChangeTaskListCompletionStatus:
       return produce(state, (draftState) => {
         draftState.tasksSettings.completionStatus = action.payload;
       });

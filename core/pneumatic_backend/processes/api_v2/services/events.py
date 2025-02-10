@@ -663,6 +663,7 @@ class CommentService(BaseModelService):
                     text=self.instance.text
                 )
                 AnalyticService.mentions_created(
+                    text=clear_text,
                     user=self.user,
                     is_superuser=self.is_superuser,
                     auth_type=self.auth_type,
@@ -679,6 +680,7 @@ class CommentService(BaseModelService):
                     text=self.instance.text
                 )
                 AnalyticService.comment_added(
+                    text=clear_text,
                     user=self.user,
                     is_superuser=self.is_superuser,
                     auth_type=self.auth_type,
@@ -733,6 +735,7 @@ class CommentService(BaseModelService):
 
         self._send_workflow_event()
         AnalyticService.comment_edited(
+            text=clear_text,
             user=self.user,
             is_superuser=self.is_superuser,
             auth_type=self.auth_type,
@@ -753,6 +756,7 @@ class CommentService(BaseModelService):
         )
         self._send_workflow_event()
         AnalyticService.comment_deleted(
+            text=self.instance.clear_text,
             user=self.user,
             is_superuser=self.is_superuser,
             auth_type=self.auth_type,
@@ -788,6 +792,7 @@ class CommentService(BaseModelService):
                 force_save=True
             )
             AnalyticService.comment_reaction_added(
+                text=value,
                 user=self.user,
                 workflow=self.instance.workflow,
                 is_superuser=self.is_superuser,
@@ -825,6 +830,7 @@ class CommentService(BaseModelService):
                 force_save=True
             )
             AnalyticService.comment_reaction_deleted(
+                text=value,
                 user=self.user,
                 workflow=self.instance.workflow,
                 is_superuser=self.is_superuser,

@@ -1777,12 +1777,14 @@ class TestGuestPerformersService:
             account_id=account.id
         )
         users_guest_invite_sent_mock.assert_called_once_with(
+            task=task,
             invite_from=request_user,
             invite_to=user_guest,
             current_url=current_url,
             is_superuser=is_superuser
         )
         users_guest_invited_mock.assert_called_once_with(
+            invite_from=request_user,
             invite_to=user_guest,
             is_superuser=is_superuser
         )

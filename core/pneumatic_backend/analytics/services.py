@@ -91,8 +91,12 @@ class AnalyticService:
             user_id=invite_from.id,
             event=UserAnalyticsEvent.invite_sent,
             properties={
-                'invitee_email': invite_to.email,
+                'text': f'Invited a "{invite_to.email}" to the team',
+                'email': invite_from.email,
+                'first_name': invite_from.first_name,
+                'last_name': invite_from.last_name,
                 'account_id': invite_from.account_id,
+                'invitee_email': invite_to.email,
                 'category': EventCategory.users,
                 'current_url': current_url,
             },
@@ -102,7 +106,7 @@ class AnalyticService:
     @classmethod
     def users_invited(
         cls,
-        invite_to,
+        invite_to: UserModel,
         invite_token: str,
         is_superuser: bool
     ) -> bool:
@@ -114,6 +118,9 @@ class AnalyticService:
             user_id=invite_to.id,
             event=UserAnalyticsEvent.invited,
             properties={
+                'text': 'Invitation sent by email',
+                'first_name': invite_to.first_name,
+                'last_name': invite_to.last_name,
                 'email': invite_to.email,
                 'invite_token': invite_token,
                 'account_id': invite_to.account_id,
@@ -132,7 +139,10 @@ class AnalyticService:
             event=UserAnalyticsEvent.joined,
             is_superuser=False,
             properties={
+                'text': 'Accepted the invitation',
                 'email': user.email,
+                'first_name': user.first_name,
+                'last_name': user.last_name,
                 'account_id': user.account_id,
                 'category': EventCategory.users,
             }
@@ -152,11 +162,15 @@ class AnalyticService:
             event=WorkflowAnalyticsEvent.terminated,
             is_superuser=is_superuser,
             properties={
+                'text': f'{workflow.name} (id: {workflow.id})',
+                'email': user.email,
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+                'account_id': user.account_id,
                 'id': workflow.id,
                 'workflow_name': workflow.name,
                 'template_id': workflow.template_id,
                 'template_name': workflow.get_template_name(),
-                'account_id': user.account_id,
                 'category': EventCategory.workflows,
                 'auth_type': auth_type,
             },
@@ -176,11 +190,15 @@ class AnalyticService:
             event=WorkflowAnalyticsEvent.ended,
             is_superuser=is_superuser,
             properties={
+                'text': f'{workflow.name} (id: {workflow.id})',
+                'email': user.email,
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+                'account_id': user.account_id,
                 'id': workflow.id,
                 'workflow_name': workflow.name,
                 'template_id': workflow.template_id,
                 'template_name': workflow.get_template_name(),
-                'account_id': workflow.account_id,
                 'category': EventCategory.workflows,
                 'auth_type': auth_type,
             },
@@ -200,10 +218,14 @@ class AnalyticService:
             event=TemplateAnalyticsEvent.kickoff_created,
             is_superuser=is_superuser,
             properties={
+                'text': f'{template.name} (id: {template.id})',
+                'email': user.email,
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+                'account_id': user.account_id,
                 'id': template.id,
                 'name': template.name,
                 'type': template.type,
-                'account_id': template.account_id,
                 'category': EventCategory.templates,
                 'auth_type': auth_type,
             },
@@ -223,10 +245,14 @@ class AnalyticService:
             event=TemplateAnalyticsEvent.kickoff_edited,
             is_superuser=is_superuser,
             properties={
+                'text': f'{template.name} (id: {template.id})',
+                'email': user.email,
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+                'account_id': user.account_id,
                 'id': template.id,
                 'name': template.name,
                 'type': template.type,
-                'account_id': template.account_id,
                 'category': EventCategory.templates,
                 'auth_type': auth_type,
             },
@@ -252,12 +278,16 @@ class AnalyticService:
             event=TemplateAnalyticsEvent.created,
             is_superuser=is_superuser,
             properties={
+                'text': f'{template.name} (id: {template.id})',
+                'email': user.email,
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+                'account_id': user.account_id,
                 'id': template.id,
                 'name': template.name,
                 'type': template.type,
                 'is_active': template.is_active,
                 'is_public': template.is_public,
-                'account_id': template.account_id,
                 'category': EventCategory.templates,
                 'auth_type': auth_type,
                 'kickoff_fields_count': kickoff_fields_count,
@@ -289,12 +319,16 @@ class AnalyticService:
             event=TemplateAnalyticsEvent.updated,
             is_superuser=is_superuser,
             properties={
+                'text': f'{template.name} (id: {template.id})',
+                'email': user.email,
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+                'account_id': user.account_id,
                 'id': template.id,
                 'name': template.name,
                 'type': template.type,
                 'is_active': template.is_active,
                 'is_public': template.is_public,
-                'account_id': template.account_id,
                 'category': EventCategory.templates,
                 'auth_type': auth_type,
                 'kickoff_fields_count': kickoff_fields_count,
@@ -320,10 +354,14 @@ class AnalyticService:
             event=TemplateAnalyticsEvent.deleted,
             is_superuser=is_superuser,
             properties={
+                'text': f'{template.name} (id: {template.id})',
+                'email': user.email,
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+                'account_id': user.account_id,
                 'id': template.id,
                 'name': template.name,
                 'type': template.type,
-                'account_id': template.account_id,
                 'category': EventCategory.templates,
                 'auth_type': auth_type,
             },
@@ -343,10 +381,17 @@ class AnalyticService:
             event=TemplateAnalyticsEvent.due_date_created,
             is_superuser=is_superuser,
             properties={
+                'text': (
+                    f'{template.name} (id: {template.id}). '
+                    f'Step: "{task.name}" '
+                ),
+                'email': user.email,
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+                'account_id': user.account_id,
                 'template_id': template.id,
                 'template_name': template.name,
                 'task_number': task.number,
-                'account_id': template.account_id,
                 'category': EventCategory.templates,
                 'auth_type': auth_type,
             },
@@ -367,11 +412,18 @@ class AnalyticService:
             event=TemplateAnalyticsEvent.condition_created,
             is_superuser=is_superuser,
             properties={
+                'text': (
+                    f'{template.name} (id: {template.id}). '
+                    f'Step: "{task.name}" '
+                ),
+                'email': user.email,
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+                'account_id': user.account_id,
                 'template_id': template.id,
                 'template_name': template.name,
                 'task_number': task.number,
                 'condition_id': condition.id,
-                'account_id': template.account_id,
                 'category': EventCategory.templates,
                 'auth_type': auth_type,
             },
@@ -380,8 +432,9 @@ class AnalyticService:
     @classmethod
     def users_guest_invite_sent(
         cls,
-        invite_from,
-        invite_to,
+        task: Task,
+        invite_from: UserModel,
+        invite_to: UserModel,
         current_url: str,
         is_superuser: bool
     ) -> bool:
@@ -389,8 +442,15 @@ class AnalyticService:
             user_id=invite_from.id,
             event=UserAnalyticsEvent.guest_invite_sent,
             properties={
-                'invitee_email': invite_to.email,
+                'text': (
+                    f'Invited a guest "{invite_to.email}" '
+                    f'to the the task "{task.name}" (id: {task.id})'
+                ),
+                'email': invite_from.email,
+                'first_name': invite_from.first_name,
+                'last_name': invite_from.last_name,
                 'account_id': invite_from.account_id,
+                'invitee_email': invite_to.email,
                 'category': EventCategory.users,
                 'current_url': current_url,
             },
@@ -400,15 +460,24 @@ class AnalyticService:
     @classmethod
     def users_guest_invited(
         cls,
-        invite_to,
+        invite_from: UserModel,
+        invite_to: UserModel,
         is_superuser: bool
     ) -> bool:
+
+        """ Sent always to trigger the sending of an invitation email
+            is_superuser may be "master account" for tenant """
+
         return cls._track(
             user_id=invite_to.id,
             event=UserAnalyticsEvent.guest_invited,
             properties={
-                'email': invite_to.email,
-                'account_id': invite_to.account_id,
+                'text': 'Guest invitation sent by email',
+                'email': invite_from.email,
+                'first_name': invite_from.first_name,
+                'last_name': invite_from.last_name,
+                'account_id': invite_from.account_id,
+                'invite_to_email': invite_to.email,
                 'category': EventCategory.users,
             },
             is_superuser=is_superuser
@@ -424,6 +493,11 @@ class AnalyticService:
             user_id=user.id,
             event=UserAnalyticsEvent.transferred,
             properties={
+                'text': 'User transfer accepted',
+                'email': user.email,
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+                'account_id': user.account_id,
                 'category': EventCategory.users,
             },
         )
@@ -439,6 +513,10 @@ class AnalyticService:
             user_id=user_id,
             event=UserAnalyticsEvent.invite_accepted,
             properties={
+                'text': 'User invitation accepted',
+                'email': invited_user.email,
+                'first_name': invited_user.first_name,
+                'last_name': invited_user.last_name,
                 'account_id': invited_user.account_id,
                 'category': EventCategory.users,
                 'invitee': {
@@ -461,7 +539,11 @@ class AnalyticService:
             event=UserAnalyticsEvent.digest,
             is_superuser=is_superuser,
             properties={
+                'text': '',
                 'email': user.email,
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+                'account_id': user.account_id,
                 'category': EventCategory.users,
                 'auth_type': auth_type,
             },
@@ -473,11 +555,11 @@ class AnalyticService:
         workflow: Workflow,
         auth_type: AuthTokenType,
         is_superuser: bool,
-        user_id: Optional[int] = None,
+        user: Optional[UserModel] = None,
         anonymous_id: Optional[str] = None,
     ) -> bool:
 
-        if not user_id and not anonymous_id:
+        if not user and not anonymous_id:
             raise exceptions.InvalidUserCredentials()
 
         if auth_type in AuthTokenType.EXTERNAL_TYPES:
@@ -489,18 +571,25 @@ class AnalyticService:
             'event': WorkflowAnalyticsEvent.started,
             'is_superuser': is_superuser,
             'properties': {
+                'text': f'{workflow.name} (id: {workflow.id})',
+                'email': None,
+                'first_name': None,
+                'last_name': None,
+                'account_id': workflow.account_id,
                 'id': workflow.id,
                 'workflow_name': workflow.name,
                 'template_id': workflow.template_id,
                 'template_name': workflow.get_template_name(),
-                'account_id': workflow.account_id,
                 'category': EventCategory.workflows,
                 'auth_type': auth_type,
                 'label': label,
             },
         }
-        if user_id:
-            params['user_id'] = user_id
+        if user:
+            params['user_id'] = user.id
+            params['properties']['first_name'] = user.first_name
+            params['properties']['last_name'] = user.last_name
+            params['properties']['email'] = user.email
         else:
             params['anonymous_id'] = anonymous_id
 
@@ -512,20 +601,24 @@ class AnalyticService:
         workflow: Workflow,
         auth_type: AuthTokenType,
         is_superuser: bool,
-        user_id: int,
+        user: UserModel,
         action: WorkflowActions
     ) -> bool:
 
         return cls._track(
-            user_id=user_id,
+            user_id=user.id,
             event=WorkflowAnalyticsEvent.urgent,
             is_superuser=is_superuser,
             properties={
+                'text': f'{workflow.name} (id: {workflow.id})',
+                'email': user.email,
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+                'account_id': user.account_id,
                 'id': workflow.id,
                 'workflow_name': workflow.name,
                 'template_id': workflow.template_id,
                 'template_name': workflow.get_template_name(),
-                'account_id': workflow.account_id,
                 'auth_type': auth_type,
                 'category': EventCategory.workflows,
                 'label': Label.urgent,
@@ -536,22 +629,26 @@ class AnalyticService:
     @classmethod
     def workflows_updated(
         cls,
+        user: UserModel,
         workflow: Workflow,
         auth_type: AuthTokenType,
         is_superuser: bool,
-        user_id: int,
     ) -> bool:
 
         return cls._track(
-            user_id=user_id,
+            user_id=user.id,
             event=WorkflowAnalyticsEvent.updated,
             is_superuser=is_superuser,
             properties={
+                'text': f'{workflow.name} (id: {workflow.id})',
+                'email': user.email,
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+                'account_id': user.account_id,
                 'id': workflow.id,
                 'name': workflow.name,
                 'template_id': workflow.template_id,
                 'template_name': workflow.get_template_name(),
-                'account_id': workflow.account_id,
                 'category': EventCategory.workflows,
                 'auth_type': auth_type,
             },
@@ -560,17 +657,22 @@ class AnalyticService:
     @classmethod
     def search_search(
         cls,
-        user_id: int,
+        user: UserModel,
         page: str,
         search_text: str,
         is_superuser: bool,
         auth_type: AuthTokenType
     ):
         return cls._track(
-            user_id=user_id,
+            user_id=user.id,
             event=SearchAnalyticsEvent.search,
             is_superuser=is_superuser,
             properties={
+                'text': f'Page: "{page}". Search text: "{search_text}"',
+                'email': user.email,
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+                'account_id': user.account_id,
                 'page': page,
                 'search_text': search_text,
                 'category': EventCategory.search,
@@ -584,9 +686,8 @@ class AnalyticService:
         attachment: FileAttachment,
         is_superuser: bool,
         auth_type: AuthTokenType,
-        user: UserModel,
+        user: Optional[UserModel] = None,
         anonymous_id: Optional[str] = None,
-
     ):
 
         if not user.is_authenticated and not anonymous_id:
@@ -596,16 +697,23 @@ class AnalyticService:
             'event': AttachmentAnalyticsEvent.uploaded,
             'is_superuser': is_superuser,
             'properties': {
+                'text': f'{attachment.name} {attachment.url}',
+                'email': None,
+                'first_name': None,
+                'last_name': None,
+                'account_id': attachment.account_id,
                 'auth_type': auth_type,
                 'id': attachment.id,
                 'size': attachment.humanize_size,
-                'account_id': attachment.account_id,
                 'category': EventCategory.attachments,
                 'type': attachment.extension
             },
         }
         if user.is_authenticated:
             analytics_data['user_id'] = user.id
+            analytics_data['properties']['email'] = user.email
+            analytics_data['properties']['first_name'] = user.first_name
+            analytics_data['properties']['last_name'] = user.last_name
         else:
             analytics_data['anonymous_id'] = anonymous_id
         return cls._track(**analytics_data)
@@ -616,26 +724,36 @@ class AnalyticService:
         template_id: int,
         account_id: int,
         integration_type: TemplateIntegrationType.LITERALS,
-        user_id: Optional[int] = None,
+        user: Optional[UserModel] = None,
         anonymous_id: Optional[str] = None,
         is_superuser: bool = False
     ) -> bool:
 
-        if not user_id and not anonymous_id:
+        if not user and not anonymous_id:
             raise exceptions.InvalidUserCredentials()
 
         params = {
             'event': TemplateAnalyticsEvent.integrated,
             'is_superuser': is_superuser,
             'properties': {
+                'text': (
+                    f'Template id: {template_id}. '
+                    f'Integration type: "{integration_type}"'
+                ),
+                'email': None,
+                'first_name': None,
+                'last_name': None,
+                'account_id': account_id,
                 'template_id': template_id,
                 'integration_type': integration_type,
-                'account_id': account_id,
                 'category': EventCategory.templates,
             }
         }
-        if user_id:
-            params['user_id'] = user_id
+        if user:
+            params['user_id'] = user.id
+            params['properties']['email'] = user.email
+            params['properties']['first_name'] = user.first_name
+            params['properties']['last_name'] = user.last_name
         else:
             params['anonymous_id'] = anonymous_id
 
@@ -652,8 +770,12 @@ class AnalyticService:
             event=AccountAnalyticsEvent.webhooks_subscribed,
             is_superuser=is_superuser,
             properties={
+                'text': '',
+                'email': user.email,
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+                'account_id': user.account_id,
                 'category': EventCategory.accounts,
-                'account_id': user.account.id,
             }
         )
 
@@ -672,10 +794,17 @@ class AnalyticService:
             event=TemplateAnalyticsEvent.checklist_created,
             is_superuser=is_superuser,
             properties={
+                'text': (
+                    f'{template.name} (id: {template.id}). '
+                    f'Step: "{task.name}" '
+                ),
+                'email': user.email,
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+                'account_id': user.account_id,
                 'id': template.id,
                 'name': template.name,
                 'task_number': task.number,
-                'account_id': template.account_id,
                 'category': EventCategory.templates,
                 'auth_type': auth_type,
             }
@@ -697,12 +826,16 @@ class AnalyticService:
             event=WorkflowAnalyticsEvent.delayed,
             is_superuser=is_superuser,
             properties={
+                'text': f'{workflow.name} (id: {workflow.id})',
+                'email': user.email,
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+                'account_id': user.account_id,
                 'id': workflow.id,
                 'duration': duration.days,
                 'workflow_name': workflow.name,
                 'template_id': workflow.template_id,
                 'template_name': workflow.get_template_name(),
-                'account_id': user.account_id,
                 'task_number': task.number,
                 'category': EventCategory.workflows,
                 'auth_type': auth_type,
@@ -722,9 +855,12 @@ class AnalyticService:
             event=SubscriptionAnalyticsEvent.created,
             is_superuser=is_superuser,
             properties={
-                'category': EventCategory.subscriptions,
-                'account_id': user.account_id,
+                'text': '',
                 'email': user.email,
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+                'account_id': user.account_id,
+                'category': EventCategory.subscriptions,
                 'quantity': user.account.max_users,
                 'plan_code': user.account.billing_plan,
             }
@@ -741,9 +877,12 @@ class AnalyticService:
             event=SubscriptionAnalyticsEvent.updated,
             is_superuser=is_superuser,
             properties={
+                'text': '',
                 'category': EventCategory.subscriptions,
-                'account_id': user.account_id,
                 'email': user.email,
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+                'account_id': user.account_id,
                 'quantity': user.account.max_users,
                 'plan_code': user.account.billing_plan,
             }
@@ -760,9 +899,12 @@ class AnalyticService:
             event=SubscriptionAnalyticsEvent.converted,
             is_superuser=is_superuser,
             properties={
-                'category': EventCategory.subscriptions,
-                'account_id': user.account_id,
+                'text': '',
                 'email': user.email,
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+                'account_id': user.account_id,
+                'category': EventCategory.subscriptions,
                 'quantity': user.account.max_users,
                 'plan_code': user.account.billing_plan,
             }
@@ -779,7 +921,11 @@ class AnalyticService:
             event=SubscriptionAnalyticsEvent.expired,
             is_superuser=is_superuser,
             properties={
-                'account_id': user.account.id,
+                'text': '',
+                'email': user.email,
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+                'account_id': user.account_id,
                 'category': EventCategory.subscriptions,
             }
         )
@@ -795,6 +941,10 @@ class AnalyticService:
             event=SubscriptionAnalyticsEvent.canceled,
             is_superuser=is_superuser,
             properties={
+                'text': '',
+                'email': user.email,
+                'first_name': user.first_name,
+                'last_name': user.last_name,
                 'account_id': user.account.id,
                 'category': EventCategory.subscriptions,
             }
@@ -812,9 +962,12 @@ class AnalyticService:
             event=SubscriptionAnalyticsEvent.trial,
             is_superuser=is_superuser,
             properties={
-                'category': EventCategory.subscriptions,
-                'account_id': user.account_id,
+                'text': '',
                 'email': user.email,
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+                'account_id': user.account_id,
+                'category': EventCategory.subscriptions,
                 'quantity': user.account.max_users,
                 'plan_code': user.account.billing_plan,
             }
@@ -833,6 +986,14 @@ class AnalyticService:
             event=TaskAnalyticsEvent.returned,
             is_superuser=is_superuser,
             properties={
+                'text': (
+                    f'{task.workflow.name} (id: {task.workflow.id}). '
+                    f'Task: "{task.name}" (id: {task.id}). '
+                ),
+                'email': user.email,
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+                'account_id': user.account_id,
                 'workflow_id': task.workflow.id,
                 'workflow_name': task.workflow.name,
                 'task_name': task.name,
@@ -856,6 +1017,14 @@ class AnalyticService:
             event=WorkflowAnalyticsEvent.returned,
             is_superuser=is_superuser,
             properties={
+                'text': (
+                    f'{workflow.name} (id: {workflow.id}) '
+                    f'has been returned to '
+                    f'task "{task.name}" (id: {task.id}). '
+                ),
+                'email': user.email,
+                'first_name': user.first_name,
+                'last_name': user.last_name,
                 'account_id': user.account_id,
                 'workflow_id': workflow.id,
                 'workflow_name': workflow.name,
@@ -879,6 +1048,10 @@ class AnalyticService:
             event=TemplateAnalyticsEvent.generation_init,
             is_superuser=is_superuser,
             properties={
+                'text': f'Prompt: {description}',
+                'email': user.email,
+                'first_name': user.first_name,
+                'last_name': user.last_name,
                 'account_id': user.account_id,
                 'request description': description,
                 'category': EventCategory.templates,
@@ -901,8 +1074,12 @@ class AnalyticService:
             event=TemplateAnalyticsEvent.generated_from_landing,
             is_superuser=is_superuser,
             properties={
-                'id': template.id,
+                'text': f'{template.name} (id: {template.id})',
+                'email': user.email,
+                'first_name': user.first_name,
+                'last_name': user.last_name,
                 'account_id': user.account_id,
+                'id': template.id,
                 'category': EventCategory.templates,
                 'label': Label.template_generation,
                 'auth_type': auth_type,
@@ -922,9 +1099,13 @@ class AnalyticService:
             event=TemplateAnalyticsEvent.created_from_landing_library,
             is_superuser=is_superuser,
             properties={
+                'text': f'{template.name} (id: {template.id})',
+                'email': user.email,
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+                'account_id': user.account_id,
                 'id': template.id,
                 'template_name': template.name,
-                'account_id': user.account_id,
                 'category': EventCategory.templates,
                 'auth_type': auth_type,
             }
@@ -944,6 +1125,14 @@ class AnalyticService:
             event=TaskAnalyticsEvent.completed,
             is_superuser=is_superuser,
             properties={
+                'text': (
+                    f'{workflow.name} (id: {workflow.id}). '
+                    f'Task: "{task.name}" (id: {task.id}). '
+                ),
+                'email': user.email,
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+                'account_id': user.account_id,
                 'workflow_id': workflow.id,
                 'workflow_name': workflow.name,
                 'task_name': task.name,
@@ -965,11 +1154,15 @@ class AnalyticService:
             event=WorkflowAnalyticsEvent.completed,
             is_superuser=is_superuser,
             properties={
+                'text': f'{workflow.name} (id: {workflow.id})',
+                'email': user.email,
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+                'account_id': user.account_id,
                 'id': workflow.id,
                 'workflow_name': workflow.name,
                 'template_id': workflow.template_id,
                 'template_name': workflow.get_template_name(),
-                'account_id': workflow.account_id,
                 'category': EventCategory.workflows,
                 'auth_type': auth_type,
             }
@@ -993,10 +1186,14 @@ class AnalyticService:
             event=LibraryTemplateAnalyticsEvent.opened,
             is_superuser=is_superuser,
             properties={
+                'text': f'{sys_template.name} (id: {sys_template.id})',
+                'email': user.email,
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+                'account_id': user.account_id,
                 'id': sys_template.id,
                 'template_name': sys_template.name,
                 'template_category': category_name,
-                'account_id': user.account_id,
                 'category': EventCategory.templates,
                 'label': Label.library_template_opened,
                 'auth_type': auth_type,
@@ -1016,8 +1213,11 @@ class AnalyticService:
             event=AccountAnalyticsEvent.created,
             is_superuser=is_superuser,
             properties={
-                'account_id': user.account_id,
+                'text': f'{user.account.name} (id: {user.account.id})',
                 'email': user.email,
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+                'account_id': user.account_id,
                 'category': EventCategory.accounts,
                 'auth_type': auth_type,
                 **signup_data.as_dict(),
@@ -1037,8 +1237,11 @@ class AnalyticService:
             event=AccountAnalyticsEvent.verified,
             is_superuser=is_superuser,
             properties={
-                'account_id': user.account_id,
+                'text': f'{user.account.name} (id: {user.account.id})',
                 'email': user.email,
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+                'account_id': user.account_id,
                 'category': EventCategory.accounts,
                 'auth_type': auth_type,
                 **signup_data.as_dict(),
@@ -1058,6 +1261,13 @@ class AnalyticService:
             event=TenantsAnalyticsEvent.added,
             is_superuser=is_superuser,
             properties={
+                'text': (
+                    f'{tenant_account.tenant_name} '
+                    f'(id: {tenant_account.id})'
+                ),
+                'first_name': master_user.first_name,
+                'last_name': master_user.last_name,
+                'email': master_user.email,
                 'account_id': master_user.account_id,
                 'tenant_id': tenant_account.id,
                 'category': EventCategory.tenants,
@@ -1078,6 +1288,13 @@ class AnalyticService:
             event=TenantsAnalyticsEvent.accessed,
             is_superuser=is_superuser,
             properties={
+                'text': (
+                    f'{tenant_account.tenant_name} '
+                    f'(id: {tenant_account.id})'
+                ),
+                'first_name': master_user.first_name,
+                'last_name': master_user.last_name,
+                'email': master_user.email,
                 'account_id': master_user.account_id,
                 'tenant_id': tenant_account.id,
                 'category': EventCategory.tenants,
@@ -1088,6 +1305,7 @@ class AnalyticService:
     @classmethod
     def mentions_created(
         cls,
+        text: str,
         user: UserModel,
         workflow: Workflow,
         is_superuser: bool,
@@ -1098,6 +1316,13 @@ class AnalyticService:
             event=MentionsAnalyticsEvent.created,
             is_superuser=is_superuser,
             properties={
+                'text': (
+                    f'{workflow.name} (id: {workflow.id}). '
+                    f'Text: "{text}"'
+                ),
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+                'email': user.email,
                 'account_id': user.account_id,
                 'workflow_id': workflow.id,
                 'workflow_name': workflow.name,
@@ -1109,6 +1334,7 @@ class AnalyticService:
     @classmethod
     def comment_added(
         cls,
+        text: str,
         user: UserModel,
         workflow: Workflow,
         is_superuser: bool,
@@ -1119,6 +1345,13 @@ class AnalyticService:
             event=CommentAnalyticsEvent.added,
             is_superuser=is_superuser,
             properties={
+                'text': (
+                    f'{workflow.name} (id: {workflow.id}). '
+                    f'Text: "{text}"'
+                ),
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+                'email': user.email,
                 'account_id': user.account_id,
                 'workflow_id': workflow.id,
                 'workflow_name': workflow.name,
@@ -1130,6 +1363,7 @@ class AnalyticService:
     @classmethod
     def comment_edited(
         cls,
+        text: str,
         user: UserModel,
         workflow: Workflow,
         is_superuser: bool,
@@ -1140,6 +1374,13 @@ class AnalyticService:
             event=CommentAnalyticsEvent.edited,
             is_superuser=is_superuser,
             properties={
+                'text': (
+                    f'{workflow.name} (id: {workflow.id}). '
+                    f'Text: "{text}"'
+                ),
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+                'email': user.email,
                 'account_id': user.account_id,
                 'workflow_id': workflow.id,
                 'workflow_name': workflow.name,
@@ -1151,6 +1392,7 @@ class AnalyticService:
     @classmethod
     def comment_deleted(
         cls,
+        text: str,
         user: UserModel,
         workflow: Workflow,
         is_superuser: bool,
@@ -1161,6 +1403,13 @@ class AnalyticService:
             event=CommentAnalyticsEvent.deleted,
             is_superuser=is_superuser,
             properties={
+                'text': (
+                    f'{workflow.name} (id: {workflow.id}). '
+                    f'Text: "{text}"'
+                ),
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+                'email': user.email,
                 'account_id': user.account_id,
                 'workflow_id': workflow.id,
                 'workflow_name': workflow.name,
@@ -1172,6 +1421,7 @@ class AnalyticService:
     @classmethod
     def comment_reaction_added(
         cls,
+        text: str,
         user: UserModel,
         workflow: Workflow,
         is_superuser: bool,
@@ -1182,6 +1432,13 @@ class AnalyticService:
             event=CommentAnalyticsEvent.reaction_added,
             is_superuser=is_superuser,
             properties={
+                'text': (
+                    f'{workflow.name} (id: {workflow.id}). '
+                    f'Reaction: "{text}"'
+                ),
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+                'email': user.email,
                 'account_id': user.account_id,
                 'workflow_id': workflow.id,
                 'workflow_name': workflow.name,
@@ -1193,6 +1450,7 @@ class AnalyticService:
     @classmethod
     def comment_reaction_deleted(
         cls,
+        text: str,
         user: UserModel,
         workflow: Workflow,
         is_superuser: bool,
@@ -1203,6 +1461,13 @@ class AnalyticService:
             event=CommentAnalyticsEvent.reaction_deleted,
             is_superuser=is_superuser,
             properties={
+                'text': (
+                    f'{workflow.name} (id: {workflow.id}). '
+                    f'Reaction: "{text}"'
+                ),
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+                'email': user.email,
                 'account_id': user.account_id,
                 'workflow_id': workflow.id,
                 'workflow_name': workflow.name,
@@ -1224,6 +1489,9 @@ class AnalyticService:
             event=UserAnalyticsEvent.logged_in,
             is_superuser=is_superuser,
             properties={
+                'text': '',
+                'first_name': user.first_name,
+                'last_name': user.last_name,
                 'email': user.email,
                 'account_id': user.account_id,
                 'category': EventCategory.users,

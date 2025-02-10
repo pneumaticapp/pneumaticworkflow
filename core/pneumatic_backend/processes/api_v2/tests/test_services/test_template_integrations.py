@@ -952,7 +952,7 @@ def test_update_instance_attr__first_activation__ok(mocker):
         account_id=user.account_id,
         integration_type=TemplateIntegrationType.API,
         is_superuser=False,
-        user_id=user.id,
+        user=user,
         anonymous_id=None
     )
 

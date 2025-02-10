@@ -10,6 +10,8 @@ export interface IWorkflowDetails {
   name: string;
   description: string;
   template: IWorkflowTemplate | null;
+  activeCurrentTask: number;
+  activeTasksCount: number;
   currentTask: TWorkflowTask;
   tasksCount: number;
   finalizable: boolean;
@@ -92,6 +94,8 @@ export interface IWorkflow {
   ancestorTaskId?: number;
   tasksCount: number;
   currentTask: number;
+  activeTasksCount: number;
+  activeCurrentTask: number;
   isExternal: boolean;
   template: IWorkflowTemplate | null;
   task: TWorkflowTask;

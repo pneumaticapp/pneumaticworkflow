@@ -1188,6 +1188,7 @@ class TestTaskView:
             status=WorkflowStatus.DELAYED
         )
         sub_wf.current_task = 3
+        sub_wf.active_current_task = 3
         sub_wf.save()
         task_1 = sub_wf.tasks.get(number=1)
         task_1.is_completed = True
@@ -1223,10 +1224,12 @@ class TestTaskView:
         assert data['date_created_tsp'] == sub_wf.date_created.timestamp()
         assert data['due_date_tsp'] == sub_wf.due_date.timestamp()
         assert data['tasks_count'] == 3
+        assert data['active_tasks_count'] == 3
         assert data['is_external'] is False
         assert data['is_urgent'] is True
         assert data['workflow_starter'] == user.id
         assert data['current_task'] == 3
+        assert data['active_current_task'] == 3
 
         passed_tasks = data['passed_tasks']
         assert len(passed_tasks) == 2

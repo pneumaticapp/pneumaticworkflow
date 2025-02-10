@@ -3,7 +3,7 @@
 import * as React from 'react';
 import * as classnames from 'classnames';
 
-import { DeleteBoldIcon } from '../../../icons';
+import { DeleteIcon } from '../../../icons';
 import { TUploadedFile } from '../../../../utils/uploadFiles';
 
 import styles from './ExtraFieldFile.css';
@@ -28,9 +28,7 @@ export function ExtraFieldFileDocument({ deleteFile, isRemoved, isEdit, name, ur
   };
 
   return (
-    <span
-      className={classnames(styles['extra-field-files-document-grid__document-container'])}
-    >
+    <span className={classnames(styles['extra-field-files-document-grid__document-container'])}>
       <a
         href={url}
         target="_blank"
@@ -38,15 +36,11 @@ export function ExtraFieldFileDocument({ deleteFile, isRemoved, isEdit, name, ur
       >
         {name}
       </a>
-      {isEdit &&
-        <button
-          className={styles['extra-field-document__delete-button']}
-          onClick={handleDeleteIconClick}
-          type="button"
-        >
-          <DeleteBoldIcon className={styles['delete-button']} />
+      {isEdit && (
+        <button className={styles['extra-field-document__delete-button']} onClick={handleDeleteIconClick} type="button">
+          <DeleteIcon className={styles['delete-button']} />
         </button>
-      }
+      )}
     </span>
   );
 }

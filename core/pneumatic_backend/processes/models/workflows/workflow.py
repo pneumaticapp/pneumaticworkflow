@@ -41,11 +41,22 @@ class Workflow(
         default=1,
         validators=[MinValueValidator(1)]
     )
+    active_current_task = models.PositiveIntegerField(
+        default=1,
+        null=True,
+        blank=True,
+        help_text='Not count skipped tasks'
+    )
     status = models.IntegerField(
         choices=WorkflowStatus.CHOICES,
         default=WorkflowStatus.RUNNING
     )
     status_updated = models.DateTimeField(db_index=True)
+    active_tasks_count = models.IntegerField(
+        null=True,
+        blank=True,
+        help_text='Not count skipped tasks'
+    )
     tasks_count = models.IntegerField(null=False)
     is_external = models.BooleanField(default=False)
     is_urgent = models.BooleanField(default=False)

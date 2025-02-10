@@ -144,7 +144,7 @@ def test_list__search__ok(api_client, mocker):
     assert response.data[0]['id'] == task.id
 
     analytics_mock.assert_called_once_with(
-        user_id=user.id,
+        user=user,
         page='tasks',
         search_text=clear_search_text,
         is_superuser=False,
@@ -174,7 +174,7 @@ def test_list__search__not_found__ok(api_client, mocker):
     assert len(response.data) == 0
 
     analytics_mock.assert_called_once_with(
-        user_id=user.id,
+        user=user,
         page='tasks',
         search_text=search_text,
         is_superuser=False,
@@ -214,7 +214,7 @@ def test_list__search__comment__ok(api_client, mocker):
     assert len(response.data) == 1
     assert response.data[0]['id'] == workflow.current_task_instance.id
     analytics_mock.assert_called_once_with(
-        user_id=user.id,
+        user=user,
         page='tasks',
         search_text=search_text,
         is_superuser=False,
@@ -249,7 +249,7 @@ def test_list__search__comment__url_as_text__ok(api_client, mocker):
     assert len(response.data) == 1
     assert response.data[0]['id'] == workflow.current_task_instance.id
     analytics_mock.assert_called_once_with(
-        user_id=user.id,
+        user=user,
         page='tasks',
         search_text=search_text,
         is_superuser=False,
@@ -284,7 +284,7 @@ def test_list__search__comment__markdown__ok(api_client, mocker):
     assert len(response.data) == 1
     assert response.data[0]['id'] == workflow.current_task_instance.id
     analytics_mock.assert_called_once_with(
-        user_id=user.id,
+        user=user,
         page='tasks',
         search_text=search_text,
         is_superuser=False,
@@ -318,7 +318,7 @@ def test_list__search__not_comment_event__not_found(api_client, mocker):
     assert response.status_code == 200
     assert len(response.data) == 0
     analytics_mock.assert_called_once_with(
-        user_id=user.id,
+        user=user,
         page='tasks',
         search_text=search_text,
         is_superuser=False,
@@ -354,7 +354,7 @@ def test_list__search__another_task_comment__not_found(api_client, mocker):
     assert response.status_code == 200
     assert len(response.data) == 0
     analytics_mock.assert_called_once_with(
-        user_id=user.id,
+        user=user,
         page='tasks',
         search_text=search_text,
         is_superuser=False,

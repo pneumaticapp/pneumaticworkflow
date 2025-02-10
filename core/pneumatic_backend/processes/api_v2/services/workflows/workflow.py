@@ -104,9 +104,11 @@ class WorkflowService(
             template=instance_template,
             user_provided_name=kwargs.get('user_provided_name'),
         )
+        tasks_count = instance_template.tasks.count()
         self.instance = Workflow.objects.create(
             template_id=instance_template.id,
-            tasks_count=instance_template.tasks.count(),
+            tasks_count=tasks_count,
+            active_tasks_count=tasks_count,
             name=name,
             name_template=name,
             description=instance_template.description,
@@ -179,14 +181,14 @@ class WorkflowService(
                 workflow=self.instance,
                 auth_type=self.auth_type,
                 is_superuser=self.is_superuser,
-                user_id=self.user.id
+                user=self.user
             )
         if self.instance.is_urgent:
             AnalyticService.workflows_urgent(
                 workflow=self.instance,
                 auth_type=self.auth_type,
                 is_superuser=self.is_superuser,
-                user_id=self.user.id,
+                user=self.user,
                 action=WorkflowActions.marked
             )
 

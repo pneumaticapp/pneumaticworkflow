@@ -113,7 +113,7 @@ function ExtraField(props: IExtraFieldProps) {
       [EExtraFieldType.Checkbox]: 'without-label',
       [EExtraFieldType.Radio]: 'without-label',
       [EExtraFieldType.Creatable]: 'with-label',
-      [EExtraFieldType.File]: 'with-label',
+      [EExtraFieldType.File]: 'without-label',
       [EExtraFieldType.User]: 'with-label',
     };
 

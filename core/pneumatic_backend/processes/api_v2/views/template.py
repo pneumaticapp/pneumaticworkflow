@@ -345,7 +345,7 @@ class TemplateViewSet(
         )
         if search_text:
             AnalyticService.search_search(
-                user_id=request.user.id,
+                user=request.user,
                 page='templates',
                 search_text=search_text,
                 is_superuser=request.is_superuser,

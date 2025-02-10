@@ -505,6 +505,7 @@ export function TaskCard({
               sorting: EWorkflowsLogSorting.New,
             })
           }
+          isHideSkippedTasks
         />
         {isWorkflowInfoVisible && (
           <div className={styles['workflow-info']}>
@@ -547,15 +548,17 @@ export function TaskCard({
           {renderPerformers()}
         </div>
 
-        {viewMode !== ETaskCardViewMode.Guest && <DueIn
-          withTime
-          timezone={authUser.timezone}
-          dateFmt={authUser.dateFmt}
-          dueDate={task.dueDate}
-          onSave={setDueDate}
-          onRemove={deleteDueDate}
-          containerClassName={styles['due-in']}
-        />}
+        {viewMode !== ETaskCardViewMode.Guest && (
+          <DueIn
+            withTime
+            timezone={authUser.timezone}
+            dateFmt={authUser.dateFmt}
+            dueDate={task.dueDate}
+            onSave={setDueDate}
+            onRemove={deleteDueDate}
+            containerClassName={styles['due-in']}
+          />
+        )}
       </div>
 
       <div className={styles['complete-form']}>
