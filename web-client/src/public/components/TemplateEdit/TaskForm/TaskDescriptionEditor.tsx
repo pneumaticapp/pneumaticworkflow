@@ -2,7 +2,7 @@ import * as React from 'react';
 import { useIntl } from 'react-intl';
 
 import { TTaskVariable } from '../types';
-import { getInitialEditorState } from '../../RichEditor/utils/сonverters';
+import { getInitialEditorState } from '../../RichEditor/utils/converters';
 import { RichEditor, RichEditorContainer } from '../../RichEditor';
 
 import { variablesDecorator } from '../utils/variablesDecorator';

@@ -75,6 +75,8 @@ def test_list__workflow_due_date__ok(api_client):
     assert wf_data['status'] == workflow.status
     assert wf_data['tasks_count'] == workflow.tasks_count
     assert wf_data['current_task'] == workflow.current_task
+    assert wf_data['active_tasks_count'] == workflow.active_tasks_count
+    assert wf_data['active_current_task'] == workflow.active_current_task
     assert wf_data['is_external'] == workflow.is_external
     assert wf_data['workflow_starter'] == user.id
     assert wf_data['is_legacy_template'] == workflow.is_legacy_template
@@ -194,7 +196,7 @@ def test_list__search__workflow_name__ok(api_client, mocker):
     assert response.data['results'][0]['id'] == workflow.id
     assert response.data['results'][0]['status_updated']
     analytics_mock.assert_called_once_with(
-        user_id=user.id,
+        user=user,
         page='processes',
         search_text=search_text,
         is_superuser=False,
@@ -228,7 +230,7 @@ def test_list__search__kickoff_description__ok(api_client, mocker):
     assert len(response.data['results']) == 1
     assert response.data['results'][0]['id'] == workflow.id
     analytics_mock.assert_called_once_with(
-        user_id=user.id,
+        user=user,
         page='processes',
         search_text=search_text,
         is_superuser=False,
@@ -262,7 +264,7 @@ def test_list__search__current_task_description__ok(api_client, mocker):
     assert len(response.data['results']) == 1
     assert response.data['results'][0]['id'] == workflow.id
     analytics_mock.assert_called_once_with(
-        user_id=user.id,
+        user=user,
         page='processes',
         search_text=search_text,
         is_superuser=False,
@@ -1173,7 +1175,7 @@ def test_list__search__find_union_result__ok(api_client, mocker):
     assert response.data['results'][1]['id'] == workflow_1.id
 
     analytics_mock.assert_called_once_with(
-        user_id=user.id,
+        user=user,
         page='processes',
         search_text=search_text,
         is_superuser=False,

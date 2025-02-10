@@ -6,16 +6,22 @@
 }
 
 .checkable-list-item-block {
+  position: relative;
   margin-bottom: 8px;
   display: flex;
 }
 
 .checkable-list-item-block__checkbox {
-  z-index: 1;
+  position: absolute;
   cursor: default;
   pointer-events: none;
 }
 
 .checkable-list-item-block__checkbox-inner {
   display: flex;
+}
+
+.checkable-list-item-block__text {
+  margin-left: 2.8rem;
+  min-width: 0.1rem;
 }

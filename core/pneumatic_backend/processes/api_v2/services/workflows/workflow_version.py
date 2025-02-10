@@ -33,8 +33,20 @@ class WorkflowUpdateVersionService(BaseUpdateVersionService):
             is_superuser=self.is_superuser,
             auth_type=self.auth_type
         )
+        active_tasks_count = self.instance.tasks.filter(
+            is_skipped=False
+        ).count()
+        active_current_task = (
+            self.instance.tasks_count - (
+                self.instance.tasks_count - active_tasks_count
+            )
+        )
+        if active_current_task < 1:
+            active_current_task = 1
         self.instance = workflow_service.partial_update(
             current_task=self.instance.tasks_count,
+            active_tasks_count=active_tasks_count,
+            active_current_task=active_current_task,
             force_save=True
         )
         action_service = WorkflowActionService(

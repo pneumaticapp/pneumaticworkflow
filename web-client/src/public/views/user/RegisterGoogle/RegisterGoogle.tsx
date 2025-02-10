@@ -25,7 +25,7 @@ import styles from '../User.css';
 
 export function RegisterGoogle({ googleAuthUserInfo, registerUser, removeGoogleUser }: IRegisterGoogleProps) {
   const { formatMessage } = useIntl();
-  const { reсaptchaSecret } = getBrowserConfigEnv();
+  const { recaptchaSecret } = getBrowserConfigEnv();
   const isGoogle = isGoogleAuth();
   const preloadedUserInfo = (): TGoogleAuthUserInfo => {
     return (isGoogle && googleAuthUserInfo) || {};
@@ -108,7 +108,7 @@ export function RegisterGoogle({ googleAuthUserInfo, registerUser, removeGoogleU
         {isEnvCaptcha && showCaptcha && (
           <div className={styles['captcha']}>
             <ReCAPTCHA
-              sitekey={reсaptchaSecret}
+              sitekey={recaptchaSecret}
               onChange={(captchaLocal: string | null) => captchaLocal && setCaptcha(captchaLocal)}
               theme="light"
             />

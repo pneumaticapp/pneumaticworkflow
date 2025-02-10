@@ -13,8 +13,6 @@ from pneumatic_backend.processes.api_v2.views.checklist import (
 from pneumatic_backend.processes.api_v2.views.task import (
     TaskViewSet,
     TasksListView,
-)
-from pneumatic_backend.processes.views.task import (
     RecentTaskView,
 )
 from pneumatic_backend import views

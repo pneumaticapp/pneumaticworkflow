@@ -1,6 +1,6 @@
 /* eslint-disable */
 
-import { getBrowserConfig } from "./getConfig";
+import { getBrowserConfig } from './getConfig';
 
 /* prettier-ignore */
 export interface ICookieOptions {
@@ -16,15 +16,11 @@ const defaultCookieOptions: ICookieOptions = {
   secure: true,
 };
 
-export const setCookie = (
-  name: string,
-  value: string,
-  config?: ICookieOptions,
-) => {
+export const setCookie = (name: string, value: string, config?: ICookieOptions) => {
   const { env } = getBrowserConfig();
   const options = Object.assign({}, defaultCookieOptions, config);
 
-  if (env === 'local') {
+  if (env === 'local' || window.location.protocol === 'http') {
     options['secure'] = false;
     options['samesite'] = undefined;
   }
@@ -44,18 +40,19 @@ export const setCookie = (
     // tslint:disable-next-line:prefer-template
     `${name}=${encodeURIComponent(value)}; ` +
     `path=${options.path}` +
-    `; domain=${options.domain}${
-      cookieExpires ? `; expires=${cookieExpires}` : ''
-    }${samesite ? `; samesite=${samesite}` : ''}${options.secure ? '; secure' : ''}`;
+    `; domain=${options.domain}${cookieExpires ? `; expires=${cookieExpires}` : ''}${
+      samesite ? `; samesite=${samesite}` : ''
+    }${options.secure ? '; secure' : ''}`;
 };
 
-export const deleteCookie = (
-  name: string,
-  config?: ICookieOptions,
-) => {
-  setCookie(name, '', Object.assign({}, config, {
-    expires: -1,
-  }));
+export const deleteCookie = (name: string, config?: ICookieOptions) => {
+  setCookie(
+    name,
+    '',
+    Object.assign({}, config, {
+      expires: -1,
+    }),
+  );
 };
 
 export const parseCookies = (cookiesString?: string) => {

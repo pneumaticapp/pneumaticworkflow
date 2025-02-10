@@ -39,7 +39,8 @@ def test_list_ok(api_client):
     data_group_1 = response.data[0]
     assert data_group_1['name'] == group_1.name
     assert data_group_1['photo'] == group_1.photo
-    assert data_group_1['users'] == [user_1.id, user_3.id]
+    # TODO Lack of order is complete crap
+    assert set(data_group_1['users']) == {user_1.id, user_3.id}
     data_group_2 = response.data[1]
     assert data_group_2['name'] == group_2.name
     assert data_group_2['photo'] == group_2.photo

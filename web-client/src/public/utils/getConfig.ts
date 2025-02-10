@@ -30,7 +30,7 @@ export interface IBrowserConfig {
   analyticsId: string;
   mainPage: string;
   formSubdomain: string;
-  reсaptchaSecret: string;
+  recaptchaSecret: string;
   firebase: {
     vapidKey: string;
     config: {
@@ -119,7 +119,7 @@ export function getConfig(): TConfig {
       "clientSecret": GOOGLE_CLIENT_SECRET
     },
     "analyticsId": ANALYTICS_WRITE_KEY,
-    "reсaptchaSecret": RECAPTCHA_SITE_KEY,
+    "recaptchaSecret": RECAPTCHA_SITE_KEY,
     "firebase": {
       "vapidKey": FIREBASE_VAPID_KEY,
       "config": {

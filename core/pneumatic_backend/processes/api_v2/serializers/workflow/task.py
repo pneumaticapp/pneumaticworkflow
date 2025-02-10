@@ -115,6 +115,8 @@ class WorkflowInfoSerializer(serializers.ModelSerializer):
             'task',
             'current_task',
             'tasks_count',
+            'active_current_task',
+            'active_tasks_count',
             'workflow_starter',
             'finalizable',
             'status',

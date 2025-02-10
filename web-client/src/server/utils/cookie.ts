@@ -14,22 +14,28 @@ export interface ITokens {
 }
 
 export function setAuthCookie(req: Request, res: Response, { token }: ITokens) {
+  const isHTTPS = req.protocol === 'https';
+
   res.cookie('token', token, {
-    ...COOKIE_OPTIONS,
+    ...(isHTTPS && COOKIE_OPTIONS),
     domain: req.hostname,
   });
 }
 
 export function setGuestCookie(req: Request, res: Response, token: string) {
+  const isHTTPS = req.protocol === 'https';
+
   res.cookie('guest-token', token, {
-    ...COOKIE_OPTIONS,
+    ...(isHTTPS && COOKIE_OPTIONS),
     domain: req.hostname,
   });
 }
 
 export function setPublicAuthCookie(req: Request, res: Response, token: string) {
+  const isHTTPS = req.protocol === 'https';
+
   res.cookie('public-token', token, {
-    ...COOKIE_OPTIONS,
+    ...(isHTTPS && COOKIE_OPTIONS),
     domain: req.hostname,
   });
 }

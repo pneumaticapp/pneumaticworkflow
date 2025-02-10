@@ -367,6 +367,7 @@ def test_revert__skipped_task__not_completed(
     assert response_revert.status_code == 204
     workflow.refresh_from_db()
     assert workflow.current_task == 1
+    assert workflow.tasks_count == 3
     task_2 = workflow.tasks.get(number=2)
     assert task_2.is_skipped is False
     assert task_2.is_completed is False
@@ -774,6 +775,9 @@ def test_revert__activate_skipped_task__ok(
     assert response_revert.status_code == 204
     workflow = Workflow.objects.get(id=workflow_id)
     assert workflow.current_task == 1
+    assert workflow.tasks_count == 2
+    assert workflow.active_current_task == 1
+    assert workflow.active_tasks_count == 2
     task = workflow.current_task_instance
     assert task.is_skipped is False
 

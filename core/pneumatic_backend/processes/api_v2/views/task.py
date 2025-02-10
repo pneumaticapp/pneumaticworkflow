@@ -4,6 +4,7 @@ from django.contrib.auth import get_user_model
 from rest_framework.decorators import action
 from rest_framework.viewsets import GenericViewSet
 from rest_framework.generics import ListAPIView
+from django_filters.rest_framework import DjangoFilterBackend
 
 from pneumatic_backend.analytics.services import AnalyticService
 from pneumatic_backend.generics.permissions import (
@@ -52,13 +53,14 @@ from pneumatic_backend.processes.api_v2.services.task.performers import (
 from pneumatic_backend.processes.api_v2.services.task.guests import (
     GuestPerformersService
 )
-
 from pneumatic_backend.utils.validation import raise_validation_error
 from pneumatic_backend.processes.throttling import TaskPerformerGuestThrottle
 from pneumatic_backend.analytics.mixins import BaseIdentifyMixin
 from pneumatic_backend.accounts.serializers.user import UserSerializer
 from pneumatic_backend.processes.queries import TaskListQuery
 from pneumatic_backend.processes.api_v2.services.task.task import TaskService
+from pneumatic_backend.processes.filters import RecentTaskFilter
+from rest_framework.response import Response
 
 
 UserModel = get_user_model()
@@ -90,13 +92,33 @@ class TasksListView(ListAPIView):
         search_text = filter_slz.validated_data.get('search')
         if search_text:
             AnalyticService.search_search(
-                user_id=user.id,
+                user=user,
                 page='tasks',
                 search_text=search_text,
                 is_superuser=request.is_superuser,
                 auth_type=request.token_type
             )
         return super().list(request, *args, **kwargs)
+
+
+class RecentTaskView(ListAPIView):
+
+    """ Used by Zapier triggers for get webhook response example"""
+
+    permission_classes = (
+        UserIsAuthenticated,
+        BillingPlanPermission,
+        ExpiredSubscriptionPermission,
+    )
+    filter_backends = (DjangoFilterBackend, )
+    filterset_class = RecentTaskFilter
+
+    def list(self, request, *args, **kwargs):
+        qst = Task.objects.on_account(
+            self.request.user.account_id
+        ).started().order_by('-date_started')
+        task = self.filter_queryset(qst).first()
+        return Response(task.webhook_payload()['task'])
 
 
 class TaskViewSet(

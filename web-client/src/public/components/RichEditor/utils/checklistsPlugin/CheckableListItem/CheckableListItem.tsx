@@ -28,10 +28,7 @@ export const CheckableListItem: React.FunctionComponent<TCheckableListItemProps>
         contentEditable={false}
         suppressContentEditableWarning
       >
-        <Checkbox
-          containerClassName={styles['checkable-list-item-block__checkbox-inner']}
-          checked={false}
-        />
+        <Checkbox containerClassName={styles['checkable-list-item-block__checkbox-inner']} checked={false} />
       </div>
       <div className={styles['checkable-list-item-block__text']}>
         <EditorBlock {...props} />

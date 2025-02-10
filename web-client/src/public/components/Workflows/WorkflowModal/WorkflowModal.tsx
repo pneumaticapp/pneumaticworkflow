@@ -126,10 +126,10 @@ export class WorkflowModal extends React.Component<IWorkflowModalProps> {
     }
 
     const {
-      workflow: { currentTask, tasksCount, status },
+      workflow: { activeCurrentTask, activeTasksCount, status },
     } = this.props;
-    if (currentTask && currentTask.number && tasksCount) {
-      return getPercent(countCompletedTasks(currentTask.number, status), tasksCount);
+    if (activeCurrentTask && activeTasksCount) {
+      return getPercent(countCompletedTasks(activeCurrentTask, status), activeTasksCount);
     }
 
     return undefined;
@@ -327,7 +327,7 @@ export class WorkflowModal extends React.Component<IWorkflowModalProps> {
       isLoading,
       changeWorkflowLogViewSettings,
       sendWorkflowLogComments,
-      isLogLoading
+      isLogLoading,
     } = this.props;
 
     if (isLoading) {

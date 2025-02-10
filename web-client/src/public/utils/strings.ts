@@ -4,6 +4,7 @@ import 'moment/locale/ru';
 
 import { PNEUMATIC_SUFFIX } from '../constants/titles';
 import { getPairedArrayItems } from './helpers';
+import { ELocale } from '../types/redux';
 
 export const sanitizeText = (textContent?: string | null) => (textContent && textContent.replace(/\u00A0/g, ' ')) || '';
 
@@ -17,7 +18,7 @@ export function getDate(dateString?: string, config?: { view: 'date' | 'day' }, 
   const { view } = config || { view: 'date' };
 
   if (!currentLocale) {
-    currentLocale = 'eng';
+    currentLocale = ELocale.English;
   }
   date.locale(currentLocale);
 

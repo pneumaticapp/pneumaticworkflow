@@ -9,7 +9,3 @@
 .components::-webkit-scrollbar {
   display: none;
 }
-
-.fields > *:first-child {
-  margin-top: 40px;
-}

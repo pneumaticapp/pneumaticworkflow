@@ -59,6 +59,7 @@ export const WorkflowLog = ({
   sendComment,
   onClickTask,
   onUnmount,
+  isHideSkippedTasks,
 }: IWorkflowLogProps) => {
   const { formatMessage } = useIntl();
 
@@ -180,6 +181,13 @@ export const WorkflowLog = ({
     );
   };
 
+  const hideSkippedTasks = (handlItems: IWorkflowLogItem[]): IWorkflowLogItem[] => {
+    return handlItems.filter(
+      ({ type }: any) =>
+        type !== EWorkflowLogEvent.TaskSkipped && type !== EWorkflowLogEvent.TaskSkippedDueLackAssignedPerformers,
+    );
+  };
+
   const renderWorkflowLogEvents = () => {
     if (!isArrayWithItems(items)) {
       return (
@@ -193,7 +201,9 @@ export const WorkflowLog = ({
       return <WorkflowLogSkeleton theme={theme} />;
     }
 
-    const normalizedItems = isLogMinimized && minimizedLogMaxEvents ? items.slice(0, minimizedLogMaxEvents) : items;
+    const visibleItems = isHideSkippedTasks ? hideSkippedTasks(items) : items;
+    const normalizedItems =
+      isLogMinimized && minimizedLogMaxEvents ? visibleItems.slice(0, minimizedLogMaxEvents) : visibleItems;
 
     return normalizedItems.map((event) => {
       const { task: eventTask, type: eventType, delay, id } = event;
@@ -284,4 +294,5 @@ export interface IWorkflowLogProps {
   sendComment({ text, attachments }: ISendWorkflowLogComment): void;
   onClickTask?(): void;
   onUnmount?(): void;
+  isHideSkippedTasks?: boolean;
 }

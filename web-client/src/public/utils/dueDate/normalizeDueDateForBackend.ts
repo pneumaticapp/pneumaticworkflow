@@ -1,18 +1,25 @@
-import { EMPTY_DURATION } from '../../components/TemplateEdit/constants';
+import { START_DURATION } from '../../components/TemplateEdit/constants';
 import { IDueDate, IDueDateAPI } from '../../types/template';
 
-export const normalizeDueDateForBackend = (dueDate: IDueDate): IDueDateAPI | null => {
-  if (!dueDate.duration && !dueDate.durationMonths) {
+export const normalizeDueDateForBackend = ({
+  rulePreposition,
+  ruleTarget,
+  apiName,
+  duration,
+  durationMonths,
+  sourceId,
+}: IDueDate): IDueDateAPI | null => {
+  if (duration === null && durationMonths === null) {
     return null;
   }
 
-  const rule = `${dueDate.rulePreposition} ${dueDate.ruleTarget}` as IDueDateAPI['rule'];
+  const rule = `${rulePreposition} ${ruleTarget}` as IDueDateAPI['rule'];
 
   return {
-    apiName: dueDate.apiName,
-    duration: dueDate.duration || EMPTY_DURATION,
-    durationMonths: dueDate.durationMonths || 0,
-    sourceId: dueDate.sourceId,
+    apiName,
+    duration: duration || START_DURATION,
+    durationMonths: durationMonths || 0,
+    sourceId,
     rule,
   };
 };

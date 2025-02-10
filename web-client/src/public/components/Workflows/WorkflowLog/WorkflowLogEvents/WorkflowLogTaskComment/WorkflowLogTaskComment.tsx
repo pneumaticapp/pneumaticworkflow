@@ -17,10 +17,10 @@ import { UserData } from '../../../../UserData';
 import {
   AddEmojiIcon,
   CommentDeleteIcon,
+  CommentEditCancelIcon,
+  CommentEditDoneIcon,
   CommentInfoIcon,
   CommentWatchedIcon,
-  CommenеEditCancelIcon,
-  CommenеEditDoneIcon,
 } from '../../../../icons';
 import { RichEditorContainer } from '../../../../RichEditor';
 import { IAccount, TUserListItem } from '../../../../../types/user';
@@ -226,8 +226,8 @@ export function WorkflowLogTaskComment({
             <RichEditorContainer
               defaultValue={text || ''}
               handleChange={setCommentText}
-              cancelIcon={<CommenеEditCancelIcon />}
-              submitIcon={<CommenеEditDoneIcon />}
+              cancelIcon={<CommentEditCancelIcon />}
+              submitIcon={<CommentEditDoneIcon />}
               onCancel={() => setIsEdit(false)}
               onSubmit={() => handleEditComment()}
               accountId={userId as number}

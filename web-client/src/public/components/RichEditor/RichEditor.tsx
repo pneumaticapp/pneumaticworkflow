@@ -32,7 +32,7 @@ import { stripUnsupportedStyles } from './utils/stripUnsupportedStyles';
 import { getSuggestionByValue } from './utils/getSuggestionByValue';
 import { handlePressTab } from './utils/handlePressTab';
 import { trackAddVideo } from './utils/trackAddVideo';
-import { convertDraftToText, getInitialEditorState } from './utils/сonverters';
+import { convertDraftToText, getInitialEditorState } from './utils/converters';
 import { handlePasteAttachments } from './utils/handlePasteAttachments';
 import { removeOrphanedEntities } from './utils/removeOrphanedEntities';
 import {

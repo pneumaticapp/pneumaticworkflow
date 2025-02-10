@@ -85,7 +85,7 @@ class TestPartialUpdateWorkflow:
             workflow=workflow,
             auth_type=AuthTokenType.USER,
             is_superuser=False,
-            user_id=user.id
+            user=user
         )
 
     def test_update__all_fields__ok(
@@ -1015,13 +1015,13 @@ class TestPartialUpdateWorkflow:
             workflow=workflow,
             auth_type=AuthTokenType.USER,
             is_superuser=False,
-            user_id=user.id
+            user=user
         )
         analytics_urgent_mock.assert_called_once_with(
             workflow=workflow,
             auth_type=AuthTokenType.USER,
             is_superuser=False,
-            user_id=user.id,
+            user=user,
             action=WorkflowActions.marked
         )
         workflow_urgent_event_mock.assert_called_once_with(
@@ -1079,13 +1079,13 @@ class TestPartialUpdateWorkflow:
             workflow=workflow,
             auth_type=AuthTokenType.USER,
             is_superuser=False,
-            user_id=user.id
+            user=user
         )
         analytics_urgent_mock.assert_called_once_with(
             workflow=workflow,
             auth_type=AuthTokenType.USER,
             is_superuser=False,
-            user_id=user.id,
+            user=user,
             action=WorkflowActions.unmarked
         )
         workflow_urgent_event_mock.assert_called_once_with(

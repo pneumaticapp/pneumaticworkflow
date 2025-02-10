@@ -15,8 +15,8 @@ import {
   createConditionRuleApiName,
   createConditionPredicateApiName,
   createUUID,
-  createСhecklistApiName,
-  createСhecklistSelectionApiName,
+  createChecklistApiName,
+  createChecklistSelectionApiName,
   createDueDateApiName,
   createPerformerApiName,
 } from '../../../utils/createId';
@@ -25,7 +25,7 @@ import { ICondition, TConditionRule } from '../TaskForm/Conditions';
 
 export function getClonedTask(task: ITemplateTask) {
   const mapChecklist: { [old: string]: string } = {};
-  const mapSelectionsСhecklist: { [old: string]: string } = {};
+  const mapSelectionsChecklist: { [old: string]: string } = {};
 
   const cloneFields = (fields: IExtraField[]): IExtraField[] => {
     return fields.map((field) => ({
@@ -71,10 +71,10 @@ export function getClonedTask(task: ITemplateTask) {
     return newRules;
   };
 
-  const cloneSelectionsСhecklist = (selections: TOutputChecklistItem[]): TOutputChecklistItem[] => {
+  const cloneSelectionsChecklist = (selections: TOutputChecklistItem[]): TOutputChecklistItem[] => {
     return selections.map((selection) => {
-      const newApiName = createСhecklistSelectionApiName();
-      mapSelectionsСhecklist[selection.apiName] = newApiName;
+      const newApiName = createChecklistSelectionApiName();
+      mapSelectionsChecklist[selection.apiName] = newApiName;
 
       return {
         ...omit(selection, ['apiName']),
@@ -85,13 +85,13 @@ export function getClonedTask(task: ITemplateTask) {
 
   const cloneChecklists = (checklists: TOutputChecklist[]): TOutputChecklist[] => {
     return checklists.map((checklist) => {
-      const newApiName = createСhecklistApiName();
+      const newApiName = createChecklistApiName();
       mapChecklist[checklist.apiName] = newApiName;
 
       return {
         ...omit(checklist, ['apiName', 'selections']),
         apiName: newApiName,
-        selections: cloneSelectionsСhecklist(checklist.selections),
+        selections: cloneSelectionsChecklist(checklist.selections),
       };
     });
   };
@@ -103,17 +103,18 @@ export function getClonedTask(task: ITemplateTask) {
       descriptionWithReplaceApiNameCheckist = descriptionWithReplaceApiNameCheckist.replaceAll(key, value);
     });
 
-    Object.entries(mapSelectionsСhecklist).forEach(([key, value]) => {
+    Object.entries(mapSelectionsChecklist).forEach(([key, value]) => {
       descriptionWithReplaceApiNameCheckist = descriptionWithReplaceApiNameCheckist.replaceAll(key, value);
     });
 
     return descriptionWithReplaceApiNameCheckist;
   };
 
-  const cloneRawDueDate = (rawDueDate: IDueDate): IDueDate => {
+  const cloneRawDueDate = (rawDueDate: IDueDate, createdTaskApiName: string): IDueDate => {
     return {
-      ...omit(rawDueDate, ['apiName']),
+      ...omit(rawDueDate, ['apiName', 'sourceId']),
       apiName: createDueDateApiName(),
+      sourceId: createdTaskApiName,
     };
   };
 
@@ -126,15 +127,26 @@ export function getClonedTask(task: ITemplateTask) {
 
   const clonedChecklist = cloneChecklists(task.checklists);
   const clonedDescription = cloneDescription(task.description);
-  const clonedRawDueDate = cloneRawDueDate(task.rawDueDate);
-
+  const createdTaskApiName = createTaskApiName();
+  const clonedRawDueDate = cloneRawDueDate(task.rawDueDate, createdTaskApiName);
 
   const clonedTask: ITemplateTask = {
-    ...omit(task, ['id', 'apiName', 'uuid', 'fields', 'conditions', 'delay', 'name', 'description', 'rawDueDate', 'rawPerformers']),
+    ...omit(task, [
+      'id',
+      'apiName',
+      'uuid',
+      'fields',
+      'conditions',
+      'delay',
+      'name',
+      'description',
+      'rawDueDate',
+      'rawPerformers',
+    ]),
     name: `${task.name} (Clone)`,
     checklists: clonedChecklist,
     description: clonedDescription,
-    apiName: createTaskApiName(),
+    apiName: createdTaskApiName,
     uuid: createUUID(),
     fields: cloneFields(task.fields),
     conditions: cloneConditions(task.conditions),

@@ -10,8 +10,8 @@ interface IWorkflowsProgressProps {
   workflow: IWorkflow;
 }
 export function WorkflowsProgress({ workflow }: IWorkflowsProgressProps) {
-  const { currentTask, tasksCount, status, task } = workflow;
-  const progress = getWorkflowProgress({ currentTask, tasksCount, status });
+  const { activeCurrentTask, activeTasksCount, status, task } = workflow;
+  const progress = getWorkflowProgress({ activeCurrentTask, activeTasksCount, status });
   const color = getWorkflowProgressColor(status, [task.dueDate, workflow.dueDate]);
 
   return (

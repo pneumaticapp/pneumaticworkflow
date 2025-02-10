@@ -1,5 +1,5 @@
 import { EExtraFieldType, IKickoff, ITemplateTask } from '../../../../../types/template';
-import { createEmptyDueDate } from '../../../../../utils/dueDate/createEmptyDueDate';
+import { createEmptyTaskDueDate } from '../../../../../utils/dueDate/createEmptyTaskDueDate';
 import { TTaskVariable } from '../../../types';
 import { getTaskVariables } from '../getTaskVariables';
 
@@ -38,7 +38,7 @@ const mockTask1: ITemplateTask = {
     },
   ],
   delay: null,
-  rawDueDate: createEmptyDueDate(),
+  rawDueDate: createEmptyTaskDueDate(),
   conditions: [],
   uuid: '5f6cbe6b-238e-462e-8f18-d5ee5ec45de3',
   checklists: [],
@@ -64,7 +64,7 @@ const mockTask2: ITemplateTask = {
     },
   ],
   delay: null,
-  rawDueDate: createEmptyDueDate(),
+  rawDueDate: createEmptyTaskDueDate(),
   conditions: [],
   uuid: '86b7e716-3819-4b2b-b306-749e0ac2f4e9',
   checklists: [],

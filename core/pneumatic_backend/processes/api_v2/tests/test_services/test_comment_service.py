@@ -214,6 +214,7 @@ def test_create__notified_users__ok(mocker):
     send_notifications_mock.assert_called_once_with()
     update_attachments_mock.assert_not_called()
     comment_added_analytics_mock.assert_called_once_with(
+        text=clear_text,
         user=account_owner,
         is_superuser=is_superuser,
         auth_type=auth_type,
@@ -323,6 +324,7 @@ def test_create_mentioned_users__ok(mocker):
     send_notifications_mock.assert_called_once_with()
     update_attachments_mock.assert_not_called()
     mention_created_analytics_mock.assert_called_once_with(
+        text=clear_text,
         user=account_owner,
         is_superuser=is_superuser,
         auth_type=auth_type,
@@ -1471,6 +1473,7 @@ def test_update__text__ok(mocker):
     )
     send_mention_notification_mock.assert_not_called()
     comment_edited_analytics_mock.assert_called_once_with(
+        text=clear_text,
         user=account_owner,
         is_superuser=is_superuser,
         auth_type=auth_type,
@@ -1568,6 +1571,7 @@ def test_update__attachments__ok(mocker):
     )
     clear_text_mock.assert_not_called()
     comment_edited_analytics_mock.assert_called_once_with(
+        text=None,
         user=account_owner,
         is_superuser=is_superuser,
         auth_type=auth_type,
@@ -1703,6 +1707,7 @@ def test_update__find_attachments_in_text__ok(data, mocker):
     )
     clear_text_mock.assert_called_once_with(text)
     comment_edited_analytics_mock.assert_called_once_with(
+        text=clear_text,
         user=account_owner,
         is_superuser=is_superuser,
         auth_type=auth_type,
@@ -1812,6 +1817,7 @@ def test_update__not_found_attachments_in_text__ok(text, mocker):
     )
     clear_text_mock.assert_called_once_with(text)
     comment_edited_analytics_mock.assert_called_once_with(
+        text=clear_text,
         user=account_owner,
         is_superuser=is_superuser,
         auth_type=auth_type,
@@ -1922,6 +1928,7 @@ def test_update__notified_users__ok(mocker):
         force_save=True
     )
     comment_edited_analytics_mock.assert_called_once_with(
+        text=clear_text,
         user=account_owner,
         is_superuser=is_superuser,
         auth_type=auth_type,
@@ -2033,6 +2040,7 @@ def test_update__mentioned_users__ok(mocker):
     )
     assert workflow.members.filter(id=user.id).exists()
     comment_edited_analytics_mock.assert_called_once_with(
+        text=clear_text,
         user=account_owner,
         is_superuser=is_superuser,
         auth_type=auth_type,
@@ -2046,11 +2054,12 @@ def test_update__remove_text__ok(mocker):
     account = create_test_account()
     account_owner = create_test_user(is_account_owner=True, account=account)
     workflow = create_test_workflow(account_owner, tasks_count=1)
-
+    clear_text = 'clear text'
     event = WorkflowEvent.objects.create(
         account=account,
         type=WorkflowEventType.COMMENT,
         task=workflow.current_task_instance,
+        clear_text=clear_text,
         text='Old text',
         with_attachments=True,
         workflow=workflow,
@@ -2122,6 +2131,7 @@ def test_update__remove_text__ok(mocker):
     )
     clear_text_mock.assert_not_called()
     comment_edited_analytics_mock.assert_called_once_with(
+        text=None,
         user=account_owner,
         is_superuser=False,
         auth_type=AuthTokenType.USER,
@@ -2212,6 +2222,7 @@ def test_update__remove_attachments__ok(mocker):
         force_save=True
     )
     comment_edited_analytics_mock.assert_called_once_with(
+        text=clear_text,
         user=account_owner,
         is_superuser=False,
         auth_type=AuthTokenType.USER,
@@ -2363,6 +2374,7 @@ def test_delete__ok(mocker):
         account=account,
         type=WorkflowEventType.COMMENT,
         text='Old text',
+        clear_text='Clear text',
         with_attachments=False,
         workflow=workflow,
         task=workflow.current_task_instance,
@@ -2413,6 +2425,7 @@ def test_delete__ok(mocker):
     )
     assert event.attachments.count() == 0
     comment_deleted_analytics_mock.assert_called_once_with(
+        text=event.clear_text,
         user=account_owner,
         is_superuser=False,
         auth_type=AuthTokenType.USER,
@@ -2570,7 +2583,7 @@ def test_create_reaction__first__ok(mocker):
         user=account_owner,
         task=task
     )
-    analytics_mock = mocker.patch(
+    create_reaction_analytics_mock = mocker.patch(
         'pneumatic_backend.processes.api_v2.services.events.'
         'AnalyticService.comment_reaction_added'
     )
@@ -2603,7 +2616,8 @@ def test_create_reaction__first__ok(mocker):
     validate_comment_action_mock.assert_called_once()
     event.refresh_from_db()
     assert event.reactions[reaction] == [user.id]
-    analytics_mock.assert_called_once_with(
+    create_reaction_analytics_mock.assert_called_once_with(
+        text=reaction,
         user=user,
         workflow=workflow,
         is_superuser=is_superuser,
@@ -2646,7 +2660,7 @@ def test_create_reaction__long_comment__cut_off(mocker):
         user=account_owner,
         task=task
     )
-    analytics_mock = mocker.patch(
+    create_reaction_analytics_mock = mocker.patch(
         'pneumatic_backend.processes.api_v2.services.events.'
         'AnalyticService.comment_reaction_added'
     )
@@ -2679,7 +2693,8 @@ def test_create_reaction__long_comment__cut_off(mocker):
     validate_comment_action_mock.assert_called_once()
     event.refresh_from_db()
     assert event.reactions[reaction] == [user.id]
-    analytics_mock.assert_called_once_with(
+    create_reaction_analytics_mock.assert_called_once_with(
+        text=reaction,
         user=user,
         workflow=workflow,
         is_superuser=is_superuser,
@@ -2720,7 +2735,7 @@ def test_create_reaction__not_comment_text__ok(mocker):
         user=account_owner,
         task=task
     )
-    analytics_mock = mocker.patch(
+    create_reaction_analytics_mock = mocker.patch(
         'pneumatic_backend.processes.api_v2.services.events.'
         'AnalyticService.comment_reaction_added'
     )
@@ -2753,7 +2768,8 @@ def test_create_reaction__not_comment_text__ok(mocker):
     validate_comment_action_mock.assert_called_once()
     event.refresh_from_db()
     assert event.reactions[reaction] == [user.id]
-    analytics_mock.assert_called_once_with(
+    create_reaction_analytics_mock.assert_called_once_with(
+        text=reaction,
         user=user,
         workflow=workflow,
         is_superuser=is_superuser,
@@ -2800,7 +2816,7 @@ def test_create_reaction__second__ok(mocker):
     event.reactions[reaction] = [account_owner.id]
     event.reactions['=D'] = [user.id]
     event.save()
-    analytics_mock = mocker.patch(
+    create_reaction_analytics_mock = mocker.patch(
         'pneumatic_backend.processes.api_v2.services.events.'
         'AnalyticService.comment_reaction_added'
     )
@@ -2832,7 +2848,8 @@ def test_create_reaction__second__ok(mocker):
     validate_comment_action_mock.assert_called_once()
     event.refresh_from_db()
     assert event.reactions[reaction] == [account_owner.id, user.id]
-    analytics_mock.assert_called_once_with(
+    create_reaction_analytics_mock.assert_called_once_with(
+        text=reaction,
         user=user,
         workflow=workflow,
         is_superuser=is_superuser,
@@ -2878,7 +2895,7 @@ def test_create_reaction__duplicate__skip(mocker):
     event.reactions[reaction] = [user.id]
     event.save()
 
-    analytics_mock = mocker.patch(
+    create_reaction_analytics_mock = mocker.patch(
         'pneumatic_backend.processes.api_v2.services.events.'
         'AnalyticService.comment_reaction_added'
     )
@@ -2910,7 +2927,7 @@ def test_create_reaction__duplicate__skip(mocker):
     validate_comment_action_mock.assert_called_once()
     event.refresh_from_db()
     assert event.reactions[reaction] == [user.id]
-    analytics_mock.assert_not_called()
+    create_reaction_analytics_mock.assert_not_called()
     send_workflow_event_mock.assert_not_called()
     send_reaction_notification_mock.assert_not_called()
 
@@ -2939,7 +2956,7 @@ def test_delete_reaction__last__remove_reaction(mocker):
     event.reactions[reaction] = [user.id]
     event.save()
 
-    analytics_mock = mocker.patch(
+    reaction_deleted_analytics_mock = mocker.patch(
         'pneumatic_backend.processes.api_v2.services.events.'
         'AnalyticService.comment_reaction_deleted'
     )
@@ -2967,7 +2984,8 @@ def test_delete_reaction__last__remove_reaction(mocker):
     validate_comment_action_mock.assert_called_once()
     event.refresh_from_db()
     assert reaction not in event.reactions.keys()
-    analytics_mock.assert_called_once_with(
+    reaction_deleted_analytics_mock.assert_called_once_with(
+        text=reaction,
         user=user,
         workflow=workflow,
         is_superuser=is_superuser,
@@ -3000,7 +3018,7 @@ def test_delete_reaction__not_last__remove_only_user_id(mocker):
     event.reactions[reaction] = [user.id, account_owner.id]
     event.save()
 
-    analytics_mock = mocker.patch(
+    reaction_deleted_analytics_mock = mocker.patch(
         'pneumatic_backend.processes.api_v2.services.events.'
         'AnalyticService.comment_reaction_deleted'
     )
@@ -3028,7 +3046,8 @@ def test_delete_reaction__not_last__remove_only_user_id(mocker):
     validate_comment_action_mock.assert_called_once()
     event.refresh_from_db()
     assert event.reactions == {reaction: [account_owner.id]}
-    analytics_mock.assert_called_once_with(
+    reaction_deleted_analytics_mock.assert_called_once_with(
+        text=reaction,
         user=user,
         workflow=workflow,
         is_superuser=is_superuser,
@@ -3059,7 +3078,7 @@ def test_delete_reaction__not_exist_reaction__skip(mocker):
         user=account_owner,
     )
 
-    analytics_mock = mocker.patch(
+    reaction_deleted_analytics_mock = mocker.patch(
         'pneumatic_backend.processes.api_v2.services.events.'
         'AnalyticService.comment_reaction_deleted'
     )
@@ -3087,7 +3106,7 @@ def test_delete_reaction__not_exist_reaction__skip(mocker):
     validate_comment_action_mock.assert_called_once()
     event.refresh_from_db()
     assert event.reactions == {}
-    analytics_mock.assert_not_called()
+    reaction_deleted_analytics_mock.assert_not_called()
     send_workflow_event_mock.assert_not_called()
 
 
@@ -3113,7 +3132,7 @@ def test_delete_reaction__not_exist_user_id__skip(mocker):
         user=account_owner,
     )
 
-    analytics_mock = mocker.patch(
+    reaction_deleted_analytics_mock = mocker.patch(
         'pneumatic_backend.processes.api_v2.services.events.'
         'AnalyticService.comment_reaction_deleted'
     )
@@ -3141,7 +3160,7 @@ def test_delete_reaction__not_exist_user_id__skip(mocker):
     validate_comment_action_mock.assert_called_once()
     event.refresh_from_db()
     assert event.reactions == {}
-    analytics_mock.assert_not_called()
+    reaction_deleted_analytics_mock.assert_not_called()
     send_workflow_event_mock.assert_not_called()
 
 
@@ -3167,7 +3186,7 @@ def test_create_reaction__to_yourself_comment__ok(mocker):
         user=user,
         task=task
     )
-    analytics_mock = mocker.patch(
+    reaction_deleted_analytics_mock = mocker.patch(
         'pneumatic_backend.processes.api_v2.services.events.'
         'AnalyticService.comment_reaction_added'
     )
@@ -3200,7 +3219,8 @@ def test_create_reaction__to_yourself_comment__ok(mocker):
     validate_comment_action_mock.assert_called_once()
     event.refresh_from_db()
     assert event.reactions[reaction] == [user.id]
-    analytics_mock.assert_called_once_with(
+    reaction_deleted_analytics_mock.assert_called_once_with(
+        text=reaction,
         user=user,
         workflow=workflow,
         is_superuser=is_superuser,

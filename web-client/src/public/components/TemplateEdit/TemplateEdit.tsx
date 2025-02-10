@@ -13,7 +13,7 @@ import { getEmptyConditions } from './TaskForm/Conditions/utils/getEmptyConditio
 import { AutoSaveStatusContainer } from './AutoSaveStatus';
 import { TemplateEntity } from './TemplateEntity';
 import { AddEntityButton, EEntityTitle } from './AddEntityButton';
-import { EMPTY_DURATION, DEFAULT_TEMPLATE_NAME } from './constants';
+import { START_DURATION, DEFAULT_TEMPLATE_NAME } from './constants';
 import { getVariables } from './TaskForm/utils/getTaskVariables';
 import { TemplateIntegrations } from './Integrations';
 import { TemplateControllsContainer } from './TemplateControlls';
@@ -33,7 +33,7 @@ import { ETaskPerformerType, ITemplate, ITemplateTask } from '../../types/templa
 import { EditableText } from '../UI/EditableText';
 import { TLoadTemplateVariablesSuccessPayload } from '../../redux/actions';
 import { ETemplateStatus, IAuthUser } from '../../types/redux';
-import { createStartedTaskDueDate } from '../../utils/dueDate/createStartedTaskDueDate';
+import { createEmptyTaskDueDate } from '../../utils/dueDate/createEmptyTaskDueDate';
 import { usePrevious } from '../../hooks/usePrevious';
 import { ConditionsBanner } from './ConditionsBanner';
 import { getUserFullName } from '../../utils/users';
@@ -193,6 +193,7 @@ export function TemplateEdit({
   };
 
   const sortedTasks = () => [...tasks].sort((a, b) => a.number - b.number);
+
   const getNewTask = (templateTask?: Partial<ITemplateTask>): ITemplateTask => {
     const taskApiName = createTaskApiName();
 
@@ -214,7 +215,7 @@ export function TemplateEdit({
       uuid: createUUID(),
       requireCompletionByAll: false,
       conditions: getEmptyConditions(accessConditions),
-      rawDueDate: createStartedTaskDueDate(taskApiName),
+      rawDueDate: createEmptyTaskDueDate(taskApiName),
       checklists: [],
       ...templateTask,
     };
@@ -370,7 +371,7 @@ export function TemplateEdit({
       if (task.uuid === targetTask.uuid) {
         return {
           ...task,
-          delay: EMPTY_DURATION,
+          delay: START_DURATION,
         };
       }
 

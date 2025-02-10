@@ -68,6 +68,30 @@ class WorkflowActionService:
         self.auth_type = auth_type
         self.sync = sync
 
+    def _set_workflow_counts(
+        self,
+        workflow: Workflow,
+        force_save: bool = True,
+        by_complete_task: bool = False,
+        by_skip_task: bool = False,
+    ):
+        active_tasks_count = (
+            workflow.tasks.filter(is_skipped=False).count()
+        )
+        workflow.active_tasks_count = active_tasks_count
+        count_skipped_tasks = workflow.tasks_count - active_tasks_count
+        active_current_task = workflow.current_task - count_skipped_tasks
+
+        if by_complete_task or by_skip_task:
+            active_current_task = active_tasks_count
+        elif active_current_task < 1:
+            active_current_task = 1
+        workflow.active_current_task = active_current_task
+        if force_save:
+            workflow.save(
+                update_fields=('active_tasks_count', 'active_current_task')
+            )
+
     def delay_workflow(
         self,
         workflow: Workflow,
@@ -278,6 +302,7 @@ class WorkflowActionService:
         workflow: Workflow,
         by_condition: bool = True,
         by_complete_task: bool = False,
+        by_skip_task: bool = False,
         **kwargs
     ):
 
@@ -332,6 +357,11 @@ class WorkflowActionService:
                 user_ids=user_ids
             )
         acc_id = self.user.account_id
+        self._set_workflow_counts(
+            workflow=workflow,
+            by_complete_task=by_complete_task,
+            by_skip_task=by_skip_task,
+        )
         if WebHook.objects.on_account(acc_id).wf_completed().exists():
             send_workflow_completed_webhook.delay(
                 user_id=self.user.id,
@@ -366,6 +396,7 @@ class WorkflowActionService:
             task.is_skipped = True
             is_reverted = False
         task.save(update_fields=['is_skipped'])
+        self._set_workflow_counts(workflow, by_skip_task=True)
         if next_task:
             action_method, _ = self.execute_condition(next_task)
             if action_method:
@@ -379,7 +410,8 @@ class WorkflowActionService:
         else:
             self.end_process(
                 workflow=workflow,
-                by_condition=False
+                by_condition=False,
+                by_skip_task=True,
             )
 
     def skip_task_no_performers(
@@ -392,6 +424,7 @@ class WorkflowActionService:
         task.is_skipped = True
         task.save(update_fields=('is_skipped',))
         workflow = task.workflow
+        self._set_workflow_counts(workflow, by_skip_task=True)
         user = workflow.workflow_starter
         if next_task:
             action_method, by_cond = self.execute_condition(next_task)
@@ -567,7 +600,14 @@ class WorkflowActionService:
     ):
 
         workflow.current_task = task.number
-        workflow.save(update_fields=('current_task',))
+        self._set_workflow_counts(workflow, force_save=False)
+        workflow.save(
+            update_fields=(
+                'current_task',
+                'active_current_task',
+                'active_tasks_count',
+            )
+        )
         if need_insert_fields_values:
             task_service = TaskService(
                 instance=task,
@@ -881,6 +921,7 @@ class WorkflowActionService:
                 auth_type=self.auth_type,
             )
         acc_id = self.user.account_id
+        self._set_workflow_counts(workflow)
         if WebHook.objects.on_account(acc_id).task_returned().exists():
             send_task_returned_webhook.delay(
                 user_id=self.user.id,

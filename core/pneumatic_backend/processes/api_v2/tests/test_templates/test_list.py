@@ -356,7 +356,7 @@ class TestListTemplate:
         # assert
         assert response.status_code == 200
         analytics_mock.assert_called_once_with(
-            user_id=user.id,
+            user=user,
             page='templates',
             search_text=search_text,
             is_superuser=False,

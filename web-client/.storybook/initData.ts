@@ -148,7 +148,7 @@ window['__pneumaticConfig'] = {
     analyticsId: '',
     mainPage: 'https://www.pneumatic.app/',
     formSubdomain: 'form.pneumatic.app',
-    reсaptchaSecret: '',
+    recaptchaSecret: '',
     firebase: {
       vapidKey: '',
       config: {

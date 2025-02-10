@@ -13,7 +13,7 @@ import { IWorkflowExtraFieldProps } from '..';
 import fieldStyles from './ExtraFieldDate.css';
 import { DatePicker } from '../../../UI/form/DatePicker/container';
 import styles from '../../KickoffRedux/KickoffRedux.css';
-import { toDate, toDateString } from '../../../../utils/dateTime';
+import { toDate, toTspDate } from '../../../../utils/dateTime';
 
 export function ExtraFieldDate({
   field,
@@ -49,8 +49,7 @@ export function ExtraFieldDate({
       return;
     }
 
-    const strDate = toDateString(date);
-    editField({ value: strDate });
+    editField({ value: toTspDate(date) });
     setSelectedDate(date);
   };
 

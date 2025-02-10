@@ -556,6 +556,242 @@ def test_complete__performer_already_complete__validation_error(
     complete_current_task_by_user_mock.assert_not_called()
 
 
+def test_complete__validation_error_required_output_user_field(
+    mocker,
+    api_client
+):
+    # arrange
+    mocker.patch(
+        'pneumatic_backend.processes.tasks.webhooks.'
+        'send_task_completed_webhook.delay'
+    )
+    user = create_test_user()
+    api_client.token_authenticate(user)
+    template = create_test_template(user=user, is_active=True)
+    template_first_task = template.tasks.get(number=1)
+    FieldTemplate.objects.create(
+        name='Enter performer for next task',
+        type=FieldType.USER,
+        is_required=True,
+        task=template_first_task,
+        template=template,
+    )
+    workflow = create_test_workflow(user=user, template=template)
+    current_task = workflow.current_task_instance
+    output_field = current_task.output.first()
+
+    # act
+    response = api_client.post(
+        f'/workflows/{workflow.id}/task-complete',
+        data={
+            'task_id': current_task.id
+            # "output is empty"
+        }
+    )
+
+    # assert
+    assert response.status_code == 400
+    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
+    assert response.data['message'] == messages.MSG_PW_0023
+    assert response.data['details']['reason'] == messages.MSG_PW_0023
+    assert response.data['details']['api_name'] == output_field.api_name
+
+
+def test_complete__validation_error_output_user_field_wrong_type(
+    mocker,
+    api_client
+):
+    # arrange
+    mocker.patch(
+        'pneumatic_backend.processes.tasks.webhooks.'
+        'send_task_completed_webhook.delay'
+    )
+    user = create_test_user()
+    api_client.token_authenticate(user)
+    template = create_test_template(user=user, is_active=True)
+    template_first_task = template.tasks.get(number=1)
+    output_field = FieldTemplate.objects.create(
+        name='Enter performer for next task',
+        type=FieldType.USER,
+        is_required=True,
+        task=template_first_task,
+        template=template,
+    )
+    workflow = create_test_workflow(user=user, template=template)
+    current_task = workflow.current_task_instance
+
+    # act
+    response = api_client.post(
+        f'/workflows/{workflow.id}/task-complete',
+        data={
+            'task_id': current_task.id,
+            'output': {
+                output_field.api_name: 'incorrect integer'
+            }
+        }
+    )
+
+    # assert
+    assert response.status_code == 400
+    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
+    assert response.data['message'] == messages.MSG_PW_0038
+    assert response.data['details']['api_name'] == output_field.api_name
+    assert response.data['details']['reason'] == messages.MSG_PW_0038
+
+
+def test_complete__validation_error_output_user_field_not_exist(
+    mocker,
+    api_client
+):
+    # arrange
+    mocker.patch(
+        'pneumatic_backend.processes.tasks.webhooks.'
+        'send_task_completed_webhook.delay'
+    )
+
+    user = create_test_user()
+    api_client.token_authenticate(user)
+    template = create_test_template(user=user, is_active=True)
+    template_first_task = template.tasks.get(number=1)
+    output_field = FieldTemplate.objects.create(
+        name='Enter performer for next task',
+        type=FieldType.USER,
+        is_required=True,
+        task=template_first_task,
+        template=template,
+    )
+    workflow = create_test_workflow(user=user, template=template)
+    current_task = workflow.current_task_instance
+
+    # act
+    response = api_client.post(
+        f'/workflows/{workflow.id}/task-complete',
+        data={
+            'task_id': current_task.id,
+            'output': {
+                output_field.api_name: '-1'
+            }
+        }
+    )
+
+    # assert
+    assert response.status_code == 400
+    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
+    assert response.data['message'] == messages.MSG_PW_0039
+    assert response.data['details']['api_name'] == output_field.api_name
+    assert response.data['details']['reason'] == messages.MSG_PW_0039
+
+
+def test_complete__validation_error_output_user_field_not_exist2(
+    mocker,
+    api_client
+):
+    # arrange
+    mocker.patch(
+        'pneumatic_backend.processes.tasks.webhooks.'
+        'send_task_completed_webhook.delay'
+    )
+    user = create_test_user()
+    another_account_user = create_test_user(email='test2@pneumatic.app')
+    api_client.token_authenticate(user)
+    template = create_test_template(user=user, is_active=True)
+    template_first_task = template.tasks.get(number=1)
+    output_field = FieldTemplate.objects.create(
+        name='Enter performer for next task',
+        type=FieldType.USER,
+        is_required=True,
+        task=template_first_task,
+        template=template,
+    )
+    workflow = create_test_workflow(user=user, template=template)
+    current_task = workflow.current_task_instance
+
+    # act
+    response = api_client.post(
+        f'/workflows/{workflow.id}/task-complete',
+        data={
+            'task_id': current_task.id,
+            'output': {
+                output_field.api_name: str(another_account_user.id)
+            }
+        }
+    )
+
+    # assert
+    assert response.status_code == 400
+    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
+    assert response.data['message'] == messages.MSG_PW_0039
+    assert response.data['details']['api_name'] == output_field.api_name
+    assert response.data['details']['reason'] == messages.MSG_PW_0039
+
+
+def test_complete__insert_output_user_through_task__ok(
+    mocker,
+    api_client
+):
+    # arrange
+    mocker.patch(
+        'pneumatic_backend.processes.tasks.webhooks.'
+        'send_workflow_started_webhook.delay',
+    )
+    mocker.patch(
+        'pneumatic_backend.processes.tasks.webhooks.'
+        'send_task_completed_webhook.delay'
+    )
+    user = create_test_user()
+    user2 = create_test_user(
+        email='test2@pneumatic.app',
+        account=user.account
+    )
+    api_client.token_authenticate(user)
+
+    template = create_test_template(
+        user=user,
+        is_active=True
+    )
+
+    template_first_task = template.tasks.order_by('number').first()
+    field_template = FieldTemplate.objects.create(
+        name='Enter performer for next task',
+        type=FieldType.USER,
+        is_required=True,
+        task=template_first_task,
+        template=template,
+    )
+    template_second_task = template_first_task.next
+    template_second_task.description = (
+        'Name is {{ %s }}.' % field_template.api_name
+    )
+    template_second_task.save()
+    response = api_client.post(
+        f'/templates/{template.id}/run',
+        data={
+            'name': 'Test name',
+        }
+    )
+    workflow = Workflow.objects.get(pk=response.data['id'])
+    current_task = workflow.current_task_instance
+    output_field = current_task.output.first()
+
+    # act
+    api_client.post(
+        f'/workflows/{workflow.id}/task-complete',
+        data={
+            'task_id': current_task.id,
+            'output': {
+                output_field.api_name: str(user2.id)
+            }
+        }
+    )
+    workflow.refresh_from_db()
+    current_task = workflow.current_task_instance
+
+    # assert
+    assert current_task.description == (
+        f'Name is {user2.first_name} {user2.last_name}.'
+    )
+
+
 class TestCompleteWorkflow:
 
     """ Legacy tests """
@@ -1215,7 +1451,7 @@ class TestCompleteWorkflow:
             user=user,
             is_active=True
         )
-        task = template.tasks.order_by('number').first()
+        task = template.tasks.get(number=1)
         output_field = FieldTemplate.objects.create(
             type=FieldType.TEXT,
             name='Past name',
@@ -1436,6 +1672,9 @@ class TestCompleteWorkflow:
         current_task = workflow.current_task_instance
 
         assert workflow.current_task == 3
+        assert workflow.tasks_count == 3
+        assert workflow.active_current_task == 2
+        assert workflow.active_tasks_count == 2
         assert current_task.description == (
             'His name is... JOHN CENA!!! Third link '
             f'[{first_file.name}]({first_file.url}), '
@@ -2151,6 +2390,9 @@ class TestCompleteWorkflow:
         assert task_2.is_skipped
         assert task_3.is_skipped
         assert workflow.current_task == 4
+        assert workflow.active_current_task == 2
+        assert workflow.tasks_count == 4
+        assert workflow.active_tasks_count == 2
         assert WorkflowEvent.objects.filter(
             workflow=workflow,
             account=user.account,
@@ -3098,3 +3340,80 @@ class TestCompleteWorkflow:
         )
         assert events[0] == WorkflowEventType.TASK_COMPLETE
         assert events[1] == WorkflowEventType.TASK_START
+
+    def test_complete__task_id__ok(
+        self,
+        api_client
+    ):
+
+        # TODO test to remove
+
+        # arrange
+        user = create_test_user()
+        template = create_test_template(
+            user=user,
+            tasks_count=3,
+            is_active=True
+        )
+        task_3 = template.tasks.get(number=3)
+        field = FieldTemplate.objects.create(
+            type=FieldType.TEXT,
+            name='Skip third task',
+            kickoff=template.kickoff_instance,
+            template=template,
+        )
+        condition_template = ConditionTemplate.objects.create(
+            task=task_3,
+            action=ConditionTemplate.SKIP_TASK,
+            order=0,
+            template=template,
+        )
+        rule = RuleTemplate.objects.create(
+            condition=condition_template,
+            template=template,
+        )
+        PredicateTemplate.objects.create(
+            rule=rule,
+            operator=PredicateOperator.EQUAL,
+            field_type=FieldType.TEXT,
+            field=field.api_name,
+            value='skip',
+            template=template,
+        )
+
+        api_client.token_authenticate(user)
+
+        response_run = api_client.post(
+            f'/templates/{template.id}/run',
+            data={
+                'kickoff': {
+                    field.api_name: 'skip'
+                }
+            }
+        )
+        workflow = Workflow.objects.get(id=response_run.data['id'])
+
+        response_complete_1 = api_client.post(
+            f'/workflows/{workflow.id}/task-complete',
+            data={
+                'task_api_name': workflow.tasks.get(number=1).api_name
+            }
+        )
+
+        # act
+        response_complete_2 = api_client.post(
+            f'/workflows/{workflow.id}/task-complete',
+            data={
+                'task_api_name': workflow.tasks.get(number=2).api_name
+            }
+        )
+
+        # assert
+        assert response_run.status_code == 200
+        assert response_complete_1.status_code == 204
+        assert response_complete_2.status_code == 204
+        workflow.refresh_from_db()
+        assert workflow.current_task == 2
+        assert workflow.tasks_count == 3
+        assert workflow.active_tasks_count == 2
+        assert workflow.active_current_task == 2

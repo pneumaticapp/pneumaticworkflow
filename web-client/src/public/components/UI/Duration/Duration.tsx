@@ -1,17 +1,11 @@
 /* eslint-disable */
-/* prettier-ignore */
-import * as React from 'react';
-import * as classnames from 'classnames';
+import React, { useState } from 'react';
+import classnames from 'classnames';
 import { useIntl } from 'react-intl';
 
 import { Field } from '../../Field';
-import {
-  formatDelayRequest,
-  getSeconds,
-  parseDuration,
-  SEC_IN_DAY,
-} from '../../../utils/dateTime';
-import { EMPTY_DURATION } from '../../TemplateEdit/constants';
+import { formatDelayRequest, getSeconds, parseDuration, SEC_IN_DAY } from '../../../utils/dateTime';
+import { START_DURATION } from '../../TemplateEdit/constants';
 
 import styles from './Duration.css';
 
@@ -20,6 +14,7 @@ export interface IDurationProps {
   durationMonths?: number | null;
   onEditDuration(duration: string): void;
   onEditDurationMonths?(months: number): void;
+  dueDateDuration?: boolean;
 }
 
 export enum EDurationFieldType {
@@ -33,11 +28,11 @@ export function Duration({
   durationMonths,
   onEditDuration,
   onEditDurationMonths,
+  dueDateDuration,
 }: IDurationProps) {
-  const { useState } = React;
   const { formatMessage } = useIntl();
 
-  const normalizedDuration = duration || EMPTY_DURATION;
+  const normalizedDuration = duration || START_DURATION;
   const { days, hours, minutes } = parseDuration(normalizedDuration);
   const [daysDuration, setDaysDuration] = useState(days);
   const [hoursDuration, setHoursDuration] = useState(hours);
@@ -79,22 +74,22 @@ export function Duration({
     onEditDuration(formattedDuration);
   };
 
-  const classNameForField = (duration: number) => classnames(styles['field'], duration === 0 && styles['field_default-value']);
+  const classNameForField = (duration: number) =>
+    classnames(styles['field'], !dueDateDuration && duration === 0 && styles['field_default-value']);
 
   return (
     <div className={styles['container']}>
-      {(typeof durationMonths !== 'undefined' &&
-        typeof onEditDurationMonths !== 'undefined') && (
-          <Field
-            value={durationMonths || ''}
-            className={classNameForField(durationMonths || 0)}
-            onChange={e => onEditDurationMonths(Number(e.target.value))}
-            intlId="duration-month"
-            labelClassName={styles['field-label']}
-            placeholder={formatMessage({ id: 'duration-month-placeholder' })}
-            pattern="[0-9]*"
-          />
-        )}
+      {typeof durationMonths !== 'undefined' && typeof onEditDurationMonths !== 'undefined' && (
+        <Field
+          value={durationMonths || (dueDateDuration ? 0 : '')}
+          className={classNameForField(durationMonths || 0)}
+          onChange={(e) => onEditDurationMonths(Number(e.target.value))}
+          intlId="duration-month"
+          labelClassName={styles['field-label']}
+          placeholder={formatMessage({ id: 'duration-month-placeholder' })}
+          pattern="[0-9]*"
+        />
+      )}
       <Field
         value={daysDuration}
         className={classNameForField(daysDuration)}

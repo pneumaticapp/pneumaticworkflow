@@ -13,6 +13,7 @@ import {
   isAfter,
 } from 'date-fns';
 
+import { useIntl } from 'react-intl';
 import { IWorkflowDelay } from '../types/workflow';
 import { EHighlightsDateFilter } from '../types/highlights';
 
@@ -105,6 +106,15 @@ export const formatDurationMonths = (value: number | null) => {
   if (!value) return '';
 
   return `${value}${value === 1 ? 'mo' : 'mos'}`;
+};
+
+export const getZeroDuration = (duration: string | null, durationMonths: number | null): string | null => {
+  const regexNotDueDate: RegExp = /[1-9]/;
+  if (durationMonths || (duration && regexNotDueDate?.test(duration))) return null;
+
+  const { formatMessage } = useIntl();
+  const zeroDuration = `0${formatMessage({ id: 'tasks.task-zero-due-date' })}`;
+  return zeroDuration;
 };
 
 export const formatDelayRequest = ({ days, hours, minutes }: ISplittedDuration) => {

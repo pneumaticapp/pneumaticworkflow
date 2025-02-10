@@ -1,4 +1,4 @@
-import { COOKIE_OPTIONS, setAuthCookie } from '../cookie';
+import { setAuthCookie } from '../cookie';
 
 describe('cookie', () => {
   it('sets a cookie.', () => {
@@ -11,6 +11,6 @@ describe('cookie', () => {
 
     setAuthCookie(req, res, tokens);
 
-    expect(res.cookie).toHaveBeenCalledWith('token', tokens.token, { ...COOKIE_OPTIONS, domain });
+    expect(res.cookie).toHaveBeenCalledWith('token', tokens.token, { domain });
   });
 });

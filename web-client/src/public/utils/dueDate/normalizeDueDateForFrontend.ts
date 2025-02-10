@@ -6,34 +6,39 @@ import {
   TDueDateRuleTarget,
 } from '../../types/template';
 import { createDueDateApiName } from '../createId';
-import { createEmptyDueDate } from './createEmptyDueDate';
+import { createEmptyTaskDueDate } from './createEmptyTaskDueDate';
 
-export const normalizeDueDateForFrontend = (task: ITemplateTaskResponse): IDueDate => {
-  if (task.dueIn && task.apiName) {
+export const normalizeDueDateForFrontend = ({
+  dueIn,
+  apiName: taskApiName,
+  rawDueDate,
+}: ITemplateTaskResponse): IDueDate => {
+  if (dueIn && taskApiName) {
     return {
       apiName: createDueDateApiName(),
-      duration: task.dueIn,
+      duration: dueIn,
       durationMonths: 0,
       rulePreposition: 'after',
       ruleTarget: 'task started',
-      sourceId: task.apiName,
+      sourceId: taskApiName,
     };
   }
 
-  if (task.rawDueDate) {
-    const [rulePreposition, ruleTarget] = convertRule(task.rawDueDate.rule);
+  if (rawDueDate) {
+    const { apiName, duration, durationMonths, sourceId, rule } = rawDueDate;
+    const [rulePreposition, ruleTarget] = convertRule(rule);
 
     return {
-      apiName: task.rawDueDate.apiName,
-      duration: task.rawDueDate.duration,
-      durationMonths: task.rawDueDate.durationMonths || null,
-      sourceId: task.rawDueDate.sourceId,
+      apiName,
+      duration,
+      durationMonths: durationMonths || 0,
+      sourceId,
       rulePreposition,
       ruleTarget,
     };
   }
 
-  return createEmptyDueDate();
+  return createEmptyTaskDueDate(taskApiName);
 };
 
 const convertRule = (rule: IDueDateAPI['rule']): readonly [TDueDateRulePreposition, TDueDateRuleTarget | null] => {

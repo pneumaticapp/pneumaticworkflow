@@ -21,8 +21,9 @@ import { getDropdownOperators, IDropdownOperator } from './utils/getDropdownOper
 import { setRulesApiNamesAndIds } from './utils/setRulesApiNames';
 import { getSubscriptionPlan } from '../../../../redux/selectors/user';
 
-import styles from './Conditions.css';
 import { ESubscriptionPlan } from '../../../../types/account';
+import styles from './Conditions.css';
+import stylesTaskForm from '../TaskForm.css';
 
 export interface IConditionsProps {
   conditions: ICondition[];
@@ -244,7 +245,7 @@ export function Conditions({ conditions, variables, users, isSubscribed, onEdit 
                       type="button"
                       aria-label={formatMessage({ id: 'templates.conditions.remove-condition-rule' })}
                       onClick={handleRemoveRule(conditionIndex)(ruleIndex)}
-                      className={styles['condition-rule__remove']}
+                      className={stylesTaskForm['taskform__remove-rule']}
                     >
                       <TrashIcon />
                     </button>
@@ -268,11 +269,11 @@ export function Conditions({ conditions, variables, users, isSubscribed, onEdit 
   };
 
   return (
-    <div className={styles['container']}>
+    <div className={classnames(styles['container'], stylesTaskForm['taskform__box'])}>
       {renderConditions()}
 
       {accessConditions && (
-        <button type="button" onClick={handleAddNewRule} className={styles['condition__add-rule']}>
+        <button type="button" onClick={handleAddNewRule} className={stylesTaskForm['taskform__add-rule']}>
           {formatMessage({ id: 'templates.conditions.add-new-rule' })}
         </button>
       )}

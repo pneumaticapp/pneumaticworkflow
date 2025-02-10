@@ -17,8 +17,8 @@ export const createUniqueId = (pattern: string) => {
 export const createTaskApiName = () => createUniqueId('task-xxxyxx');
 export const createFieldApiName = () => createUniqueId('field-xxxyxx');
 export const createFieldSelectionApiName = () => createUniqueId('selection-xxxyxx');
-export const createСhecklistApiName = () => createUniqueId('clist-xxxyxx');
-export const createСhecklistSelectionApiName = () => createUniqueId('citem-xxxyxx');
+export const createChecklistApiName = () => createUniqueId('clist-xxxyxx');
+export const createChecklistSelectionApiName = () => createUniqueId('citem-xxxyxx');
 export const createConditionApiName = () => createUniqueId('condition-xxxyxx');
 export const createPerformerApiName = () => createUniqueId('raw-performer-xxxyxx');
 export const createConditionRuleApiName = () => createUniqueId('rule-xxxyxx');
