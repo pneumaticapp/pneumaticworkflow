@@ -7,7 +7,6 @@ import { identifyAppPartOnServer } from '../../public/utils/identifyAppPart/iden
 import { EAppPart } from '../../public/utils/identifyAppPart/types';
 import { getUser } from './utils/getUser';
 import { IAuthenticatedUser } from '../utils/types';
-import { isEnvBilling } from '../../public/constants/enviroment';
 
 const UNSIGNED_USER_ROUTES = [
   ERoutes.Login,
@@ -20,47 +19,41 @@ const UNSIGNED_USER_ROUTES = [
 ];
 
 const PAYMENT_ROUTES = [ERoutes.CollectPaymentDetails, ERoutes.AfterPaymentDetailsProvided];
-const EXCLUDED_ROUTES = ['/assets/', '/static/', ERoutes.Iframes];
 
 export async function authMiddleware(req: Request, res: Response, next: NextFunction) {
+  const isEnvBilling = process.env.BILLING !== 'no';
+
+  // We determine the type of the requested application.
   const appPart = identifyAppPartOnServer(req);
+  if (appPart === EAppPart.GuestTaskApp) return handleGuestAuth(req, res, next);
 
-  if (appPart === EAppPart.GuestTaskApp) {
-    return handleGuestAuth(req, res, next);
-  }
-
-  const isRouteNotAllowed = EXCLUDED_ROUTES.some((route) => req.url.includes(route));
-  if (isRouteNotAllowed) {
-    return next();
-  }
-
-  const { mobile_app_token: mobileAppToken } = req.query || '';
-  const token = (mobileAppToken as string) || parseCookies(req.get('cookie')).token;
-  if (mobileAppToken) {
-    setAuthCookie(req, res, { token: req.query.mobile_app_token as string });
-  }
-
+  // We define the category of the requested url.
   const isUnsignedUserRoute = UNSIGNED_USER_ROUTES.some((route) => req.url.includes(route));
   const isPaymentDetailsRoute = PAYMENT_ROUTES.some((route) => req.url.includes(route));
 
-  if (!token) {
-    return isUnsignedUserRoute ? next() : res.redirect(getLoginUrl(req));
-  }
+  // We determine the presence of a token in a cookie or a mobile application.
+  const { mobile_app_token: mobileAppToken } = req.query || '';
+  const token = (mobileAppToken as string) || parseCookies(req.get('cookie')).token;
+  // If we find an authorization token from a mobile application request, we record it in cookies.
+  if (mobileAppToken) setAuthCookie(req, res, { token: req.query.mobile_app_token as string });
+
+  // If there is no token, we will render the front depending on the url category.
+  if (!token) return isUnsignedUserRoute ? next() : res.redirect(getLoginUrl(req));
 
   try {
+    // We receive the data of the authorized user using a token and record it in the response further.
     const user = await getUser(req, token, req.headers['user-agent']);
+    const { is_subscribed: isSubscribed, billing_plan: billingPlan } = user.account;
     res.locals.user = { ...user, token };
 
-    const isSubscribed = user.account.is_subscribed;
-    const billingPlan = user.account.billing_plan;
+    // If the user has a subscription or it is a free plan and tries to get to the page of an unauthorized user,
+    // we redirect him to the product page depending on the status.
+    if ((isSubscribed || billingPlan === 'free') && isUnsignedUserRoute) return redirectToUserDefaulRoute(user, res);
 
-    if ((isSubscribed || billingPlan === 'free') && isUnsignedUserRoute) {
-      return redirectToUserDefaulRoute(user, res);
-    }
-
-    if (isEnvBilling && !billingPlan) {
-      return isUnsignedUserRoute || isPaymentDetailsRoute ? next() : res.redirect(ERoutes.CollectPaymentDetails);
-    }
+    // If the user does not have a tariff set and billing is enabled,
+    // the user does not try to access the page of an unauthorized user or the payment card page, we redirect him to the payment card page.
+    if (isEnvBilling && !billingPlan && (isUnsignedUserRoute || !isPaymentDetailsRoute))
+      return res.redirect(ERoutes.CollectPaymentDetails);
 
     return next();
   } catch (err) {
@@ -72,13 +65,12 @@ export async function authMiddleware(req: Request, res: Response, next: NextFunc
 }
 
 function redirectToUserDefaulRoute(user: IAuthenticatedUser, res: Response) {
-  if (user.is_account_owner) {
-    return res.redirect(ERoutes.Main);
-  }
+  if (user.is_account_owner) return res.redirect(ERoutes.Main);
 
   return res.redirect(ERoutes.Tasks);
 }
 
+// We create a login url with a redirect url after authorization.
 function getLoginUrl(req: Request) {
   const shouldRedirectAfterLogin = req.url !== '/';
   const redirectQuery = shouldRedirectAfterLogin ? `?redirectUrl=${encodeURIComponent(req.url)}` : '';
@@ -89,9 +81,7 @@ function getLoginUrl(req: Request) {
 
 async function handleGuestAuth(req: Request, res: Response, next: NextFunction) {
   const { token } = req.query;
-  if (!token) {
-    return res.redirect(ERoutes.Error);
-  }
+  if (!token) return res.redirect(ERoutes.Error);
 
   try {
     const user = await getUser(req, token as string);

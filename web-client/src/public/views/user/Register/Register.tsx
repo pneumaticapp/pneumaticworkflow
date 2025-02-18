@@ -204,7 +204,7 @@ export function Register({ registerUser }: IRegisterProps) {
               showPasswordVisibilityToggle
             />
 
-            {(isEnvCaptcha && showCaptcha) && (
+            {isEnvCaptcha && showCaptcha && (
               <div className={styles['form__captcha']}>
                 <ReCAPTCHA
                   sitekey={recaptchaSecret}

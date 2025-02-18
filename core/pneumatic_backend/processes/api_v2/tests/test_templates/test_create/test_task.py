@@ -18,6 +18,7 @@ from pneumatic_backend.processes.enums import (
     PerformerType,
     FieldType,
     DueDateRule,
+    OwnerType,
 )
 from pneumatic_backend.accounts.models import (
     UserInvite
@@ -73,6 +74,7 @@ class TestCreateTemplateTask:
         assert response_data.get('api_name')
         assert response_data['name'] == request_data['name']
         assert response_data['number'] == request_data['number']
+        assert response_data['revert_task'] is None
         assert response_data['description'] == ''
         assert len(response_data['raw_performers']) == (
             len(request_data['raw_performers'])
@@ -84,6 +86,7 @@ class TestCreateTemplateTask:
         task = TaskTemplate.objects.get(api_name=response_data['api_name'])
         assert task.name == request_data['name']
         assert task.number == request_data['number']
+        assert task.revert_task is None
         assert task.description is None
         assert task.raw_performers.count() == len(
             request_data['raw_performers']
@@ -1226,6 +1229,180 @@ class TestCreateTemplateTask:
         assert response_data['name'] == step_name
         assert response_data['number'] == 2
         assert response_data['api_name'] == step_api_name
+
+    def test_create__set_return_to_task__ok(
+        self,
+        api_client
+    ):
+
+        # arrange
+        user = create_test_user()
+        api_client.token_authenticate(user)
+        revert_task_api_name = 'task-321'
+        request_data = [
+            {
+                'number': 1,
+                'name': 'First step',
+                'revert_task': revert_task_api_name,
+                'raw_performers': [
+                    {
+                        'type': PerformerType.USER,
+                        'source_id': user.id
+                    }
+                ]
+            },
+            {
+                'number': 2,
+                'api_name': revert_task_api_name,
+                'name': 'Revert step',
+                'raw_performers': [
+                    {
+                        'type': PerformerType.USER,
+                        'source_id': user.id
+                    }
+                ]
+            }
+        ]
+
+        # act
+        response = api_client.post(
+            path='/templates',
+            data={
+                'name': 'Template',
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id,
+                    },
+                ],
+                'kickoff': {},
+                'is_active': True,
+                'tasks': request_data,
+            }
+        )
+
+        # assert
+        assert response.status_code == 200
+        assert len(response.data['tasks']) == 2
+        response_data = response.data['tasks'][0]
+        assert response_data['revert_task'] == revert_task_api_name
+        task = TaskTemplate.objects.get(api_name=response_data['api_name'])
+        assert task.revert_task == revert_task_api_name
+
+    def test_create__not_existent_return_to_task__validation_error(
+        self,
+        api_client
+    ):
+
+        # arrange
+        user = create_test_user()
+        api_client.token_authenticate(user)
+        not_existent_api_name = 'task-not_existent_api_name'
+        task_1_name = 'First step'
+        task_1_api_name = 'task-1'
+        request_data = [
+            {
+                'number': 1,
+                'name': task_1_name,
+                'api_name': task_1_api_name,
+                'revert_task': not_existent_api_name,
+                'raw_performers': [
+                    {
+                        'type': PerformerType.USER,
+                        'source_id': user.id
+                    }
+                ]
+            },
+            {
+                'number': 2,
+                'api_name': 'task-2',
+                'name': 'Revert step',
+                'raw_performers': [
+                    {
+                        'type': PerformerType.USER,
+                        'source_id': user.id
+                    }
+                ]
+            }
+        ]
+
+        # act
+        response = api_client.post(
+            path='/templates',
+            data={
+                'name': 'Template',
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id,
+                    },
+                ],
+                'kickoff': {},
+                'is_active': True,
+                'tasks': request_data,
+            }
+        )
+
+        # assert
+        assert response.status_code == 400
+        message = messages.MSG_PT_0059(
+            step_name=task_1_name,
+            api_name=not_existent_api_name
+        )
+        assert response.data['code'] == ErrorCode.VALIDATION_ERROR
+        assert response.data['message'] == message
+        assert response.data['details']['reason'] == message
+        assert response.data['details']['api_name'] == task_1_api_name
+
+    def test_create__return_to_task__to_itself__validation_error(
+        self,
+        api_client
+    ):
+
+        # arrange
+        user = create_test_user()
+        api_client.token_authenticate(user)
+        api_name = 'task-312'
+        task_name = 'First step'
+        request_data = [
+            {
+                'number': 1,
+                'name': task_name,
+                'api_name': api_name,
+                'revert_task': api_name,
+                'raw_performers': [
+                    {
+                        'type': PerformerType.USER,
+                        'source_id': user.id
+                    }
+                ]
+            }
+        ]
+
+        # act
+        response = api_client.post(
+            path='/templates',
+            data={
+                'name': 'Template',
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id,
+                    },
+                ],
+                'kickoff': {},
+                'is_active': True,
+                'tasks': request_data,
+            }
+        )
+
+        # assert
+        assert response.status_code == 400
+        message = messages.MSG_PT_0060(step_name=task_name)
+        assert response.data['code'] == ErrorCode.VALIDATION_ERROR
+        assert response.data['message'] == message
+        assert response.data['details']['reason'] == message
+        assert response.data['details']['api_name'] == api_name
 
 
 class TestCreateTemplateRawPerformer:

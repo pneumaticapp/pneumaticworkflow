@@ -221,3 +221,25 @@ MSG_PT_0056 = lambda step_name, api_name: format_lazy(
     step_name=step_name,
     api_name=api_name
 )
+MSG_PT_0057 = _('Duplicate template owners in the add owners request.')
+MSG_PT_0058 = lambda step_name, api_name: format_lazy(
+    _(
+        'The owners passed in for template "{step_name}" contain a non-unique '
+        'api_name: "{api_name}". '
+        'Please change the non-unique api_name, or supply different owners.'
+    ),
+    step_name=step_name,
+    api_name=api_name,
+)
+MSG_PT_0059 = lambda step_name, api_name: format_lazy(
+    _(
+        'Step "{step_name}": The "Return to" setting refers to a task '
+        'that doesn\'t exist (API name: "{api_name}").'
+    ),
+    step_name=step_name,
+    api_name=api_name
+)
+MSG_PT_0060 = lambda step_name: format_lazy(
+    _('The task "{step_name}" cannot be set to return to itself.'),
+    step_name=step_name,
+)

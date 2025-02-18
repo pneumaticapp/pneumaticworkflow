@@ -15,6 +15,7 @@
   display: block;
   overflow: hidden;
   text-overflow: ellipsis;
+  color: red !important;
 
   @media screen and (min-width: 576px) {
     max-width: 105px !important;
@@ -24,7 +25,8 @@
 .dropdown-menu {
   margin-top: 6px !important;
   margin-left: -16px !important;
-  width: 192px;
+  width: auto !important;
+  min-width: 19.2rem !important;
 
   @media (--mobile) {
     width: 100%;
@@ -127,7 +129,7 @@
   display: flex;
   width: 100%;
   font-size: 13px;
-  font-weight: bold;
+  font-weight: bold !important;
   line-height: 16px;
   white-space: nowrap;
   color: var(--pneumatic-color-black100);
@@ -176,14 +178,13 @@
   align-items: center;
 
   &:hover {
-    color: #e79a26 !important;
     background: #fdf7ee !important;
     border-radius: 4px;
   }
 
   &__disabled {
-    font-weight: 800 !important;
-    cursor: not-allowed;
+    pointer-events: none;
+    color: var(--pneumatic-color-black32) !important;
   }
 }
 

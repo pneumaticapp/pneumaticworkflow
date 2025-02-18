@@ -201,6 +201,11 @@ class Account(SoftDeleteModel):
     def get_active_paid_templates(self, **kwargs):
         return self.template_set.active().paid()
 
+    def get_group_ids(self) -> Set[int]:
+        """ Return groups in the current account """
+        group_ids = self.user_groups.values_list('id', flat=True)
+        return set(group_ids)
+
     def get_user_ids(self, include_invited: bool = False) -> Set[int]:
         """ Return active and invited users in a current account"""
         user_ids = User.objects.on_account(self.id).values_list(

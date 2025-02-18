@@ -79,6 +79,15 @@ class PerformerType:
     )
 
 
+class OwnerType:
+    USER = 'user'
+    GROUP = 'group'
+    choices = (
+        (USER, USER),
+        (GROUP, GROUP),
+    )
+
+
 class DirectlyStatus:
 
     NO_STATUS = 0

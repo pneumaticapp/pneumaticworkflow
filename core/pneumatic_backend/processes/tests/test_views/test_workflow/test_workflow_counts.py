@@ -13,7 +13,10 @@ from pneumatic_backend.processes.enums import (
 )
 from pneumatic_backend.utils.validation import ErrorCode
 from pneumatic_backend.processes.messages import workflow as messages
-
+from pneumatic_backend.processes.models.templates.owner import (
+    TemplateOwner
+)
+from pneumatic_backend.processes.enums import OwnerType
 
 pytestmark = pytest.mark.django_db
 
@@ -612,7 +615,12 @@ class TestWorkflowCountsByCPerformer:
         create_test_user(account=account, email='user3@test.test')
         template_1 = create_test_template(user_1, is_active=True)
         template_2 = create_test_template(user_2, is_active=True)
-        template_2.template_owners.add(user_1)
+        TemplateOwner.objects.create(
+            template=template_2,
+            account=account,
+            type=OwnerType.USER,
+            user_id=user_1.id,
+        )
 
         create_test_workflow(user_1, template=template_1)
         create_test_workflow(user_2, template=template_2)
@@ -648,7 +656,12 @@ class TestWorkflowCountsByCPerformer:
             is_active=True,
             is_public=True
         )
-        template_2.template_owners.add(user_1)
+        TemplateOwner.objects.create(
+            template=template_2,
+            account=account,
+            type=OwnerType.USER,
+            user_id=user_1.id,
+        )
 
         create_test_workflow(user_1, template=template_1)
         create_test_workflow(user_2, template=template_2, is_external=True)
@@ -687,7 +700,12 @@ class TestWorkflowCountsByCPerformer:
             is_active=True,
             is_public=True
         )
-        template_2.template_owners.add(user_1)
+        TemplateOwner.objects.create(
+            template=template_2,
+            account=account,
+            type=OwnerType.USER,
+            user_id=user_1.id,
+        )
 
         create_test_workflow(user_1, template=template_1)
         create_test_workflow(user_2, template=template_2, is_external=True)
@@ -1141,7 +1159,6 @@ class TestWorkflowCountsByTemplateTask:
         template_task_2 = template_1.tasks.get(number=2)
 
         template_2 = create_test_template(user_2, is_active=True)
-        template_2.template_owners.add(user_1)
         template_task_21 = template_2.tasks.get(number=1)
 
         template_3 = create_test_template(user_3, is_active=True)

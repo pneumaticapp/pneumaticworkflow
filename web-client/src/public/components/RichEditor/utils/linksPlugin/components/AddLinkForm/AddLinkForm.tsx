@@ -11,7 +11,7 @@ import React, {
 import { usePopper } from 'react-popper';
 // tslint:disable-next-line: match-default-export-name
 import EditorUtils from '@draft-js-plugins/utils';
-import * as classnames from 'classnames';
+import classnames from 'classnames';
 import { useIntl } from 'react-intl';
 import OutsideClickHandler from 'react-outside-click-handler';
 import { EditorState, getVisibleSelectionRect } from 'draft-js';

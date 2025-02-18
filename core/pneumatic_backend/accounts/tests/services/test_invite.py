@@ -401,7 +401,7 @@ def test_user_create_actions__premium__ok(mocker, plan):
     workflow.refresh_from_db()
     assert invited_user not in workflow.members.all()
     template = workflow.template
-    assert invited_user not in template.template_owners.all()
+    assert invited_user not in template.owners.all()
     assert APIKey.objects.get(
         user=invited_user,
         name='User Invited',
@@ -438,9 +438,9 @@ def test_user_create_actions__freemium__ok(mocker):
 
     # assert
     workflow.refresh_from_db()
-    assert invited_user in workflow.members.all()
+    assert invited_user not in workflow.members.all()
     template = workflow.template
-    assert invited_user in template.template_owners.all()
+    assert invited_user not in template.owners.all()
     assert APIKey.objects.get(
         user=invited_user,
         name='',

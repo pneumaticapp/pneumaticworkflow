@@ -33,7 +33,6 @@ export interface IAppProps {
   hasNewTasks: boolean;
   containerClassnames: string;
   isFullscreenImageOpen: boolean;
-  showPlanExpiredMessage(): void;
   logoutUser(): void;
 }
 

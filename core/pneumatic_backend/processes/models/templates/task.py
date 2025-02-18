@@ -55,26 +55,6 @@ class TaskTemplate(
 
     objects = BaseSoftDeleteManager.from_queryset(TaskTemplateQuerySet)()
 
-    @property
-    def next(self):
-        try:
-            return TaskTemplate.objects.get(
-                number=self.number + 1,
-                template=self.template
-            )
-        except TaskTemplate.DoesNotExist:
-            return None
-
-    @property
-    def prev(self):
-        try:
-            return TaskTemplate.objects.get(
-                number=self.number - 1,
-                template=self.template
-            )
-        except TaskTemplate.DoesNotExist:
-            return None
-
     def _get_raw_performer(
         self,
         user: Optional[UserModel] = None,

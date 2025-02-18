@@ -136,9 +136,12 @@ class TaskMixin(models.Model):
         validators=[MinValueValidator(1)]
     )
     require_completion_by_all = models.BooleanField(default=False)
-
-    def is_first(self):
-        return self.number == 1
+    revert_task = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True,
+        help_text='Api name task to revert'
+    )
 
 
 class FieldMixin(models.Model):

@@ -7,7 +7,8 @@ from pneumatic_backend.processes.tests.fixtures import (
     create_test_user,
     create_test_template,
     create_invited_user,
-    create_test_workflow, create_test_account,
+    create_test_workflow,
+    create_test_account,
 )
 from pneumatic_backend.processes.models import (
     Template,
@@ -88,11 +89,13 @@ class TestListTemplate:
 
         assert response.data[0]['id'] == active_template.id
         assert response.data[0]['template_owners'][0] == user.id
+        assert response.data[0]['owners'][0]['source_id'] == str(user.id)
         assert response.data[0]['tasks_count'] == 1
         assert response.data[0]['wf_name_template'] is None
 
         assert response.data[1]['id'] == draft_template.id
         assert response.data[1]['template_owners'][0] == user.id
+        assert response.data[1]['owners'][0]['source_id'] == str(user.id)
         assert response.data[1]['tasks_count'] == 0
         assert response.data[1]['wf_name_template'] is None
 
@@ -161,8 +164,14 @@ class TestListTemplate:
         assert len(response.data) == 2
         template_owners = set(response.data[0]['template_owners'])
         assert template_owners == {user.id, user2.id}
+        owners = response.data[0]['owners']
+        assert owners[0]['source_id'] == str(user.id)
+        assert owners[1]['source_id'] == str(user2.id)
         template_owners2 = set(response.data[1]['template_owners'])
         assert template_owners2 == {user.id, user2.id}
+        owners2 = response.data[0]['owners']
+        assert owners2[0]['source_id'] == str(user.id)
+        assert owners2[1]['source_id'] == str(user2.id)
 
     def test_list__subscription_expired__forbidden(self, api_client):
 
@@ -297,6 +306,40 @@ class TestListTemplate:
         assert len(response.data) == 1
         assert response.data[0]['id'] == template.id
 
+    def test_list__not_account_owner_is_template_owner__ok(self, api_client):
+
+        # arrange
+        user = create_test_user(is_admin=False)
+        user_not_account_owner = create_test_user(
+            is_account_owner=False,
+            account=user.account,
+            email='aаher@pneumatic.app'
+        )
+        another_user = create_test_user(email='another@pneumatic.app')
+        template = create_test_template(
+            user=user,
+            is_active=True
+        )
+        create_test_template(
+            user=user,
+            is_active=False
+        )
+        create_test_template(
+            user=another_user,
+            is_active=True
+        )
+        api_client.token_authenticate(user_not_account_owner)
+
+        # act
+        response = api_client.get(
+            '/templates?is_active=true&is_template_owner=true',
+        )
+
+        # assert
+        assert response.status_code == 200
+        assert len(response.data) == 1
+        assert response.data[0]['id'] == template.id
+
     def test_list__search(self, api_client):
         user = create_test_user()
         template = create_test_template(user)
@@ -388,6 +431,26 @@ class TestListTemplate:
         assert response.data[0]['id'] == template_three.id
         assert response.data[1]['id'] == template_one.id
         assert response.data[2]['id'] == template_two.id
+
+    def test_list__ordering_usage_tasks_count__ok(self, api_client):
+
+        # arrange
+        user = create_test_user()
+
+        template = create_test_template(user, tasks_count=3)
+        create_test_workflow(user, template=template)
+        create_test_workflow(user, template=template)
+
+        api_client.token_authenticate(user=user)
+
+        # act
+        response = api_client.get('/templates?ordering=-usage')
+
+        # assert
+        assert response.status_code == 200
+        template_data = response.data[0]
+        assert template_data['id'] == template.id
+        assert template_data['tasks_count'] == 3
 
     def test_list__filter_is_not_public__ok(
         self,

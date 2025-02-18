@@ -616,6 +616,7 @@ export const enMessages = {
   'templates.no-templates.description': 'There are no templates matching your search parameters',
   'templates.show-options': 'Add new step',
   'templates.hide-options': 'Hide options',
+
   'templates.conditions.title': 'Conditions',
   'templates.conditions.add-new-rule': 'Add another condition',
   'templates.conditions.paywall': 'Workflow conditions are available only for customers on Premium plan.\u0020',
@@ -628,10 +629,15 @@ export const enMessages = {
   'templates.conditions.not-exist': "Doesn't exist",
   'templates.conditions.less-than': 'Less than',
   'templates.conditions.more-than': 'More than',
+  'templates.conditions.completed': 'Completed',
   'templates.conditions.field-placeholder': 'if',
   'templates.conditions.operator-placeholder': 'is',
   'templates.conditions.value-placeholder': 'value',
   'templates.conditions.remove-condition-rule': 'Remove condition rule',
+  'templates.conditions.starting-order': 'starting order',
+  'templates.conditions.starting-order.kick-off': 'Kick-off',
+  'templates.conditions.variables-completed': 'variables Completed',
+
   'templates.save-retry': 'Retry',
   'templates.run-workflow': 'Run workflow',
   'templates.inactive-warning-title': 'The template is disabled',

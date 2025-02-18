@@ -177,8 +177,8 @@ def test_reassign__template__ok(
 
     # assert
     assert response.status_code == 204
-    assert template.template_owners.count() == 1
-    assert template.template_owners.first() == new_user
+    assert template.owners.count() == 1
+    assert template.owners.first().user_id == new_user.id
     assert template_task.raw_performers.count() == 1
     assert template_task.raw_performers.first().user == new_user
 

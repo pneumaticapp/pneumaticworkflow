@@ -19,5 +19,4 @@ export const mapDispatchToProps: TProfileDispatchProps = {
   onChangeTab: setProfileSettingsActiveTab,
 };
 
-export const ProfileContainer = connect<TProfileProps, TProfileDispatchProps>
-(mapStateToProps, mapDispatchToProps)(Profile);
+export const ProfileContainer = connect<TProfileProps, TProfileDispatchProps>(mapStateToProps, mapDispatchToProps)(Profile);

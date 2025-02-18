@@ -43,6 +43,47 @@ export function setChecklistApiNames(editorState: EditorState) {
   return resultEditorState;
 }
 
+export function cloneChecklist(editorState: EditorState) {
+  let resultEditorState = editorState;
+  let currentListApiName = '';
+  const cache: any = {};
+
+  const contentState = editorState.getCurrentContent();
+  const usedListsApiNames: string[] = [];
+  const usedItemsApiNames: string[] = [];
+
+  contentState.getBlockMap().forEach((block, key) => {
+    if (!key || !block || block.getType() !== CHECKABLE_LIST_ITEM) return;
+
+    if (!currentListApiName) {
+      const apiName = block.getData().get('listApiName');
+      if (!cache[apiName]) {
+        const cloneApiName = createUniqueId('clist-xxxyxx');
+        cache[apiName] = cloneApiName;
+      }
+
+      currentListApiName = cache[apiName];
+    }
+
+    const itemApiName = createUniqueId('citem-xxxyxx');
+
+    usedItemsApiNames.push(itemApiName);
+
+    resultEditorState = mergeBlockDataByKey(resultEditorState, key, {
+      listApiName: currentListApiName,
+      itemApiName,
+    } as TChecklistItemData);
+
+    const nextBlock = contentState.getBlockAfter(key);
+    if (!nextBlock || nextBlock.getType() !== CHECKABLE_LIST_ITEM) {
+      usedListsApiNames.push(currentListApiName);
+      currentListApiName = '';
+    }
+  });
+
+  return resultEditorState;
+}
+
 enum EApiNameType {
   Checklist = 'checklist',
   ChecklistItem = 'checklist-item',

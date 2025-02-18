@@ -12,6 +12,10 @@ from pneumatic_backend.processes.enums import (
     PerformerType,
     FieldType
 )
+from pneumatic_backend.processes.models.templates.owner import (
+    TemplateOwner
+)
+from pneumatic_backend.processes.enums import OwnerType
 
 
 pytestmark = pytest.mark.django_db
@@ -250,7 +254,12 @@ def test_fields__template_owner__ok(api_client):
         email='user2@pneumaticapp',
         account=account
     )
-    template.template_owners.add(user)
+    TemplateOwner.objects.create(
+        template=template,
+        account=account,
+        type=OwnerType.USER,
+        user_id=user.id,
+    )
     api_client.token_authenticate(user)
 
     # act

@@ -3,7 +3,6 @@
 dist/
 /public/
 .vscode
-.idea
 .DS_Store
 
 *storybook.log

@@ -20,5 +20,5 @@ export interface IAuthenticatedAccount {
   is_subscribed: boolean;
   is_verified: boolean;
   owner_email: string;
-   billing_plan:string | null;
+  billing_plan: string | null;
 }

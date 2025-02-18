@@ -6,3 +6,4 @@ from pneumatic_backend.accounts.services.user_invite import (
 from pneumatic_backend.accounts.services.user_transfer import (
     UserTransferService
 )
+from pneumatic_backend.accounts.services.group import UserGroupService

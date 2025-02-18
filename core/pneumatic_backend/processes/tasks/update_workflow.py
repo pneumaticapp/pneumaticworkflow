@@ -1,16 +1,22 @@
 from celery import shared_task
 from django.db import transaction
+from typing import List
 
+from pneumatic_backend.processes.enums import WorkflowStatus
 from pneumatic_backend.processes.tasks.tasks import UserModel
 from pneumatic_backend.processes.models import (
     Template,
     TemplateVersion,
     Workflow,
 )
+from pneumatic_backend.processes.queries import (
+    UpdateWorkflowOwnersQuery
+)
 from pneumatic_backend.processes.api_v2.services.workflows\
     .workflow_version import (
         WorkflowUpdateVersionService
     )
+from pneumatic_backend.executor import RawSqlExecutor
 from pneumatic_backend.authentication.enums import AuthTokenType
 
 
@@ -32,25 +38,30 @@ def _update_workflows(
         version=version,
     ).first().data
 
-    for workflow in template.workflows.running():
+    for workflow in template.workflows.all():
         with transaction.atomic():
             workflow = Workflow.objects.select_for_update().get(
                 id=workflow.id
             )
             if not workflow.is_version_lower(version):
                 return
-
-            version_service = WorkflowUpdateVersionService(
-                instance=workflow,
-                user=updated_by,
-                auth_type=auth_type,
-                is_superuser=is_superuser,
-                sync=sync
-            )
-            version_service.update_from_version(
-                data=version_dict,
-                version=version
-            )
+            if workflow.status == WorkflowStatus.DONE:
+                template_owner_ids = Template.objects.filter(
+                    id=workflow.template_id
+                ).get_owners_as_users()
+                workflow.owners.set(template_owner_ids)
+            else:
+                version_service = WorkflowUpdateVersionService(
+                    instance=workflow,
+                    user=updated_by,
+                    auth_type=auth_type,
+                    is_superuser=is_superuser,
+                    sync=sync
+                )
+                version_service.update_from_version(
+                    data=version_dict,
+                    version=version
+                )
 
 
 @shared_task(
@@ -63,3 +74,23 @@ def _update_workflows(
 )
 def update_workflows(*args, **kwargs):
     _update_workflows(sync=True, *args, **kwargs)
+
+
+@shared_task(
+    acks_late=True,
+    autoretry_for=(Exception,),
+    retry_kwargs={
+        'max_retries': 3,
+        'countdown': 2,
+    },
+)
+def update_workflow_owners(template_ids: List[int]):
+    with transaction.atomic():
+        Workflow.owners.through.objects.filter(
+            workflow__template_id__in=template_ids
+        ).delete()
+        for template_id in template_ids:
+            query = UpdateWorkflowOwnersQuery(
+                template_id=template_id
+            )
+            RawSqlExecutor.execute(*query.insert_sql())

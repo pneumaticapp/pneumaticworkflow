@@ -24,6 +24,7 @@ from pneumatic_backend.processes.messages.workflow import (
     MSG_PW_0022,
     MSG_PW_0024,
 )
+from pneumatic_backend.generics.mixins.queries import DereferencedOwnersMixin
 
 UserModel = get_user_model()
 
@@ -171,8 +172,8 @@ class WorkflowListQuery(
                 t.id = pw.template_id AND
                 t.is_deleted IS FALSE
             )
-            LEFT JOIN processes_template_template_owners pto ON (
-                t.id = pto.template_id
+            LEFT JOIN processes_workflow_owners pto ON (
+                pw.id = pto.workflow_id
             )
         """
         if self.current_performer:
@@ -217,25 +218,12 @@ class WorkflowListQuery(
                 pw.is_external,
                 pw.is_urgent,
                 pw.date_created,
+                pw.date_completed,
                 pw.status_updated,
                 pw.due_date,
                 pw.workflow_starter_id,
                 pw.finalizable,
-                pt.id AS task_id,
-                pt.name AS task_name,
-                pt.number AS task_number,
-                pt.due_date AS task_due_date,
-                LEAST(pt.due_date, pw.due_date) AS nearest_due_date,
-                pt.date_started AS task_date_started,
-                pt.checklists_total AS task_checklists_total,
-                pt.checklists_marked AS task_checklists_marked,
-                pd.duration AS delay_duration,
-                pd.start_date AS delay_start_date,
-                pd.end_date AS delay_end_date,
-                pd.estimated_end_date AS delay_estimated_end_date,
-                t.id AS template_id,
-                t.name AS template_name,
-                t.is_active AS template_is_active
+                LEAST(pt.due_date, pw.due_date) AS nearest_due_date
             {tables}
             {where}
             ORDER BY pw.id
@@ -321,8 +309,8 @@ class WorkflowCountsByWfStarterQuery(
         result = """
         FROM processes_workflow pw
             LEFT JOIN processes_template t ON t.id = pw.template_id
-            LEFT JOIN processes_template_template_owners ptra
-              ON t.id = ptra.template_id
+            LEFT JOIN processes_workflow_owners ptra
+              ON pw.id = ptra.workflow_id
             LEFT JOIN accounts_user au ON au.id = ptra.user_id
         """
         if self.current_performer_ids:
@@ -456,9 +444,8 @@ class WorkflowCountsByCPerformerQuery(
     def _get_from(self):
         result = """
         FROM processes_workflow pw
-            LEFT JOIN processes_template t ON t.id = pw.template_id
-            LEFT JOIN processes_template_template_owners ptra
-              ON t.id = ptra.template_id
+            LEFT JOIN processes_workflow_owners ptra
+              ON pw.id = ptra.workflow_id
             LEFT JOIN accounts_user au ON au.id = ptra.user_id
             INNER JOIN processes_task pt
               ON (pw.id = pt.workflow_id AND pw.current_task = pt.number)
@@ -483,7 +470,8 @@ class WorkflowCountsByCPerformerQuery(
 
 
 class WorkflowCountsByTemplateTaskQuery(
-    SqlQueryObject
+    SqlQueryObject,
+    DereferencedOwnersMixin,
 ):
 
     def __init__(
@@ -604,6 +592,7 @@ class WorkflowCountsByTemplateTaskQuery(
     def _get_inner_sql(self):
         return f"""
         WITH
+          dereferenced_owners AS ({self.dereferenced_owners()}),
           template_tasks AS (
             SELECT
               tt.id,
@@ -614,7 +603,7 @@ class WorkflowCountsByTemplateTaskQuery(
                 ON t.id = tt.template_id
                 AND t.is_deleted IS FALSE
                 AND tt.is_deleted IS FALSE
-              INNER JOIN processes_template_template_owners ptra
+              INNER JOIN dereferenced_owners AS ptra
                 ON t.id = ptra.template_id
               INNER JOIN accounts_user au ON au.id = ptra.user_id
             {self._get_cte_where()}
@@ -832,13 +821,15 @@ class TemplateListQuery(
     SqlQueryObject,
     SearchSqlQueryMixin,
     OrderByMixin,
+    DereferencedOwnersMixin
 ):
     ordering_map = TemplateOrdering.MAP
 
     def __init__(
         self,
-        user: User,
-        account_id: str,
+        user_id: int,
+        account_id: int,
+        is_account_owner: bool,
         ordering: Optional[str] = None,
         search_text: Optional[str] = None,
         is_active: Optional[bool] = None,
@@ -846,11 +837,12 @@ class TemplateListQuery(
         is_template_owner: Optional[bool] = None,
     ):
 
-        self.user = user
+        self.user_id = user_id
+        self.is_account_owner = is_account_owner
         self.account_id = account_id
         self.params = {
             'account_id': self.account_id,
-            'user_id': user.id,
+            'user_id': user_id,
         }
         self.order = None
         self.is_active = is_active
@@ -871,8 +863,8 @@ class TemplateListQuery(
         """
 
     def _get_allowed(self):
-        self.params.update({'allowed_id': self.user.id})
-        return """ptra.user_id = %(allowed_id)s"""
+        self.params.update({'allowed_id': self.user_id})
+        return """owners.user_id = %(allowed_id)s"""
 
     def _get_active(self):
         self.params.update({'is_active': self.is_active})
@@ -927,7 +919,7 @@ class TemplateListQuery(
             where = f'{where} AND {self._get_active()}'
 
         if (
-            not self.user.is_account_owner
+            not self.is_account_owner
             and self.is_template_owner is not None
         ):
             where = f'{where} AND {self._get_allowed()}'
@@ -939,6 +931,7 @@ class TemplateListQuery(
 
     def _get_inner_sql(self):
         return f"""
+        WITH owners AS ({self.dereferenced_owners()})
         SELECT DISTINCT
             pt.id,
             pt.is_deleted,
@@ -954,18 +947,16 @@ class TemplateListQuery(
             pt.type,
             pt.search_content,
             {self.get_workflows_select()}
-            COUNT(ptt.id) as tasks_count
+            COUNT(DISTINCT ptt.id) as tasks_count
 
         FROM processes_template pt
         LEFT JOIN processes_tasktemplate ptt ON (
           ptt.template_id = pt.id AND
           ptt.is_deleted = false
         )
-        LEFT JOIN processes_template_template_owners ptra ON (
-          pt.id = ptra.template_id
-        )
+        LEFT JOIN owners ON pt.id = owners.template_id
         LEFT JOIN accounts_user ON (
-          ptra.user_id = accounts_user.id AND
+          owners.user_id = accounts_user.id AND
           accounts_user.is_deleted = false
         )
         {self.get_workflows_join()}
@@ -1021,6 +1012,7 @@ class RunningTaskTemplateQuery(SqlQueryObject):
 
 class TemplateStepsQuery(
     SqlQueryObject,
+    DereferencedOwnersMixin
 ):
 
     def __init__(
@@ -1066,11 +1058,6 @@ class TemplateStepsQuery(
             join += """
                 JOIN processes_taskperformer ptp
                   ON pt.id = ptp.task_id """
-        else:
-            join += """
-                JOIN processes_template_template_owners ptra
-                  ON ptra.template_id = t.id
-                    AND ptra.user_id = %(user_id)s """
         return join
 
     def _get_filter_by_type(self):
@@ -1107,6 +1094,7 @@ class TemplateStepsQuery(
 
     def get_sql(self):
         return f"""
+            WITH dereferenced_owners AS ({self.dereferenced_owners()})
             SELECT DISTINCT
               ptt.id,
               ptt.name,
@@ -1115,6 +1103,8 @@ class TemplateStepsQuery(
               JOIN processes_tasktemplate ptt
                 ON ptt.template_id = t.id
               {self._get_join()}
+              JOIN dereferenced_owners
+                ON dereferenced_owners.template_id = t.id
             WHERE
               ptt.is_deleted IS FALSE
               AND t.is_deleted IS FALSE
@@ -1210,7 +1200,10 @@ class TaskWorkflowMemberQuery(SqlQueryObject):
         return query, self.params
 
 
-class TemplateWorkflowMemberQuery(SqlQueryObject):
+class TemplateWorkflowMemberQuery(
+    SqlQueryObject,
+    DereferencedOwnersMixin
+):
 
     def __init__(
         self,
@@ -1224,13 +1217,15 @@ class TemplateWorkflowMemberQuery(SqlQueryObject):
         }
 
     def get_sql(self):
-        query = """
+        query = f"""
+            WITH
+              all_owners AS ({self.dereferenced_owners_by_template_id()})
             SELECT t.id
             FROM processes_template t
               LEFT JOIN processes_workflow pw
                 ON pw.template_id = t.id AND pw.is_deleted IS FALSE
-              LEFT JOIN processes_template_template_owners pto
-                ON pto.template_id = t.id
+              JOIN all_owners AS owners
+                ON t.id = owners.template_id
               LEFT JOIN processes_workflow_members pwm
                 ON pwm.workflow_id = pw.id
             WHERE
@@ -1238,7 +1233,7 @@ class TemplateWorkflowMemberQuery(SqlQueryObject):
               AND t.is_deleted IS FALSE
               AND t.account_id = %(account_id)s
               AND (
-                pto.user_id = %(user_id)s
+                owners.user_id = %(user_id)s
                 OR pwm.user_id = %(user_id)s
               )
             LIMIT 1
@@ -1320,14 +1315,14 @@ class HighlightsQuery(SqlQueryObject):
           we.workflow_id = workflow.id
         LEFT JOIN processes_template template ON
           workflow.template_id = template.id
-        LEFT JOIN processes_template_template_owners template_owners ON
-          template.id = template_owners.template_id
+        LEFT JOIN processes_workflow_owners workflow_owners ON
+          workflow.id = workflow_owners.workflow_id
         WHERE
           NOT we.is_deleted AND
           we.account_id = %(account_id)s AND
           NOT workflow.is_deleted AND
           NOT template.is_deleted AND
-          template_owners.user_id = %(user_id)s
+          workflow_owners.user_id = %(user_id)s
         """
         ordering = 'ORDER BY we.created DESC, we.id DESC'
         sub_ordering = ' ORDER BY we.workflow_id, we.created DESC'
@@ -1553,8 +1548,8 @@ class TemplateTitlesQuery(SqlQueryObject):
           ) """
         if self.with_tasks_in_progress is None:
             result += """
-            INNER JOIN processes_template_template_owners pto ON (
-                t.id = pto.template_id
+            INNER JOIN processes_workflow_owners pto ON (
+                pw.id = pto.workflow_id
                 AND pto.user_id = %(user_id)s
             )
             """
@@ -1600,3 +1595,34 @@ class TemplateTitlesQuery(SqlQueryObject):
             GROUP BY t.id
             ORDER BY workflows_count DESC, t.name ASC """
         return sql, self.params
+
+
+class UpdateWorkflowOwnersQuery(
+    SqlQueryObject,
+    SearchSqlQueryMixin,
+    OrderByMixin,
+    DereferencedOwnersMixin
+):
+
+    def __init__(
+        self,
+        template_id: int,
+    ):
+
+        self.params = {
+            'template_id': template_id,
+        }
+
+    def insert_sql(self):
+        return f"""
+            WITH
+              all_owners AS ({self.dereferenced_owners_by_template_id()})
+            INSERT INTO processes_workflow_owners (workflow_id, user_id)
+            SELECT
+                w.id AS workflow_id,
+                ao.user_id AS user_id
+            FROM processes_workflow w
+            JOIN all_owners ao
+              ON w.template_id = ao.template_id
+            WHERE w.template_id = %(template_id)s;
+        """, self.params

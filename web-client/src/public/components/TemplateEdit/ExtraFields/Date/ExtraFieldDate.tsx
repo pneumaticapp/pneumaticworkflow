@@ -1,7 +1,7 @@
 /* eslint-disable */
 /* prettier-ignore */
-import * as React from 'react';
 import classnames from 'classnames';
+import * as React from 'react';
 import { getFieldValidator } from '../utils/getFieldValidator';
 import { getInputNameBackground } from '../utils/getInputNameBackground';
 import { EExtraFieldMode } from '../../../../types/template';

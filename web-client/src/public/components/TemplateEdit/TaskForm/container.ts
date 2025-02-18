@@ -1,5 +1,3 @@
-/* eslint-disable */
-/* prettier-ignore */
 import { connect } from 'react-redux';
 
 import { TaskForm, ITaskFormProps } from './TaskForm';

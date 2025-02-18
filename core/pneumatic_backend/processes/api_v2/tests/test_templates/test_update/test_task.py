@@ -28,6 +28,7 @@ from pneumatic_backend.processes.enums import (
     PerformerType,
     FieldType,
     DueDateRule,
+    OwnerType,
 )
 from pneumatic_backend.processes.api_v2.services.workflows\
     .workflow_version import (
@@ -97,6 +98,7 @@ class TestUpdateTemplateTask:
                 }
             ],
             'delay': None,
+            'revert_task': None,
             'raw_due_date': {
                 'api_name': 'raw-due-date-bwybf0',
                 'rule': 'after task started',
@@ -142,6 +144,7 @@ class TestUpdateTemplateTask:
             request_data['raw_performers']
         )
         assert response_data['delay'] is None
+        assert response_data['revert_task'] is None
         assert response_data['raw_due_date']['duration'] == duration
         assert response_data['fields'] == request_data['fields']
         assert response_data['require_completion_by_all'] == (
@@ -157,6 +160,7 @@ class TestUpdateTemplateTask:
         )
         assert task.raw_performers.first().user.id == user2.id
         assert task.raw_performers.last().field.api_name == 'user-field-2'
+        assert task.revert_task is None
         assert task.delay is None
         assert task.fields.count() == len(request_data['fields'])
         assert task.require_completion_by_all == (
@@ -290,6 +294,7 @@ class TestUpdateTemplateTask:
         template_data['tasks'][0]['number'] = 2
         template_data['tasks'][1]['number'] = 3
         template_data['tasks'].insert(0, new_task)
+        template_data['owners'] = []
         mocker.patch(
             'pneumatic_backend.processes.api_v2.services.templates.'
             'integrations.TemplateIntegrationsService.template_updated'
@@ -1805,6 +1810,300 @@ class TestUpdateTemplateTask:
         assert response_data['name'] == step_name
         assert response_data['number'] == 2
         assert response_data['api_name'] == task.api_name
+
+    def test_update__set_revert_task__ok(
+        self,
+        mocker,
+        api_client
+    ):
+
+        # arrange
+        user = create_test_user()
+        api_client.token_authenticate(user)
+        template = create_test_template(
+            user=user,
+            tasks_count=2,
+            is_active=True
+        )
+        task_1 = template.tasks.get(number=1)
+        task_2 = template.tasks.get(number=2)
+
+        mocker.patch(
+            'pneumatic_backend.processes.api_v2.services.templates.'
+            'integrations.TemplateIntegrationsService.template_updated'
+        )
+
+        request_data = [
+            {
+                'id': task_1.id,
+                'number': task_1.number,
+                'name': task_1.name,
+                'api_name': task_1.api_name,
+                'raw_performers': [
+                    {
+                        'type': PerformerType.USER,
+                        'source_id': str(user.id)
+                    }
+                ]
+            },
+            {
+                'id': task_2.id,
+                'number': task_2.number,
+                'name': task_2.name,
+                'api_name': task_2.api_name,
+                'revert_task': task_1.api_name,
+                'raw_performers': [
+                    {
+                        'type': PerformerType.USER,
+                        'source_id': str(user.id)
+                    }
+                ]
+            }
+        ]
+
+        # act
+        response = api_client.put(
+            path=f'/templates/{template.id}',
+            data={
+                'id': template.id,
+                'name': template.name,
+                'is_active': True,
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id,
+                    },
+                ],
+                'kickoff': {},
+                'tasks': request_data
+            }
+        )
+
+        # assert
+        assert response.status_code == 200
+        response_data = response.data['tasks'][1]
+        assert response_data['revert_task'] == task_1.api_name
+        task_2.refresh_from_db()
+        assert task_2.revert_task == task_1.api_name
+
+    def test_update__delete_revert_task__ok(
+        self,
+        mocker,
+        api_client
+    ):
+
+        # arrange
+        user = create_test_user()
+        api_client.token_authenticate(user)
+        template = create_test_template(
+            user=user,
+            tasks_count=2,
+            is_active=True
+        )
+        task_1 = template.tasks.get(number=1)
+        task_2 = template.tasks.get(number=2)
+        task_2.revert_task = task_1.api_name
+        task_2.save()
+
+        mocker.patch(
+            'pneumatic_backend.processes.api_v2.services.templates.'
+            'integrations.TemplateIntegrationsService.template_updated'
+        )
+
+        request_data = [
+            {
+                'id': task_1.id,
+                'number': task_1.number,
+                'name': task_1.name,
+                'api_name': task_1.api_name,
+                'raw_performers': [
+                    {
+                        'type': PerformerType.USER,
+                        'source_id': str(user.id)
+                    }
+                ]
+            },
+            {
+                'id': task_2.id,
+                'number': task_2.number,
+                'name': task_2.name,
+                'api_name': task_2.api_name,
+                'revert_task': None,
+                'raw_performers': [
+                    {
+                        'type': PerformerType.USER,
+                        'source_id': str(user.id)
+                    }
+                ]
+            }
+        ]
+
+        # act
+        response = api_client.put(
+            path=f'/templates/{template.id}',
+            data={
+                'id': template.id,
+                'name': template.name,
+                'is_active': True,
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id,
+                    },
+                ],
+                'kickoff': {},
+                'tasks': request_data
+            }
+        )
+
+        # assert
+        assert response.status_code == 200
+        response_data = response.data['tasks'][1]
+        assert response_data['revert_task'] is None
+        task_2.refresh_from_db()
+        assert task_2.revert_task is None
+
+    def test_update__not_existent_revert_task__validation_error(
+        self,
+        mocker,
+        api_client
+    ):
+
+        # arrange
+        user = create_test_user()
+        api_client.token_authenticate(user)
+        template = create_test_template(
+            user=user,
+            tasks_count=2,
+            is_active=True
+        )
+        task_1 = template.tasks.get(number=1)
+        task_2 = template.tasks.get(number=2)
+
+        mocker.patch(
+            'pneumatic_backend.processes.api_v2.services.templates.'
+            'integrations.TemplateIntegrationsService.template_updated'
+        )
+        not_existent_api_name = 'task-not_existent_api_name'
+
+        request_data = [
+            {
+                'id': task_1.id,
+                'number': task_1.number,
+                'name': task_1.name,
+                'api_name': task_1.api_name,
+                'raw_performers': [
+                    {
+                        'type': PerformerType.USER,
+                        'source_id': str(user.id)
+                    }
+                ]
+            },
+            {
+                'id': task_2.id,
+                'number': task_2.number,
+                'name': task_2.name,
+                'api_name': task_2.api_name,
+                'revert_task': not_existent_api_name,
+                'raw_performers': [
+                    {
+                        'type': PerformerType.USER,
+                        'source_id': str(user.id)
+                    }
+                ]
+            }
+        ]
+
+        # act
+        response = api_client.put(
+            path=f'/templates/{template.id}',
+            data={
+                'id': template.id,
+                'name': template.name,
+                'is_active': True,
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id,
+                    },
+                ],
+                'kickoff': {},
+                'tasks': request_data
+            }
+        )
+
+        # assert
+        assert response.status_code == 400
+        message = messages.MSG_PT_0059(
+            step_name=task_2.name,
+            api_name=not_existent_api_name
+        )
+        assert response.data['code'] == ErrorCode.VALIDATION_ERROR
+        assert response.data['message'] == message
+        assert response.data['details']['reason'] == message
+        assert response.data['details']['api_name'] == task_2.api_name
+
+    def test_update__revert_task_to_itself__validation_error(
+        self,
+        mocker,
+        api_client
+    ):
+
+        # arrange
+        user = create_test_user()
+        api_client.token_authenticate(user)
+        template = create_test_template(
+            user=user,
+            tasks_count=1,
+            is_active=True
+        )
+        task = template.tasks.get(number=1)
+
+        mocker.patch(
+            'pneumatic_backend.processes.api_v2.services.templates.'
+            'integrations.TemplateIntegrationsService.template_updated'
+        )
+        request_data = [
+            {
+                'id': task.id,
+                'number': task.number,
+                'name': task.name,
+                'api_name': task.api_name,
+                'revert_task': task.api_name,
+                'raw_performers': [
+                    {
+                        'type': PerformerType.USER,
+                        'source_id': str(user.id)
+                    }
+                ]
+            }
+        ]
+
+        # act
+        response = api_client.put(
+            path=f'/templates/{template.id}',
+            data={
+                'id': template.id,
+                'name': template.name,
+                'is_active': True,
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id,
+                    },
+                ],
+                'kickoff': {},
+                'tasks': request_data
+            }
+        )
+
+        # assert
+        assert response.status_code == 400
+        message = messages.MSG_PT_0060(step_name=task.name)
+        assert response.data['code'] == ErrorCode.VALIDATION_ERROR
+        assert response.data['message'] == message
+        assert response.data['details']['reason'] == message
+        assert response.data['details']['api_name'] == task.api_name
 
 
 class TestUpdateTemplateRawPerformer:

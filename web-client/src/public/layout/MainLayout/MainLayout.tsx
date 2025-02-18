@@ -1,6 +1,7 @@
 import React from 'react';
 import classnames from 'classnames';
 import { UnregisterCallback } from 'history';
+import { useSelector } from 'react-redux';
 
 import { SelectTemplateModalContainer } from '../../components/SelectTemplateModal';
 import { NotificationsListContainer } from '../../components/NotificationsList/container';
@@ -23,6 +24,7 @@ import { EPlanActions } from '../../utils/getPlanPendingActions';
 import { Paywall } from '../../components/UI/Paywall';
 import { isEnvAnalytics, isEnvPush } from '../../constants/enviroment';
 import { IUnsavedUser, TUserListItem } from '../../types/user';
+import { getAccountPlan } from '../../redux/selectors/accounts';
 
 import styles from './MainLayout.css';
 
@@ -91,25 +93,29 @@ export function MainLayout({
     pendingActions.includes(EPlanActions.ChoosePlan) && !checkSomeRouteIsActive(...EXPIRED_TRIAL_PERMITTED_ROUTES);
   const { isSubscribed, billingPlan } = user.account;
 
+  const plan = useSelector(getAccountPlan);
+
   React.useEffect(() => {
-    loadNotificationsList();
-    watchUserWSEventsAction();
-    loadTasksCount();
-    loadUsers();
-    loadActiveUsersCount();
-    generateMenu();
-    loadPlan();
+    if (user.account.billingPlan) {
+      loadNotificationsList();
+      watchUserWSEventsAction();
+      loadTasksCount();
+      loadUsers();
+      loadActiveUsersCount();
+      generateMenu();
+      loadPlan();
 
-    if (isEnvPush) initFirebaseMessaging();
+      if (isEnvPush) initFirebaseMessaging();
 
-    if (
-      user.isAdmin &&
-      user.account.leaseLevel !== 'tenant' &&
-      (user.account.isSubscribed || billingPlan === ESubscriptionPlan.Free)
-    ) {
-      loadTenantsCount();
+      if (
+        user.isAdmin &&
+        user.account.leaseLevel !== 'tenant' &&
+        (user.account.isSubscribed || billingPlan === ESubscriptionPlan.Free)
+      ) {
+        loadTenantsCount();
+      }
     }
-  }, [user.id]);
+  }, [user.id, plan.billingPlan]);
 
   React.useLayoutEffect(() => {
     if (!user.isSupermode) {

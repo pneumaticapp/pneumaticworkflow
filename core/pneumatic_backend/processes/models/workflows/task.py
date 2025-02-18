@@ -97,10 +97,15 @@ class Task(
 
     @property
     def prev(self):
+        if self.revert_task:
+            return Task.objects.get(
+                api_name=self.revert_task,
+                workflow_id=self.workflow_id
+            )
         try:
             return Task.objects.get(
                 number=self.number - 1,
-                workflow=self.workflow,
+                workflow_id=self.workflow_id
             )
         except Task.DoesNotExist:
             return None

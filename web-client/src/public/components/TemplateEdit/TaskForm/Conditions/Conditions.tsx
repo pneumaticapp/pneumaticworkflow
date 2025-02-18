@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React, { useEffect } from 'react';
 import produce from 'immer';
 import { useIntl } from 'react-intl';
 import classnames from 'classnames';
@@ -17,16 +17,18 @@ import { ConditionValueField } from './ConditionValueField';
 import { EConditionAction, EConditionLogicOperations, EConditionOperators, TConditionRule } from './types';
 import { getEmptyConditions } from './utils/getEmptyConditions';
 import { getEmptyRule } from './utils/getEmptyRule';
-import { getDropdownOperators, IDropdownOperator } from './utils/getDropdownOperators';
+import { EStartingType, getDropdownOperators, IDropdownOperator } from './utils/getDropdownOperators';
 import { setRulesApiNamesAndIds } from './utils/setRulesApiNames';
 import { getSubscriptionPlan } from '../../../../redux/selectors/user';
-
+import { EExtraFieldType } from '../../../../types/template';
 import { ESubscriptionPlan } from '../../../../types/account';
+
 import styles from './Conditions.css';
 import stylesTaskForm from '../TaskForm.css';
 
 export interface IConditionsProps {
   conditions: ICondition[];
+  startingOrder: TTaskVariable[];
   variables: TTaskVariable[];
   users: TUserListItem[];
   isSubscribed: boolean;
@@ -38,9 +40,18 @@ export interface IDropdownVariable extends TTaskVariable {
   richLabel: any;
 }
 
-export const OPERATORS_WITHOUT_VALUE = [EConditionOperators.Exist, EConditionOperators.NotExist];
+export const OPERATORS_WITHOUT_VALUE = [
+  EConditionOperators.Exist,
+  EConditionOperators.NotExist,
+  EConditionOperators.Completed,
+];
 
-export function Conditions({ conditions, variables, users, isSubscribed, onEdit }: IConditionsProps) {
+export const CONDITION_DISABLED_OPERATOR: (EStartingType | EExtraFieldType)[] = [
+  EStartingType.Task,
+  EStartingType.Kickoff,
+];
+
+export function Conditions({ startingOrder, conditions, variables, users, isSubscribed, onEdit }: IConditionsProps) {
   const { messages, formatMessage } = useIntl();
   const billingPlan = useSelector(getSubscriptionPlan);
   const isFreePlan = billingPlan === ESubscriptionPlan.Free;
@@ -48,14 +59,12 @@ export function Conditions({ conditions, variables, users, isSubscribed, onEdit 
 
   const prevVariables = usePrevious(variables);
 
-  React.useEffect(() => {
+  useEffect(() => {
     const deletedFields = prevVariables
       ?.filter((prevVariable) => !variables.some(({ apiName }) => apiName === prevVariable.apiName))
       .map((variable) => variable.apiName);
 
-    if (!deletedFields?.length) {
-      return undefined;
-    }
+    if (!deletedFields?.length) return undefined;
 
     const newConditions = conditions.map((condition) => {
       const notDeletedRules = condition.rules.filter((rule) => !rule.field || !deletedFields.includes(rule.field));
@@ -67,6 +76,14 @@ export function Conditions({ conditions, variables, users, isSubscribed, onEdit 
 
     return undefined;
   }, [variables]);
+
+  const dropdownSteps: IDropdownVariable[] = [
+    ...startingOrder.map((variable) => ({
+      ...variable,
+      label: variable.title,
+      richLabel: <div className={styles['rich-label']}>{variable.title}</div>,
+    })),
+  ];
 
   const dropdownVariables: IDropdownVariable[] = variables.map((variable) => ({
     ...variable,
@@ -130,28 +147,22 @@ export function Conditions({ conditions, variables, users, isSubscribed, onEdit 
     onEdit(newConditions);
   };
 
-  const renderConditions = () => {
-    if (!isArrayWithItems(conditions)) {
-      return null;
-    }
-
-    return <div className={styles['conditions']}>{conditions.map(rendeCondition)}</div>;
-  };
-
   const rendeCondition = (condition: ICondition, conditionIndex: number) => {
     const { rules } = condition;
 
-    if (!isArrayWithItems(rules)) {
-      return null;
-    }
+    if (!isArrayWithItems(rules)) return null;
 
     return (
       <div key={condition.apiName} className={styles['condition']}>
         <div className={styles['condition__rules']}>
           {rules.map((rule, ruleIndex) => {
             const changeCurrentRule = handleChangeRule(conditionIndex, ruleIndex);
+            const selectedStartingOrder =
+              dropdownSteps.find((item) => rule.fieldType === EStartingType.Kickoff || item.apiName === rule.field) ||
+              null;
             const selectedVariable = dropdownVariables.find((variable) => variable.apiName === rule.field) || null;
-            const displayedVariable = selectedVariable && {
+            const selected = selectedStartingOrder || selectedVariable;
+            const selectedVariableWithNoStep = selectedVariable && {
               ...selectedVariable,
               richLabel: (
                 <div className={styles['rich-label']}>
@@ -159,10 +170,14 @@ export function Conditions({ conditions, variables, users, isSubscribed, onEdit 
                 </div>
               ),
             };
-            const dropdownOperators = selectedVariable
-              ? getDropdownOperators(selectedVariable.type, messages as Record<string, string>)
+            const displayedVariable = selectedStartingOrder || selectedVariableWithNoStep;
+            const dropdownOperators = selected
+              ? getDropdownOperators(selected.type, messages as Record<string, string>)
               : [];
             const selectedOperator = dropdownOperators?.find(({ operator }) => operator === rule.operator) || null;
+
+            const isDisabledOperator =
+              (rule.fieldType && CONDITION_DISABLED_OPERATOR.includes(rule.fieldType)) || !accessConditions;
 
             return (
               <div key={`${rule.ruleApiName}-${rule.predicateApiName}`} className={styles['condition-rule']}>
@@ -198,28 +213,37 @@ export function Conditions({ conditions, variables, users, isSubscribed, onEdit 
                         onChange={(option: IDropdownVariable) => {
                           if (option.apiName === rule.field) return;
 
+                          const isStartingOrder = CONDITION_DISABLED_OPERATOR.find((val) => val === option.type);
+
                           changeCurrentRule({
                             fieldType: option.type,
-                            field: option.apiName,
-                            value: undefined,
-                            operator: undefined,
+                            field: option.type !== 'kickoff' ? option.apiName : null,
+                            value: isStartingOrder ? null : undefined,
+                            operator: isStartingOrder ? EConditionOperators.Completed : undefined,
                           });
                         }}
                         isClearable={false}
-                        options={dropdownVariables}
+                        options={[
+                          {
+                            label: formatMessage({ id: 'templates.conditions.starting-order' }),
+                            options: dropdownSteps,
+                          },
+                          {
+                            label: formatMessage({ id: 'templates.conditions.variables-completed' }),
+                            options: dropdownVariables,
+                          },
+                        ]}
                       />
                     </div>
 
                     <div className={classnames(styles['condition-rule__setting'], styles['condition-rule__operator'])}>
                       <DropdownList
-                        isDisabled={!accessConditions}
+                        isDisabled={isDisabledOperator}
                         placeholder={formatMessage({ id: 'templates.conditions.operator-placeholder' })}
                         isSearchable={false}
                         value={selectedOperator}
                         onChange={(option: IDropdownOperator) => {
-                          if (option.operator === rule.operator) {
-                            return;
-                          }
+                          if (option.operator === rule.operator) return;
 
                           const shouldClearValue = OPERATORS_WITHOUT_VALUE.includes(option.operator);
 
@@ -232,6 +256,7 @@ export function Conditions({ conditions, variables, users, isSubscribed, onEdit 
                         options={dropdownOperators}
                       />
                     </div>
+
                     <ConditionValueField
                       isDisabled={!accessConditions}
                       variable={selectedVariable}
@@ -266,6 +291,12 @@ export function Conditions({ conditions, variables, users, isSubscribed, onEdit 
         />
       </div>
     );
+  };
+
+  const renderConditions = () => {
+    if (!isArrayWithItems(conditions)) return null;
+
+    return <div className={styles['conditions']}>{conditions.map(rendeCondition)}</div>;
   };
 
   return (

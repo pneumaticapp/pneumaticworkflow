@@ -4,9 +4,12 @@ from django.utils import timezone
 from pneumatic_backend.processes.models import (
     TaskField,
     RawDueDate,
+    ChecklistTemplate,
+    ChecklistTemplateSelection,
 )
 from pneumatic_backend.processes.tests.fixtures import (
     create_test_user,
+    create_test_template,
     create_test_workflow,
 )
 from pneumatic_backend.processes.enums import (
@@ -18,6 +21,77 @@ from pneumatic_backend.processes.api_v2.services.task.task import TaskService
 
 
 pytestmark = pytest.mark.django_db
+
+
+def test_create_instance__all_fields__ok(mocker):
+
+    # arrange
+    name = 'One of task {{ some-api_name }}'
+    api_name = 'task-1'
+    revert_task = 'task-0'
+    description = 'Some \n {{ another-api_name }} description'
+
+    user = create_test_user()
+    template = create_test_template(user=user, tasks_count=1)
+    template_task = template.tasks.get(number=1)
+    template_task.api_name = api_name
+    template_task.name = name
+    template_task.revert_task = revert_task
+    template_task.name_template = name
+    template_task.description = description
+    template_task.description_template = description
+    template_task.require_completion_by_all = True
+    template_task.save()
+
+    checklist_template = ChecklistTemplate.objects.create(
+        template=template,
+        task=template_task,
+    )
+    ChecklistTemplateSelection.objects.create(
+        checklist=checklist_template,
+        template=template,
+        value='some value 1',
+    )
+    ChecklistTemplateSelection.objects.create(
+        checklist=checklist_template,
+        template=template,
+        value='some value 2',
+    )
+    workflow = create_test_workflow(user, template=template, is_urgent=True)
+    workflow.tasks.delete()
+    task = workflow.tasks.first()
+    clear_description = 'Some \n clear description'
+    clear_mock = mocker.patch(
+        'pneumatic_backend.services.markdown.MarkdownService.clear',
+        return_value=clear_description
+    )
+    service = TaskService(
+        user=user,
+        instance=task
+    )
+
+    # act
+    service._create_instance(
+        instance_template=template_task,
+        workflow=workflow
+    )
+
+    # assert
+    task = service.instance
+    assert task.api_name == api_name
+    assert task.account == user.account
+    assert task.workflow == workflow
+    assert task.name == name
+    assert task.revert_task == revert_task
+    assert task.name_template == name
+    assert task.description == description
+    assert task.clear_description == clear_description
+    assert task.description_template == description
+    assert task.number == 1
+    assert task.require_completion_by_all is True
+    assert task.is_urgent is True
+    assert task.checklists_total == 2
+    clear_mock.assert_called_once_with(description)
 
 
 def test_get_task_due_date__raw_due_date_not_exist__return_none():

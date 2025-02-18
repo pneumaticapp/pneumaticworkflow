@@ -1,6 +1,6 @@
 import pytest
 from pneumatic_backend.processes.tests.fixtures import (
-    create_test_user
+    create_test_user,
 )
 from pneumatic_backend.processes.models import (
     Template,
@@ -148,3 +148,58 @@ class TestCopyTemplateTask:
             auth_type=AuthTokenType.USER,
             is_superuser=False,
         )
+
+    def test_clone__return_task__ok(
+        self,
+        mocker,
+        api_client,
+    ):
+
+        # arrange
+        revert_task = 'task-0'
+        user = create_test_user()
+        mocker.patch(
+            'pneumatic_backend.processes.api_v2.serializers.template.task.'
+            'AnalyticService.templates_task_due_date_created'
+        )
+        api_client.token_authenticate(user)
+        response = api_client.post(
+            path='/templates',
+            data={
+                'name': 'Template',
+                'is_active': True,
+                'template_owners': [user.id],
+                'kickoff': {},
+                'tasks': [
+                    {
+                        'number': 1,
+                        'name': 'First Step',
+                        'raw_performers': [{
+                            'type': PerformerType.USER,
+                            'source_id': user.id
+                        }],
+                        'revert_task': revert_task
+                    },
+                    {
+                        'number': 2,
+                        'name': 'Second Step',
+                        'raw_performers': [{
+                            'type': PerformerType.USER,
+                            'source_id': user.id
+                        }],
+                        'api_name': revert_task
+                    }
+                ]
+            }
+        )
+        template = Template.objects.get(id=response.data['id'])
+
+        # act
+        response = api_client.post(
+            f'/templates/{template.id}/clone'
+        )
+
+        # assert
+        assert response.status_code == 200
+        task_data = response.data['tasks'][0]
+        assert task_data['revert_task'] == revert_task

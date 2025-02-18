@@ -88,7 +88,6 @@ import {
   TDeleteReactionComment,
   TCreateReactionComment,
 } from './actions';
-import { handleLoadTemplateVariables } from '../templates/saga';
 
 import { deleteWorkflow } from '../../api/deleteWorkflow';
 import { getTemplate } from '../../api/getTemplate';
@@ -108,6 +107,7 @@ import { createWebSocketChannel } from '../utils/createWebSocketChannel';
 import { deleteReactionComment } from '../../api/workflows/deleteReactionComment';
 import { createReactionComment } from '../../api/workflows/createReactionComment';
 import { watchedComment } from '../../api/workflows/watchedComment';
+import { handleLoadTemplateVariables } from '../templates/saga';
 import { envWssURL } from '../../constants/enviroment';
 import {
   mapBackandworkflowLogToRedux,

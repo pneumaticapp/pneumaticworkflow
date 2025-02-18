@@ -9,7 +9,6 @@ export const identifyAppPartOnServer = (req: Request): EAppPart => {
     {
       check: () => {
         const { formSubdomain } = getConfig();
-
         return req.hostname.includes(formSubdomain);
       },
       appPart: EAppPart.PublicFormApp,

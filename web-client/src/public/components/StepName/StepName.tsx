@@ -1,5 +1,3 @@
-/* eslint-disable */
-/* prettier-ignore */
 import * as React from 'react';
 
 import { TLoadTemplateVariablesPayload } from '../../redux/actions';
@@ -14,12 +12,7 @@ export interface IStepNameProps {
   loadTemplateVariables(payload: TLoadTemplateVariablesPayload): void;
 }
 
-export function StepNameComponent({
-  initialStepName,
-  templateId,
-  variables,
-  loadTemplateVariables,
-}: IStepNameProps) {
+export function StepNameComponent({ initialStepName, templateId, variables, loadTemplateVariables }: IStepNameProps) {
   React.useEffect(() => {
     if (!variables) {
       loadTemplateVariables({ templateId });
@@ -27,7 +20,7 @@ export function StepNameComponent({
   }, []);
 
   if (!variables) {
-    return <>{initialStepName}</>;
+    return <div>{initialStepName}</div>;
   }
 
   return <RichText text={initialStepName} variables={variables} isMarkdownMode={false} />;

@@ -35,8 +35,9 @@
   overflow: hidden;
   max-width: 100%;
   font-family: Nunito, sans-serif;
-  font-size: 15px;
-  line-height: 20px;
+
+  @mixin text-base;
+
   text-align: left;
   white-space: nowrap;
   text-overflow: ellipsis;
@@ -51,8 +52,8 @@
 
 .variable-list__inner {
   padding: 4px !important;
-  width: 304px !important;
-  max-width: 304px !important;
+  width: 30.4rem !important;
+  max-width: 30.4rem !important;
   border: none !important;
   border-radius: 8px !important;
   box-shadow: 0 8px 16px rgba(98, 98, 95, 0.08);

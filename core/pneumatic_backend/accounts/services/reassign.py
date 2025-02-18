@@ -23,7 +23,7 @@ from pneumatic_backend.processes.models import (
     RawPerformer,
     RawPerformerTemplate,
     TaskPerformer,
-    Template,
+    TemplateOwner,
     Workflow
 )
 from pneumatic_backend.processes.tasks.tasks import complete_tasks
@@ -116,7 +116,7 @@ class ReassignService:
             user_to_substitution=self.new_user.id,
         )
         RawSqlExecutor.execute(*delete_query.get_sql())
-        Template.template_owners.through.objects.filter(
+        TemplateOwner.objects.filter(
             user=self.old_user,
             template__account=self.account,
         ).update(user=self.new_user)

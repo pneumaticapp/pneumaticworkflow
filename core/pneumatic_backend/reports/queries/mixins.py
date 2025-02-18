@@ -176,35 +176,33 @@ class WorkflowTasksMixin(TasksMixin):
     def _overdue_tasks_clause(self):
         return """
         WHERE
-            pt.is_skipped IS FALSE AND
-            pt.is_deleted IS FALSE AND
+          pt.is_skipped IS FALSE
+          AND pt.is_deleted IS FALSE
+          AND pt.date_started IS NOT NULL
+          AND (
             (
-                pt.date_completed IS NULL OR
-                pt.date_completed BETWEEN %(date_from_tsp)s AND %(date_to_tsp)s
-            ) AND
-            (
-                pw.date_completed IS NULL OR
-                pw.date_completed BETWEEN %(date_from_tsp)s AND %(date_to_tsp)s
-            ) AND
-            (
-                (
-                  pt.due_date IS NOT NULL AND
-                  pt.due_date < COALESCE(
-                    pt.date_completed,
-                    pw.date_completed,
-                    NOW()
-                  ) AND
-                  pt.date_started < %(date_to_tsp)s
-                ) OR (
-                    pw.due_date IS NOT NULL AND
-                    pw.due_date < COALESCE(
-                      pt.date_completed,
-                      pw.date_completed,
-                      NOW()
-                    ) AND
-                    pw.date_created < %(date_to_tsp)s
-                )
+              pt.due_date IS NOT NULL
+              AND pt.date_started < %(date_to_tsp)s
+              AND pt.due_date < COALESCE(pt.date_completed, NOW())
+              AND (
+                pt.date_completed IS NULL
+                OR pt.date_completed
+                  BETWEEN %(date_from_tsp)s AND %(date_to_tsp)s
+              )
             )
+            OR (
+              pw.due_date IS NOT NULL
+              AND pw.current_task = pt.number
+              AND (
+                pw.date_completed IS NULL
+                OR pw.date_completed
+                  BETWEEN %(date_from_tsp)s AND %(date_to_tsp)s
+              )
+              AND pw.due_date IS NOT NULL
+              AND pt.date_started < %(date_to_tsp)s
+              AND pw.due_date < COALESCE(pw.date_completed, NOW())
+            )
+          )
         """
 
 
@@ -225,6 +223,7 @@ class WorkflowTasksNowMixin(TasksNowMixin):
                 pt.date_completed IS NULL AND
                 pt.due_date < %(now)s
               ) OR (
+                pw.current_task = pt.number AND
                 pw.due_date IS NOT NULL AND
                 pw.due_date < %(now)s
               )

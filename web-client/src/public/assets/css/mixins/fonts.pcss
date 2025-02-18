@@ -7,6 +7,8 @@
 }
 
 @define-mixin hxl {
+  @mixin font-title;
+
   font-size: 5.6rem;
   line-height: 6rem;
 
@@ -17,6 +19,8 @@
 }
 
 @define-mixin h1 {
+  @mixin font-title;
+
   font-size: 4rem;
   line-height: 4.4rem;
 
@@ -27,6 +31,8 @@
 }
 
 @define-mixin h2 {
+  @mixin font-title;
+
   font-size: 3.6rem;
   line-height: 4rem;
 
@@ -37,6 +43,8 @@
 }
 
 @define-mixin h3 {
+  @mixin font-title;
+
   font-size: 3.2rem;
   line-height: 3.6rem;
 
@@ -47,6 +55,8 @@
 }
 
 @define-mixin h4 {
+  @mixin font-title;
+
   font-size: 2.8rem;
   line-height: 3.2rem;
 
@@ -57,6 +67,8 @@
 }
 
 @define-mixin h5 {
+  @mixin font-title;
+
   font-size: 2.4rem;
   line-height: 2.8rem;
 
@@ -67,6 +79,8 @@
 }
 
 @define-mixin h6 {
+  @mixin font-title;
+
   font-size: 2rem;
   line-height: 2.4rem;
 
@@ -77,24 +91,32 @@
 }
 
 @define-mixin text-big $weight: normal {
+  @mixin font-text;
+
   font-size: 1.7rem;
   line-height: 2.4rem;
   font-weight: $weight;
 }
 
 @define-mixin text-base $weight: normal {
+  @mixin font-text;
+
   font-size: 1.5rem;
   line-height: 2rem;
   font-weight: $weight;
 }
 
 @define-mixin text-small $weight: normal {
+  @mixin font-text;
+
   font-size: 1.3rem;
   line-height: 1.6rem;
   font-weight: $weight;
 }
 
 @define-mixin text-small-extra $weight: normal {
+  @mixin font-text;
+
   font-size: 1.1rem;
   line-height: 1.6rem;
   font-weight: $weight;

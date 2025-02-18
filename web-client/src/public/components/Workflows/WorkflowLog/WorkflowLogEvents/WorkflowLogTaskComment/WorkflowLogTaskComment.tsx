@@ -106,11 +106,7 @@ export function WorkflowLogTaskComment({
 
   const handleEditComment = () => {
     setIsEdit(false);
-
-    if (commentText && commentText !== text) {
-      editComment({ id, text: commentText, attachments: filesToUpload });
-    }
-
+    editComment({ id, text: commentText, attachments: filesToUpload });
     setFilesToUpload([]);
     setCommentText('');
   };
@@ -230,7 +226,7 @@ export function WorkflowLogTaskComment({
               submitIcon={<CommentEditDoneIcon />}
               onCancel={() => setIsEdit(false)}
               onSubmit={() => handleEditComment()}
-              accountId={userId as number}
+              accountId={currentUserId}
             />
           ))}
 

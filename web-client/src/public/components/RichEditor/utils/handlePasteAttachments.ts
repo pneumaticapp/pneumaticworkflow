@@ -1,5 +1,3 @@
-/* eslint-disable */
-/* prettier-ignore */
 import { EditorState } from 'draft-js';
 // tslint:disable-next-line: match-default-export-name
 import createAttachmentPlugin from './AttachmentsPlugin';
@@ -22,29 +20,27 @@ export const handlePasteAttachments = async (
   const text = e.clipboardData?.getData('text/plain') || '';
   const textImageUrls: TEditorAttachment[] = (text
     .match(urlRegex)
-    ?.map(url => {
+    ?.map((url) => {
       const fileType = getAttachmentTypeByUrl(url);
       if (!fileType) {
         return null;
       }
 
       return { url };
-    }).filter(Boolean) || []) as TEditorAttachment[];
+    })
+    .filter(Boolean) || []) as TEditorAttachment[];
 
-  const pastedImages = Array.from(e.clipboardData?.items || []).filter(i => {
+  const pastedImages = Array.from(e.clipboardData?.items || []).filter((i) => {
     const fileTypesRegExps = [/image/, /video/, /text/];
 
-    return fileTypesRegExps.some(regEx => regEx.test(i.type));
+    return fileTypesRegExps.some((regEx) => regEx.test(i.type));
   });
   const uploadedImages: TEditorAttachment[] = await uploadFiles(
-    pastedImages.map(image => image.getAsFile()).filter(Boolean) as File[],
+    pastedImages.map((image) => image.getAsFile()).filter(Boolean) as File[],
     accountId,
   );
 
-  const editorStateWithImages = [
-    ...uploadedImages,
-    ...textImageUrls,
-  ].reduce((stateWithImages, uploadedImage) => {
+  const editorStateWithImages = [...uploadedImages, ...textImageUrls].reduce((stateWithImages, uploadedImage) => {
     if (!uploadedImage?.url) {
       return stateWithImages;
     }

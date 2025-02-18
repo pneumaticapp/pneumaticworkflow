@@ -38,7 +38,6 @@ import { getWorkflowProgressColor } from '../utils/getWorkflowProgressColor';
 import { countCompletedTasks } from '../utils/countCompletedTasks';
 import { getEditedFields } from '../../TemplateEdit/ExtraFields/utils/getEditedFields';
 import { UserData } from '../../UserData';
-import { DueIn } from '../../DueIn';
 import { DateFormat } from '../../UI/DateFormat';
 
 import styles from './WorkflowModal.css';
@@ -421,7 +420,7 @@ export class WorkflowModal extends React.Component<IWorkflowModalProps> {
   };
 
   private renderWorkflowInfo = () => {
-    const { workflow, editWorkflow, timezone, dateFmt } = this.props;
+    const { workflow } = this.props;
     if (!workflow) return null;
 
     return (
@@ -469,17 +468,6 @@ export class WorkflowModal extends React.Component<IWorkflowModalProps> {
             }}
           />
         </p>
-
-        <div className={styles['workflow-due-date']}>
-          <DueIn
-            dateFmt={dateFmt}
-            timezone={timezone}
-            dueDate={workflow.dueDate}
-            view="dueDate"
-            onSave={(date) => editWorkflow({ workflowId: workflow.id, dueDate: date })}
-            onRemove={() => editWorkflow({ workflowId: workflow.id, dueDate: null })}
-          />
-        </div>
       </div>
     );
   };

@@ -5,7 +5,6 @@ import { IApplicationState } from '../../types/redux';
 import {
   logoutUser,
   setNotificationsListIsOpen,
-  showPlanExpiredMessage,
   returnFromSupermode,
   redirectToCustomerPortal,
 } from '../../redux/actions';
@@ -53,7 +52,6 @@ const mapStateToProps = (state: IApplicationState): TStoreProps => {
 const mapDispatchToProps: ITopNavDispatchProps = {
   logoutUser,
   setNotificationsListIsOpen,
-  showPlanExpiredMessage,
   returnFromSupermode,
   redirectToCustomerPortal,
 };

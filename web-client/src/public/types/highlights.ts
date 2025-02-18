@@ -2,6 +2,10 @@ import { EWorkflowLogEvent, EWorkflowStatus, IWorkflowDelay, IWorkflowDetailsKic
 import { TUserId } from './user';
 import { IExtraField, ITemplateTitle } from './template';
 
+export interface IDateRange {
+  startDate: Date;
+  endDate: Date;
+}
 export interface IHighlightsItem {
   id: number;
   type: EWorkflowLogEvent;

@@ -58,7 +58,7 @@ export function DropdownList<TOption extends TDropdownOptionBase>({
 
   if (label && controlSize === 'lg') {
     return (
-      <div className={classnames('react-select', className)}>
+      <div className={classnames('react-select', restProps.isDisabled && 'is-disabled', className)}>
         <div className={classnames(styles['dropdownlist-lg__control'], label && styles['is-label'])}>
           {label && <p className={styles['dropdownlist-lg__label']}>{label}</p>}
           <Select
@@ -78,7 +78,7 @@ export function DropdownList<TOption extends TDropdownOptionBase>({
   }
 
   return (
-    <div className={classnames('react-select', className)}>
+    <div className={classnames('react-select', restProps.isDisabled && 'is-disabled', className)}>
       <OutsideClickHandler onOutsideClick={() => setIsOpen(false)}>
         <Select
           isMulti={isMulti}
@@ -97,11 +97,11 @@ export function DropdownList<TOption extends TDropdownOptionBase>({
   );
 }
 
-function Input({ autoComplete, ...rest }: any) {
+const Input = ({ autoComplete, ...rest }: any) => {
   return <components.Input {...rest} aria-autocomplete="none" />;
-}
+};
 
-function ControlSM(title: string, isOpen: boolean, onClick: (isOpen: boolean) => void) {
+const ControlSM = (title: string, isOpen: boolean, onClick: (isOpen: boolean) => void) => {
   return () => {
     return (
       <button
@@ -114,9 +114,11 @@ function ControlSM(title: string, isOpen: boolean, onClick: (isOpen: boolean) =>
       </button>
     );
   };
-}
+};
 
-const DropdownIndicator = () => <ArrowDropdownIcon />;
+const DropdownIndicator = ({ isDisabled }: any) => {
+  return !isDisabled ? <ArrowDropdownIcon /> : null;
+};
 
 const MenuSM = ({ children, ...props }: any) => {
   return (

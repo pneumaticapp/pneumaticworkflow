@@ -3,7 +3,8 @@ from typing import Optional, Union, Tuple
 from django.contrib.auth import get_user_model
 from pneumatic_backend.processes.models import (
     Task,
-    TaskPerformer
+    TaskPerformer,
+    Template,
 )
 from pneumatic_backend.processes.enums import (
     DirectlyStatus,
@@ -80,14 +81,12 @@ class BasePerformersService:
         if not request_user.is_admin:
             raise PerformersServiceException(MSG_PW_0021)
         if not request_user.is_account_owner:
-            request_user_is_template_owner = False
+            tempalate_owners_ids = []
             if not workflow.is_legacy_template:
-                request_user_is_template_owner = (
-                    workflow.template.template_owners.filter(
-                        id=request_user.id
-                    ).exists()
-                )
-            if not request_user_is_template_owner:
+                tempalate_owners_ids = Template.objects.filter(
+                    id=workflow.template.id
+                ).get_owners_as_users()
+            if request_user.id not in tempalate_owners_ids:
                 user_is_task_performer = task.taskperformer_set.filter(
                     user_id=request_user.id
                 ).exclude_directly_deleted().exists()

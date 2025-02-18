@@ -220,7 +220,6 @@ class WorkflowViewSet(
             account_id=request.user.account_id,
             user_id=request.user.id
         )
-
         search_text = filter_slz.validated_data.get('search')
         if search_text:
             AnalyticService.search_search(
@@ -230,12 +229,10 @@ class WorkflowViewSet(
                 is_superuser=getattr(request, 'is_superuser', False),
                 auth_type=request.token_type,
             )
-
         page = self.paginate_queryset(queryset)
         if page is not None:
             serializer = self.get_serializer(page, many=True)
             return self.get_paginated_response(serializer.data)
-
         serializer = self.get_serializer(queryset, many=True)
         return self.response_ok(serializer.data)
 

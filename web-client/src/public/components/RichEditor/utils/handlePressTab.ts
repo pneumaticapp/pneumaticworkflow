@@ -1,5 +1,3 @@
-/* eslint-disable */
-/* prettier-ignore */
 import { EditorState, RichUtils } from 'draft-js';
 import * as React from 'react';
 

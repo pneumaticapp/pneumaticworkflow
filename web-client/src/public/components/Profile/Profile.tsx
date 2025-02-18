@@ -136,7 +136,7 @@ export function Profile({ user, editCurrentUser, sendChangePassword, onChangeTab
           return { ...errors };
         }}
       >
-        <Form autoComplete="one-time-code">
+        <Form>
           <fieldset className={styles['fields-group']}>
             <InputField
               value={id}

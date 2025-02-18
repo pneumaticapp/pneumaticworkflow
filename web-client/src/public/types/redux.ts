@@ -128,7 +128,7 @@ export interface IAccountPlan {
   maxUsers: number;
   activeUsers: number | null;
   tenantsActiveUsers: number | null;
-  maxTemplates: number | null; // null for free plan
+  maxTemplates: number | null;  // null for free plan
   activeTemplates: number;
   ownerName: string;
   trialEnded: boolean;

@@ -166,6 +166,7 @@ class WorkflowService(
                 workflow=self.instance,
                 redefined_performer=kwargs.get('redefined_performer')
             )
+        self.update_owners()
         return self.instance
 
     def _create_actions(self, **kwargs):
@@ -208,3 +209,9 @@ class WorkflowService(
                 account_id=self.account.id,
                 payload=self.instance.webhook_payload()
             )
+
+    def update_owners(self):
+        user_ids = Template.objects.filter(
+            id=self.instance.template_id
+        ).get_owners_as_users()
+        self.instance.owners.set(user_ids)

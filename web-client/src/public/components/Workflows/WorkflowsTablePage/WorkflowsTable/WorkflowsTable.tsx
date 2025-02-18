@@ -53,7 +53,6 @@ export function WorkflowsTable({
   removeWorkflowFromList,
   openWorkflowLogPopup,
   setPerformersFilter,
-  applyFilters,
 }: IWorkflowsTableProps) {
   const { formatMessage } = useIntl();
 

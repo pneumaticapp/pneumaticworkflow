@@ -13,10 +13,10 @@ const mockProps: ITeamProps = {
   loadChangeUserAdmin: jest.fn(),
   openModal: jest.fn(),
   users: mockLastNameUsers,
+  trialEnded: false,
   userListSorting: EUserListSorting.NameAsc,
   openTeamInvitesPopup: jest.fn(),
   setGeneralLoaderVisibility: jest.fn(),
-  trialEnded: null,
   loadMicrosoftInvites: jest.fn(),
 };
 

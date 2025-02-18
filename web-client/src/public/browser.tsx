@@ -26,18 +26,19 @@ smoothscroll.polyfill();
 initSentry(getBrowserConfig);
 addEventListener('beforeunload', resetSuperuserToken);
 
-hot(ReactDOM.render(
-  <Provider store={store}>
-    <React.Suspense fallback={<div className="loading" />}>
-      <Router history={history}>
-        <ErrorBoundary FallbackComponent={ErrorFallback}>
-          <PersistGate loading={null} persistor={persistor}>
-            <AppContainer />
-          </PersistGate>
-        </ErrorBoundary>
-      </Router>
-    </React.Suspense>
-  </Provider>,
-  document.getElementById('pneumatic-frontend'),
-))
-;
+hot(
+  ReactDOM.render(
+    <Provider store={store}>
+      <React.Suspense fallback={<div className="loading" />}>
+        <Router history={history}>
+          <ErrorBoundary FallbackComponent={ErrorFallback}>
+            <PersistGate loading={null} persistor={persistor}>
+              <AppContainer />
+            </PersistGate>
+          </ErrorBoundary>
+        </Router>
+      </React.Suspense>
+    </Provider>,
+    document.getElementById('pneumatic-frontend'),
+  ),
+);

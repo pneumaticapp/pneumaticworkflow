@@ -2654,7 +2654,7 @@ def test_complete_current_task__task_rcba_and_last_completion__ok(mocker):
     )
 
 
-def test_revert__ok(mocker):
+def test_revert__to_default_revert_task__ok(mocker):
 
     # arrange
     account = create_test_account()
@@ -2683,6 +2683,42 @@ def test_revert__ok(mocker):
     return_workflow_to_task_mock.assert_called_once_with(
         workflow=workflow,
         revert_from_task=task_2,
+        revert_to_task=task_1,
+        is_revert=True
+    )
+
+
+def test_revert__to_custom_revert_task__ok(mocker):
+
+    # arrange
+    account = create_test_account()
+    user = create_test_user(account=account, is_account_owner=True)
+    workflow = create_test_workflow(user, tasks_count=3)
+    task_1 = workflow.tasks.get(number=1)
+    task_3 = workflow.tasks.get(number=3)
+    task_3.revert_task = task_1.api_name
+    task_3.save()
+    workflow.current_task = 3
+    workflow.save()
+    return_workflow_to_task_mock = mocker.patch(
+        'pneumatic_backend.processes.services.workflow_action.'
+        'WorkflowActionService._return_workflow_to_task'
+    )
+    start_task_mock = mocker.patch(
+        'pneumatic_backend.processes.services.workflow_action.'
+        'WorkflowActionService.start_task'
+    )
+    start_task_mock.__name__ = 'start_task'
+
+    service = WorkflowActionService(user=user)
+
+    # act
+    service.revert(workflow=workflow)
+
+    # assert
+    return_workflow_to_task_mock.assert_called_once_with(
+        workflow=workflow,
+        revert_from_task=task_3,
         revert_to_task=task_1,
         is_revert=True
     )

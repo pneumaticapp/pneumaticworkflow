@@ -14,7 +14,6 @@ from pneumatic_backend.generics.mixins.serializers import (
     AdditionalValidationMixin,
 )
 from pneumatic_backend.processes.models import (
-    Template,
     Workflow,
     TaskPerformer,
     Task,
@@ -30,6 +29,7 @@ from pneumatic_backend.processes.serializers.kickoff_value import (
 )
 from pneumatic_backend.processes.serializers.template import (
     TemplateDetailsSerializer,
+    WorkflowTemplateSerializer,
 )
 from pneumatic_backend.processes.serializers.task_field import (
     WorkflowTaskFieldSerializer,
@@ -73,6 +73,7 @@ class WorkflowListSerializer(serializers.ModelSerializer):
             'active_tasks_count',
             'active_current_task',
             'template',
+            'owners',
             'task',
             'is_legacy_template',
             'legacy_template_name',
@@ -91,7 +92,7 @@ class WorkflowListSerializer(serializers.ModelSerializer):
         )
 
     task = serializers.SerializerMethodField()
-    template = serializers.SerializerMethodField()
+    template = WorkflowTemplateSerializer()
     passed_tasks = serializers.SerializerMethodField()
     date_created_tsp = TimeStampField(source='date_created', read_only=True)
     due_date_tsp = TimeStampField(source='due_date', read_only=True)
@@ -108,61 +109,13 @@ class WorkflowListSerializer(serializers.ModelSerializer):
         source='workflow_starter_id'
     )
 
-    def get_template(self, instance: Workflow):
-        return {
-            'id': instance.template_id,
-            'name': instance.template_name,
-            'is_active': instance.template_is_active,
-            'template_owners': list(
-                Template.template_owners.through.objects.filter(
-                    template_id=instance.template_id
-                ).order_by('user_id').values_list('user_id', flat=True)
-            )
-        }
-
     def get_passed_tasks(self, instance: Workflow):
-        return TasksPassedInfoSerializer(
-            instance.tasks.completed().order_by('number'),
-            many=True
-        ).data
+        tasks = instance.passed_tasks
+        return TasksPassedInfoSerializer(instance=tasks, many=True).data
 
     def get_task(self, instance: Workflow):
-        data = {
-            'id': instance.task_id,
-            'name': instance.task_name,
-            'number': instance.task_number,
-            'due_date_tsp': (
-                instance.task_due_date.timestamp() if
-                instance.task_due_date else None
-            ),
-            'date_started':  instance.task_date_started,
-            'date_started_tsp': (
-                instance.task_date_started.timestamp() if
-                instance.task_date_started else None
-            ),
-            'checklists_total': instance.task_checklists_total,
-            'checklists_marked': instance.task_checklists_marked,
-            'delay': None,
-            'performers': list(
-                TaskPerformer.objects.by_task(
-                    instance.task_id
-                ).exclude_directly_deleted().user_ids()
-            ),
-        }
-        if instance.status == WorkflowStatus.DELAYED:
-            data['delay'] = {
-                'duration': instance.delay_duration,
-                'start_date': instance.delay_start_date,
-                'start_date_tsp': (
-                    instance.delay_start_date.timestamp() if
-                    instance.delay_start_date else None
-                ),
-                'end_date': instance.delay_end_date,
-                'end_date_tsp': (
-                    instance.delay_end_date.timestamp() if
-                    instance.delay_end_date else None
-                ),
-            }
+        task = instance.current_tasks[0]
+        data = WorkflowCurrentTaskSerializer(instance=task).data
         return data
 
 
@@ -460,6 +413,7 @@ class WorkflowDetailsSerializer(serializers.ModelSerializer):
             'name',
             'description',
             'template',
+            'owners',
             'current_task',
             'tasks_count',
             'active_tasks_count',
@@ -510,10 +464,7 @@ class WorkflowDetailsSerializer(serializers.ModelSerializer):
 
     def get_current_task(self, instance: Workflow):
         task = instance.tasks.get(number=instance.current_task)
-        return WorkflowCurrentTaskSerializer(
-            instance=task,
-            context={'with_delay': instance.is_delayed}
-        ).data
+        return WorkflowCurrentTaskSerializer(instance=task).data
 
 
 class WorkflowNotificationSerializer(serializers.ModelSerializer):

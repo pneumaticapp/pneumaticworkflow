@@ -89,6 +89,7 @@ import { createTemplateFromName } from './utils/createTemplateFromName';
 import { ITemplate } from '../../types/template';
 import { watchNewWorkflowsEvent } from '../workflows/saga';
 import { removeLocalStorage } from '../../utils/localStorage';
+import { isEnvBilling } from '../../constants/enviroment';
 
 export function* authenticateUser(redirectUrl?: string, isRegister: boolean = false) {
   try {
@@ -98,7 +99,10 @@ export function* authenticateUser(redirectUrl?: string, isRegister: boolean = fa
     } = user;
     yield put(authUserSuccess(user));
 
-    if ((billingSync && isRegister) || (billingSync && !isSubscribed && !billingPlan)) {
+    if (
+      ((isEnvBilling || (!isEnvBilling && billingSync)) && isRegister) ||
+      (!isSubscribed && !billingPlan)
+    ) {
       yield call(collectPaymentDetailsSaga);
       return;
     }
@@ -107,9 +111,8 @@ export function* authenticateUser(redirectUrl?: string, isRegister: boolean = fa
       history.push(ERoutes.Main);
       return;
     }
-    if (redirectUrl) {
-      history.replace(redirectUrl);
-    }
+
+    if (redirectUrl) history.replace(redirectUrl);
   } catch (err) {
     logger.error(err);
     yield put(redirectToLogin());
@@ -222,9 +225,7 @@ export function* registerWithEmailPassword({ payload: { user, captcha, onStart, 
 
       const [id, type] = [getOAuthId(), getOAuthType()];
 
-      if (id && type) {
-        setOAuthRegistrationCompleted(id, type).catch((error) => error);
-      }
+      if (id && type) setOAuthRegistrationCompleted(id, type).catch((error) => error);
 
       yield call(authenticateUser, undefined, true);
     } else {

@@ -19,6 +19,8 @@ from pneumatic_backend.processes.messages import template as messages
 from pneumatic_backend.processes.enums import (
     PerformerType,
     FieldType,
+    OwnerType,
+    WorkflowStatus,
 )
 from pneumatic_backend.accounts.tokens import (
     TransferToken
@@ -143,9 +145,9 @@ class TestUpdateTemplate:
         assert response_data.get('date_updated')
 
         template.refresh_from_db()
-        template_owners_ids = list(template.template_owners.order_by(
+        template_owners_ids = list(template.owners.order_by(
             'id'
-        ).values_list('id', flat=True))
+        ).values_list('user_id', flat=True))
         assert template.kickoff_instance
         assert template_owners_ids == request_data['template_owners']
         assert template.name == request_data['name']
@@ -798,8 +800,10 @@ class TestUpdateTemplate:
         assert response_update.data['is_active'] is False
         template.refresh_from_db()
         assert template.is_active is False
-        assert template.template_owners.count() == 1
-        assert template.template_owners.filter(id=user.id).exists()
+        assert template.owners.count() == 1
+        assert template.owners.filter(
+            type=OwnerType.USER, user_id=user.id
+        ).exists()
         template_update_mock.assert_not_called()
         kickoff_update_mock.assert_not_called()
 
@@ -1031,6 +1035,162 @@ class TestUpdateTemplate:
         # assert
         assert response.status_code == 200
         assert workflow.is_external is True
+
+    @pytest.mark.parametrize(
+        'status', (
+            WorkflowStatus.DONE,
+            WorkflowStatus.RUNNING,
+            WorkflowStatus.DELAYED
+        )
+    )
+    def test_update__workflow_changed_owners__ok(
+        self,
+        mocker,
+        api_client,
+        status
+    ):
+
+        # arrange
+        user = create_test_user()
+        api_client.token_authenticate(user)
+        workflow = create_test_workflow(
+            user=user,
+            tasks_count=1,
+            status=status
+        )
+        user_2 = create_test_user(account=user.account, email='test@test.ru')
+        group = create_test_group(user=user, users=[user_2, ])
+        template = workflow.template
+        task_template = template.tasks.first()
+        mocker.patch(
+            'pneumatic_backend.processes.api_v2.services.templates.'
+            'integrations.TemplateIntegrationsService.template_updated'
+        )
+        request_data = {
+            'id': template.id,
+            'is_active': template.is_active,
+            'is_public': False,
+            'description': template.description,
+            'name': template.name,
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id,
+                },
+                {
+                    'type': OwnerType.GROUP,
+                    'source_id': group.id,
+                }
+            ],
+            'finalizable': template.finalizable,
+            'kickoff': {
+                'id': template.kickoff_instance.id
+            },
+            'tasks': [
+                {
+                    'id': task_template.id,
+                    'number': task_template.number,
+                    'name': task_template.name,
+                    'api_name': task_template.api_name,
+                    'raw_performers': [
+                        {
+                            'type': PerformerType.USER,
+                            'source_id': user.id
+                        }
+                    ]
+                }
+            ]
+        }
+
+        # act
+        response = api_client.put(
+            path=f'/templates/{template.id}',
+            data=request_data
+        )
+
+        # assert
+        workflow.refresh_from_db()
+        assert response.status_code == 200
+        workflow_owners = list(workflow.owners.all())
+        assert len(workflow_owners) == 2
+        assert user in workflow_owners
+        assert user_2 in workflow_owners
+
+    def test_update__workflow_changed_owners_empty_group__ok(
+        self,
+        mocker,
+        api_client,
+    ):
+
+        # arrange
+        user = create_test_user()
+        api_client.token_authenticate(user)
+        workflow = create_test_workflow(
+            user=user,
+            tasks_count=1,
+        )
+        user_2 = create_test_user(account=user.account, email='test@test.ru')
+        group = create_test_group(user=user, users=[user_2, ])
+        group_2 = create_test_group(user=user)
+        template = workflow.template
+        task_template = template.tasks.first()
+        mocker.patch(
+            'pneumatic_backend.processes.api_v2.services.templates.'
+            'integrations.TemplateIntegrationsService.template_updated'
+        )
+        request_data = {
+            'id': template.id,
+            'is_active': template.is_active,
+            'is_public': False,
+            'description': template.description,
+            'name': template.name,
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id,
+                },
+                {
+                    'type': OwnerType.GROUP,
+                    'source_id': group.id,
+                },
+                {
+                    'type': OwnerType.GROUP,
+                    'source_id': group_2.id,
+                }
+            ],
+            'finalizable': template.finalizable,
+            'kickoff': {
+                'id': template.kickoff_instance.id
+            },
+            'tasks': [
+                {
+                    'id': task_template.id,
+                    'number': task_template.number,
+                    'name': task_template.name,
+                    'api_name': task_template.api_name,
+                    'raw_performers': [
+                        {
+                            'type': PerformerType.USER,
+                            'source_id': user.id
+                        }
+                    ]
+                }
+            ]
+        }
+
+        # act
+        response = api_client.put(
+            path=f'/templates/{template.id}',
+            data=request_data
+        )
+
+        # assert
+        workflow.refresh_from_db()
+        assert response.status_code == 200
+        workflow_owners = list(workflow.owners.all())
+        assert len(workflow_owners) == 2
+        assert user in workflow_owners
+        assert user_2 in workflow_owners
 
     def test_update__change_template_owners__ok(
         self,
@@ -1474,8 +1634,10 @@ class TestUpdateTemplate:
             non_admin.id, owner.id
         }
         template = Template.objects.get(id=response_data['id'])
-        assert template.template_owners.count() == 2
-        assert template.template_owners.filter(id=non_admin.id).exists()
+        assert template.owners.count() == 2
+        assert template.owners.filter(
+            type=OwnerType.USER, user_id=non_admin.id
+        ).exists()
 
     def test_update__non_admin_in_template_owners_freemium__ok(
         self,
@@ -1550,8 +1712,10 @@ class TestUpdateTemplate:
             non_admin.id, owner.id
         }
         template = Template.objects.get(id=response_data['id'])
-        assert template.template_owners.count() == 2
-        assert template.template_owners.filter(id=non_admin.id).exists()
+        assert template.owners.count() == 2
+        assert template.owners.filter(
+            type=OwnerType.USER, user_id=non_admin.id
+        ).exists()
         template_update_mock.assert_called_once()
         kickoff_update_mock.assert_called_once()
 

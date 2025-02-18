@@ -4,7 +4,7 @@ import * as React from 'react';
 import OutsideClickHandler from 'react-outside-click-handler';
 import * as PerfectScrollbar from 'react-perfect-scrollbar';
 import { Tooltip } from 'reactstrap';
-import * as classnames from 'classnames';
+import classnames from 'classnames';
 import { useIntl } from 'react-intl';
 
 import styles from './VariableList.css';

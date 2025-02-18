@@ -29,7 +29,6 @@ export const enum EAccountsActions {
   FetchPlan = 'FETCH_PLAN',
   StartTrialSubscription = 'START_TRIAL_SUBSCRIPTION',
   StartFreeSubscription = 'START_FREE_SUBSCRIPTION',
-  ShowPlanExpiredMessage = 'SHOW_PLAN_EXPIRED_MESSAGE',
 }
 
 export type TSetIsLoading = ITypedReduxAction<EAccountsActions.SetIsLoading, void>;
@@ -166,10 +165,6 @@ export type TStartFreeSubscription = ITypedReduxAction<EAccountsActions.StartFre
 export const startFreeSubscriptionAction: (payload?: void) => TStartFreeSubscription =
   actionGenerator<EAccountsActions.StartFreeSubscription, void>(EAccountsActions.StartFreeSubscription);
 
-export type TShowPlanExpiredMessage = ITypedReduxAction<EAccountsActions.ShowPlanExpiredMessage, void>;
-export const showPlanExpiredMessage: (payload?: void) => TShowPlanExpiredMessage =
-  actionGenerator<EAccountsActions.ShowPlanExpiredMessage, void>(EAccountsActions.ShowPlanExpiredMessage);
-
 export type TAccountsActions =
   TUsersFetchStarted
   | TUsersFetchFailed
@@ -193,5 +188,4 @@ export type TAccountsActions =
   | TSetIsLoading
   | TFetchPlan
   | TStartTrialSubscription
-  | TStartFreeSubscription
-  | TShowPlanExpiredMessage;
+  | TStartFreeSubscription;

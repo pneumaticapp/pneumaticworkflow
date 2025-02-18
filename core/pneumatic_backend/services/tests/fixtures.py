@@ -10,7 +10,13 @@ from pneumatic_backend.processes.models import (
     FieldTemplate,
     TaskTemplate,
 )
-from pneumatic_backend.processes.enums import FieldType
+from pneumatic_backend.processes.enums import (
+    FieldType,
+    OwnerType,
+)
+from pneumatic_backend.processes.models.templates.owner import (
+    TemplateOwner
+)
 
 
 def create_test_user(email='test@penumatic.app'):
@@ -66,7 +72,12 @@ def create_test_template(account, user=None):
         template=template,
     )
     if user:
-        template.template_owners.add(user.id)
+        TemplateOwner.objects.create(
+            template=template,
+            account=account,
+            type=OwnerType.USER,
+            user_id=user.id,
+        )
     for i in range(1, 4):
         task_template = TaskTemplate.objects.create(
             account=account,

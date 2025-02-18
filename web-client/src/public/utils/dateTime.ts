@@ -1,21 +1,11 @@
 import moment, { duration as momentDuration } from 'moment';
 import 'moment-timezone';
 import 'moment-duration-format';
-import {
-  endOfMonth,
-  endOfToday,
-  endOfWeek,
-  endOfYesterday,
-  startOfMonth,
-  startOfToday,
-  startOfWeek,
-  startOfYesterday,
-  isAfter,
-} from 'date-fns';
+import { isAfter } from 'date-fns';
 
 import { useIntl } from 'react-intl';
 import { IWorkflowDelay } from '../types/workflow';
-import { EHighlightsDateFilter } from '../types/highlights';
+import { EHighlightsDateFilter, IDateRange } from '../types/highlights';
 
 import { getDate } from './strings';
 
@@ -23,23 +13,35 @@ export const SEC_IN_DAY = 24 * 60 * 60;
 export const SEC_IN_HOUR = 60 * 60;
 export const SEC_IN_MINUTE = 60;
 
-export const PROCESS_HIGHLIGHTS_DATE_RANGE_MAP = {
-  [EHighlightsDateFilter.Today]: {
-    startDate: startOfToday(),
-    endDate: endOfToday(),
-  },
-  [EHighlightsDateFilter.Yesterday]: {
-    startDate: startOfYesterday(),
-    endDate: endOfYesterday(),
-  },
-  [EHighlightsDateFilter.Week]: {
-    startDate: startOfWeek(new Date()),
-    endDate: endOfWeek(new Date()),
-  },
-  [EHighlightsDateFilter.Month]: {
-    startDate: startOfMonth(new Date()),
-    endDate: endOfMonth(new Date()),
-  },
+const calculateRange = (tzDate: moment.Moment, unit: moment.unitOfTime.StartOf, offset: number = 0): IDateRange => {
+  try {
+    const tzDateOffset = tzDate.clone().add(offset, 'days');
+    if (!tzDateOffset.isValid()) {
+      throw new Error('Invalid moment object after offset adjustment.');
+    }
+
+    const startDate = tzDateOffset.startOf(unit).toDate();
+    const endDate = tzDateOffset.endOf(unit).toDate();
+    if (!startDate || !endDate) {
+      throw new Error('Failed to calculate start or end date.');
+    }
+
+    return { startDate, endDate };
+  } catch (error) {
+    throw new Error(`Error in function 'calculateRange'. Unit: ${unit}, Offset: ${offset}. Error: ${error.message}`);
+  }
+};
+type TValidHighlightsDateFilter = Exclude<EHighlightsDateFilter, EHighlightsDateFilter.Custom>;
+
+export const getHighlightsDateRange = (range: TValidHighlightsDateFilter, timezone: string): IDateRange => {
+  const tzDate = moment.tz(timezone);
+  const dateRangeMap: Record<TValidHighlightsDateFilter, IDateRange> = {
+    [EHighlightsDateFilter.Today]: calculateRange(tzDate, 'day'),
+    [EHighlightsDateFilter.Yesterday]: calculateRange(tzDate, 'day', -1),
+    [EHighlightsDateFilter.Week]: calculateRange(tzDate, 'week'),
+    [EHighlightsDateFilter.Month]: calculateRange(tzDate, 'month'),
+  };
+  return dateRangeMap[range];
 };
 
 export const formatDateToQuery = (date?: Date | null) => {

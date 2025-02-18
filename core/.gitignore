@@ -102,3 +102,4 @@ Pipfile
 Pipfile.lock
 venv
 google_api_credentials.json
+django_queries.log

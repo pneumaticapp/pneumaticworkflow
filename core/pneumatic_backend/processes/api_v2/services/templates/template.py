@@ -1,6 +1,5 @@
-from typing import Optional, List
+from typing import List
 from copy import deepcopy
-from collections import defaultdict
 from django.contrib.auth import get_user_model
 
 from pneumatic_backend.processes.models import (
@@ -12,21 +11,14 @@ from pneumatic_backend.processes.utils.common import create_api_name
 from pneumatic_backend.processes.utils.common import (
     insert_fields_values_to_text
 )
-from pneumatic_backend.executor import RawSqlExecutor
-from pneumatic_backend.processes.queries import (
-    TemplateListQuery
-)
+
 from pneumatic_backend.processes.enums import (
     PerformerType,
-    TemplateOrdering,
     sys_template_type_map,
 )
-from pneumatic_backend.processes.api_v2.serializers.template.kickoff import (
-    KickoffListSerializer
-)
+
 from pneumatic_backend.processes.models import (
     Template,
-    Kickoff
 )
 from pneumatic_backend.generics.base.service import BaseModelService
 from rest_framework.serializers import ValidationError
@@ -53,60 +45,6 @@ class TemplateService(BaseModelService):
         **kwargs
     ):
         pass
-
-    def get_templates_data(
-        self,
-        ordering: Optional[TemplateOrdering] = None,
-        search: Optional[str] = None,
-        is_active: Optional[bool] = None,
-        is_public: Optional[bool] = None,
-        is_template_owner: Optional[bool] = None,
-    ) -> List[dict]:
-
-        """ Returns list of filtered templates
-            Adds kickoff and template_owners to the data
-            through bulk selection """
-
-        query = TemplateListQuery(
-            user=self.user,
-            account_id=self.account.id,
-            ordering=ordering,
-            search_text=search,
-            is_active=is_active,
-            is_public=is_public,
-            is_template_owner=is_template_owner,
-        )
-        templates_data = []
-        templates_ids = set()
-        for row in RawSqlExecutor.fetch(*query.get_sql()):
-            row['template_owners'] = []
-            templates_data.append(row)
-            templates_ids.add(row['id'])
-
-        template_owners_dict = defaultdict(list)
-        for template_owner in Template.template_owners.through.objects.filter(
-            template_id__in=templates_ids
-        ):
-            template_owners_dict[template_owner.template_id].append(
-                template_owner.user_id
-            )
-
-        kickoff_dict = {}
-        for kickoff in Kickoff.objects.filter(
-            template_id__in=templates_ids
-        ).prefetch_related('fields__selections'):
-            kickoff_dict[kickoff.template_id] = (
-                KickoffListSerializer(
-                    instance=kickoff
-                ).data
-            )
-
-        for template_data in templates_data:
-            template_data['template_owners'] = template_owners_dict[
-                template_data['id']
-            ]
-            template_data['kickoff'] = kickoff_dict[template_data['id']]
-        return templates_data
 
     def fill_template_data(self, initial_data: dict) -> dict:
 

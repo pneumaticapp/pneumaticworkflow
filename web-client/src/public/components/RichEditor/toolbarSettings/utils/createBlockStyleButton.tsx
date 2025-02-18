@@ -3,7 +3,7 @@
 /* eslint-disable */
 import React, { MouseEvent, ReactNode } from 'react';
 import { ToolbarChildrenProps } from '@draft-js-plugins/static-toolbar/lib/components/Toolbar';
-import * as classnames from 'classnames';
+import classnames from 'classnames';
 import { RichUtils } from 'draft-js';
 
 import { CustomTooltip } from '../../../UI';

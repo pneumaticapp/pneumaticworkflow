@@ -65,3 +65,6 @@ from pneumatic_backend.processes.models.workflows.event import (
     WorkflowEvent,
     WorkflowEventAction,
 )
+from pneumatic_backend.processes.models.templates.owner import (
+    TemplateOwner
+)

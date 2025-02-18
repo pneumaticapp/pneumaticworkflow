@@ -126,7 +126,7 @@ export function TeamInvitesPopup({
         return false;
       }
 
-      if (!isEnvMsAuth && !microsoftUsers.length && tabName === EInvitesType.Microsoft) {
+      if ((!isEnvMsAuth || !microsoftUsers.length) && tabName === EInvitesType.Microsoft) {
         return false;
       }
 

@@ -73,7 +73,6 @@ import { markChecklistItem } from '../../api/markChecklistItem';
 import { unmarkChecklistItem } from '../../api/unmarkChecklistItem';
 import { deleteTaskDueDate } from '../../api/deleteTaskDueDate';
 import { changeTaskDueDate } from '../../api/changeTaskDueDate';
-
 import {
   mapBackandworkflowLogToRedux,
   formatTaskDatesForRedux,
@@ -81,7 +80,6 @@ import {
   mapOutputToCompleteTask,
 } from '../../utils/mappers';
 import { toTspDate } from '../../utils/dateTime';
-
 import { IStoreTask } from '../../types/redux';
 import { getWorkflow } from '../../api/getWorkflow';
 import { getWorkflowLog } from '../../api/getWorkflowLog';

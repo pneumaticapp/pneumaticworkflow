@@ -12,7 +12,10 @@ from pneumatic_backend.processes.api_v2.services.task.exceptions import (
 )
 from pneumatic_backend.processes.models import TaskPerformer
 from pneumatic_backend.utils.validation import ErrorCode
-
+from pneumatic_backend.processes.models.templates.owner import (
+    TemplateOwner
+)
+from pneumatic_backend.processes.enums import OwnerType
 
 UserModel = get_user_model()
 pytestmark = pytest.mark.django_db
@@ -127,7 +130,6 @@ class TestTaskCreatePerformer:
             current_url=current_url,
             is_superuser=False
         )
-        assert template.template_owners.filter(id=request_user.id).exists()
 
     def test_create__request_user_template_owner_not_admin__permission_denied(
         self,
@@ -200,7 +202,11 @@ class TestTaskCreatePerformer:
             is_account_owner=False
         )
         template = create_test_template(user=account_owner, tasks_count=1)
-        template.template_owners.remove(request_user)
+        TemplateOwner.objects.filter(
+            template=template,
+            type=OwnerType.USER,
+            user_id=request_user.id
+        ).delete()
         workflow = create_test_workflow(user=account_owner, template=template)
 
         task = workflow.current_task_instance
@@ -223,7 +229,7 @@ class TestTaskCreatePerformer:
         # assert
         assert response.status_code == 403
         service_create_performer_mock.assert_not_called()
-        assert not template.template_owners.filter(id=request_user.id).exists()
+        assert not template.owners.filter(user_id=request_user.id).exists()
 
     def test_create__request_user_is_not_account_user__not_found(
         self,
@@ -458,7 +464,7 @@ class TestTaskDeletePerformer:
             user_key=user_performer.id,
             request_user=request_user,
         )
-        assert template.template_owners.filter(id=request_user.id).exists()
+        assert template.owners.filter(user_id=request_user.id).exists()
 
     def test_delete__request_user_not_template_owner_admin__permission_denied(
         self,
@@ -483,7 +489,11 @@ class TestTaskDeletePerformer:
             is_account_owner=False
         )
         template = create_test_template(user=account_owner, tasks_count=1)
-        template.template_owners.remove(request_user)
+        TemplateOwner.objects.filter(
+            template=template,
+            type=OwnerType.USER,
+            user_id=request_user.id
+        ).delete()
         workflow = create_test_workflow(user=account_owner, template=template)
         task = workflow.current_task_instance
         api_client.token_authenticate(request_user)
@@ -502,7 +512,7 @@ class TestTaskDeletePerformer:
         # assert
         assert response.status_code == 403
         service_delete_performer_mock.asert_not_called()
-        assert not template.template_owners.filter(id=request_user.id).exists()
+        assert not template.owners.filter(user_id=request_user.id).exists()
 
     def test_delete__request_user_template_owner_not_admin__permission_denied(
         self,
@@ -1050,7 +1060,7 @@ class TestDeleteGuestPerformer:
             user_key=guest_email,
             request_user=request_user
         )
-        assert template.template_owners.filter(id=request_user.id).exists()
+        assert template.owners.filter(user_id=request_user.id).exists()
 
     def test_delete__request_user_not_template_owner_admin__permission_denied(
         self,
@@ -1071,7 +1081,11 @@ class TestDeleteGuestPerformer:
         )
         guest_email = 'guest@test.test'
         template = create_test_template(user=account_owner, tasks_count=1)
-        template.template_owners.remove(request_user)
+        TemplateOwner.objects.filter(
+            template=template,
+            type=OwnerType.USER,
+            user_id=request_user.id
+        ).delete()
         workflow = create_test_workflow(user=account_owner, template=template)
         task = workflow.current_task_instance
         api_client.token_authenticate(request_user)
@@ -1089,7 +1103,7 @@ class TestDeleteGuestPerformer:
         # assert
         assert response.status_code == 403
         service_delete_guest_mock.asert_not_called()
-        assert not template.template_owners.filter(id=request_user.id).exists()
+        assert not template.owners.filter(user_id=request_user.id).exists()
 
     def test_delete__request_user_template_owner_not_admin__permission_denied(
         self,

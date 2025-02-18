@@ -21,7 +21,13 @@ from pneumatic_backend.processes.models import (
     Workflow,
     Task,
 )
-from pneumatic_backend.processes.enums import FieldType
+from pneumatic_backend.processes.enums import (
+    FieldType,
+    OwnerType,
+)
+from pneumatic_backend.processes.models.templates.owner import (
+    TemplateOwner
+)
 from pneumatic_backend.accounts.models import UserGroup
 
 UserModel = get_user_model()
@@ -85,11 +91,21 @@ def create_test_template(
         template=template,
     )
     if account.billing_plan == BillingPlanType.FREEMIUM:
-        template.template_owners.add(
-            *set(account.users.values_list('id', flat=True))
-        )
+        user_ids = account.get_user_ids(include_invited=True)
+        for user_id in user_ids:
+            TemplateOwner.objects.create(
+                template=template,
+                account=account,
+                type=OwnerType.USER,
+                user_id=user_id,
+            )
     elif template_owners_user:
-        template.template_owners.add(template_owners_user.id)
+        TemplateOwner.objects.create(
+            template=template,
+            account=account,
+            type=OwnerType.USER,
+            user_id=template_owners_user.id,
+        )
     if tasks_count:
         for number in range(1, tasks_count+1):
             task_template = TaskTemplate.objects.create(
@@ -112,7 +128,8 @@ def create_test_workflow(
     template: Optional[Template] = None,
     tasks_count: int = 3
 ):
-    if template is None:
+    custom_template = template is not None
+    if not custom_template:
         template = create_test_template(
             account,
             template_owners_user=user,
@@ -128,9 +145,19 @@ def create_test_workflow(
         tasks_count=template.tasks.count(),
         status_updated=timezone.now(),
     )
-    workflow.members.add(
-        *set(template.template_owners.values_list('id', flat=True))
-    )
+    if custom_template:
+        template_owners_ids = Template.objects.filter(
+            id=template.id
+        ).get_owners_as_users()
+        workflow.owners.set(template_owners_ids)
+        workflow.members.add(*template_owners_ids)
+    else:
+        workflow.members.add(
+            *set(template.owners.values_list('user_id', flat=True))
+        )
+        workflow.owners.add(*set(
+            template.owners.values_list('user_id', flat=True)
+        ))
     for task_template in template.tasks.all():
         task = Task.objects.create(
             account=workflow.account,

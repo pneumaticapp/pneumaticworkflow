@@ -147,16 +147,6 @@ class UserInviteService(
             key=PneumaticToken.create(user, for_api_key=True)
         )
 
-        if self.account.billing_plan == BillingPlanType.FREEMIUM:
-            # TODO Need use two efficient SQL-queries
-            #  https://my.pneumatic.app/workflows/16723
-            for template in self.account.template_set.on_account(
-                self.account.id
-            ):
-                template.template_owners.add(user)
-                for workflow in template.workflows.all():
-                    workflow.members.add(user)
-
     def _user_invite_actions(self, user: UserModel):
 
         self.identify(user)

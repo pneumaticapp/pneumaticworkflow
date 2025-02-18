@@ -6,7 +6,6 @@ import Truncate from 'react-truncate';
 import { Form, Modal, ModalBody, ModalHeader } from 'reactstrap';
 import { useIntl } from 'react-intl';
 import Switch from 'rc-switch';
-import moment from 'moment-timezone';
 
 import { ELLIPSIS_CHAR } from '../../constants/defaultValues';
 import { ERoutes } from '../../constants/routes';
@@ -26,14 +25,15 @@ import { checkExtraFieldsAreValid } from './utils/areKickoffFieldsValid';
 import { IRunWorkflow } from './types';
 import { Button } from '../UI/Buttons/Button';
 import { RichText } from '../RichText';
-import { DateField, SectionTitle } from '../UI';
-import { DateFormat } from '../UI/DateFormat';
-import { reactElementToText } from '../../utils/reactElementToText';
 
-import styles from '../Templates/Templates.css';
+import { SectionTitle } from '../UI';
 
 import { useWorkflowNameVariables } from '../TemplateEdit/TaskForm/utils/getTaskVariables';
 import { InputWithVariables } from '../TemplateEdit/InputWithVariables';
+
+import styles from '../Templates/Templates.css';
+import { DateFormat } from '../UI/DateFormat';
+import { reactElementToText } from '../../utils/reactElementToText';
 
 export interface INullableWorkflowEditPopupProps {
   timezone: string;
@@ -62,7 +62,6 @@ function WorkflowEditPopupComponent({
   isOpen,
   isLoading,
   workflow,
-  timezone,
   accountId,
   isAdmin,
   closeModal,
@@ -71,7 +70,6 @@ function WorkflowEditPopupComponent({
   const variables = useWorkflowNameVariables(workflow.kickoff);
 
   const { formatMessage } = useIntl();
-  const [dueDate, setDueDate] = React.useState<string | null>(null);
 
   const descriptionLinesCount = 5;
 
@@ -222,7 +220,7 @@ function WorkflowEditPopupComponent({
       kickoff: kickoffState,
       name: workflowName,
       isUrgent,
-      dueDate: dueDate || undefined,
+      dueDate: undefined,
     });
   };
 
@@ -285,18 +283,6 @@ function WorkflowEditPopupComponent({
               </div>
             )}
 
-            <div>
-              <SectionTitle className={styles['section-title']}>
-                {formatMessage({ id: 'templates.due-date-title' })}
-              </SectionTitle>
-              <DateField
-                value={dueDate}
-                onChange={setDueDate}
-                title={formatMessage({ id: 'templates.due-date-field' })}
-                foregroundColor="beige"
-                minDate={moment.tz(timezone).add(1, 'days').format('YYYY-MM-DD')}
-              />
-            </div>
             <div className={styles['popup-buttons']}>
               <Button
                 buttonStyle="yellow"

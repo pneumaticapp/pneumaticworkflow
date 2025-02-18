@@ -3,6 +3,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import InfiniteScroll from 'react-infinite-scroll-component';
 import { useIntl } from 'react-intl';
 import classnames from 'classnames';
+
 import StickyBox from 'react-sticky-box';
 import { debounce } from 'throttle-debounce';
 

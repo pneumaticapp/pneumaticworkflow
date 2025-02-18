@@ -16,6 +16,12 @@ from pneumatic_backend.processes.models import (
     Workflow,
     Task,
 )
+from pneumatic_backend.processes.models.templates.owner import (
+    TemplateOwner
+)
+from pneumatic_backend.processes.enums import (
+    OwnerType,
+)
 
 
 UserModel = get_user_model()
@@ -89,12 +95,21 @@ def create_test_template(
         'template': template
     }
     if account.billing_plan == BillingPlanType.FREEMIUM:
-        template.template_owners.set(
-            account.get_user_ids(include_invited=True)
-        )
+        user_ids = account.get_user_ids(include_invited=True)
+        for user_id in user_ids:
+            TemplateOwner.objects.create(
+                template=template,
+                account=account,
+                type=OwnerType.USER,
+                user_id=user_id,
+            )
     else:
-        template.template_owners.add(user.id)
-
+        TemplateOwner.objects.create(
+            template=template,
+            account=account,
+            type=OwnerType.USER,
+            user_id=user.id,
+        )
     if tasks_count:
         for number in range(1, tasks_count + 1):
             task_data['number'] = number
@@ -106,10 +121,12 @@ def create_test_template(
 def create_test_workflow(
     user,
     template: Template = None,
-    tasks_count: int = 3,
+    tasks_count: int = 3
 ):
     now = timezone.now()
-    if not template:
+    custom_template = template is not None
+
+    if not custom_template:
         template = create_test_template(user, tasks_count=tasks_count)
     workflow = Workflow.objects.create(
         name=template.name,
@@ -120,9 +137,19 @@ def create_test_workflow(
         status_updated=now,
         workflow_starter=user,
     )
-    workflow.members.add(
-        *set(template.template_owners.values_list('id', flat=True))
-    )
+    if custom_template:
+        template_owners_ids = Template.objects.filter(
+            id=template.id
+        ).get_owners_as_users()
+        workflow.owners.set(template_owners_ids)
+        workflow.members.add(*template_owners_ids)
+    else:
+        workflow.members.add(*set(
+            template.owners.values_list('user_id', flat=True)
+        ))
+        workflow.owners.add(*set(
+            template.owners.values_list('user_id', flat=True)
+        ))
     for task_template in template.tasks.all():
         date_started = now if task_template.number == 1 else None
         task = Task.objects.create(

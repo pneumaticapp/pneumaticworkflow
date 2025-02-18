@@ -111,7 +111,6 @@ def test_list__workflow_due_date__ok(api_client):
     task_data = wf_data['task']
     assert task_data['id'] == task.id
     assert task_data['name'] == task.name
-    assert task_data['date_started'] == task.date_started
     assert task_data['date_started_tsp'] == task.date_started.timestamp()
     assert task_data['delay'] is None
     assert task_data['due_date_tsp'] is None
@@ -141,11 +140,9 @@ def test_list__workflow_current_task_delay__ok(api_client):
     # assert
     assert response.status_code == 200
     delay_data = response.data['results'][0]['task']['delay']
-    assert delay_data['start_date'] == delay.start_date
     assert delay_data['start_date_tsp'] == delay.start_date.timestamp()
-    assert delay_data['end_date'] is None
     assert delay_data['end_date_tsp'] is None
-    assert delay_data['duration'] == delay.duration
+    assert delay_data['duration'] is not None
 
 
 def test_list__not_template_owner__empty_list(

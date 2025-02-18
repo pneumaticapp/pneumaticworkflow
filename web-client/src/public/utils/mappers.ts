@@ -3,9 +3,9 @@ import { isArrayWithItems } from './helpers';
 import { IStartWorkflowPayload, TEditWorkflowPayload } from '../redux/actions';
 import { IRunWorkflow } from '../components/WorkflowEditPopup/types';
 import { ExtraFieldsHelper } from '../components/TemplateEdit/ExtraFields/utils/ExtraFieldsHelper';
+import { IHighlightsItem } from '../types/highlights';
 import { getEndOfDayTsp, toDateString, toTspDate, formatDateToISOInObject, toISOStringFromTsp } from './dateTime';
 import { IWorkflow, IWorkflowDetailsKickoff, IWorkflowLogItem } from '../types/workflow';
-import { IHighlightsItem } from '../types/highlights';
 import { TFormatTaskDates } from '../types/tasks';
 
 interface OptionsMapRequestBody {

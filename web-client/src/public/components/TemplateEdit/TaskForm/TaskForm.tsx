@@ -18,6 +18,7 @@ import { DueDate } from './DueDate';
 import { getSingleLineVariables } from './utils/getTaskVariables';
 
 import styles from '../TemplateEdit.css';
+import { EStartingType } from './Conditions/utils/getDropdownOperators';
 
 export interface ITaskFormProps {
   listVariables: TTaskVariable[];
@@ -46,27 +47,38 @@ export function TaskForm({
   kickoff,
   patchTask,
 }: ITaskFormProps) {
-  const { formatMessage } = useIntl();
-
   if (!task) return null;
-
+  const { formatMessage } = useIntl();
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const taskName = task.name || '';
   const taskFormPartsRefs = {
     [ETaskFormParts.AssignPerformers]: useRef<HTMLDivElement>(null),
     [ETaskFormParts.DueIn]: useRef<HTMLDivElement>(null),
     [ETaskFormParts.Fields]: useRef<HTMLDivElement>(null),
     [ETaskFormParts.Conditions]: useRef<HTMLDivElement>(null),
   };
+  const startingOrder: TTaskVariable[] = [
+    {
+      title: formatMessage({ id: 'templates.conditions.starting-order.kick-off' }),
+      apiName: `kick-off`,
+      type: EStartingType.Kickoff,
+    },
+    ...tasks
+      .filter((localTask) => task.apiName !== localTask.apiName)
+      .map((currentTask) => {
+        return {
+          apiName: currentTask.apiName,
+          title: currentTask.name,
+          type: EStartingType.Task,
+        };
+      }),
+  ];
 
   useLayoutEffect(() => {
     const scrollTo = (scrollTarget && taskFormPartsRefs[scrollTarget]?.current) || wrapperRef.current;
 
-    if (scrollTo) {
-      scrollToElement(scrollTo);
-    }
+    if (scrollTo) scrollToElement(scrollTo);
   }, []);
-
-  const wrapperRef = useRef<HTMLDivElement>(null);
-  const taskName = task.name || '';
 
   const setCurrentTask = (changedFields: Partial<ITemplateTask>) => {
     patchTask({ taskUUID: task.uuid, changedFields });
@@ -125,6 +137,7 @@ export function TaskForm({
         <Conditions
           isSubscribed={isSubscribed}
           conditions={task.conditions}
+          startingOrder={startingOrder}
           variables={listVariables}
           users={users}
           onEdit={handleTaskFieldChange('conditions')}

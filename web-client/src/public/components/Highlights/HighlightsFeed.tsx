@@ -10,7 +10,7 @@ import { ERoutes } from '../../constants/routes';
 import { EHighlightsDateFilter, EHighlightsFilterType, IHighlightsItem } from '../../types/highlights';
 import { TITLES } from '../../constants/titles';
 import { history } from '../../utils/history';
-import { PROCESS_HIGHLIGHTS_DATE_RANGE_MAP } from '../../utils/dateTime';
+import { getHighlightsDateRange } from '../../utils/dateTime';
 import { UsersFilter } from './UsersFilter';
 import { IGetTemplatesTitlesRequesConfig } from '../../api/getTemplatesTitles';
 import { ILoadHighlightsConfig } from '../../redux/highlights/actions';
@@ -29,6 +29,8 @@ import { FeedItem } from './FeedItem';
 import styles from './HighlightsFeed.css';
 import { EPageTitle } from '../../constants/defaultValues';
 import { PageTitle } from '../PageTitle/PageTitle';
+import { useSelector } from 'react-redux';
+import { getUserTimezone } from '../../redux/selectors/user';
 
 export interface IHighlightsFeedProps {
   count: number;
@@ -77,7 +79,7 @@ export function HighlightsFeed({
 }: IHighlightsFeedProps) {
   const { useCallback, useEffect, useMemo, useState } = React;
   const { formatMessage } = useIntl();
-
+  const timezone = useSelector(getUserTimezone);
   const [isFirstFetch, setIsFirstFetch] = useState(true);
 
   useEffect(() => {
@@ -172,8 +174,7 @@ export function HighlightsFeed({
       setFilters({ timeRange: selectedTimeRange });
 
       if (selectedTimeRange !== EHighlightsDateFilter.Custom) {
-        const { startDate, endDate } = PROCESS_HIGHLIGHTS_DATE_RANGE_MAP[selectedTimeRange];
-
+        const { startDate, endDate } = getHighlightsDateRange(selectedTimeRange, timezone);
         setFilters({ startDate, endDate });
       }
     },

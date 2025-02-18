@@ -1,14 +1,18 @@
-/* eslint-disable */
-/* prettier-ignore */
 import { EConditionOperators } from '../types';
 import { EExtraFieldType } from '../../../../../types/template';
+
+export enum EStartingType {
+  Task = 'task',
+  Kickoff = 'kickoff',
+}
 
 export interface IDropdownOperator {
   operator: EConditionOperators;
   label: string;
 }
 
-export const conditionsByFieldTypeMap: { [key in EExtraFieldType]: EConditionOperators[] } = {
+export const conditionsByFieldTypeMap:
+{ [key in EExtraFieldType]: EConditionOperators[] } & { [key in EStartingType]: EConditionOperators[] } = {
   [EExtraFieldType.String]: [
     EConditionOperators.Equal,
     EConditionOperators.NotEqual,
@@ -71,6 +75,12 @@ export const conditionsByFieldTypeMap: { [key in EExtraFieldType]: EConditionOpe
     EConditionOperators.Exist,
     EConditionOperators.NotExist,
   ],
+  [EStartingType.Task]: [
+    EConditionOperators.Completed,
+  ],
+  [EStartingType.Kickoff]: [
+    EConditionOperators.Completed,
+  ]
 };
 
 export const labelByOperatorMap: { [key in EConditionOperators]: string } = {
@@ -82,13 +92,14 @@ export const labelByOperatorMap: { [key in EConditionOperators]: string } = {
   [EConditionOperators.NotExist]: 'templates.conditions.not-exist',
   [EConditionOperators.LessThan]: 'templates.conditions.less-than',
   [EConditionOperators.MoreThan]: 'templates.conditions.more-than',
+  [EConditionOperators.Completed]: 'templates.conditions.completed',
 };
 
 export function getDropdownOperators(
-  fieldType: EExtraFieldType,
+  fieldType: EExtraFieldType | EStartingType,
   messages: Record<string, string>,
 ): IDropdownOperator[] {
-  return conditionsByFieldTypeMap[fieldType].map(operator => {
+  return (conditionsByFieldTypeMap[fieldType]).map(operator => {
     const labelIntlId = labelByOperatorMap[operator];
 
     return {
