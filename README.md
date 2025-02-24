@@ -85,11 +85,11 @@ sudo nano /etc/hosts
 ```
 
 ```
-127.0.0.1 localhost
+your_server_address pneumatic.local
 
-127.0.0.1 api-localhost
+your_server_address api.pneumatic.local
 
-127.0.0.1 form-localhost
+your_server_address form.pneumatic.local
 ```
 
 ### Clone the repository
