@@ -1,12 +1,11 @@
 import { CookieOptions, Request, Response } from 'express';
-import { getConfig } from '../../public/utils/getConfig';
 
 export const COOKIE_MAX_AGE = 14 * 24 * 60 * 60 * 1000;
 export const COOKIE_OPTIONS: CookieOptions = {
   maxAge: COOKIE_MAX_AGE,
   // sameSite and secure attrubites are crutial if Public Form App is embedded in iframe
-  sameSite: getConfig().env !== 'local' ? 'none' : undefined,
-  secure: getConfig().env !== 'local',
+  sameSite: undefined,
+  secure: false,
 };
 
 export interface ITokens {
