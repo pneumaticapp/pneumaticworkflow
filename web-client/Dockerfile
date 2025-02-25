@@ -3,11 +3,11 @@ FROM keymetrics/pm2:18-alpine
 # Build vars
 ENV MCS_RUN_ENV=prod
 ENV NODE_OPTIONS=--max-old-space-size=3072
-ENV FRONTEND_URL=http://localhost
-ENV FORM_DOMAIN=form-localhost
+ENV FRONTEND_URL=http://pneumatic.local
+ENV FORM_DOMAIN=form.pneumatic.local
 ENV BACKEND_PRIVATE_URL=http://pneumatic-nginx/
-ENV BACKEND_URL=http://api-localhost/
-ENV WSS_URL=wss://api-localhost/
+ENV BACKEND_URL=http://api.pneumatic.local/
+ENV WSS_URL=wss://api.pneumatic.local/
 ENV BILLING=no
 ENV CAPTCHA=no
 ENV SIGNUP=yes
