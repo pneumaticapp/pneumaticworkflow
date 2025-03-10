@@ -2,8 +2,6 @@
 /* prettier-ignore */
 /* tslint:disable:no-any */
 const commonConfig = require('../../../config/common.json');
-const devConfig = require('../../../config/dev.json');
-const prodConfig = require('../../../config/prod.json');
 
 import { IUnsavedUser, TGoogleAuthUserInfo } from '../types/user';
 import { IInvitedUser } from '../types/redux';
@@ -13,12 +11,6 @@ import { get, set } from '../../server/utils/helpers';
 import { IPages } from '../types/page';
 
 export type TEnvironment = 'local' | 'staging' | 'prod';
-
-const newConfigMap: { [key in TEnvironment]: object } = {
-  local: commonConfig,
-  staging: devConfig,
-  prod: prodConfig,
-};
 
 export interface IBrowserConfig {
   host: string;
@@ -62,6 +54,8 @@ interface IPublicFormConfig {
 type TWindowWithConfig = Window & typeof globalThis & { __pneumaticConfig: IConfig };
 type TWindowWithPublicFormConfig = Window & typeof globalThis & { __pneumaticConfig: IPublicFormConfig };
 
+type TConfig = typeof commonConfig;
+
 export function getBrowserConfig() {
   const { __pneumaticConfig } = window as TWindowWithConfig;
 
@@ -80,13 +74,11 @@ export function getBrowserConfigEnv(): IBrowserConfig {
   return (browserConfig && browserConfig.config) || {};
 }
 
-type TConfig = typeof commonConfig & typeof devConfig & typeof prodConfig;
-
 export function getConfig(): TConfig {
   const env = (process.env.MCS_RUN_ENV || 'local') as TEnvironment;
   const {
     FRONTEND_URL,
-    FORM_URL,
+    FORM_DOMAIN,
     SITE_URL,
     BACKEND_PRIVATE_URL,
     BACKEND_URL,
@@ -105,9 +97,9 @@ export function getConfig(): TConfig {
     GOOGLE_CLIENT_SECRET,
   } = process.env;
 
-  return merge(commonConfig, newConfigMap[env], { env }, {
+  return merge(commonConfig, { env }, {
     "host": FRONTEND_URL,
-    "formSubdomain": FORM_URL,
+    "formSubdomain": FORM_DOMAIN,
     "mainPage": SITE_URL,
     "api": {
       "privateUrl": BACKEND_PRIVATE_URL,

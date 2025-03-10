@@ -36,30 +36,6 @@
   min-width: 0;
 }
 
-.template-name {
-  margin-bottom: 16px;
-  font-family: 'Abhaya Libre', serif;
-  font-size: 28px;
-  font-weight: 800;
-  line-height: 32px;
-  letter-spacing: -0.01em;
-  color: var(--pneumatic-color-black100);
-}
-
-.container .textarea {
-  padding: 10px 16px;
-  overflow: hidden;
-  min-height: 120px;
-  font-size: 15px;
-  line-height: 20px;
-  cursor: text;
-  resize: none;
-  color: #212121;
-  background: #f6f6f6;
-  border: 1px solid #dcdcdb;
-  border-radius: 6px;
-}
-
 .task-performers {
   margin: -0.4rem;
   display: flex;
@@ -395,18 +371,10 @@ input {
   transition: 0.15s ease-in all;
 }
 
-.description {
-  margin-bottom: 16px;
-}
-
 .last-update {
   margin-top: 16px;
 }
 
 .task-description {
   margin-bottom: 16px;
-}
-
-.form-controll {
-  font-size: 1.5rem !important;
 }

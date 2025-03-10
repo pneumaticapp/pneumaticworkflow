@@ -3,9 +3,9 @@ from rest_framework.decorators import action
 from rest_framework.generics import (
     get_object_or_404
 )
-from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.mixins import ListModelMixin, UpdateModelMixin
 from rest_framework.viewsets import GenericViewSet
+from rest_framework.pagination import LimitOffsetPagination
 from pneumatic_backend.analytics.services import AnalyticService
 from pneumatic_backend.utils.validation import raise_validation_error
 from pneumatic_backend.accounts.permissions import (
@@ -18,7 +18,9 @@ from pneumatic_backend.analytics.actions import (
     WorkflowActions
 )
 from pneumatic_backend.generics.filters import PneumaticFilterBackend
-from pneumatic_backend.processes.paginations import WorkflowPagination
+from pneumatic_backend.processes.paginations import WorkflowListPagination
+from pneumatic_backend.generics.paginations import DefaultPagination
+
 from pneumatic_backend.processes.models import (
     Workflow,
     WorkflowEvent,
@@ -43,6 +45,7 @@ from pneumatic_backend.processes.serializers.workflow import (
     WorkflowListFilterSerializer,
     WorkflowFieldsSerializer,
     WorkflowSnoozeSerializer,
+    WorkflowRevertSerializer,
 )
 from pneumatic_backend.processes.api_v2.serializers.workflow.events import (
     WorkflowEventSerializer,
@@ -82,7 +85,6 @@ class WorkflowViewSet(
     GenericViewSet
 ):
 
-    pagination_class = WorkflowPagination
     filter_backends = (PneumaticFilterBackend, )
     action_serializer_classes = {
         'retrieve': WorkflowDetailsSerializer,
@@ -95,6 +97,7 @@ class WorkflowViewSet(
         'fields': WorkflowFieldsSerializer,
         'snooze': WorkflowDetailsSerializer,
         'events': WorkflowEventSerializer,
+        'revert': WorkflowRevertSerializer,
     }
     action_filterset_classes = {
         'fields': WorkflowFieldsFilter,
@@ -103,6 +106,8 @@ class WorkflowViewSet(
 
     action_paginator_classes = {
         'events': LimitOffsetPagination,
+        'fields': DefaultPagination,
+        'list': WorkflowListPagination,
     }
 
     def get_serializer_context(self, **kwargs):
@@ -215,29 +220,12 @@ class WorkflowViewSet(
     def list(self, request, *args, **kwargs):
         filter_slz = WorkflowListFilterSerializer(data=request.GET)
         filter_slz.is_valid(raise_exception=True)
-        queryset = Workflow.objects.raw_list_query(
+        qst = Workflow.objects.raw_list_query(
             **filter_slz.validated_data,
             account_id=request.user.account_id,
             user_id=request.user.id
         )
-
-        search_text = filter_slz.validated_data.get('search')
-        if search_text:
-            AnalyticService.search_search(
-                user=request.user,
-                page='processes',
-                search_text=search_text,
-                is_superuser=getattr(request, 'is_superuser', False),
-                auth_type=request.token_type,
-            )
-
-        page = self.paginate_queryset(queryset)
-        if page is not None:
-            serializer = self.get_serializer(page, many=True)
-            return self.get_paginated_response(serializer.data)
-
-        serializer = self.get_serializer(queryset, many=True)
-        return self.response_ok(serializer.data)
+        return self.paginated_response(qst)
 
     def retrieve(self, request, pk=None):
         queryset = self.get_queryset()
@@ -336,13 +324,18 @@ class WorkflowViewSet(
     @action(methods=['post'], detail=True, url_path='task-revert')
     def revert(self, request, pk=None):
         workflow = self.get_object()
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
         service = WorkflowActionService(
             user=request.user,
             auth_type=request.token_type,
             is_superuser=request.is_superuser
         )
         try:
-            service.revert(workflow)
+            service.revert(
+                workflow=workflow,
+                comment=serializer.validated_data['comment']
+            )
         except WorkflowActionServiceException as ex:
             raise_validation_error(message=ex.message)
         return self.response_ok()

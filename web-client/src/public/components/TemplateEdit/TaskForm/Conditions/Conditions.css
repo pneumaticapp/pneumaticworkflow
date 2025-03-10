@@ -120,6 +120,18 @@
 .condition-rule__value {
   flex-basis: 0;
   flex-grow: 1;
+
+  .condition__value-field-select-menu {
+    width: 189.5%;
+
+    @media (max-width: 1340px) {
+      width: 163%;
+    }
+
+    @media (max-width: 1150px) {
+      width: 100%;
+    }
+  }
 }
 
 .condition-rule__logic-operation {
@@ -167,4 +179,21 @@
 }
 .variable-richsubtitle {
   color: var(--pneumatic-color-black48);
+}
+
+.condition__tooltop {
+  overflow: hidden;
+  width: 100%;
+}
+
+.condition__tooltop-box {
+  padding: 0.4rem 0.8rem;
+  text-align: center;
+}
+
+.condition__dropdown-option-is-selected {
+  color: var(--pneumatic-color-black32);
+}
+.condition__value-field-select-option {
+  @mixin text-overflow;
 }

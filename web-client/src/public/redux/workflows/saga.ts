@@ -518,13 +518,12 @@ export function* fetchFilterSteps({ payload: { templateId, onAfterLoaded } }: TL
 export function* updateCurrentPerformersCountersSaga() {
   const {
     workflowsSettings: {
-      values: { statusFilter, templatesIdsFilter, stepsIdsFilter, workflowStartersIdsFilter },
+      values: { templatesIdsFilter, stepsIdsFilter, workflowStartersIdsFilter },
     },
   }: IStoreWorkflows = yield select(getWorkflowsStore);
 
   try {
     const counters: TUserCounter[] | undefined = yield call(getWorkflowsCurrentPerformerCounters, {
-      statusFilter,
       templatesIdsFilter,
       stepsIdsFilter,
       workflowStartersIdsFilter,

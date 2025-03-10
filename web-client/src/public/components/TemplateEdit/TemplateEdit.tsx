@@ -1,13 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import classnames from 'classnames';
 import { useSelector } from 'react-redux';
-import TextareaAutosize from 'react-textarea-autosize';
 import { useIntl } from 'react-intl';
 import { RouteComponentProps } from 'react-router-dom';
 import { debounce } from 'throttle-debounce';
-import StickyBox from 'react-sticky-box';
 
-import { IInfoWarningProps, InfoWarningsModal } from './InfoWarningsModal';
+import { IInfoWarningProps } from './InfoWarningsModal';
 import { getClonedTask } from './utils/getClonedTask';
 import { getEmptyConditions } from './TaskForm/Conditions/utils/getEmptyConditions';
 import { AutoSaveStatusContainer } from './AutoSaveStatus';
@@ -16,9 +13,6 @@ import { AddEntityButton, EEntityTitle } from './AddEntityButton';
 import { START_DURATION, DEFAULT_TEMPLATE_NAME } from './constants';
 import { getVariables } from './TaskForm/utils/getTaskVariables';
 import { TemplateIntegrations } from './Integrations';
-import { TemplateControllsContainer } from './TemplateControlls';
-import { NAVBAR_HEIGHT } from '../../constants/defaultValues';
-import { TemplateLastUpdateInfo } from './TemplateLastUpdateInfo';
 import { ERoutes } from '../../constants/routes';
 import { TUserListItem } from '../../types/user';
 import { getEmptyKickoff, getNormalizedTemplateOwners, getTemplateIdFromUrl } from '../../utils/template';
@@ -30,7 +24,6 @@ import { isArrayWithItems } from '../../utils/helpers';
 import { createTaskApiName, createUUID } from '../../utils/createId';
 import { EMoveDirections } from '../../types/workflow';
 import { ETaskPerformerType, ITemplate, ITemplateTask } from '../../types/template';
-import { EditableText } from '../UI/EditableText';
 import { TLoadTemplateVariablesSuccessPayload } from '../../redux/actions';
 import { ETemplateStatus, IAuthUser } from '../../types/redux';
 import { createEmptyTaskDueDate } from '../../utils/dueDate/createEmptyTaskDueDate';
@@ -39,6 +32,7 @@ import { ConditionsBanner } from './ConditionsBanner';
 import { getUserFullName } from '../../utils/users';
 import { getSubscriptionPlan } from '../../redux/selectors/user';
 import { ESubscriptionPlan } from '../../types/account';
+import { TemplateSettings } from './TemplateSettings';
 
 import styles from './TemplateEdit.css';
 
@@ -91,14 +85,7 @@ export function TemplateEdit({
   loadTemplateVariablesSuccess,
 }: TTemplateEditProps) {
   const { formatMessage } = useIntl();
-  const {
-    name: templateName,
-    description: templateDescription,
-    updatedBy,
-    dateUpdated,
-    tasks,
-    templateOwners,
-  } = template;
+  const { tasks, templateOwners } = template;
   const billingPlan = useSelector(getSubscriptionPlan);
   const isFreePlan = billingPlan === ESubscriptionPlan.Free;
   const accessConditions = isSubscribed || isFreePlan;
@@ -109,8 +96,6 @@ export function TemplateEdit({
 
   const [openedTasks, setOpenedTasks] = useState<any>({});
   const [openedDelays, setOpenedDelays] = useState<any>({});
-  const [isInfoWarningsModaOpen, setIsInfoWarningsModaOpen] = useState(false);
-  const [infoWarnings, setInfoWarnings] = useState<any>([]);
 
   useEffect(() => {
     initPage();
@@ -218,6 +203,7 @@ export function TemplateEdit({
       rawDueDate: createEmptyTaskDueDate(taskApiName),
       checklists: [],
       ...templateTask,
+      revertTask: null,
     };
   };
 
@@ -259,8 +245,6 @@ export function TemplateEdit({
     setTemplate(newWorkflow);
     submitDebounced();
   };
-
-  const handleChangeTextField = (field: keyof ITemplate) => (value: string) => handleChangeTemplateField(field)(value);
 
   const changeTasks = (newTasks: ITemplateTask[]) => {
     handleChangeTemplateField('tasks')(newTasks);
@@ -437,56 +421,17 @@ export function TemplateEdit({
     );
   };
 
-  const handleSetInfoWarnings = (infoWarningsLocal: ((props: IInfoWarningProps) => JSX.Element)[]) => {
-    if (isArrayWithItems(infoWarningsLocal)) {
-      setIsInfoWarningsModaOpen(true);
-      setInfoWarnings(infoWarningsLocal);
-    }
-  };
-
-  const renderInfoWarningsModal = () => {
-    const handleCloseModal = () => setIsInfoWarningsModaOpen(false);
-
-    return <InfoWarningsModal isOpen={isInfoWarningsModaOpen} onClose={handleCloseModal} warnings={infoWarnings} />;
-  };
-
   if (templateStatus === ETemplateStatus.Loading) {
     return <div className="loading" />;
   }
 
   return (
     <div className={styles['container']}>
-      {renderInfoWarningsModal()}
-
       <AutoSaveStatusContainer onRetry={saveTemplate} />
 
       <div className={styles['template-wrapper']}>
         <div className={styles['template-wrapper__info']}>
-          <StickyBox offsetTop={NAVBAR_HEIGHT} offsetBottom={20}>
-            <EditableText
-              text={templateName}
-              className={styles['template-name']}
-              onChangeText={handleChangeTextField('name')}
-              placeholder={formatMessage({ id: 'template.name-placeholder' })}
-              editButtonHint={formatMessage({ id: 'template.edit-name' })}
-            />
-            <div className={styles['description']}>
-              <TextareaAutosize
-                placeholder={formatMessage({ id: 'template.placeholder' })}
-                className={classnames('form-control', styles['textarea'], styles['form-control-locall'])}
-                onChange={(e) => handleChangeTextField('description')(e.target.value)}
-                value={templateDescription}
-              />
-            </div>
-
-            <TemplateControllsContainer setInfoWarnings={handleSetInfoWarnings} />
-
-            {(updatedBy || dateUpdated) && (
-              <div className={styles['last-update']}>
-                <TemplateLastUpdateInfo updatedBy={updatedBy} dateUpdated={dateUpdated} />
-              </div>
-            )}
-          </StickyBox>
+          <TemplateSettings />
         </div>
         <div className={styles['template-wrapper__tasks']}>
           {!accessConditions && <ConditionsBanner />}

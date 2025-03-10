@@ -1,0 +1,30 @@
+.return-to__container {
+  position: relative;
+  margin: -0.4rem;
+  padding-right: 4rem;
+  display: flex;
+
+  .return-to__dropdown-container {
+    margin: 4px;
+    width: 100%;
+  }
+}
+
+.return-to__option {
+  width: 100%;
+
+  p {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+
+    span {
+      /* stylelint-disable-next-line declaration-no-important */
+      display: inline !important;
+    }
+  }
+}
+
+.return-to__add-return {
+  margin: 0.4rem;
+}

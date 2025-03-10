@@ -326,10 +326,10 @@ class Common(Configuration):
         'pneumatic_backend.accounts.tasks',
         'pneumatic_backend.authentication.tasks',
         'pneumatic_backend.processes.tasks.delay',
-        'pneumatic_backend.processes.tasks.digest',
         'pneumatic_backend.processes.tasks.tasks',
         'pneumatic_backend.processes.tasks.update_workflow',
         'pneumatic_backend.processes.tasks.webhooks',
+        'pneumatic_backend.reports.tasks',
         'pneumatic_backend.services.tasks',
     ]
 
@@ -390,6 +390,27 @@ class Common(Configuration):
         'SENTRY_DSN': env.get('SENTRY_DSN'),
     }
 
+    ENABLE_LOGGING = env.get('ENABLE_LOGGING', 'no') == 'yes'
+    if ENABLE_LOGGING:
+        LOGGING = {
+            'version': 1,
+            'disable_existing_loggers': False,
+            'handlers': {
+                'file': {
+                    'level': 'DEBUG',
+                    'class': 'logging.FileHandler',
+                    'filename': 'django_queries.log',
+                    # Choose a file name and path
+                },
+            },
+            'loggers': {
+                'django.db.backends': {
+                    'handlers': ['file'],
+                    'level': 'DEBUG',
+                    'propagate': False,
+                }
+            }
+        }
 
 class Development(Common):
 

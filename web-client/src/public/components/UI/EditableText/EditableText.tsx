@@ -1,6 +1,6 @@
-import * as React from 'react';
+import React, { useEffect, useState } from 'react';
 import TextareaAutosize from 'react-textarea-autosize';
-import * as classnames from 'classnames';
+import classnames from 'classnames';
 
 import { EditIcon } from '../../icons';
 import { Loader } from '../Loader';
@@ -24,10 +24,10 @@ export function EditableText({
   editButtonHint,
   onChangeText,
 }: IEditableTextProps) {
-  const [isEditing, setIsEditing] = React.useState(false);
-  const [editableText, setEditableText] = React.useState(text);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editableText, setEditableText] = useState(text);
 
-  React.useEffect(() => {
+  useEffect(() => {
     setEditableText(text);
   }, [text]);
 
@@ -80,6 +80,7 @@ export function EditableText({
     }
     setIsEditing(false);
   };
+
   return (
     <form className={className} onSubmit={(e) => e.preventDefault()}>
       <Loader isLoading={isLoading} />

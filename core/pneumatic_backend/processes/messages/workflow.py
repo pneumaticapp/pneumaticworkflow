@@ -185,3 +185,4 @@ MSG_PW_0080 = lambda task_name: format_lazy(
     task_name=task_name
 )
 MSG_PW_0081 = _("A workflow can't return to a later task.")
+MSG_PW_0083 = _("You must supply a comment.")

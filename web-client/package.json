@@ -34,6 +34,7 @@
     "dotenv": "^16.4.5",
     "draft-js": "^0.11.7",
     "draft-js-checkable-list-item": "^3.0.4",
+    "draft-js-export-html": "^1.4.1",
     "draft-js-mention-plugin": "^3.1.5",
     "draft-js-modifiers": "^0.2.2",
     "draftjs-filters": "^2.5.0",

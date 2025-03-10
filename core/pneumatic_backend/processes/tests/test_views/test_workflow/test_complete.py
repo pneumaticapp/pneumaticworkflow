@@ -750,7 +750,7 @@ def test_complete__insert_output_user_through_task__ok(
         is_active=True
     )
 
-    template_first_task = template.tasks.order_by('number').first()
+    template_first_task = template.tasks.get(number=1)
     field_template = FieldTemplate.objects.create(
         name='Enter performer for next task',
         type=FieldType.USER,
@@ -758,7 +758,7 @@ def test_complete__insert_output_user_through_task__ok(
         task=template_first_task,
         template=template,
     )
-    template_second_task = template_first_task.next
+    template_second_task = template.tasks.get(number=2)
     template_second_task.description = (
         'Name is {{ %s }}.' % field_template.api_name
     )
@@ -3080,7 +3080,7 @@ class TestCompleteWorkflow:
             }
         )
         workflow = Workflow.objects.get(id=response_run.data['id'])
-
+        text_comment = 'text_comment'
         task_1 = workflow.tasks.get(number=1)
         response_complete = api_client.post(
             f'/workflows/{workflow.id}/task-complete',
@@ -3091,6 +3091,9 @@ class TestCompleteWorkflow:
 
         response_revert = api_client.post(
             f'/workflows/{workflow.id}/task-revert',
+            data={
+                'comment': text_comment,
+            }
         )
 
         # act
@@ -3172,9 +3175,12 @@ class TestCompleteWorkflow:
             }
         )
         workflow.refresh_from_db()
-
+        text_comment = 'text_comment'
         response_revert = api_client.post(
             f'/workflows/{workflow.id}/task-revert',
+            data={
+                'comment': text_comment,
+            }
         )
         workflow.refresh_from_db()
         WorkflowEvent.objects.all().delete()
@@ -3271,9 +3277,12 @@ class TestCompleteWorkflow:
             }
         )
         workflow.refresh_from_db()
-
+        text_comment = 'text_comment'
         response_revert = api_client.post(
             f'/workflows/{workflow.id}/task-revert',
+            data={
+                'comment': text_comment,
+            }
         )
         workflow.refresh_from_db()
         WorkflowEvent.objects.all().delete()

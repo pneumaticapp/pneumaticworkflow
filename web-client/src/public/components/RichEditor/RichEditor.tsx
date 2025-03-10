@@ -1,17 +1,17 @@
 /* eslint-disable */
 /* prettier-ignore */
-// tslint:disable: match-default-export-name max-file-line-count
 import * as React from 'react';
 import classnames from 'classnames';
 import {
   EditorState,
   ContentState,
-  EditorProps,
   getDefaultKeyBinding,
   RichUtils,
   ContentBlock,
-  Modifier,
+  convertToRaw,
+  convertFromRaw,
 } from 'draft-js';
+import { stateToHTML } from 'draft-js-export-html';
 import Editor, { composeDecorators } from '@draft-js-plugins/editor';
 import createAttachmentPlugin from './utils/AttachmentsPlugin';
 import createLinkifyPlugin from '@draft-js-plugins/linkify';
@@ -49,75 +49,23 @@ import {
 import { ENTER_KEY_CODE } from '../../constants/defaultValues';
 import { Loader } from '../UI';
 import { IntlMessages } from '../IntlMessages';
+import { IRichEditorProps, IPositionSuggestionsParams, EEditorKeyCommand, IRichEditorState } from './RichEditor.props';
 
 import { handleUploadAttachments } from './utils/handleUploadAttachments';
 import { deleteAttachment } from '../../api/deleteAttachment';
 import { TEditorAttachment } from './utils/types';
-import { setChecklistApiNames } from './utils/checklistsPlugin/setChecklistApiNames';
+import { cloneChecklist, setChecklistApiNames } from './utils/checklistsPlugin/setChecklistApiNames';
 import { prepareChecklistsForAPI } from '../../utils/checklists/prepareChecklistsForAPI';
-import { TOutputChecklist } from '../../types/template';
 import { shouldHidePlaceholder } from './utils/shouldHidePlaceholder';
-import { TForegroundColor } from '../UI/Fields/common/types';
 import { getForegroundClass } from '../UI/Fields/common/utils/getForegroundClass';
+import { getSelectedContent } from './utils/getSelectedContent';
+import { insertSelectedContent } from './utils/insertSelectedContent';
+import { removeAllExcept } from './utils/removeAllExcept';
 
 import styles from './RichEditor.css';
 import mentionsStyles from './MentionStyles.css';
 import focusStyles from './FocusStyles.css';
 import 'draft-js/dist/Draft.css';
-
-enum EEditorKeyCommand {
-  Enter = 'enter',
-}
-
-export type TMentionData = {
-  id?: number;
-  name: string;
-  link?: string;
-};
-
-export interface IPositionSuggestionsParams {
-  decoratorRect: { x: number; y: number } & ClientRect;
-  popover: HTMLElement;
-  props: {
-    open: boolean;
-    suggestions: TMentionData[];
-  };
-  // tslint:disable-next-line: no-any
-  state: any;
-}
-
-export interface IRichEditorState {
-  isLoading: boolean;
-  shouldSubmitAfterFileLoaded: boolean;
-  editorState: EditorState;
-  suggestions: TMentionData[];
-  areSuggestionsOpened: boolean;
-}
-
-export interface IRichEditorProps {
-  accountId: number;
-  mentions: TMentionData[];
-  placeholder: EditorProps['placeholder'];
-  className?: string;
-  defaultValue?: string;
-  initialState?: EditorState;
-  withMentions?: boolean;
-  withToolbar?: boolean;
-  withChecklists?: boolean;
-  multiline?: boolean;
-  children?: React.ReactNode;
-  title?: string;
-  decorators?: React.ComponentProps<typeof Editor>['decorators'];
-  foregroundColor?: TForegroundColor;
-  stripPastedFormatting?: boolean;
-  submitIcon?: React.ReactNode;
-  cancelIcon?: React.ReactNode;
-
-  handleChange(value: string): Promise<string>;
-  handleChangeChecklists?(checklists: TOutputChecklist[]): void;
-  onSubmit?(): void;
-  onCancel?(): void;
-}
 
 export class RichEditor extends React.Component<IRichEditorProps, IRichEditorState> {
   public state: IRichEditorState = {
@@ -156,7 +104,9 @@ export class RichEditor extends React.Component<IRichEditorProps, IRichEditorSta
   public constructor(props: IRichEditorProps) {
     super(props);
     this.linkifyPlugin = createLinkifyPlugin();
-    this.linkPlugin = createLinkPlugin();
+    this.linkPlugin = createLinkPlugin({
+      isModal: props.isModal,
+    });
     this.toolbarPlugin = createToolbarPlugin(toolbarConfig);
     this.focusPlugin = createFocusPlugin({
       theme: {
@@ -276,16 +226,12 @@ export class RichEditor extends React.Component<IRichEditorProps, IRichEditorSta
   private editor = React.createRef<Editor>();
 
   public onChange = async (nextState: EditorState) => {
-    const { handleChange, handleChangeChecklists, withChecklists, multiline = true } = this.props;
+    const { handleChange, handleChangeChecklists, withChecklists } = this.props;
     const { editorState } = this.state;
 
     const normalizedNextState = removeOrphanedEntities(stripUnsupportedStyles(nextState, editorState));
     const prevContent = editorState.getCurrentContent();
     const newContent = normalizedNextState.getCurrentContent();
-
-    if (!multiline && newContent.getPlainText().indexOf('\n') !== -1) {
-      return;
-    }
 
     this.setState({ editorState: normalizedNextState });
 
@@ -358,16 +304,6 @@ export class RichEditor extends React.Component<IRichEditorProps, IRichEditorSta
   };
 
   private handlePastedText = (text: string, e: React.ClipboardEvent) => {
-    if (this.props.stripPastedFormatting) {
-      const { editorState } = this.state;
-      const selection = editorState.getSelection();
-      const contentState = editorState.getCurrentContent();
-      const newContentState = Modifier.replaceText(contentState, selection, text);
-
-      const newEditorState = EditorState.push(editorState, newContentState, 'insert-characters');
-      this.onChange(newEditorState);
-      return 'handled';
-    }
     trackAddVideo(text);
     return false;
   };
@@ -387,6 +323,67 @@ export class RichEditor extends React.Component<IRichEditorProps, IRichEditorSta
       },
       () => this.setState({ isLoading: false }),
     );
+  };
+
+  private handleCopy = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    e.preventDefault();
+
+    const selectedContentState = getSelectedContent(this.state.editorState);
+    const rawContent = convertToRaw(selectedContentState);
+    const serializedContent = JSON.stringify(rawContent);
+
+    e.clipboardData.setData('application/json', serializedContent);
+    e.clipboardData.setData('text/plain', selectedContentState.getPlainText());
+    e.clipboardData.setData('text/html', stateToHTML(this.state.editorState.getCurrentContent()));
+  };
+
+  private handlePaste = async (e: React.ClipboardEvent<HTMLInputElement>) => {
+    e.preventDefault();
+    const { handleChange, handleChangeChecklists, withChecklists, stripPastedFormatting } = this.props;
+    const jsonContent = e.clipboardData.getData('application/json');
+    const htmlContent = e.clipboardData.getData('text/html');
+
+    if (stripPastedFormatting) {
+      const contentState = convertFromRaw(JSON.parse(jsonContent));
+      let newEditorState = insertSelectedContent(this.state.editorState, contentState);
+
+      const allowedStyles = new Set([]);
+      const allowedBlockTypes = new Set(['variable']);
+      newEditorState = removeAllExcept(newEditorState, allowedStyles, allowedBlockTypes);
+
+      this.setState({ editorState: newEditorState });
+      this.onChange(newEditorState);
+      return;
+    }
+
+    if (jsonContent) {
+      const contentState = convertFromRaw(JSON.parse(jsonContent));
+      const newEditorState = insertSelectedContent(this.state.editorState, contentState);
+      this.setState({ editorState: newEditorState });
+
+      const stateWithChecklists = cloneChecklist(newEditorState);
+      const contentWithChecklists = stateWithChecklists.getCurrentContent();
+      this.setState({ editorState: stateWithChecklists });
+
+      const plainText = convertDraftToText(contentWithChecklists);
+
+      if (withChecklists && handleChangeChecklists) {
+        const apiChecklists = prepareChecklistsForAPI(plainText);
+        handleChangeChecklists(apiChecklists);
+      }
+
+      await handleChange(plainText);
+    } else if (htmlContent) {
+      const plainText: any = e.clipboardData.getData('text/html');
+      const newContentState = ContentState.createFromBlockArray(plainText);
+      let newEditorState = insertSelectedContent(this.state.editorState, newContentState);
+      this.setState({ editorState: newEditorState });
+    } else {
+      const plainText = e.clipboardData.getData('text/plain');
+      const newContentState = ContentState.createFromText(plainText);
+      let newEditorState = insertSelectedContent(this.state.editorState, newContentState);
+      this.setState({ editorState: newEditorState });
+    }
   };
 
   public render() {
@@ -443,6 +440,8 @@ export class RichEditor extends React.Component<IRichEditorProps, IRichEditorSta
             className,
           )}
           onClick={this.focus}
+          onCopy={this.handleCopy}
+          onPaste={this.handlePaste}
         >
           <Loader isLoading={isLoading} />
           <Editor
@@ -471,27 +470,55 @@ export class RichEditor extends React.Component<IRichEditorProps, IRichEditorSta
               <>
                 <Desktop>
                   <Toolbar>
-                    {(externalProps) => (
-                      <>
-                        <BoldButton {...externalProps} />
-                        <ItalicButton {...externalProps} />
-                        <OrderedListButton {...externalProps} />
-                        <UnorderedListButton {...externalProps} />
-                        <LinkButton {...externalProps} />
-                        {withChecklists && <ChecklistButton />}
-                        <Separator />
-                        <ImageAttachmentButton {...externalProps} uploadAttachments={this.uploadAttachments} />
-                        <VideoAttachmentButton {...externalProps} uploadAttachments={this.uploadAttachments} />
-                        <FileAttachmentButton {...externalProps} uploadAttachments={this.uploadAttachments} />
-                      </>
-                    )}
+                    {(externalProps) => {
+                      const themeWithModal = {
+                        ...externalProps.theme,
+                        isModal: this.props.isModal,
+                      };
+                      return (
+                        <>
+                          <BoldButton {...externalProps} theme={themeWithModal} />
+                          <ItalicButton {...externalProps} theme={themeWithModal} />
+                          <OrderedListButton {...externalProps} theme={themeWithModal} />
+                          <UnorderedListButton {...externalProps} theme={themeWithModal} />
+                          <LinkButton {...externalProps} />
+                          {withChecklists && <ChecklistButton />}
+                          <Separator />
+                          <ImageAttachmentButton
+                            {...externalProps}
+                            theme={themeWithModal}
+                            uploadAttachments={this.uploadAttachments}
+                          />
+                          <VideoAttachmentButton
+                            {...externalProps}
+                            theme={themeWithModal}
+                            uploadAttachments={this.uploadAttachments}
+                          />
+                          <FileAttachmentButton
+                            {...externalProps}
+                            theme={themeWithModal}
+                            uploadAttachments={this.uploadAttachments}
+                          />
+                        </>
+                      );
+                    }}
                   </Toolbar>
                 </Desktop>
                 <Mobile>
                   <Toolbar>
-                    {(externalProps) => (
-                      <FileAttachmentButton {...externalProps} uploadAttachments={this.uploadAttachments} />
-                    )}
+                    {(externalProps) => {
+                      const themeWithModal = {
+                        ...externalProps.theme,
+                        isModal: this.props.isModal,
+                      };
+                      return (
+                        <FileAttachmentButton
+                          {...externalProps}
+                          uploadAttachments={this.uploadAttachments}
+                          theme={themeWithModal}
+                        />
+                      );
+                    }}
                   </Toolbar>
                 </Mobile>
               </>

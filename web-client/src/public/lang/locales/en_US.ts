@@ -482,7 +482,11 @@ export const enMessages = {
   'task.completed-with-date': 'Completed\u00A0',
   'task.not-found': 'Task not found',
   'task.delegate': 'Run Embedded Workflow',
-
+  'task.return-to.title': 'Return',
+  'task.return-to.subtitle':
+    "Explain why the task's being returned and what is needed to complete it so whoever it's returned to can take appropriate action.",
+  'task.return-to.confirm': 'Confirm',
+  'task.return-to.cancel': 'CANCEL',
   'templates.title': 'My Workflow Templates',
   'templates.title.tooltip': 'Browse, create, and generate templates',
   'templates.title-system': 'Explore Workflow Template Examples',
@@ -645,6 +649,11 @@ export const enMessages = {
   'templates.share-popup':
     'Creating a public link to this kick-off form will allow people outside of your organization to start this workflow:',
   'templates.draft-warning': 'All API access and external links are blocked, enable to restore full access.',
+  'templates.return-to.title': 'Return',
+  'templates.return-to.placeholder': 'Pick the step the workflow will go to when the task is returned',
+  'templates.return-to.placeholder-mobile': 'Pick the step',
+  'templates.return-to.add-return': 'Add Return',
+  'templates.return-to.remove-return': 'Remove Task Return',
   'templates.run-workflow-hint': 'Run workflow',
   'templates.template-integrated': 'Integrated',
   'templates.template-not-integrated': 'Not integrated',
@@ -897,7 +906,7 @@ export const enMessages = {
 
   'task.minimize-log': 'Hide all activity',
   'task.expand-log': 'Show all activity',
-  'task.log-returned': 'Returned task',
+  'task.log-returned': 'Returned the task',
   'task.log-delay': 'Snoozed until {date}',
   'task.log-added-performer': 'Add user\u00A0',
   'task.log-removed-performer': 'Delete user\u00A0',
@@ -941,7 +950,7 @@ export const enMessages = {
   'workflow-highlights.icon-task-completed': 'Task was completed',
   'workflow-highlights.icon-process-started': 'Workflow was started',
   'workflow-highlights.icon-workflow-returned': 'Workflow was returned',
-
+  'workflow-highlights.return-to.returned-task': 'Returned the task',
   'checkout.choose-the-plan': 'Choose a payment plan',
   'checkout.coupon': 'I have coupon',
   'checkout.coupon-code': 'Coupon code',

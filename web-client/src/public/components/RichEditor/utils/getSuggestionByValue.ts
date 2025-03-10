@@ -1,5 +1,3 @@
-/* eslint-disable */
-/* prettier-ignore */
 type TSuggestion = {
   name: string;
 };

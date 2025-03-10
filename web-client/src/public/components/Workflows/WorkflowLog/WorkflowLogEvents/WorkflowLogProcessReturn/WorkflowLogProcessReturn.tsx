@@ -9,10 +9,11 @@ import { ReturnTaskInfoIcon } from '../../../../icons';
 import { UserData } from '../../../../UserData';
 
 import styles from './WorkflowLogProcessReturn.css';
+import { RichText } from '../../../../RichText';
 
-export interface IWorkflowLogProcessReturnProps extends Pick<IWorkflowLogItem, 'created' | 'userId'> {}
+export interface IWorkflowLogProcessReturnProps extends Pick<IWorkflowLogItem, 'created' | 'userId' | 'text'> {}
 
-export function WorkflowLogProcessReturn({ userId, created }: IWorkflowLogProcessReturnProps) {
+export function WorkflowLogProcessReturn({ userId, created, text }: IWorkflowLogProcessReturnProps) {
   const { formatMessage } = useIntl();
 
   return (
@@ -27,7 +28,7 @@ export function WorkflowLogProcessReturn({ userId, created }: IWorkflowLogProces
             <div className={styles['avatar']}>
               <Avatar user={user} size="lg" sizeMobile="sm" />
             </div>
-            <div className={styles['body']}>
+            <div>
               <p className={styles['title']}>
                 <span className={styles['title__text']}>{getUserFullName(user)}</span>
                 <span className={styles['title__icon']}>
@@ -38,7 +39,10 @@ export function WorkflowLogProcessReturn({ userId, created }: IWorkflowLogProces
                 </span>
               </p>
 
-              <div className={styles['text']}>{formatMessage({ id: 'task.log-returned' })}</div>
+              <div className={styles['workflow-log-return__status']}>{formatMessage({ id: 'task.log-returned' })}</div>
+              <div className={styles['workflow-log-return__message']}>
+                <RichText text={text} />
+              </div>
             </div>
           </div>
         );

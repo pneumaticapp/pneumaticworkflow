@@ -5,9 +5,13 @@ from pneumatic_backend.accounts.enums import (
 )
 from pneumatic_backend.processes.enums import FieldType
 from pneumatic_backend.queries import SqlQueryObject
+from pneumatic_backend.generics.mixins.queries import DereferencedOwnersMixin
 
 
-class CountTemplatesByUserQuery(SqlQueryObject):
+class CountTemplatesByUserQuery(
+    SqlQueryObject,
+    DereferencedOwnersMixin,
+):
 
     """ Returns the numbers of active templates and workflows
         that the user is a member of """
@@ -23,11 +27,12 @@ class CountTemplatesByUserQuery(SqlQueryObject):
         }
 
     def get_sql(self):
-        return """
+        return f"""
+          WITH dereferenced_owners AS ({self.dereferenced_owners()})
           SELECT count(*) FROM (
             SELECT DISTINCT ON (pt.id) pt.id FROM processes_template pt
-            JOIN processes_template_template_owners pwra
-              ON pt.id = pwra.template_id
+            JOIN dereferenced_owners AS owners
+              ON pt.id = owners.template_id
             JOIN processes_tasktemplate ptw ON pt.id = ptw.template_id
             JOIN processes_rawperformertemplate prpt
               ON ptw.id = prpt.task_id
@@ -35,12 +40,12 @@ class CountTemplatesByUserQuery(SqlQueryObject):
             pt.account_id = %(account_id)s AND
             pt.is_active IS TRUE AND
             ptw.is_deleted IS FALSE AND
-            (pwra.user_id = %(user_id)s OR prpt.user_id = %(user_id)s)
+            prpt.user_id = %(user_id)s
           ) pt_by_user
           UNION ALL
           SELECT count(*) FROM (
-            SELECT DISTINCT ON (w.id) w.id FROM
-              processes_workflow w
+            SELECT DISTINCT ON (w.id) w.id
+            FROM processes_workflow w
             JOIN processes_task pt ON w.id = pt.workflow_id
             JOIN processes_taskperformer ptp ON pt.id = ptp.task_id
             WHERE
@@ -137,11 +142,11 @@ class DeleteUserFromTemplateOwnerQuery(SqlQueryObject):
 
     def get_sql(self):
         return """
-        DELETE FROM processes_template_template_owners
+        DELETE FROM processes_templateowner
         WHERE
           user_id = %(user_to_delete)s AND
           template_id IN (
-            SELECT template_id FROM processes_template_template_owners
+            SELECT template_id FROM processes_templateowner
             WHERE user_id = %(user_to_substitution)s
           )
         """, {

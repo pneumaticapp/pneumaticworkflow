@@ -4,23 +4,33 @@ from django.utils import timezone
 from pneumatic_backend.processes.tests.fixtures import (
     create_test_user,
     create_test_group,
-    create_test_account
+    create_test_account,
 )
 from pneumatic_backend.accounts.enums import (
     BillingPlanType,
 )
-from pneumatic_backend.accounts.models import UserGroup
+from pneumatic_backend.accounts.services.group import UserGroupService
+from pneumatic_backend.authentication.enums import AuthTokenType
 
 pytestmark = pytest.mark.django_db
 
 
-def test_groups_delete_group_ok(api_client):
+def test_groups_delete_group_ok(api_client, mocker):
 
     # arrange
     account = create_test_account(plan=BillingPlanType.PREMIUM)
     user = create_test_user(account=account)
-    api_client.token_authenticate(user)
     group = create_test_group(user=user, users=[user, ])
+    service_init_mock = mocker.patch.object(
+        UserGroupService,
+        attribute='__init__',
+        return_value=None
+    )
+    service_delete_mock = mocker.patch(
+        'pneumatic_backend.accounts.services.group.'
+        'UserGroupService.delete'
+    )
+    api_client.token_authenticate(user)
 
     # act
     response = api_client.delete(
@@ -29,39 +39,100 @@ def test_groups_delete_group_ok(api_client):
 
     # assert
     assert response.status_code == 204
-    assert not UserGroup.objects.filter(id=group.id).exists()
+    service_init_mock.assert_called_once_with(
+        user=user,
+        instance=group,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER
+    )
+    service_delete_mock.assert_called_once()
 
 
-def test_delete__not_admin__permission_denied(api_client):
+@pytest.mark.parametrize(
+    'plan', (BillingPlanType.FREEMIUM, BillingPlanType.PREMIUM))
+def test_delete__group_owner_removed_from_workflow_in_all_plan__ok(
+    api_client, plan, mocker
+):
+    # Arrange
+    account = create_test_account(plan=plan)
+    user = create_test_user(account=account)
+    group_to_delete = create_test_group(user=user, users=[user])
+    service_init_mock = mocker.patch.object(
+        UserGroupService,
+        attribute='__init__',
+        return_value=None
+    )
+    service_delete_mock = mocker.patch(
+        'pneumatic_backend.accounts.services.group.'
+        'UserGroupService.delete'
+    )
+    api_client.token_authenticate(user)
+
+    # Act
+    response = api_client.delete(
+        path=f'/accounts/groups/{group_to_delete.id}'
+    )
+
+    # Assert
+    assert response.status_code == 204
+    service_init_mock.assert_called_once_with(
+        user=user,
+        instance=group_to_delete,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER
+    )
+    service_delete_mock.assert_called_once()
+
+
+def test_delete__not_admin__permission_denied(api_client, mocker):
 
     # arrange
     account = create_test_account(plan=BillingPlanType.UNLIMITED)
     user = create_test_user(account=account)
-    group = create_test_group(user=user, users=[user, ])
+    group_to_delete = create_test_group(user=user, users=[user, ])
     no_admin_user = create_test_user(
         account=account,
         email='no_admin@test.com',
         is_admin=False,
         is_account_owner=False
     )
-
+    service_init_mock = mocker.patch.object(
+        UserGroupService,
+        attribute='__init__',
+        return_value=None
+    )
+    service_delete_mock = mocker.patch(
+        'pneumatic_backend.accounts.services.group.'
+        'UserGroupService.delete'
+    )
     api_client.token_authenticate(no_admin_user)
 
     # act
     response = api_client.delete(
-        path=f'/accounts/groups/{group.id}'
+        path=f'/accounts/groups/{group_to_delete.id}'
     )
 
     # assert
     assert response.status_code == 403
+    service_init_mock.assert_not_called()
+    service_delete_mock.assert_not_called()
 
 
-def test_delete__not_auth__permission_denied(api_client):
+def test_delete__not_auth__permission_denied(api_client, mocker):
 
     # arrange
     account = create_test_account(plan=BillingPlanType.UNLIMITED)
     user = create_test_user(account=account)
     group = create_test_group(user=user, users=[user, ])
+    service_init_mock = mocker.patch.object(
+        UserGroupService,
+        attribute='__init__',
+        return_value=None
+    )
+    service_delete_mock = mocker.patch(
+        'pneumatic_backend.accounts.services.group.'
+        'UserGroupService.delete'
+    )
 
     # act
     response = api_client.delete(
@@ -70,9 +141,11 @@ def test_delete__not_auth__permission_denied(api_client):
 
     # assert
     assert response.status_code == 401
+    service_init_mock.assert_not_called()
+    service_delete_mock.assert_not_called()
 
 
-def test_delete__expired_subscription__permission_denied(api_client):
+def test_delete__expired_subscription__permission_denied(api_client, mocker):
 
     # arrange
     account = create_test_account(
@@ -81,6 +154,15 @@ def test_delete__expired_subscription__permission_denied(api_client):
     )
     user = create_test_user(account=account)
     group = create_test_group(user=user, users=[user, ])
+    service_init_mock = mocker.patch.object(
+        UserGroupService,
+        attribute='__init__',
+        return_value=None
+    )
+    service_delete_mock = mocker.patch(
+        'pneumatic_backend.accounts.services.group.'
+        'UserGroupService.delete'
+    )
     api_client.token_authenticate(user)
 
     # act
@@ -90,3 +172,5 @@ def test_delete__expired_subscription__permission_denied(api_client):
 
     # assert
     assert response.status_code == 403
+    service_init_mock.assert_not_called()
+    service_delete_mock.assert_not_called()

@@ -1,8 +1,9 @@
 import { connect } from 'react-redux';
 import { IApplicationState } from '../../types/redux';
 import { getNotDeletedUsers } from '../../utils/users';
-import { RichEditor, IRichEditorProps } from './RichEditor';
 import { getMentionData } from './utils/getMentionData';
+import { IRichEditorProps } from './RichEditor.props';
+import { RichEditor } from './RichEditor';
 
 type TStoreProps = Pick<IRichEditorProps, 'mentions' | 'accountId'>;
 type TOwnProps = Partial<Pick<IRichEditorProps, 'accountId'>>;

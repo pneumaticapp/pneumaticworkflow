@@ -12,6 +12,7 @@ from pneumatic_backend.reports.queries.mixins import (
     WorkflowTasksMixin,
     WorkflowTasksNowMixin
 )
+from pneumatic_backend.generics.mixins.queries import DereferencedOwnersMixin
 
 
 class OverviewQuery(
@@ -58,7 +59,7 @@ class OverviewQuery(
           pt.is_deleted IS FALSE AND
           pt.type IN (%(type_user)s, %(type_generic)s)
         LEFT JOIN
-          processes_template_template_owners ptra ON pt.id = ptra.template_id
+          processes_workflow_owners pwo ON pw.id = pwo.workflow_id
         LEFT JOIN overdue_workflows ow ON pw.id = ow.workflow_id
         WHERE pw.account_id = %(account_id)s AND
           pw.is_deleted IS FALSE AND
@@ -67,7 +68,7 @@ class OverviewQuery(
               pw.is_legacy_template IS TRUE AND
               pw.workflow_starter_id = %(user_id)s
             ) OR
-            ptra.user_id = %(user_id)s
+            pwo.user_id = %(user_id)s
           )
         """, self.params
 
@@ -109,7 +110,7 @@ class OverviewNowQuery(
           pt.is_deleted IS FALSE AND
           pt.type IN (%(type_user)s, %(type_generic)s)
         LEFT JOIN
-          processes_template_template_owners ptra ON pt.id = ptra.template_id
+          processes_workflow_owners pwo ON pw.id = pwo.workflow_id
         LEFT JOIN overdue_workflows ow ON pw.id = ow.workflow_id
         WHERE pw.account_id = %(account_id)s AND
           pw.is_deleted IS FALSE AND
@@ -118,7 +119,7 @@ class OverviewNowQuery(
               pw.is_legacy_template IS TRUE AND
               pw.workflow_starter_id = %(user_id)s
             ) OR
-            ptra.user_id = %(user_id)s
+            pwo.user_id = %(user_id)s
           )
         """, self.params
 
@@ -126,6 +127,7 @@ class OverviewNowQuery(
 class WorkflowBreakdownQuery(
     WorkflowsMixin,
     SqlQueryObject,
+    DereferencedOwnersMixin
 ):
     def __init__(
         self,
@@ -146,9 +148,9 @@ class WorkflowBreakdownQuery(
 
     def get_sql(self):
         return f"""
-        WITH overdue_workflows AS (
-          {self._overdue_workflows_cte()}
-        )
+        WITH
+          overdue_workflows AS ({self._overdue_workflows_cte()}),
+          all_owners AS ({self.dereferenced_owners()})
         SELECT
           pt.id AS template_id,
           pt.name AS template_name,
@@ -168,13 +170,12 @@ class WorkflowBreakdownQuery(
         FROM processes_template pt
         LEFT JOIN processes_workflow pw ON pw.template_id = pt.id AND
           pw.is_deleted IS FALSE
-        JOIN processes_template_template_owners ptra
-          ON pt.id = ptra.template_id
+        JOIN all_owners AS owners ON pt.id = owners.template_id
         LEFT JOIN overdue_workflows ow ON pw.id = ow.workflow_id
         WHERE pt.account_id = %(account_id)s AND
           pt.is_deleted IS FALSE AND
           pt.type IN (%(type_user)s, %(type_generic)s) AND
-          ptra.user_id = %(user_id)s
+          owners.user_id = %(user_id)s
         GROUP BY pt.id
         ORDER BY in_progress DESC, template_id
         """, self.params
@@ -183,6 +184,7 @@ class WorkflowBreakdownQuery(
 class WorkflowBreakdownNowQuery(
     WorkflowsNowMixin,
     SqlQueryObject,
+    DereferencedOwnersMixin
 ):
     def __init__(
         self,
@@ -200,9 +202,9 @@ class WorkflowBreakdownNowQuery(
 
     def get_sql(self):
         return f"""
-        WITH overdue_workflows AS (
-          {self._overdue_workflows_now_cte()}
-        )
+        WITH
+          overdue_workflows AS ({self._overdue_workflows_now_cte()}),
+          all_owners AS ({self.dereferenced_owners()})
         SELECT
           pt.id AS template_id,
           pt.name AS template_name,
@@ -219,13 +221,12 @@ class WorkflowBreakdownNowQuery(
         LEFT JOIN processes_workflow pw ON pw.template_id = pt.id AND
           pw.is_deleted IS FALSE AND
           pw.status = %(status_running)s
-        JOIN processes_template_template_owners ptra
-          ON pt.id = ptra.template_id
+        JOIN all_owners AS owners ON pt.id = owners.template_id
         LEFT JOIN overdue_workflows ow ON pw.id = ow.workflow_id
         WHERE pt.account_id = %(account_id)s AND
           pt.is_deleted IS FALSE AND
           pt.type IN (%(type_user)s, %(type_generic)s) AND
-          ptra.user_id = %(user_id)s
+          owners.user_id = %(user_id)s
         GROUP BY pt.id
         ORDER BY in_progress DESC, template_id
         """, self.params
@@ -299,11 +300,10 @@ class WorkflowDigestQuery(
             {self._overdue_workflows_clause()}
           ) AS overdue
         FROM processes_template pt
-        JOIN processes_template_template_owners ptra
-          ON pt.id = ptra.template_id
-        JOIN accounts_user au ON ptra.user_id = au.id
-        JOIN accounts_account aa ON au.account_id = aa.id
         JOIN processes_workflow pw ON pt.id = pw.template_id
+        JOIN processes_workflow_owners pwo ON pw.id = pwo.workflow_id
+        JOIN accounts_user au ON pwo.user_id = au.id
+        JOIN accounts_account aa ON au.account_id = aa.id
         LEFT JOIN overdue_workflows ow ON pw.id = ow.workflow_id
         WHERE
           pt.is_deleted IS FALSE AND
@@ -354,7 +354,8 @@ class WorkflowBreakdownByTasksQuery(
               id,
               name,
               number,
-              api_name
+              api_name,
+              template_id
             FROM processes_tasktemplate
             WHERE is_deleted IS FALSE
               AND template_id = %(template_id)s
@@ -374,13 +375,14 @@ class WorkflowBreakdownByTasksQuery(
               COUNT(pt.id) FILTER (
                 {self._overdue_tasks_clause()}
               ) AS overdue
-            FROM template_tasks tt
-            JOIN processes_task pt
-              ON pt.api_name = tt.api_name
-              AND pt.is_deleted IS FALSE
+            FROM processes_task pt
             JOIN processes_workflow pw
               ON pt.workflow_id = pw.id
               AND pw.is_deleted IS FALSE
+            JOIN template_tasks tt
+              ON pt.api_name = tt.api_name
+              AND pw.template_id = tt.template_id
+            WHERE pt.is_deleted IS FALSE
             GROUP BY tt.id
           )
 
@@ -388,6 +390,7 @@ class WorkflowBreakdownByTasksQuery(
           tasks.id,
           tasks.name,
           tasks.number,
+          tasks.api_name,
           COALESCE(results.in_progress, 0) AS in_progress,
           COALESCE(results.started, 0) AS started,
           COALESCE(results.completed, 0) AS completed,
@@ -418,6 +421,7 @@ class WorkflowBreakdownByTasksNowQuery(
           tt.id,
           tt.name,
           tt.number,
+          tt.api_name,
           COUNT(pt.id) FILTER (
             {self._tasks_in_progress_now_clause()}
           ) AS in_progress,
@@ -428,7 +432,9 @@ class WorkflowBreakdownByTasksNowQuery(
           ) AS overdue
         FROM processes_task pt
         JOIN processes_workflow pw ON pt.workflow_id = pw.id
-        JOIN processes_tasktemplate tt ON pt.api_name = tt.api_name
+        JOIN processes_tasktemplate tt
+            ON pt.api_name = tt.api_name
+            AND pw.template_id = tt.template_id
         WHERE
           pt.is_deleted IS FALSE AND
           tt.is_deleted IS FALSE AND

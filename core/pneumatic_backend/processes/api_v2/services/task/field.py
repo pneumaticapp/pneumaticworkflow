@@ -229,7 +229,7 @@ class TaskFieldService(BaseWorkflowService):
                 message=messages.MSG_PW_0035
             )
         else:
-            markdown_value = f'[{self.instance.name}]({self.instance.value})'
+            markdown_value = f'[{self.instance.name}]({raw_value})'
             return raw_value, markdown_value
 
     def _get_valid_dropdown_value(

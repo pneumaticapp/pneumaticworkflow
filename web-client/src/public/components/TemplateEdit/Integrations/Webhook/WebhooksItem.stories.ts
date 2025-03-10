@@ -5,6 +5,7 @@ import { EWebhooksSubscriberStatus, EWebhooksTypeEvent } from '../../../../types
 
 const meta: Meta<typeof WebhookItem> = {
   component: WebhookItem,
+  tags: ['autodocs'],
 };
 
 export default meta;

@@ -1002,13 +1002,16 @@ class TestDashboardMyTasksBreakdownBySteps:
         assert response.status_code == 200
         assert len(response.data) == 2
         assert response.data[0]['id'] == first_task.id
+        assert response.data[0]['api_name'] == first_task.api_name
         assert response.data[0]['name'] == first_task.name
         assert response.data[0]['number'] == first_task.number
         assert response.data[0]['started'] == 3
         assert response.data[0]['completed'] == 3
         assert response.data[0]['in_progress'] == 4
         assert response.data[0]['overdue'] == 1
+
         assert response.data[1]['id'] == second_task.id
+        assert response.data[1]['api_name'] == second_task.api_name
         assert response.data[1]['name'] == second_task.name
         assert response.data[1]['number'] == second_task.number
         assert response.data[1]['started'] == 3
@@ -1238,12 +1241,17 @@ class TestDashboardMyTasksBreakdownBySteps:
         )
         # assert
         assert response.status_code == 200
+        assert response.data[0]['id']
+        assert response.data[0]['api_name']
         assert response.data[0]['name'] == 'First step'
         assert response.data[0]['number'] == 1
         assert response.data[0]['started'] == 1
         assert response.data[0]['completed'] == 0
         assert response.data[0]['in_progress'] == 1
         assert response.data[0]['overdue'] == 0
+
+        assert response.data[1]['id']
+        assert response.data[1]['api_name']
         assert response.data[1]['name'] == 'Second step'
         assert response.data[1]['number'] == 2
         assert response.data[1]['started'] == 1
@@ -1337,13 +1345,16 @@ class TestDashboardMyTasksBreakdownBySteps:
         assert response.status_code == 200
         assert len(response.data) == 2
         assert response.data[0]['id'] == first_task.id
+        assert response.data[0]['api_name'] == first_task.api_name
         assert response.data[0]['name'] == first_task.name
         assert response.data[0]['number'] == first_task.number
         assert response.data[0]['in_progress'] == 1
         assert response.data[0]['started'] is None
         assert response.data[0]['completed'] is None
         assert response.data[0]['overdue'] == 1
+
         assert response.data[1]['id'] == second_task.id
+        assert response.data[1]['api_name'] == second_task.api_name
         assert response.data[1]['name'] == second_task.name
         assert response.data[1]['number'] == second_task.number
         assert response.data[1]['in_progress'] == 3
@@ -1442,6 +1453,7 @@ class TestDashboardMyTasksBreakdownBySteps:
         assert response.status_code == 200
         assert len(response.data) == 1
         assert response.data[0]['id'] == task_template.id
+        assert response.data[0]['api_name'] == task_template.api_name
         assert response.data[0]['name'] == task_template.name
         assert response.data[0]['number'] == 1
         assert response.data[0]['started'] == 1
@@ -1489,6 +1501,7 @@ class TestDashboardMyTasksBreakdownBySteps:
         assert response.status_code == 200
         assert len(response.data) == 1
         assert response.data[0]['id'] == task_template.id
+        assert response.data[0]['api_name'] == task_template.api_name
         assert response.data[0]['name'] == task_template.name
         assert response.data[0]['number'] == 1
         assert response.data[0]['started'] == 1
@@ -1551,6 +1564,7 @@ class TestDashboardMyTasksBreakdownBySteps:
         assert response.status_code == 200
         assert len(response.data) == 1
         assert response.data[0]['id'] == task_template.id
+        assert response.data[0]['api_name'] == task_template.api_name
         assert response.data[0]['name'] == task_template.name
         assert response.data[0]['number'] == 1
         assert response.data[0]['started'] is None
@@ -1598,6 +1612,7 @@ class TestDashboardMyTasksBreakdownBySteps:
         assert response.status_code == 200
         assert len(response.data) == 1
         assert response.data[0]['id'] == task_template.id
+        assert response.data[0]['api_name'] == task_template.api_name
         assert response.data[0]['name'] == task_template.name
         assert response.data[0]['number'] == 1
         assert response.data[0]['started'] is None

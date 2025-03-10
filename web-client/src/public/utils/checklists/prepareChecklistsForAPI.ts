@@ -6,10 +6,9 @@ export type TInputTChecklistItemData = {
 } & TChecklistItemData;
 
 export const prepareChecklistsForAPI = (markdown: string): TOutputChecklist[] => {
-  const extractedChecklist = extractChecklistsFromMarkdown(markdown);
-
-  const outputChecklists = [] as TOutputChecklist[];
   let state: 'list-added' | 'item-added' = 'list-added';
+  const extractedChecklist = extractChecklistsFromMarkdown(markdown);
+  const outputChecklists = [] as TOutputChecklist[];
   let currentList = {} as TOutputChecklist;
 
   extractedChecklist.forEach(({ listApiName, itemApiName, value }, index) => {
@@ -40,13 +39,13 @@ export const prepareChecklistsForAPI = (markdown: string): TOutputChecklist[] =>
 export function extractChecklistsFromMarkdown(markdown: string): TInputTChecklistItemData[] {
   const regEx = /\[clist:([\w-]+)\|([\w-]+)\](.*)?(?=\[\/clist])\[\/clist]/g;
 
-  return [...markdown.matchAll(regEx)].map(match => {
+  return [...markdown.matchAll(regEx)].map((match) => {
     const [, listApiName, itemApiName, value = ''] = match;
 
     return {
       listApiName,
       itemApiName,
       value,
-    }
-  })
+    };
+  });
 }

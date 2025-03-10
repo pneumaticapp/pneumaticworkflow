@@ -112,5 +112,11 @@ class GroupViewSet(
 
     def destroy(self, request, *args, **kwargs):
         group = self.get_object()
-        group.delete()
+        service = UserGroupService(
+            user=request.user,
+            instance=group,
+            is_superuser=request.is_superuser,
+            auth_type=request.token_type
+        )
+        service.delete()
         return self.response_ok()

@@ -23,7 +23,12 @@ type TControlledProps =
   | { toggle?(): never; isVisible?: never; isInitiallyVisible?: boolean }
   | { toggle(): void; isVisible: boolean; isInitiallyVisible?: never };
 
-type TShowMoreProps = React.PropsWithChildren<TShowMoreCommonProps & TControlledProps>;
+type TShowMoreProps = React.PropsWithChildren<
+  TShowMoreCommonProps &
+    TControlledProps & {
+      isDisabled?: boolean;
+    }
+>;
 
 export function ShowMore({
   isInitiallyVisible,
@@ -38,6 +43,7 @@ export function ShowMore({
   innerRef,
   isVisible: isVisibleProp,
   renderCustomLabel,
+  isDisabled,
 }: TShowMoreProps) {
   const [isVisibleState, setVisibleState] = React.useState(Boolean(isInitiallyVisible));
   const { messages } = useIntl();
@@ -67,33 +73,35 @@ export function ShowMore({
 
     if (!renderCustomLabel) {
       return (
-        <span className={styles['show_more__toggle-text']}>
+        <span className={classnames(styles['show_more__toggle-text'], isDisabled && styles['show_more--disabled'])}>
           {labelText}
         </span>
-      )
+      );
     }
 
     return renderCustomLabel(labelText);
-  }
+  };
 
   return (
     <div className={classnames(containerClassName, isVisible && styles['container--visible'])} ref={innerRef}>
       <button
+        {...(isDisabled && { disabled: true })}
         type="button"
         onClick={toggleVisible}
-        className={classnames(styles['show_more'], toggleClassName, activeClassname)}
+        className={classnames(
+          styles['show_more'],
+          toggleClassName,
+          activeClassname,
+          isDisabled && styles['show_more--disabled'],
+        )}
       >
         {renderToggleText()}
 
-        <div className={classnames(arrowClassName, styles['show_more-icon-wrapper'])} >
+        <div className={classnames(arrowClassName, styles['show_more-icon-wrapper'])}>
           <ExpandIcon className={styles['show_more-icon']} />
         </div>
       </button>
-      {isVisible && (
-        <div className={classnames(styles['content'], contentClassName)}>
-          {children}
-        </div>
-      )}
+      {isVisible && <div className={classnames(styles['content'], contentClassName)}>{children}</div>}
     </div>
   );
 }

@@ -47,3 +47,8 @@
   overflow: hidden;
   max-height: 0;
 }
+
+.show_more--disabled {
+  cursor: default;
+  color: var(--pneumatic-color-black32);
+}

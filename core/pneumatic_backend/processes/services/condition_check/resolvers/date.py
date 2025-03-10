@@ -8,15 +8,16 @@ from .base import Resolver
 
 class DateResolver(Resolver):
     def _get_date(self, value):
-        try:
-            return datetime.strptime(value, '%m/%d/%Y')
-        except (ValueError, TypeError):
-            pass
-        try:
-            return datetime.strptime(value, '%Y-%m-%d')
-        except (ValueError, TypeError):
-            pass
-
+        if isinstance(value, str):
+            try:
+                value = int(value)
+            except ValueError:
+                pass
+        if isinstance(value, int):
+            try:
+                return datetime.fromtimestamp(value)
+            except (ValueError, TypeError):
+                pass
         return None
 
     def _prepare_args(self):

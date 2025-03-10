@@ -247,6 +247,7 @@ class TasksBreakdownByStepsQuery(
         SELECT
           tt.id,
           tt.name,
+          tt.api_name,
           tt.number,
           COUNT(pt.id) FILTER (
             {self._tasks_in_progress_clause()}
@@ -299,6 +300,7 @@ class TasksBreakdownByStepsNowQuery(
           tt.id,
           tt.name,
           tt.number,
+          tt.api_name,
           COUNT(pt.id) FILTER (
             {self._tasks_in_progress_now_clause()}
           ) AS in_progress,
@@ -397,7 +399,9 @@ class TasksDigestQuery(
         JOIN processes_taskperformer ptp ON pt.id = ptp.task_id
         JOIN processes_workflow pw ON pt.workflow_id = pw.id
         JOIN processes_template ptmp ON pw.template_id = ptmp.id
-        JOIN processes_tasktemplate tt ON pt.api_name = tt.api_name
+        JOIN processes_tasktemplate tt
+          ON pt.api_name = tt.api_name
+          AND ptmp.id = tt.template_id
         JOIN accounts_user au ON ptp.user_id = au.id
         JOIN accounts_account aa ON au.account_id = aa.id
         WHERE

@@ -313,20 +313,20 @@ class TestConditionCheckService:
     @pytest.mark.parametrize(
         ('operator', 'predicate_value', 'field_value', 'result'),
         [
-            (PredicateOperator.EQUAL, '03/23/2021', 'Captain Marvel', False),
-            (PredicateOperator.EQUAL, '03/23/2021', '2021-03-23', True),
-            (PredicateOperator.EQUAL, None, '03/23/2021', False),
-            (PredicateOperator.EQUAL, '03/23/2021', '03/23/2021', True),
+            (PredicateOperator.EQUAL, '1740087999', 'Captain Marvel', False),
+            (PredicateOperator.EQUAL, '1740087999', 1740087999, True),
+            (PredicateOperator.EQUAL, None, '1740087999', False),
+            (PredicateOperator.EQUAL, '1740087999', '1740087999', True),
             (PredicateOperator.NOT_EQUAL, 'Captain Marvel', '', False),
-            (PredicateOperator.NOT_EQUAL, '03/23/2021', '03/23/2021', False),
-            (PredicateOperator.NOT_EQUAL, '02/23/2021', '03/23/2021', True),
+            (PredicateOperator.NOT_EQUAL, '1740087999', '1740087999', False),
+            (PredicateOperator.NOT_EQUAL, '1740087999', '1740087998', True),
             (PredicateOperator.EXIST, None, 'Captain Marvel', False),
-            (PredicateOperator.EXIST, None, '03/23/2021', True),
+            (PredicateOperator.EXIST, None, '1740087999', True),
             (PredicateOperator.NOT_EXIST, None, 'C', True),
-            (PredicateOperator.MORE_THAN, '02/23/2021', '03/23/2021', True),
-            (PredicateOperator.MORE_THAN, '03/23/2021', '02/23/2021', False),
-            (PredicateOperator.LESS_THAN, '02/23/2021', '03/23/2021', False),
-            (PredicateOperator.LESS_THAN, '03/23/2021', '02/23/2021', True),
+            (PredicateOperator.MORE_THAN, '1740087999', '1740097999', True),
+            (PredicateOperator.MORE_THAN, '1740087999', '1740077999', False),
+            (PredicateOperator.LESS_THAN, '1740087999', '1740097999', False),
+            (PredicateOperator.LESS_THAN, '1740087999', '1740077999', True),
         ]
     )
     def test_check__date(

@@ -1,9 +1,9 @@
 /* eslint-disable */
 /* prettier-ignore */
 import React, { MouseEvent, ReactNode } from 'react';
-import { ToolbarChildrenProps } from '@draft-js-plugins/static-toolbar/lib/components/Toolbar';
 
 import { TAttachmentType } from '../../../../types/attachments';
+import { IExtendedToolbarChildrenProps } from './types';
 import { CustomTooltip } from '../../../UI';
 
 interface ICreateAttachmentButtonProp {
@@ -12,15 +12,11 @@ interface ICreateAttachmentButtonProp {
   children: ReactNode;
 }
 
-interface IAttachmentButtonProp extends React.PropsWithChildren<ToolbarChildrenProps> {
+interface IAttachmentButtonProp extends React.PropsWithChildren<IExtendedToolbarChildrenProps> {
   uploadAttachments(e: React.ChangeEvent<HTMLInputElement>): Promise<void>;
 }
 
-export function createAttachmentButton({
-  attachmentType,
-  tooltipText,
-  children,
-}: ICreateAttachmentButtonProp) {
+export function createAttachmentButton({ attachmentType, tooltipText, children }: ICreateAttachmentButtonProp) {
   return function AttachmentButton(props: IAttachmentButtonProp) {
     const buttonRef = React.useRef<HTMLButtonElement>(null);
     const uploadFieldRef = React.useRef<HTMLInputElement>(null);
@@ -46,11 +42,11 @@ export function createAttachmentButton({
           type="button"
           children={children}
         />
-        <CustomTooltip target={buttonRef} tooltipText={tooltipText} />
+        <CustomTooltip target={buttonRef} tooltipText={tooltipText} isModal={theme.isModal} />
         <input
           ref={uploadFieldRef}
           multiple
-          onChange={async event => {
+          onChange={async (event) => {
             await uploadAttachments(event);
 
             if (uploadFieldRef.current?.value) {

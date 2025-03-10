@@ -1,3 +1,4 @@
+/* eslint-disable indent */
 import * as React from 'react';
 import classnames from 'classnames';
 import { useIntl } from 'react-intl';
@@ -13,7 +14,7 @@ import { EConditionOperators, TConditionRule } from '../types';
 import { OPERATORS_WITHOUT_VALUE } from '..';
 import { DatePicker } from '../../../../UI/form/DatePicker';
 import { toTspDate } from '../../../../../utils/dateTime';
-
+import { getFormattedDropdownOption } from '../utils/getFormattedDropdownOption';
 import styles from '../Conditions.css';
 
 interface IConditionValueFieldProps {
@@ -90,6 +91,16 @@ export function ConditionValueField({
         }}
         isClearable={false}
         options={dropdownSelections}
+        formatOptionLabel={(option: IDropdownSelection, { context }) =>
+          context === 'menu'
+            ? getFormattedDropdownOption({
+                label: option.label,
+                isSelected: option.apiName === rule.value,
+                isTooltip: true,
+              })
+            : option.label
+        }
+        classNames={{ menu: () => styles['condition__value-field-select-menu'] }}
       />
     );
   }
@@ -114,6 +125,16 @@ export function ConditionValueField({
         }}
         isClearable={false}
         options={dropdownUsers}
+        formatOptionLabel={(option: IDropdownUser, { context }) =>
+          context === 'menu'
+            ? getFormattedDropdownOption({
+                label: option.label,
+                isSelected: option.id === rule.value,
+                isTooltip: true,
+              })
+            : option.label
+        }
+        classNames={{ menu: () => styles['condition__value-field-select-menu'] }}
       />
     );
   }

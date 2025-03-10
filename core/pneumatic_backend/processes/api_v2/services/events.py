@@ -91,11 +91,15 @@ class WorkflowEventService:
         cls,
         user: UserModel,
         task: Task,
-        after_create_actions: bool = True
+        text: str,
+        clear_text: str,
+        after_create_actions: bool = True,
     ) -> WorkflowEvent:
 
         event = WorkflowEvent.objects.create(
             type=WorkflowEventType.TASK_REVERT,
+            text=text,
+            clear_text=clear_text or text,
             account=user.account,
             task=task,
             task_json=TaskEventJsonSerializer(

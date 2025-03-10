@@ -498,13 +498,15 @@ class TestTaskView:
         )
         task = workflow.current_task_instance
         second_task = task.next
-
         api_client.post(
             f'/workflows/{workflow.id}/task-complete',
             data={'task_id': task.id}
         )
         api_client.post(
             f'/workflows/{workflow.id}/task-revert',
+            data={
+                'comment': 'text_comment',
+            }
         )
         workflow.refresh_from_db()
 
@@ -708,6 +710,55 @@ class TestTaskView:
             name='Date Field',
             order=1,
             type=FieldType.DATE,
+            is_required=True,
+            task=template_task,
+            template=template,
+        )
+        response = api_client.post(
+            path=f'/templates/{template.id}/run',
+            data={
+                'name': 'Test name',
+            }
+        )
+        workflow = Workflow.objects.get(id=response.data['id'])
+        task = workflow.tasks.first()
+
+        field = task.output.first()
+        field.value = 321321321
+        field.save(update_fields=['value'])
+
+        # act
+        response = api_client.get(f'/v2/tasks/{task.id}')
+
+        # assert
+        assert response.status_code == 200
+        field_data = response.data['output'][0]
+        assert field_data['id'] == field.id
+        assert field_data['type'] == field.type
+        assert field_data['is_required'] == field.is_required
+        assert field_data['name'] == field.name
+        assert field_data['description'] == field.description
+        assert field_data['api_name'] == field.api_name
+        assert field_data['value'] == str(321321321)
+        assert field_data['selections'] == []
+        assert field_data['attachments'] == []
+        assert field_data['order'] == field.order
+
+    def test_retrieve__field_url__ok(self, api_client):
+
+        # arrange
+        user = create_test_user()
+        api_client.token_authenticate(user)
+        template = create_test_template(
+            user=user,
+            is_active=True,
+            tasks_count=1
+        )
+        template_task = template.tasks.first()
+        FieldTemplate.objects.create(
+            name='URL Field',
+            order=1,
+            type=FieldType.URL,
             is_required=True,
             task=template_task,
             template=template,

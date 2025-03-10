@@ -50,19 +50,29 @@ class WorkflowCurrentTaskSerializer(serializers.ModelSerializer):
     due_date_tsp = TimeStampField(source='due_date', read_only=True)
     date_started_tsp = TimeStampField(source='date_started', read_only=True)
 
-    def get_delay(self, instance):
-        if self.context.get('with_delay'):
+    def get_delay(self, instance: Task):
+        if hasattr(instance, 'current_delay'):
+            # GET /workflows qst prefetch delay to "current_delay" attribute
+            if instance.current_delay:
+                # Check that exists
+                delay = instance.current_delay[0]
+                return DelayInfoSerializer(delay).data
+        else:
             delay = Delay.objects.current_task_delay(instance)
             if delay:
                 return DelayInfoSerializer(delay).data
         return None
 
     def get_performers(self, instance) -> List[int]:
-        return list(
-            TaskPerformer.objects.by_task(
-                instance.id
-            ).exclude_directly_deleted().user_ids()
-        )
+        if hasattr(instance, 'performers_ids'):
+            # GET /workflows qst prefetch delay to "performers_ids" attribute
+            return [e.user_id for e in instance.performers_ids]
+        else:
+            return list(
+                TaskPerformer.objects.by_task(
+                    instance.id
+                ).exclude_directly_deleted().user_ids()
+            )
 
 
 class TasksPassedInfoSerializer(serializers.ModelSerializer):
@@ -129,6 +139,7 @@ class WorkflowInfoSerializer(serializers.ModelSerializer):
             'date_created',
             'date_created_tsp',
             'template',
+            'owners',
         )
 
     task = serializers.SerializerMethodField()
@@ -153,10 +164,7 @@ class WorkflowInfoSerializer(serializers.ModelSerializer):
 
     def get_task(self, instance: Workflow):
         task = instance.tasks.get(number=instance.current_task)
-        return WorkflowCurrentTaskSerializer(
-            instance=task,
-            context={'with_delay': instance.is_delayed}
-        ).data
+        return WorkflowCurrentTaskSerializer(instance=task).data
 
 
 class TaskSerializer(serializers.ModelSerializer):

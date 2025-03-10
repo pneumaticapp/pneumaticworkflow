@@ -126,7 +126,6 @@ class TaskViewSet(
     BaseIdentifyMixin,
     GenericViewSet,
 ):
-    serializer_class = TaskSerializer
 
     def get_permissions(self):
         if self.action == 'retrieve':
@@ -174,14 +173,14 @@ class TaskViewSet(
         qst = Task.objects.on_account(user.account_id)
         if self.action == 'retrieve':
             qst = qst.with_date_first_started()
-        return qst
+        return self.prefetch_queryset(qst)
 
     def prefetch_queryset(self, queryset, extra_fields: List[str] = None):
         if self.action == 'retrieve':
             queryset = queryset.prefetch_related(
-                'sub_workflows__template__template_owners',
-                'checklists',
-                'output',
+                'checklists__selections',
+                'output__selections',
+                'output__attachments',
             ).select_related(
                 'workflow'
             )

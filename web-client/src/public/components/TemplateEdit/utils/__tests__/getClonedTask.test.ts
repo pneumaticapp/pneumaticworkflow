@@ -78,6 +78,7 @@ describe('getClonedTask', () => {
       ],
       uuid: '5f6cbe6b-238e-462e-8f18-d5ee5ec45de3',
       checklists: [],
+      revertTask: null,
     };
 
     const clonedTask = getClonedTask(mockTask);

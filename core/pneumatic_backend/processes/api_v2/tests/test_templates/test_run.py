@@ -31,6 +31,7 @@ from pneumatic_backend.processes.tests.fixtures import (
 from pneumatic_backend.processes.api_v2.serializers.workflow.events import (
     TaskEventJsonSerializer
 )
+from pneumatic_backend.processes.enums import OwnerType
 from pneumatic_backend.utils.validation import ErrorCode
 from pneumatic_backend.processes.messages import workflow as messages
 from pneumatic_backend.processes.enums import (
@@ -43,6 +44,9 @@ from pneumatic_backend.processes.enums import (
 )
 from pneumatic_backend.processes.services.workflow_action import (
     WorkflowActionService
+)
+from pneumatic_backend.processes.models.templates.owner import (
+    TemplateOwner
 )
 from pneumatic_backend.accounts.services import (
     UserInviteService
@@ -2289,7 +2293,12 @@ def test_run__not_admin__ok(
         is_active=True,
         tasks_count=1
     )
-    template.template_owners.add(not_admin)
+    TemplateOwner.objects.create(
+        template=template,
+        account=account,
+        type=OwnerType.USER,
+        user_id=not_admin.id,
+    )
     api_client.token_authenticate(not_admin)
 
     # act

@@ -128,6 +128,9 @@ class Template(
     def kickoff_instance(self):
         return self.kickoff.first()
 
+    def get_owners(self):
+        return self.owners.all()
+
     def get_draft(self):
         try:
             return self.draft.draft
@@ -223,11 +226,10 @@ class TemplateDraft(SoftDeleteModel):
         template_owners = self.draft.get('template_owners')
         if isinstance(template_owners, list) and user_id in template_owners:
             template_owners.remove(user_id)
-            need_save = True
 
-        template_owners = self.draft.get('template_owners')
-        if isinstance(template_owners, list) and user_id in template_owners:
-            template_owners.remove(user_id)
+        owners = self.draft.get('owners')
+        if isinstance(owners, list) and user_id in owners:
+            owners.remove(user_id)
             need_save = True
 
         tasks = self.draft.get('tasks')

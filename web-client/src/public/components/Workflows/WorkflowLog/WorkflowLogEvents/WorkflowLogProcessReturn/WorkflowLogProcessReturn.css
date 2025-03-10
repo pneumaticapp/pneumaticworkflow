@@ -3,15 +3,6 @@
   flex-flow: row;
 }
 
-.body {
-  padding-right: 8px;
-  max-width: calc(100% - 88px);
-
-  @media (--mobile) {
-    max-width: calc(100% - 42px);
-  }
-}
-
 .avatar {
   margin-right: 16px;
 
@@ -55,13 +46,12 @@
   }
 }
 
-.text {
-  overflow: hidden;
-  font-family: Nunito, sans-serif;
-  font-size: 15px;
-  line-height: 20px;
-  white-space: pre-wrap;
-  text-overflow: ellipsis;
-  word-break: break-word;
-  color: #62625f;
+.workflow-log-return__status {
+  @mixin text-base bold;
+
+  color: var(--pneumatic-color-black72);
+}
+
+.workflow-log-return__message {
+  color: var(--pneumatic-color-black72);
 }

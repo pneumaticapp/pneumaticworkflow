@@ -7,6 +7,7 @@ from pneumatic_backend.utils.salt import get_salt
 from pneumatic_backend.authentication.enums import AuthTokenType
 from pneumatic_backend.accounts.services.guests import GuestService
 from pneumatic_backend.processes.enums import (
+    OwnerType,
     TemplateType,
     WorkflowStatus,
 )
@@ -23,6 +24,9 @@ from pneumatic_backend.accounts.models import (
     Account,
     UserInvite,
     AccountSignupData,
+)
+from pneumatic_backend.processes.models.templates.owner import (
+    TemplateOwner
 )
 from pneumatic_backend.processes.enums import WorkflowEventType
 from pneumatic_backend.processes.api_v2.serializers.template.template import (
@@ -252,11 +256,21 @@ def create_test_template(
         kickoff.template = template
         kickoff.save()
     if account.billing_plan == BillingPlanType.FREEMIUM:
-        template.template_owners.set(
-            account.get_user_ids(include_invited=True)
-        )
+        user_ids = account.get_user_ids(include_invited=True)
+        for user_id in user_ids:
+            TemplateOwner.objects.create(
+                template=template,
+                account=account,
+                type=OwnerType.USER,
+                user_id=user_id,
+            )
     else:
-        template.template_owners.add(user)
+        TemplateOwner.objects.create(
+            template=template,
+            account=account,
+            type=OwnerType.USER,
+            user_id=user.id,
+        )
     if tasks_count:
         for number in range(1, tasks_count + 1):
             data = {
@@ -300,7 +314,8 @@ def create_test_workflow(
     due_date: Optional[datetime] = None,
     ancestor_task: Optional[Task] = None
 ) -> Workflow:
-    if template is None:
+    custom_template = template is not None
+    if not custom_template:
         template = create_test_template(
             user=user,
             with_delay=with_delay,
@@ -333,9 +348,20 @@ def create_test_workflow(
         due_date=due_date,
         ancestor_task=ancestor_task,
     )
-    workflow.members.add(
-        *set(template.template_owners.values_list('id', flat=True))
-    )
+    if custom_template:
+        template_owners_ids = Template.objects.filter(
+            id=template.id
+        ).get_owners_as_users()
+        workflow.owners.set(template_owners_ids)
+        workflow.members.add(*template_owners_ids)
+    else:
+        workflow.members.add(*set(
+            template.owners.values_list('user_id', flat=True)
+        ))
+        workflow.owners.add(*set(
+            template.owners.values_list('user_id', flat=True)
+        ))
+
     KickoffValue.objects.create(
         workflow=workflow,
         account=workflow.account

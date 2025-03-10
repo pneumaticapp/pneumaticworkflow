@@ -188,6 +188,7 @@ class TestRetrieveTemplate:
         assert response_task['name'] == request_task['name']
         assert response_task['description'] == request_task['description']
         assert response_task['delay'] is None
+        assert response_task['revert_task'] is None
         assert response_task['require_completion_by_all'] == (
             request_task['require_completion_by_all']
         )

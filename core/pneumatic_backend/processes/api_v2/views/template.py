@@ -1,3 +1,5 @@
+from django.db.models import Prefetch
+from typing_extensions import List
 from django.db import transaction
 from django.http import Http404
 from django.conf import settings
@@ -189,18 +191,36 @@ class TemplateViewSet(
                 qst = qst.with_template_owners(user.id)
         elif self.action == 'list':
             qst = qst.with_template_owners(user.id)
-        return qst
+        return self.prefetch_queryset(qst)
 
-    def prefetch_queryset(self, queryset, **kwargs):
-        if self.action == 'run':
+    def prefetch_queryset(self, queryset, extra_fields: List[str] = None):
+
+        # Original method "prefetch_queryset"
+        # does not working with custom defined Prefetch(...) fields
+
+        if self.action == 'retrieve':
             queryset = queryset.prefetch_related(
-                'tasks__delay',
-                'tasks__due_date'
-                'tasks__raw_performers',
-                'tasks__conditions__rules__predicates',
-                'tasks__checklists',
-                'tasks__fields__selections'
-                'kickoff__fields__selections'
+                'kickoff',
+                'kickoff__fields',
+                'kickoff__fields__selections',
+                'owners',
+                Prefetch(
+                    lookup='tasks',
+                    queryset=(
+                        TaskTemplate.objects
+                        .select_related('raw_due_date')
+                        .prefetch_related(
+                            'fields',
+                            'fields__selections',
+                            'checklists',
+                            'checklists__selections',
+                            'conditions',
+                            'conditions__rules',
+                            'conditions__rules__predicates',
+                            'raw_performers',
+                        )
+                    )
+                )
             )
         return queryset
 
@@ -326,17 +346,16 @@ class TemplateViewSet(
 
             SQL pagination (by LIMIT, OFFSET) is not possible because
             it is impossible to calculate response 'count' value """
-
         filter_slz = TemplateListFilterSerializer(data=request.GET)
         filter_slz.is_valid(raise_exception=True)
-        service = TemplateService(
-            user=request.user,
-            is_superuser=request.is_superuser,
-            auth_type=request.token_type
-        )
+
         data = filter_slz.validated_data
         search_text = data.get('search')
-        templates_data = service.get_templates_data(
+        user = request.user
+        queryset = Template.objects.raw_list_query(
+            user_id=user.id,
+            account_id=user.account_id,
+            is_account_owner=user.is_account_owner,
             ordering=data.get('ordering'),
             search=search_text,
             is_active=data.get('is_active'),
@@ -351,7 +370,7 @@ class TemplateViewSet(
                 is_superuser=request.is_superuser,
                 auth_type=request.token_type,
             )
-        return self.paginated_response(templates_data)
+        return self.paginated_response(queryset)
 
     @action(methods=['POST'], detail=True)
     def run(self, request, *args, **kwargs):

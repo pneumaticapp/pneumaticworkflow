@@ -26,7 +26,8 @@ from pneumatic_backend.accounts.models import (
 from pneumatic_backend.processes.enums import (
     PerformerType,
     PredicateOperator,
-    FieldType
+    FieldType,
+    OwnerType
 )
 from pneumatic_backend.authentication.tokens import (
     PublicToken,
@@ -107,7 +108,7 @@ def test_create__only_required_fields__defaults_ok(
     assert response_data['wf_name_template'] is None
     template = Template.objects.get(id=response_data['id'])
     assert template.tasks.first().account_id == user.account_id
-    assert template.template_owners.count() == 1
+    assert template.owners.count() == 1
     assert template.name == request_data['name']
     assert template.description == ''
     assert template.is_active == request_data['is_active']
@@ -306,9 +307,9 @@ def test_create__all_fields__ok(
     assert response_data.get('date_updated')
 
     template = Template.objects.get(id=response_data['id'])
-    template_owners_ids = list(template.template_owners.order_by(
+    template_owners_ids = list(template.owners.order_by(
         'id'
-    ).values_list('id', flat=True))
+    ).values_list('user_id', flat=True))
     assert template_owners_ids == request_data['template_owners']
     assert template.name == request_data['name']
     assert template.description == request_data['description']
@@ -402,8 +403,8 @@ def test_create__draft__ok(
     assert response_data['tasks'] == request_data['tasks']
 
     template = Template.objects.get(id=response_data['id'])
-    assert template.template_owners.count() == 1
-    assert template.template_owners.first().id == user.id
+    assert template.owners.count() == 1
+    assert template.owners.first().user_id == user.id
     assert template.name == 'New template'
     assert template.is_active is False
     assert template.is_public is False
@@ -1226,7 +1227,7 @@ def test_create__template_owners_from_another_account__validation_error(
     assert response.data['code'] == ErrorCode.VALIDATION_ERROR
     assert response.data['message'] == messages.MSG_PT_0019
     assert response.data['details']['reason'] == messages.MSG_PT_0019
-    assert response.data['details']['name'] == 'template_owners'
+    assert response.data['details']['name'] == 'owners'
     template_create_mock.assert_not_called()
     kickoff_create_mock.assert_not_called()
 
@@ -1279,7 +1280,7 @@ def test_create__template_owners_without_current_user__validation_error(
     assert response.data['code'] == ErrorCode.VALIDATION_ERROR
     assert response.data['message'] == messages.MSG_PT_0018
     assert response.data['details']['reason'] == messages.MSG_PT_0018
-    assert response.data['details']['name'] == 'template_owners'
+    assert response.data['details']['name'] == 'owners'
     template_create_mock.assert_not_called()
     kickoff_create_mock.assert_not_called()
 
@@ -1558,8 +1559,8 @@ def test_create__non_admin_in_template_owners_premium__ok(
         non_admin.id, owner.id
     }
     template = Template.objects.get(id=response_data['id'])
-    assert template.template_owners.count() == 2
-    assert template.template_owners.filter(id=non_admin.id).exists()
+    assert template.owners.count() == 2
+    assert template.owners.filter(user_id=non_admin.id).exists()
     template_create_mock.assert_called_once()
     kickoff_create_mock.assert_called_once()
 
@@ -1622,8 +1623,10 @@ def test_create__non_admin_in_template_owners_freemium__ok(
         non_admin.id, owner.id
     }
     template = Template.objects.get(id=response_data['id'])
-    assert template.template_owners.count() == 2
-    assert template.template_owners.filter(id=non_admin.id).exists()
+    assert template.owners.count() == 2
+    assert template.owners.filter(
+        type=OwnerType.USER, user_id=non_admin.id
+    ).exists()
     template_create_mock.assert_called_once()
     kickoff_create_mock.assert_called_once()
 
@@ -1757,8 +1760,8 @@ def test_create__draft_invalid_template_owners_format__set_default(
     # assert
     assert response.status_code == 200
     template = Template.objects.get(id=response.data['id'])
-    assert template.template_owners.count() == 1
-    assert template.template_owners.first().id == user.id
+    assert template.owners.count() == 1
+    assert template.owners.first().user_id == user.id
     template_create_mock.assert_called_once()
     kickoff_create_mock.assert_called_once()
 
@@ -1809,8 +1812,8 @@ def test_create__draft_another_acc_users_in_template_owners__set_default(
     assert response.status_code == 200
     assert response.data['template_owners'] == [user.id]
     template = Template.objects.get(id=response.data['id'])
-    assert template.template_owners.count() == 1
-    assert template.template_owners.first().id == user.id
+    assert template.owners.count() == 1
+    assert template.owners.first().user_id == user.id
     template_create_mock.assert_called_once()
     kickoff_create_mock.assert_called_once()
 

@@ -115,6 +115,51 @@ class TestDashboardOverview:
         assert response.data['in_progress'] == 5
         assert response.data['overdue'] == 1
 
+    def test_overview__not_current_task_overdue__workflow_not_overdue__ok(
+        self,
+        api_client
+    ):
+
+        # arrange
+        account = create_test_account()
+        create_test_user(
+            email='owner@test.test',
+            account=account,
+            is_account_owner=True
+        )
+        user = create_test_user(account=account, is_account_owner=False)
+        template = create_test_template(user)
+        overdue_workflow = create_test_workflow(user, template=template)
+        task_1 = overdue_workflow.tasks.get(number=1)
+        date_started = timezone.now() - timedelta(hours=1)
+        task_1.date_started = date_started
+        task_1.date_first_started = date_started
+        task_1.is_completed = True
+        task_1.date_completed = date_started + timedelta(hours=1)
+        task_1.due_date = date_started + timedelta(seconds=1)
+        task_1.save()
+
+        task_2 = overdue_workflow.tasks.get(number=2)
+        task_2.date_first_started = date_started
+        task_2.date_started = date_started
+        task_2.save()
+
+        overdue_workflow.date_created = date_started
+        overdue_workflow.current_task = 2
+        overdue_workflow.save()
+
+        api_client.token_authenticate(user)
+
+        # act
+        response = api_client.get('/reports/dashboard/workflows/overview')
+
+        # assert
+        assert response.status_code == 200
+        assert response.data['started'] == 1
+        assert response.data['completed'] == 0
+        assert response.data['in_progress'] == 1
+        assert response.data['overdue'] == 0
+
     def test_overview__different_user_statistic__correct_count(
         self,
         api_client
@@ -464,8 +509,12 @@ class TestDashboardOverview:
             'date_started',
             'date_first_started',
         ])
+        text_comment = 'text_comment'
         r2 = api_client.post(
             f'/workflows/{workflow.id}/task-revert',
+            data={
+                'comment': text_comment,
+            }
         )
 
         # act
@@ -1274,20 +1323,25 @@ class TestWorkflowBreakdownByTasks:
         assert response.status_code == 200
         assert len(response.data) == 3
         assert response.data[0]['id']
+        assert response.data[0]['api_name']
         assert response.data[0]['name']
         assert response.data[0]['number'] == 1
         assert response.data[0]['started'] == 2
         assert response.data[0]['completed'] == 2
         assert response.data[0]['in_progress'] == 3
         assert response.data[0]['overdue'] == 1
+
         assert response.data[1]['id']
+        assert response.data[1]['api_name']
         assert response.data[1]['name']
         assert response.data[1]['number'] == 2
         assert response.data[1]['started'] == 2
         assert response.data[1]['completed'] == 1
         assert response.data[1]['in_progress'] == 2
         assert response.data[1]['overdue'] == 0
+
         assert response.data[2]['id']
+        assert response.data[2]['api_name']
         assert response.data[2]['name']
         assert response.data[2]['number'] == 3
         assert response.data[2]['started'] == 1
@@ -1382,20 +1436,25 @@ class TestWorkflowBreakdownByTasks:
         assert response.status_code == 200
         assert len(response.data) == 3
         assert response.data[0]['id']
+        assert response.data[0]['api_name']
         assert response.data[0]['name']
         assert response.data[0]['number'] == 1
         assert response.data[0]['in_progress'] == 1
         assert response.data[0]['started'] is None
         assert response.data[0]['completed'] is None
         assert response.data[0]['overdue'] == 0
+
         assert response.data[1]['id']
+        assert response.data[1]['api_name']
         assert response.data[1]['name']
         assert response.data[1]['number'] == 2
         assert response.data[1]['in_progress'] == 1
         assert response.data[1]['started'] is None
         assert response.data[1]['completed'] is None
         assert response.data[1]['overdue'] == 0
+
         assert response.data[2]['id']
+        assert response.data[2]['api_name']
         assert response.data[2]['name']
         assert response.data[2]['number'] == 3
         assert response.data[2]['in_progress'] == 1
@@ -1436,6 +1495,7 @@ class TestWorkflowBreakdownByTasks:
         assert response.status_code == 200
         assert len(response.data) == 1
         assert response.data[0]['id'] == template_task.id
+        assert response.data[0]['api_name'] == template_task.api_name
         assert response.data[0]['name'] == template_task.name
         assert response.data[0]['number'] == 1
         assert response.data[0]['started'] == 0
@@ -1491,6 +1551,7 @@ class TestWorkflowBreakdownByTasks:
         assert response.status_code == 200
         assert len(response.data) == 1
         assert response.data[0]['id'] == template_task.id
+        assert response.data[0]['api_name'] == template_task.api_name
         assert response.data[0]['name'] == template_task.name
         assert response.data[0]['number'] == 1
         assert response.data[0]['started'] == 0
@@ -1535,6 +1596,7 @@ class TestWorkflowBreakdownByTasks:
         assert response.status_code == 200
         assert len(response.data) == 1
         assert response.data[0]['id'] == template_task.id
+        assert response.data[0]['api_name'] == template_task.api_name
         assert response.data[0]['name'] == template_task.name
         assert response.data[0]['number'] == 1
         assert response.data[0]['started'] == 1
@@ -1542,27 +1604,29 @@ class TestWorkflowBreakdownByTasks:
         assert response.data[0]['in_progress'] == 1
         assert response.data[0]['overdue'] == 1
 
-    def test_workflow_breakdown__overdue_workflow__ok(
+    def test_workflow_breakdown__overdue_diff_workflow_tasks__ok(
         self,
         api_client
     ):
         # arrange
-        account = create_test_account()
-        create_test_user(
-            email='owner@test.test',
-            account=account,
-            is_account_owner=True
-        )
-        user = create_test_user(account=account, is_account_owner=False)
-        overdue_workflow = create_test_workflow(user, tasks_count=1)
-        overdue_workflow.date_created = timezone.now() - timedelta(minutes=5)
-        overdue_workflow.due_date = timezone.now() - timedelta(minutes=1)
-        overdue_workflow.save(update_fields=[
-            'due_date',
-            'date_created'
-        ])
-        template = overdue_workflow.template
-        template_task = template.tasks.first()
+        user = create_test_user()
+        template = create_test_template(user=user, tasks_count=3)
+        template_task_1 = template.tasks.get(number=1)
+        template_task_2 = template.tasks.get(number=2)
+        template_task_3 = template.tasks.get(number=3)
+        date_started = timezone.now() - timedelta(hours=1)
+
+        workflow_1 = create_test_workflow(user, template=template)
+        task_1 = workflow_1.tasks.get(number=1)
+        task_1.date_started = date_started
+        task_1.due_date = date_started + timedelta(minutes=5)
+        task_1.save(update_fields=['due_date', 'date_started'])
+
+        workflow_2 = create_test_workflow(user, template=template)
+        task_2 = workflow_2.tasks.get(number=2)
+        task_2.date_started = date_started
+        task_2.due_date = date_started + timedelta(minutes=5)
+        task_2.save(update_fields=['due_date', 'date_started'])
         api_client.token_authenticate(user)
 
         # act
@@ -1573,14 +1637,186 @@ class TestWorkflowBreakdownByTasks:
 
         # assert
         assert response.status_code == 200
+        assert len(response.data) == 3
+        assert response.data[0]['id'] == template_task_1.id
+        assert response.data[0]['api_name'] == template_task_1.api_name
+        assert response.data[0]['number'] == 1
+        assert response.data[0]['overdue'] == 1
+        assert response.data[1]['id'] == template_task_2.id
+        assert response.data[1]['api_name'] == template_task_2.api_name
+        assert response.data[1]['number'] == 2
+        assert response.data[1]['overdue'] == 1
+        assert response.data[2]['id'] == template_task_3.id
+        assert response.data[2]['api_name'] == template_task_3.api_name
+        assert response.data[2]['number'] == 3
+        assert response.data[2]['overdue'] == 0
+
+    def test_workflow_breakdown__overdue_workflow__ok(
+        self,
+        api_client
+    ):
+        # arrange
+        user = create_test_user()
+        template = create_test_template(user=user, tasks_count=2)
+        template_task_1 = template.tasks.get(number=1)
+        template_task_2 = template.tasks.get(number=2)
+        date_created = timezone.now() - timedelta(hours=1)
+
+        workflow = create_test_workflow(user, template=template)
+        workflow.date_created = date_created
+        workflow.due_date = date_created + timedelta(minutes=5)
+        workflow.current_task = 2
+        task_1 = workflow.tasks.get(number=1)
+        task_1.date_started = date_created
+        task_1.date_completed = date_created + timedelta(minutes=1)
+        task_1.is_completed = True
+        task_1.save()
+
+        task_2 = workflow.tasks.get(number=2)
+        task_2.date_first_started = date_created
+        task_2.date_started = date_created
+        task_2.save()
+        workflow.save(
+            update_fields=['due_date', 'date_created', 'current_task']
+        )
+        api_client.token_authenticate(user)
+
+        # act
+        response = api_client.get(
+            '/reports/dashboard/workflows/by-tasks',
+            data={'template_id': template.id},
+        )
+
+        # assert
+        assert response.status_code == 200
+        assert len(response.data) == 2
+        assert response.data[0]['id'] == template_task_1.id
+        assert response.data[0]['api_name'] == template_task_1.api_name
+        assert response.data[0]['number'] == 1
+        assert response.data[0]['started'] == 1
+        assert response.data[0]['completed'] == 1
+        assert response.data[0]['in_progress'] == 1
+        assert response.data[0]['overdue'] == 0
+
+        assert response.data[1]['id'] == template_task_2.id
+        assert response.data[1]['api_name'] == template_task_2.api_name
+        assert response.data[1]['number'] == 2
+        assert response.data[1]['started'] == 1
+        assert response.data[1]['completed'] == 0
+        assert response.data[1]['in_progress'] == 1
+        assert response.data[1]['overdue'] == 1
+
+    def test_workflow_breakdown__overdue_workflow_and_task__ok(
+        self,
+        api_client
+    ):
+        # arrange
+        user = create_test_user()
+        template = create_test_template(user=user, tasks_count=2)
+        template_task_1 = template.tasks.get(number=1)
+        template_task_2 = template.tasks.get(number=2)
+        date_created = timezone.now() - timedelta(hours=1)
+
+        workflow = create_test_workflow(user, template=template)
+        workflow.date_created = date_created
+        workflow.due_date = date_created + timedelta(minutes=5)
+        workflow.current_task = 2
+        task_1 = workflow.tasks.get(number=1)
+        task_1.date_started = date_created
+        task_1.date_completed = date_created + timedelta(minutes=5)
+        task_1.due_date = date_created + timedelta(minutes=1)
+        task_1.is_completed = True
+        task_1.save()
+
+        task_2 = workflow.tasks.get(number=2)
+        task_2.date_first_started = date_created
+        task_2.date_started = date_created
+        task_2.save()
+        workflow.save(
+            update_fields=['due_date', 'date_created', 'current_task']
+        )
+
+        api_client.token_authenticate(user)
+
+        # act
+        response = api_client.get(
+            '/reports/dashboard/workflows/by-tasks',
+            data={'template_id': template.id},
+        )
+
+        # assert
+        assert response.status_code == 200
+        assert len(response.data) == 2
+        assert response.data[0]['id'] == template_task_1.id
+        assert response.data[0]['api_name'] == template_task_1.api_name
+        assert response.data[0]['number'] == 1
+        assert response.data[0]['started'] == 1
+        assert response.data[0]['completed'] == 1
+        assert response.data[0]['in_progress'] == 1
+        assert response.data[0]['overdue'] == 1
+
+        assert response.data[1]['id'] == template_task_2.id
+        assert response.data[1]['api_name'] == template_task_2.api_name
+        assert response.data[1]['number'] == 2
+        assert response.data[1]['started'] == 1
+        assert response.data[1]['completed'] == 0
+        assert response.data[1]['in_progress'] == 1
+        assert response.data[1]['overdue'] == 1
+
+    def test_workflow_breakdown__in_progress__ok(
+        self,
+        mocker,
+        api_client
+    ):
+
+        """ Bug case when template task api name is same
+            in different templates """
+
+        # arrange
+        mocker.patch(
+            'pneumatic_backend.processes.tasks.webhooks.'
+            'send_task_completed_webhook.delay'
+        )
+        account = create_test_account()
+        create_test_user(
+            email='owner@test.test',
+            account=account,
+            is_account_owner=True
+        )
+        user = create_test_user(account=account, is_account_owner=False)
+        template = create_test_template(user, tasks_count=1)
+        task = template.tasks.first()
+        template_2 = create_test_template(user, tasks_count=1)
+        task_2 = template_2.tasks.first()
+        task_2.api_name = task.api_name
+        task_2.save()
+        create_test_workflow(user, template=template)
+        create_test_workflow(user, template=template_2)
+        api_client.token_authenticate(user)
+        date_from = template.date_created - timedelta(hours=1)
+        date_to = template.date_created + timedelta(hours=1)
+
+        # act
+        response = api_client.get(
+            '/reports/dashboard/workflows/by-tasks',
+            data={
+                'template_id': template.id,
+                'date_from_tsp': date_from.timestamp(),
+                'date_to_tsp': date_to.timestamp(),
+            },
+        )
+
+        # assert
+        assert response.status_code == 200
         assert len(response.data) == 1
-        assert response.data[0]['id'] == template_task.id
-        assert response.data[0]['name'] == template_task.name
+        assert response.data[0]['id']
+        assert response.data[0]['api_name']
+        assert response.data[0]['name']
         assert response.data[0]['number'] == 1
         assert response.data[0]['started'] == 1
         assert response.data[0]['completed'] == 0
         assert response.data[0]['in_progress'] == 1
-        assert response.data[0]['overdue'] == 1
+        assert response.data[0]['overdue'] == 0
 
     def test_workflow_breakdown__now__overdue_task__ok(
         self,
@@ -1624,11 +1860,66 @@ class TestWorkflowBreakdownByTasks:
         assert len(response.data) == 1
         assert response.data[0]['id'] == template_task.id
         assert response.data[0]['name'] == template_task.name
+        assert response.data[0]['api_name'] == template_task.api_name
         assert response.data[0]['number'] == 1
         assert response.data[0]['in_progress'] == 1
         assert response.data[0]['started'] is None
         assert response.data[0]['completed'] is None
         assert response.data[0]['overdue'] == 1
+
+    def test_workflow_breakdown__now__overdue_diff_workflow_tasks__ok(
+        self,
+        api_client
+    ):
+        # arrange
+        user = create_test_user()
+        template = create_test_template(user=user, tasks_count=3)
+        template_task_1 = template.tasks.get(number=1)
+        template_task_2 = template.tasks.get(number=2)
+        template_task_3 = template.tasks.get(number=3)
+        date_started = timezone.now() - timedelta(hours=1)
+
+        workflow_1 = create_test_workflow(user, template=template)
+        task_1 = workflow_1.tasks.get(number=1)
+        task_1.date_started = date_started
+        task_1.due_date = date_started + timedelta(minutes=5)
+        task_1.save(update_fields=['due_date', 'date_started'])
+
+        workflow_2 = create_test_workflow(user, template=template)
+        workflow_2.current_task = 2
+        workflow_2.save()
+        task_2 = workflow_2.tasks.get(number=2)
+        task_2.date_started = date_started
+        task_2.due_date = date_started + timedelta(minutes=5)
+        task_2.save(update_fields=['due_date', 'date_started'])
+        api_client.token_authenticate(user)
+
+        # act
+        response = api_client.get(
+            '/reports/dashboard/workflows/by-tasks',
+            data={
+                'template_id': template.id,
+                'now': True
+            },
+        )
+
+        # assert
+        assert response.status_code == 200
+        assert len(response.data) == 3
+        assert response.data[0]['id'] == template_task_1.id
+        assert response.data[0]['api_name'] == template_task_1.api_name
+        assert response.data[0]['number'] == 1
+        assert response.data[0]['overdue'] == 1
+
+        assert response.data[1]['id'] == template_task_2.id
+        assert response.data[1]['api_name'] == template_task_2.api_name
+        assert response.data[1]['number'] == 2
+        assert response.data[1]['overdue'] == 1
+
+        assert response.data[2]['id'] == template_task_3.id
+        assert response.data[2]['api_name'] == template_task_3.api_name
+        assert response.data[2]['number'] == 3
+        assert response.data[2]['overdue'] == 0
 
     def test_workflow_breakdown__now__overdue_workflow__ok(
         self,
@@ -1636,6 +1927,75 @@ class TestWorkflowBreakdownByTasks:
     ):
 
         # arrange
+        user = create_test_user()
+        template = create_test_template(user=user, tasks_count=2)
+        template_task_1 = template.tasks.get(number=1)
+        template_task_2 = template.tasks.get(number=2)
+        date_created = timezone.now() - timedelta(hours=1)
+
+        workflow = create_test_workflow(user, template=template)
+        workflow.date_created = date_created
+        workflow.due_date = date_created + timedelta(minutes=5)
+        workflow.current_task = 2
+        task_1 = workflow.tasks.get(number=1)
+        task_1.date_started = date_created
+        task_1.date_first_started = date_created
+        task_1.is_completed = True
+        task_1.save()
+
+        task_2 = workflow.tasks.get(number=2)
+        task_2.date_first_started = date_created
+        task_2.date_started = date_created
+        task_2.save()
+        workflow.save(
+            update_fields=['due_date', 'date_created', 'current_task']
+        )
+        api_client.token_authenticate(user)
+
+        # act
+        response = api_client.get(
+            '/reports/dashboard/workflows/by-tasks',
+            data={
+                'template_id': template.id,
+                'now': True
+            },
+        )
+
+        # assert
+        assert response.status_code == 200
+        assert len(response.data) == 2
+        assert response.data[0]['id'] == template_task_1.id
+        assert response.data[0]['api_name'] == template_task_1.api_name
+        assert response.data[0]['name'] == template_task_1.name
+        assert response.data[0]['number'] == 1
+        assert response.data[0]['in_progress'] == 1
+        assert response.data[0]['started'] is None
+        assert response.data[0]['completed'] is None
+        assert response.data[0]['overdue'] == 0
+
+        assert response.data[1]['id'] == template_task_2.id
+        assert response.data[1]['api_name'] == template_task_2.api_name
+        assert response.data[1]['name'] == template_task_2.name
+        assert response.data[1]['number'] == 2
+        assert response.data[1]['in_progress'] == 1
+        assert response.data[1]['started'] is None
+        assert response.data[1]['completed'] is None
+        assert response.data[1]['overdue'] == 1
+
+    def test_workflow_breakdown__now__in_progress__ok(
+        self,
+        mocker,
+        api_client
+    ):
+
+        """ Bug case when template task api name is same
+            in different templates """
+
+        # arrange
+        mocker.patch(
+            'pneumatic_backend.processes.tasks.webhooks.'
+            'send_task_completed_webhook.delay'
+        )
         account = create_test_account()
         create_test_user(
             email='owner@test.test',
@@ -1643,15 +2003,14 @@ class TestWorkflowBreakdownByTasks:
             is_account_owner=True
         )
         user = create_test_user(account=account, is_account_owner=False)
-        overdue_workflow = create_test_workflow(user, tasks_count=1)
-        overdue_workflow.date_created = timezone.now() - timedelta(minutes=5)
-        overdue_workflow.due_date = timezone.now() - timedelta(minutes=1)
-        overdue_workflow.save(update_fields=[
-            'due_date',
-            'date_created'
-        ])
-        template = overdue_workflow.template
-        template_task = template.tasks.first()
+        template = create_test_template(user, tasks_count=1)
+        task = template.tasks.first()
+        template_2 = create_test_template(user, tasks_count=1)
+        task_2 = template_2.tasks.first()
+        task_2.api_name = task.api_name
+        task_2.save()
+        create_test_workflow(user, template=template)
+        create_test_workflow(user, template=template_2)
         api_client.token_authenticate(user)
 
         # act
@@ -1666,10 +2025,11 @@ class TestWorkflowBreakdownByTasks:
         # assert
         assert response.status_code == 200
         assert len(response.data) == 1
-        assert response.data[0]['id'] == template_task.id
-        assert response.data[0]['name'] == template_task.name
+        assert response.data[0]['id']
+        assert response.data[0]['api_name']
+        assert response.data[0]['name']
         assert response.data[0]['number'] == 1
-        assert response.data[0]['in_progress'] == 1
         assert response.data[0]['started'] is None
         assert response.data[0]['completed'] is None
-        assert response.data[0]['overdue'] == 1
+        assert response.data[0]['in_progress'] == 1
+        assert response.data[0]['overdue'] == 0

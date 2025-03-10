@@ -58,7 +58,13 @@ export const Button = React.forwardRef(
   },
 );
 
-type TButtonStyle = 'yellow' | 'black' | 'transparent-yellow' | 'transparent-orange' | 'transparent-black';
+type TButtonStyle =
+  | 'yellow'
+  | 'black'
+  | 'transparent-yellow'
+  | 'transparent-orange'
+  | 'transparent-black'
+  | 'link-dark-text';
 
 type TButtonConditionalProps =
   | {
@@ -107,6 +113,7 @@ const buttonStyleClassMap: { [key in TButtonStyle]: string } = {
   'transparent-yellow': 'button_transparent-yellow',
   'transparent-orange': 'button_transparent-orange',
   'transparent-black': 'button_transparent-black',
+  'link-dark-text': 'button_link-dark-text',
 };
 
 const loaderColorMap: { [key in TButtonStyle]: TSpinnerColor } = {
@@ -115,6 +122,7 @@ const loaderColorMap: { [key in TButtonStyle]: TSpinnerColor } = {
   'transparent-yellow': 'yellow',
   'transparent-orange': 'yellow',
   'transparent-black': 'yellow',
+  'link-dark-text': 'yellow',
 };
 
 export type TButtonProps = IButtonCommonProps & TButtonConditionalProps;

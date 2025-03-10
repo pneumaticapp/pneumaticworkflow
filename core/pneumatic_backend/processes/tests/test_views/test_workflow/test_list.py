@@ -28,7 +28,6 @@ from pneumatic_backend.processes.enums import (
 from pneumatic_backend.processes.api_v2.services.task.performers import (
     TaskPerformersService
 )
-from pneumatic_backend.authentication.enums import AuthTokenType
 from pneumatic_backend.processes.api_v2.services import (
     WorkflowEventService
 )
@@ -111,11 +110,54 @@ def test_list__workflow_due_date__ok(api_client):
     task_data = wf_data['task']
     assert task_data['id'] == task.id
     assert task_data['name'] == task.name
-    assert task_data['date_started'] == task.date_started
     assert task_data['date_started_tsp'] == task.date_started.timestamp()
     assert task_data['delay'] is None
     assert task_data['due_date_tsp'] is None
     assert task_data['performers'] == [user.id]
+
+
+def test_list__pagination__ok(api_client):
+
+    # arrange
+    user = create_test_user()
+    create_test_workflow(user=user, tasks_count=2)
+    workflow_2 = create_test_workflow(user=user, tasks_count=2)
+    create_test_workflow(user=user, tasks_count=2)
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.get('/workflows?limit=1&offset=1&ordering=date')
+
+    # assert
+    assert response.status_code == 200
+    data = response.data
+    assert data['count'] == 3
+    assert data['previous'].split('?')[1] == 'limit=1&ordering=date'
+    assert data['next'].split('?')[1] == 'limit=1&offset=2&ordering=date'
+    assert len(data['results']) == 1
+    assert data['results'][0]['id'] == workflow_2.id
+
+
+def test_list__pagination_default_ordering__ok(api_client):
+
+    # arrange
+    user = create_test_user()
+    create_test_workflow(user=user, tasks_count=2)
+    create_test_workflow(user=user, tasks_count=2)
+    workflow_3 = create_test_workflow(user=user, tasks_count=2)
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.get('/workflows?limit=1&offset=0')
+
+    # assert
+    assert response.status_code == 200
+    data = response.data
+    assert data['count'] == 3
+    assert data['previous'] is None
+    assert data['next']
+    assert len(data['results']) == 1
+    assert data['results'][0]['id'] == workflow_3.id
 
 
 def test_list__workflow_current_task_delay__ok(api_client):
@@ -141,16 +183,12 @@ def test_list__workflow_current_task_delay__ok(api_client):
     # assert
     assert response.status_code == 200
     delay_data = response.data['results'][0]['task']['delay']
-    assert delay_data['start_date'] == delay.start_date
     assert delay_data['start_date_tsp'] == delay.start_date.timestamp()
-    assert delay_data['end_date'] is None
     assert delay_data['end_date_tsp'] is None
-    assert delay_data['duration'] == delay.duration
+    assert delay_data['duration'] is not None
 
 
-def test_list__not_template_owner__empty_list(
-    api_client,
-):
+def test_list__not_template_owner__empty_list(api_client):
 
     # arrange
     account = create_test_account()
@@ -172,7 +210,7 @@ def test_list__not_template_owner__empty_list(
     assert len(response.data['results']) == 0
 
 
-def test_list__search__workflow_name__ok(api_client, mocker):
+def test_list__search__workflow_name__ok(api_client):
 
     # arrange
     user = create_test_user()
@@ -182,10 +220,6 @@ def test_list__search__workflow_name__ok(api_client, mocker):
     create_test_workflow(user)
     search_text = workflow.name
     api_client.token_authenticate(user)
-    analytics_mock = mocker.patch(
-        'pneumatic_backend.analytics.services.AnalyticService.'
-        'search_search'
-    )
 
     # act
     response = api_client.get(f'/workflows?search={search_text}')
@@ -195,16 +229,9 @@ def test_list__search__workflow_name__ok(api_client, mocker):
     assert len(response.data['results']) == 1
     assert response.data['results'][0]['id'] == workflow.id
     assert response.data['results'][0]['status_updated']
-    analytics_mock.assert_called_once_with(
-        user=user,
-        page='processes',
-        search_text=search_text,
-        is_superuser=False,
-        auth_type=AuthTokenType.USER
-    )
 
 
-def test_list__search__kickoff_description__ok(api_client, mocker):
+def test_list__search__kickoff_description__ok(api_client):
 
     # arrange
     user = create_test_user()
@@ -217,10 +244,6 @@ def test_list__search__kickoff_description__ok(api_client, mocker):
     create_test_workflow(user)
     search_text = 'file'
     api_client.token_authenticate(user)
-    analytics_mock = mocker.patch(
-        'pneumatic_backend.analytics.services.AnalyticService.'
-        'search_search'
-    )
 
     # act
     response = api_client.get(f'/workflows?search={search_text}')
@@ -229,16 +252,9 @@ def test_list__search__kickoff_description__ok(api_client, mocker):
     assert response.status_code == 200
     assert len(response.data['results']) == 1
     assert response.data['results'][0]['id'] == workflow.id
-    analytics_mock.assert_called_once_with(
-        user=user,
-        page='processes',
-        search_text=search_text,
-        is_superuser=False,
-        auth_type=AuthTokenType.USER
-    )
 
 
-def test_list__search__current_task_description__ok(api_client, mocker):
+def test_list__search__current_task_description__ok(api_client):
 
     # arrange
     user = create_test_user()
@@ -251,10 +267,6 @@ def test_list__search__current_task_description__ok(api_client, mocker):
     create_test_workflow(user)
     search_text = 'file'
     api_client.token_authenticate(user)
-    analytics_mock = mocker.patch(
-        'pneumatic_backend.analytics.services.AnalyticService.'
-        'search_search'
-    )
 
     # act
     response = api_client.get(f'/workflows?search={search_text}')
@@ -263,19 +275,9 @@ def test_list__search__current_task_description__ok(api_client, mocker):
     assert response.status_code == 200
     assert len(response.data['results']) == 1
     assert response.data['results'][0]['id'] == workflow.id
-    analytics_mock.assert_called_once_with(
-        user=user,
-        page='processes',
-        search_text=search_text,
-        is_superuser=False,
-        auth_type=AuthTokenType.USER
-    )
 
 
-def test_list__search__not_current_task_description__not_found(
-    api_client,
-    mocker
-):
+def test_list__search__not_current_task_description__not_found(api_client):
 
     # arrange
     user = create_test_user()
@@ -294,10 +296,6 @@ def test_list__search__not_current_task_description__not_found(
     create_test_workflow(user)
     search_text = 'file'
     api_client.token_authenticate(user)
-    mocker.patch(
-        'pneumatic_backend.analytics.services.AnalyticService.'
-        'search_search'
-    )
 
     # act
     response = api_client.get(f'/workflows?search={search_text}')
@@ -307,10 +305,7 @@ def test_list__search__not_current_task_description__not_found(
     assert len(response.data['results']) == 0
 
 
-def test_list__search__email_login__ok(
-    api_client,
-    mocker,
-):
+def test_list__search__email_login__ok(api_client):
 
     # arrange
     user = create_test_user()
@@ -327,10 +322,6 @@ def test_list__search__email_login__ok(
     search_text = 'fred'
     create_test_workflow(user, tasks_count=1)
     api_client.token_authenticate(user)
-    mocker.patch(
-        'pneumatic_backend.analytics.services.AnalyticService.'
-        'search_search'
-    )
 
     # act
     response = api_client.get(f'/workflows?search={search_text}')
@@ -341,10 +332,7 @@ def test_list__search__email_login__ok(
     assert response.data['results'][0]['id'] == workflow.id
 
 
-def test_list__search__email_domain__ok(
-    api_client,
-    mocker,
-):
+def test_list__search__email_domain__ok(api_client):
 
     # arrange
     user = create_test_user()
@@ -361,10 +349,6 @@ def test_list__search__email_domain__ok(
     search_text = 'boy'
     create_test_workflow(user, tasks_count=1)
     api_client.token_authenticate(user)
-    mocker.patch(
-        'pneumatic_backend.analytics.services.AnalyticService.'
-        'search_search'
-    )
 
     # act
     response = api_client.get(f'/workflows?search={search_text}')
@@ -374,10 +358,7 @@ def test_list__search__email_domain__ok(
     assert len(response.data['results']) == 1
 
 
-def test_list__search__full_email__ok(
-    api_client,
-    mocker,
-):
+def test_list__search__full_email__ok(api_client):
 
     # arrange
     user = create_test_user()
@@ -394,10 +375,6 @@ def test_list__search__full_email__ok(
     search_text = 'fred@boy'
     create_test_workflow(user, tasks_count=1)
     api_client.token_authenticate(user)
-    mocker.patch(
-        'pneumatic_backend.analytics.services.AnalyticService.'
-        'search_search'
-    )
 
     # act
     response = api_client.get(f'/workflows?search={search_text}')
@@ -408,10 +385,7 @@ def test_list__search__full_email__ok(
     assert response.data['results'][0]['id'] == workflow.id
 
 
-def test_list__search__safe_single_quote__ok(
-    api_client,
-    mocker,
-):
+def test_list__search__safe_single_quote__ok(api_client):
 
     # arrange
     user = create_test_user()
@@ -423,10 +397,6 @@ def test_list__search__safe_single_quote__ok(
     search_text = "'fred@boy"
     create_test_workflow(user, tasks_count=1)
     api_client.token_authenticate(user)
-    mocker.patch(
-        'pneumatic_backend.analytics.services.AnalyticService.'
-        'search_search'
-    )
 
     # act
     response = api_client.get(f'/workflows?search={search_text}')
@@ -437,10 +407,7 @@ def test_list__search__safe_single_quote__ok(
     assert response.data['results'][0]['id'] == workflow.id
 
 
-def test_list__search__double_quote__ok(
-    api_client,
-    mocker,
-):
+def test_list__search__double_quote__ok(api_client):
 
     # arrange
     user = create_test_user()
@@ -452,10 +419,6 @@ def test_list__search__double_quote__ok(
     search_text = '"fred@boy'
     create_test_workflow(user, tasks_count=1)
     api_client.token_authenticate(user)
-    mocker.patch(
-        'pneumatic_backend.analytics.services.AnalyticService.'
-        'search_search'
-    )
 
     # act
     response = api_client.get(f'/workflows?search={search_text}')
@@ -466,10 +429,7 @@ def test_list__search__double_quote__ok(
     assert response.data['results'][0]['id'] == workflow.id
 
 
-def test_list__search__sql_injection__safe(
-    api_client,
-    mocker,
-):
+def test_list__search__sql_injection__safe(api_client):
 
     # arrange
     user = create_test_user()
@@ -481,10 +441,6 @@ def test_list__search__sql_injection__safe(
     search_text = 'SELECT * FROM accounts_user WHERE id = 105 OR 10=10;'
     create_test_workflow(user, tasks_count=1)
     api_client.token_authenticate(user)
-    mocker.patch(
-        'pneumatic_backend.analytics.services.AnalyticService.'
-        'search_search'
-    )
 
     # act
     response = api_client.get(
@@ -497,10 +453,7 @@ def test_list__search__sql_injection__safe(
     assert len(response.data['results']) == 0
 
 
-def test_list__special_chars__ok(
-    api_client,
-    mocker,
-):
+def test_list__special_chars__ok(api_client):
 
     """ !"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~ """
 
@@ -514,10 +467,6 @@ def test_list__special_chars__ok(
     )
     create_test_workflow(user, tasks_count=1)
     api_client.token_authenticate(user)
-    mocker.patch(
-        'pneumatic_backend.analytics.services.AnalyticService.'
-        'search_search'
-    )
 
     # act
     response = api_client.get(
@@ -530,7 +479,7 @@ def test_list__special_chars__ok(
     assert len(response.data['results']) == 0
 
 
-def test_list__search__strip_spaces__ok(api_client, mocker):
+def test_list__search__strip_spaces__ok(api_client):
 
     # arrange
     user = create_test_user()
@@ -543,10 +492,6 @@ def test_list__search__strip_spaces__ok(api_client, mocker):
     )
     search_text = 'oster@test.com'
     api_client.token_authenticate(user)
-    mocker.patch(
-        'pneumatic_backend.analytics.services.AnalyticService.'
-        'search_search'
-    )
 
     # act
     response = api_client.get(f'/workflows?search={search_text}')
@@ -556,7 +501,7 @@ def test_list__search__strip_spaces__ok(api_client, mocker):
     assert len(response.data['results']) == 1
 
 
-def test_list__search__comment__ok(api_client, mocker):
+def test_list__search__comment__ok(api_client):
 
     # arrange
     user = create_test_user()
@@ -569,10 +514,6 @@ def test_list__search__comment__ok(api_client, mocker):
     )
     search_text = 'comment text'
     api_client.token_authenticate(user)
-    mocker.patch(
-        'pneumatic_backend.analytics.services.AnalyticService.'
-        'search_search'
-    )
 
     # act
     response = api_client.get(f'/workflows?search={search_text}')
@@ -582,7 +523,7 @@ def test_list__search__comment__ok(api_client, mocker):
     assert len(response.data['results']) == 1
 
 
-def test_list__search__comment__url_as_text__ok(api_client, mocker):
+def test_list__search__comment__url_as_text__ok(api_client):
 
     # arrange
     user = create_test_user()
@@ -595,10 +536,6 @@ def test_list__search__comment__url_as_text__ok(api_client, mocker):
     )
     search_text = 'pneumo.app'
     api_client.token_authenticate(user)
-    mocker.patch(
-        'pneumatic_backend.analytics.services.AnalyticService.'
-        'search_search'
-    )
 
     # act
     response = api_client.get(f'/workflows?search={search_text}')
@@ -608,7 +545,7 @@ def test_list__search__comment__url_as_text__ok(api_client, mocker):
     assert len(response.data['results']) == 1
 
 
-def test_list__search__comment__email__ok(api_client, mocker):
+def test_list__search__comment__email__ok(api_client):
 
     # arrange
     user = create_test_user()
@@ -621,10 +558,6 @@ def test_list__search__comment__email__ok(api_client, mocker):
     )
     search_text = 'ster'
     api_client.token_authenticate(user)
-    mocker.patch(
-        'pneumatic_backend.analytics.services.AnalyticService.'
-        'search_search'
-    )
 
     # act
     response = api_client.get(f'/workflows?search={search_text}')
@@ -634,7 +567,7 @@ def test_list__search__comment__email__ok(api_client, mocker):
     assert len(response.data['results']) == 1
 
 
-def test_list__search__comment__markdown__ok(api_client, mocker):
+def test_list__search__comment__markdown__ok(api_client):
 
     # arrange
     user = create_test_user()
@@ -649,10 +582,6 @@ def test_list__search__comment__markdown__ok(api_client, mocker):
     )
     search_text = 'file.here'
     api_client.token_authenticate(user)
-    mocker.patch(
-        'pneumatic_backend.analytics.services.AnalyticService.'
-        'search_search'
-    )
 
     # act
     response = api_client.get(f'/workflows?search={search_text}')
@@ -662,7 +591,7 @@ def test_list__search__comment__markdown__ok(api_client, mocker):
     assert len(response.data['results']) == 1
 
 
-def test_list__search__comment_attachment__ok(api_client, mocker):
+def test_list__search__comment_attachment__ok(api_client):
 
     # arrange
     user = create_test_user()
@@ -682,10 +611,6 @@ def test_list__search__comment_attachment__ok(api_client, mocker):
     )
     search_text = 'fred'
     api_client.token_authenticate(user)
-    mocker.patch(
-        'pneumatic_backend.analytics.services.AnalyticService.'
-        'search_search'
-    )
 
     # act
     response = api_client.get(f'/workflows?search={search_text}')
@@ -695,7 +620,7 @@ def test_list__search__comment_attachment__ok(api_client, mocker):
     assert len(response.data['results']) == 1
 
 
-def test_list__search__task_field_attachment__ok(api_client, mocker):
+def test_list__search__task_field_attachment__ok(api_client):
 
     # arrange
     user = create_test_user()
@@ -717,10 +642,6 @@ def test_list__search__task_field_attachment__ok(api_client, mocker):
     )
     search_text = 'fred.ce'
     api_client.token_authenticate(user)
-    mocker.patch(
-        'pneumatic_backend.analytics.services.AnalyticService.'
-        'search_search'
-    )
 
     # act
     response = api_client.get(f'/workflows?search={search_text}')
@@ -730,10 +651,7 @@ def test_list__search__task_field_attachment__ok(api_client, mocker):
     assert len(response.data['results']) == 1
 
 
-def test_list__search__kickoff_field_attachment__ok(
-    api_client,
-    mocker
-):
+def test_list__search__kickoff_field_attachment__ok(api_client):
 
     # arrange
     user = create_test_user()
@@ -754,10 +672,6 @@ def test_list__search__kickoff_field_attachment__ok(
     )
     search_text = 'fred.ce'
     api_client.token_authenticate(user)
-    mocker.patch(
-        'pneumatic_backend.analytics.services.AnalyticService.'
-        'search_search'
-    )
 
     # act
     response = api_client.get(f'/workflows?search={search_text}')
@@ -767,10 +681,7 @@ def test_list__search__kickoff_field_attachment__ok(
     assert len(response.data['results']) == 1
 
 
-def test_list__search__not_comment_event__not_found(
-    api_client,
-    mocker
-):
+def test_list__search__not_comment_event__not_found(api_client):
 
     # arrange
     user = create_test_user()
@@ -783,10 +694,6 @@ def test_list__search__not_comment_event__not_found(
     event.text = search_text
     event.save()
     api_client.token_authenticate(user)
-    mocker.patch(
-        'pneumatic_backend.analytics.services.AnalyticService.'
-        'search_search'
-    )
 
     # act
     response = api_client.get(f'/workflows?search={search_text}')
@@ -811,7 +718,6 @@ def test_list__search__not_comment_event__not_found(
 )
 def test_list__search__in_kickoff_field_value__ok(
     api_client,
-    mocker,
     field_type
 ):
 
@@ -830,10 +736,6 @@ def test_list__search__in_kickoff_field_value__ok(
     search_text = 'fred@boy'
     create_test_workflow(user, tasks_count=1)
     api_client.token_authenticate(user)
-    mocker.patch(
-        'pneumatic_backend.analytics.services.AnalyticService.'
-        'search_search'
-    )
 
     # act
     response = api_client.get(f'/workflows?search={search_text}')
@@ -859,7 +761,6 @@ def test_list__search__in_kickoff_field_value__ok(
 )
 def test_list__search__in_current_task_field_value__ok(
     api_client,
-    mocker,
     field_type
 ):
 
@@ -878,10 +779,6 @@ def test_list__search__in_current_task_field_value__ok(
     )
     search_text = 'f boy'
     api_client.token_authenticate(user)
-    mocker.patch(
-        'pneumatic_backend.analytics.services.AnalyticService.'
-        'search_search'
-    )
 
     # act
     response = api_client.get(f'/workflows?search={search_text}')
@@ -906,7 +803,6 @@ def test_list__search__in_current_task_field_value__ok(
 )
 def test_list__search__in_prev_task_fields_value__ok(
     api_client,
-    mocker,
     field_type
 ):
 
@@ -927,10 +823,6 @@ def test_list__search__in_prev_task_fields_value__ok(
     )
     search_text = 'a boy@noway.com'
     api_client.token_authenticate(user)
-    mocker.patch(
-        'pneumatic_backend.analytics.services.AnalyticService.'
-        'search_search'
-    )
 
     # act
     response = api_client.get(f'/workflows?search={search_text}')
@@ -948,7 +840,6 @@ def test_list__search__in_prev_task_fields_value__ok(
 )
 def test_list__search__in_excluded_field_value__ok(
     api_client,
-    mocker,
     field_type
 ):
 
@@ -967,10 +858,6 @@ def test_list__search__in_excluded_field_value__ok(
     )
     search_text = 'f boy'
     api_client.token_authenticate(user)
-    mocker.patch(
-        'pneumatic_backend.analytics.services.AnalyticService.'
-        'search_search'
-    )
 
     # act
     response = api_client.get(f'/workflows?search={search_text}')
@@ -980,10 +867,7 @@ def test_list__search__in_excluded_field_value__ok(
     assert len(response.data['results']) == 0
 
 
-def test_list__search__markdown_filename_in_text_field__ok(
-    api_client,
-    mocker
-):
+def test_list__search__markdown_filename_in_text_field__ok(api_client):
 
     # arrange
     user = create_test_user()
@@ -1004,10 +888,6 @@ def test_list__search__markdown_filename_in_text_field__ok(
     )
     search_text = 'somefile.txt'
     api_client.token_authenticate(user)
-    mocker.patch(
-        'pneumatic_backend.analytics.services.AnalyticService.'
-        'search_search'
-    )
 
     # act
     response = api_client.get(f'/workflows?search={search_text}')
@@ -1017,10 +897,7 @@ def test_list__search__markdown_filename_in_text_field__ok(
     assert len(response.data['results']) == 1
 
 
-def test_list__search__full_uri_in_field__ok(
-    api_client,
-    mocker,
-):
+def test_list__search__full_uri_in_field__ok(api_client):
 
     # arrange
     user = create_test_user()
@@ -1048,10 +925,6 @@ def test_list__search__full_uri_in_field__ok(
         clear_value=MarkdownService.clear(value_2)
     )
     api_client.token_authenticate(user)
-    mocker.patch(
-        'pneumatic_backend.analytics.services.AnalyticService.'
-        'search_search'
-    )
 
     # act
     response = api_client.get(
@@ -1065,10 +938,7 @@ def test_list__search__full_uri_in_field__ok(
     assert response.data['results'][0]['id'] == workflow_1.id
 
 
-def test_list__search__prefix_uri_in_field__ok(
-    api_client,
-    mocker,
-):
+def test_list__search__prefix_uri_in_field__ok(api_client):
 
     # arrange
     user = create_test_user()
@@ -1096,10 +966,6 @@ def test_list__search__prefix_uri_in_field__ok(
         clear_value=MarkdownService.clear(value_2)
     )
     api_client.token_authenticate(user)
-    mocker.patch(
-        'pneumatic_backend.analytics.services.AnalyticService.'
-        'search_search'
-    )
 
     # act
     response = api_client.get(
@@ -1144,7 +1010,7 @@ def test_list__search_workflow_name_with_status__ok(api_client):
     assert response.data['results'][0]['id'] == done_workflow.id
 
 
-def test_list__search__find_union_result__ok(api_client, mocker):
+def test_list__search__find_union_result__ok(api_client):
 
     # arrange
     user = create_test_user()
@@ -1159,10 +1025,6 @@ def test_list__search__find_union_result__ok(api_client, mocker):
         tasks_count=1
     )
     api_client.token_authenticate(user)
-    analytics_mock = mocker.patch(
-        'pneumatic_backend.analytics.services.AnalyticService.'
-        'search_search'
-    )
     search_text = 'Payable Account'
 
     # act
@@ -1173,14 +1035,6 @@ def test_list__search__find_union_result__ok(api_client, mocker):
     assert len(response.data['results']) == 2
     assert response.data['results'][0]['id'] == workflow_2.id
     assert response.data['results'][1]['id'] == workflow_1.id
-
-    analytics_mock.assert_called_once_with(
-        user=user,
-        page='processes',
-        search_text=search_text,
-        is_superuser=False,
-        auth_type=AuthTokenType.USER
-    )
 
 
 def test_list__search__by_search_find_union_by_prefix__ok(
@@ -1201,10 +1055,6 @@ def test_list__search__by_search_find_union_by_prefix__ok(
         tasks_count=1
     )
     api_client.token_authenticate(user)
-    mocker.patch(
-        'pneumatic_backend.analytics.services.AnalyticService.'
-        'search_search'
-    )
     search_text = 'fou pa'
 
     # act
@@ -1238,10 +1088,6 @@ def test_list__search__by_search_by_prefix__ok(
         tasks_count=1
     )
     api_client.token_authenticate(user)
-    mocker.patch(
-        'pneumatic_backend.analytics.services.AnalyticService.'
-        'search_search'
-    )
     search_text = 'fou content'
 
     # act
@@ -1276,10 +1122,6 @@ def test_list__search__by_part__ok(
         tasks_count=1
     )
     api_client.token_authenticate(user)
-    mocker.patch(
-        'pneumatic_backend.analytics.services.AnalyticService.'
-        'search_search'
-    )
     search_text = 'Payab Accounts'
 
     # act

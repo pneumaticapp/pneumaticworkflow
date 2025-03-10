@@ -1,8 +1,6 @@
-/* eslint-disable */
-/* prettier-ignore */
+import React from 'react';
 import { EExtraFieldType, IExtraFieldSelection } from '../../types/template';
 import { TDropdownOptionBase } from '../UI/DropdownList';
-import React from 'react';
 
 export const enum ECustomResponsibleUsers {
   ProcessStarter = 'process-starter',
@@ -27,6 +25,7 @@ export enum ETaskFormParts {
   DueIn = 'dueIn',
   Fields = 'fields',
   AssignPerformers = 'assignPerformers',
+  ReturnTo = 'returnTo',
 }
 
 export type TTaskFormPart = ETaskFormParts | null;

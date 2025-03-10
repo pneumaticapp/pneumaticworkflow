@@ -8,12 +8,13 @@ export interface ISendTaskCommentResponse {
 
 export interface ISendTaskCommentConfig {
   id: number;
+  comment: string;
 }
 
-export function revertTask({
-  id = 0,
-}: Partial<ISendTaskCommentConfig>) {
-  const { api: { urls }} = getBrowserConfigEnv();
+export function revertTask({ id = 0, comment }: Partial<ISendTaskCommentConfig>) {
+  const {
+    api: { urls },
+  } = getBrowserConfigEnv();
 
   const url = urls.revertTask.replace(':id', String(id));
 
@@ -21,6 +22,8 @@ export function revertTask({
     url,
     {
       method: 'POST',
-    }, {responseType: 'empty', shouldThrow: true},
+      body: JSON.stringify({ comment }),
+    },
+    { responseType: 'empty', shouldThrow: true },
   );
 }

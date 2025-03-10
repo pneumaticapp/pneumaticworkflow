@@ -54,9 +54,12 @@ def test_events__ordering_date__ok(api_client):
     WorkflowEventService.task_started_event(sec_task)
     sec_task.date_started = timezone.now()
     sec_task.save(update_fields=['date_started'])
+    comment = 'text_comment'
     WorkflowEventService.task_revert_event(
         task=workflow.current_task_instance,
-        user=user
+        user=user,
+        text=comment,
+        clear_text=comment
     )
     api_client.token_authenticate(user)
 
