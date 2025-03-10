@@ -13,12 +13,10 @@ import theme from '../../../toolbarSettings/ButtonStyles.css';
 export interface ILinkButtonParams {
   store: IAnchorPluginStore;
   onRemoveLinkAtSelection(): void;
+  isModal?: boolean;
 }
 
-export const LinkButton = ({
-  onRemoveLinkAtSelection,
-  store,
-}: ILinkButtonParams): ReactElement => {
+export const LinkButton = ({ onRemoveLinkAtSelection, store, isModal }: ILinkButtonParams): ReactElement => {
   const { formatMessage } = useIntl();
 
   const buttonRef = React.useRef<HTMLButtonElement>(null);
@@ -35,9 +33,7 @@ export const LinkButton = ({
   };
 
   const editorState = store.getItem('getEditorState')?.();
-  const hasLinkSelected = editorState
-    ? EditorUtils.hasEntity(editorState, 'LINK')
-    : false;
+  const hasLinkSelected = editorState ? EditorUtils.hasEntity(editorState, 'LINK') : false;
 
   const preventBubblingUp = (event: MouseEvent): void => {
     event.preventDefault();
@@ -45,7 +41,7 @@ export const LinkButton = ({
 
   return (
     <div className={theme.buttonWrapper} onMouseDown={preventBubblingUp}>
-      <CustomTooltip target={buttonRef} tooltipText={formatMessage({ id: 'editor.add-link' })} />
+      <CustomTooltip target={buttonRef} tooltipText={formatMessage({ id: 'editor.add-link' })} isModal={isModal} />
       <button
         ref={buttonRef}
         className={theme.button}

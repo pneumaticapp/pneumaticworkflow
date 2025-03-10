@@ -246,6 +246,16 @@ msgstr "Paso \"{step_name}\": contiene un api_name no único \"{api_name}\". Rec
 msgid "Step \"{step_name}\": performer contains a non-unique api_name \"{api_name}\". Recreate performer or change it's api_name."
 msgstr "Paso \"{step_name}\": el ejecutante contiene un api_name no único \"{api_name}\". Vuelva a crear el ejecutante o cambie su api_name."
 
+#: pneumatic_backend/processes/messages/template.py:224
+#, python-brace-format
+msgid "Duplicate template owners in the add owners request."
+msgstr "Propietarios de plantilla duplicados en la solicitud de agregar propietarios."
+
+#: pneumatic_backend/processes/messages/template.py:227
+#, python-brace-format
+msgid "The owners passed in for template \"{step_name}\" contain a non-unique api_name: \"{api_name}\". Please change the non-unique api_name, or supply different owners."
+msgstr "Los propietarios enviados para la plantilla \"{step_name}\" contienen un api_name no único: \"{api_name}\". Por favor, cambie el api_name duplicado o proporcione propietarios diferentes."
+
 #: pneumatic_backend/processes/messages/workflow.py:5
 msgid "Saving files is not available, file storage does't configured. Contact support."
 msgstr "Guardar archivos no está disponible, el almacenamiento de archivos no está configurado. Contacte con soporte."
@@ -582,3 +592,15 @@ msgstr "No es posible volver a\"{task_name}\" porque se omitió debido a una con
 #: pneumatic_backend/processes/messages/workflow.py:187
 msgid "A workflow can't return to a later task."
 msgstr "Un flujo de trabajo no puede regresar a una tarea posterior."
+
+#: pneumatic_backend/processes/messages/template.py:234
+msgid "Step \"{step_name}\": The \"Return to\" setting refers to a task that doesn't exist (API name: \"{api_name}\")."
+msgstr "Paso \"{step_name}\": La opción \"Volver a\" hace referencia a una tarea que no existe (nombre de la API: \"{api_name}\")."
+
+#: pneumatic_backend/processes/messages/template.py:242
+msgid "The task \"{step_name}\" cannot be set to return to itself."
+msgstr "La tarea \"{step_name}\" no puede configurarse para volver a sí misma."
+
+#: pneumatic_backend/processes/messages/workflow.py:188
+msgid "You must supply a comment."
+msgstr "Debe proporcionar un comentario."

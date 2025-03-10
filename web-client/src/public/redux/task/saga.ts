@@ -314,7 +314,7 @@ export function* setTaskCompleted({ payload: { taskId, workflowId, output, viewM
   }
 }
 
-export function* setTaskReverted({ payload: { workflowId: processId, viewMode, taskId } }: TSetTaskReverted) {
+export function* setTaskReverted({ payload: { workflowId: processId, viewMode, taskId, comment } }: TSetTaskReverted) {
   const {
     authUser: { id: currentUserId },
   }: ReturnType<typeof getAuthUser> = yield select(getAuthUser);
@@ -326,7 +326,7 @@ export function* setTaskReverted({ payload: { workflowId: processId, viewMode, t
   try {
     yield put(setCurrentTaskStatus(ETaskStatus.Returning));
 
-    yield revertTask({ id: processId });
+    yield revertTask({ id: processId, comment });
 
     NotificationManager.success({ message: 'tasks.task-success-revert' });
 

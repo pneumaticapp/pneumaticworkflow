@@ -1,9 +1,6 @@
-# pylint:disable=redefined-outer-name
-# pylint:disable=unused-argument
 from datetime import timedelta
 import pytest
 from django.contrib.auth import get_user_model
-from django.db.models import F
 from django.utils import timezone
 
 from pneumatic_backend.accounts.enums import BillingPlanType
@@ -11,7 +8,6 @@ from pneumatic_backend.authentication.enums import AuthTokenType
 from pneumatic_backend.processes.tasks.tasks import complete_tasks
 from pneumatic_backend.processes.models import (
     Workflow,
-    Template,
 )
 from pneumatic_backend.processes.services.versioning.schemas import (
     TemplateSchemaV1,
@@ -22,58 +18,35 @@ from pneumatic_backend.processes.services.versioning.versioning import (
 from pneumatic_backend.processes.tasks.delay import (
     continue_delayed_workflows,
 )
-from pneumatic_backend.processes.tasks.digest import (
-    send_digest,
-    send_tasks_digest,
-)
 from pneumatic_backend.processes.tasks.update_workflow import (
     update_workflows,
 )
 from pneumatic_backend.processes.tests.fixtures import (
     create_test_user,
-    create_test_workflow,
-    get_workflow_create_data,
+    create_test_account,
+    create_test_group,
     create_test_template,
-    create_test_account
+    create_test_workflow
 )
 from pneumatic_backend.processes.enums import (
     PerformerType,
+    OwnerType
 )
-from pneumatic_backend.processes.api_v2.services.task.performers import (
-    TaskPerformersService
-)
-from pneumatic_backend.processes.enums import TemplateType
 from pneumatic_backend.processes.utils.workflows import (
     resume_delayed_workflows
 )
 from pneumatic_backend.processes.services.workflow_action import (
     WorkflowActionService
 )
+from pneumatic_backend.processes.models.templates.owner import (
+    TemplateOwner
+)
+from pneumatic_backend.processes.tasks.update_workflow import (
+    update_workflow_owners,
+)
 
 UserModel = get_user_model()
 pytestmark = pytest.mark.django_db
-
-
-@pytest.fixture(autouse=True)
-def replica_mock(mocker):
-    mocker.patch('django.conf.settings.REPLICA', 'default')
-    yield
-
-
-@pytest.fixture
-def email_service_digest(mocker):
-    return mocker.patch(
-        'pneumatic_backend.services.email.EmailService.'
-        'send_workflows_digest_email'
-    )
-
-
-@pytest.fixture
-def email_service_tasks_digest(mocker):
-    return mocker.patch(
-        'pneumatic_backend.services.email.EmailService.'
-        'send_tasks_digest_email'
-    )
 
 
 class TestContinueDelayedWorkflows:
@@ -278,979 +251,6 @@ class TestContinueDelayedWorkflows:
         resume_workflow_mock.assert_not_called()
 
 
-class TestSendDigest:
-
-    def test_send(self, mocker, api_client, email_service_digest):
-
-        # arrange
-        mocker.patch(
-            'pneumatic_backend.processes.tasks.webhooks.'
-            'send_workflow_started_webhook.delay',
-        )
-        mocker.patch(
-            'pneumatic_backend.processes.tasks.webhooks.'
-            'send_task_completed_webhook.delay'
-        )
-        user = create_test_user()
-        user.is_account_owner = True
-        user.save()
-        template_data = get_workflow_create_data(user)
-        template_data['is_active'] = True
-        now = timezone.now()
-        current_week_monday = (now - timedelta(days=now.weekday())).date()
-        date_from = current_week_monday - timedelta(days=7)
-        date_to = current_week_monday
-        token_patch = mocker.patch(
-            'pneumatic_backend.accounts.tokens.UnsubscribeEmailToken.'
-            'create_token'
-        )
-        token_patch.return_value = '12345'
-        api_client.token_authenticate(user)
-
-        first_template = api_client.post('/templates', data=template_data)
-        first_template = Template.objects.get(id=first_template.data['id'])
-        second_template = api_client.post('/templates', data=template_data)
-        second_template = Template.objects.get(id=second_template.data['id'])
-        system_template = api_client.post('/templates', data=template_data)
-        system_template = Template.objects.get(id=system_template.data['id'])
-        system_template.type = TemplateType.ONBOARDING_NON_ADMIN
-        system_template.save()
-
-        api_client.post(
-            f'/templates/{first_template.id}/run',
-            data={
-                'name': 'First workflow'
-            }
-        )
-        second_workflow = api_client.post(
-            f'/templates/{second_template.id}/run',
-            data={
-                'name': 'Second workflow'
-            }
-        )
-        api_client.post(
-            f'/templates/{system_template.id}/run',
-            data={
-                'name': 'Onboarding'
-            }
-        )
-        second_workflow = Workflow.objects.get(
-            id=second_workflow.data['id']
-        )
-        api_client.post(
-            f'/templates/{second_template.id}/run',
-            data={
-                'name': 'Third workflow'
-            }
-        )
-
-        for task in second_workflow.tasks.order_by('number').all():
-            api_client.post(
-                f'/workflows/{second_workflow.id}/task-complete',
-                data={
-                    'task_id': task.id
-                }
-            )
-
-        Workflow.objects.on_account(user.account_id).update(
-            date_created=date_from + timedelta(days=2),
-        )
-        second_workflow.refresh_from_db()
-        second_workflow.status_updated = date_from + timedelta(days=2)
-        second_workflow.date_completed = date_to - timedelta(days=1)
-        second_workflow.save()
-
-        # act
-        send_digest()
-
-        # assert
-        email_service_digest.assert_called_with(
-            user=user,
-            date_to=date_to - timedelta(days=1),
-            date_from=date_from,
-            digest={
-                'started': 3,
-                'in_progress': 3,
-                'overdue': 0,
-                'completed': 1,
-                'templates': [
-                    {
-                        'started': 2,
-                        'in_progress': 2,
-                        'overdue': 0,
-                        'completed': 1,
-                        'template_name': second_template.name,
-                        'template_id': second_template.id,
-                    },
-                    {
-                        'started': 1,
-                        'in_progress': 1,
-                        'overdue': 0,
-                        'completed': 0,
-                        'template_name': first_template.name,
-                        'template_id': first_template.id,
-                    },
-                ]
-            },
-            logo_lg=None,
-        )
-
-    def test_send__already_sent__not_sent_again(
-        self,
-        api_client,
-        mocker,
-        email_service_digest,
-    ):
-        # arrange
-        user = create_test_user()
-        user.is_account_owner = True
-        user.last_digest_send_time = timezone.now()
-        user.save()
-        template_data = get_workflow_create_data(user)
-        template_data['is_active'] = True
-        now = timezone.now()
-        mocker.patch(
-            'pneumatic_backend.processes.tasks.webhooks.'
-            'send_workflow_started_webhook.delay',
-        )
-        mocker.patch(
-            'pneumatic_backend.processes.tasks.webhooks.'
-            'send_task_completed_webhook.delay'
-        )
-        datetime_patch = mocker.patch(
-            'pneumatic_backend.processes.tasks.digest.'
-            'timezone.now'
-        )
-        datetime_patch.return_value = now
-
-        api_client.token_authenticate(user)
-
-        first_template = api_client.post('/templates', data=template_data)
-        first_template = Template.objects.get(id=first_template.data['id'])
-        second_template = api_client.post('/templates', data=template_data)
-        second_template = Template.objects.get(id=second_template.data['id'])
-
-        api_client.post(
-            f'/templates/{first_template.id}/run',
-            data={
-                'name': 'First workflow'
-            }
-        )
-        second_workflow = api_client.post(
-            f'/templates/{second_template.id}/run',
-            data={
-                'name': 'Second workflow'
-            }
-        )
-        second_workflow = Workflow.objects.get(id=second_workflow.data['id'])
-        api_client.post(
-            f'/templates/{second_template.id}/run',
-            data={
-                'name': 'Third workflow'
-            }
-        )
-        Workflow.objects.on_account(user.account_id).update(
-            date_created=F('date_created') - timedelta(weeks=1)
-        )
-
-        for task in second_workflow.tasks.order_by('number').all():
-            api_client.post(
-                f'/workflows/{second_workflow.id}/task-complete', data={
-                    'task_id': task.id
-                }
-            )
-
-        # act
-        send_digest()
-
-        # assert
-        email_service_digest.assert_not_called()
-
-    def test_send__active_temp_has_not_in_progress__not_include_in_digest(
-        self,
-        mocker,
-        api_client,
-        email_service_digest,
-    ):
-        # arrange
-        account = create_test_account(logo_lg='https://site.com/logo.jpg')
-        user = create_test_user(account=account)
-        template_data = get_workflow_create_data(user)
-        now = timezone.now()
-        current_week_monday = (now - timedelta(days=now.weekday())).date()
-        date_from = current_week_monday - timedelta(days=7)
-        date_to = current_week_monday
-        token_patch = mocker.patch(
-            'pneumatic_backend.accounts.tokens.UnsubscribeEmailToken.'
-            'create_token'
-        )
-        token_patch.return_value = '12345'
-
-        api_client.token_authenticate(user)
-
-        api_client.post('/templates', data=template_data)
-        template_data['is_active'] = True
-        second_template = api_client.post('/templates', data=template_data)
-        second_template = Template.objects.get(id=second_template.data['id'])
-
-        api_client.post(
-            f'/templates/{second_template.id}/run',
-            data={
-                'name': 'Second workflow'
-            }
-        )
-        second_template.is_active = False
-        second_template.save()
-
-        third_template = api_client.post('/templates', data=template_data)
-        Template.objects.get(id=third_template.data['id'])
-
-        Workflow.objects.on_account(user.account_id).update(
-            date_created=date_from + timedelta(days=2),
-        )
-
-        # act
-        send_digest()
-
-        # assert
-        email_service_digest.assert_called_with(
-            user=user,
-            date_to=date_to - timedelta(days=1),
-            date_from=date_from,
-            digest={
-                'started': 1,
-                'in_progress': 1,
-                'overdue': 0,
-                'completed': 0,
-                'templates': [
-                    {
-                        'started': 1,
-                        'in_progress': 1,
-                        'overdue': 0,
-                        'completed': 0,
-                        'template_name': second_template.name,
-                        'template_id': second_template.id,
-                    },
-                ]
-            },
-            logo_lg=account.logo_lg,
-        )
-
-    def test_send__total_in_progress_is_nil__not_sent(
-        self,
-        mocker,
-        api_client,
-        email_service_digest,
-    ):
-        # arrange
-        user = create_test_user()
-        user.is_account_owner = True
-        user.save()
-        template_data = get_workflow_create_data(user)
-        token_patch = mocker.patch(
-            'pneumatic_backend.accounts.tokens.UnsubscribeEmailToken.'
-            'create_token'
-        )
-        token_patch.return_value = '12345'
-
-        api_client.token_authenticate(user)
-
-        api_client.post('/templates', data=template_data)
-        api_client.post('/templates', data=template_data)
-        template_data['is_active'] = True
-        api_client.post('/templates', data=template_data)
-
-        # act
-        send_digest()
-
-        # assert
-        email_service_digest.assert_not_called()
-
-    def test_send__specified_user__send_only_for(
-        self,
-        mocker,
-        api_client,
-        email_service_digest,
-    ):
-        # arrange
-        mocker.patch(
-            'pneumatic_backend.processes.tasks.webhooks.'
-            'send_workflow_started_webhook.delay',
-        )
-        mocker.patch(
-            'pneumatic_backend.processes.tasks.webhooks.'
-            'send_task_completed_webhook.delay'
-        )
-        user = create_test_user()
-        user.account.billing_plan = BillingPlanType.PREMIUM
-        user.account.save()
-        another_user = create_test_user(
-            account=user.account,
-            email='anothertest@pneumatic.app',
-        )
-        template_data = get_workflow_create_data(user)
-        template_data['is_active'] = True
-        another_template_data = get_workflow_create_data(another_user)
-        another_template_data['is_active'] = True
-        now = timezone.now()
-        current_week_monday = (now - timedelta(days=now.weekday())).date()
-        date_from = current_week_monday - timedelta(days=7)
-        date_to = current_week_monday
-        token_patch = mocker.patch(
-            'pneumatic_backend.accounts.tokens.UnsubscribeEmailToken.'
-            'create_token'
-        )
-        token_patch.return_value = '12345'
-        api_client.token_authenticate(another_user)
-
-        first_template = api_client.post(
-            '/templates',
-            data=another_template_data,
-        )
-        first_template = Template.objects.get(id=first_template.data['id'])
-        api_client.post(
-            f'/templates/{first_template.id}/run',
-            data={
-                'name': 'First workflow'
-            }
-        )
-
-        api_client.token_authenticate(user)
-        second_template = api_client.post('/templates', data=template_data)
-        second_template = Template.objects.get(id=second_template.data['id'])
-        system_template = api_client.post('/templates', data=template_data)
-        system_template = Template.objects.get(id=system_template.data['id'])
-        system_template.type = TemplateType.ONBOARDING_NON_ADMIN
-        system_template.save()
-
-        second_workflow = api_client.post(
-            f'/templates/{second_template.id}/run',
-            data={
-                'name': 'Second workflow'
-            }
-        )
-        api_client.post(
-            f'/templates/{system_template.id}/run',
-            data={
-                'name': 'Onboarding'
-            }
-        )
-        second_workflow = Workflow.objects.get(id=second_workflow.data['id'])
-        api_client.post(
-            f'/templates/{second_template.id}/run',
-            data={
-                'name': 'Third workflow'
-            }
-        )
-
-        for task in second_workflow.tasks.order_by('number').all():
-            api_client.post(
-                f'/workflows/{second_workflow.id}/task-complete',
-                data={
-                    'task_id': task.id
-                }
-            )
-
-        Workflow.objects.on_account(user.account_id).update(
-            date_created=date_from + timedelta(days=2),
-        )
-        second_workflow.refresh_from_db()
-        second_workflow.status_updated = date_from + timedelta(days=2)
-        second_workflow.date_completed = date_to - timedelta(days=1)
-        second_workflow.save()
-
-        # act
-        send_digest(user_id=user.id)
-
-        # assert
-        email_service_digest.assert_called_with(
-            user=user,
-            date_to=date_to - timedelta(days=1),
-            date_from=date_from,
-            digest={
-                'started': 2,
-                'in_progress': 2,
-                'overdue': 0,
-                'completed': 1,
-                'templates': [
-                    {
-                        'started': 2,
-                        'in_progress': 2,
-                        'overdue': 0,
-                        'completed': 1,
-                        'template_name': second_template.name,
-                        'template_id': second_template.id,
-                    },
-                ]
-            },
-            logo_lg=None,
-        )
-
-
-class TestSendTasksDigest:
-
-    def test_send(self, mocker, api_client, email_service_tasks_digest):
-
-        # arrange
-        mocker.patch(
-            'pneumatic_backend.processes.tasks.webhooks.'
-            'send_workflow_started_webhook.delay',
-        )
-        mocker.patch(
-            'pneumatic_backend.processes.tasks.webhooks.'
-            'send_task_completed_webhook.delay'
-        )
-        user = create_test_user(is_account_owner=True)
-        template_data = get_workflow_create_data(user)
-        template_data['is_active'] = True
-        now = timezone.now()
-        date_from = now.date() - timedelta(days=7)
-        date_to = now
-
-        datetime_patch = mocker.patch(
-            'pneumatic_backend.processes.tasks.digest.'
-            'timezone.now'
-        )
-        datetime_patch.return_value = now
-        api_client.token_authenticate(user)
-
-        first_template = api_client.post('/templates', data=template_data)
-        first_template = Template.objects.get(id=first_template.data['id'])
-        second_template = api_client.post('/templates', data=template_data)
-        second_template = Template.objects.get(id=second_template.data['id'])
-        system_template = api_client.post('/templates', data=template_data)
-        system_template = Template.objects.get(id=system_template.data['id'])
-        system_template.type = TemplateType.ONBOARDING_NON_ADMIN
-        system_template.save()
-
-        api_client.post(
-            f'/templates/{first_template.id}/run',
-            data={
-                'name': 'First workflow'
-            }
-        )
-        second_workflow = api_client.post(
-            f'/templates/{second_template.id}/run',
-            data={
-                'name': 'Second workflow'
-            }
-        )
-        api_client.post(
-            f'/templates/{system_template.id}/run',
-            data={
-                'name': 'Onboarding'
-            }
-        )
-        second_workflow = Workflow.objects.get(id=second_workflow.data['id'])
-        api_client.post(
-            f'/templates/{second_template.id}/run',
-            data={
-                'name': 'Third workflow'
-            }
-        )
-
-        for task in second_workflow.tasks.order_by('number').all():
-            api_client.post(
-                f'/workflows/{second_workflow.id}/task-complete', data={
-                    'task_id': task.id
-                }
-            )
-
-        Workflow.objects.on_account(user.account_id).update(
-            date_created=date_from + timedelta(days=2),
-        )
-        second_workflow.refresh_from_db()
-        second_workflow.status_updated = date_from + timedelta(days=2)
-        second_workflow.date_completed = date_to - timedelta(days=1)
-        second_workflow.save()
-
-        # act
-        send_tasks_digest(fetch_size=1)
-
-        # assert
-        ft_first_task = first_template.tasks.get(number=1)
-        st_first_task = second_template.tasks.get(number=1)
-        st_second_task = second_template.tasks.get(number=2)
-        st_third_task = second_template.tasks.get(number=3)
-        email_service_tasks_digest.assert_called_with(
-            user=user,
-            date_to=date_to - timedelta(days=1),
-            date_from=date_from,
-            digest={
-                'started': 5,
-                'in_progress': 5,
-                'overdue': 0,
-                'completed': 3,
-                'templates': [
-                    {
-                        'started': 4,
-                        'in_progress': 4,
-                        'overdue': 0,
-                        'completed': 3,
-                        'template_name': second_template.name,
-                        'template_id': second_template.id,
-                        'tasks': [
-                            {
-                                'task_id': st_first_task.id,
-                                'task_name': 'First Test',
-                                'started': 2,
-                                'in_progress': 2,
-                                'overdue': 0,
-                                'completed': 1,
-                            },
-                            {
-                                'task_id': st_second_task.id,
-                                'task_name': 'Second',
-                                'started': 1,
-                                'in_progress': 1,
-                                'overdue': 0,
-                                'completed': 1,
-                            },
-                            {
-                                'task_id': st_third_task.id,
-                                'task_name': 'Third',
-                                'started': 1,
-                                'in_progress': 1,
-                                'overdue': 0,
-                                'completed': 1,
-                            }
-                        ]
-                    },
-                    {
-                        'started': 1,
-                        'in_progress': 1,
-                        'overdue': 0,
-                        'completed': 0,
-                        'template_name': first_template.name,
-                        'template_id': first_template.id,
-                        'tasks': [
-                            {
-                                'task_id': ft_first_task.id,
-                                'task_name': 'First Test',
-                                'started': 1,
-                                'in_progress': 1,
-                                'overdue': 0,
-                                'completed': 0,
-                            }
-                        ],
-                    },
-                ]
-            },
-            logo_lg=None,
-        )
-
-    def test_send__deleted_performer__no_sent(
-        self,
-        mocker,
-        api_client,
-        email_service_tasks_digest
-    ):
-
-        # arrange
-        account = create_test_account(plan=BillingPlanType.PREMIUM)
-        template_owner = create_test_user(account=account)
-        user_performer = create_test_user(
-            email='test@test.test',
-            account=account
-        )
-        api_client.token_authenticate(template_owner)
-        template = create_test_template(
-            user=template_owner,
-            tasks_count=1,
-            is_active=True
-        )
-        task_template = template.tasks.first()
-        now = timezone.now()
-        date_from = now.date() - timedelta(days=7)
-        date_to = now
-        datetime_patch = mocker.patch(
-            'pneumatic_backend.processes.tasks.digest.'
-            'timezone.now',
-            return_value=now
-        )
-
-        workflow = create_test_workflow(
-            user=template_owner,
-            template=template
-        )
-        workflow.date_created = date_from + timedelta(days=2)
-        workflow.save()
-
-        task = workflow.current_task_instance
-        task.performers.add(user_performer)
-        TaskPerformersService.delete_performer(
-            task=task,
-            request_user=template_owner,
-            user_key=user_performer.id,
-            run_actions=False
-        )
-
-        # act
-        send_tasks_digest(fetch_size=1)
-
-        # assert
-        datetime_patch.assert_called()
-        email_service_tasks_digest.assert_called_once_with(
-            user=template_owner,
-            date_to=date_to - timedelta(days=1),
-            date_from=date_from,
-            digest={
-                'started': 1,
-                'in_progress': 1,
-                'overdue': 0,
-                'completed': 0,
-                'templates': [
-                    {
-                        'template_id': template.id,
-                        'template_name': template.name,
-                        'started': 1,
-                        'in_progress': 1,
-                        'overdue': 0,
-                        'completed': 0,
-                        'tasks': [
-                            {
-                                'task_id': task_template.id,
-                                'task_name': task_template.name,
-                                'started': 1,
-                                'in_progress': 1,
-                                'overdue': 0,
-                                'completed': 0
-                            }
-                        ]
-                    }
-                ]
-            },
-            logo_lg=None,
-        )
-
-    def test_send__already_sent__not_sent_again(
-        self,
-        api_client,
-        mocker,
-        email_service_tasks_digest,
-    ):
-        # arrange
-        mocker.patch(
-            'pneumatic_backend.processes.tasks.webhooks.'
-            'send_workflow_started_webhook.delay',
-        )
-        mocker.patch(
-            'pneumatic_backend.processes.tasks.webhooks.'
-            'send_task_completed_webhook.delay'
-        )
-        now = timezone.now()
-        user = create_test_user()
-        user.is_account_owner = True
-        user.last_tasks_digest_send_time = now - timedelta(days=1)
-        user.save()
-        template_data = get_workflow_create_data(user)
-        template_data['is_active'] = True
-        datetime_patch = mocker.patch(
-            'pneumatic_backend.processes.tasks.digest.'
-            'timezone.now'
-        )
-        datetime_patch.return_value = now
-
-        api_client.token_authenticate(user)
-
-        first_template = api_client.post('/templates', data=template_data)
-        first_template = Template.objects.get(id=first_template.data['id'])
-        second_template = api_client.post('/templates', data=template_data)
-        second_template = Template.objects.get(id=second_template.data['id'])
-
-        api_client.post(
-            f'/templates/{first_template.id}/run',
-            data={
-                'name': 'First workflow'
-            }
-        )
-        second_workflow = api_client.post(
-            f'/templates/{second_template.id}/run',
-            data={
-                'name': 'Second workflow'
-            }
-        )
-        second_workflow = Workflow.objects.get(id=second_workflow.data['id'])
-        api_client.post(
-            f'/templates/{second_template.id}/run',
-            data={
-                'name': 'Third workflow'
-            }
-        )
-        Workflow.objects.on_account(user.account_id).update(
-            date_created=F('date_created') - timedelta(weeks=1)
-        )
-
-        for task in second_workflow.tasks.order_by('number').all():
-            api_client.post(
-                f'/workflows/{second_workflow.id}/task-complete',
-                data={
-                    'task_id': task.id
-                }
-            )
-
-        # act
-        send_tasks_digest(fetch_size=1)
-
-        # assert
-        email_service_tasks_digest.assert_not_called()
-
-    def test_send__active_temp_has_not_in_progress__not_include_in_digest(
-        self,
-        mocker,
-        api_client,
-        email_service_tasks_digest,
-    ):
-        # arrange
-        user = create_test_user()
-        user.is_account_owner = True
-        user.save()
-        template_data = get_workflow_create_data(user)
-        now = timezone.now()
-        date_from = now.date() - timedelta(days=7)
-        date_to = now
-        datetime_patch = mocker.patch(
-            'pneumatic_backend.processes.tasks.digest.'
-            'timezone.now'
-        )
-        datetime_patch.return_value = now
-        api_client.token_authenticate(user)
-
-        api_client.post('/templates', data=template_data)
-        template_data['is_active'] = True
-        second_template = api_client.post('/templates', data=template_data)
-        second_template = Template.objects.get(id=second_template.data['id'])
-
-        api_client.post(
-            f'/templates/{second_template.id}/run',
-            data={
-                'name': 'Second workflow'
-            }
-        )
-        second_template.is_active = False
-        second_template.save()
-
-        third_template = api_client.post('/templates', data=template_data)
-        Template.objects.get(id=third_template.data['id'])
-
-        Workflow.objects.on_account(user.account_id).update(
-            date_created=date_from + timedelta(days=2),
-        )
-
-        # act
-        send_tasks_digest(fetch_size=1)
-
-        # assert
-        first_task = second_template.tasks.get(number=1)
-        email_service_tasks_digest.assert_called_with(
-            user=user,
-            date_to=date_to - timedelta(days=1),
-            date_from=date_from,
-            digest={
-                'started': 1,
-                'in_progress': 1,
-                'overdue': 0,
-                'completed': 0,
-                'templates': [
-                    {
-                        'started': 1,
-                        'in_progress': 1,
-                        'overdue': 0,
-                        'completed': 0,
-                        'template_name': second_template.name,
-                        'template_id': second_template.id,
-                        'tasks': [
-                            {
-                                'task_id': first_task.id,
-                                'task_name': 'First Test',
-                                'started': 1,
-                                'in_progress': 1,
-                                'overdue': 0,
-                                'completed': 0,
-                            }
-                        ]
-                    },
-                ]
-            },
-            logo_lg=None,
-        )
-
-    def test_send__total_in_progress_is_nil__not_sent(
-        self,
-        api_client,
-        email_service_tasks_digest,
-    ):
-        # arrange
-
-        user = create_test_user()
-        user.is_account_owner = True
-        user.save()
-        template_data = get_workflow_create_data(user)
-        api_client.token_authenticate(user)
-
-        api_client.post('/templates', data=template_data)
-        api_client.post('/templates', data=template_data)
-        template_data['is_active'] = True
-        api_client.post('/templates', data=template_data)
-
-        # act
-        send_tasks_digest(fetch_size=1)
-
-        # assert
-        email_service_tasks_digest.assert_not_called()
-
-    def test_send__specified_user__send_only_for(
-        self,
-        mocker,
-        api_client,
-        email_service_tasks_digest,
-    ):
-        # arrange
-        mocker.patch(
-            'pneumatic_backend.processes.tasks.webhooks.'
-            'send_workflow_started_webhook.delay',
-        )
-        mocker.patch(
-            'pneumatic_backend.processes.tasks.webhooks.'
-            'send_task_completed_webhook.delay'
-        )
-        user = create_test_user()
-        user.account.billing_plan = BillingPlanType.PREMIUM
-        user.account.save()
-        another_user = create_test_user(
-            account=user.account,
-            email='anothertest@pneumatic.app',
-        )
-        template_data = get_workflow_create_data(user)
-        template_data['is_active'] = True
-        another_template_data = get_workflow_create_data(another_user)
-        another_template_data['is_active'] = True
-        now = timezone.now()
-        date_from = now.date() - timedelta(days=7)
-        date_to = now
-        datetime_patch = mocker.patch(
-            'pneumatic_backend.processes.tasks.digest.'
-            'timezone.now'
-        )
-        datetime_patch.return_value = now
-        api_client.token_authenticate(another_user)
-
-        first_template = api_client.post(
-            '/templates',
-            data=another_template_data,
-        )
-        first_template = Template.objects.get(id=first_template.data['id'])
-        api_client.post(
-            f'/templates/{first_template.id}/run',
-            data={
-                'name': 'First workflow',
-                'kickoff': {
-                    'string-field-1': 'Test',
-                }
-            }
-        )
-
-        api_client.token_authenticate(user)
-        second_template = api_client.post('/templates', data=template_data)
-        second_template = Template.objects.get(id=second_template.data['id'])
-        system_template = api_client.post('/templates', data=template_data)
-        system_template = Template.objects.get(id=system_template.data['id'])
-        system_template.type = TemplateType.ONBOARDING_NON_ADMIN
-        system_template.save()
-
-        second_workflow = api_client.post(
-            f'/templates/{second_template.id}/run',
-            data={
-                'name': 'Second workflow'
-            }
-        )
-        api_client.post(
-            f'/templates/{system_template.id}/run',
-            data={
-                'name': 'Onboarding'
-            }
-        )
-        second_workflow = Workflow.objects.get(id=second_workflow.data['id'])
-        api_client.post(
-            f'/templates/{second_template.id}/run',
-            data={
-                'name': 'Third workflow'
-            }
-        )
-
-        for task in second_workflow.tasks.order_by('number').all():
-            api_client.post(
-                f'/workflows/{second_workflow.id}/task-complete',
-                data={
-                    'task_id': task.id
-                }
-            )
-
-        Workflow.objects.on_account(user.account_id).update(
-            date_created=date_from + timedelta(days=2),
-        )
-        second_workflow.refresh_from_db()
-        second_workflow.status_updated = date_from + timedelta(days=2)
-        second_workflow.date_completed = date_to - timedelta(days=1)
-        second_workflow.save()
-
-        # act
-        send_tasks_digest(user_id=user.id, fetch_size=1)
-
-        # assert
-        first_task = second_template.tasks.get(number=1)
-        second_task = second_template.tasks.get(number=2)
-        third_task = second_template.tasks.get(number=3)
-        email_service_tasks_digest.assert_called_with(
-            user=user,
-            date_to=date_to - timedelta(days=1),
-            date_from=date_from,
-            digest={
-                'started': 4,
-                'in_progress': 4,
-                'overdue': 0,
-                'completed': 3,
-                'templates': [
-                    {
-                        'started': 4,
-                        'in_progress': 4,
-                        'overdue': 0,
-                        'completed': 3,
-                        'template_name': second_template.name,
-                        'template_id': second_template.id,
-                        'tasks': [
-                            {
-                                'task_id': first_task.id,
-                                'task_name': 'First Test',
-                                'started': 2,
-                                'in_progress': 2,
-                                'overdue': 0,
-                                'completed': 1,
-                            },
-                            {
-                                'task_id': second_task.id,
-                                'task_name': 'Second',
-                                'started': 1,
-                                'in_progress': 1,
-                                'overdue': 0,
-                                'completed': 1,
-                            },
-                            {
-                                'task_id': third_task.id,
-                                'task_name': 'Third',
-                                'started': 1,
-                                'in_progress': 1,
-                                'overdue': 0,
-                                'completed': 1,
-                            },
-                        ]
-                    },
-                ]
-            },
-            logo_lg=None,
-        )
-
-
 class TestUpdateWorkflow:
 
     def test_update(self, api_client):
@@ -1404,3 +404,290 @@ class TestCompleteTasks:
         second_workflow_first_task.refresh_from_db()
         assert first_task.is_completed
         assert second_workflow_first_task.is_completed is False
+
+
+class TestUpdateWorkflowOwners:
+
+    def test_delete__owner_only_group__ok(self):
+        '''When deleting a group, an owner of the group type
+           is deleted in template, and owner user is deleted in workflow.'''
+
+        # arrange
+        account = create_test_account(plan=BillingPlanType.PREMIUM)
+        user = create_test_user(account=account)
+        template = create_test_template(user=user, is_active=True)
+        TemplateOwner.objects.filter(
+            type=OwnerType.USER,
+            user_id=user.id
+        ).delete()
+        group = create_test_group(user=user, users=[user, ])
+        TemplateOwner.objects.create(
+            template=template,
+            account=account,
+            type=OwnerType.GROUP,
+            group_id=group.id,
+        )
+        workflow = create_test_workflow(
+            user=user,
+            template=template
+        )
+        group.delete()
+
+        # act
+        update_workflow_owners([template.id])
+
+        # assert
+        assert workflow.owners.all().count() == 0
+
+    def test_delete__same_user_equal__ok(self):
+        '''There are 2 owner types in the template.
+           We check that when deleting an owner of the group type,
+           the owner of the user type is not deleted. Same user is in group
+           and is assigned directly to owner in template.'''
+
+        # arrange
+        account = create_test_account(plan=BillingPlanType.PREMIUM)
+        user = create_test_user(account=account)
+        template = create_test_template(user, is_active=True)
+        group_to_delete = create_test_group(user=user, users=[user, ])
+        TemplateOwner.objects.create(
+            template=template,
+            account=account,
+            type=OwnerType.GROUP,
+            group_id=group_to_delete.id,
+        )
+        workflow = create_test_workflow(
+            user=user,
+            template=template
+        )
+        group_to_delete.delete()
+
+        # act
+        update_workflow_owners([template.id])
+
+        # assert
+        assert workflow.owners.all().count() == 1
+        assert workflow.owners.get(id=user.id)
+
+    def test_delete__different_user_equal__ok(self):
+        '''There are 2 owner types in the template.
+           We check that when deleting an owner of the group type,
+           the owner of the user type is not deleted.
+           2 different users, user in group, and user_2 owner in template.'''
+
+        # arrange
+        account = create_test_account(plan=BillingPlanType.PREMIUM)
+        user = create_test_user(account=account)
+        user_2 = create_test_user(account=account, email='test1@test.test')
+        template = create_test_template(user_2, is_active=True)
+        group_to_delete = create_test_group(user=user_2, users=[user, ])
+        TemplateOwner.objects.create(
+            template=template,
+            account=account,
+            type=OwnerType.GROUP,
+            group_id=group_to_delete.id,
+        )
+        workflow = create_test_workflow(
+            user=user_2,
+            template=template
+        )
+        group_to_delete.delete()
+
+        # act
+        update_workflow_owners([template.id])
+
+        # assert
+        assert workflow.owners.all().count() == 1
+        assert workflow.owners.get(id=user_2.id)
+
+    def test_delete__user_owner_remains__ok(self):
+        '''There are 2 owner types in the template. We check that when
+           deleting an owner of the group type, the owner of the user
+           type is not deleted. there are 2 different users in the group,
+           other than the owner type of user.'''
+
+        # arrange
+        account = create_test_account(plan=BillingPlanType.PREMIUM)
+        user = create_test_user(account=account)
+        user_2 = create_test_user(account=account, email='test1@test.test')
+        user_3 = create_test_user(account=account, email='test2@test.test')
+        template = create_test_template(user, is_active=True)
+        group_to_delete = create_test_group(user=user, users=[user_2, user_3])
+        TemplateOwner.objects.create(
+            template=template,
+            account=account,
+            type=OwnerType.GROUP,
+            group_id=group_to_delete.id,
+        )
+        workflow = create_test_workflow(
+            user=user_2,
+            template=template
+        )
+        group_to_delete.delete()
+
+        # act
+        update_workflow_owners([template.id])
+
+        # assert
+        assert workflow.owners.all().count() == 1
+        assert workflow.owners.get(id=user.id)
+
+    def test_delete__other_owner_group_remains__ok(self):
+        '''2 groups, each group has 1 user. In template 2, the owner of
+           group type (both groups) - delete group 1 and check that the second
+           owner of the group type remains in template and the user from
+           second group also remains in owner workflow.'''
+
+        # arrange
+        account = create_test_account(plan=BillingPlanType.PREMIUM)
+        user = create_test_user(account=account)
+        user_2 = create_test_user(account=account, email='test1@test.test')
+        template = create_test_template(user, is_active=True)
+        TemplateOwner.objects.filter(
+            type=OwnerType.USER,
+            user_id=user.id
+        ).delete()
+        group = create_test_group(user=user, users=[user])
+        group_to_delete = create_test_group(user=user, users=[user_2])
+        TemplateOwner.objects.create(
+            template=template,
+            account=account,
+            type=OwnerType.GROUP,
+            group_id=group_to_delete.id,
+        )
+        TemplateOwner.objects.create(
+            template=template,
+            account=account,
+            type=OwnerType.GROUP,
+            group_id=group.id,
+        )
+        workflow = create_test_workflow(
+            user=user,
+            template=template
+        )
+        group_to_delete.delete()
+
+        # act
+        update_workflow_owners([template.id])
+
+        # assert
+        assert workflow.owners.all().count() == 1
+        assert workflow.owners.get(id=user.id)
+
+    def test_delete__other_templates_not_changed__ok(self):
+        '''2 groups and 2 templates, each template has an owner of
+           group type - delete group 1, the changes affect the first template
+           and its workflow, and the second template and its workflow have
+           not changed.'''
+
+        # arrange
+        account = create_test_account(plan=BillingPlanType.PREMIUM)
+        user = create_test_user(account=account)
+        template = create_test_template(user, is_active=True)
+        TemplateOwner.objects.filter(
+            template=template,
+            type=OwnerType.USER,
+            user_id=user.id
+        ).delete()
+        template_2 = create_test_template(user, is_active=True)
+        TemplateOwner.objects.filter(
+            template=template_2,
+            type=OwnerType.USER,
+            user_id=user.id
+        ).delete()
+        group = create_test_group(user=user, users=[user])
+        TemplateOwner.objects.create(
+            template=template,
+            account=account,
+            type=OwnerType.GROUP,
+            group_id=group.id,
+        )
+        group_to_delete = create_test_group(user=user, users=[user])
+        TemplateOwner.objects.create(
+            template=template_2,
+            account=account,
+            type=OwnerType.GROUP,
+            group_id=group_to_delete.id,
+        )
+        workflow = create_test_workflow(
+            user=user,
+            template=template
+        )
+        workflow_2 = create_test_workflow(
+            user=user,
+            template=template_2
+        )
+        group_to_delete.delete()
+
+        # act
+        update_workflow_owners([template_2.id])
+
+        # assert
+        assert template.owners.all().count() == 1
+        assert template.owners.get(group_id=group.id)
+        assert workflow.owners.all().count() == 1
+        assert workflow.owners.get(id=user.id)
+        assert template_2.owners.all().count() == 0
+        assert workflow_2.owners.all().count() == 0
+
+    def test_delete__different_accounts__ok(self):
+        '''As the base account has only 2 accounts, deleting the group in
+           first account should not affect the template and workflow of
+           second account.'''
+
+        # arrange
+        account = create_test_account(plan=BillingPlanType.PREMIUM)
+        user = create_test_user(account=account)
+        template = create_test_template(user, is_active=True)
+        TemplateOwner.objects.filter(type=OwnerType.USER,
+                                     user_id=user.id).delete()
+        group = create_test_group(user=user, users=[user, ])
+        TemplateOwner.objects.create(
+            template=template,
+            account=account,
+            type=OwnerType.GROUP,
+            group_id=group.id,
+        )
+        workflow = create_test_workflow(
+            user=user,
+            template=template
+        )
+        account_another = create_test_account(plan=BillingPlanType.PREMIUM)
+        user_account_another = create_test_user(
+            account=account_another,
+            email='test1@test.test'
+        )
+        template_account_another = create_test_template(
+            user_account_another,
+            is_active=True
+        )
+        TemplateOwner.objects.filter(
+            type=OwnerType.USER,
+            user_id=user_account_another.id
+        ).delete()
+        group_to_delete = create_test_group(
+            user=user_account_another,
+            users=[user_account_another, ]
+        )
+        TemplateOwner.objects.create(
+            template=template_account_another,
+            account=account_another,
+            type=OwnerType.GROUP,
+            group_id=group_to_delete.id,
+        )
+        workflow_account_another = create_test_workflow(
+            user=user_account_another,
+            template=template_account_another
+        )
+        group_to_delete.delete()
+
+        # act
+        update_workflow_owners([template_account_another.id])
+
+        # assert
+        assert template.owners.all().count() == 1
+        assert template.owners.get(group_id=group.id)
+        assert workflow.owners.all().count() == 1
+        assert workflow.owners.get(id=user.id)
+        assert template_account_another.owners.all().count() == 0
+        assert workflow_account_another.owners.all().count() == 0

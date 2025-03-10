@@ -42,6 +42,7 @@ export interface ITemplateTask {
   uuid: string;
   conditions: ICondition[];
   checklists: TOutputChecklist[];
+  revertTask: string | null;
 }
 
 export type TDueDateRuleTarget = 'field' | 'workflow started' | 'task started' | 'task completed';

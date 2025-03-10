@@ -246,6 +246,16 @@ msgstr "Шаг \"{step_name}\": содержит неуникальное api_na
 msgid "Step \"{step_name}\": performer contains a non-unique api_name \"{api_name}\". Recreate performer or change it's api_name."
 msgstr "Шаг \"{step_name}\": исполнитель содержит неуникальный api_name \"{api_name}\". Создайте исполнителя заново или измените его api_name."
 
+#: pneumatic_backend/processes/messages/template.py:224
+#, python-brace-format
+msgid "Duplicate template owners in the add owners request."
+msgstr "Дублирующиеся владельцы шаблона в запросе на добавление владельцев."
+
+#: pneumatic_backend/processes/messages/template.py:227
+#, python-brace-format
+msgid "The owners passed in for template \"{step_name}\" contain a non-unique api_name: \"{api_name}\". Please change the non-unique api_name, or supply different owners."
+msgstr "Владельцы, переданные для шаблона \"{step_name}\", содержат неуникальный api_name: \"{api_name}\". Пожалуйста, измените неуникальный api_name или укажите других владельцев."
+
 #: pneumatic_backend/processes/messages/workflow.py:5
 msgid "Saving files is not available, file storage does't configured. Contact support."
 msgstr "Невозможно сохранить файл, Файловое хранилище не настроенно. Обратитесь в поддержку."
@@ -582,3 +592,15 @@ msgstr "Нельзя вернутья к задаче \"{task_name}\", т.к з�
 #: pneumatic_backend/processes/messages/workflow.py:187
 msgid "A workflow can't return to a later task."
 msgstr "Нельзя вернуться к одной из будущих задач."
+
+#: pneumatic_backend/processes/messages/template.py:234
+msgid "Step \"{step_name}\": The \"Return to\" setting refers to a task that doesn't exist (API name: \"{api_name}\")."
+msgstr "Шаг \"{step_name}\": Параметр \"Вернуться к\" ссылается на несуществующую задачу (API-имя: \"{api_name}\")."
+
+#: pneumatic_backend/processes/messages/template.py:242
+msgid "The task \"{step_name}\" cannot be set to return to itself."
+msgstr "Задача \"{step_name}\" не может быть возвращена на саму себя."
+
+#: pneumatic_backend/processes/messages/workflow.py:188
+msgid "You must supply a comment."
+msgstr "Необходимо оставить комментарий."

@@ -1,0 +1,35 @@
+/* stylelint-disable declaration-no-important */
+.template-name {
+  @mixin h4;
+
+  margin-bottom: 1.6rem;
+  font-weight: 800;
+  letter-spacing: -1%;
+  color: var(--pneumatic-color-black100);
+}
+
+.description .textarea {
+  @mixin text-base;
+
+  padding: 1rem 1.6rem;
+  overflow: hidden;
+  min-height: 12rem;
+  cursor: text;
+  resize: none;
+  color: var(--pneumatic-color-black100);
+  background: var(--pneumatic-color-black4);
+  border: 0.1rem solid var(--pneumatic-color-black16);
+  border-radius: 0.6rem;
+
+  &:focus {
+    border-color: var(--pneumatic-color--black48);
+  }
+}
+
+.description {
+  margin-bottom: 1.6rem;
+}
+
+.form-controll {
+  font-size: 1.5rem !important;
+}

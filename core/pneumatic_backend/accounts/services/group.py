@@ -1,13 +1,22 @@
 from typing import List, Optional
 from pneumatic_backend.generics.base.service import BaseModelService
 from pneumatic_backend.accounts.models import UserGroup
-from django.db import IntegrityError
-from pneumatic_backend.accounts.services.exceptions import (
-    AlreadyRegisteredException,
+from pneumatic_backend.processes.models import TemplateOwner
+from pneumatic_backend.processes.enums import (
+    OwnerType
+)
+from pneumatic_backend.processes.tasks.update_workflow import (
+    update_workflow_owners,
 )
 
 
 class UserGroupService(BaseModelService):
+
+    def _get_template_ids(self):
+        return list(TemplateOwner.objects.filter(
+            type=OwnerType.GROUP,
+            group=self.instance
+        ).values_list('template_id', flat=True))
 
     def _create_instance(
         self,
@@ -16,14 +25,11 @@ class UserGroupService(BaseModelService):
         users: Optional[List[int]] = None,
         **kwargs
     ):
-        try:
-            self.instance = UserGroup.objects.create(
-                name=name,
-                photo=photo,
-                account=self.account,
-            )
-        except IntegrityError:
-            raise AlreadyRegisteredException()
+        self.instance = UserGroup.objects.create(
+            name=name,
+            photo=photo,
+            account=self.account,
+        )
         return self.instance
 
     def _create_related(
@@ -41,6 +47,9 @@ class UserGroupService(BaseModelService):
     ):
         users = update_kwargs.pop('users', None)
         if isinstance(users, list):
+            template_ids = self._get_template_ids()
+            if template_ids:
+                update_workflow_owners.delay(template_ids)
             if users:
                 self.instance.users.set(users)
             else:
@@ -49,3 +58,9 @@ class UserGroupService(BaseModelService):
             **update_kwargs,
             force_save=force_save
         )
+
+    def delete(self):
+        template_ids = self._get_template_ids()
+        self.instance.delete()
+        if template_ids:
+            update_workflow_owners.delay(template_ids)

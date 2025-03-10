@@ -58,6 +58,7 @@ import { EBgColorTypes, UserPerformer } from '../UI/UserPerformer';
 import { DateFormat } from '../UI/DateFormat';
 
 import styles from './TaskCard.css';
+import { ReturnModal } from './ReturnModal';
 
 export enum ETaskCardViewMode {
   Single = 'single',
@@ -126,7 +127,7 @@ export function TaskCard({
   const workflowLinkRef = useRef(null);
   const [outputValues, setOutputValues] = useState([] as IExtraField[]);
   const [isLogMinimized, setIsLogMinimized] = useState(true);
-
+  const [isReturnModalOpen, setIsReturnModalOpen] = useState(false);
   const toggleLog = () => setIsLogMinimized(!isLogMinimized);
 
   useEffect(() => {
@@ -351,6 +352,16 @@ export function TaskCard({
     );
   };
 
+  const handleReturnTask = (comment: string) => {
+    setTaskReverted({
+      taskId: task.id,
+      workflowId: task.workflow.id,
+      viewMode,
+      comment,
+    });
+    setIsReturnModalOpen(false);
+  };
+
   const renderTaskButtons = () => {
     if (status === ETaskStatus.Completed || task.workflow.status === EWorkflowStatus.Finished) {
       const dateCompleted = task.dateCompleted || task.workflow.dateCompleted;
@@ -439,7 +450,7 @@ export function TaskCard({
             <div>
               <Button
                 disabled={!isEmbeddedWorkflowsComplete}
-                onClick={() => setTaskReverted({ taskId, workflowId, viewMode })}
+                onClick={() => setIsReturnModalOpen(true)}
                 label={isMobile ? undefined : formatMessage({ id: 'processes.return-task' })}
                 icon={isMobile ? ReturnToIcon : undefined}
                 buttonStyle="transparent-black"
@@ -529,47 +540,54 @@ export function TaskCard({
   };
 
   return (
-    <div
-      ref={wrapperRef}
-      className={classnames(styles['container'], viewMode === ETaskCardViewMode.Guest && styles['container_guest'])}
-    >
-      {renderHeader()}
-      <p className={styles['description']}>
-        <RichText
-          text={task.description}
-          interactiveChecklists
-          renderExtensions={[...createChecklistExtension(task), ...createProgressbarExtension(task)]}
-          hideIcon
-        />
-      </p>
-      <div className={styles['info']}>
-        <div className={styles['performers']}>
-          {renderPerformersControllers()}
-          {renderPerformers()}
+    <>
+      <ReturnModal
+        isOpen={isReturnModalOpen}
+        onClose={() => setIsReturnModalOpen(false)}
+        onConfirm={handleReturnTask}
+      />
+      <div
+        ref={wrapperRef}
+        className={classnames(styles['container'], viewMode === ETaskCardViewMode.Guest && styles['container_guest'])}
+      >
+        {renderHeader()}
+        <p className={styles['description']}>
+          <RichText
+            text={task.description}
+            interactiveChecklists
+            renderExtensions={[...createChecklistExtension(task), ...createProgressbarExtension(task)]}
+            hideIcon
+          />
+        </p>
+        <div className={styles['info']}>
+          <div className={styles['performers']}>
+            {renderPerformersControllers()}
+            {renderPerformers()}
+          </div>
+
+          {viewMode !== ETaskCardViewMode.Guest && (
+            <DueIn
+              withTime
+              timezone={authUser.timezone}
+              dateFmt={authUser.dateFmt}
+              dueDate={task.dueDate}
+              onSave={setDueDate}
+              onRemove={deleteDueDate}
+              containerClassName={styles['due-in']}
+            />
+          )}
         </div>
 
-        {viewMode !== ETaskCardViewMode.Guest && (
-          <DueIn
-            withTime
-            timezone={authUser.timezone}
-            dateFmt={authUser.dateFmt}
-            dueDate={task.dueDate}
-            onSave={setDueDate}
-            onRemove={deleteDueDate}
-            containerClassName={styles['due-in']}
-          />
-        )}
+        <div className={styles['complete-form']}>
+          {renderOutputFields()}
+          {renderTaskButtons()}
+          {viewMode !== ETaskCardViewMode.Guest && !isEmptyArray(task.subWorkflows) && (
+            <SubWorkflowsContainer workflows={task.subWorkflows} ancestorTaskId={task.id} />
+          )}
+        </div>
+        {renderWorkflowData()}
       </div>
-
-      <div className={styles['complete-form']}>
-        {renderOutputFields()}
-        {renderTaskButtons()}
-        {viewMode !== ETaskCardViewMode.Guest && !isEmptyArray(task.subWorkflows) && (
-          <SubWorkflowsContainer workflows={task.subWorkflows} ancestorTaskId={task.id} />
-        )}
-      </div>
-      {renderWorkflowData()}
-    </div>
+    </>
   );
 }
 

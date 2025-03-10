@@ -14,6 +14,7 @@ import { Conditions } from './Conditions';
 import { InputWithVariables } from '../InputWithVariables';
 import { TPatchTaskPayload } from '../../../redux/actions';
 
+import { ReturnTo } from './ReturnTo';
 import { DueDate } from './DueDate';
 import { getSingleLineVariables } from './utils/getTaskVariables';
 
@@ -55,6 +56,7 @@ export function TaskForm({
     [ETaskFormParts.DueIn]: useRef<HTMLDivElement>(null),
     [ETaskFormParts.Fields]: useRef<HTMLDivElement>(null),
     [ETaskFormParts.Conditions]: useRef<HTMLDivElement>(null),
+    [ETaskFormParts.ReturnTo]: useRef<HTMLDivElement>(null),
   };
 
   useLayoutEffect(() => {
@@ -131,6 +133,19 @@ export function TaskForm({
         />
       ),
     },
+    {
+      formPartId: ETaskFormParts.ReturnTo,
+      title: 'templates.return-to.title',
+      component: (
+        <ReturnTo
+          variables={listVariables}
+          tasks={tasks}
+          currentTaskRevertTask={task.revertTask}
+          currentTaskApiName={task.apiName}
+          setCurrentTask={setCurrentTask}
+        />
+      ),
+    },
   ];
 
   return (
@@ -167,6 +182,7 @@ export function TaskForm({
         </div>
         {taskFormParts.map(({ title, component, formPartId }, index) => (
           <ShowMore
+            isDisabled={title === 'templates.return-to.title' && tasks.length < 2}
             label={`${index + 1}. ${formatMessage({ id: title })}`}
             containerClassName={styles['task-accordion-container']}
             isInitiallyVisible={formPartId === scrollTarget}

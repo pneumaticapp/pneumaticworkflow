@@ -110,6 +110,7 @@ export type TSetTaskRevertedPayload = {
   taskId: number;
   workflowId: number;
   viewMode: ETaskCardViewMode;
+  comment: string;
 };
 export type TSetTaskReverted = ITypedReduxAction<ETaskActions.SetTaskReverted, TSetTaskRevertedPayload>;
 export const setTaskReverted: (payload: TSetTaskRevertedPayload) => TSetTaskReverted = actionGenerator<
@@ -202,25 +203,24 @@ export const setChecklistsHandling: (payload: boolean) => TSetChecklistsHandling
 >(ETaskActions.SetChecklistsHandling);
 
 export type TSendTaskWorkflowLogComment = ITypedReduxAction<
-ETaskActions.SendTaskWorkflowLogComment,
+  ETaskActions.SendTaskWorkflowLogComment,
   ISendWorkflowLogComment
 >;
 
-export const sendTaskWorkflowLogComments: (payload: ISendWorkflowLogComment) => TSendTaskWorkflowLogComment = actionGenerator<
-ETaskActions.SendTaskWorkflowLogComment,
-  ISendWorkflowLogComment
->(ETaskActions.SendTaskWorkflowLogComment);
+export const sendTaskWorkflowLogComments: (payload: ISendWorkflowLogComment) => TSendTaskWorkflowLogComment =
+  actionGenerator<ETaskActions.SendTaskWorkflowLogComment, ISendWorkflowLogComment>(
+    ETaskActions.SendTaskWorkflowLogComment,
+  );
 
 export type TUpdateTaskWorkflowLogItemPayload = IWorkflowLogItem;
 export type TUpdateTaskWorkflowLogItem = ITypedReduxAction<
-ETaskActions.UpdateTaskWorkflowLogItem,
-TUpdateTaskWorkflowLogItemPayload
+  ETaskActions.UpdateTaskWorkflowLogItem,
+  TUpdateTaskWorkflowLogItemPayload
 >;
 export const updateTaskWorkflowLogItem: (payload: TUpdateTaskWorkflowLogItemPayload) => TUpdateTaskWorkflowLogItem =
   actionGenerator<ETaskActions.UpdateTaskWorkflowLogItem, TUpdateTaskWorkflowLogItemPayload>(
     ETaskActions.UpdateTaskWorkflowLogItem,
   );
-
 
 export type TTaskActions =
   | TLoadCurrentTask

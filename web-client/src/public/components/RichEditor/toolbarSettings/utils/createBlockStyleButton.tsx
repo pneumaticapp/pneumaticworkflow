@@ -2,10 +2,10 @@
 /* prettier-ignore */
 /* eslint-disable */
 import React, { MouseEvent, ReactNode } from 'react';
-import { ToolbarChildrenProps } from '@draft-js-plugins/static-toolbar/lib/components/Toolbar';
-import * as classnames from 'classnames';
+import classnames from 'classnames';
 import { RichUtils } from 'draft-js';
 
+import { IExtendedToolbarChildrenProps } from './types';
 import { CustomTooltip } from '../../../UI';
 
 interface ICreateBlockStyleButtonProps {
@@ -14,21 +14,13 @@ interface ICreateBlockStyleButtonProps {
   children: ReactNode;
 }
 
-export function createBlockStyleButton({
-  blockType,
-  tooltipText,
-  children,
-}: ICreateBlockStyleButtonProps) {
-  return function BlockStyleButton(
-    props: React.PropsWithChildren<ToolbarChildrenProps>
-  ) {
+export function createBlockStyleButton({ blockType, tooltipText, children }: ICreateBlockStyleButtonProps) {
+  return function BlockStyleButton(props: React.PropsWithChildren<IExtendedToolbarChildrenProps>) {
     const buttonRef = React.useRef<HTMLButtonElement>(null);
 
     const toggleStyle = (event: MouseEvent): void => {
       event.preventDefault();
-      props.setEditorState(
-        RichUtils.toggleBlockType(props.getEditorState(), blockType)
-      );
+      props.setEditorState(RichUtils.toggleBlockType(props.getEditorState(), blockType));
     };
 
     const preventBubblingUp = (event: MouseEvent): void => {
@@ -42,29 +34,18 @@ export function createBlockStyleButton({
       }
 
       const editorState = props.getEditorState();
-      const type = editorState
-        .getCurrentContent()
-        .getBlockForKey(editorState.getSelection().getStartKey())
-        .getType();
+      const type = editorState.getCurrentContent().getBlockForKey(editorState.getSelection().getStartKey()).getType();
 
       return type === blockType;
     };
 
     const { theme } = props;
-    const className = blockTypeIsActive()
-      ? classnames(theme.button, theme.active)
-      : theme.button;
+    const className = blockTypeIsActive() ? classnames(theme.button, theme.active) : theme.button;
 
     return (
       <div className={theme.buttonWrapper} onMouseDown={preventBubblingUp}>
-        <CustomTooltip target={buttonRef} tooltipText={tooltipText} />
-        <button
-          ref={buttonRef}
-          children={children}
-          className={className}
-          onClick={toggleStyle}
-          type="button"
-        />
+        <CustomTooltip target={buttonRef} tooltipText={tooltipText} isModal={theme.isModal} />
+        <button ref={buttonRef} children={children} className={className} onClick={toggleStyle} type="button" />
       </div>
     );
   };

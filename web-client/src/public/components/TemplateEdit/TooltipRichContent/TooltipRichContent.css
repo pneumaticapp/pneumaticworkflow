@@ -1,0 +1,14 @@
+.tooltip-rich-content__box {
+  padding: 0.4rem 0.8rem;
+  text-align: center;
+
+  .tooltip-rich-content__title {
+    @mixin text-small bold;
+  }
+
+  .tooltip-rich-content__subtitle {
+    span {
+      color: var(--pneumatic-color-link);
+    }
+  }
+}

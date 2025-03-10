@@ -1,0 +1,31 @@
+.return-modal__title {
+  margin: 0 0 1.6rem;
+  font-weight: bold;
+
+  @mixin h6;
+}
+
+.return-modal__subtitle {
+  margin: 0 0 1.6rem;
+  color: var(--pneumatic-color-black72);
+
+  @mixin text-base;
+}
+
+.return-modal__editor {
+  margin-bottom: 3.2rem;
+  [class*='DraftEditor-root'] {
+    min-height: 10.9rem;
+  }
+}
+
+.return-modal__buttons {
+  display: flex;
+  gap: 1.6rem;
+  justify-content: flex-start;
+
+  @media (--mobile) {
+    flex-direction: column;
+    gap: 0.6rem;
+  }
+}

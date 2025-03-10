@@ -25,7 +25,7 @@ if configuration in {'Staging', 'Production'}:
             'send_default_pii': True
         }
         if configuration == 'Production':
-            kwargs['traces_sample_rate'] = 0.5
+            kwargs['traces_sample_rate'] = 0.2
         sentry_sdk.init(**kwargs)
 
 application = get_wsgi_application()

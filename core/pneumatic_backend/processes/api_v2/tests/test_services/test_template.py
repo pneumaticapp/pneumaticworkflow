@@ -63,7 +63,7 @@ def test_create_template_by_steps__ok(mocker):
     # assert
     assert template.name == name
     assert template.is_active is True
-    assert template.template_owners.filter(id=user.id).exists()
+    assert template.owners.filter(user_id=user.id).exists()
     assert template.tasks.count() == 2
     task = template.tasks.order_by('number').first()
     assert task.name == 'Step 1'

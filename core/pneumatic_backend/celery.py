@@ -32,7 +32,7 @@ if configuration in (
             'send_default_pii': True
         }
         if configuration == settings.CONFIGURATION_PROD:
-            kwargs['traces_sample_rate'] = 0.5
+            kwargs['traces_sample_rate'] = 0.2
         sentry_sdk.init(**kwargs)
 
     if settings.PROJECT_CONF['PUSH']:

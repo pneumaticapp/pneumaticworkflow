@@ -2,6 +2,7 @@ from rest_framework import serializers
 from pneumatic_backend.services.markdown import MarkdownService
 from pneumatic_backend.processes.models import (
     Template,
+    TemplateOwner,
     TaskTemplate,
     Kickoff,
     FieldTemplate,
@@ -64,6 +65,17 @@ class KickoffSchemaV1(serializers.ModelSerializer):
 
     def get_clear_description(self, obj):
         return MarkdownService.clear(obj.description)
+
+
+class TemplateOwnerSchemaV1(serializers.ModelSerializer):
+    class Meta:
+        model = TemplateOwner
+        fields = (
+            'type',
+            'user_id',
+            'group_id',
+            'api_name',
+        )
 
 
 class PredicateSchemaV1(serializers.ModelSerializer):
@@ -179,6 +191,7 @@ class TaskSchemaV1(serializers.ModelSerializer):
             'raw_performers',
             'raw_due_date',
             'checklists',
+            'revert_task',
         )
 
     fields = FieldSchemaV1(many=True, allow_null=True, allow_empty=True)
@@ -204,6 +217,7 @@ class TaskSchemaV1(serializers.ModelSerializer):
 
 
 class TemplateSchemaV1(serializers.ModelSerializer):
+    owners = TemplateOwnerSchemaV1(many=True)
     kickoff = KickoffSchemaV1(
         required=False,
         allow_null=True,
@@ -219,7 +233,7 @@ class TemplateSchemaV1(serializers.ModelSerializer):
             'tasks',
             'finalizable',
             'description',
-            'template_owners',
+            'owners',
             'updated_by',
             'wf_name_template',
         )

@@ -1,19 +1,18 @@
-/* eslint-disable */
-/* prettier-ignore */
-import * as React from 'react';
+import React, { MouseEventHandler, useRef, useState } from 'react';
 import OutsideClickHandler from 'react-outside-click-handler';
 import * as PerfectScrollbar from 'react-perfect-scrollbar';
-import { Tooltip } from 'reactstrap';
-import * as classnames from 'classnames';
+import { Tooltip as ReactstrapTooltip } from 'reactstrap';
+import classnames from 'classnames';
 import { useIntl } from 'react-intl';
 
-import styles from './VariableList.css';
+import { Tooltip, CustomTooltip } from '../../UI';
 import { isArrayWithItems } from '../../../utils/helpers';
 import { ExpandIcon } from '../../icons';
 import { ELearnMoreLinks } from '../../../constants/defaultValues';
-import { CustomTooltip } from '../../UI';
 import { TTaskVariable } from '../types';
 import { useCheckDevice } from '../../../hooks/useCheckDevice';
+import { TooltipRichContent } from '../TooltipRichContent';
+import styles from './VariableList.css';
 
 export interface IVariableListProps {
   variables: TTaskVariable[];
@@ -32,10 +31,10 @@ export const VariableList = ({
   onVariableClick,
   focusEditor,
 }: IVariableListProps) => {
-  const [isOpen, setIsOpen] = React.useState(false);
-  const [isTooltipOpen, setIsTooltipOpen] = React.useState(false);
+  const [isOpen, setIsOpen] = useState(false);
+  const [isTooltipOpen, setIsTooltipOpen] = useState(false);
   const { isDesktop } = useCheckDevice();
-  const buttonRef = React.useRef<HTMLButtonElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
   const { formatMessage } = useIntl();
   const handleOutsideClick = () => {
     if (isOpen) {
@@ -43,7 +42,7 @@ export const VariableList = ({
     }
   };
 
-  const handleButtonClick: React.MouseEventHandler<HTMLButtonElement> = (event) => {
+  const handleButtonClick: MouseEventHandler<HTMLButtonElement> = () => {
     if (!isArrayWithItems(variables)) {
       return;
     }
@@ -61,6 +60,8 @@ export const VariableList = ({
         onClick={handleButtonClick}
         onMouseOver={() => setIsTooltipOpen(true)}
         onMouseLeave={() => setIsTooltipOpen(false)}
+        onFocus={() => setIsTooltipOpen(true)}
+        onBlur={() => setIsTooltipOpen(false)}
       >
         <span>{formatMessage({ id: 'template.insert-variable' })}</span>
         <ExpandIcon className={styles['button__expand-icon']} />
@@ -73,9 +74,9 @@ export const VariableList = ({
         />
       </button>
 
-      <Tooltip
+      <ReactstrapTooltip
         fade
-        flip={true}
+        flip
         hideArrow
         innerClassName={styles['variable-list__inner']}
         className={styles['variable-list']}
@@ -88,17 +89,31 @@ export const VariableList = ({
             className={styles['variable-list__scrollbar']}
             options={{ suppressScrollX: true, wheelPropagation: false }}
           >
-            {variables.map(({ title, richSubtitle, subtitle, apiName }, index) => {
+            {variables.map(({ title, richSubtitle, subtitle, apiName }) => {
               return (
-                <p className={styles['variable-list-item']} onClick={onVariableClick(apiName)} key={index}>
-                  <span className={styles['variable-list-item__name']}>{title}</span>
-                  <span className={styles['variable-list-item__task-name']}>{richSubtitle || subtitle}</span>
-                </p>
+                <Tooltip
+                  interactive={false}
+                  containerClassName={styles['condition__tooltop']}
+                  content={<TooltipRichContent title={title} subtitle={subtitle} variables={variables} />}
+                >
+                  <p
+                    className={styles['variable-list-item']}
+                    onClick={onVariableClick(apiName)}
+                    key={apiName}
+                    // eslint-disable-next-line jsx-a11y/no-noninteractive-element-to-interactive-role
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => e.key === 'Enter' && onVariableClick(apiName)}
+                  >
+                    <span className={styles['variable-list-item__name']}>{title}</span>
+                    <span className={styles['variable-list-item__task-name']}>{richSubtitle || subtitle}</span>
+                  </p>
+                </Tooltip>
               );
             })}
           </ScrollBar>
         </OutsideClickHandler>
-      </Tooltip>
+      </ReactstrapTooltip>
     </div>
   );
 };

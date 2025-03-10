@@ -2018,3 +2018,85 @@ def test_get_valid_date_value__invalid_value__ok(raw_value):
     # assert
     assert ex.value.api_name == task_field.api_name
     assert ex.value.message == messages.MSG_PW_0032
+
+
+@pytest.mark.parametrize('raw_value', (5165, True))
+def test_get_valid_url_value__not_string__raise_exception(raw_value):
+
+    # arrange
+    user = create_test_user()
+    template = create_test_template(user=user, tasks_count=1)
+    template_task = template.tasks.first()
+    field_template = FieldTemplate.objects.create(
+        task=template_task,
+        type=FieldType.URL,
+        name='URL field',
+        template=template,
+        api_name='api-name-1',
+    )
+    service = TaskFieldService(user=user, instance=field_template)
+
+    # act
+    with pytest.raises(TaskFieldException) as ex:
+        service._get_valid_url_value(raw_value=raw_value)
+
+    # assert
+    assert ex.value.message == messages.MSG_PW_0034
+    assert ex.value.api_name == field_template.api_name
+
+
+@pytest.mark.parametrize(
+    'raw_value',
+    ('ssh://my.pneumatic.app', 'relative/path')
+)
+def test_get_valid_url_value__invalid_url__raise_exception(raw_value):
+
+    # arrange
+    user = create_test_user()
+    template = create_test_template(user=user, tasks_count=1)
+    template_task = template.tasks.first()
+    field_template = FieldTemplate.objects.create(
+        task=template_task,
+        type=FieldType.URL,
+        name='URL field',
+        template=template,
+        api_name='api-name-1',
+    )
+    service = TaskFieldService(user=user, instance=field_template)
+
+    # act
+    with pytest.raises(TaskFieldException) as ex:
+        service._get_valid_url_value(raw_value=raw_value)
+
+    # assert
+    assert ex.value.message == messages.MSG_PW_0035
+    assert ex.value.api_name == field_template.api_name
+
+
+@pytest.mark.parametrize(
+    'raw_value',
+    ('https://my.pneumatic.app', 'https://192.168.0.1')
+)
+def test_get_valid_url_value__valid_value__ok(raw_value):
+
+    # arrange
+    user = create_test_user()
+    template = create_test_template(user=user, tasks_count=1)
+    template_task = template.tasks.first()
+    field_template = FieldTemplate.objects.create(
+        task=template_task,
+        type=FieldType.URL,
+        name='URL field',
+        template=template,
+        api_name='api-name-1',
+    )
+    service = TaskFieldService(user=user, instance=field_template)
+
+    # act
+    raw_value_result, markdown_value_result = (
+        service._get_valid_url_value(raw_value=raw_value)
+    )
+
+    # assert
+    assert raw_value_result == raw_value
+    assert markdown_value_result == f'[URL field]({raw_value})'

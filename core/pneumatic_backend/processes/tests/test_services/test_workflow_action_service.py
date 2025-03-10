@@ -2654,7 +2654,7 @@ def test_complete_current_task__task_rcba_and_last_completion__ok(mocker):
     )
 
 
-def test_revert__ok(mocker):
+def test_revert__to_default_revert_task__ok(mocker):
 
     # arrange
     account = create_test_account()
@@ -2664,6 +2664,14 @@ def test_revert__ok(mocker):
     task_2 = workflow.tasks.get(number=2)
     workflow.current_task = 2
     workflow.save()
+    task_revert_event_mock = mocker.patch(
+        'pneumatic_backend.processes.services.workflow_action.'
+        'WorkflowEventService.task_revert_event'
+    )
+    task_revert_analytics_mock = mocker.patch(
+        'pneumatic_backend.analytics.services.AnalyticService.'
+        'task_returned'
+    )
     return_workflow_to_task_mock = mocker.patch(
         'pneumatic_backend.processes.services.workflow_action.'
         'WorkflowActionService._return_workflow_to_task'
@@ -2672,19 +2680,86 @@ def test_revert__ok(mocker):
         'pneumatic_backend.processes.services.workflow_action.'
         'WorkflowActionService.start_task'
     )
+    text_comment = 'text_comment'
+    start_task_mock.__name__ = 'start_task'
+    service = WorkflowActionService(user=user)
+
+    # act
+    service.revert(workflow=workflow, comment=text_comment)
+
+    # assert
+    task_revert_event_mock.assert_called_once_with(
+        task=task_1,
+        user=user,
+        text=text_comment,
+        clear_text=text_comment
+    )
+    return_workflow_to_task_mock.assert_called_once_with(
+        workflow=workflow,
+        revert_from_task=task_2,
+        revert_to_task=task_1,
+    )
+    task_revert_analytics_mock.assert_called_once_with(
+        user=user,
+        task=task_2,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER
+    )
+
+
+def test_revert__to_custom_revert_task__ok(mocker):
+
+    # arrange
+    account = create_test_account()
+    user = create_test_user(account=account, is_account_owner=True)
+    workflow = create_test_workflow(user, tasks_count=3)
+    task_1 = workflow.tasks.get(number=1)
+    task_3 = workflow.tasks.get(number=3)
+    task_3.revert_task = task_1.api_name
+    task_3.save()
+    workflow.current_task = 3
+    workflow.save()
+    task_revert_event_mock = mocker.patch(
+        'pneumatic_backend.processes.services.workflow_action.'
+        'WorkflowEventService.task_revert_event'
+    )
+    task_revert_analytics_mock = mocker.patch(
+        'pneumatic_backend.analytics.services.AnalyticService.'
+        'task_returned'
+    )
+    return_workflow_to_task_mock = mocker.patch(
+        'pneumatic_backend.processes.services.workflow_action.'
+        'WorkflowActionService._return_workflow_to_task'
+    )
+    start_task_mock = mocker.patch(
+        'pneumatic_backend.processes.services.workflow_action.'
+        'WorkflowActionService.start_task'
+    )
+    text_comment = 'text_comment'
     start_task_mock.__name__ = 'start_task'
 
     service = WorkflowActionService(user=user)
 
     # act
-    service.revert(workflow=workflow)
+    service.revert(workflow=workflow, comment=text_comment)
 
     # assert
+    task_revert_event_mock.assert_called_once_with(
+        task=task_1,
+        user=user,
+        text=text_comment,
+        clear_text=text_comment
+    )
     return_workflow_to_task_mock.assert_called_once_with(
         workflow=workflow,
-        revert_from_task=task_2,
+        revert_from_task=task_3,
         revert_to_task=task_1,
-        is_revert=True
+    )
+    task_revert_analytics_mock.assert_called_once_with(
+        user=user,
+        task=task_3,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER
     )
 
 
@@ -2697,6 +2772,14 @@ def test_revert__snoozed_workflow__raise_exception(mocker):
     workflow.status = WorkflowStatus.DELAYED
     workflow.current_task = 2
     workflow.save()
+    task_revert_event_mock = mocker.patch(
+        'pneumatic_backend.processes.services.workflow_action.'
+        'WorkflowEventService.task_revert_event'
+    )
+    task_revert_analytics_mock = mocker.patch(
+        'pneumatic_backend.analytics.services.AnalyticService.'
+        'task_returned'
+    )
     return_workflow_to_task_mock = mocker.patch(
         'pneumatic_backend.processes.services.workflow_action.'
         'WorkflowActionService._return_workflow_to_task'
@@ -2706,15 +2789,18 @@ def test_revert__snoozed_workflow__raise_exception(mocker):
         'WorkflowActionService.start_task'
     )
     start_task_mock.__name__ = 'start_task'
+    text_comment = 'text_comment'
     service = WorkflowActionService(user=user)
 
     # act
     with pytest.raises(exceptions.DelayedWorkflowCannotBeChanged) as ex:
-        service.revert(workflow=workflow)
+        service.revert(workflow=workflow, comment=text_comment)
 
     # assert
     assert ex.value.message == messages.MSG_PW_0072
     return_workflow_to_task_mock.assert_not_called()
+    task_revert_event_mock.assert_not_called()
+    task_revert_analytics_mock.assert_not_called()
     start_task_mock.assert_not_called()
 
 
@@ -2727,6 +2813,14 @@ def test_revert__completed_workflow__raise_exception(mocker):
     workflow.status = WorkflowStatus.DONE
     workflow.current_task = 2
     workflow.save()
+    task_revert_event_mock = mocker.patch(
+        'pneumatic_backend.processes.services.workflow_action.'
+        'WorkflowEventService.task_revert_event'
+    )
+    task_revert_analytics_mock = mocker.patch(
+        'pneumatic_backend.analytics.services.AnalyticService.'
+        'task_returned'
+    )
     return_workflow_to_task_mock = mocker.patch(
         'pneumatic_backend.processes.services.workflow_action.'
         'WorkflowActionService._return_workflow_to_task'
@@ -2736,15 +2830,18 @@ def test_revert__completed_workflow__raise_exception(mocker):
         'WorkflowActionService.start_task'
     )
     start_task_mock.__name__ = 'start_task'
+    text_comment = 'text_comment'
     service = WorkflowActionService(user=user)
 
     # act
     with pytest.raises(exceptions.CompletedWorkflowCannotBeChanged) as ex:
-        service.revert(workflow=workflow)
+        service.revert(workflow=workflow, comment=text_comment)
 
     # assert
     assert ex.value.message == messages.MSG_PW_0017
     return_workflow_to_task_mock.assert_not_called()
+    task_revert_event_mock.assert_not_called()
+    task_revert_analytics_mock.assert_not_called()
     start_task_mock.assert_not_called()
 
 
@@ -2757,6 +2854,14 @@ def test_revert__to_skipped_first_task__raise_exception(mocker):
     workflow.current_task = 2
     workflow.save()
     task_1 = workflow.tasks.get(number=1)
+    task_revert_event_mock = mocker.patch(
+        'pneumatic_backend.processes.services.workflow_action.'
+        'WorkflowEventService.task_revert_event'
+    )
+    task_revert_analytics_mock = mocker.patch(
+        'pneumatic_backend.analytics.services.AnalyticService.'
+        'task_returned'
+    )
     return_workflow_to_task_mock = mocker.patch(
         'pneumatic_backend.processes.services.workflow_action.'
         'WorkflowActionService._return_workflow_to_task'
@@ -2769,16 +2874,19 @@ def test_revert__to_skipped_first_task__raise_exception(mocker):
         'WorkflowActionService.execute_condition',
         return_value=(skip_task_mock, None)
     )
+    text_comment = 'text_comment'
     service = WorkflowActionService(user=user)
 
     # act
     with pytest.raises(exceptions.WorkflowActionServiceException) as ex:
-        service.revert(workflow=workflow)
+        service.revert(workflow=workflow, comment=text_comment)
 
     # assert
     assert ex.value.message == messages.MSG_PW_0079(task_1.name)
     execute_condition_mock.assert_called_once_with(task_1)
     return_workflow_to_task_mock.assert_not_called()
+    task_revert_event_mock.assert_not_called()
+    task_revert_analytics_mock.assert_not_called()
     skip_task_mock.assert_not_called()
 
 
@@ -2792,6 +2900,14 @@ def test_revert__task_is_not_returnable__raise_exception(mocker):
     workflow.save()
     task_1 = workflow.tasks.get(number=1)
     task_2 = workflow.tasks.get(number=2)
+    task_revert_event_mock = mocker.patch(
+        'pneumatic_backend.processes.services.workflow_action.'
+        'WorkflowEventService.task_revert_event'
+    )
+    task_revert_analytics_mock = mocker.patch(
+        'pneumatic_backend.analytics.services.AnalyticService.'
+        'task_returned'
+    )
     return_workflow_to_task_mock = mocker.patch(
         'pneumatic_backend.processes.services.workflow_action.'
         'WorkflowActionService._return_workflow_to_task'
@@ -2808,17 +2924,20 @@ def test_revert__task_is_not_returnable__raise_exception(mocker):
         'WorkflowActionService._task_is_returnable',
         return_value=False
     )
+    text_comment = 'text_comment'
     service = WorkflowActionService(user=user)
 
     # act
     with pytest.raises(exceptions.WorkflowActionServiceException) as ex:
-        service.revert(workflow=workflow)
+        service.revert(workflow=workflow, comment=text_comment)
 
     # assert
     assert ex.value.message == messages.MSG_PW_0080(task_2.name)
     execute_condition_mock.assert_called_once_with(task_2)
     task_is_returnable_mock.assert_called_once_with(task_1)
     return_workflow_to_task_mock.assert_not_called()
+    task_revert_event_mock.assert_not_called()
+    task_revert_analytics_mock.assert_not_called()
     skip_task_mock.assert_not_called()
 
 
@@ -2833,7 +2952,14 @@ def test_return_to__ok(mocker):
 
     workflow.current_task = 3
     workflow.save()
-
+    workflow_revert_event_mock = mocker.patch(
+        'pneumatic_backend.processes.services.workflow_action.'
+        'WorkflowEventService.workflow_revert_event'
+    )
+    workflow_returned_analytics_mock = mocker.patch(
+        'pneumatic_backend.analytics.services.AnalyticService.'
+        'workflow_returned'
+    )
     return_workflow_to_task_mock = mocker.patch(
         'pneumatic_backend.processes.services.workflow_action.'
         'WorkflowActionService._return_workflow_to_task'
@@ -2854,6 +2980,17 @@ def test_return_to__ok(mocker):
         revert_from_task=task_3,
         revert_to_task=task_1,
     )
+    workflow_revert_event_mock.assert_called_once_with(
+        task=task_3,
+        user=user
+    )
+    workflow_returned_analytics_mock.assert_called_once_with(
+        user=user,
+        task=task_1,
+        workflow=workflow,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER
+    )
 
 
 def test_return_to__skipped_task__raise_exception(mocker):
@@ -2865,6 +3002,14 @@ def test_return_to__skipped_task__raise_exception(mocker):
     workflow.current_task = 3
     workflow.save()
     task_2 = workflow.tasks.get(number=2)
+    workflow_revert_event_mock = mocker.patch(
+        'pneumatic_backend.processes.services.workflow_action.'
+        'WorkflowEventService.workflow_revert_event'
+    )
+    workflow_returned_analytics_mock = mocker.patch(
+        'pneumatic_backend.analytics.services.AnalyticService.'
+        'workflow_returned'
+    )
     return_workflow_to_task_mock = mocker.patch(
         'pneumatic_backend.processes.services.workflow_action.'
         'WorkflowActionService._return_workflow_to_task'
@@ -2886,6 +3031,8 @@ def test_return_to__skipped_task__raise_exception(mocker):
     assert ex.value.message == messages.MSG_PW_0079(task_2.name)
     execute_condition_mock.assert_called_once_with(task_2)
     return_workflow_to_task_mock.assert_not_called()
+    workflow_revert_event_mock.assert_not_called()
+    workflow_returned_analytics_mock.assert_not_called()
     skip_task_mock.assert_not_called()
 
 
@@ -2910,10 +3057,6 @@ def test_return_workflow_to_task__is_revert__ok(mocker):
     workflow.current_task = 2
     workflow.save()
 
-    task_revert_event_mock = mocker.patch(
-        'pneumatic_backend.processes.services.workflow_action.'
-        'WorkflowEventService.task_revert_event'
-    )
     workflow_revert_event_mock = mocker.patch(
         'pneumatic_backend.processes.services.workflow_action.'
         'WorkflowEventService.workflow_revert_event'
@@ -2926,10 +3069,6 @@ def test_return_workflow_to_task__is_revert__ok(mocker):
     send_removed_task_notification_mock = mocker.patch(
         'pneumatic_backend.processes.services.websocket.WSSender.'
         'send_removed_task_notification'
-    )
-    task_revert_analytics_mock = mocker.patch(
-        'pneumatic_backend.analytics.services.AnalyticService.'
-        'task_returned'
     )
     workflow_returned_analytics_mock = mocker.patch(
         'pneumatic_backend.analytics.services.AnalyticService.'
@@ -2955,7 +3094,6 @@ def test_return_workflow_to_task__is_revert__ok(mocker):
         workflow=workflow,
         revert_from_task=task_2,
         revert_to_task=task_1,
-        is_revert=True
     )
 
     # assert
@@ -2967,7 +3105,6 @@ def test_return_workflow_to_task__is_revert__ok(mocker):
     task_2.refresh_from_db()
     assert task_2.date_started is None
     assert task_2.date_first_started is not None
-    task_revert_event_mock.assert_called_once_with(task=task_1, user=user)
     task_3 = workflow.tasks.get(number=3)
     assert TaskPerformer.objects.filter(
         task__in=(task_3, task_2),
@@ -2984,12 +3121,6 @@ def test_return_workflow_to_task__is_revert__ok(mocker):
         by_condition=False,
     )
     send_removed_task_notification_mock.assert_called_once_with(task_2)
-    task_revert_analytics_mock.assert_called_once_with(
-        user=user,
-        task=task_2,
-        is_superuser=is_superuser,
-        auth_type=auth_type
-    )
     workflow_returned_analytics_mock.assert_not_called()
     send_task_returned_webhook_mock.assert_called_once_with(
         user_id=user.id,
@@ -3032,14 +3163,6 @@ def test_return_workflow_to_task__ok(mocker):
     workflow.current_task = 3
     workflow.save()
 
-    task_revert_event_mock = mocker.patch(
-        'pneumatic_backend.processes.services.workflow_action.'
-        'WorkflowEventService.task_revert_event'
-    )
-    workflow_revert_event_mock = mocker.patch(
-        'pneumatic_backend.processes.services.workflow_action.'
-        'WorkflowEventService.workflow_revert_event'
-    )
     start_task_mock = mocker.patch(
         'pneumatic_backend.processes.services.workflow_action.'
         'WorkflowActionService.start_task'
@@ -3052,10 +3175,6 @@ def test_return_workflow_to_task__ok(mocker):
     task_revert_analytics_mock = mocker.patch(
         'pneumatic_backend.analytics.services.AnalyticService.'
         'task_returned'
-    )
-    workflow_returned_analytics_mock = mocker.patch(
-        'pneumatic_backend.analytics.services.AnalyticService.'
-        'workflow_returned'
     )
     send_task_returned_webhook_mock = mocker.patch(
         'pneumatic_backend.processes.tasks.webhooks.'
@@ -3101,8 +3220,6 @@ def test_return_workflow_to_task__ok(mocker):
         date_completed=None
     ).count() == 3
 
-    task_revert_event_mock.assert_not_called()
-    workflow_revert_event_mock.assert_called_once_with(task=task_3, user=user)
     start_task_mock.assert_called_once_with(
         workflow=workflow,
         task=task_1,
@@ -3112,13 +3229,6 @@ def test_return_workflow_to_task__ok(mocker):
     )
     send_removed_task_notification_mock.assert_called_once_with(task_3)
     task_revert_analytics_mock.assert_not_called()
-    workflow_returned_analytics_mock.assert_called_once_with(
-        user=user,
-        task=task_1,
-        workflow=workflow,
-        is_superuser=is_superuser,
-        auth_type=auth_type
-    )
     send_task_returned_webhook_mock.assert_called_once_with(
         user_id=user.id,
         account_id=user.account_id,

@@ -1,0 +1,8 @@
+.task-wrapper {
+  width: 100%;
+  transition: height 0.3s;
+}
+
+.task-wrapper__inner {
+  position: relative;
+}

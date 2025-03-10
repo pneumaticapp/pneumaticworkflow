@@ -34,7 +34,7 @@ if configuration in {'Staging', 'Production'}:
             http_method = sampling_context['asgi_scope']['method']
             if http_method in {'HEAD', 'OPTIONS'}:
                 return 0
-            return 0.5
+            return 0.2
 
         kwargs = {
             'dsn': settings.PROJECT_CONF['SENTRY_DSN'],

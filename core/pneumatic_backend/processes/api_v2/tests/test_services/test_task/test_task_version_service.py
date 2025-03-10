@@ -4,6 +4,7 @@ from django.utils import timezone
 from django.contrib.auth import get_user_model
 from pneumatic_backend.processes.tests.fixtures import (
     create_test_user,
+    create_test_template,
     create_test_workflow,
 )
 from pneumatic_backend.authentication.enums import AuthTokenType
@@ -24,12 +25,106 @@ from pneumatic_backend.processes.enums import (
     FieldType,
     PredicateOperator,
 )
+from pneumatic_backend.processes.services.versioning.schemas import (
+    TaskSchemaV1
+)
 
 UserModel = get_user_model()
 pytestmark = pytest.mark.django_db
 
 
 class TestTaskUpdateVersionService:
+
+    def test_create_or_update_instance__update_all_fields__ok(self, mocker):
+
+        # arrange
+        name = 'One of task {{ some-api_name }}'
+        api_name = 'task-1'
+        revert_task = 'task-0'
+        description = 'Some \n {{ another-api_name }} description'
+
+        user = create_test_user()
+        template = create_test_template(user=user, tasks_count=1)
+        workflow = create_test_workflow(
+            user=user,
+            template=template,
+            is_urgent=True
+        )
+        clear_description = 'Some \n clear description'
+        clear_mock = mocker.patch(
+            'pneumatic_backend.services.markdown.MarkdownService.clear',
+            return_value=clear_description
+        )
+        template_task = template.tasks.get(number=1)
+        template_task.api_name = api_name
+        template_task.name = name
+        template_task.revert_task = revert_task
+        template_task.name_template = name
+        template_task.description = description
+        template_task.description_template = description
+        template_task.require_completion_by_all = True
+        template_task.save()
+        task_data = TaskSchemaV1(instance=template_task).data
+
+        task = workflow.tasks.get(number=1)
+
+        service = TaskUpdateVersionService(
+            user=user,
+            instance=task,
+            auth_type=AuthTokenType.USER,
+            is_superuser=False
+        )
+
+        # act
+        task = service._create_or_update_instance(
+            data=task_data,
+            workflow=workflow,
+            prev_tasks_fields_values={}
+        )
+
+        # assert
+        assert task.api_name == api_name
+        assert task.account == user.account
+        assert task.workflow == workflow
+        assert task.name == name
+        assert task.revert_task == revert_task
+        assert task.name_template == name
+        assert task.description == description
+        assert task.clear_description == clear_description
+        assert task.description_template == description
+        assert task.number == 1
+        assert task.require_completion_by_all is True
+        assert task.is_urgent is True
+        clear_mock.assert_called_once_with(description)
+
+    def test_create_or_update_instance__remove_revert_task__ok(self, mocker):
+
+        # arrange
+        user = create_test_user()
+        template = create_test_template(user=user, tasks_count=1)
+        template_task = template.tasks.get(number=1)
+        task_data = TaskSchemaV1(instance=template_task).data
+        workflow = create_test_workflow(
+            user=user,
+            template=template,
+        )
+        task = workflow.tasks.get(number=1)
+        service = TaskUpdateVersionService(
+            user=user,
+            instance=task,
+            auth_type=AuthTokenType.USER,
+            is_superuser=False
+        )
+
+        # act
+        task = service._create_or_update_instance(
+            data=task_data,
+            workflow=workflow,
+            prev_tasks_fields_values={}
+        )
+
+        # assert
+        assert task.revert_task is None
 
     def test_update_from_version__only_required_fields__ok(self, mocker):
 

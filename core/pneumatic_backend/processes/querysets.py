@@ -1,17 +1,19 @@
 import datetime
 from typing import List, Optional, Union, Iterable
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.db import transaction
 from django.db.models import (
     Count,
     Q,
     F,
     Avg,
-    Max,
+    Max, Prefetch,
 )
 from pneumatic_backend.processes.queries import (
     WorkflowListQuery,
     RunningTaskTemplateQuery,
+    TemplateListQuery,
 )
 from pneumatic_backend.accounts.enums import UserType
 from pneumatic_backend.generics.querysets import (
@@ -26,7 +28,10 @@ from pneumatic_backend.processes.enums import (
     DirectlyStatus,
     SysTemplateType,
     WorkflowEventActionType,
+    TemplateOrdering,
 )
+
+UserModel = get_user_model()
 
 
 class WorkflowsBaseQuerySet(AccountBaseQuerySet):
@@ -97,7 +102,23 @@ class TemplateQuerySet(WorkflowsBaseQuerySet):
         return self.filter(is_public=True)
 
     def with_template_owners(self, user_id: int):
-        return self.filter(template_owners=user_id).distinct()
+        query = self.filter(
+            Q(owners__type='user', owners__user_id=user_id) |
+            Q(owners__type='group', owners__group__users__id=user_id)
+        ).distinct()
+        return query
+
+    def get_owners_as_users(self):
+        user_owners = self.filter(
+            owners__type='user'
+        ).values_list('owners__user_id', flat=True)
+        group_owners = self.filter(
+            owners__type='group',
+            owners__group__users__isnull=False
+        ).prefetch_related('owners__group__users').values_list(
+            'owners__group__users__id', flat=True
+        )
+        return user_owners.union(group_owners)
 
     @transaction.atomic
     def delete(self):
@@ -173,6 +194,37 @@ class TemplateQuerySet(WorkflowsBaseQuerySet):
             filter_kwargs['workflows__status'] = status
         return self.filter(**filter_kwargs)
 
+    def raw_list_query(
+        self,
+        account_id: int,
+        user_id: int,
+        is_account_owner: bool,
+        ordering: Optional[TemplateOrdering] = None,
+        search: Optional[str] = None,
+        is_active: Optional[bool] = None,
+        is_public: Optional[bool] = None,
+        is_template_owner: Optional[bool] = None,
+    ):
+        query = TemplateListQuery(
+            user_id=user_id,
+            is_account_owner=is_account_owner,
+            account_id=account_id,
+            ordering=ordering,
+            search_text=search,
+            is_active=is_active,
+            is_public=is_public,
+            is_template_owner=is_template_owner,
+        )
+        return (
+            self.execute_raw(query)
+            .prefetch_related(
+                'owners',
+                'kickoff',
+                'kickoff__fields',
+                'kickoff__fields__selections'
+            )
+        )
+
 
 class WorkflowQuerySet(WorkflowsBaseQuerySet):
     def running(self):
@@ -203,6 +255,8 @@ class WorkflowQuerySet(WorkflowsBaseQuerySet):
         self,
         account_id: int,
         user_id: int,
+        limit: int,
+        offset: Optional[int] = None,
         status: Optional[str] = None,
         ordering: Optional[str] = None,
         template_id: Optional[int] = None,
@@ -213,6 +267,8 @@ class WorkflowQuerySet(WorkflowsBaseQuerySet):
         search: Optional[str] = None,
     ):
         query = WorkflowListQuery(
+            limit=limit,
+            offset=offset,
             status=status,
             ordering=ordering,
             template=template_id,
@@ -224,7 +280,82 @@ class WorkflowQuerySet(WorkflowsBaseQuerySet):
             account_id=account_id,
             user_id=user_id
         )
-        return self.execute_raw(query, using=settings.REPLICA)
+        # TODO remove in https://my.pneumatic.app/workflows/34402
+        from pneumatic_backend.processes.models.templates.owner import (
+            Template,
+            TemplateOwner
+        )
+        from pneumatic_backend.processes.models.workflows.task import (
+            Task,
+            Delay,
+            TaskPerformer,
+        )
+        raw_qst = (
+            self.raw(
+                raw_query=query.get_sql(),
+                params=query.params,
+                using=settings.REPLICA
+            )
+            .prefetch_related(
+                Prefetch(
+                    lookup='owners',
+                    to_attr='owners_ids',
+                    queryset=UserModel.objects.order_by('id').only('id')
+                ),
+                # TODO remove in https://my.pneumatic.app/workflows/34402
+                Prefetch(
+                    lookup='template',
+                    queryset=Template.objects.prefetch_related(
+                        Prefetch(
+                            lookup='owners',
+                            to_attr='tmp_owners',
+                            queryset=(
+                                TemplateOwner.objects
+                                .order_by('id')
+                                .only('user_id', 'template_id')
+                            )
+                        )
+                    )
+                ),
+                Prefetch(
+                    lookup='tasks',
+                    to_attr='passed_tasks',
+                    queryset=Task.objects.completed().order_by('number')
+                ),
+                Prefetch(
+                    lookup='tasks',
+                    to_attr='current_tasks',
+                    queryset=(
+                        Task.objects.prefetch_related(
+                            Prefetch(
+                                lookup='performers',
+                                to_attr='performers_ids',
+                                queryset=(
+                                    TaskPerformer.objects
+                                    .exclude_directly_deleted()
+                                    .only('user_id')
+                                )
+                            ),
+                            Prefetch(
+                                lookup='delay_set',
+                                to_attr='current_delay',
+                                queryset=Delay.objects.filter(
+                                    end_date__isnull=True
+                                ).order_by('-id')
+                            )
+                        ).filter(
+                            number=F('workflow__current_task')
+                        )
+                    )
+                )
+            )
+        )
+        raw_qst.count = self.raw(
+            raw_query=query.get_count_sql(),
+            params=query.params,
+            using=settings.REPLICA
+        )[0].count
+        return raw_qst
 
 
 class TasksQuerySet(TasksBaseQuerySet):

@@ -235,6 +235,7 @@ class TaskUpdateVersionService(
             ),
             'description_template': data['description'],
             'is_urgent': workflow.is_urgent,
+            'revert_task': data['revert_task']
 
         }
         if data['number'] > workflow.current_task:

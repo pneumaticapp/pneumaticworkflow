@@ -34,6 +34,7 @@ const templateResponseMock: ITemplateResponse = {
         },
       ],
       checklists: [],
+      revertTask: null,
     },
     {
       id: 14703,
@@ -66,6 +67,7 @@ const templateResponseMock: ITemplateResponse = {
         },
       ],
       checklists: [],
+      revertTask: null,
     },
     {
       id: 14707,
@@ -88,6 +90,7 @@ const templateResponseMock: ITemplateResponse = {
         },
       ],
       checklists: [],
+      revertTask: null,
     },
     {
       id: 14708,
@@ -110,6 +113,7 @@ const templateResponseMock: ITemplateResponse = {
         },
       ],
       checklists: [],
+      revertTask: null,
     },
     {
       id: 14709,
@@ -133,6 +137,7 @@ const templateResponseMock: ITemplateResponse = {
         },
       ],
       checklists: [],
+      revertTask: null,
     },
   ],
   kickoff: {

@@ -37,11 +37,13 @@ class TemplateOwnerPermission(BasePermission):
         except (ValueError, TypeError):
             return False
         else:
-            return request.user.is_account_owner or Template.objects.filter(
-                id=template_id,
-                template_owners=request.user,
-                account_id=request.user.account_id
-            ).exists()
+            tempalate_owners_ids = Template.objects.filter(
+                id=template_id
+            ).get_owners_as_users()
+            return (
+                request.user.is_account_owner or
+                request.user.id in tempalate_owners_ids
+            )
 
 
 class TemplateWorkflowMemberPermission(BasePermission):
@@ -75,7 +77,7 @@ class WorkflowTemplateOwnerPermission(BasePermission):
                         is_legacy_template=True,
                         workflow_starter_id=request.user.id
                     ) | Q(
-                        template__template_owners=request.user
+                        owners=request.user
                     )
                 ),
                 pk=workflow_id,
@@ -99,7 +101,7 @@ class TaskTemplateOwnerPermission(BasePermission):
                         workflow__is_legacy_template=True,
                         workflow__workflow_starter_id=request.user.id
                     ) | Q(
-                        workflow__template__template_owners=request.user
+                        workflow__owners=request.user
                     )
                 ),
                 pk=task_id,

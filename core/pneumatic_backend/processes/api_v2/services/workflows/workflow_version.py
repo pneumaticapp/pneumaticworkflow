@@ -13,7 +13,10 @@ from pneumatic_backend.processes.api_v2.services.workflows.\
 from pneumatic_backend.processes.api_v2.services.workflows.workflow import (
     WorkflowService
 )
-from pneumatic_backend.processes.models import TaskPerformer
+from pneumatic_backend.processes.models import (
+    TaskPerformer,
+    Template
+)
 from pneumatic_backend.processes.services.workflow_action import (
     WorkflowActionService,
 )
@@ -151,7 +154,7 @@ class WorkflowUpdateVersionService(BaseUpdateVersionService):
                 'description': str,
                 'finalizable': bool,
                 'tasks': list,
-                'template_owners': list,
+                'owners': list,
                 'kickoff': dict,
             }
         """
@@ -189,7 +192,11 @@ class WorkflowUpdateVersionService(BaseUpdateVersionService):
             version=version,
             force_save=True
         )
-        self.instance.members.add(*data['template_owners'])
+        tempalate_owners_ids = Template.objects.filter(
+            id=data['id']
+        ).get_owners_as_users()
+        self.instance.owners.set(tempalate_owners_ids)
+        self.instance.members.add(*tempalate_owners_ids)
         self._update_tasks_from_version(
             data=data['tasks'],
             version=version

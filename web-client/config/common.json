@@ -1,12 +1,5 @@
 {
-  "port": 8000,
-  "host": "http://localhost:8000/",
-  "mainPage": "https://www.pneumatic.app/",
-  "formSubdomain": "form.pneumatic.local",
   "api": {
-    "privateUrl": "http://api.pneumatic.local/",
-    "publicUrl": "http://api.pneumatic.local/",
-    "wsPublicUrl": "wss://api.pneumatic.local/",
     "urls": {
       "getInvites": "/accounts/user/contacts",
       "getPages": "/pages/public",
@@ -148,24 +141,6 @@
       "wsWorkflowsEvent": "/ws/workflows/events"
     }
   },
-  "google": {
-    "clientId": null,
-    "clientSecret": null
-  },
-  "analyticsId": null,
-  "reсaptchaSecret": null,
-  "firebase": {
-    "vapidKey": null,
-    "config": {
-      "apiKey": null,
-      "authDomain": null,
-      "projectId": null,
-      "storageBucket": null,
-      "messagingSenderId": null,
-      "appId": null,
-      "measurementId": null
-    }
-  },
   "exposedToBrowser": [
     "host",
     "api.publicUrl",
@@ -174,7 +149,7 @@
     "analyticsId",
     "mainPage",
     "formSubdomain",
-    "reсaptchaSecret",
+    "recaptchaSecret",
     "firebase"
   ]
 }

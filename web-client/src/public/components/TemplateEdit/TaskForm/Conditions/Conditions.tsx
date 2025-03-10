@@ -1,3 +1,4 @@
+/* eslint-disable indent */
 import * as React from 'react';
 import produce from 'immer';
 import { useIntl } from 'react-intl';
@@ -12,13 +13,15 @@ import { TrashIcon } from '../../../icons';
 import { usePrevious } from '../../../../hooks/usePrevious';
 import { SelectMenu } from '../../../UI';
 
-import { ICondition } from '.';
+import { ICondition, RichLabel } from '.';
 import { ConditionValueField } from './ConditionValueField';
 import { EConditionAction, EConditionLogicOperations, EConditionOperators, TConditionRule } from './types';
 import { getEmptyConditions } from './utils/getEmptyConditions';
 import { getEmptyRule } from './utils/getEmptyRule';
 import { getDropdownOperators, IDropdownOperator } from './utils/getDropdownOperators';
 import { setRulesApiNamesAndIds } from './utils/setRulesApiNames';
+import { getFormattedDropdownOption } from './utils/getFormattedDropdownOption';
+
 import { getSubscriptionPlan } from '../../../../redux/selectors/user';
 
 import { ESubscriptionPlan } from '../../../../types/account';
@@ -67,17 +70,6 @@ export function Conditions({ conditions, variables, users, isSubscribed, onEdit 
 
     return undefined;
   }, [variables]);
-
-  const dropdownVariables: IDropdownVariable[] = variables.map((variable) => ({
-    ...variable,
-    label: `${variable.subtitle} ${variable.title}`,
-    richLabel: (
-      <div className={styles['rich-label']}>
-        <div className={styles['variable-title']}>{variable.title}</div>
-        <div className={styles['variable-richsubtitle']}>{variable.richSubtitle}</div>
-      </div>
-    ),
-  }));
 
   const handleAddNewRule = () => {
     if (!isArrayWithItems(conditions)) {
@@ -150,6 +142,16 @@ export function Conditions({ conditions, variables, users, isSubscribed, onEdit 
         <div className={styles['condition__rules']}>
           {rules.map((rule, ruleIndex) => {
             const changeCurrentRule = handleChangeRule(conditionIndex, ruleIndex);
+
+            const dropdownVariables: IDropdownVariable[] = variables.map((variable) => {
+              const isSelected = variable.apiName === rule.field;
+              return {
+                ...variable,
+                label: `${variable.subtitle} ${variable.title}`,
+                richLabel: <RichLabel variable={variable} variables={variables} isSelected={isSelected} />,
+              };
+            });
+
             const selectedVariable = dropdownVariables.find((variable) => variable.apiName === rule.field) || null;
             const displayedVariable = selectedVariable && {
               ...selectedVariable,
@@ -230,6 +232,14 @@ export function Conditions({ conditions, variables, users, isSubscribed, onEdit 
                         }}
                         isClearable={false}
                         options={dropdownOperators}
+                        formatOptionLabel={(option: IDropdownOperator, { context }) =>
+                          context === 'menu'
+                            ? getFormattedDropdownOption({
+                                label: option.label,
+                                isSelected: option.operator === rule.operator,
+                              })
+                            : option.label
+                        }
                       />
                     </div>
                     <ConditionValueField

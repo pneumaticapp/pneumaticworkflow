@@ -45,7 +45,7 @@ from pneumatic_backend.processes.api_v2.services.task.field import (
     TaskFieldService
 )
 from pneumatic_backend.processes.messages import workflow as messages
-
+from pneumatic_backend.services.markdown import MarkdownService
 
 UserModel = get_user_model()
 
@@ -828,98 +828,71 @@ class WorkflowActionService:
         workflow: Workflow,
         revert_from_task: Task,
         revert_to_task: Task,
-        is_revert: bool = False
     ):
 
         """ Return workflow to specific task """
 
-        with transaction.atomic():
-            if is_revert:
-                WorkflowEventService.task_revert_event(
-                    task=revert_to_task,
-                    user=self.user
-                )
-            else:
-                WorkflowEventService.workflow_revert_event(
-                    task=revert_from_task,
-                    user=self.user,
-                )
-            next_tasks = workflow.tasks.filter(
-                number__gt=revert_to_task.number
-            )
-            next_tasks.update(
-                date_started=None,
-                date_completed=None,
-                is_completed=False,
-                is_skipped=False
-            )
-            (
-                TaskPerformer.objects
-                .with_tasks_after(revert_to_task)
-                .by_workflow(workflow.id)
-                .exclude_directly_deleted()
-                .update(is_completed=False, date_completed=None)
-            )
-            Delay.objects.filter(
-                task__in=next_tasks,
-                directly_status=DirectlyStatus.NO_STATUS
-            ).update(
-                start_date=None,
-                end_date=None,
-                estimated_end_date=None,
-            )
-            workflow_is_running = workflow.is_running
+        next_tasks = workflow.tasks.filter(
+            number__gt=revert_to_task.number
+        )
+        next_tasks.update(
+            date_started=None,
+            date_completed=None,
+            is_completed=False,
+            is_skipped=False
+        )
+        (
+            TaskPerformer.objects
+            .with_tasks_after(revert_to_task)
+            .by_workflow(workflow.id)
+            .exclude_directly_deleted()
+            .update(is_completed=False, date_completed=None)
+        )
+        Delay.objects.filter(
+            task__in=next_tasks,
+            directly_status=DirectlyStatus.NO_STATUS
+        ).update(
+            start_date=None,
+            end_date=None,
+            estimated_end_date=None,
+        )
+        workflow_is_running = workflow.is_running
 
-            # update workflow logic
-            update_fields = ['current_task']
-            if workflow.status == WorkflowStatus.DELAYED:
-                delay = revert_from_task.get_active_delay()
-                if delay:
-                    delay.end_date = timezone.now()
-                    if delay.directly_status:
-                        delay.save(update_fields=['end_date'])
-                    else:
-                        revert_from_task.reset_delay(delay)
-            if not workflow.is_running:
-                workflow.date_completed = None
-                workflow.status = WorkflowStatus.RUNNING
-                update_fields.append('status')
-                update_fields.append('date_completed')
+        # update workflow logic
+        update_fields = ['current_task']
+        if workflow.status == WorkflowStatus.DELAYED:
+            delay = revert_from_task.get_active_delay()
+            if delay:
+                delay.end_date = timezone.now()
+                if delay.directly_status:
+                    delay.save(update_fields=['end_date'])
+                else:
+                    revert_from_task.reset_delay(delay)
+        if not workflow.is_running:
+            workflow.date_completed = None
+            workflow.status = WorkflowStatus.RUNNING
+            update_fields.append('status')
+            update_fields.append('date_completed')
 
-            workflow.current_task -= 1
+        workflow.current_task -= 1
 
-            if revert_to_task is not None:
-                workflow.current_task = revert_to_task.number
+        if revert_to_task is not None:
+            workflow.current_task = revert_to_task.number
 
-            workflow.save(update_fields=update_fields)
-            if workflow_is_running:
-                WSSender.send_removed_task_notification(revert_from_task)
+        workflow.save(update_fields=update_fields)
+        if workflow_is_running:
+            WSSender.send_removed_task_notification(revert_from_task)
 
-            # end update workflow logic
-            action_method, by_cond = self.execute_condition(revert_to_task)
-            action_method(
-                workflow=workflow,
-                task=revert_to_task,
-                user=self.user,
-                is_reverted=True,
-                by_condition=by_cond,
-            )
+        # end update workflow logic
+        action_method, by_cond = self.execute_condition(revert_to_task)
+        action_method(
+            workflow=workflow,
+            task=revert_to_task,
+            user=self.user,
+            is_reverted=True,
+            by_condition=by_cond,
+        )
 
-        if is_revert:
-            AnalyticService.task_returned(
-                user=self.user,
-                task=revert_from_task,
-                is_superuser=self.is_superuser,
-                auth_type=self.auth_type
-            )
-        else:
-            AnalyticService.workflow_returned(
-                user=self.user,
-                task=revert_to_task,
-                workflow=workflow,
-                is_superuser=self.is_superuser,
-                auth_type=self.auth_type,
-            )
         acc_id = self.user.account_id
         self._set_workflow_counts(workflow)
         if WebHook.objects.on_account(acc_id).task_returned().exists():
@@ -929,7 +902,7 @@ class WorkflowActionService:
                 payload=revert_to_task.webhook_payload()
             )
 
-    def revert(self, workflow: Workflow):
+    def revert(self, workflow: Workflow, comment: str) -> None:
 
         """ Can only be applied to a running workflow """
 
@@ -955,12 +928,25 @@ class WorkflowActionService:
                 raise exceptions.WorkflowActionServiceException(
                     messages.MSG_PW_0080(revert_to_task.name)
                 )
-        self._return_workflow_to_task(
-            workflow=workflow,
-            revert_from_task=revert_from_task,
-            revert_to_task=revert_to_task,
-            is_revert=True
-        )
+        clear_comment = MarkdownService.clear(comment)
+        with transaction.atomic():
+            WorkflowEventService.task_revert_event(
+                task=revert_to_task,
+                user=self.user,
+                text=comment,
+                clear_text=clear_comment
+            )
+            self._return_workflow_to_task(
+                workflow=workflow,
+                revert_from_task=revert_from_task,
+                revert_to_task=revert_to_task,
+            )
+            AnalyticService.task_returned(
+                user=self.user,
+                task=revert_from_task,
+                is_superuser=self.is_superuser,
+                auth_type=self.auth_type
+            )
 
     def return_to(
         self,
@@ -983,8 +969,23 @@ class WorkflowActionService:
             raise exceptions.WorkflowActionServiceException(
                 messages.MSG_PW_0079(revert_to_task.name)
             )
-        self._return_workflow_to_task(
-            workflow=workflow,
-            revert_from_task=revert_from_task,
-            revert_to_task=revert_to_task,
-        )
+
+        with transaction.atomic():
+            WorkflowEventService.workflow_revert_event(
+                task=revert_from_task,
+                user=self.user,
+            )
+
+            self._return_workflow_to_task(
+                workflow=workflow,
+                revert_from_task=revert_from_task,
+                revert_to_task=revert_to_task,
+            )
+
+            AnalyticService.workflow_returned(
+                user=self.user,
+                task=revert_to_task,
+                workflow=workflow,
+                is_superuser=self.is_superuser,
+                auth_type=self.auth_type,
+            )

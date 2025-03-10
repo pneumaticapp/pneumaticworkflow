@@ -64,6 +64,7 @@ class TaskService(
             account=workflow.account,
             workflow=workflow,
             name=instance_template.name,
+            revert_task=instance_template.revert_task,
             name_template=instance_template.name,
             description=description,
             clear_description=clear_description,

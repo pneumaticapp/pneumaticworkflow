@@ -64,10 +64,14 @@ def test_revert__ok(
         'WorkflowActionService.revert'
     )
     api_client.token_authenticate(user)
+    text_comment = 'text_comment'
 
     # act
     response = api_client.post(
         f'/workflows/{workflow.id}/task-revert',
+        data={
+            'comment': text_comment,
+        }
     )
 
     # assert
@@ -77,7 +81,10 @@ def test_revert__ok(
         auth_type=AuthTokenType.USER,
         is_superuser=False
     )
-    service_revert_mock.assert_called_once_with(workflow)
+    service_revert_mock.assert_called_once_with(
+        workflow=workflow,
+        comment=text_comment
+    )
 
 
 def test_revert_service_exception__validation_error(
@@ -105,10 +112,14 @@ def test_revert_service_exception__validation_error(
         side_effect=ex,
     )
     api_client.token_authenticate(user)
+    text_comment = 'text_comment'
 
     # act
     response = api_client.post(
         f'/workflows/{workflow.id}/task-revert',
+        data={
+            'comment': text_comment,
+        }
     )
 
     # assert
@@ -120,7 +131,50 @@ def test_revert_service_exception__validation_error(
         auth_type=AuthTokenType.USER,
         is_superuser=False
     )
-    service_revert_mock.assert_called_once_with(workflow)
+    service_revert_mock.assert_called_once_with(
+        workflow=workflow,
+        comment=text_comment
+    )
+
+
+@pytest.mark.parametrize('text_comment', ('', '   '))
+def test_revert_invalid_comment__validation_error(
+    api_client,
+    mocker,
+    text_comment
+):
+    # arrange
+    user = create_test_user(is_account_owner=True)
+    workflow = create_test_workflow(
+        user=user,
+        tasks_count=2
+    )
+    workflow.current_task = 2
+    workflow.save()
+    service_init_mock = mocker.patch(
+        'pneumatic_backend.processes.services.workflow_action.'
+        'WorkflowActionService'
+    )
+    service_revert_mock = mocker.patch(
+        'pneumatic_backend.processes.services.workflow_action.'
+        'WorkflowActionService.revert'
+    )
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.post(
+        f'/workflows/{workflow.id}/task-revert',
+        data={
+            'comment': text_comment,
+        }
+    )
+
+    # assert
+    assert response.status_code == 400
+    assert response.data['message'] == messages.MSG_PW_0083
+    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
+    service_init_mock.assert_not_called()
+    service_revert_mock.assert_not_called()
 
 
 # TODO Deprecated old style tests
@@ -230,10 +284,14 @@ def test_revert__skip_task_condition_true__before_previous_task(
     workflow.refresh_from_db()
     third_description = workflow.current_task_instance.description
     third_name = workflow.current_task_instance.name
+    text_comment = 'text_comment'
 
     # act
     response = api_client.post(
         f'/workflows/{workflow.id}/task-revert',
+        data={
+            'comment': text_comment,
+        }
     )
 
     # assert
@@ -353,12 +411,15 @@ def test_revert__skipped_task__not_completed(
         f'/workflows/{workflow.id}/task-complete',
         data={'task_id': task_1.id}
     )
-
+    text_comment = 'text_comment'
     # now third task is current
 
     # act
     response_revert = api_client.post(
         f'/workflows/{workflow.id}/task-revert',
+        data={
+            'comment': text_comment,
+        }
     )
 
     # assert
@@ -624,8 +685,12 @@ def test_revert__deleted_performer_recreated__ok(
         request_user=user,
         user_key=user_performer.id
     )
+    text_comment = 'text_comment'
     api_client.post(
         f'/workflows/{workflow.id}/task-revert',
+        data={
+            'comment': text_comment,
+        }
     )
 
     # act
@@ -763,10 +828,14 @@ def test_revert__activate_skipped_task__ok(
             }
         }
     )
+    text_comment = 'text_comment'
 
     # act
     response_revert = api_client.post(
         f'/workflows/{workflow_id}/task-revert',
+        data={
+            'comment': text_comment,
+        }
     )
 
     # assert
@@ -806,10 +875,14 @@ def test_revert__sub_workflow_incompleted__validation_error(
         status=status
     )
     api_client.token_authenticate(user=user)
+    text_comment = 'text_comment'
 
     # act
     response = api_client.post(
         f'/workflows/{workflow.id}/task-revert',
+        data={
+            'comment': text_comment,
+        }
     )
 
     # assert
@@ -847,10 +920,14 @@ def test_revert__sub_workflow_completed__ok(
         status=WorkflowStatus.DONE
     )
     api_client.token_authenticate(user=user)
+    text_comment = 'text_comment'
 
     # act
     response = api_client.post(
         f'/workflows/{workflow.id}/task-revert',
+        data={
+            'comment': text_comment,
+        }
     )
 
     # assert

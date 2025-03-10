@@ -57,8 +57,7 @@ class TestWorkflowCloseSerializer:
         )
         serializer.is_valid(raise_exception=True)
         serializer.save()
-
-        assert user in workflow.template.template_owners.all()
+        assert user in workflow.owners.all()
         assert workflow.status == WorkflowStatus.DONE
 
     def test_final__user_is_current_task_performer__ok(self):

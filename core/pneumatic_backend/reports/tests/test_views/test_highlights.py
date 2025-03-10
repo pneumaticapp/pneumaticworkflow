@@ -112,6 +112,7 @@ def test__return_task__ok(api_client, mocker):
     )
     workflow = create_test_workflow(user)
     task = workflow.tasks.order_by('number').first()
+    text_comment = 'text_comment'
     api_client.token_authenticate(user)
     api_client.post(
         f'/workflows/{workflow.id}/task-complete',
@@ -121,7 +122,9 @@ def test__return_task__ok(api_client, mocker):
     )
     api_client.post(
         f'/workflows/{workflow.id}/task-revert',
-        data={},
+        data={
+            'comment': text_comment,
+        }
     )
 
     # act
@@ -134,6 +137,7 @@ def test__return_task__ok(api_client, mocker):
     event_data = response.data[0]
     assert event_data['type'] == WorkflowEventType.TASK_REVERT
     assert event_data['created'] is not None
+    assert event_data['text'] == text_comment
     assert type(event_data['created_tsp']) is float
 
 

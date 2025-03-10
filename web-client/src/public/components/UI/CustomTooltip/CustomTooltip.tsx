@@ -25,6 +25,7 @@ export interface ICustomTooltip extends Omit<TooltipProps, 'target' | 'isOpen'> 
   tooltipClassName?: string;
   learnMoreLink?: ELearnMoreLinks;
   size?: TTooltipSize;
+  isModal?: boolean;
 }
 
 export const CustomTooltip = ({
@@ -38,6 +39,7 @@ export const CustomTooltip = ({
   tooltipClassName,
   learnMoreLink,
   size = 'md',
+  isModal = false,
 }: ICustomTooltip) => {
   const { formatMessage } = useIntl();
 
@@ -86,7 +88,9 @@ export const CustomTooltip = ({
       arrowClassName={arrowClassName}
       modifiers={{ preventOverflow: { boundariesElement: 'window' } }}
       autohide={false}
-      className={classnames(tooltipClassName, styles['tooltip'], sizeClassNameMap[size])}
+      className={classnames(tooltipClassName, styles['tooltip'], sizeClassNameMap[size], {
+        [styles['tooltip__high-z-index']]: isModal,
+      })}
       delay={0}
       innerClassName={styles['inner']}
       isOpen={isTooltipOpen}
@@ -100,7 +104,9 @@ export const CustomTooltip = ({
       </p>
       {learnMoreLink && (
         <p>
-          <a href={learnMoreLink} target={'_blank'}>{formatMessage({id: 'general.learn-more'})}</a>
+          <a href={learnMoreLink} target={'_blank'}>
+            {formatMessage({ id: 'general.learn-more' })}
+          </a>
         </p>
       )}
     </Tooltip>

@@ -13,7 +13,9 @@ import { LinkButton } from './components/LinkButton';
 import { linkStrategy } from './linkStrategy';
 import { AddLinkForm } from './components/AddLinkForm';
 
-export interface IAnchorPluginConfig {}
+export interface IAnchorPluginConfig {
+  isModal?: boolean;
+}
 
 export type AnchorPlugin = EditorPlugin & {
   LinkButton: ComponentType<{}>;
@@ -46,22 +48,15 @@ export default (config: IAnchorPluginConfig = {}): AnchorPlugin => {
       return;
     }
 
-    setEditorState?.(
-      EditorUtils.removeLinkAtSelection(getEditorState?.()),
-    );
+    setEditorState?.(EditorUtils.removeLinkAtSelection(getEditorState?.()));
   };
 
   const DecoratedLinkButton = (): ReactElement => (
-    <LinkButton
-      store={store}
-      onRemoveLinkAtSelection={removeLinkAtSelection}
-    />
+    <LinkButton store={store} onRemoveLinkAtSelection={removeLinkAtSelection} isModal={config.isModal} />
   );
 
   const DecoratedAddLinkForm = () => {
-    return (
-      <AddLinkForm store={store} />
-    );
+    return <AddLinkForm store={store} />;
   };
 
   return {

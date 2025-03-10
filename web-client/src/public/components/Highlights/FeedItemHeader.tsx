@@ -109,7 +109,11 @@ export function FeedItemHeader({
       <>
         {hasCommentText && (
           <div className={styles['header__comment']}>
-            <span className={styles['comment__title']}>{messages['general.comment']}</span>
+            <span className={styles['comment__title']}>
+              {type === EWorkflowLogEvent.TaskRevert
+                ? messages['workflow-highlights.return-to.returned-task']
+                : messages['general.comment']}
+            </span>
             <span
               className={classnames(styles['comment__text'], isTextExpanded && styles['comment__text_expanded'])}
               ref={commentTextRef}
@@ -191,7 +195,7 @@ export function FeedItemHeader({
     [EWorkflowLogEvent.WorkflowFinished]: renderTaskCommentContent(),
     [EWorkflowLogEvent.WorkflowComplete]: renderOutputsContents(),
     [EWorkflowLogEvent.WorkflowsReturned]: renderOutputsContents(),
-    [EWorkflowLogEvent.TaskRevert]: renderOutputsContents(),
+    [EWorkflowLogEvent.TaskRevert]: renderTaskCommentContent(),
     [EWorkflowLogEvent.AddedPerformer]: renderAddedPerformer(),
     [EWorkflowLogEvent.RemovedPerformer]: renderRemovedPerformer(),
     [EWorkflowLogEvent.WorkflowSnoozedManually]: (

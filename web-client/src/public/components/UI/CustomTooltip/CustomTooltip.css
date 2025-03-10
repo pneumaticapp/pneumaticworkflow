@@ -65,3 +65,9 @@
 .tooltip_lg {
   max-width: 304px;
 }
+
+.tooltip__high-z-index {
+  div {
+    z-index: 1080;
+  }
+}

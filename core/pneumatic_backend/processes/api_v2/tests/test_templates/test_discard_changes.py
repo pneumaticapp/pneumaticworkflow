@@ -61,8 +61,8 @@ def test_discard_changes__active_template__not_change(api_client):
     template = Template.objects.get(id=template_id)
     assert template.name == request_data['name']
     assert template.description == request_data['description']
-    assert template.template_owners.count() == 1
-    assert template.template_owners.first().id == user.id
+    assert template.owners.count() == 1
+    assert template.owners.first().user_id == user.id
     assert template.is_active is True
 
     assert template.kickoff_instance.description == (
@@ -178,8 +178,8 @@ def test_discard_changes__draft_template__discard_changes(api_client):
     template = Template.objects.get(id=template_id)
     assert template.name == request_data['name']
     assert template.description == request_data['description']
-    assert template.template_owners.count() == 1
-    assert template.template_owners.first().id == user.id
+    assert template.owners.count() == 1
+    assert template.owners.first().user_id == user.id
     assert template.is_active is True
 
     assert template.kickoff_instance.description == (

@@ -2,6 +2,7 @@ from django.db import transaction
 from django.contrib.auth import get_user_model, password_validation
 from django.conf import settings
 from django.contrib import admin
+from django.contrib import messages as sys_messages
 from django import forms
 from django.contrib.admin import ModelAdmin, StackedInline
 from django.contrib.admin.templatetags.admin_urls import admin_urlname
@@ -35,7 +36,10 @@ from pneumatic_backend.accounts.services.convert_account import (
 from pneumatic_backend.accounts.forms import ContactAdminForm
 from pneumatic_backend.authentication.views.mixins import SignUpMixin
 from pneumatic_backend.accounts import messages
-
+from pneumatic_backend.reports.tasks import (
+    send_digest,
+    send_tasks_digest,
+)
 
 UserModel = get_user_model()
 
@@ -223,6 +227,8 @@ class UsersAdmin(UserAdmin, SignUpMixin):
             {'fields': (
                 'last_login',
                 'date_joined',
+                'last_digest_send_time',
+                'last_tasks_digest_send_time',
             )}
         ),
         (
@@ -251,6 +257,11 @@ class UsersAdmin(UserAdmin, SignUpMixin):
         'account_link',
         'api_key',
     )
+    actions = [
+        'send_digest',
+        'send_tasks_digest',
+    ]
+
     ordering = ('-id',)
     add_form = UserAdminCreationForm
     form = UserAdminChangeForm
@@ -312,6 +323,30 @@ class UsersAdmin(UserAdmin, SignUpMixin):
                 billing_sync=False,
                 request=request
             )
+
+    def send_digest(self, request, queryset):
+        names = []
+        for user in queryset.all():
+            send_digest.delay(user_id=user.id, force=True)
+            names.append(user.name_by_status)
+        self.message_user(
+            request=request,
+            message=f'"Workflows digest" sent for users: {", ".join(names)}',
+            level=sys_messages.SUCCESS,
+        )
+    send_digest.short_description = "Send workflows digest"
+
+    def send_tasks_digest(self, request, queryset):
+        names = []
+        for user in queryset.all():
+            send_tasks_digest.delay(user_id=user.id, force=True)
+            names.append(user.name_by_status)
+        self.message_user(
+            request=request,
+            message=f'"Workflows digest" sent for users: {", ".join(names)}',
+            level=sys_messages.SUCCESS,
+        )
+    send_tasks_digest.short_description = "Send tasks digest"
 
 
 class UserInlineForm(forms.ModelForm):

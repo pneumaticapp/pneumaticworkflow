@@ -81,7 +81,8 @@ class TaskTemplateSerializer(
             'api_name',
             'raw_performers',
             'checklists',
-            'raw_due_date'
+            'raw_due_date',
+            'revert_task',
         )
         create_or_update_fields = {
             'name',
@@ -92,6 +93,7 @@ class TaskTemplateSerializer(
             'api_name',
             'template',
             'account',
+            'revert_task',
         }
 
     number = IntegerField()
@@ -284,6 +286,19 @@ class TaskTemplateSerializer(
                 self.raise_validation_error(
                     message=messages.MSG_PT_0004(data.get('name')),
                     api_name=data.get('api_name')
+                )
+
+    def additional_validate_revert_task(
+        self,
+        value: Optional[str],
+        data: Dict[str, Any],
+    ):
+        if value:
+            api_name = data.get('api_name')
+            if api_name and api_name == value:
+                self.raise_validation_error(
+                    message=messages.MSG_PT_0060(data.get('name')),
+                    api_name=api_name
                 )
 
     def create_or_update_instance(

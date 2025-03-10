@@ -1,11 +1,13 @@
 /* eslint-disable no-promise-executor-return */
 /* eslint-disable class-methods-use-this */
 import * as request from 'request';
+import * as dotenv from 'dotenv';
 import { mergePaths } from '../../public/utils/urls';
 import { getConfig } from '../../public/utils/getConfig';
 import { PROXY_ALLOWED_ROUTES, PROXY_URL_PREFIX } from '../constants/proxy';
 import { isInRange } from './helpers';
-import { envBackendPrivateIP } from '../../public/constants/enviroment';
+
+dotenv.config();
 
 export type TRequestType = 'get' | 'post' | 'patch' | 'put';
 type TOptions = Pick<request.CoreOptions, 'body' | 'headers' | 'rejectUnauthorized'>;
@@ -23,7 +25,8 @@ export class HttpRequest {
     const {
       api: { privateUrl, urls },
     } = getConfig();
-    this.baseUrl = (envBackendPrivateIP && `http://${envBackendPrivateIP}/`) || privateUrl;
+
+    this.baseUrl = privateUrl;
     this.urls = urls;
   }
 
