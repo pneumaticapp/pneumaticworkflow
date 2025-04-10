@@ -110,7 +110,7 @@ Alternatively, you can run the Pneumatic containers from Docker Desktop.
 
 ### Open Pneumatic and register a free account
 
-Once the containers are up and running go to http://localhost in your browser, register a free account and you're good to go.
+Once the containers are up and running go to http://pneumatic.local in your browser, register a free account and you're good to go.
 
 
 
