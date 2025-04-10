@@ -19,7 +19,7 @@ export function changeNameTenant({ id, name }: IDeleteTenantConfig) {
     url,
     {
       method: 'PATCH',
-      body: mapRequestBody({
+      data: mapRequestBody({
         tenant_name: name,
       }),
     },

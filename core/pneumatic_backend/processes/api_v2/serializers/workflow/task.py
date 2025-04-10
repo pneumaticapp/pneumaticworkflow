@@ -1,11 +1,10 @@
 import re
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from pneumatic_backend.processes.models import (
     Delay,
     Task,
-    TaskPerformer,
     TaskForList,
     Workflow,
     TaskTemplate
@@ -26,6 +25,8 @@ from pneumatic_backend.generics.serializers import CustomValidationErrorMixin
 from pneumatic_backend.processes.messages.workflow import (
     MSG_PW_0057,
 )
+from pneumatic_backend.processes.api_v2.serializers.\
+    workflow.task_performer import TaskUserGroupPerformerSerializer
 
 
 class WorkflowCurrentTaskSerializer(serializers.ModelSerializer):
@@ -43,6 +44,7 @@ class WorkflowCurrentTaskSerializer(serializers.ModelSerializer):
             'performers',
             'checklists_total',
             'checklists_marked',
+            'status',
         )
 
     delay = serializers.SerializerMethodField()
@@ -63,16 +65,12 @@ class WorkflowCurrentTaskSerializer(serializers.ModelSerializer):
                 return DelayInfoSerializer(delay).data
         return None
 
-    def get_performers(self, instance) -> List[int]:
-        if hasattr(instance, 'performers_ids'):
-            # GET /workflows qst prefetch delay to "performers_ids" attribute
-            return [e.user_id for e in instance.performers_ids]
+    def get_performers(self, instance) -> List[Dict[str, Any]]:
+        if hasattr(instance, 'all_performers'):
+            performers = instance.all_performers
         else:
-            return list(
-                TaskPerformer.objects.by_task(
-                    instance.id
-                ).exclude_directly_deleted().user_ids()
-            )
+            performers = instance.exclude_directly_deleted_taskperformer_set()
+        return TaskUserGroupPerformerSerializer(performers, many=True).data
 
 
 class TasksPassedInfoSerializer(serializers.ModelSerializer):
@@ -182,7 +180,7 @@ class TaskSerializer(serializers.ModelSerializer):
             'delay',
             'date_started',
             'date_started_tsp',
-            'is_completed',
+            'is_completed',     # TODO deprecated
             'date_completed',
             'date_completed_tsp',
             'due_date_tsp',
@@ -192,11 +190,15 @@ class TaskSerializer(serializers.ModelSerializer):
             'checklists_total',
             'checklists',
             'sub_workflows',
+            'status',
         )
 
     date_started_tsp = TimeStampField(source='date_started')
     date_completed_tsp = TimeStampField(source='date_completed')
-    performers = serializers.SerializerMethodField()
+    performers = TaskUserGroupPerformerSerializer(
+        many=True,
+        source='exclude_directly_deleted_taskperformer_set'
+    )
     workflow = WorkflowShortInfoSerializer(read_only=True)
     output = TaskFieldListSerializer(many=True)
     delay = serializers.SerializerMethodField(required=False, allow_null=True)
@@ -207,13 +209,6 @@ class TaskSerializer(serializers.ModelSerializer):
     checklists = CheckListSerializer(many=True, read_only=True)
     due_date_tsp = TimeStampField(source='due_date')
     sub_workflows = WorkflowInfoSerializer(many=True, read_only=True)
-
-    def get_performers(self, instance) -> List[int]:
-        return list(
-            TaskPerformer.objects.by_task(
-                instance.id
-            ).exclude_directly_deleted().user_ids()
-        )
 
     def get_is_completed(self, instance):
         if instance.is_completed:
@@ -257,7 +252,8 @@ class TaskListSerializer(serializers.ModelSerializer):
             # TODO Remove in https://my.pneumatic.app/workflows/36988/
             'template_task_id',
             'template_task_api_name',
-            'is_urgent'
+            'is_urgent',
+            'status',
         )
 
 

@@ -3,6 +3,7 @@ from django.contrib.auth import get_user_model
 from pneumatic_backend.processes.api_v2.services.base import (
     BaseUpdateVersionService,
 )
+from pneumatic_backend.processes.enums import PerformerType
 from pneumatic_backend.processes.api_v2.services.task.task_version import (
     TaskUpdateVersionService,
 )
@@ -37,7 +38,7 @@ class WorkflowUpdateVersionService(BaseUpdateVersionService):
             auth_type=self.auth_type
         )
         active_tasks_count = self.instance.tasks.filter(
-            is_skipped=False
+            status=False
         ).count()
         active_current_task = (
             self.instance.tasks_count - (
@@ -53,16 +54,13 @@ class WorkflowUpdateVersionService(BaseUpdateVersionService):
             force_save=True
         )
         action_service = WorkflowActionService(
+            workflow=self.instance,
             user=self.user,
             is_superuser=self.is_superuser,
             auth_type=self.auth_type,
             sync=self.sync
         )
-        action_service.end_process(
-            workflow=self.instance,
-            by_condition=False,
-            by_complete_task=True
-        )
+        action_service.end_process(by_condition=False, by_complete_task=True)
 
     def _update_tasks_from_version(
         self,
@@ -132,16 +130,13 @@ class WorkflowUpdateVersionService(BaseUpdateVersionService):
         self.complete_up_to_task(self.instance.tasks_count + 1)
         self.instance.current_task = self.instance.tasks_count
         service = WorkflowActionService(
+            workflow=self.instance,
             user=self.user,
             is_superuser=self.is_superuser,
             auth_type=self.auth_type,
             sync=self.sync
         )
-        service.end_process(
-            workflow=self.instance,
-            by_condition=False,
-            by_complete_task=True
-        )
+        service.end_process(by_condition=False, by_complete_task=True)
 
     def update_from_version(
         self,
@@ -174,8 +169,11 @@ class WorkflowUpdateVersionService(BaseUpdateVersionService):
         )
         prev_current_task = self.instance.current_task_instance
         prev_not_completed_ids = (
-            prev_current_task.taskperformer_set.users().not_completed()
-            .exclude_directly_deleted().user_ids_set()
+            prev_current_task
+            .taskperformer_set
+            .not_completed()
+            .exclude_directly_deleted()
+            .get_user_ids_set()
         )
         workflow_service = WorkflowService(
             instance=self.instance,
@@ -211,6 +209,7 @@ class WorkflowUpdateVersionService(BaseUpdateVersionService):
                 *current_task.performers.exclude_directly_deleted().only_ids()
             )
             action_service = WorkflowActionService(
+                workflow=self.instance,
                 is_superuser=self.is_superuser,
                 auth_type=self.auth_type,
                 user=self.user,
@@ -219,13 +218,11 @@ class WorkflowUpdateVersionService(BaseUpdateVersionService):
             if self.instance.is_delayed:
                 if changed:
                     # if current task deleted from template with delay
-                    action_service.resume_workflow_with_new_current_task(
-                        workflow=self.instance
-                    )
+                    action_service.resume_workflow_with_new_current_task()
                 else:
                     delay = current_task.get_active_delay()
                     if not delay or (delay and delay.is_expired):
-                        action_service.resume_workflow(workflow=self.instance)
+                        action_service.resume_workflow()
             else:
                 if changed:
                     # if current task deleted from template
@@ -237,26 +234,34 @@ class WorkflowUpdateVersionService(BaseUpdateVersionService):
                     action_method, by_cond = action_service.execute_condition(
                         current_task
                     )
-                    action_method(
-                        workflow=self.instance,
-                        task=current_task,
-                        user=self.user,
-                        by_condition=by_cond,
-                    )
+                    action_method(task=current_task, by_condition=by_cond)
                 else:
                     if current_task.can_be_completed():
                         first_completed_user = (
-                            current_task.taskperformer_set.completed(
-                            ).exclude_directly_deleted().first().user
+                            current_task.taskperformer_set.completed()
+                            .exclude_directly_deleted()
+                            .exclude(type=PerformerType.GROUP)
+                            .first()
+                            .user
                         )
+                        if first_completed_user is None:
+                            group = (
+                                current_task.taskperformer_set.completed()
+                                .exclude_directly_deleted()
+                                .filter(type=PerformerType.GROUP)
+                                .first()
+                                .group
+                            )
+                            first_completed_user = group.users.first().user
                         action_service.user = first_completed_user
                         action_service.complete_task(current_task)
                     else:
                         not_completed_ids = (
-                            TaskPerformer.objects.by_task(
-                                current_task.id
-                            ).exclude_directly_deleted().users()
-                            .not_completed().user_ids_set()
+                            TaskPerformer.objects
+                            .by_task(current_task.id)
+                            .exclude_directly_deleted()
+                            .not_completed()
+                            .get_user_ids_set()
                         )
                         new_performers_ids = (
                             not_completed_ids - prev_not_completed_ids

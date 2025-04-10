@@ -22,7 +22,7 @@ class BaseModelService:
             self.user = user
             self.account = user.account
         else:
-            self.user = None,
+            self.user = None
             self.account = None
         self.is_superuser = is_superuser
         self.auth_type = auth_type

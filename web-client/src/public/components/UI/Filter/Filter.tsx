@@ -7,73 +7,14 @@ import { useCallback, useMemo, useState, useEffect } from 'react';
 import { useIntl } from 'react-intl';
 import classnames from 'classnames';
 
-import { Checkbox, InputField, Loader, RadioButton, TCheckboxTriState } from '..';
-import { isArrayWithItems } from '../../../utils/helpers';
-import { MoreBoldCirlce } from '../../icons';
 import { ShowMore } from '../ShowMore';
+import { MoreBoldCirlce } from '../../icons';
+import { MAX_OPTIONS_AMOUNT } from './constant';
+import { isArrayWithItems } from '../../../utils/helpers';
+import { TOptionBase, TFilterProps, TOptionId } from './types';
+import { Checkbox, InputField, Loader, RadioButton, TCheckboxTriState } from '..';
 
 import styles from './Filter.css';
-
-type TOptionId = number | string | null;
-type TSubOption<IdKey extends string, LabelKey extends string> = TOptionBase<IdKey, LabelKey> & {
-  count?: number;
-};
-
-export type TOptionBase<IdKey extends string, LabelKey extends string> = {
-  [key in IdKey]: TOptionId;
-} & {
-  [key in LabelKey]: string | React.ReactNode;
-} & {
-  customClickHandler?(): void;
-  areSubOptionsLoading?: boolean;
-  subOptions?: TSubOption<IdKey, LabelKey>[];
-  count?: number;
-};
-
-interface IFilterCommonProps<
-  IdKey extends string,
-  LabelKey extends string,
-  TOption extends TOptionBase<IdKey, LabelKey>,
-> {
-  title: string;
-  optionsTitle?: string;
-  isInitiallyExpanded?: boolean;
-  options: TOption[];
-  isLoading?: boolean;
-  optionIdKey: IdKey;
-  optionLabelKey: LabelKey;
-  containerClassName?: string;
-  withSearch?: boolean;
-  selectedSubOptions?: TOptionId[];
-  renderOptionTitle?(option: TOption): React.ReactNode;
-  onCheckOption?(option: TOption, callback?: () => void): void;
-  onUncheckOption?(option: TOption, callback?: () => void): void;
-  onCheckSubOption?(optionId: TOptionId, subOptionId: TOptionId): void;
-  onUncheckSubOption?(optionId: TOptionId, subOptionId: TOptionId): void;
-  onExpandOption?(option: TOption): void;
-}
-
-interface IFilterMultiOptionsProps {
-  isMultiple: true;
-  selectedOption?: never;
-  selectedOptions: TOptionId[];
-  changeFilter(optionIds: TOptionId[]): void;
-}
-
-interface IFilterSingleOptionsProps {
-  isMultiple?: false;
-  selectedOption: TOptionId;
-  selectedOptions?: never;
-  changeFilter(optionId: TOptionId | null): void;
-}
-
-export type TFilterProps<
-  IdKey extends string,
-  LabelKey extends string,
-  TOption extends TOptionBase<IdKey, LabelKey>,
-> = IFilterCommonProps<IdKey, LabelKey, TOption> & (IFilterMultiOptionsProps | IFilterSingleOptionsProps);
-
-const MAX_OPTIONS_AMOUNT = 14;
 
 export function Filter<IdKey extends string, LabelKey extends string, TOption extends TOptionBase<IdKey, LabelKey>>(
   props: TFilterProps<IdKey, LabelKey, TOption>,
@@ -176,7 +117,9 @@ export function Filter<IdKey extends string, LabelKey extends string, TOption ex
       ? [...props.selectedOptions, optionId]
       : props.selectedOptions.filter((selectedOption) => selectedOption !== optionId);
 
-    props.changeFilter(newSelectedOptions);
+    const mapSelectedOption = options.filter((item) => newSelectedOptions.includes(item[optionIdKey]))
+
+    props.changeFilter(newSelectedOptions, mapSelectedOption);
 
     if (newIsChecked) {
       const newExpandedOptions = [...expandedOptions, optionId];

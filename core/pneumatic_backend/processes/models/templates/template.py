@@ -84,11 +84,6 @@ class Template(
         default=get_new_embed_id
     )
     public_success_url = models.TextField(blank=True, null=True)
-    template_owners = models.ManyToManyField(
-        UserModel,
-        related_name='template_owners',
-        verbose_name='template owners'
-    )
     performers = models.ManyToManyField(
         UserModel,
         related_name='performers',
@@ -223,27 +218,33 @@ class TemplateDraft(SoftDeleteModel):
             return
 
         need_save = False
-        template_owners = self.draft.get('template_owners')
-        if isinstance(template_owners, list) and user_id in template_owners:
-            template_owners.remove(user_id)
-
         owners = self.draft.get('owners')
-        if isinstance(owners, list) and user_id in owners:
-            owners.remove(user_id)
-            need_save = True
+        if isinstance(owners, list):
+            filtered_owners = [
+                owner for owner in owners
+                if not (
+                    owner.get('type') == PerformerType.USER
+                    and owner.get('source_id') == str(user_id))
+            ]
+            if len(filtered_owners) != len(owners):
+                self.draft['owners'] = filtered_owners
+                need_save = True
 
         tasks = self.draft.get('tasks')
         if isinstance(tasks, list):
             for task in tasks:
                 raw_performers = task.get('raw_performers')
                 if isinstance(raw_performers, list):
-                    for raw_performer in raw_performers:
-                        if (
-                            raw_performer['type'] == PerformerType.USER
-                            and raw_performer['source_id'] == str(user_id)
-                        ):
-                            task['raw_performers'].remove(raw_performer)
-                            need_save = True
+                    filtered_performers = [
+                        performer for performer in raw_performers
+                        if not (
+                            performer.get('type') == PerformerType.USER
+                            and performer.get('source_id') == str(user_id)
+                        )
+                    ]
+                    if len(filtered_performers) != len(raw_performers):
+                        task['raw_performers'] = filtered_performers
+                        need_save = True
 
         if need_save:
             self.save(update_fields=('draft',))

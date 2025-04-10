@@ -11,7 +11,7 @@ export function snoozeWorkflow(workflowId: number, date: string) {
     url,
     {
       method: 'POST',
-      body: mapRequestBody({ date }),
+      data: mapRequestBody({ date }),
     },
     {
       shouldThrow: true,

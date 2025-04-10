@@ -1,11 +1,15 @@
 import datetime
 from django.utils import timezone
 import pytest
+from pneumatic_backend.authentication.services import GuestJWTAuthService
 from pneumatic_backend.processes.tests.fixtures import (
     create_test_user,
     create_test_group,
-    create_test_account
+    create_test_account,
+    create_test_guest,
+    create_test_workflow
 )
+from pneumatic_backend.processes.models import TaskPerformer
 from pneumatic_backend.utils.validation import ErrorCode
 from pneumatic_backend.accounts.enums import (
     BillingPlanType,
@@ -14,18 +18,21 @@ from pneumatic_backend.accounts.enums import (
 pytestmark = pytest.mark.django_db
 
 
-def test_list_ok(api_client):
+def test_list__ok(api_client):
 
     # arrange
     account = create_test_account(plan=BillingPlanType.UNLIMITED)
-    user_1 = create_test_user(account=account, first_name='Ajo')
+    user_1 = create_test_user(account=account, last_name='Cjo')
     user_2 = create_test_user(email='1@test.com', account=account)
     user_3 = create_test_user(
-        email='2@test.com', account=account, first_name='Bjo'
+        email='2@test.com', account=account, last_name='Ajo'
+    )
+    user_4 = create_test_user(
+        email='4@test.com', account=account, last_name='Bjo1'
     )
     create_test_user(email='3@test.com', account=account)
     api_client.token_authenticate(user_1)
-    group_1 = create_test_group(user=user_1, users=[user_1, user_3])
+    group_1 = create_test_group(user=user_1, users=[user_4, user_1, user_3])
     group_2 = create_test_group(user=user_1, users=[user_2])
 
     # act
@@ -39,20 +46,19 @@ def test_list_ok(api_client):
     data_group_1 = response.data[0]
     assert data_group_1['name'] == group_1.name
     assert data_group_1['photo'] == group_1.photo
-    # TODO Lack of order is complete crap
-    assert set(data_group_1['users']) == {user_1.id, user_3.id}
+    assert data_group_1['users'] == [user_3.id, user_4.id, user_1.id]
     data_group_2 = response.data[1]
     assert data_group_2['name'] == group_2.name
     assert data_group_2['photo'] == group_2.photo
     assert data_group_2['users'] == [user_2.id]
 
 
-def test_list__not_admin__permission_denied(api_client):
+def test_list__not_admin__ok(api_client):
 
     # arrange
     account = create_test_account(plan=BillingPlanType.UNLIMITED)
     user = create_test_user(account=account)
-    create_test_group(user=user, users=[user, ])
+    group = create_test_group(user=user, users=[user, ])
     no_admin_user = create_test_user(
         account=account,
         email='no_admin@test.com',
@@ -68,7 +74,46 @@ def test_list__not_admin__permission_denied(api_client):
     )
 
     # assert
-    assert response.status_code == 403
+    assert response.status_code == 200
+    assert len(response.data) == 1
+    data_group_1 = response.data[0]
+    assert data_group_1['name'] == group.name
+    assert data_group_1['photo'] == group.photo
+    assert data_group_1['users'] == [user.id]
+
+
+def test_list__guest__ok(api_client):
+
+    # arrange
+    account = create_test_account(plan=BillingPlanType.UNLIMITED)
+    user = create_test_user(account=account)
+    group = create_test_group(user=user, users=[user, ])
+    guest = create_test_guest(account=account, email='b@test.test')
+    workflow = create_test_workflow(user, tasks_count=1)
+    task = workflow.tasks.first()
+    TaskPerformer.objects.create(
+        task_id=task.id,
+        user_id=guest.id
+    )
+    str_token = GuestJWTAuthService.get_str_token(
+        task_id=task.id,
+        user_id=guest.id,
+        account_id=account.id
+    )
+
+    # act
+    response = api_client.get(
+        path='/accounts/groups',
+        **{'X-Guest-Authorization': str_token}
+    )
+
+    # assert
+    assert response.status_code == 200
+    assert len(response.data) == 1
+    data_group_1 = response.data[0]
+    assert data_group_1['name'] == group.name
+    assert data_group_1['photo'] == group.photo
+    assert data_group_1['users'] == [user.id]
 
 
 def test_list__not_auth__permission_denied(api_client):

@@ -117,3 +117,20 @@
 .mb-4 {
   margin-bottom: 24px;
 }
+
+.date-filter-custom {
+  display: flex;
+  align-items: center;
+  border: 0.1rem solid var(--pneumatic-color-black16);
+  border-radius: 0.8rem;
+
+  input {
+    @mixin text-overflow;
+    /* stylelint-disable-next-line declaration-no-important */
+    border: none !important;
+  }
+}
+
+.date-filter-custom__separator {
+  color: var(--pneumatic-color-black16);
+}

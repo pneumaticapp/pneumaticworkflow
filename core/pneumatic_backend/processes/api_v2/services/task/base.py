@@ -1,16 +1,19 @@
 from abc import abstractmethod
 from typing import Optional, Union, Tuple
 from django.contrib.auth import get_user_model
+from pneumatic_backend.authentication.enums import AuthTokenType
+from pneumatic_backend.accounts.models import UserGroup
 from pneumatic_backend.processes.models import (
-    Task,
     TaskPerformer,
     Template,
 )
 from pneumatic_backend.processes.enums import (
     DirectlyStatus,
+    PerformerType,
 )
 from pneumatic_backend.processes.api_v2.services.task.exceptions import (
-    PerformersServiceException
+    PerformersServiceException,
+    GroupPerformerServiceException
 )
 from pneumatic_backend.processes.messages.workflow import (
     MSG_PW_0016,
@@ -18,6 +21,7 @@ from pneumatic_backend.processes.messages.workflow import (
     MSG_PW_0018,
     MSG_PW_0021,
 )
+from pneumatic_backend.processes.models import Task
 
 
 UserModel = get_user_model()
@@ -107,18 +111,15 @@ class BasePerformersService:
         task: Task,
         user: UserModel
     ) -> Optional[TaskPerformer]:
-
-        performers_ids = list(
-            TaskPerformer.objects.by_task(
-                task.id
-            ).exclude_directly_deleted().user_ids()
+        performers = (
+            TaskPerformer.objects.by_task(task.id).exclude_directly_deleted()
         )
-        if len(performers_ids) == 1 and user.id == performers_ids[0]:
+        if (
+            performers.count() == 1
+            and performers.filter(user_id=user.id).exists()
+        ):
             raise PerformersServiceException(MSG_PW_0016)
-        return TaskPerformer.objects.filter(
-            task_id=task.id,
-            user_id=user.id,
-        ).first()
+        return performers.filter(user_id=user.id).first()
 
     @classmethod
     def create_performer(
@@ -139,6 +140,7 @@ class BasePerformersService:
         )
         task_performer, created = TaskPerformer.objects.get_or_create(
             task_id=task.id,
+            type=PerformerType.USER,
             user_id=user.id,
             defaults={'directly_status': DirectlyStatus.CREATED}
         )
@@ -183,3 +185,73 @@ class BasePerformersService:
                     user=user,
                     request_user=request_user
                 )
+
+
+class BasePerformerService2:
+    def __init__(
+        self,
+        user: UserModel,
+        task: Task,
+        is_superuser: bool,
+        auth_type: AuthTokenType.LITERALS,
+        instance: Optional[TaskPerformer] = None,
+    ):
+        self.is_superuser = is_superuser
+        self.auth_type = auth_type
+        self.instance = instance
+        self.user = user
+        self.task = task
+
+    def _validate(self):
+
+        workflow = self.task.workflow
+        if workflow.is_completed:
+            raise GroupPerformerServiceException(MSG_PW_0017)
+        if self.task.number != workflow.current_task:
+            raise GroupPerformerServiceException(MSG_PW_0018)
+
+        if not self.user.is_admin:
+            raise GroupPerformerServiceException(MSG_PW_0021)
+        if not self.user.is_account_owner:
+            tempalate_owners_ids = []
+            if not workflow.is_legacy_template:
+                tempalate_owners_ids = Template.objects.filter(
+                    id=workflow.template.id
+                ).get_owners_as_users()
+            if self.user.id not in tempalate_owners_ids:
+                user_is_task_performer = self.task.taskperformer_set.filter(
+                    user_id=self.user.id
+                ).exclude_directly_deleted().exists()
+                if not user_is_task_performer:
+                    raise GroupPerformerServiceException(MSG_PW_0021)
+
+    def _validate_create(self):
+        pass
+
+    def _get_valid_deleted_task_performer(
+        self,
+        group: UserGroup,
+    ) -> Optional[TaskPerformer]:
+        performers = (
+            TaskPerformer.objects.by_task(
+                self.task.id
+            ).exclude_directly_deleted()
+        )
+        if (
+            performers.count() == 1
+            and performers.filter(group_id=group.id).exists()
+        ):
+            raise GroupPerformerServiceException(MSG_PW_0016)
+        return performers.filter(group_id=group.id).first()
+
+    @abstractmethod
+    def create_performer(self, group: UserGroup) -> None:
+        pass
+
+    @abstractmethod
+    def delete_performer(
+        self,
+        group: UserGroup,
+        request_user: UserModel,
+    ) -> None:
+        pass

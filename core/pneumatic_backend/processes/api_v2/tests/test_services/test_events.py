@@ -4,13 +4,18 @@ from django.utils import timezone
 from django.contrib.auth import get_user_model
 from pneumatic_backend.processes.tests.fixtures import (
     create_test_user,
-    create_test_workflow, create_test_account,
+    create_test_workflow,
+    create_test_account,
+    create_test_group
 )
 from pneumatic_backend.processes.enums import (
     WorkflowEventType,
     CommentStatus,
 )
 from pneumatic_backend.processes.api_v2.services import WorkflowEventService
+from pneumatic_backend.processes.api_v2.serializers.workflow.events import (
+    TaskEventJsonSerializer
+)
 from pneumatic_backend.processes.models import (
     FileAttachment,
     WorkflowEvent,
@@ -104,7 +109,8 @@ def test_comment_created_event__ok(mocker):
     assert event.task_json['number'] == 1
     assert event.task_json['name'] == task.name
     assert event.task_json['description'] == task.description
-    assert event.task_json['performers'] == [user.id]
+    performer = {'source_id': user.id, 'type': 'user'}
+    assert event.task_json['performers'] == [performer]
     assert event.task_json['due_date_tsp'] is None
     assert event.task_json['output'] is None
     after_create_actions_mock.assert_called_once_with(event)
@@ -160,7 +166,8 @@ def test_sub_workflow_run_event__ok(mocker):
     assert event.task_json['number'] == 1
     assert event.task_json['name'] == ancestor_task.name
     assert event.task_json['description'] == ancestor_task.description
-    assert event.task_json['performers'] == [user.id]
+    performer = {'source_id': user.id, 'type': 'user'}
+    assert event.task_json['performers'] == [performer]
     sub_workflow_data = event.task_json['sub_workflow']
     assert sub_workflow_data['id'] == sub_workflow.id
     assert sub_workflow_data['name'] == sub_workflow.name
@@ -213,3 +220,95 @@ def test_sub_workflow_run_event__skip_after_create_actions__ok(mocker):
     sub_workflow_data = event.task_json['sub_workflow']
     assert sub_workflow_data['id'] == sub_workflow.id
     after_create_actions_mock.assert_not_called()
+
+
+def test_performer_group_created_event__ok(mocker):
+
+    # arrange
+    after_create_actions_mock = mocker.patch(
+        'pneumatic_backend.processes.api_v2.services.events.'
+        'WorkflowEventService._after_create_actions'
+    )
+    user = create_test_user()
+    group = create_test_group(user=user, users=[user, ])
+    workflow = create_test_workflow(
+        name='Parent workflow',
+        user=user,
+        tasks_count=1
+    )
+    task = workflow.current_task_instance
+
+    # act
+    event = WorkflowEventService.performer_group_created_event(
+        user=user,
+        task=task,
+        performer=group,
+        after_create_actions=False
+    )
+
+    # assert
+    assert event.workflow_id == workflow.id
+    assert event.account == user.account
+    assert event.type == WorkflowEventType.TASK_PERFORMER_GROUP_CREATED
+    assert event.task == task
+    assert event.task_json['id'] == task.id
+    assert event.user_id == user.id
+    assert event.target_group_id == group.id
+    after_create_actions_mock.assert_not_called()
+    assert WorkflowEvent.objects.filter(
+        workflow=workflow,
+        account=user.account,
+        type=WorkflowEventType.TASK_PERFORMER_GROUP_CREATED,
+        task_json=TaskEventJsonSerializer(
+            instance=task,
+            context={
+                'event_type': WorkflowEventType.TASK_PERFORMER_GROUP_CREATED
+            }
+        ).data,
+    ).count() == 1
+
+
+def test_performer_group_deleted_event__ok(mocker):
+
+    # arrange
+    after_create_actions_mock = mocker.patch(
+        'pneumatic_backend.processes.api_v2.services.events.'
+        'WorkflowEventService._after_create_actions'
+    )
+    user = create_test_user()
+    group = create_test_group(user=user, users=[user, ])
+    workflow = create_test_workflow(
+        name='Parent workflow',
+        user=user,
+        tasks_count=1
+    )
+    task = workflow.current_task_instance
+
+    # act
+    event = WorkflowEventService.performer_group_deleted_event(
+        user=user,
+        task=task,
+        performer=group,
+        after_create_actions=False
+    )
+
+    # assert
+    assert event.workflow_id == workflow.id
+    assert event.account == user.account
+    assert event.type == WorkflowEventType.TASK_PERFORMER_GROUP_DELETED
+    assert event.task == task
+    assert event.task_json['id'] == task.id
+    assert event.user_id == user.id
+    assert event.target_group_id == group.id
+    after_create_actions_mock.assert_not_called()
+    assert WorkflowEvent.objects.filter(
+        workflow=workflow,
+        account=user.account,
+        type=WorkflowEventType.TASK_PERFORMER_GROUP_DELETED,
+        task_json=TaskEventJsonSerializer(
+            instance=task,
+            context={
+                'event_type': WorkflowEventType.TASK_PERFORMER_GROUP_DELETED
+            }
+        ).data,
+    ).count() == 1

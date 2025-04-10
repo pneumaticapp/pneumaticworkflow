@@ -21,10 +21,14 @@ function* runWorkflow({ payload: workflow }: TRunWorkflow) {
       currentTask: { performers: currenttaskPerformers },
       name,
     }: TRunProcessResponse = yield runProcess(mappedWorkflow);
+
+
     const {
       authUser: { id },
     }: ReturnType<typeof getAuthUser> = yield select(getAuthUser);
-    const shouldRedirectTasks = (currenttaskPerformers && id && currenttaskPerformers.includes(id)) || !isAdmin;
+
+    const isCurrentPerformer = currenttaskPerformers.find(item => item.sourceId === id);
+    const shouldRedirectTasks = (currenttaskPerformers && id && isCurrentPerformer) || !isAdmin;
     const nextRoute = shouldRedirectTasks ? ERoutes.Tasks : ERoutes.WorkflowsInProgress;
 
     yield put(runWorkflowSuccess());

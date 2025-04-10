@@ -1,4 +1,4 @@
-import { ETaskPerformerType, EExtraFieldType, ITemplateResponse } from '../../../../types/template';
+import { ETaskPerformerType, EExtraFieldType, ITemplateResponse, ETemplateOwnerType } from '../../../../types/template';
 import { getRunnableWorkflow } from '../getRunnableWorkflow';
 
 const templateResponseMock: ITemplateResponse = {
@@ -144,7 +144,18 @@ const templateResponseMock: ITemplateResponse = {
     description: '',
     fields: [],
   },
-  templateOwners: [306, 1896],
+  owners: [
+    {
+      sourceId: '306',
+      type: ETemplateOwnerType.User,
+      apiName: 'owner-024t43',
+    },
+    {
+      sourceId: '1896',
+      type: ETemplateOwnerType.User,
+      apiName: 'owner-024t12',
+    },
+  ],
   isActive: true,
   isPublic: false,
   publicUrl: null,

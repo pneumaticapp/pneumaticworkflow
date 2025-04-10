@@ -90,7 +90,16 @@ class TestUpdateTemplate:
             'description': '',
             'name': 'Name changed',
             'wf_name_template': 'New wf name',
-            'template_owners': [user.id, user2.id],
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id
+                },
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user2.id
+                },
+            ],
             'finalizable': True,
             'kickoff': {
                 'id': template.kickoff_instance.id
@@ -131,9 +140,7 @@ class TestUpdateTemplate:
 
         assert response_data.get('id')
         assert response_data.get('kickoff')
-        assert len(response_data['template_owners']) == len(
-            request_data['template_owners']
-        )
+        assert len(response_data['owners']) == len(request_data['owners'])
         assert response_data['name'] == request_data['name']
         assert response_data['wf_name_template'] == 'New wf name'
         assert response_data['description'] == request_data['description']
@@ -145,11 +152,14 @@ class TestUpdateTemplate:
         assert response_data.get('date_updated')
 
         template.refresh_from_db()
-        template_owners_ids = list(template.owners.order_by(
+        template_owners = list(template.owners.order_by(
             'id'
-        ).values_list('user_id', flat=True))
+        ).values_list('user_id', 'type'))
+        assert template_owners[0][0] == user.id
+        assert template_owners[0][1] == OwnerType.USER
+        assert template_owners[1][0] == user2.id
+        assert template_owners[1][1] == OwnerType.USER
         assert template.kickoff_instance
-        assert template_owners_ids == request_data['template_owners']
         assert template.name == request_data['name']
         assert template.description == request_data['description']
         assert template.is_active == request_data['is_active']
@@ -221,7 +231,16 @@ class TestUpdateTemplate:
             'is_active': False,
             'description': 'Desc changed',
             'name': 'Name changed',
-            'template_owners': [user.id, user2.id],
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id
+                },
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user2.id
+                },
+            ],
             'finalizable': True,
             'kickoff': {
                 'id': template.kickoff_instance.id,
@@ -260,9 +279,10 @@ class TestUpdateTemplate:
         response_data = response.json()
 
         assert response_data.get('id')
-        assert set(response_data['template_owners']) == set(
-            request_data['template_owners']
-        )
+        assert response_data['owners'][0]['source_id'] == str(user.id)
+        assert response_data['owners'][0]['type'] == OwnerType.USER
+        assert response_data['owners'][1]['source_id'] == str(user2.id)
+        assert response_data['owners'][1]['type'] == OwnerType.USER
         assert response_data['name'] == request_data['name']
         assert response_data['description'] == request_data['description']
         assert response_data['is_active'] == request_data['is_active']
@@ -317,7 +337,16 @@ class TestUpdateTemplate:
             data={
                 'description': 'Desc',
                 'name': 'Name',
-                'template_owners': [user.id, user2.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user2.id
+                    },
+                ],
                 'is_active': False,
                 'finalizable': True,
                 'kickoff': {
@@ -338,7 +367,16 @@ class TestUpdateTemplate:
             'is_active': False,
             'description': 'Desc changed',
             'name': 'Name changed',
-            'template_owners': [user.id, user2.id],
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id
+                },
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user2.id
+                },
+            ],
             'finalizable': True,
             'kickoff': {
                 'description': 'Desc changed',
@@ -378,9 +416,10 @@ class TestUpdateTemplate:
         response_data = response.json()
 
         assert response_data['id'] == request_data['id']
-        assert set(response_data['template_owners']) == set(
-            request_data['template_owners']
-        )
+        assert response_data['owners'][0]['source_id'] == str(user.id)
+        assert response_data['owners'][0]['type'] == OwnerType.USER
+        assert response_data['owners'][1]['source_id'] == str(user2.id)
+        assert response_data['owners'][1]['type'] == OwnerType.USER
         assert response_data['name'] == request_data['name']
         assert response_data['description'] == request_data['description']
         assert response_data['is_active'] == request_data['is_active']
@@ -424,7 +463,12 @@ class TestUpdateTemplate:
             data={
                 'description': 'Desc',
                 'name': 'Name',
-                'template_owners': [user.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                ],
                 'is_active': False,
                 'finalizable': True,
                 'kickoff': {
@@ -462,7 +506,12 @@ class TestUpdateTemplate:
             'is_active': True,
             'description': '',
             'name': 'Name changed',
-            'template_owners': [user.id],
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id
+                },
+            ],
             'finalizable': True,
             'kickoff': {
                 'description': 'Desc changed',
@@ -492,9 +541,9 @@ class TestUpdateTemplate:
         response_data = response.json()
 
         assert response_data['id'] == request_data['id']
-        assert response_data['template_owners'] == (
-            request_data['template_owners']
-        )
+        assert response_data['owners'][0].get('api_name')
+        assert response_data['owners'][0]['source_id'] == str(user.id)
+        assert response_data['owners'][0]['type'] == OwnerType.USER
         assert response_data['name'] == request_data['name']
         assert response_data['description'] == request_data['description']
         assert response_data['is_active'] == request_data['is_active']
@@ -551,7 +600,12 @@ class TestUpdateTemplate:
             data={
                 'description': 'Desc',
                 'name': 'Name',
-                'template_owners': [user.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                ],
                 'is_active': False,
                 'finalizable': True,
                 'kickoff': {
@@ -590,7 +644,12 @@ class TestUpdateTemplate:
             'is_active': True,
             'description': '',
             'name': 'Name changed',
-            'template_owners': [user.id],
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id
+                },
+            ],
             'finalizable': True,
             'kickoff': {
                 'description': 'Desc changed',
@@ -645,7 +704,12 @@ class TestUpdateTemplate:
             data={
                 'name': 'Origin template name',
                 'description': 'Desc',
-                'template_owners': [user.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                ],
                 'is_active': False,
                 'finalizable': True,
                 'kickoff': {},
@@ -676,7 +740,12 @@ class TestUpdateTemplate:
             'id': template.id,
             'name': 'Template name changed',
             'description': 'Desc changed',
-            'template_owners': [user.id],
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id
+                },
+            ],
             'is_active': False,
             'finalizable': True,
             'kickoff': {},
@@ -737,7 +806,12 @@ class TestUpdateTemplate:
             data={
                 'name': 'Template',
                 'description': 'Desc',
-                'template_owners': [user.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                ],
                 'is_active': False,
                 'finalizable': True,
                 'kickoff': {},
@@ -768,7 +842,12 @@ class TestUpdateTemplate:
             'id': template.id,
             'name': 'Template changed',
             'description': 'Desc changed',
-            'template_owners': [user_2.id],
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user_2.id
+                },
+            ],
             'is_active': False,
             'finalizable': True,
             'kickoff': {},
@@ -796,7 +875,8 @@ class TestUpdateTemplate:
         assert response_create.status_code == 200
         assert response_update.status_code == 200
 
-        assert response_update.data['template_owners'] == [user_2.id]
+        assert response_update.data['owners'][0]['source_id'] == str(user_2.id)
+        assert response_update.data['owners'][0]['type'] == OwnerType.USER
         assert response_update.data['is_active'] is False
         template.refresh_from_db()
         assert template.is_active is False
@@ -829,14 +909,19 @@ class TestUpdateTemplate:
             data={
                 'description': 'Desc',
                 'name': 'Name',
-                'template_owners': [user.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                ],
                 'is_active': True,
                 'is_public': False,
                 'kickoff': {},
                 'tasks': [
                     {
-                      'number': 1,
-                      'name': 'First step',
+                        'number': 1,
+                        'name': 'First step',
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
@@ -863,7 +948,12 @@ class TestUpdateTemplate:
                 'is_public': True,
                 'description': template.description,
                 'name': template.name,
-                'template_owners': [user.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                ],
                 'finalizable': template.finalizable,
                 'kickoff': {},
                 'tasks': [
@@ -914,14 +1004,19 @@ class TestUpdateTemplate:
             data={
                 'description': 'Desc',
                 'name': 'Name',
-                'template_owners': [user.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                ],
                 'is_active': True,
                 'is_embedded': False,
                 'kickoff': {},
                 'tasks': [
                     {
-                      'number': 1,
-                      'name': 'First step',
+                        'number': 1,
+                        'name': 'First step',
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
@@ -944,7 +1039,12 @@ class TestUpdateTemplate:
             'is_embedded': True,
             'description': template.description,
             'name': template.name,
-            'template_owners': [user.id],
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id
+                },
+            ],
             'finalizable': template.finalizable,
             'kickoff': {},
             'tasks': [
@@ -1004,7 +1104,12 @@ class TestUpdateTemplate:
             'is_public': False,
             'description': template.description,
             'name': template.name,
-            'template_owners': [user.id],
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id
+                },
+            ],
             'finalizable': template.finalizable,
             'kickoff': {
                 'id': template.kickoff_instance.id
@@ -1232,8 +1337,12 @@ class TestUpdateTemplate:
             'is_public': template.is_public,
             'description': '',
             'name': 'Name changed',
-            'template_owners': [user.id],
-            'finalizable': True,
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id
+                },
+            ],            'finalizable': True,
             'kickoff': {
                 'id': template.kickoff_instance.id
             },
@@ -1262,9 +1371,10 @@ class TestUpdateTemplate:
         # assert
         assert response.status_code == 200
         response_data = response.json()
-        assert len(response_data['template_owners']) == len(
-            request_data['template_owners']
-        )
+        assert len(response_data['owners']) == 1
+        assert response_data['owners'][0].get('api_name')
+        assert response_data['owners'][0]['source_id'] == str(user.id)
+        assert response_data['owners'][0]['type'] == OwnerType.USER
         template_update_mock.assert_called_once()
         kickoff_update_mock.assert_called_once()
 
@@ -1285,14 +1395,19 @@ class TestUpdateTemplate:
             data={
                 'description': 'Desc',
                 'name': 'Name',
-                'template_owners': [user.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                ],
                 'is_active': True,
                 'is_public': False,
                 'kickoff': {},
                 'tasks': [
                     {
-                      'number': 1,
-                      'name': 'First step',
+                        'number': 1,
+                        'name': 'First step',
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
@@ -1315,7 +1430,12 @@ class TestUpdateTemplate:
             'is_public': True,
             'description': template.description,
             'name': template.name,
-            'template_owners': [user.id],
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id
+                },
+            ],
             'finalizable': template.finalizable,
             'kickoff': {
                 'id': template.kickoff_instance.id
@@ -1361,7 +1481,12 @@ class TestUpdateTemplate:
             data={
                 'description': 'Desc',
                 'name': 'Name',
-                'template_owners': [user.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                ],
                 'is_active': True,
                 'is_public': True,
                 'kickoff': {},
@@ -1391,7 +1516,12 @@ class TestUpdateTemplate:
             'is_public': False,
             'description': template.description,
             'name': template.name,
-            'template_owners': [user.id],
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id
+                },
+            ],
             'finalizable': template.finalizable,
             'kickoff': {
                 'id': template.kickoff_instance.id
@@ -1450,7 +1580,16 @@ class TestUpdateTemplate:
             'is_public': template.is_public,
             'description': '',
             'name': 'Name changed',
-            'template_owners': [user.id, user_2.id],
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id
+                },
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user_2.id
+                },
+            ],
             'finalizable': True,
             'kickoff': {
                 'id': template.kickoff_instance.id
@@ -1537,7 +1676,12 @@ class TestUpdateTemplate:
             'is_public': template.is_public,
             'description': '',
             'name': 'Name changed',
-            'template_owners': [account_1_owner.id],
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': account_1_owner.id
+                },
+            ],
             'finalizable': True,
             'kickoff': {
                 'id': template.kickoff_instance.id
@@ -1606,7 +1750,16 @@ class TestUpdateTemplate:
                 'is_public': template.is_public,
                 'description': '',
                 'name': 'Name changed',
-                'template_owners': [non_admin.id, owner.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': non_admin.id
+                    },
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': owner.id
+                    },
+                ],
                 'finalizable': True,
                 'kickoff': {},
                 'tasks': [
@@ -1629,10 +1782,12 @@ class TestUpdateTemplate:
         # assert
         assert response.status_code == 200
         response_data = response.json()
-
-        assert set(response_data['template_owners']) == {
-            non_admin.id, owner.id
-        }
+        assert response_data['owners'][0].get('api_name')
+        assert response_data['owners'][0]['source_id'] == str(non_admin.id)
+        assert response_data['owners'][0]['type'] == OwnerType.USER
+        assert response_data['owners'][1].get('api_name')
+        assert response_data['owners'][1]['source_id'] == str(owner.id)
+        assert response_data['owners'][1]['type'] == OwnerType.USER
         template = Template.objects.get(id=response_data['id'])
         assert template.owners.count() == 2
         assert template.owners.filter(
@@ -1684,7 +1839,16 @@ class TestUpdateTemplate:
                 'is_public': template.is_public,
                 'description': '',
                 'name': 'Name changed',
-                'template_owners': [non_admin.id, owner.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': non_admin.id
+                    },
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': owner.id
+                    },
+                ],
                 'finalizable': True,
                 'kickoff': {},
                 'tasks': [
@@ -1707,10 +1871,12 @@ class TestUpdateTemplate:
         # assert
         assert response.status_code == 200
         response_data = response.json()
-
-        assert set(response_data['template_owners']) == {
-            non_admin.id, owner.id
-        }
+        assert response_data['owners'][0].get('api_name')
+        assert response_data['owners'][0]['source_id'] == str(non_admin.id)
+        assert response_data['owners'][0]['type'] == OwnerType.USER
+        assert response_data['owners'][1].get('api_name')
+        assert response_data['owners'][1]['source_id'] == str(owner.id)
+        assert response_data['owners'][1]['type'] == OwnerType.USER
         template = Template.objects.get(id=response_data['id'])
         assert template.owners.count() == 2
         assert template.owners.filter(
@@ -1779,7 +1945,12 @@ class TestUpdateTemplate:
                 'is_public': template.is_public,
                 'description': '',
                 'name': 'Name changed',
-                'template_owners': [user.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                ],
                 'finalizable': True,
                 'kickoff': {},
                 'tasks': [
@@ -1856,7 +2027,16 @@ class TestUpdateTemplate:
             'id': template.id,
             'is_active': True,
             'name': 'Name changed',
-            'template_owners': [user.id, user2.id],
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id
+                },
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user2.id
+                },
+            ],
             'kickoff': {},
             'tasks': [
                 {
@@ -1939,7 +2119,16 @@ class TestUpdateTemplate:
             'id': template.id,
             'is_active': True,
             'name': 'Name changed',
-            'template_owners': [user.id, user2.id],
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id
+                },
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user2.id
+                },
+            ],
             'kickoff': {},
             'tasks': [
                 {

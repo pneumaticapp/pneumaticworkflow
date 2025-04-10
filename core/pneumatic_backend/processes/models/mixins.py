@@ -182,6 +182,8 @@ class ConditionMixin(models.Model):
 
 class PredicateMixin(models.Model):
 
+    # TODO add account field
+
     class Meta:
         abstract = True
 
@@ -213,6 +215,7 @@ class TaskRawPerformersMixin:
         api_name: str,
         performer_type: PerformerType = PerformerType.USER,
         user: Optional[UserModel] = None,
+        group: Optional[UserGroup] = None,
         user_id: Optional[int] = None,
         field=None,
         **kwargs
@@ -224,6 +227,7 @@ class TaskRawPerformersMixin:
     def add_raw_performer(
         self,
         user: Optional[UserModel] = None,
+        group: Optional[UserGroup] = None,
         user_id: Optional[int] = None,
         field=None,
         api_name: Optional[str] = None,
@@ -236,6 +240,7 @@ class TaskRawPerformersMixin:
     def delete_raw_performer(
         self,
         user: Optional[UserModel] = None,
+        group: Optional[UserGroup] = None,
         field=None,
         performer_type: PerformerType = PerformerType.USER
     ) -> int:
@@ -244,7 +249,7 @@ class TaskRawPerformersMixin:
             and returns the number of objects deleted """
 
         if performer_type != PerformerType.WORKFLOW_STARTER:
-            if user is None and field is None:
+            if user is None and group is None and field is None:
                 raise Exception(
                     'Raw performer should be linked with field or user'
                 )
@@ -252,6 +257,7 @@ class TaskRawPerformersMixin:
         return self.raw_performers.filter(
             type=performer_type,
             user=user,
+            group=group,
             field=field
         ).delete()[0]
 

@@ -11,9 +11,10 @@ import '../../../assets/css/library/react-select.css';
 import styles from './DropdownList.css';
 
 type TControlSize = 'lg' | 'sm';
+type TPlacement = 'left' | 'right';
 
 export type TDropdownOptionBase = {
-  label: string;
+  label: string | React.ReactNode;
   sourceId?: string | null;
   value?: string;
   onClick?: () => void;
@@ -26,6 +27,8 @@ export interface IDropdownListProps<TOption extends TDropdownOptionBase>
   title?: string;
   controlSize?: TControlSize;
   className?: string;
+  staticMenu?: boolean;
+  placement?: TPlacement;
   onChange?: (value: any, action: any) => void;
 }
 
@@ -38,6 +41,16 @@ export function DropdownList<TOption extends TDropdownOptionBase>({
   ...restProps
 }: IDropdownListProps<TOption>) {
   const [isOpen, setIsOpen] = useState(false);
+  const [filterValue, setFilterValue] = useState('');
+
+  const handleInputChange = (inputValue: string, action: any) => {
+    if (action.action === 'input-change') {
+      setFilterValue(inputValue);
+    }
+    if (restProps.onInputChange) {
+      restProps.onInputChange(inputValue, action);
+    }
+  };
 
   const componentsMap: { [key in TControlSize]: any } = {
     lg: {
@@ -50,7 +63,8 @@ export function DropdownList<TOption extends TDropdownOptionBase>({
     sm: {
       Menu: MenuSM,
       Option,
-      Control: ControlSM(title || '', isOpen, setIsOpen),
+      Control: !restProps.staticMenu ? ControlSM(title || '', isOpen, setIsOpen) : () => null,
+      ...(!restProps.staticMenu && { Input: () => null }),
       ValueContainer: () => null,
       MenuList: MenuListSM,
     },
@@ -61,6 +75,7 @@ export function DropdownList<TOption extends TDropdownOptionBase>({
       <div className={classnames('react-select', className)}>
         <div className={classnames(styles['dropdownlist-lg__control'], label && styles['is-label'])}>
           {label && <p className={styles['dropdownlist-lg__label']}>{label}</p>}
+
           <Select
             isMulti={isMulti}
             closeMenuOnSelect={!isMulti}
@@ -70,6 +85,7 @@ export function DropdownList<TOption extends TDropdownOptionBase>({
             isClearable={false}
             classNamePrefix="react-select"
             components={componentsMap[controlSize]}
+            onInputChange={handleInputChange}
             {...restProps}
           />
         </div>
@@ -78,7 +94,7 @@ export function DropdownList<TOption extends TDropdownOptionBase>({
   }
 
   return (
-    <div className={classnames('react-select', className)}>
+    <div className={classnames('react-select', className, restProps.staticMenu && 'is-static')}>
       <OutsideClickHandler onOutsideClick={() => setIsOpen(false)}>
         <Select
           isMulti={isMulti}
@@ -89,8 +105,11 @@ export function DropdownList<TOption extends TDropdownOptionBase>({
           isClearable={false}
           classNamePrefix="react-select"
           components={componentsMap[controlSize]}
+          inputValue={filterValue}
+          onInputChange={handleInputChange}
           {...restProps}
-          {...(controlSize === 'sm' && { menuIsOpen: isOpen })}
+          {...(controlSize === 'sm' && !restProps.staticMenu && { menuIsOpen: isOpen })}
+          {...(restProps.staticMenu && { menuIsOpen: true })}
         />
       </OutsideClickHandler>
     </div>
@@ -102,14 +121,18 @@ function Input({ autoComplete, ...rest }: any) {
 }
 
 function ControlSM(title: string, isOpen: boolean, onClick: (isOpen: boolean) => void) {
-  return () => {
+  return (props: any) => {
     return (
       <button
         type="button"
-        className={classnames(styles['dropdownlist-sm__control'], isOpen && styles['is-open'])}
+        className={classnames(
+          'react-select_controlllll',
+          styles['dropdownlist-sm__control'],
+          isOpen && styles['is-open'],
+        )}
         onClick={() => onClick(!isOpen)}
       >
-        <p className={styles['dropdownlist-sm__value']}>{title}</p>
+        <p className={styles['dropdownlist-sm__value']}>{title || props?.selectProps.value.label}</p>
         <ExpandIcon className={classnames(styles['dropdownlist-sm__arrow'], isOpen && styles['is-open'])} />
       </button>
     );
@@ -120,7 +143,13 @@ const DropdownIndicator = () => <ArrowDropdownIcon />;
 
 const MenuSM = ({ children, ...props }: any) => {
   return (
-    <div className="react-select__menu-list is-sm">
+    <div
+      className={classnames(
+        'react-select__menu-list',
+        props.selectProps.staticMenu ? 'is-static' : 'is-sm',
+        props.selectProps.placement === 'left' && 'is-left',
+      )}
+    >
       <components.Menu {...props}>{children}</components.Menu>
     </div>
   );
@@ -141,7 +170,7 @@ const MenuListLG = ({ selectProps, ...props }: any) => {
 
 const MenuListSM = ({ selectProps, ...props }: any) => {
   const ScrollBar = PerfectScrollbar as unknown as Function;
-  const { onInputChange, inputValue, onMenuInputFocus, placeholder } = selectProps;
+  const { onInputChange, inputValue, onMenuInputFocus, placeholder, isSearchable } = selectProps;
 
   const ariaAttributes = {
     'aria-label': selectProps['aria-label'],
@@ -150,39 +179,41 @@ const MenuListSM = ({ selectProps, ...props }: any) => {
 
   return (
     <div>
-      <div className={styles['dropdownlist-sm__search']}>
-        <input
-          type="text"
-          value={inputValue}
-          onChange={(e) =>
-            onInputChange(e.currentTarget.value, {
-              action: 'input-change',
-            })
-          }
-          // When opening sm dropdown, set the autofocus on the search field
-          // eslint-disable-next-line jsx-a11y/no-autofocus
-          autoFocus
-          onMouseDown={(e) => e.stopPropagation()}
-          onTouchEnd={(e) => e.stopPropagation()}
-          onFocus={onMenuInputFocus}
-          placeholder={placeholder}
-          {...ariaAttributes}
-        />
-        {inputValue && (
-          <button
-            className={styles['dropdownlist-sm__clear']}
-            type="button"
-            aria-label="button"
-            onClick={() =>
-              onInputChange('', {
+      {isSearchable && (
+        <div className={styles['dropdownlist-sm__search']}>
+          <input
+            type="text"
+            value={inputValue}
+            onChange={(e) =>
+              onInputChange(e.currentTarget.value, {
                 action: 'input-change',
               })
             }
-          >
-            <RoundClearIconMd />
-          </button>
-        )}
-      </div>
+            // When opening sm dropdown, set the autofocus on the search field
+            // eslint-disable-next-line jsx-a11y/no-autofocus
+            autoFocus
+            onMouseDown={(e) => e.stopPropagation()}
+            onTouchEnd={(e) => e.stopPropagation()}
+            onFocus={onMenuInputFocus}
+            placeholder={placeholder}
+            {...ariaAttributes}
+          />
+          {inputValue && (
+            <button
+              className={styles['dropdownlist-sm__clear']}
+              type="button"
+              aria-label="button"
+              onClick={() =>
+                onInputChange('', {
+                  action: 'input-change',
+                })
+              }
+            >
+              <RoundClearIconMd />
+            </button>
+          )}
+        </div>
+      )}
 
       <ScrollBar
         className={styles['dropdownlist__scrollbar']}
@@ -196,7 +227,6 @@ const MenuListSM = ({ selectProps, ...props }: any) => {
 
 const Option = (props: any) => {
   const { innerProps, data } = props;
-
   if (data.onClick) innerProps.onClick = data.onClick;
 
   return <components.Option {...props} />;

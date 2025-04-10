@@ -15,7 +15,7 @@ export function reassignWorkflows(oldUser: number, newUser: number) {
   return commonRequest(
     urls.reassignWorkflows,
     {
-      body: mapRequestBody(requestBody),
+      data: mapRequestBody(requestBody),
       method: 'POST',
     },
     {

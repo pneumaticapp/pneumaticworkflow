@@ -1,13 +1,18 @@
 import pytest
 from datetime import timedelta
 from django.utils import timezone
-from pneumatic_backend.processes.enums import DirectlyStatus
+from pneumatic_backend.processes.enums import (
+    DirectlyStatus,
+    PerformerType
+)
+from pneumatic_backend.accounts.enums import BillingPlanType
 from pneumatic_backend.processes.models import TaskPerformer
 from pneumatic_backend.processes.tests.fixtures import (
     create_test_workflow,
     create_test_user,
     create_test_account,
     create_test_guest,
+    create_test_group
 )
 from pneumatic_backend.notifications.tasks import (
     _send_due_date_changed
@@ -98,6 +103,101 @@ def test_send_due_date_changed__call_services__ok(mocker):
         workflow_name=workflow.name,
         user_id=user.id,
         user_email=user.email,
+        user_type=UserType.USER,
+        sync=True,
+        notification=notification,
+    )
+
+
+def test_send_due_date_changed__call_services_with_group__ok(mocker):
+
+    # arrange
+    account = create_test_account(
+        log_api_requests=True,
+        plan=BillingPlanType.PREMIUM
+    )
+    account_owner = create_test_user(
+        is_account_owner=True,
+        account=account
+    )
+    user = create_test_user(
+        email='t@t.t',
+        account=account,
+        is_account_owner=False
+    )
+    user_in_group = create_test_user(
+        email='t2@t.t',
+        account=account,
+        is_account_owner=False
+    )
+    group = create_test_group(user=user, users=[user_in_group, ])
+    workflow = create_test_workflow(user, tasks_count=1)
+    task = workflow.current_task_instance
+    task.due_date = timezone.now() + timedelta(hours=1)
+    task.save(update_fields=['due_date'])
+    task.performers.remove(user)
+    task.performers.add(account_owner)
+    TaskPerformer.objects.create(
+        task_id=task.id,
+        type=PerformerType.GROUP,
+        group_id=group.id,
+        directly_status=DirectlyStatus.CREATED
+    )
+    push_notification_service_init_mock = mocker.patch.object(
+        PushNotificationService,
+        attribute='__init__',
+        return_value=None
+    )
+    push_notification_mock = mocker.patch(
+        'pneumatic_backend.notifications.services.push.'
+        'PushNotificationService.send_due_date_changed'
+    )
+    websocket_notification_mock = mocker.patch(
+        'pneumatic_backend.notifications.services.websockets.'
+        'WebSocketService.send_due_date_changed'
+    )
+
+    # act
+    _send_due_date_changed(
+        logging=account.log_api_requests,
+        author_id=account_owner.id,
+        task_id=task.id,
+        task_name=task.name,
+        workflow_name=workflow.name,
+        account_id=account.id,
+        logo_lg=account.logo_lg,
+    )
+
+    # assert
+    notification = Notification.objects.get(
+        task_id=task.id,
+        user_id=user_in_group.id,
+        author_id=account_owner.id,
+        account_id=account.id,
+        type=NotificationType.DUE_DATE_CHANGED,
+    )
+
+    push_notification_service_init_mock.assert_called_once_with(
+        logging=account.log_api_requests,
+        account_id=account.id,
+        logo_lg=account.logo_lg,
+    )
+    push_notification_mock.assert_called_once_with(
+        task_id=task.id,
+        task_name=task.name,
+        workflow_name=workflow.name,
+        user_email=user_in_group.email,
+        user_id=user_in_group.id,
+        user_type=UserType.USER,
+        sync=True,
+        notification=notification,
+    )
+    websocket_notification_mock.assert_called_once_with(
+        task_id=task.id,
+        task_name=task.name,
+        workflow_name=workflow.name,
+        user_id=user_in_group.id,
+        user_email=user_in_group.email,
         user_type=UserType.USER,
         sync=True,
         notification=notification,

@@ -21,11 +21,11 @@ class TestRichEditorLinkToHTMLService:
                 (
                     f'[regeneron_photo.jpg]'
                     f'(https://storage.googleapis.com/'
-                    f'{settings.GCLOUD_BUCKET_NAME}/)'
+                    f'{settings.GCLOUD_DEFAULT_BUCKET_NAME}/)'
                 ),
                 (
                     f'<a href="https://storage.googleapis.com/'
-                    f'{settings.GCLOUD_BUCKET_NAME}/">'
+                    f'{settings.GCLOUD_DEFAULT_BUCKET_NAME}/">'
                     f'regeneron_photo.jpg</a>'
                 )
             ),

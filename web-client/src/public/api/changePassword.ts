@@ -12,7 +12,7 @@ export function changePassword(body: TChangePassword) {
 
   return commonRequest<IChangePasswordResponse>(urls.changePassword, {
     method: 'POST',
-    body: mapRequestBody(body),
+    data: mapRequestBody(body),
   }, {
     type: 'local',
     shouldThrow: true,

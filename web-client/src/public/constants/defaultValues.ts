@@ -98,8 +98,8 @@ export const MAX_VISIBLE_ICONS = 5;
 export const DEFAULT_TASK_COMMENTS_LIMIT = 5;
 export const SHOW_MORE_TASK_COMMENTS_LIMIT = 10;
 
-export const DEV_SENTRY_DSN = envSentry || 'https://2b5bb14eab304481867ba30f6d029a6f@o313255.ingest.sentry.io/5276349';
-export const PROD_SENTRY_DSN = envSentry || 'https://4e313a51d19346f094be5417b871b575@o313255.ingest.sentry.io/5433088';
+export const DEV_SENTRY_DSN = envSentry || null;
+export const PROD_SENTRY_DSN = envSentry || null;
 
 export const ENTER_KEY_CODE = 13;
 
@@ -110,6 +110,7 @@ export const enum EPageTitle {
   TemplatesSystem = 'templates.title-system',
   Highlights = 'workflow-highlights.title',
   Integrations = 'integrations.title',
+  Team = 'team.title',
 }
 
 export const enum ELearnMoreLinks {
@@ -124,6 +125,7 @@ export const enum ELearnMoreLinks {
   Checklists = 'https://support.pneumatic.app/en/articles/6145048-free-external-users',
   Tenants = 'https://www.pneumatic.app/partners/',
   TenantsModal = 'https://www.pneumatic.app/partners/',
+  Team = '',
 }
 
 export const GUEST_TOKEN_STORAGE_KEY = 'guestToken';

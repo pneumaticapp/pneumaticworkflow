@@ -1,5 +1,3 @@
-/* eslint-disable */
-/* prettier-ignore */
 import { connect } from 'react-redux';
 import { loadIntegrationsList } from '../../redux/actions';
 import { IApplicationState } from '../../types/redux';

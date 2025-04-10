@@ -1,4 +1,4 @@
-import { all, fork, takeEvery, put, select } from 'redux-saga/effects';
+import { all, fork, takeEvery, put, select, takeLatest } from 'redux-saga/effects';
 import { IInviteResponse, sendInvites } from '../../api/sendInvites';
 import { NotificationManager } from '../../components/UI/Notifications';
 import { TUserListItem } from '../../types/user';
@@ -10,9 +10,17 @@ import { fetchUsers } from '../accounts/saga';
 import { loadActiveUsersCount, teamFetchStarted } from '../actions';
 import { setGeneralLoaderVisibility } from '../general/actions';
 import { getUsers } from '../selectors/user';
-import { ETeamActions, loadMicrosoftInvitesSuccess, setRecentInvitedUsers, TInviteUsers } from './actions';
-import { IUserInviteMicrosoft } from '../../types/team';
+import {
+  changeTeamActiveTab,
+  ETeamActions,
+  loadMicrosoftInvitesSuccess,
+  setRecentInvitedUsers,
+  TInviteUsers,
+  TSetTeamActivePage,
+} from './actions';
+import { ETeamPages, IUserInviteMicrosoft } from '../../types/team';
 import { getInvites } from '../../api/team/getInvites';
+import { ERoutes } from '../../constants/routes';
 
 function* inviteUsersSaga({
   payload: { invites, withGeneralLoader, withSuccessNotification, onStartUploading, onEndUploading, onError },
@@ -66,6 +74,22 @@ function* loadMicrosoftInvitesSaga() {
   }
 }
 
+function* setTeamActiveTab({ payload: processesType }: TSetTeamActivePage) {
+  yield put(changeTeamActiveTab(processesType));
+
+  if (processesType === ETeamPages.Groups) {
+    history.push(ERoutes.Groups);
+  }
+
+  if (processesType === ETeamPages.Users) {
+    history.push(ERoutes.Team);
+  }
+}
+
+export function* watchSetProcessTypeSorting() {
+  yield takeLatest(ETeamActions.SetTeamActivePage, setTeamActiveTab);
+}
+
 export function* watchInviteUsers() {
   yield takeEvery(ETeamActions.InviteUsers, inviteUsersSaga);
 }
@@ -75,5 +99,5 @@ export function* watchLoadMicrosoftInvites() {
 }
 
 export function* rootSaga() {
-  yield all([fork(watchInviteUsers), fork(watchLoadMicrosoftInvites)]);
+  yield all([fork(watchInviteUsers), fork(watchLoadMicrosoftInvites), fork(watchSetProcessTypeSorting)]);
 }

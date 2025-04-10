@@ -25,7 +25,7 @@ export function editWorkflow({ name, kickoff, workflowId, isUrgent, dueDateTsp }
     url,
     {
       method: 'PATCH',
-      body: mapRequestBody(newProcess, 'default', {
+      data: mapRequestBody(newProcess, 'default', {
         ignorePropertyMapToSnakeCase: ['kickoff'],
       }),
     },

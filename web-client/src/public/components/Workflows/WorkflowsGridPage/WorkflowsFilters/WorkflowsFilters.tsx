@@ -1,10 +1,10 @@
 import * as React from 'react';
 import { useIntl } from 'react-intl';
 
-import { Filter, Button, Avatar } from '../../../UI';
+import { Filter, Button } from '../../../UI';
 import { EXTERNAL_USER, getUserFullName } from '../../../../utils/users';
 import { EWorkflowsStatus } from '../../../../types/workflow';
-import { TUserListItem } from '../../../../types/user';
+import { TUserListItem, TUserType } from '../../../../types/user';
 import { StepName } from '../../../StepName';
 import { isArrayWithItems } from '../../../../utils/helpers';
 import {
@@ -14,10 +14,14 @@ import {
   getVerboseSortings,
 } from '../../../../utils/workflows/filters';
 import { IWorkflowsFiltersProps } from '../../types';
+import { AvatarWithGroup } from '../../../UI/AvatarWithGroup';
+import { ETemplateOwnerType } from '../../../../types/template';
 
 import styles from '../WorkflowsGridPage.css';
 
-type TOptionUser = Pick<TUserListItem, 'id' | 'firstName' | 'lastName' | 'status' | 'email' | 'photo'>;
+type TOptionUser = Pick<TUserListItem, 'id' | 'firstName' | 'lastName' | 'status' | 'email' | 'photo'> & {
+  type?: TUserType;
+};
 
 type TOptionTemplate = {
   id: number;
@@ -43,9 +47,11 @@ export function WorkflowsFilters({
   statusFilter,
   templatesIdsFilter,
   performersIdsFilter,
+  performersGroupIdsFilter,
   workflowStartersIdsFilter,
   filterTemplates,
   users,
+  groups,
   areUsersLoading = false,
   areFilterTemplatesLoading = false,
   stepsIdsFilter,
@@ -56,6 +62,7 @@ export function WorkflowsFilters({
   loadTemplateSteps,
   setTemplatesFilter,
   setPerformersFilter,
+  setPerformersGroupFilter,
   changeWorkflowsSorting,
   setStatusFilter,
   setWorkflowStartersFilter,
@@ -95,21 +102,31 @@ export function WorkflowsFilters({
     () =>
       users.map((user) => ({
         ...user,
-        count: performersCounters.find(({ userId }) => userId === user.id)?.workflowsCount || 0,
+        count: performersCounters.find(({ sourceId }) => sourceId === user.id)?.workflowsCount || 0,
       })),
     [users, performersCounters],
   );
 
+  const performersGroupOptions = React.useMemo(
+    () =>
+      groups.map((user) => ({
+        ...user,
+        type: ETemplateOwnerType.UserGroup,
+        firstName: user.name,
+      })),
+    [groups],
+  ) as unknown as typeof performersOptions;
+
   const workflowStartersOptions = React.useMemo(() => {
     const normalizedUsers = users.map((user) => ({
       ...user,
-      count: workflowStartersCounters.find(({ userId }) => userId === user.id)?.workflowsCount || 0,
+      count: workflowStartersCounters.find(({ sourceId }) => sourceId === user.id)?.workflowsCount || 0,
     }));
 
     return [
       {
         ...EXTERNAL_USER,
-        count: workflowStartersCounters.find(({ userId }) => userId === -1)?.workflowsCount || 0,
+        count: workflowStartersCounters.find(({ sourceId }) => sourceId === -1)?.workflowsCount || 0,
       },
       ...normalizedUsers,
     ];
@@ -200,7 +217,7 @@ export function WorkflowsFilters({
   const renderUserOption = (user: TOptionUser) => {
     return (
       <div className={styles['user-filter-option']}>
-        <Avatar size="sm" user={user} containerClassName={styles['user-filter-option_avatar']} />
+        <AvatarWithGroup size="sm" user={user} containerClassName={styles['user-filter-option_avatar']} />
         <span className={styles['user-filter-option_title']}>{getUserFullName(user)}</span>
       </div>
     );
@@ -244,14 +261,24 @@ export function WorkflowsFilters({
         <Filter
           key="performers-filter"
           title={formatMessage({ id: 'workflows.filter-performer' })}
-          options={performersOptions}
+          options={[...performersGroupOptions, ...performersOptions]}
           optionsTitle={formatMessage({ id: 'workflows.filter-users-options' })}
           isLoading={areUsersLoading}
           optionIdKey="id"
           optionLabelKey="firstName"
-          changeFilter={(performers: number[]) => onChangeSetting(setPerformersFilter)(performers)}
+          changeFilter={(_, seletedPerformers) => {
+            const performers = seletedPerformers
+              .filter((item: any) => item.type === ETemplateOwnerType.User)
+              .map((lItem: any) => lItem.id);
+            const selectedGroups = seletedPerformers
+              .filter((item: any) => item.type === ETemplateOwnerType.UserGroup)
+              .map((lItem: any) => lItem.id);
+
+            onChangeSetting(setPerformersFilter)(performers);
+            onChangeSetting(setPerformersGroupFilter)(selectedGroups);
+          }}
           isMultiple
-          selectedOptions={performersIdsFilter}
+          selectedOptions={[...performersIdsFilter, ...performersGroupIdsFilter]}
           containerClassName={styles['filter']}
           renderOptionTitle={renderUserOption}
         />

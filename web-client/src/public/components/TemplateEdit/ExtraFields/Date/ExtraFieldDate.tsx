@@ -2,18 +2,20 @@
 /* prettier-ignore */
 import * as React from 'react';
 import classnames from 'classnames';
+
 import { getFieldValidator } from '../utils/getFieldValidator';
 import { getInputNameBackground } from '../utils/getInputNameBackground';
 import { EExtraFieldMode } from '../../../../types/template';
 import { DateIcon } from '../../../icons';
 import { FieldWithName } from '../utils/FieldWithName';
-
 import { IWorkflowExtraFieldProps } from '..';
+import { DatePickerCustom } from '../../../UI/form/DatePicker';
+import { toDate, toTspDate } from '../../../../utils/dateTime';
 
 import fieldStyles from './ExtraFieldDate.css';
-import { DatePicker } from '../../../UI/form/DatePicker/container';
 import styles from '../../KickoffRedux/KickoffRedux.css';
-import { toDate, toTspDate } from '../../../../utils/dateTime';
+
+
 
 export function ExtraFieldDate({
   field,
@@ -66,7 +68,7 @@ export function ExtraFieldDate({
           {isRequired && <span className={styles['kick-off-required-sign']} />}
         </div>
         <div className={fieldStyles['date-input-wrapper']}>
-          <DatePicker
+          <DatePickerCustom
             onChange={handleChangeDate}
             placeholderText={descriptionPlaceholder}
             selected={selectedDate}

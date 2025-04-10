@@ -4,19 +4,25 @@ from django.utils import timezone
 from pneumatic_backend.processes.tests.fixtures import (
     create_test_user,
     create_test_workflow,
+    create_nonlinear_workflow,
     create_test_template,
+    create_test_group
 )
 from pneumatic_backend.utils.validation import ErrorCode
 from pneumatic_backend.processes.messages import workflow as messages
 from pneumatic_backend.authentication.enums import AuthTokenType
 
 from pneumatic_backend.processes.enums import (
+    DirectlyStatus,
+    PerformerType,
     WorkflowStatus,
     FieldType,
+    TaskStatus,
 )
 from pneumatic_backend.processes.models import (
     FileAttachment,
     TaskField,
+    TaskPerformer
 )
 from pneumatic_backend.processes.services.workflow_action import (
     WorkflowActionService,
@@ -85,10 +91,95 @@ def test_list__default_ordering__ok(mocker, api_client):
     assert task_21_data['workflow_name'] == workflow_2.name
     assert task_21_data['template_id'] == workflow_2.template_id
     assert task_21_data['template_task_api_name'] == task_21.api_name
+    assert task_21_data['status'] == TaskStatus.ACTIVE
 
     task_11_data = response.data[1]
     assert task_11_data['id'] == task_11.id
     assert task_11_data['due_date_tsp'] == task_11.due_date.timestamp()
+    assert task_11_data['status'] == TaskStatus.ACTIVE
+
+
+def test_list__user_in_group__ok(api_client):
+
+    # arrange
+    user = create_test_user()
+    another_user = create_test_user(
+        account=user.account,
+        email='another@pneumatic.app'
+    )
+    group = create_test_group(user=user, users=[another_user, ])
+    api_client.token_authenticate(user=another_user)
+    workflow_1 = create_test_workflow(user, tasks_count=1)
+    task_11 = workflow_1.current_task_instance
+    TaskPerformer.objects.filter(
+        task=task_11
+    ).update(directly_status=DirectlyStatus.DELETED)
+    TaskPerformer.objects.create(
+        task_id=task_11.id,
+        type=PerformerType.GROUP,
+        group_id=group.id,
+        directly_status=DirectlyStatus.CREATED
+    )
+    workflow_2 = create_test_workflow(user, tasks_count=1, is_urgent=True)
+    task_21 = workflow_2.tasks.get(number=1)
+    TaskPerformer.objects.create(
+        task_id=task_21.id,
+        type=PerformerType.GROUP,
+        group_id=group.id,
+        directly_status=DirectlyStatus.CREATED
+    )
+    create_test_workflow(user, tasks_count=1)
+
+    # act
+    response = api_client.get('/v3/tasks')
+
+    # assert
+    assert response.status_code == 200
+    assert len(response.data) == 2
+    assert response.data[0]['id'] == task_21.id
+    assert response.data[1]['id'] == task_11.id
+
+
+def test_list__task_performer_group_empty__ok(api_client):
+
+    # arrange
+    user = create_test_user()
+    another_user = create_test_user(
+        account=user.account,
+        email='another@pneumatic.app'
+    )
+    group = create_test_group(user=user, users=[another_user, ])
+    create_test_group(user=user)
+    api_client.token_authenticate(user=another_user)
+    workflow_1 = create_test_workflow(user, tasks_count=1)
+    task_11 = workflow_1.current_task_instance
+    TaskPerformer.objects.filter(
+        task=task_11
+    ).update(directly_status=DirectlyStatus.DELETED)
+    TaskPerformer.objects.create(
+        task_id=task_11.id,
+        type=PerformerType.GROUP,
+        group_id=group.id,
+        directly_status=DirectlyStatus.CREATED
+    )
+    workflow_2 = create_test_workflow(user, tasks_count=1, is_urgent=True)
+    task_21 = workflow_2.tasks.get(number=1)
+    TaskPerformer.objects.create(
+        task_id=task_21.id,
+        type=PerformerType.GROUP,
+        group_id=group.id,
+        directly_status=DirectlyStatus.CREATED
+    )
+    create_test_workflow(user, tasks_count=1)
+
+    # act
+    response = api_client.get('/v3/tasks')
+
+    # assert
+    assert response.status_code == 200
+    assert len(response.data) == 2
+    assert response.data[0]['id'] == task_21.id
+    assert response.data[1]['id'] == task_11.id
 
 
 def test_list__urgent_tasks_first__ok(api_client):
@@ -459,7 +550,7 @@ def test_list__search__completed_prev_task_output_attachment__not_found(
         workflow=workflow,
         output=field
     )
-    task_1.is_completed = True
+    task_1.status = TaskStatus.COMPLETED
     task_1.date_completed = timezone.now()
     task_1.save()
 
@@ -1055,9 +1146,11 @@ def test_list__ordering_by_completed__ok(mocker, api_client):
     assert response.data[0]['date_completed_tsp'] == (
         task_11.date_completed.timestamp()
     )
+    assert response.data[0]['status'] == TaskStatus.COMPLETED
     assert response.data[1]['id'] == task_21.id
     assert response.data[1]['date_started'] is not None
     assert response.data[1]['date_completed'] is not None
+    assert response.data[1]['status'] == TaskStatus.COMPLETED
 
 
 def test_list__ordering_by_reversed_completed__ok(mocker, api_client):
@@ -1541,8 +1634,8 @@ def test_list__filter_is_completed_false_terminated_wf__not_found(
         data={'task_id': workflow.current_task_instance.id}
     )
     workflow.refresh_from_db()
-    service = WorkflowActionService(user=user)
-    service.terminate_workflow(workflow)
+    service = WorkflowActionService(workflow=workflow, user=user)
+    service.terminate_workflow()
     api_client.token_authenticate(user)
 
     # act
@@ -1575,11 +1668,8 @@ def test_list__filter_is_completed_false_ended_wf__not_found(
         data={'task_id': workflow.current_task_instance.id}
     )
     workflow.refresh_from_db()
-    service = WorkflowActionService(user=user)
-    service.end_process(
-        workflow=workflow,
-        by_condition=False,
-    )
+    service = WorkflowActionService(workflow=workflow, user=user)
+    service.end_process(by_condition=False)
 
     # act
     response = api_client.get('/v3/tasks?is_completed=false')
@@ -1781,8 +1871,8 @@ def test_list__filter_is_completed_true_terminated_wf__not_found(
         data={'task_id': workflow.current_task_instance.id}
     )
     workflow.refresh_from_db()
-    service = WorkflowActionService(user=user)
-    service.terminate_workflow(workflow)
+    service = WorkflowActionService(workflow=workflow, user=user)
+    service.terminate_workflow()
 
     # act
     response = api_client.get('/v3/tasks?is_completed=true')
@@ -1814,11 +1904,8 @@ def test_list__filter_is_completed_true_ended_wf__ok(
         data={'task_id': workflow.current_task_instance.id}
     )
     workflow.refresh_from_db()
-    service = WorkflowActionService(user=user)
-    service.end_process(
-        workflow=workflow,
-        by_condition=False,
-    )
+    service = WorkflowActionService(workflow=workflow, user=user)
+    service.end_process(by_condition=False)
     task = workflow.tasks.get(number=1)
 
     # act
@@ -1963,3 +2050,23 @@ def test_list__exclude_delayed_tasks__ok(api_client):
     # assert
     assert response.status_code == 200
     assert len(response.data) == 0
+
+
+# New style tests
+@pytest.mark.skip
+def test_list__multiple_workflow_tasks__show_all(api_client):
+
+    # arrange
+    user = create_test_user()
+    workflow = create_nonlinear_workflow(user, tasks_count=2)
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.get('/v3/tasks')
+
+    # assert
+    assert response.status_code == 200
+    assert len(response.data) == 2
+
+    assert response.data[0]['id'] == workflow.tasks.get(number=2).id
+    assert response.data[1]['id'] == workflow.tasks.get(number=1).id

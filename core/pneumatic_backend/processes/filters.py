@@ -145,7 +145,7 @@ class WorkflowEventFilter(FilterSet):
         )
     )
     include_comments = BooleanFilter(method='filter_comments')
-    only_attachments = BooleanFilter(method='filter_timeline')
+    only_attachments = BooleanFilter(method='filter_only_attachments')
 
     def filter_comments(self, queryset, name, value):
         if not value:
@@ -153,7 +153,7 @@ class WorkflowEventFilter(FilterSet):
 
         return queryset
 
-    def filter_timeline(self, queryset, name, value):
+    def filter_only_attachments(self, queryset, name, value):
         if value:
             return queryset.only_with_attachments().distinct()
         return queryset

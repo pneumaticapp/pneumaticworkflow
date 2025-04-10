@@ -16,7 +16,7 @@ export function setOAuthRegistrationCompleted(id: string, type: EOAuthType) {
     ['/api/', OAUTH_URL_MAP[type], id, '/'].reduce(mergePaths),
     {
       method: 'PATCH',
-      body: JSON.stringify({is_completed: true}),
+      data: JSON.stringify({is_completed: true}),
       headers: {
         'Content-Type': 'application/json',
       },

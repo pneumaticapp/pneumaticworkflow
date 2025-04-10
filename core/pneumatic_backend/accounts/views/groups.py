@@ -1,3 +1,5 @@
+from django.db.models import Prefetch
+from django.contrib.auth import get_user_model
 from rest_framework.viewsets import GenericViewSet
 from pneumatic_backend.accounts.serializers.group import (
     GroupSerializer,
@@ -9,6 +11,7 @@ from pneumatic_backend.accounts.permissions import (
     ExpiredSubscriptionPermission,
 )
 from pneumatic_backend.generics.permissions import (
+    IsAuthenticated,
     UserIsAuthenticated,
 )
 from pneumatic_backend.accounts.models import UserGroup
@@ -25,6 +28,8 @@ from pneumatic_backend.accounts.filters import (
     GroupsListFilterSet,
 )
 from pneumatic_backend.generics.filters import PneumaticFilterBackend
+
+UserModel = get_user_model()
 
 
 class GroupViewSet(
@@ -43,7 +48,12 @@ class GroupViewSet(
         return context
 
     def get_permissions(self):
-        if self.action in ('list', 'retrieve'):
+        if self.action == 'list':
+            return (
+                IsAuthenticated(),
+                BillingPlanPermission(),
+            )
+        elif self.action == 'retrieve':
             return (
                 UserIsAuthenticated(),
                 BillingPlanPermission(),
@@ -59,7 +69,15 @@ class GroupViewSet(
 
     def get_queryset(self):
         account_id = self.request.user.account_id
-        queryset = UserGroup.objects.on_account(account_id)
+        queryset = UserGroup.objects.on_account(account_id).prefetch_related(
+            Prefetch(
+                'users',
+                queryset=(
+                    UserModel.objects
+                    .on_account(account_id)
+                    .order_by('last_name'))
+            )
+        )
         return queryset
 
     def list(self, request, *args, **kwargs):

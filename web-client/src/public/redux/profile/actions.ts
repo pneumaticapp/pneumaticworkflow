@@ -1,5 +1,3 @@
-/* eslint-disable */
-/* prettier-ignore */
 import { ITypedReduxAction } from '../../types/redux';
 import { ESettingsTabs } from '../../types/profile';
 import { actionGenerator } from '../../utils/redux';

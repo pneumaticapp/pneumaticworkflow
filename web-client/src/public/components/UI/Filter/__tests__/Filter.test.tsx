@@ -3,7 +3,8 @@
 import * as React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 
-import { Filter, TOptionBase } from '../Filter';
+import { Filter } from '../Filter';
+import { TOptionBase } from '../types';
 
 const options = [{ id: 0, name: 'Jane' }, { id: 1, name: 'Mary' }, { id: 2, name: 'Alex' }];
 const changeFilter = jest.fn();

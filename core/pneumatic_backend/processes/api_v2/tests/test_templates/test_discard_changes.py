@@ -6,6 +6,7 @@ from pneumatic_backend.processes.tests.fixtures import (
 from pneumatic_backend.processes.enums import (
     PerformerType,
     FieldType,
+    OwnerType
 )
 from pneumatic_backend.processes.models import (
     Template
@@ -24,7 +25,12 @@ def test_discard_changes__active_template__not_change(api_client):
     request_data = {
         'name': 'Template',
         'description': 'Desc',
-        'template_owners': [user.id],
+        'owners': [
+            {
+                'type': OwnerType.USER,
+                'source_id': user.id
+            },
+        ],
         'is_active': True,
         'kickoff': {
             'description': 'Desc',
@@ -88,7 +94,12 @@ def test_discard_changes__draft_template__discard_changes(api_client):
     request_data = {
         'name': 'Template',
         'description': 'Desc',
-        'template_owners': [user.id],
+        'owners': [
+            {
+                'type': OwnerType.USER,
+                'source_id': user.id
+            },
+        ],
         'is_active': True,
         'kickoff': {
             'description': 'Desc',

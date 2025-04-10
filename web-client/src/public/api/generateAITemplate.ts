@@ -15,7 +15,7 @@ export function generateAITemplate(description: string, signal?: AbortSignal) {
     urls.aiTemplate,
     {
       method: 'POST',
-      body: mapRequestBody({ description }),
+      data: mapRequestBody({ description }),
       signal,
     },
     {

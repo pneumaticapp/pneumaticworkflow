@@ -11,7 +11,7 @@ class WorkflowsMixin:
               AND pt.number = pw.current_task
         WHERE pw.is_deleted IS FALSE AND
             pt.is_deleted IS FALSE AND
-            pt.is_skipped IS FALSE AND
+            pt.status != 'skipped' AND
             (
               pt.date_completed IS NULL OR
               pt.date_completed BETWEEN %(date_from_tsp)s AND %(date_to_tsp)s
@@ -75,7 +75,7 @@ class WorkflowsNowMixin:
             pw.date_completed IS NULL AND
             pw.status = %(status_running)s AND
             pt.is_deleted IS FALSE AND
-            pt.is_skipped IS FALSE AND
+            pt.status != 'skipped' AND
             (
                 (
                     pt.due_date IS NOT NULL AND
@@ -102,7 +102,7 @@ class TasksMixin:
     def _tasks_in_progress_clause(self):
         return """
         WHERE
-          pt.is_skipped IS FALSE AND
+          pt.status != 'skipped' AND
           pt.date_started <= %(date_to_tsp)s AND
           (
             pt.date_completed IS NULL OR
@@ -117,7 +117,7 @@ class TasksMixin:
     def _overdue_tasks_clause(self):
         return """
         WHERE pt.due_date IS NOT NULL AND
-          pt.is_skipped IS FALSE AND
+          pt.status != 'skipped' AND
           pt.date_started < %(date_to_tsp)s AND
           (
             pt.date_completed IS NULL OR
@@ -138,7 +138,7 @@ class TasksMixin:
         return """
         WHERE pt.date_first_started <= %(date_to_tsp)s AND
           pt.date_first_started >= %(date_from_tsp)s AND
-          pt.is_skipped IS FALSE
+          pt.status != 'skipped'
         """
 
     def _completed_tasks_clause(self):
@@ -152,7 +152,7 @@ class TasksNowMixin:
     def _tasks_in_progress_now_clause(self):
         return """
         WHERE
-          pt.is_skipped IS FALSE AND
+          pt.status != 'skipped' AND
           pt.date_completed IS NULL AND
           pt.date_started IS NOT NULL AND
           pw.status = %(status_running)s AND
@@ -162,7 +162,7 @@ class TasksNowMixin:
     def _overdue_tasks_now_clause(self):
         return """
         WHERE pt.due_date IS NOT NULL AND
-          pt.is_skipped IS FALSE AND
+          pt.status != 'skipped' AND
           pt.date_started IS NOT NULL AND
           pt.date_completed IS NULL AND
           pw.date_completed IS NULL AND
@@ -176,7 +176,7 @@ class WorkflowTasksMixin(TasksMixin):
     def _overdue_tasks_clause(self):
         return """
         WHERE
-          pt.is_skipped IS FALSE
+          pt.status != 'skipped'
           AND pt.is_deleted IS FALSE
           AND pt.date_started IS NOT NULL
           AND (
@@ -215,7 +215,7 @@ class WorkflowTasksNowMixin(TasksNowMixin):
           pw.date_completed IS NULL AND
           pw.status = %(status_running)s AND
           pt.is_deleted IS FALSE AND
-          pt.is_skipped IS FALSE AND
+          pt.status != 'skipped' AND
           (
               (
                 pt.due_date IS NOT NULL AND

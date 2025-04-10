@@ -1,7 +1,5 @@
-/* eslint-disable */
-/* prettier-ignore */
-import * as React from 'react';
-import * as classnames from 'classnames';
+import React from 'react';
+import classnames from 'classnames';
 
 import styles from './Tabs.css';
 
@@ -34,7 +32,7 @@ export function Tabs<TOption extends TOptionBase>({
 
   return (
     <div className={classnames(styles['container'], containerClassName)}>
-      {values.map(value => (
+      {values.map((value) => (
         <button
           key={value.id}
           type="button"

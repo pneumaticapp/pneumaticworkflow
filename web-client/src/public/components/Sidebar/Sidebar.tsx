@@ -42,7 +42,6 @@ export interface ISidebarProps extends IMenu {
 export interface ISidebarDispatchProps {
   setContainerClassnames: typeof setContainerClassnames;
   openSelectTemplateModal: typeof openSelectTemplateModal;
-  showPlanExpiredMessage(): void;
 }
 
 export type TSidebarProps = ISidebarProps & ISidebarDispatchProps & RouteComponentProps;
@@ -59,7 +58,6 @@ export function Sidebar({
   menuHiddenBreakpoint,
   setContainerClassnames,
   openSelectTemplateModal,
-  showPlanExpiredMessage,
 }: TSidebarProps) {
   let [active, setActive] = useState<string | null>(null);
   let [isSubMenuActiveState, setIsSubMenuActiveState] = useState(Array(menuItems.length).fill(false));
@@ -138,11 +136,7 @@ export function Sidebar({
   };
 
   const handleRunWorkflow = () => {
-    if (pendingActions.includes(EPlanActions.ChoosePlan)) {
-      showPlanExpiredMessage();
-
-      return;
-    }
+    if (pendingActions.includes(EPlanActions.ChoosePlan)) return;
     openSelectTemplateModal();
   };
 

@@ -7,7 +7,7 @@ export type TSaveAccountGenericTemplatesResponse = Pick<IGenericTemplatesStore, 
 export function saveAccountGenericTemplates(appIds: number[]) {
   return commonRequest<TSaveAccountGenericTemplatesResponse>('accountGenericTemplates', {
     method: 'POST',
-    body: mapRequestBody({ appIds }),
+    data: mapRequestBody({ appIds }),
     headers: {
       'Content-Type': 'application/json',
     },

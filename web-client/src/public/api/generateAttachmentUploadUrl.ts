@@ -36,7 +36,7 @@ export function generateAttachmentUploadUrl(payload: IGetGoogleCloudSignedUrlReq
     url,
     {
       method: 'POST',
-      body: mapRequestBody(payload),
+      data: mapRequestBody(payload),
     },
     {
       shouldThrow: true,

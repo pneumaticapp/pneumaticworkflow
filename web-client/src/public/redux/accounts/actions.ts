@@ -1,5 +1,3 @@
-/* eslint-disable */
-/* prettier-ignore */
 import { EUserListSorting, TUserListItem } from '../../types/user';
 import { actionGenerator } from '../../utils/redux';
 import { EDeleteUserModalState, IAccountPlan, ITypedReduxAction } from '../../types/redux';
@@ -29,7 +27,6 @@ export const enum EAccountsActions {
   FetchPlan = 'FETCH_PLAN',
   StartTrialSubscription = 'START_TRIAL_SUBSCRIPTION',
   StartFreeSubscription = 'START_FREE_SUBSCRIPTION',
-  ShowPlanExpiredMessage = 'SHOW_PLAN_EXPIRED_MESSAGE',
 }
 
 export type TSetIsLoading = ITypedReduxAction<EAccountsActions.SetIsLoading, void>;
@@ -68,7 +65,8 @@ type TActiveUsersCountFetchFinishedPayload = {
   activeUsers: number;
   tenantsActiveUsers: number;
 }
-export type TActiveUsersCountFetchFinished = ITypedReduxAction<EAccountsActions.ActiveUsersCountFetchFinished, TActiveUsersCountFetchFinishedPayload>;
+export type TActiveUsersCountFetchFinished =
+  ITypedReduxAction<EAccountsActions.ActiveUsersCountFetchFinished, TActiveUsersCountFetchFinishedPayload>;
 export const activeUsersCountFetchFinished: (payload: TActiveUsersCountFetchFinishedPayload) => TActiveUsersCountFetchFinished =
   actionGenerator<EAccountsActions.ActiveUsersCountFetchFinished, TActiveUsersCountFetchFinishedPayload>(
     EAccountsActions.ActiveUsersCountFetchFinished,
@@ -166,10 +164,6 @@ export type TStartFreeSubscription = ITypedReduxAction<EAccountsActions.StartFre
 export const startFreeSubscriptionAction: (payload?: void) => TStartFreeSubscription =
   actionGenerator<EAccountsActions.StartFreeSubscription, void>(EAccountsActions.StartFreeSubscription);
 
-export type TShowPlanExpiredMessage = ITypedReduxAction<EAccountsActions.ShowPlanExpiredMessage, void>;
-export const showPlanExpiredMessage: (payload?: void) => TShowPlanExpiredMessage =
-  actionGenerator<EAccountsActions.ShowPlanExpiredMessage, void>(EAccountsActions.ShowPlanExpiredMessage);
-
 export type TAccountsActions =
   TUsersFetchStarted
   | TUsersFetchFailed
@@ -193,5 +187,4 @@ export type TAccountsActions =
   | TSetIsLoading
   | TFetchPlan
   | TStartTrialSubscription
-  | TStartFreeSubscription
-  | TShowPlanExpiredMessage;
+  | TStartFreeSubscription;

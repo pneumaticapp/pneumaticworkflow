@@ -18,7 +18,7 @@ export function deleteReactionComment({ id, value }: IDeleteReaction) {
     url,
     {
       method: 'POST',
-      body: mapRequestBody({
+      data: mapRequestBody({
         value,
       }),
     },

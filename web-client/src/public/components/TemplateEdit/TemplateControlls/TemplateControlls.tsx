@@ -89,7 +89,7 @@ export function TemplateControlls({
   const {
     id: templateId,
     name: templateName,
-    templateOwners,
+    owners,
     isActive: isTemplateActive,
     finalizable: isTemplateFinalizable,
   } = template;
@@ -265,9 +265,9 @@ export function TemplateControlls({
       <div className={styles['settings-block']}>
         <ShowMore label={formatMessage({ id: 'template.owners' })} isInitiallyVisible={isCreateTemplate()}>
           <TemplateOwners
-            templateOwners={templateOwners}
+            templateOwners={owners}
             onChangeTemplateOwners={(newTemplateOwners) =>
-              patchTemplate({ changedFields: { templateOwners: newTemplateOwners } })
+              patchTemplate({ changedFields: { owners: newTemplateOwners } })
             }
           />
         </ShowMore>

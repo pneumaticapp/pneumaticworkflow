@@ -1,5 +1,3 @@
-/* eslint-disable */
-/* prettier-ignore */
 import * as React from 'react';
 import { shallow } from 'enzyme';
 

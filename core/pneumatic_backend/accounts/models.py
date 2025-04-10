@@ -129,6 +129,7 @@ class Account(SoftDeleteModel):
         )
     )
     log_api_requests = models.BooleanField(default=False)
+    bucket_name = models.CharField(max_length=255, blank=True, null=True)
 
     objects = BaseSoftDeleteManager.from_queryset(AccountQuerySet)()
 

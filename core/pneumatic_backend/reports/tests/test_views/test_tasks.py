@@ -9,15 +9,14 @@ from pneumatic_backend.processes.models import (
 from pneumatic_backend.processes.tests.fixtures import (
     create_test_template,
     create_test_workflow,
-)
-from pneumatic_backend.reports.tests.fixtures import (
     create_test_user,
     create_test_account,
 )
 from pneumatic_backend.processes.enums import (
     WorkflowStatus,
     PerformerType,
-    PredicateOperator
+    PredicateOperator,
+    OwnerType
 )
 from pneumatic_backend.processes.enums import (
     FieldType,
@@ -1176,7 +1175,12 @@ class TestDashboardMyTasksBreakdownBySteps:
             data={
                 'name': 'Template',
                 'is_active': True,
-                'template_owners': [user.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                ],
                 'kickoff': {
                     'fields': [
                         {

@@ -269,10 +269,11 @@ def _send_resumed_workflow_notification(
 ):
     users = (
         TaskPerformer.objects
-        .by_task(task_id).exclude_directly_deleted(
-        ).not_completed().users().order_by(
-            'id'
-        ).values_list('user_id', 'user__email')
+        .by_task(task_id)
+        .exclude_directly_deleted()
+        .not_completed()
+        .order_by('id')
+        .get_user_emails_and_ids_set()
     )
     for (user_id, user_email) in users:
         notification = Notification.objects.create(
@@ -422,12 +423,11 @@ def _send_due_date_changed(
     users = (
         TaskPerformer.objects
         .by_task(task_id)
-        .users()
-        .exclude(user_id=author_id)
         .exclude_directly_deleted()
         .not_completed()
-        .values_list('user_id', 'user__email')
+        .get_user_emails_and_ids_set()
     )
+    users = {user for user in users if user[0] != author_id}
     for (user_id, user_email) in users:
         notification = Notification.objects.create(
             task_id=task_id,
@@ -467,13 +467,14 @@ def _send_urgent_notification(
     method_name: NotificationMethod,
 ):
     users = (
-        TaskPerformer.objects.exclude_directly_deleted()
+        TaskPerformer.objects
         .by_task(task_id)
-        .not_completed().users()
-        .exclude(user_id=author_id)
+        .exclude_directly_deleted()
+        .not_completed()
         .order_by('id')
-        .values_list('user_id', 'user__email')
+        .get_user_emails_and_ids_set()
     )
+    users = {user for user in users if user[0] != author_id}
     for (user_id, user_email) in users:
         notification = Notification.objects.create(
             task_id=task_id,

@@ -8,7 +8,6 @@ import { store, persistor } from './redux/store';
 import { initSentry } from './utils/initSentry';
 import { AppContainer } from './components/App';
 import { ErrorBoundary } from 'react-error-boundary';
-import { hot } from 'react-hot-loader/root';
 
 import { ErrorFallback } from './components/ErrorFallback';
 
@@ -26,7 +25,7 @@ smoothscroll.polyfill();
 initSentry(getBrowserConfig);
 addEventListener('beforeunload', resetSuperuserToken);
 
-hot(ReactDOM.render(
+ReactDOM.render(
   <Provider store={store}>
     <React.Suspense fallback={<div className="loading" />}>
       <Router history={history}>
@@ -39,5 +38,4 @@ hot(ReactDOM.render(
     </React.Suspense>
   </Provider>,
   document.getElementById('pneumatic-frontend'),
-))
-;
+);

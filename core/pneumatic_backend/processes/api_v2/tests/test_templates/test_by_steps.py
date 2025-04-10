@@ -12,6 +12,9 @@ from pneumatic_backend.processes.models import (
 from pneumatic_backend.processes.api_v2.services.exceptions import (
     TemplateServiceException
 )
+from pneumatic_backend.processes.enums import (
+    OwnerType
+)
 from pneumatic_backend.processes.api_v2.services.templates.template import (
     TemplateService
 )
@@ -61,7 +64,9 @@ def test_create__account_owner__ok(mocker, api_client):
     assert data.get('id')
     assert data['name'] == template.name
     assert data['description'] == template.description
-    assert data['template_owners'] == [user.id]
+    assert data['owners'][0].get('api_name')
+    assert data['owners'][0]['source_id'] == str(user.id)
+    assert data['owners'][0]['type'] == OwnerType.USER
     assert data['is_active'] == template.is_active
     assert len(data['tasks']) == 1
 

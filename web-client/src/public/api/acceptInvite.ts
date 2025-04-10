@@ -14,7 +14,7 @@ export function acceptInvite(id: string, body: TUserInvited) {
     urls.acceptInvite.replace(':id', id),
     {
       method: 'POST',
-      body: mapRequestBody(body as unknown as {[key: string]: string}),
+      data: mapRequestBody(body as unknown as {[key: string]: string}),
     },
     {
       type: 'local',

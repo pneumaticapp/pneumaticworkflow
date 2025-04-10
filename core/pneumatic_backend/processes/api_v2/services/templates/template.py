@@ -2,6 +2,7 @@ from typing import List
 from copy import deepcopy
 from django.contrib.auth import get_user_model
 
+from pneumatic_backend.accounts.models import UserGroup
 from pneumatic_backend.processes.models import (
     TaskTemplate,
     FieldTemplate,
@@ -15,6 +16,7 @@ from pneumatic_backend.processes.utils.common import (
 from pneumatic_backend.processes.enums import (
     PerformerType,
     sys_template_type_map,
+    OwnerType
 )
 
 from pneumatic_backend.processes.models import (
@@ -27,7 +29,6 @@ from pneumatic_backend.utils.logging import (
     SentryLogLevel
 )
 from pneumatic_backend.analytics.services import AnalyticService
-
 
 UserModel = get_user_model()
 
@@ -60,7 +61,12 @@ class TemplateService(BaseModelService):
             'is_active': initial_data.get('is_active', False),
             'finalizable': initial_data.get('finalizable', True),
             'is_public': initial_data.get('is_public', False),
-            'template_owners': [self.user.id],
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': f'{self.user.id}'
+                }
+            ],
             'kickoff': {
                 'description': initial_kickoff_data.get('description', ''),
                 'fields': initial_kickoff_data.get('fields', [])
@@ -183,11 +189,23 @@ class TemplateService(BaseModelService):
             text=template_data.get('name', ''),
             fields_values=self.user.get_dynamic_mapping()
         )
-        template_data['template_owners'] = list(
-            UserModel.objects.on_account(
-                self.account.id
-            ).order_by('id').values_list('id', flat=True)
-        )
+        user_owners = [
+            {
+                'type': OwnerType.USER,
+                'source_id': user.id
+            }
+            for user in
+            UserModel.objects.on_account(self.account.id).order_by('id')
+        ]
+        group_owners = [
+            {
+                'type': OwnerType.GROUP,
+                'source_id': group.id
+            }
+            for group in
+            UserGroup.objects.filter(account_id=self.account.id).order_by('id')
+        ]
+        template_data['owners'] = user_owners + group_owners
         template_data['is_active'] = True
 
         for task_data in template_data['tasks']:

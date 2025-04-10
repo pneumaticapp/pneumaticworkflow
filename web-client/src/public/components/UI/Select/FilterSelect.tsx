@@ -1,7 +1,7 @@
 /* eslint-disable */
 /* prettier-ignore */
 import * as React from 'react';
-import * as classnames from 'classnames';
+import classnames from 'classnames';
 import * as PerfectScrollbar from 'react-perfect-scrollbar';
 import { DropdownItem, DropdownMenu, DropdownToggle, Dropdown } from 'reactstrap';
 
@@ -55,7 +55,7 @@ interface IFilterSelectMultiOptionsProps {
   isMultiple: true;
   selectedOption?: never;
   selectedOptions: TOptionId[];
-  onChange(optionIds: TOptionId[]): void;
+  onChange(optionIds: TOptionId[], option: any): void;
 }
 
 interface IFilterSelectSingleOptionsProps {
@@ -122,7 +122,9 @@ export function FilterSelect<
       ? [...props.selectedOptions, optionId]
       : props.selectedOptions.filter((selectedOption) => selectedOption !== optionId);
 
-    props.onChange(newSelectedOptions);
+    const mapSelectedOption = options.filter((item) => newSelectedOptions.includes(item[optionIdKey]))
+
+    props.onChange(newSelectedOptions, mapSelectedOption);
   };
 
   const renderSearchInput = () => {
@@ -203,7 +205,7 @@ export function FilterSelect<
       const handleSelectAll = () => {
         if (!isSelectAll) {
           setIsSelectAll(true);
-          props.onChange(options.map((option) => option[optionIdKey]));
+          props.onChange(options.map((option) => option[optionIdKey]), options);
         } else {
           setIsSelectAll(false);
           resetFilter();

@@ -8,7 +8,7 @@ from pneumatic_backend.analytics.mixins import BaseIdentifyMixin
 from pneumatic_backend.processes.services.remove_user_from_draft import (
     remove_user_from_draft,
 )
-from pneumatic_backend.accounts.validators import user_is_performer
+from pneumatic_backend.accounts.validators import user_is_last_performer
 from pneumatic_backend.accounts.services.exceptions import (
     UserIsPerformerException,
 )
@@ -198,7 +198,7 @@ class UserService(
 
     @classmethod
     def _validate_deactivate(cls, user):
-        if user_is_performer(user):
+        if user_is_last_performer(user):
             raise UserIsPerformerException()
 
     @classmethod

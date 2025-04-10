@@ -13,9 +13,9 @@ import { truncateString } from '../../utils/truncateString';
 import { ESubscriptionPlan } from '../../types/account';
 
 import { EPaywallReminderType } from './utils/getPaywallType';
+import { isEnvBilling } from '../../constants/enviroment';
 
 import styles from './TopNav.css';
-import { isEnvBilling } from '../../constants/enviroment';
 
 export interface ITopNavProps {
   pendingActions: EPlanActions[];
@@ -32,7 +32,6 @@ export interface ITopNavProps {
 export interface ITopNavDispatchProps {
   logoutUser(): void;
   setNotificationsListIsOpen(isOpen: boolean): void;
-  showPlanExpiredMessage(): void;
   returnFromSupermode(): void;
   redirectToCustomerPortal(): void;
 }
@@ -58,7 +57,6 @@ export function TopNav({
   centerContent,
   logoutUser,
   setNotificationsListIsOpen,
-  showPlanExpiredMessage,
   returnFromSupermode,
   redirectToCustomerPortal,
 }: TTopNavProps) {
@@ -79,9 +77,7 @@ export function TopNav({
       [ESubscriptionPlan.FractionalCOO]: styles['top-bar__supermode__premium'],
     };
 
-    if (status === 'partner') {
-      return null;
-    }
+    if (status === 'partner') return null;
 
     return isTrial ? styles['top-bar__supermode__trial'] : statusClassesMap[billingPlan];
   };
@@ -122,11 +118,7 @@ export function TopNav({
   };
 
   const handleOpenNotifications = () => {
-    if (pendingActions.includes(EPlanActions.ChoosePlan)) {
-      showPlanExpiredMessage();
-
-      return;
-    }
+    if (pendingActions.includes(EPlanActions.ChoosePlan)) return;
 
     setNotificationsListIsOpen(true);
   };

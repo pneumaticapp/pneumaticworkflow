@@ -10,7 +10,8 @@ from pneumatic_backend.processes.models import (
 from pneumatic_backend.processes.messages import template as messages
 from pneumatic_backend.processes.enums import (
     PerformerType,
-    FieldType
+    FieldType,
+    OwnerType
 )
 
 pytestmark = pytest.mark.django_db
@@ -63,7 +64,12 @@ class TestUpdateFieldSelections:
                 'name': template.name,
                 'is_active': True,
                 'kickoff': {},
-                'template_owners': [user.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                ],
                 'tasks': [
                     {
                         'id': task.id,
@@ -151,7 +157,12 @@ class TestUpdateFieldSelections:
                 'id': template.id,
                 'name': template.name,
                 'is_active': True,
-                'template_owners': [user.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                ],
                 'kickoff': {},
                 'tasks': [
                     {
@@ -235,7 +246,12 @@ class TestUpdateFieldSelections:
                 'id': template.id,
                 'name': template.name,
                 'is_active': True,
-                'template_owners': [user.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                ],
                 'kickoff': {},
                 'tasks': [
                     {
@@ -321,7 +337,12 @@ class TestUpdateFieldSelections:
                 'id': template.id,
                 'name': template.name,
                 'is_active': True,
-                'template_owners': [user.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                ],
                 'kickoff': {},
                 'tasks': [
                     {
@@ -412,7 +433,12 @@ class TestUpdateFieldSelections:
                 'name': template.name,
                 'is_active': True,
                 'kickoff': {},
-                'template_owners': [user.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                ],
                 'tasks': [
                     {
                         'id': task.id,

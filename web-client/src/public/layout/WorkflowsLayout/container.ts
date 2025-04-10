@@ -16,6 +16,7 @@ import {
   setWorkflowsFilterWorkflowStarters,
   setWorkflowsView,
   clearWorkflowsFilters,
+  setWorkflowsFilterPerfomersGroup,
 } from '../../redux/actions';
 import { withSyncedQueryString } from '../../HOCs/withSyncedQueryString';
 import { EWorkflowsSorting, EWorkflowsStatus, EWorkflowsView } from '../../types/workflow';
@@ -98,6 +99,20 @@ const SyncedWorkflowsFilters = withSyncedQueryString<TWorkflowsFiltersStoreProps
       }
 
       return setWorkflowsFilterPerfomers([]);
+    },
+    getQueryParamByProp: (value: number[]) => value.join(','),
+  },
+  {
+    propName: 'performersGroupIdsFilter',
+    queryParamName: 'groups',
+    defaultAction: setWorkflowsFilterPerfomersGroup([]),
+    createAction: (queryParam) => {
+      const performers = queryParam.split(',').map(Number);
+      if (performers.every(Number.isInteger)) {
+        return setWorkflowsFilterPerfomersGroup(performers);
+      }
+
+      return setWorkflowsFilterPerfomersGroup([]);
     },
     getQueryParamByProp: (value: number[]) => value.join(','),
   },

@@ -1,13 +1,11 @@
 import pytest
 from pneumatic_backend.accounts.enums import (
-    BillingPlanType,
     SourceType,
 )
-from pneumatic_backend.accounts.tests.fixtures import (
+from pneumatic_backend.processes.tests.fixtures import (
+    create_test_account,
     create_test_user,
     create_invited_user,
-    create_test_owner,
-    create_test_account
 )
 from pneumatic_backend.accounts.services import (
     UserInviteService
@@ -23,8 +21,14 @@ def test_toggle_admin__upgrade_to_admin__ok(
 ):
 
     # arrange
-    account = create_test_account(plan=BillingPlanType.PREMIUM)
-    user = create_test_user(account=account, is_admin=True)
+    account = create_test_account()
+    create_test_user(is_account_owner=True, account=account)
+    user = create_test_user(
+        email='admin@test.test',
+        account=account,
+        is_admin=True,
+        is_account_owner=False
+    )
     invited = create_invited_user(user, is_admin=False)
     api_client.token_authenticate(user)
 
@@ -46,8 +50,14 @@ def test_toggle_admin__downgrade_admin__ok(
 ):
 
     # arrange
-    account = create_test_account(plan=BillingPlanType.PREMIUM)
-    user = create_test_user(is_admin=True, account=account)
+    account = create_test_account()
+    create_test_user(is_account_owner=True, account=account)
+    user = create_test_user(
+        email='admin@test.test',
+        account=account,
+        is_admin=True,
+        is_account_owner=False
+    )
     invited = create_invited_user(user, is_admin=True)
     api_client.token_authenticate(user)
 
@@ -69,8 +79,11 @@ def test_toggle_admin__downgrade_for_account_owner__not_found(
 ):
 
     # arrange
-    account = create_test_account(plan=BillingPlanType.PREMIUM)
-    account_owner = create_test_owner(account=account)
+    account = create_test_account()
+    account_owner = create_test_user(
+        is_account_owner=True,
+        account=account
+    )
     invited = create_invited_user(account_owner, is_admin=True)
     api_client.token_authenticate(invited)
 
@@ -93,10 +106,7 @@ def test_toggle_admin__downgrade_transferred_user__ok(
 
     # arrange
     account_1 = create_test_account(name='transfer from')
-    account_2 = create_test_account(
-        name='transfer to',
-        plan=BillingPlanType.PREMIUM
-    )
+    account_2 = create_test_account(name='transfer to')
     user_to_transfer = create_test_user(
         account=account_1,
         email='user_to_transfer@test.test',

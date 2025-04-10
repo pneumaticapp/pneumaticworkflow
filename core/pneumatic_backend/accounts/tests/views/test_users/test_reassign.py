@@ -1,14 +1,10 @@
 import pytest
-
-from pneumatic_backend.accounts.enums import BillingPlanType
 from pneumatic_backend.accounts.messages import MSG_A_0004
-from pneumatic_backend.accounts.tests.fixtures import (
-    create_invited_user,
-    create_test_account,
-    create_test_owner,
-    create_test_user
+from pneumatic_backend.processes.enums import (
+    FieldType,
+    PredicateOperator,
+    OwnerType
 )
-from pneumatic_backend.processes.enums import FieldType, PredicateOperator
 from pneumatic_backend.processes.models import (
     Condition,
     ConditionTemplate,
@@ -16,11 +12,14 @@ from pneumatic_backend.processes.models import (
     Predicate,
     PredicateTemplate,
     Rule,
-    RuleTemplate
+    RuleTemplate,
+    TemplateOwner
 )
 from pneumatic_backend.processes.tests.fixtures import (
     create_test_template,
-    create_test_workflow
+    create_test_workflow,
+    create_test_user,
+    create_invited_user,
 )
 from pneumatic_backend.utils.validation import ErrorCode
 
@@ -29,8 +28,7 @@ pytestmark = pytest.mark.django_db
 
 def test_reassign__count_workflows__ok(api_client):
     # arrange
-    account = create_test_account(plan=BillingPlanType.PREMIUM)
-    user = create_test_owner(account=account)
+    user = create_test_user()
     old_user = create_invited_user(user)
     new_user = create_invited_user(user, email='newuser@pneumatic.app')
     create_test_template(
@@ -67,8 +65,7 @@ def test_reassign__count_workflows__ok(api_client):
 def test_reassign__workflow__ok(api_client):
 
     # arrange
-    account = create_test_account(plan=BillingPlanType.PREMIUM)
-    user = create_test_owner(account=account)
+    user = create_test_user()
     api_client.token_authenticate(user)
 
     old_user = create_invited_user(user)
@@ -110,8 +107,7 @@ def test_reassign__workflow_already_assigned__ok(
 ):
 
     # arrange
-    account = create_test_account(plan=BillingPlanType.PREMIUM)
-    user = create_test_owner(account=account)
+    user = create_test_user()
     api_client.token_authenticate(user)
 
     old_user = create_invited_user(user)
@@ -154,8 +150,7 @@ def test_reassign__template__ok(
     api_client,
 ):
     # arrange
-    account = create_test_account(plan=BillingPlanType.PREMIUM)
-    user = create_test_owner(account=account)
+    user = create_test_user()
     api_client.token_authenticate(user)
     old_user = create_invited_user(user)
     new_user = create_invited_user(user, email='newuser@pneumatic.app')
@@ -187,8 +182,7 @@ def test_reassign_template__already_assigned__ok(
     api_client,
 ):
     # arrange
-    account = create_test_account(plan=BillingPlanType.PREMIUM)
-    user = create_test_owner(account=account)
+    user = create_test_user()
     api_client.token_authenticate(user)
     old_user = create_invited_user(user)
     new_user = create_invited_user(user, email='newuser@pneumatic.app')
@@ -196,7 +190,12 @@ def test_reassign_template__already_assigned__ok(
         user=old_user,
         is_active=True,
     )
-    template.template_owners.add(new_user)
+    TemplateOwner.objects.create(
+        template=template,
+        account=user.account,
+        type=OwnerType.USER,
+        user_id=new_user.id,
+    )
     template_task = template.tasks.get(number=1)
     template_task.add_raw_performer(new_user)
 
@@ -212,8 +211,8 @@ def test_reassign_template__already_assigned__ok(
 
     # assert
     assert response.status_code == 204
-    assert template.template_owners.count() == 1
-    assert template.template_owners.first() == new_user
+    assert template.owners.count() == 1
+    assert template.owners.first().user == new_user
     assert template_task.raw_performers.count() == 1
     assert template_task.raw_performers.first().user == new_user
 
@@ -223,7 +222,7 @@ def test_reassign__new_user_from_another_acc__validation_error(
     api_client,
 ):
     # arrange
-    account_owner = create_test_owner()
+    account_owner = create_test_user()
     user = create_invited_user(account_owner)
     another_account_user = create_test_user(
         email='newuser@pneumatic.app'
@@ -261,7 +260,7 @@ def test_reassign__old_user_from_another_acc__validation_error(
     api_client,
 ):
     # arrange
-    account_owner = create_test_owner()
+    account_owner = create_test_user()
     user = create_invited_user(account_owner)
     another_account_user = create_test_user(
         email='newuser@pneumatic.app'
@@ -299,7 +298,7 @@ def test_reassign__to_the_same_user__validation_error(
     api_client,
 ):
     # arrange
-    user = create_test_owner()
+    user = create_test_user()
     old_user = create_invited_user(user)
     create_test_template(
         user=old_user,
@@ -331,8 +330,7 @@ def test_reassign__to_the_same_user__validation_error(
 
 def test_reassign__condition_template__ok(api_client):
     # arrange
-    account = create_test_account(plan=BillingPlanType.PREMIUM)
-    user = create_test_owner(account=account)
+    user = create_test_user()
     api_client.token_authenticate(user)
 
     old_user = create_invited_user(user)
@@ -389,8 +387,7 @@ def test_reassign__condition_template__ok(api_client):
 def test_reassign__new_user_is_used_in_condition_template___ok(api_client):
 
     # arrange
-    account = create_test_account(plan=BillingPlanType.PREMIUM)
-    user = create_test_owner(account=account)
+    user = create_test_user()
     api_client.token_authenticate(user)
 
     old_user = create_invited_user(user)
@@ -457,8 +454,7 @@ def test_reassign__new_user_from_another_condition_template__ok(
 ):
 
     # arrange
-    account = create_test_account(plan=BillingPlanType.PREMIUM)
-    user = create_test_owner(account=account)
+    user = create_test_user()
     api_client.token_authenticate(user)
 
     old_user = create_invited_user(user)
@@ -539,8 +535,7 @@ def test_reassign__new_user_from_another_condition_template__ok(
 def test_reassign__another_operator_in_condition_template__ok(api_client):
 
     # arrange
-    account = create_test_account(plan=BillingPlanType.PREMIUM)
-    user = create_test_owner(account=account)
+    user = create_test_user()
     api_client.token_authenticate(user)
 
     old_user = create_invited_user(user)
@@ -610,11 +605,9 @@ def test_reassign__user_another_acc_in_condition_template__validation_error(
 ):
 
     # arrange
-    account = create_test_account(plan=BillingPlanType.PREMIUM)
-    user = create_test_owner(account=account)
+    user = create_test_user()
     old_user = create_invited_user(user)
-    account_2 = create_test_account(name='Test', plan=BillingPlanType.PREMIUM)
-    new_user = create_test_user(email='test2@penumatic.app', account=account_2)
+    new_user = create_test_user(email='test2@penumatic.app')
     api_client.token_authenticate(user)
     template = create_test_template(
         user=user,
@@ -669,8 +662,7 @@ def test_reassign__user_another_acc_in_condition_template__validation_error(
 def test_reassign__another_field_type_in_condition_template__ok(api_client):
 
     # arrange
-    account = create_test_account(plan=BillingPlanType.PREMIUM)
-    user = create_test_owner(account=account)
+    user = create_test_user()
     api_client.token_authenticate(user)
 
     old_user = create_invited_user(user)
@@ -727,8 +719,7 @@ def test_reassign__another_field_type_in_condition_template__ok(api_client):
 def test_reassign__condition__ok(api_client):
 
     # arrange
-    account = create_test_account(plan=BillingPlanType.PREMIUM)
-    user = create_test_owner(account=account)
+    user = create_test_user()
     api_client.token_authenticate(user)
     old_user = create_invited_user(user)
     new_user = create_invited_user(user, email='newuser@pneumatic.app')
@@ -774,8 +765,7 @@ def test_reassign__condition__ok(api_client):
 
 def test_reassign__new_user_is_used_in_condition__ok(api_client):
     # arrange
-    account = create_test_account(plan=BillingPlanType.PREMIUM)
-    user = create_test_owner(account=account)
+    user = create_test_user()
     api_client.token_authenticate(user)
     old_user = create_invited_user(user)
     new_user = create_invited_user(user, email='newuser@pneumatic.app')
@@ -830,8 +820,7 @@ def test_reassign__new_user_is_used_in_condition__ok(api_client):
 def test_reassign__new_user_from_another_conditions__ok(api_client):
 
     # arrange
-    account = create_test_account(plan=BillingPlanType.PREMIUM)
-    user = create_test_owner(account=account)
+    user = create_test_user()
     api_client.token_authenticate(user)
     old_user = create_invited_user(user)
     new_user = create_invited_user(user, email='newuser@pneumatic.app')
@@ -899,8 +888,7 @@ def test_reassign__new_user_from_another_conditions__ok(api_client):
 def test_reassign__another_operator_in_condition__ok(api_client):
 
     # arrange
-    account = create_test_account(plan=BillingPlanType.PREMIUM)
-    user = create_test_owner(account=account)
+    user = create_test_user()
     api_client.token_authenticate(user)
     old_user = create_invited_user(user)
     new_user = create_invited_user(user, email='newuser@pneumatic.app')
@@ -960,11 +948,9 @@ def test_reassign__user_another_account_in_condition__validation_error(
 ):
 
     # arrange
-    account = create_test_account(plan=BillingPlanType.PREMIUM)
-    user = create_test_owner(account=account)
+    user = create_test_user()
     old_user = create_invited_user(user)
-    account_2 = create_test_account(name='Test', plan=BillingPlanType.PREMIUM)
-    new_user = create_test_user(email='test2@penumatic.app', account=account_2)
+    new_user = create_test_user(email='test2@penumatic.app')
     api_client.token_authenticate(user)
     template = create_test_template(
         user=user,
@@ -1013,8 +999,7 @@ def test_reassign__user_another_account_in_condition__validation_error(
 def test_reassign__another_field_type_in_condition__ok(api_client):
 
     # arrange
-    account = create_test_account(plan=BillingPlanType.PREMIUM)
-    user = create_test_owner(account=account)
+    user = create_test_user()
     api_client.token_authenticate(user)
 
     old_user = create_invited_user(user)

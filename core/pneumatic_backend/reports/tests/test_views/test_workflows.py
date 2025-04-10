@@ -2,13 +2,17 @@ import pytest
 from datetime import timedelta
 from django.contrib.auth import get_user_model
 from django.utils import timezone
-from pneumatic_backend.reports.tests.fixtures import (
+from pneumatic_backend.processes.tests.fixtures import (
     create_test_user,
     create_invited_user,
     create_test_account,
 )
+from pneumatic_backend.processes.models import (
+    TemplateOwner
+)
 from pneumatic_backend.processes.enums import (
     WorkflowStatus,
+    TaskStatus,
 )
 from pneumatic_backend.processes.tests.fixtures import (
     create_test_template,
@@ -115,6 +119,38 @@ class TestDashboardOverview:
         assert response.data['in_progress'] == 5
         assert response.data['overdue'] == 1
 
+    def test_overview__user_is_template_owner_is_deleted__ok(self, api_client):
+
+        # arrange
+        user = create_test_user()
+        template = create_test_template(user, tasks_count=1)
+        TemplateOwner.objects.filter(user_id=user.id).delete()
+        first_workflow = create_test_workflow(user, template=template)
+        first_workflow.status = WorkflowStatus.DONE
+        date_created = first_workflow.date_created - timedelta(days=2)
+        first_workflow.date_created = date_created
+        first_workflow.date_completed = timezone.now()
+        first_workflow.save(update_fields=[
+            'status',
+            'date_completed',
+            'date_created',
+        ])
+
+        api_client.token_authenticate(user)
+
+        # act
+        response = api_client.get(
+            '/reports/dashboard/workflows/overview',
+            data={'now': True},
+        )
+
+        # assert
+        assert response.status_code == 200
+        assert response.data['started'] is None
+        assert response.data['completed'] is None
+        assert response.data['in_progress'] == 0
+        assert response.data['overdue'] == 0
+
     def test_overview__not_current_task_overdue__workflow_not_overdue__ok(
         self,
         api_client
@@ -134,7 +170,7 @@ class TestDashboardOverview:
         date_started = timezone.now() - timedelta(hours=1)
         task_1.date_started = date_started
         task_1.date_first_started = date_started
-        task_1.is_completed = True
+        task_1.status = TaskStatus.COMPLETED
         task_1.date_completed = date_started + timedelta(hours=1)
         task_1.due_date = date_started + timedelta(seconds=1)
         task_1.save()
@@ -475,7 +511,7 @@ class TestDashboardOverview:
         assert response.data['in_progress'] == 1
         assert response.data['overdue'] == 1
 
-    def test_overview__now__not_overdue_after_overdue__task_returned__ok(
+    def test_overview__now__not_overdue_afert_overdue__task_returned__ok(
         self,
         mocker,
         api_client
@@ -681,6 +717,34 @@ class TestDashboardWorkflowBreakdown:
         assert response.data[4]['completed'] == 0
         assert response.data[4]['in_progress'] == 0
         assert response.data[4]['overdue'] == 0
+
+    def test_workflow_breakdown__template_owners_is_deleted__ok(
+        self,
+        api_client
+    ):
+        # arrange
+        user = create_test_user(is_account_owner=False)
+        template = create_test_template(user, tasks_count=1)
+        TemplateOwner.objects.filter(user_id=user.id).delete()
+        first_workflow = create_test_workflow(user, template=template)
+        first_workflow.status = WorkflowStatus.DONE
+        date_created = first_workflow.date_created - timedelta(days=2)
+        first_workflow.date_created = date_created
+        first_workflow.date_completed = timezone.now()
+        first_workflow.save(update_fields=[
+            'status',
+            'date_completed',
+            'date_created',
+        ])
+
+        api_client.token_authenticate(user)
+
+        # act
+        response = api_client.get('/reports/dashboard/workflows/breakdown')
+
+        # assert
+        assert response.status_code == 200
+        assert len(response.data) == 0
 
     def test_workflow_breakdown__legacy_template__not_count(
         self,
@@ -915,6 +979,37 @@ class TestDashboardWorkflowBreakdown:
         assert response.data[4]['overdue'] == 0
         assert response.data[4]['template_name'] == draft_template.name
         assert response.data[4]['template_id'] == draft_template.id
+
+    def test_workflow_breakdown__now_template_owners_is_deleted__ok(
+        self,
+        api_client
+    ):
+        # arrange
+        user = create_test_user(is_account_owner=False)
+        template = create_test_template(user, tasks_count=1)
+        TemplateOwner.objects.filter(user_id=user.id).delete()
+        first_workflow = create_test_workflow(user, template=template)
+        first_workflow.status = WorkflowStatus.DONE
+        date_created = first_workflow.date_created - timedelta(days=2)
+        first_workflow.date_created = date_created
+        first_workflow.date_completed = timezone.now()
+        first_workflow.save(update_fields=[
+            'status',
+            'date_completed',
+            'date_created',
+        ])
+
+        api_client.token_authenticate(user)
+
+        # act
+        response = api_client.get(
+            '/reports/dashboard/workflows/breakdown',
+            data={'now': True}
+        )
+
+        # assert
+        assert response.status_code == 200
+        assert len(response.data) == 0
 
     def test_workflow_breakdown__draft_template_with_zero_workflows__ok(
         self,
@@ -1669,7 +1764,7 @@ class TestWorkflowBreakdownByTasks:
         task_1 = workflow.tasks.get(number=1)
         task_1.date_started = date_created
         task_1.date_completed = date_created + timedelta(minutes=1)
-        task_1.is_completed = True
+        task_1.status = TaskStatus.COMPLETED
         task_1.save()
 
         task_2 = workflow.tasks.get(number=2)
@@ -1725,7 +1820,7 @@ class TestWorkflowBreakdownByTasks:
         task_1.date_started = date_created
         task_1.date_completed = date_created + timedelta(minutes=5)
         task_1.due_date = date_created + timedelta(minutes=1)
-        task_1.is_completed = True
+        task_1.status = TaskStatus.COMPLETED
         task_1.save()
 
         task_2 = workflow.tasks.get(number=2)
@@ -1940,7 +2035,7 @@ class TestWorkflowBreakdownByTasks:
         task_1 = workflow.tasks.get(number=1)
         task_1.date_started = date_created
         task_1.date_first_started = date_created
-        task_1.is_completed = True
+        task_1.status = TaskStatus.COMPLETED
         task_1.save()
 
         task_2 = workflow.tasks.get(number=2)

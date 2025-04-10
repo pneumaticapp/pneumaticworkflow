@@ -3,6 +3,7 @@ export const envBackendURL: string | undefined =        process.env.BACKEND_URL;
 export const envSentry: string | undefined =            process.env.SENTRY_DSN;
 export const envWssURL: string | undefined =            process.env.WSS_URL;
 export const envBackendPrivateIP: string | undefined =  process.env.BACKEND_PRIVATE_IP;
+export const envDevMode: boolean =  process.env.NODE_ENV === 'development';
 
 export const isEnvCaptcha: boolean =    process.env.CAPTCHA !== 'no';
 export const isEnvGoogleAuth: boolean = process.env.GOOGLE_AUTH !== 'no';

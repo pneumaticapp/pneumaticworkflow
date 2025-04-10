@@ -6,7 +6,6 @@ from rest_framework.serializers import (
     ModelSerializer,
     IntegerField,
     CharField,
-    ValidationError,
     Serializer,
     BooleanField,
 )
@@ -16,7 +15,7 @@ from pneumatic_backend.processes.api_v2.serializers.template.condition import (
 )
 from pneumatic_backend.processes.models import (
     TaskTemplate,
-    FieldTemplate
+    FieldTemplate,
 )
 from pneumatic_backend.processes.api_v2.serializers.template.checklist import (
     ChecklistTemplateSerializer
@@ -42,9 +41,6 @@ from pneumatic_backend.processes.api_v2.serializers.template.mixins import (
 )
 from pneumatic_backend.processes.utils.common import (
     VAR_PATTERN
-)
-from pneumatic_backend.processes.messages.workflow import (
-    MSG_PW_0022,
 )
 from pneumatic_backend.processes.enums import (
     PerformerType,
@@ -567,6 +563,7 @@ class TemplateStepNameSerializer(ModelSerializer):
             'id',
             'name',
             'number',
+            'api_name',
         )
 
 
@@ -595,19 +592,6 @@ class TemplateStepFilterSerializer(
         default=None,
         allow_null=True
     )
-    is_running_workflows = BooleanField(
-        required=False,
-        default=None,
-        allow_null=True
-    )
-
-    def validate(self, data):
-        if (
-            data.get("with_tasks_in_progress") is not None
-            and data.get("is_running_workflows") is not None
-        ):
-            raise ValidationError(MSG_PW_0022)
-        return data
 
 
 class ShortTaskSerializer(

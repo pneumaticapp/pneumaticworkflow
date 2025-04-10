@@ -9,7 +9,7 @@ export function removeTaskGuest(taskId: number, guestEmail: string) {
     urls.removeTaskGuest.replace(':id', String(taskId)),
     {
       method: 'POST',
-      body: mapRequestBody({ email: guestEmail }),
+      data: mapRequestBody({ email: guestEmail }),
     },
     {
       responseType: 'empty',

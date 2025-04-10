@@ -28,7 +28,7 @@ class TemplateOwner(
                 name='processes_template_owner_template_api_name_unique',
             )
         ]
-        ordering = ['type']
+        ordering = ['type', 'id']
 
     api_name_prefix = 'owner'
     template = models.ForeignKey(

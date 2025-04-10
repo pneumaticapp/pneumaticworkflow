@@ -1,5 +1,5 @@
 import pytest
-from pneumatic_backend.analytics.tests.fixtures import create_test_user
+from pneumatic_backend.processes.tests.fixtures import create_test_user
 from pneumatic_backend.analytics.customerio.exceptions import (
     WebhookInvalidData,
     WebhookUserNotFound

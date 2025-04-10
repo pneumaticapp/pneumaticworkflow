@@ -8,7 +8,7 @@ export interface IGetTokenResponse {
 export function getToken(username: string, password: string) {
   return commonRequest<IGetTokenResponse>('jwtObtain', {
     method: 'POST',
-    body: mapRequestBody({username, password}),
+    data: mapRequestBody({username, password}),
   }, {
     type: 'local',
     shouldThrow: true,

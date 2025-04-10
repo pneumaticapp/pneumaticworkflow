@@ -3,9 +3,13 @@
   align-items: center;
 }
 
+.toolbar div:first-child {
+  margin-left: 0;
+}
+
 .separator {
-  margin: 0 4px;
-  width: 1px;
-  height: 24px;
+  margin: 0 0.4rem;
+  width: 0.1rem;
+  height: 2.4rem;
   background-color: var(--pneumatic-color-black16);
 }

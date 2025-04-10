@@ -7,7 +7,10 @@ from pneumatic_backend.processes.models import (
     Template
 )
 
-from pneumatic_backend.processes.enums import PerformerType
+from pneumatic_backend.processes.enums import (
+    PerformerType,
+    OwnerType
+)
 from pneumatic_backend.authentication.enums import AuthTokenType
 
 pytestmark = pytest.mark.django_db
@@ -50,7 +53,12 @@ class TestUpdateKickoff:
                 'id': template.id,
                 'name': template.name,
                 'is_active': True,
-                'template_owners': [user.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                ],
                 'kickoff': request_data,
                 'tasks': [
                     {
@@ -113,7 +121,12 @@ class TestUpdateKickoff:
                 'id': template.id,
                 'name': template.name,
                 'is_active': False,
-                'template_owners': [user.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                ],
                 'tasks': [
                     {
                         'number': task.number,
@@ -164,7 +177,12 @@ class TestUpdateKickoff:
                 'name': template.name,
                 'kickoff': None,
                 'is_active': False,
-                'template_owners': [user.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                ],
                 'tasks': [
                     {
                         'number': task.number,

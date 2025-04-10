@@ -11,7 +11,8 @@ from pneumatic_backend.accounts.queries import (
     DeleteUserFromTaskPerformerQuery,
     DeleteUserFromTemplateConditionsQuery,
     DeleteUserFromTemplateOwnerQuery,
-    DeleteUserFromWorkflowMembersQuery
+    DeleteUserFromWorkflowMembersQuery,
+    DeleteUserFromWorkflowOwnersQuery
 )
 from pneumatic_backend.accounts.services import exceptions
 from pneumatic_backend.authentication.enums import AuthTokenType
@@ -134,6 +135,18 @@ class ReassignService:
             workflow__account=self.account,
         ).update(user_id=self.new_user.id)
 
+    def _reassign_in_workflow_owners(self):
+        delete_query = DeleteUserFromWorkflowOwnersQuery(
+            user_to_delete=self.old_user.id,
+            user_to_substitution=self.new_user.id,
+        )
+        RawSqlExecutor.execute(*delete_query.get_sql())
+
+        Workflow.owners.through.objects.filter(
+            user_id=self.old_user.id,
+            workflow__account=self.account,
+        ).update(user_id=self.new_user.id)
+
     def _reassign_in_template_conditions(self):
 
         delete_query = DeleteUserFromTemplateConditionsQuery(
@@ -166,6 +179,7 @@ class ReassignService:
                 self._reassign_in_raw_performers()
                 self._reassign_in_performers()
                 self._reassign_in_workflow_members()
+                self._reassign_in_workflow_owners()
                 self._reassign_in_template_conditions()
                 self._reassign_in_conditions()
                 complete_tasks.delay(

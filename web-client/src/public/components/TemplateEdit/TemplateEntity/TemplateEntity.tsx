@@ -14,7 +14,6 @@ export function TemplateEntity({
   index,
   users,
   tasksCount,
-  isSubscribed,
   addDelay,
   addTaskBefore,
   deleteDelay,
@@ -54,14 +53,7 @@ export function TemplateEntity({
       },
       {
         check: !isTaskOpen,
-        component: (
-          <TaskItem
-            task={task}
-            isSubscribed={isSubscribed}
-            toggleIsOpenTask={toggleIsOpenTask}
-            setScrollTarget={setScrollTarget}
-          />
-        ),
+        component: <TaskItem task={task} toggleIsOpenTask={toggleIsOpenTask} setScrollTarget={setScrollTarget} />,
       },
     ];
 

@@ -2,7 +2,7 @@ import pytest
 from pneumatic_backend.analytics.customerio.services import (
     WebHookService
 )
-from pneumatic_backend.analytics.tests.fixtures import (
+from pneumatic_backend.processes.tests.fixtures import (
     create_test_user
 )
 from pneumatic_backend.analytics.customerio.enums import MetricType

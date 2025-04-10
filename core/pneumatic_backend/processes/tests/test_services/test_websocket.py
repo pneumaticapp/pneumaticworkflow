@@ -5,6 +5,7 @@ from pneumatic_backend.processes.api_v2.services.task.performers import (
     TaskPerformersService
 )
 from pneumatic_backend.consumers import PneumaticBaseConsumer
+from pneumatic_backend.processes.enums import TaskStatus
 from pneumatic_backend.processes.tests.fixtures import (
     create_test_user,
     create_test_workflow,
@@ -71,6 +72,7 @@ class TestWSSender:
                 'template_task_id': workflow.template_id,
                 'template_task_api_name': task.api_name,
                 'is_urgent': True,
+                'status': TaskStatus.ACTIVE,
             }
         )
 
@@ -163,5 +165,6 @@ class TestWSSender:
                 'template_task_id': workflow.template_id,
                 'template_task_api_name': task.api_name,
                 'is_urgent': False,
+                'status': TaskStatus.ACTIVE,
             }
         )

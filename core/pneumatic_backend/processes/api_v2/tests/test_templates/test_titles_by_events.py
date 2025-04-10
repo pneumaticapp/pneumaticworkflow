@@ -80,11 +80,8 @@ def test_titles_by_events__ended_workflow__ok(
     template = create_test_template(user=user, is_active=True)
     workflow = create_test_workflow(user=user, template=template)
     create_test_event(workflow=workflow, user=user)
-    service = WorkflowActionService(user=user)
-    service.end_process(
-        workflow=workflow,
-        by_condition=False,
-    )
+    service = WorkflowActionService(user=user, workflow=workflow)
+    service.end_process(by_condition=False)
 
     # act
     response = api_client.get('/templates/titles-by-events')

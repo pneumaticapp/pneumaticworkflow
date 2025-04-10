@@ -22,7 +22,7 @@ export function revertTask({ id = 0, comment }: Partial<ISendTaskCommentConfig>)
     url,
     {
       method: 'POST',
-      body: JSON.stringify({ comment }),
+      data: JSON.stringify({ comment }),
     },
     { responseType: 'empty', shouldThrow: true },
   );

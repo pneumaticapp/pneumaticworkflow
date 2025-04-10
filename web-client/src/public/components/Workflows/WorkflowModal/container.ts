@@ -58,7 +58,7 @@ export function mapStateToProps({
     fullscreenImage: { isOpen: isFullscreenImageOpen },
   },
 }: IApplicationState): TStoreProps {
-  const isTemplateOwner = workflow?.template?.templateOwners?.some((id) => id === currentUserId);
+  const isTemplateOwner = workflow?.owners?.some((id) => id === currentUserId);
 
   const canEdit = [isAccountOwner, isTemplateOwner].some(Boolean);
 

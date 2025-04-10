@@ -36,6 +36,8 @@ from pneumatic_backend.processes.enums import (
     PredicateOperator,
     FieldType,
     WorkflowStatus,
+    TaskStatus,
+    OwnerType
 )
 
 
@@ -77,12 +79,12 @@ def test_revert__ok(
     # assert
     assert response.status_code == 204
     service_init_mock.assert_called_once_with(
+        workflow=workflow,
         user=user,
         auth_type=AuthTokenType.USER,
         is_superuser=False
     )
     service_revert_mock.assert_called_once_with(
-        workflow=workflow,
         comment=text_comment
     )
 
@@ -127,12 +129,12 @@ def test_revert_service_exception__validation_error(
     assert response.data['code'] == ErrorCode.VALIDATION_ERROR
     assert response.data['message'] == message
     service_init_mock.assert_called_once_with(
+        workflow=workflow,
         user=user,
         auth_type=AuthTokenType.USER,
         is_superuser=False
     )
     service_revert_mock.assert_called_once_with(
-        workflow=workflow,
         comment=text_comment
     )
 
@@ -616,7 +618,16 @@ def test_revert__deleted_performer_recreated__ok(
         path='/templates',
         data={
             'name': 'Template',
-            'template_owners': [user.id, user_performer.id],
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id
+                },
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user_performer.id
+                },
+            ],
             'is_active': True,
             'kickoff': {},
             'tasks': [
@@ -863,7 +874,7 @@ def test_revert__sub_workflow_incompleted__validation_error(
     workflow.current_task = 2
     workflow.save()
     task_1 = workflow.tasks.get(number=1)
-    task_1.is_completed = True
+    task_1.status = TaskStatus.COMPLETED
     task_1.date_completed = timezone.now()
     task_1.save()
     task_2 = workflow.tasks.get(number=2)
@@ -908,7 +919,7 @@ def test_revert__sub_workflow_completed__ok(
     workflow.current_task = 2
     workflow.save()
     task_1 = workflow.tasks.get(number=1)
-    task_1.is_completed = True
+    task_1.status = TaskStatus.COMPLETED
     task_1.date_completed = timezone.now()
     task_1.save()
     task_2 = workflow.tasks.get(number=2)

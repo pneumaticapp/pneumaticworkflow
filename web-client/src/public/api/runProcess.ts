@@ -2,11 +2,12 @@ import { commonRequest } from './commonRequest';
 import { mapRequestBody } from '../utils/mappers';
 import { getBrowserConfigEnv } from '../utils/getConfig';
 import { IStartWorkflowPayload } from '../redux/workflows/actions';
+import { RawPerformer } from '../types/template';
 
 export type TRunProcessResponse = {
   name: string;
   currentTask: {
-    performers: number[];
+    performers: RawPerformer[];
   };
 };
 
@@ -20,7 +21,7 @@ export function runProcess(data: IStartWorkflowPayload) {
     url,
     {
       method: 'POST',
-      body: mapRequestBody(data, 'default', {
+      data: mapRequestBody(data, 'default', {
         ignorePropertyMapToSnakeCase: ['kickoff'],
       }),
     },

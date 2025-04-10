@@ -1,7 +1,5 @@
-/* eslint-disable */
-/* prettier-ignore */
 import * as React from 'react';
-import * as classnames from 'classnames';
+import classnames from 'classnames';
 import { useIntl } from 'react-intl';
 import { Dropdown, DropdownToggle, DropdownMenu, DropdownItem } from 'reactstrap';
 
@@ -23,12 +21,7 @@ export interface IDropdownButtonProps {
   className?: string;
 }
 
-export function DropdownButton({
-  dropdownOptions,
-  isLoading,
-  isDisabled,
-  className,
-}: IDropdownButtonProps) {
+export function DropdownButton({ dropdownOptions, isLoading, isDisabled, className }: IDropdownButtonProps) {
   const { formatMessage } = useIntl();
 
   const [isActive, setActiveState] = React.useState(false);
@@ -41,19 +34,12 @@ export function DropdownButton({
     const { itemHeaderIntlId, itemDescriptionIntlId, onClick } = item;
 
     return (
-      <DropdownItem
-        className={styles['dropdown-item']}
-        onClick={onClick}
-      >
+      <DropdownItem className={styles['dropdown-item']} onClick={onClick}>
         {itemHeaderIntlId && (
-          <p className={styles['dropdown-item__header']}>
-            {formatMessage({ id: itemHeaderIntlId })}
-          </p>
+          <p className={styles['dropdown-item__header']}>{formatMessage({ id: itemHeaderIntlId })}</p>
         )}
         {itemDescriptionIntlId && (
-          <p className={styles['dropdown-item__hint']}>
-            {formatMessage({ id: itemDescriptionIntlId })}
-          </p>
+          <p className={styles['dropdown-item__hint']}>{formatMessage({ id: itemDescriptionIntlId })}</p>
         )}
       </DropdownItem>
     );
@@ -69,7 +55,7 @@ export function DropdownButton({
 
   return (
     <div className={classnames(styles['dropdown-wrapper'], className)}>
-      <Dropdown isOpen={isActive} toggle={handleDropdownToggle} >
+      <Dropdown isOpen={isActive} toggle={handleDropdownToggle}>
         <DropdownToggle
           tag="button"
           className={classnames(styles['btn-dropdown'], isActive && styles['btn-dropdown_active'])}
@@ -77,11 +63,7 @@ export function DropdownButton({
         >
           {renderIcon()}
         </DropdownToggle>
-        <DropdownMenu
-          flip={false}
-          className={styles['dropdown-menu']}
-          right
-        >
+        <DropdownMenu flip={false} className={styles['dropdown-menu']} right>
           {dropdownOptions.map(renderDropdownItem)}
         </DropdownMenu>
       </Dropdown>

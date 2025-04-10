@@ -12,7 +12,7 @@ export function subscribeToWebhooks(event: EWebhooksTypeEvent, url: string) {
     URL,
     {
       method: 'POST',
-      body: mapRequestBody({ url }),
+      data: mapRequestBody({ url }),
     },
     {
       shouldThrow: true,

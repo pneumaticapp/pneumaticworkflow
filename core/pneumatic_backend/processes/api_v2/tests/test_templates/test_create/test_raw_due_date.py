@@ -11,6 +11,7 @@ from pneumatic_backend.processes.enums import (
     DueDateRule,
     PerformerType,
     FieldType,
+    OwnerType
 )
 from pneumatic_backend.processes.messages import template as messages
 from pneumatic_backend.utils.validation import ErrorCode
@@ -37,7 +38,12 @@ def test_create__after_task_started__ok(api_client):
         path='/templates',
         data={
             'name': 'Template',
-            'template_owners': [user.id],
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id
+                },
+            ],
             'is_active': True,
             'kickoff': {},
             'tasks': [
@@ -107,7 +113,12 @@ def test_create__after_task_started__current_task__ok(
         path='/templates',
         data={
             'name': 'Template',
-            'template_owners': [user.id],
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id
+                },
+            ],
             'is_active': True,
             'kickoff': {},
             'tasks': [
@@ -164,7 +175,12 @@ def test_create__after_task_started__next_task__validation_error(
         path='/templates',
         data={
             'name': 'Template',
-            'template_owners': [user.id],
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id
+                },
+            ],
             'is_active': True,
             'kickoff': {},
             'tasks': [
@@ -224,7 +240,12 @@ def test_create__after_task_started__not_existent_task__validation_error(
         path='/templates',
         data={
             'name': 'Template',
-            'template_owners': [user.id],
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id
+                },
+            ],
             'is_active': True,
             'kickoff': {},
             'tasks': [
@@ -270,7 +291,12 @@ def test_create__after_task_completed__ok(api_client):
         path='/templates',
         data={
             'name': 'Template',
-            'template_owners': [user.id],
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id
+                },
+            ],
             'is_active': True,
             'kickoff': {},
             'tasks': [
@@ -337,7 +363,12 @@ def test_create__after_task_completed__current_task__validation_error(
         path='/templates',
         data={
             'name': 'Template',
-            'template_owners': [user.id],
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id
+                },
+            ],
             'is_active': True,
             'kickoff': {},
             'tasks': [
@@ -386,7 +417,12 @@ def test_create__after_task_completed__next_task__validation_error(
         path='/templates',
         data={
             'name': 'Template',
-            'template_owners': [user.id],
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id
+                },
+            ],
             'is_active': True,
             'kickoff': {},
             'tasks': [
@@ -446,7 +482,12 @@ def test_create__after_task_completed__not_existent_task__validation_error(
         path='/templates',
         data={
             'name': 'Template',
-            'template_owners': [user.id],
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id
+                },
+            ],
             'is_active': True,
             'kickoff': {},
             'tasks': [
@@ -492,7 +533,12 @@ def test_create__after_workflow_started__ok(api_client):
         path='/templates',
         data={
             'name': 'Template',
-            'template_owners': [user.id],
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id
+                },
+            ],
             'is_active': True,
             'kickoff': {},
             'tasks': [
@@ -547,7 +593,12 @@ def test_create__after_field__ok(is_required, api_client):
         path='/templates',
         data={
             'name': 'Template',
-            'template_owners': [user.id],
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id
+                },
+            ],
             'is_active': True,
             'kickoff': {
                 'fields': [
@@ -613,7 +664,12 @@ def test_create__after_field__not_source_id__validation_error(
         path='/templates',
         data={
             'name': 'Template',
-            'template_owners': [user.id],
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id
+                },
+            ],
             'is_active': True,
             'kickoff': {},
             'tasks': [
@@ -661,7 +717,12 @@ def test_create__after_field__source_id_is_null__validation_error(
         path='/templates',
         data={
             'name': 'Template',
-            'template_owners': [user.id],
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id
+                },
+            ],
             'is_active': True,
             'kickoff': {},
             'tasks': [
@@ -710,7 +771,12 @@ def test_create__after_field__current_task_field__validation_error(
         path='/templates',
         data={
             'name': 'Template',
-            'template_owners': [user.id],
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id
+                },
+            ],
             'is_active': True,
             'kickoff': {},
             'tasks': [
@@ -767,7 +833,12 @@ def test_create__after_field__next_task_field__validation_error(
         path='/templates',
         data={
             'name': 'Template',
-            'template_owners': [user.id],
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id
+                },
+            ],
             'is_active': True,
             'kickoff': {},
             'tasks': [
@@ -834,7 +905,12 @@ def test_create__after_field__not_existent_field__validation_error(
         path='/templates',
         data={
             'name': 'Template',
-            'template_owners': [user.id],
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id
+                },
+            ],
             'is_active': True,
             'kickoff': {},
             'tasks': [
@@ -883,7 +959,12 @@ def test_create__after_field__field_type_is_not_date__validation_error(
         path='/templates',
         data={
             'name': 'Template',
-            'template_owners': [user.id],
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id
+                },
+            ],
             'is_active': True,
             'kickoff': {
                 'fields': [
@@ -939,7 +1020,12 @@ def test_create__before_field__ok(is_required, api_client):
         path='/templates',
         data={
             'name': 'Template',
-            'template_owners': [user.id],
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id
+                },
+            ],
             'is_active': True,
             'kickoff': {
                 'fields': [
@@ -1005,7 +1091,12 @@ def test_create__before_field__not_source_id__validation_error(
         path='/templates',
         data={
             'name': 'Template',
-            'template_owners': [user.id],
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id
+                },
+            ],
             'is_active': True,
             'kickoff': {},
             'tasks': [
@@ -1053,7 +1144,12 @@ def test_create__before_field__current_task_field__validation_error(
         path='/templates',
         data={
             'name': 'Template',
-            'template_owners': [user.id],
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id
+                },
+            ],
             'is_active': True,
             'kickoff': {},
             'tasks': [
@@ -1102,7 +1198,12 @@ def test_create__before_field__next_task_field__validation_error(
         path='/templates',
         data={
             'name': 'Template',
-            'template_owners': [user.id],
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id
+                },
+            ],
             'is_active': True,
             'kickoff': {},
             'tasks': [
@@ -1169,7 +1270,12 @@ def test_create__before_field__not_existent_field__validation_error(
         path='/templates',
         data={
             'name': 'Template',
-            'template_owners': [user.id],
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id
+                },
+            ],
             'is_active': True,
             'kickoff': {},
             'tasks': [
@@ -1218,7 +1324,12 @@ def test_create__before_field__field_is_not_date__validation_error(
         path='/templates',
         data={
             'name': 'Template',
-            'template_owners': [user.id],
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id
+                },
+            ],
             'is_active': True,
             'kickoff': {
                 'fields': [
@@ -1276,7 +1387,12 @@ def test_create__non_existent_rule__validation_error(
         path='/templates',
         data={
             'name': 'Template',
-            'template_owners': [user.id],
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id
+                },
+            ],
             'is_active': True,
             'kickoff': {},
             'tasks': [
@@ -1325,7 +1441,12 @@ def test_create__rule_is_null__validation_error(
         path='/templates',
         data={
             'name': 'Template',
-            'template_owners': [user.id],
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id
+                },
+            ],
             'is_active': True,
             'kickoff': {},
             'tasks': [
@@ -1374,7 +1495,12 @@ def test_create__invalid_duration__validation_error(
         path='/templates',
         data={
             'name': 'Template',
-            'template_owners': [user.id],
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id
+                },
+            ],
             'is_active': True,
             'kickoff': {},
             'tasks': [
@@ -1426,7 +1552,12 @@ def test_create__duration_is_null__validation_error(
         path='/templates',
         data={
             'name': 'Template',
-            'template_owners': [user.id],
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id
+                },
+            ],
             'is_active': True,
             'kickoff': {},
             'tasks': [
@@ -1468,7 +1599,12 @@ def test_create__equal_api_names__validation_error(api_client):
         path='/templates',
         data={
             'name': 'Template',
-            'template_owners': [user.id],
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id
+                },
+            ],
             'is_active': True,
             'kickoff': {},
             'tasks': [

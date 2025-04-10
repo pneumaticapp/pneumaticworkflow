@@ -18,6 +18,7 @@ from pneumatic_backend.processes.enums import (
     SysTemplateType,
     PerformerType,
     TemplateType,
+    OwnerType
 )
 from pneumatic_backend.processes.models import (
     Template,
@@ -258,7 +259,17 @@ def test_create_template_from_sys_template__ok(
         f'{user.first_name} {user.last_name} template '
         f'{account.name} {user.email}'
     )
-    template_data['template_owners'] = [account_owner.id, user.id]
+    owners = [
+        {
+            'type': OwnerType.USER,
+            'source_id': account_owner.id
+        },
+        {
+            'type': OwnerType.USER,
+            'source_id': user.id
+        },
+    ]
+    template_data['owners'] = owners
     template_data['is_active'] = True
     template_data['tasks'][0]['api_name'] = task_api_name
 
@@ -331,7 +342,12 @@ def test_create_template_from_sys_template__default_task_performer__ok(
         'TemplateSerializer.save'
     )
     template_data = deepcopy(system_template.template)
-    template_data['template_owners'] = [user.id]
+    template_data['owners'] = [
+        {
+            'type': OwnerType.USER,
+            'source_id': user.id
+        },
+    ]
     template_data['tasks'][0]['raw_performers'] = [
         {
             'type': PerformerType.USER,
@@ -428,7 +444,12 @@ def test_create_template_from_sys_template__create_task_api_name__ok(
         'create_api_name',
         return_value=task_api_name
     )
-    template_data['template_owners'] = [user.id]
+    template_data['owners'] = [
+        {
+            'type': OwnerType.USER,
+            'source_id': user.id
+        },
+    ]
     template_data['tasks'][0]['api_name'] = task_api_name
     template_data['is_active'] = True
     service = TemplateService(user=user)
@@ -512,7 +533,12 @@ def test_create_template_from_sys_template__validation_error__save_draft(
         return_value=template_mock
     )
     template_data = deepcopy(system_template.template)
-    template_data['template_owners'] = [user.id]
+    template_data['owners'] = [
+        {
+            'type': OwnerType.USER,
+            'source_id': user.id
+        },
+    ]
     template_data['is_active'] = True
 
     service = TemplateService(user=user)
@@ -596,7 +622,12 @@ def test_create_template_from_sys_template__save_validation_error__save_draft(
         return_value=template_mock
     )
     template_data = deepcopy(system_template.template)
-    template_data['template_owners'] = [user.id]
+    template_data['owners'] = [
+        {
+            'type': OwnerType.USER,
+            'source_id': user.id
+        },
+    ]
     template_data['is_active'] = True
 
     service = TemplateService(user=user)

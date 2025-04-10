@@ -36,6 +36,8 @@ import { WorkflowLogSkeleton } from './WorkflowLogSkeleton';
 import { WorkflowLogWorkflowSnoozedManually } from './WorkflowLogEvents/WorkflowLogWorkflowSnoozedManually';
 import { WorkflowLogWorkflowResumed } from './WorkflowLogEvents/WorkflowLogWorkflowResumed';
 import { WorkflowLogDueDateChanged } from './WorkflowLogEvents/WorkflowLogDueDateChanged';
+import { WorkflowLogAddedPerformerGroup } from './WorkflowLogEvents/WorkflowLogAddedPerformerGroup';
+import { WorkflowLogRemovedPerformerGroup } from './WorkflowLogEvents/WorkflowLogRemovedPerformerGroup';
 
 import styles from './WorkflowLog.css';
 
@@ -59,7 +61,8 @@ export const WorkflowLog = ({
   sendComment,
   onClickTask,
   onUnmount,
-  isHideSkippedTasks,
+  isInTaskCard,
+  taskId,
 }: IWorkflowLogProps) => {
   const { formatMessage } = useIntl();
 
@@ -136,13 +139,20 @@ export const WorkflowLog = ({
 
   const toggleComments = () => {
     if (workflowId) {
-      changeWorkflowLogViewSettings({ id: workflowId, sorting, comments: !isCommentsShown, isOnlyAttachmentsShown });
+      changeWorkflowLogViewSettings({
+        ...(isInTaskCard ? { taskId } : {}),
+        id: workflowId,
+        sorting,
+        comments: !isCommentsShown,
+        isOnlyAttachmentsShown,
+      });
     }
   };
 
   const toggleAttachments = () => {
     if (workflowId) {
       changeWorkflowLogViewSettings({
+        ...(isInTaskCard ? { taskId } : {}),
         id: workflowId,
         sorting,
         comments: isCommentsShown,
@@ -156,6 +166,7 @@ export const WorkflowLog = ({
 
     if (workflowId) {
       changeWorkflowLogViewSettings({
+        ...(isInTaskCard ? { taskId } : {}),
         id: workflowId,
         sorting: newSorting,
         comments: isCommentsShown,
@@ -181,15 +192,8 @@ export const WorkflowLog = ({
     );
   };
 
-  const hideSkippedTasks = (handlItems: IWorkflowLogItem[]): IWorkflowLogItem[] => {
-    return handlItems.filter(
-      ({ type }: any) =>
-        type !== EWorkflowLogEvent.TaskSkipped && type !== EWorkflowLogEvent.TaskSkippedDueLackAssignedPerformers,
-    );
-  };
-
   const renderWorkflowLogEvents = () => {
-    if (!isArrayWithItems(items)) {
+    if (!isArrayWithItems(items) && !isInTaskCard) {
       return (
         <div className={styles['popup-body__no-events']}>
           <IntlMessages id="workflows.log-no-events" />
@@ -201,9 +205,7 @@ export const WorkflowLog = ({
       return <WorkflowLogSkeleton theme={theme} />;
     }
 
-    const visibleItems = isHideSkippedTasks ? hideSkippedTasks(items) : items;
-    const normalizedItems =
-      isLogMinimized && minimizedLogMaxEvents ? visibleItems.slice(0, minimizedLogMaxEvents) : visibleItems;
+    const normalizedItems = isLogMinimized && minimizedLogMaxEvents ? items.slice(0, minimizedLogMaxEvents) : items;
 
     return normalizedItems.map((event) => {
       const { task: eventTask, type: eventType, delay, id } = event;
@@ -253,6 +255,8 @@ export const WorkflowLog = ({
         [EWorkflowLogEvent.DueDateChanged]: <WorkflowLogDueDateChanged {...event} />,
         [EWorkflowLogEvent.WorkflowComplete]: null,
         [EWorkflowLogEvent.WorkflowRun]: null,
+        [EWorkflowLogEvent.AddedPerformerGroup]: <WorkflowLogAddedPerformerGroup {...event} />,
+        [EWorkflowLogEvent.RemovedPerformerGroup]: <WorkflowLogRemovedPerformerGroup {...event} />,
       };
 
       return (
@@ -294,5 +298,6 @@ export interface IWorkflowLogProps {
   sendComment({ text, attachments }: ISendWorkflowLogComment): void;
   onClickTask?(): void;
   onUnmount?(): void;
-  isHideSkippedTasks?: boolean;
+  isInTaskCard?: boolean;
+  taskId?: number;
 }

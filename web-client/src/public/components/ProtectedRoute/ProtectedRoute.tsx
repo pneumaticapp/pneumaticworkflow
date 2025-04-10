@@ -14,23 +14,18 @@ export function ProtectedRoute({ children, hasAccess, hasAccessAuth, onAccessDen
     <Route
       {...rest}
       render={({ location }) => {
-
-        if (typeof hasAccessAuth === 'boolean' && !hasAccessAuth) {
-          return (<Redirect exact from="/" to="/auth/" />)
-        }
-
-        if (onAccessDenied) {
-          onAccessDenied();
-        }
-
+        if (typeof hasAccessAuth === 'boolean' && !hasAccessAuth) return <Redirect exact from="/" to="/auth/" />;
+        if (onAccessDenied) onAccessDenied();
 
         if (typeof hasAccess === 'boolean' && !hasAccess) {
-          return <Redirect
-          to={{
-            pathname: ERoutes.Tasks,
-            state: { from: location },
-          }}
-        />
+          return (
+            <Redirect
+              to={{
+                pathname: ERoutes.Tasks,
+                state: { from: location },
+              }}
+            />
+          );
         }
 
         return children;

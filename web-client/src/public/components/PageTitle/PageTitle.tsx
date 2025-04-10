@@ -16,6 +16,7 @@ const tooltipTextMap: { [key in EPageTitle]: string } = {
   [EPageTitle.TemplatesSystem]: 'templates.title-system.tooltip',
   [EPageTitle.Highlights]: 'workflow-highlights.title.tooltip',
   [EPageTitle.Integrations]: 'integrations.title.tooltip',
+  [EPageTitle.Team]: 'team.title.tooltip',
 };
 
 const learnMoreLinkMap: { [key in EPageTitle]: ELearnMoreLinks } = {
@@ -25,6 +26,7 @@ const learnMoreLinkMap: { [key in EPageTitle]: ELearnMoreLinks } = {
   [EPageTitle.TemplatesSystem]: ELearnMoreLinks.TemplatesSystem,
   [EPageTitle.Highlights]: ELearnMoreLinks.Highlights,
   [EPageTitle.Integrations]: ELearnMoreLinks.Integrations,
+  [EPageTitle.Team]: ELearnMoreLinks.Team,
 };
 
 export interface IPageTitleProps {

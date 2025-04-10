@@ -27,6 +27,7 @@ import { webhooks } from './webhooks';
 import { tenants } from './tenants';
 import { pages } from './pages';
 import { EAuthActions } from './actions';
+import { groups } from './groups';
 
 export const reducers = combineReducers({
   general,
@@ -40,6 +41,7 @@ export const reducers = combineReducers({
   profile,
   settings,
   teamInvites,
+  groups,
   task,
   tasks,
   highlights,

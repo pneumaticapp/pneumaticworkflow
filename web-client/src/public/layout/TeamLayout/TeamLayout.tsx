@@ -1,54 +1,85 @@
-/* eslint-disable */
-/* prettier-ignore */
-import * as React from 'react';
+import React, { useEffect } from 'react';
+import { useIntl } from 'react-intl';
 import { matchPath } from 'react-router-dom';
-import { IntlShape } from 'react-intl';
+import { useDispatch, useSelector } from 'react-redux';
 
+import { IApplicationState } from '../../types/redux';
 import { TopNavContainer } from '../../components/TopNav';
 import { ERoutes } from '../../constants/routes';
-import { history } from '../../utils/history';
+import { checkSomeRouteIsActive, history } from '../../utils/history';
+import { GroupListSortingContainer } from './GroupListSortingContainer';
 import { UserListSortingContainer } from './UserListSortingContainer';
+import { ReturnLink, Tabs } from '../../components/UI';
+import { ETeamPages } from '../../types/team';
+import { resetUsers, setTeamActivePage, updateTeamActiveTab } from '../../redux/actions';
 
 import styles from './TeamLayout.css';
 
-type TTeamLayoutComponentProps = {
-  intl: IntlShape;
-};
+export interface ITeamLayoutProps {
+  children: React.ReactNode;
+}
 
-export class TeamLayoutComponent extends React.Component<TTeamLayoutComponentProps> {
-  public renderTeamLeftContent = () => {
+export function TeamLayout({ children }: ITeamLayoutProps) {
+  const dispatch = useDispatch();
+  const { formatMessage } = useIntl();
+  const page = useSelector((state: IApplicationState) => state.teamInvites.page);
+
+  useEffect(() => {
+    dispatch(
+      updateTeamActiveTab(
+        checkSomeRouteIsActive(ERoutes.Groups) || checkSomeRouteIsActive(ERoutes.GroupDetails)
+          ? ETeamPages.Groups
+          : ETeamPages.Users,
+      ),
+    );
+
+    return () => {
+      dispatch(resetUsers());
+    };
+  }, []);
+
+  const renderTeamLeftContent = () => {
     return (
-      <div className={styles['navbar-left__content']}>
-        <UserListSortingContainer />
+      <div className={styles['top-nav']}>
+        <div className={styles['top-nav__item']}>
+          <Tabs
+            values={[
+              { id: ETeamPages.Users, label: formatMessage({ id: 'team.users' }) },
+              { id: ETeamPages.Groups, label: formatMessage({ id: 'team.groups' }) },
+            ]}
+            activeValueId={page}
+            onChange={(activeTab) => dispatch(setTeamActivePage(activeTab))}
+          />
+        </div>
+        <div className={styles['top-nav__item']}>
+          {page === ETeamPages.Users ? <UserListSortingContainer /> : <GroupListSortingContainer />}
+        </div>
       </div>
     );
   };
 
-  private mapLeftContent: { [key: string]: () => React.ReactNode } = {
-    [ERoutes.Team]: this.renderTeamLeftContent,
+  const renderGroupDetailsLeftContent = () => {
+    return <ReturnLink label={formatMessage({ id: 'menu.groups' })} route={ERoutes.Groups} />;
   };
 
-  private get leftContent() {
+  const mapLeftContent: Partial<Record<ERoutes, React.ReactNode>> = {
+    [ERoutes.GroupDetails]: renderGroupDetailsLeftContent(),
+    [ERoutes.Groups]: renderTeamLeftContent(),
+    [ERoutes.Team]: renderTeamLeftContent(),
+  };
+
+  const leftContent = () => {
     const { pathname } = history.location;
-    for (let key of Object.keys(this.mapLeftContent)) {
-      if (matchPath(pathname, key)) {
-        return this.mapLeftContent[key]();
-      }
-    }
+    const currentRoute = Object.keys(mapLeftContent).find((route) => matchPath(pathname, route)) as ERoutes;
+    return mapLeftContent[currentRoute];
+  };
 
-    return null;
-  }
-
-  public render() {
-    return (
-      <>
-        <TopNavContainer leftContent={this.leftContent} />
-        <main>
-          <div className="container-fluid">
-            {this.props.children}
-          </div>
-        </main>
-      </>
-    );
-  }
+  return (
+    <>
+      <TopNavContainer leftContent={leftContent()} />
+      <main>
+        <div className="container-fluid">{children}</div>
+      </main>
+    </>
+  );
 }

@@ -10,8 +10,7 @@ import { ClockIcon } from '../icons';
 import { DropdownArea } from '../UI/DropdownArea';
 import { getDate, getTime } from '../../utils/strings';
 import { Button, InputField, Tooltip } from '../UI';
-import { DatePicker } from '../UI/form/DatePicker';
-
+import { DatePickerCustom } from '../UI/form/DatePicker';
 import styles from './DueIn.css';
 
 export interface IDueInProps {
@@ -24,9 +23,11 @@ export interface IDueInProps {
   withTime?: boolean;
   onSave(date: string): void;
   onRemove(): void;
+  dateCompletedTsp?: number | null;
 }
 
 export function DueIn({
+  dateCompletedTsp,
   dueDate,
   containerClassName,
   showIcon = true,
@@ -39,9 +40,10 @@ export function DueIn({
 }: IDueInProps) {
   const { formatMessage } = useIntl();
   const locale = useSelector(getLanguage);
-  const dueInData = getDueInData([dueDate], null, timezone, locale);
+  const dateCompletedISO = (dateCompletedTsp && moment.unix(dateCompletedTsp).toISOString()) || null;
+  const dueInData = getDueInData([dueDate], dateCompletedISO, timezone, locale);
   const dropdownRef = useRef<React.ElementRef<typeof DropdownArea> | null>(null);
-  const [selectedDate, setSelectedDate] = useState(null);
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [timeString, setTimeString] = useState('');
   const [timeError, setTimeError] = useState('');
 
@@ -59,7 +61,7 @@ export function DueIn({
     if (!selectedDate) return;
 
     if (!timeString) {
-      onSave(selectedDate);
+      onSave(selectedDate.toISOString());
       dropdownRef.current?.closeDropdown();
       return;
     }
@@ -122,10 +124,11 @@ export function DueIn({
         placement="bottom-end"
       >
         <div className={styles['datepicker']}>
-          <DatePicker
+          <DatePickerCustom
             selected={selectedDate}
-            onChange={setSelectedDate}
+            onChange={(date) => setSelectedDate(date)}
             inline
+            showTimeInput
             minDate={moment.tz(timezone).add(1, 'days').format('YYYY-MM-DD')}
           />
         </div>

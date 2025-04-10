@@ -13,9 +13,7 @@ export const initSentry = (getConfig: () => { env?: TEnvironment } ) => {
   };
 
   const dsn = sentryDevMap[env];
-  if (!dsn) {
-    return;
-  }
+  if (!dsn) return;
 
   Sentry.init({ dsn });
 };

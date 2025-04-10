@@ -1,10 +1,16 @@
 .react-datepicker {
   @mixin font-text;
-
+  
+  display: flex;
+  flex-direction: column;
   background-color: var(--pneumatic-color-white) !important;
   border: var(--pneumatic-color-black16) !important;
 
   &-popper {
+    top: 100% !important;
+    left: 0 !important;
+    margin-top: 0 !important;
+    transform: translate3d(0, 0, 0) !important;
     z-index: 20 !important;
 
     .react-datepicker {
@@ -147,6 +153,39 @@
     }
   }
 
+
+
+
+
+  &-time__input {
+    margin: 0 !important;
+    width: 100% !important;
+  }
+
+  &-time__input-container {
+    width: 100% !important;
+  }
+
+  &__input-time-container {
+    width: 100% !important;
+    margin: 0;
+
+    input {
+      @mixin font-text;
+
+      padding: 0;
+      margin: 0;
+      font-size: 1.5rem;
+      height: 4rem;
+      border-radius: 0.8rem;
+    }
+  }
+
+
+
+
+  
+
   &__current-month,
   &-time__header {
     @mixin font-text;
@@ -154,31 +193,19 @@
   }
 }
 
-// ===================
-// Not Check
-// ===================
-
 .react-datepicker-popper[data-placement^='top'] .react-datepicker__triangle,
+.react-datepicker-popper[data-placement^='bottom'] .react-datepicker__triangle,
 .react-datepicker__year-read-view--down-arrow,
 .react-datepicker__month-read-view--down-arrow,
 .react-datepicker__month-year-read-view--down-arrow {
-  border-top-color: var(----pneumatic-color-white) !important;
+  display: none !important;
 }
 
-.react-datepicker-popper[data-placement^='top'] .react-datepicker__triangle::before,
-.react-datepicker__year-read-view--down-arrow::before,
-.react-datepicker__month-read-view--down-arrow::before,
-.react-datepicker__month-year-read-view--down-arrow::before {
-  border-top-color: var(--pneumatic-color-black16) !important;
-}
 
-.react-datepicker-popper[data-placement^='bottom'] .react-datepicker__triangle {
-  border-bottom-color: var(----pneumatic-color-white) !important;
-}
 
-.react-datepicker-popper[data-placement^='bottom'] .react-datepicker__triangle::before {
-  border-bottom-color: var(--pneumatic-color-black16) !important;
-}
+// ===================
+// Not Check
+// ===================
 
 .react-datepicker__day,
 .react-datepicker__time-name {

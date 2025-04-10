@@ -1,5 +1,3 @@
-/* eslint-disable */
-/* prettier-ignore */
 import {
   all,
   fork,
@@ -36,6 +34,7 @@ import {
   changeTaskWorkflowLog,
   setTaskWorkflowIsLoading,
   changeTaskWorkflowLogViewSettings,
+  TChangeTaskWorkflowLogViewSettings,
 } from './actions';
 import { getTask } from '../../api/getTask';
 import { ITaskAPI } from '../../types/tasks';
@@ -50,7 +49,6 @@ import {
   patchTaskInList,
   setGeneralLoaderVisibility,
   shiftTaskList,
-  TChangeWorkflowLogViewSettings,
   TSendWorkflowLogComment,
   usersFetchFinished,
 } from '../actions';
@@ -63,6 +61,8 @@ import { TChannelAction } from '../tasks/saga';
 import { getCurrentTask, getTaskPerformers } from '../selectors/task';
 import { addTaskPerformer } from '../../api/addTaskPerformer';
 import { removeTaskPerformer } from '../../api/removeTaskPerformer';
+import { addTaskPerformerGroup } from '../../api/addTaskPerformerGroup';
+import { removeTaskPerformerGroup } from '../../api/removeTaskPerformerGroup';
 import { addTaskGuest } from '../../api/addTaskGuest';
 import { removeTaskGuest } from '../../api/removeTaskGuest';
 import { TUserListItem } from '../../types/user';
@@ -80,15 +80,15 @@ import {
   mapBackendWorkflowToRedux,
   mapOutputToCompleteTask,
 } from '../../utils/mappers';
-import { toTspDate } from '../../utils/dateTime';
+import { toTspDate, formatDateToISOInObject } from '../../utils/dateTime';
 
 import { IStoreTask } from '../../types/redux';
 import { getWorkflow } from '../../api/getWorkflow';
-import { getWorkflowLog } from '../../api/getWorkflowLog';
 import { EWorkflowsLogSorting, IWorkflowLogItem, TWorkflowDetailsResponse } from '../../types/workflow';
 import { sendWorkflowComment } from '../../api/sendWorkflowComment';
 import { mapFilesToRequest } from '../../utils/workflows';
-import { formatDateToISOInObject } from '../../utils/dateTime';
+import { ETemplateOwnerType, RawPerformer } from '../../types/template';
+import { getTaskWorkflowLog } from '../../api/getTaskWorkflowLog';
 
 function* fetchTask({ payload: { taskId, viewMode } }: TLoadCurrentTask) {
   const {
@@ -100,10 +100,9 @@ function* fetchTask({ payload: { taskId, viewMode } }: TLoadCurrentTask) {
 
   try {
     if (!Number.isInteger(taskId)) {
-      throw {
-        message: 'Not found.',
-        status: EResponseStatuses.NotFound,
-      };
+      const error = new Error('Not found.');
+      (error as any).status = EResponseStatuses.NotFound;
+      throw error;
     }
 
     yield put(setCurrentTaskStatus(ETaskStatus.Loading));
@@ -115,10 +114,11 @@ function* fetchTask({ payload: { taskId, viewMode } }: TLoadCurrentTask) {
     yield put(setCurrentTask(formattedTask));
 
     if (viewMode !== ETaskCardViewMode.Guest) {
-      yield loadTaskWorkflow(task.workflow.id);
+      yield loadTaskWorkflow(task.workflow.id, task.id);
     } else {
       yield put(
         changeTaskWorkflowLogViewSettings({
+          taskId: task.id,
           id: task.workflow.id,
           sorting,
           comments: isCommentsShown,
@@ -152,7 +152,7 @@ function* fetchTask({ payload: { taskId, viewMode } }: TLoadCurrentTask) {
   }
 }
 
-function* loadTaskWorkflow(workflowId: number) {
+function* loadTaskWorkflow(workflowId: number, taskId: number) {
   const {
     workflowLog: { isCommentsShown, sorting },
   }: IStoreTask = yield select(getTaskStore);
@@ -164,8 +164,8 @@ function* loadTaskWorkflow(workflowId: number) {
 
     const [workflow, workflowLog]: [TWorkflowDetailsResponse, IWorkflowLogItem[]] = yield all([
       getWorkflow(workflowId),
-      getWorkflowLog({
-        workflowId,
+      getTaskWorkflowLog({
+        taskId,
         sorting,
         comments: isCommentsShown,
       }),
@@ -186,18 +186,19 @@ function* loadTaskWorkflow(workflowId: number) {
 }
 
 function* loadTaskWorkflowLog({
-  payload: { id, sorting, comments, isOnlyAttachmentsShown },
-}: TChangeWorkflowLogViewSettings) {
+  payload: { taskId, id, sorting, comments, isOnlyAttachmentsShown },
+}: TChangeTaskWorkflowLogViewSettings) {
   yield put(changeTaskWorkflowLog({ isLoading: true }));
 
   try {
     const timezone: ReturnType<typeof getUserTimezone> = yield select(getUserTimezone);
-    const fetchedProcessLog: IWorkflowLogItem[] = yield getWorkflowLog({
-      workflowId: id,
+    const fetchedProcessLog: IWorkflowLogItem[] = yield getTaskWorkflowLog({
+      taskId,
       sorting,
       comments,
       isOnlyAttachmentsShown,
     });
+
     const formattedFetchedProcessLog = mapBackandworkflowLogToRedux(fetchedProcessLog, timezone);
 
     yield put(changeTaskWorkflowLog({ workflowId: id, items: formattedFetchedProcessLog }));
@@ -255,7 +256,12 @@ function* addTaskGuestSaga({
     const uploadedGuest: TUserListItem = yield call(addTaskGuest, taskId, guestEmail);
     const newUsers = [...currentUsers, uploadedGuest];
     yield put(usersFetchFinished(newUsers));
-    yield addPerformersToList([uploadedGuest.id]);
+    yield addPerformersToList([
+      {
+        sourceId: uploadedGuest.id,
+        type: ETemplateOwnerType.User,
+      },
+    ]);
     onEndUploading?.();
   } catch (error) {
     NotificationManager.warning({ message: getErrorMessage(error) });
@@ -347,17 +353,17 @@ export function* setTaskReverted({ payload: { workflowId: processId, viewMode, t
   }
 }
 
-function* addPerformersToList(userIds: number[]) {
+function* addPerformersToList(userIds: RawPerformer[]) {
   const performers: ReturnType<typeof getTaskPerformers> = yield select(getTaskPerformers);
 
   const newPerformers = [...performers, ...userIds];
   yield put(changeTaskPerformers(newPerformers));
 }
 
-function* removePerformersFromList(userId: number[]) {
+function* removePerformersFromList(userId: RawPerformer[]) {
   const performers: ReturnType<typeof getTaskPerformers> = yield select(getTaskPerformers);
 
-  const newPerformers = performers.filter((performerId) => !userId.includes(performerId));
+  const newPerformers = performers.filter((performerId) => performerId.sourceId !== userId[0].sourceId);
   yield put(changeTaskPerformers(newPerformers));
 }
 
@@ -401,36 +407,47 @@ function* unmarkChecklistItemSaga({ payload: { listApiName, itemApiName } }: TUn
 type TUpdateTaskPerformersActions = TAddTaskPerformer | TRemoveTaskPerformer;
 export function* updatePerformersSaga({ type, payload: { taskId, userId } }: TUpdateTaskPerformersActions) {
   const users: ReturnType<typeof getUsers> = yield select(getUsers);
-  const user = users.find((user) => user.id === userId);
-  if (!user) {
+  const user = users.find((userItem) => userItem.id === userId.sourceId);
+
+  if (!user && userId.type === ETemplateOwnerType.User) {
     return;
   }
 
   const fetchMethodMap = [
     {
-      check: () => type === ETaskActions.AddTaskPerformer && user.type === 'user',
+      check: () => type === ETaskActions.AddTaskPerformer && user?.type === ETemplateOwnerType.User,
       *fetch() {
-        yield call(addTaskPerformer, taskId, userId);
+        yield call(addTaskPerformer, taskId, userId.sourceId);
       },
     },
     {
-      check: () => type === ETaskActions.RemoveTaskPerformer && user.type === 'user',
+      check: () => type === ETaskActions.RemoveTaskPerformer && user?.type === ETemplateOwnerType.User,
       *fetch() {
-        yield call(removeTaskPerformer, taskId, userId);
+        yield call(removeTaskPerformer, taskId, userId.sourceId);
       },
     },
     {
-      check: () => type === ETaskActions.RemoveTaskPerformer && user.type === 'guest',
+      check: () => type === ETaskActions.AddTaskPerformer && userId.type === ETemplateOwnerType.UserGroup,
       *fetch() {
-        yield call(removeTaskGuest, taskId, user.email);
+        yield call(addTaskPerformerGroup, taskId, userId.sourceId);
+      },
+    },
+    {
+      check: () => type === ETaskActions.RemoveTaskPerformer && userId.type === ETemplateOwnerType.UserGroup,
+      *fetch() {
+        yield call(removeTaskPerformerGroup, taskId, userId.sourceId);
+      },
+    },
+    {
+      check: () => type === ETaskActions.RemoveTaskPerformer && user?.type === 'guest',
+      *fetch() {
+        yield call(removeTaskGuest, taskId, user?.email || '');
       },
     },
   ];
 
   const fetchMethod = fetchMethodMap.find(({ check }) => check())?.fetch;
-  if (!fetchMethod) {
-    return;
-  }
+  if (!fetchMethod) return;
 
   const listAction = type === ETaskActions.AddTaskPerformer ? addPerformersToList : removePerformersFromList;
   const recoverListAction = type === ETaskActions.AddTaskPerformer ? removePerformersFromList : addPerformersToList;
@@ -445,14 +462,16 @@ export function* updatePerformersSaga({ type, payload: { taskId, userId } }: TUp
   }
 }
 
+function* handleSetTaskReverted(action: TSetTaskReverted) {
+  const handlerAction: TChannelAction = {
+    type: ETaskListActions.ChannelAction,
+    handler: () => setTaskReverted(action),
+  };
+  yield put(handlerAction);
+}
+
 export function* watchSetTaskReverted() {
-  yield takeEvery(ETaskActions.SetTaskReverted, function* (action: TSetTaskReverted) {
-    const handlerAction: TChannelAction = {
-      type: ETaskListActions.ChannelAction,
-      handler: () => setTaskReverted(action),
-    };
-    yield put(handlerAction);
-  });
+  yield takeEvery(ETaskActions.SetTaskReverted, handleSetTaskReverted);
 }
 
 export function* watchUpdateTaskPerformers() {
@@ -507,14 +526,16 @@ export function* watchAddTaskGuest() {
   yield takeEvery(ETaskActions.AddTaskGuest, addTaskGuestSaga);
 }
 
+function* handleSetTaskCompleted(action: TSetTaskCompleted) {
+  const handlerAction: TChannelAction = {
+    type: ETaskListActions.ChannelAction,
+    handler: () => setTaskCompleted(action),
+  };
+  yield put(handlerAction);
+}
+
 export function* watchSetTaskCompleted() {
-  yield takeEvery(ETaskActions.SetTaskCompleted, function* (action: TSetTaskCompleted) {
-    const handlerAction: TChannelAction = {
-      type: ETaskListActions.ChannelAction,
-      handler: () => setTaskCompleted(action),
-    };
-    yield put(handlerAction);
-  });
+  yield takeEvery(ETaskActions.SetTaskCompleted, handleSetTaskCompleted);
 }
 
 export function* watchMarkChecklistItem() {

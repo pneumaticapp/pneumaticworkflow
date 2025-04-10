@@ -3,9 +3,10 @@ import { useIntl } from 'react-intl';
 import classnames from 'classnames';
 import { Link } from 'react-router-dom';
 import { debounce } from 'throttle-debounce';
+import { useSelector } from 'react-redux';
 
 import { autoFocusFirstField } from '../../utils/autoFocusFirstField';
-import { EExtraFieldMode, IExtraField } from '../../types/template';
+import { EExtraFieldMode, ETaskPerformerType, ETemplateOwnerType, IExtraField } from '../../types/template';
 import { sanitizeText } from '../../utils/strings';
 import { ITask } from '../../types/tasks';
 import {
@@ -24,7 +25,6 @@ import { ExtraFieldsHelper } from '../TemplateEdit/ExtraFields/utils/ExtraFields
 import { getTaskDetailRoute, getWorkflowDetailedRoute, isTaskDetailRoute } from '../../utils/routes';
 import { Header } from '../UI/Typeography/Header';
 import { RichText } from '../RichText';
-import { UserData } from '../UserData';
 import { getUserFullName } from '../../utils/users';
 import { ExtraFieldIntl } from '../TemplateEdit/ExtraFields';
 import { isArrayWithItems, isEmptyArray } from '../../utils/helpers';
@@ -39,7 +39,7 @@ import {
 import { getEditedFields } from '../TemplateEdit/ExtraFields/utils/getEditedFields';
 import { IntlMessages } from '../IntlMessages';
 import { Button } from '../UI/Buttons/Button';
-import { IAuthUser, IWorkflowLog } from '../../types/redux';
+import { IApplicationState, IAuthUser, IWorkflowLog } from '../../types/redux';
 import { WorkflowLog } from '../Workflows/WorkflowLog';
 import { DoneInfoIcon, PlayLogoIcon, ReturnTaskInfoIcon, ReturnToIcon } from '../icons';
 import { WorkflowLogSkeleton } from '../Workflows/WorkflowLog/WorkflowLogSkeleton';
@@ -48,7 +48,6 @@ import { TUserListItem } from '../../types/user';
 import { trackInviteTeamInPage } from '../../utils/analytics';
 import { Tooltip } from '../UI';
 import { addOrUpdateStorageOutput, getOutputFromStorage } from './utils/storageOutputs';
-import { WorkflowInfo } from './WorkflowInfo';
 import { TaskCarkSkeleton } from './TaskCarkSkeleton';
 import { GuestController } from './GuestsController';
 import { createChecklistExtension, createProgressbarExtension } from './checklist';
@@ -56,6 +55,7 @@ import { DueIn } from '../DueIn';
 import { SubWorkflowsContainer } from './SubWorkflows';
 import { EBgColorTypes, UserPerformer } from '../UI/UserPerformer';
 import { DateFormat } from '../UI/DateFormat';
+import UserDataWithGroup from '../UserDataWithGroup';
 
 import styles from './TaskCard.css';
 import { ReturnModal } from './ReturnModal';
@@ -120,15 +120,15 @@ export function TaskCard({
 }: ITaskCardProps) {
   const { formatMessage } = useIntl();
   const { isMobile } = useCheckDevice();
+
+  const groups = useSelector((state: IApplicationState) => state.groups.list);
   const saveOutputsToStorageDebounced = debounce(300, addOrUpdateStorageOutput);
 
   const guestsControllerRef = useRef<React.ElementRef<typeof GuestController> | null>(null);
   const wrapperRef = useRef(null);
   const workflowLinkRef = useRef(null);
   const [outputValues, setOutputValues] = useState([] as IExtraField[]);
-  const [isLogMinimized, setIsLogMinimized] = useState(true);
   const [isReturnModalOpen, setIsReturnModalOpen] = useState(false);
-  const toggleLog = () => setIsLogMinimized(!isLogMinimized);
 
   useEffect(() => {
     autoFocusFirstField(wrapperRef.current);
@@ -229,11 +229,10 @@ export function TaskCard({
       workflow?.status !== EWorkflowStatus.Finished,
     ].every(Boolean);
 
-    return task.performers.map((userId) => {
+    return task.performers.map((performer) => {
       return (
-        <UserData key={`UserData${userId}`} userId={userId}>
+        <UserDataWithGroup key={performer.sourceId} idItem={performer.sourceId} type={performer.type}>
           {(user) => {
-            if (!user) return null;
             return (
               <UserPerformer
                 user={{
@@ -244,12 +243,12 @@ export function TaskCard({
                 }}
                 bgColor={EBgColorTypes.Light}
                 {...(isPossibleToRemovePerformer && {
-                  onClick: () => removeTaskPerformer({ taskId: task.id, userId }),
+                  onClick: () => removeTaskPerformer({ taskId: task.id, userId: performer }),
                 })}
               />
             );
           }}
-        </UserData>
+        </UserDataWithGroup>
       );
     });
   };
@@ -265,7 +264,10 @@ export function TaskCard({
         value: String(item.id),
       };
     });
-    const mapPerformersDropdownValue = users.filter((user) => task.performers.find((id) => user.id === id));
+
+    const mapPerformersDropdownValue = users.filter((user) =>
+      task.performers.find(({ sourceId }) => user.id === sourceId),
+    );
     const performerDropdownValue = mapPerformersDropdownValue.map((item) => {
       return {
         ...item,
@@ -275,16 +277,55 @@ export function TaskCard({
       };
     });
 
+    const performerGroupDropdownOption = groups.map((group) => {
+      return {
+        ...group,
+        optionType: EOptionTypes.Group,
+        type: ETaskPerformerType.UserGroup,
+        label: group.name,
+        value: String(group.id),
+      };
+    });
+
+    const mapGroupDropdownValue = groups.filter((user) =>
+      task.performers.find(({ sourceId }) => Number(sourceId) === user.id),
+    );
+
+    const performerGroupDropdownValue = mapGroupDropdownValue.map((group) => {
+      return {
+        ...group,
+        optionType: EOptionTypes.Group,
+        label: group.name,
+        value: String(group.id),
+      };
+    });
+
     const onUsersInvited = (invitedUsers: TUserListItem[]) => {
-      invitedUsers.forEach((user) => addTaskPerformer({ taskId: task.id, userId: user.id }));
+      invitedUsers.forEach((user) =>
+        addTaskPerformer({
+          taskId: task.id,
+          userId: {
+            sourceId: user.id,
+            type: ETemplateOwnerType.User,
+          },
+        }),
+      );
     };
 
-    const onRemoveTaskPerformer = ({ id }: Pick<TUsersDropdownOption, 'id'>) => {
-      removeTaskPerformer({ taskId: task.id, userId: id });
+    const onRemoveTaskPerformer = ({ id, optionType }: TUsersDropdownOption) => {
+      const mapPerformer = {
+        sourceId: id,
+        type: optionType as unknown as ETemplateOwnerType,
+      };
+      removeTaskPerformer({ taskId: task.id, userId: mapPerformer });
     };
 
-    const onAddTaskPerformer = ({ id }: TUsersDropdownOption) => {
-      addTaskPerformer({ taskId: task.id, userId: id });
+    const onAddTaskPerformer = ({ id, optionType }: TUsersDropdownOption) => {
+      const mapPerformer = {
+        sourceId: id,
+        type: optionType as unknown as ETemplateOwnerType,
+      };
+      addTaskPerformer({ taskId: task.id, userId: mapPerformer });
     };
 
     return (
@@ -295,8 +336,8 @@ export function TaskCard({
             controlSize="sm"
             className={styles['responsible']}
             placeholder={formatMessage({ id: 'user.search-field-placeholder' })}
-            options={performerDropdownOption}
-            value={performerDropdownValue}
+            options={[...performerGroupDropdownOption, ...performerDropdownOption]}
+            value={[...performerDropdownValue, ...performerGroupDropdownValue]}
             onChange={onAddTaskPerformer}
             onChangeSelected={onRemoveTaskPerformer}
             onUsersInvited={onUsersInvited}
@@ -483,59 +524,34 @@ export function TaskCard({
       return <WorkflowLogSkeleton />;
     }
 
-    const isWorkflowInfoVisible = [
-      workflow,
-      viewMode !== ETaskCardViewMode.Guest,
-      !isLogMinimized,
-      !workflowLog.isOnlyAttachmentsShown,
-    ].every(Boolean);
-
     return (
-      <>
-        <WorkflowLog
-          workflowStatus={workflow?.status || EWorkflowStatus.Running}
-          theme="beige"
-          isLoading={workflowLog.isLoading}
-          items={workflowLog.items}
-          sorting={workflowLog.sorting}
-          isCommentsShown={workflowLog.isCommentsShown}
-          isOnlyAttachmentsShown={workflowLog.isOnlyAttachmentsShown}
-          workflowId={workflowLog.workflowId}
-          includeHeader
-          currentTask={workflow?.currentTask}
-          isLogMinimized={isLogMinimized && viewMode !== ETaskCardViewMode.Guest}
-          areTasksClickable={viewMode === ETaskCardViewMode.Single}
-          minimizedLogMaxEvents={MINIMIZED_LOG_MAX_EVENTS}
-          isCommentFieldHidden={viewMode === ETaskCardViewMode.Guest && status === ETaskStatus.Completed}
-          isToggleCommentHidden={viewMode === ETaskCardViewMode.Guest}
-          sendComment={sendTaskWorkflowLogComments}
-          changeWorkflowLogViewSettings={changeTaskWorkflowLogViewSettings}
-          onUnmount={() =>
-            changeTaskWorkflowLog({
-              isOnlyAttachmentsShown: false,
-              sorting: EWorkflowsLogSorting.New,
-            })
-          }
-          isHideSkippedTasks
-        />
-        {isWorkflowInfoVisible && (
-          <div className={styles['workflow-info']}>
-            <WorkflowInfo workflow={workflow!} />
-          </div>
-        )}
-        {viewMode !== ETaskCardViewMode.Guest && (
-          <Button
-            label={
-              isLogMinimized ? formatMessage({ id: 'task.expand-log' }) : formatMessage({ id: 'task.minimize-log' })
-            }
-            buttonStyle="transparent-yellow"
-            size="md"
-            onClick={toggleLog}
-            className={styles['minimize-log-button']}
-            disabled={workflowLog.isOnlyAttachmentsShown && workflowLog.items.length <= MINIMIZED_LOG_MAX_EVENTS}
-          />
-        )}
-      </>
+      <WorkflowLog
+        workflowStatus={workflow?.status || EWorkflowStatus.Running}
+        theme="beige"
+        isLoading={workflowLog.isLoading}
+        items={workflowLog.items}
+        sorting={workflowLog.sorting}
+        isCommentsShown={workflowLog.isCommentsShown}
+        isOnlyAttachmentsShown={workflowLog.isOnlyAttachmentsShown}
+        workflowId={workflowLog.workflowId}
+        includeHeader
+        currentTask={workflow?.currentTask}
+        isLogMinimized={false}
+        areTasksClickable={viewMode === ETaskCardViewMode.Single}
+        minimizedLogMaxEvents={MINIMIZED_LOG_MAX_EVENTS}
+        isCommentFieldHidden={viewMode === ETaskCardViewMode.Guest && status === ETaskStatus.Completed}
+        isToggleCommentHidden
+        sendComment={sendTaskWorkflowLogComments}
+        changeWorkflowLogViewSettings={changeTaskWorkflowLogViewSettings}
+        onUnmount={() =>
+          changeTaskWorkflowLog({
+            isOnlyAttachmentsShown: false,
+            sorting: EWorkflowsLogSorting.New,
+          })
+        }
+        isInTaskCard
+        taskId={task.id}
+      />
     );
   };
 
@@ -574,6 +590,7 @@ export function TaskCard({
               onSave={setDueDate}
               onRemove={deleteDueDate}
               containerClassName={styles['due-in']}
+              dateCompletedTsp={task.dateCompletedTsp || task.workflow.dateCompletedTsp}
             />
           )}
         </div>

@@ -6,6 +6,7 @@ from pneumatic_backend.processes.enums import (
     PerformerType,
     DueDateRule,
     FieldType,
+    OwnerType
 )
 
 pytestmark = pytest.mark.django_db
@@ -20,7 +21,12 @@ def test_clone__ok(is_active, api_client):
         path='/templates',
         data={
             'name': 'Template',
-            'template_owners': [user.id],
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id
+                },
+            ],
             'is_active': is_active,
             'kickoff': {
                 'fields': [

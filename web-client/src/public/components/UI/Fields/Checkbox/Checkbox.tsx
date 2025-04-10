@@ -79,7 +79,7 @@ export function Checkbox({
           ref={checkboxRef}
         />
         <div className={styles['checkbox__box']}></div>
-        {title && <p className={titleClassNames}>{title}</p>}
+        {title && <div className={titleClassNames}>{title}</div>}
       </label>
     </div>
   );

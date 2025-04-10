@@ -18,7 +18,7 @@ export function createReactionComment({ id, value }: ICreateReaction) {
     url,
     {
       method: 'POST',
-      body: mapRequestBody({
+      data: mapRequestBody({
         value,
       }),
     },

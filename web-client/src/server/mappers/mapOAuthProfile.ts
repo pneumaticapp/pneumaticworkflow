@@ -10,13 +10,9 @@ export interface IApiOAuthProfileResponse {
 }
 
 export function mapOAuthProfile(data?: Partial<IApiOAuthProfileResponse>) {
-  if (!data || (!data.email && !data.token) || !Object.values(data).filter(Boolean).length) {
-    return {};
-  }
+  if (!data || (!data.email && !data.token) || !Object.values(data).filter(Boolean).length) return {};
   const { token, email, first_name: firstName, last_name: lastName, company: companyName, phone, photo } = data;
-  if (token) {
-    return { token };
-  }
+  if (token) return { token };
 
   return {
     email,

@@ -12,6 +12,7 @@ from pneumatic_backend.processes.enums import (
     PredicateOperator,
     FieldType,
     PredicateType,
+    OwnerType
 )
 from pneumatic_backend.processes.models import Template, ConditionTemplate
 from pneumatic_backend.authentication.enums import AuthTokenType
@@ -522,7 +523,12 @@ class TestCreateConditionTemplate:
             data={
                 'name': 'Template',
                 'is_active': True,
-                'template_owners': [user.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                ],
                 'kickoff': {
                     'fields': [
                         {
@@ -616,7 +622,12 @@ class TestCreateConditionTemplate:
             data={
                 'name': 'Template',
                 'is_active': True,
-                'template_owners': [user.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                ],
                 'kickoff': {
                     'fields': [
                         {
@@ -697,7 +708,12 @@ class TestCreateConditionTemplate:
             data={
                 'name': 'Template',
                 'is_active': True,
-                'template_owners': [user.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                ],
                 'kickoff': {
                     'fields': [
                         {
@@ -789,7 +805,12 @@ class TestCreateConditionTemplate:
             data={
                 'name': 'Template',
                 'is_active': True,
-                'template_owners': [user.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                ],
                 'kickoff': {
                     'fields': [
                         {
@@ -890,7 +911,12 @@ class TestCreateConditionTemplate:
             data={
                 'name': 'Template',
                 'is_active': True,
-                'template_owners': [user.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                ],
                 'kickoff': {
                     'fields': [
                         {
@@ -973,7 +999,12 @@ class TestCreateConditionTemplate:
             data={
                 'name': 'Template',
                 'is_active': True,
-                'template_owners': [user.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                ],
                 'kickoff': {
                     'fields': [
                         {
@@ -1063,7 +1094,12 @@ class TestCreateConditionTemplate:
             data={
                 'name': 'Template',
                 'is_active': True,
-                'template_owners': [user.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                ],
                 'kickoff': {
                     'fields': [
                         {
@@ -1170,7 +1206,12 @@ class TestCreateConditionTemplate:
             data={
                 'name': 'Template',
                 'is_active': True,
-                'template_owners': [user.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                ],
                 'kickoff': {
                     'fields': [
                         {
@@ -1277,7 +1318,12 @@ class TestCreateConditionTemplate:
             data={
                 'name': 'Template',
                 'is_active': True,
-                'template_owners': [user.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                ],
                 'kickoff': {
                     'fields': [
                         {
@@ -1364,7 +1410,12 @@ class TestCreateConditionTemplate:
             data={
                 'name': 'Template',
                 'is_active': True,
-                'template_owners': [user.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                ],
                 'kickoff': {
                     'fields': [
                         {
@@ -1441,7 +1492,12 @@ class TestCreateConditionTemplate:
             data={
                 'name': 'Template',
                 'is_active': True,
-                'template_owners': [user.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                ],
                 'kickoff': {
                     'fields': [
                         {

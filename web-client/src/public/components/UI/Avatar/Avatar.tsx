@@ -1,14 +1,14 @@
 import * as React from 'react';
-import * as classnames from 'classnames';
+import classnames from 'classnames';
 
 import { EUserStatus, IUnsavedUser, TUserType } from '../../../types/user';
 import { getUserFullName } from '../../../utils/users';
 import { CustomTooltip } from '../CustomTooltip';
-import { ExternalUserAvatarIcon, GuestUserAvatarIcon, PneumaticAvatarIcon } from '../../icons';
+import { ExternalUserAvatarIcon, GroupIcon, GuestUserAvatarIcon, PneumaticAvatarIcon } from '../../icons';
 
 import styles from './Avatar.css';
 
-export type TAvatarUser = Pick<IUnsavedUser, 'firstName' | 'lastName' | 'email' | 'status' | 'photo'> & {
+export type TAvatarUser = Partial<Pick<IUnsavedUser, 'firstName' | 'lastName' | 'email' | 'status' | 'photo'>> & {
   type?: TUserType;
 };
 type TAvatarSize = 'xxl' | 'xl' | 'lg' | 'md' | 'sm';
@@ -27,10 +27,11 @@ export interface IAvatarProps {
 
 export const getBackgroundColor = (fullName: string) => {
   const name = [...fullName];
-  const hash = name.reduce((result, char) => {
-    // eslint-disable-next-line no-bitwise
-    return char.charCodeAt(0) + ((result << 2) - result);
-  }, 0) % 360;
+  const hash =
+    name.reduce((result, char) => {
+      // eslint-disable-next-line no-bitwise
+      return char.charCodeAt(0) + ((result << 2) - result);
+    }, 0) % 360;
 
   return `hsl(${hash}, 60%, 60%)`;
 };
@@ -40,9 +41,7 @@ const getInitials = (firstName: string, lastName: string) => {
     return null;
   }
 
-  return [firstName, lastName]
-    .map(name => name.slice(0, 1).toUpperCase())
-    .join('');
+  return [firstName, lastName].map((name) => name.slice(0, 1).toUpperCase()).join('');
 };
 
 export function Avatar({
@@ -71,38 +70,35 @@ export function Avatar({
     md: styles['avatar_mobile-md'],
     sm: styles['avatar_mobile-sm'],
   };
-  const sizeClasses = [
-    avatarSizeClassMap[size],
-    sizeMobile && avatarSizeMobileClassMap[sizeMobile],
-  ];
+  const sizeClasses = [avatarSizeClassMap[size], sizeMobile && avatarSizeMobileClassMap[sizeMobile]];
 
-  if (isSystemAvatar) {
-    return <PneumaticAvatarIcon className={classnames(...sizeClasses, className)} />;
-  }
+  if (isSystemAvatar) return <PneumaticAvatarIcon className={classnames(...sizeClasses, className)} />;
 
   if (isEmpty) {
     return (
-      <div className={containerClassName} >
+      <div className={containerClassName}>
         <div className={classnames(styles['avatar'], ...sizeClasses, styles['avatar_empty'], className)} />
       </div>
     );
   }
 
-  if (!user) {
-    return null;
-  }
+  if (!user) return null;
 
-  const {
-    firstName,
-    lastName,
-    photo,
-  } = user;
-  const initials = getInitials(firstName, lastName);
+  const { firstName, lastName, photo } = user;
+  const initials = getInitials(firstName || '', lastName || '');
   const fullName = getUserFullName(user);
 
   const renderImage = () => {
     if (user.type === 'guest') {
       return <GuestUserAvatarIcon className={classnames(styles['avatar'], ...sizeClasses, className)} />;
+    }
+
+    if (user?.type === 'group') {
+      return (
+        <div className={containerClassName}>
+          <GroupIcon className={classnames(styles['avatar'], styles['is-group'], ...sizeClasses, className)} />
+        </div>
+      );
     }
 
     const notRegistratedStatues = [EUserStatus.Invited, EUserStatus.External];
@@ -131,14 +127,9 @@ export function Avatar({
   };
 
   return (
-    <div className={containerClassName} ref={tooltipTargerRef} >
+    <div className={containerClassName} ref={tooltipTargerRef}>
       {renderImage()}
-      {withTooltip && (
-        <CustomTooltip
-          target={tooltipTargerRef}
-          tooltipText={fullName}
-        />
-      )}
+      {withTooltip && <CustomTooltip target={tooltipTargerRef} tooltipText={fullName} />}
     </div>
   );
 }

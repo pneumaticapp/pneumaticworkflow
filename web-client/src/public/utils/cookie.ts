@@ -20,7 +20,7 @@ export const setCookie = (name: string, value: string, config?: ICookieOptions) 
   const { env } = getBrowserConfig();
   const options = Object.assign({}, defaultCookieOptions, config);
 
-  if (env === 'local' || window.location.protocol === 'http') {
+  if (env === 'local' || window.location.protocol === 'http:') {
     options['secure'] = false;
     options['samesite'] = undefined;
   }

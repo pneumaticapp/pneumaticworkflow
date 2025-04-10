@@ -92,14 +92,12 @@ class UserQuerySet(AccountBaseQuerySet):
         self,
         account_id: int,
         user_ids: List[int]
-    ) -> List[int]:
-
-        """ Returns user ids found in the list """
+    ):
 
         return self.filter(
             account_id=account_id,
             id__in=user_ids
-        ).only('id').values_list('id', flat=True)
+        )
 
     def are_users_in_account(self, account_id: int, ids: List[int]) -> bool:
         return not self.filter(~Q(account_id=account_id), id__in=ids).exists()
@@ -140,6 +138,31 @@ class UserQuerySet(AccountBaseQuerySet):
     def user_ids_set(self) -> set:
         qst = self.values_list('id', flat=True)
         return set(elem for elem in qst)
+
+    def user_ids_emails_list(self) -> list:
+        qst = self.values_list('id', 'email')
+        return [elem for elem in qst]
+
+    def get_users_task_except_group(self, task, exclude_group):
+        query = Q(taskperformer__task=task, taskperformer__type='user')
+        query |= (
+            Q(user_groups__taskperformer__task=task)
+            & ~Q(user_groups=exclude_group)
+        )
+        return self.filter(query).distinct()
+
+    def get_users_task(self, task):
+        query = Q(taskperformer__task=task, taskperformer__type='user')
+        query |= Q(user_groups__taskperformer__task=task)
+        return self.filter(query).distinct()
+
+    def get_users_in_performer(self, performers_ids: list):
+        query = Q(taskperformer__id__in=performers_ids)
+        query |= Q(user_groups__taskperformer__id__in=performers_ids)
+        return self.filter(query).distinct()
+
+    def get_users_in_groups(self, group_ids: list):
+        return self.filter(Q(user_groups__id__in=group_ids)).distinct()
 
 
 class GuestQuerySet(AccountBaseQuerySet):

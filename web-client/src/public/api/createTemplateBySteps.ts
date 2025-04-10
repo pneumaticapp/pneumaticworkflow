@@ -10,7 +10,7 @@ export function createTemplateBySteps(template: TTemplateWithTasksOnly) {
   return commonRequest<ITemplateResponse>(
     urls.templateBySteps,
     {
-      body: mapRequestBody(template),
+      data: mapRequestBody(template),
       method: 'POST',
     },
     { shouldThrow: true, responseType: 'empty' },

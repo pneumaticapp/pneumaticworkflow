@@ -33,6 +33,8 @@ from pneumatic_backend.processes.enums import (
     PerformerType,
     FieldType,
     WorkflowStatus,
+    OwnerType,
+    TaskStatus,
 )
 from pneumatic_backend.authentication.services import GuestJWTAuthService
 from pneumatic_backend.processes.api_v2.services import WorkflowEventService
@@ -82,6 +84,7 @@ class TestTaskView:
         assert response.data['delay'] is None
         assert response.data['sub_workflows'] == []
         assert response.data['checklists'] == []
+        assert response.data['status'] == TaskStatus.ACTIVE
 
         workflow_data = response.data['workflow']
         assert workflow_data['id'] == workflow.id
@@ -108,6 +111,8 @@ class TestTaskView:
         api_client.token_authenticate(user)
         workflow = create_test_workflow(user=user, tasks_count=1)
         task = workflow.current_task_instance
+        task.status = TaskStatus.DELAYED
+        task.save()
         delay = Delay.objects.create(
             duration=timedelta(days=2),
             task=task,
@@ -131,6 +136,8 @@ class TestTaskView:
         assert response.data['date_completed'] is None
         assert response.data['date_completed_tsp'] is None
         assert response.data['due_date_tsp'] is None
+        assert response.data['status'] == TaskStatus.DELAYED
+
         delay_data = response.data['delay']
         assert delay_data['id'] == delay.id
         assert delay_data['duration'] == '2 00:00:00'
@@ -164,6 +171,7 @@ class TestTaskView:
             is_account_owner=False
         )
         workflow = create_test_workflow(user)
+        workflow.members.add(another_user)
         tasks = workflow.tasks.order_by('number')
         task = tasks[0]
 
@@ -273,7 +281,12 @@ class TestTaskView:
         api_client.token_authenticate(user)
         request_data = {
             'name': 'Template',
-            'template_owners': [user.id],
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id
+                },
+            ],
             'is_active': True,
             'kickoff': {},
             'tasks': [
@@ -384,6 +397,7 @@ class TestTaskView:
         assert response.data['date_completed_tsp'] == (
             task.date_completed.timestamp()
         )
+        assert response.data['status'] == TaskStatus.COMPLETED
 
     def test_retrieve__user_completed_task__return_as_completed(
         self,
@@ -566,7 +580,8 @@ class TestTaskView:
         assert response.status_code == 200
         assert response.data['id'] == task.id
         assert len(response.data['performers']) == 1
-        assert response.data['performers'][0] == user.id
+        performer = {'source_id': user.id, 'type': 'user'}
+        assert response.data['performers'][0] == performer
 
     def test_retrieve__get_performers_type_field__ok(
         self,
@@ -621,7 +636,8 @@ class TestTaskView:
 
         # assert
         assert len(performers) == 1
-        assert performers[0] == user2.id
+        performer = {'source_id': user2.id, 'type': 'user'}
+        assert performers[0] == performer
 
     def test_retrieve__is_urgent__ok(self, api_client):
 
@@ -1020,7 +1036,8 @@ class TestTaskView:
 
         # assert
         assert response.status_code == 200
-        assert guest.id in response.data['performers']
+        performer = [item['source_id'] for item in response.data['performers']]
+        assert guest.id in performer
         identify_mock.assert_called_once_with(guest)
         group_mock.assert_called_once_with(guest)
 
@@ -1242,18 +1259,19 @@ class TestTaskView:
         sub_wf.active_current_task = 3
         sub_wf.save()
         task_1 = sub_wf.tasks.get(number=1)
-        task_1.is_completed = True
+        task_1.status = TaskStatus.COMPLETED
         task_1.date_completed = timezone.now()
         task_1.save()
 
         task_2 = sub_wf.tasks.get(number=2)
-        task_2.is_completed = True
+        task_2.status = TaskStatus.COMPLETED
         task_2.date_completed = timezone.now()
         task_2.save()
 
         task_3 = sub_wf.tasks.get(number=3)
         task_3.due_date = timezone.now() + timedelta(hours=8)
         task_3.date_started = timezone.now()
+        task_3.status = TaskStatus.ACTIVE
         task_3.save()
         delay = Delay.objects.create(
             duration=timedelta(days=2),
@@ -1294,7 +1312,7 @@ class TestTaskView:
         assert data['template']['id'] == sub_wf.template.id
         assert data['template']['name'] == sub_wf.template.name
         assert data['template']['is_active'] == sub_wf.template.is_active
-        assert data['template']['template_owners'] == [user.id]
+        assert data['owners'] == [user.id]
 
         current_task = data['task']
         assert current_task['id'] == task_3.id
@@ -1307,9 +1325,11 @@ class TestTaskView:
         assert current_task['date_started_tsp'] == (
             task_3.date_started.timestamp()
         )
-        assert current_task['performers'] == [user.id]
+        performer = {'source_id': user.id, 'type': 'user'}
+        assert current_task['performers'] == [performer]
         assert current_task['checklists_total'] == 0
         assert current_task['checklists_marked'] == 0
+        assert current_task['status'] == TaskStatus.ACTIVE
 
         delay_data = current_task['delay']
         assert delay_data['id'] == delay.id

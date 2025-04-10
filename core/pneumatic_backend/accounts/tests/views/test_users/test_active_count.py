@@ -1,6 +1,7 @@
 import pytest
-from pneumatic_backend.accounts.tests.fixtures import (
-    create_test_user, create_test_account,
+from pneumatic_backend.processes.tests.fixtures import (
+    create_test_user,
+    create_test_account,
 )
 
 

@@ -1,14 +1,13 @@
-/* eslint-disable */
-/* prettier-ignore */
 import * as React from 'react';
 import { Avatar } from '../UI/Avatar';
 import { isArrayWithItems } from '../../utils/helpers';
-import { UserData } from '../UserData';
+import { RawPerformer } from '../../types/template';
+import UserDataWithGroup from '../UserDataWithGroup';
 
 import styles from './WorkflowCardUsers.css';
 
 export interface IWorkflowCardUsersProps {
-  users?: number[];
+  users?: RawPerformer[];
   maxUsers?: number;
 }
 
@@ -22,16 +21,12 @@ export function WorkflowCardUsers({ users, maxUsers = MAX_SHOW_USERS }: IWorkflo
 
   return (
     <div className={styles['card-users']}>
-      {users.slice(0, maxUsers).map((userId, index) => (
-        <UserData userId={userId} key={userId}>
-          {user => {
-            if (!user) {
-              return null;
-            }
-
+      {users.slice(0, maxUsers).map(({ type, sourceId }) => {
+        return <UserDataWithGroup idItem={sourceId} type={type}>
+          {(user) => {
             return (
               <Avatar
-                key={index}
+                key={user?.id}
                 user={user}
                 containerClassName={styles['card-user']}
                 showInitials={false}
@@ -40,8 +35,8 @@ export function WorkflowCardUsers({ users, maxUsers = MAX_SHOW_USERS }: IWorkflo
               />
             );
           }}
-        </UserData>
-      ))}
+        </UserDataWithGroup>;
+      })}
       {Boolean(usersLeft) && <span className={styles['card-users__more']}>+{usersLeft}</span>}
     </div>
   );

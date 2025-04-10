@@ -68,6 +68,17 @@ export function TasksLayoutComponent({
 }: TTasksLayoutProps) {
   const dispatch = useDispatch();
   const { formatMessage } = useIntl();
+
+  useEffect(() => {
+    loadTasksFilterTemplates();
+  }, []);
+
+  useEffect(() => {
+    if (templateIdFilter != null) {
+      loadTasksFilterSteps({ templateId: templateIdFilter });
+    }
+  }, [templateIdFilter]);
+
   const renderTaskDetailLeftContent = () => {
     return (
       <ReturnLink
@@ -218,16 +229,6 @@ export function TasksLayoutComponent({
 
     return currentRoute ? propsMap[currentRoute] : {};
   };
-
-  useEffect(() => {
-    loadTasksFilterTemplates();
-  }, []);
-
-  useEffect(() => {
-    if (templateIdFilter != null) {
-      loadTasksFilterSteps({ templateId: templateIdFilter });
-    }
-  }, [templateIdFilter]);
 
   return (
     <>

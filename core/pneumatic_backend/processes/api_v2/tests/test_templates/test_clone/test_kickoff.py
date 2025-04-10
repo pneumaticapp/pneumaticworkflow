@@ -5,7 +5,10 @@ from pneumatic_backend.processes.tests.fixtures import (
 from pneumatic_backend.processes.models import (
     Template
 )
-from pneumatic_backend.processes.enums import PerformerType
+from pneumatic_backend.processes.enums import (
+    PerformerType,
+    OwnerType
+)
 
 pytestmark = pytest.mark.django_db
 
@@ -27,7 +30,12 @@ class TestCopyKickoff:
             data={
                 'name': 'Template',
                 'is_active': is_active,
-                'template_owners': [user.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                ],
                 'kickoff': request_data,
                 'tasks': [
                     {

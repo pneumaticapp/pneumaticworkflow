@@ -1,3 +1,1 @@
-/* eslint-disable */
-/* prettier-ignore */
-export { TeamLayoutContainer as TeamLayout } from './container';
+export { TeamLayout } from './TeamLayout';

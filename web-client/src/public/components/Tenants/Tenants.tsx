@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import classnames from 'classnames';
 import { useIntl } from 'react-intl';
 
-import { AddTenantIcon } from '../icons/AddTenantIcon';
 import { TITLES } from '../../constants/titles';
 import { TChangeTenantNamePayload, TLoginPartnerSuperuserPayload } from '../../redux/actions';
 import { TenantsSkeleton } from './TenantSkeleton/TenantsSkeleton';
@@ -12,6 +11,7 @@ import { Tenant } from './Tenant/Tenant';
 import { TenantGuestBanner } from './TenantGuestBanner';
 
 import styles from './Tenants.css';
+import { AddButton } from '../UI/Buttons/AddButton';
 
 export function Tenants({
   tenants,
@@ -59,20 +59,6 @@ export function Tenants({
     });
   };
 
-  const renderAddTenant = () => {
-    return (
-      <button type="button" className={styles['tenants-add']} onClick={() => handleOpenModalCreate()}>
-        <div className={styles['tenants-add__icon']}>
-          <AddTenantIcon />
-        </div>
-        <div>
-          <h2>{formatMessage({ id: 'tenants.add-title' })}</h2>
-          <p>{formatMessage({ id: 'tenants.add-caption' })}</p>
-        </div>
-      </button>
-    );
-  };
-
   const renderTenants = () => {
     if (isLoading) {
       return new Array(3).fill(1).map((index, item) => {
@@ -106,7 +92,12 @@ export function Tenants({
         {isLoading && <div className="loading" />}
 
         <TenantGuestBanner />
-        {renderAddTenant()}
+        <AddButton
+          title={formatMessage({ id: 'tenants.add-title' })}
+          caption={formatMessage({ id: 'tenants.add-caption' })}
+          onClick={handleOpenModalCreate}
+        />
+
         {renderTenants()}
       </div>
       <TenantModal

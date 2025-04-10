@@ -1,31 +1,31 @@
 from abc import abstractmethod
+
+from rest_framework.decorators import action
 from rest_framework.mixins import DestroyModelMixin
 from rest_framework.viewsets import GenericViewSet
-from rest_framework.decorators import action
-from pneumatic_backend.processes.permissions import StoragePermission
+
+from pneumatic_backend.accounts.models import Account
 from pneumatic_backend.accounts.permissions import (
-    ExpiredSubscriptionPermission,
     BillingPlanPermission,
-)
-from pneumatic_backend.generics.permissions import (
-    IsAuthenticated,
+    ExpiredSubscriptionPermission,
 )
 from pneumatic_backend.generics.mixins.views import (
-    CustomViewSetMixin,
     AnonymousMixin,
+    CustomViewSetMixin,
 )
-from pneumatic_backend.processes.models import FileAttachment
+from pneumatic_backend.generics.permissions import IsAuthenticated
 from pneumatic_backend.processes.api_v2.serializers.file_attachment import (
     FileAttachmentCreateSerializer,
     FileAttachmentSerializer,
 )
-from pneumatic_backend.accounts.models import Account
-from pneumatic_backend.processes.api_v2.services.exceptions import (
-    AttachmentServiceException
-)
 from pneumatic_backend.processes.api_v2.services.attachments import (
-    AttachmentService
+    AttachmentService,
 )
+from pneumatic_backend.processes.api_v2.services.exceptions import (
+    AttachmentServiceException,
+)
+from pneumatic_backend.processes.models import FileAttachment
+from pneumatic_backend.processes.permissions import StoragePermission
 from pneumatic_backend.utils.validation import raise_validation_error
 
 
@@ -64,14 +64,12 @@ class BaseFileAttachmentViewSet(
         slz = self.get_serializer(data=request.data)
         slz.is_valid(raise_exception=True)
         try:
+            service = AttachmentService(account=self.get_account())
             (
                 attachment,
                 upload_url,
                 thumb_upload_url
-            ) = AttachmentService.create(
-                account_id=self.get_account().id,
-                **slz.validated_data
-            )
+            ) = service.create(**slz.validated_data)
         except AttachmentServiceException as ex:
             raise_validation_error(message=ex.message)
         else:
@@ -86,7 +84,8 @@ class BaseFileAttachmentViewSet(
     def publish(self, request, *args, **kwargs):
         instance = self.get_object()
         try:
-            AttachmentService.publish(
+            service = AttachmentService(account=self.get_account())
+            service.publish(
                 attachment=instance,
                 request_user=request.user,
                 auth_type=request.token_type,
@@ -118,5 +117,6 @@ class FileAttachmentViewSet(
     @action(methods=['POST'], detail=True)
     def clone(self, *args, **kwargs):
         instance = self.get_object()
-        clone = AttachmentService.create_clone(instance)
+        service = AttachmentService()
+        clone = service.create_clone(instance)
         return self.response_ok({'id': clone.id})

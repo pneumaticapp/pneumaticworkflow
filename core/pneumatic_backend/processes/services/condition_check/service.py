@@ -15,6 +15,7 @@ from pneumatic_backend.processes.enums import PredicateType
 
 
 class ConditionCheckService:
+
     RESOLVERS = {
         PredicateType.STRING: StringResolver,
         PredicateType.TEXT: StringResolver,

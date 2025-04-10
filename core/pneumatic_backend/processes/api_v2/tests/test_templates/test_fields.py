@@ -7,13 +7,11 @@ from pneumatic_backend.processes.tests.fixtures import (
 )
 from pneumatic_backend.processes.models import (
     Template,
+    TemplateOwner
 )
 from pneumatic_backend.processes.enums import (
     PerformerType,
     FieldType
-)
-from pneumatic_backend.processes.models.templates.owner import (
-    TemplateOwner
 )
 from pneumatic_backend.processes.enums import OwnerType
 
@@ -33,7 +31,16 @@ def test_fields__active__ok(api_client):
     request_data = {
         'name': 'Template',
         'description': 'Desc',
-        'template_owners': [user.id, user2.id],
+        'owners': [
+            {
+                'type': OwnerType.USER,
+                'source_id': user.id
+            },
+            {
+                'type': OwnerType.USER,
+                'source_id': user2.id
+            },
+        ],
         'is_active': True,
         'finalizable': True,
         'kickoff': {
@@ -269,7 +276,7 @@ def test_fields__template_owner__ok(api_client):
     assert response.status_code == 200
 
 
-def test_fields__not_workflow_member_not_owner__permission_denied(api_client):
+def test_fields__not_workflow_member_not_owner__404(api_client):
 
     # arrange
     account = create_test_account()
@@ -287,4 +294,31 @@ def test_fields__not_workflow_member_not_owner__permission_denied(api_client):
     response = api_client.get(f'/templates/{template.id}/fields')
 
     # assert
-    assert response.status_code == 403
+    assert response.status_code == 404
+
+
+def test_fields__workflow_member_and_template_owner__ok(api_client):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_user(is_account_owner=True, account=account)
+    template = create_test_template(user=owner, tasks_count=1)
+    workflow = create_test_workflow(user=owner, template=template)
+    request_user = create_test_user(
+        email='user2@pneumaticapp',
+        account=account
+    )
+    TemplateOwner.objects.create(
+        template=template,
+        account=account,
+        type=OwnerType.USER,
+        user_id=request_user.id,
+    )
+    workflow.members.add(request_user)
+    api_client.token_authenticate(request_user)
+
+    # act
+    response = api_client.get(f'/templates/{template.id}/fields')
+
+    # assert
+    assert response.status_code == 200

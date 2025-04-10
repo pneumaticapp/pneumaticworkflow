@@ -13,6 +13,7 @@ class WorkflowStatus:
         (DELAYED, 'Workflow delayed'),
     )
     RUNNING_STATUSES = {RUNNING, DELAYED}
+    ALL_STATUSES = {RUNNING, DELAYED, DONE}
 
 
 class WorkflowApiStatus:
@@ -76,6 +77,11 @@ class PerformerType:
         (GROUP, GROUP),
         (WORKFLOW_STARTER, WORKFLOW_STARTER),
         (FIELD, FIELD)
+    )
+
+    filter_choices = (
+        (USER, USER),
+        (GROUP, GROUP),
     )
 
 
@@ -332,6 +338,29 @@ class TaskOrdering:
     }
 
 
+class TaskStatus:
+
+    PENDING = 'pending'
+    ACTIVE = 'active'
+    COMPLETED = 'completed'
+    DELAYED = 'snoozed'
+    SKIPPED = 'skipped'
+
+    STARTED_STATUS = (
+        ACTIVE,
+        DELAYED,
+        COMPLETED
+    )
+
+    CHOICES = (
+        (PENDING, PENDING),
+        (ACTIVE, ACTIVE),
+        (COMPLETED, COMPLETED),
+        (DELAYED, DELAYED),
+        (SKIPPED, SKIPPED),
+    )
+
+
 class TemplateIntegrationType:
 
     SHARED = 'shared'
@@ -485,10 +514,27 @@ class WorkflowEventType:
     TASK_PERFORMER_DELETED = 15
     DUE_DATE_CHANGED = 18
     SUB_WORKFLOW_RUN = 19
+    TASK_PERFORMER_GROUP_CREATED = 20
+    TASK_PERFORMER_GROUP_DELETED = 21
 
     URGENT_TYPES = (
         URGENT,
         NOT_URGENT
+    )
+
+    TASK_EVENTS = (
+        TASK_COMPLETE,
+        TASK_REVERT,
+        COMMENT,
+        TASK_PERFORMER_CREATED,
+        TASK_PERFORMER_DELETED,
+        TASK_PERFORMER_GROUP_CREATED,
+        TASK_PERFORMER_GROUP_DELETED,
+        DUE_DATE_CHANGED,
+        REVERT,
+        URGENT,
+        NOT_URGENT,
+        SUB_WORKFLOW_RUN,
     )
 
     CHOICES = (
@@ -514,6 +560,8 @@ class WorkflowEventType:
         (TASK_PERFORMER_DELETED, 'Performer deleted from task'),
         (FORCE_RESUME, 'Workflow resumed'),
         (DUE_DATE_CHANGED, 'Due date changed'),
+        (TASK_PERFORMER_CREATED, 'Performer group added to task'),
+        (TASK_PERFORMER_DELETED, 'Performer group deleted from task'),
     )
 
 

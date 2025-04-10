@@ -18,19 +18,9 @@ export const TemplateView = () => {
     <TemplateLayout>
       <React.Suspense fallback={<div className="loading" />}>
         <Switch>
-          <Route
-            path={ERoutes.TemplateView}
-            component={Template}
-            exact={true}
-          />
-          <Route
-            path={ERoutes.TemplatesCreate}
-            component={Template}
-          />
-          <Route
-            path={ERoutes.TemplatesEdit}
-            component={Template}
-          />
+          <Route path={ERoutes.TemplateView} component={Template} exact={true} />
+          <Route path={ERoutes.TemplatesCreate} component={Template} />
+          <Route path={ERoutes.TemplatesEdit} component={Template} />
           <Redirect to={ERoutes.Error} />
         </Switch>
       </React.Suspense>

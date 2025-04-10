@@ -21,9 +21,9 @@ import { KickoffReduxContainer } from './KickoffRedux';
 import { moveTask } from '../../utils/workflows';
 import { NotificationManager } from '../UI/Notifications';
 import { isArrayWithItems } from '../../utils/helpers';
-import { createTaskApiName, createUUID } from '../../utils/createId';
+import { createOwnerApiName, createTaskApiName, createUUID } from '../../utils/createId';
 import { EMoveDirections } from '../../types/workflow';
-import { ETaskPerformerType, ITemplate, ITemplateTask } from '../../types/template';
+import { ETaskPerformerType, ETemplateOwnerType, ITemplate, ITemplateTask } from '../../types/template';
 import { TLoadTemplateVariablesSuccessPayload } from '../../redux/actions';
 import { ETemplateStatus, IAuthUser } from '../../types/redux';
 import { createEmptyTaskDueDate } from '../../utils/dueDate/createEmptyTaskDueDate';
@@ -85,7 +85,7 @@ export function TemplateEdit({
   loadTemplateVariablesSuccess,
 }: TTemplateEditProps) {
   const { formatMessage } = useIntl();
-  const { tasks, templateOwners } = template;
+  const { tasks, owners } = template;
   const billingPlan = useSelector(getSubscriptionPlan);
   const isFreePlan = billingPlan === ESubscriptionPlan.Free;
   const accessConditions = isSubscribed || isFreePlan;
@@ -132,8 +132,8 @@ export function TemplateEdit({
     }
 
     if (users.length !== prevUsers?.length) {
-      const newTemplateOwners = getNormalizedTemplateOwners(templateOwners, accessConditions, users);
-      setTemplate({ ...template, templateOwners: newTemplateOwners });
+      const newTemplateOwners = getNormalizedTemplateOwners(owners, accessConditions, users);
+      setTemplate({ ...template, owners: newTemplateOwners });
     }
   }, [prevTemplate, prevLocation, prevUsers]);
 
@@ -215,7 +215,17 @@ export function TemplateEdit({
       tasks: [getNewTask({ name: 'First Step', number: 1 })],
       isActive: false,
       finalizable: false,
-      templateOwners: getNormalizedTemplateOwners([authUser.id], accessConditions, users),
+      owners: getNormalizedTemplateOwners(
+        [
+          {
+            sourceId: String(authUser.id),
+            type: ETemplateOwnerType.User,
+            apiName: createOwnerApiName(),
+          },
+        ],
+        accessConditions,
+        users,
+      ),
       wfNameTemplate: '{{date}} — {{template-name}}',
     } as ITemplate;
   };

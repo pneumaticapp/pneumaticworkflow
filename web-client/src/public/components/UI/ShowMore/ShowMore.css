@@ -8,21 +8,21 @@
 
 .show_more__toggle-text {
   font-family: Nunito, sans-serif;
-  font-size: 11px;
+  font-size: 1.1rem;
   font-weight: 800;
-  line-height: 16px;
+  line-height: 1.6rem;
   letter-spacing: 0.05em;
   text-transform: uppercase;
   color: var(--pneumatic-color-black100);
 }
 
 .show_more-icon-wrapper {
-  margin: 0 8px;
+  margin: 0 0.8rem;
   display: flex;
   justify-content: center;
   align-items: center;
-  width: 16px;
-  height: 16px;
+  width: 1.6rem;
+  height: 1.6rem;
   color: var(--pneumatic-color-black32);
   transition: transform 0.3s;
 }
@@ -43,9 +43,21 @@
 }
 
 .content {
-  margin-top: 16px;
+  margin-top: 1.6rem;
   overflow: hidden;
   max-height: 0;
+}
+
+.show_more__button-wrapper {
+  padding-right: 4rem;
+  display: flex;
+  justify-content: space-between;
+}
+
+.show_more__right-vidgets {
+  div {
+    margin: 0;
+  }
 }
 
 .show_more--disabled {

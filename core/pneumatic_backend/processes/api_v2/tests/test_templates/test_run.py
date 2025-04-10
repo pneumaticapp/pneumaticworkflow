@@ -5,9 +5,7 @@ from datetime import timedelta
 from django.utils import timezone
 from pneumatic_backend.analytics.actions import WorkflowActions
 from pneumatic_backend.processes.models import (
-    KickoffValue,
     FieldTemplate,
-    FileAttachment,
     Workflow,
     Template,
     FieldTemplateSelection,
@@ -18,6 +16,9 @@ from pneumatic_backend.processes.models import (
     TaskPerformer,
     RawDueDateTemplate,
     WorkflowEvent,
+    KickoffValue,
+    FileAttachment,
+    TemplateOwner
 )
 from pneumatic_backend.processes.tests.fixtures import (
     create_test_user,
@@ -27,6 +28,7 @@ from pneumatic_backend.processes.tests.fixtures import (
     create_test_guest,
     create_wf_created_webhook,
     create_wf_completed_webhook,
+    create_test_group
 )
 from pneumatic_backend.processes.api_v2.serializers.workflow.events import (
     TaskEventJsonSerializer
@@ -41,12 +43,10 @@ from pneumatic_backend.processes.enums import (
     PredicateOperator,
     DueDateRule,
     WorkflowEventType,
+    TaskStatus,
 )
 from pneumatic_backend.processes.services.workflow_action import (
     WorkflowActionService
-)
-from pneumatic_backend.processes.models.templates.owner import (
-    TemplateOwner
 )
 from pneumatic_backend.accounts.services import (
     UserInviteService
@@ -54,9 +54,6 @@ from pneumatic_backend.accounts.services import (
 from pneumatic_backend.accounts.enums import (
     SourceType,
     BillingPlanType,
-    Language,
-    UserDateFormat,
-    Timezone,
 )
 from pneumatic_backend.authentication.enums import AuthTokenType
 from pneumatic_backend.processes.enums import DirectlyStatus
@@ -248,7 +245,7 @@ def test_run__all__ok(api_client, mocker):
     assert data['template']['id'] == template.id
     assert data['template']['name'] == template_name
     assert data['template']['is_active'] == is_active
-    assert data['template']['template_owners'] == [user.id]
+    assert data['owners'] == [user.id]
     assert data['template']['wf_name_template'] is None
 
     task_data = data['current_task']
@@ -259,7 +256,8 @@ def test_run__all__ok(api_client, mocker):
     assert task_data['delay'] is None
     assert task_data['due_date_tsp'] is None
     assert task_data['date_started_tsp'] == task.date_started.timestamp()
-    assert task_data['performers'] == [user.id]
+    performer = {'source_id': user.id, 'type': 'user'}
+    assert task_data['performers'] == [performer]
     assert task_data['checklists_total'] == 0
     assert task_data['checklists_marked'] == 0
 
@@ -294,7 +292,8 @@ def test_run__all__ok(api_client, mocker):
     assert selection_1_data['is_selected'] is True
     assert len(data['passed_tasks']) == 0
     assert data['id'] == workflow.id
-    assert data['current_task']['performers'] == [user.id]
+    performer = {'source_id': user.id, 'type': 'user'}
+    assert data['current_task']['performers'] == [performer]
 
     # Check created workflow
     assert workflow.name == workflow_name
@@ -998,7 +997,12 @@ def test_run__skip_task__fields_is_empty(api_client, mocker):
         data={
             'name': 'Template',
             'is_active': True,
-            'template_owners': [user.id],
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id
+                },
+            ],
             'kickoff': {
                 'fields': [
                     {
@@ -1206,7 +1210,12 @@ def test_skip_delayed_task__fields_is_empty(mocker, api_client):
         data={
             'name': 'Template',
             'is_active': True,
-            'template_owners': [user.id],
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id
+                },
+            ],
             'kickoff': {
                 'fields': [
                     {
@@ -1271,8 +1280,8 @@ def test_skip_delayed_task__fields_is_empty(mocker, api_client):
     )
     workflow = Workflow.objects.get(id=response.data['id'])
     # activate the second task
-    service = WorkflowActionService(user=user)
-    service.resume_workflow(workflow)
+    service = WorkflowActionService(user=user, workflow=workflow)
+    service.resume_workflow()
 
     # assert
     assert response_create.status_code == 200
@@ -1487,7 +1496,12 @@ def test_run__cancel_delay__ok(api_client, mocker):
         data={
             'name': 'Template',
             'description': 'Desc',
-            'template_owners': [user.id],
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id
+                },
+            ],
             'is_active': True,
             'finalizable': True,
             'kickoff': {
@@ -1547,7 +1561,12 @@ def test_run__cancel_delay__ok(api_client, mocker):
         data={
             'name': 'Template',
             'description': 'Desc',
-            'template_owners': [user.id],
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id
+                },
+            ],
             'is_active': True,
             'finalizable': True,
             'kickoff': {
@@ -2213,9 +2232,15 @@ def test_run__user_field_invited_transfer__ok(
         data={
             'name': 'Template',
             'is_active': True,
-            'template_owners': [
-                account_2_owner.id,
-                account_2_new_user.id
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': account_2_owner.id
+                },
+                {
+                    'type': OwnerType.USER,
+                    'source_id': account_2_new_user.id
+                },
             ],
             'kickoff': {
                 'fields': [
@@ -2643,7 +2668,12 @@ def test_run__task_name_with_field__ok(mocker, api_client):
         data={
             'name': 'Template',
             'is_active': True,
-            'template_owners': [user.id],
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id
+                },
+            ],
             'kickoff': {
                 'fields': [
                     {
@@ -2732,7 +2762,12 @@ def test_run__task_name_with_kickoff_data_value_int__ok(mocker, api_client):
         data={
             'name': 'Template',
             'is_active': True,
-            'template_owners': [user.id],
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id
+                },
+            ],
             'kickoff': {
                 'fields': [
                     {
@@ -2812,7 +2847,12 @@ def test_run__task_name_with_kickoff_data_value_float__ok(mocker, api_client):
         data={
             'name': 'Template',
             'is_active': True,
-            'template_owners': [user.id],
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id
+                },
+            ],
             'kickoff': {
                 'fields': [
                     {
@@ -2895,7 +2935,12 @@ def test_run__task_name_with_invalid_kickoff_data_value__validation_error(
         data={
             'name': 'Template',
             'is_active': True,
-            'template_owners': [user.id],
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id
+                },
+            ],
             'kickoff': {
                 'fields': [
                     {
@@ -2977,7 +3022,12 @@ def test_run__task_name_with_field_2__ok(mocker, api_client):
         data={
             'name': 'Template',
             'is_active': True,
-            'template_owners': [user.id],
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id
+                },
+            ],
             'kickoff': {
                 'fields': [
                     {
@@ -3120,63 +3170,6 @@ def test_run__wf_name_template_with_system_vars__only__ok(
     formatted_date = 'Aug 28, 2024, 10:41AM'
     assert workflow.name == f'{template_name} {formatted_date}'
     assert workflow.name_template == f'{template_name} {formatted_date}'
-
-
-@pytest.mark.skip
-def test_run__wf_name_template__date_in_user_locale__ok(
-    mocker,
-    api_client,
-):
-
-    """ Disabled until testing not run 'python manage.py compilemessages' """
-
-    # arrange
-    mocker.patch(
-        'pneumatic_backend.processes.services.websocket.WSSender.'
-        'send_new_task_notification'
-    )
-    mocker.patch(
-        'pneumatic_backend.analytics.services.AnalyticService.'
-        'workflows_started'
-    )
-    mocker.patch(
-        'pneumatic_backend.processes.services.workflow_action.'
-        'WorkflowEventService.workflow_run_event'
-    )
-    user = create_test_user(
-        language=Language.ru,
-        date_fmt=UserDateFormat.PY_EUROPE_24,
-        tz=Timezone.UTC_9
-    )
-    api_client.token_authenticate(user)
-    template = create_test_template(
-        user=user,
-        is_active=True,
-        tasks_count=1,
-        wf_name_template='{{ date }}',
-    )
-    date = timezone.datetime(
-        year=2024,
-        month=8,
-        day=28,
-        hour=10,
-        minute=41,
-        tzinfo=pytz.timezone('UTC')
-    )
-
-    mocker.patch('django.utils.timezone.now', return_value=date)
-
-    # act
-    response = api_client.post(
-        path=f'/templates/{template.id}/run',
-    )
-
-    # assert
-    assert response.status_code == 200
-    formatted_date = '28 Авг, 2024, 02:41'
-    workflow = Workflow.objects.get(id=response.data['id'])
-    assert workflow.name == formatted_date
-    assert workflow.name_template == formatted_date
 
 
 def test_run__wf_name_template_with_system_and_kickoff_vars__ok(
@@ -3549,6 +3542,84 @@ def test_run__ancestor_task_id__ok(mocker, api_client):
     )
 
 
+def test_run__ancestor_task_id_user_in_group__ok(mocker, api_client):
+
+    # arrange
+    mocker.patch(
+        'pneumatic_backend.processes.services.websocket.WSSender.'
+        'send_new_task_notification'
+    )
+    mocker.patch(
+        'pneumatic_backend.analytics.services.AnalyticService.'
+        'workflows_started'
+    )
+    mocker.patch(
+        'pneumatic_backend.processes.api_v2.services.templates.'
+        'integrations.TemplateIntegrationsService.api_request',
+    )
+    workflow_run_event_mock = mocker.patch(
+        'pneumatic_backend.processes.services.workflow_action.'
+        'WorkflowEventService.workflow_run_event'
+    )
+    sub_workflow_run_event_mock = mocker.patch(
+        'pneumatic_backend.processes.services.workflow_action.'
+        'WorkflowEventService.sub_workflow_run_event'
+    )
+    user = create_test_user()
+    performer = create_test_user(
+        account=user.account,
+        email='test@test.test',
+        is_account_owner=False
+    )
+    group = create_test_group(user=user, users=[performer, ])
+    template = create_test_template(
+        user=user,
+        is_active=True,
+        tasks_count=1
+    )
+    TemplateOwner.objects.create(
+        template=template,
+        account=performer.account,
+        type=OwnerType.USER,
+        user_id=performer.id,
+    )
+    parent_workflow = create_test_workflow(
+        user=user,
+        tasks_count=1
+    )
+    ancestor_task = parent_workflow.current_task_instance
+    TaskPerformer.objects.create(
+        task_id=ancestor_task.id,
+        type=PerformerType.GROUP,
+        group_id=group.id,
+        directly_status=DirectlyStatus.CREATED
+    )
+    api_client.token_authenticate(performer)
+
+    # act
+    response = api_client.post(
+        path=f'/templates/{template.id}/run',
+        data={
+            'name': 'Test name',
+            'ancestor_task_id': ancestor_task.id
+        }
+    )
+
+    # assert
+    assert response.status_code == 200
+    workflow = Workflow.objects.get(id=response.data['id'])
+    assert workflow.ancestor_task_id == ancestor_task.id
+    workflow_run_event_mock.assert_called_once_with(
+        workflow=workflow,
+        user=performer
+    )
+    sub_workflow_run_event_mock.assert_called_once_with(
+        workflow=parent_workflow,
+        sub_workflow=workflow,
+        user=performer
+    )
+
+
 def test_run__ancestor_task__is_null__validation_error(mocker, api_client):
 
     # arrange
@@ -3868,7 +3939,7 @@ def test_run__ancestor_task__completed__validation_error(
         tasks_count=1,
     )
     ancestor_task = parent_workflow.current_task_instance
-    ancestor_task.is_completed = True
+    ancestor_task.status = TaskStatus.COMPLETED
     ancestor_task.date_completed = timezone.now()
     ancestor_task.save()
     ancestor_task.performers.add(user)
@@ -4350,8 +4421,9 @@ def test_run__all_fields__ok(
         user_agent='Firefox'
     )
     action_service_init_mock.assert_called_once_with(
+        workflow=workflow,
         user=user,
         is_superuser=False,
         auth_type=AuthTokenType.USER
     )
-    start_workflow_mock.assert_called_once_with(workflow)
+    start_workflow_mock.assert_called_once_with()

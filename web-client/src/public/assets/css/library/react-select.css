@@ -1,4 +1,5 @@
 .react-select {
+  
   .react-select__control .react-select__indicators {
     transition: transform 0.3s;
     transform: rotate(0deg);
@@ -57,9 +58,27 @@
     overflow: hidden !important;
   }
 
+  &.is-static .react-select__menu {
+    position: relative;
+    padding: 0 !important;
+  }
+
+  &.is-static .scrollbar-container {
+    padding: 0 0.4rem 0.4rem !important;
+  }
+
   .react-select__menu-list.is-sm {
     position: absolute;
     min-width: 30.4rem !important;
+    z-index: 9999;
+
+    &.is-left {
+      right: 0;
+    }
+  }
+
+  .react-select__menu-list.is-sm .react-select__menu {
+    position: static !important;
   }
 
   .react-select__group-heading {

@@ -45,3 +45,15 @@ export interface IUserInviteResponse {
 export type TTeamInvitesPopup = boolean;
 
 export type TInviteType = 'google' | 'microsoft' | 'email';
+
+export interface IGroup {
+  id: number;
+  name: string;
+  photo: string | null;
+  users: number[];
+}
+
+export enum ETeamPages {
+  Users = 'users',
+  Groups = 'groups',
+}

@@ -10,6 +10,7 @@ from pneumatic_backend.processes.models import (
 )
 from pneumatic_backend.processes.enums import (
     PerformerType,
+    OwnerType
 )
 from pneumatic_backend.authentication.enums import AuthTokenType
 from pneumatic_backend.processes.messages import template as messages
@@ -76,7 +77,12 @@ def test_update__create__ok(api_client, mocker):
             'id': template.id,
             'name': template.name,
             'is_active': True,
-            'template_owners': [user.id],
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id
+                },
+            ],
             'kickoff': {},
             'tasks': [
                 {
@@ -182,7 +188,12 @@ def test_update__delete__ok(api_client, mocker):
             'id': template.id,
             'name': template.name,
             'is_active': True,
-            'template_owners': [user.id],
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id
+                },
+            ],
             'kickoff': {},
             'tasks': [
                 {
@@ -254,7 +265,12 @@ def test_update__fields_with_equal_api_names__validation_error(
             'id': template.id,
             'name': template.name,
             'is_active': True,
-            'template_owners': [user.id],
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id
+                },
+            ],
             'kickoff': {},
             'tasks': [
                 {

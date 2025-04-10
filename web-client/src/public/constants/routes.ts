@@ -38,6 +38,8 @@ export enum ERoutes {
   Highlights = '/workflow-highlights/',
   HighlightsByTemplateId = '/workflow-highlights/?templates=:templateId',
   Team = '/team/',
+  Groups = '/team/groups/',
+  GroupDetails = '/team/groups/:id',
   Reports = '/reports/',
   Help = '/help/',
   Integrations = '/integrations/',

@@ -1,20 +1,22 @@
 import pytest
 from django.contrib.auth.models import AnonymousUser
+
+from pneumatic_backend.authentication.enums import AuthTokenType
+from pneumatic_backend.processes.api_v2.services import exceptions
 from pneumatic_backend.processes.api_v2.services.attachments import (
     AttachmentService
 )
-from pneumatic_backend.processes.tests.fixtures import (
-    create_test_user,
-    create_test_workflow,
-)
-from pneumatic_backend.authentication.enums import AuthTokenType
 from pneumatic_backend.processes.enums import FieldType
+from pneumatic_backend.processes.messages import workflow as messages
 from pneumatic_backend.processes.models import (
     FileAttachment,
     TaskField,
 )
-from pneumatic_backend.processes.api_v2.services import exceptions
-from pneumatic_backend.processes.messages import workflow as messages
+from pneumatic_backend.processes.tests.fixtures import (
+    create_test_user,
+    create_test_workflow,
+    create_test_account
+)
 from pneumatic_backend.storage.google_cloud import GoogleCloudService
 
 
@@ -46,9 +48,10 @@ def test_clone__ok():
         workflow=workflow,
         output=task_field
     )
+    service = AttachmentService(account=user.account)
 
     # act
-    clone_attachment = AttachmentService.create_clone(
+    clone_attachment = service.create_clone(
         instance=attachment,
         orphan=False
     )
@@ -74,9 +77,10 @@ def test_clone__orphan__ok():
         thumbnail_url='https://thumb.to.file.png',
         account_id=user.account_id
     )
+    service = AttachmentService(account=user.account)
 
     # act
-    clone_attachment = AttachmentService.create_clone(
+    clone_attachment = service.create_clone(
         instance=attachment,
         orphan=True
     )
@@ -94,7 +98,8 @@ def test_clone__orphan__ok():
 def test_publish__authenticated_user__ok(mocker):
 
     # arrange
-    user = create_test_user()
+    account = create_test_account()
+    user = create_test_user(account=account)
     attachment = mocker.Mock(
         url='https://link.to.file.png',
         thumbnail_url=None
@@ -107,9 +112,10 @@ def test_publish__authenticated_user__ok(mocker):
         'pneumatic_backend.analytics.services.AnalyticService'
         '.attachments_uploaded'
     )
+    service = AttachmentService(account=user.account)
 
     # act
-    AttachmentService.publish(
+    service.publish(
         attachment=attachment,
         auth_type=AuthTokenType.USER,
         request_user=user,
@@ -117,7 +123,7 @@ def test_publish__authenticated_user__ok(mocker):
     )
 
     # assert
-    publish_file_mock.assert_called_once_with(attachment.url)
+    publish_file_mock.assert_called_once_with(url=attachment.url)
     analytics_mock.assert_called_once_with(
         attachment=attachment,
         user=user,
@@ -130,7 +136,8 @@ def test_publish__authenticated_user__ok(mocker):
 def test_publish__thumbnail__ok(mocker):
 
     # arrange
-    user = create_test_user()
+    account = create_test_account()
+    user = create_test_user(account=account)
     attachment = mocker.Mock(
         url='https://link.to.file.png',
         thumbnail_url='https://link.thumb.file.png',
@@ -143,9 +150,10 @@ def test_publish__thumbnail__ok(mocker):
         'pneumatic_backend.analytics.services.AnalyticService'
         '.attachments_uploaded'
     )
+    service = AttachmentService(account=user.account)
 
     # act
-    AttachmentService.publish(
+    service.publish(
         attachment=attachment,
         auth_type=AuthTokenType.USER,
         request_user=user,
@@ -163,6 +171,7 @@ def test_publish__thumbnail__ok(mocker):
 def test_publish__anonymous_user__ok(mocker):
 
     # arrange
+    account = create_test_account()
     user = AnonymousUser()
     attachment = mocker.Mock(
         url='https://link.to.file.png',
@@ -177,9 +186,10 @@ def test_publish__anonymous_user__ok(mocker):
         '.attachments_uploaded'
     )
     anonymous_id = 'some id'
+    service = AttachmentService(account=account)
 
     # act
-    AttachmentService.publish(
+    service.publish(
         attachment=attachment,
         auth_type=AuthTokenType.PUBLIC,
         request_user=user,
@@ -188,7 +198,7 @@ def test_publish__anonymous_user__ok(mocker):
     )
 
     # assert
-    publish_file_mock.assert_called_once_with(attachment.url)
+    publish_file_mock.assert_called_once_with(url=attachment.url)
     analytics_mock.assert_called_once_with(
         attachment=attachment,
         user=user,
@@ -201,7 +211,8 @@ def test_publish__anonymous_user__ok(mocker):
 def test_create__ok(mocker):
 
     # arrange
-    user = create_test_user()
+    account = create_test_account()
+    create_test_user(account=account)
     upload_url = 'some upload url'
     public_url = 'some public url'
     filename = 'image.png'
@@ -225,14 +236,14 @@ def test_create__ok(mocker):
         'AttachmentService._create_attachment',
         return_value=attachment
     )
+    service = AttachmentService(account=account)
 
     # act
     (
         result_attachment,
         result_upload_url,
         result_thumb_upload_url
-    ) = AttachmentService.create(
-        user.account_id,
+    ) = service.create(
         filename=filename,
         content_type=content_type,
         size=size,
@@ -250,7 +261,6 @@ def test_create__ok(mocker):
         thumbnail_url=None,
         name=filename,
         size=size,
-        account_id=user.account_id,
     )
     assert result_attachment == attachment
     assert result_upload_url == upload_url
@@ -260,7 +270,8 @@ def test_create__ok(mocker):
 def test_create__thumbnail__ok(mocker):
 
     # arrange
-    user = create_test_user()
+    account = create_test_account()
+    create_test_user(account=account)
     upload_url = 'some upload url'
     public_url = 'some public url'
     filename = 'image.png'
@@ -284,14 +295,14 @@ def test_create__thumbnail__ok(mocker):
         'AttachmentService._create_attachment',
         return_value=attachment
     )
+    service = AttachmentService(account=account)
 
     # act
     (
         result_attachment,
         result_upload_url,
         result_thumb_upload_url
-    ) = AttachmentService.create(
-        user.account_id,
+    ) = service.create(
         filename=filename,
         content_type=content_type,
         size=size,
@@ -317,7 +328,6 @@ def test_create__thumbnail__ok(mocker):
         thumbnail_url=public_url,
         name=filename,
         size=size,
-        account_id=user.account_id,
     )
     assert result_attachment == attachment
     assert result_upload_url == upload_url
@@ -333,9 +343,10 @@ def test_get_unique_filename__ok(mocker):
         'pneumatic_backend.processes.api_v2.services.attachments.get_salt',
         return_value=salt
     )
+    service = AttachmentService()
 
     # act
-    result = AttachmentService._get_unique_filename(origin_filename)
+    result = service._get_unique_filename(origin_filename)
 
     # assert
     assert result == f'{salt}_{origin_filename}'
@@ -350,14 +361,14 @@ def test_create_attachment__ok():
     thumb_url = 'some public url'
     filename = 'image.png'
     size = 215678
+    service = AttachmentService(account=user.account)
 
     # act
-    attachment = AttachmentService._create_attachment(
+    attachment = service._create_attachment(
         name=filename,
         url=public_url,
         thumbnail_url=thumb_url,
         size=size,
-        account_id=user.account_id
     )
 
     # assert
@@ -371,6 +382,7 @@ def test_create_attachment__ok():
 def test_publish_file__ok(mocker):
 
     # arrange
+    account = create_test_account()
     cloud_service = mocker.Mock()
     blob = True
     cloud_service.make_public = mocker.Mock(return_value=blob)
@@ -381,9 +393,10 @@ def test_publish_file__ok(mocker):
     )
     filename = 'filename.png'
     url = f'http://some/{filename}'
+    service = AttachmentService(account=account)
 
     # act
-    AttachmentService._publish_file(url)
+    service._publish_file(url=url)
 
     # assert
     get_cloud_service_mock.assert_called_once()
@@ -393,6 +406,7 @@ def test_publish_file__ok(mocker):
 def test_publish_file__empty_blob__raise_exception(mocker):
 
     # arrange
+    account = create_test_account()
     cloud_service = mocker.Mock()
     blob = None
     cloud_service.make_public = mocker.Mock(return_value=blob)
@@ -403,10 +417,11 @@ def test_publish_file__empty_blob__raise_exception(mocker):
     )
     filename = 'filename.png'
     url = f'http://some/{filename}'
+    service = AttachmentService(account=account)
 
     # act
     with pytest.raises(exceptions.AttachmentEmptyBlobException) as ex:
-        AttachmentService._publish_file(url)
+        service._publish_file(url=url)
 
     # assert
     get_cloud_service_mock.assert_called_once()
@@ -417,6 +432,7 @@ def test_publish_file__empty_blob__raise_exception(mocker):
 def test_publish_file__make_public_exception__raise_exception(mocker):
 
     # arrange
+    account = create_test_account()
     cloud_service = mocker.Mock()
     cloud_service.make_public = mocker.Mock(
         side_effect=Exception()
@@ -428,10 +444,11 @@ def test_publish_file__make_public_exception__raise_exception(mocker):
     )
     filename = 'filename.png'
     url = f'http://some/{filename}'
+    service = AttachmentService(account=account)
 
     # act
     with pytest.raises(exceptions.CloudServiceException) as ex:
-        AttachmentService._publish_file(url)
+        service._publish_file(url=url)
 
     # assert
     get_cloud_service_mock.assert_called_once()
@@ -442,6 +459,7 @@ def test_publish_file__make_public_exception__raise_exception(mocker):
 def test_get_new_file_urls__ok(mocker):
 
     # arrange
+    account = create_test_account()
     filename = 'some filename'
     content_type = 'some content_type'
     upload_url = 'some upload url'
@@ -455,14 +473,15 @@ def test_get_new_file_urls__ok(mocker):
         'AttachmentService._get_cloud_service',
         return_value=cloud_service
     )
+    service = AttachmentService(account=account)
 
     # act
     (
         result_upload_url,
         result_public_url
-    ) = AttachmentService._get_new_file_urls(
+    ) = service._get_new_file_urls(
         filename=filename,
-        content_type=content_type
+        content_type=content_type,
     )
 
     # assert
@@ -478,6 +497,7 @@ def test_get_new_file_urls__ok(mocker):
 def test_get_new_file_urls__exception__raise_exception(mocker):
 
     # arrange
+    account = create_test_account()
     filename = 'some filename'
     content_type = 'some content_type'
     cloud_service = mocker.Mock()
@@ -489,12 +509,13 @@ def test_get_new_file_urls__exception__raise_exception(mocker):
         'AttachmentService._get_cloud_service',
         return_value=cloud_service
     )
+    service = AttachmentService(account=account)
 
     # act
     with pytest.raises(exceptions.CloudServiceException) as ex:
-        AttachmentService._get_new_file_urls(
+        service._get_new_file_urls(
             filename=filename,
-            content_type=content_type
+            content_type=content_type,
         )
 
     # assert
@@ -509,6 +530,7 @@ def test_get_new_file_urls__exception__raise_exception(mocker):
 def test__get_cloud_service(mocker):
 
     # arrange
+    account = create_test_account()
     mocker.patch.object(
         GoogleCloudService,
         attribute='__init__',
@@ -520,9 +542,10 @@ def test__get_cloud_service(mocker):
         attribute='__new__',
         return_value=service_mock
     )
+    service = AttachmentService(account=account)
 
     # act
-    service = AttachmentService._get_cloud_service()
+    service = service._get_cloud_service()
 
     # assert
     service_new_mock.assert_called_once()

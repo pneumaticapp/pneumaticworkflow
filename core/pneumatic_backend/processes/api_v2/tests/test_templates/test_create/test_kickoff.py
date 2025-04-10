@@ -4,7 +4,10 @@ from pneumatic_backend.processes.tests.fixtures import (
     create_test_user
 )
 from pneumatic_backend.processes.models import Kickoff
-from pneumatic_backend.processes.enums import PerformerType
+from pneumatic_backend.processes.enums import (
+    PerformerType,
+    OwnerType
+)
 from pneumatic_backend.authentication.enums import AuthTokenType
 
 UserModel = get_user_model()
@@ -32,7 +35,12 @@ class TestCreateKickoff:
             path='/templates',
             data={
                 'name': 'Template',
-                'template_owners': [user.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                ],
                 'is_active': True,
                 'kickoff': {},
                 'tasks': [
@@ -84,7 +92,12 @@ class TestCreateKickoff:
             data={
                 'name': 'Template',
                 'is_active': True,
-                'template_owners': [user.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                ],
                 'kickoff': request_data,
                 'tasks': [
                     {
@@ -138,7 +151,12 @@ class TestCreateKickoff:
             data={
                 'name': 'Template',
                 'is_active': True,
-                'template_owners': [user.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                ],
                 'tasks': [
                     {
                         'number': 1,
@@ -176,7 +194,12 @@ class TestCreateKickoff:
             path='/templates',
             data={
                 'name': 'Template',
-                'template_owners': [user.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                ],
                 'is_active': False,
                 'tasks': [
                     {
@@ -215,7 +238,12 @@ class TestCreateKickoff:
             path='/templates',
             data={
                 'name': 'Template',
-                'template_owners': [user.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                ],
                 'is_active': False,
                 'kickoff': None,
                 'tasks': [

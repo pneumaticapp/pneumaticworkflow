@@ -132,6 +132,7 @@ class RawPerformerTemplateSchemaV1(serializers.ModelSerializer):
         fields = (
             'type',
             'user_id',
+            'group_id',
             'api_name',
             'field',
         )

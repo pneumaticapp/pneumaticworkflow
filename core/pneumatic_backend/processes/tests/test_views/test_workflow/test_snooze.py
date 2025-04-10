@@ -2,7 +2,10 @@ import pytest
 from datetime import timedelta
 from django.utils import timezone
 from django.contrib.auth import get_user_model
-from pneumatic_backend.processes.enums import WorkflowStatus
+from pneumatic_backend.processes.enums import (
+    WorkflowStatus,
+    OwnerType
+)
 from pneumatic_backend.processes.tests.fixtures import (
     create_test_user,
     create_test_workflow,
@@ -11,8 +14,11 @@ from pneumatic_backend.processes.tests.fixtures import (
 from pneumatic_backend.processes.services.exceptions import (
     WorkflowActionServiceException
 )
-from pneumatic_backend.processes.models import Delay
 from pneumatic_backend.utils.validation import ErrorCode
+from pneumatic_backend.processes.models import (
+    TemplateOwner,
+    Delay
+)
 
 
 pytestmark = pytest.mark.django_db
@@ -50,10 +56,7 @@ def test_snooze__account_owner__ok(
 
     # assert
     assert response.status_code == 200
-    snooze_mock.assert_called_once_with(
-        workflow=workflow,
-        date=date
-    )
+    snooze_mock.assert_called_once_with(date=date)
     assert response.data['id'] == workflow.id
     assert response.data['name'] == workflow.name
     assert response.data['status'] == workflow.status
@@ -77,7 +80,8 @@ def test_snooze__account_owner__ok(
     assert response.data['current_task']['number'] == task.number
     assert response.data['current_task']['due_date_tsp'] is None
     assert response.data['current_task']['date_started'] is not None
-    assert response.data['current_task']['performers'] == [user.id]
+    performer = {'source_id': user.id, 'type': 'user'}
+    assert response.data['current_task']['performers'] == [performer]
     assert response.data['current_task']['checklists_total'] == 0
     assert response.data['current_task']['checklists_marked'] == 0
     assert response.data['current_task']['delay']['duration'] == (
@@ -90,7 +94,7 @@ def test_snooze__account_owner__ok(
     assert template_data['id'] == workflow.template.id
     assert template_data['is_active'] == workflow.template.is_active
     assert template_data['name'] == workflow.get_template_name()
-    assert template_data['template_owners'] == [user.id]
+    assert response.data['owners'] == [user.id]
 
 
 def test_snooze__template_owner_admin__ok(
@@ -115,10 +119,7 @@ def test_snooze__template_owner_admin__ok(
 
     # assert
     assert response.status_code == 200
-    snooze_mock.assert_called_once_with(
-        workflow=workflow,
-        date=date
-    )
+    snooze_mock.assert_called_once_with(date=date)
 
 
 def test_snooze__legacy_workflow_workflow_starter__ok(
@@ -146,10 +147,7 @@ def test_snooze__legacy_workflow_workflow_starter__ok(
     # assert
     assert response_delete.status_code == 204
     assert response.status_code == 200
-    snooze_mock.assert_called_once_with(
-        workflow=workflow,
-        date=date
-    )
+    snooze_mock.assert_called_once_with(date=date)
     assert response.data['id'] == workflow.id
     assert response.data['is_legacy_template'] is True
 
@@ -171,7 +169,12 @@ def test_snooze__template_owner__not_admin__permission_denied(
         is_active=True,
         tasks_count=1
     )
-    template.template_owners.add(user_not_admin)
+    TemplateOwner.objects.create(
+        template=template,
+        account=account_owner.account,
+        type=OwnerType.USER,
+        user_id=user_not_admin.id,
+    )
     workflow = create_test_workflow(
         template=template,
         user=account_owner,
@@ -256,4 +259,4 @@ def test_snooze__service_exception__validation_error(
     assert response.status_code == 400
     assert response.data['code'] == ErrorCode.VALIDATION_ERROR
     assert response.data['message'] == message
-    snooze_mock.assert_called_once()
+    snooze_mock.assert_called_once_with(date=date)

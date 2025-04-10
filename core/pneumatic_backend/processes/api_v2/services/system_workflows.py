@@ -164,11 +164,12 @@ class SystemWorkflowService:
                 self._resolve_exception(ex)
             else:
                 workflow_action_service = WorkflowActionService(
+                    workflow=workflow,
                     user=self.user,
                     is_superuser=self.is_superuser,
                     auth_type=self.auth_type
                 )
-                workflow_action_service.start_workflow(workflow)
+                workflow_action_service.start_workflow()
 
     def create_activated_templates(self):
 
@@ -225,9 +226,9 @@ class SystemWorkflowService:
                             break
                         else:
                             workflow_action_service = WorkflowActionService(
+                                workflow=workflow,
                                 user=self.user,
                                 is_superuser=self.is_superuser,
-                                auth_type=self.auth_type
-
+                                auth_type=self.auth_type,
                             )
-                            workflow_action_service.start_workflow(workflow)
+                            workflow_action_service.start_workflow()

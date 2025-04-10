@@ -28,7 +28,7 @@ export function publishAttachmentLink(id: number) {
 
   return commonRequest<IPublishAttachmentLinkResponse>(
     url,
-    { method: 'POST', body: mapRequestBody({ anonymousId  }) },
+    { method: 'POST', data: mapRequestBody({ anonymousId  }) },
     { shouldThrow: true, type },
   );
 }

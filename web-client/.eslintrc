@@ -38,6 +38,7 @@
     "/*",
     "!src",
     "**/dist",
+    "src/**/*.stories.tsx",
     "src/**/PerformerIcon.tsx",
     "src/**/forms.tsx",
     "src/**/browser.tsx",
@@ -45,6 +46,7 @@
     "src/**/menu.tsx",
     "src/**/*.test.ts",
     "src/**/*.test.tsx",
+    "src/**/*.stories.tsx",
     "src/frontend/generated/*"
   ]
 }

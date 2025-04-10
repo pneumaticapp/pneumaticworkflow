@@ -1,26 +1,26 @@
 # pylint: disable=broad-except
-import msal
+
 import json
+from typing import Optional, Union
+
+import msal
 import requests
-from typing import Union, Optional
 from django.conf import settings
 from django.contrib.auth import get_user_model
 
-from pneumatic_backend.utils.salt import get_salt
-from pneumatic_backend.accounts.enums import (
-    SourceType,
-)
-from pneumatic_backend.accounts.models import Contact
+from pneumatic_backend.accounts.enums import SourceType, UserType
+from pneumatic_backend.accounts.models import Account, Contact
 from pneumatic_backend.authentication.entities import UserData
 from pneumatic_backend.authentication.models import AccessToken
-from pneumatic_backend.generics.mixins.services import CacheMixin
-from pneumatic_backend.storage.google_cloud import GoogleCloudService
-from pneumatic_backend.logs.service import AccountLogService
 from pneumatic_backend.authentication.services import exceptions
+from pneumatic_backend.generics.mixins.services import CacheMixin
+from pneumatic_backend.logs.service import AccountLogService
+from pneumatic_backend.storage.google_cloud import GoogleCloudService
 from pneumatic_backend.utils.logging import (
     capture_sentry_message,
     SentryLogLevel,
 )
+from pneumatic_backend.utils.salt import get_salt
 
 UserModel = get_user_model()
 
@@ -135,6 +135,7 @@ class MicrosoftGraphApiMixin:
         self,
         access_token: str,
         user_id: str,
+        account: Optional[Account],
     ) -> Optional[str]:
 
         """ Save photo in the storage and return public URL """
@@ -155,7 +156,7 @@ class MicrosoftGraphApiMixin:
                 filepath = f'{get_salt(30)}_photo_96x96.{ext}'
             else:
                 filepath = f'{get_salt(30)}_photo_96x96'
-            storage = GoogleCloudService()
+            storage = GoogleCloudService(account=account)
             public_url = storage.upload_from_binary(
                 binary=binary_photo,
                 filepath=filepath,
@@ -413,7 +414,16 @@ class MicrosoftAuthService(
                     'email': email
                 }
             )
+        # account exists if signin
+        account = (
+            Account.objects.filter(
+                users__email=email,
+                users__type=UserType.USER
+            )
+            .first()
+        )
         photo = self._get_user_photo(
+            account=account,
             access_token=access_token,
             user_id=user_profile['id']
         )
@@ -454,7 +464,8 @@ class MicrosoftAuthService(
                 if email and email != user.email:
                     photo = self._get_user_photo(
                         access_token=access_token,
-                        user_id=user_profile['id']
+                        user_id=user_profile['id'],
+                        account=user.account
                     )
                     first_name = (
                         user_profile['givenName'] or email.split('@')[0]

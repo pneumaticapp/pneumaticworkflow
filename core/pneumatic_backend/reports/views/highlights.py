@@ -34,7 +34,7 @@ class HighlightsView(
         filter_serializer.is_valid(raise_exception=True)
 
         templates = filter_serializer.validated_data.get('templates')
-        users = filter_serializer.validated_data.get('users')
+        users = filter_serializer.validated_data.get('current_performer_ids')
         date_before_tsp = filter_serializer.validated_data.get(
             'date_before_tsp'
         )

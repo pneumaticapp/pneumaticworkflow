@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { useIntl } from 'react-intl';
-import * as classnames from 'classnames';
+import classnames from 'classnames';
 
 import { ECommentType, EWorkflowLogEvent } from '../../types/workflow';
 import {
@@ -106,6 +106,14 @@ export function FeedItemIcon({ className, type, task }: IFeedItemIconProps) {
       tooltipMessage: formatMessage({ id: 'workflows.user-added' }),
     },
     [EWorkflowLogEvent.RemovedPerformer]: {
+      icon: <RemoveUserIcon className={className} color="#F44336" />,
+      tooltipMessage: formatMessage({ id: 'workflows.user-removed' }),
+    },
+    [EWorkflowLogEvent.AddedPerformerGroup]: {
+      icon: <AddUserIcon className={className} color="#4CAF50" />,
+      tooltipMessage: formatMessage({ id: 'workflows.user-added' }),
+    },
+    [EWorkflowLogEvent.RemovedPerformerGroup]: {
       icon: <RemoveUserIcon className={className} color="#F44336" />,
       tooltipMessage: formatMessage({ id: 'workflows.user-removed' }),
     },

@@ -12,7 +12,7 @@ export function getTokenAsSuperuser(email: string) {
 
   return commonRequest<IGetTokenAsSuperuserResponse>(url, {
     method: 'POST',
-    body: mapRequestBody({ email }),
+    data: mapRequestBody({ email }),
   }, {
     type: 'local',
     shouldThrow: true,

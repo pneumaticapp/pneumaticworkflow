@@ -14,7 +14,7 @@ export function returnWorkflowToTask({id, taskId}: IReturnWorkflowToTaskConfig) 
   return commonRequest(
     url,
     {
-      body: mapRequestBody({task: taskId}),
+      data: mapRequestBody({task: taskId}),
       method: 'POST',
     },
     { responseType: 'empty', shouldThrow: true },

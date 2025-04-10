@@ -1,0 +1,36 @@
+/* stylelint-disable declaration-no-important */
+.container {
+  margin: 0 auto;
+  max-width: 864px;
+}
+
+.search {
+  position: relative;
+  margin-bottom: 32px;
+  width: 100%;
+
+  &__icon {
+    position: absolute;
+    top: 50%;
+    margin-left: 16px;
+    color: var(--pneumatic-color-black72);
+    transform: translateY(-50%);
+  }
+
+  &-field {
+    margin-bottom: 32px;
+  }
+
+  &-field__input {
+    padding-left: 48px !important;
+    background-color: var(----background-color);
+  }
+}
+
+.groups {
+  width: 100%;
+
+  &__item + &__item {
+    margin-top: 0.8rem;
+  }
+}

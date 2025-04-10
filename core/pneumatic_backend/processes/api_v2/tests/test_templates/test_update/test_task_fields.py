@@ -10,7 +10,8 @@ from pneumatic_backend.processes.models import (
 )
 from pneumatic_backend.processes.enums import (
     PerformerType,
-    FieldType
+    FieldType,
+    OwnerType
 )
 
 
@@ -64,7 +65,12 @@ class TestUpdateTaskFields:
                 'id': template.id,
                 'name': template.name,
                 'is_active': True,
-                'template_owners': [user.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                ],
                 'kickoff': {},
                 'tasks': [
                     {
@@ -145,7 +151,12 @@ class TestUpdateTaskFields:
                 'id': template.id,
                 'name': template.name,
                 'is_active': True,
-                'template_owners': [user.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                ],
                 'kickoff': {},
                 'tasks': [
                     {
@@ -234,7 +245,12 @@ class TestUpdateTaskFields:
                 'id': template.id,
                 'name': template.name,
                 'is_active': True,
-                'template_owners': [user.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                ],
                 'kickoff': {},
                 'tasks': [
                     {
@@ -332,7 +348,12 @@ class TestUpdateTaskFields:
                 'id': template.id,
                 'name': template.name,
                 'is_active': True,
-                'template_owners': [user.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                ],
                 'kickoff': {},
                 'tasks': [
                     {
@@ -434,7 +455,12 @@ class TestUpdateTaskFields:
                 'id': template.id,
                 'name': template.name,
                 'is_active': True,
-                'template_owners': [user.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                ],
                 'kickoff': {},
                 'tasks': [
                     {
@@ -510,7 +536,12 @@ class TestUpdateTaskFields:
                 'id': template.id,
                 'name': template.name,
                 'is_active': True,
-                'template_owners': [user.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                ],
                 'kickoff': {},
                 'tasks': [
                     {
@@ -590,7 +621,12 @@ class TestUpdateTaskFields:
                 'id': template.id,
                 'name': template.name,
                 'is_active': True,
-                'template_owners': [user.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                ],
                 'kickoff': {},
                 'tasks': [
                     {

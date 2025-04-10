@@ -37,6 +37,7 @@ from pneumatic_backend.processes.enums import (
     FieldType,
     DueDateRule,
     WorkflowEventType,
+    OwnerType
 )
 from pneumatic_backend.accounts.models import Notification
 from pneumatic_backend.accounts.enums import (
@@ -381,7 +382,7 @@ class TestPartialUpdateWorkflow:
         assert third_output['selections'][1]['is_selected'] is False
         assert fourth_output['value'] == 'DWAYNE THE ROCK JOHNSON'
 
-    @pytest.mark.skip()
+    @pytest.mark.skip
     def test_partial_update__field__update_current_task_due_date__ok(
         self,
         api_client
@@ -1252,8 +1253,7 @@ class TestPartialUpdateWorkflow:
             is_admin=False,
             email='no@admin.com'
         )
-        template = create_test_template(owner, tasks_count=1, is_active=True)
-        workflow = create_test_workflow(user=user, template=template)
+        workflow = create_test_workflow(user=user, tasks_count=1)
         field_value = 'edited text 2'
         api_client.token_authenticate(user)
 
@@ -1763,7 +1763,12 @@ class TestUpdatePerformer:
             path='/templates',
             data={
                 'name': 'Template',
-                'template_owners': [user.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                ],
                 'is_active': True,
                 'kickoff': {
                     'fields': [
@@ -1908,7 +1913,13 @@ class TestUpdatePerformer:
             path='/templates',
             data={
                 'name': 'Template',
-                'template_owners': [user.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                ],
+
                 'is_active': True,
                 'kickoff': {
                     'fields': [
@@ -2027,7 +2038,12 @@ class TestUpdatePerformer:
             path='/templates',
             data={
                 'name': 'Template',
-                'template_owners': [user.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                ],
                 'is_active': True,
                 'kickoff': {
                     'fields': [
@@ -2140,7 +2156,12 @@ class TestUpdatePerformer:
             data={
                 'name': 'Template',
                 'is_active': True,
-                'template_owners': [account_1_owner.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': account_1_owner.id
+                    },
+                ],
                 'kickoff': {
                     'fields': [
                         {

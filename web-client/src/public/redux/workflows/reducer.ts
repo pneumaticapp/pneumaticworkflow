@@ -23,10 +23,11 @@ const INIT_WORKFLOWS_LIST = {
 } as IWorkflowsList;
 
 export const INITIAL_WORKFLOWS_FILTERS: IWorkflowsSettings['values'] = {
-  statusFilter: EWorkflowsStatus.All,
+  statusFilter: EWorkflowsStatus.Running,
   templatesIdsFilter: [],
   stepsIdsFilter: [],
   performersIdsFilter: [],
+  performersGroupIdsFilter: [],
   workflowStartersIdsFilter: [],
 };
 
@@ -211,6 +212,8 @@ export const reducer = (state = INIT_STATE, action: TWorkflowsActions | TGeneral
       return updateWorkflowsFilterValue(state, 'stepsIdsFilter', action.payload);
     case EWorkflowsActions.SetFilterPerformers:
       return updateWorkflowsFilterValue(state, 'performersIdsFilter', action.payload);
+    case EWorkflowsActions.SetFilterPerformersGroup:
+      return updateWorkflowsFilterValue(state, 'performersGroupIdsFilter', action.payload);
     case EWorkflowsActions.SetFilterWorkflowStarters:
       return updateWorkflowsFilterValue(state, 'workflowStartersIdsFilter', action.payload);
     case EWorkflowsActions.SetIsEditWorkflowName:
@@ -271,7 +274,7 @@ export const reducer = (state = INIT_STATE, action: TWorkflowsActions | TGeneral
           template.steps.forEach((step) => {
             const stepCountInfo = action.payload.find(({ templateTaskId }) => templateTaskId === step.id);
             step.count = stepCountInfo ? stepCountInfo.workflowsCount : 0;
-          })
+          });
         });
       });
     }

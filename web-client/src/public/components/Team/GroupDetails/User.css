@@ -1,0 +1,68 @@
+/* stylelint-disable declaration-no-important */
+.user {
+  @media (--desktop) {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  p {
+    margin: 0;
+  }
+
+  &__avatar {
+    margin-bottom: 1.6rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    @media (--desktop) {
+      margin: 0;
+      margin-right: 1.6rem;
+    }
+  }
+
+  &__info {
+    flex: 1;
+  }
+
+  &__config {
+    display: flex;
+    align-items: center;
+  }
+
+  &__admin {
+    @mixin text-small-extra;
+
+    margin-right: 1.6rem;
+    display: flex;
+    align-items: center;
+    font-weight: bold;
+    text-transform: uppercase;
+
+    p {
+      margin-right: 0.8rem;
+    }
+  }
+
+  &__caption {
+    @mixin text-small;
+
+    color: var(--pneumatic-color-black48);
+  }
+
+  &__delete {
+    color: var(--pneumatic-color-red);
+  }
+}
+
+.card-badge {
+  margin: 0;
+  margin-right: 1.6rem !important;
+  font-size: 11px;
+  font-weight: bold;
+  line-height: 16px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--pneumatic-color-black32);
+}

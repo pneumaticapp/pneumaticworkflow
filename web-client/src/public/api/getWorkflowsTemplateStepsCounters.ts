@@ -7,6 +7,7 @@ export interface IGetWorkflowsTemplateStepsCountersConfig {
   statusFilter: EWorkflowsStatus;
   templatesIdsFilter: number[];
   performersIdsFilter: number[];
+  performersGroupIdsFilter: number[];
   workflowStartersIdsFilter: number[];
 }
 
@@ -14,6 +15,7 @@ export function getWorkflowsTemplateStepsCounters({
   statusFilter = EWorkflowsStatus.Running,
   templatesIdsFilter,
   performersIdsFilter,
+  performersGroupIdsFilter,
   workflowStartersIdsFilter,
 }: IGetWorkflowsTemplateStepsCountersConfig) {
   const { api: { urls } } = getBrowserConfigEnv();
@@ -23,6 +25,7 @@ export function getWorkflowsTemplateStepsCounters({
       statusFilter,
       templatesIdsFilter,
       performersIdsFilter,
+      performersGroupIdsFilter,
       workflowStartersIdsFilter,
     })}`,
   );
@@ -32,6 +35,7 @@ export function getQueryString({
   statusFilter,
   templatesIdsFilter,
   performersIdsFilter,
+  performersGroupIdsFilter,
   workflowStartersIdsFilter,
 }: IGetWorkflowsTemplateStepsCountersConfig) {
   const isExternal = workflowStartersIdsFilter?.some(userId => userId === EXTERNAL_USER_ID);
@@ -41,6 +45,7 @@ export function getQueryString({
     statusFilter !== EWorkflowsStatus.All &&  `status=${statusFilter}`,
     `template_ids=${templatesIdsFilter.join(',')}`,
     statusFilter === EWorkflowsStatus.Running && `current_performer_ids=${performersIdsFilter.join(',')}`,
+    statusFilter === EWorkflowsStatus.Running && `current_performer_group_ids=${performersGroupIdsFilter.join(',')}`,
     `workflow_starter_ids=${workflowStarters.join(',')}`,
     isExternal && 'is_external=true',
   ].filter(Boolean).join('&');

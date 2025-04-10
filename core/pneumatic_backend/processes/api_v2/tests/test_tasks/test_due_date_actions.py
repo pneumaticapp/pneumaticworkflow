@@ -9,10 +9,20 @@ from pneumatic_backend.processes.tests.fixtures import (
     create_test_user,
     create_test_workflow,
     create_test_template,
+    create_test_group
 )
 from pneumatic_backend.processes.api_v2.services.task.task import TaskService
 from pneumatic_backend.processes.api_v2.services.task.exceptions import (
     TaskServiceException
+)
+from pneumatic_backend.processes.enums import (
+    PerformerType,
+    DirectlyStatus,
+    OwnerType
+)
+from pneumatic_backend.processes.models import (
+    TaskPerformer,
+    TemplateOwner
 )
 
 UserModel = get_user_model()
@@ -55,6 +65,55 @@ def test_create__ok(
     set_due_date_mock.assert_called_once_with(value=due_date)
 
 
+def test_create__user_in_group__ok(
+    mocker,
+    api_client
+):
+
+    # arrange
+    user = create_test_user()
+    performer = create_test_user(
+        account=user.account,
+        email='test@test.test',
+        is_account_owner=False
+    )
+    group = create_test_group(user=user, users=[performer, ])
+    workflow = create_test_workflow(user)
+    workflow.owners.add(performer)
+    task = workflow.current_task_instance
+    TaskPerformer.objects.create(
+        task_id=task.id,
+        type=PerformerType.GROUP,
+        group_id=group.id,
+        directly_status=DirectlyStatus.CREATED
+    )
+    api_client.token_authenticate(performer)
+    service_init_mock = mocker.patch.object(
+        TaskService,
+        attribute='__init__',
+        return_value=None
+    )
+    set_due_date_mock = mocker.patch(
+        'pneumatic_backend.processes.api_v2.services.task.task.'
+        'TaskService.set_due_date_directly'
+    )
+    due_date = timezone.now() + timedelta(days=1)
+    due_date_tsp = due_date.timestamp()
+
+    # act
+    response = api_client.post(
+        f'/v2/tasks/{task.id}/due-date',
+        data={
+            'due_date_tsp': due_date_tsp
+        }
+    )
+
+    # assert
+    assert response.status_code == 204
+    service_init_mock.assert_called_once_with(user=performer, instance=task)
+    set_due_date_mock.assert_called_once_with(value=due_date)
+
+
 def test_delete__ok(
     mocker,
     api_client
@@ -83,6 +142,50 @@ def test_delete__ok(
     # assert
     assert response.status_code == 204
     service_init_mock.assert_called_once_with(user=user, instance=task)
+    set_due_date_mock.assert_called_once_with(value=None)
+
+
+def test_delete__user_in_group__ok(
+    mocker,
+    api_client
+):
+
+    # arrange
+    user = create_test_user()
+    performer = create_test_user(
+        account=user.account,
+        email='test@test.test',
+        is_account_owner=False
+    )
+    group = create_test_group(user=user, users=[performer, ])
+    workflow = create_test_workflow(user)
+    workflow.owners.add(performer)
+    task = workflow.current_task_instance
+    TaskPerformer.objects.create(
+        task_id=task.id,
+        type=PerformerType.GROUP,
+        group_id=group.id,
+        directly_status=DirectlyStatus.CREATED
+    )
+    api_client.token_authenticate(performer)
+    service_init_mock = mocker.patch.object(
+        TaskService,
+        attribute='__init__',
+        return_value=None
+    )
+    set_due_date_mock = mocker.patch(
+        'pneumatic_backend.processes.api_v2.services.task.task.'
+        'TaskService.set_due_date_directly'
+    )
+
+    # act
+    response = api_client.delete(
+        f'/v2/tasks/{task.id}/due-date'
+    )
+
+    # assert
+    assert response.status_code == 204
+    service_init_mock.assert_called_once_with(user=performer, instance=task)
     set_due_date_mock.assert_called_once_with(value=None)
 
 
@@ -210,7 +313,12 @@ def test_create__request_user_is_not_admin__permission_denied(
         email='test@test.test'
     )
     template = create_test_template(user)
-    template.template_owners.add(not_admin)
+    TemplateOwner.objects.create(
+        template=template,
+        account=user.account,
+        type=OwnerType.USER,
+        user_id=not_admin.id,
+    )
     workflow = create_test_workflow(
         template=template,
         user=user,

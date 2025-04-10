@@ -7,34 +7,45 @@ from pneumatic_backend.processes.api_v2.services.task.guests import (
 )
 from pneumatic_backend.processes.api_v2.services.task.base import (
     BasePerformersService,
+    BasePerformerService2
 )
 from pneumatic_backend.processes.api_v2.services.task.performers import (
     TaskPerformersService
 )
+from pneumatic_backend.processes.api_v2.services.task.groups import (
+    GroupPerformerService
+)
 from pneumatic_backend.authentication.enums import AuthTokenType
-from pneumatic_backend.processes.enums import DirectlyStatus
+from pneumatic_backend.processes.enums import (
+    DirectlyStatus,
+    PerformerType, TaskStatus,
+)
 from pneumatic_backend.processes.tests.fixtures import (
     create_test_user,
     create_test_guest,
     create_test_workflow,
     create_test_account,
-    create_test_template
+    create_test_template,
+    create_test_group
 )
 from pneumatic_backend.accounts.enums import (
     BillingPlanType,
     UserStatus,
 )
 from pneumatic_backend.processes.api_v2.services.task.exceptions import (
-    PerformersServiceException
+    PerformersServiceException,
+    GroupPerformerServiceException
 )
 from pneumatic_backend.processes.messages import workflow as messages
 from pneumatic_backend.processes.models import (
     TaskPerformer,
     WorkflowEvent,
+    TemplateOwner
 )
 from pneumatic_backend.processes.enums import (
     WorkflowStatus,
     WorkflowEventType,
+    OwnerType
 )
 from pneumatic_backend.processes.api_v2.serializers.workflow.events import (
     TaskEventJsonSerializer
@@ -146,7 +157,11 @@ class TestBasePerformersService:
             is_active=True,
             tasks_count=1
         )
-        template.template_owners.remove(request_user)
+        TemplateOwner.objects.filter(
+            template=template,
+            type=OwnerType.USER,
+            user_id=request_user.id
+        ).delete()
         workflow = create_test_workflow(template_owner, template=template)
         task = workflow.current_task_instance
         mocker.patch(
@@ -1536,6 +1551,7 @@ class TestTaskPerformersService:
 
         # assert
         workflow_action_service_init_mock.assert_called_once_with(
+            workflow=workflow,
             user=user_performer_1,
             is_superuser=False,
             auth_type=AuthTokenType.USER
@@ -1618,6 +1634,7 @@ class TestTaskPerformersService:
 
         # assert
         workflow_action_service_init_mock.assert_called_once_with(
+            workflow=workflow,
             user=user_performer_1,
             is_superuser=False,
             auth_type=AuthTokenType.USER
@@ -1927,6 +1944,7 @@ class TestGuestPerformersService:
             user_id=deleted_guest.id
         )
         workflow_action_service_init_mock.assert_called_once_with(
+            workflow=workflow,
             user=user_performer_1,
             is_superuser=False,
             auth_type=AuthTokenType.USER
@@ -2001,6 +2019,7 @@ class TestGuestPerformersService:
             user_id=deleted_guest.id
         )
         workflow_action_service_init_mock.assert_called_once_with(
+            workflow=workflow,
             user=user_performer_1,
             is_superuser=False,
             auth_type=AuthTokenType.USER
@@ -2059,3 +2078,894 @@ class TestGuestPerformersService:
 
         # assert
         assert ex.value.message == messages.MSG_PW_0015
+
+
+class TestBasePerformerService2:
+    def test_get_valid_deleted_task_performer__group_performer__ok(self):
+
+        # arrange
+        account = create_test_account(plan=BillingPlanType.PREMIUM)
+        user = create_test_user(account=account)
+        template = create_test_template(user=user, is_active=True)
+        group = create_test_group(user=user, users=[user, ])
+        task_template = template.tasks.get(number=1)
+        task_template.add_raw_performer(
+            group=group,
+            performer_type=PerformerType.GROUP
+        )
+        workflow = create_test_workflow(user, template=template)
+        task = workflow.current_task_instance
+        service = BasePerformerService2(
+            user=user,
+            task=task,
+            is_superuser=False,
+            auth_type=AuthTokenType.USER
+        )
+
+        # act
+        task_performer = service._get_valid_deleted_task_performer(
+            group=group
+        )
+
+        # assert
+        assert task_performer.group_id == group.id
+
+    def test_get_valid_deleted_task_performer__last_performer__raise_exception(
+        self
+    ):
+
+        # arrange
+        account = create_test_account(plan=BillingPlanType.PREMIUM)
+        user = create_test_user(account=account)
+        template = create_test_template(user=user, is_active=True)
+        group = create_test_group(user=user, users=[user, ])
+        task_template = template.tasks.get(number=1)
+        task_template.delete_raw_performers()
+        task_template.add_raw_performer(
+            group=group,
+            performer_type=PerformerType.GROUP
+        )
+        workflow = create_test_workflow(user, template=template)
+        task = workflow.current_task_instance
+        service = BasePerformerService2(
+            user=user,
+            task=task,
+            is_superuser=False,
+            auth_type=AuthTokenType.USER
+        )
+
+        # act
+        with pytest.raises(GroupPerformerServiceException) as ex:
+            service._get_valid_deleted_task_performer(
+                    group=group
+                )
+
+        # assert
+        assert ex.value.message == messages.MSG_PW_0016
+
+    def test_validate__workflow_is_completed__raise_exception(self):
+
+        # arrange
+        account = create_test_account(plan=BillingPlanType.PREMIUM)
+        user = create_test_user(account=account)
+        workflow = create_test_workflow(
+            user=user,
+            status=WorkflowStatus.DONE
+        )
+        task = workflow.current_task_instance
+        service = BasePerformerService2(
+            user=user,
+            task=task,
+            is_superuser=False,
+            auth_type=AuthTokenType.USER
+        )
+
+        # act
+        with pytest.raises(GroupPerformerServiceException) as ex:
+            service._validate()
+
+        # assert
+        assert ex.value.message == messages.MSG_PW_0017
+
+    def test_validate__invalid_workflow_current_task__raise_exception(self):
+
+        # arrange
+        account = create_test_account(plan=BillingPlanType.PREMIUM)
+        user = create_test_user(account=account)
+        workflow = create_test_workflow(user=user)
+        task = workflow.tasks.get(number=2)
+        service = BasePerformerService2(
+            user=user,
+            task=task,
+            is_superuser=False,
+            auth_type=AuthTokenType.USER
+        )
+
+        # act
+        with pytest.raises(GroupPerformerServiceException) as ex:
+            service._validate()
+
+        # assert
+        assert ex.value.message == messages.MSG_PW_0018
+
+    def test_validate__user_not_admin__raise_exception(self):
+
+        # arrange
+        account = create_test_account(plan=BillingPlanType.PREMIUM)
+        user = create_test_user(account=account)
+        request_user = create_test_user(
+            account=account,
+            is_admin=False,
+            email='owner@test.test'
+        )
+        workflow = create_test_workflow(user=user)
+        task = workflow.current_task_instance
+        service = BasePerformerService2(
+            user=request_user,
+            task=task,
+            is_superuser=False,
+            auth_type=AuthTokenType.USER
+        )
+
+        # act
+        with pytest.raises(GroupPerformerServiceException) as ex:
+            service._validate()
+
+        # assert
+        assert ex.value.message == messages.MSG_PW_0021
+
+    def test_validate__user_not_owner_and_not_task_performer__raise_exception(
+        self
+    ):
+
+        # arrange
+        account = create_test_account(plan=BillingPlanType.PREMIUM)
+        user = create_test_user(account=account)
+        request_user = create_test_user(
+            account=account,
+            is_account_owner=False,
+            email='owner@test.test'
+        )
+        workflow = create_test_workflow(user=user)
+        task = workflow.current_task_instance
+        service = BasePerformerService2(
+            user=request_user,
+            task=task,
+            is_superuser=False,
+            auth_type=AuthTokenType.USER
+        )
+
+        # act
+        with pytest.raises(GroupPerformerServiceException) as ex:
+            service._validate()
+
+        # assert
+        assert ex.value.message == messages.MSG_PW_0021
+
+
+class TestGroupPerformerService:
+
+    def test_get_group__ok(self):
+
+        # arrange
+        account = create_test_account(plan=BillingPlanType.PREMIUM)
+        user = create_test_user(account=account)
+        group = create_test_group(user=user, users=[user, ])
+        workflow = create_test_workflow(user=user)
+        task = workflow.current_task_instance
+        service = GroupPerformerService(
+            user=user,
+            task=task,
+            is_superuser=False,
+            auth_type=AuthTokenType.USER
+        )
+
+        # act
+        return_group = service._get_group(group_id=group.id)
+
+        # assert
+        assert return_group == group
+
+    def test_get_group__invalid_group_id__ok(self):
+
+        # arrange
+        account = create_test_account(plan=BillingPlanType.PREMIUM)
+        user = create_test_user(account=account)
+        workflow = create_test_workflow(user=user)
+        task = workflow.current_task_instance
+        service = GroupPerformerService(
+            user=user,
+            task=task,
+            is_superuser=False,
+            auth_type=AuthTokenType.USER
+        )
+
+        # act
+        with pytest.raises(GroupPerformerServiceException) as ex:
+            service._get_group(group_id=5436)
+
+        # assert
+        assert ex.value.message == messages.MSG_PW_0082
+
+    def test_get_group__group_another_account__ok(self):
+
+        # arrange
+        user = create_test_user(email='test3@test.test')
+        another_acc_user = create_test_user()
+        group = create_test_group(another_acc_user)
+        workflow = create_test_workflow(user=user)
+        task = workflow.current_task_instance
+        service = GroupPerformerService(
+            user=user,
+            task=task,
+            is_superuser=False,
+            auth_type=AuthTokenType.USER
+        )
+
+        # act
+        with pytest.raises(GroupPerformerServiceException) as ex:
+            service._get_group(group_id=group.id)
+
+        # assert
+        assert ex.value.message == messages.MSG_PW_0082
+
+    def test_create_group_actions__ok(self, mocker):
+
+        # arrange
+        logo_lg = 'https://some.com/image.png'
+        account = create_test_account(logo_lg=logo_lg, log_api_requests=True)
+        photo = 'http://image.com/avatar.png'
+        user = create_test_user(account=account, photo=photo,)
+        user2 = create_test_user(account=account, email='test2@test.test')
+        user3 = create_test_user(account=account, email='test3@test.test')
+        group = create_test_group(user=user, users=[user2, user3, ])
+        workflow = create_test_workflow(user=user)
+        task = workflow.current_task_instance
+        task.due_date = timezone.now() + timedelta(hours=1)
+        task.save(update_fields=['due_date'])
+        service = GroupPerformerService(
+            user=user,
+            task=task,
+            is_superuser=False,
+            auth_type=AuthTokenType.USER
+        )
+        performer_group_created_event_mock = mocker.patch(
+            'pneumatic_backend.processes.api_v2.services.'
+            'WorkflowEventService.performer_group_created_event'
+        )
+        send_ws_notification_mock = mocker.patch(
+            'pneumatic_backend.processes.services.websocket.WSSender.'
+            'send_new_task_notification'
+        )
+        send_new_task_notification_mock = mocker.patch(
+            'pneumatic_backend.processes.api_v2.services.task.performers.'
+            'send_new_task_notification.delay'
+        )
+
+        # act
+        service._create_group_actions(group=group)
+
+        # assert
+        performer_group_created_event_mock.assert_called_once_with(
+            user=user,
+            task=task,
+            performer=group
+        )
+        send_ws_notification_mock.assert_called_once_with(
+            task=task,
+            user_ids=(user2.id, user3.id)
+        )
+        send_new_task_notification_mock.assert_called_once_with(
+            logging=account.log_api_requests,
+            account_id=account.id,
+            recipients=[(user2.id, user2.email), (user3.id, user3.email)],
+            task_id=task.id,
+            task_name=task.name,
+            task_description=task.description,
+            workflow_name=workflow.name,
+            template_name=workflow.get_template_name(),
+            workflow_starter_name=user.name,
+            workflow_starter_photo=photo,
+            due_date_timestamp=task.due_date.timestamp(),
+            logo_lg=logo_lg,
+            is_returned=False,
+        )
+
+    def test_create_group_actions__missing_recipients__ok(self, mocker):
+
+        # arrange
+        account = create_test_account()
+        user = create_test_user(account=account)
+        user2 = create_test_user(account=account, email='test2@test.test')
+        group = create_test_group(user=user, users=[user, user2, ])
+        workflow = create_test_workflow(user=user)
+        task = workflow.current_task_instance
+        service = GroupPerformerService(
+            user=user2,
+            task=task,
+            is_superuser=False,
+            auth_type=AuthTokenType.USER
+        )
+        performer_group_created_event_mock = mocker.patch(
+            'pneumatic_backend.processes.api_v2.services.'
+            'WorkflowEventService.performer_group_created_event'
+        )
+        send_ws_notification_mock = mocker.patch(
+            'pneumatic_backend.processes.services.websocket.WSSender.'
+            'send_new_task_notification'
+        )
+        send_new_task_notification_mock = mocker.patch(
+            'pneumatic_backend.processes.api_v2.services.task.performers.'
+            'send_new_task_notification.delay'
+        )
+
+        # act
+        service._create_group_actions(group=group)
+
+        # assert
+        performer_group_created_event_mock.assert_called_once_with(
+            user=user2,
+            task=task,
+            performer=group
+        )
+        send_ws_notification_mock.assert_called_once_with(
+            task=task,
+            user_ids=(user2.id,)
+        )
+        send_new_task_notification_mock.assert_not_called()
+
+    def test_create_group_actions__not_users_for_send_notification__ok(
+        self, mocker
+    ):
+
+        # arrange
+        account = create_test_account()
+        user = create_test_user(account=account)
+        group = create_test_group(user=user, users=[user, ])
+        workflow = create_test_workflow(user=user)
+        task = workflow.current_task_instance
+        service = GroupPerformerService(
+            user=user,
+            task=task,
+            is_superuser=False,
+            auth_type=AuthTokenType.USER
+        )
+        performer_created_event_mock = mocker.patch(
+            'pneumatic_backend.processes.api_v2.services.'
+            'WorkflowEventService.performer_group_created_event'
+        )
+        send_ws_notification_mock = mocker.patch(
+            'pneumatic_backend.processes.services.websocket.WSSender.'
+            'send_new_task_notification'
+        )
+        send_new_task_notification_mock = mocker.patch(
+            'pneumatic_backend.processes.api_v2.services.task.performers.'
+            'send_new_task_notification.delay'
+        )
+
+        # act
+        service._create_group_actions(group=group)
+
+        # assert
+        performer_created_event_mock.assert_called_once_with(
+            user=user,
+            task=task,
+            performer=group
+        )
+        send_ws_notification_mock.assert_not_called()
+        send_new_task_notification_mock.assert_not_called()
+
+    def test_create_performer__ok(self, mocker):
+
+        # arrange
+        account = create_test_account()
+        user = create_test_user(account=account)
+        group = create_test_group(user=user, users=[user, ])
+        workflow = create_test_workflow(user=user)
+        task = workflow.current_task_instance
+        validate_mock = mocker.patch(
+            'pneumatic_backend.processes.api_v2.services.task.base.'
+            'BasePerformerService2._validate'
+        )
+        validate_create_mock = mocker.patch(
+            'pneumatic_backend.processes.api_v2.services.task.base.'
+            'BasePerformerService2._validate_create'
+        )
+        create_group_actions_mock = mocker.patch(
+            'pneumatic_backend.processes.api_v2.services.task.groups.'
+            'GroupPerformerService._create_group_actions'
+        )
+        get_group_mock = mocker.patch(
+            'pneumatic_backend.processes.api_v2.services.task.groups.'
+            'GroupPerformerService._get_group',
+            return_value=group
+        )
+        service = GroupPerformerService(
+            user=user,
+            task=task,
+            is_superuser=False,
+            auth_type=AuthTokenType.USER
+        )
+
+        # act
+        service.create_performer(
+            group_id=group.id,
+            run_actions=True
+        )
+
+        # assert
+        validate_mock.assert_called_once_with()
+        validate_create_mock.assert_called_once_with()
+        create_group_actions_mock.assert_called_once_with(group=group)
+        get_group_mock.assert_called_once_with(group_id=group.id)
+        assert TaskPerformer.objects.filter(
+            group=group,
+            type=PerformerType.GROUP,
+            task=task,
+            directly_status=DirectlyStatus.CREATED
+        ).count() == 1
+
+    def test_create_performer__already_created__skip(self, mocker):
+
+        account = create_test_account()
+        user = create_test_user(account=account)
+        group = create_test_group(user=user, users=[user, ])
+        workflow = create_test_workflow(user=user)
+        task = workflow.current_task_instance
+        TaskPerformer.objects.create(
+            task_id=task.id,
+            type=PerformerType.GROUP,
+            group_id=group.id,
+            directly_status=DirectlyStatus.CREATED
+        )
+        validate_mock = mocker.patch(
+            'pneumatic_backend.processes.api_v2.services.task.base.'
+            'BasePerformerService2._validate'
+        )
+        validate_create_mock = mocker.patch(
+            'pneumatic_backend.processes.api_v2.services.task.base.'
+            'BasePerformerService2._validate_create'
+        )
+        create_group_actions_mock = mocker.patch(
+            'pneumatic_backend.processes.api_v2.services.task.groups.'
+            'GroupPerformerService._create_group_actions'
+        )
+        get_group_mock = mocker.patch(
+            'pneumatic_backend.processes.api_v2.services.task.groups.'
+            'GroupPerformerService._get_group',
+            return_value=group
+        )
+        service = GroupPerformerService(
+            user=user,
+            task=task,
+            is_superuser=False,
+            auth_type=AuthTokenType.USER
+        )
+
+        # act
+        service.create_performer(
+            group_id=group.id,
+            run_actions=True
+        )
+
+        # assert
+        validate_mock.assert_called_once_with()
+        validate_create_mock.assert_called_once_with()
+        create_group_actions_mock.assert_not_called()
+        get_group_mock.assert_called_once_with(group_id=group.id)
+
+    def test_create_performer__existent_with_no_status__skip(self, mocker):
+
+        # arrange
+        account = create_test_account()
+        user = create_test_user(account=account)
+        group = create_test_group(user=user, users=[user, ])
+        workflow = create_test_workflow(user=user)
+        task = workflow.current_task_instance
+        TaskPerformer.objects.create(
+            task_id=task.id,
+            type=PerformerType.GROUP,
+            group_id=group.id,
+            directly_status=DirectlyStatus.NO_STATUS
+        )
+        validate_mock = mocker.patch(
+            'pneumatic_backend.processes.api_v2.services.task.base.'
+            'BasePerformerService2._validate'
+        )
+        validate_create_mock = mocker.patch(
+            'pneumatic_backend.processes.api_v2.services.task.base.'
+            'BasePerformerService2._validate_create'
+        )
+        create_group_actions_mock = mocker.patch(
+            'pneumatic_backend.processes.api_v2.services.task.groups.'
+            'GroupPerformerService._create_group_actions'
+        )
+        get_group_mock = mocker.patch(
+            'pneumatic_backend.processes.api_v2.services.task.groups.'
+            'GroupPerformerService._get_group',
+            return_value=group
+        )
+        service = GroupPerformerService(
+            user=user,
+            task=task,
+            is_superuser=False,
+            auth_type=AuthTokenType.USER
+        )
+
+        # act
+        service.create_performer(
+            group_id=group.id,
+            run_actions=True
+        )
+
+        # assert
+        validate_mock.assert_called_once_with()
+        validate_create_mock.assert_called_once_with()
+        get_group_mock.assert_called_once_with(group_id=group.id)
+        create_group_actions_mock.assert_not_called()
+
+    def test_create_performer__restore_deleted__ok(self, mocker):
+
+        # arrange
+        account = create_test_account()
+        user = create_test_user(account=account)
+        group = create_test_group(user=user, users=[user, ])
+        workflow = create_test_workflow(user=user)
+        task = workflow.current_task_instance
+        performer = TaskPerformer.objects.create(
+            task_id=task.id,
+            type=PerformerType.GROUP,
+            group_id=group.id,
+            directly_status=DirectlyStatus.DELETED
+        )
+        validate_mock = mocker.patch(
+            'pneumatic_backend.processes.api_v2.services.task.base.'
+            'BasePerformerService2._validate'
+        )
+        validate_create_mock = mocker.patch(
+            'pneumatic_backend.processes.api_v2.services.task.base.'
+            'BasePerformerService2._validate_create'
+        )
+        create_group_actions_mock = mocker.patch(
+            'pneumatic_backend.processes.api_v2.services.task.groups.'
+            'GroupPerformerService._create_group_actions'
+        )
+        get_group_mock = mocker.patch(
+            'pneumatic_backend.processes.api_v2.services.task.groups.'
+            'GroupPerformerService._get_group',
+            return_value=group
+        )
+        service = GroupPerformerService(
+            user=user,
+            task=task,
+            is_superuser=False,
+            auth_type=AuthTokenType.USER
+        )
+
+        # act
+        service.create_performer(
+            group_id=group.id,
+            run_actions=True
+        )
+
+        # assert
+        validate_mock.assert_called_once_with()
+        validate_create_mock.assert_called_once_with()
+        get_group_mock.assert_called_once_with(group_id=group.id)
+        create_group_actions_mock.assert_called_once_with(group=group)
+        performer.refresh_from_db()
+        assert performer.directly_status == DirectlyStatus.CREATED
+
+    def test_delete_performer__ok(self, mocker):
+
+        # arrange
+        account = create_test_account()
+        user = create_test_user(account=account)
+        group = create_test_group(user=user, users=[user, ])
+        workflow = create_test_workflow(user=user)
+        task = workflow.current_task_instance
+        performer = TaskPerformer.objects.create(
+            task_id=task.id,
+            type=PerformerType.GROUP,
+            group_id=group.id,
+        )
+        validate_mock = mocker.patch(
+            'pneumatic_backend.processes.api_v2.services.task.base.'
+            'BasePerformerService2._validate'
+        )
+        get_valid_deleted_task_performer_mock = mocker.patch(
+            'pneumatic_backend.processes.api_v2.services.task.base.'
+            'BasePerformerService2._get_valid_deleted_task_performer',
+            return_value=performer
+        )
+        get_group_mock = mocker.patch(
+            'pneumatic_backend.processes.api_v2.services.task.groups.'
+            'GroupPerformerService._get_group',
+            return_value=group
+        )
+        delete_group_actions_mock = mocker.patch(
+            'pneumatic_backend.processes.api_v2.services.task.groups.'
+            'GroupPerformerService._delete_group_actions'
+        )
+
+        service = GroupPerformerService(
+            user=user,
+            task=task,
+            is_superuser=False,
+            auth_type=AuthTokenType.USER
+        )
+
+        # act
+        service.delete_performer(group_id=group.id)
+
+        # assert
+        validate_mock.assert_called_once_with()
+        get_group_mock.assert_called_once_with(group_id=group.id)
+        get_valid_deleted_task_performer_mock.assert_called_once_with(
+            group=group
+        )
+        delete_group_actions_mock.assert_called_once_with(group=group)
+        performer.refresh_from_db()
+        assert performer.directly_status == DirectlyStatus.DELETED
+
+    def test_delete_performer__previously_created__ok(self, mocker):
+
+        # arrange
+        account = create_test_account()
+        user = create_test_user(account=account)
+        group = create_test_group(user=user, users=[user, ])
+        workflow = create_test_workflow(user=user)
+        task = workflow.current_task_instance
+        performer = TaskPerformer.objects.create(
+            task_id=task.id,
+            type=PerformerType.GROUP,
+            group_id=group.id,
+            directly_status=DirectlyStatus.CREATED
+        )
+        validate_mock = mocker.patch(
+            'pneumatic_backend.processes.api_v2.services.task.base.'
+            'BasePerformerService2._validate'
+        )
+        get_valid_deleted_task_performer_mock = mocker.patch(
+            'pneumatic_backend.processes.api_v2.services.task.base.'
+            'BasePerformerService2._get_valid_deleted_task_performer',
+            return_value=performer
+        )
+        get_group_mock = mocker.patch(
+            'pneumatic_backend.processes.api_v2.services.task.groups.'
+            'GroupPerformerService._get_group',
+            return_value=group
+        )
+        delete_group_actions_mock = mocker.patch(
+            'pneumatic_backend.processes.api_v2.services.task.groups.'
+            'GroupPerformerService._delete_group_actions'
+        )
+
+        service = GroupPerformerService(
+            user=user,
+            task=task,
+            is_superuser=False,
+            auth_type=AuthTokenType.USER
+        )
+
+        # act
+        service.delete_performer(group_id=group.id)
+
+        # assert
+        validate_mock.assert_called_once_with()
+        get_group_mock.assert_called_once_with(group_id=group.id)
+        get_valid_deleted_task_performer_mock.assert_called_once_with(
+            group=group
+        )
+        delete_group_actions_mock.assert_called_once_with(group=group)
+        performer.refresh_from_db()
+        assert performer.directly_status == DirectlyStatus.DELETED
+
+    def test_delete_performer__not_existent__skip(self, mocker):
+
+        # arrange
+        account = create_test_account()
+        user = create_test_user(account=account)
+        group = create_test_group(user=user, users=[user, ])
+        workflow = create_test_workflow(user=user)
+        task = workflow.current_task_instance
+        validate_mock = mocker.patch(
+            'pneumatic_backend.processes.api_v2.services.task.base.'
+            'BasePerformerService2._validate'
+        )
+        get_valid_deleted_task_performer_mock = mocker.patch(
+            'pneumatic_backend.processes.api_v2.services.task.base.'
+            'BasePerformerService2._get_valid_deleted_task_performer',
+            return_value=None
+        )
+        get_group_mock = mocker.patch(
+            'pneumatic_backend.processes.api_v2.services.task.groups.'
+            'GroupPerformerService._get_group',
+            return_value=group
+        )
+        delete_group_actions_mock = mocker.patch(
+            'pneumatic_backend.processes.api_v2.services.task.groups.'
+            'GroupPerformerService._delete_group_actions'
+        )
+
+        service = GroupPerformerService(
+            user=user,
+            task=task,
+            is_superuser=False,
+            auth_type=AuthTokenType.USER
+        )
+
+        # act
+        service.delete_performer(group_id=group.id)
+
+        # assert
+        validate_mock.assert_called_once_with()
+        get_group_mock.assert_called_once_with(group_id=group.id)
+        get_valid_deleted_task_performer_mock.assert_called_once_with(
+            group=group
+        )
+        delete_group_actions_mock.assert_not_called()
+
+    def test_delete_performer__last_performer__exception(self, mocker):
+
+        # arrange
+        account = create_test_account()
+        user = create_test_user(account=account)
+        group = create_test_group(user=user, users=[user, ])
+        template = create_test_template(user=user, is_active=True)
+        task_template = template.tasks.get(number=1)
+        task_template.delete_raw_performers()
+        task_template.add_raw_performer(
+            group=group,
+            performer_type=PerformerType.GROUP
+        )
+        workflow = create_test_workflow(user=user, template=template)
+        task = workflow.current_task_instance
+        validate_mock = mocker.patch(
+            'pneumatic_backend.processes.api_v2.services.task.base.'
+            'BasePerformerService2._validate'
+        )
+        get_group_mock = mocker.patch(
+            'pneumatic_backend.processes.api_v2.services.task.groups.'
+            'GroupPerformerService._get_group',
+            return_value=group
+        )
+        delete_group_actions_mock = mocker.patch(
+            'pneumatic_backend.processes.api_v2.services.task.groups.'
+            'GroupPerformerService._delete_group_actions'
+        )
+
+        service = GroupPerformerService(
+            user=user,
+            task=task,
+            is_superuser=False,
+            auth_type=AuthTokenType.USER
+        )
+
+        # act
+        with pytest.raises(GroupPerformerServiceException) as ex:
+            service.delete_performer(group_id=group.id)
+
+        # assert
+        assert ex.value.message == messages.MSG_PW_0016
+        validate_mock.assert_called_once_with()
+        get_group_mock.assert_called_once_with(group_id=group.id)
+        delete_group_actions_mock.assert_not_called()
+
+    def test_delete_group_actions__task_not_completed__ok(self, mocker):
+
+        # arrange
+        account = create_test_account()
+        user = create_test_user(account=account)
+        user2 = create_test_user(account=account, email='test2@test.test')
+        user3 = create_test_user(account=account, email='test3@test.test')
+        group = create_test_group(user=user, users=[user2, user3, ])
+        template = create_test_template(user=user, is_active=True)
+        workflow = create_test_workflow(user=user, template=template)
+        task = workflow.current_task_instance
+        performer = task.taskperformer_set.get(user=user)
+        performer.is_completed = True
+        performer.save()
+        task.add_raw_performer(
+            group_id=group.id,
+            performer_type=PerformerType.GROUP
+        )
+        service = GroupPerformerService(
+            user=user,
+            task=task,
+            is_superuser=False,
+            auth_type=AuthTokenType.USER
+        )
+        performer_group_deleted_event_mock = mocker.patch(
+            'pneumatic_backend.processes.api_v2.services.'
+            'WorkflowEventService.performer_group_deleted_event'
+        )
+        send_ws_notification_mock = mocker.patch(
+            'pneumatic_backend.processes.services.websocket.WSSender.'
+            'send_removed_task_notification'
+        )
+        workflow_action_service_init_mock = mocker.patch.object(
+            WorkflowActionService,
+            attribute='__init__',
+            return_value=None
+        )
+        complete_task_mock = mocker.patch(
+            'pneumatic_backend.processes.services.workflow_action'
+            '.WorkflowActionService.complete_task'
+        )
+
+        # act
+        service._delete_group_actions(group=group)
+
+        # assert
+        performer_group_deleted_event_mock.assert_called_once_with(
+            user=user,
+            task=task,
+            performer=group
+        )
+        send_ws_notification_mock.assert_not_called()
+        workflow_action_service_init_mock.assert_called_once_with(
+            user=user,
+            workflow=workflow,
+            is_superuser=False,
+            auth_type=AuthTokenType.USER
+        )
+        complete_task_mock.assert_called_once_with(task=task)
+
+    def test_delete_group_actions__task_completed__ok(self, mocker):
+
+        # arrange
+        account = create_test_account()
+        user = create_test_user(account=account)
+        user2 = create_test_user(account=account, email='test2@test.test')
+        user3 = create_test_user(account=account, email='test3@test.test')
+        group = create_test_group(user=user, users=[user2, user3, ])
+        template = create_test_template(user=user, is_active=True)
+        task_template = template.tasks.get(number=1)
+        task_template.add_raw_performer(
+            group=group,
+            performer_type=PerformerType.GROUP
+        )
+        workflow = create_test_workflow(user=user, template=template)
+        task = workflow.current_task_instance
+        task.status = TaskStatus.COMPLETED
+        task.save()
+        service = GroupPerformerService(
+            user=user,
+            task=task,
+            is_superuser=False,
+            auth_type=AuthTokenType.USER
+        )
+        performer_group_deleted_event_mock = mocker.patch(
+            'pneumatic_backend.processes.api_v2.services.'
+            'WorkflowEventService.performer_group_deleted_event'
+        )
+        send_ws_notification_mock = mocker.patch(
+            'pneumatic_backend.processes.services.websocket.WSSender.'
+            'send_removed_task_notification'
+        )
+        workflow_action_service_init_mock = mocker.patch.object(
+            WorkflowActionService,
+            attribute='__init__',
+            return_value=None
+        )
+        complete_task_mock = mocker.patch(
+            'pneumatic_backend.processes.services.workflow_action.'
+            'WorkflowActionService.start_workflow'
+        )
+
+        # act
+        service._delete_group_actions(group=group)
+
+        # assert
+        performer_group_deleted_event_mock.assert_called_once_with(
+            user=user,
+            task=task,
+            performer=group
+        )
+        send_ws_notification_mock.assert_called_once_with(
+            task=task,
+            user_ids=(user2.id, user3.id)
+        )
+        workflow_action_service_init_mock.assert_not_called()
+        complete_task_mock.assert_not_called()

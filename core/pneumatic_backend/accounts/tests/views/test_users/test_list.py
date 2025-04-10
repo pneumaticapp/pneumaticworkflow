@@ -9,20 +9,16 @@ from pneumatic_backend.accounts.enums import (
 from pneumatic_backend.accounts.models import (
     UserInvite,
 )
-
-from pneumatic_backend.accounts.tests.fixtures import (
-    create_test_user,
-    create_invited_user,
-    create_test_owner,
-    create_test_account,
-    create_test_group,
-)
 from pneumatic_backend.processes.models import (
     TaskPerformer,
 )
 from pneumatic_backend.processes.tests.fixtures import (
     create_test_workflow,
-    create_test_guest
+    create_test_guest,
+    create_test_user,
+    create_test_account,
+    create_invited_user,
+    create_test_group,
 )
 from pneumatic_backend.authentication.services import GuestJWTAuthService
 from pneumatic_backend.accounts.services import (
@@ -108,11 +104,16 @@ def test_list__different_types__ok(api_client):
         email='owner@test.test',
         last_name='z'
     )
-    user = create_test_user(account=account, last_name='y')
+    user = create_test_user(
+        account=account,
+        last_name='y',
+        is_account_owner=False,
+    )
     api_client.token_authenticate(user)
     invited_user = create_invited_user(user, last_name='x')
     inactive_user = create_test_user(
         account=account,
+        is_account_owner=False,
         email='test@test.test',
         last_name='p'
     )
@@ -332,7 +333,10 @@ def test_list__type_guest__ok(api_client):
         is_account_owner=True,
         email='owner@test.test',
     )
-    user = create_test_user(account=account)
+    user = create_test_user(
+        account=account,
+        is_account_owner=False,
+    )
     guest = create_test_guest(account=account)
     api_client.token_authenticate(user)
 
@@ -360,7 +364,11 @@ def test_list__type_multiple_values__ok(api_client):
         email='owner@test.test',
         last_name='owner'
     )
-    user = create_test_user(account=account, last_name='user')
+    user = create_test_user(
+        account=account,
+        last_name='user',
+        is_account_owner=False,
+    )
     guest = create_test_guest(account=account)
     api_client.token_authenticate(user)
 
@@ -575,14 +583,14 @@ def test_list__inactive_users_from_another_acc_with_invite__ok(
          Then he will be shown in a list.
          Inactive user in current account will be shown in a list.
     """
-    account_owner = create_test_owner(last_name='z')
+    account_owner = create_test_user(last_name='z')
     inactive_invited_user = create_invited_user(
         user=account_owner,
         email='invited@pneumatic.app',
         last_name='x'
     )
     UserService.deactivate(inactive_invited_user)
-    another_account_owner = create_test_owner(
+    another_account_owner = create_test_user(
         email='anotheracc@pneumatic.app',
     )
     another_account_inactive_user = create_invited_user(
@@ -663,7 +671,7 @@ def test_list__another_acc_users__not_found(api_client):
         is_account_owner=True,
         email='owner@test.test',
     )
-    user = create_test_user(account=account)
+    user = create_test_user(account=account, is_account_owner=False)
     api_client.token_authenticate(user)
 
     another_account = create_test_account()
@@ -674,12 +682,14 @@ def test_list__another_acc_users__not_found(api_client):
     )
     another_user = create_test_user(
         account=another_account,
+        is_account_owner=False,
         email='another@user.test'
     )
 
     create_invited_user(another_user)
     another_inactive_user = create_test_user(
         account=another_account,
+        is_account_owner=False,
         email='test@test.test',
     )
     UserService.deactivate(another_inactive_user)

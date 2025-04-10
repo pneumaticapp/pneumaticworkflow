@@ -4,7 +4,7 @@ import MiniCssExtractPlugin from 'mini-css-extract-plugin';
 
 const { NODE_ENV = 'development' } = process.env;
 const devMode = NODE_ENV !== 'production';
-const fontsDir = path.resolve(__dirname, './src/public/assets');
+const fontsDir = path.resolve(__dirname, '../src/public/assets');
 
 const config: StorybookConfig = {
   stories: ['../src/**/*.mdx', '../src/**/*.stories.@(js|jsx|mjs|ts|tsx)'],
@@ -22,12 +22,14 @@ const config: StorybookConfig = {
           {
             test: /\.css$/,
             use: [
-              MiniCssExtractPlugin.loader,
+              devMode ? 'style-loader' : MiniCssExtractPlugin.loader,
               {
                 loader: 'css-loader',
                 options: {
                   modules: {
-                    localIdentName: devMode ? '[path][name]__[local]--[hash:base64:5]' : '[local]--[hash:base64:5]',
+                    localIdentName: devMode 
+                      ? '[path][name]__[local]--[hash:base64:5]' 
+                      : '[local]--[hash:base64:5]',
                     getLocalIdent: (loaderContext, _, localName) => {
                       const { resourcePath } = loaderContext;
                       if (resourcePath.includes(fontsDir) || resourcePath.includes('node_modules')) {
@@ -35,7 +37,6 @@ const config: StorybookConfig = {
                       }
                     },
                   },
-                  import: true,
                 },
               },
               'postcss-loader',
@@ -43,24 +44,26 @@ const config: StorybookConfig = {
           },
           {
             test: /\.s[ac]ss$/i,
-            use: ['style-loader', 'css-loader', 'sass-loader'],
+            use: [
+              devMode ? 'style-loader' : MiniCssExtractPlugin.loader,
+              'css-loader',
+              'sass-loader'
+            ],
           },
         ],
-        plugins: [
+        plugins: devMode ? [] : [
           new MiniCssExtractPlugin({
-            filename: devMode ? '[name].css' : '[name].[contenthash].css',
+            filename: 'styles/[name].[contenthash].css',
           }),
-        ]
-      }
+        ],
+      },
     },
     'storybook-react-intl',
   ],
-  framework: {
-    name: '@storybook/react-webpack5',
-    options: {},
-  },
+  framework: '@storybook/react-webpack5',
   docs: {
     autodocs: 'tag',
   },
 };
+
 export default config;

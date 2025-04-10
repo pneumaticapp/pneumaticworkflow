@@ -30,3 +30,8 @@ class TaskFieldException(BaseApiNameException):
 class TaskServiceException(BaseServiceException):
 
     pass
+
+
+class GroupPerformerServiceException(BaseServiceException):
+
+    pass

@@ -182,7 +182,7 @@ class WorkflowCreateSerializer(
             raise ValidationError(messages.MSG_PW_0074)
         allowed_performer = user.is_user and (
             user.is_account_owner or
-            value.taskperformer_set.by_user(
+            value.taskperformer_set.by_user_or_group(
                 user.id
             ).exclude_directly_deleted().exists()
         )
@@ -321,8 +321,10 @@ class WorkflowCompleteSerializer(
         if not (task_id or task_api_name):
             raise ValidationError(messages.MSG_PW_0076)
         if task_id and task.id != task_id:
+            # TODO Update message in https://my.pneumatic.app/workflows/35698/
             raise ValidationError(messages.MSG_PW_0018)
         if task_api_name and task.api_name != task_api_name:
+            # TODO Update message in https://my.pneumatic.app/workflows/35698/
             raise ValidationError(messages.MSG_PW_0018)
         if not task.checklists_completed:
             raise ValidationError(messages.MSG_PW_0006)
@@ -333,7 +335,7 @@ class WorkflowCompleteSerializer(
         task_performer = (
             TaskPerformer.objects
             .by_task(task.id)
-            .by_user(user.id)
+            .by_user_or_group(user.id)
             .exclude_directly_deleted()
             .first()
         )
@@ -344,6 +346,7 @@ class WorkflowCompleteSerializer(
             raise ValidationError(messages.MSG_PW_0011)
 
         attrs['output'] = attrs.get('output') or {}
+        attrs['task'] = task
         return attrs
 
 
@@ -396,16 +399,13 @@ class WorkflowFinishSerializer(
         self.additional_validate(validated_data)
 
         with transaction.atomic():
-            workflow_action_service = WorkflowActionService(
+            service = WorkflowActionService(
+                workflow=instance,
                 user=self.context['user'],
                 is_superuser=self.context['is_superuser'],
                 auth_type=self.context['auth_type'],
             )
-            workflow_action_service.end_process(
-                workflow=instance,
-                by_condition=False,
-                by_complete_task=False,
-            )
+            service.end_process(by_condition=False, by_complete_task=False)
         return instance
 
 
@@ -496,6 +496,7 @@ class WorkflowListFilterSerializer(
     # TODO Remove in https://my.pneumatic.app/workflows/36988/
     template_task_id = serializers.CharField(required=False)
     current_performer = serializers.CharField(required=False)
+    current_performer_group_ids = serializers.CharField(required=False)
     workflow_starter = serializers.CharField(required=False)
     ordering = serializers.ChoiceField(
         required=False,
@@ -531,6 +532,9 @@ class WorkflowListFilterSerializer(
     def validate_current_performer(self, value):
         return self.get_valid_list_integers(value)
 
+    def validate_current_performer_group_ids(self, value):
+        return self.get_valid_list_integers(value)
+
     def validate_workflow_starter(self, value):
         return self.get_valid_list_integers(value)
 
@@ -544,14 +548,18 @@ class WorkflowListFilterSerializer(
         template_task_ids = data.get('template_task_id')
         if template_task_ids:
             data['template_task_api_name'] = (
-                TaskTemplate.objects.
-                filter(id__in=template_task_ids)
+                TaskTemplate.objects
+                .filter(id__in=template_task_ids)
                 .values_list('api_name', flat=True)
             )
         data.pop('template_task_id', None)
         status = data.get('status')
         current_performer = data.get('current_performer')
-        if current_performer and status in WorkflowApiStatus.NOT_RUNNING:
+        current_performer_group_ids = data.get('current_performer_group_ids')
+        if (
+            (current_performer or current_performer_group_ids)
+            and status in WorkflowApiStatus.NOT_RUNNING
+        ):
             raise ValidationError(messages.MSG_PW_0067)
         return data
 

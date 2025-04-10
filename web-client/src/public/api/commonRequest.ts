@@ -1,37 +1,18 @@
-/* eslint-disable @typescript-eslint/no-throw-literal */
-// @ts-ignore
-import * as merge from 'lodash.merge';
-
+import axios, { AxiosInstance, AxiosRequestConfig, AxiosHeaders } from 'axios';
 import { logger } from '../utils/logger';
 import { ETimeouts } from '../constants/defaultValues';
 import { getAuthHeader } from '../../server/utils/getAuthHeader';
 import { getBrowserConfigEnv } from '../utils/getConfig';
 import { mapToCamelCase } from '../utils/mappers';
 import { mergePaths } from '../utils/urls';
-import { promiseTimeout } from '../utils/timeouts';
-import { retry } from '../utils/retry';
 import { identifyAppPartOnClient } from '../utils/identifyAppPart/identifyAppPartOnClient';
 import { getCurrentToken } from '../utils/auth';
 import { envBackendURL } from '../constants/enviroment';
 
-const MAX_FETCH_RETRIES = 3;
-const getFetchRetryDelay = () => 1000;
-
-const DEFAULT_FETCH_PARAMS: RequestInit = {
-  credentials: 'include',
-  method: 'GET',
-  headers: {
-    'Content-Type': 'application/json',
-  },
-};
-
 export type TRequestType = 'public' | 'local';
+export type TResponseType = 'json' | 'text' | 'empty';
 
-const DEFAULT_SUCCESS_STATUS_CODES = [200, 201, 204];
-
-type TResponseType = 'json' | 'text' | 'empty';
-
-export interface ICommonRequestOptions {
+interface ICommonRequestOptions {
   type: TRequestType;
   successStatusCodes: number[];
   shouldThrow: boolean;
@@ -41,79 +22,106 @@ export interface ICommonRequestOptions {
 
 const DEFAULT_OPTIONS: ICommonRequestOptions = {
   type: 'public',
-  successStatusCodes: DEFAULT_SUCCESS_STATUS_CODES,
+  successStatusCodes: [200, 201, 204],
   shouldThrow: false,
   timeOut: ETimeouts.Default,
   responseType: 'json',
 };
 
-const fetchWithTimeoutCreator =
-  (timeout: number) =>
-    (...args: Parameters<typeof fetch>) =>
-    promiseTimeout(timeout, fetch(...args)) as Promise<Response>;
+const axiosInstance: AxiosInstance = axios.create({
+  timeout: ETimeouts.Default,
+  withCredentials: true,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+axiosInstance.interceptors.request.use(
+  (config) => {
+    const appPart = identifyAppPartOnClient();
+    const token = getCurrentToken();
+    const authHeaders = getAuthHeader({ token, appPart });
+    const headers = new AxiosHeaders();
+
+    Object.entries(authHeaders).forEach(([key, value]) => {
+      if (value) {
+        headers.set(key, value);
+      }
+    });
+
+    if (config.headers) {
+      Object.entries(config.headers).forEach(([key, value]) => {
+        if (value) {
+          headers.set(key, value);
+        }
+      });
+    }
+
+    config.headers = headers;
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
+axiosInstance.interceptors.response.use(
+  (response) => {
+    if (response.config.responseType === 'json') {
+      response.data = mapToCamelCase(response.data);
+    }
+    return response;
+  },
+  (error) => {
+    if (error.response) {
+      logger.error('Response Error:', error.response.data);
+    } else if (error.request) {
+      logger.error('Request Error:', error.request);
+    } else {
+      logger.error('Error:', error.message);
+    }
+
+    return Promise.reject(error.response.data);
+  }
+);
 
 export async function commonRequest<T>(
   rawUrl: string,
-  params: Partial<RequestInit> = DEFAULT_FETCH_PARAMS,
-  options: Partial<ICommonRequestOptions> = DEFAULT_OPTIONS,
-) {
-  const { type, shouldThrow, successStatusCodes, timeOut } = { ...DEFAULT_OPTIONS, ...options };
+  params: Partial<AxiosRequestConfig> = {},
+  options: Partial<ICommonRequestOptions> = {}
+): Promise<T> {
   const {
     api: { publicUrl, urls },
   } = getBrowserConfigEnv();
-
-  const fetchWithRetry = retry(fetchWithTimeoutCreator(timeOut), MAX_FETCH_RETRIES, getFetchRetryDelay);
-
+  const { type, shouldThrow, successStatusCodes, timeOut } = { ...DEFAULT_OPTIONS, ...options };
   const requestBaseUrlsMap: { [key in TRequestType]: string } = {
     public: envBackendURL || publicUrl,
     local: '',
   };
+
   try {
     const url = (urls as { [key in string]: string })[rawUrl] || rawUrl;
-    const fetchUrl = mergePaths(requestBaseUrlsMap[type], url);
+    const fullUrl = mergePaths(requestBaseUrlsMap[type], url);
 
-    const headers = getRequestHeaders();
-    const fetchParams = merge({}, DEFAULT_FETCH_PARAMS, { headers }, params);
-    const response = await fetchWithRetry(fetchUrl, fetchParams);
+    const config: AxiosRequestConfig = {
+      ...params,
+      timeout: timeOut,
+      responseType: options.responseType === 'text' ? 'text' : 'json',
+      validateStatus: (status) => successStatusCodes.includes(status),
+    };
 
-    if (!response) {
-      throw response;
+    const response = await axiosInstance(fullUrl, config);
+
+    if (options.responseType === 'text') {
+      return response.data as T;
     }
 
-    let responseBody;
-
-    if (options.responseType !== 'empty' || !response.ok) {
-      responseBody = options.responseType === 'text' ? await response.text() : await response.json().catch(() => ({}));
-    }
-
-    if (!successStatusCodes.includes(response.status)) {
-      throw typeof responseBody === 'object' ? { ...responseBody, status: response.status } : responseBody;
-    }
-
-    return options.responseType !== 'text'
-      ? (mapToCamelCase(responseBody) as unknown as T)
-      : (responseBody as unknown as T);
-  } catch (e) {
+    return response.data as T;
+  } catch (error) {
     if (shouldThrow) {
-      throw e;
+      throw error;
     }
-    logger.error(e);
-
-    return undefined;
+    logger.error(error);
+    return undefined as unknown as T;
   }
 }
-
-function getRequestHeaders() {
-  const appPart = identifyAppPartOnClient();
-
-
-  const { userAgent } = window.navigator;
-  const token = getCurrentToken();
-
-  return getAuthHeader({ token, appPart, userAgent });
-}
-
-
-
-
-

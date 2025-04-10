@@ -14,7 +14,7 @@ export function saveFirebaseDeviceToken(token: string) {
     urls.fcmDevice,
     {
       method: 'POST',
-      body: mapRequestBody({ token }),
+      data: mapRequestBody({ token }),
     },
     {
       shouldThrow: false,

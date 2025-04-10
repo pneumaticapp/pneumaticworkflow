@@ -1,11 +1,9 @@
-from typing import List
 from rest_framework import serializers
 from pneumatic_backend.processes.enums import WorkflowEventType
 from pneumatic_backend.processes.models import (
     Task,
     Delay,
     Workflow,
-    TaskPerformer,
     WorkflowEvent,
 )
 from pneumatic_backend.processes.serializers.task_field import (
@@ -15,6 +13,8 @@ from pneumatic_backend.processes.api_v2.serializers.file_attachment import (
     FileAttachmentSerializer
 )
 from pneumatic_backend.generics.fields import TimeStampField
+from pneumatic_backend.processes.api_v2.serializers.\
+    workflow.task_performer import TaskUserGroupPerformerSerializer
 
 
 class SubWorkflowEventSerializer(serializers.ModelSerializer):
@@ -72,17 +72,13 @@ class TaskEventJsonSerializer(serializers.ModelSerializer):
             'sub_workflow',
         )
 
-    performers = serializers.SerializerMethodField()
+    performers = TaskUserGroupPerformerSerializer(
+        many=True,
+        source='exclude_directly_deleted_taskperformer_set'
+    )
     output = serializers.SerializerMethodField()
     due_date_tsp = TimeStampField(source='due_date')
     sub_workflow = serializers.SerializerMethodField()
-
-    def get_performers(self, instance) -> List[int]:
-        return list(
-            TaskPerformer.objects.by_task(
-                instance.id
-            ).exclude_directly_deleted().user_ids()
-        )
 
     def get_output(self, instance):
         if self.context['event_type'] == WorkflowEventType.TASK_COMPLETE:
@@ -115,6 +111,7 @@ class WorkflowEventSerializer(serializers.ModelSerializer):
             'type',
             'user_id',
             'target_user_id',
+            'target_group_id',
             'delay',
             'task',
             'attachments',

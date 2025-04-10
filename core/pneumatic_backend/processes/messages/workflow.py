@@ -37,11 +37,7 @@ MSG_PW_0020 = _(
     'You need to resume the workflow before check off this checklist item.'
 )
 MSG_PW_0021 = _('Permission denied.')
-# Translators: Workflows / Templates / Highlights filter by template steps
-MSG_PW_0022 = _(
-    "Filters 'with_tasks_in_progress' and 'is_running_workflows' "
-    "cannot be used at the same time."
-)
+
 # Translators:
 MSG_PW_0023 = _('Please fill in the required fields.')
 MSG_PW_0024 = lambda arg: format_lazy(
@@ -185,4 +181,5 @@ MSG_PW_0080 = lambda task_name: format_lazy(
     task_name=task_name
 )
 MSG_PW_0081 = _("A workflow can't return to a later task.")
+MSG_PW_0082 = _("There is no group with the specified ID.")
 MSG_PW_0083 = _("You must supply a comment.")

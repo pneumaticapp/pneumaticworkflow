@@ -16,14 +16,14 @@ type TWarningRule<T> = {
 };
 
 export function validateTemplate(template: ITemplate, isSubscribed: boolean, intl: IntlShape) {
-  const { templateOwners, name, tasks, kickoff } = template;
+  const { owners, name, tasks, kickoff } = template;
   const { formatMessage } = intl;
 
   const taskWithInvalidConditions = tasks.filter(task => !areConditionsValid(task.conditions));
 
   const commonWarningRules: TWarningRule<string>[] = [
     {
-      check: () => !templateOwners.length,
+      check: () => !owners.length,
       getMessage: () => formatMessage({ id: 'template.no-run-allowers' }),
     },
     {

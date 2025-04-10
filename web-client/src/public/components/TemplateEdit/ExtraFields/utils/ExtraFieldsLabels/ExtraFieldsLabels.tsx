@@ -1,13 +1,11 @@
-/* eslint-disable */
-/* prettier-ignore */
-import * as React from 'react';
+import React from 'react';
+import classnames from 'classnames';
 
 import { IExtraField } from '../../../../../types/template';
 import { isArrayWithItems } from '../../../../../utils/helpers';
 import { truncateString } from '../../../../../utils/truncateString';
 
 import styles from './ExtraFieldsLabels.css';
-import * as classnames from 'classnames';
 
 interface IExtraFieldsLabelsProps {
   onClick?(): void;
@@ -28,7 +26,8 @@ export function ExtraFieldsLabels({ extraFields, onClick }: IExtraFieldsLabelsPr
       <Tag
         className={classnames(
           styles['extra-field-label'],
-          (onClick && styles['extra-field-label_clickable']),
+          styles['extra-field-label_m-4'],
+          onClick && styles['extra-field-label_clickable'],
         )}
         key={`extra-field-label-${field.apiName}`}
         onClick={onClick}

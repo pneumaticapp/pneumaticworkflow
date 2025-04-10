@@ -24,7 +24,7 @@ export function sendInvites(users: IUserInvite[], currentUrl: string) {
     urls.sendInvites,
     {
       method: 'POST',
-      body: mapRequestBody({ users }),
+      data: mapRequestBody({ users }),
       headers: {
         'Content-Type': 'application/json',
         'X-Current-Url': currentUrl,

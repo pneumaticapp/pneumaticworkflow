@@ -10,7 +10,7 @@ export interface IRegisterUserResponse {
 export function registerUser(user: IUserRegister, utmParams?: IUserUtm, captcha?: string) {
   return commonRequest<IRegisterUserResponse>('registerUrl', {
     method: 'POST',
-    body: mapRequestBody({ ...user, ...utmParams, captcha }),
+    data: mapRequestBody({ ...user, ...utmParams, captcha }),
     headers: {
       'Content-Type': 'application/json',
     },

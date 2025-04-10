@@ -16,14 +16,14 @@ from pneumatic_backend.processes.tests.fixtures import (
     create_invited_user,
     create_test_workflow,
     create_test_account,
-)
-from pneumatic_backend.processes.tests.fixtures import (
-    create_test_template
+    create_test_template,
+    create_test_group,
 )
 from pneumatic_backend.processes.enums import (
     WorkflowStatus,
     WorkflowEventType,
     FieldType,
+    TaskStatus,
 )
 from pneumatic_backend.processes.api_v2.services.task.performers import (
     TaskPerformersService
@@ -61,7 +61,7 @@ def test__ordering__ok(api_client):
     )
     workflow = create_test_workflow(user)
     task = workflow.tasks.order_by('number').first()
-    task.is_completed = True
+    task.status = TaskStatus.COMPLETED
     task.date_completed = timezone.now()
     task.save()
 
@@ -204,7 +204,7 @@ def test_highlights_start_workflow(api_client):
     other_workflow = create_test_workflow(user)
     WorkflowEventService.workflow_run_event(other_workflow)
     task = workflow.tasks.order_by('number').first()
-    task.is_completed = True
+    task.status = TaskStatus.COMPLETED
     task.date_completed = timezone.now()
     task.save()
     WorkflowEventService.task_complete_event(
@@ -243,7 +243,7 @@ def test_highlights__used_tsp__ok(api_client):
         task=task,
         after_create_actions=False
     )
-    task.is_completed = True
+    task.status = TaskStatus.COMPLETED
     task.date_completed = timezone.now() + timedelta(hours=11)
     task.save()
     WorkflowEventService.task_complete_event(
@@ -271,7 +271,7 @@ def test_highlights__used_tsp__ok(api_client):
         task=task,
         after_create_actions=False
     )
-    task.is_completed = True
+    task.status = TaskStatus.COMPLETED
     task.date_completed = timezone.now() + timedelta(hours=7)
     task.save()
     event = WorkflowEvent.objects.get(
@@ -294,7 +294,7 @@ def test_highlights__used_tsp__ok(api_client):
         task=task,
         after_create_actions=False
     )
-    task.is_completed = True
+    task.status = TaskStatus.COMPLETED
     task.date_completed = timezone.now() + timedelta(hours=7)
     task.save()
     event = WorkflowEvent.objects.get(
@@ -472,7 +472,9 @@ def test__terminated_workflow__not_show(api_client):
     assert response.data[0]['text'] == event_2.text
 
 
-def test_highlights_by_users(api_client):
+def test_highlights__users__ok(api_client):
+
+    # arrange
     account = create_test_account()
     create_test_user(
         email='owner@test.test',
@@ -511,10 +513,132 @@ def test_highlights_by_users(api_client):
 
     api_client.token_authenticate(user)
 
+    # act
     response = api_client.get(
-        f'/reports/highlights?users={first_invited.id},{second_invited.id}'
+        f'/reports/highlights?'
+        f'current_performer_ids={first_invited.id},{second_invited.id}'
     )
 
+    # assert
+    assert response.status_code == 200
+    assert len(response.data) == 2
+    assert response.data[0]['text'] == event_3.text
+    assert response.data[1]['text'] == event_2.text
+
+
+def test_highlights__current_performer_ids__ok(api_client):
+
+    # arrange
+    account = create_test_account()
+    create_test_user(
+        email='owner@test.test',
+        account=account,
+        is_account_owner=True
+    )
+    user = create_test_user(
+        account=account,
+        is_account_owner=False
+    )
+    first_invited = create_invited_user(user)
+    second_invited = create_invited_user(user, 'test_n@pneumatic.app')
+
+    workflow_1 = create_test_workflow(user)
+    workflow_2 = create_test_workflow(user)
+    workflow_3 = create_test_workflow(user)
+
+    WorkflowEventService.comment_created_event(
+        text='Comment 1',
+        workflow=workflow_1,
+        user=user,
+        after_create_actions=False
+    )
+    event_2 = WorkflowEventService.comment_created_event(
+        text='Comment 2',
+        workflow=workflow_2,
+        user=first_invited,
+        after_create_actions=False
+    )
+    event_3 = WorkflowEventService.comment_created_event(
+        text='Comment 3',
+        workflow=workflow_3,
+        user=second_invited,
+        after_create_actions=False
+    )
+
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.get(
+        '/reports/highlights',
+        data={
+            'current_performer_ids': f'{first_invited.id},{second_invited.id}'
+        }
+
+    )
+
+    # assert
+    assert response.status_code == 200
+    assert len(response.data) == 2
+    assert response.data[0]['text'] == event_3.text
+    assert response.data[1]['text'] == event_2.text
+
+
+def test_highlights__not_unique_current_performer_and_performer_group_ids__ok(
+    api_client
+):
+
+    # arrange
+    account = create_test_account()
+    create_test_user(
+        email='owner@test.test',
+        account=account,
+        is_account_owner=True
+    )
+    user = create_test_user(
+        account=account,
+        is_account_owner=False
+    )
+    first_invited = create_invited_user(user)
+    second_invited = create_invited_user(user, 'test_n@pneumatic.app')
+    group = create_test_group(
+        user=first_invited,
+        users=[first_invited, second_invited]
+    )
+    workflow_1 = create_test_workflow(user)
+    workflow_2 = create_test_workflow(user)
+    workflow_3 = create_test_workflow(user)
+
+    WorkflowEventService.comment_created_event(
+        text='Comment 1',
+        workflow=workflow_1,
+        user=user,
+        after_create_actions=False
+    )
+    event_2 = WorkflowEventService.comment_created_event(
+        text='Comment 2',
+        workflow=workflow_2,
+        user=first_invited,
+        after_create_actions=False
+    )
+    event_3 = WorkflowEventService.comment_created_event(
+        text='Comment 3',
+        workflow=workflow_3,
+        user=second_invited,
+        after_create_actions=False
+    )
+
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.get(
+        '/reports/highlights',
+        data={
+            'current_performer_ids': f'{first_invited.id},{second_invited.id}',
+            'current_performer_group_ids': group.id
+        }
+    )
+
+    # assert
     assert response.status_code == 200
     assert len(response.data) == 2
     assert response.data[0]['text'] == event_3.text
@@ -536,10 +660,10 @@ def test_highlights_complete_workflow(api_client):
     workflow = create_test_workflow(user)
     WorkflowEventService.workflow_run_event(workflow)
     for task in workflow.tasks.order_by('number'):
-        task.is_completed = True
+        task.status = TaskStatus.COMPLETED
         task.date_completed = timezone.now()
         task.taskperformer_set.update(is_completed=True)
-        task.save(update_fields=['is_completed', 'date_completed'])
+        task.save(update_fields=['status', 'date_completed'])
         next_task = task.next
         if next_task:
             next_task.date_started = timezone.now()
@@ -921,7 +1045,8 @@ def test__due_date_changed__ok(api_client):
     assert data['task']['name'] == task.name
     assert data['task']['number'] == task.number
     assert data['task']['description'] == task.description
-    assert data['task']['performers'] == [user.id]
+    performer = {'source_id': user.id, 'type': 'user'}
+    assert data['task']['performers'] == [performer]
     assert data['task']['due_date_tsp'] == due_date.timestamp()
     assert data['workflow']['id'] == workflow.id
     assert data['workflow']['template']['id'] == workflow.template.id
@@ -1018,7 +1143,8 @@ def test__sub_workflow_run__ok(api_client):
     assert task_data['name'] == ancestor_task.name
     assert task_data['number'] == ancestor_task.number
     assert task_data['description'] == ancestor_task.description
-    assert task_data['performers'] == [user.id]
+    performer = {'source_id': user.id, 'type': 'user'}
+    assert task_data['performers'] == [performer]
     assert task_data['due_date_tsp'] == ancestor_task.due_date.timestamp()
 
     assert task_data['sub_workflow']['id'] == sub_workflow.id
