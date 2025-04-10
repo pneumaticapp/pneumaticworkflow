@@ -20,6 +20,7 @@ export interface IGetWorkflowsConfig {
   templatesIdsFilter: number[];
   stepsIdsFilter: number[];
   performersIdsFilter: number[];
+  performersGroupIdsFilter: number[];
   workflowStartersIdsFilter: number[];
   searchText: string;
 }
@@ -32,6 +33,7 @@ export function getWorkflows({
   templatesIdsFilter,
   stepsIdsFilter,
   performersIdsFilter,
+  performersGroupIdsFilter,
   workflowStartersIdsFilter,
   searchText = '',
 }: IGetWorkflowsConfig) {
@@ -46,6 +48,7 @@ export function getWorkflows({
       templatesIdsFilter,
       stepsIdsFilter,
       performersIdsFilter,
+      performersGroupIdsFilter,
       workflowStartersIdsFilter,
       searchText,
     })}`,
@@ -64,6 +67,7 @@ export function getWorkflowsQueryString({
   templatesIdsFilter,
   stepsIdsFilter,
   performersIdsFilter,
+  performersGroupIdsFilter,
   workflowStartersIdsFilter,
   searchText,
 }: IGetWorkflowsConfig) {
@@ -85,6 +89,7 @@ export function getWorkflowsQueryString({
     `template_id=${templatesIdsFilter.join(',')}`,
     canFilterByTemplateStep(statusFilter) && `template_task_id=${stepsIdsFilter.join(',')}`,
     canFilterByCurrentPerformer(statusFilter) && `current_performer=${performersIdsFilter.join(',')}`,
+    canFilterByCurrentPerformer(statusFilter) && `current_performer_group_ids=${performersGroupIdsFilter.join(',')}`,
     `workflow_starter=${workflowStarters.join(',')}`,
     statusFilter !== EWorkflowsStatus.All && `status=${statusFilter}`,
     `search=${searchText}`,

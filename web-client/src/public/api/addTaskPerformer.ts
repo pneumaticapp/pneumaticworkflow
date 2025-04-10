@@ -9,7 +9,7 @@ export function addTaskPerformer(taskId: number, userId: number) {
     urls.addTaskPerformer.replace(':id', String(taskId)),
     {
       method: 'POST',
-      body: mapRequestBody({ userId }),
+      data: mapRequestBody({ userId }),
     },
     {
       responseType: 'empty',

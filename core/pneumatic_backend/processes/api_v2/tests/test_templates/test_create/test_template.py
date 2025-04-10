@@ -69,7 +69,12 @@ def test_create__only_required_fields__defaults_ok(
     )
     request_data = {
         'name': 'Template',
-        'template_owners': [user.id],
+        'owners': [
+            {
+                'type': OwnerType.USER,
+                'source_id': user.id
+            },
+        ],
         'is_active': True,
         'kickoff': {},
         'tasks': [
@@ -96,9 +101,9 @@ def test_create__only_required_fields__defaults_ok(
     assert response.status_code == 200
     response_data = response.json()
 
-    assert response_data['template_owners'] == (
-        request_data['template_owners']
-    )
+    assert response.data['owners'][0].get('api_name')
+    assert response.data['owners'][0]['source_id'] == str(user.id)
+    assert response.data['owners'][0]['type'] == OwnerType.USER
     assert response_data['name'] == request_data['name']
     assert response_data['description'] == ''
     assert response_data['is_active'] is True
@@ -109,6 +114,107 @@ def test_create__only_required_fields__defaults_ok(
     template = Template.objects.get(id=response_data['id'])
     assert template.tasks.first().account_id == user.account_id
     assert template.owners.count() == 1
+    assert template.name == request_data['name']
+    assert template.description == ''
+    assert template.is_active == request_data['is_active']
+    assert template.finalizable is False
+    assert template.wf_name_template is None
+    account.refresh_from_db()
+    create_integrations_mock.assert_called_with(
+        template=template
+    )
+    api_request_mock.assert_not_called()
+    template_create_mock.assert_called_once()
+    kickoff_create_mock.assert_called_once()
+
+
+def test_create__only_required_fields_with_group__defaults_ok(
+    mocker,
+    api_client
+):
+
+    # arrange
+    account = create_test_account()
+    user = create_test_user(account=account)
+    user_in_group = create_test_user(
+        account=account,
+        email='test2@pneumatic.app'
+    )
+    group = create_test_group(user=user, users=[user_in_group, ])
+    api_client.token_authenticate(user)
+    create_integrations_mock = mocker.patch(
+        'pneumatic_backend.processes.api_v2.services.templates.'
+        'integrations.TemplateIntegrationsService.'
+        'create_integrations_for_template'
+    )
+    api_request_mock = mocker.patch(
+        'pneumatic_backend.processes.api_v2.services.templates.'
+        'integrations.TemplateIntegrationsService.api_request',
+    )
+    template_create_mock = mocker.patch(
+        'pneumatic_backend.processes.api_v2.views.template.'
+        'AnalyticService.templates_created'
+    )
+    kickoff_create_mock = mocker.patch(
+        'pneumatic_backend.processes.api_v2.views.template.'
+        'AnalyticService.templates_kickoff_created'
+    )
+    request_data = {
+        'name': 'Template',
+        'owners': [
+            {
+                'api_name': 'owner-gft3g3625',
+                'type': OwnerType.USER,
+                'source_id': user.id
+            },
+            {
+                'api_name': 'owner-gf216g1625',
+                'type': OwnerType.GROUP,
+                'source_id': group.id
+            },
+        ],
+        'is_active': True,
+        'kickoff': {},
+        'tasks': [
+            {
+                'number': 1,
+                'name': 'First step',
+                'raw_performers': [
+                    {
+                        'type': PerformerType.USER,
+                        'source_id': user.id
+                    }
+                ]
+            }
+        ]
+    }
+
+    # act
+    response = api_client.post(
+        path='/templates',
+        data=request_data
+    )
+
+    # assert
+    assert response.status_code == 200
+    response_data = response.json()
+
+    assert response.data['owners'][0]['api_name'] == 'owner-gf216g1625'
+    assert response.data['owners'][0]['source_id'] == str(group.id)
+    assert response.data['owners'][0]['type'] == OwnerType.GROUP
+    assert response.data['owners'][1]['api_name'] == 'owner-gft3g3625'
+    assert response.data['owners'][1]['source_id'] == str(user.id)
+    assert response.data['owners'][1]['type'] == OwnerType.USER
+    assert response_data['name'] == request_data['name']
+    assert response_data['description'] == ''
+    assert response_data['is_active'] is True
+    assert response_data['is_public'] is False
+    assert response_data['public_url'] is not None
+    assert response_data['finalizable'] is False
+    assert response_data['wf_name_template'] is None
+    template = Template.objects.get(id=response_data['id'])
+    assert template.tasks.first().account_id == user.account_id
+    assert template.owners.count() == 2
     assert template.name == request_data['name']
     assert template.description == ''
     assert template.is_active == request_data['is_active']
@@ -187,7 +293,16 @@ def test_create__all_fields__ok(
     request_data = {
         'description': 'Desc',
         'name': 'Name',
-        'template_owners': [user.id, user2.id],
+        'owners': [
+            {
+                'type': OwnerType.USER,
+                'source_id': user.id
+            },
+            {
+                'type': OwnerType.USER,
+                'source_id': user2.id
+            },
+        ],
         'is_active': True,
         'is_public': False,
         'finalizable': True,
@@ -293,9 +408,7 @@ def test_create__all_fields__ok(
 
     assert response_data.get('id')
     assert response_data.get('kickoff')
-    assert len(response_data['template_owners']) == len(
-        request_data['template_owners']
-    )
+    assert len(response_data['owners']) == len(request_data['owners'])
     assert response_data['name'] == request_data['name']
     assert response_data['description'] == request_data['description']
     assert response_data['is_active'] == request_data['is_active']
@@ -307,10 +420,13 @@ def test_create__all_fields__ok(
     assert response_data.get('date_updated')
 
     template = Template.objects.get(id=response_data['id'])
-    template_owners_ids = list(template.owners.order_by(
+    template_owners = list(template.owners.order_by(
         'id'
-    ).values_list('user_id', flat=True))
-    assert template_owners_ids == request_data['template_owners']
+    ).values_list('user_id', 'type'))
+    assert template_owners[0][0] == user.id
+    assert template_owners[0][1] == OwnerType.USER
+    assert template_owners[1][0] == user2.id
+    assert template_owners[1][1] == OwnerType.USER
     assert template.name == request_data['name']
     assert template.description == request_data['description']
     assert template.is_active == request_data['is_active']
@@ -344,6 +460,93 @@ def test_create__all_fields__ok(
     )
 
 
+def test_create__current_user_in_group__ok(
+    mocker,
+    api_client
+):
+
+    # arrange
+    account = create_test_account(plan=BillingPlanType.PREMIUM)
+    user = create_test_user(is_account_owner=False, account=account)
+    another_user = create_test_user(
+        account=account,
+        email='another@pneumatic.app'
+    )
+    api_client.token_authenticate(another_user)
+    group = create_test_group(user=user, users=[another_user, ])
+    mocker.patch(
+        'pneumatic_backend.processes.api_v2.services.templates.'
+        'integrations.TemplateIntegrationsService.'
+        'create_integrations_for_template'
+    )
+    template_create_mock = mocker.patch(
+        'pneumatic_backend.processes.api_v2.views.template.'
+        'AnalyticService.templates_created'
+    )
+    kickoff_create_mock = mocker.patch(
+        'pneumatic_backend.processes.api_v2.views.template.'
+        'AnalyticService.templates_kickoff_created'
+    )
+
+    # act
+    response = api_client.post(
+        '/templates',
+        data={
+            'name': 'Template',
+            'owners': [
+                {
+                    'api_name': 'owner-gft3g3625',
+                    'type': OwnerType.GROUP,
+                    'source_id': group.id
+                },
+            ],
+            'is_active': True,
+            'description': '',
+            'kickoff': {},
+            'tasks': [
+                {
+                    'name': 'First step',
+                    'number': 1,
+                    'raw_performers': [
+                        {
+                            'type': PerformerType.USER,
+                            'source_id': user.id
+                        }
+                    ]
+                }
+            ]
+        }
+    )
+
+    # assert
+    assert response.status_code == 200
+    response_data = response.json()
+
+    # assert response.data['owners'][0]['api_name'] == 'owner-gf216g1625'
+    assert response.data['owners'][0]['source_id'] == str(group.id)
+    assert response.data['owners'][0]['type'] == OwnerType.GROUP
+    template = Template.objects.get(id=response_data['id'])
+
+    template_create_mock.assert_called_once_with(
+        user=another_user,
+        template=template,
+        auth_type=AuthTokenType.USER,
+        is_superuser=False,
+        kickoff_fields_count=0,
+        tasks_count=1,
+        tasks_fields_count=0,
+        due_in_count=0,
+        delays_count=0,
+        conditions_count=0,
+    )
+    kickoff_create_mock.assert_called_once_with(
+        user=another_user,
+        template=template,
+        auth_type=AuthTokenType.USER,
+        is_superuser=False,
+    )
+
+
 def test_create__draft__ok(
     mocker,
     api_client,
@@ -370,7 +573,16 @@ def test_create__draft__ok(
         'create_integrations_for_template'
     )
     request_data = {
-        'template_owners': [user.id, user_2.id],
+        'owners': [
+            {
+                'type': OwnerType.USER,
+                'source_id': user.id
+            },
+            {
+                'type': OwnerType.USER,
+                'source_id': user_2.id
+            },
+        ],
         'is_active': False,
         'kickoff': {
             'fields': [],
@@ -390,7 +602,10 @@ def test_create__draft__ok(
     response_data = response.json()
 
     assert response_data.get('id')
-    assert response_data['template_owners'] == [user.id, user_2.id]
+    assert response_data['owners'][0]['source_id'] == str(user.id)
+    assert response_data['owners'][0]['type'] == OwnerType.USER
+    assert response_data['owners'][1]['source_id'] == str(user_2.id)
+    assert response_data['owners'][1]['type'] == OwnerType.USER
     assert response_data['name'] == ''
     assert not response_data.get('description')
     assert response_data['is_active'] is False
@@ -417,7 +632,10 @@ def test_create__draft__ok(
     assert template_draft.draft is not None
     assert template_draft.draft['is_active'] is False
     assert template_draft.draft['name'] == ''
-    assert template_draft.draft['template_owners'] == [user.id, user_2.id]
+    assert template_draft.draft['owners'][0]['source_id'] == str(user.id)
+    assert template_draft.draft['owners'][0]['type'] == OwnerType.USER
+    assert template_draft.draft['owners'][1]['source_id'] == str(user_2.id)
+    assert template_draft.draft['owners'][1]['type'] == OwnerType.USER
     assert template_draft.draft['is_public'] is False
     assert template_draft.draft['is_embedded'] is False
     assert template_draft.draft['public_url'] is not None
@@ -477,7 +695,12 @@ def test_create__public__ok(mocker, api_client):
         path='/templates',
         data={
             'name': 'Template',
-            'template_owners': [user.id],
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id
+                },
+            ],
             'is_active': True,
             'is_public': True,
             'kickoff': {},
@@ -532,7 +755,12 @@ def test_create__embed__ok(api_client, mocker):
         path='/templates',
         data={
             'name': 'Template',
-            'template_owners': [user.id],
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id
+                },
+            ],
             'is_active': True,
             'is_embedded': True,
             'kickoff': {},
@@ -599,7 +827,12 @@ def test_create__public_success_url__ok(value, api_client, mocker):
         path='/templates',
         data={
             'name': 'Template',
-            'template_owners': [user.id],
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id
+                },
+            ],
             'is_active': True,
             'is_public': True,
             'public_success_url': value,
@@ -661,7 +894,12 @@ def test_create__public_success_url_invalid__validation_error(
     api_client.token_authenticate(user)
     request_data = {
         'name': 'Template',
-        'template_owners': [user.id],
+        'owners': [
+            {
+                'type': OwnerType.USER,
+                'source_id': user.id
+            },
+        ],
         'is_active': True,
         'is_public': True,
         'public_success_url': value,
@@ -713,7 +951,12 @@ def test_create__name_is_required__validation_error(
     api_client.token_authenticate(user)
     request_data = {
         'name': None,
-        'template_owners': [user.id],
+        'owners': [
+            {
+                'type': OwnerType.USER,
+                'source_id': user.id
+            },
+        ],
         'is_active': True,
         'kickoff': {},
         'tasks': [
@@ -769,7 +1012,12 @@ def test_create__not_name_in_draft__ok(
         'create_integrations_for_template'
     )
     request_data = {
-        'template_owners': [user.id],
+        'owners': [
+            {
+                'type': OwnerType.USER,
+                'source_id': user.id
+            },
+        ],
         'is_active': False,
         'is_public': True,
         'kickoff': {},
@@ -820,7 +1068,12 @@ def test_create__name_is_required_two_errors__validation_error(
         path='/templates',
         data={
             'name': None,
-            'template_owners': [user.id],
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id
+                },
+            ],
             'is_active': True,
             'kickoff': {},
             'tasks': [
@@ -870,7 +1123,12 @@ def test_create__user_field_in_public_task__ok(
     request_data = {
         'description': 'Desc',
         'name': 'Name',
-        'template_owners': [user.id],
+        'owners': [
+            {
+                'type': OwnerType.USER,
+                'source_id': user.id
+            },
+        ],
         'is_active': True,
         'is_public': True,
         'finalizable': True,
@@ -972,7 +1230,12 @@ def test_create__public_url_limit_is_reached__validation_error(
         data={
             'description': 'Desc',
             'name': 'Name',
-            'template_owners': [user.id],
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id
+                },
+            ],
             'is_active': True,
             'is_public': True,
             'finalizable': True,
@@ -1036,7 +1299,12 @@ def test_create__embed_url_limit_is_reached__validation_error(
         data={
             'description': 'Desc',
             'name': 'Name',
-            'template_owners': [user.id],
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id
+                },
+            ],
             'is_active': True,
             'is_embedded': True,
             'finalizable': True,
@@ -1123,7 +1391,16 @@ def test_create__create_with_equal_api_names__ok(api_client, mocker):
     request_data = {
         'description': 'Desc',
         'name': 'Name',
-        'template_owners': [user.id, user2.id],
+        'owners': [
+            {
+                'type': OwnerType.USER,
+                'source_id': user.id
+            },
+            {
+                'type': OwnerType.USER,
+                'source_id': user2.id
+            },
+        ],
         'is_active': True,
         'is_public': False,
         'finalizable': True,
@@ -1203,7 +1480,16 @@ def test_create__template_owners_from_another_account__validation_error(
         '/templates',
         data={
             'name': 'Template',
-            'template_owners': [user.id, another_user.id],
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id
+                },
+                {
+                    'type': OwnerType.USER,
+                    'source_id': another_user.id
+                },
+            ],
             'is_active': True,
             'description': '',
             'kickoff': {},
@@ -1256,7 +1542,12 @@ def test_create__template_owners_without_current_user__validation_error(
         '/templates',
         data={
             'name': 'Template',
-            'template_owners': [invited_user.id],
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': invited_user.id
+                },
+            ],
             'is_active': True,
             'description': '',
             'kickoff': {},
@@ -1319,7 +1610,16 @@ def test_create__template_owners_pending_transfer__ok(
         '/templates',
         data={
             'name': 'Template',
-            'template_owners': [user.id, invited_user.id],
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id
+                },
+                {
+                    'type': OwnerType.USER,
+                    'source_id': invited_user.id
+                },
+            ],
             'is_active': True,
             'description': '',
             'kickoff': {},
@@ -1371,7 +1671,12 @@ def test_create__template_owners_inactive_user__validation_error(
         path='/templates',
         data={
             'name': 'Template',
-            'template_owners': [inactive_user.id],
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': inactive_user.id
+                },
+            ],
             'kickoff': {},
             'is_active': True,
             'tasks': [
@@ -1415,7 +1720,12 @@ def test_create__change_template_owners__ok(
     api_client.token_authenticate(user)
     request_data = {
         'name': 'Template',
-        'template_owners': [user.id],
+        'owners': [
+            {
+                'type': OwnerType.USER,
+                'source_id': user.id
+            },
+        ],
         'is_active': True,
         'kickoff': {},
         'tasks': [
@@ -1446,10 +1756,9 @@ def test_create__change_template_owners__ok(
     # assert
     assert response.status_code == 200
     response_data = response.json()
-
-    assert response_data['template_owners'] == (
-        request_data['template_owners']
-    )
+    assert response_data['owners'][0].get('api_name')
+    assert response_data['owners'][0]['source_id'] == str(user.id)
+    assert response_data['owners'][0]['type'] == OwnerType.USER
     template_create_mock.assert_called_once()
     kickoff_create_mock.assert_called_once()
 
@@ -1493,8 +1802,10 @@ def test_create_draft__skip_template_owners__set_default(
 
     # assert
     assert response.status_code == 200
-    assert len(response.data['template_owners']) == 1
-    assert response.data['template_owners'][0] == user.id
+    assert len(response.data['owners']) == 1
+    assert response.data['owners'][0].get('api_name')
+    assert response.data['owners'][0]['source_id'] == str(user.id)
+    assert response.data['owners'][0]['type'] == OwnerType.USER
     template_create_mock.assert_called_once()
     kickoff_create_mock.assert_called_once()
 
@@ -1533,7 +1844,16 @@ def test_create__non_admin_in_template_owners_premium__ok(
         path='/templates',
         data={
             'name': 'Template',
-            'template_owners': [owner.id, non_admin.id],
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': owner.id
+                },
+                {
+                    'type': OwnerType.USER,
+                    'source_id': non_admin.id
+                },
+            ],
             'is_active': True,
             'kickoff': {},
             'tasks': [
@@ -1555,9 +1875,12 @@ def test_create__non_admin_in_template_owners_premium__ok(
     assert response.status_code == 200
     response_data = response.json()
 
-    assert set(response_data['template_owners']) == {
-        non_admin.id, owner.id
-    }
+    assert response_data['owners'][0].get('api_name')
+    assert response_data['owners'][0]['source_id'] == str(owner.id)
+    assert response_data['owners'][0]['type'] == OwnerType.USER
+    assert response_data['owners'][1].get('api_name')
+    assert response_data['owners'][1]['source_id'] == str(non_admin.id)
+    assert response_data['owners'][1]['type'] == OwnerType.USER
     template = Template.objects.get(id=response_data['id'])
     assert template.owners.count() == 2
     assert template.owners.filter(user_id=non_admin.id).exists()
@@ -1597,7 +1920,16 @@ def test_create__non_admin_in_template_owners_freemium__ok(
         path='/templates',
         data={
             'name': 'Template',
-            'template_owners': [non_admin.id, owner.id],
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': non_admin.id
+                },
+                {
+                    'type': OwnerType.USER,
+                    'source_id': owner.id
+                },
+            ],
             'is_active': True,
             'kickoff': {},
             'tasks': [
@@ -1619,9 +1951,12 @@ def test_create__non_admin_in_template_owners_freemium__ok(
     assert response.status_code == 200
     response_data = response.json()
 
-    assert set(response_data['template_owners']) == {
-        non_admin.id, owner.id
-    }
+    assert response_data['owners'][0].get('api_name')
+    assert response_data['owners'][0]['source_id'] == str(non_admin.id)
+    assert response_data['owners'][0]['type'] == OwnerType.USER
+    assert response_data['owners'][1].get('api_name')
+    assert response_data['owners'][1]['source_id'] == str(owner.id)
+    assert response_data['owners'][1]['type'] == OwnerType.USER
     template = Template.objects.get(id=response_data['id'])
     assert template.owners.count() == 2
     assert template.owners.filter(
@@ -1676,7 +2011,12 @@ def test_create__api_request__ok(
         path='/templates',
         data={
             'name': 'Template',
-            'template_owners': [user.id],
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id
+                },
+            ],
             'is_active': True,
             'kickoff': {},
             'tasks': [
@@ -1734,7 +2074,16 @@ def test_create__draft_invalid_template_owners_format__set_default(
     api_client.token_authenticate(user)
     request_data = {
         'name': 'Template',
-        'template_owners': [user.id, {'user_id': user_2.id}],
+        'owners': [
+            {
+                'type': OwnerType.USER,
+                'source_id': user.id
+            },
+            {
+                'type': OwnerType.USER,
+                'source_id': {'user_id': user_2.id}
+            },
+        ],
         'is_active': False,
         'kickoff': {},
         'tasks': [
@@ -1785,7 +2134,16 @@ def test_create__draft_another_acc_users_in_template_owners__set_default(
     api_client.token_authenticate(user)
     request_data = {
         'name': 'Template',
-        'template_owners': [user.id, another_user.id],
+        'owners': [
+            {
+                'type': OwnerType.USER,
+                'source_id': user.id
+            },
+            {
+                'type': OwnerType.USER,
+                'source_id': another_user.id
+            },
+        ],
         'is_active': False,
         'kickoff': {},
         'tasks': [
@@ -1810,7 +2168,8 @@ def test_create__draft_another_acc_users_in_template_owners__set_default(
 
     # assert
     assert response.status_code == 200
-    assert response.data['template_owners'] == [user.id]
+    assert response.data['owners'][0]['source_id'] == str(user.id)
+    assert response.data['owners'][0]['type'] == OwnerType.USER
     template = Template.objects.get(id=response.data['id'])
     assert template.owners.count() == 1
     assert template.owners.first().user_id == user.id
@@ -1839,7 +2198,12 @@ def test_create__active_template__wf_name_template__sys_vars__ok(
     request_data = {
         'name': 'Template',
         'wf_name_template': wf_name_template,
-        'template_owners': [user.id],
+        'owners': [
+            {
+                'type': OwnerType.USER,
+                'source_id': user.id
+            },
+        ],
         'is_active': True,
         'kickoff': {},
         'tasks': [
@@ -1894,7 +2258,12 @@ def test_create__draft_template__wf_name_template__sys_vars__ok(
     request_data = {
         'name': 'Template',
         'wf_name_template': wf_name_template,
-        'template_owners': [user.id],
+        'owners': [
+            {
+                'type': OwnerType.USER,
+                'source_id': user.id
+            },
+        ],
         'is_active': False,
         'kickoff': {},
         'tasks': [
@@ -1949,7 +2318,12 @@ def test_create__wf_name_template__only_sys_vars__ok(
     request_data = {
         'name': 'Template',
         'wf_name_template': wf_name_template,
-        'template_owners': [user.id],
+        'owners': [
+            {
+                'type': OwnerType.USER,
+                'source_id': user.id
+            },
+        ],
         'is_active': True,
         'kickoff': {},
         'tasks': [
@@ -2017,7 +2391,12 @@ def test_create__wf_name_template__field__ok(
     request_data = {
         'name': 'Template',
         'wf_name_template': wf_name_template,
-        'template_owners': [user.id],
+        'owners': [
+            {
+                'type': OwnerType.USER,
+                'source_id': user.id
+            },
+        ],
         'is_active': True,
         'kickoff': {
             'fields': [
@@ -2091,7 +2470,12 @@ def test_create__wf_name_template__field_with_selections__ok(
     request_data = {
         'name': 'Template',
         'wf_name_template': wf_name_template,
-        'template_owners': [user.id],
+        'owners': [
+            {
+                'type': OwnerType.USER,
+                'source_id': user.id
+            },
+        ],
         'is_active': True,
         'kickoff': {
             'fields': [
@@ -2164,7 +2548,12 @@ def test_create__wf_name_template__only_fields__not_required__validation_error(
     request_data = {
         'name': 'Template',
         'wf_name_template': wf_name_template,
-        'template_owners': [user.id],
+        'owners': [
+            {
+                'type': OwnerType.USER,
+                'source_id': user.id
+            },
+        ],
         'is_active': True,
         'kickoff': {
             'fields': [
@@ -2241,7 +2630,12 @@ def test_create__wf_name_template__not_existent_field__validation_error(
     request_data = {
         'name': 'Template',
         'wf_name_template': wf_name_template,
-        'template_owners': [user.id],
+        'owners': [
+            {
+                'type': OwnerType.USER,
+                'source_id': user.id
+            },
+        ],
         'is_active': True,
         'kickoff': {
             'fields': [
@@ -2306,7 +2700,12 @@ def test_create__wf_name_template__blank_value__ok(
     request_data = {
         'name': 'Template',
         'wf_name_template': wf_name_template,
-        'template_owners': [user.id],
+        'owners': [
+            {
+                'type': OwnerType.USER,
+                'source_id': user.id
+            },
+        ],
         'is_active': True,
         'kickoff': {},
         'tasks': [
@@ -2367,7 +2766,12 @@ def test_create__raw_performers_group__ok(
     )
     request_data = {
         'name': 'Template',
-        'template_owners': [user.id],
+        'owners': [
+            {
+                'type': OwnerType.USER,
+                'source_id': user.id
+            },
+        ],
         'is_active': True,
         'kickoff': {},
         'tasks': [

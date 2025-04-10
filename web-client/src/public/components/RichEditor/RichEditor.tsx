@@ -1,5 +1,4 @@
 /* eslint-disable */
-/* prettier-ignore */
 import * as React from 'react';
 import classnames from 'classnames';
 import {
@@ -436,6 +435,7 @@ export class RichEditor extends React.Component<IRichEditorProps, IRichEditorSta
             styles['editor'],
             isLoading && styles['editor_loading'],
             multiline && styles['editor_multiline'],
+            this.props.isInTaskDescriptionEditor && styles['editor_task__description-mobile'],
             styles['editor-common'],
             className,
           )}

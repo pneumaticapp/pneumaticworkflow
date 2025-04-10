@@ -1,5 +1,5 @@
 import pytest
-from pneumatic_backend.accounts.tests.fixtures import (
+from pneumatic_backend.processes.tests.fixtures import (
     create_test_user,
     create_test_account
 )
@@ -99,7 +99,13 @@ def test_delete_user__not_admin__permission_denied(
 ):
     # arrange
     account = create_test_account()
-    request_user = create_test_user(is_admin=False)
+    create_test_user(account=account)
+    request_user = create_test_user(
+        account=account,
+        is_admin=False,
+        is_account_owner=False,
+        email='test@test.test'
+    )
     deleted_user = create_test_user(
         email='deleted@test.test',
         account=account

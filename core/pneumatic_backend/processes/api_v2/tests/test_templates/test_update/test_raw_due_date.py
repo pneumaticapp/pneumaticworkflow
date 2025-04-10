@@ -10,6 +10,7 @@ from pneumatic_backend.processes.models import (
 from pneumatic_backend.processes.enums import (
     PerformerType,
     DueDateRule,
+    OwnerType
 )
 from pneumatic_backend.processes.messages import template as messages
 
@@ -49,7 +50,12 @@ def test_update__ok(api_client, mocker):
             'id': template.id,
             'name': template.name,
             'is_active': template.is_active,
-            'template_owners': [user.id],
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id
+                },
+            ],
             'kickoff': {},
             'tasks': [
                 {
@@ -110,7 +116,12 @@ def test_update__create__ok(api_client, mocker):
             'id': template.id,
             'name': template.name,
             'is_active': True,
-            'template_owners': [user.id],
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id
+                },
+            ],
             'kickoff': {},
             'tasks': [
                 {
@@ -183,7 +194,12 @@ def test_update__delete__ok(api_client, mocker):
             'id': template.id,
             'name': template.name,
             'is_active': True,
-            'template_owners': [user.id],
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id
+                },
+            ],
             'kickoff': {},
             'tasks': [
                 {
@@ -242,7 +258,12 @@ def test_update__change_api_name__validation_error(api_client, mocker):
             'id': template.id,
             'name': template.name,
             'is_active': True,
-            'template_owners': [user.id],
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id
+                },
+            ],
             'kickoff': {},
             'tasks': [
                 {

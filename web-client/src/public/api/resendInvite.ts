@@ -8,7 +8,7 @@ export function resendInvite(inviteId: number) {
   return commonRequest(
     urls.resendInvite.replace(':id', String(inviteId)), {
       method: 'POST',
-      body: mapRequestBody({ inviteId }),
+      data: mapRequestBody({ inviteId }),
       headers: { 'Content-Type': 'application/json' },
     }, {
       type: 'local', shouldThrow: true, responseType: 'empty',

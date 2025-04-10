@@ -19,10 +19,8 @@ from pneumatic_backend.processes.tests.fixtures import (
     create_test_user,
     create_test_account,
     create_test_workflow,
-    create_test_group,
-)
-from pneumatic_backend.accounts.tests.fixtures import (
     create_invited_user,
+    create_test_group,
 )
 from pneumatic_backend.accounts.services.exceptions import (
     UserNotFoundException,

@@ -18,8 +18,6 @@ from pneumatic_backend.processes.tests.fixtures import (
     create_test_user,
     create_test_account,
     create_test_guest,
-)
-from pneumatic_backend.processes.tests.fixtures import (
     create_invited_user,
 )
 from pneumatic_backend.accounts.services.exceptions import (
@@ -947,7 +945,7 @@ def test_validate_deactivate__user_is_performer__raise_exception(mocker):
     # arrange
     user = create_test_user()
     user_is_performer_mock = mocker.patch(
-        'pneumatic_backend.accounts.services.user.user_is_performer',
+        'pneumatic_backend.accounts.services.user.user_is_last_performer',
         return_value=True
     )
 
@@ -964,7 +962,7 @@ def test_validate_deactivate__user_is_not_performer__ok(mocker):
     # arrange
     user = create_test_user()
     user_is_performer_mock = mocker.patch(
-        'pneumatic_backend.accounts.services.user.user_is_performer',
+        'pneumatic_backend.accounts.services.user.user_is_last_performer',
         return_value=False
     )
 

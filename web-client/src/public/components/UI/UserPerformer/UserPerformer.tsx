@@ -35,13 +35,14 @@ export const UserPerformerComponent = ({
   };
 
   const isTypeUser = user.type === ETaskPerformerType.User;
+  const isTypeGroup = user.type === ETaskPerformerType.UserGroup;
   const currentUser: any = isTypeUser && user.sourceId ? getUserById(users, +user.sourceId) : user;
 
   return (
     <div className={classnames(styles['user-performer'], bgColorClassNameMap[bgColor])}>
       {currentUser && (
         <Avatar
-          isEmpty={!isTypeUser}
+          isEmpty={!isTypeUser && !isTypeGroup}
           size="sm"
           user={currentUser}
           containerClassName={styles['user-performer__avatar']}

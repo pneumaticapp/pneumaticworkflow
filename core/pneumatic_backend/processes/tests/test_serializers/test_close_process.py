@@ -4,7 +4,11 @@ from rest_framework.exceptions import ValidationError
 from pneumatic_backend.authentication.enums import AuthTokenType
 from pneumatic_backend.utils.validation import ErrorCode
 from pneumatic_backend.processes.messages import workflow as messages
-from pneumatic_backend.processes.enums import WorkflowStatus
+from pneumatic_backend.processes.models.templates.owner import TemplateOwner
+from pneumatic_backend.processes.enums import (
+    OwnerType,
+    WorkflowStatus,
+)
 from pneumatic_backend.processes.serializers.workflow import (
     WorkflowFinishSerializer,
 )
@@ -117,7 +121,11 @@ class TestWorkflowCloseSerializer:
             user=template_owner,
             template=template,
         )
-        template.template_owners.remove(invited)
+        TemplateOwner.objects.filter(
+            template=template,
+            type=OwnerType.USER,
+            user_id=invited.id
+        ).delete()
         serializer = WorkflowFinishSerializer(
             instance=workflow,
             data={},

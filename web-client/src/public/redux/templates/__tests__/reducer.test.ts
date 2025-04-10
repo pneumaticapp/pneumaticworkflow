@@ -1,5 +1,3 @@
-/* eslint-disable */
-/* prettier-ignore */
 import { INIT_STATE, reducer } from '../../templates/reducer';
 import { changeTemplatesList, loadTemplates, loadTemplatesFailed, TTemplatesActions } from '../../actions';
 
@@ -19,7 +17,7 @@ describe('reducer', () => {
           name: 'Test',
           tasksCount: 2,
           performersCount: 1,
-          templateOwners: [],
+          owners: [],
           kickoff: null,
           isActive: true,
           isPublic: false,

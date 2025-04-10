@@ -20,7 +20,7 @@ export function editAccount(settings: IUpdateAccountRequest, leaseLevel: TAccoun
   return commonRequest<IUpdateAccountResponse>(
     'editAccount',
     {
-      body: mapRequestBody({
+      data: mapRequestBody({
         name: settings.name,
         ...(leaseLevel !== "tenant" && {logoSm: settings.logoSm || null}),
         ...(leaseLevel !== "tenant" && {logoLg: settings.logoLg || null}),

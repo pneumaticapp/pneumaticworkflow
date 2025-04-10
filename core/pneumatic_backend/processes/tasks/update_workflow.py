@@ -10,7 +10,8 @@ from pneumatic_backend.processes.models import (
     Workflow,
 )
 from pneumatic_backend.processes.queries import (
-    UpdateWorkflowOwnersQuery
+    UpdateWorkflowOwnersQuery,
+    UpdateWorkflowMemberQuery
 )
 from pneumatic_backend.processes.api_v2.services.workflows\
     .workflow_version import (
@@ -90,7 +91,11 @@ def update_workflow_owners(template_ids: List[int]):
             workflow__template_id__in=template_ids
         ).delete()
         for template_id in template_ids:
-            query = UpdateWorkflowOwnersQuery(
+            query_workflow = UpdateWorkflowOwnersQuery(
                 template_id=template_id
             )
-            RawSqlExecutor.execute(*query.insert_sql())
+            RawSqlExecutor.execute(*query_workflow.insert_sql())
+            query_member = UpdateWorkflowMemberQuery(
+                template_id=template_id
+            )
+            RawSqlExecutor.execute(*query_member.insert_sql())

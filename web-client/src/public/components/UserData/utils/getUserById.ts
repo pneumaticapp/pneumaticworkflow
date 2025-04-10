@@ -13,10 +13,7 @@ const DELETED_USER: TUserListItem = {
 };
 
 export function getUserById(users: TUserListItem[], userId?: number | null): TUserListItem | null {
-
-  if (!isArrayWithItems(users)) {
-    return null;
-  }
+  if (!isArrayWithItems(users)) return null;
 
   if (!userId) {
     return DELETED_USER;

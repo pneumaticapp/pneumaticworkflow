@@ -72,7 +72,6 @@ from pneumatic_backend.processes.api_v2.serializers.template.owner import (
     TemplateOwnerSerializer
 )
 from pneumatic_backend.generics.fields import (
-    RelatedListField,
     TimeStampField,
 )
 from pneumatic_backend.processes.enums import (
@@ -113,8 +112,6 @@ class TemplateSerializer(
             'description',
             'tasks',
             'kickoff',
-            # TODO remove in https://my.pneumatic.app/workflows/34402/
-            'template_owners',
             'owners',
             'is_active',
             'is_public',
@@ -148,11 +145,6 @@ class TemplateSerializer(
     description = CharField(allow_blank=True, default='')
     updated_by = IntegerField(read_only=True, source='updated_by_id')
     date_updated = DateTimeField(read_only=True)
-    # TODO remove in https://my.pneumatic.app/workflows/34402/
-    template_owners = RelatedListField(
-        child=IntegerField(),
-        required=False,
-    )
     owners = TemplateOwnerSerializer(many=True, required=False)
     kickoff = KickoffSerializer(required=False)
     tasks = TaskTemplateSerializer(many=True, required=False)
@@ -212,146 +204,39 @@ class TemplateSerializer(
             pass  # Will be raised in performer serializer
         return performers_ids
 
-    # TODO remove in https://my.pneumatic.app/workflows/34402/
-    def _get_template_owners_ids(self, data: Dict[str, Any]) -> List[int]:
-
-        """ Return correct account template owners ids for draft
-            If template owners is empty or incorrect don't rise an exception,
-            but set to as the template owner of the current request user """
-
-        template_owners_ids = set()
-        raw_template_owners_ids = data.get('template_owners', [])
-        if isinstance(raw_template_owners_ids, list):
-            for user_id in raw_template_owners_ids:
-                try:
-                    template_owners_ids.add(int(user_id))
-                except (TypeError, ValueError):
-                    pass
-        if template_owners_ids:
-            template_owners_ids = list(
-                self.context['account'].users.filter(
-                    id__in=template_owners_ids
-                ).values_list('id', flat=True)
-            )
-        if not template_owners_ids:
-            template_owners_ids = [self.context['user'].id]
-        return template_owners_ids
-
-    def _get_owners_ids(
+    def _get_owners_for_draft(
         self, data: Dict[str, Any]
     ) -> List[Dict[str, Any]]:
 
         """ Return correct account template owners ids for draft
             If template owners is empty or incorrect don't rise an exception,
             but set to as the template owner of the current request user """
-        valid_template_owners_ids = []
-        template_owners_ids = set()
 
-        # TODO remove in https://my.pneumatic.app/workflows/34402/
-        if data.get('template_owners'):
-            raw_template_owners_ids = data.get('template_owners', [])
-            if isinstance(raw_template_owners_ids, list):
-                for user_id in raw_template_owners_ids:
-                    try:
-                        template_owners_ids.add(int(user_id))
-                    except (TypeError, ValueError):
-                        pass
-            if template_owners_ids:
-                valid_user_ids = list(
-                    self.context['account'].users.filter(
-                        id__in=template_owners_ids).values_list(
-                        'id', flat=True
-                    )
-                )
-                valid_template_owners_ids.extend(
-                    {
-                        'source_id': str(user_id),
-                        'type': OwnerType.USER,
-                        'api_name': create_api_name(
-                            prefix=TemplateOwner.api_name_prefix
-                        )
-                    }
-                    for user_id in valid_user_ids
-                )
-            if not valid_template_owners_ids:
-                valid_template_owners_ids.append({
-                    'source_id': self.context['user'].id,
-                    'type': OwnerType.USER,
-                    'api_name': create_api_name(
+        owners = data.get('owners', [])
+        try:
+            for owner in owners:
+                if not owner.get('api_name'):
+                    owner['source_id'] = str(owner['source_id'])
+                    owner['api_name'] = create_api_name(
                         prefix=TemplateOwner.api_name_prefix
                     )
-                })
-            return valid_template_owners_ids
-
-        raw_template_owners_ids = data.get('owners', [])
-        if isinstance(raw_template_owners_ids, list):
-            for owner in raw_template_owners_ids:
-                try:
-                    owner_type = owner.get('type')
-                    source_id = owner.get('source_id')
-                    api_name = owner.get(
-                        'api_name',
-                        create_api_name(prefix=TemplateOwner.api_name_prefix)
-                    )
-                    if owner_type and source_id and api_name:
-                        template_owners_ids.add((
-                            source_id, owner_type, api_name
-                        ))
-                except (TypeError, ValueError):
-                    continue
-
-        group_ids = [
-            owner_id for owner_id, owner_type, _ in template_owners_ids
-            if owner_type == OwnerType.GROUP
-        ]
-        if group_ids:
-            valid_group_ids = list(
-                self.context['account'].user_groups.filter(
-                    id__in=group_ids).values_list('id', flat=True)
-            )
-            api_names_for_groups = {
-                owner_id: owner_api_name
-                for owner_id, owner_type, owner_api_name in template_owners_ids
-                if owner_type == OwnerType.GROUP
-            }
-            valid_template_owners_ids.extend(
-                {
-                    'source_id': str(group_id),
-                    'type': OwnerType.GROUP,
-                    'api_name': api_names_for_groups.get(group_id)
-                }
-                for group_id in valid_group_ids
-            )
-
-        user_ids = [
-            owner_id for owner_id, owner_type, _ in template_owners_ids
-            if owner_type == OwnerType.USER
-        ]
-        if user_ids:
-            valid_user_ids = list(self.context['account'].users.filter(
-                id__in=user_ids
-            ).values_list('id', flat=True))
-            api_names_for_users = {
-                owner_id: owner_api_name
-                for owner_id, owner_type, owner_api_name in template_owners_ids
-                if owner_type == OwnerType.USER
-            }
-            valid_template_owners_ids.extend(
-                {
-                    'source_id': str(user_id),
-                    'type': OwnerType.USER,
-                    'api_name': api_names_for_users.get(user_id)
-                } for user_id in valid_user_ids
-            )
-        if not valid_template_owners_ids:
-            valid_template_owners_ids.append({
+        except (TypeError, ValueError):
+            owners = [{
                 'source_id': str(self.context['user'].id),
                 'type': OwnerType.USER,
                 'api_name': create_api_name(
                     prefix=TemplateOwner.api_name_prefix
                 )
-            })
-        return valid_template_owners_ids
+            }]
+        if not owners:
+            owners = [{
+                'source_id': str(self.context['user'].id),
+                'type': OwnerType.USER,
+                'api_name': create_api_name(
+                    prefix=TemplateOwner.api_name_prefix
+                )
+            }]
+        return owners
 
     def create_or_update_instance(
         self,
@@ -484,8 +369,8 @@ class TemplateSerializer(
                 message=messages.MSG_PT_0057,
                 name='owners'
             )
-
-        if self.context['user'].id not in self.new_users_owners_ids:
+        all_users = self.new_users_owners_ids | self.users_in_groups_owners_ids
+        if self.context['user'].id not in all_users:
             self.raise_validation_error(
                 message=messages.MSG_PT_0018,
                 name='owners'
@@ -517,11 +402,6 @@ class TemplateSerializer(
         data = super(TemplateSerializer, self).to_representation(data)
         if data.get('description') is None:
             data['description'] = ''
-        # TODO remove in https://my.pneumatic.app/workflows/34402/
-        data['template_owners'] = [
-            int(owner.get('source_id')) for owner in data.get('owners', [])
-            if owner['type'] == 'user'
-        ]
         if data.get('tasks') is None:
             data['tasks'] = []
 
@@ -570,9 +450,7 @@ class TemplateSerializer(
             data['name'] = data.get('name', '')
             data['is_public'] = bool(data.get('is_public'))
             data['is_embedded'] = bool(data.get('is_embedded'))
-            data['owners'] = self._get_owners_ids(data)
-            # TODO remove in https://my.pneumatic.app/workflows/34402/
-            data['template_owners'] = self._get_template_owners_ids(data)
+            data['owners'] = self._get_owners_for_draft(data)
             if not self.instance:
                 self.instance = Template.objects.create(
                     account=user.account,
@@ -626,6 +504,11 @@ class TemplateSerializer(
             for owner in self.owners_data
             if owner.get('type') == OwnerType.GROUP
         }
+        self.users_in_groups_owners_ids = (
+            UserModel.objects
+            .get_users_in_groups(group_ids=self.new_groups_owners_ids)
+            .user_ids_set()
+        )
         self.in_account_user_ids = set(
             self.context['account'].get_user_ids(include_invited=True)
         )
@@ -638,21 +521,6 @@ class TemplateSerializer(
         self.undefined_groups_ids = (
             self.new_groups_owners_ids - self.in_account_group_ids
         )
-
-    # TODO remove in https://my.pneumatic.app/workflows/34402/
-    def validate(self, attrs):
-        owners = []
-        if attrs.get('template_owners') is not None:
-            for template_owner in attrs.get('template_owners'):
-                owners.append(
-                    {
-                        'type': OwnerType.USER,
-                        'source_id': str(template_owner)
-                    }
-                )
-            attrs['owners'] = owners
-            attrs.pop('template_owners', None)
-        return attrs
 
     def create(self, validated_data: Dict[str, Any]) -> Template:
 
@@ -851,8 +719,6 @@ class TemplateListSerializer(ModelSerializer):
             'wf_name_template',
             'tasks_count',
             'workflows_count',
-            # TODO remove in https://my.pneumatic.app/workflows/34402/
-            'template_owners',
             'owners',
             'name',
             'is_active',
@@ -863,8 +729,6 @@ class TemplateListSerializer(ModelSerializer):
         )
 
     owners = SerializerMethodField()
-    # TODO remove in https://my.pneumatic.app/workflows/34402/
-    template_owners = SerializerMethodField()
     kickoff = SerializerMethodField()
     tasks_count = IntegerField(read_only=True)
     workflows_count = IntegerField(read_only=True)
@@ -874,13 +738,6 @@ class TemplateListSerializer(ModelSerializer):
 
     def get_kickoff(self, instance: Template):
         return KickoffListSerializer(instance.kickoff, many=True).data[0]
-
-    # TODO remove in https://my.pneumatic.app/workflows/34402/
-    def get_template_owners(self, instance: Template):
-        return [
-            e.user_id for e in instance.owners.all()
-            if e.type == OwnerType.USER
-        ]
 
 
 class TemplateOnlyFieldsSerializer(ModelSerializer):

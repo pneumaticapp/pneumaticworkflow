@@ -295,7 +295,7 @@ class Common(Configuration):
         PRIVATE_API_IP_WHITELIST = PRIVATE_API_IP_WHITELIST.split(' ')
 
     # Google Cloud
-    GCLOUD_BUCKET_NAME = env.get('GCLOUD_BUCKET_NAME')
+    GCLOUD_DEFAULT_BUCKET_NAME = env.get('GCLOUD_BUCKET_NAME')
 
     # Slack
     SLACK = env.get('SLACK') == 'yes'
@@ -390,6 +390,7 @@ class Common(Configuration):
         'SENTRY_DSN': env.get('SENTRY_DSN'),
     }
 
+    sql_log_path = os.path.join(BASE_DIR, 'django_queries.log')
     ENABLE_LOGGING = env.get('ENABLE_LOGGING', 'no') == 'yes'
     if ENABLE_LOGGING:
         LOGGING = {
@@ -399,7 +400,7 @@ class Common(Configuration):
                 'file': {
                     'level': 'DEBUG',
                     'class': 'logging.FileHandler',
-                    'filename': 'django_queries.log',
+                    'filename': sql_log_path,
                     # Choose a file name and path
                 },
             },
@@ -411,6 +412,7 @@ class Common(Configuration):
                 }
             }
         }
+
 
 class Development(Common):
 

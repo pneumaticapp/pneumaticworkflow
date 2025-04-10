@@ -1,4 +1,11 @@
-import { EUserListSorting, EUserStatus, IUnsavedUser, TGoogleAuthUserInfo, TUserListItem } from './user';
+import {
+  EGroupsListSorting,
+  EUserListSorting,
+  EUserStatus,
+  IUnsavedUser,
+  TGoogleAuthUserInfo,
+  TUserListItem,
+} from './user';
 import { TNotificationsListItem } from './notifications';
 import { IAccountGenericTemplate } from './genericTemplates';
 import {
@@ -33,7 +40,7 @@ import { IMenuItem } from './menu';
 import { EWebhooksTypeEvent, IWebhook } from './webhooks';
 import { ETenantsSorting, ITenant } from './tenants';
 import { IPagesStore } from './page';
-import { IOAuthInviteView, IUserInviteMicrosoft } from './team';
+import { ETeamPages, IGroup, IOAuthInviteView, IUserInviteMicrosoft } from './team';
 
 export interface IApplicationState {
   general: IGeneralStore;
@@ -45,20 +52,24 @@ export interface IApplicationState {
   settings: ISettings;
   notifications: IStoreNotification;
   workflows: IStoreWorkflows;
-  task: IStoreTask;
   profile: IStoreProfile;
-  teamInvites: ITeamInvitesStore;
   highlights: IHighlightsStore;
   templates: ITemplatesStore;
   selectTemplateModal: ISelectTemplateModalStore;
   template: ITemplateStore;
   integrations: IIntegrationsStore;
   runWorkflowModal: IStoreRunWorkflowModal;
-  tasks: IStoreTasks;
   buyPlanModal: IBuyPlanModalStore;
   webhooks: IWebhookStore;
-  tenants: ITenantsStore;
   pages: IPagesStore;
+
+  tasks: IStoreTasks;
+  task: IStoreTask;
+
+  teamInvites: ITeamStore;
+  groups: IGroupsStore;
+
+  tenants: ITenantsStore;
 }
 
 export enum ELoggedState {
@@ -322,11 +333,27 @@ export interface IStoreProfile {
   settingsTab: ESettingsTabs;
 }
 
-export type ITeamInvitesStore = {
+export type ITeamStore = {
+  page: ETeamPages;
   isInvitesPopupOpen: boolean;
   recentInvitedUsers: TUserListItem[];
   googleUsers: IOAuthInviteView[];
   microsoftUsers: IUserInviteMicrosoft[];
+};
+
+export type IGroupsStore = {
+  isLoading: boolean;
+  list: IGroup[];
+  groupsListSorting: EGroupsListSorting;
+  currentGroup: {
+    data: IGroup | null,
+    userListSorting: EUserListSorting
+  };
+  createModal: boolean;
+  editModal: {
+    isOpen: boolean;
+    editGroup: IGroup | null;
+  };
 };
 
 export type ITenantsStore = {

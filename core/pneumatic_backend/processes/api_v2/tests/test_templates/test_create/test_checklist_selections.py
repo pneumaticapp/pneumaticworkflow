@@ -8,6 +8,7 @@ from pneumatic_backend.processes.models import (
 )
 from pneumatic_backend.processes.enums import (
     PerformerType,
+    OwnerType
 )
 from pneumatic_backend.utils.validation import ErrorCode
 from pneumatic_backend.processes.messages.workflow import (
@@ -40,7 +41,12 @@ def test_create__ok(api_client, mocker):
         path='/templates',
         data={
             'name': 'Template',
-            'template_owners': [user.id],
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id
+                },
+            ],
             'is_active': True,
             'kickoff': {},
             'tasks': [
@@ -114,7 +120,12 @@ def test_create__generate_api_name__ok(
         path='/templates',
         data={
             'name': 'Template',
-            'template_owners': [user.id],
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id
+                },
+            ],
             'is_active': True,
             'kickoff': {},
             'tasks': [
@@ -174,7 +185,12 @@ def test_create__draft__ok(api_client, mocker):
         path='/templates',
         data={
             'name': 'Template',
-            'template_owners': [user.id],
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id
+                },
+            ],
             'is_active': False,
             'kickoff': {},
             'tasks': [
@@ -236,7 +252,12 @@ def test_create__with_equal_api_names_in_one_checklist__create_last(
         path='/templates',
         data={
             'name': 'Template',
-            'template_owners': [user.id],
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id
+                },
+            ],
             'is_active': True,
             'kickoff': {},
             'tasks': [
@@ -286,7 +307,12 @@ def test_create__equal_api_names_in_different_checklists__validation_error(
         path='/templates',
         data={
             'name': 'Template',
-            'template_owners': [user.id],
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id
+                },
+            ],
             'is_active': True,
             'kickoff': {},
             'tasks': [
@@ -356,7 +382,12 @@ def test_create__limit_exceeded__ok(api_client, mocker):
         path='/templates',
         data={
             'name': 'Template',
-            'template_owners': [user.id],
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id
+                },
+            ],
             'is_active': True,
             'kickoff': {},
             'tasks': [

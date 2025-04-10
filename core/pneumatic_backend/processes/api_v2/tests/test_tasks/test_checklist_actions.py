@@ -48,6 +48,7 @@ class TestChecklistRetrieve:
         )
         create_checklist_template(task_template=template.tasks.first())
         workflow = create_test_workflow(template=template, user=user)
+        workflow.members.add(user_2)
         task = workflow.tasks.first()
         task.performers.add(user_2)
         checklist = task.checklists.first()
@@ -200,6 +201,7 @@ class TestChecklistRetrieve:
         )
         create_checklist_template(task_template=template.tasks.first())
         workflow = create_test_workflow(template=template, user=user)
+        workflow.members.add(user_2)
         task = workflow.tasks.first()
         TaskPerformersService.create_performer(
             request_user=user,

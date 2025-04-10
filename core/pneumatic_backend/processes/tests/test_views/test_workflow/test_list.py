@@ -7,6 +7,7 @@ from pneumatic_backend.processes.models import (
     FileAttachment,
     TaskField,
     Delay,
+    TemplateOwner
 )
 from pneumatic_backend.processes.tests.fixtures import (
     create_test_user,
@@ -14,7 +15,8 @@ from pneumatic_backend.processes.tests.fixtures import (
     create_test_template,
     create_test_account,
     create_invited_user,
-    create_test_guest
+    create_test_guest,
+    create_test_group
 )
 from pneumatic_backend.utils.validation import ErrorCode
 from pneumatic_backend.processes.messages import workflow as messages
@@ -24,6 +26,9 @@ from pneumatic_backend.processes.enums import (
     WorkflowApiStatus,
     DirectlyStatus,
     FieldType,
+    TaskStatus,
+    PerformerType,
+    OwnerType
 )
 from pneumatic_backend.processes.api_v2.services.task.performers import (
     TaskPerformersService
@@ -104,7 +109,7 @@ def test_list__workflow_due_date__ok(api_client):
     template_data = wf_data['template']
     assert template_data['id'] == template.id
     assert template_data['name'] == template.name
-    assert template_data['template_owners'] == [user.id]
+    assert wf_data['owners'] == [user.id]
     assert template_data['is_active'] == template.is_active
 
     task_data = wf_data['task']
@@ -113,7 +118,9 @@ def test_list__workflow_due_date__ok(api_client):
     assert task_data['date_started_tsp'] == task.date_started.timestamp()
     assert task_data['delay'] is None
     assert task_data['due_date_tsp'] is None
-    assert task_data['performers'] == [user.id]
+    assert task_data['status'] == TaskStatus.ACTIVE
+    performer = {'source_id': user.id, 'type': 'user'}
+    assert task_data['performers'] == [performer]
 
 
 def test_list__pagination__ok(api_client):
@@ -1487,6 +1494,176 @@ def test_list__filter_current_performer__ok(api_client):
     assert response.data['results'][0]['id'] == workflow.id
 
 
+def test_list__filter_current_performer_user_in_group__ok(api_client):
+    # arrange
+    account = create_test_account()
+    user = create_test_user(account=account)
+    api_client.token_authenticate(user)
+    workflow = create_test_workflow(user=user)
+    group = create_test_group(user=user, users=[user, ])
+    task = workflow.current_task_instance
+    TaskPerformer.objects.filter(
+        task=task
+    ).update(directly_status=DirectlyStatus.DELETED)
+    TaskPerformer.objects.create(
+        task_id=task.id,
+        type=PerformerType.GROUP,
+        group_id=group.id,
+        directly_status=DirectlyStatus.CREATED
+    )
+    # act
+    response = api_client.get(
+        f'/workflows?current_performer={user.id}'
+    )
+
+    # assert
+    assert response.status_code == 200
+    assert len(response.data['results']) == 1
+    assert response.data['results'][0]['id'] == workflow.id
+
+
+def test_list__filter_current_performer_group_ids_in_group__ok(api_client):
+    # arrange
+    account = create_test_account()
+    user = create_test_user(account=account)
+    api_client.token_authenticate(user)
+    workflow = create_test_workflow(user=user)
+    group = create_test_group(user=user, users=[user, ])
+    task = workflow.current_task_instance
+    TaskPerformer.objects.filter(
+        task=task
+    ).update(directly_status=DirectlyStatus.DELETED)
+    TaskPerformer.objects.create(
+        task_id=task.id,
+        type=PerformerType.GROUP,
+        group_id=group.id,
+        directly_status=DirectlyStatus.CREATED
+    )
+    # act
+    response = api_client.get(
+        f'/workflows?current_performer_group_ids={group.id}'
+    )
+
+    # assert
+    assert response.status_code == 200
+    assert len(response.data['results']) == 1
+    assert response.data['results'][0]['id'] == workflow.id
+
+
+def test_list__filter_current_performer_group_ids_in_user__ok(api_client):
+    # arrange
+    account = create_test_account()
+    user = create_test_user(account=account)
+    api_client.token_authenticate(user)
+    create_test_workflow(user=user)
+    group = create_test_group(user=user, users=[user, ])
+
+    # act
+    response = api_client.get(
+        f'/workflows?current_performer_group_ids={group.id}'
+    )
+
+    # assert
+    assert response.status_code == 200
+    assert len(response.data['results']) == 0
+
+
+def test_list__filter__multiple_current_performer_group_ids__ok(api_client):
+    # arrange
+    account = create_test_account(plan=BillingPlanType.PREMIUM)
+    user = create_test_user(account=account)
+    another_user = create_test_user(
+        account=account,
+        email='another@pneumatic.app'
+    )
+    api_client.token_authenticate(another_user)
+    template = create_test_template(user=user, tasks_count=2)
+    TemplateOwner.objects.create(
+        template=template,
+        account=account,
+        type=OwnerType.USER,
+        user_id=another_user.id,
+    )
+    workflow = create_test_workflow(user=user, template=template)
+    group1 = create_test_group(user=user, users=[user, ])
+    group2 = create_test_group(user=user, users=[another_user, ])
+    task = workflow.current_task_instance
+    TaskPerformer.objects.filter(
+        task=task
+    ).update(directly_status=DirectlyStatus.DELETED)
+    TaskPerformer.objects.create(
+        task_id=task.id,
+        type=PerformerType.GROUP,
+        group_id=group1.id,
+        directly_status=DirectlyStatus.CREATED
+    )
+    workflow_2 = create_test_workflow(user=user, template=template)
+    task_2 = workflow_2.current_task_instance
+    TaskPerformer.objects.create(
+        task_id=task_2.id,
+        type=PerformerType.GROUP,
+        group_id=group2.id,
+        directly_status=DirectlyStatus.CREATED
+    )
+
+    # act
+    response = api_client.get(
+        f'/workflows?current_performer_group_ids={group1.id},{group2.id}'
+    )
+
+    # assert
+    assert response.status_code == 200
+    assert len(response.data['results']) == 2
+    assert response.data['results'][1]['id'] == workflow.id
+    assert response.data['results'][0]['id'] == workflow_2.id
+
+
+def test_list__filter_multiple_current_performer_group_user__ok(api_client):
+    # arrange
+    account = create_test_account(plan=BillingPlanType.PREMIUM)
+    user = create_test_user(account=account)
+    another_user = create_test_user(
+        account=account,
+        email='another@pneumatic.app'
+    )
+    api_client.token_authenticate(another_user)
+    template = create_test_template(user=user, tasks_count=2)
+    TemplateOwner.objects.create(
+        template=template,
+        account=account,
+        type=OwnerType.USER,
+        user_id=another_user.id,
+    )
+    workflow = create_test_workflow(user=user, template=template)
+    group = create_test_group(user=user, users=[user, ])
+    task = workflow.current_task_instance
+    TaskPerformer.objects.filter(
+        task=task
+    ).update(directly_status=DirectlyStatus.DELETED)
+    TaskPerformer.objects.create(
+        task_id=task.id,
+        type=PerformerType.GROUP,
+        group_id=group.id,
+        directly_status=DirectlyStatus.CREATED
+    )
+    workflow_2 = create_test_workflow(user=user, template=template)
+    workflow_3 = create_test_workflow(user=another_user, template=template)
+
+    # act
+    response = api_client.get(
+        f'/workflows?'
+        f'current_performer_group_ids={group.id}&'
+        f'current_performer={user.id}'
+    )
+
+    # assert
+    assert response.status_code == 200
+    assert len(response.data['results']) == 3
+    assert response.data['results'][2]['id'] == workflow.id
+    assert response.data['results'][1]['id'] == workflow_2.id
+    assert response.data['results'][0]['id'] == workflow_3.id
+
+
 def test_list__filter_current_performer__not_found(api_client):
     # arrange
     account = create_test_account()
@@ -1511,14 +1688,16 @@ def test_list__filter_current_performer__not_found(api_client):
 
 
 def test_list__filter_multiple_current_performer__ok(api_client):
+
     # arrange
     account = create_test_account()
     user1 = create_test_user(account=account)
     user2 = create_test_user(account=account, email='test2@pneumatic.app')
-    api_client.token_authenticate(user1)
 
     workflow1 = create_test_workflow(user=user1)
     workflow2 = create_test_workflow(user=user2)
+    workflow2.owners.add(user1)
+    api_client.token_authenticate(user1)
 
     # act
     response = api_client.get(
@@ -1551,6 +1730,30 @@ def test_list__filter_current_performer_not_running__validation_error(
     # act
     response = api_client.get(
         f'/workflows?current_performer={user.id}&status={status}'
+    )
+
+    # assert
+    assert response.status_code == 400
+    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
+    assert response.data['message'] == messages.MSG_PW_0067
+    assert 'details' not in response.data.keys()
+
+
+@pytest.mark.parametrize('status', WorkflowApiStatus.NOT_RUNNING)
+def test_list__filter_current_performer_group_not_running__validation_error(
+    status,
+    api_client
+):
+    # arrange
+    account = create_test_account()
+    user = create_test_user(account=account)
+    api_client.token_authenticate(user)
+    create_test_workflow(user=user)
+    group = create_test_group(user=user, users=[user, ])
+
+    # act
+    response = api_client.get(
+        f'/workflows?current_performer_group_ids={group.id}&status={status}'
     )
 
     # assert
@@ -1605,10 +1808,12 @@ def test_list__filter_multiple_workflow_starter__ok(api_client):
     user = create_test_user(account=account)
     user1 = create_test_user(account=account, email='test2@pneumatic.app')
     user2 = create_test_user(account=account, email='test3@pneumatic.app')
-    api_client.token_authenticate(user)
     create_test_workflow(user=user)
     workflow1 = create_test_workflow(user=user1)
+    workflow1.owners.add(user)
     workflow2 = create_test_workflow(user=user2)
+    workflow2.owners.add(user)
+    api_client.token_authenticate(user)
 
     # act
     response = api_client.get(
@@ -1793,13 +1998,15 @@ def test_list__invalid_ordering__validation_error(value, api_client):
 
 
 def test_list__legacy_template_on_freemium__ok(api_client):
+
     # arrange
     user = create_test_user()
     another_user = create_invited_user(user)
-    workflow = create_test_workflow(user)
-    create_test_workflow(another_user)
+    workflow_1 = create_test_workflow(user)
+    workflow_2 = create_test_workflow(another_user)
+    workflow_2.owners.add(user)
     api_client.token_authenticate(user)
-    api_client.delete(f'/templates/{workflow.template.id}')
+    api_client.delete(f'/templates/{workflow_1.template.id}')
 
     # act
     response = api_client.get('/workflows')
@@ -1863,7 +2070,8 @@ def test_list__deleted_current_task_performers__ok(
     current_task_data = response.data['results'][0]['task']
     assert current_task_data['id'] == task.id
     assert len(current_task_data['performers']) == 1
-    assert current_task_data['performers'][0] == user.id
+    performer = {'source_id': user.id, 'type': 'user'}
+    assert current_task_data['performers'][0] == performer
 
 
 def test_list__guest_performer__ok(
@@ -1895,4 +2103,5 @@ def test_list__guest_performer__ok(
     current_task_data = response.data['results'][0]['task']
     assert current_task_data['id'] == task.id
     assert len(current_task_data['performers']) == 1
-    assert current_task_data['performers'][0] == guest.id
+    performer = {'source_id': guest.id, 'type': 'user'}
+    assert current_task_data['performers'][0] == performer

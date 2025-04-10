@@ -81,6 +81,7 @@ window['__pneumaticConfig'] = {
         completeTask: '/workflows/:id/task-complete',
         revertTask: '/workflows/:id/task-revert',
         workflowLog: '/workflows/:id/events',
+        taskWorkflowLog: '/v2/tasks/:id/events',
         deleteWorkflow: '/workflows/:id/close',
         finishWorkflow: '/workflows/:id/finish',
         continueWorkflow: '/workflows/:id/resume',
@@ -162,7 +163,6 @@ window['__pneumaticConfig'] = {
       },
     },
   },
-  env: 'prod',
   googleAuthUserInfo: {},
   user: {
     id: 7821,
@@ -214,7 +214,4 @@ window['__pneumaticConfig'] = {
     isSupermode: false,
     token: '',
   },
-  invitedUser: {},
-  pages:
-    '[{"slug":"signup","title":"Unlimited \\r\\nWorkflow Management","description":"No per-user charges. Your whole organization for one fixed price of $99/month, billed monthly.\\r\\n\\r\\nBegin your Pneumatic journey with a risk-free 7-day trial of our Self-serve plan."},{"slug":"signin","title":"Sign in to\\r\\nPneumatic","description":"Stay in touch and collaborate with your team, get notifications about new tasks and mentions, complete tasks, write comments, mention your colleagues, run workflows, create new workflow templates, edit existing ones."},{"slug":"reset-password","title":"Restore access\\r\\nto your account","description":""},{"slug":"forgot-password","title":"Restore access\\r\\nto your account","description":"Enter the email address you registered your Pneumatic account with and we’ll send you an email with instructions for how to reset your password. Pick up where you left off and hit the ground running as if you were never gone."},{"slug":"signup-by-invite","title":"Create a\\r\\nPneumatic Account","description":"Complete registration using the form"}]',
 };

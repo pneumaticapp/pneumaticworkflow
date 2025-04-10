@@ -3,8 +3,8 @@ export function autoFocusFirstField(fieldsContainer: HTMLElement | null) {
     return;
   }
 
-  const firstAutoFocusContainer =
-    fieldsContainer?.querySelector('[data-autofocus-first-field="true"], [data-autofocus-first-field="true"]');
+  const firstAutoFocusContainer = fieldsContainer?.
+    querySelector('[data-autofocus-first-field="true"], [data-autofocus-first-field="true"]');
 
   if (!firstAutoFocusContainer) {
     return;

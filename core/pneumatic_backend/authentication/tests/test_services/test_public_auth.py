@@ -1,10 +1,8 @@
 import pytest
-from pneumatic_backend.accounts.tests.fixtures import (
-    create_test_user,
-)
 from pneumatic_backend.processes.tests.fixtures import (
     create_test_template,
     create_test_account,
+    create_test_user,
 )
 from pneumatic_backend.authentication.services.public_auth import (
     PublicAuthService

@@ -1,5 +1,6 @@
 import React from 'react';
 import { useIntl } from 'react-intl';
+import { useSelector } from 'react-redux';
 
 import { Checkbox } from '../../UI/Fields/Checkbox';
 import { TUserListItem } from '../../../types/user';
@@ -10,6 +11,7 @@ import { TUsersDropdownOption, UsersDropdown } from '../../UI/form/UsersDropdown
 import { getUserFullName } from '../../../utils/users';
 import { getPerformersForDropdown } from './utils/getPerformersForDropdown';
 import { EBgColorTypes, UserPerformer } from '../../UI/UserPerformer';
+import { IApplicationState } from '../../../types/redux';
 
 import styles from '../TemplateEdit.css';
 
@@ -23,9 +25,16 @@ export interface ITaskPerformersProps {
 
 export function TaskPerformers({ task, users, variables, setCurrentTask }: ITaskPerformersProps) {
   const { formatMessage } = useIntl();
+  const groups = useSelector((state: IApplicationState) => state.groups.list);
+
   const { rawPerformers = [] } = task;
 
-  const dropdownPerformersOption: TUsersDropdownOption[] = getPerformersForDropdown(users, variables, formatMessage);
+  const dropdownPerformersOption: TUsersDropdownOption[] = getPerformersForDropdown(
+    users,
+    groups,
+    variables,
+    formatMessage,
+  );
   const selectedPerformerOption = rawPerformers.map((user) => {
     return {
       ...user,

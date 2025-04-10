@@ -9,6 +9,12 @@ from pneumatic_backend.utils.validation import ErrorCode
 from pneumatic_backend.processes.services.exceptions import (
     WorkflowActionServiceException
 )
+from pneumatic_backend.processes.enums import (
+    OwnerType
+)
+from pneumatic_backend.processes.models import (
+    TemplateOwner,
+)
 
 
 pytestmark = pytest.mark.django_db
@@ -33,7 +39,7 @@ def test_resume__account_owner__ok(
 
     # assert
     assert response.status_code == 204
-    resume_mock.assert_called_once_with(workflow=workflow)
+    resume_mock.assert_called_once_with()
 
 
 def test_resume__template_owner_admin__ok(
@@ -54,7 +60,7 @@ def test_resume__template_owner_admin__ok(
 
     # assert
     assert response.status_code == 204
-    resume_mock.assert_called_once_with(workflow=workflow)
+    resume_mock.assert_called_once_with()
 
 
 def test_resume__template_owner__not_admin__permission_denied(
@@ -74,7 +80,12 @@ def test_resume__template_owner__not_admin__permission_denied(
         is_active=True,
         tasks_count=1
     )
-    template.template_owners.add(user_not_admin)
+    TemplateOwner.objects.create(
+        template=template,
+        account=account_owner.account,
+        type=OwnerType.USER,
+        user_id=user_not_admin.id,
+    )
     workflow = create_test_workflow(
         template=template,
         user=account_owner,

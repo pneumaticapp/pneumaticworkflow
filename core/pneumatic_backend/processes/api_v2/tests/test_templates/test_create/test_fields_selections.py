@@ -8,7 +8,8 @@ from pneumatic_backend.processes.models import (
 )
 from pneumatic_backend.processes.enums import (
     PerformerType,
-    FieldType
+    FieldType,
+    OwnerType
 )
 from pneumatic_backend.processes.messages import template as messages
 
@@ -33,7 +34,12 @@ class TestCreateFieldSelections:
         # act
         response = api_client.post('/templates', data={
             'name': 'Template',
-            'template_owners': [user.id],
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id
+                },
+            ],
             'is_active': True,
             'kickoff': {},
             'tasks': [
@@ -124,7 +130,12 @@ class TestCreateFieldSelections:
             path='/templates',
             data={
                 'name': 'Template',
-                'template_owners': [user.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                ],
                 'is_active': True,
                 'kickoff': {
                     'fields': request_data
@@ -177,7 +188,12 @@ class TestCreateFieldSelections:
         # act
         response = api_client.post('/templates', data={
             'name': 'Template',
-            'template_owners': [user.id],
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id
+                },
+            ],
             'is_active': True,
             'kickoff': {},
             'tasks': [

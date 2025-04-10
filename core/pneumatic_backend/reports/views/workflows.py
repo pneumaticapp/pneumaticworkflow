@@ -89,7 +89,7 @@ class WorkflowsDashboardViewSet(
         get_object_or_404(
             Template.objects
             .on_account(self.request.user.account_id)
-            .with_template_owners(self.request.user.id),
+            .with_template_owner(self.request.user.id),
             pk=filters['template_id'],
         )
         if filters.pop('now', None):

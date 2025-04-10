@@ -3,6 +3,7 @@ from typing import Optional, List, Tuple
 from django.db import transaction
 from django.contrib.auth import get_user_model
 from django.utils import timezone
+from pneumatic_backend.accounts.models import UserGroup
 from pneumatic_backend.processes.models import (
     WorkflowEvent,
     Task,
@@ -291,6 +292,34 @@ class WorkflowEventService:
         return event
 
     @classmethod
+    def performer_group_created_event(
+        cls,
+        user: UserModel,
+        task: Task,
+        performer: UserGroup,
+        after_create_actions: bool = True
+    ) -> WorkflowEvent:
+
+        event = WorkflowEvent.objects.create(
+            type=WorkflowEventType.TASK_PERFORMER_GROUP_CREATED,
+            account=user.account,
+            task=task,
+            task_json=TaskEventJsonSerializer(
+                instance=task,
+                context={
+                    'event_type':
+                        WorkflowEventType.TASK_PERFORMER_GROUP_CREATED
+                }
+            ).data,
+            workflow=task.workflow,
+            user=user,
+            target_group_id=performer.id,
+        )
+        if after_create_actions:
+            cls._after_create_actions(event)
+        return event
+
+    @classmethod
     def performer_deleted_event(
         cls,
         user: UserModel,
@@ -312,6 +341,34 @@ class WorkflowEventService:
             workflow=task.workflow,
             user=user,
             target_user_id=performer.id,
+        )
+        if after_create_actions:
+            cls._after_create_actions(event)
+        return event
+
+    @classmethod
+    def performer_group_deleted_event(
+        cls,
+        user: UserModel,
+        task: Task,
+        performer: UserGroup,
+        after_create_actions: bool = True
+    ) -> WorkflowEvent:
+
+        event = WorkflowEvent.objects.create(
+            type=WorkflowEventType.TASK_PERFORMER_GROUP_DELETED,
+            account=user.account,
+            task=task,
+            task_json=TaskEventJsonSerializer(
+                instance=task,
+                context={
+                    'event_type':
+                        WorkflowEventType.TASK_PERFORMER_GROUP_DELETED
+                }
+            ).data,
+            workflow=task.workflow,
+            user=user,
+            target_group_id=performer.id,
         )
         if after_create_actions:
             cls._after_create_actions(event)

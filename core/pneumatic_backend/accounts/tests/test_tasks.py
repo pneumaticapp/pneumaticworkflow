@@ -12,7 +12,7 @@ from pneumatic_backend.accounts.models import (
 from pneumatic_backend.accounts.tasks import (
     send_system_notification,
 )
-from pneumatic_backend.accounts.tests.fixtures import (
+from pneumatic_backend.processes.tests.fixtures import (
     create_test_user,
 )
 

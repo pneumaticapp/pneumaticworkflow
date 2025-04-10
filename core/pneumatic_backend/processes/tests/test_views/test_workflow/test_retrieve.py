@@ -15,7 +15,7 @@ from pneumatic_backend.processes.tests.fixtures import (
 )
 from pneumatic_backend.processes.enums import (
     FieldType,
-    WorkflowStatus,
+    WorkflowStatus, TaskStatus,
 )
 from pneumatic_backend.utils.dates import date_format
 
@@ -74,9 +74,11 @@ class TestRetrieveWorkflow:
             task.date_started.strftime(date_format)
         )
         assert task_data['date_started_tsp'] == task.date_started.timestamp()
-        assert task_data['performers'] == [user.id]
+        performer = {'source_id': user.id, 'type': 'user'}
+        assert task_data['performers'] == [performer]
         assert task_data['checklists_total'] == 0
         assert task_data['checklists_marked'] == 0
+        assert task_data['status'] == TaskStatus.ACTIVE
 
         template_data = response.data['template']
         assert template_data['id'] == workflow.template_id
@@ -85,8 +87,7 @@ class TestRetrieveWorkflow:
         assert template_data['wf_name_template'] == (
             workflow.template.wf_name_template
         )
-        assert template_data['template_owners'] == [user.id]
-        assert template_data['template_owners'] == [user.id]
+        assert response.data['owners'] == [user.id]
 
     def test_retrieve__workflow_due_date__ok(self, api_client):
 
@@ -409,6 +410,7 @@ class TestRetrieveWorkflow:
             is_account_owner=False
         )
         workflow = create_test_workflow(user, tasks_count=1)
+        workflow.members.add(not_admin_user)
         api_client.token_authenticate(user=not_admin_user)
 
         # act

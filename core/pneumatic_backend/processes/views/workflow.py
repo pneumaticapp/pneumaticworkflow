@@ -26,7 +26,7 @@ from pneumatic_backend.processes.models import (
     WorkflowEvent,
 )
 from pneumatic_backend.processes.permissions import (
-    WorkflowTemplateOwnerPermission,
+    WorkflowOwnerPermission,
     WorkflowMemberPermission,
     UserTaskCompletePermission,
     GuestWorkflowPermission,
@@ -170,7 +170,7 @@ class WorkflowViewSet(
                 BillingPlanPermission(),
                 ExpiredSubscriptionPermission(),
                 UserIsAdminOrAccountOwner(),
-                WorkflowTemplateOwnerPermission(),
+                WorkflowOwnerPermission(),
                 UsersOverlimitedPermission(),
             )
         elif self.action == 'partial_update':
@@ -178,7 +178,7 @@ class WorkflowViewSet(
                 UserIsAuthenticated(),
                 BillingPlanPermission(),
                 ExpiredSubscriptionPermission(),
-                WorkflowTemplateOwnerPermission(),
+                WorkflowOwnerPermission(),
                 UsersOverlimitedPermission(),
             )
         elif self.action == 'comment':
@@ -301,14 +301,15 @@ class WorkflowViewSet(
         )
         serializer.is_valid(raise_exception=True)
         service = WorkflowActionService(
+            workflow=workflow,
             user=request.user,
             auth_type=request.token_type,
             is_superuser=request.is_superuser
         )
         try:
             with transaction.atomic():
-                service.complete_current_task_for_user(
-                    workflow=workflow,
+                service.complete_task_for_user(
+                    task=workflow.current_task_instance,
                     fields_values=serializer.validated_data.get('output')
                 )
         except WorkflowActionServiceException as ex:
@@ -327,15 +328,13 @@ class WorkflowViewSet(
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         service = WorkflowActionService(
+            workflow=workflow,
             user=request.user,
             auth_type=request.token_type,
             is_superuser=request.is_superuser
         )
         try:
-            service.revert(
-                workflow=workflow,
-                comment=serializer.validated_data['comment']
-            )
+            service.revert(comment=serializer.validated_data['comment'])
         except WorkflowActionServiceException as ex:
             raise_validation_error(message=ex.message)
         return self.response_ok()
@@ -349,13 +348,13 @@ class WorkflowViewSet(
         )
         serializer.is_valid(raise_exception=True)
         service = WorkflowActionService(
+            workflow=workflow,
             user=request.user,
             auth_type=request.token_type,
             is_superuser=request.is_superuser
         )
         try:
             service.return_to(
-                workflow=workflow,
                 revert_to_task=serializer.validated_data['task']
             )
         except WorkflowActionServiceException as ex:
@@ -364,12 +363,13 @@ class WorkflowViewSet(
 
     def destroy(self, request, *args, **kwargs):
         service = WorkflowActionService(
+            workflow=self.get_object(),
             user=request.user,
             auth_type=request.token_type,
             is_superuser=request.is_superuser
         )
         try:
-            service.terminate_workflow(workflow=self.get_object())
+            service.terminate_workflow()
         except WorkflowActionServiceException as ex:
             raise_validation_error(message=ex.message)
         return self.response_ok()
@@ -378,25 +378,28 @@ class WorkflowViewSet(
     def terminate(self, request, *args, **kwargs):
         # Deprecated. Will be removed in my.pneumatic.app/workflows/34225/
         service = WorkflowActionService(
+            workflow=self.get_object(),
             user=request.user,
             auth_type=request.token_type,
             is_superuser=request.is_superuser
         )
         try:
-            service.terminate_workflow(workflow=self.get_object())
+            service.terminate_workflow()
         except WorkflowActionServiceException as ex:
             raise_validation_error(message=ex.message)
         return self.response_ok()
 
     @action(methods=['post'], detail=True)
     def resume(self, request, *args, **kwargs):
+        workflow = self.get_object()
         service = WorkflowActionService(
+            workflow=workflow,
             user=request.user,
             auth_type=request.token_type,
             is_superuser=request.is_superuser
         )
         try:
-            service.force_resume_workflow(workflow=self.get_object())
+            service.force_resume_workflow()
         except WorkflowActionServiceException as ex:
             raise_validation_error(message=ex.message)
         return self.response_ok()
@@ -429,13 +432,13 @@ class WorkflowViewSet(
         request_slz.is_valid(raise_exception=True)
         workflow = self.get_object()
         service = WorkflowActionService(
+            workflow=workflow,
             user=request.user,
             auth_type=request.token_type,
             is_superuser=request.is_superuser
         )
         try:
             service.force_delay_workflow(
-                workflow=workflow,
                 date=request_slz.validated_data['date']
             )
         except WorkflowActionServiceException as ex:

@@ -1,5 +1,3 @@
-/* eslint-disable */
-/* prettier-ignore */
 import { ERoutes } from '../../constants/routes';
 import { ETemplateParts } from '../../types/template';
 

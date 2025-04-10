@@ -11,7 +11,8 @@ from pneumatic_backend.processes.tests.fixtures import (
 from pneumatic_backend.processes.enums import (
     FieldType,
     PerformerType,
-    PredicateOperator
+    PredicateOperator,
+    OwnerType
 )
 pytestmark = pytest.mark.django_db
 
@@ -51,7 +52,12 @@ class TestCopyConditionTemplate:
             data={
                 'name': 'Template',
                 'is_active': is_active,
-                'template_owners': [user.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                ],
                 'kickoff': {
                     'fields': [
                         {
@@ -122,7 +128,12 @@ class TestCopyConditionTemplate:
             data={
                 'name': 'Template',
                 'is_active': is_active,
-                'template_owners': [user.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                ],
                 'kickoff': {
                     'fields': [
                         {
@@ -196,7 +207,12 @@ class TestCopyConditionTemplate:
             data={
                 'name': 'Template',
                 'is_active': is_active,
-                'template_owners': [user.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                ],
                 'kickoff': {
                     'fields': [
                         {

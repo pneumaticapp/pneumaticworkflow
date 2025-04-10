@@ -6,7 +6,8 @@ import { useIntl } from 'react-intl';
 import { DateIcon } from '../../../icons';
 import { TForegroundColor } from '../common/types';
 import { getForegroundClass } from '../common/utils/getForegroundClass';
-import { DatePicker, IDatePickerProps } from '../../form/DatePicker';
+import { DatePickerCustom } from '../../form/DatePicker';
+import { IDatePickerProps } from '../../form/DatePicker/types';
 
 import styles from './DateField.css';
 import commonStyles from '../common/styles.css';
@@ -25,7 +26,7 @@ export interface IDateFieldProps extends Omit<IDatePickerProps, 'value'> {
   inputRef?: React.RefObject<HTMLInputElement>;
   placeholder?: string;
   onClear?(): void;
-  onChange(date: string | null): void;
+  onChange(date: Date | null): void;
   // tslint:disable-next-line: no-any
   [key: string]: any;
 }
@@ -69,11 +70,10 @@ export function DateField({
     return (
       <div className={styles['input-with-rigt-content-wrapper']}>
         <div className={inputClassName}>
-          <DatePicker
-            onChange={onChange}
+          <DatePickerCustom
+            onChange={(date) => onChange(date as Date)}
             placeholderText={placeholder}
-            selected={value}
-            showPopperArrow={false}
+            selected={value ? new Date(value) : null}
             {...props}
           />
         </div>

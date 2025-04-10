@@ -2,7 +2,7 @@ import pytest
 from pneumatic_backend.accounts.enums import (
     UserDateFormat,
 )
-from pneumatic_backend.accounts.tests.fixtures import (
+from pneumatic_backend.processes.tests.fixtures import (
     create_test_user,
     create_test_group,
 )

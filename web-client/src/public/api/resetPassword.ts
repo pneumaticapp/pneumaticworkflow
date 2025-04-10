@@ -5,7 +5,7 @@ import { mapRequestBody } from '../utils/mappers';
 export function resetPassword(body: TForgotPassword) {
   return commonRequest('resetPassword', {
     method: 'POST',
-    body: mapRequestBody(body),
+    data: mapRequestBody(body),
   }, {
     responseType: 'empty',
     type: 'local',

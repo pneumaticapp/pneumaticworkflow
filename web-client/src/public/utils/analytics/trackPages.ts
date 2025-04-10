@@ -1,5 +1,3 @@
-/* eslint-disable */
-/* prettier-ignore */
 import { history } from '../history';
 import { trackPage } from './analytics';
 import { getAnalyticsPageParams } from './utils';

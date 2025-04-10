@@ -10,7 +10,7 @@ export function createTemplateByName(template: TCreateTemplateByNameRequest) {
   return commonRequest(
     urls.templateByName,
     {
-      body: mapRequestBody(template),
+      data: mapRequestBody(template),
       method: 'POST',
     },
     { shouldThrow: true },

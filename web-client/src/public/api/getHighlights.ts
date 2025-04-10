@@ -53,7 +53,7 @@ export function getHighlightsQueryString({ limit, offset, filters }: IGetHighlig
 
   if (dateAfter) dateAfterQuery = `date_after_tsp=${toTspDate(dateAfter)}`;
   if (dateBefore) dateBeforeQuery = `date_before_tsp=${toTspDate(dateBefore)}`;
-  if (isArrayWithItems(users)) usersQuery = `users=${users.join(',')}`;
+  if (isArrayWithItems(users)) usersQuery = `current_performer_ids=${users.join(',')}`;
   if (isArrayWithItems(templates)) templatesQuery = `templates=${templates.join(',')}`;
 
   return [`limit=${limit}`, `offset=${offset}`, dateAfterQuery, dateBeforeQuery, usersQuery, templatesQuery]

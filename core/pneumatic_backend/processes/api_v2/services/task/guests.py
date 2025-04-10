@@ -12,6 +12,7 @@ from pneumatic_backend.processes.messages.workflow import (
     MSG_PW_0014,
     MSG_PW_0015,
 )
+from pneumatic_backend.processes.enums import PerformerType
 from pneumatic_backend.authentication.services import (
     GuestJWTAuthService
 )
@@ -82,9 +83,23 @@ class GuestPerformersService(BasePerformersService):
             user_id=user.id
         )
         if task.can_be_completed():
-            first_completed_user = task.taskperformer_set.completed(
-            ).exclude_directly_deleted().first().user
+            first_completed_user = (
+                task.taskperformer_set.completed()
+                .exclude_directly_deleted()
+                .exclude(type=PerformerType.GROUP)
+                .first().user
+            )
+            if first_completed_user is None:
+                group = (
+                    task.taskperformer_set.completed()
+                    .exclude_directly_deleted()
+                    .filter(type=PerformerType.GROUP)
+                    .first()
+                    .group
+                )
+                first_completed_user = group.users.first().user
             service = WorkflowActionService(
+                workflow=task.workflow,
                 user=first_completed_user,
                 is_superuser=False,
                 auth_type=AuthTokenType.USER

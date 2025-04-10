@@ -1,7 +1,7 @@
 /* eslint-disable */
 /* prettier-ignore */
 import * as React from 'react';
-import * as classnames from 'classnames';
+import classnames from 'classnames';
 import { useIntl } from 'react-intl';
 
 import { Avatar } from '../../../../UI/Avatar';
@@ -29,8 +29,8 @@ export function WorkflowLogTaskSkipped({ task, theme }: IWorkflowLogTaskSkippedP
 
     return (
       <div className={styles['performers']}>
-        {task?.performers.slice(0, MAX_SHOW_USERS).map((userId, index) => (
-          <UserData userId={userId}>
+        {task?.performers.slice(0, MAX_SHOW_USERS).map(({sourceId}, index) => (
+          <UserData userId={sourceId}>
             {user => {
               if (!user) {
                 return null;

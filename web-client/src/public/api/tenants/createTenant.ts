@@ -18,7 +18,7 @@ export function createTenant({ name }: ICreateTenantConfig) {
     url,
     {
       method: 'POST',
-      body: mapRequestBody({
+      data: mapRequestBody({
         tenant_name: name,
       }),
     },

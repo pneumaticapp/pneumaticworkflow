@@ -12,6 +12,7 @@ export * from './notifications/actions';
 export * from './selectTemplateModal/actions';
 export * from './runWorkflowModal/actions';
 export * from './tasks/actions';
+export * from './groups/actions';
 export * from './dashboard/actions';
 export * from './team/actions';
 export * from './highlights/actions';

@@ -7,6 +7,12 @@ from pneumatic_backend.processes.tests.fixtures import (
     create_test_template,
     create_test_account
 )
+from pneumatic_backend.processes.models import (
+    TemplateOwner,
+)
+from pneumatic_backend.processes.enums import (
+    OwnerType
+)
 from pneumatic_backend.processes.services.exceptions import (
     WorkflowActionServiceException
 )
@@ -37,7 +43,7 @@ def test_close__account_owner__ok(
 
     # assert
     assert response.status_code == 204
-    terminate_mock.assert_called_once_with(workflow=workflow)
+    terminate_mock.assert_called_once_with()
 
 
 def test_close__template_owner_admin__ok(
@@ -60,7 +66,7 @@ def test_close__template_owner_admin__ok(
 
     # assert
     assert response.status_code == 204
-    terminate_mock.assert_called_once_with(workflow=workflow)
+    terminate_mock.assert_called_once_with()
 
 
 def test_close__legacy_workflow_workflow_starter__ok(
@@ -98,7 +104,7 @@ def test_close__legacy_workflow_workflow_starter__ok(
     # assert
     assert response_delete.status_code == 204
     assert response.status_code == 204
-    terminate_mock.assert_called_once_with(workflow=workflow)
+    terminate_mock.assert_called_once_with()
     assert workflow.is_legacy_template is True
 
 
@@ -119,7 +125,12 @@ def test_close__template_owner__not_admin__permission_denied(
         is_active=True,
         tasks_count=1
     )
-    template.template_owners.add(user_not_admin)
+    TemplateOwner.objects.create(
+        template=template,
+        account=account_owner.account,
+        type=OwnerType.USER,
+        user_id=user_not_admin.id,
+    )
     workflow = create_test_workflow(
         template=template,
         user=account_owner,

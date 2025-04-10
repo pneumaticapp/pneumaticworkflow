@@ -21,7 +21,7 @@ export function editProfile(body: IUpdateUserRequest) {
   return commonRequest<IUpdateUserResponse>(
     'editProfile',
     {
-      body: mapRequestBody(body),
+      data: mapRequestBody(body),
       method: 'PUT',
     });
 }

@@ -1,6 +1,6 @@
 import pytest
 from django.conf import settings
-from pneumatic_backend.accounts.tests.fixtures import (
+from pneumatic_backend.processes.tests.fixtures import (
     create_test_user,
     create_test_account
 )

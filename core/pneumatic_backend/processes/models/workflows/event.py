@@ -66,6 +66,7 @@ class WorkflowEvent(
     watched = ArrayField(JSONField(), default=list)
     reactions = JSONField(default=dict)
     target_user_id = models.IntegerField(null=True)
+    target_group_id = models.IntegerField(null=True)
     with_attachments = models.BooleanField(default=False)
     search_content = SearchVectorField(null=True)
 

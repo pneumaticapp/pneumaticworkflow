@@ -10,7 +10,7 @@ export function changePhotoProfile(changedProfileFields: Partial<IAuthUser>) {
     urls.editProfile,
     {
       method: 'PUT',
-      body: mapRequestBody(changedProfileFields),
+      data: mapRequestBody(changedProfileFields),
     },
     {
       shouldThrow: true,

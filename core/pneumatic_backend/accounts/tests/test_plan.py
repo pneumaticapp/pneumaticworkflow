@@ -8,9 +8,6 @@ from pneumatic_backend.accounts.enums import (
     BillingPlanType,
     LeaseLevel,
 )
-from pneumatic_backend.accounts.tests.fixtures import (
-    create_test_owner,
-)
 from pneumatic_backend.processes.tests.fixtures import (
     create_test_template,
     create_test_account,
@@ -278,7 +275,7 @@ def test_plan__tenant__ok(api_client):
 def test_plan__guest__ok(api_client):
 
     # arrange
-    account_owner = create_test_owner()
+    account_owner = create_test_user(is_account_owner=True)
     create_test_guest(account=account_owner.account)
     api_client.token_authenticate(account_owner)
 

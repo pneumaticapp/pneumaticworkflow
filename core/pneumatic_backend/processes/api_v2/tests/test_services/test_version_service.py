@@ -24,6 +24,7 @@ from pneumatic_backend.processes.models import (
     Predicate,
     Template,
     WorkflowEvent,
+    TemplateOwner
 )
 from pneumatic_backend.processes.services.versioning.schemas import (
     TemplateSchemaV1,
@@ -45,6 +46,7 @@ from pneumatic_backend.processes.enums import (
     PredicateOperator,
     PerformerType,
     WorkflowEventType,
+    OwnerType
 )
 from pneumatic_backend.processes.api_v2.services.workflows\
     .workflow_version import (
@@ -1330,8 +1332,12 @@ class TestWorkflowUpdate:
             kickoff=template.kickoff_instance,
             template=template
         )
-
-        template.template_owners.add(user_2)
+        TemplateOwner.objects.create(
+            template=template,
+            account=user.account,
+            type=OwnerType.USER,
+            user_id=user_2.id,
+        )
         template_task_1 = template.tasks.get(number=1)
         template_task_1.add_raw_performer(user_2)
         checklist_template_11 = create_checklist_template(
@@ -1476,7 +1482,12 @@ class TestWorkflowUpdate:
             kickoff=template.kickoff_instance,
             template=template
         )
-        template.template_owners.add(user_2)
+        TemplateOwner.objects.create(
+            template=template,
+            account=user.account,
+            type=OwnerType.USER,
+            user_id=user_2.id,
+        )
         template_task_1 = template.tasks.get(number=1)
         template_task_1.add_raw_performer(user_2)
         checklist_template_11 = create_checklist_template(
@@ -1596,7 +1607,12 @@ class TestWorkflowUpdate:
             kickoff=template.kickoff_instance,
             template=template
         )
-        template.template_owners.add(user_2)
+        TemplateOwner.objects.create(
+            template=template,
+            account=user.account,
+            type=OwnerType.USER,
+            user_id=user_2.id,
+        )
         template_task_2 = template.tasks.get(number=2)
         template_task_2.add_raw_performer(user_2)
         checklist_template_11 = create_checklist_template(
@@ -1861,7 +1877,7 @@ class TestMoveToCorrectStep:
         assert new_added_task.date_completed is None
         assert new_added_task.date_first_started is None
         assert new_added_task.date_started is None
-        assert new_added_task.is_skipped is True
+        assert new_added_task.is_skipped
 
     def test_move_added_before_current_old_not_changed(self, api_client):
 
@@ -2015,7 +2031,12 @@ class TestMoveToCorrectStep:
             path='/templates',
             data={
                 'name': 'Template',
-                'template_owners': [user.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                ],
                 'is_active': True,
                 'kickoff': {},
                 'tasks': [
@@ -2076,7 +2097,12 @@ class TestMoveToCorrectStep:
                 'is_public': template.is_public,
                 'description': template.description,
                 'name': template.name,
-                'template_owners': [user.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                ],
                 'finalizable': True,
                 'kickoff': {},
                 'tasks': [
@@ -2166,7 +2192,12 @@ class TestMoveToCorrectStep:
             path='/templates',
             data={
                 'name': 'Template',
-                'template_owners': [user.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                ],
                 'is_active': True,
                 'kickoff': {},
                 'tasks': [
@@ -2229,7 +2260,12 @@ class TestMoveToCorrectStep:
                 'is_public': template.is_public,
                 'description': template.description,
                 'name': template.name,
-                'template_owners': [user.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                ],
                 'finalizable': True,
                 'kickoff': {},
                 'tasks': [

@@ -29,6 +29,7 @@ from pneumatic_backend.processes.tests.fixtures import (
     create_test_account,
     create_wf_created_webhook,
     create_task_completed_webhook,
+    create_test_group
 )
 from pneumatic_backend.processes.models import WorkflowEvent
 from pneumatic_backend.processes.api_v2.serializers.workflow.events import (
@@ -40,6 +41,8 @@ from pneumatic_backend.processes.enums import (
     FieldType,
     PredicateOperator,
     WorkflowEventType,
+    OwnerType,
+    DirectlyStatus,
 )
 from pneumatic_backend.processes.api_v2.services.task.performers import (
     TaskPerformersService
@@ -92,10 +95,71 @@ def test_complete__task_id__ok(
         'pneumatic_backend.processes.tasks.webhooks.'
         'send_task_completed_webhook.delay'
     )
-    complete_current_task_by_user_mock = mocker.patch(
+    complete_task_for_user_mock = mocker.patch(
         'pneumatic_backend.processes.services.'
         'workflow_action.WorkflowActionService.'
-        'complete_current_task_for_user'
+        'complete_task_for_user'
+    )
+    api_client.token_authenticate(performer)
+
+    # act
+    response = api_client.post(
+        f'/workflows/{workflow.id}/task-complete',
+        data={
+            'task_id': task.id
+        }
+    )
+
+    # assert
+    assert response.status_code == 204
+    workflow.refresh_from_db()
+    service_init_mock.assert_called_once_with(
+        workflow=workflow,
+        user=performer,
+        auth_type=AuthTokenType.USER,
+        is_superuser=False
+    )
+    complete_task_for_user_mock.assert_called_once_with(
+        task=task,
+        fields_values={}
+    )
+
+
+def test_complete__task_performer_is_group__ok(
+    mocker,
+    api_client
+):
+
+    # arrange
+    account = create_test_account()
+    user = create_test_user(account=account)
+    performer = create_test_user(
+        account=account,
+        email='test@test.test',
+        is_account_owner=False
+    )
+    group = create_test_group(user=user, users=[performer, ])
+    workflow = create_test_workflow(user, tasks_count=1)
+    task = workflow.current_task_instance
+    TaskPerformer.objects.create(
+        task_id=task.id,
+        type=PerformerType.GROUP,
+        group_id=group.id,
+        directly_status=DirectlyStatus.CREATED
+    )
+    service_init_mock = mocker.patch.object(
+        WorkflowActionService,
+        attribute='__init__',
+        return_value=None
+    )
+    mocker.patch(
+        'pneumatic_backend.processes.tasks.webhooks.'
+        'send_task_completed_webhook.delay'
+    )
+    complete_task_for_user_mock = mocker.patch(
+        'pneumatic_backend.processes.services.'
+        'workflow_action.WorkflowActionService.'
+        'complete_task_for_user'
     )
     api_client.token_authenticate(performer)
 
@@ -111,12 +175,13 @@ def test_complete__task_id__ok(
     assert response.status_code == 204
     workflow.refresh_from_db()
     service_init_mock.assert_called_once_with(
+        workflow=workflow,
         user=performer,
         auth_type=AuthTokenType.USER,
         is_superuser=False
     )
-    complete_current_task_by_user_mock.assert_called_once_with(
-        workflow=workflow,
+    complete_task_for_user_mock.assert_called_once_with(
+        task=task,
         fields_values={}
     )
 
@@ -146,10 +211,10 @@ def test_complete__task_api_name__ok(
         'pneumatic_backend.processes.tasks.webhooks.'
         'send_task_completed_webhook.delay'
     )
-    complete_current_task_by_user_mock = mocker.patch(
+    complete_task_for_user_mock = mocker.patch(
         'pneumatic_backend.processes.services.'
         'workflow_action.WorkflowActionService.'
-        'complete_current_task_for_user'
+        'complete_task_for_user'
     )
     api_client.token_authenticate(performer)
 
@@ -157,7 +222,7 @@ def test_complete__task_api_name__ok(
     response = api_client.post(
         f'/workflows/{workflow.id}/task-complete',
         data={
-            'task_api_name': workflow.current_task_instance.api_name
+            'task_api_name': task.api_name
         }
     )
 
@@ -165,12 +230,13 @@ def test_complete__task_api_name__ok(
     assert response.status_code == 204
     workflow.refresh_from_db()
     service_init_mock.assert_called_once_with(
+        workflow=workflow,
         user=performer,
         auth_type=AuthTokenType.USER,
         is_superuser=False
     )
-    complete_current_task_by_user_mock.assert_called_once_with(
-        workflow=workflow,
+    complete_task_for_user_mock.assert_called_once_with(
+        task=task,
         fields_values={}
     )
 
@@ -200,22 +266,23 @@ def test_complete__fields_values__ok(
         'pneumatic_backend.processes.tasks.webhooks.'
         'send_task_completed_webhook.delay'
     )
-    complete_current_task_by_user_mock = mocker.patch(
+    complete_task_by_user_mock = mocker.patch(
         'pneumatic_backend.processes.services.'
         'workflow_action.WorkflowActionService.'
-        'complete_current_task_for_user'
+        'complete_task_for_user'
     )
     fields_data = {
         'field_1': 'value_1',
         'field_2': 2
     }
     api_client.token_authenticate(performer)
+    task = workflow.current_task_instance
 
     # act
     response = api_client.post(
         f'/workflows/{workflow.id}/task-complete',
         data={
-            'task_id': workflow.current_task_instance.id,
+            'task_id': task.id,
             'output': fields_data
         }
     )
@@ -224,12 +291,13 @@ def test_complete__fields_values__ok(
     assert response.status_code == 204
     workflow.refresh_from_db()
     service_init_mock.assert_called_once_with(
+        workflow=workflow,
         user=performer,
         auth_type=AuthTokenType.USER,
         is_superuser=False
     )
-    complete_current_task_by_user_mock.assert_called_once_with(
-        workflow=workflow,
+    complete_task_by_user_mock.assert_called_once_with(
+        task=task,
         fields_values=fields_data
     )
 
@@ -252,10 +320,10 @@ def test_complete__snoozed_workflow__validation_error(
         attribute='__init__',
         return_value=None
     )
-    complete_current_task_by_user_mock = mocker.patch(
+    complete_task_for_user_mock = mocker.patch(
         'pneumatic_backend.processes.services.'
         'workflow_action.WorkflowActionService.'
-        'complete_current_task_for_user'
+        'complete_task_for_user'
     )
     mocker.patch(
         'pneumatic_backend.processes.tasks.webhooks.'
@@ -277,7 +345,7 @@ def test_complete__snoozed_workflow__validation_error(
     assert response.data['code'] == ErrorCode.VALIDATION_ERROR
     assert response.data['message'] == message
     service_init_mock.assert_not_called()
-    complete_current_task_by_user_mock.assert_not_called()
+    complete_task_for_user_mock.assert_not_called()
 
 
 def test_complete__ended_workflow__validation_error(
@@ -294,10 +362,10 @@ def test_complete__ended_workflow__validation_error(
         attribute='__init__',
         return_value=None
     )
-    complete_current_task_by_user_mock = mocker.patch(
+    complete_task_for_user_mock = mocker.patch(
         'pneumatic_backend.processes.services.'
         'workflow_action.WorkflowActionService.'
-        'complete_current_task_for_user'
+        'complete_task_for_user'
     )
     mocker.patch(
         'pneumatic_backend.processes.tasks.webhooks.'
@@ -319,7 +387,7 @@ def test_complete__ended_workflow__validation_error(
     assert response.data['code'] == ErrorCode.VALIDATION_ERROR
     assert response.data['message'] == message
     service_init_mock.assert_not_called()
-    complete_current_task_by_user_mock.assert_not_called()
+    complete_task_for_user_mock.assert_not_called()
 
 
 def test_complete__not_current_task__validation_error(
@@ -336,10 +404,10 @@ def test_complete__not_current_task__validation_error(
         attribute='__init__',
         return_value=None
     )
-    complete_current_task_by_user_mock = mocker.patch(
+    complete_task_for_user_mock = mocker.patch(
         'pneumatic_backend.processes.services.'
         'workflow_action.WorkflowActionService.'
-        'complete_current_task_for_user'
+        'complete_task_for_user'
     )
     mocker.patch(
         'pneumatic_backend.processes.tasks.webhooks.'
@@ -361,7 +429,7 @@ def test_complete__not_current_task__validation_error(
     assert response.data['code'] == ErrorCode.VALIDATION_ERROR
     assert response.data['message'] == message
     service_init_mock.assert_not_called()
-    complete_current_task_by_user_mock.assert_not_called()
+    complete_task_for_user_mock.assert_not_called()
 
 
 def test_complete__checklist_incompleted__validation_error(
@@ -383,10 +451,10 @@ def test_complete__checklist_incompleted__validation_error(
         attribute='__init__',
         return_value=None
     )
-    complete_current_task_by_user_mock = mocker.patch(
+    complete_task_for_user_mock = mocker.patch(
         'pneumatic_backend.processes.services.'
         'workflow_action.WorkflowActionService.'
-        'complete_current_task_for_user'
+        'complete_task_for_user'
     )
     mocker.patch(
         'pneumatic_backend.processes.tasks.webhooks.'
@@ -408,7 +476,7 @@ def test_complete__checklist_incompleted__validation_error(
     assert response.data['code'] == ErrorCode.VALIDATION_ERROR
     assert response.data['message'] == message
     service_init_mock.assert_not_called()
-    complete_current_task_by_user_mock.assert_not_called()
+    complete_task_for_user_mock.assert_not_called()
 
 
 def test_complete__sub_workflows_incompleted__validation_error(
@@ -431,10 +499,10 @@ def test_complete__sub_workflows_incompleted__validation_error(
         attribute='__init__',
         return_value=None
     )
-    complete_current_task_by_user_mock = mocker.patch(
+    complete_task_for_user_mock = mocker.patch(
         'pneumatic_backend.processes.services.'
         'workflow_action.WorkflowActionService.'
-        'complete_current_task_for_user'
+        'complete_task_for_user'
     )
     mocker.patch(
         'pneumatic_backend.processes.tasks.webhooks.'
@@ -456,7 +524,7 @@ def test_complete__sub_workflows_incompleted__validation_error(
     assert response.data['code'] == ErrorCode.VALIDATION_ERROR
     assert response.data['message'] == message
     service_init_mock.assert_not_called()
-    complete_current_task_by_user_mock.assert_not_called()
+    complete_task_for_user_mock.assert_not_called()
 
 
 def test_complete__not_performer__validation_error(
@@ -481,10 +549,10 @@ def test_complete__not_performer__validation_error(
         attribute='__init__',
         return_value=None
     )
-    complete_current_task_by_user_mock = mocker.patch(
+    complete_task_for_user_mock = mocker.patch(
         'pneumatic_backend.processes.services.'
         'workflow_action.WorkflowActionService.'
-        'complete_current_task_for_user'
+        'complete_task_for_user'
     )
     mocker.patch(
         'pneumatic_backend.processes.tasks.webhooks.'
@@ -503,7 +571,7 @@ def test_complete__not_performer__validation_error(
     # assert
     assert response.status_code == 403
     service_init_mock.assert_not_called()
-    complete_current_task_by_user_mock.assert_not_called()
+    complete_task_for_user_mock.assert_not_called()
 
 
 def test_complete__performer_already_complete__validation_error(
@@ -531,10 +599,10 @@ def test_complete__performer_already_complete__validation_error(
         attribute='__init__',
         return_value=None
     )
-    complete_current_task_by_user_mock = mocker.patch(
+    complete_task_for_user_mock = mocker.patch(
         'pneumatic_backend.processes.services.'
         'workflow_action.WorkflowActionService.'
-        'complete_current_task_for_user'
+        'complete_task_for_user'
     )
     mocker.patch(
         'pneumatic_backend.processes.tasks.webhooks.'
@@ -553,7 +621,7 @@ def test_complete__performer_already_complete__validation_error(
     # assert
     assert response.status_code == 403
     service_init_mock.assert_not_called()
-    complete_current_task_by_user_mock.assert_not_called()
+    complete_task_for_user_mock.assert_not_called()
 
 
 def test_complete__validation_error_required_output_user_field(
@@ -856,7 +924,7 @@ class TestCompleteWorkflow:
         )
         send_removed_task_notification_mock.assert_called_once_with(
             task=task_1,
-            user_ids=(user.id,),
+            user_ids={user.id},
             sync=False,
         )
         send_new_task_notification_mock.assert_called_once()
@@ -1223,7 +1291,7 @@ class TestCompleteWorkflow:
         assert not task_1.taskperformer_set.filter(is_completed=False).exists()
         send_ws_new_task_notification_mock.assert_called_once_with(
             task=task_1,
-            user_ids=(user.id,),
+            user_ids={user.id},
             sync=False
         )
         task_complete_analytics_mock.assert_called_once_with(
@@ -1736,7 +1804,12 @@ class TestCompleteWorkflow:
             data={
                 'name': 'Template',
                 'is_active': True,
-                'template_owners': [template_owner.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': template_owner.id
+                    },
+                ],
                 'kickoff': {
                     'fields': [
                         {
@@ -1844,7 +1917,7 @@ class TestCompleteWorkflow:
         task_3 = workflow.tasks.get(number=3)
         send_ws_removed_task_notification_mock.assert_called_once_with(
             task=task_1,
-            user_ids=(user_1.id,),
+            user_ids={user_1.id},
             sync=False
         )
         send_ws_new_task_notification_mock.assert_called_once_with(
@@ -1996,7 +2069,7 @@ class TestCompleteWorkflow:
         assert WorkflowEvent.objects.filter(
             workflow=workflow,
             account=user.account,
-            type=WorkflowEventType.ENDED,
+            type=WorkflowEventType.COMPLETE,
         ).count() == 1
 
     def test_complete__skip_task__fields_is_empty(
@@ -2124,7 +2197,12 @@ class TestCompleteWorkflow:
             data={
                 'name': 'Template',
                 'is_active': True,
-                'template_owners': [user.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                ],
                 'kickoff': {
                     'fields': [
                         {
@@ -2524,9 +2602,15 @@ class TestCompleteWorkflow:
             data={
                 'name': 'Template',
                 'is_active': True,
-                'template_owners': [
-                    account_2_owner.id,
-                    account_2_new_user.id
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': account_2_owner.id
+                    },
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': account_2_new_user.id
+                    },
                 ],
                 'kickoff': {},
                 'tasks': [

@@ -88,7 +88,8 @@ class WSSender:
             template_task_id=task.workflow.template_id,
             template_task_api_name=task.api_name,
             template_id=task.workflow.template_id,
-            is_urgent=task.is_urgent
+            is_urgent=task.is_urgent,
+            status=task.status
         )
         task_data = TaskListSerializer(instance=task_for_list).data
 

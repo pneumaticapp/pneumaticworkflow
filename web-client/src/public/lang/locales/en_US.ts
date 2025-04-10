@@ -256,11 +256,14 @@ export const enMessages = {
   'users.th-status': 'Status',
   'users.th-actions': ' ',
 
+  'team.title': 'Team',
+  'team.title.tooltip': 'Manage your team here, add/remove user groups and users and adjust their settings.',
   'team.user-invited': 'Invited {date} by {username}',
   'team.user-id': 'ID {id}',
   'team.user-email': '({email})',
   'team.invite-team-btn': 'Invite Team',
   'team.invite-team-large-btn': 'Invite Team',
+  'team.invite-team-large-btn-caption': 'Invite new team members and organize them into groups',
   'team.card-admin-toggle': 'Admin',
   'team.card-account-owner-badge': 'Owner',
   'team.card-current-user-badge': "It's you",
@@ -306,10 +309,44 @@ export const enMessages = {
   'team.add-email-placeholder': 'Email address',
   'team.empty-placeholder-title': 'No Users found',
   'team.empty-placeholder-description': 'Try changing your filter settings or invite more peoples in your team.',
+
   'team.add-guests-banner-text':
     'Add guests to your tasks to get input from and engage with people without a Pneumatic account.',
   'team.add-guests-banner-button': 'Learn more',
+
+  'team.add-groups-banner-text': 'Learn more about how to use groups.',
+  'team.add-groups-banner-button': 'Learn more',
+
   'team.search': 'Search user',
+
+  'team.users': 'Users',
+
+  'team.groups': 'Groups',
+  'team.groups.search': 'Search group',
+  'team.groups.add-group.title': 'Add Group',
+  'team.groups.add-group.caption': 'Create a new group and add users to boost team collaboration',
+
+  'team.groups.empty-result-title': 'No groups in the list',
+  'team.groups.empty-result-description': 'Add a group if you want to take full advantage of groups.',
+
+  'team.groups.create-modal.title': 'New Group',
+  'team.groups.create-modal.caption':
+  'Once a new group’s been created, add users to it immediately, so tasks can be assigned to them as a group..',
+  'team.groups.create-modal.new-group': 'New Group',
+  'team.groups.edit-modal.title': 'Edit Group Name',
+  'team.groups.edit-modal.confirm': 'Confirm',
+  'team.groups.edit-modal.caption': 'One edited, the group’s name will be updated in all the templates it’s used in.',
+
+  'group.edit-name': 'Edit name',
+  'group.clone': 'Clone',
+  'group.delete': 'Delete',
+  'group.add-user': 'Add users',
+
+  'group.user': 'User',
+  'group.users': 'Users',
+
+  'group.list-user.title': 'No users in the group',
+  'group.list-user.caption': 'Add one or more users to the group — a group without users is pointless.',
 
   'users.error-already-accepted': 'These users have already accepted invites on this account',
   'users.faied-fetch': 'Failed to fetch users',
@@ -326,6 +363,7 @@ export const enMessages = {
   'menu.help-center': 'Help Center',
   'menu.dashboard': 'Dashboard',
   'menu.tasks': 'My Tasks',
+  'menu.groups': 'All groups',
   'menu.workflows': 'Workflows',
   'menu.workflows.in-progress': 'In progress',
   'menu.workflows.completed': 'Completed',
@@ -400,6 +438,8 @@ export const enMessages = {
   'validation.tenant-name-empty': 'Please enter a tenant name',
   'validation.tenant-name-to-long': 'The tenant name is longer than 255 character',
 
+  'validation.group-name-to-long': 'The group name is longer than 255 character',
+
   'Unknown Error': 'Oops, looks like something went wrong... Our engineering team has already been notified',
   'Something Went Wrong': 'Oops, looks like something went wrong... Our engineering team has already been notified',
 
@@ -421,14 +461,14 @@ export const enMessages = {
   'tasks.task-task-name-placeholder': 'The name of the workflow step',
   'tasks.task-url-placeholder': 'URL used in this task (e.g., CRM, helpdesk, or any page)',
   'tasks.task-description-field': 'Description',
-  'tasks.task-assign-help': 'Assign Performers',
+  'tasks.task-assign-help': 'Performers',
   'tasks.task-zero-due-date': 'm',
   'tasks.task-due-date': 'Due Date',
   'tasks.task-due-date-duration': '{duration}',
   'tasks.task-due-date-rule-placeholder': 'Choose rule…',
   'tasks.task-conditions-single': 'condition',
   'tasks.task-conditions-plural': 'conditions',
-  'tasks.task-outputs-create-help': 'Add output fields',
+  'tasks.task-outputs-create-help': 'Output fields',
   'tasks.task-outputs-fill-help': 'Fill in the required fields to complete the task:',
   'tasks.task-action-field': 'Select an action',
   'tasks.task-next-task': 'Next Task',
@@ -444,6 +484,9 @@ export const enMessages = {
   'tasks.task-return-hint': 'Task will be returned to the previous stage',
   'tasks.task-success-revert': 'Your task was returned to the previous stage',
   'tasks.task-fail-revert': 'Failed to return task',
+  'tasks.task-extra-field-single': 'output',
+  'tasks.task-extra-field-plural-1': 'outputs',
+  'tasks.task-extra-field-plural-2': 'outputs',
   'tasks.failed-to-complete-delayed-task': 'You must resume the workflow before completing the task',
   'tasks.not-found': 'This task has not been found',
   'tasks.have-new-tasks': 'You have new tasks, update the feed to see them.',
@@ -484,7 +527,7 @@ export const enMessages = {
   'task.delegate': 'Run Embedded Workflow',
   'task.return-to.title': 'Return',
   'task.return-to.subtitle':
-    "Explain why the task's being returned and what is needed to complete it so whoever it's returned to can take appropriate action.",
+    'Explain why the task’s being returned and what’s needed to complete it so whoever it’s returned to can take appropriate action',
   'task.return-to.confirm': 'Confirm',
   'task.return-to.cancel': 'CANCEL',
   'templates.title': 'My Workflow Templates',
@@ -511,6 +554,7 @@ export const enMessages = {
   'templates.enable-to-complete-workflow': 'Complete \nat any stage',
   'template.name-placeholder': 'Template Name',
   'template.invite-team-member': 'Invite team member',
+  'template.all-users': 'All Users',
   'template.edit-name': 'Edit Template Name',
   'template.save-failed': 'Failed to save a workflow',
   'template.placeholder': 'A description is used as a guide to help your team quickly understand the template.',
@@ -649,10 +693,11 @@ export const enMessages = {
   'templates.share-popup':
     'Creating a public link to this kick-off form will allow people outside of your organization to start this workflow:',
   'templates.draft-warning': 'All API access and external links are blocked, enable to restore full access.',
-  'templates.return-to.title': 'Return',
-  'templates.return-to.placeholder': 'Pick the step the workflow will go to when the task is returned',
-  'templates.return-to.placeholder-mobile': 'Pick the step',
-  'templates.return-to.add-return': 'Add Return',
+  'templates.return-to.title': 'Return to',
+  'templates.return-to.minimize': 'Return to',
+  'templates.return-to.placeholder': 'Pick the task the workflow will go to when the task is returned',
+  'templates.return-to.placeholder-mobile': 'Pick a task',
+  'templates.return-to.add-return': 'Add Return Option',
   'templates.return-to.remove-return': 'Remove Task Return',
   'templates.run-workflow-hint': 'Run workflow',
   'templates.template-integrated': 'Integrated',
@@ -861,7 +906,7 @@ export const enMessages = {
   'sorting.team-group-status': 'Sort by status',
   'sorting.new': 'Newest first',
   'sorting.old': 'Oldest first',
-  'sorting.workflows-all-statuses': 'All statuses',
+  'sorting.workflows-all-statuses': 'All Statuses',
   'sorting.workflows-in-progress': 'In Progress',
   'sorting.workflows-snoozed': 'Snoozed',
   'sorting.workflows-completed': 'Completed',
@@ -887,6 +932,8 @@ export const enMessages = {
   'sorting.done': 'Completed',
   'sorting.snoozed': 'Snoozed',
   'sorting.running': 'In Progress',
+  'sorting.group-name-asc': 'Sort by name (A-Z)',
+  'sorting.group-name-desc': 'Sort by name (Z-A)',
 
   'tasks.task-workflow-performer': 'Assignee',
   'tasks.task-completed-by-all': 'Task has to be completed by all assignees',
@@ -908,6 +955,8 @@ export const enMessages = {
   'task.expand-log': 'Show all activity',
   'task.log-returned': 'Returned the task',
   'task.log-delay': 'Snoozed until {date}',
+  'task.log-added-performer-group': 'Add group\u00A0',
+  'task.log-removed-performer-group': 'Delete group\u00A0',
   'task.log-added-performer': 'Add user\u00A0',
   'task.log-removed-performer': 'Delete user\u00A0',
 
@@ -950,7 +999,7 @@ export const enMessages = {
   'workflow-highlights.icon-task-completed': 'Task was completed',
   'workflow-highlights.icon-process-started': 'Workflow was started',
   'workflow-highlights.icon-workflow-returned': 'Workflow was returned',
-  'workflow-highlights.return-to.returned-task': 'Returned the task',
+  'workflow-highlights.return-to.returned-task': 'Task returned',
   'checkout.choose-the-plan': 'Choose a payment plan',
   'checkout.coupon': 'I have coupon',
   'checkout.coupon-code': 'Coupon code',

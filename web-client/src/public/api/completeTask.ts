@@ -13,7 +13,7 @@ export function completeTask(id: number, userId: number, taskId: number, output:
 
   return commonRequest(url, {
     method: 'POST',
-    body: mapRequestBody(
+    data: mapRequestBody(
       { userId, taskId, output: normalizedOutput },
       'default',
       { ignorePropertyMapToSnakeCase: ['output'] }

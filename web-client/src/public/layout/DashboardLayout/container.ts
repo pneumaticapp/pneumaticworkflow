@@ -1,5 +1,3 @@
-/* eslint-disable */
-/* prettier-ignore */
 import { connect } from 'react-redux';
 import { compose } from 'redux';
 import { injectIntl } from 'react-intl';

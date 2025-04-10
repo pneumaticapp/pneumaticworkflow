@@ -1313,7 +1313,6 @@ class TestAnalyticService:
         return_value = True
         auth_type = AuthTokenType.API
         workflow = create_test_workflow(user, tasks_count=1)
-        task = workflow.current_task_instance
         private_track_mock = mocker.patch(
             'pneumatic_backend.analytics.services.AnalyticService._track',
             return_value=return_value
@@ -1325,7 +1324,6 @@ class TestAnalyticService:
             user=user,
             duration=duration,
             workflow=workflow,
-            task=task,
             is_superuser=is_superuser,
             auth_type=auth_type,
         )
@@ -1347,7 +1345,6 @@ class TestAnalyticService:
                 'template_id': workflow.template_id,
                 'template_name': workflow.get_template_name(),
                 'account_id': workflow.account_id,
-                'task_number': task.number,
                 'category': EventCategory.workflows,
                 'auth_type': auth_type,
                 'label': Label.delayed,
@@ -1370,7 +1367,6 @@ class TestAnalyticService:
             update_fields=['legacy_template_name', 'is_legacy_template']
         )
         workflow.refresh_from_db()
-        task = workflow.current_task_instance
         private_track_mock = mocker.patch(
             'pneumatic_backend.analytics.services.AnalyticService._track',
             return_value=return_value
@@ -1382,7 +1378,6 @@ class TestAnalyticService:
             user=user,
             duration=duration,
             workflow=workflow,
-            task=task,
             is_superuser=is_superuser,
             auth_type=auth_type,
         )
@@ -1404,7 +1399,6 @@ class TestAnalyticService:
                 'workflow_name': workflow.name,
                 'template_id': workflow.template_id,
                 'template_name': workflow.legacy_template_name,
-                'task_number': task.number,
                 'category': EventCategory.workflows,
                 'auth_type': auth_type,
                 'label': Label.delayed,

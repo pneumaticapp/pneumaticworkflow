@@ -2,33 +2,67 @@ import React from 'react';
 import { useIntl } from 'react-intl';
 import { useSelector } from 'react-redux';
 
-import { Avatar } from '../../UI/Avatar';
+import { IApplicationState } from '../../../types/redux';
+import { ESubscriptionPlan } from '../../../types/account';
+import { createOwnerApiName } from '../../../utils/createId';
 import { trackInviteTeamInPage } from '../../../utils/analytics';
-import { UserData } from '../../UserData';
 import { getNotDeletedUsers, getUserFullName } from '../../../utils/users';
-import { DeleteIcon } from '../../icons';
-import { ITemplate } from '../../../types/template';
-import { getIsUserSubsribed, getSubscriptionPlan, getUsers } from '../../../redux/selectors/user';
 import { EOptionTypes, TUsersDropdownOption, UsersDropdown } from '../../UI/form/UsersDropdown';
+import { getIsUserSubsribed, getSubscriptionPlan, getUsers } from '../../../redux/selectors/user';
+import { ETaskPerformerType, ETemplateOwnerType, ITemplate, ITemplateOwner } from '../../../types/template';
+import OwnerItem from './components';
 
 import styles from './TemplateOwners.css';
-import { ESubscriptionPlan } from '../../../types/account';
+import UserDataWithGroup from '../../UserDataWithGroup';
 
 interface ITemplateOwnersProps {
-  templateOwners: ITemplate['templateOwners'];
-  onChangeTemplateOwners(templateOwners: number[]): void;
+  templateOwners: ITemplate['owners'];
+  onChangeTemplateOwners(templateOwners: ITemplateOwner[]): void;
 }
 
 export function TemplateOwners({ templateOwners = [], onChangeTemplateOwners }: ITemplateOwnersProps) {
   const { formatMessage } = useIntl();
 
-  const users = getNotDeletedUsers(useSelector(getUsers));
   const isSubscribed = useSelector(getIsUserSubsribed);
   const billingPlan = useSelector(getSubscriptionPlan);
+  const groups = useSelector((state: IApplicationState) => state.groups.list);
 
-  const mapUsersDropdownValue = users.filter((user) => templateOwners.find((id) => user.id === id));
+  const users = getNotDeletedUsers(useSelector(getUsers));
+  const mapUsersDropdownValue = users.filter((user) =>
+    templateOwners.find(({ sourceId }) => Number(sourceId) === user.id),
+  );
+
+  const mapGroupDropdownValue = groups.filter((user) =>
+    templateOwners.find(({ sourceId }) => Number(sourceId) === user.id),
+  );
+
+  const templateOwnerGroupDropdownOption = groups.map((group) => {
+    return {
+      ...group,
+      optionType: EOptionTypes.Group,
+      type: ETaskPerformerType.UserGroup,
+      label: group.name,
+      value: String(group.id),
+    };
+  });
 
   const templateOwnerDropdownOption = users.map((item) => {
+    return {
+      ...item,
+      firstName: '',
+      lastName: '',
+      optionType: EOptionTypes.User,
+      label: getUserFullName(item),
+      value: String(item.id),
+    };
+  });
+
+  const option = [
+    ...templateOwnerGroupDropdownOption,
+    ...templateOwnerDropdownOption,
+  ] as unknown as TUsersDropdownOption[];
+
+  const tplOwnerDropdownValueUsers = mapUsersDropdownValue.map((item) => {
     return {
       ...item,
       optionType: EOptionTypes.User,
@@ -36,24 +70,29 @@ export function TemplateOwners({ templateOwners = [], onChangeTemplateOwners }: 
       value: String(item.id),
     };
   });
-  const templateOwnerDropdownValue = mapUsersDropdownValue.map((item) => {
+
+  const tplOwnerDropdownValueGroup = mapGroupDropdownValue.map((item) => {
     return {
       ...item,
-      optionType: EOptionTypes.User,
-      label: getUserFullName(item),
+      optionType: EOptionTypes.Group,
+      label: item.name,
       value: String(item.id),
     };
   });
 
   const handleRemoveTemplateOwner = ({ id }: Pick<TUsersDropdownOption, 'id'>) => {
-    const newTemplateOwners = templateOwners.filter((userId) => userId !== id);
+    const newTemplateOwners = templateOwners.filter(({ sourceId }) => sourceId !== String(id));
     onChangeTemplateOwners(newTemplateOwners);
   };
 
-  const handleAddTemplateOwners = ({ id }: Pick<TUsersDropdownOption, 'id'>) => {
+  const handleAddTemplateOwners = ({ id, optionType }: Pick<TUsersDropdownOption, 'id' | 'optionType'>) => {
     if (!isSubscribed && billingPlan !== ESubscriptionPlan.Free) return;
-
-    onChangeTemplateOwners([...templateOwners, id]);
+    const newOwner: ITemplateOwner = {
+      sourceId: String(id),
+      apiName: createOwnerApiName(),
+      type: optionType as unknown as ETemplateOwnerType,
+    };
+    onChangeTemplateOwners([...templateOwners, newOwner]);
   };
 
   return (
@@ -62,45 +101,27 @@ export function TemplateOwners({ templateOwners = [], onChangeTemplateOwners }: 
         isMulti
         className={styles['dropdown']}
         placeholder={formatMessage({ id: 'user.search-field-placeholder' })}
-        options={templateOwnerDropdownOption}
+        options={option}
         onChange={handleAddTemplateOwners}
         onChangeSelected={handleRemoveTemplateOwner}
-        value={templateOwnerDropdownValue}
-        onUsersInvited={({ id }) => handleAddTemplateOwners({ id })}
+        value={[...tplOwnerDropdownValueUsers, ...tplOwnerDropdownValueGroup]}
+        onUsersInvited={({ id, optionType }) => handleAddTemplateOwners({ id, optionType })}
         onClickInvite={() => trackInviteTeamInPage('Template owners')}
         inviteLabel={formatMessage({ id: 'template.invite-team-member' })}
       />
       <div className={styles['users']}>
-        {templateOwners.map((userId) => {
-          return (
-            <UserData userId={userId} key={`${userId}userData`}>
-              {(user) => {
-                if (!user) {
-                  return null;
-                }
-
-                return (
-                  <div key={userId} className={styles['user']}>
-                    <Avatar size="lg" user={user} />
-                    <div className={styles['user-info']}>
-                      <span className={styles['user-name']} title={getUserFullName(user)}>
-                        {getUserFullName(user)}
-                      </span>
-                      <span className={styles['user-role']}>
-                        {user.isAdmin
-                          ? formatMessage({ id: 'template.owner-admin' })
-                          : formatMessage({ id: 'template.owner-starter' })}
-                      </span>
-                    </div>
-                    <DeleteIcon
-                      onClick={() => handleRemoveTemplateOwner({ id: userId })}
-                      className={styles['user-delete']}
-                    />
-                  </div>
-                );
-              }}
-            </UserData>
-          );
+        {templateOwners.map(({ sourceId, type }) => {
+          return <UserDataWithGroup idItem={Number(sourceId)} type={type}>
+            {(user) => {
+              return (
+                <OwnerItem
+                  name={getUserFullName(user)}
+                  user={user}
+                  removeOwner={() => handleRemoveTemplateOwner({ id: Number(sourceId) })}
+                />
+              );
+            }}
+          </UserDataWithGroup>;
         })}
       </div>
     </>

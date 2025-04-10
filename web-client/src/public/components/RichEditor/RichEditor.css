@@ -8,7 +8,7 @@
 }
 
 .editor-wrapper_with-title {
-  padding-top: 8px;
+  padding-top: 0.8rem;
 }
 
 .editor-wrapper_hide-placeholder {
@@ -23,22 +23,22 @@
   position: absolute;
   z-index: 1;
   top: 0;
-  left: 12px;
-  padding: 0 4px;
-  font-size: 13px;
-  line-height: 16px;
+  left: 1.2rem;
+  padding: 0 0.4rem;
+  font-size: 1.3rem;
+  line-height: 1.6rem;
   color: var(--pneumatic-color-black72);
 }
 
 .editor {
   position: relative;
-  padding: 10px 16px;
+  padding: 1rem 1.6rem;
   box-sizing: border-box;
   width: 100%;
   cursor: text;
   background: transparent;
-  border: 1px solid var(--pneumatic-color-black16);
-  border-radius: 8px;
+  border: 0.1rem solid var(--pneumatic-color-black16);
+  border-radius: 0.8rem;
   transition: 0.1s ease-in-out border-color;
 
   &:focus-within {
@@ -83,19 +83,27 @@
 
 .editor_multiline :global {
   .public-DraftEditor-content {
-    min-height: 74px;
+    min-height: 7.4rem;
+  }
+}
+.editor_task__description-mobile :global {
+  @media (--mobile) {
+    width: calc(100% + 4rem - 0.2rem);
+    .public-DraftEditor-content {
+      min-height: calc(19.4rem - 2rem - 2.5rem);
+    }
   }
 }
 
 .editor-common :global {
-  line-height: 20px;
+  line-height: 2rem;
 
   ul,
   ol {
-    padding-left: 32px;
+    padding-left: 3.2rem;
 
     li {
-      margin: 0 0 8px;
+      margin: 0 0 0.8rem;
     }
 
     li::before {
@@ -131,7 +139,7 @@
 }
 
 .controls__send-button + .controls__send-button {
-  margin-left: 8px;
+  margin-left: 0.8rem;
 }
 
 .actions {

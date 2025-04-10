@@ -95,6 +95,7 @@ export const VariableList = ({
                   interactive={false}
                   containerClassName={styles['condition__tooltop']}
                   content={<TooltipRichContent title={title} subtitle={subtitle} variables={variables} />}
+                  key={apiName}
                 >
                   <p
                     className={styles['variable-list-item']}

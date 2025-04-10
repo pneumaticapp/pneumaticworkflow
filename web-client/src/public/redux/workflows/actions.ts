@@ -69,6 +69,7 @@ export const enum EWorkflowsActions {
   UpdateWorkflowLogItem = 'UPDATE_WORKFLOW_LOG_ITEM',
 
   SetFilterPerformers = 'SET_WORKFLOWS_FILTER_PERFORMERS',
+  SetFilterPerformersGroup = 'SET_WORKFLOWS_FILTER_PERFORMERS_GROUP',
   UpdateCurrentPerformersCounters = 'UPDATE_CURRENT_PERFORMERS_COUNTERS',
   SetCurrentPerformersCounters = 'SET_CURRENT_PERFORMERS_COUNTERS',
 
@@ -341,6 +342,10 @@ export const setWorkflowsFilterPerfomers: (payload: number[]) => TSetWorkflowsFi
   number[]
 >(EWorkflowsActions.SetFilterPerformers);
 
+export type TSetWorkflowsFilterPerfomersGroup = ITypedReduxAction<EWorkflowsActions.SetFilterPerformersGroup, number[]>;
+export const setWorkflowsFilterPerfomersGroup: (payload: number[]) => TSetWorkflowsFilterPerfomersGroup =
+  actionGenerator<EWorkflowsActions.SetFilterPerformersGroup, number[]>(EWorkflowsActions.SetFilterPerformersGroup);
+
 export type TSetWorkflowsFilterWorkflowStarters = ITypedReduxAction<
   EWorkflowsActions.SetFilterWorkflowStarters,
   number[]
@@ -603,6 +608,7 @@ export type TWorkflowsActions =
   | TLoadWorkflowsFilterStepsFailed
   | TSetWorkflowsFilterSteps
   | TSetWorkflowsFilterPerfomers
+  | TSetWorkflowsFilterPerfomersGroup
   | TSetWorkflowsFilterWorkflowStarters
   | TSendWorkflowLogComment
   | TSetIsEditWorkflowName

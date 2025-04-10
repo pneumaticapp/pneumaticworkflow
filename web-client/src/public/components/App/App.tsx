@@ -11,6 +11,7 @@ import { NotificationContainer } from '../UI/Notifications';
 import { FullscreenImageContainer } from '../FullscreenImage';
 import { initiatePagesTracking } from '../../utils/analytics/trackPages';
 import { useSyncLoggedTabsState } from './syncLoggedTabsState';
+import { envDevMode } from '../../constants/enviroment';
 
 import { AppRoutes } from './AppRoutes';
 import { useFaviconUpdater } from './useFaviconUpdater';
@@ -33,7 +34,6 @@ export interface IAppProps {
   hasNewTasks: boolean;
   containerClassnames: string;
   isFullscreenImageOpen: boolean;
-  showPlanExpiredMessage(): void;
   logoutUser(): void;
 }
 
@@ -49,11 +49,11 @@ export function App({
   logoutUser,
 }: TAppProps) {
   useFaviconUpdater(hasNewNotifications, hasNewTasks);
-  useShouldHideIntercom(user.isSupermode);
+  useShouldHideIntercom(envDevMode || user.isSupermode);
   useSyncLoggedTabsState(user.loggedState, logoutUser);
 
   React.useEffect(() => {
-    initiatePagesTracking();
+    if (!envDevMode) initiatePagesTracking();
   }, []);
 
   const currentAppLocale = AppLocale[locale];

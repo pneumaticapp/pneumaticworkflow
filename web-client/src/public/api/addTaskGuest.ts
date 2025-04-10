@@ -10,7 +10,7 @@ export function addTaskGuest(taskId: number, guestEmail: string) {
     urls.addTaskGuest.replace(':id', String(taskId)),
     {
       method: 'POST',
-      body: mapRequestBody({ email: guestEmail }),
+      data: mapRequestBody({ email: guestEmail }),
     },
     {
       shouldThrow: true,

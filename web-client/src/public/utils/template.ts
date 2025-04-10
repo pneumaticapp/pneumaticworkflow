@@ -9,12 +9,14 @@ import {
   ITemplateResponse,
   ITemplateTaskResponse,
   ITemplateTaskPerformer,
+  ETemplateOwnerType,
+  ITemplateOwner,
 } from '../types/template';
 import { getUrlParams } from './getUrlParams';
 import { DEFAULT_TEMPLATE_NAME } from '../components/TemplateEdit/constants';
 
 import { getNormalizeFieldsOrders } from './workflows';
-import { createTaskApiName, createUUID } from './createId';
+import { createOwnerApiName, createTaskApiName, createUUID } from './createId';
 import { isArrayWithItems, omit } from './helpers';
 import { getEmptyConditions } from '../components/TemplateEdit/TaskForm/Conditions/utils/getEmptyConditions';
 import { normalizeConditiosForFrontend } from './conditions/normalizeConditiosForFrontend';
@@ -61,8 +63,8 @@ export const getNormalizedTemplate = (
   const performersCount = setPerformersCounts(normalizedTasks);
   const normalizedTemplateOwners =
     !isSubscribed && billingPlan !== ESubscriptionPlan.Free
-      ? getNormalizedTemplateOwners(template.templateOwners, isSubscribed, users)
-      : template.templateOwners;
+      ? getNormalizedTemplateOwners(template.owners, isSubscribed, users)
+      : template.owners;
 
   return {
     ...template,
@@ -70,7 +72,7 @@ export const getNormalizedTemplate = (
     performersCount,
     kickoff: normalizedKickoff,
     tasks: normalizedTasks,
-    templateOwners: normalizedTemplateOwners,
+    owners: normalizedTemplateOwners,
   };
 };
 
@@ -87,7 +89,7 @@ export const setPerformersCounts = <T extends { rawPerformers: ITemplateTaskPerf
 };
 
 export const getNormalizedTemplateOwners = (
-  initialTemplateOwners: ITemplate['templateOwners'],
+  initialTemplateOwners: ITemplate['owners'],
   isSubscribed: boolean,
   users: TUserListItem[],
 ) => {
@@ -95,7 +97,15 @@ export const getNormalizedTemplateOwners = (
     return initialTemplateOwners;
   }
 
-  return getNotDeletedUsers(users).map((user) => user.id);
+  const mapOwnersNotDeletedUsers = getNotDeletedUsers(users).map((user) => {
+    return {
+      sourceId: String(user.id),
+      apiName: createOwnerApiName(),
+      type: ETemplateOwnerType.User,
+    } as ITemplateOwner
+  });
+
+  return mapOwnersNotDeletedUsers;
 };
 
 export const getNormalizedTask = (

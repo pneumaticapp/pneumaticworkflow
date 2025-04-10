@@ -1,20 +1,23 @@
 .extra-field-label {
-  margin: 0 8px 8px 0;
-  padding: 1px 8px;
+  padding: 0.1rem 0.8rem;
   display: inline-block;
   overflow: hidden;
   max-width: 20ch;
-  font-size: 13px;
-  line-height: 16px;
+  font-size: 1.3rem;
+  line-height: 1.6rem;
   vertical-align: middle;
   white-space: nowrap;
   text-overflow: ellipsis;
   user-select: all;
-  color: var(--pneumatic-color-black48);
-  background: #f6f6f6;
+  color: var(--pneumatic-color-black72);
+  background: var(--pneumatic-color-black16);
   border: 0;
-  border-radius: 14px;
+  border-radius: 1.4rem;
   justify-content: space-between;
+}
+
+.extra-field-label_m-4 {
+  margin: 0 0.4rem 0.4rem 0;
 }
 
 .extra-field-label_clickable {

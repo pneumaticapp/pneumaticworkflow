@@ -1,7 +1,10 @@
 import { IWorkflow } from './workflow';
-import { IExtraField, ITemplateTitle } from './template';
+import { IExtraField, ITemplateTitle, RawPerformer } from './template';
 
-export type TTaskWorkflow = Pick<IWorkflow, 'id' | 'name' | 'currentTask' | 'status' | 'dateCompleted'> & {
+export type TTaskWorkflow = Pick<
+  IWorkflow,
+  'id' | 'name' | 'currentTask' | 'status' | 'dateCompleted' | 'dateCompletedTsp'
+> & {
   templateName: string;
 };
 
@@ -17,14 +20,14 @@ export interface ITask {
   output: IExtraField[];
   description: string | null;
   workflow: TTaskWorkflow;
-  performers: number[];
+  performers: RawPerformer[];
   containsComments: boolean;
   requireCompletionByAll?: boolean;
   isCompleted: boolean;
   dateStarted: string;
   dateStartedTsp: string;
   dateCompleted: string | null;
-  dateCompletedTsp: string | null;
+  dateCompletedTsp: number | null;
   dueDate: string | null;
   isUrgent: boolean;
   subWorkflows: IWorkflow[];

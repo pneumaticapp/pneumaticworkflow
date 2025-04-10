@@ -7,6 +7,7 @@ from pneumatic_backend.processes.tests.fixtures import (
 from pneumatic_backend.authentication.enums import AuthTokenType
 from pneumatic_backend.processes.enums import (
     SysTemplateType,
+    OwnerType
 )
 from pneumatic_backend.processes.models import (
     SystemTemplate,
@@ -59,7 +60,8 @@ def test_by_name__account_owner__ok(mocker, api_client):
     assert data.get('id')
     assert data['name'] == template.name
     assert data['description'] == template.description
-    assert data['template_owners'] == [user.id]
+    assert data['owners'][0]['source_id'] == str(user.id)
+    assert data['owners'][0]['type'] == OwnerType.USER
     assert data['is_active'] == template.is_active
     assert len(data['tasks']) == 1
     service_init_mock.assert_called_once_with(

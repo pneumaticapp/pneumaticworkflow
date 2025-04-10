@@ -8,7 +8,8 @@ from pneumatic_backend.processes.models import (
 )
 from pneumatic_backend.processes.enums import (
     PerformerType,
-    FieldType
+    FieldType,
+    OwnerType
 )
 
 
@@ -63,7 +64,12 @@ class TestUpdateKickoffFields:
                 'id': template.id,
                 'name': template.name,
                 'is_active': True,
-                'template_owners': [user.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                ],
                 'kickoff': {
                     'fields': [request_data]
                 },
@@ -141,7 +147,12 @@ class TestUpdateKickoffFields:
                 'id': template.id,
                 'name': template.name,
                 'is_active': True,
-                'template_owners': [user.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                ],
                 'kickoff': {
                     'fields': []
                 },
@@ -206,7 +217,12 @@ class TestUpdateKickoffFields:
                 'id': template.id,
                 'name': template.name,
                 'is_active': True,
-                'template_owners': [user.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                ],
                 'kickoff': {
                     'fields': [
                         {

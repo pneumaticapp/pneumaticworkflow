@@ -28,7 +28,7 @@ export function sendWorkflowComment({
   return commonRequest<ISendWorkflowCommentResponse>(
     url,
     {
-      body: mapRequestBody({text, attachments }),
+      data: mapRequestBody({text, attachments }),
       method: 'POST',
     },
     {shouldThrow: true},

@@ -11,7 +11,7 @@ export function updateTemplate(id: number, template: ITemplateRequest) {
   return commonRequest<ITemplateResponse>(
     url,
     {
-      body: mapRequestBody(template),
+      data: mapRequestBody(template),
       method: 'PUT',
     }, {
       shouldThrow: true,

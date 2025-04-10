@@ -1,16 +1,19 @@
 import pytest
-from pneumatic_backend.accounts.tests.fixtures import (
-    create_test_user,
-    create_invited_user,
-    create_test_account
-)
 from pneumatic_backend.processes.models import (
     TaskPerformer,
 )
 from pneumatic_backend.processes.tests.fixtures import (
     create_test_workflow,
+    create_nonlinear_workflow,
+    create_test_group,
+    create_test_user,
+    create_invited_user,
+    create_test_account
 )
-
+from pneumatic_backend.processes.enums import (
+    DirectlyStatus,
+    PerformerType,
+)
 
 pytestmark = pytest.mark.django_db
 
@@ -26,6 +29,30 @@ def test_counters__ok(api_client):
     # arrange
     user = create_test_user()
     create_test_workflow(user)
+    create_test_workflow(user)
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.get('/accounts/user/counters')
+
+    # assert
+    assert response.status_code == 200
+    assert response.data['tasks_count'] == 2
+
+
+def test_counters__with_group__ok(api_client):
+
+    # arrange
+    user = create_test_user()
+    group = create_test_group(user=user, users=[user, ])
+    workflow = create_test_workflow(user)
+    task = workflow.current_task_instance
+    TaskPerformer.objects.create(
+        task_id=task.id,
+        type=PerformerType.GROUP,
+        group_id=group.id,
+        directly_status=DirectlyStatus.CREATED
+    )
     create_test_workflow(user)
     api_client.token_authenticate(user)
 
@@ -128,3 +155,20 @@ def test_counters__task_performer_changed__ok(mocker, api_client):
     assert response_delete.status_code == 204
     assert response.status_code == 200
     assert response.data['tasks_count'] == 1
+
+
+# New style tests
+@pytest.mark.skip
+def test_counters__multiple_workflow_tasks__show_all(api_client):
+
+    # arrange
+    user = create_test_user()
+    create_nonlinear_workflow(user, tasks_count=3)
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.get('/accounts/user/counters')
+
+    # assert
+    assert response.status_code == 200
+    assert response.data['tasks_count'] == 3

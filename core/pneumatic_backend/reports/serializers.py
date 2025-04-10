@@ -4,7 +4,8 @@ from rest_framework import serializers
 from pneumatic_backend.generics.serializers import DateTimeRangeSerializer
 from pneumatic_backend.generics.fields import TimeStampField
 from pneumatic_backend.generics.mixins.serializers import (
-    CustomValidationErrorMixin
+    CustomValidationErrorMixin,
+    ValidationUtilsMixin
 )
 from pneumatic_backend.processes.models import (
     Workflow,
@@ -136,12 +137,22 @@ class ActivityWorkflowSerializer(serializers.ModelSerializer):
 
 class HighlightsFilterSerializer(
     CustomValidationErrorMixin,
+    ValidationUtilsMixin,
     serializers.Serializer
 ):
     templates = serializers.CharField(required=False)
-    users = serializers.CharField(required=False)
+    current_performer_ids = serializers.CharField(required=False)
     date_before_tsp = TimeStampField(required=False, allow_null=True)
     date_after_tsp = TimeStampField(required=False, allow_null=True)
+
+    def validate_users(self, value):
+        return self.get_valid_list_integers(value)
+
+    def validate_current_performer_ids(self, value):
+        return self.get_valid_list_integers(value)
+
+    def validate_current_performer_group_ids(self, value):
+        return self.get_valid_list_integers(value)
 
 
 class EventHighlightsSerializer(serializers.ModelSerializer):

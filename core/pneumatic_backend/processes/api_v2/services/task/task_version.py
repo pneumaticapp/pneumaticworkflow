@@ -14,6 +14,7 @@ from pneumatic_backend.processes.models import (
     RawDueDate,
     Workflow,
 )
+from pneumatic_backend.processes.enums import TaskStatus
 from pneumatic_backend.processes.api_v2.services.task\
     .checklist_version import (
         ChecklistUpdateVersionService,
@@ -240,9 +241,8 @@ class TaskUpdateVersionService(
         }
         if data['number'] > workflow.current_task:
             # Uncomplete tasks after current
-            defaults['date_started'] = None
+            defaults['status'] = TaskStatus.PENDING
             defaults['date_completed'] = None
-            defaults['is_completed'] = False
 
         self.instance, created = Task.objects.update_or_create(
             account=workflow.account,
@@ -253,13 +253,11 @@ class TaskUpdateVersionService(
         if (
             created
             and self.instance.number < workflow.current_task
-            and not self.instance.is_completed
-            and not self.instance.is_skipped
-            and not self.instance.date_first_started
+            and self.instance.is_pending
         ):
             # skip new added task before current wf task
-            self.instance.is_skipped = True
-            self.instance.save(update_fields=['is_skipped'])
+            self.instance.status = TaskStatus.SKIPPED
+            self.instance.save(update_fields=['status'])
         return self.instance
 
     def update_from_version(

@@ -336,10 +336,6 @@ msgstr "Sie müssen den Arbeitsablauf fortsetzen, bevor Sie diesen Checklistenpu
 msgid "Permission denied."
 msgstr "Zugriff verweigert."
 
-#: pneumatic_backend/processes/messages/workflow.py:42
-msgid "Filters 'with_tasks_in_progress' and 'is_running_workflows' cannot be used at the same time."
-msgstr "Filter 'with_tasks_in_progress' und 'is_running_workflows' können nicht gleichzeitig verwendet werden."
-
 #. Translators:
 #: pneumatic_backend/processes/messages/workflow.py:46
 msgid "Please fill in the required fields."
@@ -602,5 +598,9 @@ msgid "The task \"{step_name}\" cannot be set to return to itself."
 msgstr "Die Aufgabe \"{step_name}\" kann nicht auf sich selbst zurückgesetzt werden."
 
 #: pneumatic_backend/processes/messages/workflow.py:188
+msgid "There is no group with the specified ID."
+msgstr "Es gibt keine Gruppe mit der angegebenen ID."
+
+#: pneumatic_backend/processes/messages/workflow.py:189
 msgid "You must supply a comment."
 msgstr "Sie müssen einen Kommentar angeben."

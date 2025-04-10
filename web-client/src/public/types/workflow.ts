@@ -1,7 +1,7 @@
 import { IAccount, TUserId } from './user';
 import { TUploadedFile } from '../utils/uploadFiles';
 import { ITask, ITemplateStep } from './tasks';
-import { IKickoff, IExtraField, ITemplateTitle } from './template';
+import { IKickoff, IExtraField, ITemplateTitle, ETemplateOwnerType } from './template';
 
 export type TWorkflowDetailsResponse = Omit<IWorkflowDetails, 'dueDate'> & { dueDateTsp: number | null };
 export interface IWorkflowDetails {
@@ -10,6 +10,7 @@ export interface IWorkflowDetails {
   name: string;
   description: string;
   template: IWorkflowTemplate | null;
+  owners: number[];
   activeCurrentTask: number;
   activeTasksCount: number;
   currentTask: TWorkflowTask;
@@ -58,6 +59,7 @@ export interface IWorkflowLogItem {
   userId: number | null;
   delay: IWorkflowDelay | null;
   targetUserId: number | null;
+  targetGroupId: number | null;
   attachments: [];
   watched: { date: string; userId: Pick<IAccount, 'id'> }[];
   reactions: { [value: string]: Pick<IAccount, 'id'>[] };
@@ -96,6 +98,7 @@ export interface IWorkflow {
   currentTask: number;
   activeTasksCount: number;
   activeCurrentTask: number;
+  owners: number[];
   isExternal: boolean;
   template: IWorkflowTemplate | null;
   task: TWorkflowTask;
@@ -104,6 +107,7 @@ export interface IWorkflow {
   passedTasks: IPassedTask[];
   isUrgent: boolean;
   dateCompleted: string | null;
+  dateCompletedTsp: number | null;
   finalizable: boolean;
   workflowStarter: number | null;
   dueDate: string | null;
@@ -126,7 +130,6 @@ export enum EWorkflowStatus {
 export interface IWorkflowTemplate {
   id: number;
   name: string;
-  templateOwners?: number[];
   isActive: boolean;
   wfNameTemplate: string | null;
 }
@@ -208,6 +211,8 @@ export enum EWorkflowLogEvent {
   WorkflowResumed = 16,
   WorkflowSnoozedManually = 17,
   DueDateChanged = 18,
+  AddedPerformerGroup = 20,
+  RemovedPerformerGroup = 21,
 }
 
 export enum EIconTitles {
@@ -238,8 +243,9 @@ export type ITemplateFilterItem = ITemplateTitle & {
 };
 
 export type TUserCounter = {
-  userId: number;
+  sourceId: number;
   workflowsCount: number;
+  type: ETemplateOwnerType;
 };
 
 export type TTemplateStepCounter = {
@@ -256,6 +262,7 @@ export interface IWorkflowsSettings {
     templatesIdsFilter: number[];
     stepsIdsFilter: number[];
     performersIdsFilter: number[];
+    performersGroupIdsFilter: number[];
     workflowStartersIdsFilter: number[];
   };
   templateList: {

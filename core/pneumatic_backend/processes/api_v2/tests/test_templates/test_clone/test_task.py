@@ -7,7 +7,8 @@ from pneumatic_backend.processes.models import (
 )
 from pneumatic_backend.processes.enums import (
     PerformerType,
-    FieldType
+    FieldType,
+    OwnerType
 )
 from pneumatic_backend.authentication.enums import AuthTokenType
 
@@ -42,7 +43,12 @@ class TestCopyTemplateTask:
             data={
                 'name': 'Template',
                 'is_active': is_active,
-                'template_owners': [user.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                ],
                 'kickoff': {
                     'fields': [
                         {
@@ -108,7 +114,12 @@ class TestCopyTemplateTask:
             data={
                 'name': 'Template',
                 'is_active': True,
-                'template_owners': [user.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                ],
                 'kickoff': {},
                 'tasks': [
                     {
@@ -168,7 +179,12 @@ class TestCopyTemplateTask:
             data={
                 'name': 'Template',
                 'is_active': True,
-                'template_owners': [user.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                ],
                 'kickoff': {},
                 'tasks': [
                     {

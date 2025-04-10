@@ -10,9 +10,6 @@ from pneumatic_backend.accounts.models import (
     APIKey,
     Notification
 )
-from pneumatic_backend.accounts.tests.fixtures import (
-    create_test_user,
-)
 from pneumatic_backend.accounts.tokens import (
     DigestUnsubscribeToken,
     UnsubscribeEmailToken,
@@ -25,6 +22,7 @@ from pneumatic_backend.processes.models import (
 )
 from pneumatic_backend.processes.tests.fixtures import (
     create_test_workflow,
+    create_test_user,
 )
 from pneumatic_backend.accounts.messages import (
     MSG_A_0008,

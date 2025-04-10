@@ -1,6 +1,7 @@
 /node_modules/
 /artifacts/
 dist/
+/storybook-static/
 /public/
 .vscode
 .idea

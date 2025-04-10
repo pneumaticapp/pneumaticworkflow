@@ -24,8 +24,9 @@ def resume_delayed_workflows():
     ):
         workflow = delay.task.workflow
         service = WorkflowActionService(
+            workflow=workflow,
             user=workflow.account.get_owner(),
             is_superuser=False,
             auth_type=AuthTokenType.USER
         )
-        service.resume_workflow(workflow)
+        service.resume_workflow()

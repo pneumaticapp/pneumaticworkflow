@@ -11,7 +11,5 @@ export function AfterPaymentDetailsProvided() {
     dispatch(onAfterPaymentDetailsProvided());
   }, []);
 
-  return (
-    <GeneralLoader />
-  );
+  return <GeneralLoader />;
 }

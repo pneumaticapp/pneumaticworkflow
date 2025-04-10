@@ -17,7 +17,7 @@ export function runPublicForm(captcha: string, fields: Fields) {
     url,
     {
       method: 'POST',
-      body: mapRequestBody({ captcha, fields, anonymousId }, 'default', {ignorePropertyMapToSnakeCase: ['fields']}),
+      data: mapRequestBody({ captcha, fields, anonymousId }, 'default', {ignorePropertyMapToSnakeCase: ['fields']}),
     },
     { shouldThrow: true, },
   );

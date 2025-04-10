@@ -252,17 +252,6 @@ export const omit = <T, U extends keyof T>(obj: T, keys: U[]): Omit<T, U> => {
   );
 };
 
-// export const omit = <T, U extends keyof T>(obj: T, keys: U[]): Omit<T, U> =>
-//   (Object.keys(obj) as U[]).reduce(
-//     (acc, curr) => (keys.includes(curr) ? acc : { ...acc, [curr]: obj[curr] }),
-//     {} as Omit<T, U>,
-//   );
-
-// export const omit = (key: any, obj: any) => {
-//   const { [key]: omitted, ...rest } = obj;
-//   return rest;
-// }
-
 export const areObjectsEqual = (originalObj: object, updatedObj: object): boolean => {
   const diffProps = diff(originalObj, updatedObj);
 

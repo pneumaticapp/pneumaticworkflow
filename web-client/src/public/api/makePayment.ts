@@ -23,7 +23,7 @@ export function makePayment({ successUrl, cancelUrl, code, quantity }: IMakePaym
     urls.makePayment,
     {
       method: 'POST',
-      body: mapRequestBody({
+      data: mapRequestBody({
         successUrl,
         cancelUrl,
         products: [

@@ -1,5 +1,3 @@
-/* eslint-disable */
-/* prettier-ignore */
 import { connect } from 'react-redux';
 import { SettingsLayoutComponent, ISettingsLayoutComponentProps } from './SettingsLayout';
 import { IApplicationState } from '../../types/redux';
@@ -14,9 +12,6 @@ export const mapStateToProps = ({ profile: { settingsTab } }: IApplicationState)
   };
 };
 
-export const mapDispatchToProps: TMapDispatchToProps = {
-  onChangeTab: setProfileSettingsActiveTab,
-};
+export const mapDispatchToProps: TMapDispatchToProps = { onChangeTab: setProfileSettingsActiveTab };
 
-export const SettingsLayout = connect<TMapStateToProps, TMapDispatchToProps>
-(mapStateToProps, mapDispatchToProps)(SettingsLayoutComponent);
+export const SettingsLayout = connect<TMapStateToProps, TMapDispatchToProps>(mapStateToProps, mapDispatchToProps)(SettingsLayoutComponent);

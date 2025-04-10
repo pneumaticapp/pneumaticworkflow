@@ -1,5 +1,3 @@
-/* eslint-disable */
-/* prettier-ignore */
 import {
   IStoreProfile,
 } from '../../types/redux';
@@ -18,10 +16,8 @@ export const INIT_STATE: IStoreProfile = {
 
 export const reducer = (state = INIT_STATE, action: TProfileSettingsActions): IStoreProfile => {
   switch (action.type) {
-  case EProfileSettingsActions.ChangeProfileSettingsActiveTab:
-
-    return { ...state, settingsTab: action.payload };
-
-  default: return { ...state };
+    case EProfileSettingsActions.ChangeProfileSettingsActiveTab:
+      return { ...state, settingsTab: action.payload };
+    default: return { ...state };
   }
 };

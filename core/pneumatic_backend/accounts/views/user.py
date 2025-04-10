@@ -84,7 +84,7 @@ class UserViewSet(
         return self.response_ok({
             'tasks_count': Task.objects.using(
                 settings.REPLICA
-            ).active_for_user(request.user.id).count()
+            ).active_for_user(request.user.id).distinct().count()
         })
 
     @action(methods=('GET',), detail=False)

@@ -11,6 +11,7 @@ from pneumatic_backend.processes.enums import (
     PerformerType,
     FieldType,
     DueDateRule,
+    OwnerType
 )
 
 pytestmark = pytest.mark.django_db
@@ -127,7 +128,9 @@ def test_fill__ok(api_client):
     assert response_data['is_active'] is False
     assert response_data['is_public'] is False
     assert response_data['public_url'] is not None
-    assert response_data['template_owners'] == [user.id]
+    assert response_data['owners'][0].get('api_name')
+    assert response_data['owners'][0]['source_id'] == str(user.id)
+    assert response_data['owners'][0]['type'] == OwnerType.USER
     tasks_data = response_data['tasks']
     assert len(tasks_data) == 5
     task_1 = tasks_data[0]
@@ -349,7 +352,9 @@ def test_create_public__ok(api_client):
     )
     assert response.status_code == 200
     response_data = response.data
-    assert response_data['template_owners'] == [user.id]
+    assert response_data['owners'][0].get('api_name')
+    assert response_data['owners'][0]['source_id'] == str(user.id)
+    assert response_data['owners'][0]['type'] == OwnerType.USER
     assert response_data['is_active'] is False
     assert response_data['is_public'] is True
     assert response_data['public_url'] is not None

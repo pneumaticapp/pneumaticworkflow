@@ -83,7 +83,6 @@ def test_create__public_token__ok(
     assert response.data['file_upload_url'] == upload_url
     assert response.data['thumbnail_upload_url'] == thumb_upload_url
     service_mock.assert_called_once_with(
-        account_id=user.account_id,
         filename=filename,
         thumbnail=thumbnail,
         content_type=content_type,
@@ -197,7 +196,6 @@ def test_create__embeded_token__ok(
     assert response.data['file_upload_url'] == upload_url
     assert response.data['thumbnail_upload_url'] == thumb_upload_url
     service_mock.assert_called_once_with(
-        account_id=user.account_id,
         filename=filename,
         thumbnail=thumbnail,
         content_type=content_type,

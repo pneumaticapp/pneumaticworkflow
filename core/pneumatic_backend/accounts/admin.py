@@ -464,6 +464,7 @@ class AccountAdminForm(forms.ModelForm):
             'tenants_active_users',
             'logo_sm',
             'logo_lg',
+            'bucket_name',
         )
     name = forms.CharField(required=False)
     logo_sm = forms.CharField(required=False)
@@ -471,6 +472,7 @@ class AccountAdminForm(forms.ModelForm):
     master_account = forms.IntegerField(required=False)
     billing_plan = forms.ChoiceField(choices=BillingPlanType.CHOICES)
     billing_period = forms.ChoiceField(choices=BillingPeriod.CHOICES)
+    bucket_name = forms.CharField(required=False)
 
     def clean_master_account(self):
         value = self.cleaned_data.get('master_account')
@@ -565,6 +567,7 @@ class AccountAdmin(ModelAdmin):
                     'logo_sm',
                     'is_verified',
                     'log_api_requests',
+                    'bucket_name',
                 )
             }
         ),
@@ -691,6 +694,7 @@ class AccountAdmin(ModelAdmin):
                 max_invites=obj.max_invites,
                 max_ai_templates_generations=obj.max_ai_templates_generations,
                 log_api_requests=obj.log_api_requests,
+                bucket_name=obj.bucket_name,
                 force_save=True
             )
             converter = AccountLLConverter(

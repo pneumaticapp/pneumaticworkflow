@@ -2,7 +2,7 @@ import * as React from 'react';
 import { useIntl } from 'react-intl';
 import { useDispatch } from 'react-redux';
 
-import { usersFetchStarted } from '../../redux/actions';
+import { loadGroups, usersFetchStarted } from '../../redux/actions';
 import { getBrowserConfig } from '../../utils/getConfig';
 import TaskDetailContainer from '../TaskDetail';
 import { ETaskCardViewMode } from '../TaskCard';
@@ -20,6 +20,7 @@ export function GuestTask() {
 
   React.useEffect(() => {
     dispatch(usersFetchStarted());
+    dispatch(loadGroups());
   }, []);
 
   return (

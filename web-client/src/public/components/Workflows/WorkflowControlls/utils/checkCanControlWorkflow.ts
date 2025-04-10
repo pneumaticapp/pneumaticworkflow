@@ -1,14 +1,13 @@
 import { IAuthUser } from '../../../../types/redux';
-import { IWorkflowTemplate } from '../../../../types/workflow';
 
-export function checkCanControlWorkflow(currentUser: IAuthUser, template: IWorkflowTemplate | null) {
+export function checkCanControlWorkflow(currentUser: IAuthUser, owners: number[]) {
   const { id: currentUserId, isAccountOwner, isAdmin } = currentUser;
 
   if (isAccountOwner) {
     return true;
   }
 
-  const isTemplateOwner = template?.templateOwners?.some((id) => id === currentUserId);
+  const isTemplateOwner = owners.some((id) => id === currentUserId);
 
   return isTemplateOwner && isAdmin;
 }

@@ -6,6 +6,7 @@ from rest_framework.serializers import (
     BooleanField,
     ValidationError
 )
+from pneumatic_backend.processes.enums import PerformerType
 from pneumatic_backend.generics.mixins.serializers import (
     CustomValidationErrorMixin,
     ValidationUtilsMixin
@@ -23,7 +24,8 @@ from pneumatic_backend.processes.models import (
 
 class WorkflowCountsResponseSerializer(Serializer):
 
-    user_id = IntegerField()
+    type = ChoiceField(choices=PerformerType.filter_choices)
+    source_id = IntegerField()
     workflows_count = IntegerField()
 
 
@@ -46,6 +48,7 @@ class WorkflowCountsByWorkflowStarterSerializer(
     )
     template_ids = CharField(required=False)
     current_performer_ids = CharField(required=False)
+    current_performer_group_ids = CharField(required=False)
 
     def validate_template_ids(self, value):
         return self.get_valid_list_integers(value)
@@ -53,11 +56,15 @@ class WorkflowCountsByWorkflowStarterSerializer(
     def validate_current_performer_ids(self, value):
         return self.get_valid_list_integers(value)
 
+    def validate_current_performer_group_ids(self, value):
+        return self.get_valid_list_integers(value)
+
     def validate(self, data):
         status = data.get('status')
         current_performer_ids = data.get('current_performer_ids')
+        current_performer_group_ids = data.get('current_performer_group_ids')
         if (
-            current_performer_ids
+            (current_performer_ids or current_performer_group_ids)
             and status in WorkflowApiStatus.NOT_RUNNING
         ):
             raise ValidationError(MSG_PW_0067)
@@ -134,11 +141,15 @@ class WorkflowCountsByTemplateTaskSerializer(
     template_ids = CharField(required=False)
     workflow_starter_ids = CharField(required=False)
     current_performer_ids = CharField(required=False)
+    current_performer_group_ids = CharField(required=False)
 
     def validate_template_ids(self, value):
         return self.get_valid_list_integers(value)
 
     def validate_current_performer_ids(self, value):
+        return self.get_valid_list_integers(value)
+
+    def validate_current_performer_group_ids(self, value):
         return self.get_valid_list_integers(value)
 
     def validate_workflow_starter_ids(self, value):
@@ -147,8 +158,9 @@ class WorkflowCountsByTemplateTaskSerializer(
     def validate(self, data):
         status = data.get('status')
         current_performer_ids = data.get('current_performer_ids')
+        current_performer_group_ids = data.get('current_performer_group_ids')
         if (
-            current_performer_ids
+            (current_performer_ids or current_performer_group_ids)
             and status in WorkflowApiStatus.NOT_RUNNING
         ):
             raise ValidationError(MSG_PW_0067)

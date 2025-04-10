@@ -21,6 +21,7 @@ export const TITLES = {
   'ExpiredInvite': `Your Invitation Is Expired ${PNEUMATIC_SUFFIX}`,
   'ResetPassword': `Reset Password ${PNEUMATIC_SUFFIX}`,
   'Team': `Team ${PNEUMATIC_SUFFIX}`,
+  'Groups': `Groups ${PNEUMATIC_SUFFIX}`,
   'Tenants': `Tenants ${PNEUMATIC_SUFFIX}`,
   'Pricing': `Pricing ${PNEUMATIC_SUFFIX}`,
   'Checkout': `Checkout ${PNEUMATIC_SUFFIX}`,

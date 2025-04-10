@@ -19,7 +19,7 @@ from pneumatic_backend.processes.tests.fixtures import (
 from pneumatic_backend.processes.enums import (
     FieldType,
     PredicateType,
-    PredicateOperator
+    PredicateOperator, TaskStatus
 )
 
 UserModel = get_user_model()
@@ -450,7 +450,7 @@ class TestConditionCheckService:
         user = create_test_user()
         workflow = create_test_workflow(user, tasks_count=2)
         task_1 = workflow.tasks.get(number=1)
-        task_1.is_completed = True
+        task_1.status = TaskStatus.COMPLETED
         task_1.save()
         task_2 = workflow.tasks.get(number=2)
         condition = Condition.objects.create(

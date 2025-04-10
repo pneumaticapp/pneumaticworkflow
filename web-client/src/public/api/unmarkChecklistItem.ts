@@ -13,7 +13,7 @@ export function unmarkChecklistItem(checklistId: number, itemId: number) {
     url,
     {
       method: 'POST',
-      body: mapRequestBody({
+      data: mapRequestBody({
         selectionId: itemId,
       }),
     },

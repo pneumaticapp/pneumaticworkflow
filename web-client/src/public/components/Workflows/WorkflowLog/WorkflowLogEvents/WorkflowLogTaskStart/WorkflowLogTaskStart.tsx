@@ -11,7 +11,6 @@ import { Avatar } from '../../../../UI/Avatar';
 import { Header } from '../../../../UI/Typeography/Header';
 import { DateFormat } from '../../../../UI/DateFormat';
 import { ERoutes } from '../../../../../constants/routes';
-import { UserData } from '../../../../UserData';
 import { getLastTaskLogEventId } from './utils/getLastTaskLogEventId';
 import { ClockIcon } from '../../../../icons';
 import { getDueInData } from '../../../../DueIn/utils/getDueInData';
@@ -19,6 +18,7 @@ import { EWorkflowsLogSorting, TWorkflowTask, IWorkflowLogItem } from '../../../
 import { TWorkflowLogTheme } from '../../WorkflowLog';
 
 import styles from './WorkflowLogTaskStart.css';
+import UserDataWithGroup from '../../../../UserDataWithGroup';
 
 const MAX_SHOW_USERS = 5;
 
@@ -51,16 +51,11 @@ export function WorkflowLogTaskStart({
     }
 
     const usersLeft = Math.max(task?.performers.length - MAX_SHOW_USERS, 0);
-
     return (
       <div className={styles['start-responsibles']}>
-        {task?.performers.slice(0, MAX_SHOW_USERS).map((userId, index) => (
-          <UserData key={index} userId={userId}>
+        {task?.performers.slice(0, MAX_SHOW_USERS).map(({ sourceId, type }, index) => (
+          <UserDataWithGroup idItem={sourceId} type={type}>
             {(user) => {
-              if (!user) {
-                return null;
-              }
-
               return (
                 <Avatar
                   user={user}
@@ -71,7 +66,7 @@ export function WorkflowLogTaskStart({
                 />
               );
             }}
-          </UserData>
+          </UserDataWithGroup>
         ))}
         {Boolean(usersLeft) && <span className={styles['start-responsibles__more']}>+{usersLeft}</span>}
       </div>

@@ -21,7 +21,7 @@ export function editComment({ id, text, attachments }: IEditComment) {
     url,
     {
       method: 'PATCH',
-      body: mapRequestBody({
+      data: mapRequestBody({
         text,
         attachments,
       }),

@@ -5,6 +5,7 @@ from pneumatic_backend.processes.tests.fixtures import (
     create_test_user,
     create_test_account,
     create_test_guest,
+    create_test_group
 )
 from pneumatic_backend.notifications.services.websockets import (
     WebSocketService,
@@ -12,7 +13,12 @@ from pneumatic_backend.notifications.services.websockets import (
 from pneumatic_backend.notifications.tasks import (
     _send_urgent_notification
 )
-from pneumatic_backend.processes.enums import DirectlyStatus
+
+from pneumatic_backend.processes.enums import (
+    DirectlyStatus,
+    PerformerType,
+    TaskStatus
+)
 from pneumatic_backend.accounts.enums import (
     NotificationType,
 )
@@ -87,6 +93,83 @@ def test_send_urgent_notification__call_services__ok(mocker):
     websocket_urgent_mock.assert_called_once_with(
         user_id=account_owner.id,
         user_email=account_owner.email,
+        sync=True,
+        notification=notification,
+    )
+    websocket_not_urgent_mock.assert_not_called()
+
+
+def test_send_urgent_notification__call_services_with_group__ok(mocker):
+    # arrange
+    account = create_test_account(
+        logo_lg='https://logo.jpg',
+        log_api_requests=True,
+    )
+    create_test_user(
+        is_account_owner=True,
+        account=account
+    )
+    user = create_test_user(
+        email='t@t.t',
+        account=account,
+        is_account_owner=False
+    )
+    user_in_group = create_test_user(
+        email='t2@t.t',
+        account=account,
+        is_account_owner=False
+    )
+    group = create_test_group(user=user, users=[user_in_group, ])
+    workflow = create_test_workflow(user, tasks_count=1)
+    task = workflow.current_task_instance
+    TaskPerformer.objects.create(
+        task_id=task.id,
+        type=PerformerType.GROUP,
+        group_id=group.id,
+        directly_status=DirectlyStatus.CREATED
+    )
+    websocket_service_init_mock = mocker.patch.object(
+        WebSocketService,
+        '__init__',
+        return_value=None
+    )
+    websocket_urgent_mock = mocker.patch(
+        'pneumatic_backend.notifications.services.websockets.'
+        'WebSocketService.send_urgent'
+    )
+    websocket_not_urgent_mock = mocker.patch(
+        'pneumatic_backend.notifications.services.websockets.'
+        'WebSocketService.send_not_urgent'
+    )
+
+    # act
+    _send_urgent_notification(
+        logging=account.log_api_requests,
+        author_id=user.id,
+        task_id=task.id,
+        account_id=account.id,
+        notification_type=NotificationType.URGENT,
+        method_name=NotificationMethod.urgent,
+        logo_lg=account.logo_lg,
+    )
+
+    # assert
+    notification = Notification.objects.get(
+        task_id=task.id,
+        user_id=user_in_group.id,
+        author_id=user.id,
+        account_id=account.id,
+        type=NotificationType.URGENT,
+        text=None
+    )
+    websocket_service_init_mock.assert_called_once_with(
+        logo_lg=account.logo_lg,
+        account_id=account.id,
+        logging=account.log_api_requests,
+    )
+    websocket_urgent_mock.assert_called_once_with(
+        user_id=user_in_group.id,
+        user_email=user_in_group.email,
         sync=True,
         notification=notification,
     )
@@ -341,7 +424,7 @@ def test_send_urgent_notification__another_task__skip(mocker):
     workflow = create_test_workflow(user, tasks_count=2)
     task_1 = workflow.tasks.get(number=1)
     task_1.date_completed = timezone.now()
-    task_1.is_completed = True
+    task_1.status = TaskStatus.COMPLETED
     task_1.save()
     task_1.performers.add(account_owner)
 

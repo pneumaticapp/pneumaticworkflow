@@ -7,11 +7,8 @@ from pneumatic_backend.accounts.enums import (
     Timezone,
     Language,
 )
-from pneumatic_backend.accounts.tests.fixtures import (
-    create_test_owner,
-    create_test_account,
-)
 from pneumatic_backend.processes.tests.fixtures import (
+    create_test_account,
     create_test_user,
     create_invited_user,
     create_test_group,
@@ -53,7 +50,7 @@ class TestCreate:
         api_client,
     ):
         # arrange
-        user = create_test_owner()
+        user = create_test_user(is_account_owner=True)
         group = create_test_group(user=user)
         current_url = 'https://my.pneumatic.app/dashboard'
         service_mock = mocker.patch.object(
@@ -104,9 +101,12 @@ class TestCreate:
         api_client,
     ):
         # arrange
-        user = create_test_owner()
+        user = create_test_user()
         group = create_test_group(user=user)
-        another_user = create_test_owner(email='test2@pneumatic.app')
+        another_user = create_test_user(
+            is_account_owner=False,
+            email='test2@pneumatic.app'
+        )
         another_group = create_test_group(user=another_user)
         current_url = 'https://my.pneumatic.app/dashboard'
         service_mock = mocker.patch.object(
@@ -150,7 +150,7 @@ class TestCreate:
         api_client,
     ):
         # arrange
-        user = create_test_owner()
+        user = create_test_user()
         current_url = 'https://my.pneumatic.app/dashboard'
         service_mock = mocker.patch.object(
             UserInviteService,
@@ -214,7 +214,7 @@ class TestCreate:
         api_client,
     ):
         # arrange
-        user = create_test_owner()
+        user = create_test_user()
         current_url = 'https://my.pneumatic.app/dashboard'
         service_mock = mocker.patch.object(
             UserInviteService,
@@ -275,7 +275,7 @@ class TestCreate:
         api_client,
     ):
         # arrange
-        user = create_test_owner()
+        user = create_test_user()
         current_url = 'https://my.pneumatic.app/dashboard'
         service_mock = mocker.patch.object(
             UserInviteService,
@@ -325,7 +325,7 @@ class TestCreate:
         api_client,
     ):
         # arrange
-        user = create_test_owner()
+        user = create_test_user()
         current_url = 'https://my.pneumatic.app/dashboard'
         service_mock = mocker.patch.object(
             UserInviteService,
@@ -368,7 +368,7 @@ class TestCreate:
         api_client,
     ):
         # arrange
-        user = create_test_owner()
+        user = create_test_user()
         current_url = 'https://my.pneumatic.app/dashboard'
         service_mock = mocker.patch.object(
             UserInviteService,
@@ -407,7 +407,7 @@ class TestCreate:
         api_client,
     ):
         # arrange
-        user = create_test_owner()
+        user = create_test_user()
         current_url = 'https://my.pneumatic.app/dashboard'
         service_mock = mocker.patch.object(
             UserInviteService,
@@ -451,7 +451,7 @@ class TestCreate:
     ):
 
         # arrange
-        user = create_test_owner()
+        user = create_test_user()
         current_url = 'https://my.pneumatic.app/dashboard'
         service_mock = mocker.patch.object(
             UserInviteService,
@@ -498,7 +498,7 @@ class TestCreate:
     ):
 
         # arrange
-        user = create_test_owner()
+        user = create_test_user()
         current_url = 'https://my.pneumatic.app/dashboard'
         service_mock = mocker.patch.object(
             UserInviteService,
@@ -542,7 +542,7 @@ class TestCreate:
         api_client,
     ):
         # arrange
-        user = create_test_owner()
+        user = create_test_user()
         current_url = 'https://my.pneumatic.app/dashboard'
         service_mock = mocker.patch.object(
             UserInviteService,

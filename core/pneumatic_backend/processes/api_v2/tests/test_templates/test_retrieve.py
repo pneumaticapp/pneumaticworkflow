@@ -16,6 +16,7 @@ from pneumatic_backend.processes.enums import (
     PerformerType,
     FieldType,
     DueDateRule,
+    OwnerType,
 )
 from pneumatic_backend.accounts.services.user_transfer import (
     UserTransferService
@@ -44,11 +45,20 @@ class TestRetrieveTemplate:
             account=user.account
         )
         api_client.token_authenticate(user)
-        request_template_owners = [user.id, user2.id]
+        owners = [
+            {
+                'type': OwnerType.USER,
+                'source_id': str(user.id)
+            },
+            {
+                'type': OwnerType.USER,
+                'source_id': str(user2.id)
+            },
+        ]
         request_data = {
             'name': 'Template',
             'description': 'Desc',
-            'template_owners': request_template_owners,
+            'owners': owners,
             'is_active': True,
             'finalizable': True,
             'kickoff': {
@@ -133,8 +143,14 @@ class TestRetrieveTemplate:
         assert response_data.get('id')
         assert response_data['name'] == request_data['name']
         assert response_data['description'] == request_data['description']
-        response_template_owners = response_data['template_owners']
-        assert set(response_template_owners) == set(request_template_owners)
+        assert (
+            response_data['owners'][0]['source_id'] == owners[0]['source_id']
+        )
+        assert response_data['owners'][0]['type'] == owners[0]['type']
+        assert (
+            response_data['owners'][1]['source_id'] == owners[1]['source_id']
+        )
+        assert response_data['owners'][1]['type'] == owners[1]['type']
         assert response_data['is_active'] == request_data['is_active']
         assert response_data['is_public'] is False
         assert response_data['public_url'] is not None
@@ -411,8 +427,10 @@ class TestRetrieveTemplate:
         # assert
         assert response.status_code == 200
         assert response.data['is_active'] is True
-        assert len(response.data['template_owners']) == 1
-        assert response.data['template_owners'][0] == account_1_owner.id
+        assert len(response.data['owners']) == 1
+        assert (
+            response.data['owners'][0]['source_id'] == str(account_1_owner.id)
+        )
         assert len(response.data['tasks'][0]['raw_performers']) == 1
         assert response.data['tasks'][0]['raw_performers'][0]['type'] == (
             PerformerType.USER
@@ -421,15 +439,12 @@ class TestRetrieveTemplate:
             str(account_1_owner.id)
         )
 
-    def test_retrieve_draft__after_template_owner_transfer__ok(
+    def test_retrieve_draft__after_template_owner_transfer__not_changed(
         self,
         api_client
     ):
         # arrange
-        account_1 = create_test_account(
-            name='transfer from',
-            plan=BillingPlanType.FREEMIUM
-        )
+        account_1 = create_test_account(name='transfer from')
         account_1_owner = create_test_user(
             account=account_1,
             email='owner@test.test',
@@ -440,6 +455,42 @@ class TestRetrieveTemplate:
             email='transfer@test.test',
             is_account_owner=False
         )
+        api_client.token_authenticate(user_to_transfer)
+
+        # act
+        response = api_client.post(
+            path='/templates',
+            data={
+                'name': 'Template',
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': account_1_owner.id,
+                        'api_name': 'user-1'
+                    },
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user_to_transfer.id,
+                        'api_name': 'user-2'
+                    }
+                ],
+                'is_active': False,
+                'kickoff': {},
+                'tasks': [
+                    {
+                        'number': 1,
+                        'name': 'First step',
+                        'raw_performers': [
+                            {
+                                'type': PerformerType.USER,
+                                'source_id': user_to_transfer.id
+                            }
+                        ]
+                    }
+                ]
+            }
+        )
+        template_id = response.data['id']
         new_account = create_test_account(name='new')
         new_account_owner = create_test_user(account=new_account)
         new_user = create_invited_user(
@@ -449,11 +500,6 @@ class TestRetrieveTemplate:
         token = TransferToken()
         token['prev_user_id'] = user_to_transfer.id
         token['new_user_id'] = new_user.id
-        template = create_test_template(
-            user=user_to_transfer,
-            is_active=False,
-            tasks_count=1
-        )
         service = UserTransferService()
         service.accept_transfer(
             user_id=new_user.id,
@@ -462,14 +508,21 @@ class TestRetrieveTemplate:
         api_client.token_authenticate(account_1_owner)
 
         # act
-        response = api_client.get(f'/templates/{template.id}')
+        response = api_client.get(f'/templates/{template_id}')
 
         # assert
         assert response.status_code == 200
         assert response.data['is_active'] is False
-        assert len(response.data['template_owners']) == 1
-        assert response.data['template_owners'][0] == account_1_owner.id
-        assert len(response.data['tasks'][0]['raw_performers']) == 0
+        assert len(response.data['owners']) == 2
+        assert int(
+            response.data['owners'][0]['source_id']
+        ) == account_1_owner.id
+        assert int(
+            response.data['owners'][1]['source_id']
+        ) == user_to_transfer.id
+        raw_performers = response.data['tasks'][0]['raw_performers']
+        assert len(raw_performers) == 1
+        assert int(raw_performers[0]['source_id']) == user_to_transfer.id
 
     def test_retrieve__api_request__ok(self, api_client, mocker):
 
@@ -544,10 +597,19 @@ class TestRetrieveTemplate:
         )
         group = create_test_group(user=user, users=[user, user2])
         api_client.token_authenticate(user)
-        request_template_owners = [user.id, user2.id]
+        owners = [
+            {
+                'type': OwnerType.USER,
+                'source_id': str(user.id)
+            },
+            {
+                'type': OwnerType.USER,
+                'source_id': str(user2.id)
+            },
+        ]
         request_data = {
             'name': 'Template',
-            'template_owners': request_template_owners,
+            'owners': owners,
             'is_active': True,
             'kickoff': {},
             'tasks': [

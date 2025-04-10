@@ -9,7 +9,7 @@ export function removeTaskPerformer(taskId: number, userId: number) {
     urls.removeTaskPerformer.replace(':id', String(taskId)),
     {
       method: 'POST',
-      body: mapRequestBody({ userId }),
+      data: mapRequestBody({ userId }),
     },
     {
       responseType: 'empty',

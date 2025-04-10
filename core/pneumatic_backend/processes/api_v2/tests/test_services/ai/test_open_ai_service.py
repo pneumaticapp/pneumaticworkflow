@@ -3,7 +3,10 @@ import pytest
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from pneumatic_backend.processes.models import TaskTemplate
-from pneumatic_backend.processes.enums import PerformerType
+from pneumatic_backend.processes.enums import (
+    PerformerType,
+    OwnerType
+)
 from pneumatic_backend.processes.tests.fixtures import (
     create_test_user,
 )
@@ -484,7 +487,12 @@ def test_get_template_data__model_gpt4__ok(mocker):
         'is_active': False,
         'finalizable': True,
         'is_public': False,
-        'template_owners': [user.id],
+        'owners': [
+            {
+                'type': OwnerType.USER,
+                'source_id': str(user.id)
+            },
+        ],
         'kickoff': {
             'description': '',
             'fields': []
@@ -589,7 +597,12 @@ def test_get_template_data_model_gpt3__ok(mocker):
         'is_active': False,
         'finalizable': True,
         'is_public': False,
-        'template_owners': [user.id],
+        'owners': [
+            {
+                'type': OwnerType.USER,
+                'source_id': str(user.id)
+            },
+        ],
         'kickoff': {
             'description': '',
             'fields': []

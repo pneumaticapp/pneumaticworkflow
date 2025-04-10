@@ -12,7 +12,7 @@ import { TTaskVariable } from '../../../types';
 import { getUserFullName } from '../../../../../utils/users';
 import { EConditionOperators, TConditionRule } from '../types';
 import { OPERATORS_WITHOUT_VALUE } from '..';
-import { DatePicker } from '../../../../UI/form/DatePicker';
+import { DatePickerCustom } from '../../../../UI/form/DatePicker';
 import { toTspDate } from '../../../../../utils/dateTime';
 import { getFormattedDropdownOption } from '../utils/getFormattedDropdownOption';
 import styles from '../Conditions.css';
@@ -157,11 +157,11 @@ export function ConditionValueField({
     };
 
     return (
-      <DatePicker
+      <DatePickerCustom 
         disabled={isDisabled}
         onChange={handleChangeDate}
         placeholderText={formatMessage({ id: 'templates.conditions.value-placeholder' })}
-        selected={selectedDate && selectedDate * 1000}
+        selected={selectedDate ? new Date(selectedDate * 1000) : null}
         showPopperArrow={false}
       />
     );

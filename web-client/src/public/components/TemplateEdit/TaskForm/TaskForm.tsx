@@ -1,4 +1,4 @@
-import React, { useLayoutEffect, useRef } from 'react';
+import React, { useCallback, useLayoutEffect, useRef } from 'react';
 import { useIntl } from 'react-intl';
 
 import { TaskDescriptionEditor } from './TaskDescriptionEditor';
@@ -19,6 +19,11 @@ import { DueDate } from './DueDate';
 import { getSingleLineVariables } from './utils/getTaskVariables';
 
 import styles from '../TemplateEdit.css';
+import { TaskItemUsers } from '../TaskItem/TaskItemUsers';
+import { TaskRenderDueIn } from '../TaskRenderDueInInfo';
+import { TaskRenderConditionsInfo } from '../TaskRenderConditionsInfo';
+import { TaskRenderExtraFieldsInfo } from '../TaskRenderExtraFieldsInfo';
+import { TaskRenderReturnInfo } from '../TaskRenderReturnInfo';
 
 export interface ITaskFormProps {
   listVariables: TTaskVariable[];
@@ -78,6 +83,13 @@ export function TaskForm({
     setCurrentTask({ [field]: value });
   };
 
+  const createWidget = useCallback(
+    (Component, props) => {
+      return (toggle: () => void) => <Component task={props.task} onClick={toggle} isInTaskForm={props.isInTaskForm} />;
+    },
+    [task],
+  );
+
   const taskFormParts = [
     {
       formPartId: ETaskFormParts.AssignPerformers,
@@ -91,6 +103,7 @@ export function TaskForm({
           isTeamInvitesModalOpen={isTeamInvitesModalOpen}
         />
       ),
+      widget: createWidget(TaskItemUsers, { task }),
     },
     {
       formPartId: ETaskFormParts.DueIn,
@@ -106,6 +119,7 @@ export function TaskForm({
           />
         </div>
       ),
+      widget: createWidget(TaskRenderDueIn, { task, isInTaskForm: true }),
     },
     {
       formPartId: ETaskFormParts.Fields,
@@ -119,6 +133,7 @@ export function TaskForm({
           accountId={accountId}
         />
       ),
+      widget: createWidget(TaskRenderExtraFieldsInfo, { task }),
     },
     {
       formPartId: ETaskFormParts.Conditions,
@@ -132,6 +147,7 @@ export function TaskForm({
           onEdit={handleTaskFieldChange('conditions')}
         />
       ),
+      widget: createWidget(TaskRenderConditionsInfo, { task, isInTaskForm: true }),
     },
     {
       formPartId: ETaskFormParts.ReturnTo,
@@ -145,6 +161,7 @@ export function TaskForm({
           setCurrentTask={setCurrentTask}
         />
       ),
+      widget: createWidget(TaskRenderReturnInfo, { task }),
     },
   ];
 
@@ -180,14 +197,16 @@ export function TaskForm({
             accountId={accountId}
           />
         </div>
-        {taskFormParts.map(({ title, component, formPartId }, index) => (
+
+        {taskFormParts.map(({ title, component, formPartId, widget }) => (
           <ShowMore
             isDisabled={title === 'templates.return-to.title' && tasks.length < 2}
-            label={`${index + 1}. ${formatMessage({ id: title })}`}
+            label={formatMessage({ id: title })}
             containerClassName={styles['task-accordion-container']}
             isInitiallyVisible={formPartId === scrollTarget}
             key={title}
             innerRef={taskFormPartsRefs[formPartId]}
+            widget={widget}
           >
             {component}
           </ShowMore>

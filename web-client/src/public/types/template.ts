@@ -15,7 +15,7 @@ export interface ITemplate {
   finalizable: boolean;
   dateUpdated: string | null;
   updatedBy: number | null;
-  templateOwners: number[];
+  owners: ITemplateOwner[];
   kickoff: IKickoff;
   tasks: ITemplateTask[];
   isPublic: boolean;
@@ -28,6 +28,11 @@ export interface ITemplate {
   performersCount: number;
 }
 
+export interface ITemplateOwner {
+  apiName: string;
+  sourceId: string;
+  type: ETemplateOwnerType;
+}
 export interface ITemplateTask {
   id?: number;
   apiName: string;
@@ -79,6 +84,11 @@ export interface ITemplateTaskPerformer {
   sourceId: string | null;
   apiName?: string;
   id?: number;
+}
+
+export enum ETemplateOwnerType {
+  User = 'user',
+  UserGroup = 'group',
 }
 
 export enum ETaskPerformerType {
@@ -154,7 +164,7 @@ export interface ITemplateListItem {
   description?: string;
   tasksCount: number;
   performersCount: number;
-  templateOwners: number[];
+  owners: number[];
   kickoff: IKickoff | null;
 }
 
@@ -238,3 +248,8 @@ export type TAITemplateGenerationStatus = 'initial' | 'generating' | 'generated'
 export type TTemplateWithTasksOnly = Pick<ITemplate, 'name'> & {
   tasks: Pick<ITemplateTask, 'name' | 'description'>[];
 };
+
+export interface RawPerformer {
+  type: ETemplateOwnerType;
+  sourceId: number;
+}

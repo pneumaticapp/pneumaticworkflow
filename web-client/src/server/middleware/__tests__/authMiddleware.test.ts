@@ -34,13 +34,6 @@ describe('middleware', () => {
       res.locals.user = {};
       (parseCookies as jest.Mock).mockReturnValue({});
     });
-    it('calls next() in case requested url is in EXCLUDED_ROUTES', async () => {
-      const url = '/static/favicon.ico';
-
-      await authMiddleware({ ...req, url }, res, next);
-
-      expect(next).toHaveBeenCalled();
-    });
     it('calls next() if no saved token and requested url is an authorization url', async () => {
       const url = '/auth/signin/';
       await authMiddleware({ ...req, url }, res, next);

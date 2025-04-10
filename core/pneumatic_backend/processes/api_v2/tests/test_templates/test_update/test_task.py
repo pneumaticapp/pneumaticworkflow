@@ -116,7 +116,16 @@ class TestUpdateTemplateTask:
                 'id': template.id,
                 'name': template.name,
                 'is_active': True,
-                'template_owners': [user.id, user2.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user2.id
+                    },
+                ],
                 'kickoff': {
                     'fields': [
                         {
@@ -197,7 +206,12 @@ class TestUpdateTemplateTask:
                 'id': template.id,
                 'name': template.name,
                 'is_active': True,
-                'template_owners': [user.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                ],
                 'kickoff': {},
                 'tasks': [
                     {
@@ -279,7 +293,12 @@ class TestUpdateTemplateTask:
             path='/templates',
             data={
                 'name': 'Template',
-                'template_owners': [user.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                ],
                 'kickoff': {},
                 'is_active': True,
                 'tasks': [
@@ -294,7 +313,12 @@ class TestUpdateTemplateTask:
         template_data['tasks'][0]['number'] = 2
         template_data['tasks'][1]['number'] = 3
         template_data['tasks'].insert(0, new_task)
-        template_data['owners'] = []
+        template_data['owners'] = [
+            {
+                'type': OwnerType.USER,
+                'source_id': user.id
+            },
+        ]
         mocker.patch(
             'pneumatic_backend.processes.api_v2.services.templates.'
             'integrations.TemplateIntegrationsService.template_updated'
@@ -339,7 +363,12 @@ class TestUpdateTemplateTask:
             path=f'/templates/{template.id}',
             data={
                 'name': 'Template',
-                'template_owners': [user.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                ],
                 'is_active': True,
                 'description': '',
                 'kickoff': {},
@@ -408,7 +437,12 @@ class TestUpdateTemplateTask:
             f'/templates/{template.id}',
             data={
                 'name': 'Template',
-                'template_owners': [user.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                ],
                 'is_active': True,
                 'kickoff': {},
                 'tasks': [
@@ -496,7 +530,12 @@ class TestUpdateTemplateTask:
             path=f'/templates/{template.id}',
             data={
                 'name': 'Template',
-                'template_owners': [user.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                ],
                 'is_active': True,
                 'kickoff': {},
                 'tasks': [
@@ -617,7 +656,12 @@ class TestUpdateTemplateTask:
             path=f'/templates/{template.id}',
             data={
                 'name': 'Template',
-                'template_owners': [user.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                ],
                 'is_active': True,
                 'kickoff': {},
                 'tasks': [
@@ -729,7 +773,16 @@ class TestUpdateTemplateTask:
             path=f'/templates/{template.id}',
             data={
                 'name': 'Template',
-                'template_owners': [user.id, user2.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user2.id
+                    },
+                ],
                 'kickoff': {
                     'fields': [
                         {
@@ -874,11 +927,23 @@ class TestUpdateTemplateTask:
             f"/templates/{template.id}",
             data={
                 'name': 'Template',
-                'template_owners': [
-                    user1.id,
-                    user2.id,
-                    user1_new.id,
-                    user2_new.id,
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user1.id
+                    },
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user2.id
+                    },
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user1_new.id
+                    },
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user2_new.id
+                    },
                 ],
                 'is_active': True,
                 'kickoff': {
@@ -1010,11 +1075,23 @@ class TestUpdateTemplateTask:
             f'/templates/{template.id}',
             data={
                 'name': 'Template',
-                'template_owners': [
-                    user1.id,
-                    user2.id,
-                    user1_new.id,
-                    user2_new.id,
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user1.id
+                    },
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user2.id
+                    },
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user1_new.id
+                    },
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user2_new.id
+                    },
                 ],
                 'is_active': True,
                 'kickoff': {
@@ -1140,7 +1217,16 @@ class TestUpdateTemplateTask:
             f'/templates/{template.id}',
             data={
                 'name': 'Template',
-                'template_owners': [user1.id, user2.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user1.id
+                    },
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user2.id
+                    },
+                ],
                 'is_active': True,
                 'kickoff': {
                     'fields': [
@@ -1263,7 +1349,20 @@ class TestUpdateTemplateTask:
             f'/templates/{template.id}',
             data={
                 'name': 'Template',
-                'template_owners': [user1.id, user2.id, user3.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user1.id
+                    },
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user2.id
+                    },
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user3.id
+                    },
+                ],
                 'is_active': True,
                 'kickoff': {
                     'fields': [
@@ -1362,7 +1461,12 @@ class TestUpdateTemplateTask:
             f"/templates/{template.id}",
             data={
                 'name': 'Template',
-                'template_owners': [user.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                ],
                 'kickoff': {
                     'fields': [
                         {
@@ -1533,7 +1637,12 @@ class TestUpdateTemplateTask:
                 'id': template.id,
                 'name': template.name,
                 'is_active': True,
-                'template_owners': [user.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                ],
                 'kickoff': {
                     'fields': [
                         {
@@ -1589,7 +1698,12 @@ class TestUpdateTemplateTask:
                 'id': template.id,
                 'name': template.name,
                 'is_active': True,
-                'template_owners': [user.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                ],
                 'kickoff': {},
                 'tasks': [
                     {
@@ -1645,7 +1759,12 @@ class TestUpdateTemplateTask:
                 'id': template.id,
                 'name': template.name,
                 'is_active': True,
-                'template_owners': [user.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                ],
                 'kickoff': {},
                 'tasks': [
                     {
@@ -1705,7 +1824,12 @@ class TestUpdateTemplateTask:
             path='/templates',
             data={
                 'name': 'Template',
-                'template_owners': [user.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                ],
                 'kickoff': {},
                 'is_active': False,
                 'tasks': [
@@ -1767,7 +1891,12 @@ class TestUpdateTemplateTask:
                 'id': template.id,
                 'name': template.name,
                 'is_active': True,
-                'template_owners': [user.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                ],
                 'kickoff': {},
                 'tasks': [
                     {
@@ -2142,7 +2271,16 @@ class TestUpdateTemplateRawPerformer:
                 'id': template.id,
                 'name': template.name,
                 'is_active': True,
-                'template_owners': [user.id, user2.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user2.id
+                    },
+                ],
                 'kickoff': {
                     'fields': [
                         {
@@ -2230,7 +2368,16 @@ class TestUpdateTemplateRawPerformer:
                 'id': template.id,
                 'name': template.name,
                 'is_active': True,
-                'template_owners': [user.id, user2.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user2.id
+                    },
+                ],
                 'kickoff': {
                     'fields': [
                         {
@@ -2324,7 +2471,16 @@ class TestUpdateTemplateRawPerformer:
                 'id': template.id,
                 'name': template.name,
                 'is_active': True,
-                'template_owners': [user.id, user2.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user2.id
+                    },
+                ],
                 'kickoff': {},
                 'tasks': [
                     {
@@ -2401,7 +2557,16 @@ class TestUpdateTemplateRawPerformer:
                 'id': template.id,
                 'name': template.name,
                 'is_active': True,
-                'template_owners': [user.id, user2.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user2.id
+                    },
+                ],
                 'kickoff': {
                     'fields': [
                         {
@@ -2504,7 +2669,16 @@ class TestUpdateTemplateRawPerformer:
                 'id': template.id,
                 'name': template.name,
                 'is_active': True,
-                'template_owners': [user.id, user2.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user2.id
+                    },
+                ],
                 'kickoff': {
                     'fields': [
                         {
@@ -2615,7 +2789,12 @@ class TestUpdateTemplateRawPerformer:
                 'id': template.id,
                 'name': template.name,
                 'is_active': template.is_active,
-                'template_owners': [user.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                ],
                 'kickoff': {},
                 'tasks': [
                     {
@@ -2670,7 +2849,12 @@ class TestUpdateTemplateRawPerformer:
                 'id': template.id,
                 'name': template.name,
                 'is_active': True,
-                'template_owners': [user.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                ],
                 'kickoff': {},
                 'tasks': [
                     {

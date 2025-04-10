@@ -9,7 +9,10 @@ from pneumatic_backend.processes.models import (
     TemplateDraft,
     Template,
 )
-from pneumatic_backend.processes.enums import PerformerType
+from pneumatic_backend.processes.enums import (
+    PerformerType,
+    OwnerType
+)
 
 
 pytestmark = pytest.mark.django_db
@@ -36,7 +39,12 @@ class TestCopyTemplate:
             'is_active': is_active,
             'is_public': True,
             'finalizable': True,
-            'template_owners': [user.id],
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id
+                },
+            ],
             'kickoff': {},
             'tasks': [
                 {
@@ -81,8 +89,13 @@ class TestCopyTemplate:
         assert response_2_data['is_public'] is True
         assert response_2_data['public_url'] is not None
         assert response_2_data['finalizable'] == request_data['finalizable']
-        assert response_2_data['template_owners'] == (
-            request_data['template_owners']
+        assert (
+            response_2_data['owners'][0]['source_id'] ==
+            str(request_data['owners'][0]['source_id'])
+        )
+        assert (
+            response_2_data['owners'][0]['type'] ==
+            request_data['owners'][0]['type']
         )
         assert response_1_data['id'] != response_2_data['id']
 
@@ -177,7 +190,12 @@ class TestCopyTemplate:
                 'is_active': is_active,
                 'is_embedded': True,
                 'finalizable': True,
-                'template_owners': [user.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                ],
                 'kickoff': {},
                 'tasks': [
                     {
@@ -218,7 +236,12 @@ class TestCopyTemplate:
         request_data = {
             'name': 'Template',
             'is_active': True,
-            'template_owners': [user.id],
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id
+                },
+            ],
             'kickoff': {},
             'tasks': [
                 {

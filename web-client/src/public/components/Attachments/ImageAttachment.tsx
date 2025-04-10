@@ -1,7 +1,7 @@
 /* eslint-disable */
 /* prettier-ignore */
 import * as React from 'react';
-import * as classnames from 'classnames';
+import classnames from 'classnames';
 import { useDispatch } from 'react-redux';
 
 import { DeleteBoldIcon } from '../icons';
@@ -33,23 +33,12 @@ export function ImageAttachment({ deleteFile, isDeleting, isEdit, thumbnailUrl, 
 
   const renderImage = () => {
     if (!url) {
-      return (
-        <img
-          src={thumbnailUrl}
-          className={styles['image']}
-        />
-      );
+      return <img src={thumbnailUrl} className={styles['image']} />;
     }
 
     return (
-      <button
-className={styles['image__link']}
-        onClick={() => dispatch(openFullscreenImage({ url }))}
-      >
-        <img
-          src={thumbnailUrl}
-          className={styles['image']}
-        />
+      <button className={styles['image__link']} onClick={() => dispatch(openFullscreenImage({ url }))}>
+        <img src={thumbnailUrl} className={styles['image']} />
       </button>
     );
   };
@@ -63,15 +52,11 @@ className={styles['image__link']}
       )}
     >
       <Loader isLoading={Boolean(isDeleting)} />
-      {isEdit &&
-        <button
-          aria-label="Delete image"
-          className={styles['image__delete-button']}
-          onClick={onDeleteIconClick}
-        >
+      {isEdit && (
+        <button aria-label="Delete image" className={styles['image__delete-button']} onClick={onDeleteIconClick}>
           <DeleteBoldIcon />
         </button>
-      }
+      )}
       {renderImage()}
     </div>
   );

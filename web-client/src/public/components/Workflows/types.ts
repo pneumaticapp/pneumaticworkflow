@@ -16,6 +16,7 @@ import {
   TUserCounter,
 } from '../../types/workflow';
 import { TUserListItem } from '../../types/user';
+import { IGroup } from '../../types/team';
 
 export interface IWorkflowsProps {
   workflowsLoadingStatus: EWorkflowsLoadingStatus;
@@ -43,10 +44,12 @@ export interface IWorkflowsFiltersProps {
   templatesIdsFilter: number[];
   stepsIdsFilter: number[];
   performersIdsFilter: number[];
+  performersGroupIdsFilter: number[];
   workflowStartersIdsFilter: number[];
   filterTemplates: ITemplateFilterItem[];
   areFilterTemplatesLoading?: boolean;
   users: TUserListItem[];
+  groups: IGroup[];
   areUsersLoading?: boolean;
   isSubscribed: boolean;
   performersCounters: TUserCounter[];
@@ -56,6 +59,7 @@ export interface IWorkflowsFiltersProps {
   setTemplatesFilter(value: number[]): void;
   setStepsFilter(value: number[]): void;
   setPerformersFilter(value: number[]): void;
+  setPerformersGroupFilter(value: number[]): void;
   setWorkflowStartersFilter(value: number[]): void;
   changeWorkflowsSorting(payload: EWorkflowsSorting): void;
   setStatusFilter(payload: EWorkflowsStatus): void;

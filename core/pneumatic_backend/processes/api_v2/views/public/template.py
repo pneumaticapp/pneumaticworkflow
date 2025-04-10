@@ -104,11 +104,12 @@ class PublicTemplateViewSet(
             raise_validation_error(ex.message)
 
         workflow_action_service = WorkflowActionService(
+            workflow=workflow,
             user=user,
             is_superuser=request.is_superuser,
             auth_type=request.token_type
         )
-        workflow_action_service.start_workflow(workflow)
+        workflow_action_service.start_workflow()
 
         self.inc_anonymous_user_workflow_counter(request, template)
         if request.token_type == AuthTokenType.PUBLIC:

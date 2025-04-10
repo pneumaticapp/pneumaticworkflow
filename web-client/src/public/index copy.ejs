@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no, user-scalable=0" />
+
+    <title>Pneumatic</title>
+    <% if (isBuildAnalytics) { %>
+      <script src="https://js.recurly.com/v4/recurly.js"></script>
+    <% } %>
+  </head>
+  <body>
+    <div id="pneumatic-frontend"></div>
+    <script type="text/javascript">
+      window.__pneumaticConfig = {
+        config: <%- config %>,
+        env: "<%= env %>",
+        googleAuthUserInfo:  <%- googleAuthUserInfo %>,
+        user:  <%- user %>,
+        invitedUser:  <%- invitedUser %>,
+        pages: <%- pages %>
+      };
+    </script>
+  </body>
+</html>

@@ -1,10 +1,10 @@
 import { ITypedReduxAction, IWorkflowLog } from '../../types/redux';
 import { actionGenerator } from '../../utils/redux';
-import { IExtraField } from '../../types/template';
+import { IExtraField, RawPerformer } from '../../types/template';
 import { ITask } from '../../types/tasks';
 import { ETaskCardViewMode } from '../../components/TaskCard';
-import { IWorkflowDetails, IWorkflowLogItem } from '../../types/workflow';
-import { IChangeWorkflowLogViewSettingsPayload, ISendWorkflowLogComment } from '../actions';
+import { EWorkflowsLogSorting, IWorkflowDetails, IWorkflowLogItem } from '../../types/workflow';
+import { ISendWorkflowLogComment } from '../actions';
 
 export const enum ETaskActions {
   LoadCurrentTask = 'LOAD_CURRENT_TASK',
@@ -64,16 +64,22 @@ export const setTaskWorkflowIsLoading: (payload: boolean) => TSetTaskWorkflowIsL
   ETaskActions.SetTaskWorkflowIsLoading,
   boolean
 >(ETaskActions.SetTaskWorkflowIsLoading);
-
+export interface IChangeTaskWorkflowLogViewSettingsPayload {
+  taskId: number;
+  id: number;
+  sorting: EWorkflowsLogSorting;
+  comments: boolean;
+  isOnlyAttachmentsShown: boolean;
+}
 export type TChangeTaskWorkflowLogViewSettings = ITypedReduxAction<
   ETaskActions.ChangeTaskWorkflowLogViewSettings,
-  IChangeWorkflowLogViewSettingsPayload
+  IChangeTaskWorkflowLogViewSettingsPayload
 >;
 export const changeTaskWorkflowLogViewSettings: (
-  payload: IChangeWorkflowLogViewSettingsPayload,
+  payload: IChangeTaskWorkflowLogViewSettingsPayload,
 ) => TChangeTaskWorkflowLogViewSettings = actionGenerator<
   ETaskActions.ChangeTaskWorkflowLogViewSettings,
-  IChangeWorkflowLogViewSettingsPayload
+  IChangeTaskWorkflowLogViewSettingsPayload
 >(ETaskActions.ChangeTaskWorkflowLogViewSettings);
 
 export type TPatchCurrentTask = ITypedReduxAction<ETaskActions.PatchCurrentTask, Partial<ITask>>;
@@ -131,21 +137,21 @@ export const setCurrentTaskStatus: (payload: ETaskStatus) => TSetCurrentTaskStat
   ETaskStatus
 >(ETaskActions.SetCurrentTaskStatus);
 
-export type TAddTaskPerformerPayload = { taskId: number; userId: number };
+export type TAddTaskPerformerPayload = { taskId: number; userId: RawPerformer };
 export type TAddTaskPerformer = ITypedReduxAction<ETaskActions.AddTaskPerformer, TAddTaskPerformerPayload>;
 export const addTaskPerformer: (payload: TAddTaskPerformerPayload) => TAddTaskPerformer = actionGenerator<
   ETaskActions.AddTaskPerformer,
   TAddTaskPerformerPayload
 >(ETaskActions.AddTaskPerformer);
 
-export type TRemoveTaskPerformerPayload = { taskId: number; userId: number };
+export type TRemoveTaskPerformerPayload = { taskId: number; userId: RawPerformer };
 export type TRemoveTaskPerformer = ITypedReduxAction<ETaskActions.RemoveTaskPerformer, TRemoveTaskPerformerPayload>;
 export const removeTaskPerformer: (payload: TRemoveTaskPerformerPayload) => TRemoveTaskPerformer = actionGenerator<
   ETaskActions.RemoveTaskPerformer,
   TRemoveTaskPerformerPayload
 >(ETaskActions.RemoveTaskPerformer);
 
-type TChangeTaskPerformersPayload = number[];
+type TChangeTaskPerformersPayload = RawPerformer[];
 export type TChangeTaskPerformers = ITypedReduxAction<ETaskActions.ChangeTaskPerformers, TChangeTaskPerformersPayload>;
 export const changeTaskPerformers: (payload: TChangeTaskPerformersPayload) => TChangeTaskPerformers = actionGenerator<
   ETaskActions.ChangeTaskPerformers,

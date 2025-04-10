@@ -1,8 +1,12 @@
 import pytest
 from datetime import timedelta
 from django.utils import timezone
+from pneumatic_backend.authentication.enums import AuthTokenType
 from pneumatic_backend.processes.api_v2.services import (
     WorkflowEventService,
+)
+from pneumatic_backend.processes.api_v2.services.task.groups import (
+    GroupPerformerService
 )
 from pneumatic_backend.processes.models import (
     Workflow,
@@ -17,14 +21,15 @@ from pneumatic_backend.processes.tests.fixtures import (
     create_test_template,
     create_test_workflow,
     create_test_account,
-    create_test_guest
+    create_test_guest,
+    create_test_group
 )
 from pneumatic_backend.processes.enums import (
     PerformerType,
     DirectlyStatus,
     FieldType,
     WorkflowEventType,
-    CommentStatus,
+    CommentStatus, TaskStatus,
 )
 from pneumatic_backend.processes.api_v2.services.task.performers import (
     TaskPerformersService
@@ -42,7 +47,7 @@ def test_events__ordering_date__ok(api_client):
     workflow = create_test_workflow(user)
     task = workflow.tasks.order_by('number').first()
     WorkflowEventService.task_started_event(task)
-    task.is_completed = True
+    task.status = TaskStatus.COMPLETED
     task.date_completed = timezone.now()
     task.save()
 
@@ -82,7 +87,7 @@ def test_events__ordering_date_inverted__ok(api_client):
     workflow = create_test_workflow(user)
     task = workflow.tasks.order_by('number').first()
     WorkflowEventService.task_started_event(task)
-    task.is_completed = True
+    task.status = TaskStatus.COMPLETED
     task.date_completed = timezone.now()
     task.save()
 
@@ -118,7 +123,7 @@ def test_events__include_comments_false__ok(api_client):
     workflow = create_test_workflow(user)
     task = workflow.tasks.order_by('number').first()
     WorkflowEventService.task_started_event(task)
-    task.is_completed = True
+    task.status = TaskStatus.COMPLETED
     task.date_completed = timezone.now()
     task.save()
 
@@ -203,10 +208,11 @@ def test_events__not_admin_user__ok(api_client):
         email='no@admin.com'
     )
     workflow = create_test_workflow(owner)
+    workflow.members.add(user)
 
     task = workflow.current_task_instance
     WorkflowEventService.task_started_event(task)
-    task.is_completed = True
+    task.status = TaskStatus.COMPLETED
     task.date_completed = timezone.now()
     task.save()
 
@@ -294,7 +300,8 @@ def test_events__guest__ok(api_client):
     assert response.data[0]['type'] == WorkflowEventType.COMMENT
     event_performers = response.data[0]['task']['performers']
     assert len(event_performers) == 1
-    assert event_performers[0] == guest.id
+    performer = {'source_id': guest.id, 'type': 'user'}
+    assert event_performers[0] == performer
 
 
 def test_events__guest_another_workflow__permission_denied(api_client):
@@ -467,7 +474,8 @@ def test_retrieve__task_started__ok(api_client):
     assert task_data['name'] == current_task.name
     assert task_data['number'] == current_task.number
     assert len(task_data['performers']) == 1
-    assert task_data['performers'] == [user.id]
+    performer = {'source_id': user.id, 'type': 'user'}
+    assert task_data['performers'] == [performer]
     assert task_data['due_date_tsp'] == due_date.timestamp()
 
 
@@ -572,8 +580,74 @@ def test_retrieve__performer_created__ok(api_client):
     assert task_data['due_date_tsp'] is None
     assert len(task_data['performers']) == 2
     assert len(task_data['performers'])
-    assert user.id in task_data['performers']
-    assert user_performer.id in task_data['performers']
+    performer = [item['source_id'] for item in task_data['performers']]
+    assert user.id in performer
+    assert user_performer.id in performer
+
+
+def test_retrieve__performer_group_created__ok(api_client):
+
+    # arrange
+    user = create_test_user()
+    user_performer = create_test_user(
+        email='t@t.t',
+        account=user.account
+    )
+    group = create_test_group(user=user, users=[user_performer, ])
+    api_client.token_authenticate(user)
+    workflow = create_test_workflow(user=user, tasks_count=1)
+    task = workflow.current_task_instance
+    service = GroupPerformerService(
+        user=user,
+        task=task,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER
+    )
+    service.create_performer(
+        group_id=group.id,
+        run_actions=False,
+    )
+    event = WorkflowEventService.performer_group_created_event(
+        user=user,
+        task=task,
+        performer=group
+    )
+
+    # act
+    response = api_client.get(f'/workflows/{workflow.id}/events')
+
+    # assert
+    assert response.status_code == 200
+    assert len(response.data) == 1
+    event_data = response.data[0]
+    assert event_data['id'] == event.id
+    assert event_data['created'] == event.created.strftime(datetime_format)
+    assert event_data['created_tsp'] == event.created.timestamp()
+    assert event_data['user_id'] == user.id
+    assert event_data['target_group_id'] == group.id
+    assert event_data['workflow_id'] == workflow.id
+    assert event_data['type'] == (
+        WorkflowEventType.TASK_PERFORMER_GROUP_CREATED
+    )
+    task_data = response.data[0]['task']
+    assert task_data['id'] == task.id
+    assert task_data['description'] == task.description
+    assert task_data['name'] == task.name
+    assert task_data['number'] == task.number
+    assert task_data['due_date_tsp'] is None
+    assert len(task_data['performers']) == 2
+    assert len(task_data['performers'])
+    user_performer_ids = [
+        item['source_id'] for item in task_data['performers']
+        if item['type'] == 'user'
+    ]
+    group_performer_ids = [
+        item['source_id'] for item in task_data['performers']
+        if item['type'] == 'group'
+    ]
+
+    assert user.id in user_performer_ids
+    assert group.id in group_performer_ids
 
 
 def test_retrieve__performer_deleted__ok(api_client):
@@ -631,7 +705,68 @@ def test_retrieve__performer_deleted__ok(api_client):
     assert task_data['due_date_tsp'] is None
     assert len(task_data['performers']) == 1
     assert len(task_data['performers'])
-    assert user.id in task_data['performers']
+    performer = {'source_id': user.id, 'type': 'user'}
+    assert task_data['performers'] == [performer]
+
+
+def test_retrieve__performer_group_deleted__ok(api_client):
+
+    # arrange
+    user = create_test_user()
+    user_performer = create_test_user(
+        email='t@t.t',
+        account=user.account
+    )
+    group = create_test_group(user=user, users=[user_performer, ])
+    api_client.token_authenticate(user)
+    workflow = create_test_workflow(user=user, tasks_count=1)
+    task = workflow.current_task_instance
+    service = GroupPerformerService(
+        user=user,
+        task=task,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER
+    )
+    service.create_performer(
+        group_id=group.id,
+        run_actions=False,
+    )
+    service.delete_performer(
+        group_id=group.id,
+        run_actions=False,
+    )
+    event = WorkflowEventService.performer_group_deleted_event(
+        user=user,
+        task=task,
+        performer=group
+    )
+
+    # act
+    response = api_client.get(f'/workflows/{workflow.id}/events')
+
+    # assert
+    assert response.status_code == 200
+    assert len(response.data) == 1
+    event_data = response.data[0]
+    assert event_data['id'] == event.id
+    assert event_data['created'] == event.created.strftime(datetime_format)
+    assert event_data['created_tsp'] == event.created.timestamp()
+    assert event_data['workflow_id'] == workflow.id
+    assert event_data['user_id'] == user.id
+    assert event_data['target_group_id'] == group.id
+    assert event_data['type'] == (
+        WorkflowEventType.TASK_PERFORMER_GROUP_DELETED
+    )
+    task_data = response.data[0]['task']
+    assert task_data['id'] == task.id
+    assert task_data['description'] == task.description
+    assert task_data['name'] == task.name
+    assert task_data['number'] == task.number
+    assert task_data['due_date_tsp'] is None
+    assert len(task_data['performers']) == 1
+    assert len(task_data['performers'])
+    performer = {'source_id': user.id, 'type': 'user'}
+    assert task_data['performers'] == [performer]
 
 
 def test_retrieve__workflow_delay_event__ok(api_client):
@@ -809,7 +944,8 @@ def test_retrieve__complete_task__field_user__ok(api_client):
     assert task_data['name'] == task.name
     assert task_data['number'] == task.number
     assert task_data['due_date_tsp'] is None
-    assert task_data['performers'] == [user.id]
+    performer = {'source_id': user.id, 'type': 'user'}
+    assert task_data['performers'] == [performer]
 
     assert len(task_data['output']) == 1
     field_data = task_data['output'][0]
@@ -941,7 +1077,8 @@ def test_retrieve__complete_task__field_date__ok(api_client):
     assert task_data['name'] == task.name
     assert task_data['number'] == task.number
     assert task_data['due_date_tsp'] is None
-    assert task_data['performers'] == [user.id]
+    performer = {'source_id': user.id, 'type': 'user'}
+    assert task_data['performers'] == [performer]
 
     assert len(task_data['output']) == 1
     field_data = task_data['output'][0]
@@ -1141,7 +1278,8 @@ def test_retrieve__comment__with_attachment__ok(api_client):
     assert data['task']['name'] == task.name
     assert data['task']['number'] == task.number
     assert data['task']['due_date_tsp'] == due_date.timestamp()
-    assert data['task']['performers'] == [user.id]
+    performer = {'source_id': user.id, 'type': 'user'}
+    assert data['task']['performers'] == [performer]
     assert data['task']['output'] is None
     assert len(data['attachments']) == 1
     assert data['attachments'][0]['id'] == attachment.id
@@ -1266,7 +1404,8 @@ def test_retrieve__run_sub_workflow__ok(api_client):
     assert task_data['name'] == ancestor_task.name
     assert task_data['number'] == ancestor_task.number
     assert task_data['due_date_tsp'] == ancestor_task.due_date.timestamp()
-    assert task_data['performers'] == [user.id]
+    performer = {'source_id': user.id, 'type': 'user'}
+    assert task_data['performers'] == [performer]
 
     assert task_data['sub_workflow']['id'] == sub_workflow.id
     assert task_data['sub_workflow']['name'] == sub_workflow.name

@@ -1,7 +1,7 @@
 import { ESubscriptionPlan } from './account';
 import { IUserInviteItem } from './team';
 
-export type TUserType = 'user' | 'guest';
+export type TUserType = 'user' | 'guest' | 'group';
 export interface IUnsavedUser {
   id?: number;
   isAccountOwner?: boolean;
@@ -78,4 +78,9 @@ export enum EUserListSorting {
   NameAsc = 'team-name-asc',
   NameDesc = 'team-name-desc',
   Status = 'team-group-status',
+}
+
+export enum EGroupsListSorting {
+  NameAsc = 'group-name-asc',
+  NameDesc = 'group-name-desc',
 }

@@ -149,7 +149,11 @@ class WorkflowService(
         )
         self.instance.save(update_fields=['name'])
         self.instance.members.add(
-            *set(instance_template.template_owners.only_ids())
+            *(
+                Template.objects
+                .filter(id=instance_template.id)
+                .get_owners_as_users()
+            )
         )
         return self.instance
 
@@ -215,3 +219,4 @@ class WorkflowService(
             id=self.instance.template_id
         ).get_owners_as_users()
         self.instance.owners.set(user_ids)
+        self.instance.members.add(*user_ids)

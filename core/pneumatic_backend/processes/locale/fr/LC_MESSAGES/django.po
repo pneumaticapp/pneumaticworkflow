@@ -336,10 +336,6 @@ msgstr "Vous devez reprendre le flux de travail avant de cocher cet élément de
 msgid "Permission denied."
 msgstr "Permission refusée."
 
-#: pneumatic_backend/processes/messages/workflow.py:42
-msgid "Filters 'with_tasks_in_progress' and 'is_running_workflows' cannot be used at the same time."
-msgstr "Les filtres 'with_tasks_in_progress' et 'is_running_workflows' ne peuvent pas être utilisés en même temps."
-
 #. Translators:
 #: pneumatic_backend/processes/messages/workflow.py:46
 msgid "Please fill in the required fields."
@@ -602,5 +598,9 @@ msgid "The task \"{step_name}\" cannot be set to return to itself."
 msgstr "La tâche \"{step_name}\" ne peut pas être configurée pour revenir à elle-même."
 
 #: pneumatic_backend/processes/messages/workflow.py:188
+msgid "There is no group with the specified ID."
+msgstr "Il n'y a aucun groupe avec l'ID spécifié."
+
+#: pneumatic_backend/processes/messages/workflow.py:189
 msgid "You must supply a comment."
 msgstr "Vous devez fournir un commentaire."

@@ -193,10 +193,11 @@ class TestFinishWorkflow:
 
         # assert
         assert response.status_code == 204
-        send_removed_task_notification_mock.assert_called_once_with(
-            task=task_1,
-            user_ids=(user.id, user_4.id)
-        )
+        expected_user_ids = {user_4.id, user.id}
+        send_removed_task_notification_mock.assert_called_once()
+        call_args = send_removed_task_notification_mock.call_args[1]
+        assert set(call_args['user_ids']) == expected_user_ids
+        assert call_args['task'] == task_1
 
     def test_finish__already_finished__validation_error(
         self,

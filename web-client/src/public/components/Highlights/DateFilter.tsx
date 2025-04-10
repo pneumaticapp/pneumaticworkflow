@@ -7,7 +7,9 @@ import { EHighlightsDateFilter, THighlightsDateFilter } from '../../types/highli
 import { ShowMore } from '../UI/ShowMore';
 
 import styles from './Filters.css';
-import { DatePicker } from '../UI/form/DatePicker';
+import { DatePickerCustom } from '../UI/form/DatePicker';
+
+
 
 export interface IDateFilterProps {
   endDate: Date | null;
@@ -84,23 +86,22 @@ export function DateFilter({
         />
       ))}
       {selectedDateFilter === EHighlightsDateFilter.Custom && (
-        <div className={classnames('d-flex', selectedDateFilter === EHighlightsDateFilter.Custom && styles['mb-4'])}>
-          <DatePicker
+        <div className={classnames(styles['date-filter-custom'], selectedDateFilter === EHighlightsDateFilter.Custom && styles['mb-4'])}>
+          <DatePickerCustom
             className={styles['datepicker__input']}
             onChange={changeStartDate}
             placeholderText={startDatePlaceholder}
             selected={startDate}
-            showPopperArrow={false}
-            wrapperClassName={classnames(styles['mr-1'], styles['datepicker'])}
+            wrapperClassName={styles['datepicker']}
             startDay={startDay}
           />
-          <DatePicker
+          <div className={styles['date-filter-custom__separator']}>—</div>
+          <DatePickerCustom
             calendarClassName={styles['datepicker__calendar_end-date']}
             className={styles['datepicker__input']}
             onChange={changeEndDate}
             placeholderText={endDatePlaceholder}
             selected={endDate}
-            showPopperArrow={false}
             wrapperClassName={styles['datepicker']}
           />
         </div>

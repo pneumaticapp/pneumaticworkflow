@@ -29,7 +29,7 @@ from pneumatic_backend.utils.validation import ErrorCode
 from pneumatic_backend.processes.enums import (
     PredicateOperator,
     FieldType,
-    WorkflowStatus,
+    WorkflowStatus, TaskStatus,
 )
 from pneumatic_backend.authentication.enums import AuthTokenType
 
@@ -69,12 +69,12 @@ def test_return_to__by_task_id__ok(
     # assert
     assert response.status_code == 204
     service_init_mock.assert_called_once_with(
+        workflow=workflow,
         user=user,
         auth_type=AuthTokenType.USER,
         is_superuser=False
     )
     service_revert_mock.assert_called_once_with(
-        workflow=workflow,
         revert_to_task=task_1,
     )
 
@@ -112,12 +112,12 @@ def test_return_to__by_task_api_name__ok(
     # assert
     assert response.status_code == 204
     service_init_mock.assert_called_once_with(
+        workflow=workflow,
         user=user,
         auth_type=AuthTokenType.USER,
         is_superuser=False
     )
     service_revert_mock.assert_called_once_with(
-        workflow=workflow,
         revert_to_task=task_1,
     )
 
@@ -228,12 +228,12 @@ def test_revert_service_exception__validation_error(
     assert response.data['code'] == ErrorCode.VALIDATION_ERROR
     assert response.data['message'] == message
     service_init_mock.assert_called_once_with(
+        workflow=workflow,
         user=user,
         auth_type=AuthTokenType.USER,
         is_superuser=False
     )
     service_revert_mock.assert_called_once_with(
-        workflow=workflow,
         revert_to_task=task_1,
     )
 
@@ -326,7 +326,7 @@ def test_return_to__ok(mocker, api_client):
     assert workflow.tasks.filter(
         Q(date_started__isnull=False) |
         Q(date_completed__isnull=False) |
-        Q(is_completed=True),
+        Q(status=TaskStatus.COMPLETED),
         number__gt=1
     ).count() == 0
     send_new_task_notification_ws_mock.assert_called_once_with(
@@ -850,7 +850,7 @@ def test_return_to__sub_workflow_incompleted__validation_error(
     workflow.current_task = 2
     workflow.save()
     task_1 = workflow.tasks.get(number=1)
-    task_1.is_completed = True
+    task_1.status = TaskStatus.COMPLETED
     task_1.date_completed = timezone.now()
     task_1.save()
     task_2 = workflow.tasks.get(number=2)
@@ -889,7 +889,7 @@ def test_return_to__sub_workflow_completed__ok(
     workflow.current_task = 2
     workflow.save()
     task_1 = workflow.tasks.get(number=1)
-    task_1.is_completed = True
+    task_1.status = TaskStatus.COMPLETED
     task_1.date_completed = timezone.now()
     task_1.save()
     task_2 = workflow.tasks.get(number=2)

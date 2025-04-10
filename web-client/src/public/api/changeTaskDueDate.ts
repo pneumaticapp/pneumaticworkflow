@@ -13,7 +13,7 @@ export function changeTaskDueDate(taskId: number, dueDateTsp: number | null) {
     url,
     {
       method: 'POST',
-      body: mapRequestBody({ dueDateTsp }),
+      data: mapRequestBody({ dueDateTsp }),
     },
     {
       shouldThrow: true,

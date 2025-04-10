@@ -16,6 +16,7 @@ from pneumatic_backend.processes.queries import (
     TemplateListQuery,
 )
 from pneumatic_backend.accounts.enums import UserType
+from pneumatic_backend.accounts.models import UserGroup
 from pneumatic_backend.generics.querysets import (
     AccountBaseQuerySet,
     BaseQuerySet,
@@ -29,6 +30,7 @@ from pneumatic_backend.processes.enums import (
     SysTemplateType,
     WorkflowEventActionType,
     TemplateOrdering,
+    TaskStatus,
 )
 
 UserModel = get_user_model()
@@ -101,7 +103,7 @@ class TemplateQuerySet(WorkflowsBaseQuerySet):
     def public(self):
         return self.filter(is_public=True)
 
-    def with_template_owners(self, user_id: int):
+    def with_template_owner(self, user_id: int):
         query = self.filter(
             Q(owners__type='user', owners__user_id=user_id) |
             Q(owners__type='group', owners__group__users__id=user_id)
@@ -205,6 +207,10 @@ class TemplateQuerySet(WorkflowsBaseQuerySet):
         is_public: Optional[bool] = None,
         is_template_owner: Optional[bool] = None,
     ):
+        from pneumatic_backend.processes.models.templates.owner import (
+            TemplateOwner,
+        )
+
         query = TemplateListQuery(
             user_id=user_id,
             is_account_owner=is_account_owner,
@@ -218,7 +224,10 @@ class TemplateQuerySet(WorkflowsBaseQuerySet):
         return (
             self.execute_raw(query)
             .prefetch_related(
-                'owners',
+                Prefetch(
+                    'owners',
+                    queryset=TemplateOwner.objects.order_by('type', 'id')
+                ),
                 'kickoff',
                 'kickoff__fields',
                 'kickoff__fields__selections'
@@ -238,7 +247,7 @@ class WorkflowQuerySet(WorkflowsBaseQuerySet):
     def exclude_legacy(self):
         return self.filter(template__isnull=False)
 
-    def with_template_owners(self, user_id: int):
+    def with_template_owner(self, user_id: int):
         return self.exclude_legacy().filter(
             template__template_owners=user_id
         ).distinct()
@@ -261,11 +270,22 @@ class WorkflowQuerySet(WorkflowsBaseQuerySet):
         ordering: Optional[str] = None,
         template_id: Optional[int] = None,
         template_task_api_name: Optional[str] = None,
-        current_performer: Optional[int] = None,
+        current_performer: Optional[List[int]] = None,
+        current_performer_group_ids: Optional[List[int]] = None,
         workflow_starter: Optional[int] = None,
         is_external: Optional[bool] = None,
         search: Optional[str] = None,
     ):
+        if current_performer:
+            performer_group_ids = UserGroup.objects.filter(
+                users__in=current_performer
+            ).values_list('id', flat=True)
+            if current_performer_group_ids:
+                current_performer_group_ids = list(
+                    set(performer_group_ids) | set(current_performer_group_ids)
+                )
+            else:
+                current_performer_group_ids = list(performer_group_ids)
         query = WorkflowListQuery(
             limit=limit,
             offset=offset,
@@ -274,16 +294,15 @@ class WorkflowQuerySet(WorkflowsBaseQuerySet):
             template=template_id,
             template_task_api_name=template_task_api_name,
             current_performer=current_performer,
+            current_performer_group_ids=current_performer_group_ids,
             workflow_starter=workflow_starter,
             is_external=is_external,
             search=search,
             account_id=account_id,
             user_id=user_id
         )
-        # TODO remove in https://my.pneumatic.app/workflows/34402
-        from pneumatic_backend.processes.models.templates.owner import (
-            Template,
-            TemplateOwner
+        from pneumatic_backend.processes.models.templates.template import (
+            Template
         )
         from pneumatic_backend.processes.models.workflows.task import (
             Task,
@@ -302,19 +321,12 @@ class WorkflowQuerySet(WorkflowsBaseQuerySet):
                     to_attr='owners_ids',
                     queryset=UserModel.objects.order_by('id').only('id')
                 ),
-                # TODO remove in https://my.pneumatic.app/workflows/34402
                 Prefetch(
                     lookup='template',
-                    queryset=Template.objects.prefetch_related(
-                        Prefetch(
-                            lookup='owners',
-                            to_attr='tmp_owners',
-                            queryset=(
-                                TemplateOwner.objects
-                                .order_by('id')
-                                .only('user_id', 'template_id')
-                            )
-                        )
+                    queryset=Template.objects.only(
+                        'id',
+                        'name',
+                        'is_active',
                     )
                 ),
                 Prefetch(
@@ -329,11 +341,10 @@ class WorkflowQuerySet(WorkflowsBaseQuerySet):
                         Task.objects.prefetch_related(
                             Prefetch(
                                 lookup='performers',
-                                to_attr='performers_ids',
+                                to_attr='all_performers',
                                 queryset=(
                                     TaskPerformer.objects
                                     .exclude_directly_deleted()
-                                    .only('user_id')
                                 )
                             ),
                             Prefetch(
@@ -363,16 +374,13 @@ class TasksQuerySet(TasksBaseQuerySet):
     def by_number(self, number):
         return self.filter(number=number)
 
-    def incompleted(self):
-        return self.filter(is_completed=False)
-
     def completed(self):
-        return self.filter(is_completed=True)
+        return self.filter(status=TaskStatus.COMPLETED)
 
     def running_now(self):
         return self.filter(
             workflow__current_task=F('number'),
-            workflow__status=WorkflowStatus.RUNNING
+            status=TaskStatus.ACTIVE
         )
 
     def on_account(self, account_id: int):
@@ -381,10 +389,7 @@ class TasksQuerySet(TasksBaseQuerySet):
         )
 
     def active(self):
-        return self.filter(workflow__current_task=F('number'))
-
-    def started(self):
-        return self.filter(date_started__isnull=False)
+        return self.filter(status=TaskStatus.ACTIVE)
 
     def with_date_first_started(self):
         return self.filter(date_first_started__isnull=False)
@@ -399,9 +404,15 @@ class TasksQuerySet(TasksBaseQuerySet):
                     taskperformer__is_completed=False
                 )
             ) & Q(
-                taskperformer__user_id=user_id,
-                workflow__current_task=F('number'),
-                workflow__status=WorkflowStatus.RUNNING
+                (
+                    Q(taskperformer__group__users__id=user_id) |
+                    Q(taskperformer__user_id=user_id)
+                ) &
+                Q(
+                    workflow__current_task=F('number'),
+                    status=TaskStatus.ACTIVE,
+                    workflow__status=WorkflowStatus.RUNNING
+                )
             ) & ~Q(
                 taskperformer__directly_status=DirectlyStatus.DELETED
             )
@@ -559,18 +570,26 @@ class TemplateDraftQuerySet(BaseQuerySet):
                   ptd.id,
                   draft,
                   jsonb_array_elements(draft->'tasks') as task,
-                  jsonb_array_elements(
-                    draft->'template_owners'
-                  ) AS template_owners
-                FROM processes_templatedraft ptd JOIN processes_template pt
-                  ON pt.id = ptd.template_id
-                    AND pt.account_id = %(account_id)s
+                  jsonb_array_elements(draft->'owners') AS owners
+                FROM processes_templatedraft ptd
+                  JOIN processes_template pt
+                    ON pt.id = ptd.template_id
+                      AND pt.account_id = %(account_id)s
                 WHERE ptd.is_deleted IS FALSE
+                AND draft IS NOT NULL
+                AND draft ? 'tasks'
+                AND jsonb_typeof(draft->'tasks')='array'
+                AND draft ? 'owners'
+                AND jsonb_typeof(draft->'owners')='array'
               ) tasks
             WHERE
-              task->'raw_performers' @>
-                '[{"source_id":%(user_id)s,"type":"user"}]'
-                OR template_owners::text = '%(user_id)s'
+              (
+                jsonb_typeof(task->'raw_performers')='array'
+                AND task->'raw_performers' @>
+                '[{"source_id": "%(user_id)s", "type":"user"}]'
+              ) OR (
+                owners @> '{"source_id": "%(user_id)s","type":"user"}'
+            )
             """,
             params={'user_id': user_id, 'account_id': account_id}
         )
@@ -590,6 +609,9 @@ class TaskPerformerQuerySet(BaseHardQuerySet):
     def by_user(self, user_id):
         return self.filter(user_id=user_id)
 
+    def by_user_or_group(self, user_id):
+        return self.filter(Q(user_id=user_id) | Q(group__users__id=user_id))
+
     def completed(self):
         return self.filter(is_completed=True)
 
@@ -605,8 +627,40 @@ class TaskPerformerQuerySet(BaseHardQuerySet):
     def exclude_directly_deleted(self):
         return self.exclude(directly_status=DirectlyStatus.DELETED)
 
+    def user_is_subscriber(self):
+        return self.filter(
+            Q(user__is_complete_tasks_subscriber=True) |
+            Q(group__users__is_complete_tasks_subscriber=True)
+        ).distinct()
+
+    def get_user_ids_set(self):
+        direct_user_ids = self.filter(
+            user__type=UserType.USER
+        ).values_list('user_id', flat=True)
+        group_user_ids = (
+            self.filter(group__users__type=UserType.USER)
+            .values_list('group__users__id', flat=True)
+        )
+        result = set(direct_user_ids).union(set(group_user_ids))
+        return result
+
+    def get_user_emails_and_ids_set(self):
+        direct_users = self.filter(
+            user__type=UserType.USER
+        ).values_list('user_id', 'user__email')
+        group_users = (
+            self.filter(group__users__type=UserType.USER)
+            .values_list('group__users__id', 'group__users__email')
+        )
+        result = set(direct_users).union(set(group_users))
+        return result
+
+    def group_ids(self):
+        qst = self.filter(type='group').values_list('group_id', flat=True)
+        return tuple(elem for elem in qst)
+
     def user_ids(self):
-        qst = self.values_list('user_id', flat=True)
+        qst = self.filter(type='user').values_list('user_id', flat=True)
         return tuple(elem for elem in qst)
 
     def user_ids_set(self) -> set:
@@ -617,7 +671,18 @@ class TaskPerformerQuerySet(BaseHardQuerySet):
         return self.filter(user__type=UserType.GUEST)
 
     def users(self):
-        return self.filter(user__type=UserType.USER)
+        direct_users = self.filter(
+            user__isnull=False,
+            user__type=UserType.USER
+        )
+        group_users = (
+            self.filter(group__isnull=False)
+            .filter(
+                group__users__isnull=False,
+                group__users__type=UserType.USER
+            )
+        )
+        return (direct_users | group_users).distinct()
 
 
 class ChecklistTemplateQuerySet(BaseQuerySet):
@@ -690,6 +755,9 @@ class WorkflowEventQuerySet(AccountBaseQuerySet):
 
     def on_workflow(self, workflow_id: int):
         return self.filter(workflow_id=workflow_id)
+
+    def on_task(self, task_id: int):
+        return self.filter(task_id=task_id)
 
     def highlights(
         self,

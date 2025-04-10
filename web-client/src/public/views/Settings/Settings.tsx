@@ -20,7 +20,7 @@ export const Settings = ({ match }: RouteComponentProps) => {
     <SettingsLayout>
       <React.Suspense fallback={<div className="loading" />}>
         <Switch>
-          <Redirect exact from={`${match.url}/`} to={ERoutes.Login} />
+          <Redirect exact from={`${match.url}/`} to={ERoutes.Profile} />
           <Route path={ERoutes.AccountSettings} component={AccountSettings} />
           <Route path={ERoutes.Profile} component={UserProfile} />
           <Redirect to={ERoutes.Error} />

@@ -217,6 +217,13 @@ export const TENANT_NAME_RULES: IRule[] = [
   },
 ];
 
+export const GROUP_NAME_RULES: IRule[] = [
+  {
+    message: 'validation.group-name-to-long',
+    isInvalid: (value) => value.length > 255,
+  },
+];
+
 export const validateFieldCreator =
   (rules: IRule[]) =>
     (value: any): string => {
@@ -243,3 +250,4 @@ export const validateRegistrationPassword = validateFieldCreator(REGISTRATION_PA
 export const validateDelayField = validateFieldCreator(DELAY_RULES);
 export const validateCheckboxAndRadioField = validateFieldCreator(CHECKBOX_AND_RADIO_FIELDS_RULUES);
 export const validateTenantName = validateFieldCreator(TENANT_NAME_RULES);
+export const validateGroupName = validateFieldCreator(GROUP_NAME_RULES);

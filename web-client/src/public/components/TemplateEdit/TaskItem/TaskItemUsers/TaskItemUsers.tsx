@@ -2,7 +2,7 @@
 /* prettier-ignore */
 import * as React from 'react';
 
-import { Avatar } from '../../../UI/Avatar';
+import { Avatar, TAvatarUser } from '../../../UI/Avatar';
 import { isArrayWithItems } from '../../../../utils/helpers';
 import { ETaskPerformerType, ITemplateTask, ITemplateTaskPerformer } from '../../../../types/template';
 import { UserData } from '../../../UserData';
@@ -52,7 +52,7 @@ export function TaskItemUsers({ task, maxUsers = MAX_SHOW_USERS, onClick }: ITas
         );
       },
       [ETaskPerformerType.UserGroup]: (performer: ITemplateTaskPerformer) => {
-        return <Avatar size="sm" containerClassName={styles['card-user']} isEmpty />;
+        return <Avatar size="sm" withTooltip user={{...performer, firstName: performer.label} as unknown as TAvatarUser} containerClassName={styles['card-user']} />;
       },
       [ETaskPerformerType.WorkflowStarter]: () => {
         return <Avatar size="sm" containerClassName={styles['card-user']} isEmpty />;

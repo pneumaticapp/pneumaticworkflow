@@ -26,7 +26,7 @@ describe('registerUser', () => {
     expect(result).toEqual('OK');
     expect(commonRequest).toHaveBeenCalledWith('registerUrl', {
       method: 'POST',
-      body: mapRequestBody(userData),
+      data: mapRequestBody(userData),
       headers: {
         'Content-Type': 'application/json',
       },

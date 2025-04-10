@@ -1,5 +1,4 @@
 import re
-from django.db.models import Q
 from django.conf import settings
 from rest_framework.permissions import BasePermission
 from pneumatic_backend.processes.messages.workflow import (
@@ -7,7 +6,6 @@ from pneumatic_backend.processes.messages.workflow import (
 )
 from pneumatic_backend.processes.messages.template import (
     MSG_PT_0023,
-    MSG_PT_0024,
 )
 from pneumatic_backend.processes.models import (
     Template,
@@ -19,8 +17,6 @@ from pneumatic_backend.processes.models import (
 from pneumatic_backend.accounts.enums import UserType
 from pneumatic_backend.processes.queries import (
     WorkflowCurrentTaskUserPerformerQuery,
-    TaskWorkflowMemberQuery,
-    TemplateWorkflowMemberQuery,
 )
 from pneumatic_backend.executor import RawSqlExecutor
 
@@ -37,31 +33,19 @@ class TemplateOwnerPermission(BasePermission):
         except (ValueError, TypeError):
             return False
         else:
-            tempalate_owners_ids = Template.objects.filter(
-                id=template_id
-            ).get_owners_as_users()
+            template_owner_qst = (
+                Template.objects
+                .by_id(template_id)
+                .on_account(request.user.account_id)
+                .with_template_owner(request.user.id)
+            )
             return (
-                request.user.is_account_owner or
-                request.user.id in tempalate_owners_ids
+                request.user.is_account_owner
+                or template_owner_qst.exists()
             )
 
 
-class TemplateWorkflowMemberPermission(BasePermission):
-
-    def has_permission(self, request, view):
-        try:
-            template_id = int(view.kwargs.get('pk'))
-        except (ValueError, TypeError):
-            return False
-        else:
-            query = TemplateWorkflowMemberQuery(
-                user=request.user,
-                template_id=template_id
-            )
-            return RawSqlExecutor.exists(*query.get_sql())
-
-
-class WorkflowTemplateOwnerPermission(BasePermission):
+class WorkflowOwnerPermission(BasePermission):
 
     """ For workflow details API """
 
@@ -71,21 +55,43 @@ class WorkflowTemplateOwnerPermission(BasePermission):
         except (ValueError, TypeError):
             return False
         else:
-            return request.user.is_account_owner or Workflow.objects.filter(
-                Q(
-                    Q(
-                        is_legacy_template=True,
-                        workflow_starter_id=request.user.id
-                    ) | Q(
-                        owners=request.user
-                    )
-                ),
+            workflow_owner_qst = Workflow.objects.filter(
+                owners=request.user,
                 pk=workflow_id,
                 account_id=request.user.account_id,
-            ).exists()
+            )
+            return (
+                request.user.is_account_owner or
+                workflow_owner_qst.exists()
+            )
 
 
-class TaskTemplateOwnerPermission(BasePermission):
+class WorkflowMemberPermission(BasePermission):
+
+    """ Allow for account owner, guests and workflow members
+        Use for workflow API only  """
+
+    def has_permission(self, request, view):
+        try:
+            workflow_id = int(view.kwargs.get('pk'))
+        except (ValueError, TypeError):
+            return False
+        else:
+            if request.user.type != UserType.USER:
+                return True
+            workflow_member_qst = (
+                Workflow.objects
+                .by_id(workflow_id)
+                .on_account(request.user.account_id)
+                .filter(members=request.user.id)
+            )
+            return (
+                request.user.is_account_owner or
+                workflow_member_qst.exists()
+            )
+
+
+class TaskWorkflowOwnerPermission(BasePermission):
 
     """ For tasks details API """
 
@@ -95,46 +101,15 @@ class TaskTemplateOwnerPermission(BasePermission):
         except (ValueError, TypeError):
             return False
         else:
-            return request.user.is_account_owner or Task.objects.filter(
-                Q(
-                    Q(
-                        workflow__is_legacy_template=True,
-                        workflow__workflow_starter_id=request.user.id
-                    ) | Q(
-                        workflow__owners=request.user
-                    )
-                ),
+            workflow_owner_qst = Task.objects.filter(
+                workflow__owners=request.user,
                 pk=task_id,
                 account_id=request.user.account_id,
-            ).exists()
-
-
-class WorkflowMemberPermission(BasePermission):
-
-    """ Allow for account owner, guests and workflow members
-        Use for workflow API only  """
-
-    def has_permission(self, request, view):
-        user = request.user
-        if user.type == UserType.USER:
-            if user.is_account_owner:
-                return True
-            else:
-                workflow_id = view.kwargs.get('pk')
-                if workflow_id:
-                    try:
-                        workflow_id = int(workflow_id)
-                    except (ValueError, TypeError):
-                        return False
-                    else:
-                        return Workflow.members.through.objects.filter(
-                            user_id=user.id,
-                            workflow_id=workflow_id
-                        ).exists()
-                else:
-                    raise Exception(MSG_PT_0024)
-        else:
-            return True
+            )
+            return (
+                request.user.is_account_owner or
+                workflow_owner_qst.exists()
+            )
 
 
 class TaskWorkflowMemberPermission(BasePermission):
@@ -142,22 +117,23 @@ class TaskWorkflowMemberPermission(BasePermission):
     """ Use for task detail API only """
 
     def has_permission(self, request, view):
-        if request.user.type == UserType.USER:
-            if request.user.is_account_owner:
-                return True
-            else:
-                try:
-                    template_id = int(view.kwargs.get('pk'))
-                except (ValueError, TypeError):
-                    return False
-                else:
-                    query = TaskWorkflowMemberQuery(
-                        user=request.user,
-                        task_id=template_id
-                    )
-                    return RawSqlExecutor.exists(*query.get_sql())
+        try:
+            task_id = int(view.kwargs.get('pk'))
+        except (ValueError, TypeError):
+            return False
         else:
-            return True
+            if request.user.type != UserType.USER:
+                return True
+            workflow_member_qst = (
+                Task.objects
+                .by_id(task_id)
+                .on_account(request.user.account_id)
+                .filter(workflow__members=request.user.id)
+            )
+            return (
+                request.user.is_account_owner or
+                workflow_member_qst.exists()
+            )
 
 
 class UserTaskCompletePermission(BasePermission):
@@ -172,20 +148,24 @@ class UserTaskCompletePermission(BasePermission):
     """
 
     def has_permission(self, request, view):
-        user = request.user
-        if user.type == UserType.USER:
-            if user.is_account_owner:
-                return True
-            else:
-                query = WorkflowCurrentTaskUserPerformerQuery(
-                    user=user,
-                    workflow_id=view.kwargs['pk'],
-                    task_id=request.data.get('task_id'),
-                )
-                result = next(RawSqlExecutor.fetch(*query.get_sql()), None)
-                return bool(result)
+        try:
+            workflow_id = int(view.kwargs.get('pk'))
+            task_id = request.data.get('task_id')
+            task_id = int(task_id) if task_id else None
+        except (ValueError, TypeError):
+            return False
         else:
-            return True
+            if request.user.type != UserType.USER:
+                return True
+            if request.user.is_account_owner:
+                return True
+            query = WorkflowCurrentTaskUserPerformerQuery(
+                user=request.user,
+                workflow_id=workflow_id,
+                task_id=task_id,
+            )
+            result = next(RawSqlExecutor.fetch(*query.get_sql()), None)
+            return bool(result)
 
 
 class GuestWorkflowPermission(BasePermission):
@@ -225,6 +205,7 @@ class GuestTaskPermission(BasePermission):
         request.task_id exists only for guests """
 
     task_urls_pattern = r'^\/v2\/tasks\/(?P<task_id>\d+)\/?$'
+    events_urls_pattern = r'^\/v2\/tasks\/(?P<task_id>\d+)\/events\/?$'
     checklists_urls_pattern = (
         r'^\/v2\/tasks\/checklists\/(?P<checklist_id>\d+)'
         r'(\/|(\/(un)?mark\/?))?$'
@@ -236,6 +217,15 @@ class GuestTaskPermission(BasePermission):
             /v2/tasks/<task_id:int> """
 
         match = re.match(self.task_urls_pattern, request.path)
+        if match is None:
+            return False
+        return int(match.group('task_id')) == request.task_id
+
+    def _request_to_events(self, request):
+        """ Allow requests to the events endpoint:
+            /v2/tasks/<task_id:int>/events """
+
+        match = re.match(self.events_urls_pattern, request.path)
         if match is None:
             return False
         return int(match.group('task_id')) == request.task_id
@@ -263,6 +253,7 @@ class GuestTaskPermission(BasePermission):
             return (
                 self._request_to_task(request)
                 or self._request_to_checklist(request)
+                or self._request_to_events(request)
             )
         return True
 

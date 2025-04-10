@@ -217,10 +217,7 @@ class TestUser:
         # arrange
         account = create_test_account()
         user = create_test_user(account=account)
-        invited_user = create_invited_user(
-            user=user,
-        )
-
+        invited_user = create_invited_user(user=user)
         user_qs = UserModel.objects.filter(id=invited_user.id)
 
         # act

@@ -336,10 +336,6 @@ msgstr "Вам нужно возобновить процесс, прежде ч
 msgid "Permission denied."
 msgstr "Доступ запрещен."
 
-#: pneumatic_backend/processes/messages/workflow.py:42
-msgid "Filters 'with_tasks_in_progress' and 'is_running_workflows' cannot be used at the same time."
-msgstr "Фильтры 'with_tasks_in_progress' и 'is_running_workflows' не могут быть использованы одновременно."
-
 #. Translators:
 #: pneumatic_backend/processes/messages/workflow.py:46
 msgid "Please fill in the required fields."
@@ -602,5 +598,9 @@ msgid "The task \"{step_name}\" cannot be set to return to itself."
 msgstr "Задача \"{step_name}\" не может быть возвращена на саму себя."
 
 #: pneumatic_backend/processes/messages/workflow.py:188
+msgid "There is no group with the specified ID."
+msgstr "Группа с указанным ID не найдена."
+
+#: pneumatic_backend/processes/messages/workflow.py:189
 msgid "You must supply a comment."
 msgstr "Необходимо оставить комментарий."

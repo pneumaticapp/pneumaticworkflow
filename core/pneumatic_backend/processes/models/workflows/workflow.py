@@ -260,17 +260,15 @@ class Workflow(
         result = True
         current_task = self.current_task_instance
         performers = current_task.taskperformer_set.exclude_directly_deleted()
-        is_performer = (
-            user.id in performers.values_list(
-                'user_id', flat=True
-            )
-        )
+        is_performer = user.id in performers.values_list('user_id', flat=True)
         if not is_performer:
             if not self.is_legacy_template:
-                is_template_owner = (
-                    user in self.template.template_owners.all()
+                list_template_owners_ids = (
+                    Template.objects
+                    .filter(id=self.template.id)
+                    .get_owners_as_users()
                 )
-                if not is_template_owner:
+                if user.id not in list_template_owners_ids:
                     is_account_owner = (
                         user.is_account_owner
                         and user.account_id == self.account_id

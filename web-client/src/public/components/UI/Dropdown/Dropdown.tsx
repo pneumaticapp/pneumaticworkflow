@@ -1,15 +1,13 @@
 import React, { useState } from 'react';
 import classnames from 'classnames';
-import { UncontrolledDropdown, DropdownToggle } from 'reactstrap';
+import { UncontrolledDropdown, DropdownToggle, DropdownMenu } from 'reactstrap';
 import OutsideClickHandler from 'react-outside-click-handler';
 
 import { ConfirmableDropdownItem, TDropdownItemState } from './ConfirmableDropdownItem';
-import { DefaultDropdownMenu } from './DefaultDropdownMenu';
 import { isArrayWithItems } from '../../../utils/helpers';
 import { ArrowRightIcon } from '../../icons';
 
 import styles from './Dropdown.css';
-import { IDropdownMenuProps } from '../../../types/workflow';
 
 type TDropdownItemColor = 'black' | 'green' | 'red' | 'orange';
 
@@ -18,7 +16,8 @@ export type TDropdownOption = {
   withConfirmation?: boolean;
   initialConfirmationState?: TDropdownItemState;
   withUpperline?: boolean;
-  subOptions?: TDropdownOption[];
+  subOptions?: TDropdownOption[] | TDropdownOption;
+  customSubOption?: React.ReactElement;
   color?: TDropdownItemColor;
   isHidden?: boolean;
   size?: 'lg' | 'sm';
@@ -28,7 +27,7 @@ export type TDropdownOption = {
 };
 
 export interface IDropdownProps {
-  options: TDropdownOption[];
+  options: TDropdownOption[] | TDropdownOption;
   direction?: 'right' | 'left';
   className?: string;
   toggleProps?: { [key in string]: string };
@@ -65,10 +64,30 @@ export function Dropdown({
     setIsOpen((prev) => !prev);
   };
 
-  const renderOptions = (items: TDropdownOption[], level = 0): React.ReactNode => {
-    const renderedOptions = items.map((option, index) => {
+  const closeDropdown = () => {
+    setIsOpen(false);
+  };
+
+  const renderOptions = (items: TDropdownOption[] | TDropdownOption, level = 0): React.ReactNode => {
+    if (!Array.isArray(items)) {
+      const Menu = CustomDropdownMenu || DefaultDropdownMenu;
+
+      return (
+        <Menu
+          isWide
+          renderedOptions={items.customSubOption}
+          level={level}
+          direction={direction}
+          className={menuClassName}
+          renderMenuContent={renderMenuContent}
+        />
+      );
+    }
+
+    const renderedOptions = items.map((option) => {
       const {
         label,
+        customSubOption,
         color,
         subOptions,
         withUpperline,
@@ -87,52 +106,57 @@ export function Dropdown({
           return (
             <>
               <span className={styles['label']}>{label}</span>
-
               {Icon && <Icon className={styles['dropdown-item-icon']} />}
             </>
           );
         }
-
         return label;
       };
 
-      if (!isArrayWithItems(subOptions)) {
-        const stringLabel = typeof label === 'string' ? label : index;
-
+      if (customSubOption || (subOptions && Array.isArray(subOptions) && isArrayWithItems(subOptions))) {
         return (
-          <div key={stringLabel}>
-            {withUpperline && <hr className={styles['line']} />}
-            <ConfirmableDropdownItem
-              {...(onClick && { onClick: () => onClick?.(() => setIsOpen(false)) })}
-              cssModule={{
-                'dropdown-item': classnames(styles['dropdown-item'], getDropdownItemColorClass(color)),
-              }}
-              withConfirmation={withConfirmation}
-              initialConfirmationState={initialConfirmationState}
-              closeDropdown={() => setIsOpen(false)}
-              toggle={false}
-              className={optionClassName}
-            >
-              {renderOptionContent()}
-            </ConfirmableDropdownItem>
-          </div>
+          <UncontrolledDropdown key={customSubOption?.props.uniqKey} direction="right">
+            <DropdownToggle tag="button" className={styles['dropdown-item']}>
+              <span className={styles['label']}>{label}</span>
+              <ArrowRightIcon className={styles['dropdown-item-icon']} />
+            </DropdownToggle>
+            {subOptions ? (
+              renderOptions(subOptions, level + 1)
+            ) : (
+              <DefaultDropdownMenu
+                className={styles['dropdown__custom-sub-options']}
+                renderedOptions={customSubOption}
+                isWide
+                level={level + 1}
+              />
+            )}
+          </UncontrolledDropdown>
         );
       }
 
       return (
-        <UncontrolledDropdown direction="right">
-          <DropdownToggle tag="button" className={styles['dropdown-item']}>
-            <span className={styles['label']}>{label}</span>
-            <ArrowRightIcon className={styles['dropdown-item-icon']} />
-          </DropdownToggle>
-
-          {renderOptions(subOptions, level + 1)}
-        </UncontrolledDropdown>
+        <div key={label?.toString()}>
+          {withUpperline && <hr className={styles['line']} />}
+          <ConfirmableDropdownItem
+            {...(onClick && { onClick: () => {
+              onClick?.(() => setIsOpen(false));
+              closeDropdown();
+            }})}
+            cssModule={{
+              'dropdown-item': classnames(styles['dropdown-item'], getDropdownItemColorClass(color)),
+            }}
+            withConfirmation={withConfirmation}
+            initialConfirmationState={initialConfirmationState}
+            closeDropdown={closeDropdown}
+            toggle={false}
+            className={optionClassName}
+          >
+            {renderOptionContent()}
+          </ConfirmableDropdownItem>
+        </div>
       );
     });
-
     const isWide = items.every((item) => item.size === 'lg');
-
     const Menu = CustomDropdownMenu || DefaultDropdownMenu;
 
     return (
@@ -163,5 +187,39 @@ export function Dropdown({
         {renderOptions(options)}
       </UncontrolledDropdown>
     </OutsideClickHandler>
+  );
+}
+
+export interface IDropdownMenuProps {
+  renderedOptions: React.ReactNode;
+  isWide: boolean;
+  level: number;
+  direction?: 'right' | 'left';
+  className?: string;
+  renderMenuContent?(renderedOptions: React.ReactNode): React.ReactNode;
+}
+
+export function DefaultDropdownMenu({
+  renderedOptions,
+  isWide,
+  level,
+  direction = 'right',
+  className,
+  renderMenuContent,
+}: IDropdownMenuProps) {
+  const content = renderMenuContent?.(renderedOptions) || renderedOptions;
+
+  return (
+    <DropdownMenu
+      cssModule={{
+        'dropdown-menu': classnames(styles['dropdown-menu'], isWide && styles['dropdown-menu_wide']),
+        show: styles['dropdown-menu_show'],
+      }}
+      right={level === 0 && direction === 'right'}
+      className={className}
+      modifiers={{ preventOverflow: { boundariesElement: 'window' } }}
+    >
+      {content}
+    </DropdownMenu>
   );
 }

@@ -10,6 +10,7 @@ from pneumatic_backend.processes.enums import (
     OwnerType,
     TemplateType,
     WorkflowStatus,
+    TaskStatus,
 )
 from pneumatic_backend.payment.enums import BillingPeriod
 from pneumatic_backend.accounts.enums import (
@@ -18,15 +19,12 @@ from pneumatic_backend.accounts.enums import (
     LeaseLevel,
     Language,
     UserDateFormat,
-    UserFirstDayWeek,
+    UserFirstDayWeek, UserInviteStatus,
 )
 from pneumatic_backend.accounts.models import (
     Account,
     UserInvite,
     AccountSignupData,
-)
-from pneumatic_backend.processes.models.templates.owner import (
-    TemplateOwner
 )
 from pneumatic_backend.processes.enums import WorkflowEventType
 from pneumatic_backend.processes.api_v2.serializers.template.template import (
@@ -48,6 +46,7 @@ from pneumatic_backend.processes.models import (
     WorkflowEvent,
     TaskField,
     Task,
+    TemplateOwner
 )
 from pneumatic_backend.processes.api_v2.services.task.task import TaskService
 from pneumatic_backend.accounts.models import UserGroup
@@ -142,7 +141,13 @@ def create_test_user(
     language: Language.LITERALS = settings.LANGUAGE_CODE,
     date_fmt: str = UserDateFormat.PY_USA_12,
     date_fdw: int = UserFirstDayWeek.SUNDAY,
-):
+) -> UserModel:
+
+    """ Instead of this method use:
+        - create_test_owner
+        - create_test_admin
+        - create_test_not_admin """
+
     account = account or create_test_account()
     return UserModel.objects.create(
         account=account,
@@ -164,6 +169,27 @@ def create_test_user(
     )
 
 
+def create_test_owner(**kwargs) -> UserModel:
+    kwargs['is_account_owner'] = True
+    kwargs['is_admin'] = True
+    kwargs['email'] = kwargs.get('email', 'owner@pneumatic.app')
+    return create_test_user(**kwargs)
+
+
+def create_test_admin(*args, **kwargs) -> UserModel:
+    kwargs['is_account_owner'] = False
+    kwargs['is_admin'] = True
+    kwargs['email'] = kwargs.get('email', 'admin@pneumatic.app')
+    return create_test_user(**kwargs)
+
+
+def create_test_not_admin(*args, **kwargs) -> UserModel:
+    kwargs['is_account_owner'] = False
+    kwargs['is_admin'] = False
+    kwargs['email'] = kwargs.get('email', 'not_admin@pneumatic.app')
+    return create_test_user(**kwargs)
+
+
 def create_test_guest(
     email: str = 'guest@pneumatic.app',
     account: Optional[Account] = None,
@@ -181,22 +207,28 @@ def create_invited_user(
     is_admin: bool = True,
     first_name='',
     last_name='',
+    status: UserStatus = UserStatus.INVITED
 ):
     invited_user = UserModel.objects.create(
         account=user.account,
         email=email,
         phone='79999999999',
-        status=UserStatus.INVITED,
+        status=status,
         is_admin=is_admin,
         first_name=first_name,
         last_name=last_name
     )
-    UserInvite.objects.create(
+    user_invite = UserInvite(
         email=email,
         account=user.account,
         invited_by=user,
         invited_user=invited_user
     )
+    if status == UserStatus.ACTIVE:
+        user_invite.status = UserInviteStatus.ACCEPTED
+    else:
+        user_invite.status = UserInviteStatus.PENDING
+    user_invite.save()
     return invited_user
 
 
@@ -255,22 +287,12 @@ def create_test_template(
     else:
         kickoff.template = template
         kickoff.save()
-    if account.billing_plan == BillingPlanType.FREEMIUM:
-        user_ids = account.get_user_ids(include_invited=True)
-        for user_id in user_ids:
-            TemplateOwner.objects.create(
-                template=template,
-                account=account,
-                type=OwnerType.USER,
-                user_id=user_id,
-            )
-    else:
-        TemplateOwner.objects.create(
-            template=template,
-            account=account,
-            type=OwnerType.USER,
-            user_id=user.id,
-        )
+    TemplateOwner.objects.create(
+        template=template,
+        account=account,
+        type=OwnerType.USER,
+        user_id=user.id,
+    )
     if tasks_count:
         for number in range(1, tasks_count + 1):
             data = {
@@ -377,7 +399,93 @@ def create_test_workflow(
         if task.number == 1:
             task.date_first_started = timezone.now()
             task.date_started = task.date_first_started
-            task.save(update_fields=['date_first_started', 'date_started'])
+            task.status = TaskStatus.ACTIVE
+            task.save(
+                update_fields=['date_first_started', 'date_started', 'status']
+            )
+        task.update_performers()
+        workflow.members.add(*task.performers.all())
+    return workflow
+
+
+def create_nonlinear_workflow(
+    user: UserModel,
+    template: Optional[Template] = None,
+    with_delay: bool = False,
+    tasks_count: int = 3,
+    is_external: bool = False,
+    is_urgent: bool = False,
+    finalizable: bool = False,
+    name: Optional[str] = None,
+    name_template: Optional[str] = None,
+    status: WorkflowStatus = WorkflowStatus.RUNNING,
+    due_date: Optional[datetime] = None,
+    ancestor_task: Optional[Task] = None
+) -> Workflow:
+
+    # Run all tasks
+
+    if template is None:
+        template = create_test_template(
+            user=user,
+            with_delay=with_delay,
+            tasks_count=tasks_count,
+            is_active=True,
+            is_public=is_external,
+            finalizable=finalizable
+        )
+    workflow_starter = None if is_external else user
+    if status == WorkflowStatus.DONE:
+        date_completed = timezone.now() + timedelta(hours=1)
+    else:
+        date_completed = None
+    workflow = Workflow.objects.create(
+        name=name or template.name,
+        name_template=name_template,
+        description=template.description,
+        account=template.account,
+        tasks_count=template.tasks_count,
+        template=template,
+        status=status,
+        status_updated=timezone.now(),
+        date_completed=date_completed,
+        workflow_starter=workflow_starter,
+        is_external=is_external,
+        is_urgent=is_urgent,
+        finalizable=template.finalizable,
+        due_date=due_date,
+        ancestor_task=ancestor_task,
+    )
+    workflow.members.add(
+        *set(template.template_owners.values_list('id', flat=True))
+    )
+    KickoffValue.objects.create(
+        workflow=workflow,
+        template_id=template.kickoff_instance.id,
+        account=workflow.account
+    )
+    for task_template in template.tasks.all():
+        task_service = TaskService(user=user)
+        task = task_service.create(
+            instance_template=task_template,
+            workflow=workflow
+        )
+
+        # emulate run workflow
+        task.date_first_started = timezone.now()
+        task.date_started = task.date_first_started
+        task.save(update_fields=['date_first_started', 'date_started'])
+        if task.number == 1:
+            task.date_first_started = timezone.now()
+            task.date_started = task.date_first_started
+            task.status = TaskStatus.ACTIVE
+            task.save(
+                update_fields=[
+                    'date_first_started',
+                    'date_started',
+                    'status'
+                ]
+            )
         task.update_performers()
         workflow.members.add(*task.performers.all())
     return workflow
@@ -386,7 +494,12 @@ def create_test_workflow(
 def get_workflow_create_data(user):
     return {
         'name': 'Test workflow',
-        'template_owners': [user.id],
+        'owners': [
+            {
+                'type': OwnerType.USER,
+                'source_id': user.id
+            },
+        ],
         'description': 'Test workflow description',
         'kickoff': {
             'fields': [
@@ -454,6 +567,8 @@ def create_test_attachment(
     )
     if event:
         attachment.event = event
+        event.with_attachments = True
+        event.save()
     if field:
         attachment.field = field
     attachment.save()
@@ -481,12 +596,11 @@ def create_test_event(
 
 
 def create_test_group(
-    user: UserModel = None,
+    user: UserModel,
     name: str = 'Group_test',
     photo: str = None,
     users: Optional[List[UserModel]] = None,
 ):
-    user = user or create_test_user()
     group = UserGroup.objects.create(
         name=name,
         photo=photo,

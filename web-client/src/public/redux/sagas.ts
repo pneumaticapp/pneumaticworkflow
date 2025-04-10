@@ -23,6 +23,7 @@ import { rootSaga as menuSagas } from './menu/saga';
 import { rootSaga as webhooksSagas } from './webhooks/saga';
 import { rootSaga as tenantsSagas } from './tenants/saga';
 import { rootSaga as pagesSagas } from './pages/saga';
+import { rootSaga as groupsSagas } from './groups/saga';
 
 export function* rootSaga() {
   while (true) {
@@ -43,6 +44,7 @@ export function* rootSaga() {
       fork(runWorkflowModalSagas),
       fork(tasksSagas),
       fork(teamSagas),
+      fork(groupsSagas),
       fork(menuSagas),
       fork(webhooksSagas),
       fork(tenantsSagas),

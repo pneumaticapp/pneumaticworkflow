@@ -1,6 +1,6 @@
-from django.db.models import Prefetch
+from django.db.models import Prefetch, Q
 from typing_extensions import List
-from django.db import transaction
+from django.db import transaction, DataError
 from django.http import Http404
 from django.conf import settings
 from rest_framework.viewsets import GenericViewSet
@@ -66,7 +66,6 @@ from pneumatic_backend.processes.queries import (
 )
 from pneumatic_backend.processes.permissions import (
     TemplateOwnerPermission,
-    TemplateWorkflowMemberPermission,
 )
 from pneumatic_backend.analytics.services import AnalyticService
 from pneumatic_backend.processes.api_v2.services import (
@@ -145,16 +144,10 @@ class TemplateViewSet(
             'titles',
             'titles_by_events',
             'steps',
+            'fields',
         ):
             return (
                 UserIsAuthenticated(),
-                ExpiredSubscriptionPermission(),
-                BillingPlanPermission(),
-            )
-        elif self.action == 'fields':
-            return (
-                UserIsAuthenticated(),
-                TemplateWorkflowMemberPermission(),
                 ExpiredSubscriptionPermission(),
                 BillingPlanPermission(),
             )
@@ -186,11 +179,13 @@ class TemplateViewSet(
     def get_queryset(self):
         user = self.request.user
         qst = Template.objects.on_account(user.account_id).exclude_onboarding()
-        if self.action == 'steps':
-            if not self.request.user.is_account_owner:
-                qst = qst.with_template_owners(user.id)
-        elif self.action == 'list':
-            qst = qst.with_template_owners(user.id)
+        if self.action == 'fields':
+            # Template owner (if not workflows) or Workflow Member
+            qst = qst.filter(
+                Q(owners__type='user', owners__user_id=user.id) |
+                Q(owners__type='group', owners__group__users__id=user.id) |
+                Q(workflows__members=user.id)
+            ).distinct()
         return self.prefetch_queryset(qst)
 
     def prefetch_queryset(self, queryset, extra_fields: List[str] = None):
@@ -403,11 +398,12 @@ class TemplateViewSet(
             raise_validation_error(ex.message)
 
         workflow_action_service = WorkflowActionService(
+            workflow=workflow,
             user=request.user,
             is_superuser=request.is_superuser,
             auth_type=request.token_type
         )
-        workflow_action_service.start_workflow(workflow)
+        workflow_action_service.start_workflow()
         slz = WorkflowDetailsSerializer(instance=workflow)
         return self.response_ok(slz.data)
 
@@ -476,23 +472,23 @@ class TemplateViewSet(
             Params:
                 - with_tasks_in_progress: bool - filter tasks by running
                 workflows where the user is performer
-                (not necessarily template owner).
-                - is_running_workflows: bool - filter tasks where there are
-                running workflows are on this task """
+                (not necessarily template owner). """
 
         filter_slz = TemplateStepFilterSerializer(data=request.GET)
         filter_slz.is_valid(raise_exception=True)
-        data = filter_slz.validated_data
         self.queryset = TaskTemplate.objects.execute_raw(
             TemplateStepsQuery(
                 user=request.user,
                 template_id=pk,
-                with_tasks_in_progress=data.get('with_tasks_in_progress'),
-                is_running_workflows=data.get('is_running_workflows'),
+                **filter_slz.validated_data,
             )
         )
         serializer = self.get_serializer(self.queryset, many=True)
-        return self.response_ok(serializer.data)
+        try:
+            data = serializer.data
+        except DataError:
+            raise Http404
+        return self.response_ok(data)
 
     @action(methods=['GET'], detail=True, url_path='fields')
     def fields(self, *args, **kwargs):

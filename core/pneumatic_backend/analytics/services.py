@@ -816,7 +816,6 @@ class AnalyticService:
         user: UserModel,
         duration: timedelta,
         workflow: Workflow,
-        task: TaskTemplate,
         is_superuser: bool,
         auth_type: AuthTokenType,
     ) -> bool:
@@ -836,7 +835,6 @@ class AnalyticService:
                 'workflow_name': workflow.name,
                 'template_id': workflow.template_id,
                 'template_name': workflow.get_template_name(),
-                'task_number': task.number,
                 'category': EventCategory.workflows,
                 'auth_type': auth_type,
                 'label': Label.delayed,

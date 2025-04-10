@@ -54,6 +54,8 @@ export const getSelectedGenericTemplates = (state: IApplicationState): Pick<IGen
   selected: state.genericTemplates.selected,
 });
 
+export const getGroupsStore = ({ groups }: IApplicationState) => groups;
+
 export const getUsers = (state: IApplicationState): TUserListItem[] => state.accounts.users;
 
 export const getUserApiKey = (state: IApplicationState) => state.integrations.apiKey;

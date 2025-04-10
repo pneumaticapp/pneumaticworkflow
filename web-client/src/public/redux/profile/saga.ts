@@ -1,5 +1,3 @@
-/* eslint-disable */
-/* prettier-ignore */
 import { all, fork, put, takeLatest } from 'redux-saga/effects';
 
 import {

@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React, { ComponentProps, useRef } from 'react';
 import { useIntl } from 'react-intl';
 
 import { TTaskVariable } from '../types';
@@ -16,8 +16,8 @@ export interface ITaskDescriptionEditorProps {
   listVariables: TTaskVariable[];
   templateVariables: TTaskVariable[];
   value?: string;
-  handleChange: React.ComponentProps<typeof RichEditor>['handleChange'];
-  handleChangeChecklists: React.ComponentProps<typeof RichEditor>['handleChangeChecklists'];
+  handleChange: ComponentProps<typeof RichEditor>['handleChange'];
+  handleChangeChecklists: ComponentProps<typeof RichEditor>['handleChangeChecklists'];
 }
 
 export function TaskDescriptionEditor({
@@ -28,7 +28,7 @@ export function TaskDescriptionEditor({
   handleChange,
   handleChangeChecklists,
 }: ITaskDescriptionEditorProps) {
-  const editor = React.useRef<RichEditor>(null);
+  const editor = useRef<RichEditor>(null);
   const { formatMessage } = useIntl();
 
   const handleInsertVariable = (apiName?: string) => (e: React.MouseEvent) => {
@@ -59,6 +59,7 @@ export function TaskDescriptionEditor({
       decorators={[variablesDecorator]}
       withChecklists
       accountId={accountId}
+      isInTaskDescriptionEditor
     >
       <VariableList
         variables={listVariables}

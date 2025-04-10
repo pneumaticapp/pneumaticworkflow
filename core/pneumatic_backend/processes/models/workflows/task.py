@@ -8,6 +8,7 @@ from django.db import models
 from pneumatic_backend.accounts.models import (
     AccountBaseMixin,
     Notification,
+    UserGroup
 )
 from pneumatic_backend.generics.managers import BaseSoftDeleteManager
 from pneumatic_backend.generics.models import SoftDeleteModel
@@ -25,9 +26,9 @@ from pneumatic_backend.processes.querysets import (
 from pneumatic_backend.processes.enums import (
     PerformerType,
     DirectlyStatus,
-    FieldType
+    FieldType,
+    TaskStatus,
 )
-
 
 UserModel = get_user_model()
 
@@ -54,9 +55,14 @@ class Task(
     )
     name = models.TextField()
     name_template = models.TextField()
+    status = models.CharField(
+        choices=TaskStatus.CHOICES,
+        max_length=50,
+        default=TaskStatus.PENDING
+    )
     description_template = models.TextField(null=True, blank=True)
-    is_completed = models.BooleanField(default=False)
-    is_skipped = models.BooleanField(default=False)
+    is_completed_deprecated = models.BooleanField(default=False)
+    is_skipped_deprecated = models.BooleanField(default=False)
     is_urgent = models.BooleanField(default=False)
     date_first_started = models.DateTimeField(
         null=True,
@@ -139,6 +145,7 @@ class Task(
                 'api_name': self.api_name,
                 'name': self.name,
                 'number': self.number,
+                'status': self.status,
                 'description': self.description,
                 'date_started_tsp': (
                     self.date_started.timestamp()
@@ -196,6 +203,7 @@ class Task(
         api_name: str,
         performer_type: PerformerType = PerformerType.USER,
         user: Optional[UserModel] = None,
+        group_id: Optional[int] = None,
         user_id: Optional[int] = None,
         field=None,  # Optional[TaskField]
     ):  # -> RawPerformer
@@ -217,12 +225,15 @@ class Task(
             result.user = user
         elif user_id:
             result.user_id = user_id
+        elif group_id:
+            result.group_id = group_id
         return result
 
     def add_raw_performer(
         self,
         user: Optional[UserModel] = None,
         user_id: Optional[int] = None,
+        group_id: Optional[int] = None,
         field=None,
         api_name: Optional[str] = None,
         performer_type: PerformerType = PerformerType.USER,
@@ -232,7 +243,7 @@ class Task(
             Optionally updates the performers after create raw performers """
 
         if performer_type != PerformerType.WORKFLOW_STARTER:
-            if not user and not user_id and not field:
+            if not group_id and not user and not user_id and not field:
                 raise Exception(
                     'Raw performer should be linked with field or user'
                 )
@@ -241,11 +252,15 @@ class Task(
             api_name=api_name,
             performer_type=performer_type,
             user=user,
+            group_id=group_id,
             user_id=user_id,
             field=field,
         )
         raw_performer.save()
         return raw_performer
+
+    def exclude_directly_deleted_taskperformer_set(self):
+        return self.taskperformer_set.exclude_directly_deleted()
 
     def get_default_performer(self) -> UserModel:
 
@@ -320,12 +335,16 @@ class Task(
         raw_performers_templates = ()
         if isinstance(task_template, TaskTemplate):
             raw_performers_templates = (
-                task_template.raw_performers.select_related('field')
+                task_template.raw_performers.select_related(
+                    'field',
+                    'group'
+                ).all()
             )
             raw_performers_templates = [{
                 'id': e.id,
                 'type': e.type,
                 'user_id': e.user_id,
+                'group_id': e.group_id,
                 'api_name': e.api_name,
                 'field': {
                     'api_name': e.field.api_name
@@ -371,7 +390,8 @@ class Task(
                 new_raw_performers.append(
                     self._get_raw_performer(
                         performer_type=raw_performer_template['type'],
-                        user_id=raw_performer_template['user_id'],
+                        user_id=raw_performer_template.get('user_id'),
+                        group_id=raw_performer_template.get('group_id'),
                         field=field,
                         api_name=raw_performer_template['api_name'],
                     )
@@ -387,7 +407,7 @@ class Task(
         self,
         raw_performer=None,
         restore_performers: bool = False,
-    ) -> Tuple[List[int], List[int]]:
+    ) -> Tuple[List[int], List[int], List[int]]:
 
         # TODO move to TaskService
 
@@ -409,19 +429,26 @@ class Task(
         if raw_performer:
             raw_performers = (raw_performer,)
         else:
-            raw_performers = self.raw_performers.select_related('field').all()
+            raw_performers = self.raw_performers.select_related(
+                'field',
+                'group'
+            ).all()
 
-        api_names, user_ids = defaultdict(list), defaultdict(list)
+        api_names, user_ids, group_ids = (
+            defaultdict(list),
+            defaultdict(list),
+            defaultdict(list)
+        )
         for raw_performer in raw_performers:
             if raw_performer.type == PerformerType.USER:
                 user_ids[raw_performer.user_id].append(raw_performer)
+            elif raw_performer.type == PerformerType.GROUP:
+                group_ids[raw_performer.group_id].append(raw_performer)
             elif raw_performer.type == PerformerType.FIELD:
                 api_names[raw_performer.field.api_name].append(raw_performer)
             elif raw_performer.type == PerformerType.WORKFLOW_STARTER:
                 user = self.get_default_performer()
-                user_ids[user.id].append(
-                    raw_performer
-                )
+                user_ids[user.id].append(raw_performer)
 
         if api_names:
             user_fields = self.workflow.get_fields(
@@ -437,9 +464,11 @@ class Task(
 
         raw_performers_for_update = []
         created_performers_user_ids = []
+        created_performers_group_ids = []
         if user_ids:
             for user_id, raw_performers_ in user_ids.items():
                 task_performer, created = TaskPerformer.objects.get_or_create(
+                    type=PerformerType.USER,
                     task_id=self.id,
                     user_id=user_id
                 )
@@ -466,7 +495,36 @@ class Task(
                             DirectlyStatus.NO_STATUS
                         )
                         task_performer.save(update_fields=('directly_status',))
-
+        if group_ids:
+            for group_id, raw_performers_ in group_ids.items():
+                task_performer, created = TaskPerformer.objects.get_or_create(
+                    type=PerformerType.GROUP,
+                    task_id=self.id,
+                    group_id=group_id
+                )
+                if created:
+                    created_performers_group_ids.append(group_id)
+                if task_performer.directly_status == DirectlyStatus.NO_STATUS:
+                    for raw_performer_ in raw_performers_:
+                        raw_performer_.task_performer_id = task_performer.id
+                        raw_performers_for_update.append(raw_performer_)
+                elif (
+                    task_performer.directly_status == DirectlyStatus.DELETED
+                    and restore_performers
+                ):
+                    restore_performer = False
+                    for raw_performer_ in raw_performers_:
+                        if raw_performer_.type == PerformerType.FIELD:
+                            raw_performer_.task_performer_id = (
+                                task_performer.id
+                            )
+                            raw_performers_for_update.append(raw_performer_)
+                            restore_performer = True
+                    if restore_performer:
+                        task_performer.directly_status = (
+                            DirectlyStatus.NO_STATUS
+                        )
+                        task_performer.save(update_fields=('directly_status',))
         if raw_performers_for_update:
             from pneumatic_backend.processes.models.workflows \
                 .raw_performer import RawPerformer
@@ -476,11 +534,18 @@ class Task(
             )
 
         deleted_performers_user_ids = self._delete_orphaned_performers()
+        users_in_groups = (
+            UserModel.objects
+            .get_users_in_groups(group_ids=group_ids)
+            .user_ids_set()
+        )
+        union_user_ids = list(set(user_ids).union(users_in_groups))
         Notification.objects.exclude_users(
-            user_ids
+            union_user_ids
         ).by_task(self.id).delete()
         return (
             created_performers_user_ids,
+            created_performers_group_ids,
             deleted_performers_user_ids
         )
 
@@ -506,6 +571,7 @@ class Task(
     def delete_raw_performer(
         self,
         user: Optional[UserModel] = None,
+        group: Optional[UserGroup] = None,
         field=None,
         performer_type: PerformerType = PerformerType.USER
     ):
@@ -517,6 +583,7 @@ class Task(
         deleted_count = super().delete_raw_performer(
             performer_type=performer_type,
             user=user,
+            group=group,
             field=field
         )
         if deleted_count:
@@ -551,6 +618,18 @@ class Task(
     def checklists_completed(self):
         return self.checklists_marked == self.checklists_total
 
+    @property
+    def is_pending(self):
+        return self.status == TaskStatus.PENDING
+
+    @property
+    def is_completed(self):
+        return self.status == TaskStatus.COMPLETED
+
+    @property
+    def is_skipped(self):
+        return self.status == TaskStatus.SKIPPED
+
     def __str__(self):
         return f'(Task {self.id}) {self.name}'
 
@@ -577,6 +656,7 @@ class TaskForList(
     is_urgent = models.BooleanField()
     due_date = models.DateTimeField(null=True)
     due_date_tsp = models.FloatField(null=True)
+    status = models.CharField(max_length=50)
 
     objects = BaseSoftDeleteManager.from_queryset(TasksQuerySet)()
 
@@ -640,11 +720,22 @@ class TaskPerformer(
 
     user = models.ForeignKey(
         UserModel,
-        on_delete=models.CASCADE
+        on_delete=models.CASCADE,
+        null=True,
+    )
+    group = models.ForeignKey(
+        UserGroup,
+        on_delete=models.CASCADE,
+        null=True,
     )
     task = models.ForeignKey(
         Task,
         on_delete=models.CASCADE
+    )
+    type = models.CharField(
+        max_length=100,
+        choices=PerformerType.choices,
+        default=PerformerType.USER,
     )
     directly_status = models.IntegerField(
         default=DirectlyStatus.NO_STATUS,

@@ -58,7 +58,12 @@ class TestCreateTemplateTask:
             path='/templates',
             data={
                 'name': 'Template',
-                'template_owners': [user.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                ],
                 'kickoff': {},
                 'is_active': True,
                 'tasks': [request_data]
@@ -138,7 +143,12 @@ class TestCreateTemplateTask:
             data={
                 'name': 'Template',
                 'is_active': True,
-                'template_owners': [user.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                ],
                 'kickoff': {
                     'fields': [
                         {
@@ -203,7 +213,12 @@ class TestCreateTemplateTask:
             data={
                 'name': 'Template',
                 'is_active': True,
-                'template_owners': [user.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                ],
                 'kickoff': {},
                 'tasks': []
             }
@@ -231,7 +246,12 @@ class TestCreateTemplateTask:
             data={
                 'name': 'Template',
                 'is_active': True,
-                'template_owners': [user.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                ],
                 'kickoff': {},
                 'tasks': [
                     {
@@ -283,7 +303,12 @@ class TestCreateTemplateTask:
         request_data = {
             'is_active': True,
             'name': 'Template',
-            'template_owners': [user.id],
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id
+                },
+            ],
             'description': 'Test description',
             'kickoff': {
                 'description': 'Desc',
@@ -369,7 +394,12 @@ class TestCreateTemplateTask:
             data={
                 'name': 'Template',
                 'is_active': True,
-                'template_owners': [user.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                ],
                 'description': '',
                 'kickoff': {},
                 'tasks': [
@@ -413,7 +443,12 @@ class TestCreateTemplateTask:
             data={
                 'name': 'Template',
                 'is_active': True,
-                'template_owners': [user.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                ],
                 'kickoff': {
                     'fields': [
                         {
@@ -460,7 +495,12 @@ class TestCreateTemplateTask:
             data={
                 'name': 'Template',
                 'is_active': True,
-                'template_owners': [user.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                ],
                 'kickoff': {
                     'fields': [
                         {
@@ -528,7 +568,12 @@ class TestCreateTemplateTask:
             data={
                 'name': 'Template',
                 'is_active': True,
-                'template_owners': [user.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                ],
                 'kickoff': {
                     'fields': [
                         {
@@ -586,7 +631,12 @@ class TestCreateTemplateTask:
             data={
                 'name': 'Template',
                 'is_active': True,
-                'template_owners': [user.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                ],
                 'kickoff': {
                     'fields': [
                         {
@@ -640,7 +690,12 @@ class TestCreateTemplateTask:
             data={
                 'name': 'Template',
                 'is_active': True,
-                'template_owners': [user.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                ],
                 'kickoff': {},
                 'tasks': [
                     {
@@ -696,7 +751,12 @@ class TestCreateTemplateTask:
             data={
                 'name': 'Template',
                 'is_active': True,
-                'template_owners': [user.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                ],
                 'kickoff': {},
                 'tasks': [
                     {
@@ -742,7 +802,12 @@ class TestCreateTemplateTask:
             data={
                 'name': 'Template',
                 'is_active': True,
-                'template_owners': [user.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                ],
                 'kickoff': {},
                 'tasks': [
                     {
@@ -806,7 +871,12 @@ class TestCreateTemplateTask:
             data={
                 'name': 'Template',
                 'is_active': True,
-                'template_owners': [user.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                ],
                 'kickoff': {
                     'fields': [
                         {
@@ -862,7 +932,12 @@ class TestCreateTemplateTask:
             data={
                 'name': 'Template',
                 'is_active': True,
-                'template_owners': [user.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                ],
                 'kickoff': {
                     'fields': [
                         {
@@ -927,7 +1002,12 @@ class TestCreateTemplateTask:
             path='/templates',
             data={
                 'name': 'Template',
-                'template_owners': [user.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                ],
                 'kickoff': {},
                 'is_active': True,
                 'tasks': [
@@ -969,7 +1049,12 @@ class TestCreateTemplateTask:
             path='/templates',
             data={
                 'name': 'Template',
-                'template_owners': [user.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                ],
                 'kickoff': {},
                 'is_active': True,
                 'tasks': [
@@ -1004,7 +1089,12 @@ class TestCreateTemplateTask:
             path='/templates',
             data={
                 'name': 'Template',
-                'template_owners': [user.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                ],
                 'kickoff': {},
                 'is_active': True,
                 'tasks': [
@@ -1055,8 +1145,8 @@ class TestCreateTemplateTask:
         workflow.refresh_from_db()
 
         # activate the second task
-        service = WorkflowActionService(user=user)
-        service.resume_workflow(workflow)
+        service = WorkflowActionService(user=user, workflow=workflow)
+        service.resume_workflow()
 
         # assert
         assert response_run.status_code == 200
@@ -1086,7 +1176,12 @@ class TestCreateTemplateTask:
             path='/templates',
             data={
                 'name': 'Template',
-                'template_owners': [user.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                ],
                 'kickoff': {},
                 'is_active': True,
                 'tasks': [
@@ -1144,7 +1239,12 @@ class TestCreateTemplateTask:
             path='/templates',
             data={
                 'name': 'Template',
-                'template_owners': [user.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                ],
                 'kickoff': {},
                 'is_active': False,
                 'tasks': [
@@ -1192,7 +1292,12 @@ class TestCreateTemplateTask:
             path='/templates',
             data={
                 'name': 'Template',
-                'template_owners': [user.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                ],
                 'kickoff': {},
                 'is_active': True,
                 'tasks': [
@@ -1420,7 +1525,12 @@ class TestCreateTemplateRawPerformer:
             path='/templates',
             data={
                 'name': 'Template',
-                'template_owners': [user.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                ],
                 'is_active': True,
                 'description': '',
                 'kickoff': {},
@@ -1470,7 +1580,12 @@ class TestCreateTemplateRawPerformer:
             path='/templates',
             data={
                 'name': 'Template',
-                'template_owners': [user.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                ],
                 'is_active': True,
                 'description': '',
                 'kickoff': {
@@ -1531,7 +1646,12 @@ class TestCreateTemplateRawPerformer:
             path='/templates',
             data={
                 'name': 'Template',
-                'template_owners': [user.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                ],
                 'is_active': True,
                 'description': '',
                 'kickoff': {
@@ -1583,7 +1703,12 @@ class TestCreateTemplateRawPerformer:
             path='/templates',
             data={
                 'name': 'Template',
-                'template_owners': [user.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                ],
                 'is_active': True,
                 'description': '',
                 'kickoff': {},
@@ -1639,7 +1764,12 @@ class TestCreateTemplateRawPerformer:
             path='/templates',
             data={
                 'name': 'Template',
-                'template_owners': [user.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                ],
                 'is_active': True,
                 'description': '',
                 'kickoff': {},
@@ -1682,7 +1812,12 @@ class TestCreateTemplateRawPerformer:
             path='/templates',
             data={
                 'name': 'Template',
-                'template_owners': [user.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                ],
                 'is_active': True,
                 'description': '',
                 'kickoff': {},
@@ -1748,7 +1883,12 @@ class TestCreateTemplateRawPerformer:
             path='/templates',
             data={
                 'name': 'Template',
-                'template_owners': [user.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                ],
                 'is_active': True,
                 'description': '',
                 'kickoff': {
@@ -1805,7 +1945,12 @@ class TestCreateTemplateRawPerformer:
             path='/templates',
             data={
                 'name': 'Template',
-                'template_owners': [user.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                ],
                 'is_active': True,
                 'description': '',
                 'kickoff': {},
@@ -1858,7 +2003,16 @@ class TestCreateTemplateRawPerformer:
             path='/templates',
             data={
                 'name': 'Template',
-                'template_owners': [user.id, invited.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': invited.id
+                    },
+                ],
                 'is_active': is_active,
                 'description': '',
                 'kickoff': {},
@@ -1908,7 +2062,12 @@ class TestCreateTemplateRawPerformer:
             path='/templates',
             data={
                 'name': 'Template',
-                'template_owners': [user.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                ],
                 'kickoff': {},
                 'is_active': True,
                 'tasks': [
@@ -1950,7 +2109,12 @@ class TestCreateTemplateRawPerformer:
             path='/templates',
             data={
                 'name': 'Template',
-                'template_owners': [user.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                ],
                 'is_active': True,
                 'description': '',
                 'kickoff': {},
@@ -1993,7 +2157,12 @@ class TestCreateTemplateRawPerformer:
             path='/templates',
             data={
                 'name': 'Template',
-                'template_owners': [user.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                ],
                 'is_active': True,
                 'description': '',
                 'kickoff': {},
@@ -2037,7 +2206,12 @@ class TestCreateTemplateRawPerformer:
             path='/templates',
             data={
                 'name': 'Template',
-                'template_owners': [user.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                ],
                 'is_active': True,
                 'description': '',
                 'kickoff': {},
@@ -2082,7 +2256,12 @@ class TestCreateTemplateRawPerformer:
             path='/templates',
             data={
                 'name': 'Template',
-                'template_owners': [user.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                ],
                 'is_active': True,
                 'description': '',
                 'kickoff': {},
@@ -2126,7 +2305,12 @@ class TestCreateTemplateRawPerformer:
             path='/templates',
             data={
                 'name': 'Template',
-                'template_owners': [user.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                ],
                 'is_active': True,
                 'description': '',
                 'kickoff': {},
@@ -2173,7 +2357,12 @@ class TestCreateTemplateRawPerformer:
             path='/templates',
             data={
                 'name': 'Template',
-                'template_owners': [user.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                ],
                 'is_active': True,
                 'description': '',
                 'kickoff': {},
@@ -2222,7 +2411,12 @@ class TestCreateTemplateRawPerformer:
             path='/templates',
             data={
                 'name': 'Template',
-                'template_owners': [user.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                ],
                 'is_active': True,
                 'description': '',
                 'kickoff': {},
@@ -2270,7 +2464,12 @@ class TestCreateTemplateRawPerformer:
             path='/templates',
             data={
                 'name': 'Template',
-                'template_owners': [user.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                ],
                 'is_active': True,
                 'is_public': True,
                 'description': '',
@@ -2316,7 +2515,12 @@ class TestCreateTemplateRawPerformer:
             path='/templates',
             data={
                 'name': 'Template',
-                'template_owners': [user.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                ],
                 'is_active': True,
                 'description': '',
                 'kickoff': {
@@ -2388,7 +2592,16 @@ class TestCreateTemplateRawPerformer:
             '/templates',
             data={
                 'name': 'Template',
-                'template_owners': [user.id, invited_user.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': invited_user.id
+                    },
+                ],
                 'is_active': True,
                 'description': '',
                 'kickoff': {},
@@ -2447,7 +2660,12 @@ class TestCreateTemplateRawPerformer:
             path='/templates',
             data={
                 'name': 'Template',
-                'template_owners': [user.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                ],
                 'is_active': False,
                 'description': '',
                 'kickoff': {},

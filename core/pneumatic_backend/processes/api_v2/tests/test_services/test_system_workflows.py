@@ -459,11 +459,12 @@ def test_create_onboarding_workflows__ok(mocker):
         redefined_performer=user,
     )
     workflow_action_service_init_mock.assert_called_once_with(
+        workflow=workflow_mock,
         user=user,
         is_superuser=False,
         auth_type=AuthTokenType.USER
     )
-    start_workflow_mock.assert_called_once_with(workflow_mock)
+    start_workflow_mock.assert_called_once_with()
 
 
 def test_create_activated_workflows__ok(mocker):
@@ -559,11 +560,12 @@ def test_create_activated_workflows__ok(mocker):
         is_urgent=True,
     )
     workflow_action_service_init_mock.assert_called_once_with(
+        workflow=workflow_mock,
         user=user,
         is_superuser=False,
         auth_type=AuthTokenType.USER
     )
-    start_workflow_mock.assert_called_once_with(workflow_mock)
+    start_workflow_mock.assert_called_once_with()
 
 
 def test_create_activated_workflows__template_not_found__logging_ex(mocker):

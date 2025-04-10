@@ -1,90 +1,201 @@
 import pytest
 
-from pneumatic_backend.accounts.enums import BillingPlanType
+from pneumatic_backend.authentication.services import GuestJWTAuthService
 from pneumatic_backend.processes.tests.fixtures import (
-    create_test_user,
     create_test_template,
-    create_test_workflow
+    create_test_workflow,
+    create_test_account,
+    create_test_group,
+    create_test_guest,
+    create_test_owner,
+    create_test_admin,
+    create_test_not_admin,
+    create_invited_user,
 )
 from pneumatic_backend.processes.enums import (
     WorkflowStatus,
-    TemplateType
+    TemplateType,
+    OwnerType, PerformerType, TaskStatus
 )
-from pneumatic_backend.processes.messages.workflow import (
-    MSG_PW_0022,
-)
-from pneumatic_backend.utils.validation import ErrorCode
-from pneumatic_backend.processes.services.workflow_action import (
-    WorkflowActionService,
+from pneumatic_backend.processes.models import (
+    TemplateOwner,
+    TaskPerformer,
 )
 
 
 pytestmark = pytest.mark.django_db
 
 
-def test_steps__all_tasks__ok(api_client):
+@pytest.mark.parametrize(
+    'template_type', (TemplateType.CUSTOM, TemplateType.LIBRARY)
+)
+def test_steps__all_template_tasks__ok(template_type, api_client):
+
     # arrange
-    user = create_test_user()
-    template = create_test_template(user, is_active=True)
-    api_client.token_authenticate(user)
-
-    # act
-    response = api_client.get(f'/templates/{template.id}/steps')
-
-    # assert
-    assert response.data[0]['number'] == 1
-    assert response.data[0]['id']
-    assert response.data[0]['name']
-    assert response.data[1]['number'] == 2
-    assert response.data[1]['id']
-    assert response.data[1]['name']
-    assert response.data[2]['number'] == 3
-    assert response.data[2]['id']
-    assert response.data[2]['name']
-
-
-def test_steps__user_is_template_owner__ok(api_client):
-    # arrange
-    user = create_test_user()
-    regular_user = create_test_user(
-        email='regular_user@pneumatic.app',
-        account=user.account,
-        is_admin=False,
+    account = create_test_account()
+    account_owner = create_test_owner(account=account)
+    template = create_test_template(
+        user=account_owner,
+        is_active=True,
+        tasks_count=2,
+        type_=template_type,
     )
-    template = create_test_template(user, is_active=True)
-    first_task = template.tasks.get(number=1)
-    first_task.add_raw_performer(regular_user)
-    api_client.token_authenticate(regular_user)
+    api_client.token_authenticate(account_owner)
 
     # act
     response = api_client.get(f'/templates/{template.id}/steps')
 
     # assert
+    assert len(response.data) == 2
+
+
+def test_steps__template_draft__ok(api_client):
+
+    # arrange
+    account = create_test_account()
+    account_owner = create_test_owner(account=account)
+    template = create_test_template(
+        user=account_owner,
+        is_active=False,
+        tasks_count=2,
+    )
+    api_client.token_authenticate(account_owner)
+
+    # act
+    response = api_client.get(f'/templates/{template.id}/steps')
+
+    # assert
+    assert len(response.data) == 2
+
+
+def test_steps__admin__ok(api_client):
+
+    # arrange
+    account = create_test_account()
+    account_owner = create_test_owner(account=account)
+    template = create_test_template(
+        user=account_owner,
+        is_active=True,
+        tasks_count=1
+    )
+    template_task = template.tasks.get(number=1)
+    request_user = create_test_admin(account=account)
+    TemplateOwner.objects.create(
+        template=template,
+        account=account,
+        user_id=request_user.id,
+        type=OwnerType.USER
+    )
+    api_client.token_authenticate(request_user)
+
+    # act
+    response = api_client.get(f'/templates/{template.id}/steps')
+
+    # assert
+    assert len(response.data) == 1
     assert response.data[0]['number'] == 1
-    assert response.data[0]['id']
-    assert response.data[0]['name']
-    assert response.data[1]['number'] == 2
-    assert response.data[1]['id']
-    assert response.data[1]['name']
-    assert response.data[2]['number'] == 3
-    assert response.data[2]['id']
-    assert response.data[2]['name']
+    assert response.data[0]['id'] == template_task.id
+    assert response.data[0]['api_name'] == template_task.api_name
+
+
+def test_steps__not_admin__ok(api_client):
+
+    # arrange
+    account = create_test_account()
+    account_owner = create_test_owner(account=account)
+    template = create_test_template(
+        user=account_owner,
+        is_active=True,
+        tasks_count=1
+    )
+    template_task = template.tasks.get(number=1)
+    request_user = create_test_not_admin(account=account)
+    TemplateOwner.objects.create(
+        template=template,
+        account=account,
+        user_id=request_user.id,
+        type=OwnerType.USER
+    )
+    api_client.token_authenticate(request_user)
+
+    # act
+    response = api_client.get(f'/templates/{template.id}/steps')
+
+    # assert
+    assert len(response.data) == 1
+    assert response.data[0]['number'] == 1
+    assert response.data[0]['id'] == template_task.id
+    assert response.data[0]['api_name'] == template_task.api_name
+
+
+def test_steps__group_is_template_owner__ok(api_client):
+
+    # arrange
+    account = create_test_account()
+    account_owner = create_test_owner(account=account)
+    template = create_test_template(
+        user=account_owner,
+        is_active=True,
+        tasks_count=1
+    )
+    template_task = template.tasks.get()
+    request_user = create_test_admin(account=account)
+    group = create_test_group(user=account_owner, users=[request_user])
+    TemplateOwner.objects.create(
+        template=template,
+        account=account,
+        type=OwnerType.GROUP,
+        group_id=group.id,
+    )
+    api_client.token_authenticate(request_user)
+
+    # act
+    response = api_client.get(
+        f'/templates/{template.id}/steps',
+    )
+
+    # assert
+    assert response.status_code == 200
+    assert len(response.data) == 1
+    assert response.data[0]['number'] == template_task.number
+    assert response.data[0]['id'] == template_task.id
+    assert response.data[0]['api_name'] == template_task.api_name
+
+
+def test_steps__deleted_template__empty_result(api_client):
+
+    # arrange
+    account = create_test_account()
+    account_owner = create_test_owner(account=account)
+    template = create_test_template(
+        user=account_owner,
+        is_active=False,
+        tasks_count=1,
+    )
+    template.delete()
+    api_client.token_authenticate(account_owner)
+
+    # act
+    response = api_client.get(f'/templates/{template.id}/steps')
+
+    # assert
+    assert response.status_code == 200
+    assert len(response.data) == 0
 
 
 def test_steps__user_not_template_owner__empty_result(api_client):
 
     # arrange
-    user = create_test_user()
-    user.account.billing_plan = BillingPlanType.PREMIUM
-    user.account.save()
-    regular_user = create_test_user(
-        email='regular_user@pneumatic.app',
-        account=user.account,
-        is_admin=False,
+    account = create_test_account()
+    account_owner = create_test_owner(account=account)
+    template = create_test_template(
+        user=account_owner,
+        is_active=True,
+        tasks_count=1
     )
-    template = create_test_template(user, is_active=True)
-    template.template_owners.remove(regular_user)
-    api_client.token_authenticate(regular_user)
+    request_user = create_test_not_admin(account=account)
+
+    api_client.token_authenticate(request_user)
 
     # act
     response = api_client.get(f'/templates/{template.id}/steps')
@@ -92,14 +203,79 @@ def test_steps__user_not_template_owner__empty_result(api_client):
     # assert
     assert response.status_code == 200
     assert len(response.data) == 0
+
+
+def test_steps__invited_user__unauthorized(api_client):
+
+    # arrange
+    account = create_test_account()
+    account_owner = create_test_owner(account=account)
+    template = create_test_template(
+        user=account_owner,
+        is_active=True,
+        tasks_count=1
+    )
+    request_user = create_invited_user(user=account_owner)
+    TemplateOwner.objects.create(
+        template=template,
+        account=account,
+        user_id=request_user.id,
+        type=OwnerType.USER
+    )
+    api_client.token_authenticate(request_user)
+
+    # act
+    response = api_client.get(f'/templates/{template.id}/steps')
+
+    # assert
+    assert response.status_code == 401
+
+
+def test_steps__deleted_user__unauthorized(api_client):
+
+    # arrange
+    account = create_test_account()
+    account_owner = create_test_owner(account=account)
+    template = create_test_template(
+        user=account_owner,
+        is_active=True,
+        tasks_count=1
+    )
+    request_user = create_test_admin(account=account)
+    TemplateOwner.objects.create(
+        template=template,
+        account=account,
+        user_id=request_user.id,
+        type=OwnerType.USER
+    )
+    request_user.delete()
+    api_client.token_authenticate(request_user)
+
+    # act
+    response = api_client.get(f'/templates/{template.id}/steps')
+
+    # assert
+    assert response.status_code == 401
 
 
 def test_steps__user_from_another_acc__empty_result(api_client):
+
     # arrange
-    user = create_test_user()
-    template = create_test_template(user, is_active=True)
-    another_user = create_test_user(email='another@pneumatic.app')
-    api_client.token_authenticate(another_user)
+    account = create_test_account()
+    account_owner = create_test_owner(account=account)
+    template = create_test_template(
+        user=account_owner,
+        is_active=True,
+        tasks_count=1
+    )
+    another_account_user = create_test_owner(email='another@pneumatic.app')
+    TemplateOwner.objects.create(
+        template=template,
+        account=account,
+        user_id=another_account_user.id,
+        type=OwnerType.USER
+    )
+    api_client.token_authenticate(another_account_user)
 
     # act
     response = api_client.get(f'/templates/{template.id}/steps')
@@ -109,593 +285,56 @@ def test_steps__user_from_another_acc__empty_result(api_client):
     assert len(response.data) == 0
 
 
-def test_steps__with_tasks_in_progress_false__running_wf__not_found(
-    api_client
-):
+def test_steps__guest_performer__permission_denied(api_client):
 
     # arrange
-    user = create_test_user()
-    api_client.token_authenticate(user)
+    account = create_test_account()
+    account_owner = create_test_owner(account=account)
     template = create_test_template(
-        user=user,
-        is_active=True,
-        tasks_count=1
-    )
-    create_test_workflow(
-        user=user,
-        template=template
-    )
-    api_client.token_authenticate(user)
-
-    # act
-    response = api_client.get(
-        f'/templates/{template.id}/steps?with_tasks_in_progress=false',
-    )
-
-    # assert
-    assert response.status_code == 200
-    assert len(response.data) == 0
-
-
-def test_steps__filter_with_tasks_in_progress_false__delayed_wf__ok(
-    api_client
-):
-
-    # arrange
-    user = create_test_user()
-    api_client.token_authenticate(user)
-    template = create_test_template(
-        user=user,
-        is_active=True,
-        tasks_count=2
-    )
-    workflow = create_test_workflow(
-        name='delayed workflow',
-        user=user,
-        template=template
-    )
-    api_client.post(
-        f'/workflows/{workflow.id}/task-complete',
-        data={'task_id': workflow.tasks.get(number=1).id},
-    )
-    workflow.refresh_from_db()
-    workflow.status = WorkflowStatus.DELAYED
-    workflow.save(update_fields=['status'])
-
-    # act
-    response = api_client.get(
-        f'/templates/{template.id}/steps?with_tasks_in_progress=false',
-    )
-
-    # assert
-    assert response.status_code == 200
-    template_task_1 = template.tasks.get(number=1)
-    assert len(response.data) == 1
-    assert response.data[0]['number'] == 1
-    assert response.data[0]['id'] == template_task_1.id
-
-
-def test_steps__with_tasks_in_progress_false__running_wf_completed_task__ok(
-    api_client
-):
-
-    # arrange
-    user = create_test_user()
-    template = create_test_template(
-        user=user,
-        is_active=True,
-        tasks_count=2
-    )
-    workflow = create_test_workflow(
-        user=user,
-        template=template
-    )
-    api_client.token_authenticate(user)
-    api_client.post(
-        f'/workflows/{workflow.id}/task-complete',
-        data={'task_id': workflow.current_task_instance.id},
-    )
-
-    # act
-    response = api_client.get(
-        f'/templates/{template.id}/steps?with_tasks_in_progress=false',
-    )
-
-    # assert
-    assert response.status_code == 200
-    template_task_1 = template.tasks.get(number=1)
-    assert len(response.data) == 1
-    assert response.data[0]['number'] == 1
-    assert response.data[0]['id'] == template_task_1.id
-
-
-def test_steps__filter_with_tasks_in_progress_false__done_wf__ok(
-    api_client
-):
-
-    # arrange
-    user = create_test_user()
-    api_client.token_authenticate(user)
-    template = create_test_template(
-        user=user,
+        user=account_owner,
         is_active=True,
         tasks_count=1
     )
     workflow = create_test_workflow(
-        user=user,
-        template=template
-    )
-    api_client.token_authenticate(user)
-    api_client.post(
-        path=f'/workflows/{workflow.id}/task-complete',
-        data={'task_id': workflow.current_task_instance.id},
-    )
-
-    # act
-    response = api_client.get(
-        f'/templates/{template.id}/steps?with_tasks_in_progress=false',
-    )
-
-    # assert
-    assert response.status_code == 200
-    template_task_1 = template.tasks.get(number=1)
-    assert len(response.data) == 1
-    assert response.data[0]['number'] == 1
-    assert response.data[0]['id'] == template_task_1.id
-
-
-def test_steps__with_tasks_in_progress_false__another_user_wf__not_found(
-    api_client
-):
-
-    # arrange
-    user = create_test_user()
-    user_2 = create_test_user(email='test@test.test')
-    template = create_test_template(
-        user=user_2,
-        is_active=True,
-        tasks_count=1
-    )
-    workflow = create_test_workflow(
-        user=user_2,
-        template=template
-    )
-    api_client.token_authenticate(user_2)
-    api_client.post(
-        path=f'/workflows/{workflow.id}/task-complete',
-        data={'task_id': workflow.current_task_instance.id},
-    )
-    api_client.token_authenticate(user)
-
-    # act
-    response = api_client.get(
-        f'/templates/{template.id}/steps?with_tasks_in_progress=false',
-    )
-
-    # assert
-    assert response.status_code == 200
-    assert len(response.data) == 0
-
-
-def test_steps_with_tasks_in_progress_false__terminated_wf__not_found(
-    api_client
-):
-
-    # arrange
-    user = create_test_user()
-    template = create_test_template(
-        name='Template with terminated workflow',
-        user=user,
-        is_active=True,
-        tasks_count=2
-    )
-    workflow = create_test_workflow(
-        user=user,
+        user=account_owner,
         template=template,
     )
-    api_client.token_authenticate(user)
-    api_client.post(
-        f'/workflows/{workflow.id}/task-complete',
-        data={'task_id': workflow.current_task_instance.id}
+    task = workflow.current_task_instance
+    guest = create_test_guest(account=account)
+    TaskPerformer.objects.create(
+        task_id=task.id,
+        user_id=guest.id,
     )
-    workflow.refresh_from_db()
-    service = WorkflowActionService(user=user)
-    service.terminate_workflow(workflow)
-
-    # act
-    response = api_client.get(
-        f'/templates/{template.id}/steps?with_tasks_in_progress=false',
+    str_token = GuestJWTAuthService.get_str_token(
+        task_id=task.id,
+        user_id=guest.id,
+        account_id=account.id
     )
-
-    # assert
-    assert response.status_code == 200
-    assert len(response.data) == 0
-
-
-def test_steps__with_tasks_in_progress_false__ended_wf__ok(
-    api_client
-):
-
-    # arrange
-    user = create_test_user()
-    template = create_test_template(
-        name='Template with ended workflow',
-        user=user,
-        is_active=True,
-        tasks_count=2
-    )
-    workflow = create_test_workflow(
-        user=user,
-        template=template,
-    )
-    api_client.token_authenticate(user)
-    api_client.post(
-        path=f'/workflows/{workflow.id}/task-complete',
-        data={'task_id': workflow.current_task_instance.id},
-    )
-    service = WorkflowActionService(user=user)
-    service.end_process(
-        workflow=workflow,
-        by_condition=False,
-    )
-
-    # act
-    response = api_client.get(
-        f'/templates/{template.id}/steps?with_tasks_in_progress=false',
-    )
-
-    # assert
-    assert response.status_code == 200
-    template_task_1 = template.tasks.get(number=1)
-    assert len(response.data) == 1
-    assert response.data[0]['number'] == 1
-    assert response.data[0]['id'] == template_task_1.id
-
-
-def test_steps__with_tasks_in_progress_true__running_wf__ok(
-    api_client
-):
-
-    # arrange
-    user = create_test_user()
-    template = create_test_template(
-        user=user,
-        is_active=True,
-        tasks_count=1
-    )
-    create_test_workflow(
-        user=user,
-        template=template
-    )
-    api_client.token_authenticate(user)
-
-    # act
-    response = api_client.get(
-        f'/templates/{template.id}/steps?with_tasks_in_progress=true',
-    )
-
-    # assert
-    assert response.status_code == 200
-    template_task_1 = template.tasks.get(number=1)
-    assert len(response.data) == 1
-    assert response.data[0]['number'] == 1
-    assert response.data[0]['id'] == template_task_1.id
-
-
-def test_steps__filter_with_tasks_in_progress_true__delayed_wf__not_found(
-    api_client
-):
-
-    # arrange
-    user = create_test_user()
-    api_client.token_authenticate(user)
-    template = create_test_template(
-        user=user,
-        is_active=True,
-        tasks_count=2
-    )
-    workflow = create_test_workflow(
-        name='delayed workflow',
-        user=user,
-        template=template
-    )
-    api_client.post(
-        f'/workflows/{workflow.id}/task-complete',
-        data={'task_id': workflow.tasks.get(number=1).id},
-    )
-    workflow.refresh_from_db()
-    workflow.status = WorkflowStatus.DELAYED
-    workflow.save(update_fields=['status'])
-
-    # act
-    response = api_client.get(
-        f'/templates/{template.id}/steps?with_tasks_in_progress=true',
-    )
-
-    # assert
-    assert response.status_code == 200
-    assert len(response.data) == 0
-
-
-def test_steps__with_tasks_in_progress_true__running_wf_completed_task__ok(
-    api_client
-):
-
-    # arrange
-    user = create_test_user()
-    template = create_test_template(
-        user=user,
-        is_active=True,
-        tasks_count=2
-    )
-    workflow = create_test_workflow(
-        user=user,
-        template=template
-    )
-    api_client.token_authenticate(user)
-    api_client.post(
-        f'/workflows/{workflow.id}/task-complete',
-        data={'task_id': workflow.current_task_instance.id},
-    )
-
-    # act
-    response = api_client.get(
-        f'/templates/{template.id}/steps?with_tasks_in_progress=true',
-    )
-
-    # assert
-    assert response.status_code == 200
-    template_task_1 = template.tasks.get(number=2)
-    assert len(response.data) == 1
-    assert response.data[0]['number'] == 2
-    assert response.data[0]['id'] == template_task_1.id
-
-
-def test_steps__filter_with_tasks_in_progress_true__done_wf__not_found(
-    api_client
-):
-
-    # arrange
-    user = create_test_user()
-    template = create_test_template(
-        user=user,
-        is_active=True,
-        tasks_count=1
-    )
-    workflow = create_test_workflow(
-        user=user,
-        template=template
-    )
-    api_client.token_authenticate(user)
-    api_client.post(
-        path=f'/workflows/{workflow.id}/task-complete',
-        data={'task_id': workflow.current_task_instance.id},
-    )
-
-    # act
-    response = api_client.get(
-        f'/templates/{template.id}/steps?with_tasks_in_progress=true',
-    )
-
-    # assert
-    assert response.status_code == 200
-    assert len(response.data) == 0
-
-
-def test_steps__with_tasks_in_progress_true__another_user_wf__not_found(
-    api_client
-):
-
-    # arrange
-    user = create_test_user()
-    user_2 = create_test_user(email='test@test.test')
-    template = create_test_template(
-        user=user_2,
-        is_active=True,
-        tasks_count=1
-    )
-    create_test_workflow(
-        user=user_2,
-        template=template
-    )
-    api_client.token_authenticate(user)
-
-    # act
-    response = api_client.get(
-        f'/templates/{template.id}/steps?with_tasks_in_progress=true',
-    )
-
-    # assert
-    assert response.status_code == 200
-    assert len(response.data) == 0
-
-
-def test_steps_with_tasks_in_progress_true__terminated_wf__not_found(
-    api_client
-):
-
-    # arrange
-    user = create_test_user()
-    template = create_test_template(
-        name='Template with terminated workflow',
-        user=user,
-        is_active=True,
-        tasks_count=1
-    )
-    workflow = create_test_workflow(
-        user=user,
-        template=template,
-    )
-    api_client.token_authenticate(user)
-    workflow.refresh_from_db()
-    service = WorkflowActionService(user=user)
-    service.terminate_workflow(workflow)
-
-    # act
-    response = api_client.get(
-        f'/templates/{template.id}/steps?with_tasks_in_progress=true',
-    )
-
-    # assert
-    assert response.status_code == 200
-    assert len(response.data) == 0
-
-
-def test_steps__with_tasks_in_progress_true__ended_wf__not_found(
-    api_client
-):
-
-    # arrange
-    user = create_test_user()
-    template = create_test_template(
-        name='Template with ended workflow',
-        user=user,
-        is_active=True,
-        tasks_count=1
-    )
-    workflow = create_test_workflow(
-        user=user,
-        template=template,
-    )
-    service = WorkflowActionService(user=user)
-    service.end_process(
-        workflow=workflow,
-        by_condition=False,
-    )
-    api_client.token_authenticate(user)
-
-    # act
-    response = api_client.get(
-        f'/templates/{template.id}/steps?with_tasks_in_progress=true',
-    )
-
-    # assert
-    assert response.status_code == 200
-    assert len(response.data) == 0
-
-
-def test_steps__is_running_workflows__ok(api_client):
-
-    # arrange
-    user = create_test_user()
-    api_client.token_authenticate(user)
-    template = create_test_template(
-        user=user,
-        is_active=True,
-        finalizable=True,
-        tasks_count=4
-    )
-    template_task_1 = template.tasks.get(number=1)
-    template_task_3 = template.tasks.get(number=3)
-
-    create_test_workflow(
-        name='first step workflow',
-        template=template,
-        user=user
-    )
-
-    delay_workflow = create_test_workflow(
-        name='second step workflow',
-        user=user,
-        template=template
-    )
-    api_client.post(
-        f'/workflows/{delay_workflow.id}/task-complete',
-        data={'task_id': delay_workflow.current_task_instance.id},
-    )
-    delay_workflow.refresh_from_db()
-    delay_workflow.status = WorkflowStatus.DELAYED
-    delay_workflow.save()
-
-    third_task_workflow = create_test_workflow(
-        name='third step workflow',
-        user=user,
-        template=template
-    )
-    api_client.post(
-        f'/workflows/{third_task_workflow.id}/task-complete',
-        data={'task_id': third_task_workflow.current_task_instance.id},
-    )
-    third_task_workflow.refresh_from_db()
-    api_client.post(
-        f'/workflows/{third_task_workflow.id}/task-complete',
-        data={'task_id': third_task_workflow.current_task_instance.id},
-    )
-
-    done_workflow = create_test_workflow(
-        name='fourth step workflow',
-        user=user,
-        template=template
-    )
-    api_client.post(
-        f'/workflows/{done_workflow.id}/task-complete',
-        data={'task_id': done_workflow.current_task_instance.id},
-    )
-    done_workflow.refresh_from_db()
-    api_client.post(
-        f'/workflows/{done_workflow.id}/task-complete',
-        data={'task_id': done_workflow.current_task_instance.id},
-    )
-    done_workflow.refresh_from_db()
-    api_client.post(
-        f'/workflows/{done_workflow.id}/task-complete',
-        data={'task_id': done_workflow.current_task_instance.id},
-    )
-    done_workflow.refresh_from_db()
-    done_workflow.status = WorkflowStatus.DONE
-    done_workflow.save()
-
     # act
     response = api_client.get(
         f'/templates/{template.id}/steps',
-        data={'is_running_workflows': True}
+        **{'X-Guest-Authorization': str_token}
     )
 
     # assert
-    assert response.status_code == 200
-    assert len(response.data) == 2
-    assert response.data[0]['number'] == 1
-    assert response.data[0]['id'] == template_task_1.id
-    assert response.data[0]['name'] == template_task_1.name
-    assert response.data[1]['number'] == 3
-    assert response.data[1]['id'] == template_task_3.id
-    assert response.data[1]['name'] == template_task_3.name
+    assert response.status_code == 403
 
 
-def test__step__incompatible_filters__validation_error(api_client):
+@pytest.mark.parametrize('template_type', TemplateType.TYPES_ONBOARDING)
+def test_steps__onboarding_template__empty_result(
+    api_client,
+    template_type
+):
 
     # arrange
-    user = create_test_user()
-    api_client.token_authenticate(user)
+    owner = create_test_owner()
     template = create_test_template(
-        user=user,
+        owner,
+        type_=template_type,
+        is_active=True,
         tasks_count=1
     )
-
-    response = api_client.get(
-        f'/templates/{template.id}/steps',
-        data={
-            'is_running_workflows': True,
-            'with_tasks_in_progress': True
-        }
-    )
-
-    # assert
-    assert response.status_code == 400
-    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
-    assert response.data['message'] == MSG_PW_0022
-
-
-def test_steps__onboarding_admin_template__empty_result(api_client):
-
-    # arrange
-    user = create_test_user()
-    template = create_test_template(
-        user,
-        type_=TemplateType.ONBOARDING_ADMIN,
-        is_active=True
-    )
-    api_client.token_authenticate(user)
+    api_client.token_authenticate(owner)
 
     # act
     response = api_client.get(f'/templates/{template.id}/steps')
@@ -703,3 +342,480 @@ def test_steps__onboarding_admin_template__empty_result(api_client):
     # assert
     assert response.status_code == 200
     assert len(response.data) == 0
+
+
+def test_steps__with_tasks_in_progress_user_from_another_acc__empty_result(
+    api_client
+):
+
+    # arrange
+    account = create_test_account()
+    account_owner = create_test_owner(account=account)
+    template = create_test_template(
+        user=account_owner,
+        is_active=True,
+        tasks_count=1
+    )
+    another_account_user = create_test_owner(email='another@pneumatic.app')
+    workflow = create_test_workflow(
+        user=account_owner,
+        template=template
+    )
+    task = workflow.tasks.get()
+    TaskPerformer.objects.create(
+        task=task,
+        user=another_account_user,
+        is_completed=True
+    )
+    api_client.token_authenticate(another_account_user)
+
+    # act
+    response = api_client.get(
+        f'/templates/{template.id}/steps?with_tasks_in_progress=false',
+    )
+
+    # assert
+    assert response.status_code == 200
+    assert len(response.data) == 0
+
+
+def test_steps__with_tasks_in_progress_true_deleted_workflow__empty_result(
+    api_client
+):
+
+    # arrange
+    account = create_test_account()
+    account_owner = create_test_owner(account=account)
+    template = create_test_template(
+        user=account_owner,
+        is_active=True,
+        tasks_count=1
+    )
+    workflow = create_test_workflow(
+        user=account_owner,
+        template=template,
+    )
+    task = workflow.tasks.get()
+    request_user = create_test_admin(account=account)
+    TaskPerformer.objects.create(
+        task=task,
+        user=request_user,
+        is_completed=False
+    )
+    workflow.delete()
+    api_client.token_authenticate(request_user)
+
+    # act
+    response = api_client.get(
+        f'/templates/{template.id}/steps?with_tasks_in_progress=true',
+    )
+
+    # assert
+    assert response.status_code == 200
+    assert len(response.data) == 0
+
+
+@pytest.mark.parametrize(
+    'status', (WorkflowStatus.DONE, WorkflowStatus.DELAYED)
+)
+def test_steps__with_tasks_in_progress_true_inactive_workflow__empty_result(
+    status,
+    api_client
+):
+
+    # arrange
+    account = create_test_account()
+    account_owner = create_test_owner(account=account)
+    template = create_test_template(
+        user=account_owner,
+        is_active=True,
+        tasks_count=1
+    )
+    workflow = create_test_workflow(
+        user=account_owner,
+        template=template
+    )
+    task = workflow.tasks.get()
+    request_user = create_test_admin(account=account)
+    TaskPerformer.objects.create(
+        task=task,
+        user=request_user,
+        is_completed=False
+    )
+    workflow.status = status
+    workflow.save(update_fields=['status'])
+    api_client.token_authenticate(request_user)
+
+    # act
+    response = api_client.get(
+        f'/templates/{template.id}/steps?with_tasks_in_progress=true',
+    )
+
+    # assert
+    assert response.status_code == 200
+    assert len(response.data) == 0
+
+
+def test_steps__with_tasks_in_progress_true__another_task_completed__ok(
+    api_client
+):
+
+    # arrange
+    account = create_test_account()
+    account_owner = create_test_owner(account=account)
+    template = create_test_template(
+        user=account_owner,
+        is_active=True,
+        tasks_count=2
+    )
+    template_task_2 = template.tasks.get(number=2)
+    workflow = create_test_workflow(
+        user=account_owner,
+        template=template
+    )
+    workflow.save()
+    task_1 = workflow.tasks.get(number=1)
+    task_1.status = TaskStatus.COMPLETED
+    task_1.save()
+    task_2 = workflow.tasks.get(number=2)
+    task_2.status = TaskStatus.ACTIVE
+    task_2.save()
+
+    api_client.token_authenticate(account_owner)
+
+    # act
+    response = api_client.get(
+        f'/templates/{template.id}/steps?with_tasks_in_progress=true',
+    )
+
+    # assert
+    assert response.status_code == 200
+    assert len(response.data) == 1
+    assert response.data[0]['number'] == template_task_2.number
+    assert response.data[0]['id'] == template_task_2.id
+    assert response.data[0]['api_name'] == template_task_2.api_name
+
+
+def test_steps__with_tasks_in_progress_true__not_template_owner__ok(
+    api_client
+):
+
+    # arrange
+    account = create_test_account()
+    account_owner = create_test_owner(account=account)
+    template = create_test_template(
+        user=account_owner,
+        is_active=True,
+        tasks_count=1
+    )
+    template_task = template.tasks.get()
+    workflow = create_test_workflow(
+        user=account_owner,
+        template=template,
+    )
+    task = workflow.current_task_instance
+    request_user = create_test_admin(account=account)
+    TaskPerformer.objects.create(
+        task=task,
+        user=request_user
+    )
+    api_client.token_authenticate(request_user)
+
+    # act
+    response = api_client.get(
+        f'/templates/{template.id}/steps?with_tasks_in_progress=true',
+    )
+
+    # assert
+    assert response.status_code == 200
+    assert len(response.data) == 1
+    assert response.data[0]['id'] == template_task.id
+    assert response.data[0]['number'] == template_task.number
+    assert response.data[0]['api_name'] == template_task.api_name
+
+
+def test_steps__with_tasks_in_progress_true__performer_group__ok(
+    api_client
+):
+
+    # arrange
+    account = create_test_account()
+    account_owner = create_test_owner(account=account)
+    template = create_test_template(
+        user=account_owner,
+        is_active=True,
+        tasks_count=1
+    )
+    template_task_1 = template.tasks.get(number=1)
+    workflow = create_test_workflow(
+        user=account_owner,
+        template=template
+    )
+    request_user = create_test_admin(account=account)
+    group = create_test_group(user=account_owner, users=[request_user])
+    task = workflow.current_task_instance
+    TaskPerformer.objects.create(
+        task_id=task.id,
+        type=PerformerType.GROUP,
+        group_id=group.id,
+    )
+    api_client.token_authenticate(request_user)
+
+    # act
+    response = api_client.get(
+        f'/templates/{template.id}/steps?with_tasks_in_progress=true',
+    )
+
+    # assert
+    assert response.status_code == 200
+    assert len(response.data) == 1
+    assert response.data[0]['number'] == 1
+    assert response.data[0]['id'] == template_task_1.id
+    assert response.data[0]['api_name'] == template_task_1.api_name
+
+
+def test_steps__with_tasks_in_progress_true__deleted_group__empty_list(
+    api_client
+):
+
+    # arrange
+    account = create_test_account()
+    account_owner = create_test_owner(account=account)
+    template = create_test_template(
+        user=account_owner,
+        is_active=True,
+        tasks_count=1
+    )
+    workflow = create_test_workflow(
+        user=account_owner,
+        template=template
+    )
+    request_user = create_test_admin(account=account)
+    group = create_test_group(user=account_owner, users=[request_user])
+    task = workflow.current_task_instance
+    TaskPerformer.objects.create(
+        task_id=task.id,
+        type=PerformerType.GROUP,
+        group_id=group.id,
+    )
+    group.delete()
+    api_client.token_authenticate(request_user)
+
+    # act
+    response = api_client.get(
+        f'/templates/{template.id}/steps?with_tasks_in_progress=true',
+    )
+
+    # assert
+    assert response.status_code == 200
+    assert len(response.data) == 0
+
+
+@pytest.mark.parametrize('status', WorkflowStatus.ALL_STATUSES)
+def test_steps__with_tasks_in_progress_false__not_completed_task__not_found(
+    status,
+    api_client
+):
+
+    # arrange
+    account = create_test_account()
+    account_owner = create_test_owner(account=account)
+    template = create_test_template(
+        user=account_owner,
+        is_active=True,
+        tasks_count=1
+    )
+    workflow = create_test_workflow(
+        user=account_owner,
+        template=template
+    )
+    workflow.status = status
+    workflow.save(update_fields=['status'])
+    task = workflow.tasks.get()
+    request_user = create_test_admin(account=account)
+    TaskPerformer.objects.create(
+        task=task,
+        user=request_user,
+        is_completed=False
+    )
+    api_client.token_authenticate(request_user)
+
+    # act
+    response = api_client.get(
+        f'/templates/{template.id}/steps?with_tasks_in_progress=false',
+    )
+
+    # assert
+    assert response.status_code == 200
+    assert len(response.data) == 0
+
+
+@pytest.mark.parametrize('status', WorkflowStatus.ALL_STATUSES)
+def test_steps__with_tasks_in_progress_false__completed_task__ok(
+    status,
+    api_client
+):
+
+    # arrange
+    account = create_test_account()
+    account_owner = create_test_owner(account=account)
+    template = create_test_template(
+        user=account_owner,
+        is_active=True,
+        tasks_count=1
+    )
+    template_task = template.tasks.get()
+    workflow = create_test_workflow(
+        user=account_owner,
+        template=template
+    )
+    workflow.status = status
+    workflow.save(update_fields=['status'])
+    task = workflow.tasks.get()
+    request_user = create_test_admin(account=account)
+    TaskPerformer.objects.create(
+        task=task,
+        user=request_user,
+        is_completed=True
+    )
+    api_client.token_authenticate(request_user)
+
+    # act
+    response = api_client.get(
+        f'/templates/{template.id}/steps?with_tasks_in_progress=false',
+    )
+    # assert
+    assert response.status_code == 200
+    assert len(response.data) == 1
+    assert response.data[0]['number'] == template_task.number
+    assert response.data[0]['id'] == template_task.id
+    assert response.data[0]['api_name'] == template_task.api_name
+
+
+def test_steps__with_tasks_in_progress_false_deleted_workflow__empty_result(
+    api_client
+):
+
+    # arrange
+    account = create_test_account()
+    account_owner = create_test_owner(account=account)
+    template = create_test_template(
+        user=account_owner,
+        is_active=True,
+        tasks_count=1
+    )
+    workflow = create_test_workflow(
+        user=account_owner,
+        template=template,
+    )
+    task = workflow.tasks.get()
+    request_user = create_test_admin(account=account)
+    TaskPerformer.objects.create(
+        task=task,
+        user=request_user,
+        is_completed=True
+    )
+    workflow.delete()
+    api_client.token_authenticate(request_user)
+
+    # act
+    response = api_client.get(
+        f'/templates/{template.id}/steps?with_tasks_in_progress=false',
+    )
+
+    # assert
+    assert response.status_code == 200
+    assert len(response.data) == 0
+
+
+def test_steps__with_tasks_in_progress_false__performer_group__ok(
+    api_client
+):
+
+    # arrange
+    account = create_test_account()
+    account_owner = create_test_owner(account=account)
+    template = create_test_template(
+        user=account_owner,
+        is_active=True,
+        tasks_count=1
+    )
+    template_task_1 = template.tasks.get(number=1)
+    workflow = create_test_workflow(
+        user=account_owner,
+        template=template
+    )
+    request_user = create_test_admin(account=account)
+    group = create_test_group(user=account_owner, users=[request_user])
+    task = workflow.current_task_instance
+    TaskPerformer.objects.create(
+        task_id=task.id,
+        type=PerformerType.GROUP,
+        group_id=group.id,
+        is_completed=True,
+    )
+    api_client.token_authenticate(request_user)
+
+    # act
+    response = api_client.get(
+        f'/templates/{template.id}/steps?with_tasks_in_progress=false',
+    )
+
+    # assert
+    assert response.status_code == 200
+    assert len(response.data) == 1
+    assert response.data[0]['number'] == 1
+    assert response.data[0]['id'] == template_task_1.id
+    assert response.data[0]['api_name'] == template_task_1.api_name
+
+
+def test_steps__with_tasks_in_progress_false__deleted_group__empty_list(
+    api_client
+):
+
+    # arrange
+    account = create_test_account()
+    account_owner = create_test_owner(account=account)
+    template = create_test_template(
+        user=account_owner,
+        is_active=True,
+        tasks_count=1
+    )
+    workflow = create_test_workflow(
+        user=account_owner,
+        template=template
+    )
+    request_user = create_test_admin(account=account)
+    group = create_test_group(user=account_owner, users=[request_user])
+    task = workflow.current_task_instance
+    TaskPerformer.objects.create(
+        task_id=task.id,
+        type=PerformerType.GROUP,
+        group_id=group.id,
+        is_completed=True
+    )
+    group.delete()
+    api_client.token_authenticate(request_user)
+
+    # act
+    response = api_client.get(
+        f'/templates/{template.id}/steps?with_tasks_in_progress=false',
+    )
+
+    # assert
+    assert response.status_code == 200
+    assert len(response.data) == 0
+
+
+def test_steps__over_limited_template_id__not_found(api_client):
+
+    # arrange
+    account = create_test_account()
+    account_owner = create_test_owner(account=account)
+    api_client.token_authenticate(account_owner)
+
+    # act
+    response = api_client.get('/templates/12345678901/steps')
+
+    # assert
+    assert response.status_code == 404

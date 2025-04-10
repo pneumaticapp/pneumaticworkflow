@@ -13,7 +13,7 @@ export function markNotificationsAsRead(data: TMarkNotificationsAsReadRequest) {
     urls.markNotificationsAsRead,
     {
       method: 'POST',
-      body: mapRequestBody(data),
+      data: mapRequestBody(data),
     },
     {
       responseType: 'empty',

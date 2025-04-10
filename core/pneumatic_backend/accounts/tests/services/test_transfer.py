@@ -4,13 +4,14 @@ from pneumatic_backend.accounts.enums import (
     UserStatus,
     SourceType,
 )
-from pneumatic_backend.accounts.tests.fixtures import (
+from pneumatic_backend.processes.tests.fixtures import (
     create_test_user,
-    create_invited_user,
     create_test_account,
+    create_invited_user,
 )
 from pneumatic_backend.processes.enums import (
     PerformerType,
+    OwnerType
 )
 from pneumatic_backend.accounts.tokens import (
     TransferToken
@@ -736,13 +737,23 @@ def test_accept_transfer__template_owner_in_template__ok(
     token = TransferToken()
     token['prev_user_id'] = user_to_transfer.id
     token['new_user_id'] = account_2_new_user.id
+    request_template_owners = [
+        {
+            'type': OwnerType.USER,
+            'source_id': f'{account_2_owner.id}'
+        },
+        {
+            'type': OwnerType.USER,
+            'source_id': account_2_new_user.id
+        },
+    ]
     api_client.token_authenticate(account_2_owner)
 
     response_create = api_client.post(
         path='/templates',
         data={
             'name': 'Template',
-            'template_owners': [account_2_owner.id, account_2_new_user.id],
+            'owners': request_template_owners,
             'is_active': True,
             'kickoff': {},
             'tasks': [
@@ -771,7 +782,10 @@ def test_accept_transfer__template_owner_in_template__ok(
     # assert
     assert response_create.status_code == 200
     assert response.status_code == 200
-    assert account_2_new_user.id in response.data['template_owners']
+    template_owners = [
+        owner['source_id'] for owner in response.data['owners']
+    ]
+    assert str(account_2_new_user.id) in template_owners
     raw_performer_data = response.data['tasks'][0]['raw_performers'][0]
     assert raw_performer_data['source_id'] == str(
         account_2_new_user.id

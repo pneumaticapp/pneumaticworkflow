@@ -220,7 +220,14 @@ function* fetchWorkflowsList({ payload: offset = 0 }: TLoadWorkflowsList) {
     workflowsList,
     workflowsSettings: {
       sorting,
-      values: { statusFilter, templatesIdsFilter, stepsIdsFilter, performersIdsFilter, workflowStartersIdsFilter },
+      values: {
+        statusFilter,
+        templatesIdsFilter,
+        stepsIdsFilter,
+        performersIdsFilter,
+        performersGroupIdsFilter,
+        workflowStartersIdsFilter
+      },
     },
   }: IStoreWorkflows = yield select(getWorkflowsStore);
 
@@ -232,14 +239,15 @@ function* fetchWorkflowsList({ payload: offset = 0 }: TLoadWorkflowsList) {
       sorting,
       statusFilter,
       templatesIdsFilter,
+      performersGroupIdsFilter,
       stepsIdsFilter,
       performersIdsFilter,
       workflowStartersIdsFilter,
       searchText,
     });
     const formattedResults = mapBackendToISOStringToRedux(results);
-
     const items = offset > 0 ? uniqBy([...workflowsList.items, ...formattedResults], 'id') : formattedResults;
+
     yield put(changeWorkflowsList({ count, offset, items }));
   } catch (error) {
     logger.info('fetch workflows list error : ', error);
@@ -567,7 +575,7 @@ export function* updateWorkflowsTemplateStepsCountersSaga() {
   const {
     workflowsSettings: {
       templateList,
-      values: { statusFilter, performersIdsFilter, workflowStartersIdsFilter },
+      values: { statusFilter, performersIdsFilter, performersGroupIdsFilter, workflowStartersIdsFilter },
     },
   }: IStoreWorkflows = yield select(getWorkflowsStore);
   const allTemplatesIds = templateList.items.map((template) => template.id);
@@ -577,6 +585,7 @@ export function* updateWorkflowsTemplateStepsCountersSaga() {
       statusFilter,
       templatesIdsFilter: allTemplatesIds,
       performersIdsFilter,
+      performersGroupIdsFilter,
       workflowStartersIdsFilter,
     });
 

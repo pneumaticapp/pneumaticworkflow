@@ -12,9 +12,11 @@ from pneumatic_backend.processes.tests.fixtures import (
 )
 from pneumatic_backend.processes.models import (
     Template,
+    TemplateOwner,
 )
 from pneumatic_backend.processes.enums import (
     PerformerType,
+    OwnerType
 )
 from pneumatic_backend.processes.enums import TemplateType
 from pneumatic_backend.accounts.messages import (
@@ -37,7 +39,12 @@ class TestListTemplate:
             data={
                 'name': 'Template 1',
                 'is_active': True,
-                'template_owners': [user.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                ],
                 'kickoff': {},
                 'tasks': [
                     {
@@ -62,7 +69,12 @@ class TestListTemplate:
                 'name': 'Template 1',
                 'wf_name_template': wf_name_template,
                 'is_active': False,
-                'template_owners': [user.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                ],
                 'kickoff': {},
                 'tasks': [
                     {
@@ -88,13 +100,11 @@ class TestListTemplate:
         assert len(response.data) == 2
 
         assert response.data[0]['id'] == active_template.id
-        assert response.data[0]['template_owners'][0] == user.id
         assert response.data[0]['owners'][0]['source_id'] == str(user.id)
         assert response.data[0]['tasks_count'] == 1
         assert response.data[0]['wf_name_template'] is None
 
         assert response.data[1]['id'] == draft_template.id
-        assert response.data[1]['template_owners'][0] == user.id
         assert response.data[1]['owners'][0]['source_id'] == str(user.id)
         assert response.data[1]['tasks_count'] == 0
         assert response.data[1]['wf_name_template'] is None
@@ -111,7 +121,12 @@ class TestListTemplate:
                 'name': 'Template 1',
                 'wf_name_template': wf_name_template,
                 'is_active': True,
-                'template_owners': [user.id],
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                ],
                 'kickoff': {},
                 'tasks': [
                     {
@@ -138,40 +153,59 @@ class TestListTemplate:
     def test_list__template_owners__ok(self, api_client):
 
         # arrange
+        any_user = create_test_user(email='test@bou.tr')
+        create_test_template(
+            user=any_user,
+            tasks_count=1,
+            is_active=True
+        )
         account = create_test_account(plan=BillingPlanType.FREEMIUM)
         user = create_test_user(account=account)
         user2 = create_test_user(
             account=account,
             email='t@t.t'
         )
-        api_client.token_authenticate(user2)
-        create_test_template(
+        template = create_test_template(
             user=user,
             tasks_count=1,
             is_active=True
         )
-        create_test_template(
-            user=user2,
-            tasks_count=1,
-            is_active=True
+        TemplateOwner.objects.create(
+            template=template,
+            account=account,
+            type=OwnerType.USER,
+            user_id=user2.id,
         )
+        api_client.token_authenticate(user2)
 
         # act
         response = api_client.get('/templates')
 
         # assert
         assert response.status_code == 200
-        assert len(response.data) == 2
-        template_owners = set(response.data[0]['template_owners'])
-        assert template_owners == {user.id, user2.id}
+        assert len(response.data) == 1
         owners = response.data[0]['owners']
         assert owners[0]['source_id'] == str(user.id)
         assert owners[1]['source_id'] == str(user2.id)
-        template_owners2 = set(response.data[1]['template_owners'])
-        assert template_owners2 == {user.id, user2.id}
-        owners2 = response.data[0]['owners']
-        assert owners2[0]['source_id'] == str(user.id)
-        assert owners2[1]['source_id'] == str(user2.id)
+
+    def test_list__template_owners_is_deleted__ok(self, api_client):
+
+        # arrange
+        user = create_test_user()
+        create_test_template(
+            user=user,
+            tasks_count=1,
+            is_active=True
+        )
+        TemplateOwner.objects.filter(user_id=user.id).delete()
+        api_client.token_authenticate(user)
+
+        # act
+        response = api_client.get('/templates')
+
+        # assert
+        assert response.status_code == 200
+        assert len(response.data) == 0
 
     def test_list__subscription_expired__forbidden(self, api_client):
 
@@ -315,15 +349,28 @@ class TestListTemplate:
             account=user.account,
             email='aаher@pneumatic.app'
         )
-        another_user = create_test_user(email='another@pneumatic.app')
         template = create_test_template(
             user=user,
             is_active=True
         )
-        create_test_template(
+        TemplateOwner.objects.create(
+            template=template,
+            account=user.account,
+            type=OwnerType.USER,
+            user_id=user_not_account_owner.id,
+        )
+        template_2 = create_test_template(
             user=user,
             is_active=False
         )
+        TemplateOwner.objects.create(
+            template=template_2,
+            account=user.account,
+            type=OwnerType.USER,
+            user_id=user_not_account_owner.id,
+        )
+
+        another_user = create_test_user(email='another@pneumatic.app')
         create_test_template(
             user=another_user,
             is_active=True
@@ -577,7 +624,12 @@ class TestListTemplate:
         request_data_1 = {
             'name': 'Template 1',
             'is_active': True,
-            'template_owners': [user.id],
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id
+                },
+            ],
             'kickoff': {},
             'tasks': [
                 {
@@ -605,7 +657,12 @@ class TestListTemplate:
         request_data_2 = {
             'is_active': True,
             'name': 'Template 2',
-            'template_owners': [user.id],
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id
+                },
+            ],
             'kickoff': {},
             'tasks': [
                 {

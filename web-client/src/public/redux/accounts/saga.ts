@@ -25,7 +25,7 @@ import {
   loadActiveUsersCount,
 } from '../actions';
 
-import { getAccountsStore, getSubscriptionPlan } from '../selectors/user';
+import { getAccountsStore } from '../selectors/user';
 import { EUserListSorting, EUserStatus, TUserListItem } from '../../types/user';
 import { EDeleteUserModalState, IAccounts } from '../../types/redux';
 
@@ -274,21 +274,6 @@ function* startFreeSubscriptionSaga() {
   }
 }
 
-function* showPlanExpiredMessageSaga() {
-  const subscriptionPlan: ReturnType<typeof getSubscriptionPlan> = yield select(getSubscriptionPlan);
-  const messagesMap = {
-    [ESubscriptionPlan.Unknown]: '',
-    [ESubscriptionPlan.Free]: '',
-    [ESubscriptionPlan.Trial]: 'general.trial-expired',
-    [ESubscriptionPlan.Premium]: 'general.premium-expired',
-    [ESubscriptionPlan.Unlimited]: 'general.premium-expired',
-    [ESubscriptionPlan.FractionalCOO]: 'general.premium-expired',
-  };
-  const message = messagesMap[subscriptionPlan];
-
-  NotificationManager.error({ message });
-}
-
 export function* watchFetchUser() {
   yield takeEvery(EAccountsActions.UsersFetchStarted, fetchUsers);
 }
@@ -336,10 +321,6 @@ export function* watchStartFreeSubscription() {
   yield takeEvery(EAccountsActions.StartFreeSubscription, startFreeSubscriptionSaga);
 }
 
-export function* watchShowPlanExpiredMessage() {
-  yield takeEvery(EAccountsActions.ShowPlanExpiredMessage, showPlanExpiredMessageSaga);
-}
-
 export function* rootSaga() {
   yield all([
     fork(watchFetchUser),
@@ -353,6 +334,5 @@ export function* rootSaga() {
     fork(watchFetchPlan),
     fork(watchStartTrialSubscription),
     fork(watchStartFreeSubscription),
-    fork(watchShowPlanExpiredMessage),
   ]);
 }

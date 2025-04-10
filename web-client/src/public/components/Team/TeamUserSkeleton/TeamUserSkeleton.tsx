@@ -1,6 +1,4 @@
-/* eslint-disable */
-/* prettier-ignore */
-import * as React from 'react';
+import React from 'react';
 
 import { Skeleton } from '../../UI/Skeleton';
 

@@ -1,7 +1,7 @@
 import { actionGenerator } from '../../utils/redux';
 import { ITypedReduxAction } from '../../types/redux';
 import { TUserListItem } from '../../types/user';
-import { IOAuthInviteView, IUserInvite, IUserInviteMicrosoft } from '../../types/team';
+import { ETeamPages, IOAuthInviteView, IUserInvite, IUserInviteMicrosoft } from '../../types/team';
 
 export const enum ETeamActions {
   OpenPopup = 'OPEN_TEAM_INVITES_POPUP',
@@ -13,7 +13,29 @@ export const enum ETeamActions {
   LoadMicrosoftInvites = 'LOAD_MICROSOFT_INVITES',
   LoadMicrosoftInvitesSuccess = 'LOAD_MICROSOFT_INVITES_SUCCESS',
   LoadMicrosoftInvitesFailed = 'LOAD_MICROSOFT_INVITES_FAILED',
+
+  UpdateTeamActiveTab = '_TEAM_ACTIVE_TAB',
+  ChangeTeamActiveTab = 'CHANGE_TEAM_ACTIVE_TAB',
+  SetTeamActivePage = 'SET_TEAM_PAGE',
 }
+
+export type TSetTeamActivePage = ITypedReduxAction<ETeamActions.SetTeamActivePage, ETeamPages>;
+export const setTeamActivePage: (payload: ETeamPages) => TSetTeamActivePage = actionGenerator<
+  ETeamActions.SetTeamActivePage,
+  ETeamPages
+>(ETeamActions.SetTeamActivePage);
+
+export type TChangeTeamActiveTab = ITypedReduxAction<ETeamActions.ChangeTeamActiveTab, ETeamPages>;
+export const changeTeamActiveTab: (payload: ETeamPages) => TChangeTeamActiveTab = actionGenerator<
+  ETeamActions.ChangeTeamActiveTab,
+  ETeamPages
+>(ETeamActions.ChangeTeamActiveTab);
+
+export type TUpdateTeamActiveTab = ITypedReduxAction<ETeamActions.UpdateTeamActiveTab, ETeamPages>;
+export const updateTeamActiveTab: (payload: ETeamPages) => TUpdateTeamActiveTab = actionGenerator<
+  ETeamActions.UpdateTeamActiveTab,
+  ETeamPages
+>(ETeamActions.UpdateTeamActiveTab);
 
 type TOpenAction = ITypedReduxAction<ETeamActions.OpenPopup, void>;
 export const openTeamInvitesPopup: (payload?: void) => TOpenAction = actionGenerator<ETeamActions.OpenPopup, void>(
@@ -57,11 +79,14 @@ export const loadMicrosoftInvites: (payload?: void) => TLoadMicrosoftInvites = a
   void
 >(ETeamActions.LoadMicrosoftInvites);
 
-export type TLoadMicrosoftInvitesSuccess = ITypedReduxAction<ETeamActions.LoadMicrosoftInvitesSuccess, IUserInviteMicrosoft[]>;
-export const loadMicrosoftInvitesSuccess: (payload: IUserInviteMicrosoft[]) => TLoadMicrosoftInvitesSuccess = actionGenerator<
+export type TLoadMicrosoftInvitesSuccess = ITypedReduxAction<
   ETeamActions.LoadMicrosoftInvitesSuccess,
   IUserInviteMicrosoft[]
->(ETeamActions.LoadMicrosoftInvitesSuccess);
+>;
+export const loadMicrosoftInvitesSuccess: (payload: IUserInviteMicrosoft[]) => TLoadMicrosoftInvitesSuccess =
+  actionGenerator<ETeamActions.LoadMicrosoftInvitesSuccess, IUserInviteMicrosoft[]>(
+    ETeamActions.LoadMicrosoftInvitesSuccess,
+  );
 
 export type TLoadMicrosoftInvitesFailed = ITypedReduxAction<ETeamActions.LoadMicrosoftInvitesFailed, void>;
 export const loadMicrosoftInvitesFailed: (payload?: void) => TLoadMicrosoftInvitesFailed = actionGenerator<
@@ -77,4 +102,7 @@ export type TTeamModalActions =
   | TChangGoogleInvites
   | TLoadMicrosoftInvites
   | TLoadMicrosoftInvitesSuccess
-  | TLoadMicrosoftInvitesFailed;
+  | TLoadMicrosoftInvitesFailed
+  | TChangeTeamActiveTab
+  | TUpdateTeamActiveTab
+  | TSetTeamActivePage;

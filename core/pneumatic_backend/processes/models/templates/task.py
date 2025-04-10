@@ -3,7 +3,10 @@ from django.contrib.auth import get_user_model
 from django.contrib.postgres.search import SearchVectorField
 from django.db import models
 from django.db.models import UniqueConstraint, Q, QuerySet
-from pneumatic_backend.accounts.models import AccountBaseMixin
+from pneumatic_backend.accounts.models import (
+    AccountBaseMixin,
+    UserGroup
+)
 from pneumatic_backend.generics.managers import BaseSoftDeleteManager
 from pneumatic_backend.processes.models.mixins import (
     TaskMixin,
@@ -58,6 +61,7 @@ class TaskTemplate(
     def _get_raw_performer(
         self,
         user: Optional[UserModel] = None,
+        group: Optional[UserGroup] = None,
         user_id: Optional[int] = None,
         field=None,  # Optional[TaskField]
         performer_type: PerformerType = PerformerType.USER,
@@ -76,7 +80,9 @@ class TaskTemplate(
             field=field,
             type=performer_type
         )
-        if user:
+        if group:
+            result.group = group
+        elif user:
             result.user = user
         elif user_id:
             result.user_id = user_id
@@ -85,6 +91,7 @@ class TaskTemplate(
     def add_raw_performer(
         self,
         user: Optional[UserModel] = None,
+        group: Optional[UserGroup] = None,
         user_id: Optional[int] = None,
         field=None,
         api_name: Optional[str] = None,
@@ -95,7 +102,7 @@ class TaskTemplate(
         """ Creates and returns a raw performer for a task with given data """
 
         if performer_type != PerformerType.WORKFLOW_STARTER:
-            if not user and not user_id and not field:
+            if not user and not user_id and not group and not field:
                 raise Exception(
                     'Raw performer should be linked with field or user'
                 )
@@ -104,6 +111,7 @@ class TaskTemplate(
             api_name=api_name,
             performer_type=performer_type,
             user=user,
+            group=group,
             user_id=user_id,
             field=field
         )

@@ -1,5 +1,3 @@
-/* eslint-disable */
-/* prettier-ignore */
 import * as React from 'react';
 import classnames from 'classnames';
 
@@ -41,7 +39,6 @@ export function WorkflowModalHeaderProgressBar({
 
   const renderControlls = () => {
     return (
-
       <WorkflowControlls
         workflow={workflow}
         onWorkflowDeleted={onWorkflowDeleted}
@@ -49,72 +46,62 @@ export function WorkflowModalHeaderProgressBar({
         onWorkflowSnoozed={onWorkflowSnoozed}
         onWorkflowResumed={onWorkflowResumed}
       >
-        {controllOptions => {
+        {(controllOptions) => {
           if (!isArrayWithItems(controllOptions)) {
             return null;
           }
 
           return (
             <div className={styles['action-buttons']}>
-              {getNormalizedControlls(controllOptions).map(option => {
+              {getNormalizedControlls(controllOptions).map((option) => {
                 const { Icon, onClick, label, subOptions, isHidden } = option;
                 if (isHidden) {
                   return null;
                 }
 
-                const renderControl = (onClick?: TDropdownOption['onClick']) => {
-                  const Tag = onClick ? "button" : "span";
+                const renderControl = (lOnClick?: TDropdownOption['onClick']) => {
+                  const Tag = lOnClick ? 'button' : 'span';
 
                   return (
                     <Tag
-                      onClick={onClick ? () => onClick(() => {}) : undefined}
-                      className={classnames(
-                        styles['action-buttons__button'],
-                        getDropdownItemColorClass(option.color)
-                      )}
-                      children={(
-                        <>
-                          {Icon && <Icon />}
-                          <span className={styles['action-buttons__button-text']}>{label}</span>
-                        </>
-                      )}
-                    />
+                      onClick={lOnClick ? () => lOnClick(() => {}) : undefined}
+                      className={classnames(styles['action-buttons__button'], getDropdownItemColorClass(option.color))}
+                    >
+                      <>
+                        {Icon && <Icon />}
+                        <span className={styles['action-buttons__button-text']}>{label}</span>
+                      </>
+                    </Tag>
                   );
                 };
 
                 return (
                   <div className={styles['action-buttons__button-wrapper']}>
-                    {!subOptions
-                      ? renderControl(onClick)
-                      : (
-                        <Dropdown
-                          renderToggle={() => renderControl()}
-                          options={subOptions}
-                          direction="left"
-                          className={styles['dropdown-container']}
-                        />
-                      )}
+                    {!subOptions ? (
+                      renderControl(onClick)
+                    ) : (
+                      <Dropdown
+                        renderToggle={() => renderControl()}
+                        options={subOptions}
+                        direction="left"
+                        className={styles['dropdown-container']}
+                      />
+                    )}
                   </div>
-                )
+                );
               })}
             </div>
           );
         }}
       </WorkflowControlls>
     );
-  }
+  };
 
   if (isMobile) {
     return (
       <div className={styles['progress-container-mobile']}>
-        <div className={styles['progress-bar-text']}>
-          {`Progress ${progress}%`}
-        </div>
-        <ProgressBar
-          progress={progress}
-          background="#fdf7ee"
-          color={color}
-        />
+        <div className={styles['progress-bar-text']}>{`Progress ${progress}%`}</div>
+        <ProgressBar progress={progress} background="#fdf7ee" color={color} />
         {renderControlls()}
       </div>
     );
@@ -122,21 +109,15 @@ export function WorkflowModalHeaderProgressBar({
 
   return (
     <div className={styles['progress-container-desktop']}>
-      <CircleProgressBar
-        radius={49}
-        bgColor="#fdF7ee"
-        percent={progress}
-        text={`${progress}%`}
-        color={color}
-      />
+      <CircleProgressBar radius={49} bgColor="#fdF7ee" percent={progress} text={`${progress}%`} color={color} />
       {renderControlls()}
     </div>
   );
 }
 
 const getNormalizedControlls = (controlls: TDropdownOption[]): TDropdownOption[] => {
-  return controlls.map(option => {
-    if (option.withConfirmation && !isArrayWithItems(option.subOptions)) {
+  return controlls.map((option) => {
+    if (option.withConfirmation && Array.isArray(option.subOptions) && !isArrayWithItems(option.subOptions)) {
       return {
         ...option,
         withConfirmation: false,
@@ -144,14 +125,14 @@ const getNormalizedControlls = (controlls: TDropdownOption[]): TDropdownOption[]
           {
             ...option,
             withConfirmation: true,
-            initialConfirmationState: "confirmation",
+            initialConfirmationState: 'confirmation',
             withUpperline: false,
-            size: "sm",
-          }
-        ]
-      }
+            size: 'sm',
+          },
+        ],
+      };
     }
 
     return option;
   });
-}
+};

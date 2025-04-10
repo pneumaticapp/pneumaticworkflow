@@ -1,4 +1,4 @@
-import React from 'react';
+import { ComponentProps, ReactNode } from 'react';
 import { EditorProps } from 'draft-js';
 import Editor from '@draft-js-plugins/editor';
 import { TOutputChecklist } from '../../types/template';
@@ -22,7 +22,7 @@ export type TMentionData = {
 };
 
 export interface IPositionSuggestionsParams {
-  decoratorRect: { x: number; y: number } & ClientRect;
+  decoratorRect: { x: number; y: number } & DOMRect;
   popover: HTMLElement;
   props: {
     open: boolean;
@@ -44,14 +44,14 @@ export interface IRichEditorProps {
   withToolbar?: boolean;
   withChecklists?: boolean;
   multiline?: boolean;
-  children?: React.ReactNode;
+  children?: ReactNode;
   title?: string;
-  decorators?: React.ComponentProps<typeof Editor>['decorators'];
+  decorators?: ComponentProps<typeof Editor>['decorators'];
   foregroundColor?: TForegroundColor;
   stripPastedFormatting?: boolean;
-  submitIcon?: React.ReactNode;
-  cancelIcon?: React.ReactNode;
-
+  submitIcon?: ReactNode;
+  cancelIcon?: ReactNode;
+  isInTaskDescriptionEditor?: boolean;
   handleChange(value: string): Promise<string>;
   handleChangeChecklists?(checklists: TOutputChecklist[]): void;
   onSubmit?(): void;

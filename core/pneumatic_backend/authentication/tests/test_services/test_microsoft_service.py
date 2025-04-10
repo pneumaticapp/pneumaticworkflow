@@ -1,26 +1,27 @@
 import json
+from datetime import timedelta
 
 import pytest
-from datetime import timedelta
 from django.utils import timezone
-from pneumatic_backend.authentication import messages
+
 from pneumatic_backend.accounts.enums import (
     SourceType,
     UserStatus,
 )
+from pneumatic_backend.accounts.models import Contact
+from pneumatic_backend.authentication import messages
+from pneumatic_backend.authentication.models import AccessToken
+from pneumatic_backend.authentication.services import exceptions
 from pneumatic_backend.authentication.services.microsoft import (
     MicrosoftAuthService,
     MicrosoftGraphApiMixin,
 )
-from pneumatic_backend.storage.google_cloud import GoogleCloudService
-from pneumatic_backend.accounts.models import Contact
-from pneumatic_backend.authentication.models import AccessToken
-from pneumatic_backend.authentication.services import exceptions
-from pneumatic_backend.utils.logging import SentryLogLevel
 from pneumatic_backend.processes.tests.fixtures import (
-    create_test_user,
     create_test_account,
+    create_test_user,
 )
+from pneumatic_backend.storage.google_cloud import GoogleCloudService
+from pneumatic_backend.utils.logging import SentryLogLevel
 
 
 pytestmark = pytest.mark.django_db
@@ -231,6 +232,7 @@ class TestMicrosoftGraphApiMixin:
     def test_get_user_photo__ok(self, mocker):
 
         # arrange
+        account = create_test_account()
         access_token = '!@#!@#@!wqww23'
         binary_photo = b'123'
         headers = {'content-type': 'image/svg+xml'}
@@ -269,7 +271,8 @@ class TestMicrosoftGraphApiMixin:
         # act
         result = service._get_user_photo(
             access_token=access_token,
-            user_id=user_id
+            user_id=user_id,
+            account=account
         )
 
         # assert
@@ -293,6 +296,7 @@ class TestMicrosoftGraphApiMixin:
     ):
 
         # arrange
+        account = create_test_account()
         access_token = '!@#!@#@!wqww23'
         binary_photo = b'123'
         headers = {'content-type': 'video|bla*-!file'}
@@ -331,7 +335,8 @@ class TestMicrosoftGraphApiMixin:
         # act
         result = service._get_user_photo(
             user_id=user_id,
-            access_token=access_token
+            access_token=access_token,
+            account=account
         )
 
         # assert
@@ -352,6 +357,7 @@ class TestMicrosoftGraphApiMixin:
     def test_get_user_photo__not_found__return_none(self, mocker):
 
         # arrange
+        account = create_test_account()
         access_token = '!@#!@#@!wqww23'
         response_mock = mocker.Mock(ok=False)
         settings_mock = mocker.patch(
@@ -373,7 +379,8 @@ class TestMicrosoftGraphApiMixin:
         # act
         result = service._get_user_photo(
             access_token=access_token,
-            user_id=user_id
+            user_id=user_id,
+            account=account
         )
 
         # assert
@@ -388,6 +395,7 @@ class TestMicrosoftGraphApiMixin:
     def test_get_user_photo__disabled_storage__return_none(self, mocker):
 
         # arrange
+        account = create_test_account()
         access_token = '!@#!@#@!wqww23'
         binary_photo = b'123'
         headers = {'content-type': 'image/svg+xml'}
@@ -426,7 +434,8 @@ class TestMicrosoftGraphApiMixin:
         # act
         result = service._get_user_photo(
             access_token=access_token,
-            user_id=user_id
+            user_id=user_id,
+            account=account
         )
 
         # assert
@@ -547,6 +556,7 @@ class TestMicrosoftAuthService:
         get_user_photo_mock.assert_called_once_with(
             access_token=access_token,
             user_id=profile_id,
+            account=None
         )
         assert result['email'] == email
         assert result['first_name'] == first_name
@@ -1278,6 +1288,7 @@ class TestMicrosoftAuthService:
         get_user_photo_mock.assert_called_once_with(
             access_token=access_token,
             user_id=user_profile['id'],
+            account=account,
         )
         google_contact.refresh_from_db()
         assert google_contact.status == UserStatus.ACTIVE
@@ -1389,6 +1400,7 @@ class TestMicrosoftAuthService:
         get_user_photo_mock.assert_called_once_with(
             access_token=access_token,
             user_id=user_profile['id'],
+            account=account,
         )
         contact.refresh_from_db()
         assert contact.photo == photo_url

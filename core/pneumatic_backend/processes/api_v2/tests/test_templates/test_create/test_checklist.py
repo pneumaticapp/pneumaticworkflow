@@ -4,10 +4,12 @@ from pneumatic_backend.processes.tests.fixtures import (
 )
 from pneumatic_backend.processes.models import (
     ChecklistTemplate,
-    Template, TaskTemplate,
+    Template,
+    TaskTemplate,
 )
 from pneumatic_backend.processes.enums import (
     PerformerType,
+    OwnerType
 )
 from pneumatic_backend.processes.messages import template as messages
 from pneumatic_backend.utils.validation import ErrorCode
@@ -44,7 +46,12 @@ def test_create__ok(api_client, mocker):
         path='/templates',
         data={
             'name': 'Template',
-            'template_owners': [user.id],
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id
+                },
+            ],
             'is_active': True,
             'kickoff': {},
             'tasks': [
@@ -125,7 +132,12 @@ def test_create__generate_api_name__ok(
         path='/templates',
         data={
             'name': 'Template',
-            'template_owners': [user.id],
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id
+                },
+            ],
             'is_active': True,
             'kickoff': {},
             'tasks': [
@@ -181,7 +193,12 @@ def test_create__draft__ok(api_client, mocker):
         path='/templates',
         data={
             'name': 'Template',
-            'template_owners': [user.id],
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id
+                },
+            ],
             'is_active': False,
             'kickoff': {},
             'tasks': [
@@ -229,7 +246,12 @@ def test_create__fields_with_equal_api_names__validation_error(
         path='/templates',
         data={
             'name': 'Template',
-            'template_owners': [user.id],
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id
+                },
+            ],
             'is_active': True,
             'kickoff': {},
             'tasks': [
@@ -302,7 +324,12 @@ def test_create__skip_selections__validation_error(api_client):
         path='/templates',
         data={
             'name': 'Template',
-            'template_owners': [user.id],
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id
+                },
+            ],
             'is_active': True,
             'kickoff': {},
             'tasks': [
@@ -347,7 +374,12 @@ def test_create__empty_selections__validation_error(api_client):
         path='/templates',
         data={
             'name': 'Template',
-            'template_owners': [user.id],
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id
+                },
+            ],
             'is_active': True,
             'kickoff': {},
             'tasks': [
@@ -399,7 +431,12 @@ def test_create__validation_error_with_task_api_name__ok(
         path='/templates',
         data={
             'name': 'Template',
-            'template_owners': [user.id],
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id
+                },
+            ],
             'is_active': True,
             'kickoff': {},
             'tasks': [
@@ -443,7 +480,12 @@ def test_create__null_selections__validation_error(api_client):
         path='/templates',
         data={
             'name': 'Template',
-            'template_owners': [user.id],
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id
+                },
+            ],
             'is_active': True,
             'kickoff': {},
             'tasks': [
@@ -490,7 +532,12 @@ def test_create__list_without_dict__validation_error(api_client):
         path='/templates',
         data={
             'name': 'Template',
-            'template_owners': [user.id],
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id
+                },
+            ],
             'is_active': True,
             'kickoff': {},
             'tasks': [

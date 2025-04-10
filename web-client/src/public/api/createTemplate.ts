@@ -10,7 +10,7 @@ export function createTemplate(template: ITemplateRequest) {
   return commonRequest<ITemplateResponse>(
     urls.templates,
     {
-      body: mapRequestBody(template),
+      data: mapRequestBody(template),
       method: 'POST',
     },
     { shouldThrow: true },

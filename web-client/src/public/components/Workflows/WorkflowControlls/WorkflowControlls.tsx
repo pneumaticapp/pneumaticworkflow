@@ -64,7 +64,7 @@ export function WorkflowControllsComponents({
   const [isUrgent, setIsUrgent] = React.useState(workflow.isUrgent);
 
   const { authUser } = useSelector(getAuthUser);
-  const canControlWorkflow = checkCanControlWorkflow(authUser, workflow.template);
+  const canControlWorkflow = checkCanControlWorkflow(authUser, workflow.owners);
 
   if (!canControlWorkflow) {
     return <>{children([])}</>;
