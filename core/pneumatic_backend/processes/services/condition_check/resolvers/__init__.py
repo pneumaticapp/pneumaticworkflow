@@ -6,3 +6,4 @@ from .string import StringResolver
 from .user import UserResolver
 from .task import TaskResolver
 from .kickoff import KickoffResolver
+from .number import NumberResolver

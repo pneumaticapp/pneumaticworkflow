@@ -118,6 +118,7 @@ class TestBasePerformersService:
         )
         current_url = '/page'
         is_superuser = False
+        auth_type = AuthTokenType.USER
 
         # act
         BasePerformersService.create_performer(
@@ -125,6 +126,7 @@ class TestBasePerformersService:
             user_key=user_performer.id,
             task=task,
             current_url=current_url,
+            auth_type=auth_type,
             is_superuser=is_superuser
         )
 
@@ -171,12 +173,14 @@ class TestBasePerformersService:
         )
         current_url = '/page'
         is_superuser = False
+        auth_type = AuthTokenType.USER
 
         # act
         BasePerformersService.create_performer(
             request_user=request_user,
             user_key=user_performer.id,
             task=task,
+            auth_type=auth_type,
             current_url=current_url,
             is_superuser=is_superuser
         )
@@ -209,6 +213,7 @@ class TestBasePerformersService:
         task = workflow.current_task_instance
         current_url = '/page'
         is_superuser = False
+        auth_type = AuthTokenType.USER
 
         # act
         with pytest.raises(PerformersServiceException) as ex:
@@ -216,6 +221,7 @@ class TestBasePerformersService:
                 request_user=user,
                 user_key=user_performer.id,
                 task=task,
+                auth_type=auth_type,
                 current_url=current_url,
                 is_superuser=is_superuser
             )
@@ -324,6 +330,7 @@ class TestBasePerformersService:
         task = workflow.current_task_instance
         current_url = '/page'
         is_superuser = False
+        auth_type = AuthTokenType.USER
 
         # act
         with pytest.raises(PerformersServiceException) as ex:
@@ -331,6 +338,7 @@ class TestBasePerformersService:
                 request_user=request_user,
                 user_key=user_performer.id,
                 task=task,
+                auth_type=auth_type,
                 current_url=current_url,
                 is_superuser=is_superuser
             )
@@ -366,6 +374,7 @@ class TestBasePerformersService:
         )
         current_url = '/page'
         is_superuser = False
+        auth_type = AuthTokenType.USER
 
         # act
         with pytest.raises(PerformersServiceException) as ex:
@@ -373,6 +382,7 @@ class TestBasePerformersService:
                 request_user=request_user,
                 user_key=user_performer.id,
                 task=task,
+                auth_type=auth_type,
                 current_url=current_url,
                 is_superuser=is_superuser
             )
@@ -410,12 +420,14 @@ class TestBasePerformersService:
         )
         current_url = '/page'
         is_superuser = False
+        auth_type = AuthTokenType.USER
 
         # act
         user, task_performer = BasePerformersService.create_performer(
             request_user=template_owner,
             user_key=user_performer.id,
             task=task,
+            auth_type=auth_type,
             current_url=current_url,
             is_superuser=is_superuser
         )
@@ -436,7 +448,8 @@ class TestBasePerformersService:
             request_user=template_owner,
             user=user_performer,
             current_url=current_url,
-            is_superuser=is_superuser
+            is_superuser=is_superuser,
+            auth_type=auth_type,
         )
         get_user_for_create_mock.assert_called_once_with(
             user_key=user_performer.id,
@@ -478,12 +491,14 @@ class TestBasePerformersService:
         )
         current_url = '/page'
         is_superuser = False
+        auth_type = AuthTokenType.USER
 
         # act
         user, task_performer = BasePerformersService.create_performer(
             request_user=template_owner,
             user_key=user_performer.id,
             task=task,
+            auth_type=auth_type,
             current_url=current_url,
             is_superuser=is_superuser
         )
@@ -528,12 +543,14 @@ class TestBasePerformersService:
         )
         current_url = '/page'
         is_superuser = False
+        auth_type = AuthTokenType.USER
 
         # act
         user, task_performer = BasePerformersService.create_performer(
             request_user=template_owner,
             user_key=user_performer.id,
             task=task,
+            auth_type=auth_type,
             current_url=current_url,
             is_superuser=is_superuser
         )
@@ -578,12 +595,14 @@ class TestBasePerformersService:
         )
         current_url = '/page'
         is_superuser = False
+        auth_type = AuthTokenType.USER
 
         # act
         user, task_performer = BasePerformersService.create_performer(
             request_user=template_owner,
             user_key=user_performer.id,
             task=task,
+            auth_type=auth_type,
             current_url=current_url,
             is_superuser=is_superuser
         )
@@ -596,7 +615,8 @@ class TestBasePerformersService:
             request_user=template_owner,
             user=user_performer,
             current_url=current_url,
-            is_superuser=is_superuser
+            is_superuser=is_superuser,
+            auth_type=auth_type,
         )
 
     def test_delete_performer__ok(self, mocker):
@@ -627,12 +647,16 @@ class TestBasePerformersService:
             'BasePerformersService._get_user_for_delete',
             return_value=user_performer
         )
+        is_superuser = False
+        auth_type = AuthTokenType.USER
 
         # act
         BasePerformersService.delete_performer(
             request_user=template_owner,
             user_key=user_performer.id,
-            task=task
+            task=task,
+            auth_type=auth_type,
+            is_superuser=is_superuser
         )
 
         # assert
@@ -650,7 +674,9 @@ class TestBasePerformersService:
         delete_actions_mock.assert_called_once_with(
             task=task,
             request_user=template_owner,
-            user=user_performer
+            user=user_performer,
+            is_superuser=is_superuser,
+            auth_type=auth_type,
         )
 
     def test_delete_performer__previously_created__ok(self, mocker):
@@ -682,12 +708,16 @@ class TestBasePerformersService:
             'BasePerformersService._get_user_for_delete',
             return_value=user_performer
         )
+        is_superuser = False
+        auth_type = AuthTokenType.USER
 
         # act
         BasePerformersService.delete_performer(
             request_user=template_owner,
             user_key=user_performer.id,
-            task=task
+            task=task,
+            auth_type=auth_type,
+            is_superuser=is_superuser
         )
 
         # assert
@@ -697,7 +727,9 @@ class TestBasePerformersService:
         delete_actions_mock.assert_called_once_with(
             task=task,
             request_user=template_owner,
-            user=user_performer
+            user=user_performer,
+            is_superuser=is_superuser,
+            auth_type=auth_type,
         )
 
     def test_delete_performer__not_existent__skip(self, mocker):
@@ -724,12 +756,16 @@ class TestBasePerformersService:
             'BasePerformersService._get_user_for_delete',
             return_value=user_performer
         )
+        is_superuser = False
+        auth_type = AuthTokenType.USER
 
         # act
         BasePerformersService.delete_performer(
             request_user=template_owner,
             user_key=user_performer.id,
-            task=task
+            task=task,
+            auth_type=auth_type,
+            is_superuser=is_superuser
         )
 
         # assert
@@ -768,12 +804,16 @@ class TestBasePerformersService:
             'BasePerformersService._get_user_for_delete',
             return_value=request_user
         )
+        is_superuser = False
+        auth_type = AuthTokenType.USER
 
         # act
         BasePerformersService.delete_performer(
             request_user=request_user,
             user_key=request_user.id,
-            task=task
+            task=task,
+            auth_type=auth_type,
+            is_superuser=is_superuser
         )
 
         # assert
@@ -787,7 +827,9 @@ class TestBasePerformersService:
         delete_actions_mock.assert_called_once_with(
             task=task,
             request_user=request_user,
-            user=request_user
+            user=request_user,
+            is_superuser=is_superuser,
+            auth_type=auth_type,
         )
 
     def test_delete_performer__last_performer__exception(self, mocker):
@@ -809,13 +851,17 @@ class TestBasePerformersService:
             'BasePerformersService._get_user_for_delete',
             return_value=request_user
         )
+        is_superuser = False
+        auth_type = AuthTokenType.USER
 
         # act
         with pytest.raises(PerformersServiceException) as ex:
             BasePerformersService.delete_performer(
                 request_user=request_user,
                 user_key=request_user.id,
-                task=task
+                task=task,
+                auth_type=auth_type,
+                is_superuser=is_superuser
             )
 
         # assert
@@ -1174,12 +1220,16 @@ class TestTaskPerformersService:
             'pneumatic_backend.processes.api_v2.services.task.performers.'
             'send_new_task_notification.delay'
         )
+        is_superuser = False
+        auth_type = AuthTokenType.USER
 
         # act
         TaskPerformersService._create_actions(
             request_user=request_user,
             user=user_performer,
-            task=task
+            task=task,
+            auth_type=auth_type,
+            is_superuser=is_superuser
         )
 
         # assert
@@ -1237,12 +1287,16 @@ class TestTaskPerformersService:
             'pneumatic_backend.processes.api_v2.services.task.performers.'
             'send_new_task_notification.delay'
         )
+        is_superuser = False
+        auth_type = AuthTokenType.USER
 
         # act
         TaskPerformersService._create_actions(
             request_user=user,
             user=user,
-            task=task
+            task=task,
+            auth_type=auth_type,
+            is_superuser=is_superuser
         )
 
         # assert
@@ -1285,12 +1339,16 @@ class TestTaskPerformersService:
             'pneumatic_backend.processes.api_v2.services.task.performers.'
             'send_new_task_notification.delay'
         )
+        is_superuser = False
+        auth_type = AuthTokenType.USER
 
         # act
         TaskPerformersService._create_actions(
             request_user=user,
             user=user_performer,
-            task=task
+            task=task,
+            auth_type=auth_type,
+            is_superuser=is_superuser
         )
 
         # assert
@@ -1339,12 +1397,16 @@ class TestTaskPerformersService:
             'pneumatic_backend.processes.api_v2.services.task.performers.'
             'send_new_task_notification.delay'
         )
+        is_superuser = False
+        auth_type = AuthTokenType.USER
 
         # act
         TaskPerformersService._create_actions(
             request_user=user,
             user=user_performer,
-            task=task
+            task=task,
+            auth_type=auth_type,
+            is_superuser=is_superuser
         )
 
         # assert
@@ -1386,12 +1448,16 @@ class TestTaskPerformersService:
             'pneumatic_backend.processes.api_v2.services.task.performers.'
             'send_new_task_notification.delay'
         )
+        is_superuser = False
+        auth_type = AuthTokenType.USER
 
         # act
         TaskPerformersService._create_actions(
             request_user=request_user,
             user=transfer_performer,
-            task=task
+            task=task,
+            auth_type=auth_type,
+            is_superuser=is_superuser
         )
 
         # assert
@@ -1465,12 +1531,16 @@ class TestTaskPerformersService:
             'pneumatic_backend.processes.services.websocket.WSSender.'
             'send_removed_task_notification'
         )
+        is_superuser = False
+        auth_type = AuthTokenType.USER
 
         # act
         TaskPerformersService._delete_actions(
             request_user=request_user,
             user=deleted_performer,
-            task=task
+            task=task,
+            auth_type=auth_type,
+            is_superuser=is_superuser
         )
 
         # assert
@@ -1541,12 +1611,16 @@ class TestTaskPerformersService:
             'pneumatic_backend.processes.services.websocket.WSSender.'
             'send_removed_task_notification'
         )
+        is_superuser = False
+        auth_type = AuthTokenType.USER
 
         # act
         TaskPerformersService._delete_actions(
             request_user=request_user,
             user=deleted_performer,
-            task=task
+            task=task,
+            auth_type=auth_type,
+            is_superuser=is_superuser
         )
 
         # assert
@@ -1624,12 +1698,16 @@ class TestTaskPerformersService:
             'pneumatic_backend.processes.services.websocket.WSSender.'
             'send_removed_task_notification'
         )
+        is_superuser = False
+        auth_type = AuthTokenType.USER
 
         # act
         TaskPerformersService._delete_actions(
             request_user=request_user,
             user=deleted_performer,
-            task=task
+            task=task,
+            auth_type=auth_type,
+            is_superuser=is_superuser
         )
 
         # assert

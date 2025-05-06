@@ -694,7 +694,9 @@ def test_revert__deleted_performer_recreated__ok(
     TaskPerformersService.delete_performer(
         task=task2,
         request_user=user,
-        user_key=user_performer.id
+        user_key=user_performer.id,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
     )
     text_comment = 'text_comment'
     api_client.post(
@@ -759,7 +761,9 @@ def test_revert__deleted_performer__permission_denied(
     TaskPerformersService.delete_performer(
         task=task2,
         request_user=template_owner,
-        user_key=deleted_performer.id
+        user_key=deleted_performer.id,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
     )
     api_client.token_authenticate(deleted_performer)
     response = api_client.post(

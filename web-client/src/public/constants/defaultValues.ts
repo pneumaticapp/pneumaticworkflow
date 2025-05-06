@@ -21,20 +21,25 @@ export const localeOptions: ILocaleOption[] = [
 ];
 
 export const DISCOVERY_CALL_URL = 'https://calendly.com/pneumaticworkflow/discovery-call';
-export const ZAPIER_EMBED_SCRIPT_SRC = 'https://cdn.zapier.com/packages/partner-sdk/v0/zapier-elements/zapier-elements.esm.js';
-export const ZAPIER_EMBED_CSS_HREF = 'https://cdn.zapier.com/packages/partner-sdk/v0/zapier-elements/zapier-elements.css';
+export const ZAPIER_EMBED_SCRIPT_SRC =
+  'https://cdn.zapier.com/packages/partner-sdk/v0/zapier-elements/zapier-elements.esm.js';
+export const ZAPIER_EMBED_CSS_HREF =
+  'https://cdn.zapier.com/packages/partner-sdk/v0/zapier-elements/zapier-elements.css';
 
 export const emailRegex = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,255}$/i;
 export const phoneRegex = /^\+?1?\d{9,15}$/;
 export const whitespaceRegex = /\s+/i;
 export const urlRegex = /((https?|ftp):\/\/)?[a-z0-9.-]+\.[a-z]{2,}(\/\S*?(?=\.*(?:\s|,|$)))?/gi;
+export const numberRegex = /^-?(?:0(?:[.,]\d+)?|[1-9]\d*(?:[.,]\d+)?)$/;
 export const urlWithProtocolRegex = /((https?|ftp):\/\/)[a-z0-9.-]+\.[a-z]{2,}(\/\S*?(?=\.*(?:\s|,|$)))?/gi;
 export const couponRegex = /([A-Za-z0-9\+\-\_])+/;
 export const hostNameRegex = /(^https?:\/\/)(www[0-9]?\.)?([^/:]+)/i;
 export const mentionsRegex = /\[([^\n\|]+)\|([0-9]+)\]/;
 export const variableRegex = /\{\{\s?([а-яa-z0-9\-_]+)\s?\}\}/i;
-export const youtubeVideoRegexp = /(?:http(?:s?):\/\/(?:www\.)?youtu(?:be\.com\/watch\?v=|\.be\/)([\w\-\_]*)(?:&(?:amp;)?‌​[\w\?‌​=]*)?)/gi;
-export const loomVideoRegexp = /(?:https?:\/\/(?:www\.|stage\.)?(?:use)?(?:loom|loomlocal)\.com(?::4444)?\/share\/([a-f0-9]+))(?:\?t=[0-9]*)?/gi;
+export const youtubeVideoRegexp =
+  /(?:http(?:s?):\/\/(?:www\.)?youtu(?:be\.com\/watch\?v=|\.be\/)([\w\-\_]*)(?:&(?:amp;)?‌​[\w\?‌​=]*)?)/gi;
+export const loomVideoRegexp =
+  /(?:https?:\/\/(?:www\.|stage\.)?(?:use)?(?:loom|loomlocal)\.com(?::4444)?\/share\/([a-f0-9]+))(?:\?t=[0-9]*)?/gi;
 export const wistiaVideoRegexp = /(?:https?:\/\/)?[a-z0-9]+\.wistia\.com\/medias\/([a-z0-9]+)/gi;
 export const imageUrlRegex = /(http(s?):)([/|.|\w|\s|-])*\.(?:jpg|gif|png)/gi;
 
@@ -163,14 +168,7 @@ export const REMARKABLE_DISIBLE_MARKDOWN_OPTIONS = {
       'list',
       'table',
     ],
-    core: [
-      'abbr',
-      'abbr2',
-      'footnote_tail',
-      'references',
-      'replacements',
-      'smartquotes',
-    ],
+    core: ['abbr', 'abbr2', 'footnote_tail', 'references', 'replacements', 'smartquotes'],
   },
 };
 

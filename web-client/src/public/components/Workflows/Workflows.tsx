@@ -8,7 +8,7 @@ import WorkflowsTablePage from './WorkflowsTablePage';
 import { getWorkflowsView } from '../../redux/selectors/workflows';
 import { EWorkflowsView } from '../../types/workflow';
 import { TITLES } from '../../constants/titles';
-import { loadWorkflowsList, resetWorkflows, openWorkflowLogPopup } from '../../redux/actions';
+import { resetWorkflows, openWorkflowLogPopup } from '../../redux/actions';
 
 export interface IWorkflowsLocationMatchParams {
   id?: string;
@@ -18,16 +18,12 @@ export const Workflows = withRouter(({ match: { params } }: RouteComponentProps<
   const view = useSelector(getWorkflowsView);
   const dispatch = useDispatch();
 
-  const refreshWorkflowsList = () => {
-    dispatch(loadWorkflowsList(0));
-  }
   const clearWorkflowsList = () => {
     dispatch(resetWorkflows());
   }
 
   React.useEffect(() => {
     document.title = TITLES.Workflows;
-    refreshWorkflowsList();
 
     const workflowId = Number(params.id);
     if (workflowId) {

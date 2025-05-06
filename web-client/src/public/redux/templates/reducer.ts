@@ -37,6 +37,7 @@ export const INIT_STATE: ITemplatesStore = {
   templatesListSorting: ETemplatesSorting.DateDesc,
   templatesVariablesMap: {},
   templatesIntegrationsStats: {},
+  isTemplateOwner: undefined,
 };
 
 export const reducer = (state = INIT_STATE, action: TTemplatesActions | TWorkflowsActions): ITemplatesStore => {
@@ -113,7 +114,11 @@ export const reducer = (state = INIT_STATE, action: TTemplatesActions | TWorkflo
 
       return { ...state, templatesIntegrationsStats };
     }
-
+    case ETemplatesActions.SetIsTemplateOwner:
+      return {
+        ...state,
+        isTemplateOwner: action.payload,
+      };
     default:
       return { ...state };
   }

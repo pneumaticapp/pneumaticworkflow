@@ -6,6 +6,7 @@
 * DJANGO_DEBUG: "yes" / "no"
 * DJANGO_SECRET_KEY: str
 * DJANGO_SETTINGS_MODULE: pneumatic_backend.settings
+* ENABLE_LOGGING: "yes" / "no"
 
 ### For developers
 If you need debug SQL queries, use this context manager:

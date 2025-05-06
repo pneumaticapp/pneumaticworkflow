@@ -1,10 +1,11 @@
-from typing import Optional
+from typing import Optional, List
 import analytics
 from datetime import timedelta
 from django.contrib.auth import get_user_model
 from django.conf import settings
 from pneumatic_backend.accounts.models import (
     Account,
+    UserGroup,
 )
 from pneumatic_backend.processes.models import (
     Workflow,
@@ -34,6 +35,7 @@ from pneumatic_backend.analytics.events import (
     TenantsAnalyticsEvent,
     MentionsAnalyticsEvent,
     CommentAnalyticsEvent,
+    GroupsAnalyticsEvent,
 )
 from pneumatic_backend.authentication.enums import AuthTokenType
 from pneumatic_backend.analytics import exceptions
@@ -995,6 +997,7 @@ class AnalyticService:
                 'workflow_id': task.workflow.id,
                 'workflow_name': task.workflow.name,
                 'task_name': task.name,
+                'task_id': task.id,
                 'category': EventCategory.tasks,
                 'auth_type': auth_type,
             }
@@ -1134,6 +1137,7 @@ class AnalyticService:
                 'workflow_id': workflow.id,
                 'workflow_name': workflow.name,
                 'task_name': task.name,
+                'task_id': task.id,
                 'category': EventCategory.tasks,
                 'auth_type': auth_type,
             },
@@ -1496,4 +1500,249 @@ class AnalyticService:
                 'auth_type': auth_type,
                 'source': source
             }
+        )
+
+    @classmethod
+    def groups_created(
+        cls,
+        user_id: int,
+        user_email: str,
+        user_first_name: str,
+        user_last_name: str,
+        group_photo: Optional[str],
+        group_users: Optional[List[int]],
+        account_id: int,
+        group_id: int,
+        group_name: str,
+        auth_type: AuthTokenType,
+        text: str,
+        is_superuser: bool,
+    ) -> bool:
+        return cls._track(
+            user_id=user_id,
+            event=GroupsAnalyticsEvent.created,
+            is_superuser=is_superuser,
+            properties={
+                'text': text,
+                'email': user_email,
+                'first_name': user_first_name,
+                'last_name': user_last_name,
+                'photo': group_photo,
+                'users': group_users,
+                'account_id': account_id,
+                'id': group_id,
+                'name': group_name,
+                'category': EventCategory.groups,
+                'auth_type': auth_type,
+            }
+        )
+
+    @classmethod
+    def groups_deleted(
+        cls,
+        user_id: int,
+        user_email: str,
+        user_first_name: str,
+        user_last_name: str,
+        group_photo: Optional[str],
+        group_users: Optional[List[int]],
+        account_id: int,
+        group_id: int,
+        group_name: str,
+        auth_type: AuthTokenType,
+        text: str,
+        is_superuser: bool,
+    ) -> bool:
+        return cls._track(
+            user_id=user_id,
+            event=GroupsAnalyticsEvent.deleted,
+            is_superuser=is_superuser,
+            properties={
+                'text': text,
+                'email': user_email,
+                'first_name': user_first_name,
+                'last_name': user_last_name,
+                'photo': group_photo,
+                'users': group_users,
+                'account_id': account_id,
+                'id': group_id,
+                'name': group_name,
+                'category': EventCategory.groups,
+                'auth_type': auth_type,
+            }
+        )
+
+    @classmethod
+    def groups_updated(
+        cls,
+        user_id: int,
+        user_email: str,
+        user_first_name: str,
+        user_last_name: str,
+        group_photo: Optional[str],
+        group_users: Optional[List[int]],
+        account_id: int,
+        group_id: int,
+        group_name: str,
+        auth_type: AuthTokenType,
+        text: str,
+        is_superuser: bool,
+    ) -> bool:
+        return cls._track(
+            user_id=user_id,
+            event=GroupsAnalyticsEvent.updated,
+            is_superuser=is_superuser,
+            properties={
+                'text': text,
+                'email': user_email,
+                'first_name': user_first_name,
+                'last_name': user_last_name,
+                'photo': group_photo,
+                'users': group_users,
+                'account_id': account_id,
+                'id': group_id,
+                'name': group_name,
+                'category': EventCategory.groups,
+                'auth_type': auth_type,
+            }
+        )
+
+    @classmethod
+    def task_performer_created(
+        cls,
+        user: UserModel,
+        performer: UserModel,
+        task: Task,
+        auth_type: AuthTokenType,
+        is_superuser: bool = False,
+    ):
+        workflow = task.workflow
+        return cls._track(
+            user_id=user.id,
+            event=TaskAnalyticsEvent.performer_created,
+            properties={
+                'text': (
+                    f'{workflow.name} (id: {workflow.id}). '
+                    f'Task: "{task.name}" (id: {task.id}). '
+                    f'{performer.name_by_status} assigned as performer'
+                ),
+                'email': user.email,
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+                'performer_id': performer.id,
+                'performer_name': performer.name_by_status,
+                'account_id': user.account_id,
+                'workflow_id': workflow.id,
+                'workflow_name': workflow.name,
+                'task_id': task.id,
+                'task_name': task.name,
+                'category': EventCategory.tasks,
+                'auth_type': auth_type,
+            },
+            is_superuser=is_superuser
+        )
+
+    @classmethod
+    def task_performer_deleted(
+        cls,
+        user: UserModel,
+        performer: UserModel,
+        task: Task,
+        auth_type: AuthTokenType,
+        is_superuser: bool = False,
+    ):
+        workflow = task.workflow
+        return cls._track(
+            user_id=user.id,
+            event=TaskAnalyticsEvent.performer_deleted,
+            properties={
+                'text': (
+                    f'{workflow.name} (id: {workflow.id}). '
+                    f'Task: "{task.name}" (id: {task.id}). '
+                    f'{performer.name_by_status} removed from performers'
+                ),
+                'email': user.email,
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+                'performer_id': performer.id,
+                'performer_name': performer.name_by_status,
+                'account_id': user.account_id,
+                'workflow_id': workflow.id,
+                'workflow_name': workflow.name,
+                'task_id': task.id,
+                'task_name': task.name,
+                'category': EventCategory.tasks,
+                'auth_type': auth_type,
+            },
+            is_superuser=is_superuser
+        )
+
+    @classmethod
+    def task_group_performer_created(
+        cls,
+        user: UserModel,
+        performer: UserGroup,
+        task: Task,
+        auth_type: AuthTokenType,
+        is_superuser: bool = False,
+    ):
+        workflow = task.workflow
+        return cls._track(
+            user_id=user.id,
+            event=TaskAnalyticsEvent.group_performer_created,
+            properties={
+                'text': (
+                    f'{workflow.name} (id: {workflow.id}). '
+                    f'Task: "{task.name}" (id: {task.id}). '
+                    f'{performer.name} assigned as performer'
+                ),
+                'email': user.email,
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+                'performer_id': performer.id,
+                'performer_name': performer.name,
+                'account_id': user.account_id,
+                'workflow_id': workflow.id,
+                'workflow_name': workflow.name,
+                'task_id': task.id,
+                'task_name': task.name,
+                'category': EventCategory.tasks,
+                'auth_type': auth_type,
+            },
+            is_superuser=is_superuser
+        )
+
+    @classmethod
+    def task_group_performer_deleted(
+        cls,
+        user: UserModel,
+        performer: UserGroup,
+        task: Task,
+        auth_type: AuthTokenType,
+        is_superuser: bool = False,
+    ):
+        workflow = task.workflow
+        return cls._track(
+            user_id=user.id,
+            event=TaskAnalyticsEvent.group_performer_deleted,
+            properties={
+                'text': (
+                    f'{workflow.name} (id: {workflow.id}). '
+                    f'Task: "{task.name}" (id: {task.id}). '
+                    f'{performer.name} removed from performers'
+                ),
+                'email': user.email,
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+                'performer_id': performer.id,
+                'performer_name': performer.name,
+                'account_id': user.account_id,
+                'workflow_id': workflow.id,
+                'workflow_name': workflow.name,
+                'task_id': task.id,
+                'task_name': task.name,
+                'category': EventCategory.tasks,
+                'auth_type': auth_type,
+            },
+            is_superuser=is_superuser
         )

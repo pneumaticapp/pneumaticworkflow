@@ -331,6 +331,7 @@ class Common(Configuration):
         'pneumatic_backend.processes.tasks.webhooks',
         'pneumatic_backend.reports.tasks',
         'pneumatic_backend.services.tasks',
+        'pneumatic_backend.analytics.tasks',
     ]
 
     # reCaptcha

@@ -1,0 +1,131 @@
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  right: 0;
+  left: 0;
+  bottom: 0;
+  pointer-events: auto;
+  background-color: var(--pneumatic-color-link);
+}
+
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  display: block;
+  overflow-x: hidden;
+  overflow-y: auto;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  outline: 0;
+}
+
+.fade {
+  opacity: 0;
+  transition: opacity 0.15s linear;
+}
+
+.modal.fade.show {
+  opacity: 1;
+}
+
+.modal-backdrop.fade.show {
+  opacity: 0.7;
+}
+
+.modal-dialog {
+  position: absolute;
+  right: 0;
+  left: 0;
+  bottom: 0;
+  margin: auto;
+  padding: 0 1.5rem;
+  max-width: 67rem;
+  pointer-events: none;
+}
+
+.modal-dialog-centered {
+  display: flex;
+  align-items: center;
+  min-height: 100%;
+}
+
+.modal-content {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  pointer-events: auto;
+  background-color: var(--pneumatic-color-white);
+  border-radius: 3.2rem;
+}
+
+.modal-content > form {
+  display: flex;
+  flex-flow: column;
+  height: 100%;
+}
+
+.modal-header {
+  padding: 3.2rem 3.2rem 1.6rem;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  border: none;
+
+  .title {
+    margin-bottom: 0;
+    padding: 4.8rem 4.8rem 0;
+    font-family: 'Abhaya Libre', 'Times New Roman', Arial;
+    font-size: 2rem;
+    font-weight: 800;
+    font-style: normal;
+    line-height: 2.4rem;
+    text-align: left;
+    color: var(--pneumatic-color-black100);
+
+    @media (--mobile) {
+      padding: 4.8rem 0 0;
+    }
+  }
+}
+
+.modal-body {
+  position: relative;
+  flex: 1 1 auto;
+  padding: 0 8rem 3.2rem;
+  word-break: break-word;
+  color: var(--pneumatic-color-black72);
+  border: none;
+
+  @media (--mobile) {
+    padding: 0 3.2rem 3.2rem;
+  }
+}
+
+.modal-footer {
+  padding: 0 8rem 8rem;
+  display: flex;
+  align-items: center;
+  justify-content: left;
+  border: none;
+
+  @media (--mobile) {
+    padding: 0 3.2rem 8rem;
+  }
+}
+
+.close-button {
+  position: absolute;
+  top: 3.2rem;
+  right: 3.2rem;
+  cursor: pointer;
+  color: var(--pneumatic-color-black16);
+  transition: color 0.3s;
+
+  &:hover {
+    color: var(--pneumatic-color-link-hover);
+  }
+}

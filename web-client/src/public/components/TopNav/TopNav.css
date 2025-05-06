@@ -12,45 +12,45 @@
 .top-bar {
   display: flex;
   width: 100%;
-  height: 24px;
-  font-size: 13px;
-  line-height: 16px;
+  height: 2.4rem;
+  font-size: 1.3rem;
+  line-height: 1.6rem;
   text-align: center;
   white-space: pre-line;
-  color: white;
+  color: var(--pneumatic-color-white);
   background: var(--pneumatic-color-black72);
   justify-content: center;
   align-items: center;
   flex-wrap: wrap;
 
   @media (--mobile) {
-    height: 32px;
+    height: 3.2rem;
   }
 }
 
 .top-bar__supermode {
-  color: white;
-  background-color: #2196f3;
+  color: var(--pneumatic-color-white);
+  background-color: var(--pneumatic-color-notification4);
 
   span {
-    margin: 0 8px;
+    margin: 0 0.8rem;
     display: inline-block;
-    width: 5px;
-    height: 5px;
-    background-color: white;
+    width: 0.5rem;
+    height: 0.5rem;
+    background-color: var(--pneumatic-color-white);
     border-radius: 50%;
   }
 
   &__free {
-    background: #4caf50;
+    background: var(--pneumatic-color-notification3);
   }
 
   &__trial {
-    background: #f44336;
+    background: var(--pneumatic-color-notification1);
   }
 
   &__premium {
-    background: #673ab7;
+    background: var(--pneumatic-color-violet);
   }
 }
 
@@ -74,34 +74,30 @@
 }
 
 .navbar {
-  backdrop-filter: blur(4px);
-  padding: 32px 32px 32px 104px !important;
+  backdrop-filter: blur(0.4rem);
+  padding: 3.2rem 3.2rem 3.2rem 10.4rem !important;
   display: flex;
   height: auto;
   background: var(--navbar-background-color);
   align-items: center;
   flex-flow: row nowrap !important;
-  flex-wrap: wrap !important;
 
   @media (--mobile) {
     padding: 0 !important;
+    flex-wrap: wrap !important;
   }
 }
 
 .navbar-left {
   display: flex;
   align-items: center;
-  width: 33.3%;
-  min-width: 110px;
-  min-height: 40px;
-
-  @media (max-width: 1350px) {
-    width: 50%;
-  }
+  width: auto;
+  min-width: 11rem;
+  min-height: 4rem;
 
   @media (--mobile) {
-    margin-top: 30px;
-    padding: 0 15px;
+    margin-top: 3rem;
+    padding: 0 1.5rem;
     width: 100%;
     order: 2;
   }
@@ -111,38 +107,25 @@
   margin-left: auto;
   display: flex;
   width: auto;
-  max-width: 33.3%;
+  flex-shrink: 0;
   align-items: center;
   justify-content: flex-end;
-  min-height: 40px;
+  min-height: 4rem;
   text-align: right;
   white-space: nowrap;
 
   @media (--mobile) {
-    margin-top: 16px;
-    padding: 0 16px 0 64px;
+    margin-top: 1.6rem;
+    padding: 0 1.6rem 0 6.4rem;
     width: 100% !important;
     max-width: 100%;
-    height: 64px;
+    height: 6.4rem;
     order: 1;
   }
 
   img {
-    width: 32px !important;
-    height: 32px !important;
-  }
-}
-
-.navbar-center {
-  display: flex;
-  width: 33.3%;
-  justify-content: center;
-
-  @media (max-width: 1350px) {
-    margin: 10px 0;
-    width: 100%;
-    flex-basis: 100%;
-    order: 3;
+    width: 3.2rem !important;
+    height: 3.2rem !important;
   }
 }
 
@@ -163,7 +146,7 @@
 }
 
 .search_desktop {
-  margin-left: 10px;
+  margin-left: 1rem;
 
   @media (--desktop) {
     display: flex;
@@ -185,12 +168,12 @@
 }
 
 .search_mobile-opened {
-  margin: 0 15px 0 10px;
+  margin: 0 1.5rem 0 1rem;
 }
 
 .search__inner {
   width: 100%;
-  max-width: 192px;
+  max-width: 19.2rem;
   transition: all 0.5s ease;
 
   @media (--mobile) {
@@ -206,23 +189,23 @@
 .search__clear {
   position: absolute;
   top: 0;
-  right: 5px;
+  right: 0.5rem;
   bottom: 0;
   background-color: transparent;
   border: 0;
 }
 
 .search__clear-icon {
-  width: 16px;
+  width: 1.6rem;
 }
 
 .search__input {
   width: 100%;
-  background: #f6f6f6;
+  background: var(--pneumatic-color-black4);
 }
 
 .notifications {
-  margin: 0 16px;
+  margin: 0 1.6rem;
 }
 
 .notifications-button {
@@ -241,23 +224,23 @@
 .notification_counter_container {
   position: absolute;
   z-index: 1;
-  bottom: 8px;
+  bottom: 0.8rem;
   display: flex;
-  width: 29px;
+  width: 2.9rem;
   justify-content: flex-end;
 }
 
 .notification_counter_container__counter {
-  padding: 2px 4px;
-  min-width: 20px;
-  max-width: 29px;
-  height: 20px;
-  font-size: 11px;
+  padding: 0.2rem 0.4rem;
+  min-width: 2rem;
+  max-width: 2.9rem;
+  height: 2rem;
+  font-size: 1.1rem;
   font-weight: bold;
-  line-height: 16px;
-  color: white;
+  line-height: 1.6rem;
+  color: var(--pneumatic-color-white);
   background: var(--pneumatic-color-warning);
-  border-radius: 12px;
+  border-radius: 1.2rem;
 }
 
 .profile-dropdown {
@@ -268,6 +251,6 @@
   all: unset;
 
   &:focus-visible {
-    outline: 1px solid var(--pneumatic-color-link-hover) !important;
+    outline: 0.1rem solid var(--pneumatic-color-link-hover) !important;
   }
 }

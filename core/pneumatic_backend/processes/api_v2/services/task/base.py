@@ -55,7 +55,8 @@ class BasePerformersService:
         user: UserModel,
         request_user: UserModel,
         current_url: str,
-        is_superuser: bool
+        is_superuser: bool,
+        auth_type: AuthTokenType
     ):
         pass
 
@@ -65,7 +66,9 @@ class BasePerformersService:
         cls,
         task: Task,
         user: UserModel,
-        request_user: UserModel
+        request_user: UserModel,
+        is_superuser: bool,
+        auth_type: AuthTokenType,
     ):
         pass
 
@@ -127,6 +130,7 @@ class BasePerformersService:
         task: Task,
         current_url: str,
         is_superuser: bool,
+        auth_type: AuthTokenType,
         user_key: Union[int, str],
         request_user: UserModel,
         run_actions: bool = True,
@@ -154,7 +158,8 @@ class BasePerformersService:
                 user=user,
                 request_user=request_user,
                 current_url=current_url,
-                is_superuser=is_superuser
+                is_superuser=is_superuser,
+                auth_type=auth_type
             )
         return user, task_performer
 
@@ -164,7 +169,9 @@ class BasePerformersService:
         task: Task,
         user_key: Union[int, str],
         request_user: UserModel,
-        run_actions: bool = True
+        is_superuser: bool,
+        auth_type: AuthTokenType,
+        run_actions: bool = True,
     ):
 
         cls._validate(task=task, request_user=request_user)
@@ -183,7 +190,9 @@ class BasePerformersService:
                 cls._delete_actions(
                     task=task,
                     user=user,
-                    request_user=request_user
+                    request_user=request_user,
+                    is_superuser=is_superuser,
+                    auth_type=auth_type
                 )
 
 

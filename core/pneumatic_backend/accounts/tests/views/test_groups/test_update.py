@@ -479,7 +479,8 @@ def test_update__fake_user_id__validation_error(api_client, mocker):
     api_client.token_authenticate(user)
     group = create_test_group(user=user)
     request_data = {
-        'name': 'Groups',
+        'name': 'Group',
+        'photo': '',
         'users': [2152]
     }
     service_init_mock = mocker.patch.object(

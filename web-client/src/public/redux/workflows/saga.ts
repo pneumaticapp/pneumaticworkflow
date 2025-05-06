@@ -1,5 +1,5 @@
 import uniqBy from 'lodash.uniqby';
-import { all, fork, put, takeEvery, select, takeLatest, call, delay, take } from 'redux-saga/effects';
+import { all, fork, put, takeEvery, select, takeLatest, call, delay, take, takeLeading } from 'redux-saga/effects';
 import { EventChannel } from 'redux-saga';
 
 import {
@@ -344,7 +344,7 @@ function* editWorkflowInWork({ payload }: TEditWorkflow) {
       yield put(setCurrentTask({ ...task, isUrgent }));
       yield put(patchTaskInList({ taskId: task.id, task: { ...task, isUrgent } }));
     }
-    yield put(loadWorkflowsList(0));
+    // yield put(loadWorkflowsList(0));
     yield updateDetailedWorkflow(payload.workflowId);
 
     if (typeof isUrgent === 'undefined') {
@@ -641,7 +641,7 @@ export function* handleApplyFilters() {
 }
 
 export function* watchFetchWorkflowsList() {
-  yield takeLatest(EWorkflowsActions.LoadWorkflowsList, fetchWorkflowsList);
+  yield takeLeading(EWorkflowsActions.LoadWorkflowsList, fetchWorkflowsList);
 }
 
 export function* watchChangeWorkflowLogViewSettings() {

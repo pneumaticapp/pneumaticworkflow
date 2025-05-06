@@ -67,6 +67,7 @@ class WSSender:
         send = cls.sync_send if sync else cls.send
         task_for_list = TaskForList(
             id=task.id,
+            api_name=task.api_name,
             name=task.name,
             date_started=task.date_started,
             date_started_tsp=(

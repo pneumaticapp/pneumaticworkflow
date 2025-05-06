@@ -212,7 +212,12 @@ export function TemplateEdit({
       description: '',
       kickoff: getEmptyKickoff(),
       name: DEFAULT_TEMPLATE_NAME,
-      tasks: [getNewTask({ name: 'First Step', number: 1 })],
+      tasks: [
+        getNewTask({
+          name: 'First Step',
+          number: 1,
+        }),
+      ],
       isActive: false,
       finalizable: false,
       owners: getNormalizedTemplateOwners(
@@ -284,7 +289,10 @@ export function TemplateEdit({
     }
 
     const newTaskNumber = tasks.length + 1;
-    const newTask = getNewTask({ number: newTaskNumber, name: `New Step ${newTaskNumber}` });
+    const newTask = getNewTask({
+      number: newTaskNumber,
+      name: `New Step ${newTaskNumber}`,
+    });
     const newTasks = [...tasks, newTask];
 
     toggleIsOpenTask(newTask.uuid);

@@ -1,5 +1,5 @@
 /* eslint-disable indent */
-import * as React from 'react';
+import React, { useState, ReactNode, ChangeEvent } from 'react';
 import classnames from 'classnames';
 import { useIntl } from 'react-intl';
 
@@ -41,8 +41,9 @@ export function ConditionValueField({
   if (isNoValueOperator) return null;
 
   const { formatMessage } = useIntl();
-
-  const renderMap: { [key in EExtraFieldType]: () => React.ReactNode } = {
+  const isNumericField = true;
+  const renderMap: { [key in EExtraFieldType]: () => ReactNode } = {
+    [EExtraFieldType.Number]: () => renderTextField(isNumericField),
     [EExtraFieldType.String]: renderTextField,
     [EExtraFieldType.Text]: renderTextField,
     [EExtraFieldType.Url]: renderTextField,
@@ -54,16 +55,17 @@ export function ConditionValueField({
     [EExtraFieldType.File]: () => null,
   };
 
-  function renderTextField() {
+  function renderTextField(isNumberType?: boolean) {
     return (
       <Field
         disabled={isDisabled}
         labelClassName={styles['text-field']}
         placeholder={formatMessage({ id: 'templates.conditions.value-placeholder' })}
         value={rule.value!}
-        onChange={(e: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement>) => {
+        onChange={(e: ChangeEvent<HTMLTextAreaElement | HTMLInputElement>) => {
           changeRuleValue(e.target.value);
         }}
+        {...(isNumberType && { isNumericField, isFromConditionValueField: true })}
       />
     );
   }
@@ -140,7 +142,7 @@ export function ConditionValueField({
   }
 
   function renderDateField() {
-    const [selectedDate, setSelectedDate] = React.useState<number | null>(rule.value as number);
+    const [selectedDate, setSelectedDate] = useState<number | null>(rule.value as number);
 
     const handleChangeDate = (date: Date) => {
       if (!date) {
@@ -157,7 +159,7 @@ export function ConditionValueField({
     };
 
     return (
-      <DatePickerCustom 
+      <DatePickerCustom
         disabled={isDisabled}
         onChange={handleChangeDate}
         placeholderText={formatMessage({ id: 'templates.conditions.value-placeholder' })}

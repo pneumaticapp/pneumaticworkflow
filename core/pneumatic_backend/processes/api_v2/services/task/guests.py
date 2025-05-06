@@ -71,7 +71,8 @@ class GuestPerformersService(BasePerformersService):
         cls,
         task: Task,
         user: UserModel,
-        request_user: UserModel
+        request_user: UserModel,
+        **kwargs
     ):
         WorkflowEventService.performer_deleted_event(
             user=request_user,
@@ -124,7 +125,8 @@ class GuestPerformersService(BasePerformersService):
         user: UserModel,
         request_user: UserModel,
         current_url: str,
-        is_superuser: bool
+        is_superuser: bool,
+        **kwargs
     ):
         WorkflowEventService.performer_created_event(
             user=request_user,

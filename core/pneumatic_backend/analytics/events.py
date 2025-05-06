@@ -1,5 +1,3 @@
-
-
 class AccountAnalyticsEvent:
     verified = 'Account Verified'
     created = 'Account Created'
@@ -57,6 +55,10 @@ class WorkflowAnalyticsEvent:
 class TaskAnalyticsEvent:
     completed = 'Task Completed'
     returned = 'Task Returned'
+    performer_created = 'Performer Created'
+    performer_deleted = 'Performer Deleted'
+    group_performer_created = 'Group Performer Created'
+    group_performer_deleted = 'Group Performer Deleted'
 
 
 class CommentAnalyticsEvent:
@@ -96,6 +98,13 @@ class EventCategory:
     search = 'Search'
     mentions = 'Mentions'
     tenants = 'Tenants'
+    groups = 'Groups'
+
+
+class GroupsAnalyticsEvent:
+    created = 'Group Created'
+    updated = 'Group Updated'
+    deleted = 'Group Deleted'
 
 
 class AttachmentAnalyticsEvent:

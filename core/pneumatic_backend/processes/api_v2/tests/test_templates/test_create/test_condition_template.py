@@ -1535,3 +1535,277 @@ class TestCreateConditionTemplate:
         assert predicate['operator'] == PredicateOperator.COMPLETED
         assert predicate['value'] is None
         assert predicate['field'] == task_api_name
+
+    @pytest.mark.parametrize(
+        'operator', (
+            PredicateOperator.EQUAL,
+            PredicateOperator.NOT_EQUAL,
+            PredicateOperator.MORE_THAN,
+            PredicateOperator.LESS_THAN,
+            PredicateOperator.EXIST,
+            PredicateOperator.NOT_EXIST,
+        )
+    )
+    def test_create__predicate_type_number_allowed_operators__ok(
+        self,
+        mocker,
+        operator,
+        api_client,
+    ):
+        # arrange
+        account = create_test_account(plan=BillingPlanType.UNLIMITED)
+        user = create_test_user(account=account)
+        mocker.patch(
+            'pneumatic_backend.processes.api_v2.serializers.template.'
+            'condition.AnalyticService.templates_task_condition_created'
+        )
+        predicate_api_name = 'predicate-1'
+        field_api_name = 'number-field-1'
+        value = '31.6'
+        condition_data = {
+            'order': 1,
+            'action': 'skip_task',
+            'rules': [
+                {
+                    'predicates': [
+                        {
+                            'field_type': PredicateType.NUMBER,
+                            'operator': operator,
+                            'api_name': predicate_api_name,
+                            'field': field_api_name,
+                            'value': value,
+                        }
+                    ]
+                }
+            ]
+        }
+        api_client.token_authenticate(user)
+
+        # act
+        response = api_client.post(
+            path='/templates',
+            data={
+                'name': 'Template',
+                'is_active': True,
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                ],
+                'kickoff': {
+                    'fields': [
+                        {
+                            'order': 1,
+                            'name': 'Price',
+                            'type': FieldType.NUMBER,
+                            'api_name': field_api_name,
+                        }
+                    ]
+                },
+                'tasks': [
+                    {
+                        'number': 1,
+                        'name': 'Step 1',
+                        'conditions': [condition_data],
+                        'raw_performers': [
+                            {
+                                'type': PerformerType.USER,
+                                'source_id': user.id
+                            }
+                        ]
+                    }
+                ]
+            }
+        )
+
+        # assert
+        assert response.status_code == 200
+        condition = response.data['tasks'][0]['conditions'][0]
+        predicate = condition['rules'][0]['predicates'][0]
+        assert predicate['field_type'] == PredicateType.NUMBER
+        assert predicate['api_name'] == predicate_api_name
+        assert predicate['operator'] == operator
+        assert predicate['value'] == value
+        assert predicate['field'] == field_api_name
+
+    @pytest.mark.parametrize(
+        'operator', (
+            PredicateOperator.CONTAIN,
+            PredicateOperator.NOT_CONTAIN,
+            PredicateOperator.COMPLETED,
+        )
+    )
+    def test_create__predicate_type_number_not_allowed_operators__valid_error(
+        self,
+        mocker,
+        operator,
+        api_client,
+    ):
+        # arrange
+        account = create_test_account(plan=BillingPlanType.UNLIMITED)
+        user = create_test_user(account=account)
+        mocker.patch(
+            'pneumatic_backend.processes.api_v2.serializers.template.'
+            'condition.AnalyticService.templates_task_condition_created'
+        )
+        predicate_api_name = 'predicate-1'
+        field_api_name = 'number-field-1'
+        step_name = 'Step 1'
+        value = '31.6'
+        condition_data = {
+            'order': 1,
+            'action': 'skip_task',
+            'rules': [
+                {
+                    'predicates': [
+                        {
+                            'field_type': PredicateType.NUMBER,
+                            'operator': operator,
+                            'api_name': predicate_api_name,
+                            'field': field_api_name,
+                            'value': value,
+                        }
+                    ]
+                }
+            ]
+        }
+        api_client.token_authenticate(user)
+
+        # act
+        response = api_client.post(
+            path='/templates',
+            data={
+                'name': 'Template',
+                'is_active': True,
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                ],
+                'kickoff': {
+                    'fields': [
+                        {
+                            'order': 1,
+                            'name': 'Price',
+                            'type': FieldType.NUMBER,
+                            'api_name': field_api_name,
+                        }
+                    ]
+                },
+                'tasks': [
+                    {
+                        'number': 1,
+                        'name': step_name,
+                        'conditions': [condition_data],
+                        'raw_performers': [
+                            {
+                                'type': PerformerType.USER,
+                                'source_id': user.id
+                            }
+                        ]
+                    }
+                ]
+            }
+        )
+
+        # assert
+        assert response.status_code == 400
+        message = messages.MSG_PT_0044(
+            field_type=FieldType.NUMBER,
+            operator=operator,
+            task=step_name,
+        )
+        assert response.data['message'] == message
+        assert response.data['details']['reason'] == message
+        assert response.data['details']['api_name'] == predicate_api_name
+
+    @pytest.mark.parametrize(
+        'value', (
+            ('1-', 'Value should be a number.'),
+            (None, 'Task "Step 1": operator "equals" should have some value.'),
+            ('', 'Value: this field may not be blank.'),
+        )
+    )
+    def test_create__predicate_type_number_invalid_value__validation_error(
+        self,
+        mocker,
+        value,
+        api_client,
+    ):
+        # arrange
+        value, error_message = value
+        account = create_test_account(plan=BillingPlanType.UNLIMITED)
+        user = create_test_user(account=account)
+        condition_create_analytics_mock = mocker.patch(
+            'pneumatic_backend.processes.api_v2.serializers.template.'
+            'condition.AnalyticService.templates_task_condition_created'
+        )
+        predicate_api_name = 'predicate-1'
+        field_api_name = 'number-field-1'
+        condition_data = {
+            'order': 1,
+            'action': 'skip_task',
+            'rules': [
+                {
+                    'predicates': [
+                        {
+                            'field_type': PredicateType.NUMBER,
+                            'operator': PredicateOperator.EQUAL,
+                            'api_name': predicate_api_name,
+                            'field': field_api_name,
+                            'value': value,
+                        }
+                    ]
+                }
+            ]
+        }
+        api_client.token_authenticate(user)
+
+        # act
+        response = api_client.post(
+            path='/templates',
+            data={
+                'name': 'Template',
+                'is_active': True,
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                ],
+                'kickoff': {
+                    'fields': [
+                        {
+                            'order': 1,
+                            'name': 'Price',
+                            'type': FieldType.NUMBER,
+                            'api_name': field_api_name,
+                        }
+                    ]
+                },
+                'tasks': [
+                    {
+                        'number': 1,
+                        'name': 'Step 1',
+                        'conditions': [condition_data],
+                        'raw_performers': [
+                            {
+                                'type': PerformerType.USER,
+                                'source_id': user.id
+                            }
+                        ]
+                    }
+                ]
+            }
+        )
+
+        # assert
+        assert response.status_code == 400
+        assert response.data['code'] == ErrorCode.VALIDATION_ERROR
+        assert response.data['message'] == error_message
+        assert response.data['details']['api_name'] == predicate_api_name
+        assert response.data['details']['reason'] == error_message
+        assert 'name' not in response.data['details']
+        condition_create_analytics_mock.assert_not_called()

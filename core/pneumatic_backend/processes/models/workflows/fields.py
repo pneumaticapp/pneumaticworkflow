@@ -49,6 +49,7 @@ class TaskField(
         null=True,
     )
     user_id = models.IntegerField(null=True)
+    group_id = models.IntegerField(null=True)
     kickoff = models.ForeignKey(
         KickoffValue,
         on_delete=models.CASCADE,

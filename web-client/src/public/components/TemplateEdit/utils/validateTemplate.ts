@@ -6,7 +6,7 @@ import { ITemplate } from '../../../types/template';
 import { isArrayWithItems } from '../../../utils/helpers';
 import { validateWorkflowName } from '../../../utils/validators';
 import { UnassignedTasksWarning, PremiumFeaturesWarning, IInfoWarningProps } from '../InfoWarningsModal/warnings';
-import { areConditionsValid } from '../TaskForm/Conditions/utils/conditionsValidators';
+import { areConditionsValid, isNumberConditionsValid } from '../TaskForm/Conditions/utils/conditionsValidators';
 import { areExtraFieldsValid } from './areExtraFieldsValid';
 import { isValidTaskForm } from './isValidTaskForm';
 
@@ -19,7 +19,8 @@ export function validateTemplate(template: ITemplate, isSubscribed: boolean, int
   const { owners, name, tasks, kickoff } = template;
   const { formatMessage } = intl;
 
-  const taskWithInvalidConditions = tasks.filter(task => !areConditionsValid(task.conditions));
+  const taskWithInvalidConditions = tasks.filter((task) => !areConditionsValid(task.conditions));
+  const tasksWithInvalidNumberFormat = tasks.filter((task) => !isNumberConditionsValid(task.conditions));
 
   const commonWarningRules: TWarningRule<string>[] = [
     {
@@ -52,12 +53,22 @@ export function validateTemplate(template: ITemplate, isSubscribed: boolean, int
         return message;
       },
     },
+    {
+      check: () => isArrayWithItems(tasksWithInvalidNumberFormat),
+      getMessage: () => {
+        const baseMessage = formatMessage({ id: 'validation.number-invalid-format' });
+        const formattedTaskNames = tasksWithInvalidNumberFormat.map(({ name }) => name).join(',\n');
+        const message = `${baseMessage}\n${formattedTaskNames}`;
+
+        return message;
+      },
+    },
   ];
 
-  const infoWarningRules: TWarningRule<((props: IInfoWarningProps) => JSX.Element)>[] = [
+  const infoWarningRules: TWarningRule<(props: IInfoWarningProps) => JSX.Element>[] = [
     {
       check: () => {
-        const hasTaskWithoutPerformers = tasks.some(task => !isArrayWithItems(task.rawPerformers));
+        const hasTaskWithoutPerformers = tasks.some((task) => !isArrayWithItems(task.rawPerformers));
 
         return hasTaskWithoutPerformers;
       },
@@ -68,8 +79,9 @@ export function validateTemplate(template: ITemplate, isSubscribed: boolean, int
         if (isSubscribed) {
           return false;
         }
-        const hasTaskWithConditionRules = tasks
-          .some(({ conditions }) => conditions.some(({ rules }) => isArrayWithItems(rules)));
+        const hasTaskWithConditionRules = tasks.some(({ conditions }) =>
+          conditions.some(({ rules }) => isArrayWithItems(rules)),
+        );
 
         return hasTaskWithConditionRules;
       },
@@ -77,9 +89,8 @@ export function validateTemplate(template: ITemplate, isSubscribed: boolean, int
     },
   ];
 
-  const getWarnings = <T>(rules: TWarningRule<T>[]) => rules
-    .filter(({ check }) => check())
-    .map(({ getMessage }) => getMessage());
+  const getWarnings = <T>(rules: TWarningRule<T>[]) =>
+    rules.filter(({ check }) => check()).map(({ getMessage }) => getMessage());
 
   return {
     commonWarnings: getWarnings(commonWarningRules),

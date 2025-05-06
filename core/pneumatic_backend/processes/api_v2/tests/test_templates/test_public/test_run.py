@@ -158,6 +158,76 @@ class TestRunPublicTemplate:
         get_token_mock.assert_called_once()
         get_template_mock.assert_called_once_with(token)
 
+    def test_run__kickoff_number_field__ok(
+        self,
+        mocker,
+        api_client,
+    ):
+
+        # arrange
+        user = create_test_user()
+        template = create_test_template(
+            user=user,
+            is_active=True,
+            is_public=True,
+            tasks_count=1
+        )
+        number_field_template = FieldTemplate.objects.create(
+            order=1,
+            name='Price',
+            type=FieldType.NUMBER,
+            kickoff=template.kickoff_instance,
+            is_required=True,
+            template=template,
+        )
+        user_ip = '127.0.0.1'
+        mocker.patch(
+            'pneumatic_backend.processes.api_v2.views.public.template.'
+            'PublicTemplateViewSet.get_user_ip',
+            return_value=user_ip
+        )
+        auth_header_value = f'Token {template.public_id}'
+        token = PublicToken(template.public_id)
+        mocker.patch(
+            'pneumatic_backend.authentication.services.public_auth.'
+            'PublicAuthService.get_token',
+            return_value=token
+        )
+        mocker.patch(
+            'pneumatic_backend.authentication.services.public_auth.'
+            'PublicAuthService.get_template',
+            return_value=template
+        )
+        settings_mock = mocker.patch(
+            'pneumatic_backend.processes.api_v2.views.public.template.settings'
+        )
+        settings_mock.PROJECT_CONF = {'CAPTCHA': True}
+        number_field_value = '31.33112312312312312312'
+
+        # act
+        response = api_client.post(
+            path=f'/templates/public/run',
+            data={
+                'captcha': 'skip',
+                'fields': {
+                    number_field_template.api_name: number_field_value,
+                }
+            },
+            **{'X-Public-Authorization': auth_header_value}
+        )
+
+        # assert
+        assert response.status_code == 200
+        assert response.data['redirect_url'] is None
+        workflow = Workflow.objects.get(template=template)
+        assert workflow.kickoff_instance.output.all().count() == 1
+
+        number_field = workflow.kickoff_instance.output.first()
+        assert number_field.name == number_field_template.name
+        assert number_field.api_name == number_field_template.api_name
+        assert number_field.value == number_field_value
+        assert number_field.is_required is True
+
     def test_run__string_abbreviation_after_insert_fields_vars__ok(
         self,
         mocker,

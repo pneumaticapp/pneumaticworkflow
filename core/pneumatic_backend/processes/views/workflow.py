@@ -13,6 +13,7 @@ from pneumatic_backend.accounts.permissions import (
     UserIsAdminOrAccountOwner,
     ExpiredSubscriptionPermission,
     BillingPlanPermission,
+    AccountOwnerPermission,
 )
 from pneumatic_backend.analytics.actions import (
     WorkflowActions
@@ -45,7 +46,7 @@ from pneumatic_backend.processes.serializers.workflow import (
     WorkflowListFilterSerializer,
     WorkflowFieldsSerializer,
     WorkflowSnoozeSerializer,
-    WorkflowRevertSerializer,
+    WorkflowRevertSerializer, WorkflowFieldsFilterSerializer,
 )
 from pneumatic_backend.processes.api_v2.serializers.workflow.events import (
     WorkflowEventSerializer,
@@ -57,7 +58,6 @@ from pneumatic_backend.generics.permissions import (
     IsAuthenticated,
 )
 from pneumatic_backend.processes.filters import (
-    WorkflowFieldsFilter,
     WorkflowEventFilter,
 )
 from pneumatic_backend.processes.services.exceptions import (
@@ -100,7 +100,6 @@ class WorkflowViewSet(
         'revert': WorkflowRevertSerializer,
     }
     action_filterset_classes = {
-        'fields': WorkflowFieldsFilter,
         'events': WorkflowEventFilter,
     }
 
@@ -143,12 +142,18 @@ class WorkflowViewSet(
         return obj
 
     def get_permissions(self):
-        if self.action in ('list', 'fields'):
+        if self.action == 'list':
             return (
                 UserIsAuthenticated(),
                 BillingPlanPermission(),
                 ExpiredSubscriptionPermission(),
                 UserIsAdminOrAccountOwner(),
+            )
+        elif self.action == 'fields':
+            return (
+                AccountOwnerPermission(),
+                BillingPlanPermission(),
+                ExpiredSubscriptionPermission(),
             )
         elif self.action == 'retrieve':
             return (
@@ -423,8 +428,13 @@ class WorkflowViewSet(
 
     @action(methods=['get'], detail=False)
     def fields(self, request, *args, **kwargs):
-        queryset = self.filter_queryset(self.get_queryset())
-        return self.paginated_response(queryset)
+        filter_slz = WorkflowFieldsFilterSerializer(data=request.GET)
+        filter_slz.is_valid(raise_exception=True)
+        qst = Workflow.objects.fields_query(
+            **filter_slz.validated_data,
+            account_id=request.user.account_id,
+        )
+        return self.paginated_response(qst)
 
     @action(methods=['post'], detail=True)
     def snooze(self, request, *args, **kwargs):

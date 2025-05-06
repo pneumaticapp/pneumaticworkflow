@@ -1,4 +1,10 @@
 .store {
+  @media (--mobile) {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
   &__title {
     margin-bottom: 16px;
     font-family: Nunito;

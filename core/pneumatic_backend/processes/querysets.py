@@ -14,6 +14,7 @@ from pneumatic_backend.processes.queries import (
     WorkflowListQuery,
     RunningTaskTemplateQuery,
     TemplateListQuery,
+    TemplateExportQuery
 )
 from pneumatic_backend.accounts.enums import UserType
 from pneumatic_backend.accounts.models import UserGroup
@@ -204,8 +205,7 @@ class TemplateQuerySet(WorkflowsBaseQuerySet):
         ordering: Optional[TemplateOrdering] = None,
         search: Optional[str] = None,
         is_active: Optional[bool] = None,
-        is_public: Optional[bool] = None,
-        is_template_owner: Optional[bool] = None,
+        is_public: Optional[bool] = None
     ):
         from pneumatic_backend.processes.models.templates.owner import (
             TemplateOwner,
@@ -218,8 +218,7 @@ class TemplateQuerySet(WorkflowsBaseQuerySet):
             ordering=ordering,
             search_text=search,
             is_active=is_active,
-            is_public=is_public,
-            is_template_owner=is_template_owner,
+            is_public=is_public
         )
         return (
             self.execute_raw(query)
@@ -228,6 +227,62 @@ class TemplateQuerySet(WorkflowsBaseQuerySet):
                     'owners',
                     queryset=TemplateOwner.objects.order_by('type', 'id')
                 ),
+                'kickoff',
+                'kickoff__fields',
+                'kickoff__fields__selections'
+            )
+        )
+
+    def raw_export_query(
+        self,
+        account_id: int,
+        user_id: int,
+        ordering: Optional[TemplateOrdering] = None,
+        is_active: Optional[bool] = None,
+        is_public: Optional[bool] = None,
+        owners_ids: Optional[List[int]] = None,
+        owners_group_ids: Optional[List[int]] = None,
+        **kwargs
+    ):
+        from pneumatic_backend.processes.models import TemplateOwner
+        if owners_ids:
+            group_ids = (
+                UserGroup.objects
+                .on_account(account_id=account_id)
+                .filter(users__in=owners_ids)
+                .values_list('id', flat=True)
+            )
+            if owners_group_ids:
+                owners_group_ids = list(
+                    set(group_ids) | set(owners_group_ids)
+                )
+            else:
+                owners_group_ids = list(group_ids)
+        query = TemplateExportQuery(
+            user_id=user_id,
+            account_id=account_id,
+            ordering=ordering,
+            is_active=is_active,
+            is_public=is_public,
+            owners_ids=owners_ids,
+            owners_group_ids=owners_group_ids,
+        )
+        return (
+            self.execute_raw(query).
+            prefetch_related(
+                Prefetch(
+                    'owners',
+                    queryset=TemplateOwner.objects.order_by('type', 'id')
+                ),
+                'tasks',
+                'tasks__fields',
+                'tasks__fields__selections',
+                'tasks__checklists',
+                'tasks__checklists__selections',
+                'tasks__conditions',
+                'tasks__conditions__rules',
+                'tasks__conditions__rules__predicates',
+                'tasks__raw_performers',
                 'kickoff',
                 'kickoff__fields',
                 'kickoff__fields__selections'
@@ -260,6 +315,43 @@ class WorkflowQuerySet(WorkflowsBaseQuerySet):
             ~Q(template__type__in=TemplateType.TYPES_ONBOARDING)
         )
 
+    def fields_query(
+        self,
+        account_id: int,
+        template_id: Optional[int] = None,
+        status: Optional[WorkflowStatus] = None,
+        fields: Optional[List[str]] = None,
+        **kwargs
+    ):
+        qst = self.on_account(account_id)
+        if template_id is not None:
+            qst = qst.filter(template_id=template_id)
+        if status is not None:
+            qst = qst.filter(status=status)
+        qst = qst.order_by('-date_created')
+        if fields:
+            from pneumatic_backend.processes.models import TaskField
+            qst = qst.prefetch_related(
+                Prefetch(
+                    lookup='fields',
+                    queryset=(
+                        TaskField.objects
+                        .filter(api_name__in=fields)
+                        .prefetch_related(
+                            'selections',
+                            'attachments',
+                        )
+                    )
+                )
+            )
+        else:
+            qst = qst.prefetch_related(
+                'fields',
+                'fields__selections',
+                'fields__attachments',
+            )
+        return qst
+
     def raw_list_query(
         self,
         account_id: int,
@@ -275,6 +367,7 @@ class WorkflowQuerySet(WorkflowsBaseQuerySet):
         workflow_starter: Optional[int] = None,
         is_external: Optional[bool] = None,
         search: Optional[str] = None,
+        fields: Optional[List[str]] = None,
     ):
         if current_performer:
             performer_group_ids = UserGroup.objects.filter(
@@ -309,57 +402,98 @@ class WorkflowQuerySet(WorkflowsBaseQuerySet):
             Delay,
             TaskPerformer,
         )
+        prefetch_args = [
+            Prefetch(
+                lookup='owners',
+                to_attr='owners_ids',
+                queryset=UserModel.objects.order_by('id').only('id')
+            ),
+            Prefetch(
+                lookup='template',
+                queryset=Template.objects.only(
+                    'id',
+                    'name',
+                    'is_active',
+                )
+            ),
+            #  TODO Remove in
+            Prefetch(
+                lookup='tasks',
+                to_attr='passed_tasks',
+                queryset=Task.objects.completed().order_by('number')
+            ),
+            #  TODO Remove in
+            Prefetch(
+                lookup='tasks',
+                to_attr='current_tasks',
+                queryset=(
+                    Task.objects.prefetch_related(
+                        Prefetch(
+                            lookup='performers',
+                            to_attr='all_performers',
+                            queryset=(
+                                TaskPerformer.objects
+                                .exclude_directly_deleted()
+                            )
+                        ),
+                        Prefetch(
+                            lookup='delay_set',
+                            to_attr='current_delay',
+                            queryset=Delay.objects.filter(
+                                end_date__isnull=True
+                            ).order_by('-id')
+                        )
+                    ).filter(
+                        number=F('workflow__current_task')
+                    )
+                )
+            ),
+            Prefetch(
+                lookup='tasks',
+                to_attr='active_tasks',
+                queryset=(
+                    Task.objects.prefetch_related(
+                        Prefetch(
+                            lookup='performers',
+                            to_attr='all_performers',
+                            queryset=(
+                                TaskPerformer.objects
+                                .exclude_directly_deleted()
+                            )
+                        ),
+                        Prefetch(
+                            lookup='delay_set',
+                            to_attr='current_delay',
+                            queryset=Delay.objects.filter(
+                                end_date__isnull=True
+                            ).order_by('-id')
+                        )
+                    ).exclude(
+                        status=TaskStatus.SKIPPED
+                    )
+                )
+            )
+        ]
+        if fields:
+            from pneumatic_backend.processes.models import TaskField
+            prefetch_args.append(
+                Prefetch(
+                    lookup='fields',
+                    to_attr='filtered_fields',
+                    queryset=(
+                        TaskField.objects
+                        .filter(api_name__in=fields)
+                        .order_by('order')
+                    )
+                )
+            )
+
         raw_qst = (
             self.raw(
                 raw_query=query.get_sql(),
                 params=query.params,
                 using=settings.REPLICA
-            )
-            .prefetch_related(
-                Prefetch(
-                    lookup='owners',
-                    to_attr='owners_ids',
-                    queryset=UserModel.objects.order_by('id').only('id')
-                ),
-                Prefetch(
-                    lookup='template',
-                    queryset=Template.objects.only(
-                        'id',
-                        'name',
-                        'is_active',
-                    )
-                ),
-                Prefetch(
-                    lookup='tasks',
-                    to_attr='passed_tasks',
-                    queryset=Task.objects.completed().order_by('number')
-                ),
-                Prefetch(
-                    lookup='tasks',
-                    to_attr='current_tasks',
-                    queryset=(
-                        Task.objects.prefetch_related(
-                            Prefetch(
-                                lookup='performers',
-                                to_attr='all_performers',
-                                queryset=(
-                                    TaskPerformer.objects
-                                    .exclude_directly_deleted()
-                                )
-                            ),
-                            Prefetch(
-                                lookup='delay_set',
-                                to_attr='current_delay',
-                                queryset=Delay.objects.filter(
-                                    end_date__isnull=True
-                                ).order_by('-id')
-                            )
-                        ).filter(
-                            number=F('workflow__current_task')
-                        )
-                    )
-                )
-            )
+            ).prefetch_related(*prefetch_args)
         )
         raw_qst.count = self.raw(
             raw_query=query.get_count_sql(),

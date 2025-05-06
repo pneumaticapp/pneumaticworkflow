@@ -1,13 +1,12 @@
-/* eslint-disable */
-/* prettier-ignore */
 import { EExtraFieldType, IExtraField } from '../../../types/template';
 import { validateKickoffFieldName, validateCheckboxAndRadioField } from '../../../utils/validators';
 
 const areSelectionsValid = (field: IExtraField) => {
-  return field?.selections?.every(selection => !validateCheckboxAndRadioField(selection.value));
+  return field?.selections?.every((selection) => !validateCheckboxAndRadioField(selection.value));
 };
 
 const fieldValidateRulesMap = {
+  [EExtraFieldType.Number]: () => true,
   [EExtraFieldType.Text]: () => true,
   [EExtraFieldType.String]: () => true,
   [EExtraFieldType.Url]: () => true,
@@ -20,5 +19,5 @@ const fieldValidateRulesMap = {
 };
 
 export function areExtraFieldsValid(fields: IExtraField[]) {
-  return fields.every(field => !validateKickoffFieldName(field.name) && fieldValidateRulesMap[field.type](field));
+  return fields.every((field) => !validateKickoffFieldName(field.name) && fieldValidateRulesMap[field.type](field));
 }

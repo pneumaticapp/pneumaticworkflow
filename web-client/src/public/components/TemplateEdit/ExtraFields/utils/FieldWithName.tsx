@@ -1,7 +1,6 @@
 /* eslint-disable */
-/* prettier-ignore */
-import * as classnames from 'classnames';
-import * as React from 'react';
+import classnames from 'classnames';
+import React, { useState, useRef, ChangeEvent, forwardRef, ReactNode, Ref } from 'react';
 
 import { Field, EFieldTagName } from '../../../Field';
 import { validateKickoffFieldName } from '../../../../utils/validators';
@@ -17,7 +16,7 @@ import styles from '../../KickoffRedux/KickoffRedux.css';
 interface IKickoffFormFieldWithNameProps {
   field: IExtraField;
   inputClassName?: string;
-  icon?: React.ReactNode;
+  icon?: ReactNode;
   mode?: EExtraFieldMode;
   labelBackgroundColor?: EInputNameBackgroundColor;
   tagName?: EFieldTagName;
@@ -25,15 +24,17 @@ interface IKickoffFormFieldWithNameProps {
   descriptionPlaceholder?: string;
   shouldReplaceWithLabel?: boolean;
   isDisabled: boolean;
-  innerRef?: React.Ref<HTMLInputElement>;
+  innerRef?: Ref<HTMLInputElement>;
   accountId?: number;
-  handleChangeName(e: React.ChangeEvent<HTMLInputElement>): void;
-  handleChangeDescription(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>): void;
+  handleChangeName(e: ChangeEvent<HTMLInputElement>): void;
+  handleChangeDescription(e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>): void;
   validate(value: string): string;
   onClick?(): void;
+  onNumericKeyDown?(event: React.KeyboardEvent<HTMLInputElement>): void;
+  isNumericField?: boolean;
 }
 
-export const FieldWithName = React.forwardRef(
+export const FieldWithName = forwardRef(
   (
     {
       field: { description = '', isRequired = false, name, value },
@@ -52,11 +53,13 @@ export const FieldWithName = React.forwardRef(
       labelBackgroundColor,
       innerRef,
       accountId,
+      onNumericKeyDown,
+      isNumericField,
     }: IKickoffFormFieldWithNameProps,
     ref,
   ) => {
-    const editInputRef = React.useRef<HTMLInputElement | null>(null);
-    const [isFocused, setIsFocused] = React.useState(false);
+    const editInputRef = useRef<HTMLInputElement | null>(null);
+    const [isFocused, setIsFocused] = useState(false);
 
     const getFieldNameError = () => {
       return validateKickoffFieldName(name);
@@ -113,6 +116,8 @@ export const FieldWithName = React.forwardRef(
             errorMessage={getFieldNameError()}
             innerRef={innerRef}
             accountId={accountId}
+            onKeyDown={onNumericKeyDown}
+            isNumericField={isNumericField}
           />
         </div>
       </div>

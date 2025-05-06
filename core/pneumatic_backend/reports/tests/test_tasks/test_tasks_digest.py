@@ -3,6 +3,7 @@ import pytest
 from django.contrib.auth import get_user_model
 from django.db.models import F
 from django.utils import timezone
+from pneumatic_backend.authentication.enums import AuthTokenType
 from pneumatic_backend.accounts.enums import BillingPlanType
 from pneumatic_backend.processes.models import (
     Workflow,
@@ -228,7 +229,9 @@ class TestSendTasksDigest:
             task=task,
             request_user=template_owner,
             user_key=user_performer.id,
-            run_actions=False
+            run_actions=False,
+            is_superuser=False,
+            auth_type=AuthTokenType.USER,
         )
         email_service_tasks_digest = mocker.patch(
             'pneumatic_backend.services.email.EmailService.'

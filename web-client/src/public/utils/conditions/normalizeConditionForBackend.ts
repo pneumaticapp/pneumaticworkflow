@@ -18,7 +18,7 @@ export const normalizeConditionForBackend = (conditions: ICondition[]): IConditi
         field: item.field,
         operator: item.operator as EConditionOperators,
         fieldType: item.fieldType,
-        value: item.value,
+        value: item.fieldType === 'number' && item?.value ? String(item.value).replace(',', '.') : item.value,
       } as TConditionRulePredicateResponse;
 
       const [lastRule] = acc.slice(-1);
@@ -50,7 +50,5 @@ export const normalizeConditionForBackend = (conditions: ICondition[]): IConditi
     };
   };
 
-  return getFilledConditions(conditions)
-    .map(normalizeCondition)
-    .filter(Boolean) as IConditionResponse[];
+  return getFilledConditions(conditions).map(normalizeCondition).filter(Boolean) as IConditionResponse[];
 };

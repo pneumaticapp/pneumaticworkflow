@@ -1,11 +1,12 @@
 /* eslint-disable */
 /* prettier-ignore */
 import * as React from 'react';
-import * as classnames from 'classnames';
+import classnames from 'classnames';
 import { Input, InputProps } from 'reactstrap';
+import { NumericFormat } from 'react-number-format';
 
 import { IntlMessages } from '../IntlMessages';
-import { onEnterPressed } from '../../utils/handlers';
+import { onEnterPressed, removeTrailingDotZeros } from '../../utils/handlers';
 
 import { RichEditorContainer } from '../RichEditor';
 import { trackVideoEmbedding } from '../../utils/analytics';
@@ -26,6 +27,9 @@ export interface IFieldProps extends InputProps {
   validate?(value: InputProps['value']): string;
   errorMessage?: string;
   accountId?: number;
+  onKeyDown?: (event: React.KeyboardEvent<HTMLInputElement>) => void;
+  isNumericField?: boolean;
+  isFromConditionValueField?: boolean;
 }
 
 export interface IFieldState {
@@ -64,11 +68,15 @@ export class Field extends React.PureComponent<IFieldProps, IFieldState> {
       disabled,
       autoFocus,
       accountId,
+      isNumericField,
+      isFromConditionValueField,
       // tslint:disable-next-line: trailing-comma
       ...rest
     } = this.props;
     const { touched } = this.state;
+
     const error = errorMessage || (validate && validate(value)) || '';
+
     const shouldShowErrorMessage = Boolean(errorMessage) || (Boolean(error) && touched);
 
     const renderInput = () => {
@@ -93,9 +101,78 @@ export class Field extends React.PureComponent<IFieldProps, IFieldState> {
         if (text.match(loomVideoRegexp)?.[0]) {
           trackVideoEmbedding('Loom');
         }
+
+        if (isNumericField && text.includes(',')) {
+          // !when working with this condition there is a flickering with an error in the validation line
+          e.preventDefault();
+
+          const input = e.target as HTMLInputElement;
+          const currentValue = input.value;
+          const selStart = input.selectionStart || 0;
+          const selEnd = input.selectionEnd || 0;
+
+          let firstSeparatorIndex = text.indexOf(',');
+          const firstDotIndex = text.indexOf('.');
+          if (firstDotIndex !== -1 && firstDotIndex < firstSeparatorIndex) {
+            firstSeparatorIndex = firstDotIndex;
+          }
+          const processedText =
+            text.substring(0, firstSeparatorIndex) + '.' + text.substring(firstSeparatorIndex + 1).replace(/,/g, '');
+
+          const hasDecimalSeparator = currentValue.includes('.');
+          const decimalPosition = currentValue.indexOf('.');
+          let newValue = '';
+          if (hasDecimalSeparator && selStart <= decimalPosition) {
+            newValue =
+              currentValue.substring(0, selStart) + processedText + currentValue.substring(selEnd).replace(/\./g, '');
+          } else if (!hasDecimalSeparator) {
+            newValue = currentValue.substring(0, selStart) + processedText + currentValue.substring(selEnd);
+          } else {
+            newValue = currentValue.substring(0, selStart) + text + currentValue.substring(selEnd);
+          }
+
+          onChange({
+            target: {
+              value: newValue,
+              name: rest.name || '',
+              type: 'text',
+            },
+          } as React.ChangeEvent<HTMLInputElement>);
+        }
       };
 
-      const input = (
+      const { defaultValue, ...restProps } = rest;
+      const input = isNumericField ? (
+        <NumericFormat
+          value={Array.isArray(value) ? value.join('') : (value as string | number | undefined)}
+          onValueChange={(values) => {
+            onChange({
+              target: {
+                value: values.value,
+                name: '',
+                type: 'text',
+              },
+            } as React.ChangeEvent<HTMLInputElement>);
+          }}
+          allowNegative={true}
+          decimalSeparator="."
+          thousandSeparator={false}
+          allowedDecimalSeparators={['.', ',']}
+          getInputRef={innerRef}
+          disabled={disabled}
+          placeholder={placeholder}
+          className={inputClassName}
+          style={{
+            display: shouldReplaceWithLabel ? 'none' : 'block',
+            ...(isFromConditionValueField ? { width: '100%', padding: '0.8rem' } : {}),
+          }}
+          onBlur={this.setTouched}
+          onKeyDown={this.handleKeyDown}
+          autoFocus={autoFocus}
+          onPaste={handlePasteText}
+          {...restProps}
+        />
+      ) : (
         <Input
           innerRef={innerRef}
           type={type}
@@ -192,5 +269,11 @@ export class Field extends React.PureComponent<IFieldProps, IFieldState> {
     onEnterPressed(this.setTouched)(event);
   };
 
-  private setTouched = () => this.setState({ touched: true });
+  private setTouched = (e?: React.FocusEvent<Element>) => {
+    if (this.props.isNumericField && e?.target && 'value' in e.target && this.props.onChange) {
+      const target = e.target as { value: string };
+      removeTrailingDotZeros(target.value, this.props.onChange);
+    }
+    this.setState({ touched: true });
+  };
 }

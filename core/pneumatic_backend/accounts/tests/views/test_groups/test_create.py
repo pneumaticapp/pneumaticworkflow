@@ -86,6 +86,7 @@ def test_create__required_fields__ok(api_client, mocker):
     api_client.token_authenticate(user)
     request_data = {
         'name': 'Group',
+        'photo': ''
     }
     service_init_mock = mocker.patch.object(
         UserGroupService,
@@ -116,7 +117,7 @@ def test_create__required_fields__ok(api_client, mocker):
     assert response.status_code == 200
     data = response.data
     assert data['name'] == request_data['name']
-    assert 'photo' not in data
+    assert data['photo'] == request_data['photo']
     assert 'users' not in data
 
 
@@ -134,6 +135,7 @@ def test_create__user_from_another_account__validation_error(
     api_client.token_authenticate(user)
     request_data = {
         'name': 'Group',
+        'photo': '',
         'users': [user.id, another_user.id],
     }
     service_init_mock = mocker.patch.object(
@@ -210,6 +212,7 @@ def test_create__invited_user__ok(api_client, mocker):
     api_client.token_authenticate(user)
     request_data = {
         'name': 'Group',
+        'photo': '',
         'users': [invited_user.id],
     }
     service_init_mock = mocker.patch.object(
@@ -257,6 +260,7 @@ def test_create__user_inactive__validation_error(api_client, mocker):
     api_client.token_authenticate(user)
     request_data = {
         'name': 'Group',
+        'photo': '',
         'users': [another_user.id],
     }
     service_init_mock = mocker.patch.object(
@@ -296,6 +300,7 @@ def test_create__guest__validation_error(api_client, mocker):
     api_client.token_authenticate(user)
     request_data = {
         'name': 'Group',
+        'photo': '',
         'users': [guest_user.id],
     }
     service_init_mock = mocker.patch.object(
@@ -367,6 +372,7 @@ def test_create__users_empty_list__ok(api_client, mocker):
     api_client.token_authenticate(user)
     request_data = {
         'name': 'Group',
+        'photo': '',
         'users': [],
     }
     service_init_mock = mocker.patch.object(
@@ -411,6 +417,7 @@ def test_create__invalid_list_users__validation_error(
     api_client.token_authenticate(user)
     request_data = {
         'name': 'Group',
+        'photo': '',
         'users': 'invalid_list',
     }
     service_init_mock = mocker.patch.object(
@@ -542,6 +549,7 @@ def test_create__service_exception__validation_error(api_client, mocker):
     api_client.token_authenticate(user)
     request_data = {
         'name': 'Group',
+        'photo': '',
         'users': [user.id, ],
     }
     service_init_mock = mocker.patch.object(

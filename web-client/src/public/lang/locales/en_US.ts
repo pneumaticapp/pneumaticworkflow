@@ -331,7 +331,7 @@ export const enMessages = {
 
   'team.groups.create-modal.title': 'New Group',
   'team.groups.create-modal.caption':
-  'Once a new group’s been created, add users to it immediately, so tasks can be assigned to them as a group..',
+    'Once a new group’s been created, add users to it immediately, so tasks can be assigned to them as a group..',
   'team.groups.create-modal.new-group': 'New Group',
   'team.groups.edit-modal.title': 'Edit Group Name',
   'team.groups.edit-modal.confirm': 'Confirm',
@@ -408,6 +408,7 @@ export const enMessages = {
   'validation.phone-number-empty': 'Please enter your phone',
   'validation.phone-number-invalid': 'Invalid phone number',
   'validation.name-empty': 'Please enter your name',
+  'validation.number-invalid-format': 'Invalid number format',
   'validation.company-name-empty': 'Please enter your company name',
   'validation.field-empty': 'This field cannot be empty',
   'validation.process-name-empty': 'Please enter a template name',
@@ -622,6 +623,8 @@ export const enMessages = {
   'template.kick-off-form-field-description-placeholder': 'Enter a hint (optional)',
   'template.kick-off-form-field-name-placeholder': 'Enter a field name',
   'template.kick-off-form-required': 'Required',
+  'template.kick-off-form-number-field-tooltip-title': 'Numeric field',
+  'template.kick-off-form-number-field-tooltop-text': 'The user can enter a number',
   'template.kick-off-form-small-text-field-tooltip-title': 'Small Text Field',
   'template.kick-off-form-small-text-field-tooltop-text': 'Single line text field',
   'template.kick-off-form-large-text-field-tooltip-title': 'Large Text Field',

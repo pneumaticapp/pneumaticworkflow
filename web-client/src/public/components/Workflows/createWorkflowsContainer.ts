@@ -1,10 +1,10 @@
-import { ComponentType } from 'react';
+import { ComponentType, useEffect, createElement } from 'react';
 import { connect } from 'react-redux';
 
 import { IApplicationState } from '../../types/redux';
 import { IWorkflowsProps } from './types';
 import {
-  loadWorkflowsList,
+  loadWorkflowsList as loadWorkflowsListAction,
   openWorkflowLogPopup,
   loadWorkflowsFilterTemplates,
   resetWorkflows,
@@ -68,7 +68,7 @@ export function mapStateToProps({
 }
 
 export const mapDispatchToProps: TDispatchProps = {
-  loadWorkflowsList,
+  loadWorkflowsList: loadWorkflowsListAction,
   openWorkflowLogPopup,
   loadTemplatesTitles: loadWorkflowsFilterTemplates,
   resetWorkflows,
@@ -79,6 +79,14 @@ export const mapDispatchToProps: TDispatchProps = {
   removeWorkflowFromList,
 };
 
-export const createWorkflowsContainer = (component: ComponentType<IWorkflowsProps>) => {
-  return connect<TStoreProps, TDispatchProps>(mapStateToProps, mapDispatchToProps)(component);
-}
+export const createWorkflowsContainer = (Component: ComponentType<IWorkflowsProps>) => {
+  const WorkflowsContainer = ({ loadWorkflowsList, loadTemplatesTitles, ...restProps }: IWorkflowsProps) => {
+    useEffect(() => {
+      loadTemplatesTitles();
+    }, [loadWorkflowsList, loadTemplatesTitles]);
+
+    return createElement(Component, { loadWorkflowsList, loadTemplatesTitles, ...restProps });
+  };
+
+  return connect<TStoreProps, TDispatchProps>(mapStateToProps, mapDispatchToProps)(WorkflowsContainer);
+};

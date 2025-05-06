@@ -2,12 +2,7 @@
 import * as React from 'react';
 import { IntlShape } from 'react-intl';
 
-import { getErrorMessage } from '../../utils/getErrorMessage';
-import { logger } from '../../utils/logger';
-import { NotificationManager } from '../../components/UI/Notifications';
-import { resendVerification } from '../../api/resendVerification';
 import { TopNavContainer } from '../../components/TopNav';
-import { VerificationReminder } from '../../components/VerificationReminder';
 import { EDashboardTimeRange } from '../../types/dashboard';
 import { EDashboardModes } from '../../types/redux';
 import { SelectMenu, Tabs } from '../../components/UI';
@@ -47,9 +42,7 @@ export class DashboardLayoutComponent extends React.Component<TAppLayoutComponen
     label: this.props.intl.formatMessage({ id: mode }),
   }));
 
-  public state = {
-    isResendClicked: false,
-  };
+  public state = {};
 
   public renderDashboardContent = () => {
     const { currentTimeRange, dashboardMode, setTimeRange, setDashboardMode, setDashboardSettingsManuallyChanged } =
@@ -81,37 +74,12 @@ export class DashboardLayoutComponent extends React.Component<TAppLayoutComponen
     );
   };
 
-  private handleResendVerification = async () => {
-    this.setState({ isResendClicked: true });
-    try {
-      await resendVerification();
-      NotificationManager.success({ message: 'dashboard.resend-verification' });
-    } catch (e) {
-      logger.error(e);
-      NotificationManager.warning({ message: getErrorMessage(e) });
-      this.setState({ isResendClicked: false });
-    }
-  };
-
-  private renderVerificationRiminder = () => {
-    const { isVerified, isAccountOwner } = this.props;
-    const { isResendClicked } = this.state;
-
-    if (isVerified || !isAccountOwner) {
-      return null;
-    }
-
-    return (
-      <VerificationReminder isResendClicked={isResendClicked} resendVerification={this.handleResendVerification} />
-    );
-  };
-
   public render() {
     const leftContent = this.renderDashboardContent();
 
     return (
       <>
-        <TopNavContainer leftContent={leftContent} centerContent={this.renderVerificationRiminder()} />
+        <TopNavContainer leftContent={leftContent} />
         <main className={styles['main']}>
           <div className="container-fluid">{this.props.children}</div>
         </main>

@@ -1665,6 +1665,46 @@ def test_run__type_url__ok(mocker, value, api_client):
     assert field.value == value
 
 
+def test_run__type_number__ok(mocker, api_client):
+
+    # arrange
+    mocker.patch(
+        'pneumatic_backend.processes.services.workflow_action.'
+        'WorkflowEventService.workflow_run_event'
+    )
+    user = create_test_user()
+    api_client.token_authenticate(user)
+    template = create_test_template(
+        user=user,
+        is_active=True
+    )
+    field_template = FieldTemplate.objects.create(
+        name='Price',
+        type=FieldType.NUMBER,
+        is_required=True,
+        kickoff=template.kickoff_instance,
+        template=template,
+    )
+    value = '30.01'
+
+    # act
+    response = api_client.post(
+        path=f'/templates/{template.id}/run',
+        data={
+            'name': 'Test name',
+            'kickoff': {
+                field_template.api_name: value
+            }
+        }
+    )
+
+    # assert
+    assert response.status_code == 200
+    workflow = Workflow.objects.get(id=response.data['id'])
+    field = workflow.kickoff_instance.output.first()
+    assert field.value == value
+
+
 @pytest.mark.parametrize(
     'value',
     [

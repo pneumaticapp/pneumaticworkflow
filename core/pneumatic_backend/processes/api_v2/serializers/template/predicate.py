@@ -1,6 +1,6 @@
 # pylint: disable=raising-bad-type
 from typing import Dict, Any, Optional
-
+from decimal import Decimal, DecimalException
 from rest_framework.fields import CharField
 from rest_framework.serializers import ModelSerializer
 
@@ -12,6 +12,7 @@ from pneumatic_backend.processes.api_v2.serializers.template.mixins import (
     CreateOrUpdateInstanceMixin,
     CustomValidationApiNameMixin
 )
+from pneumatic_backend.processes.messages.workflow import MSG_PW_0084
 from pneumatic_backend.processes.models import (
     PredicateTemplate,
     FieldTemplateSelection,
@@ -161,12 +162,20 @@ class PredicateTemplateSerializer(
                     predicate_api_name=api_name
                 )
 
-            if field_type in FieldType.TYPES_WITH_SELECTIONS:
+            elif field_type in FieldType.TYPES_WITH_SELECTIONS:
                 self._validate_selection(
                     field_api_name=field,
                     selection_api_name=value,
                     predicate_api_name=api_name
                 )
+            elif field_type == FieldType.NUMBER:
+                try:
+                    Decimal(value)
+                except (TypeError, ValueError, DecimalException):
+                    raise_validation_error(
+                        message=MSG_PW_0084,
+                        api_name=api_name
+                    )
 
     def create(self, validated_data):
         self.additional_validate(validated_data)

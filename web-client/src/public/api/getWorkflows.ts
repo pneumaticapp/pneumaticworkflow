@@ -71,6 +71,8 @@ export function getWorkflowsQueryString({
   workflowStartersIdsFilter,
   searchText,
 }: IGetWorkflowsConfig) {
+  const isCleanSearchText = searchText.trim() === '';
+
   const sortingMap: { [key in EWorkflowsSorting]: string } = {
     [EWorkflowsSorting.DateAsc]: 'ordering=date',
     [EWorkflowsSorting.DateDesc]: 'ordering=-date',
@@ -92,7 +94,7 @@ export function getWorkflowsQueryString({
     canFilterByCurrentPerformer(statusFilter) && `current_performer_group_ids=${performersGroupIdsFilter.join(',')}`,
     `workflow_starter=${workflowStarters.join(',')}`,
     statusFilter !== EWorkflowsStatus.All && `status=${statusFilter}`,
-    `search=${searchText}`,
+    !isCleanSearchText && `search=${searchText}`,
     sortingQuery,
     isExternal && 'is_external=true',
   ].filter(Boolean).join('&');

@@ -195,6 +195,7 @@ export interface IExtraFieldSelection {
 }
 
 export enum EExtraFieldType {
+  Number = 'number',
   Text = 'text',
   String = 'string',
   Date = 'date',

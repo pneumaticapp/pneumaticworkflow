@@ -1,6 +1,4 @@
 /* eslint-disable */
-/* prettier-ignore */
-// import moment from 'moment';
 import { EExtraFieldType, IExtraField, TExtraFieldValue } from '../../../../types/template';
 import { isArrayWithItems } from '../../../../utils/helpers';
 import { getEndOfDayTsp } from '../../../../utils/dateTime';
@@ -26,6 +24,8 @@ export class ExtraFieldsHelper {
           return { [apiName as string]: (value as string).replace(new RegExp(' ', 'gi'), '%20') };
         } else if (type === 'date' && typeof value === 'string') {
           return { [apiName as string]: getEndOfDayTsp(value) };
+        } else if (type === 'number') {
+          return { [apiName as string]: String(value).replace(',', '.') };
         } else {
           return { [apiName as string]: value };
         }
@@ -77,6 +77,9 @@ export class ExtraFieldsHelper {
   };
 
   private fieldValuesDispatch: TFieldDispatchRecord = {
+    [EExtraFieldType.Number]: (field: IExtraField) => {
+      return { ...field, value: this.getFieldValue(field.value, '', field.apiName) };
+    },
     [EExtraFieldType.Text]: (field: IExtraField) => {
       return { ...field, value: this.getFieldValue(field.value, '', field.apiName) };
     },

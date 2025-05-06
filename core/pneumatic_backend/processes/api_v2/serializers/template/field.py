@@ -200,8 +200,10 @@ class FieldTemplateShortViewSerializer(ModelSerializer):
     class Meta:
         model = FieldTemplate
         fields = (
-            'type',
             'name',
+            'type',
+            'order',
+            'description',
             'api_name',
         )
 

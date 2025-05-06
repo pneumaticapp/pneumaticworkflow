@@ -6,8 +6,8 @@ from pneumatic_backend.processes.models import (
     Workflow,
     WorkflowEvent,
 )
-from pneumatic_backend.processes.serializers.task_field import (
-    TaskFieldListSerializer,
+from pneumatic_backend.processes.serializers.field import (
+    TaskFieldSerializer,
 )
 from pneumatic_backend.processes.api_v2.serializers.file_attachment import (
     FileAttachmentSerializer
@@ -82,7 +82,7 @@ class TaskEventJsonSerializer(serializers.ModelSerializer):
 
     def get_output(self, instance):
         if self.context['event_type'] == WorkflowEventType.TASK_COMPLETE:
-            return TaskFieldListSerializer(
+            return TaskFieldSerializer(
                 instance=instance.output.all(),
                 many=True
             ).data

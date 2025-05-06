@@ -1,5 +1,3 @@
-/* eslint-disable */
-/* prettier-ignore */
 import { EExtraFieldType } from '../../../../types/template';
 
 export interface IChecklists {
@@ -34,7 +32,7 @@ export interface ITypedConditionPredicateValue<FieldType, ValueType> {
 }
 
 export type TConditionPredicateValue =
-  ITypedConditionPredicateValue<EExtraFieldType.String, string>
+  | ITypedConditionPredicateValue<EExtraFieldType.String, string>
   | ITypedConditionPredicateValue<EExtraFieldType.Text, string>
   | ITypedConditionPredicateValue<EExtraFieldType.Creatable, number>
   | ITypedConditionPredicateValue<EExtraFieldType.Checkbox, number>
@@ -42,7 +40,8 @@ export type TConditionPredicateValue =
   | ITypedConditionPredicateValue<EExtraFieldType.Date, string>
   | ITypedConditionPredicateValue<EExtraFieldType.File, null>
   | ITypedConditionPredicateValue<EExtraFieldType.Url, string>
-  | ITypedConditionPredicateValue<EExtraFieldType.User, number>;
+  | ITypedConditionPredicateValue<EExtraFieldType.User, number>
+  | ITypedConditionPredicateValue<EExtraFieldType.Number, number>;
 
 export enum EConditionAction {
   SkipTask = 'skip_task',

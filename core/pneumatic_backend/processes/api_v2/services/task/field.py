@@ -1,4 +1,6 @@
-from typing import List, Any, Union, Optional, Iterable, Set, Tuple
+from typing import List, Any, Union, Optional, Iterable, Set
+from decimal import Decimal, DecimalException
+from collections import namedtuple
 from django.db.models import ObjectDoesNotExist
 from django.contrib.auth import get_user_model
 from pneumatic_backend.generics.validators import NoSchemaURLValidator
@@ -27,6 +29,17 @@ from pneumatic_backend.utils.dates import date_tsp_to_user_fmt
 
 
 UserModel = get_user_model()
+FieldData = namedtuple(
+    typename='FieldData',
+    field_names=[
+        'value',
+        'markdown_value',
+        'clear_value',
+        'user_id',
+        'group_id'
+    ],
+    defaults=['', '', '', None, None]
+)
 
 
 class TaskFieldService(BaseWorkflowService):
@@ -34,11 +47,22 @@ class TaskFieldService(BaseWorkflowService):
     NULL_VALUES = (None, '', [])
     STRING_LENGTH = 140
 
-    def _get_valid_string_value(
-        self,
-        raw_value: Any,
-        **kwargs
-    ) -> Tuple[str, str]:
+    def _get_valid_number_value(self, raw_value: Any, **kwargs) -> FieldData:
+
+        try:
+            value = Decimal(raw_value)
+        except (TypeError, ValueError, DecimalException):
+            raise TaskFieldException(
+                api_name=self.instance.api_name,
+                message=messages.MSG_PW_0084
+            )
+        return FieldData(
+            value=value,
+            markdown_value=value,
+            clear_value=value
+        )
+
+    def _get_valid_string_value(self, raw_value: Any, **kwargs) -> FieldData:
 
         if not isinstance(raw_value, str):
             raise TaskFieldException(
@@ -50,20 +74,24 @@ class TaskFieldService(BaseWorkflowService):
                 api_name=self.instance.api_name,
                 message=messages.MSG_PW_0026(self.STRING_LENGTH)
             )
-        return raw_value, raw_value
+        return FieldData(
+            value=raw_value,
+            markdown_value=raw_value,
+            clear_value=MarkdownService.clear(raw_value)
+        )
 
-    def _get_valid_text_value(
-        self,
-        raw_value: Any,
-        **kwargs
-    ) -> Tuple[str, str]:
+    def _get_valid_text_value(self, raw_value: Any, **kwargs) -> FieldData:
 
         if not isinstance(raw_value, str):
             raise TaskFieldException(
                 api_name=self.instance.api_name,
                 message=messages.MSG_PW_0025
             )
-        return raw_value, raw_value
+        return FieldData(
+            value=raw_value,
+            markdown_value=raw_value,
+            clear_value=MarkdownService.clear(raw_value)
+        )
 
     def __get_selections_values_by_ids(
         self,
@@ -128,7 +156,7 @@ class TaskFieldService(BaseWorkflowService):
         self,
         raw_value: str,
         selections: Iterable[FieldTemplateSelection]
-    ) -> Tuple[str, str]:
+    ) -> FieldData:
 
         """ Selections need for first create selection
             when TaskField selections doesn't exist """
@@ -146,20 +174,28 @@ class TaskFieldService(BaseWorkflowService):
                 selection_id=raw_value,
                 selections=selections
             )
-            return value, value
+            return FieldData(
+                value=value,
+                markdown_value=value,
+                clear_value=MarkdownService.clear(value)
+            )
             # TODO Uncomment in https://my.pneumatic.app/workflows/34311/
             # raise TaskFieldException(
             #     api_name=self.instance.api_name,
             #     message=messages.MSG_PW_0028
             # )
         else:
-            return selection.value, selection.value
+            return FieldData(
+                value=selection.value,
+                markdown_value=selection.value,
+                clear_value=MarkdownService.clear(selection.value)
+            )
 
     def _get_valid_checkbox_value(
         self,
         raw_value: List[str],
         selections: Iterable[FieldTemplateSelection]
-    ) -> Tuple[str, str]:
+    ) -> FieldData:
 
         if not isinstance(raw_value, list):
             raise TaskFieldException(
@@ -190,13 +226,17 @@ class TaskFieldService(BaseWorkflowService):
             # )
         else:
             value = ', '.join(selections_values)
-        return value, value
+        return FieldData(
+            value=value,
+            markdown_value=value,
+            clear_value=MarkdownService.clear(value)
+        )
 
     def _get_valid_date_value(
         self,
         raw_value: Any,
         **kwargs
-    ) -> Tuple[str, str]:
+    ) -> FieldData:
 
         if not isinstance(raw_value, (int, float)):
             raise TaskFieldException(
@@ -204,17 +244,17 @@ class TaskFieldService(BaseWorkflowService):
                 message=messages.MSG_PW_0032
             )
         value = str(raw_value)
-        markdown_value = date_tsp_to_user_fmt(
+        user_fmt_value = date_tsp_to_user_fmt(
             date_tsp=raw_value,
             user=self.user,
         )
-        return value, markdown_value
+        return FieldData(
+            value=value,
+            markdown_value=user_fmt_value,
+            clear_value=user_fmt_value
+        )
 
-    def _get_valid_url_value(
-        self,
-        raw_value: Any,
-        **kwargs
-    ) -> Tuple[str, str]:
+    def _get_valid_url_value(self, raw_value: Any, **kwargs) -> FieldData:
 
         if not isinstance(raw_value, str):
             raise TaskFieldException(
@@ -230,21 +270,21 @@ class TaskFieldService(BaseWorkflowService):
             )
         else:
             markdown_value = f'[{self.instance.name}]({raw_value})'
-            return raw_value, markdown_value
+            return FieldData(
+                value=raw_value,
+                markdown_value=markdown_value,
+                clear_value=raw_value
+            )
 
     def _get_valid_dropdown_value(
         self,
         raw_value: Any,
         **kwargs
-    ) -> Tuple[str, str]:
+    ) -> FieldData:
 
         return self._get_valid_radio_value(raw_value, **kwargs)
 
-    def _get_valid_file_value(
-        self,
-        raw_value: Any,
-        **kwargs
-    ) -> Tuple[str, str]:
+    def _get_valid_file_value(self, raw_value: Any, **kwargs) -> FieldData:
 
         if not isinstance(raw_value, list):
             raise TaskFieldException(
@@ -281,13 +321,13 @@ class TaskFieldService(BaseWorkflowService):
             markdown_value = ', '.join(
                 [f'[{e.name}]({e.url})' for e in attachments]
             )
-            return value, markdown_value
+            return FieldData(
+                value=value,
+                markdown_value=markdown_value,
+                clear_value=value
+            )
 
-    def _get_valid_user_value(
-        self,
-        raw_value: Any,
-        **kwargs
-    ) -> Tuple[str, str]:
+    def _get_valid_user_value(self, raw_value: Any, **kwargs) -> FieldData:
 
         try:
             user_id = int(raw_value)
@@ -304,9 +344,14 @@ class TaskFieldService(BaseWorkflowService):
                     message=messages.MSG_PW_0039
                 )
             value = user.name_by_status
-            return value, value
+            return FieldData(
+                value=value,
+                markdown_value=value,
+                clear_value=value,
+                user_id=user_id,
+            )
 
-    def _get_valid_value(self, raw_value: Any, **kwargs) -> Tuple[str, str]:
+    def _get_valid_value(self, raw_value: Any, **kwargs) -> FieldData:
         if raw_value in self.NULL_VALUES:
             if self.instance.is_required:
                 raise TaskFieldException(
@@ -314,7 +359,7 @@ class TaskFieldService(BaseWorkflowService):
                     message=messages.MSG_PW_0023
                 )
             else:
-                return '', ''
+                return FieldData()
         else:
             func = getattr(self, f'_get_valid_{self.instance.type}_value')
             return func(raw_value, **kwargs)
@@ -342,17 +387,16 @@ class TaskFieldService(BaseWorkflowService):
                 if self.instance.type in FieldType.TYPES_WITH_SELECTIONS
                 else None
             )
-            self.instance.value, self.instance.markdown_value = (
-                self._get_valid_value(
-                    raw_value=raw_value,
-                    selections=selections
-                )
+            # self.instance.value, self.instance.markdown_value = (
+            field_data = self._get_valid_value(
+                raw_value=raw_value,
+                selections=selections
             )
-            self.instance.clear_value = MarkdownService.clear(
-                self.instance.value
-            )
-            if self.instance.type == FieldType.USER:
-                self.instance.user_id = int(raw_value)
+            self.instance.value = field_data.value
+            self.instance.markdown_value = field_data.markdown_value
+            self.instance.clear_value = field_data.clear_value
+            self.instance.user_id = field_data.user_id
+            self.instance.group_id = field_data.group_id
         self.instance.save()
 
     def _create_related(
@@ -491,6 +535,25 @@ class TaskFieldService(BaseWorkflowService):
                     force_save=True
                 )
 
+    def _remove_unused_attachments(
+        self,
+        value: Optional[str],
+        attachment_ids: Optional[List[str]]
+    ):
+
+        # TODO remove unused attachments
+        #   instead of call DELETE /workflows/attachments/:id
+        current_attach_ids = self.instance.attachments.ids_set()
+        if value:
+            new_attach_ids = set(int(e) for e in attachment_ids)
+            deleted_attach_ids = current_attach_ids - new_attach_ids
+        else:
+            deleted_attach_ids = current_attach_ids
+        if deleted_attach_ids:
+            FileAttachment.objects.filter(
+                id__in=deleted_attach_ids
+            ).delete()
+
     def partial_update(
         self,
         force_save=False,
@@ -505,32 +568,22 @@ class TaskFieldService(BaseWorkflowService):
             if self.instance.type in FieldType.TYPES_WITH_SELECTIONS
             else None
         )
-        value, markdown_value = (
-            self._get_valid_value(
-                raw_value=raw_value,
-                selections=selections
-            )
+        field_data = self._get_valid_value(
+            raw_value=raw_value,
+            selections=selections
         )
-        clear_value = MarkdownService.clear(value)
         if self.instance.type == FieldType.FILE:
-            # TODO remove unused attachments
-            #   instead of call DELETE /workflows/attachments/:id
-            current_attach_ids = self.instance.attachments.ids_set()
-            if value:
-                new_attach_ids = set(int(e) for e in raw_value)
-                deleted_attach_ids = current_attach_ids - new_attach_ids
-            else:
-                deleted_attach_ids = current_attach_ids
-            if deleted_attach_ids:
-                FileAttachment.objects.filter(
-                    id__in=deleted_attach_ids
-                ).delete()
+            self._remove_unused_attachments(
+                value=raw_value,
+                attachment_ids=raw_value
+            )
         super().partial_update(
             force_save=True,
-            value=value,
-            markdown_value=markdown_value,
-            clear_value=clear_value,
-            user_id=raw_value if self.instance.type == FieldType.USER else None
+            value=field_data.value,
+            markdown_value=field_data.markdown_value,
+            clear_value=field_data.clear_value,
+            user_id=field_data.user_id,
+            group_id=field_data.group_id,
         )
         if self.instance.type == FieldType.FILE:
             self._link_new_attachments(raw_value)

@@ -548,7 +548,8 @@ def test_retrieve__performer_created__ok(api_client):
         user_key=user_performer.id,
         run_actions=False,
         current_url='/page',
-        is_superuser=False
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
     )
     event = WorkflowEventService.performer_created_event(
         user=user,
@@ -667,13 +668,16 @@ def test_retrieve__performer_deleted__ok(api_client):
         user_key=user_performer.id,
         run_actions=False,
         current_url='/page',
-        is_superuser=False
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
     )
     TaskPerformersService.delete_performer(
         task=task,
         request_user=user,
         user_key=user_performer.id,
-        run_actions=False
+        run_actions=False,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
     )
     event = WorkflowEventService.performer_deleted_event(
         user=user,

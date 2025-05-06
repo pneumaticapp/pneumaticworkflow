@@ -162,3 +162,4 @@ export * from './CommentWatchedIcon';
 export * from './AddEmojiIcon';
 export * from './GroupIcon';
 export * from './LockIcon';
+export * from './NumericIcon';

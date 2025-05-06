@@ -11,12 +11,13 @@ from pneumatic_backend.processes.models import (
     Workflow,
     Template,
     KickoffValue,
-    TaskField,
-    FieldSelection,
-    FileAttachment,
     WorkflowEvent,
 )
-from pneumatic_backend.processes.enums import FieldType
+from pneumatic_backend.processes.serializers.field import (
+    TaskFieldSerializer
+)
+
+
 UserModel = get_user_model()
 
 
@@ -41,64 +42,7 @@ class TaskActivityTemplateSerializer(serializers.ModelSerializer):
         )
 
 
-class ActivitySelectionListSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = FieldSelection
-        fields = (
-            'id',
-            'value',
-            'is_selected',
-        )
-
-
-class ActivityFileAttachmentSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = FileAttachment
-        fields = (
-            'id',
-            'name',
-            'url',
-            'thumbnail_url',
-            'size',
-        )
-
-
-class ActivityFieldSerializer(serializers.ModelSerializer):
-
-    # TODO replace to TaskFieldListSerializer
-
-    selections = ActivitySelectionListSerializer(many=True)
-    attachments = ActivityFileAttachmentSerializer(many=True)
-
-    class Meta:
-        model = TaskField
-        fields = (
-            'type',
-            'is_required',
-            'name',
-            'description',
-            'api_name',
-            'value',
-            'user_id',
-            'selections',
-            'attachments',
-        )
-
-    value = serializers.SerializerMethodField(method_name='get_v')
-
-    # TODO Remove in https://my.pneumatic.app/workflows/18137/
-    def get_v(self, instance: TaskField):
-        if instance.type == FieldType.USER:
-            if instance.user_id:
-                return str(instance.user_id)
-            else:
-                return ''
-        else:
-            return instance.value
-
-
 class ActivityKickoffValueSerializer(serializers.ModelSerializer):
-    output = ActivityFieldSerializer(many=True)
 
     class Meta:
         model = KickoffValue
@@ -106,6 +50,8 @@ class ActivityKickoffValueSerializer(serializers.ModelSerializer):
             'description',
             'output',
         )
+
+    output = TaskFieldSerializer(many=True)
 
 
 class ActivityWorkflowSerializer(serializers.ModelSerializer):

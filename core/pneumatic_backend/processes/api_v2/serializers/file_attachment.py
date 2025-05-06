@@ -40,14 +40,3 @@ class FileAttachmentSerializer(serializers.ModelSerializer):
             'thumbnail_url',
             'size',
         )
-
-
-class FileAttachmentShortSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = FileAttachment
-        fields = (
-            'id',
-            'name',
-            'url',
-        )

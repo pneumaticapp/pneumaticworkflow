@@ -2546,13 +2546,17 @@ class TestCompleteWorkflow:
             request_user=user,
             run_actions=False,
             current_url='/page',
-            is_superuser=False
+            is_superuser=False,
+            auth_type=AuthTokenType.USER,
+
         )
         TaskPerformersService.delete_performer(
             task=task,
             user_key=deleted_user.id,
             request_user=user,
-            run_actions=False
+            run_actions=False,
+            is_superuser=False,
+            auth_type=AuthTokenType.USER,
         )
         api_client.token_authenticate(user=deleted_user)
 

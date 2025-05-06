@@ -32,6 +32,8 @@ export const enum ETemplatesActions {
   LoadTemplateVariablesSuccess = 'LOAD_TEMPLATE_VARIABLES_SUCCESS',
   LoadTemplateIntegrationsStats = 'LOAD_TEMPLATE_INTEGRATIONS_STATS',
   SetTemplateIntegrationsStats = 'SET_TEMPLATE_INTEGRATIONS_STATS',
+  CheckIsTemplateOwner = 'CHECK_IS_TEMPLATE_OWNER',
+  SetIsTemplateOwner = 'SET_IS_TEMPLATE_OWNER',
 }
 
 export enum ETemplatesSystemStatus {
@@ -194,6 +196,18 @@ export const setTemplateIntegrationsStats: (payload: TTemplateIntegrationStatsAp
     ETemplatesActions.SetTemplateIntegrationsStats,
   );
 
+export type TCheckIsTemplateOwner = ITypedReduxAction<ETemplatesActions.CheckIsTemplateOwner, void>;
+export const checkIsTemplateOwner: (payload: void) => TCheckIsTemplateOwner = actionGenerator<
+  ETemplatesActions.CheckIsTemplateOwner,
+  void
+>(ETemplatesActions.CheckIsTemplateOwner);
+
+export type TSetIsTemplateOwner = ITypedReduxAction<ETemplatesActions.SetIsTemplateOwner, boolean>;
+export const setIsTemplateOwner: (payload: boolean) => TSetIsTemplateOwner = actionGenerator<
+  ETemplatesActions.SetIsTemplateOwner,
+  boolean
+>(ETemplatesActions.SetIsTemplateOwner);
+
 export type TTemplatesActions =
   | TSetCurrentTemplatesSystemStatus
   | TChangeTemplatesList
@@ -212,4 +226,6 @@ export type TTemplatesActions =
   | TLoadTemplateVariables
   | TLoadTemplateVariablesSuccess
   | TLoadTemplateIntegrationsStats
-  | TSetTemplateIntegrationsStats;
+  | TSetTemplateIntegrationsStats
+  | TCheckIsTemplateOwner
+  | TSetIsTemplateOwner;

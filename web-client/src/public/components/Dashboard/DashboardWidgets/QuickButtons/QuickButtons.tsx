@@ -11,35 +11,46 @@ import { history } from '../../../../utils/history';
 
 import styles from './QuickButtons.css';
 
-export function QuickButtons() {
+interface IQuickButtonsProps {
+  isAdmin: boolean;
+  isTemplateOwner: undefined | boolean;
+}
+export function QuickButtons({ isAdmin, isTemplateOwner }: IQuickButtonsProps) {
   const { formatMessage } = useIntl();
   const dispatch = useDispatch();
 
-  const QUICK_BUTTONS: TQuickButton[] = [
-    {
-      title: formatMessage({ id: 'dashboard.quick-button-create-template-title' }),
-      description: formatMessage({ id: 'dashboard.quick-button-create-template-description' }),
-      analyticsEventName: 'Add template',
-      analyticsCategory: EAnalyticsCategory.Templates,
-      analyticsLabel: QUICK_BUTTONS_ANALYTICS_LABEL,
-      Icon: CircleWithArrowRightIcon,
-      action: () => history.push(ERoutes.Templates),
-    },
-    {
-      title: formatMessage({ id: 'dashboard.quick-button-run-workflow-title' }),
-      description: formatMessage({ id: 'dashboard.quick-button-run-workflow-description' }),
-      analyticsEventName: 'Run Workflow',
-      analyticsCategory: EAnalyticsCategory.Workflow,
-      analyticsLabel: QUICK_BUTTONS_ANALYTICS_LABEL,
-      Icon: CircleWithArrowRightIcon,
-      action: () => dispatch(openSelectTemplateModal()),
-    },
-  ];
+  const createTemplateButton = {
+    title: formatMessage({ id: 'dashboard.quick-button-create-template-title' }),
+    description: formatMessage({ id: 'dashboard.quick-button-create-template-description' }),
+    analyticsEventName: 'Add template',
+    analyticsCategory: EAnalyticsCategory.Templates,
+    analyticsLabel: QUICK_BUTTONS_ANALYTICS_LABEL,
+    Icon: CircleWithArrowRightIcon,
+    action: () => history.push(ERoutes.Templates),
+  };
+
+  const runWorkflowButton = {
+    title: formatMessage({ id: 'dashboard.quick-button-run-workflow-title' }),
+    description: formatMessage({ id: 'dashboard.quick-button-run-workflow-description' }),
+    analyticsEventName: 'Run Workflow',
+    analyticsCategory: EAnalyticsCategory.Workflow,
+    analyticsLabel: QUICK_BUTTONS_ANALYTICS_LABEL,
+    Icon: CircleWithArrowRightIcon,
+    action: () => dispatch(openSelectTemplateModal()),
+  };
 
   const handleCickButton = (button: TQuickButton) => () => {
     trackClickQuickButton(button);
     button.action();
   };
+
+  let QUICK_BUTTONS: TQuickButton[] = [];
+  if (isAdmin) {
+    QUICK_BUTTONS = [createTemplateButton, runWorkflowButton];
+  } else if (isTemplateOwner) {
+    QUICK_BUTTONS = [runWorkflowButton];
+  }
+  if (QUICK_BUTTONS.length === 0) return null;
 
   return (
     <div className={styles['quick-button']}>

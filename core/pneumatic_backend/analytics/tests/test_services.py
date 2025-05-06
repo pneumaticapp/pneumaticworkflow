@@ -16,6 +16,7 @@ from pneumatic_backend.analytics.events import (
     TenantsAnalyticsEvent,
     CommentAnalyticsEvent,
     MentionsAnalyticsEvent,
+    GroupsAnalyticsEvent,
 )
 from pneumatic_backend.analytics.services import (
     AnalyticService
@@ -28,6 +29,7 @@ from pneumatic_backend.processes.tests.fixtures import (
     create_test_template,
     create_test_workflow,
     create_test_attachment,
+    create_test_group
 )
 from pneumatic_backend.processes.enums import (
     TemplateIntegrationType,
@@ -1669,6 +1671,7 @@ class TestAnalyticService:
                 'first_name': user.first_name,
                 'last_name': user.last_name,
                 'account_id': user.account_id,
+                'task_id': task.id,
                 'workflow_id': task.workflow.id,
                 'workflow_name': task.workflow.name,
                 'task_name': task.name,
@@ -2368,6 +2371,385 @@ class TestAnalyticService:
                 'workflow_id': workflow.id,
                 'workflow_name': workflow.name,
                 'category': EventCategory.comments,
+                'auth_type': auth_type,
+            }
+        )
+
+    def test_task_performer_created__ok(self, mocker):
+        # arrange
+        account = create_test_account()
+        user = create_test_user(account=account)
+        performer = create_test_user(account=account, email='test@mail.app')
+        is_superuser = False
+        return_value = True
+        auth_type = AuthTokenType.USER
+        private_track_mock = mocker.patch(
+            'pneumatic_backend.analytics.services.AnalyticService._track',
+            return_value=return_value
+        )
+        workflow = create_test_workflow(user=user, tasks_count=1)
+        task = workflow.current_task_instance
+
+        # act
+        result = AnalyticService.task_performer_created(
+            user=user,
+            performer=performer,
+            task=task,
+            auth_type=auth_type,
+            is_superuser=is_superuser,
+        )
+
+        # assert
+        assert result == return_value
+        private_track_mock.assert_called_once_with(
+            user_id=user.id,
+            event=TaskAnalyticsEvent.performer_created,
+            properties={
+                'text': (
+                    f'{workflow.name} (id: {workflow.id}). '
+                    f'Task: "{task.name}" (id: {task.id}). '
+                    f'{performer.name_by_status} assigned as performer'
+                ),
+                'email': user.email,
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+                'performer_id': performer.id,
+                'performer_name': performer.name_by_status,
+                'account_id': user.account_id,
+                'workflow_id': workflow.id,
+                'workflow_name': workflow.name,
+                'task_id': task.id,
+                'task_name': task.name,
+                'category': EventCategory.tasks,
+                'auth_type': auth_type,
+            },
+            is_superuser=is_superuser
+        )
+
+    def test__task_performer_deleted__ok(self, mocker):
+        # arrange
+        account = create_test_account()
+        user = create_test_user(account=account)
+        performer = create_test_user(account=account, email='test@mail.app')
+        is_superuser = False
+        return_value = True
+        auth_type = AuthTokenType.USER
+        private_track_mock = mocker.patch(
+            'pneumatic_backend.analytics.services.AnalyticService._track',
+            return_value=return_value
+        )
+        workflow = create_test_workflow(user=user, tasks_count=1)
+        task = workflow.current_task_instance
+
+        # act
+        result = AnalyticService.task_performer_deleted(
+            user=user,
+            performer=performer,
+            task=task,
+            auth_type=auth_type,
+            is_superuser=is_superuser,
+        )
+
+        # assert
+        assert result == return_value
+        private_track_mock.assert_called_once_with(
+            user_id=user.id,
+            event=TaskAnalyticsEvent.performer_deleted,
+            properties={
+                'text': (
+                    f'{workflow.name} (id: {workflow.id}). '
+                    f'Task: "{task.name}" (id: {task.id}). '
+                    f'{performer.name_by_status} removed from performers'
+                ),
+                'email': user.email,
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+                'performer_id': performer.id,
+                'performer_name': performer.name_by_status,
+                'account_id': user.account_id,
+                'workflow_id': workflow.id,
+                'workflow_name': workflow.name,
+                'task_id': task.id,
+                'task_name': task.name,
+                'category': EventCategory.tasks,
+                'auth_type': auth_type,
+            },
+            is_superuser=is_superuser
+        )
+
+    def test__task_group_performer_created__ok(self, mocker):
+        # arrange
+        account = create_test_account()
+        user = create_test_user(account=account)
+        performer = create_test_group(user=user)
+        is_superuser = False
+        auth_type = AuthTokenType.USER
+        return_value = True
+        private_track_mock = mocker.patch(
+            'pneumatic_backend.analytics.services.AnalyticService._track',
+            return_value=return_value
+        )
+        workflow = create_test_workflow(user=user, tasks_count=1)
+        task = workflow.current_task_instance
+
+        # act
+        result = AnalyticService.task_group_performer_created(
+            user=user,
+            performer=performer,
+            task=task,
+            auth_type=auth_type,
+            is_superuser=is_superuser,
+        )
+
+        # assert
+        assert result == return_value
+        private_track_mock.assert_called_once_with(
+            user_id=user.id,
+            event=TaskAnalyticsEvent.group_performer_created,
+            properties={
+                'text': (
+                    f'{workflow.name} (id: {workflow.id}). '
+                    f'Task: "{task.name}" (id: {task.id}). '
+                    f'{performer.name} assigned as performer'
+                ),
+                'email': user.email,
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+                'performer_id': performer.id,
+                'performer_name': performer.name,
+                'account_id': user.account_id,
+                'workflow_id': workflow.id,
+                'workflow_name': workflow.name,
+                'task_id': task.id,
+                'task_name': task.name,
+                'category': EventCategory.tasks,
+                'auth_type': auth_type,
+            },
+            is_superuser=is_superuser
+        )
+
+    def test__task_group_performer_deleted__ok(self, mocker):
+        # arrange
+        account = create_test_account()
+        user = create_test_user(account=account)
+        performer = create_test_group(user=user)
+        is_superuser = False
+        return_value = True
+        auth_type = AuthTokenType.USER
+        private_track_mock = mocker.patch(
+            'pneumatic_backend.analytics.services.AnalyticService._track',
+            return_value=return_value
+        )
+        workflow = create_test_workflow(user=user, tasks_count=1)
+        task = workflow.current_task_instance
+
+        # act
+        result = AnalyticService.task_group_performer_deleted(
+            user=user,
+            performer=performer,
+            task=task,
+            auth_type=auth_type,
+            is_superuser=is_superuser,
+        )
+
+        # assert
+        assert result == return_value
+        private_track_mock.assert_called_once_with(
+            user_id=user.id,
+            event=TaskAnalyticsEvent.group_performer_deleted,
+            properties={
+                'text': (
+                    f'{workflow.name} (id: {workflow.id}). '
+                    f'Task: "{task.name}" (id: {task.id}). '
+                    f'{performer.name} removed from performers'
+                ),
+                'email': user.email,
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+                'performer_id': performer.id,
+                'performer_name': performer.name,
+                'account_id': user.account_id,
+                'workflow_id': workflow.id,
+                'workflow_name': workflow.name,
+                'task_id': task.id,
+                'task_name': task.name,
+                'category': EventCategory.tasks,
+                'auth_type': auth_type,
+            },
+            is_superuser=is_superuser
+        )
+
+    def test_groups_created__ok(self, mocker):
+        # arrange
+        user = create_test_user()
+        auth_type = AuthTokenType.API
+        is_superuser = False
+        return_value = True
+
+        group = mocker.MagicMock()
+        group.id = 1
+        group.name = 'Test Group'
+        group.photo = 'photo.jpg'
+        users = [user.id]
+        text = f'{group.name} (id: {group.id}).'
+        private_track_mock = mocker.patch(
+            'pneumatic_backend.analytics.services.AnalyticService._track',
+            return_value=return_value
+        )
+
+        # act
+        result = AnalyticService.groups_created(
+            user_id=user.id,
+            user_email=user.email,
+            user_first_name=user.first_name,
+            user_last_name=user.last_name,
+            group_photo=group.photo,
+            group_users=users,
+            account_id=user.account_id,
+            group_id=group.id,
+            group_name=group.name,
+            auth_type=auth_type,
+            is_superuser=is_superuser,
+            text=text
+        )
+
+        # assert
+        assert result == return_value
+        private_track_mock.assert_called_once_with(
+            user_id=user.id,
+            event=GroupsAnalyticsEvent.created,
+            is_superuser=is_superuser,
+            properties={
+                'text': text,
+                'email': user.email,
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+                'photo': group.photo,
+                'users': users,
+                'account_id': user.account_id,
+                'id': group.id,
+                'name': group.name,
+                'category': EventCategory.groups,
+                'auth_type': auth_type,
+            }
+        )
+
+    def test_groups_deleted__ok(self, mocker):
+        # arrange
+        user = create_test_user()
+        auth_type = AuthTokenType.API
+        is_superuser = False
+        return_value = True
+
+        group = mocker.MagicMock()
+        group.id = 1
+        group.name = 'Test Group'
+        group.photo = 'photo.jpg'
+        users = [user.id]
+        text = f'{group.name} (id: {group.id}).'
+        private_track_mock = mocker.patch(
+            'pneumatic_backend.analytics.services.AnalyticService._track',
+            return_value=return_value
+        )
+
+        # act
+        result = AnalyticService.groups_deleted(
+            user_id=user.id,
+            user_email=user.email,
+            user_first_name=user.first_name,
+            user_last_name=user.last_name,
+            group_photo=group.photo,
+            group_users=users,
+            account_id=user.account_id,
+            group_id=group.id,
+            group_name=group.name,
+            auth_type=auth_type,
+            is_superuser=is_superuser,
+            text=text
+        )
+
+        # assert
+        assert result == return_value
+        private_track_mock.assert_called_once_with(
+            user_id=user.id,
+            event=GroupsAnalyticsEvent.deleted,
+            is_superuser=is_superuser,
+            properties={
+                'text': text,
+                'email': user.email,
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+                'photo': group.photo,
+                'users': users,
+                'account_id': user.account_id,
+                'id': group.id,
+                'name': group.name,
+                'category': EventCategory.groups,
+                'auth_type': auth_type,
+            }
+        )
+
+    def test_groups_updated__ok(self, mocker):
+        # arrange
+        user = create_test_user()
+        auth_type = AuthTokenType.API
+        is_superuser = False
+        return_value = True
+
+        group = mocker.MagicMock()
+        group.id = 1
+        group.name = 'Test Group'
+        group.photo = 'photo.jpg'
+        users = [1, 2, 3]
+
+        added_user = mocker.MagicMock()
+        added_user.email = 'added@test.com'
+
+        removed_user = mocker.MagicMock()
+        removed_user.email = 'removed@test.com'
+
+        text = (
+            f'{group.name} (id: {group.id}). '
+            f'Added user(s): {user.email}.'
+        )
+        private_track_mock = mocker.patch(
+            'pneumatic_backend.analytics.services.AnalyticService._track',
+            return_value=return_value
+        )
+
+        # act
+        result = AnalyticService.groups_updated(
+            user_id=user.id,
+            user_email=user.email,
+            user_first_name=user.first_name,
+            user_last_name=user.last_name,
+            group_photo=group.photo,
+            group_users=users,
+            account_id=user.account_id,
+            group_id=group.id,
+            group_name=group.name,
+            auth_type=auth_type,
+            is_superuser=is_superuser,
+            text=text
+        )
+
+        # assert
+        assert result == return_value
+        private_track_mock.assert_called_once_with(
+            user_id=user.id,
+            event=GroupsAnalyticsEvent.updated,
+            is_superuser=is_superuser,
+            properties={
+                'text': text,
+                'email': user.email,
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+                'photo': group.photo,
+                'users': users,
+                'account_id': user.account_id,
+                'id': group.id,
+                'name': group.name,
+                'category': EventCategory.groups,
                 'auth_type': auth_type,
             }
         )

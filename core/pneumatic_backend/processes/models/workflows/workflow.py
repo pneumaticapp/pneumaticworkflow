@@ -116,10 +116,14 @@ class Workflow(
                     self.date_created.timestamp()
                     if self.date_created else None
                 ),
+                'is_legacy_template': self.is_legacy_template,
                 'template': {
-                    'id': self.template.id,
-                    'name': self.template.name
-                } if self.template else None,
+                    'id': (
+                        None if self.is_legacy_template
+                        else self.template.id
+                    ),
+                    'name': self.get_template_name()
+                },
                 'current_task': {
                     'id': current_task.id,
                     'name': current_task.name,

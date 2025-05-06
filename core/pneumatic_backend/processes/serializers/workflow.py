@@ -3,10 +3,13 @@ import re
 from typing import Dict, Any
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist
+from django.core.validators import MinValueValidator
 from django.db import transaction
 from django.utils import timezone
 from rest_framework import serializers
 from rest_framework.serializers import ValidationError
+
+from pneumatic_backend.generics.paginations import DefaultPagination
 from pneumatic_backend.processes.messages import workflow as messages
 from pneumatic_backend.generics.mixins.serializers import (
     CustomValidationErrorMixin,
@@ -22,7 +25,7 @@ from pneumatic_backend.processes.models import (
 from pneumatic_backend.processes.enums import (
     WorkflowStatus,
     WorkflowApiStatus,
-    WorkflowOrdering,
+    WorkflowOrdering, TaskStatus,
 )
 from pneumatic_backend.processes.paginations import WorkflowListPagination
 from pneumatic_backend.processes.serializers.kickoff_value import (
@@ -32,8 +35,8 @@ from pneumatic_backend.processes.serializers.template import (
     TemplateDetailsSerializer,
     WorkflowTemplateSerializer,
 )
-from pneumatic_backend.processes.serializers.task_field import (
-    WorkflowTaskFieldSerializer,
+from pneumatic_backend.processes.serializers.field import (
+    TaskFieldListSerializer,
 )
 from pneumatic_backend.processes.services.workflow_action import (
     WorkflowActionService,
@@ -71,14 +74,15 @@ class WorkflowListSerializer(serializers.ModelSerializer):
             'status',
             'tasks_count',
             'current_task',
-            'active_tasks_count',
-            'active_current_task',
+            'active_tasks_count',  # TODO Remove in  41258
+            'active_current_task',  # TODO Remove in  41258
             'template',
             'owners',
-            'task',
+            'task',  # TODO Remove in  41258
             'is_legacy_template',
             'legacy_template_name',
-            'passed_tasks',
+            'passed_tasks',  # TODO Remove in  41258
+            'tasks',
             'is_external',
             'is_urgent',
             'finalizable',
@@ -90,11 +94,16 @@ class WorkflowListSerializer(serializers.ModelSerializer):
             'date_created_tsp',
             'date_completed',
             'date_completed_tsp',
+            'fields',
         )
 
-    task = serializers.SerializerMethodField()
+    task = serializers.SerializerMethodField()  # TODO Remove in  41258
     template = WorkflowTemplateSerializer()
-    passed_tasks = serializers.SerializerMethodField()
+    passed_tasks = serializers.SerializerMethodField()  # TODO Remove in  41258
+    tasks = serializers.SerializerMethodField()
+    fields = serializers.SerializerMethodField(
+        method_name='get_filtered_fields'
+    )
     owners = serializers.SerializerMethodField()
     date_created_tsp = TimeStampField(source='date_created', read_only=True)
     due_date_tsp = TimeStampField(source='due_date', read_only=True)
@@ -112,13 +121,27 @@ class WorkflowListSerializer(serializers.ModelSerializer):
     )
 
     def get_passed_tasks(self, instance: Workflow):
+        #  TODO Remove in  41258
         tasks = instance.passed_tasks
         return TasksPassedInfoSerializer(instance=tasks, many=True).data
 
     def get_task(self, instance: Workflow):
+        #  TODO Remove in  41258
         task = instance.current_tasks[0]
         data = WorkflowCurrentTaskSerializer(instance=task).data
         return data
+
+    def get_tasks(self, instance: Workflow):
+        tasks = instance.active_tasks
+        return WorkflowCurrentTaskSerializer(instance=tasks, many=True).data
+
+    def get_filtered_fields(self, instance: Workflow):
+        if hasattr(instance, 'filtered_fields'):
+            return TaskFieldListSerializer(
+                instance=instance.filtered_fields,
+                many=True
+            ).data
+        return []
 
     def get_owners(self, instance: Workflow):
         return list(e.id for e in instance.owners_ids)
@@ -419,10 +442,10 @@ class WorkflowDetailsSerializer(serializers.ModelSerializer):
             'description',
             'template',
             'owners',
-            'current_task',
+            'current_task',  # TODO Remove in  41258
             'tasks_count',
-            'active_tasks_count',
-            'active_current_task',
+            'active_tasks_count',  # TODO Remove in  41258
+            'active_current_task',  # TODO Remove in  41258
             'workflow_starter',
             'finalizable',
             'is_legacy_template',
@@ -431,13 +454,14 @@ class WorkflowDetailsSerializer(serializers.ModelSerializer):
             'kickoff',
             'is_external',
             'is_urgent',
-            'passed_tasks',
+            'passed_tasks',  # TODO Remove in  41258
             'date_completed',
             'date_completed_tsp',
             'due_date_tsp',
             'date_created',
             'date_created_tsp',
             'ancestor_task_id',
+            'tasks',
         )
 
     template = TemplateDetailsSerializer()
@@ -447,7 +471,9 @@ class WorkflowDetailsSerializer(serializers.ModelSerializer):
         read_only=True
     )
     kickoff = serializers.SerializerMethodField()
+    #  TODO Remove in  41258
     passed_tasks = serializers.SerializerMethodField()
+    tasks = serializers.SerializerMethodField()
     due_date_tsp = TimeStampField(source='due_date', read_only=True)
     date_created_tsp = TimeStampField(source='date_created', read_only=True)
     date_completed_tsp = TimeStampField(
@@ -456,6 +482,7 @@ class WorkflowDetailsSerializer(serializers.ModelSerializer):
     )
 
     def get_passed_tasks(self, instance: Workflow):
+        #  TODO Remove in  41258
         return TasksPassedInfoSerializer(
             instance.tasks.completed().order_by('number'),
             many=True
@@ -468,8 +495,13 @@ class WorkflowDetailsSerializer(serializers.ModelSerializer):
         return None
 
     def get_current_task(self, instance: Workflow):
+        #  TODO Remove in  41258
         task = instance.tasks.get(number=instance.current_task)
         return WorkflowCurrentTaskSerializer(instance=task).data
+
+    def get_tasks(self, instance: Workflow):
+        tasks = instance.tasks.exclude(status=TaskStatus.SKIPPED)
+        return WorkflowCurrentTaskSerializer(instance=tasks, many=True).data
 
 
 class WorkflowNotificationSerializer(serializers.ModelSerializer):
@@ -493,6 +525,7 @@ class WorkflowListFilterSerializer(
     )
     template_id = serializers.CharField(required=False)
     template_task_api_name = serializers.CharField(required=False)
+    fields = serializers.CharField(required=False)
     # TODO Remove in https://my.pneumatic.app/workflows/36988/
     template_task_id = serializers.CharField(required=False)
     current_performer = serializers.CharField(required=False)
@@ -523,6 +556,9 @@ class WorkflowListFilterSerializer(
         return self.get_valid_list_integers(value)
 
     def validate_template_task_api_name(self, value):
+        return self.get_valid_list_strings(value)
+
+    def validate_fields(self, value):
         return self.get_valid_list_strings(value)
 
     # TODO Remove in https://my.pneumatic.app/workflows/36988/
@@ -564,9 +600,43 @@ class WorkflowListFilterSerializer(
         return data
 
 
-class WorkflowFieldsSerializer(
-    serializers.ModelSerializer
+class WorkflowFieldsFilterSerializer(
+    CustomValidationErrorMixin,
+    ValidationUtilsMixin,
+    serializers.Serializer
 ):
+
+    status = serializers.ChoiceField(
+        required=False,
+        allow_null=False,
+        choices=WorkflowApiStatus.CHOICES
+    )
+    template_id = serializers.IntegerField(
+        required=False,
+        allow_null=False,
+        validators=[MinValueValidator(1)]
+    )
+    fields = serializers.CharField(required=False)
+    limit = serializers.IntegerField(
+        required=False,
+        min_value=0,
+        max_value=DefaultPagination.max_limit,
+        default=DefaultPagination.default_limit
+    )
+    offset = serializers.IntegerField(
+        required=False,
+        min_value=0,
+    )
+
+    def validate_status(self, value):
+        return WorkflowApiStatus.MAP[value]
+
+    def validate_fields(self, value):
+        return self.get_valid_list_strings(value)
+
+
+class WorkflowFieldsSerializer(serializers.ModelSerializer):
+
     class Meta:
         model = Workflow
         fields = (
@@ -577,10 +647,10 @@ class WorkflowFieldsSerializer(
             'date_created_tsp',
             'date_completed',
             'date_completed_tsp',
-            'fields'
+            'fields',
         )
 
-    fields = WorkflowTaskFieldSerializer(many=True)
+    fields = TaskFieldListSerializer(many=True)
     date_created_tsp = TimeStampField(source='date_created', read_only=True)
     date_completed_tsp = TimeStampField(
         source='date_completed',
