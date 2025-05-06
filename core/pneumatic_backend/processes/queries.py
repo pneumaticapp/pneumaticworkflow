@@ -1038,6 +1038,7 @@ class TaskListQuery(
                 pw.template_id as template_id,
                 pt.id as template_task_id,
                 pt.api_name as template_task_api_name,
+                pt.api_name,
                 pt.is_urgent,
                 pt.status
             {self._get_tables()}
@@ -1075,7 +1076,6 @@ class TemplateListQuery(
         search_text: Optional[str] = None,
         is_active: Optional[bool] = None,
         is_public: Optional[bool] = None,
-        is_template_owner: Optional[bool] = None,
     ):
 
         self.user_id = user_id
@@ -1088,7 +1088,6 @@ class TemplateListQuery(
         self.order = None
         self.is_active = is_active
         self.is_public = is_public
-        self.is_template_owner = is_template_owner
         self.ordering = ordering
         self.search_text = search_text
 
@@ -1151,19 +1150,16 @@ class TemplateListQuery(
         accounts_user.id = %(user_id)s
         """
 
-        where = f'{where} AND {self._get_filter_by_type()}'
+        where = (
+            f'{where} AND {self._get_filter_by_type()} AND '
+            f'{self._get_allowed()}'
+        )
 
         if self.search_text:
             where = f'{where} AND {self._get_search()}'
 
         if self.is_active is not None:
             where = f'{where} AND {self._get_active()}'
-
-        if (
-            not self.is_account_owner
-            and self.is_template_owner is not None
-        ):
-            where = f'{where} AND {self._get_allowed()}'
 
         if self.is_public is not None:
             where = f'{where} AND {self._get_public()}'
@@ -1215,6 +1211,123 @@ class TemplateListQuery(
         SELECT *
         FROM ({self._get_inner_sql()}) templates
         {order_by}
+        """, self.params
+
+
+class TemplateExportQuery(
+    SqlQueryObject,
+    OrderByMixin,
+    DereferencedOwnersMixin
+):
+    ordering_map = TemplateOrdering.MAP
+
+    def __init__(
+        self,
+        user_id: int,
+        account_id: int,
+        ordering: Optional[str] = None,
+        is_active: Optional[bool] = None,
+        is_public: Optional[bool] = None,
+        owners_ids: Optional[List[int]] = None,
+        owners_group_ids: Optional[List[int]] = None,
+    ):
+
+        self.user_id = user_id
+        self.account_id = account_id
+        self.params = {
+            'account_id': self.account_id,
+            'user_id': user_id,
+        }
+        self.order = None
+        self.is_active = is_active
+        self.is_public = is_public
+        self.owners_ids = owners_ids
+        self.owners_group_ids = owners_group_ids
+        self.ordering = ordering
+
+    def _get_owners_ids(self):
+        result, params = self._to_sql_list(
+            values=self.owners_ids,
+            prefix='owners_ids'
+        )
+        self.params.update(params)
+        return f'pto.user_id in {result}'
+
+    def _get_owners_group_ids(self):
+        result, params = self._to_sql_list(
+            values=self.owners_group_ids,
+            prefix='owners_group_ids'
+        )
+        self.params.update(params)
+        return f'pto.group_id in {result}'
+
+    def _get_active(self):
+        self.params.update({'is_active': self.is_active})
+        return 't.is_active IS %(is_active)s'
+
+    def _get_public(self):
+        self.params.update({'is_public': self.is_public})
+        return 't.is_public IS %(is_public)s'
+
+    def _get_filter_by_type(self):
+        result, params = self._to_sql_list(
+            values=TemplateType.TYPES_ONBOARDING,
+            prefix='template_type'
+        )
+        self.params.update(params)
+        return f"t.type NOT IN {result}"
+
+    def _get_inner_where(self):
+        where = """
+            WHERE t.is_deleted = false AND
+            t.account_id = %(account_id)s
+        """
+
+        where = f'{where} AND {self._get_filter_by_type()}'
+
+        if self.is_active is not None:
+            where = f'{where} AND {self._get_active()}'
+
+        if self.is_public is not None:
+            where = f'{where} AND {self._get_public()}'
+
+        if self.owners_ids and self.owners_group_ids:
+            where = (
+                f'{where} AND'
+                f' ({self._get_owners_ids()}'
+                f' OR {self._get_owners_group_ids()})'
+            )
+        elif self.owners_ids:
+            where = (
+                f'{where} AND {self._get_owners_ids()}'
+            )
+        elif self.owners_group_ids:
+            where = (
+                f'{where} AND {self._get_owners_group_ids()}'
+            )
+
+        return where
+
+    def _get_inner_sql(self):
+        return f"""
+            WITH owners AS ({self.dereferenced_owners()})
+            SELECT t.*
+            FROM processes_template t
+            JOIN processes_templateowner pto
+              ON t.id = pto.template_id
+            LEFT JOIN owners ON t.id = owners.template_id
+            {self._get_inner_where()}
+        """
+
+    def get_sql(self):
+        order_by = self.get_order_by(
+            pre_columns='templates.is_active DESC',
+            default_column='templates.id'
+        )
+        return f"""
+            SELECT DISTINCT *
+            FROM ({self._get_inner_sql()}) templates
+            {order_by}
         """, self.params
 
 

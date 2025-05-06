@@ -32,6 +32,10 @@ class Comparator:
 
     @classmethod
     def exists(cls, a):
+        if a is None:
+            return False
+        if a == 0:
+            return True
         return bool(a)
 
     @classmethod

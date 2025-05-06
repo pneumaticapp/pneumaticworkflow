@@ -1,9 +1,8 @@
-/* eslint-disable */
-/* prettier-ignore */
 import { EExtraFieldType } from '../../../../types/template';
 import {
   TitleIcon,
   NotesIcon,
+  NumericIcon,
   DateIcon,
   LinkIcon,
   CheckboxIcon,
@@ -19,6 +18,12 @@ export const ExtraFieldsMap = [
     id: EExtraFieldType.String,
     tooltipText: 'template.kick-off-form-small-text-field-tooltop-text',
     tooltipTitle: 'template.kick-off-form-small-text-field-tooltip-title',
+  },
+  {
+    Icon: NumericIcon,
+    id: EExtraFieldType.Number,
+    tooltipText: 'template.kick-off-form-number-field-tooltop-text',
+    tooltipTitle: 'template.kick-off-form-number-field-tooltip-title',
   },
   {
     Icon: TitleIcon,

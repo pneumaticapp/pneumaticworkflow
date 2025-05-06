@@ -1,6 +1,7 @@
 import pytest
 from datetime import timedelta
 from django.contrib.auth import get_user_model
+from pneumatic_backend.authentication.enums import AuthTokenType
 from pneumatic_backend.processes.api_v2.services.task.performers import (
     TaskPerformersService
 )
@@ -62,6 +63,7 @@ class TestWSSender:
             data={
                 'id': task.id,
                 'name': task.name,
+                'api_name': task.api_name,
                 'workflow_name': workflow.name,
                 'due_date_tsp': task_data['due_date_tsp'],
                 'date_started': task_data['date_started'],
@@ -93,7 +95,9 @@ class TestWSSender:
         TaskPerformersService.delete_performer(
             task=task,
             request_user=template_owner,
-            user_key=user_performer.id
+            user_key=user_performer.id,
+            is_superuser=False,
+            auth_type=AuthTokenType.USER,
         )
 
         send_mock = mocker.patch(
@@ -155,6 +159,7 @@ class TestWSSender:
             data={
                 'id': task.id,
                 'name': task.name,
+                'api_name': task.api_name,
                 'workflow_name': workflow.name,
                 'due_date_tsp': None,
                 'date_started': task_data['date_started'],

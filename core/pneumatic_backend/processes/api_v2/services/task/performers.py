@@ -1,5 +1,6 @@
 from django.contrib.auth import get_user_model
 from pneumatic_backend.accounts.enums import UserStatus
+from pneumatic_backend.analytics.services import AnalyticService
 from pneumatic_backend.processes.models import Task
 from pneumatic_backend.processes.messages.workflow import (
     MSG_PW_0014
@@ -62,12 +63,21 @@ class TaskPerformersService(BasePerformersService):
         cls,
         task: Task,
         user: UserModel,
-        request_user: UserModel
+        request_user: UserModel,
+        is_superuser: bool,
+        auth_type: AuthTokenType
     ):
         WorkflowEventService.performer_deleted_event(
             user=request_user,
             task=task,
             performer=user
+        )
+        AnalyticService.task_performer_deleted(
+            user=request_user,
+            performer=user,
+            task=task,
+            auth_type=auth_type,
+            is_superuser=is_superuser
         )
         if task.can_be_completed():
             first_completed_user = (
@@ -104,12 +114,21 @@ class TaskPerformersService(BasePerformersService):
         task: Task,
         user: UserModel,
         request_user: UserModel,
+        is_superuser: bool,
+        auth_type: AuthTokenType,
         **kwargs
     ):
         WorkflowEventService.performer_created_event(
             user=request_user,
             task=task,
             performer=user
+        )
+        AnalyticService.task_performer_created(
+            user=request_user,
+            performer=user,
+            task=task,
+            auth_type=auth_type,
+            is_superuser=is_superuser
         )
         if not task.get_active_delay():
             task.workflow.members.add(user)

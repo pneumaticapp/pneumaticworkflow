@@ -471,6 +471,123 @@ class TestUpdateConditionTemplate:
         assert predicate.field_type == PredicateType.KICKOFF
         assert predicate.operator == PredicateOperator.COMPLETED
 
+    def test_update__predicate_to_type_number__ok(
+        self,
+        mocker,
+        api_client,
+    ):
+        # arrange
+        account = create_test_account()
+        user = create_test_user(account=account)
+        mocker.patch(
+            'pneumatic_backend.processes.api_v2.services.templates.'
+            'integrations.TemplateIntegrationsService.template_updated'
+        )
+        template = create_test_template(
+            user=user,
+            tasks_count=3,
+            is_active=True
+        )
+        first_task = template.tasks.order_by('number').first()
+        condition = ConditionTemplate.objects.create(
+            action=ConditionTemplate.SKIP_TASK,
+            order=1,
+            task=first_task,
+            template=template,
+        )
+        rule = RuleTemplate.objects.create(
+            condition=condition,
+            template=template,
+        )
+        predicate_api_name = 'predicate-1'
+        predicate = PredicateTemplate.objects.create(
+            rule=rule,
+            field_type=PredicateType.KICKOFF,
+            operator=PredicateOperator.COMPLETED,
+            field=None,
+            template=template,
+            api_name=predicate_api_name,
+        )
+        field_api_name = 'number-field-1'
+        value = '31.6'
+        request_data = {
+            'api_name': condition.api_name,
+            'order': condition.order,
+            'action': ConditionTemplate.END_WORKFLOW,
+            'rules': [
+                {
+                    'api_name': rule.api_name,
+                    'predicates': [
+                        {
+                            'api_name': predicate_api_name,
+                            'field_type': PredicateType.NUMBER,
+                            'operator': PredicateOperator.EQUAL,
+                            'field': field_api_name,
+                            'value': value,
+                        }
+                    ]
+                }
+            ]
+        }
+        api_client.token_authenticate(user)
+
+        # act
+        response = api_client.put(
+            path=f'/templates/{template.id}',
+            data={
+                'id': template.id,
+                'name': template.name,
+                'is_active': True,
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id
+                    },
+                ],
+                'kickoff': {
+                    'fields': [
+                        {
+                            'order': 1,
+                            'name': 'Price',
+                            'type': FieldType.NUMBER,
+                            'api_name': field_api_name,
+                        }
+                    ]
+                },
+                'tasks': [
+                    {
+                        'id': first_task.id,
+                        'number': first_task.number,
+                        'name': first_task.name,
+                        'api_name': first_task.api_name,
+                        'conditions': [request_data],
+                        'raw_performers': [
+                            {
+                                'type': PerformerType.USER,
+                                'source_id': user.id
+                            }
+                        ]
+                    }
+                ]
+            }
+        )
+
+        # assert
+        assert response.status_code == 200
+        condition_data = response.data['tasks'][0]['conditions'][0]
+        predicate_data = condition_data['rules'][0]['predicates'][0]
+        assert predicate_data['field_type'] == PredicateType.NUMBER
+        assert predicate_data['api_name'] == predicate_api_name
+        assert predicate_data['operator'] == PredicateOperator.EQUAL
+        assert predicate_data['value'] == value
+        assert predicate_data['field'] == field_api_name
+
+        predicate.refresh_from_db()
+        assert predicate.field_type == PredicateType.NUMBER
+        assert predicate.operator == PredicateOperator.EQUAL
+        assert predicate.field == field_api_name
+        assert predicate.value == value
+
     def test_update__replace_existing_predicate__create_new_predicate(
         self,
         mocker,

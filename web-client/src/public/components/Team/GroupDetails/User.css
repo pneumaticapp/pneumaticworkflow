@@ -52,7 +52,7 @@
   }
 
   &__delete {
-    color: var(--pneumatic-color-red);
+    color: var(--pneumatic-color-notification1);
   }
 }
 

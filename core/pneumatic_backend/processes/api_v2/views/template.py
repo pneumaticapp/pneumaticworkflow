@@ -7,6 +7,7 @@ from rest_framework.viewsets import GenericViewSet
 from rest_framework.decorators import action
 from rest_framework.pagination import LimitOffsetPagination
 from pneumatic_backend.accounts.permissions import (
+    AccountOwnerPermission,
     UserIsAdminOrAccountOwner,
     UsersOverlimitedPermission,
     ExpiredSubscriptionPermission,
@@ -36,6 +37,7 @@ from pneumatic_backend.processes.api_v2.serializers.template.template import (
     TemplateAiSerializer,
     TemplateByStepsSerializer,
     TemplateByNameSerializer,
+    TemplateExportFilterSerializer
 )
 from pneumatic_backend.processes.serializers.template import (
     TemplateTitlesSerializer
@@ -113,6 +115,7 @@ class TemplateViewSet(
         'by_name': TemplateByNameSerializer,
         'titles': TemplateTitlesSerializer,
         'titles_by_events': TemplateTitlesSerializer,
+        'fields': TemplateOnlyFieldsSerializer,
     }
 
     def get_permissions(self):
@@ -159,6 +162,12 @@ class TemplateViewSet(
                 BillingPlanPermission(),
                 UsersOverlimitedPermission(),
                 UserIsAdminOrAccountOwner(),
+            )
+        elif self.action == 'export':
+            return (
+                AccountOwnerPermission(),
+                ExpiredSubscriptionPermission(),
+                BillingPlanPermission(),
             )
         else:
             return (
@@ -354,8 +363,7 @@ class TemplateViewSet(
             ordering=data.get('ordering'),
             search=search_text,
             is_active=data.get('is_active'),
-            is_public=data.get('is_public'),
-            is_template_owner=(data.get('is_template_owner'))
+            is_public=data.get('is_public')
         )
         if search_text:
             AnalyticService.search_search(
@@ -493,8 +501,8 @@ class TemplateViewSet(
     @action(methods=['GET'], detail=True, url_path='fields')
     def fields(self, *args, **kwargs):
         template = self.get_object()
-        serializer = TemplateOnlyFieldsSerializer(instance=template)
-        return self.response_ok(serializer.data)
+        slz = self.get_serializer(instance=template)
+        return self.response_ok(slz.data)
 
     @action(methods=['GET'], detail=True)
     def integrations(self, request, pk, *args, **kwargs):
@@ -589,6 +597,21 @@ class TemplateViewSet(
             return self.response_ok()
         template.delete()
         return self.response_ok()
+
+    @action(methods=['GET'], detail=False, url_path='export')
+    def export(self, request, *args, **kwargs):
+        user = request.user
+        filter_slz = TemplateExportFilterSerializer(
+            data=request.query_params,
+            context={'account_id': user.account.id}
+        )
+        filter_slz.is_valid(raise_exception=True)
+        queryset = Template.objects.raw_export_query(
+            user_id=user.id,
+            account_id=user.account_id,
+            **filter_slz.validated_data
+        )
+        return self.paginated_response(queryset)
 
 
 class TemplateIntegrationsViewSet(

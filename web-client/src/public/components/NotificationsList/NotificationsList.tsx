@@ -17,6 +17,7 @@ import {
   NotUrgentIcon,
   AlarmIcon,
   AlarmCrossedIcon,
+  TaskCompleteIcon,
 } from '../icons';
 import { Loader } from '../UI/Loader';
 import { RichText } from '../RichText';
@@ -86,6 +87,25 @@ export const NotificationsList = ({
       };
 
       switch (notification.type) {
+        case 'complete_task': {
+          const author = getUserById(users, notification.author);
+
+          return {
+            ...commonProps,
+            avatar: author && (
+              <Avatar
+                user={author}
+                className={styles['avatar__image']}
+                containerClassName={styles['avatar__container']}
+              />
+            ),
+            icon: <TaskCompleteIcon size="sm" />,
+            title: getUserFullName(author),
+            subtitle: notification.workflow.name,
+            text: `${formatMessage({ id: 'workflows.log-complete' })}: ${notification.task.name}`,
+            link: getTaskDetailRoute(notification.task.id),
+          };
+        }
         case 'reaction': {
           const author = getUserById(users, notification.author);
 

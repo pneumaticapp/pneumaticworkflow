@@ -86,6 +86,12 @@ export const mapOutputToCompleteTask = (output: IExtraField[]): IExtraField[] =>
         value: getEndOfDayTsp(item.value),
       };
     }
+    if (item.type === 'number') {
+      return {
+        ...item,
+        value: String(item.value).replace(',', '.'),
+      };
+    }
     return item;
   });
 };

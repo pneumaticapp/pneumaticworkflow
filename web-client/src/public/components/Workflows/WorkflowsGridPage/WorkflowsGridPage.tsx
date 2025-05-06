@@ -1,5 +1,5 @@
 // tslint:disable-next-line: match-default-export-name
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import InfiniteScroll from 'react-infinite-scroll-component';
 import { useIntl } from 'react-intl';
 import classnames from 'classnames';
@@ -26,6 +26,38 @@ import { WorkflowsFiltersContainer } from './WorkflowsFilters';
 
 import styles from './WorkflowsGridPage.css';
 
+
+
+const useSearchWithDebounce = (
+  initialSearchText: string,
+  onSearch: (query: string) => void,
+  debounceTime = 800
+) => {
+  const [searchQuery, setSearchQuery] = useState(initialSearchText);
+  const isFirstSearch = useRef(true);
+  const debouncedSearch = useCallback(debounce(debounceTime, onSearch), []);
+
+  useEffect(() => {
+    if (searchQuery.length === 0) {
+      onSearch(searchQuery);
+      return;
+    }
+
+    if (isFirstSearch.current) {
+      isFirstSearch.current = false;
+      onSearch(searchQuery);
+    } else {
+      debouncedSearch(searchQuery);
+    }
+  }, [searchQuery]);
+
+  const handleSearch = useCallback((value: string) => {
+    setSearchQuery(value);
+  }, []);
+
+  return { searchQuery, handleSearch } as const;
+};
+
 export const WorkflowsGridPage = function Workflows({
   workflowsLoadingStatus,
   workflowsList: { count, items },
@@ -39,27 +71,25 @@ export const WorkflowsGridPage = function Workflows({
   openSelectTemplateModal,
   openRunWorkflowModal,
   removeWorkflowFromList,
+  loadTemplatesTitles,
 }: IWorkflowsProps) {
   const { formatMessage } = useIntl();
-
-  const [searchQuery, setSearchQuery] = useState(searchText);
+  const { searchQuery, handleSearch } = useSearchWithDebounce(searchText, onSearch);
   const [isRunningNewWorkflow, setIsRunningNewWorkflow] = useState(false);
 
-  const debounceOnSearch = useCallback(debounce(500, onSearch), []);
-
   useEffect(() => {
-    debounceOnSearch(searchQuery);
-  }, [searchQuery]);
-
-  const handleOpenPopup = (workflowId: number) => () => {
-    openWorkflowLogPopup({ workflowId, shouldSetWorkflowDetailUrl: true, redirectTo404IfNotFound: true });
-  };
+    loadTemplatesTitles();
+  }, []);
 
   React.useEffect(() => {
     if (workflowsLoadingStatus === EWorkflowsLoadingStatus.EmptyList && stepsIdsFilter.length) {
       setStepsFilter([]);
     }
   }, [workflowsLoadingStatus]);
+
+  const handleOpenPopup = (workflowId: number) => () => {
+    openWorkflowLogPopup({ workflowId, shouldSetWorkflowDetailUrl: true, redirectTo404IfNotFound: true });
+  };
 
   const handleRunNewWorkflow = async () => {
     if (!isArrayWithItems(templatesFilter)) {
@@ -169,12 +199,12 @@ export const WorkflowsGridPage = function Workflows({
           <SearchLargeIcon className={styles['search__icon']} />
           <InputField
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.currentTarget.value)}
+            onChange={(e) => handleSearch(e.currentTarget.value)}
             containerClassName={styles['search-field']}
             className={styles['search-field__input']}
             placeholder={formatMessage({ id: 'workflows.search' })}
             fieldSize="md"
-            onClear={() => setSearchQuery('')}
+            onClear={() => handleSearch('')}
           />
         </div>
 

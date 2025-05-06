@@ -131,6 +131,15 @@ class FieldType:
     DROPDOWN = 'dropdown'
     FILE = 'file'
     USER = 'user'
+    NUMBER = 'number'
+
+    SIMPLE_TYPES = {
+        STRING,
+        TEXT,
+        DATE,
+        URL,
+        NUMBER,
+    }
 
     TYPES_WITH_SELECTIONS = {
         DROPDOWN,
@@ -150,7 +159,8 @@ class FieldType:
         (URL, 'Url'),
         (DROPDOWN, 'Dropdown'),
         (FILE, 'File'),
-        (USER, 'User')
+        (USER, 'User'),
+        (NUMBER, 'Number'),
     )
 
     LITERALS = Literal[
@@ -163,6 +173,7 @@ class FieldType:
         DROPDOWN,
         FILE,
         USER,
+        NUMBER,
     ]
 
 
@@ -181,6 +192,7 @@ class PredicateType:
     DROPDOWN = 'dropdown'
     FILE = 'file'
     USER = 'user'
+    NUMBER = 'number'
 
     CHOICES = (
         (KICKOFF, KICKOFF),
@@ -193,7 +205,8 @@ class PredicateType:
         (URL, URL),
         (DROPDOWN, DROPDOWN),
         (FILE, FILE),
-        (USER, USER)
+        (USER, USER),
+        (NUMBER, NUMBER),
     )
 
     FIELD_TYPES = {
@@ -206,6 +219,7 @@ class PredicateType:
         DROPDOWN,
         FILE,
         USER,
+        NUMBER,
     }
 
 
@@ -278,6 +292,14 @@ class PredicateOperator:
             EXIST,
             NOT_EXIST,
         },
+        PredicateType.NUMBER: {
+            EQUAL,
+            NOT_EQUAL,
+            MORE_THAN,
+            LESS_THAN,
+            EXIST,
+            NOT_EXIST,
+        },
     }
     UNARY_OPERATORS = {EXIST, NOT_EXIST, COMPLETED}
 
@@ -299,6 +321,12 @@ class TemplateOrdering:
         (REVERSE_DATE, REVERSE_DATE),
         (USAGE, USAGE),
         (REVERSE_USAGE, REVERSE_USAGE),
+    )
+    CHOICES_EXPORT = (
+        (NAME, NAME),
+        (REVERSE_NAME, REVERSE_NAME),
+        (DATE, DATE),
+        (REVERSE_DATE, REVERSE_DATE),
     )
     MAP = {
         NAME: 'templates.name',

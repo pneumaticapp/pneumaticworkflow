@@ -2,6 +2,7 @@ import pytest
 from datetime import timedelta
 from django.contrib.auth import get_user_model
 from django.utils import timezone
+from pneumatic_backend.authentication.enums import AuthTokenType
 from pneumatic_backend.processes.api_v2.services import (
     WorkflowEventService,
 )
@@ -797,7 +798,8 @@ def test__performer_created_event__ok(api_client):
         task=task,
         run_actions=False,
         current_url='/page',
-        is_superuser=False
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
     )
     WorkflowEventService.performer_created_event(
         task=task,

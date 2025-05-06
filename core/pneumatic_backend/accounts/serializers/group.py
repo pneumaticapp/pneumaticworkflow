@@ -35,10 +35,20 @@ class GroupSerializer(
 
     id = IntegerField(read_only=True)
     name = CharField(max_length=255, required=True)
+    photo = serializers.URLField(
+        required=True,
+        allow_blank=True,
+        allow_null=True,
+    )
     users = RelatedListField(
         child=IntegerField(),
         required=False,
     )
+
+    def validate_photo(self, value):
+        if value is None:
+            return ""
+        return value
 
     def validate_users(self, value):
         if value:

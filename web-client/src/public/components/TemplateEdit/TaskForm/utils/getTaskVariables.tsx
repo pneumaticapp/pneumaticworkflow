@@ -15,7 +15,7 @@ type TGetVariablesParam = {
 export function getVariables({ kickoff, tasks, templateId }: TGetVariablesParam) {
   const tasksVariables = tasks
     ?.reduce((acc, task) => {
-      const fieldsWithTasks = task.fields.map(field => [task, field] as const);
+      const fieldsWithTasks = task.fields.map((field) => [task, field] as const);
 
       return [...acc, ...fieldsWithTasks];
     }, [])
@@ -31,14 +31,11 @@ export function getVariables({ kickoff, tasks, templateId }: TGetVariablesParam)
 
   const kickoffVariables = getKickoffVariables(kickoff);
 
-  return [
-    ...(kickoffVariables || []),
-    ...(tasksVariables || []),
-  ];
+  return [...(kickoffVariables || []), ...(tasksVariables || [])];
 }
 
 export function getKickoffVariables(kickoff?: Pick<IKickoff, 'fields'>) {
-  return kickoff?.fields.map(field => getVariableFromField(field, 'Kick-off form')) || [];
+  return kickoff?.fields.map((field) => getVariableFromField(field, 'Kick-off form')) || [];
 }
 
 export function getTaskVariables(
@@ -70,6 +67,7 @@ export function getVariableFromField(
 }
 
 const SINGLE_LINE_VARIBALE_TIPES = [
+  EExtraFieldType.Number,
   EExtraFieldType.String,
   EExtraFieldType.User,
   EExtraFieldType.Date,
@@ -79,8 +77,8 @@ const SINGLE_LINE_VARIBALE_TIPES = [
 ];
 
 export const getSingleLineVariables = (variables: TTaskVariable[]) => {
-  return variables.filter(variable => SINGLE_LINE_VARIBALE_TIPES.includes(variable.type));
-}
+  return variables.filter((variable) => SINGLE_LINE_VARIBALE_TIPES.includes(variable.type));
+};
 
 export const useWorkflowNameVariables = (kickoff?: Pick<IKickoff, 'fields'>) => {
   const { formatMessage } = useIntl();
@@ -108,4 +106,4 @@ export const useWorkflowNameVariables = (kickoff?: Pick<IKickoff, 'fields'>) => 
   const kickoffSingleLineVriables = getSingleLineVariables(getKickoffVariables(kickoff));
 
   return [...CUSTOM_VARIABLES, ...kickoffSingleLineVriables];
-}
+};

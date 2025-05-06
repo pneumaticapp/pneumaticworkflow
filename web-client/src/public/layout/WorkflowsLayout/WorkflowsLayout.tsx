@@ -62,7 +62,7 @@ export function WorkflowsLayoutComponent({
 
   useEffect(() => {
     setIsLoadSteps(false);
-  }, [templatesIdsFilter])
+  }, [templatesIdsFilter]);
 
   useEffect(() => {
     if (workflowsView !== EWorkflowsView.Table) {
@@ -105,7 +105,6 @@ export function WorkflowsLayoutComponent({
     }
   }, [workflowsView, templatesIdsFilter[0], filterTemplates, statusFilter, isLoadSteps]);
 
-
   useEffect(() => {
     loadTemplatesTitles();
   }, [statusFilter]);
@@ -128,14 +127,7 @@ export function WorkflowsLayoutComponent({
 
   useEffect(() => {
     applyFilters();
-  }, [
-    statusFilter,
-    templatesIdsFilter,
-    stepsIdsFilter,
-    performersIdsFilter,
-    workflowStartersIdsFilter,
-    sorting,
-  ]);
+  }, [statusFilter, templatesIdsFilter, stepsIdsFilter, performersIdsFilter, workflowStartersIdsFilter, sorting]);
 
   useEffect(() => {
     if (checkSortingIsIncorrect(statusFilter, sorting)) {
@@ -180,28 +172,30 @@ export function WorkflowsLayoutComponent({
   const renderFilters = () => {
     return (
       <>
-        <FilterSelect
-          isSearchShown
-          noValueLabel={formatMessage({ id: 'sorting.all-templates' })}
-          placeholderText={formatMessage({ id: 'sorting.no-template-found' })}
-          selectedOption={templateIdFilter}
-          options={filterTemplates}
-          optionIdKey="id"
-          optionLabelKey="name"
-          onChange={(templateId: number) => {
-            setStepsFilter([]);
-            setTemplatesFilter([templateId]);
-          }}
-          resetFilter={() => {
-            setStepsFilter([]);
-            setTemplatesFilter([]);
-          }}
-          Icon={FilterIcon}
-          renderPlaceholder={() => {
-            const selectedTemplate = filterTemplates.find((t) => t.id === templateIdFilter);
-            return selectedTemplate?.name || formatMessage({ id: 'sorting.all-templates' });
-          }}
-        />
+        <div className={styles['template-filter']}>
+          <FilterSelect
+            isSearchShown
+            noValueLabel={formatMessage({ id: 'sorting.all-templates' })}
+            placeholderText={formatMessage({ id: 'sorting.no-template-found' })}
+            selectedOption={templateIdFilter}
+            options={filterTemplates}
+            optionIdKey="id"
+            optionLabelKey="name"
+            onChange={(templateId: number) => {
+              setStepsFilter([]);
+              setTemplatesFilter([templateId]);
+            }}
+            resetFilter={() => {
+              setStepsFilter([]);
+              setTemplatesFilter([]);
+            }}
+            Icon={FilterIcon}
+            renderPlaceholder={() => {
+              const selectedTemplate = filterTemplates.find((t) => t.id === templateIdFilter);
+              return selectedTemplate?.name || formatMessage({ id: 'sorting.all-templates' });
+            }}
+          />
+        </div>
         <SelectMenu values={statusTitles} activeValue={statusFilter} onChange={setStatusFilter} Icon={FilterIcon} />
         <SelectMenu values={sortingTitles} activeValue={sorting} onChange={changeWorkflowsSorting} />
         {areFiltersChanged && (

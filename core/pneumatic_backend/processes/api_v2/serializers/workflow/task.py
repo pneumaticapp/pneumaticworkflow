@@ -10,9 +10,9 @@ from pneumatic_backend.processes.models import (
     TaskTemplate
 )
 from pneumatic_backend.generics.fields import TimeStampField
-from pneumatic_backend.processes.enums import TaskOrdering
-from pneumatic_backend.processes.serializers.task_field import (
-    TaskFieldListSerializer,
+from pneumatic_backend.processes.enums import TaskOrdering, TaskStatus
+from pneumatic_backend.processes.serializers.field import (
+    TaskFieldSerializer,
 )
 from pneumatic_backend.processes.api_v2.serializers.workflow\
     .checklist import CheckListSerializer
@@ -36,6 +36,8 @@ class WorkflowCurrentTaskSerializer(serializers.ModelSerializer):
         fields = (
             'id',
             'name',
+            'api_name',
+            'description',
             'number',
             'delay',
             'due_date_tsp',
@@ -74,7 +76,7 @@ class WorkflowCurrentTaskSerializer(serializers.ModelSerializer):
 
 
 class TasksPassedInfoSerializer(serializers.ModelSerializer):
-
+    #  TODO Remove in  41258
     class Meta:
         model = Task
         fields = (
@@ -120,17 +122,17 @@ class WorkflowInfoSerializer(serializers.ModelSerializer):
             'id',
             'name',
             'description',
-            'task',
+            'task',  # TODO Remove in  41258
             'current_task',
             'tasks_count',
-            'active_current_task',
-            'active_tasks_count',
+            'active_current_task',  # TODO Remove in  41258
+            'active_tasks_count',  # TODO Remove in  41258
             'workflow_starter',
             'finalizable',
             'status',
             'is_external',
             'is_urgent',
-            'passed_tasks',
+            'passed_tasks',  # TODO Remove in  41258
             'date_completed',
             'date_completed_tsp',
             'due_date_tsp',
@@ -138,13 +140,17 @@ class WorkflowInfoSerializer(serializers.ModelSerializer):
             'date_created_tsp',
             'template',
             'owners',
+            'tasks',
         )
 
+    #  TODO Remove in  41258
     task = serializers.SerializerMethodField()
+    tasks = serializers.SerializerMethodField()
     workflow_starter = serializers.IntegerField(
         source='workflow_starter_id',
         read_only=True
     )
+    #  TODO Remove in  41258
     passed_tasks = serializers.SerializerMethodField()
     due_date_tsp = TimeStampField(source='due_date', read_only=True)
     date_created_tsp = TimeStampField(source='date_created', read_only=True)
@@ -154,13 +160,19 @@ class WorkflowInfoSerializer(serializers.ModelSerializer):
     )
     template = TemplateDetailsSerializer(read_only=True)
 
+    def get_tasks(self, instance: Workflow):
+        tasks = instance.tasks.exclude(status=TaskStatus.SKIPPED)
+        return WorkflowCurrentTaskSerializer(instance=tasks, many=True).data
+
     def get_passed_tasks(self, instance: Workflow):
+        #  TODO Remove in  41258
         return TasksPassedInfoSerializer(
             instance.tasks.completed().order_by('number'),
             many=True
         ).data
 
     def get_task(self, instance: Workflow):
+        #  TODO Remove in  41258
         task = instance.tasks.get(number=instance.current_task)
         return WorkflowCurrentTaskSerializer(instance=task).data
 
@@ -172,6 +184,7 @@ class TaskSerializer(serializers.ModelSerializer):
         fields = (
             'id',
             'name',
+            'api_name',
             'description',
             'workflow',
             'contains_comments',
@@ -200,7 +213,7 @@ class TaskSerializer(serializers.ModelSerializer):
         source='exclude_directly_deleted_taskperformer_set'
     )
     workflow = WorkflowShortInfoSerializer(read_only=True)
-    output = TaskFieldListSerializer(many=True)
+    output = TaskFieldSerializer(many=True)
     delay = serializers.SerializerMethodField(required=False, allow_null=True)
     is_completed = serializers.SerializerMethodField(read_only=True)
     is_urgent = serializers.BooleanField(read_only=True)
@@ -242,6 +255,7 @@ class TaskListSerializer(serializers.ModelSerializer):
         fields = (
             'id',
             'name',
+            'api_name',
             'workflow_name',
             'due_date_tsp',
             'date_started',

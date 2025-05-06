@@ -1,7 +1,7 @@
-import { Modal, ModalBody, ModalFooter, ModalHeader } from 'reactstrap';
-import * as React from 'react';
+import React, { useState } from 'react';
 import classnames from 'classnames';
 import { useIntl } from 'react-intl';
+import { BaseModal, ModalBody, ModalFooter, ModalHeader } from '../../../UI/BaseModal';
 
 import { IntlMessages } from '../../../IntlMessages';
 import { TDeclineIvitePayload, TDeleteUserPayload } from '../../../../redux/actions';
@@ -39,7 +39,7 @@ export function DeleteTeamUserPopup({
     return null;
   }
 
-  const [reassignedUserId, setReassignedUserId] = React.useState<number | null>(null);
+  const [reassignedUserId, setReassignedUserId] = useState<number | null>(null);
   const dropdownSelections = getDropdownUsersList(usersList).filter((dropdownUser) => dropdownUser.id !== user.id);
   const { email } = user;
   const { formatMessage } = useIntl();
@@ -92,7 +92,7 @@ export function DeleteTeamUserPopup({
     if (modalState === EDeleteUserModalState.FetchingUserData) {
       return (
         <>
-          <ModalHeader toggle={handleCloseModal} className={styles['header']} />
+          <ModalHeader toggle={handleCloseModal} />
           <Loader isLoading />
         </>
       );
@@ -100,10 +100,8 @@ export function DeleteTeamUserPopup({
 
     return (
       <>
-        <ModalHeader toggle={handleCloseModal} className={styles['header']}>
-          <IntlMessages id={modalTitle} tagName="p" />
-        </ModalHeader>
-        <ModalBody className={styles['body']}>
+        <ModalHeader toggle={handleCloseModal}>{formatMessage({ id: modalTitle })}</ModalHeader>
+        <ModalBody>
           <p className={styles['message-text']}>{renderMessage()}</p>
 
           {userWorkflowsCount > 0 && (
@@ -117,7 +115,7 @@ export function DeleteTeamUserPopup({
             </div>
           )}
         </ModalBody>
-        <ModalFooter className={styles['footer']}>
+        <ModalFooter>
           <div
             className={classnames(styles['popup-buttons'], {
               [styles['submit_loading']]: modalState === EDeleteUserModalState.PerformingAction,
@@ -148,16 +146,13 @@ export function DeleteTeamUserPopup({
   };
 
   return (
-    <Modal
+    <BaseModal
       isOpen={modalState !== EDeleteUserModalState.Closed}
       toggle={handleCloseModal}
       centered
-      wrapClassName={classnames(
-        styles['team-popup'],
-        modalState === EDeleteUserModalState.FetchingUserData && styles['team-popup__loading'],
-      )}
+      wrapClassName={modalState === EDeleteUserModalState.FetchingUserData ? styles['team-popup__loading'] : ''}
     >
       {renderContent()}
-    </Modal>
+    </BaseModal>
   );
 }

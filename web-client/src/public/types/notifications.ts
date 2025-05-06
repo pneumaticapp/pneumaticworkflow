@@ -26,6 +26,16 @@ export type TNotificationsListItemCommon = {
 
 export type TNotificationsListItemOptional =
   | {
+      type: 'complete_task';
+      author: number;
+      text: null;
+      workflow: Pick<IWorkflow, 'id' | 'name'>;
+      task: {
+        id: number;
+        name: string;
+      };
+    }
+  | {
       type: 'reaction';
       author: number;
       text: string;

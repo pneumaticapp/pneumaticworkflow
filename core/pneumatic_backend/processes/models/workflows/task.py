@@ -644,6 +644,7 @@ class TaskForList(
 
     id = models.IntegerField(primary_key=True)
     name = models.CharField(max_length=280)
+    api_name = models.CharField(max_length=280)
     workflow_name = models.CharField(max_length=120)
     date_started = models.DateTimeField()
     date_started_tsp = models.FloatField()

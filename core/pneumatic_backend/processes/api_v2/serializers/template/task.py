@@ -560,7 +560,7 @@ class TemplateStepNameSerializer(ModelSerializer):
     class Meta:
         model = TaskTemplate
         fields = (
-            'id',
+            'id',  # Deprecated
             'name',
             'number',
             'api_name',
@@ -571,7 +571,10 @@ class TemplateTaskOnlyFieldsSerializer(ModelSerializer):
     class Meta:
         model = TaskTemplate
         fields = (
-            'id',
+            'id',  # Deprecated
+            'name',
+            'number',
+            'api_name',
             'fields',
         )
 

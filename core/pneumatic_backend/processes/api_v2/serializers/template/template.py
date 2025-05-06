@@ -28,6 +28,7 @@ from pneumatic_backend.processes.models import (
 )
 from pneumatic_backend.generics.mixins.serializers import (
     AdditionalValidationMixin,
+    ValidationUtilsMixin,
     CustomValidationErrorMixin
 )
 from pneumatic_backend.processes.api_v2.serializers.template.mixins import (
@@ -397,20 +398,16 @@ class TemplateSerializer(
                     name='public_success_url'
                 )
 
-    def to_representation(self, data: Dict[str, Any]):
-
-        data = super(TemplateSerializer, self).to_representation(data)
+    def to_representation(self, instance: Template):
+        data = super(TemplateSerializer, self).to_representation(instance)
         if data.get('description') is None:
             data['description'] = ''
         if data.get('tasks') is None:
             data['tasks'] = []
-
         # TemplateSerializer cannot return a single Kickoff object
         # because the Template related with Kickoff by foreign key
         # instead of one to one relation. Getting the object manually:
-        kickoff_slz = KickoffSerializer(
-            instance=self.instance.kickoff_instance
-        )
+        kickoff_slz = KickoffSerializer(instance=instance.kickoff_instance)
         data['kickoff'] = kickoff_slz.data
         return data
 
@@ -855,3 +852,34 @@ class TemplateByNameSerializer(
         allow_null=False,
         allow_blank=False,
     )
+
+
+class TemplateExportFilterSerializer(
+    CustomValidationErrorMixin,
+    ValidationUtilsMixin,
+    Serializer
+):
+    owners_ids = CharField(required=False)
+    owners_group_ids = CharField(required=False)
+    is_active = BooleanField(
+        required=False,
+        default=None,
+        allow_null=True
+    )
+    is_public = BooleanField(
+        required=False,
+        default=None,
+        allow_null=True
+    )
+    ordering = ChoiceField(
+        required=False,
+        choices=TemplateOrdering.CHOICES_EXPORT
+    )
+    limit = IntegerField(min_value=0, required=False)
+    offset = IntegerField(min_value=0, required=False)
+
+    def validate_owners_ids(self, value):
+        return self.get_valid_list_integers(value)
+
+    def validate_owners_group_ids(self, value):
+        return self.get_valid_list_integers(value)

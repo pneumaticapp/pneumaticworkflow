@@ -25,9 +25,10 @@ import { Paywall } from '../../components/UI/Paywall';
 import { isEnvAnalytics, isEnvPush } from '../../constants/enviroment';
 import { IUnsavedUser, TUserListItem } from '../../types/user';
 import { getAccountPlan } from '../../redux/selectors/accounts';
-import { loadGroups } from '../../redux/actions';
+import { checkIsTemplateOwner, loadGroups } from '../../redux/actions';
 
 import styles from './MainLayout.css';
+import { getIsAdmin } from '../../redux/selectors/user';
 
 export interface IMainLayoutComponentStoreProps {
   user: IAuthUser;
@@ -96,6 +97,7 @@ export function MainLayout({
   const { isSubscribed, billingPlan } = user.account;
 
   const plan = useSelector(getAccountPlan);
+  const isAdmin = useSelector(getIsAdmin);
 
   React.useEffect(() => {
     if (user.account.billingPlan) {
@@ -148,6 +150,12 @@ export function MainLayout({
       unregisterHistoryListener.current?.();
     };
   }, [isSubscribed, billingPlan, ESubscriptionPlan.Free]);
+
+  React.useEffect(() => {
+    if (!isAdmin) {
+      dispatch(checkIsTemplateOwner());
+    }
+  }, [dispatch, isAdmin]);
 
   const shouldRenderNotifications = useDelayUnmount(isNotificationsListOpen, 150);
 

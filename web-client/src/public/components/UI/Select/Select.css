@@ -1,9 +1,9 @@
 /* stylelint-disable declaration-no-important */
 .container {
-  padding: 6px 16px;
+  padding: 0.6rem 1.6rem;
   display: flex;
-  background: white;
-  border-radius: 16px;
+  background: var(--pneumatic-color-white);
+  border-radius: 1.6rem;
 
   @media (--mobile) {
     width: 100% !important;
@@ -16,15 +16,15 @@
   overflow: hidden;
   text-overflow: ellipsis;
 
-  @media screen and (min-width: 576px) {
-    max-width: 105px !important;
+  @media screen and (min-width: 576rem) {
+    max-width: 10.5rem !important;
   }
 }
 
 .dropdown-menu {
-  margin-top: 6px !important;
-  margin-left: -16px !important;
-  width: 192px;
+  margin-top: 0.6rem !important;
+  margin-left: -1.6rem !important;
+  width: 19.2rem;
 
   @media (--mobile) {
     width: 100%;
@@ -32,7 +32,7 @@
 }
 
 .dropdown-menu_search {
-  width: 304px;
+  width: 30.4rem;
 
   @media (--mobile) {
     width: 100%;
@@ -43,7 +43,7 @@
   margin-right: 0 !important;
   padding-right: 0 !important;
   height: 100%;
-  max-height: 200px;
+  max-height: 20rem;
 }
 
 .dropdown-item_search {
@@ -52,7 +52,7 @@
   &:hover,
   &:active,
   &:focus {
-    background-color: white !important;
+    background-color: var(--pneumatic-color-white) !important;
   }
 }
 
@@ -66,7 +66,7 @@
 }
 
 .dropdown-item-check__title {
-  width: calc(100% - 28px);
+  width: calc(100% - 2.8rem);
 }
 
 .dropdown-item-content {
@@ -88,10 +88,10 @@
 }
 
 .dropdown-item-content__subtitle {
-  margin: 0 8px;
-  font-size: 11px;
+  margin: 0 0.8rem;
+  font-size: 1.1rem;
   font-weight: bold;
-  line-height: 16px;
+  line-height: 1.6rem;
   text-align: center;
   letter-spacing: 0.05em;
   text-transform: uppercase;
@@ -100,35 +100,35 @@
 
 .dropdown-item-content__count {
   margin-left: auto;
-  padding: 0 4px;
+  padding: 0 0.4rem;
   display: flex;
-  min-width: 20px;
-  height: 20px;
-  font-size: 11px;
+  min-width: 2rem;
+  height: 2rem;
+  font-size: 1.1rem;
   font-weight: bold;
-  line-height: 16px;
+  line-height: 1.6rem;
   letter-spacing: 0.05em;
   color: var(--pneumatic-color-black48);
   background: var(--pneumatic-color-black4);
-  border-radius: 12px;
+  border-radius: 1.2rem;
   align-items: center;
   justify-content: center;
 }
 
 .dropdown-item__text_stub {
   font-family: Nunito, sans-serif;
-  font-size: 15px;
-  line-height: 20px;
-  color: #b9b9b8;
+  font-size: 1.5rem;
+  line-height: 2rem;
+  color: var(--pneumatic-color-black32);
 }
 
 .active-value {
   padding: 0;
   display: flex;
   width: 100%;
-  font-size: 13px;
+  font-size: 1.3rem;
   font-weight: bold;
-  line-height: 16px;
+  line-height: 1.6rem;
   white-space: nowrap;
   color: var(--pneumatic-color-black100);
   background: transparent;
@@ -140,7 +140,9 @@
   }
 
   .active-value__text {
-    margin-right: 8px;
+    margin-right: 0.8rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   &[aria-expanded='true'] {
@@ -161,24 +163,36 @@
   }
 }
 
+.active-value__text {
+  div {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+
+    span {
+      display: inline !important;
+    }
+  }
+}
+
 .active-value_disabled {
   pointer-events: none;
 }
 
 .value-item {
-  padding-top: 5px !important;
-  padding-bottom: 5px !important;
+  padding-top: 0.5rem !important;
+  padding-bottom: 0.5rem !important;
   display: flex !important;
-  font-size: 15px;
+  font-size: 1.5rem;
   font-weight: 800;
-  line-height: 16px;
-  color: #262522 !important;
+  line-height: 1.6rem;
+  color: var(--pneumatic-color-black100) !important;
   align-items: center;
 
   &:hover {
-    color: #e79a26 !important;
-    background: #fdf7ee !important;
-    border-radius: 4px;
+    color: var(--pneumatic-color-link-hover) !important;
+    background: var(--pneumatic-color-beige) !important;
+    border-radius: 0.4rem;
   }
 
   &__disabled {
@@ -193,23 +207,24 @@
 
 .sorting-item__search {
   position: relative;
-  margin: -4px -4px 0;
+  margin: -0.4rem -0.4rem 0;
 }
 
 .search__input {
-  padding-top: 10px !important;
-  padding-bottom: 10px !important;
+  padding-top: 1rem !important;
+  padding-bottom: 1rem !important;
   width: 100% !important;
   border: 0 !important;
 }
 
 .search__separator {
-  margin: 0 -4px 10px;
+  margin: 0 -0.4rem 1rem;
   border-color: var(--pneumatic-color-black16);
 }
 
 .icon {
-  margin-right: 4px;
+  margin-right: 0.4rem;
+  flex-shrink: 0;
 }
 
 .filter-container {

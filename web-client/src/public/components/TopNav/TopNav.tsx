@@ -38,7 +38,6 @@ export interface ITopNavDispatchProps {
 
 export interface ITopNavOwnProps {
   leftContent?: React.ReactNode;
-  centerContent?: React.ReactNode;
 }
 
 export type TTopNavProps = ITopNavProps & ITopNavDispatchProps & ITopNavOwnProps;
@@ -54,7 +53,6 @@ export function TopNav({
   isAccountOwner,
   leftContent,
   accountOwnerPlan,
-  centerContent,
   logoutUser,
   setNotificationsListIsOpen,
   returnFromSupermode,
@@ -161,7 +159,6 @@ export function TopNav({
       {renderPaywallContent()}
       <nav className={classnames('navbar', styles['navbar'])}>
         {leftContent && <div className={styles['navbar-left']}>{leftContent}</div>}
-        {centerContent && <div className={styles['navbar-center']}>{centerContent}</div>}
         <div className={rightNavbarClassname}>
           <div className={styles['notifications']}>
             <button

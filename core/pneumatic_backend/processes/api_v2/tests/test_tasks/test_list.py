@@ -81,6 +81,7 @@ def test_list__default_ordering__ok(mocker, api_client):
     task_21_data = response.data[0]
     assert task_21_data['id'] == task_21.id
     assert task_21_data['name'] == task_21.name
+    assert task_21_data['api_name'] == task_21.api_name
     assert task_21_data['due_date_tsp'] is None
     assert task_21_data['date_started'] == task_21.date_started.strftime(
         datetime_format

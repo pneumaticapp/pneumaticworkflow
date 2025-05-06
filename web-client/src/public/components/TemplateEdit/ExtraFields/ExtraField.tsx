@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React, { Ref, useCallback, useMemo } from 'react';
 import classnames from 'classnames';
 import { injectIntl, IntlShape } from 'react-intl';
 
@@ -11,6 +11,7 @@ import { ExtraFieldRadio } from './Radio';
 import { ExtraFieldCreatable } from './Creatable';
 import { ExtraFieldFile } from './File';
 import { ExtraFieldUser } from './User';
+import { ExtraFieldNumber } from './Number';
 
 import { EExtraFieldMode, EExtraFieldType, IExtraField } from '../../../types/template';
 import { EInputNameBackgroundColor } from '../../../types/workflow';
@@ -32,7 +33,7 @@ export interface IWorkflowExtraFieldProps {
   moveFieldDown?(): void;
   editField(changedProps: Partial<IExtraField>): void;
   isDisabled?: boolean;
-  innerRef?: React.Ref<HTMLInputElement>;
+  innerRef?: Ref<HTMLInputElement>;
   accountId: number;
 }
 
@@ -59,7 +60,7 @@ function ExtraField(props: IExtraFieldProps) {
     innerRef,
   } = props;
 
-  const handleDeleteField = React.useCallback(() => {
+  const handleDeleteField = useCallback(() => {
     if (!deleteField) {
       return;
     }
@@ -85,6 +86,7 @@ function ExtraField(props: IExtraFieldProps) {
 
   const renderField = () => {
     const fieldsMap: { [key in EExtraFieldType]: Function } = {
+      [EExtraFieldType.Number]: ExtraFieldNumber,
       [EExtraFieldType.Text]: ExtraFieldText,
       [EExtraFieldType.String]: ExtraFieldString,
       [EExtraFieldType.Url]: ExtraFieldUrl,
@@ -101,11 +103,12 @@ function ExtraField(props: IExtraFieldProps) {
     return <Field {...props} innerRef={innerRef} />;
   };
 
-  const isFirstItem = React.useMemo(() => id === 0 && id !== undefined, [id]);
-  const isLastItem = React.useMemo(() => fieldsCount !== undefined && id === fieldsCount - 1, [id, fieldsCount]);
+  const isFirstItem = useMemo(() => id === 0 && id !== undefined, [id]);
+  const isLastItem = useMemo(() => fieldsCount !== undefined && id === fieldsCount - 1, [id, fieldsCount]);
 
   const getFieldClassName = () => {
     const labelClassNameMap: { [key in EExtraFieldType]: string } = {
+      [EExtraFieldType.Number]: 'with-label',
       [EExtraFieldType.Text]: 'with-label',
       [EExtraFieldType.String]: 'with-label',
       [EExtraFieldType.Url]: 'with-label',
@@ -130,6 +133,7 @@ function ExtraField(props: IExtraFieldProps) {
 
   const getIsRequiredDisabled = () => {
     const isRequiredDisabledMap: { [key in EExtraFieldType]: boolean } = {
+      [EExtraFieldType.Number]: false,
       [EExtraFieldType.Text]: false,
       [EExtraFieldType.String]: false,
       [EExtraFieldType.Url]: false,

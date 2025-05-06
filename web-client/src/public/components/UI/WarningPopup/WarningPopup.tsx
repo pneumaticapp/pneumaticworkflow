@@ -1,7 +1,6 @@
 import React from 'react';
-import classnames from 'classnames';
-import { Modal, ModalBody, ModalFooter, ModalHeader } from 'reactstrap';
-import { Button } from "..";
+import { BaseModal, ModalBody, ModalFooter, ModalHeader } from '../BaseModal';
+import { Button } from '..';
 
 import styles from './WarningPopup.css';
 
@@ -34,12 +33,10 @@ export function WarningPopup({
   };
 
   return (
-    <Modal centered isOpen={isOpen} wrapClassName={classnames('team-popup')} toggle={closeModal}>
-      <ModalHeader toggle={closeModal} className={styles['header']}>
-        <p className={styles['title']}>{title}</p>
-      </ModalHeader>
-      <ModalBody className={styles['body']}>{message}</ModalBody>
-      <ModalFooter className={styles['footer']}>
+    <BaseModal isOpen={isOpen || false} toggle={closeModal}>
+      <ModalHeader toggle={closeModal}>{title}</ModalHeader>
+      <ModalBody>{message}</ModalBody>
+      <ModalFooter>
         <div className={styles['popup-buttons']}>
           {renderCustomControlls ? (
             renderCustomControlls(onConfirm, onReject)
@@ -59,6 +56,6 @@ export function WarningPopup({
           )}
         </div>
       </ModalFooter>
-    </Modal>
+    </BaseModal>
   );
 }

@@ -3,6 +3,7 @@ from pneumatic_backend.processes.api_v2.services.task.base import (
     BasePerformerService2
 )
 from pneumatic_backend.accounts.models import UserGroup
+from pneumatic_backend.analytics.services import AnalyticService
 from pneumatic_backend.processes.models import (
     TaskPerformer
 )
@@ -80,6 +81,13 @@ class GroupPerformerService(BasePerformerService2):
             task=self.task,
             performer=group
         )
+        AnalyticService.task_group_performer_deleted(
+            user=self.user,
+            performer=group,
+            task=self.task,
+            auth_type=self.auth_type,
+            is_superuser=self.is_superuser
+        )
         if self.task.can_be_completed():
             first_completed_user = (
                 self.task.taskperformer_set.completed()
@@ -123,11 +131,17 @@ class GroupPerformerService(BasePerformerService2):
             )
 
     def _create_group_actions(self, group: UserGroup) -> None:
-
         WorkflowEventService.performer_group_created_event(
             user=self.user,
             task=self.task,
             performer=group
+        )
+        AnalyticService.task_group_performer_created(
+            user=self.user,
+            performer=group,
+            task=self.task,
+            auth_type=self.auth_type,
+            is_superuser=self.is_superuser
         )
         group_users = set(group.users.values_list('id', flat=True))
         task_performer_users = (

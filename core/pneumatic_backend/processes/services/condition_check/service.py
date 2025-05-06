@@ -10,6 +10,7 @@ from pneumatic_backend.processes.services.condition_check.resolvers import (
     CheckboxResolver,
     TaskResolver,
     KickoffResolver,
+    NumberResolver,
 )
 from pneumatic_backend.processes.enums import PredicateType
 
@@ -17,6 +18,7 @@ from pneumatic_backend.processes.enums import PredicateType
 class ConditionCheckService:
 
     RESOLVERS = {
+        PredicateType.NUMBER: NumberResolver,
         PredicateType.STRING: StringResolver,
         PredicateType.TEXT: StringResolver,
         PredicateType.URL: StringResolver,

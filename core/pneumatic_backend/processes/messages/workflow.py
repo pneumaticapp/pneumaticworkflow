@@ -183,3 +183,5 @@ MSG_PW_0080 = lambda task_name: format_lazy(
 MSG_PW_0081 = _("A workflow can't return to a later task.")
 MSG_PW_0082 = _("There is no group with the specified ID.")
 MSG_PW_0083 = _("You must supply a comment.")
+# Translators: Number field validation
+MSG_PW_0084 = _('Value should be a number.')

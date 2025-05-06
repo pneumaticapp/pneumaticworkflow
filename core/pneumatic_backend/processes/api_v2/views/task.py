@@ -265,7 +265,8 @@ class TaskViewSet(
                 request_user=request.user,
                 user_key=user_id,
                 current_url=request.META.get('HTTP_X_CURRENT_URL'),
-                is_superuser=request.is_superuser
+                is_superuser=request.is_superuser,
+                auth_type=request.token_type
             )
         except PerformersServiceException as ex:
             raise_validation_error(message=ex.message)
@@ -307,7 +308,9 @@ class TaskViewSet(
             TaskPerformersService.delete_performer(
                 task=task,
                 request_user=request.user,
-                user_key=user_id
+                user_key=user_id,
+                is_superuser=request.is_superuser,
+                auth_type=request.token_type
             )
         except PerformersServiceException as ex:
             raise_validation_error(message=ex.message)
@@ -352,7 +355,8 @@ class TaskViewSet(
                 request_user=request.user,
                 user_key=email,
                 current_url=request.META.get('HTTP_X_CURRENT_URL'),
-                is_superuser=request.is_superuser
+                is_superuser=request.is_superuser,
+                auth_type=request.token_type
             )
         except PerformersServiceException as ex:
             raise_validation_error(message=ex.message)
@@ -373,7 +377,9 @@ class TaskViewSet(
             GuestPerformersService.delete_performer(
                 task=task,
                 request_user=request.user,
-                user_key=email
+                user_key=email,
+                is_superuser=request.is_superuser,
+                auth_type=request.token_type,
             )
         except PerformersServiceException as ex:
             raise_validation_error(message=ex.message)

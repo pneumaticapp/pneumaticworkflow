@@ -80,12 +80,7 @@ export function TasksLayoutComponent({
   }, [templateIdFilter]);
 
   const renderTaskDetailLeftContent = () => {
-    return (
-      <ReturnLink
-        label={formatMessage({ id: 'menu.tasks' })}
-        route={ERoutes.Tasks}
-      />
-    );
+    return <ReturnLink label={formatMessage({ id: 'menu.tasks' })} route={ERoutes.Tasks} />;
   };
 
   const getStepsFilterOptions = () => {
@@ -94,9 +89,8 @@ export function TasksLayoutComponent({
     }
 
     const options = filterSteps.map(({ name, id }) => {
-      const stepName = typeof name === 'string'
-        ? <StepName initialStepName={name} templateId={templateIdFilter} />
-        : name;
+      const stepName =
+        typeof name === 'string' ? <StepName initialStepName={name} templateId={templateIdFilter} /> : name;
 
       return {
         id,
@@ -111,8 +105,8 @@ export function TasksLayoutComponent({
   const renderTaskListContent = () => {
     function mapSorting(
       taskStatus: ETaskListCompletionStatus,
-      value: ETaskListSorting | ETaskListCompleteSorting): ETaskListSorting | ETaskListCompleteSorting {
-
+      value: ETaskListSorting | ETaskListCompleteSorting,
+    ): ETaskListSorting | ETaskListCompleteSorting {
       if (taskStatus === ETaskListCompletionStatus.Completed) {
         switch (value) {
           case ETaskListCompleteSorting.DateAsc:
@@ -163,49 +157,49 @@ export function TasksLayoutComponent({
             }}
             containerClassName={styles['completion-status-tabs']}
           />
-          <FilterSelect
-            isSearchShown
-            noValueLabel={formatMessage({ id: 'sorting.all-templates' })}
-            placeholderText={formatMessage({ id: 'sorting.no-template-found' })}
-            selectedOption={templateIdFilter}
-            options={filterTemplates}
-            optionIdKey="id"
-            optionLabelKey="name"
-            onChange={setTasksFilterTemplate}
-            resetFilter={() => setTasksFilterTemplate(null)}
-            Icon={FilterIcon}
-            renderPlaceholder={templates => {
-              const activeOption = templates.find(t => t.id === templateIdFilter);
-
-              return activeOption?.name || formatMessage({ id: 'sorting.all-templates' });
-            }}
-          />
-          {templateIdFilter && (
+          <div className={styles['template-filter']}>
             <FilterSelect
               isSearchShown
-              noValueLabel={formatMessage({ id: 'sorting.all-steps' })}
-              placeholderText={formatMessage({ id: 'sorting.no-step-found' })}
-              selectedOption={stepIdFilter}
-              options={getStepsFilterOptions()}
+              noValueLabel={formatMessage({ id: 'sorting.all-templates' })}
+              placeholderText={formatMessage({ id: 'sorting.no-template-found' })}
+              selectedOption={templateIdFilter}
+              options={filterTemplates}
               optionIdKey="id"
               optionLabelKey="name"
-              onChange={setTasksFilterStep}
-              resetFilter={() => setTasksFilterStep(null)}
+              onChange={setTasksFilterTemplate}
+              resetFilter={() => setTasksFilterTemplate(null)}
               Icon={FilterIcon}
-              renderPlaceholder={steps => {
-                const activeOption = steps.find(s => s.id === stepIdFilter);
+              renderPlaceholder={(templates) => {
+                const activeOption = templates.find((t) => t.id === templateIdFilter);
 
-                return activeOption?.name || formatMessage({ id: 'sorting.all-steps' });
+                return activeOption?.name || formatMessage({ id: 'sorting.all-templates' });
               }}
             />
+          </div>
+          {templateIdFilter && (
+            <div className={styles['step-filter']}>
+              <FilterSelect
+                isSearchShown
+                noValueLabel={formatMessage({ id: 'sorting.all-steps' })}
+                placeholderText={formatMessage({ id: 'sorting.no-step-found' })}
+                selectedOption={stepIdFilter}
+                options={getStepsFilterOptions()}
+                optionIdKey="id"
+                optionLabelKey="name"
+                onChange={setTasksFilterStep}
+                resetFilter={() => setTasksFilterStep(null)}
+                Icon={FilterIcon}
+                renderPlaceholder={(steps) => {
+                  const activeOption = steps.find((s) => s.id === stepIdFilter);
+
+                  return activeOption?.name || formatMessage({ id: 'sorting.all-steps' });
+                }}
+              />
+            </div>
           )}
           <TasksSortingContainer />
           {isHasFilter && (
-            <button
-              type="button"
-              onClick={clearFilters}
-              className="cancel-button"
-            >
+            <button type="button" onClick={clearFilters} className="cancel-button">
               {formatMessage({ id: 'tasks.clear-filters' })}
             </button>
           )}
@@ -225,7 +219,7 @@ export function TasksLayoutComponent({
     };
 
     const { pathname } = history.location;
-    const currentRoute = Object.keys(propsMap).find(route => matchPath(pathname, route));
+    const currentRoute = Object.keys(propsMap).find((route) => matchPath(pathname, route));
 
     return currentRoute ? propsMap[currentRoute] : {};
   };
@@ -234,14 +228,12 @@ export function TasksLayoutComponent({
     <>
       <TopNavContainer {...topNavProps()} />
       <main>
-        <div className="container-fluid">
-          {children}
-        </div>
+        <div className="container-fluid">{children}</div>
       </main>
       <WorkflowModalContainer
         onWorkflowEnded={() => {
           dispatch(loadWorkflowsList(0));
-          closeWorkflowLogPopup()
+          closeWorkflowLogPopup();
         }}
         onWorkflowSnoozed={() => {
           closeWorkflowLogPopup();

@@ -1,10 +1,11 @@
+/* eslint-disable indent */
 import { isValidPhoneNumber } from 'react-phone-number-input';
 import { couponRegex, emailRegex, urlRegex, urlWithProtocolRegex, whitespaceRegex } from '../constants/defaultValues';
 
 export interface IRule {
   message: string;
   // tslint:disable-next-line: no-any
-  isInvalid(value: any): boolean;
+  isInvalid(value: any, showError?: boolean): boolean;
 }
 
 export const isEmpty = (value: string | null) => !value || !String(value).trim().length;
@@ -226,9 +227,9 @@ export const GROUP_NAME_RULES: IRule[] = [
 
 export const validateFieldCreator =
   (rules: IRule[]) =>
-    (value: any): string => {
-      return rules.reduce((msg, { message, isInvalid }) => (!msg && isInvalid(value) ? message : msg), '');
-    };
+  (value: any): string => {
+    return rules.reduce((msg, { message, isInvalid }) => (!msg && isInvalid(value) ? message : msg), '');
+  };
 
 export const validateCouponCode = validateFieldCreator(COUPON_RULES);
 export const validateEmail = validateFieldCreator(EMAIL_RULES);

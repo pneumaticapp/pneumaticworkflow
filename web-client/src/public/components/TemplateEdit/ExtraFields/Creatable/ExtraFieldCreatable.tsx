@@ -71,8 +71,11 @@ export function ExtraFieldCreatable({
 
   const handleSelectableChange = (inputValue: IDropdownSelection) => {
     editField({
-      value: String(inputValue.id),
-      selections: selections?.map((selection) => ({ ...selection, isSelected: inputValue.id === selection.id })),
+      value: String(inputValue.apiName),
+      selections: selections?.map((selection) => ({
+        ...selection,
+        isSelected: inputValue.apiName === selection.apiName,
+      })),
     });
   };
 
@@ -205,7 +208,7 @@ export function ExtraFieldCreatable({
 
   const renderSelectableView = () => {
     const displayValue = {
-      label: field.selections?.find((selection) => Number(selection.id) === Number(field.value))?.value,
+      label: field.selections?.find((selection) => selection.apiName === field.value)?.value,
     };
 
     return (

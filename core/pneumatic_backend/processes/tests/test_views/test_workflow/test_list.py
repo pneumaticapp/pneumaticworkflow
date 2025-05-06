@@ -2,6 +2,7 @@ import pytest
 from string import punctuation
 from datetime import timedelta
 from django.utils import timezone
+from pneumatic_backend.authentication.enums import AuthTokenType
 from pneumatic_backend.processes.models import (
     TaskPerformer,
     FileAttachment,
@@ -16,7 +17,7 @@ from pneumatic_backend.processes.tests.fixtures import (
     create_test_account,
     create_invited_user,
     create_test_guest,
-    create_test_group
+    create_test_group, create_test_owner, create_test_admin
 )
 from pneumatic_backend.utils.validation import ErrorCode
 from pneumatic_backend.processes.messages import workflow as messages
@@ -37,7 +38,6 @@ from pneumatic_backend.processes.api_v2.services import (
     WorkflowEventService
 )
 from pneumatic_backend.services.markdown import MarkdownService
-from pneumatic_backend.utils.dates import date_format
 
 
 pytestmark = pytest.mark.django_db
@@ -49,12 +49,11 @@ def replica_mock(mocker):
     yield
 
 
-def test_list__workflow_due_date__ok(api_client):
+def test_list__workflow_data__ok(api_client):
 
     # arrange
     user = create_test_user()
     due_date = timezone.now()
-
     workflow = create_test_workflow(
         user=user,
         tasks_count=1,
@@ -62,7 +61,7 @@ def test_list__workflow_due_date__ok(api_client):
         status=WorkflowStatus.DONE
     )
 
-    task = workflow.current_task_instance
+    task = workflow.tasks.first()
     template = workflow.template
     create_test_workflow(user)
     api_client.token_authenticate(user)
@@ -87,40 +86,89 @@ def test_list__workflow_due_date__ok(api_client):
     assert wf_data['legacy_template_name'] == workflow.legacy_template_name
     assert wf_data['is_urgent'] == workflow.is_urgent
     assert wf_data['finalizable'] == workflow.finalizable
-    assert wf_data['date_created'] == (
-        workflow.date_created.strftime(date_format)
-    )
     assert wf_data['date_created_tsp'] == (
         workflow.date_created.timestamp()
-    )
-    assert wf_data['date_completed'] == (
-        workflow.date_completed.strftime(date_format)
     )
     assert wf_data['date_completed_tsp'] == (
         workflow.date_completed.timestamp()
     )
     assert wf_data['due_date_tsp'] == due_date.timestamp()
-    assert wf_data['status_updated'] == (
-        workflow.status_updated.strftime(date_format)
-    )
     assert wf_data['status_updated_tsp'] == (
         workflow.status_updated.timestamp()
     )
+    assert wf_data['fields'] == []
     template_data = wf_data['template']
     assert template_data['id'] == template.id
     assert template_data['name'] == template.name
     assert wf_data['owners'] == [user.id]
     assert template_data['is_active'] == template.is_active
 
-    task_data = wf_data['task']
+    task_data = wf_data['tasks'][0]
     assert task_data['id'] == task.id
     assert task_data['name'] == task.name
+    assert task_data['api_name'] == task.api_name
+    assert task_data['description'] == task.description
     assert task_data['date_started_tsp'] == task.date_started.timestamp()
     assert task_data['delay'] is None
     assert task_data['due_date_tsp'] is None
     assert task_data['status'] == TaskStatus.ACTIVE
     performer = {'source_id': user.id, 'type': 'user'}
     assert task_data['performers'] == [performer]
+
+
+def test_list__multiple_tasks__ok(api_client):
+
+    # arrange
+    user = create_test_user()
+    workflow = create_test_workflow(
+        user=user,
+        tasks_count=2,
+    )
+    task_1 = workflow.tasks.get(number=1)
+    task_2 = workflow.tasks.get(number=2)
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.get(f'/workflows?ordering=date')
+
+    # assert
+    assert response.status_code == 200
+    assert len(response.data['results']) == 1
+    workflow_data = response.data['results'][0]
+    assert len(workflow_data['tasks']) == 2
+    task_1_data = workflow_data['tasks'][0]
+    assert task_1_data['id'] == task_1.id
+    assert task_1_data['status'] == TaskStatus.ACTIVE
+    task_2_data = workflow_data['tasks'][1]
+    assert task_2_data['id'] == task_2.id
+    assert task_2_data['status'] == TaskStatus.PENDING
+
+
+def test_list__not_return_skipped_tasks__ok(api_client):
+
+    # arrange
+    user = create_test_user()
+    workflow = create_test_workflow(
+        user=user,
+        tasks_count=2,
+    )
+    task_1 = workflow.tasks.get(number=1)
+    task_1.status = TaskStatus.SKIPPED
+    task_1.save()
+    task_2 = workflow.tasks.get(number=2)
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.get(f'/workflows?ordering=date')
+
+    # assert
+    assert response.status_code == 200
+    assert len(response.data['results']) == 1
+    workflow_data = response.data['results'][0]
+    assert len(workflow_data['tasks']) == 1
+    task_1_data = workflow_data['tasks'][0]
+    assert task_1_data['id'] == task_2.id
+    assert task_1_data['status'] == TaskStatus.PENDING
 
 
 def test_list__pagination__ok(api_client):
@@ -189,7 +237,7 @@ def test_list__workflow_current_task_delay__ok(api_client):
 
     # assert
     assert response.status_code == 200
-    delay_data = response.data['results'][0]['task']['delay']
+    delay_data = response.data['results'][0]['tasks'][0]['delay']
     assert delay_data['start_date_tsp'] == delay.start_date.timestamp()
     assert delay_data['end_date_tsp'] is None
     assert delay_data['duration'] is not None
@@ -235,7 +283,7 @@ def test_list__search__workflow_name__ok(api_client):
     assert response.status_code == 200
     assert len(response.data['results']) == 1
     assert response.data['results'][0]['id'] == workflow.id
-    assert response.data['results'][0]['status_updated']
+    assert response.data['results'][0]['status_updated_tsp']
 
 
 def test_list__search__kickoff_description__ok(api_client):
@@ -1159,7 +1207,7 @@ def test_list__task_due_date__ok(api_client):
 
     # assert
     assert response.status_code == 200
-    response_task = response.data['results'][0]['task']
+    response_task = response.data['results'][0]['tasks'][0]
     assert response_task['due_date_tsp'] == due_date_tsp
 
 
@@ -1877,6 +1925,332 @@ def test_list__filter_invalid_workflow_starter__validation_error(api_client):
     assert response.data['details']['name'] == 'workflow_starter'
 
 
+def test_list__filter_fields_kickoff_field__ok(api_client):
+
+    # arrange
+    user = create_test_user()
+    workflow = create_test_workflow(user, tasks_count=1)
+    TaskField.objects.create(
+        kickoff=workflow.kickoff_instance,
+        api_name='api-name-1',
+        type=FieldType.STRING,
+        workflow=workflow,
+        value='value',
+    )
+    field_api_name = 'api-name-2'
+    field = TaskField.objects.create(
+        kickoff=workflow.kickoff_instance,
+        api_name=field_api_name,
+        type=FieldType.STRING,
+        workflow=workflow,
+        value='raw value',
+        clear_value='clear value',
+        markdown_value='**bold** value',
+        order=2,
+        description='desc',
+        is_required=True
+    )
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.get(f'/workflows?fields={field_api_name}')
+
+    # assert
+    assert response.status_code == 200
+    assert len(response.data['results']) == 1
+    assert response.data['results'][0]['id'] == workflow.id
+    assert len(response.data['results'][0]['fields']) == 1
+    field_data = response.data['results'][0]['fields'][0]
+    assert field_data['id'] == field.id
+    assert field_data['order'] == field.order
+    assert field_data['is_required'] == field.is_required
+    assert field_data['task_id'] is None
+    assert field_data['kickoff_id'] == workflow.kickoff_instance.id
+    assert field_data['type'] == field.type
+    assert field_data['api_name'] == field.api_name
+    assert field_data['name'] == field.name
+    assert field_data['description'] == field.description
+    assert field_data['value'] == field.value
+    assert field_data['markdown_value'] == field.markdown_value
+    assert field_data['clear_value'] == field.clear_value
+    assert field_data['user_id'] is None
+    assert field_data['group_id'] is None
+
+
+def test_list__filter_fields_task_field__ok(api_client):
+
+    # arrange
+    user = create_test_user()
+    workflow = create_test_workflow(user, tasks_count=1)
+    task = workflow.tasks.first()
+    TaskField.objects.create(
+        task=task,
+        api_name='api-name-1',
+        type=FieldType.STRING,
+        workflow=workflow,
+        value='value',
+    )
+    field_api_name = 'api-name-2'
+    field = TaskField.objects.create(
+        task=task,
+        api_name=field_api_name,
+        type=FieldType.STRING,
+        workflow=workflow,
+        value='raw value',
+        clear_value='clear value',
+        markdown_value='**bold** value',
+        order=2,
+        description='desc',
+        is_required=True
+    )
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.get(f'/workflows?fields={field_api_name}')
+
+    # assert
+    assert response.status_code == 200
+    assert len(response.data['results']) == 1
+    assert response.data['results'][0]['id'] == workflow.id
+    assert len(response.data['results'][0]['fields']) == 1
+    field_data = response.data['results'][0]['fields'][0]
+    assert field_data['id'] == field.id
+    assert field_data['order'] == field.order
+    assert field_data['is_required'] == field.is_required
+    assert field_data['task_id'] == task.id
+    assert field_data['kickoff_id'] is None
+    assert field_data['type'] == field.type
+    assert field_data['api_name'] == field.api_name
+    assert field_data['name'] == field.name
+    assert field_data['description'] == field.description
+    assert field_data['value'] == field.value
+    assert field_data['markdown_value'] == field.markdown_value
+    assert field_data['clear_value'] == field.clear_value
+    assert field_data['user_id'] is None
+    assert field_data['group_id'] is None
+
+
+def test_list__filter_fields_multiple_values__ok(api_client):
+
+    # arrange
+    user = create_test_user()
+    workflow = create_test_workflow(user, tasks_count=1)
+    task = workflow.tasks.first()
+    field_1 = TaskField.objects.create(
+        task=task,
+        api_name='api-name-1',
+        type=FieldType.STRING,
+        workflow=workflow,
+        value='value',
+        order=3,
+    )
+    field_2 = TaskField.objects.create(
+        task=task,
+        api_name='api-name-2',
+        type=FieldType.NUMBER,
+        workflow=workflow,
+        value='2.13',
+        order=2,
+    )
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.get(
+        f'/workflows?fields={field_1.api_name},{field_2.api_name}'
+    )
+
+    # assert
+    assert response.status_code == 200
+    assert len(response.data['results']) == 1
+    assert response.data['results'][0]['id'] == workflow.id
+    assert len(response.data['results'][0]['fields']) == 2
+    field_1_data = response.data['results'][0]['fields'][0]
+    assert field_1_data['id'] == field_2.id
+    field_2_data = response.data['results'][0]['fields'][1]
+    assert field_2_data['id'] == field_1.id
+
+
+def test_list__filter_fields_blank__empty_list(api_client):
+
+    # arrange
+    user = create_test_user()
+    workflow = create_test_workflow(user, tasks_count=1)
+    task = workflow.tasks.first()
+    TaskField.objects.create(
+        task=task,
+        api_name='api-name-1',
+        type=FieldType.STRING,
+        workflow=workflow,
+        value='value',
+    )
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.get(f'/workflows?fields=')
+
+    # assert
+    assert response.status_code == 200
+    assert len(response.data['results']) == 1
+    assert response.data['results'][0]['id'] == workflow.id
+    assert len(response.data['results'][0]['fields']) == 0
+
+
+def test_list__filter_fields_not_existent_field__empty_list(api_client):
+
+    # arrange
+    user = create_test_user()
+    workflow = create_test_workflow(user, tasks_count=1)
+    task = workflow.tasks.first()
+    TaskField.objects.create(
+        task=task,
+        api_name='api-name-1',
+        type=FieldType.STRING,
+        workflow=workflow,
+        value='value',
+    )
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.get(f'/workflows?fields=not-existent')
+
+    # assert
+    assert response.status_code == 200
+    assert len(response.data['results']) == 1
+    assert response.data['results'][0]['id'] == workflow.id
+    assert len(response.data['results'][0]['fields']) == 0
+
+
+def test_list__filter_fields__another_account_field__empty_list(api_client):
+
+    # arrange
+    another_user = create_test_user()
+    workflow = create_test_workflow(another_user, tasks_count=1)
+    task = workflow.tasks.first()
+    field_api_name = 'api-name-1'
+    TaskField.objects.create(
+        task=task,
+        api_name=field_api_name,
+        type=FieldType.STRING,
+        workflow=workflow,
+        value='value',
+    )
+    user = create_test_owner()
+    workflow_2 = create_test_workflow(user=user, tasks_count=1)
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.get(f'/workflows?fields={field_api_name}')
+
+    # assert
+    assert response.status_code == 200
+    assert len(response.data['results']) == 1
+    assert response.data['results'][0]['id'] == workflow_2.id
+    assert len(response.data['results'][0]['fields']) == 0
+
+
+def test_list__filter_fields__another_workflow_field__empty_list(api_client):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    workflow = create_test_workflow(owner, tasks_count=1)
+    task = workflow.tasks.first()
+    field_api_name = 'api-name-1'
+    TaskField.objects.create(
+        task=task,
+        api_name=field_api_name,
+        type=FieldType.STRING,
+        workflow=workflow,
+        value='value',
+    )
+    user = create_test_admin(account=account)
+    workflow_2 = create_test_workflow(user, tasks_count=1)
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.get(f'/workflows?fields={field_api_name}')
+
+    # assert
+    assert response.status_code == 200
+    assert len(response.data['results']) == 1
+    assert response.data['results'][0]['id'] == workflow_2.id
+    assert len(response.data['results'][0]['fields']) == 0
+
+
+def test_list__filter_fields_and_template__ok(api_client):
+
+    # arrange
+    user = create_test_owner()
+    template_1 = create_test_template(
+        user=user,
+        is_active=True,
+        tasks_count=1
+    )
+    workflow = create_test_workflow(
+        user=user,
+        template=template_1,
+    )
+    task = workflow.tasks.first()
+    field_api_name = 'api-name-1'
+    field = TaskField.objects.create(
+        task=task,
+        api_name=field_api_name,
+        type=FieldType.STRING,
+        workflow=workflow,
+        value='value',
+    )
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.get(
+        f'/workflows?fields={field_api_name};template_id={template_1.id}'
+    )
+
+    # assert
+    assert response.status_code == 200
+    assert len(response.data['results']) == 1
+    assert response.data['results'][0]['id'] == workflow.id
+    assert len(response.data['results'][0]['fields']) == 1
+    field_data = response.data['results'][0]['fields'][0]
+    assert field_data['id'] == field.id
+
+
+def test_list__filter_fields_and_another_template_id__empty_list(api_client):
+
+    # arrange
+    user = create_test_owner()
+    template_1 = create_test_template(
+        user=user,
+        is_active=True,
+        tasks_count=1
+    )
+    workflow = create_test_workflow(
+        user=user,
+        template=template_1,
+    )
+    task = workflow.tasks.first()
+    field_api_name = 'api-name-1'
+    TaskField.objects.create(
+        task=task,
+        api_name=field_api_name,
+        type=FieldType.STRING,
+        workflow=workflow,
+        value='value',
+    )
+
+    another_template = create_test_template(user=user, tasks_count=1)
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.get(
+        f'/workflows?fields={field_api_name};template_id={another_template.id}'
+    )
+
+    # assert
+    assert response.status_code == 200
+    assert len(response.data['results']) == 0
+
+
 def test_list__ordering_oldest__ok(api_client):
 
     # arrange
@@ -2052,13 +2426,16 @@ def test_list__deleted_current_task_performers__ok(
         task=task,
         run_actions=False,
         current_url='/page',
-        is_superuser=False
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
     )
     TaskPerformersService.delete_performer(
         request_user=user,
         user_key=deleted_user.id,
         task=task,
-        run_actions=False
+        run_actions=False,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
     )
     api_client.token_authenticate(user)
 
@@ -2067,7 +2444,7 @@ def test_list__deleted_current_task_performers__ok(
 
     # assert
     assert response.status_code == 200
-    current_task_data = response.data['results'][0]['task']
+    current_task_data = response.data['results'][0]['tasks'][0]
     assert current_task_data['id'] == task.id
     assert len(current_task_data['performers']) == 1
     performer = {'source_id': user.id, 'type': 'user'}
@@ -2100,7 +2477,7 @@ def test_list__guest_performer__ok(
 
     # assert
     assert response.status_code == 200
-    current_task_data = response.data['results'][0]['task']
+    current_task_data = response.data['results'][0]['tasks'][0]
     assert current_task_data['id'] == task.id
     assert len(current_task_data['performers']) == 1
     performer = {'source_id': guest.id, 'type': 'user'}

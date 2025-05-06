@@ -1,5 +1,6 @@
 import pytest
 from django.contrib.auth import get_user_model
+from pneumatic_backend.authentication.enums import AuthTokenType
 from pneumatic_backend.processes.tests.fixtures import (
     create_test_user,
     create_test_workflow,
@@ -79,7 +80,8 @@ class TestTaskCreatePerformer:
             user_key=user_performer.id,
             request_user=account_owner,
             current_url=current_url,
-            is_superuser=False
+            is_superuser=False,
+            auth_type=AuthTokenType.USER,
         )
         assert not TemplateOwner.objects.filter(
             template=template,
@@ -136,7 +138,8 @@ class TestTaskCreatePerformer:
             user_key=user_performer.id,
             request_user=request_user,
             current_url=current_url,
-            is_superuser=False
+            is_superuser=False,
+            auth_type=AuthTokenType.USER
         )
 
     def test_create__request_user_template_owner_not_admin__permission_denied(
@@ -376,7 +379,8 @@ class TestTaskCreatePerformer:
             user_key=user_performer.id,
             request_user=request_user,
             current_url=current_url,
-            is_superuser=False
+            is_superuser=False,
+            auth_type=AuthTokenType.USER
         )
 
 
@@ -431,6 +435,8 @@ class TestTaskDeletePerformer:
             task=task,
             user_key=user_performer.id,
             request_user=account_owner,
+            is_superuser=False,
+            auth_type=AuthTokenType.USER
         )
         assert not TemplateOwner.objects.filter(
             template=template,
@@ -482,6 +488,8 @@ class TestTaskDeletePerformer:
             task=task,
             user_key=user_performer.id,
             request_user=request_user,
+            is_superuser=False,
+            auth_type=AuthTokenType.USER
         )
         assert template.owners.filter(user_id=request_user.id).exists()
 
@@ -707,7 +715,9 @@ class TestTaskDeletePerformer:
         service_delete_performer_mock.assert_called_once_with(
             task=task,
             user_key=user_performer.id,
-            request_user=request_user
+            request_user=request_user,
+            is_superuser=False,
+            auth_type=AuthTokenType.USER
         )
 
 
@@ -781,7 +791,8 @@ class TestCreateGuestPerformer:
             user_key=guest_user.email.lower(),
             request_user=account_owner,
             current_url=current_url,
-            is_superuser=False
+            is_superuser=False,
+            auth_type=AuthTokenType.USER
         )
 
     def test_create__request_user_is_template_owner_admin__ok(
@@ -835,7 +846,8 @@ class TestCreateGuestPerformer:
             user_key=guest_user.email.lower(),
             request_user=request_user,
             current_url=current_url,
-            is_superuser=False
+            is_superuser=False,
+            auth_type=AuthTokenType.USER
         )
 
     def test_create__request_user_template_owner_not_admin__permission_denied(
@@ -1000,7 +1012,8 @@ class TestCreateGuestPerformer:
             user_key=guest_email,
             request_user=request_user,
             current_url=current_url,
-            is_superuser=False
+            is_superuser=False,
+            auth_type=AuthTokenType.USER
         )
 
 
@@ -1050,7 +1063,9 @@ class TestDeleteGuestPerformer:
         service_delete_guest_mock.assert_called_once_with(
             task=task,
             user_key=guest_email,
-            request_user=account_owner
+            request_user=account_owner,
+            is_superuser=False,
+            auth_type=AuthTokenType.USER
         )
         assert not TemplateOwner.objects.filter(
             template=template,
@@ -1097,7 +1112,9 @@ class TestDeleteGuestPerformer:
         service_delete_guest_mock.assert_called_once_with(
             task=task,
             user_key=guest_email,
-            request_user=request_user
+            request_user=request_user,
+            is_superuser=False,
+            auth_type=AuthTokenType.USER
         )
         assert template.owners.filter(user_id=request_user.id).exists()
 
@@ -1305,7 +1322,9 @@ class TestDeleteGuestPerformer:
         service_delete_guest_mock.assert_called_once_with(
             task=task,
             user_key=guest_email,
-            request_user=request_user
+            request_user=request_user,
+            is_superuser=False,
+            auth_type=AuthTokenType.USER
         )
 
 

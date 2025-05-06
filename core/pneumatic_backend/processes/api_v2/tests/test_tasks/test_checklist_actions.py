@@ -1,5 +1,6 @@
 import pytest
 from django.contrib.auth import get_user_model
+from pneumatic_backend.authentication.enums import AuthTokenType
 from pneumatic_backend.processes.tests.fixtures import (
     create_test_user,
     create_test_template,
@@ -209,13 +210,15 @@ class TestChecklistRetrieve:
             task=task,
             run_actions=False,
             current_url='/page',
-            is_superuser=False
+            is_superuser=False,
+            auth_type=AuthTokenType.USER
         )
         TaskPerformersService.delete_performer(
             request_user=user,
             user_key=user_2.id,
             task=task,
-            run_actions=False
+            is_superuser=False,
+            auth_type=AuthTokenType.USER
         )
         checklist = task.checklists.first()
 

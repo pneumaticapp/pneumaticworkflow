@@ -2,7 +2,6 @@
 from django_filters import (
     ChoiceFilter,
     BooleanFilter,
-    NumberFilter,
     OrderingFilter,
 )
 from django_filters.rest_framework import (
@@ -13,18 +12,10 @@ from django_filters.constants import EMPTY_VALUES
 from pneumatic_backend.generics.filters import (
     TsQuerySearchFilter
 )
-from pneumatic_backend.generics.filters import PneumaticBaseFilterSet
-from pneumatic_backend.processes.enums import (
-    WorkflowApiStatus,
-)
 from pneumatic_backend.processes.models import (
     Template,
-    Workflow,
     SystemTemplate,
     WorkflowEvent,
-)
-from pneumatic_backend.generics.filters import (
-    ListFilter
 )
 
 
@@ -99,34 +90,6 @@ class RecentTaskFilter(FilterSet):
             return queryset.completed().order_by('-date_completed')
 
         return queryset
-
-
-class WorkflowFieldsFilter(PneumaticBaseFilterSet):
-
-    class Meta:
-        model = Workflow
-        fields = (
-            'template_id',
-            'status',
-            'fields'
-        )
-
-    template_id = NumberFilter(
-        field_name='template_id',
-        required=True,
-    )
-    status = ListFilter(
-        field_name='status',
-        lookup_expr='in',
-        choices=WorkflowApiStatus.CHOICES,
-        map_to_db=WorkflowApiStatus.MAP,
-    )
-
-    fields = ListFilter(
-        field_name='fields__api_name',
-        lookup_expr='in',
-        distinct=True,
-    )
 
 
 class WorkflowEventFilter(FilterSet):

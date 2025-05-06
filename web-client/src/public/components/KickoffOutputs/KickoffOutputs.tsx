@@ -1,6 +1,5 @@
 /* eslint-disable */
-/* prettier-ignore */
-import * as React from 'react';
+import React from 'react';
 import classnames from 'classnames';
 import { useIntl } from 'react-intl';
 
@@ -56,6 +55,7 @@ export function KickoffOutputs({
 
   const renderOutputsList = () => {
     const outputsMap: { [key in EExtraFieldType]: Function } = {
+      [EExtraFieldType.Number]: TextOutput,
       [EExtraFieldType.Checkbox]: CheckboxOutput,
       [EExtraFieldType.Creatable]: RadioOutput,
       [EExtraFieldType.Date]: TextOutput,

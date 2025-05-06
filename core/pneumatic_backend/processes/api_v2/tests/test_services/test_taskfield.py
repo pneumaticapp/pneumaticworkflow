@@ -5,17 +5,17 @@ from pneumatic_backend.processes.tests.fixtures import (
     create_test_user,
     create_test_template,
     create_test_workflow,
-    create_test_account,
+    create_test_account, create_test_admin, create_test_owner,
 )
 from pneumatic_backend.processes.enums import (
-    FieldType,
+    FieldType, WorkflowEventType,
 )
 from pneumatic_backend.processes.models import (
     FieldTemplate,
     TaskField,
     FieldTemplateSelection,
     FieldSelection,
-    FileAttachment,
+    FileAttachment, WorkflowEvent,
 )
 from pneumatic_backend.processes.api_v2.services.task.selection import (
     SelectionService
@@ -24,7 +24,7 @@ from pneumatic_backend.processes.api_v2.services import (
     WorkflowEventService
 )
 from pneumatic_backend.processes.api_v2.services.task.field import (
-    TaskFieldService
+    TaskFieldService, FieldData
 )
 from pneumatic_backend.processes.api_v2.services.task.exceptions import (
     TaskFieldException
@@ -55,16 +55,19 @@ def test_create_instance__task_field__ok(mocker):
     task = workflow.current_task_instance
     value = 'https://john.cena/john.cena'
     markdown_value = '[john.cena](https://john.cena/john.cena)'
+    clear_value = 'https://clear-john.cena/john.cena'
+    user_id = 123
+    group_id = 321
     get_valid_value_mock = mocker.patch(
         'pneumatic_backend.processes.api_v2.services.task.field.'
         'TaskFieldService._get_valid_value',
-        return_value=(value, markdown_value)
-    )
-    clear_value = 'https://clear-john.cena/john.cena'
-    clear_markdown_mock = mocker.patch(
-        'pneumatic_backend.processes.api_v2.services.task.field.'
-        'MarkdownService.clear',
-        return_value=clear_value
+        return_value=FieldData(
+            value=value,
+            markdown_value=markdown_value,
+            clear_value=clear_value,
+            user_id=user_id,
+            group_id=group_id,
+        )
     )
     raw_value = ['555']
     service = TaskFieldService(
@@ -84,7 +87,6 @@ def test_create_instance__task_field__ok(mocker):
         raw_value=raw_value,
         selections=None
     )
-    clear_markdown_mock.assert_called_once_with(value)
     task_field = service.instance
     assert task_field.kickoff is None
     assert task_field.task == task
@@ -97,7 +99,8 @@ def test_create_instance__task_field__ok(mocker):
     assert task_field.value == value
     assert task_field.markdown_value == markdown_value
     assert task_field.clear_value == clear_value
-    assert task_field.user_id is None
+    assert task_field.user_id == user_id
+    assert task_field.group_id == group_id
 
 
 def test_create_instance__kickoff_field__ok(mocker):
@@ -117,13 +120,10 @@ def test_create_instance__kickoff_field__ok(mocker):
     get_valid_value_mock = mocker.patch(
         'pneumatic_backend.processes.api_v2.services.task.field.'
         'TaskFieldService._get_valid_value',
-        return_value=(value, markdown_value)
-    )
-    clear_value = 'https://clear-john.cena/john.cena'
-    clear_markdown_mock = mocker.patch(
-        'pneumatic_backend.processes.api_v2.services.task.field.'
-        'MarkdownService.clear',
-        return_value=clear_value
+        return_value=FieldData(
+            value=value,
+            markdown_value=markdown_value,
+        )
     )
     raw_value = ['555']
     service = TaskFieldService(
@@ -143,60 +143,9 @@ def test_create_instance__kickoff_field__ok(mocker):
         raw_value=raw_value,
         selections=None
     )
-    clear_markdown_mock.assert_called_once_with(value)
     task_field = service.instance
     assert task_field.task is None
     assert task_field.kickoff_id == workflow.kickoff_instance.id
-    assert task_field.user_id is None
-
-
-def test_create_instance__type_user__ok(mocker):
-
-    # arrange
-    user = create_test_user()
-    template = create_test_template(user, tasks_count=1)
-    field_template = FieldTemplate.objects.create(
-        type=FieldType.USER,
-        name='Some user',
-        task=template.tasks.get(number=1),
-        template=template,
-    )
-    workflow = create_test_workflow(user=user, template=template)
-    task = workflow.current_task_instance
-    value = 'https://john.cena/john.cena'
-    markdown_value = '[john.cena](https://john.cena/john.cena)'
-    get_valid_value_mock = mocker.patch(
-        'pneumatic_backend.processes.api_v2.services.task.field.'
-        'TaskFieldService._get_valid_value',
-        return_value=(value, markdown_value)
-    )
-    clear_value = 'https://clear-john.cena/john.cena'
-    clear_markdown_mock = mocker.patch(
-        'pneumatic_backend.processes.api_v2.services.task.field.'
-        'MarkdownService.clear',
-        return_value=clear_value
-    )
-    raw_value = '555'
-    service = TaskFieldService(
-        user=user
-    )
-
-    # act
-    service._create_instance(
-        instance_template=field_template,
-        value=raw_value,
-        task_id=task.id,
-        workflow_id=workflow.id,
-    )
-
-    # assert
-    get_valid_value_mock.assert_called_once_with(
-        raw_value=raw_value,
-        selections=None
-    )
-    clear_markdown_mock.assert_called_once_with(value)
-    task_field = service.instance
-    assert task_field.user_id == 555
 
 
 def test_create_instance__skip_value__ok(mocker):
@@ -214,16 +163,19 @@ def test_create_instance__skip_value__ok(mocker):
     task = workflow.current_task_instance
     value = 'https://john.cena/john.cena'
     markdown_value = '[john.cena](https://john.cena/john.cena)'
+    clear_value = 'https://clear-john.cena/john.cena'
+    user_id = 123
+    group_id = 321
     get_valid_value_mock = mocker.patch(
         'pneumatic_backend.processes.api_v2.services.task.field.'
         'TaskFieldService._get_valid_value',
-        return_value=(value, markdown_value)
-    )
-    clear_value = 'https://clear-john.cena/john.cena'
-    clear_markdown_mock = mocker.patch(
-        'pneumatic_backend.processes.api_v2.services.task.field.'
-        'MarkdownService.clear',
-        return_value=clear_value
+        return_value=FieldData(
+            value=value,
+            markdown_value=markdown_value,
+            clear_value=clear_value,
+            user_id=user_id,
+            group_id=group_id,
+        )
     )
     service = TaskFieldService(
         user=user
@@ -239,12 +191,12 @@ def test_create_instance__skip_value__ok(mocker):
 
     # assert
     get_valid_value_mock.assert_not_called()
-    clear_markdown_mock.assert_not_called()
     task_field = service.instance
     assert task_field.value == ''
     assert task_field.clear_value is None
     assert task_field.markdown_value is None
     assert task_field.user_id is None
+    assert task_field.group_id is None
 
 
 @pytest.mark.parametrize('field_type', FieldType.TYPES_WITH_SELECTION)
@@ -1272,6 +1224,67 @@ def test_update_selections__radio_dropdown_api_name__ok(
     ])
 
 
+def test_partial_update__ok(mocker):
+
+    # arrange
+    user = create_test_user()
+    workflow = create_test_workflow(user=user)
+    task = workflow.current_task_instance
+    task_field = TaskField.objects.create(
+        task=task,
+        api_name='api-name-1',
+        is_required=True,
+        type=FieldType.NUMBER,
+        workflow=workflow
+    )
+    value = 'value'
+    clear_value = 'clear value'
+    markdown_value = 'markdown value'
+    user_id = 123
+    group_id = 321
+    get_valid_value_mock = mocker.patch(
+        'pneumatic_backend.processes.api_v2.services.task.field.'
+        'TaskFieldService._get_valid_value',
+        return_value=FieldData(
+            value=value,
+            markdown_value=markdown_value,
+            clear_value=clear_value,
+            user_id=user_id,
+            group_id=group_id,
+        )
+    )
+    link_new_attachments_mock = mocker.patch(
+        'pneumatic_backend.processes.api_v2.services.task.field.'
+        'TaskFieldService._link_new_attachments'
+    )
+    update_selections_mock = mocker.patch(
+        'pneumatic_backend.processes.api_v2.services.task.field.'
+        'TaskFieldService._update_selections'
+    )
+    service = TaskFieldService(
+        instance=task_field,
+        user=user
+    )
+    raw_value = 'raw value'
+
+    # act
+    service.partial_update(value=raw_value)
+
+    # assert
+    get_valid_value_mock.assert_called_once_with(
+        raw_value=raw_value,
+        selections=None
+    )
+    link_new_attachments_mock.assert_not_called()
+    update_selections_mock.assert_not_called()
+    task_field.refresh_from_db()
+    assert task_field.value == value
+    assert task_field.markdown_value == markdown_value
+    assert task_field.clear_value == clear_value
+    assert task_field.user_id == user_id
+    assert task_field.group_id == group_id
+
+
 def test_partial_update__type_file__ok(mocker):
 
     # arrange
@@ -1293,6 +1306,7 @@ def test_partial_update__type_file__ok(mocker):
         output=task_field
     )
     value = 'https://john.cena/john.cena'
+    clear_value = 'https://clear-john.cena/john.cena'
     markdown_value = '[john.cena](https://john.cena/john.cena)'
     attachment = FileAttachment.objects.create(
         name='john.cena',
@@ -1304,13 +1318,11 @@ def test_partial_update__type_file__ok(mocker):
     get_valid_value_mock = mocker.patch(
         'pneumatic_backend.processes.api_v2.services.task.field.'
         'TaskFieldService._get_valid_value',
-        return_value=(value, markdown_value)
-    )
-    clear_value = 'https://clear-john.cena/john.cena'
-    clear_markdown_mock = mocker.patch(
-        'pneumatic_backend.processes.api_v2.services.task.field.'
-        'MarkdownService.clear',
-        return_value=clear_value
+        return_value=FieldData(
+            value=value,
+            markdown_value=markdown_value,
+            clear_value=clear_value,
+        )
     )
     link_new_attachments_mock = mocker.patch(
         'pneumatic_backend.processes.api_v2.services.task.field.'
@@ -1334,7 +1346,6 @@ def test_partial_update__type_file__ok(mocker):
         raw_value=raw_value,
         selections=None
     )
-    clear_markdown_mock.assert_called_once_with(value)
     assert not FileAttachment.objects.filter(id=deleted_attachment.id).exists()
     link_new_attachments_mock.assert_called_once_with(raw_value)
     update_selections_mock.assert_not_called()
@@ -1343,6 +1354,7 @@ def test_partial_update__type_file__ok(mocker):
     assert task_field.markdown_value == markdown_value
     assert task_field.clear_value == clear_value
     assert task_field.user_id is None
+    assert task_field.group_id is None
 
 
 def test_partial_update__type_file_null_value__ok(mocker):
@@ -1350,6 +1362,7 @@ def test_partial_update__type_file_null_value__ok(mocker):
     # arrange
     value = ''
     markdown_value = ''
+    clear_value = ''
     user = create_test_user()
     workflow = create_test_workflow(user=user)
     task = workflow.current_task_instance
@@ -1376,14 +1389,13 @@ def test_partial_update__type_file_null_value__ok(mocker):
     get_valid_value_mock = mocker.patch(
         'pneumatic_backend.processes.api_v2.services.task.field.'
         'TaskFieldService._get_valid_value',
-        return_value=(value, value)
+        return_value=FieldData(
+            value=value,
+            markdown_value=markdown_value,
+            clear_value=clear_value,
+        )
     )
-    clear_value = ''
-    clear_markdown_mock = mocker.patch(
-        'pneumatic_backend.processes.api_v2.services.task.field.'
-        'MarkdownService.clear',
-        return_value=clear_value
-    )
+
     link_new_attachments_mock = mocker.patch(
         'pneumatic_backend.processes.api_v2.services.task.field.'
         'TaskFieldService._link_new_attachments'
@@ -1401,7 +1413,6 @@ def test_partial_update__type_file_null_value__ok(mocker):
         raw_value=raw_value,
         selections=None
     )
-    clear_markdown_mock.assert_called_once_with(value)
     assert not FileAttachment.objects.filter(id=deleted_attachment.id).exists()
     link_new_attachments_mock.assert_called_once_with(raw_value)
     update_selections_mock.assert_not_called()
@@ -1410,9 +1421,217 @@ def test_partial_update__type_file_null_value__ok(mocker):
     assert task_field.markdown_value == markdown_value
     assert task_field.clear_value == clear_value
     assert task_field.user_id is None
+    assert task_field.group_id is None
 
 
-def test_get_valid_radio_value__id__ok():
+@pytest.mark.parametrize('raw_value', (0, 176516132789, 176516132.00000123))
+def test_get_valid_number_value__valid_value__ok(raw_value):
+
+    # arrange
+    user = create_test_user()
+    service = TaskFieldService(user=user)
+
+    # act
+    field_data = service._get_valid_number_value(raw_value=raw_value)
+
+    # assert
+    assert field_data.value == raw_value
+    assert field_data.markdown_value == raw_value
+    assert field_data.clear_value == raw_value
+
+
+@pytest.mark.parametrize('raw_value', (None, '1,2', '1a'))
+def test_get_valid_number_value__invalid_value__raise_exception(raw_value):
+
+    # arrange
+    user = create_test_user()
+    workflow = create_test_workflow(user=user)
+    task = workflow.current_task_instance
+    field_api_name = 'api-name-1'
+    task_field = TaskField.objects.create(
+        task=task,
+        api_name=field_api_name,
+        type=FieldType.NUMBER,
+        workflow=workflow,
+    )
+    service = TaskFieldService(instance=task_field)
+    raw_value = None
+
+    # act
+    with pytest.raises(TaskFieldException) as ex:
+        service._get_valid_number_value(raw_value=raw_value)
+
+    # assert
+    assert ex.value.message == messages.MSG_PW_0084
+    assert ex.value.api_name == field_api_name
+
+
+def test_get_valid_string_value__ok(mocker):
+
+    # arrange
+    user = create_test_user()
+    service = TaskFieldService(user=user)
+    raw_value = 'text 123'
+    clear_value = 'clear value'
+    clear_markdown_mock = mocker.patch(
+        'pneumatic_backend.processes.api_v2.services.task.field.'
+        'MarkdownService.clear',
+        return_value=clear_value
+    )
+
+    # act
+    field_data = service._get_valid_string_value(raw_value=raw_value)
+
+    # assert
+    assert field_data.value == raw_value
+    assert field_data.markdown_value == raw_value
+    assert field_data.clear_value == clear_value
+    clear_markdown_mock.assert_called_once_with(raw_value)
+
+
+@pytest.mark.parametrize('raw_value', (None, 0, []))
+def test_get_valid_string_value__invalid_value__raise_exception(
+    mocker,
+    raw_value
+):
+
+    # arrange
+    user = create_test_user()
+    workflow = create_test_workflow(user=user)
+    task = workflow.current_task_instance
+    field_api_name = 'api-name-1'
+    task_field = TaskField.objects.create(
+        task=task,
+        api_name=field_api_name,
+        type=FieldType.STRING,
+        workflow=workflow,
+    )
+    service = TaskFieldService(instance=task_field)
+    clear_markdown_mock = mocker.patch(
+        'pneumatic_backend.processes.api_v2.services.task.field.'
+        'MarkdownService.clear'
+    )
+
+    # act
+    with pytest.raises(TaskFieldException) as ex:
+        service._get_valid_string_value(raw_value=raw_value)
+
+    # assert
+    assert ex.value.message == messages.MSG_PW_0025
+    assert ex.value.api_name == field_api_name
+    clear_markdown_mock.assert_not_called()
+
+
+def test_get_valid_string_value__over_limit__raise_exception():
+
+    # arrange
+    user = create_test_user()
+    workflow = create_test_workflow(user=user)
+    task = workflow.current_task_instance
+    field_api_name = 'api-name-1'
+    task_field = TaskField.objects.create(
+        task=task,
+        api_name=field_api_name,
+        type=FieldType.STRING,
+        workflow=workflow,
+    )
+    service = TaskFieldService(instance=task_field)
+    raw_value = 's' * (TaskFieldService.STRING_LENGTH + 1)
+
+    # act
+    with pytest.raises(TaskFieldException) as ex:
+        service._get_valid_string_value(raw_value=raw_value)
+
+    # assert
+    assert ex.value.message == messages.MSG_PW_0026(
+        TaskFieldService.STRING_LENGTH
+    )
+    assert ex.value.api_name == field_api_name
+
+
+def test_get_valid_text_value__ok(mocker):
+
+    # arrange
+    user = create_test_user()
+    service = TaskFieldService(user=user)
+    raw_value = 'text 123'
+    clear_value = 'clear value'
+    clear_markdown_mock = mocker.patch(
+        'pneumatic_backend.processes.api_v2.services.task.field.'
+        'MarkdownService.clear',
+        return_value=clear_value
+    )
+
+    # act
+    field_data = service._get_valid_text_value(raw_value=raw_value)
+
+    # assert
+    assert field_data.value == raw_value
+    assert field_data.markdown_value == raw_value
+    assert field_data.clear_value == clear_value
+    clear_markdown_mock.assert_called_once_with(raw_value)
+
+
+@pytest.mark.parametrize('raw_value', (None, 0, []))
+def test_get_valid_text_value__invalid_value__raise_exception(
+    mocker,
+    raw_value
+):
+
+    # arrange
+    user = create_test_user()
+    workflow = create_test_workflow(user=user)
+    task = workflow.current_task_instance
+    field_api_name = 'api-name-1'
+    task_field = TaskField.objects.create(
+        task=task,
+        api_name=field_api_name,
+        type=FieldType.TEXT,
+        workflow=workflow,
+    )
+    service = TaskFieldService(instance=task_field)
+    clear_markdown_mock = mocker.patch(
+        'pneumatic_backend.processes.api_v2.services.task.field.'
+        'MarkdownService.clear'
+    )
+
+    # act
+    with pytest.raises(TaskFieldException) as ex:
+        service._get_valid_text_value(raw_value=raw_value)
+
+    # assert
+    assert ex.value.message == messages.MSG_PW_0025
+    assert ex.value.api_name == field_api_name
+    clear_markdown_mock.assert_not_called()
+
+
+def test_get_valid_dropdown_value__ok(mocker):
+
+    # arrange
+    service = TaskFieldService()
+    raw_value = 'api_name'
+    result_mock = mocker.Mock()
+    selections_mock = mocker.Mock()
+    get_valid_radio_value_mock = mocker.patch(
+        'pneumatic_backend.processes.api_v2.services.task.field.'
+        'TaskFieldService._get_valid_radio_value',
+        return_value=result_mock
+    )
+
+    # act
+    field_data = service._get_valid_dropdown_value(
+        raw_value=raw_value,
+        selections=selections_mock
+    )
+
+    # assert
+    assert field_data == result_mock
+    get_valid_radio_value_mock.assert_called_once_with(
+        raw_value, selections=selections_mock
+    )
+
+
+def test_get_valid_radio_value__id__ok(mocker):
 
     # TODO Remove in https://my.pneumatic.app/workflows/34311/
 
@@ -1447,7 +1666,7 @@ def test_get_valid_radio_value__id__ok():
         type=field_template.type,
         workflow=workflow,
     )
-    selection = FieldSelection.objects.create(
+    FieldSelection.objects.create(
         field=task_field,
         value=selection_template.value,
         api_name=selection_template.api_name,
@@ -1455,18 +1674,27 @@ def test_get_valid_radio_value__id__ok():
     )
     service = TaskFieldService(instance=task_field)
     raw_value = str(selection_template.id)
+    clear_value = 'clear value'
+    clear_markdown_mock = mocker.patch(
+        'pneumatic_backend.processes.api_v2.services.task.field.'
+        'MarkdownService.clear',
+        return_value=clear_value
+    )
 
     # act
-    result = service._get_valid_radio_value(
+    field_data = service._get_valid_radio_value(
         raw_value=raw_value,
         selections=field_template.selections.all()
     )
 
     # assert
-    assert result == (selection.value, selection.value)
+    assert field_data.value == value
+    assert field_data.markdown_value == value
+    assert field_data.clear_value == clear_value
+    clear_markdown_mock.assert_called_once_with(value)
 
 
-def test_get_valid_radio_value__api_name__ok():
+def test_get_valid_radio_value__api_name__ok(mocker):
 
     # arrange
     user = create_test_user()
@@ -1502,18 +1730,27 @@ def test_get_valid_radio_value__api_name__ok():
     )
     service = TaskFieldService(instance=task_field)
     raw_value = selection.api_name
+    clear_value = 'clear value'
+    clear_markdown_mock = mocker.patch(
+        'pneumatic_backend.processes.api_v2.services.task.field.'
+        'MarkdownService.clear',
+        return_value=clear_value
+    )
 
     # act
-    result = service._get_valid_radio_value(
+    field_data = service._get_valid_radio_value(
         raw_value=raw_value,
         selections=field_template.selections.all()
     )
 
     # assert
-    assert result == (selection.value, selection.value)
+    assert field_data.value == value
+    assert field_data.markdown_value == value
+    assert field_data.clear_value == clear_value
+    clear_markdown_mock.assert_called_once_with(value)
 
 
-def test_get_valid_radio_value__first_create_selection__ok():
+def test_get_valid_radio_value__first_create_selection__ok(mocker):
 
     # arrange
     user = create_test_user()
@@ -1543,15 +1780,24 @@ def test_get_valid_radio_value__first_create_selection__ok():
     )
     service = TaskFieldService(instance=task_field)
     raw_value = selection_template.api_name
+    clear_value = 'clear value'
+    clear_markdown_mock = mocker.patch(
+        'pneumatic_backend.processes.api_v2.services.task.field.'
+        'MarkdownService.clear',
+        return_value=clear_value
+    )
 
     # act
-    result = service._get_valid_radio_value(
+    field_data = service._get_valid_radio_value(
         raw_value=raw_value,
         selections=field_template.selections.all()
     )
 
     # assert
-    assert result == (selection_template.value, selection_template.value)
+    assert field_data.value == selection_template.value
+    assert field_data.markdown_value == selection_template.value
+    assert field_data.clear_value == clear_value
+    clear_markdown_mock.assert_called_once_with(value)
 
 
 @pytest.mark.parametrize('raw_value', ('abc', None))
@@ -1606,7 +1852,7 @@ def test_get_valid_radio_value__not_exists_selection__raise_exception():
     assert ex.value.api_name == task_field.api_name
 
 
-def test_get_valid_checkbox_value__one_id__ok():
+def test_get_valid_checkbox_value__one_id__ok(mocker):
 
     # TODO Remove in https://my.pneumatic.app/workflows/34311/
 
@@ -1641,7 +1887,7 @@ def test_get_valid_checkbox_value__one_id__ok():
         type=field_template.type,
         workflow=workflow,
     )
-    selection = FieldSelection.objects.create(
+    FieldSelection.objects.create(
         field=task_field,
         value=selection_template.value,
         api_name=selection_template.api_name,
@@ -1649,18 +1895,27 @@ def test_get_valid_checkbox_value__one_id__ok():
     )
     service = TaskFieldService(instance=task_field)
     raw_value = [str(selection_template.id)]
+    clear_value = 'clear value'
+    clear_markdown_mock = mocker.patch(
+        'pneumatic_backend.processes.api_v2.services.task.field.'
+        'MarkdownService.clear',
+        return_value=clear_value
+    )
 
     # act
-    result = service._get_valid_checkbox_value(
+    field_data = service._get_valid_checkbox_value(
         raw_value=raw_value,
         selections=field_template.selections.all()
     )
 
     # assert
-    assert result == (selection.value, selection.value)
+    assert field_data.value == value
+    assert field_data.markdown_value == value
+    assert field_data.clear_value == clear_value
+    clear_markdown_mock.assert_called_once_with(value)
 
 
-def test_get_valid_checkbox_value__many_ids__ok():
+def test_get_valid_checkbox_value__many_ids__ok(mocker):
 
     # TODO Remove in https://my.pneumatic.app/workflows/34311/
 
@@ -1706,23 +1961,30 @@ def test_get_valid_checkbox_value__many_ids__ok():
         value=selection_template_2.value,
         api_name=selection_template_2.api_name,
     )
+    value = f'{value_1}, {value_2}'
     service = TaskFieldService(instance=task_field)
     raw_value = [str(selection_template_1.id), str(selection_template_2.id)]
+    clear_value = 'clear value'
+    clear_markdown_mock = mocker.patch(
+        'pneumatic_backend.processes.api_v2.services.task.field.'
+        'MarkdownService.clear',
+        return_value=clear_value
+    )
 
     # act
-    result = service._get_valid_checkbox_value(
+    field_data = service._get_valid_checkbox_value(
         raw_value=raw_value,
         selections=field_template.selections.all()
     )
 
     # assert
-    assert result == (
-        f'{value_1}, {value_2}',
-        f'{value_1}, {value_2}'
-    )
+    assert field_data.value == value
+    assert field_data.markdown_value == value
+    assert field_data.clear_value == clear_value
+    clear_markdown_mock.assert_called_once_with(value)
 
 
-def test_get_valid_checkbox_value__one_api_name__ok():
+def test_get_valid_checkbox_value__one_api_name__ok(mocker):
 
     # arrange
     user = create_test_user()
@@ -1755,7 +2017,7 @@ def test_get_valid_checkbox_value__one_api_name__ok():
         type=field_template.type,
         workflow=workflow,
     )
-    selection = FieldSelection.objects.create(
+    FieldSelection.objects.create(
         field=task_field,
         value=selection_template.value,
         api_name=selection_template.api_name,
@@ -1763,18 +2025,27 @@ def test_get_valid_checkbox_value__one_api_name__ok():
     )
     service = TaskFieldService(instance=task_field)
     raw_value = [selection_template.api_name]
+    clear_value = 'clear value'
+    clear_markdown_mock = mocker.patch(
+        'pneumatic_backend.processes.api_v2.services.task.field.'
+        'MarkdownService.clear',
+        return_value=clear_value
+    )
 
     # act
-    result = service._get_valid_checkbox_value(
+    field_data = service._get_valid_checkbox_value(
         raw_value=raw_value,
         selections=field_template.selections.all()
     )
 
     # assert
-    assert result == (selection.value, selection.value)
+    assert field_data.value == value
+    assert field_data.markdown_value == value
+    assert field_data.clear_value == clear_value
+    clear_markdown_mock.assert_called_once_with(value)
 
 
-def test_get_valid_checkbox_value__many_api_names__ok():
+def test_get_valid_checkbox_value__many_api_names__ok(mocker):
 
     # arrange
     user = create_test_user()
@@ -1818,20 +2089,27 @@ def test_get_valid_checkbox_value__many_api_names__ok():
         value=selection_template_2.value,
         api_name=selection_template_2.api_name,
     )
+    clear_value = 'clear value'
+    clear_markdown_mock = mocker.patch(
+        'pneumatic_backend.processes.api_v2.services.task.field.'
+        'MarkdownService.clear',
+        return_value=clear_value
+    )
     service = TaskFieldService(instance=task_field)
     raw_value = [selection_template_1.api_name, selection_template_2.api_name]
+    value = f'{value_1}, {value_2}'
 
     # act
-    result = service._get_valid_checkbox_value(
+    field_data = service._get_valid_checkbox_value(
         raw_value=raw_value,
         selections=field_template.selections.all()
     )
 
     # assert
-    assert result == (
-        f'{value_1}, {value_2}',
-        f'{value_1}, {value_2}'
-    )
+    assert field_data.value == value
+    assert field_data.markdown_value == value
+    assert field_data.clear_value == clear_value
+    clear_markdown_mock.assert_called_once_with(value)
 
 
 @pytest.mark.parametrize('raw_value', ('abc', None))
@@ -1970,25 +2248,319 @@ def test_get_valid_checkbox_value__wrong_api_name_type__raise_exception(
 #     assert ex.value.api_name == task_field.api_name
 
 
+def test_get_valid_file_value__one_file__ok():
+
+    # arrange
+    user = create_test_owner()
+    workflow = create_test_workflow(user=user, tasks_count=1)
+    task = workflow.current_task_instance
+    TaskField.objects.create(
+        task=task,
+        api_name='api-name-1',
+        type=FieldType.FILE,
+        workflow=workflow
+    )
+    attachment = FileAttachment.objects.create(
+        name='john.cena',
+        url='https://john.cena/john.cena',
+        size=1488,
+        account_id=user.account_id
+    )
+    service = TaskFieldService(user=user)
+    raw_value = [str(attachment.id)]
+
+    # act
+    field_data = service._get_valid_file_value(raw_value=raw_value)
+
+    # assert
+    assert field_data.value == attachment.url
+    assert field_data.markdown_value == (
+        f'[{attachment.name}]({attachment.url})'
+    )
+    assert field_data.clear_value == attachment.url
+
+
+def test_get_valid_file_value__multiple_files__ok():
+
+    # arrange
+    user = create_test_owner()
+    workflow = create_test_workflow(user=user, tasks_count=1)
+    task = workflow.current_task_instance
+    field = TaskField.objects.create(
+        task=task,
+        api_name='api-name-1',
+        type=FieldType.FILE,
+        workflow=workflow
+    )
+    attachment_1 = FileAttachment.objects.create(
+        name='john.cena',
+        url='https://john.cena/john.cena',
+        size=1488,
+        account_id=user.account_id,
+        output=field
+    )
+    attachment_2 = FileAttachment.objects.create(
+        name='The Rock',
+        url='https://rock.com',
+        size=1483,
+        account_id=user.account_id,
+    )
+    service = TaskFieldService(user=user, instance=field)
+    raw_value = [str(attachment_1.id), str(attachment_2.id)]
+
+    # act
+    field_data = service._get_valid_file_value(raw_value=raw_value)
+
+    # assert
+    assert field_data.value == f'{attachment_1.url}, {attachment_2.url}'
+    assert field_data.markdown_value == (
+        f'[{attachment_1.name}]({attachment_1.url}), '
+        f'[{attachment_2.name}]({attachment_2.url})'
+    )
+    assert field_data.clear_value == f'{attachment_1.url}, {attachment_2.url}'
+
+
+def test_get_valid_file_value__new_field__ok():
+
+    # arrange
+    user = create_test_owner()
+    workflow = create_test_workflow(user=user, tasks_count=1)
+    task = workflow.current_task_instance
+    field = TaskField.objects.create(
+        task=task,
+        api_name='api-name-1',
+        type=FieldType.FILE,
+        workflow=workflow
+    )
+    event = WorkflowEvent.objects.create(
+        account=user.account,
+        type=WorkflowEventType.COMMENT,
+        workflow=workflow,
+        task=task,
+        user=user,
+    )
+    FileAttachment.objects.create(
+        name='The Rock',
+        url='https://rock.com',
+        size=1483,
+        account_id=user.account_id,
+        output=field
+    )
+    FileAttachment.objects.create(
+        name='The Rock',
+        url='https://rock.com',
+        size=1483,
+        account_id=user.account_id,
+        event=event
+    )
+    new_attachment = FileAttachment.objects.create(
+        name='john.cena',
+        url='https://john.cena/john.cena',
+        size=1488,
+        account_id=user.account_id
+    )
+
+    service = TaskFieldService(user=user)
+    raw_value = [str(new_attachment.id)]
+
+    # act
+    field_data = service._get_valid_file_value(raw_value=raw_value)
+
+    # assert
+    assert field_data.value == new_attachment.url
+    assert field_data.markdown_value == (
+        f'[{new_attachment.name}]({new_attachment.url})'
+    )
+    assert field_data.clear_value == new_attachment.url
+
+
+def test_get_valid_file_value__not_list__raise_exception():
+
+    # arrange
+    user = create_test_owner()
+    workflow = create_test_workflow(user=user, tasks_count=1)
+    task = workflow.current_task_instance
+    task_field = TaskField.objects.create(
+        task=task,
+        api_name='api-name-1',
+        type=FieldType.FILE,
+        workflow=workflow
+    )
+    attachment = FileAttachment.objects.create(
+        name='john.cena',
+        url='https://john.cena/john.cena',
+        size=1488,
+        account_id=user.account_id
+    )
+    another_user = create_test_owner(email='test@test.test')
+    another_attachment = FileAttachment.objects.create(
+        name='another',
+        url='https://another',
+        size=1652,
+        account_id=another_user.account_id
+    )
+    service = TaskFieldService(
+        instance=task_field,
+        user=user
+    )
+
+    # act
+    with pytest.raises(TaskFieldException) as ex:
+        service._get_valid_file_value(
+            raw_value=[attachment.id, another_attachment.id]
+        )
+
+    # assert
+    assert ex.value.message == messages.MSG_PW_0037
+    assert ex.value.api_name == task_field.api_name
+
+
+@pytest.mark.parametrize('raw_value', ('abc', None, []))
+def test_get_valid_file_value__invalid_attach_id__raise_exception(raw_value):
+
+    # arrange
+    user = create_test_owner()
+    workflow = create_test_workflow(user=user, tasks_count=1)
+    task = workflow.current_task_instance
+    task_field = TaskField.objects.create(
+        task=task,
+        api_name='api-name-1',
+        type=FieldType.FILE,
+        workflow=workflow
+    )
+    service = TaskFieldService(instance=task_field)
+
+    # act
+    with pytest.raises(TaskFieldException) as ex:
+        service._get_valid_file_value(raw_value=[raw_value])
+
+    # assert
+    assert ex.value.message == messages.MSG_PW_0036
+    assert ex.value.api_name == task_field.api_name
+
+
+def test_get_valid_file_value__incorrect_attachments_count__raise_exception():
+
+    # arrange
+    user = create_test_owner()
+    workflow = create_test_workflow(user=user, tasks_count=1)
+    task = workflow.current_task_instance
+    task_field = TaskField.objects.create(
+        task=task,
+        api_name='api-name-1',
+        type=FieldType.FILE,
+        workflow=workflow
+    )
+    service = TaskFieldService(instance=task_field)
+    raw_value = None
+
+    # act
+    with pytest.raises(TaskFieldException) as ex:
+        service._get_valid_file_value(raw_value=raw_value)
+
+    # assert
+    assert ex.value.message == messages.MSG_PW_0036
+    assert ex.value.api_name == task_field.api_name
+
+
+def test_get_valid_user_value__ok():
+
+    # arrange
+    account = create_test_account()
+    account_owner = create_test_owner(account=account)
+    user = create_test_admin(account=account)
+
+    service = TaskFieldService(user=account_owner)
+    raw_value = str(user.id)
+    user_name = f'{user.first_name} {user.last_name}'
+
+    # act
+    field_data = service._get_valid_user_value(raw_value=raw_value)
+
+    # assert
+    assert field_data.value == user_name
+    assert field_data.markdown_value == user_name
+    assert field_data.clear_value == user_name
+    assert field_data.user_id == user.id
+
+
+@pytest.mark.parametrize('raw_value', (None, 'a1', []))
+def test_get_valid_user_value__invalid_value__raise_exception(raw_value):
+
+    # arrange
+    account = create_test_account()
+    account_owner = create_test_owner(account=account)
+    workflow = create_test_workflow(user=account_owner)
+    task = workflow.current_task_instance
+    field_api_name = 'api-name-1'
+    task_field = TaskField.objects.create(
+        task=task,
+        api_name=field_api_name,
+        type=FieldType.USER,
+        workflow=workflow,
+    )
+    service = TaskFieldService(
+        user=account_owner,
+        instance=task_field
+    )
+
+    # act
+    with pytest.raises(TaskFieldException) as ex:
+        service._get_valid_user_value(raw_value=raw_value)
+
+    # assert
+    assert ex.value.message == messages.MSG_PW_0038
+    assert ex.value.api_name == field_api_name
+
+
+def test_get_valid_user_value__not_account_user__raise_exception():
+
+    # arrange
+    account_owner = create_test_owner()
+    workflow = create_test_workflow(user=account_owner)
+    task = workflow.current_task_instance
+    field_api_name = 'api-name-1'
+    task_field = TaskField.objects.create(
+        task=task,
+        api_name=field_api_name,
+        type=FieldType.USER,
+        workflow=workflow,
+    )
+    service = TaskFieldService(
+        user=account_owner,
+        instance=task_field
+    )
+    another_account_user = create_test_owner(email='test@test.test')
+    raw_value = str(another_account_user.id)
+
+    # act
+    with pytest.raises(TaskFieldException) as ex:
+        service._get_valid_user_value(raw_value=raw_value)
+
+    # assert
+    assert ex.value.message == messages.MSG_PW_0039
+    assert ex.value.api_name == field_api_name
+
+
 @pytest.mark.parametrize('raw_value', (176516132, 176516132.00))
 def test_get_valid_date_value__valid_value__ok(raw_value):
 
     # arrange
     user = create_test_user()
     service = TaskFieldService(user=user)
+    user_fmt_value = 'Aug 06, 1975, 12:15AM'
 
     # act
-    result = service._get_valid_date_value(raw_value=raw_value)
+    field_data = service._get_valid_date_value(raw_value=raw_value)
 
     # assert
-    assert result == (
-        str(raw_value),
-        'Aug 06, 1975, 12:15AM'
-    )
+    assert field_data.value == str(raw_value)
+    assert field_data.markdown_value == user_fmt_value
+    assert field_data.clear_value == user_fmt_value
 
 
 @pytest.mark.parametrize('raw_value', ('176516132', '176516132.00', ' '))
-def test_get_valid_date_value__invalid_value__ok(raw_value):
+def test_get_valid_date_value__invalid_value__raise_exception(raw_value):
     # arrange
     user = create_test_user()
     template = create_test_template(user=user, tasks_count=1)
@@ -2093,10 +2665,9 @@ def test_get_valid_url_value__valid_value__ok(raw_value):
     service = TaskFieldService(user=user, instance=field_template)
 
     # act
-    raw_value_result, markdown_value_result = (
-        service._get_valid_url_value(raw_value=raw_value)
-    )
+    field_data = service._get_valid_url_value(raw_value=raw_value)
 
     # assert
-    assert raw_value_result == raw_value
-    assert markdown_value_result == f'[URL field]({raw_value})'
+    assert field_data.value == raw_value
+    assert field_data.markdown_value == f'[URL field]({raw_value})'
+    assert field_data.clear_value == raw_value

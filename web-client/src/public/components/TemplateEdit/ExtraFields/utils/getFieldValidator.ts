@@ -1,8 +1,8 @@
-/* eslint-disable */
-/* prettier-ignore */
+/* eslint-disable indent */
 import { EMPTY_RULE, IRule, isEmpty, isInvalidUrl, validateFieldCreator } from '../../../../utils/validators';
 import { EExtraFieldMode, EExtraFieldType, IExtraField } from '../../../../types/template';
 import { isArrayWithItems } from '../../../../utils/helpers';
+import { numberRegex } from '../../../../constants/defaultValues';
 
 export const getFieldValidator = (field: IExtraField, mode: EExtraFieldMode) => {
   const shouldValidate = mode === EExtraFieldMode.ProcessRun;
@@ -12,6 +12,7 @@ export const getFieldValidator = (field: IExtraField, mode: EExtraFieldMode) => 
   }
 
   const fieldValidateRulesMap: { [key in EExtraFieldType]: IRule[] } = {
+    [EExtraFieldType.Number]: getNumberValidateRules(field),
     [EExtraFieldType.Text]: getTextValidateRules(field),
     [EExtraFieldType.String]: getStringValidateRules(field),
     [EExtraFieldType.Url]: getUrlValidateRules(field),
@@ -43,23 +44,37 @@ export const KICKOFF_SIMPLE_FIELD_RULE: IRule = {
 };
 
 function getTextValidateRules({ isRequired }: IExtraField) {
-  return [
-    isRequired ? KICKOFF_SIMPLE_FIELD_RULE : EMPTY_RULE,
-  ];
+  return [isRequired ? KICKOFF_SIMPLE_FIELD_RULE : EMPTY_RULE];
 }
 
 function getAttachmentValidateRules({ isRequired }: IExtraField) {
   return [
-    isRequired ? {
-      message: 'validation.kickoff-form-field-empty',
-      isInvalid: (value: number[]) => !isArrayWithItems(value),
-    } : EMPTY_RULE,
+    isRequired
+      ? {
+          message: 'validation.kickoff-form-field-empty',
+          isInvalid: (value: number[]) => !isArrayWithItems(value),
+        }
+      : EMPTY_RULE,
   ];
 }
 
 function getStringValidateRules({ isRequired }: IExtraField) {
+  return [isRequired ? KICKOFF_SIMPLE_FIELD_RULE : EMPTY_RULE];
+}
+
+function getNumberValidateRules({ isRequired }: IExtraField) {
   return [
     isRequired ? KICKOFF_SIMPLE_FIELD_RULE : EMPTY_RULE,
+    {
+      message: 'validation.number-invalid-format',
+      isInvalid: (value: number) => {
+        if (!value) {
+          return false;
+        }
+
+        return !numberRegex.test(String(value));
+      },
+    },
   ];
 }
 
@@ -74,34 +89,28 @@ function getUrlValidateRules({ isRequired }: IExtraField) {
 }
 
 function getDateValidateRules({ isRequired }: IExtraField) {
-  return [
-    isRequired ? KICKOFF_SIMPLE_FIELD_RULE : EMPTY_RULE,
-  ];
+  return [isRequired ? KICKOFF_SIMPLE_FIELD_RULE : EMPTY_RULE];
 }
 
 function getCheckboxValidateRules({ isRequired }: IExtraField) {
   return [
-    isRequired ? {
-      message: 'validation.kickoff-form-field-empty',
-      isInvalid: (value: string[]) => !isArrayWithItems(value),
-    } : EMPTY_RULE,
+    isRequired
+      ? {
+          message: 'validation.kickoff-form-field-empty',
+          isInvalid: (value: string[]) => !isArrayWithItems(value),
+        }
+      : EMPTY_RULE,
   ];
 }
 
 function getCreatableValidateRules({ isRequired }: IExtraField) {
-  return [
-    isRequired ? KICKOFF_SIMPLE_FIELD_RULE : EMPTY_RULE,
-  ];
+  return [isRequired ? KICKOFF_SIMPLE_FIELD_RULE : EMPTY_RULE];
 }
 
 function getRadioValidateRules({ isRequired }: IExtraField) {
-  return [
-    isRequired ? KICKOFF_SIMPLE_FIELD_RULE : EMPTY_RULE,
-  ];
+  return [isRequired ? KICKOFF_SIMPLE_FIELD_RULE : EMPTY_RULE];
 }
 
 function getUserValidateRules({ isRequired }: IExtraField) {
-  return [
-    isRequired ? KICKOFF_SIMPLE_FIELD_RULE : EMPTY_RULE,
-  ];
+  return [isRequired ? KICKOFF_SIMPLE_FIELD_RULE : EMPTY_RULE];
 }

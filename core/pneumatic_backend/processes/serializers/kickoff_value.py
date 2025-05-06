@@ -1,8 +1,8 @@
 from typing import Any, Dict
 from rest_framework import serializers
 from pneumatic_backend.processes.models import KickoffValue
-from pneumatic_backend.processes.serializers.task_field import (
-    TaskFieldListSerializer,
+from pneumatic_backend.processes.serializers.field import (
+    TaskFieldSerializer,
 )
 from pneumatic_backend.processes.models import (
     Workflow,
@@ -19,7 +19,7 @@ from pneumatic_backend.services.markdown import MarkdownService
 
 
 class KickoffValueInfoSerializer(serializers.ModelSerializer):
-    output = TaskFieldListSerializer(many=True)
+    output = TaskFieldSerializer(many=True)
 
     class Meta:
         model = KickoffValue

@@ -27,6 +27,76 @@ pytestmark = pytest.mark.django_db
 
 
 class TestConditionCheckService:
+
+    @pytest.mark.parametrize(
+        ('operator', 'predicate_value', 'field_value', 'result'),
+        [
+            (PredicateOperator.EQUAL, '100', '100', True),
+            (PredicateOperator.EQUAL, '100.00', '100', True),
+            (PredicateOperator.EQUAL, '1.01', '1.0', False),
+            (PredicateOperator.EQUAL, '1.5', '', False),
+            (PredicateOperator.EQUAL, '', '0', False),
+            (PredicateOperator.NOT_EQUAL, '1.0000000000000000001', '1', True),
+            (PredicateOperator.NOT_EQUAL, '1.5', '', True),
+            (PredicateOperator.NOT_EQUAL, '1.0000000000000000000', '1', False),
+            (PredicateOperator.EXIST, None, '0', True),
+            (PredicateOperator.EXIST, None, '0.1', True),
+            (PredicateOperator.EXIST, None, '', False),
+            (PredicateOperator.NOT_EXIST, None, '', True),
+            (PredicateOperator.NOT_EXIST, None, '0', False),
+            (PredicateOperator.MORE_THAN, '0', '1', True),
+            (PredicateOperator.MORE_THAN, '0.0000000000000001', '0', False),
+            (PredicateOperator.MORE_THAN, '2.0', '2', False),
+            (PredicateOperator.MORE_THAN, '', '22', False),
+            (PredicateOperator.MORE_THAN, '22', '', False),
+            (PredicateOperator.LESS_THAN, '0.0000000000000001', '0', True),
+            (PredicateOperator.LESS_THAN, '2.0', '2', False),
+            (PredicateOperator.LESS_THAN, '', '22', False),
+            (PredicateOperator.LESS_THAN, '22', '', False),
+        ]
+    )
+    def test_check__number(
+        self,
+        operator,
+        predicate_value,
+        field_value,
+        result,
+    ):
+        # arrange
+        user = create_test_user()
+        workflow = create_test_workflow(user, tasks_count=2)
+        first_task = workflow.tasks.first()
+        second_task = workflow.tasks.last()
+        first_field = TaskField.objects.create(
+            name='Hero',
+            api_name='hero-1',
+            task=first_task,
+            type=FieldType.NUMBER,
+            value=field_value,
+            workflow=workflow
+        )
+        condition = Condition.objects.create(
+            task=second_task,
+            action=Condition.SKIP_TASK,
+            order=1,
+        )
+        first_rule = Rule.objects.create(
+            condition=condition,
+        )
+        Predicate.objects.create(
+            rule=first_rule,
+            operator=operator,
+            field_type=first_field.type,
+            field=first_field.api_name,
+            value=predicate_value,
+        )
+
+        # act
+        response = ConditionCheckService.check(condition, workflow.id)
+
+        # assert
+        assert response is result
+
     @pytest.mark.parametrize(
         ('operator', 'predicate_value', 'field_value', 'result'),
         [

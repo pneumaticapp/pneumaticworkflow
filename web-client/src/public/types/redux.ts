@@ -283,6 +283,7 @@ export interface ITemplatesStore {
   templatesListSorting: ETemplatesSorting;
   templatesVariablesMap: { [key in number]: TTaskVariable[] };
   templatesIntegrationsStats: { [key in number]: TTemplateIntegrationStats };
+  isTemplateOwner: undefined | boolean;
 }
 
 export interface IBuyPlanModalStore {
@@ -346,8 +347,8 @@ export type IGroupsStore = {
   list: IGroup[];
   groupsListSorting: EGroupsListSorting;
   currentGroup: {
-    data: IGroup | null,
-    userListSorting: EUserListSorting
+    data: IGroup | null;
+    userListSorting: EUserListSorting;
   };
   createModal: boolean;
   editModal: {

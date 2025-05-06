@@ -1,5 +1,6 @@
 .navbar-left-content {
   display: flex;
+  width: 100%;
   align-items: center;
   justify-content: space-between;
 
@@ -12,6 +13,7 @@
 
 .filters {
   display: flex;
+  width: 100%;
   align-items: center;
 
   @media (--mobile) {
@@ -20,12 +22,24 @@
     width: 100%;
   }
 
+  .template-filter {
+    flex: 1 1 16.9rem;
+    width: max(16.9rem, max-content);
+    min-width: 9.5rem;
+    max-width: min-content;
+
+    @media (--mobile) {
+      max-width: 100%;
+      flex: 1 1 auto;
+    }
+  }
+
   & > *:not(:last-child) {
-    margin-right: 8px;
+    margin-right: 0.8rem;
 
     @media (--mobile) {
       margin-right: 0;
-      margin-bottom: 8px;
+      margin-bottom: 0.8rem;
     }
   }
 

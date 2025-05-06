@@ -17,6 +17,7 @@ import {
   changeTemplatesSystemCategories,
   ETemplatesSystemStatus,
   setCurrentTemplatesSystemStatus,
+  setIsTemplateOwner,
 } from '../actions';
 import { getTemplatesSystem } from '../../api/getSystemTemplates';
 import { getTemplatesIntegrationsStats } from '../../api/getTemplatesIntegrationsStats';
@@ -173,6 +174,25 @@ export function* watchLoadTemplateIntegrationsStats() {
   yield takeEvery(ETemplatesActions.LoadTemplateIntegrationsStats, loadTemplateIntegrationsStatsSaga);
 }
 
+export function* fetchIsTemplateOwner() {
+  try {
+    const { results } = yield getTemplates({
+      limit: 1,
+      isActive: true,
+      isTemplateOwner: true,
+    });
+
+    yield put(setIsTemplateOwner(results.length > 0));
+  } catch (error) {
+    logger.info('fetch is template_owner error:', error);
+    yield put(setIsTemplateOwner(false));
+  }
+}
+
+export function* watchCheckIsTemplateOwner() {
+  yield takeEvery(ETemplatesActions.CheckIsTemplateOwner, fetchIsTemplateOwner);
+}
+
 export function* rootSaga() {
   yield all([
     fork(watchLoadTemplatesSystem),
@@ -181,5 +201,6 @@ export function* rootSaga() {
     fork(watchChangeTemplatesListSorting),
     fork(watchLoadTemplateVariables),
     fork(watchLoadTemplateIntegrationsStats),
+    fork(watchCheckIsTemplateOwner),
   ]);
 }

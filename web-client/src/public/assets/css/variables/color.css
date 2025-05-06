@@ -7,14 +7,19 @@
   --pneumatic-color-black16: #dcdcdb;
   --pneumatic-color-black4: #f6f6f6;
   --pneumatic-color-white: #fff;
+
+  --pneumatic-color-beige: #fdf7ee;
+  --pneumatic-color-selection: #f0dbc3;
   --pneumatic-color-link: #fec336;
   --pneumatic-color-link-hover: #e79a26;
   --pneumatic-color-link-dark: #c6720f;
-  --pneumatic-color-beige: #fdf7ee;
+
+  --pneumatic-background-red: #fff2f8;
   --pneumatic-color-warning: #fc5b67;
   --pneumatic-color-notification1: #f44336;
-  --pneumatic-color-selection: #f0dbc3;
-  --pneumatic-background-red: #fff2f8;
-  --pneumatic-color-red: #F44336;
+
+  --pneumatic-color-notification3: #4caf50;
+  --pneumatic-color-notification4: #2196f3;
+  --pneumatic-color-violet: #673ab7;
   --separator-color: var(--pneumatic-color-black16);
 }

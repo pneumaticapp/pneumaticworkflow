@@ -1,5 +1,3 @@
-/* eslint-disable */
-/* prettier-ignore */
 import { EConditionOperators } from '../types';
 import { EExtraFieldType } from '../../../../../types/template';
 
@@ -9,6 +7,14 @@ export interface IDropdownOperator {
 }
 
 export const conditionsByFieldTypeMap: { [key in EExtraFieldType]: EConditionOperators[] } = {
+  [EExtraFieldType.Number]: [
+    EConditionOperators.Equal,
+    EConditionOperators.NotEqual,
+    EConditionOperators.Exist,
+    EConditionOperators.NotExist,
+    EConditionOperators.MoreThan,
+    EConditionOperators.LessThan,
+  ],
   [EExtraFieldType.String]: [
     EConditionOperators.Equal,
     EConditionOperators.NotEqual,
@@ -61,10 +67,7 @@ export const conditionsByFieldTypeMap: { [key in EExtraFieldType]: EConditionOpe
     EConditionOperators.Exist,
     EConditionOperators.NotExist,
   ],
-  [EExtraFieldType.File]: [
-    EConditionOperators.Exist,
-    EConditionOperators.NotExist,
-  ],
+  [EExtraFieldType.File]: [EConditionOperators.Exist, EConditionOperators.NotExist],
   [EExtraFieldType.User]: [
     EConditionOperators.Equal,
     EConditionOperators.NotEqual,
@@ -88,7 +91,7 @@ export function getDropdownOperators(
   fieldType: EExtraFieldType,
   messages: Record<string, string>,
 ): IDropdownOperator[] {
-  return conditionsByFieldTypeMap[fieldType].map(operator => {
+  return conditionsByFieldTypeMap[fieldType].map((operator) => {
     const labelIntlId = labelByOperatorMap[operator];
 
     return {
