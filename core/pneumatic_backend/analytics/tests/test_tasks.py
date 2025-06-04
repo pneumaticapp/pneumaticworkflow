@@ -51,7 +51,7 @@ def test_track_group_analytics__create_group_all_fields__ok(
 ):
     # arrange
     user = create_test_user()
-    group = create_test_group(user=user)
+    group = create_test_group(user.account)
     is_superuser = False
     photo = 'photo.jpg'
     analytics_service_mock = mocker.patch(
@@ -130,7 +130,7 @@ def test_track_group_analytics__create_group_all_fields__ok(
 def test_track_group_analytics__create_group_required_fields__ok(mocker):
     # arrange
     user = create_test_user()
-    group = create_test_group(user=user)
+    group = create_test_group(user.account)
     is_superuser = False
 
     analytics_service_mock = mocker.patch(
@@ -173,7 +173,7 @@ def test_track_group_analytics__create_group_required_fields__ok(mocker):
 def test_track_group_analytics__create_group_with_photo__ok(mocker):
     # arrange
     user = create_test_user()
-    group = create_test_group(user=user)
+    group = create_test_group(user.account)
     is_superuser = False
     photo = 'photo.jpg'
     analytics_service_mock = mocker.patch(
@@ -235,7 +235,7 @@ def test_track_group_analytics__create_group_with_user__ok(
 ):
     # arrange
     user = create_test_user()
-    group = create_test_group(user=user)
+    group = create_test_group(user.account)
     is_superuser = False
     analytics_service_mock = mocker.patch(
         'pneumatic_backend.analytics.tasks.AnalyticService'
@@ -292,7 +292,7 @@ def test_track_group_analytics__create_group_with_user__ok(
 def test_track_group_analytics__update_group_name__ok(mocker):
     # arrange
     user = create_test_user()
-    group = create_test_group(user=user)
+    group = create_test_group(user.account)
     is_superuser = False
     new_name = "New Group Name"
     analytics_service_mock = mocker.patch(
@@ -339,7 +339,7 @@ def test_track_group_analytics__update_group_name__ok(mocker):
 def test_track_group_analytics__update_group_photo__ok(mocker):
     # arrange
     user = create_test_user()
-    group = create_test_group(user=user)
+    group = create_test_group(user.account)
     is_superuser = False
     new_photo = 'photo.jpg'
     analytics_service_mock = mocker.patch(
@@ -386,7 +386,7 @@ def test_track_group_analytics__update_group_photo__ok(mocker):
 def test_track_group_analytics__delete_group_photo__ok(mocker):
     # arrange
     user = create_test_user()
-    group = create_test_group(user=user, photo='url')
+    group = create_test_group(user.account, photo='url')
     is_superuser = False
     analytics_service_mock = mocker.patch(
         'pneumatic_backend.analytics.tasks.AnalyticService'
@@ -433,7 +433,7 @@ def test_track_group_analytics__delete_group_photo__ok(mocker):
 def test_track_group_analytics__update_group_add_users__ok(mocker):
     # arrange
     user = create_test_user()
-    group = create_test_group(user=user)
+    group = create_test_group(user.account)
     is_superuser = False
     new_users_ids = [user.id]
 
@@ -478,7 +478,7 @@ def test_track_group_analytics__update_group_add_users__ok(mocker):
 def test_track_group_analytics__remove_users__ok(mocker):
     # arrange
     user = create_test_user()
-    group = create_test_group(user=user)
+    group = create_test_group(user.account)
     is_superuser = False
     removed_users_ids = [user.id]
 
@@ -523,7 +523,7 @@ def test_track_group_analytics__remove_users__ok(mocker):
 def test_track_group_analytics__delete_group__ok(mocker):
     # arrange
     user = create_test_user()
-    group = create_test_group(user=user)
+    group = create_test_group(user.account)
     is_superuser = False
     analytics_service_mock = mocker.patch(
         'pneumatic_backend.analytics.tasks.AnalyticService'

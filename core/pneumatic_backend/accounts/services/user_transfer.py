@@ -10,7 +10,6 @@ from pneumatic_backend.accounts.services.exceptions import (
     InvalidTransferTokenException,
     AlreadyAcceptedInviteException,
     ExpiredTransferTokenException,
-    ReassignUserDoesNotExist,
 )
 from pneumatic_backend.payment.stripe.service import StripeService
 from pneumatic_backend.accounts.enums import (
@@ -111,12 +110,17 @@ class UserTransferService(
         ).delete()
 
     def _deactivate_prev_user(self):
-
-        try:
-            service = ReassignService(old_user=self.prev_user)
-        except ReassignUserDoesNotExist:
-            pass
-        else:
+        new_user = (
+            self.prev_user.account.users
+            .exclude(id=self.prev_user.id)
+            .exclude(status=UserStatus.INACTIVE)
+            .order_by('-is_account_owner', '-is_admin', 'id').first()
+        )
+        if new_user:
+            service = ReassignService(
+                old_user=self.prev_user,
+                new_user=new_user
+            )
             service.reassign_everywhere()
         remove_user_from_draft(
             account_id=self.prev_user.account.id,

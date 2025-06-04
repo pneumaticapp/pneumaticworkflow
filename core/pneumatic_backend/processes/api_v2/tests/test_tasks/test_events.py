@@ -247,13 +247,13 @@ def test_events__pagination__ok(api_client):
     task = workflow.current_task_instance
     WorkflowEventService.comment_created_event(
         text='Comment 1',
-        workflow=workflow,
+        task=task,
         user=user,
         after_create_actions=False
     )
     WorkflowEventService.comment_created_event(
         text='Comment 2',
-        workflow=workflow,
+        task=task,
         user=user,
         after_create_actions=False
     )

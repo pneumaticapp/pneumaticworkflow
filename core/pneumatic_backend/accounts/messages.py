@@ -85,3 +85,9 @@ MSG_A_0039 = _(
 )
 MSG_A_0040 = _('The list of groups contains a non-existent group identifier')
 MSG_A_0041 = _('Select a plan to complete the signup')
+MSG_A_0042 = _(
+    'A group cannot be assigned to the same task more than once. '
+    'Please choose a different group.'
+)
+MSG_A_0043 = _('You need to pass in old_user or old_group')
+MSG_A_0044 = _('You need to pass in new_user or new_group')

@@ -35,7 +35,7 @@ export function ExtraFieldDropdown({
 }: IKickoffDropdownProps) {
   const { formatMessage } = useIntl();
 
-  const handleOptionClick = (handler: () => void) =>  (closeDropdown: () => void) => {
+  const handleOptionClick = (handler: () => void) => (closeDropdown: () => void) => {
     closeDropdown();
     handler();
   };
@@ -44,16 +44,14 @@ export function ExtraFieldDropdown({
     <Dropdown
       direction="right"
       className={styles['dropdown-wrapper']}
-      renderToggle={isOpen => {
+      renderToggle={(isOpen) => {
         const DropdownIcon = isOpen ? DropdownCrossIcon : BurgerIcon;
 
         return (
-          <div
-            className={classnames(styles['toggle'], isOpen && styles['toggle_active'])}
-          >
+          <div className={classnames(styles['toggle'], isOpen && styles['toggle_active'])}>
             <DropdownIcon className={styles['toggle__icon']} />
           </div>
-        )
+        );
       }}
       options={[
         {
@@ -69,8 +67,9 @@ export function ExtraFieldDropdown({
           isHidden: isLastItem,
         },
         {
+          mapKey: 'template.kick-off-form-required',
           label: (
-            <div style={{ display: 'flex', 'justifyContent': 'space-between', width: '100%' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
               <IntlMessages id="template.kick-off-form-required" />
               <Switch
                 className={classnames(
@@ -80,30 +79,24 @@ export function ExtraFieldDropdown({
                 checked={isRequired}
                 checkedChildren={null}
                 unCheckedChildren={null}
-                onChange={isChecked => onEditField({ isRequired: isChecked })}
+                onChange={(isChecked) => onEditField({ isRequired: isChecked })}
                 disabled={isRequiredDisabled}
               />
             </div>
           ),
         },
         {
-          label: formatMessage({ id: "template.kick-off-form-delete-component" }),
+          label: formatMessage({ id: 'template.kick-off-form-delete-component' }),
           onClick: handleOptionClick(onDeleteField),
           Icon: TrashIcon,
           withConfirmation: true,
           withUpperline: true,
-          color: 'red'
-        }
+          color: 'red',
+        },
       ]}
-      renderMenuContent={renderedOptions => (
+      renderMenuContent={(renderedOptions) => (
         <>
-          {apiName &&
-            <div
-              className={styles['dropdown-header']}
-            >
-              {apiName}
-            </div>
-          }
+          {apiName && <div className={styles['dropdown-header']}>{apiName}</div>}
           <div className={styles['dropdown-items-wrapper']}>{renderedOptions}</div>
         </>
       )}

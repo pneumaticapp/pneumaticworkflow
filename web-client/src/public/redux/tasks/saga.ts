@@ -70,7 +70,7 @@ import { ETaskListStatus } from '../../components/Tasks/types';
 import { setCurrentTask } from '../actions';
 import { getCurrentTask } from '../selectors/task';
 import { envWssURL } from '../../constants/enviroment';
-import { mapBackendToISOStringToRedux } from '../../utils/mappers';
+import { mapTasksToISOStringToRedux } from '../../utils/mappers';
 
 export function* setDetailedTask(taskId: number) {
   yield put(setTaskListDetailedTaskId(taskId));
@@ -147,7 +147,7 @@ function* fetchTaskList(offset: number, nextStatus: ETaskListStatus) {
       templateStepId: stepIdFilter,
       status: completionStatus,
     });
-    const formattedResults = mapBackendToISOStringToRedux(results);
+    const formattedResults = mapTasksToISOStringToRedux(results);
 
     const items: ITaskListItem[] = !isEmptyList
       ? uniqBy([...taskList.items, ...formattedResults], 'id')

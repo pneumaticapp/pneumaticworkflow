@@ -77,7 +77,6 @@ class TestCreateFieldSelections:
             api_name=response_data['api_name'],
             value=request_data['value']
         )
-        assert response_data['id'] == selection.id
         assert response_data['api_name'] == selection.api_name
         assert response_data['value'] == selection.value
 

@@ -11,6 +11,7 @@ import {
   IWorkflowLogItem,
   EWorkflowStatus,
 } from '../../../types/workflow';
+import { ETaskStatus } from '../../../types/tasks';
 import { IChangeWorkflowLogViewSettingsPayload, ISendWorkflowLogComment } from '../../../redux/actions';
 import { IntlMessages } from '../../IntlMessages';
 import { isArrayWithItems } from '../../../utils/helpers';
@@ -63,6 +64,7 @@ export const WorkflowLog = ({
   onUnmount,
   isInTaskCard,
   taskId,
+  taskStatus,
 }: IWorkflowLogProps) => {
   const { formatMessage } = useIntl();
 
@@ -187,7 +189,7 @@ export const WorkflowLog = ({
 
     return (
       <div className={styles['comment-field']}>
-        <PopupCommentFieldContainer sendComment={sendComment} />
+        <PopupCommentFieldContainer sendComment={sendComment} taskId={taskId} />
       </div>
     );
   };
@@ -270,7 +272,9 @@ export const WorkflowLog = ({
   return (
     <div>
       {renderControls()}
-      {renderCommentField()}
+      {isInTaskCard && taskStatus !== ETaskStatus.Active && taskStatus !== ETaskStatus.Snoozed
+        ? null
+        : renderCommentField()}
       <div>{renderWorkflowLogEvents()}</div>
     </div>
   );
@@ -295,9 +299,10 @@ export interface IWorkflowLogProps {
   areTasksClickable?: boolean;
   isToggleCommentHidden?: boolean;
   changeWorkflowLogViewSettings(payload: IChangeWorkflowLogViewSettingsPayload): void;
-  sendComment({ text, attachments }: ISendWorkflowLogComment): void;
+  sendComment({ text, attachments, taskId }: ISendWorkflowLogComment): void;
   onClickTask?(): void;
   onUnmount?(): void;
   isInTaskCard?: boolean;
   taskId?: number;
+  taskStatus?: ETaskStatus;
 }

@@ -88,6 +88,7 @@ class HighlightsFilterSerializer(
 ):
     templates = serializers.CharField(required=False)
     current_performer_ids = serializers.CharField(required=False)
+    current_performer_group_ids = serializers.CharField(required=False)
     date_before_tsp = TimeStampField(required=False, allow_null=True)
     date_after_tsp = TimeStampField(required=False, allow_null=True)
 

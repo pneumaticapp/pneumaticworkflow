@@ -2,6 +2,10 @@ import pytest
 from datetime import timedelta
 from django.utils import timezone
 from django.db import connection
+from pneumatic_backend.accounts.serializers.notifications import (
+    NotificationTaskSerializer,
+    NotificationWorkflowSerializer,
+)
 from pneumatic_backend.processes.tests.fixtures import (
     create_test_workflow,
     create_test_user,
@@ -144,6 +148,13 @@ def test_send_overdue_task_notification__already_sent__not_sent(mocker):
     )
     notification = Notification.objects.create(
         task_id=task.id,
+        task_json=NotificationTaskSerializer(
+            instance=task,
+            notification_type=NotificationType.OVERDUE_TASK
+        ).data,
+        workflow_json=NotificationWorkflowSerializer(
+            instance=task.workflow
+        ).data,
         user_id=user.id,
         type=NotificationType.OVERDUE_TASK,
         account_id=user.account.id
@@ -253,6 +264,13 @@ def test_send_overdue_task_notification__guest_already_sent__not_sent(mocker):
     )
     notification = Notification.objects.create(
         task_id=task.id,
+        task_json=NotificationTaskSerializer(
+            instance=task,
+            notification_type=NotificationType.OVERDUE_TASK
+        ).data,
+        workflow_json=NotificationWorkflowSerializer(
+            instance=task.workflow
+        ).data,
         user_id=guest.id,
         type=NotificationType.OVERDUE_TASK,
         account_id=guest.account.id

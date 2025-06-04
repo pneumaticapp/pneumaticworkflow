@@ -37,7 +37,7 @@ import {
   TChangeTaskWorkflowLogViewSettings,
 } from './actions';
 import { getTask } from '../../api/getTask';
-import { ITaskAPI } from '../../types/tasks';
+import { ITask, ITaskAPI } from '../../types/tasks';
 import { logger } from '../../utils/logger';
 import { ERoutes } from '../../constants/routes';
 import { NotificationManager } from '../../components/UI/Notifications';
@@ -80,15 +80,15 @@ import {
   mapBackendWorkflowToRedux,
   mapOutputToCompleteTask,
 } from '../../utils/mappers';
-import { toTspDate, formatDateToISOInObject } from '../../utils/dateTime';
+import { formatDateToISOInWorkflow, toTspDate } from '../../utils/dateTime';
 
 import { IStoreTask } from '../../types/redux';
 import { getWorkflow } from '../../api/getWorkflow';
 import { EWorkflowsLogSorting, IWorkflowLogItem, TWorkflowDetailsResponse } from '../../types/workflow';
-import { sendWorkflowComment } from '../../api/sendWorkflowComment';
 import { mapFilesToRequest } from '../../utils/workflows';
 import { ETemplateOwnerType, RawPerformer } from '../../types/template';
 import { getTaskWorkflowLog } from '../../api/getTaskWorkflowLog';
+import { sendTaskComment } from '../../api/sendTaskComment';
 
 function* fetchTask({ payload: { taskId, viewMode } }: TLoadCurrentTask) {
   const {
@@ -109,7 +109,7 @@ function* fetchTask({ payload: { taskId, viewMode } }: TLoadCurrentTask) {
 
     const task: ITaskAPI = yield getTask(taskId);
     const normalizedTask = getNormalizedTask(task);
-    const formattedTask = formatTaskDatesForRedux(normalizedTask, timezone);
+    const formattedTask = formatTaskDatesForRedux(normalizedTask, timezone) as ITask;
 
     yield put(setCurrentTask(formattedTask));
 
@@ -172,7 +172,7 @@ function* loadTaskWorkflow(workflowId: number, taskId: number) {
     ]);
 
     const formattedKickoffWorkflow = mapBackendWorkflowToRedux(workflow, timezone);
-    const formattedDueDateWorkflow = formatDateToISOInObject(formattedKickoffWorkflow);
+    const formattedDueDateWorkflow = formatDateToISOInWorkflow(formattedKickoffWorkflow);
     const formattedWorkflowLog = mapBackandworkflowLogToRedux(workflowLog, timezone);
 
     yield put(changeTaskWorkflow(formattedDueDateWorkflow));
@@ -210,7 +210,7 @@ function* loadTaskWorkflowLog({
   }
 }
 
-function* saveWorkflowLogComment({ payload: { text, attachments } }: TSendWorkflowLogComment) {
+function* saveWorkflowLogComment({ payload: { text, attachments, taskId } }: TSendWorkflowLogComment) {
   const {
     workflowLog: { items, workflowId: processId, sorting },
   }: ReturnType<typeof getTaskStore> = yield select(getTaskStore);
@@ -223,8 +223,8 @@ function* saveWorkflowLogComment({ payload: { text, attachments } }: TSendWorkfl
 
   try {
     yield put(setGeneralLoaderVisibility(true));
-    const newComment: IWorkflowLogItem = yield sendWorkflowComment({
-      id: processId,
+    const newComment: IWorkflowLogItem = yield sendTaskComment({
+      taskId: taskId || 0,
       text,
       attachments: normalizedAttachments,
     });
@@ -239,7 +239,7 @@ function* saveWorkflowLogComment({ payload: { text, attachments } }: TSendWorkfl
     yield put(changeTaskWorkflowLog({ items: preLoadedProcessLog }));
   } catch (error) {
     logger.info('send process log comment error:', error);
-    NotificationManager.error({ message: 'workflows.send-process-log-comment-fail' });
+    NotificationManager.error({ message: error.message });
     yield put(changeTaskWorkflowLog({ items }));
   } finally {
     yield put(setGeneralLoaderVisibility(false));
@@ -269,7 +269,7 @@ function* addTaskGuestSaga({
   }
 }
 
-export function* setTaskCompleted({ payload: { taskId, workflowId, output, viewMode } }: TSetTaskCompleted) {
+export function* setTaskCompleted({ payload: { taskId, output, viewMode } }: TSetTaskCompleted) {
   const {
     authUser: { id: currentUserId },
   }: ReturnType<typeof getAuthUser> = yield select(getAuthUser);
@@ -296,7 +296,7 @@ export function* setTaskCompleted({ payload: { taskId, workflowId, output, viewM
     yield deleteRemovedFilesFromFields(output);
 
     const mappedOutput = mapOutputToCompleteTask(output);
-    yield completeTask(workflowId, currentUserId, taskId, mappedOutput);
+    yield completeTask(taskId, mappedOutput);
     NotificationManager.success({ title: 'tasks.task-success-complete' });
 
     removeOutputFromLocalStorage(taskId);
@@ -320,7 +320,7 @@ export function* setTaskCompleted({ payload: { taskId, workflowId, output, viewM
   }
 }
 
-export function* setTaskReverted({ payload: { workflowId: processId, viewMode, taskId, comment } }: TSetTaskReverted) {
+export function* setTaskReverted({ payload: { viewMode, taskId, comment } }: TSetTaskReverted) {
   const {
     authUser: { id: currentUserId },
   }: ReturnType<typeof getAuthUser> = yield select(getAuthUser);
@@ -332,7 +332,7 @@ export function* setTaskReverted({ payload: { workflowId: processId, viewMode, t
   try {
     yield put(setCurrentTaskStatus(ETaskStatus.Returning));
 
-    yield revertTask({ id: processId, comment });
+    yield revertTask({ id: taskId, comment });
 
     NotificationManager.success({ message: 'tasks.task-success-revert' });
 

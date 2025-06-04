@@ -80,3 +80,12 @@ class GroupRequestSerializer(
             )
         )
     )
+
+
+class GroupNameSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserGroup
+        fields = (
+            'id',
+            'name'
+        )

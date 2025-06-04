@@ -191,3 +191,15 @@ msgstr "Die Gruppenliste enthält eine nicht vorhandene Gruppenkennung"
 #: accounts/messages.py:87
 msgid "Select a plan to complete the signup"
 msgstr "Wählen Sie einen Plan, um die Anmeldung abzuschließen"
+
+#: accounts/messages.py:88
+msgid "A group cannot be assigned to the same task more than once. Please choose a different group."
+msgstr "Eine Gruppe kann nicht mehrfach derselben Aufgabe zugeordnet werden. Andere wählen."
+
+#: accounts/messages.py:92
+msgid "You need to pass in old_user or old_group"
+msgstr "old_user oder old_group angeben"
+
+#: accounts/messages.py:93
+msgid "You need to pass in new_user or new_group"
+msgstr "new_user oder new_group angeben"

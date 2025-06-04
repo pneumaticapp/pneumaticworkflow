@@ -89,7 +89,7 @@ def test_comment_created_event__ok(mocker):
     # act
     event = WorkflowEventService.comment_created_event(
         user=user,
-        workflow=workflow,
+        task=task,
         text=text,
         attachments=[attach.id],
     )
@@ -109,8 +109,14 @@ def test_comment_created_event__ok(mocker):
     assert event.task_json['number'] == 1
     assert event.task_json['name'] == task.name
     assert event.task_json['description'] == task.description
-    performer = {'source_id': user.id, 'type': 'user'}
-    assert event.task_json['performers'] == [performer]
+    assert event.task_json['performers'] == [
+        {
+            'source_id': user.id,
+            'type': 'user',
+            'is_completed': False,
+            'date_completed_tsp': None,
+        }
+    ]
     assert event.task_json['due_date_tsp'] is None
     assert event.task_json['output'] is None
     after_create_actions_mock.assert_called_once_with(event)
@@ -166,8 +172,15 @@ def test_sub_workflow_run_event__ok(mocker):
     assert event.task_json['number'] == 1
     assert event.task_json['name'] == ancestor_task.name
     assert event.task_json['description'] == ancestor_task.description
-    performer = {'source_id': user.id, 'type': 'user'}
-    assert event.task_json['performers'] == [performer]
+
+    assert event.task_json['performers'] == [
+        {
+            'source_id': user.id,
+            'type': 'user',
+            'is_completed': False,
+            'date_completed_tsp': None,
+        }
+    ]
     sub_workflow_data = event.task_json['sub_workflow']
     assert sub_workflow_data['id'] == sub_workflow.id
     assert sub_workflow_data['name'] == sub_workflow.name
@@ -230,7 +243,7 @@ def test_performer_group_created_event__ok(mocker):
         'WorkflowEventService._after_create_actions'
     )
     user = create_test_user()
-    group = create_test_group(user=user, users=[user, ])
+    group = create_test_group(user.account, users=[user])
     workflow = create_test_workflow(
         name='Parent workflow',
         user=user,
@@ -276,7 +289,7 @@ def test_performer_group_deleted_event__ok(mocker):
         'WorkflowEventService._after_create_actions'
     )
     user = create_test_user()
-    group = create_test_group(user=user, users=[user, ])
+    group = create_test_group(user.account, users=[user])
     workflow = create_test_workflow(
         name='Parent workflow',
         user=user,

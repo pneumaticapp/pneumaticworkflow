@@ -13,7 +13,7 @@ from pneumatic_backend.processes.querysets import (
     WorkflowQuerySet,
     TaskFieldQuerySet,
 )
-from pneumatic_backend.processes.enums import WorkflowStatus
+from pneumatic_backend.processes.enums import WorkflowStatus, TaskStatus
 from pneumatic_backend.processes.models.templates.template import Template
 
 UserModel = get_user_model()
@@ -98,6 +98,17 @@ class Workflow(
         return self.tasks.get(number=self.current_task)
 
     def webhook_payload(self):
+        from pneumatic_backend.processes.serializers.field import (
+            TaskFieldSerializer
+        )
+        from pneumatic_backend.processes.api_v2.serializers.\
+            workflow.task import (
+                WorkflowCurrentTaskSerializer
+            )
+        from pneumatic_backend.processes.serializers.template import (
+            TemplateDetailsSerializer,
+        )
+        tasks = self.tasks.exclude(status=TaskStatus.SKIPPED)
         kickoff = self.kickoff_instance
         current_task = self.current_task_instance
         current_task_performers = [
@@ -107,23 +118,49 @@ class Workflow(
                 'last_name': x.last_name
             } for x in current_task.performers.exclude_directly_deleted()
         ]
+        # TODO Replace with the WorkflowDetailsSerializer in 41258
         return {
             'workflow': {
                 'id': self.id,
                 'name': self.name,
                 'status': self.status,
-                'date_created_tsp': (
-                    self.date_created.timestamp()
-                    if self.date_created else None
+                'description': self.description,
+                'finalizable': self.finalizable,
+                'is_external': self.is_external,
+                'is_urgent': self.is_urgent,
+                'date_created_tsp': self.date_created.timestamp(),
+                'date_completed_tsp': (
+                    self.date_completed.timestamp()
+                    if self.date_completed else None
+                ),
+                'workflow_starter': (
+                    self.workflow_starter.id
+                    if self.workflow_starter else None
+                ),
+                'ancestor_task_id': (
+                    self.ancestor_task.id
+                    if self.ancestor_task else None
                 ),
                 'is_legacy_template': self.is_legacy_template,
-                'template': {
-                    'id': (
-                        None if self.is_legacy_template
-                        else self.template.id
-                    ),
-                    'name': self.get_template_name()
+                'legacy_template_name': self.legacy_template_name,
+                'template': (
+                    TemplateDetailsSerializer(
+                        instance=self.template
+                    ).data if self.template else None
+                ),
+                'kickoff': {
+                    'output': TaskFieldSerializer(
+                        instance=kickoff.output.all(),
+                        many=True
+                    ).data
                 },
+                'tasks': (
+                    WorkflowCurrentTaskSerializer(
+                        instance=tasks,
+                        many=True
+                    ).data
+                ),
+                # TODO Remove in  41258
                 'current_task': {
                     'id': current_task.id,
                     'name': current_task.name,
@@ -144,35 +181,6 @@ class Workflow(
                     ),
                     'performers': current_task_performers
                 },
-                'kickoff': {
-                    'output': [
-                        {
-                            'id': field.id,
-                            'type': field.type,
-                            'is_required': field.is_required,
-                            'name': field.name,
-                            'description': field.description,
-                            'api_name': field.api_name,
-                            'value': field.value,
-                            'user_id': field.user_id,
-                            'selections': [
-                                {
-                                    'id': selection.id,
-                                    'api_name': selection.api_name,
-                                    'value': selection.value,
-                                    'is_selected': selection.is_selected,
-                                } for selection in field.selections.all()
-                            ],
-                            'attachments': [
-                                {
-                                    'id': attachment.id,
-                                    'name': attachment.name,
-                                    'url': attachment.url,
-                                } for attachment in field.attachments.all()
-                            ]
-                        } for field in kickoff.output.all()
-                    ]
-                }
             }
         }
 

@@ -59,8 +59,6 @@ def test_send_complete_task_notification__call_services(mocker):
         account_id=account.id,
         recipients=[(user.id, user_email)],
         task_id=task.id,
-        task_name=task.name,
-        workflow_name=workflow_name,
         logo_lg=logo_lg,
     )
 
@@ -128,8 +126,6 @@ def test_send_complete_task_notification__ok(api_client, mocker):
         account_id=account.id,
         recipients=[(user.id, user_email)],
         task_id=task.id,
-        task_name=task.name,
-        workflow_name=workflow_name,
         logo_lg=logo_lg,
     )
 

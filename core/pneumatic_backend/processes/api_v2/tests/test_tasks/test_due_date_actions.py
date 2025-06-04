@@ -77,7 +77,7 @@ def test_create__user_in_group__ok(
         email='test@test.test',
         is_account_owner=False
     )
-    group = create_test_group(user=user, users=[performer, ])
+    group = create_test_group(user.account, users=[performer])
     workflow = create_test_workflow(user)
     workflow.owners.add(performer)
     task = workflow.current_task_instance
@@ -157,7 +157,7 @@ def test_delete__user_in_group__ok(
         email='test@test.test',
         is_account_owner=False
     )
-    group = create_test_group(user=user, users=[performer, ])
+    group = create_test_group(user.account, users=[performer])
     workflow = create_test_workflow(user)
     workflow.owners.add(performer)
     task = workflow.current_task_instance

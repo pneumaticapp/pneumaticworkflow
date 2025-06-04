@@ -20,9 +20,7 @@ def test_token__partner__ok(
     api_client,
 ):
     # arrange
-    master_account = create_test_account(
-        plan=BillingPlanType.UNLIMITED,
-    )
+    master_account = create_test_account()
     master_account_owner = create_test_user(account=master_account)
     tenant_account = create_test_account(
         name='tenant',
@@ -169,7 +167,6 @@ def test_token__free_plan__ok(
 ):
     # arrange
     master_account = create_test_account(
-        plan=BillingPlanType.FREEMIUM,
         lease_level=LeaseLevel.STANDARD
     )
     master_account_owner = create_test_user(account=master_account)

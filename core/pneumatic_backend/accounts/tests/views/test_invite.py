@@ -51,7 +51,7 @@ class TestCreate:
     ):
         # arrange
         user = create_test_user(is_account_owner=True)
-        group = create_test_group(user=user)
+        group = create_test_group(user.account)
         current_url = 'https://my.pneumatic.app/dashboard'
         service_mock = mocker.patch.object(
             UserInviteService,
@@ -72,7 +72,7 @@ class TestCreate:
                     {
                         'email': 'test1@pneumatic.app',
                         'invited_from': SourceType.EMAIL,
-                        'groups': [group.id, ]
+                        'groups': [group.id]
                     },
                 ]
             },
@@ -91,7 +91,7 @@ class TestCreate:
             {
                 'email': 'test1@pneumatic.app',
                 'invited_from': SourceType.EMAIL,
-                'groups': [group.id, ]
+                'groups': [group.id]
             },
         ])
 
@@ -102,12 +102,12 @@ class TestCreate:
     ):
         # arrange
         user = create_test_user()
-        group = create_test_group(user=user)
+        group = create_test_group(user.account)
         another_user = create_test_user(
             is_account_owner=False,
             email='test2@pneumatic.app'
         )
-        another_group = create_test_group(user=another_user)
+        another_group = create_test_group(account=another_user.account)
         current_url = 'https://my.pneumatic.app/dashboard'
         service_mock = mocker.patch.object(
             UserInviteService,

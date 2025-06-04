@@ -2165,7 +2165,7 @@ class TestBasePerformerService2:
         account = create_test_account(plan=BillingPlanType.PREMIUM)
         user = create_test_user(account=account)
         template = create_test_template(user=user, is_active=True)
-        group = create_test_group(user=user, users=[user, ])
+        group = create_test_group(account, users=[user])
         task_template = template.tasks.get(number=1)
         task_template.add_raw_performer(
             group=group,
@@ -2196,7 +2196,7 @@ class TestBasePerformerService2:
         account = create_test_account(plan=BillingPlanType.PREMIUM)
         user = create_test_user(account=account)
         template = create_test_template(user=user, is_active=True)
-        group = create_test_group(user=user, users=[user, ])
+        group = create_test_group(account, users=[user])
         task_template = template.tasks.get(number=1)
         task_template.delete_raw_performers()
         task_template.add_raw_performer(
@@ -2328,7 +2328,7 @@ class TestGroupPerformerService:
         # arrange
         account = create_test_account(plan=BillingPlanType.PREMIUM)
         user = create_test_user(account=account)
-        group = create_test_group(user=user, users=[user, ])
+        group = create_test_group(account, users=[user])
         workflow = create_test_workflow(user=user)
         task = workflow.current_task_instance
         service = GroupPerformerService(
@@ -2370,7 +2370,7 @@ class TestGroupPerformerService:
         # arrange
         user = create_test_user(email='test3@test.test')
         another_acc_user = create_test_user()
-        group = create_test_group(another_acc_user)
+        group = create_test_group(another_acc_user.account)
         workflow = create_test_workflow(user=user)
         task = workflow.current_task_instance
         service = GroupPerformerService(
@@ -2396,7 +2396,7 @@ class TestGroupPerformerService:
         user = create_test_user(account=account, photo=photo,)
         user2 = create_test_user(account=account, email='test2@test.test')
         user3 = create_test_user(account=account, email='test3@test.test')
-        group = create_test_group(user=user, users=[user2, user3, ])
+        group = create_test_group(account, users=[user2, user3])
         workflow = create_test_workflow(user=user)
         task = workflow.current_task_instance
         task.due_date = timezone.now() + timedelta(hours=1)
@@ -2455,7 +2455,7 @@ class TestGroupPerformerService:
         account = create_test_account()
         user = create_test_user(account=account)
         user2 = create_test_user(account=account, email='test2@test.test')
-        group = create_test_group(user=user, users=[user, user2, ])
+        group = create_test_group(account, users=[user, user2])
         workflow = create_test_workflow(user=user)
         task = workflow.current_task_instance
         service = GroupPerformerService(
@@ -2499,7 +2499,7 @@ class TestGroupPerformerService:
         # arrange
         account = create_test_account()
         user = create_test_user(account=account)
-        group = create_test_group(user=user, users=[user, ])
+        group = create_test_group(account, users=[user])
         workflow = create_test_workflow(user=user)
         task = workflow.current_task_instance
         service = GroupPerformerService(
@@ -2538,7 +2538,7 @@ class TestGroupPerformerService:
         # arrange
         account = create_test_account()
         user = create_test_user(account=account)
-        group = create_test_group(user=user, users=[user, ])
+        group = create_test_group(account, users=[user])
         workflow = create_test_workflow(user=user)
         task = workflow.current_task_instance
         validate_mock = mocker.patch(
@@ -2587,7 +2587,7 @@ class TestGroupPerformerService:
 
         account = create_test_account()
         user = create_test_user(account=account)
-        group = create_test_group(user=user, users=[user, ])
+        group = create_test_group(account, users=[user])
         workflow = create_test_workflow(user=user)
         task = workflow.current_task_instance
         TaskPerformer.objects.create(
@@ -2637,7 +2637,7 @@ class TestGroupPerformerService:
         # arrange
         account = create_test_account()
         user = create_test_user(account=account)
-        group = create_test_group(user=user, users=[user, ])
+        group = create_test_group(account, users=[user])
         workflow = create_test_workflow(user=user)
         task = workflow.current_task_instance
         TaskPerformer.objects.create(
@@ -2687,7 +2687,7 @@ class TestGroupPerformerService:
         # arrange
         account = create_test_account()
         user = create_test_user(account=account)
-        group = create_test_group(user=user, users=[user, ])
+        group = create_test_group(account, users=[user])
         workflow = create_test_workflow(user=user)
         task = workflow.current_task_instance
         performer = TaskPerformer.objects.create(
@@ -2739,7 +2739,7 @@ class TestGroupPerformerService:
         # arrange
         account = create_test_account()
         user = create_test_user(account=account)
-        group = create_test_group(user=user, users=[user, ])
+        group = create_test_group(account, users=[user])
         workflow = create_test_workflow(user=user)
         task = workflow.current_task_instance
         performer = TaskPerformer.objects.create(
@@ -2791,7 +2791,7 @@ class TestGroupPerformerService:
         # arrange
         account = create_test_account()
         user = create_test_user(account=account)
-        group = create_test_group(user=user, users=[user, ])
+        group = create_test_group(account, users=[user])
         workflow = create_test_workflow(user=user)
         task = workflow.current_task_instance
         performer = TaskPerformer.objects.create(
@@ -2844,7 +2844,7 @@ class TestGroupPerformerService:
         # arrange
         account = create_test_account()
         user = create_test_user(account=account)
-        group = create_test_group(user=user, users=[user, ])
+        group = create_test_group(account, users=[user])
         workflow = create_test_workflow(user=user)
         task = workflow.current_task_instance
         validate_mock = mocker.patch(
@@ -2889,7 +2889,7 @@ class TestGroupPerformerService:
         # arrange
         account = create_test_account()
         user = create_test_user(account=account)
-        group = create_test_group(user=user, users=[user, ])
+        group = create_test_group(account, users=[user])
         template = create_test_template(user=user, is_active=True)
         task_template = template.tasks.get(number=1)
         task_template.delete_raw_performers()
@@ -2937,7 +2937,7 @@ class TestGroupPerformerService:
         user = create_test_user(account=account)
         user2 = create_test_user(account=account, email='test2@test.test')
         user3 = create_test_user(account=account, email='test3@test.test')
-        group = create_test_group(user=user, users=[user2, user3, ])
+        group = create_test_group(account, users=[user2, user3])
         template = create_test_template(user=user, is_active=True)
         workflow = create_test_workflow(user=user, template=template)
         task = workflow.current_task_instance
@@ -2997,7 +2997,7 @@ class TestGroupPerformerService:
         user = create_test_user(account=account)
         user2 = create_test_user(account=account, email='test2@test.test')
         user3 = create_test_user(account=account, email='test3@test.test')
-        group = create_test_group(user=user, users=[user2, user3, ])
+        group = create_test_group(account, users=[user2, user3])
         template = create_test_template(user=user, is_active=True)
         task_template = template.tasks.get(number=1)
         task_template.add_raw_performer(

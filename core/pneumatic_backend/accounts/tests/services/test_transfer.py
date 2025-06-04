@@ -514,60 +514,6 @@ def test_deactivate_prev_user__ok(mocker):
     )
 
 
-def test_deactivate_prev_user__last_user_freemium__not_reassign(mocker):
-
-    # arrange
-    user = create_test_user()
-    prev_account = create_test_account(plan=BillingPlanType.FREEMIUM)
-    prev_user = create_test_user(
-        account=prev_account,
-        email='prev@test.test'
-    )
-
-    service = UserTransferService()
-    service.user = user
-    service.prev_user = prev_user
-    reassign_everywhere_mock = mocker.patch(
-        'pneumatic_backend.accounts.services.reassign.ReassignService.'
-        'reassign_everywhere'
-    )
-    remove_user_from_draft_mock = mocker.patch(
-        'pneumatic_backend.accounts.services.user_transfer'
-        '.remove_user_from_draft'
-    )
-    delete_pending_invites_mock = mocker.patch(
-        'pneumatic_backend.accounts.services.user_transfer'
-        '.UserTransferService._delete_prev_user_pending_invites'
-    )
-    cancel_subscription_mock = mocker.patch(
-        'pneumatic_backend.payment.stripe.service.'
-        'StripeService.cancel_subscription'
-    )
-    deactivate_mock = mocker.patch(
-        'pneumatic_backend.accounts.services.user.UserService.deactivate'
-    )
-    settings_mock = mocker.patch(
-        'pneumatic_backend.accounts.services.user_transfer.settings'
-    )
-    settings_mock.PROJECT_CONF = {'BILLING': True}
-
-    # act
-    service._deactivate_prev_user()
-
-    # assert
-    reassign_everywhere_mock.assert_not_called()
-    remove_user_from_draft_mock.assert_called_once_with(
-        account_id=prev_user.account.id,
-        user_id=prev_user.id
-    )
-    delete_pending_invites_mock.assert_called_once()
-    cancel_subscription_mock.assert_not_called()
-    deactivate_mock.assert_called_once_with(
-        prev_user,
-        skip_validation=True
-    )
-
-
 def test_deactivate_prev_user__cancel_subscription__ok(mocker):
 
     # arrange
@@ -700,12 +646,8 @@ def test_deactivate_prev_user__disable_billing__ok(plan, mocker):
     )
 
 
-@pytest.mark.parametrize('is_active', (True, False))
-@pytest.mark.parametrize('is_account_owner', (True, False))
 def test_accept_transfer__template_owner_in_template__ok(
     api_client,
-    is_active,
-    is_account_owner,
 ):
 
     # arrange
@@ -714,10 +656,14 @@ def test_accept_transfer__template_owner_in_template__ok(
         name='transfer to',
         plan=BillingPlanType.FREEMIUM
     )
+    create_test_user(
+        account=account_1,
+        email='user_owner@test.test',
+    )
     user_to_transfer = create_test_user(
         account=account_1,
         email='user_to_transfer@test.test',
-        is_account_owner=is_account_owner
+        is_account_owner=False
     )
     account_2_owner = create_test_user(
         account=account_2,

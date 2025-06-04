@@ -119,7 +119,7 @@ def test_send_urgent_notification__call_services_with_group__ok(mocker):
         account=account,
         is_account_owner=False
     )
-    group = create_test_group(user=user, users=[user_in_group, ])
+    group = create_test_group(user.account, users=[user_in_group])
     workflow = create_test_workflow(user, tasks_count=1)
     task = workflow.current_task_instance
     TaskPerformer.objects.create(

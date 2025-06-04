@@ -21,6 +21,7 @@ from pneumatic_backend.processes.tasks.webhooks import (
     send_task_completed_webhook,
     send_workflow_completed_webhook,
     send_task_returned_webhook,
+    send_workflow_started_webhook,
 )
 from pneumatic_backend.webhooks.models import WebHook
 from pneumatic_backend.processes.services.condition_check.service import (
@@ -57,7 +58,7 @@ class WorkflowActionService:
         user: UserModel,
         workflow: Workflow,
         is_superuser: bool = False,
-        auth_type: AuthTokenType = AuthTokenType.USER,
+        auth_type: AuthTokenType.LITERALS = AuthTokenType.USER,
         sync: bool = False
     ):
         self.workflow = workflow
@@ -154,12 +155,11 @@ class WorkflowActionService:
                     send_delayed_workflow_notification.delay(
                         logging=self.user.account.log_api_requests,
                         logo_lg=self.user.account.logo_lg,
-                        task_id=task.id,
                         author_id=self.user.id,
                         user_id=user_id,
                         user_email=user_email,
                         account_id=self.user.account_id,
-                        workflow_name=self.workflow.name,
+                        task_id=task.id,
                     )
                 # decrease tasks count
                 WSSender.send_removed_task_notification(
@@ -233,10 +233,9 @@ class WorkflowActionService:
             send_resumed_workflow_notification.delay(
                 logging=self.user.account.log_api_requests,
                 logo_lg=self.user.account.logo_lg,
-                task_id=task.id,
                 author_id=self.user.id,
                 account_id=self.user.account_id,
-                workflow_name=self.workflow.name,
+                task_id=task.id,
             )
             self.continue_task(task)
 
@@ -415,6 +414,14 @@ class WorkflowActionService:
                 user=self.user
             )
         self.start_next_tasks(task=self.workflow.current_task_instance)
+        if WebHook.objects.on_account(
+            self.user.account.id
+        ).wf_started().exists():
+            send_workflow_started_webhook.delay(
+                user_id=self.user.id,
+                account_id=self.user.account.id,
+                payload=self.workflow.webhook_payload()
+            )
 
     def continue_workflow(self, task: Task, is_returned: bool = False):
         if not self.workflow.is_running:
@@ -587,7 +594,7 @@ class WorkflowActionService:
             else:
                 self.continue_workflow(task=task, is_returned=is_returned)
 
-    def complete_task(self, task: Task):
+    def complete_task(self, task: Task, by_user: bool = False):
 
         """ Complete workflow task if it <= current task
             Only for current task run complete actions """
@@ -624,6 +631,11 @@ class WorkflowActionService:
             .order_by('id')
             .user_ids_set()
         )
+        WSSender.send_removed_task_notification(
+            task=task,
+            user_ids=task_performer_ids,
+            sync=self.sync
+        )
         notification_recipients = (
             UserModel.objects
             .get_users_in_performer(performers_ids=performers_ids)
@@ -632,11 +644,6 @@ class WorkflowActionService:
             .order_by('id')
             .user_ids_emails_list()
         )
-        WSSender.send_removed_task_notification(
-            task=task,
-            user_ids=task_performer_ids,
-            sync=self.sync
-        )
         if notification_recipients:
             send_complete_task_notification.delay(
                 logging=self.user.account.log_api_requests,
@@ -644,10 +651,36 @@ class WorkflowActionService:
                 account_id=task.account_id,
                 recipients=notification_recipients,
                 task_id=task.id,
-                task_name=task.name,
-                workflow_name=self.workflow.name,
                 logo_lg=task.account.logo_lg,
             )
+        (
+            TaskPerformer.objects
+            .by_task(task.id)
+            .exclude_directly_deleted()
+            .not_completed()
+            .update(
+                date_completed=timezone.now(),
+                is_completed=True
+            )
+        )
+        if by_user:
+            AnalyticService.task_completed(
+                user=self.user,
+                is_superuser=self.is_superuser,
+                auth_type=self.auth_type,
+                workflow=self.workflow,
+                task=task
+            )
+            # Need run after save completed task (and performers)
+            # and before start next tasks
+            WorkflowEventService.task_complete_event(
+                task=task,
+                user=self.user
+            )
+        self.start_next_tasks(
+            task=task.next,
+            by_complete_task=True
+        )
         acc_id = self.user.account.id
         if WebHook.objects.on_account(acc_id).task_completed().exists():
             send_task_completed_webhook.delay(
@@ -655,10 +688,6 @@ class WorkflowActionService:
                 account_id=self.user.account_id,
                 payload=task.webhook_payload()
             )
-        self.start_next_tasks(
-            task=task.next,
-            by_complete_task=True
-        )
 
     def _task_can_be_completed(self, task: Task) -> bool:
 
@@ -690,73 +719,66 @@ class WorkflowActionService:
         task: Task,
         fields_values: Optional[dict] = None,
     ):
+        if self.workflow.is_delayed:
+            raise exceptions.CompleteDelayedWorkflow()
+        elif self.workflow.is_completed:
+            raise exceptions.CompleteCompletedWorkflow()
+        if not task.is_active:
+            raise exceptions.CompleteInactiveTask()
 
-        task_fields = list(task.output.all())
-        for task_field in task_fields:
-            service = TaskFieldService(
-                user=self.user,
-                instance=task_field
-            )
-            service.partial_update(
-                value=fields_values.get(task_field.api_name),
-                force_save=True
-            )
-
-        task_performers_qst = (
+        task_performer = (
             TaskPerformer.objects
             .by_task(task.id)
-            .exclude_directly_deleted()
-            .order_by('user_id')
-        )
-        task_performer = (
-            task_performers_qst
             .by_user_or_group(self.user.id)
-            .order_by('user_id')
+            .exclude_directly_deleted()
             .first()
         )
-        if not task_performer and not self.user.is_account_owner:
-            # duplicate WorkflowCompleteSerializer validation
+        if task_performer:
+            if task_performer.is_completed:
+                raise exceptions.UserAlreadyCompleteTask()
+        elif not self.user.is_account_owner:
             raise exceptions.UserNotPerformer()
 
-        AnalyticService.task_completed(
-            user=self.user,
-            is_superuser=self.is_superuser,
-            auth_type=self.auth_type,
-            workflow=self.workflow,
-            task=task
-        )
-        WorkflowEventService.task_complete_event(
-            task=task,
-            user=self.user
-        )
+        if not task.checklists_completed:
+            raise exceptions.ChecklistIncompleted()
+        elif task.sub_workflows.running().exists():
+            raise exceptions.SubWorkflowsIncompleted()
 
-        if task_performer:
-            if self._task_can_be_completed(task):
-                self.complete_task(task=task)
-                task_performers_qst.not_completed().update(
-                    date_completed=timezone.now(),
-                    is_completed=True
+        fields_values = fields_values or dict()
+        with transaction.atomic():
+            for task_field in task.output.all():
+                service = TaskFieldService(
+                    user=self.user,
+                    instance=task_field
                 )
-            else:
-                # completed only for user and send ws remove task
-                # if "requires completion by all", sending message
-                # about the completion of the task by each performer
-                task_performer.date_completed = timezone.now()
-                task_performer.is_completed = True
-                task_performer.save(
-                    update_fields=('date_completed', 'is_completed')
+                service.partial_update(
+                    value=fields_values.get(task_field.api_name),
+                    force_save=True
                 )
-                if not self.user.is_guest:
-                    # Websocket notification
-                    WSSender.send_removed_task_notification(
-                        task=task,
-                        user_ids=(self.user.id,),
-                        sync=self.sync
+            if task_performer:
+                if self._task_can_be_completed(task):
+                    self.complete_task(task=task, by_user=True)
+                else:
+                    # completed only for user and send ws remove task
+                    # if "requires completion by all", sending message
+                    # about the completion of the task by each performer
+                    task_performer.date_completed = timezone.now()
+                    task_performer.is_completed = True
+                    task_performer.save(
+                        update_fields=('date_completed', 'is_completed')
                     )
-        elif self.user.is_account_owner:
-            # account owner force completion
-            # not complete performers, but send ws remove task
-            self.complete_task(task=task)
+                    if not self.user.is_guest:
+                        # Websocket notification
+                        WSSender.send_removed_task_notification(
+                            task=task,
+                            user_ids=(self.user.id,),
+                            sync=self.sync
+                        )
+            elif self.user.is_account_owner:
+                # account owner force completion
+                # not complete performers, but send ws remove task
+                self.complete_task(task=task, by_user=True)
+        return task
 
     def _task_is_returnable(self, task: Task):
         service = WorkflowActionService(
@@ -839,19 +861,27 @@ class WorkflowActionService:
         acc_id = self.user.account_id
         self._set_workflow_counts()
         if WebHook.objects.on_account(acc_id).task_returned().exists():
+            revert_from_task.refresh_from_db()
             send_task_returned_webhook.delay(
                 user_id=self.user.id,
                 account_id=acc_id,
-                payload=revert_to_task.webhook_payload()
+                payload=revert_from_task.webhook_payload()
             )
 
-    def revert(self, comment: str) -> None:
+    def revert(
+        self,
+        comment: str,
+        revert_from_task: Task
+    ) -> None:
 
         """ Can only be applied to a running workflow """
 
-        revert_from_task = self.workflow.current_task_instance
+        if self.user.is_guest:
+            raise exceptions.PermissionDenied()
         if revert_from_task.number == 1:
             raise exceptions.FirstTaskCannotBeReverted()
+        if not revert_from_task.is_active:
+            raise exceptions.RevertInactiveTask()
         revert_to_task = revert_from_task.prev
         if self.workflow.is_running:
             if revert_from_task.sub_workflows.running().exists():
@@ -860,6 +890,19 @@ class WorkflowActionService:
             raise exceptions.DelayedWorkflowCannotBeChanged()
         elif self.workflow.is_completed:
             raise exceptions.CompletedWorkflowCannotBeChanged()
+
+        task_performer = (
+            TaskPerformer.objects
+            .by_task(revert_from_task.id)
+            .by_user_or_group(self.user.id)
+            .exclude_directly_deleted()
+            .first()
+        )
+        if task_performer:
+            if task_performer.is_completed:
+                raise exceptions.CompletedTaskCannotBeReturned()
+        elif not self.user.is_account_owner:
+            raise exceptions.UserNotPerformer()
 
         action_method, _ = self.execute_condition(revert_to_task)
         if action_method.__name__ == 'skip_task':
@@ -873,21 +916,23 @@ class WorkflowActionService:
                 )
         clear_comment = MarkdownService.clear(comment)
         with transaction.atomic():
+            # Need run after update revert_to_task task (and performers)
+            # and before start prev task
             WorkflowEventService.task_revert_event(
                 task=revert_to_task,
                 user=self.user,
                 text=comment,
                 clear_text=clear_comment
             )
-            self._return_workflow_to_task(
-                revert_from_task=revert_from_task,
-                revert_to_task=revert_to_task,
-            )
             AnalyticService.task_returned(
                 user=self.user,
                 task=revert_from_task,
                 is_superuser=self.is_superuser,
                 auth_type=self.auth_type
+            )
+            self._return_workflow_to_task(
+                revert_from_task=revert_from_task,
+                revert_to_task=revert_to_task,
             )
 
     def return_to(self, revert_to_task: Optional[Task] = None):
@@ -909,19 +954,20 @@ class WorkflowActionService:
             )
 
         with transaction.atomic():
+            # Need run after update revert_to_task task (and performers)
+            # and before start prev task
             WorkflowEventService.workflow_revert_event(
                 task=revert_from_task,
                 user=self.user,
             )
-            self._return_workflow_to_task(
-                revert_from_task=revert_from_task,
-                revert_to_task=revert_to_task,
-            )
-
             AnalyticService.workflow_returned(
                 user=self.user,
                 task=revert_to_task,
                 workflow=self.workflow,
                 is_superuser=self.is_superuser,
                 auth_type=self.auth_type,
+            )
+            self._return_workflow_to_task(
+                revert_from_task=revert_from_task,
+                revert_to_task=revert_to_task,
             )

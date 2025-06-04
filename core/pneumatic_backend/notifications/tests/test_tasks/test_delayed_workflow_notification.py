@@ -54,12 +54,11 @@ def test_send_delayed_workflow_notification__call_services__ok(mocker):
     # act
     _send_delayed_workflow_notification(
         logging=account.log_api_requests,
-        task_id=task.id,
         author_id=account_owner.id,
         user_id=user.id,
         user_email=user.email,
         account_id=account.id,
-        workflow_name=workflow.name,
+        task_id=task.id,
         logo_lg=account.logo_lg,
     )
 

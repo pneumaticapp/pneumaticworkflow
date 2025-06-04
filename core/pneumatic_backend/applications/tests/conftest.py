@@ -22,11 +22,3 @@ def create_test_user(email='test@pneumatic.app', account=None):
 @pytest.fixture
 def api_client():
     return PneumaticApiClient(HTTP_USER_AGENT='Mozilla/5.0')
-
-
-@pytest.fixture(autouse=True)
-def session_mock(mocker):
-    session = mocker.patch(
-        'django.contrib.sessions.backends.cache.SessionStore',
-    )
-    session.return_value.session_key = 'test'

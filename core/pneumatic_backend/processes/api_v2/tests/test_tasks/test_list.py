@@ -83,11 +83,7 @@ def test_list__default_ordering__ok(mocker, api_client):
     assert task_21_data['name'] == task_21.name
     assert task_21_data['api_name'] == task_21.api_name
     assert task_21_data['due_date_tsp'] is None
-    assert task_21_data['date_started'] == task_21.date_started.strftime(
-        datetime_format
-    )
     assert task_21_data['date_started_tsp'] == task_21.date_started.timestamp()
-    assert task_21_data['date_completed'] is None
     assert task_21_data['date_completed_tsp'] is None
     assert task_21_data['workflow_name'] == workflow_2.name
     assert task_21_data['template_id'] == workflow_2.template_id
@@ -108,7 +104,7 @@ def test_list__user_in_group__ok(api_client):
         account=user.account,
         email='another@pneumatic.app'
     )
-    group = create_test_group(user=user, users=[another_user, ])
+    group = create_test_group(user.account, users=[another_user])
     api_client.token_authenticate(user=another_user)
     workflow_1 = create_test_workflow(user, tasks_count=1)
     task_11 = workflow_1.current_task_instance
@@ -149,8 +145,8 @@ def test_list__task_performer_group_empty__ok(api_client):
         account=user.account,
         email='another@pneumatic.app'
     )
-    group = create_test_group(user=user, users=[another_user, ])
-    create_test_group(user=user)
+    group = create_test_group(user.account, users=[another_user])
+    create_test_group(user.account)
     api_client.token_authenticate(user=another_user)
     workflow_1 = create_test_workflow(user, tasks_count=1)
     task_11 = workflow_1.current_task_instance
@@ -279,16 +275,18 @@ def test_list__search__comment__ok(api_client, mocker):
     # arrange
     user = create_test_user()
     workflow = create_test_workflow(user, tasks_count=1)
+    task = workflow.tasks.active().first()
     WorkflowEventService.comment_created_event(
         user=user,
-        workflow=workflow,
+        task=task,
         text='some comment text'
     )
     search_text = 'com tex'
     workflow_2 = create_test_workflow(user=user, tasks_count=1)
+    task_2 = workflow_2.tasks.active().first()
     WorkflowEventService.comment_created_event(
         user=user,
-        workflow=workflow_2,
+        task=task_2,
         text='some camera retext'
     )
 
@@ -319,10 +317,11 @@ def test_list__search__comment__url_as_text__ok(api_client, mocker):
     # arrange
     user = create_test_user()
     workflow = create_test_workflow(user, tasks_count=1)
+    task = workflow.tasks.active().first()
     text = 'some **https://pneumo.app** text'
     WorkflowEventService.comment_created_event(
         user=user,
-        workflow=workflow,
+        task=task,
         text=text,
         clear_text=MarkdownService.clear(text)
     )
@@ -355,9 +354,10 @@ def test_list__search__comment__markdown__ok(api_client, mocker):
     user = create_test_user()
     workflow = create_test_workflow(user, tasks_count=1)
     text = 'some -  **[file.here](http://google.com/) value**'
+    task = workflow.tasks.active().first()
     WorkflowEventService.comment_created_event(
         user=user,
-        workflow=workflow,
+        task=task,
         text=text,
         clear_text=MarkdownService.clear(text)
     )
@@ -424,9 +424,10 @@ def test_list__search__another_task_comment__not_found(api_client, mocker):
     user = create_test_user()
     workflow = create_test_workflow(user, tasks_count=2)
     text = 'some comment text'
+    task = workflow.tasks.active().first()
     WorkflowEventService.comment_created_event(
         user=user,
-        workflow=workflow,
+        task=task,
         text=text,
         clear_text=MarkdownService.clear(text)
     )
@@ -459,9 +460,10 @@ def test_list__search__comment_attachment__ok(api_client, mocker):
     # arrange
     user = create_test_user()
     workflow = create_test_workflow(user)
+    task = workflow.tasks.active().first()
     event = WorkflowEventService.comment_created_event(
         user=user,
-        workflow=workflow,
+        task=task,
         text='comment'
     )
     FileAttachment.objects.create(
@@ -497,9 +499,10 @@ def test_list__search__another_task_comment_attachment__not_found(
     # arrange
     user = create_test_user()
     workflow = create_test_workflow(user, tasks_count=2)
+    task = workflow.tasks.active().first()
     event = WorkflowEventService.comment_created_event(
         user=user,
-        workflow=workflow,
+        task=task,
         text='comment'
     )
     FileAttachment.objects.create(
@@ -1135,22 +1138,16 @@ def test_list__ordering_by_completed__ok(mocker, api_client):
     assert len(response.data) == 2
     task_11.refresh_from_db()
     assert response.data[0]['id'] == task_11.id
-    assert response.data[0]['date_started'] == (
-        task_11.date_started.strftime(datetime_format)
-    )
     assert response.data[0]['date_started_tsp'] == (
         task_11.date_started.timestamp()
     )
-    # assert response.data[0]['date_completed'] == (
-    #     task_11.date_completed.strftime(datetime_format)
-    # )
     assert response.data[0]['date_completed_tsp'] == (
         task_11.date_completed.timestamp()
     )
     assert response.data[0]['status'] == TaskStatus.COMPLETED
     assert response.data[1]['id'] == task_21.id
-    assert response.data[1]['date_started'] is not None
-    assert response.data[1]['date_completed'] is not None
+    assert response.data[1]['date_started_tsp'] is not None
+    assert response.data[1]['date_completed_tsp'] is not None
     assert response.data[1]['status'] == TaskStatus.COMPLETED
 
 

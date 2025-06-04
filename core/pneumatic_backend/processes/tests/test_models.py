@@ -12,14 +12,18 @@ from pneumatic_backend.processes.models import (
     Kickoff,
     FieldTemplate,
     SystemTemplate,
+    TemplateOwner
 )
 from pneumatic_backend.processes.tests.fixtures import (
     create_test_user,
     create_test_template,
     create_test_workflow,
+    create_test_group,
+    create_test_account
 )
 from pneumatic_backend.processes.enums import (
     FieldType,
+    OwnerType
 )
 
 
@@ -229,6 +233,85 @@ class TestTemplate:
         assert workflow.template_id is None
         assert workflow.is_legacy_template is True
         assert workflow.legacy_template_name == template.name
+
+    def test_get_owners_as_users__empty_group__ok(self):
+        # arrange
+        account = create_test_account()
+        user = create_test_user(account=account)
+        template = create_test_template(
+            user=user,
+            is_active=True,
+            tasks_count=1
+        )
+        TemplateOwner.objects.filter(user_id=user.id).delete()
+        group = create_test_group(account)
+        TemplateOwner.objects.create(
+            template=template,
+            account=account,
+            type=OwnerType.GROUP,
+            group_id=group.id,
+        )
+
+        # act
+        owners = Template.objects.get_owners_as_users()
+
+        # assert
+        assert not owners
+
+    def test_get_owners_as_users__empty_owner_template__ok(self):
+        # arrange
+        user = create_test_user()
+        create_test_template(
+            user=user,
+            is_active=True,
+            tasks_count=1
+        )
+        TemplateOwner.objects.filter(user_id=user.id).delete()
+
+        # act
+        owners = Template.objects.get_owners_as_users()
+
+        # assert
+        assert not owners
+
+    def test_get_owners_as_users__user_in_group__ok(self):
+        # arrange
+        account = create_test_account()
+        user = create_test_user(account=account)
+        template = create_test_template(
+            user=user,
+            is_active=True,
+            tasks_count=1
+        )
+        TemplateOwner.objects.filter(user_id=user.id).delete()
+        group = create_test_group(account, users=[user])
+        TemplateOwner.objects.create(
+            template=template,
+            account=account,
+            type=OwnerType.GROUP,
+            group_id=group.id,
+        )
+
+        # act
+        owners = Template.objects.get_owners_as_users()
+
+        # assert
+        assert list(owners) == [user.id]
+
+    def test_get_owners_as_users__user__ok(self):
+        # arrange
+        user = create_test_user()
+        create_test_template(
+            user=user,
+            is_active=True,
+            tasks_count=1
+        )
+
+        # act
+        owners = Template.objects.get_owners_as_users()
+
+        # assert
+        assert list(owners) == [user.id]
 
 
 class TestWorkflow:

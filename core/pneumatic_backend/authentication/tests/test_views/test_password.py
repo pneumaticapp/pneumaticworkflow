@@ -463,7 +463,7 @@ class TestChangePassword:
         user_change_password_mock.assert_not_called()
 
     @pytest.mark.parametrize(
-        'new_password, confirm_new_password', [('', ''), (' ', ' '), ]
+        'new_password, confirm_new_password', [('', ''), (' ', ' ')]
     )
     def test_change__password_blank__validation_error(
         self,

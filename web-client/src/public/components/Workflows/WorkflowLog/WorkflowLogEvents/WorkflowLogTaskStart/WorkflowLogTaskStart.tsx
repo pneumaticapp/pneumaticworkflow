@@ -53,8 +53,8 @@ export function WorkflowLogTaskStart({
     const usersLeft = Math.max(task?.performers.length - MAX_SHOW_USERS, 0);
     return (
       <div className={styles['start-responsibles']}>
-        {task?.performers.slice(0, MAX_SHOW_USERS).map(({ sourceId, type }, index) => (
-          <UserDataWithGroup idItem={sourceId} type={type}>
+        {task?.performers.slice(0, MAX_SHOW_USERS).map(({ sourceId, type }) => (
+          <UserDataWithGroup key={`${type}-${sourceId}`} idItem={sourceId} type={type}>
             {(user) => {
               return (
                 <Avatar

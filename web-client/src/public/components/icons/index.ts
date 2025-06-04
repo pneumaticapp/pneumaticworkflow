@@ -163,3 +163,6 @@ export * from './AddEmojiIcon';
 export * from './GroupIcon';
 export * from './LockIcon';
 export * from './NumericIcon';
+export * from './ShortArrowIcon';
+export * from './WorkflowOpen';
+export * from './WorkflowMinimize';

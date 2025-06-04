@@ -44,7 +44,7 @@ def test_counters__with_group__ok(api_client):
 
     # arrange
     user = create_test_user()
-    group = create_test_group(user=user, users=[user, ])
+    group = create_test_group(user.account, users=[user])
     workflow = create_test_workflow(user)
     task = workflow.current_task_instance
     TaskPerformer.objects.create(

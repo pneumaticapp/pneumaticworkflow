@@ -1,4 +1,4 @@
-from django.db import transaction
+from django.conf import settings
 from rest_framework.decorators import action
 from rest_framework.generics import (
     get_object_or_404
@@ -29,12 +29,14 @@ from pneumatic_backend.processes.models import (
 from pneumatic_backend.processes.permissions import (
     WorkflowOwnerPermission,
     WorkflowMemberPermission,
-    UserTaskCompletePermission,
     GuestWorkflowPermission,
-    GuestTaskCompletePermission,
+    GuestWorkflowEventsPermission,
 )
 from pneumatic_backend.processes.serializers.comments import (
     CommentCreateSerializer,
+)
+from pneumatic_backend.processes.api_v2.serializers.workflow.task import (
+    TaskRevertSerializer,
 )
 from pneumatic_backend.processes.serializers.workflow import (
     WorkflowDetailsSerializer,
@@ -46,7 +48,7 @@ from pneumatic_backend.processes.serializers.workflow import (
     WorkflowListFilterSerializer,
     WorkflowFieldsSerializer,
     WorkflowSnoozeSerializer,
-    WorkflowRevertSerializer, WorkflowFieldsFilterSerializer,
+    WorkflowFieldsFilterSerializer,
 )
 from pneumatic_backend.processes.api_v2.serializers.workflow.events import (
     WorkflowEventSerializer,
@@ -59,6 +61,7 @@ from pneumatic_backend.generics.permissions import (
 )
 from pneumatic_backend.processes.filters import (
     WorkflowEventFilter,
+    WorkflowWebhookFilterSet,
 )
 from pneumatic_backend.processes.services.exceptions import (
     WorkflowActionServiceException
@@ -76,6 +79,7 @@ from pneumatic_backend.processes.api_v2.services.task.exceptions import (
     TaskFieldException
 )
 from pneumatic_backend.processes.enums import WorkflowEventType
+from pneumatic_backend.webhooks.enums import HookEvent
 
 
 class WorkflowViewSet(
@@ -97,10 +101,12 @@ class WorkflowViewSet(
         'fields': WorkflowFieldsSerializer,
         'snooze': WorkflowDetailsSerializer,
         'events': WorkflowEventSerializer,
-        'revert': WorkflowRevertSerializer,
+        'revert': TaskRevertSerializer,
+        'resume': WorkflowDetailsSerializer,
     }
     action_filterset_classes = {
         'events': WorkflowEventFilter,
+        'webhook_example': WorkflowWebhookFilterSet,
     }
 
     action_paginator_classes = {
@@ -115,6 +121,8 @@ class WorkflowViewSet(
         context['account'] = self.request.user.account
         context['is_superuser'] = self.request.is_superuser
         context['auth_type'] = self.request.token_type
+        if self.request.user.is_guest:
+            context['guest_task_id'] = self.request.task_id
         return context
 
     def get_queryset(self):
@@ -122,6 +130,10 @@ class WorkflowViewSet(
         queryset = Workflow.objects.on_account(user.account_id)
         if self.action in ('list', 'fields'):
             queryset = queryset.with_member(user)
+        elif self.action == 'webhook_example':
+            queryset = queryset.filter(
+                owners=user.id
+            ).order_by('-date_created')
         return self.prefetch_queryset(queryset)
 
     def get_object(self):
@@ -201,8 +213,7 @@ class WorkflowViewSet(
                 BillingPlanPermission(),
                 ExpiredSubscriptionPermission(),
                 UsersOverlimitedPermission(),
-                GuestTaskCompletePermission(),
-                UserTaskCompletePermission(),
+                GuestWorkflowPermission(),
             )
         elif self.action == 'revert':
             return (
@@ -210,15 +221,20 @@ class WorkflowViewSet(
                 BillingPlanPermission(),
                 ExpiredSubscriptionPermission(),
                 UsersOverlimitedPermission(),
-                UserTaskCompletePermission(),
             )
         elif self.action == 'events':
             return (
                 IsAuthenticated(),
                 BillingPlanPermission(),
                 ExpiredSubscriptionPermission(),
-                GuestWorkflowPermission(),
+                GuestWorkflowEventsPermission(),
                 WorkflowMemberPermission(),
+            )
+        elif self.action == 'webhook_example':
+            return (
+                UserIsAuthenticated(),
+                ExpiredSubscriptionPermission(),
+                BillingPlanPermission(),
             )
         return super().get_permissions()
 
@@ -228,7 +244,8 @@ class WorkflowViewSet(
         qst = Workflow.objects.raw_list_query(
             **filter_slz.validated_data,
             account_id=request.user.account_id,
-            user_id=request.user.id
+            user_id=request.user.id,
+            using=settings.REPLICA
         )
         return self.paginated_response(qst)
 
@@ -286,9 +303,10 @@ class WorkflowViewSet(
             auth_type=request.token_type,
             is_superuser=request.is_superuser
         )
+        task = workflow.tasks.active_or_delayed().order_by('-number').first()
         try:
             event = service.create(
-                workflow=workflow,
+                task=task,
                 **slz.validated_data
             )
         except CommentServiceException as ex:
@@ -312,11 +330,10 @@ class WorkflowViewSet(
             is_superuser=request.is_superuser
         )
         try:
-            with transaction.atomic():
-                service.complete_task_for_user(
-                    task=workflow.current_task_instance,
-                    fields_values=serializer.validated_data.get('output')
-                )
+            service.complete_task_for_user(
+                task=serializer.validated_data['task'],
+                fields_values=serializer.validated_data.get('output')
+            )
         except WorkflowActionServiceException as ex:
             raise_validation_error(message=ex.message)
         except TaskFieldException as ex:
@@ -324,7 +341,6 @@ class WorkflowViewSet(
                 message=ex.message,
                 api_name=ex.api_name
             )
-        workflow.refresh_from_db()
         return self.response_ok()
 
     @action(methods=['post'], detail=True, url_path='task-revert')
@@ -339,7 +355,10 @@ class WorkflowViewSet(
             is_superuser=request.is_superuser
         )
         try:
-            service.revert(comment=serializer.validated_data['comment'])
+            service.revert(
+                comment=serializer.validated_data['comment'],
+                revert_from_task=workflow.current_task_instance
+            )
         except WorkflowActionServiceException as ex:
             raise_validation_error(message=ex.message)
         return self.response_ok()
@@ -407,7 +426,8 @@ class WorkflowViewSet(
             service.force_resume_workflow()
         except WorkflowActionServiceException as ex:
             raise_validation_error(message=ex.message)
-        return self.response_ok()
+        serializer = self.get_serializer(workflow)
+        return self.response_ok(serializer.data)
 
     @action(methods=['post'], detail=True)
     def finish(self, request, *args, **kwargs):
@@ -470,3 +490,22 @@ class WorkflowViewSet(
             ).exclude(type=WorkflowEventType.TASK_START)
         qst = self.filter_queryset(qst)
         return self.paginated_response(qst)
+
+    @action(methods=['get'], url_path='webhook-example', detail=False)
+    def webhook_example(self, request, *args, **kwargs):
+        workflow = self.filter_queryset(self.get_queryset()).first()
+        if not workflow:
+            return self.response_not_found()
+        return self.response_ok(
+            {
+                'hook': {
+                    "event": (
+                        HookEvent.WORKFLOW_COMPLETED if workflow.is_completed
+                        else HookEvent.WORKFLOW_STARTED
+                    ),
+                    'id': 123,
+                    "target": 'https://example.com/webhooks/'
+                },
+                **workflow.webhook_payload()
+            }
+        )

@@ -1,9 +1,25 @@
 import { IAccount, TUserId } from './user';
 import { TUploadedFile } from '../utils/uploadFiles';
 import { ITask, ITemplateStep } from './tasks';
-import { IKickoff, IExtraField, ITemplateTitle, ETemplateOwnerType } from './template';
+import { IKickoff, IExtraField, ITemplateTitle, ETemplateOwnerType, RawPerformer } from './template';
+import { EProgressbarColor } from '../components/ProgressBar';
 
-export type TWorkflowDetailsResponse = Omit<IWorkflowDetails, 'dueDate'> & { dueDateTsp: number | null };
+export type WorkflowWithDateFields = {
+  dueDate: string | null;
+  dateCreated: string;
+  dateCompleted: string | null;
+};
+
+export type WorkflowWithTspFields = {
+  dueDateTsp: number | null;
+  dateCreatedTsp: number;
+  dateCompletedTsp: number | null;
+};
+
+export type WorkflowWithTsp<T> = Omit<T, keyof WorkflowWithDateFields> & WorkflowWithTspFields;
+
+export type TWorkflowDetailsResponse = WorkflowWithTsp<IWorkflowDetails>;
+
 export interface IWorkflowDetails {
   id: number;
   ancestorTaskId?: number;
@@ -87,12 +103,37 @@ export type TWorkflowTask = Pick<
   number: number;
 };
 
-export type TWorkflowResponse = Omit<IWorkflow, 'dueDate'> & { dueDateTsp: number | null };
+export interface IWorkflowTaskDelay {
+  duration: string;
+  startDate: string;
+  endDate: string;
+  estimatedEndDate: string;
+}
+
+export interface IWorkflowTaskItem {
+  id: number;
+  name: string;
+  api_name: string;
+  number: number;
+  description: string;
+  dueDateTsp: number | null;
+  dateStartedTsp: number | null;
+  dateCompletedTsp: number | null;
+  status: EWorkflowTaskStatus;
+  performers: RawPerformer[];
+  checklistsTotal: number;
+  checklistsMarked: number;
+  delay: IWorkflowTaskDelay | null;
+  overdue?: boolean;
+  color?: EProgressbarColor;
+}
+
+export type TWorkflowResponse = WorkflowWithTsp<IWorkflow>;
+
 export interface IWorkflow {
   id: number;
   name: string;
   status: EWorkflowStatus;
-  statusUpdated: string;
   ancestorTaskId?: number;
   tasksCount: number;
   currentTask: number;
@@ -102,12 +143,12 @@ export interface IWorkflow {
   isExternal: boolean;
   template: IWorkflowTemplate | null;
   task: TWorkflowTask;
+  tasks: IWorkflowTaskItem[];
   isLegacyTemplate: boolean;
   legacyTemplateName: string;
   passedTasks: IPassedTask[];
   isUrgent: boolean;
   dateCompleted: string | null;
-  dateCompletedTsp: number | null;
   finalizable: boolean;
   workflowStarter: number | null;
   dueDate: string | null;
@@ -125,6 +166,13 @@ export enum EWorkflowStatus {
   Finished = 1,
   Aborted = 2,
   Snoozed = 3,
+}
+
+export enum EWorkflowTaskStatus {
+  Pending = 'pending',
+  Active = 'active',
+  Completed = 'completed',
+  Snoozed = 'snoozed',
 }
 
 export interface IWorkflowTemplate {

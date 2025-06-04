@@ -559,8 +559,6 @@ def test_set_due_date_directly__ok(mocker):
         logging=user.account.log_api_requests,
         author_id=user.id,
         task_id=task.id,
-        task_name=task.name,
-        workflow_name=workflow.name,
         account_id=user.account_id,
         logo_lg=user.account.logo_lg,
     )

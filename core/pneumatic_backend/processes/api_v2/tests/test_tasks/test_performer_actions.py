@@ -663,7 +663,7 @@ class TestTaskDeletePerformer:
         )
         api_client.token_authenticate(request_user)
         create_test_workflow(request_user)
-        not_existent_task_id = 999
+        not_existent_task_id = 9999
         service_delete_performer_mock = mocker.patch(
             'pneumatic_backend.processes.api_v2.services.task.performers.'
             'TaskPerformersService.delete_performer'
@@ -1357,7 +1357,7 @@ class TestTaskCreateGroupPerformer:
             account=account,
             is_account_owner=False
         )
-        group = create_test_group(user=account_owner, users=[user_2, user_3])
+        group = create_test_group(account, users=[user_2, user_3])
         template = create_test_template(user=request_user, tasks_count=1)
         TemplateOwner.objects.filter(
             template=template,
@@ -1420,7 +1420,7 @@ class TestTaskCreateGroupPerformer:
             account=account,
             is_account_owner=False
         )
-        group = create_test_group(user=request_user, users=[user_2, ])
+        group = create_test_group(account, users=[user_2])
         template = create_test_template(user=request_user, tasks_count=1)
         workflow = create_test_workflow(user=request_user, template=template)
         task = workflow.current_task_instance
@@ -1468,7 +1468,7 @@ class TestTaskCreateGroupPerformer:
             account=account,
             is_account_owner=False
         )
-        group = create_test_group(user=account_owner, users=[user_2, ])
+        group = create_test_group(account, users=[user_2])
         template = create_test_template(user=account_owner, tasks_count=1)
         TemplateOwner.objects.create(
             template=template,
@@ -1525,7 +1525,7 @@ class TestTaskCreateGroupPerformer:
             account=account,
             is_account_owner=False
         )
-        group = create_test_group(user=account_owner, users=[user_2, user_3])
+        group = create_test_group(account, users=[user_2, user_3])
         template = create_test_template(user=account_owner, tasks_count=1)
         TemplateOwner.objects.filter(
             template=template,
@@ -1567,7 +1567,7 @@ class TestTaskCreateGroupPerformer:
 
         # arrange
         request_user = create_test_user()
-        group = create_test_group(user=request_user)
+        group = create_test_group(request_user.account)
         another_account_user = create_test_user(email='user2@test.test')
         api_client.token_authenticate(another_account_user)
         workflow = create_test_workflow(request_user)
@@ -1594,7 +1594,7 @@ class TestTaskCreateGroupPerformer:
     ):
         # arrange
         request_user = create_test_user()
-        group = create_test_group(user=request_user)
+        group = create_test_group(request_user.account)
         workflow = create_test_workflow(request_user)
         task = workflow.current_task_instance
         service_create_performer_mock = mocker.patch(
@@ -1620,7 +1620,7 @@ class TestTaskCreateGroupPerformer:
 
         # arrange
         request_user = create_test_user()
-        group = create_test_group(user=request_user)
+        group = create_test_group(request_user.account)
         api_client.token_authenticate(request_user)
         create_test_workflow(request_user)
         not_existent_task_id = 999
@@ -1647,7 +1647,7 @@ class TestTaskCreateGroupPerformer:
 
         # arrange
         request_user = create_test_user()
-        group = create_test_group(user=request_user)
+        group = create_test_group(request_user.account)
         workflow = create_test_workflow(request_user)
         task = workflow.current_task_instance
         api_client.token_authenticate(request_user)
@@ -1695,7 +1695,7 @@ class TestTaskDeleteGroupPerformer:
             is_admin=True,
             is_account_owner=False
         )
-        group = create_test_group(user=request_user)
+        group = create_test_group(request_user.account)
         template = create_test_template(user=request_user, tasks_count=1)
         TemplateOwner.objects.filter(
             template=template,
@@ -1745,7 +1745,7 @@ class TestTaskDeleteGroupPerformer:
             is_admin=True,
             is_account_owner=False
         )
-        group = create_test_group(user=request_user)
+        group = create_test_group(account)
         template = create_test_template(user=request_user, tasks_count=1)
         workflow = create_test_workflow(user=request_user, template=template)
         task = workflow.current_task_instance
@@ -1789,7 +1789,7 @@ class TestTaskDeleteGroupPerformer:
             is_admin=True,
             is_account_owner=False
         )
-        group = create_test_group(user=request_user)
+        group = create_test_group(account)
         template = create_test_template(user=account_owner, tasks_count=1)
         TemplateOwner.objects.filter(
             template=template,
@@ -1837,7 +1837,7 @@ class TestTaskDeleteGroupPerformer:
             is_admin=False,
             is_account_owner=False
         )
-        group = create_test_group(user=request_user)
+        group = create_test_group(account)
         template = create_test_template(user=account_owner, tasks_count=1)
         TemplateOwner.objects.create(
             template=template,
@@ -1872,7 +1872,7 @@ class TestTaskDeleteGroupPerformer:
         # arrange
         template_owner = create_test_user()
         request_user = create_test_user(email='user3@test.test')
-        group = create_test_group(user=request_user)
+        group = create_test_group(template_owner.account)
         api_client.token_authenticate(request_user)
         workflow = create_test_workflow(template_owner)
         task = workflow.current_task_instance
@@ -1898,7 +1898,7 @@ class TestTaskDeleteGroupPerformer:
     ):
         # arrange
         request_user = create_test_user()
-        group = create_test_group(user=request_user)
+        group = create_test_group(request_user.account)
         workflow = create_test_workflow(request_user)
         task = workflow.current_task_instance
         service_delete_performer_mock = mocker.patch(
@@ -1923,7 +1923,7 @@ class TestTaskDeleteGroupPerformer:
     ):
         # arrange
         request_user = create_test_user()
-        group = create_test_group(user=request_user)
+        group = create_test_group(request_user.account)
         api_client.token_authenticate(request_user)
         create_test_workflow(request_user)
         not_existent_task_id = 999
@@ -1950,7 +1950,7 @@ class TestTaskDeleteGroupPerformer:
 
         # arrange
         request_user = create_test_user()
-        group = create_test_group(user=request_user)
+        group = create_test_group(request_user.account)
         workflow = create_test_workflow(request_user)
         task = workflow.current_task_instance
         api_client.token_authenticate(request_user)

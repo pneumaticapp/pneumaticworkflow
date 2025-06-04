@@ -37,14 +37,14 @@ def test_list__ok(api_client):
     # arrange
     user = create_test_user()
     group_1 = create_test_group(
+        user.account,
         name='group_1',
-        user=user,
-        users=[user, ]
+        users=[user]
     )
     group_2 = create_test_group(
+        user.account,
         name='group_2',
-        user=user,
-        users=[user, ]
+        users=[user]
     )
     api_client.token_authenticate(user)
 
@@ -147,8 +147,8 @@ def test_list__filter_group__ok(api_client):
         email='additional@test.test'
     )
     group = create_test_group(
-        user=user,
-        users=[user, another_user, ]
+        account,
+        users=[user, another_user]
     )
     api_client.token_authenticate(user)
 
@@ -179,13 +179,13 @@ def test_list__group_multiple_values__ok(api_client):
         email='additional@test.test'
     )
     group_1 = create_test_group(
+        account,
         name='test',
-        user=user,
-        users=[another_user, ]
+        users=[another_user]
     )
     group_2 = create_test_group(
-        user=user,
-        users=[user, ]
+        account,
+        users=[user]
     )
     api_client.token_authenticate(user)
 
@@ -712,10 +712,7 @@ def test_list__remove_transferred__new_account_ok(
 
     # arrange
     account_1 = create_test_account(name='transfer from')
-    account_2 = create_test_account(
-        name='transfer to',
-        plan=BillingPlanType.PREMIUM
-    )
+    account_2 = create_test_account(name='transfer to')
     user_to_transfer = create_test_user(
         account=account_1,
         email='user_to_transfer@test.test',

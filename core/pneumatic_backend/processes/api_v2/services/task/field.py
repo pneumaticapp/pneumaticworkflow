@@ -93,65 +93,6 @@ class TaskFieldService(BaseWorkflowService):
             clear_value=MarkdownService.clear(raw_value)
         )
 
-    def __get_selections_values_by_ids(
-        self,
-        selection_ids: list,
-        selections: Iterable[FieldTemplateSelection]
-    ) -> str:
-
-        # TODO Remove in https://my.pneumatic.app/workflows/34311/
-        try:
-            # TODO raw_value FieldTemplateSelection id
-            #   Remove in https://my.pneumatic.app/workflows/34311/
-            selections_ids = [
-                int(selection_id) for selection_id in selection_ids
-            ]
-        except (ValueError, TypeError):
-            raise TaskFieldException(
-                api_name=self.instance.api_name,
-                message=messages.MSG_PW_0030
-            )
-        else:
-            selections_values = list(
-                selections.by_ids(
-                    selections_ids
-                ).values_list('value', flat=True)
-            )
-            if len(selections_values) < len(selections_ids):
-                raise TaskFieldException(
-                    api_name=self.instance.api_name,
-                    message=messages.MSG_PW_0031
-                )
-            else:
-                return ', '.join(selections_values)
-
-    def __get_selection_value_by_id(
-        self,
-        selection_id: str,
-        selections: Iterable[FieldTemplateSelection]
-    ) -> str:
-
-        # TODO Remove in https://my.pneumatic.app/workflows/34311/
-
-        try:
-            # raw_value FieldTemplateSelection id
-            selection_id = int(selection_id)
-        except (ValueError, TypeError):
-            raise TaskFieldException(
-                api_name=self.instance.api_name,
-                message=messages.MSG_PW_0028
-            )
-        try:
-            # FieldTemplate selections
-            selection = selections.get(id=selection_id)
-        except ObjectDoesNotExist:
-            raise TaskFieldException(
-                api_name=self.instance.api_name,
-                message=messages.MSG_PW_0028
-            )
-        else:
-            return selection.value
-
     def _get_valid_radio_value(
         self,
         raw_value: str,
@@ -169,21 +110,10 @@ class TaskFieldService(BaseWorkflowService):
         try:
             selection = selections.get(api_name=raw_value)
         except ObjectDoesNotExist:
-            # TODO Remove in https://my.pneumatic.app/workflows/34311/
-            value = self.__get_selection_value_by_id(
-                selection_id=raw_value,
-                selections=selections
+            raise TaskFieldException(
+                api_name=self.instance.api_name,
+                message=messages.MSG_PW_0028
             )
-            return FieldData(
-                value=value,
-                markdown_value=value,
-                clear_value=MarkdownService.clear(value)
-            )
-            # TODO Uncomment in https://my.pneumatic.app/workflows/34311/
-            # raise TaskFieldException(
-            #     api_name=self.instance.api_name,
-            #     message=messages.MSG_PW_0028
-            # )
         else:
             return FieldData(
                 value=selection.value,
@@ -214,16 +144,10 @@ class TaskFieldService(BaseWorkflowService):
             selections.by_api_names(raw_value).values_list('value', flat=True)
         )
         if len(selections_values) < len(raw_value):
-            # TODO Remove in https://my.pneumatic.app/workflows/34311/
-            value = self.__get_selections_values_by_ids(
-                selection_ids=raw_value,
-                selections=selections
+            raise TaskFieldException(
+                api_name=self.instance.api_name,
+                message=messages.MSG_PW_0031
             )
-            # TODO Uncomment in https://my.pneumatic.app/workflows/34311/
-            # raise TaskFieldException(
-            #     api_name=self.instance.api_name,
-            #     message=messages.MSG_PW_0031
-            # )
         else:
             value = ', '.join(selections_values)
         return FieldData(
@@ -456,24 +380,13 @@ class TaskFieldService(BaseWorkflowService):
     ) -> Set:
 
         if self.instance.type in FieldType.TYPES_WITH_SELECTION:
-            try:
-                # TODO Remove in https://my.pneumatic.app/workflows/34311/
-                # selection id
-                value = {int(raw_value)}
-            except ValueError:
-                # selection api_name
-                value = {raw_value}
+            # selection api_name
+            value = {raw_value}
         else:
             value = set()
             for el in raw_value:
-                try:
-                    # TODO Remove in
-                    #  https://my.pneumatic.app/workflows/34311/
-                    # selection id
-                    value.add(int(el))
-                except ValueError:
-                    # selection api_name
-                    value.add(el)
+                # selection api_name
+                value.add(el)
         return value
 
     def _create_selections_with_value(
@@ -500,8 +413,6 @@ class TaskFieldService(BaseWorkflowService):
                     field_id=self.instance.id,
                     is_selected=(
                         selection_template.api_name in selections_values
-                        # Remove in https://my.pneumatic.app/workflows/34311/
-                        or selection_template.id in selections_values
                     )
                 )
 
@@ -527,11 +438,7 @@ class TaskFieldService(BaseWorkflowService):
                     user=self.user
                 )
                 selection_service.partial_update(
-                    is_selected=(
-                        selection.api_name in selections_values
-                        # Remove in https://my.pneumatic.app/workflows/34311/
-                        or selection.id in selections_values
-                    ),
+                    is_selected=selection.api_name in selections_values,
                     force_save=True
                 )
 

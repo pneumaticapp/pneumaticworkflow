@@ -352,7 +352,7 @@ def test_delete__free_plan__ok(
     billing_sync,
 ):
     # arrange
-    master_account = create_test_account(plan=BillingPlanType.UNLIMITED)
+    master_account = create_test_account()
     master_account_owner = create_test_user(account=master_account)
     tenant_account = create_test_account(
         name='tenant',
@@ -414,7 +414,7 @@ def test_delete__free_plan__ok(
 
 def test_delete__not_exists__permission_denied(api_client, mocker):
     # arrange
-    master_account = create_test_account(plan=BillingPlanType.UNLIMITED)
+    master_account = create_test_account()
     master_account_owner = create_test_user(account=master_account)
     api_client.token_authenticate(master_account_owner)
     cancel_subscription_mock = mocker.patch(
@@ -433,7 +433,7 @@ def test_delete__not_exists__permission_denied(api_client, mocker):
 def test_delete__another_account_tenant__permission_denied(mocker, api_client):
 
     # arrange
-    master_account = create_test_account(plan=BillingPlanType.UNLIMITED)
+    master_account = create_test_account()
     master_account_owner = create_test_user(account=master_account)
     another_tenant_account = create_test_account(
         name='tenant',

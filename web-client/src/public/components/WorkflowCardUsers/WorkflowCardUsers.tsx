@@ -22,20 +22,22 @@ export function WorkflowCardUsers({ users, maxUsers = MAX_SHOW_USERS }: IWorkflo
   return (
     <div className={styles['card-users']}>
       {users.slice(0, maxUsers).map(({ type, sourceId }) => {
-        return <UserDataWithGroup idItem={sourceId} type={type}>
-          {(user) => {
-            return (
-              <Avatar
-                key={user?.id}
-                user={user}
-                containerClassName={styles['card-user']}
-                showInitials={false}
-                withTooltip
-                size="sm"
-              />
-            );
-          }}
-        </UserDataWithGroup>;
+        return (
+          <UserDataWithGroup idItem={sourceId} type={type} key={`${type}-${sourceId}`}>
+            {(user) => {
+              return (
+                <Avatar
+                  key={user?.id}
+                  user={user}
+                  containerClassName={styles['card-user']}
+                  showInitials={false}
+                  withTooltip
+                  size="sm"
+                />
+              );
+            }}
+          </UserDataWithGroup>
+        );
       })}
       {Boolean(usersLeft) && <span className={styles['card-users__more']}>+{usersLeft}</span>}
     </div>

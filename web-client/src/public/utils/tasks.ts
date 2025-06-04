@@ -7,7 +7,9 @@ import {
   TTaskChecklist,
 } from '../types/tasks';
 
-export const getNormalizedTask = (task: ITaskAPI): ITask => {
+export const getNormalizedTask = (
+  task: ITaskAPI,
+): Omit<ITaskAPI, 'checklists'> & { checklists: TTaskChecklists; areChecklistsHandling: boolean } => {
   const normalizedChecklists: TTaskChecklists = {};
 
   task.checklists.forEach((checklist) => {

@@ -38,6 +38,7 @@ from pneumatic_backend.processes.api_v2.serializers.template.mixins import (
 from pneumatic_backend.processes.api_v2.serializers.template.task import (
     TaskTemplateSerializer,
     TemplateTaskOnlyFieldsSerializer,
+    TaskTemplatePrivilegesSerializer
 )
 from pneumatic_backend.processes.api_v2.serializers.template.kickoff import (
     KickoffSerializer,
@@ -495,11 +496,13 @@ class TemplateSerializer(
             int(owner.get('source_id'))
             for owner in self.owners_data
             if owner.get('type') == OwnerType.USER
+            and owner.get('source_id') is not None
         }
         self.new_groups_owners_ids = {
             int(owner.get('source_id'))
             for owner in self.owners_data
             if owner.get('type') == OwnerType.GROUP
+            and owner.get('source_id') is not None
         }
         self.users_in_groups_owners_ids = (
             UserModel.objects
@@ -883,3 +886,22 @@ class TemplateExportFilterSerializer(
 
     def validate_owners_group_ids(self, value):
         return self.get_valid_list_integers(value)
+
+
+class TemplateUserPrivilegesSerializer(
+    CustomValidationErrorMixin,
+    ModelSerializer
+):
+    class Meta:
+        model = Template
+        fields = (
+            'id',
+            'name',
+            'is_active',
+            'is_public',
+            'owners',
+            'tasks',
+        )
+
+    owners = TemplateOwnerSerializer(many=True)
+    tasks = TaskTemplatePrivilegesSerializer(many=True)

@@ -26,10 +26,6 @@ from pneumatic_backend.processes.api_v2.services.task.task import TaskService
 from pneumatic_backend.analytics.actions import (
     WorkflowActions
 )
-from pneumatic_backend.webhooks.models import WebHook
-from pneumatic_backend.processes.tasks.webhooks import (
-    send_workflow_started_webhook,
-)
 from pneumatic_backend.analytics.services import AnalyticService
 from pneumatic_backend.authentication.enums import AuthTokenType
 
@@ -206,12 +202,6 @@ class WorkflowService(
             service.api_request(
                 template=self.instance.template,
                 user_agent=kwargs.get('user_agent')
-            )
-        if WebHook.objects.on_account(self.account.id).wf_started().exists():
-            send_workflow_started_webhook.delay(
-                user_id=self.user.id,
-                account_id=self.account.id,
-                payload=self.instance.webhook_payload()
             )
 
     def update_owners(self):

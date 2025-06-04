@@ -7,6 +7,14 @@
   all: unset;
   display: flex;
 }
+.dropdown-toggle-centered {
+  align-items: center;
+  height: 100%;
+}
+
+.dropdown-toggle-centered-container {
+  height: 100%;
+}
 
 .dropdown-menu {
   z-index: 1000;
@@ -75,6 +83,9 @@
       opacity: 1;
     }
   }
+}
+.dropdown-item-mobile {
+  justify-content: space-between;
 }
 
 .dropdown-menu .dropdown-item_black {

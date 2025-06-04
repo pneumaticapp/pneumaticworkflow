@@ -167,14 +167,16 @@ def test_send__connection_error__create_log(mocker):
     service = WebhookDeliverer()
 
     # act
-    service.send(
-        event=event,
-        user_id=user.id,
-        account_id=account.id,
-        payload=payload
-    )
+    with pytest.raises(ConnectionError) as ex:
+        service.send(
+            event=event,
+            user_id=user.id,
+            account_id=account.id,
+            payload=payload
+        )
 
     # assert
+    assert str(ex.value) == '=('
     post_mock.assert_called_once_with(
         url=webhook.target,
         data=json.dumps(
@@ -204,7 +206,7 @@ def test_send__connection_error__create_log(mocker):
         account_id=account.id,
         status=AccountEventStatus.FAILED,
         http_status=None,
-        response_data={'ConnectionError': str(ex)},
+        response_data={'ConnectionError': str(ex.value)},
         user_id=user.id
     )
     capture_sentry_mock.assert_called_once()
@@ -436,6 +438,85 @@ def test_send__not_found__ok(mocker):
             'response': {
                 'request_url': webhook.target,
                 'response_status': 404,
+            }
+        },
+        user_id=user.id
+    )
+    capture_sentry_mock.assert_called_once()
+
+
+def test_send__internal_server_error__raise_exception(mocker):
+
+    # arrange
+    account = create_test_account()
+    user = create_test_user(account=account)
+    event = HookEvent.WORKFLOW_STARTED
+    webhook = create_test_webhook(user=user, event=event)
+    payload = {'workflow': 'value'}
+    response_mock = mocker.Mock(
+        ok=False,
+        status_code=500,
+        headers={'content-type': 'text/html'},
+        text='internal server error'
+    )
+    post_mock = mocker.Mock(return_value=response_mock)
+    mocker.patch(
+        'pneumatic_backend.webhooks.services.requests',
+        post=post_mock
+    )
+    webhook_log_mock = mocker.patch(
+        'pneumatic_backend.webhooks.services.AccountLogService.webhook'
+    )
+    capture_sentry_mock = mocker.patch(
+        'pneumatic_backend.webhooks.services.capture_sentry_message'
+    )
+    service = WebhookDeliverer()
+
+    # act
+    with pytest.raises(ConnectionError) as ex:
+        service.send(
+            event=event,
+            user_id=user.id,
+            account_id=account.id,
+            payload=payload
+        )
+
+    # assert
+    assert str(ex.value) == 'Error sending webhook (500)'
+    post_mock.assert_called_once_with(
+        url=webhook.target,
+        data=json.dumps(
+            {
+                'hook': {
+                    'id': webhook.id,
+                    'event': webhook.event,
+                    'target': webhook.target,
+                },
+                'workflow': 'value'
+            },
+            cls=DjangoJSONEncoder
+        ),
+        headers={'Content-Type': 'application/json'}
+    )
+    webhook_log_mock.assert_called_once_with(
+        title=f'Webhook: {event}',
+        path=webhook.target,
+        request_data={
+            'hook': {
+                'id': webhook.id,
+                'event': event,
+                'target': webhook.target
+            },
+            'workflow': 'value'
+        },
+        account_id=account.id,
+        status=AccountEventStatus.FAILED,
+        http_status=500,
+        response_data={
+            'response': {
+                'request_url': webhook.target,
+                'response_status': 500,
+                'response_text': 'internal server error'
             }
         },
         user_id=user.id

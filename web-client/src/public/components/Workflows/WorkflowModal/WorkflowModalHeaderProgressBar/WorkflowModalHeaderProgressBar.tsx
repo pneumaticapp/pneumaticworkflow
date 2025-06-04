@@ -1,6 +1,7 @@
 import * as React from 'react';
 import classnames from 'classnames';
 
+import { ConfirmableDropdownItem } from '../../../UI/Dropdown/ConfirmableDropdownItem';
 import { CircleProgressBar } from '../../../CircleProgressBar';
 import { EProgressbarColor, ProgressBar } from '../../../ProgressBar';
 import { IWorkflowDetails } from '../../../../types/workflow';
@@ -54,7 +55,7 @@ export function WorkflowModalHeaderProgressBar({
           return (
             <div className={styles['action-buttons']}>
               {getNormalizedControlls(controllOptions).map((option) => {
-                const { Icon, onClick, label, subOptions, isHidden } = option;
+                const { Icon, onClick, label, mapKey, subOptions, isHidden } = option;
                 if (isHidden) {
                   return null;
                 }
@@ -74,12 +75,35 @@ export function WorkflowModalHeaderProgressBar({
                     </Tag>
                   );
                 };
+                const labelWithConfirmation = option.label === 'Delete' || option.label === 'End workflow';
 
                 return (
-                  <div className={styles['action-buttons__button-wrapper']}>
-                    {!subOptions ? (
-                      renderControl(onClick)
-                    ) : (
+                  <div
+                    key={typeof label === 'string' ? label : mapKey}
+                    className={styles['action-buttons__button-wrapper']}
+                  >
+                    {labelWithConfirmation && (
+                      <ConfirmableDropdownItem
+                        withConfirmation
+                        initialConfirmationState="option"
+                        closeDropdown={() => {}}
+                        cssModule={{
+                          'dropdown-item': classnames(
+                            styles['action-buttons__button'],
+                            getDropdownItemColorClass(option.color),
+                          ),
+                        }}
+                        onClick={() => onClick && onClick(() => {})}
+                        toggle={false}
+                        tag="button"
+                      >
+                        <>
+                          {Icon && <Icon />}
+                          <span className={styles['action-buttons__button-text']}>{label}</span>
+                        </>
+                      </ConfirmableDropdownItem>
+                    )}
+                    {subOptions && (
                       <Dropdown
                         renderToggle={() => renderControl()}
                         options={subOptions}
@@ -87,6 +111,7 @@ export function WorkflowModalHeaderProgressBar({
                         className={styles['dropdown-container']}
                       />
                     )}
+                    {!subOptions && !labelWithConfirmation && renderControl(onClick)}
                   </div>
                 );
               })}

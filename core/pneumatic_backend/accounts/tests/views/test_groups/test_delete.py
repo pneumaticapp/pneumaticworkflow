@@ -18,9 +18,9 @@ pytestmark = pytest.mark.django_db
 def test_groups_delete_group_ok(api_client, mocker):
 
     # arrange
-    account = create_test_account(plan=BillingPlanType.PREMIUM)
+    account = create_test_account()
     user = create_test_user(account=account)
-    group = create_test_group(user=user, users=[user, ])
+    group = create_test_group(account, users=[user])
     service_init_mock = mocker.patch.object(
         UserGroupService,
         attribute='__init__',
@@ -56,7 +56,7 @@ def test_delete__group_owner_removed_from_workflow_in_all_plan__ok(
     # Arrange
     account = create_test_account(plan=plan)
     user = create_test_user(account=account)
-    group_to_delete = create_test_group(user=user, users=[user])
+    group_to_delete = create_test_group(account, users=[user])
     service_init_mock = mocker.patch.object(
         UserGroupService,
         attribute='__init__',
@@ -87,9 +87,9 @@ def test_delete__group_owner_removed_from_workflow_in_all_plan__ok(
 def test_delete__not_admin__permission_denied(api_client, mocker):
 
     # arrange
-    account = create_test_account(plan=BillingPlanType.UNLIMITED)
+    account = create_test_account()
     user = create_test_user(account=account)
-    group_to_delete = create_test_group(user=user, users=[user, ])
+    group_to_delete = create_test_group(account, users=[user])
     no_admin_user = create_test_user(
         account=account,
         email='no_admin@test.com',
@@ -121,9 +121,9 @@ def test_delete__not_admin__permission_denied(api_client, mocker):
 def test_delete__not_auth__permission_denied(api_client, mocker):
 
     # arrange
-    account = create_test_account(plan=BillingPlanType.UNLIMITED)
+    account = create_test_account()
     user = create_test_user(account=account)
-    group = create_test_group(user=user, users=[user, ])
+    group = create_test_group(account, users=[user])
     service_init_mock = mocker.patch.object(
         UserGroupService,
         attribute='__init__',
@@ -153,7 +153,7 @@ def test_delete__expired_subscription__permission_denied(api_client, mocker):
         plan_expiration=timezone.now() - datetime.timedelta(hours=1)
     )
     user = create_test_user(account=account)
-    group = create_test_group(user=user, users=[user, ])
+    group = create_test_group(account, users=[user])
     service_init_mock = mocker.patch.object(
         UserGroupService,
         attribute='__init__',

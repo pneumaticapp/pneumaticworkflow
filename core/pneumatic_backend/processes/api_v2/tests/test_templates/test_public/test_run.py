@@ -41,7 +41,6 @@ class TestRunPublicTemplate:
         self,
         mocker,
         api_client,
-        session_mock
     ):
 
         # arrange
@@ -312,7 +311,6 @@ class TestRunPublicTemplate:
         self,
         mocker,
         api_client,
-        session_mock
     ):
 
         # arrange
@@ -472,7 +470,6 @@ class TestRunPublicTemplate:
         self,
         mocker,
         api_client,
-        session_mock,
     ):
 
         # arrange
@@ -528,7 +525,6 @@ class TestRunPublicTemplate:
         self,
         mocker,
         api_client,
-        session_mock,
     ):
 
         # arrange
@@ -579,7 +575,7 @@ class TestRunPublicTemplate:
         get_token_mock.assert_called_once()
         get_template_mock.assert_called_once_with(token)
 
-    def test_run__not_fields__ok(self, mocker, api_client, session_mock):
+    def test_run__not_fields__ok(self, mocker, api_client):
 
         # arrange
         user = create_test_user()
@@ -638,7 +634,7 @@ class TestRunPublicTemplate:
         get_token_mock.assert_called_once()
         get_template_mock.assert_called_once_with(token)
 
-    def test_run__null_fields__ok(self, mocker, api_client, session_mock):
+    def test_run__null_fields__ok(self, mocker, api_client):
 
         # arrange
         user = create_test_user()
@@ -690,7 +686,6 @@ class TestRunPublicTemplate:
         self,
         mocker,
         api_client,
-        session_mock
     ):
 
         # arrange
@@ -767,7 +762,6 @@ class TestRunPublicTemplate:
         self,
         mocker,
         api_client,
-        session_mock,
     ):
         # arrange
         user = create_test_user()
@@ -826,7 +820,6 @@ class TestRunPublicTemplate:
         self,
         mocker,
         api_client,
-        session_mock
     ):
 
         # arrange
@@ -909,7 +902,6 @@ class TestRunPublicTemplate:
         self,
         mocker,
         api_client,
-        session_mock
     ):
 
         # arrange
@@ -997,7 +989,6 @@ class TestRunPublicTemplate:
         self,
         mocker,
         api_client,
-        session_mock,
     ):
 
         # arrange
@@ -1053,7 +1044,6 @@ class TestRunPublicTemplate:
         self,
         mocker,
         api_client,
-        session_mock
     ):
 
         # arrange
@@ -1131,7 +1121,6 @@ class TestRunPublicTemplate:
         self,
         mocker,
         api_client,
-        session_mock
     ):
 
         # arrange
@@ -1220,7 +1209,6 @@ class TestRunPublicTemplate:
         self,
         mocker,
         api_client,
-        session_mock
     ):
 
         # arrange
@@ -1324,7 +1312,6 @@ class TestRunPublicTemplate:
         self,
         mocker,
         api_client,
-        session_mock
     ):
 
         # arrange
@@ -1413,7 +1400,6 @@ class TestRunPublicTemplate:
         self,
         mocker,
         api_client,
-        session_mock
     ):
 
         # arrange
@@ -1474,7 +1460,6 @@ class TestRunEmbedTemplate:
         self,
         mocker,
         api_client,
-        session_mock
     ):
 
         # arrange
@@ -1665,7 +1650,6 @@ class TestRunEmbedTemplate:
         self,
         mocker,
         api_client,
-        session_mock,
     ):
 
         # arrange
@@ -1717,7 +1701,6 @@ class TestRunEmbedTemplate:
         self,
         mocker,
         api_client,
-        session_mock
     ):
 
         # arrange
@@ -1793,7 +1776,6 @@ class TestRunEmbedTemplate:
         self,
         mocker,
         api_client,
-        session_mock
     ):
 
         # arrange
@@ -1883,7 +1865,6 @@ class TestRunEmbedTemplate:
         self,
         mocker,
         api_client,
-        session_mock
     ):
 
         # arrange
@@ -1987,7 +1968,6 @@ class TestRunEmbedTemplate:
         self,
         mocker,
         api_client,
-        session_mock
     ):
 
         # arrange
@@ -2073,7 +2053,6 @@ class TestRunEmbedTemplate:
         self,
         mocker,
         api_client,
-        session_mock
     ):
 
         # arrange

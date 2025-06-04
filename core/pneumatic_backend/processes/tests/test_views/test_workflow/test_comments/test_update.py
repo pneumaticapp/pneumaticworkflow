@@ -40,9 +40,10 @@ def test_update__author__only_text__ok(api_client, mocker):
         account=owner.account
     )
     workflow = create_test_workflow(user)
+    task = workflow.tasks.active().first()
     event = WorkflowEventService.comment_created_event(
         text='Some comment',
-        workflow=workflow,
+        task=task,
         user=user,
         after_create_actions=False
     )
@@ -77,10 +78,11 @@ def test_update_text_and_attachment__ok(mocker, api_client):
     # assert
     user = create_test_user()
     workflow = create_test_workflow(user)
+    task = workflow.tasks.active().first()
     event = WorkflowEventService.comment_created_event(
         user=user,
         text='Some comment',
-        workflow=workflow,
+        task=task,
         attachments=[1, 2],
         after_create_actions=False
     )
@@ -153,10 +155,11 @@ def test_update__remove_attachment__null__ok(mocker, api_client):
     # assert
     user = create_test_user()
     workflow = create_test_workflow(user)
+    task = workflow.tasks.active().first()
     event = WorkflowEventService.comment_created_event(
         user=user,
         text='Some comment',
-        workflow=workflow,
+        task=task,
         attachments=[1],
         after_create_actions=False
     )
@@ -207,10 +210,11 @@ def test_update__remove_attachment__empty_list__ok(mocker, api_client):
     # assert
     user = create_test_user()
     workflow = create_test_workflow(user)
+    task = workflow.tasks.active().first()
     event = WorkflowEventService.comment_created_event(
         user=user,
         text='Some comment',
-        workflow=workflow,
+        task=task,
         attachments=[1],
         after_create_actions=False
     )
@@ -261,10 +265,11 @@ def test_update_remove_text__null__ok(mocker, api_client):
     # assert
     user = create_test_user()
     workflow = create_test_workflow(user)
+    task = workflow.tasks.active().first()
     event = WorkflowEventService.comment_created_event(
         user=user,
         text='Some comment',
-        workflow=workflow,
+        task=task,
         attachments=[1, 2],
         after_create_actions=False
     )
@@ -336,10 +341,11 @@ def test_update_remove_text__blank__ok(mocker, api_client):
     # assert
     user = create_test_user()
     workflow = create_test_workflow(user)
+    task = workflow.tasks.active().first()
     event = WorkflowEventService.comment_created_event(
         user=user,
         text='Some comment',
-        workflow=workflow,
+        task=task,
         attachments=[1, 2],
         after_create_actions=False
     )
@@ -412,9 +418,10 @@ def test_update__admin__ok(api_client, mocker):
     task = workflow.current_task_instance
     task.performers.add(user)
     workflow.members.add(user)
+    task = workflow.tasks.active().first()
     event = WorkflowEventService.comment_created_event(
         text='Some comment',
-        workflow=workflow,
+        task=task,
         user=user,
         after_create_actions=False
     )
@@ -480,9 +487,10 @@ def test_update__not_admin__ok(api_client, mocker):
     task = workflow.current_task_instance
     task.performers.add(user)
     workflow.members.add(user)
+    task = workflow.tasks.active().first()
     event = WorkflowEventService.comment_created_event(
         text='Some comment',
-        workflow=workflow,
+        task=task,
         user=user,
         after_create_actions=False
     )
@@ -554,10 +562,11 @@ def test_update__guest__ok(mocker, api_client):
         user_id=guest.id,
         account_id=account.id
     )
+    task = workflow.tasks.active().first()
     event = WorkflowEventService.comment_created_event(
         user=guest,
         text='Some comment',
-        workflow=workflow,
+        task=task,
         after_create_actions=False
     )
     event.updated = timezone.now() + timedelta(hours=1)
@@ -620,9 +629,10 @@ def test_update__guest_another_workflow__permission_denied(
         is_account_owner=True,
     )
     workflow_1 = create_test_workflow(account_owner, tasks_count=1)
+    task = workflow_1.tasks.active().first()
     event = WorkflowEventService.comment_created_event(
         text='Some comment',
-        workflow=workflow_1,
+        task=task,
         user=account_owner,
         after_create_actions=False
     )
@@ -684,9 +694,10 @@ def test_update__service_exception__validation_error(
     # arrange
     user = create_test_user()
     workflow = create_test_workflow(user)
+    task = workflow.tasks.active().first()
     event = WorkflowEventService.comment_created_event(
         text='Some comment',
-        workflow=workflow,
+        task=task,
         user=user,
         after_create_actions=False
     )
@@ -740,7 +751,7 @@ def test_update__another_user_comment__permission_denied(api_client, mocker):
     task.performers.add(user)
     event = WorkflowEventService.comment_created_event(
         text='Some comment',
-        workflow=workflow,
+        task=task,
         user=owner,
         after_create_actions=False
     )

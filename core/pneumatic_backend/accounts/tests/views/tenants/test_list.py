@@ -59,7 +59,6 @@ def test_list__free__ok(
 ):
     # arrange
     master_account = create_test_account(
-        plan=BillingPlanType.FREEMIUM,
         lease_level=LeaseLevel.STANDARD
     )
     master_account_owner = create_test_user(account=master_account)
@@ -96,7 +95,6 @@ def test_list__tenant__permission_denied(
 ):
     # arrange
     account = create_test_account(
-        plan=BillingPlanType.UNLIMITED,
         lease_level=LeaseLevel.TENANT,
     )
     master_account_owner = create_test_user(account=account)
@@ -131,9 +129,7 @@ def test_list__not_admin__permission_denied(
     api_client,
 ):
     # arrange
-    master_account = create_test_account(
-        plan=BillingPlanType.UNLIMITED,
-    )
+    master_account = create_test_account()
     master_account_owner = create_test_user(
         account=master_account,
         is_account_owner=False,

@@ -2,6 +2,10 @@ import pytest
 from datetime import timedelta
 from django.conf import settings
 from django.utils import timezone
+from pneumatic_backend.accounts.serializers.notifications import (
+    NotificationTaskSerializer,
+    NotificationWorkflowSerializer,
+)
 from pneumatic_backend.processes.tests.fixtures import (
     create_test_workflow,
     create_test_user,
@@ -44,7 +48,7 @@ def test_send_unread_notifications__call_all_services__ok(mocker):
     comment = WorkflowEventService.comment_created_event(
         user=user_2,
         text='Notify',
-        workflow=workflow,
+        task=task,
         after_create_actions=False
     )
     not_read_timeout_date = (
@@ -58,7 +62,13 @@ def test_send_unread_notifications__call_all_services__ok(mocker):
         user=user,
         type=NotificationType.COMMENT,
         text=comment.text,
-        task=comment.task,
+        task_json=NotificationTaskSerializer(
+            instance=comment.task,
+            notification_type=NotificationType.COMMENT
+        ).data,
+        workflow_json=NotificationWorkflowSerializer(
+            instance=comment.task.workflow
+        ).data,
     )
     notification.datetime = not_read_timeout_date
     notification.save(update_fields=['datetime'])
@@ -106,7 +116,7 @@ def test_send_unread_notifications__second_mailing__not_sent(mocker):
     comment = WorkflowEventService.comment_created_event(
         user=user_2,
         text='Notify',
-        workflow=workflow,
+        task=task,
         after_create_actions=False
     )
 
@@ -120,7 +130,14 @@ def test_send_unread_notifications__second_mailing__not_sent(mocker):
         account_id=comment.user.account_id,
         user=user,
         type=NotificationType.COMMENT,
-        task=comment.task,
+        text=comment.text,
+        task_json=NotificationTaskSerializer(
+            instance=comment.task,
+            notification_type=NotificationType.COMMENT
+        ).data,
+        workflow_json=NotificationWorkflowSerializer(
+            instance=comment.task.workflow
+        ).data,
     )
     notification.datetime = not_read_timeout_date
     notification.save(update_fields=['datetime'])
@@ -154,7 +171,7 @@ def test_send_unread_notifications__not_read_timeout__not_sent(mocker):
     comment = WorkflowEventService.comment_created_event(
         user=user_2,
         text='Notify',
-        workflow=workflow,
+        task=task,
         after_create_actions=False
     )
     not_read_timeout_date = (
@@ -168,7 +185,13 @@ def test_send_unread_notifications__not_read_timeout__not_sent(mocker):
         user=user,
         type=NotificationType.COMMENT,
         text=comment.text,
-        task=comment.task,
+        task_json=NotificationTaskSerializer(
+            instance=comment.task,
+            notification_type=NotificationType.COMMENT
+        ).data,
+        workflow_json=NotificationWorkflowSerializer(
+            instance=comment.task.workflow
+        ).data,
     )
     notification.datetime = not_read_timeout_date
     notification.save(update_fields=['datetime'])
@@ -200,7 +223,7 @@ def test_send_unread_notifications__deleted__not_sent(mocker):
     comment = WorkflowEventService.comment_created_event(
         user=user_2,
         text='Notify',
-        workflow=workflow,
+        task=task,
         after_create_actions=False
     )
     not_read_timeout_date = (
@@ -214,7 +237,13 @@ def test_send_unread_notifications__deleted__not_sent(mocker):
         user=user,
         type=NotificationType.COMMENT,
         text=comment.text,
-        task=comment.task,
+        task_json=NotificationTaskSerializer(
+            instance=comment.task,
+            notification_type=NotificationType.COMMENT
+        ).data,
+        workflow_json=NotificationWorkflowSerializer(
+            instance=comment.task.workflow
+        ).data,
     )
     notification.datetime = not_read_timeout_date
     notification.save(update_fields=['datetime'])
@@ -249,7 +278,7 @@ def test_send_unread_notifications__not_subscriber__not_sent(mocker):
     comment = WorkflowEventService.comment_created_event(
         user=user_2,
         text='Notify',
-        workflow=workflow,
+        task=task,
         after_create_actions=False
     )
     not_read_timeout_date = (
@@ -263,7 +292,13 @@ def test_send_unread_notifications__not_subscriber__not_sent(mocker):
         user=user,
         type=NotificationType.COMMENT,
         text=comment.text,
-        task=comment.task,
+        task_json=NotificationTaskSerializer(
+            instance=comment.task,
+            notification_type=NotificationType.COMMENT
+        ).data,
+        workflow_json=NotificationWorkflowSerializer(
+            instance=comment.task.workflow
+        ).data,
     )
     notification.datetime = not_read_timeout_date
     notification.save(update_fields=['datetime'])
@@ -303,7 +338,13 @@ def test_send_unread_notifications__owner_invited_in_another_acc__ok(mocker):
         account=account,
         user=account_owner,
         type=NotificationType.URGENT,
-        task=task,
+        task_json=NotificationTaskSerializer(
+            instance=task,
+            notification_type=NotificationType.URGENT
+        ).data,
+        workflow_json=NotificationWorkflowSerializer(
+            instance=workflow
+        ).data,
     )
     not_read_timeout_date = (
         timezone.now()

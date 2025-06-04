@@ -119,7 +119,6 @@ class TestRetrievePublicTemplate:
         self,
         api_client,
         mocker,
-        session_mock,
     ):
 
         # arrange
@@ -327,7 +326,6 @@ class TestRetrieveEmbedTemplate:
         self,
         api_client,
         mocker,
-        session_mock,
     ):
 
         # arrange

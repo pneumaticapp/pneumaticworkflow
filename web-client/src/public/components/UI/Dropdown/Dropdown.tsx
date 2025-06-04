@@ -8,10 +8,12 @@ import { isArrayWithItems } from '../../../utils/helpers';
 import { ArrowRightIcon } from '../../icons';
 
 import styles from './Dropdown.css';
+import { useCheckDevice } from '../../../hooks/useCheckDevice';
 
 type TDropdownItemColor = 'black' | 'green' | 'red' | 'orange';
 
 export type TDropdownOption = {
+  mapKey?: string;
   label: React.ReactNode;
   withConfirmation?: boolean;
   initialConfirmationState?: TDropdownItemState;
@@ -27,7 +29,7 @@ export type TDropdownOption = {
 };
 
 export interface IDropdownProps {
-  options: TDropdownOption[] | TDropdownOption;
+  options: TDropdownOption[] | TDropdownOption | [];
   direction?: 'right' | 'left';
   className?: string;
   toggleProps?: { [key in string]: string };
@@ -35,6 +37,8 @@ export interface IDropdownProps {
   renderToggle(isOpen: boolean): React.ReactNode;
   renderMenuContent?(renderedOptions: React.ReactNode): React.ReactNode;
   CustomDropdownMenu?(props: IDropdownMenuProps): JSX.Element;
+  isFromBreakdownItem?: boolean;
+  isDisabled?: boolean;
 }
 
 export const getDropdownItemColorClass = (color: TDropdownItemColor = 'black') => {
@@ -57,10 +61,13 @@ export function Dropdown({
   renderToggle,
   renderMenuContent,
   CustomDropdownMenu,
+  isFromBreakdownItem,
+  isDisabled = false,
 }: IDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
-
+  const { isDesktop, isMobile } = useCheckDevice();
   const onToggle = () => {
+    if (isDisabled) return;
     setIsOpen((prev) => !prev);
   };
 
@@ -87,6 +94,7 @@ export function Dropdown({
     const renderedOptions = items.map((option) => {
       const {
         label,
+        mapKey,
         customSubOption,
         color,
         subOptions,
@@ -115,7 +123,7 @@ export function Dropdown({
 
       if (customSubOption || (subOptions && Array.isArray(subOptions) && isArrayWithItems(subOptions))) {
         return (
-          <UncontrolledDropdown key={customSubOption?.props.uniqKey} direction="right">
+          <UncontrolledDropdown key={`submenu-${typeof label === 'string' ? label : mapKey}`} direction="right">
             <DropdownToggle tag="button" className={styles['dropdown-item']}>
               <span className={styles['label']}>{label}</span>
               <ArrowRightIcon className={styles['dropdown-item-icon']} />
@@ -135,15 +143,19 @@ export function Dropdown({
       }
 
       return (
-        <div key={label?.toString()}>
+        <div key={`option-${typeof label === 'string' ? label : mapKey}`}>
           {withUpperline && <hr className={styles['line']} />}
           <ConfirmableDropdownItem
-            {...(onClick && { onClick: () => {
-              onClick?.(() => setIsOpen(false));
-              closeDropdown();
-            }})}
+            {...(onClick && {
+              onClick: () => {
+                onClick?.(() => setIsOpen(false));
+                closeDropdown();
+              },
+            })}
             cssModule={{
-              'dropdown-item': classnames(styles['dropdown-item'], getDropdownItemColorClass(color)),
+              'dropdown-item': classnames(styles['dropdown-item'], getDropdownItemColorClass(color), {
+                [styles['dropdown-item-mobile']]: isMobile && isFromBreakdownItem,
+              }),
             }}
             withConfirmation={withConfirmation}
             initialConfirmationState={initialConfirmationState}
@@ -177,13 +189,24 @@ export function Dropdown({
         isOpen={isOpen}
         direction="down"
         onClick={(event) => event.stopPropagation()}
-        className={classnames(styles['container'], className)}
+        className={classnames(
+          styles['container'],
+          isFromBreakdownItem && isDesktop && styles['dropdown-toggle-centered-container'],
+          className,
+        )}
         toggle={onToggle}
       >
-        <DropdownToggle tag="button" className={styles['dropdown-toggle']} {...toggleProps}>
+        <DropdownToggle
+          tag="button"
+          className={classnames(
+            styles['dropdown-toggle'],
+            isFromBreakdownItem && isDesktop && styles['dropdown-toggle-centered'],
+          )}
+          {...(isDisabled && { disabled: true })}
+          {...toggleProps}
+        >
           {renderToggle(isOpen)}
         </DropdownToggle>
-
         {renderOptions(options)}
       </UncontrolledDropdown>
     </OutsideClickHandler>

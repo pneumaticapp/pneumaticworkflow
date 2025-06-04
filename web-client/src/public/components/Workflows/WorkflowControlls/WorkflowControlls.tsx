@@ -167,6 +167,7 @@ export function WorkflowControllsComponents({
       size: 'sm',
     },
     {
+      mapKey: 'workflows.card-urgent',
       label: (
         <div className={styles['urgent-wrapper']}>
           <span className={styles['urgent-text']}>{formatMessage({ id: 'workflows.card-urgent' })}</span>
@@ -191,6 +192,7 @@ export function WorkflowControllsComponents({
         const taskIndex = String(passedTasks.length - index).padStart(2, '0');
 
         return {
+          mapKey: `return-task-${item.name}-${taskIndex}`,
           label: (
             <div className={styles['task-item']}>
               <div className={styles['task-item__text']}>{item.name}</div>
@@ -210,6 +212,7 @@ export function WorkflowControllsComponents({
       isHidden: !canSnoozeWorkflow,
       subOptions: snoozeOptions.map((option) => {
         return {
+          mapKey: `snooze-${option.title}-${option.dateISOString}`,
           label: (
             <>
               <span className={styles['dropdown-title']}>{option.title}</span>

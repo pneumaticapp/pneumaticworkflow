@@ -1,4 +1,4 @@
-import datetime
+from datetime import datetime
 from typing import List, Optional, Union, Iterable
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -113,13 +113,15 @@ class TemplateQuerySet(WorkflowsBaseQuerySet):
 
     def get_owners_as_users(self):
         user_owners = self.filter(
-            owners__type='user'
+            owners__type='user',
+            owners__user_id__isnull=False
         ).values_list('owners__user_id', flat=True)
         group_owners = self.filter(
             owners__type='group',
-            owners__group__users__isnull=False
+            owners__group__users__isnull=False,
+            owners__group__users__id__isnull=False
         ).prefetch_related('owners__group__users').values_list(
-            'owners__group__users__id', flat=True
+            'owners__group__users__id', flat=True,
         )
         return user_owners.union(group_owners)
 
@@ -355,8 +357,8 @@ class WorkflowQuerySet(WorkflowsBaseQuerySet):
     def raw_list_query(
         self,
         account_id: int,
-        user_id: int,
-        limit: int,
+        user_id: Optional[int] = None,
+        limit: Optional[int] = None,
         offset: Optional[int] = None,
         status: Optional[str] = None,
         ordering: Optional[str] = None,
@@ -368,6 +370,8 @@ class WorkflowQuerySet(WorkflowsBaseQuerySet):
         is_external: Optional[bool] = None,
         search: Optional[str] = None,
         fields: Optional[List[str]] = None,
+        ancestor_task_id: Optional[int] = None,
+        using: str = 'default',
     ):
         if current_performer:
             performer_group_ids = UserGroup.objects.filter(
@@ -392,7 +396,8 @@ class WorkflowQuerySet(WorkflowsBaseQuerySet):
             is_external=is_external,
             search=search,
             account_id=account_id,
-            user_id=user_id
+            user_id=user_id,
+            ancestor_task_id=ancestor_task_id
         )
         from pneumatic_backend.processes.models.templates.template import (
             Template
@@ -492,13 +497,13 @@ class WorkflowQuerySet(WorkflowsBaseQuerySet):
             self.raw(
                 raw_query=query.get_sql(),
                 params=query.params,
-                using=settings.REPLICA
+                using=using
             ).prefetch_related(*prefetch_args)
         )
         raw_qst.count = self.raw(
             raw_query=query.get_count_sql(),
             params=query.params,
-            using=settings.REPLICA
+            using=using
         )[0].count
         return raw_qst
 
@@ -524,6 +529,9 @@ class TasksQuerySet(TasksBaseQuerySet):
 
     def active(self):
         return self.filter(status=TaskStatus.ACTIVE)
+
+    def active_or_delayed(self):
+        return self.filter(status__in=(TaskStatus.ACTIVE, TaskStatus.DELAYED))
 
     def with_date_first_started(self):
         return self.filter(date_first_started__isnull=False)
@@ -593,7 +601,7 @@ class FieldTemplateValuesQuerySet(BaseQuerySet):
     def by_ids(self, ids: List[int]):
         return self.filter(id__in=ids)
 
-    def by_api_names(self, api_names: List[int]):
+    def by_api_names(self, api_names: List[str]):
         return self.filter(api_name__in=api_names)
 
     def selected(self):
@@ -898,9 +906,10 @@ class WorkflowEventQuerySet(AccountBaseQuerySet):
         account_id: int,
         user_id: int,
         templates: str = None,
-        users: str = None,
-        date_before_tsp: datetime = None,
-        date_after_tsp: datetime = None,
+        current_performer_ids: Optional[List[int]] = None,
+        current_performer_group_ids: Optional[List[int]] = None,
+        date_before_tsp: Optional[datetime] = None,
+        date_after_tsp: Optional[datetime] = None,
     ):
         # TODO refactoring need
 
@@ -909,7 +918,8 @@ class WorkflowEventQuerySet(AccountBaseQuerySet):
             account_id=account_id,
             user_id=user_id,
             templates=templates,
-            users=users,
+            current_performer_ids=current_performer_ids,
+            current_performer_group_ids=current_performer_group_ids,
             date_before_tsp=date_before_tsp,
             date_after_tsp=date_after_tsp
         )
@@ -922,7 +932,7 @@ class WorkflowEventQuerySet(AccountBaseQuerySet):
         return self.order_by('-created').first()
 
     def by_task(self, task_id: int):
-        return self.filter(task_json__id=task_id)
+        return self.filter(task_id=task_id)
 
     def by_user(self, user_id: int):
         return self.filter(user_id=user_id)

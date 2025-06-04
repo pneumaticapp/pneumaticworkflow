@@ -46,7 +46,7 @@ def test_create__all_fields__ok(api_client, mocker):
         attribute='__init__',
         return_value=None
     )
-    group = create_test_group(user=user, users=request_data['users'])
+    group = create_test_group(account, users=request_data['users'])
     create_group_mock = mocker.patch(
         'pneumatic_backend.accounts.services.group.UserGroupService.create',
         return_value=group
@@ -77,7 +77,7 @@ def test_create__all_fields__ok(api_client, mocker):
 def test_create__required_fields__ok(api_client, mocker):
 
     # arrange
-    account = create_test_account(plan=BillingPlanType.UNLIMITED)
+    account = create_test_account()
     user = create_test_user(account=account)
     create_test_user(
         email='another@pneumatic.app',
@@ -93,7 +93,7 @@ def test_create__required_fields__ok(api_client, mocker):
         attribute='__init__',
         return_value=None
     )
-    group = create_test_group(user=user)
+    group = create_test_group(account)
     create_group_mock = mocker.patch(
         'pneumatic_backend.accounts.services.group.UserGroupService.create',
         return_value=group
@@ -143,7 +143,7 @@ def test_create__user_from_another_account__validation_error(
         attribute='__init__',
         return_value=None
     )
-    create_test_group(user=user, users=request_data['users'])
+    create_test_group(account, users=request_data['users'])
     create_group_mock = mocker.patch(
         'pneumatic_backend.accounts.services.group.UserGroupService.create'
     )
@@ -220,7 +220,7 @@ def test_create__invited_user__ok(api_client, mocker):
         attribute='__init__',
         return_value=None
     )
-    group = create_test_group(user=user, users=request_data['users'])
+    group = create_test_group(account, users=request_data['users'])
     create_group_mock = mocker.patch(
         'pneumatic_backend.accounts.services.group.UserGroupService.create',
         return_value=group
@@ -268,7 +268,7 @@ def test_create__user_inactive__validation_error(api_client, mocker):
         attribute='__init__',
         return_value=None
     )
-    create_test_group(user=user, users=request_data['users'])
+    create_test_group(account, users=request_data['users'])
     create_group_mock = mocker.patch(
         'pneumatic_backend.accounts.services.group.UserGroupService.create'
     )
@@ -308,7 +308,7 @@ def test_create__guest__validation_error(api_client, mocker):
         attribute='__init__',
         return_value=None
     )
-    create_test_group(user=user, users=request_data['users'])
+    create_test_group(account, users=request_data['users'])
     create_group_mock = mocker.patch(
         'pneumatic_backend.accounts.services.group.UserGroupService.create'
     )
@@ -337,7 +337,7 @@ def test_create__not_name__validation_error(api_client, mocker):
     api_client.token_authenticate(user)
     request_data = {
         'photo': 'https://foeih.com/image.jpg',
-        'users': [user.id, ],
+        'users': [user.id],
     }
     service_init_mock = mocker.patch.object(
         UserGroupService,
@@ -380,7 +380,7 @@ def test_create__users_empty_list__ok(api_client, mocker):
         attribute='__init__',
         return_value=None
     )
-    group = create_test_group(user=user, users=request_data['users'])
+    group = create_test_group(account, users=request_data['users'])
     create_group_mock = mocker.patch(
         'pneumatic_backend.accounts.services.group.UserGroupService.create',
         return_value=group
@@ -458,7 +458,7 @@ def test_create__not_admin__permission_denied(api_client, mocker):
     api_client.token_authenticate(no_admin_user)
     request_data = {
         'name': 'Group',
-        'users': [no_admin_user.id, ],
+        'users': [no_admin_user.id],
     }
     service_init_mock = mocker.patch.object(
         UserGroupService,
@@ -486,7 +486,7 @@ def test_create__not_auth__permission_denied(api_client, mocker):
     user = create_test_user()
     request_data = {
         'name': 'Group',
-        'users': [user.id, ],
+        'users': [user.id],
     }
     service_init_mock = mocker.patch.object(
         UserGroupService,
@@ -519,7 +519,7 @@ def test_create__expired_subscription__permission_denied(api_client, mocker):
     api_client.token_authenticate(user)
     request_data = {
         'name': 'Group',
-        'users': [user.id, ],
+        'users': [user.id],
     }
     service_init_mock = mocker.patch.object(
         UserGroupService,
@@ -550,7 +550,7 @@ def test_create__service_exception__validation_error(api_client, mocker):
     request_data = {
         'name': 'Group',
         'photo': '',
-        'users': [user.id, ],
+        'users': [user.id],
     }
     service_init_mock = mocker.patch.object(
         UserGroupService,

@@ -1,7 +1,4 @@
-# pylint:disable=redefined-outer-name
 import pytest
-from django.utils import timezone
-
 from pneumatic_backend.authentication.enums import AuthTokenType
 from pneumatic_backend.processes.models import (
     Workflow,
@@ -11,12 +8,14 @@ from pneumatic_backend.processes.models import (
     PredicateTemplate,
     FileAttachment,
     Template,
+    TaskPerformer,
 )
 from pneumatic_backend.accounts.enums import (
     BillingPlanType
 )
-from pneumatic_backend.processes.services.exceptions import \
+from pneumatic_backend.processes.services.exceptions import (
     WorkflowActionServiceException
+)
 from pneumatic_backend.processes.services.workflow_action import (
     WorkflowActionService
 )
@@ -25,7 +24,9 @@ from pneumatic_backend.processes.tests.fixtures import (
     create_test_user,
     create_test_template,
     create_test_account,
+    create_test_guest, create_test_owner,
 )
+from pneumatic_backend.authentication.services import GuestJWTAuthService
 from pneumatic_backend.processes.messages import workflow as messages
 from pneumatic_backend.utils.validation import ErrorCode
 from pneumatic_backend.processes.api_v2.services.task.performers import (
@@ -36,7 +37,6 @@ from pneumatic_backend.processes.enums import (
     PredicateOperator,
     FieldType,
     WorkflowStatus,
-    TaskStatus,
     OwnerType
 )
 
@@ -52,10 +52,10 @@ def test_revert__ok(
     user = create_test_user(is_account_owner=True)
     workflow = create_test_workflow(
         user=user,
-        tasks_count=2
+        tasks_count=2,
+        active_task_number=2
     )
-    workflow.current_task = 2
-    workflow.save()
+    task_2 = workflow.tasks.get(number=2)
     service_init_mock = mocker.patch.object(
         WorkflowActionService,
         attribute='__init__',
@@ -85,6 +85,7 @@ def test_revert__ok(
         is_superuser=False
     )
     service_revert_mock.assert_called_once_with(
+        revert_from_task=task_2,
         comment=text_comment
     )
 
@@ -97,10 +98,10 @@ def test_revert_service_exception__validation_error(
     user = create_test_user(is_account_owner=True)
     workflow = create_test_workflow(
         user=user,
-        tasks_count=2
+        tasks_count=2,
+        active_task_number=2
     )
-    workflow.current_task = 2
-    workflow.save()
+    task_2 = workflow.tasks.get(number=2)
     service_init_mock = mocker.patch.object(
         WorkflowActionService,
         attribute='__init__',
@@ -135,6 +136,7 @@ def test_revert_service_exception__validation_error(
         is_superuser=False
     )
     service_revert_mock.assert_called_once_with(
+        revert_from_task=task_2,
         comment=text_comment
     )
 
@@ -149,10 +151,9 @@ def test_revert_invalid_comment__validation_error(
     user = create_test_user(is_account_owner=True)
     workflow = create_test_workflow(
         user=user,
-        tasks_count=2
+        tasks_count=2,
+        active_task_number=2
     )
-    workflow.current_task = 2
-    workflow.save()
     service_init_mock = mocker.patch(
         'pneumatic_backend.processes.services.workflow_action.'
         'WorkflowActionService'
@@ -329,10 +330,6 @@ def test_revert__skipped_task__not_completed(
     mocker.patch(
         'pneumatic_backend.processes.services.websocket.WSSender.'
         'send_removed_task_notification'
-    )
-    mocker.patch(
-        'pneumatic_backend.authentication.services.'
-        'GuestJWTAuthService.delete_task_guest_cache'
     )
     mocker.patch(
         'pneumatic_backend.processes.services.workflow_action.'
@@ -726,55 +723,6 @@ def test_revert__deleted_performer_recreated__ok(
     assert performers.filter(id=user_performer.id).exists()
 
 
-def test_revert__deleted_performer__permission_denied(
-    mocker,
-    api_client
-):
-    # arrange
-    template_owner = create_test_user()
-    deleted_performer = create_test_user(
-        email='t@t.t',
-        account=template_owner.account,
-        is_account_owner=False
-    )
-    api_client.token_authenticate(template_owner)
-    workflow = create_test_workflow(
-        tasks_count=2,
-        user=template_owner
-    )
-
-    mocker.patch(
-        'pneumatic_backend.processes.services.websocket.WSSender.'
-        '_send_task_notification'
-    )
-
-    # Go on second step
-    task1 = workflow.current_task_instance
-    api_client.post(
-        f'/workflows/{workflow.id}/task-complete',
-        data={'task_id': task1.id}
-    )
-    workflow.refresh_from_db()
-    task2 = workflow.current_task_instance
-
-    # Remove performer and go to the first step
-    TaskPerformersService.delete_performer(
-        task=task2,
-        request_user=template_owner,
-        user_key=deleted_performer.id,
-        is_superuser=False,
-        auth_type=AuthTokenType.USER,
-    )
-    api_client.token_authenticate(deleted_performer)
-    response = api_client.post(
-        f'/workflows/{workflow.id}/task-revert',
-    )
-
-    # assert
-    workflow.refresh_from_db()
-    assert response.status_code == 403
-
-
 def test_revert__activate_skipped_task__ok(
     api_client,
     mocker,
@@ -874,13 +822,11 @@ def test_revert__sub_workflow_incompleted__validation_error(
     # arrange
 
     user = create_test_user()
-    workflow = create_test_workflow(user=user, tasks_count=2)
-    workflow.current_task = 2
-    workflow.save()
-    task_1 = workflow.tasks.get(number=1)
-    task_1.status = TaskStatus.COMPLETED
-    task_1.date_completed = timezone.now()
-    task_1.save()
+    workflow = create_test_workflow(
+        user=user,
+        tasks_count=2,
+        active_task_number=2
+    )
     task_2 = workflow.tasks.get(number=2)
 
     create_test_workflow(
@@ -919,13 +865,11 @@ def test_revert__sub_workflow_completed__ok(
         'send_task_returned_webhook.delay',
     )
     user = create_test_user()
-    workflow = create_test_workflow(user=user, tasks_count=2)
-    workflow.current_task = 2
-    workflow.save()
-    task_1 = workflow.tasks.get(number=1)
-    task_1.status = TaskStatus.COMPLETED
-    task_1.date_completed = timezone.now()
-    task_1.save()
+    workflow = create_test_workflow(
+        user=user,
+        tasks_count=2,
+        active_task_number=2
+    )
     task_2 = workflow.tasks.get(number=2)
 
     create_test_workflow(
@@ -949,3 +893,43 @@ def test_revert__sub_workflow_completed__ok(
     assert response.status_code == 204
     workflow.refresh_from_db()
     assert workflow.current_task == 1
+
+
+def test_revert__guest__permission_denied(
+    mocker,
+    api_client,
+):
+    # arrange
+    account = create_test_account()
+    account_owner = create_test_owner(account=account)
+    workflow = create_test_workflow(account_owner, tasks_count=2)
+    workflow.current_task = 2
+    workflow.save()
+    task_2 = workflow.tasks.get(number=2)
+
+    guest = create_test_guest(account=account)
+    TaskPerformer.objects.create(
+        task_id=task_2.id,
+        user_id=guest.id
+    )
+    str_token = GuestJWTAuthService.get_str_token(
+        task_id=task_2.id,
+        user_id=guest.id,
+        account_id=account.id
+    )
+    service_revert_mock = mocker.patch(
+        'pneumatic_backend.processes.services.workflow_action.'
+        'WorkflowActionService.revert'
+    )
+    text_comment = 'text_comment'
+
+    # act
+    response = api_client.post(
+        path=f'/workflows/{workflow.id}/task-revert',
+        data={'comment': text_comment},
+        **{'X-Guest-Authorization': str_token}
+    )
+
+    # assert
+    assert response.status_code == 403
+    service_revert_mock.assert_not_called()

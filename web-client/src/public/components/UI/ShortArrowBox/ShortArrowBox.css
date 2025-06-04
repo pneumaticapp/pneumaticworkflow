@@ -1,0 +1,33 @@
+.short-arrow-box {
+  margin-right: 1.6rem;
+  display: flex;
+  width: 4rem;
+  height: 4rem;
+  border: 1px solid var(--pneumatic-color-black16);
+  border-radius: 0.8rem;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.short-arrow-box:hover {
+  border-color: var(--pneumatic-color-link-hover);
+}
+
+.short-arrow-rotated {
+  transition: transform 0.3s;
+  transform: rotate(180deg);
+}
+
+.short-arrow {
+  transition: transform 0.3s;
+}
+
+.short-arrow path,
+.short-arrow-rotated path {
+  fill: var(--pneumatic-color-black48);
+}
+.short-arrow-box:hover,
+.short-arrow-box:hover path,
+.short-arrow-box:hover path {
+  fill: var(--pneumatic-color-link-hover);
+}

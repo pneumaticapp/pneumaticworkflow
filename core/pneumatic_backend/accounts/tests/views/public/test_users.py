@@ -13,7 +13,6 @@ from pneumatic_backend.authentication.tokens import (
     PublicToken,
     EmbedToken,
 )
-from pneumatic_backend.accounts.enums import BillingPlanType
 from pneumatic_backend.accounts.services.user import UserService
 
 pytestmark = pytest.mark.django_db
@@ -104,7 +103,7 @@ class TestEmbedUsersVewSet:
     def test_list__ok(self, api_client, mocker):
 
         # arrange
-        account = create_test_account(plan=BillingPlanType.PREMIUM)
+        account = create_test_account()
         user = create_test_user(account=account)
         invited_user = create_invited_user(user)
         inactive_user = create_test_user(

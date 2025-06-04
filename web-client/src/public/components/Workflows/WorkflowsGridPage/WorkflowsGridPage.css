@@ -1,8 +1,10 @@
+/* stylelint-disable property-no-vendor-prefix */
+/* stylelint-disable value-no-vendor-prefix */
 /* stylelint-disable declaration-no-important */
 .container {
   margin: 0 auto;
   display: flex;
-  max-width: 1088px;
+  max-width: 108.8rem;
 
   @media (--mobile) {
     flex-direction: column;
@@ -11,10 +13,10 @@
 }
 
 .filters {
-  margin-right: 64px;
-  margin-bottom: 32px;
-  width: 272px;
-  min-width: 272px;
+  margin-right: 6.4rem;
+  margin-bottom: 3.2rem;
+  width: 27.2rem;
+  min-width: 27.2rem;
 
   @media (--mobile) {
     width: 100%;
@@ -33,22 +35,22 @@
 .search__icon {
   position: absolute;
   top: 50%;
-  margin-left: 16px;
+  margin-left: 1.6rem;
   color: var(--pneumatic-color-black72);
   transform: translateY(-50%);
 }
 
 .search-field {
-  margin-bottom: 32px;
+  margin-bottom: 3.2rem;
 }
 
 .search-field__input {
-  padding-left: 48px !important;
+  padding-left: 4.8rem !important;
   background-color: var(----background-color);
 }
 
 .cards {
-  margin: 0 -16px;
+  margin: 0 -1.6rem;
   display: flex;
   overflow: visible !important;
   flex-wrap: wrap;
@@ -59,12 +61,12 @@
 }
 
 .card-wrapper {
-  margin: 0 16px 32px;
-  width: calc(50% - 32px);
-  max-width: 360px;
+  margin: 0 1.6rem 3.2rem;
+  width: calc(50% - 3.2rem);
+  max-width: 36rem;
 
   @media (--mobile) {
-    margin: 0 0 32px;
+    margin: 0 0 3.2rem;
     width: 100%;
     max-width: 100%;
   }
@@ -72,24 +74,37 @@
 
 .card {
   position: relative;
-  padding: 32px 72px 32px 32px;
+  padding: 3.2rem 7.2rem 3.2rem 3.2rem;
   display: flex;
   flex-flow: column;
-  color: #262522;
-  background-color: white;
-  border: 1px solid white;
-  border-radius: 24px;
+  color: var(--pneumatic-color-black100);
+  border-radius: 2.4rem;
   transition: box-shadow 0.2s ease-in-out;
 
   &:hover {
     cursor: pointer;
-    color: #e79a26;
-    box-shadow: 0 8px 24px rgba(98, 98, 95, 0.08);
+    color: var(--pneumatic-color-link-hover);
+    box-shadow: 0 0.8rem 2.4rem rgba(98, 98, 95, 0.08);
   }
 }
 
+.card-process-based {
+  background-color: var(--pneumatic-color-white);
+  border: 0.1rem solid var(--pneumatic-color-white);
+}
+
+.card-process-finished {
+  background-color: var(--pneumatic-color-notification3-light);
+  border: 0.1rem solid var(--pneumatic-color-notification3-light);
+}
+
+.card-active-task-overdue {
+  background-color: var(--pneumatic-color-notification1-light);
+  border: 0.1rem solid var(--pneumatic-color-notification1-light);
+}
+
 .card-loading {
-  padding: 32px 16px 16px;
+  padding: 3.2rem 1.6rem 1.6rem;
 }
 
 .card-pending {
@@ -111,13 +126,13 @@
 
 .dropdown {
   position: absolute;
-  top: 32px;
-  right: 32px;
+  top: 3.2rem;
+  right: 3.2rem;
 }
 
 .card-more {
   cursor: pointer;
-  color: var(--pneumatic-color-black16);
+  color: var(--pneumatic-color-black32);
   transition: color 0.1s ease-in-out;
 
   &.card-more_active,
@@ -128,72 +143,70 @@
 
 .card-title {
   position: relative;
-  margin-right: -5px;
-  margin-bottom: 16px;
-  padding-right: 5px;
-  height: 48px;
+  margin-right: -0.5rem;
+  margin-bottom: 1.6rem;
+  padding-right: 0.5rem;
+  height: 4.8rem;
   font-family: 'Abhaya Libre', 'Times New Roman', Arial;
-  font-size: 20px;
+  font-size: 2rem;
   font-weight: 800;
-  line-height: 24px;
+  line-height: 2.4rem;
   letter-spacing: -0.01em;
 
   @supports (-webkit-line-clamp: 2) {
-    /* stylelint-disable-next-line property-no-vendor-prefix, value-no-vendor-prefix */
     display: -webkit-box;
     overflow: hidden;
     white-space: initial;
     text-overflow: ellipsis;
     -webkit-line-clamp: 2;
-    /* stylelint-disable-next-line property-no-vendor-prefix */
     -webkit-box-orient: vertical;
   }
 }
 
 .card:hover .card-title {
-  color: #e79a26;
+  color: var(--pneumatic-color-link-hover);
 }
 
 .card-pretitle {
   display: block;
   overflow: hidden;
-  font-size: 13px;
-  line-height: 16px;
+  font-size: 1.3rem;
+  line-height: 1.6rem;
   white-space: nowrap;
   text-overflow: ellipsis;
-  color: #979795;
+  color: var(--pneumatic-color-black48);
 }
 
 .workflow-group {
-  margin: 0 -15px;
+  margin: 0 -1.5rem;
   width: 100%;
   flex-flow: wrap;
-  max-width: 1122px;
+  max-width: 112.2rem;
   flex-grow: 1;
 }
 
 .workflow-title {
-  margin-bottom: 32px;
+  margin-bottom: 3.2rem;
 
   span {
-    padding: 0 17px;
+    padding: 0 1.7rem;
     display: block;
     font-family: 'Abhaya Libre', serif;
-    font-size: 28px;
+    font-size: 2.8rem;
     font-weight: 800;
-    line-height: 32px;
+    line-height: 3.2rem;
     letter-spacing: -0.01em;
     word-break: break-word;
   }
 }
 
 .card-footer {
-  margin: auto -56px -16px -16px;
-  padding: 16px;
-  height: 102px;
-  color: #262522;
-  background: #fdf7ee;
-  border-radius: 16px;
+  margin: auto -5.6rem -1.6rem -1.6rem;
+  padding: 1.6rem;
+  height: 9.8rem;
+  color: var(--pneumatic-color-black100);
+  background: var(--pneumatic-color-beige);
+  border-radius: 1.6rem;
 
   .footer-users-and-links {
     display: flex;
@@ -202,19 +215,25 @@
   }
 }
 
+.card-footer-base {
+  background: var(--pneumatic-color-beige);
+}
+
+.card-footer-white {
+  background: var(--pneumatic-color-white);
+}
 .card-task {
-  margin-bottom: 8px;
+  margin-bottom: 0.8rem;
   font-family: Nunito, sans-serif;
-  font-size: 15px;
-  line-height: 20px;
-  color: #62625f;
+  font-size: 1.5rem;
+  line-height: 2rem;
+  color: var(--pneumatic-color-black72);
 }
 
 .progress-bar-container {
-  margin-bottom: 8px;
+  margin-bottom: 0.8rem;
 }
 
-/* stylelint-disable-next-line selector-pseudo-class-no-unknown */
 :global {
   .infinite-scroll-component__outerdiv {
     width: 100%;
@@ -225,11 +244,11 @@
   margin-right: 0 !important;
   padding-right: 0 !important;
   height: 100%;
-  max-height: 185px;
+  max-height: 18.5rem;
 }
 
 .filter:not(:last-child) {
-  margin-bottom: 16px;
+  margin-bottom: 1.6rem;
 }
 
 .placeholder {
@@ -237,18 +256,18 @@
 }
 
 .filter-buttons {
-  margin-top: 32px;
+  margin-top: 3.2rem;
   display: flex;
   flex-flow: row wrap;
   align-items: center;
 }
 
 .filter-buttons__apply {
-  margin-right: 16px;
+  margin-right: 1.6rem;
 }
 
 .filter-buttons__clear {
-  padding: 8px 0 !important;
+  padding: 0.8rem 0 !important;
 }
 
 .placeholder {
@@ -256,84 +275,82 @@
 }
 
 .placeholder__title {
-  margin: 0 0 16px;
+  margin: 0 0 1.6rem;
   font-family: 'Abhaya Libre', 'Times New Roman', Arial;
-  font-size: 20px;
+  font-size: 2rem;
   font-weight: 800;
-  line-height: 24px;
+  line-height: 2.4rem;
   color: var(--pneumatic-color-black32);
 }
 
 .placeholder__text {
   margin: 0;
   font-family: Nunito, sans-serif;
-  font-size: 13px;
-  line-height: 16px;
+  font-size: 1.3rem;
+  line-height: 1.6rem;
   color: var(--pneumatic-color-black48);
 }
 
 .run-workflow-card {
   position: relative;
-  padding: 32px;
+  padding: 3.2rem;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  min-height: 232px;
+  min-height: 23.2rem;
   align-items: center;
   color: var(--pneumatic-color-link-dark);
-  background-color: white;
+  background-color: var(--pneumatic-color-white);
   border: 0;
-  border-radius: 24px;
+  border-radius: 2.4rem;
   transition: all 0.1s ease-in-out;
 
   &:hover {
     color: var(--pneumatic-color-link-hover);
-    box-shadow: 0 8px 24px rgba(98, 98, 95, 0.08);
+    box-shadow: 0 0.8rem 24rem rgba(98, 98, 95, 0.08);
   }
 }
 
 .run-workflow-card__text {
-  margin: 8px 0 0;
+  margin: 0.8rem 0 0;
 
   @supports (-webkit-line-clamp: 2) {
-    /* stylelint-disable-next-line property-no-vendor-prefix, value-no-vendor-prefix */
     display: -webkit-box;
     overflow: hidden;
     white-space: initial;
     text-overflow: ellipsis;
     -webkit-line-clamp: 2;
-    /* stylelint-disable-next-line property-no-vendor-prefix */
     -webkit-box-orient: vertical;
   }
 }
 
 .card-urgent {
-  border: 1px solid var(--pneumatic-notification-1);
+  border: 0.1rem solid var(--pneumatic-notification-1);
 }
 
 .dropdown-delete {
-  font-size: 15px;
-  line-height: 23px;
+  font-size: 1.5rem;
+  line-height: 2.3rem;
   color: var(--pneumatic-notification-1) !important;
 }
 
 .item__separator {
-  margin: 5px 12px;
-  width: calc(100% - 24px);
+  margin: 0.5rem 1.2rem;
+  width: calc(100% - 2.4rem);
 }
 
 .dropdown-menu {
-  width: 192px;
+  width: 19.2rem;
 }
 
 .dropdown-submenu {
-  top: -40px !important;
-  right: 68px !important;
+  top: -4rem !important;
+  right: 6.8rem !important;
   left: auto !important;
-  width: 304px;
+  width: 30.4rem;
 
   @media (--mobile) {
-    right: 60px !important;
+    right: 6rem !important;
   }
 }
 
@@ -368,7 +385,7 @@ button.dropdown-resume {
 }
 
 .title {
-  margin-bottom: 16px;
+  margin-bottom: 1.6rem;
 }
 
 .user-filter-option {
@@ -381,5 +398,9 @@ button.dropdown-resume {
 }
 
 .user-filter-option_avatar {
-  margin-right: 8px;
+  margin-right: 0.8rem;
+}
+
+.card-tooltip-task-number {
+  @mixin text-small bold;
 }

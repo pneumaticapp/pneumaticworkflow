@@ -36,9 +36,10 @@ def test_destroy__account_owner__permission_denied(api_client, mocker):
         account=owner.account
     )
     workflow = create_test_workflow(user)
+    task = workflow.tasks.active().first()
     event = WorkflowEventService.comment_created_event(
         text='Some comment',
-        workflow=workflow,
+        task=task,
         user=user,
         after_create_actions=False
     )
@@ -69,9 +70,10 @@ def test_destroy__author__ok(api_client, mocker):
     # arrange
     user = create_test_user()
     workflow = create_test_workflow(user)
+    task = workflow.tasks.active().first()
     event = WorkflowEventService.comment_created_event(
         text='Some comment',
-        workflow=workflow,
+        task=task,
         user=user,
         after_create_actions=False
     )
@@ -123,9 +125,10 @@ def test_destroy__admin__ok(api_client, mocker):
         is_admin=True
     )
     workflow = create_test_workflow(user)
+    task = workflow.tasks.active().first()
     event = WorkflowEventService.comment_created_event(
         text='Some comment',
-        workflow=workflow,
+        task=task,
         user=user,
         after_create_actions=False
     )
@@ -177,9 +180,10 @@ def test_destroy__not_admin__ok(api_client, mocker):
         is_admin=False
     )
     workflow = create_test_workflow(user)
+    task = workflow.tasks.active().first()
     event = WorkflowEventService.comment_created_event(
         text='Some comment',
-        workflow=workflow,
+        task=task,
         user=user,
         after_create_actions=False
     )
@@ -241,10 +245,11 @@ def test_destroy__guest__ok(mocker, api_client):
         user_id=guest.id,
         account_id=account.id
     )
+    task = workflow.tasks.active().first()
     event = WorkflowEventService.comment_created_event(
         user=guest,
         text='Some comment',
-        workflow=workflow,
+        task=task,
         after_create_actions=False
     )
     service_init_mock = mocker.patch.object(
@@ -283,9 +288,10 @@ def test_destroy__service_exception__validation_error(
     # arrange
     user = create_test_user()
     workflow = create_test_workflow(user)
+    task = workflow.tasks.active().first()
     event = WorkflowEventService.comment_created_event(
         text='Some comment',
-        workflow=workflow,
+        task=task,
         user=user,
         after_create_actions=False
     )
@@ -329,9 +335,10 @@ def test_destroy__another_user_comment__permission_denied(api_client, mocker):
         is_admin=True
     )
     workflow = create_test_workflow(user)
+    task = workflow.tasks.active().first()
     event = WorkflowEventService.comment_created_event(
         text='Some comment',
-        workflow=workflow,
+        task=task,
         user=owner,
         after_create_actions=False
     )

@@ -58,7 +58,8 @@ def test_list__workflow_data__ok(api_client):
         user=user,
         tasks_count=1,
         due_date=due_date,
-        status=WorkflowStatus.DONE
+        status=WorkflowStatus.DONE,
+        description='Some workflow description'
     )
 
     task = workflow.tasks.first()
@@ -76,12 +77,14 @@ def test_list__workflow_data__ok(api_client):
     assert wf_data['id'] == workflow.id
     assert wf_data['name'] == workflow.name
     assert wf_data['status'] == workflow.status
+    assert wf_data['description'] == workflow.description
     assert wf_data['tasks_count'] == workflow.tasks_count
     assert wf_data['current_task'] == workflow.current_task
     assert wf_data['active_tasks_count'] == workflow.active_tasks_count
     assert wf_data['active_current_task'] == workflow.active_current_task
     assert wf_data['is_external'] == workflow.is_external
     assert wf_data['workflow_starter'] == user.id
+    assert wf_data['ancestor_task_id'] == workflow.ancestor_task_id
     assert wf_data['is_legacy_template'] == workflow.is_legacy_template
     assert wf_data['legacy_template_name'] == workflow.legacy_template_name
     assert wf_data['is_urgent'] == workflow.is_urgent
@@ -93,9 +96,6 @@ def test_list__workflow_data__ok(api_client):
         workflow.date_completed.timestamp()
     )
     assert wf_data['due_date_tsp'] == due_date.timestamp()
-    assert wf_data['status_updated_tsp'] == (
-        workflow.status_updated.timestamp()
-    )
     assert wf_data['fields'] == []
     template_data = wf_data['template']
     assert template_data['id'] == template.id
@@ -112,8 +112,14 @@ def test_list__workflow_data__ok(api_client):
     assert task_data['delay'] is None
     assert task_data['due_date_tsp'] is None
     assert task_data['status'] == TaskStatus.ACTIVE
-    performer = {'source_id': user.id, 'type': 'user'}
-    assert task_data['performers'] == [performer]
+    assert task_data['performers'] == [
+        {
+            'source_id': user.id,
+            'type': 'user',
+            'is_completed': False,
+            'date_completed_tsp': None,
+        }
+    ]
 
 
 def test_list__multiple_tasks__ok(api_client):
@@ -283,7 +289,6 @@ def test_list__search__workflow_name__ok(api_client):
     assert response.status_code == 200
     assert len(response.data['results']) == 1
     assert response.data['results'][0]['id'] == workflow.id
-    assert response.data['results'][0]['status_updated_tsp']
 
 
 def test_list__search__kickoff_description__ok(api_client):
@@ -539,9 +544,10 @@ def test_list__search__strip_spaces__ok(api_client):
     # arrange
     user = create_test_user()
     workflow = create_test_workflow(user, tasks_count=1)
+    task = workflow.tasks.active().first()
     WorkflowEventService.comment_created_event(
         user=user,
-        workflow=workflow,
+        task=task,
         text='   some\noster@test.com   text',
         after_create_actions=False
     )
@@ -561,9 +567,10 @@ def test_list__search__comment__ok(api_client):
     # arrange
     user = create_test_user()
     workflow = create_test_workflow(user, tasks_count=1)
+    task = workflow.tasks.active().first()
     WorkflowEventService.comment_created_event(
         user=user,
-        workflow=workflow,
+        task=task,
         text='some comment text',
         after_create_actions=False
     )
@@ -583,9 +590,10 @@ def test_list__search__comment__url_as_text__ok(api_client):
     # arrange
     user = create_test_user()
     workflow = create_test_workflow(user, tasks_count=1)
+    task = workflow.tasks.active().first()
     WorkflowEventService.comment_created_event(
         user=user,
-        workflow=workflow,
+        task=task,
         text='some https://www.pneumo.app text',
         after_create_actions=False
     )
@@ -605,9 +613,10 @@ def test_list__search__comment__email__ok(api_client):
     # arrange
     user = create_test_user()
     workflow = create_test_workflow(user, tasks_count=1)
+    task = workflow.tasks.active().first()
     WorkflowEventService.comment_created_event(
         user=user,
-        workflow=workflow,
+        task=task,
         text='some ster@test.com text',
         after_create_actions=False
     )
@@ -627,10 +636,11 @@ def test_list__search__comment__markdown__ok(api_client):
     # arrange
     user = create_test_user()
     workflow = create_test_workflow(user, tasks_count=1)
+    task = workflow.tasks.active().first()
     text = 'some **[file.here](http://google.com/) value**'
     WorkflowEventService.comment_created_event(
         user=user,
-        workflow=workflow,
+        task=task,
         text=text,
         clear_text=MarkdownService.clear(text),
         after_create_actions=False
@@ -651,9 +661,10 @@ def test_list__search__comment_attachment__ok(api_client):
     # arrange
     user = create_test_user()
     workflow = create_test_workflow(user, tasks_count=1)
+    task = workflow.tasks.active().first()
     event = WorkflowEventService.comment_created_event(
         user=user,
-        workflow=workflow,
+        task=task,
         text='comment'
     )
     FileAttachment.objects.create(
@@ -1548,7 +1559,7 @@ def test_list__filter_current_performer_user_in_group__ok(api_client):
     user = create_test_user(account=account)
     api_client.token_authenticate(user)
     workflow = create_test_workflow(user=user)
-    group = create_test_group(user=user, users=[user, ])
+    group = create_test_group(account, users=[user])
     task = workflow.current_task_instance
     TaskPerformer.objects.filter(
         task=task
@@ -1576,7 +1587,7 @@ def test_list__filter_current_performer_group_ids_in_group__ok(api_client):
     user = create_test_user(account=account)
     api_client.token_authenticate(user)
     workflow = create_test_workflow(user=user)
-    group = create_test_group(user=user, users=[user, ])
+    group = create_test_group(account, users=[user])
     task = workflow.current_task_instance
     TaskPerformer.objects.filter(
         task=task
@@ -1604,7 +1615,7 @@ def test_list__filter_current_performer_group_ids_in_user__ok(api_client):
     user = create_test_user(account=account)
     api_client.token_authenticate(user)
     create_test_workflow(user=user)
-    group = create_test_group(user=user, users=[user, ])
+    group = create_test_group(account, users=[user])
 
     # act
     response = api_client.get(
@@ -1633,8 +1644,8 @@ def test_list__filter__multiple_current_performer_group_ids__ok(api_client):
         user_id=another_user.id,
     )
     workflow = create_test_workflow(user=user, template=template)
-    group1 = create_test_group(user=user, users=[user, ])
-    group2 = create_test_group(user=user, users=[another_user, ])
+    group1 = create_test_group(account, users=[user])
+    group2 = create_test_group(account, users=[another_user])
     task = workflow.current_task_instance
     TaskPerformer.objects.filter(
         task=task
@@ -1683,7 +1694,7 @@ def test_list__filter_multiple_current_performer_group_user__ok(api_client):
         user_id=another_user.id,
     )
     workflow = create_test_workflow(user=user, template=template)
-    group = create_test_group(user=user, users=[user, ])
+    group = create_test_group(account, users=[user])
     task = workflow.current_task_instance
     TaskPerformer.objects.filter(
         task=task
@@ -1797,7 +1808,7 @@ def test_list__filter_current_performer_group_not_running__validation_error(
     user = create_test_user(account=account)
     api_client.token_authenticate(user)
     create_test_workflow(user=user)
-    group = create_test_group(user=user, users=[user, ])
+    group = create_test_group(account, users=[user])
 
     # act
     response = api_client.get(
@@ -2447,8 +2458,14 @@ def test_list__deleted_current_task_performers__ok(
     current_task_data = response.data['results'][0]['tasks'][0]
     assert current_task_data['id'] == task.id
     assert len(current_task_data['performers']) == 1
-    performer = {'source_id': user.id, 'type': 'user'}
-    assert current_task_data['performers'][0] == performer
+    assert current_task_data['performers'] == [
+        {
+            'source_id': user.id,
+            'type': 'user',
+            'is_completed': False,
+            'date_completed_tsp': None,
+        }
+    ]
 
 
 def test_list__guest_performer__ok(
@@ -2480,5 +2497,35 @@ def test_list__guest_performer__ok(
     current_task_data = response.data['results'][0]['tasks'][0]
     assert current_task_data['id'] == task.id
     assert len(current_task_data['performers']) == 1
-    performer = {'source_id': guest.id, 'type': 'user'}
-    assert current_task_data['performers'][0] == performer
+    assert current_task_data['performers'] == [
+        {
+            'source_id': guest.id,
+            'type': 'user',
+            'is_completed': False,
+            'date_completed_tsp': None,
+        }
+    ]
+
+
+def test_list__sub_workflow__ok(api_client, mocker):
+
+    # arrange
+    account_owner = create_test_owner()
+    workflow = create_test_workflow(user=account_owner, tasks_count=1)
+    ancestor_task = workflow.current_task_instance
+    user = create_test_admin(account=account_owner.account)
+    sub_workflow = create_test_workflow(
+        user=user,
+        tasks_count=1,
+        ancestor_task=ancestor_task
+    )
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.get('/workflows')
+
+    # assert
+    assert response.status_code == 200
+    data = response.data['results'][0]
+    assert data['id'] == sub_workflow.id
+    assert data['ancestor_task_id'] == ancestor_task.id

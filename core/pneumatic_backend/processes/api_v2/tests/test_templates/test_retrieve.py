@@ -595,7 +595,7 @@ class TestRetrieveTemplate:
             email='user2@pneumaticapp',
             account=user.account
         )
-        group = create_test_group(user=user, users=[user, user2])
+        group = create_test_group(user.account, users=[user, user2])
         api_client.token_authenticate(user)
         owners = [
             {

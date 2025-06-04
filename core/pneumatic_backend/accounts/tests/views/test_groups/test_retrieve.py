@@ -19,7 +19,7 @@ def test_retrieve__ok(api_client):
     account = create_test_account(plan=BillingPlanType.UNLIMITED)
     user = create_test_user(account=account)
     api_client.token_authenticate(user)
-    group = create_test_group(user=user, users=[user, ])
+    group = create_test_group(account, users=[user])
 
     # act
     response = api_client.get(
@@ -36,9 +36,9 @@ def test_retrieve__ok(api_client):
 
 def test_retrieve__not_admin__permission_denied(api_client):
     # arrange
-    account = create_test_account(plan=BillingPlanType.UNLIMITED)
+    account = create_test_account()
     user = create_test_user(account=account)
-    group = create_test_group(user=user, users=[user, ])
+    group = create_test_group(account, users=[user])
     no_admin_user = create_test_user(
         account=account,
         email='no_admin@test.com',
@@ -59,9 +59,9 @@ def test_retrieve__not_admin__permission_denied(api_client):
 
 def test_retrieve__not_auth__permission_denied(api_client):
     # arrange
-    account = create_test_account(plan=BillingPlanType.UNLIMITED)
+    account = create_test_account()
     user = create_test_user(account=account)
-    group = create_test_group(user=user, users=[user, ])
+    group = create_test_group(account, users=[user])
 
     # act
     response = api_client.get(
@@ -79,7 +79,7 @@ def test_retrieve__expired_subscription__ok(api_client):
         plan_expiration=timezone.now() - datetime.timedelta(hours=1)
     )
     user = create_test_user(account=account)
-    group = create_test_group(user=user, users=[user, ])
+    group = create_test_group(account, users=[user])
     api_client.token_authenticate(user)
 
     # act

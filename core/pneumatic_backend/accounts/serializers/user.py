@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.db.models import Prefetch, Q
 from rest_framework import serializers
 from pneumatic_backend.accounts.models import Contact
 from pneumatic_backend.accounts.serializers.user_invites import (
@@ -14,6 +15,22 @@ from pneumatic_backend.accounts.enums import (
     SourceType,
     Language,
     Timezone
+)
+from pneumatic_backend.accounts.serializers.group import (
+    GroupNameSerializer,
+)
+from pneumatic_backend.processes.models import (
+    RawPerformerTemplate,
+    TemplateOwner,
+    Template,
+    TaskTemplate
+)
+from pneumatic_backend.processes.enums import (
+    OwnerType,
+    PerformerType
+)
+from pneumatic_backend.processes.api_v2.serializers.template.template import (
+    TemplateUserPrivilegesSerializer
 )
 from pneumatic_backend.generics.fields import CommaSeparatedListField
 from pneumatic_backend.generics.mixins.serializers import (
@@ -93,6 +110,76 @@ class UserSerializer(
             self.fields['language'].choices = Language.CHOICES
         else:
             self.fields['language'].choices = Language.EURO_CHOICES
+
+
+class UserPrivilegesSerializer(UserSerializer):
+    class Meta(UserSerializer.Meta):
+        model = UserModel
+        fields = UserSerializer.Meta.fields + (
+            'templates',
+        )
+        read_only_fields = UserSerializer.Meta.read_only_fields + (
+            'templates',
+        )
+
+    groups = GroupNameSerializer(
+        source='user_groups',
+        many=True,
+        read_only=True
+    )
+    templates = serializers.SerializerMethodField()
+
+    def get_templates(self, instance: UserModel):
+        groups = instance.user_groups.values_list('id', flat=True)
+
+        templates = (
+            Template.objects.filter(
+                Q(account=instance.account) &
+                (
+                    Q(owners__type=OwnerType.USER,
+                      owners__user=instance.id) |
+                    Q(owners__type=OwnerType.GROUP,
+                      owners__group__in=groups) |
+                    Q(tasks__raw_performers__type=PerformerType.USER,
+                      tasks__raw_performers__user=instance.id) |
+                    Q(tasks__raw_performers__type=PerformerType.GROUP,
+                      tasks__raw_performers__group__in=groups)
+                )
+            )
+            .distinct()
+            .only('id', 'name', 'is_active', 'is_public')
+            .prefetch_related(
+                Prefetch(
+                    'owners',
+                    queryset=TemplateOwner.objects.filter(
+                        Q(type=OwnerType.USER, user=instance.id) |
+                        Q(type=OwnerType.GROUP, group__in=groups)
+                    ).select_related(
+                        'user', 'group'
+                    )
+                ),
+                Prefetch(
+                    'tasks',
+                    queryset=TaskTemplate.objects.filter(
+                        Q(raw_performers__type=PerformerType.USER,
+                          raw_performers__user=instance.id) |
+                        Q(raw_performers__type=PerformerType.GROUP,
+                          raw_performers__group__in=groups)
+                    ).distinct().only(
+                        'number', 'api_name', 'name'
+                    ).prefetch_related(
+                        Prefetch(
+                            'raw_performers',
+                            queryset=RawPerformerTemplate.objects.filter(
+                                Q(type=PerformerType.USER, user=instance.id) |
+                                Q(type=PerformerType.GROUP, group__in=groups)
+                            ).distinct().select_related('user', 'group')
+                        )
+                    )
+                )
+            )
+        )
+        return TemplateUserPrivilegesSerializer(templates, many=True).data
 
 
 class UserNameSerializer(serializers.ModelSerializer):

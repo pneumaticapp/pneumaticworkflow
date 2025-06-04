@@ -15,7 +15,7 @@ interface IProgressbarTooltipContentsProps {
 }
 export function ProgressbarTooltipContents({
   workflow: {
-    statusUpdated,
+    dateCompleted,
     status,
     task: { checklistsMarked, checklistsTotal, dueDate: taskDueDate, dateStarted, delay },
     activeCurrentTask,
@@ -52,10 +52,8 @@ export function ProgressbarTooltipContents({
       .filter(Boolean)
       .join('\n'),
     [EWorkflowStatus.Snoozed]: getSnoozedText(),
-    [EWorkflowStatus.Finished]: formatMessage(
-      { id: 'workflows.finished' },
-      { date: <DateFormat date={statusUpdated} /> },
-    ),
+    [EWorkflowStatus.Finished]:
+      dateCompleted && formatMessage({ id: 'workflows.finished' }, { date: <DateFormat date={dateCompleted} /> }),
     [EWorkflowStatus.Aborted]: '',
   };
 

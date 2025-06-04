@@ -114,11 +114,11 @@ import {
   mapBackendWorkflowToRedux,
   mapBackendNewEventToRedux,
   formatDueDateToEditWorkflow,
-  mapBackendToISOStringToRedux,
+  mapWorkflowsToISOStringToRedux,
 } from '../../utils/mappers';
 import { getUserTimezone } from '../selectors/user';
 import { getCurrentTask } from '../selectors/task';
-import { formatDateToISOInObject } from '../../utils/dateTime';
+import { formatDateToISOInWorkflow } from '../../utils/dateTime';
 
 function* handleLoadWorkflow({ workflowId, showLoader = true }: { workflowId: number; showLoader?: boolean }) {
   const {
@@ -143,7 +143,7 @@ function* handleLoadWorkflow({ workflowId, showLoader = true }: { workflowId: nu
     const formattedWorkflowLog = mapBackandworkflowLogToRedux(workflowLog, timezone);
 
     const formattedKickoffWorkflow = mapBackendWorkflowToRedux(workflow, timezone);
-    const formattedDueDateWorkflow = formatDateToISOInObject(formattedKickoffWorkflow);
+    const formattedDueDateWorkflow = formatDateToISOInWorkflow(formattedKickoffWorkflow);
 
     yield put(changeWorkflow(formattedDueDateWorkflow));
     yield put(changeWorkflowLog({ items: formattedWorkflowLog, workflowId }));
@@ -226,7 +226,7 @@ function* fetchWorkflowsList({ payload: offset = 0 }: TLoadWorkflowsList) {
         stepsIdsFilter,
         performersIdsFilter,
         performersGroupIdsFilter,
-        workflowStartersIdsFilter
+        workflowStartersIdsFilter,
       },
     },
   }: IStoreWorkflows = yield select(getWorkflowsStore);
@@ -245,7 +245,7 @@ function* fetchWorkflowsList({ payload: offset = 0 }: TLoadWorkflowsList) {
       workflowStartersIdsFilter,
       searchText,
     });
-    const formattedResults = mapBackendToISOStringToRedux(results);
+    const formattedResults = mapWorkflowsToISOStringToRedux(results);
     const items = offset > 0 ? uniqBy([...workflowsList.items, ...formattedResults], 'id') : formattedResults;
 
     yield put(changeWorkflowsList({ count, offset, items }));
@@ -330,7 +330,7 @@ function* editWorkflowInWork({ payload }: TEditWorkflow) {
 
     const formattedPayload = formatDueDateToEditWorkflow(payload);
     const editedWorkflow: IEditWorkflowResponse = yield editWorkflow(formattedPayload);
-    const formattedEditedWorkflow = formatDateToISOInObject(editedWorkflow);
+    const formattedEditedWorkflow = formatDateToISOInWorkflow(editedWorkflow);
 
     const newEditingProcess = {
       name: formattedEditedWorkflow.name,
@@ -476,7 +476,7 @@ export function* cloneWorkflowSaga({ payload: { workflowId, workflowName, templa
       getWorkflow(workflowId),
       getTemplate(templateId),
     ]);
-    const formattedworkflowDetails = formatDateToISOInObject(workflowDetails);
+    const formattedworkflowDetails = formatDateToISOInWorkflow(workflowDetails);
     if (!formattedworkflowDetails || !template) {
       throw new Error('failed to prepare runnable workflow object');
     }

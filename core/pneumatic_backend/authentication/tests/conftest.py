@@ -41,11 +41,3 @@ def group_mock(mocker):
 @pytest.fixture
 def verification_check_true_mock(settings):
     settings.VERIFICATION_CHECK = True
-
-
-@pytest.fixture(autouse=True)
-def push_service_mock(mocker):
-    return mocker.patch(
-        'pneumatic_backend.notifications.tasks.'
-        'PushNotificationService',
-    )
