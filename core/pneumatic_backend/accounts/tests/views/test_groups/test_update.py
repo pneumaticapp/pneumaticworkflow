@@ -35,7 +35,7 @@ def test_update__ok(api_client, mocker):
         email='another@pneumatic.app'
     )
     api_client.token_authenticate(user)
-    group = create_test_group(user=user)
+    group = create_test_group(account)
     request_data = {
         'name': 'Groups',
         'photo': 'https://foeih.com/image.jpg',
@@ -47,7 +47,7 @@ def test_update__ok(api_client, mocker):
         return_value=None
     )
     group_update = create_test_group(
-        user=user,
+        account,
         name=request_data['name'],
         photo=request_data['photo'],
         users=[another_user.id]
@@ -85,10 +85,10 @@ def test_update__ok(api_client, mocker):
 def test_update__yourself__ok(api_client, mocker):
 
     # arrange
-    account = create_test_account(plan=BillingPlanType.UNLIMITED)
+    account = create_test_account()
     user = create_test_user(account=account)
     api_client.token_authenticate(user)
-    group = create_test_group(user=user)
+    group = create_test_group(account)
     request_data = {
         'name': 'Groups',
         'photo': 'https://foeih.com/image.jpg',
@@ -100,7 +100,7 @@ def test_update__yourself__ok(api_client, mocker):
         return_value=None
     )
     group_update = create_test_group(
-        user=user,
+        account,
         name=request_data['name'],
         photo=request_data['photo'],
         users=[user.id]
@@ -139,8 +139,8 @@ def test_update__not_admin__permission_denied(api_client, mocker):
 
     # arrange
     user = create_test_user()
-    group = create_test_group(user=user, users=[user.id, ])
-    account = create_test_account(plan=BillingPlanType.UNLIMITED)
+    group = create_test_group(user.account, users=[user.id])
+    account = create_test_account()
     no_admin_user = create_test_user(
         account=account,
         email='no_admin@test.com',
@@ -177,7 +177,7 @@ def test_update__not_auth__permission_denied(api_client, mocker):
 
     # arrange
     user = create_test_user()
-    group = create_test_group(user=user, users=[user.id, ])
+    group = create_test_group(user.account, users=[user.id])
     request_data = {
         'name': 'Group',
         'photo': 'https://foeih.com/image.jpg',
@@ -211,7 +211,7 @@ def test_update__expired_subscription__permission_denied(api_client, mocker):
         plan_expiration=timezone.now() - datetime.timedelta(hours=1)
     )
     user = create_test_user(account=account)
-    group = create_test_group(user=user, users=[user.id, ])
+    group = create_test_group(user.account, users=[user.id])
     api_client.token_authenticate(user)
     request_data = {
         'name': 'Group',
@@ -241,11 +241,11 @@ def test_update__expired_subscription__permission_denied(api_client, mocker):
 def test_update__service_exception__validation_error(api_client, mocker):
 
     # arrange
-    account = create_test_account(plan=BillingPlanType.UNLIMITED)
+    account = create_test_account()
     user = create_test_user(account=account)
     another_user = create_test_user(email='another@pneumatic.app')
     api_client.token_authenticate(user)
-    group = create_test_group(user=user, users=[user.id, another_user.id])
+    group = create_test_group(account, users=[user.id, another_user.id])
     request_data = {
         'name': 'Groups',
         'photo': 'https://foeih.com/image.jpg',
@@ -256,7 +256,7 @@ def test_update__service_exception__validation_error(api_client, mocker):
         return_value=None
     )
     create_test_group(
-        user=user,
+        account,
         name=request_data['name'],
         photo=request_data['photo'],
         users=[user.id, another_user.id]
@@ -293,13 +293,13 @@ def test_update__user_from_another_account__validation_error(
 ):
 
     # arrange
-    account = create_test_account(plan=BillingPlanType.UNLIMITED)
+    account = create_test_account()
     user = create_test_user(account=account)
     another_user = create_test_user(
         email='another@pneumatic.app'
     )
     api_client.token_authenticate(user)
-    group = create_test_group(user=user)
+    group = create_test_group(account)
     request_data = {
         'name': 'Groups',
         'photo': 'https://foeih.com/image.jpg',
@@ -334,14 +334,14 @@ def test_update__user_from_another_account__validation_error(
 def test_update__invited_user__ok(api_client, mocker):
 
     # arrange
-    account = create_test_account(plan=BillingPlanType.UNLIMITED)
+    account = create_test_account()
     user = create_test_user(account=account)
     invited_user = create_invited_user(
         user=user,
         email='invited@pneumatic.app',
     )
     api_client.token_authenticate(user)
-    group = create_test_group(user=user)
+    group = create_test_group(account)
     request_data = {
         'name': 'Groups',
         'photo': 'https://foeih.com/image.jpg',
@@ -353,7 +353,7 @@ def test_update__invited_user__ok(api_client, mocker):
         return_value=None
     )
     group_update = create_test_group(
-        user=user,
+        account,
         name=request_data['name'],
         photo=request_data['photo'],
         users=[invited_user.id]
@@ -399,7 +399,7 @@ def test_update__user_inactive__validation_error(api_client, mocker):
         status=UserStatus.INACTIVE,
     )
     api_client.token_authenticate(user)
-    group = create_test_group(user=user)
+    group = create_test_group(account)
     request_data = {
         'name': 'Groups',
         'photo': 'https://foeih.com/image.jpg',
@@ -440,7 +440,7 @@ def test_update__guest__validation_error(api_client, mocker):
         account=account,
     )
     api_client.token_authenticate(user)
-    group = create_test_group(user=user)
+    group = create_test_group(account)
     request_data = {
         'name': 'Groups',
         'photo': 'https://foeih.com/image.jpg',
@@ -474,10 +474,10 @@ def test_update__guest__validation_error(api_client, mocker):
 
 def test_update__fake_user_id__validation_error(api_client, mocker):
     # arrange
-    account = create_test_account(plan=BillingPlanType.UNLIMITED)
+    account = create_test_account()
     user = create_test_user(account=account)
     api_client.token_authenticate(user)
-    group = create_test_group(user=user)
+    group = create_test_group(account)
     request_data = {
         'name': 'Group',
         'photo': '',

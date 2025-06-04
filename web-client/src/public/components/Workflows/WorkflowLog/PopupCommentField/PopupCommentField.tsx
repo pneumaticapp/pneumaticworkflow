@@ -13,12 +13,13 @@ import styles from './PopupCommentField.css';
 
 export interface IPopupCommentFieldProps {
   user: IAuthUser;
-  sendComment({ text, attachments }: ISendWorkflowLogComment): void;
+  sendComment({ text, attachments, taskId }: ISendWorkflowLogComment): void;
+  taskId?: number;
 }
 
 export type TPopupCommentFieldProps = IPopupCommentFieldProps;
 
-export function PopupCommentField({ user, sendComment }: TPopupCommentFieldProps) {
+export function PopupCommentField({ user, sendComment, taskId }: TPopupCommentFieldProps) {
   const { formatMessage } = useIntl();
 
   const [commentText, setCommentText] = useStatePromise('');
@@ -31,7 +32,7 @@ export function PopupCommentField({ user, sendComment }: TPopupCommentFieldProps
       return;
     }
 
-    sendComment({ text: commentText, attachments: filesToUpload });
+    sendComment({ text: commentText, attachments: filesToUpload, taskId });
     setFilesToUpload([]);
     setCommentText('');
   };

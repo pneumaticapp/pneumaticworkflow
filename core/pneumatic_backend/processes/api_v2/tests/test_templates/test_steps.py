@@ -140,7 +140,7 @@ def test_steps__group_is_template_owner__ok(api_client):
     )
     template_task = template.tasks.get()
     request_user = create_test_admin(account=account)
-    group = create_test_group(user=account_owner, users=[request_user])
+    group = create_test_group(account, users=[request_user])
     TemplateOwner.objects.create(
         template=template,
         account=account,
@@ -552,7 +552,7 @@ def test_steps__with_tasks_in_progress_true__performer_group__ok(
         template=template
     )
     request_user = create_test_admin(account=account)
-    group = create_test_group(user=account_owner, users=[request_user])
+    group = create_test_group(account, users=[request_user])
     task = workflow.current_task_instance
     TaskPerformer.objects.create(
         task_id=task.id,
@@ -591,7 +591,7 @@ def test_steps__with_tasks_in_progress_true__deleted_group__empty_list(
         template=template
     )
     request_user = create_test_admin(account=account)
-    group = create_test_group(user=account_owner, users=[request_user])
+    group = create_test_group(account, users=[request_user])
     task = workflow.current_task_instance
     TaskPerformer.objects.create(
         task_id=task.id,
@@ -746,7 +746,7 @@ def test_steps__with_tasks_in_progress_false__performer_group__ok(
         template=template
     )
     request_user = create_test_admin(account=account)
-    group = create_test_group(user=account_owner, users=[request_user])
+    group = create_test_group(account, users=[request_user])
     task = workflow.current_task_instance
     TaskPerformer.objects.create(
         task_id=task.id,
@@ -786,7 +786,7 @@ def test_steps__with_tasks_in_progress_false__deleted_group__empty_list(
         template=template
     )
     request_user = create_test_admin(account=account)
-    group = create_test_group(user=account_owner, users=[request_user])
+    group = create_test_group(account, users=[request_user])
     task = workflow.current_task_instance
     TaskPerformer.objects.create(
         task_id=task.id,

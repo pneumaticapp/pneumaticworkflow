@@ -7,6 +7,7 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
+        ('accounts', '0124_delete_group_add_usergroup'),
         ('processes', '0215_migrate_output_fields_type_date'),
     ]
 

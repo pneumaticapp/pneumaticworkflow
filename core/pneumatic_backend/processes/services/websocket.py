@@ -69,12 +69,10 @@ class WSSender:
             id=task.id,
             api_name=task.api_name,
             name=task.name,
-            date_started=task.date_started,
             date_started_tsp=(
                 task.date_started.timestamp()
                 if task.date_started else None
             ),
-            date_completed=task.date_completed,
             date_completed_tsp=(
                 task.date_completed.timestamp()
                 if task.date_completed else None

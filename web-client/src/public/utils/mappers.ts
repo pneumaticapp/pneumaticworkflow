@@ -1,12 +1,26 @@
+/* eslint-disable indent */
 import { IExtraField, IKickoff } from '../types/template';
 import { isArrayWithItems } from './helpers';
 import { IStartWorkflowPayload, TEditWorkflowPayload } from '../redux/actions';
 import { IRunWorkflow } from '../components/WorkflowEditPopup/types';
 import { ExtraFieldsHelper } from '../components/TemplateEdit/ExtraFields/utils/ExtraFieldsHelper';
-import { getEndOfDayTsp, toDateString, toTspDate, formatDateToISOInObject, toISOStringFromTsp } from './dateTime';
-import { IWorkflow, IWorkflowDetailsKickoff, IWorkflowLogItem } from '../types/workflow';
+import {
+  getEndOfDayTsp,
+  toDateString,
+  toTspDate,
+  toISOStringFromTsp,
+  formatDateToISOInWorkflow,
+  formatDateToISOInTask,
+} from './dateTime';
+import {
+  IWorkflow,
+  IWorkflowDetailsKickoff,
+  IWorkflowLogItem,
+  WorkflowWithDateFields,
+  WorkflowWithTspFields,
+} from '../types/workflow';
 import { IHighlightsItem } from '../types/highlights';
-import { TFormatTaskDates } from '../types/tasks';
+import { TaskWithDateFields, TaskWithTspFields, TFormatTaskDates } from '../types/tasks';
 
 interface OptionsMapRequestBody {
   ignorePropertyMapToSnakeCase?: string[];
@@ -150,11 +164,19 @@ export const getNormalizedKickoff = (kickoff: IKickoff): { [key: string]: string
   return mappedKickoff;
 };
 
-export const mapBackendToISOStringToRedux = <T extends { dueDateTsp: number | null }>(
+export const mapTasksToISOStringToRedux = <T extends TaskWithTspFields>(
   results: T[],
-): (Omit<T, 'dueDateTsp'> & { dueDate: string | null })[] => {
+): (Omit<T, keyof TaskWithTspFields> & TaskWithDateFields)[] => {
   return results.map((result) => {
-    return formatDateToISOInObject(result);
+    return formatDateToISOInTask(result);
+  });
+};
+
+export const mapWorkflowsToISOStringToRedux = <T extends WorkflowWithTspFields>(
+  results: T[],
+): (Omit<T, keyof WorkflowWithTspFields> & WorkflowWithDateFields)[] => {
+  return results.map((result) => {
+    return formatDateToISOInWorkflow(result);
   });
 };
 
@@ -194,14 +216,23 @@ export const mapTspToString = (output: IExtraField[], timezone: string): IExtraF
 export const formatTaskDatesForRedux = <T extends TFormatTaskDates>(
   task: T,
   timezone: string,
-): Omit<T, 'dueDateTsp | subWorkflow'> & { dueDate: string | null; subWorkflow?: IWorkflow | null } => {
+): Omit<T, 'dueDateTsp' | 'subWorkflow' | 'dateStartedTsp' | 'dateCompletedTsp'> & {
+  dueDate: string | null;
+  subWorkflow?: IWorkflow | null;
+  dateStarted?: string;
+  dateCompleted?: string;
+} => {
   const formattedTask = {
     ...task,
     dueDate: task.dueDateTsp ? toISOStringFromTsp(task.dueDateTsp) : null,
+    ...(task.dateStartedTsp && { dateStarted: toISOStringFromTsp(task.dateStartedTsp) }),
+    ...(task.dateCompletedTsp && { dateCompleted: toISOStringFromTsp(task.dateCompletedTsp) }),
     ...(task.output && { output: mapTspToString(task.output, timezone) }),
-    ...(task.subWorkflow && { subWorkflow: formatDateToISOInObject(task.subWorkflow) }),
+    ...(task.subWorkflow && { subWorkflow: formatDateToISOInWorkflow(task.subWorkflow) }),
   };
   delete formattedTask.dueDateTsp;
+  delete formattedTask.dateStartedTsp;
+  delete formattedTask.dateCompletedTsp;
   return formattedTask;
 };
 

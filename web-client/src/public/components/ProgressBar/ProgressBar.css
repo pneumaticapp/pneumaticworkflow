@@ -1,11 +1,36 @@
 .progress-bar {
-  padding: 2px;
+  padding: 0.2rem;
   width: 100%;
-  height: 14px;
-  border-radius: 7px;
+  height: 1.4rem;
+  border-radius: 0.7rem;
 
   .progress-bar-stroke {
     height: 100%;
-    border-radius: 7px;
+    border-radius: 0.7rem;
   }
+}
+
+@define-mixin progress-base {
+  height: 1rem;
+  background: var(--progress-step-color, var(--pneumatic-color-black16));
+  border-radius: 0.5rem;
+}
+
+.container-bar-grid {
+  display: flex;
+  gap: 0.2rem;
+
+  .tooltip-classname {
+    flex: 1;
+
+    .progress-step {
+      @mixin progress-base;
+    }
+  }
+}
+
+.progress-all-steps-skipped {
+  width: 100%;
+
+  @mixin progress-base;
 }

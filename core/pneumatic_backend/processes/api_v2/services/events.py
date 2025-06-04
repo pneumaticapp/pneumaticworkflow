@@ -27,6 +27,7 @@ from pneumatic_backend.processes.api_v2.services.exceptions import (
     CommentTextRequired,
     CommentedWorkflowNotRunning,
     CommentIsDeleted,
+    CommentedTaskNotActive,
 )
 from pneumatic_backend.processes.api_v2.serializers.workflow.events import (
     DelayEventJsonSerializer,
@@ -213,14 +214,13 @@ class WorkflowEventService:
     def comment_created_event(
         cls,
         user: UserModel,
-        workflow: Workflow,
+        task: Task,
         text: Optional[str],
         clear_text: Optional[str] = None,
         attachments: Optional[List[int]] = None,
         after_create_actions: bool = True
     ) -> WorkflowEvent:
 
-        task = workflow.current_task_instance
         event = WorkflowEvent.objects.create(
             account=user.account,
             type=WorkflowEventType.COMMENT,
@@ -232,7 +232,7 @@ class WorkflowEventService:
                 context={'event_type': WorkflowEventType.COMMENT}
             ).data,
             with_attachments=bool(attachments),
-            workflow=workflow,
+            workflow=task.workflow,
             user=user,
         )
         if after_create_actions:
@@ -596,8 +596,7 @@ class CommentService(BaseModelService):
         text: str,
         exclude_ids: List[int],
     ) -> Tuple[int]:
-
-        list_of_ids = re.findall(r'\[[\w\s\']+\|([0-9]+)\]', text)
+        list_of_ids = re.findall(r'\[(?:[^[\]]+|\[.*?\])*\|([0-9]+)', text)
         if not list_of_ids:
             return tuple()
         return UserModel.objects.filter(
@@ -675,7 +674,7 @@ class CommentService(BaseModelService):
 
     def create(
         self,
-        workflow: Workflow,
+        task: Task,
         text: Optional[str] = None,
         attachments: Optional[List[int]] = None,
     ) -> WorkflowEvent:
@@ -684,8 +683,11 @@ class CommentService(BaseModelService):
             then only a notification about a new comment
             will be sent to him """
 
+        workflow = task.workflow
         if workflow.is_completed:
             raise CommentedWorkflowNotRunning()
+        if not (task.is_active or task.is_delayed):
+            raise CommentedTaskNotActive()
         if not text and not attachments:
             raise CommentTextRequired()
         clear_text = MarkdownService.clear(text) if text else None
@@ -698,12 +700,11 @@ class CommentService(BaseModelService):
         with transaction.atomic():
             self.instance = WorkflowEventService.comment_created_event(
                 user=self.user,
-                workflow=workflow,
+                task=task,
                 text=text,
                 clear_text=clear_text,
                 attachments=attachments
             )
-            task = workflow.current_task_instance
             if not task.contains_comments:
                 task.contains_comments = True
                 task.save(update_fields=['contains_comments'])
@@ -757,6 +758,9 @@ class CommentService(BaseModelService):
     ) -> WorkflowEvent:
 
         self._validate_comment_action()
+        task = self.instance.task
+        if not (task.is_active or task.is_delayed):
+            raise CommentedTaskNotActive()
         if not text and not attachments:
             raise CommentTextRequired()
         clear_text = MarkdownService.clear(text) if text else None
@@ -788,7 +792,7 @@ class CommentService(BaseModelService):
                     logging=self.user.account.log_api_requests,
                     logo_lg=self.user.account.logo_lg,
                     author_id=self.user.id,
-                    task_id=self.instance.task.id,
+                    task_id=task.id,
                     account_id=self.user.account.id,
                     users_ids=new_mentioned_users_ids,
                     text=self.instance.text
@@ -808,6 +812,9 @@ class CommentService(BaseModelService):
     def delete(self):
 
         self._validate_comment_action()
+        task = self.instance.task
+        if not (task.is_active or task.is_delayed):
+            raise CommentedTaskNotActive()
         self.instance.attachments.delete()
         super().partial_update(
             status=CommentStatus.DELETED,
@@ -872,7 +879,6 @@ class CommentService(BaseModelService):
                     user_id=self.instance.user_id,
                     user_email=self.instance.user.email,
                     reaction=value,
-                    workflow_name=self.instance.workflow.name,
                 )
 
     def delete_reaction(self, value: str):

@@ -117,7 +117,7 @@ export function Filter<IdKey extends string, LabelKey extends string, TOption ex
       ? [...props.selectedOptions, optionId]
       : props.selectedOptions.filter((selectedOption) => selectedOption !== optionId);
 
-    const mapSelectedOption = options.filter((item) => newSelectedOptions.includes(item[optionIdKey]))
+    const mapSelectedOption = options.filter((item) => newSelectedOptions.includes(item[optionIdKey]));
 
     props.changeFilter(newSelectedOptions, mapSelectedOption);
 
@@ -190,7 +190,7 @@ export function Filter<IdKey extends string, LabelKey extends string, TOption ex
           const subOptionId = subOption[optionIdKey];
 
           return (
-            <div key={optionId} className={styles['option-container']}>
+            <div key={subOptionId} className={styles['option-container']}>
               <div className={styles['option']}>
                 <Checkbox
                   checked={selectedSubOptions?.includes(subOptionId)}

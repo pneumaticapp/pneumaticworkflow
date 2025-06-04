@@ -432,7 +432,7 @@ class TestWorkflowCountsByWorkflowStarter:
             email='user2@test.test',
             is_account_owner=False
         )
-        group = create_test_group(user=workflow_starter, users=[group_user, ])
+        group = create_test_group(account, users=[group_user])
         TaskPerformer.objects.create(
             task_id=task.id,
             type=PerformerType.GROUP,
@@ -480,7 +480,7 @@ class TestWorkflowCountsByWorkflowStarter:
         task_1 = workflow_1.current_task_instance
         task_1.taskperformer_set.all().delete()
         group_1 = create_test_group(
-            user=workflow_starter,
+            account,
             users=[group_user_1]
         )
         TaskPerformer.objects.create(
@@ -498,7 +498,7 @@ class TestWorkflowCountsByWorkflowStarter:
         task_2 = workflow_2.current_task_instance
         task_2.taskperformer_set.all().delete()
         group_2 = create_test_group(
-            user=workflow_starter,
+            account,
             users=[group_user_2]
         )
         TaskPerformer.objects.create(
@@ -557,7 +557,7 @@ class TestWorkflowCountsByWorkflowStarter:
         task_2 = workflow_2.current_task_instance
         task_2.taskperformer_set.all().delete()
         group = create_test_group(
-            user=workflow_starter,
+            account,
             users=[group_user]
         )
         TaskPerformer.objects.create(
@@ -652,7 +652,7 @@ class TestWorkflowCountsByCPerformer:
             is_account_owner=False
         )
         workflow.owners.add(user_1)
-        group = create_test_group(user=user_1, users=[user_1])
+        group = create_test_group(account, users=[user_1])
         task = workflow.current_task_instance
         TaskPerformer.objects.create(
             task_id=task.id,
@@ -669,39 +669,6 @@ class TestWorkflowCountsByCPerformer:
         assert len(response.data) == 3
         assert response.data[0]['type'] == 'group'
         assert response.data[0]['source_id'] == group.id
-        assert response.data[0]['workflows_count'] == 1
-
-    def test__filter__status_running__ok(self, api_client):
-
-        # arrange
-        account = create_test_account()
-        user_1 = create_test_user(account=account, email='user1@test.test')
-        user_2 = create_test_user(account=account, email='user2@test.test')
-        create_test_group(user=user_1, users=[user_1, user_2])
-        workflow_done = create_test_workflow(user_1)
-        workflow_done.status = WorkflowStatus.DONE
-        workflow_done.save()
-        workflow_2 = create_test_workflow(user_2)
-        workflow_2.owners.add(user_1)
-        workflow_delay = create_test_workflow(user_2)
-        workflow_delay.status = WorkflowStatus.DELAYED
-        workflow_delay.save()
-        workflow_delay.owners.add(user_1)
-        api_client.token_authenticate(user_1)
-
-        # act
-        response = api_client.get(
-            '/workflows/count/by-current-performer',
-            data={
-                'status': WorkflowApiStatus.RUNNING
-            }
-        )
-
-        # assert
-        assert response.status_code == 200
-        assert len(response.data) == 1
-        assert response.data[0]['type'] == 'user'
-        assert response.data[0]['source_id'] == user_2.id
         assert response.data[0]['workflows_count'] == 1
 
     def test__filter__all_status___ok(self, api_client):
@@ -730,54 +697,6 @@ class TestWorkflowCountsByCPerformer:
         assert response.data[0]['type'] == 'user'
         assert response.data[0]['source_id'] == user.id
         assert response.data[0]['workflows_count'] == 1
-
-    @pytest.mark.parametrize('status', WorkflowApiStatus.NOT_RUNNING)
-    def test__filter__status_not_running__validation_error(
-        self,
-        status,
-        api_client
-    ):
-
-        # arrange
-        account = create_test_account()
-        user = create_test_user(account=account, email='user1@test.test')
-        api_client.token_authenticate(user)
-
-        # act
-        response = api_client.get(
-            '/workflows/count/by-current-performer',
-            data={'status': status}
-        )
-
-        # assert
-        assert response.status_code == 400
-        assert response.data['code'] == ErrorCode.VALIDATION_ERROR
-        assert response.data['message'] == messages.MSG_PW_0067
-
-    def test__filter__status_invalid__validation_error(self, api_client):
-
-        # arrange
-        account = create_test_account()
-        user_1 = create_test_user(account=account, email='user1@test.test')
-        workflow_delay = create_test_workflow(user_1, is_external=True)
-        workflow_delay.status = WorkflowStatus.DELAYED
-        workflow_delay.save()
-        create_test_workflow(user_1)
-        api_client.token_authenticate(user_1)
-
-        # act
-        response = api_client.get(
-            f'/workflows/count/by-current-performer',
-            data={'status': 'invalid'}
-        )
-
-        # assert
-        assert response.status_code == 400
-        message = '"invalid" is not a valid choice.'
-        assert response.data['code'] == ErrorCode.VALIDATION_ERROR
-        assert response.data['message'] == message
-        assert response.data['details']['name'] == 'status'
-        assert response.data['details']['reason'] == message
 
     def test__filter__template_ids__ok(self, api_client):
 
@@ -936,7 +855,7 @@ class TestWorkflowCountsByCPerformer:
         account = create_test_account(plan=BillingPlanType.PREMIUM)
         user_1 = create_test_user(account=account, email='user1@test.test')
         user_2 = create_test_user(account=account, email='user2@test.test')
-        create_test_group(user=user_1, users=[user_1, user_2])
+        create_test_group(account, users=[user_1, user_2])
         create_test_user(account=account, email='user3@test.test')
         template_1 = create_test_template(user_1, is_active=True)
         template_2 = create_test_template(user_2, is_active=True)
@@ -1417,7 +1336,7 @@ class TestWorkflowCountsByTemplateTask:
         account = create_test_account()
         user = create_test_user(account=account)
         user2 = create_test_user(account=account, email='owner@test.test')
-        group = create_test_group(user=user, users=[user, ])
+        group = create_test_group(account, users=[user])
         template_1 = create_test_template(user=user, tasks_count=1)
         TemplateOwner.objects.create(
             template=template_1,
@@ -1500,7 +1419,7 @@ class TestWorkflowCountsByTemplateTask:
         account = create_test_account()
         user = create_test_user(account=account)
         user2 = create_test_user(account=account, email='owner@test.test')
-        group = create_test_group(user=user, users=[user, ])
+        group = create_test_group(account, users=[user])
         template_1 = create_test_template(user=user, tasks_count=1)
         TemplateOwner.objects.create(
             template=template_1,
@@ -1584,7 +1503,7 @@ class TestWorkflowCountsByTemplateTask:
         account = create_test_account()
         user = create_test_user(account=account)
         user2 = create_test_user(account=account, email='owner@test.test')
-        group = create_test_group(user=user, users=[user2, ])
+        group = create_test_group(account, users=[user2])
         template_1 = create_test_template(user=user, tasks_count=1)
         TemplateOwner.objects.create(
             template=template_1,
@@ -1669,7 +1588,7 @@ class TestWorkflowCountsByTemplateTask:
         account = create_test_account()
         user = create_test_user(account=account)
         user2 = create_test_user(account=account, email='owner@test.test')
-        group = create_test_group(user=user, users=[user, ])
+        group = create_test_group(account, users=[user])
         template_1 = create_test_template(user=user, tasks_count=1)
         TemplateOwner.objects.create(
             template=template_1,

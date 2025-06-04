@@ -191,3 +191,15 @@ msgstr "Список групп содержит несуществующий и
 #: accounts/messages.py:87
 msgid "Select a plan to complete the signup"
 msgstr "Выберите план, чтобы завершить регистрацию"
+
+#: accounts/messages.py:88
+msgid "A group cannot be assigned to the same task more than once. Please choose a different group."
+msgstr "Группа не может быть назначена на одну задачу дважды. Выберите другую."
+
+#: accounts/messages.py:92
+msgid "You need to pass in old_user or old_group"
+msgstr "Укажите old_user или old_group"
+
+#: accounts/messages.py:93
+msgid "You need to pass in new_user or new_group"
+msgstr "Укажите new_user или new_group"

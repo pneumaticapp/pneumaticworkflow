@@ -64,7 +64,7 @@ def create_test_account(
     logo_sm: str = None,
     logo_lg: str = None,
     master_account: Optional[Account] = None,
-    plan: Optional[BillingPlanType] = BillingPlanType.FREEMIUM,
+    plan: Optional[BillingPlanType.LITERALS] = BillingPlanType.FREEMIUM,
     period: Optional[BillingPeriod.LITERALS] = None,
     plan_expiration: Optional[datetime] = None,
     stripe_id: str = None,
@@ -130,7 +130,7 @@ def create_test_user(
     is_staff: bool = True,
     is_admin: bool = True,
     is_account_owner: bool = True,
-    status: UserStatus = UserStatus.ACTIVE,
+    status: UserStatus.LITERALS = UserStatus.ACTIVE,
     first_name='John',
     last_name='Doe',
     phone: str = '79999999999',
@@ -327,14 +327,16 @@ def create_test_workflow(
     template: Optional[Template] = None,
     with_delay: bool = False,
     tasks_count: int = 3,
+    active_task_number: int = 1,
     is_external: bool = False,
     is_urgent: bool = False,
     finalizable: bool = False,
     name: Optional[str] = None,
     name_template: Optional[str] = None,
-    status: WorkflowStatus = WorkflowStatus.RUNNING,
+    status: int = WorkflowStatus.RUNNING,
     due_date: Optional[datetime] = None,
-    ancestor_task: Optional[Task] = None
+    ancestor_task: Optional[Task] = None,
+    description: Optional[str] = None
 ) -> Workflow:
     custom_template = template is not None
     if not custom_template:
@@ -355,7 +357,7 @@ def create_test_workflow(
     workflow = Workflow.objects.create(
         name=name or template.name,
         name_template=name_template,
-        description=template.description,
+        description=description,
         account=template.account,
         tasks_count=tasks_count,
         active_tasks_count=tasks_count,
@@ -369,6 +371,7 @@ def create_test_workflow(
         finalizable=template.finalizable,
         due_date=due_date,
         ancestor_task=ancestor_task,
+        current_task=active_task_number,
     )
     if custom_template:
         template_owners_ids = Template.objects.filter(
@@ -388,6 +391,7 @@ def create_test_workflow(
         workflow=workflow,
         account=workflow.account
     )
+    now_date = timezone.now()
     for task_template in template.tasks.all():
         task_service = TaskService(user=user)
         task = task_service.create(
@@ -396,15 +400,35 @@ def create_test_workflow(
         )
 
         # emulate run workflow
-        if task.number == 1:
-            task.date_first_started = timezone.now()
-            task.date_started = task.date_first_started
+        if task.number == active_task_number:
+            task.date_first_started = now_date
+            task.date_started = now_date
             task.status = TaskStatus.ACTIVE
             task.save(
                 update_fields=['date_first_started', 'date_started', 'status']
             )
-        task.update_performers()
-        workflow.members.add(*task.performers.all())
+            task.update_performers()
+        elif task.number < active_task_number:
+            task.date_first_started = now_date
+            task.date_started = now_date
+            task.date_completed = now_date + timedelta(seconds=30)
+            task.status = TaskStatus.COMPLETED
+            task.save(
+                update_fields=[
+                    'date_first_started',
+                    'date_started',
+                    'date_completed',
+                    'status'
+                ]
+            )
+            task.update_performers()
+            task.taskperformer_set.update(
+                is_completed=True,
+                date_completed=timezone.now()
+            )
+        else:
+            task.update_performers()
+        now_date += timedelta(seconds=60)
     return workflow
 
 
@@ -420,7 +444,8 @@ def create_nonlinear_workflow(
     name_template: Optional[str] = None,
     status: WorkflowStatus = WorkflowStatus.RUNNING,
     due_date: Optional[datetime] = None,
-    ancestor_task: Optional[Task] = None
+    ancestor_task: Optional[Task] = None,
+    description: Optional[str] = None,
 ) -> Workflow:
 
     # Run all tasks
@@ -442,7 +467,7 @@ def create_nonlinear_workflow(
     workflow = Workflow.objects.create(
         name=name or template.name,
         name_template=name_template,
-        description=template.description,
+        description=description,
         account=template.account,
         tasks_count=template.tasks_count,
         template=template,
@@ -487,7 +512,6 @@ def create_nonlinear_workflow(
                 ]
             )
         task.update_performers()
-        workflow.members.add(*task.performers.all())
     return workflow
 
 
@@ -596,7 +620,7 @@ def create_test_event(
 
 
 def create_test_group(
-    user: UserModel,
+    account: Account,
     name: str = 'Group_test',
     photo: str = None,
     users: Optional[List[UserModel]] = None,
@@ -604,7 +628,7 @@ def create_test_group(
     group = UserGroup.objects.create(
         name=name,
         photo=photo,
-        account=user.account,
+        account=account,
     )
     if users:
         group.users.set(users)

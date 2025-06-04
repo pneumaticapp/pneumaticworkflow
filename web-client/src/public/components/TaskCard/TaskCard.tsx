@@ -396,7 +396,6 @@ export function TaskCard({
   const handleReturnTask = (comment: string) => {
     setTaskReverted({
       taskId: task.id,
-      workflowId: task.workflow.id,
       viewMode,
       comment,
     });
@@ -433,7 +432,6 @@ export function TaskCard({
           onClick={() =>
             setTaskCompleted({
               taskId,
-              workflowId,
               viewMode,
               output: outputValues,
             })
@@ -447,13 +445,13 @@ export function TaskCard({
     };
 
     const {
-      workflow: { id: workflowId, currentTask },
+      workflow: { currentTask },
       id: taskId,
-      dateStartedTsp,
-      dateCompletedTsp,
+      dateStarted,
+      dateCompleted,
     } = task;
     const isReturnAllowed = viewMode !== ETaskCardViewMode.Guest && currentTask > 1;
-    const isReturnedTask = !dateStartedTsp && !dateCompletedTsp;
+    const isReturnedTask = !dateStarted && !dateCompleted;
 
     if (isReturnedTask) {
       return (
@@ -551,6 +549,7 @@ export function TaskCard({
         }
         isInTaskCard
         taskId={task.id}
+        taskStatus={task.status}
       />
     );
   };
@@ -580,7 +579,6 @@ export function TaskCard({
             {renderPerformersControllers()}
             {renderPerformers()}
           </div>
-
           {viewMode !== ETaskCardViewMode.Guest && (
             <DueIn
               withTime
@@ -590,7 +588,7 @@ export function TaskCard({
               onSave={setDueDate}
               onRemove={deleteDueDate}
               containerClassName={styles['due-in']}
-              dateCompletedTsp={task.dateCompletedTsp || task.workflow.dateCompletedTsp}
+              dateCompleted={task.dateCompleted || task.workflow.dateCompleted}
             />
           )}
         </div>

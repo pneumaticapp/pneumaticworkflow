@@ -380,6 +380,13 @@ class TaskStatus:
         COMPLETED
     )
 
+    INACTIVE_STATUS = (
+        PENDING,
+        COMPLETED,
+        DELAYED,
+        SKIPPED,
+    )
+
     CHOICES = (
         (PENDING, PENDING),
         (ACTIVE, ACTIVE),

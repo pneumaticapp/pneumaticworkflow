@@ -57,6 +57,7 @@ class UserStatus:
         (INACTIVE, INACTIVE),
     )
     NOT_ACTIVE = {INVITED, INACTIVE}
+    LITERALS = Literal[INVITED, ACTIVE, INVITED]
 
 
 class UserType:

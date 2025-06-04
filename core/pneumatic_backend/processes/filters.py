@@ -1,4 +1,3 @@
-# pylint:disable=unused-argument
 from django_filters import (
     ChoiceFilter,
     BooleanFilter,
@@ -9,9 +8,12 @@ from django_filters.rest_framework import (
     FilterSet,
 )
 from django_filters.constants import EMPTY_VALUES
+
 from pneumatic_backend.generics.filters import (
-    TsQuerySearchFilter
+    TsQuerySearchFilter,
+    DefaultOrderingFilter
 )
+from pneumatic_backend.processes.enums import TaskStatus, WorkflowStatus
 from pneumatic_backend.processes.models import (
     Template,
     SystemTemplate,
@@ -74,22 +76,38 @@ class WorkflowSuccessRateFilter(FilterSet):
         return queryset
 
 
-class RecentTaskFilter(FilterSet):
+class WorkflowWebhookFilterSet(FilterSet):
+
     status = ChoiceFilter(
         choices=(
-            ('running', 'running'),
-            ('completed', 'completed'),
+            (WorkflowStatus.RUNNING, WorkflowStatus.RUNNING),
+            (WorkflowStatus.DONE, WorkflowStatus.DONE),
         ),
-        method='filter_status',
+    )
+    ordering = DefaultOrderingFilter(
+        fields=(
+            ('date_created', 'date_created'),
+            ('-date_created', '-date_created'),
+        ),
+        default=('-date_created',)
     )
 
-    def filter_status(self, queryset, name, value):
-        if value == 'running':
-            return queryset.running_now().order_by('-date_started')
-        if value == 'completed':
-            return queryset.completed().order_by('-date_completed')
 
-        return queryset
+class TaskWebhookFilterSet(FilterSet):
+
+    status = ChoiceFilter(
+        choices=(
+            (TaskStatus.ACTIVE, TaskStatus.ACTIVE),
+            (TaskStatus.COMPLETED, TaskStatus.COMPLETED),
+        ),
+    )
+    ordering = DefaultOrderingFilter(
+        fields=(
+            ('date_started', 'date_started'),
+            ('-date_started', '-date_started'),
+        ),
+        default=('-date_started',)
+    )
 
 
 class WorkflowEventFilter(FilterSet):

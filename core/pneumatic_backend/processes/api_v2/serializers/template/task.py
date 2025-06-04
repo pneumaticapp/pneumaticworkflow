@@ -31,9 +31,7 @@ from pneumatic_backend.generics.mixins.serializers import (
     CustomValidationErrorMixin
 )
 from pneumatic_backend.processes.api_v2.serializers.template\
-    .raw_performer import (
-        RawPerformerSerializer
-    )
+    .raw_performer import RawPerformerSerializer
 from pneumatic_backend.processes.api_v2.serializers.template.mixins import (
     CreateOrUpdateRelatedMixin,
     CreateOrUpdateInstanceMixin,
@@ -583,6 +581,19 @@ class TemplateTaskOnlyFieldsSerializer(ModelSerializer):
         required=False,
         read_only=True,
     )
+
+
+class TaskTemplatePrivilegesSerializer(ModelSerializer):
+    class Meta:
+        model = TaskTemplate
+        fields = (
+            'number',
+            'api_name',
+            'name',
+            'raw_performers'
+        )
+
+    raw_performers = RawPerformerSerializer(many=True)
 
 
 class TemplateStepFilterSerializer(

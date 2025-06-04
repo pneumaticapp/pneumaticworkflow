@@ -15,18 +15,20 @@ from pneumatic_backend.accounts.filters import (
     UsersListFilterSet,
 )
 from pneumatic_backend.accounts.services import AccountService
-from pneumatic_backend.accounts.models import (
-    UserInvite,
-)
+from pneumatic_backend.accounts.models import UserInvite
 from pneumatic_backend.accounts.permissions import (
     UserIsAdminOrAccountOwner,
     ExpiredSubscriptionPermission,
     BillingPlanPermission,
+    AccountOwnerPermission,
 )
 from pneumatic_backend.accounts.queries import (
     CountTemplatesByUserQuery,
 )
-from pneumatic_backend.accounts.serializers.user import UserSerializer
+from pneumatic_backend.accounts.serializers.user import (
+    UserSerializer,
+    UserPrivilegesSerializer,
+)
 from pneumatic_backend.accounts.serializers.users import (
     ReassignSerializer,
     AcceptTransferSerializer,
@@ -51,6 +53,7 @@ from pneumatic_backend.accounts.services.exceptions import (
     AlreadyAcceptedInviteException,
     InvalidTransferTokenException,
     UserIsPerformerException,
+    ReassignServiceException,
 )
 from pneumatic_backend.accounts.enums import (
     UserInviteStatus
@@ -72,9 +75,11 @@ class UsersViewSet(
     filter_backends = [PneumaticFilterBackend]
     action_serializer_classes = {
         'reassign': ReassignSerializer,
+        'privileges': UserPrivilegesSerializer,
     }
     action_filterset_classes = {
-        'list': UsersListFilterSet
+        'list': UsersListFilterSet,
+        'privileges': UsersListFilterSet,
     }
 
     def get_permissions(self):
@@ -83,6 +88,12 @@ class UsersViewSet(
         elif self.action in {'list', 'active_count'}:
             return (
                 IsAuthenticated(),
+                BillingPlanPermission(),
+            )
+        elif self.action == 'privileges':
+            return (
+                AccountOwnerPermission(),
+                ExpiredSubscriptionPermission(),
                 BillingPlanPermission(),
             )
         else:
@@ -101,7 +112,15 @@ class UsersViewSet(
 
     def prefetch_queryset(self, queryset, extra_fields=None):
         if self.action in {'list', 'delete'}:
-            extra_fields = ('incoming_invites',)
+            extra_fields = (
+                'user_groups',
+                'incoming_invites',
+            )
+        elif self.action == 'privileges':
+            queryset = queryset.prefetch_related(
+                'user_groups',
+                'incoming_invites',
+            )
 
         return super().prefetch_queryset(
             queryset=queryset,
@@ -111,7 +130,7 @@ class UsersViewSet(
     def get_queryset(self):
         if self.action == 'transfer':
             queryset = UserModel.objects.all()
-        elif self.action == 'list':
+        elif self.action in {'list', 'privileges'}:
             account_id = self.request.user.account_id
             queryset = UserModel.include_inactive.all_account_users(
                 account_id
@@ -125,6 +144,11 @@ class UsersViewSet(
             queryset = self.request.user.account.users
         queryset = self.prefetch_queryset(queryset)
         return queryset
+
+    @action(detail=False, methods=('get',))
+    def privileges(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        return self.paginated_response(queryset)
 
     @action(detail=True, methods=('post',))
     def delete(self, request, pk=None):
@@ -153,14 +177,15 @@ class UsersViewSet(
         serializer = self.get_serializer(data=request.data)
         # TODO need return formatted validation error
         serializer.is_valid(raise_exception=True)
-        data = serializer.validated_data
-        service = ReassignService(
-            old_user=data['old_user'],
-            new_user=data['new_user'],
-            is_superuser=request.is_superuser,
-            auth_type=request.token_type,
-        )
-        service.reassign_everywhere()
+        try:
+            service = ReassignService(
+                is_superuser=request.is_superuser,
+                auth_type=request.token_type,
+                **serializer.validated_data
+            )
+            service.reassign_everywhere()
+        except ReassignServiceException as ex:
+            raise_validation_error(message=ex.message)
         return self.response_ok()
 
     # TODO uncomment in https://my.pneumatic.app/workflows/15691/

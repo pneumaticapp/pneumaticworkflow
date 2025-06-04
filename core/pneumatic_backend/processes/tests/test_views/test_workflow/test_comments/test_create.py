@@ -11,7 +11,7 @@ from pneumatic_backend.processes.models import (
     TaskPerformer,
 )
 from pneumatic_backend.processes.enums import (
-    CommentStatus,
+    CommentStatus, WorkflowStatus, TaskStatus,
 )
 from pneumatic_backend.processes.tests.fixtures import (
     create_test_user,
@@ -32,9 +32,10 @@ def test_create__text__ok(api_client, mocker):
     # arrange
     user = create_test_user()
     workflow = create_test_workflow(user)
+    task = workflow.tasks.active().first()
     event = WorkflowEventService.comment_created_event(
         text='Some comment',
-        workflow=workflow,
+        task=task,
         user=user,
         after_create_actions=False
     )
@@ -78,7 +79,7 @@ def test_create__text__ok(api_client, mocker):
         is_superuser=False
     )
     comment_create_mock.assert_called_once_with(
-        workflow=workflow,
+        task=task,
         text=event.text,
     )
 
@@ -88,10 +89,11 @@ def test_create_text_and_attachment__ok(mocker, api_client):
     # assert
     user = create_test_user()
     workflow = create_test_workflow(user)
+    task = workflow.tasks.active().first()
     event = WorkflowEventService.comment_created_event(
         user=user,
         text='Some comment',
-        workflow=workflow,
+        task=task,
         attachments=[1, 2],
         after_create_actions=False
     )
@@ -151,7 +153,7 @@ def test_create_text_and_attachment__ok(mocker, api_client):
         is_superuser=False
     )
     comment_create_mock.assert_called_once_with(
-        workflow=workflow,
+        task=task,
         text=event.text,
         attachments=[attach_1.id, attach_2.id]
     )
@@ -181,7 +183,7 @@ def test_create__guest__ok(mocker, api_client):
     event = WorkflowEventService.comment_created_event(
         user=guest,
         text='Some comment',
-        workflow=workflow,
+        task=task,
         after_create_actions=False
     )
     service_init_mock = mocker.patch.object(
@@ -223,7 +225,7 @@ def test_create__guest__ok(mocker, api_client):
         is_superuser=False
     )
     comment_create_mock.assert_called_once_with(
-        workflow=workflow,
+        task=task,
         text='Test text',
     )
 
@@ -299,6 +301,7 @@ def test_create__service_exception__validation_error(
     # arrange
     user = create_test_user()
     workflow = create_test_workflow(user)
+    task = workflow.tasks.active().first()
     service_init_mock = mocker.patch.object(
         CommentService,
         attribute='__init__',
@@ -328,6 +331,57 @@ def test_create__service_exception__validation_error(
         is_superuser=False
     )
     comment_create_mock.assert_called_once_with(
-        workflow=workflow,
+        task=task,
         text='Raise',
+    )
+
+
+def test_create__snoozed_workflow__ok(api_client, mocker):
+
+    # arrange
+    user = create_test_user()
+    workflow = create_test_workflow(
+        user=user,
+        tasks_count=1,
+        status=WorkflowStatus.DELAYED
+    )
+    task = workflow.tasks.get(number=1)
+    task.status = TaskStatus.DELAYED
+    task.save()
+    event = WorkflowEventService.comment_created_event(
+        text='Some comment',
+        task=task,
+        user=user,
+        after_create_actions=False
+    )
+
+    service_init_mock = mocker.patch.object(
+        CommentService,
+        attribute='__init__',
+        return_value=None
+    )
+    comment_create_mock = mocker.patch(
+        'pneumatic_backend.processes.api_v2.services.'
+        'CommentService.create',
+        return_value=event
+    )
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.post(
+        f'/workflows/{workflow.id}/comment',
+        data={'text': event.text}
+    )
+
+    # assert
+    assert response.status_code == 200
+    assert response.data['id'] == event.id
+    service_init_mock.assert_called_once_with(
+        user=user,
+        auth_type=AuthTokenType.USER,
+        is_superuser=False
+    )
+    comment_create_mock.assert_called_once_with(
+        task=task,
+        text=event.text,
     )

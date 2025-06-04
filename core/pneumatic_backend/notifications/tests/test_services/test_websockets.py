@@ -12,6 +12,10 @@ from pneumatic_backend.notifications.services.exceptions import (
 from pneumatic_backend.accounts.enums import UserType, NotificationType
 from pneumatic_backend.accounts.models import Notification
 from pneumatic_backend.processes.models import Delay
+from pneumatic_backend.accounts.serializers.notifications import (
+    NotificationTaskSerializer,
+    NotificationWorkflowSerializer,
+)
 from pneumatic_backend.processes.tests.fixtures import (
     create_test_user,
     create_invited_user,
@@ -32,7 +36,13 @@ def test_get_serialized_notification__type_mention__ok():
     workflow = create_test_workflow(user, tasks_count=1)
     task = workflow.current_task_instance
     notification = Notification.objects.create(
-        task=task,
+        task_json=NotificationTaskSerializer(
+            instance=task,
+            notification_type=NotificationType.MENTION
+        ).data,
+        workflow_json=NotificationWorkflowSerializer(
+            instance=task.workflow
+        ).data,
         user=user,
         account=user.account,
         type=NotificationType.MENTION,
@@ -74,7 +84,13 @@ def test_get_serialized_notification__type_delay__ok():
         duration=timedelta(days=1)
     )
     notification = Notification.objects.create(
-        task_id=task.id,
+        task_json=NotificationTaskSerializer(
+            instance=task,
+            notification_type=NotificationType.DELAY_WORKFLOW
+        ).data,
+        workflow_json=NotificationWorkflowSerializer(
+            instance=task.workflow
+        ).data,
         user_id=user.id,
         account_id=user.account.id,
         type=NotificationType.DELAY_WORKFLOW,
@@ -99,7 +115,7 @@ def test_get_serialized_notification__type_delay__ok():
     assert data['author'] == notification.author
     assert data['task']['id'] == task.id
     assert data['task']['name'] == task.name
-    assert data['task']['delay']['estimated_end_date'] is not None
+    assert data['task']['delay']['estimated_end_date_tsp'] is not None
     assert data['task']['delay']['duration'] == '1 00:00:00'
     assert data['workflow']['id'] == workflow.id
     assert data['workflow']['name'] == workflow.name
@@ -114,7 +130,13 @@ def test_get_serialized_notification__type_due_date__ok():
     task.due_date = timezone.now() + timedelta(hours=1)
     task.save(update_fields=['due_date'])
     notification = Notification.objects.create(
-        task_id=task.id,
+        task_json=NotificationTaskSerializer(
+            instance=task,
+            notification_type=NotificationType.DUE_DATE_CHANGED
+        ).data,
+        workflow_json=NotificationWorkflowSerializer(
+            instance=task.workflow
+        ).data,
         user_id=user.id,
         account_id=user.account.id,
         type=NotificationType.DUE_DATE_CHANGED,
@@ -505,7 +527,13 @@ async def test_consumer_send_notification__received(mocker, api_client):
     token = '123456'
     workflow = create_test_workflow(user)
     notification = Notification.objects.create(
-        task=workflow.current_task_instance,
+        task_json=NotificationTaskSerializer(
+            instance=workflow.current_task_instance,
+            notification_type=NotificationType.COMMENT
+        ).data,
+        workflow_json=NotificationWorkflowSerializer(
+            instance=workflow.current_task_instance.workflow
+        ).data,
         user=user,
         author=invited,
         account=user.account,

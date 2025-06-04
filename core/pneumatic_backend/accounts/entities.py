@@ -5,7 +5,7 @@ from pneumatic_backend.accounts.enums import SourceType
 
 class InviteData(TypedDict):
 
-    invited_from: SourceType
+    invited_from: SourceType.LITERALS
     email: str
     first_name: Optional[str]
     last_name: Optional[str]

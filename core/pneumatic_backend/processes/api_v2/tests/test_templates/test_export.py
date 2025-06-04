@@ -178,7 +178,7 @@ def test_export__response_format__ok(api_client):
     assert field_task_template[0]['api_name'] == field_task.api_name
 
     selection = field_task_template[0]['selections']
-    assert selection[0]['id'] == selection_template.id
+    assert selection[0]['api_name'] == selection_template.api_name
     assert selection[0]['value'] == selection_template.value
     conditions_template = tasks_template['conditions']
     assert conditions_template[0]['action'] == condition_template.action
@@ -484,7 +484,7 @@ def test_export__filter_owners_ids_user_in_group__ok(api_client):
     # arrange
     account = create_test_account()
     user = create_test_owner(account=account)
-    group = create_test_group(user=user, users=[user])
+    group = create_test_group(account, users=[user])
     template = create_test_template(user=user)
     create_test_template(user=user)
     TemplateOwner.objects.all().delete()
@@ -511,7 +511,7 @@ def test_export__filter_owners_group_ids__ok(api_client):
     # arrange
     account = create_test_account()
     user = create_test_owner(account=account)
-    group = create_test_group(user=user, users=[user])
+    group = create_test_group(account, users=[user])
     template = create_test_template(user=user)
     TemplateOwner.objects.all().delete()
     TemplateOwner.objects.create(
@@ -541,7 +541,7 @@ def test_export__mix_filter__ok(api_client):
         email='test@bou.tr',
         account=account
     )
-    group = create_test_group(user=user1, users=[user1])
+    group = create_test_group(account, users=[user1])
     api_client.token_authenticate(user1)
     template1 = create_test_template(user=user1)
     template2 = create_test_template(user=user2)

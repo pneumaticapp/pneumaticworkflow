@@ -2,6 +2,7 @@ import pytest
 from datetime import datetime, timedelta
 from django.utils import timezone
 from django.conf import settings
+
 from pneumatic_backend.accounts.enums import (
     NotificationStatus,
     NotificationType,
@@ -14,11 +15,16 @@ from pneumatic_backend.accounts.tokens import (
     DigestUnsubscribeToken,
     UnsubscribeEmailToken,
 )
+from pneumatic_backend.accounts.serializers.notifications import (
+    NotificationTaskSerializer,
+    NotificationWorkflowSerializer,
+)
 from pneumatic_backend.analytics.enums import MailoutType
 from pneumatic_backend.authentication.tokens import PneumaticToken
 from pneumatic_backend.authentication.enums import AuthTokenType
 from pneumatic_backend.processes.models import (
     Delay,
+    Task
 )
 from pneumatic_backend.processes.tests.fixtures import (
     create_test_workflow,
@@ -225,7 +231,13 @@ class TestUserNotifications:
         workflow = create_test_workflow(user, tasks_count=1)
         task = workflow.tasks.first()
         notification = Notification.objects.create(
-            task_id=task.id,
+            task_json=NotificationTaskSerializer(
+                instance=task,
+                notification_type=NotificationType.COMMENT
+            ).data,
+            workflow_json=NotificationWorkflowSerializer(
+                instance=task.workflow
+            ).data,
             user_id=user.id,
             account_id=user.account.id,
             type=NotificationType.COMMENT,
@@ -272,7 +284,13 @@ class TestUserNotifications:
             duration=timedelta(days=1)
         )
         notification = Notification.objects.create(
-            task_id=task.id,
+            task_json=NotificationTaskSerializer(
+                instance=task,
+                notification_type=NotificationType.DELAY_WORKFLOW
+            ).data,
+            workflow_json=NotificationWorkflowSerializer(
+                instance=task.workflow
+            ).data,
             user_id=user.id,
             account_id=user.account.id,
             type=NotificationType.DELAY_WORKFLOW,
@@ -297,17 +315,15 @@ class TestUserNotifications:
         assert data['datetime_tsp'] == notification.datetime.timestamp()
         assert data['status'] == notification.status
         assert data['author'] == user_author.id
-        assert data['workflow']['id'] == workflow.id
-        assert data['workflow']['name'] == workflow.name
+
         assert data['task']['id'] == task.id
         assert data['task']['name'] == task.name
-        assert data['task']['delay']['estimated_end_date'] == (
-            delay.estimated_end_date.strftime(date_format)
-        )
         assert data['task']['delay']['estimated_end_date_tsp'] == (
             delay.estimated_end_date.timestamp()
         )
         assert data['task']['delay']['duration'] == '1 00:00:00'
+        assert data['workflow']['id'] == workflow.id
+        assert data['workflow']['name'] == workflow.name
 
     def test_list__type_delay_resumed__ok(self, api_client):
 
@@ -330,10 +346,15 @@ class TestUserNotifications:
             task=task,
             start_date=timezone.now(),
             duration=timedelta(hours=1),
-            end_date=(timezone.now() + timedelta(seconds=5)),
         )
         Notification.objects.create(
-            task_id=task.id,
+            task_json=NotificationTaskSerializer(
+                instance=task,
+                notification_type=NotificationType.DELAY_WORKFLOW
+            ).data,
+            workflow_json=NotificationWorkflowSerializer(
+                instance=task.workflow
+            ).data,
             user_id=user.id,
             account_id=user.account.id,
             type=NotificationType.DELAY_WORKFLOW,
@@ -349,9 +370,6 @@ class TestUserNotifications:
         assert response.status_code == 200
         assert len(response.data) == 1
         data = response.data[0]
-        assert data['task']['delay']['estimated_end_date'] == (
-            delay.estimated_end_date.strftime(date_format)
-        )
         assert data['task']['delay']['estimated_end_date_tsp'] == (
             delay.estimated_end_date.timestamp()
         )
@@ -372,7 +390,13 @@ class TestUserNotifications:
         task.save(update_fields=['due_date'])
 
         notification = Notification.objects.create(
-            task_id=task.id,
+            task_json=NotificationTaskSerializer(
+                instance=task,
+                notification_type=NotificationType.DUE_DATE_CHANGED
+            ).data,
+            workflow_json=NotificationWorkflowSerializer(
+                instance=task.workflow
+            ).data,
             user_id=user.id,
             account_id=user.account.id,
             type=NotificationType.DUE_DATE_CHANGED,
@@ -545,6 +569,50 @@ class TestUserNotifications:
         response = api_client.get('/accounts/notifications?ordering=datetime')
         assert response.status_code == 200
         assert response.data[0]['id'] == notification.id
+
+    def test_list__remove_task__ok(self, api_client):
+
+        # arrange
+        user = create_test_user()
+        user_author = create_test_user(
+            email='t@t.t',
+            account=user.account,
+            is_account_owner=False
+        )
+        workflow = create_test_workflow(user)
+        task = workflow.tasks.get(number=1)
+        Delay.objects.create(
+            task=task,
+            start_date=timezone.now(),
+            duration=timedelta(days=1)
+        )
+        notification = Notification.objects.create(
+            task_json=NotificationTaskSerializer(
+                instance=task,
+                notification_type=NotificationType.DELAY_WORKFLOW
+            ).data,
+            workflow_json=NotificationWorkflowSerializer(
+                instance=task.workflow
+            ).data,
+            user_id=user.id,
+            account_id=user.account.id,
+            type=NotificationType.DELAY_WORKFLOW,
+            text='text',
+            author_id=user_author.id
+        )
+        Task.objects.filter(id=task.id).delete()
+        api_client.token_authenticate(user)
+
+        # act
+        response = api_client.get('/accounts/notifications')
+
+        # assert
+        assert response.status_code == 200
+        assert len(response.data) == 1
+        data = response.data[0]
+        assert data['id'] == notification.id
+        assert data['task']['id'] == task.id
+        assert data['task']['name'] == task.name
 
     def test_delete__ok(self, api_client):
 

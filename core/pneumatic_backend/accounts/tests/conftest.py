@@ -9,14 +9,6 @@ def analytics_mock(mocker):
     )
 
 
-@pytest.fixture(autouse=True)
-def session_mock(mocker):
-    session = mocker.patch(
-        'django.contrib.sessions.backends.cache.SessionStore',
-    )
-    session.return_value.session_key = 'test'
-
-
 @pytest.fixture
 def api_client():
     return PneumaticApiClient(HTTP_USER_AGENT='Mozilla/5.0')
@@ -33,12 +25,4 @@ def identify_mock(mocker):
 def group_mock(mocker):
     return mocker.patch(
         'pneumatic_backend.analytics.mixins.BaseIdentifyMixin.group'
-    )
-
-
-@pytest.fixture(autouse=True)
-def push_service_mock(mocker):
-    return mocker.patch(
-        'pneumatic_backend.notifications.tasks.'
-        'PushNotificationService',
     )

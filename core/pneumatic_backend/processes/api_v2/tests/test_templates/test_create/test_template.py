@@ -140,7 +140,7 @@ def test_create__only_required_fields_with_group__defaults_ok(
         account=account,
         email='test2@pneumatic.app'
     )
-    group = create_test_group(user=user, users=[user_in_group, ])
+    group = create_test_group(account, users=[user_in_group])
     api_client.token_authenticate(user)
     create_integrations_mock = mocker.patch(
         'pneumatic_backend.processes.api_v2.services.templates.'
@@ -473,7 +473,7 @@ def test_create__current_user_in_group__ok(
         email='another@pneumatic.app'
     )
     api_client.token_authenticate(another_user)
-    group = create_test_group(user=user, users=[another_user, ])
+    group = create_test_group(account, users=[another_user])
     mocker.patch(
         'pneumatic_backend.processes.api_v2.services.templates.'
         'integrations.TemplateIntegrationsService.'
@@ -1571,6 +1571,128 @@ def test_create__template_owners_without_current_user__validation_error(
     assert response.data['code'] == ErrorCode.VALIDATION_ERROR
     assert response.data['message'] == messages.MSG_PT_0018
     assert response.data['details']['reason'] == messages.MSG_PT_0018
+    assert response.data['details']['name'] == 'owners'
+    template_create_mock.assert_not_called()
+    kickoff_create_mock.assert_not_called()
+
+
+def test_create__template_owners_user_source_id_none__validation_error(
+    mocker,
+    api_client
+):
+
+    # arrange
+    template_create_mock = mocker.patch(
+        'pneumatic_backend.processes.api_v2.views.template.'
+        'AnalyticService.templates_created'
+    )
+    kickoff_create_mock = mocker.patch(
+        'pneumatic_backend.processes.api_v2.views.template.'
+        'AnalyticService.templates_kickoff_created'
+    )
+    account = create_test_account(plan=BillingPlanType.PREMIUM)
+    user = create_test_user(is_account_owner=False, account=account)
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.post(
+        '/templates',
+        data={
+            'name': 'Template',
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id
+                },
+                {
+                    'type': OwnerType.USER,
+                    'source_id': None
+                }
+            ],
+            'is_active': True,
+            'description': '',
+            'kickoff': {},
+            'tasks': [
+                {
+                    'name': 'First step',
+                    'number': 1,
+                    'raw_performers': [
+                        {
+                            'type': PerformerType.USER,
+                            'source_id': user.id
+                        }
+                    ]
+                }
+            ]
+        }
+    )
+
+    # assert
+    assert response.status_code == 400
+    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
+    assert response.data['message'] == messages.MSG_PT_0057
+    assert response.data['details']['reason'] == messages.MSG_PT_0057
+    assert response.data['details']['name'] == 'owners'
+    template_create_mock.assert_not_called()
+    kickoff_create_mock.assert_not_called()
+
+
+def test_create__template_owners_group_source_id_none__validation_error(
+    mocker,
+    api_client
+):
+
+    # arrange
+    template_create_mock = mocker.patch(
+        'pneumatic_backend.processes.api_v2.views.template.'
+        'AnalyticService.templates_created'
+    )
+    kickoff_create_mock = mocker.patch(
+        'pneumatic_backend.processes.api_v2.views.template.'
+        'AnalyticService.templates_kickoff_created'
+    )
+    account = create_test_account(plan=BillingPlanType.PREMIUM)
+    user = create_test_user(is_account_owner=False, account=account)
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.post(
+        '/templates',
+        data={
+            'name': 'Template',
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id
+                },
+                {
+                    'type': OwnerType.GROUP,
+                    'source_id': None
+                }
+            ],
+            'is_active': True,
+            'description': '',
+            'kickoff': {},
+            'tasks': [
+                {
+                    'name': 'First step',
+                    'number': 1,
+                    'raw_performers': [
+                        {
+                            'type': PerformerType.USER,
+                            'source_id': user.id
+                        }
+                    ]
+                }
+            ]
+        }
+    )
+
+    # assert
+    assert response.status_code == 400
+    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
+    assert response.data['message'] == messages.MSG_PT_0057
+    assert response.data['details']['reason'] == messages.MSG_PT_0057
     assert response.data['details']['name'] == 'owners'
     template_create_mock.assert_not_called()
     kickoff_create_mock.assert_not_called()
@@ -2745,7 +2867,7 @@ def test_create__raw_performers_group__ok(
     # arrange
     account = create_test_account()
     user = create_test_user(account=account)
-    group = create_test_group(user=user, users=[user, ])
+    group = create_test_group(account, users=[user])
     api_client.token_authenticate(user)
     mocker.patch(
         'pneumatic_backend.processes.api_v2.services.templates.'

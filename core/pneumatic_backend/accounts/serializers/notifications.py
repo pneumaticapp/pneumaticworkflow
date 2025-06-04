@@ -1,13 +1,12 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
-from pneumatic_backend.processes.models import Delay
+from pneumatic_backend.processes.models import Delay, Task, Workflow
 from pneumatic_backend.accounts.models import Notification
 from pneumatic_backend.accounts.enums import NotificationType
 from pneumatic_backend.generics.fields import TimeStampField
 
 
 UserModel = get_user_model()
-datetime_format = '%Y-%m-%dT%H:%M:%S.%fZ'
 
 
 class DelaySerializer(serializers.ModelSerializer):
@@ -15,7 +14,6 @@ class DelaySerializer(serializers.ModelSerializer):
     class Meta:
         model = Delay
         fields = (
-            'estimated_end_date',
             'estimated_end_date_tsp',
             'duration',
         )
@@ -26,6 +24,44 @@ class DelaySerializer(serializers.ModelSerializer):
     )
 
 
+class NotificationTaskSerializer(serializers.ModelSerializer):
+    due_date_tsp = TimeStampField(source='due_date', read_only=True)
+    delay = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Task
+        fields = (
+            'id',
+            'name',
+            'due_date_tsp',
+            'delay'
+        )
+
+    def __init__(self, *args, **kwargs):
+        self.notification_type = kwargs.pop('notification_type', None)
+        super().__init__(*args, **kwargs)
+        if self.notification_type != NotificationType.DELAY_WORKFLOW:
+            self.fields.pop('delay', None)
+        if self.notification_type != NotificationType.DUE_DATE_CHANGED:
+            if not self.instance.due_date:
+                self.fields.pop('due_date_tsp', None)
+
+    def get_delay(self, instance):
+        delay = instance.get_active_delay()
+        if not delay:
+            return None
+        return DelaySerializer(delay).data
+
+
+class NotificationWorkflowSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Workflow
+        fields = (
+            'id',
+            'name'
+        )
+
+
 class NotificationsSerializer(serializers.ModelSerializer):
 
     class Meta:
@@ -34,44 +70,14 @@ class NotificationsSerializer(serializers.ModelSerializer):
             'id',
             'text',
             'type',
-            'task',
             'datetime',
             'datetime_tsp',
             'status',
             'author',
-            'workflow'
+            'task',
+            'workflow',
         )
 
-    workflow = serializers.SerializerMethodField()
-    task = serializers.SerializerMethodField()
+    task = serializers.JSONField(source='task_json', read_only=True)
+    workflow = serializers.JSONField(source='workflow_json', read_only=True)
     datetime_tsp = TimeStampField(source='datetime', read_only=True)
-
-    def get_workflow(self, instance):
-        if instance.type == NotificationType.SYSTEM:
-            return None
-        elif instance.task.workflow:  # TODO fix in 2962
-            return {
-                'id': instance.task.workflow.id,
-                'name': instance.task.workflow.name
-            }
-
-    def get_task(self, instance):
-        if instance.type == NotificationType.SYSTEM:
-            return None
-        elif instance.task:  # TODO fix in 2962
-            result = {
-                'id': instance.task.id,
-                'name': instance.task.name
-            }
-            if instance.type == NotificationType.DELAY_WORKFLOW:
-                delay = (
-                    instance.task.delay_set.active().first()
-                    or instance.task.delay_set.order_by('-id').first()
-                )
-                result['delay'] = DelaySerializer(instance=delay).data
-            elif instance.type == NotificationType.DUE_DATE_CHANGED:
-                if instance.task.due_date:
-                    result['due_date_tsp'] = instance.task.due_date.timestamp()
-                else:
-                    result['due_date_tsp'] = None
-            return result

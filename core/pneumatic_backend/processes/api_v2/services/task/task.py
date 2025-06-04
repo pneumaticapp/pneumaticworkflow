@@ -320,8 +320,6 @@ class TaskService(
             logging=self.user.account.log_api_requests,
             author_id=self.user.id,
             task_id=self.instance.id,
-            task_name=self.instance.name,
-            workflow_name=self.instance.workflow.name,
             account_id=self.instance.account_id,
             logo_lg=self.user.account.logo_lg,
         )

@@ -1,5 +1,7 @@
 from django.db.models import Prefetch
 from django.contrib.auth import get_user_model
+from django.http import Http404
+from rest_framework.decorators import action
 from rest_framework.viewsets import GenericViewSet
 from pneumatic_backend.accounts.serializers.group import (
     GroupSerializer,
@@ -27,6 +29,8 @@ from pneumatic_backend.accounts.services.exceptions import (
 from pneumatic_backend.accounts.filters import (
     GroupsListFilterSet,
 )
+from pneumatic_backend.accounts.queries import CountTemplatesByGroupQuery
+from pneumatic_backend.executor import RawSqlExecutor
 from pneumatic_backend.generics.filters import PneumaticFilterBackend
 
 UserModel = get_user_model()
@@ -138,3 +142,27 @@ class GroupViewSet(
         )
         service.delete()
         return self.response_ok()
+
+    @action(
+        detail=True,
+        methods=('get',),
+        url_path='count-workflows',
+    )
+    def count_workflows(self, request, pk=None):
+
+        # Used before reassigning group tasks to know
+        # if the reassign request needs to be executed.
+
+        try:
+            group = self.get_queryset().get(id=pk)
+        except UserGroup.DoesNotExist:
+            raise Http404
+        query = CountTemplatesByGroupQuery(
+            group_id=group.id,
+            account_id=request.user.account_id,
+        )
+        result = list(RawSqlExecutor.fetch(*query.get_sql()))
+        count = sum(item['count'] for item in result)
+        return self.response_ok(
+            data={'count': count}
+        )

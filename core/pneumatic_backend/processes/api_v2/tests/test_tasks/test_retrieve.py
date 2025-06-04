@@ -23,7 +23,9 @@ from pneumatic_backend.processes.tests.fixtures import (
     create_test_workflow,
     create_test_template,
     create_test_account,
-    create_test_guest
+    create_test_guest,
+    create_test_group,
+    create_test_admin
 )
 from pneumatic_backend.processes.api_v2.services.task.performers import (
     TaskPerformersService
@@ -89,7 +91,6 @@ def test_retrieve__ok(api_client, mocker):
     assert workflow_data['status'] == workflow.status
     assert workflow_data['current_task'] == workflow.current_task
     assert workflow_data['template_name'] == workflow.get_template_name()
-    assert workflow_data['date_completed'] is None
     assert workflow_data['date_completed_tsp'] is None
 
     identify_mock.assert_not_called()
@@ -149,7 +150,6 @@ def test_retrieve__delayed__ok(api_client, mocker):
     assert workflow_data['status'] == workflow.status
     assert workflow_data['current_task'] == workflow.current_task
     assert workflow_data['template_name'] == workflow.get_template_name()
-    assert workflow_data['date_completed'] is None
     assert workflow_data['date_completed_tsp'] is None
 
 
@@ -384,6 +384,15 @@ def test_retrieve__completed_task__ok(api_client, mocker):
         task.date_completed.timestamp()
     )
     assert response.data['status'] == TaskStatus.COMPLETED
+    performer = task.taskperformer_set.first()
+    assert response.data['performers'] == [
+        {
+            'source_id': user.id,
+            'type': 'user',
+            'is_completed': True,
+            'date_completed_tsp': performer.date_completed.timestamp(),
+        }
+    ]
 
 
 def test_retrieve__user_completed_task__return_as_completed(
@@ -568,8 +577,14 @@ def test_retrieve__deleted_performer__ok(api_client):
     assert response.status_code == 200
     assert response.data['id'] == task.id
     assert len(response.data['performers']) == 1
-    performer = {'source_id': user.id, 'type': 'user'}
-    assert response.data['performers'][0] == performer
+    assert response.data['performers'] == [
+        {
+            'source_id': user.id,
+            'type': 'user',
+            'is_completed': False,
+            'date_completed_tsp': None,
+        }
+    ]
 
 
 def test_retrieve__get_performers_type_field__ok(api_client):
@@ -622,8 +637,14 @@ def test_retrieve__get_performers_type_field__ok(api_client):
 
     # assert
     assert len(performers) == 1
-    performer = {'source_id': user2.id, 'type': 'user'}
-    assert performers[0] == performer
+    assert performers == [
+        {
+            'source_id': user2.id,
+            'type': 'user',
+            'is_completed': False,
+            'date_completed_tsp': None,
+        }
+    ]
 
 
 def test_retrieve__is_urgent__ok(api_client):
@@ -1180,7 +1201,7 @@ def test_retrieve__with_comment__ok(api_client, mocker):
     WorkflowEventService.workflow_run_event(workflow)
     WorkflowEventService.comment_created_event(
         user=user,
-        workflow=workflow,
+        task=task,
         text='Some text',
         after_create_actions=False
     )
@@ -1270,18 +1291,20 @@ def test_retrieve__sub_workflows__ok(api_client, mocker):
     assert data['id'] == sub_wf.id
     assert data['name'] == sub_wf.name
     assert data['status'] == sub_wf.status
-    assert data['date_created'] == (
-        sub_wf.date_created.strftime(date_format)
-    )
+    assert data['description'] == sub_wf.description
     assert data['date_created_tsp'] == sub_wf.date_created.timestamp()
     assert data['due_date_tsp'] == sub_wf.due_date.timestamp()
     assert data['tasks_count'] == 1
     assert data['active_tasks_count'] == 1
     assert data['is_external'] is False
     assert data['is_urgent'] is True
+    assert data['finalizable'] == sub_wf.finalizable
     assert data['workflow_starter'] == user.id
     assert data['current_task'] == 1
     assert data['active_current_task'] == 1
+    assert data['ancestor_task_id'] == ancestor_task.id
+    assert data['is_legacy_template'] is False
+    assert data['legacy_template_name'] is None
 
     assert data['template']['id'] == sub_wf.template.id
     assert data['template']['name'] == sub_wf.template.name
@@ -1296,8 +1319,14 @@ def test_retrieve__sub_workflows__ok(api_client, mocker):
     assert current_task['date_started_tsp'] == (
         task_1.date_started.timestamp()
     )
-    performer = {'source_id': user.id, 'type': 'user'}
-    assert current_task['performers'] == [performer]
+    assert current_task['performers'] == [
+        {
+            'source_id': user.id,
+            'type': 'user',
+            'is_completed': False,
+            'date_completed_tsp': None,
+        }
+    ]
     assert current_task['checklists_total'] == 0
     assert current_task['checklists_marked'] == 0
     assert current_task['status'] == TaskStatus.ACTIVE
@@ -1399,3 +1428,39 @@ def test_retrieve__sub_workflows_not_return_skipped_tasks__ok(
     task_1_data = data['tasks'][0]
     assert task_1_data['id'] == task_2.id
     assert task_1_data['status'] == TaskStatus.PENDING
+
+
+def test_retrieve__user_in_group_task_performer__ok(api_client, mocker):
+    # arrange
+    identify_mock = mocker.patch(
+        'pneumatic_backend.processes.api_v2.views.task.TaskViewSet.'
+        'identify'
+    )
+    group_mock = mocker.patch(
+        'pneumatic_backend.processes.api_v2.views.task.TaskViewSet.'
+        'group'
+    )
+    user = create_test_user()
+    group_user = create_test_admin(
+        account=user.account,
+        email='group_user@test.test',
+    )
+    group = create_test_group(user.account, users=[group_user])
+    workflow = create_test_workflow(user=user, tasks_count=1)
+    task = workflow.tasks.first()
+    TaskPerformer.objects.create(
+        task_id=task.id,
+        type=PerformerType.GROUP,
+        group_id=group.id,
+    )
+    api_client.token_authenticate(group_user)
+
+    # act
+    response = api_client.get(f'/v2/tasks/{task.id}')
+
+    # assert
+    assert response.status_code == 200
+    assert response.data['id'] == task.id
+    assert response.data['workflow']['id'] == workflow.id
+    identify_mock.assert_not_called()
+    group_mock.assert_not_called()

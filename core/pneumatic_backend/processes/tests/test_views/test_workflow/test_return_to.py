@@ -629,7 +629,7 @@ def test_return_to__force_snooze_and_resume__snooze_not_running_again(
     # assert
     assert response_complete.status_code == 204
     assert response_snooze.status_code == 200
-    assert response_resume.status_code == 204
+    assert response_resume.status_code == 200
     assert response_return_to.status_code == 204
     assert response_complete_2.status_code == 204
     workflow.refresh_from_db()

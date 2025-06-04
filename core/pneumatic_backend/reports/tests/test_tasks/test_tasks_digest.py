@@ -196,7 +196,7 @@ class TestSendTasksDigest:
     ):
 
         # arrange
-        account = create_test_account(plan=BillingPlanType.PREMIUM)
+        account = create_test_account()
         template_owner = create_test_user(account=account)
         user_performer = create_test_user(
             email='test@test.test',

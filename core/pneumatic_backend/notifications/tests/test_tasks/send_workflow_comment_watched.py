@@ -33,7 +33,7 @@ def test_send_workflow_comment_watched__not_watched__skip(mocker):
     workflow = create_test_workflow(account_owner, tasks_count=1)
     comment_event = WorkflowEventService.comment_created_event(
         user=account_owner,
-        workflow=workflow,
+        task=workflow.tasks.active().first(),
         text='text',
         after_create_actions=False
     )
@@ -65,7 +65,7 @@ def test_send_workflow_comment_watched__first_watched__ok(mocker):
     workflow = create_test_workflow(account_owner, tasks_count=1)
     comment_event = WorkflowEventService.comment_created_event(
         user=account_owner,
-        workflow=workflow,
+        task=workflow.tasks.active().first(),
         text='text',
         after_create_actions=False
     )
@@ -118,7 +118,7 @@ def test_send_workflow_comment_watched__second_watched__ok(mocker):
     workflow = create_test_workflow(account_owner, tasks_count=1)
     comment_event = WorkflowEventService.comment_created_event(
         user=account_owner,
-        workflow=workflow,
+        task=workflow.tasks.active().first(),
         text='text',
         after_create_actions=False
     )

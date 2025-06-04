@@ -708,8 +708,12 @@ export const ruMessages = {
   'ai-template.button-generate': 'Генерировать',
   'ai-template.button-stop': 'Остановить',
   'ai-template.button-apply': 'Использовать Шаблон',
+  'workflows.open': 'открыть',
+  'workflows.minimize': 'минимизировать',
   'workflows.table-view': 'Процессы',
   'workflows.grid-view': 'Плитки',
+  'workflows.multiple-active-tasks': 'Задачи',
+  'workflows.tasks': 'Задача',
   'workflows.clear-table-filters': 'Очистить',
   'workflows.clear-grid-filters': 'Очистить Фильтр',
   'workflows.title.tooltip':

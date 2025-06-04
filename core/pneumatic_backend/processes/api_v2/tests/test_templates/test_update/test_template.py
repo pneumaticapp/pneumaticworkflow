@@ -1164,7 +1164,7 @@ class TestUpdateTemplate:
             status=status
         )
         user_2 = create_test_user(account=user.account, email='test@test.ru')
-        group = create_test_group(user=user, users=[user_2, ])
+        group = create_test_group(user.account, users=[user_2])
         template = workflow.template
         task_template = template.tasks.first()
         mocker.patch(
@@ -1235,8 +1235,8 @@ class TestUpdateTemplate:
             tasks_count=1,
         )
         user_2 = create_test_user(account=user.account, email='test@test.ru')
-        group = create_test_group(user=user, users=[user_2, ])
-        group_2 = create_test_group(user=user)
+        group = create_test_group(user.account, users=[user_2])
+        group_2 = create_test_group(user.account)
         template = workflow.template
         task_template = template.tasks.first()
         mocker.patch(
@@ -1995,7 +1995,7 @@ class TestUpdateTemplate:
 
         # arrange
         user = create_test_user()
-        group = create_test_group(user=user, users=[user, ])
+        group = create_test_group(user.account, users=[user])
 
         user2 = create_test_user(
             email='test2@pneumatic.app',
@@ -2088,7 +2088,7 @@ class TestUpdateTemplate:
         # arrange
         account = create_test_account()
         user = create_test_user(account=account)
-        group = create_test_group(user=user, users=[user, ])
+        group = create_test_group(account, users=[user])
 
         user2 = create_test_user(
             email='test2@pneumatic.app',

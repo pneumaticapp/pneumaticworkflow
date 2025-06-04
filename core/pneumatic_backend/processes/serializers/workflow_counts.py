@@ -82,10 +82,6 @@ class WorkflowCountsByCurrentPerformerSerializer(
         default=None,
         allow_null=True
     )
-    status = ChoiceField(
-        required=False,
-        choices=WorkflowApiStatus.CHOICES
-    )
     template_ids = CharField(required=False)
     template_task_api_names = CharField(required=False)
     # TODO Remove in https://my.pneumatic.app/workflows/36988/
@@ -116,11 +112,6 @@ class WorkflowCountsByCurrentPerformerSerializer(
 
     def validate_workflow_starter_ids(self, value):
         return self.get_valid_list_integers(value)
-
-    def validate_status(self, value):
-        if value in WorkflowApiStatus.NOT_RUNNING:
-            raise ValidationError(MSG_PW_0067)
-        return value
 
 
 class WorkflowCountsByTemplateTaskSerializer(

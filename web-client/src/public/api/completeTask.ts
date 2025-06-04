@@ -4,22 +4,26 @@ import { mapRequestBody } from '../utils/mappers';
 import { ExtraFieldsHelper } from '../components/TemplateEdit/ExtraFields/utils/ExtraFieldsHelper';
 
 import { commonRequest } from './commonRequest';
+import { ITaskAPI } from '../types/tasks';
 
-export function completeTask(id: number, userId: number, taskId: number, output: IExtraField[]) {
-  const { api: { urls }} = getBrowserConfigEnv();
-  const url = urls.completeTask.replace(':id', String(id));
+export function completeTask(taskId: number, output: IExtraField[]) {
+  const {
+    api: { urls },
+  } = getBrowserConfigEnv();
+  const url = urls.completeTask.replace(':id', String(taskId));
 
   const normalizedOutput = new ExtraFieldsHelper(output).normalizeFieldsValuesAsObject();
 
-  return commonRequest(url, {
-    method: 'POST',
-    data: mapRequestBody(
-      { userId, taskId, output: normalizedOutput },
-      'default',
-      { ignorePropertyMapToSnakeCase: ['output'] }
-    ),
-  }, {
-    responseType: 'empty',
-    shouldThrow: true,
-  });
+  return commonRequest<ITaskAPI>(
+    url,
+    {
+      method: 'POST',
+      data: mapRequestBody({ output: normalizedOutput }, 'default', {
+        ignorePropertyMapToSnakeCase: ['output'],
+      }),
+    },
+    {
+      shouldThrow: true,
+    },
+  );
 }

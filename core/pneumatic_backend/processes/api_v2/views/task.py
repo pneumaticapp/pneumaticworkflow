@@ -4,7 +4,6 @@ from django.contrib.auth import get_user_model
 from rest_framework.decorators import action
 from rest_framework.viewsets import GenericViewSet
 from rest_framework.generics import ListAPIView, get_object_or_404
-from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.pagination import LimitOffsetPagination
 
 from pneumatic_backend.analytics.services import AnalyticService
@@ -14,11 +13,11 @@ from pneumatic_backend.generics.permissions import (
     IsAuthenticated,
 )
 from pneumatic_backend.accounts.enums import UserType
-from pneumatic_backend.processes.enums import TaskStatus
 from pneumatic_backend.processes.permissions import (
     TaskWorkflowMemberPermission,
     TaskWorkflowOwnerPermission,
     GuestTaskPermission,
+    TaskRevertPermission, TaskCompletePermission,
 )
 from pneumatic_backend.accounts.permissions import (
     UsersOverlimitedPermission,
@@ -38,6 +37,7 @@ from pneumatic_backend.processes.api_v2.serializers.workflow.task import (
     TaskSerializer,
     TaskListSerializer,
     TaskListFilterSerializer,
+    TaskCompleteSerializer,
 )
 from pneumatic_backend.processes.api_v2.serializers.workflow.due_date import (
     DueDateSerializer
@@ -54,7 +54,7 @@ from pneumatic_backend.processes.api_v2.serializers.workflow.events import (
 from pneumatic_backend.processes.api_v2.services.task.exceptions import (
     PerformersServiceException,
     TaskServiceException,
-    GroupPerformerServiceException
+    GroupPerformerServiceException, TaskFieldException
 )
 from pneumatic_backend.processes.api_v2.services.task.groups import (
     GroupPerformerService
@@ -65,6 +65,15 @@ from pneumatic_backend.processes.api_v2.services.task.performers import (
 from pneumatic_backend.processes.api_v2.services.task.guests import (
     GuestPerformersService
 )
+from pneumatic_backend.processes.api_v2.serializers.workflow.task import (
+    TaskRevertSerializer
+)
+from pneumatic_backend.processes.services.exceptions import (
+    WorkflowActionServiceException
+)
+from pneumatic_backend.processes.services.workflow_action import (
+    WorkflowActionService
+)
 from pneumatic_backend.utils.validation import raise_validation_error
 from pneumatic_backend.processes.throttling import TaskPerformerGuestThrottle
 from pneumatic_backend.analytics.mixins import BaseIdentifyMixin
@@ -72,16 +81,26 @@ from pneumatic_backend.accounts.serializers.user import UserSerializer
 from pneumatic_backend.processes.queries import TaskListQuery
 from pneumatic_backend.processes.api_v2.services.task.task import TaskService
 from pneumatic_backend.processes.filters import (
-    RecentTaskFilter,
+    TaskWebhookFilterSet,
     WorkflowEventFilter,
 )
 from pneumatic_backend.processes.enums import WorkflowEventType
-from rest_framework.response import Response
+from pneumatic_backend.processes.api_v2.services import (
+    CommentService,
+)
+from pneumatic_backend.processes.api_v2.services.exceptions import (
+    CommentServiceException
+)
+from pneumatic_backend.processes.serializers.comments import (
+    CommentCreateSerializer,
+)
+from pneumatic_backend.webhooks.enums import HookEvent
 
 UserModel = get_user_model()
 
 
 class TasksListView(ListAPIView):
+
     serializer_class = TaskListSerializer
     permission_classes = (
         UserIsAuthenticated,
@@ -116,28 +135,6 @@ class TasksListView(ListAPIView):
         return super().list(request, *args, **kwargs)
 
 
-class RecentTaskView(ListAPIView):
-    """ Used by Zapier triggers for get webhook response example"""
-
-    permission_classes = (
-        UserIsAuthenticated,
-        BillingPlanPermission,
-        ExpiredSubscriptionPermission,
-    )
-    filter_backends = (DjangoFilterBackend,)
-    filterset_class = RecentTaskFilter
-
-    def list(self, request, *args, **kwargs):
-        qst = (
-            Task.objects
-                .on_account(self.request.user.account_id)
-                .filter(status__in={TaskStatus.ACTIVE, TaskStatus.COMPLETED})
-                .order_by('-date_started')
-        )
-        task = self.filter_queryset(qst).first()
-        return Response(task.webhook_payload()['task'])
-
-
 class TaskViewSet(
     CustomViewSetMixin,
     BaseIdentifyMixin,
@@ -147,7 +144,11 @@ class TaskViewSet(
     filter_backends = (PneumaticFilterBackend,)
 
     def get_permissions(self):
-        if self.action in ('retrieve', 'events'):
+        if self.action in (
+            'retrieve',
+            'events',
+            'comment',
+        ):
             return (
                 IsAuthenticated(),
                 ExpiredSubscriptionPermission(),
@@ -172,6 +173,28 @@ class TaskViewSet(
                 TaskWorkflowOwnerPermission(),
                 UsersOverlimitedPermission(),
             )
+        elif self.action == 'revert':
+            return (
+                UserIsAuthenticated(),
+                ExpiredSubscriptionPermission(),
+                BillingPlanPermission(),
+                UsersOverlimitedPermission(),
+                TaskRevertPermission(),
+            )
+        elif self.action == 'complete':
+            return (
+                IsAuthenticated(),
+                ExpiredSubscriptionPermission(),
+                BillingPlanPermission(),
+                UsersOverlimitedPermission(),
+                TaskCompletePermission(),
+            )
+        elif self.action == 'webhook_example':
+            return (
+                UserIsAuthenticated(),
+                ExpiredSubscriptionPermission(),
+                BillingPlanPermission(),
+            )
         return super().get_permissions()
 
     action_serializer_classes = {
@@ -184,10 +207,14 @@ class TaskViewSet(
         'create_group_performer': TaskGroupPerformerSerializer,
         'delete_group_performer': TaskGroupPerformerSerializer,
         'events': WorkflowEventSerializer,
+        'revert': TaskRevertSerializer,
+        'complete': TaskCompleteSerializer,
+        'comment': CommentCreateSerializer,
     }
 
     action_filterset_classes = {
         'events': WorkflowEventFilter,
+        'webhook_example': TaskWebhookFilterSet,
     }
 
     action_paginator_classes = {
@@ -202,10 +229,14 @@ class TaskViewSet(
 
     def get_queryset(self):
         user = self.request.user
-        qst = Task.objects.on_account(user.account_id)
+        queryset = Task.objects.on_account(user.account_id)
         if self.action == 'retrieve':
-            qst = qst.with_date_first_started()
-        return self.prefetch_queryset(qst)
+            queryset = queryset.with_date_first_started()
+        elif self.action == 'webhook_example':
+            queryset = queryset.filter(
+                workflow__owners=user.id
+            ).order_by('-date_started')
+        return self.prefetch_queryset(queryset)
 
     def get_object(self):
 
@@ -233,6 +264,8 @@ class TaskViewSet(
             ).select_related(
                 'workflow'
             )
+        elif self.action in {'revert', 'complete', 'comment'}:
+            queryset = queryset.select_related('workflow')
         return queryset
 
     @property
@@ -416,3 +449,95 @@ class TaskViewSet(
         )
         qst = self.filter_queryset(qst)
         return self.paginated_response(qst)
+
+    @action(methods=['post'], detail=True)
+    def revert(self, request, *args, **kwargs):
+        task = self.get_object()
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        service = WorkflowActionService(
+            workflow=task.workflow,
+            user=request.user,
+            auth_type=request.token_type,
+            is_superuser=request.is_superuser
+        )
+        try:
+            service.revert(
+                revert_from_task=task,
+                comment=serializer.validated_data['comment']
+            )
+        except WorkflowActionServiceException as ex:
+            raise_validation_error(message=ex.message)
+        return self.response_ok()
+
+    @action(methods=['post'], detail=True)
+    def complete(self, request, *args, **kwargs):
+        task = self.get_object()
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        service = WorkflowActionService(
+            workflow=task.workflow,
+            user=request.user,
+            auth_type=request.token_type,
+            is_superuser=request.is_superuser
+        )
+        try:
+            task = service.complete_task_for_user(
+                task=task,
+                fields_values=serializer.validated_data.get('output')
+            )
+        except WorkflowActionServiceException as ex:
+            raise_validation_error(message=ex.message)
+        except TaskFieldException as ex:
+            raise_validation_error(
+                message=ex.message,
+                api_name=ex.api_name
+            )
+        response_slz = TaskSerializer(
+            instance=task,
+            context={'user': request.user}
+        )
+        return self.response_ok(response_slz.data)
+
+    @action(methods=['post'], detail=True)
+    def comment(self, request, *args, **kwargs):
+        task = self.get_object()
+        slz = self.get_serializer(
+            data=request.data,
+            extra_fields={'workflow': task.workflow}
+        )
+        slz.is_valid(raise_exception=True)
+        service = CommentService(
+            user=request.user,
+            auth_type=request.token_type,
+            is_superuser=request.is_superuser
+        )
+        try:
+            event = service.create(
+                task=task,
+                **slz.validated_data
+            )
+        except CommentServiceException as ex:
+            raise_validation_error(message=ex.message)
+        return self.response_ok(
+            WorkflowEventSerializer(instance=event).data
+        )
+
+    @action(methods=['get'], url_path='webhook-example', detail=False)
+    def webhook_example(self, request, *args, **kwargs):
+        task = self.filter_queryset(self.get_queryset()).first()
+        if not task:
+            return self.response_not_found()
+        return self.response_ok(
+            {
+                'hook': {
+                    "event": (
+                        HookEvent.TASK_COMPLETED if task.is_completed
+                        else HookEvent.TASK_RETURNED
+                    ),
+                    'id': 123,
+                    "target": 'https://example.com/webhooks/'
+                },
+                **task.webhook_payload()
+            }
+        )

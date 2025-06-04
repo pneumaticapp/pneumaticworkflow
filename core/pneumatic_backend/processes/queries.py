@@ -4,6 +4,7 @@ from datetime import datetime
 from django.contrib.auth import get_user_model
 from pneumatic_backend.accounts.models import User, UserGroup
 from pneumatic_backend.generics.mixins.managers import SearchSqlQueryMixin
+from pneumatic_backend.processes.paginations import WorkflowListPagination
 from pneumatic_backend.queries import (
     SqlQueryObject,
     OrderByMixin,
@@ -42,8 +43,8 @@ class WorkflowListQuery(
     def __init__(
         self,
         account_id: int,
-        user_id: int,
-        limit: int,
+        limit: Optional[int] = WorkflowListPagination.default_limit,
+        user_id:  Optional[int] = None,
         offset: Optional[int] = None,
         status: Optional[str] = None,
         ordering: Optional[WorkflowOrdering.LITERALS] = None,
@@ -54,15 +55,13 @@ class WorkflowListQuery(
         workflow_starter: Optional[List[int]] = None,
         is_external: Optional[bool] = None,
         search: Optional[str] = None,
+        ancestor_task_id: Optional[int] = None,
     ):
-        self.status = WorkflowApiStatus.MAP[status] if status else None
         self.params = {
             'account_id': account_id,
-            'user_id': user_id,
-            'directly_status': DirectlyStatus.DELETED,
-            'status': self.status,
             'limit': limit,
         }
+        self.status = WorkflowApiStatus.MAP[status] if status else None
         self.offset = offset
         self.ordering = ordering
         self.template = template
@@ -72,6 +71,8 @@ class WorkflowListQuery(
         self.workflow_starter = workflow_starter
         self.is_external = is_external
         self.search_text = search
+        self.ancestor_task_id = ancestor_task_id
+        self.user_id = user_id
 
     def _get_search(self):
         tsquery, params = self._get_tsquery()
@@ -141,12 +142,16 @@ class WorkflowListQuery(
     def _get_where(self):
         where = f"""
             WHERE pw.is_deleted IS FALSE
-            AND pw.account_id = %(account_id)s
-            AND (
-              pto.user_id = %(user_id)s
-              OR pw.workflow_starter_id = %(user_id)s
+            AND pw.account_id = %(account_id)s """
+
+        if self.user_id:
+            where = (
+                f'{where} AND ('
+                f'pto.user_id = %(user_id)s'
+                f' OR pw.workflow_starter_id = %(user_id)s'
+                f')'
             )
-        """
+            self.params['user_id'] = self.user_id
 
         if self.template:
             where = f'{where} AND {self._get_template()}'
@@ -159,17 +164,17 @@ class WorkflowListQuery(
                 f'{where} AND'
                 f' ({self._get_current_performer()}'
                 f' OR {self._get_current_performer_group_ids()})'
-                f' AND ptp.directly_status != %(directly_status)s'
+                f' AND ptp.directly_status != {DirectlyStatus.DELETED}'
             )
         elif self.current_performer:
             where = (
                 f'{where} AND {self._get_current_performer()}'
-                f' AND ptp.directly_status != %(directly_status)s'
+                f' AND ptp.directly_status != {DirectlyStatus.DELETED}'
             )
         elif self.current_performer_group_ids:
             where = (
                 f'{where} AND {self._get_current_performer_group_ids()}'
-                f' AND ptp.directly_status != %(directly_status)s'
+                f' AND ptp.directly_status != {DirectlyStatus.DELETED}'
             )
 
         if self.workflow_starter and self.is_external:
@@ -188,6 +193,11 @@ class WorkflowListQuery(
 
         if self.status is not None:
             where = f'{where} AND pw.status = %(status)s'
+            self.params['status'] = self.status
+
+        if self.ancestor_task_id:
+            where = f'{where} AND pw.ancestor_task_id = %(ancestor_task_id)s'
+            self.params['ancestor_task_id'] = self.ancestor_task_id
 
         return where
 
@@ -247,6 +257,7 @@ class WorkflowListQuery(
             pw.name,
             pw.template_id,
             pw.status,
+            pw.description,
             pw.tasks_count,
             pw.active_tasks_count,
             pw.current_task,
@@ -257,9 +268,9 @@ class WorkflowListQuery(
             pw.is_urgent,
             pw.date_created,
             pw.date_completed,
-            pw.status_updated,
             pw.due_date,
             pw.workflow_starter_id,
+            pw.ancestor_task_id,
             pw.finalizable,
             LEAST(pt.due_date, pw.due_date) AS nearest_due_date
         """
@@ -452,7 +463,6 @@ class WorkflowCountsByCPerformerQuery(
         self,
         user_id: int,
         account_id: int,
-        status: Optional[str] = None,
         is_external: Optional[bool] = None,
         template_ids: Optional[List[int]] = None,
         template_task_api_names: Optional[List[int]] = None,
@@ -1443,66 +1453,6 @@ class TemplateStepsQuery(
         """, self.params
 
 
-class WorkflowCurrentTaskUserPerformerQuery(SqlQueryObject):
-
-    def __init__(
-        self,
-        user: User,
-        workflow_id: int,
-        task_id: Optional[int] = None
-    ):
-        self.params = {
-            'account_id': user.account.id,
-            'user_id': user.id,
-            'workflow_id': workflow_id,
-            'directly_status': DirectlyStatus.DELETED,
-            'task_id': task_id
-        }
-
-    def _get_workflow_current_task_performer_query(self):
-        return f"""
-            SELECT ptp.id
-            FROM processes_workflow pw
-              INNER JOIN processes_task pt
-                ON pt.workflow_id=pw.id
-                  AND pt.number = pw.current_task
-              INNER JOIN processes_taskperformer ptp
-                ON ptp.task_id = pt.id
-              LEFT JOIN accounts_usergroup_users ugu
-                ON ptp.group_id = ugu.usergroup_id
-              LEFT JOIN accounts_usergroup ag
-                ON ugu.usergroup_id = ag.id AND ag.is_deleted IS FALSE
-            WHERE (ptp.user_id = %(user_id)s OR ugu.user_id = %(user_id)s)
-              AND ptp.directly_status != %(directly_status)s
-              AND pw.id = %(workflow_id)s
-              AND pt.account_id = %(account_id)s
-        """
-
-    def _get_workflow_task_performer_query(self):
-        return f"""
-            SELECT ptp.id
-            FROM processes_task pt
-              INNER JOIN processes_taskperformer ptp
-                ON ptp.task_id = pt.id
-              LEFT JOIN accounts_usergroup_users ugu
-                ON ptp.group_id = ugu.usergroup_id
-              LEFT JOIN accounts_usergroup ag
-                ON ugu.usergroup_id = ag.id AND ag.is_deleted IS FALSE
-            WHERE (ptp.user_id = %(user_id)s OR ugu.user_id = %(user_id)s)
-              AND ptp.directly_status != %(directly_status)s
-              AND pt.workflow_id = %(workflow_id)s
-              AND pt.account_id = %(account_id)s
-              AND pt.id = %(task_id)s
-        """
-
-    def get_sql(self):
-        if self.params['task_id']:
-            query = self._get_workflow_task_performer_query()
-        else:
-            query = self._get_workflow_current_task_performer_query()
-        return query, self.params
-
-
 class HighlightsQuery(SqlQueryObject):
     event_types = (
         WorkflowEventType.COMMENT,
@@ -1527,7 +1477,8 @@ class HighlightsQuery(SqlQueryObject):
         account_id,
         user_id,
         templates=None,
-        users=None,
+        current_performer_ids: Optional[List[int]] = None,
+        current_performer_group_ids: Optional[List[int]] = None,
         date_before_tsp: Optional[datetime] = None,
         date_after_tsp: Optional[datetime] = None,
     ):
@@ -1544,13 +1495,26 @@ class HighlightsQuery(SqlQueryObject):
             except (SyntaxError, ValueError):
                 raise ValidationError(MSG_PW_0024('templates'))
 
-        if users is not None:
+        if current_performer_ids is not None:
             try:
-                self.users = users
+                self.users = current_performer_ids
                 if isinstance(self.users, int):
                     self.users = (self.users,)
             except (SyntaxError, ValueError):
                 raise ValidationError(MSG_PW_0024('users'))
+
+        if current_performer_group_ids is not None:
+            group_users_ids = (
+                UserModel.objects
+                .on_account(account_id=account_id)
+                .get_users_in_groups(group_ids=current_performer_group_ids)
+                .user_ids_set()
+            )
+            if group_users_ids:
+                if current_performer_ids:
+                    self.users = list(set(self.users) | group_users_ids)
+                else:
+                    self.users = list(group_users_ids)
 
         if date_before_tsp is not None:
             self.date_before_tsp = date_before_tsp
@@ -1698,6 +1662,8 @@ class TemplateTitlesEventsQuery(SqlQueryObject):
         WorkflowEventType.NOT_URGENT,
         WorkflowEventType.TASK_PERFORMER_CREATED,
         WorkflowEventType.TASK_PERFORMER_DELETED,
+        WorkflowEventType.TASK_PERFORMER_GROUP_CREATED,
+        WorkflowEventType.TASK_PERFORMER_GROUP_DELETED,
         WorkflowEventType.FORCE_DELAY,
         WorkflowEventType.FORCE_RESUME,
         WorkflowEventType.DUE_DATE_CHANGED,

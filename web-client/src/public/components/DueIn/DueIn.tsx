@@ -23,11 +23,11 @@ export interface IDueInProps {
   withTime?: boolean;
   onSave(date: string): void;
   onRemove(): void;
-  dateCompletedTsp?: number | null;
+  dateCompleted: string | null;
 }
 
 export function DueIn({
-  dateCompletedTsp,
+  dateCompleted,
   dueDate,
   containerClassName,
   showIcon = true,
@@ -40,8 +40,7 @@ export function DueIn({
 }: IDueInProps) {
   const { formatMessage } = useIntl();
   const locale = useSelector(getLanguage);
-  const dateCompletedISO = (dateCompletedTsp && moment.unix(dateCompletedTsp).toISOString()) || null;
-  const dueInData = getDueInData([dueDate], dateCompletedISO, timezone, locale);
+  const dueInData = getDueInData([dueDate], dateCompleted, timezone, locale);
   const dropdownRef = useRef<React.ElementRef<typeof DropdownArea> | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [timeString, setTimeString] = useState('');

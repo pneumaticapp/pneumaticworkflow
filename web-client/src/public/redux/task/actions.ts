@@ -102,7 +102,6 @@ export const deleteCurrentTaskDueDate: (payload?: void) => TDeleteCurrentTaskDue
 
 export type TSetTaskCompletedPayload = {
   taskId: number;
-  workflowId: number;
   output: IExtraField[];
   viewMode: ETaskCardViewMode;
 };
@@ -114,7 +113,6 @@ export const setTaskCompleted: (payload: TSetTaskCompletedPayload) => TSetTaskCo
 
 export type TSetTaskRevertedPayload = {
   taskId: number;
-  workflowId: number;
   viewMode: ETaskCardViewMode;
   comment: string;
 };

@@ -32,8 +32,8 @@ def test_list__ok(api_client):
     )
     create_test_user(email='3@test.com', account=account)
     api_client.token_authenticate(user_1)
-    group_1 = create_test_group(user=user_1, users=[user_4, user_1, user_3])
-    group_2 = create_test_group(user=user_1, users=[user_2])
+    group_1 = create_test_group(account, users=[user_4, user_1, user_3])
+    group_2 = create_test_group(account, users=[user_2])
 
     # act
     response = api_client.get(
@@ -56,9 +56,9 @@ def test_list__ok(api_client):
 def test_list__not_admin__ok(api_client):
 
     # arrange
-    account = create_test_account(plan=BillingPlanType.UNLIMITED)
+    account = create_test_account()
     user = create_test_user(account=account)
-    group = create_test_group(user=user, users=[user, ])
+    group = create_test_group(account, users=[user])
     no_admin_user = create_test_user(
         account=account,
         email='no_admin@test.com',
@@ -85,9 +85,9 @@ def test_list__not_admin__ok(api_client):
 def test_list__guest__ok(api_client):
 
     # arrange
-    account = create_test_account(plan=BillingPlanType.UNLIMITED)
+    account = create_test_account()
     user = create_test_user(account=account)
-    group = create_test_group(user=user, users=[user, ])
+    group = create_test_group(account, users=[user])
     guest = create_test_guest(account=account, email='b@test.test')
     workflow = create_test_workflow(user, tasks_count=1)
     task = workflow.tasks.first()
@@ -120,7 +120,7 @@ def test_list__not_auth__permission_denied(api_client):
 
     # arrange
     user = create_test_user()
-    create_test_group(user=user, users=[user, ])
+    create_test_group(account=user.account, users=[user])
 
     # act
     response = api_client.get(
@@ -139,7 +139,7 @@ def test_list__expired_subscription__ok(api_client):
         plan_expiration=timezone.now() - datetime.timedelta(hours=1)
     )
     user = create_test_user(account=account)
-    group = create_test_group(user=user, users=[user, ])
+    group = create_test_group(account, users=[user])
     api_client.token_authenticate(user)
 
     # act
@@ -161,9 +161,9 @@ def test_list__default_ordering__ok(api_client):
     account = create_test_account(plan=BillingPlanType.UNLIMITED)
     user = create_test_user(account=account)
     api_client.token_authenticate(user)
-    group_1 = create_test_group(name='test_3', user=user)
-    group_2 = create_test_group(name='test_1', user=user)
-    group_3 = create_test_group(name='test_2', user=user)
+    group_1 = create_test_group(account, name='test_3')
+    group_2 = create_test_group(account, name='test_1')
+    group_3 = create_test_group(account, name='test_2')
 
     # act
     response = api_client.get(
@@ -184,9 +184,9 @@ def test_list__order_by_reverse_name__ok(api_client):
     account = create_test_account(plan=BillingPlanType.UNLIMITED)
     user = create_test_user(account=account)
     api_client.token_authenticate(user)
-    group_1 = create_test_group(name='test_3', user=user)
-    group_2 = create_test_group(name='test_1', user=user)
-    group_3 = create_test_group(name='test_2', user=user)
+    group_1 = create_test_group(account, name='test_3')
+    group_2 = create_test_group(account, name='test_1')
+    group_3 = create_test_group(account, name='test_2')
 
     # act
     response = api_client.get(
@@ -207,9 +207,9 @@ def test_list__order_name__ok(api_client):
     account = create_test_account(plan=BillingPlanType.UNLIMITED)
     user = create_test_user(account=account)
     api_client.token_authenticate(user)
-    group_1 = create_test_group(name='test_3', user=user)
-    group_2 = create_test_group(name='test_1', user=user)
-    group_3 = create_test_group(name='test_2', user=user)
+    group_1 = create_test_group(account, name='test_3')
+    group_2 = create_test_group(account, name='test_1')
+    group_3 = create_test_group(account, name='test_2')
 
     # act
     response = api_client.get(
@@ -228,12 +228,12 @@ def test_list__order_name__ok(api_client):
 def test_list__invalid_ordering__validation_error(value, api_client):
 
     # arrange
-    account = create_test_account(plan=BillingPlanType.UNLIMITED)
+    account = create_test_account()
     user = create_test_user(account=account)
     api_client.token_authenticate(user)
-    create_test_group(name='test_3', user=user)
-    create_test_group(name='test_1', user=user)
-    create_test_group(name='test_2', user=user)
+    create_test_group(account, name='test_3')
+    create_test_group(account, name='test_1')
+    create_test_group(account, name='test_2')
 
     # act
     response = api_client.get(

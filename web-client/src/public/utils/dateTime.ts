@@ -1,3 +1,4 @@
+/* eslint-disable indent */
 import moment, { duration as momentDuration } from 'moment';
 import 'moment-timezone';
 import 'moment-duration-format';
@@ -14,10 +15,11 @@ import {
 } from 'date-fns';
 
 import { useIntl } from 'react-intl';
-import { IWorkflowDelay } from '../types/workflow';
+import { IWorkflowDelay, WorkflowWithDateFields, WorkflowWithTspFields } from '../types/workflow';
 import { EHighlightsDateFilter } from '../types/highlights';
 
 import { getDate } from './strings';
+import { TaskWithDateFields, TaskWithTspFields } from '../types/tasks';
 
 export const SEC_IN_DAY = 24 * 60 * 60;
 export const SEC_IN_HOUR = 60 * 60;
@@ -205,13 +207,27 @@ export const toTspDate = (date?: string | Date | null): number | null => {
   return momentDate.unix();
 };
 
-export const formatDateToISOInObject = <T extends { dueDateTsp: number | null }>(
-  resWitTsp: T,
-): Omit<T, 'dueDateTsp'> & { dueDate: string | null } => {
-  const { dueDateTsp, ...rest } = resWitTsp;
+export const formatDateToISOInTask = <T extends TaskWithTspFields>(
+  task: T,
+): Omit<T, keyof TaskWithTspFields> & TaskWithDateFields => {
+  const { dueDateTsp, dateStartedTsp, dateCompletedTsp, ...rest } = task;
   return {
     ...rest,
     dueDate: dueDateTsp ? toISOStringFromTsp(dueDateTsp) : null,
+    dateStarted: toISOStringFromTsp(dateStartedTsp),
+    dateCompleted: dateCompletedTsp ? toISOStringFromTsp(dateCompletedTsp) : null,
+  };
+};
+
+export const formatDateToISOInWorkflow = <T extends WorkflowWithTspFields>(
+  workflow: T,
+): Omit<T, keyof WorkflowWithTspFields> & WorkflowWithDateFields => {
+  const { dueDateTsp, dateCreatedTsp, dateCompletedTsp, ...rest } = workflow;
+  return {
+    ...rest,
+    dueDate: dueDateTsp ? toISOStringFromTsp(dueDateTsp) : null,
+    dateCreated: toISOStringFromTsp(dateCreatedTsp),
+    dateCompleted: dateCompletedTsp ? toISOStringFromTsp(dateCompletedTsp) : null,
   };
 };
 

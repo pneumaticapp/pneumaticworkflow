@@ -58,13 +58,12 @@ def test_send_reaction_notification__call_services__ok(mocker):
         logging=account.log_api_requests,
         author_id=reacted_user.id,
         author_name=reacted_user.name,
-        task_id=task.id,
         user_id=account_owner.id,
         user_email=account_owner.email,
         logo_lg=account.logo_lg,
         account_id=account.id,
         reaction=reaction,
-        workflow_name=workflow.name,
+        task_id=task.id,
     )
 
     # assert

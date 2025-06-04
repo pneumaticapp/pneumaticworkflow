@@ -356,6 +356,7 @@ export const setWorkflowsFilterWorkflowStarters: (payload: number[]) => TSetWork
 export interface ISendWorkflowLogComment {
   text: string;
   attachments: TUploadedFile[];
+  taskId?: number;
 }
 
 export type TSendWorkflowLogComment = ITypedReduxAction<

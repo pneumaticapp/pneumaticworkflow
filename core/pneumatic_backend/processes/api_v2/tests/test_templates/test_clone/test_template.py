@@ -230,7 +230,7 @@ class TestCopyTemplate:
 
         # arrange
         user = create_test_user()
-        group = create_test_group(user=user, users=[user, ])
+        group = create_test_group(user.account, users=[user])
         api_client.token_authenticate(user)
 
         request_data = {

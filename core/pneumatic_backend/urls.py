@@ -13,7 +13,6 @@ from pneumatic_backend.processes.api_v2.views.checklist import (
 from pneumatic_backend.processes.api_v2.views.task import (
     TaskViewSet,
     TasksListView,
-    RecentTaskView,
 )
 from pneumatic_backend import views
 from pneumatic_backend.accounts.views import (
@@ -77,7 +76,6 @@ urlpatterns = [
     path('reports/', include('pneumatic_backend.reports.urls')),
 
     # Using by Zapier
-    path('recent-task', RecentTaskView.as_view()),
     path('v3/tasks', TasksListView.as_view()),
 
     path('templates/', include('pneumatic_backend.processes.urls.templates')),

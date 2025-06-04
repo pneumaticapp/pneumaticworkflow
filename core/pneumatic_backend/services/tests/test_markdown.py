@@ -167,6 +167,14 @@ def test_clear_list__ok(text, expected):
         (
             '[Man|9] please read [file.jpg](https://g.com/file.txt)',
             'Man please read [file.jpg](https://g.com/file.txt)'
+        ),
+        (
+            '[John (Smith)|123] and [Mary (Jones)|456] hello',
+            'John (Smith) and Mary (Jones) hello'
+        ),
+        (
+            '[User (admin)|789] check task [Document (final).pdf|999]',
+            'User (admin) check task Document (final).pdf'
         )
     ]
 )

@@ -3,6 +3,7 @@ from datetime import timedelta
 from typing import Set, Dict
 from django.conf import settings
 from django.contrib.auth.models import AbstractUser
+from django.contrib.postgres.fields import JSONField
 from django.contrib.postgres.search import SearchVectorField
 from django.db import models
 from django.db.models import UniqueConstraint, Q, Manager
@@ -569,9 +570,11 @@ class Notification(
     )
     task = models.ForeignKey(
         'processes.Task',
-        null=True,
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,
+        null=True
     )
+    task_json = JSONField(null=True, blank=True)
+    workflow_json = JSONField(null=True, blank=True)
     system_message = models.ForeignKey(
         SystemMessage,
         null=True,

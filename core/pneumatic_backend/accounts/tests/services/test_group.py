@@ -93,7 +93,7 @@ class TestUserGroupService:
         account = create_test_account()
         user = create_test_user(account=account)
         user_2 = create_test_user(account=account, email='test@test.app')
-        group = create_test_group(user=user)
+        group = create_test_group(account)
         is_superuser = False
         service = UserGroupService(
             user=user,
@@ -118,7 +118,7 @@ class TestUserGroupService:
         # arrange
         account = create_test_account()
         user = create_test_user(account=account)
-        group = create_test_group(user=user)
+        group = create_test_group(account)
         is_superuser = False
         service = UserGroupService(
             user=user,
@@ -137,7 +137,7 @@ class TestUserGroupService:
     def test_create_actions__ok(self, mocker):
         # arrange
         user = create_test_user()
-        group = create_test_group(user=user)
+        group = create_test_group(user.account)
         is_superuser = False
         auth_type = AuthTokenType.API
         service = UserGroupService(
@@ -176,7 +176,7 @@ class TestUserGroupService:
         # arrange
         account = create_test_account()
         user = create_test_user(account=account)
-        group = create_test_group(user=user)
+        group = create_test_group(account)
         template = create_test_template(user, is_active=True)
 
         TemplateOwner.objects.create(
@@ -205,7 +205,7 @@ class TestUserGroupService:
         # arrange
         account = create_test_account()
         user = create_test_user(account=account)
-        group = create_test_group(user=user)
+        group = create_test_group(account)
         template = create_test_template(user, is_active=True)
         TemplateOwner.objects.create(
             template=template,
@@ -271,7 +271,7 @@ class TestUserGroupService:
         # arrange
         account = create_test_account()
         user = create_test_user(account=account)
-        group = create_test_group(user=user)
+        group = create_test_group(account)
         is_superuser = False
         service = UserGroupService(
             user=user,
@@ -331,7 +331,7 @@ class TestUserGroupService:
         account = create_test_account()
         user = create_test_user(account=account)
         user_2 = create_test_user(account=account, email='test@test.app')
-        group = create_test_group(user=user, users=[user])
+        group = create_test_group(account, users=[user])
         is_superuser = False
         service = UserGroupService(
             user=user,
@@ -393,7 +393,7 @@ class TestUserGroupService:
         # arrange
         account = create_test_account()
         user = create_test_user(account=account)
-        group = create_test_group(user=user)
+        group = create_test_group(account)
         is_superuser = False
         service = UserGroupService(
             user=user,
@@ -452,7 +452,7 @@ class TestUserGroupService:
         # arrange
         account = create_test_account()
         user = create_test_user(account=account)
-        group = create_test_group(user=user, users=[user])
+        group = create_test_group(account, users=[user])
         is_superuser = False
         service = UserGroupService(
             user=user,
@@ -510,7 +510,7 @@ class TestUserGroupService:
         # arrange
         account = create_test_account()
         user = create_test_user(account=account)
-        group = create_test_group(user=user)
+        group = create_test_group(account)
         template = create_test_template(user, is_active=True)
         TemplateOwner.objects.create(
             template=template,
@@ -575,7 +575,7 @@ class TestUserGroupService:
         # arrange
         account = create_test_account()
         user = create_test_user(account=account)
-        group = create_test_group(user=user)
+        group = create_test_group(account)
         is_superuser = False
         service = UserGroupService(
             user=user,
@@ -632,7 +632,7 @@ class TestUserGroupService:
         account = create_test_account()
         user = create_test_user(account=account)
         delete_photo = ''
-        group = create_test_group(user=user, photo='photo.jpg')
+        group = create_test_group(account, photo='photo.jpg')
         is_superuser = False
         service = UserGroupService(
             user=user,
@@ -688,7 +688,7 @@ class TestUserGroupService:
         account = create_test_account()
         user = create_test_user(account=account)
         photo = 'url'
-        group = create_test_group(user=user, photo=photo)
+        group = create_test_group(account, photo=photo)
         is_superuser = False
         service = UserGroupService(
             user=user,
@@ -726,7 +726,7 @@ class TestUserGroupService:
         # arrange
         account = create_test_account()
         user = create_test_user(account=account)
-        group = create_test_group(user=user)
+        group = create_test_group(account)
         template = create_test_template(user, is_active=True)
         TemplateOwner.objects.create(
             template=template,
@@ -774,7 +774,7 @@ class TestUserGroupService:
         account = create_test_account()
         user = create_test_user(account=account)
         template = create_test_template(user=user, is_active=True)
-        group = create_test_group(user=user, users=[user])
+        group = create_test_group(account, users=[user])
         TemplateOwner.objects.create(
             template=template,
             account=account,
@@ -828,7 +828,7 @@ class TestUserGroupService:
         # arrange
         account = create_test_account()
         user = create_test_user(account=account)
-        group = create_test_group(user=user, users=[user])
+        group = create_test_group(account, users=[user])
         is_superuser = False
         service = UserGroupService(
             user=user,

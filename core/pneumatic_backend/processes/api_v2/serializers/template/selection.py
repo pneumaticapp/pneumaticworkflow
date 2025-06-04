@@ -2,7 +2,6 @@ from typing import Dict, Any
 from rest_framework.serializers import (
     ModelSerializer,
     CharField,
-    IntegerField,
 )
 from pneumatic_backend.processes.models import (
     FieldTemplateSelection
@@ -30,7 +29,6 @@ class FieldTemplateSelectionSerializer(
         model = FieldTemplateSelection
         api_primary_field = 'api_name'
         fields = (
-            'id',  # TODO Remove in https://my.pneumatic.app/workflows/34311/
             'value',
             'api_name',
         )
@@ -41,7 +39,6 @@ class FieldTemplateSelectionSerializer(
             'template',
         }
 
-    id = IntegerField(read_only=True)
     value = CharField(max_length=200)
     api_name = CharField(max_length=200, required=False)
 
@@ -98,7 +95,6 @@ class FieldTemplateSelectionListSerializer(ModelSerializer):
     class Meta:
         model = FieldTemplateSelection
         fields = (
-            'id',  # TODO Remove in https://my.pneumatic.app/workflows/34311/
             'api_name',
             'value',
         )

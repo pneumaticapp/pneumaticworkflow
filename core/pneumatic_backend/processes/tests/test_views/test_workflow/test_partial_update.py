@@ -318,7 +318,7 @@ class TestPartialUpdateWorkflow:
         task.save()
         second_task = template.tasks.order_by('number')[1]
         second_task.description = (
-                'His name is... {{%s}}!!!' % kickoff_field.api_name
+            'His name is... {{%s}}!!!' % kickoff_field.api_name
         )
         second_task.save()
         api_client.token_authenticate(user)

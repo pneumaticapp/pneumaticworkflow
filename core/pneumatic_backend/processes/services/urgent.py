@@ -68,7 +68,7 @@ class UrgentService:
         notification = Notification.objects.filter(
             user=user,
             type=cls._get_notification_type(workflow, reverse=True),
-            task__workflow=workflow
+            task__workflow=workflow.id
         ).last_created()
         if notification:
             notification.delete()

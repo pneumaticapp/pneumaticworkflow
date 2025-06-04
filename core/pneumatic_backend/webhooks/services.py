@@ -165,6 +165,7 @@ class WebhookDeliverer:
                 )
                 status = AccountEventStatus.FAILED
                 error['ConnectionError'] = str(e)
+                raise e
             else:
                 http_status = response.status_code
                 if not response.ok:
@@ -187,7 +188,9 @@ class WebhookDeliverer:
                     http_status = response.status_code
                     error['response'] = data
                 if response.status_code >= 500:
-                    response.raise_for_status()
+                    raise ConnectionError(
+                        f'Error sending webhook ({response.status_code})'
+                    )
             finally:
                 AccountLogService().webhook(
                     title=f'Webhook: {hook.event}',

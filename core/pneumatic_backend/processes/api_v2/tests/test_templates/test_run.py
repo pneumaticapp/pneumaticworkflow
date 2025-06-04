@@ -64,7 +64,8 @@ from pneumatic_backend.accounts.messages import MSG_A_0037
 from pneumatic_backend.generics.messages import MSG_GE_0007
 from pneumatic_backend.processes.messages.workflow import (
     MSG_PW_0030,
-    MSG_PW_0028
+    MSG_PW_0028,
+    MSG_PW_0031
 )
 from pneumatic_backend.processes.consts import WORKFLOW_NAME_LENGTH
 from pneumatic_backend.utils.dates import date_format
@@ -196,7 +197,7 @@ def test_run__all__ok(api_client, mocker):
         'workflows_started'
     )
     send_workflow_started_webhook_mock = mocker.patch(
-        'pneumatic_backend.processes.api_v2.services.workflows.workflow.'
+        'pneumatic_backend.processes.tasks.webhooks.'
         'send_workflow_started_webhook.delay'
     )
     workflow_name = 'Test name'
@@ -215,8 +216,8 @@ def test_run__all__ok(api_client, mocker):
                 kickoff_field_3.api_name: 6351521536,
                 kickoff_field_4.api_name: [str(attach_1.id), str(attach_2.id)],
                 kickoff_field_5.api_name: [
-                    str(selection_1.id),
-                    str(selection_2.id)
+                    str(selection_1.api_name),
+                    str(selection_2.api_name)
                 ]
             }
         }
@@ -256,8 +257,14 @@ def test_run__all__ok(api_client, mocker):
     assert task_data['delay'] is None
     assert task_data['due_date_tsp'] is None
     assert task_data['date_started_tsp'] == task.date_started.timestamp()
-    performer = {'source_id': user.id, 'type': 'user'}
-    assert task_data['performers'] == [performer]
+    assert task_data['performers'] == [
+        {
+            'source_id': user.id,
+            'type': 'user',
+            'is_completed': False,
+            'date_completed_tsp': None,
+        }
+    ]
     assert task_data['checklists_total'] == 0
     assert task_data['checklists_marked'] == 0
 
@@ -292,8 +299,14 @@ def test_run__all__ok(api_client, mocker):
     assert selection_1_data['is_selected'] is True
     assert len(data['passed_tasks']) == 0
     assert data['id'] == workflow.id
-    performer = {'source_id': user.id, 'type': 'user'}
-    assert data['current_task']['performers'] == [performer]
+    assert data['current_task']['performers'] == [
+        {
+            'source_id': user.id,
+            'type': 'user',
+            'is_completed': False,
+            'date_completed_tsp': None,
+        }
+    ]
 
     # Check created workflow
     assert workflow.name == workflow_name
@@ -1302,7 +1315,7 @@ def test_run__end_workflow_condition_true__end_workflow(api_client, mocker):
         return_value=webhook_payload
     )
     send_workflow_started_webhook_mock = mocker.patch(
-        'pneumatic_backend.processes.api_v2.services.workflows.workflow.'
+        'pneumatic_backend.processes.tasks.webhooks.'
         'send_workflow_started_webhook.delay'
     )
     send_workflow_completed_webhook_mock = mocker.patch(
@@ -1393,16 +1406,10 @@ def test_run__end_workflow_condition_true__end_workflow(api_client, mocker):
 
 
 def test_run__start_task_condition_false__skip_task(api_client, mocker):
-    # arrange
 
-    webhook_payload = mocker.Mock()
+    # arrange
     mocker.patch(
-        'pneumatic_backend.processes.models.workflows.workflow.Workflow'
-        '.webhook_payload',
-        return_value=webhook_payload
-    )
-    send_workflow_started_webhook_mock = mocker.patch(
-        'pneumatic_backend.processes.api_v2.services.workflows.workflow.'
+        'pneumatic_backend.processes.tasks.webhooks.'
         'send_workflow_started_webhook.delay'
     )
     mocker.patch(
@@ -1475,11 +1482,6 @@ def test_run__start_task_condition_false__skip_task(api_client, mocker):
     assert response.status_code == 200
     workflow = Workflow.objects.get(id=response.data['id'])
     assert workflow.current_task == 2
-    send_workflow_started_webhook_mock.assert_called_once_with(
-        user_id=user.id,
-        account_id=user.account_id,
-        payload=webhook_payload
-    )
 
 
 def test_run__cancel_delay__ok(api_client, mocker):
@@ -1950,14 +1952,13 @@ def test_run__field_type_dropdown_invalid__validation_error(
     workflow_run_event_mock.assert_not_called()
 
 
-@pytest.mark.parametrize('value', (['undefined'], [None]))
 def test_run__field_type_checkbox_invalid__validation_error(
-    value,
     mocker,
     api_client
 ):
 
     # arrange
+    value = [None]
     workflow_run_event_mock = mocker.patch(
         'pneumatic_backend.processes.services.workflow_action.'
         'WorkflowEventService.workflow_run_event'
@@ -2000,6 +2001,59 @@ def test_run__field_type_checkbox_invalid__validation_error(
     assert response.data['code'] == ErrorCode.VALIDATION_ERROR
     assert response.data['message'] == MSG_PW_0030
     assert response.data['details']['reason'] == MSG_PW_0030
+    assert response.data['details']['api_name'] == field_template.api_name
+    workflow_run_event_mock.assert_not_called()
+
+
+def test_run__field_type_checkbox_non_existent__validation_error(
+    mocker,
+    api_client
+):
+
+    # arrange
+    value = ['undefined']
+    workflow_run_event_mock = mocker.patch(
+        'pneumatic_backend.processes.services.workflow_action.'
+        'WorkflowEventService.workflow_run_event'
+    )
+    user = create_test_user()
+    api_client.token_authenticate(user)
+
+    template = create_test_template(
+        user=user,
+        is_active=True,
+        tasks_count=1
+    )
+
+    field_template = FieldTemplate.objects.create(
+        name='Checkbox',
+        type=FieldType.CHECKBOX,
+        is_required=True,
+        kickoff=template.kickoff_instance,
+        template=template,
+    )
+    FieldTemplateSelection.objects.create(
+        value='checkbox selection',
+        field_template=field_template,
+        template=template,
+    )
+
+    # act
+    response = api_client.post(
+        f'/templates/{template.id}/run',
+        data={
+            'name': 'test process',
+            'kickoff': {
+                field_template.api_name: value
+            }
+        }
+    )
+
+    # assert
+    assert response.status_code == 400
+    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
+    assert response.data['message'] == MSG_PW_0031
+    assert response.data['details']['reason'] == MSG_PW_0031
     assert response.data['details']['api_name'] == field_template.api_name
     workflow_run_event_mock.assert_not_called()
 
@@ -3141,8 +3195,8 @@ def test_run__task_name_with_field_2__ok(mocker, api_client):
         data={
             'kickoff': {
                 api_name_1: [
-                    str(selection_1.id),
-                    str(selection_2.id)
+                    str(selection_1.api_name),
+                    str(selection_2.api_name)
                 ],
                 api_name_2: 1726012800,
                 api_name_3: str(user.id),
@@ -3611,7 +3665,7 @@ def test_run__ancestor_task_id_user_in_group__ok(mocker, api_client):
         email='test@test.test',
         is_account_owner=False
     )
-    group = create_test_group(user=user, users=[performer, ])
+    group = create_test_group(user.account, users=[performer])
     template = create_test_template(
         user=user,
         is_active=True,

@@ -3,9 +3,11 @@ from rest_framework.serializers import (
     Serializer,
     IntegerField,
     EmailField,
-    CharField,
-    SerializerMethodField
+    SerializerMethodField,
+    ModelSerializer
 )
+from pneumatic_backend.generics.fields import TimeStampField
+from pneumatic_backend.processes.models.workflows.task import TaskPerformer
 from pneumatic_backend.generics.mixins.serializers import (
     CustomValidationErrorMixin
 )
@@ -23,10 +25,19 @@ class TaskPerformerSerializer(
 
 class TaskUserGroupPerformerSerializer(
     CustomValidationErrorMixin,
-    Serializer
+    ModelSerializer
 ):
-    type = CharField()
+    class Meta:
+        model = TaskPerformer
+        fields = (
+            'is_completed',
+            'date_completed_tsp',
+            'type',
+            'source_id',
+        )
+
     source_id = SerializerMethodField()
+    date_completed_tsp = TimeStampField(source='date_completed')
 
     def get_source_id(self, instance):
         return (

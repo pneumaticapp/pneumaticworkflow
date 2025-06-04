@@ -11,6 +11,7 @@ from pneumatic_backend.processes.messages.workflow import (
     MSG_PW_0047,
     MSG_PW_0048,
     MSG_PW_0049,
+    MSG_PW_0089,
 )
 
 
@@ -92,3 +93,8 @@ class CommentIsDeleted(CommentServiceException):
 class WorkflowServiceException(BaseServiceException):
 
     pass
+
+
+class CommentedTaskNotActive(CommentServiceException):
+
+    default_message = MSG_PW_0089

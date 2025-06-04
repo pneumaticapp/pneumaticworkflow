@@ -164,7 +164,7 @@ class TestDashboardMyTasksOverview:
             'pneumatic_backend.processes.tasks.webhooks.'
             'send_task_completed_webhook.delay'
         )
-        account = create_test_account(plan=BillingPlanType.PREMIUM)
+        account = create_test_account()
         create_test_user(
             email='owner@test.test',
             account=account,
@@ -233,7 +233,7 @@ class TestDashboardMyTasksOverview:
         api_client
     ):
         # arrange
-        account = create_test_account(plan=BillingPlanType.PREMIUM)
+        account = create_test_account()
         create_test_user(
             email='owner@test.test',
             account=account,
@@ -272,7 +272,7 @@ class TestDashboardMyTasksOverview:
             'pneumatic_backend.processes.tasks.webhooks.'
             'send_task_completed_webhook.delay'
         )
-        account = create_test_account(plan=BillingPlanType.PREMIUM)
+        account = create_test_account()
         create_test_user(
             email='owner@test.test',
             account=account,
@@ -348,7 +348,7 @@ class TestDashboardMyTasksOverview:
             'pneumatic_backend.processes.tasks.webhooks.'
             'send_task_completed_webhook.delay'
         )
-        account = create_test_account(plan=BillingPlanType.PREMIUM)
+        account = create_test_account()
         create_test_user(
             email='owner@test.test',
             account=account,
@@ -465,7 +465,7 @@ class TestDashboardMyTasksBreakdown:
             'pneumatic_backend.processes.tasks.webhooks.'
             'send_task_completed_webhook.delay'
         )
-        account = create_test_account(plan=BillingPlanType.PREMIUM)
+        account = create_test_account()
         create_test_user(
             email='owner@test.test',
             account=account,
@@ -564,7 +564,7 @@ class TestDashboardMyTasksBreakdown:
     ):
 
         # arrange
-        account = create_test_account(plan=BillingPlanType.PREMIUM)
+        account = create_test_account()
         create_test_user(
             email='owner@test.test',
             account=account,
@@ -599,7 +599,7 @@ class TestDashboardMyTasksBreakdown:
             'pneumatic_backend.processes.tasks.webhooks.'
             'send_task_completed_webhook.delay'
         )
-        account = create_test_account(plan=BillingPlanType.PREMIUM)
+        account = create_test_account()
         create_test_user(
             email='owner@test.test',
             account=account,
@@ -672,7 +672,7 @@ class TestDashboardMyTasksBreakdown:
         api_client
     ):
         # arrange
-        account = create_test_account(plan=BillingPlanType.PREMIUM)
+        account = create_test_account()
         create_test_user(
             email='owner@test.test',
             account=account,
@@ -707,7 +707,7 @@ class TestDashboardMyTasksBreakdown:
             'pneumatic_backend.processes.tasks.webhooks.'
             'send_task_completed_webhook.delay'
         )
-        account = create_test_account(plan=BillingPlanType.PREMIUM)
+        account = create_test_account()
         create_test_user(
             email='owner@test.test',
             account=account,
@@ -879,7 +879,7 @@ class TestDashboardMyTasksBreakdown:
     ):
 
         # arrange
-        account = create_test_account(plan=BillingPlanType.PREMIUM)
+        account = create_test_account()
         create_test_user(
             email='owner@test.test',
             account=account,

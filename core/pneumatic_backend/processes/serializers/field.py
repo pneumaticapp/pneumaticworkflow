@@ -38,6 +38,8 @@ class TaskFieldSerializer(serializers.ModelSerializer):
             'api_name',
             'name',
             'value',
+            'markdown_value',
+            'clear_value',
             'user_id',
             'group_id',
             'selections',

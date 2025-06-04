@@ -2481,7 +2481,7 @@ class TestAnalyticService:
         # arrange
         account = create_test_account()
         user = create_test_user(account=account)
-        performer = create_test_group(user=user)
+        performer = create_test_group(account)
         is_superuser = False
         auth_type = AuthTokenType.USER
         return_value = True
@@ -2532,7 +2532,7 @@ class TestAnalyticService:
         # arrange
         account = create_test_account()
         user = create_test_user(account=account)
-        performer = create_test_group(user=user)
+        performer = create_test_group(account)
         is_superuser = False
         return_value = True
         auth_type = AuthTokenType.USER

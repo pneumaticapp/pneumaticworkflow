@@ -2,14 +2,18 @@ import pytest
 from datetime import timedelta
 from django.utils import timezone
 from django.contrib.auth import get_user_model
+
+from pneumatic_backend.analytics.customerio.tests.fixtures import \
+    create_test_account
 from pneumatic_backend.processes.enums import (
     WorkflowStatus,
-    OwnerType
+    OwnerType,
+    TaskStatus,
 )
 from pneumatic_backend.processes.tests.fixtures import (
     create_test_user,
     create_test_workflow,
-    create_test_template
+    create_test_template, create_test_owner, create_test_admin
 )
 from pneumatic_backend.processes.services.exceptions import (
     WorkflowActionServiceException
@@ -17,7 +21,6 @@ from pneumatic_backend.processes.services.exceptions import (
 from pneumatic_backend.utils.validation import ErrorCode
 from pneumatic_backend.processes.models import (
     TemplateOwner,
-    Delay
 )
 
 
@@ -25,27 +28,13 @@ pytestmark = pytest.mark.django_db
 UserModel = get_user_model()
 
 
-def test_snooze__account_owner__ok(
-    mocker,
-    api_client
-):
+def test_snooze__body__ok(api_client):
+
     # arrange
     user = create_test_user(is_account_owner=True)
     workflow = create_test_workflow(user, tasks_count=1)
-    workflow.status = WorkflowStatus.DELAYED
-    workflow.save(update_fields=['status'])
-    task = workflow.current_task_instance
-    Delay.objects.create(
-        task=task,
-        start_date=timezone.now(),
-        duration=timedelta(days=7)
-    )
-    task = workflow.current_task_instance
+    task = workflow.tasks.get(number=1)
     api_client.token_authenticate(user)
-    snooze_mock = mocker.patch(
-        'pneumatic_backend.processes.services.workflow_action.'
-        'WorkflowActionService.force_delay_workflow'
-    )
     date = timezone.now() + timedelta(days=1)
 
     # act
@@ -56,15 +45,12 @@ def test_snooze__account_owner__ok(
 
     # assert
     assert response.status_code == 200
-    snooze_mock.assert_called_once_with(date=date)
     assert response.data['id'] == workflow.id
     assert response.data['name'] == workflow.name
-    assert response.data['status'] == workflow.status
-    assert response.data['tasks_count'] == 1
+    assert response.data['status'] == WorkflowStatus.DELAYED
     assert response.data['description'] == workflow.description
     assert response.data['passed_tasks'] == []
     assert response.data['finalizable'] is False
-    assert response.data['date_completed'] is None
     assert response.data['is_external'] is False
     assert response.data['is_urgent'] is False
     assert response.data['is_legacy_template'] is False
@@ -72,28 +58,38 @@ def test_snooze__account_owner__ok(
     kickoff = workflow.kickoff_instance
     assert response.data['kickoff']['id'] == kickoff.id
     assert response.data['kickoff']['description'] == kickoff.description
-
     assert response.data['workflow_starter'] == user.id
 
-    assert response.data['current_task']['id'] == task.id
-    assert response.data['current_task']['name'] == task.name
-    assert response.data['current_task']['number'] == task.number
-    assert response.data['current_task']['due_date_tsp'] is None
-    assert response.data['current_task']['date_started'] is not None
-    performer = {'source_id': user.id, 'type': 'user'}
-    assert response.data['current_task']['performers'] == [performer]
-    assert response.data['current_task']['checklists_total'] == 0
-    assert response.data['current_task']['checklists_marked'] == 0
-    assert response.data['current_task']['delay']['duration'] == (
-        '7 00:00:00'
-    )
-    assert response.data['current_task']['delay']['start_date'] is not None
-    assert response.data['current_task']['delay']['end_date'] is None
-    assert response.data['current_task']['delay']['estimated_end_date']
+    task_data = response.data['tasks'][0]
+    assert task_data['id'] == task.id
+    assert task_data['name'] == task.name
+    assert task_data['api_name'] == task.api_name
+    assert task_data['description'] == task.description
+    assert task_data['number'] == task.number
+    assert task_data['delay']['duration'] is not None
+    assert task_data['delay']['start_date'] is not None
+    assert task_data['delay']['end_date'] is None
+    assert task_data['delay']['estimated_end_date']
+    assert task_data['due_date_tsp'] is None
+    assert task_data['date_started_tsp'] == task.date_started.timestamp()
+    assert task_data['checklists_total'] == 0
+    assert task_data['checklists_marked'] == 0
+    assert task_data['status'] == TaskStatus.DELAYED
+    assert task_data['performers'] == [
+        {
+            'source_id': user.id,
+            'type': 'user',
+            'is_completed': False,
+            'date_completed_tsp': None,
+        }
+    ]
     template_data = response.data['template']
-    assert template_data['id'] == workflow.template.id
+    assert template_data['id'] == workflow.template_id
     assert template_data['is_active'] == workflow.template.is_active
-    assert template_data['name'] == workflow.get_template_name()
+    assert template_data['name'] == workflow.template.name
+    assert template_data['wf_name_template'] == (
+        workflow.template.wf_name_template
+    )
     assert response.data['owners'] == [user.id]
 
 
@@ -110,6 +106,33 @@ def test_snooze__template_owner_admin__ok(
         'WorkflowActionService.force_delay_workflow'
     )
     date = timezone.now() + timedelta(days=1)
+
+    # act
+    response = api_client.post(
+        f'/workflows/{workflow.id}/snooze',
+        data={'date': str(date)}
+    )
+
+    # assert
+    assert response.status_code == 200
+    snooze_mock.assert_called_once_with(date=date)
+
+
+def test_snooze__account_owner_admin__ok(
+    mocker,
+    api_client
+):
+    # arrange
+    account = create_test_account()
+    account_owner = create_test_owner(account=account)
+    user = create_test_admin(account=account)
+    workflow = create_test_workflow(user, tasks_count=1)
+    snooze_mock = mocker.patch(
+        'pneumatic_backend.processes.services.workflow_action.'
+        'WorkflowActionService.force_delay_workflow'
+    )
+    date = timezone.now() + timedelta(days=1)
+    api_client.token_authenticate(account_owner)
 
     # act
     response = api_client.post(

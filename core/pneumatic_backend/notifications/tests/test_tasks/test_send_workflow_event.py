@@ -324,7 +324,7 @@ def test_send_workflow_event__comment_event__ok(mocker):
 
     event = WorkflowEventService.comment_created_event(
         user=account_owner,
-        workflow=workflow,
+        task=workflow.tasks.active().first(),
         text='Some text',
         after_create_actions=False
     )
@@ -409,7 +409,7 @@ def test_send_workflow_event__directly_deleted_guest__skip(mocker):
 
     event = WorkflowEventService.comment_created_event(
         user=account_owner,
-        workflow=workflow,
+        task=task,
         text='Some text',
         after_create_actions=False
     )
@@ -460,7 +460,11 @@ def test_send_workflow_event__another_task_guest__ok(mocker):
         is_account_owner=True,
         account=account
     )
-    workflow = create_test_workflow(account_owner, tasks_count=3)
+    workflow = create_test_workflow(
+        account_owner,
+        tasks_count=3,
+        active_task_number=2
+    )
     workflow.current_task = 2
     workflow.save()
 
@@ -478,7 +482,7 @@ def test_send_workflow_event__another_task_guest__ok(mocker):
 
     event = WorkflowEventService.comment_created_event(
         user=account_owner,
-        workflow=workflow,
+        task=workflow.tasks.active().first(),
         text='Some text',
         after_create_actions=False
     )
@@ -543,7 +547,7 @@ def test_send_workflow_event__another_account_guest__ok(mocker):
     workflow = create_test_workflow(account_owner, tasks_count=1)
     event = WorkflowEventService.comment_created_event(
         user=account_owner,
-        workflow=workflow,
+        task=workflow.tasks.active().first(),
         text='Some text',
         after_create_actions=False
     )

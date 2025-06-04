@@ -7,15 +7,20 @@ from pneumatic_backend.processes.models import (
     FieldTemplateSelection,
     FileAttachment,
     Delay,
+    TaskPerformer,
 )
 from pneumatic_backend.processes.tests.fixtures import (
     create_test_user,
     create_test_workflow,
     create_test_template,
+    create_test_admin,
+    create_test_group,
 )
 from pneumatic_backend.processes.enums import (
     FieldType,
-    WorkflowStatus, TaskStatus,
+    WorkflowStatus,
+    TaskStatus,
+    PerformerType,
 )
 
 
@@ -61,9 +66,14 @@ def test_retrieve__workflow_data__ok(api_client):
     assert task_data['delay'] is None
     assert task_data['due_date_tsp'] is None
     assert task_data['date_started_tsp'] == task.date_started.timestamp()
-
-    performer = {'source_id': user.id, 'type': 'user'}
-    assert task_data['performers'] == [performer]
+    assert task_data['performers'] == [
+        {
+            'source_id': user.id,
+            'type': 'user',
+            'is_completed': False,
+            'date_completed_tsp': None,
+        }
+    ]
     assert task_data['checklists_total'] == 0
     assert task_data['checklists_marked'] == 0
     assert task_data['status'] == TaskStatus.ACTIVE
@@ -618,3 +628,28 @@ def test_retrieve__subprocess__ok(api_client):
     assert response.status_code == 200
     assert response.data['id'] == sub_workflow.id
     assert response.data['ancestor_task_id'] == ancestor_task.id
+
+
+def test_retrieve__user_in_group_task_performer__ok(api_client):
+    # arrange
+    user = create_test_user()
+    group_user = create_test_admin(
+        account=user.account,
+        email='group_user@test.test',
+    )
+    group = create_test_group(account=user.account, users=[group_user])
+    workflow = create_test_workflow(user=user, tasks_count=1)
+    task = workflow.tasks.first()
+    TaskPerformer.objects.create(
+        task_id=task.id,
+        type=PerformerType.GROUP,
+        group_id=group.id,
+    )
+    api_client.token_authenticate(group_user)
+
+    # act
+    response = api_client.get(f'/workflows/{workflow.id}')
+
+    # assert
+    assert response.status_code == 200
+    assert response.data['id'] == workflow.id

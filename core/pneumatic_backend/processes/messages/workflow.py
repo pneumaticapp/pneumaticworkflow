@@ -185,3 +185,12 @@ MSG_PW_0082 = _("There is no group with the specified ID.")
 MSG_PW_0083 = _("You must supply a comment.")
 # Translators: Number field validation
 MSG_PW_0084 = _('Value should be a number.')
+# Translators: task actions validation
+MSG_PW_0085 = _('Task not found.')
+MSG_PW_0086 = _('Available for active tasks only.')
+MSG_PW_0087 = _(
+    'You need to be added to the task as a performer '
+    'in order to complete this action.'
+)
+MSG_PW_0088 = _('Completed task can\'t be returned.')
+MSG_PW_0089 = _('You cannot write a comment on a inactive task.')

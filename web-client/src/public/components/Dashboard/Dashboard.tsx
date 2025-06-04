@@ -25,6 +25,7 @@ import { EWorkflowsSorting, EWorkflowsStatus } from '../../types/workflow';
 import { DashboardWidgets } from './DashboardWidgets';
 
 import styles from './Dashboard.css';
+import { useCheckDevice } from '../../hooks/useCheckDevice';
 
 export interface IDashboardProps {
   isLoading?: boolean;
@@ -47,7 +48,7 @@ const { useRef, useState, useEffect, useCallback } = React;
 
 export const Dashboard = (props: IDashboardProps) => {
   const { formatMessage } = useIntl();
-
+  const { isMobile } = useCheckDevice();
   useEffect(() => {
     return () => props.resetDashboardData();
   }, []);
@@ -160,6 +161,7 @@ export const Dashboard = (props: IDashboardProps) => {
             isLoading={props.isLoading}
             counterLoader={<Loader containerClassName={styles['counter-loader']} isLoading isCentered={false} />}
             countersParamsList={countersParamsList()}
+            {...(isMobile && { className: styles['mobile-counters'] })}
           />
         </div>
         <div className={styles['activities']}>

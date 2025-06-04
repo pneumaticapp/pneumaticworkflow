@@ -16,9 +16,12 @@
 
   --pneumatic-background-red: #fff2f8;
   --pneumatic-color-warning: #fc5b67;
+  --pneumatic-color-notification1-light: rgba(254, 237, 235, 1);
   --pneumatic-color-notification1: #f44336;
 
+  --pneumatic-color-notification3-light: rgba(238, 247, 238, 1);
   --pneumatic-color-notification3: #4caf50;
+
   --pneumatic-color-notification4: #2196f3;
   --pneumatic-color-violet: #673ab7;
   --separator-color: var(--pneumatic-color-black16);

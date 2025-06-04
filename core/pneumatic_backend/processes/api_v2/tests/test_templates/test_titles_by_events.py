@@ -592,6 +592,8 @@ def test_titles_by_events__incorrect_tsp_datetime__validation_error(
         WorkflowEventType.NOT_URGENT,
         WorkflowEventType.TASK_PERFORMER_CREATED,
         WorkflowEventType.TASK_PERFORMER_DELETED,
+        WorkflowEventType.TASK_PERFORMER_GROUP_CREATED,
+        WorkflowEventType.TASK_PERFORMER_GROUP_DELETED,
         WorkflowEventType.FORCE_DELAY,
         WorkflowEventType.FORCE_RESUME,
         WorkflowEventType.DUE_DATE_CHANGED,

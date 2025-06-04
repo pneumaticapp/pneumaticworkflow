@@ -735,7 +735,7 @@ def test_invite_new_user__all_fields__ok(mocker):
     # arrange
     request_user = create_test_user()
     invited_user = create_invited_user(user=request_user)
-    group = create_test_group(user=request_user)
+    group = create_test_group(account=request_user.account)
     invite_data = InviteData(
         invited_from=SourceType.EMAIL,
         email='transfer@test.test',
@@ -880,7 +880,7 @@ def test_invite_new_user__already_accepted__ok(mocker):
     # arrange
     request_user = create_test_user()
     invited_user = create_invited_user(user=request_user)
-    create_test_group(user=request_user)
+    create_test_group(account=request_user.account)
     invite_data = InviteData(
         invited_from=SourceType.EMAIL,
         email='transfer@test.test',
@@ -943,7 +943,7 @@ def test_invite_new_user__not_send_email__ok(mocker):
     # arrange
     request_user = create_test_user()
     invited_user = create_invited_user(user=request_user)
-    create_test_group(user=request_user)
+    create_test_group(account=request_user.account)
     invite_data = InviteData(
         invited_from=SourceType.EMAIL,
         email='transfer@test.test',
@@ -1016,7 +1016,7 @@ def test_transfer_existent_user__all_fields__ok(mocker):
     # arrange
     request_user = create_test_user()
     invited_user = create_invited_user(user=request_user)
-    group = create_test_group(user=request_user)
+    group = create_test_group(account=request_user.account)
     invite_data = InviteData(
         invited_from=SourceType.EMAIL,
         email='transfer@test.test',
@@ -1200,7 +1200,7 @@ def test_transfer_existent_user__already_accepted__ok(mocker):
         user=request_user,
         email='transfer@test.test'
     )
-    create_test_group(user=request_user)
+    create_test_group(account=request_user.account)
     invite_data = InviteData(
         invited_from=SourceType.EMAIL,
         email='transfer@test.test',
@@ -1272,7 +1272,7 @@ def test_transfer_existent_user__not_send_email__ok(mocker):
     # arrange
     request_user = create_test_user()
     invited_user = create_invited_user(user=request_user)
-    create_test_group(user=request_user)
+    create_test_group(account=request_user.account)
     invite_data = InviteData(
         invited_from=SourceType.EMAIL,
         email='transfer@test.test',
@@ -1552,7 +1552,7 @@ def test_invite_user__ok(mocker):
 
     # arrange
     request_user = create_test_user()
-    group = create_test_group(user=request_user)
+    group = create_test_group(account=request_user.account)
     invite_data = InviteData(
         invited_from=SourceType.EMAIL,
         email='test_1@test.test',

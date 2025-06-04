@@ -1,6 +1,7 @@
 from typing import List, Optional
 from pneumatic_backend.generics.exceptions import BaseServiceException
 from pneumatic_backend.accounts.messages import (
+    MSG_A_0004,
     MSG_A_0005,
     MSG_A_0006,
     MSG_A_0007,
@@ -10,6 +11,9 @@ from pneumatic_backend.accounts.messages import (
     MSG_A_0011,
     MSG_A_0012,
     MSG_A_0013,
+    MSG_A_0042,
+    MSG_A_0043,
+    MSG_A_0044
 )
 
 
@@ -84,3 +88,28 @@ class InvalidOrExpiredToken(BaseServiceException):
 class UserGroupServiceException(BaseServiceException):
 
     pass
+
+
+class ReassignServiceException(BaseServiceException):
+
+    pass
+
+
+class ReassignUserSameUser(ReassignServiceException):
+
+    default_message = MSG_A_0004
+
+
+class ReassignUserSameGroup(ReassignServiceException):
+
+    default_message = MSG_A_0042
+
+
+class ReassignOldUserDoesNotExist(ReassignServiceException):
+
+    default_message = MSG_A_0043
+
+
+class ReassignNewUserDoesNotExist(ReassignServiceException):
+
+    default_message = MSG_A_0044

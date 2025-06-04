@@ -181,10 +181,7 @@ def test_update_not_exists__permission_denied(
     api_client,
 ):
     # arrange
-    master_account = create_test_account(
-        plan=BillingPlanType.UNLIMITED,
-        plan_expiration=timezone.now() + timedelta(hours=1)
-    )
+    master_account = create_test_account()
     master_account_owner = create_test_user(account=master_account)
     tenant_name = 'some name'
     update_subscription_description_mock = mocker.patch(
@@ -215,10 +212,7 @@ def test_update__another_account_tenant__permission_denied(
     api_client,
 ):
     # arrange
-    master_account = create_test_account(
-        plan_expiration=timezone.now() + timedelta(hours=1),
-        plan=BillingPlanType.UNLIMITED
-    )
+    master_account = create_test_account()
     master_account_owner = create_test_user(account=master_account)
     tenant_name = 'some name'
     tenant_account = create_test_account(
@@ -259,10 +253,7 @@ def test_update__another_account_not_tenant__permission_denied(
     api_client,
 ):
     # arrange
-    master_account = create_test_account(
-        plan_expiration=timezone.now() + timedelta(hours=1),
-        plan=BillingPlanType.UNLIMITED
-    )
+    master_account = create_test_account()
     master_account_owner = create_test_user(account=master_account)
     tenant_name = 'some name'
     another_account = create_test_account(
@@ -303,10 +294,7 @@ def test_update__stripe_exception__validation_error(
     api_client,
 ):
     # arrange
-    master_account = create_test_account(
-        plan=BillingPlanType.UNLIMITED,
-        plan_expiration=timezone.now() + timedelta(days=1)
-    )
+    master_account = create_test_account()
     master_account_owner = create_test_user(account=master_account)
     tenant_account = create_test_account(
         name='tenant',
@@ -363,10 +351,7 @@ def test_update__blank_tenant_name__validation_error(
     api_client,
 ):
     # arrange
-    master_account = create_test_account(
-        plan_expiration=timezone.now() + timedelta(hours=1),
-        plan=BillingPlanType.UNLIMITED,
-    )
+    master_account = create_test_account()
     master_account_owner = create_test_user(account=master_account)
     tenant_account = create_test_account(
         name='tenant',

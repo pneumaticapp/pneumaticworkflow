@@ -132,65 +132,11 @@ class Task(
         return delay
 
     def webhook_payload(self):
-        performers = [
-            {
-                'id': x.id,
-                'first_name': x.first_name,
-                'last_name': x.last_name
-            } for x in self.performers.exclude_directly_deleted()
-        ]
-        obj = {
-            'task': {
-                'id': self.id,
-                'api_name': self.api_name,
-                'name': self.name,
-                'number': self.number,
-                'status': self.status,
-                'description': self.description,
-                'date_started_tsp': (
-                    self.date_started.timestamp()
-                    if self.date_started else None
-                ),
-                'date_completed_tsp': (
-                    self.date_completed.timestamp()
-                    if self.date_completed else None
-                ),
-                'due_date_tsp': (
-                    self.due_date.timestamp()
-                    if self.due_date else None
-                ),
-                'performers': performers,
-                'output': [
-                    {
-                        'id': field.id,
-                        'type': field.type,
-                        'is_required': field.is_required,
-                        'name': field.name,
-                        'description': field.description,
-                        'api_name': field.api_name,
-                        'value': field.value,
-                        'user_id': field.user_id,
-                        'selections': [
-                            {
-                                'id': selection.id,
-                                'value': selection.value,
-                                'is_selected': selection.is_selected,
-                                'api_name': selection.api_name,
-                            } for selection in field.selections.all()
-                        ],
-                        'attachments': [
-                            {
-                                'id': attachment.id,
-                                'name': attachment.name,
-                                'url': attachment.url,
-                            } for attachment in field.attachments.all()
-                        ]
-                    } for field in self.output.all()
-                ],
-                **self.workflow.webhook_payload(),
-            }
-        }
-        return obj
+        from pneumatic_backend.processes.api_v2.serializers.workflow.task \
+            import TaskSerializer
+        task_data = TaskSerializer(instance=self).data
+        task_data.update(**self.workflow.webhook_payload())
+        return {'task': task_data}
 
     def get_active_delay(self):
         return self.delay_set.active().first()
@@ -543,6 +489,7 @@ class Task(
         Notification.objects.exclude_users(
             union_user_ids
         ).by_task(self.id).delete()
+        self.workflow.members.add(*created_performers_user_ids)
         return (
             created_performers_user_ids,
             created_performers_group_ids,
@@ -629,6 +576,14 @@ class Task(
     @property
     def is_skipped(self):
         return self.status == TaskStatus.SKIPPED
+
+    @property
+    def is_active(self):
+        return self.status == TaskStatus.ACTIVE
+
+    @property
+    def is_delayed(self):
+        return self.status == TaskStatus.DELAYED
 
     def __str__(self):
         return f'(Task {self.id}) {self.name}'

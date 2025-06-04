@@ -149,6 +149,8 @@
 }
 
 .action-buttons__button-wrapper {
+  height: 2rem;
+  font-size: 1.5rem;
   &:not(:last-child) {
     margin-bottom: 10px;
   }

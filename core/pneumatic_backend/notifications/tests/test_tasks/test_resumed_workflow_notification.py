@@ -66,10 +66,9 @@ def test_send_resumed_workflow_notification__call_services__ok(mocker):
     # act
     _send_resumed_workflow_notification(
         logging=account.log_api_requests,
-        task_id=task.id,
         author_id=account_owner.id,
         account_id=account.id,
-        workflow_name=workflow.name,
+        task_id=task.id,
         logo_lg=account.logo_lg,
     )
 
@@ -130,7 +129,7 @@ def test_send_resumed_workflow_notification__call_services_with_group__ok(
         account=account,
         is_account_owner=False
     )
-    group = create_test_group(user=user, users=[user_in_group, ])
+    group = create_test_group(user.account, users=[user_in_group])
     workflow = create_test_workflow(user, tasks_count=1)
     task = workflow.current_task_instance
     task.performers.remove(user)
@@ -157,10 +156,9 @@ def test_send_resumed_workflow_notification__call_services_with_group__ok(
     # act
     _send_resumed_workflow_notification(
         logging=account.log_api_requests,
-        task_id=task.id,
         author_id=account_owner.id,
         account_id=account.id,
-        workflow_name=workflow.name,
+        task_id=task.id,
         logo_lg=account.logo_lg,
     )
 
@@ -228,10 +226,9 @@ def test_send_resumed_workflow_notification__completed_performer__skip(
     # act
     _send_resumed_workflow_notification(
         logging=account.log_api_requests,
-        task_id=task.id,
         author_id=account_owner.id,
         account_id=account.id,
-        workflow_name=workflow.name,
+        task_id=task.id,
         logo_lg=account.logo_lg,
     )
 
@@ -293,10 +290,9 @@ def test_send_resumed_workflow_notification__deleted_performer__skip(
     # act
     _send_resumed_workflow_notification(
         logging=account.log_api_requests,
-        task_id=task.id,
         author_id=account_owner.id,
         account_id=account.id,
-        workflow_name=workflow.name
+        task_id=task.id,
     )
 
     # assert
@@ -359,10 +355,9 @@ def test_send_resumed_workflow_notification__guest_performer__skip(
     # act
     _send_resumed_workflow_notification(
         logging=account.log_api_requests,
-        task_id=task.id,
         author_id=account_owner.id,
         account_id=account.id,
-        workflow_name=workflow.name,
+        task_id=task.id,
         logo_lg=account.logo_lg,
     )
 

@@ -5,6 +5,7 @@ from pneumatic_backend.processes.tests.fixtures import (
     create_test_user,
     create_test_account,
     create_test_workflow,
+    create_test_owner
 )
 from pneumatic_backend.processes.api_v2.services import exceptions
 from pneumatic_backend.processes.api_v2.services.events import (
@@ -14,7 +15,7 @@ from pneumatic_backend.processes.enums import (
     WorkflowEventType,
     WorkflowStatus,
     CommentStatus,
-    WorkflowEventActionType,
+    WorkflowEventActionType, TaskStatus,
 )
 from pneumatic_backend.processes.models import (
     WorkflowEvent,
@@ -101,7 +102,7 @@ def test_create__not_another_performers__ok(mocker):
 
     # act
     result = service.create(
-        workflow=workflow,
+        task=task,
         text=text,
     )
 
@@ -110,7 +111,7 @@ def test_create__not_another_performers__ok(mocker):
     clear_text_mock.assert_called_once_with(text)
     comment_created_event_mock.assert_called_once_with(
         user=account_owner,
-        workflow=workflow,
+        task=task,
         text=text,
         clear_text=clear_text,
         attachments=[]
@@ -125,7 +126,14 @@ def test_create__not_another_performers__ok(mocker):
     assert task.contains_comments is True
 
 
-def test_create__notified_users__ok(mocker):
+@pytest.mark.parametrize(
+    'status',
+    (
+        TaskStatus.ACTIVE,
+        TaskStatus.DELAYED,
+    )
+)
+def test_create__notified_users__ok(mocker, status):
 
     # arrange
     account = create_test_account()
@@ -138,6 +146,8 @@ def test_create__notified_users__ok(mocker):
     )
     workflow = create_test_workflow(account_owner, tasks_count=1)
     task = workflow.current_task_instance
+    task.status = status
+    task.save()
     task.performers.add(user)
 
     text = 'Text comment'
@@ -197,7 +207,7 @@ def test_create__notified_users__ok(mocker):
 
     # act
     result = service.create(
-        workflow=workflow,
+        task=task,
         text=text,
     )
 
@@ -206,7 +216,7 @@ def test_create__notified_users__ok(mocker):
     clear_text_mock.assert_called_once_with(text)
     comment_created_event_mock.assert_called_once_with(
         user=account_owner,
-        workflow=workflow,
+        task=task,
         text=text,
         clear_text=clear_text,
         attachments=[]
@@ -307,7 +317,7 @@ def test_create_mentioned_users__ok(mocker):
 
     # act
     result = service.create(
-        workflow=workflow,
+        task=task,
         text=text,
     )
 
@@ -316,7 +326,7 @@ def test_create_mentioned_users__ok(mocker):
     clear_text_mock.assert_called_once_with(text)
     comment_created_event_mock.assert_called_once_with(
         user=account_owner,
-        workflow=workflow,
+        task=task,
         text=text,
         clear_text=clear_text,
         attachments=[]
@@ -422,7 +432,7 @@ def test_create__with_attachments__ok(mocker):
 
     # act
     result = service.create(
-        workflow=workflow,
+        task=task,
         text=text,
         attachments=attachments
     )
@@ -432,7 +442,7 @@ def test_create__with_attachments__ok(mocker):
     clear_text_mock.assert_called_once_with(text)
     comment_created_event_mock.assert_called_once_with(
         user=account_owner,
-        workflow=workflow,
+        task=task,
         text=text,
         clear_text=clear_text,
         attachments=attachments
@@ -555,7 +565,7 @@ def test_create__find_attachments_in_text__ok(data, mocker):
 
     # act
     result = service.create(
-        workflow=workflow,
+        task=task,
         text=text,
     )
 
@@ -564,7 +574,7 @@ def test_create__find_attachments_in_text__ok(data, mocker):
     clear_text_mock.assert_called_once_with(text)
     comment_created_event_mock.assert_called_once_with(
         user=account_owner,
-        workflow=workflow,
+        task=task,
         text=text,
         clear_text=clear_text,
         attachments=attachment_ids
@@ -660,7 +670,7 @@ def test_create__not_found_attachments_in_text__ok(text, mocker):
 
     # act
     result = service.create(
-        workflow=workflow,
+        task=task,
         text=text,
     )
 
@@ -669,7 +679,7 @@ def test_create__not_found_attachments_in_text__ok(text, mocker):
     clear_text_mock.assert_called_once_with(text)
     comment_created_event_mock.assert_called_once_with(
         user=account_owner,
-        workflow=workflow,
+        task=task,
         text=text,
         clear_text=clear_text,
         attachments=[]
@@ -744,7 +754,7 @@ def test_create__workflow_ended__raise_exception(mocker):
     # act
     with pytest.raises(exceptions.CommentedWorkflowNotRunning) as ex:
         service.create(
-            workflow=workflow,
+            task=task,
             text=text,
         )
 
@@ -814,7 +824,7 @@ def test_create__not_text_and_attachment__raise_exception(mocker):
     # act
     with pytest.raises(exceptions.CommentTextRequired) as ex:
         service.create(
-            workflow=workflow,
+            task=task,
             text=None,
             attachments=None
         )
@@ -828,6 +838,84 @@ def test_create__not_text_and_attachment__raise_exception(mocker):
     comment_added_analytics_mock.assert_not_called()
     send_comment_notification_mock.assert_not_called()
     send_mention_notification_mock.assert_not_called()
+    mention_created_analytics_mock.assert_not_called()
+    task.refresh_from_db()
+    assert task.contains_comments is False
+
+
+@pytest.mark.parametrize(
+    'status',
+    (
+        TaskStatus.COMPLETED,
+        TaskStatus.PENDING,
+        TaskStatus.SKIPPED,
+    )
+)
+def test_create__inactive_task__raise_exception(mocker, status):
+
+    # arrange
+    account = create_test_account()
+    account_owner = create_test_user(is_account_owner=True, account=account)
+    workflow = create_test_workflow(
+        account_owner,
+        tasks_count=1,
+    )
+    workflow.tasks.update(status=status)
+    task = workflow.tasks.first()
+    text = 'Some text'
+    clear_text = 'clear text'
+    comment_created_event_mock = mocker.patch(
+        'pneumatic_backend.processes.api_v2.services.events.'
+        'WorkflowEventService.comment_created_event',
+    )
+    clear_text_mock = mocker.patch(
+        'pneumatic_backend.processes.api_v2.services.events.'
+        'MarkdownService.clear',
+        return_value=clear_text
+    )
+    update_attachments_mock = mocker.patch(
+        'pneumatic_backend.processes.api_v2.services.events.'
+        'CommentService._update_attachments'
+    )
+    send_notifications_mock = mocker.patch(
+        'pneumatic_backend.processes.api_v2.services.events.'
+        'CommentService._get_new_comment_recipients',
+        return_value=((), ())
+    )
+    send_comment_notification_mock = mocker.patch(
+        'pneumatic_backend.processes.api_v2.services.events.'
+        'send_comment_notification.delay'
+    )
+    send_mention_notification_mock = mocker.patch(
+        'pneumatic_backend.processes.api_v2.services.events.'
+        'send_mention_notification.delay'
+    )
+    comment_added_analytics_mock = mocker.patch(
+        'pneumatic_backend.processes.api_v2.services.events.'
+        'AnalyticService.comment_added'
+    )
+    mention_created_analytics_mock = mocker.patch(
+        'pneumatic_backend.processes.api_v2.services.events.'
+        'AnalyticService.mentions_created'
+    )
+    service = CommentService(user=account_owner)
+
+    # act
+    with pytest.raises(exceptions.CommentedTaskNotActive) as ex:
+        service.create(
+            task=task,
+            text=text,
+        )
+
+    # assert
+    assert ex.value.message == messages.MSG_PW_0089
+    clear_text_mock.assert_not_called()
+    comment_created_event_mock.assert_not_called()
+    update_attachments_mock.assert_not_called()
+    send_notifications_mock.assert_not_called()
+    send_comment_notification_mock.assert_not_called()
+    send_mention_notification_mock.assert_not_called()
+    comment_added_analytics_mock.assert_not_called()
     mention_created_analytics_mock.assert_not_called()
     task.refresh_from_db()
     assert task.contains_comments is False
@@ -1155,7 +1243,7 @@ def test_get_new_comment_recipients__not_performer_mentioned__send_mention():
         is_account_owner=False,
         is_admin=True
     )
-    text = f'Go [Joe Stalin|{user.id}] testing'
+    text = f'Go [Joe (Stalin)|{user.id}] testing'
     event = WorkflowEvent.objects.create(
         account=account,
         type=WorkflowEventType.COMMENT,
@@ -1297,7 +1385,14 @@ def test_get_updated_comment_recipients__not_mention__not_send():
     assert len(mentioned) == 0
 
 
-def test_validate_comment_action__ok():
+@pytest.mark.parametrize(
+    'status',
+    (
+        TaskStatus.ACTIVE,
+        TaskStatus.DELAYED,
+    )
+)
+def test_validate_comment_action__ok(status):
 
     # arrange
     user = create_test_user()
@@ -1305,6 +1400,9 @@ def test_validate_comment_action__ok():
         user=user,
         status=WorkflowStatus.RUNNING
     )
+    task = workflow.tasks.active().first()
+    task.status = status
+    task.save()
     event = WorkflowEvent.objects.create(
         account=user.account,
         type=WorkflowEventType.COMMENT,
@@ -1352,13 +1450,14 @@ def test_validate_comment_action__deleted__raise_exception():
     assert ex.value.message == messages.MSG_PW_0049
 
 
-def test_validate_comment__workflow_ended__raise_exception():
+def test_validate_comment_action__workflow_ended__raise_exception():
 
     # arrange
     user = create_test_user()
     workflow = create_test_workflow(
         user=user,
-        status=WorkflowStatus.DONE
+        status=WorkflowStatus.DONE,
+        tasks_count=1
     )
     event = WorkflowEvent.objects.create(
         account=user.account,
@@ -2363,6 +2462,86 @@ def test_update__remove_attachment__raise_exception(mocker):
     comment_edited_analytics_mock.assert_not_called()
 
 
+@pytest.mark.parametrize(
+    'status',
+    (
+        TaskStatus.COMPLETED,
+        TaskStatus.PENDING,
+        TaskStatus.SKIPPED,
+    )
+)
+def test_update_inactive_task__raise_exception(status, mocker):
+
+    # arrange
+    account = create_test_account()
+    account_owner = create_test_user(is_account_owner=True, account=account)
+    workflow = create_test_workflow(account_owner, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    task.status = status
+    task.save()
+
+    event = WorkflowEvent.objects.create(
+        account=account,
+        type=WorkflowEventType.COMMENT,
+        text='text',
+        with_attachments=False,
+        workflow=workflow,
+        task=task,
+        user=account_owner,
+    )
+    validate_comment_action_mock = mocker.patch(
+        'pneumatic_backend.processes.api_v2.services.events.'
+        'CommentService._validate_comment_action'
+    )
+    update_attachments_mock = mocker.patch(
+        'pneumatic_backend.processes.api_v2.services.events.'
+        'CommentService._update_attachments'
+    )
+    get_updated_comment_recipients_mock = mocker.patch(
+        'pneumatic_backend.processes.api_v2.services.events.'
+        'CommentService._get_new_comment_recipients',
+        return_value=((), ())
+    )
+    send_workflow_event_mock = mocker.patch(
+        'pneumatic_backend.processes.api_v2.services.events.'
+        'CommentService._send_workflow_event'
+    )
+    partial_update_mock = mocker.patch(
+        'pneumatic_backend.processes.api_v2.services.events.'
+        'BaseModelService.partial_update'
+    )
+    comment_edited_analytics_mock = mocker.patch(
+        'pneumatic_backend.processes.api_v2.services.events.'
+        'AnalyticService.comment_edited'
+    )
+    clear_text_mock = mocker.patch(
+        'pneumatic_backend.processes.api_v2.services.events.'
+        'MarkdownService.clear'
+    )
+
+    service = CommentService(
+        instance=event,
+        user=account_owner,
+    )
+
+    # act
+    with pytest.raises(exceptions.CommentedTaskNotActive) as ex:
+        service.update(
+            text='text',
+            force_save=True
+        )
+
+    # assert
+    assert ex.value.message == messages.MSG_PW_0089
+    validate_comment_action_mock.assert_called_once()
+    get_updated_comment_recipients_mock.assert_not_called()
+    send_workflow_event_mock.assert_not_called()
+    update_attachments_mock.assert_not_called()
+    clear_text_mock.assert_not_called()
+    partial_update_mock.assert_not_called()
+    comment_edited_analytics_mock.assert_not_called()
+
+
 def test_delete__ok(mocker):
 
     # arrange
@@ -2432,6 +2611,69 @@ def test_delete__ok(mocker):
         workflow=workflow
     )
     send_workflow_event_mock.assert_called_once()
+
+
+@pytest.mark.parametrize(
+    'status',
+    (
+        TaskStatus.COMPLETED,
+        TaskStatus.PENDING,
+        TaskStatus.SKIPPED,
+    )
+)
+def test_delete_inactive_task__raise_exception(status, mocker):
+
+    # arrange
+    account = create_test_account()
+    account_owner = create_test_user(is_account_owner=True, account=account)
+    workflow = create_test_workflow(account_owner, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    task.status = status
+    task.save()
+
+    event = WorkflowEvent.objects.create(
+        account=account,
+        type=WorkflowEventType.COMMENT,
+        text='Old text',
+        clear_text='Clear text',
+        with_attachments=False,
+        workflow=workflow,
+        task=task,
+        user=account_owner,
+    )
+    validate_comment_action_mock = mocker.patch(
+        'pneumatic_backend.processes.api_v2.services.events.'
+        'CommentService._validate_comment_action'
+    )
+    partial_update_mock = mocker.patch(
+        'pneumatic_backend.processes.api_v2.services.events.'
+        'BaseModelService.partial_update',
+        return_value=event
+    )
+    comment_deleted_analytics_mock = mocker.patch(
+        'pneumatic_backend.processes.api_v2.services.events.'
+        'AnalyticService.comment_deleted'
+    )
+    send_workflow_event_mock = mocker.patch(
+        'pneumatic_backend.processes.api_v2.services.events.'
+        'CommentService._send_workflow_event'
+    )
+
+    service = CommentService(
+        instance=event,
+        user=account_owner
+    )
+
+    # act
+    with pytest.raises(exceptions.CommentedTaskNotActive) as ex:
+        service.delete()
+
+    # assert
+    assert ex.value.message == messages.MSG_PW_0089
+    validate_comment_action_mock.assert_called_once()
+    partial_update_mock.assert_not_called()
+    comment_deleted_analytics_mock.assert_not_called()
+    send_workflow_event_mock.assert_not_called()
 
 
 def test_watched__ok(mocker):
@@ -2634,7 +2876,6 @@ def test_create_reaction__first__ok(mocker):
         user_email=account_owner.email,
         author_name=account_owner.name,
         reaction=reaction,
-        workflow_name=workflow.name
     )
 
 
@@ -2711,7 +2952,6 @@ def test_create_reaction__long_comment__cut_off(mocker):
         logo_lg=account.logo_lg,
         author_name=account_owner.name,
         reaction=reaction,
-        workflow_name=workflow.name
     )
 
 
@@ -2786,7 +3026,6 @@ def test_create_reaction__not_comment_text__ok(mocker):
         logo_lg=account.logo_lg,
         author_name=account_owner.name,
         reaction=reaction,
-        workflow_name=workflow.name
     )
 
 
@@ -2866,7 +3105,6 @@ def test_create_reaction__second__ok(mocker):
         account_id=account.id,
         author_name=account_owner.name,
         reaction=reaction,
-        workflow_name=workflow.name
     )
 
 
@@ -3228,3 +3466,41 @@ def test_create_reaction__to_yourself_comment__ok(mocker):
     )
     send_workflow_event_mock.assert_called_once()
     send_reaction_notification_mock.assert_not_called()
+
+
+@pytest.mark.parametrize(
+    'name',
+    [
+        'John',
+        'John *S*',
+        'John (Smith)',
+        'John [Smith]',
+        'John [Smith]',
+        'John |Smith|',
+        'John \\Smith\\',
+        'John }Smith{',
+        'John )Smith(',
+        'User ]Smith['
+    ]
+)
+def test_get_mentioned_users_ids_with_parentheses__ok(name):
+
+    # arrange
+    account_owner = create_test_owner()
+    user = create_test_user(
+        account=account_owner.account,
+        email='user@test.test',
+        is_account_owner=False
+    )
+    service = CommentService(user=account_owner)
+    text = f'Hello [{name}|{user.id}], please check this task.'
+
+    # act
+    mentioned_ids = service._get_mentioned_users_ids(
+        text=text,
+        exclude_ids=[]
+    )
+
+    # assert
+    assert len(mentioned_ids) == 1
+    assert mentioned_ids[0] == user.id

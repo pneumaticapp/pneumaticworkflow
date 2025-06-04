@@ -1,18 +1,39 @@
-import { IWorkflow } from './workflow';
+import { IWorkflow, WorkflowWithTsp } from './workflow';
 import { IExtraField, ITemplateTitle, RawPerformer } from './template';
 
-export type TTaskWorkflow = Pick<
-  IWorkflow,
-  'id' | 'name' | 'currentTask' | 'status' | 'dateCompleted' | 'dateCompletedTsp'
-> & {
+export type TTaskWorkflow = Pick<IWorkflow, 'id' | 'name' | 'currentTask' | 'status' | 'dateCompleted'> & {
   templateName: string;
 };
 
+export type TaskWithDateFields = {
+  dueDate: string | null;
+  dateStarted: string;
+  dateCompleted: string | null;
+};
+
+export type TaskWithTspFields = {
+  dueDateTsp: number | null;
+  dateStartedTsp: number;
+  dateCompletedTsp: number | null;
+};
+
+export type TaskWithTsp<T> = Omit<T, keyof TaskWithDateFields> & TaskWithTspFields;
+
 export type TFormatTaskDates = {
   output?: IExtraField[];
-  subWorkflow?: (Omit<IWorkflow, 'dueDate'> & { dueDateTsp: number | null }) | null;
+  subWorkflow?: WorkflowWithTsp<IWorkflow> | null;
   dueDateTsp?: number | null;
+  dateStartedTsp?: number;
+  dateCompletedTsp?: number | null;
 };
+
+export enum ETaskStatus {
+  Pending = 'pending',
+  Active = 'active',
+  Completed = 'completed',
+  Snoozed = 'snoozed',
+  Skipped = 'skipped',
+}
 
 export interface ITask {
   id: number;
@@ -25,9 +46,7 @@ export interface ITask {
   requireCompletionByAll?: boolean;
   isCompleted: boolean;
   dateStarted: string;
-  dateStartedTsp: string;
   dateCompleted: string | null;
-  dateCompletedTsp: number | null;
   dueDate: string | null;
   isUrgent: boolean;
   subWorkflows: IWorkflow[];
@@ -35,6 +54,7 @@ export interface ITask {
   checklistsTotal: number;
   checklistsMarked: number;
   checklists: TTaskChecklists;
+  status?: ETaskStatus;
 }
 
 export type TTaskChecklists = {
@@ -59,7 +79,8 @@ export type TTaskChecklistsItem = {
   isSelected: boolean;
 };
 
-export interface ITaskAPI extends Omit<ITask, 'checklists' | 'areChecklistsHandling'> {
+export interface ITaskAPI
+  extends Omit<ITask, 'checklists' | 'areChecklistsHandling' | 'dateStarted' | 'dateCompleted'> {
   checklists: {
     id: number;
     apiName: string;
@@ -70,9 +91,10 @@ export interface ITaskAPI extends Omit<ITask, 'checklists' | 'areChecklistsHandl
     }[];
   }[];
   dueDateTsp: number | null;
+  dateStartedTsp: number;
+  dateCompletedTsp: number | null;
 }
-
-export type TTaskListItemResponse = Omit<ITaskListItem, 'dueDate'> & { dueDateTsp: number | null };
+export type TTaskListItemResponse = TaskWithTsp<ITaskListItem>;
 
 export interface ITaskListItem {
   id: number;

@@ -19,8 +19,6 @@ from pneumatic_backend.processes.tests.fixtures import (
     create_test_workflow,
 )
 
-from pneumatic_backend.accounts.enums import BillingPlanType
-
 
 UserModel = get_user_model()
 pytestmark = pytest.mark.django_db
@@ -1405,7 +1403,7 @@ class TestWorkflowBreakdownByTasks:
     ):
 
         # arrange
-        account = create_test_account(plan=BillingPlanType.PREMIUM)
+        account = create_test_account()
         create_test_user(
             email='owner@test.test',
             account=account,

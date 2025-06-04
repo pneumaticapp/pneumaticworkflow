@@ -2,7 +2,7 @@ import pytz
 from typing import Optional, Tuple, List
 from datetime import datetime, timedelta
 from celery import shared_task
-from celery.task import Task
+from celery.task import Task as TaskCelery
 from django.db import transaction
 from django.utils import timezone
 from django.conf import settings
@@ -14,6 +14,10 @@ from pneumatic_backend.accounts.enums import (
     UserStatus,
 )
 from pneumatic_backend.accounts.models import Notification
+from pneumatic_backend.accounts.serializers.notifications import (
+    NotificationTaskSerializer,
+    NotificationWorkflowSerializer,
+)
 from pneumatic_backend.notifications.enums import (
     NotificationMethod,
 )
@@ -34,6 +38,7 @@ from pneumatic_backend.processes.models import (
     Workflow,
     WorkflowEvent,
     WorkflowEventAction,
+    Task
 )
 from pneumatic_backend.processes.api_v2.serializers.workflow.events import (
     WorkflowEventSerializer,
@@ -72,7 +77,7 @@ __all__ = [
 ]
 
 
-class NotificationTask(Task):
+class NotificationTask(TaskCelery):
     autoretry_for = (FirebaseError, )
     retry_backoff = True
 
@@ -122,7 +127,6 @@ def _send_new_task_notification(
     logo_lg: Optional[str] = None,
     is_returned: bool = False,
 ):
-
     method_name = (
         NotificationMethod.returned_task
         if is_returned else
@@ -182,14 +186,19 @@ def _send_complete_task_notification(
     account_id: int,
     recipients: List[Tuple[int, str]],
     task_id: int,
-    task_name: str,
-    workflow_name: str,
     logo_lg: Optional[str] = None,
 ):
-
+    task = Task.objects.select_related('workflow').get(id=task_id)
+    task_json = NotificationTaskSerializer(
+        instance=task,
+        notification_type=NotificationType.COMPLETE_TASK
+    ).data
+    workflow_json = NotificationWorkflowSerializer(instance=task.workflow).data
     for (user_id, user_email) in recipients:
         notification = Notification.objects.create(
-            task_id=task_id,
+            task=task,
+            task_json=task_json,
+            workflow_json=workflow_json,
             user_id=user_id,
             author_id=author_id,
             account_id=account_id,
@@ -203,9 +212,9 @@ def _send_complete_task_notification(
             account_id=account_id,
             notification=notification,
             method_name=NotificationMethod.complete_task,
-            workflow_name=workflow_name,
-            task_id=task_id,
-            task_name=task_name,
+            workflow_name=task.workflow.name,
+            task_id=task.id,
+            task_name=task.name,
             sync=True
         )
 
@@ -226,8 +235,18 @@ def _send_overdue_task_notification():
     notifications = []
     send_data = []
     for elem in overdue_task_users:
+        task = Task.objects.select_related('workflow').get(id=elem['task_id'])
+        task_json = NotificationTaskSerializer(
+            instance=task,
+            notification_type=NotificationType.OVERDUE_TASK
+        ).data
+        workflow_json = NotificationWorkflowSerializer(
+            instance=task.workflow
+        ).data
         notification = Notification(
-            task_id=elem['task_id'],
+            task=task,
+            task_json=task_json,
+            workflow_json=workflow_json,
             user_id=elem['user_id'],
             account_id=elem['account_id'],
             type=NotificationType.OVERDUE_TASK,
@@ -261,23 +280,30 @@ def send_overdue_task_notification():
 
 def _send_resumed_workflow_notification(
     logging: bool,
-    task_id: int,
     author_id: int,
     account_id: int,
-    workflow_name: str,
+    task_id: int,
     logo_lg: Optional[str] = None,
 ):
+    task = Task.objects.select_related('workflow').get(id=task_id)
     users = (
         TaskPerformer.objects
-        .by_task(task_id)
+        .by_task(task.id)
         .exclude_directly_deleted()
         .not_completed()
         .order_by('id')
         .get_user_emails_and_ids_set()
     )
+    task_json = NotificationTaskSerializer(
+        instance=task,
+        notification_type=NotificationType.RESUME_WORKFLOW
+    ).data
+    workflow_json = NotificationWorkflowSerializer(instance=task.workflow).data
     for (user_id, user_email) in users:
         notification = Notification.objects.create(
-            task_id=task_id,
+            task=task,
+            task_json=task_json,
+            workflow_json=workflow_json,
             user_id=user_id,
             author_id=author_id,
             account_id=account_id,
@@ -291,8 +317,8 @@ def _send_resumed_workflow_notification(
             account_id=account_id,
             logo_lg=logo_lg,
             notification=notification,
-            task_id=task_id,
-            workflow_name=workflow_name,
+            task_id=task.id,
+            workflow_name=task.workflow.name,
             author_id=author_id,
             sync=True
         )
@@ -307,16 +333,23 @@ def send_resumed_workflow_notification(
 
 def _send_delayed_workflow_notification(
     logging: bool,
-    task_id: int,
     author_id: int,
     user_id: int,
     user_email: str,
     account_id: int,
-    workflow_name: str,
+    task_id: int,
     logo_lg: Optional[str] = None,
 ):
+    task = Task.objects.select_related('workflow').get(id=task_id)
+    task_json = NotificationTaskSerializer(
+        instance=task,
+        notification_type=NotificationType.DELAY_WORKFLOW
+    ).data
+    workflow_json = NotificationWorkflowSerializer(instance=task.workflow).data
     notification = Notification.objects.create(
-        task_id=task_id,
+        task=task,
+        task_json=task_json,
+        workflow_json=workflow_json,
         user_id=user_id,
         author_id=author_id,
         account_id=account_id,
@@ -330,8 +363,8 @@ def _send_delayed_workflow_notification(
         logo_lg=logo_lg,
         notification=notification,
         method_name=NotificationMethod.delay_workflow,
-        task_id=task_id,
-        workflow_name=workflow_name,
+        task_id=task.id,
+        workflow_name=task.workflow.name,
         author_id=author_id,
         sync=True
     )
@@ -415,11 +448,10 @@ def _send_due_date_changed(
     logging: bool,
     author_id: int,
     task_id: int,
-    task_name: str,
-    workflow_name: str,
     account_id: int,
     logo_lg: Optional[str]
 ):
+    task = Task.objects.select_related('workflow').get(id=task_id)
     users = (
         TaskPerformer.objects
         .by_task(task_id)
@@ -428,9 +460,16 @@ def _send_due_date_changed(
         .get_user_emails_and_ids_set()
     )
     users = {user for user in users if user[0] != author_id}
+    task_json = NotificationTaskSerializer(
+        instance=task,
+        notification_type=NotificationType.DUE_DATE_CHANGED
+    ).data
+    workflow_json = NotificationWorkflowSerializer(instance=task.workflow).data
     for (user_id, user_email) in users:
         notification = Notification.objects.create(
-            task_id=task_id,
+            task=task,
+            task_json=task_json,
+            workflow_json=workflow_json,
             user_id=user_id,
             author_id=author_id,
             account_id=account_id,
@@ -444,8 +483,8 @@ def _send_due_date_changed(
             account_id=account_id,
             logo_lg=logo_lg,
             notification=notification,
-            workflow_name=workflow_name,
-            task_name=task_name,
+            workflow_name=task.workflow.name,
+            task_name=task.name,
             task_id=task_id,
             user_type=UserType.USER,
             sync=True,
@@ -466,6 +505,7 @@ def _send_urgent_notification(
     notification_type: NotificationType.URGENT_TYPES,
     method_name: NotificationMethod,
 ):
+    task = Task.objects.select_related('workflow').get(id=task_id)
     users = (
         TaskPerformer.objects
         .by_task(task_id)
@@ -475,9 +515,16 @@ def _send_urgent_notification(
         .get_user_emails_and_ids_set()
     )
     users = {user for user in users if user[0] != author_id}
+    task_json = NotificationTaskSerializer(
+        instance=task,
+        notification_type=notification_type
+    ).data
+    workflow_json = NotificationWorkflowSerializer(instance=task.workflow).data
     for (user_id, user_email) in users:
         notification = Notification.objects.create(
-            task_id=task_id,
+            task=task,
+            task_json=task_json,
+            workflow_json=workflow_json,
             user_id=user_id,
             author_id=author_id,
             account_id=account_id,
@@ -522,6 +569,7 @@ def _send_comment_notification(
     users_ids: Tuple[int],
     text: Optional[str] = None,
 ):
+    task = Task.objects.select_related('workflow').get(id=task_id)
     users = (
         UserModel.objects
         .on_account(account_id)
@@ -529,9 +577,16 @@ def _send_comment_notification(
         .order_by('id')
         .values_list('id', 'email')
     )
+    task_json = NotificationTaskSerializer(
+        instance=task,
+        notification_type=NotificationType.COMMENT
+    ).data
+    workflow_json = NotificationWorkflowSerializer(instance=task.workflow).data
     for (user_id, user_email) in users:
         notification = Notification.objects.create(
-            task_id=task_id,
+            task=task,
+            task_json=task_json,
+            workflow_json=workflow_json,
             user_id=user_id,
             author_id=author_id,
             account_id=account_id,
@@ -565,6 +620,7 @@ def _send_mention_notification(
     users_ids: Tuple[int],
     text: Optional[str] = None,
 ):
+    task = Task.objects.select_related('workflow').get(id=task_id)
     users = (
         UserModel.objects
         .on_account(account_id)
@@ -572,9 +628,16 @@ def _send_mention_notification(
         .order_by('id')
         .values_list('id', 'email', 'first_name')
     )
+    task_json = NotificationTaskSerializer(
+        instance=task,
+        notification_type=NotificationType.MENTION
+    ).data
+    workflow_json = NotificationWorkflowSerializer(instance=task.workflow).data
     for (user_id, user_email, user_first_name) in users:
         notification = Notification.objects.create(
-            task_id=task_id,
+            task=task,
+            task_json=task_json,
+            workflow_json=workflow_json,
             user_id=user_id,
             author_id=author_id,
             account_id=account_id,
@@ -694,18 +757,25 @@ def send_workflow_comment_watched():
 def _send_reaction_notification(
     logging: bool,
     author_id: int,
-    task_id: int,
     account_id: int,
     user_id: int,
     user_email: str,
     logo_lg: Optional[str],
     author_name: str,
     reaction: str,
-    workflow_name: str,
+    task_id: int,
 ):
+    task = Task.objects.select_related('workflow').get(id=task_id)
     text = MSG_NF_0001(reaction)
+    task_json = NotificationTaskSerializer(
+        instance=task,
+        notification_type=NotificationType.REACTION
+    ).data
+    workflow_json = NotificationWorkflowSerializer(instance=task.workflow).data
     notification = Notification.objects.create(
-        task_id=task_id,
+        task=task,
+        task_json=task_json,
+        workflow_json=workflow_json,
         user_id=user_id,
         author_id=author_id,
         account_id=account_id,
@@ -722,7 +792,7 @@ def _send_reaction_notification(
         method_name=NotificationMethod.reaction,
         author_name=author_name,
         task_id=task_id,
-        workflow_name=workflow_name,
+        workflow_name=task.workflow.name,
         text=text,
         sync=True,
     )

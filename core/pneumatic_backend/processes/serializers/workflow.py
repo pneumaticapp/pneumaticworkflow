@@ -1,10 +1,10 @@
-# pylint: disable=comparison-with-callable
 import re
 from typing import Dict, Any
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.validators import MinValueValidator
 from django.db import transaction
+from django.db.models import Q
 from django.utils import timezone
 from rest_framework import serializers
 from rest_framework.serializers import ValidationError
@@ -18,7 +18,6 @@ from pneumatic_backend.generics.mixins.serializers import (
 )
 from pneumatic_backend.processes.models import (
     Workflow,
-    TaskPerformer,
     Task,
     TaskTemplate,
 )
@@ -72,29 +71,27 @@ class WorkflowListSerializer(serializers.ModelSerializer):
             'id',
             'name',
             'status',
-            'tasks_count',
-            'current_task',
-            'active_tasks_count',  # TODO Remove in  41258
-            'active_current_task',  # TODO Remove in  41258
-            'template',
-            'owners',
-            'task',  # TODO Remove in  41258
-            'is_legacy_template',
-            'legacy_template_name',
-            'passed_tasks',  # TODO Remove in  41258
-            'tasks',
+            'description',
+            'finalizable',
             'is_external',
             'is_urgent',
-            'finalizable',
-            'workflow_starter',
-            'status_updated',
-            'status_updated_tsp',
-            'due_date_tsp',
-            'date_created',
             'date_created_tsp',
-            'date_completed',
             'date_completed_tsp',
+            'workflow_starter',
+            'ancestor_task_id',
+            'is_legacy_template',
+            'legacy_template_name',
+            'template',
+            'owners',
+            'tasks',
             'fields',
+            'due_date_tsp',  # TODO Remove in  41258
+            'tasks_count',  # TODO Remove in  41258
+            'current_task',  # TODO Remove in  41258
+            'active_tasks_count',  # TODO Remove in  41258
+            'active_current_task',  # TODO Remove in  41258
+            'task',  # TODO Remove in  41258
+            'passed_tasks',  # TODO Remove in  41258
         )
 
     task = serializers.SerializerMethodField()  # TODO Remove in  41258
@@ -109,10 +106,6 @@ class WorkflowListSerializer(serializers.ModelSerializer):
     due_date_tsp = TimeStampField(source='due_date', read_only=True)
     date_completed_tsp = TimeStampField(
         source='date_completed',
-        read_only=True
-    )
-    status_updated_tsp = TimeStampField(
-        source='status_updated',
         read_only=True
     )
     workflow_starter = serializers.IntegerField(
@@ -324,51 +317,31 @@ class WorkflowCompleteSerializer(
 
     task_id = serializers.IntegerField(required=False)
     task_api_name = serializers.CharField(required=False)
-    output = serializers.DictField(
-        write_only=True,
-        allow_empty=True,
-        allow_null=False,
-        required=False
-    )
+    output = serializers.DictField(required=False)
 
     def validate(self, attrs):
         workflow = self.context['workflow']
-        if workflow.status == WorkflowStatus.DELAYED:
-            raise ValidationError(messages.MSG_PW_0004)
-        elif workflow.is_completed:
-            raise ValidationError(messages.MSG_PW_0008)
-
-        task = workflow.current_task_instance
         task_id = attrs.get('task_id')
         task_api_name = attrs.get('task_api_name')
+
+        # if not (task_id or task_api_name):
+        #     raise ValidationError(messages.MSG_PW_0076)
+        # if task_id and task.id != task_id:
+        #     raise ValidationError(messages.MSG_PW_0018)
+        # if task_api_name and task.api_name != task_api_name:
+        #     raise ValidationError(messages.MSG_PW_0018)
+
         if not (task_id or task_api_name):
-            raise ValidationError(messages.MSG_PW_0076)
-        if task_id and task.id != task_id:
-            # TODO Update message in https://my.pneumatic.app/workflows/35698/
-            raise ValidationError(messages.MSG_PW_0018)
-        if task_api_name and task.api_name != task_api_name:
-            # TODO Update message in https://my.pneumatic.app/workflows/35698/
-            raise ValidationError(messages.MSG_PW_0018)
-        if not task.checklists_completed:
-            raise ValidationError(messages.MSG_PW_0006)
-        elif task.sub_workflows.running().exists():
-            raise ValidationError(messages.MSG_PW_0070)
+            task = workflow.current_task_instance
+        else:
+            task = workflow.tasks.filter(
+                Q(id=task_id) | Q(api_name=task_api_name)
+            ).first()
+            if task is None:
+                raise ValidationError(messages.MSG_PW_0085)
+            if not task.is_active:
+                raise ValidationError(messages.MSG_PW_0086)
 
-        user = self.context['user']
-        task_performer = (
-            TaskPerformer.objects
-            .by_task(task.id)
-            .by_user_or_group(user.id)
-            .exclude_directly_deleted()
-            .first()
-        )
-        if task_performer:
-            if task_performer.is_completed:
-                raise ValidationError(messages.MSG_PW_0007)
-        elif not user.is_account_owner:
-            raise ValidationError(messages.MSG_PW_0011)
-
-        attrs['output'] = attrs.get('output') or {}
         attrs['task'] = task
         return attrs
 
@@ -439,29 +412,27 @@ class WorkflowDetailsSerializer(serializers.ModelSerializer):
         fields = (
             'id',
             'name',
-            'description',
-            'template',
-            'owners',
-            'current_task',  # TODO Remove in  41258
-            'tasks_count',
-            'active_tasks_count',  # TODO Remove in  41258
-            'active_current_task',  # TODO Remove in  41258
-            'workflow_starter',
-            'finalizable',
-            'is_legacy_template',
-            'legacy_template_name',
             'status',
-            'kickoff',
+            'description',
+            'finalizable',
             'is_external',
             'is_urgent',
-            'passed_tasks',  # TODO Remove in  41258
-            'date_completed',
-            'date_completed_tsp',
-            'due_date_tsp',
-            'date_created',
             'date_created_tsp',
+            'date_completed_tsp',
+            'workflow_starter',
             'ancestor_task_id',
+            'is_legacy_template',
+            'legacy_template_name',
+            'template',
+            'owners',
             'tasks',
+            'kickoff',
+            'due_date_tsp',   # TODO Remove in  41258
+            'passed_tasks',  # TODO Remove in  41258
+            'current_task',  # TODO Remove in  41258
+            'tasks_count',  # TODO Remove in  41258
+            'active_tasks_count',  # TODO Remove in  41258
+            'active_current_task',  # TODO Remove in  41258
         )
 
     template = TemplateDetailsSerializer()
@@ -643,9 +614,7 @@ class WorkflowFieldsSerializer(serializers.ModelSerializer):
             'id',
             'name',
             'status',
-            'date_created',
             'date_created_tsp',
-            'date_completed',
             'date_completed_tsp',
             'fields',
         )
@@ -681,3 +650,27 @@ class WorkflowRevertSerializer(
         if not comment:
             raise ValidationError(messages.MSG_PW_0083)
         return data
+
+
+class WorkflowShortInfoSerializer(serializers.ModelSerializer):
+
+    """ Used for tasks API only """
+
+    class Meta:
+        model = Workflow
+        fields = (
+            'id',
+            'status',
+            'name',
+            'current_task',  # TODO Remove in  41258
+            'template_name',
+            'date_created_tsp',
+            'date_completed_tsp',
+        )
+
+    template_name = serializers.SerializerMethodField()
+    date_completed_tsp = TimeStampField(source='date_completed')
+    date_created_tsp = TimeStampField(source='date_created')
+
+    def get_template_name(self, instance: Workflow):
+        return instance.get_template_name()
