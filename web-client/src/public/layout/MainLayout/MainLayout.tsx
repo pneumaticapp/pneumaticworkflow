@@ -29,6 +29,8 @@ import { checkIsTemplateOwner, loadGroups } from '../../redux/actions';
 
 import styles from './MainLayout.css';
 import { getIsAdmin } from '../../redux/selectors/user';
+import { closeAllConnections, hasActiveConnections } from '../../redux/utils/webSocketConnections';
+import { promiseDelay } from '../../utils/timeouts';
 
 export interface IMainLayoutComponentStoreProps {
   user: IAuthUser;
@@ -101,8 +103,15 @@ export function MainLayout({
 
   React.useEffect(() => {
     if (user.account.billingPlan) {
+      if (hasActiveConnections()) {
+        closeAllConnections()
+          .then(() => promiseDelay(500))
+          .then(() => watchUserWSEventsAction());
+      } else {
+        watchUserWSEventsAction();
+      }
+
       loadNotificationsList();
-      watchUserWSEventsAction();
       loadTasksCount();
       loadUsers();
       loadActiveUsersCount();

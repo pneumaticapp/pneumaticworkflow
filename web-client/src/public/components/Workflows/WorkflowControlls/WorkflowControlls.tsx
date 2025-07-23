@@ -17,7 +17,7 @@ import {
 } from '../../icons';
 import { isArrayWithItems } from '../../../utils/helpers';
 import { getAuthUser } from '../../../redux/selectors/user';
-import { EWorkflowStatus, IPassedTask, IWorkflow, IWorkflowDetails } from '../../../types/workflow';
+import { EWorkflowStatus, IPassedTask, IWorkflowClient, IWorkflowDetailsClient } from '../../../types/workflow';
 import { NotificationManager } from '../../UI/Notifications';
 import {
   setWorkflowFinished,
@@ -37,11 +37,11 @@ import { checkCanControlWorkflow } from './utils/checkCanControlWorkflow';
 import styles from './WorkflowControlls.css';
 
 export interface IWorkflowControllsProps {
-  workflow: IWorkflow | IWorkflowDetails;
+  workflow: IWorkflowClient | IWorkflowDetailsClient;
   timezone: string;
   onWorkflowDeleted?(): void;
   onWorkflowEnded?(): void;
-  onWorkflowSnoozed?(workflow: IWorkflowDetails): void;
+  onWorkflowSnoozed?(workflow: IWorkflowClient): void;
   onWorkflowResumed?(): void;
   onWorkflowReturn?(): void;
   onChangeUrgent?(isChecked: boolean): void;
@@ -72,7 +72,7 @@ export function WorkflowControllsComponents({
 
   const workflowId = workflow.id;
   const templateId = workflow.template?.id;
-  const passedTasks = workflow?.passedTasks;
+  const completedTasks = workflow?.completedTasks;
   const snoozeOptions = getSnoozeOptions(formatMessage, timezone);
 
   const canCloneWorkflow = Boolean(workflow.template?.isActive);
@@ -186,10 +186,10 @@ export function WorkflowControllsComponents({
     },
     {
       label: formatMessage({ id: 'workflows.card-return' }),
-      isHidden: !isArrayWithItems(passedTasks),
+      isHidden: !isArrayWithItems(completedTasks),
       Icon: ReturnToIcon,
-      subOptions: [...passedTasks].reverse().map((item, index) => {
-        const taskIndex = String(passedTasks.length - index).padStart(2, '0');
+      subOptions: [...completedTasks].reverse().map((item, index) => {
+        const taskIndex = String(completedTasks.length - index).padStart(2, '0');
 
         return {
           mapKey: `return-task-${item.name}-${taskIndex}`,

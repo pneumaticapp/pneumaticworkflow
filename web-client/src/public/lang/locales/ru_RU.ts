@@ -634,8 +634,10 @@ export const ruMessages = {
   'templates.inactive-warning-message':
     'Все интеграции заблокированы, и невозможно начать новые процессы. Включите шаблон, чтобы восстановить полную функциональность.',
   'templates.enable-button': 'Включить',
+  'templates.enable-template-button': 'Включить шаблон',
+  'templates.save-and-enable-button': 'Сохранить и включить',
   'templates.discard-changes': 'Отменить изменения',
-  'templates.keep-draft': 'Сохранить Черновик',
+  'templates.save-as-draft': 'Сохранить как черновик',
   'templates.conditions-banner-text': 'Вы можете использовать условные операторы в процессах!',
   'templates.conditions-banner-button': 'Подробнее',
   'templates.share-popup':
@@ -785,7 +787,7 @@ export const ruMessages = {
   'workflows.user-added': 'Пользователь добавлен',
   'workflows.user-removed': 'Пользователь удален',
   'workflows.name': 'Название процесса',
-  'workflows.tooltip-header': 'Задача {activeCurrentTask} из {activeTasksCount}',
+  'workflows.tooltip-header': 'Задача {lastActiveCurrentTask} из {tasksCountWithoutSkipped}',
   'workflows.checklists-header': 'Чек листы',
   'workflows.checklists-counter': '{marked}/{total}',
   'workflows.event-snoozed-until': 'Процесс отложен до {date}',

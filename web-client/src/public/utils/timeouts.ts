@@ -6,8 +6,11 @@ export function promiseTimeout<T>(ms: number, promise: T) {
     }, ms);
   });
 
-  return Promise.race([
-    promise,
-    timeout,
-  ]);
+  return Promise.race([promise, timeout]);
+}
+
+export function promiseDelay(ms: number): Promise<void> {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
 }

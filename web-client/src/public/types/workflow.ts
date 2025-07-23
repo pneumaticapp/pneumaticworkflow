@@ -1,48 +1,65 @@
 import { IAccount, TUserId } from './user';
 import { TUploadedFile } from '../utils/uploadFiles';
-import { ITask, ITemplateStep } from './tasks';
+import { ITask, ITemplateStep, TaskWithTsp } from './tasks';
 import { IKickoff, IExtraField, ITemplateTitle, ETemplateOwnerType, RawPerformer } from './template';
-import { EProgressbarColor } from '../components/ProgressBar';
+import { EProgressbarColor } from '../components/Workflows/utils/getWorfkflowClientProperties';
 
 export type WorkflowWithDateFields = {
   dueDate: string | null;
   dateCreated: string;
   dateCompleted: string | null;
+  tasks: IWorkflowTaskItem[];
 };
 
 export type WorkflowWithTspFields = {
   dueDateTsp: number | null;
   dateCreatedTsp: number;
   dateCompletedTsp: number | null;
+  tasks: TaskWithTsp<IWorkflowTaskItem>[];
 };
 
-export type WorkflowWithTsp<T> = Omit<T, keyof WorkflowWithDateFields> & WorkflowWithTspFields;
+export type WorkflowWithTsp<T> = Omit<T, keyof WorkflowWithDateFields> &
+  WorkflowWithTspFields & {
+    tasks: TaskWithTsp<IWorkflowTaskItem>[];
+  };
 
 export type TWorkflowDetailsResponse = WorkflowWithTsp<IWorkflowDetails>;
+export interface IWorkflowClientProperties {
+  tasks: IWorkflowTaskClient[];
+  completedTasks: IWorkflowTaskClient[];
 
+  areMultipleTasks: boolean;
+  namesMultipleTasks: string[];
+  oneActiveTaskName?: string | null;
+  selectedUsers: RawPerformer[];
+
+  tasksCountWithoutSkipped: number;
+  lastActiveCurrentTask: number;
+  minDelay: IWorkflowTaskDelay | null;
+  areOverdueTasks: boolean;
+  oldestDeadline: string | null;
+}
 export interface IWorkflowDetails {
   id: number;
-  ancestorTaskId?: number;
   name: string;
-  description: string;
-  template: IWorkflowTemplate | null;
   owners: number[];
-  activeCurrentTask: number;
-  activeTasksCount: number;
-  currentTask: TWorkflowTask;
-  tasksCount: number;
-  finalizable: boolean;
+  status: EWorkflowStatus;
+  dateCreated: string;
+  dateCompleted: string | null;
+  dueDate: string | null;
   isLegacyTemplate: boolean;
+  legacyTemplateName: string;
   isExternal: boolean;
   isUrgent: boolean;
-  legacyTemplateName: string;
-  status: EWorkflowStatus;
-  kickoff: IWorkflowDetailsKickoff;
-  passedTasks: Array<IPassedTask>;
-  dateCompleted: string | null;
-  dateCreated: string;
   workflowStarter: number | null;
-  dueDate: string | null;
+  template: IWorkflowTemplate | null;
+  tasks: IWorkflowTaskItem[];
+
+  ancestorTaskId?: number;
+  finalizable: boolean;
+
+  description: string;
+  kickoff: IWorkflowDetailsKickoff;
 }
 
 export interface IWorkflowEditData {
@@ -108,6 +125,12 @@ export interface IWorkflowTaskDelay {
   startDate: string;
   endDate: string;
   estimatedEndDate: string;
+  estimatedEndDateTsp: number | null;
+}
+
+export interface IWorkflowTaskClient extends IWorkflowTaskItem {
+  overdue: boolean;
+  color: EProgressbarColor | null;
 }
 
 export interface IWorkflowTaskItem {
@@ -116,43 +139,41 @@ export interface IWorkflowTaskItem {
   api_name: string;
   number: number;
   description: string;
-  dueDateTsp: number | null;
-  dateStartedTsp: number | null;
-  dateCompletedTsp: number | null;
+  dueDate: string | null;
+  dateStarted: string | null;
+  dateCompleted: string | null;
   status: EWorkflowTaskStatus;
   performers: RawPerformer[];
   checklistsTotal: number;
   checklistsMarked: number;
   delay: IWorkflowTaskDelay | null;
-  overdue?: boolean;
-  color?: EProgressbarColor;
 }
 
 export type TWorkflowResponse = WorkflowWithTsp<IWorkflow>;
 
+export interface IWorkflowClient extends Omit<IWorkflow, 'tasks'>, IWorkflowClientProperties {}
+export interface IWorkflowDetailsClient extends Omit<IWorkflowDetails, 'tasks'>, IWorkflowClientProperties {}
+
 export interface IWorkflow {
   id: number;
   name: string;
-  status: EWorkflowStatus;
-  ancestorTaskId?: number;
-  tasksCount: number;
-  currentTask: number;
-  activeTasksCount: number;
-  activeCurrentTask: number;
   owners: number[];
-  isExternal: boolean;
-  template: IWorkflowTemplate | null;
-  task: TWorkflowTask;
-  tasks: IWorkflowTaskItem[];
+  status: EWorkflowStatus;
+  dateCreated: string;
+  dateCompleted: string | null;
+  dueDate: string | null;
   isLegacyTemplate: boolean;
   legacyTemplateName: string;
-  passedTasks: IPassedTask[];
+  isExternal: boolean;
   isUrgent: boolean;
-  dateCompleted: string | null;
-  finalizable: boolean;
   workflowStarter: number | null;
-  dueDate: string | null;
-  dueDateTsp?: number | null;
+  template: IWorkflowTemplate | null;
+  tasks: IWorkflowTaskItem[];
+
+  ancestorTaskId?: number;
+  finalizable: boolean;
+
+  workflowSnoosed?: IWorkflowTaskDelay | null;
 }
 
 export interface IPassedTask {

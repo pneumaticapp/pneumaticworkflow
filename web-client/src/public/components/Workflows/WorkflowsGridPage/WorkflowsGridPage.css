@@ -400,7 +400,3 @@ button.dropdown-resume {
 .user-filter-option_avatar {
   margin-right: 0.8rem;
 }
-
-.card-tooltip-task-number {
-  @mixin text-small bold;
-}

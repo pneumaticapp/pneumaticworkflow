@@ -2,29 +2,23 @@ import React, { ReactElement, ReactNode } from 'react';
 
 import { Tooltip } from '../UI';
 import { ProgressBarGrid } from './ProgressBarGrid';
-import { IWorkflowTaskItem } from '../../types/workflow';
+import { IWorkflowTaskClient } from '../../types/workflow';
 
 import styles from './ProgressBar.css';
-
-export enum EProgressbarColor {
-  Yellow = '#FFC107',
-  Red = '#E53D00',
-  Grey = '#979795',
-  Green = '#5FAD56',
-}
+import { EProgressbarColor } from '../Workflows/utils/getWorfkflowClientProperties';
 
 export interface IProgressBarProps {
-  tasks?: IWorkflowTaskItem[];
-  progress: number | undefined;
+  tasks?: IWorkflowTaskClient[];
+  progress?: number | undefined;
   background?: string;
-  color: EProgressbarColor;
+  color?: EProgressbarColor;
   containerClassName?: string;
   tooltipContent?: ReactNode;
 }
 
 export const ProgressBar = ({
   progress,
-  color,
+  color = EProgressbarColor.Grey,
   background,
   containerClassName,
   tooltipContent,

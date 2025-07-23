@@ -3,14 +3,14 @@ import { actionGenerator } from '../../utils/redux';
 import {
   EWorkflowsLogSorting,
   EWorkflowsSorting,
-  IWorkflowDetails,
   IWorkflowEditData,
   EWorkflowsStatus,
   TUserCounter,
   TTemplateStepCounter,
-  IWorkflow,
   EWorkflowsView,
   IWorkflowLogItem,
+  IWorkflowClient,
+  IWorkflowDetailsClient,
 } from '../../types/workflow';
 import { ITemplateTitle, IKickoff } from '../../types/template';
 import { TUploadedFile } from '../../utils/uploadFiles';
@@ -166,10 +166,10 @@ export const closeWorkflowLogPopup: (payload?: void) => TCloseWorkflowLogPopup =
   void
 >(EWorkflowsActions.CloseWorkflowLogPopup);
 
-export type TChangeWorkflow = ITypedReduxAction<EWorkflowsActions.ChangeWorkflow, IWorkflowDetails>;
-export const changeWorkflow: (payload: IWorkflowDetails) => TChangeWorkflow = actionGenerator<
+export type TChangeWorkflow = ITypedReduxAction<EWorkflowsActions.ChangeWorkflow, IWorkflowDetailsClient>;
+export const changeWorkflow: (payload: IWorkflowDetailsClient) => TChangeWorkflow = actionGenerator<
   EWorkflowsActions.ChangeWorkflow,
-  IWorkflowDetails
+  IWorkflowDetailsClient
 >(EWorkflowsActions.ChangeWorkflow);
 
 export type TChangeWorkflowLog = ITypedReduxAction<EWorkflowsActions.ChangeWorkflowLog, Partial<IWorkflowLog>>;
@@ -507,7 +507,7 @@ export const setWorkflowsTemplateStepsCounters: (
 export type TSnoozeWorkflowPayload = {
   workflowId: number;
   date: string;
-  onSuccess?(workflow: IWorkflowDetails): void;
+  onSuccess?(workflow: IWorkflowClient): void;
 };
 export type TSnoozeWorkflow = ITypedReduxAction<EWorkflowsActions.SnoozeWorkflow, TSnoozeWorkflowPayload>;
 export const snoozeWorkflow: (payload: TSnoozeWorkflowPayload) => TSnoozeWorkflow = actionGenerator<
@@ -517,7 +517,7 @@ export const snoozeWorkflow: (payload: TSnoozeWorkflowPayload) => TSnoozeWorkflo
 
 export type TPatchWorkflowInListPayload = {
   workflowId: number;
-  changedFields: Partial<IWorkflow>;
+  changedFields: Partial<IWorkflowClient>;
 };
 export type TPatchWorkflowInList = ITypedReduxAction<
   EWorkflowsActions.PatchWorkflowInList,
@@ -530,7 +530,7 @@ export const patchWorkflowInList: (payload: TPatchWorkflowInListPayload) => TPat
 
 export type TPatchWorkflowDetailedPayload = {
   workflowId: number;
-  changedFields: Partial<IWorkflowDetails>;
+  changedFields: Partial<IWorkflowDetailsClient>;
 };
 export type TPatchWorkflowDetailed = ITypedReduxAction<
   EWorkflowsActions.PatchWorkflowDetailed,

@@ -36,13 +36,16 @@ import {
 import {
   IWorkflowLogItem,
   EWorkflowsLogSorting,
-  IWorkflowDetails,
   EWorkflowsStatus,
   TUserCounter,
   TTemplateStepCounter,
   EWorkflowStatus,
   TWorkflowResponse,
   TWorkflowDetailsResponse,
+  IWorkflowClient,
+  IWorkflowDetailsClient,
+  EWorkflowTaskStatus,
+  IWorkflowTaskClient,
 } from '../../types/workflow';
 import { ERoutes } from '../../constants/routes';
 import { getWorkflowsStore, getWorkflowsSearchText, getWorkflowsStatus, getTaskStore } from '../selectors/workflows';
@@ -115,10 +118,12 @@ import {
   mapBackendNewEventToRedux,
   formatDueDateToEditWorkflow,
   mapWorkflowsToISOStringToRedux,
+  mapWorkflowsAddComputedPropsToRedux,
 } from '../../utils/mappers';
 import { getUserTimezone } from '../selectors/user';
 import { getCurrentTask } from '../selectors/task';
 import { formatDateToISOInWorkflow } from '../../utils/dateTime';
+import { getWorkflowAddComputedPropsToRedux } from '../../components/Workflows/utils/getWorfkflowClientProperties';
 
 function* handleLoadWorkflow({ workflowId, showLoader = true }: { workflowId: number; showLoader?: boolean }) {
   const {
@@ -144,8 +149,9 @@ function* handleLoadWorkflow({ workflowId, showLoader = true }: { workflowId: nu
 
     const formattedKickoffWorkflow = mapBackendWorkflowToRedux(workflow, timezone);
     const formattedDueDateWorkflow = formatDateToISOInWorkflow(formattedKickoffWorkflow);
+    const formattedWorkflow = getWorkflowAddComputedPropsToRedux(formattedDueDateWorkflow) as IWorkflowDetailsClient;
 
-    yield put(changeWorkflow(formattedDueDateWorkflow));
+    yield put(changeWorkflow(formattedWorkflow));
     yield put(changeWorkflowLog({ items: formattedWorkflowLog, workflowId }));
   } catch (error) {
     logger.info('fetch prorcess error : ', error);
@@ -248,7 +254,7 @@ function* fetchWorkflowsList({ payload: offset = 0 }: TLoadWorkflowsList) {
     const formattedResults = mapWorkflowsToISOStringToRedux(results);
     const items = offset > 0 ? uniqBy([...workflowsList.items, ...formattedResults], 'id') : formattedResults;
 
-    yield put(changeWorkflowsList({ count, offset, items }));
+    yield put(changeWorkflowsList({ count, offset, items: mapWorkflowsAddComputedPropsToRedux(items) }));
   } catch (error) {
     logger.info('fetch workflows list error : ', error);
     yield put(loadWorkflowsListFailed());
@@ -331,6 +337,7 @@ function* editWorkflowInWork({ payload }: TEditWorkflow) {
     const formattedPayload = formatDueDateToEditWorkflow(payload);
     const editedWorkflow: IEditWorkflowResponse = yield editWorkflow(formattedPayload);
     const formattedEditedWorkflow = formatDateToISOInWorkflow(editedWorkflow);
+    const formattedWorkflow = getWorkflowAddComputedPropsToRedux(formattedEditedWorkflow) as IWorkflowDetailsClient;
 
     const newEditingProcess = {
       name: formattedEditedWorkflow.name,
@@ -338,11 +345,23 @@ function* editWorkflowInWork({ payload }: TEditWorkflow) {
     };
 
     const task: ReturnType<typeof getCurrentTask> = yield select(getCurrentTask);
+    const worlflowActiveTasks = formattedWorkflow.tasks.filter(
+      (localTask: IWorkflowTaskClient) => localTask.status === EWorkflowTaskStatus.Active,
+    );
     yield put(setWorkflowEdit(newEditingProcess));
-    yield put(changeWorkflow(formattedEditedWorkflow));
-    if (payload.workflowId === task?.workflow.id && task && typeof isUrgent !== 'undefined') {
+    yield put(changeWorkflow(formattedWorkflow));
+    if (typeof isUrgent !== 'undefined' && task && payload.workflowId === task.workflow.id) {
       yield put(setCurrentTask({ ...task, isUrgent }));
-      yield put(patchTaskInList({ taskId: task.id, task: { ...task, isUrgent } }));
+      yield all(
+        worlflowActiveTasks.map((localTask) =>
+          put(
+            patchTaskInList({
+              taskId: localTask.id,
+              task: { ...localTask, dateStarted: localTask.dateStarted || undefined, isUrgent },
+            }),
+          ),
+        ),
+      );
     }
     // yield put(loadWorkflowsList(0));
     yield updateDetailedWorkflow(payload.workflowId);
@@ -378,12 +397,16 @@ function* editWorkflowInWork({ payload }: TEditWorkflow) {
 export function* setWorkflowResumedSaga({ payload: { workflowId, onSuccess } }: TWorkflowResumed) {
   try {
     yield put(setGeneralLoaderVisibility(true));
-    yield continueWorkflow(workflowId);
-
+    const workflow: IEditWorkflowResponse = yield continueWorkflow(workflowId);
+    const normilizedWorkflow: IWorkflowClient = getWorkflowAddComputedPropsToRedux(formatDateToISOInWorkflow(workflow));
     yield put(
       patchWorkflowInList({
         workflowId,
-        changedFields: { status: EWorkflowStatus.Running },
+        changedFields: {
+          status: EWorkflowStatus.Running,
+          tasks: normilizedWorkflow.tasks,
+          minDelay: normilizedWorkflow.minDelay,
+        },
       }),
     );
 
@@ -602,21 +625,22 @@ export function* updateWorkflowsTemplateStepsCountersSaga() {
 export function* snoozeWorkflowSaga({ payload: { workflowId, date, onSuccess } }: TSnoozeWorkflow) {
   try {
     yield put(setGeneralLoaderVisibility(true));
-    const workflow: IWorkflowDetails = yield call(snoozeWorkflow, workflowId, date);
-
+    const workflow: IEditWorkflowResponse = yield call(snoozeWorkflow, workflowId, date);
+    const normilizedWorkflow: IWorkflowClient = getWorkflowAddComputedPropsToRedux(formatDateToISOInWorkflow(workflow));
     yield put(
       patchWorkflowInList({
         workflowId: workflow.id,
         changedFields: {
           status: EWorkflowStatus.Snoozed,
-          task: workflow.currentTask,
+          minDelay: normilizedWorkflow.minDelay,
+          tasks: normilizedWorkflow.tasks,
         },
       }),
     );
 
     yield updateDetailedWorkflow(workflowId);
 
-    onSuccess?.(workflow);
+    onSuccess?.(normilizedWorkflow);
   } catch (error) {
     NotificationManager.warning({ message: getErrorMessage(error) });
     logger.error('failed to snooze a workflow ', error);

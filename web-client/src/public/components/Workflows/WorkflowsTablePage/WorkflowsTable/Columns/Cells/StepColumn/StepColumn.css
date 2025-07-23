@@ -2,6 +2,8 @@
   overflow: hidden;
   text-overflow: ellipsis;
   color: var(--pneumatic-color-black72);
+
+  @mixin text-overflow;
 }
 
 .tooltip {

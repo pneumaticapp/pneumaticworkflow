@@ -3,8 +3,9 @@ import classnames from 'classnames';
 
 import { ConfirmableDropdownItem } from '../../../UI/Dropdown/ConfirmableDropdownItem';
 import { CircleProgressBar } from '../../../CircleProgressBar';
-import { EProgressbarColor, ProgressBar } from '../../../ProgressBar';
-import { IWorkflowDetails } from '../../../../types/workflow';
+import { ProgressBar } from '../../../ProgressBar';
+import { EProgressbarColor } from '../../utils/getWorfkflowClientProperties';
+import { IWorkflowDetailsClient } from '../../../../types/workflow';
 import { WorkflowControlls } from '../../WorkflowControlls';
 import { Dropdown, getDropdownItemColorClass, TDropdownOption } from '../../../UI';
 import { isArrayWithItems } from '../../../../utils/helpers';
@@ -14,7 +15,7 @@ import styles from '../WorkflowModal.css';
 export interface IWorkflowModalHeaderProgressBarProps {
   progress?: number;
   color: EProgressbarColor;
-  workflow: IWorkflowDetails;
+  workflow: IWorkflowDetailsClient;
   workflowId: number;
   isMobile?: boolean;
   closeModal(): void;

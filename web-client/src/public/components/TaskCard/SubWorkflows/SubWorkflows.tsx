@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import classnames from 'classnames';
 
 import { IWorkflowControllsProps, WorkflowControlls } from '../../Workflows/WorkflowControlls';
-import { IWorkflow } from '../../../types/workflow';
+import { IWorkflowClient } from '../../../types/workflow';
 import { Dropdown, Tooltip } from '../../UI';
 import { MoreIcon, UrgentColorIcon } from '../../icons';
 import { isArrayWithItems } from '../../../utils/helpers';
@@ -14,7 +14,7 @@ import styles from './SubWorkflows.css';
 
 export interface TSubWorkflowsProps {
   ancestorTaskId: number;
-  workflows: IWorkflow[];
+  workflows: IWorkflowClient[];
   loadCurrentTask(payload: TLoadCurrentTaskPayload): void;
   openWorkflowLogPopup(payload: TOpenWorkflowLogPopupPayload): void;
 }
@@ -26,6 +26,7 @@ export function SubWorkflows({ workflows, ancestorTaskId, loadCurrentTask, openW
     <div className={styles['embeded-workflows']}>
       {workflows.map((workflow) => (
         <SubWorkflowItem
+          key={workflow.id}
           workflow={workflow}
           onWorkflowEnded={handleUpdateTask}
           onWorkflowSnoozed={handleUpdateTask}
@@ -42,7 +43,7 @@ type TSubWorkflowProps = Pick<
   IWorkflowControllsProps,
   'onWorkflowDeleted' | 'onWorkflowEnded' | 'onWorkflowResumed' | 'onWorkflowSnoozed' | 'onWorkflowReturn'
 > & {
-  workflow: IWorkflow;
+  workflow: IWorkflowClient;
   handleOpenModal(): void;
 };
 

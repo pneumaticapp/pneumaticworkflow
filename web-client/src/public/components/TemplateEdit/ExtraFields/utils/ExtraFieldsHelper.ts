@@ -131,7 +131,7 @@ export class ExtraFieldsHelper {
       }
 
       const selectedOption = field.selections.find(({ isSelected }) => isSelected);
-      const initialValue = selectedOption ? String(selectedOption.id) : null;
+      const initialValue = selectedOption ? selectedOption.apiName : null;
 
       return { ...field, value: this.getFieldValue(initialValue, null, field.apiName) };
     },

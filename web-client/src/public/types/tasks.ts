@@ -1,7 +1,7 @@
-import { IWorkflow, WorkflowWithTsp } from './workflow';
+import { IWorkflow, IWorkflowClient, WorkflowWithTsp } from './workflow';
 import { IExtraField, ITemplateTitle, RawPerformer } from './template';
 
-export type TTaskWorkflow = Pick<IWorkflow, 'id' | 'name' | 'currentTask' | 'status' | 'dateCompleted'> & {
+export type TTaskWorkflow = Pick<IWorkflow, 'id' | 'name' | 'status' | 'dateCompleted'> & {
   templateName: string;
 };
 
@@ -21,7 +21,7 @@ export type TaskWithTsp<T> = Omit<T, keyof TaskWithDateFields> & TaskWithTspFiel
 
 export type TFormatTaskDates = {
   output?: IExtraField[];
-  subWorkflow?: WorkflowWithTsp<IWorkflow> | null;
+  subWorkflows?: WorkflowWithTsp<IWorkflow>[] | null;
   dueDateTsp?: number | null;
   dateStartedTsp?: number;
   dateCompletedTsp?: number | null;
@@ -49,7 +49,7 @@ export interface ITask {
   dateCompleted: string | null;
   dueDate: string | null;
   isUrgent: boolean;
-  subWorkflows: IWorkflow[];
+  subWorkflows: IWorkflowClient[];
   areChecklistsHandling: boolean;
   checklistsTotal: number;
   checklistsMarked: number;
@@ -80,7 +80,7 @@ export type TTaskChecklistsItem = {
 };
 
 export interface ITaskAPI
-  extends Omit<ITask, 'checklists' | 'areChecklistsHandling' | 'dateStarted' | 'dateCompleted'> {
+  extends Omit<ITask, 'checklists' | 'areChecklistsHandling' | 'dateStarted' | 'dateCompleted' | 'subWorkflows'> {
   checklists: {
     id: number;
     apiName: string;
@@ -93,6 +93,7 @@ export interface ITaskAPI
   dueDateTsp: number | null;
   dateStartedTsp: number;
   dateCompletedTsp: number | null;
+  subWorkflows: WorkflowWithTsp<IWorkflow>[];
 }
 export type TTaskListItemResponse = TaskWithTsp<ITaskListItem>;
 

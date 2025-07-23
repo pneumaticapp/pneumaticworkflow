@@ -3,7 +3,8 @@ import ReactDOM from 'react-dom';
 import { useIntl } from 'react-intl';
 
 import { createProgressbarPlaceholderId } from '../createProgressbarPlaceholderId';
-import { EProgressbarColor, ProgressBar } from '../../../ProgressBar';
+import { ProgressBar } from '../../../ProgressBar';
+import { EProgressbarColor } from '../../../Workflows/utils/getWorfkflowClientProperties';
 import { getPercent } from '../../../../utils/helpers';
 import { Tooltip } from '../../../UI';
 import { StarIcon } from '../../../icons';
@@ -12,7 +13,7 @@ import styles from '../../../RichText/RichText.css';
 
 export type TChecklistProgressbarOwnProps = {
   listApiName: string;
-}
+};
 
 export type TChecklistProgressbarReduxProps = {
   checkedItems: number;
@@ -21,11 +22,7 @@ export type TChecklistProgressbarReduxProps = {
 
 type IChecklistProgressbarProps = TChecklistProgressbarOwnProps & TChecklistProgressbarReduxProps;
 
-export function ChecklistProgressbar({
-  listApiName,
-  checkedItems,
-  totalItems,
-}: IChecklistProgressbarProps) {
+export function ChecklistProgressbar({ listApiName, checkedItems, totalItems }: IChecklistProgressbarProps) {
   const { formatMessage } = useIntl();
 
   const element = document.getElementById(createProgressbarPlaceholderId(listApiName));
@@ -36,30 +33,33 @@ export function ChecklistProgressbar({
   const renderProgressbar = () => {
     return (
       <div className={styles['progressbar']}>
-        <ProgressBar  progress={getPercent(checkedItems, totalItems)} color={EProgressbarColor.Green} background="#fdf7ee" />
+        <ProgressBar
+          progress={getPercent(checkedItems, totalItems)}
+          color={EProgressbarColor.Green}
+          background="#fdf7ee"
+        />
 
         <div className={styles['progressbar-hint']}>
-          <Tooltip content={(
-            <>
-              {formatMessage({ id: 'task.progressbar-hint' })}
+          <Tooltip
+            content={
+              <>
+                {formatMessage({ id: 'task.progressbar-hint' })}
 
-              {/* <div>
+                {/* <div>
                 <a target="_blank" rel="noreferrer" href={ELearnMoreLinks.Checklists}>
                   {formatMessage({ id: 'dashboard.integrations-tooltip-link' })}
                 </a>
               </div> */}
-            </>
-          )}>
+              </>
+            }
+          >
             <span className={styles['progressbar-hint-icon']}>
               <StarIcon />
             </span>
           </Tooltip>
         </div>
       </div>
-    )
-  }
-  return ReactDOM.createPortal(
-    renderProgressbar(),
-    element
-  );
+    );
+  };
+  return ReactDOM.createPortal(renderProgressbar(), element);
 }

@@ -1,0 +1,3 @@
+.card-tooltip-task-number {
+  @mixin text-small bold;
+}

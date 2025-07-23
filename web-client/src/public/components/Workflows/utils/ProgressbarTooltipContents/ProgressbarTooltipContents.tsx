@@ -2,39 +2,40 @@ import * as React from 'react';
 import { useSelector } from 'react-redux';
 import { useIntl } from 'react-intl';
 import { getLanguage } from '../../../../redux/selectors/user';
-import { EWorkflowStatus, IWorkflow } from '../../../../types/workflow';
+import { EWorkflowStatus, IWorkflowClient } from '../../../../types/workflow';
 import { getSnoozedUntilDate } from '../../../../utils/dateTime';
 import { DateFormat } from '../../../UI/DateFormat';
 import { getDueInData } from '../../../DueIn/utils/getDueInData';
 
 import styles from './ProgressbarTooltipContents.css';
-import { reactElementToText } from '../../../../utils/reactElementToText';
 
 interface IProgressbarTooltipContentsProps {
-  workflow: IWorkflow;
+  workflow: IWorkflowClient;
 }
 export function ProgressbarTooltipContents({
   workflow: {
     dateCompleted,
     status,
-    task: { checklistsMarked, checklistsTotal, dueDate: taskDueDate, dateStarted, delay },
-    activeCurrentTask,
-    activeTasksCount,
+    lastActiveCurrentTask,
+    tasksCountWithoutSkipped,
     dueDate,
+    minDelay,
+    dateCreated,
+    oldestDeadline,
   },
 }: IProgressbarTooltipContentsProps) {
   const { formatMessage } = useIntl();
   const locale = useSelector(getLanguage);
   const getSnoozedText = () => {
-    if (!delay) {
+    if (!minDelay) {
       return '';
     }
 
-    return formatMessage({ id: 'task.log-delay' }, { date: getSnoozedUntilDate(delay) });
+    return formatMessage({ id: 'task.log-delay' }, { date: getSnoozedUntilDate(minDelay) });
   };
 
   const getDueInTooltipText = (): string => {
-    const dueInData = getDueInData([taskDueDate, dueDate], undefined, undefined, locale);
+    const dueInData = getDueInData([oldestDeadline, dueDate], undefined, undefined, locale);
     if (!dueInData) {
       return '';
     }
@@ -44,13 +45,23 @@ export function ProgressbarTooltipContents({
     return formatMessage({ id: statusTitle }, { duration: timeLeft });
   };
 
+  const getRunningTooltipText = () => {
+    const startedProcessText = formatMessage({ id: 'workflows.started' }, { date: <DateFormat date={dateCreated} /> });
+    const dueInText = getDueInTooltipText();
+
+    return dueInText ? (
+      <>
+        {startedProcessText}
+        <br />
+        {dueInText}
+      </>
+    ) : (
+      startedProcessText
+    );
+  };
+
   const tooltipTextMap = {
-    [EWorkflowStatus.Running]: [
-      formatMessage({ id: 'workflows.started' }, { date: reactElementToText(<DateFormat date={dateStarted} />) }),
-      getDueInTooltipText(),
-    ]
-      .filter(Boolean)
-      .join('\n'),
+    [EWorkflowStatus.Running]: getRunningTooltipText(),
     [EWorkflowStatus.Snoozed]: getSnoozedText(),
     [EWorkflowStatus.Finished]:
       dateCompleted && formatMessage({ id: 'workflows.finished' }, { date: <DateFormat date={dateCompleted} /> }),
@@ -60,20 +71,9 @@ export function ProgressbarTooltipContents({
   return (
     <>
       <p className={styles['tooltip-header']}>
-        {formatMessage({ id: 'workflows.tooltip-header' }, { activeCurrentTask, activeTasksCount })}
+        {formatMessage({ id: 'workflows.tooltip-header' }, { lastActiveCurrentTask, tasksCountWithoutSkipped })}
       </p>
       <p className={styles['tooltip-content']}>{tooltipTextMap[status]}</p>
-      {checklistsTotal !== 0 && (
-        <>
-          <p className={styles['tooltip-header']}>{formatMessage({ id: 'workflows.checklists-header' })}</p>
-          <p className={styles['tooltip-content']}>
-            {formatMessage(
-              { id: 'workflows.checklists-counter' },
-              { marked: checklistsMarked, total: checklistsTotal },
-            )}
-          </p>
-        </>
-      )}
     </>
   );
 }

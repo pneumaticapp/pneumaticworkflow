@@ -52,7 +52,14 @@ export function TaskItemUsers({ task, maxUsers = MAX_SHOW_USERS, onClick }: ITas
         );
       },
       [ETaskPerformerType.UserGroup]: (performer: ITemplateTaskPerformer) => {
-        return <Avatar size="sm" withTooltip user={{...performer, firstName: performer.label} as unknown as TAvatarUser} containerClassName={styles['card-user']} />;
+        return (
+          <Avatar
+            size="sm"
+            withTooltip
+            user={{ ...performer, firstName: performer.label } as unknown as TAvatarUser}
+            containerClassName={styles['card-user']}
+          />
+        );
       },
       [ETaskPerformerType.WorkflowStarter]: () => {
         return <Avatar size="sm" containerClassName={styles['card-user']} isEmpty />;
@@ -64,7 +71,7 @@ export function TaskItemUsers({ task, maxUsers = MAX_SHOW_USERS, onClick }: ITas
 
   return (
     <div className={styles['card-users']} onClick={onClick}>
-      {rawPerformers.map(renderPerformer)}
+      {rawPerformers.slice(0, maxUsers).map(renderPerformer)}
       {Boolean(usersLeft) && <span className={styles['card-users__more']}>+{usersLeft}</span>}
     </div>
   );

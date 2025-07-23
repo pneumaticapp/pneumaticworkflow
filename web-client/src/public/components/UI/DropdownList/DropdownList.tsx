@@ -44,6 +44,9 @@ export function DropdownList<TOption extends TDropdownOptionBase>({
   const [filterValue, setFilterValue] = useState('');
 
   const handleInputChange = (inputValue: string, action: any) => {
+    if (action.action === 'set-value') {
+      setFilterValue('');
+    }
     if (action.action === 'input-change') {
       setFilterValue(inputValue);
     }
@@ -58,7 +61,6 @@ export function DropdownList<TOption extends TDropdownOptionBase>({
       DropdownIndicator,
       MenuList: MenuListLG,
       IndicatorSeparator: () => null,
-      Input,
     },
     sm: {
       Menu: MenuSM,
@@ -114,10 +116,6 @@ export function DropdownList<TOption extends TDropdownOptionBase>({
       </OutsideClickHandler>
     </div>
   );
-}
-
-function Input({ autoComplete, ...rest }: any) {
-  return <components.Input {...rest} aria-autocomplete="none" />;
 }
 
 function ControlSM(title: string, isOpen: boolean, onClick: (isOpen: boolean) => void) {

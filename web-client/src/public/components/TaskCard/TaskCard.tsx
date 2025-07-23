@@ -444,13 +444,9 @@ export function TaskCard({
       );
     };
 
-    const {
-      workflow: { currentTask },
-      id: taskId,
-      dateStarted,
-      dateCompleted,
-    } = task;
-    const isReturnAllowed = viewMode !== ETaskCardViewMode.Guest && currentTask > 1;
+    const { id: taskId, dateStarted, dateCompleted } = task;
+    const isNotFirstTask = workflow?.tasks.find((localTask) => localTask.id === taskId && localTask.number !== 1);
+    const isReturnAllowed = viewMode !== ETaskCardViewMode.Guest && isNotFirstTask;
     const isReturnedTask = !dateStarted && !dateCompleted;
 
     if (isReturnedTask) {
@@ -533,7 +529,7 @@ export function TaskCard({
         isOnlyAttachmentsShown={workflowLog.isOnlyAttachmentsShown}
         workflowId={workflowLog.workflowId}
         includeHeader
-        currentTask={workflow?.currentTask}
+        oldestDeadline={task.dueDate}
         isLogMinimized={false}
         areTasksClickable={viewMode === ETaskCardViewMode.Single}
         minimizedLogMaxEvents={MINIMIZED_LOG_MAX_EVENTS}
@@ -579,6 +575,7 @@ export function TaskCard({
             {renderPerformersControllers()}
             {renderPerformers()}
           </div>
+
           {viewMode !== ETaskCardViewMode.Guest && (
             <DueIn
               withTime
