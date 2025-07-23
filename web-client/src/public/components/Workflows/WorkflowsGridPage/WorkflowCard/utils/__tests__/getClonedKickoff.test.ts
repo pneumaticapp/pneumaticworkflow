@@ -4,7 +4,8 @@ import { getClonedKickoff } from '../getClonedKickoff';
 
 const mockWorkflowDetailKickoff: IWorkflowDetailsKickoff = {
   id: 1,
-  description: 'youtube: \nhttps://www.youtube.com/watch?v=JZRm7NKTPhk\n loom:\nhttps://www.loom.com/share/29f210bc12484eaa81ca462381fb4415?t=0\n 404 loom:\n\nhttps://www.loom.com/share/9853f0790ad2408094a3717bfcf4a0c0\nYoutube 404 :\n\nhttps://www.youtube.com/watch?v=D6hIeqZt22g',
+  description:
+    'youtube: \nhttps://www.youtube.com/watch?v=JZRm7NKTPhk\n loom:\nhttps://www.loom.com/share/29f210bc12484eaa81ca462381fb4415?t=0\n 404 loom:\n\nhttps://www.loom.com/share/9853f0790ad2408094a3717bfcf4a0c0\nYoutube 404 :\n\nhttps://www.youtube.com/watch?v=D6hIeqZt22g',
   output: [
     {
       id: 60844,
@@ -108,7 +109,8 @@ const mockWorkflowDetailKickoff: IWorkflowDetailsKickoff = {
 };
 
 const templateKickoffMock: IKickoff = {
-  description: ' youtube: \nhttps://www.youtube.com/watch?v=JZRm7NKTPhk\n loom:\nhttps://www.loom.com/share/29f210bc12484eaa81ca462381fb4415?t=0\n 404 loom:\n\nhttps://www.loom.com/share/9853f0790ad2408094a3717bfcf4a0c0\nYoutube 404 :\n\nhttps://www.youtube.com/watch?v=D6hIeqZt22g',
+  description:
+    ' youtube: \nhttps://www.youtube.com/watch?v=JZRm7NKTPhk\n loom:\nhttps://www.loom.com/share/29f210bc12484eaa81ca462381fb4415?t=0\n 404 loom:\n\nhttps://www.loom.com/share/9853f0790ad2408094a3717bfcf4a0c0\nYoutube 404 :\n\nhttps://www.youtube.com/watch?v=D6hIeqZt22g',
   fields: [
     {
       id: 20770,
@@ -192,7 +194,8 @@ const templateKickoffMock: IKickoff = {
 };
 
 const expectedKickoff = {
-  description: 'youtube: \nhttps://www.youtube.com/watch?v=JZRm7NKTPhk\n loom:\nhttps://www.loom.com/share/29f210bc12484eaa81ca462381fb4415?t=0\n 404 loom:\n\nhttps://www.loom.com/share/9853f0790ad2408094a3717bfcf4a0c0\nYoutube 404 :\n\nhttps://www.youtube.com/watch?v=D6hIeqZt22g',
+  description:
+    'youtube: \nhttps://www.youtube.com/watch?v=JZRm7NKTPhk\n loom:\nhttps://www.loom.com/share/29f210bc12484eaa81ca462381fb4415?t=0\n 404 loom:\n\nhttps://www.loom.com/share/9853f0790ad2408094a3717bfcf4a0c0\nYoutube 404 :\n\nhttps://www.youtube.com/watch?v=D6hIeqZt22g',
   fields: [
     {
       id: 60844,
@@ -252,13 +255,13 @@ const expectedKickoff = {
       value: [],
       selections: [
         {
-          id: 7227,
+          id: 27659,
           value: 'value1',
           isSelected: false,
           apiName: 'selection-vin9ak',
         },
         {
-          id: 7228,
+          id: 27660,
           value: 'value2',
           isSelected: false,
           apiName: 'selection-6r2pcy',
@@ -277,13 +280,13 @@ const expectedKickoff = {
       value: null,
       selections: [
         {
-          id: 7229,
+          id: 27661,
           value: '1',
           isSelected: false,
           apiName: 'selection-33cchr',
         },
         {
-          id: 7230,
+          id: 27662,
           value: '2',
           isSelected: false,
           apiName: 'selection-709cjo',

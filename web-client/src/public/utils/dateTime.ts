@@ -13,13 +13,12 @@ import {
   startOfYesterday,
   isAfter,
 } from 'date-fns';
-
 import { useIntl } from 'react-intl';
-import { IWorkflowDelay, WorkflowWithDateFields, WorkflowWithTspFields } from '../types/workflow';
-import { EHighlightsDateFilter } from '../types/highlights';
 
-import { getDate } from './strings';
+import { IWorkflowDelay, IWorkflowTaskDelay, WorkflowWithDateFields, WorkflowWithTspFields } from '../types/workflow';
+import { EHighlightsDateFilter } from '../types/highlights';
 import { TaskWithDateFields, TaskWithTspFields } from '../types/tasks';
+import { getDate } from './strings';
 
 export const SEC_IN_DAY = 24 * 60 * 60;
 export const SEC_IN_HOUR = 60 * 60;
@@ -129,7 +128,7 @@ export const getSeconds = ({ days, hours, minutes }: ISplittedDuration) => {
   return days * SEC_IN_DAY + hours * SEC_IN_HOUR + minutes * SEC_IN_MINUTE;
 };
 
-export const getSnoozedUntilDate = (delay: IWorkflowDelay | null, locale?: string) => {
+export const getSnoozedUntilDate = (delay: IWorkflowDelay | IWorkflowTaskDelay | null, locale?: string) => {
   if (!delay) return '';
   const { estimatedEndDate } = delay;
   const currentLocale = locale || undefined;
@@ -222,12 +221,13 @@ export const formatDateToISOInTask = <T extends TaskWithTspFields>(
 export const formatDateToISOInWorkflow = <T extends WorkflowWithTspFields>(
   workflow: T,
 ): Omit<T, keyof WorkflowWithTspFields> & WorkflowWithDateFields => {
-  const { dueDateTsp, dateCreatedTsp, dateCompletedTsp, ...rest } = workflow;
+  const { dueDateTsp, dateCreatedTsp, dateCompletedTsp, tasks, ...rest } = workflow;
   return {
     ...rest,
     dueDate: dueDateTsp ? toISOStringFromTsp(dueDateTsp) : null,
     dateCreated: toISOStringFromTsp(dateCreatedTsp),
     dateCompleted: dateCompletedTsp ? toISOStringFromTsp(dateCompletedTsp) : null,
+    tasks: tasks.map((task) => formatDateToISOInTask(task)),
   };
 };
 

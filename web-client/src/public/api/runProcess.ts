@@ -2,14 +2,9 @@ import { commonRequest } from './commonRequest';
 import { mapRequestBody } from '../utils/mappers';
 import { getBrowserConfigEnv } from '../utils/getConfig';
 import { IStartWorkflowPayload } from '../redux/workflows/actions';
-import { RawPerformer } from '../types/template';
+import { TWorkflowDetailsResponse } from '../types/workflow';
 
-export type TRunProcessResponse = {
-  name: string;
-  currentTask: {
-    performers: RawPerformer[];
-  };
-};
+export type TRunProcessResponse = Pick<TWorkflowDetailsResponse, 'name' | 'tasks' | 'status'>;
 
 export function runProcess(data: IStartWorkflowPayload) {
   const {

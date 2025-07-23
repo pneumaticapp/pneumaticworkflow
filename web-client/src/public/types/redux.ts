@@ -14,9 +14,10 @@ import {
   IWorkflowDetails,
   IWorkflowLogItem,
   IWorkflowEdit,
-  IWorkflow,
   IWorkflowsSettings,
   EWorkflowsLoadingStatus,
+  IWorkflowClient,
+  IWorkflowDetailsClient,
 } from './workflow';
 import { ITask, ITaskListItem, ITasksSettings } from './tasks';
 import { IIntegrationDetailed, IIntegrationListItem } from './integrations';
@@ -220,7 +221,7 @@ export interface IIntegrationsStore {
 export interface IStoreWorkflows {
   workflowsLoadingStatus: EWorkflowsLoadingStatus;
   isWorkflowLoading: boolean;
-  workflow: IWorkflowDetails | null;
+  workflow: IWorkflowDetailsClient | null;
   workflowLog: IWorkflowLog;
   workflowEdit: IWorkflowEdit;
   workflowsSettings: IWorkflowsSettings;
@@ -320,7 +321,7 @@ export interface ITemplatesList {
 export interface IWorkflowsList {
   count: number;
   offset: number;
-  items: IWorkflow[];
+  items: IWorkflowClient[];
 }
 
 export interface ITaskList {

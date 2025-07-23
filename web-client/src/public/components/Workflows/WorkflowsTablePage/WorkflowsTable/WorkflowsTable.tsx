@@ -1,4 +1,4 @@
-/* eslint-disable */
+/* eslint-disable indent */
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTable, Column, TableOptions } from 'react-table';
 import InfiniteScroll from 'react-infinite-scroll-component';
@@ -57,7 +57,6 @@ export function WorkflowsTable({
   openWorkflowLogPopup,
   setPerformersFilter,
   setPerformersGroupFilter,
-  applyFilters,
 }: IWorkflowsTableProps) {
   const { formatMessage } = useIntl();
 
@@ -236,13 +235,13 @@ export function WorkflowsTable({
         optionIdKey="id"
         optionLabelKey="displayName"
         options={[...performersGroupOptions, ...performersOptions]}
-        onChange={(users: number[], options: any) => {
+        onChange={(_, options: any) => {
           const performers = options
-          .filter((item: any) => item.type === ETemplateOwnerType.User)
-          .map((lItem: any) => lItem.id);
+            .filter((item: any) => item.type === ETemplateOwnerType.User)
+            .map((lItem: any) => lItem.id);
           const selectedGroups = options
-          .filter((item: any) => item.type === ETemplateOwnerType.UserGroup)
-          .map((lItem: any) => lItem.id);
+            .filter((item: any) => item.type === ETemplateOwnerType.UserGroup)
+            .map((lItem: any) => lItem.id);
 
           setPerformersFilter(performers);
           setPerformersGroupFilter(selectedGroups);
@@ -261,32 +260,37 @@ export function WorkflowsTable({
     );
   };
 
+  const renderWorkflowColumn = useCallback(
+    (props) => (
+      <ColumnCells.WorkflowColumn
+        {...props}
+        onWorkflowEnded={() => loadWorkflowsList(0)}
+        onWorkflowDeleted={() => removeWorkflowFromList({ workflowId: props.value.id })}
+        handleOpenModal={() =>
+          openWorkflowLogPopup({
+            workflowId: props.value.id,
+            shouldSetWorkflowDetailUrl: true,
+            redirectTo404IfNotFound: true,
+          })
+        }
+      />
+    ),
+    [loadWorkflowsList, removeWorkflowFromList, openWorkflowLogPopup],
+  );
+
   const columns: Column<TableColumns>[] = React.useMemo(
     () => [
       {
         Header: renderSearch(),
         accessor: 'workflow',
-        Cell: (props) => (
-          <ColumnCells.WorkflowColumn
-            {...props}
-            onWorkflowEnded={() => loadWorkflowsList(0)}
-            onWorkflowDeleted={() => removeWorkflowFromList({ workflowId: props.value.id })}
-            handleOpenModal={() =>
-              openWorkflowLogPopup({
-                workflowId: props.value.id,
-                shouldSetWorkflowDetailUrl: true,
-                redirectTo404IfNotFound: true,
-              })
-            }
-          />
-        ),
+        Cell: renderWorkflowColumn,
         width: 336,
       },
       {
         Header: renderWorkflowStarterFilter(),
         accessor: 'starter',
         Cell: ColumnCells.StarterColumn,
-        width: 80,
+        width: 82,
       },
       {
         Header: formatMessage({ id: 'workflows.filter-column-progress' }),
@@ -324,7 +328,7 @@ export function WorkflowsTable({
   const data = React.useMemo((): TableColumns[] => {
     return workflowsList.items.map((workflow) => {
       return {
-        workflow: workflow,
+        workflow,
         starter: workflow,
         progress: workflow,
         step: workflow,

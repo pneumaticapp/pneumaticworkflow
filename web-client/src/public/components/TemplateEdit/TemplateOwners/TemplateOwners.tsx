@@ -111,17 +111,19 @@ export function TemplateOwners({ templateOwners = [], onChangeTemplateOwners }: 
       />
       <div className={styles['users']}>
         {templateOwners.map(({ sourceId, type }) => {
-          return <UserDataWithGroup idItem={Number(sourceId)} type={type}>
-            {(user) => {
-              return (
-                <OwnerItem
-                  name={getUserFullName(user)}
-                  user={user}
-                  removeOwner={() => handleRemoveTemplateOwner({ id: Number(sourceId) })}
-                />
-              );
-            }}
-          </UserDataWithGroup>;
+          return (
+            <UserDataWithGroup key={sourceId} idItem={Number(sourceId)} type={type}>
+              {(user) => {
+                return (
+                  <OwnerItem
+                    name={getUserFullName(user)}
+                    user={user}
+                    removeOwner={() => handleRemoveTemplateOwner({ id: Number(sourceId) })}
+                  />
+                );
+              }}
+            </UserDataWithGroup>
+          );
         })}
       </div>
     </>

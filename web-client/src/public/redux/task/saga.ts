@@ -84,11 +84,17 @@ import { formatDateToISOInWorkflow, toTspDate } from '../../utils/dateTime';
 
 import { IStoreTask } from '../../types/redux';
 import { getWorkflow } from '../../api/getWorkflow';
-import { EWorkflowsLogSorting, IWorkflowLogItem, TWorkflowDetailsResponse } from '../../types/workflow';
+import {
+  EWorkflowsLogSorting,
+  IWorkflowDetailsClient,
+  IWorkflowLogItem,
+  TWorkflowDetailsResponse,
+} from '../../types/workflow';
 import { mapFilesToRequest } from '../../utils/workflows';
 import { ETemplateOwnerType, RawPerformer } from '../../types/template';
 import { getTaskWorkflowLog } from '../../api/getTaskWorkflowLog';
 import { sendTaskComment } from '../../api/sendTaskComment';
+import { getWorkflowAddComputedPropsToRedux } from '../../components/Workflows/utils/getWorfkflowClientProperties';
 
 function* fetchTask({ payload: { taskId, viewMode } }: TLoadCurrentTask) {
   const {
@@ -173,9 +179,11 @@ function* loadTaskWorkflow(workflowId: number, taskId: number) {
 
     const formattedKickoffWorkflow = mapBackendWorkflowToRedux(workflow, timezone);
     const formattedDueDateWorkflow = formatDateToISOInWorkflow(formattedKickoffWorkflow);
+    const formattedWorkflow = getWorkflowAddComputedPropsToRedux(formattedDueDateWorkflow) as IWorkflowDetailsClient;
+
     const formattedWorkflowLog = mapBackandworkflowLogToRedux(workflowLog, timezone);
 
-    yield put(changeTaskWorkflow(formattedDueDateWorkflow));
+    yield put(changeTaskWorkflow(formattedWorkflow));
     yield put(changeTaskWorkflowLog({ items: formattedWorkflowLog, workflowId }));
   } catch (error) {
     logger.info('fetch prorcess error : ', error);

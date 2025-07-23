@@ -14,7 +14,7 @@ import { ERoutes } from '../../../../../constants/routes';
 import { getLastTaskLogEventId } from './utils/getLastTaskLogEventId';
 import { ClockIcon } from '../../../../icons';
 import { getDueInData } from '../../../../DueIn/utils/getDueInData';
-import { EWorkflowsLogSorting, TWorkflowTask, IWorkflowLogItem } from '../../../../../types/workflow';
+import { EWorkflowsLogSorting, IWorkflowLogItem } from '../../../../../types/workflow';
 import { TWorkflowLogTheme } from '../../WorkflowLog';
 
 import styles from './WorkflowLogTaskStart.css';
@@ -25,7 +25,7 @@ const MAX_SHOW_USERS = 5;
 export interface IWorkflowLogTaskStartProps extends Pick<IWorkflowLogItem, 'task' | 'created' | 'id'> {
   logItems: IWorkflowLogItem[];
   sorting: EWorkflowsLogSorting;
-  currentTask?: TWorkflowTask;
+  oldestDeadline: string | null;
   areTasksClickable?: boolean;
   theme: TWorkflowLogTheme;
   onClickTask?(): void;
@@ -37,12 +37,12 @@ export function WorkflowLogTaskStart({
   sorting,
   task,
   created,
-  currentTask,
+  oldestDeadline,
   areTasksClickable,
   theme,
   onClickTask,
 }: IWorkflowLogTaskStartProps) {
-  const dueDate = (id === getLastTaskLogEventId(logItems, sorting) && currentTask?.dueDate) || null;
+  const dueDate = (id === getLastTaskLogEventId(logItems, sorting) && oldestDeadline) || null;
   const { formatMessage } = useIntl();
   const locale = useSelector(getLanguage);
   const renderResponsiblesAvatars = () => {

@@ -12,7 +12,6 @@ import { ShowMore } from '../../UI/ShowMore';
 import { getLinkToWorkflows } from '../../../utils/routes/getLinkToWorkflows';
 import { getLinkToHighlightsByTemplate } from '../../../utils/routes/getLinkToHighlightsByTemplate';
 import { Button } from '../../UI/Buttons/Button';
-import { IntegrateButton } from '../../IntegrateButton';
 import { ITemplate } from '../../../types/template';
 import {
   TCloneTemplatePayload,
@@ -70,7 +69,6 @@ export function TemplateControlls({
   const [showDraftWarning, setShowDraftWarning] = useState(
     checkShowDraftTemplateWarning(template.isActive, template.isPublic, templateIntegrations),
   );
-  const [areIntegrationsVisible, setIntegrationsVisible] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isTemplateActivating, setIsTemplateActivating] = useState(false);
   const [isTemplateDeleted, setIsTemplateDeleted] = useState(false);
@@ -182,28 +180,28 @@ export function TemplateControlls({
           return (
             <>
               <Button
-                label={formatMessage({ id: 'templates.enable-button' })}
+                label={formatMessage({ id: 'templates.save-and-enable-button' })}
                 onClick={confirm}
                 buttonStyle="yellow"
                 size="md"
               />
 
-              {templateId && (
-                <Button
-                  label={formatMessage({ id: 'templates.discard-changes' })}
-                  onClick={() => dispatch(discardTemplateChanges({ templateId, onSuccess: reject }))}
-                  buttonStyle="transparent-black"
-                  size="md"
-                />
-              )}
-
-              <button
-                type="button"
-                className={classnames('cancel-button', styles['keep-draf-button'])}
+              <Button
+                label={formatMessage({ id: 'templates.save-as-draft' })}
                 onClick={reject}
-              >
-                {formatMessage({ id: 'templates.keep-draft' })}
-              </button>
+                buttonStyle="transparent-black"
+                size="md"
+              />
+
+              {templateId && (
+                <button
+                  type="button"
+                  className={classnames('cancel-button', styles['keep-draf-button'])}
+                  onClick={() => dispatch(discardTemplateChanges({ templateId, onSuccess: reject }))}
+                >
+                  {formatMessage({ id: 'templates.discard-changes' })}
+                </button>
+              )}
             </>
           );
         }}
@@ -226,7 +224,7 @@ export function TemplateControlls({
             )}
             type="button"
             onClick={() => handleChangeIsActive(!isTemplateActive)}
-            label={showEnableTemplateButton ? formatMessage({ id: 'templates.enable-button' }) : ''}
+            label={showEnableTemplateButton ? formatMessage({ id: 'templates.enable-template-button' }) : ''}
             buttonStyle="yellow"
             icon={EnableIcon}
             isLoading={isTemplateActivating}
@@ -245,14 +243,6 @@ export function TemplateControlls({
             buttonStyle="transparent-black"
           />
         </div>
-
-        <IntegrateButton
-          isVisible={areIntegrationsVisible}
-          toggle={() => setIntegrationsVisible(!areIntegrationsVisible)}
-          buttonSize="md"
-          buttonClassname={styles['control-button']}
-          linksType="anchors"
-        />
       </div>
     );
   };

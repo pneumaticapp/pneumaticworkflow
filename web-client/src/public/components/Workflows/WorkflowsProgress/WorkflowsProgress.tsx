@@ -4,15 +4,15 @@ import { ProgressBar } from '../../ProgressBar';
 import { ProgressbarTooltipContents } from '../utils/ProgressbarTooltipContents';
 import { getWorkflowProgress } from '../utils/getWorkflowProgress';
 import { getWorkflowProgressColor } from '../utils/getWorkflowProgressColor';
-import { IWorkflow } from '../../../types/workflow';
+import { IWorkflowClient } from '../../../types/workflow';
 
 interface IWorkflowsProgressProps {
-  workflow: IWorkflow;
+  workflow: IWorkflowClient;
 }
 export function WorkflowsProgress({ workflow }: IWorkflowsProgressProps) {
-  const { activeCurrentTask, activeTasksCount, status, task } = workflow;
-  const progress = getWorkflowProgress({ activeCurrentTask, activeTasksCount, status });
-  const color = getWorkflowProgressColor(status, [task.dueDate, workflow.dueDate]);
+  const { lastActiveCurrentTask, tasksCountWithoutSkipped, status, oldestDeadline, areOverdueTasks } = workflow;
+  const progress = getWorkflowProgress({ lastActiveCurrentTask, tasksCountWithoutSkipped, status });
+  const color = getWorkflowProgressColor(status, [areOverdueTasks ? oldestDeadline : '', workflow.dueDate]);
 
   return (
     <ProgressBar

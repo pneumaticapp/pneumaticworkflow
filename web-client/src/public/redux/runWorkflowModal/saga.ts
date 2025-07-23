@@ -10,6 +10,8 @@ import { history } from '../../utils/history';
 import { NotificationManager } from '../../components/UI/Notifications';
 import { logger } from '../../utils/logger';
 import { deleteRemovedFilesFromFields } from '../../api/deleteRemovedFilesFromFields';
+import { EWorkflowTaskStatus } from '../../types/workflow';
+import { RawPerformer } from '../../types/template';
 
 function* runWorkflow({ payload: workflow }: TRunWorkflow) {
   yield deleteRemovedFilesFromFields(workflow.kickoff.fields);
@@ -17,18 +19,22 @@ function* runWorkflow({ payload: workflow }: TRunWorkflow) {
   try {
     const isAdmin: ReturnType<typeof getIsAdmin> = yield select(getIsAdmin);
     const mappedWorkflow = mapWorkflowToRunProcess(workflow);
-    const {
-      currentTask: { performers: currenttaskPerformers },
-      name,
-    }: TRunProcessResponse = yield runProcess(mappedWorkflow);
 
+    const { tasks, name }: TRunProcessResponse = yield runProcess(mappedWorkflow);
+
+    const activeTasksPerformers: RawPerformer[] = tasks.reduce((allPerformers, task) => {
+      if (task.status === EWorkflowTaskStatus.Active) {
+        return [...allPerformers, ...task.performers];
+      }
+      return allPerformers;
+    }, [] as RawPerformer[]);
 
     const {
       authUser: { id },
     }: ReturnType<typeof getAuthUser> = yield select(getAuthUser);
 
-    const isCurrentPerformer = currenttaskPerformers.find(item => item.sourceId === id);
-    const shouldRedirectTasks = (currenttaskPerformers && id && isCurrentPerformer) || !isAdmin;
+    const isCurrentPerformer = activeTasksPerformers.find((item) => item.sourceId === id);
+    const shouldRedirectTasks = (activeTasksPerformers && id && isCurrentPerformer) || !isAdmin;
     const nextRoute = shouldRedirectTasks ? ERoutes.Tasks : ERoutes.WorkflowsInProgress;
 
     yield put(runWorkflowSuccess());

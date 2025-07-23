@@ -9,7 +9,7 @@ import { Modal, ModalBody } from 'reactstrap';
 
 import {
   EWorkflowsLogSorting,
-  IWorkflowDetails,
+  IWorkflowDetailsClient,
   IWorkflowEdit,
   IWorkflowEditData,
   IWorkflowLogItem,
@@ -55,7 +55,7 @@ export interface IWorkflowModalStoreProps {
   isOpen: boolean;
   timezone: string;
   dateFmt: string;
-  workflow: IWorkflowDetails | null;
+  workflow: IWorkflowDetailsClient | null;
   workflowEdit: IWorkflowEdit;
   items: IWorkflowLogItem[];
   isLoading?: boolean;
@@ -125,10 +125,10 @@ export class WorkflowModal extends React.Component<IWorkflowModalProps> {
     }
 
     const {
-      workflow: { activeCurrentTask, activeTasksCount, status },
+      workflow: { lastActiveCurrentTask, tasksCountWithoutSkipped, status },
     } = this.props;
-    if (activeCurrentTask && activeTasksCount) {
-      return getPercent(countCompletedTasks(activeCurrentTask, status), activeTasksCount);
+    if (lastActiveCurrentTask && tasksCountWithoutSkipped) {
+      return getPercent(countCompletedTasks(lastActiveCurrentTask, status), tasksCountWithoutSkipped);
     }
 
     return undefined;
@@ -145,7 +145,11 @@ export class WorkflowModal extends React.Component<IWorkflowModalProps> {
     return (
       <WorkflowModalHeaderProgressBar
         progress={this.processProgress}
-        color={getWorkflowProgressColor(workflow.status, [workflow.currentTask.dueDate, workflow.dueDate], language)}
+        color={getWorkflowProgressColor(
+          workflow.status,
+          [workflow.areOverdueTasks ? workflow.oldestDeadline : '', workflow.dueDate],
+          language,
+        )}
         workflow={workflow}
         workflowId={workflowId}
         closeModal={this.closeModal}
@@ -380,7 +384,7 @@ export class WorkflowModal extends React.Component<IWorkflowModalProps> {
             sendComment={sendWorkflowLogComments}
             workflowStatus={workflow.status}
             onClickTask={this.closeModal}
-            currentTask={workflow.currentTask}
+            oldestDeadline={workflow.oldestDeadline}
             areTasksClickable={true}
           />
         </ModalBody>

@@ -12,15 +12,16 @@ import { TableColumns } from '../../../types';
 type TProps = React.PropsWithChildren<CellProps<TableColumns, TableColumns['workflow']>>;
 
 export function ProgressColumn({ value: workflow }: TProps) {
-  const { activeCurrentTask, activeTasksCount, status, task } = workflow;
+  const { lastActiveCurrentTask, tasksCountWithoutSkipped, status, oldestDeadline, areOverdueTasks } = workflow;
 
   const progress = getWorkflowProgress({
-    activeCurrentTask,
-    activeTasksCount,
+    lastActiveCurrentTask,
+    tasksCountWithoutSkipped,
     status,
   });
   const locale = useSelector(getLanguage);
-  const color = getWorkflowProgressColor(status, [task.dueDate, workflow.dueDate], locale);
+
+  const color = getWorkflowProgressColor(status, [areOverdueTasks ? oldestDeadline : '', workflow.dueDate], locale);
 
   return (
     <ProgressBar

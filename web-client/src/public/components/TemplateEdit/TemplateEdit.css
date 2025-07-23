@@ -310,6 +310,10 @@
 }
 .task-preview-due-in_mb-16 {
   margin-bottom: 1.6rem;
+
+  @media (--mobile) {
+    margin-left: 0;
+  }
 }
 
 .task-preview-due-in__icon {

@@ -1,9 +1,9 @@
 import React, { CSSProperties } from 'react';
 import { Tooltip } from '../UI';
-import { IWorkflowTaskItem } from '../../types/workflow';
+import { IWorkflowTaskClient } from '../../types/workflow';
 import styles from './ProgressBar.css';
 
-export const ProgressBarGrid = ({ tasks }: { tasks: IWorkflowTaskItem[] }) => {
+export const ProgressBarGrid = ({ tasks }: { tasks: IWorkflowTaskClient[] }) => {
   return (
     <div className={styles['container-bar-grid']}>
       {tasks.length > 0 &&

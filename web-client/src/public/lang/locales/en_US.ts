@@ -689,8 +689,10 @@ export const enMessages = {
   'templates.inactive-warning-message':
     'All integrations are blocked, and no new workflows can be launched. Enable the template to regain full functionality.',
   'templates.enable-button': 'Enable',
-  'templates.discard-changes': 'Discard',
-  'templates.keep-draft': 'Keep Draft',
+  'templates.enable-template-button': 'Enable Template',
+  'templates.save-and-enable-button': 'Save and Enable',
+  'templates.discard-changes': 'Discard Changes',
+  'templates.save-as-draft': 'Save as Draft',
   'templates.conditions-banner-text': 'Our Premium plans now support conditional workflows!',
   'templates.conditions-banner-button': 'Learn More',
   'templates.share-popup':
@@ -837,7 +839,7 @@ export const enMessages = {
   'workflows.user-added': 'User added',
   'workflows.user-removed': 'User removed',
   'workflows.name': 'Workflow name',
-  'workflows.tooltip-header': 'Task {activeCurrentTask} of {activeTasksCount}',
+  'workflows.tooltip-header': 'Task {lastActiveCurrentTask} of {tasksCountWithoutSkipped}',
   'workflows.checklists-header': 'Check Lists',
   'workflows.checklists-counter': '{marked}/{total}',
   'workflows.event-snoozed-until': 'Workflow snoozed until {date}',

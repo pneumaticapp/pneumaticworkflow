@@ -98,6 +98,7 @@ export function UsersDropdownComponent<TOption extends TUsersDropdownOption>({
   }, [recentInvitedUsers]);
 
   const handleOnChange = (newValue: TOption, { action, option }: ActionMeta<TOption>) => {
+    if (action === 'pop-value') return;
     if (isMulti && option) {
       if (onChangeSelected && action === 'deselect-option') {
         onChangeSelected(option);

@@ -14,7 +14,7 @@ import styles from './WorkflowInfo.css';
 export interface IWorkflowInfoProps {
   workflow: IWorkflowDetails;
 }
-
+// component deprecated
 export function WorkflowInfo({ workflow }: IWorkflowInfoProps) {
   const renderStartedByUser = () => {
     return (
@@ -43,7 +43,8 @@ export function WorkflowInfo({ workflow }: IWorkflowInfoProps) {
   return (
     <>
       <div className={styles['process-info-general-info']}>
-        <div className={styles['process-info-pretitle']}>{workflow.currentTask.name}</div>
+        {/* parameter is no longer used */}
+        {/* <div className={styles['process-info-pretitle']}>{workflow.currentTask.name}</div> */}
         {workflow.name && (
           <Header size="4" tag="p" className={styles['process-info-title']}>
             {workflow.name}

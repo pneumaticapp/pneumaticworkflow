@@ -3,7 +3,7 @@ import { actionGenerator } from '../../utils/redux';
 import { IExtraField, RawPerformer } from '../../types/template';
 import { ITask } from '../../types/tasks';
 import { ETaskCardViewMode } from '../../components/TaskCard';
-import { EWorkflowsLogSorting, IWorkflowDetails, IWorkflowLogItem } from '../../types/workflow';
+import { EWorkflowsLogSorting, IWorkflowDetailsClient, IWorkflowLogItem } from '../../types/workflow';
 import { ISendWorkflowLogComment } from '../actions';
 
 export const enum ETaskActions {
@@ -47,10 +47,10 @@ export const setCurrentTask: (payload: ITask | null) => TSetCurrentTask = action
   ITask | null
 >(ETaskActions.SetCurrentTask);
 
-export type TChangeTaskWorkflow = ITypedReduxAction<ETaskActions.ChangeTaskWorkflow, IWorkflowDetails>;
-export const changeTaskWorkflow: (payload: IWorkflowDetails) => TChangeTaskWorkflow = actionGenerator<
+export type TChangeTaskWorkflow = ITypedReduxAction<ETaskActions.ChangeTaskWorkflow, IWorkflowDetailsClient>;
+export const changeTaskWorkflow: (payload: IWorkflowDetailsClient) => TChangeTaskWorkflow = actionGenerator<
   ETaskActions.ChangeTaskWorkflow,
-  IWorkflowDetails
+  IWorkflowDetailsClient
 >(ETaskActions.ChangeTaskWorkflow);
 
 export type TChangeTaskWorkflowLog = ITypedReduxAction<ETaskActions.ChangeTaskWorkflowLog, Partial<IWorkflowLog>>;

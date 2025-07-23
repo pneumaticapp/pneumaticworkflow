@@ -52,11 +52,15 @@
   padding-right: 4rem;
   display: flex;
   justify-content: space-between;
+
+  @media (--mobile) {
+    padding-right: 0;
+  }
 }
 
 .show_more__right-vidgets {
   div {
-    margin: 0;
+    margin: 0 0 0 -0.4rem;
   }
 }
 

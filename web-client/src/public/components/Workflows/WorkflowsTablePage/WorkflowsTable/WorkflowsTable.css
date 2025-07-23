@@ -2,21 +2,21 @@
 .container {
   position: relative;
   z-index: 0;
-  margin-bottom: -80px;
-  padding-bottom: 80px;
+  margin-bottom: -8rem;
+  padding-bottom: 8rem;
 
   @media (--mobile) {
-    margin-right: -15px;
-    margin-left: -15px;
+    margin-right: -1.5rem;
+    margin-left: -1.5rem;
   }
 }
 
 .table-wrapper {
   margin: 0 auto;
-  padding: 32px;
-  max-width: 1088px;
-  background-color: white;
-  border-radius: 24px;
+  padding: 3.2rem;
+  max-width: 108.8rem;
+  background-color: var(--pneumatic-color-white);
+  border-radius: 2.4rem;
 
   @media (--mobile) {
     overflow: auto;
@@ -32,12 +32,18 @@
 
   td,
   th {
-    padding: 0 16px;
+    padding: 0 1.6rem;
     box-sizing: content-box;
   }
 
+  td:nth-child(2),
+  th:nth-child(2) {
+    padding-right: 1.5rem;
+    padding-left: 1.5rem;
+  }
+
   th {
-    padding-bottom: 32px;
+    padding-bottom: 3.2rem;
   }
 
   td:first-child,
@@ -52,35 +58,35 @@
 }
 
 .loader {
-  margin-top: 16px;
+  margin-top: 1.6rem;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .thead {
-  border-bottom: 1px solid #dcdcdb;
+  border-bottom: 0.1rem solid var(--pneumatic-color-black16);
 }
 
 .column-header {
-  font-size: 11px;
+  font-size: 1.1rem;
   font-weight: bold;
   font-style: normal;
-  line-height: 16px;
+  line-height: 1.6rem;
   letter-spacing: 0.05em;
   text-transform: uppercase;
   color: var(--pneumatic-color-black48);
 }
 
 .row {
-  height: 52px;
-  font-size: 15px;
-  border-bottom: 1px solid #dcdcdb;
+  height: 5.2rem;
+  font-size: 1.5rem;
+  border-bottom: 0.1rem solid var(--pneumatic-color-black16);
 }
 
 .table-scoll {
-  margin: 0 -15px;
-  padding: 0 15px;
+  margin: 0 -1.5rem;
+  padding: 0 1.5rem;
   overflow: visible !important;
 }
 
@@ -96,24 +102,24 @@
 }
 
 .search-field__input {
-  padding-left: 28px !important;
-  height: 20px !important;
+  padding-left: 2.8rem !important;
+  height: 2rem !important;
   background-color: var(----background-color);
   border: 0;
-  border-radius: 8px;
+  border-radius: 0.8rem;
 }
 
 .empty-list-placeholder {
-  margin-top: 32px;
+  margin-top: 3.2rem;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .header-filter {
-  font-size: 11px;
+  font-size: 1.1rem;
   font-weight: bold;
-  line-height: 16px;
+  line-height: 1.6rem;
   letter-spacing: 0.05em;
   text-transform: uppercase;
 }
@@ -137,7 +143,7 @@
 }
 
 .user-name {
-  margin: 0 8px;
+  margin: 0 0.8rem;
   overflow: hidden;
   text-overflow: ellipsis;
 }

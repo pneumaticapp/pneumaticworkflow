@@ -7,7 +7,6 @@ import {
   EWorkflowLogAttachmentsModes,
   EWorkflowsLogSorting,
   EWorkflowLogEvent,
-  TWorkflowTask,
   IWorkflowLogItem,
   EWorkflowStatus,
 } from '../../../types/workflow';
@@ -51,7 +50,7 @@ export const WorkflowLog = ({
   isOnlyAttachmentsShown,
   workflowId,
   includeHeader,
-  currentTask,
+  oldestDeadline,
   isLogMinimized,
   isLoading,
   minimizedLogMaxEvents,
@@ -219,7 +218,7 @@ export const WorkflowLog = ({
             onClickTask={onClickTask}
             logItems={items}
             sorting={sorting}
-            currentTask={currentTask}
+            oldestDeadline={oldestDeadline}
             areTasksClickable={areTasksClickable}
             {...event}
           />
@@ -292,7 +291,7 @@ export interface IWorkflowLogProps {
   workflowId: number | null;
   includeHeader: boolean;
   workflowStatus: EWorkflowStatus;
-  currentTask?: TWorkflowTask;
+  oldestDeadline: string | null;
   isLogMinimized?: boolean;
   isLoading?: boolean;
   minimizedLogMaxEvents?: number;

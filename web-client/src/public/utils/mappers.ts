@@ -21,6 +21,7 @@ import {
 } from '../types/workflow';
 import { IHighlightsItem } from '../types/highlights';
 import { TaskWithDateFields, TaskWithTspFields, TFormatTaskDates } from '../types/tasks';
+import { getWorkflowAddComputedPropsToRedux } from '../components/Workflows/utils/getWorfkflowClientProperties';
 
 interface OptionsMapRequestBody {
   ignorePropertyMapToSnakeCase?: string[];
@@ -165,18 +166,18 @@ export const getNormalizedKickoff = (kickoff: IKickoff): { [key: string]: string
 };
 
 export const mapTasksToISOStringToRedux = <T extends TaskWithTspFields>(
-  results: T[],
+  tasks: T[],
 ): (Omit<T, keyof TaskWithTspFields> & TaskWithDateFields)[] => {
-  return results.map((result) => {
-    return formatDateToISOInTask(result);
+  return tasks.map((task) => {
+    return formatDateToISOInTask(task);
   });
 };
 
 export const mapWorkflowsToISOStringToRedux = <T extends WorkflowWithTspFields>(
-  results: T[],
+  workflows: T[],
 ): (Omit<T, keyof WorkflowWithTspFields> & WorkflowWithDateFields)[] => {
-  return results.map((result) => {
-    return formatDateToISOInWorkflow(result);
+  return workflows.map((workflow) => {
+    return formatDateToISOInWorkflow(workflow);
   });
 };
 
@@ -216,9 +217,9 @@ export const mapTspToString = (output: IExtraField[], timezone: string): IExtraF
 export const formatTaskDatesForRedux = <T extends TFormatTaskDates>(
   task: T,
   timezone: string,
-): Omit<T, 'dueDateTsp' | 'subWorkflow' | 'dateStartedTsp' | 'dateCompletedTsp'> & {
+): Omit<T, 'dueDateTsp' | 'subWorkflows' | 'dateStartedTsp' | 'dateCompletedTsp'> & {
   dueDate: string | null;
-  subWorkflow?: IWorkflow | null;
+  subWorkflows?: IWorkflow[] | null;
   dateStarted?: string;
   dateCompleted?: string;
 } => {
@@ -228,7 +229,9 @@ export const formatTaskDatesForRedux = <T extends TFormatTaskDates>(
     ...(task.dateStartedTsp && { dateStarted: toISOStringFromTsp(task.dateStartedTsp) }),
     ...(task.dateCompletedTsp && { dateCompleted: toISOStringFromTsp(task.dateCompletedTsp) }),
     ...(task.output && { output: mapTspToString(task.output, timezone) }),
-    ...(task.subWorkflow && { subWorkflow: formatDateToISOInWorkflow(task.subWorkflow) }),
+    ...(task.subWorkflows && {
+      subWorkflows: mapWorkflowsAddComputedPropsToRedux(mapWorkflowsToISOStringToRedux(task.subWorkflows)),
+    }),
   };
   delete formattedTask.dueDateTsp;
   delete formattedTask.dateStartedTsp;
@@ -242,4 +245,10 @@ export const mapBackendNewEventToRedux = (event: IWorkflowLogItem, timezone: str
     ...event,
     task: formatTaskDatesForRedux(event.task, timezone),
   };
+};
+
+export const mapWorkflowsAddComputedPropsToRedux = (items: IWorkflow[]) => {
+  return items.map((workflow) => {
+    return getWorkflowAddComputedPropsToRedux(workflow);
+  });
 };
