@@ -80,6 +80,9 @@ urlpatterns = [
 
     path('templates/', include('pneumatic_backend.processes.urls.templates')),
     path('workflows/', include('pneumatic_backend.processes.urls.workflows')),
+    path(
+        'attachments/', include('pneumatic_backend.processes.urls.attachments')
+    ),
     path('notifications/', include('pneumatic_backend.notifications.urls')),
     path('navigation/', include('pneumatic_backend.navigation.urls')),
     path('pages/', include('pneumatic_backend.pages.urls')),

@@ -39,7 +39,8 @@ from pneumatic_backend.processes.models.workflows.task import (
     TaskPerformer,
 )
 from pneumatic_backend.processes.models.workflows.attachment import (
-    FileAttachment
+    FileAttachment,
+    FileAttachmentPermission,
 )
 
 from pneumatic_backend.processes.models.workflows.raw_due_date import (
