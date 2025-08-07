@@ -8,6 +8,7 @@ from pneumatic_backend.analytics.services import AnalyticService
 from pneumatic_backend.authentication.enums import AuthTokenType
 from pneumatic_backend.processes.api_v2.services import exceptions
 from pneumatic_backend.processes.models import FileAttachment
+from pneumatic_backend.processes.enums import FileAttachmentAccessType
 from pneumatic_backend.storage.google_cloud import GoogleCloudService
 from pneumatic_backend.utils.logging import (
     capture_sentry_message,
@@ -150,3 +151,24 @@ class AttachmentService:
             clone.output = instance.output
         clone.save()
         return clone
+
+    def check_user_permission(
+        self,
+        user_id: int,
+        account_id: int,
+        file_id: str
+    ) -> bool:
+        attachment = (
+            FileAttachment.objects
+            .filter(url__endswith=file_id)
+            .prefetch_related('permissions').first()
+        )
+
+        if not attachment:
+            return False
+
+        if attachment.access_type == FileAttachmentAccessType.ACCOUNT:
+            return account_id == attachment.account_id
+
+        elif attachment.access_type == FileAttachmentAccessType.RESTRICTED:
+            return attachment.permissions.filter(user_id=user_id).exists()
