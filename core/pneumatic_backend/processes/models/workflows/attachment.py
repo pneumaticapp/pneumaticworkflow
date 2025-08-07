@@ -48,7 +48,7 @@ class FileAttachment(
     access_type = models.CharField(
         max_length=20,
         choices=FileAttachmentAccessType.CHOICES,
-        default=FileAttachmentAccessType.RESTRICTED
+        default=FileAttachmentAccessType.ACCOUNT
     )
     search_content = SearchVectorField(null=True)
 

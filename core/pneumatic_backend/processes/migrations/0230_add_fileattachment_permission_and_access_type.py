@@ -15,7 +15,7 @@ class Migration(migrations.Migration):
             name='access_type',
             field=models.CharField(
                 choices=[('account', 'account'), ('restricted', 'restricted')],
-                default='restricted',
+                default='account',
                 max_length=20
             ),
             preserve_default=True,
