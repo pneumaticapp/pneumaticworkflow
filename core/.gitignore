@@ -1,6 +1,7 @@
 ### IDE ###
 .idea
 .vscode
+*.mdc
 
 ### OSX ###
 .DS_Store
