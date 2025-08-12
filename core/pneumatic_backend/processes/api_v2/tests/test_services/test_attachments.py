@@ -559,6 +559,7 @@ def test_check_user_permission__account_access_same_account__ok():
     user = create_test_admin()
     FileAttachment.objects.create(
         name='test.pdf',
+        file_id='test123.pdf',
         url='https://storage.com/files/test123.pdf',
         size=1024,
         account=user.account,
@@ -608,6 +609,7 @@ def test_check_user_permission__restricted_access_has_permission__ok():
     user = create_test_admin()
     attachment = FileAttachment.objects.create(
         name='test.pdf',
+        file_id='test123.pdf',
         url='https://storage.com/files/test123.pdf',
         size=1024,
         account=user.account,

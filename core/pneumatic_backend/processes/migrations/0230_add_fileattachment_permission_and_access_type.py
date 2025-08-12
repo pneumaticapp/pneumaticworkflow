@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.db import migrations, models
 import django.db.models.deletion
+import pneumatic_backend.generics.mixins.models
 
 
 class Migration(migrations.Migration):
@@ -13,18 +14,18 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='fileattachment',
             name='access_type',
-            field=models.CharField(
-                choices=[('account', 'account'), ('restricted', 'restricted')],
-                default='account',
-                max_length=20
-            ),
-            preserve_default=True,
+            field=models.CharField(choices=[('account', 'account'), ('restricted', 'restricted')], default='account', max_length=20),
         ),
-        
+        migrations.AddField(
+            model_name='fileattachment',
+            name='file_id',
+            field=models.CharField(blank=True, max_length=64, null=True, unique=True),
+        ),
         migrations.CreateModel(
             name='FileAttachmentPermission',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('is_deleted', models.BooleanField(default=False)),
                 ('account', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='accounts.Account')),
                 ('attachment', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='permissions', to='processes.FileAttachment')),
                 ('user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='file_permissions', to=settings.AUTH_USER_MODEL)),
@@ -32,5 +33,6 @@ class Migration(migrations.Migration):
             options={
                 'unique_together': {('user', 'attachment')},
             },
+            bases=(pneumatic_backend.generics.mixins.models.SoftDeleteMixin, models.Model),
         ),
     ]

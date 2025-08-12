@@ -27,6 +27,12 @@ class FileAttachment(
     url = models.URLField(max_length=1024)
     thumbnail_url = models.URLField(max_length=1024, null=True, blank=True)
     size = models.PositiveIntegerField(default=0)
+    file_id = models.CharField(
+        max_length=64,
+        unique=True,
+        null=True,
+        blank=True
+    )
     event = models.ForeignKey(
         WorkflowEvent,
         on_delete=models.CASCADE,
@@ -83,7 +89,10 @@ class FileAttachment(
         return "%.1f%s" % (size, 'MiB')
 
 
-class FileAttachmentPermission(AccountBaseMixin):
+class FileAttachmentPermission(
+    SoftDeleteModel,
+    AccountBaseMixin,
+):
     class Meta:
         unique_together = ('user', 'attachment')
 

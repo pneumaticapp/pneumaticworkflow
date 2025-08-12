@@ -160,7 +160,7 @@ class AttachmentService:
     ) -> bool:
         attachment = (
             FileAttachment.objects
-            .filter(url__endswith=file_id)
+            .filter(file_id=file_id)
             .prefetch_related('permissions').first()
         )
 
