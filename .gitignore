@@ -1,10 +1,75 @@
-.idea
-web-client/config/how
+# Environment variables
+*.env
+*.env.local
+*.env.*.local
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Django
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+media/
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+.dockerignore
+
+# Backup files
+*.bak
+*.backup
+
+# PostgreSQL data
 postgres/data
 postgres/backups
-redis/data
+!/postgres/data/*.conf
+!/postgres/data/PG_VERSION
+
+# RabbitMQ data
 rabbitmq/data
 rabbitmq/logs
+!/rabbitmq/data/.erlang.cookie
+
+web-client/config/how
+web-client/logs
+redis/data
 nginx/logs
 nginx/keys
-web-client/logs

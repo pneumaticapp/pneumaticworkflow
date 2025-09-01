@@ -1,0 +1,22 @@
+logs/
+*.log
+
+*.tmp
+*.temp
+
+www/
+staticfiles/
+
+# Docker
+.dockerignore
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
