@@ -9,6 +9,10 @@ from pneumatic_backend.processes.querysets import FileAttachmentQuerySet
 from pneumatic_backend.processes.models.workflows.fields import TaskField
 from pneumatic_backend.processes.models.workflows.workflow import Workflow
 from pneumatic_backend.processes.models.workflows.event import WorkflowEvent
+from pneumatic_backend.processes.enums import FileAttachmentAccessType
+from django.contrib.auth import get_user_model
+
+UserModel = get_user_model()
 
 
 class FileAttachment(
@@ -41,6 +45,11 @@ class FileAttachment(
         related_name='attachments',
         null=True,
     )
+    access_type = models.CharField(
+        max_length=20,
+        choices=FileAttachmentAccessType.CHOICES,
+        default=FileAttachmentAccessType.RESTRICTED
+    )
     search_content = SearchVectorField(null=True)
 
     objects = BaseSoftDeleteManager.from_queryset(FileAttachmentQuerySet)()
@@ -72,3 +81,21 @@ class FileAttachment(
                 return '%3.1f%s' % (size, unit)
             size /= 1024.0
         return "%.1f%s" % (size, 'MiB')
+
+
+class FileAttachmentPermission(
+    AccountBaseMixin,
+):
+    class Meta:
+        unique_together = ('user', 'attachment')
+
+    user = models.ForeignKey(
+        UserModel,
+        on_delete=models.CASCADE,
+        related_name='file_permissions'
+    )
+    attachment = models.ForeignKey(
+        FileAttachment,
+        on_delete=models.CASCADE,
+        related_name='permissions'
+    )
