@@ -133,6 +133,7 @@ export function FeedItemIcon({ className, type, task }: IFeedItemIconProps) {
       icon: <AlarmCrossedIcon className={className} fill="#4CAF50" />,
       tooltipMessage: formatMessage({ id: 'workflows.event-resumed' }),
     },
+    [EWorkflowLogEvent.TaskSnoozed]: NULL_FEED_ICON,
   };
 
   const isComment = type === EWorkflowLogEvent.TaskComment;

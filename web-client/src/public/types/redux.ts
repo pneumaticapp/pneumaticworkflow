@@ -32,6 +32,7 @@ import {
   ITemplateTitle,
   TTemplateIntegrationStats,
   TAITemplateGenerationStatus,
+  TTransformedTask,
 } from './template';
 import { IRunWorkflow } from '../components/WorkflowEditPopup/types';
 import { TTaskVariable } from '../components/TemplateEdit/types';
@@ -227,6 +228,7 @@ export interface IStoreWorkflows {
   workflowsSettings: IWorkflowsSettings;
   workflowsSearchText: string;
   workflowsList: IWorkflowsList;
+  WorkflowsTuneViewModal: IWorkflowsTuneViewModal;
 }
 
 export interface IStoreTasks {
@@ -283,6 +285,7 @@ export interface ITemplatesStore {
   templatesList: ITemplatesList;
   templatesListSorting: ETemplatesSorting;
   templatesVariablesMap: { [key in number]: TTaskVariable[] };
+  templatesTasksMap: { [key in number]: TTransformedTask[] };
   templatesIntegrationsStats: { [key in number]: TTemplateIntegrationStats };
   isTemplateOwner: undefined | boolean;
 }
@@ -457,4 +460,8 @@ export interface IStoreRunWorkflowModal {
   workflow: IRunWorkflow | null;
   isOpen: boolean;
   isWorkflowStarting: boolean;
+}
+
+export interface IWorkflowsTuneViewModal {
+  isOpen: boolean;
 }

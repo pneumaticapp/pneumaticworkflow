@@ -1,10 +1,10 @@
 /* stylelint-disable declaration-no-important */
 .container {
-  margin-bottom: 32px;
+  margin-bottom: 3.2rem;
 }
 
 .container.is-mb-sm {
-  margin-bottom: 16px;
+  margin-bottom: 1.6rem;
 }
 
 .page-title {
@@ -13,7 +13,7 @@
 }
 
 .tooltip-container {
-  margin-left: 8px;
+  margin-left: 0.8rem;
 }
 
 .tooltip-icon {
@@ -22,5 +22,10 @@
 
 .learn-more {
   display: block;
+  text-align: center;
+}
+
+.tooltip-content-table-view {
+  padding: 0.4rem 0.8rem;
   text-align: center;
 }

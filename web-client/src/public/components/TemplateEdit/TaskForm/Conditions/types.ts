@@ -1,4 +1,5 @@
 import { EExtraFieldType } from '../../../../types/template';
+import { EStartingType } from './utils/getDropdownOperators';
 
 export interface IChecklists {
   id?: number;
@@ -22,13 +23,13 @@ export type TConditionRule = {
   predicateId?: number;
   predicateApiName: string;
   logicOperation: EConditionLogicOperations;
-  field: string;
+  field: string | null;
   operator: EConditionOperators | null;
 } & TConditionPredicateValue;
 
 export interface ITypedConditionPredicateValue<FieldType, ValueType> {
   fieldType?: FieldType;
-  value?: ValueType;
+  value?: ValueType | null;
 }
 
 export type TConditionPredicateValue =
@@ -41,6 +42,8 @@ export type TConditionPredicateValue =
   | ITypedConditionPredicateValue<EExtraFieldType.File, null>
   | ITypedConditionPredicateValue<EExtraFieldType.Url, string>
   | ITypedConditionPredicateValue<EExtraFieldType.User, number>
+  | ITypedConditionPredicateValue<EStartingType.Task, null>
+  | ITypedConditionPredicateValue<EStartingType.Kickoff, null>
   | ITypedConditionPredicateValue<EExtraFieldType.Number, number>;
 
 export enum EConditionAction {
@@ -58,6 +61,7 @@ export enum EConditionOperators {
   NotContain = 'not_contains',
   MoreThan = 'more_than',
   LessThan = 'less_than',
+  Completed = 'completed',
 }
 
 export enum EConditionLogicOperations {

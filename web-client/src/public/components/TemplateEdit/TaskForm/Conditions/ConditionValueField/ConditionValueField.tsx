@@ -16,6 +16,7 @@ import { DatePickerCustom } from '../../../../UI/form/DatePicker';
 import { toTspDate } from '../../../../../utils/dateTime';
 import { getFormattedDropdownOption } from '../utils/getFormattedDropdownOption';
 import styles from '../Conditions.css';
+import { EStartingType } from '../utils/getDropdownOperators';
 
 interface IConditionValueFieldProps {
   variable: TTaskVariable | null;
@@ -42,7 +43,10 @@ export function ConditionValueField({
 
   const { formatMessage } = useIntl();
   const isNumericField = true;
-  const renderMap: { [key in EExtraFieldType]: () => ReactNode } = {
+
+  const renderMap: { [key in EExtraFieldType]: () => ReactNode } & {
+    [key in EStartingType]: () => ReactNode;
+  } = {
     [EExtraFieldType.Number]: () => renderTextField(isNumericField),
     [EExtraFieldType.String]: renderTextField,
     [EExtraFieldType.Text]: renderTextField,
@@ -53,6 +57,8 @@ export function ConditionValueField({
     [EExtraFieldType.User]: renderUserField,
     [EExtraFieldType.Date]: renderDateField,
     [EExtraFieldType.File]: () => null,
+    [EStartingType.Task]: () => null,
+    [EStartingType.Kickoff]: () => null,
   };
 
   function renderTextField(isNumberType?: boolean) {

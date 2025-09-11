@@ -87,6 +87,10 @@ export const enum EWorkflowsActions {
   WatchedComment = 'WATCHED_COMMENT',
   CreateReactionComment = 'CREATE_REACTION_COMMENT',
   DeleteReactionComment = 'DELETE_REACTION_COMMENT',
+  OpenTuneViewModal = 'OPEN_TUNE_VIEW_MODAL',
+  CloseTuneViewModal = 'CLOSE_TUNE_VIEW_MODAL',
+  SetFilterSelectedFields = 'SET_WORKFLOWS_FILTER_SELECTED_FIELDS',
+  LoadTemplateFieldsFromLocalStorage = 'LOAD_TEMPLATE_FIELDS_FROM_LOCAL_STORAGE',
 }
 
 export type TDeleteReactionComment = ITypedReduxAction<EWorkflowsActions.DeleteReactionComment, IDeleteReaction>;
@@ -583,6 +587,41 @@ export const editComment: (payload: TEditCommentPayload) => TEditComment = actio
   TEditCommentPayload
 >(EWorkflowsActions.EditComment);
 
+export type TOpenTuneViewModal = ITypedReduxAction<EWorkflowsActions.OpenTuneViewModal, void>;
+export const openTuneViewModal: () => TOpenTuneViewModal = actionGenerator<EWorkflowsActions.OpenTuneViewModal, void>(
+  EWorkflowsActions.OpenTuneViewModal,
+);
+
+export type TCloseTuneViewModal = ITypedReduxAction<EWorkflowsActions.CloseTuneViewModal, void>;
+export const closeTuneViewModal: () => TCloseTuneViewModal = actionGenerator<EWorkflowsActions.CloseTuneViewModal>(
+  EWorkflowsActions.CloseTuneViewModal,
+);
+
+export type TSetWorkflowsFilterSelectedFields = ITypedReduxAction<
+  EWorkflowsActions.SetFilterSelectedFields,
+  { templateId: number; selectedFields: string[] }
+>;
+
+export const setWorkflowsFilterSelectedFields: (payload: {
+  templateId: number;
+  selectedFields: string[];
+}) => TSetWorkflowsFilterSelectedFields = actionGenerator<
+  EWorkflowsActions.SetFilterSelectedFields,
+  { templateId: number; selectedFields: string[] }
+>(EWorkflowsActions.SetFilterSelectedFields);
+
+export type TLoadTemplateFieldsFromLocalStorage = ITypedReduxAction<
+  EWorkflowsActions.LoadTemplateFieldsFromLocalStorage,
+  { [templateId: number]: string[] }
+>;
+
+export const loadTemplateFieldsFromLocalStorage: (payload: {
+  [templateId: number]: string[];
+}) => TLoadTemplateFieldsFromLocalStorage = actionGenerator<
+  EWorkflowsActions.LoadTemplateFieldsFromLocalStorage,
+  { [templateId: number]: string[] }
+>(EWorkflowsActions.LoadTemplateFieldsFromLocalStorage);
+
 export type TWorkflowsActions =
   | TOpenWorkflowLogPopup
   | TChangeWorkflowsList
@@ -640,4 +679,8 @@ export type TWorkflowsActions =
   | TWatchedComment
   | TCreateReactionComment
   | TDeleteReactionComment
-  | TEditComment;
+  | TEditComment
+  | TOpenTuneViewModal
+  | TCloseTuneViewModal
+  | TSetWorkflowsFilterSelectedFields
+  | TLoadTemplateFieldsFromLocalStorage;

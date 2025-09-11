@@ -36,6 +36,7 @@ export const INIT_STATE: ITemplatesStore = {
   templatesList: INIT_TEMPLATES_LIST,
   templatesListSorting: ETemplatesSorting.DateDesc,
   templatesVariablesMap: {},
+  templatesTasksMap: {},
   templatesIntegrationsStats: {},
   isTemplateOwner: undefined,
 };
@@ -105,6 +106,12 @@ export const reducer = (state = INIT_STATE, action: TTemplatesActions | TWorkflo
           (ov) => !variables.some((v) => ov.apiName === v.apiName),
         );
         draftState.templatesVariablesMap[templateId] = [...variables, ...oldVariables];
+      });
+    }
+    case ETemplatesActions.SaveTemplateTasks: {
+      return produce(state, (draftState) => {
+        const { templateId, transformedTasks } = action.payload;
+        draftState.templatesTasksMap[templateId] = transformedTasks;
       });
     }
     case ETemplatesActions.SetTemplateIntegrationsStats: {

@@ -8,7 +8,7 @@ import {
   ITypedReduxAction,
 } from '../../types/redux';
 import { actionGenerator } from '../../utils/redux';
-import { TTemplateIntegrationStatsApi } from '../../types/template';
+import { TTemplateIntegrationStatsApi, TTransformedTask } from '../../types/template';
 import { ETemplatesSorting } from '../../types/workflow';
 import { TTaskVariable } from '../../components/TemplateEdit/types';
 
@@ -30,6 +30,7 @@ export const enum ETemplatesActions {
   LoadTemplatesFailed = 'LOAD_TEMPLATES_FAILED',
   LoadTemplateVariables = 'LOAD_TEMPLATE_VARIABLES',
   LoadTemplateVariablesSuccess = 'LOAD_TEMPLATE_VARIABLES_SUCCESS',
+  SaveTemplateTasks = 'SAVE_TEMPLATE_TASKS',
   LoadTemplateIntegrationsStats = 'LOAD_TEMPLATE_INTEGRATIONS_STATS',
   SetTemplateIntegrationsStats = 'SET_TEMPLATE_INTEGRATIONS_STATS',
   CheckIsTemplateOwner = 'CHECK_IS_TEMPLATE_OWNER',
@@ -175,6 +176,13 @@ export const loadTemplateVariablesSuccess: (
   TLoadTemplateVariablesSuccessPayload
 >(ETemplatesActions.LoadTemplateVariablesSuccess);
 
+export type TSaveTemplateTasksPayload = { templateId: number; transformedTasks: TTransformedTask[] };
+export type TSaveTemplateTasks = ITypedReduxAction<ETemplatesActions.SaveTemplateTasks, TSaveTemplateTasksPayload>;
+export const saveTemplateTasks: (payload: TSaveTemplateTasksPayload) => TSaveTemplateTasks = actionGenerator<
+  ETemplatesActions.SaveTemplateTasks,
+  TSaveTemplateTasksPayload
+>(ETemplatesActions.SaveTemplateTasks);
+
 export type TLoadStatsPayload = {
   templates: number[];
 };
@@ -228,4 +236,5 @@ export type TTemplatesActions =
   | TLoadTemplateIntegrationsStats
   | TSetTemplateIntegrationsStats
   | TCheckIsTemplateOwner
-  | TSetIsTemplateOwner;
+  | TSetIsTemplateOwner
+  | TSaveTemplateTasks;

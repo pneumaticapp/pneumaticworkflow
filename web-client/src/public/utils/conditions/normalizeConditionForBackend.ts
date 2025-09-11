@@ -1,5 +1,3 @@
-/* eslint-disable */
-/* prettier-ignore */
 import { EConditionLogicOperations, EConditionOperators, ICondition } from '../../components/TemplateEdit/TaskForm/Conditions';
 import { getFilledConditions } from '../../components/TemplateEdit/TaskForm/Conditions/utils/conditionsValidators';
 import { IConditionResponse, IConditionRuleResponse, TConditionRulePredicateResponse } from '../../types/template';

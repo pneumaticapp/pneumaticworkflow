@@ -18,6 +18,7 @@ import { identifyUser } from '../../utils/analytics';
 import { setIntercomUser } from '../../utils/setIntercomUser';
 import { TemplateAIModalContainer } from '../../components/TemplateAIModal';
 import { ESubscriptionPlan } from '../../types/account';
+import { TuneViewModal } from '../../components/TuneViewModal';
 
 import { ERoutes } from '../../constants/routes';
 import { EPlanActions } from '../../utils/getPlanPendingActions';
@@ -185,6 +186,7 @@ export function MainLayout({
       <SelectTemplateModalContainer />
       <TemplateAIModalContainer />
       <TeamInvitesPopupContainer />
+      <TuneViewModal />
     </>
   );
 }

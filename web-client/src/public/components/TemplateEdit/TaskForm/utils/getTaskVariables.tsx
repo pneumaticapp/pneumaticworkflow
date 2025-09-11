@@ -5,6 +5,7 @@ import { IKickoff, IExtraField, ITemplateTask, EExtraFieldType } from '../../../
 import { TTaskVariable } from '../../types';
 import { StepName } from '../../../StepName';
 import { getPreviousTasks } from './getPreviousTasks';
+import { EStartingType } from '../Conditions/utils/getDropdownOperators';
 
 type TGetVariablesParam = {
   kickoff?: Pick<IKickoff, 'fields'>;
@@ -74,6 +75,8 @@ const SINGLE_LINE_VARIBALE_TIPES = [
   EExtraFieldType.Radio,
   EExtraFieldType.Creatable,
   EExtraFieldType.Checkbox,
+  EStartingType.Task,
+  EStartingType.Kickoff,
 ];
 
 export const getSingleLineVariables = (variables: TTaskVariable[]) => {

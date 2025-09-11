@@ -74,47 +74,49 @@ export const VariableList = ({
         />
       </button>
 
-      <ReactstrapTooltip
-        fade
-        flip
-        hideArrow
-        innerClassName={styles['variable-list__inner']}
-        className={styles['variable-list']}
-        isOpen={isOpen}
-        target={buttonRef.current!}
-        {...(isDesktop && { placement: 'bottom-end' })}
-      >
-        <OutsideClickHandler onOutsideClick={handleOutsideClick}>
-          <ScrollBar
-            className={styles['variable-list__scrollbar']}
-            options={{ suppressScrollX: true, wheelPropagation: false }}
-          >
-            {variables.map(({ title, richSubtitle, subtitle, apiName }) => {
-              return (
-                <Tooltip
-                  interactive={false}
-                  containerClassName={styles['condition__tooltop']}
-                  content={<TooltipRichContent title={title} subtitle={subtitle} variables={variables} />}
-                  key={apiName}
-                >
-                  <p
-                    className={styles['variable-list-item']}
-                    onClick={onVariableClick(apiName)}
+      {buttonRef.current && (
+        <ReactstrapTooltip
+          fade
+          flip
+          hideArrow
+          innerClassName={styles['variable-list__inner']}
+          className={styles['variable-list']}
+          isOpen={isOpen}
+          target={buttonRef.current!}
+          {...(isDesktop && { placement: 'bottom-end' })}
+        >
+          <OutsideClickHandler onOutsideClick={handleOutsideClick}>
+            <ScrollBar
+              className={styles['variable-list__scrollbar']}
+              options={{ suppressScrollX: true, wheelPropagation: false }}
+            >
+              {variables.map(({ title, richSubtitle, subtitle, apiName }) => {
+                return (
+                  <Tooltip
+                    interactive={false}
+                    containerClassName={styles['condition__tooltop']}
+                    content={<TooltipRichContent title={title} subtitle={subtitle || ''} variables={variables} />}
                     key={apiName}
-                    // eslint-disable-next-line jsx-a11y/no-noninteractive-element-to-interactive-role
-                    role="button"
-                    tabIndex={0}
-                    onKeyDown={(e) => e.key === 'Enter' && onVariableClick(apiName)}
                   >
-                    <span className={styles['variable-list-item__name']}>{title}</span>
-                    <span className={styles['variable-list-item__task-name']}>{richSubtitle || subtitle}</span>
-                  </p>
-                </Tooltip>
-              );
-            })}
-          </ScrollBar>
-        </OutsideClickHandler>
-      </ReactstrapTooltip>
+                    <p
+                      className={styles['variable-list-item']}
+                      onClick={onVariableClick(apiName)}
+                      key={apiName}
+                      // eslint-disable-next-line jsx-a11y/no-noninteractive-element-to-interactive-role
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => e.key === 'Enter' && onVariableClick(apiName)}
+                    >
+                      <span className={styles['variable-list-item__name']}>{title}</span>
+                      <span className={styles['variable-list-item__task-name']}>{richSubtitle || subtitle}</span>
+                    </p>
+                  </Tooltip>
+                );
+              })}
+            </ScrollBar>
+          </OutsideClickHandler>
+        </ReactstrapTooltip>
+      )}
     </div>
   );
 };

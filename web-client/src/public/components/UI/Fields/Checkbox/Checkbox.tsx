@@ -1,5 +1,5 @@
-/* eslint-disable jsx-a11y/label-has-associated-control */
 import * as React from 'react';
+import { HTMLProps, useEffect, useRef } from 'react';
 import classnames from 'classnames';
 import { FieldHookConfig, useField } from 'formik';
 
@@ -10,21 +10,24 @@ export type TCheckboxTriState = 'checked' | 'empty' | 'indeterminate';
 
 export interface ICheckboxProps {
   title?: string | React.ReactNode;
+  titlePosition?: 'external';
   isRequired?: boolean;
   containerClassName?: string;
   labelClassName?: string;
   titleClassName?: string;
   triState?: TCheckboxTriState;
+  checkboxId?: string;
 }
 
 type TCheckboxProps = ICheckboxProps &
-  Pick<React.HTMLProps<HTMLInputElement>, 'checked' | 'disabled' | 'onChange' | 'id' | 'onClick'>;
+  Pick<HTMLProps<HTMLInputElement>, 'checked' | 'disabled' | 'onChange' | 'id' | 'onClick'>;
 
 // A checkbox can be controlled either with "checked" or "triState" prop.
 // The difference is that the triState prop provides an indeterminate checkbox state.
 
 export function Checkbox({
   title,
+  titlePosition,
   isRequired,
   containerClassName,
   labelClassName,
@@ -32,10 +35,11 @@ export function Checkbox({
   checked,
   disabled,
   triState,
+  checkboxId,
   ...props
 }: TCheckboxProps) {
-  const checkboxRef = React.useRef<HTMLInputElement>(null);
-  React.useEffect(() => {
+  const checkboxRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
     if (!triState || !checkboxRef.current) return;
 
     const handleUpdateCheckboxTriState = (checkbox: HTMLInputElement) => {
@@ -68,7 +72,7 @@ export function Checkbox({
 
   return (
     <div className={classnames(styles['checkbox__container'], containerClassName)}>
-      <label className={classnames(styles['checkbox'], labelClassName)}>
+      <label htmlFor={checkboxId} className={classnames(styles['checkbox'], labelClassName)}>
         <input
           onClick={(e) => e.stopPropagation()}
           type="checkbox"
@@ -77,9 +81,12 @@ export function Checkbox({
           disabled={disabled}
           {...props}
           ref={checkboxRef}
+          id={checkboxId}
         />
-        <div className={styles['checkbox__box']}></div>
-        {title && <div className={titleClassNames}>{title}</div>}
+        <div
+          className={classnames(styles['checkbox__box'], !titlePosition && styles['checkbox__box--has-margin'])}
+        ></div>
+        {title && !titlePosition && <div className={titleClassNames}>{title}</div>}
       </label>
     </div>
   );

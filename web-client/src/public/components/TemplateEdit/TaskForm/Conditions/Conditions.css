@@ -144,6 +144,11 @@
   background: var(--pneumatic-color-beige);
 }
 
+.select-logic-operation {
+  display: inline-block;
+  background: var(--pneumatic-color-black4);
+}
+
 .select-toggle {
   width: auto;
   font-weight: normal;

@@ -445,8 +445,7 @@ export function TaskCard({
     };
 
     const { id: taskId, dateStarted, dateCompleted } = task;
-    const isNotFirstTask = workflow?.tasks.find((localTask) => localTask.id === taskId && localTask.number !== 1);
-    const isReturnAllowed = viewMode !== ETaskCardViewMode.Guest && isNotFirstTask;
+    const isReturnAllowed = viewMode !== ETaskCardViewMode.Guest && task.revertTasks.length > 0;
     const isReturnedTask = !dateStarted && !dateCompleted;
 
     if (isReturnedTask) {
@@ -529,7 +528,6 @@ export function TaskCard({
         isOnlyAttachmentsShown={workflowLog.isOnlyAttachmentsShown}
         workflowId={workflowLog.workflowId}
         includeHeader
-        oldestDeadline={task.dueDate}
         isLogMinimized={false}
         areTasksClickable={viewMode === ETaskCardViewMode.Single}
         minimizedLogMaxEvents={MINIMIZED_LOG_MAX_EVENTS}

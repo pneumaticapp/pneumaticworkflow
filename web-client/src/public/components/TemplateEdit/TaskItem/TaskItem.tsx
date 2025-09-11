@@ -13,10 +13,10 @@ import { ETaskFormParts } from '../types';
 import { TaskItemUsers } from './TaskItemUsers';
 import { RichText } from '../../RichText';
 import { TaskRenderDueIn } from '../TaskRenderDueInInfo';
-import { TaskRenderConditionsInfo } from '../TaskRenderConditionsInfo';
 import { TaskRenderReturnInfo } from '../TaskRenderReturnInfo';
 
 import styles from '../TemplateEdit.css';
+import { TaskRenderConditionsInfo } from '../TaskRenderConditionsInfo';
 
 export interface ITaskItemProps {
   task: ITemplateTask;
@@ -58,7 +58,12 @@ export const TaskItem = ({ task, toggleIsOpenTask, setScrollTarget }: ITaskItemP
 
         <div className={styles['task-preview-outputs']}>
           <ExtraFieldsLabels extraFields={fields} onClick={() => handleClickOnLabel(ETaskFormParts.Fields)} />
-          {TaskRenderConditionsInfo({ task, onClick: () => handleClickOnLabel(ETaskFormParts.Conditions) })}
+          {TaskRenderConditionsInfo({
+            task,
+            onClick: () => handleClickOnLabel(ETaskFormParts.StartsAfter),
+            isStartTask: true,
+          })}
+          {TaskRenderConditionsInfo({ task, onClick: () => handleClickOnLabel(ETaskFormParts.CheckIf) })}
           {TaskRenderReturnInfo({ task, onClick: () => handleClickOnLabel(ETaskFormParts.ReturnTo) })}
         </div>
       </div>

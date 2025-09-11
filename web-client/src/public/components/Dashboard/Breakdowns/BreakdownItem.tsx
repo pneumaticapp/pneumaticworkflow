@@ -10,7 +10,7 @@ import { Link } from 'react-router-dom';
 import { EIntegrations } from '../../../types/integrations';
 import { TemplateIntegrationsIndicator } from '../../TemplateIntegrationsStats';
 import { IDashboardCounterProps } from '../Counters';
-import { EDashboardModes, TDashboardBreakdownItem } from '../../../types/redux';
+import { EDashboardModes, IApplicationState, TDashboardBreakdownItem } from '../../../types/redux';
 import { DashboardCounters } from '../Counters/DashboardCounters';
 import { ILoadBreakdownTasksPayload } from '../../../redux/dashboard/actions';
 import { getLinkToWorkflows } from '../../../utils/routes/getLinkToWorkflows';
@@ -41,6 +41,7 @@ import { TaskItem } from './TaskItem';
 
 import styles from './Breakdowns.css';
 import { ShortArrowBox } from '../../UI/ShortArrowBox';
+import { useSelector } from 'react-redux';
 
 export interface IBreakdownItemProps {
   breakdown: TDashboardBreakdownItem;
@@ -60,7 +61,10 @@ export function BreakdownItem({
   const { isDesktop, isMobile } = useCheckDevice();
   const [showBreakdownTasks, setShowBreakdownTasks] = useState(false);
   const [areIntegrationsVisible, setIntegrationsVisible] = useState(false);
-
+  const selectedFieldsByTemplate = useSelector(
+    (state: IApplicationState) => state.workflows.workflowsSettings.selectedFieldsByTemplate[breakdown.templateId],
+  );
+  const selectedFields = selectedFieldsByTemplate?.join(',') || '';
   const { formatMessage } = useIntl();
 
   const getRoute = useCallback(
@@ -75,10 +79,18 @@ export function BreakdownItem({
       };
 
       const workflowsRouteMap = {
-        [EDashboardCounterType.Started]: getLinkToWorkflows({ templateId }),
-        [EDashboardCounterType.InProgress]: getLinkToWorkflows({ templateId }),
-        [EDashboardCounterType.Overdue]: getLinkToWorkflows({ templateId, sorting: EWorkflowsSorting.Overdue }),
-        [EDashboardCounterType.Completed]: getLinkToWorkflows({ templateId, status: EWorkflowsStatus.Completed }),
+        [EDashboardCounterType.Started]: getLinkToWorkflows({ templateId, fields: selectedFields }),
+        [EDashboardCounterType.InProgress]: getLinkToWorkflows({ templateId, fields: selectedFields }),
+        [EDashboardCounterType.Overdue]: getLinkToWorkflows({
+          templateId,
+          sorting: EWorkflowsSorting.Overdue,
+          fields: selectedFields,
+        }),
+        [EDashboardCounterType.Completed]: getLinkToWorkflows({
+          templateId,
+          status: EWorkflowsStatus.Completed,
+          fields: selectedFields,
+        }),
       };
 
       const routeMap = {
@@ -340,7 +352,10 @@ export function BreakdownItem({
                     >
                       {isDesktop ? (
                         <Link
-                          to={getLinkToWorkflows({ templateId: breakdown.templateId })}
+                          to={getLinkToWorkflows({
+                            templateId: breakdown.templateId,
+                            fields: selectedFields,
+                          })}
                           className={styles['breakdown__title-link']}
                         >
                           {breakdown.templateName}

@@ -23,6 +23,7 @@ export interface IGetWorkflowsConfig {
   performersGroupIdsFilter: number[];
   workflowStartersIdsFilter: number[];
   searchText: string;
+  fields?: string[];
 }
 
 export function getWorkflows({
@@ -36,8 +37,11 @@ export function getWorkflows({
   performersGroupIdsFilter,
   workflowStartersIdsFilter,
   searchText = '',
+  fields,
 }: IGetWorkflowsConfig) {
-  const { api: { urls } } = getBrowserConfigEnv();
+  const {
+    api: { urls },
+  } = getBrowserConfigEnv();
 
   return commonRequest<IGetWorkflowsResponse>(
     `${urls.workflows}?${getWorkflowsQueryString({
@@ -51,11 +55,12 @@ export function getWorkflows({
       performersGroupIdsFilter,
       workflowStartersIdsFilter,
       searchText,
+      fields,
     })}`,
     {},
     {
       timeOut: searchText ? ETimeouts.Prolonged : ETimeouts.Default,
-    }
+    },
   );
 }
 
@@ -70,6 +75,7 @@ export function getWorkflowsQueryString({
   performersGroupIdsFilter,
   workflowStartersIdsFilter,
   searchText,
+  fields,
 }: IGetWorkflowsConfig) {
   const isCleanSearchText = searchText.trim() === '';
 
@@ -82,8 +88,8 @@ export function getWorkflowsQueryString({
 
   const sortingQuery = sortingMap[sorting!];
 
-  const isExternal = workflowStartersIdsFilter?.some(userId => userId === EXTERNAL_USER_ID);
-  const workflowStarters = workflowStartersIdsFilter?.filter(userId => userId !== EXTERNAL_USER_ID);
+  const isExternal = workflowStartersIdsFilter?.some((userId) => userId === EXTERNAL_USER_ID);
+  const workflowStarters = workflowStartersIdsFilter?.filter((userId) => userId !== EXTERNAL_USER_ID);
 
   return [
     `limit=${limit}`,
@@ -97,5 +103,8 @@ export function getWorkflowsQueryString({
     !isCleanSearchText && `search=${searchText}`,
     sortingQuery,
     isExternal && 'is_external=true',
-  ].filter(Boolean).join('&');
+    fields && `fields=${fields.join(',')}`,
+  ]
+    .filter(Boolean)
+    .join('&');
 }

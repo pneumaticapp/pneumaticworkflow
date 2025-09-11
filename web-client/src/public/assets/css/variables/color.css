@@ -1,10 +1,12 @@
 :root {
   --pneumatic-color-black100: #262522;
+  --pneumatic-color-black90: #404040;
   --pneumatic-color-black88: #40403d;
   --pneumatic-color-black72: #62625f;
   --pneumatic-color-black48: #979795;
   --pneumatic-color-black32: #b9b9b8;
   --pneumatic-color-black16: #dcdcdb;
+  --pneumatic-color-black8: #eeeeed;
   --pneumatic-color-black4: #f6f6f6;
   --pneumatic-color-white: #fff;
 

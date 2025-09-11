@@ -6,7 +6,12 @@
   border-radius: 1.6rem;
 
   @media (--mobile) {
-    width: 100% !important;
+    width: calc(100%);
+  }
+}
+.container--select-menu {
+  @media (--mobile) {
+    width: calc(100% - 4.2rem);
   }
 }
 
@@ -15,6 +20,7 @@
   display: block;
   overflow: hidden;
   text-overflow: ellipsis;
+  color: red !important;
 
   @media screen and (min-width: 576rem) {
     max-width: 10.5rem !important;
@@ -127,7 +133,7 @@
   display: flex;
   width: 100%;
   font-size: 1.3rem;
-  font-weight: bold;
+  font-weight: bold !important;
   line-height: 1.6rem;
   white-space: nowrap;
   color: var(--pneumatic-color-black100);
@@ -196,8 +202,8 @@
   }
 
   &__disabled {
-    font-weight: 800 !important;
-    cursor: not-allowed;
+    pointer-events: none;
+    color: var(--pneumatic-color-black32) !important;
   }
 }
 

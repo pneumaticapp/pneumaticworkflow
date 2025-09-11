@@ -176,7 +176,7 @@ function* createOrUpdateTemplate(template: ITemplateRequest, isSubscribed: boole
     NotificationManager.error({
       title: 'template.save-failed',
       message: getErrorMessage(error),
-      timeOut: 0
+      timeOut: 0,
     });
     yield put(saveTemplateFailed());
 
@@ -220,6 +220,13 @@ function* fetchSaveTemplate(onSuccess?: () => void, onFailed?: () => void) {
     dateUpdated: savedTemplate.dateUpdated,
     publicUrl: savedTemplate.publicUrl,
     embedUrl: savedTemplate.embedUrl,
+    tasks: (() => {
+      const savedTasksMap = new Map(savedTemplate.tasks.map((task) => [task.apiName, task]));
+      return lastTemplateState.tasks.map((task) => ({
+        ...task,
+        ancestors: savedTasksMap.get(task.apiName)?.ancestors || [],
+      }));
+    })(),
   };
 
   yield put(setTemplate(newTemplateState));
@@ -296,7 +303,9 @@ function* generateAITemplateSaga(action: TGenerateAITemplate | TStopAITemplateGe
   try {
     yield put(setAITemplateGenerationStatus('generating'));
     const generatedTemplate: ITemplateResponse = yield generateAITemplate(templateDescription, abortController.signal);
-    yield put(setAITemplateData({ template: getNormalizedTemplate(generatedTemplate, isSubscribed, users, billingPlan) }));
+    yield put(
+      setAITemplateData({ template: getNormalizedTemplate(generatedTemplate, isSubscribed, users, billingPlan) }),
+    );
     yield put(setAITemplateGenerationStatus('generated'));
   } catch (error) {
     yield put(setAITemplateGenerationStatus('initial'));

@@ -1,6 +1,7 @@
 import React from 'react';
 import { EExtraFieldType, IExtraFieldSelection } from '../../types/template';
 import { TDropdownOptionBase } from '../UI/DropdownList';
+import { EStartingType } from './TaskForm/Conditions/utils/getDropdownOperators';
 
 export const enum ECustomResponsibleUsers {
   ProcessStarter = 'process-starter',
@@ -13,19 +14,20 @@ export interface ITemplateOwnerOption extends TDropdownOptionBase {
 
 export type TTaskVariable = {
   title: string;
-  subtitle: string;
-  richSubtitle: React.ReactNode;
   apiName: string;
-  type: EExtraFieldType;
+  type: EExtraFieldType | EStartingType;
+  subtitle?: string;
+  richSubtitle?: React.ReactNode;
   selections?: IExtraFieldSelection[];
 };
 
 export enum ETaskFormParts {
-  Conditions = 'conditions',
+  CheckIf = 'checkIf',
   DueIn = 'dueIn',
   Fields = 'fields',
   AssignPerformers = 'assignPerformers',
   ReturnTo = 'returnTo',
+  StartsAfter = 'startsAfter',
 }
 
 export type TTaskFormPart = ETaskFormParts | null;

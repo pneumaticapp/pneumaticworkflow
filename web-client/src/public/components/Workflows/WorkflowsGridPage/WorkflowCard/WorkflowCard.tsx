@@ -76,7 +76,9 @@ export const WorkflowCard = ({
     const subtitlesMap = {
       [EWorkflowStatus.Running]: areMultipleTasks ? (
         <Tooltip content={namesTooltip}>
-          <div>{formatMessage({ id: 'workflows.multiple-active-tasks' })}</div>
+          <div className={styles['card-multiple-tasks-title']}>
+            {formatMessage({ id: 'workflows.multiple-active-tasks' })}
+          </div>
         </Tooltip>
       ) : (
         oneActiveTaskName

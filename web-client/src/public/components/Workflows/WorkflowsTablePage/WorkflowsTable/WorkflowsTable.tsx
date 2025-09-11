@@ -1,12 +1,14 @@
+/* eslint-disable consistent-return */
 /* eslint-disable indent */
-import React, { useCallback, useEffect, useState } from 'react';
-import { useTable, Column, TableOptions } from 'react-table';
+import React, { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
+import { useTable, Column, TableOptions, HeaderGroup } from 'react-table';
 import InfiniteScroll from 'react-infinite-scroll-component';
 import { useIntl } from 'react-intl';
 import { createPortal } from 'react-dom';
 import { debounce } from 'throttle-debounce';
 import { useSelector } from 'react-redux';
 
+import classNames from 'classnames';
 import { TableColumns } from './types';
 import * as ColumnCells from './Columns/Cells';
 
@@ -21,9 +23,19 @@ import { isArrayWithItems } from '../../../../utils/helpers';
 import { canFilterByTemplateStep } from '../../../../utils/workflows/filters';
 import { StepName } from '../../../StepName';
 import { EXTERNAL_USER, getUserFullName } from '../../../../utils/users';
-import { ETemplateOwnerType } from '../../../../types/template';
+import { ETemplateOwnerType, ITableViewFields } from '../../../../types/template';
+import { useIsTableWiderThanScreen, useWorkflowsTableRef } from './WorkflowsTableContext';
 
 import styles from './WorkflowsTable.css';
+import { EColumnWidthMinWidth, ETableViewFieldsWidth } from './Columns/Cells/WorkflowTableConstants';
+import { WorkflowsTableActions } from './WorkflowsTableActions';
+import { useCheckDevice } from '../../../../hooks/useCheckDevice';
+import { createResizeHandler } from './utils/resizeUtils';
+
+type CustomHeaderGroup<T extends object> = HeaderGroup<T> & {
+  columnType: keyof typeof EColumnWidthMinWidth;
+  minWidth: number;
+};
 
 export interface IWorkflowsTableProps extends IWorkflowsFiltersProps {
   workflowsLoadingStatus: EWorkflowsLoadingStatus;
@@ -34,6 +46,27 @@ export interface IWorkflowsTableProps extends IWorkflowsFiltersProps {
   removeWorkflowFromList(payload: TRemoveWorkflowFromListPayload): void;
   openWorkflowLogPopup(payload: TOpenWorkflowLogPopupPayload): void;
 }
+export interface TableViewContainerRef {
+  element: HTMLDivElement | null;
+}
+
+export const TableViewContainer = forwardRef<TableViewContainerRef, { children: React.ReactNode }>(
+  ({ children }, ref) => {
+    const containerRef = useRef<HTMLDivElement>(null);
+
+    useImperativeHandle(ref, () => ({
+      get element() {
+        return containerRef.current;
+      },
+    }));
+
+    return (
+      <div className={styles['table-view-container']} ref={containerRef}>
+        {children}
+      </div>
+    );
+  },
+);
 
 export function WorkflowsTable({
   templatesIdsFilter,
@@ -59,24 +92,64 @@ export function WorkflowsTable({
   setPerformersGroupFilter,
 }: IWorkflowsTableProps) {
   const { formatMessage } = useIntl();
-
+  const { isDesktop } = useCheckDevice();
   const groups = useSelector((state: IApplicationState) => state.groups.list);
+  const currentUser = useSelector((state: IApplicationState) => state.authUser);
   const [searchQuery, setSearchQuery] = useState(searchText);
 
+  const savedGlobalWidths = JSON.parse(
+    localStorage.getItem(`workflow-column-widths-${currentUser?.id}-global`) || '{}',
+  );
+  const savedOptionalWidths = JSON.parse(
+    localStorage.getItem(`workflow-column-widths-${currentUser?.id}-template-${templatesIdsFilter[0]}`) || '{}',
+  );
+
   const tableWrapperRef = React.useRef<HTMLDivElement | null>(null);
+  const tableRef = useRef<HTMLTableElement>(null);
+
+  const tableViewContainerRef = useWorkflowsTableRef();
+  const isTableWiderThanScreen = useIsTableWiderThanScreen();
   const debounceOnSearch = useCallback(debounce(500, onSearch), []);
+
+  const [tableHeight, setTableHeight] = useState<number>(0);
+  const [colWidths, setColWidths] = useState<Record<string, number>>({});
+
+  useEffect(() => {
+    const appContainer = document.getElementById('app-container');
+    if (appContainer) {
+      appContainer.style.overflow = 'hidden';
+    }
+
+    return () => {
+      if (appContainer) {
+        appContainer.style.overflow = 'scroll';
+        appContainer.style.overflowX = 'hidden';
+      }
+    };
+  }, []);
 
   useEffect(() => {
     debounceOnSearch(searchQuery);
   }, [searchQuery]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (workflowsLoadingStatus === EWorkflowsLoadingStatus.EmptyList && stepsIdsFilter.length) {
       setStepsFilter([]);
     }
   }, [workflowsLoadingStatus]);
 
-  const workflowStartersOptions = React.useMemo(() => {
+  useEffect(() => {
+    if (!tableRef.current) return;
+    const observer = new ResizeObserver(([entry]) => {
+      setTableHeight(entry.contentRect.height);
+    });
+    observer.observe(tableRef.current);
+    return () => {
+      observer.disconnect();
+    };
+  }, []);
+
+  const workflowStartersOptions = useMemo(() => {
     const usersWithExternal = [EXTERNAL_USER, ...users];
 
     const normalizedUsers = usersWithExternal.map((user) => {
@@ -278,38 +351,59 @@ export function WorkflowsTable({
     [loadWorkflowsList, removeWorkflowFromList, openWorkflowLogPopup],
   );
 
+  const fieldsColumns: Column<TableColumns>[] =
+    workflowsList?.items?.[0]?.fields?.map((field: ITableViewFields) => ({
+      Header: <div className={styles['column-header__title']}>{field.name}</div>,
+      accessor: field.apiName,
+      Cell: ColumnCells.OptionalFieldColumn,
+      width: savedOptionalWidths[field.apiName] || ETableViewFieldsWidth[field.type],
+      columnType: field.type,
+      minWidth: EColumnWidthMinWidth[field.type],
+    })) || [];
+
   const columns: Column<TableColumns>[] = React.useMemo(
     () => [
       {
         Header: renderSearch(),
         accessor: 'workflow',
         Cell: renderWorkflowColumn,
-        width: 336,
+        width: savedGlobalWidths.workflow || ETableViewFieldsWidth.workflow,
+        minWidth: EColumnWidthMinWidth.workflow,
+        columnType: 'workflow',
       },
       {
         Header: renderWorkflowStarterFilter(),
         accessor: 'starter',
         Cell: ColumnCells.StarterColumn,
-        width: 82,
+        width: savedGlobalWidths.starter || ETableViewFieldsWidth.starter,
+        minWidth: EColumnWidthMinWidth.starter,
+        columnType: 'starter',
       },
       {
         Header: formatMessage({ id: 'workflows.filter-column-progress' }),
         accessor: 'progress',
         Cell: ColumnCells.ProgressColumn,
-        width: 80,
+        width: savedGlobalWidths.progress || ETableViewFieldsWidth.progress,
+        minWidth: EColumnWidthMinWidth.progress,
+        columnType: 'progress',
       },
       {
         Header: renderStepFilter(),
         accessor: 'step',
         Cell: ColumnCells.StepColumn,
-        width: 272,
+        width: savedGlobalWidths.step || ETableViewFieldsWidth.step,
+        minWidth: EColumnWidthMinWidth.step,
+        columnType: 'step',
       },
       {
         Header: renderPerformersFilter(),
         accessor: 'performer',
         Cell: ColumnCells.PerformerColumn,
-        width: 128,
+        width: savedGlobalWidths.performer || ETableViewFieldsWidth.performer,
+        minWidth: EColumnWidthMinWidth.performer,
+        columnType: 'performer',
       },
+      ...fieldsColumns,
     ],
     [
       searchQuery,
@@ -322,18 +416,25 @@ export function WorkflowsTable({
       statusFilter,
       performersCounters,
       workflowStartersCounters,
+      fieldsColumns.length,
     ],
   );
 
-  const data = React.useMemo((): TableColumns[] => {
+  const data = useMemo((): TableColumns[] => {
     return workflowsList.items.map((workflow) => {
-      return {
+      const baseData: TableColumns = {
         workflow,
         starter: workflow,
         progress: workflow,
         step: workflow,
         performer: workflow,
-      };
+      } as TableColumns;
+
+      workflow.fields?.forEach((field: ITableViewFields) => {
+        baseData[field.apiName] = field;
+      });
+
+      return baseData;
     });
   }, [workflowsList.items]);
 
@@ -342,22 +443,61 @@ export function WorkflowsTable({
     columns,
   };
 
-  const { getTableProps, getTableBodyProps, headerGroups, rows, prepareRow } = useTable(options);
+  useEffect(() => {
+    setColWidths((prev) => {
+      const newWidths = { ...prev };
+
+      columns.forEach((col) => {
+        const id = col.accessor as string;
+        if (!newWidths[id]) {
+          newWidths[id] = col.width as number;
+        }
+      });
+
+      return newWidths;
+    });
+  }, [columns.length]);
+
+  const handleMouseDown = createResizeHandler(colWidths, setColWidths, currentUser?.id, templatesIdsFilter[0]);
+
+  const { getTableProps, getTableBodyProps, headerGroups, rows, prepareRow } = useTable<TableColumns>(options);
 
   const renderTable = () => {
     return (
-      <table {...getTableProps()} className={styles['table']}>
+      <table {...getTableProps()} className={styles['table']} ref={tableRef}>
         <thead className={styles['thead']}>
           {headerGroups.map((headerGroup) => (
             <tr {...headerGroup.getHeaderGroupProps()}>
-              {headerGroup.headers.map((column) => (
+              {headerGroup.headers.map((column: CustomHeaderGroup<TableColumns>) => (
                 <th
                   {...column.getHeaderProps({
-                    style: { width: column.width },
+                    style: {
+                      position: 'relative',
+                      width: colWidths[column.id],
+                      maxWidth: colWidths[column.id],
+                      minWidth: colWidths[column.id],
+                    },
                   })}
-                  className={styles['column-header']}
+                  className={classNames(styles['column-header'], styles['column'])}
                 >
                   {column.render('Header')}
+                  <div className={styles['column-header__hover-zone']} style={{ height: tableHeight }}>
+                    <div
+                      className={styles['column-header__resize']}
+                      style={{ height: tableHeight }}
+                      onMouseDown={(e) => handleMouseDown(e, column.id, column.minWidth)}
+                      role="button"
+                      aria-label={`Resize column ${column.id}`}
+                      tabIndex={0}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                        }
+                      }}
+                    >
+                      <div className={styles['column-header__dashed-line']} style={{ height: tableHeight }}></div>
+                    </div>
+                  </div>
                 </th>
               ))}
             </tr>
@@ -374,7 +514,20 @@ export function WorkflowsTable({
                 return (
                   <tr {...row.getRowProps()} className={styles['row']} key={workflowId}>
                     {row.cells.map((cell) => {
-                      return <td {...cell.getCellProps()}>{cell.render('Cell')}</td>;
+                      return (
+                        <td
+                          {...cell.getCellProps({
+                            style: {
+                              width: colWidths[cell.column.id],
+                              maxWidth: colWidths[cell.column.id],
+                              minWidth: colWidths[cell.column.id],
+                            },
+                          })}
+                          className={styles['column']}
+                        >
+                          {cell.render('Cell')}
+                        </td>
+                      );
                     })}
                   </tr>
                 );
@@ -400,8 +553,17 @@ export function WorkflowsTable({
   };
 
   return (
-    <div className={styles['container']}>
-      <div className={styles['table-wrapper']} ref={tableWrapperRef}>
+    <TableViewContainer ref={tableViewContainerRef}>
+      {!isTableWiderThanScreen && isDesktop && (
+        <WorkflowsTableActions workflowsLoadingStatus={workflowsLoadingStatus} />
+      )}
+      <div
+        className={classNames(
+          styles['table-wrapper'],
+          isTableWiderThanScreen && styles['table-wrapper--narrow-mobile'],
+        )}
+        ref={tableWrapperRef}
+      >
         <InfiniteScroll
           dataLength={workflowsList.items.length}
           next={() => loadWorkflowsList(workflowsList.items.length)}
@@ -409,7 +571,7 @@ export function WorkflowsTable({
           hasMore={!isListFullLoaded}
           scrollThreshold="150px"
           className={styles['table-scoll']}
-          scrollableTarget="app-container"
+          scrollableTarget="workflows-main"
         >
           {renderTable()}
         </InfiniteScroll>
@@ -420,10 +582,13 @@ export function WorkflowsTable({
             description={formatMessage({ id: 'workflows.empty-placeholder-description' })}
             Icon={WorkflowsPlaceholderIcon}
             mood="neutral"
-            containerClassName={styles['empty-list-placeholder']}
+            containerClassName={classNames(
+              styles['empty-list-placeholder'],
+              isTableWiderThanScreen && styles['empty-list-placeholder--wide'],
+            )}
           />
         )}
       </div>
-    </div>
+    </TableViewContainer>
   );
 }

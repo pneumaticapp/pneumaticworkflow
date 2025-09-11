@@ -1,3 +1,4 @@
+/* stylelint-disable declaration-no-important */
 .navbar-left-content {
   display: flex;
   width: 100%;
@@ -8,6 +9,17 @@
     width: 100%;
     justify-content: center;
     flex-flow: column nowrap;
+  }
+}
+
+.workflows-main {
+  margin-right: 0 !important;
+  margin-bottom: 0 !important;
+  margin-left: 7.1rem;
+  overflow: scroll;
+
+  @media (--mobile) {
+    margin: 0 !important;
   }
 }
 

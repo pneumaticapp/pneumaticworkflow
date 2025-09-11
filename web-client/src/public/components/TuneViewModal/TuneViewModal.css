@@ -1,0 +1,92 @@
+.tune-view-modal__container {
+  display: flex;
+  flex-direction: column;
+
+  .tune-view-modal__header {
+    margin-bottom: 2.6rem;
+    flex-shrink: 0;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--pneumatic-color-white);
+
+    @mixin text-small-extra bold;
+  }
+
+  .tune-view-modal__body {
+    margin-bottom: 3.2rem;
+    padding-right: 3.2rem;
+    flex: 1;
+    overflow-y: scroll;
+
+    &::-webkit-scrollbar {
+      width: 0.4rem;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background: var(--pneumatic-color-black72);
+      border-radius: 0.2rem;
+    }
+
+    .tune-view-modal__task-box-title {
+      margin-bottom: 1.6rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      height: 2rem;
+      cursor: pointer;
+    }
+
+    .tune-view-modal__fields-container {
+      margin-left: 1.6rem;
+      padding-bottom: 1.6rem;
+    }
+  }
+
+  .tune-view-modal__footer {
+    flex-shrink: 0;
+    margin-right: 3.2rem;
+    height: 4rem;
+
+    .footer-button {
+      width: 100%;
+    }
+  }
+}
+
+.tune-view-modal__task-title {
+  margin-right: 1.6rem;
+  width: fit-content;
+
+  @mixin text-overflow;
+}
+
+.tune-view-modal__task-arrow {
+  margin-right: 0.7rem;
+  transition: transform 0.3s;
+}
+
+.tune-view-modal__task-arrow-rotated {
+  transform: rotate(180deg);
+}
+
+.tune-view-modal__field-item {
+  margin-bottom: 0.8rem;
+
+  .tune-view-modal__label {
+    margin-bottom: 0;
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+
+    .tune-view-modal__field-name {
+      margin-right: 1.6rem;
+      color: var(--pneumatic-color-black16);
+
+      @mixin text-overflow;
+    }
+  }
+}
+
+.tune-view-modal__tooltip {
+  padding: 0.4rem 0.8rem;
+}

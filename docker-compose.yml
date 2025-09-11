@@ -1,5 +1,3 @@
-# version: '3.8'
-
 services:
   postgres:
     image: postgres:15-bookworm
@@ -52,17 +50,17 @@ services:
 
   pneumatic-backend:
     build:
-      context: ./core
+      context: ./backend
     container_name: pneumatic-backend
     command: >
       sh -c "python manage.py migrate &&
              python manage.py collectstatic --no-input &&
              python manage.py compilemessages &&
-             gunicorn pneumatic_backend.asgi:application --workers 2 -k uvicorn.workers.UvicornWorker --worker-tmp-dir /dev/shm --bind 0.0.0.0:6000 --timeout 200 --access-logfile - --error-logfile -"
+             gunicorn src.asgi:application --workers 2 -k uvicorn.workers.UvicornWorker --worker-tmp-dir /dev/shm --bind 0.0.0.0:6000 --timeout 200 --access-logfile - --error-logfile -"
     env_file:
       - ./default-project.env
       - ./postgres/default.env
-      - ./core/default.env
+      - ./backend/default.env
     volumes:
       - pneumatic-backend-staticfiles:/pneumatic_backend/staticfiles
     expose:
@@ -82,14 +80,14 @@ services:
 
   celery:
     build:
-      context: ./core
+      context: ./backend
     container_name: pneumatic-celery
     env_file:
       - ./default-project.env
       - ./postgres/default.env
-      - ./core/default.env
+      - ./backend/default.env
     command: >
-      sh -c "celery -A pneumatic_backend worker -l warning"
+      sh -c "celery -A src worker -l warning"
     depends_on:
       - postgres
       - rabbitmq
@@ -100,13 +98,13 @@ services:
 
   celery-beat:
     build:
-      context: ./core
+      context: ./backend
     container_name: pneumatic-celery-beat
     env_file:
       - ./default-project.env
       - ./postgres/default.env
-      - ./core/default.env
-    command: celery --pidfile= -A pneumatic_backend beat -l warning -S django
+      - ./backend/default.env
+    command: celery --pidfile= -A src beat -l warning -S django
     depends_on:
       - postgres
       - rabbitmq
@@ -119,7 +117,7 @@ services:
     build:
       context: ./web-client
     container_name: pneumatic-frontend
-    command: [ "pm2-runtime", "start", "pm2.json" ]
+    command: pm2-runtime start pm2.json
     expose:
       - 8000
     volumes:

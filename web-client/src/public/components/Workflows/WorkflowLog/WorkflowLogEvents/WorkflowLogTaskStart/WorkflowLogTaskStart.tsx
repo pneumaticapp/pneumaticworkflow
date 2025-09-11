@@ -25,7 +25,6 @@ const MAX_SHOW_USERS = 5;
 export interface IWorkflowLogTaskStartProps extends Pick<IWorkflowLogItem, 'task' | 'created' | 'id'> {
   logItems: IWorkflowLogItem[];
   sorting: EWorkflowsLogSorting;
-  oldestDeadline: string | null;
   areTasksClickable?: boolean;
   theme: TWorkflowLogTheme;
   onClickTask?(): void;
@@ -37,12 +36,11 @@ export function WorkflowLogTaskStart({
   sorting,
   task,
   created,
-  oldestDeadline,
   areTasksClickable,
   theme,
   onClickTask,
 }: IWorkflowLogTaskStartProps) {
-  const dueDate = (id === getLastTaskLogEventId(logItems, sorting) && oldestDeadline) || null;
+  const dueDate = (id === getLastTaskLogEventId(logItems, sorting) && task?.dueDate) || null;
   const { formatMessage } = useIntl();
   const locale = useSelector(getLanguage);
   const renderResponsiblesAvatars = () => {

@@ -50,7 +50,6 @@ export const WorkflowLog = ({
   isOnlyAttachmentsShown,
   workflowId,
   includeHeader,
-  oldestDeadline,
   isLogMinimized,
   isLoading,
   minimizedLogMaxEvents,
@@ -218,7 +217,6 @@ export const WorkflowLog = ({
             onClickTask={onClickTask}
             logItems={items}
             sorting={sorting}
-            oldestDeadline={oldestDeadline}
             areTasksClickable={areTasksClickable}
             {...event}
           />
@@ -258,6 +256,7 @@ export const WorkflowLog = ({
         [EWorkflowLogEvent.WorkflowRun]: null,
         [EWorkflowLogEvent.AddedPerformerGroup]: <WorkflowLogAddedPerformerGroup {...event} />,
         [EWorkflowLogEvent.RemovedPerformerGroup]: <WorkflowLogRemovedPerformerGroup {...event} />,
+        [EWorkflowLogEvent.TaskSnoozed]: <WorkflowLogDelay delay={delay} theme={theme} />,
       };
 
       return (
@@ -291,7 +290,6 @@ export interface IWorkflowLogProps {
   workflowId: number | null;
   includeHeader: boolean;
   workflowStatus: EWorkflowStatus;
-  oldestDeadline: string | null;
   isLogMinimized?: boolean;
   isLoading?: boolean;
   minimizedLogMaxEvents?: number;

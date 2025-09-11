@@ -19,6 +19,7 @@ export interface ISelectMenuProps<T extends string> {
   hideSelectedOption?: boolean;
   onChange(value: T): void;
   Icon?(props: React.SVGAttributes<SVGElement>): JSX.Element;
+  isFromCheckIfConditions?: boolean;
 }
 
 export const SelectMenu = <T extends string>({
@@ -33,6 +34,7 @@ export const SelectMenu = <T extends string>({
   containerClassName,
   onChange,
   Icon,
+  isFromCheckIfConditions,
 }: ISelectMenuProps<T>) => {
   const [isDropdownOpen, setIsDropdownOpen] = React.useState(false);
   const getIntlId = (value: T) => `sorting.${value}`;
@@ -49,7 +51,12 @@ export const SelectMenu = <T extends string>({
 
   return (
     <Dropdown
-      className={classnames(styles['container'], 'dropdown-menu-right dropdown', containerClassName)}
+      className={classnames(
+        styles['container'],
+        isFromCheckIfConditions && styles['container--select-menu'],
+        'dropdown-menu-right dropdown',
+        containerClassName,
+      )}
       isOpen={isDropdownOpen}
       setActiveFromChild={isDropdownOpen}
       toggle={handleToggleDropdown}

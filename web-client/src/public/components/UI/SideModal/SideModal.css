@@ -22,13 +22,17 @@
   top: 1rem;
   right: 0;
   bottom: 1rem;
-  padding: 32px;
+  padding: 3.2rem;
   overflow: hidden;
-  width: 416px;
-  max-width: calc(100% - 16px);
-  color: white;
-  background-color: #262522;
-  border-radius: 32px 0 0 32px;
+  width: 41.6rem;
+  max-width: calc(100% - 1.6rem);
+  color: var(--pneumatic-color-white);
+  background-color: var(--pneumatic-color-black100);
+  border-radius: 3.2rem 0 0 3.2rem;
+}
+
+.side-modal_none-pedding-right {
+  padding-right: 0;
 }
 
 .side-modal_opened {
@@ -42,20 +46,24 @@
 .side-modal_close {
   position: absolute;
   z-index: 1;
-  top: 30px;
-  right: 25px;
+  top: 3rem;
+  right: 2.5rem;
   cursor: pointer;
   background-color: transparent;
   border: 0;
 
   svg {
-    fill: #62625f;
+    fill: var(--pneumatic-color-black72);
     transition: fill 0.3s;
   }
 
   &:hover svg {
-    fill: white;
+    fill: var(--pneumatic-color-white);
   }
+}
+
+.side-modal_close-is-from-view-modal {
+  right: 3.7rem;
 }
 
 .side-modal-parts {
@@ -65,15 +73,15 @@
 }
 
 .side-modal-parts_header {
-  margin-right: 30px;
-  min-height: 24px;
+  margin-right: 3rem;
+  min-height: 2.4rem;
 }
 
 .side-modal-parts_body {
-  min-height: 20px;
+  min-height: 2rem;
   flex-grow: 1;
 }
 
 .side-modal-parts_footer {
-  min-height: 20px;
+  min-height: 2rem;
 }

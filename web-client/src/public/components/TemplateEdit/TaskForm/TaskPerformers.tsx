@@ -1,6 +1,7 @@
 import React from 'react';
 import { useIntl } from 'react-intl';
 import { useSelector } from 'react-redux';
+import classNames from 'classnames';
 
 import { Checkbox } from '../../UI/Fields/Checkbox';
 import { TUserListItem } from '../../../types/user';
@@ -14,6 +15,7 @@ import { EBgColorTypes, UserPerformer } from '../../UI/UserPerformer';
 import { IApplicationState } from '../../../types/redux';
 
 import styles from '../TemplateEdit.css';
+import stylesTaskForm from './TaskForm.css';
 
 export interface ITaskPerformersProps {
   task: ITemplateTask;
@@ -104,7 +106,7 @@ export function TaskPerformers({ task, users, variables, setCurrentTask }: ITask
   };
 
   return (
-    <div className={styles['task-fields-wrapper']}>
+    <div className={classNames(styles['task-fields-wrapper'], stylesTaskForm['content-mt16'])}>
       <div className="mb-3">
         <Checkbox
           id="completeByAll"

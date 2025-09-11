@@ -8,6 +8,8 @@ import { RouteComponentProps, withRouter } from 'react-router-dom';
 import { getQueryStringByParams, getQueryStringParams, history } from '../../utils/history';
 import { getWrappedDisplayName } from '../../utils/hoc';
 import { isArrayWithItems } from '../../utils/helpers';
+import { IAuthUser } from '../../types/redux';
+import { updateFieldsFromUrl, loadFieldsFromLocalStorage } from './utils';
 
 const HOC_WRAPPER_NAME = 'withSyncedQueryString';
 
@@ -46,7 +48,7 @@ export interface ISyncedQueryStringState {
 export const withSyncedQueryString =
   <T extends {}>(settings: IQuerySyncItem<T>[], resetAction?: AnyAction) =>
   (Child: React.ComponentType<T>): React.ComponentType => {
-    type TWrappedChildProps = T & RouteComponentProps & { dispatch: Dispatch };
+    type TWrappedChildProps = T & RouteComponentProps & { dispatch: Dispatch; authUser: IAuthUser };
 
     const wrpappedChild = class extends React.Component<TWrappedChildProps, ISyncedQueryStringState> {
       public static displayName = getWrappedDisplayName(Child, HOC_WRAPPER_NAME);
@@ -66,6 +68,12 @@ export const withSyncedQueryString =
         }
 
         this.updateStoreBySettings(currentSyncSettings);
+        loadFieldsFromLocalStorage(this.props.authUser, this.props.dispatch);
+
+        if (this.props.location?.pathname.includes('/workflows/')) {
+          updateFieldsFromUrl(this.props.location.search, this.props.dispatch);
+        }
+
         this.handleUpdateLocation();
         this.setState({ isMounted: true });
       }
@@ -102,7 +110,12 @@ export const withSyncedQueryString =
           return { ...acc, [queryParamName]: queryParamValue };
         }, {});
 
-        const newQueryString = getQueryStringByParams(queryParams);
+        let newQueryString = getQueryStringByParams(queryParams);
+
+        if (this.props.location?.pathname.includes('/workflows/') && this.props.location?.search.includes('fields=')) {
+          const currentParams = getQueryStringParams(this.props.location.search);
+          newQueryString += `&fields=${currentParams.fields}`;
+        }
 
         history.push({ search: newQueryString });
       };
@@ -139,5 +152,7 @@ export const withSyncedQueryString =
 
     const WrpappedChildWithRouter = withRouter(wrpappedChild) as React.ComponentType;
 
-    return connect(null)(WrpappedChildWithRouter);
+    return connect((state: any) => ({
+      authUser: state.authUser,
+    }))(WrpappedChildWithRouter);
   };

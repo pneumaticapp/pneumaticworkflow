@@ -1,12 +1,6 @@
-import * as React from 'react';
-
-import { WorkflowsTableContainer } from './WorkflowsTable';
-
+import React from 'react';
 import { IWorkflowsProps } from '../types';
-import { EPageTitle } from '../../../constants/defaultValues';
-import { PageTitle } from '../../PageTitle';
-
-import styles from './WorkflowsTablePage.css';
+import { WorkflowsTableContainer } from './WorkflowsTable';
 
 export const WorkflowsTablePage = function Workflows({
   workflowsLoadingStatus,
@@ -17,21 +11,15 @@ export const WorkflowsTablePage = function Workflows({
   openWorkflowLogPopup,
   removeWorkflowFromList,
 }: IWorkflowsProps) {
-
   return (
-    <>
-      <div className={styles['container']}>
-        <PageTitle titleId={EPageTitle.Workflows} className={styles['title']} withUnderline={false} />
-      </div>
-      <WorkflowsTableContainer
-        workflowsLoadingStatus={workflowsLoadingStatus}
-        workflowsList={workflowsList}
-        searchText={searchText}
-        onSearch={onSearch}
-        loadWorkflowsList={loadWorkflowsList}
-        removeWorkflowFromList={removeWorkflowFromList}
-        openWorkflowLogPopup={openWorkflowLogPopup}
-      />
-    </>
+    <WorkflowsTableContainer
+      workflowsLoadingStatus={workflowsLoadingStatus}
+      workflowsList={workflowsList}
+      searchText={searchText}
+      onSearch={onSearch}
+      loadWorkflowsList={loadWorkflowsList}
+      removeWorkflowFromList={removeWorkflowFromList}
+      openWorkflowLogPopup={openWorkflowLogPopup}
+    />
   );
 };

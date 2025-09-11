@@ -6,6 +6,10 @@
   @mixin text-overflow;
 }
 
+.multiple-tasks {
+  width: fit-content;
+}
+
 .tooltip {
   display: flex;
   overflow: hidden;

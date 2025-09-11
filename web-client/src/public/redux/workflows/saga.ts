@@ -234,10 +234,13 @@ function* fetchWorkflowsList({ payload: offset = 0 }: TLoadWorkflowsList) {
         performersGroupIdsFilter,
         workflowStartersIdsFilter,
       },
+      selectedFieldsByTemplate,
     },
   }: IStoreWorkflows = yield select(getWorkflowsStore);
 
   const searchText: ReturnType<typeof getWorkflowsSearchText> = yield select(getWorkflowsSearchText);
+  const currentTemplateId = templatesIdsFilter.length === 1 ? templatesIdsFilter[0] : null;
+  const selectedFields = currentTemplateId ? selectedFieldsByTemplate[currentTemplateId] || [] : [];
 
   try {
     const { count, results }: { count: number; results: TWorkflowResponse[] } = yield getWorkflows({
@@ -250,6 +253,7 @@ function* fetchWorkflowsList({ payload: offset = 0 }: TLoadWorkflowsList) {
       performersIdsFilter,
       workflowStartersIdsFilter,
       searchText,
+      fields: selectedFields,
     });
     const formattedResults = mapWorkflowsToISOStringToRedux(results);
     const items = offset > 0 ? uniqBy([...workflowsList.items, ...formattedResults], 'id') : formattedResults;

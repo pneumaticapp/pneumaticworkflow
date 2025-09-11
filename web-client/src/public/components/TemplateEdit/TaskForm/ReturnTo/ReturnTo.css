@@ -1,6 +1,6 @@
 .return-to__container {
   position: relative;
-  margin: -0.4rem;
+  margin-left: -0.4rem;
   padding-right: 4rem;
   display: flex;
 
@@ -26,5 +26,5 @@
 }
 
 .return-to__add-return {
-  margin: 0.4rem;
+  margin: 0.2rem 0.4rem 0;
 }

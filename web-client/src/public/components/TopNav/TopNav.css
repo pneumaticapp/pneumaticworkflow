@@ -9,6 +9,17 @@
   }
 }
 
+.top-wrapper--workflows-layout {
+  left: 0;
+
+  @media (--mobile) {
+    position: sticky;
+    top: unset;
+    left: 0;
+    margin-bottom: 3.2rem;
+  }
+}
+
 .top-bar {
   display: flex;
   width: 100%;
@@ -88,6 +99,19 @@
   }
 }
 
+.navbar--workflows-table {
+  padding-left: 3.2rem !important;
+
+  @media (--mobile) {
+    padding-left: 0 !important;
+  }
+}
+
+.navbar--workflows-grid {
+  padding-right: 0 !important;
+  padding-left: 0 !important;
+}
+
 .navbar-left {
   display: flex;
   align-items: center;
@@ -101,6 +125,11 @@
     width: 100%;
     order: 2;
   }
+}
+
+.navbar-left--workflows-grid {
+  padding-right: 0;
+  padding-left: 0;
 }
 
 .navbar-right {

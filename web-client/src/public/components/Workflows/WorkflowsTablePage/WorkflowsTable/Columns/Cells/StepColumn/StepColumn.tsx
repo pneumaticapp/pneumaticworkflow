@@ -1,5 +1,6 @@
 import React from 'react';
 import { useIntl } from 'react-intl';
+import classNames from 'classnames';
 import { CellProps } from 'react-table';
 
 import { TaskNamesTooltipContent } from '../../../../../utils/TaskNamesTooltipContent';
@@ -16,7 +17,9 @@ export function StepColumn({ value: { oneActiveTaskName, areMultipleTasks, names
 
   return areMultipleTasks ? (
     <Tooltip content={namesTooltip}>
-      <span className={styles['step']}>{formatMessage({ id: 'workflows.multiple-active-tasks' })}</span>
+      <span className={classNames(styles['step'], styles['multiple-tasks'])}>
+        {formatMessage({ id: 'workflows.multiple-active-tasks' })}
+      </span>
     </Tooltip>
   ) : (
     <span className={styles['step']}>{oneActiveTaskName}</span>

@@ -51,13 +51,12 @@ const getStepColor = (task: IWorkflowTaskClient, status: EWorkflowStatus): EProg
 
 export const getWorkflowAddComputedPropsToRedux = (workflow: IWorkflow): IWorkflowClient | IWorkflowDetailsClient => {
   let multipleTasksCount = 0;
-  const namesMultipleTasks: string[] = [];
+  const namesMultipleTasks: Record<string, string> = {};
   const currentPerformersMap = new Map();
   let overdueTasksCount = 0;
   let oldestDeadline: number | null = null;
   let minEstimatedEndDateTsp = Infinity;
   let minDelay: IWorkflowTaskDelay | null = null;
-  let pendingTasksCount = 0;
 
   const formattedTasks = workflow.tasks.map((task) => {
     const newTask: IWorkflowTaskClient = {
@@ -68,7 +67,7 @@ export const getWorkflowAddComputedPropsToRedux = (workflow: IWorkflow): IWorkfl
 
     if (newTask.status === EWorkflowTaskStatus.Active) {
       multipleTasksCount += 1;
-      namesMultipleTasks.push(newTask.name);
+      namesMultipleTasks[newTask.apiName] = newTask.name;
       newTask.performers.forEach((performer) => {
         currentPerformersMap.set(performer.sourceId, performer);
       });
@@ -95,20 +94,15 @@ export const getWorkflowAddComputedPropsToRedux = (workflow: IWorkflow): IWorkfl
       minDelay = task.delay;
     }
 
-    if (newTask.status === EWorkflowTaskStatus.Pending) {
-      pendingTasksCount += 1;
-    }
-
     return newTask;
   });
 
   const completedTasks = formattedTasks.filter((task) => task.status === EWorkflowTaskStatus.Completed);
   const areMultipleTasks = Boolean(multipleTasksCount > 1);
-  const oneActiveTaskName = multipleTasksCount === 1 ? namesMultipleTasks[0] : null;
+  const oneActiveTaskName = multipleTasksCount === 1 ? Object.values(namesMultipleTasks)[0] : null;
   const selectedUsers = Array.from(currentPerformersMap.values());
 
   const tasksCountWithoutSkipped = workflow.tasks.length;
-  const lastActiveCurrentTask = tasksCountWithoutSkipped - pendingTasksCount;
   const areOverdueTasks = Boolean(overdueTasksCount);
   const formattedOldestDeadline = oldestDeadline && new Date(oldestDeadline).toISOString();
 
@@ -123,7 +117,6 @@ export const getWorkflowAddComputedPropsToRedux = (workflow: IWorkflow): IWorkfl
     selectedUsers,
 
     tasksCountWithoutSkipped,
-    lastActiveCurrentTask,
     minDelay,
     areOverdueTasks,
     oldestDeadline: formattedOldestDeadline,
