@@ -3,7 +3,7 @@ services:
     image: postgres:15-bookworm
     container_name: pneumatic-postgres
     env_file:
-      - ./postgres/default.env
+      - ./config/postgres.env
     volumes:
       - ./postgres/data:/var/lib/postgresql/data:rw
       - ./postgres/backups:/backups:rw
@@ -44,7 +44,7 @@ services:
       - ./rabbitmq/data/:/var/lib/rabbitmq/
       - ./rabbitmq/log/:/var/log/rabbitmq
     env_file:
-      - ./rabbitmq/default.env
+      - ./config/rabbitmq.env
     networks:
       - pneumatic
 
@@ -58,9 +58,9 @@ services:
              python manage.py compilemessages &&
              gunicorn src.asgi:application --workers 2 -k uvicorn.workers.UvicornWorker --worker-tmp-dir /dev/shm --bind 0.0.0.0:6000 --timeout 200 --access-logfile - --error-logfile -"
     env_file:
-      - ./default-project.env
-      - ./postgres/default.env
-      - ./backend/default.env
+      - ./config/project.env
+      - ./config/postgres.env
+      - ./config/backend.env
     volumes:
       - pneumatic-backend-staticfiles:/pneumatic_backend/staticfiles
     expose:
@@ -83,9 +83,9 @@ services:
       context: ./backend
     container_name: pneumatic-celery
     env_file:
-      - ./default-project.env
-      - ./postgres/default.env
-      - ./backend/default.env
+      - ./config/project.env
+      - ./config/postgres.env
+      - ./config/backend.env
     command: >
       sh -c "celery -A src worker -l warning"
     depends_on:
@@ -101,9 +101,9 @@ services:
       context: ./backend
     container_name: pneumatic-celery-beat
     env_file:
-      - ./default-project.env
-      - ./postgres/default.env
-      - ./backend/default.env
+      - ./config/project.env
+      - ./config/postgres.env
+      - ./config/backend.env
     command: celery --pidfile= -A src beat -l warning -S django
     depends_on:
       - postgres
@@ -118,8 +118,8 @@ services:
       context: ./web-client
     container_name: pneumatic-frontend
     env_file:
-      - ./default-project.env
-      - ./web-client/default.env
+      - ./config/project.env
+      - ./config/web-client.env
     command: >
       sh -c "npm run build-client:prod && pm2-runtime start pm2.json"
     expose:
