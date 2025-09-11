@@ -1,9 +1,10 @@
 import * as React from 'react';
 import classnames from 'classnames';
+import { useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
 
 import { IDashboardCounterProps } from '../Counters';
-import { EDashboardModes, IDashboardTask } from '../../../types/redux';
+import { EDashboardModes, IApplicationState, IDashboardTask } from '../../../types/redux';
 import { DashboardCounters } from '../Counters/DashboardCounters';
 import { StepName } from '../../StepName';
 import { getLinkToTasks } from '../../../utils/routes/getLinkToTasks';
@@ -23,6 +24,10 @@ export interface ITaskItemProps {
 }
 
 export function TaskItem({ task, index, mode, templateId }: ITaskItemProps) {
+  const selectedFieldsByTemplate = useSelector(
+    (state: IApplicationState) => state.workflows.workflowsSettings.selectedFieldsByTemplate[templateId],
+  );
+  const selectedFields = selectedFieldsByTemplate?.join(',') || '';
   const { useCallback } = React;
 
   const getRoute = useCallback(
@@ -47,22 +52,26 @@ export function TaskItem({ task, index, mode, templateId }: ITaskItemProps) {
           status: EWorkflowsStatus.Running,
           templateId,
           stepId: task.id,
+          fields: selectedFields,
         }),
         [EDashboardCounterType.InProgress]: getLinkToWorkflows({
           status: EWorkflowsStatus.Running,
           templateId,
           stepId: task.id,
+          fields: selectedFields,
         }),
         [EDashboardCounterType.Overdue]: getLinkToWorkflows({
           status: EWorkflowsStatus.Running,
           templateId,
           stepId: task.id,
           sorting: EWorkflowsSorting.Overdue,
+          fields: selectedFields,
         }),
         [EDashboardCounterType.Completed]: getLinkToWorkflows({
           templateId,
           stepId: task.id,
           status: EWorkflowsStatus.Completed,
+          fields: selectedFields,
         }),
       };
 
@@ -106,7 +115,7 @@ export function TaskItem({ task, index, mode, templateId }: ITaskItemProps) {
   const taskLink =
     mode === EDashboardModes.Tasks
       ? getLinkToTasks({ templateId, stepId: task.id })
-      : getLinkToWorkflows({ templateId, stepId: task.id });
+      : getLinkToWorkflows({ templateId, stepId: task.id, fields: selectedFields });
 
   return (
     <div className={styles.task__container}>

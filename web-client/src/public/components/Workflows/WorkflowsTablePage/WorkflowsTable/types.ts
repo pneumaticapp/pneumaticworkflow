@@ -1,3 +1,4 @@
+import { ITableViewFields } from '../../../../types/template';
 import { IWorkflowClient } from '../../../../types/workflow';
 
 export type TableColumns = {
@@ -6,4 +7,6 @@ export type TableColumns = {
   progress: IWorkflowClient;
   step: IWorkflowClient;
   performer: IWorkflowClient;
+} & {
+  [key: string]: ITableViewFields;
 };

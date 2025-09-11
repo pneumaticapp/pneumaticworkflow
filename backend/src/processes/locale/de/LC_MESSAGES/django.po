@@ -1,0 +1,623 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-07-21 10:46+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: src/processes/messages/template.py:5
+msgid "You can't pass \"snooze\" for the first task."
+msgstr "Sie können \"snooze\" nicht für die erste Aufgabe übergeben."
+
+#: src/processes/messages/template.py:7
+msgid "You should set task performers before setting template to active."
+msgstr "Sie sollten die Aufgabenbearbeiter festlegen, bevor Sie die Vorlage aktivieren."
+
+#: src/processes/messages/template.py:9
+msgid "One or more performers are repeated."
+msgstr "Ein oder mehrere Darsteller sind doppelt vorhanden."
+
+#: src/processes/messages/template.py:11
+msgid "Some fields referenced in the conditions of task \"{name}\" do not exist."
+msgstr "Einige Felder, die in den Bedingungen der Aufgabe \"{name}\" referenziert werden, existieren nicht."
+
+#: src/processes/messages/template.py:13
+msgid "Selections can't be empty on radio or checkbox fields."
+msgstr "Auswahlen dürfen bei Radio- oder Kontrollkästchenfeldern nicht leer sein."
+
+#: src/processes/messages/template.py:14
+msgid "A field with a type 'User' should be required."
+msgstr "Ein Feld vom Typ 'Benutzer' sollte erforderlich sein."
+
+#: src/processes/messages/template.py:15
+msgid "Workflow template name is empty."
+msgstr "Der Name der Workflow-Vorlage ist leer."
+
+#: src/processes/messages/template.py:16
+msgid "Some of fields in \"workflow template name\" don't exist."
+msgstr "Einige Felder in \"workflow template name\" existieren nicht."
+
+#: src/processes/messages/template.py:18
+msgid "If a \"workflow template name\" contains only an output fields, at least one of the fields must be required."
+msgstr ""
+
+#: src/processes/messages/template.py:21
+msgid "Kickoff form data not provided."
+msgstr "Formulardaten für den Start nicht bereitgestellt."
+
+#: src/processes/messages/template.py:22
+msgid "Kickoff form 'id' has incorrect value."
+msgstr "Das Kickoff-Formular 'id' hat einen falschen Wert."
+
+#: src/processes/messages/template.py:23
+msgid "Kickoff 'id' not provided."
+msgstr "Kickoff 'id' nicht angegeben."
+
+#: src/processes/messages/template.py:24
+msgid "Tasks data not provided, one task required."
+msgstr "Aufgabendaten nicht bereitgestellt, eine Aufgabe erforderlich."
+
+#: src/processes/messages/template.py:25
+msgid "Incorrect tasks order."
+msgstr "Falsche Aufgabenreihenfolge."
+
+#: src/processes/messages/template.py:26
+msgid "You should set 'template owners' value."
+msgstr "Sie sollten den Wert für 'Vorlagenbesitzer' festlegen."
+
+#: src/processes/messages/template.py:27
+msgid "You cannot remove yourself from template owners."
+msgstr "Sie können sich nicht selbst als Vorlagenbesitzer entfernen."
+
+#: src/processes/messages/template.py:28
+msgid "One or more template owners are incorrect."
+msgstr "Ein oder mehrere Vorlagenbesitzer sind falsch."
+
+#: src/processes/messages/template.py:29
+msgid "\"Public success url\" is an invalid format."
+msgstr "„Öffentliche Erfolgs-URL“ ist ein ungültiges Format."
+
+#: src/processes/messages/template.py:31
+msgid "Filters 'with_tasks_in_progress' and 'workflows_status' cannot be used at the same time."
+msgstr "Filter 'mit_aktuellen_Aufgaben' und 'workflow_Status' können nicht gleichzeitig verwendet werden."
+
+#: src/processes/messages/template.py:34
+msgid "Permission denied. You are not a template owner."
+msgstr "Zugriff verweigert. Sie sind kein Vorlagenbesitzer."
+
+#: src/processes/messages/template.py:36
+msgid "Inconsistent permission! Should use only for \"workflow detail\" actions."
+msgstr "Inkonsistente Berechtigung! Sollte nur für \"Workflow-Detail\"-Aktionen verwendet werden."
+
+#: src/processes/messages/template.py:38
+msgid "The limit for creating a public id has been exceeded."
+msgstr "Das Limit für die Erstellung einer öffentlichen ID wurde überschritten."
+
+#: src/processes/messages/template.py:39
+msgid "The limit for creating a embed id has been exceeded."
+msgstr "Das Limit für die Erstellung einer Embed-ID wurde überschritten."
+
+#. Translators: Template due date editor
+#: src/processes/messages/template.py:41
+msgid "Expected date field api_name."
+msgstr "Erwartetes Datumsfeld api_name."
+
+#. Translators: Template due date editor
+#: src/processes/messages/template.py:43
+msgid "Only existing date fields can be used as a due date."
+msgstr "Als Fälligkeitsdatum können nur vorhandene Datumsfelder verwendet werden."
+
+#. Translators: Template due date editor
+#: src/processes/messages/template.py:45
+msgid "Expected task api_name."
+msgstr "Erwartete Aufgabe api_name."
+
+#: src/processes/messages/template.py:46
+msgid "Only previous tasks are allowed in a rule."
+msgstr "In einer Regel sind nur vorherige Aufgaben zulässig."
+
+#: src/processes/messages/template.py:47
+msgid "Only previous and current tasks are allowed in a rule."
+msgstr "In einer Regel sind nur vorherige und aktuelle Aufgaben zulässig."
+
+#: src/processes/messages/template.py:50
+msgid "You should set the user id for performer with the type \"user\"."
+msgstr "Sie sollten die Benutzer-ID für den Ausführenden mit dem Typ \"Benutzer\" festlegen."
+
+#: src/processes/messages/template.py:52
+msgid "Performer \"id\" should be a number."
+msgstr "Der Wert von \"id\" sollte eine Zahl sein."
+
+#: src/processes/messages/template.py:53
+msgid "One or more performers are incorrect."
+msgstr "Ein oder mehrere Ausführende sind falsch."
+
+#: src/processes/messages/template.py:55
+msgid "A template with \"Workflow starter\" in the list of performers can not be shared. Please replace the \"workflow starter\" with another team member."
+msgstr "Eine Vorlage mit \"Workflow-Starter\" in der Liste der Ausführenden kann nicht freigegeben werden. Bitte ersetzen Sie den \"Workflow-Starter\" durch ein anderes Teammitglied."
+
+#: src/processes/messages/template.py:60
+msgid "You should set the field api_name for performer with the type \"field\"."
+msgstr "Sie sollten das Feld api_name für den Ausführenden mit dem Typ \"field\" festlegen."
+
+#: src/processes/messages/template.py:63
+msgid "Some fields referenced in the description of task \"{name}\" do not exist."
+msgstr "Einige Felder, die in der Beschreibung der Aufgabe \"{name}\" referenziert werden, existieren nicht."
+
+#: src/processes/messages/template.py:67
+msgid "Some fields in task \"{name}\" do not exist."
+msgstr "Einige Felder in der Aufgabe \"{name}\" existieren nicht."
+
+#: src/processes/messages/template.py:72
+msgid "Task \"{name}\": If the task name contains only output fields, at least one field must be required."
+msgstr "Aufgabe \"{name}\": Wenn der Aufgabenname nur Ausgabefelder enthält, muss mindestens eines dieser Felder erforderlich sein."
+
+#: src/processes/messages/template.py:77
+msgid "Checklist items not exists or invalid."
+msgstr "Checklistenpunkte existieren nicht oder sind ungültig."
+
+#: src/processes/messages/template.py:80
+msgid "You can't change api_name of an existing object. Old value: \"{old}\", new value: \"{new}\"."
+msgstr "Sie können den api_name eines bestehenden Objekts nicht ändern. Alter Wert: \"{old}\", neuer Wert: \"{new}\"."
+
+#: src/processes/messages/template.py:89
+msgid "Task \"{task}\": user id \"{user_id}\" doesn't exist or can't be used in this condition."
+msgstr "Aufgabe \"{task}\": Benutzer-ID \"{user_id}\" existiert nicht oder kann unter diesen Bedingungen nicht verwendet werden."
+
+#: src/processes/messages/template.py:98
+msgid "Task \"{task}\": operator \"{operator}\" can't be use with type of field \"{field_type}\"."
+msgstr "Aufgabe \"{task}\": Operator \"{operator}\" kann nicht mit dem Feldtyp \"{field_type}\" verwendet werden."
+
+#: src/processes/messages/template.py:107
+msgid "Task \"{task}\": selection \"{selection_api_name}\" doesn't exist or can't be used in this condition."
+msgstr "Aufgabe \"{task}\": Auswahl \"{selection_api_name}\" existiert nicht oder kann in diesem Zustand nicht verwendet werden."
+
+#: src/processes/messages/template.py:115
+msgid "Task \"{task}\": operator \"{operator}\" should have some value."
+msgstr "Aufgabe \"{task}\": Der Operator \"{operator}\" sollte einen Wert haben."
+
+#: src/processes/messages/template.py:121
+msgid "Task \"{name}\": The checklist contains a duplicate api_name \"{api_name}\". Recreate the checklist or change its api_name."
+msgstr "Aufgabe \"{name}\": Die Checkliste enthält einen doppelten api_name \"{api_name}\". Erstellen Sie die Checkliste neu oder ändern Sie ihren api_name."
+
+#: src/processes/messages/template.py:129
+msgid "Task \"{name}\": The checklist item contains a duplicate api_name \"{api_name}\". Recreate the item or change its api_name."
+msgstr "Aufgabe \"{name}\": Das Checklistenelement enthält einen doppelten api_name \"{api_name}\". Erstellen Sie das Element neu oder ändern Sie seinen api_name."
+
+#: src/processes/messages/template.py:137
+msgid "Task \"{name}\": The condition contains a duplicate api_name \"{api_name}\". Recreate the condition or change its api_name."
+msgstr "Aufgabe \"{name}\": Die Bedingung enthält einen doppelten api_name \"{api_name}\". Erstellen Sie die Bedingung neu oder ändern Sie ihren api_name."
+
+#: src/processes/messages/template.py:145
+msgid "Task \"{name}\": Output field \"{field_name}\" contains a duplicate api_name \"{api_name}\". Change the api_name or recreate the output field."
+msgstr "Aufgabe \"{name}\": Das Ausgabefeld \"{field_name}\" enthält einen doppelten api_name \"{api_name}\". Ändern Sie den api_name oder erstellen Sie das Ausgabefeld neu."
+
+#: src/processes/messages/template.py:154
+msgid "Task \"{name}\": The condition predicate contains a duplicate api_name \"{api_name}\". Recreate the predicate or change its api_name."
+msgstr "Aufgabe \"{name}\": Das Bedingungsprädikat enthält einen doppelten api_name \"{api_name}\". Erstellen Sie das Prädikat neu oder ändern Sie seinen api_name."
+
+#: src/processes/messages/template.py:163
+msgid "Task \"{name}\": The due date contains a duplicate api_name \"{api_name}\". Recreate the due date or change its api_name."
+msgstr "Aufgabe \"{name}\": Das Fälligkeitsdatum enthält einen doppelten api_name \"{api_name}\". Erstellen Sie das Datum neu oder ändern Sie seinen api_name."
+
+#: src/processes/messages/template.py:171
+msgid "Task \"{name}\": The condition rule contains a duplicate api_name \"{api_name}\". Recreate the rule or change its api_name."
+msgstr "Aufgabe \"{name}\": Die Bedingungsregel enthält einen doppelten api_name \"{api_name}\". Erstellen Sie die Regel neu oder ändern Sie ihren api_name."
+
+#: src/processes/messages/template.py:179
+msgid "Task \"{name}\": Option \"{value}\" of output field \"{field_name}\" contains a duplicate api_name \"{api_name}\". Change the api_name or recreate the option."
+msgstr "Aufgabe \"{name}\": Die Option \"{value}\" des Ausgabefeldes \"{field_name}\" enthält einen doppelten api_name \"{api_name}\". Ändern Sie den api_name oder erstellen Sie die Option neu."
+
+#: src/processes/messages/template.py:190
+msgid "Task \"{name}\": Contains a duplicate api_name \"{api_name}\". Recreate the task or change its api_name."
+msgstr "Aufgabe \"{name}\": Enthält einen doppelten api_name \"{api_name}\". Erstellen Sie die Aufgabe neu oder ändern Sie ihren api_name."
+
+#: src/processes/messages/template.py:198
+msgid "Task \"{name}\": The performer contains a duplicate api_name \"{api_name}\". Recreate the performer or change its api_name."
+msgstr "Aufgabe \"{name}\": Der Ausführende enthält einen doppelten api_name \"{api_name}\". Erstellen Sie den Ausführenden neu oder ändern Sie seinen api_name."
+
+#: src/processes/messages/template.py:204
+msgid "Duplicate template owners in the add owners request."
+msgstr "Doppelte Vorlagenbesitzer in der Anfrage zum Hinzufügen von Besitzern."
+
+##: src/processes/messages/template.py:207
+msgid "Template \"{name}\": The owners contain a duplicate api_name \"{api_name}\". Change the duplicate api_name or specify different owners."
+msgstr "Vorlage \"{name}\": Die Eigentümer enthalten einen doppelten api_name \"{api_name}\". Ändern Sie den doppelten api_name oder geben Sie andere Eigentümer an."
+
+#: src/processes/messages/template.py:216
+msgid "Task \"{name}\": The \"Return to\" setting refers to a non-existent task (API name: \"{api_name}\")."
+msgstr "Aufgabe \"{name}\": Die Einstellung \"Zurück zu\" verweist auf eine Aufgabe, die nicht existiert (API-Name: \"{api_name}\")."
+
+#: src/processes/messages/template.py:223
+msgid "Task \"{name}\": Cannot be set to return to itself."
+msgstr "Aufgabe \"{name}\": Kann nicht so eingestellt werden, dass sie zu sich selbst zurückkehrt."
+
+#: src/processes/messages/template.py:227
+msgid "Task \"{name}\": Can be returned only to one of its ancestors."
+msgstr "Aufgabe \"{name}\": Kann nur zu einem ihrer Vorgänger zurückgegeben werden."
+
+#: src/processes/messages/template.py:236
+msgid "Task \"{task}\": Group ID \"{group_id}\" does not exist or cannot be used in this condition."
+msgstr "Aufgabe \"{task}\": Die Gruppen-ID \"{group_id}\" existiert nicht oder kann in dieser Bedingung nicht verwendet werden."
+
+#: src/processes/messages/template.py:244
+msgid "Task condition \"{name}\": Only the \"completed\" operator is allowed for the \"start_task\" action"
+msgstr "Aufgabenbedingung \"{name}\": Für die Aktion \"start_task\" ist nur der Operator \"completed\" zulässig"
+
+#: src/processes/messages/template.py:251
+msgid "Task \"{name}\" has a circular dependency. Please change the \"start after\" condition."
+msgstr "Aufgabe \"{name}\" hat eine zirkuläre Abhängigkeit. Bitte ändern Sie die Bedingung \"starten nach\"."
+
+#: src/processes/messages/template.py:258
+msgid "Task \"{name}\": the \"start after\" condition points to a non-existent task. Please change the \"start after\" condition."
+msgstr ""
+
+#: src/processes/messages/workflow.py:5
+msgid "Saving files is not available, file storage does't configured. Contact support."
+msgstr "Speichern von Dateien ist nicht verfügbar, Dateispeicher ist nicht konfiguriert. Kontaktieren Sie den Support."
+
+#: src/processes/messages/workflow.py:8
+msgid "Only \"snoozed\" workflows can be resumed."
+msgstr "Nur \"schlummernde\" Workflows können fortgesetzt werden."
+
+#: src/processes/messages/workflow.py:9
+msgid "You need to resume the workflow before completing the task."
+msgstr "Sie müssen den Arbeitsablauf fortsetzen, bevor Sie die Aufgabe abschließen."
+
+#: src/processes/messages/workflow.py:10
+msgid "Task is skipped and cannot be completed."
+msgstr "Aufgabe wird übersprungen und kann nicht abgeschlossen werden."
+
+#: src/processes/messages/workflow.py:12
+msgid "Check off all the items in the checklist before completing the task."
+msgstr "Markieren Sie alle Punkte auf der Checkliste, bevor Sie die Aufgabe abschließen."
+
+#: src/processes/messages/workflow.py:14
+msgid "You have already completed this task."
+msgstr "Sie haben diese Aufgabe bereits abgeschlossen."
+
+#: src/processes/messages/workflow.py:15
+msgid "You have already completed this workflow."
+msgstr "Sie haben diesen Arbeitsablauf bereits abgeschlossen."
+
+#: src/processes/messages/workflow.py:16
+msgid "You are not allowed to finish this workflow."
+msgstr "Sie dürfen diesen Workflow nicht abschließen."
+
+#: src/processes/messages/workflow.py:17
+msgid "Task already completed."
+msgstr "Aufgabe bereits abgeschlossen."
+
+#. Translators: Task return api
+#: src/processes/messages/workflow.py:18
+msgid "You don't have permission for complete the task."
+msgstr "Sie haben keine Berechtigung, um die Aufgabe zu erledigen."
+
+#. Translators: Task return api
+#: src/processes/messages/workflow.py:20
+msgid "The supplied task number is incorrect."
+msgstr "Die angegebene Auftragsnummer ist falsch."
+
+#. Translators: Create / delete task performer action
+#: src/processes/messages/workflow.py:22
+msgid "The user with the specified credentials not found."
+msgstr "Der Benutzer mit den angegebenen Anmeldeinformationen wurde nicht gefunden."
+
+#: src/processes/messages/workflow.py:25
+msgid "You have reached the limit of the number of guest performers."
+msgstr "Sie haben die Höchstzahl an Gastkünstlern erreicht."
+
+#. Translators: Create / delete task performer action
+#: src/processes/messages/workflow.py:28
+msgid "Deleting the last performer is not allowed."
+msgstr "Das Löschen des letzten Ausführenden ist nicht zulässig."
+
+#: src/processes/messages/workflow.py:29
+msgid "Completed workflow cannot be changed."
+msgstr "Abgeschlossener Workflow kann nicht geändert werden."
+
+#. Translators: Create / delete task performer or fill checklist actions
+#: src/processes/messages/workflow.py:31
+msgid "Available only for the active task."
+msgstr "Nur für die aktive Aufgabe verfügbar."
+
+#: src/processes/messages/workflow.py:33
+msgid "You need to be added to the task as a performer to check off this checklist item."
+msgstr "Sie müssen als Ausführender zur Aufgabe hinzugefügt werden, um diesen Checklistenpunkt abzuhaken."
+
+#: src/processes/messages/workflow.py:37
+msgid "You need to resume the workflow before check off this checklist item."
+msgstr "Sie müssen den Arbeitsablauf fortsetzen, bevor Sie diesen Checklistenpunkt abhaken."
+
+#: src/processes/messages/workflow.py:39
+msgid "Permission denied."
+msgstr "Zugriff verweigert."
+
+#. Translators:
+#: src/processes/messages/workflow.py:42
+msgid "Please fill in the required fields."
+msgstr "Bitte füllen Sie die erforderlichen Felder aus."
+
+#: src/processes/messages/workflow.py:44
+msgid "Wrong argument format: \"{arg}\"."
+msgstr "Falsches Argumentformat: \"{arg}\"."
+
+#. Translators: String field validation
+#: src/processes/messages/workflow.py:48
+msgid "Value should be a string."
+msgstr "Wert sollte eine Zeichenkette sein."
+
+#: src/processes/messages/workflow.py:51
+msgid "The value of the field exceeds the limit of {limit} characters."
+msgstr "Der Wert des Feldes überschreitet das Limit von {limit} Zeichen."
+
+#. Translators: Dropdown / radio / checkbox selections validation
+#: src/processes/messages/workflow.py:55
+msgid "Selection with the given id does not exist."
+msgstr "Auswahl mit der angegebenen ID existiert nicht."
+
+#. Translators: Checkbox selections validation
+#: src/processes/messages/workflow.py:57
+msgid "Checkbox value should be a list."
+msgstr "Kontrollkästchenwert sollte eine Liste sein."
+
+#. Translators: Checkbox selections validation
+#: src/processes/messages/workflow.py:59
+msgid "Checkbox value contains invalid selections."
+msgstr "Checkbox-Wert enthält ungültige Auswahlen."
+
+#. Translators: Checkbox selections validation
+#: src/processes/messages/workflow.py:61
+msgid "Checkbox value contains non existent selections."
+msgstr "Checkbox-Wert enthält nicht existierende Auswahlen."
+
+#: src/processes/messages/workflow.py:64
+msgid "The date value must be an integer or a floating-point number."
+msgstr "Der Datumswert muss eine ganze Zahl oder eine Gleitkommazahl sein."
+
+#. Translators: URL field validation
+#: src/processes/messages/workflow.py:67
+msgid "URL field value should be a string."
+msgstr "Der Wert des URL-Feldes muss eine Zeichenkette sein."
+
+#. Translators: URL field validation
+#: src/processes/messages/workflow.py:69
+msgid "The URL is invalid."
+msgstr "Die URL ist ungültig."
+
+#. Translators: File field validation
+#: src/processes/messages/workflow.py:71
+msgid "File value should be a list of integers."
+msgstr "Dateiwert sollte eine Liste von ganzen Zahlen sein."
+
+#. Translators: File field validation
+#: src/processes/messages/workflow.py:73
+msgid "Attachment not found."
+msgstr "Anhang nicht gefunden."
+
+#. Translators: User field validation
+#: src/processes/messages/workflow.py:75
+msgid "The value must be the ID of an existing account user."
+msgstr "Der Wert muss die ID eines bestehenden Kontobenutzers sein."
+
+#: src/processes/messages/workflow.py:76
+msgid "Account user with given id does not exist."
+msgstr "Kontobenutzer mit der angegebenen ID existiert nicht."
+
+#: src/processes/messages/workflow.py:77
+msgid "Save attachments failed. Service unavailable."
+msgstr "Speichern der Anhänge fehlgeschlagen. Dienst nicht verfügbar."
+
+#: src/processes/messages/workflow.py:78
+msgid "Blob object doesn't exist."
+msgstr "Blob-Objekt existiert nicht."
+
+#: src/processes/messages/workflow.py:79
+msgid "AI service is temporarily unavailable."
+msgstr "Der AI-Dienst ist vorübergehend nicht verfügbar."
+
+#. Translators: AI template generation
+#: src/processes/messages/workflow.py:81
+msgid "Could not create template from given description."
+msgstr "Vorlage konnte nicht aus der angegebenen Beschreibung erstellt werden."
+
+#: src/processes/messages/workflow.py:83
+msgid "You've reached the limit for free AI powered template generation requests, sign up for a premium account to get unlimited access."
+msgstr "Sie haben das Limit für kostenlose KI-gestützte Vorlagenerstellungsanfragen erreicht. Melden Sie sich für ein Premium-Konto an, um unbegrenzten Zugriff zu erhalten."
+
+#: src/processes/messages/workflow.py:89
+msgid "Something seems to be wrong with your input, please try re phrasing your process name and description."
+msgstr "Etwas scheint mit Ihrer Eingabe nicht zu stimmen. Bitte versuchen Sie, den Namen und die Beschreibung Ihres Prozesses neu zu formulieren."
+
+#: src/processes/messages/workflow.py:94
+msgid "You need to set up a system prompt for template generation. Contact administrator."
+msgstr "Sie müssen eine Systemaufforderung für die Vorlagenerstellung einrichten. Kontaktieren Sie den Administrator."
+
+#. Translators: Comment create validation
+#: src/processes/messages/workflow.py:98
+msgid "You need to specify the comment text or attachments."
+msgstr "Sie müssen den Kommentartext oder Anhänge angeben."
+
+#: src/processes/messages/workflow.py:99
+msgid "You cannot write a comment on a completed workflow."
+msgstr "Sie können keinen Kommentar zu einem abgeschlossenen Workflow schreiben."
+
+#: src/processes/messages/workflow.py:100
+msgid "You cannot change a deleted comment."
+msgstr "Sie können einen gelöschten Kommentar nicht ändern."
+
+#: src/processes/messages/workflow.py:102
+msgid "The size limit for attachments is {mb} Mb."
+msgstr "Die Größenbeschränkung für Anhänge beträgt {mb} MB."
+
+#. Translators: Set task / workflow due date
+#: src/processes/messages/workflow.py:106
+msgid "Due date should be greater than current."
+msgstr "Fälligkeitsdatum sollte später als das aktuelle Datum sein."
+
+#. Translators: Starting workflow. Validate user field
+#: src/processes/messages/workflow.py:108
+msgid "Field with type \"User\" should be required."
+msgstr "Feld mit dem Typ \"Benutzer\" sollte erforderlich sein."
+
+#: src/processes/messages/workflow.py:111
+msgid "The default value for a field with type \"User\" should be an integer."
+msgstr "Der Standardwert für ein Feld vom Typ \"Benutzer\" sollte eine ganze Zahl sein."
+
+#: src/processes/messages/workflow.py:113
+msgid "The user for a field with type \"User\" does not exist."
+msgstr "Der Benutzer für ein Feld vom Typ \"Benutzer\" existiert nicht."
+
+#. Translators: Starting workflow. Validate dropdown / radio / checkbox
+#: src/processes/messages/workflow.py:115
+msgid "Field selections not provided."
+msgstr "Feldauswahlen nicht angegeben."
+
+#: src/processes/messages/workflow.py:116
+msgid "Checklist element length limit exceeded. Limit 2000 chars."
+msgstr "Checklisten-Element-Längenlimit überschritten. Limit 2000 Zeichen."
+
+#. Translators: Task list filter by performer
+#: src/processes/messages/workflow.py:118
+msgid "Filter by \"assigned_to\" is only allowed for the admin."
+msgstr "Filtern nach \"assigned_to\" ist nur für den Administrator erlaubt."
+
+#: src/processes/messages/workflow.py:119
+msgid "Checklist item with given id not found."
+msgstr "Checklistenpunkt mit der angegebenen ID nicht gefunden."
+
+#. Translators: System template creation validation
+#: src/processes/messages/workflow.py:121
+msgid "You can't pass the `id` field."
+msgstr "Sie können das Feld `id` nicht übergeben."
+
+#. Translators: System template creation validation
+#: src/processes/messages/workflow.py:123
+msgid "Radio and checkbox fields must have non-empty selections."
+msgstr "Radio- und Kontrollkästchenfelder müssen nicht-leere Auswahlen haben."
+
+#. Translators: System template kickoff creation validation
+#: src/processes/messages/workflow.py:125
+msgid "Value should be a object."
+msgstr "Wert sollte ein Objekt sein."
+
+#. Translators: System template fields creation validation
+#: src/processes/messages/workflow.py:127
+msgid "Value should be a list."
+msgstr "Der Wert sollte eine Liste sein."
+
+#. Translators: System template tasks creation validation
+#: src/processes/messages/workflow.py:129
+msgid "Incorrect order of tasks."
+msgstr "Falsche Reihenfolge der Aufgaben."
+
+#. Translators: System template creation validation
+#: src/processes/messages/workflow.py:131
+msgid "You must pass an \"api_name\" into every field you declare."
+msgstr "Sie müssen ein \"api_name\" in jedes Feld einfügen, das Sie deklarieren."
+
+#: src/processes/messages/workflow.py:133
+msgid "Your template is disabled. Please, enable this template before running."
+msgstr "Ihre Vorlage ist deaktiviert. Bitte aktivieren Sie diese Vorlage, bevor Sie fortfahren."
+
+#: src/processes/messages/workflow.py:136
+msgid "Only \"in-progress\" workflows can be filtered by current performer."
+msgstr "Nur \"in Bearbeitung\" befindliche Workflows können nach aktuellem Ausführenden gefiltert werden."
+
+#: src/processes/messages/workflow.py:140
+msgid "The task can't be completed until all the embedded workflows are done."
+msgstr "Die Aufgabe kann nicht abgeschlossen werden, bis alle eingebetteten Workflows erledigt sind."
+
+#: src/processes/messages/workflow.py:143
+msgid "The task can't be returned until all the embedded workflows are done."
+msgstr "Die Aufgabe kann erst zurückgegeben werden, wenn alle eingebetteten Arbeitsabläufe abgeschlossen sind."
+
+#: src/processes/messages/workflow.py:145
+msgid "Snoozed workflow cannot be changed."
+msgstr "Schlummernder Workflow kann nicht geändert werden."
+
+#: src/processes/messages/workflow.py:146
+msgid "Completed task cannot be changed."
+msgstr "Abgeschlossene Aufgabe kann nicht geändert werden."
+
+#: src/processes/messages/workflow.py:148
+msgid "Embedded workflows can be created only for the workflow's active task."
+msgstr "Eingebettete Workflows können nur für die aktive Aufgabe des Workflows erstellt werden."
+
+#: src/processes/messages/workflow.py:152
+msgid "You need to be added to the task as a performer in order to create a embedded workflows."
+msgstr "Sie müssen der Aufgabe als Ausführender hinzugefügt werden, um eingebettete Arbeitsabläufe zu erstellen."
+
+#: src/processes/messages/workflow.py:155
+msgid "You need to pass in a \"task_id\", or a \"task api_name\"."
+msgstr "Sie müssen eine task \"id\" oder einen task \"api_name\" übergeben."
+
+#: src/processes/messages/workflow.py:156
+msgid "The passed in task was not found in the workflow."
+msgstr "Die übergebene Aufgabe wurde im Workflow nicht gefunden."
+
+#: src/processes/messages/workflow.py:157
+msgid "You can't revert from the first task."
+msgstr "Sie können nicht von der ersten Aufgabe aus zurückspringen."
+
+#: src/processes/messages/workflow.py:159
+msgid "Unable return to \"{task_name}\" because it was skipped by a condition."
+msgstr "Eine Rückkehr zu \"{task_name}\", ist nicht möglich, da sie aufgrund einer Bedingung übersprungen wurde."
+
+#: src/processes/messages/workflow.py:164
+msgid "Unable return to \"{task_name}\", because it was skipped by a condition (as were all the tasks before it)."
+msgstr "Eine Rückkehr zu \"{task_name}\", ist nicht möglich, da sie aufgrund einer Bedingung übersprungen wurde (wie auch alle vorherigen Aufgaben)."
+
+#: src/processes/messages/workflow.py:169
+msgid "A workflow can't return to a later task."
+msgstr "Ein Workflow kann nicht zu einer späteren Aufgabe zurückkehren."
+
+#: src/processes/messages/workflow.py:170
+msgid "There is no group with the specified ID."
+msgstr "Es gibt keine Gruppe mit der angegebenen ID."
+
+#: src/processes/messages/workflow.py:171
+msgid "You must supply a comment."
+msgstr "Sie müssen einen Kommentar angeben."
+
+#. Translators: Number field validation
+#: src/processes/messages/workflow.py:173
+msgid "The value must be a number."
+msgstr "Der Wert muss eine Zahl sein."
+
+#. Translators: task actions validation
+#: src/processes/messages/workflow.py:175
+msgid "Task not found."
+msgstr "Aufgabe nicht gefunden."
+
+#: src/processes/messages/workflow.py:176
+msgid "Available for active tasks only."
+msgstr "Nur für aktive Aufgaben verfügbar."
+
+#: src/processes/messages/workflow.py:178
+msgid "You must be added to the task as a performer to complete this action."
+msgstr "Sie müssen der Aufgabe als Ausführender hinzugefügt werden, um diese Aktion abzuschließen."
+
+#: src/processes/messages/workflow.py:181
+msgid "Completed task can't be returned."
+msgstr "Eine abgeschlossene Aufgabe kann nicht zurückgegeben werden."
+
+#: src/processes/messages/workflow.py:180
+msgid "You cannot write a comment on a inactive task."
+msgstr "Sie können keinen Kommentar zu einer inaktiven Aufgabe schreiben."
+
+#: src/processes/messages/workflow.py:182
+msgid "The user or group specified for a \"User\" field does not exist."
+msgstr "Der Benutzer oder die Gruppe, die für ein Feld des Typs \"Benutzer\" angegeben wurde, existiert nicht."

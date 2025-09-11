@@ -2,15 +2,10 @@
 /* prettier-ignore */
 import * as React from 'react';
 import { injectIntl, IntlShape } from 'react-intl';
+import classNames from 'classnames';
 
-import {
-  EMoveDirections,
-  EInputNameBackgroundColor,
-} from '../../../types/workflow';
-import {
-  EExtraFieldType,
-  IExtraField,
-} from '../../../types/template';
+import { EMoveDirections, EInputNameBackgroundColor } from '../../../types/workflow';
+import { EExtraFieldType, IExtraField } from '../../../types/template';
 import { isArrayWithItems } from '../../../utils/helpers';
 import { getNormalizeFieldsOrders, moveWorkflowField } from '../../../utils/workflows';
 
@@ -21,6 +16,7 @@ import { getEditedFields } from '../ExtraFields/utils/getEditedFields';
 import { getEmptyField } from '../KickoffRedux/utils/getEmptyField';
 
 import styles from './OutputForm.css';
+import stylesTaskForm from '../TaskForm/TaskForm.css';
 
 export interface IOutputFormOwnProps {
   fields: IExtraField[];
@@ -78,8 +74,8 @@ export function OutputForm({ fields, onOutputChange, intl, isDisabled, show, acc
   };
 
   const renderOutputIcons = () => (
-    <div className={styles['components']}>
-      {ExtraFieldsMap.map(field => (
+    <div className={classNames(styles['components'], stylesTaskForm['content-mt16'])}>
+      {ExtraFieldsMap.map((field) => (
         <ExtraFieldIcon {...field} key={field.id} onClick={() => handleCreateField(field.id)} />
       ))}
     </div>
@@ -105,11 +101,10 @@ export function OutputForm({ fields, onOutputChange, intl, isDisabled, show, acc
               isDisabled={isDisabled}
               innerRef={outputRef}
               accountId={accountId}
-            />),
-          )}
+            />
+          ))}
         </div>
       )}
-
     </>
   );
 }

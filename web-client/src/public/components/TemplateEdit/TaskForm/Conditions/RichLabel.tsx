@@ -8,19 +8,38 @@ import styles from './Conditions.css';
 interface IRichLabelProps {
   variables: TTaskVariable[];
   variable: TTaskVariable;
-  isSelected: boolean;
+  isSelected?: boolean;
+  isFromStartingOrder?: boolean;
 }
 
-export function RichLabel({ variable: { title, subtitle, richSubtitle }, variables, isSelected }: IRichLabelProps) {
+export function RichLabel({
+  variable: { title, subtitle, richSubtitle },
+  variables,
+  isSelected,
+  isFromStartingOrder,
+}: IRichLabelProps) {
   return (
     <Tooltip
       interactive={false}
       containerClassName={styles['condition__tooltop']}
-      content={<TooltipRichContent title={title} subtitle={subtitle} variables={variables} />}
+      content={
+        <TooltipRichContent
+          title={title}
+          subtitle={isFromStartingOrder ? title || '' : subtitle || ''}
+          variables={variables}
+          hideTitle={isFromStartingOrder}
+        />
+      }
     >
       <div className={classnames(styles['rich-label'], isSelected && styles['condition__dropdown-option-is-selected'])}>
-        <div className={styles['variable-title']}>{title}</div>
-        <div className={styles['variable-richsubtitle']}>{richSubtitle}</div>
+        {isFromStartingOrder ? (
+          richSubtitle || title
+        ) : (
+          <>
+            <div className={styles['variable-title']}>{title}</div>
+            <div className={styles['variable-richsubtitle']}>{richSubtitle}</div>
+          </>
+        )}
       </div>
     </Tooltip>
   );

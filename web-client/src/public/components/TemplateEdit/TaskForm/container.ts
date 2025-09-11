@@ -1,5 +1,3 @@
-/* eslint-disable */
-/* prettier-ignore */
 import { connect } from 'react-redux';
 
 import { TaskForm, ITaskFormProps } from './TaskForm';
@@ -11,7 +9,7 @@ import { getIsUserSubsribed } from '../../../redux/selectors/user';
 type TStoreProps = Pick<
   ITaskFormProps,
   'listVariables' | 'templateVariables' | 'isSubscribed' | 'accountId' | 'isTeamInvitesModalOpen' | 'kickoff' | 'tasks'
->;
+> & { templateId: number | undefined };
 type TDispatchProps = Pick<ITaskFormProps, 'patchTask'>;
 type TOwnProps = Pick<ITaskFormProps, 'task'>;
 
@@ -33,6 +31,7 @@ const mapStateToProps = (state: IApplicationState, { task }: TOwnProps): TStoreP
     isTeamInvitesModalOpen,
     kickoff,
     tasks,
+    templateId: id,
   };
 };
 

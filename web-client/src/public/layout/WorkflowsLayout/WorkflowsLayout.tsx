@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from 'react';
+/* eslint-disable consistent-return */
+import React, { useEffect, useRef, useState } from 'react';
 import { useIntl } from 'react-intl';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 
 import { loadWorkflowsList, TRemoveWorkflowFromListPayload } from '../../redux/actions';
 import { TopNavContainer } from '../../components/TopNav';
@@ -18,8 +19,16 @@ import {
   getSortingsByStatus,
 } from '../../utils/workflows/filters';
 import { isArrayWithItems } from '../../utils/helpers';
+import {
+  TableViewContainerRef,
+  WorkflowsTableActions,
+} from '../../components/Workflows/WorkflowsTablePage/WorkflowsTable';
+import { WorkflowsTableProvider } from '../../components/Workflows/WorkflowsTablePage/WorkflowsTable/WorkflowsTableContext';
 
+import { IApplicationState } from '../../types/redux';
+import { useCheckDevice } from '../../hooks/useCheckDevice';
 import styles from './WorkflowsLayout.css';
+import { updateQueryFields } from './utils';
 
 export interface IWorkflowsLayoutComponentProps extends IWorkflowsFiltersProps {
   workflowId: number | null;
@@ -58,7 +67,48 @@ export function WorkflowsLayoutComponent({
 }: IWorkflowsLayoutComponentProps) {
   const dispatch = useDispatch();
   const { formatMessage } = useIntl();
+  const { isMobile } = useCheckDevice();
+  const workflowsLoadingStatus = useSelector((state: IApplicationState) => state.workflows.workflowsLoadingStatus);
+  const selectedFieldsByTemplate = useSelector(
+    (state: IApplicationState) => state.workflows.workflowsSettings.selectedFieldsByTemplate,
+  );
   const [isLoadSteps, setIsLoadSteps] = useState(false);
+  const [isTableWiderThanScreen, setIsTableWiderThanScreen] = useState(false);
+  const workflowsMainRef = useRef<HTMLDivElement>(null);
+  const tableViewContainerRef = useRef<TableViewContainerRef>(null);
+
+  useEffect(() => {
+    if (workflowsView !== EWorkflowsView.Table) {
+      return;
+    }
+
+    const checkWidth = () => {
+      if (workflowsMainRef.current && tableViewContainerRef.current?.element) {
+        const isWider = tableViewContainerRef.current.element.scrollWidth > workflowsMainRef.current.clientWidth;
+        setIsTableWiderThanScreen(isWider);
+      }
+    };
+
+    const setupObserver = () => {
+      if (!tableViewContainerRef.current?.element) {
+        setTimeout(setupObserver, 100);
+        return;
+      }
+
+      const observer = new ResizeObserver(checkWidth);
+      observer.observe(tableViewContainerRef.current.element);
+
+      window.addEventListener('resize', checkWidth);
+      checkWidth();
+
+      return () => {
+        window.removeEventListener('resize', checkWidth);
+        observer.disconnect();
+      };
+    };
+
+    return setupObserver();
+  }, [workflowsView]);
 
   useEffect(() => {
     setIsLoadSteps(false);
@@ -127,13 +177,25 @@ export function WorkflowsLayoutComponent({
 
   useEffect(() => {
     applyFilters();
-  }, [statusFilter, templatesIdsFilter, stepsIdsFilter, performersIdsFilter, workflowStartersIdsFilter, sorting]);
+  }, [
+    statusFilter,
+    templatesIdsFilter,
+    stepsIdsFilter,
+    performersIdsFilter,
+    workflowStartersIdsFilter,
+    sorting,
+    selectedFieldsByTemplate,
+  ]);
 
   useEffect(() => {
     if (checkSortingIsIncorrect(statusFilter, sorting)) {
       changeWorkflowsSorting(EWorkflowsSorting.DateDesc);
     }
   }, [sorting, statusFilter]);
+
+  useEffect(() => {
+    updateQueryFields(selectedFieldsByTemplate, templatesIdsFilter, workflowsView);
+  }, [selectedFieldsByTemplate, templatesIdsFilter, workflowsView]);
 
   const templateIdFilter = React.useMemo(() => {
     const [firstTemplate] = templatesIdsFilter;
@@ -213,9 +275,16 @@ export function WorkflowsLayoutComponent({
   };
 
   return (
-    <>
-      <TopNavContainer leftContent={renderLeftContent()} />
-      <main>
+    <main
+      ref={workflowsMainRef}
+      id="workflows-main"
+      className={workflowsView === EWorkflowsView.Table ? styles['workflows-main'] : ''}
+    >
+      <TopNavContainer leftContent={renderLeftContent()} isFromWorkflowsLayout workflowsView={workflowsView} />
+      <WorkflowsTableProvider value={{ ref: tableViewContainerRef, isTableWiderThanScreen }}>
+        {workflowsView === EWorkflowsView.Table && (isTableWiderThanScreen || isMobile) && (
+          <WorkflowsTableActions workflowsLoadingStatus={workflowsLoadingStatus} isWideTable isMobile={isMobile} />
+        )}
         <div className="container-fluid">{children}</div>
 
         <WorkflowModalContainer
@@ -225,7 +294,7 @@ export function WorkflowsLayoutComponent({
           }}
           onWorkflowDeleted={() => removeWorkflowFromList({ workflowId })}
         />
-      </main>
-    </>
+      </WorkflowsTableProvider>
+    </main>
   );
 }

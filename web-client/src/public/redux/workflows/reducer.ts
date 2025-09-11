@@ -63,6 +63,7 @@ export const INIT_STATE: IStoreWorkflows = {
     areFiltersChanged: false,
     sorting: EWorkflowsSorting.DateDesc,
     values: INITIAL_WORKFLOWS_FILTERS,
+    selectedFieldsByTemplate: {},
     templateList: {
       items: [],
       isLoading: false,
@@ -71,6 +72,9 @@ export const INIT_STATE: IStoreWorkflows = {
       workflowStartersCounters: [],
       performersCounters: [],
     },
+  },
+  WorkflowsTuneViewModal: {
+    isOpen: false,
   },
 };
 
@@ -322,6 +326,26 @@ export const reducer = (state = INIT_STATE, action: TWorkflowsActions | TGeneral
         draftState.workflowsSettings.view = action.payload;
       });
     }
+    case EWorkflowsActions.OpenTuneViewModal:
+      return produce(state, (draftState) => {
+        draftState.WorkflowsTuneViewModal.isOpen = true;
+      });
+
+    case EWorkflowsActions.CloseTuneViewModal:
+      return produce(state, (draftState) => {
+        draftState.WorkflowsTuneViewModal.isOpen = false;
+      });
+
+    case EWorkflowsActions.SetFilterSelectedFields:
+      return produce(state, (draftState) => {
+        const { templateId, selectedFields } = action.payload;
+        draftState.workflowsSettings.selectedFieldsByTemplate[templateId] = selectedFields;
+      });
+
+    case EWorkflowsActions.LoadTemplateFieldsFromLocalStorage:
+      return produce(state, (draftState) => {
+        draftState.workflowsSettings.selectedFieldsByTemplate = action.payload;
+      });
 
     default:
       return { ...state };

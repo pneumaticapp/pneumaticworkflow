@@ -1,0 +1,258 @@
+from django.contrib.auth import get_user_model
+from django.conf import settings
+from django.db import transaction
+from rest_framework.mixins import (
+    ListModelMixin,
+    DestroyModelMixin,
+)
+from rest_framework.decorators import action
+from rest_framework.viewsets import GenericViewSet
+
+from src.analytics.services import AnalyticService
+from src.accounts.permissions import (
+    UserIsAdminOrAccountOwner,
+    MasterAccountPermission,
+    MasterAccountAccessPermission,
+    ExpiredSubscriptionPermission,
+    BillingPlanPermission,
+)
+from src.generics.permissions import (
+    UserIsAuthenticated,
+)
+from src.generics.mixins.views import (
+    CustomViewSetMixin,
+)
+from src.accounts.models import Account
+from src.accounts.enums import (
+    BillingPlanType,
+)
+from src.accounts.serializers.tenant import TenantSerializer
+from src.accounts.filters import TenantsFilterSet
+from src.authentication.services import AuthService
+from src.generics.filters import PneumaticFilterBackend
+from src.accounts.services import (
+    AccountService,
+    UserService,
+)
+from src.accounts.services.exceptions import (
+    AccountServiceException,
+    UserServiceException
+)
+from src.utils.validation import raise_validation_error
+from src.processes.services.system_workflows import (
+    SystemWorkflowService
+)
+from src.payment.stripe.service import StripeService
+from src.payment.stripe.exceptions import StripeServiceException
+from src.payment.tasks import (
+    increase_plan_users,
+)
+
+UserModel = get_user_model()
+
+
+class TenantsViewSet(
+    CustomViewSetMixin,
+    DestroyModelMixin,
+    ListModelMixin,
+    GenericViewSet
+):
+    filter_backends = [PneumaticFilterBackend]
+    action_filterset_classes = {
+        'list': TenantsFilterSet
+    }
+    serializer_class = TenantSerializer
+
+    def get_permissions(self):
+        if self.action == 'create':
+            return (
+                UserIsAuthenticated(),
+                BillingPlanPermission(),
+                ExpiredSubscriptionPermission(),
+                MasterAccountPermission(),
+                UserIsAdminOrAccountOwner(),
+            )
+        elif self.action in ('list', 'count'):
+            return (
+                UserIsAuthenticated(),
+                ExpiredSubscriptionPermission(),
+                MasterAccountPermission(),
+                UserIsAdminOrAccountOwner(),
+            )
+        else:
+            return (
+                UserIsAuthenticated(),
+                BillingPlanPermission(),
+                ExpiredSubscriptionPermission(),
+                MasterAccountAccessPermission(),
+                UserIsAdminOrAccountOwner(),
+            )
+
+    def get_queryset(self):
+        return self.request.user.account.tenants.only_tenants()
+
+    def perform_destroy(self, instance: Account):
+        master_account = self.request.user.account
+        billing_enabled = (
+            instance.billing_sync and settings.PROJECT_CONF['BILLING']
+        )
+        with transaction.atomic():
+            if (
+                instance.billing_plan == BillingPlanType.UNLIMITED
+                and billing_enabled
+            ):
+                try:
+                    stripe_service = StripeService(
+                        user=self.request.user,
+                        subscription_account=instance,
+                        is_superuser=self.request.is_superuser,
+                        auth_type=self.request.token_type,
+                    )
+                    stripe_service.cancel_subscription()
+                except StripeServiceException as ex:
+                    raise_validation_error(message=ex.message)
+            instance.delete()
+            account_service = AccountService(
+                instance=master_account,
+                user=self.request.user,
+                is_superuser=self.request.is_superuser,
+                auth_type=self.request.token_type,
+            )
+            account_service.update_users_counts()
+            if (
+                instance.billing_plan == BillingPlanType.PREMIUM
+                and billing_enabled
+            ):
+                increase_plan_users.delay(
+                    account_id=master_account.id,
+                    is_superuser=self.request.is_superuser,
+                    auth_type=self.request.token_type,
+                )
+
+    def patch(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(
+            instance=instance,
+            data=request.data,
+            partial=True
+        )
+        serializer.is_valid(raise_exception=True)
+        new_tenant_name = serializer.validated_data.get('tenant_name')
+        old_tenant_name = instance.tenant_name
+        with (transaction.atomic()):
+            instance = serializer.save()
+            if (
+                new_tenant_name is not None
+                and new_tenant_name != old_tenant_name
+                and instance.billing_sync
+                and settings.PROJECT_CONF['BILLING']
+            ):
+                try:
+                    stripe_service = StripeService(
+                        user=self.request.user,
+                        subscription_account=instance,
+                        is_superuser=self.request.is_superuser,
+                        auth_type=self.request.token_type,
+                    )
+                    stripe_service.update_subscription_description()
+                except StripeServiceException as ex:
+                    raise_validation_error(message=ex.message)
+            return self.response_ok(serializer.data)
+
+    def create(self, request, **kwargs):
+        slz = self.get_serializer(data=request.data)
+        slz.is_valid(raise_exception=True)
+        account_service = AccountService(
+            is_superuser=request.is_superuser,
+            auth_type=request.token_type,
+        )
+        user_service = UserService(
+            is_superuser=request.is_superuser,
+            auth_type=request.token_type,
+        )
+        master_account = request.user.account
+        with transaction.atomic():
+            try:
+                tenant_account = account_service.create(
+                    tenant_name=slz.validated_data['tenant_name'],
+                    master_account=master_account,
+                )
+                tenant_user = user_service.create_tenant_account_owner(
+                    tenant_account=tenant_account,
+                    master_account=master_account
+                )
+                account_service.user = tenant_user
+                account_service.update_users_counts()
+            except (AccountServiceException, UserServiceException) as ex:
+                raise_validation_error(message=ex.message)
+            else:
+                service = SystemWorkflowService(user=tenant_user)
+                service.create_onboarding_templates()
+                service.create_activated_templates()
+                billing_enabled = (
+                    settings.PROJECT_CONF['BILLING']
+                    and master_account.billing_sync
+                )
+                if (
+                    tenant_account.billing_plan == BillingPlanType.PREMIUM
+                    and billing_enabled
+                ):
+                    increase_plan_users.delay(
+                        account_id=master_account.id,
+                        is_superuser=request.is_superuser,
+                        auth_type=request.token_type,
+                    )
+                elif tenant_account.billing_plan is None:
+                    try:
+                        stripe_service = StripeService(
+                            user=request.user,
+                            subscription_account=tenant_account,
+                            is_superuser=request.is_superuser,
+                            auth_type=request.token_type,
+                        )
+                        stripe_service.create_off_session_subscription(
+                            products=[
+                                {
+                                    'code': 'unlimited_month',
+                                    'quantity': 1
+                                }
+                            ]
+                        )
+                    except StripeServiceException as ex:
+                        raise_validation_error(message=ex.message)
+
+                AnalyticService.tenants_added(
+                    master_user=request.user,
+                    tenant_account=tenant_account,
+                    is_superuser=request.is_superuser,
+                    auth_type=request.token_type
+                )
+        response_slz = self.serializer_class(instance=tenant_account)
+        return self.response_ok(response_slz.data)
+
+    @action(methods=('GET',), detail=True)
+    def token(self, request, **kwargs):
+        tenant_account = self.get_object()
+        account_owner = tenant_account.get_owner()
+        token = AuthService.get_auth_token(
+            user=account_owner,
+            user_agent=request.headers.get(
+                'User-Agent',
+                request.META.get('HTTP_USER_AGENT')
+            ),
+            user_ip=request.META.get('HTTP_X_REAL_IP'),
+            superuser_mode=True,
+        )
+        AnalyticService.tenants_accessed(
+            master_user=request.user,
+            tenant_account=tenant_account,
+            is_superuser=request.is_superuser,
+            auth_type=request.token_type
+        )
+        return self.response_ok({'token': token})
+
+    @action(methods=('GET',), detail=False)
+    def count(self, request, **kwargs):
+        return self.response_ok({
+            'count': self.get_queryset().count()
+        })

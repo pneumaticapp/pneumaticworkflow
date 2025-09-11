@@ -1,5 +1,3 @@
-/* eslint-disable */
-/* prettier-ignore */
 import { EConditionLogicOperations, TConditionRule } from '..';
 import { createConditionRuleApiName } from '../../../../../utils/createId';
 

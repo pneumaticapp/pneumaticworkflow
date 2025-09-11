@@ -1,5 +1,4 @@
-/* eslint-disable react/jsx-no-target-blank */
-import * as React from 'react';
+import React from 'react';
 import { useIntl } from 'react-intl';
 import classnames from 'classnames';
 
@@ -35,9 +34,17 @@ export interface IPageTitleProps {
   size?: THeaderSize;
   className?: string;
   mbSize?: string;
+  isFromTableView?: boolean;
 }
 
-export function PageTitle({ titleId, size = '4', className, withUnderline = true, mbSize }: IPageTitleProps) {
+export function PageTitle({
+  titleId,
+  size = '4',
+  className,
+  withUnderline = true,
+  mbSize,
+  isFromTableView,
+}: IPageTitleProps) {
   const { formatMessage } = useIntl();
 
   return (
@@ -50,14 +57,16 @@ export function PageTitle({ titleId, size = '4', className, withUnderline = true
               {formatMessage({ id: tooltipTextMap[titleId] })}
 
               {learnMoreLinkMap[titleId] && (
-                <a href={learnMoreLinkMap[titleId]} target="_blank" className={styles['learn-more']}>
+                <a href={learnMoreLinkMap[titleId]} target="_blank" rel="noreferrer" className={styles['learn-more']}>
                   {formatMessage({ id: 'workflow-highlights.title-tooltip-learn-more' })}
                 </a>
               )}
             </>
           }
           containerClassName={styles['tooltip-container']}
+          contentClassName={isFromTableView ? styles['tooltip-content-table-view'] : ''}
           placement="bottom"
+          appendTo={isFromTableView ? () => document.body : undefined}
         >
           <span className={styles['tooltip-icon']}>
             <FilledInfoIcon />

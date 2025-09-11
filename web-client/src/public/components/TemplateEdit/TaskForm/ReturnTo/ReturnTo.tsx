@@ -19,8 +19,8 @@ interface IReturnToProps {
   variables: TTaskVariable[];
   tasks: ITemplateTask[];
   currentTaskRevertTask: string | null;
-  currentTaskApiName: string;
   setCurrentTask(changedFields: Partial<ITemplateTask>): void;
+  taskAncestors: Set<string>;
 }
 
 interface IDropdownTask {
@@ -28,24 +28,25 @@ interface IDropdownTask {
   apiName: string | null;
   richLabel: ReactNode;
 }
-const STYLES = {
-  option: styles['return-to__option'],
-  container: classnames(styles['return-to__container'], stylesTaskForm['taskform__box']),
-  addReturn: classnames(styles['return-to__add-return'], stylesTaskForm['taskform__add-rule']),
-  dropdownContainer: classnames(styles['return-to__dropdown-container'], stylesTaskForm['taskform__basket-visibility']),
-  removeReturn: stylesTaskForm['taskform__remove-rule'],
-} as const;
 
-export function ReturnTo({
-  variables,
-  tasks,
-  currentTaskRevertTask,
-  currentTaskApiName,
-  setCurrentTask,
-}: IReturnToProps) {
+export function ReturnTo({ variables, tasks, currentTaskRevertTask, setCurrentTask, taskAncestors }: IReturnToProps) {
   const [isReturnTo, setIsReturnTo] = useState(Boolean(currentTaskRevertTask));
   const { formatMessage } = useIntl();
   const { isMobile } = useCheckDevice();
+  const STYLES = {
+    option: styles['return-to__option'],
+    container: classnames(
+      styles['return-to__container'],
+      stylesTaskForm['taskform__box'],
+      isReturnTo ? stylesTaskForm['content-mt16'] : stylesTaskForm['content-mt12'],
+    ),
+    addReturn: classnames(styles['return-to__add-return'], stylesTaskForm['taskform__add-rule']),
+    dropdownContainer: classnames(
+      styles['return-to__dropdown-container'],
+      stylesTaskForm['taskform__basket-visibility'],
+    ),
+    removeReturn: stylesTaskForm['taskform__remove-rule'],
+  } as const;
 
   const TRANSLATIONS = {
     addReturn: 'templates.return-to.add-return',
@@ -56,7 +57,7 @@ export function ReturnTo({
   const dropdownTaskList = useMemo(
     () => [
       ...tasks
-        .filter((task: ITemplateTask) => currentTaskApiName !== task.apiName)
+        .filter((task: ITemplateTask) => taskAncestors.has(task.apiName))
         .map(({ name, apiName }) => {
           return {
             label: name,
@@ -69,7 +70,7 @@ export function ReturnTo({
           };
         }),
     ],
-    [tasks, currentTaskApiName, variables],
+    [tasks, variables, taskAncestors],
   );
 
   const selectedTask =

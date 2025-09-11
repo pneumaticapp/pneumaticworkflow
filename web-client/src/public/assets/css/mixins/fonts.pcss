@@ -122,6 +122,12 @@
   font-weight: $weight;
 }
 
+@define-mixin text-truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 @define-mixin text-overflow $line: 1 {
   display: -webkit-box;
   -webkit-box-orient: vertical;

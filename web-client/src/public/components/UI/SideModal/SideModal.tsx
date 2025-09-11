@@ -1,6 +1,5 @@
-/* eslint-disable */
-/* prettier-ignore */
 import * as React from 'react';
+import { Component } from 'react';
 import classnames from 'classnames';
 import * as ReactDOM from 'react-dom';
 import OutsideClickHandler from 'react-outside-click-handler';
@@ -16,6 +15,7 @@ export interface ISideModalProps {
   onOpen?(): void;
   onClose(): void;
   onAfterClose?(): void;
+  nonePeddingRight?: boolean;
 }
 
 export interface ISideModalPartProps {
@@ -23,44 +23,27 @@ export interface ISideModalPartProps {
   className?: string;
 }
 
-const Header = (props: ISideModalPartProps) => (
-  <div className={classnames(styles['side-modal-parts_header'], props.className)}>
-    {props.children}
-  </div>
-);
+const Header = (props: ISideModalPartProps) => {
+  const { children, className } = props;
+  return <div className={classnames(styles['side-modal-parts_header'], className)}>{children}</div>;
+};
 
-const Body = (props: ISideModalPartProps) => (
-  <div className={classnames(styles['side-modal-parts_body'], props.className)}>
-    {props.children}
-  </div>
-);
+const Body = (props: ISideModalPartProps) => {
+  const { children, className } = props;
+  return <div className={classnames(styles['side-modal-parts_body'], className)}>{children}</div>;
+};
 
-const Footer = (props: ISideModalPartProps) => (
-  <div className={classnames(styles['side-modal-parts_footer'], props.className)}>
-    {props.children}
-  </div>
-);
+const Footer = (props: ISideModalPartProps) => {
+  const { children, className } = props;
+  return <div className={classnames(styles['side-modal-parts_footer'], className)}>{children}</div>;
+};
 
-export class SideModal extends React.Component<ISideModalProps> {
+export class SideModal extends Component<ISideModalProps> {
   public static Header = Header;
+
   public static Body = Body;
+
   public static Footer = Footer;
-
-  private hanldeClickOutside = () => {
-    const { onClose } = this.props;
-
-    onClose();
-  };
-
-  private handleKeyDown = (event: KeyboardEvent) => {
-    const ESC_CODE = 27;
-
-    const { onClose } = this.props;
-
-    if (event.keyCode === ESC_CODE) {
-      onClose();
-    }
-  };
 
   public componentDidMount() {
     const { onOpen, onClose } = this.props;
@@ -78,32 +61,48 @@ export class SideModal extends React.Component<ISideModalProps> {
     onAfterClose?.();
   }
 
+  private hanldeClickOutside = () => {
+    const { onClose } = this.props;
+
+    onClose();
+  };
+
+  private handleKeyDown = (event: KeyboardEvent) => {
+    const ESC_CODE = 27;
+
+    const { onClose } = this.props;
+
+    if (event.keyCode === ESC_CODE) {
+      onClose();
+    }
+  };
+
   private renderModal() {
-    const {
-      className,
-      isClosing,
-      onClose,
-    } = this.props;
+    const { className, isClosing, onClose, nonePeddingRight, children } = this.props;
 
     return (
       <OutsideClickHandler onOutsideClick={this.hanldeClickOutside}>
-        <div className={classnames(
-          styles['side-modal'],
-          !isClosing ? styles['side-modal_opened'] : styles['side-modal_closed'],
-        )}>
+        <div
+          className={classnames(
+            styles['side-modal'],
+            !isClosing ? styles['side-modal_opened'] : styles['side-modal_closed'],
+            nonePeddingRight && styles['side-modal_none-pedding-right'],
+          )}
+        >
           <button
             onClick={onClose}
             type="button"
-            className={styles['side-modal_close']}
+            className={classnames(
+              styles['side-modal_close'],
+              nonePeddingRight && styles['side-modal_close-is-from-view-modal'],
+            )}
             aria-label="Close modal"
             data-test-id="close"
           >
             <ClearIcon />
           </button>
 
-          <div className={classnames(styles['side-modal-parts'], className)}>
-            {this.props.children}
-          </div>
+          <div className={classnames(styles['side-modal-parts'], className)}>{children}</div>
         </div>
       </OutsideClickHandler>
     );

@@ -35,7 +35,6 @@ import { WorkflowModalHeaderProgressBar } from './WorkflowModalHeaderProgressBar
 import { validateWorkflowName } from '../../../utils/validators';
 import { TemplateName } from '../../UI/TemplateName';
 import { getWorkflowProgressColor } from '../utils/getWorkflowProgressColor';
-import { countCompletedTasks } from '../utils/countCompletedTasks';
 import { getEditedFields } from '../../TemplateEdit/ExtraFields/utils/getEditedFields';
 import { UserData } from '../../UserData';
 import { DateFormat } from '../../UI/DateFormat';
@@ -125,10 +124,10 @@ export class WorkflowModal extends React.Component<IWorkflowModalProps> {
     }
 
     const {
-      workflow: { lastActiveCurrentTask, tasksCountWithoutSkipped, status },
+      workflow: { completedTasks, tasksCountWithoutSkipped },
     } = this.props;
-    if (lastActiveCurrentTask && tasksCountWithoutSkipped) {
-      return getPercent(countCompletedTasks(lastActiveCurrentTask, status), tasksCountWithoutSkipped);
+    if (tasksCountWithoutSkipped) {
+      return getPercent(completedTasks.length, tasksCountWithoutSkipped);
     }
 
     return undefined;
@@ -384,7 +383,6 @@ export class WorkflowModal extends React.Component<IWorkflowModalProps> {
             sendComment={sendWorkflowLogComments}
             workflowStatus={workflow.status}
             onClickTask={this.closeModal}
-            oldestDeadline={workflow.oldestDeadline}
             areTasksClickable={true}
           />
         </ModalBody>

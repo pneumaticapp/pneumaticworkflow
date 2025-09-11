@@ -18,10 +18,11 @@ import {
   ETemplatesSystemStatus,
   setCurrentTemplatesSystemStatus,
   setIsTemplateOwner,
+  saveTemplateTasks,
 } from '../actions';
 import { getTemplatesSystem } from '../../api/getSystemTemplates';
 import { getTemplatesIntegrationsStats } from '../../api/getTemplatesIntegrationsStats';
-import { TTemplateIntegrationStatsApi } from '../../types/template';
+import { TTemplateIntegrationStatsApi, TTransformedTask } from '../../types/template';
 import { logger } from '../../utils/logger';
 import { NotificationManager } from '../../components/UI/Notifications';
 import { getErrorMessage } from '../../utils/getErrorMessage';
@@ -34,7 +35,7 @@ import { getTemplateFields, TGetTemplateFieldsResponse } from '../../api/getTemp
 import { isArrayWithItems } from '../../utils/helpers';
 import { getTemplatesSystemCategories } from '../../api/getSystemTemplatesCategories';
 import { ITemplatesSystemCategories } from '../../types/redux';
-import { LIMIT_LOAD_SYSTEMS_TEMPLATES, LIMIT_LOAD_TEMPLATES } from '../../constants/defaultValues';
+import { LIMIT_LOAD_SYSTEMS_TEMPLATES, LIMIT_LOAD_TEMPLATES, varibleIdRegex } from '../../constants/defaultValues';
 
 function* fetchTemplatesSystem() {
   try {
@@ -123,6 +124,21 @@ export function* handleLoadTemplateVariables(templateId: number) {
     const variables = getVariables({ kickoff, tasks });
 
     yield put(loadTemplateVariablesSuccess({ templateId, variables }));
+    const transformedTasks: TTransformedTask[] = [
+      ...(kickoff.fields.length > 0 ? [{ apiName: '-1', name: 'Kick-off', fields: kickoff.fields }] : []),
+      ...tasks
+        .filter((task) => task.fields.length > 0)
+        .map((task) => {
+          if (varibleIdRegex.test(task.name)) {
+            return {
+              ...task,
+              needSteName: true,
+            };
+          }
+          return task;
+        }),
+    ];
+    yield put(saveTemplateTasks({ templateId, transformedTasks }));
   } catch (error) {
     logger.info('fetch template fields error: ', error);
     NotificationManager.error({ message: getErrorMessage(error) });

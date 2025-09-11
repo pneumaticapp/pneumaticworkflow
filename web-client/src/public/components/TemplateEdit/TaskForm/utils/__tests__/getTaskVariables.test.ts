@@ -43,6 +43,7 @@ const mockTask1: ITemplateTask = {
   uuid: '5f6cbe6b-238e-462e-8f18-d5ee5ec45de3',
   checklists: [],
   revertTask: null,
+  ancestors: [],
 };
 
 const mockTask2: ITemplateTask = {
@@ -70,6 +71,7 @@ const mockTask2: ITemplateTask = {
   uuid: '86b7e716-3819-4b2b-b306-749e0ac2f4e9',
   checklists: [],
   revertTask: null,
+  ancestors: ['task-1'],
 };
 
 describe('getTaskVariables', () => {

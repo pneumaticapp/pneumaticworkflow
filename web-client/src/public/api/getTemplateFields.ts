@@ -3,7 +3,7 @@ import { getBrowserConfigEnv } from '../utils/getConfig';
 import { IKickoff, ITemplateTask } from '../types/template';
 
 export type TGetTemplateFieldsResponse = {
-  tasks: Pick<ITemplateTask, 'id' | 'fields'>[];
+  tasks: Pick<ITemplateTask, 'id' | 'fields' | 'name' | 'apiName'>[];
   kickoff: Pick<IKickoff, 'fields'>;
 };
 

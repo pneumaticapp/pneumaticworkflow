@@ -1,3 +1,4 @@
+/* stylelint-disable declaration-colon-newline-after */
 /* stylelint-disable selector-max-specificity */
 
 .checkbox {
@@ -12,7 +13,6 @@
 
   &__box {
     position: relative;
-    margin-right: 0.8rem;
     box-sizing: border-box;
     width: 2rem;
     height: 2rem;
@@ -21,6 +21,10 @@
     border-radius: 0.4rem;
     flex-shrink: 0;
     transition: all 0.1s ease;
+
+    &--has-margin {
+      margin-right: 0.8rem;
+    }
 
     &::before,
     &::after {
@@ -33,7 +37,8 @@
     &::before {
       width: 2rem;
       height: 2rem;
-      background: url("data:image/svg+xml,%0A%3Csvg width='16' height='16' viewBox='0 0 16 16' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M5.81818 10.7166L2.95455 7.79121L2 8.76633L5.81818 12.6668L14 4.30862L13.0455 3.3335L5.81818 10.7166Z' fill='%23262522'/%3E%3C/svg%3E%0A") no-repeat center center / 1.6rem;
+      background: url("data:image/svg+xml,%0A%3Csvg width='16' height='16' viewBox='0 0 16 16' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M5.81818 10.7166L2.95455 7.79121L2 8.76633L5.81818 12.6668L14 4.30862L13.0455 3.3335L5.81818 10.7166Z' fill='%23262522'/%3E%3C/svg%3E%0A")
+        no-repeat center center / 1.6rem;
     }
 
     /* indeterminate symbol */
@@ -75,7 +80,7 @@
       background-color: var(--pneumatic-color-link-hover);
 
       &::after {
-        background-color: white;
+        background-color: var(--pneumatic-color-white);
         opacity: 1;
       }
     }

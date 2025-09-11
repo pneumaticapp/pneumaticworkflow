@@ -26,6 +26,7 @@ type TShowMoreProps = React.PropsWithChildren<
   TShowMoreCommonProps &
     TControlledProps & {
       isDisabled?: boolean;
+      isFromTaskForm?: boolean;
     }
 >;
 
@@ -44,6 +45,7 @@ export function ShowMore({
   renderCustomLabel,
   widget,
   isDisabled,
+  isFromTaskForm,
 }: TShowMoreProps) {
   const [isVisibleState, setVisibleState] = useState(Boolean(isInitiallyVisible));
   const { messages } = useIntl();
@@ -104,7 +106,10 @@ export function ShowMore({
         </button>
         {widget && !isVisible && <div className={styles['show_more__right-vidgets']}>{widget(toggleVisible)}</div>}
       </div>
-      {isVisible && <div className={classnames(styles['content'], contentClassName)}>{children}</div>}
+
+      {isVisible && (
+        <div className={classnames(!isFromTaskForm && styles['content'], contentClassName)}>{children}</div>
+      )}
     </div>
   );
 }

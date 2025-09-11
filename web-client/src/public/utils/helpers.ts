@@ -24,6 +24,32 @@ export function getPluralNoun({ counter, single, plural, includeCounter = false 
   return includeCounter ? `${counter} ${correctNoun}` : correctNoun;
 }
 
+export type TGetTriplePluralParams = {
+  counter?: number;
+  forms: string[];
+  formatMessage: ({ id }: { id: string }) => string;
+};
+
+export function getTriplePlural({
+  counter,
+  forms: [string1, string2, string3],
+  formatMessage,
+}: TGetTriplePluralParams): string {
+  if (!counter) {
+    return '';
+  }
+
+  let message;
+  if (counter % 10 === 1 && counter % 100 !== 11) {
+    message = string1;
+  } else if ([2, 3, 4].includes(counter % 10) && ![12, 13, 14].includes(counter % 100)) {
+    message = string2;
+  } else {
+    message = string3;
+  }
+  return `${counter} ${formatMessage({ id: message })}`;
+}
+
 export function removeFromArrayByKey<T, K extends keyof T>(value: Pick<T, K>, arr: T[], key: K) {
   return arr.filter((v) => v[key] !== value[key]);
 }

@@ -1,5 +1,9 @@
 .react-select {
-  
+  &.is-disabled {
+    opacity: 0.32;
+    cursor: not-allowed;
+  }
+
   .react-select__control .react-select__indicators {
     transition: transform 0.3s;
     transform: rotate(0deg);
@@ -81,12 +85,18 @@
     position: static !important;
   }
 
+  .react-select__group {
+    padding: 0 !important;
+  }
+
   .react-select__group-heading {
-    color: var(--pneumatic-color-black48) !important;
-    font-weight: 700 !important;
-    font-size: 1.1rem !important;
-    line-height: 1.6rem !important;
+    @mixin text-small-extra;
+
     letter-spacing: 0.05em !important;
+    margin: 0 !important;
+    padding-bottom: 1rem !important;
+    padding-top: 1rem !important;
+    font-weight: 700 !important;
     text-transform: uppercase !important;
   }
 

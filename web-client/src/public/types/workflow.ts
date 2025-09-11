@@ -1,7 +1,7 @@
 import { IAccount, TUserId } from './user';
 import { TUploadedFile } from '../utils/uploadFiles';
 import { ITask, ITemplateStep, TaskWithTsp } from './tasks';
-import { IKickoff, IExtraField, ITemplateTitle, ETemplateOwnerType, RawPerformer } from './template';
+import { IKickoff, IExtraField, ITemplateTitle, ETemplateOwnerType, RawPerformer, ITableViewFields } from './template';
 import { EProgressbarColor } from '../components/Workflows/utils/getWorfkflowClientProperties';
 
 export type WorkflowWithDateFields = {
@@ -29,12 +29,11 @@ export interface IWorkflowClientProperties {
   completedTasks: IWorkflowTaskClient[];
 
   areMultipleTasks: boolean;
-  namesMultipleTasks: string[];
+  namesMultipleTasks: Record<string, string>;
   oneActiveTaskName?: string | null;
   selectedUsers: RawPerformer[];
 
   tasksCountWithoutSkipped: number;
-  lastActiveCurrentTask: number;
   minDelay: IWorkflowTaskDelay | null;
   areOverdueTasks: boolean;
   oldestDeadline: string | null;
@@ -136,7 +135,7 @@ export interface IWorkflowTaskClient extends IWorkflowTaskItem {
 export interface IWorkflowTaskItem {
   id: number;
   name: string;
-  api_name: string;
+  apiName: string;
   number: number;
   description: string;
   dueDate: string | null;
@@ -169,6 +168,7 @@ export interface IWorkflow {
   workflowStarter: number | null;
   template: IWorkflowTemplate | null;
   tasks: IWorkflowTaskItem[];
+  fields?: ITableViewFields[];
 
   ancestorTaskId?: number;
   finalizable: boolean;
@@ -282,6 +282,7 @@ export enum EWorkflowLogEvent {
   DueDateChanged = 18,
   AddedPerformerGroup = 20,
   RemovedPerformerGroup = 21,
+  TaskSnoozed = 22,
 }
 
 export enum EIconTitles {
@@ -333,6 +334,9 @@ export interface IWorkflowsSettings {
     performersIdsFilter: number[];
     performersGroupIdsFilter: number[];
     workflowStartersIdsFilter: number[];
+  };
+  selectedFieldsByTemplate: {
+    [templateId: number]: string[];
   };
   templateList: {
     items: ITemplateFilterItem[];

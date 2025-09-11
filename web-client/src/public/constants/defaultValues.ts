@@ -42,6 +42,7 @@ export const loomVideoRegexp =
   /(?:https?:\/\/(?:www\.|stage\.)?(?:use)?(?:loom|loomlocal)\.com(?::4444)?\/share\/([a-f0-9]+))(?:\?t=[0-9]*)?/gi;
 export const wistiaVideoRegexp = /(?:https?:\/\/)?[a-z0-9]+\.wistia\.com\/medias\/([a-z0-9]+)/gi;
 export const imageUrlRegex = /(http(s?):)([/|.|\w|\s|-])*\.(?:jpg|gif|png)/gi;
+export const varibleIdRegex = /{{field-[a-z0-9]{6}}}/;
 
 export const DASHBOARD_VIDEO_URL = 'https://pneumaticworkflow.wistia.com/medias/0ph9hqcku3';
 

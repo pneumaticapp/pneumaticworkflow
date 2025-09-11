@@ -1,4 +1,4 @@
-// tslint:disable-next-line: match-default-export-name
+/* eslint-disable indent */
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import InfiniteScroll from 'react-infinite-scroll-component';
 import { useIntl } from 'react-intl';
@@ -26,13 +26,7 @@ import { WorkflowsFiltersContainer } from './WorkflowsFilters';
 
 import styles from './WorkflowsGridPage.css';
 
-
-
-const useSearchWithDebounce = (
-  initialSearchText: string,
-  onSearch: (query: string) => void,
-  debounceTime = 800
-) => {
+const useSearchWithDebounce = (initialSearchText: string, onSearch: (query: string) => void, debounceTime = 800) => {
   const [searchQuery, setSearchQuery] = useState(initialSearchText);
   const isFirstSearch = useRef(true);
   const debouncedSearch = useCallback(debounce(debounceTime, onSearch), []);
@@ -141,9 +135,9 @@ export const WorkflowsGridPage = function Workflows({
           {templatesFilter.length !== 1
             ? formatMessage({ id: 'workflows.run-workflow' })
             : `${formatMessage({ id: 'workflows.run-workflows' })} ${templatesFilter
-              .map((t) => t.name)
-              .join(', ')
-              .trim()}`}
+                .map((t) => t.name)
+                .join(', ')
+                .trim()}`}
         </Header>
       </button>
     );

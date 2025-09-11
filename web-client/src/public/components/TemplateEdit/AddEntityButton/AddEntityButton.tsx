@@ -15,8 +15,9 @@ export enum EEntityTitle {
 }
 
 export interface ITemplateEntity {
+  previousTaskapiName?: string;
   title: EEntityTitle;
-  onAddEntity(): void;
+  onAddEntity(previousTaskapiName?: string): void;
 }
 
 export interface IAddEntityButtonProps {
@@ -27,7 +28,7 @@ export function AddEntityButton({ entities }: IAddEntityButtonProps) {
   if (!isArrayWithItems(entities)) {
     return null;
   }
-
+  const [{ onAddEntity, previousTaskapiName }] = entities;
   const { messages } = useIntl();
   const { useCallback, useState } = React;
 
@@ -38,9 +39,7 @@ export function AddEntityButton({ entities }: IAddEntityButtonProps) {
 
   const handleClickAddButton = () => {
     if (entities.length === 1) {
-      const [{ onAddEntity }] = entities;
-
-      onAddEntity();
+      onAddEntity(previousTaskapiName);
       closeOptions();
 
       return;
@@ -50,7 +49,7 @@ export function AddEntityButton({ entities }: IAddEntityButtonProps) {
   };
 
   const handleAddEntity = (onAddEntity: ITemplateEntity['onAddEntity']) => () => {
-    onAddEntity();
+    onAddEntity(previousTaskapiName);
     closeOptions();
   };
 
@@ -80,12 +79,7 @@ export function AddEntityButton({ entities }: IAddEntityButtonProps) {
         </button>
 
         {entities.map(({ title, onAddEntity }) => (
-          <button
-            key={title}
-            type="button"
-            className={styles['entity']}
-            onClick={handleAddEntity(onAddEntity)}
-          >
+          <button key={title} type="button" className={styles['entity']} onClick={handleAddEntity(onAddEntity)}>
             <IntlMessages id={`template.add-entity-button-${title}`} />
           </button>
         ))}
@@ -95,9 +89,7 @@ export function AddEntityButton({ entities }: IAddEntityButtonProps) {
 
   return (
     <div className={styles['container']}>
-      <div className={styles['inner-wrapper']}>
-        {areOptionsOpened ? renderEntities() : renderAddButton()}
-      </div>
+      <div className={styles['inner-wrapper']}>{areOptionsOpened ? renderEntities() : renderAddButton()}</div>
     </div>
   );
 }

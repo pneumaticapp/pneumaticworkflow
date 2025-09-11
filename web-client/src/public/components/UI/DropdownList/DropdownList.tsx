@@ -74,7 +74,7 @@ export function DropdownList<TOption extends TDropdownOptionBase>({
 
   if (label && controlSize === 'lg') {
     return (
-      <div className={classnames('react-select', className)}>
+      <div className={classnames('react-select', restProps.isDisabled && 'is-disabled', className)}>
         <div className={classnames(styles['dropdownlist-lg__control'], label && styles['is-label'])}>
           {label && <p className={styles['dropdownlist-lg__label']}>{label}</p>}
 
@@ -96,7 +96,14 @@ export function DropdownList<TOption extends TDropdownOptionBase>({
   }
 
   return (
-    <div className={classnames('react-select', className, restProps.staticMenu && 'is-static')}>
+    <div
+      className={classnames(
+        'react-select',
+        restProps.isDisabled && 'is-disabled',
+        className,
+        restProps.staticMenu && 'is-static',
+      )}
+    >
       <OutsideClickHandler onOutsideClick={() => setIsOpen(false)}>
         <Select
           isMulti={isMulti}
@@ -137,7 +144,9 @@ function ControlSM(title: string, isOpen: boolean, onClick: (isOpen: boolean) =>
   };
 }
 
-const DropdownIndicator = () => <ArrowDropdownIcon />;
+const DropdownIndicator = ({ isDisabled }: any) => {
+  return !isDisabled ? <ArrowDropdownIcon /> : null;
+};
 
 const MenuSM = ({ children, ...props }: any) => {
   return (

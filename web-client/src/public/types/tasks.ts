@@ -35,6 +35,12 @@ export enum ETaskStatus {
   Skipped = 'skipped',
 }
 
+export interface ITaskRevertTask {
+  id: number;
+  name: string;
+  apiName: string;
+}
+
 export interface ITask {
   id: number;
   name: string;
@@ -55,6 +61,7 @@ export interface ITask {
   checklistsMarked: number;
   checklists: TTaskChecklists;
   status?: ETaskStatus;
+  revertTasks: ITaskRevertTask[];
 }
 
 export type TTaskChecklists = {

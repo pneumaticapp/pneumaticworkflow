@@ -9,19 +9,21 @@ import styles from './WorkflowCardUsers.css';
 export interface IWorkflowCardUsersProps {
   users?: RawPerformer[];
   maxUsers?: number;
+  showAllUsers?: boolean;
 }
 
 const MAX_SHOW_USERS = 5;
 
-export function WorkflowCardUsers({ users, maxUsers = MAX_SHOW_USERS }: IWorkflowCardUsersProps) {
+export function WorkflowCardUsers({ users, maxUsers = MAX_SHOW_USERS, showAllUsers }: IWorkflowCardUsersProps) {
   if (!isArrayWithItems(users)) {
     return null;
   }
   const usersLeft = Math.max(users.length - maxUsers, 0);
+  const usersToShow = showAllUsers ? users : users.slice(0, maxUsers);
 
   return (
     <div className={styles['card-users']}>
-      {users.slice(0, maxUsers).map(({ type, sourceId }) => {
+      {usersToShow.map(({ type, sourceId }) => {
         return (
           <UserDataWithGroup idItem={sourceId} type={type} key={`${type}-${sourceId}`}>
             {(user) => {
@@ -39,7 +41,8 @@ export function WorkflowCardUsers({ users, maxUsers = MAX_SHOW_USERS }: IWorkflo
           </UserDataWithGroup>
         );
       })}
-      {Boolean(usersLeft) && <span className={styles['card-users__more']}>+{usersLeft}</span>}
+
+      {!showAllUsers && Boolean(usersLeft) && <span className={styles['card-users__more']}>+{usersLeft}</span>}
     </div>
   );
 }

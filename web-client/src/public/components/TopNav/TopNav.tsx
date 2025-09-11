@@ -16,6 +16,7 @@ import { EPaywallReminderType } from './utils/getPaywallType';
 import { isEnvBilling } from '../../constants/enviroment';
 
 import styles from './TopNav.css';
+import { EWorkflowsView } from '../../types/workflow';
 
 export interface ITopNavProps {
   pendingActions: EPlanActions[];
@@ -27,6 +28,8 @@ export interface ITopNavProps {
   leaseLevel: TAccountLeaseLevel;
   isAccountOwner: boolean;
   accountOwnerPlan: IAccount;
+  isFromWorkflowsLayout?: boolean;
+  workflowsView?: EWorkflowsView;
 }
 
 export interface ITopNavDispatchProps {
@@ -57,6 +60,8 @@ export function TopNav({
   setNotificationsListIsOpen,
   returnFromSupermode,
   redirectToCustomerPortal,
+  isFromWorkflowsLayout,
+  workflowsView,
 }: TTopNavProps) {
   const { formatMessage } = useIntl();
 
@@ -154,11 +159,36 @@ export function TopNav({
     },
   ].filter((item) => typeof item === 'object') as TDropdownOption[];
 
+  const getWorkflowNavbarClassname = () => {
+    if (!isFromWorkflowsLayout) return '';
+
+    return workflowsView === EWorkflowsView.Table
+      ? styles['navbar--workflows-table']
+      : styles['navbar--workflows-grid'];
+  };
+
+  const workflowNavbarClassname = getWorkflowNavbarClassname();
+
   return (
-    <div className={classnames(styles['top-wrapper'], isPaywallVisible && styles['top-wrapper_with-paywall'])}>
+    <div
+      className={classnames(
+        styles['top-wrapper'],
+        isFromWorkflowsLayout && styles['top-wrapper--workflows-layout'],
+        isPaywallVisible && styles['top-wrapper_with-paywall'],
+      )}
+    >
       {renderPaywallContent()}
-      <nav className={classnames('navbar', styles['navbar'])}>
-        {leftContent && <div className={styles['navbar-left']}>{leftContent}</div>}
+      <nav className={classnames('navbar', styles['navbar'], workflowNavbarClassname)}>
+        {leftContent && (
+          <div
+            className={classnames(
+              styles['navbar-left'],
+              workflowsView === EWorkflowsView.Grid && styles['navbar-left--workflows-grid'],
+            )}
+          >
+            {leftContent}
+          </div>
+        )}
         <div className={rightNavbarClassname}>
           <div className={styles['notifications']}>
             <button

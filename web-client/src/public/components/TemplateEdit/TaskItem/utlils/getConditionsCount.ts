@@ -1,5 +1,3 @@
-/* eslint-disable */
-/* prettier-ignore */
 import { ICondition } from '../../TaskForm/Conditions';
 import { getFilledConditions } from '../../TaskForm/Conditions/utils/conditionsValidators';
 

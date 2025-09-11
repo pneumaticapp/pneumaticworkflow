@@ -6,7 +6,6 @@ import { debounce } from 'throttle-debounce';
 
 import { IInfoWarningProps } from './InfoWarningsModal';
 import { getClonedTask } from './utils/getClonedTask';
-import { getEmptyConditions } from './TaskForm/Conditions/utils/getEmptyConditions';
 import { AutoSaveStatusContainer } from './AutoSaveStatus';
 import { TemplateEntity } from './TemplateEntity';
 import { AddEntityButton, EEntityTitle } from './AddEntityButton';
@@ -26,6 +25,8 @@ import { EMoveDirections } from '../../types/workflow';
 import { ETaskPerformerType, ETemplateOwnerType, ITemplate, ITemplateTask } from '../../types/template';
 import { TLoadTemplateVariablesSuccessPayload } from '../../redux/actions';
 import { ETemplateStatus, IAuthUser } from '../../types/redux';
+import { getKickoffConditions } from './TaskForm/Conditions/utils/getKickoffConditions';
+import { getStartTaskConditions } from './TaskForm/Conditions/utils/getStartTaskConditions';
 import { createEmptyTaskDueDate } from '../../utils/dueDate/createEmptyTaskDueDate';
 import { usePrevious } from '../../hooks/usePrevious';
 import { ConditionsBanner } from './ConditionsBanner';
@@ -35,6 +36,7 @@ import { ESubscriptionPlan } from '../../types/account';
 import { TemplateSettings } from './TemplateSettings';
 
 import styles from './TemplateEdit.css';
+import { getEmptyConditions } from './TaskForm/Conditions/utils/getEmptyConditions';
 
 export interface ITemplateEditProps {
   match: any;
@@ -204,6 +206,7 @@ export function TemplateEdit({
       checklists: [],
       ...templateTask,
       revertTask: null,
+      ancestors: [],
     };
   };
 
@@ -216,6 +219,7 @@ export function TemplateEdit({
         getNewTask({
           name: 'First Step',
           number: 1,
+          conditions: getKickoffConditions(),
         }),
       ],
       isActive: false,
@@ -281,7 +285,11 @@ export function TemplateEdit({
 
   const handleAddTask = () => {
     if (!isArrayWithItems(tasks)) {
-      const newTasks = [getNewTask()];
+      const newTasks = [
+        getNewTask({
+          conditions: getKickoffConditions(),
+        }),
+      ];
 
       changeTasks(newTasks);
 
@@ -292,6 +300,7 @@ export function TemplateEdit({
     const newTask = getNewTask({
       number: newTaskNumber,
       name: `New Step ${newTaskNumber}`,
+      conditions: getStartTaskConditions(tasks[tasks.length - 1].apiName),
     });
     const newTasks = [...tasks, newTask];
 
@@ -315,9 +324,12 @@ export function TemplateEdit({
     toggleIsOpenTask(newTask.uuid);
   };
 
-  const handleAddTaskBefore = (targetTask: ITemplateTask) => () => {
+  const handleAddTaskBefore = (targetTask: ITemplateTask) => (previousTaskApiName?: string) => {
     const newTaskName = `New Step ${tasks.length + 1}`;
-    const newTask = getNewTask({ name: newTaskName });
+    const newTask = getNewTask({
+      name: newTaskName,
+      conditions: previousTaskApiName ? getStartTaskConditions(previousTaskApiName) : getKickoffConditions(),
+    });
     const newTasks = getTasksWithNewTask(newTask, targetTask.number - 1);
 
     changeTasks(newTasks);
@@ -386,9 +398,7 @@ export function TemplateEdit({
 
   const editDelay = (targetTask: ITemplateTask) => (delay: string) => {
     const newTasks = tasks.map((task) => {
-      if (task.uuid === targetTask.uuid) {
-        return { ...targetTask, delay };
-      }
+      if (task.uuid === targetTask.uuid) return { ...targetTask, delay };
 
       return task;
     });
@@ -397,9 +407,7 @@ export function TemplateEdit({
   };
 
   const deleteDelay = (targetTask: ITemplateTask) => () => {
-    if (!targetTask.delay) {
-      return;
-    }
+    if (!targetTask.delay) return;
 
     handleEditTaskField(targetTask)('delay')('');
   };
@@ -415,7 +423,8 @@ export function TemplateEdit({
   const getTaskListItem = (task: ITemplateTask, index: number, tasksLocal: ITemplateTask[]) => {
     const isTaskOpen = Boolean(openedTasks[task.uuid]);
     const isDelayOpen = Boolean(openedDelays[task.uuid]);
-
+    const previousTask = index > 0 ? tasksLocal[index - 1] : null;
+    const actualPreviousTaskApiName = previousTask?.apiName;
     return (
       <TemplateEntity
         key={`template-entity-${task.uuid}`}
@@ -435,6 +444,7 @@ export function TemplateEdit({
         toggleDelay={() => toggleDelay(task.uuid)}
         handleMoveTask={handleMoveTask}
         toggleIsOpenTask={() => toggleIsOpenTask(task.uuid)}
+        actualPreviousTaskApiName={actualPreviousTaskApiName}
       />
     );
   };

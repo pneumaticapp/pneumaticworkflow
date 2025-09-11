@@ -25,6 +25,7 @@ export function TemplateEntity({
   removeTask,
   toggleIsOpenTask,
   cloneTask,
+  actualPreviousTaskApiName,
 }: ITemplateEntityProps) {
   const [scrollTarget, setScrollTarget] = useState<TTaskFormPart>(null);
 
@@ -33,6 +34,7 @@ export function TemplateEntity({
 
     const entities = [
       {
+        previousTaskapiName: actualPreviousTaskApiName,
         title: EEntityTitle.Task,
         onAddEntity: addTaskBefore,
       },
@@ -43,6 +45,25 @@ export function TemplateEntity({
     ].filter(Boolean) as ITemplateEntity[];
 
     return <AddEntityButton key={`workflow-entity-${task.number}-add-button`} entities={entities} />;
+  };
+
+  const renderDelay = () => {
+    const hasDelay = Boolean(task?.delay);
+
+    if (!hasDelay) return null;
+
+    return (
+      <div key={`delay-${task.uuid}`} className={styles['task-wrapper']}>
+        {renderAddWorkflowEntityButton()}
+        <Delay
+          taskDelay={task.delay}
+          isDelayOpen={isDelayOpen}
+          deleteDelay={deleteDelay(task)}
+          editDelay={editDelay}
+          toggleDelay={toggleDelay}
+        />
+      </div>
+    );
   };
 
   const renderWorkflowEntity = () => {
@@ -59,9 +80,7 @@ export function TemplateEntity({
 
     const { component } = entities.find(({ check }) => check) || {};
 
-    if (!component) {
-      return null;
-    }
+    if (!component) return null;
 
     return (
       <div key={`task-${task.uuid}`} className={styles['task-wrapper']}>
@@ -81,27 +100,6 @@ export function TemplateEntity({
             setScrollTarget={setScrollTarget}
           />
         </div>
-      </div>
-    );
-  };
-
-  const renderDelay = () => {
-    const hasDelay = Boolean(task?.delay);
-
-    if (!hasDelay) {
-      return null;
-    }
-
-    return (
-      <div key={`delay-${task.uuid}`} className={styles['task-wrapper']}>
-        {renderAddWorkflowEntityButton()}
-        <Delay
-          taskDelay={task.delay}
-          isDelayOpen={isDelayOpen}
-          deleteDelay={deleteDelay(task)}
-          editDelay={editDelay}
-          toggleDelay={toggleDelay}
-        />
       </div>
     );
   };

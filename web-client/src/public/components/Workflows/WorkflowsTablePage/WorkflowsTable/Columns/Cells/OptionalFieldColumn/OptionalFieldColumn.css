@@ -1,0 +1,40 @@
+.field-column__content,
+.field-column__files {
+  @mixin text-truncate;
+}
+
+.field-column__file-item {
+  margin-right: 0.4rem;
+  text-decoration: none;
+  cursor: pointer;
+  color: var(--pneumatic-color-link-dark);
+  transition: color 0.1s ease-in-out;
+}
+
+.field-column__file-item:hover {
+  color: var(--pneumatic-color-link-hover);
+}
+
+.field-column__file-item svg {
+  position: relative;
+  margin-right: 0.8rem;
+  display: inline;
+}
+
+.field-column__image-icon {
+  top: -0.1rem;
+}
+
+.field-column__document-icon {
+  top: -0.15rem;
+}
+
+.field-column__url {
+  text-decoration: none;
+  color: var(--pneumatic-color-link-dark);
+  transition: color 0.1s ease-in-out;
+}
+
+.field-column__url:hover {
+  color: var(--pneumatic-color-link-hover);
+}

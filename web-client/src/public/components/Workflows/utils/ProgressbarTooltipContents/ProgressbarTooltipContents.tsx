@@ -16,7 +16,7 @@ export function ProgressbarTooltipContents({
   workflow: {
     dateCompleted,
     status,
-    lastActiveCurrentTask,
+    completedTasks,
     tasksCountWithoutSkipped,
     dueDate,
     minDelay,
@@ -71,7 +71,10 @@ export function ProgressbarTooltipContents({
   return (
     <>
       <p className={styles['tooltip-header']}>
-        {formatMessage({ id: 'workflows.tooltip-header' }, { lastActiveCurrentTask, tasksCountWithoutSkipped })}
+        {formatMessage(
+          { id: 'workflows.tooltip-header' },
+          { completedTasks: completedTasks.length, tasksCountWithoutSkipped },
+        )}
       </p>
       <p className={styles['tooltip-content']}>{tooltipTextMap[status]}</p>
     </>

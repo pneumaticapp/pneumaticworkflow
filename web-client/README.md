@@ -15,6 +15,9 @@
 
 * `npm t`
 
+##### Run development version
+
+* `npm run local`
 
 ##### Config:
 

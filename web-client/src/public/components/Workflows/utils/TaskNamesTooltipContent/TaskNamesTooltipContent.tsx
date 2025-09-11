@@ -3,11 +3,11 @@ import { useIntl } from 'react-intl';
 
 import styles from './TaskNamesTooltipContent.css';
 
-export const TaskNamesTooltipContent = (taskNames: string[]) => {
+export const TaskNamesTooltipContent = (taskNames: Record<string, string>) => {
   const { formatMessage } = useIntl();
 
-  return taskNames.map((name, index) => (
-    <div key={name}>
+  return Object.entries(taskNames).map(([apiName, name], index) => (
+    <div key={apiName}>
       <div className={styles['card-tooltip-task-number']}>
         {`${formatMessage({ id: 'workflows.tasks' })} ${index + 1}`}
       </div>

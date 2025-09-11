@@ -1,8 +1,7 @@
-import React, { useCallback, useLayoutEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useRef } from 'react';
 import { useIntl } from 'react-intl';
 
 import { TaskDescriptionEditor } from './TaskDescriptionEditor';
-
 import { scrollToElement } from '../../../utils/helpers';
 import { TUserListItem } from '../../../types/user';
 import { IKickoff, ITemplateTask } from '../../../types/template';
@@ -10,7 +9,7 @@ import { TTaskVariable, TTaskFormPart, ETaskFormParts } from '../types';
 import { OutputFormIntl } from '../OutputForm';
 import { ShowMore } from '../../UI/ShowMore';
 import { TaskPerformers } from './TaskPerformers';
-import { Conditions } from './Conditions';
+import { CheckIfConditions, ICondition, removeDeletedTasks, StartAfterCondition } from './Conditions';
 import { InputWithVariables } from '../InputWithVariables';
 import { TPatchTaskPayload } from '../../../redux/actions';
 
@@ -19,11 +18,14 @@ import { DueDate } from './DueDate';
 import { getSingleLineVariables } from './utils/getTaskVariables';
 
 import styles from '../TemplateEdit.css';
+
+import { EStartingType } from './Conditions/utils/getDropdownOperators';
 import { TaskItemUsers } from '../TaskItem/TaskItemUsers';
 import { TaskRenderDueIn } from '../TaskRenderDueInInfo';
 import { TaskRenderConditionsInfo } from '../TaskRenderConditionsInfo';
 import { TaskRenderExtraFieldsInfo } from '../TaskRenderExtraFieldsInfo';
 import { TaskRenderReturnInfo } from '../TaskRenderReturnInfo';
+import { StepName } from '../../StepName';
 
 export interface ITaskFormProps {
   listVariables: TTaskVariable[];
@@ -51,29 +53,54 @@ export function TaskForm({
   tasks,
   kickoff,
   patchTask,
-}: ITaskFormProps) {
-  const { formatMessage } = useIntl();
-
+  templateId,
+}: ITaskFormProps & { templateId: number | undefined }) {
   if (!task) return null;
-
+  const { formatMessage } = useIntl();
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const taskName = task.name || '';
   const taskFormPartsRefs = {
     [ETaskFormParts.AssignPerformers]: useRef<HTMLDivElement>(null),
     [ETaskFormParts.DueIn]: useRef<HTMLDivElement>(null),
     [ETaskFormParts.Fields]: useRef<HTMLDivElement>(null),
-    [ETaskFormParts.Conditions]: useRef<HTMLDivElement>(null),
+    [ETaskFormParts.StartsAfter]: useRef<HTMLDivElement>(null),
+    [ETaskFormParts.CheckIf]: useRef<HTMLDivElement>(null),
     [ETaskFormParts.ReturnTo]: useRef<HTMLDivElement>(null),
   };
+  const startingOrder: TTaskVariable[] = [
+    {
+      title: formatMessage({ id: 'templates.conditions.starting-order.kick-off' }),
+      apiName: `kick-off`,
+      type: EStartingType.Kickoff,
+    },
+    ...tasks
+      .filter((localTask) => task.apiName !== localTask.apiName)
+      .map((currentTask) => {
+        return {
+          apiName: currentTask.apiName,
+          title: currentTask.name,
+          type: EStartingType.Task,
+          richSubtitle: <StepName initialStepName={currentTask.name} templateId={templateId || 0} />,
+        };
+      }),
+  ];
+
+  const onEdit = useCallback(
+    (conditions: ICondition[]) => {
+      patchTask({ taskUUID: task.uuid, changedFields: { conditions } });
+    },
+    [patchTask, task.uuid],
+  );
+
+  useEffect(() => {
+    removeDeletedTasks(startingOrder, task.conditions, onEdit);
+  }, [startingOrder, task.conditions, onEdit]);
 
   useLayoutEffect(() => {
     const scrollTo = (scrollTarget && taskFormPartsRefs[scrollTarget]?.current) || wrapperRef.current;
 
-    if (scrollTo) {
-      scrollToElement(scrollTo);
-    }
+    if (scrollTo) scrollToElement(scrollTo);
   }, []);
-
-  const wrapperRef = useRef<HTMLDivElement>(null);
-  const taskName = task.name || '';
 
   const setCurrentTask = (changedFields: Partial<ITemplateTask>) => {
     patchTask({ taskUUID: task.uuid, changedFields });
@@ -85,7 +112,14 @@ export function TaskForm({
 
   const createWidget = useCallback(
     (Component, props) => {
-      return (toggle: () => void) => <Component task={props.task} onClick={toggle} isInTaskForm={props.isInTaskForm} />;
+      return (toggle: () => void) => (
+        <Component
+          task={props.task}
+          onClick={toggle}
+          isInTaskForm={props.isInTaskForm}
+          isStartTask={props.isStartTask}
+        />
+      );
     },
     [task],
   );
@@ -136,18 +170,38 @@ export function TaskForm({
       widget: createWidget(TaskRenderExtraFieldsInfo, { task }),
     },
     {
-      formPartId: ETaskFormParts.Conditions,
-      title: 'templates.conditions.title',
+      formPartId: ETaskFormParts.StartsAfter,
+      title: 'templates.starts-after.title',
       component: (
-        <Conditions
+        <StartAfterCondition
           isSubscribed={isSubscribed}
           conditions={task.conditions}
+          startingOrder={startingOrder}
           variables={listVariables}
           users={users}
           onEdit={handleTaskFieldChange('conditions')}
         />
       ),
-      widget: createWidget(TaskRenderConditionsInfo, { task, isInTaskForm: true }),
+      widget: createWidget(TaskRenderConditionsInfo, {
+        task,
+        isInTaskForm: true,
+        isStartTask: true,
+      }),
+    },
+    {
+      formPartId: ETaskFormParts.CheckIf,
+      title: 'templates.conditions.check-if-title',
+      component: (
+        <CheckIfConditions
+          isSubscribed={isSubscribed}
+          conditions={task.conditions}
+          startingOrder={startingOrder}
+          variables={listVariables}
+          users={users}
+          onEdit={handleTaskFieldChange('conditions')}
+        />
+      ),
+      widget: createWidget(TaskRenderConditionsInfo, { task, isInTaskForm: true, isStartTask: false }),
     },
     {
       formPartId: ETaskFormParts.ReturnTo,
@@ -157,8 +211,8 @@ export function TaskForm({
           variables={listVariables}
           tasks={tasks}
           currentTaskRevertTask={task.revertTask}
-          currentTaskApiName={task.apiName}
           setCurrentTask={setCurrentTask}
+          taskAncestors={new Set(task.ancestors)}
         />
       ),
       widget: createWidget(TaskRenderReturnInfo, { task }),
@@ -207,6 +261,7 @@ export function TaskForm({
             key={title}
             innerRef={taskFormPartsRefs[formPartId]}
             widget={widget}
+            isFromTaskForm
           >
             {component}
           </ShowMore>

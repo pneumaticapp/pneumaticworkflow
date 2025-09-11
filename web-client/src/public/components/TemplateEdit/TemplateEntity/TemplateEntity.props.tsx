@@ -10,6 +10,7 @@ export interface ITemplateEntityProps {
   isSubscribed: boolean;
   isTaskOpen: boolean;
   isDelayOpen: boolean;
+  actualPreviousTaskApiName?: string;
   addDelay(): void;
   addTaskBefore(): void;
   deleteDelay(targetTask: ITemplateTask): () => void;

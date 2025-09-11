@@ -1,6 +1,5 @@
 /* eslint-disable */
-/* prettier-ignore */
-import * as React from 'react';
+import React, { ChangeEvent, ReactNode, SVGAttributes, useState } from 'react';
 import classnames from 'classnames';
 import * as PerfectScrollbar from 'react-perfect-scrollbar';
 import { DropdownItem, DropdownMenu, DropdownToggle, Dropdown } from 'reactstrap';
@@ -19,7 +18,7 @@ type TOptionId = number | string | null;
 type TOptionBase<IdKey extends string, LabelKey extends string> = {
   [key in IdKey]: TOptionId;
 } & {
-  [key in LabelKey]: string | React.ReactNode;
+  [key in LabelKey]: string | ReactNode;
 } & {
   customClickHandler?(): void;
   areSubOptionsLoading?: boolean;
@@ -47,7 +46,7 @@ interface IFilterSelectCommonProps<
   selectAllLabel?: string;
   resetFilter(): void;
   selectAll?(): void;
-  Icon?(props: React.SVGAttributes<SVGElement>): JSX.Element;
+  Icon?(props: SVGAttributes<SVGElement>): JSX.Element;
   renderPlaceholder(options: TOption[]): string | JSX.Element;
 }
 
@@ -94,10 +93,10 @@ export function FilterSelect<
     Icon,
   } = props;
 
-  const [searchText, setSearchText] = React.useState('');
-  const [isSelectAll, setIsSelectAll] = React.useState(false);
-  const [isDropdownOpen, setIsDropdownOpen] = React.useState(false);
-  const [isClearHovered, setClearHovered] = React.useState(false);
+  const [searchText, setSearchText] = useState('');
+  const [isSelectAll, setIsSelectAll] = useState(false);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isClearHovered, setClearHovered] = useState(false);
 
   const handleChange = (option: TOption) => () => {
     const { customClickHandler } = option;
@@ -122,7 +121,7 @@ export function FilterSelect<
       ? [...props.selectedOptions, optionId]
       : props.selectedOptions.filter((selectedOption) => selectedOption !== optionId);
 
-    const mapSelectedOption = options.filter((item) => newSelectedOptions.includes(item[optionIdKey]))
+    const mapSelectedOption = options.filter((item) => newSelectedOptions.includes(item[optionIdKey]));
 
     props.onChange(newSelectedOptions, mapSelectedOption);
   };
@@ -205,7 +204,10 @@ export function FilterSelect<
       const handleSelectAll = () => {
         if (!isSelectAll) {
           setIsSelectAll(true);
-          props.onChange(options.map((option) => option[optionIdKey]), options);
+          props.onChange(
+            options.map((option) => option[optionIdKey]),
+            options,
+          );
         } else {
           setIsSelectAll(false);
           resetFilter();
@@ -250,6 +252,7 @@ export function FilterSelect<
                   checked={props.selectedOptions.includes(option[optionIdKey])}
                   title={label}
                   onClick={(e) => e.stopPropagation()}
+                  onChange={() => {}}
                   containerClassName={styles['dropdown-item-check']}
                   labelClassName={styles['dropdown-item-check__label']}
                   titleClassName={styles['dropdown-item-check__title']}
@@ -268,7 +271,7 @@ export function FilterSelect<
     setIsDropdownOpen(!isDropdownOpen);
   };
 
-  const handleChangeSearchText = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChangeSearchText = (e: ChangeEvent<HTMLInputElement>) => {
     setSearchText(e.target.value);
   };
 
@@ -301,18 +304,26 @@ export function FilterSelect<
           {Icon && <Icon className={styles['icon']} />}
           <span className={styles['active-value__text']}>{props.renderPlaceholder(options)}</span>
           {props.isMultiple && isArrayWithItems(props.selectedOptions) ? (
-            <button
+            <span
               onClick={(e) => {
                 e.stopPropagation();
                 resetFilter();
               }}
-              type="button"
               className={classnames(styles['clear-button'], arrowClassName)}
               onMouseEnter={() => setClearHovered(true)}
               onMouseLeave={() => setClearHovered(false)}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  resetFilter();
+                }
+              }}
             >
               <ClearIcon />
-            </button>
+            </span>
           ) : (
             <ExpandIcon className={classnames(styles['expand-icon'], arrowClassName)} />
           )}

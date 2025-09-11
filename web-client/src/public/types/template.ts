@@ -33,6 +33,11 @@ export interface ITemplateOwner {
   sourceId: string;
   type: ETemplateOwnerType;
 }
+
+export type TTransformedTask =
+  | (Pick<ITemplateTask, 'apiName' | 'fields' | 'name'> & { needSteName?: boolean })
+  | (Pick<IKickoff, 'fields'> & { apiName: string; name: string; needSteName: null });
+
 export interface ITemplateTask {
   id?: number;
   apiName: string;
@@ -48,6 +53,7 @@ export interface ITemplateTask {
   conditions: ICondition[];
   checklists: TOutputChecklist[];
   revertTask: string | null;
+  ancestors: string[];
 }
 
 export type TDueDateRuleTarget = 'field' | 'workflow started' | 'task started' | 'task completed';
@@ -166,6 +172,15 @@ export interface ITemplateListItem {
   performersCount: number;
   owners: number[];
   kickoff: IKickoff | null;
+}
+
+export interface ITableViewFields extends IExtraField {
+  taskId: number | null;
+  kickoffId: number | null;
+  markdownValue: string;
+  clearValue: string;
+  userId: number;
+  groupId: number;
 }
 
 export interface IExtraField {
