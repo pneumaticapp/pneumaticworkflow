@@ -117,7 +117,11 @@ services:
     build:
       context: ./web-client
     container_name: pneumatic-frontend
-    command: pm2-runtime start pm2.json
+    env_file:
+      - ./default-project.env
+      - ./web-client/default.env
+    command: >
+      sh -c "npm run build-client:prod && pm2-runtime start pm2.json"
     expose:
       - 8000
     volumes:
