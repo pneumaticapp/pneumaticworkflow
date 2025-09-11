@@ -6,6 +6,7 @@ dist/
 .vscode
 .idea
 .DS_Store
-
+logs
+config/how
 *storybook.log
 .env

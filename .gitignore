@@ -1,10 +1,6 @@
 .idea
-web-client/config/how
-postgres/data
-postgres/backups
-redis/data
-rabbitmq/data
-rabbitmq/logs
+postgres
+redis
+rabbitmq
 nginx/logs
 nginx/keys
-web-client/logs
