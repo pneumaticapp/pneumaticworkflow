@@ -113,11 +113,11 @@ class Template(
 
     @property
     def public_url(self) -> Optional[str]:
-        return f'{settings.PUBLIC_FORMS_ORIGIN}/{self.public_id}'
+        return f'{settings.FORMS_URL}/{self.public_id}'
 
     @property
     def embed_url(self) -> Optional[str]:
-        return f'{settings.PUBLIC_FORMS_ORIGIN}/embed/{self.embed_id}'
+        return f'{settings.FORMS_URL}/embed/{self.embed_id}'
 
     @property
     def kickoff_instance(self):

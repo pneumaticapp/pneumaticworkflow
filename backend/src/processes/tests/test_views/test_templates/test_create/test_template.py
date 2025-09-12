@@ -863,7 +863,7 @@ def test_create__public__ok(mocker, api_client):
     user = create_test_user()
     api_client.token_authenticate(user)
     token = 'a' * PublicToken.token_length
-    public_url = f'{settings.PUBLIC_FORMS_ORIGIN}/{token}'
+    public_url = f'{settings.FORMS_URL}/{token}'
     token_mock = mocker.patch.object(
         PublicToken,
         attribute='__str__',
@@ -923,7 +923,7 @@ def test_create__embed__ok(api_client, mocker):
     user = create_test_user(account=account)
     api_client.token_authenticate(user)
     token = 'a' * EmbedToken.token_length
-    embed_url = f'{settings.PUBLIC_FORMS_ORIGIN}/embed/{token}'
+    embed_url = f'{settings.FORMS_URL}/embed/{token}'
     token_mock = mocker.patch.object(
         EmbedToken,
         attribute='__str__',
@@ -1370,7 +1370,7 @@ def test_create__public_url__ok(mocker):
         is_public=True,
         tasks_count=1
     )
-    host = settings.PUBLIC_FORMS_ORIGIN
+    host = settings.FORMS_URL
     assert len(template.public_id) == 8
     assert template.public_url == f'{host}/{template.public_id}'
 

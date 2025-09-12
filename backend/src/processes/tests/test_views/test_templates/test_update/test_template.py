@@ -897,7 +897,7 @@ class TestUpdateTemplate:
         user = create_test_user()
         api_client.token_authenticate(user)
         token = 'a' * PublicToken.token_length
-        public_url = f'{settings.PUBLIC_FORMS_ORIGIN}/{token}'
+        public_url = f'{settings.FORMS_URL}/{token}'
         token_mock = mocker.patch.object(
             PublicToken,
             attribute='__str__',
@@ -993,7 +993,7 @@ class TestUpdateTemplate:
         user = create_test_user(account=account)
         api_client.token_authenticate(user)
         token = 'a' * EmbedToken.token_length
-        embed_url = f'{settings.PUBLIC_FORMS_ORIGIN}/embed/{token}'
+        embed_url = f'{settings.FORMS_URL}/embed/{token}'
         token_mock = mocker.patch.object(
             EmbedToken,
             attribute='__str__',
