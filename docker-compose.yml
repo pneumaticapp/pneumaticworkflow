@@ -131,17 +131,24 @@ services:
     restart: always
 
   nginx:
-    image: nginx:1.25.4
+    build:
+      context: ./nginx
     container_name: pneumatic-nginx
+    env_file:
+      - ./config/project.env
+    environment:
+      - NGINX_ENVSUBST_OUTPUT_DIR=/etc/nginx/
+      - NGINX_ENVSUBST_TEMPLATE_DIR=/etc/nginx/templates
     volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./nginx/logs/:/var/log/nginx/
       - ./nginx/keys/:/etc/keys/:ro
       - ./nginx/www/:/var/www/:ro
+      - ./nginx/templates/:/etc/nginx/templates
       - pneumatic-backend-staticfiles:/tmp/pneumatic-backend-staticfiles/
     ports:
       - 80:80
       - 443:443
+      - 8001:8001
     networks:
       - pneumatic
     depends_on:

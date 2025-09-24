@@ -4,3 +4,4 @@ redis
 rabbitmq
 nginx/logs
 nginx/keys
+nginx/config/nginx.conf
