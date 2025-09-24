@@ -40,7 +40,7 @@ class Common(Configuration):
     BASE_DIR = os.path.dirname(os.path.dirname(__file__))
     PROJECT_DIR = os.path.dirname(__file__)
     ROOT_URLCONF = 'src.urls'
-    ADMIN_PATH = '__cp'
+    ADMIN_PATH = env.get('ADMIN_PATH', 'admin')
     LOCALE_PATHS = [
         os.path.join(PROJECT_DIR, os.path.join('accounts', 'locale')),
         os.path.join(PROJECT_DIR, os.path.join('analytics', 'locale')),
@@ -54,9 +54,13 @@ class Common(Configuration):
     ]
     SECRET_KEY = values.SecretValue()
     DEBUG = env.get('DJANGO_DEBUG') == 'yes'
-    FRONTEND_URL = env.get('FRONTEND_URL', 'http://localhost')
+    
+    # Frontend
+    FRONTEND_URL = env.get('FRONTEND_URL')
     EXPIRED_INVITE_PAGE = f'{FRONTEND_URL}/auth/expired-invite'
-    PUBLIC_FORMS_ORIGIN = env.get('PUBLIC_FORMS_ORIGIN')
+
+    # Forms
+    FORMS_URL = env.get('FORMS_URL')
 
     # Auth
     AUTH_USER_MODEL = 'accounts.User'
@@ -67,11 +71,12 @@ class Common(Configuration):
     UNSUBSCRIBE_TOKEN_IN_DAYS = 7
     USER_TRANSFER_TOKEN_LIFETIME_IN_DAYS = 7
 
-    ALLOWED_HOSTS = env.get("ALLOWED_HOSTS")
-    if ALLOWED_HOSTS:
-        ALLOWED_HOSTS = ALLOWED_HOSTS.split(' ')
-    else:
-        ALLOWED_HOSTS = ['localhost', '0.0.0.0', '127.0.0.1']
+    BACKEND_URL = env.get('BACKEND_URL')
+    BACKEND_HOST = BACKEND_URL.split('//')[1].split(':')[0]
+    ALLOWED_HOSTS = [BACKEND_HOST]
+    EXTRA_ALLOWED_HOSTS = env.get("ALLOWED_HOSTS")
+    if EXTRA_ALLOWED_HOSTS:
+        ALLOWED_HOSTS.extend(EXTRA_ALLOWED_HOSTS.split(' '))
 
     # CORS
     # Sets header:
@@ -100,11 +105,10 @@ class Common(Configuration):
     # A list of origins that are authorized to make cross-site HTTP requests.
     # A list of origins echoed back to the client in the
     # Access-Control-Allow-Origin header. Defaults to [].
-    CORS_ORIGIN_WHITELIST = env.get('CORS_ORIGIN_WHITELIST', None)
-    if CORS_ORIGIN_WHITELIST:
-        CORS_ORIGIN_WHITELIST = CORS_ORIGIN_WHITELIST.split(' ')
-    else:
-        CORS_ORIGIN_WHITELIST = []
+    CORS_ORIGIN_WHITELIST = [FRONTEND_URL, FORMS_URL]
+    EXTRA_CORS_ORIGIN_WHITELIST = env.get("CORS_ORIGIN_WHITELIST")
+    if EXTRA_CORS_ORIGIN_WHITELIST:
+        CORS_ORIGIN_WHITELIST.extend(EXTRA_CORS_ORIGIN_WHITELIST.split(' '))
 
     INSTALLED_APPS = [
         'django.contrib.admin',

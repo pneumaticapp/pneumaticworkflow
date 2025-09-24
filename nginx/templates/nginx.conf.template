@@ -66,7 +66,7 @@ http {
     }
 
     server {
-        listen 80;
+        listen ${BACKEND_PORT};
         # Uncomment if using SSL
         # listen 443 ssl;
         # ssl_certificate     /etc/keys/backend_domain.crt;
@@ -75,7 +75,7 @@ http {
         root /var/www/html;
         index index.html index.nginx-debian.html;
 
-        server_name api.pneumatic.local pneumatic-nginx;
+        server_name ${BACKEND_DOMAIN};
 
         location / {
             proxy_pass http://backend;
@@ -96,6 +96,25 @@ http {
         }
     }
 
+
+    # for frontend private http API requests
+    server {
+        listen 80;
+        root /var/www/html;
+        index index.html index.htm index.nginx-debian.html;
+
+        server_name pneumatic-nginx;
+
+        location / {
+            proxy_pass http://backend;
+            proxy_http_version 1.1;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection 'upgrade';
+            proxy_set_header Host $host;
+            proxy_set_header REMOTE_ADDR $remote_addr;
+            proxy_cache_bypass $http_upgrade;
+        }
+    }
 
     ##
     # Frontend server
@@ -123,7 +142,7 @@ http {
         root /var/www/html;
         index index.html index.nginx-debian.html;
 
-        server_name pneumatic.local;
+        server_name ${FRONTEND_DOMAIN};
 
         location / {
             proxy_pass http://frontend;
