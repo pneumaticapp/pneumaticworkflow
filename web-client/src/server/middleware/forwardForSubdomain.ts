@@ -10,6 +10,15 @@ export function forwardForSubdomain(subdomainHosts: TSubdomainHosts, customRoute
     host = host.split(':')[0];
 
     const isSubdomain = (host && subdomainHosts.includes(host));
+    
+    console.log('forwardForSubdomain debug:', {
+      originalHost: req.headers.host,
+      cleanHost: host,
+      subdomainHosts,
+      isSubdomain,
+      path: req.path
+    });
+    
     if (isSubdomain) {
       return customRouter(req, res, next);
     }

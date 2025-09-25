@@ -22,6 +22,7 @@ export function getAuthHeader(params: IGetAuthHeaderParams = defaultParams) {
   const { token, appPart, userAgent } = { ...defaultParams, ...params };
 
   if (!token) {
+    console.log('getAuthHeader: no token provided');
     return {};
   }
 
@@ -34,6 +35,12 @@ export function getAuthHeader(params: IGetAuthHeaderParams = defaultParams) {
   const userAgentHeader = userAgent && { 'User-Agent': userAgent };
 
   const headers: IAuthHeader = { ...authHeaderMap[appPart], ...userAgentHeader };
+
+  console.log('getAuthHeader debug:', {
+    token: token ? token.substring(0, 8) + '...' : 'none',
+    appPart,
+    headers
+  });
 
   return headers;
 }

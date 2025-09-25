@@ -69,9 +69,17 @@ export function initServer() {
   formsRouter.get('*', async (req, res) => {
     const token = /[^$/]+$/.exec(req.path)?.[0];
     let userPublic: any;
+    
+    console.log('Forms router debug:', {
+      host: req.headers.host,
+      path: req.path,
+      token,
+      originalUrl: req.originalUrl
+    });
 
     try {
       if (token) {
+        console.log('Setting public cookie for token:', token);
         setPublicAuthCookie(req, res, token);
         userPublic = await new Promise((resolve) => {
           const publicContext = getUserPublic(req, token, req.headers['user-agent']);

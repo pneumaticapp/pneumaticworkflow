@@ -10,6 +10,9 @@ export async function getUser(req: Request, token: string, userAgent?: string) {
   try {
     const appPart = identifyAppPartOnServer(req);
     const headers = getAuthHeader({ token, appPart, userAgent });
+    
+    console.log('getUser: making API call with headers:', headers);
+    
     const user = await serverApi.get<IAuthenticatedUser>(
       'getUser',
       {
@@ -18,6 +21,13 @@ export async function getUser(req: Request, token: string, userAgent?: string) {
       },
       true,
     );
+
+    console.log('getUser: API response received:', {
+      hasUser: !!user,
+      userEmail: user?.email,
+      hasAccount: !!user?.account,
+      rawResponse: user
+    });
 
     return user;
   } catch (error) {

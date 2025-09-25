@@ -41,8 +41,23 @@ export async function authMiddleware(req: Request, res: Response, next: NextFunc
   if (!token) return isUnsignedUserRoute ? next() : res.redirect(getLoginUrl(req));
 
   try {
+    console.log('authMiddleware: attempting getUser with token:', token ? token.substring(0, 8) + '...' : 'none');
+    
     // We receive the data of the authorized user using a token and record it in the response further.
     const user = await getUser(req, token, req.headers['user-agent']);
+    
+    console.log('authMiddleware: getUser success for user:', user?.email || 'unknown');
+    console.log('authMiddleware: user object structure:', {
+      hasAccount: !!user?.account,
+      userKeys: user ? Object.keys(user) : [],
+      accountKeys: user?.account ? Object.keys(user.account) : []
+    });
+    
+    // Proper error handling: account should always exist
+    if (!user?.account) {
+      throw new Error(`User account data is missing for user ${user?.email || 'unknown'}`);
+    }
+    
     const { is_subscribed: isSubscribed, billing_plan: billingPlan } = user.account;
     res.locals.user = { ...user, token };
 
@@ -57,6 +72,9 @@ export async function authMiddleware(req: Request, res: Response, next: NextFunc
 
     return next();
   } catch (err) {
+    console.log('authMiddleware: getUser failed:', err.message || err);
+    console.log('authMiddleware: calling resetCookie for token');
+    
     resetCookie('token', req, res);
 
     res.locals.user = { token };
@@ -97,5 +115,14 @@ async function handleGuestAuth(req: Request, res: Response, next: NextFunction) 
 }
 
 export function resetCookie(key: string, req: Request, res: Response) {
-  res.cookie(key, '', { domain: req.hostname, maxAge: 0, secure: false });
+  // For localhost development, always use .localhost domain to work across subdomains
+  const cookieDomain = (req.hostname === 'localhost' || req.hostname === 'form.localhost') ? '.localhost' : req.hostname;
+  
+  console.log('resetCookie debug:', {
+    key,
+    hostname: req.hostname,
+    domain: cookieDomain
+  });
+  
+  res.cookie(key, '', { domain: cookieDomain, maxAge: 0, secure: false });
 }
