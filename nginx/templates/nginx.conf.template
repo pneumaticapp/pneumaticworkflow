@@ -179,7 +179,7 @@ http {
         root /var/www/html;
         index index.html index.nginx-debian.html;
 
-        server_name form.pneumatic.local;
+        server_name form.localhost;
 
         location / {
             proxy_pass http://frontend;
