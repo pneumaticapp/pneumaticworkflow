@@ -62,7 +62,7 @@ http {
 
     upstream backend {
         # for UNIX domain socket setups https://docs.gunicorn.org/en/stable/deploy.html
-        server pneumatic-backend:6000 fail_timeout=0;
+        server unix:/tmp/gunicorn/pneumatic-backend.sock fail_timeout=0;
     }
 
     server {
