@@ -73,24 +73,7 @@ You can grab your own copy of Pneumatic by cloning this repository and self-host
 * Git version 2.0 or above
 * Docker version 2.27 or above
 * Docker compose version 27.0 or above
-  
 
-
-### Add the following lines to your hosts file 
-
-On Linux you can use the following command to edit your hosts file:
-
-``` 
-sudo nano /etc/hosts
-```
-
-```
-your_server_address pneumatic.local
-
-your_server_address api.pneumatic.local
-
-your_server_address form.pneumatic.local
-```
 
 ### Clone the repository
 
