@@ -1,7 +1,6 @@
 import pytest
 from datetime import timedelta
 from django.utils import timezone
-from django.db import connection
 from src.accounts.serializers.notifications import (
     NotificationTaskSerializer,
     NotificationWorkflowSerializer,
@@ -59,10 +58,6 @@ def test_send_overdue_task_notification__call_all_services__ok(mocker):
     send_push_mock = mocker.patch(
         'src.notifications.services.push.'
         'PushNotificationService.send_overdue_task'
-    )
-    mocker.patch(
-        'src.executor.connections',
-        new={'replica': connection}
     )
 
     # act
@@ -142,10 +137,6 @@ def test_send_overdue_task_notification__already_sent__not_sent(mocker):
     send_notification_mock = mocker.patch(
         'src.notifications.tasks._send_notification'
     )
-    mocker.patch(
-        'src.executor.connections',
-        new={'replica': connection}
-    )
     notification = Notification.objects.create(
         task_id=task.id,
         task_json=NotificationTaskSerializer(
@@ -199,10 +190,6 @@ def test_send_overdue_task_notification__guest__ok(mocker):
         'src.authentication.services.GuestJWTAuthService.'
         'get_str_token',
         return_value=token
-    )
-    mocker.patch(
-        'src.executor.connections',
-        new={'replica': connection}
     )
 
     # act
@@ -258,10 +245,6 @@ def test_send_overdue_task_notification__guest_already_sent__not_sent(mocker):
     send_notification_mock = mocker.patch(
         'src.notifications.tasks._send_notification'
     )
-    mocker.patch(
-        'src.executor.connections',
-        new={'replica': connection}
-    )
     notification = Notification.objects.create(
         task_id=task.id,
         task_json=NotificationTaskSerializer(
@@ -300,10 +283,6 @@ def test_send_overdue_task_notification__not_overdue__skip(mocker):
     send_notification_mock = mocker.patch(
         'src.notifications.tasks._send_notification'
     )
-    mocker.patch(
-        'src.executor.connections',
-        new={'replica': connection}
-    )
 
     # act
     _send_overdue_task_notification()
@@ -335,10 +314,6 @@ def test_send_overdue_task_notification__two_performers__ok(mocker):
     task.update_performers()
     send_notification_mock = mocker.patch(
         'src.notifications.tasks._send_notification'
-    )
-    mocker.patch(
-        'src.executor.connections',
-        new={'replica': connection}
     )
 
     # act
@@ -414,10 +389,6 @@ def test_send_overdue_task_notification__completed_task__skip(
     mocker.patch(
         'src.notifications.tasks._send_notification'
     )
-    mocker.patch(
-        'src.executor.connections',
-        new={'replica': connection}
-    )
     send_notification_mock = mocker.patch(
         'src.notifications.tasks._send_notification'
     )
@@ -457,10 +428,6 @@ def test_send_overdue_task_notification__terminated_workflow__skip(
     send_notification_mock = mocker.patch(
         'src.notifications.tasks._send_notification'
     )
-    mocker.patch(
-        'src.executor.connections',
-        new={'replica': connection}
-    )
 
     # act
     _send_overdue_task_notification()
@@ -499,10 +466,6 @@ def test_send_overdue_task_notification__ended__workflow__skip(
     )
     send_notification_mock = mocker.patch(
         'src.notifications.tasks._send_notification'
-    )
-    mocker.patch(
-        'src.executor.connections',
-        new={'replica': connection}
     )
 
     # act
@@ -545,10 +508,6 @@ def test_send_overdue_task_notification__delayed_workflow__skip(
     send_notification_mock = mocker.patch(
         'src.notifications.tasks._send_notification'
     )
-    mocker.patch(
-        'src.executor.connections',
-        new={'replica': connection}
-    )
 
     # act
     _send_overdue_task_notification()
@@ -583,10 +542,6 @@ def test_send_overdue_task_notification__deleted_performer__skip(mocker):
     )
     send_notification_mock = mocker.patch(
         'src.notifications.tasks._send_notification'
-    )
-    mocker.patch(
-        'src.executor.connections',
-        new={'replica': connection}
     )
 
     # act
@@ -648,10 +603,6 @@ def test_send_overdue_task_notification__completed_performer__skip(mocker):
     )
     send_notification_mock = mocker.patch(
         'src.notifications.tasks._send_notification'
-    )
-    mocker.patch(
-        'src.executor.connections',
-        new={'replica': connection}
     )
 
     # act

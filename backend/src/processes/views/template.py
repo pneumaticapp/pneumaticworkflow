@@ -2,7 +2,6 @@ from django.db.models import Prefetch, Q
 from typing_extensions import List
 from django.db import transaction, DataError
 from django.http import Http404
-from django.conf import settings
 from rest_framework.viewsets import GenericViewSet
 from rest_framework.decorators import action
 from rest_framework.pagination import LimitOffsetPagination
@@ -485,10 +484,7 @@ class TemplateViewSet(
             user=request.user,
             **request_slz.validated_data
         )
-        data = RawSqlExecutor.fetch(
-            *query.get_sql(),
-            db=settings.REPLICA
-        )
+        data = RawSqlExecutor.fetch(*query.get_sql())
         response_slz = self.get_serializer(data, many=True)
         return self.response_ok(response_slz.data)
 
@@ -500,10 +496,7 @@ class TemplateViewSet(
             user=request.user,
             **request_slz.validated_data
         )
-        data = RawSqlExecutor.fetch(
-            *query.get_sql(),
-            db=settings.REPLICA
-        )
+        data = RawSqlExecutor.fetch(*query.get_sql(),)
         response_slz = self.get_serializer(data, many=True)
         return self.response_ok(response_slz.data)
 

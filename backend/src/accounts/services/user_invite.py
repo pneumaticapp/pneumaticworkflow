@@ -3,6 +3,7 @@ from django.db import transaction, IntegrityError
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.hashers import make_password
+from src.accounts.serializers.user import UserWebsocketSerializer
 from src.authentication.enums import AuthTokenType
 from src.authentication.tokens import PneumaticToken
 from src.accounts.enums import (
@@ -39,7 +40,10 @@ from src.processes.services.system_workflows import (
 )
 from src.accounts.services import AccountService
 from src.payment.tasks import increase_plan_users
-
+from src.notifications.tasks import (
+    send_user_created_notification,
+    send_user_updated_notification,
+)
 
 UserModel = get_user_model()
 
@@ -145,6 +149,11 @@ class UserInviteService(
             name=user.get_full_name(),
             account_id=user.account_id,
             key=PneumaticToken.create(user, for_api_key=True)
+        )
+        send_user_created_notification.delay(
+            logging=user.account.log_api_requests,
+            account_id=user.account.id,
+            user_data=UserWebsocketSerializer(user).data,
         )
 
     def _user_invite_actions(self, user: UserModel):
@@ -413,7 +422,11 @@ class UserInviteService(
                 is_superuser=self.is_superuser,
                 auth_type=self.auth_type
             )
-
+        send_user_updated_notification.delay(
+            logging=user.account.log_api_requests,
+            account_id=user.account.id,
+            user_data=UserWebsocketSerializer(user).data,
+        )
         AnalyticService.users_joined(user)
         self.identify(user)
         self.group(user)

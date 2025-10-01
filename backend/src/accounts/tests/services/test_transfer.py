@@ -336,6 +336,10 @@ def test_after_transfer_actions__premium__ok(mocker):
     settings_mock = mocker.patch(
         'src.accounts.services.user_transfer.settings'
     )
+    send_user_updated_mock = mocker.patch(
+        'src.notifications.tasks.'
+        'send_user_updated_notification.delay'
+    )
     settings_mock.PROJECT_CONF = {'BILLING': True}
     service = UserTransferService()
     service.user = user
@@ -358,6 +362,19 @@ def test_after_transfer_actions__premium__ok(mocker):
         account_id=user.account_id,
         is_superuser=False,
         auth_type=AuthTokenType.USER
+    )
+    send_user_updated_mock.assert_called_once_with(
+        logging=user.account.log_api_requests,
+        account_id=user.account_id,
+        user_data={
+            'id': user.id,
+            'first_name': user.first_name,
+            'last_name': user.last_name,
+            'email': user.email,
+            'photo': user.photo,
+            'is_admin': user.is_admin,
+            'is_account_owner': user.is_account_owner
+        }
     )
 
 
@@ -385,6 +402,10 @@ def test_after_transfer_actions__unlimited__ok(mocker):
     settings_mock = mocker.patch(
         'src.accounts.services.user_transfer.settings'
     )
+    send_user_updated_mock = mocker.patch(
+        'src.notifications.tasks.'
+        'send_user_updated_notification.delay'
+    )
     settings_mock.PROJECT_CONF = {'BILLING': True}
     service = UserTransferService()
     service.user = user
@@ -404,6 +425,19 @@ def test_after_transfer_actions__unlimited__ok(mocker):
         user=service.prev_user
     )
     increase_plan_users_mock.assert_not_called()
+    send_user_updated_mock.assert_called_once_with(
+        logging=user.account.log_api_requests,
+        account_id=user.account_id,
+        user_data={
+            'id': user.id,
+            'first_name': user.first_name,
+            'last_name': user.last_name,
+            'email': user.email,
+            'photo': user.photo,
+            'is_admin': user.is_admin,
+            'is_account_owner': user.is_account_owner
+        }
+    )
 
 
 @pytest.mark.parametrize('plan', BillingPlanType.PAYMENT_PLANS)
@@ -434,6 +468,10 @@ def test_after_transfer_actions__disable_billing__ok(mocker, plan):
     settings_mock = mocker.patch(
         'src.accounts.services.user_transfer.settings'
     )
+    send_user_updated_mock = mocker.patch(
+        'src.notifications.tasks.'
+        'send_user_updated_notification.delay'
+    )
     settings_mock.PROJECT_CONF = {'BILLING': False}
     service = UserTransferService()
     service.user = user
@@ -453,6 +491,19 @@ def test_after_transfer_actions__disable_billing__ok(mocker, plan):
         user=service.prev_user
     )
     increase_plan_users_mock.assert_not_called()
+    send_user_updated_mock.assert_called_once_with(
+        logging=user.account.log_api_requests,
+        account_id=user.account_id,
+        user_data={
+            'id': user.id,
+            'first_name': user.first_name,
+            'last_name': user.last_name,
+            'email': user.email,
+            'photo': user.photo,
+            'is_admin': user.is_admin,
+            'is_account_owner': user.is_account_owner
+        }
+    )
 
 
 def test_deactivate_prev_user__ok(mocker):

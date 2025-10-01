@@ -17,12 +17,6 @@ from src.processes.enums import (
 pytestmark = pytest.mark.django_db
 
 
-@pytest.fixture(autouse=True)
-def replica_mock(mocker):
-    mocker.patch('django.conf.settings.REPLICA', 'default')
-    yield
-
-
 def test_counters__ok(api_client):
 
     # arrange

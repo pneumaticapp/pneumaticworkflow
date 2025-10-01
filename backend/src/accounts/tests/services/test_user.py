@@ -990,6 +990,10 @@ def test_deactivate__ok(mocker):
         'src.accounts.services.user.UserService'
         '._validate_deactivate'
     )
+    send_user_deleted_mock = mocker.patch(
+        'src.notifications.tasks.'
+        'send_user_deleted_notification.delay'
+    )
 
     # act
     UserService.deactivate(user)
@@ -998,6 +1002,19 @@ def test_deactivate__ok(mocker):
     validate_deactivate_mock.assert_called_once_with(user)
     deactivate_mock.assert_called_once_with(user)
     deactivate_actions_mock.assert_called_once_with(user)
+    send_user_deleted_mock.assert_called_once_with(
+        logging=user.account.log_api_requests,
+        account_id=user.account_id,
+        user_data={
+            'id': user.id,
+            'first_name': user.first_name,
+            'last_name': user.last_name,
+            'email': user.email,
+            'photo': user.photo,
+            'is_admin': user.is_admin,
+            'is_account_owner': user.is_account_owner
+        }
+    )
 
 
 def test_deactivate__skip_validation__ok(mocker):
@@ -1017,6 +1034,10 @@ def test_deactivate__skip_validation__ok(mocker):
         'src.accounts.services.user.UserService'
         '._validate_deactivate'
     )
+    send_user_deleted_mock = mocker.patch(
+        'src.notifications.tasks.'
+        'send_user_deleted_notification.delay'
+    )
 
     # act
     UserService.deactivate(user, skip_validation=True)
@@ -1025,6 +1046,19 @@ def test_deactivate__skip_validation__ok(mocker):
     validate_deactivate_mock.assert_not_called()
     deactivate_mock.assert_called_once_with(user)
     deactivate_actions_mock.assert_called_once_with(user)
+    send_user_deleted_mock.assert_called_once_with(
+        logging=user.account.log_api_requests,
+        account_id=user.account_id,
+        user_data={
+            'id': user.id,
+            'first_name': user.first_name,
+            'last_name': user.last_name,
+            'email': user.email,
+            'photo': user.photo,
+            'is_admin': user.is_admin,
+            'is_account_owner': user.is_account_owner
+        }
+    )
 
 
 def test_deactivate__not_call_actions_for_invited_user__ok(mocker):
@@ -1044,6 +1078,10 @@ def test_deactivate__not_call_actions_for_invited_user__ok(mocker):
         'src.accounts.services.user.UserService'
         '._deactivate_actions'
     )
+    send_user_deleted_mock = mocker.patch(
+        'src.notifications.tasks.'
+        'send_user_deleted_notification.delay'
+    )
 
     # act
     UserService.deactivate(invited_user)
@@ -1052,6 +1090,19 @@ def test_deactivate__not_call_actions_for_invited_user__ok(mocker):
     validate_deactivate_mock.assert_called_once_with(invited_user)
     deactivate_mock.assert_called_once_with(invited_user)
     deactivate_actions_mock.assert_not_called()
+    send_user_deleted_mock.assert_called_once_with(
+        logging=user.account.log_api_requests,
+        account_id=user.account_id,
+        user_data={
+            'id': invited_user.id,
+            'first_name': invited_user.first_name,
+            'last_name': invited_user.last_name,
+            'email': invited_user.email,
+            'photo': invited_user.photo,
+            'is_admin': invited_user.is_admin,
+            'is_account_owner': invited_user.is_account_owner
+        }
+    )
 
 
 def test_private_deactivate__ok(mocker):
@@ -1169,7 +1220,7 @@ def test_private_deactivate__activate_contacts__ok(mocker):
 def test_deactivate_actions__ok(mocker):
 
     # arrange
-    user = create_test_user()
+    user = create_test_user(status=UserStatus.INACTIVE)
     send_user_deactivated_email_mock = mocker.patch(
         'src.services.email.EmailService.'
         'send_user_deactivated_email'

@@ -3,6 +3,7 @@ import { Field, Formik, FormikConfig } from 'formik';
 import { useIntl } from 'react-intl';
 import ReCAPTCHA from 'react-google-recaptcha';
 import moment from 'moment-timezone';
+import classNames from 'classnames';
 
 import { TRegisterUserPayload } from '../../../redux/actions';
 import { IntlMessages } from '../../../components/IntlMessages';
@@ -83,7 +84,7 @@ export function Register({ registerUser }: IRegisterProps) {
         ...(phone && { phone }),
         fromEmail: true,
         password,
-        timezone: TIMEZONE_OFFSET_MAP[defaultOffset]
+        timezone: TIMEZONE_OFFSET_MAP[defaultOffset],
       },
       onStart: () => setSubmitting(true),
       onFinish: () => setSubmitting(false),
@@ -191,7 +192,6 @@ export function Register({ registerUser }: IRegisterProps) {
                 errorMessage={errors.phone}
               />
             </div>
-
             <InputField
               name="password"
               value={values.password}
@@ -203,8 +203,7 @@ export function Register({ registerUser }: IRegisterProps) {
               showErrorIfTouched
               showPasswordVisibilityToggle
             />
-
-            {(isEnvCaptcha && showCaptcha) && (
+            {isEnvCaptcha && showCaptcha && (
               <div className={styles['form__captcha']}>
                 <ReCAPTCHA
                   sitekey={recaptchaSecret}
@@ -213,7 +212,16 @@ export function Register({ registerUser }: IRegisterProps) {
                 />
               </div>
             )}
-
+            <Button
+              buttonStyle="yellow"
+              isLoading={isSubmitting}
+              className={styles['form__submit']}
+              size="lg"
+              type="submit"
+              disabled={!isValid || !dirty}
+              data-test-id="registration-button"
+              label={formatMessage({ id: 'user.register-button' })}
+            />
             <p className={styles['form__terms']}>
               <IntlMessages
                 id="user.you-agree-to-pneumatic-terms"
@@ -228,25 +236,24 @@ export function Register({ registerUser }: IRegisterProps) {
                       <span>{formatMessage({ id: 'user.register-terms-link' })}</span>
                     </a>
                   ),
+                  privacyPolicy: (
+                    <a
+                      href="https://www.pneumatic.app/legal/privacy/"
+                      target="_blank"
+                      className={styles['link']}
+                      rel="noreferrer"
+                    >
+                      <span>{formatMessage({ id: 'user.register-privacy-policy-link' })}</span>
+                    </a>
+                  ),
                 }}
               />
             </p>
-
-            <Button
-              buttonStyle="yellow"
-              isLoading={isSubmitting}
-              className={styles['form__submit']}
-              size="lg"
-              type="submit"
-              disabled={!isValid || !dirty}
-              data-test-id="registration-button"
-              label={formatMessage({ id: 'user.register-button' })}
-            />
           </form>
         )}
       </Formik>
 
-      <div className={styles['footnote']}>
+      <div className={classNames(styles['footnote'], styles['footnote-register'])}>
         <IntlMessages id="user.register-already" />
 
         <NavLink to={ERoutes.Login} className={styles['link']}>

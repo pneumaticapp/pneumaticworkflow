@@ -385,6 +385,10 @@ def test_user_create_actions__premium__ok(mocker, plan):
         first_name='User',
         last_name='Invited'
     )
+    send_user_created_mock = mocker.patch(
+        'src.notifications.tasks.'
+        'send_user_created_notification.delay'
+    )
 
     service = UserInviteService(
         current_url=current_url,
@@ -407,6 +411,19 @@ def test_user_create_actions__premium__ok(mocker, plan):
         key=key
     )
     create_key_mock.assert_called_once_with(invited_user, for_api_key=True)
+    send_user_created_mock.assert_called_once_with(
+        logging=invited_user.account.log_api_requests,
+        account_id=invited_user.account_id,
+        user_data={
+            'id': invited_user.id,
+            'first_name': invited_user.first_name,
+            'last_name': invited_user.last_name,
+            'email': invited_user.email,
+            'photo': invited_user.photo,
+            'is_admin': invited_user.is_admin,
+            'is_account_owner': invited_user.is_account_owner
+        }
+    )
 
 
 def test_user_create_actions__freemium__ok(mocker):
@@ -423,6 +440,10 @@ def test_user_create_actions__freemium__ok(mocker):
         'src.accounts.services.user_invite.'
         'PneumaticToken.create',
         return_value=key
+    )
+    send_user_created_mock = mocker.patch(
+        'src.notifications.tasks.'
+        'send_user_created_notification.delay'
     )
 
     service = UserInviteService(
@@ -446,6 +467,19 @@ def test_user_create_actions__freemium__ok(mocker):
         key=key
     )
     create_key_mock.assert_called_once_with(invited_user, for_api_key=True)
+    send_user_created_mock.assert_called_once_with(
+        logging=invited_user.account.log_api_requests,
+        account_id=invited_user.account_id,
+        user_data={
+            'id': invited_user.id,
+            'first_name': invited_user.first_name,
+            'last_name': invited_user.last_name,
+            'email': invited_user.email,
+            'photo': invited_user.photo,
+            'is_admin': invited_user.is_admin,
+            'is_account_owner': invited_user.is_account_owner
+        }
+    )
 
 
 def test_send_transfer_email__ok(mocker):
@@ -1815,6 +1849,10 @@ def test__accept__all_fields__ok(identify_mock, group_mock, mocker):
     settings_mock = mocker.patch(
         'src.accounts.services.user_invite.settings'
     )
+    send_user_updated_mock = mocker.patch(
+        'src.notifications.tasks.'
+        'send_user_updated_notification.delay'
+    )
     settings_mock.PROJECT_CONF = {'BILLING': True}
     first_name = 'John'
     last_name = 'Wick'
@@ -1857,6 +1895,19 @@ def test__accept__all_fields__ok(identify_mock, group_mock, mocker):
     users_joined_mock.assert_called_once_with(invited_user)
     identify_mock.assert_called_once_with(invited_user)
     group_mock.assert_called_once_with(invited_user)
+    send_user_updated_mock.assert_called_once_with(
+        logging=invited_user.account.log_api_requests,
+        account_id=invited_user.account_id,
+        user_data={
+            'id': invited_user.id,
+            'first_name': invited_user.first_name,
+            'last_name': invited_user.last_name,
+            'email': invited_user.email,
+            'photo': invited_user.photo,
+            'is_admin': invited_user.is_admin,
+            'is_account_owner': invited_user.is_account_owner
+        }
+    )
 
 
 def test__accept__only_required_fields__ok(identify_mock, group_mock, mocker):
@@ -1913,6 +1964,10 @@ def test__accept__only_required_fields__ok(identify_mock, group_mock, mocker):
     settings_mock = mocker.patch(
         'src.accounts.services.user_invite.settings'
     )
+    send_user_updated_mock = mocker.patch(
+        'src.notifications.tasks.'
+        'send_user_updated_notification.delay'
+    )
     settings_mock.PROJECT_CONF = {'BILLING': True}
     first_name = 'John'
     last_name = 'Wick'
@@ -1950,3 +2005,16 @@ def test__accept__only_required_fields__ok(identify_mock, group_mock, mocker):
     users_joined_mock.assert_called_once_with(invited_user)
     identify_mock.assert_called_once_with(invited_user)
     group_mock.assert_called_once_with(invited_user)
+    send_user_updated_mock.assert_called_once_with(
+        logging=invited_user.account.log_api_requests,
+        account_id=invited_user.account_id,
+        user_data={
+            'id': invited_user.id,
+            'first_name': invited_user.first_name,
+            'last_name': invited_user.last_name,
+            'email': invited_user.email,
+            'photo': invited_user.photo,
+            'is_admin': invited_user.is_admin,
+            'is_account_owner': invited_user.is_account_owner
+        }
+    )

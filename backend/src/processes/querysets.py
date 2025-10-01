@@ -1,6 +1,5 @@
 from datetime import datetime
 from typing import List, Optional, Union, Iterable
-from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db import transaction
 from django.db.models import (
@@ -961,7 +960,7 @@ class WorkflowEventQuerySet(AccountBaseQuerySet):
             date_before_tsp=date_before_tsp,
             date_after_tsp=date_after_tsp
         )
-        return self.execute_raw(query, using=settings.REPLICA)
+        return self.execute_raw(query)
 
     def only_with_attachments(self):
         return self.filter(with_attachments=True)

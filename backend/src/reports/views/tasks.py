@@ -1,4 +1,3 @@
-from django.conf import settings
 from rest_framework.decorators import action
 from rest_framework.generics import get_object_or_404
 from rest_framework.pagination import LimitOffsetPagination
@@ -54,7 +53,7 @@ class TasksDashboardViewSet(
                 user_id=request.user.id,
                 **filters
             )
-        data = RawSqlExecutor.fetchone(*query.get_sql(), db=settings.REPLICA)
+        data = RawSqlExecutor.fetchone(*query.get_sql())
         return self.response_ok(data)
 
     @action(methods=['get'], detail=False)
@@ -74,10 +73,7 @@ class TasksDashboardViewSet(
                 **filters
             )
         data = list(
-            RawSqlExecutor.fetch(
-                *query.get_sql(),
-                db=settings.REPLICA
-            )
+            RawSqlExecutor.fetch(*query.get_sql())
         )
         return self.response_ok(data)
 
@@ -101,9 +97,6 @@ class TasksDashboardViewSet(
                 **filters
             )
         data = list(
-            RawSqlExecutor.fetch(
-                *query.get_sql(),
-                db=settings.REPLICA
-            )
+            RawSqlExecutor.fetch(*query.get_sql())
         )
         return self.response_ok(data)

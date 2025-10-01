@@ -4,6 +4,9 @@ from src.executor import RawSqlExecutor
 from src.accounts.queries import (
     FetchGroupTaskNotificationRecipientsQuery
 )
+from src.accounts.serializers.group import (
+    GroupWebsocketSerializer
+)
 from collections import defaultdict
 from src.analytics.tasks import track_group_analytics
 from src.analytics.events import GroupsAnalyticsEvent
@@ -22,7 +25,10 @@ from src.processes.tasks.update_workflow import (
 )
 from src.notifications.tasks import (
     send_removed_task_notification,
-    send_new_task_websocket
+    send_new_task_websocket,
+    send_group_created_notification,
+    send_group_updated_notification,
+    send_group_deleted_notification,
 )
 
 UserModel = get_user_model()
@@ -92,6 +98,12 @@ class UserGroupService(BaseModelService):
             new_photo=photo
         )
 
+        send_group_created_notification.delay(
+            logging=self.account.log_api_requests,
+            account_id=self.user.account_id,
+            group_data=GroupWebsocketSerializer(self.instance).data,
+        )
+
     def _send_users_notification(
         self,
         user_ids: List[int],
@@ -103,15 +115,26 @@ class UserGroupService(BaseModelService):
             account_id=self.user.account_id,
         )
         recipients_query = list(RawSqlExecutor.fetch(*query.get_sql()))
+        is_removed_task = (
+            send_notification_task is send_removed_task_notification
+        )
         notifications = defaultdict(list)
         for recipient in recipients_query:
-            notifications[recipient['task_id']].append(
+            recipient_data = (
                 (recipient['id'], recipient['email'])
+                if is_removed_task
+                else (
+                    recipient['id'],
+                    recipient['email'],
+                    recipient['is_subscribed']
+                )
             )
+            notifications[recipient['task_id']].append(recipient_data)
 
         for task_id, recipients in notifications.items():
             if recipients:
                 send_notification_task.delay(
+                    logging=self.account.log_api_requests,
                     task_id=task_id,
                     recipients=recipients,
                     account_id=self.user.account_id,
@@ -184,6 +207,13 @@ class UserGroupService(BaseModelService):
                 )
             )
         result = super().partial_update(**update_kwargs, force_save=force_save)
+
+        send_group_updated_notification.delay(
+            logging=self.account.log_api_requests,
+            account_id=self.user.account_id,
+            group_data=GroupWebsocketSerializer(self.instance).data,
+        )
+
         if added_users_ids:
             self._send_added_users_notifications(added_users_ids)
         if removed_users_ids:
@@ -193,6 +223,15 @@ class UserGroupService(BaseModelService):
     def delete(self):
         template_ids = self._get_template_ids()
         users = list(self.instance.users.values_list('id', flat=True))
+        if users:
+            self._send_removed_users_notifications(users)
+
+        send_group_deleted_notification.delay(
+            logging=self.account.log_api_requests,
+            account_id=self.user.account_id,
+            group_data=GroupWebsocketSerializer(self.instance).data,
+        )
+
         track_group_analytics.delay(
             event=GroupsAnalyticsEvent.deleted,
             user_id=self.user.id,

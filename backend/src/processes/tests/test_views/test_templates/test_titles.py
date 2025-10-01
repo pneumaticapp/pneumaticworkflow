@@ -31,12 +31,6 @@ from src.utils.validation import ErrorCode
 pytestmark = pytest.mark.django_db
 
 
-@pytest.fixture(autouse=True)
-def replica_mock(mocker):
-    mocker.patch('django.conf.settings.REPLICA', 'default')
-    yield
-
-
 def test_titles_many_templates__ok(api_client):
 
     # arrange

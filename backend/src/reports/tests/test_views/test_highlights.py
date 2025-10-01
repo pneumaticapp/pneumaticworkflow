@@ -39,12 +39,6 @@ UserModel = get_user_model()
 pytestmark = pytest.mark.django_db
 
 
-@pytest.fixture(autouse=True)
-def replica_mock(mocker):
-    mocker.patch('django.conf.settings.REPLICA', 'default')
-    yield
-
-
 def test__ordering__ok(api_client):
     account = create_test_account()
     create_test_user(

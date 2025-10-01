@@ -89,3 +89,23 @@ class GroupNameSerializer(serializers.ModelSerializer):
             'id',
             'name'
         )
+
+
+class GroupWebsocketSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = UserGroup
+        fields = (
+            'id',
+            'name',
+            'photo',
+            'users',
+        )
+
+    users = serializers.SerializerMethodField()
+
+    def get_users(self, obj):
+        from src.accounts.serializers.user import (
+            UserWebsocketSerializer
+        )
+        return UserWebsocketSerializer(obj.users.all(), many=True).data
