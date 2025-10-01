@@ -36,12 +36,6 @@ pytestmark = pytest.mark.django_db
 datetime_format = '%Y-%m-%dT%H:%M:%S.%fZ'
 
 
-@pytest.fixture(autouse=True)
-def replica_mock(mocker):
-    mocker.patch('django.conf.settings.REPLICA', 'default')
-    yield
-
-
 def test_list__default_ordering__ok(mocker, api_client):
 
     # arrange

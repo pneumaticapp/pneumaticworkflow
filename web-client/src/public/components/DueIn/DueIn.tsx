@@ -11,20 +11,13 @@ import { DropdownArea } from '../UI/DropdownArea';
 import { getDate, getTime } from '../../utils/strings';
 import { Button, InputField, Tooltip } from '../UI';
 import { DatePickerCustom } from '../UI/form/DatePicker';
+import { setTimeForDate } from './utils/setTimeForDate';
+import { checkMinTimeForDate } from './utils/checkMinTimeForDate';
+import { IDueInProps } from './types';
+
 import styles from './DueIn.css';
 
-export interface IDueInProps {
-  dueDate: string | null;
-  timezone: string;
-  dateFmt: string;
-  showIcon?: boolean;
-  containerClassName?: string;
-  view?: 'timeLeft' | 'dueDate';
-  withTime?: boolean;
-  onSave(date: string): void;
-  onRemove(): void;
-  dateCompleted: string | null;
-}
+
 
 export function DueIn({
   dateCompleted,
@@ -67,6 +60,13 @@ export function DueIn({
 
     try {
       const dateWithTime = setTimeForDate(selectedDate, timeString, timezone, dateFmt);
+      const isValidMinTime = checkMinTimeForDate(dateWithTime, timezone);
+
+      if (!isValidMinTime) {
+        setTimeError(formatMessage({ id: 'due-date.time-too-early' }));
+        return;
+      }
+
       onSave(dateWithTime);
       dropdownRef.current?.closeDropdown();
     } catch (error) {
@@ -128,7 +128,7 @@ export function DueIn({
             onChange={(date) => setSelectedDate(date)}
             inline
             showTimeInput
-            minDate={moment.tz(timezone).add(1, 'days').format('YYYY-MM-DD')}
+            minDate={moment.tz(timezone).format('YYYY-MM-DD')}
           />
         </div>
 
@@ -174,16 +174,3 @@ export function DueIn({
   );
 }
 
-const setTimeForDate = (initialDate: Date, timeString: string, timezone: string, dateFmt: string): string => {
-  const timeRegex12 = /(\d{1,2})(?::(\d{2}))?\s*?(am|pm)/;
-  const timeRegex24 = /^([01][0-9]|2[0-3]):([0-5][0-9])$/;
-  const match = dateFmt.split(', ')[2] === 'p' ? timeRegex12.exec(timeString) : timeRegex24.exec(timeString);
-  if (!match) throw new Error('Invalid time');
-
-  const [, hours, minutes = '00', period] = match;
-
-  return moment(initialDate)
-    .tz(timezone)
-    .set({ h: period && period === 'pm' ? +hours + 12 : +hours, m: +minutes })
-    .format();
-};

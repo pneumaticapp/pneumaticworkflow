@@ -1,5 +1,4 @@
 from typing import List
-from django.conf import settings
 from django.contrib.auth import get_user_model
 from rest_framework.decorators import action
 from rest_framework.viewsets import GenericViewSet
@@ -118,10 +117,7 @@ class TasksListView(ListAPIView):
             user=user,
             **filter_slz.validated_data
         )
-        self.queryset = TaskForList.objects.execute_raw(
-            query,
-            using=settings.REPLICA
-        )
+        self.queryset = TaskForList.objects.execute_raw(query)
         search_text = filter_slz.validated_data.get('search')
         if search_text:
             AnalyticService.search_search(

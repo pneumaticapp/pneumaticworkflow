@@ -6,6 +6,7 @@ from rest_framework_simplejwt.exceptions import TokenError
 from src.authentication.enums import AuthTokenType
 from src.accounts.models import UserInvite
 from src.accounts.tokens import TransferToken
+from src.accounts.serializers.user import UserWebsocketSerializer
 from src.accounts.services.exceptions import (
     InvalidTransferTokenException,
     AlreadyAcceptedInviteException,
@@ -28,7 +29,7 @@ from src.analytics.services import AnalyticService
 from src.accounts.services.user import UserService
 from src.payment.tasks import increase_plan_users
 from src.accounts.services import AccountService
-
+from src.notifications.tasks import send_user_updated_notification
 
 UserModel = get_user_model()
 
@@ -91,6 +92,11 @@ class UserTransferService(
         self.identify(self.user)
         self.group(self.prev_user)
         self.group(self.user)
+        send_user_updated_notification.delay(
+            logging=self.user.account.log_api_requests,
+            account_id=self.user.account.id,
+            user_data=UserWebsocketSerializer(self.user).data,
+        )
         AnalyticService.users_transferred(user=self.prev_user)
 
     def _delete_prev_user_pending_invites(self):

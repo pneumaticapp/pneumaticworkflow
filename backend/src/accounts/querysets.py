@@ -148,30 +148,45 @@ class UserQuerySet(AccountBaseQuerySet):
         return [elem for elem in qst]
 
     def get_users_task_except_group(self, task, exclude_group):
-        query = (
-            Q(taskperformer__task=task)
-            & ~Q(taskperformer__directly_status=DirectlyStatus.DELETED)
+        query = Q(
+            taskperformer__task=task,
+            taskperformer__directly_status__in=[
+                DirectlyStatus.NO_STATUS,
+                DirectlyStatus.CREATED
+            ]
         )
-        query |= Q(user_groups__taskperformer__task=task) & ~Q(
-            user_groups=exclude_group
-        ) & ~Q(
-            user_groups__taskperformer__directly_status=DirectlyStatus.DELETED
-        )
+        query |= Q(
+            user_groups__taskperformer__task=task,
+            user_groups__taskperformer__directly_status__in=[
+                DirectlyStatus.NO_STATUS,
+                DirectlyStatus.CREATED
+            ]
+        ) & ~Q(user_groups=exclude_group)
         return self.filter(query).distinct()
 
     def get_users_taskperformer_groups(self, task):
-        query = Q(user_groups__taskperformer__task=task) & ~Q(
-            user_groups__taskperformer__directly_status=DirectlyStatus.DELETED
-        )
-        return self.filter(query).distinct()
+        return self.filter(
+            user_groups__taskperformer__task=task,
+            user_groups__taskperformer__directly_status__in=[
+                DirectlyStatus.NO_STATUS,
+                DirectlyStatus.CREATED
+            ]
+        ).distinct()
 
     def get_users_task(self, task):
-        query = (
-            Q(taskperformer__task=task) &
-            ~Q(taskperformer__directly_status=DirectlyStatus.DELETED)
+        query = Q(
+            taskperformer__task=task,
+            taskperformer__directly_status__in=[
+                DirectlyStatus.NO_STATUS,
+                DirectlyStatus.CREATED
+            ]
         )
-        query |= Q(user_groups__taskperformer__task=task) & ~Q(
-            user_groups__taskperformer__directly_status=DirectlyStatus.DELETED
+        query |= Q(
+            user_groups__taskperformer__task=task,
+            user_groups__taskperformer__directly_status__in=[
+                DirectlyStatus.NO_STATUS,
+                DirectlyStatus.CREATED
+            ]
         )
         return self.filter(query).distinct()
 

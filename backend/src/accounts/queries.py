@@ -510,6 +510,7 @@ class FetchGroupTaskNotificationRecipientsQuery(SqlQueryObject):
         SELECT DISTINCT
           au.id AS id,
           au.email AS email,
+          au.is_new_tasks_subscriber AS is_subscribed,
           pt.id AS task_id
         FROM accounts_user au
         INNER JOIN accounts_usergroup aug ON aug.id = %(group_id)s
@@ -560,6 +561,7 @@ class FetchGroupTaskNotificationRecipientsQuery(SqlQueryObject):
           SELECT DISTINCT
             notify_users.id,
             notify_users.email,
+            notify_users.is_subscribed,
             notify_users.task_id
           FROM (
             {self._get_notify_users()}

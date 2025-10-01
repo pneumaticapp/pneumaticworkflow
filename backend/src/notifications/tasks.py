@@ -76,6 +76,12 @@ __all__ = [
     'send_reaction_notification',
     'send_reset_password_notification',
     'send_removed_task_notification',
+    'send_group_created_notification',
+    'send_group_updated_notification',
+    'send_group_deleted_notification',
+    'send_user_created_notification',
+    'send_user_updated_notification',
+    'send_user_deleted_notification',
 ]
 
 
@@ -223,6 +229,7 @@ def _send_removed_task_notification(
     recipients: List[Tuple[int, str]],
     account_id: int,
     task_data: Optional[dict] = None,
+    **kwargs
 ):
 
     if task_data is None:
@@ -295,7 +302,6 @@ def _send_overdue_task_notification():
         *query.get_sql(),
         stream=True,
         fetch_size=50,
-        db='replica',
     )
     notifications = []
     send_data = []
@@ -923,3 +929,171 @@ def _send_reset_password_notification(
 @shared_task(base=NotificationTask)
 def send_reset_password_notification(**kwargs):
     _send_reset_password_notification(**kwargs)
+
+
+def _send_group_created_notification(
+    logging: bool,
+    account_id: int,
+    group_data: dict,
+    **kwargs
+):
+    users = UserModel.objects.filter(
+        account_id=account_id,
+        status=UserStatus.ACTIVE
+    ).values_list('id', 'email')
+
+    for (user_id, user_email) in users:
+        _send_notification(
+            method_name=NotificationMethod.group_created,
+            account_id=account_id,
+            user_id=user_id,
+            user_email=user_email,
+            logging=logging,
+            group_data=group_data,
+            sync=True,
+        )
+
+
+@shared_task(base=NotificationTask)
+def send_group_created_notification(**kwargs):
+    _send_group_created_notification(**kwargs)
+
+
+def _send_group_updated_notification(
+    logging: bool,
+    account_id: int,
+    group_data: dict,
+    **kwargs
+):
+    users = UserModel.objects.filter(
+        account_id=account_id,
+        status=UserStatus.ACTIVE
+    ).values_list('id', 'email')
+
+    for (user_id, user_email) in users:
+        _send_notification(
+            method_name=NotificationMethod.group_updated,
+            account_id=account_id,
+            user_id=user_id,
+            user_email=user_email,
+            logging=logging,
+            group_data=group_data,
+            sync=True,
+        )
+
+
+@shared_task(base=NotificationTask)
+def send_group_updated_notification(**kwargs):
+    _send_group_updated_notification(**kwargs)
+
+
+def _send_group_deleted_notification(
+    logging: bool,
+    account_id: int,
+    group_data: dict,
+    **kwargs
+):
+    users = UserModel.objects.filter(
+        account_id=account_id,
+        status=UserStatus.ACTIVE
+    ).values_list('id', 'email')
+
+    for (user_id, user_email) in users:
+        _send_notification(
+            method_name=NotificationMethod.group_deleted,
+            account_id=account_id,
+            user_id=user_id,
+            user_email=user_email,
+            logging=logging,
+            group_data=group_data,
+            sync=True,
+        )
+
+
+@shared_task(base=NotificationTask)
+def send_group_deleted_notification(**kwargs):
+    _send_group_deleted_notification(**kwargs)
+
+
+def _send_user_created_notification(
+    logging: bool,
+    account_id: int,
+    user_data: dict,
+    **kwargs
+):
+    users = UserModel.objects.filter(
+        account_id=account_id,
+        status=UserStatus.ACTIVE
+    ).values_list('id', 'email')
+
+    for (user_id, user_email) in users:
+        _send_notification(
+            method_name=NotificationMethod.user_created,
+            account_id=account_id,
+            user_id=user_id,
+            user_email=user_email,
+            logging=logging,
+            user_data=user_data,
+            sync=True,
+        )
+
+
+@shared_task(base=NotificationTask)
+def send_user_created_notification(**kwargs):
+    _send_user_created_notification(**kwargs)
+
+
+def _send_user_updated_notification(
+    logging: bool,
+    account_id: int,
+    user_data: dict,
+    **kwargs
+):
+    users = UserModel.objects.filter(
+        account_id=account_id,
+        status=UserStatus.ACTIVE
+    ).values_list('id', 'email')
+
+    for (user_id, user_email) in users:
+        _send_notification(
+            method_name=NotificationMethod.user_updated,
+            account_id=account_id,
+            user_id=user_id,
+            user_email=user_email,
+            logging=logging,
+            user_data=user_data,
+            sync=True,
+        )
+
+
+@shared_task(base=NotificationTask)
+def send_user_updated_notification(**kwargs):
+    _send_user_updated_notification(**kwargs)
+
+
+def _send_user_deleted_notification(
+    logging: bool,
+    account_id: int,
+    user_data: dict,
+    **kwargs
+):
+    users = UserModel.objects.filter(
+        account_id=account_id,
+        status=UserStatus.ACTIVE
+    ).values_list('id', 'email')
+
+    for (user_id, user_email) in users:
+        _send_notification(
+            method_name=NotificationMethod.user_deleted,
+            account_id=account_id,
+            user_id=user_id,
+            user_email=user_email,
+            logging=logging,
+            user_data=user_data,
+            sync=True,
+        )
+
+
+@shared_task(base=NotificationTask)
+def send_user_deleted_notification(**kwargs):
+    _send_user_deleted_notification(**kwargs)

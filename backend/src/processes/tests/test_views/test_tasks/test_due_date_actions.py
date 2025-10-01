@@ -4,7 +4,6 @@ from django.utils import timezone
 from django.contrib.auth import get_user_model
 from src.utils.validation import ErrorCode
 from src.generics.messages import MSG_GE_0007
-from src.processes.messages import workflow as messages
 from src.processes.tests.fixtures import (
     create_test_user,
     create_test_workflow,
@@ -537,7 +536,7 @@ def test_create__invalid_value__validation_error(
     set_due_date_mock.assert_not_called()
 
 
-def test_create__due_date_less_then_current__validation_error(
+def test_create__due_date_less_then_current__ok(
     mocker,
     api_client
 ):
@@ -564,13 +563,12 @@ def test_create__due_date_less_then_current__validation_error(
     )
 
     # assert
-    assert response.status_code == 400
-    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
-    assert response.data['message'] == messages.MSG_PW_0051
-    assert response.data['details']['reason'] == messages.MSG_PW_0051
-    assert response.data['details']['name'] == 'due_date_tsp'
-    service_init_mock.assert_not_called()
-    set_due_date_mock.assert_not_called()
+    assert response.status_code == 204
+    service_init_mock.assert_called_once_with(
+        user=user,
+        instance=task
+    )
+    set_due_date_mock.assert_called_once_with(value=due_date)
 
 
 def test_create__service_exception__validation_error(

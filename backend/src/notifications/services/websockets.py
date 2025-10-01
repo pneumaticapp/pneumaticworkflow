@@ -1,3 +1,5 @@
+import uuid
+from django.utils import timezone
 from typing import Dict, Optional
 from asyncio import get_event_loop
 from django.contrib.auth import get_user_model
@@ -17,6 +19,7 @@ from src.notifications.consumers import (
     WorkflowEventConsumer,
     NewTaskConsumer,
     RemovedTaskConsumer,
+    EventsConsumer,
 )
 
 UserModel = get_user_model()
@@ -39,6 +42,12 @@ class WebSocketService(NotificationService):
         NotificationMethod.reaction,
         NotificationMethod.new_task_websocket,
         NotificationMethod.removed_task,
+        NotificationMethod.group_created,
+        NotificationMethod.group_updated,
+        NotificationMethod.group_deleted,
+        NotificationMethod.user_created,
+        NotificationMethod.user_updated,
+        NotificationMethod.user_deleted,
     }
 
     def _get_serialized_notification(
@@ -311,5 +320,119 @@ class WebSocketService(NotificationService):
             method_name=NotificationMethod.removed_task,
             group_name=f'{RemovedTaskConsumer.classname}_{user_id}',
             data=task_data,
+            sync=sync
+        )
+
+    def send_group_created(
+        self,
+        user_id: int,
+        group_data: dict,
+        sync: bool,
+        **kwargs
+    ):
+        self._send(
+            method_name=NotificationMethod.group_created,
+            group_name=f'{EventsConsumer.classname}_{user_id}',
+            data={
+                'id': str(uuid.uuid4()),
+                'date_created_tsp': timezone.now().timestamp(),
+                'type': NotificationMethod.group_created,
+                'data': group_data
+            },
+            sync=sync
+        )
+
+    def send_group_updated(
+        self,
+        user_id: int,
+        group_data: dict,
+        sync: bool,
+        **kwargs
+    ):
+        self._send(
+            method_name=NotificationMethod.group_updated,
+            group_name=f'{EventsConsumer.classname}_{user_id}',
+            data={
+                'id': str(uuid.uuid4()),
+                'date_created_tsp': timezone.now().timestamp(),
+                'type': NotificationMethod.group_updated,
+                'data': group_data
+            },
+            sync=sync
+        )
+
+    def send_group_deleted(
+        self,
+        user_id: int,
+        group_data: dict,
+        sync: bool,
+        **kwargs
+    ):
+        self._send(
+            method_name=NotificationMethod.group_deleted,
+            group_name=f'{EventsConsumer.classname}_{user_id}',
+            data={
+                'id': str(uuid.uuid4()),
+                'date_created_tsp': timezone.now().timestamp(),
+                'type': NotificationMethod.group_deleted,
+                'data': group_data
+            },
+            sync=sync
+        )
+
+    def send_user_created(
+        self,
+        user_id: int,
+        user_data: dict,
+        sync: bool,
+        **kwargs
+    ):
+        self._send(
+            method_name=NotificationMethod.user_created,
+            group_name=f'{EventsConsumer.classname}_{user_id}',
+            data={
+                'id': str(uuid.uuid4()),
+                'date_created_tsp': timezone.now().timestamp(),
+                'type': NotificationMethod.user_created,
+                'data': user_data
+            },
+            sync=sync
+        )
+
+    def send_user_updated(
+        self,
+        user_id: int,
+        user_data: dict,
+        sync: bool,
+        **kwargs
+    ):
+        self._send(
+            method_name=NotificationMethod.user_updated,
+            group_name=f'{EventsConsumer.classname}_{user_id}',
+            data={
+                'id': str(uuid.uuid4()),
+                'date_created_tsp': timezone.now().timestamp(),
+                'type': NotificationMethod.user_updated,
+                'data': user_data
+            },
+            sync=sync
+        )
+
+    def send_user_deleted(
+        self,
+        user_id: int,
+        user_data: dict,
+        sync: bool,
+        **kwargs
+    ):
+        self._send(
+            method_name=NotificationMethod.user_deleted,
+            group_name=f'{EventsConsumer.classname}_{user_id}',
+            data={
+                'id': str(uuid.uuid4()),
+                'date_created_tsp': timezone.now().timestamp(),
+                'type': NotificationMethod.user_deleted,
+                'data': user_data
+            },
             sync=sync
         )

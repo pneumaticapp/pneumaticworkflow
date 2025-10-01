@@ -17,12 +17,6 @@ from src.generics.messages import MSG_GE_0007
 pytestmark = pytest.mark.django_db
 
 
-@pytest.fixture(autouse=True)
-def replica_mock(mocker):
-    mocker.patch('django.conf.settings.REPLICA', 'default')
-    yield
-
-
 def test_titles_by_events__response_data_templates__ok(api_client):
 
     # arrange

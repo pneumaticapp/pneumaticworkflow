@@ -237,3 +237,17 @@ class ContactResponseSerializer(serializers.ModelSerializer):
             'source',
             'email',
         )
+
+
+class UserWebsocketSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserModel
+        fields = (
+            'id',
+            'first_name',
+            'last_name',
+            'email',
+            'photo',
+            'is_admin',
+            'is_account_owner',
+        )

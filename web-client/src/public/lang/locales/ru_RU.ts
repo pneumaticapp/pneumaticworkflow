@@ -81,9 +81,10 @@ export const ruMessages = {
   'user.register-title-invite': 'Завершите регистрацию с помощью формы ниже.',
   'user.register-login-link': 'Вход',
   'user.register-already': 'Уже зарегистрированы?\u00A0',
-  'user.you-agree-to-pneumatic-terms': 'Регистрируясь, вы соглашаетесь с {termsOfService} Pneumatic',
+  'user.you-agree-to-pneumatic-terms': 'Регистрируясь, вы соглашаетесь с {termsOfService} и {privacyPolicy} Pneumatic.',
   'user.register-terms': 'При регистрации вы соглашаетесь с условиями Pneumatic',
-  'user.register-terms-link': 'Условиями предоставления услуг',
+  'user.register-terms-link': 'Условиями обслуживания',
+  'user.register-privacy-policy-link': 'Политикой конфиденциальности',
   'user.register-link': 'Создать аккаунт',
   'user.forgot-password': 'Забыли пароль',
   'user.sign-in-not-a-member': 'Не являетесь участником?\u00A0',
@@ -1242,4 +1243,5 @@ export const ruMessages = {
   'due-date.time-invalid.24': 'Введите время в 24-часовом формате (например, 18:01)',
   'due-date.time.12': '10:01am',
   'due-date.time.24': '18:01',
+  'due-date.time-too-early': 'Дата выполнения должна быть больше текущей.',
 };

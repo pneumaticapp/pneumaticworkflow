@@ -1,4 +1,3 @@
-from django.conf import settings
 from rest_framework.decorators import action
 from rest_framework.generics import (
     get_object_or_404
@@ -234,7 +233,6 @@ class WorkflowViewSet(
             **filter_slz.validated_data,
             account_id=request.user.account_id,
             user_id=request.user.id,
-            using=settings.REPLICA
         )
         return self.paginated_response(qst)
 

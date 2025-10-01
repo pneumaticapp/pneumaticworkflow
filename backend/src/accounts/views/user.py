@@ -1,4 +1,3 @@
-from django.conf import settings
 from django.contrib.auth import get_user_model
 from rest_framework.decorators import action
 from rest_framework.pagination import LimitOffsetPagination
@@ -13,6 +12,7 @@ from src.accounts.serializers.user import (
     ContactRequestSerializer,
     ContactResponseSerializer,
     UserSerializer,
+    UserWebsocketSerializer
 )
 from src.generics.filters import PneumaticFilterBackend
 from src.generics.mixins.views import (
@@ -29,6 +29,7 @@ from src.generics.permissions import (
     IsAuthenticated,
     UserIsAuthenticated,
 )
+from src.notifications.tasks import send_user_updated_notification
 from src.analytics.mixins import BaseIdentifyMixin
 from src.analytics.services import AnalyticService
 from src.utils.validation import raise_validation_error
@@ -82,9 +83,12 @@ class UserViewSet(
     @action(methods=('GET',), detail=False)
     def counters(self, request, *args, **kwargs):
         return self.response_ok({
-            'tasks_count': Task.objects.using(
-                settings.REPLICA
-            ).active_for_user(request.user.id).distinct().count()
+            'tasks_count': (
+                Task.objects
+                .active_for_user(request.user.id)
+                .distinct()
+                .count()
+            )
         })
 
     @action(methods=('GET',), detail=False)
@@ -128,5 +132,10 @@ class UserViewSet(
                 auth_type=self.request.token_type,
                 is_superuser=self.request.is_superuser
             )
+        send_user_updated_notification.delay(
+            logging=user.account.log_api_requests,
+            account_id=user.account.id,
+            user_data=UserWebsocketSerializer(user).data,
+        )
         self.identify(user)
         return self.response_ok(slz.data)

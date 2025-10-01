@@ -5,6 +5,7 @@ from django.contrib.auth.hashers import make_password
 from django.db import transaction, IntegrityError
 from django.conf import settings
 from src.analytics.mixins import BaseIdentifyMixin
+from src.accounts.serializers.user import UserWebsocketSerializer
 from src.processes.services.remove_user_from_draft import (
     remove_user_from_draft,
 )
@@ -30,6 +31,7 @@ from src.accounts.services.exceptions import (
 )
 from src.services.email import EmailService
 from src.analytics.services import AnalyticService
+from src.notifications.tasks import send_user_deleted_notification
 
 
 UserModel = get_user_model()
@@ -240,5 +242,10 @@ class UserService(
             cls._validate_deactivate(user)
         run_deactivate_actions = user.status == UserStatus.ACTIVE
         cls._deactivate(user)
+        send_user_deleted_notification.delay(
+            logging=user.account.log_api_requests,
+            account_id=user.account_id,
+            user_data=UserWebsocketSerializer(user).data,
+        )
         if run_deactivate_actions:
             cls._deactivate_actions(user)

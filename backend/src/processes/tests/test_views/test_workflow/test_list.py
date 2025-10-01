@@ -48,12 +48,6 @@ from src.services.markdown import MarkdownService
 pytestmark = pytest.mark.django_db
 
 
-@pytest.fixture(autouse=True)
-def replica_mock(mocker):
-    mocker.patch('django.conf.settings.REPLICA', 'default')
-    yield
-
-
 def test_list__workflow_data__ok(api_client):
 
     # arrange

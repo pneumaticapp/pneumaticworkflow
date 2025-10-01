@@ -77,6 +77,9 @@
   text-align: center;
   color: var(--pneumatic-color-black72);
 }
+.footnote-register {
+  margin-top: 1.6rem;
+}
 
 .link {
   line-height: 20px;
@@ -86,4 +89,8 @@
   &:hover {
     color: var(--pneumatic-color-link-hover);
   }
+}
+
+.form__terms {
+  white-space: pre-line;
 }

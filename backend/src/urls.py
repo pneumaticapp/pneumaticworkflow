@@ -36,6 +36,7 @@ from src.notifications.consumers import (
     NewTaskConsumer,
     RemovedTaskConsumer,
     WorkflowEventConsumer,
+    EventsConsumer,
 )
 
 
@@ -93,4 +94,5 @@ websocket_urlpatterns = [
     path('ws/workflows/new-task', NewTaskConsumer.as_asgi()),
     path('ws/workflows/removed-task', RemovedTaskConsumer.as_asgi()),
     path('ws/workflows/events', WorkflowEventConsumer.as_asgi()),
+    path('ws/events', EventsConsumer.as_asgi()),
 ]

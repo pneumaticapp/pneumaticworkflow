@@ -163,6 +163,10 @@ class TestUserGroupService:
         analytics_mock = mocker.patch(
             'src.analytics.tasks.track_group_analytics.delay'
         )
+        send_group_created_mock = mocker.patch(
+            'src.notifications.tasks.'
+            'send_group_created_notification.delay'
+        )
 
         # act
         service._create_actions()
@@ -183,6 +187,16 @@ class TestUserGroupService:
             is_superuser=is_superuser,
             new_users_ids=None,
             new_photo=None
+        )
+        send_group_created_mock.assert_called_once_with(
+            logging=user.account.log_api_requests,
+            account_id=user.account_id,
+            group_data={
+                'id': group.id,
+                'name': group.name,
+                'photo': group.photo,
+                'users': []
+            }
         )
 
     def test_get_template_ids__ok(self):
@@ -253,6 +267,10 @@ class TestUserGroupService:
             'src.accounts.services.group.'
             'UserGroupService._send_removed_users_notifications'
         )
+        send_group_updated_mock = mocker.patch(
+            'src.notifications.tasks.'
+            'send_group_updated_notification.delay'
+        )
 
         # act
         service.partial_update(
@@ -288,6 +306,7 @@ class TestUserGroupService:
             removed_users_ids=[],
             new_users_ids=[user.id],
         )
+        send_group_updated_mock.assert_called_once()
 
     def test_partial_update__without_template__ok(self, mocker):
 
@@ -321,6 +340,10 @@ class TestUserGroupService:
         send_removed_users_notifications_mock = mocker.patch(
             'src.accounts.services.group.'
             'UserGroupService._send_removed_users_notifications'
+        )
+        send_group_updated_mock = mocker.patch(
+            'src.notifications.tasks.'
+            'send_group_updated_notification.delay'
         )
 
         # act
@@ -357,6 +380,7 @@ class TestUserGroupService:
             removed_users_ids=[],
             new_users_ids=[user.id],
         )
+        send_group_updated_mock.assert_called_once()
 
     def test_partial_update__all_fields__ok(self, mocker):
 
@@ -393,6 +417,10 @@ class TestUserGroupService:
         send_removed_users_notifications_mock = mocker.patch(
             'src.accounts.services.group.'
             'UserGroupService._send_removed_users_notifications'
+        )
+        send_group_updated_mock = mocker.patch(
+            'src.notifications.tasks.'
+            'send_group_updated_notification.delay'
         )
 
         # act
@@ -434,6 +462,24 @@ class TestUserGroupService:
             removed_users_ids=[user.id],
             new_users_ids=[user_2.id],
         )
+        send_group_updated_mock.assert_called_once_with(
+            logging=user.account.log_api_requests,
+            account_id=user.account_id,
+            group_data={
+                'id': group.id,
+                'name': group.name,
+                'photo': group.photo,
+                'users': [{
+                    'id': user_2.id,
+                    'first_name': user_2.first_name,
+                    'last_name': user_2.last_name,
+                    'email': user_2.email,
+                    'photo': user_2.photo,
+                    'is_admin': user_2.is_admin,
+                    'is_account_owner': user_2.is_account_owner
+                }]
+            }
+        )
 
     def test_partial_update__added_users__ok(self, mocker):
 
@@ -467,6 +513,10 @@ class TestUserGroupService:
         send_removed_users_notifications_mock = mocker.patch(
             'src.accounts.services.group.'
             'UserGroupService._send_removed_users_notifications'
+        )
+        send_group_updated_mock = mocker.patch(
+            'src.notifications.tasks.'
+            'send_group_updated_notification.delay'
         )
 
         # act
@@ -503,6 +553,7 @@ class TestUserGroupService:
             removed_users_ids=[],
             new_users_ids=[user.id],
         )
+        send_group_updated_mock.assert_called_once()
 
     def test_partial_update__removed_users__ok(self, mocker):
 
@@ -528,6 +579,10 @@ class TestUserGroupService:
         )
         analytics_mock = mocker.patch(
             'src.analytics.tasks.track_group_analytics.delay'
+        )
+        send_group_updated_mock = mocker.patch(
+            'src.notifications.tasks.'
+            'send_group_updated_notification.delay'
         )
 
         # act
@@ -561,6 +616,7 @@ class TestUserGroupService:
             removed_users_ids=[user.id],
             new_users_ids=[],
         )
+        send_group_updated_mock.assert_called_once()
 
     def test_partial_update__name_changed__ok(self, mocker):
 
@@ -603,6 +659,10 @@ class TestUserGroupService:
             'src.accounts.services.group.'
             'UserGroupService._send_removed_users_notifications'
         )
+        send_group_updated_mock = mocker.patch(
+            'src.notifications.tasks.'
+            'send_group_updated_notification.delay'
+        )
 
         # act
         service.partial_update(
@@ -635,6 +695,16 @@ class TestUserGroupService:
             new_photo=None,
             removed_users_ids=None,
             new_users_ids=None,
+        )
+        send_group_updated_mock.assert_called_once_with(
+            logging=user.account.log_api_requests,
+            account_id=user.account_id,
+            group_data={
+                'id': group.id,
+                'name': group.name,
+                'photo': group.photo,
+                'users': []
+            }
         )
 
     def test_partial_update__photo_changed__ok(self, mocker):
@@ -671,6 +741,10 @@ class TestUserGroupService:
             'src.accounts.services.group.'
             'UserGroupService._send_removed_users_notifications'
         )
+        send_group_updated_mock = mocker.patch(
+            'src.notifications.tasks.'
+            'send_group_updated_notification.delay'
+        )
 
         # act
         service.partial_update(
@@ -702,6 +776,7 @@ class TestUserGroupService:
             removed_users_ids=None,
             new_users_ids=None,
         )
+        send_group_updated_mock.assert_called_once()
 
     def test_partial_update__photo_delete__ok(self, mocker):
 
@@ -737,6 +812,10 @@ class TestUserGroupService:
             'src.accounts.services.group.'
             'UserGroupService._send_removed_users_notifications'
         )
+        send_group_updated_mock = mocker.patch(
+            'src.notifications.tasks.'
+            'send_group_updated_notification.delay'
+        )
 
         # act
         service.partial_update(
@@ -768,6 +847,7 @@ class TestUserGroupService:
             removed_users_ids=None,
             new_users_ids=None,
         )
+        send_group_updated_mock.assert_called_once()
 
     def test_partial_update__without_all_fields__ok(self, mocker):
 
@@ -802,6 +882,10 @@ class TestUserGroupService:
             'src.accounts.services.group.'
             'UserGroupService._send_removed_users_notifications'
         )
+        send_group_updated_mock = mocker.patch(
+            'src.notifications.tasks.'
+            'send_group_updated_notification.delay'
+        )
 
         # act
         service.partial_update(
@@ -818,6 +902,7 @@ class TestUserGroupService:
         group.refresh_from_db()
         assert group.users.all().count() == 0
         analytics_mock.assert_not_called()
+        send_group_updated_mock.assert_called_once()
 
     def test_partial_update__empty_list_users__ok(self, mocker):
         # arrange
@@ -857,6 +942,10 @@ class TestUserGroupService:
             'src.accounts.services.group.'
             'UserGroupService._send_removed_users_notifications'
         )
+        send_group_updated_mock = mocker.patch(
+            'src.notifications.tasks.'
+            'send_group_updated_notification.delay'
+        )
 
         # act
         service.partial_update(
@@ -873,6 +962,7 @@ class TestUserGroupService:
         group.refresh_from_db()
         assert group.users.all().count() == 0
         analytics_mock.assert_not_called()
+        send_group_updated_mock.assert_called_once()
 
     def test_delete__with_template__ok(self, mocker):
 
@@ -907,11 +997,22 @@ class TestUserGroupService:
         analytics_mock = mocker.patch(
             'src.analytics.tasks.track_group_analytics.delay'
         )
+        send_removed_users_notifications_mock = mocker.patch(
+            'src.accounts.services.group.'
+            'UserGroupService._send_removed_users_notifications'
+        )
+        send_group_deleted_mock = mocker.patch(
+            'src.notifications.tasks.'
+            'send_group_deleted_notification.delay'
+        )
 
         # act
         service.delete()
 
         # assert
+        send_removed_users_notifications_mock.assert_called_once_with(
+            [user.id]
+        )
         get_list_template_ids_for_delete_group_mock.assert_called_once_with()
         update_workflow_owners_mock.assert_called_once_with([template.id])
         analytics_mock.assert_called_once_with(
@@ -927,6 +1028,24 @@ class TestUserGroupService:
             group_name=group.name,
             auth_type=AuthTokenType.USER,
             is_superuser=is_superuser,
+        )
+        send_group_deleted_mock.assert_called_once_with(
+            logging=user.account.log_api_requests,
+            account_id=user.account_id,
+            group_data={
+                'id': group.id,
+                'name': group.name,
+                'photo': group.photo,
+                'users': [{
+                    'id': user.id,
+                    'first_name': user.first_name,
+                    'last_name': user.last_name,
+                    'email': user.email,
+                    'photo': user.photo,
+                    'is_admin': user.is_admin,
+                    'is_account_owner': user.is_account_owner
+                }]
+            }
         )
 
     def test_delete__without_template__ok(self, mocker):
@@ -955,11 +1074,22 @@ class TestUserGroupService:
         analytics_mock = mocker.patch(
             'src.analytics.tasks.track_group_analytics.delay'
         )
+        send_removed_users_notifications_mock = mocker.patch(
+            'src.accounts.services.group.'
+            'UserGroupService._send_removed_users_notifications'
+        )
+        send_group_deleted_mock = mocker.patch(
+            'src.notifications.tasks.'
+            'send_group_deleted_notification.delay'
+        )
 
         # act
         service.delete()
 
         # assert
+        send_removed_users_notifications_mock.assert_called_once_with(
+            [user.id]
+        )
         get_list_template_ids_for_delete_group_mock.assert_called_once_with()
         update_workflow_owners_mock.assert_not_called()
         analytics_mock.assert_called_once_with(
@@ -970,6 +1100,132 @@ class TestUserGroupService:
             user_last_name=user.last_name,
             group_photo=group.photo,
             group_users=[user.id],
+            account_id=user.account_id,
+            group_id=group.id,
+            group_name=group.name,
+            auth_type=AuthTokenType.USER,
+            is_superuser=is_superuser,
+        )
+        send_group_deleted_mock.assert_called_once_with(
+            logging=user.account.log_api_requests,
+            account_id=user.account_id,
+            group_data={
+                'id': group.id,
+                'name': group.name,
+                'photo': group.photo,
+                'users': [{
+                    'id': user.id,
+                    'first_name': user.first_name,
+                    'last_name': user.last_name,
+                    'email': user.email,
+                    'photo': user.photo,
+                    'is_admin': user.is_admin,
+                    'is_account_owner': user.is_account_owner
+                }]
+            }
+        )
+
+    def test_delete__with_users__ok(self, mocker):
+
+        # arrange
+        account = create_test_account()
+        user = create_test_admin(account=account)
+        group = create_test_group(account, users=[user])
+        is_superuser = False
+        service = UserGroupService(
+            user=user,
+            is_superuser=is_superuser,
+            instance=group,
+            auth_type=AuthTokenType.USER,
+        )
+
+        get_list_template_ids_for_delete_group_mock = mocker.patch(
+            'src.accounts.services.group.'
+            'UserGroupService._get_template_ids',
+            return_value=[]
+        )
+        update_workflow_owners_mock = mocker.patch(
+            'src.accounts.services.group.'
+            'update_workflow_owners.delay'
+        )
+        analytics_mock = mocker.patch(
+            'src.analytics.tasks.track_group_analytics.delay'
+        )
+        send_removed_users_notifications_mock = mocker.patch(
+            'src.accounts.services.group.'
+            'UserGroupService._send_removed_users_notifications'
+        )
+
+        # act
+        service.delete()
+
+        # assert
+        send_removed_users_notifications_mock.assert_called_once_with(
+            [user.id]
+        )
+        get_list_template_ids_for_delete_group_mock.assert_called_once_with()
+        update_workflow_owners_mock.assert_not_called()
+        analytics_mock.assert_called_once_with(
+            event=GroupsAnalyticsEvent.deleted,
+            user_id=user.id,
+            user_email=user.email,
+            user_first_name=user.first_name,
+            user_last_name=user.last_name,
+            group_photo=group.photo,
+            group_users=[user.id],
+            account_id=user.account_id,
+            group_id=group.id,
+            group_name=group.name,
+            auth_type=AuthTokenType.USER,
+            is_superuser=is_superuser,
+        )
+
+    def test_delete__without_users__ok(self, mocker):
+
+        # arrange
+        account = create_test_account()
+        user = create_test_admin(account=account)
+        group = create_test_group(account)
+        is_superuser = False
+        service = UserGroupService(
+            user=user,
+            is_superuser=is_superuser,
+            instance=group,
+            auth_type=AuthTokenType.USER,
+        )
+
+        get_list_template_ids_for_delete_group_mock = mocker.patch(
+            'src.accounts.services.group.'
+            'UserGroupService._get_template_ids',
+            return_value=[]
+        )
+        update_workflow_owners_mock = mocker.patch(
+            'src.accounts.services.group.'
+            'update_workflow_owners.delay'
+        )
+        analytics_mock = mocker.patch(
+            'src.analytics.tasks.track_group_analytics.delay'
+        )
+        send_removed_users_notifications_mock = mocker.patch(
+            'src.accounts.services.group.'
+            'UserGroupService._send_removed_users_notifications'
+        )
+
+        # act
+        service.delete()
+
+        # assert
+        send_removed_users_notifications_mock.assert_not_called()
+        get_list_template_ids_for_delete_group_mock.assert_called_once_with()
+        update_workflow_owners_mock.assert_not_called()
+        analytics_mock.assert_called_once_with(
+            event=GroupsAnalyticsEvent.deleted,
+            user_id=user.id,
+            user_email=user.email,
+            user_first_name=user.first_name,
+            user_last_name=user.last_name,
+            group_photo=group.photo,
+            group_users=[],
             account_id=user.account_id,
             group_id=group.id,
             group_name=group.name,
@@ -1016,8 +1272,11 @@ class TestUserGroupService:
 
         # assert
         send_new_task_websocket_mock.assert_called_once_with(
+            logging=account.log_api_requests,
             task_id=task.id,
-            recipients=[(user_add.id, user_add.email)],
+            recipients=[
+                (user_add.id, user_add.email, user_add.is_new_tasks_subscriber)
+            ],
             account_id=account.id
         )
 
@@ -1095,8 +1354,13 @@ class TestUserGroupService:
 
         # assert
         send_notification_mock.assert_called_once_with(
+            logging=account.log_api_requests,
             task_id=task1.id,
-            recipients=[(user_to_notify.id, user_to_notify.email)],
+            recipients=[(
+                user_to_notify.id,
+                user_to_notify.email,
+                user_to_notify.is_new_tasks_subscriber
+            )],
             account_id=account.id,
         )
 
@@ -1151,13 +1415,23 @@ class TestUserGroupService:
         assert send_notification_mock.call_count == 2
         send_notification_mock.assert_has_calls([
             mocker.call(
+                logging=account.log_api_requests,
                 task_id=task1.id,
-                recipients=[(user_to_notify.id, user_to_notify.email)],
+                recipients=[(
+                    user_to_notify.id,
+                    user_to_notify.email,
+                    user_to_notify.is_new_tasks_subscriber
+                )],
                 account_id=account.id,
             ),
             mocker.call(
+                logging=account.log_api_requests,
                 task_id=task2.id,
-                recipients=[(user_to_notify.id, user_to_notify.email)],
+                recipients=[(
+                    user_to_notify.id,
+                    user_to_notify.email,
+                    user_to_notify.is_new_tasks_subscriber
+                )],
                 account_id=account.id,
             )
         ])
@@ -1215,13 +1489,23 @@ class TestUserGroupService:
         assert send_notification_mock.call_count == 2
         send_notification_mock.assert_has_calls([
             mocker.call(
+                logging=account.log_api_requests,
                 task_id=task1.id,
-                recipients=[(user_to_notify.id, user_to_notify.email)],
+                recipients=[(
+                    user_to_notify.id,
+                    user_to_notify.email,
+                    user_to_notify.is_new_tasks_subscriber
+                )],
                 account_id=account.id,
             ),
             mocker.call(
+                logging=account.log_api_requests,
                 task_id=task2.id,
-                recipients=[(user_to_notify.id, user_to_notify.email)],
+                recipients=[(
+                    user_to_notify.id,
+                    user_to_notify.email,
+                    user_to_notify.is_new_tasks_subscriber
+                )],
                 account_id=account.id,
             )
         ])
@@ -1265,6 +1549,7 @@ class TestUserGroupService:
 
         # assert
         send_removed_task_notification_mock.assert_called_once_with(
+            logging=account.log_api_requests,
             task_id=task.id,
             recipients=[(user_removed.id, user_removed.email)],
             account_id=account.id,
@@ -1384,6 +1669,7 @@ class TestUserGroupService:
 
         # assert
         send_notification_mock.assert_called_once_with(
+            logging=account.log_api_requests,
             task_id=task1.id,
             recipients=[(user_to_notify.id, user_to_notify.email)],
             account_id=account.id,
@@ -1440,11 +1726,13 @@ class TestUserGroupService:
         assert send_notification_mock.call_count == 2
         send_notification_mock.assert_has_calls([
             mocker.call(
+                logging=account.log_api_requests,
                 task_id=task1.id,
                 recipients=[(user_to_notify.id, user_to_notify.email)],
                 account_id=account.id,
             ),
             mocker.call(
+                logging=account.log_api_requests,
                 task_id=task2.id,
                 recipients=[(user_to_notify.id, user_to_notify.email)],
                 account_id=account.id,
@@ -1504,11 +1792,13 @@ class TestUserGroupService:
         assert send_notification_mock.call_count == 2
         send_notification_mock.assert_has_calls([
             mocker.call(
+                logging=account.log_api_requests,
                 task_id=task1.id,
                 recipients=[(user_to_notify.id, user_to_notify.email)],
                 account_id=account.id,
             ),
             mocker.call(
+                logging=account.log_api_requests,
                 task_id=task2.id,
                 recipients=[(user_to_notify.id, user_to_notify.email)],
                 account_id=account.id,
@@ -1669,8 +1959,13 @@ class TestUserGroupService:
 
         # assert
         send_notification_mock.assert_called_once_with(
+            logging=account.log_api_requests,
             task_id=task.id,
-            recipients=[(user2.id, user2.email)],
+            recipients=[(
+                user2.id,
+                user2.email,
+                user2.is_new_tasks_subscriber
+            )],
             account_id=account.id,
         )
 
@@ -1785,8 +2080,13 @@ class TestUserGroupService:
 
         # assert
         send_notification_mock.assert_called_once_with(
+            logging=account.log_api_requests,
             task_id=task.id,
-            recipients=[(user3.id, user3.email)],
+            recipients=[(
+                user3.id,
+                user3.email,
+                user3.is_new_tasks_subscriber
+            )],
             account_id=account.id,
         )
 

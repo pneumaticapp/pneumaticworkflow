@@ -86,9 +86,10 @@ export const enMessages = {
   'user.register-title-invite': 'Complete registration using the form below',
   'user.register-login-link': 'Login',
   'user.register-already': 'Already Registered? ',
-  'user.you-agree-to-pneumatic-terms': "By signing up, you agree to Pneumatic's {termsOfService}",
+  'user.you-agree-to-pneumatic-terms': "By signing up, you agree to Pneumatic's \n{termsOfService} and {privacyPolicy}",
   'user.register-terms': "By signing up, you agree to Pneumatic's ",
   'user.register-terms-link': 'Terms of Service',
+  'user.register-privacy-policy-link': 'Privacy Policy',
   'user.register-link': 'Create an Account',
   'user.forgot-password': 'Forgot the password',
   'user.sign-in-not-a-member': 'Not a member?\u00A0',
@@ -1323,4 +1324,5 @@ export const enMessages = {
   'due-date.time.24': '18:01',
   'due-date.time-invalid.12': 'Enter time in 12-hour format (e.g., 10:00am)',
   'due-date.time-invalid.24': 'Enter time in 24-hour format (e.g., 18:01)',
+  'due-date.time-too-early': 'Due date should be greater than current.',
 };

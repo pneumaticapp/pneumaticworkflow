@@ -23,6 +23,12 @@ class NotificationMethod:
     workflow_event = 'workflow_event'
     reaction = 'reaction'
     reset_password = 'reset_password'
+    group_created = 'group_created'
+    group_updated = 'group_updated'
+    group_deleted = 'group_deleted'
+    user_created = 'user_created'
+    user_updated = 'user_updated'
+    user_deleted = 'user_deleted'
 
     LITERALS = Literal[
         new_task,
@@ -43,6 +49,12 @@ class NotificationMethod:
         workflow_event,
         reaction,
         reset_password,
+        group_created,
+        group_updated,
+        group_deleted,
+        user_created,
+        user_updated,
+        user_deleted,
     ]
 
 

@@ -23,12 +23,6 @@ UserModel = get_user_model()
 pytestmark = pytest.mark.django_db
 
 
-@pytest.fixture(autouse=True)
-def replica_mock(mocker):
-    mocker.patch('django.conf.settings.REPLICA', 'default')
-    yield
-
-
 class TestDashboardOverview:
 
     def test_overview__ok(self, api_client):

@@ -19,3 +19,8 @@ class RemovedTaskConsumer(PneumaticBaseConsumer):
 class WorkflowEventConsumer(PneumaticBaseConsumer):
 
     classname = 'workflow_event'
+
+
+class EventsConsumer(PneumaticBaseConsumer):
+
+    classname = 'events'
