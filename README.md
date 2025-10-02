@@ -65,25 +65,27 @@ For more in-depth treatment of Pneumatic's features consult the support center: 
 
 ## Getting Started
 
-You can grab your own copy of Pneumatic by cloning this repository and self-host it on your machine. Here's a quick start guide:
+You can grab your own copy of Pneumatic by cloning this repository and self-hosting it on your machine/instance. Here's a quick start guide:
 
 
 ### Prerequisites
 * Operating System: Linux(Ubuntu/Debian), macOS or Windows(install and run at your own risk)
-* Git version 2.0 or above
 * Docker version 2.27 or above
 * Docker compose version 27.0 or above
 
 
-### Clone the repository
+### Get the files
+
+You can either clone the repository using git like so
 
 ```
 git clone https://github.com/pneumaticapp/pneumaticworkflow.git
 ```
+or, you can simply download the [project's master folder](https://github.com/pneumaticapp/pneumaticworkflow/archive/refs/heads/master.zip) and unzip it
 
 ### Run Pneumatic
 
-in order to run Pneumatic cd into the project's directory and run the command
+To run Pneumatic cd into the project's directory and run the command
 
 ```
 docker compose up -d
