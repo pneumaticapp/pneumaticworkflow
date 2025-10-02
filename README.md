@@ -83,7 +83,7 @@ git clone https://github.com/pneumaticapp/pneumaticworkflow.git
 
 ### Run Pneumatic
 
-in order to run Pneumatic cd into the web-client folder inside the project's directory and run the command
+in order to run Pneumatic cd into the project's directory and run the command
 
 ```
 docker compose up -d
