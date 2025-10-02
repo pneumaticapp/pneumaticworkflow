@@ -114,17 +114,17 @@ services:
 
   pneumatic-frontend:
     build:
-      context: ./web-client
+      context: ./frontend
     container_name: pneumatic-frontend
     env_file:
       - ./config/project.env
-      - ./config/web-client.env
+      - ./config/frontend.env
     command: >
       sh -c "npm run build-client:prod && pm2-runtime start pm2.json"
     expose:
       - 8000
     volumes:
-      - ./web-client/logs/:/tmp/logs/
+      - ./frontend/logs/:/tmp/logs/
     networks:
       - pneumatic
     restart: always
