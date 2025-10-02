@@ -9,14 +9,23 @@
 * ENABLE_LOGGING: "yes" / "no"
 
 ### For developers
+
+Quick server start 
+
+```commandline
+python manage.py migrate
+python manage.py collectstatic --no-input
+python manage.py compilemessages
+gunicorn src.asgi:application --workers 2 -k uvicorn.workers.UvicornWorker --worker-tmp-dir /dev/shm --bind 0.0.0.0:8001
+```
+
 If you need debug SQL queries, use this context manager:
 ```python
 from src.logs.utils import log_sql
 with log_sql():
    ... # code for debug here
 ```
-After that, find "django_queries.log" in the project root 
-
+After that, find "django_queries.log" in the project root
 
 # Postgres
 
