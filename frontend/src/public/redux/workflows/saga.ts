@@ -122,7 +122,7 @@ import {
 } from '../../utils/mappers';
 import { getUserTimezone } from '../selectors/user';
 import { getCurrentTask } from '../selectors/task';
-import { formatDateToISOInWorkflow } from '../../utils/dateTime';
+import { formatDateToISOInWorkflow, toTspDate } from '../../utils/dateTime';
 import { getWorkflowAddComputedPropsToRedux } from '../../components/Workflows/utils/getWorfkflowClientProperties';
 
 function* handleLoadWorkflow({ workflowId, showLoader = true }: { workflowId: number; showLoader?: boolean }) {
@@ -627,9 +627,13 @@ export function* updateWorkflowsTemplateStepsCountersSaga() {
 }
 
 export function* snoozeWorkflowSaga({ payload: { workflowId, date, onSuccess } }: TSnoozeWorkflow) {
+  const dateTsp = toTspDate(date);
+  if (dateTsp === null) {
+    throw new Error(`snoozeWorkflowSaga: Invalid date format: ${date}`);
+  }
   try {
     yield put(setGeneralLoaderVisibility(true));
-    const workflow: IEditWorkflowResponse = yield call(snoozeWorkflow, workflowId, date);
+    const workflow: IEditWorkflowResponse = yield call(snoozeWorkflow, workflowId, dateTsp);
     const normilizedWorkflow: IWorkflowClient = getWorkflowAddComputedPropsToRedux(formatDateToISOInWorkflow(workflow));
     yield put(
       patchWorkflowInList({
