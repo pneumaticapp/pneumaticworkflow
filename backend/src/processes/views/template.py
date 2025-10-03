@@ -393,7 +393,6 @@ class TemplateViewSet(
         queryset = Template.objects.raw_list_query(
             user_id=user.id,
             account_id=user.account_id,
-            is_account_owner=user.is_account_owner,
             ordering=data.get('ordering'),
             search=search_text,
             is_active=data.get('is_active'),

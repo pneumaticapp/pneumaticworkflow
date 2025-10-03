@@ -1104,7 +1104,6 @@ class TemplateListQuery(
         self,
         user_id: int,
         account_id: int,
-        is_account_owner: bool,
         ordering: Optional[str] = None,
         search_text: Optional[str] = None,
         is_active: Optional[bool] = None,
@@ -1112,7 +1111,6 @@ class TemplateListQuery(
     ):
 
         self.user_id = user_id
-        self.is_account_owner = is_account_owner
         self.account_id = account_id
         self.params = {
             'account_id': self.account_id,
