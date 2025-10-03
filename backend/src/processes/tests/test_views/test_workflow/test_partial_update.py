@@ -532,7 +532,7 @@ class TestPartialUpdateWorkflow:
             data={
                 'kickoff': {
                     not_required_field.api_name: 'text',
-                    required_field.api_name: str(user.id)
+                    required_field.api_name: str(user.email)
                 }
             }
         )
@@ -1540,7 +1540,7 @@ class TestPartialUpdateWorkflow:
             f'/templates/{template.id}/run',
             data={
                 'kickoff': {
-                    field.api_name: str(user.id),
+                    field.api_name: str(user.email),
                 },
             }
         )
@@ -1551,7 +1551,7 @@ class TestPartialUpdateWorkflow:
             f'/workflows/{workflow.id}',
             data={
                 'kickoff': {
-                    field.api_name: str(user_2.id),
+                    field.api_name: str(user_2.email),
                 }
             }
         )
@@ -1621,7 +1621,7 @@ class TestPartialUpdateWorkflow:
             data={
                 'kickoff': {
                     field_api_name_1: feedback,
-                    field_api_name_2: str(user.id)
+                    field_api_name_2: str(user.email)
                 },
             }
         )
@@ -1634,7 +1634,7 @@ class TestPartialUpdateWorkflow:
             data={
                 'kickoff': {
                     field_api_name_1: feedback_2,
-                    field_api_name_2: str(user_2.id)
+                    field_api_name_2: str(user_2.email)
                 }
             }
         )
@@ -1707,7 +1707,7 @@ class TestUpdatePerformer:
             f'/templates/{template.id}/run',
             data={
                 'kickoff': {
-                    field_api_name: user.id
+                    field_api_name: user.email
                 }
             }
         )
@@ -1720,7 +1720,7 @@ class TestUpdatePerformer:
             path=f'/workflows/{workflow.id}',
             data={
                 'kickoff': {
-                    field_api_name: user2.id
+                    field_api_name: user2.email
                 }
             }
         )
@@ -1810,7 +1810,7 @@ class TestUpdatePerformer:
             f'/templates/{template.id}/run',
             data={
                 'kickoff': {
-                    field_api_name: user.id
+                    field_api_name: user.email
                 }
             }
         )
@@ -1819,7 +1819,7 @@ class TestUpdatePerformer:
             path=f'/workflows/{workflow.id}',
             data={
                 'kickoff': {
-                    field_api_name: user2.id
+                    field_api_name: user2.email
                 }
             }
         )
@@ -1901,7 +1901,7 @@ class TestUpdatePerformer:
             f'/templates/{template.id}/run',
             data={
                 'kickoff': {
-                    field_api_name: user.id
+                    field_api_name: user.email
                 }
             }
         )
@@ -1914,7 +1914,7 @@ class TestUpdatePerformer:
             path=f'/workflows/{workflow.id}',
             data={
                 'kickoff': {
-                    field_api_name: user2.id
+                    field_api_name: user2.email
                 }
             }
         )
@@ -1978,7 +1978,7 @@ class TestUpdatePerformer:
             path=f'/templates/{template.id}/run',
             data={
                 'kickoff': {
-                    'user-field-1': str(account_1_owner.id)
+                    'user-field-1': str(account_1_owner.email)
                 }
             }
         )
@@ -1999,7 +1999,7 @@ class TestUpdatePerformer:
             path=f'/workflows/{workflow.id}',
             data={
                 'kickoff': {
-                    'user-field-1': str(account_1_new_user.id)
+                    'user-field-1': str(account_1_new_user.email)
                 }
             }
         )

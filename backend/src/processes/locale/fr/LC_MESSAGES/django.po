@@ -411,10 +411,6 @@ msgstr "Pièce jointe introuvable."
 msgid "The value must be the ID of an existing account user."
 msgstr "La valeur doit être l'identifiant d'un utilisateur de compte existant."
 
-#: src/processes/messages/workflow.py:76
-msgid "Account user with given id does not exist."
-msgstr "Utilisateur de compte avec l'identifiant donné n'existe pas."
-
 #: src/processes/messages/workflow.py:77
 msgid "Save attachments failed. Service unavailable."
 msgstr "Échec de l'enregistrement des pièces jointes. Service indisponible."
@@ -619,4 +615,12 @@ msgstr "Vous ne pouvez pas écrire un commentaire sur une tâche inactive."
 
 #: src/processes/messages/workflow.py:180
 msgid "The user or group specified for a \"User\" field does not exist."
+msgstr "L'utilisateur ou le groupe spécifié pour un champ de type \"Utilisateur\" n'existe pas."
+
+#: src/processes/messages/template.py:247
+msgid "Task \"{task}\": Group ID \"{group_id}\" does not exist or cannot be used in this condition."
+msgstr "Tâche \"{task}\" : l'ID de groupe \"{group_id}\" n'existe pas ou ne peut pas être utilisé dans cette condition."
+
+#: src/processes/messages/workflow.py:197
+msgid "The user or group for a field with type \"User\" does not exist."
 msgstr "L'utilisateur ou le groupe spécifié pour un champ de type \"Utilisateur\" n'existe pas."

@@ -15,6 +15,7 @@ from src.processes.services.condition_check.service import (
 from src.processes.tests.fixtures import (
     create_test_user,
     create_test_workflow,
+    create_test_owner
 )
 from src.processes.enums import (
     FieldType,
@@ -508,6 +509,63 @@ class TestConditionCheckService:
             field_type=first_field.type,
             field=first_field.api_name,
             value=predicate_user.id if predicate_user else None,
+        )
+
+        # act
+        response = ConditionCheckService.check(condition, workflow.id)
+
+        # assert
+        assert response is result
+
+    @pytest.mark.parametrize(
+        ('operator', 'predicate_value', 'field_value', 'result'),
+        [
+            (PredicateOperator.EQUAL, '1', 1, True),
+            (PredicateOperator.EQUAL, '1', 2, False),
+            (PredicateOperator.EQUAL, None, 1, False),
+            (PredicateOperator.NOT_EQUAL, '1', 2, True),
+            (PredicateOperator.NOT_EQUAL, '1', 1, False),
+            (PredicateOperator.EXIST, None, 1, True),
+            (PredicateOperator.EXIST, None, None, False),
+            (PredicateOperator.NOT_EXIST, None, None, True),
+            (PredicateOperator.NOT_EXIST, None, 1, False),
+        ]
+    )
+    def test_check__group(
+        self,
+        operator,
+        predicate_value,
+        field_value,
+        result,
+    ):
+        # arrange
+        user = create_test_owner()
+        workflow = create_test_workflow(user, tasks_count=2)
+        first_task = workflow.tasks.get(number=1)
+        second_task = workflow.tasks.get(number=2)
+        first_field = TaskField.objects.create(
+            name='Group',
+            api_name='group-1',
+            task=first_task,
+            type=FieldType.USER,
+            value=str(field_value) if field_value else '',
+            workflow=workflow,
+            group_id=field_value,
+        )
+        condition = Condition.objects.create(
+            task=second_task,
+            action=ConditionAction.SKIP_TASK,
+            order=1,
+        )
+        first_rule = Rule.objects.create(
+            condition=condition,
+        )
+        Predicate.objects.create(
+            rule=first_rule,
+            operator=operator,
+            field_type=PredicateType.GROUP,
+            field=first_field.api_name,
+            value=predicate_value,
         )
 
         # act
