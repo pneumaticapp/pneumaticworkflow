@@ -10,7 +10,9 @@ from src.processes.views.system_template import (
 from src.processes.views.template import (
     TemplateIntegrationsViewSet
 )
-
+from src.processes.views.template_preset import (
+    TemplatePresetViewSet
+)
 
 router = DefaultRouter(trailing_slash=False)
 router.register(
@@ -27,6 +29,11 @@ router.register(
     prefix='integrations',
     viewset=TemplateIntegrationsViewSet,
     basename='templates_integrations'
+)
+router.register(
+    prefix='presets',
+    viewset=TemplatePresetViewSet,
+    basename='presets'
 )
 urlpatterns = [
     path('public', PublicTemplateViewSet.as_view({'get': 'retrieve'})),

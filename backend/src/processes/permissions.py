@@ -15,8 +15,10 @@ from src.processes.models import (
     WorkflowEvent,
     Checklist,
     TaskPerformer,
+    TemplatePreset
 )
 from src.accounts.enums import UserType
+from src.processes.enums import PresetType
 
 
 class TemplateOwnerPermission(BasePermission):
@@ -345,3 +347,25 @@ class StoragePermission(BasePermission):
 
     def has_permission(self, request, view):
         return settings.PROJECT_CONF['STORAGE']
+
+
+class TemplatePresetPermission(BasePermission):
+
+    def has_permission(self, request, view):
+        try:
+            preset_id = int(view.kwargs.get('pk'))
+        except (ValueError, TypeError):
+            return False
+        else:
+            user = request.user
+            preset = TemplatePreset.objects.filter(
+                id=preset_id,
+                account_id=user.account_id
+            ).first()
+            if not preset:
+                return False
+            if preset.author_id == user.id or user.is_account_owner:
+                return True
+            elif preset.type == PresetType.ACCOUNT:
+                return preset.template.owners.filter(user_id=user.id).exists()
+            return False
