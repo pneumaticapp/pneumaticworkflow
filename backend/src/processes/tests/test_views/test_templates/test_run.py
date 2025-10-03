@@ -619,7 +619,7 @@ def test_run__performer_type_field_not_reused__ok(mocker, api_client):
         data={
             'name': 'Test name',
             'kickoff': {
-                field_template.api_name: user1.id
+                field_template.api_name: user1.email
             }
         }
     )
@@ -628,7 +628,7 @@ def test_run__performer_type_field_not_reused__ok(mocker, api_client):
         data={
             'name': 'Test name',
             'kickoff': {
-                field_template.api_name: user2.id
+                field_template.api_name: user2.email
             }
         }
     )
@@ -2342,7 +2342,7 @@ def test_run__user_field_invited_transfer__ok(
         data={
             'name': 'Wf',
             'kickoff': {
-                'user-field-1': str(account_2_new_user.id)
+                'user-field-1': str(account_2_new_user.email)
             }
         }
     )
@@ -3205,7 +3205,7 @@ def test_run__task_name_with_field_2__ok(mocker, api_client):
                     str(selection_2.api_name)
                 ],
                 api_name_2: 1726012800,
-                api_name_3: str(user.id),
+                api_name_3: str(user.email),
             }
         }
     )
@@ -3325,7 +3325,7 @@ def test_run__wf_name_template_with_system_and_kickoff_vars__ok(
         path=f'/templates/{template.id}/run',
         data={
             'kickoff': {
-                field_api_name: str(user.id)
+                field_api_name: str(user.email)
             }
         }
     )
@@ -3408,7 +3408,7 @@ def test_run__name_with_kickoff_vars_only__ok(
         data={
             'kickoff': {
                 field_api_name_1: feedback,
-                field_api_name_2: str(user.id)
+                field_api_name_2: str(user.email)
             }
         }
     )

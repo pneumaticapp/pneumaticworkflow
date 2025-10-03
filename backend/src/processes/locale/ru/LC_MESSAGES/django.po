@@ -417,10 +417,6 @@ msgstr "Вложение не найдено."
 msgid "The value must be the ID of an existing account user."
 msgstr "Значение должно быть идентификатором существующего пользователя."
 
-#: src/processes/messages/workflow.py:76
-msgid "Account user with given id does not exist."
-msgstr "Пользователь с данным идентификатором не существует в данной учетной записи."
-
 #: src/processes/messages/workflow.py:77
 msgid "Save attachments failed. Service unavailable."
 msgstr "Сохранение вложения невозможно. Сервис недоступен."
@@ -623,3 +619,11 @@ msgstr "Нельзя написать комментарий к неактивн
 #: src/processes/messages/workflow.py:181
 msgid "The user or group specified for a \"User\" field does not exist."
 msgstr "Указанный пользователь или группа для поля типа \"Пользователь\" не существует."
+
+#: src/processes/messages/template.py:247
+msgid "Task \"{task}\": Group ID \"{group_id}\" does not exist or cannot be used in this condition."
+msgstr "Задача «{task}»: идентификатор группы «{group_id}» не существует или не может быть использован в этом условии."
+
+#: src/processes/messages/workflow.py:197
+msgid "The user or group for a field with type \"User\" does not exist."
+msgstr "Указанный пользователь или группа для поля типа «Пользователь» не существует."

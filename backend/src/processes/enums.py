@@ -192,6 +192,7 @@ class PredicateType:
     DROPDOWN = 'dropdown'
     FILE = 'file'
     USER = 'user'
+    GROUP = 'group'
     NUMBER = 'number'
 
     CHOICES = (
@@ -206,6 +207,7 @@ class PredicateType:
         (DROPDOWN, DROPDOWN),
         (FILE, FILE),
         (USER, USER),
+        (GROUP, GROUP),
         (NUMBER, NUMBER),
     )
 
@@ -219,6 +221,7 @@ class PredicateType:
         DROPDOWN,
         FILE,
         USER,
+        GROUP,
         NUMBER,
     }
 
@@ -249,6 +252,7 @@ class PredicateOperator:
         PredicateType.KICKOFF: {COMPLETED},
         PredicateType.TASK: {COMPLETED},
         PredicateType.USER: {EQUAL, NOT_EQUAL, EXIST, NOT_EXIST},
+        PredicateType.GROUP: {EQUAL, NOT_EQUAL, EXIST, NOT_EXIST},
         PredicateType.FILE: {EXIST, NOT_EXIST},
         PredicateType.URL: {
             EQUAL,
