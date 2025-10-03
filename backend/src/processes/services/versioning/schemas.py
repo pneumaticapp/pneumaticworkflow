@@ -82,6 +82,8 @@ class PredicateSchemaV1(serializers.ModelSerializer):
             'field_type',
             'value',
             'api_name',
+            'user_id',
+            'group_id',
         )
 
 

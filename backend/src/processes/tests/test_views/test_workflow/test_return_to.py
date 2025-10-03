@@ -463,7 +463,7 @@ def test_return_to__skip_condition__validation_error(
         f'/templates/{template.id}/run',
         data={
             'kickoff': {
-                field_template.api_name: user.id
+                field_template.api_name: user.email
             }
         }
     )
