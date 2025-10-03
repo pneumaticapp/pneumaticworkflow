@@ -19,9 +19,8 @@ from src.processes.services.exceptions import (
     WorkflowActionServiceException
 )
 from src.utils.validation import ErrorCode
-from src.processes.models import (
-    TemplateOwner,
-)
+from src.processes.models import TemplateOwner
+from src.generics.messages import MSG_GE_0007
 
 
 pytestmark = pytest.mark.django_db
@@ -40,7 +39,7 @@ def test_snooze__body__ok(api_client):
     # act
     response = api_client.post(
         f'/workflows/{workflow.id}/snooze',
-        data={'date': str(date)}
+        data={'date': date.timestamp()}
     )
 
     # assert
@@ -109,7 +108,7 @@ def test_snooze__template_owner_admin__ok(
     # act
     response = api_client.post(
         f'/workflows/{workflow.id}/snooze',
-        data={'date': str(date)}
+        data={'date': date.timestamp()}
     )
 
     # assert
@@ -136,7 +135,7 @@ def test_snooze__account_owner_admin__ok(
     # act
     response = api_client.post(
         f'/workflows/{workflow.id}/snooze',
-        data={'date': str(date)}
+        data={'date': date.timestamp()}
     )
 
     # assert
@@ -163,7 +162,7 @@ def test_snooze__legacy_workflow_workflow_starter__ok(
     # act
     response = api_client.post(
         f'/workflows/{workflow.id}/snooze',
-        data={'date': str(date)}
+        data={'date': date.timestamp()}
     )
 
     # assert
@@ -211,7 +210,7 @@ def test_snooze__template_owner__not_admin__permission_denied(
     # act
     response = api_client.post(
         f'/workflows/{workflow.id}/snooze',
-        data={'date': str(date)}
+        data={'date': date.timestamp()}
     )
 
     # assert
@@ -231,21 +230,20 @@ def test_snooze__invalid_date__validation_error(
         'src.processes.services.workflow_action.'
         'WorkflowActionService.force_delay_workflow'
     )
-    date = '2000/20/01'
+    invalid_timestamp = 'invalid_timestamp_string'
 
     # act
     response = api_client.post(
         f'/workflows/{workflow.id}/snooze',
-        data={'date': str(date)}
+        data={'date': invalid_timestamp}
     )
 
     # assert
     assert response.status_code == 400
     assert response.data['code'] == ErrorCode.VALIDATION_ERROR
-    assert response.data['message'] == (
-        'Datetime has wrong format. Use one of these formats instead:'
-        ' YYYY-MM-DDThh:mm[:ss[.uuuuuu]][+HH:MM|-HH:MM|Z].'
-    )
+    assert response.data['message'] == MSG_GE_0007
+    assert response.data['details']['reason'] == MSG_GE_0007
+    assert response.data['details']['name'] == 'date'
     snooze_mock.assert_not_called()
 
 
@@ -274,7 +272,7 @@ def test_snooze__service_exception__validation_error(
     # act
     response = api_client.post(
         f'/workflows/{workflow.id}/snooze',
-        data={'date': str(date)}
+        data={'date': date.timestamp()}
     )
 
     # assert
