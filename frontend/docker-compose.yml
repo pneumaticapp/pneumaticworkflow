@@ -88,6 +88,8 @@ services:
       - ../config/project.env
       - ../config/postgres.env
       - ../config/backend.env
+    volumes:
+      - ../backend:/pneumatic_backend
     command: >
       sh -c "celery -A src worker -l warning"
     depends_on:
@@ -106,6 +108,8 @@ services:
       - ../config/project.env
       - ../config/postgres.env
       - ../config/backend.env
+    volumes:
+      - ../backend:/pneumatic_backend
     command: celery --pidfile= -A src beat -l warning -S django
     depends_on:
       - postgres
