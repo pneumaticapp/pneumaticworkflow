@@ -1,3 +1,4 @@
+name: pneumatic
 services:
   postgres:
     image: postgres:15-bookworm
@@ -48,7 +49,7 @@ services:
     networks:
       - pneumatic
 
-  pneumatic-backend:
+  backend:
     build:
       context: ../backend
     container_name: pneumatic-backend
@@ -64,7 +65,8 @@ services:
       - ../config/postgres.env
       - ../config/backend.env
     volumes:
-      - pneumatic-backend-staticfiles:/pneumatic_backend/staticfiles
+      - ../backend:/pneumatic_backend
+      - backend-staticfiles:/pneumatic_backend/staticfiles
     depends_on:
       - postgres
       - rabbitmq
@@ -117,4 +119,4 @@ networks:
   pneumatic:
 
 volumes:
-  pneumatic-backend-staticfiles:
+  backend-staticfiles:
