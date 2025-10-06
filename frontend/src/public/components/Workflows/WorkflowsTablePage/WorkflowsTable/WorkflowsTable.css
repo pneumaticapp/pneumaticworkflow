@@ -216,6 +216,7 @@
 .container__actions--narrow-table {
   display: flex;
   width: 100%;
+  min-width: 29rem;
   justify-content: space-between;
 }
 
