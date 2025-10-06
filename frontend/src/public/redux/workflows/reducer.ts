@@ -1,3 +1,4 @@
+/* eslint-disable indent */
 import produce from 'immer';
 import { IWorkflowsList, IStoreWorkflows } from '../../types/redux';
 import { EWorkflowsActions, TWorkflowsActions } from './actions';
@@ -63,7 +64,8 @@ export const INIT_STATE: IStoreWorkflows = {
     areFiltersChanged: false,
     sorting: EWorkflowsSorting.DateDesc,
     values: INITIAL_WORKFLOWS_FILTERS,
-    selectedFieldsByTemplate: {},
+    selectedFields: [],
+    presets: [],
     templateList: {
       items: [],
       isLoading: false,
@@ -72,6 +74,7 @@ export const INIT_STATE: IStoreWorkflows = {
       workflowStartersCounters: [],
       performersCounters: [],
     },
+    lastLoadedTemplateId: null,
   },
   WorkflowsTuneViewModal: {
     isOpen: false,
@@ -338,13 +341,16 @@ export const reducer = (state = INIT_STATE, action: TWorkflowsActions | TGeneral
 
     case EWorkflowsActions.SetFilterSelectedFields:
       return produce(state, (draftState) => {
-        const { templateId, selectedFields } = action.payload;
-        draftState.workflowsSettings.selectedFieldsByTemplate[templateId] = selectedFields;
+        draftState.workflowsSettings.selectedFields = action.payload;
       });
 
-    case EWorkflowsActions.LoadTemplateFieldsFromLocalStorage:
+    case EWorkflowsActions.SetLastLoadedTemplateId:
       return produce(state, (draftState) => {
-        draftState.workflowsSettings.selectedFieldsByTemplate = action.payload;
+        draftState.workflowsSettings.lastLoadedTemplateId = action.payload;
+      });
+    case EWorkflowsActions.SetWorkflowsPresetsRedux:
+      return produce(state, (draftState) => {
+        draftState.workflowsSettings.presets = action.payload;
       });
 
     default:
