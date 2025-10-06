@@ -6,6 +6,7 @@ import {
   TConditionPredicateValue,
 } from '../components/TemplateEdit/TaskForm/Conditions';
 import { TUploadedFile } from '../utils/uploadFiles';
+import { TSystemField } from '../components/Workflows/WorkflowsTablePage/WorkflowsTable/types';
 
 export interface ITemplate {
   id?: number;
@@ -35,6 +36,7 @@ export interface ITemplateOwner {
 }
 
 export type TTransformedTask =
+  | { apiName: string; name: string; needSteName: null; fields: TSystemField[] }
   | (Pick<ITemplateTask, 'apiName' | 'fields' | 'name'> & { needSteName?: boolean })
   | (Pick<IKickoff, 'fields'> & { apiName: string; name: string; needSteName: null });
 
