@@ -276,7 +276,7 @@ export function TemplateControlls({
                 })}
                 className={styles['more-setting']}
                 onClick={() => {
-                  sessionStorage.setItem('isInternalNavigation', 'true');
+                  sessionStorage.setItem('shouldLoadPresets', 'true');
                 }}
               >
                 <BoxesIcon className={styles['more-setting__icon']} />

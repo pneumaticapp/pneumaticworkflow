@@ -1,10 +1,9 @@
 import { TGetTemplatePresetsResponse } from '../../../api/getTemplatePresets';
 import { TTemplatePreset } from '../../../types/template';
-import { SYSTEM_FIELD_NAMES } from '../WorkflowsTablePage/WorkflowsTable/constants';
 
 export function getCorrectPresetFields(presets: TGetTemplatePresetsResponse) {
   if (presets.length === 0) {
-    return SYSTEM_FIELD_NAMES;
+    return undefined;
   }
   const defaultPresets: TTemplatePreset[] = presets.filter((preset) => preset.isDefault);
   let correctPreset: TTemplatePreset;

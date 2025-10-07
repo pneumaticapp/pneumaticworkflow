@@ -355,7 +355,7 @@ export function BreakdownItem({
                           })}
                           className={styles['breakdown__title-link']}
                           onClick={() => {
-                            sessionStorage.setItem('isInternalNavigation', 'true');
+                            sessionStorage.setItem('shouldLoadPresets', 'true');
                           }}
                         >
                           {breakdown.templateName}
