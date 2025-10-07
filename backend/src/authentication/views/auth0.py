@@ -1,5 +1,6 @@
 from django.contrib.auth import get_user_model
 from django.db.models import ObjectDoesNotExist
+from src.accounts.models import Account
 from django.conf import settings
 from rest_framework.viewsets import GenericViewSet
 from rest_framework.decorators import action
@@ -30,6 +31,7 @@ from src.utils.logging import (
     SentryLogLevel,
 )
 from src.authentication.messages import MSG_AU_0003
+from src.authentication.tasks import update_auth0_contacts
 
 
 UserModel = get_user_model()
@@ -79,18 +81,75 @@ class Auth0ViewSet(
                 )
             except ObjectDoesNotExist:
                 if settings.PROJECT_CONF['SIGNUP']:
-                    user, token = self.signup(
-                        **user_data,
-                        utm_source=slz.validated_data.get('utm_source'),
-                        utm_medium=slz.validated_data.get('utm_medium'),
-                        utm_campaign=slz.validated_data.get('utm_campaign'),
-                        utm_term=slz.validated_data.get('utm_term'),
-                        utm_content=slz.validated_data.get('utm_content'),
-                        gclid=slz.validated_data.get('gclid'),
+                    # Get user's organizations from Auth0
+                    user_profile = service._get_user_profile(
+                        service.tokens['access_token']
                     )
+                    organizations = (
+                        service.get_user_organizations(user_profile)
+                    )
+                    # Check if any organization matches existing account
+                    existing_account = None
+                    if organizations:
+                        org_ids = [
+                            org.get('id')
+                            for org in organizations
+                            if org.get('id')
+                        ]
+                        if org_ids:
+                            existing_account = Account.objects.filter(
+                                external_id__in=org_ids,
+                                is_deleted=False
+                            ).first()
+                    if existing_account:
+                        # Join existing account
+                        user, token = self.join_existing_account(
+                            account=existing_account,
+                            **user_data,
+                        )
+                        capture_sentry_message(
+                            message='Auth0 user joined existing account',
+                            data={
+                                'user_email': user_data['email'],
+                                'account_id': existing_account.id,
+                                'external_id': existing_account.external_id,
+                                'organizations': organizations
+                            },
+                            level=SentryLogLevel.INFO
+                        )
+                    else:
+                        # Create new account
+                        user, token = self.signup(
+                            **user_data,
+                            utm_source=slz.validated_data.get('utm_source'),
+                            utm_medium=slz.validated_data.get('utm_medium'),
+                            utm_term=slz.validated_data.get('utm_term'),
+                            utm_content=slz.validated_data.get('utm_content'),
+                            gclid=slz.validated_data.get('gclid'),
+                            utm_campaign=slz.validated_data.get('utm_campaign')
+                        )
+                        # Set external_id for the first organization
+                        if organizations:
+                            first_org_id = organizations[0].get('id')
+                            if first_org_id:
+                                user.account.external_id = first_org_id
+                                user.account.save(
+                                    update_fields=['external_id']
+                                )
+                        capture_sentry_message(
+                            message='Auth0 user created new account',
+                            data={
+                                'user_email': user_data['email'],
+                                'account_id': user.account.id,
+                                'external_id': user.account.external_id,
+                                'organizations': organizations
+                            },
+                            level=SentryLogLevel.INFO
+                        )
                 else:
                     raise AuthenticationFailed(MSG_AU_0003)
             service.save_tokens_for_user(user)
+            update_auth0_contacts.delay(user.id)
             return self.response_ok({'token': token})
 
     @action(methods=('GET',), detail=False, url_path='auth-uri')

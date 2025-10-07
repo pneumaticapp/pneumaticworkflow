@@ -9,6 +9,7 @@ from src.accounts.services import (
     AccountService,
     UserService,
 )
+from src.accounts.models import Account
 from src.accounts.services.exceptions import (
     AccountServiceException,
     UserServiceException,
@@ -37,6 +38,58 @@ class SignUpMixin:
 
     def after_signup(self, user: UserModel):
         pass
+
+    def join_existing_account(
+        self,
+        account: Account,
+        email: str,
+        phone: Optional[str] = None,
+        first_name: Optional[str] = None,
+        last_name: Optional[str] = None,
+        photo: Optional[str] = None,
+        job_title: Optional[str] = None,
+        language: Language.LITERALS = None,
+        timezone: str = None,
+        password: Optional[str] = None,
+        request: Optional[HttpRequest] = None,
+    ) -> Tuple[UserModel, PneumaticToken]:
+        """ Join user to existing account """
+
+        request = request or self.request
+        is_superuser = getattr(request, 'is_superuser', False)
+        user_service = UserService(
+            is_superuser=is_superuser,
+            auth_type=AuthTokenType.USER
+        )
+        with transaction.atomic():
+            try:
+                user = user_service.create(
+                    account=account,
+                    phone=phone,
+                    email=email,
+                    first_name=first_name,
+                    last_name=last_name,
+                    raw_password=password,
+                    photo=photo,
+                    is_account_owner=False,
+                    timezone=timezone,
+                    language=language,
+                )
+            except UserServiceException as ex:
+                raise_validation_error(message=ex.message)
+            else:
+                self.identify(user)
+                self.group(user)
+                token = AuthService.get_auth_token(
+                    user=user,
+                    user_agent=request.headers.get(
+                        'User-Agent',
+                        request.META.get('HTTP_USER_AGENT')
+                    ),
+                    user_ip=request.META.get('HTTP_X_REAL_IP'),
+                )
+                self.after_signup(user)
+                return user, token
 
     def signup(
         self,
