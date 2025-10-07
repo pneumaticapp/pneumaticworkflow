@@ -33,10 +33,12 @@ STORAGE_PROVIDER=
 ```
 
 ### Installation
-1. Install node.js v16 directly or use [nvm](https://github.com/nvm-sh/nvm).
+Open a terminal in the "frontend" directory and run the following commands:
+1. Start backend containers ``docker compose up -d``
+2. Install node.js v16 directly or use [nvm](https://github.com/nvm-sh/nvm).
 3. Install packages with ``npm clean-install``. If an errors occurs, use ``npm i --legacy-peer-deps``
-3. Run the development version with the command ``npm run local``
-4. Run the production version with the command:
+4. Run the development version with the command ``npm run local``
+5. Run the production version with the command:
    * ``npm run build-client:prod``
    * ``pm2-runtime start pm2.json``
 
