@@ -24,4 +24,21 @@ export function StepColumn({ value: { oneActiveTaskName, areMultipleTasks, names
   ) : (
     <span className={styles['step']}>{oneActiveTaskName}</span>
   );
+
+  /**
+   * TODO: Previous implementation from task 41554
+   * Author: Bogdanova
+   * Date: 05.29.2025
+   * Description: Step display with tooltip for template name
+   * Status: May be partially reused in the future
+   */
+  // const step = <span className={styles['step']}>{oneActiveTaskName}</span>;
+  // if (!template?.name) {
+  //   return step;
+  // }
+  // return (
+  //   <Tooltip containerClassName={styles['tooltip']} content={template.name}>
+  //     {step}
+  //   </Tooltip>
+  // );
 }

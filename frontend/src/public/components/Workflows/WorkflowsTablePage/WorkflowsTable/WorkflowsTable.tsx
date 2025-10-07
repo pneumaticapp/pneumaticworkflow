@@ -371,22 +371,6 @@ export function WorkflowsTable({
         minWidth: EColumnWidthMinWidth.workflow,
         columnType: 'workflow',
       },
-      ...(templatesIdsFilter.length === 0
-        ? [
-            {
-              Header: (
-                <div className={styles['column-header__template-name']}>
-                  {formatMessage({ id: 'workflows.filter-column-template-name' })}
-                </div>
-              ),
-              accessor: 'templateName',
-              Cell: ColumnCells.TemplateNameColumn,
-              width: savedGlobalWidths.workflow || ETableViewFieldsWidth.workflow,
-              minWidth: EColumnWidthMinWidth.templateName,
-              columnType: 'templateName',
-            },
-          ]
-        : []),
       {
         Header: renderWorkflowStarterFilter(),
         accessor: 'starter',
@@ -440,7 +424,6 @@ export function WorkflowsTable({
     return workflowsList.items.map((workflow) => {
       const baseData: TableColumns = {
         workflow,
-        templateName: workflow,
         starter: workflow,
         progress: workflow,
         step: workflow,

@@ -269,21 +269,3 @@ export interface RawPerformer {
   type: ETemplateOwnerType;
   sourceId: number;
 }
-
-export type TOrderedFields = {
-  order: number;
-  width: number;
-  apiName: string;
-};
-
-export type TTemplatePreset = {
-  id: number;
-  name: string;
-  author: number;
-  dateCreatedTsp: number;
-  isDefault: boolean;
-  type: 'personal' | 'account';
-  fields: TOrderedFields[];
-};
-
-export type TAddTemplatePreset = Omit<TTemplatePreset, 'id' | 'author' | 'dateCreatedTsp'>;
