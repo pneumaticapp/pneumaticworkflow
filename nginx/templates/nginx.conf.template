@@ -89,7 +89,7 @@ http {
         }
         # Django admin files
         location /static {
-            alias /tmp/pneumatic-backend-staticfiles;
+            alias /tmp/backend-staticfiles;
         }
         location /robots.txt {
             alias /var/www/robots.txt;
