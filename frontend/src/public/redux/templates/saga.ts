@@ -36,7 +36,6 @@ import { isArrayWithItems } from '../../utils/helpers';
 import { getTemplatesSystemCategories } from '../../api/getSystemTemplatesCategories';
 import { ITemplatesSystemCategories } from '../../types/redux';
 import { LIMIT_LOAD_SYSTEMS_TEMPLATES, LIMIT_LOAD_TEMPLATES, varibleIdRegex } from '../../constants/defaultValues';
-import { SYSTEM_FIELDS } from '../../components/Workflows/WorkflowsTablePage/WorkflowsTable/constants';
 
 function* fetchTemplatesSystem() {
   try {
@@ -126,7 +125,6 @@ export function* handleLoadTemplateVariables(templateId: number) {
 
     yield put(loadTemplateVariablesSuccess({ templateId, variables }));
     const transformedTasks: TTransformedTask[] = [
-      ...[{ apiName: '-2', name: 'System', needSteName: null, fields: SYSTEM_FIELDS }],
       ...(kickoff.fields.length > 0 ? [{ apiName: '-1', name: 'Kick-off', fields: kickoff.fields }] : []),
       ...tasks
         .filter((task) => task.fields.length > 0)

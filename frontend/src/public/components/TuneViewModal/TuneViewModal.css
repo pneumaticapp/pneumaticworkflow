@@ -27,24 +27,18 @@
       border-radius: 0.2rem;
     }
 
+    .tune-view-modal__task-box-title {
+      margin-bottom: 1.6rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      height: 2rem;
+      cursor: pointer;
+    }
+
     .tune-view-modal__fields-container {
       margin-left: 1.6rem;
-      padding-bottom: 0.8rem;
-    }
-  }
-
-  .tune-view-modal__task-box-title {
-    margin-bottom: 1.6rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    height: 2rem;
-    cursor: pointer;
-
-    &:hover {
-      .tune-view-modal__task-arrow {
-        color: var(--pneumatic-color-white);
-      }
+      padding-bottom: 1.6rem;
     }
   }
 
@@ -70,8 +64,7 @@
 
 .tune-view-modal__task-arrow {
   margin-right: 0.7rem;
-  color: var(--pneumatic-color-black72);
-  transition: transform 0.3s, color 0.3s;
+  transition: transform 0.3s;
 }
 
 .tune-view-modal__task-arrow-rotated {

@@ -354,17 +354,7 @@ export function Sidebar({
                         <IntlMessages id={item.label} />
                       </a>
                     ) : (
-                      <NavLink
-                        tabIndex={1}
-                        to={item.to}
-                        data-flag={item.id}
-                        className={styles['sidebar__link']}
-                        onClick={() => {
-                          if (item.id === 'workflows') {
-                            sessionStorage.setItem('isInternalNavigation', 'true');
-                          }
-                        }}
-                      >
+                      <NavLink tabIndex={1} to={item.to} data-flag={item.id} className={styles['sidebar__link']}>
                         {renderIcon(item)}
                         <IntlMessages id={item.label} />
                         {typeof item.counter === 'number' && (
