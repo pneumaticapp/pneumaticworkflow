@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
 import classnames from 'classnames';
 import { useIntl } from 'react-intl';
@@ -26,6 +27,7 @@ import { getLinkToWorkflows } from '../../../utils/routes/getLinkToWorkflows';
 import { getLinkToTemplate } from '../../../utils/routes/getLinkToTemplate';
 
 import styles from '../Templates.css';
+import { IApplicationState } from '../../../types/redux';
 
 export interface ITemplateCardProps extends ITemplateListItem {
   canEdit: boolean | undefined;
@@ -51,6 +53,10 @@ export function TemplateCard({
 }: ITemplateCardProps) {
   const { formatMessage } = useIntl();
   const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
+  const selectedFieldsByTemplate = useSelector(
+    (state: IApplicationState) => state.workflows.workflowsSettings.selectedFieldsByTemplate[id],
+  );
+  const selectedFields = selectedFieldsByTemplate?.join(',') || '';
 
   const openDeleteTemplateModal = () => {
     setIsDeleteModalVisible(true);
@@ -65,12 +71,7 @@ export function TemplateCard({
   };
 
   const handleShowWorkflows = () => {
-    sessionStorage.setItem('shouldLoadPresets', 'true');
-    history.push(
-      getLinkToWorkflows({
-        templateId: id,
-      }),
-    );
+    history.push(getLinkToWorkflows({ templateId: id, fields: selectedFields }));
   };
 
   const handleShowActivity = () => {

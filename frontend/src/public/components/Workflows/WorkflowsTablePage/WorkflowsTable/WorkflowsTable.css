@@ -249,7 +249,3 @@
   padding: 0.4rem 0.8rem;
   text-align: center;
 }
-
-.column-header__template-name {
-  @mixin text-truncate;
-}

@@ -12,7 +12,7 @@ import {
   IWorkflowClient,
   IWorkflowDetailsClient,
 } from '../../types/workflow';
-import { ITemplateTitle, IKickoff, TTemplatePreset, TOrderedFields } from '../../types/template';
+import { ITemplateTitle, IKickoff } from '../../types/template';
 import { TUploadedFile } from '../../utils/uploadFiles';
 import { ITemplateStep } from '../../types/tasks';
 import { IDeleteComment } from '../../api/workflows/deleteComment';
@@ -87,13 +87,10 @@ export const enum EWorkflowsActions {
   WatchedComment = 'WATCHED_COMMENT',
   CreateReactionComment = 'CREATE_REACTION_COMMENT',
   DeleteReactionComment = 'DELETE_REACTION_COMMENT',
-
   OpenTuneViewModal = 'OPEN_TUNE_VIEW_MODAL',
   CloseTuneViewModal = 'CLOSE_TUNE_VIEW_MODAL',
   SetFilterSelectedFields = 'SET_WORKFLOWS_FILTER_SELECTED_FIELDS',
-  SetLastLoadedTemplateId = 'SET_LAST_LOADED_TEMPLATE_ID',
-  SetWorkflowsPresetsRedux = 'SET_WORKFLOWS_PRESETS_REDUX',
-  SaveWorkflowsPreset = 'SAVE_WORKFLOWS_PRESET',
+  LoadTemplateFieldsFromLocalStorage = 'LOAD_TEMPLATE_FIELDS_FROM_LOCAL_STORAGE',
 }
 
 export type TDeleteReactionComment = ITypedReduxAction<EWorkflowsActions.DeleteReactionComment, IDeleteReaction>;
@@ -600,39 +597,30 @@ export const closeTuneViewModal: () => TCloseTuneViewModal = actionGenerator<EWo
   EWorkflowsActions.CloseTuneViewModal,
 );
 
-export type TSetWorkflowsFilterSelectedFields = ITypedReduxAction<EWorkflowsActions.SetFilterSelectedFields, string[]>;
-
-export const setWorkflowsFilterSelectedFields: (payload: string[]) => TSetWorkflowsFilterSelectedFields =
-  actionGenerator<EWorkflowsActions.SetFilterSelectedFields, string[]>(EWorkflowsActions.SetFilterSelectedFields);
-
-export type TSetLastLoadedTemplateId = ITypedReduxAction<EWorkflowsActions.SetLastLoadedTemplateId, string | null>;
-export const setLastLoadedTemplateId: (payload: string | null) => TSetLastLoadedTemplateId = actionGenerator<
-  EWorkflowsActions.SetLastLoadedTemplateId,
-  string | null
->(EWorkflowsActions.SetLastLoadedTemplateId);
-
-export type TSetWorkflowsPresetsRedux = ITypedReduxAction<
-  EWorkflowsActions.SetWorkflowsPresetsRedux,
-  TTemplatePreset[]
->;
-export const setWorkflowsPresetsRedux: (presets: TTemplatePreset[]) => TSetWorkflowsPresetsRedux = actionGenerator<
-  EWorkflowsActions.SetWorkflowsPresetsRedux,
-  TTemplatePreset[]
->(EWorkflowsActions.SetWorkflowsPresetsRedux);
-
-export type TSaveWorkflowsPreset = ITypedReduxAction<
-  EWorkflowsActions.SaveWorkflowsPreset,
-  { orderedFields: TOrderedFields[]; type: 'personal' | 'account'; templateId: number }
+export type TSetWorkflowsFilterSelectedFields = ITypedReduxAction<
+  EWorkflowsActions.SetFilterSelectedFields,
+  { templateId: number; selectedFields: string[] }
 >;
 
-export const saveWorkflowsPreset: (payload: {
-  orderedFields: TOrderedFields[];
-  type: 'personal' | 'account';
+export const setWorkflowsFilterSelectedFields: (payload: {
   templateId: number;
-}) => TSaveWorkflowsPreset = actionGenerator<
-  EWorkflowsActions.SaveWorkflowsPreset,
-  { orderedFields: TOrderedFields[]; type: 'personal' | 'account'; templateId: number }
->(EWorkflowsActions.SaveWorkflowsPreset);
+  selectedFields: string[];
+}) => TSetWorkflowsFilterSelectedFields = actionGenerator<
+  EWorkflowsActions.SetFilterSelectedFields,
+  { templateId: number; selectedFields: string[] }
+>(EWorkflowsActions.SetFilterSelectedFields);
+
+export type TLoadTemplateFieldsFromLocalStorage = ITypedReduxAction<
+  EWorkflowsActions.LoadTemplateFieldsFromLocalStorage,
+  { [templateId: number]: string[] }
+>;
+
+export const loadTemplateFieldsFromLocalStorage: (payload: {
+  [templateId: number]: string[];
+}) => TLoadTemplateFieldsFromLocalStorage = actionGenerator<
+  EWorkflowsActions.LoadTemplateFieldsFromLocalStorage,
+  { [templateId: number]: string[] }
+>(EWorkflowsActions.LoadTemplateFieldsFromLocalStorage);
 
 export type TWorkflowsActions =
   | TOpenWorkflowLogPopup
@@ -695,6 +683,4 @@ export type TWorkflowsActions =
   | TOpenTuneViewModal
   | TCloseTuneViewModal
   | TSetWorkflowsFilterSelectedFields
-  | TSetLastLoadedTemplateId
-  | TSetWorkflowsPresetsRedux
-  | TSaveWorkflowsPreset;
+  | TLoadTemplateFieldsFromLocalStorage;

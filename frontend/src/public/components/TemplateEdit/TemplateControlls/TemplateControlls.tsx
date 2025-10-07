@@ -20,7 +20,7 @@ import {
   discardTemplateChanges,
 } from '../../../redux/actions';
 import { getRunnableWorkflow } from '../utils/getRunnableWorkflow';
-import { ETemplateStatus } from '../../../types/redux';
+import { ETemplateStatus, IApplicationState } from '../../../types/redux';
 import { IRunWorkflow } from '../../WorkflowEditPopup/types';
 import { WarningPopup } from '../../UI/WarningPopup';
 import { validateTemplate } from '../utils/validateTemplate';
@@ -92,6 +92,13 @@ export function TemplateControlls({
     finalizable: isTemplateFinalizable,
   } = template;
 
+  const selectedFieldsByTemplate = useSelector(
+    (state: IApplicationState) => state.workflows.workflowsSettings.selectedFieldsByTemplate,
+  );
+  let selectedFields = '';
+  if (templateId) {
+    selectedFields = selectedFieldsByTemplate?.[templateId]?.join(',') || '';
+  }
   const runnableWorkflow = getRunnableWorkflow(template);
   const isSavedTemplate = React.useMemo(() => Boolean(templateId), [templateId]);
 
@@ -270,15 +277,7 @@ export function TemplateControlls({
         >
           {templateId && (
             <>
-              <Link
-                to={getLinkToWorkflows({
-                  templateId,
-                })}
-                className={styles['more-setting']}
-                onClick={() => {
-                  sessionStorage.setItem('shouldLoadPresets', 'true');
-                }}
-              >
+              <Link to={getLinkToWorkflows({ templateId, fields: selectedFields })} className={styles['more-setting']}>
                 <BoxesIcon className={styles['more-setting__icon']} />
                 <p className={styles['more-setting__text']}>{formatMessage({ id: 'template.more-show-workflows' })}</p>
               </Link>

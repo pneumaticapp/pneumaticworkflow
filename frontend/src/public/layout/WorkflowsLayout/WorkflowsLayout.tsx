@@ -28,7 +28,7 @@ import { WorkflowsTableProvider } from '../../components/Workflows/WorkflowsTabl
 import { IApplicationState } from '../../types/redux';
 import { useCheckDevice } from '../../hooks/useCheckDevice';
 import styles from './WorkflowsLayout.css';
-// import { updateQueryFields } from './utils';
+import { updateQueryFields } from './utils';
 
 export interface IWorkflowsLayoutComponentProps extends IWorkflowsFiltersProps {
   workflowId: number | null;
@@ -69,6 +69,9 @@ export function WorkflowsLayoutComponent({
   const { formatMessage } = useIntl();
   const { isMobile } = useCheckDevice();
   const workflowsLoadingStatus = useSelector((state: IApplicationState) => state.workflows.workflowsLoadingStatus);
+  const selectedFieldsByTemplate = useSelector(
+    (state: IApplicationState) => state.workflows.workflowsSettings.selectedFieldsByTemplate,
+  );
   const [isLoadSteps, setIsLoadSteps] = useState(false);
   const [isTableWiderThanScreen, setIsTableWiderThanScreen] = useState(false);
   const workflowsMainRef = useRef<HTMLDivElement>(null);
@@ -174,13 +177,25 @@ export function WorkflowsLayoutComponent({
 
   useEffect(() => {
     applyFilters();
-  }, [statusFilter, templatesIdsFilter, stepsIdsFilter, performersIdsFilter, workflowStartersIdsFilter, sorting]);
+  }, [
+    statusFilter,
+    templatesIdsFilter,
+    stepsIdsFilter,
+    performersIdsFilter,
+    workflowStartersIdsFilter,
+    sorting,
+    selectedFieldsByTemplate,
+  ]);
 
   useEffect(() => {
     if (checkSortingIsIncorrect(statusFilter, sorting)) {
       changeWorkflowsSorting(EWorkflowsSorting.DateDesc);
     }
   }, [sorting, statusFilter]);
+
+  useEffect(() => {
+    updateQueryFields(selectedFieldsByTemplate, templatesIdsFilter, workflowsView);
+  }, [selectedFieldsByTemplate, templatesIdsFilter, workflowsView]);
 
   const templateIdFilter = React.useMemo(() => {
     const [firstTemplate] = templatesIdsFilter;
@@ -229,12 +244,10 @@ export function WorkflowsLayoutComponent({
             optionIdKey="id"
             optionLabelKey="name"
             onChange={(templateId: number) => {
-              sessionStorage.setItem('shouldLoadPresets', 'true');
               setStepsFilter([]);
               setTemplatesFilter([templateId]);
             }}
             resetFilter={() => {
-              sessionStorage.setItem('shouldLoadPresets', 'true');
               setStepsFilter([]);
               setTemplatesFilter([]);
             }}

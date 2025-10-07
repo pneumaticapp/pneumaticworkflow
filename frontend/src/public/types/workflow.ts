@@ -1,15 +1,7 @@
 import { IAccount, TUserId } from './user';
 import { TUploadedFile } from '../utils/uploadFiles';
 import { ITask, ITemplateStep, TaskWithTsp } from './tasks';
-import {
-  IKickoff,
-  IExtraField,
-  ITemplateTitle,
-  ETemplateOwnerType,
-  RawPerformer,
-  ITableViewFields,
-  TTemplatePreset,
-} from './template';
+import { IKickoff, IExtraField, ITemplateTitle, ETemplateOwnerType, RawPerformer, ITableViewFields } from './template';
 import { EProgressbarColor } from '../components/Workflows/utils/getWorfkflowClientProperties';
 
 export type WorkflowWithDateFields = {
@@ -343,8 +335,9 @@ export interface IWorkflowsSettings {
     performersGroupIdsFilter: number[];
     workflowStartersIdsFilter: number[];
   };
-  presets: TTemplatePreset[];
-  selectedFields: string[];
+  selectedFieldsByTemplate: {
+    [templateId: number]: string[];
+  };
   templateList: {
     items: ITemplateFilterItem[];
     isLoading: boolean;
@@ -353,7 +346,6 @@ export interface IWorkflowsSettings {
     workflowStartersCounters: TUserCounter[];
     performersCounters: TUserCounter[];
   };
-  lastLoadedTemplateId: string | null;
 }
 
 export enum EWorkflowsView {

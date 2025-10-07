@@ -4,9 +4,9 @@ import { useSelector, useDispatch } from 'react-redux';
 
 import { useDelayUnmount } from '../../hooks/useDelayUnmount';
 import { IApplicationState } from '../../types/redux';
-import { closeTuneViewModal, saveWorkflowsPreset, setWorkflowsFilterSelectedFields } from '../../redux/actions';
+import { closeTuneViewModal, setWorkflowsFilterSelectedFields } from '../../redux/actions';
 
-import { IExtraField, TOrderedFields, TTransformedTask } from '../../types/template';
+import { IExtraField, TTransformedTask } from '../../types/template';
 import { Button, Checkbox, SideModal, Tooltip } from '../UI';
 import { ShortArrowIcon } from '../icons';
 import { StepName } from '../StepName';
@@ -29,13 +29,15 @@ export function TuneViewModal() {
   const templateTasks: TTransformedTask[] = useSelector(
     (state: IApplicationState) => state.templates.templatesTasksMap[templateId],
   );
-
-  const savedFields = useSelector((state: IApplicationState) => state.workflows.workflowsSettings.selectedFields);
-
+  const selectedFieldsByTemplate = useSelector(
+    (state: IApplicationState) => state.workflows.workflowsSettings.selectedFieldsByTemplate,
+  );
+  const currentUser = useSelector((state: IApplicationState) => state.authUser);
   const variables = useSelector((state: IApplicationState) => state.templates.templatesVariablesMap[templateId] || []);
 
   useEffect(() => {
     if (isOpen && templateId) {
+      const savedFields = selectedFieldsByTemplate[templateId] || [];
       const savedFieldsSet = new Set(savedFields);
       setSelectedFields(savedFieldsSet);
 
@@ -48,7 +50,7 @@ export function TuneViewModal() {
       });
       setOpenedTasks(tasksToOpen);
     }
-  }, [isOpen, templateId, templateTasks]);
+  }, [isOpen, templateId, selectedFieldsByTemplate, templateTasks]);
 
   const shouldRender = useDelayUnmount(isOpen, 150);
   if (!shouldRender) {
@@ -78,7 +80,6 @@ export function TuneViewModal() {
   const MESSAGES = {
     title: 'workflow.tune-view-modal-title',
     applyChanges: 'workflow.tune-view-modal-applay-changes',
-    saveForAll: 'workflow.tune-view-modal-save-for-all',
   };
 
   const handleClose = () => {
@@ -103,23 +104,14 @@ export function TuneViewModal() {
     setSelectedFields((prev) => getNewSet(prev, fieldId));
   };
 
-  const handleApplyChanges = (type: 'personal' | 'account') => {
-    const orderedFields: TOrderedFields[] = [];
-    let orderIndex = 0;
-    templateTasks.forEach(({ fields }) => {
-      fields.forEach(({ apiName }) => {
-        if (selectedFields.has(apiName)) {
-          orderedFields.push({
-            order: (orderIndex += 1),
-            width: 1,
-            apiName,
-          });
-        }
-      });
-    });
+  const saveFieldsToLocalStorage = (localtemplateId: number, fields: string[]) => {
+    const key = `workflows_fields_user_${currentUser?.id}_template_${localtemplateId}`;
+    localStorage.setItem(key, JSON.stringify(fields));
+  };
 
-    dispatch(setWorkflowsFilterSelectedFields(Array.from(selectedFields)));
-    dispatch(saveWorkflowsPreset({ orderedFields, type, templateId }));
+  const handleApplyChanges = () => {
+    dispatch(setWorkflowsFilterSelectedFields({ templateId, selectedFields: Array.from(selectedFields) }));
+    saveFieldsToLocalStorage(templateId, Array.from(selectedFields));
     handleClose();
   };
 
@@ -189,14 +181,9 @@ export function TuneViewModal() {
         <Button
           buttonStyle="yellow"
           label={formatMessage({ id: MESSAGES.applyChanges })}
+          size="md"
           className={STYLES.footerButton}
-          onClick={() => handleApplyChanges('personal')}
-        />
-        <Button
-          buttonStyle="transparent-yellow"
-          label={formatMessage({ id: MESSAGES.saveForAll })}
-          className={STYLES.footerButton}
-          onClick={() => handleApplyChanges('account')}
+          onClick={handleApplyChanges}
         />
       </SideModal.Footer>
     </SideModal>

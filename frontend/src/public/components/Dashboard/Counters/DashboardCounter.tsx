@@ -44,28 +44,35 @@ export function DashboardCounter(props: IDashboardCounterProps) {
       return null;
     }
 
-    return (
-      <Tooltip
-        target={containerRef.current}
-        modifiers={{ preventOverflow: { boundariesElement: 'window' } }}
-        autohide={false}
-        delay={0}
-        innerClassName={tooltipStyles['inner']}
-        isOpen={isShowTooltip}
-        className={classnames(tooltipStyles['tooltip'], styles['dashboard__tooltip'])}
-        arrowClassName={classnames(tooltipStyles['custom-arrow'], tooltipStyles['custom-arrow_bottom'])}
-        placement={'top'}
-      >
-        <p>{props.tooltipLabel}</p>
-      </Tooltip>
-    );
+    return <Tooltip
+      target={containerRef.current}
+      modifiers={{ preventOverflow: { boundariesElement: 'window' } }}
+      autohide={false}
+      delay={0}
+      innerClassName={tooltipStyles['inner']}
+      isOpen={isShowTooltip}
+      className={classnames(
+        tooltipStyles['tooltip'],
+        styles['dashboard__tooltip'],
+      )}
+      arrowClassName={classnames(
+        tooltipStyles['custom-arrow'],
+        tooltipStyles['custom-arrow_bottom'],
+      )}
+      placement={'top'}
+    >
+      <p>{props.tooltipLabel}</p>
+    </Tooltip>;
   };
 
   const renderCounterContent = () => {
     return (
       <>
         {label && <div>{label}</div>}
-        <div className={labelClassName || styles['counter__count']} ref={containerRef}>
+        <div
+          className={labelClassName || styles['counter__count']}
+          ref={containerRef}
+        >
           {isLoading && counterLoader ? counterLoader : count}
         </div>
       </>
@@ -73,7 +80,11 @@ export function DashboardCounter(props: IDashboardCounterProps) {
   };
 
   const renderCounter = () => {
-    const classNamesList = classnames(className, getClassNameByColor(color), count === null && styles['counter_empty']);
+    const classNamesList = classnames(
+      className,
+      getClassNameByColor(color),
+      count === null && styles['counter_empty'],
+    );
 
     if (route) {
       return (
@@ -82,9 +93,6 @@ export function DashboardCounter(props: IDashboardCounterProps) {
           className={classNamesList}
           onMouseOver={handleMouseOver}
           onMouseLeave={handleMouseLeave}
-          onClick={() => {
-            sessionStorage.setItem('shouldLoadPresets', 'true');
-          }}
         >
           {renderCounterContent()}
         </Link>
@@ -92,7 +100,11 @@ export function DashboardCounter(props: IDashboardCounterProps) {
     }
 
     return (
-      <div className={classNamesList} onMouseOver={handleMouseOver} onMouseLeave={handleMouseLeave}>
+      <div
+        className={classNamesList}
+        onMouseOver={handleMouseOver}
+        onMouseLeave={handleMouseLeave}
+      >
         {renderCounterContent()}
       </div>
     );
