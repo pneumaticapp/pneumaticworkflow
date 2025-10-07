@@ -10,6 +10,8 @@ services:
       - ../postgres/backups:/backups:rw
     expose:
       - 5432
+    ports:
+      - 5432:5432
     networks:
       - pneumatic
     restart: always
@@ -30,6 +32,8 @@ services:
       - ../redis/data:/data
     expose:
       - 6379
+    ports:
+      - 6379:6379
     networks:
       - pneumatic
     restart: always
@@ -40,6 +44,7 @@ services:
     expose:
       - 5672    # broker url
     ports:
+      - 5672:5672
       - 15672:15672  # admin panel
     volumes:
       - ../rabbitmq/data/:/var/lib/rabbitmq/
@@ -49,46 +54,16 @@ services:
     networks:
       - pneumatic
 
-  backend:
-    build:
-      context: ../backend
-    container_name: pneumatic-backend
-    command: >
-      sh -c "python manage.py migrate &&
-             python manage.py collectstatic --no-input &&
-             python manage.py compilemessages &&
-             gunicorn src.asgi:application --workers 2 -k uvicorn.workers.UvicornWorker --worker-tmp-dir /dev/shm --bind 0.0.0.0:8001"
-    ports:
-      - 8001:8001
-    env_file:
-      - ../config/project.env
-      - ../config/postgres.env
-      - ../config/backend.env
-    volumes:
-      - ../backend:/pneumatic_backend
-    depends_on:
-      - postgres
-      - rabbitmq
-      - redis
-    healthcheck:
-      test: ["CMD", "pg_isready", "-h", postgres]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-    networks:
-      - pneumatic
-    restart: always
-
   celery:
     build:
-      context: ../backend
+      context: ./backend
     container_name: pneumatic-celery
     env_file:
       - ../config/project.env
       - ../config/postgres.env
       - ../config/backend.env
     volumes:
-      - ../backend:/pneumatic_backend
+      - ./:/pneumatic_backend
     command: >
       sh -c "celery -A src worker -l warning"
     depends_on:
@@ -101,14 +76,14 @@ services:
 
   celery-beat:
     build:
-      context: ../backend
+      context: ./backend
     container_name: pneumatic-celery-beat
     env_file:
       - ../config/project.env
       - ../config/postgres.env
       - ../config/backend.env
     volumes:
-      - ../backend:/pneumatic_backend
+      - ./:/pneumatic_backend
     command: celery --pidfile= -A src beat -l warning -S django
     depends_on:
       - postgres
@@ -117,6 +92,25 @@ services:
     networks:
       - pneumatic
     restart: always
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: pneumatic-frontend
+    env_file:
+      - ../config/project.env
+      - ../config/frontend.env
+    command: >
+      sh -c "npm run build-client:prod && pm2-runtime start pm2.json"
+    ports:
+      - 80:8000
+    volumes:
+      - ../frontend:/pneumatic_frontend
+      - ../frontend/logs:/tmp/logs
+    networks:
+      - pneumatic
+    restart: always
+
 
 networks:
   pneumatic:

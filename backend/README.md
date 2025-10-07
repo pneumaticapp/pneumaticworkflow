@@ -1,12 +1,55 @@
 # Pneumatic backend
 
-## Environment variables
+### Configuration
+Create a file ".env" with the following values in "backend" directory:
+```shell
+BACKEND_URL=http://localhost:8001
+FRONTEND_URL=http://localhost
+FORMS_URL=http://form.localhost
 
-### Required 
-* DJANGO_DEBUG: "yes" / "no"
-* DJANGO_SECRET_KEY: str
-* DJANGO_SETTINGS_MODULE: src.settings
-* ENABLE_LOGGING: "yes" / "no"
+SSL=no        # Disable using https
+ENVIRONMENT=Development
+LANGUAGE_CODE=en # Allowed langs: en, fr, de, es, ru
+CAPTCHA=no   # Disable using captcha in forms
+ANALYTICS=no # Disable any analytics integrations
+BILLING=no   # Disable stripe integration
+SIGNUP=yes   # Disable signup page
+MS_AUTH=no   # Disable Microsoft auth
+GOOGLE_AUTH=no # Disable Google auth
+SSO_AUTH=no   # Disable SSO Auth0 auth
+EMAIL=no      # Disable send emails
+EMAIL_PROVIDER=
+AI=no         # Disable AI template generation
+AI_PROVIDER=
+PUSH=no       # Disable push notifications
+PUSH_PROVIDER=
+STORAGE=no    # Disable file storage
+STORAGE_PROVIDER=
+
+
+DJANGO_DEBUG='yes'
+ADMIN_PATH='admin'
+DJANGO_SECRET_KEY=django_secret_django_secret_django_secret
+DJANGO_SETTINGS_MODULE=src.settings
+AUTH_REDIS_URL=redis://:redis_password@localhost:6379/1
+CACHE_REDIS_URL=redis://:redis_password@localhost:6379/0
+CHANNELS_REDIS_URL=redis://:redis_password@localhost:6379/2
+SESSION_REDIS_URL=redis://:redis_password@localhost:6379/3
+CELERY_BROKER_URL=amqp://rabbitmq_user:rabbitmq_password@localhost:5672
+ALLOWED_HOSTS=
+CORS_ORIGIN_ALLOW_ALL='no'
+CORS_ALLOW_CREDENTIALS='yes'
+CORS_ORIGIN_WHITELIST=
+```
+
+### Installation
+Open a terminal in the "backend" directory and run the following commands:
+1. Start backend containers ``docker compose up -d``
+
+
+
+
+
 
 ### For developers
 
