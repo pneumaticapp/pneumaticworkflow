@@ -9,8 +9,5 @@ RUN npm install pm2 -g
 EXPOSE 80 443 43554
 
 WORKDIR /pneumatic_frontend
-ADD package-lock.json /pneumatic_frontend/package-lock.json
-ADD package.json /pneumatic_frontend/package.json
-RUN npm ci --legacy-peer-deps
-
-ADD . /pneumatic_frontend/
+ADD package-lock.json package.json /tmp
+RUN npm --prefix /tmp ci --legacy-peer-deps
