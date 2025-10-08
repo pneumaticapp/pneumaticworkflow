@@ -131,7 +131,6 @@ services:
       - 8000
     volumes:
       - ./frontend:/pneumatic_frontend
-      - ./frontend/logs:/tmp/logs
     networks:
       - pneumatic
     restart: always
