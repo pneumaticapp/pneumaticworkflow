@@ -721,11 +721,6 @@ class TemplateListFilterSerializer(
     Serializer
 ):
 
-    is_template_owner = BooleanField(
-        required=False,
-        default=None,
-        allow_null=True
-    )
     is_active = BooleanField(
         required=False,
         default=None,
