@@ -27,6 +27,7 @@ from src.processes.models import (
     TaskTemplate,
     SystemTemplate, Kickoff, FieldTemplate,
 )
+from src.processes.models.templates.preset import TemplatePreset
 from src.processes.serializers.templates.template import (
     TemplateSerializer,
     TemplateListFilterSerializer,
@@ -38,6 +39,9 @@ from src.processes.serializers.templates.template import (
     TemplateByStepsSerializer,
     TemplateByNameSerializer,
     TemplateExportFilterSerializer
+)
+from src.processes.serializers.templates.preset import (
+    TemplatePresetSerializer,
 )
 from src.processes.serializers.templates.template import (
     TemplateTitlesSerializer
@@ -52,6 +56,8 @@ from src.processes.filters import (
 from src.processes.services.templates.template import (
     TemplateService
 )
+from src.processes.services.templates.preset import TemplatePresetService
+from src.processes.services.exceptions import TemplatePresetServiceException
 from src.processes.services.clone import (
     CloneService
 )
@@ -116,6 +122,8 @@ class TemplateViewSet(
         'titles': TemplateTitlesSerializer,
         'titles_by_events': TemplateTitlesSerializer,
         'fields': TemplateOnlyFieldsSerializer,
+        'presets': TemplatePresetSerializer,
+        'preset': TemplatePresetSerializer,
     }
 
     def get_permissions(self):
@@ -125,6 +133,8 @@ class TemplateViewSet(
             'clone',
             'destroy',
             'discard_changes',
+            'presets',
+            'preset',
         ):
             return (
                 UserIsAuthenticated(),
@@ -639,6 +649,40 @@ class TemplateViewSet(
             **filter_slz.validated_data
         )
         return self.paginated_response(queryset)
+
+    @action(methods=['GET'], detail=True, url_path='presets')
+    def presets(self, request, *args, **kwargs):
+        template = self.get_object()
+        user_presets = (
+            TemplatePreset.objects
+            .by_user(request.user, template.id)
+            .select_related('author', 'template')
+            .prefetch_related('fields')
+        )
+        serializer = self.get_serializer(user_presets, many=True)
+        return self.response_ok(serializer.data)
+
+    @action(methods=['POST'], detail=True, url_path='preset')
+    def preset(self, request, *args, **kwargs):
+        template = self.get_object()
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        service = TemplatePresetService(
+            user=request.user,
+            is_superuser=request.is_superuser,
+            auth_type=request.token_type
+        )
+
+        try:
+            preset = service.create(
+                template=template,
+                **serializer.validated_data
+            )
+        except TemplatePresetServiceException as ex:
+            raise_validation_error(message=ex.message)
+
+        return self.response_ok(self.get_serializer(preset).data)
 
 
 class TemplateIntegrationsViewSet(
