@@ -13,6 +13,7 @@ import { StepName } from '../StepName';
 
 import styles from './TuneViewModal.css';
 import { TooltipRichContent } from '../TemplateEdit/TooltipRichContent';
+import { TSystemField } from '../Workflows/WorkflowsTablePage/WorkflowsTable/types';
 
 export function TuneViewModal() {
   const dispatch = useDispatch();
@@ -55,10 +56,6 @@ export function TuneViewModal() {
     return null;
   }
 
-  const COLORS = {
-    white: 'rgba(255, 255, 255, 1)',
-    black72: 'rgba(98, 98, 95, 1)',
-  };
   const STYLES = {
     container: styles['tune-view-modal__container'],
     header: styles['tune-view-modal__header'],
@@ -101,6 +98,10 @@ export function TuneViewModal() {
 
   const onFieldToggle = (fieldId: string) => {
     setSelectedFields((prev) => getNewSet(prev, fieldId));
+  };
+
+  const isSystemField = (field: IExtraField | TSystemField): field is TSystemField => {
+    return 'hasNotTooltip' in field && 'isDisabled' in field;
   };
 
   const handleApplyChanges = (type: 'personal' | 'account') => {
@@ -155,29 +156,40 @@ export function TuneViewModal() {
               </div>
 
               <div className={`${STYLES.taskArrow} ${openedTasks.has(taskApiname) && STYLES.taskArrowRotated}`}>
-                <ShortArrowIcon fill={openedTasks.has(taskApiname) ? COLORS.white : COLORS.black72} />
+                <ShortArrowIcon />
               </div>
             </div>
 
             <div>
               {openedTasks.has(taskApiname) && (
                 <div className={fields.length > 0 ? STYLES.fieldsContainer : ''}>
-                  {fields.map(({ apiName: fieldApiName, name: fieldName }: IExtraField) => (
-                    <div key={fieldApiName} className={STYLES.fieldItem}>
-                      <label htmlFor={fieldApiName} className={STYLES.label}>
-                        <Tooltip content={fieldName} interactive={false} contentClassName={STYLES.tooltip}>
-                          <span className={STYLES.fieldName}>{fieldName}</span>
-                        </Tooltip>
-                        <Checkbox
-                          checked={selectedFields.has(fieldApiName)}
-                          onChange={() => onFieldToggle(fieldApiName)}
-                          title={fieldName}
-                          titlePosition="external"
-                          checkboxId={fieldApiName}
-                        />
-                      </label>
-                    </div>
-                  ))}
+                  {fields.map((field: IExtraField | TSystemField) => {
+                    const { apiName: fieldApiName, name: fieldName } = field;
+                    const hasNotTooltip = isSystemField(field) ? field.hasNotTooltip : null;
+                    const isDisabled = isSystemField(field) ? field.isDisabled : null;
+
+                    return (
+                      <div key={fieldApiName} className={STYLES.fieldItem}>
+                        <label htmlFor={fieldApiName} className={STYLES.label}>
+                          {hasNotTooltip ? (
+                            <span className={STYLES.fieldName}>{fieldName}</span>
+                          ) : (
+                            <Tooltip content={fieldName} interactive={false} contentClassName={STYLES.tooltip}>
+                              <span className={STYLES.fieldName}>{fieldName}</span>
+                            </Tooltip>
+                          )}
+                          <Checkbox
+                            {...(isDisabled ? { disabled: isDisabled } : {})}
+                            checked={selectedFields.has(fieldApiName)}
+                            onChange={() => onFieldToggle(fieldApiName)}
+                            title={fieldName}
+                            titlePosition="external"
+                            checkboxId={fieldApiName}
+                          />
+                        </label>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </div>

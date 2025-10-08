@@ -83,7 +83,7 @@ export function DashboardCounter(props: IDashboardCounterProps) {
           onMouseOver={handleMouseOver}
           onMouseLeave={handleMouseLeave}
           onClick={() => {
-            sessionStorage.setItem('shouldLoadPresets', 'true');
+            sessionStorage.setItem('isInternalNavigation', 'true');
           }}
         >
           {renderCounterContent()}

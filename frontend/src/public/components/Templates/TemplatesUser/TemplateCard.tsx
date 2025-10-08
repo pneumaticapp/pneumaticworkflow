@@ -65,7 +65,7 @@ export function TemplateCard({
   };
 
   const handleShowWorkflows = () => {
-    sessionStorage.setItem('shouldLoadPresets', 'true');
+    sessionStorage.setItem('isInternalNavigation', 'true');
     history.push(
       getLinkToWorkflows({
         templateId: id,
