@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useIntl } from 'react-intl';
 import classnames from 'classnames';
-import moment from 'moment-timezone';
 
 import { useSelector } from 'react-redux';
 import { getLanguage } from '../../redux/selectors/user';
@@ -12,12 +11,9 @@ import { getDate, getTime } from '../../utils/strings';
 import { Button, InputField, Tooltip } from '../UI';
 import { DatePickerCustom } from '../UI/form/DatePicker';
 import { setTimeForDate } from './utils/setTimeForDate';
-import { checkMinTimeForDate } from './utils/checkMinTimeForDate';
 import { IDueInProps } from './types';
 
 import styles from './DueIn.css';
-
-
 
 export function DueIn({
   dateCompleted,
@@ -60,13 +56,6 @@ export function DueIn({
 
     try {
       const dateWithTime = setTimeForDate(selectedDate, timeString, timezone, dateFmt);
-      const isValidMinTime = checkMinTimeForDate(dateWithTime, timezone);
-
-      if (!isValidMinTime) {
-        setTimeError(formatMessage({ id: 'due-date.time-too-early' }));
-        return;
-      }
-
       onSave(dateWithTime);
       dropdownRef.current?.closeDropdown();
     } catch (error) {
@@ -123,13 +112,7 @@ export function DueIn({
         placement="bottom-end"
       >
         <div className={styles['datepicker']}>
-          <DatePickerCustom
-            selected={selectedDate}
-            onChange={(date) => setSelectedDate(date)}
-            inline
-            showTimeInput
-            minDate={moment.tz(timezone).format('YYYY-MM-DD')}
-          />
+          <DatePickerCustom selected={selectedDate} onChange={(date) => setSelectedDate(date)} inline showTimeInput />
         </div>
 
         {withTime && (
@@ -173,4 +156,3 @@ export function DueIn({
     </div>
   );
 }
-
