@@ -696,7 +696,7 @@ class TestWorkflowUpdateVersionService:
             data={
                 'name': 'Workflow',
                 'kickoff': {
-                    field_template_1.api_name: str(owner.id),
+                    field_template_1.api_name: str(owner.email),
                     field_template_2.api_name: 'field text',
                 }
             }
@@ -838,7 +838,7 @@ class TestWorkflowUpdateVersionService:
             data={
                 'name': 'Workflow',
                 'kickoff': {
-                    field_template_1.api_name: str(user.id),
+                    field_template_1.api_name: str(user.email),
                     field_template_2.api_name: 'field text',
                 }
             }
@@ -964,7 +964,7 @@ class TestWorkflowUpdateVersionService:
             data={
                 'name': 'Workflow',
                 'kickoff': {
-                    field_template_1.api_name: str(owner.id),
+                    field_template_1.api_name: str(owner.email),
                     field_template_2.api_name: 'field text',
                 }
             }

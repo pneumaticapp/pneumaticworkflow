@@ -19,8 +19,10 @@ from src.generics.mixins.views import (
     CustomViewSetMixin,
 )
 from src.processes.models import (
-    Task
+    Task,
+    TaskField,
 )
+from src.processes.enums import FieldType
 from src.accounts.permissions import (
     ExpiredSubscriptionPermission,
     BillingPlanPermission,
@@ -110,7 +112,21 @@ class UserViewSet(
             partial=False
         )
         slz.is_valid(raise_exception=True)
+
+        old_first_name = request.user.first_name
+        old_last_name = request.user.last_name
+
         user = slz.save()
+
+        if (
+            old_first_name != user.first_name or
+            old_last_name != user.last_name
+        ):
+            TaskField.objects.filter(
+                type=FieldType.USER,
+                user_id=user.id,
+            ).update(value=user.name)
+
         if (
             not user.account.is_tenant
             and user.is_account_owner

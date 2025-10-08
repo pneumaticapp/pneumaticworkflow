@@ -255,7 +255,7 @@ def test_retrieve__kickoff_field_user__ok(api_client):
         data={
             'name': 'Workflow',
             'kickoff': {
-                field_template.api_name: user.id
+                field_template.api_name: user.email
             }
         }
     )
@@ -279,7 +279,7 @@ def test_retrieve__kickoff_field_user__ok(api_client):
     assert field_data['order'] == field.order
     assert field_data['user_id'] == user.id
     # TODO Replace in https://my.pneumatic.app/workflows/18137/
-    assert field_data['value'] == str(user.id)  # user.get_full_name()
+    assert field_data['value'] == user.get_full_name()
 
 
 def test_retrieve__kickoff_field_date__ok(api_client):

@@ -7,8 +7,11 @@ from src.processes.services.exceptions import (
     OpenAiTemplateStepsNotExist,
     OpenAiStepsPromptNotExist,
 )
-from src.processes.enums import ConditionAction, PredicateType, \
+from src.processes.enums import (
+    ConditionAction,
+    PredicateType,
     PredicateOperator
+)
 from src.processes.messages import workflow as messages
 from src.ai.tests.fixtures import create_test_prompt
 

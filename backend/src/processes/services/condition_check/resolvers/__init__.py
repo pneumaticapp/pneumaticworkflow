@@ -2,6 +2,7 @@ from .checkbox import CheckboxResolver
 from .date import DateResolver
 from .dropdown import DropdownResolver
 from .file import FileResolver
+from .group import GroupResolver
 from .string import StringResolver
 from .user import UserResolver
 from .task import TaskResolver
