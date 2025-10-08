@@ -619,11 +619,3 @@ msgstr "Нельзя написать комментарий к неактивн
 #: src/processes/messages/workflow.py:181
 msgid "The user or group specified for a \"User\" field does not exist."
 msgstr "Указанный пользователь или группа для поля типа \"Пользователь\" не существует."
-
-#: src/processes/messages/template.py:247
-msgid "Task \"{task}\": Group ID \"{group_id}\" does not exist or cannot be used in this condition."
-msgstr "Задача «{task}»: идентификатор группы «{group_id}» не существует или не может быть использован в этом условии."
-
-#: src/processes/messages/workflow.py:197
-msgid "The user or group for a field with type \"User\" does not exist."
-msgstr "Указанный пользователь или группа для поля типа «Пользователь» не существует."
