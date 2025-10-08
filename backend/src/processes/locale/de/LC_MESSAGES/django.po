@@ -617,11 +617,3 @@ msgstr "Sie können keinen Kommentar zu einer inaktiven Aufgabe schreiben."
 #: src/processes/messages/workflow.py:182
 msgid "The user or group specified for a \"User\" field does not exist."
 msgstr "Der Benutzer oder die Gruppe, die für ein Feld des Typs \"Benutzer\" angegeben wurde, existiert nicht."
-
-#: src/processes/messages/template.py:247
-msgid "Task \"{task}\": Group ID \"{group_id}\" does not exist or cannot be used in this condition."
-msgstr "Aufgabe \"{task}\": Die Gruppen-ID \"{group_id}\" existiert nicht oder kann in dieser Bedingung nicht verwendet werden."
-
-#: src/processes/messages/workflow.py:197
-msgid "The user or group for a field with type \"User\" does not exist."
-msgstr "Der Benutzer oder die Gruppe, die für ein Feld des Typs \"Benutzer\" angegeben wurde, existiert nicht."

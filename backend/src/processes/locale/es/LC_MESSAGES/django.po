@@ -617,11 +617,3 @@ msgstr "No puedes escribir un comentario en una tarea inactiva."
 #: src/processes/messages/workflow.py:182
 msgid "The user or group specified for a \"User\" field does not exist."
 msgstr "El usuario o grupo especificado para un campo de tipo \"Usuario\" no existe."
-
-#: src/processes/messages/template.py:247
-msgid "Task \"{task}\": Group ID \"{group_id}\" does not exist or cannot be used in this condition."
-msgstr "Tarea \"{task}\": El ID de grupo \"{group_id}\" no existe o no puede usarse en esta condición."
-
-#: src/processes/messages/workflow.py:197
-msgid "The user or group for a field with type \"User\" does not exist."
-msgstr "El usuario o grupo especificado para un campo de tipo \"Usuario\" no existe."
