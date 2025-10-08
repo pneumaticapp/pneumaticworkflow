@@ -8,7 +8,7 @@ class Migration(migrations.Migration):
     according to the logic of the user.name_by_BY_STATUS method.
     """
     dependencies = [
-        ('processes', '0235_auto_20241016_1632'),
+        ('processes', '0237_auto_20250916_2245'),
     ]
 
     operations = [

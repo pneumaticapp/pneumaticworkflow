@@ -10,7 +10,7 @@ class Migration(migrations.Migration):
     dependencies = [
         ('accounts', '0131_add_bucket_name'),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ('processes', '0236_update_user_field_values_in_workflow_events'),
+        ('processes', '0238_update_user_field_values_in_workflow_events'),
     ]
 
     operations = [
