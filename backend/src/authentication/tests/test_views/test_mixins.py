@@ -91,7 +91,7 @@ def test_create__all_fields__ok(
     settings_mock.SLACK_CONFIG = {'NOTIFY_ON_SIGNUP': True}
     settings_mock.PROJECT_CONF = {'BILLING': True}
     notification_mock = mocker.patch(
-        'src.authentication.views.mixins.'
+        'src.authentication.tasks.'
         'send_new_signup_notification.delay'
     )
     after_signup_mock = mocker.patch(
@@ -266,7 +266,7 @@ def test_create__account_service_exception__validation_error(
     settings_mock.SLACK_CONFIG = {'NOTIFY_ON_SIGNUP': False}
     settings_mock.PROJECT_CONF = {'BILLING': True}
     notification_mock = mocker.patch(
-        'src.authentication.views.mixins.'
+        'src.authentication.tasks.'
         'send_new_signup_notification.delay'
     )
     after_signup_mock = mocker.patch(
@@ -389,7 +389,7 @@ def test_create__user_service_exception__validation_error(
     settings_mock.SLACK_CONFIG = {'NOTIFY_ON_SIGNUP': True}
     settings_mock.PROJECT_CONF = {'BILLING': True}
     notification_mock = mocker.patch(
-        'src.authentication.views.mixins.'
+        'src.authentication.tasks.'
         'send_new_signup_notification.delay'
     )
     after_signup_mock = mocker.patch(
@@ -532,7 +532,7 @@ def test_create__stripe_service_exception__skip_sync(
     settings_mock.PROJECT_CONF = {'BILLING': True}
 
     notification_mock = mocker.patch(
-        'src.authentication.views.mixins.'
+        'src.authentication.tasks.'
         'send_new_signup_notification.delay'
     )
     after_signup_mock = mocker.patch(
@@ -717,7 +717,7 @@ def test_create__disable_billing__skip_stripe_call(
     settings_mock.PROJECT_CONF = {'BILLING': False}
 
     notification_mock = mocker.patch(
-        'src.authentication.views.mixins.'
+        'src.authentication.tasks.'
         'send_new_signup_notification.delay'
     )
     after_signup_mock = mocker.patch(
