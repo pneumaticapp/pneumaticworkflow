@@ -54,6 +54,7 @@ export interface IWorkflowsFiltersProps {
   isSubscribed: boolean;
   performersCounters: TUserCounter[];
   workflowStartersCounters: TUserCounter[];
+  selectedFields: string[];
   loadTemplatesTitles(): void;
   loadTemplateSteps(payload: TLoadWorkflowsFilterStepsPayload): void;
   setTemplatesFilter(value: number[]): void;

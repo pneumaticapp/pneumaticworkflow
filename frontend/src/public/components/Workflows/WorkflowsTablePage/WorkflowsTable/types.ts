@@ -3,6 +3,7 @@ import { IWorkflowClient } from '../../../../types/workflow';
 
 export type TableColumns = {
   workflow: IWorkflowClient;
+  templateName: IWorkflowClient;
   starter: IWorkflowClient;
   progress: IWorkflowClient;
   step: IWorkflowClient;
