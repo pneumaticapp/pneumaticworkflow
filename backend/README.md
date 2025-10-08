@@ -36,10 +36,15 @@ CACHE_REDIS_URL=redis://:redis_password@localhost:6379/0
 CHANNELS_REDIS_URL=redis://:redis_password@localhost:6379/2
 SESSION_REDIS_URL=redis://:redis_password@localhost:6379/3
 CELERY_BROKER_URL=amqp://rabbitmq_user:rabbitmq_password@localhost:5672
-ALLOWED_HOSTS=
+ALLOWED_HOSTS=0.0.0.0
 CORS_ORIGIN_ALLOW_ALL='no'
 CORS_ALLOW_CREDENTIALS='yes'
 CORS_ORIGIN_WHITELIST=
+
+POSTGRES_HOST=localhost
+POSTGRES_USER=postgres_user
+POSTGRES_PASSWORD=postgres_password
+POSTGRES_DB=postgres_db
 ```
 
 ## Installation
@@ -75,7 +80,10 @@ Open a terminal in the "backend" directory and run the following commands:
 Will be added later
 
 
-### Debugging
+## Testing
+Pytest requires the environment variables from the .env file. The easiest way to run tests is to set up an action in your IDE. Command ``pytest -vv .``
+
+## Debugging
 If you need debug SQL queries, use this context manager:
 ```python
 from src.logs.utils import log_sql

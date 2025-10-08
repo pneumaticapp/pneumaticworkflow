@@ -56,7 +56,7 @@ services:
 
   celery:
     build:
-      context: ./backend
+      context: ../backend
     container_name: pneumatic-celery
     env_file:
       - ../config/project.env
@@ -76,7 +76,7 @@ services:
 
   celery-beat:
     build:
-      context: ./backend
+      context: ../backend
     container_name: pneumatic-celery-beat
     env_file:
       - ../config/project.env
@@ -89,23 +89,6 @@ services:
       - postgres
       - rabbitmq
       - redis
-    networks:
-      - pneumatic
-    restart: always
-
-  frontend:
-    build:
-      context: ./frontend
-    container_name: pneumatic-frontend
-    env_file:
-      - ../config/project.env
-      - ../config/frontend.env
-    command: >
-      sh -c "npm run build-client:prod && pm2-runtime start pm2.json"
-    ports:
-      - 80:8000
-    volumes:
-      - ../frontend:/pneumatic_frontend
     networks:
       - pneumatic
     restart: always
