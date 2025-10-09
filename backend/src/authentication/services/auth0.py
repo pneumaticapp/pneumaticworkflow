@@ -14,6 +14,7 @@ from src.authentication.tokens import PneumaticToken
 from src.authentication.views.mixins import SignUpMixin
 from src.generics.mixins.services import CacheMixin
 from src.authentication.services import exceptions
+from src.logs.service import AccountLogService
 from src.utils.logging import (
     capture_sentry_message,
     SentryLogLevel,
@@ -371,9 +372,9 @@ class Auth0Service(SignUpMixin, CacheMixin):
         gclid: Optional[str] = None,
     ) -> Tuple[UserModel, PneumaticToken]:
         """Authenticate user via Auth0 and create/join account"""
-        
+
         user_data = self.get_user_data(auth_response)
-        
+
         try:
             user = UserModel.objects.active().get(email=user_data['email'])
             token = AuthService.get_auth_token(
@@ -388,10 +389,10 @@ class Auth0Service(SignUpMixin, CacheMixin):
         except UserModel.DoesNotExist:
             if not settings.PROJECT_CONF['SIGNUP']:
                 raise AuthenticationFailed(MSG_AU_0003)
-            
+
             user_profile = self._get_user_profile(self.tokens['access_token'])
             organizations = self.get_user_organizations(user_profile)
-            
+
             existing_account = None
             if organizations:
                 org_ids = [
@@ -409,15 +410,15 @@ class Auth0Service(SignUpMixin, CacheMixin):
                     account=existing_account,
                     **user_data,
                 )
-                capture_sentry_message(
-                    message='Auth0 user joined existing account',
+                service = AccountLogService(user)
+                service.log_auth0(
+                    title='Auth0 user joined existing account',
                     data={
                         'user_email': user_data['email'],
-                        'account_id': existing_account.id,
-                        'external_id': existing_account.external_id,
+                        'account_id': user.account.id,
+                        'external_id': user.account.external_id,
                         'organizations': organizations
                     },
-                    level=SentryLogLevel.INFO
                 )
             else:
                 # Create new account
@@ -435,16 +436,16 @@ class Auth0Service(SignUpMixin, CacheMixin):
                     if first_org_id:
                         user.account.external_id = first_org_id
                         user.account.save(update_fields=['external_id'])
-                capture_sentry_message(
-                    message='Auth0 user created new account',
+                service = AccountLogService(user)
+                service.log_auth0(
+                    title='Auth0 user created new account',
                     data={
                         'user_email': user_data['email'],
                         'account_id': user.account.id,
                         'external_id': user.account.external_id,
                         'organizations': organizations
                     },
-                    level=SentryLogLevel.INFO
                 )
-            
+
             self.save_tokens_for_user(user)
             return user, token
