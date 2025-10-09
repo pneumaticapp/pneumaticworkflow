@@ -188,6 +188,11 @@ class CommentedTaskNotActive(CommentServiceException):
     default_message = pw_messages.MSG_PW_0089
 
 
+class TemplatePresetServiceException(BaseServiceException):
+
+    pass
+
+
 class CommentedNotTask(CommentServiceException):
 
     default_message = pw_messages.MSG_PW_0077
