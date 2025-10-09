@@ -622,3 +622,13 @@ class WorkflowEventActionType:
     CHOICES = (
         (WATCHED, 'Watched'),
     )
+
+
+class FileAttachmentAccessType:
+    ACCOUNT = 'account'
+    RESTRICTED = 'restricted'
+
+    CHOICES = (
+        (ACCOUNT, 'account'),
+        (RESTRICTED, 'restricted'),
+    )

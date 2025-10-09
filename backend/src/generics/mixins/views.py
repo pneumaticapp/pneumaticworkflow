@@ -32,6 +32,9 @@ class BaseResponseMixin:
     def response_created(self, data):
         return Response(data=data, status=status.HTTP_201_CREATED)
 
+    def response_forbidden(self):
+        return Response(status=status.HTTP_403_FORBIDDEN)
+
     def response_not_found(self):
         return Response(status=status.HTTP_404_NOT_FOUND)
 

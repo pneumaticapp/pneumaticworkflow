@@ -10,9 +10,11 @@ from src.processes.enums import FieldType
 from src.processes.messages import workflow as messages
 from src.processes.models import (
     FileAttachment,
+    FileAttachmentPermission,
     TaskField,
 )
 from src.processes.tests.fixtures import (
+    create_test_admin,
     create_test_user,
     create_test_workflow,
     create_test_account
@@ -550,3 +552,171 @@ def test__get_cloud_service(mocker):
     # assert
     service_new_mock.assert_called_once()
     assert service == service_mock
+
+
+def test_check_user_permission__account_access_same_account__ok():
+    # arrange
+    user = create_test_admin()
+    FileAttachment.objects.create(
+        name='test.pdf',
+        file_id='test123.pdf',
+        url='https://storage.com/files/test123.pdf',
+        size=1024,
+        account=user.account,
+        access_type='account'
+    )
+    service = AttachmentService()
+
+    # act
+    result = service.check_user_permission(
+        user_id=user.id,
+        account_id=user.account_id,
+        file_id='test123.pdf'
+    )
+
+    # assert
+    assert result is True
+
+
+def test_check_user_permission__account_access_different_account__false():
+    # arrange
+    account1 = create_test_account()
+    user1 = create_test_admin(account=account1)
+    account2 = create_test_account()
+
+    FileAttachment.objects.create(
+        name='test.pdf',
+        url='https://storage.com/files/test123.pdf',
+        size=1024,
+        account=account2,
+        access_type='account'
+    )
+    service = AttachmentService()
+
+    # act
+    result = service.check_user_permission(
+        user_id=user1.id,
+        account_id=user1.account_id,
+        file_id='test123.pdf'
+    )
+
+    # assert
+    assert result is False
+
+
+def test_check_user_permission__restricted_access_has_permission__ok():
+    # arrange
+    user = create_test_admin()
+    attachment = FileAttachment.objects.create(
+        name='test.pdf',
+        file_id='test123.pdf',
+        url='https://storage.com/files/test123.pdf',
+        size=1024,
+        account=user.account,
+        access_type='restricted'
+    )
+
+    FileAttachmentPermission.objects.create(
+        user=user,
+        attachment=attachment,
+        account=user.account
+    )
+
+    service = AttachmentService()
+
+    # act
+    result = service.check_user_permission(
+        user_id=user.id,
+        account_id=user.account_id,
+        file_id='test123.pdf'
+    )
+
+    # assert
+    assert result is True
+
+
+def test_check_user_permission__restricted_access_no_permission__false():
+    # arrange
+    user = create_test_admin()
+    FileAttachment.objects.create(
+        name='test.pdf',
+        url='https://storage.com/files/test123.pdf',
+        size=1024,
+        account=user.account,
+        access_type='restricted'
+    )
+    service = AttachmentService()
+
+    # act
+    result = service.check_user_permission(
+        user_id=user.id,
+        account_id=user.account_id,
+        file_id='test123.pdf'
+    )
+
+    # assert
+    assert result is False
+
+
+def test_check_user_permission__file_not_found__false():
+    # arrange
+    user = create_test_admin()
+    service = AttachmentService()
+
+    # act
+    result = service.check_user_permission(
+        user_id=user.id,
+        account_id=user.account_id,
+        file_id='nonexistent.pdf'
+    )
+
+    # assert
+    assert result is False
+
+
+def test_check_user_permission__soft_deleted_attachment__false():
+    # arrange
+    user = create_test_admin()
+    attachment = FileAttachment.objects.create(
+        name='test.pdf',
+        url='https://storage.com/files/test123.pdf',
+        size=1024,
+        account=user.account,
+        access_type='account'
+    )
+    attachment.is_deleted = True
+    attachment.save()
+    service = AttachmentService()
+
+    # act
+    result = service.check_user_permission(
+        user_id=user.id,
+        account_id=user.account_id,
+        file_id='test123.pdf'
+    )
+
+    # assert
+    assert result is False
+
+
+def test_check_user_permission__case_sensitive_file_id__false():
+    # arrange
+    user = create_test_admin()
+    FileAttachment.objects.create(
+        name='test.pdf',
+        url='https://storage.com/files/Test123.PDF',
+        size=1024,
+        account=user.account,
+        access_type='account'
+    )
+    service = AttachmentService()
+
+    # act
+    result = service.check_user_permission(
+        user_id=user.id,
+        account_id=user.account_id,
+        file_id='test123.pdf'
+    )
+
+    # assert
+    assert result is False

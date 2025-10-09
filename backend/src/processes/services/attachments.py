@@ -8,6 +8,7 @@ from src.analytics.services import AnalyticService
 from src.authentication.enums import AuthTokenType
 from src.processes.services import exceptions
 from src.processes.models import FileAttachment
+from src.processes.enums import FileAttachmentAccessType
 from src.storage.google_cloud import GoogleCloudService
 from src.utils.logging import (
     capture_sentry_message,
@@ -150,3 +151,24 @@ class AttachmentService:
             clone.output = instance.output
         clone.save()
         return clone
+
+    def check_user_permission(
+        self,
+        user_id: int,
+        account_id: int,
+        file_id: str
+    ) -> bool:
+        attachment = (
+            FileAttachment.objects
+            .filter(file_id=file_id)
+            .prefetch_related('permissions').first()
+        )
+
+        if not attachment:
+            return False
+
+        if attachment.access_type == FileAttachmentAccessType.ACCOUNT:
+            return account_id == attachment.account_id
+
+        elif attachment.access_type == FileAttachmentAccessType.RESTRICTED:
+            return attachment.permissions.filter(user_id=user_id).exists()

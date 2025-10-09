@@ -39,7 +39,8 @@ from src.processes.models.workflows.task import (
     TaskPerformer,
 )
 from src.processes.models.workflows.attachment import (
-    FileAttachment
+    FileAttachment,
+    FileAttachmentPermission,
 )
 
 from src.processes.models.workflows.raw_due_date import (
