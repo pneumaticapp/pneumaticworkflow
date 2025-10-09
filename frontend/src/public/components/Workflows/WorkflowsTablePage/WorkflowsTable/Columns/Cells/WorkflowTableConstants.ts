@@ -1,5 +1,6 @@
 export const ETableViewFieldsWidth = {
   workflow: 376,
+  templateName: 304,
   starter: 82,
   progress: 80,
   step: 304,
@@ -17,7 +18,8 @@ export const ETableViewFieldsWidth = {
 } as const;
 
 export const EColumnWidthMinWidth = {
-  workflow: 152,
+  workflow: 184,
+  templateName: 80,
   starter: 82,
   progress: 80,
   step: 80,

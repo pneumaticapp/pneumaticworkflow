@@ -41,6 +41,7 @@ export type TWorkflowsFiltersStoreProps = Pick<
   | 'performersCounters'
   | 'workflowStartersCounters'
   | 'view'
+  | 'selectedFields'
 >;
 
 type TDispatchProps = Pick<
@@ -69,13 +70,14 @@ export function mapStateToProps(state: IApplicationState): TWorkflowsFiltersStor
         templateList,
         sorting,
         areFiltersChanged,
+        selectedFields,
         values: {
           statusFilter,
           templatesIdsFilter,
           stepsIdsFilter,
           performersIdsFilter,
           performersGroupIdsFilter,
-          workflowStartersIdsFilter
+          workflowStartersIdsFilter,
         },
         counters: { performersCounters, workflowStartersCounters },
       },
@@ -103,6 +105,7 @@ export function mapStateToProps(state: IApplicationState): TWorkflowsFiltersStor
     performersCounters,
     workflowStartersCounters,
     view,
+    selectedFields,
   };
 }
 

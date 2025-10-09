@@ -9,7 +9,6 @@ import { getQueryStringByParams, getQueryStringParams, history } from '../../uti
 import { getWrappedDisplayName } from '../../utils/hoc';
 import { isArrayWithItems } from '../../utils/helpers';
 import { IAuthUser } from '../../types/redux';
-import { updateFieldsFromUrl, loadFieldsFromLocalStorage } from './utils';
 
 const HOC_WRAPPER_NAME = 'withSyncedQueryString';
 
@@ -68,11 +67,6 @@ export const withSyncedQueryString =
         }
 
         this.updateStoreBySettings(currentSyncSettings);
-        loadFieldsFromLocalStorage(this.props.authUser, this.props.dispatch);
-
-        if (this.props.location?.pathname.includes('/workflows/')) {
-          updateFieldsFromUrl(this.props.location.search, this.props.dispatch);
-        }
 
         this.handleUpdateLocation();
         this.setState({ isMounted: true });
@@ -111,12 +105,6 @@ export const withSyncedQueryString =
         }, {});
 
         let newQueryString = getQueryStringByParams(queryParams);
-
-        if (this.props.location?.pathname.includes('/workflows/') && this.props.location?.search.includes('fields=')) {
-          const currentParams = getQueryStringParams(this.props.location.search);
-          newQueryString += `&fields=${currentParams.fields}`;
-        }
-
         history.push({ search: newQueryString });
       };
 
