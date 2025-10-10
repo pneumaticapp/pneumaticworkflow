@@ -564,7 +564,7 @@ class WorkflowSnoozeSerializer(
     serializers.Serializer
 ):
 
-    date = serializers.DateTimeField(required=True)
+    date = TimeStampField(required=True)
 
 
 class WorkflowRevertSerializer(
