@@ -116,7 +116,7 @@ class SystemWorkflowService:
 
         for field in template.kickoff_instance.fields.all():
             if field.type == FieldType.USER:
-                result[field.api_name] = str(self.user.id)
+                result[field.api_name] = self.user.email
             elif fields_data.get(field.api_name):
                 result[field.api_name] = fields_data[field.api_name]
             elif field.default is not None:
