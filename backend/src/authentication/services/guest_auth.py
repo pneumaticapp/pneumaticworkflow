@@ -98,8 +98,8 @@ class GuestJWTAuthService(JWTAuthentication):
         """
         try:
             return GuestToken(raw_token)
-        except TokenError:
-            raise InvalidToken(MSG_AU_0010)
+        except TokenError as ex:
+            raise InvalidToken(MSG_AU_0010) from ex
 
     def get_user(self, validated_token: GuestToken) -> UserModel:
         """
@@ -109,8 +109,8 @@ class GuestJWTAuthService(JWTAuthentication):
             user_id = validated_token['user_id']
             account_id = validated_token['account_id']
             task_id = validated_token['task_id']
-        except KeyError:
-            raise InvalidToken(MSG_AU_0011)
+        except KeyError as ex:
+            raise InvalidToken(MSG_AU_0011) from ex
         try:
             user = UserModel.objects.execute_raw(
                 GetGuestQuery(
@@ -119,8 +119,8 @@ class GuestJWTAuthService(JWTAuthentication):
                     task_id=task_id
                 )
             )[0]
-        except IndexError:
-            raise AuthenticationFailed(MSG_AU_0009)
+        except IndexError as ex:
+            raise AuthenticationFailed(MSG_AU_0009) from ex
         else:
             return user
 
@@ -239,10 +239,10 @@ class GuestJWTAuthService(JWTAuthentication):
         if guest_status == GuestCachedStatus.ACTIVE:
             try:
                 user = UserModel.guests_objects.get(id=user_id)
-            except UserModel.DoesNotExist:
+            except UserModel.DoesNotExist as ex:
                 value[user_id] = GuestCachedStatus.INACTIVE
                 self.cache.set(key, json.dumps(value), self.CACHE_TIMEOUT)
-                raise AuthenticationFailed(MSG_AU_0009)
+                raise AuthenticationFailed(MSG_AU_0009) from ex
         elif guest_status == GuestCachedStatus.INACTIVE:
             raise AuthenticationFailed(MSG_AU_0009)
         else:

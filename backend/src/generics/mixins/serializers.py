@@ -1,4 +1,3 @@
-# pylint: disable=no-name-in-module
 from ast import literal_eval
 from collections import OrderedDict
 from collections.abc import Iterable
@@ -52,8 +51,8 @@ class ValidationUtilsMixin:
         result = []
         try:
             value = literal_eval(raw_value)
-        except (TypeError, ValueError, SyntaxError):
-            raise validation_error
+        except (TypeError, ValueError, SyntaxError) as ex:
+            raise validation_error from ex
         else:
             if isinstance(value, int):
                 result = [value]
@@ -63,8 +62,8 @@ class ValidationUtilsMixin:
                 for number in value:
                     try:
                         result.append(int(number))
-                    except (TypeError, ValueError):
-                        raise validation_error
+                    except (TypeError, ValueError) as ex:
+                        raise validation_error from ex
             else:
                 raise validation_error
             return result
@@ -372,12 +371,12 @@ class CustomValidationErrorMixin:
             msg = '.validate() should return the validated data'
             assert value is not None, msg
 
-        except (ValidationError, DjangoValidationError) as exc:
+        except (ValidationError, DjangoValidationError) as ex:
             detail = self._enrich_error_detail(
-                detail=as_serializer_error(exc),
+                detail=as_serializer_error(ex),
                 fields_data=value
             )
-            raise ValidationError(detail)
+            raise ValidationError(detail) from ex
 
         return value
 

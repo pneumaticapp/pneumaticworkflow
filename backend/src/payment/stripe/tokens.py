@@ -41,8 +41,8 @@ class ConfirmToken(Token):
                 return Account.objects.get(
                     id=self.payload['account_id']
                 ).get_owner()
-            except ObjectDoesNotExist:
-                raise TokenError(MSG_BL_0001)
+            except ObjectDoesNotExist as ex:
+                raise TokenError(MSG_BL_0001) from ex
 
     def get_subscription_data(self) -> Optional[TokenSubscriptionData]:
         data = self.payload.get('subscription')

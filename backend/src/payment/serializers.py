@@ -127,8 +127,8 @@ class ConfirmSerializer(
     def validate_token(self, value) -> ConfirmToken:
         try:
             token = ConfirmToken(value)
-        except TokenError:
-            raise ValidationError(MSG_BL_0001)
+        except TokenError as ex:
+            raise ValidationError(MSG_BL_0001) from ex
         else:
             return token
 

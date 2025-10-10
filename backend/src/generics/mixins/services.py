@@ -1,4 +1,3 @@
-# pylint: disable=not-callable
 from typing import Union, Optional
 from django.core.cache import caches
 from rest_framework.serializers import ModelSerializer

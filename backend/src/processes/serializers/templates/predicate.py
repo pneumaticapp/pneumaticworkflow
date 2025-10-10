@@ -1,4 +1,3 @@
-# pylint: disable=raising-bad-type
 from typing import Dict, Any, Optional
 from decimal import Decimal, DecimalException
 

@@ -520,8 +520,8 @@ class StripeService(StripeMixin):
         try:
             new_price = Price.objects.subscriptions().active_or_archived(
             ).get(code__in=products_dict.keys())
-        except MultipleObjectsReturned:
-            raise exceptions.MultipleSubscriptionsNotAllowed()
+        except MultipleObjectsReturned as ex:
+            raise exceptions.MultipleSubscriptionsNotAllowed() from ex
         except ObjectDoesNotExist:
             return None
         else:
@@ -668,9 +668,9 @@ class StripeService(StripeMixin):
                 if self.subscription:
                     self._log_stripe_error(ex)
                     if isinstance(ex, CardError):
-                        raise exceptions.CardError()
+                        raise exceptions.CardError() from ex
                     else:
-                        raise exceptions.PaymentError()
+                        raise exceptions.PaymentError() from ex
                 else:
                     self._log_stripe_error(ex, level=SentryLogLevel.WARNING)
                     return self._get_checkout_link(
@@ -812,6 +812,6 @@ class StripeService(StripeMixin):
         except StripeError as ex:
             self._log_stripe_error(ex)
             if isinstance(ex, CardError):
-                raise exceptions.CardError()
+                raise exceptions.CardError() from ex
             else:
-                raise exceptions.PaymentError()
+                raise exceptions.PaymentError() from ex

@@ -41,21 +41,21 @@ class InviteToken(BaseToken):
         self.invite = None
         try:
             super().__init__(token, verify)
-        except TokenError:
-            raise InvalidOrExpiredToken()
+        except TokenError as ex:
+            raise InvalidOrExpiredToken() from ex
 
     def verify(self):
         try:
             super().verify()
-        except TokenError:
-            raise InvalidOrExpiredToken()
+        except TokenError as ex:
+            raise InvalidOrExpiredToken() from ex
 
         try:
             self.user = UserModel.objects.get(
                 id=self.payload[api_settings.USER_ID_CLAIM]
             )
-        except ObjectDoesNotExist:
-            raise InvalidOrExpiredToken()
+        except ObjectDoesNotExist as ex:
+            raise InvalidOrExpiredToken() from ex
 
         if self.user.status == UserStatus.ACTIVE:
             raise AlreadyAcceptedInviteException()
@@ -75,8 +75,8 @@ class ResetPasswordToken(BaseToken):
         user_id = self.payload[api_settings.USER_ID_CLAIM]
         try:
             UserModel.objects.active().get(id=user_id)
-        except ObjectDoesNotExist:
-            raise TokenError(MSG_A_0008)
+        except ObjectDoesNotExist as ex:
+            raise TokenError(MSG_A_0008) from ex
 
 
 class AuthToken(BaseToken):

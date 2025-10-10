@@ -1,4 +1,3 @@
-# pylint: disable=super-init-not-called,attribute-defined-outside-init
 from typing import Optional
 from rest_framework.throttling import SimpleRateThrottle
 from django.core.exceptions import ImproperlyConfigured

@@ -268,8 +268,8 @@ class WebhookService(StripeMixin):
                 values=data,
                 key=self.secret
             )
-        except ValueError:
-            raise WebhookServiceException('Invalid payload')
+        except ValueError as ex:
+            raise WebhookServiceException('Invalid payload') from ex
         else:
             handler_name = f"_{event.type.replace('.', '_')}"
             handler = getattr(self, handler_name, None)

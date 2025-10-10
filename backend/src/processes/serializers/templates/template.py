@@ -1,4 +1,3 @@
-# pylint: disable=attribute-defined-outside-init
 import re
 from typing import Dict, Any, List, Optional, Set
 

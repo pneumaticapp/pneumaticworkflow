@@ -106,7 +106,7 @@ class BaseAiService:
                 prompt=prompt,
                 user_description=user_description
             )
-            raise OpenAiServiceUnavailable()
+            raise OpenAiServiceUnavailable() from ex
         else:
             if not completion.choices:
                 self._log(

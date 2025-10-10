@@ -40,8 +40,8 @@ class GroupPerformerService(BasePerformerService2):
                 account_id=self.user.account_id,
                 id=group_id
             )
-        except UserGroup.DoesNotExist:
-            raise GroupPerformerServiceException(MSG_PW_0082)
+        except UserGroup.DoesNotExist as ex:
+            raise GroupPerformerServiceException(MSG_PW_0082) from ex
 
     def create_performer(
         self,

@@ -269,7 +269,7 @@ class UsersViewSet(
 
         try:
             user = self.get_queryset().get(id=pk)
-        except UserModel.DoesNotExist:
+        except UserModel.DoesNotExist as ex:
             if UserInvite.objects.filter(
                 status=UserInviteStatus.PENDING,
                 account=request.user.account,
@@ -277,7 +277,7 @@ class UsersViewSet(
             ).exists():
                 user = UserModel.objects.get(id=pk)
             else:
-                raise Http404
+                raise Http404 from ex
         query = CountTemplatesByUserQuery(
             user_id=user.id,
             account_id=request.user.account_id,

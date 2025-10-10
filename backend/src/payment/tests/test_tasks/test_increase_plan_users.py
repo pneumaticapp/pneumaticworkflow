@@ -1,4 +1,3 @@
-# pylint: disable=protected-access
 import pytest
 from datetime import timedelta
 from django.utils import timezone

@@ -91,15 +91,15 @@ class TimeStampField(serializers.DateTimeField):
         if isinstance(value, str):
             try:
                 value = float(value)
-            except ValueError:
-                raise ValidationError(detail=MSG_GE_0007)
+            except ValueError as ex:
+                raise ValidationError(detail=MSG_GE_0007) from ex
         elif not isinstance(value, int) and not isinstance(value, float):
             raise ValidationError(detail=MSG_GE_0007)
         tz = pytz.timezone(settings.TIME_ZONE)
         try:
             return datetime.fromtimestamp(value, tz=tz)
-        except (OverflowError, OSError, ValueError):
-            raise ValidationError(detail=MSG_GE_0020)
+        except (OverflowError, OSError, ValueError) as ex:
+            raise ValidationError(detail=MSG_GE_0020) from ex
 
 
 class DateFormatField(serializers.ChoiceField):

@@ -291,7 +291,7 @@ class AccountService(
             try:
                 account = Account.objects.get(id=account_id)
             except Account.DoesNotExist as ex:
-                raise AccountServiceException(str(ex))
+                raise AccountServiceException(str(ex)) from ex
             else:
                 value = cls._set_cache(key=account.id, value=account)
         return value

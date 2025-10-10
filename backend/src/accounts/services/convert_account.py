@@ -1,4 +1,3 @@
-# pylint:disable=unnecessary-pass
 from typing import Optional
 from django.conf import settings
 from django.contrib.auth import get_user_model

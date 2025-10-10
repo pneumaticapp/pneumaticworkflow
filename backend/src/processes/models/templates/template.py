@@ -216,7 +216,6 @@ class TemplateDraft(SoftDeleteModel):
                     raw_performers.pop(num)
         return raw_performers
 
-    # pylint: disable=unsubscriptable-object,unsupported-assignment-operation
     def remove_user(self, user_id: int):
         if self.draft is None:
             return

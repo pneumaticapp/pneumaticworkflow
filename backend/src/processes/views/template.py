@@ -522,8 +522,8 @@ class TemplateViewSet(
         serializer = self.get_serializer(self.queryset, many=True)
         try:
             data = serializer.data
-        except DataError:
-            raise Http404
+        except DataError as ex:
+            raise Http404 from ex
         return self.response_ok(data)
 
     @action(methods=['GET'], detail=True, url_path='fields')
@@ -590,7 +590,7 @@ class TemplateViewSet(
             system_template = SystemTemplate.objects.library().active().get(
                 name=slz.validated_data['name']
             )
-        except SystemTemplate.DoesNotExist:
+        except SystemTemplate.DoesNotExist as ex:
             capture_sentry_message(
                 message='Library template not found during registration',
                 level=SentryLogLevel.ERROR,
@@ -600,7 +600,7 @@ class TemplateViewSet(
                     'account_id': self.request.user.account_id,
                 }
             )
-            raise Http404
+            raise Http404 from ex
         service = TemplateService(
             user=request.user,
             is_superuser=request.is_superuser,
