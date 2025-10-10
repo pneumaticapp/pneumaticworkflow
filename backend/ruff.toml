@@ -31,12 +31,18 @@ select = [
     "E4",
     "E7",
     "E9",
-    "F"
+    "F",
+    "PL",
 ]
 ignore = [
     "E731",   # lambda expressions used in the messages
     "UP031",  # Use format specifiers instead of percent format
     "F401",   # imported but unused
+    "PLR2004", # Use constans
+    "PLR0915", # Too many statements
+    "PLR0912", # Too many branches
+    "PLR0911", # Too many return statements
+    "PLR0913", # Too many arguments in function definition
 ]
 extend-select = [
     "E501", # maximum line length

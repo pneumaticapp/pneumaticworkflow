@@ -1,3 +1,4 @@
+# ruff: noqa: PLC0415
 from ast import literal_eval
 from typing import Optional, List, Tuple
 from datetime import datetime

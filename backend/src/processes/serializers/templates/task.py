@@ -1,4 +1,5 @@
 # pylint: disable=attribute-defined-outside-init
+# ruff: noqa: PLC0415
 from typing import Dict, Any, List, Optional
 from django.contrib.auth import get_user_model
 from rest_framework.serializers import (

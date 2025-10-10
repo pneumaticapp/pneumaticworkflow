@@ -1,3 +1,4 @@
+# ruff: noqa: PLC0415
 from typing import Any, Dict
 from django.db import models
 from django.db.models import UniqueConstraint, Q

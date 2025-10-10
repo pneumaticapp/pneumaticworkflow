@@ -38,10 +38,10 @@ def _update_workflows(
         version=version,
     ).first().data
 
-    for workflow in template.workflows.all().only('id'):
+    for _workflow in template.workflows.all().only('id'):
         with transaction.atomic():
             workflow = Workflow.objects.select_for_update().get(
-                id=workflow.id
+                id=_workflow.id
             )
             if not workflow.is_version_lower(version):
                 return

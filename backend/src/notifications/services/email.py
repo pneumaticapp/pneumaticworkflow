@@ -3,6 +3,7 @@ from django.utils import timezone
 from typing import Dict, Optional, Union, Any
 from django.contrib.auth import get_user_model
 from django.conf import settings
+from django.utils.dateparse import parse_datetime
 
 from src.notifications.enums import NotificationMethod
 from src.notifications.services.base import (
@@ -281,7 +282,6 @@ class EmailService(NotificationService):
         if task_due_date:
             # floating bug when task_estimated_end_date is string
             if isinstance(task_due_date, str):
-                from django.utils.dateparse import parse_datetime
                 task_due_date = parse_datetime(task_due_date)
             due_in: timedelta = task_due_date - timezone.now()
             formatted_date = get_duration_format(duration=due_in)

@@ -124,7 +124,7 @@ class UrgentService:
         prev_urgent_event = cls._get_prev_urgent_event(workflow)
         if not prev_urgent_event:
             cls._create_urgent_actions(workflow, user)
-        else:
+        else:  # noqa: PLR5501
             if prev_urgent_event.type != cls._get_event_type(workflow):
                 delete_period = tz.now() - tz.timedelta(minutes=1)
                 if prev_urgent_event.created >= delete_period:

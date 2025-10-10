@@ -1,3 +1,4 @@
+# ruff: noqa: PLC0415
 import re
 from typing import Optional
 from django.contrib.auth import get_user_model

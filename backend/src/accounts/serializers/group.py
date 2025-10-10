@@ -1,3 +1,4 @@
+# ruff: noqa: PLC0415
 from rest_framework.serializers import (
     ModelSerializer,
     IntegerField,

@@ -1,3 +1,4 @@
+# ruff: noqa: PLC0415
 from datetime import datetime
 from typing import List, Optional, Union, Iterable
 from django.contrib.auth import get_user_model

@@ -1,4 +1,3 @@
-# pylint:disable=redefined-outer-name
 import pytest
 from datetime import timedelta
 from django.utils import timezone

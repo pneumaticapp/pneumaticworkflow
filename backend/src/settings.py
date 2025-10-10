@@ -1,4 +1,5 @@
 # pylint: disable=W,C,R
+# ruff: noqa: PLC0415
 """
 Django settings for src project.
 
@@ -64,7 +65,7 @@ class Common(Configuration):
 
     # Auth
     AUTH_USER_MODEL = 'accounts.User'
-    AUTH_TOKEN_ITERATIONS = int(env.get('AUTH_TOKEN_ITERATIONS', 1))
+    AUTH_TOKEN_ITERATIONS = int(env.get('AUTH_TOKEN_ITERATIONS', '1'))
 
     # Tokens lifetime
     DIGEST_UNSUB_TOKEN_IN_DAYS = 7
@@ -283,7 +284,7 @@ class Common(Configuration):
     # Stripe
     STRIPE_SECRET_KEY = env.get('STRIPE_SECRET_KEY')
     STRIPE_WEBHOOK_SECRET = env.get('STRIPE_WEBHOOK_SECRET')
-    STRIPE_WEBHOOK_IP_WHITELIST = env.get('STRIPE_WEBHOOK_IP_WHITELIST', [])
+    STRIPE_WEBHOOK_IP_WHITELIST = env.get('STRIPE_WEBHOOK_IP_WHITELIST')
     if STRIPE_WEBHOOK_IP_WHITELIST:
         STRIPE_WEBHOOK_IP_WHITELIST = STRIPE_WEBHOOK_IP_WHITELIST.split(' ')
     else:
@@ -325,7 +326,7 @@ class Common(Configuration):
     # Notifications
     # In seconds - default 10 min
     UNREAD_NOTIFICATIONS_TIMEOUT = int(
-        env.get('UNREAD_NOTIFICATIONS_TIMEOUT', 600)
+        env.get('UNREAD_NOTIFICATIONS_TIMEOUT', '600')
     )
 
     # Celery

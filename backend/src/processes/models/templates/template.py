@@ -1,3 +1,4 @@
+# ruff: noqa: PLC0415
 from typing import Optional, Dict
 from django.contrib.auth import get_user_model
 from django.contrib.postgres.fields import JSONField
