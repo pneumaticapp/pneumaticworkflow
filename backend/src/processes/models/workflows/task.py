@@ -233,7 +233,7 @@ class Task(
 
     def update_raw_performers_from_task_template(
         self,
-        task_template: Union['TaskTemplate', dict, None] = None,
+        task_template # Union['TaskTemplate', dict, None] = None
     ):
 
         """

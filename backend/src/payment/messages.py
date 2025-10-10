@@ -7,7 +7,7 @@ MSG_BL_0002 = _('Products list cannot be empty.')
 MSG_BL_0003 = lambda code: format_lazy(
     _('Price with code(s) {code} not found.'),
     code=(
-        f'"{code}"' if type(code) == str
+        f'"{code}"' if type(code) is str
         else ', '.join(f'"{c}"' for c in code)
     )
 )
