@@ -115,7 +115,7 @@ class TestRunPublicTemplate:
                 'captcha': 'skip',
                 'fields': {
                     text_field_template.api_name: 'text',
-                    user_field_template.api_name: str(user.id),
+                    user_field_template.api_name: str(user.email),
                     date_field_template.api_name: 1596561916,
                 }
             },
@@ -1194,7 +1194,7 @@ class TestRunPublicTemplate:
             data={
                 'captcha': 'skip',
                 'fields': {
-                    field_api_name: str(user.id)
+                    field_api_name: str(user.email)
                 }
             },
             **{'X-Public-Authorization': auth_header_value}
@@ -1300,7 +1300,7 @@ class TestRunPublicTemplate:
                 'captcha': 'skip',
                 'fields': {
                     field_api_name_1: feedback,
-                    field_api_name_2: str(user.id)
+                    field_api_name_2: str(user.email)
                 }
             },
             **{'X-Public-Authorization': auth_header_value}
@@ -1850,7 +1850,7 @@ class TestRunEmbedTemplate:
             data={
                 'captcha': 'skip',
                 'fields': {
-                    field_api_name: str(user.id)
+                    field_api_name: str(user.email)
                 }
             },
             **{'X-Public-Authorization': auth_header_value}
@@ -1956,7 +1956,7 @@ class TestRunEmbedTemplate:
                 'captcha': 'skip',
                 'fields': {
                     field_api_name_1: feedback,
-                    field_api_name_2: str(user.id)
+                    field_api_name_2: str(user.email)
                 }
             },
             **{'X-Public-Authorization': auth_header_value}

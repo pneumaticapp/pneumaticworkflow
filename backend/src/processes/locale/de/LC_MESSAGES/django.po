@@ -412,10 +412,6 @@ msgstr "Anhang nicht gefunden."
 msgid "The value must be the ID of an existing account user."
 msgstr "Der Wert muss die ID eines bestehenden Kontobenutzers sein."
 
-#: src/processes/messages/workflow.py:76
-msgid "Account user with given id does not exist."
-msgstr "Kontobenutzer mit der angegebenen ID existiert nicht."
-
 #: src/processes/messages/workflow.py:77
 msgid "Save attachments failed. Service unavailable."
 msgstr "Speichern der Anhänge fehlgeschlagen. Dienst nicht verfügbar."

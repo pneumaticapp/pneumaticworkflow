@@ -9,9 +9,9 @@ from src.processes.enums import (
     DirectlyStatus,
     TaskStatus,
     WorkflowStatus,
-    PerformerType
+    PerformerType,
+    PredicateType
 )
-from src.processes.enums import FieldType
 from src.queries import SqlQueryObject
 
 
@@ -369,70 +369,122 @@ class DeleteUserFromWorkflowOwnersQuery(SqlQueryObject):
         }
 
 
-class DeleteUserFromTemplateConditionsQuery(SqlQueryObject):
-
-    """ Deletes conditions in template for user_to_delete
-        where user_to_substitution exists in conditions """
-
-    def __init__(
-        self,
-        user_to_delete: str,
-        user_to_substitution: str,
-    ):
-        self.user_to_delete = user_to_delete
-        self.user_to_substitution = user_to_substitution
+class BaseDeleteTemplateConditionsQuery(SqlQueryObject):
+    def __init__(self, delete_id: int, substitution_id: int):
+        self.delete_id = delete_id
+        self.substitution_id = substitution_id
+        self.params = {
+            'delete_id': delete_id,
+            'substitution_id': substitution_id,
+            'field_type': self.field_type,
+            'substitution_field_type': self.substitution_field_type,
+        }
 
     def get_sql(self):
-        return """
+        return f"""
         DELETE FROM processes_predicatetemplate
         WHERE
           field_type = %(field_type)s AND
-          value = %(user_to_delete)s AND
+          {self.delete_field} = %(delete_id)s AND
           (rule_id, operator) IN (
             SELECT rule_id, operator
             FROM processes_predicatetemplate
             WHERE
-              field_type = %(field_type)s AND
-              value = %(user_to_substitution)s
+              field_type = %(substitution_field_type)s AND
+              {self.substitution_field} = %(substitution_id)s
           )
-        """, {
-            'field_type': FieldType.USER,
-            'user_to_delete': self.user_to_delete,
-            'user_to_substitution': self.user_to_substitution,
+        """, self.params
+
+
+class DeleteGroupFromTemplateConditionsQuery(
+    BaseDeleteTemplateConditionsQuery
+):
+    delete_field = "group_id"
+    substitution_field = "group_id"
+    field_type = PredicateType.GROUP
+    substitution_field_type = PredicateType.GROUP
+
+
+class DeleteGroupUserFromTemplateConditionsQuery(
+    BaseDeleteTemplateConditionsQuery
+):
+    delete_field = "group_id"
+    substitution_field = "user_id"
+    field_type = PredicateType.GROUP
+    substitution_field_type = PredicateType.USER
+
+
+class DeleteUserGroupFromTemplateConditionsQuery(
+    BaseDeleteTemplateConditionsQuery
+):
+    delete_field = "user_id"
+    substitution_field = "group_id"
+    field_type = PredicateType.USER
+    substitution_field_type = PredicateType.GROUP
+
+
+class DeleteUserFromTemplateConditionsQuery(
+    BaseDeleteTemplateConditionsQuery
+):
+    delete_field = "user_id"
+    substitution_field = "user_id"
+    field_type = PredicateType.USER
+    substitution_field_type = PredicateType.USER
+
+
+class BaseDeleteConditionsQuery(SqlQueryObject):
+    def __init__(self, delete_id: int, substitution_id: int):
+        self.delete_id = delete_id
+        self.substitution_id = substitution_id
+        self.params = {
+            'delete_id': delete_id,
+            'substitution_id': substitution_id,
+            'field_type': self.field_type,
+            'substitution_field_type': self.substitution_field_type,
         }
 
-
-class DeleteUserFromConditionsQuery(SqlQueryObject):
-
-    """ Deletes conditions in workflow for user_to_delete
-        where user_to_substitution exists in conditions """
-
-    def __init__(
-        self,
-        user_to_delete: str,
-        user_to_substitution: str,
-    ):
-        self.user_to_delete = user_to_delete
-        self.user_to_substitution = user_to_substitution
-
     def get_sql(self):
-        return """
+        return f"""
         DELETE FROM processes_predicate
         WHERE
           field_type = %(field_type)s AND
-          value = %(user_to_delete)s AND
+          {self.delete_field} = %(delete_id)s AND
           (rule_id, operator) IN (
             SELECT rule_id, operator
             FROM processes_predicate
             WHERE
-              field_type = %(field_type)s AND
-              value = %(user_to_substitution)s
+              field_type = %(substitution_field_type)s AND
+              {self.substitution_field} = %(substitution_id)s
           )
-        """, {
-            'field_type': FieldType.USER,
-            'user_to_delete': self.user_to_delete,
-            'user_to_substitution': self.user_to_substitution,
-        }
+        """, self.params
+
+
+class DeleteGroupFromConditionsQuery(BaseDeleteConditionsQuery):
+    delete_field = "group_id"
+    substitution_field = "group_id"
+    field_type = PredicateType.GROUP
+    substitution_field_type = PredicateType.GROUP
+
+
+class DeleteGroupUserFromConditionsQuery(BaseDeleteConditionsQuery):
+    delete_field = "group_id"
+    substitution_field = "user_id"
+    field_type = PredicateType.GROUP
+    substitution_field_type = PredicateType.USER
+
+
+class DeleteUserGroupFromConditionsQuery(BaseDeleteConditionsQuery):
+    delete_field = "user_id"
+    substitution_field = "group_id"
+    field_type = PredicateType.USER
+    substitution_field_type = PredicateType.GROUP
+
+
+class DeleteUserFromConditionsQuery(BaseDeleteConditionsQuery):
+    delete_field = "user_id"
+    substitution_field = "user_id"
+    field_type = PredicateType.USER
+    substitution_field_type = PredicateType.USER
 
 
 class CreateSystemNotificationsQuery(SqlQueryObject):

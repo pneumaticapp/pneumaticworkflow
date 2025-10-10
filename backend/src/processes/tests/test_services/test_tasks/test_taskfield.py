@@ -5,7 +5,10 @@ from src.processes.tests.fixtures import (
     create_test_user,
     create_test_template,
     create_test_workflow,
-    create_test_account, create_test_admin, create_test_owner,
+    create_test_account,
+    create_test_admin,
+    create_test_owner,
+    create_test_group,
 )
 from src.processes.enums import (
     FieldType,
@@ -1837,7 +1840,7 @@ def test_get_valid_user_value__ok():
     user = create_test_admin(account=account)
 
     service = TaskFieldService(user=account_owner)
-    raw_value = str(user.id)
+    raw_value = str(user.email)
     user_name = f'{user.first_name} {user.last_name}'
 
     # act
@@ -1848,6 +1851,7 @@ def test_get_valid_user_value__ok():
     assert field_data.markdown_value == user_name
     assert field_data.clear_value == user_name
     assert field_data.user_id == user.id
+    assert field_data.group_id is None
 
 
 @pytest.mark.parametrize('raw_value', (None, 'a1', []))
@@ -1875,36 +1879,7 @@ def test_get_valid_user_value__invalid_value__raise_exception(raw_value):
         service._get_valid_user_value(raw_value=raw_value)
 
     # assert
-    assert ex.value.message == messages.MSG_PW_0038
-    assert ex.value.api_name == field_api_name
-
-
-def test_get_valid_user_value__not_account_user__raise_exception():
-
-    # arrange
-    account_owner = create_test_owner()
-    workflow = create_test_workflow(user=account_owner)
-    task = workflow.tasks.get(number=1)
-    field_api_name = 'api-name-1'
-    task_field = TaskField.objects.create(
-        task=task,
-        api_name=field_api_name,
-        type=FieldType.USER,
-        workflow=workflow,
-    )
-    service = TaskFieldService(
-        user=account_owner,
-        instance=task_field
-    )
-    another_account_user = create_test_owner(email='test@test.test')
-    raw_value = str(another_account_user.id)
-
-    # act
-    with pytest.raises(TaskFieldException) as ex:
-        service._get_valid_user_value(raw_value=raw_value)
-
-    # assert
-    assert ex.value.message == messages.MSG_PW_0039
+    assert ex.value.message == messages.MSG_PW_0090
     assert ex.value.api_name == field_api_name
 
 
@@ -2037,3 +2012,177 @@ def test_get_valid_url_value__valid_value__ok(raw_value):
     assert field_data.value == raw_value
     assert field_data.markdown_value == f'[URL field]({raw_value})'
     assert field_data.clear_value == raw_value
+
+
+def test_get_valid_user_value__by_email__ok():
+
+    # arrange
+    account = create_test_account()
+    account_owner = create_test_owner(account=account)
+    user = create_test_admin(account=account, email='test@example.com')
+
+    service = TaskFieldService(user=account_owner)
+    raw_value = 'test@example.com'
+    user_name = f'{user.first_name} {user.last_name}'
+
+    # act
+    field_data = service._get_valid_user_value(raw_value=raw_value)
+
+    # assert
+    assert field_data.value == user_name
+    assert field_data.markdown_value == user_name
+    assert field_data.clear_value == user_name
+    assert field_data.user_id == user.id
+    assert field_data.group_id is None
+
+
+def test_get_valid_user_value__by_email_case_insensitive__ok():
+
+    # arrange
+    account = create_test_account()
+    account_owner = create_test_owner(account=account)
+    user = create_test_admin(account=account, email='test@example.com')
+
+    service = TaskFieldService(user=account_owner)
+    raw_value = 'TEST@EXAMPLE.COM'
+    user_name = f'{user.first_name} {user.last_name}'
+
+    # act
+    field_data = service._get_valid_user_value(raw_value=raw_value)
+
+    # assert
+    assert field_data.value == user_name
+    assert field_data.markdown_value == user_name
+    assert field_data.clear_value == user_name
+    assert field_data.user_id == user.id
+    assert field_data.group_id is None
+
+
+def test_get_valid_user_value__by_group_name__ok():
+
+    # arrange
+    account = create_test_account()
+    account_owner = create_test_owner(account=account)
+    group = create_test_group(account=account, name='Test Group')
+
+    service = TaskFieldService(user=account_owner)
+    raw_value = 'Test Group'
+
+    # act
+    field_data = service._get_valid_user_value(raw_value=raw_value)
+
+    # assert
+    assert field_data.value == group.name
+    assert field_data.markdown_value == group.name
+    assert field_data.clear_value == group.name
+    assert field_data.user_id is None
+    assert field_data.group_id == group.id
+
+
+def test_get_valid_user_value__by_group_name_case_insensitive__ok():
+
+    # arrange
+    account = create_test_account()
+    account_owner = create_test_owner(account=account)
+    group = create_test_group(account=account, name='Test Group')
+    workflow = create_test_workflow(user=account_owner)
+    task = workflow.tasks.get(number=1)
+    field_api_name = 'api-name-1'
+    task_field = TaskField.objects.create(
+        task=task,
+        api_name=field_api_name,
+        type=FieldType.USER,
+        workflow=workflow,
+    )
+
+    service = TaskFieldService(
+        user=account_owner,
+        instance=task_field
+    )
+    raw_value = 'TEST GROUP'
+
+    # act
+    field_data = service._get_valid_user_value(raw_value=raw_value)
+
+    # assert
+    assert field_data.value == group.name
+    assert field_data.markdown_value == group.name
+    assert field_data.clear_value == group.name
+    assert field_data.user_id is None
+    assert field_data.group_id == group.id
+
+
+def test_get_valid_user_value__email_vs_group_name__prefer_email():
+    """
+    The test checks that if the value is suitable as an email,
+    then we first look for a user, and not a group
+    """
+
+    # arrange
+    account = create_test_account()
+    account_owner = create_test_owner(account=account)
+    user = create_test_admin(account=account, email='test@example.com')
+    create_test_group(account=account, name='test@example.com')
+    workflow = create_test_workflow(user=account_owner)
+    task = workflow.tasks.get(number=1)
+    field_api_name = 'api-name-1'
+    task_field = TaskField.objects.create(
+        task=task,
+        api_name=field_api_name,
+        type=FieldType.USER,
+        workflow=workflow,
+    )
+
+    service = TaskFieldService(
+        user=account_owner,
+        instance=task_field
+    )
+    raw_value = 'test@example.com'
+    user_name = f'{user.first_name} {user.last_name}'
+
+    # act
+    field_data = service._get_valid_user_value(raw_value=raw_value)
+
+    # assert
+    assert field_data.value == user_name
+    assert field_data.markdown_value == user_name
+    assert field_data.clear_value == user_name
+    assert field_data.user_id == user.id
+    assert field_data.group_id is None
+
+
+@pytest.mark.parametrize(
+    'raw_value',
+    (
+        'nonexistent@email.com',
+        'invalid-email',
+        '',
+        '   ',
+    )
+)
+def test_get_valid_user_value__invalid_string__raise_exception(raw_value):
+
+    # arrange
+    account = create_test_account()
+    account_owner = create_test_owner(account=account)
+    workflow = create_test_workflow(user=account_owner)
+    task = workflow.tasks.get(number=1)
+    field_api_name = 'api-name-1'
+    task_field = TaskField.objects.create(
+        task=task,
+        api_name=field_api_name,
+        type=FieldType.USER,
+        workflow=workflow,
+    )
+    service = TaskFieldService(
+        user=account_owner,
+        instance=task_field
+    )
+
+    # act
+    with pytest.raises(TaskFieldException) as ex:
+        service._get_valid_user_value(raw_value=raw_value)
+
+    # assert
+    assert ex.value.message == messages.MSG_PW_0090
+    assert ex.value.api_name == field_api_name
