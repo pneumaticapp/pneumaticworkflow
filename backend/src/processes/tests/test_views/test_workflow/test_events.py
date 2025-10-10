@@ -390,7 +390,7 @@ def test_retrieve__external_workflow__ok(
 
     # act
     run_response = api_client.post(
-        path=f'/templates/public/run',
+        path='/templates/public/run',
         data={
             'captcha': 'skip'
         },

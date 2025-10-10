@@ -114,7 +114,7 @@ def test_create__premium_plan__increase_master_acc_subscription(
 
     # act
     response = api_client.post(
-        f'/tenants',
+        '/tenants',
         data={
             'tenant_name': tenant_name
         }
@@ -251,7 +251,7 @@ def test_create__premium_plan__billing_disabled__not_increase_master_acc_subs(
 
     # act
     response = api_client.post(
-        f'/tenants',
+        '/tenants',
         data={
             'tenant_name': tenant_name
         }
@@ -376,7 +376,7 @@ def test_create__unlimited_plan__buy_subscription(
 
     # act
     response = api_client.post(
-        f'/tenants',
+        '/tenants',
         data={
             'tenant_name': tenant_name
         }
@@ -514,7 +514,7 @@ def test_create__free_plan__not_buy_subscription(
 
     # act
     response = api_client.post(
-        f'/tenants',
+        '/tenants',
         data={
             'tenant_name': tenant_name
         }
@@ -597,7 +597,7 @@ def test_create__blank_tenant_name__validation_error(
 
     # act
     response = api_client.post(
-        f'/tenants',
+        '/tenants',
         data={
             'tenant_name': ''
         }
@@ -652,7 +652,7 @@ def test_create__account_service_exception__validation_error(
 
     # act
     response = api_client.post(
-        f'/tenants',
+        '/tenants',
         data={
             'tenant_name': tenant_name
         }
@@ -752,7 +752,7 @@ def test_create__stripe_service_exception__validation_error(
 
     # act
     response = api_client.post(
-        f'/tenants',
+        '/tenants',
         data={
             'tenant_name': tenant_name
         }
@@ -811,7 +811,7 @@ def test_create__user_service_exception__validation_error(
 
     # act
     response = api_client.post(
-        f'/tenants',
+        '/tenants',
         data={
             'tenant_name': tenant_name
         }
@@ -866,7 +866,7 @@ def test_create__null_tenant_name__validation_error(
 
     # act
     response = api_client.post(
-        f'/tenants',
+        '/tenants',
         data={
             'tenant_name': None
         }
@@ -909,7 +909,7 @@ def test_create__skip_tenant_name__validation_error(
 
     # act
     response = api_client.post(
-        f'/tenants',
+        '/tenants',
         data={}
     )
 
@@ -950,7 +950,7 @@ def test_create__tenant_name_over_limit__validation_error(
 
     # act
     response = api_client.post(
-        f'/tenants',
+        '/tenants',
         data={
             'tenant_name': 'a' * 256
         }
@@ -997,7 +997,7 @@ def test_create__tenant__permission_denied(
 
     # act
     response = api_client.post(
-        f'/tenants',
+        '/tenants',
         data={
             'tenant_name': tenant_name
         }
@@ -1086,7 +1086,7 @@ def test_create__not_admin__permission_denied(
 
     # act
     response = api_client.post(
-        f'/tenants',
+        '/tenants',
         data={
             'tenant_name': tenant_name
         }

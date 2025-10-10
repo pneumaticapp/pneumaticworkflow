@@ -166,7 +166,7 @@ def test__return_to_task__ok(api_client, mocker):
 
     # act
     response = api_client.get(
-        f'/reports/highlights'
+        '/reports/highlights'
     )
 
     # assert
@@ -208,7 +208,7 @@ def test_highlights_start_workflow(api_client):
     )
     api_client.token_authenticate(user)
 
-    response = api_client.get(f'/reports/highlights')
+    response = api_client.get('/reports/highlights')
 
     assert response.status_code == 200
 
@@ -1105,7 +1105,7 @@ def test__kickoff_field_type_user__ok(api_client):
     api_client.token_authenticate(user)
 
     # act
-    response = api_client.get(f'/reports/highlights')
+    response = api_client.get('/reports/highlights')
 
     # assert
     assert response.status_code == 200

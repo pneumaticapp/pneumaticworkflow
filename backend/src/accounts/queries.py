@@ -29,7 +29,7 @@ class CountTemplatesByUserQuery(SqlQueryObject):
         }
 
     def get_sql(self):
-        return f"""
+        return """
           SELECT count(*) FROM (
             SELECT DISTINCT ON (t.id) t.id FROM processes_template t
             JOIN processes_templateowner AS pto
@@ -73,7 +73,7 @@ class CountTemplatesByGroupQuery(SqlQueryObject):
         }
 
     def get_sql(self):
-        return f"""
+        return """
           SELECT count(*) FROM (
             SELECT DISTINCT ON (t.id) t.id FROM processes_template t
             JOIN processes_templateowner AS pto

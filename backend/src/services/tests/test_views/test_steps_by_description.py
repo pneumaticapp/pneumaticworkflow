@@ -118,7 +118,7 @@ def test_create__description__invalid_value__validation_error(
 
     # act
     response = api_client.get(
-        path=f'/services/steps-by-description',
+        path='/services/steps-by-description',
         data={'description': description}
     )
 

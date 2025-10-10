@@ -762,7 +762,7 @@ class TestWorkflowUpdateVersionService:
         # assert
         assert response_complete.status_code == 200
         selection_11.refresh_from_db()
-        assert selection_11.value == f'+ field text +'
+        assert selection_11.value == '+ field text +'
         assert selection_11.is_selected
         assert selection_11.date_selected
         assert selection_11.selected_user_id == user_2.id
@@ -889,7 +889,7 @@ class TestWorkflowUpdateVersionService:
         # assert
         task_1.refresh_from_db()
         selection_11.refresh_from_db()
-        assert selection_11.value == f'+ field text +'
+        assert selection_11.value == '+ field text +'
         assert selection_11.is_selected
         assert selection_11.date_selected
         assert selection_11.selected_user_id == user_2.id
@@ -1010,7 +1010,7 @@ class TestWorkflowUpdateVersionService:
         # assert
         task_2.refresh_from_db()
         selection_11.refresh_from_db()
-        assert selection_11.value == f'+ field text +'
+        assert selection_11.value == '+ field text +'
         assert not selection_11.is_selected
         assert selection_11.date_selected is None
         assert selection_11.selected_user_id is None

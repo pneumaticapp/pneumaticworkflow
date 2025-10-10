@@ -36,10 +36,10 @@ class TruncatingCharField(models.CharField):
     def formfield(self, **kwargs):
         defaults = {'form_class': FormTruncatingCharField}
         defaults.update(kwargs)
-        return super(TruncatingCharField, self).formfield(**defaults)
+        return super().formfield(**defaults)
 
     def get_prep_value(self, value):
-        value = super(TruncatingCharField, self).get_prep_value(value)
+        value = super().get_prep_value(value)
         if value:
             return value[:self.max_length]
         return value

@@ -141,7 +141,7 @@ def test_delete__no_authenticated__permission_denied(
 
     # act
     response = api_client.delete(
-        f'/workflows/public/attachments/1'
+        '/workflows/public/attachments/1'
     )
 
     # assert

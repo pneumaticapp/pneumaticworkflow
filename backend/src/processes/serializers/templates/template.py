@@ -414,7 +414,7 @@ class TemplateSerializer(
                 )
 
     def to_representation(self, instance: Template):
-        data = super(TemplateSerializer, self).to_representation(instance)
+        data = super().to_representation(instance)
         if data.get('description') is None:
             data['description'] = ''
         if data.get('tasks') is None:

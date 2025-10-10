@@ -26,7 +26,7 @@ def test__get_webhook_hash__ok(mocker):
         CUSTOMERIO_WEBHOOK_API_KEY=key,
         CUSTOMERIO_WEBHOOK_API_VERSION=api_version
     )
-    msg = f'{api_version}:{timestamp}:'.encode('utf-8') + request_body_bytes
+    msg = f'{api_version}:{timestamp}:'.encode() + request_body_bytes
     valid_result = hmac.new(
         key=key.encode('utf-8'),
         msg=msg,

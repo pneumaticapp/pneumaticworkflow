@@ -520,7 +520,7 @@ class TestListTemplate:
         )
 
         # act
-        response = api_client.get(f'/templates?is_public=false')
+        response = api_client.get('/templates?is_public=false')
 
         # assert
         assert response.status_code == 200
@@ -550,7 +550,7 @@ class TestListTemplate:
         )
 
         # act
-        response = api_client.get(f'/templates?is_public=true')
+        response = api_client.get('/templates?is_public=true')
 
         # assert
         assert response.status_code == 200
@@ -690,7 +690,7 @@ class TestListTemplate:
         }
 
         response = api_client.post(
-            path=f'/templates',
+            path='/templates',
             data=request_data_1
         )
         template_1_id = response.data['id']
@@ -708,7 +708,7 @@ class TestListTemplate:
             data=response.data
         )
         response = api_client.post(
-            path=f'/templates',
+            path='/templates',
             data=request_data_2
         )
         template_2_id = response.data['id']

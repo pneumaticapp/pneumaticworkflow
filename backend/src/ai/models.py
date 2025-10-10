@@ -156,4 +156,4 @@ class OpenAiMessage(models.Model):
     )
 
     def __str__(self):
-        return f'Prompt message'
+        return 'Prompt message'

@@ -128,9 +128,7 @@ class GroupInline(StackedInline):
     show_change_link = True
 
     def formfield_for_foreignkey(self, db_field, request=None, **kwargs):
-        field = super(
-            GroupInline, self
-        ).formfield_for_foreignkey(db_field, request, **kwargs)
+        field = super().formfield_for_foreignkey(db_field, request, **kwargs)
 
         if db_field.name == 'usergroup':
             if request._obj_ is not None:
@@ -272,7 +270,7 @@ class UsersAdmin(UserAdmin, SignUpMixin):
 
     def get_form(self, request, obj=None, **kwargs):
         request._obj_ = obj
-        return super(UsersAdmin, self).get_form(request, obj, **kwargs)
+        return super().get_form(request, obj, **kwargs)
 
     def api_key(self, obj):
         return obj.apikey.key

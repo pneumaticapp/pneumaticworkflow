@@ -48,7 +48,7 @@ def test_delete__no_authenticated__permission_denied(api_client, mocker):
     )
 
     # act
-    response = api_client.delete(f'/workflows/attachments/1')
+    response = api_client.delete('/workflows/attachments/1')
 
     # assert
     assert response.status_code == 401

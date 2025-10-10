@@ -26,7 +26,7 @@ def test_list_public_page__ok(api_client):
     )
 
     # act
-    response = api_client.get(f'/pages/public')
+    response = api_client.get('/pages/public')
 
     # assert
     assert response.status_code == 200

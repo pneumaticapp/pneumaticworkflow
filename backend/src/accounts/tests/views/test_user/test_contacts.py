@@ -501,7 +501,7 @@ def test_contacts__ordering__source__ok(api_client):
 
     # act
     response = api_client.get(
-        f'/accounts/user/contacts?ordering=source'
+        '/accounts/user/contacts?ordering=source'
     )
 
     # assert
@@ -540,7 +540,7 @@ def test_contacts__ordering__source_reversed__ok(api_client):
 
     # act
     response = api_client.get(
-        f'/accounts/user/contacts?ordering=-source'
+        '/accounts/user/contacts?ordering=-source'
     )
 
     # assert
@@ -579,7 +579,7 @@ def test_contacts__ordering__multiple_values__ok(api_client):
 
     # act
     response = api_client.get(
-        f'/accounts/user/contacts?ordering=-source,first_name'
+        '/accounts/user/contacts?ordering=-source,first_name'
     )
 
     # assert

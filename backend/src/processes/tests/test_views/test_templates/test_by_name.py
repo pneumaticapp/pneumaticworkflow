@@ -113,7 +113,7 @@ def test_by_name__admin__ok(
 
     # act
     response = api_client.post(
-        path=f'/templates/by-name',
+        path='/templates/by-name',
         data={'name': name}
     )
 
@@ -147,7 +147,7 @@ def test_by_name__request_user_is_not_authenticated__permission_denied(
 
     # act
     response = api_client.post(
-        path=f'/templates/by-name',
+        path='/templates/by-name',
         data={
             'name': 'some name',
         }
@@ -179,7 +179,7 @@ def test_by_name__not_found__return_404(
 
     # act
     response = api_client.post(
-        path=f'/templates/by-name',
+        path='/templates/by-name',
         data={
             'name': 'Not existent',
         }
@@ -208,7 +208,7 @@ def test_by_name__name_null__validation_error(
 
     # act
     response = api_client.post(
-        path=f'/templates/by-name',
+        path='/templates/by-name',
         data={
             'name': name,
         }
@@ -241,7 +241,7 @@ def test_by_name__name_blank__validation_error(
 
     # act
     response = api_client.post(
-        path=f'/templates/by-name',
+        path='/templates/by-name',
         data={
             'name': name,
         }

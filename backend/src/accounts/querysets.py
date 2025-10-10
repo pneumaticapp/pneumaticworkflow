@@ -228,7 +228,7 @@ class InactiveUserQuerySet(UserQuerySet):
             )
         )
         return self.filter(
-            (in_account | invited)
+            in_account | invited
         ).distinct()
 
 

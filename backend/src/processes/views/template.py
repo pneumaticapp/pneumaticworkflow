@@ -1,5 +1,5 @@
 from django.db.models import Prefetch, Q
-from typing_extensions import List
+from typing import List
 from django.db import transaction, DataError
 from django.http import Http404
 from rest_framework.viewsets import GenericViewSet

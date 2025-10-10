@@ -18,7 +18,7 @@ def test_clone__ok(
     attachment = FileAttachment.objects.create(
         account=user.account,
         name='filename',
-        url=f'https://link.to/filename',
+        url='https://link.to/filename',
         size=100
     )
     clone_attachment = mocker.Mock(id=1)
@@ -57,7 +57,7 @@ def test_clone__not_exists__not_found(mocker, api_client):
 
     # act
     response = api_client.post(
-        f'/workflows/attachments/9999/clone'
+        '/workflows/attachments/9999/clone'
     )
 
     # assert
@@ -91,7 +91,7 @@ def test_clone__disable_storage__permission_denied(
     attachment = FileAttachment.objects.create(
         account=user.account,
         name='filename',
-        url=f'https://link.to/filename',
+        url='https://link.to/filename',
         size=100
     )
     service_mock = mocker.patch(

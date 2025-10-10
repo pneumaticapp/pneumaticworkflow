@@ -51,7 +51,7 @@ def test_retrieve_public_page_not_existent__not_found(api_client):
     )
 
     # act
-    response = api_client.get(f'/pages/public/blabla')
+    response = api_client.get('/pages/public/blabla')
 
     # assert
     assert response.status_code == 404
