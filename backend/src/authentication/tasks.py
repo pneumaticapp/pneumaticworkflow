@@ -8,6 +8,9 @@ from src.authentication.services.exceptions import (
 from src.authentication.services.microsoft import (
     MicrosoftAuthService
 )
+from src.authentication.services.auth0 import (
+    Auth0Service
+)
 
 
 @shared_task(ignore_result=True)
@@ -50,6 +53,16 @@ def send_new_signup_notification(account_id: int):
 def update_microsoft_contacts(user_id: int):
     user = User.objects.get(id=user_id)
     service = MicrosoftAuthService()
+    try:
+        service.update_user_contacts(user)
+    except AuthException:
+        pass
+
+
+@shared_task(ignore_result=True)
+def update_auth0_contacts(user_id: int):
+    user = User.objects.get(id=user_id)
+    service = Auth0Service()
     try:
         service.update_user_contacts(user)
     except AuthException:

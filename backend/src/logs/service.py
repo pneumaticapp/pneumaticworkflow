@@ -204,3 +204,17 @@ class AccountLogService(BaseModelService):
             account_id=user.account_id,
             response_data=data
         )
+
+    def log_auth0(
+        self,
+        title: str,
+        status: AccountEventStatus.LITERALS = AccountEventStatus.SUCCESS,
+        data: Optional[dict] = None,
+    ):
+
+        self.create(
+            event_type=AccountEventType.AUTH,
+            title=title,
+            status=status,
+            response_data=data
+        )
