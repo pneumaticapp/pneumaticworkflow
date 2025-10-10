@@ -236,6 +236,16 @@ class GoogleAuthService(
         """
 
         state = self._get_cache(key=auth_response['state'])
+        capture_sentry_message(
+            message='Google OAuth state validation',
+            data={
+                'state_from_request': auth_response['state'],
+                'state_from_cache': state,
+                'cache_key_prefix': self.cache_key_prefix,
+            },
+            level=SentryLogLevel.INFO
+        )
+
         if not state:
             raise exceptions.TokenInvalidOrExpired()
 
@@ -248,6 +258,16 @@ class GoogleAuthService(
             'redirect_uri': self.redirect_uri,
         }
 
+        capture_sentry_message(
+            message='Google OAuth token exchange request',
+            data={
+                'redirect_uri': self.redirect_uri,
+                'client_id': self.client_id,
+                'code_length': len(auth_response['code']),
+            },
+            level=SentryLogLevel.INFO
+        )
+
         response = requests.post(token_url, data=data)
 
         if not response.ok:
@@ -256,7 +276,9 @@ class GoogleAuthService(
                 message='Get Google access token returned an error',
                 data={
                     'response_data': response_data,
-                    'status_code': response.status_code
+                    'status_code': response.status_code,
+                    'redirect_uri': self.redirect_uri,
+                    'client_id': self.client_id,
                 },
                 level=SentryLogLevel.WARNING
             )
