@@ -148,7 +148,6 @@ class TestTemplatePresetsCreateView:
         assert 'id' in data
         assert data['fields'] == []
 
-
     def test_create__preset_type_account__ok(self, api_client, mocker):
         # arrange
         account = create_test_account()
