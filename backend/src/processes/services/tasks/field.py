@@ -1,3 +1,4 @@
+import re
 from typing import List, Any, Union, Optional, Iterable, Set
 from decimal import Decimal, DecimalException
 from collections import namedtuple
@@ -253,27 +254,42 @@ class TaskFieldService(BaseWorkflowService):
 
     def _get_valid_user_value(self, raw_value: Any, **kwargs) -> FieldData:
 
-        try:
-            user_id = int(raw_value)
-        except (ValueError, TypeError):
+        user_id = None
+        group_id = None
+        value = None
+
+        if isinstance(raw_value, str):
+            if re.match(
+                r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
+                raw_value
+            ):
+                try:
+                    user = self.account.users.get(email__iexact=raw_value)
+                    user_id = user.id
+                    value = user.name_by_status
+                except ObjectDoesNotExist:
+                    pass
+            else:
+                try:
+                    group = self.account.user_groups.get(
+                        name__iexact=raw_value
+                    )
+                    group_id = group.id
+                    value = group.name
+                except ObjectDoesNotExist:
+                    pass
+        if user_id is None and group_id is None:
             raise TaskFieldException(
                 api_name=self.instance.api_name,
-                message=messages.MSG_PW_0038
+                message=messages.MSG_PW_0090
             )
-        else:
-            user = self.account.users.by_id(user_id).first()
-            if user is None:
-                raise TaskFieldException(
-                    api_name=self.instance.api_name,
-                    message=messages.MSG_PW_0039
-                )
-            value = user.name_by_status
-            return FieldData(
-                value=value,
-                markdown_value=value,
-                clear_value=value,
-                user_id=user_id,
-            )
+        return FieldData(
+            user_id=user_id,
+            group_id=group_id,
+            value=value,
+            markdown_value=value,
+            clear_value=value,
+        )
 
     def _get_valid_value(self, raw_value: Any, **kwargs) -> FieldData:
         if raw_value in self.NULL_VALUES:

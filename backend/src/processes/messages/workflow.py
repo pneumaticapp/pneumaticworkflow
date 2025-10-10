@@ -73,7 +73,6 @@ MSG_PW_0036 = _('File value should be a list of integers.')
 MSG_PW_0037 = _('Attachment not found.')
 # Translators: User field validation
 MSG_PW_0038 = _('The value must be the ID of an existing account user.')
-MSG_PW_0039 = _('Account user with given id does not exist.')
 MSG_PW_0040 = _('Save attachments failed. Service unavailable.')
 MSG_PW_0041 = _('Blob object doesn\'t exist.')
 MSG_PW_0042 = _('AI service is temporarily unavailable.')
