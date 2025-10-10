@@ -18,7 +18,7 @@ class TemplatePresetService(BaseModelService):
         template: Template,
         name: str,
         is_default: bool = False,
-        type: str = PresetType.PERSONAL,
+        type: str = PresetType.PERSONAL,  # pylint: disable=redefined-builtin
         **kwargs
     ):
         self.instance = TemplatePreset.objects.create(
