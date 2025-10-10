@@ -424,7 +424,7 @@ class Common(Configuration):
         }
 
 
-class Development(Common):
+class Testing(Common):
 
     INSTALLED_APPS = Common.INSTALLED_APPS + ['pylint_django']
     TEST_RUNNER = 'djcelery.contrib.test_runner.CeleryTestSuiteRunner'
@@ -466,31 +466,7 @@ class Development(Common):
     }
 
 
-class Testing(Development):
-
-    pass
-
-
-class Staging(Common):
-
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.postgresql_psycopg2',
-            'NAME': env.get('POSTGRES_DB', 'pneumatic'),
-            'USER': env.get('POSTGRES_USER', 'pneumatic'),
-            'PASSWORD': env.get('POSTGRES_PASSWORD', 'pneumatic'),
-            'HOST': env.get('POSTGRES_HOST', 'localhost'),
-            'PORT': env.get('POSTGRES_PORT', '5432'),
-        },
-        'replica': {
-            'ENGINE': 'django.db.backends.postgresql_psycopg2',
-            'NAME': env.get('POSTGRES_REPLICA_DB', 'pneumatic'),
-            'USER': env.get('POSTGRES_REPLICA_USER', 'pneumatic'),
-            'PASSWORD': env.get('POSTGRES_REPLICA_PASSWORD', 'pneumatic'),
-            'HOST': env.get('POSTGRES_REPLICA_HOST', 'localhost'),
-            'PORT': env.get('POSTGRES_REPLICA_PORT', '5432')
-        }
-    }
+class Development(Common):
 
     CACHES = {
         "default": {
@@ -540,6 +516,30 @@ class Staging(Common):
             }
         }
     }
+
+
+class Staging(Development):
+
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql_psycopg2',
+            'NAME': env.get('POSTGRES_DB', 'pneumatic'),
+            'USER': env.get('POSTGRES_USER', 'pneumatic'),
+            'PASSWORD': env.get('POSTGRES_PASSWORD', 'pneumatic'),
+            'HOST': env.get('POSTGRES_HOST', 'localhost'),
+            'PORT': env.get('POSTGRES_PORT', '5432'),
+        },
+        'replica': {
+            'ENGINE': 'django.db.backends.postgresql_psycopg2',
+            'NAME': env.get('POSTGRES_REPLICA_DB', 'pneumatic'),
+            'USER': env.get('POSTGRES_REPLICA_USER', 'pneumatic'),
+            'PASSWORD': env.get('POSTGRES_REPLICA_PASSWORD', 'pneumatic'),
+            'HOST': env.get('POSTGRES_REPLICA_HOST', 'localhost'),
+            'PORT': env.get('POSTGRES_REPLICA_PORT', '5432')
+        }
+    }
+
+
 
     MAX_INVITES = 10
 
