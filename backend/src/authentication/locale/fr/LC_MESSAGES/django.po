@@ -74,3 +74,7 @@ msgstr "Le mot de passe actuel est incorrect."
 #: authentication/messages.py:31
 msgid "The new password and its confirmation don't match."
 msgstr "Le nouveau mot de passe et sa confirmation ne correspondent pas."
+
+#: authentication/messages.py:32
+msgid "Failed to fetch organization members."
+msgstr "Échec du chargement des membres de l’organisation."
