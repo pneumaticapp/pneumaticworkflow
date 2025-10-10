@@ -1,6 +1,5 @@
-# pylint: disable=W,C,R
+# ruff: noqa: E402
 import os
-
 import django
 from channels.routing import ProtocolTypeRouter, URLRouter
 from channels.sessions import CookieMiddleware, SessionMiddleware

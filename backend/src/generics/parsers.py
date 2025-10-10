@@ -65,7 +65,7 @@ class CamelCaseJSONParser(JSONParser):
         ignore_keys = self.JSON_UNDERSCOREIZE.get("ignore_keys") or ()
         if isinstance(data, dict):
             new_dict = {}
-            if type(data) == MultiValueDict:
+            if isinstance(data, MultiValueDict):
                 new_data = MultiValueDict()
                 for key, value in data.items():
                     new_data.setlist(

@@ -35,11 +35,9 @@ select = [
 ]
 ignore = [
     "E731",   # lambda expressions used in the messages
-    "UP031",  #  Use format specifiers instead of percent format
+    "UP031",  # Use format specifiers instead of percent format
+    "F401",   # imported but unused
 ]
-# Add the `line-too-long` rule to the enforced rule set. By default, Ruff omits rules that
-# overlap with the use of a formatter, like Black, but we can override this behavior by
-# explicitly adding the rule.
 extend-select = [
     "E501", # maximum line length
     "UP",   # pyupgrade

@@ -139,7 +139,7 @@ class TenantsViewSet(
         serializer.is_valid(raise_exception=True)
         new_tenant_name = serializer.validated_data.get('tenant_name')
         old_tenant_name = instance.tenant_name
-        with (transaction.atomic()):
+        with transaction.atomic():
             instance = serializer.save()
             if (
                 new_tenant_name is not None

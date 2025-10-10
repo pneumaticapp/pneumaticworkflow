@@ -1,4 +1,4 @@
-# pylint: disable=W,C,R
+# ruff: noqa: E402
 """
 WSGI config for src project.
 It exposes the WSGI callable as a module-level variable named ``application``.
