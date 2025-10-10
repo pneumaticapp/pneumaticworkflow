@@ -50,7 +50,7 @@ class TestTemplatePresetsCreateView:
             author=user,
             name=request_data['name'],
             is_default=request_data['is_default'],
-            preset_type=request_data['type'],
+            type=request_data['type'],
             fields=request_data['fields']
         )
 
@@ -112,7 +112,70 @@ class TestTemplatePresetsCreateView:
             author=user,
             name=request_data['name'],
             is_default=request_data['is_default'],
-            preset_type=request_data['type'],
+            type=request_data['type'],
+            fields=request_data['fields']
+        )
+
+        service_create_mock = mocker.patch(
+            'src.processes.services.templates.preset.'
+            'TemplatePresetService.create',
+            return_value=preset
+        )
+
+        # act
+        response = api_client.post(
+            f'/templates/{template.id}/preset',
+            data=request_data
+        )
+
+        # assert
+        service_init_mock.assert_called_once_with(
+            user=user,
+            is_superuser=False,
+            auth_type=AuthTokenType.USER
+        )
+        service_create_mock.assert_called_once_with(
+            template=template,
+            **request_data
+        )
+        assert response.status_code == 200
+        data = response.data
+        assert data['name'] == request_data['name']
+        assert data['is_default'] == request_data['is_default']
+        assert data['type'] == request_data['type']
+        assert data['author'] == user.id
+        assert 'date_created_tsp' in data
+        assert 'id' in data
+        assert data['fields'] == []
+
+
+    def test_create__preset_type_account__ok(self, api_client, mocker):
+        # arrange
+        account = create_test_account()
+        user = create_test_admin(account=account)
+        template = create_test_template(user, is_active=True)
+
+        api_client.token_authenticate(user)
+
+        request_data = {
+            'name': 'Empty Preset',
+            'is_default': False,
+            'type': PresetType.ACCOUNT,
+            'fields': []
+        }
+
+        service_init_mock = mocker.patch(
+            'src.processes.services.templates.preset.'
+            'TemplatePresetService.__init__',
+            return_value=None
+        )
+
+        preset = create_test_template_preset(
+            template=template,
+            author=user,
+            name=request_data['name'],
+            is_default=request_data['is_default'],
+            type=request_data['type'],
             fields=request_data['fields']
         )
 
@@ -377,7 +440,7 @@ class TestTemplatePresetsCreateView:
             author=account_owner,
             name=request_data['name'],
             is_default=request_data['is_default'],
-            preset_type=request_data['type'],
+            type=request_data['type'],
             fields=request_data['fields']
         )
 
@@ -511,7 +574,7 @@ class TestTemplatePresetsCreateView:
             author=account_owner,
             name=request_data['name'],
             is_default=request_data['is_default'],
-            preset_type=request_data['type']
+            type=request_data['type']
         )
 
         service_class_mock = mocker.patch(
