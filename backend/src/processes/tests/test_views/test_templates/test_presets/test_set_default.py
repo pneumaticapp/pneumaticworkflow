@@ -23,7 +23,7 @@ class TestTemplatePresetSetDefaultView:
             template=template,
             author=user,
             is_default=False,
-            preset_type=PresetType.PERSONAL
+            type=PresetType.PERSONAL
         )
 
         api_client.token_authenticate(user)
@@ -108,7 +108,7 @@ class TestTemplatePresetSetDefaultView:
             template=template,
             author=user1,
             is_default=False,
-            preset_type=PresetType.PERSONAL
+            type=PresetType.PERSONAL
         )
 
         api_client.token_authenticate(user2)
@@ -140,7 +140,7 @@ class TestTemplatePresetSetDefaultView:
             template=template,
             author=user1,
             is_default=False,
-            preset_type=PresetType.PERSONAL
+            type=PresetType.PERSONAL
         )
 
         api_client.token_authenticate(user2)
@@ -170,7 +170,7 @@ class TestTemplatePresetSetDefaultView:
             template=template,
             author=user1,
             is_default=False,
-            preset_type=PresetType.ACCOUNT
+            type=PresetType.ACCOUNT
         )
 
         api_client.token_authenticate(user2)
@@ -195,7 +195,7 @@ class TestTemplatePresetSetDefaultView:
             template=template,
             author=user,
             is_default=True,
-            preset_type=PresetType.PERSONAL
+            type=PresetType.PERSONAL
         )
 
         api_client.token_authenticate(user)

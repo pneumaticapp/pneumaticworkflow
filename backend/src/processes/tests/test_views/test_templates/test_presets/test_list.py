@@ -26,7 +26,7 @@ class TestTemplatePresetsListView:
             author=user,
             name='Test Preset',
             is_default=True,
-            preset_type=PresetType.PERSONAL,
+            type=PresetType.PERSONAL,
             fields=[
                 {
                     'api_name': 'field_1',
@@ -85,7 +85,7 @@ class TestTemplatePresetsListView:
             author=account_owner,
             name='Owner Preset',
             is_default=True,
-            preset_type=PresetType.ACCOUNT
+            type=PresetType.ACCOUNT
         )
 
         api_client.token_authenticate(account_owner)

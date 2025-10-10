@@ -23,7 +23,7 @@ class TestTemplatePresetUpdateView:
             template=template,
             author=user,
             name='Old Name',
-            preset_type=PresetType.PERSONAL
+            type=PresetType.PERSONAL
         )
 
         api_client.token_authenticate(user)
@@ -46,7 +46,7 @@ class TestTemplatePresetUpdateView:
             author=user,
             name=data['name'],
             is_default=data['is_default'],
-            preset_type=data['type']
+            type=data['type']
         )
 
         mock_service = mocker.MagicMock()
@@ -92,7 +92,7 @@ class TestTemplatePresetUpdateView:
         preset = create_test_template_preset(
             template=template,
             author=user,
-            preset_type=PresetType.PERSONAL
+            type=PresetType.PERSONAL
         )
 
         api_client.token_authenticate(user)
@@ -181,7 +181,7 @@ class TestTemplatePresetUpdateView:
         preset = create_test_template_preset(
             template=template,
             author=user1,
-            preset_type=PresetType.PERSONAL
+            type=PresetType.PERSONAL
         )
 
         api_client.token_authenticate(user2)
@@ -222,7 +222,7 @@ class TestTemplatePresetUpdateView:
         preset = create_test_template_preset(
             template=template,
             author=user1,
-            preset_type=PresetType.PERSONAL
+            type=PresetType.PERSONAL
         )
 
         api_client.token_authenticate(user2)

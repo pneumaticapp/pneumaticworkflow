@@ -18,7 +18,7 @@ class TemplatePresetService(BaseModelService):
         template: Template,
         name: str,
         is_default: bool = False,
-        preset_type: str = PresetType.PERSONAL,
+        type: str = PresetType.PERSONAL,
         **kwargs
     ):
         self.instance = TemplatePreset.objects.create(
@@ -27,7 +27,7 @@ class TemplatePresetService(BaseModelService):
             account=self.account,
             name=name,
             is_default=is_default,
-            type=preset_type
+            type=type
         )
         return self.instance
 
