@@ -529,7 +529,7 @@ def test_return_to__force_snooze_and_return_to__snooze_not_running_again(
 
     response_snooze = api_client.post(
         f'/workflows/{workflow.id}/snooze',
-        data={'date': str(date)}
+        data={'date': date.timestamp()}
     )
     workflow.refresh_from_db()
 
@@ -589,7 +589,7 @@ def test_return_to__force_snooze_and_resume__snooze_not_running_again(
 
     response_snooze = api_client.post(
         f'/workflows/{workflow.id}/snooze',
-        data={'date': str(date)}
+        data={'date': date.timestamp()}
     )
     workflow.refresh_from_db()
     response_resume = api_client.post(f'/workflows/{workflow.id}/resume')
