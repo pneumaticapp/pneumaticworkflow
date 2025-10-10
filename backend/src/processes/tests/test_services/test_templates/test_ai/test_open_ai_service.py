@@ -5,7 +5,10 @@ from django.contrib.auth import get_user_model
 from src.processes.models import TaskTemplate
 from src.processes.enums import (
     PerformerType,
-    OwnerType, ConditionAction, PredicateType, PredicateOperator
+    OwnerType,
+    ConditionAction,
+    PredicateType,
+    PredicateOperator
 )
 from src.processes.tests.fixtures import (
     create_test_user,

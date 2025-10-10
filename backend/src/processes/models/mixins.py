@@ -222,6 +222,16 @@ class PredicateMixin(models.Model):
         null=True,
         max_length=200,
     )
+    user = models.ForeignKey(
+        UserModel,
+        on_delete=models.CASCADE,
+        null=True
+    )
+    group = models.ForeignKey(
+        UserGroup,
+        on_delete=models.CASCADE,
+        null=True
+    )
 
 
 class TaskRawPerformersMixin:

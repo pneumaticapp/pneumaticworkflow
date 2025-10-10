@@ -1,4 +1,4 @@
-FROM python:3.7
+FROM python:3.7.11-bullseye
 
 # Install Internationalization requirements
 RUN apt-get update && \
