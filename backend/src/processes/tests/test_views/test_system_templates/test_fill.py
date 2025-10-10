@@ -116,7 +116,7 @@ def test_fill__ok(api_client):
     # act
     response = api_client.post(f'/templates/system/{template.id}/fill')
     response = api_client.post(
-        path=f'/templates',
+        path='/templates',
         data=response.data
     )
 
@@ -200,7 +200,7 @@ def test_fill__set_wf_name_template__ok(api_client):
     # act
     response = api_client.post(f'/templates/system/{template.id}/fill')
     response = api_client.post(
-        path=f'/templates',
+        path='/templates',
         data=response.data
     )
 
@@ -243,7 +243,7 @@ def test_create__save_task_api_name__ok(api_client):
 
     response = api_client.post(f'/templates/system/{template.id}/fill')
     response = api_client.post(
-        path=f'/templates',
+        path='/templates',
         data=response.data
     )
     assert response.status_code == 200
@@ -347,7 +347,7 @@ def test_create_public__ok(api_client):
         path=f'/templates/system/{system_template.id}/fill'
     )
     response = api_client.post(
-        path=f'/templates',
+        path='/templates',
         data=response.data
     )
     assert response.status_code == 200

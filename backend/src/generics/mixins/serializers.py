@@ -1,6 +1,7 @@
 # pylint: disable=no-name-in-module
 from ast import literal_eval
-from collections import OrderedDict, Iterable
+from collections import OrderedDict
+from collections.abc import Iterable
 from collections.abc import Mapping
 from django.core.exceptions import ValidationError as DjangoValidationError
 from typing import Dict, Any, List, Optional, Union

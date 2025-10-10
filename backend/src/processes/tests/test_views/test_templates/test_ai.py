@@ -40,7 +40,7 @@ def test_create__account_owner__ok(mocker, api_client):
 
     # act
     response = api_client.post(
-        path=f'/templates/ai',
+        path='/templates/ai',
         data={'description': description}
     )
 
@@ -84,7 +84,7 @@ def test_create__admin__ok(
 
     # act
     response = api_client.post(
-        path=f'/templates/ai',
+        path='/templates/ai',
         data={'description': description}
     )
 
@@ -126,7 +126,7 @@ def test_create__request_user_is_not_authenticated__permission_denied(
 
     # act
     response = api_client.post(
-        path=f'/templates/ai',
+        path='/templates/ai',
         data={'description': description}
     )
 
@@ -163,7 +163,7 @@ def test_create__user_not_admin__permission_denied(
 
     # act
     response = api_client.post(
-        path=f'/templates/ai',
+        path='/templates/ai',
         data={'description': description}
     )
 
@@ -199,7 +199,7 @@ def test_create__description_over_limit__validation_error(
 
     # act
     response = api_client.post(
-        path=f'/templates/ai',
+        path='/templates/ai',
         data={'description': description}
     )
 
@@ -237,7 +237,7 @@ def test_create__description_null__validation_error(
 
     # act
     response = api_client.post(
-        path=f'/templates/ai',
+        path='/templates/ai',
         data={'description': None}
     )
 
@@ -277,7 +277,7 @@ def test_create__description__invalid_value__validation_error(
 
     # act
     response = api_client.post(
-        path=f'/templates/ai',
+        path='/templates/ai',
         data={'description': description}
     )
 
@@ -316,7 +316,7 @@ def test_create__service_exception__validation_error(
 
     # act
     response = api_client.post(
-        path=f'/templates/ai',
+        path='/templates/ai',
         data={'description': description}
     )
 

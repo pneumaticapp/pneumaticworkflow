@@ -51,7 +51,7 @@ def test_create__account_owner__ok(mocker, api_client):
 
     # act
     response = api_client.post(
-        path=f'/templates/by-steps',
+        path='/templates/by-steps',
         data={
             'name': name,
             'tasks': tasks
@@ -121,7 +121,7 @@ def test_create__admin__ok(
 
     # act
     response = api_client.post(
-        path=f'/templates/by-steps',
+        path='/templates/by-steps',
         data={
             'name': name,
             'tasks': tasks
@@ -167,7 +167,7 @@ def test_create__request_user_is_not_authenticated__permission_denied(
 
     # act
     response = api_client.post(
-        path=f'/templates/by-steps',
+        path='/templates/by-steps',
         data={
             'name': name,
             'tasks': tasks
@@ -210,7 +210,7 @@ def test_create__task_over_limit__cut_to_max_len(
 
     # act
     response = api_client.post(
-        path=f'/templates/by-steps',
+        path='/templates/by-steps',
         data={
             'name': name,
             'tasks': tasks
@@ -264,7 +264,7 @@ def test_create__task_description_null__validation_error(
 
     # act
     response = api_client.post(
-        path=f'/templates/by-steps',
+        path='/templates/by-steps',
         data={
             'name': name,
             'tasks': tasks
@@ -310,7 +310,7 @@ def test_create__task_description_blank__validation_error(
 
     # act
     response = api_client.post(
-        path=f'/templates/by-steps',
+        path='/templates/by-steps',
         data={
             'name': name,
             'tasks': tasks
@@ -358,7 +358,7 @@ def test_create__task_description__invalid_value__validation_error(
 
     # act
     response = api_client.post(
-        path=f'/templates/by-steps',
+        path='/templates/by-steps',
         data={
             'name': name,
             'tasks': tasks
@@ -404,7 +404,7 @@ def test_create__task_name_null__validation_error(
 
     # act
     response = api_client.post(
-        path=f'/templates/by-steps',
+        path='/templates/by-steps',
         data={
             'name': name,
             'tasks': tasks
@@ -450,7 +450,7 @@ def test_create__task_name_blank__validation_error(
 
     # act
     response = api_client.post(
-        path=f'/templates/by-steps',
+        path='/templates/by-steps',
         data={
             'name': name,
             'tasks': tasks
@@ -494,7 +494,7 @@ def test_create__name_null__validation_error(
 
     # act
     response = api_client.post(
-        path=f'/templates/by-steps',
+        path='/templates/by-steps',
         data={
             'name': name,
             'tasks': tasks
@@ -540,7 +540,7 @@ def test_create__name_blank__validation_error(
 
     # act
     response = api_client.post(
-        path=f'/templates/by-steps',
+        path='/templates/by-steps',
         data={
             'name': name,
             'tasks': tasks
@@ -587,7 +587,7 @@ def test_create__service_exception__validation_error(
     api_client.token_authenticate(user)
 
     response = api_client.post(
-        path=f'/templates/by-steps',
+        path='/templates/by-steps',
         data={
             'name': name,
             'tasks': tasks

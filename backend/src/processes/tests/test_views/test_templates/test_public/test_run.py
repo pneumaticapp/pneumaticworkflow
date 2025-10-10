@@ -110,7 +110,7 @@ class TestRunPublicTemplate:
 
         # act
         response = api_client.post(
-            path=f'/templates/public/run',
+            path='/templates/public/run',
             data={
                 'captcha': 'skip',
                 'fields': {
@@ -206,7 +206,7 @@ class TestRunPublicTemplate:
 
         # act
         response = api_client.post(
-            path=f'/templates/public/run',
+            path='/templates/public/run',
             data={
                 'captcha': 'skip',
                 'fields': {
@@ -288,7 +288,7 @@ class TestRunPublicTemplate:
 
         # act
         response = api_client.post(
-            path=f'/templates/public/run',
+            path='/templates/public/run',
             data={
                 'captcha': 'skip',
                 'fields': {
@@ -373,7 +373,7 @@ class TestRunPublicTemplate:
 
         # act
         response = api_client.post(
-            path=f'/templates/public/run',
+            path='/templates/public/run',
             data={
                 'captcha': 'skip',
             },
@@ -458,7 +458,7 @@ class TestRunPublicTemplate:
 
         # act
         response = api_client.get(
-            path=f'/templates/public',
+            path='/templates/public',
             **{'X-Public-Authorization': auth_header_value}
         )
 
@@ -508,7 +508,7 @@ class TestRunPublicTemplate:
 
         # act
         response = api_client.post(
-            path=f'/templates/public/run',
+            path='/templates/public/run',
             data={
                 'captcha': 'skip',
                 'fields': {}
@@ -562,7 +562,7 @@ class TestRunPublicTemplate:
 
         # act
         response = api_client.post(
-            path=f'/templates/public/run',
+            path='/templates/public/run',
             data={
                 'captcha': 'skip',
                 'fields': {}
@@ -618,7 +618,7 @@ class TestRunPublicTemplate:
 
         # act
         response = api_client.post(
-            path=f'/templates/public/run',
+            path='/templates/public/run',
             data={
                 'captcha': 'skip',
             },
@@ -668,7 +668,7 @@ class TestRunPublicTemplate:
 
         # act
         response = api_client.post(
-            path=f'/templates/public/run',
+            path='/templates/public/run',
             data={
                 'captcha': 'skip',
                 'fields': None
@@ -734,7 +734,7 @@ class TestRunPublicTemplate:
 
         # act
         response = api_client.post(
-            path=f'/templates/public/run',
+            path='/templates/public/run',
             data={
                 'captcha': 'skip',
                 'fields': {},
@@ -799,7 +799,7 @@ class TestRunPublicTemplate:
 
         # act
         response = api_client.post(
-            path=f'/templates/public/run',
+            path='/templates/public/run',
             data={
                 'captcha': 'skip',
                 'fields': {},
@@ -882,7 +882,7 @@ class TestRunPublicTemplate:
 
         # act
         response = api_client.post(
-            path=f'/templates/public/run',
+            path='/templates/public/run',
             data={
                 'captcha': 'skip',
                 'fields': {
@@ -967,7 +967,7 @@ class TestRunPublicTemplate:
 
         # act
         response = api_client.post(
-            path=f'/templates/public/run',
+            path='/templates/public/run',
             data={
                 'captcha': 'skip',
                 'fields': {
@@ -1031,7 +1031,7 @@ class TestRunPublicTemplate:
 
         # act
         response = api_client.post(
-            path=f'/templates/public/run',
+            path='/templates/public/run',
             data={'fields': {}},
             **{'X-Public-Authorization': auth_header_value}
         )
@@ -1107,7 +1107,7 @@ class TestRunPublicTemplate:
 
         # act
         response = api_client.post(
-            path=f'/templates/public/run',
+            path='/templates/public/run',
             data={
                 'captcha': 'skip'
             },
@@ -1190,7 +1190,7 @@ class TestRunPublicTemplate:
 
         # act
         response = api_client.post(
-            path=f'/templates/public/run',
+            path='/templates/public/run',
             data={
                 'captcha': 'skip',
                 'fields': {
@@ -1295,7 +1295,7 @@ class TestRunPublicTemplate:
 
         # act
         response = api_client.post(
-            path=f'/templates/public/run',
+            path='/templates/public/run',
             data={
                 'captcha': 'skip',
                 'fields': {
@@ -1384,7 +1384,7 @@ class TestRunPublicTemplate:
 
         # act
         response = api_client.post(
-            path=f'/templates/public/run',
+            path='/templates/public/run',
             data={
                 'captcha': 'skip',
                 'fields': {
@@ -1444,7 +1444,7 @@ class TestRunPublicTemplate:
 
         # act
         response = api_client.post(
-            path=f'/templates/public/run',
+            path='/templates/public/run',
             data={
                 'captcha': '',
             },
@@ -1499,7 +1499,7 @@ class TestRunEmbedTemplate:
 
         # act
         response = api_client.post(
-            path=f'/templates/public/run',
+            path='/templates/public/run',
             data={
                 'captcha': 'skip',
                 'fields': {}
@@ -1588,7 +1588,7 @@ class TestRunEmbedTemplate:
 
         # act
         response = api_client.post(
-            path=f'/templates/public/run',
+            path='/templates/public/run',
             data={
                 'captcha': 'skip',
                 'fields': {
@@ -1641,7 +1641,7 @@ class TestRunEmbedTemplate:
 
         # act
         response = api_client.get(
-            path=f'/templates/public',
+            path='/templates/public',
             **{'X-Public-Authorization': auth_header_value}
         )
 
@@ -1688,7 +1688,7 @@ class TestRunEmbedTemplate:
 
         # act
         response = api_client.post(
-            path=f'/templates/public/run',
+            path='/templates/public/run',
             data={'fields': {}},
             **{'X-Public-Authorization': auth_header_value}
         )
@@ -1762,7 +1762,7 @@ class TestRunEmbedTemplate:
 
         # act
         response = api_client.post(
-            path=f'/templates/public/run',
+            path='/templates/public/run',
             data={
                 'captcha': 'skip'
             },
@@ -1846,7 +1846,7 @@ class TestRunEmbedTemplate:
 
         # act
         response = api_client.post(
-            path=f'/templates/public/run',
+            path='/templates/public/run',
             data={
                 'captcha': 'skip',
                 'fields': {
@@ -1951,7 +1951,7 @@ class TestRunEmbedTemplate:
 
         # act
         response = api_client.post(
-            path=f'/templates/public/run',
+            path='/templates/public/run',
             data={
                 'captcha': 'skip',
                 'fields': {
@@ -2037,7 +2037,7 @@ class TestRunEmbedTemplate:
 
         # act
         response = api_client.post(
-            path=f'/templates/public/run',
+            path='/templates/public/run',
             data={
                 'captcha': 'skip',
                 'fields': {
@@ -2097,7 +2097,7 @@ class TestRunEmbedTemplate:
 
         # act
         response = api_client.post(
-            path=f'/templates/public/run',
+            path='/templates/public/run',
             data={},
             **{'X-Public-Authorization': auth_header_value}
         )

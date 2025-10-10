@@ -168,7 +168,7 @@ def test_publish__no_authenticated__permission_denied(mocker, api_client):
 
     # act
     response = api_client.post(
-        f'/workflows/attachments/1/publish'
+        '/workflows/attachments/1/publish'
     )
 
     # assert

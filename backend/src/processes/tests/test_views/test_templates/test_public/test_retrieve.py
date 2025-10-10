@@ -54,7 +54,7 @@ class TestRetrievePublicTemplate:
 
         # act
         response = api_client.get(
-            path=f'/templates/public',
+            path='/templates/public',
             **{'X-Public-Authorization': auth_header_value}
         )
 
@@ -103,7 +103,7 @@ class TestRetrievePublicTemplate:
 
         # act
         response = api_client.get(
-            path=f'/templates/public',
+            path='/templates/public',
             **{'X-Public-Authorization': auth_header_value}
         )
 
@@ -147,11 +147,11 @@ class TestRetrievePublicTemplate:
             'integrations.TemplateIntegrationsService.public_api_request',
         )
         response_1 = api_client.get(
-            path=f'/templates/public',
+            path='/templates/public',
             **{'X-Public-Authorization': auth_header_value}
         )
         response_2 = api_client.post(
-            path=f'/templates/public/run',
+            path='/templates/public/run',
             data={'fields': {}},
             **{'X-Public-Authorization': auth_header_value}
         )
@@ -163,7 +163,7 @@ class TestRetrievePublicTemplate:
 
         # act
         response_3 = api_client.get(
-            path=f'/templates/public',
+            path='/templates/public',
             **{'X-Public-Authorization': auth_header_value}
         )
 
@@ -208,7 +208,7 @@ class TestRetrievePublicTemplate:
 
         # act
         response = api_client.get(
-            path=f'/templates/public',
+            path='/templates/public',
             **{'X-Public-Authorization': auth_header_value}
         )
 
@@ -258,7 +258,7 @@ class TestRetrieveEmbedTemplate:
 
         # act
         response = api_client.get(
-            path=f'/templates/public',
+            path='/templates/public',
             **{'X-Public-Authorization': auth_header_value}
         )
 
@@ -307,7 +307,7 @@ class TestRetrieveEmbedTemplate:
 
         # act
         response = api_client.get(
-            path=f'/templates/public',
+            path='/templates/public',
             **{'X-Public-Authorization': auth_header_value}
         )
 
@@ -348,7 +348,7 @@ class TestRetrieveEmbedTemplate:
         settings_mock.PROJECT_CONF = {'CAPTCHA': True}
 
         response_1 = api_client.get(
-            path=f'/templates/public',
+            path='/templates/public',
             **{'X-Public-Authorization': auth_header_value}
         )
         mocker.patch(
@@ -356,7 +356,7 @@ class TestRetrieveEmbedTemplate:
             'integrations.TemplateIntegrationsService.public_api_request',
         )
         response_2 = api_client.post(
-            path=f'/templates/public/run',
+            path='/templates/public/run',
             data={'fields': {}},
             **{'X-Public-Authorization': auth_header_value}
         )
@@ -368,7 +368,7 @@ class TestRetrieveEmbedTemplate:
 
         # act
         response_3 = api_client.get(
-            path=f'/templates/public',
+            path='/templates/public',
             **{'X-Public-Authorization': auth_header_value}
         )
 
@@ -420,7 +420,7 @@ class TestRetrieveEmbedTemplate:
 
         # act
         response = api_client.get(
-            path=f'/templates/public',
+            path='/templates/public',
             **{'X-Public-Authorization': auth_header_value}
         )
 

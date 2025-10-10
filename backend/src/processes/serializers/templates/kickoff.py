@@ -41,7 +41,7 @@ class KickoffSerializer(
     fields = FieldTemplateSerializer(many=True, required=False)
 
     def to_representation(self, data: Dict[str, Any]):
-        data = super(KickoffSerializer, self).to_representation(data)
+        data = super().to_representation(data)
         if data.get('fields') is None:
             data['fields'] = []
         return data

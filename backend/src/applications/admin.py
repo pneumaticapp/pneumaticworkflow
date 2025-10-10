@@ -36,7 +36,7 @@ class IntegrationCreateForm(ModelForm):
     )
 
     def clean(self):
-        cleaned_data = super(IntegrationCreateForm, self).clean()
+        cleaned_data = super().clean()
         cleaned_file = cleaned_data.get("image_file")
         if cleaned_file:
             if os.path.splitext(cleaned_file.name)[1].lower() != '.svg':
@@ -53,7 +53,7 @@ class IntegrationCreateForm(ModelForm):
 
         image = self.cleaned_data.get('image_file', None)
         if not image:
-            return super(IntegrationCreateForm, self).save(commit=commit)
+            return super().save(commit=commit)
 
         file_path = image.name.replace(' ', '_')
         storage = GoogleCloudService()
@@ -62,7 +62,7 @@ class IntegrationCreateForm(ModelForm):
             binary=image.file.getvalue(),
             content_type='image/svg+xml'
         )
-        integration = super(IntegrationCreateForm, self).save(commit=commit)
+        integration = super().save(commit=commit)
         integration.logo = public_url
         integration.save()
         return integration

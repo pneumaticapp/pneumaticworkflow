@@ -1428,7 +1428,7 @@ def test_list__filter_assigned_to_not_number__validation_error(api_client):
     api_client.token_authenticate(user=user)
 
     # act
-    response = api_client.get(f'/v3/tasks?assigned_to=DROP DATABASE')
+    response = api_client.get('/v3/tasks?assigned_to=DROP DATABASE')
 
     # assert
     message = 'A valid integer is required.'
@@ -1902,7 +1902,7 @@ def test_list__filter_template_id_not_number__validation_error(api_client):
     api_client.token_authenticate(user=user)
 
     # act
-    response = api_client.get(f"/v3/tasks?template_id=' OR 1='1")
+    response = api_client.get("/v3/tasks?template_id=' OR 1='1")
 
     # assert
     message = 'A valid integer is required.'

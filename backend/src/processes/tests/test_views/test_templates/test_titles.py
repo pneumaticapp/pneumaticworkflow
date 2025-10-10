@@ -1220,7 +1220,7 @@ def test_titles__workflows_status_invalid_value__validation_error(
     api_client.token_authenticate(account_owner)
 
     # act
-    response = api_client.get(f'/templates/titles?workflows_status=undefined')
+    response = api_client.get('/templates/titles?workflows_status=undefined')
 
     # assert
     assert response.status_code == 400

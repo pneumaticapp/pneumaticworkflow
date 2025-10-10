@@ -180,7 +180,7 @@ def test_webhook_example__filter_ordering_date_created__ok(api_client):
 
     # act
     response = api_client.get(
-        f'/v2/tasks/webhook-example?ordering=date_started'
+        '/v2/tasks/webhook-example?ordering=date_started'
     )
 
     # assert
@@ -204,7 +204,7 @@ def test_webhook_example__filter_ordering_date_created_reverse__ok(api_client):
 
     # act
     response = api_client.get(
-        f'/v2/tasks/webhook-example?ordering=-date_started'
+        '/v2/tasks/webhook-example?ordering=-date_started'
     )
 
     # assert

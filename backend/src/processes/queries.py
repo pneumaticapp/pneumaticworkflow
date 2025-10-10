@@ -155,7 +155,7 @@ class WorkflowListQuery(
         return ""
 
     def _get_where(self):
-        where = f"""
+        where = """
             WHERE pw.is_deleted IS FALSE
             AND pw.account_id = %(account_id)s """
 
@@ -222,7 +222,7 @@ class WorkflowListQuery(
         return where
 
     def _get_from(self):
-        result = f"""
+        result = """
             FROM processes_workflow pw
             LEFT JOIN processes_workflow_owners pwo ON (
                 pw.id = pwo.workflow_id
@@ -684,7 +684,7 @@ class WorkflowCountsByCPerformerQuery(
             conditions.append(f"{self._get_is_external()}")
 
         if self.status is not None:
-            conditions.append(f"pw.status = %(status)s")
+            conditions.append("pw.status = %(status)s")
 
         if conditions:
             return "AND " + " AND ".join(conditions)
@@ -1457,7 +1457,7 @@ class TemplateStepsQuery(
                 AND pt.status = '{TaskStatus.ACTIVE}'
                 AND pw.status = {WorkflowStatus.RUNNING}"""
         elif self.with_tasks_in_progress is False:
-            result += f"""
+            result += """
                 AND pt.is_deleted IS FALSE
                 AND dereferenced_performers.is_completed IS TRUE"""
         return result
@@ -1545,7 +1545,7 @@ class HighlightsQuery(SqlQueryObject):
             self.date_after_tsp = date_after_tsp
 
     def get_sql(self):
-        subquery = f"""
+        subquery = """
         SELECT DISTINCT ON (we.workflow_id)
           we.id,
           we.type,
@@ -1597,11 +1597,11 @@ class HighlightsQuery(SqlQueryObject):
 
         if hasattr(self, 'date_before_tsp'):
             self.sql_params['date_before_tsp'] = self.date_before_tsp
-            where.append(f'we.created <= %(date_before_tsp)s')
+            where.append('we.created <= %(date_before_tsp)s')
 
         if hasattr(self, 'date_after_tsp'):
             self.sql_params['date_after_tsp'] = self.date_after_tsp
-            where.append(f'we.created >= %(date_after_tsp)s')
+            where.append('we.created >= %(date_after_tsp)s')
 
         if additional_where:
             additional_where = ' AND '.join(additional_where)
@@ -1807,11 +1807,11 @@ class TemplateTitlesQuery(SqlQueryObject, DereferencedPerformersMixin):
                 AND pt.status = '{TaskStatus.ACTIVE}'
                 AND pw.status = {WorkflowStatus.RUNNING}"""
         elif self.with_tasks_in_progress is False:
-            result += f"""
+            result += """
                 AND pt.is_deleted IS FALSE
                 AND dereferenced_performers.is_completed IS TRUE"""
         elif self.status is not None:
-            result += f"AND pw.status = %(status)s"
+            result += "AND pw.status = %(status)s"
         return result
 
     def get_sql(self) -> Tuple[str, dict]:

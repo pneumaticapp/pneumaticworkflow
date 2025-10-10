@@ -196,7 +196,7 @@ def test_update_not_exists__permission_denied(
 
     # act
     response = api_client.patch(
-        f'/tenants/123',
+        '/tenants/123',
         data={
             'tenant_name': tenant_name
         }

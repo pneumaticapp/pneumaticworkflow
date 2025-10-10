@@ -67,7 +67,7 @@ def test_list__workflow_data__ok(api_client):
     api_client.token_authenticate(user)
 
     # act
-    response = api_client.get(f'/workflows?ordering=date')
+    response = api_client.get('/workflows?ordering=date')
 
     # assert
     assert response.status_code == 200
@@ -130,7 +130,7 @@ def test_list__multiple_tasks__ok(api_client):
     api_client.token_authenticate(user)
 
     # act
-    response = api_client.get(f'/workflows?ordering=date')
+    response = api_client.get('/workflows?ordering=date')
 
     # assert
     assert response.status_code == 200
@@ -162,7 +162,7 @@ def test_list__not_return_skipped_tasks__ok(api_client):
     api_client.token_authenticate(user)
 
     # act
-    response = api_client.get(f'/workflows?ordering=date')
+    response = api_client.get('/workflows?ordering=date')
 
     # assert
     assert response.status_code == 200
@@ -239,7 +239,7 @@ def test_list__workflow_active_task_delay__ok(api_client):
     api_client.token_authenticate(user)
 
     # act
-    response = api_client.get(f'/workflows?ordering=date')
+    response = api_client.get('/workflows?ordering=date')
 
     # assert
     assert response.status_code == 200
@@ -264,7 +264,7 @@ def test_list__not_template_owner__empty_list(api_client):
     api_client.token_authenticate(user_2)
 
     # act
-    response = api_client.get(f'/workflows?ordering=date')
+    response = api_client.get('/workflows?ordering=date')
 
     # assert
     assert response.status_code == 200
@@ -1065,7 +1065,7 @@ def test_list__search_workflow_name_with_status__ok(api_client):
 
     # act
     response = api_client.get(
-        path=f'/workflows',
+        path='/workflows',
         data={
             'search': search_text,
             'status': WorkflowApiStatus.DONE
@@ -1531,7 +1531,7 @@ def test_list__filter_is_external__ok(api_client):
 
     # act
     response = api_client.get(
-        f'/workflows?is_external=true'
+        '/workflows?is_external=true'
     )
 
     # assert
@@ -1554,7 +1554,7 @@ def test_list__filter_is_external__default_ordering__ok(api_client):
 
     # act
     response = api_client.get(
-        f'/workflows?is_external=true'
+        '/workflows?is_external=true'
     )
 
     # assert
@@ -1595,7 +1595,7 @@ def test_list__filter_invalid_is_external__validation_error(api_client):
     )
 
     # assert
-    message = f'Must be a valid boolean.'
+    message = 'Must be a valid boolean.'
     assert response.status_code == 400
     assert response.data['code'] == ErrorCode.VALIDATION_ERROR
     assert response.data['message'] == message
@@ -2035,7 +2035,7 @@ def test_list__filter_invalid_workflow_starter__validation_error(api_client):
 
     # act
     response = api_client.get(
-        f'/workflows?workflow_starter=undefined'
+        '/workflows?workflow_starter=undefined'
     )
 
     # assert
@@ -2275,7 +2275,7 @@ def test_list__filter_fields_blank__empty_list(api_client):
     api_client.token_authenticate(user)
 
     # act
-    response = api_client.get(f'/workflows?fields=')
+    response = api_client.get('/workflows?fields=')
 
     # assert
     assert response.status_code == 200
@@ -2300,7 +2300,7 @@ def test_list__filter_fields_not_existent_field__empty_list(api_client):
     api_client.token_authenticate(user)
 
     # act
-    response = api_client.get(f'/workflows?fields=not-existent')
+    response = api_client.get('/workflows?fields=not-existent')
 
     # assert
     assert response.status_code == 200
@@ -2627,7 +2627,7 @@ def test_list__active_task_deleted_performer__ok(api_client):
     api_client.token_authenticate(user)
 
     # act
-    response = api_client.get(f'/workflows')
+    response = api_client.get('/workflows')
 
     # assert
     assert response.status_code == 200
@@ -2666,7 +2666,7 @@ def test_list__guest_performer__ok(
     api_client.token_authenticate(account_owner)
 
     # act
-    response = api_client.get(f'/workflows')
+    response = api_client.get('/workflows')
 
     # assert
     assert response.status_code == 200

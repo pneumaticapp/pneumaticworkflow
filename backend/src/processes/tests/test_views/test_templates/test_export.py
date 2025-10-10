@@ -327,7 +327,7 @@ def test_export__filter_is_public__ok(api_client):
     )
 
     # act
-    response = api_client.get(f'/templates/export?is_public=true')
+    response = api_client.get('/templates/export?is_public=true')
 
     # assert
     assert response.status_code == 200

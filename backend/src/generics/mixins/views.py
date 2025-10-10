@@ -85,7 +85,7 @@ class BaseContextMixin:
         return serializer_class(*args, **kwargs)
 
     def get_serializer_context(self, **kwargs):
-        context = super(BaseContextMixin, self).get_serializer_context()
+        context = super().get_serializer_context()
         context.update(kwargs)
         return context
 

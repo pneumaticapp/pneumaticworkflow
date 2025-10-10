@@ -141,7 +141,7 @@ class TestIntegrations:
         )
 
         # act
-        response = api_client.get(f'/templates/integrations')
+        response = api_client.get('/templates/integrations')
 
         # assert
         assert response.status_code == 200
@@ -168,7 +168,7 @@ class TestIntegrations:
         )
 
         # act
-        response = api_client.get(f'/templates/integrations')
+        response = api_client.get('/templates/integrations')
 
         # assert
         assert response.status_code == 403

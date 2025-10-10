@@ -267,7 +267,7 @@ def test__disable_log_api_requests__skip(api_client, mocker):
     )
 
     # act
-    response = api_client.get(f'/accounts/account')
+    response = api_client.get('/accounts/account')
 
     # assert
     assert response.status_code == 200

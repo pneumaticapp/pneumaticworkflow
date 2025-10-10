@@ -666,7 +666,7 @@ def test_create_template__from_imported_template__ok(api_client):
 
     # act
     response = api_client.post(
-        path=f'/templates',
+        path='/templates',
         data=response_fill.data
     )
 
@@ -739,7 +739,7 @@ def test_create_template__kickoff_fields__ok(api_client):
 
     # act
     response = api_client.post(
-        path=f'/templates',
+        path='/templates',
         data=response_fill.data
     )
 

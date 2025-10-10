@@ -37,7 +37,7 @@ class HTMLList:
 
     def close_li(self):
         if self._is_open_li:
-            self._html += f'</li>'
+            self._html += '</li>'
             self._is_open_li = False
 
     def close(self):

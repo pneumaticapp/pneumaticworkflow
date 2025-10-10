@@ -108,7 +108,7 @@ class TestWorkflowCountsByWorkflowStarter:
 
         # act
         response = api_client.get(
-            f'/workflows/count/by-workflow-starter',
+            '/workflows/count/by-workflow-starter',
             data={
                 'status': WorkflowApiStatus.DONE
             }
@@ -142,7 +142,7 @@ class TestWorkflowCountsByWorkflowStarter:
 
         # act
         response = api_client.get(
-            f'/workflows/count/by-workflow-starter',
+            '/workflows/count/by-workflow-starter',
             data={
                 'status': WorkflowApiStatus.RUNNING
             }
@@ -172,7 +172,7 @@ class TestWorkflowCountsByWorkflowStarter:
 
         # act
         response = api_client.get(
-            f'/workflows/count/by-workflow-starter',
+            '/workflows/count/by-workflow-starter',
             data={
                 'status': WorkflowApiStatus.DELAYED
             }
@@ -201,7 +201,7 @@ class TestWorkflowCountsByWorkflowStarter:
 
         # act
         response = api_client.get(
-            f'/workflows/count/by-workflow-starter',
+            '/workflows/count/by-workflow-starter',
             data={'status': 'delayed'}
         )
 
@@ -1117,7 +1117,7 @@ class TestWorkflowCountsByTemplateTask:
 
         # act
         response = api_client.get(
-            f'/workflows/count/by-template-task',
+            '/workflows/count/by-template-task',
             data={
                 'status': WorkflowApiStatus.DONE
             }
@@ -1167,7 +1167,7 @@ class TestWorkflowCountsByTemplateTask:
 
         # act
         response = api_client.get(
-            f'/workflows/count/by-template-task',
+            '/workflows/count/by-template-task',
             data={
                 'status': WorkflowApiStatus.RUNNING
             }
@@ -1207,7 +1207,7 @@ class TestWorkflowCountsByTemplateTask:
 
         # act
         response = api_client.get(
-            f'/workflows/count/by-template-task',
+            '/workflows/count/by-template-task',
             data={
                 'status': WorkflowApiStatus.DELAYED
             }
@@ -1243,7 +1243,7 @@ class TestWorkflowCountsByTemplateTask:
 
         # act
         response = api_client.get(
-            f'/workflows/count/by-template-task',
+            '/workflows/count/by-template-task',
             data={'status': 'delayed'}
         )
 
@@ -1285,7 +1285,7 @@ class TestWorkflowCountsByTemplateTask:
 
         # act
         response = api_client.get(
-            f'/workflows/count/by-template-task',
+            '/workflows/count/by-template-task',
             data={
                 'template_ids': f'{template_1.id},{template_3.id}'
             }
@@ -1364,7 +1364,7 @@ class TestWorkflowCountsByTemplateTask:
 
         # act
         response = api_client.get(
-            f'/workflows/count/by-template-task',
+            '/workflows/count/by-template-task',
             data={'current_performer_ids': user.id}
         )
 
@@ -1446,7 +1446,7 @@ class TestWorkflowCountsByTemplateTask:
 
         # act
         response = api_client.get(
-            f'/workflows/count/by-template-task',
+            '/workflows/count/by-template-task',
             data={
                 'current_performer_group_ids': group.id
             }
@@ -1530,7 +1530,7 @@ class TestWorkflowCountsByTemplateTask:
 
         # act
         response = api_client.get(
-            f'/workflows/count/by-template-task',
+            '/workflows/count/by-template-task',
             data={
                 'current_performer_ids': user.id,
                 'current_performer_group_ids': group.id
@@ -1615,7 +1615,7 @@ class TestWorkflowCountsByTemplateTask:
 
         # act
         response = api_client.get(
-            f'/workflows/count/by-template-task',
+            '/workflows/count/by-template-task',
             data={
                 'current_performer_ids': user.id,
                 'current_performer_group_ids': group.id
@@ -1660,7 +1660,7 @@ class TestWorkflowCountsByTemplateTask:
 
         # act
         response = api_client.get(
-            f'/workflows/count/by-template-task',
+            '/workflows/count/by-template-task',
             data={'current_performer_group_ids': 'None'}
         )
 
@@ -1684,7 +1684,7 @@ class TestWorkflowCountsByTemplateTask:
 
         # act
         response = api_client.get(
-            f'/workflows/count/by-template-task',
+            '/workflows/count/by-template-task',
             data={'current_performer_ids': 'None'}
         )
 
@@ -1707,7 +1707,7 @@ class TestWorkflowCountsByTemplateTask:
 
         # act
         response = api_client.get(
-            f'/workflows/count/by-template-task',
+            '/workflows/count/by-template-task',
             data={
                 'status': WorkflowApiStatus.DONE,
                 'current_performer_ids': user.id
@@ -1735,7 +1735,7 @@ class TestWorkflowCountsByTemplateTask:
 
         # act
         response = api_client.get(
-            f'/workflows/count/by-template-task',
+            '/workflows/count/by-template-task',
         )
 
         # assert

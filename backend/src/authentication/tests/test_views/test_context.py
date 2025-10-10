@@ -147,7 +147,7 @@ def test_context__guest__ok(api_client):
 
     # act
     response = api_client.get(
-        f'/auth/context',
+        '/auth/context',
         **{'X-Guest-Authorization': str_token}
     )
 
