@@ -1,4 +1,3 @@
-# pylint:disable=redefined-outer-name
 import pytest
 from src.accounts.enums import (
     UserInviteStatus,

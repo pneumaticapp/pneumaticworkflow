@@ -539,7 +539,7 @@ class StripeService(StripeMixin):
                     and current_price.id != new_price.id
                 ):
                     raise exceptions.PurchaseArchivedPrice()
-            else:
+            else:  # noqa: PLR5501
                 if new_price.is_archived:
                     raise exceptions.PurchaseArchivedPrice()
 

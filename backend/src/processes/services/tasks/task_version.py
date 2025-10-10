@@ -91,7 +91,7 @@ class TaskUpdateVersionService(
                     duration=new_duration,
                     workflow=self.instance.workflow
                 )
-        else:
+        else:  # noqa: PLR5501
             if existent_delay:
                 if self.instance.is_active:
                     if not existent_delay.directly_status:

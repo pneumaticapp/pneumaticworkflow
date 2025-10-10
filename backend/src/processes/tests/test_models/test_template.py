@@ -1,4 +1,3 @@
-# pylint:disable=redefined-outer-name
 import pytest
 from django.contrib.auth import get_user_model
 from django.utils import timezone

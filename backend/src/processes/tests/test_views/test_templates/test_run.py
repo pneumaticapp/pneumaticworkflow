@@ -1,4 +1,3 @@
-# pylint:disable=redefined-outer-name
 import pytz
 import pytest
 from datetime import timedelta
@@ -3026,7 +3025,6 @@ def test_run__task_name_with_invalid_kickoff_data_value__validation_error(
     user = create_test_user()
     api_client.token_authenticate(user)
     api_name = 'date-field-1'
-    kickoff_data = kickoff_data
     task_name = '{{%s}} - test name' % api_name
 
     # act

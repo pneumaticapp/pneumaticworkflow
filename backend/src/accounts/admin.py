@@ -1,3 +1,4 @@
+# ruff: noqa: PLC0415
 from django.db import transaction
 from django.contrib.auth import get_user_model, password_validation
 from django.conf import settings

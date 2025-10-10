@@ -162,9 +162,9 @@ class CustomValidationErrorMixin:
 
         if detail:
             if isinstance(detail, list):
-                for number, sub_detail in enumerate(detail):
-                    if isinstance(sub_detail, str):
-                        sub_detail = {self._message_key: sub_detail}
+                for number, _sub_detail in enumerate(detail):
+                    if isinstance(_sub_detail, str):
+                        sub_detail = {self._message_key: _sub_detail}
                         sub_detail.update(
                             self._get_data_for_enrichment(
                                 fields_data=fields_data,
@@ -175,14 +175,14 @@ class CustomValidationErrorMixin:
                     else:
                         detail[number] = self._enrich_error_detail(
                             fields_data=fields_data,
-                            detail=sub_detail,
+                            detail=_sub_detail,
                             field=field
                         )
             elif isinstance(detail, dict):
                 if self._enriched_key not in detail.keys():
-                    for key, sub_detail in detail.items():
-                        if isinstance(sub_detail, str):
-                            sub_detail = {self._message_key: sub_detail}
+                    for key, _sub_detail in detail.items():
+                        if isinstance(_sub_detail, str):
+                            sub_detail = {self._message_key: _sub_detail}
                             sub_detail.update(
                                 self._get_data_for_enrichment(
                                     fields_data=fields_data,
@@ -193,7 +193,7 @@ class CustomValidationErrorMixin:
                         else:
                             detail[key] = self._enrich_error_detail(
                                 fields_data=fields_data,
-                                detail=sub_detail,
+                                detail=_sub_detail,
                                 field=field
                             )
                     detail.update(

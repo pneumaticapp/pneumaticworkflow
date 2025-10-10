@@ -1,3 +1,4 @@
+# ruff: noqa: PLC0415
 from typing import Optional
 from django.conf import settings
 from django.db import transaction

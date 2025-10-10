@@ -1,3 +1,4 @@
+# ruff: noqa: PLC0415
 import re
 from typing import List, Optional, Dict, Any
 

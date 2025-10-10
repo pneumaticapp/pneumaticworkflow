@@ -1,5 +1,6 @@
+# ruff: noqa: PLC0415
 from django.utils import timezone
-from typing import List, Optional, Union, Set, Tuple
+from typing import List, Optional, Set, Tuple
 from collections import defaultdict
 from django.contrib.auth import get_user_model
 from django.contrib.postgres.search import SearchVectorField
@@ -356,16 +357,16 @@ class Task(
             defaultdict(list),
             defaultdict(list)
         )
-        for raw_performer in raw_performers:
-            if raw_performer.type == PerformerType.USER:
-                user_ids[raw_performer.user_id].append(raw_performer)
-            elif raw_performer.type == PerformerType.GROUP:
-                group_ids[raw_performer.group_id].append(raw_performer)
-            elif raw_performer.type == PerformerType.FIELD:
-                api_names[raw_performer.field.api_name].append(raw_performer)
-            elif raw_performer.type == PerformerType.WORKFLOW_STARTER:
+        for raw_performer_ in raw_performers:
+            if raw_performer_.type == PerformerType.USER:
+                user_ids[raw_performer_.user_id].append(raw_performer_)
+            elif raw_performer_.type == PerformerType.GROUP:
+                group_ids[raw_performer_.group_id].append(raw_performer_)
+            elif raw_performer_.type == PerformerType.FIELD:
+                api_names[raw_performer_.field.api_name].append(raw_performer_)
+            elif raw_performer_.type == PerformerType.WORKFLOW_STARTER:
                 user = self.get_default_performer()
-                user_ids[user.id].append(raw_performer)
+                user_ids[user.id].append(raw_performer_)
 
         if api_names:
             user_fields = self.workflow.get_fields(
@@ -443,8 +444,9 @@ class Task(
                         )
                         task_performer.save(update_fields=('directly_status',))
         if raw_performers_for_update:
-            from src.processes.models.workflows \
-                .raw_performer import RawPerformer
+            from src.processes.models.workflows.raw_performer import (
+                RawPerformer
+            )
             RawPerformer.objects.bulk_update(
                 objs=raw_performers_for_update,
                 fields=('task_performer_id',)

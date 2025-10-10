@@ -37,7 +37,7 @@ class GuestPerformersService(BasePerformersService):
     """ Service describes methods for change
         task performers with type 'GUEST' """
 
-    MAX_GUEST_PERFORMERS = environ.get('MAX_GUEST_PERFORMERS', 30)
+    MAX_GUEST_PERFORMERS = int(environ.get('MAX_GUEST_PERFORMERS', '30'))
 
     @classmethod
     def _get_user_for_create(
