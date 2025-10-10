@@ -77,7 +77,7 @@ class Auth0ViewSet(
                     ),
                     user_ip=request.META.get('HTTP_X_REAL_IP'),
                 )
-            except ObjectDoesNotExist:
+            except ObjectDoesNotExist as ex:
                 if settings.PROJECT_CONF['SIGNUP']:
                     user, token = self.signup(
                         **user_data,
@@ -89,7 +89,7 @@ class Auth0ViewSet(
                         gclid=slz.validated_data.get('gclid'),
                     )
                 else:
-                    raise AuthenticationFailed(MSG_AU_0003)
+                    raise AuthenticationFailed(MSG_AU_0003) from ex
             service.save_tokens_for_user(user)
             return self.response_ok({'token': token})
 

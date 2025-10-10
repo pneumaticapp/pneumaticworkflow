@@ -334,8 +334,8 @@ class WorkflowReturnToTaskSerializer(
                 data['task'] = workflow.tasks.get(id=task_id)
             else:
                 data['task'] = workflow.tasks.get(api_name=task_api_name)
-        except ObjectDoesNotExist:
-            raise ValidationError(messages.MSG_PW_0077)
+        except ObjectDoesNotExist as ex:
+            raise ValidationError(messages.MSG_PW_0077) from ex
         return data
 
 

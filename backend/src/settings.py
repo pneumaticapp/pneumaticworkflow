@@ -1,4 +1,3 @@
-# pylint: disable=W,C,R
 # ruff: noqa: PLC0415
 """
 Django settings for src project.

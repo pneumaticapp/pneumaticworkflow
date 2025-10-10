@@ -51,11 +51,11 @@ class TaskFieldService(BaseWorkflowService):
 
         try:
             value = Decimal(raw_value)
-        except (TypeError, ValueError, DecimalException):
+        except (TypeError, ValueError, DecimalException) as ex:
             raise TaskFieldException(
                 api_name=self.instance.api_name,
                 message=messages.MSG_PW_0084
-            )
+            ) from ex
         return FieldData(
             value=value,
             markdown_value=value,
@@ -109,11 +109,11 @@ class TaskFieldService(BaseWorkflowService):
             )
         try:
             selection = selections.get(api_name=raw_value)
-        except ObjectDoesNotExist:
+        except ObjectDoesNotExist as ex:
             raise TaskFieldException(
                 api_name=self.instance.api_name,
                 message=messages.MSG_PW_0028
-            )
+            ) from ex
         else:
             return FieldData(
                 value=selection.value,
@@ -187,11 +187,11 @@ class TaskFieldService(BaseWorkflowService):
             )
         try:
             NoSchemaURLValidator()(raw_value)
-        except ValidationCoreError:
+        except ValidationCoreError as ex:
             raise TaskFieldException(
                 api_name=self.instance.api_name,
                 message=messages.MSG_PW_0035
-            )
+            ) from ex
         else:
             markdown_value = f'[{self.instance.name}]({raw_value})'
             return FieldData(
@@ -217,11 +217,11 @@ class TaskFieldService(BaseWorkflowService):
             )
         try:
             attachments_ids = [int(attach_id) for attach_id in raw_value]
-        except (ValueError, TypeError):
+        except (ValueError, TypeError) as ex:
             raise TaskFieldException(
                 api_name=self.instance.api_name,
                 message=messages.MSG_PW_0036
-            )
+            ) from ex
         else:
             attachments = (
                 FileAttachment.objects
@@ -255,11 +255,11 @@ class TaskFieldService(BaseWorkflowService):
 
         try:
             user_id = int(raw_value)
-        except (ValueError, TypeError):
+        except (ValueError, TypeError) as ex:
             raise TaskFieldException(
                 api_name=self.instance.api_name,
                 message=messages.MSG_PW_0038
-            )
+            ) from ex
         else:
             user = self.account.users.by_id(user_id).first()
             if user is None:

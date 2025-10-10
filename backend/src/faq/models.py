@@ -1,4 +1,3 @@
-# pylint: disable=unsubscriptable-object
 from django.db.models import (
     TextField,
     BooleanField,

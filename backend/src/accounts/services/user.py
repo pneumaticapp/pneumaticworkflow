@@ -104,8 +104,8 @@ class UserService(
                 date_fmt=date_fmt,
                 date_fdw=date_fdw,
             )
-        except IntegrityError:
-            raise AlreadyRegisteredException()
+        except IntegrityError as ex:
+            raise AlreadyRegisteredException() from ex
         return self.instance
 
     def _create_related(self, **kwargs):

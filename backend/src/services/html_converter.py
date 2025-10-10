@@ -1,4 +1,3 @@
-# pylint:disable=anomalous-backslash-in-string
 from abc import abstractmethod
 from typing import Optional
 from src.services.markdown import MarkdownPatterns

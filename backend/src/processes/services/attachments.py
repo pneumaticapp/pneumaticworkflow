@@ -44,7 +44,7 @@ class AttachmentService:
                 data={'message': str(ex)},
                 level=SentryLogLevel.ERROR
             )
-            raise exceptions.CloudServiceException()
+            raise exceptions.CloudServiceException() from ex
         return upload_url, public_url
 
     def _publish_file(self, url: str):
@@ -59,7 +59,7 @@ class AttachmentService:
                 data={'message': str(ex)},
                 level=SentryLogLevel.ERROR
             )
-            raise exceptions.CloudServiceException()
+            raise exceptions.CloudServiceException() from ex
         else:
             if not file_blob:
                 raise exceptions.AttachmentEmptyBlobException()

@@ -61,8 +61,8 @@ class GuestPerformersService(BasePerformersService):
                 email=user_key,
                 account_id=account_id
             )
-        except UserModel.DoesNotExist:
-            raise PerformersServiceException(MSG_PW_0014)
+        except UserModel.DoesNotExist as ex:
+            raise PerformersServiceException(MSG_PW_0014) from ex
         else:
             return user
 

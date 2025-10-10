@@ -48,8 +48,8 @@ class WebHookEventViewSet(
                 is_superuser=request.is_superuser
             )
             url = service.get_event_url(event=event)
-        except exceptions.InvalidEventException:
-            raise Http404
+        except exceptions.InvalidEventException as ex:
+            raise Http404 from ex
         return self.response_ok({'url': url})
 
     @action(methods=('POST',), detail=True)
@@ -65,8 +65,8 @@ class WebHookEventViewSet(
                 event=event,
                 **slz.validated_data
             )
-        except exceptions.InvalidEventException:
-            raise Http404
+        except exceptions.InvalidEventException as ex:
+            raise Http404 from ex
         return self.response_ok()
 
     @action(methods=('POST',), detail=True)
@@ -77,6 +77,6 @@ class WebHookEventViewSet(
                 is_superuser=request.is_superuser
             )
             service.unsubscribe_event(event=event)
-        except exceptions.InvalidEventException:
-            raise Http404
+        except exceptions.InvalidEventException as ex:
+            raise Http404 from ex
         return self.response_ok()

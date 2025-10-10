@@ -399,8 +399,8 @@ class UserInviteService(
                 user.language = language
             try:
                 user.save()
-            except IntegrityError:
-                raise AlreadyRegisteredException()
+            except IntegrityError as ex:
+                raise AlreadyRegisteredException() from ex
 
             invite.status = UserInviteStatus.ACCEPTED
             invite.save(update_fields=['status', 'date_updated'])

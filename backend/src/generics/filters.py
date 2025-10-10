@@ -1,4 +1,3 @@
-# pylint: disable=unsupported-membership-test
 from typing import Optional
 from django_filters.rest_framework import (
     DjangoFilterBackend,

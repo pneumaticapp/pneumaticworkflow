@@ -114,11 +114,11 @@ class StripeMixin:
                     return account
                 else:
                     return account.tenants.only_tenants().get(id=account_id)
-        except (ValueError, TypeError, ObjectDoesNotExist):
+        except (ValueError, TypeError, ObjectDoesNotExist) as ex:
             raise exceptions.NotFoundAccountForSubscription(
                 account_id=account.id,
                 subs_metadata=subscription.metadata
-            )
+            ) from ex
 
     def get_subscription_details(
         self,

@@ -155,8 +155,8 @@ class GroupViewSet(
 
         try:
             group = self.get_queryset().get(id=pk)
-        except UserGroup.DoesNotExist:
-            raise Http404
+        except UserGroup.DoesNotExist as ex:
+            raise Http404 from ex
         query = CountTemplatesByGroupQuery(
             group_id=group.id,
             account_id=request.user.account_id,

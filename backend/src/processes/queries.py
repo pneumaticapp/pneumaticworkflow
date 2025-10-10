@@ -1515,16 +1515,16 @@ class HighlightsQuery(SqlQueryObject):
         if templates is not None:
             try:
                 self.templates = literal_eval(templates)
-            except (SyntaxError, ValueError):
-                raise ValidationError(MSG_PW_0024('templates'))
+            except (SyntaxError, ValueError) as ex:
+                raise ValidationError(MSG_PW_0024('templates')) from ex
 
         if current_performer_ids is not None:
             try:
                 self.users = current_performer_ids
                 if isinstance(self.users, int):
                     self.users = (self.users,)
-            except (SyntaxError, ValueError):
-                raise ValidationError(MSG_PW_0024('users'))
+            except (SyntaxError, ValueError) as ex:
+                raise ValidationError(MSG_PW_0024('users')) from ex
 
         if current_performer_group_ids is not None:
             group_users_ids = (

@@ -207,6 +207,6 @@ class UserInviteViewSet(
             service.resend_invite(user_id=pk)
         except AlreadyAcceptedInviteException as ex:
             raise_validation_error(message=ex.message)
-        except UserNotFoundException:
-            raise Http404
+        except UserNotFoundException as ex:
+            raise Http404 from ex
         return self.response_ok()

@@ -45,8 +45,8 @@ class TaskPerformersService(BasePerformersService):
                 id=user_key,
                 status__in=(UserStatus.ACTIVE, UserStatus.INVITED)
             )
-        except UserModel.DoesNotExist:
-            raise PerformersServiceException(MSG_PW_0014)
+        except UserModel.DoesNotExist as ex:
+            raise PerformersServiceException(MSG_PW_0014) from ex
 
     @classmethod
     def _get_user_for_delete(
@@ -58,8 +58,8 @@ class TaskPerformersService(BasePerformersService):
             return UserModel.include_inactive.on_account(
                 account_id
             ).type_user().by_id(user_key).get()
-        except UserModel.DoesNotExist:
-            raise PerformersServiceException(MSG_PW_0014)
+        except UserModel.DoesNotExist as ex:
+            raise PerformersServiceException(MSG_PW_0014) from ex
 
     @classmethod
     def _delete_actions(

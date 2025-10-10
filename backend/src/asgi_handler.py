@@ -1,4 +1,3 @@
-# pylint: disable=attribute-defined-outside-init
 # All about this file only exists because original AsgiHandler from
 # channels doesn't works propertly, and does things, that developers could have
 # avoided (sync_to_async decorator, for example). If we use a parent handler,

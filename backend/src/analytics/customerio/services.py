@@ -66,4 +66,4 @@ class WebHookService(
             else:
                 raise exceptions.UnsupportedMetric(data)
         except KeyError as ex:
-            raise exceptions.WebhookInvalidData(data, details=str(ex))
+            raise exceptions.WebhookInvalidData(data, details=str(ex)) from ex

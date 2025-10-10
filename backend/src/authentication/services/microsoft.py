@@ -1,5 +1,3 @@
-# pylint: disable=broad-except
-
 import json
 from typing import Optional, Union
 
@@ -291,13 +289,13 @@ class MicrosoftAuthService(
                 user_id=user_id,
                 source=SourceType.MICROSOFT
             )
-        except AccessToken.DoesNotExist:
+        except AccessToken.DoesNotExist as ex:
             capture_sentry_message(
                 message='MS Access  token not found for the user',
                 data={'user_id': user_id},
                 level=SentryLogLevel.ERROR
             )
-            raise exceptions.AccessTokenNotFound()
+            raise exceptions.AccessTokenNotFound() from ex
         else:
             if token.is_expired:
                 tokens_data = self.auth_client.acquire_token_by_refresh_token(

@@ -52,8 +52,8 @@ class ChecklistService(BaseWorkflowService):
                 checklist=self.instance,
                 id=selection_id
             )
-        except ObjectDoesNotExist:
-            raise exceptions.ChecklistSelectionNotFound()
+        except ObjectDoesNotExist as ex:
+            raise exceptions.ChecklistSelectionNotFound() from ex
         return selection
 
     def insert_fields_values(

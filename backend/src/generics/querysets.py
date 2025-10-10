@@ -13,7 +13,6 @@ class BaseQuerySet(SoftDeleteMixin, QuerySet):
         self._q_filters = Q()
         super().__init__(*args, **kwargs)
 
-    # pylint:disable=protected-access
     def _clone(self):
         c = super()._clone()
         for _filter_props in self._custom_filter_props:

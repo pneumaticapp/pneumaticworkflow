@@ -1,4 +1,3 @@
-# pylint: disable=attribute-defined-outside-init
 import json
 from websockets.exceptions import ConnectionClosedError
 from channels.exceptions import DenyConnection
