@@ -28,7 +28,7 @@ class AsgiHandler(ChannelsAsgiHandler):
         if scope["type"] != "http":
             raise ValueError(
                 "The AsgiHandler can only handle HTTP connections, not %s"
-                % scope["type"]
+                % scope["type"],
             )
         self.scope = scope
         self.send = send
@@ -57,7 +57,7 @@ class AsgiHandler(ChannelsAsgiHandler):
         except RequestTimeout:
             response = HttpResponse(
                 "408 Request Timeout (upload too slow)",
-                status=408
+                status=408,
             )
         except RequestAborted:
             return

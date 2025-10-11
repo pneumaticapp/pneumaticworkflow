@@ -4,12 +4,12 @@ from rest_framework.serializers import (
     CharField,
     ChoiceField,
     BooleanField,
-    ValidationError
+    ValidationError,
 )
 from src.processes.enums import PerformerType
 from src.generics.mixins.serializers import (
     CustomValidationErrorMixin,
-    ValidationUtilsMixin
+    ValidationUtilsMixin,
 )
 from src.processes.enums import (
     WorkflowApiStatus,
@@ -39,12 +39,12 @@ class WorkflowCountsByTemplateTaskResponseSerializer(Serializer):
 class WorkflowCountsByWorkflowStarterSerializer(
     CustomValidationErrorMixin,
     ValidationUtilsMixin,
-    Serializer
+    Serializer,
 ):
 
     status = ChoiceField(
         required=False,
-        choices=WorkflowApiStatus.CHOICES
+        choices=WorkflowApiStatus.CHOICES,
     )
     template_ids = CharField(required=False)
     current_performer_ids = CharField(required=False)
@@ -74,13 +74,13 @@ class WorkflowCountsByWorkflowStarterSerializer(
 class WorkflowCountsByCurrentPerformerSerializer(
     CustomValidationErrorMixin,
     ValidationUtilsMixin,
-    Serializer
+    Serializer,
 ):
 
     is_external = BooleanField(
         required=False,
         default=None,
-        allow_null=True
+        allow_null=True,
     )
     template_ids = CharField(required=False)
     template_task_api_names = CharField(required=False)
@@ -117,17 +117,17 @@ class WorkflowCountsByCurrentPerformerSerializer(
 class WorkflowCountsByTemplateTaskSerializer(
     CustomValidationErrorMixin,
     ValidationUtilsMixin,
-    Serializer
+    Serializer,
 ):
 
     is_external = BooleanField(
         required=False,
         default=None,
-        allow_null=True
+        allow_null=True,
     )
     status = ChoiceField(
         required=False,
-        choices=WorkflowApiStatus.CHOICES
+        choices=WorkflowApiStatus.CHOICES,
     )
     template_ids = CharField(required=False)
     workflow_starter_ids = CharField(required=False)

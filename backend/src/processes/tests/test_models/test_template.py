@@ -7,17 +7,17 @@ from src.processes.models import (
     Workflow,
     Kickoff,
     FieldTemplate,
-    TemplateOwner
+    TemplateOwner,
 )
 from src.processes.tests.fixtures import (
     create_test_user,
     create_test_template,
     create_test_group,
-    create_test_account
+    create_test_account,
 )
 from src.processes.enums import (
     FieldType,
-    OwnerType
+    OwnerType,
 )
 
 
@@ -53,7 +53,7 @@ class TestKickoff:
     def test_delete(
         self,
         kickoff_sql,
-        kickoff_field_sql
+        kickoff_field_sql,
     ):
         # arrange
         user = create_test_user()
@@ -126,7 +126,7 @@ class TestTemplate:
         user = create_test_user()
         template = create_test_template(
             user=user,
-            is_active=True
+            is_active=True,
         )
         kickoff = template.kickoff_instance
 
@@ -170,7 +170,7 @@ class TestTemplate:
         user = create_test_user()
         template = create_test_template(
             user=user,
-            is_active=True
+            is_active=True,
         )
         workflow = Workflow.objects.create(
             name=template.name,
@@ -234,7 +234,7 @@ class TestTemplate:
         template = create_test_template(
             user=user,
             is_active=True,
-            tasks_count=1
+            tasks_count=1,
         )
         TemplateOwner.objects.filter(user_id=user.id).delete()
         group = create_test_group(account)
@@ -257,7 +257,7 @@ class TestTemplate:
         create_test_template(
             user=user,
             is_active=True,
-            tasks_count=1
+            tasks_count=1,
         )
         TemplateOwner.objects.filter(user_id=user.id).delete()
 
@@ -274,7 +274,7 @@ class TestTemplate:
         template = create_test_template(
             user=user,
             is_active=True,
-            tasks_count=1
+            tasks_count=1,
         )
         TemplateOwner.objects.filter(user_id=user.id).delete()
         group = create_test_group(account, users=[user])
@@ -297,7 +297,7 @@ class TestTemplate:
         create_test_template(
             user=user,
             is_active=True,
-            tasks_count=1
+            tasks_count=1,
         )
 
         # act

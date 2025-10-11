@@ -3,7 +3,7 @@ from src.generics.throttling import (
     CustomSimpleRateThrottle,
     TokenThrottle,
     ApiKeyThrottle,
-    AnonThrottle
+    AnonThrottle,
 )
 from src.authentication.enums import AuthTokenType
 
@@ -27,7 +27,7 @@ class TestCustomSimpleRateThrottle:
         mocker.patch.object(
             CustomSimpleRateThrottle,
             attribute='__init__',
-            return_value=None
+            return_value=None,
         )
         rate_value = '1/s'
         service = CustomSimpleRateThrottle()
@@ -46,7 +46,7 @@ class TestCustomSimpleRateThrottle:
         mocker.patch.object(
             CustomSimpleRateThrottle,
             attribute='__init__',
-            return_value=None
+            return_value=None,
         )
         service = CustomSimpleRateThrottle()
         service.scope = 'scope'
@@ -64,13 +64,13 @@ class TestCustomSimpleRateThrottle:
         mocker.patch.object(
             CustomSimpleRateThrottle,
             attribute='__init__',
-            return_value=None
+            return_value=None,
         )
         num_requests, duration = 3, 60
         parse_rate_mock = mocker.patch(
             'src.generics.throttling.CustomSimpleRateThrottle'
             '.parse_rate',
-            return_value=(num_requests, duration)
+            return_value=(num_requests, duration),
         )
         service = CustomSimpleRateThrottle()
         service.rate = '3/min'
@@ -88,18 +88,18 @@ class TestCustomSimpleRateThrottle:
         mocker.patch.object(
             CustomSimpleRateThrottle,
             attribute='__init__',
-            return_value=None
+            return_value=None,
         )
         skip_condition_mock = mocker.patch(
             'src.generics.throttling.CustomSimpleRateThrottle'
             '.skip_condition',
-            return_value=False
+            return_value=False,
         )
         return_mock = mocker.Mock()
         allow_request_mock = mocker.patch(
             'src.generics.throttling.CustomSimpleRateThrottle'
             '._allow_request',
-            return_value=return_mock
+            return_value=return_mock,
         )
 
         request = mocker.Mock()
@@ -120,12 +120,12 @@ class TestCustomSimpleRateThrottle:
         mocker.patch.object(
             CustomSimpleRateThrottle,
             attribute='__init__',
-            return_value=None
+            return_value=None,
         )
         skip_condition_mock = mocker.patch(
             'src.generics.throttling.CustomSimpleRateThrottle'
             '.skip_condition',
-            return_value=True
+            return_value=True,
         )
         allow_request_mock = mocker.patch(
             'rest_framework.throttling.SimpleRateThrottle.allow_request',
@@ -149,13 +149,13 @@ class TestCustomSimpleRateThrottle:
         mocker.patch.object(
             CustomSimpleRateThrottle,
             attribute='__init__',
-            return_value=None
+            return_value=None,
         )
         scope = 'scope'
         ident = 7
         get_ident_mock = mocker.patch(
             'rest_framework.throttling.SimpleRateThrottle.get_ident',
-            return_value=ident
+            return_value=ident,
         )
 
         request = mocker.Mock()
@@ -171,7 +171,7 @@ class TestCustomSimpleRateThrottle:
         get_ident_mock.assert_called_once_with(request)
         assert result == 'throttle_%(scope)s_%(ident)s' % {
             'scope': scope,
-            'ident': str(ident)
+            'ident': str(ident),
         }
 
     def test_throttle_success__ok(self, mocker):
@@ -180,7 +180,7 @@ class TestCustomSimpleRateThrottle:
         mocker.patch.object(
             CustomSimpleRateThrottle,
             attribute='__init__',
-            return_value=None
+            return_value=None,
         )
         period = 3
         current_request_time = 65
@@ -200,7 +200,7 @@ class TestCustomSimpleRateThrottle:
 
         # assert
         cache_mock.set.assert_called_once_with(
-            key, current_request_time, period
+            key, current_request_time, period,
         )
         assert result is True
 
@@ -210,12 +210,12 @@ class TestCustomSimpleRateThrottle:
         mocker.patch.object(
             CustomSimpleRateThrottle,
             attribute='__init__',
-            return_value=None
+            return_value=None,
         )
         get_rate_mock = mocker.patch(
             'src.generics.throttling.CustomSimpleRateThrottle'
             '.get_rate',
-            return_value=None
+            return_value=None,
         )
         service = CustomSimpleRateThrottle()
 
@@ -232,36 +232,36 @@ class TestCustomSimpleRateThrottle:
         mocker.patch.object(
             CustomSimpleRateThrottle,
             attribute='__init__',
-            return_value=None
+            return_value=None,
         )
         rate = '3/s'
         get_rate_mock = mocker.patch(
             'src.generics.throttling.CustomSimpleRateThrottle'
             '.get_rate',
-            return_value=rate
+            return_value=rate,
         )
         period = 0.3
         get_period_mock = mocker.patch(
             'src.generics.throttling.CustomSimpleRateThrottle'
             '._get_period',
-            return_value=period
+            return_value=period,
         )
         key = 'key'
         get_cache_key_mock = mocker.patch(
             'src.generics.throttling.CustomSimpleRateThrottle'
             '.get_cache_key',
-            return_value=key
+            return_value=key,
         )
         cache_get_mock = mocker.Mock(return_value=None)
         mocker.patch(
             'src.generics.throttling.CustomSimpleRateThrottle'
             '.cache',
-            get=cache_get_mock
+            get=cache_get_mock,
         )
         throttle_success_mock = mocker.patch(
             'src.generics.throttling.CustomSimpleRateThrottle'
             '.throttle_success',
-            return_value=True
+            return_value=True,
         )
         request = mocker.Mock()
         service = CustomSimpleRateThrottle()
@@ -284,44 +284,44 @@ class TestCustomSimpleRateThrottle:
         mocker.patch.object(
             CustomSimpleRateThrottle,
             attribute='__init__',
-            return_value=None
+            return_value=None,
         )
         key = 'key'
         mocker.patch(
             'src.generics.throttling.CustomSimpleRateThrottle'
             '.get_cache_key',
-            return_value=key
+            return_value=key,
         )
         rate = '3/s'
         get_rate_mock = mocker.patch(
             'src.generics.throttling.CustomSimpleRateThrottle'
             '.get_rate',
-            return_value=rate
+            return_value=rate,
         )
         period = 0.3
         get_period_mock = mocker.patch(
             'src.generics.throttling.CustomSimpleRateThrottle'
             '._get_period',
-            return_value=period
+            return_value=period,
         )
         prev_request_time = 1639048599.1951413
         prev_request_time_mock = mocker.Mock(return_value=prev_request_time)
         mocker.patch(
             'src.generics.throttling.CustomSimpleRateThrottle'
             '.cache',
-            get=prev_request_time_mock
+            get=prev_request_time_mock,
         )
         current_request_time = prev_request_time + 0.4
         current_request_time_mock = mocker.patch(
             'src.generics.throttling.CustomSimpleRateThrottle'
             '.timer',
-            return_value=current_request_time
+            return_value=current_request_time,
         )
         result_mock = mocker.Mock()
         throttle_success_mock = mocker.patch(
             'src.generics.throttling.CustomSimpleRateThrottle'
             '.throttle_success',
-            return_value=result_mock
+            return_value=result_mock,
         )
         request = mocker.Mock()
         service = CustomSimpleRateThrottle()
@@ -345,44 +345,44 @@ class TestCustomSimpleRateThrottle:
         mocker.patch.object(
             CustomSimpleRateThrottle,
             attribute='__init__',
-            return_value=None
+            return_value=None,
         )
         key = 'key'
         mocker.patch(
             'src.generics.throttling.CustomSimpleRateThrottle'
             '.get_cache_key',
-            return_value=key
+            return_value=key,
         )
         rate = '3/s'
         get_rate_mock = mocker.patch(
             'src.generics.throttling.CustomSimpleRateThrottle'
             '.get_rate',
-            return_value=rate
+            return_value=rate,
         )
         period = 0.3
         get_period_mock = mocker.patch(
             'src.generics.throttling.CustomSimpleRateThrottle'
             '._get_period',
-            return_value=period
+            return_value=period,
         )
         prev_request_time = 1639048599.1951413
         prev_request_time_mock = mocker.Mock(return_value=prev_request_time)
         cache_mock = mocker.patch(
             'src.generics.throttling.CustomSimpleRateThrottle'
-            '.cache'
+            '.cache',
         )
         cache_mock.get = prev_request_time_mock
         current_request_time = prev_request_time + 0.2
         current_request_time_mock = mocker.patch(
             'src.generics.throttling.CustomSimpleRateThrottle'
             '.timer',
-            return_value=current_request_time
+            return_value=current_request_time,
         )
         result_mock = mocker.Mock()
         throttle_failure_mock = mocker.patch(
             'rest_framework.throttling.SimpleRateThrottle'
             '.throttle_failure',
-            return_value=result_mock
+            return_value=result_mock,
         )
         request = mocker.Mock()
         service = CustomSimpleRateThrottle()
@@ -406,7 +406,7 @@ class TestCustomSimpleRateThrottle:
         mocker.patch.object(
             CustomSimpleRateThrottle,
             attribute='__init__',
-            return_value=None
+            return_value=None,
         )
         wait_time = 3
         service = CustomSimpleRateThrottle()
@@ -425,7 +425,7 @@ class TestCustomSimpleRateThrottle:
         mocker.patch.object(
             CustomSimpleRateThrottle,
             attribute='__init__',
-            return_value=None
+            return_value=None,
         )
         service = CustomSimpleRateThrottle()
         service.need_wait = False
@@ -445,17 +445,17 @@ class TestAnonThrottle:
         mocker.patch.object(
             CustomSimpleRateThrottle,
             attribute='__init__',
-            return_value=None
+            return_value=None,
         )
         super_skip_condition_mock = mocker.patch(
             'src.generics.throttling.CustomSimpleRateThrottle'
             '.skip_condition',
-            return_value=False
+            return_value=False,
         )
         account_mock = mocker.Mock(is_subscribed=True)
         user_mock = mocker.Mock(
             is_authenticated=True,
-            account=account_mock
+            account=account_mock,
         )
         request = mocker.Mock(
             user=user_mock,
@@ -476,17 +476,17 @@ class TestAnonThrottle:
         mocker.patch.object(
             CustomSimpleRateThrottle,
             attribute='__init__',
-            return_value=None
+            return_value=None,
         )
         super_skip_condition_mock = mocker.patch(
             'src.generics.throttling.CustomSimpleRateThrottle'
             '.skip_condition',
-            return_value=False
+            return_value=False,
         )
         user_mock = mocker.Mock(is_authenticated=False)
         request = mocker.Mock(
             user=user_mock,
-            token_type=AuthTokenType.USER
+            token_type=AuthTokenType.USER,
         )
         throttle = AnonThrottle()
 
@@ -506,21 +506,21 @@ class TestTokenThrottle:
         mocker.patch.object(
             CustomSimpleRateThrottle,
             attribute='__init__',
-            return_value=None
+            return_value=None,
         )
         super_skip_condition_mock = mocker.patch(
             'src.generics.throttling.CustomSimpleRateThrottle'
             '.skip_condition',
-            return_value=False
+            return_value=False,
         )
         account_mock = mocker.Mock(is_subscribed=True)
         user_mock = mocker.Mock(
             is_authenticated=False,
-            account=account_mock
+            account=account_mock,
         )
         request = mocker.Mock(
             user=user_mock,
-            token_type=AuthTokenType.USER
+            token_type=AuthTokenType.USER,
         )
         throttle = TokenThrottle()
 
@@ -537,21 +537,21 @@ class TestTokenThrottle:
         mocker.patch.object(
             CustomSimpleRateThrottle,
             attribute='__init__',
-            return_value=None
+            return_value=None,
         )
         super_skip_condition_mock = mocker.patch(
             'src.generics.throttling.CustomSimpleRateThrottle'
             '.skip_condition',
-            return_value=False
+            return_value=False,
         )
         account_mock = mocker.Mock(is_paid=True)
         user_mock = mocker.Mock(
             is_authenticated=True,
-            account=account_mock
+            account=account_mock,
         )
         request = mocker.Mock(
             user=user_mock,
-            token_type=AuthTokenType.USER
+            token_type=AuthTokenType.USER,
         )
         throttle = TokenThrottle()
 
@@ -568,21 +568,21 @@ class TestTokenThrottle:
         mocker.patch.object(
             CustomSimpleRateThrottle,
             attribute='__init__',
-            return_value=None
+            return_value=None,
         )
         super_skip_condition_mock = mocker.patch(
             'src.generics.throttling.CustomSimpleRateThrottle'
             '.skip_condition',
-            return_value=False
+            return_value=False,
         )
         account_mock = mocker.Mock(is_paid=True)
         user_mock = mocker.Mock(
             is_authenticated=True,
-            account=account_mock
+            account=account_mock,
         )
         request = mocker.Mock(
             user=user_mock,
-            token_type=AuthTokenType.USER
+            token_type=AuthTokenType.USER,
         )
         throttle = TokenThrottle()
         throttle.skip_for_paid_accounts = False
@@ -600,21 +600,21 @@ class TestTokenThrottle:
         mocker.patch.object(
             CustomSimpleRateThrottle,
             attribute='__init__',
-            return_value=None
+            return_value=None,
         )
         super_skip_condition_mock = mocker.patch(
             'src.generics.throttling.CustomSimpleRateThrottle'
             '.skip_condition',
-            return_value=False
+            return_value=False,
         )
         account_mock = mocker.Mock(is_paid=True)
         user_mock = mocker.Mock(
             is_authenticated=True,
-            account=account_mock
+            account=account_mock,
         )
         request = mocker.Mock(
             user=user_mock,
-            token_type=AuthTokenType.API
+            token_type=AuthTokenType.API,
         )
         throttle = TokenThrottle()
 
@@ -631,7 +631,7 @@ class TestTokenThrottle:
         mocker.patch.object(
             CustomSimpleRateThrottle,
             attribute='__init__',
-            return_value=None
+            return_value=None,
         )
         pk = 7
         user_mock = mocker.Mock(pk=pk)
@@ -653,21 +653,21 @@ class TestApiKeyThrottle:
         mocker.patch.object(
             CustomSimpleRateThrottle,
             attribute='__init__',
-            return_value=None
+            return_value=None,
         )
         super_skip_condition_mock = mocker.patch(
             'src.generics.throttling.CustomSimpleRateThrottle'
             '.skip_condition',
-            return_value=False
+            return_value=False,
         )
         account_mock = mocker.Mock(is_subscribed=True)
         user_mock = mocker.Mock(
             is_authenticated=False,
-            account=account_mock
+            account=account_mock,
         )
         request = mocker.Mock(
             user=user_mock,
-            token_type=AuthTokenType.USER
+            token_type=AuthTokenType.USER,
         )
         throttle = ApiKeyThrottle()
 
@@ -684,21 +684,21 @@ class TestApiKeyThrottle:
         mocker.patch.object(
             CustomSimpleRateThrottle,
             attribute='__init__',
-            return_value=None
+            return_value=None,
         )
         super_skip_condition_mock = mocker.patch(
             'src.generics.throttling.CustomSimpleRateThrottle'
             '.skip_condition',
-            return_value=False
+            return_value=False,
         )
         account_mock = mocker.Mock(is_paid=True)
         user_mock = mocker.Mock(
             is_authenticated=True,
-            account=account_mock
+            account=account_mock,
         )
         request = mocker.Mock(
             user=user_mock,
-            token_type=AuthTokenType.USER
+            token_type=AuthTokenType.USER,
         )
         throttle = ApiKeyThrottle()
 
@@ -715,21 +715,21 @@ class TestApiKeyThrottle:
         mocker.patch.object(
             CustomSimpleRateThrottle,
             attribute='__init__',
-            return_value=None
+            return_value=None,
         )
         super_skip_condition_mock = mocker.patch(
             'src.generics.throttling.CustomSimpleRateThrottle'
             '.skip_condition',
-            return_value=False
+            return_value=False,
         )
         account_mock = mocker.Mock(is_paid=True)
         user_mock = mocker.Mock(
             is_authenticated=True,
-            account=account_mock
+            account=account_mock,
         )
         request = mocker.Mock(
             user=user_mock,
-            token_type=AuthTokenType.API
+            token_type=AuthTokenType.API,
         )
         throttle = ApiKeyThrottle()
         throttle.skip_for_paid_accounts = False
@@ -747,21 +747,21 @@ class TestApiKeyThrottle:
         mocker.patch.object(
             CustomSimpleRateThrottle,
             attribute='__init__',
-            return_value=None
+            return_value=None,
         )
         super_skip_condition_mock = mocker.patch(
             'src.generics.throttling.CustomSimpleRateThrottle'
             '.skip_condition',
-            return_value=False
+            return_value=False,
         )
         account_mock = mocker.Mock(is_paid=False)
         user_mock = mocker.Mock(
             is_authenticated=True,
-            account=account_mock
+            account=account_mock,
         )
         request = mocker.Mock(
             token_type=AuthTokenType.USER,
-            user=user_mock
+            user=user_mock,
         )
         throttle = ApiKeyThrottle()
 
@@ -778,11 +778,11 @@ class TestApiKeyThrottle:
         mocker.patch.object(
             CustomSimpleRateThrottle,
             attribute='__init__',
-            return_value=None
+            return_value=None,
         )
         token = '123'
         headers_mock = {
-            'HTTP_AUTHORIZATION': f'Bearer {token}'
+            'HTTP_AUTHORIZATION': f'Bearer {token}',
         }
         request = mocker.Mock(META=headers_mock)
         throttle = ApiKeyThrottle()

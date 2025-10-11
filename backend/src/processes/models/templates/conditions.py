@@ -1,7 +1,7 @@
 from django.db import models
 from django.db.models import UniqueConstraint, Q
 from src.processes.models.base import (
-    BaseApiNameModel
+    BaseApiNameModel,
 )
 from src.processes.models.mixins import (
     ConditionMixin,
@@ -13,7 +13,7 @@ from src.processes.models.templates.task import TaskTemplate
 
 class ConditionTemplate(
     BaseApiNameModel,
-    ConditionMixin
+    ConditionMixin,
 ):
 
     class Meta:
@@ -22,7 +22,7 @@ class ConditionTemplate(
                 fields=['template', 'api_name'],
                 condition=Q(is_deleted=False),
                 name='processes_conditiontemplate_template_api_name_unique',
-            )
+            ),
         ]
 
     api_name_prefix = 'condition'
@@ -40,7 +40,7 @@ class ConditionTemplate(
 
 
 class RuleTemplate(
-    BaseApiNameModel
+    BaseApiNameModel,
 ):
 
     class Meta:
@@ -49,7 +49,7 @@ class RuleTemplate(
                 fields=['template', 'api_name'],
                 condition=Q(is_deleted=False),
                 name='processes_ruletemplate_template_api_name_unique',
-            )
+            ),
         ]
     api_name_prefix = 'rule'
 
@@ -61,13 +61,13 @@ class RuleTemplate(
     condition = models.ForeignKey(
         ConditionTemplate,
         on_delete=models.CASCADE,
-        related_name='rules'
+        related_name='rules',
     )
 
 
 class PredicateTemplate(
     BaseApiNameModel,
-    PredicateMixin
+    PredicateMixin,
 ):
 
     class Meta:
@@ -76,7 +76,7 @@ class PredicateTemplate(
                 fields=['template', 'api_name'],
                 condition=Q(is_deleted=False),
                 name='processes_predicatetemplate_template_api_name_unique',
-            )
+            ),
         ]
 
     api_name_prefix = 'predicate'

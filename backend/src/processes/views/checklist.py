@@ -15,7 +15,7 @@ from src.generics.mixins.views import (
     CustomViewSetMixin,
 )
 from src.processes.models import (
-    Checklist
+    Checklist,
 )
 from src.processes.services.tasks.exceptions import (
     ChecklistServiceException,
@@ -23,11 +23,11 @@ from src.processes.services.tasks.exceptions import (
 from src.utils.validation import raise_validation_error
 from src.analytics.mixins import BaseIdentifyMixin
 from src.processes.services.tasks.checklist import (
-    ChecklistService
+    ChecklistService,
 )
 from src.processes.serializers.workflows.checklist import (
     CheckListSerializer,
-    CheckListRequestSerializer
+    CheckListRequestSerializer,
 )
 from src.accounts.enums import UserType
 
@@ -55,7 +55,7 @@ class CheckListViewSet(
 
     def get_queryset(self):
         qst = Checklist.objects.filter(
-            task__account_id=self.request.user.account_id
+            task__account_id=self.request.user.account_id,
         )
         user = self.request.user
         skip_member_access = (
@@ -83,7 +83,7 @@ class CheckListViewSet(
                 auth_type=request.token_type,
             )
             checklist_service.mark(
-                selection_id=request_slz.validated_data['selection_id']
+                selection_id=request_slz.validated_data['selection_id'],
             )
         except ChecklistServiceException as ex:
             raise_validation_error(message=ex.message)
@@ -104,7 +104,7 @@ class CheckListViewSet(
                 auth_type=request.token_type,
             )
             checklist_service.unmark(
-                selection_id=request_slz.validated_data['selection_id']
+                selection_id=request_slz.validated_data['selection_id'],
             )
         except ChecklistServiceException as ex:
             raise_validation_error(message=ex.message)

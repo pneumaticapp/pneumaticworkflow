@@ -15,22 +15,22 @@ class CreateOrUpdateInstanceMixin:
         if value is None:
             raise Exception(
                 f'You should set a Meta.create_or_update_fields value for'
-                f' the {str(self.__class__)}'
+                f' the {str(self.__class__)}',
             )
         if not isinstance(value, set):
             raise Exception(
-                '"create_or_update_fields" must be of type "Set".'
+                '"create_or_update_fields" must be of type "Set".',
             )
         if 'id' in value:
             raise Exception(
                 '"create_or_update_fields" contains "id" field. '
-                'It should be removed from the list.'
+                'It should be removed from the list.',
             )
         return value
 
     def _get_create_or_update_data(
         self,
-        validated_data: Dict[str, Any]
+        validated_data: Dict[str, Any],
     ) -> Dict[str, Any]:
 
         data = {}
@@ -45,7 +45,7 @@ class CreateOrUpdateInstanceMixin:
     def _update(
         self,
         instance,
-        validated_data: Dict[str, Any]
+        validated_data: Dict[str, Any],
     ):
 
         data = self._get_create_or_update_data(validated_data)
@@ -67,24 +67,24 @@ class CreateOrUpdateInstanceMixin:
         self,
         validated_data: Dict[str, Any],
         instance: Optional = None,
-        not_unique_exception_msg: Optional[str] = None
+        not_unique_exception_msg: Optional[str] = None,
     ) -> Any:
 
         try:
             if instance:
                 self._update(
                     instance=instance,
-                    validated_data=validated_data
+                    validated_data=validated_data,
                 )
             else:
                 instance = self._create(
-                    validated_data=validated_data
+                    validated_data=validated_data,
                 )
         except IntegrityError as ex:
             if not_unique_exception_msg:
                 raise_validation_error(
                     api_name=validated_data.get('api_name'),
-                    message=not_unique_exception_msg
+                    message=not_unique_exception_msg,
                 )
             raise ex
         return instance
@@ -97,7 +97,7 @@ class CreateOrUpdateRelatedMixin:
         if api_primary_field is None:
             raise Exception(
                 f'You should set a Meta.api_primary_field value for'
-                f' the {str(slz_cls)}'
+                f' the {str(slz_cls)}',
             )
         return api_primary_field
 
@@ -136,7 +136,7 @@ class CreateOrUpdateRelatedMixin:
         slz_cls,
         data,
         ancestors_data,
-        slz_context=None
+        slz_context=None,
     ):
         """ This method checks existing of one related object.
             If objects exists then returns serializer
@@ -172,14 +172,14 @@ class CreateOrUpdateRelatedMixin:
                 slz_cls=slz_cls,
                 slz_context=slz_context,
                 data=data,
-                ancestors_data=ancestors_data
+                ancestors_data=ancestors_data,
             )
             slz.is_valid(raise_exception=True)
             obj = slz.save()
             existent_ids.add(obj.id)
         model_cls = slz_cls.Meta.model
         model_cls.objects.filter(**ancestors_data).exclude(
-            id__in=existent_ids
+            id__in=existent_ids,
         ).delete()
 
     def create_or_update_related(
@@ -203,7 +203,7 @@ class CreateOrUpdateRelatedMixin:
                 if primary_value:
                     existent_ids.add(primary_value)
             model_cls.objects.filter(**ancestors_data).exclude(
-                **{f'{api_primary_field}__in': existent_ids}
+                **{f'{api_primary_field}__in': existent_ids},
             ).delete()
         else:
             model_cls.objects.filter(**ancestors_data).delete()
@@ -232,6 +232,6 @@ class CustomValidationApiNameMixin:
                 raise_validation_error(
                     message=MSG_PT_0041(
                         old_api_name=self.instance.api_name,
-                        new_api_name=value
-                    )
+                        new_api_name=value,
+                    ),
                 )

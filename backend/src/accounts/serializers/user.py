@@ -4,7 +4,7 @@ from django.db.models import Prefetch, Q
 from rest_framework import serializers
 from src.accounts.models import Contact
 from src.accounts.serializers.user_invites import (
-    UserListInviteSerializer
+    UserListInviteSerializer,
 )
 from src.generics.fields import (
     TimeStampField,
@@ -14,7 +14,7 @@ from src.generics.fields import (
 from src.accounts.enums import (
     SourceType,
     Language,
-    Timezone
+    Timezone,
 )
 from src.accounts.serializers.group import (
     GroupNameSerializer,
@@ -23,18 +23,18 @@ from src.processes.models import (
     RawPerformerTemplate,
     TemplateOwner,
     Template,
-    TaskTemplate
+    TaskTemplate,
 )
 from src.processes.enums import (
     OwnerType,
-    PerformerType
+    PerformerType,
 )
 from src.processes.serializers.templates.template import (
-    TemplateUserPrivilegesSerializer
+    TemplateUserPrivilegesSerializer,
 )
 from src.generics.fields import CommaSeparatedListField
 from src.generics.mixins.serializers import (
-    CustomValidationErrorMixin
+    CustomValidationErrorMixin,
 )
 
 
@@ -73,7 +73,7 @@ class UserSerializer(
             'date_fmt',
             'date_fdw',
             'invite',
-            'groups'
+            'groups',
         )
         read_only_fields = (
             'id',
@@ -83,18 +83,18 @@ class UserSerializer(
             'status',
             'is_admin',
             'is_account_owner',
-            'groups'
+            'groups',
         )
 
     groups = RelatedListField(
         source='user_groups',
         child=serializers.IntegerField(),
-        read_only=True
+        read_only=True,
     )
     date_joined_tsp = TimeStampField(source='date_joined', read_only=True)
     timezone = serializers.ChoiceField(
         choices=Timezone.CHOICES,
-        required=False
+        required=False,
     )
     date_fmt = DateFormatField(required=False)
     invite = serializers.SerializerMethodField(allow_null=True, read_only=True)
@@ -125,7 +125,7 @@ class UserPrivilegesSerializer(UserSerializer):
     groups = GroupNameSerializer(
         source='user_groups',
         many=True,
-        read_only=True
+        read_only=True,
     )
     templates = serializers.SerializerMethodField()
 
@@ -144,7 +144,7 @@ class UserPrivilegesSerializer(UserSerializer):
                       tasks__raw_performers__user=instance.id) |
                     Q(tasks__raw_performers__type=PerformerType.GROUP,
                       tasks__raw_performers__group__in=groups)
-                )
+                ),
             )
             .distinct()
             .only('id', 'name', 'is_active', 'is_public')
@@ -153,10 +153,10 @@ class UserPrivilegesSerializer(UserSerializer):
                     'owners',
                     queryset=TemplateOwner.objects.filter(
                         Q(type=OwnerType.USER, user=instance.id) |
-                        Q(type=OwnerType.GROUP, group__in=groups)
+                        Q(type=OwnerType.GROUP, group__in=groups),
                     ).select_related(
-                        'user', 'group'
-                    )
+                        'user', 'group',
+                    ),
                 ),
                 Prefetch(
                     'tasks',
@@ -164,19 +164,19 @@ class UserPrivilegesSerializer(UserSerializer):
                         Q(raw_performers__type=PerformerType.USER,
                           raw_performers__user=instance.id) |
                         Q(raw_performers__type=PerformerType.GROUP,
-                          raw_performers__group__in=groups)
+                          raw_performers__group__in=groups),
                     ).distinct().only(
-                        'number', 'api_name', 'name'
+                        'number', 'api_name', 'name',
                     ).prefetch_related(
                         Prefetch(
                             'raw_performers',
                             queryset=RawPerformerTemplate.objects.filter(
                                 Q(type=PerformerType.USER, user=instance.id) |
-                                Q(type=PerformerType.GROUP, group__in=groups)
-                            ).distinct().select_related('user', 'group')
-                        )
-                    )
-                )
+                                Q(type=PerformerType.GROUP, group__in=groups),
+                            ).distinct().select_related('user', 'group'),
+                        ),
+                    ),
+                ),
             )
         )
         return TemplateUserPrivilegesSerializer(templates, many=True).data
@@ -194,7 +194,7 @@ class UserNameSerializer(serializers.ModelSerializer):
 
 class ContactRequestSerializer(
     CustomValidationErrorMixin,
-    serializers.Serializer
+    serializers.Serializer,
 ):
     ordering = CommaSeparatedListField(
         allow_empty=True,
@@ -210,15 +210,15 @@ class ContactRequestSerializer(
                 ('-last_name', '-last_name'),
                 ('source', 'source'),
                 ('-source', '-source'),
-            )
-        )
+            ),
+        ),
     )
     search = serializers.CharField(
         required=False,
     )
     source = serializers.ChoiceField(
         required=False,
-        choices=SourceType.CHOICES
+        choices=SourceType.CHOICES,
     )
     limit = serializers.IntegerField(required=False)
     offset = serializers.IntegerField(required=False)

@@ -36,15 +36,15 @@ class TestMicrosoftGraphApiMixin:
         path = 'some/path'
         response_mock = mocker.Mock(
             ok=True,
-            json=mocker.Mock()
+            json=mocker.Mock(),
         )
         request_user_mock = mocker.patch(
             'src.authentication.services.microsoft.requests.get',
-            return_value=response_mock
+            return_value=response_mock,
         )
         sentry_mock = mocker.patch(
             'src.authentication.services.microsoft.'
-            'capture_sentry_message'
+            'capture_sentry_message',
         )
         service = MicrosoftGraphApiMixin()
 
@@ -58,13 +58,13 @@ class TestMicrosoftGraphApiMixin:
         assert result == response_mock
         request_user_mock.assert_called_once_with(
             url=f'https://graph.microsoft.com/v1.0/{path}',
-            headers={'Authorization': access_token}
+            headers={'Authorization': access_token},
         )
         sentry_mock.assert_not_called()
 
     def test_graph_api_request__bad_request__raise_exception(
         self,
-        mocker
+        mocker,
     ):
         # arrange
         access_token = '!@#!@#@!wqww23'
@@ -73,15 +73,15 @@ class TestMicrosoftGraphApiMixin:
             ok=False,
         )
         response_mock.json = mocker.Mock(
-            return_value={'error': {'code': 'Authorization_Error'}}
+            return_value={'error': {'code': 'Authorization_Error'}},
         )
         request_user_mock = mocker.patch(
             'src.authentication.services.microsoft.requests.get',
-            return_value=response_mock
+            return_value=response_mock,
         )
         sentry_mock = mocker.patch(
             'src.authentication.services.microsoft.'
-            'capture_sentry_message'
+            'capture_sentry_message',
         )
         service = MicrosoftGraphApiMixin()
 
@@ -96,13 +96,13 @@ class TestMicrosoftGraphApiMixin:
         assert ex.value.message == messages.MSG_AU_0005
         request_user_mock.assert_called_once_with(
             url=f'https://graph.microsoft.com/v1.0/{path}',
-            headers={'Authorization': access_token}
+            headers={'Authorization': access_token},
         )
         sentry_mock.assert_called_once()
 
     def test_graph_api_request__request_denied__raise_exception(
         self,
-        mocker
+        mocker,
     ):
         # arrange
         access_token = '!@#!@#@!wqww23'
@@ -111,15 +111,15 @@ class TestMicrosoftGraphApiMixin:
             ok=False,
         )
         response_mock.json = mocker.Mock(
-            return_value={'error': {'code': 'Authorization_RequestDenied'}}
+            return_value={'error': {'code': 'Authorization_RequestDenied'}},
         )
         request_user_mock = mocker.patch(
             'src.authentication.services.microsoft.requests.get',
-            return_value=response_mock
+            return_value=response_mock,
         )
         sentry_mock = mocker.patch(
             'src.authentication.services.microsoft.'
-            'capture_sentry_message'
+            'capture_sentry_message',
         )
         service = MicrosoftGraphApiMixin()
 
@@ -134,7 +134,7 @@ class TestMicrosoftGraphApiMixin:
         assert ex.value.message == messages.MSG_AU_0005
         request_user_mock.assert_called_once_with(
             url=f'https://graph.microsoft.com/v1.0/{path}',
-            headers={'Authorization': access_token}
+            headers={'Authorization': access_token},
         )
         sentry_mock.assert_not_called()
 
@@ -148,7 +148,7 @@ class TestMicrosoftGraphApiMixin:
         graph_api_request_mock = mocker.patch(
             'src.authentication.services.microsoft.'
             'MicrosoftGraphApiMixin._graph_api_request',
-            return_value=response_mock
+            return_value=response_mock,
         )
         service = MicrosoftGraphApiMixin()
 
@@ -162,7 +162,7 @@ class TestMicrosoftGraphApiMixin:
                 'me?$select=id,givenName,surname,jobTitle,'
                 'mail,userPrincipalName,userType,creationType'
             ),
-            access_token=access_token
+            access_token=access_token,
         )
 
     def test_get_users__ok(self, mocker):
@@ -175,7 +175,7 @@ class TestMicrosoftGraphApiMixin:
         graph_api_request_mock = mocker.patch(
             'src.authentication.services.microsoft.'
             'MicrosoftGraphApiMixin._graph_api_request',
-            return_value=response_mock
+            return_value=response_mock,
         )
         service = MicrosoftGraphApiMixin()
 
@@ -189,7 +189,7 @@ class TestMicrosoftGraphApiMixin:
                 'users?$select=id,givenName,surname,jobTitle,'
                 'mail,userPrincipalName,userType,creationType'
             ),
-            access_token=access_token
+            access_token=access_token,
         )
 
     def test_get_users__decode_error__raise_exception(self, mocker):
@@ -200,13 +200,13 @@ class TestMicrosoftGraphApiMixin:
             json=mocker.Mock(side_effect=json.decoder.JSONDecodeError(
                 msg='msg',
                 doc='doc',
-                pos=1
-            ))
+                pos=1,
+            )),
         )
         graph_api_request_mock = mocker.patch(
             'src.authentication.services.microsoft.'
             'MicrosoftGraphApiMixin._graph_api_request',
-            return_value=response_mock
+            return_value=response_mock,
         )
         service = MicrosoftGraphApiMixin()
 
@@ -219,14 +219,14 @@ class TestMicrosoftGraphApiMixin:
                 'https://graph.microsoft.com/v1.0/$metadata'
                 '#users(id,givenName,surname,jobTitle,mail)'
             ),
-            'value': []
+            'value': [],
         }
         graph_api_request_mock.assert_called_once_with(
             path=(
                 'users?$select=id,givenName,surname,jobTitle,'
                 'mail,userPrincipalName,userType,creationType'
             ),
-            access_token=access_token
+            access_token=access_token,
         )
 
     def test_get_user_photo__ok(self, mocker):
@@ -241,29 +241,29 @@ class TestMicrosoftGraphApiMixin:
         response_mock = mocker.Mock(headers=headers_mock, ok=True)
         response_mock.content = binary_photo
         settings_mock = mocker.patch(
-            'src.authentication.services.microsoft.settings'
+            'src.authentication.services.microsoft.settings',
         )
         settings_mock.PROJECT_CONF = {'STORAGE': True}
         graph_api_request_mock = mocker.patch(
             'src.authentication.services.microsoft.'
             'MicrosoftGraphApiMixin._graph_api_request',
-            return_value=response_mock
+            return_value=response_mock,
         )
         salt = '123asd'
         get_salt_mock = mocker.patch(
             'src.authentication.services.microsoft.get_salt',
-            return_value=salt
+            return_value=salt,
         )
         public_url = 'https://test.com/image.svg'
         storage_init_mock = mocker.patch.object(
             GoogleCloudService,
             attribute='__init__',
-            return_value=None
+            return_value=None,
         )
         upload_from_binary_mock = mocker.patch(
             'src.storage.google_cloud.GoogleCloudService.'
             'upload_from_binary',
-            return_value=public_url
+            return_value=public_url,
         )
         user_id = 'UQ@SDW@31221'
         service = MicrosoftGraphApiMixin()
@@ -272,27 +272,27 @@ class TestMicrosoftGraphApiMixin:
         result = service._get_user_photo(
             access_token=access_token,
             user_id=user_id,
-            account=account
+            account=account,
         )
 
         # assert
         graph_api_request_mock.assert_called_once_with(
             path=f'users/{user_id}/photos/96x96/$value',
             access_token=access_token,
-            raise_exception=False
+            raise_exception=False,
         )
         get_salt_mock.assert_called_once()
         storage_init_mock.assert_called_once()
         upload_from_binary_mock.assert_called_once_with(
             binary=binary_photo,
             filepath=f'{salt}_photo_96x96.svg',
-            content_type=headers['content-type']
+            content_type=headers['content-type'],
         )
         assert result == public_url
 
     def test_get_user_photo__undefined_content_type__blank_image_ext(
         self,
-        mocker
+        mocker,
     ):
 
         # arrange
@@ -305,29 +305,29 @@ class TestMicrosoftGraphApiMixin:
         response_mock = mocker.Mock(headers=headers_mock, ok=True)
         response_mock.content = binary_photo
         settings_mock = mocker.patch(
-            'src.authentication.services.microsoft.settings'
+            'src.authentication.services.microsoft.settings',
         )
         settings_mock.PROJECT_CONF = {'STORAGE': True}
         graph_api_request_mock = mocker.patch(
             'src.authentication.services.microsoft.'
             'MicrosoftGraphApiMixin._graph_api_request',
-            return_value=response_mock
+            return_value=response_mock,
         )
         salt = '123asd'
         get_salt_mock = mocker.patch(
             'src.authentication.services.microsoft.get_salt',
-            return_value=salt
+            return_value=salt,
         )
         public_url = 'https://test.com/image.svg'
         storage_init_mock = mocker.patch.object(
             GoogleCloudService,
             attribute='__init__',
-            return_value=None
+            return_value=None,
         )
         upload_from_binary_mock = mocker.patch(
             'src.storage.google_cloud.GoogleCloudService.'
             'upload_from_binary',
-            return_value=public_url
+            return_value=public_url,
         )
         user_id = '!@#$#$#12ase'
         service = MicrosoftGraphApiMixin()
@@ -336,21 +336,21 @@ class TestMicrosoftGraphApiMixin:
         result = service._get_user_photo(
             user_id=user_id,
             access_token=access_token,
-            account=account
+            account=account,
         )
 
         # assert
         graph_api_request_mock.assert_called_once_with(
             path=f'users/{user_id}/photos/96x96/$value',
             access_token=access_token,
-            raise_exception=False
+            raise_exception=False,
         )
         get_salt_mock.assert_called_once()
         storage_init_mock.assert_called_once()
         upload_from_binary_mock.assert_called_once_with(
             binary=binary_photo,
             filepath=f'{salt}_photo_96x96',
-            content_type=headers['content-type']
+            content_type=headers['content-type'],
         )
         assert result == public_url
 
@@ -361,17 +361,17 @@ class TestMicrosoftGraphApiMixin:
         access_token = '!@#!@#@!wqww23'
         response_mock = mocker.Mock(ok=False)
         settings_mock = mocker.patch(
-            'src.authentication.services.microsoft.settings'
+            'src.authentication.services.microsoft.settings',
         )
         settings_mock.PROJECT_CONF = {'STORAGE': True}
         graph_api_request_mock = mocker.patch(
             'src.authentication.services.microsoft.'
             'MicrosoftGraphApiMixin._graph_api_request',
-            return_value=response_mock
+            return_value=response_mock,
         )
         upload_from_binary_mock = mocker.patch(
             'src.storage.google_cloud.GoogleCloudService.'
-            'upload_from_binary'
+            'upload_from_binary',
         )
         user_id = '!@W@##$%%$21'
         service = MicrosoftGraphApiMixin()
@@ -380,14 +380,14 @@ class TestMicrosoftGraphApiMixin:
         result = service._get_user_photo(
             access_token=access_token,
             user_id=user_id,
-            account=account
+            account=account,
         )
 
         # assert
         graph_api_request_mock.assert_called_once_with(
             path=f'users/{user_id}/photos/96x96/$value',
             access_token=access_token,
-            raise_exception=False
+            raise_exception=False,
         )
         upload_from_binary_mock.assert_not_called()
         assert result is None
@@ -404,29 +404,29 @@ class TestMicrosoftGraphApiMixin:
         response_mock = mocker.Mock(headers=headers_mock, ok=True)
         response_mock.content = binary_photo
         settings_mock = mocker.patch(
-            'src.authentication.services.microsoft.settings'
+            'src.authentication.services.microsoft.settings',
         )
         settings_mock.PROJECT_CONF = {'STORAGE': False}
         graph_api_request_mock = mocker.patch(
             'src.authentication.services.microsoft.'
             'MicrosoftGraphApiMixin._graph_api_request',
-            return_value=response_mock
+            return_value=response_mock,
         )
         salt = '123asd'
         get_salt_mock = mocker.patch(
             'src.authentication.services.microsoft.get_salt',
-            return_value=salt
+            return_value=salt,
         )
         public_url = 'https://test.com/image.svg'
         storage_init_mock = mocker.patch.object(
             GoogleCloudService,
             attribute='__init__',
-            return_value=None
+            return_value=None,
         )
         upload_from_binary_mock = mocker.patch(
             'src.storage.google_cloud.GoogleCloudService.'
             'upload_from_binary',
-            return_value=public_url
+            return_value=public_url,
         )
         user_id = 'UQ@SDW@31221'
         service = MicrosoftGraphApiMixin()
@@ -435,7 +435,7 @@ class TestMicrosoftGraphApiMixin:
         result = service._get_user_photo(
             access_token=access_token,
             user_id=user_id,
-            account=account
+            account=account,
         )
 
         # assert
@@ -465,20 +465,20 @@ class TestMicrosoftAuthService:
                 'profile',
                 'offline_access',
                 'https://graph.microsoft.com/.default',
-                'openid'
+                'openid',
             ],
         }
         client_mock.initiate_auth_code_flow = mocker.Mock(
-            return_value=flow_data
+            return_value=flow_data,
         )
         get_auth_client_mock = mocker.patch(
             'src.authentication.services.microsoft.'
             'MicrosoftAuthService._build_msal_app',
-            return_value=client_mock
+            return_value=client_mock,
         )
         set_cache_mock = mocker.patch(
             'src.authentication.services.microsoft.'
-            'MicrosoftAuthService._set_cache'
+            'MicrosoftAuthService._set_cache',
         )
         service = MicrosoftAuthService()
 
@@ -492,11 +492,11 @@ class TestMicrosoftAuthService:
             scopes=[
                 'User.Read.All',
                 'User.Read',
-            ]
+            ],
         )
         set_cache_mock.assert_called_once_with(
             value=flow_data,
-            key=state
+            key=state,
         )
 
     def test_get_user_data__ok(self, mocker):
@@ -506,13 +506,13 @@ class TestMicrosoftAuthService:
         get_auth_client_mock = mocker.patch(
             'src.authentication.services.microsoft.'
             'MicrosoftAuthService._build_msal_app',
-            return_value=client_mock
+            return_value=client_mock,
         )
         access_token = '!@#!@#@!wqww23'
         get_access_token_mock = mocker.patch(
             'src.authentication.services.microsoft.'
             'MicrosoftAuthService._get_first_access_token',
-            return_value=access_token
+            return_value=access_token,
         )
         profile_id = '!@#seasda'
         email = 'test@test.test'
@@ -529,18 +529,18 @@ class TestMicrosoftAuthService:
         get_user_mock = mocker.patch(
             'src.authentication.services.microsoft.'
             'MicrosoftAuthService._get_user',
-            return_value=profile_data
+            return_value=profile_data,
         )
         get_user_profile_email_mock = mocker.patch(
             'src.authentication.services.microsoft.'
             'MicrosoftAuthService._get_user_profile_email',
-            return_value=email
+            return_value=email,
         )
         photo_url = 'https://test.image.com'
         get_user_photo_mock = mocker.patch(
             'src.authentication.services.microsoft.'
             'MicrosoftAuthService._get_user_photo',
-            return_value=photo_url
+            return_value=photo_url,
         )
         auth_response = mocker.Mock()
         service = MicrosoftAuthService()
@@ -556,7 +556,7 @@ class TestMicrosoftAuthService:
         get_user_photo_mock.assert_called_once_with(
             access_token=access_token,
             user_id=profile_id,
-            account=None
+            account=None,
         )
         assert result['email'] == email
         assert result['first_name'] == first_name
@@ -572,13 +572,13 @@ class TestMicrosoftAuthService:
         mocker.patch(
             'src.authentication.services.microsoft.'
             'MicrosoftAuthService._build_msal_app',
-            return_value=client_mock
+            return_value=client_mock,
         )
         access_token = '!@#!@#@!wqww23'
         mocker.patch(
             'src.authentication.services.microsoft.'
             'MicrosoftAuthService._get_first_access_token',
-            return_value=access_token
+            return_value=access_token,
         )
         profile_id = '!@#seasda'
         email = 'username@domain.com'
@@ -595,18 +595,18 @@ class TestMicrosoftAuthService:
         mocker.patch(
             'src.authentication.services.microsoft.'
             'MicrosoftAuthService._get_user',
-            return_value=profile_data
+            return_value=profile_data,
         )
         mocker.patch(
             'src.authentication.services.microsoft.'
             'MicrosoftAuthService._get_user_profile_email',
-            return_value=email
+            return_value=email,
         )
         photo_url = 'https://test.image.com'
         mocker.patch(
             'src.authentication.services.microsoft.'
             'MicrosoftAuthService._get_user_photo',
-            return_value=photo_url
+            return_value=photo_url,
         )
         auth_response = mocker.Mock()
         service = MicrosoftAuthService()
@@ -619,7 +619,7 @@ class TestMicrosoftAuthService:
 
     def test_get_user_data__email_not_found__raise_exception(
         self,
-        mocker
+        mocker,
     ):
 
         # arrange
@@ -627,13 +627,13 @@ class TestMicrosoftAuthService:
         get_auth_client_mock = mocker.patch(
             'src.authentication.services.microsoft.'
             'MicrosoftAuthService._build_msal_app',
-            return_value=client_mock
+            return_value=client_mock,
         )
         access_token = '!@#!@#@!wqww23'
         get_access_token_mock = mocker.patch(
             'src.authentication.services.microsoft.'
             'MicrosoftAuthService._get_first_access_token',
-            return_value=access_token
+            return_value=access_token,
         )
         profile_data = {
             'id': '!@#easd',
@@ -644,16 +644,16 @@ class TestMicrosoftAuthService:
         get_user_mock = mocker.patch(
             'src.authentication.services.microsoft.'
             'MicrosoftAuthService._get_user',
-            return_value=profile_data
+            return_value=profile_data,
         )
         get_user_profile_email_mock = mocker.patch(
             'src.authentication.services.microsoft.'
             'MicrosoftAuthService._get_user_profile_email',
-            return_value=None
+            return_value=None,
         )
         get_user_photo_mock = mocker.patch(
             'src.authentication.services.microsoft.'
-            'MicrosoftAuthService._get_user_photo'
+            'MicrosoftAuthService._get_user_photo',
         )
         auth_response = mocker.Mock()
         service = MicrosoftAuthService()
@@ -676,25 +676,25 @@ class TestMicrosoftAuthService:
         client_mock = mocker.Mock()
         state = 'ASDSDasd12'
         auth_response = {
-            'state': state
+            'state': state,
         }
         response = {
             'token_type': 'Bearer',
-            'access_token': '!@#wad123'
+            'access_token': '!@#wad123',
         }
         client_mock.acquire_token_by_auth_code_flow = mocker.Mock(
-            return_value=response
+            return_value=response,
         )
         get_auth_client_mock = mocker.patch(
             'src.authentication.services.microsoft.'
             'MicrosoftAuthService._build_msal_app',
-            return_value=client_mock
+            return_value=client_mock,
         )
         flow_data = mocker.Mock()
         get_cache_mock = mocker.patch(
             'src.authentication.services.microsoft.'
             'MicrosoftAuthService._get_cache',
-            return_value=flow_data
+            return_value=flow_data,
         )
         service = MicrosoftAuthService()
 
@@ -708,30 +708,30 @@ class TestMicrosoftAuthService:
         get_cache_mock.assert_called_once_with(key=state)
         client_mock.acquire_token_by_auth_code_flow.assert_called_once_with(
             auth_code_flow=flow_data,
-            auth_response=auth_response
+            auth_response=auth_response,
         )
 
     def test_get_first_access_token__clear_cache__raise_exception(
         self,
-        mocker
+        mocker,
     ):
 
         # arrange
         client_mock = mocker.Mock()
         state = 'ASDSDasd12'
         auth_response = {
-            'state': state
+            'state': state,
         }
         client_mock.acquire_token_by_auth_code_flow = mocker.Mock()
         get_auth_client_mock = mocker.patch(
             'src.authentication.services.microsoft.'
             'MicrosoftAuthService._build_msal_app',
-            return_value=client_mock
+            return_value=client_mock,
         )
         get_cache_mock = mocker.patch(
             'src.authentication.services.microsoft.'
             'MicrosoftAuthService._get_cache',
-            return_value=None
+            return_value=None,
         )
         service = MicrosoftAuthService()
 
@@ -747,7 +747,7 @@ class TestMicrosoftAuthService:
 
     def test_get_first_access_token__request_return_error__raise_exception(
         self,
-        mocker
+        mocker,
     ):
 
         # arrange
@@ -756,22 +756,22 @@ class TestMicrosoftAuthService:
         auth_response = {'state': state}
         response = {'error': 'some error'}
         client_mock.acquire_token_by_auth_code_flow = mocker.Mock(
-            return_value=response
+            return_value=response,
         )
         get_auth_client_mock = mocker.patch(
             'src.authentication.services.microsoft.'
             'MicrosoftAuthService._build_msal_app',
-            return_value=client_mock
+            return_value=client_mock,
         )
         flow_data = mocker.Mock()
         get_cache_mock = mocker.patch(
             'src.authentication.services.microsoft.'
             'MicrosoftAuthService._get_cache',
-            return_value=flow_data
+            return_value=flow_data,
         )
         sentry_mock = mocker.patch(
             'src.authentication.services.microsoft.'
-            'capture_sentry_message'
+            'capture_sentry_message',
         )
         service = MicrosoftAuthService()
 
@@ -785,12 +785,12 @@ class TestMicrosoftAuthService:
         get_cache_mock.assert_called_once_with(key=state)
         client_mock.acquire_token_by_auth_code_flow.assert_called_once_with(
             auth_code_flow=flow_data,
-            auth_response=auth_response
+            auth_response=auth_response,
         )
         sentry_mock.assert_called_once_with(
             message='Get Microsoft Access token return an error',
             data=response,
-            level=SentryLogLevel.WARNING
+            level=SentryLogLevel.WARNING,
         )
 
     def test_get_access_token__not_expired__ok(self, mocker):
@@ -802,18 +802,18 @@ class TestMicrosoftAuthService:
             source=SourceType.MICROSOFT,
             access_token='!@#SDSDe12',
             refresh_token='asdsdfs213',
-            expires_in=3600
+            expires_in=3600,
         )
         client_mock = mocker.Mock()
         get_auth_client_mock = mocker.patch(
             'src.authentication.services.microsoft.'
             'MicrosoftAuthService._build_msal_app',
-            return_value=client_mock
+            return_value=client_mock,
         )
         client_mock.acquire_token_by_refresh_token = mocker.Mock()
         sentry_mock = mocker.patch(
             'src.authentication.services.microsoft.'
-            'capture_sentry_message'
+            'capture_sentry_message',
         )
         service = MicrosoftAuthService()
 
@@ -844,7 +844,7 @@ class TestMicrosoftAuthService:
         get_auth_client_mock = mocker.patch(
             'src.authentication.services.microsoft.'
             'MicrosoftAuthService._build_msal_app',
-            return_value=client_mock
+            return_value=client_mock,
         )
         token_new_data = {
             'access_token': 'new access_token',
@@ -852,17 +852,17 @@ class TestMicrosoftAuthService:
             'expires_in': 3000,
         }
         client_mock.acquire_token_by_refresh_token = mocker.Mock(
-            return_value=token_new_data
+            return_value=token_new_data,
         )
         sentry_mock = mocker.patch(
             'src.authentication.services.microsoft.'
-            'capture_sentry_message'
+            'capture_sentry_message',
         )
         # future current date for expire token
         date = timezone.now() + timedelta(seconds=expires_in + 120)
         mocker.patch(
             'src.payment.stripe.service.timezone.now',
-            return_value=date
+            return_value=date,
         )
         service = MicrosoftAuthService()
 
@@ -883,7 +883,7 @@ class TestMicrosoftAuthService:
             scopes=[
                 'User.Read.All',
                 'User.Read',
-            ]
+            ],
         )
 
     def test_get_access_token__not_found__raise_exception(self, mocker):
@@ -895,18 +895,18 @@ class TestMicrosoftAuthService:
             source=SourceType.GOOGLE,
             access_token='!@#SDSDe12',
             refresh_token='asdsdfs213',
-            expires_in=3600
+            expires_in=3600,
         )
         client_mock = mocker.Mock()
         get_auth_client_mock = mocker.patch(
             'src.authentication.services.microsoft.'
             'MicrosoftAuthService._build_msal_app',
-            return_value=client_mock
+            return_value=client_mock,
         )
         client_mock.acquire_token_by_refresh_token = mocker.Mock()
         sentry_mock = mocker.patch(
             'src.authentication.services.microsoft.'
-            'capture_sentry_message'
+            'capture_sentry_message',
         )
         service = MicrosoftAuthService()
 
@@ -927,7 +927,7 @@ class TestMicrosoftAuthService:
         get_auth_client_mock = mocker.patch(
             'src.authentication.services.microsoft.'
             'MicrosoftAuthService._build_msal_app',
-            return_value=client_mock
+            return_value=client_mock,
         )
         email = 'some@email.test'
         service = MicrosoftAuthService()
@@ -941,7 +941,7 @@ class TestMicrosoftAuthService:
 
     def test_get_email_from_principal_name__external_user_principal_name__ok(
         self,
-        mocker
+        mocker,
     ):
 
         # arrange
@@ -949,7 +949,7 @@ class TestMicrosoftAuthService:
         get_auth_client_mock = mocker.patch(
             'src.authentication.services.microsoft.'
             'MicrosoftAuthService._build_msal_app',
-            return_value=client_mock
+            return_value=client_mock,
         )
         email = 'some.boomer@outlook.com'
         principal_name = (
@@ -966,7 +966,7 @@ class TestMicrosoftAuthService:
 
     def test_get_email_from_principal_name__unexpected_format__return_none(
         self,
-        mocker
+        mocker,
     ):
 
         # arrange
@@ -974,7 +974,7 @@ class TestMicrosoftAuthService:
         get_auth_client_mock = mocker.patch(
             'src.authentication.services.microsoft.'
             'MicrosoftAuthService._build_msal_app',
-            return_value=client_mock
+            return_value=client_mock,
         )
         principal_name = (
             'some.boomer.outlook.com#EXT#@pneumaticapp.onmicrosoft.com'
@@ -995,21 +995,21 @@ class TestMicrosoftAuthService:
         get_auth_client_mock = mocker.patch(
             'src.authentication.services.microsoft.'
             'MicrosoftAuthService._build_msal_app',
-            return_value=client_mock
+            return_value=client_mock,
         )
         get_email_from_principal_name_mock = mocker.patch(
             'src.authentication.services.microsoft.'
             'MicrosoftAuthService._get_email_from_principal_name',
-            return_value=client_mock
+            return_value=client_mock,
         )
         email = 'custom@email.com'
         profile_data = {
             'mail': email,
-            'userPrincipalName': 'principal@email.com'
+            'userPrincipalName': 'principal@email.com',
         }
         sentry_mock = mocker.patch(
             'src.authentication.services.microsoft.'
-            'capture_sentry_message'
+            'capture_sentry_message',
         )
         service = MicrosoftAuthService()
 
@@ -1029,7 +1029,7 @@ class TestMicrosoftAuthService:
         get_auth_client_mock = mocker.patch(
             'src.authentication.services.microsoft.'
             'MicrosoftAuthService._build_msal_app',
-            return_value=client_mock
+            return_value=client_mock,
         )
         principal_name = 'principal_email.com#EXT#'
         email = 'principal@email.com'
@@ -1037,16 +1037,16 @@ class TestMicrosoftAuthService:
             'mail': 'custom@email.com',
             'userPrincipalName': principal_name,
             'userType': 'member',
-            'creationType': None
+            'creationType': None,
         }
         get_email_from_principal_name_mock = mocker.patch(
             'src.authentication.services.microsoft.'
             'MicrosoftAuthService._get_email_from_principal_name',
-            return_value=email
+            return_value=email,
         )
         sentry_mock = mocker.patch(
             'src.authentication.services.microsoft.'
-            'capture_sentry_message'
+            'capture_sentry_message',
         )
         service = MicrosoftAuthService()
 
@@ -1057,13 +1057,13 @@ class TestMicrosoftAuthService:
         assert result == email
         get_auth_client_mock.assert_called_once()
         get_email_from_principal_name_mock.assert_called_once_with(
-            principal_name
+            principal_name,
         )
         sentry_mock.assert_not_called()
 
     def test_get_user_profile_email__work_account_without_email__return_none(
         self,
-        mocker
+        mocker,
     ):
 
         # arrange
@@ -1071,23 +1071,23 @@ class TestMicrosoftAuthService:
         get_auth_client_mock = mocker.patch(
             'src.authentication.services.microsoft.'
             'MicrosoftAuthService._build_msal_app',
-            return_value=client_mock
+            return_value=client_mock,
         )
         principal_name = 'principal_email.com#EXT#'
         profile_data = {
             'mail': 'custom@email.com',
             'userPrincipalName': principal_name,
             'userType': 'member',
-            'creationType': None
+            'creationType': None,
         }
         get_email_from_principal_name_mock = mocker.patch(
             'src.authentication.services.microsoft.'
             'MicrosoftAuthService._get_email_from_principal_name',
-            return_value=None
+            return_value=None,
         )
         sentry_mock = mocker.patch(
             'src.authentication.services.microsoft.'
-            'capture_sentry_message'
+            'capture_sentry_message',
         )
         service = MicrosoftAuthService()
 
@@ -1098,7 +1098,7 @@ class TestMicrosoftAuthService:
         assert result is None
         get_auth_client_mock.assert_called_once()
         get_email_from_principal_name_mock.assert_called_once_with(
-            principal_name
+            principal_name,
         )
         sentry_mock.assert_called_once()
 
@@ -1109,21 +1109,21 @@ class TestMicrosoftAuthService:
         get_auth_client_mock = mocker.patch(
             'src.authentication.services.microsoft.'
             'MicrosoftAuthService._build_msal_app',
-            return_value=client_mock
+            return_value=client_mock,
         )
         get_email_from_principal_name_mock = mocker.patch(
             'src.authentication.services.microsoft.'
             'MicrosoftAuthService._get_email_from_principal_name',
-            return_value=client_mock
+            return_value=client_mock,
         )
         email = 'custom@email.com'
         profile_data = {
             'mail':  'CustoM@eMail.cOm',
-            'userPrincipalName': 'principal@email.com'
+            'userPrincipalName': 'principal@email.com',
         }
         sentry_mock = mocker.patch(
             'src.authentication.services.microsoft.'
-            'capture_sentry_message'
+            'capture_sentry_message',
         )
         service = MicrosoftAuthService()
 
@@ -1144,7 +1144,7 @@ class TestMicrosoftAuthService:
         mocker.patch(
             'src.authentication.services.microsoft.'
             'MicrosoftAuthService._build_msal_app',
-            return_value=client_mock
+            return_value=client_mock,
         )
         refresh_token = 'some refresh'
         access_token = 'some access'
@@ -1181,20 +1181,20 @@ class TestMicrosoftAuthService:
             user=user,
             refresh_token='ahsdsdasd23ggfn',
             access_token=f'{token_type} !@#asas',
-            expires_in=360
+            expires_in=360,
         )
 
         client_mock = mocker.Mock()
         mocker.patch(
             'src.authentication.services.microsoft.'
             'MicrosoftAuthService._build_msal_app',
-            return_value=client_mock
+            return_value=client_mock,
         )
         new_tokens_data = {
             'refresh_token': 'new refresh',
             'access_token': 'new access token',
             'token_type': token_type,
-            'expires_in': 400
+            'expires_in': 400,
         }
         service = MicrosoftAuthService()
         service.tokens = new_tokens_data
@@ -1219,13 +1219,13 @@ class TestMicrosoftAuthService:
         get_auth_client_mock = mocker.patch(
             'src.authentication.services.microsoft.'
             'MicrosoftAuthService._build_msal_app',
-            return_value=client_mock
+            return_value=client_mock,
         )
         access_token = '!@#!@#@!wqww23'
         get_access_token_mock = mocker.patch(
             'src.authentication.services.microsoft.'
             'MicrosoftAuthService._get_access_token',
-            return_value=access_token
+            return_value=access_token,
         )
         user_profile = {
             'id': '111',
@@ -1240,40 +1240,40 @@ class TestMicrosoftAuthService:
                 '#users(id,givenName,surname,jobTitle,mail)'
             ),
             'value': [
-                user_profile
-            ]
+                user_profile,
+            ],
         }
         get_users_mock = mocker.patch(
             'src.authentication.services.microsoft.'
             'MicrosoftAuthService._get_users',
-            return_value=get_users_response
+            return_value=get_users_response,
         )
         get_user_profile_email_mock = mocker.patch(
             'src.authentication.services.microsoft.'
             'MicrosoftAuthService._get_user_profile_email',
-            return_value=user_profile['mail']
+            return_value=user_profile['mail'],
         )
         photo_url = 'https://test.image.com'
         get_user_photo_mock = mocker.patch(
             'src.authentication.services.microsoft.'
             'MicrosoftAuthService._get_user_photo',
-            return_value=photo_url
+            return_value=photo_url,
         )
         log_mock = mocker.patch(
             'src.authentication.services.microsoft.'
-            'AccountLogService.contacts_request'
+            'AccountLogService.contacts_request',
         )
         google_contact = Contact.objects.create(
             account=user.account,
             user_id=user.id,
             source=SourceType.GOOGLE,
-            email='test@test.test'
+            email='test@test.test',
         )
         ms_contact = Contact.objects.create(
             account=user.account,
             user_id=user.id,
             source=SourceType.MICROSOFT,
-            email='test@test.test'
+            email='test@test.test',
         )
         service = MicrosoftAuthService()
 
@@ -1343,13 +1343,13 @@ class TestMicrosoftAuthService:
         get_auth_client_mock = mocker.patch(
             'src.authentication.services.microsoft.'
             'MicrosoftAuthService._build_msal_app',
-            return_value=client_mock
+            return_value=client_mock,
         )
         access_token = '!@#!@#@!wqww23'
         get_access_token_mock = mocker.patch(
             'src.authentication.services.microsoft.'
             'MicrosoftAuthService._get_access_token',
-            return_value=access_token
+            return_value=access_token,
         )
         user_profile = {
             'id': '111',
@@ -1364,28 +1364,28 @@ class TestMicrosoftAuthService:
                 '#users(id,givenName,surname,jobTitle,mail)'
             ),
             'value': [
-                user_profile
-            ]
+                user_profile,
+            ],
         }
         get_users_mock = mocker.patch(
             'src.authentication.services.microsoft.'
             'MicrosoftAuthService._get_users',
-            return_value=get_users_response
+            return_value=get_users_response,
         )
         get_user_profile_email_mock = mocker.patch(
             'src.authentication.services.microsoft.'
             'MicrosoftAuthService._get_user_profile_email',
-            return_value=user_profile['mail']
+            return_value=user_profile['mail'],
         )
         photo_url = 'https://test.image.com'
         get_user_photo_mock = mocker.patch(
             'src.authentication.services.microsoft.'
             'MicrosoftAuthService._get_user_photo',
-            return_value=photo_url
+            return_value=photo_url,
         )
         log_mock = mocker.patch(
             'src.authentication.services.microsoft.'
-            'AccountLogService.contacts_request'
+            'AccountLogService.contacts_request',
         )
         service = MicrosoftAuthService()
 
@@ -1433,13 +1433,13 @@ class TestMicrosoftAuthService:
         get_auth_client_mock = mocker.patch(
             'src.authentication.services.microsoft.'
             'MicrosoftAuthService._build_msal_app',
-            return_value=client_mock
+            return_value=client_mock,
         )
         access_token = '!@#!@#@!wqww23'
         get_access_token_mock = mocker.patch(
             'src.authentication.services.microsoft.'
             'MicrosoftAuthService._get_access_token',
-            return_value=access_token
+            return_value=access_token,
         )
         user_profile = mocker.Mock()
         get_users_mock = mocker.patch(
@@ -1451,34 +1451,34 @@ class TestMicrosoftAuthService:
                     '#users(id,givenName,surname,jobTitle,mail)'
                 ),
                 'value': [
-                    user_profile
-                ]
-            }
+                    user_profile,
+                ],
+            },
         )
         get_user_profile_email_mock = mocker.patch(
             'src.authentication.services.microsoft.'
             'MicrosoftAuthService._get_user_profile_email',
-            return_value=None
+            return_value=None,
         )
         get_user_photo_mock = mocker.patch(
             'src.authentication.services.microsoft.'
-            'MicrosoftAuthService._get_user_photo'
+            'MicrosoftAuthService._get_user_photo',
         )
         log_mock = mocker.patch(
             'src.authentication.services.microsoft.'
-            'AccountLogService.contacts_request'
+            'AccountLogService.contacts_request',
         )
         google_contact = Contact.objects.create(
             account=user.account,
             user_id=user.id,
             source=SourceType.GOOGLE,
-            email='test@test.test'
+            email='test@test.test',
         )
         ms_contact = Contact.objects.create(
             account=user.account,
             user_id=user.id,
             source=SourceType.MICROSOFT,
-            email='test@test.test'
+            email='test@test.test',
         )
         service = MicrosoftAuthService()
 
@@ -1505,13 +1505,13 @@ class TestMicrosoftAuthService:
         get_auth_client_mock = mocker.patch(
             'src.authentication.services.microsoft.'
             'MicrosoftAuthService._build_msal_app',
-            return_value=client_mock
+            return_value=client_mock,
         )
         access_token = '!@#!@#@!wqww23'
         get_access_token_mock = mocker.patch(
             'src.authentication.services.microsoft.'
             'MicrosoftAuthService._get_access_token',
-            return_value=access_token
+            return_value=access_token,
         )
         user_profile = {
             'mail': user.email,
@@ -1525,22 +1525,22 @@ class TestMicrosoftAuthService:
                     '#users(id,givenName,surname,jobTitle,mail)'
                 ),
                 'value': [
-                    user_profile
-                ]
-            }
+                    user_profile,
+                ],
+            },
         )
         get_user_profile_email_mock = mocker.patch(
             'src.authentication.services.microsoft.'
             'MicrosoftAuthService._get_user_profile_email',
-            return_value=user.email
+            return_value=user.email,
         )
         get_user_photo_mock = mocker.patch(
             'src.authentication.services.microsoft.'
-            'MicrosoftAuthService._get_user_photo'
+            'MicrosoftAuthService._get_user_photo',
         )
         log_mock = mocker.patch(
             'src.authentication.services.microsoft.'
-            'AccountLogService.contacts_request'
+            'AccountLogService.contacts_request',
         )
         service = MicrosoftAuthService()
 
@@ -1570,13 +1570,13 @@ class TestMicrosoftAuthService:
         get_auth_client_mock = mocker.patch(
             'src.authentication.services.microsoft.'
             'MicrosoftAuthService._build_msal_app',
-            return_value=client_mock
+            return_value=client_mock,
         )
         access_token = '!@#!@#@!wqww23'
         get_access_token_mock = mocker.patch(
             'src.authentication.services.microsoft.'
             'MicrosoftAuthService._get_access_token',
-            return_value=access_token
+            return_value=access_token,
         )
         user_profile = {
             'id': '111',
@@ -1589,25 +1589,25 @@ class TestMicrosoftAuthService:
         error_details = {'error_details': 'Error details'}
         ex = exceptions.GraphApiRequestError(
             message=error_message,
-            details=error_details
+            details=error_details,
         )
         get_users_mock = mocker.patch(
             'src.authentication.services.microsoft.'
             'MicrosoftAuthService._get_users',
-            side_effect=ex
+            side_effect=ex,
         )
         get_user_profile_email_mock = mocker.patch(
             'src.authentication.services.microsoft.'
             'MicrosoftAuthService._get_user_profile_email',
-            return_value=user_profile['mail']
+            return_value=user_profile['mail'],
         )
         get_user_photo_mock = mocker.patch(
             'src.authentication.services.microsoft.'
-            'MicrosoftAuthService._get_user_photo'
+            'MicrosoftAuthService._get_user_photo',
         )
         log_mock = mocker.patch(
             'src.authentication.services.microsoft.'
-            'AccountLogService.contacts_request'
+            'AccountLogService.contacts_request',
         )
         service = MicrosoftAuthService()
 
@@ -1634,7 +1634,7 @@ class TestMicrosoftAuthService:
                 'updated_contacts': [],
                 'message': error_message,
                 'details': error_details,
-                'exception_type': type(ex)
+                'exception_type': type(ex),
             },
             contractor='Microsoft Graph API',
         )

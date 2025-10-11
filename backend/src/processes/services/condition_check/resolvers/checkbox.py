@@ -2,7 +2,7 @@ from django.db.models import Q
 
 from src.processes.models import TaskField
 from src.processes.enums import (
-    PredicateOperator
+    PredicateOperator,
 )
 from .base import Resolver
 
@@ -21,7 +21,7 @@ class CheckboxResolver(Resolver):
         self.field_value = selected
         if self._predicate.operator in {
             PredicateOperator.EQUAL,
-            PredicateOperator.NOT_EQUAL
+            PredicateOperator.NOT_EQUAL,
         }:
             self.predicate_value = [self._predicate.value]
         else:

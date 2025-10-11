@@ -46,7 +46,7 @@ class AccountOwnerPermission(BaseAuthPermission):
     def has_permission(self, request, view):
         return bool(
             self._user_is_authenticated(request)
-            and request.user.is_account_owner
+            and request.user.is_account_owner,
         )
 
 

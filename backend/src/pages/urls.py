@@ -7,7 +7,7 @@ router = DefaultRouter(trailing_slash=False)
 router.register(
     prefix='public',
     viewset=PublicPageViewSet,
-    basename='public-pages'
+    basename='public-pages',
 )
 
 urlpatterns = router.urls

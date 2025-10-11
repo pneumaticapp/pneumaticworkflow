@@ -30,7 +30,7 @@ class OrderByMixin:
         self,
         pre_columns: Optional[str] = None,
         post_columns: Optional[str] = None,
-        default_column: Optional[str] = None
+        default_column: Optional[str] = None,
     ) -> str:
 
         """ Returns ORDER BY clause for SQL query

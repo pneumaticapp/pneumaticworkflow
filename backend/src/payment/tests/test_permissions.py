@@ -1,5 +1,5 @@
 from src.payment.stripe.permissions import (
-    StripeWebhookPermission
+    StripeWebhookPermission,
 )
 from django.conf import settings
 
@@ -12,13 +12,13 @@ def test_stripe_permission__signature__ok(mocker):
     mocker.patch(
         'src.payment.stripe.permissions.StripeWebhookPermission.'
         'configuration',
-        settings.CONFIGURATION_PROD
+        settings.CONFIGURATION_PROD,
     )
     ip = '127.0.0.1'
     mocker.patch(
         'src.payment.stripe.permissions.StripeWebhookPermission.'
         'whitelist',
-        [ip]
+        [ip],
     )
     stripe_secret_key = (
         'sk_test_51N6TJkBM2UVM1VfGfeB4YtiqwRHTI55Y4VquoUQtiloS2iqn7aNE6ZNmF4'
@@ -27,13 +27,13 @@ def test_stripe_permission__signature__ok(mocker):
     mocker.patch(
         'src.payment.stripe.permissions.StripeWebhookPermission.'
         'stripe_secret_key',
-        stripe_secret_key
+        stripe_secret_key,
     )
     stripe_webhook_secret = 'we_1N6XhwBM2UVM1VfGdCsiGf83'
     mocker.patch(
         'src.payment.stripe.permissions.StripeWebhookPermission.'
         'stripe_webhook_secret',
-        stripe_webhook_secret
+        stripe_webhook_secret,
     )
     sig_header = (
         't=1685096681,'
@@ -44,7 +44,7 @@ def test_stripe_permission__signature__ok(mocker):
     request_mock = mocker.Mock(
         META={'HTTP_REMOTE_ADDR': ip},
         headers={'Stripe-Signature': sig_header},
-        body=body
+        body=body,
     )
 
     view_mock = mocker.Mock()

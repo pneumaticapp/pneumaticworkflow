@@ -6,7 +6,7 @@ from src.processes.models import (
 )
 from src.processes.enums import (
     OwnerType,
-    PerformerType
+    PerformerType,
 )
 from src.processes.tests.fixtures import (
     create_test_template,
@@ -15,7 +15,7 @@ from src.processes.tests.fixtures import (
 from src.processes.tests.fixtures import (
     create_test_user,
     create_test_account,
-    create_test_group
+    create_test_group,
 )
 
 
@@ -29,7 +29,7 @@ def test_count_templates__group_in_template_owner__ok(api_client):
     template = create_test_template(
         user=user,
         is_active=True,
-        tasks_count=1
+        tasks_count=1,
     )
     TemplateOwner.objects.create(
         template=template,
@@ -42,7 +42,7 @@ def test_count_templates__group_in_template_owner__ok(api_client):
 
     # act
     response = api_client.get(
-        f'/accounts/groups/{group.id}/count-workflows'
+        f'/accounts/groups/{group.id}/count-workflows',
     )
 
     # assert
@@ -57,19 +57,19 @@ def test_count_templates__group_in_raw_performer__ok(api_client):
     template = create_test_template(
         user=user,
         is_active=True,
-        tasks_count=1
+        tasks_count=1,
     )
     template_task = template.tasks.get(number=1)
     template_task.add_raw_performer(
         performer_type=PerformerType.GROUP,
-        group=group
+        group=group,
     )
 
     api_client.token_authenticate(user)
 
     # act
     response = api_client.get(
-        f'/accounts/groups/{group.id}/count-workflows'
+        f'/accounts/groups/{group.id}/count-workflows',
     )
 
     # assert
@@ -93,7 +93,7 @@ def test_count_templates__group_in_task_performer__ok(api_client):
 
     # act
     response = api_client.get(
-        f'/accounts/groups/{group.id}/count-workflows'
+        f'/accounts/groups/{group.id}/count-workflows',
     )
 
     # assert
@@ -108,7 +108,7 @@ def test_count_templates__non_existent_group__not_found(api_client):
 
     # act
     response = api_client.get(
-        '/accounts/groups/99999/count-workflows'
+        '/accounts/groups/99999/count-workflows',
     )
 
     # assert
@@ -123,7 +123,7 @@ def test_count_templates__empty_result(api_client):
 
     # act
     response = api_client.get(
-        f'/accounts/groups/{group.id}/count-workflows'
+        f'/accounts/groups/{group.id}/count-workflows',
     )
 
     # assert
@@ -138,26 +138,26 @@ def test_count_templates__raw_performer_in_multiple_templates__ok(api_client):
     template1 = create_test_template(
         user=user,
         is_active=True,
-        tasks_count=1
+        tasks_count=1,
     )
     template2 = create_test_template(
         user=user,
         is_active=True,
-        tasks_count=1
+        tasks_count=1,
     )
     template1.tasks.get(number=1).add_raw_performer(
         performer_type=PerformerType.GROUP,
-        group=group
+        group=group,
     )
     template2.tasks.get(number=1).add_raw_performer(
         performer_type=PerformerType.GROUP,
-        group=group
+        group=group,
     )
     api_client.token_authenticate(user)
 
     # act
     response = api_client.get(
-        f'/accounts/groups/{group.id}/count-workflows'
+        f'/accounts/groups/{group.id}/count-workflows',
     )
 
     # assert
@@ -176,18 +176,18 @@ def test_count_templates__performer_in_multiple_workflows__ok(api_client):
     TaskPerformer.objects.create(
         task=workflow1.tasks.get(number=1),
         type=PerformerType.GROUP,
-        group=group
+        group=group,
     )
     TaskPerformer.objects.create(
         task=workflow2.tasks.get(number=1),
         type=PerformerType.GROUP,
-        group=group
+        group=group,
     )
     api_client.token_authenticate(user)
 
     # act
     response = api_client.get(
-        f'/accounts/groups/{group.id}/count-workflows'
+        f'/accounts/groups/{group.id}/count-workflows',
     )
 
     # assert
@@ -202,16 +202,16 @@ def test_count_templates__inactive_templates_not_counted__ok(api_client):
     inactive_template = create_test_template(
         user=user,
         is_active=False,
-        tasks_count=1
+        tasks_count=1,
     )
     inactive_template.tasks.get(number=1).add_raw_performer(
         performer_type=PerformerType.GROUP,
-        group=group
+        group=group,
     )
     api_client.token_authenticate(user)
     # act
     response = api_client.get(
-        f'/accounts/groups/{group.id}/count-workflows'
+        f'/accounts/groups/{group.id}/count-workflows',
     )
 
     # assert
@@ -229,13 +229,13 @@ def test_count_templates__deleted_workflows_not_counted__ok(api_client):
     TaskPerformer.objects.create(
         task=deleted_workflow.tasks.get(number=1),
         type=PerformerType.GROUP,
-        group=group
+        group=group,
     )
     api_client.token_authenticate(user)
 
     # act
     response = api_client.get(
-        f'/accounts/groups/{group.id}/count-workflows'
+        f'/accounts/groups/{group.id}/count-workflows',
     )
 
     # assert
@@ -244,7 +244,7 @@ def test_count_templates__deleted_workflows_not_counted__ok(api_client):
 
 
 def test_count_templates__another_account_group__not_found(
-    api_client
+    api_client,
 ):
     # arrange
     another_account = create_test_account(name="Acc 1")
@@ -256,7 +256,7 @@ def test_count_templates__another_account_group__not_found(
 
     # act
     response = api_client.get(
-        f'/accounts/groups/{group.id}/count-workflows'
+        f'/accounts/groups/{group.id}/count-workflows',
     )
 
     # assert
@@ -270,12 +270,12 @@ def test_count_templates__template_and_workflow_task_performer__ok(api_client):
     template = create_test_template(
         user=user,
         is_active=True,
-        tasks_count=1
+        tasks_count=1,
     )
     workflow = create_test_workflow(user)
     template.tasks.get(number=1).add_raw_performer(
         performer_type=PerformerType.GROUP,
-        group=group
+        group=group,
     )
 
     TaskPerformer.objects.create(
@@ -287,7 +287,7 @@ def test_count_templates__template_and_workflow_task_performer__ok(api_client):
 
     # act
     response = api_client.get(
-        f'/accounts/groups/{group.id}/count-workflows'
+        f'/accounts/groups/{group.id}/count-workflows',
     )
 
     # assert

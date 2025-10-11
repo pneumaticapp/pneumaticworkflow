@@ -22,7 +22,7 @@ if configuration in {'Staging', 'Production'}:
         kwargs = {
             'dsn': settings.PROJECT_CONF['SENTRY_DSN'],
             'integrations': [DjangoIntegration()],
-            'send_default_pii': True
+            'send_default_pii': True,
         }
         if configuration == 'Production':
             kwargs['traces_sample_rate'] = 0.2

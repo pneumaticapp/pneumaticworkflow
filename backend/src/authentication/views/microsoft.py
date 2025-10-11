@@ -8,13 +8,13 @@ from src.generics.mixins.views import CustomViewSetMixin
 from src.analytics.mixins import BaseIdentifyMixin
 from src.authentication.permissions import MSAuthPermission
 from src.authentication.services.user_auth import (
-    AuthService
+    AuthService,
 )
 from src.authentication.services.exceptions import (
-    AuthException
+    AuthException,
 )
 from src.authentication.services.microsoft import (
-    MicrosoftAuthService
+    MicrosoftAuthService,
 )
 from src.authentication.serializers import (
     MSTokenSerializer,
@@ -40,7 +40,7 @@ class MSAuthViewSet(
     SignUpMixin,
     CustomViewSetMixin,
     BaseIdentifyMixin,
-    GenericViewSet
+    GenericViewSet,
 ):
     permission_classes = (MSAuthPermission,)
     serializer_class = MSTokenSerializer
@@ -65,7 +65,7 @@ class MSAuthViewSet(
                     'client_info': slz.validated_data['client_info'],
                     'state': slz.validated_data['state'],
                     'session_state': slz.validated_data['session_state'],
-                }
+                },
             )
         except AuthException as ex:
             raise_validation_error(message=ex.message)
@@ -76,7 +76,7 @@ class MSAuthViewSet(
                     user=user,
                     user_agent=request.headers.get(
                         'User-Agent',
-                        request.META.get('HTTP_USER_AGENT')
+                        request.META.get('HTTP_USER_AGENT'),
                     ),
                     user_ip=request.META.get('HTTP_X_REAL_IP'),
                 )
@@ -106,7 +106,7 @@ class MSAuthViewSet(
             raise_validation_error(message=ex.message)
         else:
             return self.response_ok({
-                'auth_uri': auth_uri
+                'auth_uri': auth_uri,
             })
 
     @action(methods=('GET',), detail=False)
@@ -114,6 +114,6 @@ class MSAuthViewSet(
         capture_sentry_message(
             message='Microsoft logout request',
             data=self.request.GET,
-            level=SentryLogLevel.INFO
+            level=SentryLogLevel.INFO,
         )
         return self.response_ok()

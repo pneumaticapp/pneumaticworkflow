@@ -25,7 +25,7 @@ class TemplateIntegrationsFilterSerializer(
 
 
 class TemplateIntegrationsSerializer(
-    ModelSerializer
+    ModelSerializer,
 ):
 
     class Meta:

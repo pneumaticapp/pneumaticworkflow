@@ -70,7 +70,7 @@ class CamelCaseJSONParser(JSONParser):
                 for key in data.keys():
                     new_data.setlist(
                         self.camel_to_underscore(key),
-                        data.getlist(key)
+                        data.getlist(key),
                     )
                 return new_data
             for key, value in self._get_iterable(data):

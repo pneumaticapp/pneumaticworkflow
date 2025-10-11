@@ -18,12 +18,12 @@ def test_list__ok(api_client, mocker):
     service_init_mock = mocker.patch.object(
         WebhookService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     service_mock = mocker.patch(
         'src.webhooks.views.events.WebhookService'
         '.get_events',
-        return_value=data
+        return_value=data,
     )
 
     # act
@@ -34,7 +34,7 @@ def test_list__ok(api_client, mocker):
     assert response.data == data
     service_init_mock.assert_called_once_with(
         user=user,
-        is_superuser=False
+        is_superuser=False,
     )
     service_mock.assert_called_once()
 
@@ -49,12 +49,12 @@ def test_retrieve__ok(api_client, mocker):
     service_init_mock = mocker.patch.object(
         WebhookService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     service_mock = mocker.patch(
         'src.webhooks.views.events.WebhookService'
         '.get_event_url',
-        return_value=url
+        return_value=url,
     )
 
     # act
@@ -65,7 +65,7 @@ def test_retrieve__ok(api_client, mocker):
     assert response.data['url'] == url
     service_init_mock.assert_called_once_with(
         user=user,
-        is_superuser=False
+        is_superuser=False,
     )
     service_mock.assert_called_once_with(event=event)
 
@@ -75,7 +75,7 @@ def test_retrieve__not_admin__permission_denied(api_client):
     # arrange
     user = create_test_user(
         is_admin=False,
-        is_account_owner=False
+        is_account_owner=False,
     )
     api_client.token_authenticate(user)
     event = 'event_1'
@@ -108,12 +108,12 @@ def test_retrieve__invalid_event__not_found(api_client, mocker):
     service_init_mock = mocker.patch.object(
         WebhookService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     service_mock = mocker.patch(
         'src.webhooks.views.events.WebhookService'
         '.get_event_url',
-        side_effect=exceptions.InvalidEventException
+        side_effect=exceptions.InvalidEventException,
     )
 
     # act
@@ -123,7 +123,7 @@ def test_retrieve__invalid_event__not_found(api_client, mocker):
     assert response.status_code == 404
     service_init_mock.assert_called_once_with(
         user=user,
-        is_superuser=False
+        is_superuser=False,
     )
     service_mock.assert_called_once_with(event=event)
 
@@ -138,28 +138,28 @@ def test_subscribe__ok(api_client, mocker):
     service_init_mock = mocker.patch.object(
         WebhookService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     service_mock = mocker.patch(
         'src.webhooks.views.events.WebhookService'
-        '.subscribe_event'
+        '.subscribe_event',
     )
 
     # act
     response = api_client.post(
         path=f'/webhooks/events/{event}/subscribe',
-        data={'url': url}
+        data={'url': url},
     )
 
     # assert
     assert response.status_code == 204
     service_init_mock.assert_called_once_with(
         user=user,
-        is_superuser=False
+        is_superuser=False,
     )
     service_mock.assert_called_once_with(
         event=event,
-        url=url
+        url=url,
     )
 
 
@@ -173,29 +173,29 @@ def test_subscribe__invalid_event__not_found(api_client, mocker):
     service_init_mock = mocker.patch.object(
         WebhookService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     service_mock = mocker.patch(
         'src.webhooks.views.events.WebhookService'
         '.subscribe_event',
-        side_effect=exceptions.InvalidEventException
+        side_effect=exceptions.InvalidEventException,
     )
 
     # act
     response = api_client.post(
         path=f'/webhooks/events/{event}/subscribe',
-        data={'url': url}
+        data={'url': url},
     )
 
     # assert
     assert response.status_code == 404
     service_init_mock.assert_called_once_with(
         user=user,
-        is_superuser=False
+        is_superuser=False,
     )
     service_mock.assert_called_once_with(
         event=event,
-        url=url
+        url=url,
     )
 
 
@@ -208,13 +208,13 @@ def test_subscribe__invalid_url__validation__error(api_client, mocker):
     event = 'event_1'
     service_mock = mocker.patch(
         'src.webhooks.views.events.WebhookService'
-        '.subscribe_event'
+        '.subscribe_event',
     )
 
     # act
     response = api_client.post(
         path=f'/webhooks/events/{event}/subscribe',
-        data={'url': url}
+        data={'url': url},
     )
 
     # assert
@@ -235,24 +235,24 @@ def test_unsubscribe__ok(api_client, mocker):
     event = 'event_1'
     service_mock = mocker.patch(
         'src.webhooks.views.events.WebhookService'
-        '.unsubscribe_event'
+        '.unsubscribe_event',
     )
     service_init_mock = mocker.patch.object(
         WebhookService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
 
     # act
     response = api_client.post(
-        f'/webhooks/events/{event}/unsubscribe'
+        f'/webhooks/events/{event}/unsubscribe',
     )
 
     # assert
     assert response.status_code == 204
     service_init_mock.assert_called_once_with(
         user=user,
-        is_superuser=False
+        is_superuser=False,
     )
     service_mock.assert_called_once_with(event=event)
 
@@ -266,23 +266,23 @@ def test_unsubscribe__invalid_event__not_found(api_client, mocker):
     service_init_mock = mocker.patch.object(
         WebhookService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     service_mock = mocker.patch(
         'src.webhooks.views.events.WebhookService'
         '.unsubscribe_event',
-        side_effect=exceptions.InvalidEventException
+        side_effect=exceptions.InvalidEventException,
     )
 
     # act
     response = api_client.post(
-        f'/webhooks/events/{event}/unsubscribe'
+        f'/webhooks/events/{event}/unsubscribe',
     )
 
     # assert
     assert response.status_code == 404
     service_init_mock.assert_called_once_with(
         user=user,
-        is_superuser=False
+        is_superuser=False,
     )
     service_mock.assert_called_once_with(event=event)

@@ -3,7 +3,7 @@ from django.db.models import Model
 from django.contrib.auth import get_user_model
 from src.generics.base.service import BaseModelService
 from src.authentication.enums import (
-    AuthTokenType
+    AuthTokenType,
 )
 
 UserModel = get_user_model()
@@ -17,7 +17,7 @@ class BaseWorkflowService(BaseModelService):
     def _create_instance(
         self,
         instance_template: Model,
-        **kwargs
+        **kwargs,
     ):
         pass
 
@@ -25,7 +25,7 @@ class BaseWorkflowService(BaseModelService):
     def _create_related(
         self,
         instance_template: Model,
-        **kwargs
+        **kwargs,
     ):
         pass
 
@@ -38,7 +38,7 @@ class BaseUpdateVersionService:
         auth_type: AuthTokenType.LITERALS,
         is_superuser: bool,
         instance: Model = None,
-        sync: bool = False
+        sync: bool = False,
     ):
         self.user = user
         self.instance = instance

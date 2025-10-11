@@ -2,7 +2,7 @@ from typing import Optional
 from rest_framework.exceptions import ValidationError
 
 from src.generics.entities import (
-    ValidationErrorData
+    ValidationErrorData,
 )
 
 
@@ -17,7 +17,7 @@ def raise_validation_error(
     name: Optional[str] = None,
     api_name: Optional[str] = None,
     error_code: ErrorCode = ErrorCode.VALIDATION_ERROR,
-    **kwargs
+    **kwargs,
 ):
     """ Short functionality for raising validation error
 
@@ -29,12 +29,12 @@ def raise_validation_error(
     """
     if message is None:
         raise AttributeError(
-            '"Message" and can\'t be is None at the same time'
+            '"Message" and can\'t be is None at the same time',
         )
     data = ValidationErrorData(
         code=error_code,
         message=message,
-        details={**kwargs}
+        details={**kwargs},
     )
     if api_name:
         data['details']['reason'] = message

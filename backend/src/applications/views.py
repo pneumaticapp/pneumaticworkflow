@@ -7,7 +7,7 @@ from src.accounts.permissions import (
 from src.applications.models import Integration
 from src.applications.serializers import (
     IntegrationsListSerializer,
-    IntegrationSerializer
+    IntegrationSerializer,
 )
 from src.generics.permissions import (
     UserIsAuthenticated,

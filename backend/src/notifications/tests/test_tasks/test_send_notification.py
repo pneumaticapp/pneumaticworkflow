@@ -7,13 +7,13 @@ from src.processes.tests.fixtures import (
 from src.notifications.enums import NotificationMethod
 from src.notifications.tasks import _send_notification
 from src.notifications.services.email import (
-    EmailService
+    EmailService,
 )
 from src.notifications.services.websockets import (
-    WebSocketService
+    WebSocketService,
 )
 from src.notifications.services.push import (
-    PushNotificationService
+    PushNotificationService,
 )
 
 
@@ -25,7 +25,7 @@ def test_send_notification__user__ok(mocker):
     # arrange
     account = create_test_account(
         logo_lg='https://logo.jpg',
-        log_api_requests=True
+        log_api_requests=True,
     )
     user = create_test_user(account=account)
     method_name = NotificationMethod.overdue_task
@@ -33,44 +33,44 @@ def test_send_notification__user__ok(mocker):
     email_service_init_mock = mocker.patch.object(
         EmailService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     mocker.patch(
         'src.notifications.services.email.'
         'EmailService.ALLOWED_METHODS',
-        {NotificationMethod.overdue_task}
+        {NotificationMethod.overdue_task},
     )
     email_notification_mock = mocker.patch(
         'src.notifications.services.email.'
-        'EmailService.send_overdue_task'
+        'EmailService.send_overdue_task',
     )
     mocker.patch(
         'src.notifications.services.push.'
         'PushNotificationService.ALLOWED_METHODS',
-        {NotificationMethod.overdue_task}
+        {NotificationMethod.overdue_task},
     )
     push_notification_service_init_mock = mocker.patch.object(
         PushNotificationService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     push_notification_mock = mocker.patch(
         'src.notifications.services.push.'
-        'PushNotificationService.send_overdue_task'
+        'PushNotificationService.send_overdue_task',
     )
     websocket_service_init_mock = mocker.patch.object(
         WebSocketService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     mocker.patch(
         'src.notifications.services.websockets.'
         'WebSocketService.ALLOWED_METHODS',
-        {NotificationMethod.overdue_task}
+        {NotificationMethod.overdue_task},
     )
     websocket_notification_mock = mocker.patch(
         'src.notifications.services.websockets.'
-        'WebSocketService.send_overdue_task'
+        'WebSocketService.send_overdue_task',
     )
 
     # act
@@ -81,7 +81,7 @@ def test_send_notification__user__ok(mocker):
         user_email=user.email,
         account_id=account.id,
         logo_lg=account.logo_lg,
-        **kwargs
+        **kwargs,
     )
 
     # assert
@@ -93,7 +93,7 @@ def test_send_notification__user__ok(mocker):
     email_notification_mock.assert_called_once_with(
         user_id=user.id,
         user_email=user.email,
-        **kwargs
+        **kwargs,
     )
     push_notification_service_init_mock.assert_called_once_with(
         logging=account.log_api_requests,
@@ -103,7 +103,7 @@ def test_send_notification__user__ok(mocker):
     push_notification_mock.assert_called_once_with(
         user_id=user.id,
         user_email=user.email,
-        **kwargs
+        **kwargs,
     )
     websocket_service_init_mock.assert_called_once_with(
         logging=account.log_api_requests,
@@ -113,7 +113,7 @@ def test_send_notification__user__ok(mocker):
     websocket_notification_mock.assert_called_once_with(
         user_id=user.id,
         user_email=user.email,
-        **kwargs
+        **kwargs,
     )
 
 
@@ -122,7 +122,7 @@ def test_send_notification__guest__ok(mocker):
     # arrange
     account = create_test_account(
         logo_lg='https://logo.jpg',
-        log_api_requests=True
+        log_api_requests=True,
     )
     create_test_user(account=account)
     guest = create_test_guest(account=account)
@@ -131,44 +131,44 @@ def test_send_notification__guest__ok(mocker):
     email_service_init_mock = mocker.patch.object(
         EmailService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     mocker.patch(
         'src.notifications.services.email.'
         'EmailService.ALLOWED_METHODS',
-        {NotificationMethod.overdue_task}
+        {NotificationMethod.overdue_task},
     )
     email_notification_mock = mocker.patch(
         'src.notifications.services.email.'
-        'EmailService.send_overdue_task'
+        'EmailService.send_overdue_task',
     )
     mocker.patch(
         'src.notifications.services.push.'
         'PushNotificationService.ALLOWED_METHODS',
-        {NotificationMethod.overdue_task}
+        {NotificationMethod.overdue_task},
     )
     push_notification_service_init_mock = mocker.patch.object(
         PushNotificationService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     push_notification_mock = mocker.patch(
         'src.notifications.services.push.'
-        'PushNotificationService.send_overdue_task'
+        'PushNotificationService.send_overdue_task',
     )
     websocket_service_init_mock = mocker.patch.object(
         WebSocketService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     mocker.patch(
         'src.notifications.services.websockets.'
         'WebSocketService.ALLOWED_METHODS',
-        {NotificationMethod.overdue_task}
+        {NotificationMethod.overdue_task},
     )
     websocket_notification_mock = mocker.patch(
         'src.notifications.services.websockets.'
-        'WebSocketService.send_overdue_task'
+        'WebSocketService.send_overdue_task',
     )
 
     # act
@@ -179,7 +179,7 @@ def test_send_notification__guest__ok(mocker):
         user_email=guest.email,
         account_id=account.id,
         logo_lg=account.logo_lg,
-        **kwargs
+        **kwargs,
     )
 
     # assert
@@ -191,7 +191,7 @@ def test_send_notification__guest__ok(mocker):
     email_notification_mock.assert_called_once_with(
         user_id=guest.id,
         user_email=guest.email,
-        **kwargs
+        **kwargs,
     )
     push_notification_service_init_mock.assert_called_once_with(
         logging=account.log_api_requests,
@@ -201,7 +201,7 @@ def test_send_notification__guest__ok(mocker):
     push_notification_mock.assert_called_once_with(
         user_id=guest.id,
         user_email=guest.email,
-        **kwargs
+        **kwargs,
     )
     websocket_service_init_mock.assert_called_once_with(
         logging=account.log_api_requests,
@@ -211,5 +211,5 @@ def test_send_notification__guest__ok(mocker):
     websocket_notification_mock.assert_called_once_with(
         user_id=guest.id,
         user_email=guest.email,
-        **kwargs
+        **kwargs,
     )

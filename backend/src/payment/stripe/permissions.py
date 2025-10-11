@@ -13,7 +13,7 @@ class StripeWebhookPermission(BasePermission):
     def has_permission(self, request, view):
         if self.configuration not in (
             settings.CONFIGURATION_STAGING,
-            settings.CONFIGURATION_PROD
+            settings.CONFIGURATION_PROD,
         ):
             return True
 

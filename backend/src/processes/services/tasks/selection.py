@@ -16,7 +16,7 @@ class SelectionService(BaseWorkflowService):
     def _create_related(
         self,
         instance_template: FieldTemplateSelection,
-        **kwargs
+        **kwargs,
     ):
         pass
 

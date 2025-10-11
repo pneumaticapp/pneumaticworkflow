@@ -25,7 +25,7 @@ def create_test_user(
     email: str = 'test@pneumatic.app',
     account: Optional[Account] = None,
     is_admin: bool = True,
-    is_account_owner: bool = True
+    is_account_owner: bool = True,
 ):
     account = account or create_test_account()
     return UserModel.objects.create(
@@ -35,5 +35,5 @@ def create_test_user(
         last_name='Doe',
         phone='79999999999',
         is_admin=is_admin,
-        is_account_owner=is_account_owner
+        is_account_owner=is_account_owner,
     )

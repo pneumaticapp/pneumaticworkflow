@@ -104,7 +104,7 @@ def create_test_account(
                 plan_expiration=plan_expiration,
                 period=period,
                 name='master',
-                billing_sync=billing_sync
+                billing_sync=billing_sync,
             )
             plan = master_account.billing_plan
             plan_expiration = master_account.plan_expiration
@@ -207,7 +207,7 @@ def create_test_guest(
     account = account or create_test_account()
     return GuestService.create(
         email=email,
-        account_id=account.id
+        account_id=account.id,
     )
 
 
@@ -217,7 +217,7 @@ def create_invited_user(
     is_admin: bool = True,
     first_name='',
     last_name='',
-    status: UserStatus = UserStatus.INVITED
+    status: UserStatus = UserStatus.INVITED,
 ):
     invited_user = UserModel.objects.create(
         account=user.account,
@@ -226,13 +226,13 @@ def create_invited_user(
         status=status,
         is_admin=is_admin,
         first_name=first_name,
-        last_name=last_name
+        last_name=last_name,
     )
     user_invite = UserInvite(
         email=email,
         account=user.account,
         invited_by=user,
-        invited_user=invited_user
+        invited_user=invited_user,
     )
     if status == UserStatus.ACTIVE:
         user_invite.status = UserInviteStatus.ACCEPTED
@@ -245,21 +245,21 @@ def create_invited_user(
 def create_checklist_template(
     task_template: TaskTemplate,
     selections_count: int = 1,
-    api_name_prefix: str = None
+    api_name_prefix: str = None,
 ) -> ChecklistTemplate:
     if api_name_prefix is None:
         api_name_prefix = ''
     checklist_template = ChecklistTemplate.objects.create(
         template=task_template.template,
         task=task_template,
-        api_name=f'{api_name_prefix}checklist'
+        api_name=f'{api_name_prefix}checklist',
     )
     for num in range(1, selections_count + 1):
         ChecklistTemplateSelection.objects.create(
             checklist=checklist_template,
             template=task_template.template,
             value=f'some value {num}',
-            api_name=f'{api_name_prefix}cl-selection-{num}'
+            api_name=f'{api_name_prefix}cl-selection-{num}',
         )
     return checklist_template
 
@@ -343,8 +343,8 @@ def create_test_template(
             'user': user,
             'account': user.account,
             'is_superuser': False,
-            'auth_type': AuthTokenType.USER
-        }
+            'auth_type': AuthTokenType.USER,
+        },
     )
     slz.initial_data = slz.data
     slz.save_as_draft()
@@ -367,7 +367,7 @@ def create_test_workflow(
     status: int = WorkflowStatus.RUNNING,
     due_date: Optional[datetime] = None,
     ancestor_task: Optional[Task] = None,
-    description: Optional[str] = None
+    description: Optional[str] = None,
 ) -> Workflow:
     custom_template = template is not None
     if not custom_template:
@@ -377,7 +377,7 @@ def create_test_workflow(
             tasks_count=tasks_count,
             is_active=True,
             is_public=is_external,
-            finalizable=finalizable
+            finalizable=finalizable,
         )
     workflow_starter = None if is_external else user
     if status == WorkflowStatus.DONE:
@@ -402,28 +402,28 @@ def create_test_workflow(
     )
     if custom_template:
         template_owners_ids = Template.objects.filter(
-            id=template.id
+            id=template.id,
         ).get_owners_as_users()
         workflow.owners.set(template_owners_ids)
         workflow.members.add(*template_owners_ids)
     else:
         workflow.members.add(*set(
-            template.owners.values_list('user_id', flat=True)
+            template.owners.values_list('user_id', flat=True),
         ))
         workflow.owners.add(*set(
-            template.owners.values_list('user_id', flat=True)
+            template.owners.values_list('user_id', flat=True),
         ))
 
     KickoffValue.objects.create(
         workflow=workflow,
-        account=workflow.account
+        account=workflow.account,
     )
     now_date = timezone.now()
     for task_template in template.tasks.all():
         task_service = TaskService(user=user)
         task = task_service.create(
             instance_template=task_template,
-            workflow=workflow
+            workflow=workflow,
         )
 
         # emulate run workflow
@@ -432,7 +432,7 @@ def create_test_workflow(
             task.date_started = now_date
             task.status = TaskStatus.ACTIVE
             task.save(
-                update_fields=['date_first_started', 'date_started', 'status']
+                update_fields=['date_first_started', 'date_started', 'status'],
             )
             task.update_performers()
         elif task.number < active_task_number:
@@ -445,13 +445,13 @@ def create_test_workflow(
                     'date_first_started',
                     'date_started',
                     'date_completed',
-                    'status'
-                ]
+                    'status',
+                ],
             )
             task.update_performers()
             task.taskperformer_set.update(
                 is_completed=True,
-                date_completed=timezone.now()
+                date_completed=timezone.now(),
             )
         else:
             task.update_performers()
@@ -466,7 +466,7 @@ def create_test_workflow(
             for rule_template in condition_template.rules.all():
                 rule = Rule.objects.create(
                     condition=condition,
-                    api_name=rule_template.api_name
+                    api_name=rule_template.api_name,
                 )
                 for predicate_template in rule_template.predicates.all():
                     Predicate.objects.create(
@@ -488,7 +488,7 @@ def get_workflow_create_data(user):
         'owners': [
             {
                 'type': OwnerType.USER,
-                'source_id': user.id
+                'source_id': user.id,
             },
         ],
         'description': 'Test workflow description',
@@ -499,8 +499,8 @@ def get_workflow_create_data(user):
                     'name': 'Test',
                     'api_name': 'string-field-1',
                     'order': 0,
-                }
-            ]
+                },
+            ],
         },
         'tasks': [
             {
@@ -509,7 +509,7 @@ def get_workflow_create_data(user):
                 'api_name': 'task-1-api-name',
                 'raw_performers': [{
                     'type': PerformerType.USER,
-                    'source_id': user.id
+                    'source_id': user.id,
                 }],
             },
             {
@@ -518,14 +518,14 @@ def get_workflow_create_data(user):
                 'api_name': 'task-2-api-name',
                 'raw_performers': [{
                     'type': PerformerType.USER,
-                    'source_id': user.id
+                    'source_id': user.id,
                 }],
                 'fields': [
                     {
                         'type': FieldType.TEXT,
                         'name': 'Test',
                         'order': 0,
-                    }
+                    },
                 ],
                 'conditions': [
                     {
@@ -539,19 +539,19 @@ def get_workflow_create_data(user):
                                       'field_type': PredicateType.TASK,
                                       'operator': PredicateOperator.COMPLETED,
                                       'value': None,
-                                    }
-                                ]
-                            }
-                        ]
-                    }
-                ]
+                                    },
+                                ],
+                            },
+                        ],
+                    },
+                ],
             },
             {
                 'name': 'Third',
                 'number': 3,
                 'raw_performers': [{
                     'type': PerformerType.USER,
-                    'source_id': user.id
+                    'source_id': user.id,
                 }],
                 'conditions': [
                     {
@@ -565,14 +565,14 @@ def get_workflow_create_data(user):
                                       'field_type': PredicateType.TASK,
                                       'operator': PredicateOperator.COMPLETED,
                                       'value': None,
-                                    }
-                                ]
-                            }
-                        ]
-                    }
-                ]
-            }
-        ]
+                                    },
+                                ],
+                            },
+                        ],
+                    },
+                ],
+            },
+        ],
     }
 
 
@@ -592,7 +592,7 @@ def create_test_attachment(
         name=filename,
         url=f'https://link.to/{filename}',
         thumbnail_url=f'https://link.to/{thumb_filename}',
-        size=size
+        size=size,
     )
     if event:
         attachment.event = event
@@ -616,7 +616,7 @@ def create_test_event(
         account=workflow.account,
         workflow=workflow,
         user=user,  # For highlights
-        task=task
+        task=task,
     )
     if data_create:
         event.created = data_create
@@ -646,7 +646,7 @@ def create_wf_created_webhook(user: UserModel):
         user_id=user.id,
         event=HookEvent.WORKFLOW_STARTED,
         account_id=user.account.id,
-        target='http://test.test'
+        target='http://test.test',
     )
 
 
@@ -655,7 +655,7 @@ def create_wf_completed_webhook(user: UserModel):
         user_id=user.id,
         event=HookEvent.WORKFLOW_COMPLETED,
         account_id=user.account.id,
-        target='http://test.test'
+        target='http://test.test',
     )
 
 
@@ -664,7 +664,7 @@ def create_task_completed_webhook(user: UserModel):
         user_id=user.id,
         event=HookEvent.TASK_COMPLETED,
         account_id=user.account.id,
-        target='http://test.test'
+        target='http://test.test',
     )
 
 
@@ -673,5 +673,5 @@ def create_task_returned_webhook(user: UserModel):
         user_id=user.id,
         event=HookEvent.TASK_RETURNED,
         account_id=user.account.id,
-        target='http://test.test'
+        target='http://test.test',
     )

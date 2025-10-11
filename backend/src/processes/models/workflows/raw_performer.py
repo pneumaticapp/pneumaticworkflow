@@ -25,13 +25,13 @@ class RawPerformer(
     task = models.ForeignKey(
         Task,
         related_name='raw_performers',
-        on_delete=models.CASCADE
+        on_delete=models.CASCADE,
     )
     field = models.ForeignKey(
         TaskField,
         on_delete=models.CASCADE,
         related_name='raw_performers',
-        null=True
+        null=True,
     )
     task_performer_id = models.IntegerField(blank=True, null=True)
 

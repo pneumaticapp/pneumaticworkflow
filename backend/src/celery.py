@@ -20,7 +20,7 @@ celery_config = {}
 # Env vars not exists for "Testing" and "Development" env
 if configuration in (
     settings.CONFIGURATION_STAGING,
-    settings.CONFIGURATION_PROD
+    settings.CONFIGURATION_PROD,
 ):
     kwargs = {}
     if settings.PROJECT_CONF['SENTRY_DSN']:
@@ -29,7 +29,7 @@ if configuration in (
         kwargs = {
             'dsn': settings.PROJECT_CONF['SENTRY_DSN'],
             'integrations': [CeleryIntegration()],
-            'send_default_pii': True
+            'send_default_pii': True,
         }
         if configuration == settings.CONFIGURATION_PROD:
             kwargs['traces_sample_rate'] = 0.2
@@ -37,17 +37,17 @@ if configuration in (
 
     if settings.PROJECT_CONF['PUSH']:
         path_firebase_credentials = os.getenv(
-            'FIREBASE_PUSH_APPLICATION_CREDENTIALS'
+            'FIREBASE_PUSH_APPLICATION_CREDENTIALS',
         )
         cred = firebase_admin.credentials.Certificate(
-            path_firebase_credentials
+            path_firebase_credentials,
         )
         firebase_admin.initialize_app(cred)
     celery_config['broker'] = settings.CELERY_BROKER_URL
 
 celery_app = Celery(
     'src',
-    **celery_config
+    **celery_config,
 )
 celery_app.conf.setdefault('broker_login_method', 'PLAIN')
 celery_app.config_from_object('django.conf:settings')
@@ -59,7 +59,7 @@ default_lock_expire = 60 * 10  # Lock expires in 10 minutes
 @contextmanager
 def periodic_lock(
     lock_id: str,
-    lock_expire: Optional[int] = None
+    lock_expire: Optional[int] = None,
 ):
 
     """ Ensuring a periodic task is only executed one at a time

@@ -52,11 +52,11 @@ def test_webhook_example__body__ok(api_client):
             ('id', template.id),
             ('name', 'Test workflow'),
             ('is_active', True),
-            ('wf_name_template', None)
+            ('wf_name_template', None),
         ]),
         'kickoff': {
             'id': workflow.kickoff_instance.id,
-            'output': []
+            'output': [],
         },
         'tasks': [
             OrderedDict([
@@ -74,14 +74,14 @@ def test_webhook_example__body__ok(api_client):
                         ('is_completed', False),
                         ('date_completed_tsp', None),
                         ('type', 'user'),
-                        ('source_id', user.id)
-                    ])
+                        ('source_id', user.id),
+                    ]),
                 ]),
                 ('checklists_total', 0),
                 ('checklists_marked', 0),
                 ('status', 'active'),
-            ])
-        ]
+            ]),
+        ],
     }
 
 
@@ -92,14 +92,14 @@ def test_webhook_example__filter_status_completed__ok(api_client):
     workflow = create_test_workflow(
         user=user,
         tasks_count=1,
-        status=WorkflowStatus.DONE
+        status=WorkflowStatus.DONE,
     )
     create_test_workflow(user=user, tasks_count=1)
     api_client.token_authenticate(user)
 
     # act
     response = api_client.get(
-        f'/workflows/webhook-example?status={WorkflowStatus.DONE}'
+        f'/workflows/webhook-example?status={WorkflowStatus.DONE}',
     )
 
     # assert
@@ -120,13 +120,13 @@ def test_webhook_example__filter_status_running__ok(api_client):
     create_test_workflow(
         user=user,
         tasks_count=1,
-        status=WorkflowStatus.DONE
+        status=WorkflowStatus.DONE,
     )
     api_client.token_authenticate(user)
 
     # act
     response = api_client.get(
-        f'/workflows/webhook-example?status={WorkflowStatus.RUNNING}'
+        f'/workflows/webhook-example?status={WorkflowStatus.RUNNING}',
     )
 
     # assert
@@ -147,13 +147,13 @@ def test_webhook_example__filter_ordering_date_created__ok(api_client):
     create_test_workflow(
         user=user,
         tasks_count=1,
-        status=WorkflowStatus.DONE
+        status=WorkflowStatus.DONE,
     )
     api_client.token_authenticate(user)
 
     # act
     response = api_client.get(
-        '/workflows/webhook-example?ordering=date_created'
+        '/workflows/webhook-example?ordering=date_created',
     )
 
     # assert
@@ -173,14 +173,14 @@ def test_webhook_example__filter_ordering_date_created_reverse__ok(api_client):
     create_test_workflow(
         user=user,
         tasks_count=1,
-        status=WorkflowStatus.DONE
+        status=WorkflowStatus.DONE,
     )
     workflow = create_test_workflow(user=user, tasks_count=1)
     api_client.token_authenticate(user)
 
     # act
     response = api_client.get(
-        '/workflows/webhook-example?ordering=-date_created'
+        '/workflows/webhook-example?ordering=-date_created',
     )
 
     # assert

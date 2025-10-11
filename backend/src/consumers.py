@@ -42,8 +42,8 @@ class PneumaticBaseConsumer(AsyncWebsocketConsumer):
     async def notification(self, event):
         await self.send(
             text_data=json.dumps(
-                event['notification']
-            )
+                event['notification'],
+            ),
         )
 
     async def receive(self, text_data=None, bytes_data=None):

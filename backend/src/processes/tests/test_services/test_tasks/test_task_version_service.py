@@ -13,10 +13,10 @@ from src.processes.tests.fixtures import (
 )
 from src.authentication.enums import AuthTokenType
 from src.processes.services.workflow_action import (
-    WorkflowActionService
+    WorkflowActionService,
 )
 from src.processes.services.tasks.task_version import (
-    TaskUpdateVersionService
+    TaskUpdateVersionService,
 )
 from src.processes.models import (
     Delay,
@@ -30,7 +30,7 @@ from src.processes.enums import (
     PredicateOperator, TaskStatus, PerformerType,
 )
 from src.processes.services.versioning.schemas import (
-    TaskSchemaV1
+    TaskSchemaV1,
 )
 
 UserModel = get_user_model()
@@ -52,12 +52,12 @@ class TestTaskUpdateVersionService:
         workflow = create_test_workflow(
             user=user,
             template=template,
-            is_urgent=True
+            is_urgent=True,
         )
         clear_description = 'Some \n clear description'
         clear_mock = mocker.patch(
             'src.services.markdown.MarkdownService.clear',
-            return_value=clear_description
+            return_value=clear_description,
         )
         template_task = template.tasks.get(number=1)
         template_task.api_name = api_name
@@ -76,14 +76,14 @@ class TestTaskUpdateVersionService:
             user=user,
             instance=task,
             auth_type=AuthTokenType.USER,
-            is_superuser=False
+            is_superuser=False,
         )
 
         # act
         task = service._create_or_update_instance(
             data=task_data,
             workflow=workflow,
-            fields_values={}
+            fields_values={},
         )
 
         # assert
@@ -117,14 +117,14 @@ class TestTaskUpdateVersionService:
             user=user,
             instance=task,
             auth_type=AuthTokenType.USER,
-            is_superuser=False
+            is_superuser=False,
         )
 
         # act
         task = service._create_or_update_instance(
             data=task_data,
             workflow=workflow,
-            fields_values={}
+            fields_values={},
         )
 
         # assert
@@ -140,7 +140,7 @@ class TestTaskUpdateVersionService:
             user=user,
             instance=task,
             auth_type=AuthTokenType.USER,
-            is_superuser=False
+            is_superuser=False,
         )
         version = 1
         data = {
@@ -156,7 +156,7 @@ class TestTaskUpdateVersionService:
                     'type': 'user',
                     'user_id': 27,
                     'api_name': 'raw-performer-1',
-                }
+                },
             ],
         }
 
@@ -164,39 +164,39 @@ class TestTaskUpdateVersionService:
         fields_values_mock = mocker.patch(
             'src.processes.models.workflows.workflow.Workflow.'
             'get_fields_markdown_values',
-            return_value=fields_values
+            return_value=fields_values,
         )
         create_or_update_instance_mock = mocker.patch(
             'src.processes.services.tasks.task_version.'
-            'TaskUpdateVersionService._create_or_update_instance'
+            'TaskUpdateVersionService._create_or_update_instance',
         )
         update_fields_mock = mocker.patch(
             'src.processes.services.tasks.task_version.'
-            'TaskUpdateVersionService._update_fields'
+            'TaskUpdateVersionService._update_fields',
         )
         update_conditions_mock = mocker.patch(
             'src.processes.services.tasks.task_version.'
-            'TaskUpdateVersionService._update_conditions'
+            'TaskUpdateVersionService._update_conditions',
         )
         update_checklists_mock = mocker.patch(
             'src.processes.services.tasks.task_version.'
-            'TaskUpdateVersionService._update_checklists'
+            'TaskUpdateVersionService._update_checklists',
         )
         update_raw_due_date_mock = mocker.patch(
             'src.processes.services.tasks.task_version.'
-            'TaskUpdateVersionService._update_raw_due_date'
+            'TaskUpdateVersionService._update_raw_due_date',
         )
         set_due_date_from_template = mocker.patch(
             'src.processes.services.tasks.task.'
-            'TaskService.set_due_date_from_template'
+            'TaskService.set_due_date_from_template',
         )
         update_performers_mock = mocker.patch(
             'src.processes.services.tasks.task_version.'
-            'TaskUpdateVersionService._update_performers'
+            'TaskUpdateVersionService._update_performers',
         )
         update_delay_mock = mocker.patch(
             'src.processes.services.tasks.task_version.'
-            'TaskUpdateVersionService._update_delay'
+            'TaskUpdateVersionService._update_delay',
         )
 
         # act
@@ -213,14 +213,14 @@ class TestTaskUpdateVersionService:
         create_or_update_instance_mock.assert_called_once_with(
             data=data,
             workflow=workflow,
-            fields_values=fields_values
+            fields_values=fields_values,
         )
         update_fields_mock.assert_called_once_with(data=None)
         update_conditions_mock.assert_called_once_with(data=None)
         update_checklists_mock.assert_called_once_with(
             data=None,
             version=version,
-            fields_values=fields_values
+            fields_values=fields_values,
         )
         update_raw_due_date_mock.assert_called_once_with(data=None)
         set_due_date_from_template.assert_called_once()
@@ -241,7 +241,7 @@ class TestTaskUpdateVersionService:
             user=user,
             instance=task,
             auth_type=AuthTokenType.USER,
-            is_superuser=False
+            is_superuser=False,
         )
         version = 1
         data = {
@@ -259,7 +259,7 @@ class TestTaskUpdateVersionService:
                     'type': FieldType.USER,
                     'api_name': 'user-field-1',
                     'is_required': True,
-                }
+                },
             ],
             'delay': '1 00:00:00',
             'conditions': [
@@ -276,11 +276,11 @@ class TestTaskUpdateVersionService:
                                     'field': 'client-name-1',
                                     'field_type': FieldType.TEXT,
                                     'value': 'Captain Marvel',
-                                }
-                            ]
-                        }
-                    ]
-                }
+                                },
+                            ],
+                        },
+                    ],
+                },
             ],
             'raw_performers': [
                 {
@@ -288,14 +288,14 @@ class TestTaskUpdateVersionService:
                     'type': 'user',
                     'user_id': 27,
                     'api_name': None,
-                }
+                },
             ],
             'raw_due_date': {
                 'api_name': 'raw-due-date-bwybf0',
                 'rule': 'after task started',
                 'duration_months': 3,
                 'duration': '1 00:00:00',
-                'source_id': 'task-r5btf7'
+                'source_id': 'task-r5btf7',
             },
             'checklists': [
                 {
@@ -303,50 +303,50 @@ class TestTaskUpdateVersionService:
                     'selections': [
                         {
                             'api_name': 'cl-selection-1',
-                            'value': 'some value 1'
-                        }
-                    ]
-                }
-            ]
+                            'value': 'some value 1',
+                        },
+                    ],
+                },
+            ],
         }
 
         fields_values = {'key': 'value'}
         fields_values_mock = mocker.patch(
             'src.processes.models.workflows.workflow.Workflow.'
             'get_fields_markdown_values',
-            return_value=fields_values
+            return_value=fields_values,
         )
         create_or_update_instance_mock = mocker.patch(
             'src.processes.services.tasks.task_version.'
-            'TaskUpdateVersionService._create_or_update_instance'
+            'TaskUpdateVersionService._create_or_update_instance',
         )
         update_fields_mock = mocker.patch(
             'src.processes.services.tasks.task_version.'
-            'TaskUpdateVersionService._update_fields'
+            'TaskUpdateVersionService._update_fields',
         )
         update_conditions_mock = mocker.patch(
             'src.processes.services.tasks.task_version.'
-            'TaskUpdateVersionService._update_conditions'
+            'TaskUpdateVersionService._update_conditions',
         )
         update_checklists_mock = mocker.patch(
             'src.processes.services.tasks.task_version.'
-            'TaskUpdateVersionService._update_checklists'
+            'TaskUpdateVersionService._update_checklists',
         )
         update_raw_due_date_mock = mocker.patch(
             'src.processes.services.tasks.task_version.'
-            'TaskUpdateVersionService._update_raw_due_date'
+            'TaskUpdateVersionService._update_raw_due_date',
         )
         set_due_date_from_template = mocker.patch(
             'src.processes.services.tasks.task.'
-            'TaskService.set_due_date_from_template'
+            'TaskService.set_due_date_from_template',
         )
         update_performers_mock = mocker.patch(
             'src.processes.services.tasks.task_version.'
-            'TaskUpdateVersionService._update_performers'
+            'TaskUpdateVersionService._update_performers',
         )
         update_delay_mock = mocker.patch(
             'src.processes.services.tasks.task_version.'
-            'TaskUpdateVersionService._update_delay'
+            'TaskUpdateVersionService._update_delay',
         )
 
         # act
@@ -363,21 +363,21 @@ class TestTaskUpdateVersionService:
         create_or_update_instance_mock.assert_called_once_with(
             data=data,
             workflow=workflow,
-            fields_values=fields_values
+            fields_values=fields_values,
         )
         update_fields_mock.assert_called_once_with(
-            data=data['fields']
+            data=data['fields'],
         )
         update_conditions_mock.assert_called_once_with(
-            data=data['conditions']
+            data=data['conditions'],
         )
         update_checklists_mock.assert_called_once_with(
             data=data['checklists'],
             version=version,
-            fields_values=fields_values
+            fields_values=fields_values,
         )
         update_raw_due_date_mock.assert_called_once_with(
-            data=data['raw_due_date']
+            data=data['raw_due_date'],
         )
         set_due_date_from_template.assert_called_once()
         update_performers_mock.assert_called_once_with(data)
@@ -394,7 +394,7 @@ class TestTaskUpdateVersionService:
             user=user,
             instance=task,
             auth_type=AuthTokenType.USER,
-            is_superuser=False
+            is_superuser=False,
         )
         data = {
             'id': 27,
@@ -409,57 +409,57 @@ class TestTaskUpdateVersionService:
                     'type': 'user',
                     'user_id': 27,
                     'api_name': 'raw-performer-1',
-                }
+                },
             ],
             'raw_due_date': {
                 'api_name': 'raw-due-date-bwybf0',
                 'rule': 'after task started',
                 'duration': '1 00:00:00',
-                'source_id': 'task-r5btf7'
+                'source_id': 'task-r5btf7',
             },
         }
 
         mocker.patch(
             'src.processes.services.tasks.task_version.'
-            'TaskUpdateVersionService._create_or_update_instance'
+            'TaskUpdateVersionService._create_or_update_instance',
         )
         mocker.patch(
             'src.processes.services.tasks.task_version.'
-            'TaskUpdateVersionService._update_fields'
+            'TaskUpdateVersionService._update_fields',
         )
         mocker.patch(
             'src.processes.services.tasks.task_version.'
-            'TaskUpdateVersionService._update_conditions'
+            'TaskUpdateVersionService._update_conditions',
         )
         mocker.patch(
             'src.processes.services.tasks.task_version.'
-            'TaskUpdateVersionService._update_checklists'
+            'TaskUpdateVersionService._update_checklists',
         )
         update_raw_due_date_mock = mocker.patch(
             'src.processes.services.tasks.task_version.'
-            'TaskUpdateVersionService._update_raw_due_date'
+            'TaskUpdateVersionService._update_raw_due_date',
         )
         set_due_date_from_template = mocker.patch(
             'src.processes.services.tasks.task.'
-            'TaskService.set_due_date_from_template'
+            'TaskService.set_due_date_from_template',
         )
         update_raw_performers_mock = mocker.patch(
             'src.processes.models.workflows.task.Task.'
-            'update_raw_performers_from_task_template'
+            'update_raw_performers_from_task_template',
         )
         update_performers_mock = mocker.patch(
             'src.processes.models.workflows.task.Task.'
-            'update_performers'
+            'update_performers',
         )
         raw_performer = mocker.Mock()
         add_raw_performer_mock = mocker.patch(
             'src.processes.models.workflows.task.Task.'
             'add_raw_performer',
-            return_value=raw_performer
+            return_value=raw_performer,
         )
         mocker.patch(
             'src.processes.services.tasks.task_version.'
-            'TaskUpdateVersionService._update_delay'
+            'TaskUpdateVersionService._update_delay',
         )
 
         # act
@@ -480,7 +480,7 @@ class TestTaskUpdateVersionService:
 
     def test_update_from_version__completed_task__with_performer__ok(
         self,
-        mocker
+        mocker,
     ):
 
         # arrange
@@ -488,14 +488,14 @@ class TestTaskUpdateVersionService:
         workflow = create_test_workflow(
             user=user,
             tasks_count=2,
-            active_task_number=2
+            active_task_number=2,
         )
         task = workflow.tasks.get(number=1)
         service = TaskUpdateVersionService(
             user=user,
             instance=task,
             auth_type=AuthTokenType.USER,
-            is_superuser=False
+            is_superuser=False,
         )
         data = {
             'id': 27,
@@ -510,58 +510,58 @@ class TestTaskUpdateVersionService:
                     'type': 'user',
                     'user_id': 27,
                     'api_name': 'raw-performer-1',
-                }
+                },
             ],
             'raw_due_date': {
                 'api_name': 'raw-due-date-bwybf0',
                 'rule': 'after task started',
                 'duration': '1 00:00:00',
-                'source_id': 'task-r5btf7'
+                'source_id': 'task-r5btf7',
             },
-            'parents': []
+            'parents': [],
         }
 
         mocker.patch(
             'src.processes.services.tasks.task_version.'
-            'TaskUpdateVersionService._create_or_update_instance'
+            'TaskUpdateVersionService._create_or_update_instance',
         )
         mocker.patch(
             'src.processes.services.tasks.task_version.'
-            'TaskUpdateVersionService._update_fields'
+            'TaskUpdateVersionService._update_fields',
         )
         mocker.patch(
             'src.processes.services.tasks.task_version.'
-            'TaskUpdateVersionService._update_conditions'
+            'TaskUpdateVersionService._update_conditions',
         )
         mocker.patch(
             'src.processes.services.tasks.task_version.'
-            'TaskUpdateVersionService._update_checklists'
+            'TaskUpdateVersionService._update_checklists',
         )
         update_raw_due_date_mock = mocker.patch(
             'src.processes.services.tasks.task_version.'
-            'TaskUpdateVersionService._update_raw_due_date'
+            'TaskUpdateVersionService._update_raw_due_date',
         )
         set_due_date_from_template = mocker.patch(
             'src.processes.services.tasks.task.'
-            'TaskService.set_due_date_from_template'
+            'TaskService.set_due_date_from_template',
         )
         update_raw_performers_mock = mocker.patch(
             'src.processes.models.workflows.task.Task.'
-            'update_raw_performers_from_task_template'
+            'update_raw_performers_from_task_template',
         )
         update_performers_mock = mocker.patch(
             'src.processes.models.workflows.task.Task.'
-            'update_performers'
+            'update_performers',
         )
         raw_performer = mocker.Mock()
         add_raw_performer_mock = mocker.patch(
             'src.processes.models.workflows.task.Task.'
             'add_raw_performer',
-            return_value=raw_performer
+            return_value=raw_performer,
         )
         mocker.patch(
             'src.processes.services.tasks.task_version.'
-            'TaskUpdateVersionService._update_delay'
+            'TaskUpdateVersionService._update_delay',
         )
 
         # act
@@ -580,7 +580,7 @@ class TestTaskUpdateVersionService:
 
     def test_update_from_version__completed_task__not_performer__set_default(
         self,
-        mocker
+        mocker,
     ):
 
         # arrange
@@ -588,7 +588,7 @@ class TestTaskUpdateVersionService:
         workflow = create_test_workflow(
             user,
             tasks_count=2,
-            active_task_number=2
+            active_task_number=2,
         )
         task = workflow.tasks.get(number=1)
         task.raw_performers.all().delete()
@@ -597,7 +597,7 @@ class TestTaskUpdateVersionService:
             user=user,
             instance=task,
             auth_type=AuthTokenType.USER,
-            is_superuser=False
+            is_superuser=False,
         )
         data = {
             'id': 27,
@@ -612,55 +612,55 @@ class TestTaskUpdateVersionService:
                     'type': 'user',
                     'user_id': 27,
                     'api_name': 'raw-performer-1',
-                }
+                },
             ],
             'raw_due_date': {
                 'api_name': 'raw-due-date-bwybf0',
                 'rule': 'after task started',
                 'duration': '1 00:00:00',
-                'source_id': 'task-r5btf7'
+                'source_id': 'task-r5btf7',
             },
-            'parents': []
+            'parents': [],
         }
 
         mocker.patch(
             'src.processes.services.tasks.task_version.'
-            'TaskUpdateVersionService._create_or_update_instance'
+            'TaskUpdateVersionService._create_or_update_instance',
         )
         mocker.patch(
             'src.processes.services.tasks.task_version.'
-            'TaskUpdateVersionService._update_fields'
+            'TaskUpdateVersionService._update_fields',
         )
         mocker.patch(
             'src.processes.services.tasks.task_version.'
-            'TaskUpdateVersionService._update_conditions'
+            'TaskUpdateVersionService._update_conditions',
         )
         mocker.patch(
             'src.processes.services.tasks.task_version.'
-            'TaskUpdateVersionService._update_checklists'
+            'TaskUpdateVersionService._update_checklists',
         )
         update_raw_due_date_mock = mocker.patch(
             'src.processes.services.tasks.task_version.'
-            'TaskUpdateVersionService._update_raw_due_date'
+            'TaskUpdateVersionService._update_raw_due_date',
         )
         set_due_date_from_template = mocker.patch(
             'src.processes.services.tasks.task.'
-            'TaskService.set_due_date_from_template'
+            'TaskService.set_due_date_from_template',
         )
         update_raw_performers_mock = mocker.patch(
             'src.processes.models.workflows.task.Task.'
-            'update_raw_performers_from_task_template'
+            'update_raw_performers_from_task_template',
         )
 
         raw_performer = mocker.Mock()
         add_raw_performer_mock = mocker.patch(
             'src.processes.models.workflows.task.Task.'
             'add_raw_performer',
-            return_value=raw_performer
+            return_value=raw_performer,
         )
         mocker.patch(
             'src.processes.services.tasks.task_version.'
-            'TaskUpdateVersionService._update_delay'
+            'TaskUpdateVersionService._update_delay',
         )
 
         # act
@@ -688,13 +688,13 @@ class TestTaskUpdateVersionService:
             task=task,
             start_date=timezone.now(),
             duration=timedelta(days=1),
-            workflow=workflow
+            workflow=workflow,
         )
         service = TaskUpdateVersionService(
             user=user,
             instance=task,
             auth_type=AuthTokenType.USER,
-            is_superuser=False
+            is_superuser=False,
         )
         new_duration_str = '14 00:00:00'
         new_duration = timedelta(days=14)
@@ -721,13 +721,13 @@ class TestTaskUpdateVersionService:
             start_date=timezone.now(),
             duration=old_duration,
             directly_status=DirectlyStatus.CREATED,
-            workflow=workflow
+            workflow=workflow,
         )
         service = TaskUpdateVersionService(
             user=user,
             instance=task,
             auth_type=AuthTokenType.USER,
-            is_superuser=False
+            is_superuser=False,
         )
         new_duration_str = '14 00:00:00'
 
@@ -750,7 +750,7 @@ class TestTaskUpdateVersionService:
             user=user,
             instance=task,
             auth_type=AuthTokenType.USER,
-            is_superuser=False
+            is_superuser=False,
         )
         new_duration_str = '14 00:00:00'
         new_duration = timedelta(days=14)
@@ -779,7 +779,7 @@ class TestTaskUpdateVersionService:
             user=user,
             instance=task,
             auth_type=AuthTokenType.USER,
-            is_superuser=False
+            is_superuser=False,
         )
 
         # act
@@ -805,23 +805,23 @@ class TestTaskUpdateVersionService:
             start_date=timezone.now(),
             duration=old_duration,
             directly_status=DirectlyStatus.CREATED,
-            workflow=workflow
+            workflow=workflow,
         )
         service = TaskUpdateVersionService(
             user=user,
             instance=task,
             sync=False,
             auth_type=AuthTokenType.USER,
-            is_superuser=False
+            is_superuser=False,
         )
         resume_workflow_init_mock = mocker.patch.object(
             WorkflowActionService,
             attribute='__init__',
-            return_value=None
+            return_value=None,
         )
         resume_task_mock = mocker.patch(
             'src.processes.services.'
-            'workflow_action.WorkflowActionService.resume_task'
+            'workflow_action.WorkflowActionService.resume_task',
         )
 
         # act
@@ -837,7 +837,7 @@ class TestTaskUpdateVersionService:
         resume_task_mock.assert_not_called()
 
     def test_update_delay__not_duration_and_active_task_delay__end_delay(
-        self
+        self,
     ):
 
         # arrange
@@ -850,7 +850,7 @@ class TestTaskUpdateVersionService:
             task=task,
             start_date=timezone.now(),
             duration=timedelta(days=1),
-            workflow=workflow
+            workflow=workflow,
         )
         sync = True
         service = TaskUpdateVersionService(
@@ -858,7 +858,7 @@ class TestTaskUpdateVersionService:
             instance=task,
             sync=sync,
             auth_type=AuthTokenType.USER,
-            is_superuser=False
+            is_superuser=False,
         )
 
         # act
@@ -882,13 +882,13 @@ class TestTaskUpdateVersionService:
             task=task_2,
             start_date=timezone.now(),
             duration=timedelta(days=1),
-            workflow=workflow
+            workflow=workflow,
         )
         service = TaskUpdateVersionService(
             user=user,
             instance=task_2,
             auth_type=AuthTokenType.USER,
-            is_superuser=False
+            is_superuser=False,
         )
 
         # act
@@ -906,13 +906,13 @@ class TestTaskUpdateVersionService:
         raw_due_date = RawDueDate.objects.create(
             rule=DueDateRule.AFTER_WORKFLOW_STARTED,
             duration=timedelta(hours=1),
-            task=task
+            task=task,
         )
         service = TaskUpdateVersionService(
             user=user,
             instance=task,
             auth_type=AuthTokenType.USER,
-            is_superuser=False
+            is_superuser=False,
         )
 
         # act
@@ -937,7 +937,7 @@ class TestTaskUpdateVersionService:
             user=user,
             instance=task,
             auth_type=AuthTokenType.USER,
-            is_superuser=False
+            is_superuser=False,
         )
 
         # act
@@ -962,7 +962,7 @@ class TestTaskUpdateVersionService:
             rule=DueDateRule.AFTER_WORKFLOW_STARTED,
             duration=timedelta(hours=1),
             task=task,
-            api_name='raw-due-date-1'
+            api_name='raw-due-date-1',
         )
         data = {
             'rule': DueDateRule.AFTER_TASK_STARTED,
@@ -974,7 +974,7 @@ class TestTaskUpdateVersionService:
             user=user,
             instance=task,
             auth_type=AuthTokenType.USER,
-            is_superuser=False
+            is_superuser=False,
         )
 
         # act
@@ -998,7 +998,7 @@ class TestTaskUpdateVersionService:
         performer = create_test_not_admin(account=account)
         update_raw_performers_from_task_template_mock = mocker.patch(
             'src.processes.models.workflows.task.Task.'
-            'update_raw_performers_from_task_template'
+            'update_raw_performers_from_task_template',
         )
         created_user_ids = [performer.id]
         created_group_ids = []
@@ -1012,32 +1012,32 @@ class TestTaskUpdateVersionService:
                 created_group_ids,
                 deleted_user_ids,
                 deleted_group_ids,
-            )
+            ),
         )
         add_raw_performer_mock = mocker.patch(
             'src.processes.models.workflows.task.Task.'
-            'add_raw_performer'
+            'add_raw_performer',
         )
         send_new_task_notification_mock = mocker.patch(
             'src.processes.services.tasks.task_version.'
-            'send_new_task_notification.delay'
+            'send_new_task_notification.delay',
         )
         send_removed_task_notification_mock = mocker.patch(
             'src.processes.services.tasks.task_version.'
-            'send_removed_task_notification.delay'
+            'send_removed_task_notification.delay',
         )
         service = TaskUpdateVersionService(
             user=owner,
             instance=task,
             auth_type=AuthTokenType.USER,
-            is_superuser=False
+            is_superuser=False,
         )
         data_mock = mocker.Mock()
         task_data_mock = mocker.Mock()
         get_data_for_list_mock = mocker.patch(
             'src.processes.models.workflows.task.Task.'
             'get_data_for_list',
-            return_value=task_data_mock
+            return_value=task_data_mock,
         )
 
         # act
@@ -1045,7 +1045,7 @@ class TestTaskUpdateVersionService:
 
         # assert
         update_raw_performers_from_task_template_mock.assert_called_once_with(
-            data_mock
+            data_mock,
         )
         update_performers_mock.assert_called_once()
         add_raw_performer_mock.assert_not_called()
@@ -1056,7 +1056,7 @@ class TestTaskUpdateVersionService:
             recipients=[(
                 performer.id,
                 performer.email,
-                performer.is_new_tasks_subscriber
+                performer.is_new_tasks_subscriber,
             )],
             task_id=task.id,
             task_name=task.name,
@@ -1068,7 +1068,7 @@ class TestTaskUpdateVersionService:
             workflow_starter_photo=owner.photo,
             due_date_timestamp=None,
             logo_lg=account.logo_lg,
-            is_returned=False
+            is_returned=False,
         )
         send_removed_task_notification_mock.assert_not_called()
 
@@ -1083,7 +1083,7 @@ class TestTaskUpdateVersionService:
         group = create_test_group(account=account, users=[performer])
         update_raw_performers_from_task_template_mock = mocker.patch(
             'src.processes.models.workflows.task.Task.'
-            'update_raw_performers_from_task_template'
+            'update_raw_performers_from_task_template',
         )
         created_user_ids = []
         created_group_ids = [group.id]
@@ -1097,32 +1097,32 @@ class TestTaskUpdateVersionService:
                 created_group_ids,
                 deleted_user_ids,
                 deleted_group_ids,
-            )
+            ),
         )
         add_raw_performer_mock = mocker.patch(
             'src.processes.models.workflows.task.Task.'
-            'add_raw_performer'
+            'add_raw_performer',
         )
         send_new_task_notification_mock = mocker.patch(
             'src.processes.services.tasks.task_version.'
-            'send_new_task_notification.delay'
+            'send_new_task_notification.delay',
         )
         send_removed_task_notification_mock = mocker.patch(
             'src.processes.services.tasks.task_version.'
-            'send_removed_task_notification.delay'
+            'send_removed_task_notification.delay',
         )
         service = TaskUpdateVersionService(
             user=owner,
             instance=task,
             auth_type=AuthTokenType.USER,
-            is_superuser=False
+            is_superuser=False,
         )
         data_mock = mocker.Mock()
         task_data_mock = mocker.Mock()
         get_data_for_list_mock = mocker.patch(
             'src.processes.models.workflows.task.Task.'
             'get_data_for_list',
-            return_value=task_data_mock
+            return_value=task_data_mock,
         )
 
         # act
@@ -1130,7 +1130,7 @@ class TestTaskUpdateVersionService:
 
         # assert
         update_raw_performers_from_task_template_mock.assert_called_once_with(
-            data_mock
+            data_mock,
         )
         update_performers_mock.assert_called_once()
         add_raw_performer_mock.assert_not_called()
@@ -1141,7 +1141,7 @@ class TestTaskUpdateVersionService:
             recipients=[(
                 performer.id,
                 performer.email,
-                performer.is_new_tasks_subscriber
+                performer.is_new_tasks_subscriber,
             )],
             task_id=task.id,
             task_name=task.name,
@@ -1153,7 +1153,7 @@ class TestTaskUpdateVersionService:
             workflow_starter_photo=owner.photo,
             due_date_timestamp=None,
             logo_lg=account.logo_lg,
-            is_returned=False
+            is_returned=False,
         )
         send_removed_task_notification_mock.assert_not_called()
 
@@ -1167,7 +1167,7 @@ class TestTaskUpdateVersionService:
         performer = create_test_not_admin(account=account)
         update_raw_performers_from_task_template_mock = mocker.patch(
             'src.processes.models.workflows.task.Task.'
-            'update_raw_performers_from_task_template'
+            'update_raw_performers_from_task_template',
         )
         created_user_ids = []
         created_group_ids = []
@@ -1181,32 +1181,32 @@ class TestTaskUpdateVersionService:
                 created_group_ids,
                 deleted_user_ids,
                 deleted_group_ids,
-            )
+            ),
         )
         add_raw_performer_mock = mocker.patch(
             'src.processes.models.workflows.task.Task.'
-            'add_raw_performer'
+            'add_raw_performer',
         )
         send_new_task_notification_mock = mocker.patch(
             'src.processes.services.tasks.task_version.'
-            'send_new_task_notification.delay'
+            'send_new_task_notification.delay',
         )
         send_removed_task_notification_mock = mocker.patch(
             'src.processes.services.tasks.task_version.'
-            'send_removed_task_notification.delay'
+            'send_removed_task_notification.delay',
         )
         service = TaskUpdateVersionService(
             user=owner,
             instance=task,
             auth_type=AuthTokenType.USER,
-            is_superuser=False
+            is_superuser=False,
         )
         data_mock = mocker.Mock()
         task_data_mock = mocker.Mock()
         get_data_for_list_mock = mocker.patch(
             'src.processes.models.workflows.task.Task.'
             'get_data_for_list',
-            return_value=task_data_mock
+            return_value=task_data_mock,
         )
 
         # act
@@ -1214,7 +1214,7 @@ class TestTaskUpdateVersionService:
 
         # assert
         update_raw_performers_from_task_template_mock.assert_called_once_with(
-            data_mock
+            data_mock,
         )
         update_performers_mock.assert_called_once()
         add_raw_performer_mock.assert_not_called()
@@ -1224,7 +1224,7 @@ class TestTaskUpdateVersionService:
             task_id=task.id,
             recipients=[(performer.id, performer.email)],
             account_id=account.id,
-            task_data=task_data_mock
+            task_data=task_data_mock,
         )
 
     def test_update_performers__remove_group_performers__ok(self, mocker):
@@ -1238,7 +1238,7 @@ class TestTaskUpdateVersionService:
         group = create_test_group(account=account, users=[performer])
         update_raw_performers_from_task_template_mock = mocker.patch(
             'src.processes.models.workflows.task.Task.'
-            'update_raw_performers_from_task_template'
+            'update_raw_performers_from_task_template',
         )
         created_user_ids = []
         created_group_ids = []
@@ -1252,32 +1252,32 @@ class TestTaskUpdateVersionService:
                 created_group_ids,
                 deleted_user_ids,
                 deleted_group_ids,
-            )
+            ),
         )
         add_raw_performer_mock = mocker.patch(
             'src.processes.models.workflows.task.Task.'
-            'add_raw_performer'
+            'add_raw_performer',
         )
         send_new_task_notification_mock = mocker.patch(
             'src.processes.services.tasks.task_version.'
-            'send_new_task_notification.delay'
+            'send_new_task_notification.delay',
         )
         send_removed_task_notification_mock = mocker.patch(
             'src.processes.services.tasks.task_version.'
-            'send_removed_task_notification.delay'
+            'send_removed_task_notification.delay',
         )
         service = TaskUpdateVersionService(
             user=owner,
             instance=task,
             auth_type=AuthTokenType.USER,
-            is_superuser=False
+            is_superuser=False,
         )
         data_mock = mocker.Mock()
         task_data_mock = mocker.Mock()
         get_data_for_list_mock = mocker.patch(
             'src.processes.models.workflows.task.Task.'
             'get_data_for_list',
-            return_value=task_data_mock
+            return_value=task_data_mock,
         )
 
         # act
@@ -1285,7 +1285,7 @@ class TestTaskUpdateVersionService:
 
         # assert
         update_raw_performers_from_task_template_mock.assert_called_once_with(
-            data_mock
+            data_mock,
         )
         update_performers_mock.assert_called_once()
         add_raw_performer_mock.assert_not_called()
@@ -1295,12 +1295,12 @@ class TestTaskUpdateVersionService:
             task_id=task.id,
             recipients=[(performer.id, performer.email)],
             account_id=account.id,
-            task_data=task_data_mock
+            task_data=task_data_mock,
         )
 
     def test_update_performers__set_default_performer_account_owner__ok(
         self,
-        mocker
+        mocker,
     ):
 
         # arrange
@@ -1312,7 +1312,7 @@ class TestTaskUpdateVersionService:
         task.performers.all().delete()
         update_raw_performers_from_task_template_mock = mocker.patch(
             'src.processes.models.workflows.task.Task.'
-            'update_raw_performers_from_task_template'
+            'update_raw_performers_from_task_template',
         )
         created_user_ids = []
         created_group_ids = []
@@ -1326,32 +1326,32 @@ class TestTaskUpdateVersionService:
                 created_group_ids,
                 deleted_user_ids,
                 deleted_group_ids,
-            )
+            ),
         )
         add_raw_performer_mock = mocker.patch(
             'src.processes.models.workflows.task.Task.'
-            'add_raw_performer'
+            'add_raw_performer',
         )
         send_new_task_notification_mock = mocker.patch(
             'src.processes.services.tasks.task_version.'
-            'send_new_task_notification.delay'
+            'send_new_task_notification.delay',
         )
         send_removed_task_notification_mock = mocker.patch(
             'src.processes.services.tasks.task_version.'
-            'send_removed_task_notification.delay'
+            'send_removed_task_notification.delay',
         )
         service = TaskUpdateVersionService(
             user=owner,
             instance=task,
             auth_type=AuthTokenType.USER,
-            is_superuser=False
+            is_superuser=False,
         )
         data_mock = mocker.Mock()
         task_data_mock = mocker.Mock()
         get_data_for_list_mock = mocker.patch(
             'src.processes.models.workflows.task.Task.'
             'get_data_for_list',
-            return_value=task_data_mock
+            return_value=task_data_mock,
         )
 
         # act
@@ -1359,7 +1359,7 @@ class TestTaskUpdateVersionService:
 
         # assert
         update_raw_performers_from_task_template_mock.assert_called_once_with(
-            data_mock
+            data_mock,
         )
         update_performers_mock.assert_called_once()
         add_raw_performer_mock.assert_called_once_with(owner)
@@ -1373,7 +1373,7 @@ class TestTaskUpdateVersionService:
             recipients=[(
                 owner.id,
                 owner.email,
-                owner.is_new_tasks_subscriber
+                owner.is_new_tasks_subscriber,
             )],
             task_id=task.id,
             task_name=task.name,
@@ -1385,13 +1385,13 @@ class TestTaskUpdateVersionService:
             workflow_starter_photo=None,
             due_date_timestamp=None,
             logo_lg=account.logo_lg,
-            is_returned=False
+            is_returned=False,
         )
         send_removed_task_notification_mock.assert_not_called()
 
     def test_update_performers__set_default_performer__workflow_starter__ok(
         self,
-        mocker
+        mocker,
     ):
 
         # arrange
@@ -1404,7 +1404,7 @@ class TestTaskUpdateVersionService:
         task.performers.all().delete()
         update_raw_performers_from_task_template_mock = mocker.patch(
             'src.processes.models.workflows.task.Task.'
-            'update_raw_performers_from_task_template'
+            'update_raw_performers_from_task_template',
         )
         created_user_ids = []
         created_group_ids = []
@@ -1418,32 +1418,32 @@ class TestTaskUpdateVersionService:
                 created_group_ids,
                 deleted_user_ids,
                 deleted_group_ids,
-            )
+            ),
         )
         add_raw_performer_mock = mocker.patch(
             'src.processes.models.workflows.task.Task.'
-            'add_raw_performer'
+            'add_raw_performer',
         )
         send_new_task_notification_mock = mocker.patch(
             'src.processes.services.tasks.task_version.'
-            'send_new_task_notification.delay'
+            'send_new_task_notification.delay',
         )
         send_removed_task_notification_mock = mocker.patch(
             'src.processes.services.tasks.task_version.'
-            'send_removed_task_notification.delay'
+            'send_removed_task_notification.delay',
         )
         service = TaskUpdateVersionService(
             user=user,
             instance=task,
             auth_type=AuthTokenType.USER,
-            is_superuser=False
+            is_superuser=False,
         )
         data_mock = mocker.Mock()
         task_data_mock = mocker.Mock()
         get_data_for_list_mock = mocker.patch(
             'src.processes.models.workflows.task.Task.'
             'get_data_for_list',
-            return_value=task_data_mock
+            return_value=task_data_mock,
         )
 
         # act
@@ -1451,7 +1451,7 @@ class TestTaskUpdateVersionService:
 
         # assert
         update_raw_performers_from_task_template_mock.assert_called_once_with(
-            data_mock
+            data_mock,
         )
         update_performers_mock.assert_called_once()
         add_raw_performer_mock.assert_called_once_with(workflow_starter)
@@ -1465,7 +1465,7 @@ class TestTaskUpdateVersionService:
             recipients=[(
                 workflow_starter.id,
                 workflow_starter.email,
-                workflow_starter.is_new_tasks_subscriber
+                workflow_starter.is_new_tasks_subscriber,
             )],
             task_id=task.id,
             task_name=task.name,
@@ -1477,13 +1477,13 @@ class TestTaskUpdateVersionService:
             workflow_starter_photo=workflow_starter.photo,
             due_date_timestamp=None,
             logo_lg=account.logo_lg,
-            is_returned=False
+            is_returned=False,
         )
         send_removed_task_notification_mock.assert_not_called()
 
     def test_update_performers__new_user_already_performer__not_sent(
         self,
-        mocker
+        mocker,
     ):
 
         # arrange
@@ -1497,7 +1497,7 @@ class TestTaskUpdateVersionService:
         group = create_test_group(account=account, users=[performer])
         update_raw_performers_from_task_template_mock = mocker.patch(
             'src.processes.models.workflows.task.Task.'
-            'update_raw_performers_from_task_template'
+            'update_raw_performers_from_task_template',
         )
         created_user_ids = []
         created_group_ids = [group.id]
@@ -1511,32 +1511,32 @@ class TestTaskUpdateVersionService:
                 created_group_ids,
                 deleted_user_ids,
                 deleted_group_ids,
-            )
+            ),
         )
         add_raw_performer_mock = mocker.patch(
             'src.processes.models.workflows.task.Task.'
-            'add_raw_performer'
+            'add_raw_performer',
         )
         send_new_task_notification_mock = mocker.patch(
             'src.processes.services.tasks.task_version.'
-            'send_new_task_notification.delay'
+            'send_new_task_notification.delay',
         )
         send_removed_task_notification_mock = mocker.patch(
             'src.processes.services.tasks.task_version.'
-            'send_removed_task_notification.delay'
+            'send_removed_task_notification.delay',
         )
         service = TaskUpdateVersionService(
             user=owner,
             instance=task,
             auth_type=AuthTokenType.USER,
-            is_superuser=False
+            is_superuser=False,
         )
         data_mock = mocker.Mock()
         task_data_mock = mocker.Mock()
         get_data_for_list_mock = mocker.patch(
             'src.processes.models.workflows.task.Task.'
             'get_data_for_list',
-            return_value=task_data_mock
+            return_value=task_data_mock,
         )
 
         # act
@@ -1544,7 +1544,7 @@ class TestTaskUpdateVersionService:
 
         # assert
         update_raw_performers_from_task_template_mock.assert_called_once_with(
-            data_mock
+            data_mock,
         )
         update_performers_mock.assert_called_once()
         add_raw_performer_mock.assert_not_called()
@@ -1554,7 +1554,7 @@ class TestTaskUpdateVersionService:
 
     def test_update_performers__new_group_user_already_performer__not_sent(
         self,
-        mocker
+        mocker,
     ):
 
         # arrange
@@ -1573,7 +1573,7 @@ class TestTaskUpdateVersionService:
         task.performers.add(performer)
         update_raw_performers_from_task_template_mock = mocker.patch(
             'src.processes.models.workflows.task.Task.'
-            'update_raw_performers_from_task_template'
+            'update_raw_performers_from_task_template',
         )
         created_user_ids = [performer.id]
         created_group_ids = []
@@ -1587,32 +1587,32 @@ class TestTaskUpdateVersionService:
                 created_group_ids,
                 deleted_user_ids,
                 deleted_group_ids,
-            )
+            ),
         )
         add_raw_performer_mock = mocker.patch(
             'src.processes.models.workflows.task.Task.'
-            'add_raw_performer'
+            'add_raw_performer',
         )
         send_new_task_notification_mock = mocker.patch(
             'src.processes.services.tasks.task_version.'
-            'send_new_task_notification.delay'
+            'send_new_task_notification.delay',
         )
         send_removed_task_notification_mock = mocker.patch(
             'src.processes.services.tasks.task_version.'
-            'send_removed_task_notification.delay'
+            'send_removed_task_notification.delay',
         )
         service = TaskUpdateVersionService(
             user=owner,
             instance=task,
             auth_type=AuthTokenType.USER,
-            is_superuser=False
+            is_superuser=False,
         )
         data_mock = mocker.Mock()
         task_data_mock = mocker.Mock()
         get_data_for_list_mock = mocker.patch(
             'src.processes.models.workflows.task.Task.'
             'get_data_for_list',
-            return_value=task_data_mock
+            return_value=task_data_mock,
         )
 
         # act
@@ -1620,7 +1620,7 @@ class TestTaskUpdateVersionService:
 
         # assert
         update_raw_performers_from_task_template_mock.assert_called_once_with(
-            data_mock
+            data_mock,
         )
         update_performers_mock.assert_called_once()
         add_raw_performer_mock.assert_not_called()
@@ -1630,7 +1630,7 @@ class TestTaskUpdateVersionService:
 
     def test_update_performers__removed_user_already_performer__not_sent(
         self,
-        mocker
+        mocker,
     ):
 
         # arrange
@@ -1648,7 +1648,7 @@ class TestTaskUpdateVersionService:
         )
         update_raw_performers_from_task_template_mock = mocker.patch(
             'src.processes.models.workflows.task.Task.'
-            'update_raw_performers_from_task_template'
+            'update_raw_performers_from_task_template',
         )
         created_user_ids = []
         created_group_ids = []
@@ -1662,32 +1662,32 @@ class TestTaskUpdateVersionService:
                 created_group_ids,
                 deleted_user_ids,
                 deleted_group_ids,
-            )
+            ),
         )
         add_raw_performer_mock = mocker.patch(
             'src.processes.models.workflows.task.Task.'
-            'add_raw_performer'
+            'add_raw_performer',
         )
         send_new_task_notification_mock = mocker.patch(
             'src.processes.services.tasks.task_version.'
-            'send_new_task_notification.delay'
+            'send_new_task_notification.delay',
         )
         send_removed_task_notification_mock = mocker.patch(
             'src.processes.services.tasks.task_version.'
-            'send_removed_task_notification.delay'
+            'send_removed_task_notification.delay',
         )
         service = TaskUpdateVersionService(
             user=owner,
             instance=task,
             auth_type=AuthTokenType.USER,
-            is_superuser=False
+            is_superuser=False,
         )
         data_mock = mocker.Mock()
         task_data_mock = mocker.Mock()
         get_data_for_list_mock = mocker.patch(
             'src.processes.models.workflows.task.Task.'
             'get_data_for_list',
-            return_value=task_data_mock
+            return_value=task_data_mock,
         )
 
         # act
@@ -1695,7 +1695,7 @@ class TestTaskUpdateVersionService:
 
         # assert
         update_raw_performers_from_task_template_mock.assert_called_once_with(
-            data_mock
+            data_mock,
         )
         update_performers_mock.assert_called_once()
         add_raw_performer_mock.assert_not_called()
@@ -1705,7 +1705,7 @@ class TestTaskUpdateVersionService:
 
     def test_update_performers__removed_group_user_already_performer__not_sent(
         self,
-        mocker
+        mocker,
     ):
 
         # arrange
@@ -1719,7 +1719,7 @@ class TestTaskUpdateVersionService:
         group = create_test_group(account=account, users=[performer])
         update_raw_performers_from_task_template_mock = mocker.patch(
             'src.processes.models.workflows.task.Task.'
-            'update_raw_performers_from_task_template'
+            'update_raw_performers_from_task_template',
         )
         created_user_ids = []
         created_group_ids = []
@@ -1733,32 +1733,32 @@ class TestTaskUpdateVersionService:
                 created_group_ids,
                 deleted_user_ids,
                 deleted_group_ids,
-            )
+            ),
         )
         add_raw_performer_mock = mocker.patch(
             'src.processes.models.workflows.task.Task.'
-            'add_raw_performer'
+            'add_raw_performer',
         )
         send_new_task_notification_mock = mocker.patch(
             'src.processes.services.tasks.task_version.'
-            'send_new_task_notification.delay'
+            'send_new_task_notification.delay',
         )
         send_removed_task_notification_mock = mocker.patch(
             'src.processes.services.tasks.task_version.'
-            'send_removed_task_notification.delay'
+            'send_removed_task_notification.delay',
         )
         service = TaskUpdateVersionService(
             user=owner,
             instance=task,
             auth_type=AuthTokenType.USER,
-            is_superuser=False
+            is_superuser=False,
         )
         data_mock = mocker.Mock()
         task_data_mock = mocker.Mock()
         get_data_for_list_mock = mocker.patch(
             'src.processes.models.workflows.task.Task.'
             'get_data_for_list',
-            return_value=task_data_mock
+            return_value=task_data_mock,
         )
 
         # act
@@ -1766,7 +1766,7 @@ class TestTaskUpdateVersionService:
 
         # assert
         update_raw_performers_from_task_template_mock.assert_called_once_with(
-            data_mock
+            data_mock,
         )
         update_performers_mock.assert_called_once()
         add_raw_performer_mock.assert_not_called()

@@ -17,7 +17,7 @@ from rest_framework.serializers import (
 from django.utils import timezone
 from django.contrib.auth import get_user_model
 from django.core.exceptions import (
-    ValidationError as ValidationCoreError
+    ValidationError as ValidationCoreError,
 )
 from src.processes.models import (
     TemplateOwner,
@@ -28,7 +28,7 @@ from src.processes.models import (
 from src.generics.mixins.serializers import (
     AdditionalValidationMixin,
     ValidationUtilsMixin,
-    CustomValidationErrorMixin
+    CustomValidationErrorMixin,
 )
 from src.processes.serializers.templates.mixins import (
     CreateOrUpdateInstanceMixin,
@@ -37,7 +37,7 @@ from src.processes.serializers.templates.mixins import (
 from src.processes.serializers.templates.task import (
     TaskTemplateSerializer,
     TemplateTaskOnlyFieldsSerializer,
-    TaskTemplatePrivilegesSerializer
+    TaskTemplatePrivilegesSerializer,
 )
 from src.processes.serializers.templates.kickoff import (
     KickoffSerializer,
@@ -45,7 +45,7 @@ from src.processes.serializers.templates.kickoff import (
     KickoffListSerializer,
 )
 from src.processes.serializers.templates.task import (
-    ShortTaskSerializer
+    ShortTaskSerializer,
 )
 from src.processes.utils.common import (
     create_api_name,
@@ -54,7 +54,7 @@ from src.processes.utils.common import (
 )
 from src.processes.utils.common import (
     string_abbreviation,
-    is_tasks_ordering_correct
+    is_tasks_ordering_correct,
 )
 from src.processes.services.versioning.schemas import (
     TemplateSchemaV1,
@@ -71,20 +71,20 @@ from src.processes.enums import (
 )
 from src.generics.exceptions import BaseServiceException
 from src.processes.services.templates.integrations import (
-    TemplateIntegrationsService
+    TemplateIntegrationsService,
 )
 from src.processes.serializers.templates.owner import (
-    TemplateOwnerSerializer
+    TemplateOwnerSerializer,
 )
 from src.generics.fields import (
     TimeStampField,
 )
 from src.processes.enums import (
     TemplateType,
-    OwnerType
+    OwnerType,
 )
 from src.processes.utils.common import (
-    VAR_PATTERN
+    VAR_PATTERN,
 )
 
 UserModel = get_user_model()
@@ -95,7 +95,7 @@ class TemplateSerializer(
     AdditionalValidationMixin,
     CreateOrUpdateInstanceMixin,
     CreateOrUpdateRelatedMixin,
-    ModelSerializer
+    ModelSerializer,
 ):
     """
         Requires the following context variables:
@@ -185,7 +185,7 @@ class TemplateSerializer(
                             result.append({
                                 'name': name,
                                 'api_name': api_name,
-                                'is_required': is_required
+                                'is_required': is_required,
                             })
                     except TypeError:
                         continue
@@ -210,7 +210,7 @@ class TemplateSerializer(
         return performers_ids
 
     def _get_owners_for_draft(
-        self, data: Dict[str, Any]
+        self, data: Dict[str, Any],
     ) -> List[Dict[str, Any]]:
 
         """ Return correct account template owners ids for draft
@@ -226,12 +226,12 @@ class TemplateSerializer(
                     and owner.get('source_id')
                     and owner.get('type') in (
                         OwnerType.USER,
-                        OwnerType.GROUP
+                        OwnerType.GROUP,
                     )
                 ):
                     owner['api_name'] = (
                         owner.get('api_name') or create_api_name(
-                            prefix=TemplateOwner.api_name_prefix
+                            prefix=TemplateOwner.api_name_prefix,
                         )
                     )
                     owner['source_id'] = str(owner['source_id'])
@@ -242,23 +242,23 @@ class TemplateSerializer(
                 'source_id': str(self.context['user'].id),
                 'type': OwnerType.USER,
                 'api_name': create_api_name(
-                    prefix=TemplateOwner.api_name_prefix
-                )
+                    prefix=TemplateOwner.api_name_prefix,
+                ),
             }]
         if not result:
             result = [{
                 'source_id': str(self.context['user'].id),
                 'type': OwnerType.USER,
                 'api_name': create_api_name(
-                    prefix=TemplateOwner.api_name_prefix
-                )
+                    prefix=TemplateOwner.api_name_prefix,
+                ),
             }]
         return result
 
     def create_or_update_instance(
         self,
         validated_data: Dict[str, Any],
-        instance: Optional[Template] = None
+        instance: Optional[Template] = None,
     ) -> Template:
 
         user = self.context['user']
@@ -268,7 +268,7 @@ class TemplateSerializer(
         validated_data['type'] = self.context.get('type', TemplateType.CUSTOM)
         validated_data['name'] = string_abbreviation(
             validated_data['name'],
-            TEMPLATE_NAME_LENGTH
+            TEMPLATE_NAME_LENGTH,
         )
         performers_ids = self._get_template_performers_ids(validated_data)
         if instance:
@@ -279,7 +279,7 @@ class TemplateSerializer(
         try:
             instance = super().create_or_update_instance(
                 validated_data=validated_data,
-                instance=instance
+                instance=instance,
             )
         except BaseServiceException as ex:
             self.raise_validation_error(message=ex.message)
@@ -313,7 +313,7 @@ class TemplateSerializer(
         if failed_api_names:
             self.raise_validation_error(
                 message=messages.MSG_PT_0008,
-                name='wf_name_template'
+                name='wf_name_template',
             )
 
         contains_only_api_names = VAR_PATTERN.sub('', value).strip() == ''
@@ -326,14 +326,14 @@ class TemplateSerializer(
             if not_required_fields:
                 self.raise_validation_error(
                     message=messages.MSG_PT_0009,
-                    name='wf_name_template'
+                    name='wf_name_template',
                 )
 
     def additional_validate_kickoff(self, value: Dict[str, Any], **kwargs):
         if value is None:
             self.raise_validation_error(
                 message=messages.MSG_PT_0010,
-                name='kickoff'
+                name='kickoff',
             )
 
     def additional_validate_tasks(self, value: List[Dict[str, Any]], **kwargs):
@@ -346,7 +346,7 @@ class TemplateSerializer(
         if not is_tasks_ordering_correct(numbers):
             self.raise_validation_error(
                 message=messages.MSG_PT_0014,
-                name='tasks'
+                name='tasks',
             )
         # Validate tasks "revert task"
         revert_task_api_names = dict()
@@ -363,9 +363,9 @@ class TemplateSerializer(
             self.raise_validation_error(
                 message=messages.MSG_PT_0059(
                     name=task['name'],
-                    api_name=revert_task_api_name
+                    api_name=revert_task_api_name,
                 ),
-                api_name=task.get('api_name')
+                api_name=task.get('api_name'),
             )
 
     def additional_validate_owners(self, *args, **kwargs):
@@ -373,7 +373,7 @@ class TemplateSerializer(
         if not self.new_users_owners_ids and not self.new_groups_owners_ids:
             self.raise_validation_error(
                 message=messages.MSG_PT_0016,
-                name='owners'
+                name='owners',
             )
 
         count_new_owners_ids = (
@@ -382,25 +382,25 @@ class TemplateSerializer(
         if len(self.owners_data) != count_new_owners_ids:
             self.raise_validation_error(
                 message=messages.MSG_PT_0057,
-                name='owners'
+                name='owners',
             )
         all_users = self.new_users_owners_ids | self.users_in_groups_owners_ids
         if self.context['user'].id not in all_users:
             self.raise_validation_error(
                 message=messages.MSG_PT_0018,
-                name='owners'
+                name='owners',
             )
 
         if self.undefined_users_ids or self.undefined_groups_ids:
             self.raise_validation_error(
                 message=messages.MSG_PT_0019,
-                name='owners'
+                name='owners',
             )
 
     def additional_validate_public_success_url(
         self,
         value: Dict[str, Any],
-        **kwargs
+        **kwargs,
     ):
 
         if value:
@@ -409,7 +409,7 @@ class TemplateSerializer(
             except ValidationCoreError:
                 self.raise_validation_error(
                     message=messages.MSG_PT_0021,
-                    name='public_success_url'
+                    name='public_success_url',
                 )
 
     def to_representation(self, instance: Template):
@@ -434,7 +434,7 @@ class TemplateSerializer(
     def _update_draft(self, data: Dict[str, Any]):
 
         draft, _ = TemplateDraft.objects.get_or_create(
-            template=self.instance
+            template=self.instance,
         )
         draft.draft = data
         draft.save()
@@ -468,7 +468,7 @@ class TemplateSerializer(
                 if task.get('api_name'):
                     task['parents'] = parents_by_tasks[task['api_name']]
                     task['ancestors'] = list(
-                        ancestors_by_tasks[task['api_name']]
+                        ancestors_by_tasks[task['api_name']],
                     )
                 else:
                     task['parents'] = []
@@ -477,7 +477,7 @@ class TemplateSerializer(
                 self.instance = Template.objects.create(
                     account=user.account,
                     name=data.get('name') or 'New template',
-                    is_active=False
+                    is_active=False,
                 )
                 TemplateOwner.objects.get_or_create(
                     type=OwnerType.USER,
@@ -487,10 +487,10 @@ class TemplateSerializer(
                 )
                 service = TemplateIntegrationsService(
                     account=user.account,
-                    user=user
+                    user=user,
                 )
                 service.create_integrations_for_template(
-                    template=self.instance
+                    template=self.instance,
                 )
             else:
                 self.instance.is_active = False
@@ -506,10 +506,10 @@ class TemplateSerializer(
             data['id'] = self.instance.id
             Kickoff.objects.get_or_create(
                 template_id=self.instance.id,
-                defaults={'account_id': self.instance.account_id}
+                defaults={'account_id': self.instance.account_id},
             )
             data['kickoff'] = self._get_normalized_kickoff_draft(
-                data=data.get('kickoff')
+                data=data.get('kickoff'),
             )
             self._update_draft(data=data)
             return self.instance
@@ -534,10 +534,10 @@ class TemplateSerializer(
             .user_ids_set()
         )
         self.in_account_user_ids = set(
-            self.context['account'].get_user_ids(include_invited=True)
+            self.context['account'].get_user_ids(include_invited=True),
         )
         self.in_account_group_ids = set(
-            self.context['account'].get_group_ids()
+            self.context['account'].get_group_ids(),
         )
         self.undefined_users_ids = (
             self.new_users_owners_ids - self.in_account_user_ids
@@ -553,31 +553,31 @@ class TemplateSerializer(
         user = self.context['user']
         account = user.account
         instance = self.create_or_update_instance(
-            validated_data=validated_data
+            validated_data=validated_data,
         )
         self.create_or_update_related(
             slz_cls=TemplateOwnerSerializer,
             data=validated_data['owners'],
             ancestors_data={
                 'account': account,
-                'template': instance
+                'template': instance,
             },
             slz_context={
                 **self.context,
                 'template': instance,
-            }
+            },
         )
         self.create_or_update_related_one(
             slz_cls=KickoffSerializer,
             data=validated_data['kickoff'],
             ancestors_data={
                 'account': account,
-                'template': instance
+                'template': instance,
             },
             slz_context={
                 **self.context,
                 'template': instance,
-            }
+            },
         )
         parents_by_tasks = get_tasks_parents(validated_data['tasks'])
         tasks_api_names = set(parents_by_tasks.keys())
@@ -595,27 +595,27 @@ class TemplateSerializer(
                 'tasks_api_names': tasks_api_names,
                 'parents_by_tasks': parents_by_tasks,
                 'ancestors_by_tasks': ancestors_by_tasks,
-            }
+            },
         )
 
         if instance.is_active:
             version_service = TemplateVersioningService(
-                schema=TemplateSchemaV1
+                schema=TemplateSchemaV1,
             )
             version_service.save(template=instance)
         service = TemplateIntegrationsService(
             account=user.account,
-            user=user
+            user=user,
         )
         service.create_integrations_for_template(
-            template=instance
+            template=instance,
         )
         return instance
 
     def update(
         self,
         instance: Template,
-        validated_data: Dict[str, Any]
+        validated_data: Dict[str, Any],
     ) -> Template:
 
         self._set_constances(validated_data)
@@ -624,31 +624,31 @@ class TemplateSerializer(
         account = user.account
         instance = self.create_or_update_instance(
             validated_data=validated_data,
-            instance=instance
+            instance=instance,
         )
         self.create_or_update_related(
             slz_cls=TemplateOwnerSerializer,
             data=validated_data['owners'],
             ancestors_data={
                 'account': account,
-                'template': instance
+                'template': instance,
             },
             slz_context={
                 **self.context,
                 'template': instance,
-            }
+            },
         )
         self.create_or_update_related_one(
             slz_cls=KickoffSerializer,
             data=validated_data['kickoff'],
             ancestors_data={
                 'account': account,
-                'template': instance
+                'template': instance,
             },
             slz_context={
                 **self.context,
                 'template': instance,
-            }
+            },
         )
         parents_by_tasks = get_tasks_parents(validated_data['tasks'])
         tasks_api_names = set(parents_by_tasks.keys())
@@ -666,12 +666,12 @@ class TemplateSerializer(
                 'tasks_api_names': tasks_api_names,
                 'parents_by_tasks': parents_by_tasks,
                 'ancestors_by_tasks': ancestors_by_tasks,
-            }
+            },
         )
 
         if instance.is_active:
             version_service = TemplateVersioningService(
-                schema=TemplateSchemaV1
+                schema=TemplateSchemaV1,
             )
             version_service.save(template=instance)
         return instance
@@ -717,23 +717,23 @@ class TemplateSerializer(
 class TemplateListFilterSerializer(
     CustomValidationErrorMixin,
     AdditionalValidationMixin,
-    Serializer
+    Serializer,
 ):
 
     is_template_owner = BooleanField(
         required=False,
         default=None,
-        allow_null=True
+        allow_null=True,
     )
     is_active = BooleanField(
         required=False,
         default=None,
-        allow_null=True
+        allow_null=True,
     )
     is_public = BooleanField(
         required=False,
         default=None,
-        allow_null=True
+        allow_null=True,
     )
     search = CharField(required=False)
     ordering = ChoiceField(required=False, choices=TemplateOrdering.CHOICES)
@@ -802,7 +802,7 @@ class TemplateOnlyFieldsSerializer(ModelSerializer):
         # because the Template related with Kickoff by foreign key
         # instead of one to one relation. Getting the object manually:
         kickoff_slz = KickoffOnlyFieldsSerializer(
-            instance=self.instance.kickoff_instance
+            instance=self.instance.kickoff_instance,
         )
         data['kickoff'] = kickoff_slz.data
         return data
@@ -822,12 +822,12 @@ class TemplateTitlesRequestSerializer(
     with_tasks_in_progress = BooleanField(
         required=False,
         allow_null=True,
-        default=None
+        default=None,
     )
     workflows_status = ChoiceField(
         choices=WorkflowApiStatus.CHOICES,
         required=False,
-        allow_null=False
+        allow_null=False,
     )
 
     def validate(self, attrs):
@@ -850,20 +850,20 @@ class TemplateTitlesEventsRequestSerializer(
 
 class TemplateAiSerializer(
     CustomValidationErrorMixin,
-    Serializer
+    Serializer,
 ):
 
     description = CharField(
         required=True,
         allow_null=False,
         allow_blank=False,
-        max_length=500
+        max_length=500,
     )
 
 
 class TemplateByStepsSerializer(
     CustomValidationErrorMixin,
-    Serializer
+    Serializer,
 ):
 
     name = CharField(
@@ -874,7 +874,7 @@ class TemplateByStepsSerializer(
     tasks = ShortTaskSerializer(
         many=True,
         required=True,
-        allow_null=False
+        allow_null=False,
     )
 
     def validate_name(self, value):
@@ -883,7 +883,7 @@ class TemplateByStepsSerializer(
 
 class TemplateByNameSerializer(
     CustomValidationErrorMixin,
-    Serializer
+    Serializer,
 ):
 
     name = CharField(
@@ -896,23 +896,23 @@ class TemplateByNameSerializer(
 class TemplateExportFilterSerializer(
     CustomValidationErrorMixin,
     ValidationUtilsMixin,
-    Serializer
+    Serializer,
 ):
     owners_ids = CharField(required=False)
     owners_group_ids = CharField(required=False)
     is_active = BooleanField(
         required=False,
         default=None,
-        allow_null=True
+        allow_null=True,
     )
     is_public = BooleanField(
         required=False,
         default=None,
-        allow_null=True
+        allow_null=True,
     )
     ordering = ChoiceField(
         required=False,
-        choices=TemplateOrdering.CHOICES_EXPORT
+        choices=TemplateOrdering.CHOICES_EXPORT,
     )
     limit = IntegerField(min_value=0, required=False)
     offset = IntegerField(min_value=0, required=False)
@@ -926,7 +926,7 @@ class TemplateExportFilterSerializer(
 
 class TemplateUserPrivilegesSerializer(
     CustomValidationErrorMixin,
-    ModelSerializer
+    ModelSerializer,
 ):
     class Meta:
         model = Template

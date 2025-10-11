@@ -151,7 +151,7 @@ class TestGetDurationFormat:
             (timedelta(seconds=86400), '1 day 0 hours 0 minutes'),
             (timedelta(seconds=172800), '2 days 0 hours 0 minutes'),
             (timedelta(seconds=90000), '1 day 1 hour 0 minutes'),
-        ]
+        ],
     )
     def test_ok(self, duration, expected_str):
         # act

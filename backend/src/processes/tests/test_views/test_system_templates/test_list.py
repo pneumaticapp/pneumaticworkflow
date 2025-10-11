@@ -2,7 +2,7 @@ import pytest
 from src.processes.enums import SysTemplateType
 from src.processes.models import (
     SystemTemplate,
-    SystemTemplateCategory
+    SystemTemplateCategory,
 )
 from src.processes.tests.fixtures import (
     create_test_user,
@@ -40,13 +40,13 @@ def test_list__ordering_by_name__ok(api_client):
                 {
                     'name': 'Creating report',
                     'number': 4,
-                }
+                },
             ],
-        }
+        },
     )
     category = SystemTemplateCategory.objects.create(
         is_active=True,
-        name='Some category'
+        name='Some category',
     )
     template_1 = SystemTemplate.objects.create(
         is_active=True,
@@ -65,9 +65,9 @@ def test_list__ordering_by_name__ok(api_client):
                 {
                     'name': 'Finding reasons of request',
                     'number': 2,
-                }
+                },
             ],
-        }
+        },
     )
     SystemTemplate.objects.create(
         is_active=True,
@@ -85,9 +85,9 @@ def test_list__ordering_by_name__ok(api_client):
                 {
                     'name': 'Finding reasons of request',
                     'number': 2,
-                }
+                },
             ],
-        }
+        },
     )
     response = api_client.get('/templates/system')
 
@@ -119,20 +119,20 @@ def test_system_templates_list_paginated(api_client):
             {
                 'name': 'Finding reasons of request',
                 'number': 2,
-            }
+            },
         ],
     }
     SystemTemplate.objects.create(
         is_active=True,
         name='First template',
         description='Very beginning of templates',
-        template=template_data
+        template=template_data,
     )
     SystemTemplate.objects.create(
         is_active=True,
         name='Second template',
         description='123',
-        template=template_data
+        template=template_data,
     )
 
     response = api_client.get('/templates/system?limit=1&offset=0')
@@ -162,9 +162,9 @@ def test_system_templates__only_library_type_library__ok(api_client):
                 {
                     'name': 'Finding reasons of request',
                     'number': 2,
-                }
+                },
             ],
-        }
+        },
     )
     SystemTemplate.objects.create(
         is_active=True,
@@ -182,9 +182,9 @@ def test_system_templates__only_library_type_library__ok(api_client):
                 {
                     'name': 'Finding reasons of request',
                     'number': 2,
-                }
+                },
             ],
-        }
+        },
     )
     SystemTemplate.objects.create(
         is_active=True,
@@ -202,9 +202,9 @@ def test_system_templates__only_library_type_library__ok(api_client):
                 {
                     'name': 'Finding reasons of request',
                     'number': 2,
-                }
+                },
             ],
-        }
+        },
     )
     SystemTemplate.objects.create(
         is_active=True,
@@ -222,9 +222,9 @@ def test_system_templates__only_library_type_library__ok(api_client):
                 {
                     'name': 'Finding reasons of request',
                     'number': 2,
-                }
+                },
             ],
-        }
+        },
     )
     response = api_client.get('/templates/system')
 
@@ -260,9 +260,9 @@ def test_list__filter_by_search__ok(api_client):
                 {
                     'name': 'Creating report',
                     'number': 4,
-                }
+                },
             ],
-        }
+        },
     )
     template_2 = SystemTemplate.objects.create(
         is_active=True,
@@ -280,9 +280,9 @@ def test_list__filter_by_search__ok(api_client):
                 {
                     'name': 'Finding reasons of request',
                     'number': 2,
-                }
+                },
             ],
-        }
+        },
     )
     SystemTemplate.objects.create(
         is_active=True,
@@ -299,9 +299,9 @@ def test_list__filter_by_search__ok(api_client):
                 {
                     'name': 'Finding reasons of request',
                     'number': 2,
-                }
+                },
             ],
-        }
+        },
     )
     template_3 = SystemTemplate.objects.create(
         is_active=True,
@@ -319,9 +319,9 @@ def test_list__filter_by_search__ok(api_client):
                 {
                     'name': 'Finding reasons of request',
                     'number': 2,
-                }
+                },
             ],
-        }
+        },
     )
     response = api_client.get('/templates/system?search=Search text')
 
@@ -351,9 +351,9 @@ def test_list__filter_by_search_find_union_result__ok(api_client):
                 {
                     'name': 'Checking data',
                     'number': 1,
-                }
-            ]
-        }
+                },
+            ],
+        },
     )
     template_2 = SystemTemplate.objects.create(
         is_active=True,
@@ -370,9 +370,9 @@ def test_list__filter_by_search_find_union_result__ok(api_client):
                 {
                     'name': 'Checking data',
                     'number': 1,
-                }
-            ]
-        }
+                },
+            ],
+        },
     )
     response = api_client.get('/templates/system?search=Payable Account')
 
@@ -399,9 +399,9 @@ def test_list__filter_by_search_find_union_by_prefix__ok(api_client):
                 {
                     'name': 'Checking data',
                     'number': 1,
-                }
-            ]
-        }
+                },
+            ],
+        },
     )
     template_2 = SystemTemplate.objects.create(
         is_active=True,
@@ -416,9 +416,9 @@ def test_list__filter_by_search_find_union_by_prefix__ok(api_client):
                 {
                     'name': 'Checking data',
                     'number': 1,
-                }
-            ]
-        }
+                },
+            ],
+        },
     )
     response = api_client.get('/templates/system?search=fou pa')
 
@@ -445,9 +445,9 @@ def test_list__filter_by_search_by_prefix__ok(api_client):
                 {
                     'name': 'Checking data',
                     'number': 1,
-                }
-            ]
-        }
+                },
+            ],
+        },
     )
     template_2 = SystemTemplate.objects.create(
         is_active=True,
@@ -462,9 +462,9 @@ def test_list__filter_by_search_by_prefix__ok(api_client):
                 {
                     'name': 'Checking data',
                     'number': 1,
-                }
-            ]
-        }
+                },
+            ],
+        },
     )
     response = api_client.get('/templates/system?search=fun')
 
@@ -492,9 +492,9 @@ def test_list__filter_by_search_by_part__ok(api_client):
                 {
                     'name': 'Checking data',
                     'number': 1,
-                }
-            ]
-        }
+                },
+            ],
+        },
     )
     response = api_client.get('/templates/system?search=Payab Accounts')
 
@@ -510,17 +510,17 @@ def test_list__filter_by_category__ok(api_client):
     category_1 = SystemTemplateCategory.objects.create(
         is_active=True,
         order=1,
-        name='First category'
+        name='First category',
     )
     category_2 = SystemTemplateCategory.objects.create(
         is_active=True,
         order=2,
-        name='Second category'
+        name='Second category',
     )
     SystemTemplateCategory.objects.create(
         is_active=True,
         order=2,
-        name='Third category'
+        name='Third category',
     )
     template_1 = SystemTemplate.objects.create(
         is_active=True,
@@ -539,9 +539,9 @@ def test_list__filter_by_category__ok(api_client):
                 {
                     'name': 'Finding reasons of request',
                     'number': 2,
-                }
+                },
             ],
-        }
+        },
     )
     SystemTemplate.objects.create(
         is_active=True,
@@ -559,9 +559,9 @@ def test_list__filter_by_category__ok(api_client):
                 {
                     'name': 'Finding reasons of request',
                     'number': 2,
-                }
+                },
             ],
-        }
+        },
     )
     SystemTemplate.objects.create(
         is_active=True,
@@ -578,9 +578,9 @@ def test_list__filter_by_category__ok(api_client):
                 {
                     'name': 'Finding reasons of request',
                     'number': 2,
-                }
+                },
             ],
-        }
+        },
     )
     template_4 = SystemTemplate.objects.create(
         is_active=True,
@@ -607,9 +607,9 @@ def test_list__filter_by_category__ok(api_client):
                 {
                     'name': 'Creating report',
                     'number': 4,
-                }
+                },
             ],
-        }
+        },
     )
     response = api_client.get(f'/templates/system?category={category_1.id}')
 
@@ -626,7 +626,7 @@ def test_list__filter_by_category_and_search__ok(api_client):
     category = SystemTemplateCategory.objects.create(
         is_active=True,
         order=1,
-        name='First category'
+        name='First category',
     )
     template = SystemTemplate.objects.create(
         is_active=True,
@@ -645,9 +645,9 @@ def test_list__filter_by_category_and_search__ok(api_client):
                 {
                     'name': 'Finding reasons of request',
                     'number': 2,
-                }
+                },
             ],
-        }
+        },
     )
     SystemTemplate.objects.create(
         is_active=True,
@@ -665,13 +665,13 @@ def test_list__filter_by_category_and_search__ok(api_client):
                 {
                     'name': 'Finding reasons of request',
                     'number': 2,
-                }
+                },
             ],
-        }
+        },
     )
 
     response = api_client.get(
-        f'/templates/system?category={category.id}&search=Search content'
+        f'/templates/system?category={category.id}&search=Search content',
     )
 
     assert response.status_code == 200

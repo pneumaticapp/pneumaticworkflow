@@ -21,7 +21,7 @@ class Command(BaseCommand):
 
         if UserModel.objects.filter(email=email).exists():
             self.stdout.write(
-                self.style.ERROR('User with the given email already exists.')
+                self.style.ERROR('User with the given email already exists.'),
             )
             return
 
@@ -42,5 +42,5 @@ class Command(BaseCommand):
             account_owner.is_staff = True
             account_owner.save()
             self.stdout.write(
-                self.style.SUCCESS('User successfully created.')
+                self.style.SUCCESS('User successfully created.'),
             )

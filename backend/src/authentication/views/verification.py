@@ -20,7 +20,7 @@ from src.authentication.serializers import TokenSerializer
 from src.utils.validation import raise_validation_error
 from src.authentication.messages import MSG_AU_0008
 from src.generics.mixins.views import (
-    BaseResponseMixin
+    BaseResponseMixin,
 )
 from src.generics.permissions import (
     UserIsAuthenticated,
@@ -32,7 +32,7 @@ UserModel = get_user_model()
 
 class VerificationTokenView(
     ListAPIView,
-    BaseResponseMixin
+    BaseResponseMixin,
 ):
     permission_classes = (PrivateApiPermission,)
     serializer_class = TokenSerializer
@@ -46,7 +46,7 @@ class VerificationTokenView(
             raise_validation_error(message=MSG_AU_0008)
         user = get_object_or_404(
             UserModel.objects.active(),
-            id=token_data['user_id']
+            id=token_data['user_id'],
         )
         account = user.account
         if not account.is_verified:
@@ -55,7 +55,7 @@ class VerificationTokenView(
             AnalyticService.account_verified(
                 user=user,
                 is_superuser=request.is_superuser,
-                auth_type=AuthTokenType.USER
+                auth_type=AuthTokenType.USER,
             )
         return self.response_ok()
 
@@ -77,7 +77,7 @@ class VerificationTokenResendView(
             EmailService.send_verification_email(
                 user=user,
                 token=str(VerificationToken.for_user(user)),
-                logo_lg=user.account.logo_lg
+                logo_lg=user.account.logo_lg,
             )
 
         return self.response_ok({'email': user.email})

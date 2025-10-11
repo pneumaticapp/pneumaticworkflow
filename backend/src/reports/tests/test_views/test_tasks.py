@@ -7,7 +7,7 @@ from src.processes.models import (
     FieldTemplate,
     ConditionTemplate,
     RuleTemplate,
-    PredicateTemplate
+    PredicateTemplate,
 )
 from src.processes.tests.fixtures import (
     create_test_template,
@@ -15,18 +15,18 @@ from src.processes.tests.fixtures import (
     create_test_account,
     create_test_owner,
     create_test_admin,
-    create_test_group
+    create_test_group,
 )
 from src.processes.enums import (
     WorkflowStatus,
     PredicateOperator,
     TaskStatus,
     ConditionAction,
-    PerformerType
+    PerformerType,
 )
 from src.processes.enums import (
     FieldType,
-    DirectlyStatus
+    DirectlyStatus,
 )
 
 UserModel = get_user_model()
@@ -38,19 +38,19 @@ class TestDashboardMyTasksOverview:
     def test_my_tasks__started__ok(
         self,
         mocker,
-        api_client
+        api_client,
     ):
         # arrange
         mocker.patch(
             'src.processes.tasks.webhooks.'
-            'send_task_completed_webhook.delay'
+            'send_task_completed_webhook.delay',
         )
         account = create_test_account()
         user = create_test_owner(account=account)
         workflow = create_test_workflow(
             user=user,
             active_task_number=2,
-            tasks_count=3
+            tasks_count=3,
         )
         task_1 = workflow.tasks.get(number=1)
         task_1.date_first_started = timezone.now() - timedelta(minutes=1)
@@ -73,12 +73,12 @@ class TestDashboardMyTasksOverview:
     def test_my_tasks_started__performer_user_and_group__ok(
         self,
         mocker,
-        api_client
+        api_client,
     ):
         # arrange
         mocker.patch(
             'src.processes.tasks.webhooks.'
-            'send_task_completed_webhook.delay'
+            'send_task_completed_webhook.delay',
         )
         account = create_test_account()
         user = create_test_owner(account=account)
@@ -110,12 +110,12 @@ class TestDashboardMyTasksOverview:
     def test_my_tasks_in_progress__performer_user_and_group__ok(
         self,
         mocker,
-        api_client
+        api_client,
     ):
         # arrange
         mocker.patch(
             'src.processes.tasks.webhooks.'
-            'send_task_completed_webhook.delay'
+            'send_task_completed_webhook.delay',
         )
         account = create_test_account()
         user = create_test_owner(account=account)
@@ -149,12 +149,12 @@ class TestDashboardMyTasksOverview:
     def test_my_tasks_completed__performer_user_and_group__ok(
         self,
         mocker,
-        api_client
+        api_client,
     ):
         # arrange
         mocker.patch(
             'src.processes.tasks.webhooks.'
-            'send_task_completed_webhook.delay'
+            'send_task_completed_webhook.delay',
         )
         account = create_test_account()
         user = create_test_owner(account=account)
@@ -189,12 +189,12 @@ class TestDashboardMyTasksOverview:
     def test_my_tasks_overdue__performer_user_and_group__ok(
         self,
         mocker,
-        api_client
+        api_client,
     ):
         # arrange
         mocker.patch(
             'src.processes.tasks.webhooks.'
-            'send_task_completed_webhook.delay'
+            'send_task_completed_webhook.delay',
         )
         account = create_test_account()
         user = create_test_owner(account=account)
@@ -231,24 +231,24 @@ class TestDashboardMyTasksOverview:
         (
             TaskStatus.ACTIVE,
             TaskStatus.DELAYED,
-        )
+        ),
     )
     def test_my_tasks__in_progress__allowed_task_status__ok(
         self,
         mocker,
         api_client,
-        task_status
+        task_status,
     ):
         # arrange
         mocker.patch(
             'src.processes.tasks.webhooks.'
-            'send_task_completed_webhook.delay'
+            'send_task_completed_webhook.delay',
         )
         account = create_test_account()
         user = create_test_owner(account=account)
         workflow = create_test_workflow(
             user=user,
-            tasks_count=2
+            tasks_count=2,
         )
         task_1 = workflow.tasks.get(number=1)
         task_1.date_started = timezone.now() - timedelta(hours=1)
@@ -268,26 +268,26 @@ class TestDashboardMyTasksOverview:
         'task_status',
         (
             TaskStatus.PENDING,
-            TaskStatus.SKIPPED
-        )
+            TaskStatus.SKIPPED,
+        ),
     )
     def test_my_tasks__in_progress__not_allowed_task_status__ok(
         self,
         mocker,
         api_client,
-        task_status
+        task_status,
     ):
 
         # arrange
         mocker.patch(
             'src.processes.tasks.webhooks.'
-            'send_task_completed_webhook.delay'
+            'send_task_completed_webhook.delay',
         )
         account = create_test_account()
         user = create_test_owner(account=account)
         workflow = create_test_workflow(
             user=user,
-            tasks_count=2
+            tasks_count=2,
         )
         task_1 = workflow.tasks.get(number=1)
         task_1.date_started = timezone.now() - timedelta(hours=1)
@@ -311,13 +311,13 @@ class TestDashboardMyTasksOverview:
         # arrange
         mocker.patch(
             'src.processes.tasks.webhooks.'
-            'send_task_completed_webhook.delay'
+            'send_task_completed_webhook.delay',
         )
         account = create_test_account()
         user = create_test_owner(account=account)
         workflow = create_test_workflow(
             user=user,
-            tasks_count=2
+            tasks_count=2,
         )
         now_date = timezone.now()
         date_from = datetime.combine(now_date, time.min)
@@ -345,13 +345,13 @@ class TestDashboardMyTasksOverview:
         # arrange
         mocker.patch(
             'src.processes.tasks.webhooks.'
-            'send_task_completed_webhook.delay'
+            'send_task_completed_webhook.delay',
         )
         account = create_test_account()
         user = create_test_owner(account=account)
         workflow = create_test_workflow(
             user=user,
-            tasks_count=2
+            tasks_count=2,
         )
         now_date = timezone.now()
         date_from = datetime.combine(now_date, time.min)
@@ -379,13 +379,13 @@ class TestDashboardMyTasksOverview:
         # arrange
         mocker.patch(
             'src.processes.tasks.webhooks.'
-            'send_task_completed_webhook.delay'
+            'send_task_completed_webhook.delay',
         )
         account = create_test_account()
         user = create_test_owner(account=account)
         workflow = create_test_workflow(
             user=user,
-            tasks_count=2
+            tasks_count=2,
         )
         now_date = timezone.now()
         date_from = datetime.combine(now_date, time.min)
@@ -410,25 +410,25 @@ class TestDashboardMyTasksOverview:
         (
             TaskStatus.ACTIVE,
             TaskStatus.DELAYED,
-        )
+        ),
     )
     def test_my_tasks__overdue_task_allowed_status__ok(
         self,
         mocker,
         api_client,
-        task_status
+        task_status,
     ):
         # arrange
         mocker.patch(
             'src.processes.tasks.webhooks.'
-            'send_task_completed_webhook.delay'
+            'send_task_completed_webhook.delay',
         )
         account = create_test_account()
         user = create_test_owner(account=account)
         workflow = create_test_workflow(
             user=user,
             active_task_number=2,
-            tasks_count=3
+            tasks_count=3,
         )
         now_date = timezone.now()
         date_to = now_date
@@ -452,25 +452,25 @@ class TestDashboardMyTasksOverview:
         (
             TaskStatus.PENDING,
             TaskStatus.SKIPPED,
-        )
+        ),
     )
     def test_my_tasks__overdue_task_not_allowed_status__not_count(
         self,
         mocker,
         api_client,
-        task_status
+        task_status,
     ):
         # arrange
         mocker.patch(
             'src.processes.tasks.webhooks.'
-            'send_task_completed_webhook.delay'
+            'send_task_completed_webhook.delay',
         )
         account = create_test_account()
         user = create_test_owner(account=account)
         workflow = create_test_workflow(
             user=user,
             active_task_number=2,
-            tasks_count=3
+            tasks_count=3,
         )
         now_date = timezone.now()
         date_to = now_date
@@ -497,14 +497,14 @@ class TestDashboardMyTasksOverview:
         # arrange
         mocker.patch(
             'src.processes.tasks.webhooks.'
-            'send_task_completed_webhook.delay'
+            'send_task_completed_webhook.delay',
         )
         account = create_test_account()
         user = create_test_owner(account=account)
         workflow = create_test_workflow(
             user=user,
             active_task_number=2,
-            tasks_count=3
+            tasks_count=3,
         )
         now_date = timezone.now()
         date_from = datetime.combine(now_date, time.min)
@@ -533,7 +533,7 @@ class TestDashboardMyTasksOverview:
         # arrange
         mocker.patch(
             'src.processes.tasks.webhooks.'
-            'send_task_completed_webhook.delay'
+            'send_task_completed_webhook.delay',
         )
         account = create_test_account()
         user = create_test_owner(account=account)
@@ -541,7 +541,7 @@ class TestDashboardMyTasksOverview:
             user=user,
             active_task_number=2,
             tasks_count=3,
-            status=WorkflowStatus.DONE
+            status=WorkflowStatus.DONE,
         )
         now_date = timezone.now()
         date_from = datetime.combine(now_date, time.min)
@@ -565,7 +565,7 @@ class TestDashboardMyTasksOverview:
 
     def test__my_tasks__deleted_performer__ok(
         self,
-        api_client
+        api_client,
     ):
 
         # arrange
@@ -575,7 +575,7 @@ class TestDashboardMyTasksOverview:
         workflow = create_test_workflow(user, tasks_count=1)
         task = workflow.tasks.get(number=1)
         TaskPerformer.objects.filter(
-            task=task
+            task=task,
         ).update(directly_status=DirectlyStatus.DELETED)
         api_client.token_authenticate(user)
 
@@ -592,12 +592,12 @@ class TestDashboardMyTasksOverview:
     def test_my_tasks__legacy_template__count_tasks(
         self,
         mocker,
-        api_client
+        api_client,
     ):
         # arrange
         mocker.patch(
             'src.processes.tasks.webhooks.'
-            'send_task_completed_webhook.delay'
+            'send_task_completed_webhook.delay',
         )
         account = create_test_account()
         create_test_owner(account=account)
@@ -660,7 +660,7 @@ class TestDashboardMyTasksOverview:
 
     def test_my_tasks__regular_user__ok(
         self,
-        api_client
+        api_client,
     ):
         # arrange
         account = create_test_account()
@@ -692,7 +692,7 @@ class TestDashboardMyTasksOverview:
         # arrange
         mocker.patch(
             'src.processes.tasks.webhooks.'
-            'send_task_completed_webhook.delay'
+            'send_task_completed_webhook.delay',
         )
         account = create_test_account()
         create_test_owner(account=account)
@@ -757,12 +757,12 @@ class TestDashboardMyTasksOverview:
     def test_my_tasks__now__ok(
         self,
         mocker,
-        api_client
+        api_client,
     ):
         # arrange
         mocker.patch(
             'src.processes.tasks.webhooks.'
-            'send_task_completed_webhook.delay'
+            'send_task_completed_webhook.delay',
         )
         account = create_test_account()
         create_test_owner(account=account)
@@ -816,7 +816,7 @@ class TestDashboardMyTasksOverview:
         # act
         response = api_client.get(
             '/reports/dashboard/tasks/overview',
-            data={'now': True}
+            data={'now': True},
         )
 
         # assert
@@ -828,7 +828,7 @@ class TestDashboardMyTasksOverview:
 
     def test_my_tasks__deleted_performer__ok(
         self,
-        api_client
+        api_client,
     ):
 
         # arrange
@@ -838,14 +838,14 @@ class TestDashboardMyTasksOverview:
         workflow = create_test_workflow(user, tasks_count=1)
         task = workflow.tasks.get(number=1)
         TaskPerformer.objects.filter(
-            task=task
+            task=task,
         ).update(directly_status=DirectlyStatus.DELETED)
         api_client.token_authenticate(user)
 
         # act
         response = api_client.get(
             '/reports/dashboard/tasks/overview',
-            data={'now': True}
+            data={'now': True},
         )
 
         # assert
@@ -858,23 +858,23 @@ class TestDashboardMyTasksOverview:
     def test_my_tasks__group_assignment__ok(
         self,
         mocker,
-        api_client
+        api_client,
     ):
         # arrange
         mocker.patch(
             'src.processes.tasks.webhooks.'
-            'send_task_completed_webhook.delay'
+            'send_task_completed_webhook.delay',
         )
         user = create_test_owner()
         group = create_test_group(user.account, users=[user])
         workflow = create_test_workflow(
             user=user,
             active_task_number=1,
-            tasks_count=1
+            tasks_count=1,
         )
         task = workflow.tasks.get(number=1)
         TaskPerformer.objects.filter(
-            task=task
+            task=task,
         ).update(directly_status=DirectlyStatus.DELETED)
         TaskPerformer.objects.create(
             task=task,
@@ -897,12 +897,12 @@ class TestDashboardMyTasksOverview:
     def test_my_tasks_now_in_progress__performer_user_and_group__ok(
         self,
         mocker,
-        api_client
+        api_client,
     ):
         # arrange
         mocker.patch(
             'src.processes.tasks.webhooks.'
-            'send_task_completed_webhook.delay'
+            'send_task_completed_webhook.delay',
         )
         account = create_test_account()
         user = create_test_owner(account=account)
@@ -929,7 +929,7 @@ class TestDashboardMyTasksOverview:
         # act
         response = api_client.get(
             '/reports/dashboard/tasks/overview',
-            data={'now': True}
+            data={'now': True},
         )
 
         # assert
@@ -939,12 +939,12 @@ class TestDashboardMyTasksOverview:
     def test_my_tasks_now_overdue__performer_user_and_group__ok(
         self,
         mocker,
-        api_client
+        api_client,
     ):
         # arrange
         mocker.patch(
             'src.processes.tasks.webhooks.'
-            'send_task_completed_webhook.delay'
+            'send_task_completed_webhook.delay',
         )
         account = create_test_account()
         user = create_test_owner(account=account)
@@ -972,7 +972,7 @@ class TestDashboardMyTasksOverview:
         # act
         response = api_client.get(
             '/reports/dashboard/tasks/overview',
-            data={'now': True}
+            data={'now': True},
         )
 
         # assert
@@ -985,12 +985,12 @@ class TestDashboardMyTasksBreakdown:
     def test_my_tasks_breakdown__ok(
         self,
         mocker,
-        api_client
+        api_client,
     ):
         # arrange
         mocker.patch(
             'src.processes.tasks.webhooks.'
-            'send_task_completed_webhook.delay'
+            'send_task_completed_webhook.delay',
         )
         account = create_test_account()
         create_test_owner(account=account)
@@ -1082,7 +1082,7 @@ class TestDashboardMyTasksBreakdown:
 
     def test_my_tasks_breakdown__deleted_performer__ok(
         self,
-        api_client
+        api_client,
     ):
 
         # arrange
@@ -1092,7 +1092,7 @@ class TestDashboardMyTasksBreakdown:
         workflow = create_test_workflow(user, tasks_count=1)
         task = workflow.tasks.get(number=1)
         TaskPerformer.objects.filter(
-            task=task
+            task=task,
         ).update(directly_status=DirectlyStatus.DELETED)
         api_client.token_authenticate(user)
 
@@ -1112,7 +1112,7 @@ class TestDashboardMyTasksBreakdown:
         # arrange
         mocker.patch(
             'src.processes.tasks.webhooks.'
-            'send_task_completed_webhook.delay'
+            'send_task_completed_webhook.delay',
         )
         account = create_test_account()
         create_test_owner(account=account)
@@ -1178,7 +1178,7 @@ class TestDashboardMyTasksBreakdown:
 
     def test_my_tasks_breakdown__regular_user__ok(
         self,
-        api_client
+        api_client,
     ):
         # arrange
         account = create_test_account()
@@ -1199,12 +1199,12 @@ class TestDashboardMyTasksBreakdown:
     def test_my_tasks_breakdown__overdue_tasks(
         self,
         mocker,
-        api_client
+        api_client,
     ):
         # arrange
         mocker.patch(
             'src.processes.tasks.webhooks.'
-            'send_task_completed_webhook.delay'
+            'send_task_completed_webhook.delay',
         )
         account = create_test_account()
         create_test_owner(account=account)
@@ -1276,12 +1276,12 @@ class TestDashboardMyTasksBreakdown:
     def test_my_tasks_breakdown_now(
         self,
         mocker,
-        api_client
+        api_client,
     ):
         # arrange
         mocker.patch(
             'src.processes.tasks.webhooks.'
-            'send_task_completed_webhook.delay'
+            'send_task_completed_webhook.delay',
         )
         account = create_test_account()
         create_test_owner(account=account)
@@ -1360,7 +1360,7 @@ class TestDashboardMyTasksBreakdown:
 
     def test_my_tasks_breakdown_now__deleted_performer__ok(
         self,
-        api_client
+        api_client,
     ):
 
         # arrange
@@ -1370,14 +1370,14 @@ class TestDashboardMyTasksBreakdown:
         workflow = create_test_workflow(user, tasks_count=1)
         task = workflow.tasks.get(number=1)
         TaskPerformer.objects.filter(
-            task=task
+            task=task,
         ).update(directly_status=DirectlyStatus.DELETED)
         api_client.token_authenticate(user)
 
         # act
         response = api_client.get(
             '/reports/dashboard/tasks/breakdown',
-            data={'now': True}
+            data={'now': True},
         )
 
         # assert
@@ -1387,12 +1387,12 @@ class TestDashboardMyTasksBreakdown:
     def test_my_tasks_breakdown_now__performer_user_and_group__ok(
         self,
         mocker,
-        api_client
+        api_client,
     ):
         # arrange
         mocker.patch(
             'src.processes.tasks.webhooks.'
-            'send_task_completed_webhook.delay'
+            'send_task_completed_webhook.delay',
         )
         account = create_test_account()
         create_test_owner(account=account)
@@ -1429,7 +1429,7 @@ class TestDashboardMyTasksBreakdown:
         # act
         response = api_client.get(
             '/reports/dashboard/tasks/breakdown',
-            data={'now': True}
+            data={'now': True},
         )
 
         # assert
@@ -1445,12 +1445,12 @@ class TestDashboardMyTasksBreakdown:
     def test_my_tasks_breakdown__group_assignment__ok(
         self,
         mocker,
-        api_client
+        api_client,
     ):
         # arrange
         mocker.patch(
             'src.processes.tasks.webhooks.'
-            'send_task_completed_webhook.delay'
+            'send_task_completed_webhook.delay',
         )
         account = create_test_account()
         create_test_owner(account=account)
@@ -1467,19 +1467,19 @@ class TestDashboardMyTasksBreakdown:
         template_task_1 = template_1.tasks.get(number=1)
         template_task_1.add_raw_performer(
             group=group,
-            performer_type=PerformerType.GROUP
+            performer_type=PerformerType.GROUP,
         )
 
         template_task_1 = template_2.tasks.get(number=1)
         template_task_1.add_raw_performer(
             group=group,
-            performer_type=PerformerType.GROUP
+            performer_type=PerformerType.GROUP,
         )
 
         template_task_2 = third_template.tasks.get(number=2)
         template_task_2.add_raw_performer(
             group=group,
-            performer_type=PerformerType.GROUP
+            performer_type=PerformerType.GROUP,
         )
 
         workflow_1 = create_test_workflow(template_owner, template_1)
@@ -1556,12 +1556,12 @@ class TestDashboardMyTasksBreakdownBySteps:
     def test_my_tasks_breakdown_by_steps__ok(
         self,
         mocker,
-        api_client
+        api_client,
     ):
         # arrange
         mocker.patch(
             'src.processes.tasks.webhooks.'
-            'send_task_completed_webhook.delay'
+            'send_task_completed_webhook.delay',
         )
         account = create_test_account()
         create_test_owner(account=account)
@@ -1659,7 +1659,7 @@ class TestDashboardMyTasksBreakdownBySteps:
 
     def test_my_tasks_breakdown_by_steps__deleted_performer__ok(
         self,
-        api_client
+        api_client,
     ):
 
         # arrange
@@ -1669,7 +1669,7 @@ class TestDashboardMyTasksBreakdownBySteps:
         workflow = create_test_workflow(user, tasks_count=1)
         task = workflow.tasks.get(number=1)
         TaskPerformer.objects.filter(
-            task=task
+            task=task,
         ).update(directly_status=DirectlyStatus.DELETED)
         api_client.token_authenticate(user)
 
@@ -1691,7 +1691,7 @@ class TestDashboardMyTasksBreakdownBySteps:
         # arrange
         mocker.patch(
             'src.processes.tasks.webhooks.'
-            'send_task_completed_webhook.delay'
+            'send_task_completed_webhook.delay',
         )
         account = create_test_account()
         create_test_owner(account=account)
@@ -1766,7 +1766,7 @@ class TestDashboardMyTasksBreakdownBySteps:
 
     def test_my_tasks_breakdown__skipped_tasks__not_count_in_progress(
         self,
-        api_client
+        api_client,
     ):
         # arrange
         account = create_test_account()
@@ -1776,7 +1776,7 @@ class TestDashboardMyTasksBreakdownBySteps:
         template = create_test_template(
             user=user,
             tasks_count=2,
-            is_active=True
+            is_active=True,
         )
         field_api_name = 'field-api-name-1'
         FieldTemplate.objects.create(
@@ -1784,7 +1784,7 @@ class TestDashboardMyTasksBreakdownBySteps:
             type=FieldType.STRING,
             name='Skip first task marker',
             template=template,
-            api_name=field_api_name
+            api_name=field_api_name,
         )
         template_task_1 = template.tasks.get(number=1)
         template_task_2 = template.tasks.get(number=2)
@@ -1812,11 +1812,11 @@ class TestDashboardMyTasksBreakdownBySteps:
 
         response_run_1 = api_client.post(
             f'/templates/{template.id}/run',
-            data={'kickoff': {field_api_name: 'skip'}}
+            data={'kickoff': {field_api_name: 'skip'}},
         )
         response_run_2 = api_client.post(
             f'/templates/{template.id}/run',
-            data={'kickoff': {field_api_name: 'no-skip'}}
+            data={'kickoff': {field_api_name: 'no-skip'}},
         )
 
         # act
@@ -1849,12 +1849,12 @@ class TestDashboardMyTasksBreakdownBySteps:
     def test_my_tasks_breakdown__now__ok(
         self,
         mocker,
-        api_client
+        api_client,
     ):
         # arrange
         mocker.patch(
             'src.processes.tasks.webhooks.'
-            'send_task_completed_webhook.delay'
+            'send_task_completed_webhook.delay',
         )
         account = create_test_account()
         create_test_owner(account=account)
@@ -1948,7 +1948,7 @@ class TestDashboardMyTasksBreakdownBySteps:
 
     def test_my_tasks_breakdown__now__deleted_performer__ok(
         self,
-        api_client
+        api_client,
     ):
 
         # arrange
@@ -1958,7 +1958,7 @@ class TestDashboardMyTasksBreakdownBySteps:
         workflow = create_test_workflow(user, tasks_count=1)
         task = workflow.tasks.get(number=1)
         TaskPerformer.objects.filter(
-            task=task
+            task=task,
         ).update(directly_status=DirectlyStatus.DELETED)
         api_client.token_authenticate(user)
 
@@ -1967,8 +1967,8 @@ class TestDashboardMyTasksBreakdownBySteps:
             '/reports/dashboard/tasks/by-steps',
             data={
                 'template_id': workflow.template.id,
-                'now': True
-            }
+                'now': True,
+            },
         )
 
         # assert
@@ -1977,7 +1977,7 @@ class TestDashboardMyTasksBreakdownBySteps:
 
     def test_my_tasks_breakdown_by_steps__overdue_task__ok(
         self,
-        api_client
+        api_client,
     ):
         # arrange
         account = create_test_account()
@@ -1990,14 +1990,14 @@ class TestDashboardMyTasksBreakdownBySteps:
         template = create_test_template(
             user=template_owner,
             tasks_count=1,
-            is_active=True
+            is_active=True,
         )
         task_template = template.tasks.get(number=1)
         task_template.add_raw_performer(user)
 
         overdue_workflow = create_test_workflow(
             user=template_owner,
-            template=template
+            template=template,
         )
         overdue_workflow.date_created = timezone.now() - timedelta(minutes=3)
         overdue_workflow.save(update_fields=['date_created'])
@@ -2033,7 +2033,7 @@ class TestDashboardMyTasksBreakdownBySteps:
 
     def test_my_tasks_breakdown_by_steps__overdue_workflow__not_count(
         self,
-        api_client
+        api_client,
     ):
         # arrange
         account = create_test_account()
@@ -2042,12 +2042,12 @@ class TestDashboardMyTasksBreakdownBySteps:
         template = create_test_template(
             user=template_owner,
             tasks_count=1,
-            is_active=True
+            is_active=True,
         )
         task_template = template.tasks.get(number=1)
         overdue_workflow = create_test_workflow(
             user=template_owner,
-            template=template
+            template=template,
         )
         overdue_workflow.date_created = timezone.now() - timedelta(minutes=3)
         overdue_workflow.due_date = timezone.now() - timedelta(minutes=1)
@@ -2074,7 +2074,7 @@ class TestDashboardMyTasksBreakdownBySteps:
 
     def test_my_tasks_breakdown_by_steps__now__overdue_task__ok(
         self,
-        api_client
+        api_client,
     ):
         # arrange
         account = create_test_account()
@@ -2087,14 +2087,14 @@ class TestDashboardMyTasksBreakdownBySteps:
         template = create_test_template(
             user=template_owner,
             tasks_count=1,
-            is_active=True
+            is_active=True,
         )
         task_template = template.tasks.get(number=1)
         task_template.add_raw_performer(user)
 
         overdue_workflow = create_test_workflow(
             user=template_owner,
-            template=template
+            template=template,
         )
         overdue_workflow.date_created = timezone.now() - timedelta(minutes=3)
         overdue_workflow.save(update_fields=['date_created'])
@@ -2130,7 +2130,7 @@ class TestDashboardMyTasksBreakdownBySteps:
 
     def test_my_tasks_breakdown_by_steps__now__overdue_workflow__not_count(
         self,
-        api_client
+        api_client,
     ):
         # arrange
         account = create_test_account()
@@ -2139,12 +2139,12 @@ class TestDashboardMyTasksBreakdownBySteps:
         template = create_test_template(
             user=template_owner,
             tasks_count=1,
-            is_active=True
+            is_active=True,
         )
         task_template = template.tasks.get(number=1)
         overdue_workflow = create_test_workflow(
             user=template_owner,
-            template=template
+            template=template,
         )
         overdue_workflow.date_created = timezone.now() - timedelta(minutes=3)
         overdue_workflow.due_date = timezone.now() - timedelta(minutes=1)
@@ -2172,12 +2172,12 @@ class TestDashboardMyTasksBreakdownBySteps:
     def test_my_tasks_breakdown_by_steps_now__performer_user_and_group__ok(
         self,
         mocker,
-        api_client
+        api_client,
     ):
         # arrange
         mocker.patch(
             'src.processes.tasks.webhooks.'
-            'send_task_completed_webhook.delay'
+            'send_task_completed_webhook.delay',
         )
         account = create_test_account()
         create_test_owner(account=account)
@@ -2231,24 +2231,24 @@ class TestDashboardMyTasksBreakdownBySteps:
     def test_my_tasks_breakdown__group_assignment__ok(
         self,
         mocker,
-        api_client
+        api_client,
     ):
         # arrange
         mocker.patch(
             'src.processes.tasks.webhooks.'
-            'send_task_completed_webhook.delay'
+            'send_task_completed_webhook.delay',
         )
         user = create_test_owner()
         group = create_test_group(user.account, users=[user])
         workflow = create_test_workflow(
             user=user,
             active_task_number=1,
-            tasks_count=1
+            tasks_count=1,
         )
         task = workflow.tasks.get(number=1)
 
         TaskPerformer.objects.filter(
-            task=task
+            task=task,
         ).update(directly_status=DirectlyStatus.DELETED)
 
         TaskPerformer.objects.create(

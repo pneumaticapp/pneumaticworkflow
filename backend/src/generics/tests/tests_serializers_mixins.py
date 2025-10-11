@@ -2,7 +2,7 @@ import pytest
 from rest_framework.serializers import ValidationError
 from src.generics.mixins.serializers import (
     ValidationUtilsMixin,
-    CustomValidationErrorMixin
+    CustomValidationErrorMixin,
 )
 from src.utils.validation import ErrorCode
 from src.generics.messages import (
@@ -41,11 +41,11 @@ class TestValidationUtilsMixin:
 
     @pytest.mark.parametrize(
         'raw_value',
-        ('undefined', None, [], '1,a', '1 23', ',1,23,')
+        ('undefined', None, [], '1,a', '1 23', ',1,23,'),
     )
     def test_get_valid_list_integers__invalid_value__validation_error(
         self,
-        raw_value
+        raw_value,
     ):
         # arrange
         mixin = ValidationUtilsMixin()
@@ -72,7 +72,7 @@ class TestCustomValidationErrorMixin:
         with pytest.raises(ValidationError) as e:
             mixin.raise_validation_error(
                 message=message,
-                api_name=api_name
+                api_name=api_name,
             )
 
         # assert
@@ -94,7 +94,7 @@ class TestCustomValidationErrorMixin:
         with pytest.raises(ValidationError) as e:
             mixin.raise_validation_error(
                 message=message,
-                name=name
+                name=name,
             )
 
         # assert

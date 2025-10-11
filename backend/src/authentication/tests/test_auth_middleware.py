@@ -27,8 +27,8 @@ def test__user_token_auth__skip(api_client, mocker):
         return_value={
             'user_id': user.id,
             'is_superuser': False,
-            'for_api_key': False
-        }
+            'for_api_key': False,
+        },
     )
     path = '/accounts/account'
 
@@ -52,8 +52,8 @@ def test__api_token_auth__ok(api_client, mocker):
         return_value={
             'user_id': user.id,
             'is_superuser': False,
-            'for_api_key': True
-        }
+            'for_api_key': True,
+        },
     )
     path = '/accounts/account'
 
@@ -90,8 +90,8 @@ def test__get_request_with_data__ok(api_client, mocker):
         return_value={
             'user_id': user.id,
             'is_superuser': False,
-            'for_api_key': True
-        }
+            'for_api_key': True,
+        },
     )
     path = '/accounts/account'
     params = {'key_1': 'Value1,Value2', 'key_2': '123'}
@@ -130,8 +130,8 @@ def test__get_request_with_query_string__ok(api_client, mocker):
         return_value={
             'user_id': user.id,
             'is_superuser': False,
-            'for_api_key': True
-        }
+            'for_api_key': True,
+        },
     )
     path = '/accounts/account'
 
@@ -169,8 +169,8 @@ def test__post_request_with_data__ok(api_client, mocker):
         return_value={
             'user_id': user.id,
             'is_superuser': False,
-            'for_api_key': True
-        }
+            'for_api_key': True,
+        },
     )
     path = '/accounts/notifications/read'
     data = {'notifications': [1, 2]}
@@ -210,8 +210,8 @@ def test__head_request__skip(api_client, mocker):
         return_value={
             'user_id': user.id,
             'is_superuser': False,
-            'for_api_key': True
-        }
+            'for_api_key': True,
+        },
     )
     path = f'/accounts/users/{user.id}/delete'
     data = {'key_1': 'Value1,Value2', 'key_2': '123'}
@@ -236,8 +236,8 @@ def test__options_request__skip(api_client, mocker):
         return_value={
             'user_id': user.id,
             'is_superuser': False,
-            'for_api_key': True
-        }
+            'for_api_key': True,
+        },
     )
     path = f'/accounts/users/{user.id}/delete'
     data = {'key_1': 'Value1,Value2', 'key_2': '123'}
@@ -262,8 +262,8 @@ def test__disable_log_api_requests__skip(api_client, mocker):
         return_value={
             'user_id': user.id,
             'is_superuser': False,
-            'for_api_key': True
-        }
+            'for_api_key': True,
+        },
     )
 
     # act
@@ -286,8 +286,8 @@ def test__bad_request__save_error(api_client, mocker):
         return_value={
             'user_id': user.id,
             'is_superuser': False,
-            'for_api_key': True
-        }
+            'for_api_key': True,
+        },
     )
     path = '/templates'
     data = {'kickoff': {}, 'tasks': [], 'is_active': True}

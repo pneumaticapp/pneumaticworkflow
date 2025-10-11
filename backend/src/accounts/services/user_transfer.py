@@ -19,7 +19,7 @@ from src.accounts.enums import (
     BillingPlanType,
 )
 from src.accounts.services.reassign import (
-    ReassignService
+    ReassignService,
 )
 from src.processes.services.remove_user_from_draft import (
     remove_user_from_draft,
@@ -35,7 +35,7 @@ UserModel = get_user_model()
 
 
 class UserTransferService(
-    BaseIdentifyMixin
+    BaseIdentifyMixin,
 ):
 
     def __init__(self):
@@ -58,11 +58,11 @@ class UserTransferService(
     def _get_valid_prev_user(self) -> UserModel:
         try:
             return UserModel.objects.exclude(
-                id=self.user.id
+                id=self.user.id,
             ).get(
                 email=self.user.email,
                 id=self.token['prev_user_id'],
-                status=UserStatus.ACTIVE
+                status=UserStatus.ACTIVE,
             )
         except UserModel.DoesNotExist as ex:
             raise ExpiredTransferTokenException() from ex
@@ -87,7 +87,7 @@ class UserTransferService(
             increase_plan_users.delay(
                 account_id=self.user.account_id,
                 is_superuser=False,
-                auth_type=AuthTokenType.USER
+                auth_type=AuthTokenType.USER,
             )
         self.identify(self.user)
         self.group(self.prev_user)
@@ -101,18 +101,18 @@ class UserTransferService(
 
     def _delete_prev_user_pending_invites(self):
         UserInvite.objects.on_account(
-            self.prev_user.account.id
+            self.prev_user.account.id,
         ).filter(
             status=UserInviteStatus.PENDING,
-            invited_user=self.prev_user
+            invited_user=self.prev_user,
         ).delete()
 
     def _accept_user_pending_invite(self):
         UserInvite.objects.on_account(
-            self.user.account.id
+            self.user.account.id,
         ).filter(
             status=UserInviteStatus.PENDING,
-            invited_user=self.prev_user
+            invited_user=self.prev_user,
         ).delete()
 
     def _deactivate_prev_user(self):
@@ -125,12 +125,12 @@ class UserTransferService(
         if new_user:
             service = ReassignService(
                 old_user=self.prev_user,
-                new_user=new_user
+                new_user=new_user,
             )
             service.reassign_everywhere()
         remove_user_from_draft(
             account_id=self.prev_user.account.id,
-            user_id=self.prev_user.id
+            user_id=self.prev_user.id,
         )
         self._delete_prev_user_pending_invites()
         if (
@@ -143,7 +143,7 @@ class UserTransferService(
             service = StripeService(
                 user=self.prev_user,
                 is_superuser=False,
-                auth_type=AuthTokenType.USER
+                auth_type=AuthTokenType.USER,
             )
             service.cancel_subscription()
 
@@ -156,11 +156,11 @@ class UserTransferService(
         self.user.last_name = self.prev_user.last_name
         self.user.status = UserStatus.ACTIVE
         self.user.save(update_fields=[
-            'status', 'is_active', 'first_name', 'last_name'
+            'status', 'is_active', 'first_name', 'last_name',
         ])
         service = AccountService(
             instance=self.user.account,
-            user=self.user
+            user=self.user,
         )
         service.update_users_counts()
 

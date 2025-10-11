@@ -3,13 +3,13 @@ from typing import List
 from src.accounts.enums import (
     NotificationStatus,
     NotificationType,
-    UserStatus
+    UserStatus,
 )
 from src.processes.enums import (
     DirectlyStatus,
     TaskStatus,
     WorkflowStatus,
-    PerformerType
+    PerformerType,
 )
 from src.processes.enums import FieldType
 from src.queries import SqlQueryObject
@@ -134,28 +134,28 @@ class BaseDeleteRawPerformerTemplateQuery(SqlQueryObject):
 
 
 class DeleteGroupFromRawPerformerTemplateQuery(
-    BaseDeleteRawPerformerTemplateQuery
+    BaseDeleteRawPerformerTemplateQuery,
 ):
     delete_field = "group_id"
     substitution_field = "group_id"
 
 
 class DeleteGroupUserFromRawPerformerTemplateQuery(
-    BaseDeleteRawPerformerTemplateQuery
+    BaseDeleteRawPerformerTemplateQuery,
 ):
     delete_field = "group_id"
     substitution_field = "user_id"
 
 
 class DeleteUserGroupFromRawPerformerTemplateQuery(
-    BaseDeleteRawPerformerTemplateQuery
+    BaseDeleteRawPerformerTemplateQuery,
 ):
     delete_field = "user_id"
     substitution_field = "group_id"
 
 
 class DeleteUserFromRawPerformerTemplateQuery(
-    BaseDeleteRawPerformerTemplateQuery
+    BaseDeleteRawPerformerTemplateQuery,
 ):
     delete_field = "user_id"
     substitution_field = "user_id"
@@ -491,13 +491,13 @@ class FetchGroupTaskNotificationRecipientsQuery(SqlQueryObject):
         self.user_ids = user_ids
         self.params = {
             'group_id': group_id,
-            'account_id': account_id
+            'account_id': account_id,
         }
 
     def _get_user_ids(self):
         result, params = self._to_sql_list(
             values=self.user_ids,
-            prefix='user'
+            prefix='user',
         )
         self.params.update(params)
         return result

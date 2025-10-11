@@ -14,7 +14,7 @@ class AuthException(BaseServiceException):
     def __init__(
         self,
         message: Optional[str] = None,
-        details: Optional[dict] = None
+        details: Optional[dict] = None,
     ):
         self.details = details
         super().__init__(message)

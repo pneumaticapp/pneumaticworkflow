@@ -5,7 +5,7 @@ from src.generics.fields import TimeStampField
 from rest_framework.serializers import Serializer
 
 from src.generics.mixins.serializers import (
-    CustomValidationErrorMixin
+    CustomValidationErrorMixin,
 )
 
 

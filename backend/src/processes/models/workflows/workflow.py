@@ -39,7 +39,7 @@ class Workflow(
     )
     status = models.IntegerField(
         choices=WorkflowStatus.CHOICES,
-        default=WorkflowStatus.RUNNING
+        default=WorkflowStatus.RUNNING,
     )
     status_updated = models.DateTimeField(db_index=True)
     is_external = models.BooleanField(default=False)
@@ -55,13 +55,13 @@ class Workflow(
     owners = models.ManyToManyField(
         UserModel,
         related_name='owners',
-        verbose_name='owners'
+        verbose_name='owners',
     )
     workflow_starter = models.ForeignKey(
         UserModel,
         on_delete=models.SET_NULL,
         related_name='started_workflow',
-        null=True
+        null=True,
     )
     date_completed = models.DateTimeField(null=True)
     due_date = models.DateTimeField(null=True)
@@ -70,7 +70,7 @@ class Workflow(
         null=True,
         help_text='The task within which the subprocess should be executed',
         on_delete=models.SET_NULL,
-        related_name='sub_workflows'
+        related_name='sub_workflows',
     )
 
     objects = BaseSoftDeleteManager.from_queryset(WorkflowQuerySet)()
@@ -82,7 +82,7 @@ class Workflow(
             WorkflowDetailsSerializer,
         )
         return {
-            'workflow': WorkflowDetailsSerializer(instance=self).data
+            'workflow': WorkflowDetailsSerializer(instance=self).data,
         }
 
     def __str__(self):
@@ -105,7 +105,7 @@ class Workflow(
                 .kickoff import KickoffValue
             kickoff = KickoffValue(
                 workflow=self,
-                account_id=self.account_id
+                account_id=self.account_id,
             )
         return kickoff
 
@@ -117,12 +117,12 @@ class Workflow(
             .task import Task
         return Task(
             workflow=self,
-            number=number
+            number=number,
         )
 
     def get_kickoff_output_fields(
         self,
-        fields_filter_kwargs: Optional[Dict] = None
+        fields_filter_kwargs: Optional[Dict] = None,
     ) -> TaskFieldQuerySet:
 
         """ Return the output fields from kickoff """
@@ -141,7 +141,7 @@ class Workflow(
         self,
         tasks_filter_kwargs: Optional[Dict] = None,
         tasks_exclude_kwargs: Optional[Dict] = None,
-        fields_filter_kwargs: Optional[Dict] = None
+        fields_filter_kwargs: Optional[Dict] = None,
     ) -> TaskFieldQuerySet:
 
         """ Return the output fields from tasks """
@@ -152,7 +152,7 @@ class Workflow(
         if tasks_filter_kwargs is None:
             tasks_filter_kwargs = {
                 'task__workflow_id': self.id,
-                'task__account_id': self.account_id
+                'task__account_id': self.account_id,
             }
         else:
             tasks_filter_kwargs['task__workflow_id'] = self.id

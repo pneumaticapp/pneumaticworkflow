@@ -27,17 +27,17 @@ def test_get_customer_portal_link__ok(
     service_init_mock = mocker.patch.object(
         StripeService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     get_customer_portal_link_mock = mocker.patch(
         'src.payment.stripe.service.StripeService.'
         'get_customer_portal_link',
-        return_value=customer_portal_link
+        return_value=customer_portal_link,
     )
     mocker.patch(
         'src.payment.views.ProjectBillingPermission'
         '.has_permission',
-        return_value=True
+        return_value=True,
     )
 
     api_client.token_authenticate(user)
@@ -47,7 +47,7 @@ def test_get_customer_portal_link__ok(
         '/payment/customer-portal',
         data={
             'cancel_url': cancel_url,
-        }
+        },
     )
 
     # assert
@@ -56,10 +56,10 @@ def test_get_customer_portal_link__ok(
     service_init_mock.assert_called_once_with(
         user=user,
         auth_type=AuthTokenType.USER,
-        is_superuser=False
+        is_superuser=False,
     )
     get_customer_portal_link_mock.assert_called_once_with(
-        cancel_url=cancel_url
+        cancel_url=cancel_url,
     )
 
 
@@ -74,18 +74,18 @@ def test_get_customer_portal_link__service_exception__validation_error(
     service_init_mock = mocker.patch.object(
         StripeService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     message = 'some message'
     get_customer_portal_link_mock = mocker.patch(
         'src.payment.stripe.service.StripeService.'
         'get_customer_portal_link',
-        side_effect=StripeServiceException(message)
+        side_effect=StripeServiceException(message),
     )
     mocker.patch(
         'src.payment.views.ProjectBillingPermission'
         '.has_permission',
-        return_value=True
+        return_value=True,
     )
 
     api_client.token_authenticate(user)
@@ -95,7 +95,7 @@ def test_get_customer_portal_link__service_exception__validation_error(
         '/payment/customer-portal',
         data={
             'cancel_url': cancel_url,
-        }
+        },
     )
 
     # assert
@@ -105,10 +105,10 @@ def test_get_customer_portal_link__service_exception__validation_error(
     service_init_mock.assert_called_once_with(
         user=user,
         auth_type=AuthTokenType.USER,
-        is_superuser=False
+        is_superuser=False,
     )
     get_customer_portal_link_mock.assert_called_once_with(
-        cancel_url=cancel_url
+        cancel_url=cancel_url,
     )
 
 
@@ -123,16 +123,16 @@ def test_get_customer_portal_link__invalid_cancel_url__validation_error(
     service_init_mock = mocker.patch.object(
         StripeService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     get_customer_portal_link_mock = mocker.patch(
         'src.payment.stripe.service.StripeService.'
-        'get_customer_portal_link'
+        'get_customer_portal_link',
     )
     mocker.patch(
         'src.payment.views.ProjectBillingPermission'
         '.has_permission',
-        return_value=True
+        return_value=True,
     )
 
     api_client.token_authenticate(user)
@@ -141,8 +141,8 @@ def test_get_customer_portal_link__invalid_cancel_url__validation_error(
     response = api_client.get(
         '/payment/customer-portal',
         data={
-            'cancel_url': cancel_url
-        }
+            'cancel_url': cancel_url,
+        },
     )
 
     # assert
@@ -166,22 +166,22 @@ def test_get_customer_portal_link__skip_cancel_url__validation_error(
     service_init_mock = mocker.patch.object(
         StripeService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     get_customer_portal_link_mock = mocker.patch(
         'src.payment.stripe.service.StripeService.'
-        'get_customer_portal_link'
+        'get_customer_portal_link',
     )
     mocker.patch(
         'src.payment.views.ProjectBillingPermission'
         '.has_permission',
-        return_value=True
+        return_value=True,
     )
     api_client.token_authenticate(user)
 
     # act
     response = api_client.get(
-        '/payment/customer-portal'
+        '/payment/customer-portal',
     )
 
     # assert
@@ -204,22 +204,22 @@ def test_get_customer_portal_link__cancel_url_is_null__validation_error(
     service_init_mock = mocker.patch.object(
         StripeService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     get_customer_portal_link_mock = mocker.patch(
         'src.payment.stripe.service.StripeService.'
-        'get_customer_portal_link'
+        'get_customer_portal_link',
     )
     mocker.patch(
         'src.payment.views.ProjectBillingPermission'
         '.has_permission',
-        return_value=True
+        return_value=True,
     )
     api_client.token_authenticate(user)
 
     # act
     response = api_client.get(
-        '/payment/customer-portal?cancel_url=null'
+        '/payment/customer-portal?cancel_url=null',
     )
 
     # assert
@@ -242,7 +242,7 @@ def test_get_customer_portal_link__not_account_owner__permission_denied(
     user = create_test_user(
         is_account_owner=False,
         account=account_owner.account,
-        email='admin@test.test'
+        email='admin@test.test',
     )
     cancel_url = 'http://localhost/cancel/'
     customer_portal_link = 'checkout.stripe.com/portal?token=123wsd'
@@ -250,17 +250,17 @@ def test_get_customer_portal_link__not_account_owner__permission_denied(
     service_init_mock = mocker.patch.object(
         StripeService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     get_customer_portal_link_mock = mocker.patch(
         'src.payment.stripe.service.StripeService.'
         'get_customer_portal_link',
-        return_value=customer_portal_link
+        return_value=customer_portal_link,
     )
     mocker.patch(
         'src.payment.views.ProjectBillingPermission'
         '.has_permission',
-        return_value=True
+        return_value=True,
     )
 
     api_client.token_authenticate(user)
@@ -270,7 +270,7 @@ def test_get_customer_portal_link__not_account_owner__permission_denied(
         '/payment/customer-portal',
         data={
             'cancel_url': cancel_url,
-        }
+        },
     )
 
     # assert
@@ -292,17 +292,17 @@ def test__disable_billing__permission_denied(
     service_init_mock = mocker.patch.object(
         StripeService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     get_customer_portal_link_mock = mocker.patch(
         'src.payment.stripe.service.StripeService.'
         'get_customer_portal_link',
-        return_value=customer_portal_link
+        return_value=customer_portal_link,
     )
     mocker.patch(
         'src.payment.views.ProjectBillingPermission'
         '.has_permission',
-        return_value=False
+        return_value=False,
     )
 
     api_client.token_authenticate(user)
@@ -312,7 +312,7 @@ def test__disable_billing__permission_denied(
         '/payment/customer-portal',
         data={
             'cancel_url': cancel_url,
-        }
+        },
     )
 
     # assert

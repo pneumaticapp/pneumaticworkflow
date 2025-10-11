@@ -29,7 +29,7 @@ class AuthService:
             user=user,
             user_agent=user_agent,
             user_ip=user_ip,
-            for_superuser=superuser_mode
+            for_superuser=superuser_mode,
         )
 
     @staticmethod
@@ -62,7 +62,7 @@ class PneumaticTokenAuthentication(TokenAuthentication):
 
     def authenticate_credentials(
         self,
-        token: str
+        token: str,
     ) -> Optional[Tuple[UserModel, PneumaticToken]]:
         # Get active user or api key
         cached_data = PneumaticToken.data(token)

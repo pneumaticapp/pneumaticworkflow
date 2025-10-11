@@ -8,7 +8,7 @@ from src.processes.tests.fixtures import (
     create_test_user,
 )
 from src.payment.services.account import (
-    AccountSubscriptionService
+    AccountSubscriptionService,
 )
 from src.payment.entities import (
     SubscriptionDetails,
@@ -183,7 +183,7 @@ def test_plan_changed__first_trial__ok():
 
     account = create_test_account(
         plan=BillingPlanType.FREEMIUM,
-        period=period
+        period=period,
     )
     user = create_test_user(account=account)
     is_superuser = True
@@ -292,25 +292,25 @@ def test_create__freemium_to_trial__ok(mocker, identify_mock):
     # arrange
     account = create_test_account(
         plan=BillingPlanType.FREEMIUM,
-        trial_ended=False
+        trial_ended=False,
     )
     user = create_test_user(account=account)
     account_service_init_mock = mocker.patch.object(
         AccountService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     account_service_partial_update_mock = mocker.patch(
         'src.accounts.services.'
-        'AccountService.partial_update'
+        'AccountService.partial_update',
     )
     analytics_trial_subscription_created_mock = mocker.patch(
         'src.analytics.services.AnalyticService.'
-        'trial_subscription_created'
+        'trial_subscription_created',
     )
     analytics_subscription_created_mock = mocker.patch(
         'src.analytics.services.AnalyticService.'
-        'subscription_created'
+        'subscription_created',
     )
     trial_start = timezone.now() - timedelta(minutes=1)
     plan_expiration = timezone.now() + timedelta(days=30)
@@ -321,7 +321,7 @@ def test_create__freemium_to_trial__ok(mocker, identify_mock):
         billing_period=BillingPeriod.YEARLY,
         plan_expiration=plan_expiration,
         trial_start=trial_start,
-        trial_end=plan_expiration
+        trial_end=plan_expiration,
     )
     is_superuser = True
     auth_type = AuthTokenType.WEBHOOK
@@ -352,7 +352,7 @@ def test_create__freemium_to_trial__ok(mocker, identify_mock):
         trial_start=trial_start,
         trial_end=plan_expiration,
         tmp_subscription=False,
-        force_save=True
+        force_save=True,
     )
     analytics_subscription_created_mock.assert_called_once_with(user)
     analytics_trial_subscription_created_mock.assert_called_once_with(user)
@@ -364,25 +364,25 @@ def test_create__trial_ended__not_trial(mocker, identify_mock):
     # arrange
     account = create_test_account(
         plan=BillingPlanType.FREEMIUM,
-        trial_ended=True
+        trial_ended=True,
     )
     user = create_test_user(account=account)
     account_service_init_mock = mocker.patch.object(
         AccountService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     account_service_partial_update_mock = mocker.patch(
         'src.accounts.services.'
-        'AccountService.partial_update'
+        'AccountService.partial_update',
     )
     analytics_trial_subscription_created_mock = mocker.patch(
         'src.analytics.services.AnalyticService.'
-        'trial_subscription_created'
+        'trial_subscription_created',
     )
     analytics_subscription_created_mock = mocker.patch(
         'src.analytics.services.AnalyticService.'
-        'subscription_created'
+        'subscription_created',
     )
     trial_start = timezone.now() - timedelta(minutes=1)
     plan_expiration = timezone.now() + timedelta(days=30)
@@ -393,7 +393,7 @@ def test_create__trial_ended__not_trial(mocker, identify_mock):
         billing_period=BillingPeriod.MONTHLY,
         plan_expiration=plan_expiration,
         trial_start=trial_start,
-        trial_end=plan_expiration
+        trial_end=plan_expiration,
     )
     is_superuser = True
     auth_type = AuthTokenType.WEBHOOK
@@ -422,7 +422,7 @@ def test_create__trial_ended__not_trial(mocker, identify_mock):
         plan_expiration=plan_expiration,
         max_users=details.max_users,
         tmp_subscription=False,
-        force_save=True
+        force_save=True,
     )
     analytics_subscription_created_mock.assert_called_once_with(user)
     analytics_trial_subscription_created_mock.assert_not_called()
@@ -439,19 +439,19 @@ def test_create__freemium_to_premium__ok(mocker, identify_mock):
     account_service_init_mock = mocker.patch.object(
         AccountService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     account_service_partial_update_mock = mocker.patch(
         'src.accounts.services.'
-        'AccountService.partial_update'
+        'AccountService.partial_update',
     )
     analytics_subscription_created_mock = mocker.patch(
         'src.analytics.services.AnalyticService.'
-        'subscription_created'
+        'subscription_created',
     )
     analytics_trial_subscription_created_mock = mocker.patch(
         'src.analytics.services.AnalyticService.'
-        'trial_subscription_created'
+        'trial_subscription_created',
     )
     plan_expiration = timezone.now() + timedelta(days=30)
     details = SubscriptionDetails(
@@ -461,7 +461,7 @@ def test_create__freemium_to_premium__ok(mocker, identify_mock):
         billing_period=BillingPeriod.MONTHLY,
         plan_expiration=plan_expiration,
         trial_start=None,
-        trial_end=None
+        trial_end=None,
     )
     is_superuser = True
     auth_type = AuthTokenType.WEBHOOK
@@ -492,7 +492,7 @@ def test_create__freemium_to_premium__ok(mocker, identify_mock):
         trial_start=None,
         trial_end=None,
         tmp_subscription=False,
-        force_save=True
+        force_save=True,
     )
     analytics_subscription_created_mock.assert_called_once_with(user)
     analytics_trial_subscription_created_mock.assert_not_called()
@@ -506,25 +506,25 @@ def test_create__tmp_subscription_to_premium_trial__ok(mocker, identify_mock):
         max_users=10,
         plan=BillingPlanType.PREMIUM,
         plan_expiration=timezone.now() + timedelta(hours=1),
-        tmp_subscription=True
+        tmp_subscription=True,
     )
     user = create_test_user(account=account)
     account_service_init_mock = mocker.patch.object(
         AccountService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     account_service_partial_update_mock = mocker.patch(
         'src.accounts.services.'
-        'AccountService.partial_update'
+        'AccountService.partial_update',
     )
     analytics_subscription_created_mock = mocker.patch(
         'src.analytics.services.AnalyticService.'
-        'subscription_created'
+        'subscription_created',
     )
     analytics_trial_subscription_created_mock = mocker.patch(
         'src.analytics.services.AnalyticService.'
-        'trial_subscription_created'
+        'trial_subscription_created',
     )
     trial_start = timezone.now()
     plan_expiration = timezone.now() + timedelta(days=7)
@@ -566,7 +566,7 @@ def test_create__tmp_subscription_to_premium_trial__ok(mocker, identify_mock):
         trial_start=trial_start,
         trial_end=plan_expiration,
         tmp_subscription=False,
-        force_save=True
+        force_save=True,
     )
     analytics_subscription_created_mock.assert_called_once_with(user)
     analytics_trial_subscription_created_mock.assert_called_once_with(user)
@@ -583,7 +583,7 @@ def test_public_create__plan_changed__ok(mocker, identify_mock):
     plan_changed_mock = mocker.patch(
         'src.payment.services.account.'
         'AccountSubscriptionService._plan_changed',
-        return_value=plan_changed
+        return_value=plan_changed,
     )
     private_create_mock = mocker.patch(
         'src.payment.services.account.'
@@ -621,11 +621,11 @@ def test_public_create__plan_not_changed__skip(mocker, identify_mock):
     plan_changed_mock = mocker.patch(
         'src.payment.services.account.'
         'AccountSubscriptionService._plan_changed',
-        return_value=plan_changed
+        return_value=plan_changed,
     )
     private_create_mock = mocker.patch(
         'src.payment.services.account.'
-        'AccountSubscriptionService._create'
+        'AccountSubscriptionService._create',
     )
     is_superuser = True
     auth_type = AuthTokenType.WEBHOOK
@@ -657,21 +657,21 @@ def test_update__trial_to_premium__ok(mocker, identify_mock):
         plan_expiration=plan_expiration,
         trial_start=trial_start,
         trial_end=plan_expiration,
-        trial_ended=False
+        trial_ended=False,
     )
     user = create_test_user(account=account)
     account_service_init_mock = mocker.patch.object(
         AccountService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     account_service_partial_update_mock = mocker.patch(
         'src.accounts.services.'
-        'AccountService.partial_update'
+        'AccountService.partial_update',
     )
     analytics_subscription_converted_mock = mocker.patch(
         'src.analytics.services.AnalyticService.'
-        'subscription_converted'
+        'subscription_converted',
     )
     is_superuser = True
     auth_type = AuthTokenType.WEBHOOK
@@ -688,7 +688,7 @@ def test_update__trial_to_premium__ok(mocker, identify_mock):
         billing_period=BillingPeriod.MONTHLY,
         plan_expiration=plan_expiration,
         trial_start=trial_start,
-        trial_end=plan_expiration
+        trial_end=plan_expiration,
     )
 
     # act
@@ -708,7 +708,7 @@ def test_update__trial_to_premium__ok(mocker, identify_mock):
         max_users=details.max_users,
         trial_ended=True,
         tmp_subscription=False,
-        force_save=True
+        force_save=True,
     )
     analytics_subscription_converted_mock.assert_called_once_with(user)
     identify_mock.assert_called_once_with(user)
@@ -720,21 +720,21 @@ def test_update__premium_to_premium__ok(mocker, identify_mock):
     account = create_test_account(
         plan=BillingPlanType.PREMIUM,
         plan_expiration=timezone.now() + timedelta(days=1),
-        trial_end=timezone.now() - timedelta(days=1)
+        trial_end=timezone.now() - timedelta(days=1),
     )
     user = create_test_user(account=account)
     account_service_init_mock = mocker.patch.object(
         AccountService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     account_service_partial_update_mock = mocker.patch(
         'src.accounts.services.'
-        'AccountService.partial_update'
+        'AccountService.partial_update',
     )
     analytics_subscription_updated_mock = mocker.patch(
         'src.analytics.services.AnalyticService.'
-        'subscription_updated'
+        'subscription_updated',
     )
     is_superuser = True
     auth_type = AuthTokenType.WEBHOOK
@@ -752,7 +752,7 @@ def test_update__premium_to_premium__ok(mocker, identify_mock):
         billing_period=BillingPeriod.MONTHLY,
         plan_expiration=new_plan_expiration,
         trial_start=None,
-        trial_end=None
+        trial_end=None,
     )
 
     # act
@@ -772,7 +772,7 @@ def test_update__premium_to_premium__ok(mocker, identify_mock):
         max_users=details.max_users,
         tmp_subscription=False,
         trial_ended=True,
-        force_save=True
+        force_save=True,
     )
     analytics_subscription_updated_mock.assert_called_once_with(user)
     identify_mock.assert_called_once_with(user)
@@ -788,7 +788,7 @@ def test_public_update__plan_changed__ok(mocker):
     plan_changed_mock = mocker.patch(
         'src.payment.services.account.'
         'AccountSubscriptionService._plan_changed',
-        return_value=plan_changed
+        return_value=plan_changed,
     )
     private_update_mock = mocker.patch(
         'src.payment.services.account.'
@@ -824,7 +824,7 @@ def test_public_update__plan_not_changed__skip(mocker):
     plan_changed_mock = mocker.patch(
         'src.payment.services.account.'
         'AccountSubscriptionService._plan_changed',
-        return_value=plan_changed
+        return_value=plan_changed,
     )
     private_update_mock = mocker.patch(
         'src.payment.services.account.'
@@ -860,11 +860,11 @@ def test_expired__ok(mocker):
     account_service_init_mock = mocker.patch.object(
         AccountService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     account_service_partial_update_mock = mocker.patch(
         'src.accounts.services.'
-        'AccountService.partial_update'
+        'AccountService.partial_update',
     )
     is_superuser = True
     auth_type = AuthTokenType.WEBHOOK
@@ -888,7 +888,7 @@ def test_expired__ok(mocker):
     account_service_partial_update_mock.assert_called_once_with(
         plan_expiration=period_end_date,
         trial_ended=True,
-        force_save=True
+        force_save=True,
     )
 
 
@@ -899,11 +899,11 @@ def test_cancel__ok(mocker):
     user = create_test_user(account=account)
     analytics_subscription_canceled_created_mock = mocker.patch(
         'src.analytics.services.AnalyticService.'
-        'subscription_canceled'
+        'subscription_canceled',
     )
     expired_mock = mocker.patch(
         'src.payment.services.account.'
-        'AccountSubscriptionService.expired'
+        'AccountSubscriptionService.expired',
     )
     is_superuser = True
     auth_type = AuthTokenType.WEBHOOK

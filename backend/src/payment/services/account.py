@@ -67,7 +67,7 @@ class AccountSubscriptionService(BaseIdentifyMixin):
             'plan_expiration': details.plan_expiration,
             'max_users': details.max_users,
             'tmp_subscription': False,
-            'force_save': True
+            'force_save': True,
         }
         if not self.instance.trial_ended:
             data['trial_start'] = details.trial_start
@@ -95,7 +95,7 @@ class AccountSubscriptionService(BaseIdentifyMixin):
 
     def _update(
         self,
-        details: SubscriptionDetails
+        details: SubscriptionDetails,
     ):
         convert_trial = (
             not self.instance.trial_ended
@@ -108,7 +108,7 @@ class AccountSubscriptionService(BaseIdentifyMixin):
             instance=self.instance,
             user=self.user,
             auth_type=self.auth_type,
-            is_superuser=self.is_superuser
+            is_superuser=self.is_superuser,
         )
         account_service.partial_update(
             billing_plan=details.billing_plan,
@@ -117,7 +117,7 @@ class AccountSubscriptionService(BaseIdentifyMixin):
             max_users=details.max_users,
             tmp_subscription=False,
             trial_ended=True,
-            force_save=True
+            force_save=True,
         )
 
         if convert_trial:
@@ -145,12 +145,12 @@ class AccountSubscriptionService(BaseIdentifyMixin):
             instance=self.instance,
             user=self.user,
             auth_type=self.auth_type,
-            is_superuser=self.is_superuser
+            is_superuser=self.is_superuser,
         )
         account_service.partial_update(
             plan_expiration=plan_expiration,
             trial_ended=True,
-            force_save=True
+            force_save=True,
         )
 
     def cancel(self, plan_expiration: datetime):

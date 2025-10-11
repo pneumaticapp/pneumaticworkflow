@@ -20,7 +20,7 @@ class DelaySerializer(serializers.ModelSerializer):
 
     estimated_end_date_tsp = TimeStampField(
         source='estimated_end_date',
-        read_only=True
+        read_only=True,
     )
 
 
@@ -34,7 +34,7 @@ class NotificationTaskSerializer(serializers.ModelSerializer):
             'id',
             'name',
             'due_date_tsp',
-            'delay'
+            'delay',
         )
 
     def __init__(self, *args, **kwargs):
@@ -58,7 +58,7 @@ class NotificationWorkflowSerializer(serializers.ModelSerializer):
         model = Workflow
         fields = (
             'id',
-            'name'
+            'name',
         )
 
 

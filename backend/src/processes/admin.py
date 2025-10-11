@@ -12,7 +12,7 @@ from src.processes.models import (
 @admin.register(SystemTemplateCategory)
 class SystemTemplateCategoryAdmin(ModelAdmin):
 
-    list_display = ('name', 'order', 'color', 'is_active',)
+    list_display = ('name', 'order', 'color', 'is_active')
     exclude = ('is_deleted',)
 
 
@@ -30,12 +30,12 @@ class SystemTemplateAdmin(ModelAdmin):
             ),
         }),
     )
-    list_display = ('name', 'type', 'category', 'is_active',)
+    list_display = ('name', 'type', 'category', 'is_active')
     list_filter = ('type', 'category', 'is_active')
 
     formfield_overrides = {
         pg_fields.JSONField: {
-            'widget': JSONEditorWidget
+            'widget': JSONEditorWidget,
         },
     }
 
@@ -58,6 +58,6 @@ class SystemWorkflowKickoffDataAdmin(ModelAdmin):
 
     formfield_overrides = {
         pg_fields.JSONField: {
-            'widget': JSONEditorWidget
-        }
+            'widget': JSONEditorWidget,
+        },
     }

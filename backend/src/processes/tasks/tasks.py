@@ -16,7 +16,7 @@ UserModel = get_user_model()
 def complete_tasks(
     user_id: int,
     is_superuser: bool,
-    auth_type: AuthTokenType.LITERALS
+    auth_type: AuthTokenType.LITERALS,
 ):
 
     """ Complete all tasks for specific user where completion_by_all is True
@@ -30,7 +30,7 @@ def complete_tasks(
             status=TaskStatus.ACTIVE,
             require_completion_by_all=True,
             taskperformer__user_id=user_id,
-            workflow__status=WorkflowStatus.RUNNING
+            workflow__status=WorkflowStatus.RUNNING,
         )
         .select_related('workflow')
         .exclude(taskperformer__is_completed=False)
@@ -41,6 +41,6 @@ def complete_tasks(
             workflow=task.workflow,
             user=user,
             is_superuser=is_superuser,
-            auth_type=auth_type
+            auth_type=auth_type,
         )
         service.complete_task(task)

@@ -5,7 +5,7 @@ from django.db.models import ObjectDoesNotExist
 from django.contrib.auth import get_user_model
 from src.generics.validators import NoSchemaURLValidator
 from django.core.exceptions import (
-    ValidationError as ValidationCoreError
+    ValidationError as ValidationCoreError,
 )
 from src.processes.messages import workflow as messages
 from src.processes.models import (
@@ -15,13 +15,13 @@ from src.processes.models import (
     FieldTemplateSelection,
 )
 from src.processes.services.base import (
-    BaseWorkflowService
+    BaseWorkflowService,
 )
 from src.processes.services.tasks.exceptions import (
-    TaskFieldException
+    TaskFieldException,
 )
 from src.processes.services.tasks.selection import (
-    SelectionService
+    SelectionService,
 )
 from src.services.markdown import MarkdownService
 from src.processes.enums import FieldType
@@ -36,9 +36,9 @@ FieldData = namedtuple(
         'markdown_value',
         'clear_value',
         'user_id',
-        'group_id'
+        'group_id',
     ],
-    defaults=['', '', '', None, None]
+    defaults=['', '', '', None, None],
 )
 
 
@@ -54,12 +54,12 @@ class TaskFieldService(BaseWorkflowService):
         except (TypeError, ValueError, DecimalException) as ex:
             raise TaskFieldException(
                 api_name=self.instance.api_name,
-                message=messages.MSG_PW_0084
+                message=messages.MSG_PW_0084,
             ) from ex
         return FieldData(
             value=value,
             markdown_value=value,
-            clear_value=value
+            clear_value=value,
         )
 
     def _get_valid_string_value(self, raw_value: Any, **kwargs) -> FieldData:
@@ -67,17 +67,17 @@ class TaskFieldService(BaseWorkflowService):
         if not isinstance(raw_value, str):
             raise TaskFieldException(
                 api_name=self.instance.api_name,
-                message=messages.MSG_PW_0025
+                message=messages.MSG_PW_0025,
             )
         if len(raw_value) > self.STRING_LENGTH:
             raise TaskFieldException(
                 api_name=self.instance.api_name,
-                message=messages.MSG_PW_0026(self.STRING_LENGTH)
+                message=messages.MSG_PW_0026(self.STRING_LENGTH),
             )
         return FieldData(
             value=raw_value,
             markdown_value=raw_value,
-            clear_value=MarkdownService.clear(raw_value)
+            clear_value=MarkdownService.clear(raw_value),
         )
 
     def _get_valid_text_value(self, raw_value: Any, **kwargs) -> FieldData:
@@ -85,18 +85,18 @@ class TaskFieldService(BaseWorkflowService):
         if not isinstance(raw_value, str):
             raise TaskFieldException(
                 api_name=self.instance.api_name,
-                message=messages.MSG_PW_0025
+                message=messages.MSG_PW_0025,
             )
         return FieldData(
             value=raw_value,
             markdown_value=raw_value,
-            clear_value=MarkdownService.clear(raw_value)
+            clear_value=MarkdownService.clear(raw_value),
         )
 
     def _get_valid_radio_value(
         self,
         raw_value: str,
-        selections: Iterable[FieldTemplateSelection]
+        selections: Iterable[FieldTemplateSelection],
     ) -> FieldData:
 
         """ Selections need for first create selection
@@ -105,67 +105,67 @@ class TaskFieldService(BaseWorkflowService):
         if not isinstance(raw_value, str):
             raise TaskFieldException(
                 api_name=self.instance.api_name,
-                message=messages.MSG_PW_0028
+                message=messages.MSG_PW_0028,
             )
         try:
             selection = selections.get(api_name=raw_value)
         except ObjectDoesNotExist as ex:
             raise TaskFieldException(
                 api_name=self.instance.api_name,
-                message=messages.MSG_PW_0028
+                message=messages.MSG_PW_0028,
             ) from ex
         else:
             return FieldData(
                 value=selection.value,
                 markdown_value=selection.value,
-                clear_value=MarkdownService.clear(selection.value)
+                clear_value=MarkdownService.clear(selection.value),
             )
 
     def _get_valid_checkbox_value(
         self,
         raw_value: List[str],
-        selections: Iterable[FieldTemplateSelection]
+        selections: Iterable[FieldTemplateSelection],
     ) -> FieldData:
 
         if not isinstance(raw_value, list):
             raise TaskFieldException(
                 api_name=self.instance.api_name,
-                message=messages.MSG_PW_0029
+                message=messages.MSG_PW_0029,
             )
 
         for el in raw_value:
             if not isinstance(el, str):
                 raise TaskFieldException(
                     api_name=self.instance.api_name,
-                    message=messages.MSG_PW_0030
+                    message=messages.MSG_PW_0030,
                 )
 
         selections_values = list(
-            selections.by_api_names(raw_value).values_list('value', flat=True)
+            selections.by_api_names(raw_value).values_list('value', flat=True),
         )
         if len(selections_values) < len(raw_value):
             raise TaskFieldException(
                 api_name=self.instance.api_name,
-                message=messages.MSG_PW_0031
+                message=messages.MSG_PW_0031,
             )
         else:
             value = ', '.join(selections_values)
         return FieldData(
             value=value,
             markdown_value=value,
-            clear_value=MarkdownService.clear(value)
+            clear_value=MarkdownService.clear(value),
         )
 
     def _get_valid_date_value(
         self,
         raw_value: Any,
-        **kwargs
+        **kwargs,
     ) -> FieldData:
 
         if not isinstance(raw_value, (int, float)):
             raise TaskFieldException(
                 api_name=self.instance.api_name,
-                message=messages.MSG_PW_0032
+                message=messages.MSG_PW_0032,
             )
         value = str(raw_value)
         user_fmt_value = date_tsp_to_user_fmt(
@@ -175,7 +175,7 @@ class TaskFieldService(BaseWorkflowService):
         return FieldData(
             value=value,
             markdown_value=user_fmt_value,
-            clear_value=user_fmt_value
+            clear_value=user_fmt_value,
         )
 
     def _get_valid_url_value(self, raw_value: Any, **kwargs) -> FieldData:
@@ -183,27 +183,27 @@ class TaskFieldService(BaseWorkflowService):
         if not isinstance(raw_value, str):
             raise TaskFieldException(
                 api_name=self.instance.api_name,
-                message=messages.MSG_PW_0034
+                message=messages.MSG_PW_0034,
             )
         try:
             NoSchemaURLValidator()(raw_value)
         except ValidationCoreError as ex:
             raise TaskFieldException(
                 api_name=self.instance.api_name,
-                message=messages.MSG_PW_0035
+                message=messages.MSG_PW_0035,
             ) from ex
         else:
             markdown_value = f'[{self.instance.name}]({raw_value})'
             return FieldData(
                 value=raw_value,
                 markdown_value=markdown_value,
-                clear_value=raw_value
+                clear_value=raw_value,
             )
 
     def _get_valid_dropdown_value(
         self,
         raw_value: Any,
-        **kwargs
+        **kwargs,
     ) -> FieldData:
 
         return self._get_valid_radio_value(raw_value, **kwargs)
@@ -213,14 +213,14 @@ class TaskFieldService(BaseWorkflowService):
         if not isinstance(raw_value, list):
             raise TaskFieldException(
                 api_name=self.instance.api_name,
-                message=messages.MSG_PW_0036
+                message=messages.MSG_PW_0036,
             )
         try:
             attachments_ids = [int(attach_id) for attach_id in raw_value]
         except (ValueError, TypeError) as ex:
             raise TaskFieldException(
                 api_name=self.instance.api_name,
-                message=messages.MSG_PW_0036
+                message=messages.MSG_PW_0036,
             ) from ex
         else:
             attachments = (
@@ -239,16 +239,16 @@ class TaskFieldService(BaseWorkflowService):
             if len(urls) < len(attachments_ids):
                 raise TaskFieldException(
                     api_name=self.instance.api_name,
-                    message=messages.MSG_PW_0037
+                    message=messages.MSG_PW_0037,
                 )
             value = ', '.join(urls)
             markdown_value = ', '.join(
-                [f'[{e.name}]({e.url})' for e in attachments]
+                [f'[{e.name}]({e.url})' for e in attachments],
             )
             return FieldData(
                 value=value,
                 markdown_value=markdown_value,
-                clear_value=value
+                clear_value=value,
             )
 
     def _get_valid_user_value(self, raw_value: Any, **kwargs) -> FieldData:
@@ -258,14 +258,14 @@ class TaskFieldService(BaseWorkflowService):
         except (ValueError, TypeError) as ex:
             raise TaskFieldException(
                 api_name=self.instance.api_name,
-                message=messages.MSG_PW_0038
+                message=messages.MSG_PW_0038,
             ) from ex
         else:
             user = self.account.users.by_id(user_id).first()
             if user is None:
                 raise TaskFieldException(
                     api_name=self.instance.api_name,
-                    message=messages.MSG_PW_0039
+                    message=messages.MSG_PW_0039,
                 )
             value = user.name_by_status
             return FieldData(
@@ -280,7 +280,7 @@ class TaskFieldService(BaseWorkflowService):
             if self.instance.is_required:
                 raise TaskFieldException(
                     api_name=self.instance.api_name,
-                    message=messages.MSG_PW_0023
+                    message=messages.MSG_PW_0023,
                 )
             else:
                 return FieldData()
@@ -302,7 +302,7 @@ class TaskFieldService(BaseWorkflowService):
             description=instance_template.description,
             api_name=instance_template.api_name,
             order=instance_template.order,
-            workflow_id=kwargs['workflow_id']
+            workflow_id=kwargs['workflow_id'],
         )
         if not kwargs.get('skip_value'):
             raw_value = kwargs.get('value')
@@ -314,7 +314,7 @@ class TaskFieldService(BaseWorkflowService):
             # self.instance.value, self.instance.markdown_value = (
             field_data = self._get_valid_value(
                 raw_value=raw_value,
-                selections=selections
+                selections=selections,
             )
             self.instance.value = field_data.value
             self.instance.markdown_value = field_data.markdown_value
@@ -326,7 +326,7 @@ class TaskFieldService(BaseWorkflowService):
     def _create_related(
         self,
         instance_template: FieldTemplate,
-        **kwargs
+        **kwargs,
     ):
         skip_value = kwargs.get('skip_value')
         raw_value = kwargs.get('value')
@@ -338,12 +338,12 @@ class TaskFieldService(BaseWorkflowService):
             else:
                 self._create_selections_with_value(
                     raw_value=raw_value,
-                    instance_template=instance_template
+                    instance_template=instance_template,
                 )
 
     def _link_new_attachments(
         self,
-        attachments_ids: Optional[List[int]] = None
+        attachments_ids: Optional[List[int]] = None,
     ):
 
         """ Attach new account files to the task field
@@ -357,13 +357,13 @@ class TaskFieldService(BaseWorkflowService):
                 .by_ids(attachments_ids)
                 .update(
                     output_id=self.instance.id,
-                    workflow_id=self.instance.workflow.id
+                    workflow_id=self.instance.workflow.id,
                 )
             )
 
     def _create_selections(
         self,
-        instance_template: FieldTemplate
+        instance_template: FieldTemplate,
     ):
 
         for selection_template in instance_template.selections.all():
@@ -371,12 +371,12 @@ class TaskFieldService(BaseWorkflowService):
             selection_service.create(
                 instance_template=selection_template,
                 field_id=self.instance.id,
-                is_selected=False
+                is_selected=False,
             )
 
     def _get_selections_values(
         self,
-        raw_value: Union[str, List[str], None]
+        raw_value: Union[str, List[str], None],
     ) -> Set:
 
         if self.instance.type in FieldType.TYPES_WITH_SELECTION:
@@ -392,7 +392,7 @@ class TaskFieldService(BaseWorkflowService):
     def _create_selections_with_value(
         self,
         raw_value: Union[str, List[str], None],
-        instance_template: FieldTemplate
+        instance_template: FieldTemplate,
     ):
         """ raw_value - validated FieldTemplateSelection id(s) or None """
 
@@ -402,7 +402,7 @@ class TaskFieldService(BaseWorkflowService):
                 selection_service.create(
                     instance_template=selection_template,
                     field_id=self.instance.id,
-                    is_selected=False
+                    is_selected=False,
                 )
         else:
             selections_values = self._get_selections_values(raw_value)
@@ -413,7 +413,7 @@ class TaskFieldService(BaseWorkflowService):
                     field_id=self.instance.id,
                     is_selected=(
                         selection_template.api_name in selections_values
-                    )
+                    ),
                 )
 
     def _update_selections(self, raw_value: Union[str, List[str], None]):
@@ -424,28 +424,28 @@ class TaskFieldService(BaseWorkflowService):
             for selection in self.instance.selections.all():
                 selection_service = SelectionService(
                     instance=selection,
-                    user=self.user
+                    user=self.user,
                 )
                 selection_service.partial_update(
                     is_selected=False,
-                    force_save=True
+                    force_save=True,
                 )
         else:
             selections_values = self._get_selections_values(raw_value)
             for selection in self.instance.selections.all():
                 selection_service = SelectionService(
                     instance=selection,
-                    user=self.user
+                    user=self.user,
                 )
                 selection_service.partial_update(
                     is_selected=selection.api_name in selections_values,
-                    force_save=True
+                    force_save=True,
                 )
 
     def _remove_unused_attachments(
         self,
         value: Optional[str],
-        attachment_ids: Optional[List[str]]
+        attachment_ids: Optional[List[str]],
     ):
 
         # TODO remove unused attachments
@@ -458,13 +458,13 @@ class TaskFieldService(BaseWorkflowService):
             deleted_attach_ids = current_attach_ids
         if deleted_attach_ids:
             FileAttachment.objects.filter(
-                id__in=deleted_attach_ids
+                id__in=deleted_attach_ids,
             ).delete()
 
     def partial_update(
         self,
         force_save=False,
-        **update_kwargs
+        **update_kwargs,
     ) -> TaskField:
 
         """ Set or update field value only """
@@ -477,12 +477,12 @@ class TaskFieldService(BaseWorkflowService):
         )
         field_data = self._get_valid_value(
             raw_value=raw_value,
-            selections=selections
+            selections=selections,
         )
         if self.instance.type == FieldType.FILE:
             self._remove_unused_attachments(
                 value=raw_value,
-                attachment_ids=raw_value
+                attachment_ids=raw_value,
             )
         super().partial_update(
             force_save=True,

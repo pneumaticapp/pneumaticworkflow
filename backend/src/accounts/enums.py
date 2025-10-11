@@ -17,7 +17,7 @@ class NotificationType:
 
     URGENT_TYPES = (
         URGENT,
-        NOT_URGENT
+        NOT_URGENT,
     )
 
     CHOICES = (
@@ -225,7 +225,7 @@ class UserInviteStatus:
 
     NOT_FAILED_STATUSES = {
         PENDING,
-        ACCEPTED
+        ACCEPTED,
     }
 
     CHOICES = (
@@ -265,7 +265,7 @@ class Timezone:
         ('Asia/Tokyo', '+09 Asia/Tokyo'),
         ('Australia/Sydney', '+10 Australia/Sydney'),
         ('Pacific/Guadalcanal', '+11 Pacific/Guadalcanal'),
-        ('Pacific/Fiji', '+12 Pacific/Fiji')
+        ('Pacific/Fiji', '+12 Pacific/Fiji'),
     ]
 
 

@@ -7,10 +7,10 @@ from src.processes.models import (
     Rule, TaskField,
 )
 from src.processes.services.exceptions import (
-    WorkflowActionServiceException
+    WorkflowActionServiceException,
 )
 from src.processes.services.workflow_action import (
-    WorkflowActionService
+    WorkflowActionService,
 )
 from src.processes.tests.fixtures import (
     create_test_workflow,
@@ -45,17 +45,17 @@ def test_revert__account_owner__ok(
     workflow = create_test_workflow(
         user=owner,
         tasks_count=2,
-        active_task_number=2
+        active_task_number=2,
     )
     task_2 = workflow.tasks.get(number=2)
     service_init_mock = mocker.patch.object(
         WorkflowActionService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     service_revert_mock = mocker.patch(
         'src.processes.services.workflow_action.'
-        'WorkflowActionService.revert'
+        'WorkflowActionService.revert',
     )
     api_client.token_authenticate(owner)
     text_comment = 'text_comment'
@@ -65,7 +65,7 @@ def test_revert__account_owner__ok(
         f'/v2/tasks/{task_2.id}/revert',
         data={
             'comment': text_comment,
-        }
+        },
     )
 
     # assert
@@ -74,11 +74,11 @@ def test_revert__account_owner__ok(
         workflow=workflow,
         user=owner,
         auth_type=AuthTokenType.USER,
-        is_superuser=False
+        is_superuser=False,
     )
     service_revert_mock.assert_called_once_with(
         revert_from_task=task_2,
-        comment=text_comment
+        comment=text_comment,
     )
 
 
@@ -92,22 +92,22 @@ def test_revert__user_performer__ok(
     workflow = create_test_workflow(
         user=owner,
         tasks_count=2,
-        active_task_number=2
+        active_task_number=2,
     )
     task_2 = workflow.tasks.get(number=2)
     performer = create_test_not_admin(account=account)
     TaskPerformer.objects.create(
         task_id=task_2.id,
-        user_id=performer.id
+        user_id=performer.id,
     )
     service_init_mock = mocker.patch.object(
         WorkflowActionService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     service_revert_mock = mocker.patch(
         'src.processes.services.workflow_action.'
-        'WorkflowActionService.revert'
+        'WorkflowActionService.revert',
     )
     api_client.token_authenticate(performer)
     text_comment = 'text_comment'
@@ -117,7 +117,7 @@ def test_revert__user_performer__ok(
         f'/v2/tasks/{task_2.id}/revert',
         data={
             'comment': text_comment,
-        }
+        },
     )
 
     # assert
@@ -126,11 +126,11 @@ def test_revert__user_performer__ok(
         workflow=workflow,
         user=performer,
         auth_type=AuthTokenType.USER,
-        is_superuser=False
+        is_superuser=False,
     )
     service_revert_mock.assert_called_once_with(
         revert_from_task=task_2,
-        comment=text_comment
+        comment=text_comment,
     )
 
 
@@ -144,23 +144,23 @@ def test_revert__deleted_performer__permission_denied(
     workflow = create_test_workflow(
         user=owner,
         tasks_count=2,
-        active_task_number=2
+        active_task_number=2,
     )
     task_2 = workflow.tasks.get(number=2)
     performer = create_test_not_admin(account=account)
     TaskPerformer.objects.create(
         task_id=task_2.id,
         user_id=performer.id,
-        directly_status=DirectlyStatus.DELETED
+        directly_status=DirectlyStatus.DELETED,
     )
     service_init_mock = mocker.patch.object(
         WorkflowActionService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     service_revert_mock = mocker.patch(
         'src.processes.services.workflow_action.'
-        'WorkflowActionService.revert'
+        'WorkflowActionService.revert',
     )
     api_client.token_authenticate(performer)
     text_comment = 'text_comment'
@@ -170,7 +170,7 @@ def test_revert__deleted_performer__permission_denied(
         f'/v2/tasks/{task_2.id}/revert',
         data={
             'comment': text_comment,
-        }
+        },
     )
 
     # assert
@@ -189,18 +189,18 @@ def test_revert__user_not_performer__permission_denied(
     workflow = create_test_workflow(
         user=owner,
         tasks_count=2,
-        active_task_number=2
+        active_task_number=2,
     )
     task_2 = workflow.tasks.get(number=2)
     performer = create_test_not_admin(account=account)
     service_init_mock = mocker.patch.object(
         WorkflowActionService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     service_revert_mock = mocker.patch(
         'src.processes.services.workflow_action.'
-        'WorkflowActionService.revert'
+        'WorkflowActionService.revert',
     )
     api_client.token_authenticate(performer)
     text_comment = 'text_comment'
@@ -210,7 +210,7 @@ def test_revert__user_not_performer__permission_denied(
         f'/v2/tasks/{task_2.id}/revert',
         data={
             'comment': text_comment,
-        }
+        },
     )
 
     # assert
@@ -229,23 +229,23 @@ def test_revert__guest_performer__permission_denied(
     workflow = create_test_workflow(
         owner,
         tasks_count=2,
-        active_task_number=2
+        active_task_number=2,
     )
     task_2 = workflow.tasks.get(number=2)
 
     guest = create_test_guest(account=account)
     TaskPerformer.objects.create(
         task_id=task_2.id,
-        user_id=guest.id
+        user_id=guest.id,
     )
     str_token = GuestJWTAuthService.get_str_token(
         task_id=task_2.id,
         user_id=guest.id,
-        account_id=account.id
+        account_id=account.id,
     )
     service_revert_mock = mocker.patch(
         'src.processes.services.workflow_action.'
-        'WorkflowActionService.revert'
+        'WorkflowActionService.revert',
     )
     text_comment = 'text_comment'
 
@@ -255,7 +255,7 @@ def test_revert__guest_performer__permission_denied(
         data={
             'comment': text_comment,
         },
-        **{'X-Guest-Authorization': str_token}
+        **{'X-Guest-Authorization': str_token},
     )
 
     # assert
@@ -273,14 +273,14 @@ def test_revert__service_exception__validation_error(
     workflow = create_test_workflow(
         owner,
         tasks_count=2,
-        active_task_number=2
+        active_task_number=2,
     )
     task_2 = workflow.tasks.get(number=2)
 
     service_init_mock = mocker.patch.object(
         WorkflowActionService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     message = 'Some message'
     ex = WorkflowActionServiceException(message)
@@ -297,7 +297,7 @@ def test_revert__service_exception__validation_error(
         path=f'/v2/tasks/{task_2.id}/revert',
         data={
             'comment': text_comment,
-        }
+        },
     )
 
     # assert
@@ -308,11 +308,11 @@ def test_revert__service_exception__validation_error(
         workflow=workflow,
         user=owner,
         auth_type=AuthTokenType.USER,
-        is_superuser=False
+        is_superuser=False,
     )
     service_revert_mock.assert_called_once_with(
         revert_from_task=task_2,
-        comment=text_comment
+        comment=text_comment,
     )
 
 
@@ -320,7 +320,7 @@ def test_revert__service_exception__validation_error(
 def test_revert__invalid_comment__validation_error(
     api_client,
     mocker,
-    text_comment
+    text_comment,
 ):
     # arrange
     account = create_test_account()
@@ -328,16 +328,16 @@ def test_revert__invalid_comment__validation_error(
     workflow = create_test_workflow(
         owner,
         tasks_count=2,
-        active_task_number=2
+        active_task_number=2,
     )
     task_2 = workflow.tasks.get(number=2)
     service_init_mock = mocker.patch(
         'src.processes.services.workflow_action.'
-        'WorkflowActionService'
+        'WorkflowActionService',
     )
     service_revert_mock = mocker.patch(
         'src.processes.services.workflow_action.'
-        'WorkflowActionService.revert'
+        'WorkflowActionService.revert',
     )
     api_client.token_authenticate(owner)
 
@@ -346,7 +346,7 @@ def test_revert__invalid_comment__validation_error(
         path=f'/v2/tasks/{task_2.id}/revert',
         data={
             'comment': text_comment,
-        }
+        },
     )
 
     # assert
@@ -363,7 +363,7 @@ def test_revert__start_multiple_tasks__ok(api_client):
     workflow = create_test_workflow(
         user=owner,
         tasks_count=4,
-        active_task_number=3
+        active_task_number=3,
     )
     task_1 = workflow.tasks.get(number=1)
     task_2 = workflow.tasks.get(number=2)
@@ -404,7 +404,7 @@ def test_revert__start_multiple_tasks__ok(api_client):
         f'/v2/tasks/{task_3.id}/revert',
         data={
             'comment': text_comment,
-        }
+        },
     )
 
     # assert
@@ -426,7 +426,7 @@ def test_revert__to_first_skipped_task__validation_error(api_client):
     workflow = create_test_workflow(
         user=owner,
         tasks_count=2,
-        active_task_number=2
+        active_task_number=2,
     )
     task_1 = workflow.tasks.get(number=1)
     task_1.status = TaskStatus.SKIPPED
@@ -437,7 +437,7 @@ def test_revert__to_first_skipped_task__validation_error(api_client):
         api_name='field-1',
         type=FieldType.STRING,
         workflow=workflow,
-        value='Yes'
+        value='Yes',
     )
     condition = Condition.objects.create(
         task=task_1,
@@ -463,7 +463,7 @@ def test_revert__to_first_skipped_task__validation_error(api_client):
         f'/v2/tasks/{task_2.id}/revert',
         data={
             'comment': text_comment,
-        }
+        },
     )
 
     # assert
@@ -485,7 +485,7 @@ def test_revert__all_tasks_skipped__validation_error(api_client):
     workflow = create_test_workflow(
         user=owner,
         tasks_count=3,
-        active_task_number=3
+        active_task_number=3,
     )
     # Skip task 1
     task_1 = workflow.tasks.get(number=1)
@@ -497,7 +497,7 @@ def test_revert__all_tasks_skipped__validation_error(api_client):
         api_name='field-1',
         type=FieldType.STRING,
         workflow=workflow,
-        value='Yes'
+        value='Yes',
     )
     condition = Condition.objects.create(
         task=task_1,
@@ -525,7 +525,7 @@ def test_revert__all_tasks_skipped__validation_error(api_client):
         api_name='field-2',
         type=FieldType.STRING,
         workflow=workflow,
-        value='Yes'
+        value='Yes',
     )
     condition_2 = Condition.objects.create(
         task=task_2,
@@ -551,7 +551,7 @@ def test_revert__all_tasks_skipped__validation_error(api_client):
         f'/v2/tasks/{task_3.id}/revert',
         data={
             'comment': text_comment,
-        }
+        },
     )
 
     # assert

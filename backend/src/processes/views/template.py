@@ -16,7 +16,7 @@ from src.executor import RawSqlExecutor
 from src.services.permissions import AIPermission
 from src.generics.filters import PneumaticFilterBackend
 from src.processes.serializers.templates.integrations import (
-    TemplateIntegrationsFilterSerializer
+    TemplateIntegrationsFilterSerializer,
 )
 from src.processes.serializers.templates.task import (
     TemplateStepFilterSerializer,
@@ -37,10 +37,10 @@ from src.processes.serializers.templates.template import (
     TemplateAiSerializer,
     TemplateByStepsSerializer,
     TemplateByNameSerializer,
-    TemplateExportFilterSerializer
+    TemplateExportFilterSerializer,
 )
 from src.processes.serializers.templates.template import (
-    TemplateTitlesSerializer
+    TemplateTitlesSerializer,
 )
 from src.processes.serializers.workflows.workflow import (
     WorkflowCreateSerializer,
@@ -50,10 +50,10 @@ from src.processes.filters import (
     TemplateFilter,
 )
 from src.processes.services.templates.template import (
-    TemplateService
+    TemplateService,
 )
 from src.processes.services.clone import (
-    CloneService
+    CloneService,
 )
 from src.processes.tasks.update_workflow import (
     update_workflows,
@@ -78,7 +78,7 @@ from src.generics.permissions import (
     UserIsAuthenticated,
 )
 from src.processes.services.templates.ai import (
-    OpenAiService
+    OpenAiService,
 )
 from src.authentication.enums import AuthTokenType
 from src.processes.utils.common import get_user_agent
@@ -100,7 +100,7 @@ from src.processes.services.workflow_action import (
 
 class TemplateViewSet(
     CustomViewSetMixin,
-    GenericViewSet
+    GenericViewSet,
 ):
     pagination_class = LimitOffsetPagination
     filter_backends = (PneumaticFilterBackend,)
@@ -193,7 +193,7 @@ class TemplateViewSet(
             qst = qst.filter(
                 Q(owners__type='user', owners__user_id=user.id) |
                 Q(owners__type='group', owners__group__users__id=user.id) |
-                Q(workflows__members=user.id)
+                Q(workflows__members=user.id),
             ).distinct()
         return self.prefetch_queryset(qst)
 
@@ -223,8 +223,8 @@ class TemplateViewSet(
                             'conditions__rules__predicates',
                             'raw_performers',
                         )
-                    )
-                )
+                    ),
+                ),
             )
         elif self.action == 'fields':
             queryset = queryset.prefetch_related(
@@ -238,10 +238,10 @@ class TemplateViewSet(
                                 queryset=(
                                     FieldTemplate.objects.all()
                                     .order_by('-order')
-                                )
-                            )
+                                ),
+                            ),
                         )
-                    )
+                    ),
                 ),
                 Prefetch(
                     lookup='tasks',
@@ -254,11 +254,11 @@ class TemplateViewSet(
                                 queryset=(
                                     FieldTemplate.objects.all()
                                     .order_by('-order')
-                                )
-                            )
+                                ),
+                            ),
                         )
-                    )
-                )
+                    ),
+                ),
             )
         return queryset
 
@@ -277,11 +277,11 @@ class TemplateViewSet(
             service = TemplateIntegrationsService(
                 account=request.user.account,
                 is_superuser=request.is_superuser,
-                user=request.user
+                user=request.user,
             )
             service.api_request(
                 template=template,
-                user_agent=get_user_agent(request)
+                user_agent=get_user_agent(request),
             )
         return self.response_ok(serializer.get_response_data())
 
@@ -310,11 +310,11 @@ class TemplateViewSet(
             service = TemplateIntegrationsService(
                 account=request.user.account,
                 is_superuser=request.is_superuser,
-                user=request.user
+                user=request.user,
             )
             service.api_request(
                 template=template,
-                user_agent=get_user_agent(request)
+                user_agent=get_user_agent(request),
             )
         return self.response_ok(serializer.get_response_data())
 
@@ -322,7 +322,7 @@ class TemplateViewSet(
         template = self.get_object()
         serializer = self.get_serializer(
             instance=template,
-            data=request.data
+            data=request.data,
         )
         with transaction.atomic():
             if request.data.get('is_active'):
@@ -333,13 +333,13 @@ class TemplateViewSet(
         service = TemplateIntegrationsService(
             account=request.user.account,
             is_superuser=request.is_superuser,
-            user=request.user
+            user=request.user,
         )
         service.template_updated(template=template)
         if self.request.token_type == AuthTokenType.API:
             service.api_request(
                 template=template,
-                user_agent=get_user_agent(request)
+                user_agent=get_user_agent(request),
             )
         if template.is_active:
             update_workflows.delay(
@@ -347,7 +347,7 @@ class TemplateViewSet(
                 version=template.version,
                 updated_by=request.user.id,
                 auth_type=request.token_type,
-                is_superuser=request.is_superuser
+                is_superuser=request.is_superuser,
             )
             AnalyticService.templates_kickoff_updated(
                 user=request.user,
@@ -368,7 +368,7 @@ class TemplateViewSet(
     def clone(self, request, *args, **kwargs):
         template = self.get_object()
         template_data_clone = CloneService.get_template_draft_clone(
-            template.get_draft()
+            template.get_draft(),
         )
         serializer = self.get_serializer(data=template_data_clone)
         with transaction.atomic():
@@ -397,7 +397,7 @@ class TemplateViewSet(
             ordering=data.get('ordering'),
             search=search_text,
             is_active=data.get('is_active'),
-            is_public=data.get('is_public')
+            is_public=data.get('is_public'),
         )
         if search_text:
             AnalyticService.search_search(
@@ -415,14 +415,14 @@ class TemplateViewSet(
         template = self.get_object()
         request_slz = self.get_serializer(
             data=request.data,
-            extra_fields={'template': template}
+            extra_fields={'template': template},
         )
         request_slz.is_valid(raise_exception=True)
         data = request_slz.validated_data
         service = WorkflowService(
             user=request.user,
             is_superuser=request.is_superuser,
-            auth_type=request.token_type
+            auth_type=request.token_type,
         )
         try:
             workflow = service.create(
@@ -434,7 +434,7 @@ class TemplateViewSet(
                 is_urgent=data['is_urgent'],
                 due_date=data.get('due_date_tsp'),
                 ancestor_task=data.get('ancestor_task_id'),
-                user_agent=get_user_agent(request)
+                user_agent=get_user_agent(request),
             )
         except WorkflowServiceException as ex:
             raise_validation_error(ex.message)
@@ -443,7 +443,7 @@ class TemplateViewSet(
             workflow=workflow,
             user=request.user,
             is_superuser=request.is_superuser,
-            auth_type=request.token_type
+            auth_type=request.token_type,
         )
         workflow_action_service.start_workflow()
         slz = WorkflowDetailsSerializer(instance=workflow)
@@ -462,17 +462,17 @@ class TemplateViewSet(
             user=request.user,
             template=template,
             auth_type=request.token_type,
-            is_superuser=request.is_superuser
+            is_superuser=request.is_superuser,
         )
         if self.request.token_type == AuthTokenType.API:
             service = TemplateIntegrationsService(
                 account=request.user.account,
                 is_superuser=request.is_superuser,
-                user=request.user
+                user=request.user,
             )
             service.api_request(
                 template=template,
-                user_agent=get_user_agent(request)
+                user_agent=get_user_agent(request),
             )
         return self.response_ok()
 
@@ -482,7 +482,7 @@ class TemplateViewSet(
         request_slz.is_valid(raise_exception=True)
         query = TemplateTitlesQuery(
             user=request.user,
-            **request_slz.validated_data
+            **request_slz.validated_data,
         )
         data = RawSqlExecutor.fetch(*query.get_sql())
         response_slz = self.get_serializer(data, many=True)
@@ -494,9 +494,9 @@ class TemplateViewSet(
         request_slz.is_valid(raise_exception=True)
         query = TemplateTitlesEventsQuery(
             user=request.user,
-            **request_slz.validated_data
+            **request_slz.validated_data,
         )
-        data = RawSqlExecutor.fetch(*query.get_sql(),)
+        data = RawSqlExecutor.fetch(*query.get_sql())
         response_slz = self.get_serializer(data, many=True)
         return self.response_ok(response_slz.data)
 
@@ -517,7 +517,7 @@ class TemplateViewSet(
                 user=request.user,
                 template_id=pk,
                 **filter_slz.validated_data,
-            )
+            ),
         )
         serializer = self.get_serializer(self.queryset, many=True)
         try:
@@ -538,10 +538,10 @@ class TemplateViewSet(
         service = TemplateIntegrationsService(
             account=request.user.account,
             is_superuser=request.is_superuser,
-            user=request.user
+            user=request.user,
         )
         data = service.get_template_integrations_data(
-            template_id=template.id
+            template_id=template.id,
         )
         return self.response_ok(data=data)
 
@@ -554,7 +554,7 @@ class TemplateViewSet(
             ident=request.user.id,
             user=request.user,
             is_superuser=request.is_superuser,
-            auth_type=request.token_type
+            auth_type=request.token_type,
         )
         try:
             data = service.get_template_data(user_description=description)
@@ -570,11 +570,11 @@ class TemplateViewSet(
         service = TemplateService(
             user=request.user,
             is_superuser=request.is_superuser,
-            auth_type=request.token_type
+            auth_type=request.token_type,
         )
         try:
             template = service.create_template_by_steps(
-                **request_slz.validated_data
+                **request_slz.validated_data,
             )
         except TemplateServiceException as ex:
             raise_validation_error(message=ex.message)
@@ -588,7 +588,7 @@ class TemplateViewSet(
         slz.is_valid(raise_exception=True)
         try:
             system_template = SystemTemplate.objects.library().active().get(
-                name=slz.validated_data['name']
+                name=slz.validated_data['name'],
             )
         except SystemTemplate.DoesNotExist as ex:
             capture_sentry_message(
@@ -598,17 +598,17 @@ class TemplateViewSet(
                     'name': slz.validated_data['name'],
                     'user_id': self.request.user.id,
                     'account_id': self.request.user.account_id,
-                }
+                },
             )
             raise Http404 from ex
         service = TemplateService(
             user=request.user,
             is_superuser=request.is_superuser,
-            auth_type=request.token_type
+            auth_type=request.token_type,
         )
         try:
             template = service.create_template_from_library_template(
-                system_template=system_template
+                system_template=system_template,
             )
         except TemplateServiceException as ex:
             raise_validation_error(message=ex.message)
@@ -631,20 +631,20 @@ class TemplateViewSet(
         user = request.user
         filter_slz = TemplateExportFilterSerializer(
             data=request.query_params,
-            context={'account_id': user.account.id}
+            context={'account_id': user.account.id},
         )
         filter_slz.is_valid(raise_exception=True)
         queryset = Template.objects.raw_export_query(
             user_id=user.id,
             account_id=user.account_id,
-            **filter_slz.validated_data
+            **filter_slz.validated_data,
         )
         return self.paginated_response(queryset)
 
 
 class TemplateIntegrationsViewSet(
     CustomViewSetMixin,
-    GenericViewSet
+    GenericViewSet,
 ):
     permission_classes = (
         UserIsAuthenticated,
@@ -656,7 +656,7 @@ class TemplateIntegrationsViewSet(
 
     def get_queryset(self):
         return Template.objects.on_account(
-            self.request.user.account_id
+            self.request.user.account_id,
         ).exclude_onboarding()
 
     def list(self, request, *args, **kwargs):
@@ -665,9 +665,9 @@ class TemplateIntegrationsViewSet(
         service = TemplateIntegrationsService(
             account=request.user.account,
             is_superuser=request.is_superuser,
-            user=request.user
+            user=request.user,
         )
         data = service.get_integrations(
-            **slz.validated_data
+            **slz.validated_data,
         )
         return self.response_ok(data=data)

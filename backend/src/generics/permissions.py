@@ -9,14 +9,14 @@ class BaseAuthPermission(BasePermission):
     def _is_authenticated(self, request: Request) -> bool:
         return bool(
             request.user
-            and request.user.is_authenticated
+            and request.user.is_authenticated,
         )
 
     def _user_is_authenticated(self, request: Request) -> bool:
         return bool(
             request.user
             and request.user.is_authenticated
-            and request.user.type == UserType.USER
+            and request.user.type == UserType.USER,
         )
 
 

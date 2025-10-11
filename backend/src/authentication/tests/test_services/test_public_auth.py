@@ -5,7 +5,7 @@ from src.processes.tests.fixtures import (
     create_test_user,
 )
 from src.authentication.services.public_auth import (
-    PublicAuthService
+    PublicAuthService,
 )
 from src.processes.enums import TemplateType
 from src.authentication.tokens import (
@@ -24,7 +24,7 @@ class TestPublicUsersVewSet:
         # arrange
         header_value = 'Token AW!2d@'
         request_mock = mocker.Mock(
-            headers={'X-Public-Authorization': header_value}
+            headers={'X-Public-Authorization': header_value},
         )
 
         # act
@@ -39,7 +39,7 @@ class TestPublicUsersVewSet:
         header_value = 'Token AW!2d@'
         request_mock = mocker.Mock(
             META={'X-Public-Authorization': header_value},
-            headers={}
+            headers={},
         )
 
         # act
@@ -57,7 +57,7 @@ class TestPublicUsersVewSet:
         get_header_mock = mocker.patch(
             'src.authentication.services.public_auth.'
             'PublicAuthService._get_header',
-            return_value=header_value
+            return_value=header_value,
         )
 
         # act
@@ -77,7 +77,7 @@ class TestPublicUsersVewSet:
         get_header_mock = mocker.patch(
             'src.authentication.services.public_auth.'
             'PublicAuthService._get_header',
-            return_value=header_value
+            return_value=header_value,
         )
 
         # act
@@ -96,7 +96,7 @@ class TestPublicUsersVewSet:
         get_header_mock = mocker.patch(
             'src.authentication.services.public_auth.'
             'PublicAuthService._get_header',
-            return_value=header_value
+            return_value=header_value,
         )
 
         # act
@@ -116,7 +116,7 @@ class TestPublicUsersVewSet:
         get_header_mock = mocker.patch(
             'src.authentication.services.public_auth.'
             'PublicAuthService._get_header',
-            return_value=header_value
+            return_value=header_value,
         )
 
         # act
@@ -133,7 +133,7 @@ class TestPublicUsersVewSet:
         get_header_mock = mocker.patch(
             'src.authentication.services.public_auth.'
             'PublicAuthService._get_header',
-            return_value=None
+            return_value=None,
         )
 
         # act
@@ -151,7 +151,7 @@ class TestPublicUsersVewSet:
         get_header_mock = mocker.patch(
             'src.authentication.services.public_auth.'
             'PublicAuthService._get_header',
-            return_value=public_id
+            return_value=public_id,
         )
 
         # act
@@ -170,7 +170,7 @@ class TestPublicUsersVewSet:
         get_header_mock = mocker.patch(
             'src.authentication.services.public_auth.'
             'PublicAuthService._get_header',
-            return_value=header_value
+            return_value=header_value,
         )
 
         # act
@@ -198,7 +198,7 @@ class TestPublicUsersVewSet:
         template = create_test_template(
             user=user,
             is_active=True,
-            is_public=True
+            is_public=True,
         )
         token = PublicToken(template.public_id)
 
@@ -216,7 +216,7 @@ class TestPublicUsersVewSet:
         template = create_test_template(
             user=user,
             is_active=True,
-            is_embedded=True
+            is_embedded=True,
         )
         token = EmbedToken(template.embed_id)
 
@@ -233,7 +233,7 @@ class TestPublicUsersVewSet:
         template = create_test_template(
             user=user,
             is_active=False,
-            is_public=True
+            is_public=True,
         )
         token = PublicToken(template.public_id)
 
@@ -250,7 +250,7 @@ class TestPublicUsersVewSet:
         template = create_test_template(
             user=user,
             is_active=True,
-            is_public=False
+            is_public=False,
         )
         token = PublicToken(template.public_id)
 
@@ -268,7 +268,7 @@ class TestPublicUsersVewSet:
         create_test_template(
             user=user,
             is_active=True,
-            is_public=True
+            is_public=True,
         )
         token = PublicToken()
 
@@ -287,7 +287,7 @@ class TestPublicUsersVewSet:
             is_active=True,
             is_public=True,
             tasks_count=1,
-            type_=TemplateType.ONBOARDING_ACCOUNT_OWNER
+            type_=TemplateType.ONBOARDING_ACCOUNT_OWNER,
         )
         token = PublicToken(template.public_id)
 

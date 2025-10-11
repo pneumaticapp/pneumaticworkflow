@@ -5,7 +5,7 @@ from rest_framework.serializers import (
 )
 from drf_recaptcha.fields import ReCaptchaV2Field
 from src.generics.mixins.serializers import (
-    CustomValidationErrorMixin
+    CustomValidationErrorMixin,
 )
 
 
@@ -14,7 +14,7 @@ UserModel = get_user_model()
 
 class ExternalWorkflowCreateSerializer(
     CustomValidationErrorMixin,
-    Serializer
+    Serializer,
 ):
 
     class Meta:
@@ -30,7 +30,7 @@ class ExternalWorkflowCreateSerializer(
 
 
 class SecuredExternalWorkflowCreateSerializer(
-    ExternalWorkflowCreateSerializer
+    ExternalWorkflowCreateSerializer,
 ):
     class Meta:
         fields = (

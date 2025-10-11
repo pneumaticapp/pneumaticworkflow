@@ -28,11 +28,11 @@ class IntegrationCreateForm(ModelForm):
     image_file = forms.FileField(
         required=False,
         help_text='Logo of service we integrated with. '
-                  'Only svg files are supported!'
+                  'Only svg files are supported!',
     )
     long_description = CharField(
         widget=TinyMCE(),
-        help_text='Long description to be displayed on the integration page.'
+        help_text='Long description to be displayed on the integration page.',
     )
 
     def clean(self):
@@ -60,7 +60,7 @@ class IntegrationCreateForm(ModelForm):
         public_url = storage.upload_from_binary(
             filepath=file_path,
             binary=image.file.getvalue(),
-            content_type='image/svg+xml'
+            content_type='image/svg+xml',
         )
         integration = super().save(commit=commit)
         integration.logo = public_url
@@ -73,7 +73,7 @@ class IntegrationAdmin(ModelAdmin):
 
     def logo_preview(self, obj):
         return mark_safe(
-            f'<image src={obj.logo} style="max-width: 200px;">'
+            f'<image src={obj.logo} style="max-width: 200px;">',
         )
 
     readonly_fields = ['id', 'logo_preview']

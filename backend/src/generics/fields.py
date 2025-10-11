@@ -27,7 +27,7 @@ class AccountPrimaryKeyRelatedField(serializers.PrimaryKeyRelatedField):
                 account = request.user.account
         if not account:
             raise Exception(
-                'Account not provided for AccountPrimaryKeyRelatedField'
+                'Account not provided for AccountPrimaryKeyRelatedField',
             )
         return account
 
@@ -75,7 +75,7 @@ class CommaSeparatedListField(serializers.ListField):
             return html.parse_html_list(
                 dictionary,
                 prefix=self.field_name,
-                default=empty
+                default=empty,
             )
         return dictionary.get(self.field_name, empty)
 
@@ -107,7 +107,7 @@ class DateFormatField(serializers.ChoiceField):
     def __init__(self, **kwargs):
         super().__init__(
             choices=UserDateFormat.API_CHOICES,
-            **kwargs
+            **kwargs,
         )
 
     def to_internal_value(self, data):

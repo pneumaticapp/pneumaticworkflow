@@ -22,7 +22,7 @@ class AccountCacheSerializer(serializers.ModelSerializer):
 
 class AccountSerializer(
     CustomValidationErrorMixin,
-    serializers.ModelSerializer
+    serializers.ModelSerializer,
 ):
 
     class Meta:
@@ -49,11 +49,11 @@ class AccountSerializer(
 
     date_joined_tsp = TimeStampField(
         source='date_joined',
-        read_only=True
+        read_only=True,
     )
     plan_expiration_tsp = TimeStampField(
         source='plan_expiration',
-        read_only=True
+        read_only=True,
     )
 
     def validate_logo_lg(self, value):
@@ -89,5 +89,5 @@ class AccountPlanSerializer(serializers.ModelSerializer):
 
     plan_expiration_tsp = TimeStampField(
         read_only=True,
-        source='plan_expiration'
+        source='plan_expiration',
     )

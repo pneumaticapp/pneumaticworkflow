@@ -25,7 +25,7 @@ class PublicAuthService(BaseAuthentication):
         """
         return request.headers.get(
             'X-Public-Authorization',
-            request.META.get('X-Public-Authorization')
+            request.META.get('X-Public-Authorization'),
         )
 
     @classmethod

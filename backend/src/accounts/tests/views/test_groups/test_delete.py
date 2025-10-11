@@ -24,17 +24,17 @@ def test_groups_delete_group_ok(api_client, mocker):
     service_init_mock = mocker.patch.object(
         UserGroupService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     service_delete_mock = mocker.patch(
         'src.accounts.services.group.'
-        'UserGroupService.delete'
+        'UserGroupService.delete',
     )
     api_client.token_authenticate(user)
 
     # act
     response = api_client.delete(
-        path=f'/accounts/groups/{group.id}'
+        path=f'/accounts/groups/{group.id}',
     )
 
     # assert
@@ -43,7 +43,7 @@ def test_groups_delete_group_ok(api_client, mocker):
         user=user,
         instance=group,
         is_superuser=False,
-        auth_type=AuthTokenType.USER
+        auth_type=AuthTokenType.USER,
     )
     service_delete_mock.assert_called_once()
 
@@ -51,7 +51,7 @@ def test_groups_delete_group_ok(api_client, mocker):
 @pytest.mark.parametrize(
     'plan', (BillingPlanType.FREEMIUM, BillingPlanType.PREMIUM))
 def test_delete__group_owner_removed_from_workflow_in_all_plan__ok(
-    api_client, plan, mocker
+    api_client, plan, mocker,
 ):
     # Arrange
     account = create_test_account(plan=plan)
@@ -60,17 +60,17 @@ def test_delete__group_owner_removed_from_workflow_in_all_plan__ok(
     service_init_mock = mocker.patch.object(
         UserGroupService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     service_delete_mock = mocker.patch(
         'src.accounts.services.group.'
-        'UserGroupService.delete'
+        'UserGroupService.delete',
     )
     api_client.token_authenticate(user)
 
     # Act
     response = api_client.delete(
-        path=f'/accounts/groups/{group_to_delete.id}'
+        path=f'/accounts/groups/{group_to_delete.id}',
     )
 
     # Assert
@@ -79,7 +79,7 @@ def test_delete__group_owner_removed_from_workflow_in_all_plan__ok(
         user=user,
         instance=group_to_delete,
         is_superuser=False,
-        auth_type=AuthTokenType.USER
+        auth_type=AuthTokenType.USER,
     )
     service_delete_mock.assert_called_once()
 
@@ -94,22 +94,22 @@ def test_delete__not_admin__permission_denied(api_client, mocker):
         account=account,
         email='no_admin@test.com',
         is_admin=False,
-        is_account_owner=False
+        is_account_owner=False,
     )
     service_init_mock = mocker.patch.object(
         UserGroupService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     service_delete_mock = mocker.patch(
         'src.accounts.services.group.'
-        'UserGroupService.delete'
+        'UserGroupService.delete',
     )
     api_client.token_authenticate(no_admin_user)
 
     # act
     response = api_client.delete(
-        path=f'/accounts/groups/{group_to_delete.id}'
+        path=f'/accounts/groups/{group_to_delete.id}',
     )
 
     # assert
@@ -127,16 +127,16 @@ def test_delete__not_auth__permission_denied(api_client, mocker):
     service_init_mock = mocker.patch.object(
         UserGroupService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     service_delete_mock = mocker.patch(
         'src.accounts.services.group.'
-        'UserGroupService.delete'
+        'UserGroupService.delete',
     )
 
     # act
     response = api_client.delete(
-        path=f'/accounts/groups/{group.id}'
+        path=f'/accounts/groups/{group.id}',
     )
 
     # assert
@@ -150,24 +150,24 @@ def test_delete__expired_subscription__permission_denied(api_client, mocker):
     # arrange
     account = create_test_account(
         plan=BillingPlanType.UNLIMITED,
-        plan_expiration=timezone.now() - datetime.timedelta(hours=1)
+        plan_expiration=timezone.now() - datetime.timedelta(hours=1),
     )
     user = create_test_user(account=account)
     group = create_test_group(account, users=[user])
     service_init_mock = mocker.patch.object(
         UserGroupService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     service_delete_mock = mocker.patch(
         'src.accounts.services.group.'
-        'UserGroupService.delete'
+        'UserGroupService.delete',
     )
     api_client.token_authenticate(user)
 
     # act
     response = api_client.delete(
-        path=f'/accounts/groups/{group.id}'
+        path=f'/accounts/groups/{group.id}',
     )
 
     # assert

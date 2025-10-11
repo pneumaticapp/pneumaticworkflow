@@ -6,7 +6,7 @@ from src.processes.messages.workflow import (
     MSG_PW_0050,
 )
 from src.generics.mixins.serializers import (
-    CustomValidationErrorMixin
+    CustomValidationErrorMixin,
 )
 
 

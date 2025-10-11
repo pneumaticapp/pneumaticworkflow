@@ -5,13 +5,13 @@ from src.generics.managers import BaseSoftDeleteManager
 from src.processes.models.workflows.task import Task
 from src.processes.querysets import (
     ChecklistQuerySet,
-    ChecklistSelectionQuerySet
+    ChecklistSelectionQuerySet,
 )
 
 
 class Checklist(
     SoftDeleteModel,
-    ApiNameMixin
+    ApiNameMixin,
 ):
 
     class Meta:
@@ -36,21 +36,21 @@ class ChecklistSelection(
     checklist = models.ForeignKey(
         Checklist,
         on_delete=models.CASCADE,
-        related_name='selections'
+        related_name='selections',
     )
     date_selected = models.DateTimeField(
         null=True,
-        verbose_name='The date the selection was marked'
+        verbose_name='The date the selection was marked',
     )
     selected_user_id = models.IntegerField(
         null=True,
-        verbose_name='The user who mark or unmark selection'
+        verbose_name='The user who mark or unmark selection',
     )
     value = models.TextField()
     value_template = models.TextField()
 
     objects = BaseSoftDeleteManager.from_queryset(
-        ChecklistSelectionQuerySet
+        ChecklistSelectionQuerySet,
     )()
 
     @property

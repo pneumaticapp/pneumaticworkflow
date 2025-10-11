@@ -4,12 +4,12 @@ from django.core.cache import cache as default_cache
 from django.contrib.auth import get_user_model
 from rest_framework import HTTP_HEADER_ENCODING
 from rest_framework_simplejwt.authentication import (
-    JWTAuthentication
+    JWTAuthentication,
 )
 from rest_framework_simplejwt.exceptions import (
     AuthenticationFailed,
     InvalidToken,
-    TokenError
+    TokenError,
 )
 from src.authentication.enums import (
     GuestCachedStatus,
@@ -59,8 +59,8 @@ class GuestJWTAuthService(JWTAuthentication):
             cls.get_token(
                 user_id=user_id,
                 task_id=task_id,
-                account_id=account_id
-            )
+                account_id=account_id,
+            ),
         )
 
     def get_header(self, request):
@@ -70,7 +70,7 @@ class GuestJWTAuthService(JWTAuthentication):
         """
         header = request.headers.get(
             'X-Guest-Authorization',
-            request.META.get('X-Guest-Authorization')
+            request.META.get('X-Guest-Authorization'),
         )
         if isinstance(header, str):
             header = header.encode(HTTP_HEADER_ENCODING)
@@ -116,8 +116,8 @@ class GuestJWTAuthService(JWTAuthentication):
                 GetGuestQuery(
                     user_id=user_id,
                     account_id=account_id,
-                    task_id=task_id
-                )
+                    task_id=task_id,
+                ),
             )[0]
         except IndexError as ex:
             raise AuthenticationFailed(MSG_AU_0009) from ex
@@ -156,7 +156,7 @@ class GuestJWTAuthService(JWTAuthentication):
         cls,
         task_id: int,
         status: GuestCachedStatus,
-        user_id: Optional[int] = None
+        user_id: Optional[int] = None,
     ):
 
         """ Store in cache guests status for task.
@@ -181,7 +181,7 @@ class GuestJWTAuthService(JWTAuthentication):
     def deactivate_task_guest_cache(
         cls,
         task_id: int,
-        user_id: Optional[int] = None
+        user_id: Optional[int] = None,
     ):
         """ Set the guest status active in cache
             It means that guest user will receive and permission denied error
@@ -190,14 +190,14 @@ class GuestJWTAuthService(JWTAuthentication):
         cls._set_guest_cache(
             task_id=task_id,
             user_id=user_id,
-            status=GuestCachedStatus.INACTIVE
+            status=GuestCachedStatus.INACTIVE,
         )
 
     @classmethod
     def activate_task_guest_cache(
         cls,
         task_id: int,
-        user_id: Optional[int] = None
+        user_id: Optional[int] = None,
     ):
         """ Set the guest status active in cache
             It means that the guest will be authenticated quickly
@@ -206,13 +206,13 @@ class GuestJWTAuthService(JWTAuthentication):
         cls._set_guest_cache(
             task_id=task_id,
             user_id=user_id,
-            status=GuestCachedStatus.ACTIVE
+            status=GuestCachedStatus.ACTIVE,
         )
 
     @classmethod
     def delete_task_guest_cache(
         cls,
-        task_id: int
+        task_id: int,
     ):
         key = cls._get_cache_key(task_id)
         cls.cache.delete(key)

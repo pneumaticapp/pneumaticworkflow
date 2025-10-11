@@ -23,12 +23,12 @@ def test_retrieve__not_admin__ok(api_client):
         logo_lg=logo_lg,
         logo_sm=logo_sm,
         lease_level=LeaseLevel.TENANT,
-        plan=BillingPlanType.PREMIUM
+        plan=BillingPlanType.PREMIUM,
     )
     user = create_test_user(
         account=account,
         is_admin=False,
-        is_account_owner=False
+        is_account_owner=False,
     )
     api_client.token_authenticate(user)
     response = api_client.get('/accounts/account')

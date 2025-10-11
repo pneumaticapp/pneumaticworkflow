@@ -8,14 +8,14 @@ from src.accounts.enums import (
 )
 from src.authentication.enums import AuthTokenType
 from src.accounts.services import (
-    AccountService
+    AccountService,
 )
 from src.processes.tests.fixtures import (
     create_test_user,
     create_test_account,
 )
 from src.accounts.services.convert_account import (
-    AccountLLConverter
+    AccountLLConverter,
 )
 from src.payment.stripe.service import StripeService
 
@@ -35,12 +35,12 @@ class TestAccountLLConverter:
             (LeaseLevel.STANDARD, LeaseLevel.PARTNER),
             (LeaseLevel.PARTNER, LeaseLevel.STANDARD),
             (LeaseLevel.PARTNER, LeaseLevel.TENANT),
-        )
+        ),
     )
     def test_handle__different_lease_level__ok(
         self,
         mocker,
-        pair
+        pair,
     ):
 
         # arrange
@@ -49,11 +49,11 @@ class TestAccountLLConverter:
         prev, new = pair
         method_mock = mocker.patch(
             'src.accounts.services.convert_account'
-            f'.AccountLLConverter._{prev}_to_{new}'
+            f'.AccountLLConverter._{prev}_to_{new}',
         )
         service = AccountLLConverter(
             user=user,
-            instance=account
+            instance=account,
         )
 
         # act
@@ -72,7 +72,7 @@ class TestAccountLLConverter:
         prev = new = LeaseLevel.TENANT
         service = AccountLLConverter(
             user=user,
-            instance=account
+            instance=account,
         )
 
         # act
@@ -85,32 +85,32 @@ class TestAccountLLConverter:
 
         # arrange
         master_account = create_test_account(
-            lease_level=LeaseLevel.PARTNER
+            lease_level=LeaseLevel.PARTNER,
         )
         master_account_owner = create_test_user(
             account=master_account,
-            email='master@test.test'
+            email='master@test.test',
         )
         tenant_account = create_test_account(
             name='tenant',
             lease_level=LeaseLevel.TENANT,
-            master_account=master_account
+            master_account=master_account,
         )
         tenant_user = create_test_user(account=tenant_account)
 
         init_mock = mocker.patch.object(
             AccountService,
             attribute='__init__',
-            return_value=None
+            return_value=None,
         )
         update_users_counts_mock = mocker.patch(
             'src.accounts.services.AccountService.'
-            'update_users_counts'
+            'update_users_counts',
         )
 
         service = AccountLLConverter(
             user=tenant_user,
-            instance=tenant_account
+            instance=tenant_account,
         )
 
         # act
@@ -119,7 +119,7 @@ class TestAccountLLConverter:
         # assert
         init_mock.assert_called_once_with(
             user=master_account_owner,
-            instance=master_account
+            instance=master_account,
         )
         update_users_counts_mock.assert_called_once()
 
@@ -146,50 +146,50 @@ class TestAccountLLConverter:
             trial_start=trial_start,
             trial_end=plan_expiration,
             trial_ended=trial_ended,
-            billing_sync=True
+            billing_sync=True,
         )
         create_test_user(
             account=master_account,
-            email='master@test.test'
+            email='master@test.test',
         )
         tenant_account = create_test_account(
             name='tenant',
             plan=None,
             lease_level=LeaseLevel.TENANT,
-            master_account=master_account
+            master_account=master_account,
         )
         tenant_user = create_test_user(account=tenant_account)
         settings_mock = mocker.patch(
-            'src.accounts.services.convert_account.settings'
+            'src.accounts.services.convert_account.settings',
         )
         settings_mock.PROJECT_CONF = {'BILLING': True}
         update_master_account_user_counts_mock = mocker.patch(
             'src.accounts.services.convert_account'
-            '.AccountLLConverter._update_master_account_user_counts'
+            '.AccountLLConverter._update_master_account_user_counts',
         )
         init_mock = mocker.patch.object(
             AccountService,
             attribute='__init__',
-            return_value=None
+            return_value=None,
         )
         partial_update_mock = mocker.patch(
-            'src.accounts.services.AccountService.partial_update'
+            'src.accounts.services.AccountService.partial_update',
         )
         increase_plan_users_mock = mocker.patch(
-            'src.payment.tasks.increase_plan_users.delay'
+            'src.payment.tasks.increase_plan_users.delay',
         )
         stripe_service_init_mock = mocker.patch.object(
             StripeService,
             attribute='__init__',
-            return_value=None
+            return_value=None,
         )
         create_off_session_subscription_mock = mocker.patch(
             'src.payment.stripe.service.StripeService.'
-            'create_off_session_subscription'
+            'create_off_session_subscription',
         )
         service = AccountLLConverter(
             user=tenant_user,
-            instance=tenant_account
+            instance=tenant_account,
         )
 
         # act
@@ -199,7 +199,7 @@ class TestAccountLLConverter:
         update_master_account_user_counts_mock.assert_called_once()
         init_mock.assert_called_once_with(
             user=tenant_user,
-            instance=tenant_account
+            instance=tenant_account,
         )
         partial_update_mock.assert_called_once_with(
             logo_lg=logo_lg,
@@ -211,13 +211,13 @@ class TestAccountLLConverter:
             trial_start=trial_start,
             trial_end=plan_expiration,
             trial_ended=trial_ended,
-            force_save=True
+            force_save=True,
         )
         increase_plan_users_mock.assert_called_once_with(
             account_id=master_account.id,
             increment=False,
             is_superuser=True,
-            auth_type=AuthTokenType.USER
+            auth_type=AuthTokenType.USER,
         )
         stripe_service_init_mock.assert_not_called()
         create_off_session_subscription_mock.assert_not_called()
@@ -245,50 +245,50 @@ class TestAccountLLConverter:
             trial_start=trial_start,
             trial_end=plan_expiration,
             trial_ended=trial_ended,
-            billing_sync=False
+            billing_sync=False,
         )
         create_test_user(
             account=master_account,
-            email='master@test.test'
+            email='master@test.test',
         )
         tenant_account = create_test_account(
             name='tenant',
             plan=None,
             lease_level=LeaseLevel.TENANT,
-            master_account=master_account
+            master_account=master_account,
         )
         tenant_user = create_test_user(account=tenant_account)
         settings_mock = mocker.patch(
-            'src.accounts.services.convert_account.settings'
+            'src.accounts.services.convert_account.settings',
         )
         settings_mock.PROJECT_CONF = {'BILLING': True}
         update_master_account_user_counts_mock = mocker.patch(
             'src.accounts.services.convert_account'
-            '.AccountLLConverter._update_master_account_user_counts'
+            '.AccountLLConverter._update_master_account_user_counts',
         )
         init_mock = mocker.patch.object(
             AccountService,
             attribute='__init__',
-            return_value=None
+            return_value=None,
         )
         partial_update_mock = mocker.patch(
-            'src.accounts.services.AccountService.partial_update'
+            'src.accounts.services.AccountService.partial_update',
         )
         increase_plan_users_mock = mocker.patch(
-            'src.payment.tasks.increase_plan_users.delay'
+            'src.payment.tasks.increase_plan_users.delay',
         )
         stripe_service_init_mock = mocker.patch.object(
             StripeService,
             attribute='__init__',
-            return_value=None
+            return_value=None,
         )
         create_off_session_subscription_mock = mocker.patch(
             'src.payment.stripe.service.StripeService.'
-            'create_off_session_subscription'
+            'create_off_session_subscription',
         )
         service = AccountLLConverter(
             user=tenant_user,
-            instance=tenant_account
+            instance=tenant_account,
         )
 
         # act
@@ -298,7 +298,7 @@ class TestAccountLLConverter:
         update_master_account_user_counts_mock.assert_called_once()
         init_mock.assert_called_once_with(
             user=tenant_user,
-            instance=tenant_account
+            instance=tenant_account,
         )
         partial_update_mock.assert_called_once_with(
             logo_lg=logo_lg,
@@ -310,7 +310,7 @@ class TestAccountLLConverter:
             trial_start=trial_start,
             trial_end=plan_expiration,
             trial_ended=trial_ended,
-            force_save=True
+            force_save=True,
         )
         increase_plan_users_mock.assert_not_called()
         stripe_service_init_mock.assert_not_called()
@@ -340,56 +340,56 @@ class TestAccountLLConverter:
             trial_start=trial_start,
             trial_end=trial_end,
             trial_ended=trial_ended,
-            billing_sync=True
+            billing_sync=True,
         )
         create_test_user(
             account=master_account,
             email='admin@test.test',
-            is_account_owner=False
+            is_account_owner=False,
         )
         master_account_owner = create_test_user(
             account=master_account,
             email='master@test.test',
-            is_account_owner=True
+            is_account_owner=True,
         )
         tenant_account = create_test_account(
             name='tenant',
             plan=None,
             lease_level=LeaseLevel.TENANT,
-            master_account=master_account
+            master_account=master_account,
         )
         tenant_user = create_test_user(account=tenant_account)
         settings_mock = mocker.patch(
-            'src.accounts.services.convert_account.settings'
+            'src.accounts.services.convert_account.settings',
         )
         settings_mock.PROJECT_CONF = {'BILLING': True}
         update_master_account_user_counts_mock = mocker.patch(
             'src.accounts.services.convert_account'
-            '.AccountLLConverter._update_master_account_user_counts'
+            '.AccountLLConverter._update_master_account_user_counts',
         )
         init_mock = mocker.patch.object(
             AccountService,
             attribute='__init__',
-            return_value=None
+            return_value=None,
         )
         partial_update_mock = mocker.patch(
-            'src.accounts.services.AccountService.partial_update'
+            'src.accounts.services.AccountService.partial_update',
         )
         increase_plan_users_mock = mocker.patch(
-            'src.payment.tasks.increase_plan_users.delay'
+            'src.payment.tasks.increase_plan_users.delay',
         )
         stripe_service_init_mock = mocker.patch.object(
             StripeService,
             attribute='__init__',
-            return_value=None
+            return_value=None,
         )
         create_off_session_subscription_mock = mocker.patch(
             'src.payment.stripe.service.StripeService.'
-            'create_off_session_subscription'
+            'create_off_session_subscription',
         )
         service = AccountLLConverter(
             user=tenant_user,
-            instance=tenant_account
+            instance=tenant_account,
         )
 
         # act
@@ -399,29 +399,29 @@ class TestAccountLLConverter:
         update_master_account_user_counts_mock.assert_called_once()
         init_mock.assert_called_once_with(
             user=tenant_user,
-            instance=tenant_account
+            instance=tenant_account,
         )
         partial_update_mock.assert_called_once_with(
             logo_lg=logo_lg,
             logo_sm=logo_sm,
             max_users=max_users,
             billing_plan=None,
-            force_save=True
+            force_save=True,
         )
         increase_plan_users_mock.assert_not_called()
         stripe_service_init_mock.assert_called_once_with(
             user=master_account_owner,
             subscription_account=tenant_account,
             is_superuser=True,
-            auth_type=AuthTokenType.USER
+            auth_type=AuthTokenType.USER,
         )
         create_off_session_subscription_mock.assert_called_once_with(
             products=[
                 {
                     'code': 'unlimited_month',
-                    'quantity': 1
-                }
-            ]
+                    'quantity': 1,
+                },
+            ],
         )
 
     def test_standard_to_tenant__master_acc_on_unlimited__disable_billing__ok(
@@ -448,56 +448,56 @@ class TestAccountLLConverter:
             trial_start=trial_start,
             trial_end=trial_end,
             trial_ended=trial_ended,
-            billing_sync=False
+            billing_sync=False,
         )
         create_test_user(
             account=master_account,
             email='admin@test.test',
-            is_account_owner=False
+            is_account_owner=False,
         )
         create_test_user(
             account=master_account,
             email='master@test.test',
-            is_account_owner=True
+            is_account_owner=True,
         )
         tenant_account = create_test_account(
             name='tenant',
             plan=None,
             lease_level=LeaseLevel.TENANT,
-            master_account=master_account
+            master_account=master_account,
         )
         tenant_user = create_test_user(account=tenant_account)
         settings_mock = mocker.patch(
-            'src.accounts.services.convert_account.settings'
+            'src.accounts.services.convert_account.settings',
         )
         settings_mock.PROJECT_CONF = {'BILLING': True}
         update_master_account_user_counts_mock = mocker.patch(
             'src.accounts.services.convert_account'
-            '.AccountLLConverter._update_master_account_user_counts'
+            '.AccountLLConverter._update_master_account_user_counts',
         )
         init_mock = mocker.patch.object(
             AccountService,
             attribute='__init__',
-            return_value=None
+            return_value=None,
         )
         partial_update_mock = mocker.patch(
-            'src.accounts.services.AccountService.partial_update'
+            'src.accounts.services.AccountService.partial_update',
         )
         increase_plan_users_mock = mocker.patch(
-            'src.payment.tasks.increase_plan_users.delay'
+            'src.payment.tasks.increase_plan_users.delay',
         )
         stripe_service_init_mock = mocker.patch.object(
             StripeService,
             attribute='__init__',
-            return_value=None
+            return_value=None,
         )
         create_off_session_subscription_mock = mocker.patch(
             'src.payment.stripe.service.StripeService.'
-            'create_off_session_subscription'
+            'create_off_session_subscription',
         )
         service = AccountLLConverter(
             user=tenant_user,
-            instance=tenant_account
+            instance=tenant_account,
         )
 
         # act
@@ -507,7 +507,7 @@ class TestAccountLLConverter:
         update_master_account_user_counts_mock.assert_called_once()
         init_mock.assert_called_once_with(
             user=tenant_user,
-            instance=tenant_account
+            instance=tenant_account,
         )
         partial_update_mock.assert_called_once_with(
             logo_lg=logo_lg,
@@ -519,7 +519,7 @@ class TestAccountLLConverter:
             trial_start=trial_start,
             trial_end=trial_end,
             trial_ended=trial_ended,
-            force_save=True
+            force_save=True,
         )
         increase_plan_users_mock.assert_not_called()
         stripe_service_init_mock.assert_not_called()
@@ -549,56 +549,56 @@ class TestAccountLLConverter:
             trial_start=trial_start,
             trial_end=trial_end,
             trial_ended=trial_ended,
-            billing_sync=True
+            billing_sync=True,
         )
         create_test_user(
             account=master_account,
             email='admin@test.test',
-            is_account_owner=False
+            is_account_owner=False,
         )
         create_test_user(
             account=master_account,
             email='master@test.test',
-            is_account_owner=True
+            is_account_owner=True,
         )
         tenant_account = create_test_account(
             name='tenant',
             plan=None,
             lease_level=LeaseLevel.TENANT,
-            master_account=master_account
+            master_account=master_account,
         )
         tenant_user = create_test_user(account=tenant_account)
         settings_mock = mocker.patch(
-            'src.accounts.services.convert_account.settings'
+            'src.accounts.services.convert_account.settings',
         )
         settings_mock.PROJECT_CONF = {'BILLING': True}
         update_master_account_user_counts_mock = mocker.patch(
             'src.accounts.services.convert_account'
-            '.AccountLLConverter._update_master_account_user_counts'
+            '.AccountLLConverter._update_master_account_user_counts',
         )
         init_mock = mocker.patch.object(
             AccountService,
             attribute='__init__',
-            return_value=None
+            return_value=None,
         )
         partial_update_mock = mocker.patch(
-            'src.accounts.services.AccountService.partial_update'
+            'src.accounts.services.AccountService.partial_update',
         )
         increase_plan_users_mock = mocker.patch(
-            'src.payment.tasks.increase_plan_users.delay'
+            'src.payment.tasks.increase_plan_users.delay',
         )
         stripe_service_init_mock = mocker.patch.object(
             StripeService,
             attribute='__init__',
-            return_value=None
+            return_value=None,
         )
         create_off_session_subscription_mock = mocker.patch(
             'src.payment.stripe.service.StripeService.'
-            'create_off_session_subscription'
+            'create_off_session_subscription',
         )
         service = AccountLLConverter(
             user=tenant_user,
-            instance=tenant_account
+            instance=tenant_account,
         )
 
         # act
@@ -608,14 +608,14 @@ class TestAccountLLConverter:
         update_master_account_user_counts_mock.assert_called_once()
         init_mock.assert_called_once_with(
             user=tenant_user,
-            instance=tenant_account
+            instance=tenant_account,
         )
         partial_update_mock.assert_called_once_with(
             logo_lg=logo_lg,
             logo_sm=logo_sm,
             max_users=max_users,
             billing_plan=BillingPlanType.FREEMIUM,
-            force_save=True
+            force_save=True,
         )
         increase_plan_users_mock.assert_not_called()
         stripe_service_init_mock.assert_not_called()
@@ -634,56 +634,56 @@ class TestAccountLLConverter:
             logo_sm=logo_sm,
             plan=BillingPlanType.FREEMIUM,
             lease_level=LeaseLevel.PARTNER,
-            billing_sync=True
+            billing_sync=True,
         )
         create_test_user(
             account=master_account,
             email='admin@test.test',
-            is_account_owner=False
+            is_account_owner=False,
         )
         create_test_user(
             account=master_account,
             email='master@test.test',
-            is_account_owner=True
+            is_account_owner=True,
         )
         tenant_account = create_test_account(
             name='tenant',
             plan=None,
             lease_level=LeaseLevel.TENANT,
-            master_account=master_account
+            master_account=master_account,
         )
         tenant_user = create_test_user(account=tenant_account)
         settings_mock = mocker.patch(
-            'src.accounts.services.convert_account.settings'
+            'src.accounts.services.convert_account.settings',
         )
         settings_mock.PROJECT_CONF = {'BILLING': True}
         update_master_account_user_counts_mock = mocker.patch(
             'src.accounts.services.convert_account'
-            '.AccountLLConverter._update_master_account_user_counts'
+            '.AccountLLConverter._update_master_account_user_counts',
         )
         init_mock = mocker.patch.object(
             AccountService,
             attribute='__init__',
-            return_value=None
+            return_value=None,
         )
         partial_update_mock = mocker.patch(
-            'src.accounts.services.AccountService.partial_update'
+            'src.accounts.services.AccountService.partial_update',
         )
         increase_plan_users_mock = mocker.patch(
-            'src.payment.tasks.increase_plan_users.delay'
+            'src.payment.tasks.increase_plan_users.delay',
         )
         stripe_service_init_mock = mocker.patch.object(
             StripeService,
             attribute='__init__',
-            return_value=None
+            return_value=None,
         )
         create_off_session_subscription_mock = mocker.patch(
             'src.payment.stripe.service.StripeService.'
-            'create_off_session_subscription'
+            'create_off_session_subscription',
         )
         service = AccountLLConverter(
             user=tenant_user,
-            instance=tenant_account
+            instance=tenant_account,
         )
 
         # act
@@ -693,14 +693,14 @@ class TestAccountLLConverter:
         update_master_account_user_counts_mock.assert_called_once()
         init_mock.assert_called_once_with(
             user=tenant_user,
-            instance=tenant_account
+            instance=tenant_account,
         )
         partial_update_mock.assert_called_once_with(
             logo_lg=logo_lg,
             logo_sm=logo_sm,
             max_users=master_account.max_users,
             billing_plan=BillingPlanType.FREEMIUM,
-            force_save=True
+            force_save=True,
         )
         increase_plan_users_mock.assert_not_called()
         stripe_service_init_mock.assert_not_called()

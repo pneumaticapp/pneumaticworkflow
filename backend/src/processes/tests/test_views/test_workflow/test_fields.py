@@ -95,8 +95,8 @@ def test_fields__filter_by_template_id__ok(api_client):
     response = api_client.get(
         '/workflows/fields',
         data={
-            'template_id': workflow.template.id
-        }
+            'template_id': workflow.template.id,
+        },
     )
 
     # assert
@@ -117,7 +117,7 @@ def test_fields__filter_not_existent_template_id__ok(api_client):
         '/workflows/fields',
         data={
             'template_id': 1233123312123,
-        }
+        },
     )
 
     # assert
@@ -137,7 +137,7 @@ def test_fields__filter_invalid_template_id__validation_error(api_client):
         '/workflows/fields',
         data={
             'template_id': 'invalid',
-        }
+        },
     )
 
     # assert
@@ -185,7 +185,7 @@ def test_fields__simple_field_types__ok(api_client, field_type):
         clear_value='bold text',
         workflow=workflow,
         is_required=True,
-        description='Some description'
+        description='Some description',
     )
     api_client.token_authenticate(user)
 
@@ -230,17 +230,17 @@ def test_fields__field_types_with_selections__ok(api_client, field_type):
         markdown_value='don\'t lovely value',
         workflow=workflow,
         is_required=True,
-        description='Some description'
+        description='Some description',
     )
     FieldSelection.objects.create(
         field=field,
         value='don\'t lovely value',
-        is_selected=True
+        is_selected=True,
     )
     FieldSelection.objects.create(
         field=field,
         value='don\'t lovely value',
-        is_selected=False
+        is_selected=False,
     )
     api_client.token_authenticate(user)
 
@@ -272,14 +272,14 @@ def test_fields__type_file__ok(api_client):
         clear_value='https://john.cena/john.cena',
         workflow=workflow,
         is_required=True,
-        description='Some description'
+        description='Some description',
     )
     FileAttachment.objects.create(
         name='file',
         url='https://john.cena/john.cena',
         account_id=user.account_id,
         output=field,
-        workflow=workflow
+        workflow=workflow,
     )
     api_client.token_authenticate(user)
 
@@ -307,17 +307,17 @@ def test_fields__filter_by_status_running__ok(api_client):
     )
     workflow = create_test_workflow(
         user=user,
-        template=template
+        template=template,
     )
     create_test_workflow(
         user=user,
         template=template,
-        status=WorkflowStatus.DONE
+        status=WorkflowStatus.DONE,
     )
     create_test_workflow(
         user=user,
         template=template,
-        status=WorkflowStatus.DELAYED
+        status=WorkflowStatus.DELAYED,
     )
     api_client.token_authenticate(user)
 
@@ -326,7 +326,7 @@ def test_fields__filter_by_status_running__ok(api_client):
         '/workflows/fields',
         data={
             'status': WorkflowApiStatus.RUNNING,
-        }
+        },
     )
 
     # assert
@@ -341,18 +341,18 @@ def test_fields__filter_by_status_delayed__ok(api_client):
     template = create_test_template(
         user,
         is_active=True,
-        tasks_count=1
+        tasks_count=1,
     )
     create_test_workflow(user, template=template)
     create_test_workflow(
         user=user,
         template=template,
-        status=WorkflowStatus.DONE
+        status=WorkflowStatus.DONE,
     )
     delayed_workflow = create_test_workflow(
         user=user,
         template=template,
-        status=WorkflowStatus.DELAYED
+        status=WorkflowStatus.DELAYED,
     )
 
     api_client.token_authenticate(user)
@@ -362,7 +362,7 @@ def test_fields__filter_by_status_delayed__ok(api_client):
         '/workflows/fields',
         data={
             'status': WorkflowApiStatus.DELAYED,
-        }
+        },
     )
 
     # assert
@@ -377,18 +377,18 @@ def test_fields__filter_by_status_done__ok(api_client):
     template = create_test_template(
         user,
         is_active=True,
-        tasks_count=1
+        tasks_count=1,
     )
     create_test_workflow(user, template=template)
     done_workflow = create_test_workflow(
         user=user,
         template=template,
-        status=WorkflowStatus.DONE
+        status=WorkflowStatus.DONE,
     )
     create_test_workflow(
         user=user,
         template=template,
-        status=WorkflowStatus.DELAYED
+        status=WorkflowStatus.DELAYED,
     )
 
     api_client.token_authenticate(user)
@@ -398,7 +398,7 @@ def test_fields__filter_by_status_done__ok(api_client):
         '/workflows/fields',
         data={
             'status': WorkflowApiStatus.DONE,
-        }
+        },
     )
 
     # assert
@@ -418,7 +418,7 @@ def test_fields__filter_by_invalid_status__validation__error(api_client):
         '/workflows/fields',
         data={
             'status': 'non-existing-status',
-        }
+        },
     )
 
     # assert
@@ -443,7 +443,7 @@ def test_fields__filter_by_fields__ok(api_client):
         task=task,
         value='text',
         api_name='field-1',
-        workflow=workflow
+        workflow=workflow,
     )
     TaskField.objects.create(
         order=2,
@@ -452,7 +452,7 @@ def test_fields__filter_by_fields__ok(api_client):
         task=task,
         value='text 2',
         api_name='field-2',
-        workflow=workflow
+        workflow=workflow,
     )
     api_client.token_authenticate(user)
 
@@ -461,7 +461,7 @@ def test_fields__filter_by_fields__ok(api_client):
         '/workflows/fields',
         data={
             'fields': [field.api_name],
-        }
+        },
     )
 
     # assert
@@ -487,7 +487,7 @@ def test_fields__filter_by_multiple_fields__ok(api_client):
         kickoff=workflow.kickoff_instance,
         value='text',
         api_name='field-1',
-        workflow=workflow
+        workflow=workflow,
     )
     field_2 = TaskField.objects.create(
         order=2,
@@ -496,7 +496,7 @@ def test_fields__filter_by_multiple_fields__ok(api_client):
         task=task_1,
         value='text 2',
         api_name='field-2',
-        workflow=workflow
+        workflow=workflow,
     )
     TaskField.objects.create(
         order=2,
@@ -505,7 +505,7 @@ def test_fields__filter_by_multiple_fields__ok(api_client):
         task=task_1,
         value='text 2',
         api_name='field-non-selected',
-        workflow=workflow
+        workflow=workflow,
     )
 
     api_client.token_authenticate(user)
@@ -517,8 +517,8 @@ def test_fields__filter_by_multiple_fields__ok(api_client):
             'fields': (
                 f'{field.api_name},'
                 f'{field_2.api_name}'
-            )
-        }
+            ),
+        },
     )
 
     # assert
@@ -548,7 +548,7 @@ def test_fields__multiple_workflows_and_multiple_fields__ok(api_client):
         kickoff=workflow.kickoff_instance,
         value='text',
         api_name='field-1',
-        workflow=workflow
+        workflow=workflow,
     )
     workflow_2 = create_test_workflow(user, tasks_count=2)
     field_2 = TaskField.objects.create(
@@ -558,7 +558,7 @@ def test_fields__multiple_workflows_and_multiple_fields__ok(api_client):
         kickoff=workflow_2.kickoff_instance,
         value='text 2',
         api_name='field-2',
-        workflow=workflow_2
+        workflow=workflow_2,
     )
 
     api_client.token_authenticate(user)
@@ -570,8 +570,8 @@ def test_fields__multiple_workflows_and_multiple_fields__ok(api_client):
             'fields': (
                 f'{field.api_name},'
                 f'{field_2.api_name}'
-            )
-        }
+            ),
+        },
     )
 
     # assert
@@ -602,7 +602,7 @@ def test_fields__filter_by_invalid_fields__ok(api_client):
         task=task,
         value='text',
         api_name='field-1',
-        workflow=workflow
+        workflow=workflow,
     )
     TaskField.objects.create(
         order=2,
@@ -611,7 +611,7 @@ def test_fields__filter_by_invalid_fields__ok(api_client):
         task=task,
         value='text 2',
         api_name='field-2',
-        workflow=workflow
+        workflow=workflow,
     )
     api_client.token_authenticate(user)
 
@@ -620,7 +620,7 @@ def test_fields__filter_by_invalid_fields__ok(api_client):
         '/workflows/fields',
         data={
             'fields': 'field-non-existing',
-        }
+        },
     )
 
     # assert
@@ -645,8 +645,8 @@ def test_fields__pagination__ok(api_client):
         '/workflows/fields',
         data={
             'limit': 1,
-            'offset': 1
-        }
+            'offset': 1,
+        },
     )
 
     # assert
@@ -698,18 +698,18 @@ def test_fields__user_guest__permission_denied(api_client):
     task = workflow.tasks.first()
     TaskPerformer.objects.create(
         task_id=task.id,
-        user_id=guest.id
+        user_id=guest.id,
     )
     str_token = GuestJWTAuthService.get_str_token(
         task_id=task.id,
         user_id=guest.id,
-        account_id=account.id
+        account_id=account.id,
     )
 
     # act
     response = api_client.get(
         '/workflows/fields',
-        **{'X-Guest-Authorization': str_token}
+        **{'X-Guest-Authorization': str_token},
     )
 
     # assert
@@ -725,7 +725,7 @@ def test_fields__public_auth__permission_denied(api_client):
         user=owner,
         is_active=True,
         is_public=True,
-        tasks_count=1
+        tasks_count=1,
     )
     token = f'Token {template.public_id}'
     create_test_workflow(owner, template=template)
@@ -733,7 +733,7 @@ def test_fields__public_auth__permission_denied(api_client):
     # act
     response = api_client.get(
         '/workflows/fields',
-        **{'X-Public-Authorization': token}
+        **{'X-Public-Authorization': token},
     )
 
     # assert

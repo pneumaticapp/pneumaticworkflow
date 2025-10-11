@@ -29,6 +29,6 @@ class TenantSerializer(
     tenant_name = CharField(
         allow_null=False,
         allow_blank=False,
-        max_length=255
+        max_length=255,
     )
     date_joined_tsp = TimeStampField(source='date_joined', read_only=True)

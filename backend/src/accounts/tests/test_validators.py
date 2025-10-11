@@ -40,7 +40,7 @@ class TestTemplateTask:
         template_task = template.tasks.get(number=1)
         template_task.raw_performers.all().delete()
         template_task.add_raw_performer(
-            performer_type=PerformerType.WORKFLOW_STARTER
+            performer_type=PerformerType.WORKFLOW_STARTER,
         )
 
         # act
@@ -165,7 +165,7 @@ class TestWorkflowTask:
     @pytest.mark.parametrize('status', (
         TaskStatus.PENDING,
         TaskStatus.DELAYED,
-        TaskStatus.ACTIVE
+        TaskStatus.ACTIVE,
     ))
     def test_user_is_last_performer__active_task__ok(self, status):
 

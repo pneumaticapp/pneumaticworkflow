@@ -1,14 +1,14 @@
 import pytest
 from src.processes.tests.fixtures import (
-    create_test_user
+    create_test_user,
 )
 from src.processes.models import (
-    FieldTemplate
+    FieldTemplate,
 )
 from src.processes.enums import (
     PerformerType,
     FieldType,
-    OwnerType
+    OwnerType,
 )
 from src.processes.messages import template as messages
 
@@ -20,7 +20,7 @@ class TestCreateTemplateTaskFields:
 
     def test_create__only_required_fields__defaults_ok(
         self,
-        api_client
+        api_client,
     ):
 
         # arrange
@@ -30,7 +30,7 @@ class TestCreateTemplateTaskFields:
             'type': FieldType.TEXT,
             'name': 'Text field',
             'order': 1,
-            'api_name': 'text-field-1'
+            'api_name': 'text-field-1',
         }
 
         # act
@@ -41,7 +41,7 @@ class TestCreateTemplateTaskFields:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'is_active': True,
@@ -54,12 +54,12 @@ class TestCreateTemplateTaskFields:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': user.id
-                            }
-                        ]
-                    }
-                ]
-            }
+                                'source_id': user.id,
+                            },
+                        ],
+                    },
+                ],
+            },
         )
 
         # assert
@@ -99,7 +99,7 @@ class TestCreateTemplateTaskFields:
             'order': 1,
             'is_required': True,
             'api_name': 'text-field-1',
-            'default': 'default value'
+            'default': 'default value',
         }
 
         # act
@@ -111,7 +111,7 @@ class TestCreateTemplateTaskFields:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'kickoff': {},
@@ -123,12 +123,12 @@ class TestCreateTemplateTaskFields:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': user.id
-                            }
-                        ]
-                    }
-                ]
-            }
+                                'source_id': user.id,
+                            },
+                        ],
+                    },
+                ],
+            },
         )
 
         # assert
@@ -166,7 +166,7 @@ class TestCreateTemplateTaskFields:
             'order': 1,
             'name': 'Enter next task performer',
             'is_required': True,
-            'api_name': 'user-field-1'
+            'api_name': 'user-field-1',
         }
 
         # act
@@ -177,7 +177,7 @@ class TestCreateTemplateTaskFields:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'is_active': True,
@@ -190,12 +190,12 @@ class TestCreateTemplateTaskFields:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': user.id
-                            }
-                        ]
-                    }
-                ]
-            }
+                                'source_id': user.id,
+                            },
+                        ],
+                    },
+                ],
+            },
         )
 
         # assert
@@ -224,7 +224,7 @@ class TestCreateTemplateTaskFields:
             'order': 1,
             'name': 'Enter next task performer',
             'is_required': True,
-            'api_name': 'user-field-1'
+            'api_name': 'user-field-1',
         }
 
         api_client.post(
@@ -234,12 +234,12 @@ class TestCreateTemplateTaskFields:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'is_active': True,
                 'kickoff': {
-                    'fields': [request_data]
+                    'fields': [request_data],
                 },
                 'tasks': [
                     {
@@ -249,12 +249,12 @@ class TestCreateTemplateTaskFields:
                         'raw_performers': [
                             {
                                 'type': PerformerType.FIELD,
-                                'source_id': 'user-field-1'
-                            }
-                        ]
-                    }
-                ]
-            }
+                                'source_id': 'user-field-1',
+                            },
+                        ],
+                    },
+                ],
+            },
         )
 
         # act
@@ -265,12 +265,12 @@ class TestCreateTemplateTaskFields:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'is_active': True,
                 'kickoff': {
-                    'fields': [request_data]
+                    'fields': [request_data],
                 },
                 'tasks': [
                     {
@@ -280,12 +280,12 @@ class TestCreateTemplateTaskFields:
                         'raw_performers': [
                             {
                                 'type': PerformerType.FIELD,
-                                'source_id': 'user-field-1'
-                            }
-                        ]
-                    }
-                ]
-            }
+                                'source_id': 'user-field-1',
+                            },
+                        ],
+                    },
+                ],
+            },
         )
 
         # assert
@@ -308,7 +308,7 @@ class TestCreateTemplateTaskFields:
             'order': 1,
             'name': field_name,
             'is_required': True,
-            'api_name': field_api_name
+            'api_name': field_api_name,
         }
 
         # act
@@ -317,7 +317,7 @@ class TestCreateTemplateTaskFields:
             'owners': [
                 {
                     'type': OwnerType.USER,
-                    'source_id': user.id
+                    'source_id': user.id,
                 },
             ],
             'is_active': True,
@@ -329,10 +329,10 @@ class TestCreateTemplateTaskFields:
                     'raw_performers': [
                         {
                             'type': PerformerType.USER,
-                            'source_id': user.id
-                        }
+                            'source_id': user.id,
+                        },
                     ],
-                    'fields': [request_data]
+                    'fields': [request_data],
                 },
                 {
                     'number': 2,
@@ -340,19 +340,19 @@ class TestCreateTemplateTaskFields:
                     'raw_performers': [
                         {
                             'type': PerformerType.USER,
-                            'source_id': user.id
-                        }
+                            'source_id': user.id,
+                        },
                     ],
-                    'fields': [request_data]
-                }
-            ]
+                    'fields': [request_data],
+                },
+            ],
         })
         # assert
         assert response.status_code == 400
         message = messages.MSG_PT_0050(
             name=step_name,
             field_name=field_name,
-            api_name=field_api_name
+            api_name=field_api_name,
         )
         assert response.data['message'] == message
         assert response.data['details']['reason'] == message

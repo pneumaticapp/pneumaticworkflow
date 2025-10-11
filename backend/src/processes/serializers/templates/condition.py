@@ -2,7 +2,7 @@ from rest_framework.fields import CharField
 from rest_framework.serializers import ModelSerializer
 from src.generics.mixins.serializers import (
     AdditionalValidationMixin,
-    CustomValidationErrorMixin
+    CustomValidationErrorMixin,
 )
 from src.processes.serializers.templates.mixins import (
     CreateOrUpdateInstanceMixin,
@@ -23,7 +23,7 @@ class ConditionTemplateSerializer(
     CreateOrUpdateRelatedMixin,
     AdditionalValidationMixin,
     CustomValidationApiNameMixin,
-    ModelSerializer
+    ModelSerializer,
 ):
     class Meta:
         model = ConditionTemplate
@@ -55,12 +55,12 @@ class ConditionTemplateSerializer(
             validated_data={
                 'template': self.context['template'],
                 'task':  self.context['task'],
-                **validated_data
+                **validated_data,
             },
             not_unique_exception_msg=MSG_PT_0049(
                 name=self.context['task'].name,
-                api_name=validated_data.get('api_name')
-            )
+                api_name=validated_data.get('api_name'),
+            ),
         )
         self.create_or_update_related(
             data=validated_data.get('rules'),
@@ -71,8 +71,8 @@ class ConditionTemplateSerializer(
             },
             slz_context={
                 'condition': instance,
-                **self.context
-            }
+                **self.context,
+            },
         )
         template = self.context['template']
         if template.is_active:
@@ -82,7 +82,7 @@ class ConditionTemplateSerializer(
                 auth_type=self.context['auth_type'],
                 task=self.context['task'],
                 condition=instance,
-                template=template
+                template=template,
             )
         return instance
 
@@ -94,12 +94,12 @@ class ConditionTemplateSerializer(
             validated_data={
                 'template': self.context['template'],
                 'task':  self.context['task'],
-                **validated_data
+                **validated_data,
             },
             not_unique_exception_msg=MSG_PT_0049(
                 name=self.context['task'].name,
-                api_name=validated_data.get('api_name')
-            )
+                api_name=validated_data.get('api_name'),
+            ),
         )
         self.create_or_update_related(
             data=validated_data.get('rules'),
@@ -110,7 +110,7 @@ class ConditionTemplateSerializer(
             },
             slz_context={
                 'condition': instance,
-                **self.context
-            }
+                **self.context,
+            },
         )
         return instance

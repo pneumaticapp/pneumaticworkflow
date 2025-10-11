@@ -4,7 +4,7 @@ from django.utils import timezone
 from src.processes.tests.fixtures import (
     create_test_user,
     create_test_group,
-    create_test_account
+    create_test_account,
 )
 from src.accounts.enums import (
     BillingPlanType,
@@ -23,7 +23,7 @@ def test_retrieve__ok(api_client):
 
     # act
     response = api_client.get(
-        path=f'/accounts/groups/{group.id}'
+        path=f'/accounts/groups/{group.id}',
     )
 
     # assert
@@ -43,14 +43,14 @@ def test_retrieve__not_admin__permission_denied(api_client):
         account=account,
         email='no_admin@test.com',
         is_admin=False,
-        is_account_owner=False
+        is_account_owner=False,
     )
 
     api_client.token_authenticate(no_admin_user)
 
     # act
     response = api_client.get(
-        path=f'/accounts/groups/{group.id}'
+        path=f'/accounts/groups/{group.id}',
     )
 
     # assert
@@ -65,7 +65,7 @@ def test_retrieve__not_auth__permission_denied(api_client):
 
     # act
     response = api_client.get(
-        path=f'/accounts/groups/{group.id}'
+        path=f'/accounts/groups/{group.id}',
     )
 
     # assert
@@ -76,7 +76,7 @@ def test_retrieve__expired_subscription__ok(api_client):
     # arrange
     account = create_test_account(
         plan=BillingPlanType.UNLIMITED,
-        plan_expiration=timezone.now() - datetime.timedelta(hours=1)
+        plan_expiration=timezone.now() - datetime.timedelta(hours=1),
     )
     user = create_test_user(account=account)
     group = create_test_group(account, users=[user])
@@ -84,7 +84,7 @@ def test_retrieve__expired_subscription__ok(api_client):
 
     # act
     response = api_client.get(
-        path=f'/accounts/groups/{group.id}'
+        path=f'/accounts/groups/{group.id}',
     )
 
     # assert

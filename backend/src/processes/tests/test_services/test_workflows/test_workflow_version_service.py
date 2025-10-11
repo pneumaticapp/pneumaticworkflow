@@ -15,7 +15,7 @@ from src.processes.models import (
     ConditionTemplate,
     RuleTemplate,
     PredicateTemplate,
-    TemplateOwner
+    TemplateOwner,
 )
 from src.processes.services.versioning.schemas import (
     TemplateSchemaV1,
@@ -39,10 +39,10 @@ from src.processes.enums import (
     ConditionAction,
 )
 from src.processes.services.workflows.workflow_version import (
-        WorkflowUpdateVersionService
+        WorkflowUpdateVersionService,
     )
 from src.processes.services.tasks.checklist_selection import (
-        ChecklistSelectionService
+        ChecklistSelectionService,
     )
 
 
@@ -62,12 +62,12 @@ class TestWorkflowUpdateVersionService:
         template = create_test_template(
             user=user,
             is_active=True,
-            tasks_count=1
+            tasks_count=1,
         )
         kickoff_template = template.kickoff_instance
         workflow = create_test_workflow(
             user=user,
-            template=template
+            template=template,
         )
         template_task_1 = template.tasks.get(number=1)
         template_task_1.name = 'New task name'
@@ -110,13 +110,13 @@ class TestWorkflowUpdateVersionService:
             instance=workflow,
             user=user,
             is_superuser=False,
-            auth_type=AuthTokenType.USER
+            auth_type=AuthTokenType.USER,
         )
 
         # act
         version_service.update_from_version(
             data=template.data,
-            version=template.version
+            version=template.version,
         )
 
         # assert
@@ -124,7 +124,7 @@ class TestWorkflowUpdateVersionService:
         assert kickoff.output.filter(
             type=FieldType.NUMBER,
             name='Number field',
-            value=''
+            value='',
         ).exists()
 
         task_1 = workflow.tasks.get(number=1)
@@ -135,12 +135,12 @@ class TestWorkflowUpdateVersionService:
             type=FieldType.TEXT,
             name=field_template.name,
             task=task_1,
-            value=''
+            value='',
         ).exists()
 
         assert task_1.conditions.count() == 1
         condition = task_1.conditions.get(
-            action=ConditionAction.SKIP_TASK
+            action=ConditionAction.SKIP_TASK,
         )
         assert condition.rules.count() == 1
         rule = condition.rules.get()
@@ -155,7 +155,7 @@ class TestWorkflowUpdateVersionService:
     def test_update_from_version__end_workflow__ok(
         self,
         mocker,
-        api_client
+        api_client,
     ):
 
         # arrange
@@ -164,16 +164,16 @@ class TestWorkflowUpdateVersionService:
         template = create_test_template(
             user=user,
             is_active=True,
-            tasks_count=2
+            tasks_count=2,
         )
         workflow = create_test_workflow(
             user=user,
-            template=template
+            template=template,
         )
         task = workflow.tasks.get(number=1)
         mocker.patch(
             'src.processes.tasks.webhooks.'
-            'send_task_completed_webhook.delay'
+            'send_task_completed_webhook.delay',
         )
         api_client.token_authenticate(user)
         response_complete = api_client.post(f'/v2/tasks/{task.id}/complete')
@@ -185,13 +185,13 @@ class TestWorkflowUpdateVersionService:
             instance=workflow,
             user=user,
             is_superuser=False,
-            auth_type=AuthTokenType.USER
+            auth_type=AuthTokenType.USER,
         )
 
         # act
         version_service.update_from_version(
             data=template.data,
-            version=template.version
+            version=template.version,
         )
 
         # assert
@@ -203,7 +203,7 @@ class TestWorkflowUpdateVersionService:
         user = create_test_owner(account=account)
         template = create_test_template(
             user=user,
-            is_active=True
+            is_active=True,
         )
         kickoff = template.kickoff_instance
         workflow = create_test_workflow(user, template)
@@ -224,7 +224,7 @@ class TestWorkflowUpdateVersionService:
             api_name=field_template_1.api_name,
             is_required=True,
             task=workflow_task,
-            workflow=workflow
+            workflow=workflow,
         )
         field_template_2 = FieldTemplate.objects.create(
             type=FieldType.CHECKBOX,
@@ -238,7 +238,7 @@ class TestWorkflowUpdateVersionService:
             api_name=field_template_2.api_name,
             is_required=True,
             task=workflow_task,
-            workflow=workflow
+            workflow=workflow,
         )
         FieldTemplateSelection.objects.create(
             value='first',
@@ -270,7 +270,7 @@ class TestWorkflowUpdateVersionService:
             api_name=kickoff_field_template_1.api_name,
             kickoff=workflow.kickoff_instance,
             is_required=True,
-            workflow=workflow
+            workflow=workflow,
         )
         kickoff_field_template_2 = FieldTemplate.objects.create(
             type=FieldType.CHECKBOX,
@@ -295,13 +295,13 @@ class TestWorkflowUpdateVersionService:
             instance=workflow,
             user=user,
             is_superuser=False,
-            auth_type=AuthTokenType.USER
+            auth_type=AuthTokenType.USER,
         )
 
         # act
         version_service.update_from_version(
             data=template.data,
-            version=template.version
+            version=template.version,
         )
 
         # assert
@@ -313,38 +313,38 @@ class TestWorkflowUpdateVersionService:
         assert kickoff_fields.count() == 2
         assert kickoff_fields.filter(name='Old name').exists() is False
         assert kickoff_fields.filter(
-            type=FieldType.TEXT
+            type=FieldType.TEXT,
         ).first().name == 'Text field'
         assert kickoff_fields.filter(
-            type=FieldType.TEXT
+            type=FieldType.TEXT,
         ).first().is_required is False
         assert kickoff_fields.filter(
-            type=FieldType.CHECKBOX
+            type=FieldType.CHECKBOX,
         ).first().selections.count() == 2
         assert kickoff_fields.filter(
-            type=FieldType.CHECKBOX
+            type=FieldType.CHECKBOX,
         ).first().selections.filter(value='Old name').exists() is False
         assert task_fields.count() == 2
         assert task_fields.filter(
-            api_name=field_template_1.api_name
+            api_name=field_template_1.api_name,
         ).first().type == FieldType.TEXT
         assert task_fields.filter(
-            api_name=field_template_1.api_name
+            api_name=field_template_1.api_name,
         ).first().name == field_template_1.name
         assert task_fields.filter(
-            api_name=field_template_2.api_name
+            api_name=field_template_2.api_name,
         ).first().name == field_template_2.name
         assert task_fields.filter(
-            api_name=field_template_2.api_name
+            api_name=field_template_2.api_name,
         ).first().selections.count() == 2
         assert 'old' not in task_fields.filter(
-            api_name=field_template_2.api_name
+            api_name=field_template_2.api_name,
         ).first().selections.values_list('value', flat=True)
         assert 'first' in task_fields.filter(
-            api_name=field_template_2.api_name
+            api_name=field_template_2.api_name,
         ).first().selections.values_list('value', flat=True)
         assert 'second' in task_fields.filter(
-            api_name=field_template_2.api_name
+            api_name=field_template_2.api_name,
         ).first().selections.values_list('value', flat=True)
 
     def test_update_from_version__new_tasks(self):
@@ -361,7 +361,7 @@ class TestWorkflowUpdateVersionService:
             description='New description',
             number=last_number+1,
             template=template,
-            require_completion_by_all=True
+            require_completion_by_all=True,
         )
         field_template_1 = FieldTemplate.objects.create(
             type=FieldType.TEXT,
@@ -392,13 +392,13 @@ class TestWorkflowUpdateVersionService:
             instance=workflow,
             user=user,
             is_superuser=False,
-            auth_type=AuthTokenType.USER
+            auth_type=AuthTokenType.USER,
         )
 
         # act
         version_service.update_from_version(
             data=template.data,
-            version=template.version
+            version=template.version,
         )
 
         # assert
@@ -414,29 +414,29 @@ class TestWorkflowUpdateVersionService:
             new_task.require_completion_by_all
         )
         assert last_task.output.filter(
-            type=FieldType.TEXT
+            type=FieldType.TEXT,
         ).exists() is True
         assert last_task.output.filter(
-            type=FieldType.TEXT
+            type=FieldType.TEXT,
         ).first().name == field_template_1.name
         assert last_task.output.filter(
-            type=FieldType.CHECKBOX
+            type=FieldType.CHECKBOX,
         ).exists() is True
         assert last_task.output.filter(
-            type=FieldType.CHECKBOX
+            type=FieldType.CHECKBOX,
         ).first().name == field_template_2.name
         assert last_task.output.filter(
-            type=FieldType.CHECKBOX
+            type=FieldType.CHECKBOX,
         ).first().selections.count() == 2
         assert last_task.output.filter(
-            type=FieldType.CHECKBOX
+            type=FieldType.CHECKBOX,
         ).first().selections.order_by(
-            'value'
+            'value',
         ).first().value == first_selection.value
         assert last_task.output.filter(
-            type=FieldType.CHECKBOX
+            type=FieldType.CHECKBOX,
         ).first().selections.order_by(
-            'value'
+            'value',
         ).last().value == second_selection.value
 
     def test_update_from_version__new_task_in_urgent_workflow__urgent_too(
@@ -451,7 +451,7 @@ class TestWorkflowUpdateVersionService:
         api_client.token_authenticate(user)
         api_client.patch(
             path=f'/workflows/{workflow.id}',
-            data={'is_urgent': True}
+            data={'is_urgent': True},
         )
         workflow.refresh_from_db()
 
@@ -462,7 +462,7 @@ class TestWorkflowUpdateVersionService:
             description='New description',
             number=last_number + 1,
             template=template,
-            require_completion_by_all=True
+            require_completion_by_all=True,
         )
 
         template.refresh_from_db()
@@ -471,13 +471,13 @@ class TestWorkflowUpdateVersionService:
             instance=workflow,
             user=user,
             is_superuser=False,
-            auth_type=AuthTokenType.USER
+            auth_type=AuthTokenType.USER,
         )
 
         # act
         version_service.update_from_version(
             data=template.data,
-            version=template.version
+            version=template.version,
         )
 
         # assert
@@ -491,7 +491,7 @@ class TestWorkflowUpdateVersionService:
         user = create_test_owner(account=account)
         template = create_test_template(
             user=user,
-            is_active=True
+            is_active=True,
         )
         kickoff = template.kickoff_instance
         kickoff_field_template_1 = FieldTemplate.objects.create(
@@ -531,13 +531,13 @@ class TestWorkflowUpdateVersionService:
             instance=workflow,
             user=user,
             is_superuser=False,
-            auth_type=AuthTokenType.USER
+            auth_type=AuthTokenType.USER,
         )
 
         # act
         version_service.update_from_version(
             data=template.data,
-            version=template.version
+            version=template.version,
         )
 
         # assert
@@ -554,7 +554,7 @@ class TestWorkflowUpdateVersionService:
     def test_update_from_version__add_user_to_current_task__ok(
         self,
         mocker,
-        api_client
+        api_client,
     ):
 
         # arrange
@@ -582,13 +582,13 @@ class TestWorkflowUpdateVersionService:
             instance=workflow,
             user=user,
             is_superuser=False,
-            auth_type=AuthTokenType.USER
+            auth_type=AuthTokenType.USER,
         )
 
         # act
         version_service.update_from_version(
             data=template.data,
-            version=template.version
+            version=template.version,
         )
 
         # assert
@@ -598,7 +598,7 @@ class TestWorkflowUpdateVersionService:
     def test_update_from_version__remove_user_from_current_task__ok(
         self,
         mocker,
-        api_client
+        api_client,
     ):
 
         # arrange
@@ -622,13 +622,13 @@ class TestWorkflowUpdateVersionService:
             instance=workflow,
             user=owner,
             is_superuser=False,
-            auth_type=AuthTokenType.USER
+            auth_type=AuthTokenType.USER,
         )
 
         # act
         version_service.update_from_version(
             data=template.data,
-            version=template.version
+            version=template.version,
         )
 
         # assert
@@ -637,7 +637,7 @@ class TestWorkflowUpdateVersionService:
 
     def test_update_from_version__prev_task_checklist__not_changed(
         self,
-        api_client
+        api_client,
     ):
 
         # arrange
@@ -648,7 +648,7 @@ class TestWorkflowUpdateVersionService:
         template = create_test_template(
             user=owner,
             is_active=True,
-            tasks_count=2
+            tasks_count=2,
         )
         field_template_1 = FieldTemplate.objects.create(
             type=FieldType.USER,
@@ -660,7 +660,7 @@ class TestWorkflowUpdateVersionService:
             type=FieldType.STRING,
             name='text',
             kickoff=template.kickoff_instance,
-            template=template
+            template=template,
         )
         TemplateOwner.objects.create(
             template=template,
@@ -673,17 +673,17 @@ class TestWorkflowUpdateVersionService:
         checklist_template_11 = create_checklist_template(
             task_template=template_task_1,
             api_name_prefix='first-',
-            selections_count=2
+            selections_count=2,
         )
         cl_selection_template_11 = checklist_template_11.selections.get(
-            api_name='first-cl-selection-1'
+            api_name='first-cl-selection-1',
         )
         cl_selection_template_11.value = (
             '+ {{%s}} +' % field_template_1.api_name
         )
         cl_selection_template_11.save(update_fields=['value'])
         cl_selection_template_12 = checklist_template_11.selections.get(
-            api_name='first-cl-selection-2'
+            api_name='first-cl-selection-2',
         )
         checklist_template_12 = create_checklist_template(
             task_template=template_task_1,
@@ -698,35 +698,35 @@ class TestWorkflowUpdateVersionService:
                 'kickoff': {
                     field_template_1.api_name: str(owner.id),
                     field_template_2.api_name: 'field text',
-                }
-            }
+                },
+            },
         )
         workflow = Workflow.objects.get(id=response_run.data['id'])
         task_1 = workflow.tasks.get(number=1)
         checklist_1 = task_1.checklists.get(api_name='first-checklist')
         selection_11 = checklist_1.selections.get(
-            api_name='first-cl-selection-1'
+            api_name='first-cl-selection-1',
         )
         selection_12 = checklist_1.selections.get(
-            api_name='first-cl-selection-2'
+            api_name='first-cl-selection-2',
         )
         checklist_2 = task_1.checklists.get(api_name='second-checklist')
         selection_21 = checklist_2.selections.get(
-            api_name='second-cl-selection-1'
+            api_name='second-cl-selection-1',
         )
         selection_service = ChecklistSelectionService(
             instance=selection_11,
-            user=user_2
+            user=user_2,
         )
         selection_service.mark()
         selection_service = ChecklistSelectionService(
             instance=selection_12,
-            user=owner
+            user=owner,
         )
         selection_service.mark()
         selection_service = ChecklistSelectionService(
             instance=selection_21,
-            user=user_2
+            user=user_2,
         )
         selection_service.mark()
 
@@ -743,20 +743,20 @@ class TestWorkflowUpdateVersionService:
 
         template.refresh_from_db()
         template_version = TemplateVersioningService(
-            TemplateSchemaV1
+            TemplateSchemaV1,
         ).save(template)
 
         version_service = WorkflowUpdateVersionService(
             instance=workflow,
             user=owner,
             is_superuser=False,
-            auth_type=AuthTokenType.USER
+            auth_type=AuthTokenType.USER,
         )
 
         # act
         version_service.update_from_version(
             data=template_version.data,
-            version=template_version.version
+            version=template_version.version,
         )
 
         # assert
@@ -769,12 +769,12 @@ class TestWorkflowUpdateVersionService:
 
         assert not ChecklistSelection.objects.filter(
             api_name=selection_12.api_name,
-            checklist=checklist_1
+            checklist=checklist_1,
         ).exists()
 
         assert not Checklist.objects.filter(
             api_name=checklist_2.api_name,
-            task=task_1
+            task=task_1,
         ).exists()
 
         task_1.refresh_from_db()
@@ -783,7 +783,7 @@ class TestWorkflowUpdateVersionService:
 
     def test_update_from_version__current_task_checklist__updated(
         self,
-        api_client
+        api_client,
     ):
 
         # arrange
@@ -794,7 +794,7 @@ class TestWorkflowUpdateVersionService:
         template = create_test_template(
             user=user,
             is_active=True,
-            tasks_count=2
+            tasks_count=2,
         )
         field_template_1 = FieldTemplate.objects.create(
             type=FieldType.USER,
@@ -806,7 +806,7 @@ class TestWorkflowUpdateVersionService:
             type=FieldType.STRING,
             name='text',
             kickoff=template.kickoff_instance,
-            template=template
+            template=template,
         )
         TemplateOwner.objects.create(
             template=template,
@@ -819,13 +819,13 @@ class TestWorkflowUpdateVersionService:
         checklist_template_11 = create_checklist_template(
             task_template=template_task_1,
             api_name_prefix='first-',
-            selections_count=2
+            selections_count=2,
         )
         cl_selection_template_11 = checklist_template_11.selections.get(
-            api_name='first-cl-selection-1'
+            api_name='first-cl-selection-1',
         )
         cl_selection_template_12 = checklist_template_11.selections.get(
-            api_name='first-cl-selection-2'
+            api_name='first-cl-selection-2',
         )
         checklist_template_12 = create_checklist_template(
             task_template=template_task_1,
@@ -840,23 +840,23 @@ class TestWorkflowUpdateVersionService:
                 'kickoff': {
                     field_template_1.api_name: str(user.id),
                     field_template_2.api_name: 'field text',
-                }
-            }
+                },
+            },
         )
         workflow = Workflow.objects.get(id=response_run.data['id'])
 
         task_1 = workflow.tasks.get(number=1)
         checklist_1 = task_1.checklists.get(api_name='first-checklist')
         selection_11 = checklist_1.selections.get(
-            api_name='first-cl-selection-1'
+            api_name='first-cl-selection-1',
         )
         selection_12 = checklist_1.selections.get(
-            api_name='first-cl-selection-2'
+            api_name='first-cl-selection-2',
         )
         checklist_2 = task_1.checklists.get(api_name='second-checklist')
         selection_service = ChecklistSelectionService(
             instance=selection_11,
-            user=user_2
+            user=user_2,
         )
         selection_service.mark()
 
@@ -870,20 +870,20 @@ class TestWorkflowUpdateVersionService:
 
         template.refresh_from_db()
         template_version = TemplateVersioningService(
-            TemplateSchemaV1
+            TemplateSchemaV1,
         ).save(template)
 
         version_service = WorkflowUpdateVersionService(
             instance=workflow,
             user=user,
             is_superuser=False,
-            auth_type=AuthTokenType.USER
+            auth_type=AuthTokenType.USER,
         )
 
         # act
         version_service.update_from_version(
             data=template_version.data,
-            version=template_version.version
+            version=template_version.version,
         )
 
         # assert
@@ -896,12 +896,12 @@ class TestWorkflowUpdateVersionService:
 
         assert not ChecklistSelection.objects.filter(
             api_name=selection_12.api_name,
-            checklist=checklist_1
+            checklist=checklist_1,
         ).exists()
 
         assert not Checklist.objects.filter(
             api_name=checklist_2.api_name,
-            task=task_1
+            task=task_1,
         ).exists()
 
         assert task_1.checklists_total == 1
@@ -909,7 +909,7 @@ class TestWorkflowUpdateVersionService:
 
     def test_update_from_version__next_task_checklist__updated(
         self,
-        api_client
+        api_client,
     ):
 
         # arrange
@@ -920,7 +920,7 @@ class TestWorkflowUpdateVersionService:
         template = create_test_template(
             user=owner,
             is_active=True,
-            tasks_count=2
+            tasks_count=2,
         )
         field_template_1 = FieldTemplate.objects.create(
             type=FieldType.USER,
@@ -932,7 +932,7 @@ class TestWorkflowUpdateVersionService:
             type=FieldType.STRING,
             name='text',
             kickoff=template.kickoff_instance,
-            template=template
+            template=template,
         )
         TemplateOwner.objects.create(
             template=template,
@@ -945,13 +945,13 @@ class TestWorkflowUpdateVersionService:
         checklist_template_11 = create_checklist_template(
             task_template=template_task_2,
             api_name_prefix='first-',
-            selections_count=2
+            selections_count=2,
         )
         cl_selection_template_11 = checklist_template_11.selections.get(
-            api_name='first-cl-selection-1'
+            api_name='first-cl-selection-1',
         )
         cl_selection_template_12 = checklist_template_11.selections.get(
-            api_name='first-cl-selection-2'
+            api_name='first-cl-selection-2',
         )
         checklist_template_12 = create_checklist_template(
             task_template=template_task_2,
@@ -966,18 +966,18 @@ class TestWorkflowUpdateVersionService:
                 'kickoff': {
                     field_template_1.api_name: str(owner.id),
                     field_template_2.api_name: 'field text',
-                }
-            }
+                },
+            },
         )
         workflow = Workflow.objects.get(id=response_run.data['id'])
 
         task_2 = workflow.tasks.get(number=2)
         checklist_1 = task_2.checklists.get(api_name='first-checklist')
         selection_11 = checklist_1.selections.get(
-            api_name='first-cl-selection-1'
+            api_name='first-cl-selection-1',
         )
         selection_12 = checklist_1.selections.get(
-            api_name='first-cl-selection-2'
+            api_name='first-cl-selection-2',
         )
         checklist_2 = task_2.checklists.get(api_name='second-checklist')
 
@@ -991,20 +991,20 @@ class TestWorkflowUpdateVersionService:
 
         template.refresh_from_db()
         template_version = TemplateVersioningService(
-            TemplateSchemaV1
+            TemplateSchemaV1,
         ).save(template)
 
         version_service = WorkflowUpdateVersionService(
             instance=workflow,
             user=owner,
             is_superuser=False,
-            auth_type=AuthTokenType.USER
+            auth_type=AuthTokenType.USER,
         )
 
         # act
         version_service.update_from_version(
             data=template_version.data,
-            version=template_version.version
+            version=template_version.version,
         )
 
         # assert
@@ -1017,19 +1017,19 @@ class TestWorkflowUpdateVersionService:
 
         assert not ChecklistSelection.objects.filter(
             api_name=selection_12.api_name,
-            checklist=checklist_1
+            checklist=checklist_1,
         ).exists()
 
         assert not Checklist.objects.filter(
             api_name=checklist_2.api_name,
-            task=task_2
+            task=task_2,
         ).exists()
 
         assert task_2.checklists_total == 1
         assert task_2.checklists_marked == 0
 
     def test_update_from_version__disable_name_template__not_change_wf_name(
-        self
+        self,
     ):
 
         # arrange
@@ -1048,7 +1048,7 @@ class TestWorkflowUpdateVersionService:
             name=old_wf_name,
             user=user,
             template=template,
-            name_template=wf_name_template
+            name_template=wf_name_template,
         )
 
         template.name = 'New name'
@@ -1060,13 +1060,13 @@ class TestWorkflowUpdateVersionService:
             instance=workflow,
             user=user,
             is_superuser=False,
-            auth_type=AuthTokenType.USER
+            auth_type=AuthTokenType.USER,
         )
 
         # act
         version_service.update_from_version(
             data=template.data,
-            version=template.version
+            version=template.version,
         )
 
         # assert
@@ -1075,7 +1075,7 @@ class TestWorkflowUpdateVersionService:
         assert workflow.name_template == wf_name_template
 
     def test_update_from_version__enable_name_template__not_change_wf_name(
-        self
+        self,
     ):
 
         # arrange
@@ -1106,13 +1106,13 @@ class TestWorkflowUpdateVersionService:
             instance=workflow,
             user=user,
             is_superuser=False,
-            auth_type=AuthTokenType.USER
+            auth_type=AuthTokenType.USER,
         )
 
         # act
         version_service.update_from_version(
             data=template.data,
-            version=template.version
+            version=template.version,
         )
 
         # assert

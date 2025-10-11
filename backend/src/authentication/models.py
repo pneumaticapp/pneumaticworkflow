@@ -18,7 +18,7 @@ class AccessToken(SoftDeleteModel):
                 fields=['user_id', 'source'],
                 condition=(models.Q(is_deleted=False)),
                 name='auth_access_token_user_unique',
-            )
+            ),
         ]
 
     access_token = models.CharField(max_length=3000)
@@ -28,11 +28,11 @@ class AccessToken(SoftDeleteModel):
     user = models.ForeignKey(
         UserModel,
         on_delete=models.CASCADE,
-        related_name='access_tokens'
+        related_name='access_tokens',
     )
     source = models.CharField(
         max_length=255,
-        choices=SourceType.CHOICES
+        choices=SourceType.CHOICES,
     )
     date_updated = models.DateTimeField(auto_now=True)
 

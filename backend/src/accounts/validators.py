@@ -19,8 +19,8 @@ def user_is_last_performer(user: User):
             status__in=(
                 TaskStatus.PENDING,
                 TaskStatus.DELAYED,
-                TaskStatus.ACTIVE
-            )
+                TaskStatus.ACTIVE,
+            ),
         ).exists()
     ):
         return True

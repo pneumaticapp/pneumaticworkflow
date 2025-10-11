@@ -1,5 +1,5 @@
 from src.generics.querysets import (
-    AccountBaseQuerySet
+    AccountBaseQuerySet,
 )
 from src.logs.enums import (
     AccountEventType,

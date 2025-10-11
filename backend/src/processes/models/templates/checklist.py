@@ -6,7 +6,7 @@ from src.processes.models.base import BaseApiNameModel
 from src.generics.managers import BaseSoftDeleteManager
 from src.processes.querysets import (
     ChecklistTemplateQuerySet,
-    ChecklistTemplateSelectionQuerySet
+    ChecklistTemplateSelectionQuerySet,
 )
 
 
@@ -21,7 +21,7 @@ class ChecklistTemplate(
                 fields=['template', 'api_name'],
                 condition=Q(is_deleted=False),
                 name='processes_checklisttemplate_template_api_name_unique',
-            )
+            ),
         ]
 
     api_name_prefix = 'checklist'
@@ -66,10 +66,10 @@ class ChecklistTemplateSelection(
     checklist = models.ForeignKey(
         ChecklistTemplate,
         on_delete=models.CASCADE,
-        related_name='selections'
+        related_name='selections',
     )
     value = models.CharField(max_length=2000)
 
     objects = BaseSoftDeleteManager.from_queryset(
-        ChecklistTemplateSelectionQuerySet
+        ChecklistTemplateSelectionQuerySet,
     )()

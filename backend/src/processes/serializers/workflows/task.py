@@ -8,7 +8,7 @@ from src.processes.models import (
     Task,
     TaskForList,
     Workflow,
-    TaskTemplate
+    TaskTemplate,
 )
 from src.generics.fields import TimeStampField
 from src.processes.enums import TaskOrdering
@@ -16,10 +16,10 @@ from src.processes.serializers.workflows.field import (
     TaskFieldSerializer,
 )
 from src.processes.serializers.workflows.checklist import (
-    CheckListSerializer
+    CheckListSerializer,
 )
 from src.processes.serializers.workflows.delay import (
-    DelayInfoSerializer
+    DelayInfoSerializer,
 )
 from src.generics.serializers import CustomValidationErrorMixin
 from src.processes.messages.workflow import (
@@ -27,7 +27,7 @@ from src.processes.messages.workflow import (
     MSG_PW_0083,
 )
 from src.processes.serializers.workflows.task_performer import (
-    TaskUserGroupPerformerSerializer
+    TaskUserGroupPerformerSerializer,
 )
 
 
@@ -121,7 +121,7 @@ class TaskSerializer(serializers.ModelSerializer):
     date_completed_tsp = TimeStampField(source='date_completed')
     performers = TaskUserGroupPerformerSerializer(
         many=True,
-        source='exclude_directly_deleted_taskperformer_set'
+        source='exclude_directly_deleted_taskperformer_set',
     )
     workflow = serializers.SerializerMethodField()
     output = TaskFieldSerializer(many=True)
@@ -163,16 +163,16 @@ class TaskSerializer(serializers.ModelSerializer):
     def get_sub_workflows(self, instance):
         qst = Workflow.objects.raw_list_query(
             account_id=instance.account_id,
-            ancestor_task_id=instance.id
+            ancestor_task_id=instance.id,
         )
         from src.processes.serializers.workflows.workflow import (
-            WorkflowListSerializer
+            WorkflowListSerializer,
         )
         return WorkflowListSerializer(instance=qst, many=True).data
 
     def get_workflow(self, instance):
         from src.processes.serializers.workflows.workflow import (
-            WorkflowShortInfoSerializer
+            WorkflowShortInfoSerializer,
         )
         return WorkflowShortInfoSerializer(instance=instance.workflow).data
 
@@ -200,13 +200,13 @@ class TaskListSerializer(serializers.ModelSerializer):
 
 class TaskListFilterSerializer(
     CustomValidationErrorMixin,
-    serializers.Serializer
+    serializers.Serializer,
 ):
 
     is_completed = serializers.BooleanField(default=False, required=False)
     ordering = serializers.ChoiceField(
         required=False,
-        choices=TaskOrdering.CHOICES
+        choices=TaskOrdering.CHOICES,
     )
     assigned_to = serializers.IntegerField(required=False)
     search = serializers.CharField(required=False)
@@ -238,7 +238,7 @@ class TaskListFilterSerializer(
 
 class TaskRevertSerializer(
     CustomValidationErrorMixin,
-    serializers.Serializer
+    serializers.Serializer,
 ):
 
     comment = serializers.CharField(
@@ -256,7 +256,7 @@ class TaskRevertSerializer(
 
 class TaskCompleteSerializer(
     CustomValidationErrorMixin,
-    serializers.Serializer
+    serializers.Serializer,
 ):
 
     output = serializers.DictField(required=False)

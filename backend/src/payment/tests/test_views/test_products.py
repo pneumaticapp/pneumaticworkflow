@@ -8,7 +8,7 @@ from src.processes.tests.fixtures import (
 from src.payment.tests.fixtures import (
     create_test_invoice_price,
     create_test_product,
-    create_test_recurring_price
+    create_test_recurring_price,
 )
 from src.payment import messages
 
@@ -29,7 +29,7 @@ def test_products__ok(
         code='some code',
         name='Prem',
         is_active=True,
-        is_subscription=True
+        is_subscription=True,
     )
     price_1 = create_test_recurring_price(
         product=product_1,
@@ -38,33 +38,33 @@ def test_products__ok(
         code='prem_month',
         stripe_id='price_1',
         min_quantity=5,
-        max_quantity=1000
+        max_quantity=1000,
     )
     create_test_recurring_price(
         product=product_1,
         status=PriceStatus.INACTIVE,
         code='prem_month_2',
-        stripe_id='price_2'
+        stripe_id='price_2',
     )
     product_2 = create_test_product(
         stripe_id='prod_2',
         name='Addon',
         code='some code 2',
         is_active=True,
-        is_subscription=False
+        is_subscription=False,
     )
     price_21 = create_test_invoice_price(
         product=product_2,
         status=PriceStatus.ACTIVE,
         code='addon',
-        stripe_id='price_21'
+        stripe_id='price_21',
     )
     create_test_product(is_active=False)
     api_client.token_authenticate(user)
     mocker.patch(
         'src.payment.views.ProjectBillingPermission'
         '.has_permission',
-        return_value=True
+        return_value=True,
     )
 
     # act
@@ -112,7 +112,7 @@ def test_products__archived_price__ok(
         code='some code',
         name='Prem',
         is_active=True,
-        is_subscription=True
+        is_subscription=True,
     )
     price_1 = create_test_recurring_price(
         product=product_1,
@@ -121,13 +121,13 @@ def test_products__archived_price__ok(
         code='prem_month',
         stripe_id='price_1',
         min_quantity=10,
-        max_quantity=20
+        max_quantity=20,
     )
     api_client.token_authenticate(user)
     mocker.patch(
         'src.payment.views.ProjectBillingPermission'
         '.has_permission',
-        return_value=True
+        return_value=True,
     )
 
     # act
@@ -165,7 +165,7 @@ def test_products__disable_billing__permission_denied(
         code='some code',
         name='Prem',
         is_active=True,
-        is_subscription=True
+        is_subscription=True,
     )
     create_test_recurring_price(
         product=product,
@@ -174,13 +174,13 @@ def test_products__disable_billing__permission_denied(
         code='prem_month',
         stripe_id='price_1',
         min_quantity=5,
-        max_quantity=1000
+        max_quantity=1000,
     )
     api_client.token_authenticate(user)
     mocker.patch(
         'src.payment.views.ProjectBillingPermission'
         '.has_permission',
-        return_value=False
+        return_value=False,
     )
 
     # act

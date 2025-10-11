@@ -40,7 +40,7 @@ class NotificationsViewSet(
     CustomViewSetMixin,
     ListModelMixin,
     DestroyModelMixin,
-    GenericViewSet
+    GenericViewSet,
 ):
     pagination_class = LimitOffsetPagination
     serializer_class = NotificationsSerializer
@@ -67,7 +67,7 @@ class NotificationsViewSet(
             extra_fields = ('task__workflow', 'comment')
         return super().prefetch_queryset(
             queryset=queryset,
-            extra_fields=extra_fields
+            extra_fields=extra_fields,
         )
 
     @action(methods=['GET'], detail=False)

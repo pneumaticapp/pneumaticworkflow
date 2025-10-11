@@ -28,17 +28,17 @@ def test_card_setup__payment_link__ok(
     service_init_mock = mocker.patch.object(
         StripeService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     card_setup_mock = mocker.patch(
         'src.payment.stripe.service.StripeService.'
         'get_payment_method_checkout_link',
-        return_value=setup_link
+        return_value=setup_link,
     )
     mocker.patch(
         'src.payment.views.ProjectBillingPermission'
         '.has_permission',
-        return_value=True
+        return_value=True,
     )
 
     api_client.token_authenticate(user)
@@ -49,7 +49,7 @@ def test_card_setup__payment_link__ok(
         data={
             'success_url': success_url,
             'cancel_url': cancel_url,
-        }
+        },
     )
 
     # assert
@@ -58,11 +58,11 @@ def test_card_setup__payment_link__ok(
     service_init_mock.assert_called_once_with(
         user=user,
         auth_type=AuthTokenType.USER,
-        is_superuser=False
+        is_superuser=False,
     )
     card_setup_mock.assert_called_once_with(
         success_url=success_url,
-        cancel_url=cancel_url
+        cancel_url=cancel_url,
     )
 
 
@@ -78,18 +78,18 @@ def test_card_setup__service_exception__validation_error(
     service_init_mock = mocker.patch.object(
         StripeService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     message = 'some message'
     card_setup_mock = mocker.patch(
         'src.payment.stripe.service.StripeService.'
         'get_payment_method_checkout_link',
-        side_effect=StripeServiceException(message)
+        side_effect=StripeServiceException(message),
     )
     mocker.patch(
         'src.payment.views.ProjectBillingPermission'
         '.has_permission',
-        return_value=True
+        return_value=True,
     )
 
     api_client.token_authenticate(user)
@@ -100,7 +100,7 @@ def test_card_setup__service_exception__validation_error(
         data={
             'success_url': success_url,
             'cancel_url': cancel_url,
-        }
+        },
     )
 
     # assert
@@ -110,11 +110,11 @@ def test_card_setup__service_exception__validation_error(
     service_init_mock.assert_called_once_with(
         user=user,
         auth_type=AuthTokenType.USER,
-        is_superuser=False
+        is_superuser=False,
     )
     card_setup_mock.assert_called_once_with(
         success_url=success_url,
-        cancel_url=cancel_url
+        cancel_url=cancel_url,
     )
 
 
@@ -129,16 +129,16 @@ def test_card_setup__success_url_is_skipped__validation_error(
     service_init_mock = mocker.patch.object(
         StripeService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     card_setup_mock = mocker.patch(
         'src.payment.stripe.service.StripeService.'
-        'get_payment_method_checkout_link'
+        'get_payment_method_checkout_link',
     )
     mocker.patch(
         'src.payment.views.ProjectBillingPermission'
         '.has_permission',
-        return_value=True
+        return_value=True,
     )
 
     api_client.token_authenticate(user)
@@ -148,7 +148,7 @@ def test_card_setup__success_url_is_skipped__validation_error(
         '/payment/card-setup',
         data={
             'cancel_url': cancel_url,
-        }
+        },
     )
 
     # assert
@@ -173,16 +173,16 @@ def test_card_setup__success_url_invalid__validation_error(
     service_init_mock = mocker.patch.object(
         StripeService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     card_setup_mock = mocker.patch(
         'src.payment.stripe.service.StripeService.'
-        'get_payment_method_checkout_link'
+        'get_payment_method_checkout_link',
     )
     mocker.patch(
         'src.payment.views.ProjectBillingPermission'
         '.has_permission',
-        return_value=True
+        return_value=True,
     )
 
     api_client.token_authenticate(user)
@@ -192,8 +192,8 @@ def test_card_setup__success_url_invalid__validation_error(
         '/payment/card-setup',
         data={
             'cancel_url': cancel_url,
-            'success_url': '/localhost/success'
-        }
+            'success_url': '/localhost/success',
+        },
     )
 
     # assert
@@ -218,16 +218,16 @@ def test_card_setup__cancel_url_invalid__validation_error(
     service_init_mock = mocker.patch.object(
         StripeService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     card_setup_mock = mocker.patch(
         'src.payment.stripe.service.StripeService.'
-        'get_payment_method_checkout_link'
+        'get_payment_method_checkout_link',
     )
     mocker.patch(
         'src.payment.views.ProjectBillingPermission'
         '.has_permission',
-        return_value=True
+        return_value=True,
     )
     api_client.token_authenticate(user)
 
@@ -236,8 +236,8 @@ def test_card_setup__cancel_url_invalid__validation_error(
         '/payment/card-setup',
         data={
             'cancel_url':  '/localhost/success',
-            'success_url': success_url
-        }
+            'success_url': success_url,
+        },
     )
 
     # assert
@@ -264,17 +264,17 @@ def test_card_setup__disable_billing__permission_denied(
     service_init_mock = mocker.patch.object(
         StripeService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     card_setup_mock = mocker.patch(
         'src.payment.stripe.service.StripeService.'
         'get_payment_method_checkout_link',
-        return_value=setup_link
+        return_value=setup_link,
     )
     mocker.patch(
         'src.payment.views.ProjectBillingPermission'
         '.has_permission',
-        return_value=False
+        return_value=False,
     )
 
     api_client.token_authenticate(user)
@@ -285,7 +285,7 @@ def test_card_setup__disable_billing__permission_denied(
         data={
             'success_url': success_url,
             'cancel_url': cancel_url,
-        }
+        },
     )
 
     # assert

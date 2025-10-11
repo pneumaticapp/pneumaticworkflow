@@ -34,7 +34,7 @@ def test_list__ok(api_client):
         icon='https://some.com/img.jpg',
         color='#fff',
         template_color='#eaeaea',
-        is_active=True
+        is_active=True,
     )
     category_1 = SystemTemplateCategory.objects.create(
         name='Onboarding',
@@ -42,7 +42,7 @@ def test_list__ok(api_client):
         icon='https://some.com/img1.jpg',
         color='#000',
         template_color='#cecece',
-        is_active=True
+        is_active=True,
     )
     SystemTemplateCategory.objects.create(
         name='Onboarding',
@@ -50,7 +50,7 @@ def test_list__ok(api_client):
         icon='https://some.com/img1.jpg',
         color='#000',
         template_color='#ffffff',
-        is_active=False
+        is_active=False,
     )
 
     # act

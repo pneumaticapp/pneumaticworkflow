@@ -7,13 +7,13 @@ from src.processes.services.tasks.task_version import (
     TaskUpdateVersionService,
 )
 from src.processes.services.workflows.kickoff_version import (
-        KickoffUpdateVersionService
+        KickoffUpdateVersionService,
     )
 from src.processes.services.workflows.workflow import (
-    WorkflowService
+    WorkflowService,
 )
 from src.processes.models import (
-    Template
+    Template,
 )
 from src.notifications.tasks import (
     send_removed_task_notification,
@@ -38,16 +38,16 @@ class WorkflowUpdateVersionService(BaseUpdateVersionService):
                 user=self.user,
                 sync=self.sync,
                 auth_type=self.auth_type,
-                is_superuser=self.is_superuser
+                is_superuser=self.is_superuser,
             )
             task_service.update_from_version(
                 workflow=self.instance,
                 version=version,
-                data=data
+                data=data,
             )
             tasks_api_names.append(data['api_name'])
         deleted_tasks = self.instance.tasks.exclude(
-            api_name__in=tasks_api_names
+            api_name__in=tasks_api_names,
         )
         for deleted_task in deleted_tasks:
             recipients = list(
@@ -55,7 +55,7 @@ class WorkflowUpdateVersionService(BaseUpdateVersionService):
                 .taskperformer_set
                 .not_completed()
                 .exclude_directly_deleted()
-                .get_user_emails_and_ids_set()
+                .get_user_emails_and_ids_set(),
             )
             send_removed_task_notification.delay(
                 task_id=deleted_task.id,
@@ -68,7 +68,7 @@ class WorkflowUpdateVersionService(BaseUpdateVersionService):
         self,
         data: dict,
         version: int,
-        **kwargs
+        **kwargs,
     ):
         """
             data = {
@@ -84,38 +84,38 @@ class WorkflowUpdateVersionService(BaseUpdateVersionService):
             is_superuser=self.is_superuser,
             auth_type=self.auth_type,
             user=self.user,
-            instance=self.instance.kickoff_instance
+            instance=self.instance.kickoff_instance,
         )
         kickoff_service.update_from_version(
             data=data['kickoff'],
-            version=version
+            version=version,
         )
         workflow_service = WorkflowService(
             instance=self.instance,
             user=self.user,
             is_superuser=self.is_superuser,
-            auth_type=self.auth_type
+            auth_type=self.auth_type,
         )
         self.instance = workflow_service.partial_update(
             description=data['description'],
             finalizable=data['finalizable'],
             version=version,
-            force_save=True
+            force_save=True,
         )
         template_owners_ids = Template.objects.filter(
-            id=data['id']
+            id=data['id'],
         ).get_owners_as_users()
         self.instance.owners.set(template_owners_ids)
         self.instance.members.add(*template_owners_ids)
         self._update_tasks_from_version(
             tasks_data=data['tasks'],
-            version=version
+            version=version,
         )
         action_service = WorkflowActionService(
             workflow=self.instance,
             user=self.user,
             is_superuser=self.is_superuser,
             auth_type=self.auth_type,
-            sync=self.sync
+            sync=self.sync,
         )
         action_service.update_tasks_status()

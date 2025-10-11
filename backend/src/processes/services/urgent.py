@@ -13,7 +13,7 @@ from src.processes.models import (
     Workflow,
 )
 from src.processes.services.events import (
-    WorkflowEventService
+    WorkflowEventService,
 )
 
 
@@ -33,7 +33,7 @@ class UrgentService:
     def _get_notification_type(
         cls,
         workflow: Workflow,
-        reverse: bool = False
+        reverse: bool = False,
     ) -> NotificationType:
         if reverse:
             return (
@@ -49,26 +49,26 @@ class UrgentService:
     @classmethod
     def _get_prev_urgent_event(
         cls,
-        workflow: Workflow
+        workflow: Workflow,
     ) -> Optional[WorkflowEvent]:
 
         return WorkflowEvent.objects.on_workflow(
-            workflow.id
+            workflow.id,
         ).filter(
-            type__in=WorkflowEventType.URGENT_TYPES
+            type__in=WorkflowEventType.URGENT_TYPES,
         ).last_created()
 
     @classmethod
     def _delete_urgent_notification(
         cls,
         workflow: Workflow,
-        user: UserModel
+        user: UserModel,
     ):
 
         notification = Notification.objects.filter(
             user=user,
             type=cls._get_notification_type(workflow, reverse=True),
-            task__workflow=workflow.id
+            task__workflow=workflow.id,
         ).last_created()
         if notification:
             notification.delete()
@@ -77,7 +77,7 @@ class UrgentService:
     def _create_urgent_actions(
         cls,
         workflow: Workflow,
-        user: UserModel
+        user: UserModel,
     ):
         event_type = cls._get_event_type(workflow)
         notification_type = cls._get_notification_type(workflow)
@@ -88,7 +88,7 @@ class UrgentService:
                 logo_lg=user.account.logo_lg,
                 author_id=user.id,
                 task_ids=task_ids,
-                account_id=user.account_id
+                account_id=user.account_id,
             )
         else:
             send_not_urgent_notification.delay(
@@ -96,7 +96,7 @@ class UrgentService:
                 logging=user.account.log_api_requests,
                 logo_lg=user.account.logo_lg,
                 task_ids=task_ids,
-                account_id=user.account_id
+                account_id=user.account_id,
             )
         WorkflowEventService.workflow_urgent_event(
             event_type=event_type,
@@ -108,7 +108,7 @@ class UrgentService:
     def resolve(
         cls,
         workflow: Workflow,
-        user: UserModel
+        user: UserModel,
     ):
 
         """ Urgent management logic:

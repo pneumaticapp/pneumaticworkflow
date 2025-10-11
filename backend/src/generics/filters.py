@@ -3,7 +3,7 @@ from django_filters.rest_framework import (
     DjangoFilterBackend,
     FilterSet,
     OrderingFilter,
-    Filter
+    Filter,
 )
 from django_filters import CharFilter
 from django_filters.constants import EMPTY_VALUES
@@ -109,6 +109,6 @@ class TsQuerySearchFilter(CharFilter):
         value = ' | '.join(words)
         value = SearchQuery(
             value=value,
-            search_type='raw'
+            search_type='raw',
         )
         return super().filter(qs, value)

@@ -7,16 +7,16 @@ from src.processes.tests.fixtures import (
 from src.authentication.enums import AuthTokenType
 from src.processes.enums import (
     SysTemplateType,
-    OwnerType
+    OwnerType,
 )
 from src.processes.models import (
     SystemTemplate,
 )
 from src.processes.services.exceptions import (
-    TemplateServiceException
+    TemplateServiceException,
 )
 from src.processes.services.templates.template import (
-    TemplateService
+    TemplateService,
 )
 from src.utils.validation import ErrorCode
 
@@ -33,25 +33,25 @@ def test_by_name__account_owner__ok(mocker, api_client):
         name=name,
         type=SysTemplateType.LIBRARY,
         template={},
-        is_active=True
+        is_active=True,
     )
     service_init_mock = mocker.patch.object(
         TemplateService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     template = create_test_template(user, tasks_count=1)
     create_template_from_library_template_mock = mocker.patch(
         'src.processes.services.templates.'
         'template.TemplateService.create_template_from_library_template',
-        return_value=template
+        return_value=template,
     )
     api_client.token_authenticate(user)
 
     # act
     response = api_client.post(
         path='/templates/by-name',
-        data={'name': name}
+        data={'name': name},
     )
 
     # assert
@@ -67,16 +67,16 @@ def test_by_name__account_owner__ok(mocker, api_client):
     service_init_mock.assert_called_once_with(
         user=user,
         is_superuser=False,
-        auth_type=AuthTokenType.USER
+        auth_type=AuthTokenType.USER,
     )
     create_template_from_library_template_mock.assert_called_once_with(
-        system_template=system_template
+        system_template=system_template,
     )
 
 
 def test_by_name__admin__ok(
     mocker,
-    api_client
+    api_client,
 ):
 
     # arrange
@@ -84,37 +84,37 @@ def test_by_name__admin__ok(
     create_test_user(
         is_account_owner=True,
         account=account,
-        email='owner@test.test'
+        email='owner@test.test',
     )
     user = create_test_user(
         is_admin=True,
         is_account_owner=False,
-        account=account
+        account=account,
     )
     name = 'Library template'
     system_template = SystemTemplate.objects.create(
         name=name,
         type=SysTemplateType.LIBRARY,
         template={},
-        is_active=True
+        is_active=True,
     )
     service_init_mock = mocker.patch.object(
         TemplateService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     template = create_test_template(user)
     create_template_from_library_template_mock = mocker.patch(
         'src.processes.services.templates.'
         'template.TemplateService.create_template_from_library_template',
-        return_value=template
+        return_value=template,
     )
     api_client.token_authenticate(user)
 
     # act
     response = api_client.post(
         path='/templates/by-name',
-        data={'name': name}
+        data={'name': name},
     )
 
     # assert
@@ -122,27 +122,27 @@ def test_by_name__admin__ok(
     service_init_mock.assert_called_once_with(
         user=user,
         is_superuser=False,
-        auth_type=AuthTokenType.USER
+        auth_type=AuthTokenType.USER,
     )
     create_template_from_library_template_mock.assert_called_once_with(
-        system_template=system_template
+        system_template=system_template,
     )
 
 
 def test_by_name__request_user_is_not_authenticated__permission_denied(
     mocker,
-    api_client
+    api_client,
 ):
 
     # arrange
     service_init_mock = mocker.patch.object(
         TemplateService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     create_template_from_library_template_mock = mocker.patch(
         'src.processes.services.templates.'
-        'template.TemplateService.create_template_from_library_template'
+        'template.TemplateService.create_template_from_library_template',
     )
 
     # act
@@ -150,7 +150,7 @@ def test_by_name__request_user_is_not_authenticated__permission_denied(
         path='/templates/by-name',
         data={
             'name': 'some name',
-        }
+        },
     )
 
     # assert
@@ -161,7 +161,7 @@ def test_by_name__request_user_is_not_authenticated__permission_denied(
 
 def test_by_name__not_found__return_404(
     mocker,
-    api_client
+    api_client,
 ):
 
     # arrange
@@ -169,12 +169,12 @@ def test_by_name__not_found__return_404(
     service_init_mock = mocker.patch.object(
         TemplateService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     api_client.token_authenticate(user)
     sentry_mock = mocker.patch(
         'src.processes.views.template.'
-        'capture_sentry_message'
+        'capture_sentry_message',
     )
 
     # act
@@ -182,7 +182,7 @@ def test_by_name__not_found__return_404(
         path='/templates/by-name',
         data={
             'name': 'Not existent',
-        }
+        },
     )
 
     # assert
@@ -193,7 +193,7 @@ def test_by_name__not_found__return_404(
 
 def test_by_name__name_null__validation_error(
     mocker,
-    api_client
+    api_client,
 ):
 
     # arrange
@@ -202,7 +202,7 @@ def test_by_name__name_null__validation_error(
     service_init_mock = mocker.patch.object(
         TemplateService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     api_client.token_authenticate(user)
 
@@ -211,7 +211,7 @@ def test_by_name__name_null__validation_error(
         path='/templates/by-name',
         data={
             'name': name,
-        }
+        },
     )
 
     # assert
@@ -226,7 +226,7 @@ def test_by_name__name_null__validation_error(
 
 def test_by_name__name_blank__validation_error(
     mocker,
-    api_client
+    api_client,
 ):
 
     # arrange
@@ -235,7 +235,7 @@ def test_by_name__name_blank__validation_error(
     service_init_mock = mocker.patch.object(
         TemplateService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     api_client.token_authenticate(user)
 
@@ -244,7 +244,7 @@ def test_by_name__name_blank__validation_error(
         path='/templates/by-name',
         data={
             'name': name,
-        }
+        },
     )
 
     # assert
@@ -259,7 +259,7 @@ def test_by_name__name_blank__validation_error(
 
 def test_by_name__service_exception__validation_error(
     mocker,
-    api_client
+    api_client,
 ):
 
     # arrange
@@ -269,18 +269,18 @@ def test_by_name__service_exception__validation_error(
         name=name,
         type=SysTemplateType.LIBRARY,
         template={},
-        is_active=True
+        is_active=True,
     )
     service_init_mock = mocker.patch.object(
         TemplateService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     error_message = 'some message'
     create_template_from_library_template_mock = mocker.patch(
         'src.processes.services.templates.'
         'template.TemplateService.create_template_from_library_template',
-        side_effect=TemplateServiceException(message=error_message)
+        side_effect=TemplateServiceException(message=error_message),
     )
     api_client.token_authenticate(user)
 
@@ -288,7 +288,7 @@ def test_by_name__service_exception__validation_error(
         path='/templates/by-name',
         data={
             'name': name,
-        }
+        },
     )
 
     # assert
@@ -298,7 +298,7 @@ def test_by_name__service_exception__validation_error(
     service_init_mock.assert_called_once_with(
         user=user,
         is_superuser=False,
-        auth_type=AuthTokenType.USER
+        auth_type=AuthTokenType.USER,
     )
     create_template_from_library_template_mock.assert_called_once_with(
         system_template=system_template,

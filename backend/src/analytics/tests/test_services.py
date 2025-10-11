@@ -19,7 +19,7 @@ from src.analytics.events import (
     GroupsAnalyticsEvent,
 )
 from src.analytics.services import (
-    AnalyticService
+    AnalyticService,
 )
 from src.accounts.enums import SourceType
 from src.processes.tests.fixtures import (
@@ -29,7 +29,7 @@ from src.processes.tests.fixtures import (
     create_test_template,
     create_test_workflow,
     create_test_attachment,
-    create_test_group
+    create_test_group,
 )
 from src.processes.enums import (
     TemplateIntegrationType,
@@ -38,7 +38,7 @@ from src.processes.enums import (
 from src.analytics import messages
 from src.analytics.labels import Label
 from src.analytics.actions import (
-    WorkflowActions
+    WorkflowActions,
 )
 from src.analytics.services import exceptions
 from src.authentication.enums import AuthTokenType
@@ -57,7 +57,7 @@ class TestAnalyticService:
         # arrange
         data = {'is_superuser': False}
         settings_mock = mocker.patch(
-            'src.analytics.services.settings'
+            'src.analytics.services.settings',
         )
         settings_mock.PROJECT_CONF = {'ANALYTICS': True}
 
@@ -72,7 +72,7 @@ class TestAnalyticService:
         # arrange
         data = {'is_superuser': True}
         settings_mock = mocker.patch(
-            'src.analytics.services.settings'
+            'src.analytics.services.settings',
         )
         settings_mock.PROJECT_CONF = {'ANALYTICS': True}
 
@@ -86,10 +86,10 @@ class TestAnalyticService:
 
         # arrange
         settings_mock = mocker.patch(
-            'src.analytics.services.settings'
+            'src.analytics.services.settings',
         )
         settings_mock.PROJECT_CONF = {
-            'ANALYTICS': False
+            'ANALYTICS': False,
         }
 
         # act
@@ -102,10 +102,10 @@ class TestAnalyticService:
 
         # arrange
         settings_mock = mocker.patch(
-            'src.analytics.services.settings'
+            'src.analytics.services.settings',
         )
         settings_mock.PROJECT_CONF = {
-            'ANALYTICS': True
+            'ANALYTICS': True,
         }
 
         # act
@@ -120,7 +120,7 @@ class TestAnalyticService:
         data = {'value': 'test'}
         skip_mock = mocker.patch(
             'src.analytics.services.AnalyticService._skip',
-            return_value=False
+            return_value=False,
         )
         track_mock = mocker.patch(
             'src.analytics.services.analytics.track',
@@ -143,7 +143,7 @@ class TestAnalyticService:
         data = {'value': 'test'}
         skip_mock = mocker.patch(
             'src.analytics.services.AnalyticService._skip',
-            return_value=True
+            return_value=True,
         )
         track_mock = mocker.patch(
             'src.analytics.services.analytics.track',
@@ -164,7 +164,7 @@ class TestAnalyticService:
         value = 'value'
         private_track_mock = mocker.patch(
             'src.analytics.services.AnalyticService._track',
-            return_value=value
+            return_value=value,
         )
 
         # act
@@ -180,7 +180,7 @@ class TestAnalyticService:
         invite_from = create_test_user()
         invite_to = create_test_user(
             email='t@t.t',
-            account=invite_from.account
+            account=invite_from.account,
         )
         value = 'value'
         current_url = 'url'
@@ -188,7 +188,7 @@ class TestAnalyticService:
 
         private_track_mock = mocker.patch(
             'src.analytics.services.AnalyticService._track',
-            return_value=value
+            return_value=value,
         )
 
         # act
@@ -196,7 +196,7 @@ class TestAnalyticService:
             invite_from=invite_from,
             invite_to=invite_to,
             current_url=current_url,
-            is_superuser=is_superuser
+            is_superuser=is_superuser,
         )
 
         # assert
@@ -214,7 +214,7 @@ class TestAnalyticService:
                 'category': EventCategory.users,
                 'current_url': current_url,
             },
-            is_superuser=is_superuser
+            is_superuser=is_superuser,
         )
 
     def test__users_invited__ok(self, mocker):
@@ -227,7 +227,7 @@ class TestAnalyticService:
 
         private_track_mock = mocker.patch(
             'src.analytics.services.AnalyticService._track',
-            return_value=value
+            return_value=value,
         )
 
         # act
@@ -251,7 +251,7 @@ class TestAnalyticService:
                 'category': EventCategory.users,
                 'invite_token': invite_token,
             },
-            is_superuser=False
+            is_superuser=False,
         )
 
     def test__users_logged_in__ok(self, mocker):
@@ -264,7 +264,7 @@ class TestAnalyticService:
         source = SourceType.GOOGLE
         private_track_mock = mocker.patch(
             'src.analytics.services.AnalyticService._track',
-            return_value=return_value
+            return_value=return_value,
         )
 
         # act
@@ -272,7 +272,7 @@ class TestAnalyticService:
             user=user,
             is_superuser=is_superuser,
             auth_type=auth_type,
-            source=source
+            source=source,
         )
 
         # assert
@@ -289,7 +289,7 @@ class TestAnalyticService:
                 'account_id': user.account_id,
                 'category': EventCategory.users,
                 'auth_type': auth_type,
-                'source': source
+                'source': source,
             },
         )
 
@@ -304,7 +304,7 @@ class TestAnalyticService:
 
         private_track_mock = mocker.patch(
             'src.analytics.services.AnalyticService._track',
-            return_value=return_value
+            return_value=return_value,
         )
         kickoff_fields_count = 1
         tasks_count = 2
@@ -366,7 +366,7 @@ class TestAnalyticService:
 
         private_track_mock = mocker.patch(
             'src.analytics.services.AnalyticService._track',
-            return_value=return_value
+            return_value=return_value,
         )
         kickoff_fields_count = 1
         tasks_count = 2
@@ -428,7 +428,7 @@ class TestAnalyticService:
 
         private_track_mock = mocker.patch(
             'src.analytics.services.AnalyticService._track',
-            return_value=return_value
+            return_value=return_value,
         )
 
         # act
@@ -436,7 +436,7 @@ class TestAnalyticService:
             user=user,
             template=template,
             is_superuser=is_superuser,
-            auth_type=auth_type
+            auth_type=auth_type,
         )
 
         # assert
@@ -471,7 +471,7 @@ class TestAnalyticService:
 
         private_track_mock = mocker.patch(
             'src.analytics.services.AnalyticService._track',
-            return_value=return_value
+            return_value=return_value,
         )
 
         # act
@@ -503,7 +503,7 @@ class TestAnalyticService:
                 'task_number': task.number,
                 'category': EventCategory.templates,
                 'auth_type': auth_type,
-            }
+            },
         )
 
     def test__templates_task_condition_created__ok(self, mocker):
@@ -520,7 +520,7 @@ class TestAnalyticService:
 
         private_track_mock = mocker.patch(
             'src.analytics.services.AnalyticService._track',
-            return_value=return_value
+            return_value=return_value,
         )
 
         # act
@@ -554,7 +554,7 @@ class TestAnalyticService:
                 'condition_id': condition.id,
                 'category': EventCategory.templates,
                 'auth_type': auth_type,
-            }
+            },
         )
 
     def test__templates_kickoff_created__ok(self, mocker):
@@ -568,7 +568,7 @@ class TestAnalyticService:
 
         private_track_mock = mocker.patch(
             'src.analytics.services.AnalyticService._track',
-            return_value=return_value
+            return_value=return_value,
         )
 
         # act
@@ -576,7 +576,7 @@ class TestAnalyticService:
             user=user,
             template=template,
             is_superuser=is_superuser,
-            auth_type=auth_type
+            auth_type=auth_type,
         )
 
         # assert
@@ -610,7 +610,7 @@ class TestAnalyticService:
 
         private_track_mock = mocker.patch(
             'src.analytics.services.AnalyticService._track',
-            return_value=return_value
+            return_value=return_value,
         )
 
         # act
@@ -618,7 +618,7 @@ class TestAnalyticService:
             user=user,
             template=template,
             is_superuser=is_superuser,
-            auth_type=auth_type
+            auth_type=auth_type,
         )
 
         # assert
@@ -652,7 +652,7 @@ class TestAnalyticService:
 
         private_track_mock = mocker.patch(
             'src.analytics.services.AnalyticService._track',
-            return_value=return_value
+            return_value=return_value,
         )
 
         # act
@@ -660,7 +660,7 @@ class TestAnalyticService:
             user=user,
             workflow=workflow,
             is_superuser=is_superuser,
-            auth_type=auth_type
+            auth_type=auth_type,
         )
 
         # assert
@@ -680,8 +680,8 @@ class TestAnalyticService:
                 'template_id': workflow.template_id,
                 'template_name': workflow.get_template_name(),
                 'category': EventCategory.workflows,
-                'auth_type': auth_type
-            }
+                'auth_type': auth_type,
+            },
         )
 
     def test__workflows_ended__ok(self, mocker):
@@ -695,7 +695,7 @@ class TestAnalyticService:
 
         private_track_mock = mocker.patch(
             'src.analytics.services.AnalyticService._track',
-            return_value=return_value
+            return_value=return_value,
         )
 
         # act
@@ -703,7 +703,7 @@ class TestAnalyticService:
             user=user,
             workflow=workflow,
             is_superuser=is_superuser,
-            auth_type=auth_type
+            auth_type=auth_type,
         )
 
         # assert
@@ -722,9 +722,9 @@ class TestAnalyticService:
                 'template_id': workflow.template_id,
                 'template_name': workflow.get_template_name(),
                 'category': EventCategory.workflows,
-                'auth_type': auth_type
+                'auth_type': auth_type,
             },
-            is_superuser=is_superuser
+            is_superuser=is_superuser,
         )
 
     def test__users_guest_invite_sent__ok(self, mocker):
@@ -733,7 +733,7 @@ class TestAnalyticService:
         invite_from = create_test_user()
         invite_to = create_test_user(
             email='t@t.t',
-            account=invite_from.account
+            account=invite_from.account,
         )
         value = 'value'
         current_url = 'url'
@@ -741,7 +741,7 @@ class TestAnalyticService:
 
         private_track_mock = mocker.patch(
             'src.analytics.services.AnalyticService._track',
-            return_value=value
+            return_value=value,
         )
         task_id = 31
         task_name = 'Task name'
@@ -755,7 +755,7 @@ class TestAnalyticService:
             invite_from=invite_from,
             invite_to=invite_to,
             current_url=current_url,
-            is_superuser=is_superuser
+            is_superuser=is_superuser,
         )
 
         # assert
@@ -776,7 +776,7 @@ class TestAnalyticService:
                 'category': EventCategory.users,
                 'current_url': current_url,
             },
-            is_superuser=is_superuser
+            is_superuser=is_superuser,
         )
 
     def test_invite_accepted__ok(self, mocker):
@@ -784,7 +784,7 @@ class TestAnalyticService:
         # arrange
         private_track_mock = mocker.patch(
             'src.analytics.services.AnalyticService._track',
-            return_value=True
+            return_value=True,
         )
         user = create_test_user()
         invited_user = create_invited_user(user=user)
@@ -826,14 +826,14 @@ class TestAnalyticService:
 
         private_track_mock = mocker.patch(
             'src.analytics.services.AnalyticService._track',
-            return_value=return_value
+            return_value=return_value,
         )
 
         # act
         result = AnalyticService.users_digest(
             user=user,
             is_superuser=is_superuser,
-            auth_type=auth_type
+            auth_type=auth_type,
         )
 
         # assert
@@ -865,7 +865,7 @@ class TestAnalyticService:
 
         private_track_mock = mocker.patch(
             'src.analytics.services.AnalyticService._track',
-            return_value=return_value
+            return_value=return_value,
         )
 
         # act
@@ -895,7 +895,7 @@ class TestAnalyticService:
                 'category': EventCategory.workflows,
                 'auth_type': auth_type,
                 'label': label,
-            }
+            },
         )
 
     def test__workflows_started__anonymous_user__ok(self, mocker):
@@ -911,7 +911,7 @@ class TestAnalyticService:
 
         private_track_mock = mocker.patch(
             'src.analytics.services.AnalyticService._track',
-            return_value=return_value
+            return_value=return_value,
         )
 
         # act
@@ -941,12 +941,12 @@ class TestAnalyticService:
                 'category': EventCategory.workflows,
                 'auth_type': auth_type,
                 'label': label,
-            }
+            },
         )
 
     def test__workflows_started__not_anonymous_and_user__raise_exception(
         self,
-        mocker
+        mocker,
     ):
 
         # arrange
@@ -955,7 +955,7 @@ class TestAnalyticService:
         auth_type = AuthTokenType.GUEST
         workflow = create_test_workflow(user, tasks_count=1, is_external=True)
         private_track_mock = mocker.patch(
-            'src.analytics.services.AnalyticService._track'
+            'src.analytics.services.AnalyticService._track',
         )
 
         # act
@@ -982,7 +982,7 @@ class TestAnalyticService:
 
         private_track_mock = mocker.patch(
             'src.analytics.services.AnalyticService._track',
-            return_value=return_value
+            return_value=return_value,
         )
 
         # act
@@ -991,7 +991,7 @@ class TestAnalyticService:
             auth_type=auth_type,
             is_superuser=is_superuser,
             user=user,
-            action=action
+            action=action,
         )
 
         # assert
@@ -1013,8 +1013,8 @@ class TestAnalyticService:
                 'category': EventCategory.workflows,
                 'auth_type': auth_type,
                 'label': Label.urgent,
-                'action': action
-            }
+                'action': action,
+            },
         )
 
     def test__search_search__ok(self, mocker):
@@ -1029,7 +1029,7 @@ class TestAnalyticService:
 
         private_track_mock = mocker.patch(
             'src.analytics.services.AnalyticService._track',
-            return_value=return_value
+            return_value=return_value,
         )
 
         # act
@@ -1038,7 +1038,7 @@ class TestAnalyticService:
             page=page,
             search_text=search_text,
             is_superuser=is_superuser,
-            auth_type=token_type
+            auth_type=token_type,
         )
 
         # assert
@@ -1070,7 +1070,7 @@ class TestAnalyticService:
         attachment = create_test_attachment(account=user.account)
         private_track_mock = mocker.patch(
             'src.analytics.services.AnalyticService._track',
-            return_value=return_value
+            return_value=return_value,
         )
 
         # act
@@ -1078,7 +1078,7 @@ class TestAnalyticService:
             user=user,
             attachment=attachment,
             is_superuser=is_superuser,
-            auth_type=token_type
+            auth_type=token_type,
         )
 
         # assert
@@ -1098,7 +1098,7 @@ class TestAnalyticService:
                 'size': attachment.humanize_size,
                 'category': EventCategory.attachments,
                 'type': attachment.extension,
-            }
+            },
         )
 
     def test__attachments_uploaded__anonymous_user__ok(self, mocker):
@@ -1112,7 +1112,7 @@ class TestAnalyticService:
         attachment = create_test_attachment(account=account)
         private_track_mock = mocker.patch(
             'src.analytics.services.AnalyticService._track',
-            return_value=return_value
+            return_value=return_value,
         )
 
         # act
@@ -1121,7 +1121,7 @@ class TestAnalyticService:
             anonymous_id=anonymous_id,
             attachment=attachment,
             is_superuser=is_superuser,
-            auth_type=token_type
+            auth_type=token_type,
         )
 
         # assert
@@ -1141,7 +1141,7 @@ class TestAnalyticService:
                 'account_id': account.id,
                 'category': EventCategory.attachments,
                 'type': attachment.extension,
-            }
+            },
         )
 
     def test__attachments_uploaded__not_user__raise_exception(self, mocker):
@@ -1161,7 +1161,7 @@ class TestAnalyticService:
                 attachment=attachment,
                 is_superuser=is_superuser,
                 auth_type=token_type,
-                user=AnonymousUser()
+                user=AnonymousUser(),
             )
 
         # assert
@@ -1176,7 +1176,7 @@ class TestAnalyticService:
 
         private_track_mock = mocker.patch(
             'src.analytics.services.AnalyticService._track',
-            return_value=return_value
+            return_value=return_value,
         )
 
         # act
@@ -1205,7 +1205,7 @@ class TestAnalyticService:
                 'integration_type': TemplateIntegrationType.ZAPIER,
                 'account_id': user.account_id,
                 'category': EventCategory.templates,
-            }
+            },
         )
 
     def test__templates_integrated__anonymous_id__ok(self, mocker):
@@ -1218,7 +1218,7 @@ class TestAnalyticService:
 
         private_track_mock = mocker.patch(
             'src.analytics.services.AnalyticService._track',
-            return_value=return_value
+            return_value=return_value,
         )
 
         # act
@@ -1247,19 +1247,19 @@ class TestAnalyticService:
                 'integration_type': TemplateIntegrationType.ZAPIER,
                 'account_id': user.account_id,
                 'category': EventCategory.templates,
-            }
+            },
         )
 
     def test__templates_integrated__anonymous_and_user__raise_exception(
         self,
-        mocker
+        mocker,
     ):
 
         # arrange
         user = create_test_user()
         template = create_test_template(user)
         private_track_mock = mocker.patch(
-            'src.analytics.services.AnalyticService._track'
+            'src.analytics.services.AnalyticService._track',
         )
 
         # act
@@ -1282,13 +1282,13 @@ class TestAnalyticService:
 
         private_track_mock = mocker.patch(
             'src.analytics.services.AnalyticService._track',
-            return_value=return_value
+            return_value=return_value,
         )
 
         # act
         result = AnalyticService.accounts_webhooks_subscribed(
             user=user,
-            is_superuser=True
+            is_superuser=True,
         )
 
         # assert
@@ -1304,7 +1304,7 @@ class TestAnalyticService:
                 'last_name': user.last_name,
                 'account_id': user.account_id,
                 'category': EventCategory.accounts,
-            }
+            },
         )
 
     def test__workflows_delayed__ok(self, mocker):
@@ -1317,7 +1317,7 @@ class TestAnalyticService:
         workflow = create_test_workflow(user, tasks_count=1)
         private_track_mock = mocker.patch(
             'src.analytics.services.AnalyticService._track',
-            return_value=return_value
+            return_value=return_value,
         )
         duration = timedelta(days=10)
 
@@ -1351,7 +1351,7 @@ class TestAnalyticService:
                 'auth_type': auth_type,
                 'label': Label.delayed,
                 'action': WorkflowActions.delayed,
-            }
+            },
         )
 
     def test__workflows_delayed__legacy_template__ok(self, mocker):
@@ -1366,12 +1366,12 @@ class TestAnalyticService:
         workflow.legacy_template_name = 'Legacy name'
         workflow.is_legacy_template = True
         workflow.save(
-            update_fields=['legacy_template_name', 'is_legacy_template']
+            update_fields=['legacy_template_name', 'is_legacy_template'],
         )
         workflow.refresh_from_db()
         private_track_mock = mocker.patch(
             'src.analytics.services.AnalyticService._track',
-            return_value=return_value
+            return_value=return_value,
         )
         duration = timedelta(days=10)
 
@@ -1405,7 +1405,7 @@ class TestAnalyticService:
                 'auth_type': auth_type,
                 'label': Label.delayed,
                 'action': WorkflowActions.delayed,
-            }
+            },
         )
 
     def test__subscription_created__ok(self, mocker):
@@ -1420,13 +1420,13 @@ class TestAnalyticService:
 
         private_track_mock = mocker.patch(
             'src.analytics.services.AnalyticService._track',
-            return_value=return_value
+            return_value=return_value,
         )
 
         # act
         result = AnalyticService.subscription_created(
             is_superuser=is_superuser,
-            user=user
+            user=user,
         )
 
         # assert
@@ -1444,7 +1444,7 @@ class TestAnalyticService:
                 'category': EventCategory.subscriptions,
                 'quantity': user.account.max_users,
                 'plan_code': user.account.billing_plan,
-            }
+            },
         )
 
     def test__subscription_updated__ok(self, mocker):
@@ -1459,13 +1459,13 @@ class TestAnalyticService:
 
         private_track_mock = mocker.patch(
             'src.analytics.services.AnalyticService._track',
-            return_value=return_value
+            return_value=return_value,
         )
 
         # act
         result = AnalyticService.subscription_updated(
             is_superuser=is_superuser,
-            user=user
+            user=user,
         )
 
         # assert
@@ -1483,7 +1483,7 @@ class TestAnalyticService:
                 'category': EventCategory.subscriptions,
                 'quantity': user.account.max_users,
                 'plan_code': user.account.billing_plan,
-            }
+            },
         )
 
     def test__subscription_converted__ok(self, mocker):
@@ -1498,13 +1498,13 @@ class TestAnalyticService:
 
         private_track_mock = mocker.patch(
             'src.analytics.services.AnalyticService._track',
-            return_value=return_value
+            return_value=return_value,
         )
 
         # act
         result = AnalyticService.subscription_converted(
             is_superuser=is_superuser,
-            user=user
+            user=user,
         )
 
         # assert
@@ -1522,7 +1522,7 @@ class TestAnalyticService:
                 'category': EventCategory.subscriptions,
                 'quantity': user.account.max_users,
                 'plan_code': user.account.billing_plan,
-            }
+            },
         )
 
     def test__subscription_expired__ok(self, mocker):
@@ -1535,13 +1535,13 @@ class TestAnalyticService:
 
         private_track_mock = mocker.patch(
             'src.analytics.services.AnalyticService._track',
-            return_value=return_value
+            return_value=return_value,
         )
 
         # act
         result = AnalyticService.subscription_expired(
             is_superuser=is_superuser,
-            user=user
+            user=user,
         )
 
         # assert
@@ -1557,7 +1557,7 @@ class TestAnalyticService:
                 'last_name': user.last_name,
                 'account_id': user.account_id,
                 'category': EventCategory.subscriptions,
-            }
+            },
         )
 
     def test__subscription_canceled__ok(self, mocker):
@@ -1570,13 +1570,13 @@ class TestAnalyticService:
 
         private_track_mock = mocker.patch(
             'src.analytics.services.AnalyticService._track',
-            return_value=return_value
+            return_value=return_value,
         )
 
         # act
         result = AnalyticService.subscription_canceled(
             is_superuser=is_superuser,
-            user=user
+            user=user,
         )
 
         # assert
@@ -1592,7 +1592,7 @@ class TestAnalyticService:
                 'last_name': user.last_name,
                 'account_id': user.account_id,
                 'category': EventCategory.subscriptions,
-            }
+            },
         )
 
     def test__trial_subscription_created__ok(self, mocker):
@@ -1607,13 +1607,13 @@ class TestAnalyticService:
 
         private_track_mock = mocker.patch(
             'src.analytics.services.AnalyticService._track',
-            return_value=return_value
+            return_value=return_value,
         )
 
         # act
         result = AnalyticService.trial_subscription_created(
             is_superuser=is_superuser,
-            user=user
+            user=user,
         )
 
         # assert
@@ -1631,7 +1631,7 @@ class TestAnalyticService:
                 'category': EventCategory.subscriptions,
                 'quantity': user.account.max_users,
                 'plan_code': user.account.billing_plan,
-            }
+            },
         )
 
     def test__task_returned__ok(self, mocker):
@@ -1643,7 +1643,7 @@ class TestAnalyticService:
         return_value = True
         private_track_mock = mocker.patch(
             'src.analytics.services.AnalyticService._track',
-            return_value=return_value
+            return_value=return_value,
         )
         workflow = create_test_workflow(user=user, tasks_count=1)
         task = workflow.tasks.get(number=1)
@@ -1677,7 +1677,7 @@ class TestAnalyticService:
                 'task_name': task.name,
                 'category': EventCategory.tasks,
                 'auth_type': AuthTokenType.USER,
-            }
+            },
         )
 
     def test__template_generation_init__ok(self, mocker):
@@ -1688,7 +1688,7 @@ class TestAnalyticService:
         description = 's0me description'
         private_track_mock = mocker.patch(
             'src.analytics.services.AnalyticService._track',
-            return_value=return_value
+            return_value=return_value,
         )
 
         # act
@@ -1717,7 +1717,7 @@ class TestAnalyticService:
                 'label': Label.template_generation,
                 'auth_type': AuthTokenType.API,
                 'success': False,
-            }
+            },
         )
 
     def test__workflow_returned__ok(self, mocker):
@@ -1730,7 +1730,7 @@ class TestAnalyticService:
         auth_type = AuthTokenType.USER
         private_track_mock = mocker.patch(
             'src.analytics.services.AnalyticService._track',
-            return_value=return_value
+            return_value=return_value,
         )
         workflow = create_test_workflow(user=user, tasks_count=1)
         task = workflow.tasks.get(number=1)
@@ -1765,7 +1765,7 @@ class TestAnalyticService:
                 'returned_to_task': task.name,
                 'category': EventCategory.workflows,
                 'auth_type': auth_type,
-            }
+            },
         )
 
     def test__library_template_opened__ok(self, mocker):
@@ -1777,7 +1777,7 @@ class TestAnalyticService:
         return_value = True
         private_track_mock = mocker.patch(
             'src.analytics.services.AnalyticService._track',
-            return_value=return_value
+            return_value=return_value,
         )
         category = SystemTemplateCategory.objects.create(
             name='Sales',
@@ -1789,7 +1789,7 @@ class TestAnalyticService:
             type=SysTemplateType.LIBRARY,
             template={},
             category=category,
-            is_active=True
+            is_active=True,
         )
 
         # act
@@ -1818,7 +1818,7 @@ class TestAnalyticService:
                 'category': EventCategory.templates,
                 'label': Label.library_template_opened,
                 'auth_type': auth_type,
-            }
+            },
         )
 
     def test__account_created__ok(self, mocker):
@@ -1837,7 +1837,7 @@ class TestAnalyticService:
             utm_campaign=utm_campaign,
             utm_term=utm_term,
             utm_content=utm_content,
-            gclid=gclid
+            gclid=gclid,
         )
         user = create_test_user(account=account)
         is_superuser = True
@@ -1845,7 +1845,7 @@ class TestAnalyticService:
         return_value = True
         private_track_mock = mocker.patch(
             'src.analytics.services.AnalyticService._track',
-            return_value=return_value
+            return_value=return_value,
         )
 
         # act
@@ -1874,8 +1874,8 @@ class TestAnalyticService:
                 'utm_campaign': utm_campaign,
                 'utm_term': utm_term,
                 'utm_content': utm_content,
-                'gclid': gclid
-            }
+                'gclid': gclid,
+            },
         )
 
     def test__account_verified__ok(self, mocker):
@@ -1894,7 +1894,7 @@ class TestAnalyticService:
             utm_campaign=utm_campaign,
             utm_term=utm_term,
             utm_content=utm_content,
-            gclid=gclid
+            gclid=gclid,
         )
         user = create_test_user(account=account)
         is_superuser = True
@@ -1902,7 +1902,7 @@ class TestAnalyticService:
         return_value = True
         private_track_mock = mocker.patch(
             'src.analytics.services.AnalyticService._track',
-            return_value=return_value
+            return_value=return_value,
         )
 
         # act
@@ -1931,8 +1931,8 @@ class TestAnalyticService:
                 'utm_campaign': utm_campaign,
                 'utm_term': utm_term,
                 'utm_content': utm_content,
-                'gclid': gclid
-            }
+                'gclid': gclid,
+            },
         )
 
     def test__tenants_added__ok(self, mocker):
@@ -1947,7 +1947,7 @@ class TestAnalyticService:
 
         private_track_mock = mocker.patch(
             'src.analytics.services.AnalyticService._track',
-            return_value=return_value
+            return_value=return_value,
         )
 
         # act
@@ -1955,7 +1955,7 @@ class TestAnalyticService:
             master_user=master_user,
             tenant_account=tenant_account,
             is_superuser=is_superuser,
-            auth_type=auth_type
+            auth_type=auth_type,
         )
 
         # assert
@@ -1976,7 +1976,7 @@ class TestAnalyticService:
                 'account_id': master_account.id,
                 'tenant_id': tenant_account.id,
                 'auth_type': auth_type,
-            }
+            },
         )
 
     def test__tenants_accessed__ok(self, mocker):
@@ -1991,7 +1991,7 @@ class TestAnalyticService:
 
         private_track_mock = mocker.patch(
             'src.analytics.services.AnalyticService._track',
-            return_value=return_value
+            return_value=return_value,
         )
 
         # act
@@ -1999,7 +1999,7 @@ class TestAnalyticService:
             master_user=master_user,
             tenant_account=tenant_account,
             is_superuser=is_superuser,
-            auth_type=auth_type
+            auth_type=auth_type,
         )
 
         # assert
@@ -2020,7 +2020,7 @@ class TestAnalyticService:
                 'account_id': master_account.id,
                 'tenant_id': tenant_account.id,
                 'auth_type': auth_type,
-            }
+            },
         )
 
     def test__template_generated_from_landing__ok(self, mocker):
@@ -2033,7 +2033,7 @@ class TestAnalyticService:
         template = create_test_template(user=user)
         private_track_mock = mocker.patch(
             'src.analytics.services.AnalyticService._track',
-            return_value=return_value
+            return_value=return_value,
         )
 
         # act
@@ -2060,7 +2060,7 @@ class TestAnalyticService:
                 'category': EventCategory.templates,
                 'label': Label.template_generation,
                 'auth_type': auth_type,
-            }
+            },
         )
 
     def test__template_created_from_landing_library__ok(self, mocker):
@@ -2073,7 +2073,7 @@ class TestAnalyticService:
         template = create_test_template(user=user)
         private_track_mock = mocker.patch(
             'src.analytics.services.AnalyticService._track',
-            return_value=return_value
+            return_value=return_value,
         )
 
         # act
@@ -2100,7 +2100,7 @@ class TestAnalyticService:
                 'template_name': template.name,
                 'category': EventCategory.templates,
                 'auth_type': auth_type,
-            }
+            },
         )
 
     def test__comment_added__ok(self, mocker):
@@ -2113,7 +2113,7 @@ class TestAnalyticService:
         workflow = create_test_workflow(user=user, tasks_count=1)
         private_track_mock = mocker.patch(
             'src.analytics.services.AnalyticService._track',
-            return_value=return_value
+            return_value=return_value,
         )
         text = 'comment text'
 
@@ -2145,7 +2145,7 @@ class TestAnalyticService:
                 'workflow_name': workflow.name,
                 'category': EventCategory.comments,
                 'auth_type': auth_type,
-            }
+            },
         )
 
     def test__mentions_created__ok(self, mocker):
@@ -2158,7 +2158,7 @@ class TestAnalyticService:
         workflow = create_test_workflow(user=user, tasks_count=1)
         private_track_mock = mocker.patch(
             'src.analytics.services.AnalyticService._track',
-            return_value=return_value
+            return_value=return_value,
         )
         text = 'comment text'
 
@@ -2190,7 +2190,7 @@ class TestAnalyticService:
                 'workflow_name': workflow.name,
                 'category': EventCategory.mentions,
                 'auth_type': auth_type,
-            }
+            },
         )
 
     def test__comment_edited__ok(self, mocker):
@@ -2203,7 +2203,7 @@ class TestAnalyticService:
         workflow = create_test_workflow(user=user, tasks_count=1)
         private_track_mock = mocker.patch(
             'src.analytics.services.AnalyticService._track',
-            return_value=return_value
+            return_value=return_value,
         )
         text = 'comment text'
 
@@ -2236,7 +2236,7 @@ class TestAnalyticService:
                 'workflow_name': workflow.name,
                 'category': EventCategory.comments,
                 'auth_type': auth_type,
-            }
+            },
         )
 
     def test__comment_deleted__ok(self, mocker):
@@ -2249,7 +2249,7 @@ class TestAnalyticService:
         workflow = create_test_workflow(user=user, tasks_count=1)
         private_track_mock = mocker.patch(
             'src.analytics.services.AnalyticService._track',
-            return_value=return_value
+            return_value=return_value,
         )
         text = 'comment text'
 
@@ -2282,7 +2282,7 @@ class TestAnalyticService:
                 'workflow_name': workflow.name,
                 'category': EventCategory.comments,
                 'auth_type': auth_type,
-            }
+            },
         )
 
     def test_comment_reaction_added__ok(self, mocker):
@@ -2295,7 +2295,7 @@ class TestAnalyticService:
         workflow = create_test_workflow(user=user, tasks_count=1)
         private_track_mock = mocker.patch(
             'src.analytics.services.AnalyticService._track',
-            return_value=return_value
+            return_value=return_value,
         )
         reaction = '=D'
 
@@ -2327,7 +2327,7 @@ class TestAnalyticService:
                 'workflow_name': workflow.name,
                 'category': EventCategory.comments,
                 'auth_type': auth_type,
-            }
+            },
         )
 
     def test_comment_reaction_deleted__ok(self, mocker):
@@ -2340,7 +2340,7 @@ class TestAnalyticService:
         workflow = create_test_workflow(user=user, tasks_count=1)
         private_track_mock = mocker.patch(
             'src.analytics.services.AnalyticService._track',
-            return_value=return_value
+            return_value=return_value,
         )
         reaction = '=D'
 
@@ -2372,7 +2372,7 @@ class TestAnalyticService:
                 'workflow_name': workflow.name,
                 'category': EventCategory.comments,
                 'auth_type': auth_type,
-            }
+            },
         )
 
     def test_task_performer_created__ok(self, mocker):
@@ -2385,7 +2385,7 @@ class TestAnalyticService:
         auth_type = AuthTokenType.USER
         private_track_mock = mocker.patch(
             'src.analytics.services.AnalyticService._track',
-            return_value=return_value
+            return_value=return_value,
         )
         workflow = create_test_workflow(user=user, tasks_count=1)
         task = workflow.tasks.get(number=1)
@@ -2423,7 +2423,7 @@ class TestAnalyticService:
                 'category': EventCategory.tasks,
                 'auth_type': auth_type,
             },
-            is_superuser=is_superuser
+            is_superuser=is_superuser,
         )
 
     def test__task_performer_deleted__ok(self, mocker):
@@ -2436,7 +2436,7 @@ class TestAnalyticService:
         auth_type = AuthTokenType.USER
         private_track_mock = mocker.patch(
             'src.analytics.services.AnalyticService._track',
-            return_value=return_value
+            return_value=return_value,
         )
         workflow = create_test_workflow(user=user, tasks_count=1)
         task = workflow.tasks.get(number=1)
@@ -2474,7 +2474,7 @@ class TestAnalyticService:
                 'category': EventCategory.tasks,
                 'auth_type': auth_type,
             },
-            is_superuser=is_superuser
+            is_superuser=is_superuser,
         )
 
     def test__task_group_performer_created__ok(self, mocker):
@@ -2487,7 +2487,7 @@ class TestAnalyticService:
         return_value = True
         private_track_mock = mocker.patch(
             'src.analytics.services.AnalyticService._track',
-            return_value=return_value
+            return_value=return_value,
         )
         workflow = create_test_workflow(user=user, tasks_count=1)
         task = workflow.tasks.get(number=1)
@@ -2525,7 +2525,7 @@ class TestAnalyticService:
                 'category': EventCategory.tasks,
                 'auth_type': auth_type,
             },
-            is_superuser=is_superuser
+            is_superuser=is_superuser,
         )
 
     def test__task_group_performer_deleted__ok(self, mocker):
@@ -2538,7 +2538,7 @@ class TestAnalyticService:
         auth_type = AuthTokenType.USER
         private_track_mock = mocker.patch(
             'src.analytics.services.AnalyticService._track',
-            return_value=return_value
+            return_value=return_value,
         )
         workflow = create_test_workflow(user=user, tasks_count=1)
         task = workflow.tasks.get(number=1)
@@ -2576,7 +2576,7 @@ class TestAnalyticService:
                 'category': EventCategory.tasks,
                 'auth_type': auth_type,
             },
-            is_superuser=is_superuser
+            is_superuser=is_superuser,
         )
 
     def test_groups_created__ok(self, mocker):
@@ -2594,7 +2594,7 @@ class TestAnalyticService:
         text = f'{group.name} (id: {group.id}).'
         private_track_mock = mocker.patch(
             'src.analytics.services.AnalyticService._track',
-            return_value=return_value
+            return_value=return_value,
         )
 
         # act
@@ -2610,7 +2610,7 @@ class TestAnalyticService:
             group_name=group.name,
             auth_type=auth_type,
             is_superuser=is_superuser,
-            text=text
+            text=text,
         )
 
         # assert
@@ -2631,7 +2631,7 @@ class TestAnalyticService:
                 'name': group.name,
                 'category': EventCategory.groups,
                 'auth_type': auth_type,
-            }
+            },
         )
 
     def test_groups_deleted__ok(self, mocker):
@@ -2649,7 +2649,7 @@ class TestAnalyticService:
         text = f'{group.name} (id: {group.id}).'
         private_track_mock = mocker.patch(
             'src.analytics.services.AnalyticService._track',
-            return_value=return_value
+            return_value=return_value,
         )
 
         # act
@@ -2665,7 +2665,7 @@ class TestAnalyticService:
             group_name=group.name,
             auth_type=auth_type,
             is_superuser=is_superuser,
-            text=text
+            text=text,
         )
 
         # assert
@@ -2686,7 +2686,7 @@ class TestAnalyticService:
                 'name': group.name,
                 'category': EventCategory.groups,
                 'auth_type': auth_type,
-            }
+            },
         )
 
     def test_groups_updated__ok(self, mocker):
@@ -2714,7 +2714,7 @@ class TestAnalyticService:
         )
         private_track_mock = mocker.patch(
             'src.analytics.services.AnalyticService._track',
-            return_value=return_value
+            return_value=return_value,
         )
 
         # act
@@ -2730,7 +2730,7 @@ class TestAnalyticService:
             group_name=group.name,
             auth_type=auth_type,
             is_superuser=is_superuser,
-            text=text
+            text=text,
         )
 
         # assert
@@ -2751,5 +2751,5 @@ class TestAnalyticService:
                 'name': group.name,
                 'category': EventCategory.groups,
                 'auth_type': auth_type,
-            }
+            },
         )

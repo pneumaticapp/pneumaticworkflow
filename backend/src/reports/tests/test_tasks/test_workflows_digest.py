@@ -42,7 +42,7 @@ class TestSendDigest:
         )
         mocker.patch(
             'src.processes.tasks.webhooks.'
-            'send_task_completed_webhook.delay'
+            'send_task_completed_webhook.delay',
         )
         user = create_test_user()
         user.is_account_owner = True
@@ -55,7 +55,7 @@ class TestSendDigest:
         date_to = current_week_monday
         token_patch = mocker.patch(
             'src.accounts.tokens.UnsubscribeEmailToken.'
-            'create_token'
+            'create_token',
         )
         token_patch.return_value = '12345'
         api_client.token_authenticate(user)
@@ -73,37 +73,37 @@ class TestSendDigest:
         api_client.post(
             f'/templates/{template_1.id}/run',
             data={
-                'name': 'First workflow'
-            }
+                'name': 'First workflow',
+            },
         )
         second_workflow = api_client.post(
             f'/templates/{template_2.id}/run',
             data={
-                'name': 'Second workflow'
-            }
+                'name': 'Second workflow',
+            },
         )
         api_client.post(
             f'/templates/{system_template.id}/run',
             data={
-                'name': 'Onboarding'
-            }
+                'name': 'Onboarding',
+            },
         )
         second_workflow = Workflow.objects.get(
-            id=second_workflow.data['id']
+            id=second_workflow.data['id'],
         )
         api_client.post(
             f'/templates/{template_2.id}/run',
             data={
-                'name': 'Third workflow'
-            }
+                'name': 'Third workflow',
+            },
         )
 
         for task in second_workflow.tasks.order_by('number').all():
             api_client.post(
                 f'/workflows/{second_workflow.id}/task-complete',
                 data={
-                    'task_id': task.id
-                }
+                    'task_id': task.id,
+                },
             )
 
         Workflow.objects.on_account(user.account_id).update(
@@ -115,7 +115,7 @@ class TestSendDigest:
         second_workflow.save()
         email_service_digest = mocker.patch(
             'src.services.email.EmailService.'
-            'send_workflows_digest_email'
+            'send_workflows_digest_email',
         )
 
         # act
@@ -148,7 +148,7 @@ class TestSendDigest:
                         'template_name': template_1.name,
                         'template_id': template_1.id,
                     },
-                ]
+                ],
             },
             logo_lg=None,
         )
@@ -172,11 +172,11 @@ class TestSendDigest:
         )
         mocker.patch(
             'src.processes.tasks.webhooks.'
-            'send_task_completed_webhook.delay'
+            'send_task_completed_webhook.delay',
         )
         mocker.patch(
             'src.reports.services.workflows.timezone.now',
-            return_value=now
+            return_value=now,
         )
 
         api_client.token_authenticate(user)
@@ -189,35 +189,35 @@ class TestSendDigest:
         api_client.post(
             f'/templates/{template_1.id}/run',
             data={
-                'name': 'First workflow'
-            }
+                'name': 'First workflow',
+            },
         )
         second_workflow = api_client.post(
             f'/templates/{template_2.id}/run',
             data={
-                'name': 'Second workflow'
-            }
+                'name': 'Second workflow',
+            },
         )
         second_workflow = Workflow.objects.get(id=second_workflow.data['id'])
         api_client.post(
             f'/templates/{template_2.id}/run',
             data={
-                'name': 'Third workflow'
-            }
+                'name': 'Third workflow',
+            },
         )
         Workflow.objects.on_account(user.account_id).update(
-            date_created=F('date_created') - timedelta(weeks=1)
+            date_created=F('date_created') - timedelta(weeks=1),
         )
 
         for task in second_workflow.tasks.order_by('number').all():
             api_client.post(
                 f'/workflows/{second_workflow.id}/task-complete', data={
-                    'task_id': task.id
-                }
+                    'task_id': task.id,
+                },
             )
         email_service_digest = mocker.patch(
             'src.services.email.EmailService.'
-            'send_workflows_digest_email'
+            'send_workflows_digest_email',
         )
 
         # act
@@ -241,7 +241,7 @@ class TestSendDigest:
         date_to = current_week_monday
         token_patch = mocker.patch(
             'src.accounts.tokens.UnsubscribeEmailToken.'
-            'create_token'
+            'create_token',
         )
         token_patch.return_value = '12345'
 
@@ -255,8 +255,8 @@ class TestSendDigest:
         api_client.post(
             f'/templates/{template_2.id}/run',
             data={
-                'name': 'Second workflow'
-            }
+                'name': 'Second workflow',
+            },
         )
         template_2.is_active = False
         template_2.save()
@@ -269,7 +269,7 @@ class TestSendDigest:
         )
         email_service_digest = mocker.patch(
             'src.services.email.EmailService.'
-            'send_workflows_digest_email'
+            'send_workflows_digest_email',
         )
 
         # act
@@ -294,7 +294,7 @@ class TestSendDigest:
                         'template_name': template_2.name,
                         'template_id': template_2.id,
                     },
-                ]
+                ],
             },
             logo_lg=account.logo_lg,
         )
@@ -311,7 +311,7 @@ class TestSendDigest:
         template_data = get_workflow_create_data(user)
         token_patch = mocker.patch(
             'src.accounts.tokens.UnsubscribeEmailToken.'
-            'create_token'
+            'create_token',
         )
         token_patch.return_value = '12345'
 
@@ -323,7 +323,7 @@ class TestSendDigest:
         api_client.post('/templates', data=template_data)
         email_service_digest = mocker.patch(
             'src.services.email.EmailService.'
-            'send_workflows_digest_email'
+            'send_workflows_digest_email',
         )
 
         # act
@@ -344,7 +344,7 @@ class TestSendDigest:
         )
         mocker.patch(
             'src.processes.tasks.webhooks.'
-            'send_task_completed_webhook.delay'
+            'send_task_completed_webhook.delay',
         )
         user = create_test_user()
         another_user = create_test_user(
@@ -361,7 +361,7 @@ class TestSendDigest:
         date_to = current_week_monday
         token_patch = mocker.patch(
             'src.accounts.tokens.UnsubscribeEmailToken.'
-            'create_token'
+            'create_token',
         )
         token_patch.return_value = '12345'
         api_client.token_authenticate(another_user)
@@ -374,8 +374,8 @@ class TestSendDigest:
         api_client.post(
             f'/templates/{template_1.id}/run',
             data={
-                'name': 'First workflow'
-            }
+                'name': 'First workflow',
+            },
         )
 
         api_client.token_authenticate(user)
@@ -389,29 +389,29 @@ class TestSendDigest:
         second_workflow = api_client.post(
             f'/templates/{template_2.id}/run',
             data={
-                'name': 'Second workflow'
-            }
+                'name': 'Second workflow',
+            },
         )
         api_client.post(
             f'/templates/{system_template.id}/run',
             data={
-                'name': 'Onboarding'
-            }
+                'name': 'Onboarding',
+            },
         )
         second_workflow = Workflow.objects.get(id=second_workflow.data['id'])
         api_client.post(
             f'/templates/{template_2.id}/run',
             data={
-                'name': 'Third workflow'
-            }
+                'name': 'Third workflow',
+            },
         )
 
         for task in second_workflow.tasks.order_by('number').all():
             api_client.post(
                 f'/workflows/{second_workflow.id}/task-complete',
                 data={
-                    'task_id': task.id
-                }
+                    'task_id': task.id,
+                },
             )
 
         Workflow.objects.on_account(user.account_id).update(
@@ -423,7 +423,7 @@ class TestSendDigest:
         second_workflow.save()
         email_service_digest = mocker.patch(
             'src.services.email.EmailService.'
-            'send_workflows_digest_email'
+            'send_workflows_digest_email',
         )
 
         # act
@@ -448,7 +448,7 @@ class TestSendDigest:
                         'template_name': template_2.name,
                         'template_id': template_2.id,
                     },
-                ]
+                ],
             },
             logo_lg=None,
         )
@@ -478,11 +478,11 @@ class TestSendDigest:
         )
         email_service_digest = mocker.patch(
             'src.services.email.EmailService.'
-            'send_workflows_digest_email'
+            'send_workflows_digest_email',
         )
         token_patch = mocker.patch(
             'src.accounts.tokens.UnsubscribeEmailToken.'
-            'create_token'
+            'create_token',
         )
         token_patch.return_value = '12345'
 
@@ -516,7 +516,7 @@ class TestSendDigest:
                         'template_name': template.name,
                         'template_id': template_2.id,
                     },
-                ]
+                ],
             },
             logo_lg=None,
         )

@@ -7,7 +7,7 @@ router = DefaultRouter(trailing_slash=False)
 router.register(
     prefix='menu',
     viewset=MenuViewSet,
-    basename='menu'
+    basename='menu',
 )
 
 urlpatterns = router.urls

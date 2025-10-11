@@ -34,7 +34,7 @@ class TestListIntegrations:
             button_text='Button',
             url='https://google.com/logo.svg',
             order=9,
-            is_active=True
+            is_active=True,
         )
         Integration.objects.create(
             name='Inactive integration',
@@ -42,7 +42,7 @@ class TestListIntegrations:
             long_description='This is long description',
             button_text='Button',
             url='https://google.com/logo.svg',
-            order=11
+            order=11,
         )
 
         api_client.token_authenticate(user)
@@ -77,7 +77,7 @@ class TestRetrieveIntegration:
 
         api_client.token_authenticate(user)
         response = api_client.get(
-            f'/applications/integrations/{integration.id}'
+            f'/applications/integrations/{integration.id}',
         )
 
         assert response.status_code == 200
@@ -102,7 +102,7 @@ class TestRetrieveIntegration:
 
         api_client.token_authenticate(user)
         response = api_client.get(
-            f'/applications/integrations/{integration.id}'
+            f'/applications/integrations/{integration.id}',
         )
 
         assert response.status_code == 404

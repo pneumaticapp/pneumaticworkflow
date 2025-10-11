@@ -28,7 +28,7 @@ class TestSendSystemNotification:
         another_user = create_test_user(email='another@pneumatic.app')
 
         send_notification_mock = mocker.patch(
-            'src.accounts.tasks._send_notification'
+            'src.accounts.tasks._send_notification',
         )
         SystemMessage.objects.create(
             text='If you smell what The Rock is cooking!',
@@ -50,7 +50,7 @@ class TestSendSystemNotification:
         another_user = create_test_user(email='another@pneumatic.app')
 
         send_notification_mock = mocker.patch(
-            'src.accounts.tasks._send_notification'
+            'src.accounts.tasks._send_notification',
         )
 
         system_message = SystemMessage.objects.create(
@@ -82,7 +82,7 @@ class TestSendSystemNotification:
         another_user = create_test_user(email='another@pneumatic.app')
 
         send_notification_mock = mocker.patch(
-            'src.accounts.tasks._send_notification'
+            'src.accounts.tasks._send_notification',
         )
 
         SystemMessage.objects.create(

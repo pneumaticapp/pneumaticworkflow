@@ -8,7 +8,7 @@ from src.processes.entities import (
 from src.processes.enums import SysTemplateType
 from src.processes.models import (
     SystemTemplate,
-    SystemTemplateCategory
+    SystemTemplateCategory,
 )
 
 UserModel = get_user_model()
@@ -20,7 +20,7 @@ class SystemTemplateService:
         self,
         user: UserModel,
         is_superuser: bool = False,
-        auth_type: AuthTokenType.LITERALS = AuthTokenType.USER
+        auth_type: AuthTokenType.LITERALS = AuthTokenType.USER,
     ):
         self.user = user
         self.account = user.account
@@ -29,7 +29,7 @@ class SystemTemplateService:
 
     def _get_categories_dict(
         self,
-        data: List[LibraryTemplateData]
+        data: List[LibraryTemplateData],
     ) -> Dict[str, int]:
 
         """ Create not existent categories and return dict with {name: id} """
@@ -38,7 +38,7 @@ class SystemTemplateService:
         category_by_name = {
             elem.name: elem.id
             for elem in SystemTemplateCategory.objects.filter(
-                name__in=names
+                name__in=names,
             ).only('id', 'name')
         }
         if len(names) != len(category_by_name.keys()):
@@ -48,7 +48,7 @@ class SystemTemplateService:
                 category = SystemTemplateCategory.objects.create(
                     name=name,
                     is_active=False,
-                    order=order
+                    order=order,
                 )
                 category_by_name[name] = category.id
                 order += 1
@@ -56,7 +56,7 @@ class SystemTemplateService:
 
     def import_library_templates(
         self,
-        data: List[LibraryTemplateData]
+        data: List[LibraryTemplateData],
     ):
 
         """ Create or update library templates by name """
@@ -68,7 +68,7 @@ class SystemTemplateService:
             # update existent sys templates
             for sys_template in SystemTemplate.objects.filter(
                 name__in=data_by_name.keys(),
-                type=SysTemplateType.LIBRARY
+                type=SysTemplateType.LIBRARY,
             ):
                 data = data_by_name[sys_template.name]
                 sys_template.name = data['name']
@@ -98,7 +98,7 @@ class SystemTemplateService:
                             'description': data['description'],
                             'kickoff': data['kickoff'],
                             'tasks': data['tasks'],
-                        }
-                    )
+                        },
+                    ),
                 )
             SystemTemplate.objects.bulk_create(sys_templates, batch_size=1000)

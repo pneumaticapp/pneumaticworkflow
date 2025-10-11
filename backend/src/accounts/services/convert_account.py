@@ -34,7 +34,7 @@ class AccountLLConverter:
         master_account = self.instance.master_account
         service = AccountService(
             instance=master_account,
-            user=master_account.get_owner()
+            user=master_account.get_owner(),
         )
         service.update_users_counts()
 
@@ -54,7 +54,7 @@ class AccountLLConverter:
         self._update_master_account_user_counts()
         service = AccountService(
             instance=self.instance,
-            user=self.user
+            user=self.user,
         )
         master_account = self.instance.master_account
         billing_enabled = (
@@ -64,7 +64,7 @@ class AccountLLConverter:
             'logo_lg': master_account.logo_lg,
             'logo_sm': master_account.logo_sm,
             'max_users': master_account.max_users,
-            'force_save': True
+            'force_save': True,
         }
         if master_account.billing_plan == BillingPlanType.PREMIUM:
             update_kwargs['max_users'] = master_account.max_users
@@ -76,7 +76,7 @@ class AccountLLConverter:
             update_kwargs['trial_ended'] = master_account.trial_ended
         elif master_account.billing_plan in (
             BillingPlanType.FRACTIONALCOO,
-            BillingPlanType.FREEMIUM
+            BillingPlanType.FREEMIUM,
         ):
             update_kwargs['billing_plan'] = BillingPlanType.FREEMIUM
         elif master_account.billing_plan == BillingPlanType.UNLIMITED:
@@ -103,22 +103,22 @@ class AccountLLConverter:
                 account_id=master_account.id,
                 increment=False,
                 is_superuser=True,
-                auth_type=AuthTokenType.USER
+                auth_type=AuthTokenType.USER,
             )
         elif update_kwargs['billing_plan'] is None:
             stripe_service = StripeService(
                 user=master_account.get_owner(),
                 subscription_account=self.instance,
                 is_superuser=True,
-                auth_type=AuthTokenType.USER
+                auth_type=AuthTokenType.USER,
             )
             stripe_service.create_off_session_subscription(
                 products=[
                     {
                         'code': 'unlimited_month',
-                        'quantity': 1
-                    }
-                ]
+                        'quantity': 1,
+                    },
+                ],
             )
 
     def _tenant_to_partner(self):
@@ -136,7 +136,7 @@ class AccountLLConverter:
     def handle(
         self,
         prev: LeaseLevel.LITERALS,
-        new: LeaseLevel.LITERALS
+        new: LeaseLevel.LITERALS,
     ):
 
         if prev != new:

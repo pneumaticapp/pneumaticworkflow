@@ -20,7 +20,7 @@ class ChecklistUpdateVersionService(BaseUpdateVersionService):
         self,
         data: dict,
         version: int,
-        **kwargs
+        **kwargs,
     ) -> Tuple[Checklist, bool]:
 
         """
@@ -32,19 +32,19 @@ class ChecklistUpdateVersionService(BaseUpdateVersionService):
 
         self.instance, created = Checklist.objects.update_or_create(
             task=kwargs['task'],
-            api_name=data['api_name']
+            api_name=data['api_name'],
         )
         for selection_data in data['selections']:
             selection_service = ChecklistSelectionVersionService(
                 user=self.user,
                 is_superuser=self.is_superuser,
-                auth_type=self.auth_type
+                auth_type=self.auth_type,
             )
             selection_service.update_from_version(
                 data=selection_data,
                 version=version,
                 checklist=self.instance,
-                fields_values=kwargs['fields_values']
+                fields_values=kwargs['fields_values'],
             )
         if not created:
             api_names = {elem['api_name'] for elem in data['selections']}

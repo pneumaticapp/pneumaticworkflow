@@ -6,7 +6,7 @@ from src.processes.utils.common import (
     string_abbreviation,
 )
 from src.processes.serializers.workflows.kickoff_value import (
-    KickoffValueSerializer
+    KickoffValueSerializer,
 )
 from src.processes.services.tasks.task import TaskService
 
@@ -30,7 +30,7 @@ class WorkflowSerializerMixin:
             for task in tasks:
                 task_service = TaskService(
                     instance=task,
-                    user=self.context['user']
+                    user=self.context['user'],
                 )
                 if is_urgent is not None:
                     task_service.partial_update(is_urgent=is_urgent)
@@ -41,17 +41,17 @@ class WorkflowSerializerMixin:
 
     def _update_kickoff_value(
         self,
-        fields_data: Dict[str, Any]
+        fields_data: Dict[str, Any],
     ):
         kickoff_slz = KickoffValueSerializer(
             data={
-                'fields_data': fields_data
+                'fields_data': fields_data,
             },
             instance=self.instance.kickoff_instance,
             partial=True,
             context={
-                'user': self.context['user']
-            }
+                'user': self.context['user'],
+            },
         )
         kickoff_slz.is_valid(raise_exception=True)
         return kickoff_slz.save()
@@ -61,7 +61,7 @@ class WorkflowSerializerMixin:
         if 'name' in kwargs:
             self.instance.name = string_abbreviation(
                 name=kwargs['name'],
-                length=WORKFLOW_NAME_LENGTH
+                length=WORKFLOW_NAME_LENGTH,
             )
             self.instance.name_template = kwargs['name']
             update_fields.append('name')

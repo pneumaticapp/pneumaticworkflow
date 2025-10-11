@@ -3,7 +3,7 @@ import pytest
 from src.notifications.services.push import \
     PushNotificationService
 from src.notifications.tasks import (
-    _send_complete_task_notification
+    _send_complete_task_notification,
 )
 from src.notifications.enums import NotificationMethod
 from src.accounts.enums import NotificationType
@@ -28,12 +28,12 @@ def test_send_complete_task_notification__call_services(mocker):
     account = create_test_account(logo_lg=logo_lg, log_api_requests=True)
     account_owner = create_test_user(
         is_account_owner=True,
-        account=account
+        account=account,
     )
     user = create_test_user(
         email=user_email,
         account=account,
-        is_account_owner=False
+        is_account_owner=False,
     )
     workflow = create_test_workflow(user, name=workflow_name, tasks_count=1)
     task = workflow.tasks.get(number=1)
@@ -41,15 +41,15 @@ def test_send_complete_task_notification__call_services(mocker):
     push_notification_service_mock = mocker.patch.object(
         PushNotificationService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     push_notification_mock = mocker.patch(
         'src.notifications.services.push.'
-        'PushNotificationService.send_complete_task'
+        'PushNotificationService.send_complete_task',
     )
     ws_notification_mock = mocker.patch(
         'src.notifications.services.websockets.'
-        'WebSocketService.send_complete_task'
+        'WebSocketService.send_complete_task',
     )
 
     # act
@@ -82,7 +82,7 @@ def test_send_complete_task_notification__call_services(mocker):
         user_id=user.id,
         sync=True,
         user_email=user_email,
-        notification=notification
+        notification=notification,
     )
     ws_notification_mock.assert_called_once_with(
         task_id=task.id,
@@ -91,7 +91,7 @@ def test_send_complete_task_notification__call_services(mocker):
         user_id=user.id,
         sync=True,
         user_email=user_email,
-        notification=notification
+        notification=notification,
     )
 
 
@@ -105,18 +105,18 @@ def test_send_complete_task_notification__ok(api_client, mocker):
     account = create_test_account(logo_lg=logo_lg, log_api_requests=True)
     account_owner = create_test_user(
         is_account_owner=True,
-        account=account
+        account=account,
     )
     user = create_test_user(
         email=user_email,
         account=account,
-        is_account_owner=False
+        is_account_owner=False,
     )
     workflow = create_test_workflow(user, name=workflow_name, tasks_count=1)
     task = workflow.tasks.get(number=1)
 
     send_notification_mock = mocker.patch(
-        'src.notifications.tasks._send_notification'
+        'src.notifications.tasks._send_notification',
     )
 
     # act
@@ -148,5 +148,5 @@ def test_send_complete_task_notification__ok(api_client, mocker):
         workflow_name=workflow_name,
         task_id=task.id,
         task_name=task.name,
-        sync=True
+        sync=True,
     )

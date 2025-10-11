@@ -4,10 +4,10 @@ from src.processes.tests.fixtures import (
     create_test_account,
 )
 from src.notifications.services.email import (
-    EmailService
+    EmailService,
 )
 from src.notifications.tasks import (
-    _send_reset_password_notification
+    _send_reset_password_notification,
 )
 from src.notifications.enums import (
     NotificationMethod,
@@ -22,18 +22,18 @@ def test_send_reset_password_notification__call_all_services__ok(mocker):
     # arrange
     account = create_test_account(
         logo_lg='https://best.com/logo.jpg',
-        log_api_requests=True
+        log_api_requests=True,
     )
     email = 'man@best.com'
     user = create_test_user(account=account, email=email)
     email_service_init_mock = mocker.patch.object(
         EmailService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     email_service_mock = mocker.patch(
         'src.notifications.services.email.'
-        'EmailService.send_reset_password'
+        'EmailService.send_reset_password',
     )
 
     # act
@@ -42,7 +42,7 @@ def test_send_reset_password_notification__call_all_services__ok(mocker):
         user_id=user.id,
         user_email=email,
         account_id=account.id,
-        logo_lg=account.logo_lg
+        logo_lg=account.logo_lg,
     )
 
     # assert
@@ -54,7 +54,7 @@ def test_send_reset_password_notification__call_all_services__ok(mocker):
     email_service_mock.assert_called_once_with(
         user_id=user.id,
         user_email=email,
-        sync=True
+        sync=True,
     )
 
 
@@ -66,7 +66,7 @@ def test_send_reset_password_notification__ok(mocker):
     account = create_test_account(logo_lg=logo)
     user = create_test_user(account=account, email=email)
     send_notification_mock = mocker.patch(
-        'src.notifications.tasks._send_notification'
+        'src.notifications.tasks._send_notification',
     )
 
     # act
@@ -86,5 +86,5 @@ def test_send_reset_password_notification__ok(mocker):
         user_email=email,
         logo_lg=logo,
         account_id=account.id,
-        sync=True
+        sync=True,
     )

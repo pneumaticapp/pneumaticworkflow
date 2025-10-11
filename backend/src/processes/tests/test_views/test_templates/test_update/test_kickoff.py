@@ -1,15 +1,15 @@
 import pytest
 from src.processes.tests.fixtures import (
     create_test_user,
-    create_test_template
+    create_test_template,
 )
 from src.processes.models import (
-    Template
+    Template,
 )
 
 from src.processes.enums import (
     PerformerType,
-    OwnerType
+    OwnerType,
 )
 from src.authentication.enums import AuthTokenType
 
@@ -30,16 +30,16 @@ class TestUpdateKickoff:
         template = create_test_template(
             user,
             is_active=True,
-            tasks_count=1
+            tasks_count=1,
         )
         task = template.tasks.first()
         mocker.patch(
             'src.processes.services.templates.'
-            'integrations.TemplateIntegrationsService.template_updated'
+            'integrations.TemplateIntegrationsService.template_updated',
         )
         kickoff_update_mock = mocker.patch(
             'src.processes.views.template.'
-            'AnalyticService.templates_kickoff_updated'
+            'AnalyticService.templates_kickoff_updated',
         )
         request_data = {}
         # act
@@ -52,7 +52,7 @@ class TestUpdateKickoff:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'kickoff': request_data,
@@ -63,12 +63,12 @@ class TestUpdateKickoff:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': user.id
-                            }
-                        ]
-                    }
-                ]
-            }
+                                'source_id': user.id,
+                            },
+                        ],
+                    },
+                ],
+            },
         )
 
         # assert
@@ -98,7 +98,7 @@ class TestUpdateKickoff:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'is_active': True,
@@ -111,21 +111,21 @@ class TestUpdateKickoff:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': user.id
-                            }
-                        ]
-                    }
-                ]
-            }
+                                'source_id': user.id,
+                            },
+                        ],
+                    },
+                ],
+            },
         )
         template = Template.objects.get(id=response.data['id'])
         mocker.patch(
             'src.processes.services.templates.'
-            'integrations.TemplateIntegrationsService.template_updated'
+            'integrations.TemplateIntegrationsService.template_updated',
         )
         kickoff_update_mock = mocker.patch(
             'src.processes.views.template.'
-            'AnalyticService.templates_kickoff_updated'
+            'AnalyticService.templates_kickoff_updated',
         )
         request_data = {
             'id': template.id,
@@ -142,17 +142,17 @@ class TestUpdateKickoff:
                     'raw_performers': [
                         {
                             'type': PerformerType.USER,
-                            'source_id': user.id
-                        }
-                    ]
-                }
-            ]
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+            ],
         }
 
         # act
         response = api_client.put(
             path=f'/templates/{template.id}',
-            data=request_data
+            data=request_data,
         )
 
         # assert
@@ -171,16 +171,16 @@ class TestUpdateKickoff:
         template = create_test_template(
             user,
             is_active=True,
-            tasks_count=1
+            tasks_count=1,
         )
         task = template.tasks.first()
         mocker.patch(
             'src.processes.services.templates.'
-            'integrations.TemplateIntegrationsService.template_updated'
+            'integrations.TemplateIntegrationsService.template_updated',
         )
         kickoff_update_mock = mocker.patch(
             'src.processes.views.template.'
-            'AnalyticService.templates_kickoff_updated'
+            'AnalyticService.templates_kickoff_updated',
         )
 
         # act
@@ -193,16 +193,16 @@ class TestUpdateKickoff:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'tasks': [
                     {
                         'number': task.number,
                         'name': task.name,
-                    }
-                ]
-            }
+                    },
+                ],
+            },
         )
 
         # assert
@@ -225,16 +225,16 @@ class TestUpdateKickoff:
         template = create_test_template(
             user,
             is_active=True,
-            tasks_count=1
+            tasks_count=1,
         )
         task = template.tasks.first()
         mocker.patch(
             'src.processes.services.templates.'
-            'integrations.TemplateIntegrationsService.template_updated'
+            'integrations.TemplateIntegrationsService.template_updated',
         )
         kickoff_update_mock = mocker.patch(
             'src.processes.views.template.'
-            'AnalyticService.templates_kickoff_updated'
+            'AnalyticService.templates_kickoff_updated',
         )
 
         # act
@@ -248,16 +248,16 @@ class TestUpdateKickoff:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'tasks': [
                     {
                         'number': task.number,
                         'name': task.name,
-                    }
-                ]
-            }
+                    },
+                ],
+            },
         )
 
         # assert
@@ -280,7 +280,7 @@ class TestUpdateKickoff:
         template = create_test_template(
             user,
             is_active=True,
-            tasks_count=1
+            tasks_count=1,
         )
         template.is_active = False
         template.save()
@@ -289,17 +289,17 @@ class TestUpdateKickoff:
         data = response.data
         mocker.patch(
             'src.processes.services.templates.'
-            'integrations.TemplateIntegrationsService.template_updated'
+            'integrations.TemplateIntegrationsService.template_updated',
         )
         kickoff_update_mock = mocker.patch(
             'src.processes.views.template.'
-            'AnalyticService.templates_kickoff_updated'
+            'AnalyticService.templates_kickoff_updated',
         )
 
         # act
         response = api_client.put(
             path=f'/templates/{template.id}',
-            data=data
+            data=data,
         )
 
         # assert

@@ -13,7 +13,7 @@ class BaseClsCache:
     @classmethod
     def _serialize_value(
         cls,
-        value: Union[str, dict]
+        value: Union[str, dict],
     ) -> str:
 
         """ Django cache framework serialize
@@ -26,7 +26,7 @@ class BaseClsCache:
     @classmethod
     def _serialize_instance(
         cls,
-        instance: Model
+        instance: Model,
     ) -> dict:
 
         if cls.serializer_cls is None:
@@ -36,7 +36,7 @@ class BaseClsCache:
     @classmethod
     def _deserialize_value(
         cls,
-        value: Optional[str]
+        value: Optional[str],
     ) -> Union[str, dict, None]:
 
         """ Django cache framework deserialize
@@ -50,7 +50,7 @@ class BaseClsCache:
     def _set_cache_value(
         cls,
         value: Union[str, int, dict, list, Model],
-        key: str
+        key: str,
     ):
         if isinstance(value, Model):
             value = cls._serialize_instance(value)
@@ -58,7 +58,7 @@ class BaseClsCache:
         cls.cache.set(
             key=key,
             value=cls._serialize_value(value),
-            timeout=cls.cache_timeout
+            timeout=cls.cache_timeout,
         )
         return value
 
@@ -66,7 +66,7 @@ class BaseClsCache:
     def _get_cache_value(
         cls,
         key: str,
-        default: Union[str, int, dict, list, None] = None
+        default: Union[str, int, dict, list, None] = None,
     ):
         str_value = cls.cache.get(key=key, default=default)
         return cls._deserialize_value(str_value)
@@ -74,7 +74,7 @@ class BaseClsCache:
     @classmethod
     def _delete_cache_value(
         cls,
-        key: str
+        key: str,
     ) -> bool:
         return cls.cache.delete(key=key)
 
@@ -99,18 +99,18 @@ class DefaultClsCacheMixin(BaseClsCache):
     @classmethod
     def _get_cache(
         cls,
-        default: Union[str, int, dict, list, None] = None
+        default: Union[str, int, dict, list, None] = None,
     ) -> Union[str, int, dict, list, None]:
 
         return cls._get_cache_value(
             key=cls.default_cache_key,
-            default=default
+            default=default,
         )
 
     @classmethod
     def _delete_cache(cls) -> bool:
         return cls._delete_cache_value(
-            key=cls.default_cache_key
+            key=cls.default_cache_key,
         )
 
 
@@ -123,7 +123,7 @@ class ClsCacheMixin(BaseClsCache):
     @classmethod
     def _get_cache_key(
         cls,
-        key: Union[str, int]
+        key: Union[str, int],
     ) -> str:
         return f'{cls.cache_key_prefix}:{key}'
 
@@ -131,7 +131,7 @@ class ClsCacheMixin(BaseClsCache):
     def _set_cache(
         cls,
         value: Union[str, int, dict, list, Model],
-        key: Union[str, int]
+        key: Union[str, int],
     ) -> Union[str, int, dict, list]:
 
         return cls._set_cache_value(
@@ -143,18 +143,18 @@ class ClsCacheMixin(BaseClsCache):
     def _get_cache(
         cls,
         key: Union[str, int],
-        default: Union[str, int, dict, list, None] = None
+        default: Union[str, int, dict, list, None] = None,
     ) -> Union[str, int, dict, list, None]:
 
         return cls._get_cache_value(
             key=cls._get_cache_key(key),
-            default=default
+            default=default,
         )
 
     @classmethod
     def _delete_cache(
         cls,
-        key: Union[str, int]
+        key: Union[str, int],
     ) -> bool:
         return cls._delete_cache_value(
             key=cls._get_cache_key(key),
@@ -170,7 +170,7 @@ class CacheMixin(BaseClsCache):
 
     def _serialize_value(
         self,
-        value: Union[str, dict]
+        value: Union[str, dict],
     ) -> str:
 
         """ Django cache framework serialize
@@ -182,7 +182,7 @@ class CacheMixin(BaseClsCache):
 
     def _serialize_instance(
         self,
-        instance: Model
+        instance: Model,
     ) -> dict:
 
         if self.serializer_cls is None:
@@ -191,7 +191,7 @@ class CacheMixin(BaseClsCache):
 
     def _deserialize_value(
         self,
-        value: Optional[str]
+        value: Optional[str],
     ) -> Union[str, dict, None]:
 
         """ Django cache framework deserialize
@@ -204,7 +204,7 @@ class CacheMixin(BaseClsCache):
     def _set_cache_value(
         self,
         value: Union[str, int, dict, list, Model],
-        key: str
+        key: str,
     ):
         if isinstance(value, Model):
             value = self._serialize_instance(value)
@@ -212,34 +212,34 @@ class CacheMixin(BaseClsCache):
         self.cache.set(
             key=key,
             value=self._serialize_value(value),
-            timeout=self.cache_timeout
+            timeout=self.cache_timeout,
         )
         return value
 
     def _get_cache_value(
         self,
         key: str,
-        default: Union[str, int, dict, list, None] = None
+        default: Union[str, int, dict, list, None] = None,
     ):
         str_value = self.cache.get(key=key, default=default)
         return self._deserialize_value(str_value)
 
     def _delete_cache_value(
         self,
-        key: str
+        key: str,
     ) -> bool:
         return self.cache.delete(key=key)
 
     def _get_cache_key(
         self,
-        key: Union[str, int]
+        key: Union[str, int],
     ) -> str:
         return f'{self.cache_key_prefix}:{key}'
 
     def _set_cache(
         self,
         value: Union[str, int, dict, list, Model],
-        key: Union[str, int]
+        key: Union[str, int],
     ) -> Union[str, int, dict, list]:
 
         return self._set_cache_value(
@@ -250,17 +250,17 @@ class CacheMixin(BaseClsCache):
     def _get_cache(
         self,
         key: Union[str, int],
-        default: Union[str, int, dict, list, None] = None
+        default: Union[str, int, dict, list, None] = None,
     ) -> Union[str, int, dict, list, None]:
 
         return self._get_cache_value(
             key=self._get_cache_key(key),
-            default=default
+            default=default,
         )
 
     def _delete_cache(
         self,
-        key: Union[str, int]
+        key: Union[str, int],
     ) -> bool:
         return self._delete_cache_value(
             key=self._get_cache_key(key),

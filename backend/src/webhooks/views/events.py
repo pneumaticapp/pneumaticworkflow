@@ -7,7 +7,7 @@ from src.generics.mixins.views import (
 from src.accounts.permissions import (
     UserIsAdminOrAccountOwner,
     BillingPlanPermission,
-    ExpiredSubscriptionPermission
+    ExpiredSubscriptionPermission,
 )
 from src.webhooks.services import (
     WebhookService,
@@ -23,7 +23,7 @@ from src.generics.permissions import (
 
 class WebHookEventViewSet(
     CustomViewSetMixin,
-    GenericViewSet
+    GenericViewSet,
 ):
     lookup_field = 'event'
     permission_classes = (
@@ -36,7 +36,7 @@ class WebHookEventViewSet(
     def list(self, request, *args, **kwargs):
         service = WebhookService(
             user=request.user,
-            is_superuser=request.is_superuser
+            is_superuser=request.is_superuser,
         )
         data = service.get_events()
         return self.response_ok(data)
@@ -45,7 +45,7 @@ class WebHookEventViewSet(
         try:
             service = WebhookService(
                 user=request.user,
-                is_superuser=request.is_superuser
+                is_superuser=request.is_superuser,
             )
             url = service.get_event_url(event=event)
         except exceptions.InvalidEventException as ex:
@@ -59,11 +59,11 @@ class WebHookEventViewSet(
         try:
             service = WebhookService(
                 user=request.user,
-                is_superuser=request.is_superuser
+                is_superuser=request.is_superuser,
             )
             service.subscribe_event(
                 event=event,
-                **slz.validated_data
+                **slz.validated_data,
             )
         except exceptions.InvalidEventException as ex:
             raise Http404 from ex
@@ -74,7 +74,7 @@ class WebHookEventViewSet(
         try:
             service = WebhookService(
                 user=request.user,
-                is_superuser=request.is_superuser
+                is_superuser=request.is_superuser,
             )
             service.unsubscribe_event(event=event)
         except exceptions.InvalidEventException as ex:

@@ -1,10 +1,10 @@
 from django.contrib.auth import get_user_model
 from rest_framework.serializers import (
     Serializer,
-    CharField
+    CharField,
 )
 from src.generics.serializers import (
-    CustomValidationErrorMixin
+    CustomValidationErrorMixin,
 )
 
 UserModel = get_user_model()
@@ -12,7 +12,7 @@ UserModel = get_user_model()
 
 class WebHookIdSerializer(
     CustomValidationErrorMixin,
-    Serializer
+    Serializer,
 ):
 
     id = CharField(required=True, max_length=100)
@@ -20,7 +20,7 @@ class WebHookIdSerializer(
 
 class WebHookDataSerializer(
     CustomValidationErrorMixin,
-    Serializer
+    Serializer,
 ):
 
     identifiers = WebHookIdSerializer()
@@ -28,7 +28,7 @@ class WebHookDataSerializer(
 
 class WebHookSerializer(
     CustomValidationErrorMixin,
-    Serializer
+    Serializer,
 ):
 
     metric = CharField(required=True, max_length=100)

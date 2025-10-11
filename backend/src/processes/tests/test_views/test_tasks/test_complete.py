@@ -9,7 +9,7 @@ from src.processes.tests.fixtures import (
     create_test_account,
     create_test_group,
     create_test_owner,
-    create_test_admin
+    create_test_admin,
 )
 from src.processes.enums import (
     PerformerType,
@@ -18,7 +18,7 @@ from src.processes.enums import (
 from src.authentication.services import GuestJWTAuthService
 from src.authentication.enums import AuthTokenType
 from src.processes.services.workflow_action import (
-    WorkflowActionService
+    WorkflowActionService,
 )
 from src.utils.validation import ErrorCode
 
@@ -27,7 +27,7 @@ pytestmark = pytest.mark.django_db
 
 def test_complete__response_body__ok(
     mocker,
-    api_client
+    api_client,
 ):
 
     # arrange
@@ -39,18 +39,18 @@ def test_complete__response_body__ok(
     service_init_mock = mocker.patch.object(
         WorkflowActionService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     complete_task_for_user_mock = mocker.patch(
         'src.processes.services.'
         'workflow_action.WorkflowActionService.'
         'complete_task_for_user',
-        return_value=task
+        return_value=task,
     )
     check_delay_workflow_mock = mocker.patch(
         'src.processes.services.'
         'workflow_action.WorkflowActionService.'
-        'check_delay_workflow'
+        'check_delay_workflow',
     )
     api_client.token_authenticate(owner)
 
@@ -86,18 +86,18 @@ def test_complete__response_body__ok(
         workflow=workflow,
         user=owner,
         auth_type=AuthTokenType.USER,
-        is_superuser=False
+        is_superuser=False,
     )
     complete_task_for_user_mock.assert_called_once_with(
         task=task,
-        fields_values=None
+        fields_values=None,
     )
     check_delay_workflow_mock.assert_called_once()
 
 
 def test_complete__account_owner_not_performer__ok(
     mocker,
-    api_client
+    api_client,
 ):
 
     # arrange
@@ -109,18 +109,18 @@ def test_complete__account_owner_not_performer__ok(
     service_init_mock = mocker.patch.object(
         WorkflowActionService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     complete_task_for_user_mock = mocker.patch(
         'src.processes.services.'
         'workflow_action.WorkflowActionService.'
         'complete_task_for_user',
-        return_value=task
+        return_value=task,
     )
     check_delay_workflow_mock = mocker.patch(
         'src.processes.services.'
         'workflow_action.WorkflowActionService.'
-        'check_delay_workflow'
+        'check_delay_workflow',
     )
     api_client.token_authenticate(owner)
 
@@ -135,18 +135,18 @@ def test_complete__account_owner_not_performer__ok(
         workflow=workflow,
         user=owner,
         auth_type=AuthTokenType.USER,
-        is_superuser=False
+        is_superuser=False,
     )
     complete_task_for_user_mock.assert_called_once_with(
         task=task,
-        fields_values=None
+        fields_values=None,
     )
     check_delay_workflow_mock.assert_called_once()
 
 
 def test_complete__group_performer__ok(
     mocker,
-    api_client
+    api_client,
 ):
 
     # arrange
@@ -167,24 +167,24 @@ def test_complete__group_performer__ok(
     service_init_mock = mocker.patch.object(
         WorkflowActionService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     complete_task_for_user_mock = mocker.patch(
         'src.processes.services.'
         'workflow_action.WorkflowActionService.'
         'complete_task_for_user',
-        return_value=task
+        return_value=task,
     )
     check_delay_workflow_mock = mocker.patch(
         'src.processes.services.'
         'workflow_action.WorkflowActionService.'
-        'check_delay_workflow'
+        'check_delay_workflow',
     )
     api_client.token_authenticate(performer)
 
     # act
     response = api_client.post(
-        f'/v2/tasks/{task.id}/complete'
+        f'/v2/tasks/{task.id}/complete',
     )
 
     # assert
@@ -194,18 +194,18 @@ def test_complete__group_performer__ok(
         workflow=workflow,
         user=performer,
         auth_type=AuthTokenType.USER,
-        is_superuser=False
+        is_superuser=False,
     )
     complete_task_for_user_mock.assert_called_once_with(
         task=task,
-        fields_values=None
+        fields_values=None,
     )
     check_delay_workflow_mock.assert_called_once()
 
 
 def test_complete__user_performer__ok(
     mocker,
-    api_client
+    api_client,
 ):
 
     # arrange
@@ -221,25 +221,25 @@ def test_complete__user_performer__ok(
     service_init_mock = mocker.patch.object(
         WorkflowActionService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     complete_task_by_user_mock = mocker.patch(
         'src.processes.services.'
         'workflow_action.WorkflowActionService.'
         'complete_task_for_user',
-        return_value=task
+        return_value=task,
     )
     check_delay_workflow_mock = mocker.patch(
         'src.processes.services.'
         'workflow_action.WorkflowActionService.'
-        'check_delay_workflow'
+        'check_delay_workflow',
     )
     api_client.token_authenticate(performer)
     task = workflow.tasks.get(number=1)
 
     # act
     response = api_client.post(
-        f'/v2/tasks/{task.id}/complete'
+        f'/v2/tasks/{task.id}/complete',
     )
 
     # assert
@@ -249,11 +249,11 @@ def test_complete__user_performer__ok(
         workflow=workflow,
         user=performer,
         auth_type=AuthTokenType.USER,
-        is_superuser=False
+        is_superuser=False,
     )
     complete_task_by_user_mock.assert_called_once_with(
         task=task,
-        fields_values=None
+        fields_values=None,
     )
     check_delay_workflow_mock.assert_called_once()
 
@@ -270,34 +270,34 @@ def test_complete__guest__ok(
     task = workflow.tasks.first()
     TaskPerformer.objects.create(
         task_id=task.id,
-        user_id=guest.id
+        user_id=guest.id,
     )
     str_token = GuestJWTAuthService.get_str_token(
         task_id=task.id,
         user_id=guest.id,
-        account_id=account.id
+        account_id=account.id,
     )
     service_init_mock = mocker.patch.object(
         WorkflowActionService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     complete_task_for_user_mock = mocker.patch(
         'src.processes.services.'
         'workflow_action.WorkflowActionService.'
         'complete_task_for_user',
-        return_value=task
+        return_value=task,
     )
     check_delay_workflow_mock = mocker.patch(
         'src.processes.services.'
         'workflow_action.WorkflowActionService.'
-        'check_delay_workflow'
+        'check_delay_workflow',
     )
 
     # act
     response = api_client.post(
         f'/v2/tasks/{task.id}/complete',
-        **{'X-Guest-Authorization': str_token}
+        **{'X-Guest-Authorization': str_token},
 
     )
     # assert
@@ -307,18 +307,18 @@ def test_complete__guest__ok(
         workflow=workflow,
         user=guest,
         auth_type=AuthTokenType.GUEST,
-        is_superuser=False
+        is_superuser=False,
     )
     complete_task_for_user_mock.assert_called_once_with(
         task=task,
-        fields_values=None
+        fields_values=None,
     )
     check_delay_workflow_mock.assert_called_once()
 
 
 def test_complete__user_not_performer__permission_denied(
     mocker,
-    api_client
+    api_client,
 ):
 
     # arrange
@@ -331,25 +331,25 @@ def test_complete__user_not_performer__permission_denied(
     service_init_mock = mocker.patch.object(
         WorkflowActionService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     complete_task_by_user_mock = mocker.patch(
         'src.processes.services.'
         'workflow_action.WorkflowActionService.'
         'complete_task_for_user',
-        return_value=task
+        return_value=task,
     )
     check_delay_workflow_mock = mocker.patch(
         'src.processes.services.'
         'workflow_action.WorkflowActionService.'
-        'check_delay_workflow'
+        'check_delay_workflow',
     )
     api_client.token_authenticate(user)
     task = workflow.tasks.get(number=1)
 
     # act
     response = api_client.post(
-        f'/v2/tasks/{task.id}/complete'
+        f'/v2/tasks/{task.id}/complete',
     )
 
     # assert
@@ -361,7 +361,7 @@ def test_complete__user_not_performer__permission_denied(
 
 def test_complete__not_authorized__permission_denied(
     mocker,
-    api_client
+    api_client,
 ):
 
     # arrange
@@ -372,23 +372,23 @@ def test_complete__not_authorized__permission_denied(
     service_init_mock = mocker.patch.object(
         WorkflowActionService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     complete_task_for_user_mock = mocker.patch(
         'src.processes.services.'
         'workflow_action.WorkflowActionService.'
         'complete_task_for_user',
-        return_value=task
+        return_value=task,
     )
     check_delay_workflow_mock = mocker.patch(
         'src.processes.services.'
         'workflow_action.WorkflowActionService.'
-        'check_delay_workflow'
+        'check_delay_workflow',
     )
 
     # act
     response = api_client.post(
-        f'/v2/tasks/{task.id}/complete'
+        f'/v2/tasks/{task.id}/complete',
     )
 
     # assert
@@ -400,7 +400,7 @@ def test_complete__not_authorized__permission_denied(
 
 def test_complete__fields_values__ok(
     mocker,
-    api_client
+    api_client,
 ):
 
     # arrange
@@ -416,22 +416,22 @@ def test_complete__fields_values__ok(
     service_init_mock = mocker.patch.object(
         WorkflowActionService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     complete_task_by_user_mock = mocker.patch(
         'src.processes.services.'
         'workflow_action.WorkflowActionService.'
         'complete_task_for_user',
-        return_value=task
+        return_value=task,
     )
     check_delay_workflow_mock = mocker.patch(
         'src.processes.services.'
         'workflow_action.WorkflowActionService.'
-        'check_delay_workflow'
+        'check_delay_workflow',
     )
     fields_data = {
         'field_1': 'value_1',
-        'field_2': 2
+        'field_2': 2,
     }
     api_client.token_authenticate(performer)
     task = workflow.tasks.get(number=1)
@@ -440,8 +440,8 @@ def test_complete__fields_values__ok(
     response = api_client.post(
         f'/v2/tasks/{task.id}/complete',
         data={
-            'output': fields_data
-        }
+            'output': fields_data,
+        },
     )
 
     # assert
@@ -451,18 +451,18 @@ def test_complete__fields_values__ok(
         workflow=workflow,
         user=performer,
         auth_type=AuthTokenType.USER,
-        is_superuser=False
+        is_superuser=False,
     )
     complete_task_by_user_mock.assert_called_once_with(
         task=task,
-        fields_values=fields_data
+        fields_values=fields_data,
     )
     check_delay_workflow_mock.assert_called_once()
 
 
 def test_complete__empty_fields_data__ok(
     mocker,
-    api_client
+    api_client,
 ):
 
     # arrange
@@ -478,18 +478,18 @@ def test_complete__empty_fields_data__ok(
     service_init_mock = mocker.patch.object(
         WorkflowActionService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     complete_task_by_user_mock = mocker.patch(
         'src.processes.services.'
         'workflow_action.WorkflowActionService.'
         'complete_task_for_user',
-        return_value=task
+        return_value=task,
     )
     check_delay_workflow_mock = mocker.patch(
         'src.processes.services.'
         'workflow_action.WorkflowActionService.'
-        'check_delay_workflow'
+        'check_delay_workflow',
     )
     api_client.token_authenticate(performer)
     task = workflow.tasks.get(number=1)
@@ -498,8 +498,8 @@ def test_complete__empty_fields_data__ok(
     response = api_client.post(
         f'/v2/tasks/{task.id}/complete',
         data={
-            'output': {}
-        }
+            'output': {},
+        },
     )
 
     # assert
@@ -509,18 +509,18 @@ def test_complete__empty_fields_data__ok(
         workflow=workflow,
         user=performer,
         auth_type=AuthTokenType.USER,
-        is_superuser=False
+        is_superuser=False,
     )
     complete_task_by_user_mock.assert_called_once_with(
         task=task,
-        fields_values={}
+        fields_values={},
     )
     check_delay_workflow_mock.assert_called_once()
 
 
 def test_complete__guest_another_workflow__permission_denied(
     mocker,
-    api_client
+    api_client,
 ):
 
     # arrange
@@ -531,49 +531,49 @@ def test_complete__guest_another_workflow__permission_denied(
     guest_1 = create_test_guest(account=account)
     TaskPerformer.objects.create(
         task_id=task_1.id,
-        user_id=guest_1.id
+        user_id=guest_1.id,
     )
     GuestJWTAuthService.get_str_token(
         task_id=task_1.id,
         user_id=guest_1.id,
-        account_id=account.id
+        account_id=account.id,
     )
 
     workflow_2 = create_test_workflow(account_owner, tasks_count=1)
     task_2 = workflow_2.tasks.get(number=1)
     guest_2 = create_test_guest(
         account=account,
-        email='guest2@test.test'
+        email='guest2@test.test',
     )
     TaskPerformer.objects.create(
         task_id=task_2.id,
-        user_id=guest_2.id
+        user_id=guest_2.id,
     )
     str_token_2 = GuestJWTAuthService.get_str_token(
         task_id=task_2.id,
         user_id=guest_2.id,
-        account_id=account.id
+        account_id=account.id,
     )
     service_init_mock = mocker.patch.object(
         WorkflowActionService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     complete_task_for_user_mock = mocker.patch(
         'src.processes.services.'
         'workflow_action.WorkflowActionService.'
-        'complete_task_for_user'
+        'complete_task_for_user',
     )
     check_delay_workflow_mock = mocker.patch(
         'src.processes.services.'
         'workflow_action.WorkflowActionService.'
-        'check_delay_workflow'
+        'check_delay_workflow',
     )
 
     # act
     response = api_client.post(
         f'/v2/tasks/{task_1.id}/complete',
-        **{'X-Guest-Authorization': str_token_2}
+        **{'X-Guest-Authorization': str_token_2},
     )
 
     # assert
@@ -585,7 +585,7 @@ def test_complete__guest_another_workflow__permission_denied(
 
 def test_complete__guest_another_workflow_task__permission_denied(
     mocker,
-    api_client
+    api_client,
 ):
 
     # arrange
@@ -594,54 +594,54 @@ def test_complete__guest_another_workflow_task__permission_denied(
     workflow = create_test_workflow(
         account_owner,
         tasks_count=2,
-        active_task_number=2
+        active_task_number=2,
     )
     task_1 = workflow.tasks.get(number=1)
     guest_1 = create_test_guest(account=account)
     TaskPerformer.objects.create(
         task_id=task_1.id,
-        user_id=guest_1.id
+        user_id=guest_1.id,
     )
     GuestJWTAuthService.get_str_token(
         task_id=task_1.id,
         user_id=guest_1.id,
-        account_id=account.id
+        account_id=account.id,
     )
 
     task_2 = workflow.tasks.get(number=2)
     guest_2 = create_test_guest(
         account=account,
-        email='guest2@test.test'
+        email='guest2@test.test',
     )
     TaskPerformer.objects.create(
         task_id=task_2.id,
-        user_id=guest_2.id
+        user_id=guest_2.id,
     )
     str_token_2 = GuestJWTAuthService.get_str_token(
         task_id=task_2.id,
         user_id=guest_2.id,
-        account_id=account.id
+        account_id=account.id,
     )
     service_init_mock = mocker.patch.object(
         WorkflowActionService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     complete_task_for_user_mock = mocker.patch(
         'src.processes.services.'
         'workflow_action.WorkflowActionService.'
-        'complete_task_for_user'
+        'complete_task_for_user',
     )
     check_delay_workflow_mock = mocker.patch(
         'src.processes.services.'
         'workflow_action.WorkflowActionService.'
-        'check_delay_workflow'
+        'check_delay_workflow',
     )
 
     # act
     response = api_client.post(
         f'/v2/tasks/{task_1.id}/complete',
-        **{'X-Guest-Authorization': str_token_2}
+        **{'X-Guest-Authorization': str_token_2},
     )
 
     # assert
@@ -657,7 +657,7 @@ def test_complete__guest_another_workflow_task__permission_denied(
         ([], 'Expected a dictionary of items but got type "list".'),
         ('null', 'Expected a dictionary of items but got type "str".'),
         (123, 'Expected a dictionary of items but got type "int".'),
-    )
+    ),
 )
 def test_complete__invalid_output__validation_error(
     mocker,
@@ -674,18 +674,18 @@ def test_complete__invalid_output__validation_error(
     service_init_mock = mocker.patch.object(
         WorkflowActionService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     complete_task_by_user_mock = mocker.patch(
         'src.processes.services.'
         'workflow_action.WorkflowActionService.'
         'complete_task_for_user',
-        return_value=task
+        return_value=task,
     )
     check_delay_workflow_mock = mocker.patch(
         'src.processes.services.'
         'workflow_action.WorkflowActionService.'
-        'check_delay_workflow'
+        'check_delay_workflow',
     )
     api_client.token_authenticate(owner)
     task = workflow.tasks.get(number=1)
@@ -694,8 +694,8 @@ def test_complete__invalid_output__validation_error(
     response = api_client.post(
         f'/v2/tasks/{task.id}/complete',
         data={
-            'output': output
-        }
+            'output': output,
+        },
     )
 
     # assert

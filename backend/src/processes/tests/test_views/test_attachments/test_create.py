@@ -4,10 +4,10 @@ from src.processes.tests.fixtures import (
     create_test_user,
 )
 from src.processes.services.exceptions import (
-    AttachmentServiceException
+    AttachmentServiceException,
 )
 from src.processes.messages.workflow import (
-    MSG_PW_0001
+    MSG_PW_0001,
 )
 from src.utils.validation import ErrorCode
 
@@ -17,7 +17,7 @@ pytestmark = pytest.mark.django_db
 
 def test_create__ok(
     api_client,
-    mocker
+    mocker,
 ):
 
     # arrange
@@ -32,7 +32,7 @@ def test_create__ok(
     mocker.patch(
         'src.processes.permissions.'
         'StoragePermission.has_permission',
-        return_value=True
+        return_value=True,
     )
     service_mock = mocker.patch(
         'src.processes.services.attachments.'
@@ -40,8 +40,8 @@ def test_create__ok(
         return_value=(
             attachment,
             upload_url,
-            thumb_upload_url
-        )
+            thumb_upload_url,
+        ),
     )
     api_client.token_authenticate(user)
 
@@ -52,8 +52,8 @@ def test_create__ok(
             'filename': filename,
             'thumbnail': thumbnail,
             'content_type': content_type,
-            'size': size
-        }
+            'size': size,
+        },
     )
 
     assert response.status_code == 200
@@ -64,13 +64,13 @@ def test_create__ok(
         filename=filename,
         thumbnail=thumbnail,
         content_type=content_type,
-        size=size
+        size=size,
     )
 
 
 def test_create__limit_exceeded__validation_error(
     api_client,
-    mocker
+    mocker,
 ):
 
     # arrange
@@ -82,16 +82,16 @@ def test_create__limit_exceeded__validation_error(
     mocker.patch(
         'src.processes.permissions.'
         'StoragePermission.has_permission',
-        return_value=True
+        return_value=True,
     )
     mocker.patch(
         'src.processes.serializers.'
         'file_attachment.ATTACHMENT_MAX_SIZE_BYTES',
-        size
+        size,
     )
     service_mock = mocker.patch(
         'src.processes.services.attachments.'
-        'AttachmentService.create'
+        'AttachmentService.create',
     )
     api_client.token_authenticate(user)
 
@@ -102,8 +102,8 @@ def test_create__limit_exceeded__validation_error(
             'filename': filename,
             'thumbnail': thumbnail,
             'content_type': content_type,
-            'size': size + 1
-        }
+            'size': size + 1,
+        },
     )
 
     assert response.status_code == 400
@@ -117,7 +117,7 @@ def test_create__limit_exceeded__validation_error(
 
 def test_create__service_exception__validation_error(
     api_client,
-    mocker
+    mocker,
 ):
 
     # arrange
@@ -130,12 +130,12 @@ def test_create__service_exception__validation_error(
     service_mock = mocker.patch(
         'src.processes.services.attachments.'
         'AttachmentService.create',
-        side_effect=AttachmentServiceException(message)
+        side_effect=AttachmentServiceException(message),
     )
     mocker.patch(
         'src.processes.permissions.'
         'StoragePermission.has_permission',
-        return_value=True
+        return_value=True,
     )
     api_client.token_authenticate(user)
 
@@ -146,8 +146,8 @@ def test_create__service_exception__validation_error(
             'filename': filename,
             'thumbnail': thumbnail,
             'content_type': content_type,
-            'size': size
-        }
+            'size': size,
+        },
     )
 
     assert response.status_code == 400
@@ -157,7 +157,7 @@ def test_create__service_exception__validation_error(
         filename=filename,
         thumbnail=thumbnail,
         content_type=content_type,
-        size=size
+        size=size,
     )
 
 
@@ -167,7 +167,7 @@ def test_create__no_authenticated__permission_denied(mocker, api_client):
     mocker.patch(
         'src.processes.permissions.'
         'StoragePermission.has_permission',
-        return_value=True
+        return_value=True,
     )
 
     # act
@@ -177,8 +177,8 @@ def test_create__no_authenticated__permission_denied(mocker, api_client):
             'filename': 'mark_dacascas.png',
             'thumbnail': 'mark_dacascas_th.png',
             'content_type': 'image/png',
-            'size': 215678
-        }
+            'size': 215678,
+        },
     )
 
     # assert
@@ -187,7 +187,7 @@ def test_create__no_authenticated__permission_denied(mocker, api_client):
 
 def test_create__disabled_billing__permission_error(
     api_client,
-    mocker
+    mocker,
 ):
 
     # arrange
@@ -203,7 +203,7 @@ def test_create__disabled_billing__permission_error(
         'src.processes.permissions.'
 
         'StoragePermission.has_permission',
-        return_value=False
+        return_value=False,
     )
     service_mock = mocker.patch(
         'src.processes.services.attachments.'
@@ -211,8 +211,8 @@ def test_create__disabled_billing__permission_error(
         return_value=(
             attachment,
             upload_url,
-            thumb_upload_url
-        )
+            thumb_upload_url,
+        ),
     )
     api_client.token_authenticate(user)
 
@@ -223,8 +223,8 @@ def test_create__disabled_billing__permission_error(
             'filename': filename,
             'thumbnail': thumbnail,
             'content_type': content_type,
-            'size': size
-        }
+            'size': size,
+        },
     )
 
     assert response.status_code == 403

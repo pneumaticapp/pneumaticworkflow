@@ -3,10 +3,10 @@ from django.conf import settings
 from slack import WebClient
 from src.accounts.models import User, Account
 from src.authentication.services.exceptions import (
-    AuthException
+    AuthException,
 )
 from src.authentication.services.microsoft import (
-    MicrosoftAuthService
+    MicrosoftAuthService,
 )
 
 
@@ -38,11 +38,11 @@ def send_new_signup_notification(account_id: int):
                 'type': 'section',
                 'text': {
                     'type': 'mrkdwn',
-                    'text': text
-                }
-            }
+                    'text': text,
+                },
+            },
         ],
-        text='A new account just signed up'
+        text='A new account just signed up',
     )
 
 

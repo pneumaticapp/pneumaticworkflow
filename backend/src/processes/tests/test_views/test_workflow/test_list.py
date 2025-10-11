@@ -34,13 +34,13 @@ from src.processes.enums import (
     FieldType,
     TaskStatus,
     PerformerType,
-    OwnerType, ConditionAction, PredicateOperator, PredicateType
+    OwnerType, ConditionAction, PredicateOperator, PredicateType,
 )
 from src.processes.services.tasks.performers import (
-    TaskPerformersService
+    TaskPerformersService,
 )
 from src.processes.services.events import (
-    WorkflowEventService
+    WorkflowEventService,
 )
 from src.services.markdown import MarkdownService
 
@@ -58,7 +58,7 @@ def test_list__workflow_data__ok(api_client):
         tasks_count=1,
         due_date=due_date,
         status=WorkflowStatus.DONE,
-        description='Some workflow description'
+        description='Some workflow description',
     )
 
     task = workflow.tasks.first()
@@ -113,7 +113,7 @@ def test_list__workflow_data__ok(api_client):
             'type': 'user',
             'is_completed': False,
             'date_completed_tsp': None,
-        }
+        },
     ]
 
 
@@ -232,7 +232,7 @@ def test_list__workflow_active_task_delay__ok(api_client):
         task=task,
         start_date=timezone.now() - timedelta(hours=1),
         duration=timedelta(days=1),
-        workflow=workflow
+        workflow=workflow,
     )
     task.status = TaskStatus.DELAYED
     task.save()
@@ -258,7 +258,7 @@ def test_list__not_template_owner__empty_list(api_client):
         account=account,
         email='t@t.t',
         is_admin=True,
-        is_account_owner=False
+        is_account_owner=False,
     )
     create_test_workflow(user, tasks_count=1)
     api_client.token_authenticate(user_2)
@@ -344,7 +344,7 @@ def test_list__search__completed_task_description__ok(api_client):
     workflow = create_test_workflow(
         user=user,
         active_task_number=2,
-        tasks_count=3
+        tasks_count=3,
     )
     description = 'some [file.here](http://google.com/) value'
     task_1 = workflow.tasks.get(number=1)
@@ -376,7 +376,7 @@ def test_list__search__email_login__ok(api_client):
         type=FieldType.STRING,
         workflow=workflow,
         value=value,
-        clear_value=MarkdownService.clear(value)
+        clear_value=MarkdownService.clear(value),
     )
     search_text = 'fred'
     create_test_workflow(user, tasks_count=1)
@@ -403,7 +403,7 @@ def test_list__search__email_domain__ok(api_client):
         type=FieldType.STRING,
         workflow=workflow,
         value=value,
-        clear_value=MarkdownService.clear(value)
+        clear_value=MarkdownService.clear(value),
     )
     search_text = 'boy'
     create_test_workflow(user, tasks_count=1)
@@ -429,7 +429,7 @@ def test_list__search__full_email__ok(api_client):
         type=FieldType.STRING,
         workflow=workflow,
         value=value,
-        clear_value=MarkdownService.clear(value)
+        clear_value=MarkdownService.clear(value),
     )
     search_text = 'fred@boy'
     create_test_workflow(user, tasks_count=1)
@@ -451,7 +451,7 @@ def test_list__search__safe_single_quote__ok(api_client):
     workflow = create_test_workflow(
         user,
         tasks_count=1,
-        name='text fred@boy some'
+        name='text fred@boy some',
     )
     search_text = "'fred@boy"
     create_test_workflow(user, tasks_count=1)
@@ -473,7 +473,7 @@ def test_list__search__double_quote__ok(api_client):
     workflow = create_test_workflow(
         user,
         tasks_count=1,
-        name='text fred@boy some'
+        name='text fred@boy some',
     )
     search_text = '"fred@boy'
     create_test_workflow(user, tasks_count=1)
@@ -495,7 +495,7 @@ def test_list__search__sql_injection__safe(api_client):
     create_test_workflow(
         user,
         tasks_count=1,
-        name='text some'
+        name='text some',
     )
     search_text = 'SELECT * FROM accounts_user WHERE id = 105 OR 10=10;'
     create_test_workflow(user, tasks_count=1)
@@ -504,7 +504,7 @@ def test_list__search__sql_injection__safe(api_client):
     # act
     response = api_client.get(
         '/workflows',
-        data={'search': search_text}
+        data={'search': search_text},
     )
 
     # assert
@@ -522,7 +522,7 @@ def test_list__special_chars__ok(api_client):
     create_test_workflow(
         user,
         tasks_count=1,
-        name=punctuation
+        name=punctuation,
     )
     create_test_workflow(user, tasks_count=1)
     api_client.token_authenticate(user)
@@ -530,7 +530,7 @@ def test_list__special_chars__ok(api_client):
     # act
     response = api_client.get(
         '/workflows',
-        data={'search': search_text}
+        data={'search': search_text},
     )
 
     # assert
@@ -548,7 +548,7 @@ def test_list__search__strip_spaces__ok(api_client):
         user=user,
         task=task,
         text='   some\noster@test.com   text',
-        after_create_actions=False
+        after_create_actions=False,
     )
     search_text = 'oster@test.com'
     api_client.token_authenticate(user)
@@ -571,7 +571,7 @@ def test_list__search__comment__ok(api_client):
         user=user,
         task=task,
         text='some comment text',
-        after_create_actions=False
+        after_create_actions=False,
     )
     search_text = 'comment text'
     api_client.token_authenticate(user)
@@ -594,7 +594,7 @@ def test_list__search__comment__url_as_text__ok(api_client):
         user=user,
         task=task,
         text='some https://www.pneumo.app text',
-        after_create_actions=False
+        after_create_actions=False,
     )
     search_text = 'pneumo.app'
     api_client.token_authenticate(user)
@@ -617,7 +617,7 @@ def test_list__search__comment__email__ok(api_client):
         user=user,
         task=task,
         text='some ster@test.com text',
-        after_create_actions=False
+        after_create_actions=False,
     )
     search_text = 'ster'
     api_client.token_authenticate(user)
@@ -642,7 +642,7 @@ def test_list__search__comment__markdown__ok(api_client):
         task=task,
         text=text,
         clear_text=MarkdownService.clear(text),
-        after_create_actions=False
+        after_create_actions=False,
     )
     search_text = 'file.here'
     api_client.token_authenticate(user)
@@ -664,7 +664,7 @@ def test_list__search__comment_attachment__ok(api_client):
     event = WorkflowEventService.comment_created_event(
         user=user,
         task=task,
-        text='comment'
+        text='comment',
     )
     FileAttachment.objects.create(
         name='fred.cena',
@@ -672,7 +672,7 @@ def test_list__search__comment_attachment__ok(api_client):
         size=1488,
         account_id=user.account_id,
         workflow=workflow,
-        event=event
+        event=event,
     )
     search_text = 'fred'
     api_client.token_authenticate(user)
@@ -695,7 +695,7 @@ def test_list__search__task_field_attachment__ok(api_client):
         task=task,
         api_name='api-name-1',
         type=FieldType.FILE,
-        workflow=workflow
+        workflow=workflow,
     )
     FileAttachment.objects.create(
         name='fred.cena',
@@ -725,7 +725,7 @@ def test_list__search__kickoff_field_attachment__ok(api_client):
         kickoff=workflow.kickoff_instance,
         api_name='api-name-1',
         type=FieldType.FILE,
-        workflow=workflow
+        workflow=workflow,
     )
     FileAttachment.objects.create(
         name='fred.cena',
@@ -780,11 +780,11 @@ def test_list__search__not_comment_event__not_found(api_client):
         FieldType.DATE,
         FieldType.USER,
         FieldType.URL,
-    )
+    ),
 )
 def test_list__search__in_kickoff_field_value__ok(
     api_client,
-    field_type
+    field_type,
 ):
 
     # arrange
@@ -797,7 +797,7 @@ def test_list__search__in_kickoff_field_value__ok(
         type=field_type,
         workflow=workflow,
         value=value,
-        clear_value=MarkdownService.clear(value)
+        clear_value=MarkdownService.clear(value),
     )
     search_text = 'fred@boy'
     create_test_workflow(user, tasks_count=1)
@@ -823,11 +823,11 @@ def test_list__search__in_kickoff_field_value__ok(
         FieldType.DATE,
         FieldType.USER,
         FieldType.URL,
-    )
+    ),
 )
 def test_list__search__in_active_task_field_value__ok(
     api_client,
-    field_type
+    field_type,
 ):
 
     # arrange
@@ -841,7 +841,7 @@ def test_list__search__in_active_task_field_value__ok(
         type=field_type,
         workflow=workflow,
         value=value,
-        clear_value=MarkdownService.clear(value)
+        clear_value=MarkdownService.clear(value),
     )
     search_text = 'f boy'
     api_client.token_authenticate(user)
@@ -865,11 +865,11 @@ def test_list__search__in_active_task_field_value__ok(
         FieldType.DATE,
         FieldType.USER,
         FieldType.URL,
-    )
+    ),
 )
 def test_list__search__in_prev_task_fields_value__ok(
     api_client,
-    field_type
+    field_type,
 ):
 
     # arrange
@@ -877,7 +877,7 @@ def test_list__search__in_prev_task_fields_value__ok(
     workflow = create_test_workflow(
         user=user,
         tasks_count=2,
-        active_task_number=2
+        active_task_number=2,
     )
     task_1 = workflow.tasks.get(number=1)
     value = 'boy@noway.com'
@@ -887,7 +887,7 @@ def test_list__search__in_prev_task_fields_value__ok(
         type=field_type,
         workflow=workflow,
         value=value,
-        clear_value=MarkdownService.clear(value)
+        clear_value=MarkdownService.clear(value),
     )
     search_text = 'a boy@noway.com'
     api_client.token_authenticate(user)
@@ -904,11 +904,11 @@ def test_list__search__in_prev_task_fields_value__ok(
     'field_type',
     (
         FieldType.FILE,
-    )
+    ),
 )
 def test_list__search__in_excluded_field_value__ok(
     api_client,
-    field_type
+    field_type,
 ):
 
     # arrange
@@ -922,7 +922,7 @@ def test_list__search__in_excluded_field_value__ok(
         type=field_type,
         workflow=workflow,
         value=value,
-        clear_value=MarkdownService.clear(value)
+        clear_value=MarkdownService.clear(value),
     )
     search_text = 'f boy'
     api_client.token_authenticate(user)
@@ -952,7 +952,7 @@ def test_list__search__markdown_filename_in_text_field__ok(api_client):
         type=FieldType.TEXT,
         workflow=workflow,
         value=value,
-        clear_value=MarkdownService.clear(value)
+        clear_value=MarkdownService.clear(value),
     )
     search_text = 'somefile.txt'
     api_client.token_authenticate(user)
@@ -978,7 +978,7 @@ def test_list__search__full_uri_in_field__ok(api_client):
         type=FieldType.URL,
         workflow=workflow_1,
         value=value_1,
-        clear_value=MarkdownService.clear(value_1)
+        clear_value=MarkdownService.clear(value_1),
     )
 
     workflow_2 = create_test_workflow(user, tasks_count=1)
@@ -990,14 +990,14 @@ def test_list__search__full_uri_in_field__ok(api_client):
         type=FieldType.URL,
         workflow=workflow_2,
         value=value_2,
-        clear_value=MarkdownService.clear(value_2)
+        clear_value=MarkdownService.clear(value_2),
     )
     api_client.token_authenticate(user)
 
     # act
     response = api_client.get(
         '/workflows?',
-        data={'search': value_1}
+        data={'search': value_1},
     )
 
     # assert
@@ -1019,7 +1019,7 @@ def test_list__search__prefix_uri_in_field__ok(api_client):
         type=FieldType.URL,
         workflow=workflow_1,
         value=value_1,
-        clear_value=MarkdownService.clear(value_1)
+        clear_value=MarkdownService.clear(value_1),
     )
 
     workflow_2 = create_test_workflow(user, tasks_count=1)
@@ -1031,14 +1031,14 @@ def test_list__search__prefix_uri_in_field__ok(api_client):
         type=FieldType.URL,
         workflow=workflow_2,
         value=value_2,
-        clear_value=MarkdownService.clear(value_2)
+        clear_value=MarkdownService.clear(value_2),
     )
     api_client.token_authenticate(user)
 
     # act
     response = api_client.get(
         '/workflows?',
-        data={'search': value_1}
+        data={'search': value_1},
     )
 
     # assert
@@ -1068,8 +1068,8 @@ def test_list__search_workflow_name_with_status__ok(api_client):
         path='/workflows',
         data={
             'search': search_text,
-            'status': WorkflowApiStatus.DONE
-        }
+            'status': WorkflowApiStatus.DONE,
+        },
     )
 
     # assert
@@ -1085,12 +1085,12 @@ def test_list__search__find_union_result__ok(api_client):
     workflow_1 = create_test_workflow(
         user=user,
         name='Accounts found',
-        tasks_count=1
+        tasks_count=1,
     )
     workflow_2 = create_test_workflow(
         user=user,
         name='Info Payable',
-        tasks_count=1
+        tasks_count=1,
     )
     api_client.token_authenticate(user)
     search_text = 'Payable Account'
@@ -1107,7 +1107,7 @@ def test_list__search__find_union_result__ok(api_client):
 
 def test_list__search__by_search_find_union_by_prefix__ok(
     api_client,
-    mocker
+    mocker,
 ):
 
     # arrange
@@ -1115,12 +1115,12 @@ def test_list__search__by_search_find_union_by_prefix__ok(
     workflow_1 = create_test_workflow(
         user=user,
         name='Accounts found',
-        tasks_count=1
+        tasks_count=1,
     )
     workflow_2 = create_test_workflow(
         user=user,
         name='Info Payable',
-        tasks_count=1
+        tasks_count=1,
     )
     api_client.token_authenticate(user)
     search_text = 'fou pa'
@@ -1137,7 +1137,7 @@ def test_list__search__by_search_find_union_by_prefix__ok(
 
 def test_list__search__by_search_by_prefix__ok(
     api_client,
-    mocker
+    mocker,
 ):
 
     # arrange
@@ -1145,7 +1145,7 @@ def test_list__search__by_search_by_prefix__ok(
     workflow_1 = create_test_workflow(
         user=user,
         name='Accounts found',
-        tasks_count=1
+        tasks_count=1,
     )
     task_1 = workflow_1.tasks.get(number=1)
     task_1.description = "process is a critical business function"
@@ -1153,7 +1153,7 @@ def test_list__search__by_search_by_prefix__ok(
     create_test_workflow(
         user=user,
         name='Info financial',
-        tasks_count=1
+        tasks_count=1,
     )
     api_client.token_authenticate(user)
     search_text = 'fou content'
@@ -1169,7 +1169,7 @@ def test_list__search__by_search_by_prefix__ok(
 
 def test_list__search__by_part__ok(
     api_client,
-    mocker
+    mocker,
 ):
 
     # arrange
@@ -1182,12 +1182,12 @@ def test_list__search__by_part__ok(
         template=template,
         user=user,
         name='Account found',
-        tasks_count=1
+        tasks_count=1,
     )
     create_test_workflow(
         user=user,
         name='Info Pay',
-        tasks_count=1
+        tasks_count=1,
     )
     api_client.token_authenticate(user)
     search_text = 'Payab Accounts'
@@ -1215,7 +1215,7 @@ def test_list__task_due_date__ok(api_client):
 
     # act
     response = api_client.get(
-        f'/workflows?template_id={workflow.template.id}'
+        f'/workflows?template_id={workflow.template.id}',
     )
 
     # assert
@@ -1232,20 +1232,20 @@ def test_list__filter_status_running__ok(api_client):
     workflow_done = create_test_workflow(
         user,
         tasks_count=1,
-        status=WorkflowStatus.DONE
+        status=WorkflowStatus.DONE,
     )
     workflow_done.tasks.update(status=TaskStatus.COMPLETED)
     workflow = create_test_workflow(user, tasks_count=1)
     workflow_delayed = create_test_workflow(
         user=user,
         status=WorkflowStatus.DELAYED,
-        tasks_count=1
+        tasks_count=1,
     )
     workflow_delayed.tasks.update(status=TaskStatus.DELAYED)
 
     # act
     response = api_client.get(
-        f'/workflows?status={WorkflowApiStatus.RUNNING}'
+        f'/workflows?status={WorkflowApiStatus.RUNNING}',
     )
 
     # assert
@@ -1262,20 +1262,20 @@ def test_list__filter_status_delayed__ok(api_client):
     workflow_done = create_test_workflow(
         user,
         tasks_count=1,
-        status=WorkflowStatus.DONE
+        status=WorkflowStatus.DONE,
     )
     workflow_done.tasks.update(status=TaskStatus.COMPLETED)
     create_test_workflow(user=user, tasks_count=1)
     workflow_delayed = create_test_workflow(
         user=user,
         status=WorkflowStatus.DELAYED,
-        tasks_count=1
+        tasks_count=1,
     )
     workflow_delayed.tasks.update(status=TaskStatus.DELAYED)
 
     # act
     response = api_client.get(
-        f'/workflows?status={WorkflowApiStatus.DELAYED}'
+        f'/workflows?status={WorkflowApiStatus.DELAYED}',
     )
 
     # assert
@@ -1297,7 +1297,7 @@ def test_list__filter_status_delayed_and_active_tasks__not_found(api_client):
         user,
         template=template,
         status=WorkflowStatus.DELAYED,
-        active_task_number=2
+        active_task_number=2,
     )
 
     # act
@@ -1305,8 +1305,8 @@ def test_list__filter_status_delayed_and_active_tasks__not_found(api_client):
         path='/workflows',
         data={
             'template_task_api_name': template_task_1.api_name,
-            'status': WorkflowApiStatus.DELAYED
-        }
+            'status': WorkflowApiStatus.DELAYED,
+        },
     )
 
     # assert
@@ -1318,11 +1318,11 @@ def test_list__filter_status_delayed_and_active_tasks__not_found(api_client):
     'status', (
         TaskStatus.SKIPPED,
         TaskStatus.PENDING,
-    )
+    ),
 )
 def test_list__filter_template_task_api_name__not_active_task__not_found(
     api_client,
-    status
+    status,
 ):
 
     # arrange
@@ -1338,7 +1338,7 @@ def test_list__filter_template_task_api_name__not_active_task__not_found(
         path='/workflows',
         data={
             'template_task_api_name': task.api_name,
-        }
+        },
     )
 
     # assert
@@ -1351,7 +1351,7 @@ def test_list__filter_template_task_api_name__not_active_task__not_found(
         TaskStatus.ACTIVE,
         TaskStatus.DELAYED,
         TaskStatus.COMPLETED,
-    )
+    ),
 )
 def test_list__filter_template_task_api_name__active_task__ok(
     api_client,
@@ -1371,7 +1371,7 @@ def test_list__filter_template_task_api_name__active_task__ok(
         path='/workflows',
         data={
             'template_task_api_name': task.api_name,
-        }
+        },
     )
 
     # assert
@@ -1389,18 +1389,18 @@ def test_list__filter_template_task__and__all_statuses__ok(
     template = create_test_template(
         user=user,
         tasks_count=3,
-        is_active=True
+        is_active=True,
     )
     template_task_2 = template.tasks.get(number=2)
     create_test_workflow(
         user,
         template=template,
-        active_task_number=3
+        active_task_number=3,
     )
     create_test_workflow(
         user,
         template=template,
-        active_task_number=2
+        active_task_number=2,
     )
 
     # act
@@ -1408,7 +1408,7 @@ def test_list__filter_template_task__and__all_statuses__ok(
         path='/workflows',
         data={
             'template_task_id': template_task_2.id,
-        }
+        },
     )
 
     # assert
@@ -1424,20 +1424,20 @@ def test_list__filter_status_done__ok(api_client):
     workflow_done = create_test_workflow(
         user,
         tasks_count=1,
-        status=WorkflowStatus.DONE
+        status=WorkflowStatus.DONE,
     )
     workflow_done.tasks.update(status=TaskStatus.COMPLETED)
     create_test_workflow(user=user, tasks_count=1)
     workflow_delayed = create_test_workflow(
         user=user,
         status=WorkflowStatus.DELAYED,
-        tasks_count=1
+        tasks_count=1,
     )
     workflow_delayed.tasks.update(status=TaskStatus.DELAYED)
 
     # act
     response = api_client.get(
-        f'/workflows?status={WorkflowApiStatus.DONE}'
+        f'/workflows?status={WorkflowApiStatus.DONE}',
     )
 
     # assert
@@ -1488,7 +1488,7 @@ def test_list__filter_template__ok(api_client):
 
     # act
     response = api_client.get(
-        f'/workflows?template_id={template_1.id},{template_2.id}'
+        f'/workflows?template_id={template_1.id},{template_2.id}',
     )
 
     # assert
@@ -1531,7 +1531,7 @@ def test_list__filter_is_external__ok(api_client):
 
     # act
     response = api_client.get(
-        '/workflows?is_external=true'
+        '/workflows?is_external=true',
     )
 
     # assert
@@ -1554,7 +1554,7 @@ def test_list__filter_is_external__default_ordering__ok(api_client):
 
     # act
     response = api_client.get(
-        '/workflows?is_external=true'
+        '/workflows?is_external=true',
     )
 
     # assert
@@ -1591,7 +1591,7 @@ def test_list__filter_invalid_is_external__validation_error(api_client):
 
     # act
     response = api_client.get(
-        path=f'/workflows?is_external={value}'
+        path=f'/workflows?is_external={value}',
     )
 
     # assert
@@ -1609,11 +1609,11 @@ def test_list__filter_invalid_is_external__validation_error(api_client):
         TaskStatus.ACTIVE,
         TaskStatus.DELAYED,
         TaskStatus.COMPLETED,
-    )
+    ),
 )
 def test_list__filter_current_performer__active_task__ok(
     api_client,
-    status
+    status,
 ):
     # arrange
     account = create_test_account()
@@ -1626,7 +1626,7 @@ def test_list__filter_current_performer__active_task__ok(
 
     # act
     response = api_client.get(
-        f'/workflows?current_performer={user.id}'
+        f'/workflows?current_performer={user.id}',
     )
 
     # assert
@@ -1639,11 +1639,11 @@ def test_list__filter_current_performer__active_task__ok(
     'status', (
         TaskStatus.SKIPPED,
         TaskStatus.PENDING,
-    )
+    ),
 )
 def test_list__filter_current_performer__not_active_task__not_found(
     api_client,
-    status
+    status,
 ):
     # arrange
     account = create_test_account()
@@ -1656,7 +1656,7 @@ def test_list__filter_current_performer__not_active_task__not_found(
 
     # act
     response = api_client.get(
-        f'/workflows?current_performer={user.id}'
+        f'/workflows?current_performer={user.id}',
     )
 
     # assert
@@ -1673,17 +1673,17 @@ def test_list__filter_current_performer_user_in_group__ok(api_client):
     group = create_test_group(account, users=[user])
     task = workflow.tasks.get(number=1)
     TaskPerformer.objects.filter(
-        task=task
+        task=task,
     ).update(directly_status=DirectlyStatus.DELETED)
     TaskPerformer.objects.create(
         task_id=task.id,
         type=PerformerType.GROUP,
         group_id=group.id,
-        directly_status=DirectlyStatus.CREATED
+        directly_status=DirectlyStatus.CREATED,
     )
     # act
     response = api_client.get(
-        f'/workflows?current_performer={user.id}'
+        f'/workflows?current_performer={user.id}',
     )
 
     # assert
@@ -1701,17 +1701,17 @@ def test_list__filter_current_performer_group_ids_in_group__ok(api_client):
     group = create_test_group(account, users=[user])
     task = workflow.tasks.get(number=1)
     TaskPerformer.objects.filter(
-        task=task
+        task=task,
     ).update(directly_status=DirectlyStatus.DELETED)
     TaskPerformer.objects.create(
         task_id=task.id,
         type=PerformerType.GROUP,
         group_id=group.id,
-        directly_status=DirectlyStatus.CREATED
+        directly_status=DirectlyStatus.CREATED,
     )
     # act
     response = api_client.get(
-        f'/workflows?current_performer_group_ids={group.id}'
+        f'/workflows?current_performer_group_ids={group.id}',
     )
 
     # assert
@@ -1730,7 +1730,7 @@ def test_list__filter_current_performer_group_ids_in_user__ok(api_client):
 
     # act
     response = api_client.get(
-        f'/workflows?current_performer_group_ids={group.id}'
+        f'/workflows?current_performer_group_ids={group.id}',
     )
 
     # assert
@@ -1744,7 +1744,7 @@ def test_list__filter__multiple_current_performer_group_ids__ok(api_client):
     user = create_test_user(account=account)
     another_user = create_test_user(
         account=account,
-        email='another@pneumatic.app'
+        email='another@pneumatic.app',
     )
     api_client.token_authenticate(another_user)
     template = create_test_template(user=user, tasks_count=2)
@@ -1759,13 +1759,13 @@ def test_list__filter__multiple_current_performer_group_ids__ok(api_client):
     group2 = create_test_group(account, users=[another_user])
     task = workflow.tasks.get(number=1)
     TaskPerformer.objects.filter(
-        task=task
+        task=task,
     ).update(directly_status=DirectlyStatus.DELETED)
     TaskPerformer.objects.create(
         task_id=task.id,
         type=PerformerType.GROUP,
         group_id=group1.id,
-        directly_status=DirectlyStatus.CREATED
+        directly_status=DirectlyStatus.CREATED,
     )
     workflow_2 = create_test_workflow(user=user, template=template)
     task_2 = workflow_2.tasks.get(number=1)
@@ -1773,12 +1773,12 @@ def test_list__filter__multiple_current_performer_group_ids__ok(api_client):
         task_id=task_2.id,
         type=PerformerType.GROUP,
         group_id=group2.id,
-        directly_status=DirectlyStatus.CREATED
+        directly_status=DirectlyStatus.CREATED,
     )
 
     # act
     response = api_client.get(
-        f'/workflows?current_performer_group_ids={group1.id},{group2.id}'
+        f'/workflows?current_performer_group_ids={group1.id},{group2.id}',
     )
 
     # assert
@@ -1794,7 +1794,7 @@ def test_list__filter_multiple_current_performer_group_user__ok(api_client):
     user = create_test_user(account=account)
     another_user = create_test_user(
         account=account,
-        email='another@pneumatic.app'
+        email='another@pneumatic.app',
     )
     api_client.token_authenticate(another_user)
     template = create_test_template(user=user, tasks_count=2)
@@ -1808,13 +1808,13 @@ def test_list__filter_multiple_current_performer_group_user__ok(api_client):
     group = create_test_group(account, users=[user])
     task = workflow.tasks.get(number=1)
     TaskPerformer.objects.filter(
-        task=task
+        task=task,
     ).update(directly_status=DirectlyStatus.DELETED)
     TaskPerformer.objects.create(
         task_id=task.id,
         type=PerformerType.GROUP,
         group_id=group.id,
-        directly_status=DirectlyStatus.CREATED
+        directly_status=DirectlyStatus.CREATED,
     )
     workflow_2 = create_test_workflow(user=user, template=template)
     workflow_3 = create_test_workflow(user=another_user, template=template)
@@ -1823,7 +1823,7 @@ def test_list__filter_multiple_current_performer_group_user__ok(api_client):
     response = api_client.get(
         f'/workflows?'
         f'current_performer_group_ids={group.id}&'
-        f'current_performer={user.id}'
+        f'current_performer={user.id}',
     )
 
     # assert
@@ -1849,7 +1849,7 @@ def test_list__filter_current_performer__not_found(api_client):
 
     # act
     response = api_client.get(
-        f'/workflows?current_performer={user.id}'
+        f'/workflows?current_performer={user.id}',
     )
 
     # assert
@@ -1871,7 +1871,7 @@ def test_list__filter_multiple_current_performer__ok(api_client):
 
     # act
     response = api_client.get(
-        f'/workflows?current_performer={user2.id},{user1.id}'
+        f'/workflows?current_performer={user2.id},{user1.id}',
     )
 
     # assert
@@ -1879,17 +1879,17 @@ def test_list__filter_multiple_current_performer__ok(api_client):
     assert len(response.data['results']) == 2
     assert {
         response.data['results'][0]['id'],
-        response.data['results'][1]['id']
+        response.data['results'][1]['id'],
     } == {
         workflow1.id,
-        workflow2.id
+        workflow2.id,
     }
 
 
 @pytest.mark.parametrize('status', WorkflowApiStatus.NOT_RUNNING)
 def test_list__filter_current_performer_not_running__validation_error(
     status,
-    api_client
+    api_client,
 ):
     # arrange
     account = create_test_account()
@@ -1899,7 +1899,7 @@ def test_list__filter_current_performer_not_running__validation_error(
 
     # act
     response = api_client.get(
-        f'/workflows?current_performer={user.id}&status={status}'
+        f'/workflows?current_performer={user.id}&status={status}',
     )
 
     # assert
@@ -1912,7 +1912,7 @@ def test_list__filter_current_performer_not_running__validation_error(
 @pytest.mark.parametrize('status', WorkflowApiStatus.NOT_RUNNING)
 def test_list__filter_current_performer_group_not_running__validation_error(
     status,
-    api_client
+    api_client,
 ):
     # arrange
     account = create_test_account()
@@ -1923,7 +1923,7 @@ def test_list__filter_current_performer_group_not_running__validation_error(
 
     # act
     response = api_client.get(
-        f'/workflows?current_performer_group_ids={group.id}&status={status}'
+        f'/workflows?current_performer_group_ids={group.id}&status={status}',
     )
 
     # assert
@@ -1962,7 +1962,7 @@ def test_list__filter_workflow_starter__ok(api_client):
     create_test_workflow(user=user1)
     # act
     response = api_client.get(
-        f'/workflows?workflow_starter={user.id}'
+        f'/workflows?workflow_starter={user.id}',
     )
 
     # assert
@@ -1987,7 +1987,7 @@ def test_list__filter_multiple_workflow_starter__ok(api_client):
 
     # act
     response = api_client.get(
-        f'/workflows?workflow_starter={user1.id},{user2.id}'
+        f'/workflows?workflow_starter={user1.id},{user2.id}',
     )
 
     # assert
@@ -1995,9 +1995,9 @@ def test_list__filter_multiple_workflow_starter__ok(api_client):
     assert len(response.data['results']) == 2
     assert {
         response.data['results'][0]['id'],
-        response.data['results'][1]['id']
+        response.data['results'][1]['id'],
     } == {
-        workflow1.id, workflow2.id
+        workflow1.id, workflow2.id,
     }
 
 
@@ -2013,7 +2013,7 @@ def test_list__filter_external_multiple_workflow_starter__ok(api_client):
 
     # act
     response = api_client.get(
-        f'/workflows?is_external=true&workflow_starter={user.id}'
+        f'/workflows?is_external=true&workflow_starter={user.id}',
     )
 
     # assert
@@ -2021,9 +2021,9 @@ def test_list__filter_external_multiple_workflow_starter__ok(api_client):
     assert len(response.data['results']) == 2
     assert {
        response.data['results'][0]['id'],
-       response.data['results'][1]['id']
+       response.data['results'][1]['id'],
     } == {
-        workflow1.id, workflow2.id
+        workflow1.id, workflow2.id,
     }
 
 
@@ -2035,7 +2035,7 @@ def test_list__filter_invalid_workflow_starter__validation_error(api_client):
 
     # act
     response = api_client.get(
-        '/workflows?workflow_starter=undefined'
+        '/workflows?workflow_starter=undefined',
     )
 
     # assert
@@ -2070,7 +2070,7 @@ def test_list__filter_fields_kickoff_field__ok(api_client):
         markdown_value='**bold** value',
         order=2,
         description='desc',
-        is_required=True
+        is_required=True,
     )
     api_client.token_authenticate(user)
 
@@ -2123,7 +2123,7 @@ def test_list__filter_fields_task_field__ok(api_client):
         markdown_value='**bold** value',
         order=2,
         description='desc',
-        is_required=True
+        is_required=True,
     )
     api_client.token_authenticate(user)
 
@@ -2164,7 +2164,7 @@ def test_list__filter_fields__fields_ordering__ok(api_client):
         workflow=workflow,
         value='value',
         order=3,
-        api_name='field-2'
+        api_name='field-2',
     )
     task_2 = workflow.tasks.get(number=2)
     field_3 = TaskField.objects.create(
@@ -2173,7 +2173,7 @@ def test_list__filter_fields__fields_ordering__ok(api_client):
         workflow=workflow,
         value='value',
         order=2,
-        api_name='field-3'
+        api_name='field-3',
     )
     field_2 = TaskField.objects.create(
         task=task_2,
@@ -2181,7 +2181,7 @@ def test_list__filter_fields__fields_ordering__ok(api_client):
         workflow=workflow,
         value='value',
         order=1,
-        api_name='field-1'
+        api_name='field-1',
     )
 
     kickoff = workflow.kickoff_instance
@@ -2191,7 +2191,7 @@ def test_list__filter_fields__fields_ordering__ok(api_client):
         workflow=workflow,
         value='value',
         order=5,
-        api_name='field-4'
+        api_name='field-4',
     )
     task_1.number = 3
     task_1.save()
@@ -2245,7 +2245,7 @@ def test_list__filter_fields_multiple_values__ok(api_client):
 
     # act
     response = api_client.get(
-        f'/workflows?fields={field_1.api_name},{field_2.api_name}'
+        f'/workflows?fields={field_1.api_name},{field_2.api_name}',
     )
 
     # assert
@@ -2373,7 +2373,7 @@ def test_list__filter_fields_and_template__ok(api_client):
     template_1 = create_test_template(
         user=user,
         is_active=True,
-        tasks_count=1
+        tasks_count=1,
     )
     workflow = create_test_workflow(
         user=user,
@@ -2392,7 +2392,7 @@ def test_list__filter_fields_and_template__ok(api_client):
 
     # act
     response = api_client.get(
-        f'/workflows?fields={field_api_name};template_id={template_1.id}'
+        f'/workflows?fields={field_api_name};template_id={template_1.id}',
     )
 
     # assert
@@ -2411,7 +2411,7 @@ def test_list__filter_fields_and_another_template_id__empty_list(api_client):
     template_1 = create_test_template(
         user=user,
         is_active=True,
-        tasks_count=1
+        tasks_count=1,
     )
     workflow = create_test_workflow(
         user=user,
@@ -2432,7 +2432,7 @@ def test_list__filter_fields_and_another_template_id__empty_list(api_client):
 
     # act
     response = api_client.get(
-        f'/workflows?fields={field_api_name};template_id={another_template.id}'
+        f'/workflows?fields={field_api_name};template_id={another_template.id}',
     )
 
     # assert
@@ -2603,7 +2603,7 @@ def test_list__active_task_deleted_performer__ok(api_client):
     user = create_test_user()
     deleted_user = create_test_user(
         email='t@t.t',
-        account=user.account
+        account=user.account,
     )
     workflow = create_test_workflow(user, tasks_count=1)
     task = workflow.tasks.get(number=1)
@@ -2640,7 +2640,7 @@ def test_list__active_task_deleted_performer__ok(api_client):
             'type': 'user',
             'is_completed': False,
             'date_completed_tsp': None,
-        }
+        },
     ]
 
 
@@ -2656,12 +2656,12 @@ def test_list__guest_performer__ok(
     task = workflow.tasks.first()
     TaskPerformer.objects.create(
         task_id=task.id,
-        user_id=guest.id
+        user_id=guest.id,
     )
     TaskPerformer.objects.by_task(
-        task.id
+        task.id,
     ).by_user(
-        account_owner.id
+        account_owner.id,
     ).update(directly_status=DirectlyStatus.DELETED)
     api_client.token_authenticate(account_owner)
 
@@ -2679,7 +2679,7 @@ def test_list__guest_performer__ok(
             'type': 'user',
             'is_completed': False,
             'date_completed_tsp': None,
-        }
+        },
     ]
 
 
@@ -2693,7 +2693,7 @@ def test_list__sub_workflow__ok(api_client):
     sub_workflow = create_test_workflow(
         user=user,
         tasks_count=1,
-        ancestor_task=ancestor_task
+        ancestor_task=ancestor_task,
     )
     api_client.token_authenticate(user)
 
@@ -2715,7 +2715,7 @@ def test_list__skip_all_tasks__found(api_client):
     template = create_test_template(
         user=owner,
         tasks_count=1,
-        is_active=True
+        is_active=True,
     )
     template_task = template.tasks.get(number=1)
     condition_template = ConditionTemplate.objects.create(
@@ -2757,7 +2757,7 @@ def test_list__first_task_end_workflow__found(api_client):
     template = create_test_template(
         user=owner,
         tasks_count=1,
-        is_active=True
+        is_active=True,
     )
     template_task = template.tasks.get(number=1)
     condition_template = ConditionTemplate.objects.create(

@@ -34,15 +34,15 @@ class SystemTemplateCategory(SoftDeleteModel):
     color = models.CharField(
         max_length=20,
         null=True,
-        help_text='category color (hex)'
+        help_text='category color (hex)',
     )
     template_color = models.CharField(
         max_length=20,
         null=True,
-        help_text='templates color (hex)'
+        help_text='templates color (hex)',
     )
     objects = BaseSoftDeleteManager.from_queryset(
-        SystemTemplateCategoryQuerySet
+        SystemTemplateCategoryQuerySet,
     )()
 
     def __str__(self):
@@ -58,7 +58,7 @@ class SystemTemplate(SoftDeleteModel):
     name = models.CharField(max_length=64)
     description = models.TextField(
         null=True,
-        blank=True
+        blank=True,
     )
     template = JSONField(
         null=True,
@@ -74,19 +74,19 @@ class SystemTemplate(SoftDeleteModel):
             '`"generic_name": "{{user_first_name}}\'s onboarding".<br>'
             'Possible dynamic values: '
             'account_name, user_first_name, user_last_name, user_email</span>'
-        )
+        ),
     )
     type = models.CharField(
         choices=SysTemplateType.CHOICES,
         default=SysTemplateType.LIBRARY,
-        max_length=48
+        max_length=48,
     )
     category = models.ForeignKey(
         SystemTemplateCategory,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        help_text='for type "library"'
+        help_text='for type "library"',
     )
 
     search_content = SearchVectorField(null=True)
@@ -113,13 +113,13 @@ class SystemWorkflowKickoffData(SoftDeleteModel):
         on_delete=models.CASCADE,
         limit_choices_to={
             'type': SysTemplateType.ACTIVATED,
-            'is_active': True
+            'is_active': True,
         },
-        related_name='system_workflow_kickoff_data'
+        related_name='system_workflow_kickoff_data',
     )
     user_role = models.CharField(
         choices=SysTemplateType.ONBOARDING_CHOICES,
-        max_length=255
+        max_length=255,
     )
     order = models.IntegerField(default=0)
     kickoff_data = JSONField(
@@ -132,9 +132,9 @@ class SystemWorkflowKickoffData(SoftDeleteModel):
             'user_last_name, user_email</b></br>'
             'Example: Onboarding {{ user_first_name }} {{ user_first_name }}'
             '</span>'
-        )
+        ),
     )
 
     objects = BaseSoftDeleteManager.from_queryset(
-        SystemWorkflowKickoffDataQuerySet
+        SystemWorkflowKickoffDataQuerySet,
     )()

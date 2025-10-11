@@ -12,5 +12,5 @@ class DueDateSerializer(
 
     due_date_tsp = TimeStampField(
         required=True,
-        allow_null=False
+        allow_null=False,
     )

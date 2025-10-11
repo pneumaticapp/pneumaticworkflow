@@ -1,6 +1,6 @@
 from django.contrib.auth import get_user_model
 from rest_framework.generics import (
-    ListAPIView
+    ListAPIView,
 )
 from src.accounts.permissions import (
     UserIsAdminOrAccountOwner,
@@ -21,7 +21,7 @@ UserModel = get_user_model()
 
 class APIKeyView(
     ListAPIView,
-    BaseResponseMixin
+    BaseResponseMixin,
 ):
 
     permission_classes = (

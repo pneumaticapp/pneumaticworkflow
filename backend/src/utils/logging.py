@@ -34,7 +34,7 @@ def capture_sentry_message(
                     scope.set_extra(key, val)
             capture_message(
                 message=message,
-                level=level
+                level=level,
             )
 
 

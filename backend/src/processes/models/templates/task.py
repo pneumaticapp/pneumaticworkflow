@@ -7,17 +7,17 @@ from django.db import models
 from django.db.models import UniqueConstraint, Q
 from src.accounts.models import (
     AccountBaseMixin,
-    UserGroup
+    UserGroup,
 )
 from src.generics.managers import BaseSoftDeleteManager
 from src.processes.models.mixins import (
     TaskMixin,
-    TaskRawPerformersMixin
+    TaskRawPerformersMixin,
 )
 from src.processes.querysets import TaskTemplateQuerySet
 from src.processes.enums import (
     PerformerType,
-    FieldType
+    FieldType,
 )
 from src.processes.models.templates.template import Template
 from src.processes.models.base import BaseApiNameModel
@@ -42,7 +42,7 @@ class TaskTemplate(
                 fields=['template', 'api_name'],
                 condition=Q(is_deleted=False),
                 name='processes_tasktemplate_template_api_name_unique',
-            )
+            ),
         ]
 
     api_name_prefix = 'task'
@@ -50,7 +50,7 @@ class TaskTemplate(
     template = models.ForeignKey(
         Template,
         on_delete=models.CASCADE,
-        related_name='tasks'
+        related_name='tasks',
     )
     delay = models.DurationField(
         blank=True,
@@ -59,7 +59,7 @@ class TaskTemplate(
     ancestors = ArrayField(
         base_field=models.CharField(max_length=200),
         default=list,
-        help_text='Api names of task ancestors'
+        help_text='Api names of task ancestors',
     )
     search_content = SearchVectorField(null=True)
 
@@ -72,7 +72,7 @@ class TaskTemplate(
         user_id: Optional[int] = None,
         field=None,  # Optional[TaskField]
         performer_type: PerformerType = PerformerType.USER,
-        **kwargs
+        **kwargs,
     ):  # -> RawPerformerTemplate
 
         """ Returns new a raw performer object with given data """
@@ -85,7 +85,7 @@ class TaskTemplate(
             task=self,
             template=self.template,
             field=field,
-            type=performer_type
+            type=performer_type,
         )
         if group:
             result.group = group
@@ -103,7 +103,7 @@ class TaskTemplate(
         field=None,
         api_name: Optional[str] = None,
         performer_type: PerformerType = PerformerType.USER,
-        **kwargs
+        **kwargs,
     ) -> object:
 
         """ Creates and returns a raw performer for a task with given data """
@@ -111,7 +111,7 @@ class TaskTemplate(
         if performer_type != PerformerType.WORKFLOW_STARTER:
             if not user and not user_id and not group and not field:
                 raise Exception(
-                    'Raw performer should be linked with field or user'
+                    'Raw performer should be linked with field or user',
                 )
 
         raw_performer = self._get_raw_performer(
@@ -120,7 +120,7 @@ class TaskTemplate(
             user=user,
             group=group,
             user_id=user_id,
-            field=field
+            field=field,
         )
         raw_performer.save()
         return raw_performer
@@ -128,7 +128,7 @@ class TaskTemplate(
     def get_prev_tasks_fields_api_names(self) -> Set[str]:
 
         prev_tasks_fields_api_names = self.template.get_fields(
-            fields_filter_kwargs={'type': FieldType.USER}
+            fields_filter_kwargs={'type': FieldType.USER},
         )
         return set(prev_tasks_fields_api_names.api_names())
 

@@ -25,24 +25,24 @@ urlpatterns = [
     path(
         'context',
         ContextUserView.as_view(),
-        name='auth-context'
+        name='auth-context',
     ),
     path(
         'signin-google',
         SignInWithGoogleView.as_view(),
-        name='auth-signin-google'
+        name='auth-signin-google',
     ),
 
     # JSON Web Tokens
     path(
         'token/obtain',
         TokenObtainPairCustomView.as_view(),
-        name='auth-token-obtain'
+        name='auth-token-obtain',
     ),
     path(
         'token/refresh',
         TokenRefreshView.as_view(),
-        name='auth-token-refresh'
+        name='auth-token-refresh',
     ),
 
     path('signup', SignUpView.as_view(), name='auth-signup'),
@@ -50,7 +50,7 @@ urlpatterns = [
     path(
         'change-password',
         ChangePasswordView.as_view(),
-        name='auth-change-password'
+        name='auth-change-password',
     ),
     path('verification', VerificationTokenView.as_view()),
     path('resend-verification', VerificationTokenResendView.as_view()),
@@ -62,18 +62,18 @@ router.register('google', GoogleAuthViewSet, basename='auth-google')
 router.register(
     'reset-password',
     ResetPasswordViewSet,
-    basename='reset-password'
+    basename='reset-password',
 )
 router.register(
     'microsoft',
     MSAuthViewSet,
-    basename='microsoft'
+    basename='microsoft',
 )
 
 router.register(
     'auth0',
     Auth0ViewSet,
-    basename='auth0'
+    basename='auth0',
 )
 
 urlpatterns += router.urls

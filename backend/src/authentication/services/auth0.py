@@ -73,13 +73,13 @@ class Auth0Service(CacheMixin):
                 'client_secret': self.client_secret,
                 'code': auth_response['code'],
                 'redirect_uri': self.redirect_uri,
-            }
+            },
         )
         if not response.ok:
             capture_sentry_message(
                 message='Get Auth0 access token return an error',
                 data={'content': response.content},
-                level=SentryLogLevel.ERROR
+                level=SentryLogLevel.ERROR,
             )
             raise exceptions.TokenInvalidOrExpired()
         self.tokens = response.json()
@@ -105,13 +105,13 @@ class Auth0Service(CacheMixin):
 
         response = requests.get(
             f'https://{self.domain}/userinfo',
-            headers={'Authorization': f'Bearer {access_token}'}
+            headers={'Authorization': f'Bearer {access_token}'},
         )
         if not response.ok:
             capture_sentry_message(
                 message='Get Auth0 user profile return an error',
                 data={'content': response.content},
-                level=SentryLogLevel.ERROR
+                level=SentryLogLevel.ERROR,
             )
             raise exceptions.TokenInvalidOrExpired()
         return response.json()
@@ -143,8 +143,8 @@ class Auth0Service(CacheMixin):
             raise exceptions.EmailNotExist(
                 details={
                     'user_profile': user_profile,
-                    'email': email
-                }
+                    'email': email,
+                },
             )
         first_name = user_profile['given_name'] or email.split('@')[0]
         capture_sentry_message(
@@ -176,6 +176,6 @@ class Auth0Service(CacheMixin):
                 'access_token': (
                     f'{self.tokens["token_type"]} '
                     f'{self.tokens["access_token"]}'
-                )
-            }
+                ),
+            },
         )

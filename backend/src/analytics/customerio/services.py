@@ -19,7 +19,7 @@ class CommonMixin:
     @classmethod
     def _get_webhook_user(
         cls,
-        data: WebHookMetricData
+        data: WebHookMetricData,
     ) -> Optional[UserModel]:
 
         user_id = data['identifiers']['id']
@@ -52,7 +52,7 @@ class SubscribeMixin:
 class WebHookService(
     CommonMixin,
     SubscribeMixin,
-    UnsubscribeMixin
+    UnsubscribeMixin,
 ):
 
     @classmethod

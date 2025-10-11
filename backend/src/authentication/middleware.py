@@ -43,7 +43,7 @@ class WebsocketAuthMiddleware:
 
 class AuthMiddleware(
     AuthenticationMiddleware,
-    AnonymousMixin
+    AnonymousMixin,
 ):
     def process_request(self, request):
         super().process_request(request)
@@ -93,6 +93,6 @@ class AuthMiddleware(
                         path=request.path,
                         request_data=body,
                         http_status=response.status_code,
-                        response_data=response_data
+                        response_data=response_data,
                     )
         return response

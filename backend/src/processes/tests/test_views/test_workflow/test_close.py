@@ -5,16 +5,16 @@ from src.processes.tests.fixtures import (
     create_test_user,
     create_test_workflow,
     create_test_template,
-    create_test_account
+    create_test_account,
 )
 from src.processes.models import (
     TemplateOwner,
 )
 from src.processes.enums import (
-    OwnerType
+    OwnerType,
 )
 from src.processes.services.exceptions import (
-    WorkflowActionServiceException
+    WorkflowActionServiceException,
 )
 from src.utils.validation import ErrorCode
 
@@ -25,7 +25,7 @@ UserModel = get_user_model()
 
 def test_close__account_owner__ok(
     mocker,
-    api_client
+    api_client,
 ):
     # arrange
     user = create_test_user(is_account_owner=True)
@@ -33,7 +33,7 @@ def test_close__account_owner__ok(
     api_client.token_authenticate(user)
     terminate_mock = mocker.patch(
         'src.processes.services.workflow_action.'
-        'WorkflowActionService.terminate_workflow'
+        'WorkflowActionService.terminate_workflow',
     )
 
     # act
@@ -48,7 +48,7 @@ def test_close__account_owner__ok(
 
 def test_close__template_owner_admin__ok(
     mocker,
-    api_client
+    api_client,
 ):
     # arrange
     user = create_test_user(is_account_owner=False, is_admin=True)
@@ -56,7 +56,7 @@ def test_close__template_owner_admin__ok(
     api_client.token_authenticate(user)
     terminate_mock = mocker.patch(
         'src.processes.services.workflow_action.'
-        'WorkflowActionService.terminate_workflow'
+        'WorkflowActionService.terminate_workflow',
     )
 
     # act
@@ -71,19 +71,19 @@ def test_close__template_owner_admin__ok(
 
 def test_close__legacy_workflow_workflow_starter__ok(
     mocker,
-    api_client
+    api_client,
 ):
     # arrange
     account = create_test_account(plan=BillingPlanType.PREMIUM)
     account_owner = create_test_user(
         account=account,
-        is_account_owner=True
+        is_account_owner=True,
     )
     user = create_test_user(
         account=account,
         email='t@t.t',
         is_account_owner=False,
-        is_admin=True
+        is_admin=True,
     )
 
     workflow = create_test_workflow(user, tasks_count=1)
@@ -92,7 +92,7 @@ def test_close__legacy_workflow_workflow_starter__ok(
     workflow.refresh_from_db()
     terminate_mock = mocker.patch(
         'src.processes.services.workflow_action.'
-        'WorkflowActionService.terminate_workflow'
+        'WorkflowActionService.terminate_workflow',
     )
     api_client.token_authenticate(user)
 
@@ -110,7 +110,7 @@ def test_close__legacy_workflow_workflow_starter__ok(
 
 def test_close__template_owner__not_admin__permission_denied(
     mocker,
-    api_client
+    api_client,
 ):
     # arrange
     account_owner = create_test_user()
@@ -118,12 +118,12 @@ def test_close__template_owner__not_admin__permission_denied(
         account=account_owner.account,
         is_admin=False,
         is_account_owner=False,
-        email='t@t.t'
+        email='t@t.t',
     )
     template = create_test_template(
         user=account_owner,
         is_active=True,
-        tasks_count=1
+        tasks_count=1,
     )
     TemplateOwner.objects.create(
         template=template,
@@ -137,7 +137,7 @@ def test_close__template_owner__not_admin__permission_denied(
     )
     terminate_mock = mocker.patch(
         'src.processes.services.workflow_action.'
-        'WorkflowActionService.terminate_workflow'
+        'WorkflowActionService.terminate_workflow',
     )
     api_client.token_authenticate(user_not_admin)
 
@@ -153,7 +153,7 @@ def test_close__template_owner__not_admin__permission_denied(
 
 def test_close__service_exception__validation_error(
     mocker,
-    api_client
+    api_client,
 ):
     # arrange
     account_owner = create_test_user()
@@ -161,7 +161,7 @@ def test_close__service_exception__validation_error(
         account=account_owner.account,
         is_admin=True,
         is_account_owner=False,
-        email='t@t.t'
+        email='t@t.t',
     )
     message = 'message'
     workflow = create_test_workflow(user_admin, tasks_count=1)
@@ -169,7 +169,7 @@ def test_close__service_exception__validation_error(
     terminate_mock = mocker.patch(
         'src.processes.services.workflow_action.'
         'WorkflowActionService.terminate_workflow',
-        side_effect=WorkflowActionServiceException(message)
+        side_effect=WorkflowActionServiceException(message),
     )
 
     # act

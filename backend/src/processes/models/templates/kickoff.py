@@ -9,7 +9,7 @@ from src.processes.models.templates.template import Template
 
 class Kickoff(
     SoftDeleteModel,
-    AccountBaseMixin
+    AccountBaseMixin,
 ):
 
     class Meta:
@@ -18,14 +18,14 @@ class Kickoff(
                 fields=['template'],
                 condition=Q(is_deleted=False),
                 name='kickoff_template_unique',
-            )
+            ),
         ]
 
     template = models.ForeignKey(
         Template,
         on_delete=models.CASCADE,
         related_name='kickoff',
-        null=True
+        null=True,
     )
 
     objects = BaseSoftDeleteManager.from_queryset(KickoffQuerySet)()

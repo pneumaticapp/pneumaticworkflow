@@ -4,7 +4,7 @@ from rest_framework.routers import DefaultRouter
 from src.accounts.views.groups import GroupViewSet
 from src.accounts.views.public.users import PublicUsersViewSet
 from src.accounts.views.public.account import (
-    PublicAccountViewSet
+    PublicAccountViewSet,
 )
 from src.accounts.views import (
     UsersViewSet,
@@ -31,7 +31,7 @@ router.register('invites', UserInviteViewSet, basename='invites')
 router.register(
     'notifications',
     NotificationsViewSet,
-    basename='notifications'
+    basename='notifications',
 )
 
 urlpatterns = [

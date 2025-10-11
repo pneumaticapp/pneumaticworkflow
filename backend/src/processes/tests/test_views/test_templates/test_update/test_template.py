@@ -13,7 +13,7 @@ from src.processes.tests.fixtures import (
 from src.processes.models import (
     FieldTemplate,
     Template,
-    RawPerformerTemplate
+    RawPerformerTemplate,
 )
 from src.processes.messages import template as messages
 from src.processes.enums import (
@@ -23,10 +23,10 @@ from src.processes.enums import (
     WorkflowStatus,
 )
 from src.accounts.tokens import (
-    TransferToken
+    TransferToken,
 )
 from src.accounts.services.user_transfer import (
-    UserTransferService
+    UserTransferService,
 )
 from src.authentication.tokens import (
     PublicToken,
@@ -34,7 +34,7 @@ from src.authentication.tokens import (
 )
 from src.authentication.enums import AuthTokenType
 from src.processes.services.templates.integrations import (
-    TemplateIntegrationsService
+    TemplateIntegrationsService,
 )
 
 
@@ -53,7 +53,7 @@ class TestUpdateTemplate:
         user = create_test_user()
         user2 = create_test_user(
             email='test2@pneumatic.app',
-            account=user.account
+            account=user.account,
         )
         api_client.token_authenticate(user)
         template = create_test_template(
@@ -74,11 +74,11 @@ class TestUpdateTemplate:
         create_integrations_mock = mocker.patch(
             'src.processes.services.templates.'
             'integrations.TemplateIntegrationsService.'
-            'create_integrations_for_template'
+            'create_integrations_for_template',
         )
         template_updated_mock = mocker.patch(
             'src.processes.services.templates.'
-            'integrations.TemplateIntegrationsService.template_updated'
+            'integrations.TemplateIntegrationsService.template_updated',
         )
         api_request_mock = mocker.patch(
             'src.processes.services.templates.'
@@ -95,11 +95,11 @@ class TestUpdateTemplate:
             'owners': [
                 {
                     'type': OwnerType.USER,
-                    'source_id': user.id
+                    'source_id': user.id,
                 },
                 {
                     'type': OwnerType.USER,
-                    'source_id': user2.id
+                    'source_id': user2.id,
                 },
             ],
             'finalizable': True,
@@ -116,25 +116,25 @@ class TestUpdateTemplate:
                     'raw_performers': [
                         {
                             'type': PerformerType.USER,
-                            'source_id': user.id
-                        }
-                    ]
-                }
-            ]
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+            ],
         }
         template_update_mock = mocker.patch(
             'src.processes.views.template.'
-            'AnalyticService.templates_updated'
+            'AnalyticService.templates_updated',
         )
         kickoff_update_mock = mocker.patch(
             'src.processes.views.template.'
-            'AnalyticService.templates_kickoff_updated'
+            'AnalyticService.templates_kickoff_updated',
         )
 
         # act
         response = api_client.put(
             path=f'/templates/{template.id}',
-            data=request_data
+            data=request_data,
         )
 
         # assert
@@ -156,7 +156,7 @@ class TestUpdateTemplate:
 
         template.refresh_from_db()
         template_owners = list(template.owners.order_by(
-            'id'
+            'id',
         ).values_list('user_id', 'type'))
         assert template_owners[0][0] == user.id
         assert template_owners[0][1] == OwnerType.USER
@@ -204,13 +204,13 @@ class TestUpdateTemplate:
         user = create_test_user(account=account)
         user2 = create_test_user(
             email='test2@pneumatic.app',
-            account=account
+            account=account,
         )
         api_client.token_authenticate(user)
         template = create_test_template(
             user,
             is_active=True,
-            tasks_count=1
+            tasks_count=1,
         )
         task = template.tasks.first()
         FieldTemplate.objects.create(
@@ -223,11 +223,11 @@ class TestUpdateTemplate:
         create_integrations_mock = mocker.patch(
             'src.processes.services.templates.'
             'integrations.TemplateIntegrationsService.'
-            'create_integrations_for_template'
+            'create_integrations_for_template',
         )
         template_updated_mock = mocker.patch(
             'src.processes.services.templates.'
-            'integrations.TemplateIntegrationsService.template_updated'
+            'integrations.TemplateIntegrationsService.template_updated',
         )
         request_data = {
             'id': template.id,
@@ -237,17 +237,17 @@ class TestUpdateTemplate:
             'owners': [
                 {
                     'type': OwnerType.USER,
-                    'source_id': user.id
+                    'source_id': user.id,
                 },
                 {
                     'type': OwnerType.USER,
-                    'source_id': user2.id
+                    'source_id': user2.id,
                 },
             ],
             'finalizable': True,
             'kickoff': {
                 'id': template.kickoff_instance.id,
-                'description': 'Desc changed'
+                'description': 'Desc changed',
             },
             'tasks': [
                 {
@@ -256,25 +256,25 @@ class TestUpdateTemplate:
                     'raw_performers': [
                         {
                             'type': PerformerType.USER,
-                            'source_id': user.id
-                        }
-                    ]
-                }
-            ]
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+            ],
         }
         template_update_mock = mocker.patch(
             'src.processes.views.template.'
-            'AnalyticService.templates_updated'
+            'AnalyticService.templates_updated',
         )
         kickoff_update_mock = mocker.patch(
             'src.processes.views.template.'
-            'AnalyticService.templates_kickoff_updated'
+            'AnalyticService.templates_kickoff_updated',
         )
 
         # act
         response = api_client.put(
             path=f'/templates/{template.id}',
-            data=request_data
+            data=request_data,
         )
 
         # assert
@@ -331,7 +331,7 @@ class TestUpdateTemplate:
         user = create_test_user()
         user2 = create_test_user(
             email='test2@pneumatic.app',
-            account=user.account
+            account=user.account,
         )
         api_client.token_authenticate(user)
 
@@ -343,11 +343,11 @@ class TestUpdateTemplate:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                     {
                         'type': OwnerType.USER,
-                        'source_id': user2.id
+                        'source_id': user2.id,
                     },
                 ],
                 'is_active': False,
@@ -358,10 +358,10 @@ class TestUpdateTemplate:
                 'tasks': [
                     {
                       'number': 1,
-                      'name': 'First step'
-                    }
-                ]
-            }
+                      'name': 'First step',
+                    },
+                ],
+            },
         )
         template = Template.objects.get(id=response.data['id'])
 
@@ -373,11 +373,11 @@ class TestUpdateTemplate:
             'owners': [
                 {
                     'type': OwnerType.USER,
-                    'source_id': user.id
+                    'source_id': user.id,
                 },
                 {
                     'type': OwnerType.USER,
-                    'source_id': user2.id
+                    'source_id': user2.id,
                 },
             ],
             'finalizable': True,
@@ -386,32 +386,32 @@ class TestUpdateTemplate:
             },
             'tasks': [
                 {
-                    'name': 'First step changed'
-                }
-            ]
+                    'name': 'First step changed',
+                },
+            ],
         }
         create_integrations_mock = mocker.patch(
             'src.processes.services.templates.'
             'integrations.TemplateIntegrationsService.'
-            'create_integrations_for_template'
+            'create_integrations_for_template',
         )
         template_updated_mock = mocker.patch(
             'src.processes.services.templates.'
-            'integrations.TemplateIntegrationsService.template_updated'
+            'integrations.TemplateIntegrationsService.template_updated',
         )
         template_update_mock = mocker.patch(
             'src.processes.views.template.'
-            'AnalyticService.templates_updated'
+            'AnalyticService.templates_updated',
         )
         kickoff_update_mock = mocker.patch(
             'src.processes.views.template.'
-            'AnalyticService.templates_kickoff_updated'
+            'AnalyticService.templates_kickoff_updated',
         )
 
         # act
         response = api_client.put(
             path=f'/templates/{template.id}',
-            data=request_data
+            data=request_data,
         )
 
         # assert
@@ -469,7 +469,7 @@ class TestUpdateTemplate:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'is_active': False,
@@ -480,28 +480,28 @@ class TestUpdateTemplate:
                 'tasks': [
                     {
                       'number': 1,
-                      'name': 'First step'
-                    }
-                ]
-            }
+                      'name': 'First step',
+                    },
+                ],
+            },
         )
         template = Template.objects.get(id=response.data['id'])
         create_integrations_mock = mocker.patch(
             'src.processes.services.templates.'
             'integrations.TemplateIntegrationsService.'
-            'create_integrations_for_template'
+            'create_integrations_for_template',
         )
         template_updated_mock = mocker.patch(
             'src.processes.services.templates.'
-            'integrations.TemplateIntegrationsService.template_updated'
+            'integrations.TemplateIntegrationsService.template_updated',
         )
         template_update_mock = mocker.patch(
             'src.processes.views.template.'
-            'AnalyticService.templates_updated'
+            'AnalyticService.templates_updated',
         )
         kickoff_update_mock = mocker.patch(
             'src.processes.views.template.'
-            'AnalyticService.templates_kickoff_updated'
+            'AnalyticService.templates_kickoff_updated',
         )
 
         request_data = {
@@ -512,7 +512,7 @@ class TestUpdateTemplate:
             'owners': [
                 {
                     'type': OwnerType.USER,
-                    'source_id': user.id
+                    'source_id': user.id,
                 },
             ],
             'finalizable': True,
@@ -526,17 +526,17 @@ class TestUpdateTemplate:
                     'raw_performers': [
                         {
                             'type': PerformerType.USER,
-                            'source_id': user.id
-                        }
-                    ]
-                }
-            ]
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+            ],
         }
 
         # act
         response = api_client.put(
             path=f'/templates/{template.id}',
-            data=request_data
+            data=request_data,
         )
 
         # assert
@@ -591,7 +591,7 @@ class TestUpdateTemplate:
         admin_user = create_test_user(
             account=user.account,
             email='admin@test.test',
-            is_account_owner=False
+            is_account_owner=False,
         )
         api_client.token_authenticate(user)
 
@@ -603,7 +603,7 @@ class TestUpdateTemplate:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'is_active': False,
@@ -618,25 +618,25 @@ class TestUpdateTemplate:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': admin_user.id
-                            }
-                        ]
-                    }
-                ]
-            }
+                                'source_id': admin_user.id,
+                            },
+                        ],
+                    },
+                ],
+            },
         )
         template = Template.objects.get(id=response.data['id'])
         mocker.patch(
             'src.processes.services.templates.'
-            'integrations.TemplateIntegrationsService.template_updated'
+            'integrations.TemplateIntegrationsService.template_updated',
         )
         template_update_mock = mocker.patch(
             'src.processes.views.template.'
-            'AnalyticService.templates_updated'
+            'AnalyticService.templates_updated',
         )
         kickoff_update_mock = mocker.patch(
             'src.processes.views.template.'
-            'AnalyticService.templates_kickoff_updated'
+            'AnalyticService.templates_kickoff_updated',
         )
 
         request_data = {
@@ -647,7 +647,7 @@ class TestUpdateTemplate:
             'owners': [
                 {
                     'type': OwnerType.USER,
-                    'source_id': user.id
+                    'source_id': user.id,
                 },
             ],
             'finalizable': True,
@@ -661,18 +661,18 @@ class TestUpdateTemplate:
                     'raw_performers': [
                         {
                             'type': PerformerType.USER,
-                            'source_id': admin_user.id
-                        }
-                    ]
-                }
-            ]
+                            'source_id': admin_user.id,
+                        },
+                    ],
+                },
+            ],
         }
         api_client.token_authenticate(admin_user)
 
         # act
         response = api_client.put(
             path=f'/templates/{template.id}',
-            data=request_data
+            data=request_data,
         )
 
         # assert
@@ -690,11 +690,11 @@ class TestUpdateTemplate:
         # arrange
         template_update_mock = mocker.patch(
             'src.processes.views.template.'
-            'AnalyticService.templates_updated'
+            'AnalyticService.templates_updated',
         )
         kickoff_update_mock = mocker.patch(
             'src.processes.views.template.'
-            'AnalyticService.templates_kickoff_updated'
+            'AnalyticService.templates_kickoff_updated',
         )
         user = create_test_user()
         api_client.token_authenticate(user)
@@ -707,7 +707,7 @@ class TestUpdateTemplate:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'is_active': False,
@@ -720,21 +720,21 @@ class TestUpdateTemplate:
                         'raw_performers': [
                             {
                                 'type': PerformerType.WORKFLOW_STARTER,
-                                'source_id': None
-                            }
-                        ]
+                                'source_id': None,
+                            },
+                        ],
                     },
                     {
                         'number': 1,
-                        'name': 'Second step'
-                    }
-                ]
-            }
+                        'name': 'Second step',
+                    },
+                ],
+            },
         )
         template = Template.objects.get(id=response.data['id'])
         mocker.patch(
             'src.processes.services.templates.'
-            'integrations.TemplateIntegrationsService.template_updated'
+            'integrations.TemplateIntegrationsService.template_updated',
         )
         request_data = {
             'id': template.id,
@@ -743,7 +743,7 @@ class TestUpdateTemplate:
             'owners': [
                 {
                     'type': OwnerType.USER,
-                    'source_id': user.id
+                    'source_id': user.id,
                 },
             ],
             'is_active': False,
@@ -756,16 +756,16 @@ class TestUpdateTemplate:
                     'raw_performers': [
                         {
                             'type': PerformerType.USER,
-                            'source_id': user.id
-                        }
-                    ]
-                }
-            ]
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+            ],
         }
 
         response_put = api_client.put(
             path=f'/templates/{template.id}',
-            data=request_data
+            data=request_data,
         )
 
         # act
@@ -791,11 +791,11 @@ class TestUpdateTemplate:
         # arrange
         template_update_mock = mocker.patch(
             'src.processes.views.template.'
-            'AnalyticService.templates_updated'
+            'AnalyticService.templates_updated',
         )
         kickoff_update_mock = mocker.patch(
             'src.processes.views.template.'
-            'AnalyticService.templates_kickoff_updated'
+            'AnalyticService.templates_kickoff_updated',
         )
         user = create_test_user()
         user_2 = create_test_user(account=user.account, email='t@t.t')
@@ -809,7 +809,7 @@ class TestUpdateTemplate:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'is_active': False,
@@ -822,21 +822,21 @@ class TestUpdateTemplate:
                         'raw_performers': [
                             {
                                 'type': PerformerType.WORKFLOW_STARTER,
-                                'source_id': None
-                            }
-                        ]
+                                'source_id': None,
+                            },
+                        ],
                     },
                     {
                         'number': 1,
-                        'name': 'Second step'
-                    }
-                ]
-            }
+                        'name': 'Second step',
+                    },
+                ],
+            },
         )
         template = Template.objects.get(id=response_create.data['id'])
         mocker.patch(
             'src.processes.services.templates.'
-            'integrations.TemplateIntegrationsService.template_updated'
+            'integrations.TemplateIntegrationsService.template_updated',
         )
         request_data = {
             'id': template.id,
@@ -845,7 +845,7 @@ class TestUpdateTemplate:
             'owners': [
                 {
                     'type': OwnerType.USER,
-                    'source_id': user_2.id
+                    'source_id': user_2.id,
                 },
             ],
             'is_active': False,
@@ -858,17 +858,17 @@ class TestUpdateTemplate:
                     'raw_performers': [
                         {
                             'type': PerformerType.USER,
-                            'source_id': user.id
-                        }
-                    ]
-                }
-            ]
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+            ],
         }
 
         # act
         response_update = api_client.put(
             path=f'/templates/{template.id}',
-            data=request_data
+            data=request_data,
         )
 
         # assert
@@ -882,7 +882,7 @@ class TestUpdateTemplate:
         assert template.is_active is False
         assert template.owners.count() == 1
         assert template.owners.filter(
-            type=OwnerType.USER, user_id=user.id
+            type=OwnerType.USER, user_id=user.id,
         ).exists()
         template_update_mock.assert_not_called()
         kickoff_update_mock.assert_not_called()
@@ -890,7 +890,7 @@ class TestUpdateTemplate:
     def test_update__public__ok(
         self,
         mocker,
-        api_client
+        api_client,
     ):
 
         # arrange
@@ -901,7 +901,7 @@ class TestUpdateTemplate:
         token_mock = mocker.patch.object(
             PublicToken,
             attribute='__str__',
-            return_value=token
+            return_value=token,
         )
 
         response = api_client.post(
@@ -912,7 +912,7 @@ class TestUpdateTemplate:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'is_active': True,
@@ -925,18 +925,18 @@ class TestUpdateTemplate:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': user.id
-                            }
-                        ]
-                    }
-                ]
-            }
+                                'source_id': user.id,
+                            },
+                        ],
+                    },
+                ],
+            },
         )
         template = Template.objects.get(id=response.data['id'])
         task = template.tasks.first()
         mocker.patch(
             'src.processes.services.templates.'
-            'integrations.TemplateIntegrationsService.template_updated'
+            'integrations.TemplateIntegrationsService.template_updated',
         )
 
         # act
@@ -951,7 +951,7 @@ class TestUpdateTemplate:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'finalizable': template.finalizable,
@@ -965,12 +965,12 @@ class TestUpdateTemplate:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': user.id
-                            }
-                        ]
-                    }
-                ]
-            }
+                                'source_id': user.id,
+                            },
+                        ],
+                    },
+                ],
+            },
         )
 
         # assert
@@ -985,7 +985,7 @@ class TestUpdateTemplate:
     def test_update__embed__ok(
         self,
         mocker,
-        api_client
+        api_client,
     ):
 
         # arrange
@@ -997,7 +997,7 @@ class TestUpdateTemplate:
         token_mock = mocker.patch.object(
             EmbedToken,
             attribute='__str__',
-            return_value=token
+            return_value=token,
         )
         response = api_client.post(
             path='/templates',
@@ -1007,7 +1007,7 @@ class TestUpdateTemplate:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'is_active': True,
@@ -1020,18 +1020,18 @@ class TestUpdateTemplate:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': user.id
-                            }
-                        ]
-                    }
-                ]
-            }
+                                'source_id': user.id,
+                            },
+                        ],
+                    },
+                ],
+            },
         )
         template = Template.objects.get(id=response.data['id'])
         task = template.tasks.first()
         mocker.patch(
             'src.processes.services.templates.'
-            'integrations.TemplateIntegrationsService.template_updated'
+            'integrations.TemplateIntegrationsService.template_updated',
         )
         request_data = {
             'id': template.id,
@@ -1042,7 +1042,7 @@ class TestUpdateTemplate:
             'owners': [
                 {
                     'type': OwnerType.USER,
-                    'source_id': user.id
+                    'source_id': user.id,
                 },
             ],
             'finalizable': template.finalizable,
@@ -1056,17 +1056,17 @@ class TestUpdateTemplate:
                     'raw_performers': [
                         {
                             'type': PerformerType.USER,
-                            'source_id': user.id
-                        }
-                    ]
-                }
-            ]
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+            ],
         }
 
         # act
         response = api_client.put(
             path=f'/templates/{template.id}',
-            data=request_data
+            data=request_data,
         )
 
         # assert
@@ -1081,7 +1081,7 @@ class TestUpdateTemplate:
     def test_update__workflow_is_external_not_changed__ok(
         self,
         mocker,
-        api_client
+        api_client,
     ):
 
         # arrange
@@ -1090,13 +1090,13 @@ class TestUpdateTemplate:
         workflow = create_test_workflow(
             user=user,
             is_external=True,
-            tasks_count=1
+            tasks_count=1,
         )
         template = workflow.template
         task_template = template.tasks.first()
         mocker.patch(
             'src.processes.services.templates.'
-            'integrations.TemplateIntegrationsService.template_updated'
+            'integrations.TemplateIntegrationsService.template_updated',
         )
         request_data = {
             'id': template.id,
@@ -1107,7 +1107,7 @@ class TestUpdateTemplate:
             'owners': [
                 {
                     'type': OwnerType.USER,
-                    'source_id': user.id
+                    'source_id': user.id,
                 },
             ],
             'finalizable': template.finalizable,
@@ -1124,17 +1124,17 @@ class TestUpdateTemplate:
                     'raw_performers': [
                         {
                             'type': PerformerType.USER,
-                            'source_id': user.id
-                        }
-                    ]
-                }
-            ]
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+            ],
         }
 
         # act
         response = api_client.put(
             path=f'/templates/{template.id}',
-            data=request_data
+            data=request_data,
         )
         workflow.refresh_from_db()
 
@@ -1146,14 +1146,14 @@ class TestUpdateTemplate:
         'status', (
             WorkflowStatus.DONE,
             WorkflowStatus.RUNNING,
-            WorkflowStatus.DELAYED
-        )
+            WorkflowStatus.DELAYED,
+        ),
     )
     def test_update__workflow_changed_owners__ok(
         self,
         mocker,
         api_client,
-        status
+        status,
     ):
 
         # arrange
@@ -1162,7 +1162,7 @@ class TestUpdateTemplate:
         workflow = create_test_workflow(
             user=user,
             tasks_count=1,
-            status=status
+            status=status,
         )
         user_2 = create_test_user(account=user.account, email='test@test.ru')
         group = create_test_group(user.account, users=[user_2])
@@ -1170,7 +1170,7 @@ class TestUpdateTemplate:
         task_template = template.tasks.first()
         mocker.patch(
             'src.processes.services.templates.'
-            'integrations.TemplateIntegrationsService.template_updated'
+            'integrations.TemplateIntegrationsService.template_updated',
         )
         request_data = {
             'id': template.id,
@@ -1186,7 +1186,7 @@ class TestUpdateTemplate:
                 {
                     'type': OwnerType.GROUP,
                     'source_id': group.id,
-                }
+                },
             ],
             'finalizable': template.finalizable,
             'kickoff': {
@@ -1202,17 +1202,17 @@ class TestUpdateTemplate:
                     'raw_performers': [
                         {
                             'type': PerformerType.USER,
-                            'source_id': user.id
-                        }
-                    ]
-                }
-            ]
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+            ],
         }
 
         # act
         response = api_client.put(
             path=f'/templates/{template.id}',
-            data=request_data
+            data=request_data,
         )
 
         # assert
@@ -1243,7 +1243,7 @@ class TestUpdateTemplate:
         task_template = template.tasks.first()
         mocker.patch(
             'src.processes.services.templates.'
-            'integrations.TemplateIntegrationsService.template_updated'
+            'integrations.TemplateIntegrationsService.template_updated',
         )
         request_data = {
             'id': template.id,
@@ -1263,7 +1263,7 @@ class TestUpdateTemplate:
                 {
                     'type': OwnerType.GROUP,
                     'source_id': group_2.id,
-                }
+                },
             ],
             'finalizable': template.finalizable,
             'kickoff': {
@@ -1279,17 +1279,17 @@ class TestUpdateTemplate:
                     'raw_performers': [
                         {
                             'type': PerformerType.USER,
-                            'source_id': user.id
-                        }
-                    ]
-                }
-            ]
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+            ],
         }
 
         # act
         response = api_client.put(
             path=f'/templates/{template.id}',
-            data=request_data
+            data=request_data,
         )
 
         # assert
@@ -1311,27 +1311,27 @@ class TestUpdateTemplate:
         user = create_test_user(account=account)
         create_test_user(
             email='test2@pneumatic.app',
-            account=account
+            account=account,
         )
         api_client.token_authenticate(user)
         template = create_test_template(
             user,
             is_active=True,
             is_public=False,
-            tasks_count=1
+            tasks_count=1,
         )
         task = template.tasks.first()
         mocker.patch(
             'src.processes.services.templates.'
-            'integrations.TemplateIntegrationsService.template_updated'
+            'integrations.TemplateIntegrationsService.template_updated',
         )
         template_update_mock = mocker.patch(
             'src.processes.views.template.'
-            'AnalyticService.templates_updated'
+            'AnalyticService.templates_updated',
         )
         kickoff_update_mock = mocker.patch(
             'src.processes.views.template.'
-            'AnalyticService.templates_kickoff_updated'
+            'AnalyticService.templates_kickoff_updated',
         )
 
         request_data = {
@@ -1343,11 +1343,11 @@ class TestUpdateTemplate:
             'owners': [
                 {
                     'type': OwnerType.USER,
-                    'source_id': user.id
+                    'source_id': user.id,
                 },
             ],            'finalizable': True,
             'kickoff': {
-                'id': template.kickoff_instance.id
+                'id': template.kickoff_instance.id,
             },
             'tasks': [
                 {
@@ -1358,17 +1358,17 @@ class TestUpdateTemplate:
                     'raw_performers': [
                         {
                             'type': PerformerType.USER,
-                            'source_id': user.id
-                        }
-                    ]
-                }
-            ]
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+            ],
         }
 
         # act
         response = api_client.put(
             path=f'/templates/{template.id}',
-            data=request_data
+            data=request_data,
         )
 
         # assert
@@ -1384,7 +1384,7 @@ class TestUpdateTemplate:
     def test_update__make_public__ok(
         self,
         mocker,
-        api_client
+        api_client,
     ):
 
         # arrange
@@ -1401,7 +1401,7 @@ class TestUpdateTemplate:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'is_active': True,
@@ -1416,18 +1416,18 @@ class TestUpdateTemplate:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': user.id
-                            }
-                        ]
-                    }
-                ]
-            }
+                                'source_id': user.id,
+                            },
+                        ],
+                    },
+                ],
+            },
         )
         template = Template.objects.get(id=response.data['id'])
         task = template.tasks.first()
         mocker.patch(
             'src.processes.services.templates.'
-            'integrations.TemplateIntegrationsService.template_updated'
+            'integrations.TemplateIntegrationsService.template_updated',
         )
         request_data = {
             'id': template.id,
@@ -1438,12 +1438,12 @@ class TestUpdateTemplate:
             'owners': [
                 {
                     'type': OwnerType.USER,
-                    'source_id': user.id
+                    'source_id': user.id,
                 },
             ],
             'finalizable': template.finalizable,
             'kickoff': {
-                'id': template.kickoff_instance.id
+                'id': template.kickoff_instance.id,
             },
             'tasks': [
                 {
@@ -1454,17 +1454,17 @@ class TestUpdateTemplate:
                     'raw_performers': [
                         {
                             'type': PerformerType.USER,
-                            'source_id': user.id
-                        }
-                    ]
-                }
-            ]
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+            ],
         }
 
         # act
         response = api_client.put(
             path=f'/templates/{template.id}',
-            data=request_data
+            data=request_data,
         )
 
         # assert
@@ -1475,7 +1475,7 @@ class TestUpdateTemplate:
     def test_update__make_not_public__ok(
         self,
         mocker,
-        api_client
+        api_client,
     ):
 
         # arrange
@@ -1489,7 +1489,7 @@ class TestUpdateTemplate:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'is_active': True,
@@ -1504,18 +1504,18 @@ class TestUpdateTemplate:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': user.id
-                            }
-                        ]
-                    }
-                ]
-            }
+                                'source_id': user.id,
+                            },
+                        ],
+                    },
+                ],
+            },
         )
         template = Template.objects.get(id=response.data['id'])
         task = template.tasks.first()
         mocker.patch(
             'src.processes.services.templates.'
-            'integrations.TemplateIntegrationsService.template_updated'
+            'integrations.TemplateIntegrationsService.template_updated',
         )
         request_data = {
             'id': template.id,
@@ -1526,12 +1526,12 @@ class TestUpdateTemplate:
             'owners': [
                 {
                     'type': OwnerType.USER,
-                    'source_id': user.id
+                    'source_id': user.id,
                 },
             ],
             'finalizable': template.finalizable,
             'kickoff': {
-                'id': template.kickoff_instance.id
+                'id': template.kickoff_instance.id,
             },
             'tasks': [
                 {
@@ -1542,17 +1542,17 @@ class TestUpdateTemplate:
                     'raw_performers': [
                         {
                             'type': PerformerType.USER,
-                            'source_id': user.id
-                        }
-                    ]
-                }
-            ]
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+            ],
         }
 
         # act
         response = api_client.put(
             path=f'/templates/{template.id}',
-            data=request_data
+            data=request_data,
         )
 
         # assert
@@ -1574,12 +1574,12 @@ class TestUpdateTemplate:
         template = create_test_template(
             user,
             is_active=True,
-            tasks_count=1
+            tasks_count=1,
         )
         task = template.tasks.first()
         mocker.patch(
             'src.processes.services.templates.'
-            'integrations.TemplateIntegrationsService.template_updated'
+            'integrations.TemplateIntegrationsService.template_updated',
         )
         request_data = {
             'id': template.id,
@@ -1590,16 +1590,16 @@ class TestUpdateTemplate:
             'owners': [
                 {
                     'type': OwnerType.USER,
-                    'source_id': user.id
+                    'source_id': user.id,
                 },
                 {
                     'type': OwnerType.USER,
-                    'source_id': user_2.id
+                    'source_id': user_2.id,
                 },
             ],
             'finalizable': True,
             'kickoff': {
-                'id': template.kickoff_instance.id
+                'id': template.kickoff_instance.id,
             },
             'tasks': [
                 {
@@ -1610,17 +1610,17 @@ class TestUpdateTemplate:
                     'raw_performers': [
                         {
                             'type': PerformerType.USER,
-                            'source_id': user.id
-                        }
-                    ]
-                }
-            ]
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+            ],
         }
 
         # act
         response = api_client.put(
             path=f'/templates/{template.id}',
-            data=request_data
+            data=request_data,
         )
 
         # assert
@@ -1631,23 +1631,23 @@ class TestUpdateTemplate:
         self,
         mocker,
         is_active,
-        api_client
+        api_client,
     ):
 
         # arrange
         account_1 = create_test_account(
             name='transfer from',
-            plan=BillingPlanType.FREEMIUM
+            plan=BillingPlanType.FREEMIUM,
         )
         account_1_owner = create_test_user(
             account=account_1,
             email='owner@test.test',
-            is_account_owner=True
+            is_account_owner=True,
         )
         user_to_transfer = create_test_user(
             account=account_1,
             email='transfer@test.test',
-            is_account_owner=False
+            is_account_owner=False,
         )
 
         new_account = create_test_account(name='transfer to')
@@ -1663,19 +1663,19 @@ class TestUpdateTemplate:
         template = create_test_template(
             user=user_to_transfer,
             is_active=is_active,
-            tasks_count=1
+            tasks_count=1,
         )
         task = template.tasks.first()
         task.add_raw_performer(account_1_owner)
         service = UserTransferService()
         service.accept_transfer(
             user_id=new_user.id,
-            token_str=str(token)
+            token_str=str(token),
         )
         api_client.token_authenticate(account_1_owner)
         mocker.patch(
             'src.processes.services.templates.'
-            'integrations.TemplateIntegrationsService.template_updated'
+            'integrations.TemplateIntegrationsService.template_updated',
         )
         request_data = {
             'id': template.id,
@@ -1686,12 +1686,12 @@ class TestUpdateTemplate:
             'owners': [
                 {
                     'type': OwnerType.USER,
-                    'source_id': account_1_owner.id
+                    'source_id': account_1_owner.id,
                 },
             ],
             'finalizable': True,
             'kickoff': {
-                'id': template.kickoff_instance.id
+                'id': template.kickoff_instance.id,
             },
             'tasks': [
                 {
@@ -1702,17 +1702,17 @@ class TestUpdateTemplate:
                     'raw_performers': [
                         {
                             'type': PerformerType.USER,
-                            'source_id': account_1_owner.id
-                        }
-                    ]
-                }
-            ]
+                            'source_id': account_1_owner.id,
+                        },
+                    ],
+                },
+            ],
         }
 
         # act
         response = api_client.put(
             path=f'/templates/{template.id}',
-            data=request_data
+            data=request_data,
         )
 
         # assert
@@ -1731,7 +1731,7 @@ class TestUpdateTemplate:
         owner = create_test_user(
             email='owner@test.test',
             is_account_owner=True,
-            account=account
+            account=account,
         )
         non_admin = create_test_user(is_admin=False, account=account)
         api_client.token_authenticate(owner)
@@ -1740,12 +1740,12 @@ class TestUpdateTemplate:
             owner,
             is_active=True,
             is_public=False,
-            tasks_count=1
+            tasks_count=1,
         )
         task = template.tasks.first()
         mocker.patch(
             'src.processes.services.templates.'
-            'integrations.TemplateIntegrationsService.template_updated'
+            'integrations.TemplateIntegrationsService.template_updated',
         )
 
         # act
@@ -1760,11 +1760,11 @@ class TestUpdateTemplate:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': non_admin.id
+                        'source_id': non_admin.id,
                     },
                     {
                         'type': OwnerType.USER,
-                        'source_id': owner.id
+                        'source_id': owner.id,
                     },
                 ],
                 'finalizable': True,
@@ -1778,12 +1778,12 @@ class TestUpdateTemplate:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': non_admin.id
-                            }
-                        ]
-                    }
-                ]
-            }
+                                'source_id': non_admin.id,
+                            },
+                        ],
+                    },
+                ],
+            },
         )
 
         # assert
@@ -1798,7 +1798,7 @@ class TestUpdateTemplate:
         template = Template.objects.get(id=response_data['id'])
         assert template.owners.count() == 2
         assert template.owners.filter(
-            type=OwnerType.USER, user_id=non_admin.id
+            type=OwnerType.USER, user_id=non_admin.id,
         ).exists()
 
     def test_update__non_admin_in_template_owners_freemium__ok(
@@ -1812,7 +1812,7 @@ class TestUpdateTemplate:
         owner = create_test_user(
             email='owner@test.test',
             is_account_owner=True,
-            account=account
+            account=account,
         )
         non_admin = create_test_user(is_admin=False, account=account)
         api_client.token_authenticate(owner)
@@ -1821,20 +1821,20 @@ class TestUpdateTemplate:
             owner,
             is_active=True,
             is_public=False,
-            tasks_count=1
+            tasks_count=1,
         )
         task = template.tasks.first()
         mocker.patch(
             'src.processes.services.templates.'
-            'integrations.TemplateIntegrationsService.template_updated'
+            'integrations.TemplateIntegrationsService.template_updated',
         )
         template_update_mock = mocker.patch(
             'src.processes.views.template.'
-            'AnalyticService.templates_updated'
+            'AnalyticService.templates_updated',
         )
         kickoff_update_mock = mocker.patch(
             'src.processes.views.template.'
-            'AnalyticService.templates_kickoff_updated'
+            'AnalyticService.templates_kickoff_updated',
         )
 
         # act
@@ -1849,11 +1849,11 @@ class TestUpdateTemplate:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': non_admin.id
+                        'source_id': non_admin.id,
                     },
                     {
                         'type': OwnerType.USER,
-                        'source_id': owner.id
+                        'source_id': owner.id,
                     },
                 ],
                 'finalizable': True,
@@ -1867,12 +1867,12 @@ class TestUpdateTemplate:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': non_admin.id
-                            }
-                        ]
-                    }
-                ]
-            }
+                                'source_id': non_admin.id,
+                            },
+                        ],
+                    },
+                ],
+            },
         )
 
         # assert
@@ -1887,7 +1887,7 @@ class TestUpdateTemplate:
         template = Template.objects.get(id=response_data['id'])
         assert template.owners.count() == 2
         assert template.owners.filter(
-            type=OwnerType.USER, user_id=non_admin.id
+            type=OwnerType.USER, user_id=non_admin.id,
         ).exists()
         template_update_mock.assert_called_once()
         kickoff_update_mock.assert_called_once()
@@ -1904,22 +1904,22 @@ class TestUpdateTemplate:
             user,
             is_active=True,
             is_public=False,
-            tasks_count=1
+            tasks_count=1,
         )
         task = template.tasks.first()
         create_integrations_mock = mocker.patch(
             'src.processes.services.templates.'
             'integrations.TemplateIntegrationsService.'
-            'create_integrations_for_template'
+            'create_integrations_for_template',
         )
         template_updated_mock = mocker.patch(
             'src.processes.services.templates.'
-            'integrations.TemplateIntegrationsService.template_updated'
+            'integrations.TemplateIntegrationsService.template_updated',
         )
         user_agent = 'Mozilla'
         get_user_agent_mock = mocker.patch(
             'src.processes.views.template.get_user_agent',
-            return_value=user_agent
+            return_value=user_agent,
         )
         api_request_mock = mocker.patch(
             'src.processes.services.templates.'
@@ -1927,20 +1927,20 @@ class TestUpdateTemplate:
         )
         template_update_mock = mocker.patch(
             'src.processes.views.template.'
-            'AnalyticService.templates_updated'
+            'AnalyticService.templates_updated',
         )
         kickoff_update_mock = mocker.patch(
             'src.processes.views.template.'
-            'AnalyticService.templates_kickoff_updated'
+            'AnalyticService.templates_kickoff_updated',
         )
         api_client.token_authenticate(
             user=user,
-            token_type=AuthTokenType.API
+            token_type=AuthTokenType.API,
         )
         service_init_mock = mocker.patch.object(
             TemplateIntegrationsService,
             attribute='__init__',
-            return_value=None
+            return_value=None,
         )
 
         # act
@@ -1955,7 +1955,7 @@ class TestUpdateTemplate:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'finalizable': True,
@@ -1969,12 +1969,12 @@ class TestUpdateTemplate:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': user.id
-                            }
-                        ]
-                    }
-                ]
-            }
+                                'source_id': user.id,
+                            },
+                        ],
+                    },
+                ],
+            },
         )
 
         # assert
@@ -1984,12 +1984,12 @@ class TestUpdateTemplate:
         get_user_agent_mock.assert_called_once()
         api_request_mock.assert_called_once_with(
             template=template,
-            user_agent=user_agent
+            user_agent=user_agent,
         )
         service_init_mock.assert_called_once_with(
             account=user.account,
             is_superuser=False,
-            user=user
+            user=user,
         )
         template_update_mock.assert_called_once()
         kickoff_update_mock.assert_called_once()
@@ -2006,7 +2006,7 @@ class TestUpdateTemplate:
 
         user2 = create_test_user(
             email='test2@pneumatic.app',
-            account=user.account
+            account=user.account,
         )
         api_client.token_authenticate(user)
         template = create_test_template(
@@ -2019,11 +2019,11 @@ class TestUpdateTemplate:
         mocker.patch(
             'src.processes.services.templates.'
             'integrations.TemplateIntegrationsService.'
-            'create_integrations_for_template'
+            'create_integrations_for_template',
         )
         mocker.patch(
             'src.processes.services.templates.'
-            'integrations.TemplateIntegrationsService.template_updated'
+            'integrations.TemplateIntegrationsService.template_updated',
         )
         mocker.patch(
             'src.processes.services.templates.'
@@ -2037,11 +2037,11 @@ class TestUpdateTemplate:
             'owners': [
                 {
                     'type': OwnerType.USER,
-                    'source_id': user.id
+                    'source_id': user.id,
                 },
                 {
                     'type': OwnerType.USER,
-                    'source_id': user2.id
+                    'source_id': user2.id,
                 },
             ],
             'kickoff': {},
@@ -2055,25 +2055,25 @@ class TestUpdateTemplate:
                         {
                             'api_name': raw_performer.api_name,
                             'type': PerformerType.GROUP,
-                            'source_id': group.id
-                        }
-                    ]
-                }
-            ]
+                            'source_id': group.id,
+                        },
+                    ],
+                },
+            ],
         }
         mocker.patch(
             'src.processes.views.template.'
-            'AnalyticService.templates_updated'
+            'AnalyticService.templates_updated',
         )
         mocker.patch(
             'src.processes.views.template.'
-            'AnalyticService.templates_kickoff_updated'
+            'AnalyticService.templates_kickoff_updated',
         )
 
         # act
         response = api_client.put(
             path=f'/templates/{template.id}',
-            data=request_data
+            data=request_data,
         )
 
         # assert
@@ -2099,7 +2099,7 @@ class TestUpdateTemplate:
 
         user2 = create_test_user(
             email='test2@pneumatic.app',
-            account=user.account
+            account=user.account,
         )
         api_client.token_authenticate(user)
         template = create_test_template(
@@ -2111,11 +2111,11 @@ class TestUpdateTemplate:
         mocker.patch(
             'src.processes.services.templates.'
             'integrations.TemplateIntegrationsService.'
-            'create_integrations_for_template'
+            'create_integrations_for_template',
         )
         mocker.patch(
             'src.processes.services.templates.'
-            'integrations.TemplateIntegrationsService.template_updated'
+            'integrations.TemplateIntegrationsService.template_updated',
         )
         mocker.patch(
             'src.processes.services.templates.'
@@ -2129,11 +2129,11 @@ class TestUpdateTemplate:
             'owners': [
                 {
                     'type': OwnerType.USER,
-                    'source_id': user.id
+                    'source_id': user.id,
                 },
                 {
                     'type': OwnerType.USER,
-                    'source_id': user2.id
+                    'source_id': user2.id,
                 },
             ],
             'kickoff': {},
@@ -2146,25 +2146,25 @@ class TestUpdateTemplate:
                     'raw_performers': [
                         {
                             'type': PerformerType.GROUP,
-                            'source_id': group.id
-                        }
-                    ]
-                }
-            ]
+                            'source_id': group.id,
+                        },
+                    ],
+                },
+            ],
         }
         mocker.patch(
             'src.processes.views.template.'
-            'AnalyticService.templates_updated'
+            'AnalyticService.templates_updated',
         )
         mocker.patch(
             'src.processes.views.template.'
-            'AnalyticService.templates_kickoff_updated'
+            'AnalyticService.templates_kickoff_updated',
         )
 
         # act
         response = api_client.put(
             path=f'/templates/{template.id}',
-            data=request_data
+            data=request_data,
         )
 
         # assert

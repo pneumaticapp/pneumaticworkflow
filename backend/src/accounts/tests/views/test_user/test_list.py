@@ -27,12 +27,12 @@ def test_list__ok(api_client):
     group_1 = create_test_group(
         user.account,
         name='group_1',
-        users=[user]
+        users=[user],
     )
     group_2 = create_test_group(
         user.account,
         name='group_2',
-        users=[user]
+        users=[user],
     )
     api_client.token_authenticate(user)
 
@@ -86,18 +86,18 @@ def test_list__guest__ok(api_client):
     task = workflow.tasks.first()
     TaskPerformer.objects.create(
         task_id=task.id,
-        user_id=guest.id
+        user_id=guest.id,
     )
     str_token = GuestJWTAuthService.get_str_token(
         task_id=task.id,
         user_id=guest.id,
-        account_id=account.id
+        account_id=account.id,
     )
 
     # act
     response = api_client.get(
         path='/accounts/user',
-        **{'X-Guest-Authorization': str_token}
+        **{'X-Guest-Authorization': str_token},
     )
 
     # assert
@@ -150,7 +150,7 @@ def test_list__expired_subscription__ok(api_client):
     # arrange
     account = create_test_account(
         plan=BillingPlanType.UNLIMITED,
-        plan_expiration=timezone.now() - timedelta(days=1)
+        plan_expiration=timezone.now() - timedelta(days=1),
     )
     user = create_test_user(is_account_owner=True, account=account)
     api_client.token_authenticate(user)

@@ -1,7 +1,7 @@
 import pytest
 from src.processes.tests.fixtures import (
     create_test_user,
-    create_test_account
+    create_test_account,
 )
 from src.processes.tests.fixtures import (
     create_test_template,
@@ -45,7 +45,7 @@ class TestPublicAccountViewSet:
             language=language,
             tz=tz,
             date_fdw=date_fdw,
-            date_fmt=date_fmt
+            date_fmt=date_fmt,
         )
         template = create_test_template(user=account_owner, is_public=True)
         auth_header_value = f'Token {template.public_id}'
@@ -53,12 +53,12 @@ class TestPublicAccountViewSet:
         get_token_mock = mocker.patch(
             'src.authentication.services.public_auth.'
             'PublicAuthService.get_token',
-            return_value=token
+            return_value=token,
         )
         get_template_mock = mocker.patch(
             'src.authentication.services.public_auth.'
             'PublicAuthService.get_template',
-            return_value=template
+            return_value=template,
         )
 
         # act
@@ -92,12 +92,12 @@ class TestPublicAccountViewSet:
         get_token_mock = mocker.patch(
             'src.authentication.services.public_auth.'
             'PublicAuthService.get_token',
-            return_value=None
+            return_value=None,
         )
         get_template_mock = mocker.patch(
             'src.authentication.services.public_auth.'
             'PublicAuthService.get_template',
-            return_value=None
+            return_value=None,
         )
 
         # act
@@ -138,7 +138,7 @@ class TestEmbedAccountVewSet:
             language=language,
             tz=tz,
             date_fdw=date_fdw,
-            date_fmt=date_fmt
+            date_fmt=date_fmt,
         )
         template = create_test_template(user=account_owner, is_embedded=True)
         auth_header_value = f'Token {template.embed_id}'
@@ -146,12 +146,12 @@ class TestEmbedAccountVewSet:
         get_token_mock = mocker.patch(
             'src.authentication.services.public_auth.'
             'PublicAuthService.get_token',
-            return_value=token
+            return_value=token,
         )
         get_template_mock = mocker.patch(
             'src.authentication.services.public_auth.'
             'PublicAuthService.get_template',
-            return_value=template
+            return_value=template,
         )
 
         # act
@@ -186,12 +186,12 @@ class TestEmbedAccountVewSet:
         get_token_mock = mocker.patch(
             'src.authentication.services.public_auth.'
             'PublicAuthService.get_token',
-            return_value=None
+            return_value=None,
         )
         get_template_mock = mocker.patch(
             'src.authentication.services.public_auth.'
             'PublicAuthService.get_template',
-            return_value=None
+            return_value=None,
         )
 
         # act

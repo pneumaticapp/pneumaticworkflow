@@ -4,11 +4,11 @@ from src.processes.tests.fixtures import (
 )
 from src.processes.models import FileAttachment
 from src.processes.services.exceptions import (
-    AttachmentServiceException
+    AttachmentServiceException,
 )
 from src.authentication.enums import AuthTokenType
 from src.processes.messages.workflow import (
-    MSG_PW_0001
+    MSG_PW_0001,
 )
 from src.utils.validation import ErrorCode
 
@@ -18,7 +18,7 @@ pytestmark = pytest.mark.django_db
 
 def test_publish__ok(
     api_client,
-    mocker
+    mocker,
 ):
 
     # arrange
@@ -27,29 +27,29 @@ def test_publish__ok(
         name='filename.png',
         url='https://some.url',
         size=249128,
-        account_id=user.account_id
+        account_id=user.account_id,
     )
 
     service_mock = mocker.patch(
         'src.processes.services.attachments.'
-        'AttachmentService.publish'
+        'AttachmentService.publish',
     )
     ip = 'some ip'
     get_user_ip_mock = mocker.patch(
         'src.processes.views.file_attachment.'
         'BaseFileAttachmentViewSet.get_user_ip',
-        return_value=ip
+        return_value=ip,
     )
     mocker.patch(
         'src.processes.views.file_attachment'
         '.StoragePermission.has_permission',
-        return_value=True
+        return_value=True,
     )
     api_client.token_authenticate(user)
 
     # act
     response = api_client.post(
-        f'/workflows/attachments/{attachment.id}/publish'
+        f'/workflows/attachments/{attachment.id}/publish',
     )
 
     assert response.status_code == 200
@@ -63,13 +63,13 @@ def test_publish__ok(
         attachment=attachment,
         request_user=user,
         auth_type=AuthTokenType.USER,
-        anonymous_id=ip
+        anonymous_id=ip,
     )
 
 
 def test_publish__anonymous_id__ok(
     api_client,
-    mocker
+    mocker,
 ):
 
     # arrange
@@ -78,16 +78,16 @@ def test_publish__anonymous_id__ok(
         name='filename.png',
         url='https://some.url',
         size=249128,
-        account_id=user.account_id
+        account_id=user.account_id,
     )
     service_mock = mocker.patch(
         'src.processes.services.attachments.'
-        'AttachmentService.publish'
+        'AttachmentService.publish',
     )
     mocker.patch(
         'src.processes.views.file_attachment'
         '.StoragePermission.has_permission',
-        return_value=True
+        return_value=True,
     )
 
     api_client.token_authenticate(user)
@@ -96,7 +96,7 @@ def test_publish__anonymous_id__ok(
     # act
     response = api_client.post(
         path=f'/workflows/attachments/{attachment.id}/publish',
-        data={'anonymous_id': anonymous_id}
+        data={'anonymous_id': anonymous_id},
     )
 
     assert response.status_code == 200
@@ -104,13 +104,13 @@ def test_publish__anonymous_id__ok(
         attachment=attachment,
         request_user=user,
         auth_type=AuthTokenType.USER,
-        anonymous_id=anonymous_id
+        anonymous_id=anonymous_id,
     )
 
 
 def test_publish__service_exception__validation_error(
     api_client,
-    mocker
+    mocker,
 ):
 
     # arrange
@@ -119,30 +119,30 @@ def test_publish__service_exception__validation_error(
         name='filename.png',
         url='https://some.url',
         size=249128,
-        account_id=user.account_id
+        account_id=user.account_id,
     )
     message = 'some message'
     service_mock = mocker.patch(
         'src.processes.services.attachments.'
         'AttachmentService.publish',
-        side_effect=AttachmentServiceException(message)
+        side_effect=AttachmentServiceException(message),
     )
     ip = 'some ip'
     get_user_ip_mock = mocker.patch(
         'src.processes.views.file_attachment.'
         'BaseFileAttachmentViewSet.get_user_ip',
-        return_value=ip
+        return_value=ip,
     )
     mocker.patch(
         'src.processes.views.file_attachment'
         '.StoragePermission.has_permission',
-        return_value=True
+        return_value=True,
     )
     api_client.token_authenticate(user)
 
     # act
     response = api_client.post(
-        f'/workflows/attachments/{attachment.id}/publish'
+        f'/workflows/attachments/{attachment.id}/publish',
     )
 
     assert response.status_code == 400
@@ -153,7 +153,7 @@ def test_publish__service_exception__validation_error(
         attachment=attachment,
         request_user=user,
         auth_type=AuthTokenType.USER,
-        anonymous_id=ip
+        anonymous_id=ip,
     )
 
 
@@ -163,12 +163,12 @@ def test_publish__no_authenticated__permission_denied(mocker, api_client):
     mocker.patch(
         'src.processes.views.file_attachment'
         '.StoragePermission.has_permission',
-        return_value=True
+        return_value=True,
     )
 
     # act
     response = api_client.post(
-        '/workflows/attachments/1/publish'
+        '/workflows/attachments/1/publish',
     )
 
     # assert
@@ -177,7 +177,7 @@ def test_publish__no_authenticated__permission_denied(mocker, api_client):
 
 def test_publish__disabled_billing__permission_error(
     api_client,
-    mocker
+    mocker,
 ):
 
     # arrange
@@ -186,29 +186,29 @@ def test_publish__disabled_billing__permission_error(
         name='filename.png',
         url='https://some.url',
         size=249128,
-        account_id=user.account_id
+        account_id=user.account_id,
     )
 
     service_mock = mocker.patch(
         'src.processes.services.attachments.'
-        'AttachmentService.publish'
+        'AttachmentService.publish',
     )
     ip = 'some ip'
     get_user_ip_mock = mocker.patch(
         'src.processes.views.file_attachment.'
         'BaseFileAttachmentViewSet.get_user_ip',
-        return_value=ip
+        return_value=ip,
     )
     mocker.patch(
         'src.processes.views.file_attachment'
         '.StoragePermission.has_permission',
-        return_value=False
+        return_value=False,
     )
     api_client.token_authenticate(user)
 
     # act
     response = api_client.post(
-        f'/workflows/attachments/{attachment.id}/publish'
+        f'/workflows/attachments/{attachment.id}/publish',
     )
 
     assert response.status_code == 403

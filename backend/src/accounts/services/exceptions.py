@@ -13,7 +13,7 @@ from src.accounts.messages import (
     MSG_A_0013,
     MSG_A_0042,
     MSG_A_0043,
-    MSG_A_0044
+    MSG_A_0044,
 )
 
 

@@ -97,13 +97,13 @@ cio_template_ids = {
     EmailTemplate.NEW_TASK: env.get('CIO_TEMPLATE__NEW_TASK'),
     EmailTemplate.TASK_RETURNED: env.get('CIO_TEMPLATE__TASK_RETURNED'),
     EmailTemplate.ACCOUNT_VERIFICATION: env.get(
-        'CIO_TEMPLATE__ACCOUNT_VERIFICATION'
+        'CIO_TEMPLATE__ACCOUNT_VERIFICATION',
     ),
     EmailTemplate.WORKFLOWS_DIGEST: env.get('CIO_TEMPLATE__WORKFLOWS_DIGEST'),
     EmailTemplate.TASKS_DIGEST: env.get('CIO_TEMPLATE__TASKS_DIGEST'),
     EmailTemplate.USER_TRANSFER: env.get('CIO_TEMPLATE__USER_TRANSFER'),
     EmailTemplate.UNREAD_NOTIFICATIONS: env.get(
-        'CIO_TEMPLATE__UNREAD_NOTIFICATIONS'
+        'CIO_TEMPLATE__UNREAD_NOTIFICATIONS',
     ),
     EmailTemplate.GUEST_NEW_TASK: env.get('CIO_TEMPLATE__GUEST_NEW_TASK'),
     EmailTemplate.OVERDUE_TASK: env.get('CIO_TEMPLATE__OVERDUE_TASK'),

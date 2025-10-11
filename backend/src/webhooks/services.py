@@ -8,12 +8,12 @@ from src.generics.mixins.services import DefaultClsCacheMixin
 from src.webhooks.enums import HookEvent
 from src.webhooks import exceptions
 from src.processes.services.templates.integrations import (
-    TemplateIntegrationsService
+    TemplateIntegrationsService,
 )
 from src.analytics.services import AnalyticService
 from src.utils.logging import (
     capture_sentry_message,
-    SentryLogLevel
+    SentryLogLevel,
 )
 from src.logs.service import AccountLogService
 from src.logs.enums import (
@@ -29,7 +29,7 @@ class WebhookService:
     def __init__(
         self,
         user: UserModel,
-        is_superuser: bool = False
+        is_superuser: bool = False,
     ):
         self.user = user
         self.account = user.account
@@ -47,22 +47,22 @@ class WebhookService:
         service = TemplateIntegrationsService(
             account=self.account,
             user=self.user,
-            is_superuser=self.is_superuser
+            is_superuser=self.is_superuser,
         )
         service.webhooks_unsubscribed()
 
     def unsubscribe_event(self, event: str):
         self._validate_event(event)
         WebHook.objects.on_account(
-            self.account.id
+            self.account.id,
         ).for_event(event).delete()
         if not WebHook.objects.on_account(
-            self.account.id
+            self.account.id,
         ).exists():
             service = TemplateIntegrationsService(
                 account=self.account,
                 user=self.user,
-                is_superuser=self.is_superuser
+                is_superuser=self.is_superuser,
             )
             service.webhooks_unsubscribed()
 
@@ -74,24 +74,24 @@ class WebhookService:
                     user_id=self.user.id,
                     event=event,
                     account_id=self.account.id,
-                    target=url
+                    target=url,
                 ) for event in self._get_events()
             )
             service = TemplateIntegrationsService(
                 account=self.account,
                 user=self.user,
-                is_superuser=self.is_superuser
+                is_superuser=self.is_superuser,
             )
             service.webhooks_subscribed()
             AnalyticService.accounts_webhooks_subscribed(
                 user=self.user,
-                is_superuser=self.is_superuser
+                is_superuser=self.is_superuser,
             )
 
     def subscribe_event(
         self,
         url: str,
-        event: str
+        event: str,
     ):
         self._validate_event(event)
         events_exists = WebHook.objects.on_account(self.account.id).exists()
@@ -99,18 +99,18 @@ class WebhookService:
             user_id=self.user.id,
             event=event,
             account_id=self.account.id,
-            defaults={'target': url}
+            defaults={'target': url},
         )
         service = TemplateIntegrationsService(
             account=self.account,
             user=self.user,
-            is_superuser=self.is_superuser
+            is_superuser=self.is_superuser,
         )
         service.webhooks_subscribed()
         if not events_exists:
             AnalyticService.accounts_webhooks_subscribed(
                 user=self.user,
-                is_superuser=self.is_superuser
+                is_superuser=self.is_superuser,
             )
 
     def get_event_url(
@@ -119,7 +119,7 @@ class WebhookService:
     ) -> Optional[str]:
         self._validate_event(event)
         hook = WebHook.objects.on_account(
-            self.account.id
+            self.account.id,
         ).for_event(event).first()
         return hook.target if hook else None
 
@@ -153,16 +153,16 @@ class WebhookDeliverer:
                 response = requests.post(
                     url=hook.target,
                     data=json.dumps(hook_payload),
-                    headers={'Content-Type': 'application/json'}
+                    headers={'Content-Type': 'application/json'},
                 )
             except ConnectionError as e:
                 capture_sentry_message(
                     message='HttpException sending webhook',
                     data={
                         'request_url': hook.target,
-                        'exception': str(e)
+                        'exception': str(e),
                     },
-                    level=SentryLogLevel.INFO
+                    level=SentryLogLevel.INFO,
                 )
                 status = AccountEventStatus.FAILED
                 error['ConnectionError'] = str(e)
@@ -172,7 +172,7 @@ class WebhookDeliverer:
                 if not response.ok:
                     data = {
                         'request_url': hook.target,
-                        'response_status': response.status_code
+                        'response_status': response.status_code,
                     }
                     if response.status_code != 404:
                         content_type = response.headers.get('content-type', '')
@@ -183,14 +183,14 @@ class WebhookDeliverer:
                     capture_sentry_message(
                         message='Error sending webhook',
                         data=data,
-                        level=SentryLogLevel.INFO
+                        level=SentryLogLevel.INFO,
                     )
                     status = AccountEventStatus.FAILED
                     http_status = response.status_code
                     error['response'] = data
                 if response.status_code >= 500:
                     raise ConnectionError(
-                        f'Error sending webhook ({response.status_code})'
+                        f'Error sending webhook ({response.status_code})',
                     )
             finally:
                 AccountLogService().webhook(
@@ -201,7 +201,7 @@ class WebhookDeliverer:
                     status=status,
                     http_status=http_status,
                     response_data=error,
-                    user_id=user_id
+                    user_id=user_id,
                 )
 
 

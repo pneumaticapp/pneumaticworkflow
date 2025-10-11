@@ -8,7 +8,7 @@ from rest_framework_simplejwt.settings import api_settings
 from rest_framework_simplejwt.exceptions import TokenError
 from src.analytics.enums import MailoutType
 from src.accounts.enums import (
-    UserStatus
+    UserStatus,
 )
 from src.accounts.services.exceptions import (
     InvalidOrExpiredToken,
@@ -16,7 +16,7 @@ from src.accounts.services.exceptions import (
     AlreadyRegisteredException,
 )
 from src.accounts.messages import (
-    MSG_A_0008
+    MSG_A_0008,
 )
 
 UserModel = get_user_model()
@@ -52,7 +52,7 @@ class InviteToken(BaseToken):
 
         try:
             self.user = UserModel.objects.get(
-                id=self.payload[api_settings.USER_ID_CLAIM]
+                id=self.payload[api_settings.USER_ID_CLAIM],
             )
         except ObjectDoesNotExist as ex:
             raise InvalidOrExpiredToken() from ex
