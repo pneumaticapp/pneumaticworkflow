@@ -5,10 +5,10 @@ from rest_framework.routers import DefaultRouter
 
 from src.processes.views.workflow import WorkflowViewSet
 from src.processes.views.template import (
-    TemplateViewSet
+    TemplateViewSet,
 )
 from src.processes.views.checklist import (
-    CheckListViewSet
+    CheckListViewSet,
 )
 from src.processes.views.task import (
     TaskViewSet,
@@ -22,7 +22,7 @@ from src.accounts.views import (
 from src.webhooks.views import (
     WebHookViewSet,
     WebHookEventViewSet,
-    WebHookBufferViewSet
+    WebHookBufferViewSet,
 )
 from src.services.views import ServicesViewSet
 from src.payment.views import (
@@ -46,11 +46,11 @@ router.register('workflows', WorkflowViewSet, basename='workflows')
 router.register('webhooks', WebHookViewSet, basename='webhooks')
 router.register(
     'webhooks/buffer',
-    WebHookBufferViewSet, basename='webhooks-buffer'
+    WebHookBufferViewSet, basename='webhooks-buffer',
 )
 router.register(
     'webhooks/events',
-    WebHookEventViewSet, basename='webhooks-events'
+    WebHookEventViewSet, basename='webhooks-events',
 )
 router.register('v2/tasks', TaskViewSet, basename='tasks')
 router.register('v2/tasks/checklists', CheckListViewSet, basename='cl')
@@ -70,7 +70,7 @@ urlpatterns = [
     path('accounts/', include('src.accounts.urls', 'accounts')),
     path(
         'analytics/',
-        include('src.analytics.urls')
+        include('src.analytics.urls'),
     ),
     path('v2/accounts/plan', AccountPlanView.as_view()),
     path('applications/', include('src.applications.urls')),

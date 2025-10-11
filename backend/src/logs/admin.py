@@ -55,8 +55,8 @@ class AccountEventAdmin(admin.ModelAdmin):
                     'event_type',
                     'direction',
                     'contractor',
-                )
-            }
+                ),
+            },
         ),
         (
             'Request', {
@@ -66,9 +66,9 @@ class AccountEventAdmin(admin.ModelAdmin):
                     'path',
                     'formatted_request_data',
                     'http_status',
-                    'formatted_response_data'
-                )
-            }
+                    'formatted_response_data',
+                ),
+            },
         ),
         (
             'User', {
@@ -76,10 +76,10 @@ class AccountEventAdmin(admin.ModelAdmin):
                     'user',
                     'ip',
                     'auth_token',
-                    'user_agent'
-                )
-            }
-        )
+                    'user_agent',
+                ),
+            },
+        ),
     )
 
     readonly_fields = (
@@ -110,7 +110,7 @@ class AccountEventAdmin(admin.ModelAdmin):
     def date_created_tz(self, obj):
         return date_to_user_fmt(
             date=obj.date_created,
-            user=self.user
+            user=self.user,
         )
 
     date_created_tz.short_description = 'date_created'
@@ -135,7 +135,7 @@ class AccountEventAdmin(admin.ModelAdmin):
                 instance.request_data,
                 sort_keys=True,
                 indent=2,
-                ensure_ascii=False
+                ensure_ascii=False,
             )
             response = highlight(response, json_lexer, formatter)
             style = "<style>" + formatter.get_style_defs() + "</style><br>"
@@ -150,7 +150,7 @@ class AccountEventAdmin(admin.ModelAdmin):
                 instance.response_data,
                 sort_keys=True,
                 indent=2,
-                ensure_ascii=False
+                ensure_ascii=False,
             )
             response = highlight(response, json_lexer, formatter)
             style = "<style>" + formatter.get_style_defs() + "</style><br>"

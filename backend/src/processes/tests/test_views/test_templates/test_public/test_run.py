@@ -50,7 +50,7 @@ class TestRunPublicTemplate:
             user=user,
             is_active=True,
             is_public=True,
-            tasks_count=1
+            tasks_count=1,
         )
         text_field_template = FieldTemplate.objects.create(
             order=1,
@@ -80,22 +80,22 @@ class TestRunPublicTemplate:
         mocker.patch(
             'src.processes.views.public.template.'
             'PublicTemplateViewSet.get_user_ip',
-            return_value=user_ip
+            return_value=user_ip,
         )
         auth_header_value = f'Token {template.public_id}'
         token = PublicToken(template.public_id)
         get_token_mock = mocker.patch(
             'src.authentication.services.public_auth.'
             'PublicAuthService.get_token',
-            return_value=token
+            return_value=token,
         )
         get_template_mock = mocker.patch(
             'src.authentication.services.public_auth.'
             'PublicAuthService.get_template',
-            return_value=template
+            return_value=template,
         )
         settings_mock = mocker.patch(
-            'src.processes.views.public.template.settings'
+            'src.processes.views.public.template.settings',
         )
         settings_mock.PROJECT_CONF = {'CAPTCHA': True}
         date = timezone.datetime(
@@ -104,7 +104,7 @@ class TestRunPublicTemplate:
             day=28,
             hour=10,
             minute=41,
-            tzinfo=pytz.timezone('UTC')
+            tzinfo=pytz.timezone('UTC'),
         )
         mocker.patch('django.utils.timezone.now', return_value=date)
 
@@ -117,9 +117,9 @@ class TestRunPublicTemplate:
                     text_field_template.api_name: 'text',
                     user_field_template.api_name: str(user.id),
                     date_field_template.api_name: 1596561916,
-                }
+                },
             },
-            **{'X-Public-Authorization': auth_header_value}
+            **{'X-Public-Authorization': auth_header_value},
         )
 
         # assert
@@ -135,7 +135,7 @@ class TestRunPublicTemplate:
         assert workflow.tasks.count() == template.tasks.count()
 
         field = workflow.kickoff_instance.output.all().order_by(
-            'order'
+            'order',
         ).first()
         text_field_template.refresh_from_db()
         assert field.name == text_field_template.name
@@ -170,7 +170,7 @@ class TestRunPublicTemplate:
             user=user,
             is_active=True,
             is_public=True,
-            tasks_count=1
+            tasks_count=1,
         )
         number_field_template = FieldTemplate.objects.create(
             order=1,
@@ -184,22 +184,22 @@ class TestRunPublicTemplate:
         mocker.patch(
             'src.processes.views.public.template.'
             'PublicTemplateViewSet.get_user_ip',
-            return_value=user_ip
+            return_value=user_ip,
         )
         auth_header_value = f'Token {template.public_id}'
         token = PublicToken(template.public_id)
         mocker.patch(
             'src.authentication.services.public_auth.'
             'PublicAuthService.get_token',
-            return_value=token
+            return_value=token,
         )
         mocker.patch(
             'src.authentication.services.public_auth.'
             'PublicAuthService.get_template',
-            return_value=template
+            return_value=template,
         )
         settings_mock = mocker.patch(
-            'src.processes.views.public.template.settings'
+            'src.processes.views.public.template.settings',
         )
         settings_mock.PROJECT_CONF = {'CAPTCHA': True}
         number_field_value = '31.33112312312312312312'
@@ -211,9 +211,9 @@ class TestRunPublicTemplate:
                 'captcha': 'skip',
                 'fields': {
                     number_field_template.api_name: number_field_value,
-                }
+                },
             },
-            **{'X-Public-Authorization': auth_header_value}
+            **{'X-Public-Authorization': auth_header_value},
         )
 
         # assert
@@ -239,7 +239,7 @@ class TestRunPublicTemplate:
             user=user,
             is_active=True,
             is_public=True,
-            tasks_count=1
+            tasks_count=1,
         )
         field_api_name = 'field-1'
         FieldTemplate.objects.create(
@@ -248,7 +248,7 @@ class TestRunPublicTemplate:
             is_required=True,
             kickoff=template.kickoff_instance,
             template=template,
-            api_name=field_api_name
+            api_name=field_api_name,
         )
         wf_name_template = 'a' * (WORKFLOW_NAME_LENGTH - 4)
         wf_name_template += '{{%s}}' % field_api_name
@@ -259,30 +259,30 @@ class TestRunPublicTemplate:
         mocker.patch(
             'src.processes.views.public.template.'
             'PublicTemplateViewSet.get_user_ip',
-            return_value=user_ip
+            return_value=user_ip,
         )
         auth_header_value = f'Token {template.public_id}'
         token = PublicToken(template.public_id)
         mocker.patch(
             'src.authentication.services.public_auth.'
             'PublicAuthService.get_token',
-            return_value=token
+            return_value=token,
         )
         mocker.patch(
             'src.authentication.services.public_auth.'
             'PublicAuthService.get_template',
-            return_value=template
+            return_value=template,
         )
         mocker.patch(
             'src.analytics.services.AnalyticService.'
-            'workflows_started'
+            'workflows_started',
         )
         mocker.patch(
             'src.processes.services.templates.'
             'integrations.TemplateIntegrationsService.public_api_request',
         )
         settings_mock = mocker.patch(
-            'src.processes.views.public.template.settings'
+            'src.processes.views.public.template.settings',
         )
         settings_mock.PROJECT_CONF = {'CAPTCHA': True}
 
@@ -293,9 +293,9 @@ class TestRunPublicTemplate:
                 'captcha': 'skip',
                 'fields': {
                     field_api_name: 'Some shit!',
-                }
+                },
             },
-            **{'X-Public-Authorization': auth_header_value}
+            **{'X-Public-Authorization': auth_header_value},
         )
 
         # assert
@@ -320,7 +320,7 @@ class TestRunPublicTemplate:
             user=user,
             is_active=True,
             is_public=True,
-            tasks_count=1
+            tasks_count=1,
         )
         template_task = template.tasks.first()
         text_field_template = FieldTemplate.objects.create(
@@ -343,22 +343,22 @@ class TestRunPublicTemplate:
         mocker.patch(
             'src.processes.views.public.template.'
             'PublicTemplateViewSet.get_user_ip',
-            return_value=user_ip
+            return_value=user_ip,
         )
         auth_header_value = f'Token {template.public_id}'
         token = PublicToken(template.public_id)
         get_token_mock = mocker.patch(
             'src.authentication.services.public_auth.'
             'PublicAuthService.get_token',
-            return_value=token
+            return_value=token,
         )
         get_template_mock = mocker.patch(
             'src.authentication.services.public_auth.'
             'PublicAuthService.get_template',
-            return_value=template
+            return_value=template,
         )
         settings_mock = mocker.patch(
-            'src.processes.views.public.template.settings'
+            'src.processes.views.public.template.settings',
         )
         settings_mock.PROJECT_CONF = {'CAPTCHA': True}
         date = timezone.datetime(
@@ -367,7 +367,7 @@ class TestRunPublicTemplate:
             day=28,
             hour=10,
             minute=41,
-            tzinfo=pytz.timezone('UTC')
+            tzinfo=pytz.timezone('UTC'),
         )
         mocker.patch('django.utils.timezone.now', return_value=date)
 
@@ -377,7 +377,7 @@ class TestRunPublicTemplate:
             data={
                 'captcha': 'skip',
             },
-            **{'X-Public-Authorization': auth_header_value}
+            **{'X-Public-Authorization': auth_header_value},
         )
 
         # assert
@@ -394,7 +394,7 @@ class TestRunPublicTemplate:
         assert workflow.tasks.count() == template.tasks.count()
 
         text_field = task.output.all().order_by(
-            'order'
+            'order',
         ).first()
         text_field_template.refresh_from_db()
         assert text_field.name == text_field_template.name
@@ -403,7 +403,7 @@ class TestRunPublicTemplate:
         assert text_field.is_required is True
 
         user_field = task.output.all().order_by(
-            'order'
+            'order',
         ).last()
         user_field_template.refresh_from_db()
         assert user_field.name == user_field_template.name
@@ -428,7 +428,7 @@ class TestRunPublicTemplate:
     def test_run__not_authorized__permission_denied(
         self,
         api_client,
-        mocker
+        mocker,
     ):
 
         # arrange
@@ -437,29 +437,29 @@ class TestRunPublicTemplate:
             user=user,
             is_active=True,
             is_public=True,
-            tasks_count=1
+            tasks_count=1,
         )
         auth_header_value = f'Token {template.public_id}'
         token = PublicToken(template.public_id)
         get_token_mock = mocker.patch(
             'src.authentication.services.public_auth.'
             'PublicAuthService.get_token',
-            return_value=token
+            return_value=token,
         )
         get_template_mock = mocker.patch(
             'src.authentication.services.public_auth.'
             'PublicAuthService.get_template',
-            return_value=None
+            return_value=None,
         )
         settings_mock = mocker.patch(
-            'src.processes.views.public.template.settings'
+            'src.processes.views.public.template.settings',
         )
         settings_mock.PROJECT_CONF = {'CAPTCHA': True}
 
         # act
         response = api_client.get(
             path='/templates/public',
-            **{'X-Public-Authorization': auth_header_value}
+            **{'X-Public-Authorization': auth_header_value},
         )
 
         # assert
@@ -480,7 +480,7 @@ class TestRunPublicTemplate:
             user=user,
             is_active=True,
             is_public=True,
-            tasks_count=1
+            tasks_count=1,
         )
         redirect_url = 'example.org'
         template.public_success_url = redirect_url
@@ -490,19 +490,19 @@ class TestRunPublicTemplate:
         get_token_mock = mocker.patch(
             'src.authentication.services.public_auth.'
             'PublicAuthService.get_token',
-            return_value=token
+            return_value=token,
         )
         get_template_mock = mocker.patch(
             'src.authentication.services.public_auth.'
             'PublicAuthService.get_template',
-            return_value=template
+            return_value=template,
         )
         mocker.patch(
             'src.processes.services.templates.'
             'integrations.TemplateIntegrationsService.public_api_request',
         )
         settings_mock = mocker.patch(
-            'src.processes.views.public.template.settings'
+            'src.processes.views.public.template.settings',
         )
         settings_mock.PROJECT_CONF = {'CAPTCHA': True}
 
@@ -511,9 +511,9 @@ class TestRunPublicTemplate:
             path='/templates/public/run',
             data={
                 'captcha': 'skip',
-                'fields': {}
+                'fields': {},
             },
-            **{'X-Public-Authorization': auth_header_value}
+            **{'X-Public-Authorization': auth_header_value},
         )
 
         # assert
@@ -534,7 +534,7 @@ class TestRunPublicTemplate:
             user=user,
             is_active=True,
             is_public=True,
-            tasks_count=1
+            tasks_count=1,
         )
         redirect_url = 'example.org'
         template.public_success_url = redirect_url
@@ -544,19 +544,19 @@ class TestRunPublicTemplate:
         get_token_mock = mocker.patch(
             'src.authentication.services.public_auth.'
             'PublicAuthService.get_token',
-            return_value=token
+            return_value=token,
         )
         get_template_mock = mocker.patch(
             'src.authentication.services.public_auth.'
             'PublicAuthService.get_template',
-            return_value=template
+            return_value=template,
         )
         mocker.patch(
             'src.processes.services.templates.'
             'integrations.TemplateIntegrationsService.public_api_request',
         )
         settings_mock = mocker.patch(
-            'src.processes.views.public.template.settings'
+            'src.processes.views.public.template.settings',
         )
         settings_mock.PROJECT_CONF = {'CAPTCHA': True}
 
@@ -565,9 +565,9 @@ class TestRunPublicTemplate:
             path='/templates/public/run',
             data={
                 'captcha': 'skip',
-                'fields': {}
+                'fields': {},
             },
-            **{'X-Public-Authorization': auth_header_value}
+            **{'X-Public-Authorization': auth_header_value},
         )
 
         # assert
@@ -584,26 +584,26 @@ class TestRunPublicTemplate:
             user=user,
             is_active=True,
             is_public=True,
-            tasks_count=1
+            tasks_count=1,
         )
         auth_header_value = f'Token {template.public_id}'
         token = PublicToken(template.public_id)
         get_token_mock = mocker.patch(
             'src.authentication.services.public_auth.'
             'PublicAuthService.get_token',
-            return_value=token
+            return_value=token,
         )
         get_template_mock = mocker.patch(
             'src.authentication.services.public_auth.'
             'PublicAuthService.get_template',
-            return_value=template
+            return_value=template,
         )
         mocker.patch(
             'src.processes.services.templates.'
             'integrations.TemplateIntegrationsService.public_api_request',
         )
         settings_mock = mocker.patch(
-            'src.processes.views.public.template.settings'
+            'src.processes.views.public.template.settings',
         )
         settings_mock.PROJECT_CONF = {'CAPTCHA': True}
         date = timezone.datetime(
@@ -612,7 +612,7 @@ class TestRunPublicTemplate:
             day=28,
             hour=10,
             minute=41,
-            tzinfo=pytz.timezone('UTC')
+            tzinfo=pytz.timezone('UTC'),
         )
         mocker.patch('django.utils.timezone.now', return_value=date)
 
@@ -622,7 +622,7 @@ class TestRunPublicTemplate:
             data={
                 'captcha': 'skip',
             },
-            **{'X-Public-Authorization': auth_header_value}
+            **{'X-Public-Authorization': auth_header_value},
         )
 
         # assert
@@ -643,26 +643,26 @@ class TestRunPublicTemplate:
             user=user,
             is_active=True,
             is_public=True,
-            tasks_count=1
+            tasks_count=1,
         )
         auth_header_value = f'Token {template.public_id}'
         token = PublicToken(template.public_id)
         get_token_mock = mocker.patch(
             'src.authentication.services.public_auth.'
             'PublicAuthService.get_token',
-            return_value=token
+            return_value=token,
         )
         get_template_mock = mocker.patch(
             'src.authentication.services.public_auth.'
             'PublicAuthService.get_template',
-            return_value=template
+            return_value=template,
         )
         mocker.patch(
             'src.processes.services.templates.'
             'integrations.TemplateIntegrationsService.public_api_request',
         )
         settings_mock = mocker.patch(
-            'src.processes.views.public.template.settings'
+            'src.processes.views.public.template.settings',
         )
         settings_mock.PROJECT_CONF = {'CAPTCHA': True}
 
@@ -671,9 +671,9 @@ class TestRunPublicTemplate:
             path='/templates/public/run',
             data={
                 'captcha': 'skip',
-                'fields': None
+                'fields': None,
             },
-            **{'X-Public-Authorization': auth_header_value}
+            **{'X-Public-Authorization': auth_header_value},
         )
 
         # assert
@@ -695,7 +695,7 @@ class TestRunPublicTemplate:
             user=user,
             is_active=True,
             is_public=True,
-            tasks_count=1
+            tasks_count=1,
         )
         field_template = FieldTemplate.objects.create(
             order=1,
@@ -711,15 +711,15 @@ class TestRunPublicTemplate:
         get_token_mock = mocker.patch(
             'src.authentication.services.public_auth.'
             'PublicAuthService.get_token',
-            return_value=token
+            return_value=token,
         )
         get_template_mock = mocker.patch(
             'src.authentication.services.public_auth.'
             'PublicAuthService.get_template',
-            return_value=template
+            return_value=template,
         )
         settings_mock = mocker.patch(
-            'src.processes.views.public.template.settings'
+            'src.processes.views.public.template.settings',
         )
         settings_mock.PROJECT_CONF = {'CAPTCHA': True}
         date = timezone.datetime(
@@ -728,7 +728,7 @@ class TestRunPublicTemplate:
             day=28,
             hour=10,
             minute=41,
-            tzinfo=pytz.timezone('UTC')
+            tzinfo=pytz.timezone('UTC'),
         )
         mocker.patch('django.utils.timezone.now', return_value=date)
 
@@ -739,7 +739,7 @@ class TestRunPublicTemplate:
                 'captcha': 'skip',
                 'fields': {},
             },
-            **{'X-Public-Authorization': auth_header_value}
+            **{'X-Public-Authorization': auth_header_value},
         )
 
         # assert
@@ -770,7 +770,7 @@ class TestRunPublicTemplate:
             user=user,
             is_active=True,
             is_public=True,
-            tasks_count=1
+            tasks_count=1,
         )
         field_template = FieldTemplate.objects.create(
             order=1,
@@ -785,15 +785,15 @@ class TestRunPublicTemplate:
         get_token_mock = mocker.patch(
             'src.authentication.services.public_auth.'
             'PublicAuthService.get_token',
-            return_value=token
+            return_value=token,
         )
         get_template_mock = mocker.patch(
             'src.authentication.services.public_auth.'
             'PublicAuthService.get_template',
-            return_value=template
+            return_value=template,
         )
         settings_mock = mocker.patch(
-            'src.processes.views.public.template.settings'
+            'src.processes.views.public.template.settings',
         )
         settings_mock.PROJECT_CONF = {'CAPTCHA': True}
 
@@ -804,7 +804,7 @@ class TestRunPublicTemplate:
                 'captcha': 'skip',
                 'fields': {},
             },
-            **{'X-Public-Authorization': auth_header_value}
+            **{'X-Public-Authorization': auth_header_value},
         )
 
         # assert
@@ -830,7 +830,7 @@ class TestRunPublicTemplate:
             user=user,
             is_active=True,
             is_public=True,
-            tasks_count=2
+            tasks_count=2,
         )
         field_template = FieldTemplate.objects.create(
             order=1,
@@ -864,19 +864,19 @@ class TestRunPublicTemplate:
         get_token_mock = mocker.patch(
             'src.authentication.services.public_auth.'
             'PublicAuthService.get_token',
-            return_value=token
+            return_value=token,
         )
         get_template_mock = mocker.patch(
             'src.authentication.services.public_auth.'
             'PublicAuthService.get_template',
-            return_value=template
+            return_value=template,
         )
         mocker.patch(
             'src.processes.services.templates.'
             'integrations.TemplateIntegrationsService.public_api_request',
         )
         settings_mock = mocker.patch(
-            'src.processes.views.public.template.settings'
+            'src.processes.views.public.template.settings',
         )
         settings_mock.PROJECT_CONF = {'CAPTCHA': True}
 
@@ -887,9 +887,9 @@ class TestRunPublicTemplate:
                 'captcha': 'skip',
                 'fields': {
                     field_template.api_name: 'skip first task',
-                }
+                },
             },
-            **{'X-Public-Authorization': auth_header_value}
+            **{'X-Public-Authorization': auth_header_value},
         )
 
         # assert
@@ -915,7 +915,7 @@ class TestRunPublicTemplate:
             user=user,
             is_active=True,
             is_public=True,
-            tasks_count=2
+            tasks_count=2,
         )
         field_template = FieldTemplate.objects.create(
             order=1,
@@ -949,19 +949,19 @@ class TestRunPublicTemplate:
         get_token_mock = mocker.patch(
             'src.authentication.services.public_auth.'
             'PublicAuthService.get_token',
-            return_value=token
+            return_value=token,
         )
         get_template_mock = mocker.patch(
             'src.authentication.services.public_auth.'
             'PublicAuthService.get_template',
-            return_value=template
+            return_value=template,
         )
         mocker.patch(
             'src.processes.services.templates.'
             'integrations.TemplateIntegrationsService.public_api_request',
         )
         settings_mock = mocker.patch(
-            'src.processes.views.public.template.settings'
+            'src.processes.views.public.template.settings',
         )
         settings_mock.PROJECT_CONF = {'CAPTCHA': True}
 
@@ -972,9 +972,9 @@ class TestRunPublicTemplate:
                 'captcha': 'skip',
                 'fields': {
                     field_template.api_name: 'end workflow',
-                }
+                },
             },
-            **{'X-Public-Authorization': auth_header_value}
+            **{'X-Public-Authorization': auth_header_value},
         )
 
         # assert
@@ -1006,26 +1006,26 @@ class TestRunPublicTemplate:
             user=user,
             is_active=True,
             is_public=True,
-            tasks_count=1
+            tasks_count=1,
         )
         auth_header_value = f'Token {template.public_id}'
         token = PublicToken(template.public_id)
         get_token_mock = mocker.patch(
             'src.authentication.services.public_auth.'
             'PublicAuthService.get_token',
-            return_value=token
+            return_value=token,
         )
         get_template_mock = mocker.patch(
             'src.authentication.services.public_auth.'
             'PublicAuthService.get_template',
-            return_value=template
+            return_value=template,
         )
         mocker.patch(
             'src.processes.services.templates.'
             'integrations.TemplateIntegrationsService.public_api_request',
         )
         settings_mock = mocker.patch(
-            'src.processes.views.public.template.settings'
+            'src.processes.views.public.template.settings',
         )
         settings_mock.PROJECT_CONF = {'CAPTCHA': True}
 
@@ -1033,7 +1033,7 @@ class TestRunPublicTemplate:
         response = api_client.post(
             path='/templates/public/run',
             data={'fields': {}},
-            **{'X-Public-Authorization': auth_header_value}
+            **{'X-Public-Authorization': auth_header_value},
         )
 
         # assert
@@ -1071,28 +1071,28 @@ class TestRunPublicTemplate:
         mocker.patch(
             'src.processes.views.public.template.'
             'PublicTemplateViewSet.get_user_ip',
-            return_value=user_ip
+            return_value=user_ip,
         )
         mocker.patch(
             'src.authentication.services.public_auth.'
             'PublicAuthService.get_token',
-            return_value=token
+            return_value=token,
         )
         mocker.patch(
             'src.authentication.services.public_auth.'
             'PublicAuthService.get_template',
-            return_value=template
+            return_value=template,
         )
         mocker.patch(
             'src.analytics.services.AnalyticService.'
-            'workflows_started'
+            'workflows_started',
         )
         mocker.patch(
             'src.processes.services.templates.'
             'integrations.TemplateIntegrationsService.public_api_request',
         )
         settings_mock = mocker.patch(
-            'src.processes.views.public.template.settings'
+            'src.processes.views.public.template.settings',
         )
         settings_mock.PROJECT_CONF = {'CAPTCHA': True}
         date = timezone.datetime(
@@ -1101,7 +1101,7 @@ class TestRunPublicTemplate:
             day=28,
             hour=10,
             minute=41,
-            tzinfo=pytz.timezone('UTC')
+            tzinfo=pytz.timezone('UTC'),
         )
         mocker.patch('django.utils.timezone.now', return_value=date)
 
@@ -1109,9 +1109,9 @@ class TestRunPublicTemplate:
         response = api_client.post(
             path='/templates/public/run',
             data={
-                'captcha': 'skip'
+                'captcha': 'skip',
             },
-            **{'X-Public-Authorization': auth_header_value}
+            **{'X-Public-Authorization': auth_header_value},
         )
 
         # assert
@@ -1142,7 +1142,7 @@ class TestRunPublicTemplate:
             is_required=True,
             kickoff=template.kickoff_instance,
             template=template,
-            api_name=field_api_name
+            api_name=field_api_name,
         )
         wf_name_template = 'Feedback from {{%s}} {{ date }}' % field_api_name
         template.wf_name_template = wf_name_template
@@ -1154,28 +1154,28 @@ class TestRunPublicTemplate:
         mocker.patch(
             'src.processes.views.public.template.'
             'PublicTemplateViewSet.get_user_ip',
-            return_value=user_ip
+            return_value=user_ip,
         )
         mocker.patch(
             'src.authentication.services.public_auth.'
             'PublicAuthService.get_token',
-            return_value=token
+            return_value=token,
         )
         mocker.patch(
             'src.authentication.services.public_auth.'
             'PublicAuthService.get_template',
-            return_value=template
+            return_value=template,
         )
         mocker.patch(
             'src.analytics.services.AnalyticService.'
-            'workflows_started'
+            'workflows_started',
         )
         mocker.patch(
             'src.processes.services.templates.'
             'integrations.TemplateIntegrationsService.public_api_request',
         )
         settings_mock = mocker.patch(
-            'src.processes.views.public.template.settings'
+            'src.processes.views.public.template.settings',
         )
         settings_mock.PROJECT_CONF = {'CAPTCHA': True}
         date = timezone.datetime(
@@ -1184,7 +1184,7 @@ class TestRunPublicTemplate:
             day=28,
             hour=10,
             minute=41,
-            tzinfo=pytz.timezone('UTC')
+            tzinfo=pytz.timezone('UTC'),
         )
         mocker.patch('django.utils.timezone.now', return_value=date)
 
@@ -1194,10 +1194,10 @@ class TestRunPublicTemplate:
             data={
                 'captcha': 'skip',
                 'fields': {
-                    field_api_name: str(user.id)
-                }
+                    field_api_name: str(user.id),
+                },
             },
-            **{'X-Public-Authorization': auth_header_value}
+            **{'X-Public-Authorization': auth_header_value},
         )
 
         # assert
@@ -1234,7 +1234,7 @@ class TestRunPublicTemplate:
             is_required=True,
             kickoff=template.kickoff_instance,
             template=template,
-            api_name=field_api_name_1
+            api_name=field_api_name_1,
         )
         FieldTemplate.objects.create(
             name='User',
@@ -1242,7 +1242,7 @@ class TestRunPublicTemplate:
             is_required=True,
             kickoff=template.kickoff_instance,
             template=template,
-            api_name=field_api_name_2
+            api_name=field_api_name_2,
         )
         FieldTemplate.objects.create(
             name='Url',
@@ -1250,7 +1250,7 @@ class TestRunPublicTemplate:
             is_required=False,
             kickoff=template.kickoff_instance,
             template=template,
-            api_name=field_api_name_3
+            api_name=field_api_name_3,
         )
         wf_name_template = 'Feedback: {{%s}} from {{ %s }} Url: {{%s}}' % (
             field_api_name_1,
@@ -1268,28 +1268,28 @@ class TestRunPublicTemplate:
         mocker.patch(
             'src.processes.views.public.template.'
             'PublicTemplateViewSet.get_user_ip',
-            return_value=user_ip
+            return_value=user_ip,
         )
         mocker.patch(
             'src.authentication.services.public_auth.'
             'PublicAuthService.get_token',
-            return_value=token
+            return_value=token,
         )
         mocker.patch(
             'src.authentication.services.public_auth.'
             'PublicAuthService.get_template',
-            return_value=template
+            return_value=template,
         )
         mocker.patch(
             'src.analytics.services.AnalyticService.'
-            'workflows_started'
+            'workflows_started',
         )
         mocker.patch(
             'src.processes.services.templates.'
             'integrations.TemplateIntegrationsService.public_api_request',
         )
         settings_mock = mocker.patch(
-            'src.processes.views.public.template.settings'
+            'src.processes.views.public.template.settings',
         )
         settings_mock.PROJECT_CONF = {'CAPTCHA': True}
 
@@ -1300,10 +1300,10 @@ class TestRunPublicTemplate:
                 'captcha': 'skip',
                 'fields': {
                     field_api_name_1: feedback,
-                    field_api_name_2: str(user.id)
-                }
+                    field_api_name_2: str(user.id),
+                },
             },
-            **{'X-Public-Authorization': auth_header_value}
+            **{'X-Public-Authorization': auth_header_value},
         )
 
         # assert
@@ -1333,7 +1333,7 @@ class TestRunPublicTemplate:
             is_required=True,
             kickoff=template.kickoff_instance,
             template=template,
-            api_name=field_api_name
+            api_name=field_api_name,
         )
         wf_name_template = None
         template.wf_name_template = wf_name_template
@@ -1345,7 +1345,7 @@ class TestRunPublicTemplate:
             day=28,
             hour=10,
             minute=41,
-            tzinfo=pytz.timezone('UTC')
+            tzinfo=pytz.timezone('UTC'),
         )
         mocker.patch('django.utils.timezone.now', return_value=date)
         formatted_date = 'Aug 28, 2024, 10:41AM'
@@ -1357,28 +1357,28 @@ class TestRunPublicTemplate:
         mocker.patch(
             'src.processes.views.public.template.'
             'PublicTemplateViewSet.get_user_ip',
-            return_value=user_ip
+            return_value=user_ip,
         )
         mocker.patch(
             'src.authentication.services.public_auth.'
             'PublicAuthService.get_token',
-            return_value=token
+            return_value=token,
         )
         mocker.patch(
             'src.authentication.services.public_auth.'
             'PublicAuthService.get_template',
-            return_value=template
+            return_value=template,
         )
         mocker.patch(
             'src.analytics.services.AnalyticService.'
-            'workflows_started'
+            'workflows_started',
         )
         mocker.patch(
             'src.processes.services.templates.'
             'integrations.TemplateIntegrationsService.public_api_request',
         )
         settings_mock = mocker.patch(
-            'src.processes.views.public.template.settings'
+            'src.processes.views.public.template.settings',
         )
         settings_mock.PROJECT_CONF = {'CAPTCHA': True}
 
@@ -1389,9 +1389,9 @@ class TestRunPublicTemplate:
                 'captcha': 'skip',
                 'fields': {
                     field_api_name: 'Some shit!',
-                }
+                },
             },
-            **{'X-Public-Authorization': auth_header_value}
+            **{'X-Public-Authorization': auth_header_value},
         )
 
         # assert
@@ -1412,28 +1412,28 @@ class TestRunPublicTemplate:
             user=user,
             is_active=True,
             is_public=True,
-            tasks_count=1
+            tasks_count=1,
         )
         user_ip = '127.0.0.1'
         mocker.patch(
             'src.processes.views.public.template.'
             'PublicTemplateViewSet.get_user_ip',
-            return_value=user_ip
+            return_value=user_ip,
         )
         auth_header_value = f'Token {template.public_id}'
         token = PublicToken(template.public_id)
         get_token_mock = mocker.patch(
             'src.authentication.services.public_auth.'
             'PublicAuthService.get_token',
-            return_value=token
+            return_value=token,
         )
         get_template_mock = mocker.patch(
             'src.authentication.services.public_auth.'
             'PublicAuthService.get_template',
-            return_value=template
+            return_value=template,
         )
         settings_mock = mocker.patch(
-            'src.processes.views.public.template.settings'
+            'src.processes.views.public.template.settings',
         )
         anonymous_user_workflow_exists_mock = mocker.patch(
             'src.processes.views.public.template.'
@@ -1448,7 +1448,7 @@ class TestRunPublicTemplate:
             data={
                 'captcha': '',
             },
-            **{'X-Public-Authorization': auth_header_value}
+            **{'X-Public-Authorization': auth_header_value},
         )
 
         # assert
@@ -1472,28 +1472,28 @@ class TestRunEmbedTemplate:
             user=user,
             is_active=True,
             is_embedded=True,
-            tasks_count=1
+            tasks_count=1,
         )
         user_ip = '127.0.0.1'
         mocker.patch(
             'src.processes.views.public.template.'
             'PublicTemplateViewSet.get_user_ip',
-            return_value=user_ip
+            return_value=user_ip,
         )
         auth_header_value = f'Token {template.embed_id}'
         token = EmbedToken(template.embed_id)
         get_token_mock = mocker.patch(
             'src.authentication.services.public_auth.'
             'PublicAuthService.get_token',
-            return_value=token
+            return_value=token,
         )
         get_template_mock = mocker.patch(
             'src.authentication.services.public_auth.'
             'PublicAuthService.get_template',
-            return_value=template
+            return_value=template,
         )
         settings_mock = mocker.patch(
-            'src.processes.views.public.template.settings'
+            'src.processes.views.public.template.settings',
         )
         settings_mock.PROJECT_CONF = {'CAPTCHA': True}
 
@@ -1502,9 +1502,9 @@ class TestRunEmbedTemplate:
             path='/templates/public/run',
             data={
                 'captcha': 'skip',
-                'fields': {}
+                'fields': {},
             },
-            **{'X-Public-Authorization': auth_header_value}
+            **{'X-Public-Authorization': auth_header_value},
         )
 
         # assert
@@ -1539,7 +1539,7 @@ class TestRunEmbedTemplate:
             user=user,
             is_active=True,
             is_public=True,
-            tasks_count=1
+            tasks_count=1,
         )
         field_api_name = 'field-1'
         FieldTemplate.objects.create(
@@ -1548,7 +1548,7 @@ class TestRunEmbedTemplate:
             is_required=True,
             kickoff=template.kickoff_instance,
             template=template,
-            api_name=field_api_name
+            api_name=field_api_name,
         )
         wf_name_template = 'a' * (WORKFLOW_NAME_LENGTH - 4)
         wf_name_template += '{{%s}}' % field_api_name
@@ -1559,30 +1559,30 @@ class TestRunEmbedTemplate:
         mocker.patch(
             'src.processes.views.public.template.'
             'PublicTemplateViewSet.get_user_ip',
-            return_value=user_ip
+            return_value=user_ip,
         )
         auth_header_value = f'Token {template.embed_id}'
         token = EmbedToken(template.embed_id)
         mocker.patch(
             'src.authentication.services.public_auth.'
             'PublicAuthService.get_token',
-            return_value=token
+            return_value=token,
         )
         mocker.patch(
             'src.authentication.services.public_auth.'
             'PublicAuthService.get_template',
-            return_value=template
+            return_value=template,
         )
         mocker.patch(
             'src.analytics.services.AnalyticService.'
-            'workflows_started'
+            'workflows_started',
         )
         mocker.patch(
             'src.processes.services.templates.'
             'integrations.TemplateIntegrationsService.public_api_request',
         )
         settings_mock = mocker.patch(
-            'src.processes.views.public.template.settings'
+            'src.processes.views.public.template.settings',
         )
         settings_mock.PROJECT_CONF = {'CAPTCHA': True}
 
@@ -1593,9 +1593,9 @@ class TestRunEmbedTemplate:
                 'captcha': 'skip',
                 'fields': {
                     field_api_name: 'Some shit!',
-                }
+                },
             },
-            **{'X-Public-Authorization': auth_header_value}
+            **{'X-Public-Authorization': auth_header_value},
         )
 
         # assert
@@ -1611,7 +1611,7 @@ class TestRunEmbedTemplate:
     def test_run__not_authorized__permission_denied(
         self,
         api_client,
-        mocker
+        mocker,
     ):
 
         # arrange
@@ -1620,29 +1620,29 @@ class TestRunEmbedTemplate:
             user=user,
             is_active=True,
             is_embedded=True,
-            tasks_count=1
+            tasks_count=1,
         )
         auth_header_value = f'Token {template.embed_id}'
         token = EmbedToken(template.embed_id)
         get_token_mock = mocker.patch(
             'src.authentication.services.public_auth.'
             'PublicAuthService.get_token',
-            return_value=token
+            return_value=token,
         )
         get_template_mock = mocker.patch(
             'src.authentication.services.public_auth.'
             'PublicAuthService.get_template',
-            return_value=None
+            return_value=None,
         )
         settings_mock = mocker.patch(
-            'src.processes.views.public.template.settings'
+            'src.processes.views.public.template.settings',
         )
         settings_mock.PROJECT_CONF = {'CAPTCHA': True}
 
         # act
         response = api_client.get(
             path='/templates/public',
-            **{'X-Public-Authorization': auth_header_value}
+            **{'X-Public-Authorization': auth_header_value},
         )
 
         # assert
@@ -1667,22 +1667,22 @@ class TestRunEmbedTemplate:
             user=user,
             is_active=True,
             is_embedded=True,
-            tasks_count=1
+            tasks_count=1,
         )
         auth_header_value = f'Token {template.embed_id}'
         token = EmbedToken(template.embed_id)
         get_token_mock = mocker.patch(
             'src.authentication.services.public_auth.'
             'PublicAuthService.get_token',
-            return_value=token
+            return_value=token,
         )
         get_template_mock = mocker.patch(
             'src.authentication.services.public_auth.'
             'PublicAuthService.get_template',
-            return_value=template
+            return_value=template,
         )
         settings_mock = mocker.patch(
-            'src.processes.views.public.template.settings'
+            'src.processes.views.public.template.settings',
         )
         settings_mock.PROJECT_CONF = {'CAPTCHA': True}
 
@@ -1690,7 +1690,7 @@ class TestRunEmbedTemplate:
         response = api_client.post(
             path='/templates/public/run',
             data={'fields': {}},
-            **{'X-Public-Authorization': auth_header_value}
+            **{'X-Public-Authorization': auth_header_value},
         )
 
         # assert
@@ -1725,7 +1725,7 @@ class TestRunEmbedTemplate:
             day=28,
             hour=10,
             minute=41,
-            tzinfo=pytz.timezone('UTC')
+            tzinfo=pytz.timezone('UTC'),
         )
         mocker.patch('django.utils.timezone.now', return_value=date)
 
@@ -1735,28 +1735,28 @@ class TestRunEmbedTemplate:
         mocker.patch(
             'src.processes.views.public.template.'
             'PublicTemplateViewSet.get_user_ip',
-            return_value=user_ip
+            return_value=user_ip,
         )
         mocker.patch(
             'src.authentication.services.public_auth.'
             'PublicAuthService.get_token',
-            return_value=token
+            return_value=token,
         )
         mocker.patch(
             'src.authentication.services.public_auth.'
             'PublicAuthService.get_template',
-            return_value=template
+            return_value=template,
         )
         mocker.patch(
             'src.analytics.services.AnalyticService.'
-            'workflows_started'
+            'workflows_started',
         )
         mocker.patch(
             'src.processes.services.templates.'
             'integrations.TemplateIntegrationsService.public_api_request',
         )
         settings_mock = mocker.patch(
-            'src.processes.views.public.template.settings'
+            'src.processes.views.public.template.settings',
         )
         settings_mock.PROJECT_CONF = {'CAPTCHA': True}
 
@@ -1764,9 +1764,9 @@ class TestRunEmbedTemplate:
         response = api_client.post(
             path='/templates/public/run',
             data={
-                'captcha': 'skip'
+                'captcha': 'skip',
             },
-            **{'X-Public-Authorization': auth_header_value}
+            **{'X-Public-Authorization': auth_header_value},
         )
 
         # assert
@@ -1797,7 +1797,7 @@ class TestRunEmbedTemplate:
             is_required=True,
             kickoff=template.kickoff_instance,
             template=template,
-            api_name=field_api_name
+            api_name=field_api_name,
         )
         wf_name_template = 'Feedback from {{%s}} {{ date }}' % field_api_name
         template.wf_name_template = wf_name_template
@@ -1809,7 +1809,7 @@ class TestRunEmbedTemplate:
             day=28,
             hour=10,
             minute=41,
-            tzinfo=pytz.timezone('UTC')
+            tzinfo=pytz.timezone('UTC'),
         )
         mocker.patch('django.utils.timezone.now', return_value=date)
 
@@ -1819,28 +1819,28 @@ class TestRunEmbedTemplate:
         mocker.patch(
             'src.processes.views.public.template.'
             'PublicTemplateViewSet.get_user_ip',
-            return_value=user_ip
+            return_value=user_ip,
         )
         mocker.patch(
             'src.authentication.services.public_auth.'
             'PublicAuthService.get_token',
-            return_value=token
+            return_value=token,
         )
         mocker.patch(
             'src.authentication.services.public_auth.'
             'PublicAuthService.get_template',
-            return_value=template
+            return_value=template,
         )
         mocker.patch(
             'src.analytics.services.AnalyticService.'
-            'workflows_started'
+            'workflows_started',
         )
         mocker.patch(
             'src.processes.services.templates.'
             'integrations.TemplateIntegrationsService.public_api_request',
         )
         settings_mock = mocker.patch(
-            'src.processes.views.public.template.settings'
+            'src.processes.views.public.template.settings',
         )
         settings_mock.PROJECT_CONF = {'CAPTCHA': True}
 
@@ -1850,10 +1850,10 @@ class TestRunEmbedTemplate:
             data={
                 'captcha': 'skip',
                 'fields': {
-                    field_api_name: str(user.id)
-                }
+                    field_api_name: str(user.id),
+                },
             },
-            **{'X-Public-Authorization': auth_header_value}
+            **{'X-Public-Authorization': auth_header_value},
         )
 
         # assert
@@ -1890,7 +1890,7 @@ class TestRunEmbedTemplate:
             is_required=True,
             kickoff=template.kickoff_instance,
             template=template,
-            api_name=field_api_name_1
+            api_name=field_api_name_1,
         )
         FieldTemplate.objects.create(
             name='User',
@@ -1898,7 +1898,7 @@ class TestRunEmbedTemplate:
             is_required=True,
             kickoff=template.kickoff_instance,
             template=template,
-            api_name=field_api_name_2
+            api_name=field_api_name_2,
         )
         FieldTemplate.objects.create(
             name='Url',
@@ -1906,7 +1906,7 @@ class TestRunEmbedTemplate:
             is_required=False,
             kickoff=template.kickoff_instance,
             template=template,
-            api_name=field_api_name_3
+            api_name=field_api_name_3,
         )
         wf_name_template = 'Feedback: {{%s}} from {{ %s }} Url: {{%s}}' % (
             field_api_name_1,
@@ -1924,28 +1924,28 @@ class TestRunEmbedTemplate:
         mocker.patch(
             'src.processes.views.public.template.'
             'PublicTemplateViewSet.get_user_ip',
-            return_value=user_ip
+            return_value=user_ip,
         )
         mocker.patch(
             'src.authentication.services.public_auth.'
             'PublicAuthService.get_token',
-            return_value=token
+            return_value=token,
         )
         mocker.patch(
             'src.authentication.services.public_auth.'
             'PublicAuthService.get_template',
-            return_value=template
+            return_value=template,
         )
         mocker.patch(
             'src.analytics.services.AnalyticService.'
-            'workflows_started'
+            'workflows_started',
         )
         mocker.patch(
             'src.processes.services.templates.'
             'integrations.TemplateIntegrationsService.public_api_request',
         )
         settings_mock = mocker.patch(
-            'src.processes.views.public.template.settings'
+            'src.processes.views.public.template.settings',
         )
         settings_mock.PROJECT_CONF = {'CAPTCHA': True}
 
@@ -1956,10 +1956,10 @@ class TestRunEmbedTemplate:
                 'captcha': 'skip',
                 'fields': {
                     field_api_name_1: feedback,
-                    field_api_name_2: str(user.id)
-                }
+                    field_api_name_2: str(user.id),
+                },
             },
-            **{'X-Public-Authorization': auth_header_value}
+            **{'X-Public-Authorization': auth_header_value},
         )
 
         # assert
@@ -1981,7 +1981,7 @@ class TestRunEmbedTemplate:
             is_active=True,
             is_embedded=True,
             tasks_count=1,
-            wf_name_template=None
+            wf_name_template=None,
         )
         field_api_name = 'field-1'
         FieldTemplate.objects.create(
@@ -1990,7 +1990,7 @@ class TestRunEmbedTemplate:
             is_required=True,
             kickoff=template.kickoff_instance,
             template=template,
-            api_name=field_api_name
+            api_name=field_api_name,
         )
         date = timezone.datetime(
             year=2024,
@@ -1998,7 +1998,7 @@ class TestRunEmbedTemplate:
             day=28,
             hour=10,
             minute=41,
-            tzinfo=pytz.timezone('UTC')
+            tzinfo=pytz.timezone('UTC'),
         )
         mocker.patch('django.utils.timezone.now', return_value=date)
         formatted_date = 'Aug 28, 2024, 10:41AM'
@@ -2010,28 +2010,28 @@ class TestRunEmbedTemplate:
         mocker.patch(
             'src.processes.views.public.template.'
             'PublicTemplateViewSet.get_user_ip',
-            return_value=user_ip
+            return_value=user_ip,
         )
         mocker.patch(
             'src.authentication.services.public_auth.'
             'PublicAuthService.get_token',
-            return_value=token
+            return_value=token,
         )
         mocker.patch(
             'src.authentication.services.public_auth.'
             'PublicAuthService.get_template',
-            return_value=template
+            return_value=template,
         )
         mocker.patch(
             'src.analytics.services.AnalyticService.'
-            'workflows_started'
+            'workflows_started',
         )
         mocker.patch(
             'src.processes.services.templates.'
             'integrations.TemplateIntegrationsService.public_api_request',
         )
         settings_mock = mocker.patch(
-            'src.processes.views.public.template.settings'
+            'src.processes.views.public.template.settings',
         )
         settings_mock.PROJECT_CONF = {'CAPTCHA': True}
 
@@ -2042,9 +2042,9 @@ class TestRunEmbedTemplate:
                 'captcha': 'skip',
                 'fields': {
                     field_api_name: 'Some shit!',
-                }
+                },
             },
-            **{'X-Public-Authorization': auth_header_value}
+            **{'X-Public-Authorization': auth_header_value},
         )
 
         # assert
@@ -2065,28 +2065,28 @@ class TestRunEmbedTemplate:
             user=user,
             is_active=True,
             is_embedded=True,
-            tasks_count=1
+            tasks_count=1,
         )
         user_ip = '127.0.0.1'
         mocker.patch(
             'src.processes.views.public.template.'
             'PublicTemplateViewSet.get_user_ip',
-            return_value=user_ip
+            return_value=user_ip,
         )
         auth_header_value = f'Token {template.embed_id}'
         token = EmbedToken(template.embed_id)
         get_token_mock = mocker.patch(
             'src.authentication.services.public_auth.'
             'PublicAuthService.get_token',
-            return_value=token
+            return_value=token,
         )
         get_template_mock = mocker.patch(
             'src.authentication.services.public_auth.'
             'PublicAuthService.get_template',
-            return_value=template
+            return_value=template,
         )
         settings_mock = mocker.patch(
-            'src.processes.views.public.template.settings'
+            'src.processes.views.public.template.settings',
         )
         settings_mock.PROJECT_CONF = {'CAPTCHA': False}
         anonymous_user_workflow_exists_mock = mocker.patch(
@@ -2099,7 +2099,7 @@ class TestRunEmbedTemplate:
         response = api_client.post(
             path='/templates/public/run',
             data={},
-            **{'X-Public-Authorization': auth_header_value}
+            **{'X-Public-Authorization': auth_header_value},
         )
 
         # assert

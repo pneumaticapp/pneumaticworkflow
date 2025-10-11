@@ -1,7 +1,7 @@
 from rest_framework.serializers import ModelSerializer
 from src.navigation.models import (
     Menu,
-    MenuItem
+    MenuItem,
 )
 
 
@@ -12,7 +12,7 @@ class MenuItemSerializer(ModelSerializer):
         fields = (
             'order',
             'label',
-            'link'
+            'link',
         )
 
 
@@ -24,7 +24,7 @@ class MenuSerializer(ModelSerializer):
             'slug',
             'label',
             'link',
-            'items'
+            'items',
         )
 
     items = MenuItemSerializer(many=True)

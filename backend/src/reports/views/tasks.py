@@ -28,7 +28,7 @@ from src.generics.mixins.views import CustomViewSetMixin
 
 class TasksDashboardViewSet(
     CustomViewSetMixin,
-    GenericViewSet
+    GenericViewSet,
 ):
     pagination_class = LimitOffsetPagination
     permission_classes = (
@@ -51,7 +51,7 @@ class TasksDashboardViewSet(
             query = TasksOverviewQuery(
                 account_id=request.user.account_id,
                 user_id=request.user.id,
-                **filters
+                **filters,
             )
         data = RawSqlExecutor.fetchone(*query.get_sql())
         return self.response_ok(data)
@@ -70,10 +70,10 @@ class TasksDashboardViewSet(
             query = TasksBreakdownQuery(
                 account_id=request.user.account_id,
                 user_id=request.user.id,
-                **filters
+                **filters,
             )
         data = list(
-            RawSqlExecutor.fetch(*query.get_sql())
+            RawSqlExecutor.fetch(*query.get_sql()),
         )
         return self.response_ok(data)
 
@@ -94,9 +94,9 @@ class TasksDashboardViewSet(
         else:
             query = TasksBreakdownByStepsQuery(
                 user_id=request.user.id,
-                **filters
+                **filters,
             )
         data = list(
-            RawSqlExecutor.fetch(*query.get_sql())
+            RawSqlExecutor.fetch(*query.get_sql()),
         )
         return self.response_ok(data)

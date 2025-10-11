@@ -8,7 +8,7 @@ class WebhookServiceException(BaseServiceException):
     def __init__(
         self,
         message: Optional[str] = None,
-        **kwargs: dict
+        **kwargs: dict,
     ):
         super().__init__(message)
         self.details = kwargs
@@ -19,7 +19,7 @@ class StripeServiceException(BaseServiceException):
     def __init__(
         self,
         message: Optional[str] = None,
-        **kwargs: dict
+        **kwargs: dict,
     ):
         super().__init__(message)
         self.details = kwargs

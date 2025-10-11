@@ -1,7 +1,7 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 from src.processes.enums import (
-    FieldType
+    FieldType,
 )
 from src.processes.models import (
     TaskField,
@@ -21,7 +21,7 @@ class FieldSelectionListSerializer(serializers.ModelSerializer):
             'id',
             'value',
             'is_selected',
-            'api_name'
+            'api_name',
         )
 
 

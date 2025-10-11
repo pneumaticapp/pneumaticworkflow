@@ -8,7 +8,7 @@ from src.authentication.permissions import (
 )
 from src.authentication.tokens import PneumaticToken
 from src.generics.mixins.views import (
-    BaseResponseMixin
+    BaseResponseMixin,
 )
 from src.generics.permissions import (
     UserIsAuthenticated,
@@ -20,7 +20,7 @@ UserModel = get_user_model()
 
 class SignOutView(
     CreateAPIView,
-    BaseResponseMixin
+    BaseResponseMixin,
 ):
 
     permission_classes = (UserIsAuthenticated, PrivateApiPermission)

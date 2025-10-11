@@ -14,7 +14,7 @@ class PriceInlineForm(forms.ModelForm):
         if min_quantity >= max_quantity:
             self.add_error(
                 field='min_quantity',
-                error='value must be less then the "max_quantity" value'
+                error='value must be less then the "max_quantity" value',
             )
         return min_quantity
 
@@ -23,6 +23,6 @@ class PriceInlineForm(forms.ModelForm):
         if max_quantity > 10000:
             self.add_error(
                 field='max_quantity',
-                error='value must be less than or equal to 10000'
+                error='value must be less than or equal to 10000',
             )
         return max_quantity

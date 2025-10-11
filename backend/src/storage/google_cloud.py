@@ -45,18 +45,18 @@ class GoogleCloudService:
                     )
                 except gcloud_exceptions.NotFound:
                     self.bucket = self._create_bucket(
-                        bucket_name=account.bucket_name
+                        bucket_name=account.bucket_name,
                     )
             else:
                 self.bucket = self._create_bucket()
         else:
             try:
                 self.bucket = self.client.get_bucket(
-                    settings.GCLOUD_DEFAULT_BUCKET_NAME
+                    settings.GCLOUD_DEFAULT_BUCKET_NAME,
                 )
             except gcloud_exceptions.NotFound:
                 self.bucket = self._create_bucket(
-                    bucket_name=settings.GCLOUD_DEFAULT_BUCKET_NAME
+                    bucket_name=settings.GCLOUD_DEFAULT_BUCKET_NAME,
                 )
 
     def get_normalized_name(self, text: str) -> str:
@@ -83,17 +83,17 @@ class GoogleCloudService:
                 "origin": ["*"],
                 "method": ["GET"],
                 "responseHeader": ["Content-Type"],
-                "maxAgeSeconds": 3600
+                "maxAgeSeconds": 3600,
             },
             {
                 "origin": ["*"],
                 "method": ["PUT"],
                 "responseHeader": [
                     "Content-Type",
-                    "Access-Control-Allow-Origin"
+                    "Access-Control-Allow-Origin",
                 ],
-                "maxAgeSeconds": 300
-            }
+                "maxAgeSeconds": 300,
+            },
         ]
         try:
             bucket = self.client.bucket(bucket_name)
@@ -103,7 +103,7 @@ class GoogleCloudService:
                     self.account.name)
                 bucket.labels = {
                     'account_id': str(self.account.id),
-                    'account_name': formatted_label_name
+                    'account_name': formatted_label_name,
                 }
             bucket.cors = cors_rule
             bucket.patch()
@@ -112,13 +112,13 @@ class GoogleCloudService:
                 message='Cloud service: bucket creation, '
                         'CORS/labels configuration failed',
                 data={'message': str(ex)},
-                level=SentryLogLevel.ERROR
+                level=SentryLogLevel.ERROR,
             )
             raise exceptions.CloudServiceException() from ex
         if self.account:
             account_service = AccountService(
                 user=self.account.get_owner(),
-                instance=self.account
+                instance=self.account,
             )
             account_service.update_bucket_name(bucket_name)
         return bucket
@@ -143,7 +143,7 @@ class GoogleCloudService:
         blob = self.bucket.blob(filename)
         signed_url = blob.generate_signed_url(
             expiration=timedelta(
-                minutes=settings.ATTACHMENT_SIGNED_URL_LIFETIME_MIN
+                minutes=settings.ATTACHMENT_SIGNED_URL_LIFETIME_MIN,
             ),
             method='PUT',
             content_type=content_type,

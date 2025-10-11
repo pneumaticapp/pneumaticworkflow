@@ -1,6 +1,6 @@
 from src.accounts.serializers.public.users import (
-    PublicUserSerializer
+    PublicUserSerializer,
 )
 from src.accounts.serializers.public.accounts import (
-    PublicAccountSerializer
+    PublicAccountSerializer,
 )

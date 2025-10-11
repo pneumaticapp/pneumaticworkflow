@@ -13,7 +13,7 @@ from src.generics.querysets import (
     BaseQuerySet,
 )
 from src.processes.enums import (
-    DirectlyStatus
+    DirectlyStatus,
 )
 from src.accounts.enums import (
     UserType,
@@ -49,9 +49,9 @@ class UserInviteQuerySet(AccountBaseQuerySet):
 
         queryset = self.filter(
             account_id=account_id,
-            invited_user__type=UserType.USER
+            invited_user__type=UserType.USER,
         ).exclude(
-            invited_user__status=UserStatus.INACTIVE
+            invited_user__status=UserStatus.INACTIVE,
         )
         if user_ids:
             queryset = queryset.filter(invited_user_id__in=user_ids)
@@ -76,7 +76,7 @@ class UserQuerySet(AccountBaseQuerySet):
         return self.filter(
             Q(is_digest_subscriber=True),
             Q(last_digest_send_time__isnull=True) |
-            Q(last_digest_send_time__lt=date)
+            Q(last_digest_send_time__lt=date),
         )
 
     def invited(self):
@@ -91,12 +91,12 @@ class UserQuerySet(AccountBaseQuerySet):
     def get_users_in_account(
         self,
         account_id: int,
-        user_ids: List[int]
+        user_ids: List[int],
     ):
 
         return self.filter(
             account_id=account_id,
-            id__in=user_ids
+            id__in=user_ids,
         )
 
     def are_users_in_account(self, account_id: int, ids: List[int]) -> bool:
@@ -110,7 +110,7 @@ class UserQuerySet(AccountBaseQuerySet):
 
     def with_timeout_to_read_notifications(
         self,
-        not_read_timeout_date: datetime.datetime
+        not_read_timeout_date: datetime.datetime,
     ):
         return self.annotate(
             unread_notifications_count=Count(
@@ -120,13 +120,13 @@ class UserQuerySet(AccountBaseQuerySet):
                     notifications__datetime__lt=not_read_timeout_date,
                     notifications__is_deleted=False,
                     notifications__is_notified_about_not_read=False,
-                )
-            )
+                ),
+            ),
         ).filter(unread_notifications_count__gt=0)
 
     def exclude_directly_deleted(self):
         return self.exclude(
-            taskperformer__directly_status=DirectlyStatus.DELETED
+            taskperformer__directly_status=DirectlyStatus.DELETED,
         )
 
     def only_emails(self) -> list:
@@ -152,15 +152,15 @@ class UserQuerySet(AccountBaseQuerySet):
             taskperformer__task=task,
             taskperformer__directly_status__in=[
                 DirectlyStatus.NO_STATUS,
-                DirectlyStatus.CREATED
-            ]
+                DirectlyStatus.CREATED,
+            ],
         )
         query |= Q(
             user_groups__taskperformer__task=task,
             user_groups__taskperformer__directly_status__in=[
                 DirectlyStatus.NO_STATUS,
-                DirectlyStatus.CREATED
-            ]
+                DirectlyStatus.CREATED,
+            ],
         ) & ~Q(user_groups=exclude_group)
         return self.filter(query).distinct()
 
@@ -169,8 +169,8 @@ class UserQuerySet(AccountBaseQuerySet):
             user_groups__taskperformer__task=task,
             user_groups__taskperformer__directly_status__in=[
                 DirectlyStatus.NO_STATUS,
-                DirectlyStatus.CREATED
-            ]
+                DirectlyStatus.CREATED,
+            ],
         ).distinct()
 
     def get_users_task(self, task):
@@ -178,15 +178,15 @@ class UserQuerySet(AccountBaseQuerySet):
             taskperformer__task=task,
             taskperformer__directly_status__in=[
                 DirectlyStatus.NO_STATUS,
-                DirectlyStatus.CREATED
-            ]
+                DirectlyStatus.CREATED,
+            ],
         )
         query |= Q(
             user_groups__taskperformer__task=task,
             user_groups__taskperformer__directly_status__in=[
                 DirectlyStatus.NO_STATUS,
-                DirectlyStatus.CREATED
-            ]
+                DirectlyStatus.CREATED,
+            ],
         )
         return self.filter(query).distinct()
 
@@ -228,7 +228,7 @@ class InactiveUserQuerySet(UserQuerySet):
             )
         )
         return self.filter(
-            in_account | invited
+            in_account | invited,
         ).distinct()
 
 
@@ -288,13 +288,13 @@ class NotificationsQuerySet(AccountBaseQuerySet):
     def timeout_to_read(
         self,
         user_ids: List[int],
-        not_read_timeout_date: datetime.datetime
+        not_read_timeout_date: datetime.datetime,
     ):
         return self.filter(
             status=NotificationStatus.NEW,
             datetime__lt=not_read_timeout_date,
             is_notified_about_not_read=False,
-            user_id__in=user_ids
+            user_id__in=user_ids,
         )
 
 

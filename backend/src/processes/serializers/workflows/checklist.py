@@ -5,7 +5,7 @@ from rest_framework.serializers import (
 )
 from src.processes.models import Checklist
 from src.processes.serializers.workflows.checklist_selection import (
-    CheckListSelectionSerializer
+    CheckListSelectionSerializer,
 )
 from src.generics.serializers import CustomValidationErrorMixin
 
@@ -25,7 +25,7 @@ class CheckListSerializer(ModelSerializer):
 
 class CheckListRequestSerializer(
     CustomValidationErrorMixin,
-    Serializer
+    Serializer,
 ):
 
     selection_id = IntegerField(required=True)

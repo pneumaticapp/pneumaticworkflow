@@ -8,7 +8,7 @@ from django.db import models
 from src.accounts.models import (
     AccountBaseMixin,
     Notification,
-    UserGroup
+    UserGroup,
 )
 from src.generics.managers import BaseSoftDeleteManager
 from src.generics.models import SoftDeleteModel
@@ -21,7 +21,7 @@ from src.processes.models.mixins import (
 from src.processes.querysets import (
     TasksQuerySet,
     DelayBaseQuerySet,
-    TaskPerformerQuerySet
+    TaskPerformerQuerySet,
 )
 from src.processes.enums import (
     PerformerType,
@@ -38,7 +38,7 @@ class Task(
     AccountBaseMixin,
     TaskMixin,
     TaskRawPerformersMixin,
-    ApiNameMixin
+    ApiNameMixin,
 ):
 
     class Meta:
@@ -51,14 +51,14 @@ class Task(
     )
     performers = models.ManyToManyField(
         UserModel,
-        through='TaskPerformer'
+        through='TaskPerformer',
     )
     name = models.TextField()
     name_template = models.TextField()
     status = models.CharField(
         choices=TaskStatus.CHOICES,
         max_length=50,
-        default=TaskStatus.PENDING
+        default=TaskStatus.PENDING,
     )
     description_template = models.TextField(null=True, blank=True)
     is_completed_deprecated = models.BooleanField(default=False)
@@ -66,17 +66,17 @@ class Task(
     is_urgent = models.BooleanField(default=False)
     date_first_started = models.DateTimeField(
         null=True,
-        help_text='set when the task becomes active for the first time'
+        help_text='set when the task becomes active for the first time',
     )
     date_started = models.DateTimeField(
         null=True,
-        help_text='set every time the task becomes active'
+        help_text='set every time the task becomes active',
     )
     date_completed = models.DateTimeField(null=True)
     due_date = models.DateTimeField(null=True)
     due_date_directly_status = models.IntegerField(
         default=DirectlyStatus.NO_STATUS,
-        choices=DirectlyStatus.CHOICES
+        choices=DirectlyStatus.CHOICES,
     )
     checklists_total = models.IntegerField(default=0)
     checklists_marked = models.IntegerField(default=0)
@@ -84,7 +84,7 @@ class Task(
     clear_description = models.TextField(
         null=True,
         blank=True,
-        help_text='Does not contains markdown'
+        help_text='Does not contains markdown',
     )
 
     search_content = SearchVectorField(null=True)
@@ -163,7 +163,7 @@ class Task(
         if performer_type != PerformerType.WORKFLOW_STARTER:
             if not group_id and not user and not user_id and not field:
                 raise Exception(
-                    'Raw performer should be linked with field or user'
+                    'Raw performer should be linked with field or user',
                 )
 
         raw_performer = self._get_raw_performer(
@@ -188,24 +188,24 @@ class Task(
         user = self.workflow.workflow_starter
         if not user:
             user = self.workflow.account.users.filter(
-                is_account_owner=True
+                is_account_owner=True,
             ).first()
             if not user:
                 raise Exception(
                     'Invalid workflow: '
-                    'Workflow starter or account owner must be set!'
+                    'Workflow starter or account owner must be set!',
                 )
         return user
 
     def _get_raw_performers_api_names(self) -> set:
         return set(
-            self.raw_performers.values_list('api_name', flat=True)
+            self.raw_performers.values_list('api_name', flat=True),
         )
 
     def _get_raw_performers_fields_dict(
         self,
         raw_performers_templates: List[dict],
-        existent_raw_performer_api_names: Set[int]
+        existent_raw_performer_api_names: Set[int],
     ) -> dict:
 
         """ For presented RawPerformerTemplates with type Field
@@ -226,15 +226,15 @@ class Task(
                 tasks_filter_kwargs={'task__number__lt': self.number},
                 fields_filter_kwargs={
                     'type': FieldType.USER,
-                    'api_name__in': api_names
+                    'api_name__in': api_names,
                 },
-                dict_key='api_name'
+                dict_key='api_name',
             )
         return fields_dict
 
     def update_raw_performers_from_task_template(
         self,
-        task_template # Union['TaskTemplate', dict, None] = None
+        task_template, # Union['TaskTemplate', dict, None] = None
     ):
 
         """
@@ -255,7 +255,7 @@ class Task(
             raw_performers_templates = (
                 task_template.raw_performers.select_related(
                     'field',
-                    'group'
+                    'group',
                 ).all()
             )
             raw_performers_templates = [{
@@ -265,14 +265,14 @@ class Task(
                 'group_id': e.group_id,
                 'api_name': e.api_name,
                 'field': {
-                    'api_name': e.field.api_name
-                } if e.type == PerformerType.FIELD else None
+                    'api_name': e.field.api_name,
+                } if e.type == PerformerType.FIELD else None,
             } for e in raw_performers_templates]
         elif isinstance(task_template, dict):
             raw_performers_templates = task_template['raw_performers']
         elif self.api_name:
             task_template = TaskTemplate.objects.by_id(
-                self.api_name
+                self.api_name,
             ).first()
             if task_template:
                 raw_performers_templates = (
@@ -284,7 +284,7 @@ class Task(
         )
         fields_dict = self._get_raw_performers_fields_dict(
             raw_performers_templates,
-            existent_raw_performer_api_names
+            existent_raw_performer_api_names,
         )
 
         new_raw_performers = []
@@ -296,12 +296,12 @@ class Task(
                 existent_raw_performer_api_names
             ):
                 deleted_raw_performer_api_names.remove(
-                    raw_performer_template['api_name']
+                    raw_performer_template['api_name'],
                 )
             else:
                 if raw_performer_template['type'] == PerformerType.FIELD:
                     field = fields_dict.get(
-                        raw_performer_template['field']['api_name']
+                        raw_performer_template['field']['api_name'],
                     )
                 else:
                     field = None
@@ -312,13 +312,13 @@ class Task(
                         group_id=raw_performer_template.get('group_id'),
                         field=field,
                         api_name=raw_performer_template['api_name'],
-                    )
+                    ),
                 )
         if new_raw_performers:
             RawPerformer.objects.bulk_create(new_raw_performers)
         if deleted_raw_performer_api_names:
             RawPerformer.objects.filter(
-                api_name__in=deleted_raw_performer_api_names
+                api_name__in=deleted_raw_performer_api_names,
             ).delete()
 
     def update_performers(
@@ -349,13 +349,13 @@ class Task(
         else:
             raw_performers = self.raw_performers.select_related(
                 'field',
-                'group'
+                'group',
             ).all()
 
         api_names, user_ids, group_ids = (
             defaultdict(list),
             defaultdict(list),
-            defaultdict(list)
+            defaultdict(list),
         )
         for raw_performer_ in raw_performers:
             if raw_performer_.type == PerformerType.USER:
@@ -373,8 +373,8 @@ class Task(
                 tasks_filter_kwargs={'task__number__lt': self.number},
                 fields_filter_kwargs={
                     'type': FieldType.USER,
-                    'api_name__in': api_names.keys()
-                }
+                    'api_name__in': api_names.keys(),
+                },
             )
             for field in user_fields:
                 if field.user_id:
@@ -388,7 +388,7 @@ class Task(
                 task_performer, created = TaskPerformer.objects.get_or_create(
                     type=PerformerType.USER,
                     task_id=self.id,
-                    user_id=user_id
+                    user_id=user_id,
                 )
                 if created:
                     created_performers_user_ids.append(user_id)
@@ -418,7 +418,7 @@ class Task(
                 task_performer, created = TaskPerformer.objects.get_or_create(
                     type=PerformerType.GROUP,
                     task_id=self.id,
-                    group_id=group_id
+                    group_id=group_id,
                 )
                 if created:
                     created_performers_group_ids.append(group_id)
@@ -445,11 +445,11 @@ class Task(
                         task_performer.save(update_fields=('directly_status',))
         if raw_performers_for_update:
             from src.processes.models.workflows.raw_performer import (
-                RawPerformer
+                RawPerformer,
             )
             RawPerformer.objects.bulk_update(
                 objs=raw_performers_for_update,
-                fields=('task_performer_id',)
+                fields=('task_performer_id',),
             )
 
         deleted_performers_user_ids, deleted_performers_group_ids = (
@@ -462,14 +462,14 @@ class Task(
         )
         union_user_ids = list(set(user_ids).union(users_in_groups))
         Notification.objects.exclude_users(
-            union_user_ids
+            union_user_ids,
         ).by_task(self.id).delete()
         self.workflow.members.add(*created_performers_user_ids)
         return (
             created_performers_user_ids,
             created_performers_group_ids,
             deleted_performers_user_ids,
-            deleted_performers_group_ids
+            deleted_performers_group_ids,
         )
 
     def _delete_orphaned_performers(self) -> Tuple[List[int], List[int]]:
@@ -478,7 +478,7 @@ class Task(
             left pointing to the performer) """
 
         task_performer_ids = list(
-            self.raw_performers.values_list('task_performer_id', flat=True)
+            self.raw_performers.values_list('task_performer_id', flat=True),
         )
         performers_to_delete = (
             TaskPerformer.objects
@@ -502,7 +502,7 @@ class Task(
         user: Optional[UserModel] = None,
         group: Optional[UserGroup] = None,
         field=None,
-        performer_type: PerformerType = PerformerType.USER
+        performer_type: PerformerType = PerformerType.USER,
     ):
 
         """ Delete a raw_performer
@@ -513,7 +513,7 @@ class Task(
             performer_type=performer_type,
             user=user,
             group=group,
-            field=field
+            field=field,
         )
         if deleted_count:
             self._delete_orphaned_performers()
@@ -546,12 +546,12 @@ class Task(
         if self.revert_task:
             return Task.objects.filter(
                 api_name=self.revert_task,
-                workflow_id=self.workflow_id
+                workflow_id=self.workflow_id,
             )
         elif self.parents:
             return Task.objects.filter(
                 api_name__in=self.parents,
-                workflow_id=self.workflow_id
+                workflow_id=self.workflow_id,
             )
         else:
             return []
@@ -559,7 +559,7 @@ class Task(
     def get_data_for_list(self):
 
         from src.processes.serializers.workflows.task import (
-            TaskListSerializer
+            TaskListSerializer,
         )
         task_for_list = TaskForList(
             id=self.id,
@@ -584,7 +584,7 @@ class Task(
             template_task_api_name=self.api_name,
             template_id=self.workflow.template_id,
             is_urgent=self.is_urgent,
-            status=self.status
+            status=self.status,
         )
         return TaskListSerializer(instance=task_for_list).data
 
@@ -618,7 +618,7 @@ class Task(
 
 class TaskForList(
     SoftDeleteModel,
-    models.Model
+    models.Model,
 ):
 
     class Meta:
@@ -645,7 +645,7 @@ class TaskForList(
 
 
 class Delay(
-    SoftDeleteModel
+    SoftDeleteModel,
 ):
 
     task = models.ForeignKey(
@@ -673,11 +673,11 @@ class Delay(
         Workflow,
         on_delete=models.CASCADE,
         null=True,
-        blank=True
+        blank=True,
     )
     directly_status = models.IntegerField(
         default=DirectlyStatus.NO_STATUS,
-        choices=DirectlyStatus.CHOICES
+        choices=DirectlyStatus.CHOICES,
     )
 
     def save(self, update_fields=None, **kwargs):
@@ -700,7 +700,7 @@ class Delay(
 
 
 class TaskPerformer(
-    SoftDeleteModel
+    SoftDeleteModel,
 ):
 
     class Meta:
@@ -719,7 +719,7 @@ class TaskPerformer(
     )
     task = models.ForeignKey(
         Task,
-        on_delete=models.CASCADE
+        on_delete=models.CASCADE,
     )
     type = models.CharField(
         max_length=100,
@@ -728,7 +728,7 @@ class TaskPerformer(
     )
     directly_status = models.IntegerField(
         default=DirectlyStatus.NO_STATUS,
-        choices=DirectlyStatus.CHOICES
+        choices=DirectlyStatus.CHOICES,
     )
     is_completed = models.BooleanField(default=False)
     date_completed = models.DateTimeField(null=True)

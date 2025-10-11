@@ -1,14 +1,14 @@
 import pytest
 from src.processes.tests.fixtures import (
-    create_test_user
+    create_test_user,
 )
 from src.processes.models import (
-    Template
+    Template,
 )
 from src.processes.enums import (
     PerformerType,
     FieldType,
-    OwnerType
+    OwnerType,
 )
 
 pytestmark = pytest.mark.django_db
@@ -28,7 +28,7 @@ class TestCopyTaskFields:
             'type': FieldType.TEXT,
             'is_required': True,
             'order': 1,
-            'api_name': 'field-name-1'
+            'api_name': 'field-name-1',
         }
 
         response = api_client.post(
@@ -39,7 +39,7 @@ class TestCopyTaskFields:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'kickoff': {},
@@ -50,20 +50,20 @@ class TestCopyTaskFields:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': user.id
-                            }
+                                'source_id': user.id,
+                            },
                         ],
-                        'fields': [request_data]
-                    }
-                ]
-            }
+                        'fields': [request_data],
+                    },
+                ],
+            },
         )
         template = Template.objects.get(id=response.data['id'])
         response_1_data = response.data['tasks'][0]['fields'][0]
 
         # act
         response = api_client.post(
-            f'/templates/{template.id}/clone'
+            f'/templates/{template.id}/clone',
         )
 
         # assert

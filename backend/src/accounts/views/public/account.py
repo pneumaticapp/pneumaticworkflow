@@ -4,7 +4,7 @@ from src.generics.mixins.views import (
     CustomViewSetMixin,
 )
 from src.accounts.serializers.public import (
-    PublicAccountSerializer
+    PublicAccountSerializer,
 )
 from src.processes.permissions import PublicTemplatePermission
 

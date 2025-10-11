@@ -16,10 +16,10 @@ from src.accounts.services.exceptions import (
 from src.authentication.services import AuthService
 from src.utils.validation import raise_validation_error
 from src.processes.services.system_workflows import (
-    SystemWorkflowService
+    SystemWorkflowService,
 )
 from src.authentication.tasks import (
-    send_new_signup_notification
+    send_new_signup_notification,
 )
 from src.authentication.tokens import PneumaticToken
 from src.payment.stripe.service import StripeService
@@ -64,11 +64,11 @@ class SignUpMixin:
         is_superuser = getattr(request, 'is_superuser', False)  # for Admin
         account_service = AccountService(
             is_superuser=is_superuser,
-            auth_type=AuthTokenType.USER
+            auth_type=AuthTokenType.USER,
         )
         user_service = UserService(
             is_superuser=is_superuser,
-            auth_type=AuthTokenType.USER
+            auth_type=AuthTokenType.USER,
         )
         with transaction.atomic():
             try:
@@ -109,7 +109,7 @@ class SignUpMixin:
                                 'stripe_id': account.stripe_id,
                                 'exception': str(ex),
                             },
-                            level=SentryLogLevel.ERROR
+                            level=SentryLogLevel.ERROR,
                         )
                 service = SystemWorkflowService(user=account_owner)
                 service.create_onboarding_templates()
@@ -126,7 +126,7 @@ class SignUpMixin:
                     user=account_owner,
                     user_agent=request.headers.get(
                         'User-Agent',
-                        request.META.get('HTTP_USER_AGENT')
+                        request.META.get('HTTP_USER_AGENT'),
                     ),
                     user_ip=request.META.get('HTTP_X_REAL_IP'),
                 )

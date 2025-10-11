@@ -6,20 +6,20 @@ from src.processes.tests.fixtures import (
     create_test_workflow,
     create_test_template,
     create_test_account,
-    create_test_group
+    create_test_group,
 )
 from src.processes.enums import (
     PerformerType,
 )
 from src.processes.enums import (
     WorkflowStatus,
-    WorkflowApiStatus
+    WorkflowApiStatus,
 )
 from src.utils.validation import ErrorCode
 from src.processes.messages import workflow as messages
 from src.processes.models import (
     TaskPerformer,
-    TemplateOwner
+    TemplateOwner,
 )
 from src.processes.enums import OwnerType
 
@@ -110,8 +110,8 @@ class TestWorkflowCountsByWorkflowStarter:
         response = api_client.get(
             '/workflows/count/by-workflow-starter',
             data={
-                'status': WorkflowApiStatus.DONE
-            }
+                'status': WorkflowApiStatus.DONE,
+            },
         )
 
         # assert
@@ -144,8 +144,8 @@ class TestWorkflowCountsByWorkflowStarter:
         response = api_client.get(
             '/workflows/count/by-workflow-starter',
             data={
-                'status': WorkflowApiStatus.RUNNING
-            }
+                'status': WorkflowApiStatus.RUNNING,
+            },
         )
 
         # assert
@@ -174,8 +174,8 @@ class TestWorkflowCountsByWorkflowStarter:
         response = api_client.get(
             '/workflows/count/by-workflow-starter',
             data={
-                'status': WorkflowApiStatus.DELAYED
-            }
+                'status': WorkflowApiStatus.DELAYED,
+            },
         )
 
         # assert
@@ -202,7 +202,7 @@ class TestWorkflowCountsByWorkflowStarter:
         # act
         response = api_client.get(
             '/workflows/count/by-workflow-starter',
-            data={'status': 'delayed'}
+            data={'status': 'delayed'},
         )
 
         # assert
@@ -230,8 +230,8 @@ class TestWorkflowCountsByWorkflowStarter:
         response = api_client.get(
             '/workflows/count/by-workflow-starter',
             data={
-                'template_ids': f'{template_1.id},{template_3.id}'
-            }
+                'template_ids': f'{template_1.id},{template_3.id}',
+            },
         )
 
         # assert
@@ -246,7 +246,7 @@ class TestWorkflowCountsByWorkflowStarter:
 
     def test__filter__template_ids_invalid__validation_error(
         self,
-        api_client
+        api_client,
     ):
 
         # arrange
@@ -257,7 +257,7 @@ class TestWorkflowCountsByWorkflowStarter:
         # act
         response = api_client.get(
             '/workflows/count/by-workflow-starter',
-            data={'template_ids': 'null'}
+            data={'template_ids': 'null'},
         )
 
         # assert
@@ -277,7 +277,7 @@ class TestWorkflowCountsByWorkflowStarter:
         request_user = create_test_user(
             account=account,
             email='user3@test.test',
-            is_account_owner=False
+            is_account_owner=False,
         )
         workflow.owners.add(request_user)
         task = workflow.tasks.get(number=1)
@@ -285,7 +285,7 @@ class TestWorkflowCountsByWorkflowStarter:
         performer_1 = create_test_user(
             account=account,
             email='performer_1@test.test',
-            is_account_owner=False
+            is_account_owner=False,
         )
         TaskPerformer.objects.create(
             task=task,
@@ -297,8 +297,8 @@ class TestWorkflowCountsByWorkflowStarter:
         response = api_client.get(
             '/workflows/count/by-workflow-starter',
             data={
-                'current_performer_ids': f'{performer_1.id}'
-            }
+                'current_performer_ids': f'{performer_1.id}',
+            },
         )
 
         # assert
@@ -318,13 +318,13 @@ class TestWorkflowCountsByWorkflowStarter:
         request_user = create_test_user(
             account=account,
             email='request_user@test.test',
-            is_account_owner=False
+            is_account_owner=False,
         )
 
         performer_1 = create_test_user(
             account=account,
             email='performer_1@test.test',
-            is_account_owner=False
+            is_account_owner=False,
         )
         workflow_1.owners.add(request_user)
         task_1 = workflow_1.tasks.get(number=1)
@@ -337,7 +337,7 @@ class TestWorkflowCountsByWorkflowStarter:
         performer_2 = create_test_user(
             account=account,
             email='performer_2@test.test',
-            is_account_owner=False
+            is_account_owner=False,
         )
         workflow_2.owners.add(request_user)
         task_2 = workflow_2.tasks.get(number=1)
@@ -353,8 +353,8 @@ class TestWorkflowCountsByWorkflowStarter:
         response = api_client.get(
             '/workflows/count/by-workflow-starter',
             data={
-                'current_performer_ids': f'{performer_1.id}, {performer_2.id}'
-            }
+                'current_performer_ids': f'{performer_1.id}, {performer_2.id}',
+            },
         )
 
         # assert
@@ -366,7 +366,7 @@ class TestWorkflowCountsByWorkflowStarter:
 
     def test__filter__current_performer_ids_invalid__validation_error(
         self,
-        api_client
+        api_client,
     ):
 
         # arrange
@@ -377,7 +377,7 @@ class TestWorkflowCountsByWorkflowStarter:
         # act
         response = api_client.get(
             '/workflows/count/by-workflow-starter',
-            data={'current_performer_ids': 'None'}
+            data={'current_performer_ids': 'None'},
         )
 
         # assert
@@ -390,7 +390,7 @@ class TestWorkflowCountsByWorkflowStarter:
 
     def test__filter__inconsistent_filters__validation_error(
         self,
-        api_client
+        api_client,
     ):
 
         # arrange
@@ -403,8 +403,8 @@ class TestWorkflowCountsByWorkflowStarter:
             '/workflows/count/by-workflow-starter',
             data={
                 'status': WorkflowApiStatus.DONE,
-                'current_performer_ids': user.id
-            }
+                'current_performer_ids': user.id,
+            },
         )
 
         # assert
@@ -421,7 +421,7 @@ class TestWorkflowCountsByWorkflowStarter:
         request_user = create_test_user(
             account=account,
             email='request_user@test.test',
-            is_account_owner=False
+            is_account_owner=False,
         )
 
         workflow.owners.add(request_user)
@@ -430,7 +430,7 @@ class TestWorkflowCountsByWorkflowStarter:
         group_user = create_test_user(
             account=account,
             email='user2@test.test',
-            is_account_owner=False
+            is_account_owner=False,
         )
         group = create_test_group(account, users=[group_user])
         TaskPerformer.objects.create(
@@ -444,8 +444,8 @@ class TestWorkflowCountsByWorkflowStarter:
         response = api_client.get(
             '/workflows/count/by-workflow-starter',
             data={
-                'current_performer_group_ids': f'{group.id}'
-            }
+                'current_performer_group_ids': f'{group.id}',
+            },
         )
 
         # assert
@@ -457,7 +457,7 @@ class TestWorkflowCountsByWorkflowStarter:
 
     def test__filter__current_performer_group_ids_multiple__ok(
         self,
-        api_client
+        api_client,
     ):
 
         # arrange
@@ -468,20 +468,20 @@ class TestWorkflowCountsByWorkflowStarter:
         request_user = create_test_user(
             account=account,
             email='request_user@test.test',
-            is_account_owner=False
+            is_account_owner=False,
         )
 
         group_user_1 = create_test_user(
             account=account,
             email='group_user_1@test.test',
-            is_account_owner=False
+            is_account_owner=False,
         )
         workflow_1.owners.add(request_user)
         task_1 = workflow_1.tasks.get(number=1)
         task_1.taskperformer_set.all().delete()
         group_1 = create_test_group(
             account,
-            users=[group_user_1]
+            users=[group_user_1],
         )
         TaskPerformer.objects.create(
             task_id=task_1.id,
@@ -492,14 +492,14 @@ class TestWorkflowCountsByWorkflowStarter:
         group_user_2 = create_test_user(
             account=account,
             email='group_user_2@test.test',
-            is_account_owner=False
+            is_account_owner=False,
         )
         workflow_2.owners.add(request_user)
         task_2 = workflow_2.tasks.get(number=1)
         task_2.taskperformer_set.all().delete()
         group_2 = create_test_group(
             account,
-            users=[group_user_2]
+            users=[group_user_2],
         )
         TaskPerformer.objects.create(
             task_id=task_2.id,
@@ -512,8 +512,8 @@ class TestWorkflowCountsByWorkflowStarter:
         response = api_client.get(
             '/workflows/count/by-workflow-starter',
             data={
-                'current_performer_group_ids': f'{group_1.id},{group_2.id}'
-            }
+                'current_performer_group_ids': f'{group_1.id},{group_2.id}',
+            },
         )
 
         # assert
@@ -533,7 +533,7 @@ class TestWorkflowCountsByWorkflowStarter:
         request_user = create_test_user(
             account=account,
             email='user3@test.test',
-            is_account_owner=False
+            is_account_owner=False,
         )
         workflow_1.owners.add(request_user)
         task_1 = workflow_1.tasks.get(number=1)
@@ -541,7 +541,7 @@ class TestWorkflowCountsByWorkflowStarter:
         performer = create_test_user(
             account=account,
             email='performer_1@test.test',
-            is_account_owner=False
+            is_account_owner=False,
         )
         TaskPerformer.objects.create(
             task=task_1,
@@ -551,14 +551,14 @@ class TestWorkflowCountsByWorkflowStarter:
         group_user = create_test_user(
             account=account,
             email='group_user_2@test.test',
-            is_account_owner=False
+            is_account_owner=False,
         )
         workflow_2.owners.add(request_user)
         task_2 = workflow_2.tasks.get(number=1)
         task_2.taskperformer_set.all().delete()
         group = create_test_group(
             account,
-            users=[group_user]
+            users=[group_user],
         )
         TaskPerformer.objects.create(
             task_id=task_2.id,
@@ -573,8 +573,8 @@ class TestWorkflowCountsByWorkflowStarter:
             '/workflows/count/by-workflow-starter',
             data={
                 'current_performer_ids': f'{performer.id}',
-                'current_performer_group_ids': f'{group.id}'
-            }
+                'current_performer_group_ids': f'{group.id}',
+            },
         )
 
         # assert
@@ -589,7 +589,7 @@ class TestWorkflowCountsByWorkflowStarter:
         # arrange
         account = create_test_account(
             'plan kapkan',
-            plan=BillingPlanType.PREMIUM
+            plan=BillingPlanType.PREMIUM,
         )
         user_1 = create_test_user(account=account, email='user1@test.test')
         user_2 = create_test_user(account=account, email='user2@test.test')
@@ -619,7 +619,7 @@ class TestWorkflowCountsByCPerformer:
         user_2 = create_test_user(
             account=account,
             email='user2@test.test',
-            is_account_owner=False
+            is_account_owner=False,
         )
         create_test_workflow(user_1, is_external=True)
         create_test_workflow(user_1)
@@ -649,7 +649,7 @@ class TestWorkflowCountsByCPerformer:
         user_1 = create_test_user(
             account=account,
             email='user1@test.test',
-            is_account_owner=False
+            is_account_owner=False,
         )
         workflow.owners.add(user_1)
         group = create_test_group(account, users=[user_1])
@@ -715,8 +715,8 @@ class TestWorkflowCountsByCPerformer:
         response = api_client.get(
             '/workflows/count/by-current-performer',
             data={
-                'template_ids': f'{template_1.id},{template_3.id}'
-            }
+                'template_ids': f'{template_1.id},{template_3.id}',
+            },
         )
 
         # assert
@@ -728,7 +728,7 @@ class TestWorkflowCountsByCPerformer:
 
     def test__filter__template_ids_invalid__validation_error(
         self,
-        api_client
+        api_client,
     ):
 
         # arrange
@@ -739,7 +739,7 @@ class TestWorkflowCountsByCPerformer:
         # act
         response = api_client.get(
             '/workflows/count/by-current-performer',
-            data={'template_ids': 'null'}
+            data={'template_ids': 'null'},
         )
 
         # assert
@@ -768,7 +768,7 @@ class TestWorkflowCountsByCPerformer:
         workflow_1 = create_test_workflow(
             user_1,
             template=template_1,
-            is_external=True
+            is_external=True,
         )
         workflow_1.owners.add(user_2)
         workflow_2 = create_test_workflow(user_1, template=template_2)
@@ -787,7 +787,7 @@ class TestWorkflowCountsByCPerformer:
         # act
         response = api_client.get(
             '/workflows/count/by-current-performer',
-            data={'template_task_api_names': template_task_api_names}
+            data={'template_task_api_names': template_task_api_names},
         )
 
         # assert
@@ -818,7 +818,7 @@ class TestWorkflowCountsByCPerformer:
         workflow_1 = create_test_workflow(
             user_1,
             template=template_1,
-            is_external=True
+            is_external=True,
         )
         workflow_1.owners.add(user_2)
         workflow_2 = create_test_workflow(user_1, template=template_2)
@@ -836,7 +836,7 @@ class TestWorkflowCountsByCPerformer:
         # act
         response = api_client.get(
             '/workflows/count/by-current-performer',
-            data={'template_task_ids': template_task_api_names}
+            data={'template_task_ids': template_task_api_names},
         )
 
         # assert
@@ -873,7 +873,7 @@ class TestWorkflowCountsByCPerformer:
         # act
         response = api_client.get(
             '/workflows/count/by-current-performer',
-            data={'workflow_starter_ids': f'{user_1.id},{user_2.id}'}
+            data={'workflow_starter_ids': f'{user_1.id},{user_2.id}'},
         )
 
         # assert
@@ -888,7 +888,7 @@ class TestWorkflowCountsByCPerformer:
 
     def test__filter__workflow_starter_ids_and_external_workflows__ok(
         self,
-        api_client
+        api_client,
     ):
 
         # arrange
@@ -900,7 +900,7 @@ class TestWorkflowCountsByCPerformer:
         template_2 = create_test_template(
             user_2,
             is_active=True,
-            is_public=True
+            is_public=True,
         )
         TemplateOwner.objects.create(
             template=template_2,
@@ -918,8 +918,8 @@ class TestWorkflowCountsByCPerformer:
             '/workflows/count/by-current-performer',
             data={
                 'workflow_starter_ids': f'{user_1.id}',
-                'is_external': True
-            }
+                'is_external': True,
+            },
         )
 
         # assert
@@ -934,7 +934,7 @@ class TestWorkflowCountsByCPerformer:
 
     def test__filter__external_workflows__ok(
         self,
-        api_client
+        api_client,
     ):
 
         # arrange
@@ -946,7 +946,7 @@ class TestWorkflowCountsByCPerformer:
         template_2 = create_test_template(
             user_2,
             is_active=True,
-            is_public=True
+            is_public=True,
         )
         TemplateOwner.objects.create(
             template=template_2,
@@ -962,7 +962,7 @@ class TestWorkflowCountsByCPerformer:
         # act
         response = api_client.get(
             '/workflows/count/by-current-performer',
-            data={'is_external': True}
+            data={'is_external': True},
         )
 
         # assert
@@ -977,7 +977,7 @@ class TestWorkflowCountsByCPerformer:
         # arrange
         account = create_test_account(
             'plan kapkan',
-            plan=BillingPlanType.PREMIUM
+            plan=BillingPlanType.PREMIUM,
         )
         user_1 = create_test_user(account=account, email='user1@test.test')
         user_2 = create_test_user(account=account, email='user2@test.test')
@@ -1010,7 +1010,7 @@ class TestWorkflowCountsByTemplateTask:
         create_test_workflow(
             user=user,
             template=template,
-            active_task_number=2
+            active_task_number=2,
         )
         api_client.token_authenticate(user)
 
@@ -1056,18 +1056,18 @@ class TestWorkflowCountsByTemplateTask:
         create_test_workflow(
             template=template,
             user=user,
-            active_task_number=2
+            active_task_number=2,
         )
         create_test_workflow(
             template=template,
             user=user,
-            status=WorkflowStatus.DONE
+            status=WorkflowStatus.DONE,
         )
         create_test_workflow(
             user=user,
             template=template,
             active_task_number=2,
-            status=WorkflowStatus.DELAYED
+            status=WorkflowStatus.DELAYED,
         )
         api_client.token_authenticate(user)
 
@@ -1100,18 +1100,18 @@ class TestWorkflowCountsByTemplateTask:
         template_task_2 = template.tasks.get(number=2)
         create_test_workflow(
             template=template,
-            user=user
+            user=user,
         )
         create_test_workflow(
             template=template,
             user=user,
             status=WorkflowStatus.DONE,
-            active_task_number=2
+            active_task_number=2,
         )
         create_test_workflow(
             user=user,
             template=template,
-            status=WorkflowStatus.DELAYED
+            status=WorkflowStatus.DELAYED,
         )
         api_client.token_authenticate(user)
 
@@ -1119,8 +1119,8 @@ class TestWorkflowCountsByTemplateTask:
         response = api_client.get(
             '/workflows/count/by-template-task',
             data={
-                'status': WorkflowApiStatus.DONE
-            }
+                'status': WorkflowApiStatus.DONE,
+            },
         )
 
         # assert
@@ -1150,18 +1150,18 @@ class TestWorkflowCountsByTemplateTask:
         create_test_workflow(
             template=template,
             user=user,
-            active_task_number=2
+            active_task_number=2,
         )
         create_test_workflow(
             template=template,
             user=user,
-            status=WorkflowStatus.DONE
+            status=WorkflowStatus.DONE,
         )
         create_test_workflow(
             user=user,
             template=template,
             active_task_number=2,
-            status=WorkflowStatus.DELAYED
+            status=WorkflowStatus.DELAYED,
         )
         api_client.token_authenticate(user)
 
@@ -1169,8 +1169,8 @@ class TestWorkflowCountsByTemplateTask:
         response = api_client.get(
             '/workflows/count/by-template-task',
             data={
-                'status': WorkflowApiStatus.RUNNING
-            }
+                'status': WorkflowApiStatus.RUNNING,
+            },
         )
 
         # assert
@@ -1209,8 +1209,8 @@ class TestWorkflowCountsByTemplateTask:
         response = api_client.get(
             '/workflows/count/by-template-task',
             data={
-                'status': WorkflowApiStatus.DELAYED
-            }
+                'status': WorkflowApiStatus.DELAYED,
+            },
         )
 
         # assert
@@ -1237,14 +1237,14 @@ class TestWorkflowCountsByTemplateTask:
         template = create_test_template(user=user, tasks_count=2)
         create_test_workflow(
             template=template,
-            user=user
+            user=user,
         )
         api_client.token_authenticate(user)
 
         # act
         response = api_client.get(
             '/workflows/count/by-template-task',
-            data={'status': 'delayed'}
+            data={'status': 'delayed'},
         )
 
         # assert
@@ -1269,16 +1269,16 @@ class TestWorkflowCountsByTemplateTask:
 
         create_test_workflow(
             template=template_1,
-            user=user
+            user=user,
         )
         create_test_workflow(
             template=template_2,
-            user=user
+            user=user,
         )
         create_test_workflow(
             template=template_3,
             user=user,
-            active_task_number=2
+            active_task_number=2,
         )
 
         api_client.token_authenticate(user)
@@ -1287,8 +1287,8 @@ class TestWorkflowCountsByTemplateTask:
         response = api_client.get(
             '/workflows/count/by-template-task',
             data={
-                'template_ids': f'{template_1.id},{template_3.id}'
-            }
+                'template_ids': f'{template_1.id},{template_3.id}',
+            },
         )
 
         # assert
@@ -1315,7 +1315,7 @@ class TestWorkflowCountsByTemplateTask:
 
     def test__filter__current_performer_ids__ok(
         self,
-        api_client
+        api_client,
     ):
         # arrange
         account = create_test_account()
@@ -1344,20 +1344,20 @@ class TestWorkflowCountsByTemplateTask:
         template_task_3.delete_raw_performers()
         template_task_3.add_raw_performer(
             performer_type=PerformerType.GROUP,
-            group=group
+            group=group,
         )
 
         create_test_workflow(
             template=template_1,
-            user=user
+            user=user,
         )
         create_test_workflow(
             template=template_2,
-            user=user2
+            user=user2,
         )
         create_test_workflow(
             template=template_3,
-            user=user
+            user=user,
         )
 
         api_client.token_authenticate(user2)
@@ -1365,7 +1365,7 @@ class TestWorkflowCountsByTemplateTask:
         # act
         response = api_client.get(
             '/workflows/count/by-template-task',
-            data={'current_performer_ids': user.id}
+            data={'current_performer_ids': user.id},
         )
 
         # assert
@@ -1398,7 +1398,7 @@ class TestWorkflowCountsByTemplateTask:
 
     def test__filter__current_performer_group_ids__ok(
         self,
-        api_client
+        api_client,
     ):
         # arrange
         account = create_test_account()
@@ -1426,20 +1426,20 @@ class TestWorkflowCountsByTemplateTask:
         template_task_3 = template_3.tasks.get(number=1)
         template_task_1.add_raw_performer(
             performer_type=PerformerType.GROUP,
-            group=group
+            group=group,
         )
 
         create_test_workflow(
             template=template_1,
-            user=user
+            user=user,
         )
         create_test_workflow(
             template=template_2,
-            user=user2
+            user=user2,
         )
         create_test_workflow(
             template=template_3,
-            user=user
+            user=user,
         )
 
         api_client.token_authenticate(user2)
@@ -1448,8 +1448,8 @@ class TestWorkflowCountsByTemplateTask:
         response = api_client.get(
             '/workflows/count/by-template-task',
             data={
-                'current_performer_group_ids': group.id
-            }
+                'current_performer_group_ids': group.id,
+            },
         )
 
         # assert
@@ -1482,7 +1482,7 @@ class TestWorkflowCountsByTemplateTask:
 
     def test__filter__current_performer_and_performer_group_ids__ok(
         self,
-        api_client
+        api_client,
     ):
         # arrange
         account = create_test_account()
@@ -1510,20 +1510,20 @@ class TestWorkflowCountsByTemplateTask:
         template_task_3 = template_3.tasks.get(number=1)
         template_task_1.add_raw_performer(
             performer_type=PerformerType.GROUP,
-            group=group
+            group=group,
         )
 
         create_test_workflow(
             template=template_1,
-            user=user
+            user=user,
         )
         create_test_workflow(
             template=template_2,
-            user=user2
+            user=user2,
         )
         create_test_workflow(
             template=template_3,
-            user=user
+            user=user,
         )
 
         api_client.token_authenticate(user2)
@@ -1533,8 +1533,8 @@ class TestWorkflowCountsByTemplateTask:
             '/workflows/count/by-template-task',
             data={
                 'current_performer_ids': user.id,
-                'current_performer_group_ids': group.id
-            }
+                'current_performer_group_ids': group.id,
+            },
         )
 
         # assert
@@ -1567,7 +1567,7 @@ class TestWorkflowCountsByTemplateTask:
 
     def test__filter__not_unique_current_performer_and_performer_group_ids__ok(
         self,
-        api_client
+        api_client,
     ):
         # arrange
         account = create_test_account()
@@ -1595,20 +1595,20 @@ class TestWorkflowCountsByTemplateTask:
         template_task_3 = template_3.tasks.get(number=1)
         template_task_1.add_raw_performer(
             performer_type=PerformerType.GROUP,
-            group=group
+            group=group,
         )
 
         create_test_workflow(
             template=template_1,
-            user=user
+            user=user,
         )
         create_test_workflow(
             template=template_2,
-            user=user2
+            user=user2,
         )
         create_test_workflow(
             template=template_3,
-            user=user
+            user=user,
         )
 
         api_client.token_authenticate(user2)
@@ -1618,8 +1618,8 @@ class TestWorkflowCountsByTemplateTask:
             '/workflows/count/by-template-task',
             data={
                 'current_performer_ids': user.id,
-                'current_performer_group_ids': group.id
-            }
+                'current_performer_group_ids': group.id,
+            },
         )
 
         # assert
@@ -1652,7 +1652,7 @@ class TestWorkflowCountsByTemplateTask:
 
     def test__filter__current_performer_group_ids_invalid__validation_error(
         self,
-        api_client
+        api_client,
     ):
         # arrange
         user = create_test_user()
@@ -1661,7 +1661,7 @@ class TestWorkflowCountsByTemplateTask:
         # act
         response = api_client.get(
             '/workflows/count/by-template-task',
-            data={'current_performer_group_ids': 'None'}
+            data={'current_performer_group_ids': 'None'},
         )
 
         # assert
@@ -1676,7 +1676,7 @@ class TestWorkflowCountsByTemplateTask:
 
     def test__filter__current_performer_ids_invalid__validation_error(
         self,
-        api_client
+        api_client,
     ):
         # arrange
         user = create_test_user()
@@ -1685,7 +1685,7 @@ class TestWorkflowCountsByTemplateTask:
         # act
         response = api_client.get(
             '/workflows/count/by-template-task',
-            data={'current_performer_ids': 'None'}
+            data={'current_performer_ids': 'None'},
         )
 
         # assert
@@ -1698,7 +1698,7 @@ class TestWorkflowCountsByTemplateTask:
 
     def test__filter__inconsistent_filters__validation_error(
         self,
-        api_client
+        api_client,
     ):
 
         # arrange
@@ -1710,8 +1710,8 @@ class TestWorkflowCountsByTemplateTask:
             '/workflows/count/by-template-task',
             data={
                 'status': WorkflowApiStatus.DONE,
-                'current_performer_ids': user.id
-            }
+                'current_performer_ids': user.id,
+            },
         )
 
         # assert
@@ -1724,7 +1724,7 @@ class TestWorkflowCountsByTemplateTask:
         # arrange
         account = create_test_account(
             'plan kapkan',
-            plan=BillingPlanType.PREMIUM
+            plan=BillingPlanType.PREMIUM,
         )
         user_1 = create_test_user(account=account, email='user1@test.test')
         user_2 = create_test_user(account=account, email='user2@test.test')
@@ -1772,7 +1772,7 @@ class TestWorkflowCountsByTemplateTask:
         create_test_workflow(
             user=user_1,
             template=template_1,
-            active_task_number=2
+            active_task_number=2,
         )
         template_1.is_public = True
         template_1.save()
@@ -1786,7 +1786,7 @@ class TestWorkflowCountsByTemplateTask:
         # act
         response = api_client.get(
             path='/workflows/count/by-template-task',
-            data={'workflow_starter_ids': f'{user_1.id},{user_2.id}'}
+            data={'workflow_starter_ids': f'{user_1.id},{user_2.id}'},
         )
 
         # assert

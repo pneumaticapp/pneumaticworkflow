@@ -23,7 +23,7 @@ from src.authentication.enums import AuthTokenType
 from src.authentication.permissions import PrivateApiPermission
 from src.authentication.services import AuthService
 from src.accounts.throttling import (
-    InvitesTokenThrottle
+    InvitesTokenThrottle,
 )
 from src.generics.permissions import (
     UserIsAuthenticated,
@@ -37,14 +37,14 @@ from src.accounts.services.exceptions import (
     AlreadyRegisteredException,
 )
 from src.accounts.services import (
-    UserInviteService
+    UserInviteService,
 )
 from src.utils.validation import raise_validation_error
 from src.analytics.mixins import (
     BaseIdentifyMixin,
 )
 from src.generics.mixins.views import (
-    CustomViewSetMixin
+    CustomViewSetMixin,
 )
 from src.accounts.services.user import UserService
 
@@ -54,7 +54,7 @@ UserModel = get_user_model()
 class UserInviteViewSet(
     CustomViewSetMixin,
     GenericViewSet,
-    BaseIdentifyMixin
+    BaseIdentifyMixin,
 ):
 
     action_serializer_classes = {
@@ -115,13 +115,13 @@ class UserInviteViewSet(
         service = UserInviteService(
             is_superuser=request.is_superuser,
             request_user=request.user,
-            current_url=request.META.get('HTTP_X_CURRENT_URL')
+            current_url=request.META.get('HTTP_X_CURRENT_URL'),
         )
         try:
             service.invite_users(data=slz.validated_data['users'])
         except AlreadyAcceptedInviteException as ex:
             return self.response_ok({
-                'already_accepted': ex.invites_data
+                'already_accepted': ex.invites_data,
             })
         except UsersLimitInvitesException as ex:
             raise_validation_error(message=ex.message)
@@ -146,7 +146,7 @@ class UserInviteViewSet(
         except (
             InvalidOrExpiredToken,
             AlreadyRegisteredException,
-            AlreadyAcceptedInviteException
+            AlreadyAcceptedInviteException,
         ) as ex:
             raise_validation_error(message=ex.message)
         else:
@@ -166,12 +166,12 @@ class UserInviteViewSet(
         service = UserInviteService(
             current_url=request.META.get('HTTP_X_CURRENT_URL'),
             is_superuser=False,
-            auth_type=AuthTokenType.USER
+            auth_type=AuthTokenType.USER,
         )
         try:
             user = service.accept(
                 invite=self.get_object(),
-                **slz.validated_data
+                **slz.validated_data,
             )
         except AlreadyRegisteredException as ex:
             raise_validation_error(message=ex.message)
@@ -180,7 +180,7 @@ class UserInviteViewSet(
                 user=user,
                 user_agent=request.headers.get(
                     'User-Agent',
-                    request.META.get('HTTP_USER_AGENT')
+                    request.META.get('HTTP_USER_AGENT'),
                 ),
                 user_ip=request.META.get('HTTP_X_REAL_IP'),
             )
@@ -201,7 +201,7 @@ class UserInviteViewSet(
         service = UserInviteService(
             is_superuser=request.is_superuser,
             request_user=request.user,
-            current_url=request.META.get('HTTP_X_CURRENT_URL')
+            current_url=request.META.get('HTTP_X_CURRENT_URL'),
         )
         try:
             service.resend_invite(user_id=pk)

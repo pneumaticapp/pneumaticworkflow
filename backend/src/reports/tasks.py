@@ -56,9 +56,9 @@ def send_digest_notification(count: int):
                 'text': {
                     'type': 'mrkdwn',
                     'text': text,
-                }
-            }
-        ]
+                },
+            },
+        ],
     )
 
 
@@ -77,7 +77,7 @@ def send_tasks_digest_notification(count: int):
                 'text': {
                     'type': 'mrkdwn',
                     'text': text,
-                }
-            }
-        ]
+                },
+            },
+        ],
     )

@@ -21,7 +21,7 @@ class TestTokenObtainView:
         'username', [
             'test@pneumatic.app',
             'tESt@pneumatic.app',
-        ]
+        ],
     )
     def test_correct_data(
         self,
@@ -41,11 +41,11 @@ class TestTokenObtainView:
         user.save(update_fields=['password'])
         data = {
             'username': username,
-            'password': '12345'
+            'password': '12345',
         }
         analytics_mock = mocker.patch(
             'src.authentication.views.signin.'
-            'AnalyticService.users_logged_in'
+            'AnalyticService.users_logged_in',
         )
 
         # act
@@ -59,7 +59,7 @@ class TestTokenObtainView:
             user=user,
             auth_type=AuthTokenType.USER,
             source=SourceType.EMAIL,
-            is_superuser=False
+            is_superuser=False,
         )
 
     def test_incorrect_data(
@@ -74,11 +74,11 @@ class TestTokenObtainView:
         user.save(update_fields=['password'])
         data = {
             'username': user.email,
-            'password': 'YouShallNotPass'
+            'password': 'YouShallNotPass',
         }
         analytics_mock = mocker.patch(
             'src.authentication.views.signin.'
-            'AnalyticService.users_logged_in'
+            'AnalyticService.users_logged_in',
         )
 
         # act
@@ -109,11 +109,11 @@ class TestTokenObtainView:
 
         data = {
             'username': user.email,
-            'password': '12345'
+            'password': '12345',
         }
         analytics_mock = mocker.patch(
             'src.authentication.views.signin.'
-            'AnalyticService.users_logged_in'
+            'AnalyticService.users_logged_in',
         )
 
         # act
@@ -141,14 +141,14 @@ class TestSuperuserView:
         get_token_mock = mocker.patch(
             'src.authentication.views.signin.AuthService.'
             'get_superuser_auth_token',
-            return_value=token
+            return_value=token,
         )
 
         response = api_client.post(
             '/auth/superuser/token',
             data={
                 'email': user.email,
-            }
+            },
         )
 
         assert response.status_code == 200
@@ -164,7 +164,7 @@ class TestSuperuserView:
             '/auth/superuser/token',
             data={
                 'email': another_user.email,
-            }
+            },
         )
 
         assert response.status_code == 403

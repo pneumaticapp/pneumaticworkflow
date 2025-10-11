@@ -32,15 +32,15 @@ def test_confirm__ok(
     service_init_mock = mocker.patch.object(
         StripeService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     confirm_mock = mocker.patch(
-        'src.payment.stripe.service.StripeService.confirm'
+        'src.payment.stripe.service.StripeService.confirm',
     )
     mocker.patch(
         'src.payment.views.ProjectBillingPermission'
         '.has_permission',
-        return_value=True
+        return_value=True,
     )
 
     api_client.token_authenticate(user)
@@ -50,7 +50,7 @@ def test_confirm__ok(
         '/payment/confirm',
         data={
             'token': str(token),
-        }
+        },
     )
 
     # assert
@@ -58,7 +58,7 @@ def test_confirm__ok(
     service_init_mock.assert_called_once_with(
         user=user,
         auth_type=AuthTokenType.API,
-        is_superuser=False
+        is_superuser=False,
     )
     confirm_mock.assert_called_once()
 
@@ -72,7 +72,7 @@ def test_confirm__subscription_data__ok(
     user = create_test_user(account=account)
     subscription_data = {
         'code': 'price code',
-        'quantity': 2
+        'quantity': 2,
     }
     token = ConfirmToken()
     token['user_id'] = user.id
@@ -84,15 +84,15 @@ def test_confirm__subscription_data__ok(
     service_init_mock = mocker.patch.object(
         StripeService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     confirm_mock = mocker.patch(
-        'src.payment.stripe.service.StripeService.confirm'
+        'src.payment.stripe.service.StripeService.confirm',
     )
     mocker.patch(
         'src.payment.views.ProjectBillingPermission'
         '.has_permission',
-        return_value=True
+        return_value=True,
     )
 
     api_client.token_authenticate(user)
@@ -102,7 +102,7 @@ def test_confirm__subscription_data__ok(
         '/payment/confirm',
         data={
             'token': str(token),
-        }
+        },
     )
 
     # assert
@@ -110,10 +110,10 @@ def test_confirm__subscription_data__ok(
     service_init_mock.assert_called_once_with(
         user=user,
         auth_type=AuthTokenType.API,
-        is_superuser=False
+        is_superuser=False,
     )
     confirm_mock.assert_called_once_with(
-        subscription_data=subscription_data
+        subscription_data=subscription_data,
     )
 
 
@@ -127,15 +127,15 @@ def test_confirm__skip_token__validation_error(
     service_init_mock = mocker.patch.object(
         StripeService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     confirm_mock = mocker.patch(
-        'src.payment.stripe.service.StripeService.confirm'
+        'src.payment.stripe.service.StripeService.confirm',
     )
     mocker.patch(
         'src.payment.views.ProjectBillingPermission'
         '.has_permission',
-        return_value=True
+        return_value=True,
     )
 
     api_client.token_authenticate(user)
@@ -165,20 +165,20 @@ def test_confirm__invalid_token__validation_error(
     get_token_mock = mocker.patch.object(
         ConfirmToken,
         attribute='__init__',
-        side_effect=TokenError(message)
+        side_effect=TokenError(message),
     )
     service_init_mock = mocker.patch.object(
         StripeService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     confirm_mock = mocker.patch(
-        'src.payment.stripe.service.StripeService.confirm'
+        'src.payment.stripe.service.StripeService.confirm',
     )
     mocker.patch(
         'src.payment.views.ProjectBillingPermission'
         '.has_permission',
-        return_value=True
+        return_value=True,
     )
     invalid_token = '!@#ASEwadd13'
     api_client.token_authenticate(user)
@@ -188,7 +188,7 @@ def test_confirm__invalid_token__validation_error(
         '/payment/confirm',
         data={
             'token': invalid_token,
-        }
+        },
     )
 
     # assert
@@ -218,15 +218,15 @@ def test_confirm__disable_billing__permission_denied(
     service_init_mock = mocker.patch.object(
         StripeService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     confirm_mock = mocker.patch(
-        'src.payment.stripe.service.StripeService.confirm'
+        'src.payment.stripe.service.StripeService.confirm',
     )
     mocker.patch(
         'src.payment.views.ProjectBillingPermission'
         '.has_permission',
-        return_value=False
+        return_value=False,
     )
 
     api_client.token_authenticate(user)
@@ -236,7 +236,7 @@ def test_confirm__disable_billing__permission_denied(
         '/payment/confirm',
         data={
             'token': str(token),
-        }
+        },
     )
 
     # assert

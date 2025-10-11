@@ -19,7 +19,7 @@ def send_system_notification():
             system_message.is_delivery_completed = True
             system_message.save()
         notifications = Notification.objects.filter(
-            system_message=system_message
+            system_message=system_message,
         ).select_related('user', 'account').exclude_read()
         for notification in notifications:
             _send_notification(

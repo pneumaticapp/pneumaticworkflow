@@ -3,7 +3,7 @@ from django.conf import settings
 from django.db.models import Q, Count
 from rest_framework.permissions import BasePermission
 from src.processes.messages.workflow import (
-    MSG_PW_0001
+    MSG_PW_0001,
 )
 from src.processes.messages.template import (
     MSG_PT_0023,
@@ -82,7 +82,7 @@ class WorkflowMemberPermission(BasePermission):
             workflow_access_query = Workflow.objects.by_id(
                 workflow_id).on_account(request.user.account_id).filter(
                 Q(members=request.user.id) |
-                Q(tasks__taskperformer__group__users=request.user.id)
+                Q(tasks__taskperformer__group__users=request.user.id),
             ).distinct()
             return (
                 request.user.is_account_owner or
@@ -170,11 +170,11 @@ class TaskWorkflowMemberPermission(BasePermission):
 
         query = Task.objects.filter(
             id=task_id,
-            account_id=request.user.account_id
+            account_id=request.user.account_id,
         ).annotate(
             is_member=Count(
                 'workflow__members',
-                filter=Q(workflow__members=request.user.id)
+                filter=Q(workflow__members=request.user.id),
             ),
         )
         is_member = query.values('is_member').first()
@@ -203,7 +203,7 @@ class GuestWorkflowPermission(BasePermission):
             workflow_id = int(match.group('workflow_id'))
             return Task.objects.filter(
                 id=request.task_id,
-                workflow_id=workflow_id
+                workflow_id=workflow_id,
             ).active().exists()
         else:
             return True
@@ -220,7 +220,7 @@ class GuestWorkflowEventsPermission(BasePermission):
             else:
                 return Task.objects.filter(
                     id=request.task_id,
-                    workflow_id=workflow_id
+                    workflow_id=workflow_id,
                 ).exists()
         else:
             return True
@@ -278,7 +278,7 @@ class GuestTaskPermission(BasePermission):
             return False
         return Checklist.objects.filter(
             task_id=request.task_id,
-            id=int(match.group('checklist_id'))
+            id=int(match.group('checklist_id')),
         ).exists()
 
     def has_permission(self, request, view):
@@ -306,7 +306,7 @@ class CommentEditPermission(BasePermission):
             return False
         qst = WorkflowEvent.objects.filter(
             user_id=request.user.id,
-            id=comment_id
+            id=comment_id,
         ).type_comment()
         if request.user.type == UserType.GUEST:
             qst = qst.by_task(request.task_id)
@@ -335,7 +335,7 @@ class CommentReactionPermission(BasePermission):
         else:
             return qst.filter(
                 Q(workflow__members=request.user.id) |
-                Q(workflow__tasks__taskperformer__group__users=request.user.id)
+                Q(workflow__tasks__taskperformer__group__users=request.user.id),
             ).exists()
 
 

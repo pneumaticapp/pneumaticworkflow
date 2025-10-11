@@ -17,11 +17,11 @@ class TestEmailService:
     def test_call_mailing_dev(self, mocker):
 
         settings_mock = mocker.patch(
-            'src.services.email.settings'
+            'src.services.email.settings',
         )
         send_to_console_mock = mocker.patch(
             'src.services.email.'
-            'EmailService._send_email_to_console'
+            'EmailService._send_email_to_console',
         )
         user_id = 1
         email = 'john@cena.com'
@@ -44,7 +44,7 @@ class TestEmailService:
         settings_mock = mocker.patch(
             'src.services.email.settings')
         send_via_customerio_mock = mocker.patch(
-            'src.services.tasks.send_email_via_customerio.delay'
+            'src.services.tasks.send_email_via_customerio.delay',
         )
         user_id = 1
         email = 'john@cena.com'
@@ -68,7 +68,7 @@ class TestEmailService:
         account = create_test_account(logo_lg='https://another/image.jpg')
         user = create_test_user(account=account)
         call_mailing_mock = mocker.patch(
-            'src.services.email.EmailService._send_mail'
+            'src.services.email.EmailService._send_mail',
         )
 
         EmailService.send_user_deactivated_email(user)
@@ -79,7 +79,7 @@ class TestEmailService:
             template_code=EmailTemplate.USER_DEACTIVATED,
             data={
                 'logo_lg': user.account.logo_lg,
-            }
+            },
         )
 
     def test_send_verification_email(self, mocker):
@@ -89,19 +89,19 @@ class TestEmailService:
         user.first_name = 'Shrek'
         user.save()
         call_mailing_mock = mocker.patch(
-            'src.services.email.EmailService._send_mail'
+            'src.services.email.EmailService._send_mail',
         )
 
         data = {
             'token': '123456',
             'first_name': user.first_name,
-            'logo_lg': user.account.logo_lg
+            'logo_lg': user.account.logo_lg,
         }
 
         EmailService.send_verification_email(
             user=user,
             token='123456',
-            logo_lg=account.logo_lg
+            logo_lg=account.logo_lg,
         )
 
         call_mailing_mock.assert_called_with(
@@ -117,7 +117,7 @@ class TestEmailService:
         account = create_test_account(logo_lg='https://another/image.jpg')
         user = create_test_user(account=account)
         call_mailing_mock = mocker.patch(
-            'src.services.email.EmailService._send_mail'
+            'src.services.email.EmailService._send_mail',
         )
         create_token_mock = mocker.patch(
             'src.accounts.tokens.UnsubscribeEmailToken.'
@@ -176,5 +176,5 @@ class TestEmailService:
                 'unsubscribe_token': create_token_mock.return_value,
                 'logo_lg': account.logo_lg,
                 **mailing_data,
-            }
+            },
         )

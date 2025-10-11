@@ -7,21 +7,21 @@ from src.processes.tests.fixtures import (
 from src.processes.models import WorkflowEvent
 from src.processes.enums import WorkflowEventType
 from src.processes.serializers.workflows.events import (
-    TaskEventJsonSerializer
+    TaskEventJsonSerializer,
 )
 from src.notifications.tasks import (
-    _send_mention_notification
+    _send_mention_notification,
 )
 from src.accounts.enums import (
     NotificationType,
 )
 from src.accounts.models import Notification
 from src.notifications.services.push import (
-    PushNotificationService
+    PushNotificationService,
 )
 from src.notifications.services.email import EmailService
 from src.notifications.services.websockets import (
-    WebSocketService
+    WebSocketService,
 )
 
 
@@ -37,12 +37,12 @@ def test_send_mention_notification__call_services__ok(mocker):
     )
     account_owner = create_test_user(
         is_account_owner=True,
-        account=account
+        account=account,
     )
     user = create_test_user(
         email='t@t.t',
         account=account,
-        is_account_owner=False
+        is_account_owner=False,
     )
     workflow = create_test_workflow(user, tasks_count=1)
     task = workflow.tasks.get(number=1)
@@ -56,36 +56,36 @@ def test_send_mention_notification__call_services__ok(mocker):
         task=task,
         task_json=TaskEventJsonSerializer(
             instance=task,
-            context={'event_type': WorkflowEventType.COMMENT}
+            context={'event_type': WorkflowEventType.COMMENT},
         ).data,
         user=account_owner,
     )
     push_notification_service_init_mock = mocker.patch.object(
         PushNotificationService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     push_notification_mock = mocker.patch(
         'src.notifications.services.push.'
-        'PushNotificationService.send_mention'
+        'PushNotificationService.send_mention',
     )
     websocket_service_init_mock = mocker.patch.object(
         WebSocketService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     websocket_notification_mock = mocker.patch(
         'src.notifications.services.websockets.'
-        'WebSocketService.send_mention'
+        'WebSocketService.send_mention',
     )
     email_service_init_mock = mocker.patch.object(
         EmailService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     email_notification_mock = mocker.patch(
         'src.notifications.services.email.'
-        'EmailService.send_mention'
+        'EmailService.send_mention',
     )
     text = 'Some mention'
 
@@ -107,7 +107,7 @@ def test_send_mention_notification__call_services__ok(mocker):
         author_id=user.id,
         account_id=account.id,
         type=NotificationType.MENTION,
-        text=text
+        text=text,
     )
     push_notification_service_init_mock.assert_called_once_with(
         logging=account.log_api_requests,

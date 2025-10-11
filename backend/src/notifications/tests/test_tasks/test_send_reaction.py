@@ -4,7 +4,7 @@ from src.accounts.serializers.notifications import (
     NotificationWorkflowSerializer,
 )
 from src.processes.serializers.workflows.events import (
-    TaskEventJsonSerializer
+    TaskEventJsonSerializer,
 )
 from src.processes.tests.fixtures import (
     create_test_workflow,
@@ -14,7 +14,7 @@ from src.processes.tests.fixtures import (
 from src.processes.models import WorkflowEvent
 from src.processes.enums import WorkflowEventType
 from src.notifications.tasks import (
-    _send_reaction_notification
+    _send_reaction_notification,
 )
 from src.accounts.enums import (
     NotificationType,
@@ -22,7 +22,7 @@ from src.accounts.enums import (
 from src.accounts.models import Notification
 from src.notifications.messages import MSG_NF_0001
 from src.notifications.services.push import (
-    PushNotificationService
+    PushNotificationService,
 )
 
 
@@ -35,14 +35,14 @@ def test_send_reaction_notification__call_services__ok(mocker):
     account = create_test_account(logo_lg='https://logo.jpg')
     account_owner = create_test_user(
         is_account_owner=True,
-        account=account
+        account=account,
     )
     reacted_user = create_test_user(
         email='t@t.t',
         account=account,
         is_account_owner=False,
         first_name='Messaged',
-        last_name='User'
+        last_name='User',
     )
     workflow = create_test_workflow(account_owner, tasks_count=1)
     task = workflow.tasks.get(number=1)
@@ -53,24 +53,24 @@ def test_send_reaction_notification__call_services__ok(mocker):
         task=task,
         task_json=TaskEventJsonSerializer(
             instance=task,
-            context={'event_type': WorkflowEventType.COMMENT}
+            context={'event_type': WorkflowEventType.COMMENT},
         ).data,
         workflow=workflow,
         user=reacted_user,
-        text='Test comment'
+        text='Test comment',
     )
     push_notification_service_init_mock = mocker.patch.object(
         PushNotificationService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     push_notification_mock = mocker.patch(
         'src.notifications.services.push.'
-        'PushNotificationService.send_reaction'
+        'PushNotificationService.send_reaction',
     )
     websocket_notification_mock = mocker.patch(
         'src.notifications.services.websockets.'
-        'WebSocketService.send_reaction'
+        'WebSocketService.send_reaction',
     )
     reaction = ':dumb face:'
 
@@ -93,16 +93,16 @@ def test_send_reaction_notification__call_services__ok(mocker):
         task_id=task.id,
         task_json=NotificationTaskSerializer(
             instance=event.task,
-            notification_type=NotificationType.REACTION
+            notification_type=NotificationType.REACTION,
         ).data,
         workflow_json=NotificationWorkflowSerializer(
-            instance=event.workflow
+            instance=event.workflow,
         ).data,
         user_id=account_owner.id,
         author_id=reacted_user.id,
         account_id=account.id,
         type=NotificationType.REACTION,
-        text=text
+        text=text,
     )
     push_notification_service_init_mock.assert_called_once_with(
         logging=account.log_api_requests,
@@ -127,7 +127,7 @@ def test_send_reaction_notification__call_services__ok(mocker):
         workflow_name=workflow.name,
         text=text,
         sync=True,
-        notification=notification
+        notification=notification,
     )
 
 
@@ -137,14 +137,14 @@ def test_send_reaction_notification__delete_task__ok(mocker):
     account = create_test_account(logo_lg='https://logo.jpg')
     account_owner = create_test_user(
         is_account_owner=True,
-        account=account
+        account=account,
     )
     reacted_user = create_test_user(
         email='t@t.t',
         account=account,
         is_account_owner=False,
         first_name='Messaged',
-        last_name='User'
+        last_name='User',
     )
     workflow = create_test_workflow(account_owner, tasks_count=1)
     task = workflow.tasks.get(number=1)
@@ -155,25 +155,25 @@ def test_send_reaction_notification__delete_task__ok(mocker):
         task=task,
         task_json=TaskEventJsonSerializer(
             instance=task,
-            context={'event_type': WorkflowEventType.COMMENT}
+            context={'event_type': WorkflowEventType.COMMENT},
         ).data,
         workflow=workflow,
         user=reacted_user,
-        text='Test comment'
+        text='Test comment',
     )
     task.delete()
     push_notification_service_init_mock = mocker.patch.object(
         PushNotificationService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     push_notification_mock = mocker.patch(
         'src.notifications.services.push.'
-        'PushNotificationService.send_reaction'
+        'PushNotificationService.send_reaction',
     )
     websocket_notification_mock = mocker.patch(
         'src.notifications.services.websockets.'
-        'WebSocketService.send_reaction'
+        'WebSocketService.send_reaction',
     )
     reaction = ':dumb face:'
 
@@ -196,16 +196,16 @@ def test_send_reaction_notification__delete_task__ok(mocker):
         task_id=task.id,
         task_json={
             'id': event.task_json['id'],
-            'name': event.task_json['name']
+            'name': event.task_json['name'],
         },
         workflow_json=NotificationWorkflowSerializer(
-            instance=event.workflow
+            instance=event.workflow,
         ).data,
         user_id=account_owner.id,
         author_id=reacted_user.id,
         account_id=account.id,
         type=NotificationType.REACTION,
-        text=text
+        text=text,
     )
     push_notification_service_init_mock.assert_called_once_with(
         logging=account.log_api_requests,
@@ -230,5 +230,5 @@ def test_send_reaction_notification__delete_task__ok(mocker):
         workflow_name=workflow.name,
         text=text,
         sync=True,
-        notification=notification
+        notification=notification,
     )

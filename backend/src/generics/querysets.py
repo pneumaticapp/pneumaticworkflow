@@ -40,7 +40,7 @@ class BaseQuerySet(SoftDeleteMixin, QuerySet):
     def execute_raw(
         self,
         query: SqlQueryObject,
-        using: Optional[str] = None
+        using: Optional[str] = None,
     ):
         query, raw_params = query.get_sql()
         return self.raw(query, raw_params, using=using)

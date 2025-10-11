@@ -5,10 +5,10 @@ from django.utils import timezone
 from src.processes.tests.fixtures import (
     create_test_user,
     create_test_account,
-    create_invited_user, create_test_owner, create_test_admin
+    create_invited_user, create_test_owner, create_test_admin,
 )
 from src.processes.models import (
-    TemplateOwner
+    TemplateOwner,
 )
 from src.processes.enums import (
     WorkflowStatus,
@@ -32,7 +32,7 @@ class TestDashboardOverview:
         create_test_user(
             email='owner@test.test',
             account=account,
-            is_account_owner=True
+            is_account_owner=True,
         )
         user = create_test_user(account=account, is_account_owner=False)
         template_1 = create_test_template(user)
@@ -44,7 +44,7 @@ class TestDashboardOverview:
         workflow_1 = create_test_workflow(
             user=user,
             template=template_1,
-            status=WorkflowStatus.DONE
+            status=WorkflowStatus.DONE,
         )
         date_created = workflow_1.date_created - timedelta(days=2)
         workflow_1.date_created = date_created
@@ -74,7 +74,7 @@ class TestDashboardOverview:
         overdue_workflow.save(update_fields=[
             'status',
             'date_completed',
-            'date_created'
+            'date_created',
         ])
 
         workflow_2 = create_test_workflow(user, template=template_1)
@@ -147,14 +147,14 @@ class TestDashboardOverview:
 
     def test_overview__different_user_statistic__correct_count(
         self,
-        api_client
+        api_client,
     ):
         # arrange
         account = create_test_account()
         create_test_user(
             email='owner@test.test',
             account=account,
-            is_account_owner=True
+            is_account_owner=True,
         )
         user = create_test_user(account=account, is_account_owner=False)
         create_invited_user(user, 'test1@pneumatic.app')
@@ -202,14 +202,14 @@ class TestDashboardOverview:
 
     def test_overview__legacy_template__count(
         self,
-        api_client
+        api_client,
     ):
         # arrange
         account = create_test_account()
         create_test_user(
             email='owner@test.test',
             account=account,
-            is_account_owner=True
+            is_account_owner=True,
         )
         user = create_test_user(account=account, is_account_owner=False)
         template_1 = create_test_template(user, is_active=True)
@@ -249,14 +249,14 @@ class TestDashboardOverview:
 
     def test_overview__now__ok(
         self,
-        api_client
+        api_client,
     ):
         # arrange
         account = create_test_account()
         create_test_user(
             email='owner@test.test',
             account=account,
-            is_account_owner=True
+            is_account_owner=True,
         )
         user = create_test_user(account=account, is_account_owner=False)
         template_1 = create_test_template(user)
@@ -336,7 +336,7 @@ class TestDashboardOverview:
         create_test_user(
             email='owner@test.test',
             account=account,
-            is_account_owner=True
+            is_account_owner=True,
         )
         user = create_test_user(account=account, is_account_owner=False)
         overdue_workflow = create_test_workflow(user, tasks_count=1)
@@ -370,7 +370,7 @@ class TestDashboardOverview:
         create_test_user(
             email='owner@test.test',
             account=account,
-            is_account_owner=True
+            is_account_owner=True,
         )
         user = create_test_user(account=account, is_account_owner=False)
         overdue_workflow = create_test_workflow(user, tasks_count=1)
@@ -390,14 +390,14 @@ class TestDashboardOverview:
 
     def test_overview__now_overdue_task__ok(
         self,
-        api_client
+        api_client,
     ):
         # arrange
         account = create_test_account()
         create_test_user(
             email='owner@test.test',
             account=account,
-            is_account_owner=True
+            is_account_owner=True,
         )
         user = create_test_user(account=account, is_account_owner=False)
         overdue_workflow = create_test_workflow(user, tasks_count=1)
@@ -431,14 +431,14 @@ class TestDashboardOverview:
 
     def test_overview__now_overdue_workflow__ok(
         self,
-        api_client
+        api_client,
     ):
         # arrange
         account = create_test_account()
         create_test_user(
             email='owner@test.test',
             account=account,
-            is_account_owner=True
+            is_account_owner=True,
         )
         user = create_test_user(account=account, is_account_owner=False)
         overdue_workflow = create_test_workflow(user, tasks_count=1)
@@ -463,18 +463,18 @@ class TestDashboardOverview:
     def test_overview__now__not_overdue_afert_overdue__task_returned__ok(
         self,
         mocker,
-        api_client
+        api_client,
     ):
         # arrange
         mocker.patch(
             'src.processes.tasks.webhooks.'
-            'send_task_completed_webhook.delay'
+            'send_task_completed_webhook.delay',
         )
         account = create_test_account()
         create_test_user(
             email='owner@test.test',
             account=account,
-            is_account_owner=True
+            is_account_owner=True,
         )
         user = create_test_user(account=account, is_account_owner=False)
         api_client.token_authenticate(user)
@@ -500,7 +500,7 @@ class TestDashboardOverview:
             f'/v2/tasks/{task_2.id}/revert',
             data={
                 'comment': text_comment,
-            }
+            },
         )
 
         # act
@@ -524,14 +524,14 @@ class TestDashboardWorkflowBreakdown:
 
     def test_workflow_breakdown__ok(
         self,
-        api_client
+        api_client,
     ):
         # arrange
         account = create_test_account()
         create_test_user(
             email='owner@test.test',
             account=account,
-            is_account_owner=True
+            is_account_owner=True,
         )
         user = create_test_user(account=account, is_account_owner=False)
         template_1 = create_test_template(user)
@@ -569,7 +569,7 @@ class TestDashboardWorkflowBreakdown:
         overdue_workflow.save(update_fields=[
             'status',
             'date_completed',
-            'date_created'
+            'date_created',
         ])
 
         workflow_2 = create_test_workflow(user, template=template_1)
@@ -669,7 +669,7 @@ class TestDashboardWorkflowBreakdown:
 
     def test_workflow_breakdown__template_owners_is_deleted__ok(
         self,
-        api_client
+        api_client,
     ):
         # arrange
         user = create_test_user(is_account_owner=False)
@@ -697,14 +697,14 @@ class TestDashboardWorkflowBreakdown:
 
     def test_workflow_breakdown__legacy_template__not_count(
         self,
-        api_client
+        api_client,
     ):
         # arrange
         account = create_test_account()
         create_test_user(
             email='owner@test.test',
             account=account,
-            is_account_owner=True
+            is_account_owner=True,
         )
         user = create_test_user(account=account, is_account_owner=False)
         template_1 = create_test_template(user)
@@ -739,7 +739,7 @@ class TestDashboardWorkflowBreakdown:
         overdue_workflow.save(update_fields=[
             'status',
             'date_completed',
-            'date_created'
+            'date_created',
         ])
 
         workflow_2 = create_test_workflow(user, template=template_1)
@@ -769,7 +769,7 @@ class TestDashboardWorkflowBreakdown:
 
     def test_workflow_breakdown__now__ok(
         self,
-        api_client
+        api_client,
     ):
 
         # arrange
@@ -777,29 +777,29 @@ class TestDashboardWorkflowBreakdown:
         create_test_user(
             email='owner@test.test',
             account=account,
-            is_account_owner=True
+            is_account_owner=True,
         )
         user = create_test_user(account=account, is_account_owner=False)
         template_1 = create_test_template(user, name='first')
         template_2 = create_test_template(
             user,
             is_active=True,
-            name='second'
+            name='second',
         )
         template_3 = create_test_template(
             user,
             is_active=True,
-            name='third'
+            name='third',
         )
         template_4 = create_test_template(
             user,
             is_active=True,
-            name='fourth'
+            name='fourth',
         )
         draft_template = create_test_template(
             user,
             is_active=False,
-            name='draft'
+            name='draft',
         )
 
         workflow_1 = create_test_workflow(user, template=template_1)
@@ -828,7 +828,7 @@ class TestDashboardWorkflowBreakdown:
         overdue_workflow.date_created = date_created
         overdue_workflow.save(update_fields=[
             'status',
-            'date_created'
+            'date_created',
         ])
 
         workflow_2 = create_test_workflow(user, template=template_1)
@@ -883,7 +883,7 @@ class TestDashboardWorkflowBreakdown:
         # act
         response = api_client.get(
             '/reports/dashboard/workflows/breakdown',
-            data={'now': True}
+            data={'now': True},
         )
 
         # assert
@@ -931,7 +931,7 @@ class TestDashboardWorkflowBreakdown:
 
     def test_workflow_breakdown__now_template_owners_is_deleted__ok(
         self,
-        api_client
+        api_client,
     ):
         # arrange
         user = create_test_user(is_account_owner=False)
@@ -953,7 +953,7 @@ class TestDashboardWorkflowBreakdown:
         # act
         response = api_client.get(
             '/reports/dashboard/workflows/breakdown',
-            data={'now': True}
+            data={'now': True},
         )
 
         # assert
@@ -962,14 +962,14 @@ class TestDashboardWorkflowBreakdown:
 
     def test_workflow_breakdown__draft_template_with_zero_workflows__ok(
         self,
-        api_client
+        api_client,
     ):
         # arrange
         account = create_test_account()
         create_test_user(
             email='owner@test.test',
             account=account,
-            is_account_owner=True
+            is_account_owner=True,
         )
         user = create_test_user(account=account, is_account_owner=False)
         template = create_test_template(user, is_active=False)
@@ -991,14 +991,14 @@ class TestDashboardWorkflowBreakdown:
 
     def test_workflow_breakdown__date_range__ok(
         self,
-        api_client
+        api_client,
     ):
         # arrange
         account = create_test_account()
         create_test_user(
             email='owner@test.test',
             account=account,
-            is_account_owner=True
+            is_account_owner=True,
         )
         user = create_test_user(account=account, is_account_owner=False)
         api_client.token_authenticate(user)
@@ -1008,12 +1008,12 @@ class TestDashboardWorkflowBreakdown:
         draft_template = create_test_template(
             user=user,
             is_active=False,
-            tasks_count=1
+            tasks_count=1,
         )
         active_template = create_test_template(
             user=user,
             is_active=True,
-            tasks_count=1
+            tasks_count=1,
         )
         create_test_workflow(
             user=user,
@@ -1030,8 +1030,8 @@ class TestDashboardWorkflowBreakdown:
             update_fields=[
                 'date_created',
                 'date_completed',
-                'status'
-            ]
+                'status',
+            ],
         )
 
         # act
@@ -1040,7 +1040,7 @@ class TestDashboardWorkflowBreakdown:
             data={
                 'date_from_tsp': date_from.timestamp(),
                 'date_to_tsp': date_to.timestamp(),
-            }
+            },
         )
 
         # assert
@@ -1065,14 +1065,14 @@ class TestDashboardWorkflowBreakdown:
 
     def test_workflow_breakdown__date_range_tsp__ok(
         self,
-        api_client
+        api_client,
     ):
         # arrange
         account = create_test_account()
         create_test_user(
             email='owner@test.test',
             account=account,
-            is_account_owner=True
+            is_account_owner=True,
         )
         user = create_test_user(account=account, is_account_owner=False)
         api_client.token_authenticate(user)
@@ -1082,12 +1082,12 @@ class TestDashboardWorkflowBreakdown:
         draft_template = create_test_template(
             user=user,
             is_active=False,
-            tasks_count=1
+            tasks_count=1,
         )
         active_template = create_test_template(
             user=user,
             is_active=True,
-            tasks_count=1
+            tasks_count=1,
         )
         create_test_workflow(
             user=user,
@@ -1104,8 +1104,8 @@ class TestDashboardWorkflowBreakdown:
             update_fields=[
                 'date_created',
                 'date_completed',
-                'status'
-            ]
+                'status',
+            ],
         )
 
         # act
@@ -1114,7 +1114,7 @@ class TestDashboardWorkflowBreakdown:
             data={
                 'date_from_tsp': date_from.timestamp(),
                 'date_to_tsp': date_to.timestamp(),
-            }
+            },
         )
 
         # assert
@@ -1139,14 +1139,14 @@ class TestDashboardWorkflowBreakdown:
 
     def test_workflow_breakdown__overdue_task__ok(
         self,
-        api_client
+        api_client,
     ):
         # arrange
         account = create_test_account()
         create_test_user(
             email='owner@test.test',
             account=account,
-            is_account_owner=True
+            is_account_owner=True,
         )
         user = create_test_user(account=account, is_account_owner=False)
         overdue_workflow = create_test_workflow(user, tasks_count=1)
@@ -1179,14 +1179,14 @@ class TestDashboardWorkflowBreakdown:
 
     def test_workflow_breakdown__overdue_workflow__ok(
         self,
-        api_client
+        api_client,
     ):
         # arrange
         account = create_test_account()
         create_test_user(
             email='owner@test.test',
             account=account,
-            is_account_owner=True
+            is_account_owner=True,
         )
         user = create_test_user(account=account, is_account_owner=False)
         overdue_workflow = create_test_workflow(user, tasks_count=1)
@@ -1194,7 +1194,7 @@ class TestDashboardWorkflowBreakdown:
         overdue_workflow.due_date = timezone.now() - timedelta(minutes=1)
         overdue_workflow.save(update_fields=[
             'due_date',
-            'date_created'
+            'date_created',
         ])
         template = overdue_workflow.template
         api_client.token_authenticate(user)
@@ -1215,14 +1215,14 @@ class TestDashboardWorkflowBreakdown:
 
     def test_workflow_breakdown__now__overdue_task__ok(
         self,
-        api_client
+        api_client,
     ):
         # arrange
         account = create_test_account()
         create_test_user(
             email='owner@test.test',
             account=account,
-            is_account_owner=True
+            is_account_owner=True,
         )
         user = create_test_user(account=account, is_account_owner=False)
         overdue_workflow = create_test_workflow(user, tasks_count=1)
@@ -1242,7 +1242,7 @@ class TestDashboardWorkflowBreakdown:
         # act
         response = api_client.get(
             '/reports/dashboard/workflows/breakdown',
-            data={'now': True}
+            data={'now': True},
         )
 
         # assert
@@ -1258,14 +1258,14 @@ class TestDashboardWorkflowBreakdown:
 
     def test_workflow_breakdown__now__overdue_workflow__ok(
         self,
-        api_client
+        api_client,
     ):
         # arrange
         account = create_test_account()
         create_test_user(
             email='owner@test.test',
             account=account,
-            is_account_owner=True
+            is_account_owner=True,
         )
         user = create_test_user(account=account, is_account_owner=False)
         overdue_workflow = create_test_workflow(user, tasks_count=1)
@@ -1273,7 +1273,7 @@ class TestDashboardWorkflowBreakdown:
         overdue_workflow.due_date = timezone.now() - timedelta(minutes=1)
         overdue_workflow.save(update_fields=[
             'due_date',
-            'date_created'
+            'date_created',
         ])
         template = overdue_workflow.template
         api_client.token_authenticate(user)
@@ -1282,7 +1282,7 @@ class TestDashboardWorkflowBreakdown:
         # act
         response = api_client.get(
             '/reports/dashboard/workflows/breakdown',
-            data={'now': True}
+            data={'now': True},
         )
 
         # assert
@@ -1302,18 +1302,18 @@ class TestWorkflowBreakdownByTasks:
     def test_workflow_breakdown__ok(
         self,
         mocker,
-        api_client
+        api_client,
     ):
         # arrange
         mocker.patch(
             'src.processes.tasks.webhooks.'
-            'send_task_completed_webhook.delay'
+            'send_task_completed_webhook.delay',
         )
         account = create_test_account()
         create_test_user(
             email='owner@test.test',
             account=account,
-            is_account_owner=True
+            is_account_owner=True,
         )
         user = create_test_user(account=account, is_account_owner=False)
         template_1 = create_test_template(user)
@@ -1396,7 +1396,7 @@ class TestWorkflowBreakdownByTasks:
 
     def test_workflow_breakdown__user_is_not_template_owner__not_found(
         self,
-        api_client
+        api_client,
     ):
 
         # arrange
@@ -1404,14 +1404,14 @@ class TestWorkflowBreakdownByTasks:
         create_test_user(
             email='owner@test.test',
             account=account,
-            is_account_owner=True
+            is_account_owner=True,
         )
         user = create_test_user(account=account, is_account_owner=False)
         template_1 = create_test_template(user, is_active=True)
         create_test_workflow(user, template=template_1)
         another_user = create_test_user(
             account=user.account,
-            email='test@test.test'
+            email='test@test.test',
         )
         api_client.token_authenticate(another_user)
 
@@ -1427,13 +1427,13 @@ class TestWorkflowBreakdownByTasks:
     def test_workflow_breakdown__now__ok(
         self,
         mocker,
-        api_client
+        api_client,
     ):
 
         # arrange
         mocker.patch(
             'src.processes.tasks.webhooks.'
-            'send_task_completed_webhook.delay'
+            'send_task_completed_webhook.delay',
         )
         account = create_test_account()
         create_test_owner(account=account)
@@ -1444,18 +1444,18 @@ class TestWorkflowBreakdownByTasks:
         create_test_workflow(
             user,
             template=template_1,
-            active_task_number=2
+            active_task_number=2,
         )
         create_test_workflow(
             user=user,
             template=template_1,
-            active_task_number=3
+            active_task_number=3,
         )
         template_2 = create_test_template(user, is_active=True)
         create_test_workflow(
             user=user,
             template=template_2,
-            status=WorkflowStatus.DONE
+            status=WorkflowStatus.DONE,
         )
         api_client.token_authenticate(user)
 
@@ -1499,7 +1499,7 @@ class TestWorkflowBreakdownByTasks:
     def test_workflow_breakdown__without_workflows__ok(
         self,
         is_active,
-        api_client
+        api_client,
     ):
 
         # arrange
@@ -1507,14 +1507,14 @@ class TestWorkflowBreakdownByTasks:
         create_test_user(
             email='owner@test.test',
             account=account,
-            is_account_owner=True
+            is_account_owner=True,
         )
         user = create_test_user(account=account, is_account_owner=False)
         api_client.token_authenticate(user)
         template = create_test_template(
             user=user,
             is_active=is_active,
-            tasks_count=1
+            tasks_count=1,
         )
         template_task = template.tasks.get()
 
@@ -1541,7 +1541,7 @@ class TestWorkflowBreakdownByTasks:
         self,
         mocker,
         is_active,
-        api_client
+        api_client,
     ):
 
         # arrange
@@ -1549,25 +1549,25 @@ class TestWorkflowBreakdownByTasks:
         create_test_user(
             email='owner@test.test',
             account=account,
-            is_account_owner=True
+            is_account_owner=True,
         )
         user = create_test_user(account=account, is_account_owner=False)
         api_client.token_authenticate(user)
         template = create_test_template(
             user=user,
             is_active=is_active,
-            tasks_count=1
+            tasks_count=1,
         )
         workflow = create_test_workflow(
             template=template,
             user=user,
-            tasks_count=1
+            tasks_count=1,
         )
 
         template_task = template.tasks.get()
         mocker.patch(
             'src.analytics.services.AnalyticService.'
-            'workflows_terminated'
+            'workflows_terminated',
         )
 
         # act
@@ -1594,14 +1594,14 @@ class TestWorkflowBreakdownByTasks:
 
     def test_workflow_breakdown__overdue_task__ok(
         self,
-        api_client
+        api_client,
     ):
         # arrange
         account = create_test_account()
         create_test_user(
             email='owner@test.test',
             account=account,
-            is_account_owner=True
+            is_account_owner=True,
         )
         user = create_test_user(account=account, is_account_owner=False)
         overdue_workflow = create_test_workflow(user, tasks_count=1)
@@ -1639,7 +1639,7 @@ class TestWorkflowBreakdownByTasks:
 
     def test_workflow_breakdown__overdue_diff_workflow_tasks__ok(
         self,
-        api_client
+        api_client,
     ):
         # arrange
         user = create_test_user()
@@ -1687,7 +1687,7 @@ class TestWorkflowBreakdownByTasks:
     def test_workflow_breakdown__in_progress__ok(
         self,
         mocker,
-        api_client
+        api_client,
     ):
 
         """ Bug case when template task api name is same
@@ -1696,13 +1696,13 @@ class TestWorkflowBreakdownByTasks:
         # arrange
         mocker.patch(
             'src.processes.tasks.webhooks.'
-            'send_task_completed_webhook.delay'
+            'send_task_completed_webhook.delay',
         )
         account = create_test_account()
         create_test_user(
             email='owner@test.test',
             account=account,
-            is_account_owner=True
+            is_account_owner=True,
         )
         user = create_test_user(account=account, is_account_owner=False)
         template = create_test_template(user, tasks_count=1)
@@ -1741,7 +1741,7 @@ class TestWorkflowBreakdownByTasks:
 
     def test_workflow_breakdown__now__overdue_task__ok(
         self,
-        api_client
+        api_client,
     ):
 
         # arrange
@@ -1749,7 +1749,7 @@ class TestWorkflowBreakdownByTasks:
         create_test_user(
             email='owner@test.test',
             account=account,
-            is_account_owner=True
+            is_account_owner=True,
         )
         user = create_test_user(account=account, is_account_owner=False)
         overdue_workflow = create_test_workflow(user, tasks_count=1)
@@ -1772,7 +1772,7 @@ class TestWorkflowBreakdownByTasks:
             '/reports/dashboard/workflows/by-tasks',
             data={
                 'template_id': template.id,
-                'now': True
+                'now': True,
             },
         )
 
@@ -1790,7 +1790,7 @@ class TestWorkflowBreakdownByTasks:
 
     def test_workflow_breakdown__now__overdue_diff_workflow_tasks__ok(
         self,
-        api_client
+        api_client,
     ):
         # arrange
         user = create_test_user()
@@ -1809,7 +1809,7 @@ class TestWorkflowBreakdownByTasks:
         workflow_2 = create_test_workflow(
             user=user,
             template=template,
-            active_task_number=2
+            active_task_number=2,
         )
         task_2 = workflow_2.tasks.get(number=2)
         task_2.date_started = date_started
@@ -1822,7 +1822,7 @@ class TestWorkflowBreakdownByTasks:
             '/reports/dashboard/workflows/by-tasks',
             data={
                 'template_id': template.id,
-                'now': True
+                'now': True,
             },
         )
 
@@ -1846,7 +1846,7 @@ class TestWorkflowBreakdownByTasks:
 
     def test_workflow_breakdown__now__overdue_workflow__ok(
         self,
-        api_client
+        api_client,
     ):
 
         # arrange
@@ -1859,12 +1859,12 @@ class TestWorkflowBreakdownByTasks:
         workflow = create_test_workflow(
             user=user,
             template=template,
-            active_task_number=2
+            active_task_number=2,
         )
         workflow.date_created = date_created
         workflow.due_date = date_created + timedelta(minutes=5)
         workflow.save(
-            update_fields=['due_date', 'date_created']
+            update_fields=['due_date', 'date_created'],
         )
         api_client.token_authenticate(user)
 
@@ -1873,7 +1873,7 @@ class TestWorkflowBreakdownByTasks:
             '/reports/dashboard/workflows/by-tasks',
             data={
                 'template_id': template.id,
-                'now': True
+                'now': True,
             },
         )
 
@@ -1901,7 +1901,7 @@ class TestWorkflowBreakdownByTasks:
     def test_workflow_breakdown__now__in_progress__ok(
         self,
         mocker,
-        api_client
+        api_client,
     ):
 
         """ Bug case when template task api name is same
@@ -1910,13 +1910,13 @@ class TestWorkflowBreakdownByTasks:
         # arrange
         mocker.patch(
             'src.processes.tasks.webhooks.'
-            'send_task_completed_webhook.delay'
+            'send_task_completed_webhook.delay',
         )
         account = create_test_account()
         create_test_user(
             email='owner@test.test',
             account=account,
-            is_account_owner=True
+            is_account_owner=True,
         )
         user = create_test_user(account=account, is_account_owner=False)
         template = create_test_template(user, tasks_count=1)
@@ -1934,7 +1934,7 @@ class TestWorkflowBreakdownByTasks:
             '/reports/dashboard/workflows/by-tasks',
             data={
                 'template_id': template.id,
-                'now': True
+                'now': True,
             },
         )
 

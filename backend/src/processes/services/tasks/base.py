@@ -13,7 +13,7 @@ from src.processes.enums import (
 )
 from src.processes.services.tasks.exceptions import (
     PerformersServiceException,
-    GroupPerformerServiceException
+    GroupPerformerServiceException,
 )
 from src.processes.messages.workflow import (
     MSG_PW_0016,
@@ -56,7 +56,7 @@ class BasePerformersService:
         request_user: UserModel,
         current_url: str,
         is_superuser: bool,
-        auth_type: AuthTokenType
+        auth_type: AuthTokenType,
     ):
         pass
 
@@ -76,7 +76,7 @@ class BasePerformersService:
     def _validate(
         cls,
         task: Task,
-        request_user: UserModel
+        request_user: UserModel,
     ):
 
         workflow = task.workflow
@@ -91,11 +91,11 @@ class BasePerformersService:
             tempalate_owners_ids = []
             if not workflow.is_legacy_template:
                 tempalate_owners_ids = Template.objects.filter(
-                    id=workflow.template.id
+                    id=workflow.template.id,
                 ).get_owners_as_users()
             if request_user.id not in tempalate_owners_ids:
                 user_is_task_performer = task.taskperformer_set.filter(
-                    user_id=request_user.id
+                    user_id=request_user.id,
                 ).exclude_directly_deleted().exists()
                 if not user_is_task_performer:
                     raise PerformersServiceException(MSG_PW_0021)
@@ -104,7 +104,7 @@ class BasePerformersService:
     def _validate_create(
         cls,
         task: Task,
-        request_user: UserModel
+        request_user: UserModel,
     ):
         pass
 
@@ -112,7 +112,7 @@ class BasePerformersService:
     def _get_valid_deleted_task_performer(
         cls,
         task: Task,
-        user: UserModel
+        user: UserModel,
     ) -> Optional[TaskPerformer]:
         performers = (
             TaskPerformer.objects.by_task(task.id).exclude_directly_deleted()
@@ -140,13 +140,13 @@ class BasePerformersService:
         cls._validate_create(task=task, request_user=request_user)
         user = cls._get_user_for_create(
             account_id=request_user.account.id,
-            user_key=user_key
+            user_key=user_key,
         )
         task_performer, created = TaskPerformer.objects.get_or_create(
             task_id=task.id,
             type=PerformerType.USER,
             user_id=user.id,
-            defaults={'directly_status': DirectlyStatus.CREATED}
+            defaults={'directly_status': DirectlyStatus.CREATED},
         )
         if task_performer.directly_status == DirectlyStatus.DELETED:
             task_performer.directly_status = DirectlyStatus.CREATED
@@ -159,7 +159,7 @@ class BasePerformersService:
                 request_user=request_user,
                 current_url=current_url,
                 is_superuser=is_superuser,
-                auth_type=auth_type
+                auth_type=auth_type,
             )
         return user, task_performer
 
@@ -177,11 +177,11 @@ class BasePerformersService:
         cls._validate(task=task, request_user=request_user)
         user = cls._get_user_for_delete(
             user_key=user_key,
-            account_id=request_user.account_id
+            account_id=request_user.account_id,
         )
         task_performer = cls._get_valid_deleted_task_performer(
             task=task,
-            user=user
+            user=user,
         )
         if task_performer is not None:
             task_performer.directly_status = DirectlyStatus.DELETED
@@ -192,7 +192,7 @@ class BasePerformersService:
                     user=user,
                     request_user=request_user,
                     is_superuser=is_superuser,
-                    auth_type=auth_type
+                    auth_type=auth_type,
                 )
 
 
@@ -225,11 +225,11 @@ class BasePerformerService2:
             tempalate_owners_ids = []
             if not workflow.is_legacy_template:
                 tempalate_owners_ids = Template.objects.filter(
-                    id=workflow.template.id
+                    id=workflow.template.id,
                 ).get_owners_as_users()
             if self.user.id not in tempalate_owners_ids:
                 user_is_task_performer = self.task.taskperformer_set.filter(
-                    user_id=self.user.id
+                    user_id=self.user.id,
                 ).exclude_directly_deleted().exists()
                 if not user_is_task_performer:
                     raise GroupPerformerServiceException(MSG_PW_0021)
@@ -243,7 +243,7 @@ class BasePerformerService2:
     ) -> Optional[TaskPerformer]:
         performers = (
             TaskPerformer.objects.by_task(
-                self.task.id
+                self.task.id,
             ).exclude_directly_deleted()
         )
         if (

@@ -4,11 +4,11 @@ from rest_framework.serializers import (
     CharField,
 )
 from src.processes.models import (
-    FieldTemplateSelection
+    FieldTemplateSelection,
 )
 from src.generics.mixins.serializers import (
     AdditionalValidationMixin,
-    CustomValidationErrorMixin
+    CustomValidationErrorMixin,
 )
 from src.processes.serializers.templates.mixins import (
     CreateOrUpdateInstanceMixin,
@@ -22,7 +22,7 @@ class FieldTemplateSelectionSerializer(
     CustomValidationErrorMixin,
     AdditionalValidationMixin,
     CustomValidationApiNameMixin,
-    ModelSerializer
+    ModelSerializer,
 ):
 
     class Meta:
@@ -53,20 +53,20 @@ class FieldTemplateSelectionSerializer(
             validated_data={
                 'template': self.context['template'],
                 'field_template': field_template,
-                **validated_data
+                **validated_data,
             },
             not_unique_exception_msg=MSG_PT_0054(
                 name=step,
                 field_name=field_template.name,
                 api_name=validated_data.get('api_name'),
-                value=value
-            )
+                value=value,
+            ),
         )
 
     def update(
         self,
         instance: FieldTemplateSelection,
-        validated_data: Dict[str, Any]
+        validated_data: Dict[str, Any],
     ):
         self.additional_validate(validated_data)
         field_template = self.context['field_template']
@@ -79,14 +79,14 @@ class FieldTemplateSelectionSerializer(
             validated_data={
                 'template': self.context['template'],
                 'field_template': field_template,
-                **validated_data
+                **validated_data,
             },
             not_unique_exception_msg=MSG_PT_0054(
                 name=step,
                 field_name=field_template.name,
                 api_name=validated_data.get('api_name'),
-                value=value
-            )
+                value=value,
+            ),
         )
 
 

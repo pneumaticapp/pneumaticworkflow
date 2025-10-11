@@ -14,6 +14,6 @@ class WebhookAPIPermission(BasePermission):
                     'request_data': request.data,
                     'request_headers': request.headers,
                 },
-                level=logging.SentryLogLevel.ERROR
+                level=logging.SentryLogLevel.ERROR,
             )
         return result

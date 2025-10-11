@@ -15,13 +15,13 @@ class Page(Model):
     slug = CharField(
         max_length=50,
         unique=True,
-        choices=PageType.CHOICES
+        choices=PageType.CHOICES,
     )
     title = CharField(max_length=500)
     description = TextField(
         max_length=500,
         default='',
-        blank=True
+        blank=True,
     )
 
     objects = PageQuerySet.as_manager()

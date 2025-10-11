@@ -3,16 +3,16 @@ from rest_framework.serializers import (
     ModelSerializer,
 )
 from src.processes.models import (
-    Kickoff
+    Kickoff,
 )
 from src.processes.serializers.templates.field import (
     FieldTemplateSerializer,
     FieldTemplateShortViewSerializer,
-    FieldTemplateListSerializer
+    FieldTemplateListSerializer,
 )
 from src.generics.mixins.serializers import (
     AdditionalValidationMixin,
-    CustomValidationErrorMixin
+    CustomValidationErrorMixin,
 )
 from src.processes.serializers.templates.mixins import (
     CreateOrUpdateInstanceMixin,
@@ -25,7 +25,7 @@ class KickoffSerializer(
     CreateOrUpdateRelatedMixin,
     CustomValidationErrorMixin,
     AdditionalValidationMixin,
-    ModelSerializer
+    ModelSerializer,
 ):
 
     class Meta:
@@ -52,8 +52,8 @@ class KickoffSerializer(
             validated_data={
                 'template': self.context['template'],
                 'account':  self.context.get('account'),
-                **validated_data
-            }
+                **validated_data,
+            },
         )
         self.create_or_update_related(
             data=validated_data.get('fields'),
@@ -65,14 +65,14 @@ class KickoffSerializer(
             slz_context={
                 **self.context,
                 'kickoff': instance,
-            }
+            },
         )
         return instance
 
     def update(
         self,
         instance: Kickoff,
-        validated_data: Dict[str, Any]
+        validated_data: Dict[str, Any],
     ):
         self.additional_validate(validated_data)
         instance = self.create_or_update_instance(
@@ -80,8 +80,8 @@ class KickoffSerializer(
             validated_data={
                 'template': self.context['template'],
                 'account':  self.context.get('account'),
-                **validated_data
-            }
+                **validated_data,
+            },
         )
         self.create_or_update_related(
             data=validated_data.get('fields'),
@@ -93,7 +93,7 @@ class KickoffSerializer(
             slz_context={
                 **self.context,
                 'kickoff': instance,
-            }
+            },
         )
         return instance
 

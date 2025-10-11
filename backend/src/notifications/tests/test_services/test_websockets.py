@@ -4,7 +4,7 @@ from django.utils import timezone
 from django.core.exceptions import ObjectDoesNotExist
 from src.notifications.enums import NotificationMethod
 from src.notifications.services.websockets import (
-    WebSocketService
+    WebSocketService,
 )
 from src.notifications.services.exceptions import (
     NotificationServiceError,
@@ -19,7 +19,7 @@ from src.accounts.serializers.notifications import (
 from src.processes.tests.fixtures import (
     create_test_user,
     create_invited_user,
-    create_test_workflow
+    create_test_workflow,
 )
 from channels.testing import WebsocketCommunicator
 from src.asgi import application
@@ -38,10 +38,10 @@ def test_get_serialized_notification__type_mention__ok():
     notification = Notification.objects.create(
         task_json=NotificationTaskSerializer(
             instance=task,
-            notification_type=NotificationType.MENTION
+            notification_type=NotificationType.MENTION,
         ).data,
         workflow_json=NotificationWorkflowSerializer(
-            instance=task.workflow
+            instance=task.workflow,
         ).data,
         user=user,
         account=user.account,
@@ -52,7 +52,7 @@ def test_get_serialized_notification__type_mention__ok():
     service = WebSocketService(
         logging=True,
         logo_lg='https://logo.com',
-        account_id=123
+        account_id=123,
     )
 
     # act
@@ -82,15 +82,15 @@ def test_get_serialized_notification__type_delay__ok():
         task=task,
         start_date=timezone.now(),
         duration=timedelta(days=1),
-        workflow=workflow
+        workflow=workflow,
     )
     notification = Notification.objects.create(
         task_json=NotificationTaskSerializer(
             instance=task,
-            notification_type=NotificationType.DELAY_WORKFLOW
+            notification_type=NotificationType.DELAY_WORKFLOW,
         ).data,
         workflow_json=NotificationWorkflowSerializer(
-            instance=task.workflow
+            instance=task.workflow,
         ).data,
         user_id=user.id,
         account_id=user.account.id,
@@ -101,7 +101,7 @@ def test_get_serialized_notification__type_delay__ok():
     service = WebSocketService(
         logging=True,
         logo_lg='https://logo.com',
-        account_id=123
+        account_id=123,
     )
 
     # act
@@ -133,10 +133,10 @@ def test_get_serialized_notification__type_due_date__ok():
     notification = Notification.objects.create(
         task_json=NotificationTaskSerializer(
             instance=task,
-            notification_type=NotificationType.DUE_DATE_CHANGED
+            notification_type=NotificationType.DUE_DATE_CHANGED,
         ).data,
         workflow_json=NotificationWorkflowSerializer(
-            instance=task.workflow
+            instance=task.workflow,
         ).data,
         user_id=user.id,
         account_id=user.account.id,
@@ -145,7 +145,7 @@ def test_get_serialized_notification__type_due_date__ok():
     service = WebSocketService(
         logging=True,
         logo_lg='https://logo.com',
-        account_id=123
+        account_id=123,
     )
 
     # act
@@ -163,28 +163,28 @@ def test_async_send__ok(mocker):
     get_channel_layer_mock = mocker.patch(
         'src.notifications.services.websockets.'
         'get_channel_layer',
-        return_value=mocker.Mock()
+        return_value=mocker.Mock(),
     )
     get_event_loop_mock = mocker.patch(
         'src.notifications.services.websockets.'
-        'get_event_loop'
+        'get_event_loop',
     )
     create_task_mock = mocker.Mock()
     get_event_loop_mock.create_task = mocker.Mock(
-        return_value=create_task_mock
+        return_value=create_task_mock,
     )
     group_name = 'group'
     data = {'some': 'data'}
     service = WebSocketService(
         logging=True,
         logo_lg='https://logo.com',
-        account_id=123
+        account_id=123,
     )
 
     # act
     service._async_send(
         group_name=group_name,
-        data=data
+        data=data,
     )
 
     # assert
@@ -205,7 +205,7 @@ def test_send__sync__ok(mocker):
     service = WebSocketService(
         logging=True,
         logo_lg='https://logo.com',
-        account_id=123
+        account_id=123,
     )
 
     # act
@@ -213,13 +213,13 @@ def test_send__sync__ok(mocker):
         sync=True,
         group_name=group_name,
         method_name=NotificationMethod.overdue_task,
-        data=data
+        data=data,
     )
 
     # assert
     sync_send_mock.assert_called_once_with(
         group_name=group_name,
-        data=data
+        data=data,
     )
 
 
@@ -236,20 +236,20 @@ def test_send__async__ok(mocker):
     service = WebSocketService(
         logging=True,
         logo_lg='https://logo.com',
-        account_id=123
+        account_id=123,
     )
 
     # act
     service._send(
         group_name=group_name,
         method_name=NotificationMethod.overdue_task,
-        data=data
+        data=data,
     )
 
     # assert
     async_send_mock.assert_called_once_with(
         group_name=group_name,
-        data=data
+        data=data,
     )
 
 
@@ -259,7 +259,7 @@ def test_send__not_allowed_method__raise_exception(mocker):
     mocker.patch(
         'src.notifications.services.websockets.'
         'WebSocketService.ALLOWED_METHODS',
-        {NotificationMethod.new_task}
+        {NotificationMethod.new_task},
     )
     sync_send_mock = mocker.patch(
         'src.notifications.services.websockets.'
@@ -275,7 +275,7 @@ def test_send__not_allowed_method__raise_exception(mocker):
     service = WebSocketService(
         logging=True,
         logo_lg='https://logo.com',
-        account_id=123
+        account_id=123,
     )
 
     # act
@@ -283,7 +283,7 @@ def test_send__not_allowed_method__raise_exception(mocker):
         service._send(
             group_name=group_name,
             method_name=NotificationMethod.overdue_task,
-            data=data
+            data=data,
         )
 
     # assert
@@ -303,18 +303,18 @@ def test_send_overdue_task__type_user__ok(mocker):
     data = {'some': 'body'}
     send_mock = mocker.patch(
         'src.notifications.services.websockets.'
-        'WebSocketService._send'
+        'WebSocketService._send',
     )
     slz_mock = mocker.patch(
         'src.notifications.services.websockets.'
         'WebSocketService._get_serialized_notification',
-        return_value=data
+        return_value=data,
     )
 
     service = WebSocketService(
         logging=True,
         logo_lg='https://logo.com',
-        account_id=123
+        account_id=123,
     )
 
     # act
@@ -322,7 +322,7 @@ def test_send_overdue_task__type_user__ok(mocker):
         user_id=user_id,
         user_type=user_type,
         notification=notification,
-        sync=True
+        sync=True,
     )
 
     # assert
@@ -330,7 +330,7 @@ def test_send_overdue_task__type_user__ok(mocker):
         method_name=NotificationMethod.overdue_task,
         group_name=f'notifications_{user_id}',
         data=data,
-        sync=True
+        sync=True,
     )
     slz_mock.assert_called_once_with(notification)
 
@@ -343,13 +343,13 @@ def test_send_overdue_task__type_guest__not_sent(mocker):
     notification = mocker.Mock
     send_mock = mocker.patch(
         'src.notifications.services.websockets.'
-        'WebSocketService._send'
+        'WebSocketService._send',
     )
 
     service = WebSocketService(
         logging=True,
         logo_lg='https://logo.com',
-        account_id=123
+        account_id=123,
     )
 
     # act
@@ -357,7 +357,7 @@ def test_send_overdue_task__type_guest__not_sent(mocker):
         user_id=user_id,
         user_type=user_type,
         notification=notification,
-        sync=True
+        sync=True,
     )
 
     # assert
@@ -372,18 +372,18 @@ def test_send_resume_workflow__ok(mocker):
     data = {'some': 'body'}
     send_mock = mocker.patch(
         'src.notifications.services.websockets.'
-        'WebSocketService._send'
+        'WebSocketService._send',
     )
     slz_mock = mocker.patch(
         'src.notifications.services.websockets.'
         'WebSocketService._get_serialized_notification',
-        return_value=data
+        return_value=data,
     )
 
     service = WebSocketService(
         logging=True,
         logo_lg='https://logo.com',
-        account_id=123
+        account_id=123,
     )
 
     # act
@@ -398,7 +398,7 @@ def test_send_resume_workflow__ok(mocker):
         method_name=NotificationMethod.resume_workflow,
         group_name=f'notifications_{user_id}',
         data=data,
-        sync=True
+        sync=True,
     )
     slz_mock.assert_called_once_with(notification)
 
@@ -411,18 +411,18 @@ def test_send_delay_workflow__ok(mocker):
     data = {'some': 'body'}
     send_mock = mocker.patch(
         'src.notifications.services.websockets.'
-        'WebSocketService._send'
+        'WebSocketService._send',
     )
     slz_mock = mocker.patch(
         'src.notifications.services.websockets.'
         'WebSocketService._get_serialized_notification',
-        return_value=data
+        return_value=data,
     )
 
     service = WebSocketService(
         logging=True,
         logo_lg='https://logo.com',
-        account_id=123
+        account_id=123,
     )
 
     # act
@@ -437,7 +437,7 @@ def test_send_delay_workflow__ok(mocker):
         method_name=NotificationMethod.delay_workflow,
         group_name=f'notifications_{user_id}',
         data=data,
-        sync=False
+        sync=False,
     )
     slz_mock.assert_called_once_with(notification)
 
@@ -451,18 +451,18 @@ def test_send_due_date_changed__type_user__ok(mocker):
     data = {'some': 'body'}
     send_mock = mocker.patch(
         'src.notifications.services.websockets.'
-        'WebSocketService._send'
+        'WebSocketService._send',
     )
     slz_mock = mocker.patch(
         'src.notifications.services.websockets.'
         'WebSocketService._get_serialized_notification',
-        return_value=data
+        return_value=data,
     )
 
     service = WebSocketService(
         logging=True,
         logo_lg='https://logo.com',
-        account_id=123
+        account_id=123,
     )
 
     # act
@@ -470,7 +470,7 @@ def test_send_due_date_changed__type_user__ok(mocker):
         user_id=user_id,
         user_type=user_type,
         notification=notification,
-        sync=True
+        sync=True,
     )
 
     # assert
@@ -478,7 +478,7 @@ def test_send_due_date_changed__type_user__ok(mocker):
         method_name=NotificationMethod.due_date_changed,
         group_name=f'notifications_{user_id}',
         data=data,
-        sync=True
+        sync=True,
     )
     slz_mock.assert_called_once_with(notification)
 
@@ -492,18 +492,18 @@ def test_send_due_date_changed__type_guest__not_sent(mocker):
     data = {'some': 'body'}
     send_mock = mocker.patch(
         'src.notifications.services.websockets.'
-        'WebSocketService._send'
+        'WebSocketService._send',
     )
     slz_mock = mocker.patch(
         'src.notifications.services.websockets.'
         'WebSocketService._get_serialized_notification',
-        return_value=data
+        return_value=data,
     )
 
     service = WebSocketService(
         logging=True,
         logo_lg='https://logo.com',
-        account_id=123
+        account_id=123,
     )
 
     # act
@@ -511,7 +511,7 @@ def test_send_due_date_changed__type_guest__not_sent(mocker):
         user_id=user_id,
         user_type=user_type,
         notification=notification,
-        sync=True
+        sync=True,
     )
 
     # assert
@@ -531,28 +531,28 @@ async def test_consumer_send_notification__received(mocker, api_client):
     notification = Notification.objects.create(
         task_json=NotificationTaskSerializer(
             instance=task,
-            notification_type=NotificationType.COMMENT
+            notification_type=NotificationType.COMMENT,
         ).data,
         workflow_json=NotificationWorkflowSerializer(
-            instance=workflow
+            instance=workflow,
         ).data,
         user=user,
         author=invited,
         account=user.account,
         type=NotificationType.COMMENT,
-        text='Comment text'
+        text='Comment text',
     )
 
     service = WebSocketService(
         logging=True,
         logo_lg='https://logo.com',
-        account_id=123
+        account_id=123,
     )
 
     ws_auth_patch = mocker.patch(
         'src.authentication.'
         'middleware.PneumaticToken.get_user_from_token',
-        return_value=user
+        return_value=user,
     )
     communicator = WebsocketCommunicator(
         application,
@@ -563,7 +563,7 @@ async def test_consumer_send_notification__received(mocker, api_client):
     service.send_comment(
         user_id=user.id,
         sync=False,
-        notification=notification
+        notification=notification,
     )
 
     # act
@@ -584,12 +584,12 @@ async def test_consumer__connection__ok(mocker):
     user = create_test_user()
     user_patch = mocker.patch(
         'src.authentication.'
-        'middleware.PneumaticToken.get_user_from_token'
+        'middleware.PneumaticToken.get_user_from_token',
     )
     user_patch.return_value = user
     communicator = WebsocketCommunicator(
         application,
-        '/ws/notifications/?auth_token=123456'
+        '/ws/notifications/?auth_token=123456',
     )
 
     connected, _ = await communicator.connect()
@@ -604,7 +604,7 @@ async def test_consumer__connection__ok(mocker):
 async def test_consumer__incorrect_token__deny_connection(mocker):
     user_patch = mocker.patch(
         'src.authentication.'
-        'middleware.PneumaticToken.get_user_from_token'
+        'middleware.PneumaticToken.get_user_from_token',
     )
     user_patch.side_effect = ObjectDoesNotExist()
     communicator = WebsocketCommunicator(
@@ -623,7 +623,7 @@ async def test_consumer__incorrect_token__deny_connection(mocker):
 async def test_consumer__without_token__deny_connection(mocker):
     user_patch = mocker.patch(
         'src.authentication.'
-        'middleware.PneumaticToken.get_user_from_token'
+        'middleware.PneumaticToken.get_user_from_token',
     )
     communicator = WebsocketCommunicator(
         application,
@@ -644,7 +644,7 @@ async def test_consumer__ping_pong__ok(mocker, api_client):
     user = create_test_user()
     user_patch = mocker.patch(
         'src.authentication.'
-        'middleware.PneumaticToken.get_user_from_token'
+        'middleware.PneumaticToken.get_user_from_token',
     )
     user_patch.return_value = user
     communicator = WebsocketCommunicator(
@@ -655,7 +655,7 @@ async def test_consumer__ping_pong__ok(mocker, api_client):
 
     # act
     await communicator.send_to(
-        text_data=PneumaticBaseConsumer.HEARTBEAT_PING_MESSAGE
+        text_data=PneumaticBaseConsumer.HEARTBEAT_PING_MESSAGE,
     )
 
     # assert
@@ -672,25 +672,25 @@ def test_send_urgent__ok(mocker):
     data = {'some': 'body'}
     send_mock = mocker.patch(
         'src.notifications.services.websockets.'
-        'WebSocketService._send'
+        'WebSocketService._send',
     )
     slz_mock = mocker.patch(
         'src.notifications.services.websockets.'
         'WebSocketService._get_serialized_notification',
-        return_value=data
+        return_value=data,
     )
 
     service = WebSocketService(
         logging=True,
         logo_lg='https://logo.com',
-        account_id=123
+        account_id=123,
     )
 
     # act
     service.send_urgent(
         user_id=user_id,
         notification=notification,
-        sync=True
+        sync=True,
     )
 
     # assert
@@ -698,7 +698,7 @@ def test_send_urgent__ok(mocker):
         method_name=NotificationMethod.urgent,
         group_name=f'notifications_{user_id}',
         data=data,
-        sync=True
+        sync=True,
     )
     slz_mock.assert_called_once_with(notification)
 
@@ -711,25 +711,25 @@ def test_send_not_urgent__ok(mocker):
     data = {'some': 'body'}
     send_mock = mocker.patch(
         'src.notifications.services.websockets.'
-        'WebSocketService._send'
+        'WebSocketService._send',
     )
     slz_mock = mocker.patch(
         'src.notifications.services.websockets.'
         'WebSocketService._get_serialized_notification',
-        return_value=data
+        return_value=data,
     )
 
     service = WebSocketService(
         logging=True,
         logo_lg='https://logo.com',
-        account_id=123
+        account_id=123,
     )
 
     # act
     service.send_not_urgent(
         user_id=user_id,
         notification=notification,
-        sync=True
+        sync=True,
     )
 
     # assert
@@ -737,7 +737,7 @@ def test_send_not_urgent__ok(mocker):
         method_name=NotificationMethod.not_urgent,
         group_name=f'notifications_{user_id}',
         data=data,
-        sync=True
+        sync=True,
     )
     slz_mock.assert_called_once_with(notification)
 
@@ -750,25 +750,25 @@ def test_send_mention__ok(mocker):
     data = {'some': 'body'}
     send_mock = mocker.patch(
         'src.notifications.services.websockets.'
-        'WebSocketService._send'
+        'WebSocketService._send',
     )
     slz_mock = mocker.patch(
         'src.notifications.services.websockets.'
         'WebSocketService._get_serialized_notification',
-        return_value=data
+        return_value=data,
     )
 
     service = WebSocketService(
         logging=True,
         logo_lg='https://logo.com',
-        account_id=123
+        account_id=123,
     )
 
     # act
     service.send_mention(
         user_id=user_id,
         notification=notification,
-        sync=True
+        sync=True,
     )
 
     # assert
@@ -776,7 +776,7 @@ def test_send_mention__ok(mocker):
         method_name=NotificationMethod.mention,
         group_name=f'notifications_{user_id}',
         data=data,
-        sync=True
+        sync=True,
     )
     slz_mock.assert_called_once_with(notification)
 
@@ -789,25 +789,25 @@ def test_send_comment__ok(mocker):
     data = {'some': 'body'}
     send_mock = mocker.patch(
         'src.notifications.services.websockets.'
-        'WebSocketService._send'
+        'WebSocketService._send',
     )
     slz_mock = mocker.patch(
         'src.notifications.services.websockets.'
         'WebSocketService._get_serialized_notification',
-        return_value=data
+        return_value=data,
     )
 
     service = WebSocketService(
         logging=True,
         logo_lg='https://logo.com',
-        account_id=123
+        account_id=123,
     )
 
     # act
     service.send_comment(
         user_id=user_id,
         notification=notification,
-        sync=True
+        sync=True,
     )
 
     # assert
@@ -815,7 +815,7 @@ def test_send_comment__ok(mocker):
         method_name=NotificationMethod.comment,
         group_name=f'notifications_{user_id}',
         data=data,
-        sync=True
+        sync=True,
     )
     slz_mock.assert_called_once_with(notification)
 
@@ -828,25 +828,25 @@ def test_send_system__ok(mocker):
     data = {'some': 'body'}
     send_mock = mocker.patch(
         'src.notifications.services.websockets.'
-        'WebSocketService._send'
+        'WebSocketService._send',
     )
     slz_mock = mocker.patch(
         'src.notifications.services.websockets.'
         'WebSocketService._get_serialized_notification',
-        return_value=data
+        return_value=data,
     )
 
     service = WebSocketService(
         logging=True,
         logo_lg='https://logo.com',
-        account_id=123
+        account_id=123,
     )
 
     # act
     service.send_system(
         user_id=user_id,
         notification=notification,
-        sync=True
+        sync=True,
     )
 
     # assert
@@ -854,7 +854,7 @@ def test_send_system__ok(mocker):
         method_name=NotificationMethod.system,
         group_name=f'notifications_{user_id}',
         data=data,
-        sync=True
+        sync=True,
     )
     slz_mock.assert_called_once_with(notification)
 
@@ -867,25 +867,25 @@ def test_send_reaction__ok(mocker):
     data = {'some': 'body'}
     send_mock = mocker.patch(
         'src.notifications.services.websockets.'
-        'WebSocketService._send'
+        'WebSocketService._send',
     )
     slz_mock = mocker.patch(
         'src.notifications.services.websockets.'
         'WebSocketService._get_serialized_notification',
-        return_value=data
+        return_value=data,
     )
 
     service = WebSocketService(
         logging=True,
         logo_lg='https://logo.com',
-        account_id=123
+        account_id=123,
     )
 
     # act
     service.send_reaction(
         user_id=user_id,
         notification=notification,
-        sync=True
+        sync=True,
     )
 
     # assert
@@ -893,7 +893,7 @@ def test_send_reaction__ok(mocker):
         method_name=NotificationMethod.reaction,
         group_name=f'notifications_{user_id}',
         data=data,
-        sync=True
+        sync=True,
     )
     slz_mock.assert_called_once_with(notification)
 
@@ -906,24 +906,24 @@ def test_send_complete_task__ok(mocker):
     data = {'some': 'body'}
     send_mock = mocker.patch(
         'src.notifications.services.websockets.'
-        'WebSocketService._send'
+        'WebSocketService._send',
     )
     slz_mock = mocker.patch(
         'src.notifications.services.websockets.'
         'WebSocketService._get_serialized_notification',
-        return_value=data
+        return_value=data,
     )
     service = WebSocketService(
         logging=True,
         logo_lg='https://logo.com',
-        account_id=123
+        account_id=123,
     )
 
     # act
     service.send_complete_task(
         user_id=user_id,
         notification=notification,
-        sync=True
+        sync=True,
     )
 
     # assert
@@ -931,6 +931,6 @@ def test_send_complete_task__ok(mocker):
         method_name=NotificationMethod.complete_task,
         group_name=f'notifications_{user_id}',
         data=data,
-        sync=True
+        sync=True,
     )
     slz_mock.assert_called_once_with(notification)

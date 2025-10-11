@@ -7,13 +7,13 @@ from src.generics.mixins.views import (
 )
 from src.generics.permissions import StagingPermission
 from src.webhooks.services import (
-    WebhookBufferService
+    WebhookBufferService,
 )
 
 
 class WebHookBufferViewSet(
     CustomViewSetMixin,
-    GenericViewSet
+    GenericViewSet,
 ):
     permission_classes = (
         AllowAny,

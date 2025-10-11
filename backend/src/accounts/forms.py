@@ -4,10 +4,10 @@ from django.forms import (
 )
 from django.conf import settings
 from src.accounts.models import (
-    Contact
+    Contact,
 )
 from src.storage.google_cloud import (
-    GoogleCloudService
+    GoogleCloudService,
 )
 from src.accounts.messages import MSG_A_0001
 
@@ -31,7 +31,7 @@ class ContactAdminForm(ModelForm):
 
     photo_file = FileField(
         required=False,
-        label='Upload photo to Google drive'
+        label='Upload photo to Google drive',
     )
 
     def clean_photo_file(self):
@@ -49,12 +49,12 @@ class ContactAdminForm(ModelForm):
 
         file_path = photo_file.name.replace(' ', '_')
         storage = GoogleCloudService(
-            account=self.instance.account
+            account=self.instance.account,
         )
         public_url = storage.upload_from_binary(
             filepath=file_path,
             binary=photo_file.file.getvalue(),
-            content_type=photo_file.content_type
+            content_type=photo_file.content_type,
         )
         self.instance.photo = public_url
         return super().save(commit=commit)

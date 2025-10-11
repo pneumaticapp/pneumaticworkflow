@@ -1,18 +1,18 @@
 from rest_framework import serializers
 from src.generics.mixins.serializers import (
-    CustomValidationErrorMixin
+    CustomValidationErrorMixin,
 )
 
 
 class CommentCreateSerializer(
     CustomValidationErrorMixin,
-    serializers.Serializer
+    serializers.Serializer,
 ):
 
     text = serializers.CharField(
         required=False,
         allow_null=True,
-        allow_blank=True
+        allow_blank=True,
     )
     attachments = serializers.ListField(
         child=serializers.IntegerField(allow_null=False, min_value=1),
@@ -37,12 +37,12 @@ class CommentCreateSerializer(
 
 class CommentReactionSerializer(
     CustomValidationErrorMixin,
-    serializers.Serializer
+    serializers.Serializer,
 ):
 
     value = serializers.CharField(
         required=True,
         allow_null=False,
         allow_blank=False,
-        max_length=10
+        max_length=10,
     )

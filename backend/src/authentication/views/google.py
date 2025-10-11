@@ -31,7 +31,7 @@ from src.authentication.messages import (
 )
 from src.generics.mixins.views import (
     CustomViewSetMixin,
-    BaseResponseMixin
+    BaseResponseMixin,
 )
 from src.authentication.serializers import (
     SignInWithGoogleSerializer,
@@ -46,7 +46,7 @@ UserModel = get_user_model()
 class GoogleAuthViewSet(
     CustomViewSetMixin,
     BaseIdentifyMixin,
-    GenericViewSet
+    GenericViewSet,
 ):
     permission_classes = (
         GoogleAuthPermission,
@@ -65,7 +65,7 @@ class GoogleAuthViewSet(
         try:
             instance = UserModel.objects.get(
                 status=UserStatus.ACTIVE,
-                email=token_decoded.get('email')
+                email=token_decoded.get('email'),
             )
             self.identify(instance)
             self.group(instance)
@@ -73,7 +73,7 @@ class GoogleAuthViewSet(
                 user=instance,
                 user_agent=request.headers.get(
                     'User-Agent',
-                    request.META.get('HTTP_USER_AGENT')
+                    request.META.get('HTTP_USER_AGENT'),
                 ),
                 user_ip=request.META.get('HTTP_X_REAL_IP'),
             )
@@ -99,14 +99,14 @@ class SignInWithGoogleView(
         serializer.is_valid(raise_exception=True)
         user = get_object_or_404(
             UserModel.objects.active(),
-            email=serializer.validated_data['email']
+            email=serializer.validated_data['email'],
         )
         if user.account.is_verification_timed_out():
             owner = user.account.get_owner()
             EmailService.send_verification_email(
                 user=owner,
                 token=str(VerificationToken.for_user(owner)),
-                logo_lg=user.account.logo_lg
+                logo_lg=user.account.logo_lg,
             )
             raise AuthenticationFailed(MSG_AU_0002(owner.email))
         invite = user.invite
@@ -126,7 +126,7 @@ class SignInWithGoogleView(
             user=user,
             user_agent=request.headers.get(
                 'User-Agent',
-                request.META.get('HTTP_USER_AGENT')
+                request.META.get('HTTP_USER_AGENT'),
             ),
             user_ip=request.META.get('HTTP_X_REAL_IP'),
         )

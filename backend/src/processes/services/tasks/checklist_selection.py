@@ -2,7 +2,7 @@ from typing import Dict, Tuple
 from django.utils import timezone
 from django.contrib.auth import get_user_model
 from src.processes.models.templates.checklist import (
-    ChecklistTemplateSelection
+    ChecklistTemplateSelection,
 )
 from src.processes.models import (
     ChecklistSelection,
@@ -14,7 +14,7 @@ from src.processes.services.base import (
     BaseUpdateVersionService,
 )
 from src.processes.utils.common import (
-    insert_fields_values_to_text
+    insert_fields_values_to_text,
 )
 from src.processes.enums import WorkflowStatus
 from src.processes.messages.workflow import (
@@ -34,7 +34,7 @@ class ChecklistSelectionVersionService(BaseUpdateVersionService):
         self,
         data: dict,
         version: int,
-        **kwargs
+        **kwargs,
     ) -> Tuple[ChecklistSelection, bool]:
 
         """
@@ -47,7 +47,7 @@ class ChecklistSelectionVersionService(BaseUpdateVersionService):
         checklist = kwargs['checklist']
         value = insert_fields_values_to_text(
             fields_values=kwargs['fields_values'],
-            text=data['value']
+            text=data['value'],
         )
         self.instance, created = ChecklistSelection.objects.update_or_create(
             checklist=checklist,
@@ -55,7 +55,7 @@ class ChecklistSelectionVersionService(BaseUpdateVersionService):
             defaults={
                 'value': value,
                 'value_template': data['value'],
-            }
+            },
         )
         return self.instance, created
 
@@ -65,7 +65,7 @@ class ChecklistSelectionService(BaseWorkflowService):
     def _create_instance(
         self,
         instance_template: ChecklistTemplateSelection,
-        **kwargs
+        **kwargs,
     ):
 
         self.instance = ChecklistSelection.objects.create(
@@ -78,7 +78,7 @@ class ChecklistSelectionService(BaseWorkflowService):
     def _create_related(
         self,
         instance_template: ChecklistTemplateSelection,
-        **kwargs
+        **kwargs,
     ):
         pass
 
@@ -89,7 +89,7 @@ class ChecklistSelectionService(BaseWorkflowService):
     ):
         performers = task.taskperformer_set.exclude_directly_deleted()
         is_performer = user.id in performers.values_list(
-            'user_id', flat=True
+            'user_id', flat=True,
         )
         user_permission = user.is_account_owner or is_performer
         if not user_permission:
@@ -114,7 +114,7 @@ class ChecklistSelectionService(BaseWorkflowService):
     ):
         self.instance.value = insert_fields_values_to_text(
             text=self.instance.value_template,
-            fields_values=fields_values
+            fields_values=fields_values,
         )
         self.update_fields.add('value')
 
@@ -125,7 +125,7 @@ class ChecklistSelectionService(BaseWorkflowService):
             self.partial_update(
                 date_selected=timezone.now(),
                 selected_user_id=self.user.id,
-                force_save=True
+                force_save=True,
             )
             self._update_marked_count(task)
 
@@ -136,6 +136,6 @@ class ChecklistSelectionService(BaseWorkflowService):
             self.partial_update(
                 date_selected=None,
                 selected_user_id=self.user.id,
-                force_save=True
+                force_save=True,
             )
             self._update_marked_count(task)

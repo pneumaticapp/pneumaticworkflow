@@ -19,14 +19,14 @@ class PneumaticApiClient(APIClient):
         token_type: AuthTokenType = AuthTokenType.USER,
         user_agent: str = 'Firefox',
         user_ip: str = '192.168.0.1',
-        token: Optional[str] = None
+        token: Optional[str] = None,
     ):
 
         if not token:
             if token_type == AuthTokenType.API:
                 token = PneumaticToken.create(
                     user=user,
-                    for_api_key=True
+                    for_api_key=True,
                 )
                 APIKey.objects.create(
                     user=user,
@@ -39,7 +39,7 @@ class PneumaticApiClient(APIClient):
                     user=user,
                     for_api_key=False,
                     user_agent=user_agent,
-                    user_ip=user_ip
+                    user_ip=user_ip,
                 )
             else:
                 raise Exception('Unsupported token type.')

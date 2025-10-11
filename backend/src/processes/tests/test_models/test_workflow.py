@@ -57,7 +57,7 @@ class TestWorkflow:
         )[0].is_deleted is True
         task_list = Task.objects.raw(
             task_sql,
-            {'workflow_id': workflow.id}
+            {'workflow_id': workflow.id},
         )
         assert task_list[0].is_deleted is True
         assert task_list[1].is_deleted is True
@@ -69,12 +69,12 @@ class TestWorkflow:
         workflow = create_test_workflow(user=user)
         field_mock = mocker.Mock(
             api_name='field-template',
-            markdown_value='test'
+            markdown_value='test',
         )
         kickoff_output_fields_mock = mocker.patch(
             'src.processes.models.Workflow.'
             'get_kickoff_output_fields',
-            return_value=[field_mock]
+            return_value=[field_mock],
         )
 
         # act

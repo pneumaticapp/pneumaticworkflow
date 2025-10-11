@@ -14,7 +14,7 @@ from src.authentication.permissions import (
 )
 from src.generics.mixins.views import (
     AnonymousAccountMixin,
-    BaseResponseMixin
+    BaseResponseMixin,
 )
 from src.authentication.serializers import (
     SignUpSerializer,
@@ -57,7 +57,7 @@ class SignUpView(
                 user=user,
                 token=str(
                     VerificationToken.for_user(user)),
-                logo_lg=account.logo_lg
+                logo_lg=account.logo_lg,
             )
         self.inc_anonymous_user_account_counter(self.request)
 
@@ -70,7 +70,7 @@ class SignUpView(
             serializer_cls = SignUpSerializer
         slz = serializer_cls(
             data=request.data,
-            context={"request": request}  # for ReCaptchaV2Field
+            context={"request": request},  # for ReCaptchaV2Field
         )
         slz.is_valid(raise_exception=True)
         _, token = self.signup(**slz.validated_data)

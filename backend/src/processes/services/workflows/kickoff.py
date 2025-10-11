@@ -11,7 +11,7 @@ class KickoffService(BaseWorkflowService):
     def _create_instance(
         self,
         instance_template: KickoffValue,
-        **kwargs
+        **kwargs,
     ):
 
         # TODO move from KickoffCreateSerializer
@@ -21,6 +21,6 @@ class KickoffService(BaseWorkflowService):
     def _create_related(
         self,
         instance_template: KickoffValue,
-        **kwargs
+        **kwargs,
     ):
         pass

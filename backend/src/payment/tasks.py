@@ -53,7 +53,7 @@ def _increase_plan_users(
                 service = StripeService(
                     user=user,
                     is_superuser=is_superuser,
-                    auth_type=auth_type
+                    auth_type=auth_type,
                 )
                 service.increase_subscription(quantity=quantity)
             except StripeServiceException as ex:
@@ -63,7 +63,7 @@ def _increase_plan_users(
                     ),
                     data={
                         'account_id': account.id,
-                        'ex': str(ex)
+                        'ex': str(ex),
                     },
                     level=SentryLogLevel.ERROR,
                 )
@@ -74,7 +74,7 @@ def increase_plan_users(
     account_id: int,
     is_superuser: bool,
     auth_type: AuthTokenType.LITERALS,
-    increment=True
+    increment=True,
 ):
     _increase_plan_users(
         account_id=account_id,

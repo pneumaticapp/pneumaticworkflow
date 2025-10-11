@@ -31,7 +31,7 @@ class IsSuperuserPermission(BaseAuthPermission):
     def has_permission(self, request, view):
         return bool(
             self._user_is_authenticated(request)
-            and request.user.is_superuser
+            and request.user.is_superuser,
         )
 
 
@@ -40,7 +40,7 @@ class StaffPermission(BaseAuthPermission):
     def has_permission(self, request, view):
         return bool(
             self._user_is_authenticated(request)
-            and request.user.is_staff
+            and request.user.is_staff,
         )
 
 

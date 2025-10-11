@@ -18,7 +18,7 @@ from src.processes.models import (
 )
 from src.analytics.labels import Label
 from src.analytics.actions import (
-    WorkflowActions
+    WorkflowActions,
 )
 from src.accounts.enums import SourceType
 from src.analytics.events import (
@@ -87,7 +87,7 @@ class AnalyticService:
         invite_from,
         invite_to,
         current_url: str,
-        is_superuser: bool
+        is_superuser: bool,
     ) -> bool:
         return cls._track(
             user_id=invite_from.id,
@@ -102,7 +102,7 @@ class AnalyticService:
                 'category': EventCategory.users,
                 'current_url': current_url,
             },
-            is_superuser=is_superuser
+            is_superuser=is_superuser,
         )
 
     @classmethod
@@ -110,7 +110,7 @@ class AnalyticService:
         cls,
         invite_to: UserModel,
         invite_token: str,
-        is_superuser: bool
+        is_superuser: bool,
     ) -> bool:
 
         """ Sent always to trigger the sending of an invitation email
@@ -128,7 +128,7 @@ class AnalyticService:
                 'account_id': invite_to.account_id,
                 'category': EventCategory.users,
             },
-            is_superuser=False
+            is_superuser=False,
         )
 
     @classmethod
@@ -147,7 +147,7 @@ class AnalyticService:
                 'last_name': user.last_name,
                 'account_id': user.account_id,
                 'category': EventCategory.users,
-            }
+            },
         )
 
     @classmethod
@@ -339,7 +339,7 @@ class AnalyticService:
                 'delays_count': delays_count,
                 'due_in_count': due_in_count,
                 'conditions_count': conditions_count,
-            }
+            },
         )
 
     @classmethod
@@ -376,7 +376,7 @@ class AnalyticService:
         is_superuser: bool,
         auth_type: AuthTokenType,
         task: TaskTemplate,
-        template: Template
+        template: Template,
     ):
         return cls._track(
             user_id=user.id,
@@ -407,7 +407,7 @@ class AnalyticService:
         auth_type: AuthTokenType,
         task: TaskTemplate,
         condition: ConditionTemplate,
-        template: Template
+        template: Template,
     ):
         return cls._track(
             user_id=user.id,
@@ -438,7 +438,7 @@ class AnalyticService:
         invite_from: UserModel,
         invite_to: UserModel,
         current_url: str,
-        is_superuser: bool
+        is_superuser: bool,
     ) -> bool:
         return cls._track(
             user_id=invite_from.id,
@@ -456,7 +456,7 @@ class AnalyticService:
                 'category': EventCategory.users,
                 'current_url': current_url,
             },
-            is_superuser=is_superuser
+            is_superuser=is_superuser,
         )
 
     @classmethod
@@ -464,7 +464,7 @@ class AnalyticService:
         cls,
         invite_from: UserModel,
         invite_to: UserModel,
-        is_superuser: bool
+        is_superuser: bool,
     ) -> bool:
 
         """ Sent always to trigger the sending of an invitation email
@@ -482,7 +482,7 @@ class AnalyticService:
                 'invite_to_email': invite_to.email,
                 'category': EventCategory.users,
             },
-            is_superuser=is_superuser
+            is_superuser=is_superuser,
         )
 
     @classmethod
@@ -604,7 +604,7 @@ class AnalyticService:
         auth_type: AuthTokenType,
         is_superuser: bool,
         user: UserModel,
-        action: WorkflowActions
+        action: WorkflowActions,
     ) -> bool:
 
         return cls._track(
@@ -624,7 +624,7 @@ class AnalyticService:
                 'auth_type': auth_type,
                 'category': EventCategory.workflows,
                 'label': Label.urgent,
-                'action': action
+                'action': action,
             },
         )
 
@@ -663,7 +663,7 @@ class AnalyticService:
         page: str,
         search_text: str,
         is_superuser: bool,
-        auth_type: AuthTokenType
+        auth_type: AuthTokenType,
     ):
         return cls._track(
             user_id=user.id,
@@ -708,7 +708,7 @@ class AnalyticService:
                 'id': attachment.id,
                 'size': attachment.humanize_size,
                 'category': EventCategory.attachments,
-                'type': attachment.extension
+                'type': attachment.extension,
             },
         }
         if user.is_authenticated:
@@ -728,7 +728,7 @@ class AnalyticService:
         integration_type: TemplateIntegrationType.LITERALS,
         user: Optional[UserModel] = None,
         anonymous_id: Optional[str] = None,
-        is_superuser: bool = False
+        is_superuser: bool = False,
     ) -> bool:
 
         if not user and not anonymous_id:
@@ -749,7 +749,7 @@ class AnalyticService:
                 'template_id': template_id,
                 'integration_type': integration_type,
                 'category': EventCategory.templates,
-            }
+            },
         }
         if user:
             params['user_id'] = user.id
@@ -778,7 +778,7 @@ class AnalyticService:
                 'last_name': user.last_name,
                 'account_id': user.account_id,
                 'category': EventCategory.accounts,
-            }
+            },
         )
 
     @classmethod
@@ -809,7 +809,7 @@ class AnalyticService:
                 'task_number': task.number,
                 'category': EventCategory.templates,
                 'auth_type': auth_type,
-            }
+            },
         )
 
     @classmethod
@@ -841,7 +841,7 @@ class AnalyticService:
                 'auth_type': auth_type,
                 'label': Label.delayed,
                 'action': WorkflowActions.delayed,
-            }
+            },
         )
 
     @classmethod
@@ -863,7 +863,7 @@ class AnalyticService:
                 'category': EventCategory.subscriptions,
                 'quantity': user.account.max_users,
                 'plan_code': user.account.billing_plan,
-            }
+            },
         )
 
     @classmethod
@@ -885,7 +885,7 @@ class AnalyticService:
                 'account_id': user.account_id,
                 'quantity': user.account.max_users,
                 'plan_code': user.account.billing_plan,
-            }
+            },
         )
 
     @classmethod
@@ -907,7 +907,7 @@ class AnalyticService:
                 'category': EventCategory.subscriptions,
                 'quantity': user.account.max_users,
                 'plan_code': user.account.billing_plan,
-            }
+            },
         )
 
     @classmethod
@@ -927,7 +927,7 @@ class AnalyticService:
                 'last_name': user.last_name,
                 'account_id': user.account_id,
                 'category': EventCategory.subscriptions,
-            }
+            },
         )
 
     @classmethod
@@ -947,7 +947,7 @@ class AnalyticService:
                 'last_name': user.last_name,
                 'account_id': user.account.id,
                 'category': EventCategory.subscriptions,
-            }
+            },
         )
 
     @classmethod
@@ -970,7 +970,7 @@ class AnalyticService:
                 'category': EventCategory.subscriptions,
                 'quantity': user.account.max_users,
                 'plan_code': user.account.billing_plan,
-            }
+            },
         )
 
     @classmethod
@@ -1000,7 +1000,7 @@ class AnalyticService:
                 'task_id': task.id,
                 'category': EventCategory.tasks,
                 'auth_type': auth_type,
-            }
+            },
         )
 
     @classmethod
@@ -1059,7 +1059,7 @@ class AnalyticService:
                 'label': Label.template_generation,
                 'auth_type': auth_type,
                 'success': success,
-            }
+            },
         )
 
     @classmethod
@@ -1084,7 +1084,7 @@ class AnalyticService:
                 'category': EventCategory.templates,
                 'label': Label.template_generation,
                 'auth_type': auth_type,
-            }
+            },
         )
 
     @classmethod
@@ -1109,7 +1109,7 @@ class AnalyticService:
                 'template_name': template.name,
                 'category': EventCategory.templates,
                 'auth_type': auth_type,
-            }
+            },
         )
 
     @classmethod
@@ -1119,7 +1119,7 @@ class AnalyticService:
         is_superuser: bool,
         auth_type: AuthTokenType,
         task: Task,
-        workflow: Workflow
+        workflow: Workflow,
     ):
         cls._track(
             user_id=user.id,
@@ -1149,7 +1149,7 @@ class AnalyticService:
         user: UserModel,
         is_superuser: bool,
         auth_type: AuthTokenType,
-        workflow: Workflow
+        workflow: Workflow,
     ):
         cls._track(
             user_id=user.id,
@@ -1167,7 +1167,7 @@ class AnalyticService:
                 'template_name': workflow.get_template_name(),
                 'category': EventCategory.workflows,
                 'auth_type': auth_type,
-            }
+            },
         )
 
     @classmethod
@@ -1199,7 +1199,7 @@ class AnalyticService:
                 'category': EventCategory.templates,
                 'label': Label.library_template_opened,
                 'auth_type': auth_type,
-            }
+            },
         )
 
     @classmethod
@@ -1223,7 +1223,7 @@ class AnalyticService:
                 'category': EventCategory.accounts,
                 'auth_type': auth_type,
                 **signup_data.as_dict(),
-            }
+            },
         )
 
     @classmethod
@@ -1247,7 +1247,7 @@ class AnalyticService:
                 'category': EventCategory.accounts,
                 'auth_type': auth_type,
                 **signup_data.as_dict(),
-            }
+            },
         )
 
     @classmethod
@@ -1274,7 +1274,7 @@ class AnalyticService:
                 'tenant_id': tenant_account.id,
                 'category': EventCategory.tenants,
                 'auth_type': auth_type,
-            }
+            },
         )
 
     @classmethod
@@ -1301,7 +1301,7 @@ class AnalyticService:
                 'tenant_id': tenant_account.id,
                 'category': EventCategory.tenants,
                 'auth_type': auth_type,
-            }
+            },
         )
 
     @classmethod
@@ -1330,7 +1330,7 @@ class AnalyticService:
                 'workflow_name': workflow.name,
                 'category': EventCategory.mentions,
                 'auth_type': auth_type,
-            }
+            },
         )
 
     @classmethod
@@ -1359,7 +1359,7 @@ class AnalyticService:
                 'workflow_name': workflow.name,
                 'category': EventCategory.comments,
                 'auth_type': auth_type,
-            }
+            },
         )
 
     @classmethod
@@ -1388,7 +1388,7 @@ class AnalyticService:
                 'workflow_name': workflow.name,
                 'category': EventCategory.comments,
                 'auth_type': auth_type,
-            }
+            },
         )
 
     @classmethod
@@ -1417,7 +1417,7 @@ class AnalyticService:
                 'workflow_name': workflow.name,
                 'category': EventCategory.comments,
                 'auth_type': auth_type,
-            }
+            },
         )
 
     @classmethod
@@ -1446,7 +1446,7 @@ class AnalyticService:
                 'workflow_name': workflow.name,
                 'category': EventCategory.comments,
                 'auth_type': auth_type,
-            }
+            },
         )
 
     @classmethod
@@ -1475,7 +1475,7 @@ class AnalyticService:
                 'workflow_name': workflow.name,
                 'category': EventCategory.comments,
                 'auth_type': auth_type,
-            }
+            },
         )
 
     @classmethod
@@ -1498,8 +1498,8 @@ class AnalyticService:
                 'account_id': user.account_id,
                 'category': EventCategory.users,
                 'auth_type': auth_type,
-                'source': source
-            }
+                'source': source,
+            },
         )
 
     @classmethod
@@ -1534,7 +1534,7 @@ class AnalyticService:
                 'name': group_name,
                 'category': EventCategory.groups,
                 'auth_type': auth_type,
-            }
+            },
         )
 
     @classmethod
@@ -1569,7 +1569,7 @@ class AnalyticService:
                 'name': group_name,
                 'category': EventCategory.groups,
                 'auth_type': auth_type,
-            }
+            },
         )
 
     @classmethod
@@ -1604,7 +1604,7 @@ class AnalyticService:
                 'name': group_name,
                 'category': EventCategory.groups,
                 'auth_type': auth_type,
-            }
+            },
         )
 
     @classmethod
@@ -1639,7 +1639,7 @@ class AnalyticService:
                 'category': EventCategory.tasks,
                 'auth_type': auth_type,
             },
-            is_superuser=is_superuser
+            is_superuser=is_superuser,
         )
 
     @classmethod
@@ -1674,7 +1674,7 @@ class AnalyticService:
                 'category': EventCategory.tasks,
                 'auth_type': auth_type,
             },
-            is_superuser=is_superuser
+            is_superuser=is_superuser,
         )
 
     @classmethod
@@ -1709,7 +1709,7 @@ class AnalyticService:
                 'category': EventCategory.tasks,
                 'auth_type': auth_type,
             },
-            is_superuser=is_superuser
+            is_superuser=is_superuser,
         )
 
     @classmethod
@@ -1744,5 +1744,5 @@ class AnalyticService:
                 'category': EventCategory.tasks,
                 'auth_type': auth_type,
             },
-            is_superuser=is_superuser
+            is_superuser=is_superuser,
         )

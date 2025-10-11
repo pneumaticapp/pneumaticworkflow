@@ -11,17 +11,17 @@ from rest_framework.serializers import (
 )
 
 from src.processes.serializers.templates.condition import (
-    ConditionTemplateSerializer
+    ConditionTemplateSerializer,
 )
 from src.processes.models import (
     TaskTemplate,
     FieldTemplate,
 )
 from src.processes.serializers.templates.checklist import (
-    ChecklistTemplateSerializer
+    ChecklistTemplateSerializer,
 )
 from src.processes.serializers.templates.raw_due_date import (
-    RawDueDateTemplateSerializer
+    RawDueDateTemplateSerializer,
 )
 from src.processes.serializers.templates.field import (
     FieldTemplateSerializer,
@@ -29,18 +29,18 @@ from src.processes.serializers.templates.field import (
 )
 from src.generics.mixins.serializers import (
     AdditionalValidationMixin,
-    CustomValidationErrorMixin
+    CustomValidationErrorMixin,
 )
 from src.processes.serializers.templates.raw_performer import (
-    RawPerformerSerializer
+    RawPerformerSerializer,
 )
 from src.processes.serializers.templates.mixins import (
     CreateOrUpdateRelatedMixin,
     CreateOrUpdateInstanceMixin,
-    CustomValidationApiNameMixin
+    CustomValidationApiNameMixin,
 )
 from src.processes.utils.common import (
-    VAR_PATTERN, create_api_name
+    VAR_PATTERN, create_api_name,
 )
 from src.processes.enums import (
     PerformerType,
@@ -59,7 +59,7 @@ class TaskTemplateSerializer(
     CustomValidationErrorMixin,
     AdditionalValidationMixin,
     CustomValidationApiNameMixin,
-    ModelSerializer
+    ModelSerializer,
 ):
 
     class Meta:
@@ -103,11 +103,11 @@ class TaskTemplateSerializer(
     conditions = ConditionTemplateSerializer(many=True, required=False)
     raw_performers = RawPerformerSerializer(
         many=True,
-        required=False
+        required=False,
     )
     raw_due_date = RawDueDateTemplateSerializer(
         required=False,
-        allow_null=True
+        allow_null=True,
     )
     parents = ReadOnlyField()
     ancestors = ReadOnlyField()
@@ -115,14 +115,14 @@ class TaskTemplateSerializer(
     def validate(self, data):
         if not data.get('api_name'):
             data['api_name'] = create_api_name(
-                prefix=TaskTemplate.api_name_prefix
+                prefix=TaskTemplate.api_name_prefix,
             )
         return data
 
     def get_raw_performers_ctx(
         self,
         task_template: TaskTemplate,
-        raw_performers_data: Optional[Dict[str, Any]]
+        raw_performers_data: Optional[Dict[str, Any]],
     ) -> Dict[str, Any]:
 
         context = {
@@ -141,7 +141,7 @@ class TaskTemplateSerializer(
             )
         if PerformerType.USER in performers_types:
             context['account_user_ids'] = set(
-                self.context['account'].get_user_ids(include_invited=True)
+                self.context['account'].get_user_ids(include_invited=True),
             )
         return context
 
@@ -158,7 +158,7 @@ class TaskTemplateSerializer(
         self,
         value: str,
         data: Dict[str, Any],
-        **kwargs
+        **kwargs,
     ):
 
         """ Checks three cases:
@@ -180,7 +180,7 @@ class TaskTemplateSerializer(
         if failed_api_names:
             self.raise_validation_error(
                 message=messages.MSG_PT_0038(data['name']),
-                api_name=data.get('api_name')
+                api_name=data.get('api_name'),
             )
 
         contains_only_api_names = VAR_PATTERN.sub('', value).strip() == ''
@@ -193,13 +193,13 @@ class TaskTemplateSerializer(
             if not_required_fields:
                 self.raise_validation_error(
                     message=messages.MSG_PT_0039(data['number']),
-                    api_name=data.get('api_name')
+                    api_name=data.get('api_name'),
                 )
 
     def additional_validate_description(
         self,
         value: Optional[str],
-        data: Dict[str, Any]
+        data: Dict[str, Any],
     ):
 
         """ Checks that api-name in text should be available
@@ -225,19 +225,19 @@ class TaskTemplateSerializer(
         if failed_api_names_exist:
             self.raise_validation_error(
                 message=messages.MSG_PT_0037(data['number']),
-                api_name=data.get('api_name')
+                api_name=data.get('api_name'),
             )
 
     def additional_validate_raw_performers(
         self,
         value: List[Dict[str, str]],
-        data: Dict[str, Any]
+        data: Dict[str, Any],
     ):
 
         if not value:
             self.raise_validation_error(
                 message=messages.MSG_PT_0002,
-                api_name=data.get('api_name')
+                api_name=data.get('api_name'),
             )
 
         unique_performers = set(
@@ -247,7 +247,7 @@ class TaskTemplateSerializer(
         if len(value) != len(unique_performers):
             self.raise_validation_error(
                 message=messages.MSG_PT_0003,
-                api_name=data.get('api_name')
+                api_name=data.get('api_name'),
             )
 
     def additional_validate_conditions(
@@ -278,7 +278,7 @@ class TaskTemplateSerializer(
             if failed_api_names_exist:
                 self.raise_validation_error(
                     message=messages.MSG_PT_0004(data.get('name')),
-                    api_name=data.get('api_name')
+                    api_name=data.get('api_name'),
                 )
 
     def additional_validate_revert_task(
@@ -292,19 +292,19 @@ class TaskTemplateSerializer(
                 if api_name == value:
                     self.raise_validation_error(
                         message=messages.MSG_PT_0060(data.get('name')),
-                        api_name=api_name
+                        api_name=api_name,
                     )
                 ancestors = self.context['ancestors_by_tasks'][api_name]
                 if value not in ancestors:
                     self.raise_validation_error(
                         message=messages.MSG_PT_0061(data.get('name')),
-                        api_name=api_name
+                        api_name=api_name,
                     )
 
     def create_or_update_instance(
         self,
         validated_data: Dict[str, Any],
-        instance: Optional[TaskTemplate] = None
+        instance: Optional[TaskTemplate] = None,
     ) -> TaskTemplate:
 
         if not validated_data.get('delay'):
@@ -314,8 +314,8 @@ class TaskTemplateSerializer(
             instance=instance,
             not_unique_exception_msg=messages.MSG_PT_0055(
                 name=validated_data.get('name'),
-                api_name=validated_data.get('api_name')
-            )
+                api_name=validated_data.get('api_name'),
+            ),
         )
         return instance
 
@@ -344,18 +344,18 @@ class TaskTemplateSerializer(
         if not data:
             return
         from src.processes.models import (
-            ChecklistTemplateSelection
+            ChecklistTemplateSelection,
         )
         pairs = {}
         for checklist_data in data:
             for s in checklist_data['selections']:
                 pairs[s.get('api_name')] = checklist_data.get('api_name')
         for selection in ChecklistTemplateSelection.objects.select_related(
-            'checklist'
+            'checklist',
         ).filter(
             template=template,
             checklist__task=task,
-            api_name__in=pairs.keys()
+            api_name__in=pairs.keys(),
         ):
             checklist_api_name = pairs.get(selection.api_name)
             if checklist_api_name:
@@ -373,8 +373,8 @@ class TaskTemplateSerializer(
                 'account': self.context['account'],
                 'parents': parents,
                 'ancestors': ancestors,
-                **validated_data
-            }
+                **validated_data,
+            },
         )
         template = self.context['template']
         if template.is_active and validated_data.get('raw_due_date'):
@@ -383,7 +383,7 @@ class TaskTemplateSerializer(
                 template=template,
                 task=instance,
                 is_superuser=self.context['is_superuser'],
-                auth_type=self.context['auth_type']
+                auth_type=self.context['auth_type'],
             )
 
         self.create_or_update_related(
@@ -396,13 +396,13 @@ class TaskTemplateSerializer(
             slz_context={
                 **self.context,
                 'task': instance,
-            }
+            },
         )
 
         raw_performers_data = validated_data.get('raw_performers')
         raw_performers_clz_context = self.get_raw_performers_ctx(
             task_template=instance,
-            raw_performers_data=raw_performers_data
+            raw_performers_data=raw_performers_data,
         )
         self.create_or_update_related(
             data=raw_performers_data,
@@ -410,7 +410,7 @@ class TaskTemplateSerializer(
                 'task': instance,
             },
             slz_cls=RawPerformerSerializer,
-            slz_context=raw_performers_clz_context
+            slz_context=raw_performers_clz_context,
         )
 
         self.create_or_update_related(
@@ -424,7 +424,7 @@ class TaskTemplateSerializer(
                 **self.context,
                 'task': instance,
                 'ancestors': ancestors,
-            }
+            },
         )
 
         # TODO tmp crutch
@@ -444,7 +444,7 @@ class TaskTemplateSerializer(
             slz_context={
                 **self.context,
                 'task': instance,
-            }
+            },
         )
 
         self.create_or_update_related_one(
@@ -457,14 +457,14 @@ class TaskTemplateSerializer(
             slz_context={
                 **self.context,
                 'task': instance,
-            }
+            },
         )
         return instance
 
     def update(
         self,
         instance: TaskTemplate,
-        validated_data: Dict[str, Any]
+        validated_data: Dict[str, Any],
     ):
         self.additional_validate(validated_data)
         api_name = validated_data['api_name']
@@ -483,8 +483,8 @@ class TaskTemplateSerializer(
                 'account': self.context['account'],
                 'parents': parents,
                 'ancestors': ancestors,
-                **validated_data
-            }
+                **validated_data,
+            },
         )
         if raw_due_date_created:
             AnalyticService.templates_task_due_date_created(
@@ -492,7 +492,7 @@ class TaskTemplateSerializer(
                 template=template,
                 task=instance,
                 is_superuser=self.context['is_superuser'],
-                auth_type=self.context['auth_type']
+                auth_type=self.context['auth_type'],
             )
         self.create_or_update_related(
             data=validated_data.get('fields'),
@@ -504,13 +504,13 @@ class TaskTemplateSerializer(
             slz_context={
                 **self.context,
                 'task': instance,
-            }
+            },
         )
 
         raw_performers_data = validated_data.get('raw_performers')
         raw_performers_clz_context = self.get_raw_performers_ctx(
             task_template=instance,
-            raw_performers_data=raw_performers_data
+            raw_performers_data=raw_performers_data,
         )
         self.create_or_update_related(
             data=raw_performers_data,
@@ -533,7 +533,7 @@ class TaskTemplateSerializer(
                 **self.context,
                 'task': instance,
                 'ancestors': ancestors,
-            }
+            },
         )
         # TODO tmp crutch
         self._remove_notexistent_checklist_items(
@@ -552,7 +552,7 @@ class TaskTemplateSerializer(
             slz_context={
                 **self.context,
                 'task': instance,
-            }
+            },
         )
 
         self.create_or_update_related_one(
@@ -565,7 +565,7 @@ class TaskTemplateSerializer(
             slz_context={
                 **self.context,
                 'task': instance,
-            }
+            },
         )
         return instance
 
@@ -606,7 +606,7 @@ class TaskTemplatePrivilegesSerializer(ModelSerializer):
             'number',
             'api_name',
             'name',
-            'raw_performers'
+            'raw_performers',
         )
 
     raw_performers = RawPerformerSerializer(many=True)
@@ -614,34 +614,34 @@ class TaskTemplatePrivilegesSerializer(ModelSerializer):
 
 class TemplateStepFilterSerializer(
     CustomValidationErrorMixin,
-    Serializer
+    Serializer,
 ):
 
     with_tasks_in_progress = BooleanField(
         required=False,
         default=None,
-        allow_null=True
+        allow_null=True,
     )
 
 
 class ShortTaskSerializer(
     CustomValidationApiNameMixin,
-    Serializer
+    Serializer,
 ):
     number = IntegerField(
         min_value=1,
         required=True,
-        allow_null=False
+        allow_null=False,
     )
     name = CharField(
         required=True,
         allow_null=False,
-        allow_blank=False
+        allow_blank=False,
     )
     description = CharField(
         required=True,
         allow_null=False,
-        allow_blank=False
+        allow_blank=False,
     )
 
     def validate_name(self, value):

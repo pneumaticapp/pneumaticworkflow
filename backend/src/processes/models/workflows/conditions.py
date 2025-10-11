@@ -35,7 +35,7 @@ class Rule(
     condition = models.ForeignKey(
         Condition,
         on_delete=models.CASCADE,
-        related_name='rules'
+        related_name='rules',
     )
 
 

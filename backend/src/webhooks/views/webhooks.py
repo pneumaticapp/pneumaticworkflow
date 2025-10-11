@@ -6,7 +6,7 @@ from src.generics.mixins.views import (
 from src.accounts.permissions import (
     UserIsAdminOrAccountOwner,
     BillingPlanPermission,
-    ExpiredSubscriptionPermission
+    ExpiredSubscriptionPermission,
 )
 from src.webhooks.services import (
     WebhookService,
@@ -21,7 +21,7 @@ from src.generics.permissions import (
 
 class WebHookViewSet(
     CustomViewSetMixin,
-    GenericViewSet
+    GenericViewSet,
 ):
     permission_classes = (
         UserIsAuthenticated,
@@ -36,7 +36,7 @@ class WebHookViewSet(
         slz.is_valid(raise_exception=True)
         service = WebhookService(
             user=request.user,
-            is_superuser=request.is_superuser
+            is_superuser=request.is_superuser,
         )
         service.subscribe(**slz.validated_data)
         return self.response_ok()
@@ -45,7 +45,7 @@ class WebHookViewSet(
     def unsubscribe(self, request, *args, **kwargs):
         service = WebhookService(
             user=request.user,
-            is_superuser=request.is_superuser
+            is_superuser=request.is_superuser,
         )
         service.unsubscribe()
         return self.response_ok()

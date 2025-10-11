@@ -5,7 +5,7 @@ from src.queries import (
 )
 from src.processes.enums import (
     WorkflowStatus,
-    DirectlyStatus, TaskStatus
+    DirectlyStatus, TaskStatus,
 )
 from src.accounts.enums import NotificationType
 
@@ -19,7 +19,7 @@ class UsersWithOverdueTaskQuery(SqlQueryObject):
         self.params = {
             'workflow_status': WorkflowStatus.RUNNING,
             'directly_status': DirectlyStatus.DELETED,
-            'notification_type': NotificationType.OVERDUE_TASK
+            'notification_type': NotificationType.OVERDUE_TASK,
         }
 
     def get_sql(self) -> Tuple[str, dict]:

@@ -32,7 +32,7 @@ class CloneService:
     @classmethod
     def get_template_draft_clone(
         cls,
-        draft: Dict[str, Any]
+        draft: Dict[str, Any],
     ) -> Dict[str, Any]:
 
         """ Return clone of all template data.

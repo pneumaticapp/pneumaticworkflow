@@ -13,39 +13,39 @@ class MarkdownPatterns:
     MEDIA_PATTERN = re.compile(
         r'\[(?:[^\]\(]+)\]\((?:http[s]?:\/\/\S*)\s'
         r'[\\]?"attachment_id:(?P<attachment_id>\d+)'
-        r'(?:\sentityType:(?:file|image|video))?[\\]?"\)'
+        r'(?:\sentityType:(?:file|image|video))?[\\]?"\)',
     )
 
     MENTION_PATTERN = re.compile(
-        r'\[(?P<name>[^]]+)\|(?P<user_id>\d+)\]'
+        r'\[(?P<name>[^]]+)\|(?P<user_id>\d+)\]',
     )
     BOLD_PATTERN = re.compile(
-        r'(?ms)\*{2}((?=[^\*\r\n]).*?[^\*\r\n])\*{2}'
+        r'(?ms)\*{2}((?=[^\*\r\n]).*?[^\*\r\n])\*{2}',
     )
     ITALIC_PATTERN = re.compile(
-        r'(?ms)\*((?=[^\*\r\n]).*?[^\*\r\n])\*'
+        r'(?ms)\*((?=[^\*\r\n]).*?[^\*\r\n])\*',
     )
     LINK_MARKDOWN_PATTERN = re.compile(
-        r'\[(?P<name>[^\]]+)\]\((?P<link>.*?)(?P<desc>\s*"(?:.*[^"])"\s*)?\)'
+        r'\[(?P<name>[^\]]+)\]\((?P<link>.*?)(?P<desc>\s*"(?:.*[^"])"\s*)?\)',
     )
     CHECKLIST_ITEM_PATTERN = re.compile(
         r'\[clist:(?:[\w-]+)\|(?:[\w-]+)\](?P<text>.*)\[\/clist]',
-        flags=re.M
+        flags=re.M,
     )
     IMAGE_MARKDOWN_PATTERN = re.compile(
         r'!\[(?P<name>(?:[^\]].+))\]'
-        r'\((?P<link>.*?)(?P<desc>\s*"(?:.*[^"])"\s*)?\)'
+        r'\((?P<link>.*?)(?P<desc>\s*"(?:.*[^"])"\s*)?\)',
     )
 
     LIST_PATTERN = re.compile(
         r'^(?P<depth>\s*)(?P<label>(?:\d+\.)|(?:\-))(?P<text>.*)$',
-        flags=re.M
+        flags=re.M,
     )
 
     TABLE_MARKDOWN_PATTERN = re.compile(
         r'(?ms)^(?P<thead>\|[^\n]+\|\r?\n)'
         r'(?P<delimiter>(?:\|:?[-]+:?)+\|)'
-        r'(?P<tbody>\n(?:\|[^\n]+\|\r?\n?)*)?$'
+        r'(?P<tbody>\n(?:\|[^\n]+\|\r?\n?)*)?$',
     )
 
 
@@ -132,10 +132,10 @@ class MarkdownService:
                     cls._clear_italic(
                         cls._clear_bold(
                             cls._clear_mentions(
-                                cls. _clear_table(text)
-                            )
-                        )
-                    )
-                )
-            )
+                                cls. _clear_table(text),
+                            ),
+                        ),
+                    ),
+                ),
+            ),
         )

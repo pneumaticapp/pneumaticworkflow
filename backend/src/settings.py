@@ -184,8 +184,8 @@ class Common(Configuration):
     ASGI_APPLICATION = 'src.asgi.application'
     CHANNEL_LAYERS = {
         'default': {
-            'BACKEND': 'channels.layers.InMemoryChannelLayer'
-        }
+            'BACKEND': 'channels.layers.InMemoryChannelLayer',
+        },
     }
 
     AUTH_PASSWORD_VALIDATORS = [
@@ -246,7 +246,7 @@ class Common(Configuration):
             '09_auth0__token': env.get('THROTTLE_09'),
             '10_auth0__auth_uri': env.get('THROTTLE_10'),
             '11_auth__reset_password': env.get('THROTTLE_11'),
-        }
+        },
     }
 
     SIMPLE_JWT = {
@@ -255,13 +255,13 @@ class Common(Configuration):
         'AUTH_TOKEN_CLASSES': (
             'rest_framework_simplejwt.tokens.AccessToken',
             'src.authentication.tokens.GuestToken',
-        )
+        ),
     }
 
     # Email
     DEFAULT_FROM_EMAIL = env.get(
         'DEFAULT_FROM_EMAIL',
-        'Pneumatic <no-reply@pneumatic.app>'
+        'Pneumatic <no-reply@pneumatic.app>',
     )
     EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
     EMAIL_DATE_FORMAT = '%a, %d %b %Y %I:%M:%S %p UTC'
@@ -277,7 +277,7 @@ class Common(Configuration):
     CONFIGURATION_STAGING = 'Staging'
     CONFIGURATION_PROD = 'Production'
     CONFIGURATION_CURRENT = env.get(
-        'ENVIRONMENT', CONFIGURATION_DEV
+        'ENVIRONMENT', CONFIGURATION_DEV,
     ).title()
 
     # Stripe
@@ -325,7 +325,7 @@ class Common(Configuration):
     # Notifications
     # In seconds - default 10 min
     UNREAD_NOTIFICATIONS_TIMEOUT = int(
-        env.get('UNREAD_NOTIFICATIONS_TIMEOUT', '600')
+        env.get('UNREAD_NOTIFICATIONS_TIMEOUT', '600'),
     )
 
     # Celery
@@ -350,7 +350,7 @@ class Common(Configuration):
 
     # Firebase Credentials
     FIREBASE_PUSH_APPLICATION_CREDENTIALS = env.get(
-        'FIREBASE_PUSH_APPLICATION_CREDENTIALS'
+        'FIREBASE_PUSH_APPLICATION_CREDENTIALS',
     )
 
     # OpenAI
@@ -377,7 +377,7 @@ class Common(Configuration):
             'PASSWORD': env.get('POSTGRES_PASSWORD', 'pneumatic'),
             'HOST': env.get('POSTGRES_HOST', 'localhost'),
             'PORT': env.get('POSTGRES_PORT', '5432'),
-        }
+        },
     }
 
     # False value to disable some features.
@@ -419,8 +419,8 @@ class Common(Configuration):
                     'handlers': ['file'],
                     'level': 'DEBUG',
                     'propagate': False,
-                }
-            }
+                },
+            },
         }
 
 
@@ -462,7 +462,7 @@ class Testing(Common):
         'session': {
             'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
             'LOCATION': 'session',
-        }
+        },
     }
 
 
@@ -477,7 +477,7 @@ class Development(Common):
                 "CONNECTION_POOL_KWARGS": {
                     "retry_on_timeout": True,
                     "health_check_interval": 30,
-                }
+                },
             },
             "KEY_PREFIX": "default",
         },
@@ -489,7 +489,7 @@ class Development(Common):
                 "CONNECTION_POOL_KWARGS": {
                     "retry_on_timeout": True,
                     "health_check_interval": 30,
-                }
+                },
             },
             'KEY_PREFIX': '',
         },
@@ -501,7 +501,7 @@ class Development(Common):
                 "CONNECTION_POOL_KWARGS": {
                     "retry_on_timeout": True,
                     "health_check_interval": 30,
-                }
+                },
             },
             'KEY_PREFIX': '',
         },
@@ -512,9 +512,9 @@ class Development(Common):
         'default': {
             'BACKEND': 'channels_redis.core.RedisChannelLayer',
             'CONFIG': {
-                'hosts': [env.get('CHANNELS_REDIS_URL', '')]
-            }
-        }
+                'hosts': [env.get('CHANNELS_REDIS_URL', '')],
+            },
+        },
     }
 
 
@@ -535,8 +535,8 @@ class Staging(Development):
             'USER': env.get('POSTGRES_REPLICA_USER', 'pneumatic'),
             'PASSWORD': env.get('POSTGRES_REPLICA_PASSWORD', 'pneumatic'),
             'HOST': env.get('POSTGRES_REPLICA_HOST', 'localhost'),
-            'PORT': env.get('POSTGRES_REPLICA_PORT', '5432')
-        }
+            'PORT': env.get('POSTGRES_REPLICA_PORT', '5432'),
+        },
     }
 
 

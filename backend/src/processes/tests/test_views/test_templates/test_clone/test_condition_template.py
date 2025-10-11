@@ -5,7 +5,7 @@ from src.processes.models import (
     Template,
 )
 from src.processes.tests.fixtures import (
-    create_test_user
+    create_test_user,
 )
 from src.processes.enums import (
     FieldType,
@@ -40,11 +40,11 @@ class TestCopyConditionTemplate:
                             'api_name': 'predicate-1',
                             'field': 'field-1',
                             'field_type': FieldType.USER,
-                            'operator': PredicateOperator.EXIST
-                        }
-                    ]
-                }
-            ]
+                            'operator': PredicateOperator.EXIST,
+                        },
+                    ],
+                },
+            ],
         }
 
         response = api_client.post(
@@ -55,7 +55,7 @@ class TestCopyConditionTemplate:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'kickoff': {
@@ -66,8 +66,8 @@ class TestCopyConditionTemplate:
                             'type': FieldType.USER,
                             'api_name': 'field-1',
                             'is_required': True,
-                        }
-                    ]
+                        },
+                    ],
                 },
                 'tasks': [
                     {
@@ -76,20 +76,20 @@ class TestCopyConditionTemplate:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': user.id
-                            }
+                                'source_id': user.id,
+                            },
                         ],
                         'conditions': [request_data],
-                    }
-                ]
-            }
+                    },
+                ],
+            },
         )
         template = Template.objects.get(id=response.data['id'])
         response_1_data = response.data['tasks'][0]['conditions'][0]
 
         # act
         response = api_client.post(
-            f'/templates/{template.id}/clone'
+            f'/templates/{template.id}/clone',
         )
 
         # assert
@@ -118,9 +118,9 @@ class TestCopyConditionTemplate:
                     'api_name': 'predicate-1',
                     'field': 'field-1',
                     'field_type': FieldType.USER,
-                    'operator': PredicateOperator.EXIST
-                }
-            ]
+                    'operator': PredicateOperator.EXIST,
+                },
+            ],
         }
 
         response = api_client.post(
@@ -131,7 +131,7 @@ class TestCopyConditionTemplate:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'kickoff': {
@@ -142,8 +142,8 @@ class TestCopyConditionTemplate:
                             'type': FieldType.USER,
                             'api_name': 'field-1',
                             'is_required': True,
-                        }
-                    ]
+                        },
+                    ],
                 },
                 'tasks': [
                     {
@@ -152,19 +152,19 @@ class TestCopyConditionTemplate:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': user.id
-                            }
+                                'source_id': user.id,
+                            },
                         ],
                         'conditions': [
                             {
                                 'order': 1,
                                 'rules': [request_data],
-                                'action': 'skip_task'
-                            }
+                                'action': 'skip_task',
+                            },
                         ],
-                    }
-                ]
-            }
+                    },
+                ],
+            },
         )
         template = Template.objects.get(id=response.data['id'])
         response_1_data = (
@@ -173,7 +173,7 @@ class TestCopyConditionTemplate:
 
         # act
         response = api_client.post(
-            f'/templates/{template.id}/clone'
+            f'/templates/{template.id}/clone',
         )
 
         # assert
@@ -199,7 +199,7 @@ class TestCopyConditionTemplate:
             'api_name': 'predicate-1',
             'field': 'field-1',
             'field_type': FieldType.USER,
-            'operator': PredicateOperator.EXIST
+            'operator': PredicateOperator.EXIST,
         }
 
         response = api_client.post(
@@ -210,7 +210,7 @@ class TestCopyConditionTemplate:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'kickoff': {
@@ -221,8 +221,8 @@ class TestCopyConditionTemplate:
                             'type': FieldType.USER,
                             'api_name': 'field-1',
                             'is_required': True,
-                        }
-                    ]
+                        },
+                    ],
                 },
                 'tasks': [
                     {
@@ -231,8 +231,8 @@ class TestCopyConditionTemplate:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': user.id
-                            }
+                                'source_id': user.id,
+                            },
                         ],
                         'conditions': [
                             {
@@ -242,14 +242,14 @@ class TestCopyConditionTemplate:
                                 'rules': [
                                     {
                                         'api_name': 'rule-1',
-                                        'predicates': [request_data]
-                                    }
-                                ]
-                            }
-                        ]
-                    }
-                ]
-            }
+                                        'predicates': [request_data],
+                                    },
+                                ],
+                            },
+                        ],
+                    },
+                ],
+            },
         )
         template = Template.objects.get(id=response.data['id'])
         response_1_data = (
@@ -260,7 +260,7 @@ class TestCopyConditionTemplate:
 
         # act
         response = api_client.post(
-            f'/templates/{template.id}/clone'
+            f'/templates/{template.id}/clone',
         )
 
         # assert
@@ -268,7 +268,7 @@ class TestCopyConditionTemplate:
         assert len(
             response.data['tasks'][0][
                 'conditions'
-            ][0]['rules'][0]['predicates']
+            ][0]['rules'][0]['predicates'],
         ) == 1
         response_2_data = (
             response.data['tasks'][0][

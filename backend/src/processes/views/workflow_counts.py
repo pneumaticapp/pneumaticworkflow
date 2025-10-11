@@ -24,7 +24,7 @@ from src.generics.permissions import UserIsAuthenticated
 
 class WorkflowCountsViewSet(
     CustomViewSetMixin,
-    GenericViewSet
+    GenericViewSet,
 ):
     permission_classes = (
         UserIsAuthenticated,
@@ -41,13 +41,13 @@ class WorkflowCountsViewSet(
     @action(methods=['get'], detail=False, url_path='by-workflow-starter')
     def by_workflow_starter(self, request, *args, **kwargs):
         request_slz = WorkflowCountsByWorkflowStarterSerializer(
-            data=request.GET
+            data=request.GET,
         )
         request_slz.is_valid(raise_exception=True)
         query = WorkflowCountsByWfStarterQuery(
             user_id=request.user.id,
             account_id=request.user.account_id,
-            **request_slz.validated_data
+            **request_slz.validated_data,
         )
         sql_rows = list(RawSqlExecutor.fetch(*query.get_sql()))
         response_slz = self.get_serializer(instance=sql_rows, many=True)
@@ -56,13 +56,13 @@ class WorkflowCountsViewSet(
     @action(methods=['get'], detail=False, url_path='by-current-performer')
     def by_current_performer(self, request, *args, **kwargs):
         request_slz = WorkflowCountsByCurrentPerformerSerializer(
-            data=request.GET
+            data=request.GET,
         )
         request_slz.is_valid(raise_exception=True)
         query = WorkflowCountsByCPerformerQuery(
             user_id=request.user.id,
             account_id=request.user.account_id,
-            **request_slz.validated_data
+            **request_slz.validated_data,
         )
         sql_rows = list(RawSqlExecutor.fetch(*query.get_sql()))
         response_slz = self.get_serializer(instance=sql_rows, many=True)
@@ -71,13 +71,13 @@ class WorkflowCountsViewSet(
     @action(methods=['get'], detail=False, url_path='by-template-task')
     def by_template_task(self, request, *args, **kwargs):
         request_slz = WorkflowCountsByTemplateTaskSerializer(
-            data=request.GET
+            data=request.GET,
         )
         request_slz.is_valid(raise_exception=True)
         query = WorkflowCountsByTemplateTaskQuery(
             user_id=request.user.id,
             account_id=request.user.account_id,
-            **request_slz.validated_data
+            **request_slz.validated_data,
         )
         sql_rows = list(RawSqlExecutor.fetch(*query.get_sql()))
         response_slz = self.get_serializer(instance=sql_rows, many=True)

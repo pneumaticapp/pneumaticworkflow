@@ -21,7 +21,7 @@ def create_test_product(
         is_subscription=is_subscription,
         is_active=is_active,
         stripe_id=stripe_id,
-        code=code
+        code=code,
     )
 
 
@@ -42,7 +42,7 @@ def create_test_recurring_price(
     if product is None:
         product = create_test_product(
             stripe_id='prod_1N8JnDBM2UVM1VfGDN6IsDDg1',
-            is_subscription=True
+            is_subscription=True,
         )
     return Price.objects.create(
         product=product,
@@ -56,7 +56,7 @@ def create_test_recurring_price(
         price=price,
         trial_days=trial_days,
         billing_period=period,
-        currency=currency
+        currency=currency,
     )
 
 
@@ -69,7 +69,7 @@ def create_test_invoice_price(
     price: int = 1000,
     currency: str = 'usd',
     min_quantity: int = 0,
-    max_quantity: int = 1
+    max_quantity: int = 1,
 ) -> Price:
 
     if product is None:
@@ -84,5 +84,5 @@ def create_test_invoice_price(
         min_quantity=min_quantity,
         price_type=PriceType.ONE_TIME,
         price=price,
-        currency=currency
+        currency=currency,
     )

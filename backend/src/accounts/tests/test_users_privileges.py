@@ -23,7 +23,7 @@ from src.processes.tests.fixtures import (
     create_test_not_admin,
     create_test_admin,
     create_test_owner,
-    create_invited_user
+    create_invited_user,
 )
 from src.generics.messages import MSG_GE_0001
 from src.utils.dates import date_format
@@ -133,8 +133,8 @@ def test_privileges__pagination__ok(api_client):
         '/accounts/users/privileges',
         data={
             'limit': 1,
-            'offset': 2
-        }
+            'offset': 2,
+        },
     )
 
     # assert
@@ -160,18 +160,18 @@ def test_privileges__guest__permission_denied(api_client):
     guest = create_test_guest(account=user.account)
     TaskPerformer.objects.create(
         task_id=task.id,
-        user_id=guest.id
+        user_id=guest.id,
     )
     str_token = GuestJWTAuthService.get_str_token(
         task_id=task.id,
         user_id=guest.id,
-        account_id=user.account.id
+        account_id=user.account.id,
     )
 
     # act
     response = api_client.get(
         path='/accounts/users/privileges',
-        **{'X-Guest-Authorization': str_token}
+        **{'X-Guest-Authorization': str_token},
     )
 
     # assert
@@ -246,21 +246,21 @@ def test_privileges__filter_group__ok(api_client):
     user = create_test_owner(account=account)
     another_user = create_test_user(
         account=account,
-        email='test@test.test'
+        email='test@test.test',
     )
     create_test_user(
         account=account,
-        email='additional@test.test'
+        email='additional@test.test',
     )
     group = create_test_group(
         account=account,
-        users=[user, another_user, ]
+        users=[user, another_user ],
     )
     api_client.token_authenticate(user)
 
     # act
     response = api_client.get(
-        f'/accounts/users/privileges?groups={group.id}'
+        f'/accounts/users/privileges?groups={group.id}',
     )
 
     # assert
@@ -278,11 +278,11 @@ def test_privileges__group_multiple_values__ok(api_client):
     another_user = create_test_user(
         account=account,
         first_name='2',
-        email='test@test.test'
+        email='test@test.test',
     )
     create_test_user(
         account=account,
-        email='additional@test.test'
+        email='additional@test.test',
     )
     group_1 = create_test_group(account=account, users=[another_user])
     group_2 = create_test_group(account=account, users=[user])
@@ -290,7 +290,7 @@ def test_privileges__group_multiple_values__ok(api_client):
 
     # act
     response = api_client.get(
-        f'/accounts/users/privileges?groups={group_1.id},{group_2.id}'
+        f'/accounts/users/privileges?groups={group_1.id},{group_2.id}',
     )
 
     # assert
@@ -306,7 +306,7 @@ def test_privileges__status_inactive__ok(api_client):
     user = create_test_owner()
     inactive_user = create_test_user(
         account=user.account,
-        email='test@test.test'
+        email='test@test.test',
     )
 
     UserService.deactivate(inactive_user)
@@ -331,7 +331,7 @@ def test_privileges__status_active__ok(api_client):
     user = create_test_owner()
     inactive_user = create_test_user(
         account=user.account,
-        email='test@test.test'
+        email='test@test.test',
     )
     UserService.deactivate(inactive_user)
     create_invited_user(user)
@@ -355,7 +355,7 @@ def test_privileges__status_invited__ok(api_client):
     user = create_test_owner()
     inactive_user = create_test_user(
         account=user.account,
-        email='test@test.test'
+        email='test@test.test',
     )
     UserService.deactivate(inactive_user)
     invited_user = create_invited_user(user)
@@ -379,7 +379,7 @@ def test_privileges__status_multiple_values__ok(api_client):
     user = create_test_owner(last_name='z')
     inactive_user = create_test_user(
         account=user.account,
-        email='test@test.test'
+        email='test@test.test',
     )
     UserService.deactivate(inactive_user)
     invited_user = create_invited_user(user, last_name='x')
@@ -388,7 +388,7 @@ def test_privileges__status_multiple_values__ok(api_client):
     # act
     response = api_client.get(
         f'/accounts/users/privileges'
-        f'?status={UserStatus.INVITED},{UserStatus.ACTIVE}'
+        f'?status={UserStatus.INVITED},{UserStatus.ACTIVE}',
     )
 
     # assert
@@ -409,8 +409,8 @@ def test_privileges__type_user__ok(api_client):
     response = api_client.get(
         '/accounts/users/privileges',
         data={
-            'type': UserType.USER
-        }
+            'type': UserType.USER,
+        },
     )
 
     # assert
@@ -438,8 +438,8 @@ def test_privileges__type_guest__ok(api_client):
     response = api_client.get(
         '/accounts/users/privileges',
         data={
-            'type': UserType.GUEST
-        }
+            'type': UserType.GUEST,
+        },
     )
 
     # assert
@@ -466,7 +466,7 @@ def test_privileges__type_multiple_values__ok(api_client):
     # act
     response = api_client.get(
         f'/accounts/users/privileges?type={UserType.GUEST}, {UserType.USER}'
-        f'?ordering=last_name'
+        f'?ordering=last_name',
     )
 
     # assert
@@ -504,7 +504,7 @@ def test_privileges__ordering_by_status__ok(api_client):
     # act
     response = api_client.get(
         path='/accounts/users/privileges',
-        data={'ordering': 'status'}
+        data={'ordering': 'status'},
     )
 
     # assert
@@ -524,7 +524,7 @@ def test_privileges__ordering_by_status_desc_ok(api_client):
     # act
     response = api_client.get(
         path='/accounts/users/privileges',
-        data={'ordering': '-status'}
+        data={'ordering': '-status'},
     )
 
     # assert
@@ -543,7 +543,7 @@ def test_privileges__ordering_by_last_name__ok(api_client):
     # act
     response = api_client.get(
         path='/accounts/users/privileges',
-        data={'ordering': 'last_name'}
+        data={'ordering': 'last_name'},
     )
 
     # assert
@@ -562,7 +562,7 @@ def test_privileges__ordering_by_last_name_desc__ok(api_client):
     # act
     response = api_client.get(
         path='/accounts/users/privileges',
-        data={'ordering': '-last_name'}
+        data={'ordering': '-last_name'},
     )
 
     # assert
@@ -581,7 +581,7 @@ def test_privileges__ordering_multiple_values__ok(api_client):
     user2 = create_test_owner(
         account=account,
         last_name='b',
-        email='user2@test.test'
+        email='user2@test.test',
     )
     user2.status = UserStatus.ACTIVE
     user2.save()
@@ -590,7 +590,7 @@ def test_privileges__ordering_multiple_values__ok(api_client):
 
     # act
     response = api_client.get(
-        path='/accounts/users/privileges?ordering=last_name,status'
+        path='/accounts/users/privileges?ordering=last_name,status',
     )
 
     # assert
@@ -605,24 +605,24 @@ def test_privileges__ordering_by_multiple_values_2__ok(api_client):
     # arrange
     user = create_test_owner(
         first_name='A',
-        last_name='C'
+        last_name='C',
     )
     user_2 = create_test_user(
         account=user.account,
         first_name='A',
         last_name='B',
-        email='t@t.t'
+        email='t@t.t',
     )
     invited = create_invited_user(
         user=user,
         first_name='B',
-        last_name='A'
+        last_name='A',
     )
     api_client.token_authenticate(user)
 
     # act
     response = api_client.get(
-        path='/accounts/users/privileges?ordering=first_name,last_name'
+        path='/accounts/users/privileges?ordering=first_name,last_name',
     )
 
     # assert

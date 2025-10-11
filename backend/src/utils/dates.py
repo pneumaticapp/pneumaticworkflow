@@ -32,7 +32,7 @@ def date_to_tz(
 
 def date_to_user_fmt(
     date: datetime,
-    user: UserModel
+    user: UserModel,
 ) -> str:
     local_date = date.astimezone(timezone(user.timezone))
     month = date.strftime('%B')
@@ -45,7 +45,7 @@ def date_to_user_fmt(
 
 def date_tsp_to_user_fmt(
     date_tsp: float,
-    user: UserModel
+    user: UserModel,
 ) -> str:
     utc_date = datetime.fromtimestamp(date_tsp)
     return date_to_user_fmt(date=utc_date, user=user)

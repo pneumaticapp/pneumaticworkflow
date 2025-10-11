@@ -12,7 +12,7 @@ from src.processes.models import (
     Workflow, RawDueDateTemplate,
 )
 from src.processes.services.workflow_action import (
-    WorkflowActionService
+    WorkflowActionService,
 )
 from src.processes.enums import (
     PerformerType,
@@ -25,7 +25,7 @@ from src.processes.enums import (
     PredicateOperator,
 )
 from src.accounts.models import (
-    UserInvite
+    UserInvite,
 )
 from src.accounts.services.user import UserService
 from src.authentication.enums import AuthTokenType
@@ -40,7 +40,7 @@ class TestCreateTemplateTask:
 
     def test_create__only_required_fields__defaults_ok(
         self,
-        api_client
+        api_client,
     ):
 
         # arrange
@@ -52,9 +52,9 @@ class TestCreateTemplateTask:
             'raw_performers': [
                 {
                     'type': PerformerType.USER,
-                    'source_id': user.id
-                }
-            ]
+                    'source_id': user.id,
+                },
+            ],
         }
 
         # act
@@ -65,13 +65,13 @@ class TestCreateTemplateTask:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'kickoff': {},
                 'is_active': True,
-                'tasks': [request_data]
-            }
+                'tasks': [request_data],
+            },
         )
 
         # assert
@@ -100,7 +100,7 @@ class TestCreateTemplateTask:
         assert task.revert_task is None
         assert task.description is None
         assert task.raw_performers.count() == len(
-            request_data['raw_performers']
+            request_data['raw_performers'],
         )
         assert task.require_completion_by_all is False
         assert task.delay is None
@@ -109,7 +109,7 @@ class TestCreateTemplateTask:
 
     def test_create__all_fields__ok(
         self,
-        api_client
+        api_client,
     ):
 
         # arrange
@@ -128,19 +128,19 @@ class TestCreateTemplateTask:
                 'rule': 'after task started',
                 'duration_months': 0,
                 'duration': duration,
-                'source_id': 'task-1'
+                'source_id': 'task-1',
             },
             'raw_performers': [
                 {
                     'type': PerformerType.USER,
-                    'source_id': user.id
+                    'source_id': user.id,
                 },
                 {
                     'type': PerformerType.FIELD,
-                    'source_id': 'user-field-1'
-                }
+                    'source_id': 'user-field-1',
+                },
             ],
-            'fields': []
+            'fields': [],
         }
 
         # act
@@ -152,7 +152,7 @@ class TestCreateTemplateTask:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'kickoff': {
@@ -162,12 +162,12 @@ class TestCreateTemplateTask:
                             'name': 'First step performer',
                             'type': FieldType.USER,
                             'is_required': True,
-                            'api_name': 'user-field-1'
-                        }
-                    ]
+                            'api_name': 'user-field-1',
+                        },
+                    ],
                 },
-                'tasks': [request_data]
-            }
+                'tasks': [request_data],
+            },
         )
 
         # assert
@@ -181,7 +181,7 @@ class TestCreateTemplateTask:
         assert response_data['number'] == request_data['number']
         assert response_data['description'] == request_data['description']
         assert len(response_data['raw_performers']) == len(
-            request_data['raw_performers']
+            request_data['raw_performers'],
         )
         assert response_data['delay'] is None
         assert response_data['raw_due_date']['duration'] == duration
@@ -196,7 +196,7 @@ class TestCreateTemplateTask:
         assert task.number == request_data['number']
         assert task.description == request_data['description']
         assert task.raw_performers.count() == len(
-            request_data['raw_performers']
+            request_data['raw_performers'],
         )
         assert task.delay is None
         assert task.fields.count() == len(request_data['fields'])
@@ -206,7 +206,7 @@ class TestCreateTemplateTask:
 
     def test_create__tasks_not_provided__validation_error(
         self,
-        api_client
+        api_client,
     ):
 
         # arrange
@@ -222,12 +222,12 @@ class TestCreateTemplateTask:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'kickoff': {},
-                'tasks': []
-            }
+                'tasks': [],
+            },
         )
 
         # assert
@@ -238,7 +238,7 @@ class TestCreateTemplateTask:
 
     def test_create__long_task_name__validation_error(
         self,
-        api_client
+        api_client,
     ):
 
         # arrange
@@ -255,7 +255,7 @@ class TestCreateTemplateTask:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'kickoff': {},
@@ -267,12 +267,12 @@ class TestCreateTemplateTask:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': user.id
-                            }
-                        ]
-                    }
-                ]
-            }
+                                'source_id': user.id,
+                            },
+                        ],
+                    },
+                ],
+            },
         )
 
         # assert
@@ -286,7 +286,7 @@ class TestCreateTemplateTask:
 
     def test_create__insert_valid_api_names_to_description__ok(
         self,
-        api_client
+        api_client,
     ):
 
         # arrange
@@ -297,14 +297,14 @@ class TestCreateTemplateTask:
             'name': 'First step performer',
             'type': FieldType.USER,
             'is_required': True,
-            'api_name': 'user-field-1'
+            'api_name': 'user-field-1',
         }
         task_field_data = {
             'order': 1,
             'name': 'Attached URL',
             'type': FieldType.URL,
             'is_required': False,
-            'api_name': 'url-field-1'
+            'api_name': 'url-field-1',
         }
         request_data = {
             'is_active': True,
@@ -312,13 +312,13 @@ class TestCreateTemplateTask:
             'owners': [
                 {
                     'type': OwnerType.USER,
-                    'source_id': user.id
+                    'source_id': user.id,
                 },
             ],
             'description': 'Test description',
             'kickoff': {
                 'description': 'Desc',
-                'fields': [kickoff_field_data]
+                'fields': [kickoff_field_data],
             },
             'tasks': [
                 {
@@ -328,10 +328,10 @@ class TestCreateTemplateTask:
                     'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': user.id
-                            }
+                                'source_id': user.id,
+                            },
                         ],
-                    'fields': [task_field_data]
+                    'fields': [task_field_data],
                 },
                 {
                     'name': 'Second',
@@ -340,30 +340,30 @@ class TestCreateTemplateTask:
                     'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': user.id
-                            }
-                        ]
+                                'source_id': user.id,
+                            },
+                        ],
                 },
                 {
                     'name': 'Third',
                     'number': 3,
                     'description': '{{%s}} {{%s}}' % (
                         kickoff_field_data['api_name'],
-                        task_field_data['api_name']
+                        task_field_data['api_name'],
                     ),
                     'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': user.id
-                            }
-                        ]
-                }
-            ]
+                                'source_id': user.id,
+                            },
+                        ],
+                },
+            ],
         }
         # act
         response = api_client.post(
             path='/templates',
-            data=request_data
+            data=request_data,
         )
 
         # assert
@@ -382,7 +382,7 @@ class TestCreateTemplateTask:
         another_template = create_test_template(
             user=user,
             tasks_count=1,
-            is_active=True
+            is_active=True,
         )
         field_api_name = 'field-1'
         FieldTemplate.objects.create(
@@ -403,7 +403,7 @@ class TestCreateTemplateTask:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'description': '',
@@ -417,12 +417,12 @@ class TestCreateTemplateTask:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': user.id
-                            }
-                        ]
-                    }
-                ]
-            }
+                                'source_id': user.id,
+                            },
+                        ],
+                    },
+                ],
+            },
         )
 
         # assert
@@ -436,7 +436,7 @@ class TestCreateTemplateTask:
 
     def test_create__insert_valid_api_name_to_task_name__ok(
         self,
-        api_client
+        api_client,
     ):
 
         # arrange
@@ -452,7 +452,7 @@ class TestCreateTemplateTask:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'kickoff': {
@@ -462,9 +462,9 @@ class TestCreateTemplateTask:
                             'name': 'String field',
                             'type': FieldType.STRING,
                             'is_required': True,
-                            'api_name': 'string-field-1'
-                        }
-                    ]
+                            'api_name': 'string-field-1',
+                        },
+                    ],
                 },
                 'tasks': [
                     {
@@ -473,12 +473,12 @@ class TestCreateTemplateTask:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': user.id
-                            }
-                        ]
-                    }
-                ]
-            }
+                                'source_id': user.id,
+                            },
+                        ],
+                    },
+                ],
+            },
         )
 
         # assert
@@ -486,7 +486,7 @@ class TestCreateTemplateTask:
 
     def test_create__multiple_api_name_in_task_name__ok(
         self,
-        api_client
+        api_client,
     ):
 
         # arrange
@@ -504,7 +504,7 @@ class TestCreateTemplateTask:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'kickoff': {
@@ -514,16 +514,16 @@ class TestCreateTemplateTask:
                             'name': 'String field',
                             'type': FieldType.STRING,
                             'is_required': True,
-                            'api_name': 'string-field-1'
+                            'api_name': 'string-field-1',
                         },
                         {
                             'order': 2,
                             'name': 'String field 2',
                             'type': FieldType.STRING,
                             'is_required': True,
-                            'api_name': 'string-field-2'
-                        }
-                    ]
+                            'api_name': 'string-field-2',
+                        },
+                    ],
                 },
                 'tasks': [
                     {
@@ -533,12 +533,12 @@ class TestCreateTemplateTask:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': user.id
-                            }
-                        ]
-                    }
-                ]
-            }
+                                'source_id': user.id,
+                            },
+                        ],
+                    },
+                ],
+            },
         )
 
         # assert
@@ -553,12 +553,12 @@ class TestCreateTemplateTask:
             FieldType.FILE,
             FieldType.URL,
             FieldType.TEXT,
-        }
+        },
     )
     def test_create__simple_field_in_task_name__ok(
         self,
         field_type,
-        api_client
+        api_client,
     ):
 
         # arrange
@@ -577,7 +577,7 @@ class TestCreateTemplateTask:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'kickoff': {
@@ -587,9 +587,9 @@ class TestCreateTemplateTask:
                             'name': 'Field',
                             'type': field_type,
                             'api_name': field_api_name,
-                            'is_required': True
-                        }
-                    ]
+                            'is_required': True,
+                        },
+                    ],
                 },
                 'tasks': [
                     {
@@ -599,12 +599,12 @@ class TestCreateTemplateTask:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': user.id
-                            }
-                        ]
-                    }
-                ]
-            }
+                                'source_id': user.id,
+                            },
+                        ],
+                    },
+                ],
+            },
         )
 
         # assert
@@ -616,12 +616,12 @@ class TestCreateTemplateTask:
             FieldType.DROPDOWN,
             FieldType.RADIO,
             FieldType.CHECKBOX,
-        }
+        },
     )
     def test_create__field_with_selections_in_task_name__ok(
         self,
         field_type,
-        api_client
+        api_client,
     ):
 
         # arrange
@@ -640,7 +640,7 @@ class TestCreateTemplateTask:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'kickoff': {
@@ -654,11 +654,11 @@ class TestCreateTemplateTask:
                             'selections': [
                                 {
                                     'api_name': 'selection-1',
-                                    'value': 'some value'
-                                }
-                            ]
-                        }
-                    ]
+                                    'value': 'some value',
+                                },
+                            ],
+                        },
+                    ],
                 },
                 'tasks': [
                     {
@@ -668,12 +668,12 @@ class TestCreateTemplateTask:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': user.id
-                            }
-                        ]
-                    }
-                ]
-            }
+                                'source_id': user.id,
+                            },
+                        ],
+                    },
+                ],
+            },
         )
 
         # assert
@@ -681,7 +681,7 @@ class TestCreateTemplateTask:
 
     def test_create__not_existent_field_in_task_name__validation_error(
         self,
-        api_client
+        api_client,
     ):
 
         # arrange
@@ -699,7 +699,7 @@ class TestCreateTemplateTask:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'kickoff': {},
@@ -711,12 +711,12 @@ class TestCreateTemplateTask:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': user.id
-                            }
-                        ]
-                    }
-                ]
-            }
+                                'source_id': user.id,
+                            },
+                        ],
+                    },
+                ],
+            },
         )
 
         # assert
@@ -730,7 +730,7 @@ class TestCreateTemplateTask:
 
     def test_create__another_template_field_in_task_name__validation_error(
         self,
-        api_client
+        api_client,
     ):
 
         # arrange
@@ -760,7 +760,7 @@ class TestCreateTemplateTask:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'kickoff': {},
@@ -773,12 +773,12 @@ class TestCreateTemplateTask:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': user.id
-                            }
-                        ]
-                    }
-                ]
-            }
+                                'source_id': user.id,
+                            },
+                        ],
+                    },
+                ],
+            },
         )
 
         # assert
@@ -811,7 +811,7 @@ class TestCreateTemplateTask:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'kickoff': {},
@@ -823,8 +823,8 @@ class TestCreateTemplateTask:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': user.id
-                            }
+                                'source_id': user.id,
+                            },
                         ],
                     },
                     {
@@ -833,8 +833,8 @@ class TestCreateTemplateTask:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': user.id
-                            }
+                                'source_id': user.id,
+                            },
                         ],
                         'fields': [
                             {
@@ -842,12 +842,12 @@ class TestCreateTemplateTask:
                                 'name': 'String field',
                                 'type': FieldType.STRING,
                                 'is_required': True,
-                                'api_name': field_api_name
-                            }
-                        ]
-                    }
-                ]
-            }
+                                'api_name': field_api_name,
+                            },
+                        ],
+                    },
+                ],
+            },
         )
 
         # assert
@@ -880,7 +880,7 @@ class TestCreateTemplateTask:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'kickoff': {
@@ -890,9 +890,9 @@ class TestCreateTemplateTask:
                             'name': 'String field',
                             'type': FieldType.STRING,
                             'is_required': False,
-                            'api_name': field_api_name
-                        }
-                    ]
+                            'api_name': field_api_name,
+                        },
+                    ],
                 },
                 'tasks': [
                     {
@@ -902,12 +902,12 @@ class TestCreateTemplateTask:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': user.id
-                            }
+                                'source_id': user.id,
+                            },
                         ],
-                    }
-                ]
-            }
+                    },
+                ],
+            },
         )
 
         # assert
@@ -941,7 +941,7 @@ class TestCreateTemplateTask:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'kickoff': {
@@ -951,7 +951,7 @@ class TestCreateTemplateTask:
                             'name': 'String field',
                             'type': FieldType.STRING,
                             'is_required': False,
-                            'api_name': field_1_api_name
+                            'api_name': field_1_api_name,
                         },
                         {
                             'order': 2,
@@ -962,11 +962,11 @@ class TestCreateTemplateTask:
                             'selections': [
                                 {
                                     'api_name': 'selection-1',
-                                    'value': 'some value'
-                                }
-                            ]
-                        }
-                    ]
+                                    'value': 'some value',
+                                },
+                            ],
+                        },
+                    ],
                 },
                 'tasks': [
                     {
@@ -976,12 +976,12 @@ class TestCreateTemplateTask:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': user.id
-                            }
+                                'source_id': user.id,
+                            },
                         ],
-                    }
-                ]
-            }
+                    },
+                ],
+            },
         )
 
         # assert
@@ -995,7 +995,7 @@ class TestCreateTemplateTask:
 
     def test_create__delay_in_first_task__ok(
         self,
-        api_client
+        api_client,
     ):
 
         # arrange
@@ -1011,7 +1011,7 @@ class TestCreateTemplateTask:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'kickoff': {},
@@ -1025,12 +1025,12 @@ class TestCreateTemplateTask:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': user.id
-                            }
+                                'source_id': user.id,
+                            },
                         ],
-                    }
-                ]
-            }
+                    },
+                ],
+            },
         )
 
         # assert
@@ -1053,7 +1053,7 @@ class TestCreateTemplateTask:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'kickoff': {},
@@ -1066,12 +1066,12 @@ class TestCreateTemplateTask:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': user.id
-                            }
-                        ]
-                    }
-                ]
-            }
+                                'source_id': user.id,
+                            },
+                        ],
+                    },
+                ],
+            },
         )
 
         # assert
@@ -1094,12 +1094,12 @@ class TestCreateTemplateTask:
             duration=timedelta(hours=1),
             duration_months=0,
             rule=DueDateRule.AFTER_TASK_STARTED,
-            source_id=template_task_2.api_name
+            source_id=template_task_2.api_name,
         )
 
         response_run = api_client.post(
             path=f'/templates/{template.id}/run',
-            data={}
+            data={},
         )
         workflow = Workflow.objects.get(id=response_run.data['id'])
         task_1 = workflow.tasks.get(number=1)
@@ -1125,7 +1125,7 @@ class TestCreateTemplateTask:
         # arrange
         analytics_mock = mocker.patch(
             'src.processes.serializers.templates.task.'
-            'AnalyticService.templates_task_due_date_created'
+            'AnalyticService.templates_task_due_date_created',
         )
         user = create_test_user()
         api_client.token_authenticate(user)
@@ -1139,7 +1139,7 @@ class TestCreateTemplateTask:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'kickoff': {},
@@ -1152,19 +1152,19 @@ class TestCreateTemplateTask:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': user.id
-                            }
+                                'source_id': user.id,
+                            },
                         ],
                         'raw_due_date': {
                             'api_name': 'raw-due-date-bwybf0',
                             'rule': 'after task started',
                             'duration_months': 0,
                             'duration': duration,
-                            'source_id': 'task-1'
-                        }
-                    }
-                ]
-            }
+                            'source_id': 'task-1',
+                        },
+                    },
+                ],
+            },
         )
 
         # assert
@@ -1188,7 +1188,7 @@ class TestCreateTemplateTask:
         # arrange
         analytics_mock = mocker.patch(
             'src.processes.serializers.templates.task.'
-            'AnalyticService.templates_task_due_date_created'
+            'AnalyticService.templates_task_due_date_created',
         )
         user = create_test_user()
         api_client.token_authenticate(user)
@@ -1202,7 +1202,7 @@ class TestCreateTemplateTask:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'kickoff': {},
@@ -1215,19 +1215,19 @@ class TestCreateTemplateTask:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': user.id
-                            }
+                                'source_id': user.id,
+                            },
                         ],
                         'raw_due_date': {
                             'api_name': 'raw-due-date-bwybf0',
                             'rule': 'after task started',
                             'duration_months': 0,
                             'duration': duration,
-                            'source_id': 'task-1'
-                        }
-                    }
-                ]
-            }
+                            'source_id': 'task-1',
+                        },
+                    },
+                ],
+            },
         )
 
         # assert
@@ -1238,7 +1238,7 @@ class TestCreateTemplateTask:
 
     def test_create__equal_api_names__save_last(
         self,
-        api_client
+        api_client,
     ):
 
         # arrange
@@ -1255,7 +1255,7 @@ class TestCreateTemplateTask:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'kickoff': {},
@@ -1268,9 +1268,9 @@ class TestCreateTemplateTask:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': user.id
-                            }
-                        ]
+                                'source_id': user.id,
+                            },
+                        ],
                     },
                     {
                         'number': 2,
@@ -1279,12 +1279,12 @@ class TestCreateTemplateTask:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': user.id
-                            }
-                        ]
-                    }
-                ]
-            }
+                                'source_id': user.id,
+                            },
+                        ],
+                    },
+                ],
+            },
         )
 
         # assert
@@ -1297,7 +1297,7 @@ class TestCreateTemplateTask:
 
     def test_create__set_return_to_task__ok(
         self,
-        api_client
+        api_client,
     ):
 
         # arrange
@@ -1312,9 +1312,9 @@ class TestCreateTemplateTask:
                 'raw_performers': [
                     {
                         'type': PerformerType.USER,
-                        'source_id': user.id
-                    }
-                ]
+                        'source_id': user.id,
+                    },
+                ],
             },
             {
                 'number': 2,
@@ -1323,8 +1323,8 @@ class TestCreateTemplateTask:
                 'raw_performers': [
                     {
                         'type': PerformerType.USER,
-                        'source_id': user.id
-                    }
+                        'source_id': user.id,
+                    },
                 ],
                 'conditions': [
                     {
@@ -1338,13 +1338,13 @@ class TestCreateTemplateTask:
                                       'operator': PredicateOperator.COMPLETED,
                                       'field': revert_task_api_name,
                                       'value': None,
-                                    }
-                                ]
-                            }
-                        ]
-                    }
-                ]
-            }
+                                    },
+                                ],
+                            },
+                        ],
+                    },
+                ],
+            },
         ]
 
         # act
@@ -1361,7 +1361,7 @@ class TestCreateTemplateTask:
                 'kickoff': {},
                 'is_active': True,
                 'tasks': request_data,
-            }
+            },
         )
 
         # assert
@@ -1374,7 +1374,7 @@ class TestCreateTemplateTask:
 
     def test_create__set_return_to_task__not_ancestor__validation_error(
         self,
-        api_client
+        api_client,
     ):
 
         # arrange
@@ -1391,8 +1391,8 @@ class TestCreateTemplateTask:
                 'raw_performers': [
                     {
                         'type': PerformerType.USER,
-                        'source_id': user.id
-                    }
+                        'source_id': user.id,
+                    },
                 ],
                 'revert_task': revert_task_api_name,
             },
@@ -1403,8 +1403,8 @@ class TestCreateTemplateTask:
                 'raw_performers': [
                     {
                         'type': PerformerType.USER,
-                        'source_id': user.id
-                    }
+                        'source_id': user.id,
+                    },
                 ],
                 'conditions': [
                     {
@@ -1418,13 +1418,13 @@ class TestCreateTemplateTask:
                                       'operator': PredicateOperator.COMPLETED,
                                       'field': task_1_api_name,
                                       'value': None,
-                                    }
-                                ]
-                            }
-                        ]
-                    }
-                ]
-            }
+                                    },
+                                ],
+                            },
+                        ],
+                    },
+                ],
+            },
         ]
 
         # act
@@ -1441,7 +1441,7 @@ class TestCreateTemplateTask:
                 'kickoff': {},
                 'is_active': True,
                 'tasks': request_data,
-            }
+            },
         )
 
         # assert
@@ -1454,7 +1454,7 @@ class TestCreateTemplateTask:
 
     def test_create__set_return_to_task__same_level__validation_error(
         self,
-        api_client
+        api_client,
     ):
 
         # arrange
@@ -1471,9 +1471,9 @@ class TestCreateTemplateTask:
                 'raw_performers': [
                     {
                         'type': PerformerType.USER,
-                        'source_id': user.id
-                    }
-                ]
+                        'source_id': user.id,
+                    },
+                ],
             },
             {
                 'number': 2,
@@ -1482,11 +1482,11 @@ class TestCreateTemplateTask:
                 'raw_performers': [
                     {
                         'type': PerformerType.USER,
-                        'source_id': user.id
-                    }
+                        'source_id': user.id,
+                    },
                 ],
-                'revert_task': revert_task_api_name
-            }
+                'revert_task': revert_task_api_name,
+            },
         ]
 
         # act
@@ -1503,7 +1503,7 @@ class TestCreateTemplateTask:
                 'kickoff': {},
                 'is_active': True,
                 'tasks': request_data,
-            }
+            },
         )
 
         # assert
@@ -1516,7 +1516,7 @@ class TestCreateTemplateTask:
 
     def test_create__multiple_ancestors__ok(
         self,
-        api_client
+        api_client,
     ):
         # arrange
         user = create_test_user()
@@ -1531,9 +1531,9 @@ class TestCreateTemplateTask:
                 'raw_performers': [
                     {
                         'type': PerformerType.USER,
-                        'source_id': user.id
-                    }
-                ]
+                        'source_id': user.id,
+                    },
+                ],
             },
             {
                 'number': 2,
@@ -1542,8 +1542,8 @@ class TestCreateTemplateTask:
                 'raw_performers': [
                     {
                         'type': PerformerType.USER,
-                        'source_id': user.id
-                    }
+                        'source_id': user.id,
+                    },
                 ],
                 'conditions': [
                     {
@@ -1557,12 +1557,12 @@ class TestCreateTemplateTask:
                                       'operator': PredicateOperator.COMPLETED,
                                       'field': task_1_api_name,
                                       'value': None,
-                                    }
-                                ]
-                            }
-                        ]
-                    }
-                ]
+                                    },
+                                ],
+                            },
+                        ],
+                    },
+                ],
             },
             {
                 'number': 3,
@@ -1570,8 +1570,8 @@ class TestCreateTemplateTask:
                 'raw_performers': [
                     {
                         'type': PerformerType.USER,
-                        'source_id': user.id
-                    }
+                        'source_id': user.id,
+                    },
                 ],
                 'conditions': [
                     {
@@ -1585,13 +1585,13 @@ class TestCreateTemplateTask:
                                       'operator': PredicateOperator.COMPLETED,
                                       'field': task_2_api_name,
                                       'value': None,
-                                    }
-                                ]
-                            }
-                        ]
-                    }
-                ]
-            }
+                                    },
+                                ],
+                            },
+                        ],
+                    },
+                ],
+            },
         ]
 
         # act
@@ -1608,7 +1608,7 @@ class TestCreateTemplateTask:
                 'kickoff': {},
                 'is_active': True,
                 'tasks': request_data,
-            }
+            },
         )
 
         # assert
@@ -1621,12 +1621,12 @@ class TestCreateTemplateTask:
         task_3_data = response.data['tasks'][2]
         assert set(task_3_data['ancestors']) == {
             task_1_api_name,
-            task_2_api_name
+            task_2_api_name,
         }
 
     def test_create__not_existent_return_to_task__validation_error(
         self,
-        api_client
+        api_client,
     ):
 
         # arrange
@@ -1644,9 +1644,9 @@ class TestCreateTemplateTask:
                 'raw_performers': [
                     {
                         'type': PerformerType.USER,
-                        'source_id': user.id
-                    }
-                ]
+                        'source_id': user.id,
+                    },
+                ],
             },
             {
                 'number': 2,
@@ -1655,10 +1655,10 @@ class TestCreateTemplateTask:
                 'raw_performers': [
                     {
                         'type': PerformerType.USER,
-                        'source_id': user.id
-                    }
-                ]
-            }
+                        'source_id': user.id,
+                    },
+                ],
+            },
         ]
 
         # act
@@ -1675,14 +1675,14 @@ class TestCreateTemplateTask:
                 'kickoff': {},
                 'is_active': True,
                 'tasks': request_data,
-            }
+            },
         )
 
         # assert
         assert response.status_code == 400
         message = messages.MSG_PT_0059(
             name=task_1_name,
-            api_name=not_existent_api_name
+            api_name=not_existent_api_name,
         )
         assert response.data['code'] == ErrorCode.VALIDATION_ERROR
         assert response.data['message'] == message
@@ -1691,7 +1691,7 @@ class TestCreateTemplateTask:
 
     def test_create__return_to_task__to_itself__validation_error(
         self,
-        api_client
+        api_client,
     ):
 
         # arrange
@@ -1708,10 +1708,10 @@ class TestCreateTemplateTask:
                 'raw_performers': [
                     {
                         'type': PerformerType.USER,
-                        'source_id': user.id
-                    }
-                ]
-            }
+                        'source_id': user.id,
+                    },
+                ],
+            },
         ]
 
         # act
@@ -1728,7 +1728,7 @@ class TestCreateTemplateTask:
                 'kickoff': {},
                 'is_active': True,
                 'tasks': request_data,
-            }
+            },
         )
 
         # assert
@@ -1763,18 +1763,18 @@ class TestCreateTemplateTask:
                                       'operator': PredicateOperator.COMPLETED,
                                       'field': 'task-2-api-name',
                                       'value': None,
-                                    }
-                                ]
-                            }
-                        ]
-                    }
+                                    },
+                                ],
+                            },
+                        ],
+                    },
                 ],
                 'raw_performers': [
                     {
                         'type': PerformerType.WORKFLOW_STARTER,
                         'source_id': None,
-                    }
-                ]
+                    },
+                ],
             },
             {
                 'number': 2,
@@ -1792,19 +1792,19 @@ class TestCreateTemplateTask:
                                       'operator': PredicateOperator.COMPLETED,
                                       'field': task_1_api_name,
                                       'value': None,
-                                    }
-                                ]
-                            }
-                        ]
-                    }
+                                    },
+                                ],
+                            },
+                        ],
+                    },
                 ],
                 'raw_performers': [
                     {
                         'type': PerformerType.WORKFLOW_STARTER,
                         'source_id': None,
-                    }
-                ]
-            }
+                    },
+                ],
+            },
         ]
         api_client.token_authenticate(user)
 
@@ -1816,13 +1816,13 @@ class TestCreateTemplateTask:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'kickoff': {},
                 'is_active': True,
-                'tasks': tasks_data
-            }
+                'tasks': tasks_data,
+            },
         )
 
         # assert
@@ -1838,7 +1838,7 @@ class TestCreateTemplateRawPerformer:
 
     def test_create__only_required_fields__defaults_ok(
         self,
-        api_client
+        api_client,
     ):
         # arrange
         user = create_test_user()
@@ -1852,7 +1852,7 @@ class TestCreateTemplateRawPerformer:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'is_active': True,
@@ -1866,11 +1866,11 @@ class TestCreateTemplateRawPerformer:
                             {
                                 'type': PerformerType.WORKFLOW_STARTER,
                                 'source_id': None,
-                            }
-                        ]
-                    }
-                ]
-            }
+                            },
+                        ],
+                    },
+                ],
+            },
         )
 
         # assert
@@ -1890,7 +1890,7 @@ class TestCreateTemplateRawPerformer:
 
     def test_create__type_field__ok(
         self,
-        api_client
+        api_client,
     ):
         # arrange
         user = create_test_user()
@@ -1907,7 +1907,7 @@ class TestCreateTemplateRawPerformer:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'is_active': True,
@@ -1919,9 +1919,9 @@ class TestCreateTemplateRawPerformer:
                             'order': 1,
                             'type': FieldType.USER,
                             'is_required': True,
-                            'api_name': field_api_name
-                        }
-                    ]
+                            'api_name': field_api_name,
+                        },
+                    ],
                 },
                 'tasks': [
                     {
@@ -1933,10 +1933,10 @@ class TestCreateTemplateRawPerformer:
                                 'source_id': field_api_name,
                                 'api_name': api_name_raw_performer,
                             },
-                        ]
-                    }
-                ]
-            }
+                        ],
+                    },
+                ],
+            },
         )
 
         # assert
@@ -1957,7 +1957,7 @@ class TestCreateTemplateRawPerformer:
 
     def test_create__type_field_value_is_null__validation_error(
         self,
-        api_client
+        api_client,
     ):
         # arrange
         user = create_test_user()
@@ -1973,7 +1973,7 @@ class TestCreateTemplateRawPerformer:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'is_active': True,
@@ -1985,9 +1985,9 @@ class TestCreateTemplateRawPerformer:
                             'order': 1,
                             'type': FieldType.USER,
                             'is_required': True,
-                            'api_name': field_api_name
-                        }
-                    ]
+                            'api_name': field_api_name,
+                        },
+                    ],
                 },
                 'tasks': [
                     {
@@ -1999,11 +1999,11 @@ class TestCreateTemplateRawPerformer:
                                 'type': PerformerType.FIELD,
                                 'source_id': None,
                                 'api_name': api_name_raw_performer,
-                            }
-                        ]
-                    }
-                ]
-            }
+                            },
+                        ],
+                    },
+                ],
+            },
         )
 
         # assert
@@ -2015,7 +2015,7 @@ class TestCreateTemplateRawPerformer:
 
     def test_create__type_field_not_existing_value__validation_error(
         self,
-        api_client
+        api_client,
     ):
         # arrange
         user = create_test_user()
@@ -2030,7 +2030,7 @@ class TestCreateTemplateRawPerformer:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'is_active': True,
@@ -2045,12 +2045,12 @@ class TestCreateTemplateRawPerformer:
                             {
                                 'type': PerformerType.FIELD,
                                 'source_id': 'not-existing',
-                                'api_name': api_name_raw_performer
-                            }
-                        ]
-                    }
-                ]
-            }
+                                'api_name': api_name_raw_performer,
+                            },
+                        ],
+                    },
+                ],
+            },
         )
 
         # assert
@@ -2069,7 +2069,7 @@ class TestCreateTemplateRawPerformer:
         another_user = create_test_user(email='another@pneumatic,app')
         another_template = create_test_template(
             user=another_user,
-            is_active=True
+            is_active=True,
         )
         unavailable_field = FieldTemplate.objects.create(
             name="Bad performer",
@@ -2091,7 +2091,7 @@ class TestCreateTemplateRawPerformer:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'is_active': True,
@@ -2106,12 +2106,12 @@ class TestCreateTemplateRawPerformer:
                             {
                                 'type': PerformerType.FIELD,
                                 'source_id': unavailable_field.api_name,
-                                'api_name': api_name_raw_performer
-                            }
-                        ]
-                    }
-                ]
-            }
+                                'api_name': api_name_raw_performer,
+                            },
+                        ],
+                    },
+                ],
+            },
         )
 
         # assert
@@ -2139,7 +2139,7 @@ class TestCreateTemplateRawPerformer:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'is_active': True,
@@ -2155,8 +2155,8 @@ class TestCreateTemplateRawPerformer:
                                 'type': PerformerType.FIELD,
                                 'source_id': 'user-field-1',
                                 'api_name': api_name_raw_performer_1,
-                            }
-                        ]
+                            },
+                        ],
                     },
                     {
                         'name': 'First task',
@@ -2167,7 +2167,7 @@ class TestCreateTemplateRawPerformer:
                                 'type': PerformerType.USER,
                                 'source_id': user.id,
                                 'api_name': api_name_raw_performer_2,
-                            }
+                            },
                         ],
                         'fields': [
                             {
@@ -2175,12 +2175,12 @@ class TestCreateTemplateRawPerformer:
                                 'name': 'First step performer',
                                 'type': FieldType.USER,
                                 'is_required': True,
-                                'api_name': 'user-field-1'
-                            }
-                        ]
-                    }
-                ]
-            }
+                                'api_name': 'user-field-1',
+                            },
+                        ],
+                    },
+                ],
+            },
         )
 
         # assert
@@ -2193,7 +2193,7 @@ class TestCreateTemplateRawPerformer:
 
     def test_create__type_field_duplicate__validation_error(
         self,
-        api_client
+        api_client,
     ):
         # arrange
         user = create_test_user()
@@ -2210,7 +2210,7 @@ class TestCreateTemplateRawPerformer:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'is_active': True,
@@ -2222,9 +2222,9 @@ class TestCreateTemplateRawPerformer:
                             'order': 1,
                             'type': FieldType.USER,
                             'is_required': True,
-                            'api_name': field_api_name
-                        }
-                    ]
+                            'api_name': field_api_name,
+                        },
+                    ],
                 },
                 'tasks': [
                     {
@@ -2241,11 +2241,11 @@ class TestCreateTemplateRawPerformer:
                                 'type': PerformerType.FIELD,
                                 'source_id': field_api_name,
                                 'api_name': api_name_raw_performer_2,
-                            }
-                        ]
-                    }
-                ]
-            }
+                            },
+                        ],
+                    },
+                ],
+            },
         )
 
         # assert
@@ -2257,7 +2257,7 @@ class TestCreateTemplateRawPerformer:
 
     def test_create__type_user__ok(
         self,
-        api_client
+        api_client,
     ):
         # arrange
         user = create_test_user()
@@ -2272,7 +2272,7 @@ class TestCreateTemplateRawPerformer:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'is_active': True,
@@ -2287,11 +2287,11 @@ class TestCreateTemplateRawPerformer:
                                 'type': PerformerType.USER,
                                 'source_id': user.id,
                                 'api_name': api_name_raw_performer,
-                            }
-                        ]
-                    }
-                ]
-            }
+                            },
+                        ],
+                    },
+                ],
+            },
         )
 
         # assert
@@ -2314,7 +2314,7 @@ class TestCreateTemplateRawPerformer:
     def test_create__type_user_invited_label__ok(
         self,
         api_client,
-        is_active
+        is_active,
     ):
         # arrange
         user = create_test_user()
@@ -2330,11 +2330,11 @@ class TestCreateTemplateRawPerformer:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                     {
                         'type': OwnerType.USER,
-                        'source_id': invited.id
+                        'source_id': invited.id,
                     },
                 ],
                 'is_active': is_active,
@@ -2350,11 +2350,11 @@ class TestCreateTemplateRawPerformer:
                                 'source_id': str(invited.id),
                                 'label': f'{invited.email} (invited user)',
                                 'api_name': api_name_raw_performer,
-                            }
-                        ]
-                    }
-                ]
-            }
+                            },
+                        ],
+                    },
+                ],
+            },
         )
 
         # assert
@@ -2368,7 +2368,7 @@ class TestCreateTemplateRawPerformer:
 
     def test_create__type_user_inactive_user__validation_error(
         self,
-        api_client
+        api_client,
     ):
 
         # arrange
@@ -2389,7 +2389,7 @@ class TestCreateTemplateRawPerformer:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'kickoff': {},
@@ -2404,11 +2404,11 @@ class TestCreateTemplateRawPerformer:
                                 'type': PerformerType.USER,
                                 'source_id': inactive_user.id,
                                 'api_name': api_name_raw_performer,
-                            }
-                        ]
-                    }
-                ]
-            }
+                            },
+                        ],
+                    },
+                ],
+            },
         )
 
         # assert
@@ -2421,7 +2421,7 @@ class TestCreateTemplateRawPerformer:
 
     def test_create__type_user_value_is_null__validation_error(
         self,
-        api_client
+        api_client,
     ):
         # arrange
         user = create_test_user()
@@ -2436,7 +2436,7 @@ class TestCreateTemplateRawPerformer:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'is_active': True,
@@ -2452,11 +2452,11 @@ class TestCreateTemplateRawPerformer:
                                 'type': PerformerType.USER,
                                 'source_id': None,
                                 'api_name': api_name_raw_performer,
-                            }
-                        ]
-                    }
-                ]
-            }
+                            },
+                        ],
+                    },
+                ],
+            },
         )
 
         # assert
@@ -2468,7 +2468,7 @@ class TestCreateTemplateRawPerformer:
 
     def test_create__type_user_not_number_value__validation_error(
         self,
-        api_client
+        api_client,
     ):
 
         # arrange
@@ -2484,7 +2484,7 @@ class TestCreateTemplateRawPerformer:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'is_active': True,
@@ -2500,11 +2500,11 @@ class TestCreateTemplateRawPerformer:
                                 'type': PerformerType.USER,
                                 'source_id': 'abc',
                                 'api_name': api_name_raw_performer,
-                            }
-                        ]
-                    }
-                ]
-            }
+                            },
+                        ],
+                    },
+                ],
+            },
         )
 
         # assert
@@ -2517,7 +2517,7 @@ class TestCreateTemplateRawPerformer:
 
     def test_create__type_user_not_existing_value__validation_error(
         self,
-        api_client
+        api_client,
     ):
 
         # arrange
@@ -2533,7 +2533,7 @@ class TestCreateTemplateRawPerformer:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'is_active': True,
@@ -2549,11 +2549,11 @@ class TestCreateTemplateRawPerformer:
                                 'type': PerformerType.USER,
                                 'source_id': '-999999999',
                                 'api_name': api_name_raw_performer,
-                            }
-                        ]
-                    }
-                ]
-            }
+                            },
+                        ],
+                    },
+                ],
+            },
         )
 
         # assert
@@ -2566,7 +2566,7 @@ class TestCreateTemplateRawPerformer:
 
     def test_create__type_user_from_another_account__validation_error(
         self,
-        api_client
+        api_client,
     ):
         # arrange
         another_user = create_test_user(email='another@pneumatic,app')
@@ -2583,7 +2583,7 @@ class TestCreateTemplateRawPerformer:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'is_active': True,
@@ -2599,11 +2599,11 @@ class TestCreateTemplateRawPerformer:
                                 'type': PerformerType.USER,
                                 'source_id': another_user.id,
                                 'api_name': api_name_raw_performer,
-                            }
-                        ]
-                    }
-                ]
-            }
+                            },
+                        ],
+                    },
+                ],
+            },
         )
 
         # assert
@@ -2616,7 +2616,7 @@ class TestCreateTemplateRawPerformer:
 
     def test_create__type_user_duplicate__validation_error(
         self,
-        api_client
+        api_client,
     ):
         # arrange
         user = create_test_user()
@@ -2632,7 +2632,7 @@ class TestCreateTemplateRawPerformer:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'is_active': True,
@@ -2653,11 +2653,11 @@ class TestCreateTemplateRawPerformer:
                                 'type': PerformerType.USER,
                                 'source_id': user.id,
                                 'api_name': api_name_raw_performer_2,
-                            }
-                        ]
-                    }
-                ]
-            }
+                            },
+                        ],
+                    },
+                ],
+            },
         )
 
         # assert
@@ -2669,7 +2669,7 @@ class TestCreateTemplateRawPerformer:
 
     def test_create__type_workflow_starter__ok(
         self,
-        api_client
+        api_client,
     ):
         # arrange
         user = create_test_user()
@@ -2684,7 +2684,7 @@ class TestCreateTemplateRawPerformer:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'is_active': True,
@@ -2700,10 +2700,10 @@ class TestCreateTemplateRawPerformer:
                                 'source_id': None,
                                 'api_name': api_name_raw_performer,
                             },
-                        ]
-                    }
-                ]
-            }
+                        ],
+                    },
+                ],
+            },
         )
 
         # assert
@@ -2722,7 +2722,7 @@ class TestCreateTemplateRawPerformer:
 
     def test_create__type_workflow_starter_duplicate__validation_error(
         self,
-        api_client
+        api_client,
     ):
         # arrange
         user = create_test_user()
@@ -2738,7 +2738,7 @@ class TestCreateTemplateRawPerformer:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'is_active': True,
@@ -2759,11 +2759,11 @@ class TestCreateTemplateRawPerformer:
                                 'type': PerformerType.WORKFLOW_STARTER,
                                 'source_id': None,
                                 'api_name': api_name_raw_performer_2,
-                            }
-                        ]
-                    }
-                ]
-            }
+                            },
+                        ],
+                    },
+                ],
+            },
         )
 
         # assert
@@ -2775,7 +2775,7 @@ class TestCreateTemplateRawPerformer:
 
     def test_create__type_workflow_starter_public_template__validation_error(
         self,
-        api_client
+        api_client,
     ):
         # arrange
         user = create_test_user()
@@ -2791,7 +2791,7 @@ class TestCreateTemplateRawPerformer:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'is_active': True,
@@ -2809,10 +2809,10 @@ class TestCreateTemplateRawPerformer:
                                 'source_id': None,
                                 'api_name': api_name_raw_performer,
                             },
-                        ]
-                    }
-                ]
-            }
+                        ],
+                    },
+                ],
+            },
         )
 
         # assert
@@ -2824,7 +2824,7 @@ class TestCreateTemplateRawPerformer:
 
     def test_create__all_types__ok(
         self,
-        api_client
+        api_client,
     ):
         # arrange
         user = create_test_user()
@@ -2842,7 +2842,7 @@ class TestCreateTemplateRawPerformer:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'is_active': True,
@@ -2854,9 +2854,9 @@ class TestCreateTemplateRawPerformer:
                             'order': 1,
                             'type': FieldType.USER,
                             'is_required': True,
-                            'api_name': field_api_name
-                        }
-                    ]
+                            'api_name': field_api_name,
+                        },
+                    ],
                 },
                 'tasks': [
                     {
@@ -2878,11 +2878,11 @@ class TestCreateTemplateRawPerformer:
                                 'type': PerformerType.WORKFLOW_STARTER,
                                 'source_id': None,
                                 'api_name': api_name_raw_performer_3,
-                            }
-                        ]
-                    }
-                ]
-            }
+                            },
+                        ],
+                    },
+                ],
+            },
         )
 
         # assert
@@ -2896,7 +2896,7 @@ class TestCreateTemplateRawPerformer:
 
     def test_create__pending_transfer__ok(
         self,
-        api_client
+        api_client,
     ):
 
         # arrange
@@ -2919,11 +2919,11 @@ class TestCreateTemplateRawPerformer:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                     {
                         'type': OwnerType.USER,
-                        'source_id': invited_user.id
+                        'source_id': invited_user.id,
                     },
                 ],
                 'is_active': True,
@@ -2938,11 +2938,11 @@ class TestCreateTemplateRawPerformer:
                                 'type': PerformerType.USER,
                                 'source_id': invited_user.id,
                                 'api_name': api_name_raw_performer,
-                            }
-                        ]
-                    }
-                ]
-            }
+                            },
+                        ],
+                    },
+                ],
+            },
         )
 
         # assert
@@ -2973,7 +2973,7 @@ class TestCreateTemplateRawPerformer:
     def test_create__incorrect_value_in_draft__skip(
         self,
         raw_performers,
-        api_client
+        api_client,
     ):
         # arrange
         user = create_test_user()
@@ -2987,7 +2987,7 @@ class TestCreateTemplateRawPerformer:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'is_active': False,
@@ -2998,10 +2998,10 @@ class TestCreateTemplateRawPerformer:
                         'name': 'First task',
                         'number': 1,
                         'api_name': 'task-66',
-                        'raw_performers': raw_performers
-                    }
-                ]
-            }
+                        'raw_performers': raw_performers,
+                    },
+                ],
+            },
         )
 
         # assert

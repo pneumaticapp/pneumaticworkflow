@@ -15,7 +15,7 @@ from src.processes.tests.fixtures import (
 from src.processes.enums import (
     WorkflowStatus,
     TemplateType,
-    OwnerType, PerformerType, TaskStatus
+    OwnerType, PerformerType, TaskStatus,
 )
 from src.processes.models import (
     TemplateOwner,
@@ -27,7 +27,7 @@ pytestmark = pytest.mark.django_db
 
 
 @pytest.mark.parametrize(
-    'template_type', (TemplateType.CUSTOM, TemplateType.LIBRARY)
+    'template_type', (TemplateType.CUSTOM, TemplateType.LIBRARY),
 )
 def test_steps__all_template_tasks__ok(template_type, api_client):
 
@@ -76,7 +76,7 @@ def test_steps__admin__ok(api_client):
     template = create_test_template(
         user=account_owner,
         is_active=True,
-        tasks_count=1
+        tasks_count=1,
     )
     template_task = template.tasks.get(number=1)
     request_user = create_test_admin(account=account)
@@ -84,7 +84,7 @@ def test_steps__admin__ok(api_client):
         template=template,
         account=account,
         user_id=request_user.id,
-        type=OwnerType.USER
+        type=OwnerType.USER,
     )
     api_client.token_authenticate(request_user)
 
@@ -106,7 +106,7 @@ def test_steps__not_admin__ok(api_client):
     template = create_test_template(
         user=account_owner,
         is_active=True,
-        tasks_count=1
+        tasks_count=1,
     )
     template_task = template.tasks.get(number=1)
     request_user = create_test_not_admin(account=account)
@@ -114,7 +114,7 @@ def test_steps__not_admin__ok(api_client):
         template=template,
         account=account,
         user_id=request_user.id,
-        type=OwnerType.USER
+        type=OwnerType.USER,
     )
     api_client.token_authenticate(request_user)
 
@@ -136,7 +136,7 @@ def test_steps__group_is_template_owner__ok(api_client):
     template = create_test_template(
         user=account_owner,
         is_active=True,
-        tasks_count=1
+        tasks_count=1,
     )
     template_task = template.tasks.get()
     request_user = create_test_admin(account=account)
@@ -191,7 +191,7 @@ def test_steps__user_not_template_owner__empty_result(api_client):
     template = create_test_template(
         user=account_owner,
         is_active=True,
-        tasks_count=1
+        tasks_count=1,
     )
     request_user = create_test_not_admin(account=account)
 
@@ -213,14 +213,14 @@ def test_steps__invited_user__unauthorized(api_client):
     template = create_test_template(
         user=account_owner,
         is_active=True,
-        tasks_count=1
+        tasks_count=1,
     )
     request_user = create_invited_user(user=account_owner)
     TemplateOwner.objects.create(
         template=template,
         account=account,
         user_id=request_user.id,
-        type=OwnerType.USER
+        type=OwnerType.USER,
     )
     api_client.token_authenticate(request_user)
 
@@ -239,14 +239,14 @@ def test_steps__deleted_user__unauthorized(api_client):
     template = create_test_template(
         user=account_owner,
         is_active=True,
-        tasks_count=1
+        tasks_count=1,
     )
     request_user = create_test_admin(account=account)
     TemplateOwner.objects.create(
         template=template,
         account=account,
         user_id=request_user.id,
-        type=OwnerType.USER
+        type=OwnerType.USER,
     )
     request_user.delete()
     api_client.token_authenticate(request_user)
@@ -266,14 +266,14 @@ def test_steps__user_from_another_acc__empty_result(api_client):
     template = create_test_template(
         user=account_owner,
         is_active=True,
-        tasks_count=1
+        tasks_count=1,
     )
     another_account_user = create_test_owner(email='another@pneumatic.app')
     TemplateOwner.objects.create(
         template=template,
         account=account,
         user_id=another_account_user.id,
-        type=OwnerType.USER
+        type=OwnerType.USER,
     )
     api_client.token_authenticate(another_account_user)
 
@@ -293,7 +293,7 @@ def test_steps__guest_performer__permission_denied(api_client):
     template = create_test_template(
         user=account_owner,
         is_active=True,
-        tasks_count=1
+        tasks_count=1,
     )
     workflow = create_test_workflow(
         user=account_owner,
@@ -308,12 +308,12 @@ def test_steps__guest_performer__permission_denied(api_client):
     str_token = GuestJWTAuthService.get_str_token(
         task_id=task.id,
         user_id=guest.id,
-        account_id=account.id
+        account_id=account.id,
     )
     # act
     response = api_client.get(
         f'/templates/{template.id}/steps',
-        **{'X-Guest-Authorization': str_token}
+        **{'X-Guest-Authorization': str_token},
     )
 
     # assert
@@ -323,7 +323,7 @@ def test_steps__guest_performer__permission_denied(api_client):
 @pytest.mark.parametrize('template_type', TemplateType.TYPES_ONBOARDING)
 def test_steps__onboarding_template__empty_result(
     api_client,
-    template_type
+    template_type,
 ):
 
     # arrange
@@ -332,7 +332,7 @@ def test_steps__onboarding_template__empty_result(
         owner,
         type_=template_type,
         is_active=True,
-        tasks_count=1
+        tasks_count=1,
     )
     api_client.token_authenticate(owner)
 
@@ -345,7 +345,7 @@ def test_steps__onboarding_template__empty_result(
 
 
 def test_steps__with_tasks_in_progress_user_from_another_acc__empty_result(
-    api_client
+    api_client,
 ):
 
     # arrange
@@ -354,18 +354,18 @@ def test_steps__with_tasks_in_progress_user_from_another_acc__empty_result(
     template = create_test_template(
         user=account_owner,
         is_active=True,
-        tasks_count=1
+        tasks_count=1,
     )
     another_account_user = create_test_owner(email='another@pneumatic.app')
     workflow = create_test_workflow(
         user=account_owner,
-        template=template
+        template=template,
     )
     task = workflow.tasks.get()
     TaskPerformer.objects.create(
         task=task,
         user=another_account_user,
-        is_completed=True
+        is_completed=True,
     )
     api_client.token_authenticate(another_account_user)
 
@@ -380,7 +380,7 @@ def test_steps__with_tasks_in_progress_user_from_another_acc__empty_result(
 
 
 def test_steps__with_tasks_in_progress_true_deleted_workflow__empty_result(
-    api_client
+    api_client,
 ):
 
     # arrange
@@ -389,7 +389,7 @@ def test_steps__with_tasks_in_progress_true_deleted_workflow__empty_result(
     template = create_test_template(
         user=account_owner,
         is_active=True,
-        tasks_count=1
+        tasks_count=1,
     )
     workflow = create_test_workflow(
         user=account_owner,
@@ -400,7 +400,7 @@ def test_steps__with_tasks_in_progress_true_deleted_workflow__empty_result(
     TaskPerformer.objects.create(
         task=task,
         user=request_user,
-        is_completed=False
+        is_completed=False,
     )
     workflow.delete()
     api_client.token_authenticate(request_user)
@@ -416,11 +416,11 @@ def test_steps__with_tasks_in_progress_true_deleted_workflow__empty_result(
 
 
 @pytest.mark.parametrize(
-    'status', (WorkflowStatus.DONE, WorkflowStatus.DELAYED)
+    'status', (WorkflowStatus.DONE, WorkflowStatus.DELAYED),
 )
 def test_steps__with_tasks_in_progress_true_inactive_workflow__empty_result(
     status,
-    api_client
+    api_client,
 ):
 
     # arrange
@@ -429,18 +429,18 @@ def test_steps__with_tasks_in_progress_true_inactive_workflow__empty_result(
     template = create_test_template(
         user=account_owner,
         is_active=True,
-        tasks_count=1
+        tasks_count=1,
     )
     workflow = create_test_workflow(
         user=account_owner,
-        template=template
+        template=template,
     )
     task = workflow.tasks.get()
     request_user = create_test_admin(account=account)
     TaskPerformer.objects.create(
         task=task,
         user=request_user,
-        is_completed=False
+        is_completed=False,
     )
     workflow.status = status
     workflow.save(update_fields=['status'])
@@ -457,7 +457,7 @@ def test_steps__with_tasks_in_progress_true_inactive_workflow__empty_result(
 
 
 def test_steps__with_tasks_in_progress_true__another_task_completed__ok(
-    api_client
+    api_client,
 ):
 
     # arrange
@@ -466,12 +466,12 @@ def test_steps__with_tasks_in_progress_true__another_task_completed__ok(
     template = create_test_template(
         user=account_owner,
         is_active=True,
-        tasks_count=2
+        tasks_count=2,
     )
     template_task_2 = template.tasks.get(number=2)
     workflow = create_test_workflow(
         user=account_owner,
-        template=template
+        template=template,
     )
     workflow.save()
     task_1 = workflow.tasks.get(number=1)
@@ -497,7 +497,7 @@ def test_steps__with_tasks_in_progress_true__another_task_completed__ok(
 
 
 def test_steps__with_tasks_in_progress_true__not_template_owner__ok(
-    api_client
+    api_client,
 ):
 
     # arrange
@@ -506,7 +506,7 @@ def test_steps__with_tasks_in_progress_true__not_template_owner__ok(
     template = create_test_template(
         user=account_owner,
         is_active=True,
-        tasks_count=1
+        tasks_count=1,
     )
     template_task = template.tasks.get()
     workflow = create_test_workflow(
@@ -517,7 +517,7 @@ def test_steps__with_tasks_in_progress_true__not_template_owner__ok(
     request_user = create_test_admin(account=account)
     TaskPerformer.objects.create(
         task=task,
-        user=request_user
+        user=request_user,
     )
     api_client.token_authenticate(request_user)
 
@@ -535,7 +535,7 @@ def test_steps__with_tasks_in_progress_true__not_template_owner__ok(
 
 
 def test_steps__with_tasks_in_progress_true__performer_group__ok(
-    api_client
+    api_client,
 ):
 
     # arrange
@@ -544,12 +544,12 @@ def test_steps__with_tasks_in_progress_true__performer_group__ok(
     template = create_test_template(
         user=account_owner,
         is_active=True,
-        tasks_count=1
+        tasks_count=1,
     )
     template_task_1 = template.tasks.get(number=1)
     workflow = create_test_workflow(
         user=account_owner,
-        template=template
+        template=template,
     )
     request_user = create_test_admin(account=account)
     group = create_test_group(account, users=[request_user])
@@ -575,7 +575,7 @@ def test_steps__with_tasks_in_progress_true__performer_group__ok(
 
 
 def test_steps__with_tasks_in_progress_true__deleted_group__empty_list(
-    api_client
+    api_client,
 ):
 
     # arrange
@@ -584,11 +584,11 @@ def test_steps__with_tasks_in_progress_true__deleted_group__empty_list(
     template = create_test_template(
         user=account_owner,
         is_active=True,
-        tasks_count=1
+        tasks_count=1,
     )
     workflow = create_test_workflow(
         user=account_owner,
-        template=template
+        template=template,
     )
     request_user = create_test_admin(account=account)
     group = create_test_group(account, users=[request_user])
@@ -614,7 +614,7 @@ def test_steps__with_tasks_in_progress_true__deleted_group__empty_list(
 @pytest.mark.parametrize('status', WorkflowStatus.ALL_STATUSES)
 def test_steps__with_tasks_in_progress_false__not_completed_task__not_found(
     status,
-    api_client
+    api_client,
 ):
 
     # arrange
@@ -623,11 +623,11 @@ def test_steps__with_tasks_in_progress_false__not_completed_task__not_found(
     template = create_test_template(
         user=account_owner,
         is_active=True,
-        tasks_count=1
+        tasks_count=1,
     )
     workflow = create_test_workflow(
         user=account_owner,
-        template=template
+        template=template,
     )
     workflow.status = status
     workflow.save(update_fields=['status'])
@@ -636,7 +636,7 @@ def test_steps__with_tasks_in_progress_false__not_completed_task__not_found(
     TaskPerformer.objects.create(
         task=task,
         user=request_user,
-        is_completed=False
+        is_completed=False,
     )
     api_client.token_authenticate(request_user)
 
@@ -653,7 +653,7 @@ def test_steps__with_tasks_in_progress_false__not_completed_task__not_found(
 @pytest.mark.parametrize('status', WorkflowStatus.ALL_STATUSES)
 def test_steps__with_tasks_in_progress_false__completed_task__ok(
     status,
-    api_client
+    api_client,
 ):
 
     # arrange
@@ -662,12 +662,12 @@ def test_steps__with_tasks_in_progress_false__completed_task__ok(
     template = create_test_template(
         user=account_owner,
         is_active=True,
-        tasks_count=1
+        tasks_count=1,
     )
     template_task = template.tasks.get()
     workflow = create_test_workflow(
         user=account_owner,
-        template=template
+        template=template,
     )
     workflow.status = status
     workflow.save(update_fields=['status'])
@@ -676,7 +676,7 @@ def test_steps__with_tasks_in_progress_false__completed_task__ok(
     TaskPerformer.objects.create(
         task=task,
         user=request_user,
-        is_completed=True
+        is_completed=True,
     )
     api_client.token_authenticate(request_user)
 
@@ -693,7 +693,7 @@ def test_steps__with_tasks_in_progress_false__completed_task__ok(
 
 
 def test_steps__with_tasks_in_progress_false_deleted_workflow__empty_result(
-    api_client
+    api_client,
 ):
 
     # arrange
@@ -702,7 +702,7 @@ def test_steps__with_tasks_in_progress_false_deleted_workflow__empty_result(
     template = create_test_template(
         user=account_owner,
         is_active=True,
-        tasks_count=1
+        tasks_count=1,
     )
     workflow = create_test_workflow(
         user=account_owner,
@@ -713,7 +713,7 @@ def test_steps__with_tasks_in_progress_false_deleted_workflow__empty_result(
     TaskPerformer.objects.create(
         task=task,
         user=request_user,
-        is_completed=True
+        is_completed=True,
     )
     workflow.delete()
     api_client.token_authenticate(request_user)
@@ -729,7 +729,7 @@ def test_steps__with_tasks_in_progress_false_deleted_workflow__empty_result(
 
 
 def test_steps__with_tasks_in_progress_false__performer_group__ok(
-    api_client
+    api_client,
 ):
 
     # arrange
@@ -738,12 +738,12 @@ def test_steps__with_tasks_in_progress_false__performer_group__ok(
     template = create_test_template(
         user=account_owner,
         is_active=True,
-        tasks_count=1
+        tasks_count=1,
     )
     template_task_1 = template.tasks.get(number=1)
     workflow = create_test_workflow(
         user=account_owner,
-        template=template
+        template=template,
     )
     request_user = create_test_admin(account=account)
     group = create_test_group(account, users=[request_user])
@@ -770,7 +770,7 @@ def test_steps__with_tasks_in_progress_false__performer_group__ok(
 
 
 def test_steps__with_tasks_in_progress_false__deleted_group__empty_list(
-    api_client
+    api_client,
 ):
 
     # arrange
@@ -779,11 +779,11 @@ def test_steps__with_tasks_in_progress_false__deleted_group__empty_list(
     template = create_test_template(
         user=account_owner,
         is_active=True,
-        tasks_count=1
+        tasks_count=1,
     )
     workflow = create_test_workflow(
         user=account_owner,
-        template=template
+        template=template,
     )
     request_user = create_test_admin(account=account)
     group = create_test_group(account, users=[request_user])
@@ -792,7 +792,7 @@ def test_steps__with_tasks_in_progress_false__deleted_group__empty_list(
         task_id=task.id,
         type=PerformerType.GROUP,
         group_id=group.id,
-        is_completed=True
+        is_completed=True,
     )
     group.delete()
     api_client.token_authenticate(request_user)

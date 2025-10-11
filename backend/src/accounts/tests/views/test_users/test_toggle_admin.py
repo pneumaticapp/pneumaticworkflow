@@ -8,7 +8,7 @@ from src.processes.tests.fixtures import (
     create_invited_user,
 )
 from src.accounts.services import (
-    UserInviteService
+    UserInviteService,
 )
 
 
@@ -17,7 +17,7 @@ pytestmark = pytest.mark.django_db
 
 def test_toggle_admin__upgrade_to_admin__ok(
     identify_mock,
-    api_client
+    api_client,
 ):
 
     # arrange
@@ -27,14 +27,14 @@ def test_toggle_admin__upgrade_to_admin__ok(
         email='admin@test.test',
         account=account,
         is_admin=True,
-        is_account_owner=False
+        is_account_owner=False,
     )
     invited = create_invited_user(user, is_admin=False)
     api_client.token_authenticate(user)
 
     # act
     response = api_client.post(
-        f'/accounts/users/{invited.id}/toggle-admin'
+        f'/accounts/users/{invited.id}/toggle-admin',
     )
 
     # assert
@@ -46,7 +46,7 @@ def test_toggle_admin__upgrade_to_admin__ok(
 
 def test_toggle_admin__downgrade_admin__ok(
     identify_mock,
-    api_client
+    api_client,
 ):
 
     # arrange
@@ -56,14 +56,14 @@ def test_toggle_admin__downgrade_admin__ok(
         email='admin@test.test',
         account=account,
         is_admin=True,
-        is_account_owner=False
+        is_account_owner=False,
     )
     invited = create_invited_user(user, is_admin=True)
     api_client.token_authenticate(user)
 
     # act
     response = api_client.post(
-        f'/accounts/users/{invited.id}/toggle-admin'
+        f'/accounts/users/{invited.id}/toggle-admin',
     )
 
     # assert
@@ -75,21 +75,21 @@ def test_toggle_admin__downgrade_admin__ok(
 
 def test_toggle_admin__downgrade_for_account_owner__not_found(
     identify_mock,
-    api_client
+    api_client,
 ):
 
     # arrange
     account = create_test_account()
     account_owner = create_test_user(
         is_account_owner=True,
-        account=account
+        account=account,
     )
     invited = create_invited_user(account_owner, is_admin=True)
     api_client.token_authenticate(invited)
 
     # act
     response = api_client.post(
-        f'accounts/users/{account_owner.id}/toggle-admin'
+        f'accounts/users/{account_owner.id}/toggle-admin',
     )
 
     # assert
@@ -101,7 +101,7 @@ def test_toggle_admin__downgrade_for_account_owner__not_found(
 def test_toggle_admin__downgrade_transferred_user__ok(
     identify_mock,
     api_client,
-    is_account_owner
+    is_account_owner,
 ):
 
     # arrange
@@ -110,28 +110,28 @@ def test_toggle_admin__downgrade_transferred_user__ok(
     user_to_transfer = create_test_user(
         account=account_1,
         email='user_to_transfer@test.test',
-        is_account_owner=is_account_owner
+        is_account_owner=is_account_owner,
     )
     account_2_owner = create_test_user(
         account=account_2,
         is_account_owner=True,
-        email='owner@test.test'
+        email='owner@test.test',
     )
     current_url = 'some_url'
     service = UserInviteService(
         request_user=account_2_owner,
-        current_url=current_url
+        current_url=current_url,
     )
     service.invite_user(
         email=user_to_transfer.email,
-        invited_from=SourceType.EMAIL
+        invited_from=SourceType.EMAIL,
     )
     account_2_new_user = account_2.users.get(email=user_to_transfer.email)
     api_client.token_authenticate(account_2_owner)
 
     # act
     response = api_client.post(
-        f'/accounts/users/{account_2_new_user.id}/toggle-admin'
+        f'/accounts/users/{account_2_new_user.id}/toggle-admin',
     )
 
     # assert

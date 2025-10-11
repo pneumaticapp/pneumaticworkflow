@@ -13,7 +13,7 @@ from src.processes.tests.fixtures import (
     create_test_user,
 )
 from src.processes.tests.fixtures import (
-    create_test_guest
+    create_test_guest,
 )
 from src.accounts.services.account import AccountService
 from src.utils.dates import date_format
@@ -28,7 +28,7 @@ def test_plan__freemium__ok(api_client):
     name = 'New name'
     account = create_test_account(
         name=name,
-        plan=BillingPlanType.FREEMIUM
+        plan=BillingPlanType.FREEMIUM,
     )
     user = create_test_user(account=account)
     create_test_user(
@@ -39,12 +39,12 @@ def test_plan__freemium__ok(api_client):
     create_test_template(
         user=user,
         is_active=True,
-        tasks_count=1
+        tasks_count=1,
     )
     create_test_template(
         user=user,
         is_active=False,
-        tasks_count=1
+        tasks_count=1,
     )
 
     service = AccountService(instance=account, user=user)
@@ -94,7 +94,7 @@ def test_plan__premium__ok(api_client):
     assert response.data['billing_sync'] is True
     assert response.data['billing_period'] == BillingPeriod.MONTHLY
     assert response.data['plan_expiration'] == plan_expiration.strftime(
-        date_format
+        date_format,
     )
     assert response.data['plan_expiration_tsp'] == plan_expiration.timestamp()
     assert response.data['trial_ended'] is False
@@ -122,7 +122,7 @@ def test_plan__premium_with_tenants__ok(api_client):
 
     tenant_account = create_test_account(
         lease_level=LeaseLevel.TENANT,
-        master_account=master_account
+        master_account=master_account,
     )
     create_test_user(account=tenant_account, email='t@t.t')
     service = AccountService(instance=master_account, user=user)
@@ -138,7 +138,7 @@ def test_plan__premium_with_tenants__ok(api_client):
     assert response.data['billing_plan'] == BillingPlanType.PREMIUM
     assert response.data['billing_sync'] is True
     assert response.data['plan_expiration'] == plan_expiration.strftime(
-        date_format
+        date_format,
     )
     assert response.data['plan_expiration_tsp'] == plan_expiration.timestamp()
     assert response.data['trial_ended'] is False
@@ -194,12 +194,12 @@ def test_plan__partner__ok(api_client):
     master_account = create_test_account(
         plan=BillingPlanType.PREMIUM,
         lease_level=LeaseLevel.PARTNER,
-        max_users=3
+        max_users=3,
     )
     user = create_test_user(account=master_account)
     tenant_account = create_test_account(
         lease_level=LeaseLevel.TENANT,
-        master_account=master_account
+        master_account=master_account,
     )
     create_test_user(account=tenant_account, email='t@t.t')
 
@@ -236,12 +236,12 @@ def test_plan__tenant__ok(api_client):
     master_account = create_test_account(
         plan=BillingPlanType.PREMIUM,
         lease_level=LeaseLevel.PARTNER,
-        max_users=2
+        max_users=2,
     )
     create_test_user(account=master_account)
     tenant_account = create_test_account(
         lease_level=LeaseLevel.TENANT,
-        master_account=master_account
+        master_account=master_account,
     )
     tenant_user = create_test_user(account=tenant_account, email='t@t.t')
     service = AccountService(instance=tenant_account, user=tenant_user)

@@ -7,16 +7,16 @@ import re
 
 list_block_pattern = re.compile(
     pattern=r'(^(?:\s*(?:(?:\d+\.)|[\-\+\*])\s+.*?(?:\n|$))+)',
-    flags=re.M
+    flags=re.M,
 )
 
 table_block_pattern = re.compile(
     pattern=r'(^(?:\|[^\n]+\|\r?\n)+)',
-    flags=re.M
+    flags=re.M,
 )
 paragraph_block_pattern = re.compile(
     pattern=r'^(?P<paragraph>(?:([*_`]|\*\*|\[){0,1}[a-zA-Z]+)(.*))',
-    flags=re.M
+    flags=re.M,
 )
 
 

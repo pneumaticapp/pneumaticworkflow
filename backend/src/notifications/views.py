@@ -31,15 +31,15 @@ class DeviceViewSet(
     def create(self, request, *args, **kwargs):
         user_agent = request.headers.get(
             'User-Agent',
-            request.META.get('HTTP_USER_AGENT')
+            request.META.get('HTTP_USER_AGENT'),
         )
         serializer = self.get_serializer(
             data={
                 'user': request.user.id,
                 'description': user_agent,
                 'is_app': user_agent.startswith('Dart'),
-                **request.data
-            }
+                **request.data,
+            },
         )
         serializer.is_valid(raise_exception=True)
         serializer.save()

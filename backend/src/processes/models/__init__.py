@@ -12,7 +12,7 @@ from src.processes.models.templates.system_template import (
 from src.processes.models.templates.kickoff import Kickoff
 from src.processes.models.templates.task import TaskTemplate
 from src.processes.models.templates.raw_performer import (
-    RawPerformerTemplate
+    RawPerformerTemplate,
 )
 from src.processes.models.templates.fields import (
     FieldTemplate,
@@ -25,10 +25,10 @@ from src.processes.models.templates.conditions import (
 )
 from src.processes.models.templates.checklist import (
     ChecklistTemplate,
-    ChecklistTemplateSelection
+    ChecklistTemplateSelection,
 )
 from src.processes.models.templates.raw_due_date import (
-    RawDueDateTemplate
+    RawDueDateTemplate,
 )
 from src.processes.models.workflows.workflow import Workflow
 from src.processes.models.workflows.kickoff import KickoffValue
@@ -39,23 +39,23 @@ from src.processes.models.workflows.task import (
     TaskPerformer,
 )
 from src.processes.models.workflows.attachment import (
-    FileAttachment
+    FileAttachment,
 )
 
 from src.processes.models.workflows.raw_due_date import (
-    RawDueDate
+    RawDueDate,
 )
 from src.processes.models.workflows.raw_performer import (
-    RawPerformer
+    RawPerformer,
 )
 from src.processes.models.workflows.fields import (
     TaskField,
-    FieldSelection
+    FieldSelection,
 )
 from src.processes.models.workflows.conditions import (
     Condition,
     Rule,
-    Predicate
+    Predicate,
 )
 from src.processes.models.workflows.checklist import (
     Checklist,
@@ -66,5 +66,5 @@ from src.processes.models.workflows.event import (
     WorkflowEventAction,
 )
 from src.processes.models.templates.owner import (
-    TemplateOwner
+    TemplateOwner,
 )

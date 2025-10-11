@@ -44,7 +44,7 @@ from src.processes.serializers.workflows.mixins import (
     WorkflowSerializerMixin,
 )
 from src.processes.services.urgent import (
-    UrgentService
+    UrgentService,
 )
 from src.generics.fields import (
     AccountPrimaryKeyRelatedField,
@@ -86,18 +86,18 @@ class WorkflowListSerializer(serializers.ModelSerializer):
     template = WorkflowTemplateSerializer()
     tasks = serializers.SerializerMethodField()
     fields = serializers.SerializerMethodField(
-        method_name='get_filtered_fields'
+        method_name='get_filtered_fields',
     )
     owners = serializers.SerializerMethodField()
     date_created_tsp = TimeStampField(source='date_created', read_only=True)
     due_date_tsp = TimeStampField(source='due_date', read_only=True)
     date_completed_tsp = TimeStampField(
         source='date_completed',
-        read_only=True
+        read_only=True,
     )
     workflow_starter = serializers.IntegerField(
         read_only=True,
-        source='workflow_starter_id'
+        source='workflow_starter_id',
     )
 
     def get_tasks(self, instance: Workflow):
@@ -108,7 +108,7 @@ class WorkflowListSerializer(serializers.ModelSerializer):
         if hasattr(instance, 'filtered_fields'):
             return TaskFieldListSerializer(
                 instance=instance.filtered_fields,
-                many=True
+                many=True,
             ).data
         return []
 
@@ -119,7 +119,7 @@ class WorkflowListSerializer(serializers.ModelSerializer):
 class WorkflowCreateSerializer(
     CustomValidationErrorMixin,
     WorkflowSerializerMixin,
-    serializers.ModelSerializer
+    serializers.ModelSerializer,
 ):
 
     """ Use next context vars:
@@ -144,14 +144,14 @@ class WorkflowCreateSerializer(
     kickoff = serializers.DictField(
         required=False,
         allow_empty=True,
-        allow_null=True
+        allow_null=True,
     )
     due_date_tsp = TimeStampField(required=False, allow_null=True)
     ancestor_task_id = AccountPrimaryKeyRelatedField(
         required=False,
         queryset=Task.objects.prefetch_related('performers').select_related(
-            'workflow'
-        )
+            'workflow',
+        ),
     )
 
     def validate_due_date(self, value):
@@ -173,7 +173,7 @@ class WorkflowCreateSerializer(
         allowed_performer = user.is_user and (
             user.is_account_owner or
             value.taskperformer_set.by_user_or_group(
-                user.id
+                user.id,
             ).exclude_directly_deleted().exists()
         )
         if not allowed_performer:
@@ -192,7 +192,7 @@ class WorkflowCreateSerializer(
 class WorkflowUpdateSerializer(
     CustomValidationErrorMixin,
     WorkflowSerializerMixin,
-    serializers.ModelSerializer
+    serializers.ModelSerializer,
 ):
 
     class Meta:
@@ -227,7 +227,7 @@ class WorkflowUpdateSerializer(
     def update(
         self,
         instance: Workflow,
-        validated_data: Dict[str, Any]
+        validated_data: Dict[str, Any],
     ):
         update_kickoff_kwargs = {}
         update_tasks_kwargs = {}
@@ -259,36 +259,36 @@ class WorkflowUpdateSerializer(
         with transaction.atomic():
             if update_instance_kwargs:
                 self.instance = self._partial_update_workflow(
-                    **update_instance_kwargs
+                    **update_instance_kwargs,
                 )
             if update_kickoff_kwargs:
                 self._update_kickoff_value(
-                    **update_kickoff_kwargs
+                    **update_kickoff_kwargs,
                 )
                 if contains_fields_vars(self.instance.name_template):
                     fields_values = self.instance.get_kickoff_fields_values()
                     self.instance.name = insert_fields_values_to_text(
                         text=self.instance.name_template,
-                        fields_values=fields_values
+                        fields_values=fields_values,
                     )
                     self.instance.save(update_fields=['name'])
 
             if update_tasks_kwargs:
                 self._update_tasks(
                     is_urgent=is_urgent,
-                    update_fields_values=bool(kickoff_fields_data)
+                    update_fields_values=bool(kickoff_fields_data),
                 )
             if is_urgent_changed:
                 UrgentService.resolve(
                     workflow=self.instance,
-                    user=self.context['user']
+                    user=self.context['user'],
                 )
         return self.instance
 
 
 class WorkflowTaskCompleteSerializer(
     CustomValidationErrorMixin,
-    serializers.Serializer
+    serializers.Serializer,
 ):
 
     task_id = serializers.IntegerField(required=False)
@@ -303,7 +303,7 @@ class WorkflowTaskCompleteSerializer(
         if not (task_id or task_api_name):
             raise ValidationError(messages.MSG_PW_0076)
         task = workflow.tasks.filter(
-            Q(id=task_id) | Q(api_name=task_api_name)
+            Q(id=task_id) | Q(api_name=task_api_name),
         ).first()
         if task is None:
             raise ValidationError(messages.MSG_PW_0076)
@@ -316,7 +316,7 @@ class WorkflowTaskCompleteSerializer(
 
 class WorkflowReturnToTaskSerializer(
     CustomValidationErrorMixin,
-    serializers.Serializer
+    serializers.Serializer,
 ):
 
     task = serializers.IntegerField(required=False)
@@ -385,7 +385,7 @@ class WorkflowDetailsSerializer(serializers.ModelSerializer):
     template = TemplateDetailsSerializer()
     workflow_starter = serializers.IntegerField(
         source='workflow_starter_id',
-        read_only=True
+        read_only=True,
     )
     kickoff = serializers.SerializerMethodField()
     tasks = serializers.SerializerMethodField()
@@ -393,7 +393,7 @@ class WorkflowDetailsSerializer(serializers.ModelSerializer):
     date_created_tsp = TimeStampField(source='date_created', read_only=True)
     date_completed_tsp = TimeStampField(
         source='date_completed',
-        read_only=True
+        read_only=True,
     )
 
     def get_kickoff(self, instance: Workflow):
@@ -419,12 +419,12 @@ class WorkflowNotificationSerializer(serializers.ModelSerializer):
 class WorkflowListFilterSerializer(
     CustomValidationErrorMixin,
     ValidationUtilsMixin,
-    serializers.Serializer
+    serializers.Serializer,
 ):
 
     status = serializers.ChoiceField(
         required=False,
-        choices=WorkflowApiStatus.CHOICES
+        choices=WorkflowApiStatus.CHOICES,
     )
     template_id = serializers.CharField(required=False)
     template_task_api_name = serializers.CharField(required=False)
@@ -436,19 +436,19 @@ class WorkflowListFilterSerializer(
     workflow_starter = serializers.CharField(required=False)
     ordering = serializers.ChoiceField(
         required=False,
-        choices=WorkflowOrdering.CHOICES
+        choices=WorkflowOrdering.CHOICES,
     )
     search = serializers.CharField(required=False)
     is_external = serializers.BooleanField(
         required=False,
         default=None,
-        allow_null=True
+        allow_null=True,
     )
     limit = serializers.IntegerField(
         required=False,
         min_value=0,
         max_value=WorkflowListPagination.max_limit,
-        default=WorkflowListPagination.default_limit
+        default=WorkflowListPagination.default_limit,
     )
     offset = serializers.IntegerField(
         required=False,
@@ -506,25 +506,25 @@ class WorkflowListFilterSerializer(
 class WorkflowFieldsFilterSerializer(
     CustomValidationErrorMixin,
     ValidationUtilsMixin,
-    serializers.Serializer
+    serializers.Serializer,
 ):
 
     status = serializers.ChoiceField(
         required=False,
         allow_null=False,
-        choices=WorkflowApiStatus.CHOICES
+        choices=WorkflowApiStatus.CHOICES,
     )
     template_id = serializers.IntegerField(
         required=False,
         allow_null=False,
-        validators=[MinValueValidator(1)]
+        validators=[MinValueValidator(1)],
     )
     fields = serializers.CharField(required=False)
     limit = serializers.IntegerField(
         required=False,
         min_value=0,
         max_value=DefaultPagination.max_limit,
-        default=DefaultPagination.default_limit
+        default=DefaultPagination.default_limit,
     )
     offset = serializers.IntegerField(
         required=False,
@@ -555,13 +555,13 @@ class WorkflowFieldsSerializer(serializers.ModelSerializer):
     date_created_tsp = TimeStampField(source='date_created', read_only=True)
     date_completed_tsp = TimeStampField(
         source='date_completed',
-        read_only=True
+        read_only=True,
     )
 
 
 class WorkflowSnoozeSerializer(
     CustomValidationErrorMixin,
-    serializers.Serializer
+    serializers.Serializer,
 ):
 
     date = TimeStampField(required=True)
@@ -569,7 +569,7 @@ class WorkflowSnoozeSerializer(
 
 class WorkflowRevertSerializer(
     CustomValidationErrorMixin,
-    serializers.Serializer
+    serializers.Serializer,
 ):
     comment = serializers.CharField(
         required=False,

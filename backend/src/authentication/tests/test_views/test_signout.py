@@ -16,7 +16,7 @@ def test_signout__user_token__ok(api_client, mocker):
     user = create_test_user()
     token = PneumaticToken.create(
         user=user,
-        for_api_key=True
+        for_api_key=True,
     )
     APIKey.objects.create(
         user=user,
@@ -26,7 +26,7 @@ def test_signout__user_token__ok(api_client, mocker):
     )
     expire_token_mock = mocker.patch(
         'src.authentication.tokens.'
-        'PneumaticToken.expire_token'
+        'PneumaticToken.expire_token',
     )
 
     api_client.token_authenticate(user)
@@ -46,7 +46,7 @@ def test_signout__api_key__skip(api_client, mocker):
     user = create_test_user()
     expire_token_mock = mocker.patch(
         'src.authentication.tokens.'
-        'PneumaticToken.expire_token'
+        'PneumaticToken.expire_token',
     )
 
     api_client.token_authenticate(user, token_type=AuthTokenType.API)

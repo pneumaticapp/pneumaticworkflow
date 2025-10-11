@@ -30,7 +30,7 @@ from src.generics.permissions import (
 
 class WorkflowsDashboardViewSet(
     CustomViewSetMixin,
-    GenericViewSet
+    GenericViewSet,
 ):
     pagination_class = LimitOffsetPagination
     permission_classes = (
@@ -57,7 +57,7 @@ class WorkflowsDashboardViewSet(
             query = OverviewQuery(
                 account_id=request.user.account_id,
                 user_id=request.user.id,
-                **filters
+                **filters,
             )
         data = RawSqlExecutor.fetchone(*query.get_sql())
         return self.response_ok(data)
@@ -76,7 +76,7 @@ class WorkflowsDashboardViewSet(
             query = WorkflowBreakdownQuery(
                 account_id=request.user.account_id,
                 user_id=request.user.id,
-                **filters
+                **filters,
             )
         data = list(RawSqlExecutor.fetch(*query.get_sql()))
         return self.response_ok(data)
@@ -98,7 +98,7 @@ class WorkflowsDashboardViewSet(
             )
         else:
             query = WorkflowBreakdownByTasksQuery(
-                **filters
+                **filters,
             )
         data = list(RawSqlExecutor.fetch(*query.get_sql()))
         return self.response_ok(data)

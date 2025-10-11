@@ -16,15 +16,15 @@ class RawDueDate(
     task = models.OneToOneField(
         Task,
         on_delete=models.CASCADE,
-        related_name='raw_due_date'
+        related_name='raw_due_date',
     )
     duration = models.DurationField()
     duration_months = models.PositiveIntegerField(default=0)
     rule = models.CharField(
         choices=DueDateRule.CHOICES,
-        max_length=100
+        max_length=100,
     )
     source_id = models.CharField(
         null=True,
-        max_length=200
+        max_length=200,
     )

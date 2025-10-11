@@ -2,7 +2,7 @@ from rest_framework import serializers
 from rest_framework.serializers import ValidationError
 from rest_framework_simplejwt.tokens import TokenError
 from src.generics.mixins.serializers import (
-    CustomValidationErrorMixin
+    CustomValidationErrorMixin,
 )
 from src.payment.stripe.tokens import ConfirmToken
 from src.payment.models import Product, Price
@@ -46,7 +46,7 @@ class ProductSerializer(serializers.ModelSerializer):
 
 class PurchaseProductSerializer(
     CustomValidationErrorMixin,
-    serializers.Serializer
+    serializers.Serializer,
 ):
 
     code = serializers.CharField(
@@ -63,18 +63,18 @@ class PurchaseProductSerializer(
 
 class PurchaseSerializer(
     CustomValidationErrorMixin,
-    serializers.Serializer
+    serializers.Serializer,
 ):
 
     success_url = serializers.URLField(
         required=True,
         allow_null=False,
-        allow_blank=False
+        allow_blank=False,
     )
     cancel_url = serializers.URLField(
         required=False,
         allow_null=True,
-        allow_blank=False
+        allow_blank=False,
     )
     products = PurchaseProductSerializer(
         many=True,
@@ -88,7 +88,7 @@ class PurchaseSerializer(
         request_codes = {elem['code'] for elem in attrs}
         existent_codes = {
             elem for elem in Price.objects.active_or_archived().filter(
-                code__in=request_codes
+                code__in=request_codes,
             ).order_by('code').values_list('code', flat=True)
         }
         non_existent_codes = request_codes - existent_codes
@@ -99,24 +99,24 @@ class PurchaseSerializer(
 
 class CardSetupSerializer(
     CustomValidationErrorMixin,
-    serializers.Serializer
+    serializers.Serializer,
 ):
 
     success_url = serializers.URLField(
         required=True,
         allow_null=False,
-        allow_blank=False
+        allow_blank=False,
     )
     cancel_url = serializers.URLField(
         required=False,
         allow_null=True,
-        allow_blank=False
+        allow_blank=False,
     )
 
 
 class ConfirmSerializer(
     CustomValidationErrorMixin,
-    serializers.Serializer
+    serializers.Serializer,
 ):
     token = serializers.CharField(
         required=True,
@@ -135,11 +135,11 @@ class ConfirmSerializer(
 
 class CustomerPortalSerializer(
     CustomValidationErrorMixin,
-    serializers.Serializer
+    serializers.Serializer,
 ):
 
     cancel_url = serializers.URLField(
         required=True,
         allow_null=False,
-        allow_blank=False
+        allow_blank=False,
     )

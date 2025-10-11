@@ -6,11 +6,11 @@ from rest_framework.serializers import ModelSerializer
 
 from src.generics.mixins.serializers import (
     AdditionalValidationMixin,
-    CustomValidationErrorMixin
+    CustomValidationErrorMixin,
 )
 from src.processes.serializers.templates.mixins import (
     CreateOrUpdateInstanceMixin,
-    CustomValidationApiNameMixin
+    CustomValidationApiNameMixin,
 )
 from src.processes.models import (
     PredicateTemplate,
@@ -43,7 +43,7 @@ class PredicateTemplateSerializer(
     AdditionalValidationMixin,
     CustomValidationApiNameMixin,
     CreateOrUpdateInstanceMixin,
-    ModelSerializer
+    ModelSerializer,
 ):
     class Meta:
         model = PredicateTemplate
@@ -71,7 +71,7 @@ class PredicateTemplateSerializer(
         self,
         operator: PredicateOperator,
         field_type: FieldType,
-        predicate_api_name: Optional[str] = None
+        predicate_api_name: Optional[str] = None,
     ):
         task = self.context['task']
         if operator not in PredicateOperator.ALLOWED_OPERATORS[field_type]:
@@ -81,7 +81,7 @@ class PredicateTemplateSerializer(
                     operator=operator,
                     task=task.name,
                 ),
-                api_name=predicate_api_name
+                api_name=predicate_api_name,
             )
         condition = self.context['condition']
         if (
@@ -90,7 +90,7 @@ class PredicateTemplateSerializer(
         ):
             raise_validation_error(
                 message=MSG_PT_0064(name=task.name),
-                api_name=predicate_api_name
+                api_name=predicate_api_name,
             )
 
     def _validate_value(
@@ -108,7 +108,7 @@ class PredicateTemplateSerializer(
                     task=self.context['task'].name,
                     operator=operator,
                 ),
-                api_name=predicate_api_name
+                api_name=predicate_api_name,
             )
 
         return value
@@ -125,12 +125,12 @@ class PredicateTemplateSerializer(
             if not account.users.filter(id=user_id).exists():
                 raise_validation_error(
                     message=MSG_PT_0043(user_id=user_id, task=task_name),
-                    api_name=predicate_api_name
+                    api_name=predicate_api_name,
                 )
         except ValueError:
             raise_validation_error(
                 message=MSG_PT_0043(user_id=user_id, task=task_name),
-                api_name=predicate_api_name
+                api_name=predicate_api_name,
             )
         return user_id
 
@@ -138,7 +138,7 @@ class PredicateTemplateSerializer(
         self,
         value: str,
         data: Dict[str, Any],
-        **kwargs
+        **kwargs,
     ):
         if data['field_type'] == PredicateType.TASK:
             ancestors = self.context['ancestors']
@@ -146,7 +146,7 @@ class PredicateTemplateSerializer(
             if task.api_name in ancestors:
                 raise_validation_error(
                     message=MSG_PT_0065(name=task.name),
-                    api_name=data.get('api_name')
+                    api_name=data.get('api_name'),
                 )
             tasks_api_names = self.context['tasks_api_names']
             condition = self.context['condition']
@@ -157,7 +157,7 @@ class PredicateTemplateSerializer(
                     message = MSG_PT_0067(name=task.name)
                 raise_validation_error(
                     message=message,
-                    api_name=data.get('api_name')
+                    api_name=data.get('api_name'),
                 )
             if (
                 condition.action != ConditionAction.START_TASK
@@ -165,7 +165,7 @@ class PredicateTemplateSerializer(
             ):
                 raise_validation_error(
                     message=MSG_PT_0068(name=task.name),
-                    api_name=data.get('api_name')
+                    api_name=data.get('api_name'),
                  )
 
     def _validate_selection(
@@ -181,9 +181,9 @@ class PredicateTemplateSerializer(
             raise_validation_error(
                 message=MSG_PT_0045(
                     task=self.context['task'].name,
-                    selection_api_name=selection_api_name
+                    selection_api_name=selection_api_name,
                 ),
-                api_name=predicate_api_name
+                api_name=predicate_api_name,
             )
         return selection_api_name
 
@@ -199,25 +199,25 @@ class PredicateTemplateSerializer(
         self._validate_allowed_operators(
             operator=operator,
             field_type=field_type,
-            predicate_api_name=api_name
+            predicate_api_name=api_name,
         )
         if self._validate_value(
             operator=operator,
             value=value,
-            predicate_api_name=api_name
+            predicate_api_name=api_name,
         ) is not None:
             if field_type == FieldType.USER:
                 self._validate_user(
                     account=account,
                     user_id=value,
-                    predicate_api_name=api_name
+                    predicate_api_name=api_name,
                 )
 
             elif field_type in FieldType.TYPES_WITH_SELECTIONS:
                 self._validate_selection(
                     field_api_name=field,
                     selection_api_name=value,
-                    predicate_api_name=api_name
+                    predicate_api_name=api_name,
                 )
             elif field_type == FieldType.NUMBER:
                 try:
@@ -225,7 +225,7 @@ class PredicateTemplateSerializer(
                 except (TypeError, ValueError, DecimalException):
                     raise_validation_error(
                         message=MSG_PT_0063,
-                        api_name=api_name
+                        api_name=api_name,
                     )
 
     def create(self, validated_data):
@@ -234,12 +234,12 @@ class PredicateTemplateSerializer(
             validated_data={
                 'template': self.context['template'],
                 'rule':  self.context.get('rule'),
-                **validated_data
+                **validated_data,
             },
             not_unique_exception_msg=MSG_PT_0051(
                 name=self.context['task'].name,
                 api_name=validated_data.get('api_name'),
-            )
+            ),
         )
 
     def update(self, instance, validated_data):
@@ -249,10 +249,10 @@ class PredicateTemplateSerializer(
             validated_data={
                 'template': self.context['template'],
                 'rule':  self.context.get('rule'),
-                **validated_data
+                **validated_data,
             },
             not_unique_exception_msg=MSG_PT_0051(
                 name=self.context['task'].name,
                 api_name=validated_data.get('api_name'),
-            )
+            ),
         )

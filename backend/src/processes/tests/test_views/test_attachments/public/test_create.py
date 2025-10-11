@@ -10,7 +10,7 @@ from src.authentication.tokens import (
 )
 from src.accounts.enums import BillingPlanType
 from src.processes.messages.workflow import (
-    MSG_PW_0001
+    MSG_PW_0001,
 )
 
 
@@ -19,7 +19,7 @@ pytestmark = pytest.mark.django_db
 
 def test_create__public_token__ok(
     api_client,
-    mocker
+    mocker,
 ):
 
     # arrange
@@ -34,17 +34,17 @@ def test_create__public_token__ok(
     get_token_mock = mocker.patch(
         'src.authentication.services.public_auth.'
         'PublicAuthService.get_token',
-        return_value=token
+        return_value=token,
     )
     get_template_mock = mocker.patch(
         'src.authentication.services.public_auth.'
         'PublicAuthService.get_template',
-        return_value=template
+        return_value=template,
     )
     mocker.patch(
         'src.processes.views.public.file_attachment'
         '.StoragePermission.has_permission',
-        return_value=True
+        return_value=True,
     )
     attachment = mocker.Mock(id=1)
     upload_url = 'some upload url'
@@ -60,8 +60,8 @@ def test_create__public_token__ok(
         return_value=(
             attachment,
             upload_url,
-            thumb_upload_url
-        )
+            thumb_upload_url,
+        ),
     )
     api_client.token_authenticate(user)
 
@@ -72,7 +72,7 @@ def test_create__public_token__ok(
             'filename': filename,
             'thumbnail': thumbnail,
             'content_type': content_type,
-            'size': size
+            'size': size,
         },
         **{'X-Public-Authorization': auth_header_value},
     )
@@ -86,7 +86,7 @@ def test_create__public_token__ok(
         filename=filename,
         thumbnail=thumbnail,
         content_type=content_type,
-        size=size
+        size=size,
     )
     get_token_mock.assert_called_once()
     get_template_mock.assert_called_once_with(token)
@@ -94,23 +94,23 @@ def test_create__public_token__ok(
 
 def test_create__not_authenticated__permission_denied(
     api_client,
-    mocker
+    mocker,
 ):
 
     # arrange
     get_token_mock = mocker.patch(
         'src.authentication.services.public_auth.'
         'PublicAuthService.get_token',
-        return_value=None
+        return_value=None,
     )
     get_template_mock = mocker.patch(
         'src.authentication.services.public_auth.'
-        'PublicAuthService.get_template'
+        'PublicAuthService.get_template',
     )
     mocker.patch(
         'src.processes.views.public.file_attachment'
         '.StoragePermission.has_permission',
-        return_value=True
+        return_value=True,
     )
 
     # act
@@ -120,8 +120,8 @@ def test_create__not_authenticated__permission_denied(
             'filename': 'mark_dacascas.png',
             'thumbnail': 'mark_dacascas_th.png',
             'content_type': 'image/png',
-            'size': 215678
-        }
+            'size': 215678,
+        },
     )
 
     # assert
@@ -132,7 +132,7 @@ def test_create__not_authenticated__permission_denied(
 
 def test_create__embeded_token__ok(
     api_client,
-    mocker
+    mocker,
 ):
 
     # arrange
@@ -148,17 +148,17 @@ def test_create__embeded_token__ok(
     get_token_mock = mocker.patch(
         'src.authentication.services.public_auth.'
         'PublicAuthService.get_token',
-        return_value=token
+        return_value=token,
     )
     get_template_mock = mocker.patch(
         'src.authentication.services.public_auth.'
         'PublicAuthService.get_template',
-        return_value=template
+        return_value=template,
     )
     mocker.patch(
         'src.processes.views.public.file_attachment'
         '.StoragePermission.has_permission',
-        return_value=True
+        return_value=True,
     )
     attachment = mocker.Mock(id=1)
     upload_url = 'some upload url'
@@ -174,8 +174,8 @@ def test_create__embeded_token__ok(
         return_value=(
             attachment,
             upload_url,
-            thumb_upload_url
-        )
+            thumb_upload_url,
+        ),
     )
 
     # act
@@ -185,7 +185,7 @@ def test_create__embeded_token__ok(
             'filename': filename,
             'thumbnail': thumbnail,
             'content_type': content_type,
-            'size': size
+            'size': size,
         },
         **{'X-Public-Authorization': auth_header_value},
     )
@@ -199,7 +199,7 @@ def test_create__embeded_token__ok(
         filename=filename,
         thumbnail=thumbnail,
         content_type=content_type,
-        size=size
+        size=size,
     )
     get_token_mock.assert_called_once()
     get_template_mock.assert_called_once_with(token)
@@ -207,7 +207,7 @@ def test_create__embeded_token__ok(
 
 def test_create__disabled_billing__permission_error(
     api_client,
-    mocker
+    mocker,
 ):
 
     # arrange
@@ -222,17 +222,17 @@ def test_create__disabled_billing__permission_error(
     get_token_mock = mocker.patch(
         'src.authentication.services.public_auth.'
         'PublicAuthService.get_token',
-        return_value=token
+        return_value=token,
     )
     get_template_mock = mocker.patch(
         'src.authentication.services.public_auth.'
         'PublicAuthService.get_template',
-        return_value=template
+        return_value=template,
     )
     mocker.patch(
         'src.processes.views.public.file_attachment'
         '.StoragePermission.has_permission',
-        return_value=False
+        return_value=False,
     )
     attachment = mocker.Mock(id=1)
     upload_url = 'some upload url'
@@ -248,8 +248,8 @@ def test_create__disabled_billing__permission_error(
         return_value=(
             attachment,
             upload_url,
-            thumb_upload_url
-        )
+            thumb_upload_url,
+        ),
     )
     api_client.token_authenticate(user)
 
@@ -260,7 +260,7 @@ def test_create__disabled_billing__permission_error(
             'filename': filename,
             'thumbnail': thumbnail,
             'content_type': content_type,
-            'size': size
+            'size': size,
         },
         **{'X-Public-Authorization': auth_header_value},
     )

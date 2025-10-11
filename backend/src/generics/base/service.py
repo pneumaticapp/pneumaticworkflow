@@ -16,7 +16,7 @@ class BaseModelService:
         user: Optional[UserModel] = None,
         instance=None,
         is_superuser: bool = False,
-        auth_type: AuthTokenType.LITERALS = AuthTokenType.USER
+        auth_type: AuthTokenType.LITERALS = AuthTokenType.USER,
     ):
         if user:
             self.user = user
@@ -32,27 +32,27 @@ class BaseModelService:
     @abstractmethod
     def _create_related(
         self,
-        **kwargs
+        **kwargs,
     ):
         pass
 
     @abstractmethod
     def _create_instance(
         self,
-        **kwargs
+        **kwargs,
     ):
 
         pass
 
     def _create_actions(
         self,
-        **kwargs
+        **kwargs,
     ):
         pass
 
     def create(
         self,
-        **kwargs
+        **kwargs,
     ) -> Model:
         with transaction.atomic():
             self._create_instance(**kwargs)
@@ -68,7 +68,7 @@ class BaseModelService:
     def partial_update(
         self,
         force_save=False,
-        **update_kwargs
+        **update_kwargs,
     ) -> Model:
 
         self.update_fields.update(update_kwargs.keys())

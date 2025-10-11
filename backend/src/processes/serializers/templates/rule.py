@@ -3,7 +3,7 @@ from rest_framework.serializers import ModelSerializer
 
 from src.generics.mixins.serializers import (
     AdditionalValidationMixin,
-    CustomValidationErrorMixin
+    CustomValidationErrorMixin,
 )
 from src.processes.serializers.templates.mixins import (
     CreateOrUpdateRelatedMixin,
@@ -50,12 +50,12 @@ class RuleTemplateSerializer(
             validated_data={
                 'template': self.context['template'],
                 'condition':  self.context.get('condition'),
-                **validated_data
+                **validated_data,
             },
             not_unique_exception_msg=MSG_PT_0053(
                 name=self.context['task'].name,
                 api_name=validated_data.get('api_name'),
-            )
+            ),
         )
         self.create_or_update_related(
             data=validated_data.get('predicates'),
@@ -66,8 +66,8 @@ class RuleTemplateSerializer(
             },
             slz_context={
                 'rule': instance,
-                **self.context
-            }
+                **self.context,
+            },
         )
         return instance
 
@@ -78,12 +78,12 @@ class RuleTemplateSerializer(
             validated_data={
                 'template': self.context['template'],
                 'condition':  self.context.get('condition'),
-                **validated_data
+                **validated_data,
             },
             not_unique_exception_msg=MSG_PT_0053(
                 name=self.context['task'].name,
                 api_name=validated_data.get('api_name'),
-            )
+            ),
         )
         self.create_or_update_related(
             data=validated_data.get('predicates'),
@@ -94,8 +94,8 @@ class RuleTemplateSerializer(
             },
             slz_context={
                 'rule': instance,
-                **self.context
-            }
+                **self.context,
+            },
         )
 
         return instance

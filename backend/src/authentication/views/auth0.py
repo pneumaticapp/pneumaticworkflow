@@ -8,13 +8,13 @@ from src.generics.mixins.views import CustomViewSetMixin
 from src.authentication.permissions import Auth0Permission
 from src.analytics.mixins import BaseIdentifyMixin
 from src.authentication.services.user_auth import (
-    AuthService
+    AuthService,
 )
 from src.authentication.services.exceptions import (
-    AuthException
+    AuthException,
 )
 from src.authentication.services.auth0 import (
-    Auth0Service
+    Auth0Service,
 )
 from src.authentication.serializers import (
     Auth0TokenSerializer,
@@ -39,7 +39,7 @@ class Auth0ViewSet(
     SignUpMixin,
     CustomViewSetMixin,
     BaseIdentifyMixin,
-    GenericViewSet
+    GenericViewSet,
 ):
     permission_classes = (Auth0Permission,)
     serializer_class = Auth0TokenSerializer
@@ -62,7 +62,7 @@ class Auth0ViewSet(
                 auth_response={
                     'code': slz.validated_data['code'],
                     'state': slz.validated_data['state'],
-                }
+                },
             )
         except AuthException as ex:
             raise_validation_error(message=ex.message)
@@ -73,7 +73,7 @@ class Auth0ViewSet(
                     user=user,
                     user_agent=request.headers.get(
                         'User-Agent',
-                        request.META.get('HTTP_USER_AGENT')
+                        request.META.get('HTTP_USER_AGENT'),
                     ),
                     user_ip=request.META.get('HTTP_X_REAL_IP'),
                 )
@@ -102,7 +102,7 @@ class Auth0ViewSet(
             raise_validation_error(message=ex.message)
         else:
             return self.response_ok({
-                'auth_uri': auth_uri
+                'auth_uri': auth_uri,
             })
 
     @action(methods=('GET',), detail=False)
@@ -110,6 +110,6 @@ class Auth0ViewSet(
         capture_sentry_message(
             message='Auth0 logout request',
             data=self.request.GET,
-            level=SentryLogLevel.INFO
+            level=SentryLogLevel.INFO,
         )
         return self.response_ok()

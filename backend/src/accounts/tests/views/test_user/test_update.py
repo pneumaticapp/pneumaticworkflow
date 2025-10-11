@@ -31,11 +31,11 @@ def test_update__all_fields__ok(mocker, api_client):
     # arrange
     analytics_mock = mocker.patch(
         'src.accounts.views.user.AnalyticService.'
-        'users_digest'
+        'users_digest',
     )
     identify_mock = mocker.patch(
         'src.accounts.views.user'
-        '.UserViewSet.identify'
+        '.UserViewSet.identify',
     )
     user = create_test_user(is_account_owner=True)
     request_data = {
@@ -58,15 +58,15 @@ def test_update__all_fields__ok(mocker, api_client):
     stripe_service_init_mock = mocker.patch.object(
         StripeService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     update_customer_mock = mocker.patch(
         'src.payment.stripe.service.StripeService.'
-        'update_customer'
+        'update_customer',
     )
     send_user_updated_mock = mocker.patch(
         'src.notifications.tasks.'
-        'send_user_updated_notification.delay'
+        'send_user_updated_notification.delay',
     )
     api_client.token_authenticate(user)
 
@@ -148,12 +148,12 @@ def test_update__all_fields__ok(mocker, api_client):
     analytics_mock.assert_called_once_with(
         user=user,
         auth_type=AuthTokenType.USER,
-        is_superuser=False
+        is_superuser=False,
     )
     stripe_service_init_mock.assert_called_once_with(
         user=user,
         auth_type=AuthTokenType.USER,
-        is_superuser=False
+        is_superuser=False,
     )
     update_customer_mock.assert_called_once()
     send_user_updated_mock.assert_called_once_with(
@@ -166,8 +166,8 @@ def test_update__all_fields__ok(mocker, api_client):
             'email': user.email,
             'photo': user.photo,
             'is_admin': user.is_admin,
-            'is_account_owner': user.is_account_owner
-        }
+            'is_account_owner': user.is_account_owner,
+        },
     )
 
 
@@ -189,11 +189,11 @@ def test_update__partial__update_request_fields(mocker, api_client):
 
     analytics_mock = mocker.patch(
         'src.accounts.views.user.AnalyticService.'
-        'users_digest'
+        'users_digest',
     )
     identify_mock = mocker.patch(
         'src.accounts.views.user'
-        '.UserViewSet.identify'
+        '.UserViewSet.identify',
     )
     user = create_test_user(
         is_account_owner=True,
@@ -217,15 +217,15 @@ def test_update__partial__update_request_fields(mocker, api_client):
     stripe_service_init_mock = mocker.patch.object(
         StripeService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     update_customer_mock = mocker.patch(
         'src.payment.stripe.service.StripeService.'
-        'update_customer'
+        'update_customer',
     )
     send_user_updated_mock = mocker.patch(
         'src.notifications.tasks.'
-        'send_user_updated_notification.delay'
+        'send_user_updated_notification.delay',
     )
     api_client.token_authenticate(user)
 
@@ -283,12 +283,12 @@ def test_update__partial__update_request_fields(mocker, api_client):
     analytics_mock.assert_called_once_with(
         user=user,
         auth_type=AuthTokenType.USER,
-        is_superuser=False
+        is_superuser=False,
     )
     stripe_service_init_mock.assert_called_once_with(
         user=user,
         auth_type=AuthTokenType.USER,
-        is_superuser=False
+        is_superuser=False,
     )
     update_customer_mock.assert_called_once()
     send_user_updated_mock.assert_called_once_with(
@@ -301,8 +301,8 @@ def test_update__partial__update_request_fields(mocker, api_client):
             'email': user.email,
             'photo': user.photo,
             'is_admin': user.is_admin,
-            'is_account_owner': user.is_account_owner
-        }
+            'is_account_owner': user.is_account_owner,
+        },
     )
 
 
@@ -311,26 +311,26 @@ def test_update__no_call_analytics__ok(mocker, api_client):
     # arrange
     analytics_mock = mocker.patch(
         'src.accounts.views.user.AnalyticService'
-        '.users_digest'
+        '.users_digest',
     )
     identify_mock = mocker.patch(
         'src.accounts.views.user'
-        '.UserViewSet.identify'
+        '.UserViewSet.identify',
     )
     user = create_test_user()
     api_client.token_authenticate(user)
     mocker.patch.object(
         StripeService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     mocker.patch(
         'src.payment.stripe.service.StripeService.'
-        'update_customer'
+        'update_customer',
     )
     send_user_updated_mock = mocker.patch(
         'src.notifications.tasks.'
-        'send_user_updated_notification.delay'
+        'send_user_updated_notification.delay',
     )
 
     # act
@@ -338,7 +338,7 @@ def test_update__no_call_analytics__ok(mocker, api_client):
         path='/accounts/user',
         data={
             'is_digest_subscriber': True,
-        }
+        },
     )
 
     # assert
@@ -357,8 +357,8 @@ def test_update__no_call_analytics__ok(mocker, api_client):
             'email': user.email,
             'photo': user.photo,
             'is_admin': user.is_admin,
-            'is_account_owner': user.is_account_owner
-        }
+            'is_account_owner': user.is_account_owner,
+        },
     )
 
 
@@ -367,11 +367,11 @@ def test_update__only_date_fmt__ok(mocker, api_client):
     # arrange
     analytics_mock = mocker.patch(
         'src.accounts.views.user.AnalyticService.'
-        'users_digest'
+        'users_digest',
     )
     identify_mock = mocker.patch(
         'src.accounts.views.user'
-        '.UserViewSet.identify'
+        '.UserViewSet.identify',
     )
     user = create_test_user(
         is_account_owner=True,
@@ -383,15 +383,15 @@ def test_update__only_date_fmt__ok(mocker, api_client):
     stripe_service_init_mock = mocker.patch.object(
         StripeService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     update_customer_mock = mocker.patch(
         'src.payment.stripe.service.StripeService.'
-        'update_customer'
+        'update_customer',
     )
     send_user_updated_mock = mocker.patch(
         'src.notifications.tasks.'
-        'send_user_updated_notification.delay'
+        'send_user_updated_notification.delay',
     )
     api_client.token_authenticate(user)
 
@@ -410,7 +410,7 @@ def test_update__only_date_fmt__ok(mocker, api_client):
     stripe_service_init_mock.assert_called_once_with(
         user=user,
         auth_type=AuthTokenType.USER,
-        is_superuser=False
+        is_superuser=False,
     )
     update_customer_mock.assert_called_once()
     send_user_updated_mock.assert_called_once_with(
@@ -423,8 +423,8 @@ def test_update__only_date_fmt__ok(mocker, api_client):
             'email': user.email,
             'photo': user.photo,
             'is_admin': user.is_admin,
-            'is_account_owner': user.is_account_owner
-        }
+            'is_account_owner': user.is_account_owner,
+        },
     )
 
 
@@ -433,11 +433,11 @@ def test_update__only_date_fdw__ok(mocker, api_client):
     # arrange
     analytics_mock = mocker.patch(
         'src.accounts.views.user.AnalyticService.'
-        'users_digest'
+        'users_digest',
     )
     identify_mock = mocker.patch(
         'src.accounts.views.user'
-        '.UserViewSet.identify'
+        '.UserViewSet.identify',
     )
     user = create_test_user(
         is_account_owner=True,
@@ -449,15 +449,15 @@ def test_update__only_date_fdw__ok(mocker, api_client):
     stripe_service_init_mock = mocker.patch.object(
         StripeService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     update_customer_mock = mocker.patch(
         'src.payment.stripe.service.StripeService.'
-        'update_customer'
+        'update_customer',
     )
     send_user_updated_mock = mocker.patch(
         'src.notifications.tasks.'
-        'send_user_updated_notification.delay'
+        'send_user_updated_notification.delay',
     )
     api_client.token_authenticate(user)
 
@@ -476,7 +476,7 @@ def test_update__only_date_fdw__ok(mocker, api_client):
     stripe_service_init_mock.assert_called_once_with(
         user=user,
         auth_type=AuthTokenType.USER,
-        is_superuser=False
+        is_superuser=False,
     )
     update_customer_mock.assert_called_once()
     send_user_updated_mock.assert_called_once_with(
@@ -489,8 +489,8 @@ def test_update__only_date_fdw__ok(mocker, api_client):
             'email': user.email,
             'photo': user.photo,
             'is_admin': user.is_admin,
-            'is_account_owner': user.is_account_owner
-        }
+            'is_account_owner': user.is_account_owner,
+        },
     )
 
 
@@ -504,17 +504,17 @@ def test_update__only_date_fdw__ok(mocker, api_client):
 def test_update__invalid_date_fmt__validation_error(
     mocker,
     api_client,
-    date_fmt
+    date_fmt,
 ):
 
     # arrange
     analytics_mock = mocker.patch(
         'src.accounts.views.user.AnalyticService.'
-        'users_digest'
+        'users_digest',
     )
     identify_mock = mocker.patch(
         'src.accounts.views.user'
-        '.UserViewSet.identify'
+        '.UserViewSet.identify',
     )
     user = create_test_user(is_account_owner=True)
     data = {
@@ -523,15 +523,15 @@ def test_update__invalid_date_fmt__validation_error(
     stripe_service_init_mock = mocker.patch.object(
         StripeService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     update_customer_mock = mocker.patch(
         'src.payment.stripe.service.StripeService.'
-        'update_customer'
+        'update_customer',
     )
     send_user_updated_mock = mocker.patch(
         'src.notifications.tasks.'
-        'send_user_updated_notification.delay'
+        'send_user_updated_notification.delay',
     )
     api_client.token_authenticate(user)
 
@@ -564,17 +564,17 @@ def test_update__invalid_date_fmt__validation_error(
 def test_update__invalid_date_fdw__validation_error(
     mocker,
     api_client,
-    date_fdw
+    date_fdw,
 ):
 
     # arrange
     analytics_mock = mocker.patch(
         'src.accounts.views.user.AnalyticService.'
-        'users_digest'
+        'users_digest',
     )
     identify_mock = mocker.patch(
         'src.accounts.views.user'
-        '.UserViewSet.identify'
+        '.UserViewSet.identify',
     )
     user = create_test_user(is_account_owner=True)
     data = {
@@ -583,15 +583,15 @@ def test_update__invalid_date_fdw__validation_error(
     stripe_service_init_mock = mocker.patch.object(
         StripeService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     update_customer_mock = mocker.patch(
         'src.payment.stripe.service.StripeService.'
-        'update_customer'
+        'update_customer',
     )
     send_user_updated_mock = mocker.patch(
         'src.notifications.tasks.'
-        'send_user_updated_notification.delay'
+        'send_user_updated_notification.delay',
     )
     api_client.token_authenticate(user)
 
@@ -617,17 +617,17 @@ def test_update__invalid_date_fdw__validation_error(
 
 def test_update__invalid_photo__validation_error(
     mocker,
-    api_client
+    api_client,
 ):
 
     # arrange
     analytics_mock = mocker.patch(
         'src.accounts.views.user.AnalyticService'
-        '.users_digest'
+        '.users_digest',
     )
     identify_mock = mocker.patch(
         'src.accounts.views.user'
-        '.UserViewSet.identify'
+        '.UserViewSet.identify',
     )
     user = create_test_user()
     data = {
@@ -637,15 +637,15 @@ def test_update__invalid_photo__validation_error(
     stripe_service_init_mock = mocker.patch.object(
         StripeService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     update_customer_mock = mocker.patch(
         'src.payment.stripe.service.StripeService.'
-        'update_customer'
+        'update_customer',
     )
     send_user_updated_mock = mocker.patch(
         'src.notifications.tasks.'
-        'send_user_updated_notification.delay'
+        'send_user_updated_notification.delay',
     )
 
     # act
@@ -670,40 +670,40 @@ def test_update__invalid_photo__validation_error(
 
 def test_update__not_account_owner__not_update_customer(
     mocker,
-    api_client
+    api_client,
 ):
 
     # arrange
     mocker.patch(
         'src.accounts.views.user.AnalyticService'
-        '.users_digest'
+        '.users_digest',
     )
     mocker.patch(
         'src.accounts.views.user'
-        '.UserViewSet.identify'
+        '.UserViewSet.identify',
     )
     account = create_test_account(lease_level=LeaseLevel.STANDARD)
     create_test_user(
         account=account,
         is_account_owner=True,
-        email='owner@test.test'
+        email='owner@test.test',
     )
     user = create_test_user(
         account=account,
-        is_account_owner=False
+        is_account_owner=False,
     )
     stripe_service_init_mock = mocker.patch.object(
         StripeService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     update_customer_mock = mocker.patch(
         'src.payment.stripe.service.StripeService.'
-        'update_customer'
+        'update_customer',
     )
     send_user_updated_mock = mocker.patch(
         'src.notifications.tasks.'
-        'send_user_updated_notification.delay'
+        'send_user_updated_notification.delay',
     )
     api_client.token_authenticate(user)
 
@@ -727,42 +727,42 @@ def test_update__not_account_owner__not_update_customer(
             'email': user.email,
             'photo': user.photo,
             'is_admin': user.is_admin,
-            'is_account_owner': user.is_account_owner
-        }
+            'is_account_owner': user.is_account_owner,
+        },
     )
 
 
 def test_update__tenant_account__not_update_customer(
     mocker,
-    api_client
+    api_client,
 ):
 
     # arrange
     mocker.patch(
         'src.accounts.views.user.AnalyticService'
-        '.users_digest'
+        '.users_digest',
     )
     mocker.patch(
         'src.accounts.views.user'
-        '.UserViewSet.identify'
+        '.UserViewSet.identify',
     )
     account = create_test_account(lease_level=LeaseLevel.TENANT)
     user = create_test_user(
         account=account,
-        is_account_owner=True
+        is_account_owner=True,
     )
     stripe_service_init_mock = mocker.patch.object(
         StripeService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     update_customer_mock = mocker.patch(
         'src.payment.stripe.service.StripeService.'
-        'update_customer'
+        'update_customer',
     )
     send_user_updated_mock = mocker.patch(
         'src.notifications.tasks.'
-        'send_user_updated_notification.delay'
+        'send_user_updated_notification.delay',
     )
     api_client.token_authenticate(user)
 
@@ -786,40 +786,40 @@ def test_update__tenant_account__not_update_customer(
             'email': user.email,
             'photo': user.photo,
             'is_admin': user.is_admin,
-            'is_account_owner': user.is_account_owner
-        }
+            'is_account_owner': user.is_account_owner,
+        },
     )
 
 
 def test_update__stripe_exception__validation_error(
     mocker,
-    api_client
+    api_client,
 ):
 
     # arrange
     mocker.patch(
         'src.accounts.views.user.AnalyticService'
-        '.users_digest'
+        '.users_digest',
     )
     mocker.patch(
         'src.accounts.views.user'
-        '.UserViewSet.identify'
+        '.UserViewSet.identify',
     )
     user = create_test_user(is_account_owner=True)
     stripe_service_init_mock = mocker.patch.object(
         StripeService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     message = 'Some error'
     update_customer_mock = mocker.patch(
         'src.payment.stripe.service.StripeService.'
         'update_customer',
-        side_effect=StripeServiceException(message)
+        side_effect=StripeServiceException(message),
     )
     send_user_updated_mock = mocker.patch(
         'src.notifications.tasks.'
-        'send_user_updated_notification.delay'
+        'send_user_updated_notification.delay',
     )
     api_client.token_authenticate(user)
 
@@ -836,7 +836,7 @@ def test_update__stripe_exception__validation_error(
     stripe_service_init_mock.assert_called_once_with(
         user=user,
         auth_type=AuthTokenType.USER,
-        is_superuser=False
+        is_superuser=False,
     )
     update_customer_mock.assert_called_once()
     send_user_updated_mock.assert_not_called()
@@ -844,17 +844,17 @@ def test_update__stripe_exception__validation_error(
 
 def test_update__is_digest_subscriber__anaytics_call(
     mocker,
-    api_client
+    api_client,
 ):
 
     # arrange
     analytics_mock = mocker.patch(
         'src.accounts.views.user.AnalyticService'
-        '.users_digest'
+        '.users_digest',
     )
     identify_mock = mocker.patch(
         'src.accounts.views.user'
-        '.UserViewSet.identify'
+        '.UserViewSet.identify',
     )
     user = create_test_user()
     data = {
@@ -863,15 +863,15 @@ def test_update__is_digest_subscriber__anaytics_call(
     mocker.patch.object(
         StripeService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     mocker.patch(
         'src.payment.stripe.service.StripeService.'
-        'update_customer'
+        'update_customer',
     )
     send_user_updated_mock = mocker.patch(
         'src.notifications.tasks.'
-        'send_user_updated_notification.delay'
+        'send_user_updated_notification.delay',
     )
     api_client.token_authenticate(user)
 
@@ -892,7 +892,7 @@ def test_update__is_digest_subscriber__anaytics_call(
     analytics_mock.assert_called_once_with(
         user=user,
         auth_type=AuthTokenType.USER,
-        is_superuser=False
+        is_superuser=False,
     )
     send_user_updated_mock.assert_called_once_with(
         logging=user.account.log_api_requests,
@@ -904,8 +904,8 @@ def test_update__is_digest_subscriber__anaytics_call(
             'email': user.email,
             'photo': user.photo,
             'is_admin': user.is_admin,
-            'is_account_owner': user.is_account_owner
-        }
+            'is_account_owner': user.is_account_owner,
+        },
     )
 
 
@@ -913,30 +913,30 @@ def test_update__is_digest_subscriber__anaytics_call(
 def test_update__euro_languages__ok(
     mocker,
     language,
-    api_client
+    api_client,
 ):
 
     # arrange
     mocker.patch(
         'src.accounts.views.user.AnalyticService'
-        '.users_digest'
+        '.users_digest',
     )
     mocker.patch(
         'src.accounts.views.user'
-        '.UserViewSet.identify'
+        '.UserViewSet.identify',
     )
     user = create_test_user()
     mocker.patch.object(
         StripeService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     mocker.patch(
         'src.payment.stripe.service.StripeService.'
-        'update_customer'
+        'update_customer',
     )
     settings_mock = mocker.patch(
-        'src.accounts.serializers.user.settings'
+        'src.accounts.serializers.user.settings',
     )
     settings_mock.LANGUAGE_CODE = Language.en
 
@@ -945,7 +945,7 @@ def test_update__euro_languages__ok(
     }
     send_user_updated_mock = mocker.patch(
         'src.notifications.tasks.'
-        'send_user_updated_notification.delay'
+        'send_user_updated_notification.delay',
     )
     api_client.token_authenticate(user)
 
@@ -970,8 +970,8 @@ def test_update__euro_languages__ok(
             'email': user.email,
             'photo': user.photo,
             'is_admin': user.is_admin,
-            'is_account_owner': user.is_account_owner
-        }
+            'is_account_owner': user.is_account_owner,
+        },
     )
 
 
@@ -979,20 +979,20 @@ def test_update__euro_languages__ok(
 def test_update__system_euro_language_not_allow_ru__validation_error(
     mocker,
     language,
-    api_client
+    api_client,
 ):
 
     # arrange
     analytics_mock = mocker.patch(
         'src.accounts.views.user.AnalyticService'
-        '.users_digest'
+        '.users_digest',
     )
     identify_mock = mocker.patch(
         'src.accounts.views.user'
-        '.UserViewSet.identify'
+        '.UserViewSet.identify',
     )
     settings_mock = mocker.patch(
-        'src.accounts.serializers.user.settings'
+        'src.accounts.serializers.user.settings',
     )
     settings_mock.LANGUAGE_CODE = language
 
@@ -1000,15 +1000,15 @@ def test_update__system_euro_language_not_allow_ru__validation_error(
     stripe_service_init_mock = mocker.patch.object(
         StripeService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     update_customer_mock = mocker.patch(
         'src.payment.stripe.service.StripeService.'
-        'update_customer'
+        'update_customer',
     )
     send_user_updated_mock = mocker.patch(
         'src.notifications.tasks.'
-        'send_user_updated_notification.delay'
+        'send_user_updated_notification.delay',
     )
     data = {
         'language': Language.ru,
@@ -1039,34 +1039,34 @@ def test_update__system_euro_language_not_allow_ru__validation_error(
 def test_update__system_ru_language_allow_all__ok(
     mocker,
     language,
-    api_client
+    api_client,
 ):
 
     # arrange
     mocker.patch(
         'src.accounts.views.user.AnalyticService'
-        '.users_digest'
+        '.users_digest',
     )
     mocker.patch(
         'src.accounts.views.user'
-        '.UserViewSet.identify'
+        '.UserViewSet.identify',
     )
     user = create_test_user()
     mocker.patch.object(
         StripeService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     mocker.patch(
         'src.payment.stripe.service.StripeService.'
-        'update_customer'
+        'update_customer',
     )
     settings_mock = mocker.patch(
-        'src.accounts.serializers.user.settings'
+        'src.accounts.serializers.user.settings',
     )
     send_user_updated_mock = mocker.patch(
         'src.notifications.tasks.'
-        'send_user_updated_notification.delay'
+        'send_user_updated_notification.delay',
     )
     settings_mock.LANGUAGE_CODE = Language.ru
 
@@ -1096,39 +1096,39 @@ def test_update__system_ru_language_allow_all__ok(
             'email': user.email,
             'photo': user.photo,
             'is_admin': user.is_admin,
-            'is_account_owner': user.is_account_owner
-        }
+            'is_account_owner': user.is_account_owner,
+        },
     )
 
 
 def test_update__unsupported_language__validation_error(
     mocker,
-    api_client
+    api_client,
 ):
 
     # arrange
     analytics_mock = mocker.patch(
         'src.accounts.views.user.AnalyticService'
-        '.users_digest'
+        '.users_digest',
     )
     identify_mock = mocker.patch(
         'src.accounts.views.user'
-        '.UserViewSet.identify'
+        '.UserViewSet.identify',
     )
     send_user_updated_mock = mocker.patch(
         'src.notifications.tasks.'
-        'send_user_updated_notification.delay'
+        'send_user_updated_notification.delay',
     )
     language = 'po'
     user = create_test_user()
     stripe_service_init_mock = mocker.patch.object(
         StripeService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     update_customer_mock = mocker.patch(
         'src.payment.stripe.service.StripeService.'
-        'update_customer'
+        'update_customer',
     )
     api_client.token_authenticate(user)
 
@@ -1154,35 +1154,35 @@ def test_update__unsupported_language__validation_error(
 
 def test_update__timezone__ok(
     mocker,
-    api_client
+    api_client,
 ):
 
     # arrange
     mocker.patch(
         'src.accounts.views.user.AnalyticService'
-        '.users_digest'
+        '.users_digest',
     )
     mocker.patch(
         'src.accounts.views.user'
-        '.UserViewSet.identify'
+        '.UserViewSet.identify',
     )
     user = create_test_user()
     mocker.patch.object(
         StripeService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     mocker.patch(
         'src.payment.stripe.service.StripeService.'
-        'update_customer'
+        'update_customer',
     )
     send_user_updated_mock = mocker.patch(
         'src.notifications.tasks.'
-        'send_user_updated_notification.delay'
+        'send_user_updated_notification.delay',
     )
     tz = 'America/Anchorage'
     data = {
-        'timezone': tz
+        'timezone': tz,
     }
     api_client.token_authenticate(user)
 
@@ -1207,42 +1207,42 @@ def test_update__timezone__ok(
             'email': user.email,
             'photo': user.photo,
             'is_admin': user.is_admin,
-            'is_account_owner': user.is_account_owner
-        }
+            'is_account_owner': user.is_account_owner,
+        },
     )
 
 
 def test_update__invalid_timezone__validation_error(
     mocker,
-    api_client
+    api_client,
 ):
 
     # arrange
     analytics_mock = mocker.patch(
         'src.accounts.views.user.AnalyticService'
-        '.users_digest'
+        '.users_digest',
     )
     identify_mock = mocker.patch(
         'src.accounts.views.user'
-        '.UserViewSet.identify'
+        '.UserViewSet.identify',
     )
     user = create_test_user()
     stripe_service_init_mock = mocker.patch.object(
         StripeService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     update_customer_mock = mocker.patch(
         'src.payment.stripe.service.StripeService.'
-        'update_customer'
+        'update_customer',
     )
     send_user_updated_mock = mocker.patch(
         'src.notifications.tasks.'
-        'send_user_updated_notification.delay'
+        'send_user_updated_notification.delay',
     )
     tz = 'What/Ever'
     data = {
-        'timezone': tz
+        'timezone': tz,
     }
     api_client.token_authenticate(user)
 
@@ -1269,30 +1269,30 @@ def test_update__not_authenticated__unauthorized(mocker, api_client):
     # arrange
     analytics_mock = mocker.patch(
         'src.accounts.views.user.AnalyticService.'
-        'users_digest'
+        'users_digest',
     )
     identify_mock = mocker.patch(
         'src.accounts.views.user'
-        '.UserViewSet.identify'
+        '.UserViewSet.identify',
     )
     stripe_service_init_mock = mocker.patch.object(
         StripeService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     update_customer_mock = mocker.patch(
         'src.payment.stripe.service.StripeService.'
-        'update_customer'
+        'update_customer',
     )
     send_user_updated_mock = mocker.patch(
         'src.notifications.tasks.'
-        'send_user_updated_notification.delay'
+        'send_user_updated_notification.delay',
     )
 
     # act
     response = api_client.put(
         path='/accounts/user',
-        data={'phone': '79999999990'}
+        data={'phone': '79999999990'},
     )
 
     # assert
@@ -1309,11 +1309,11 @@ def test_update__guest__permission_denied(mocker, api_client):
     # arrange
     analytics_mock = mocker.patch(
         'src.accounts.views.user.AnalyticService.'
-        'users_digest'
+        'users_digest',
     )
     identify_mock = mocker.patch(
         'src.accounts.views.user'
-        '.UserViewSet.identify'
+        '.UserViewSet.identify',
     )
     account = create_test_account()
     owner = create_test_user(is_account_owner=True, account=account)
@@ -1322,32 +1322,32 @@ def test_update__guest__permission_denied(mocker, api_client):
     task = workflow.tasks.first()
     TaskPerformer.objects.create(
         task_id=task.id,
-        user_id=guest.id
+        user_id=guest.id,
     )
     stripe_service_init_mock = mocker.patch.object(
         StripeService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     update_customer_mock = mocker.patch(
         'src.payment.stripe.service.StripeService.'
-        'update_customer'
+        'update_customer',
     )
     send_user_updated_mock = mocker.patch(
         'src.notifications.tasks.'
-        'send_user_updated_notification.delay'
+        'send_user_updated_notification.delay',
     )
     str_token = GuestJWTAuthService.get_str_token(
         task_id=task.id,
         user_id=guest.id,
-        account_id=account.id
+        account_id=account.id,
     )
 
     # act
     response = api_client.put(
         path='/accounts/user',
         data={'date_fdw': UserFirstDayWeek.THURSDAY},
-        **{'X-Guest-Authorization': str_token}
+        **{'X-Guest-Authorization': str_token},
     )
 
     # assert
@@ -1361,35 +1361,35 @@ def test_update__guest__permission_denied(mocker, api_client):
 
 def test_update__expired_subscription__permission_denied(
     mocker,
-    api_client
+    api_client,
 ):
 
     # arrange
     analytics_mock = mocker.patch(
         'src.accounts.views.user.AnalyticService.'
-        'users_digest'
+        'users_digest',
     )
     identify_mock = mocker.patch(
         'src.accounts.views.user'
-        '.UserViewSet.identify'
+        '.UserViewSet.identify',
     )
     account = create_test_account(
         plan=BillingPlanType.UNLIMITED,
-        plan_expiration=timezone.now() - timedelta(days=1)
+        plan_expiration=timezone.now() - timedelta(days=1),
     )
     user = create_test_user(is_account_owner=True, account=account)
     stripe_service_init_mock = mocker.patch.object(
         StripeService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     update_customer_mock = mocker.patch(
         'src.payment.stripe.service.StripeService.'
-        'update_customer'
+        'update_customer',
     )
     send_user_updated_mock = mocker.patch(
         'src.notifications.tasks.'
-        'send_user_updated_notification.delay'
+        'send_user_updated_notification.delay',
     )
     api_client.token_authenticate(user)
 

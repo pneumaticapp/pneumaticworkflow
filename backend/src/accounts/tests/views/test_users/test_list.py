@@ -22,7 +22,7 @@ from src.processes.tests.fixtures import (
 )
 from src.authentication.services import GuestJWTAuthService
 from src.accounts.services import (
-    UserInviteService
+    UserInviteService,
 )
 from src.accounts.services.user import UserService
 from src.generics.messages import MSG_GE_0001
@@ -39,12 +39,12 @@ def test_list__ok(api_client):
     group_1 = create_test_group(
         user.account,
         name='group_1',
-        users=[user]
+        users=[user],
     )
     group_2 = create_test_group(
         user.account,
         name='group_2',
-        users=[user]
+        users=[user],
     )
     api_client.token_authenticate(user)
 
@@ -102,7 +102,7 @@ def test_list__different_types__ok(api_client):
         account=account,
         is_account_owner=True,
         email='owner@test.test',
-        last_name='z'
+        last_name='z',
     )
     user = create_test_user(
         account=account,
@@ -115,7 +115,7 @@ def test_list__different_types__ok(api_client):
         account=account,
         is_account_owner=False,
         email='test@test.test',
-        last_name='p'
+        last_name='p',
     )
     UserService.deactivate(inactive_user)
     guest = create_test_guest(account=account)
@@ -137,24 +137,24 @@ def test_list__filter_group__ok(api_client):
 
     # arrange
     account = create_test_account()
-    user = create_test_user(account=account,)
+    user = create_test_user(account=account)
     another_user = create_test_user(
         account=account,
-        email='test@test.test'
+        email='test@test.test',
     )
     create_test_user(
         account=account,
-        email='additional@test.test'
+        email='additional@test.test',
     )
     group = create_test_group(
         account,
-        users=[user, another_user]
+        users=[user, another_user],
     )
     api_client.token_authenticate(user)
 
     # act
     response = api_client.get(
-        f'/accounts/users?groups={group.id}'
+        f'/accounts/users?groups={group.id}',
     )
 
     # assert
@@ -172,26 +172,26 @@ def test_list__group_multiple_values__ok(api_client):
     another_user = create_test_user(
         account=account,
         first_name='2',
-        email='test@test.test'
+        email='test@test.test',
     )
     create_test_user(
         account=account,
-        email='additional@test.test'
+        email='additional@test.test',
     )
     group_1 = create_test_group(
         account,
         name='test',
-        users=[another_user]
+        users=[another_user],
     )
     group_2 = create_test_group(
         account,
-        users=[user]
+        users=[user],
     )
     api_client.token_authenticate(user)
 
     # act
     response = api_client.get(
-        f'/accounts/users?groups={group_1.id},{group_2.id}'
+        f'/accounts/users?groups={group_1.id},{group_2.id}',
     )
 
     # assert
@@ -208,7 +208,7 @@ def test_list__status_inactive__ok(api_client):
     user = create_test_user(account=account)
     inactive_user = create_test_user(
         account=account,
-        email='test@test.test'
+        email='test@test.test',
     )
 
     UserService.deactivate(inactive_user)
@@ -234,7 +234,7 @@ def test_list__status_active__ok(api_client):
     user = create_test_user(account=account)
     inactive_user = create_test_user(
         account=account,
-        email='test@test.test'
+        email='test@test.test',
     )
     UserService.deactivate(inactive_user)
     create_invited_user(user)
@@ -259,7 +259,7 @@ def test_list__status_invited__ok(api_client):
     user = create_test_user(account=account)
     inactive_user = create_test_user(
         account=account,
-        email='test@test.test'
+        email='test@test.test',
     )
     UserService.deactivate(inactive_user)
     invited_user = create_invited_user(user)
@@ -284,7 +284,7 @@ def test_list__status_multiple_values__ok(api_client):
     user = create_test_user(account=account, last_name='z')
     inactive_user = create_test_user(
         account=account,
-        email='test@test.test'
+        email='test@test.test',
     )
     UserService.deactivate(inactive_user)
     invited_user = create_invited_user(user, last_name='x')
@@ -292,7 +292,7 @@ def test_list__status_multiple_values__ok(api_client):
 
     # act
     response = api_client.get(
-        f'/accounts/users?status={UserStatus.INVITED},{UserStatus.ACTIVE}'
+        f'/accounts/users?status={UserStatus.INVITED},{UserStatus.ACTIVE}',
     )
 
     # assert
@@ -314,8 +314,8 @@ def test_list__type_user__ok(api_client):
     response = api_client.get(
         '/accounts/users',
         data={
-            'type': UserType.USER
-        }
+            'type': UserType.USER,
+        },
     )
 
     # assert
@@ -344,8 +344,8 @@ def test_list__type_guest__ok(api_client):
     response = api_client.get(
         '/accounts/users',
         data={
-            'type': UserType.GUEST
-        }
+            'type': UserType.GUEST,
+        },
     )
 
     # assert
@@ -362,7 +362,7 @@ def test_list__type_multiple_values__ok(api_client):
         account=account,
         is_account_owner=True,
         email='owner@test.test',
-        last_name='owner'
+        last_name='owner',
     )
     user = create_test_user(
         account=account,
@@ -375,7 +375,7 @@ def test_list__type_multiple_values__ok(api_client):
     # act
     response = api_client.get(
         f'/accounts/users?type={UserType.GUEST}, {UserType.USER}'
-        f'?ordering=last_name'
+        f'?ordering=last_name',
     )
 
     # assert
@@ -414,7 +414,7 @@ def test_list__ordering_by_status__ok(api_client):
     # act
     response = api_client.get(
         path='/accounts/users',
-        data={'ordering': 'status'}
+        data={'ordering': 'status'},
     )
 
     # assert
@@ -434,7 +434,7 @@ def test_list__ordering_by_status_desc_ok(api_client):
     # act
     response = api_client.get(
         path='/accounts/users',
-        data={'ordering': '-status'}
+        data={'ordering': '-status'},
     )
 
     # assert
@@ -453,7 +453,7 @@ def test_list__ordering_by_last_name__ok(api_client):
     # act
     response = api_client.get(
         path='/accounts/users',
-        data={'ordering': 'last_name'}
+        data={'ordering': 'last_name'},
     )
 
     # assert
@@ -472,7 +472,7 @@ def test_list__ordering_by_last_name_desc__ok(api_client):
     # act
     response = api_client.get(
         path='/accounts/users',
-        data={'ordering': '-last_name'}
+        data={'ordering': '-last_name'},
     )
 
     # assert
@@ -491,7 +491,7 @@ def test_list__ordering_multiple_values__ok(api_client):
     user2 = create_test_user(
         account=account,
         last_name='b',
-        email='user2@test.test'
+        email='user2@test.test',
     )
     user2.status = UserStatus.ACTIVE
     user2.save()
@@ -500,7 +500,7 @@ def test_list__ordering_multiple_values__ok(api_client):
 
     # act
     response = api_client.get(
-        path='/accounts/users?ordering=last_name,status'
+        path='/accounts/users?ordering=last_name,status',
     )
 
     # assert
@@ -515,24 +515,24 @@ def test_list__ordering_by_multiple_values_2__ok(api_client):
     # arrange
     user = create_test_user(
         first_name='A',
-        last_name='C'
+        last_name='C',
     )
     user_2 = create_test_user(
         account=user.account,
         first_name='A',
         last_name='B',
-        email='t@t.t'
+        email='t@t.t',
     )
     invited = create_invited_user(
         user=user,
         first_name='B',
-        last_name='A'
+        last_name='A',
     )
     api_client.token_authenticate(user)
 
     # act
     response = api_client.get(
-        path='/accounts/users?ordering=first_name,last_name'
+        path='/accounts/users?ordering=first_name,last_name',
     )
 
     # assert
@@ -561,8 +561,8 @@ def test_list__invited_from_current_acc__correct_count(api_client):
     response = api_client.get(
         path='/accounts/users',
         data={
-            'ordering': 'first_name'
-        }
+            'ordering': 'first_name',
+        },
 
     )
 
@@ -587,7 +587,7 @@ def test_list__inactive_users_from_another_acc_with_invite__ok(
     inactive_invited_user = create_invited_user(
         user=account_owner,
         email='invited@pneumatic.app',
-        last_name='x'
+        last_name='x',
     )
     UserService.deactivate(inactive_invited_user)
     another_account_owner = create_test_user(
@@ -596,7 +596,7 @@ def test_list__inactive_users_from_another_acc_with_invite__ok(
     another_account_inactive_user = create_invited_user(
         another_account_owner,
         email='inactive@pneumatic.app',
-        last_name='y'
+        last_name='y',
     )
     UserService.deactivate(another_account_inactive_user)
     UserInvite.objects.create(
@@ -608,7 +608,7 @@ def test_list__inactive_users_from_another_acc_with_invite__ok(
 
     mocker.patch(
         'src.services.email.EmailService.'
-        'send_user_deactivated_email'
+        'send_user_deactivated_email',
     )
     api_client.token_authenticate(account_owner)
 
@@ -633,25 +633,25 @@ def test_list__guest__ok(api_client):
         account=account,
         email='owner@test.test',
         is_account_owner=True,
-        last_name='a'
+        last_name='a',
     )
     guest = create_test_guest(account=account, email='b@test.test')
     workflow = create_test_workflow(account_owner, tasks_count=1)
     task = workflow.tasks.first()
     TaskPerformer.objects.create(
         task_id=task.id,
-        user_id=guest.id
+        user_id=guest.id,
     )
     str_token = GuestJWTAuthService.get_str_token(
         task_id=task.id,
         user_id=guest.id,
-        account_id=account.id
+        account_id=account.id,
     )
 
     # act
     response = api_client.get(
         path='/accounts/users',
-        **{'X-Guest-Authorization': str_token}
+        **{'X-Guest-Authorization': str_token},
     )
 
     assert response.status_code == 200
@@ -683,7 +683,7 @@ def test_list__another_acc_users__not_found(api_client):
     another_user = create_test_user(
         account=another_account,
         is_account_owner=False,
-        email='another@user.test'
+        email='another@user.test',
     )
 
     create_invited_user(another_user)
@@ -707,7 +707,7 @@ def test_list__another_acc_users__not_found(api_client):
 @pytest.mark.parametrize('is_account_owner', (True, False))
 def test_list__remove_transferred__new_account_ok(
     api_client,
-    is_account_owner
+    is_account_owner,
 ):
 
     # arrange
@@ -716,21 +716,21 @@ def test_list__remove_transferred__new_account_ok(
     user_to_transfer = create_test_user(
         account=account_1,
         email='user_to_transfer@test.test',
-        is_account_owner=is_account_owner
+        is_account_owner=is_account_owner,
     )
     account_2_owner = create_test_user(
         account=account_2,
         is_account_owner=True,
-        email='owner@test.test'
+        email='owner@test.test',
     )
     current_url = 'some_url'
     service = UserInviteService(
         request_user=account_2_owner,
-        current_url=current_url
+        current_url=current_url,
     )
     service.invite_user(
         email=user_to_transfer.email,
-        invited_from=SourceType.EMAIL
+        invited_from=SourceType.EMAIL,
     )
     account_2_new_user = account_2.users.get(email=user_to_transfer.email)
     UserService.deactivate(user_to_transfer)
@@ -751,38 +751,38 @@ def test_list__remove_transferred__new_account_ok(
 @pytest.mark.parametrize('is_account_owner', (True, False))
 def test_list__remove_transferred__prev_account_ok(
     api_client,
-    is_account_owner
+    is_account_owner,
 ):
 
     # arrange
     account_1 = create_test_account(name='transfer from')
     account_2 = create_test_account(
         name='transfer to',
-        plan=BillingPlanType.PREMIUM
+        plan=BillingPlanType.PREMIUM,
     )
     account_1_owner = create_test_user(
         account=account_1,
         is_account_owner=True,
-        email='owner1@test.test'
+        email='owner1@test.test',
     )
     user_to_transfer = create_test_user(
         account=account_1,
         email='user_to_transfer@test.test',
-        is_account_owner=is_account_owner
+        is_account_owner=is_account_owner,
     )
     account_2_owner = create_test_user(
         account=account_2,
         is_account_owner=True,
-        email='owner@test.test'
+        email='owner@test.test',
     )
     current_url = 'some_url'
     service = UserInviteService(
         request_user=account_2_owner,
-        current_url=current_url
+        current_url=current_url,
     )
     service.invite_user(
         email=user_to_transfer.email,
-        invited_from=SourceType.EMAIL
+        invited_from=SourceType.EMAIL,
     )
     UserService.deactivate(user_to_transfer)
     api_client.token_authenticate(account_1_owner)

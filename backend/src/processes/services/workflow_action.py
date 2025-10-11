@@ -44,7 +44,7 @@ from src.notifications.tasks import (
     send_resumed_workflow_notification,
 )
 from src.processes.services.tasks.field import (
-    TaskFieldService
+    TaskFieldService,
 )
 from src.processes.messages import workflow as messages
 from src.services.markdown import MarkdownService
@@ -60,12 +60,12 @@ class WorkflowActionService:
         workflow: Workflow,
         is_superuser: bool = False,
         auth_type: AuthTokenType.LITERALS = AuthTokenType.USER,
-        sync: bool = False
+        sync: bool = False,
     ):
         self.workflow = workflow
         if user is None:
             raise Exception(
-                'Specify user before initialization WorkflowActionService'
+                'Specify user before initialization WorkflowActionService',
             )
         self.user = user
         self.account = user.account
@@ -106,8 +106,8 @@ class WorkflowActionService:
                         update_fields=[
                             'duration',
                             'start_date',
-                            'directly_status'
-                        ]
+                            'directly_status',
+                        ],
                     )
                 else:
                     delay = Delay.objects.create(
@@ -115,14 +115,14 @@ class WorkflowActionService:
                         duration=duration,
                         start_date=now,
                         directly_status=DirectlyStatus.CREATED,
-                        workflow=self.workflow
+                        workflow=self.workflow,
                     )
                 recipients = list(
                     TaskPerformer.objects
                     .filter(task_id=task.id)
                     .exclude_directly_deleted()
                     .not_completed()
-                    .get_user_emails_and_ids_set()
+                    .get_user_emails_and_ids_set(),
                 )
                 # notifications about event
                 for (user_id, user_email) in recipients:
@@ -151,7 +151,7 @@ class WorkflowActionService:
                 workflow=self.workflow,
                 is_superuser=self.is_superuser,
                 auth_type=self.auth_type,
-                duration=duration
+                duration=duration,
             )
 
     def resume_task(self, task: Task):
@@ -179,7 +179,7 @@ class WorkflowActionService:
             self.workflow.save(update_fields=['status'])
             WorkflowEventService.force_resume_workflow_event(
                 workflow=self.workflow,
-                user=self.user
+                user=self.user,
             )
             for task in self.workflow.tasks.delayed():
                 send_resumed_workflow_notification.delay(
@@ -195,10 +195,10 @@ class WorkflowActionService:
 
         for task in self.workflow.tasks.active():
             recipients = list(
-                TaskPerformer.objects.filter(task_id=task.id,)
+                TaskPerformer.objects.filter(task_id=task.id)
                 .exclude_directly_deleted()
                 .not_completed()
-                .get_user_emails_and_ids_set()
+                .get_user_emails_and_ids_set(),
             )
             send_removed_task_notification.delay(
                 task_id=task.id,
@@ -208,13 +208,13 @@ class WorkflowActionService:
             )
         for task_id in self.workflow.tasks.only_ids():
             GuestJWTAuthService.deactivate_task_guest_cache(
-                task_id=task_id
+                task_id=task_id,
             )
         AnalyticService.workflows_terminated(
             user=self.user,
             workflow=self.workflow,
             is_superuser=self.is_superuser,
-            auth_type=self.auth_type
+            auth_type=self.auth_type,
         )
         self.workflow.delete()
 
@@ -230,7 +230,7 @@ class WorkflowActionService:
         tasks_ids = self.workflow.tasks.only_ids()
         for task_id in tasks_ids:
             GuestJWTAuthService.deactivate_task_guest_cache(
-                task_id=task_id
+                task_id=task_id,
             )
 
         update_fields = ['status', 'date_completed']
@@ -245,7 +245,7 @@ class WorkflowActionService:
             send_workflow_completed_webhook.delay(
                 user_id=self.user.id,
                 account_id=self.account.id,
-                payload=self.workflow.webhook_payload()
+                payload=self.workflow.webhook_payload(),
             )
 
     def force_complete_workflow(self):
@@ -260,7 +260,7 @@ class WorkflowActionService:
                 TaskPerformer.objects.filter(task=task)
                 .exclude_directly_deleted()
                 .not_completed()
-                .get_user_emails_and_ids_set()
+                .get_user_emails_and_ids_set(),
             )
             send_removed_task_notification.delay(
                 task_id=task.id,
@@ -273,7 +273,7 @@ class WorkflowActionService:
         task: Task,
         by_condition: bool = False,
         by_complete_task: bool = False,
-        **kwargs
+        **kwargs,
     ):
         if by_condition:
             self._complete_workflow()
@@ -287,13 +287,13 @@ class WorkflowActionService:
             WorkflowEventService.workflow_complete_event(
                 workflow=self.workflow,
                 task=task,
-                user=self.user
+                user=self.user,
             )
             AnalyticService.workflow_completed(
                 user=self.user,
                 is_superuser=self.is_superuser,
                 auth_type=self.auth_type,
-                workflow=self.workflow
+                workflow=self.workflow,
             )
         else:
             self.force_complete_workflow()
@@ -302,16 +302,16 @@ class WorkflowActionService:
         self,
         task: Task,
         is_returned: bool = False,
-        **kwargs
+        **kwargs,
     ):
         task_service = TaskService(
             instance=task,
-            user=self.user or self.workflow.account.get_owner()
+            user=self.user or self.workflow.account.get_owner(),
         )
         fields_values = self.workflow.get_fields_markdown_values(
             tasks_filter_kwargs={'task__status__in': (
-                TaskStatus.COMPLETED, TaskStatus.SKIPPED
-            )}
+                TaskStatus.COMPLETED, TaskStatus.SKIPPED,
+            )},
         )
         task_service.insert_fields_values(fields_values=fields_values)
 
@@ -327,7 +327,7 @@ class WorkflowActionService:
 
     def _execute_skip_conditions(
         self,
-        task: Task
+        task: Task,
     ) -> Optional[Callable]:
 
         skip_task_condition_passed = False
@@ -347,7 +347,7 @@ class WorkflowActionService:
 
     def execute_conditions(
         self,
-        task: Task
+        task: Task,
     ) -> Tuple[Optional[Callable], bool]:
 
         """ Return pair:
@@ -402,23 +402,23 @@ class WorkflowActionService:
 
         WorkflowEventService.workflow_run_event(
             workflow=self.workflow,
-            user=self.user
+            user=self.user,
         )
         if self.workflow.ancestor_task:
             WorkflowEventService.sub_workflow_run_event(
                 workflow=self.workflow.ancestor_task.workflow,
                 sub_workflow=self.workflow,
-                user=self.user
+                user=self.user,
             )
         self._start_next_tasks()
         self.check_delay_workflow()
         if WebHook.objects.on_account(
-            self.account.id
+            self.account.id,
         ).wf_started().exists():
             send_workflow_started_webhook.delay(
                 user_id=self.user.id,
                 account_id=self.account.id,
-                payload=self.workflow.webhook_payload()
+                payload=self.workflow.webhook_payload(),
             )
 
     def continue_workflow(self, task: Task, is_returned: bool = False):
@@ -447,14 +447,14 @@ class WorkflowActionService:
             delay.save(update_fields=['end_date'])
         task_service = TaskService(
             instance=task,
-            user=self.user
+            user=self.user,
         )
         task_service.partial_update(
             is_urgent=self.workflow.is_urgent,
             date_completed=None,
             status=TaskStatus.ACTIVE,
             date_started=timezone.now(),
-            force_save=True
+            force_save=True,
         )
         task_service.set_due_date_from_template()
         (
@@ -492,7 +492,7 @@ class WorkflowActionService:
                         )
                     else:
                         recipients.append(
-                            (el.user_id, el.email, el.is_subscribed)
+                            (el.user_id, el.email, el.is_subscribed),
                         )
             else:
                 recipients = [
@@ -522,7 +522,7 @@ class WorkflowActionService:
                         task.due_date.timestamp() if task.due_date else None
                     ),
                     logo_lg=task.account.logo_lg,
-                    is_returned=is_returned
+                    is_returned=is_returned,
                 )
             if ws_recipients:
                 send_new_task_websocket.delay(
@@ -530,14 +530,14 @@ class WorkflowActionService:
                     task_id=task.id,
                     recipients=ws_recipients,
                     account_id=self.account.id,
-                    task_data=task_data or task.get_data_for_list()
+                    task_data=task_data or task.get_data_for_list(),
                 )
 
         for task_id in self.workflow.tasks.filter(
-            parents__contains=[task.api_name]
+            parents__contains=[task.api_name],
         ).only_ids():
             GuestJWTAuthService.delete_task_guest_cache(
-                task_id=task_id
+                task_id=task_id,
             )
         self._start_next_tasks()
 
@@ -548,7 +548,7 @@ class WorkflowActionService:
 
         for task in Task.objects.filter(
             api_name__in=child_task.parents,
-            workflow_id=self.workflow.id
+            workflow_id=self.workflow.id,
         ):
             action_method, _ = self.execute_conditions(task)
             if action_method:
@@ -559,7 +559,7 @@ class WorkflowActionService:
 
     def _start_next_tasks(
         self,
-        parent_task: Optional[Task] = None
+        parent_task: Optional[Task] = None,
     ):
         by_complete_task = parent_task and parent_task.is_completed
         if self.workflow.tasks.pending().exists():
@@ -611,30 +611,30 @@ class WorkflowActionService:
         WorkflowEventService.task_delay_event(
             user=self.user,
             task=task,
-            delay=delay
+            delay=delay,
         )
 
     def start_task(
         self,
         task: Task,
         is_returned: bool = False,
-        **kwargs
+        **kwargs,
     ):
 
         task_service = TaskService(
             instance=task,
-            user=self.user or self.workflow.account.get_owner()
+            user=self.user or self.workflow.account.get_owner(),
         )
         fields_values = self.workflow.get_fields_markdown_values(
             tasks_filter_kwargs={'task__status__in': (
-                TaskStatus.COMPLETED, TaskStatus.SKIPPED
-            )}
+                TaskStatus.COMPLETED, TaskStatus.SKIPPED,
+            )},
         )
         task_service.insert_fields_values(fields_values=fields_values)
         task.update_performers(restore_performers=True)
         task_performers_exists = (
             TaskPerformer.objects.exclude_directly_deleted().by_task(
-                task.id
+                task.id,
             ).exists()
         )
         if not task_performers_exists:
@@ -665,13 +665,13 @@ class WorkflowActionService:
         update_fields = {
             'status': TaskStatus.COMPLETED,
             'date_completed': current_date,
-            'date_started': task.date_started or current_date
+            'date_started': task.date_started or current_date,
         }
         task_service = TaskService(
             instance=task,
             is_superuser=self.is_superuser,
             auth_type=self.auth_type,
-            user=self.user
+            user=self.user,
         )
         task_service.partial_update(**update_fields, force_save=True)
         # Not include guests
@@ -717,7 +717,7 @@ class WorkflowActionService:
             .not_completed()
             .update(
                 date_completed=timezone.now(),
-                is_completed=True
+                is_completed=True,
             )
         )
         if by_user:
@@ -726,13 +726,13 @@ class WorkflowActionService:
                 is_superuser=self.is_superuser,
                 auth_type=self.auth_type,
                 workflow=self.workflow,
-                task=task
+                task=task,
             )
             # Need run after save completed task (and performers)
             # and before start next tasks
             WorkflowEventService.task_complete_event(
                 task=task,
-                user=self.user
+                user=self.user,
             )
         self._start_next_tasks(parent_task=task)
         if (
@@ -743,7 +743,7 @@ class WorkflowActionService:
             send_task_completed_webhook.delay(
                 user_id=self.user.id,
                 account_id=self.account.id,
-                payload=task.webhook_payload()
+                payload=task.webhook_payload(),
             )
 
     def _task_can_be_completed(self, task: Task) -> bool:
@@ -759,11 +759,11 @@ class WorkflowActionService:
             completed_performers = task_performers.filter(
                 Q(is_completed=True)
                 | Q(is_completed=False, user_id=self.user.id)
-                | Q(is_completed=False, group__users=self.user.id)
+                | Q(is_completed=False, group__users=self.user.id),
             ).exists()
             incompleted_performers = task_performers.not_completed().exclude(
                 Q(user_id=self.user.id)
-                | Q(is_completed=False, group__users=self.user.id)
+                | Q(is_completed=False, group__users=self.user.id),
             ).exists()
             by_all = task.require_completion_by_all
             return (
@@ -806,11 +806,11 @@ class WorkflowActionService:
             for task_field in task.output.all():
                 service = TaskFieldService(
                     user=self.user,
-                    instance=task_field
+                    instance=task_field,
                 )
                 service.partial_update(
                     value=fields_values.get(task_field.api_name),
-                    force_save=True
+                    force_save=True,
                 )
             if task_performer:
                 if self._task_can_be_completed(task):
@@ -822,14 +822,14 @@ class WorkflowActionService:
                     task_performer.date_completed = timezone.now()
                     task_performer.is_completed = True
                     task_performer.save(
-                        update_fields=('date_completed', 'is_completed')
+                        update_fields=('date_completed', 'is_completed'),
                     )
                     if not self.user.is_guest:
                         # Websocket notification
                         send_removed_task_notification.delay(
                             task_id=task.id,
                             recipients=[(self.user.id, self.user.email)],
-                            account_id=task.account_id
+                            account_id=task.account_id,
                         )
             elif self.user.is_account_owner:
                 # account owner force completion
@@ -895,25 +895,25 @@ class WorkflowActionService:
             if next_depth_revert_to_tasks:
                 next_depth_revert_tasks_exists = True
                 revert_is_possible = self._revert_is_possible(
-                    next_depth_revert_to_tasks
+                    next_depth_revert_to_tasks,
                 )
                 if revert_is_possible:
                     return True
 
         if next_depth_revert_tasks_exists:
             raise exceptions.RevertToSkippedTask(
-                messages.MSG_PW_0080(revert_to_tasks[0].name)
+                messages.MSG_PW_0080(revert_to_tasks[0].name),
             )
         else:
             raise exceptions.RevertToSkippedTask(
-                messages.MSG_PW_0079(revert_to_tasks[0].name)
+                messages.MSG_PW_0079(revert_to_tasks[0].name),
             )
 
     def _deactivate_task(self, parent_task: Task):
 
         dependent_tasks = Task.objects.filter(
             workflow=self.workflow,
-            parents__contains=[parent_task.api_name]
+            parents__contains=[parent_task.api_name],
         ).exclude(status=TaskStatus.PENDING)
         deactivated_tasks = []
         for task in dependent_tasks:
@@ -931,11 +931,11 @@ class WorkflowActionService:
                 else:
                     # Reset delay from template
                     task.delay_set.filter(
-                        directly_status=DirectlyStatus.NO_STATUS
+                        directly_status=DirectlyStatus.NO_STATUS,
                     ).update(
                         start_date=None,
                         end_date=None,
-                        estimated_end_date=None
+                        estimated_end_date=None,
                     )
                 if task.is_active:
                     recipients = list(
@@ -943,7 +943,7 @@ class WorkflowActionService:
                         .filter(task_id=task.id)
                         .exclude_directly_deleted()
                         .not_completed()
-                        .get_user_emails_and_ids_set()
+                        .get_user_emails_and_ids_set(),
                     )
                     send_removed_task_notification.delay(
                         task_id=task.id,
@@ -958,7 +958,7 @@ class WorkflowActionService:
                         'date_started',
                         'date_completed',
                         'status',
-                    ]
+                    ],
                 )
                 (
                     TaskPerformer.objects
@@ -987,7 +987,7 @@ class WorkflowActionService:
 
         for revert_to_task in revert_to_tasks:
             action_method, by_condition = self.execute_conditions(
-                revert_to_task
+                revert_to_task,
             )
             if action_method:
                 action_method(
@@ -1012,13 +1012,13 @@ class WorkflowActionService:
                 send_task_returned_webhook.delay(
                     user_id=self.user.id,
                     account_id=self.account.id,
-                    payload=revert_from_task.webhook_payload()
+                    payload=revert_from_task.webhook_payload(),
                 )
 
     def revert(
         self,
         comment: str,
-        revert_from_task: Task
+        revert_from_task: Task,
     ) -> None:
 
         """ Can only be applied to a running workflow """
@@ -1060,13 +1060,13 @@ class WorkflowActionService:
                     task=revert_to_task,
                     user=self.user,
                     text=comment,
-                    clear_text=clear_comment
+                    clear_text=clear_comment,
                 )
             AnalyticService.task_returned(
                 user=self.user,
                 task=revert_from_task,
                 is_superuser=self.is_superuser,
-                auth_type=self.auth_type
+                auth_type=self.auth_type,
             )
             self._return_workflow_to_task(
                 revert_from_tasks=(revert_from_task,),
@@ -1084,7 +1084,7 @@ class WorkflowActionService:
             or action_method.__name__ == ConditionAction.SKIP_TASK
         ):
             raise exceptions.WorkflowActionServiceException(
-                messages.MSG_PW_0079(revert_to_task.name)
+                messages.MSG_PW_0079(revert_to_task.name),
             )
 
         # validate revert from tasks

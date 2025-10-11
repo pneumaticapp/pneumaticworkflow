@@ -1,10 +1,10 @@
 import pytest
 from src.processes.services.exceptions import (
-    CommentServiceException
+    CommentServiceException,
 )
 from src.processes.services.events import (
     WorkflowEventService,
-    CommentService
+    CommentService,
 )
 from src.processes.models import (
     FileAttachment,
@@ -37,25 +37,25 @@ def test_create__text__ok(api_client, mocker):
         text='Some comment',
         task=task,
         user=user,
-        after_create_actions=False
+        after_create_actions=False,
     )
 
     service_init_mock = mocker.patch.object(
         CommentService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     comment_create_mock = mocker.patch(
         'src.processes.services.events.'
         'CommentService.create',
-        return_value=event
+        return_value=event,
     )
     api_client.token_authenticate(user)
 
     # act
     response = api_client.post(
         f'/workflows/{workflow.id}/comment',
-        data={'text': event.text}
+        data={'text': event.text},
     )
 
     # assert
@@ -76,7 +76,7 @@ def test_create__text__ok(api_client, mocker):
     service_init_mock.assert_called_once_with(
         user=user,
         auth_type=AuthTokenType.USER,
-        is_superuser=False
+        is_superuser=False,
     )
     comment_create_mock.assert_called_once_with(
         task=task,
@@ -95,7 +95,7 @@ def test_create_text_and_attachment__ok(mocker, api_client):
         text='Some comment',
         task=task,
         attachments=[1, 2],
-        after_create_actions=False
+        after_create_actions=False,
     )
     attach_1 = FileAttachment.objects.create(
         account_id=user.account_id,
@@ -103,24 +103,24 @@ def test_create_text_and_attachment__ok(mocker, api_client):
         size=384812,
         url='https://cloud.google.com/bucket/filename_salt.png',
         thumbnail_url='https://cloud.google.com/bucket/filename_thumb.png',
-        event=event
+        event=event,
     )
     attach_2 = FileAttachment.objects.create(
         account_id=user.account_id,
         name='doc.docx',
         size=2412413,
         url='https://cloud.google.com/bucket/doc_salt.docx',
-        event=event
+        event=event,
     )
     service_init_mock = mocker.patch.object(
         CommentService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     comment_create_mock = mocker.patch(
         'src.processes.services.events.'
         'CommentService.create',
-        return_value=event
+        return_value=event,
     )
     api_client.token_authenticate(user)
 
@@ -131,9 +131,9 @@ def test_create_text_and_attachment__ok(mocker, api_client):
             'text': event.text,
             'attachments': [
                 attach_1.id,
-                attach_2.id
-            ]
-        }
+                attach_2.id,
+            ],
+        },
     )
 
     # arrange
@@ -150,12 +150,12 @@ def test_create_text_and_attachment__ok(mocker, api_client):
     service_init_mock.assert_called_once_with(
         user=user,
         auth_type=AuthTokenType.USER,
-        is_superuser=False
+        is_superuser=False,
     )
     comment_create_mock.assert_called_once_with(
         task=task,
         text=event.text,
-        attachments=[attach_1.id, attach_2.id]
+        attachments=[attach_1.id, attach_2.id],
     )
 
 
@@ -173,35 +173,35 @@ def test_create__guest__ok(mocker, api_client):
     task = workflow.tasks.get(number=1)
     TaskPerformer.objects.create(
         task_id=task.id,
-        user_id=guest.id
+        user_id=guest.id,
     )
     str_token = GuestJWTAuthService.get_str_token(
         task_id=task.id,
         user_id=guest.id,
-        account_id=account.id
+        account_id=account.id,
     )
     event = WorkflowEventService.comment_created_event(
         user=guest,
         text='Some comment',
         task=task,
-        after_create_actions=False
+        after_create_actions=False,
     )
     service_init_mock = mocker.patch.object(
         CommentService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     comment_create_mock = mocker.patch(
         'src.processes.services.events.'
         'CommentService.create',
-        return_value=event
+        return_value=event,
     )
 
     # act
     response = api_client.post(
         f'/workflows/{workflow.id}/comment',
         data={'text': 'Test text'},
-        **{'X-Guest-Authorization': str_token}
+        **{'X-Guest-Authorization': str_token},
     )
 
     # assert
@@ -222,7 +222,7 @@ def test_create__guest__ok(mocker, api_client):
     service_init_mock.assert_called_once_with(
         user=guest,
         auth_type=AuthTokenType.GUEST,
-        is_superuser=False
+        is_superuser=False,
     )
     comment_create_mock.assert_called_once_with(
         task=task,
@@ -232,7 +232,7 @@ def test_create__guest__ok(mocker, api_client):
 
 def test_create__guest_another_workflow__permission_denied(
     mocker,
-    api_client
+    api_client,
 ):
 
     # arrange
@@ -247,33 +247,33 @@ def test_create__guest_another_workflow__permission_denied(
     guest_1 = create_test_guest(account=account)
     TaskPerformer.objects.create(
         task_id=task_1.id,
-        user_id=guest_1.id
+        user_id=guest_1.id,
     )
     GuestJWTAuthService.get_str_token(
         task_id=task_1.id,
         user_id=guest_1.id,
-        account_id=account.id
+        account_id=account.id,
     )
 
     workflow_2 = create_test_workflow(account_owner, tasks_count=1)
     task_2 = workflow_2.tasks.get(number=1)
     guest_2 = create_test_guest(
         account=account,
-        email='guest2@test.test'
+        email='guest2@test.test',
     )
     TaskPerformer.objects.create(
         task_id=task_2.id,
-        user_id=guest_2.id
+        user_id=guest_2.id,
     )
     str_token_2 = GuestJWTAuthService.get_str_token(
         task_id=task_2.id,
         user_id=guest_2.id,
-        account_id=account.id
+        account_id=account.id,
     )
     service_init_mock = mocker.patch.object(
         CommentService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     comment_create_mock = mocker.patch(
         'src.processes.services.events.'
@@ -284,7 +284,7 @@ def test_create__guest_another_workflow__permission_denied(
     response = api_client.post(
         f'/workflows/{workflow_1.id}/comment',
         data={'text': 'Test text'},
-        **{'X-Guest-Authorization': str_token_2}
+        **{'X-Guest-Authorization': str_token_2},
     )
 
     # assert
@@ -295,7 +295,7 @@ def test_create__guest_another_workflow__permission_denied(
 
 def test_create__service_exception__validation_error(
     api_client,
-    mocker
+    mocker,
 ):
 
     # arrange
@@ -305,20 +305,20 @@ def test_create__service_exception__validation_error(
     service_init_mock = mocker.patch.object(
         CommentService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     message = 'some message'
     comment_create_mock = mocker.patch(
         'src.processes.services.events.'
         'CommentService.create',
-        side_effect=CommentServiceException(message)
+        side_effect=CommentServiceException(message),
     )
     api_client.token_authenticate(user)
 
     # act
     response = api_client.post(
         f'/workflows/{workflow.id}/comment',
-        data={'text': 'Raise'}
+        data={'text': 'Raise'},
     )
 
     # assert
@@ -328,7 +328,7 @@ def test_create__service_exception__validation_error(
     service_init_mock.assert_called_once_with(
         user=user,
         auth_type=AuthTokenType.USER,
-        is_superuser=False
+        is_superuser=False,
     )
     comment_create_mock.assert_called_once_with(
         task=task,
@@ -343,7 +343,7 @@ def test_create__snoozed_workflow__ok(api_client, mocker):
     workflow = create_test_workflow(
         user=user,
         tasks_count=1,
-        status=WorkflowStatus.DELAYED
+        status=WorkflowStatus.DELAYED,
     )
     task = workflow.tasks.get(number=1)
     task.status = TaskStatus.DELAYED
@@ -352,25 +352,25 @@ def test_create__snoozed_workflow__ok(api_client, mocker):
         text='Some comment',
         task=task,
         user=user,
-        after_create_actions=False
+        after_create_actions=False,
     )
 
     service_init_mock = mocker.patch.object(
         CommentService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     comment_create_mock = mocker.patch(
         'src.processes.services.events.'
         'CommentService.create',
-        return_value=event
+        return_value=event,
     )
     api_client.token_authenticate(user)
 
     # act
     response = api_client.post(
         f'/workflows/{workflow.id}/comment',
-        data={'text': event.text}
+        data={'text': event.text},
     )
 
     # assert
@@ -379,7 +379,7 @@ def test_create__snoozed_workflow__ok(api_client, mocker):
     service_init_mock.assert_called_once_with(
         user=user,
         auth_type=AuthTokenType.USER,
-        is_superuser=False
+        is_superuser=False,
     )
     comment_create_mock.assert_called_once_with(
         task=task,

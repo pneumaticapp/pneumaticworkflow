@@ -35,7 +35,7 @@ class CustomSimpleRateThrottle(SimpleRateThrottle):
     def get_cache_key(self, request, *args, **kwargs) -> str:
         return self.cache_format % {
             'scope': self.scope,
-            'ident': self.get_ident(request)
+            'ident': self.get_ident(request),
         }
 
     def throttle_success(self):

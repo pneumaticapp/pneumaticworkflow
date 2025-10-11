@@ -4,7 +4,7 @@ from rest_framework.generics import ListAPIView
 from rest_framework.permissions import AllowAny
 from rest_framework_simplejwt.exceptions import TokenError
 from src.generics.mixins.views import (
-    BaseResponseMixin
+    BaseResponseMixin,
 )
 from src.accounts.tokens import (
     DigestUnsubscribeToken,
@@ -22,7 +22,7 @@ UserModel = get_user_model()
 
 class UnsubscribeDigestView(
     ListAPIView,
-    BaseResponseMixin
+    BaseResponseMixin,
 ):
     permission_classes = (AllowAny,)
 
@@ -55,7 +55,7 @@ class UnsubscribeDigestView(
 
 class UnsubscribeEmailView(
     ListAPIView,
-    BaseResponseMixin
+    BaseResponseMixin,
 ):
     permission_classes = (AllowAny,)
 

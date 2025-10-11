@@ -25,7 +25,7 @@ UserModel = get_user_model()
 
 class WorkflowEvent(
     SoftDeleteModel,
-    AccountBaseMixin
+    AccountBaseMixin,
 ):
 
     class Meta:
@@ -33,12 +33,12 @@ class WorkflowEvent(
 
     type = models.IntegerField(
         choices=WorkflowEventType.CHOICES,
-        verbose_name='type'
+        verbose_name='type',
     )
     status = models.CharField(
         default=CommentStatus.CREATED,
         choices=CommentStatus.CHOICES,
-        max_length=20
+        max_length=20,
     )
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(null=True)
@@ -52,7 +52,7 @@ class WorkflowEvent(
         on_delete=models.SET_NULL,
         related_name='events',
         null=True,
-        help_text='Not null for task events and comments'
+        help_text='Not null for task events and comments',
     )
     task_json = JSONField(null=True)
     text = models.TextField(blank=True, null=True)
@@ -92,5 +92,5 @@ class WorkflowEventAction(
     )
     type = models.IntegerField(choices=WorkflowEventActionType.CHOICES)
     objects = BaseSoftDeleteManager.from_queryset(
-        WorkflowEventActionQuerySet
+        WorkflowEventActionQuerySet,
     )()

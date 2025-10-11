@@ -33,7 +33,7 @@ class TemplateVersioningService:
             template_id=template.id,
             version=template.version,
             defaults={
-                "data": template_dict
-            }
+                "data": template_dict,
+            },
         )
         return instance

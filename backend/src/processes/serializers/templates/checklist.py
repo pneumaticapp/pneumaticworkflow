@@ -17,10 +17,10 @@ from src.processes.serializers.templates.mixins import (
     CreateOrUpdateRelatedMixin,
 )
 from src.processes.models.templates.checklist import (
-    ChecklistTemplate
+    ChecklistTemplate,
 )
 from src.processes.serializers.templates.checklist_selection import (
-    ChecklistTemplateSelectionSerializer
+    ChecklistTemplateSelectionSerializer,
 )
 from src.analytics.services import AnalyticService
 
@@ -30,7 +30,7 @@ class ChecklistTemplateSerializer(
     AdditionalValidationMixin,
     CreateOrUpdateInstanceMixin,
     CreateOrUpdateRelatedMixin,
-    ModelSerializer
+    ModelSerializer,
 ):
 
     class Meta:
@@ -49,14 +49,14 @@ class ChecklistTemplateSerializer(
     api_name = CharField(required=False, max_length=200)
     selections = ChecklistTemplateSelectionSerializer(
         many=True,
-        required=True
+        required=True,
     )
 
     def additional_validate_selections(self, value, data: Dict[str, Any]):
         if not isinstance(value, list) or not value:
             self.raise_validation_error(
                 message=MSG_PT_0040,
-                api_name=data.get('api_name', self.context['task'].api_name)
+                api_name=data.get('api_name', self.context['task'].api_name),
             )
 
     def create(self, validated_data: Dict[str, Any]):
@@ -65,38 +65,38 @@ class ChecklistTemplateSerializer(
             validated_data={
                 'template': self.context['template'],
                 'task':  self.context['task'],
-                **validated_data
+                **validated_data,
             },
             not_unique_exception_msg=MSG_PT_0047(
                 name=self.context['task'].name,
-                api_name=validated_data.get('api_name')
-            )
+                api_name=validated_data.get('api_name'),
+            ),
         )
         self.create_or_update_related(
             data=validated_data.get('selections'),
             ancestors_data={
                 'checklist': instance,
-                'template': self.context['template']
+                'template': self.context['template'],
             },
             slz_cls=ChecklistTemplateSelectionSerializer,
             slz_context={
                 'checklist': instance,
-                **self.context
-            }
+                **self.context,
+            },
         )
         AnalyticService.checklist_created(
             user=self.context['user'],
             template=self.context['template'],
             task=self.context['task'],
             is_superuser=self.context['is_superuser'],
-            auth_type=self.context['auth_type']
+            auth_type=self.context['auth_type'],
         )
         return instance
 
     def update(
         self,
         instance: FieldTemplate,
-        validated_data: Dict[str, Any]
+        validated_data: Dict[str, Any],
     ):
         self.additional_validate(validated_data)
         instance = self.create_or_update_instance(
@@ -104,23 +104,23 @@ class ChecklistTemplateSerializer(
             validated_data={
                 'template': self.context['template'],
                 'task':  self.context['task'],
-                **validated_data
+                **validated_data,
             },
             not_unique_exception_msg=MSG_PT_0047(
                 name=self.context['task'].name,
-                api_name=validated_data.get('api_name')
-            )
+                api_name=validated_data.get('api_name'),
+            ),
         )
         self.create_or_update_related(
             data=validated_data.get('selections'),
             ancestors_data={
                 'checklist': instance,
-                'template': self.context['template']
+                'template': self.context['template'],
             },
             slz_cls=ChecklistTemplateSelectionSerializer,
             slz_context={
                 'checklist': instance,
-                **self.context
-            }
+                **self.context,
+            },
         )
         return instance

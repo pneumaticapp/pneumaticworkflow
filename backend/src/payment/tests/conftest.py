@@ -5,7 +5,7 @@ from src.generics.tests.clients import PneumaticApiClient
 @pytest.fixture
 def identify_mock(mocker):
     return mocker.patch(
-        'src.analytics.mixins.BaseIdentifyMixin.identify'
+        'src.analytics.mixins.BaseIdentifyMixin.identify',
     )
 
 
@@ -17,5 +17,5 @@ def api_client():
 @pytest.fixture
 def group_mock(mocker):
     return mocker.patch(
-        'src.analytics.mixins.BaseIdentifyMixin.group'
+        'src.analytics.mixins.BaseIdentifyMixin.group',
     )

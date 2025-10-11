@@ -47,7 +47,7 @@ class SearchSqlQueryMixin:
         escaped_words = [self._escape_tsquery_text(word) for word in words]
 
         result = (" || ' | ' || ".join(
-            [f"''%(search_{i})s'' || ':*'" for i in range(len(escaped_words))]
+            [f"''%(search_{i})s'' || ':*'" for i in range(len(escaped_words))],
         ))
         params = {
             f'search_{i}': value for i, value in enumerate(escaped_words)

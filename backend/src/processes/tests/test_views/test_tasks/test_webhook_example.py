@@ -50,8 +50,8 @@ def test_webhook_example__body__ok(api_client):
                 ('is_completed', False),
                 ('date_completed_tsp', None),
                 ('type', 'user'),
-                ('source_id', user.id)
-            ])
+                ('source_id', user.id),
+            ]),
         ],
         'is_urgent': False,
         'checklists_marked': 0,
@@ -80,11 +80,11 @@ def test_webhook_example__body__ok(api_client):
                 ('id', template.id),
                 ('name', 'Test workflow'),
                 ('is_active', True),
-                ('wf_name_template', None)
+                ('wf_name_template', None),
             ]),
             'kickoff': {
                 'id': workflow.kickoff_instance.id,
-                'output': []
+                'output': [],
             },
             'tasks': [
                 OrderedDict([
@@ -102,15 +102,15 @@ def test_webhook_example__body__ok(api_client):
                             ('is_completed', False),
                             ('date_completed_tsp', None),
                             ('type', 'user'),
-                            ('source_id', user.id)
-                        ])
+                            ('source_id', user.id),
+                        ]),
                     ]),
                     ('checklists_total', 0),
                     ('checklists_marked', 0),
                     ('status', 'active'),
-                ])
-            ]
-        }
+                ]),
+            ],
+        },
     }
 
 
@@ -127,7 +127,7 @@ def test_webhook_example__filter_status_completed__ok(api_client):
 
     # act
     response = api_client.get(
-        f'/v2/tasks/webhook-example?status={TaskStatus.COMPLETED}'
+        f'/v2/tasks/webhook-example?status={TaskStatus.COMPLETED}',
     )
 
     # assert
@@ -155,7 +155,7 @@ def test_webhook_example__filter_status_active__ok(api_client):
 
     # act
     response = api_client.get(
-        f'/v2/tasks/webhook-example?status={TaskStatus.ACTIVE}'
+        f'/v2/tasks/webhook-example?status={TaskStatus.ACTIVE}',
     )
 
     # assert
@@ -180,7 +180,7 @@ def test_webhook_example__filter_ordering_date_created__ok(api_client):
 
     # act
     response = api_client.get(
-        '/v2/tasks/webhook-example?ordering=date_started'
+        '/v2/tasks/webhook-example?ordering=date_started',
     )
 
     # assert
@@ -204,7 +204,7 @@ def test_webhook_example__filter_ordering_date_created_reverse__ok(api_client):
 
     # act
     response = api_client.get(
-        '/v2/tasks/webhook-example?ordering=-date_started'
+        '/v2/tasks/webhook-example?ordering=-date_started',
     )
 
     # assert

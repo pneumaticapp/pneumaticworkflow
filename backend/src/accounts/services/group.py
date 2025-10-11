@@ -2,10 +2,10 @@ from django.contrib.auth import get_user_model
 from typing import List, Optional
 from src.executor import RawSqlExecutor
 from src.accounts.queries import (
-    FetchGroupTaskNotificationRecipientsQuery
+    FetchGroupTaskNotificationRecipientsQuery,
 )
 from src.accounts.serializers.group import (
-    GroupWebsocketSerializer
+    GroupWebsocketSerializer,
 )
 from collections import defaultdict
 from src.analytics.tasks import track_group_analytics
@@ -18,7 +18,7 @@ from src.processes.models import (
 )
 from src.processes.enums import (
     OwnerType,
-    PerformerType
+    PerformerType,
 )
 from src.processes.tasks.update_workflow import (
     update_workflow_owners,
@@ -40,16 +40,16 @@ class UserGroupService(BaseModelService):
         template_owner_ids = TemplateOwner.objects.filter(
             type=OwnerType.GROUP,
             group=self.instance,
-            is_deleted=False
+            is_deleted=False,
         ).values_list('template_id', flat=True)
         task_performer_template_ids = TaskPerformer.objects.filter(
             type=PerformerType.GROUP,
             group=self.instance,
-            is_deleted=False
+            is_deleted=False,
         ).exclude_directly_deleted().select_related(
-            'task__workflow'
+            'task__workflow',
         ).values_list(
-            'task__workflow__template_id', flat=True
+            'task__workflow__template_id', flat=True,
         ).distinct()
         return list(set(template_owner_ids) | set(task_performer_template_ids))
 
@@ -58,7 +58,7 @@ class UserGroupService(BaseModelService):
         name: str,
         photo: Optional[str] = '',
         users: Optional[List[int]] = None,
-        **kwargs
+        **kwargs,
     ):
         self.instance = UserGroup.objects.create(
             name=name,
@@ -70,7 +70,7 @@ class UserGroupService(BaseModelService):
     def _create_related(
         self,
         users: Optional[List[int]] = None,
-        **kwargs
+        **kwargs,
     ):
         if users:
             self.instance.users.set(users)
@@ -79,7 +79,7 @@ class UserGroupService(BaseModelService):
         self,
         photo: Optional[str] = None,
         users: Optional[List[int]] = None,
-        **kwargs
+        **kwargs,
     ):
         track_group_analytics.delay(
             event=GroupsAnalyticsEvent.created,
@@ -95,7 +95,7 @@ class UserGroupService(BaseModelService):
             auth_type=self.auth_type,
             is_superuser=self.is_superuser,
             new_users_ids=users,
-            new_photo=photo
+            new_photo=photo,
         )
 
         send_group_created_notification.delay(
@@ -126,7 +126,7 @@ class UserGroupService(BaseModelService):
                 else (
                     recipient['id'],
                     recipient['email'],
-                    recipient['is_subscribed']
+                    recipient['is_subscribed'],
                 )
             )
             notifications[recipient['task_id']].append(recipient_data)
@@ -155,7 +155,7 @@ class UserGroupService(BaseModelService):
     def partial_update(
         self,
         force_save: bool = False,
-        **update_kwargs
+        **update_kwargs,
     ):
         users = update_kwargs.pop('users', None)
         new_name = update_kwargs.get('name')
@@ -163,7 +163,7 @@ class UserGroupService(BaseModelService):
         added_users_ids = None
         removed_users_ids = None
         current_users_ids = list(
-            self.instance.users.values_list('id', flat=True)
+            self.instance.users.values_list('id', flat=True),
         )
 
         if users is not None:
@@ -204,7 +204,7 @@ class UserGroupService(BaseModelService):
                 new_name=new_name if new_name != self.instance.name else None,
                 new_photo=(
                     new_photo if new_photo != self.instance.photo else None
-                )
+                ),
             )
         result = super().partial_update(**update_kwargs, force_save=force_save)
 

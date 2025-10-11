@@ -11,12 +11,12 @@ def test_reset_push_counter__ok(mocker, api_client):
     user = create_test_user()
     counter = UserNotifications.objects.create(
         user=user,
-        count_unread_push_in_ios_app=5
+        count_unread_push_in_ios_app=5,
     )
     api_client.token_authenticate(user)
     mocker.patch(
         'src.notifications.views.PushPermission.has_permission',
-        return_value=True
+        return_value=True,
     )
 
     # act
@@ -30,19 +30,19 @@ def test_reset_push_counter__ok(mocker, api_client):
 
 def test_reset_push_counter__disable_push__permission_error(
     mocker,
-    api_client
+    api_client,
 ):
 
     # arrange
     user = create_test_user()
     counter = UserNotifications.objects.create(
         user=user,
-        count_unread_push_in_ios_app=5
+        count_unread_push_in_ios_app=5,
     )
     api_client.token_authenticate(user)
     mocker.patch(
         'src.notifications.views.PushPermission.has_permission',
-        return_value=False
+        return_value=False,
     )
 
     # act

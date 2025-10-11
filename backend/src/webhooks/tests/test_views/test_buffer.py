@@ -9,13 +9,13 @@ def test_buffer_create__ok(api_client, mocker):
     # arrange
     data = {'some': 'hook data'}
     service_mock = mocker.patch(
-        'src.webhooks.views.buffer.WebhookBufferService.push'
+        'src.webhooks.views.buffer.WebhookBufferService.push',
     )
 
     # act
     response = api_client.post(
         path='/webhooks/buffer',
-        data=data
+        data=data,
     )
 
     # assert
@@ -30,13 +30,13 @@ def test_buffer_create__env_prod__permission_denied(api_client, mocker):
     permission_mock = mocker.patch(
         'src.generics.permissions.StagingPermission.'
         'has_permission',
-        return_value=False
+        return_value=False,
     )
 
     # act
     response = api_client.post(
         path='/webhooks/buffer',
-        data=data
+        data=data,
     )
 
     # assert
@@ -51,7 +51,7 @@ def test_buffer_list__ok(api_client, mocker):
     service_mock = mocker.patch(
         'src.webhooks.views.buffer.WebhookBufferService'
         '.get_list',
-        return_value=data
+        return_value=data,
     )
 
     # act
@@ -67,7 +67,7 @@ def test_buffer_clear__ok(api_client, mocker):
 
     # arrange
     service_mock = mocker.patch(
-        'src.webhooks.views.buffer.WebhookBufferService.clear'
+        'src.webhooks.views.buffer.WebhookBufferService.clear',
     )
 
     # act

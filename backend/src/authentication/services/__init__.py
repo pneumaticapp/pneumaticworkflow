@@ -1,10 +1,10 @@
 from src.authentication.services.user_auth import (
     PneumaticTokenAuthentication,
-    AuthService
+    AuthService,
 )
 from src.authentication.services.guest_auth import (
-    GuestJWTAuthService
+    GuestJWTAuthService,
 )
 from src.authentication.services.public_auth import (
-    PublicAuthService
+    PublicAuthService,
 )

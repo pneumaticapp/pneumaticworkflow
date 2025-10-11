@@ -12,7 +12,7 @@ class PageAdminForm(ModelForm):
         fields = (
             'slug',
             'title',
-            'description'
+            'description',
         )
     title = CharField(widget=Textarea)
 

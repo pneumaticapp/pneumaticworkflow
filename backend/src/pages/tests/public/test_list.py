@@ -12,17 +12,17 @@ def test_list_public_page__ok(api_client):
     page_1 = Page.objects.create(
         title='Test title 1',
         description='Test desc 2',
-        slug=PageType.SIGNIN
+        slug=PageType.SIGNIN,
     )
     page_2 = Page.objects.create(
         title='Test title 2',
         description='Test desc 2',
-        slug=PageType.RESET_PASSWORD
+        slug=PageType.RESET_PASSWORD,
     )
     Page.objects.create(
         title='Test title 3',
         description='Test desc 3',
-        slug='not-public'
+        slug='not-public',
     )
 
     # act

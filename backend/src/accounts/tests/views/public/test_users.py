@@ -2,11 +2,11 @@ import pytest
 from src.processes.tests.fixtures import (
     create_test_user,
     create_invited_user,
-    create_test_account
+    create_test_account,
 )
 from src.processes.tests.fixtures import (
     create_test_template,
-    create_test_guest
+    create_test_guest,
 )
 from src.accounts.enums import UserStatus
 from src.authentication.tokens import (
@@ -38,12 +38,12 @@ class TestPublicUsersVewSet:
         get_token_mock = mocker.patch(
             'src.authentication.services.public_auth.'
             'PublicAuthService.get_token',
-            return_value=token
+            return_value=token,
         )
         get_template_mock = mocker.patch(
             'src.authentication.services.public_auth.'
             'PublicAuthService.get_template',
-            return_value=template
+            return_value=template,
         )
 
         # act
@@ -78,12 +78,12 @@ class TestPublicUsersVewSet:
         get_token_mock = mocker.patch(
             'src.authentication.services.public_auth.'
             'PublicAuthService.get_token',
-            return_value=None
+            return_value=None,
         )
         get_template_mock = mocker.patch(
             'src.authentication.services.public_auth.'
             'PublicAuthService.get_template',
-            return_value=None
+            return_value=None,
         )
 
         # act
@@ -118,12 +118,12 @@ class TestEmbedUsersVewSet:
         get_token_mock = mocker.patch(
             'src.authentication.services.public_auth.'
             'PublicAuthService.get_token',
-            return_value=token
+            return_value=token,
         )
         get_template_mock = mocker.patch(
             'src.authentication.services.public_auth.'
             'PublicAuthService.get_template',
-            return_value=template
+            return_value=template,
         )
 
         # act

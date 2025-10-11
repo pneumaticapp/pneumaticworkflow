@@ -32,7 +32,7 @@ class ConditionMixin:
     @staticmethod
     def _create_predicates(
         rules: List[Rule],
-        rules_tree: dict
+        rules_tree: dict,
     ):
 
         # TODO Move to PredicateService

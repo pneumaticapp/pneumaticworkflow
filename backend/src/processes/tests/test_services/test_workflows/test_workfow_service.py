@@ -27,21 +27,21 @@ def test_create_instance__only_required_fields__ok(mocker):
         user=owner,
         is_active=True,
         tasks_count=1,
-        finalizable=True
+        finalizable=True,
     )
     create_workflow_name_mock = mocker.patch(
         'src.processes.services.workflows.workflow.'
         'WorkflowService._create_workflow_name',
-        return_value=workflow_name
+        return_value=workflow_name,
     )
     contains_fields_vars_mock = mocker.patch(
         'src.processes.services.workflows.workflow.'
         'contains_fields_vars',
-        return_value=False
+        return_value=False,
     )
     string_abbreviation_mock = mocker.patch(
         'src.processes.services.workflows.workflow.'
-        'string_abbreviation'
+        'string_abbreviation',
     )
     service = WorkflowService(
         user=owner,
@@ -59,7 +59,7 @@ def test_create_instance__only_required_fields__ok(mocker):
     create_workflow_name_mock.assert_called_once_with(
         workflow_starter=owner,
         template=template,
-        user_provided_name=None
+        user_provided_name=None,
     )
     contains_fields_vars_mock.assert_called_once_with(workflow_name)
     string_abbreviation_mock.assert_not_called()
@@ -92,21 +92,21 @@ def test_create_instance__all_fields__ok(mocker):
         user=owner,
         is_active=True,
         tasks_count=1,
-        finalizable=True
+        finalizable=True,
     )
     create_workflow_name_mock = mocker.patch(
         'src.processes.services.workflows.workflow.'
         'WorkflowService._create_workflow_name',
-        return_value=workflow_name
+        return_value=workflow_name,
     )
     contains_fields_vars_mock = mocker.patch(
         'src.processes.services.workflows.workflow.'
         'contains_fields_vars',
-        return_value=False
+        return_value=False,
     )
     string_abbreviation_mock = mocker.patch(
         'src.processes.services.workflows.workflow.'
-        'string_abbreviation'
+        'string_abbreviation',
     )
     service = WorkflowService(
         user=owner,
@@ -125,14 +125,14 @@ def test_create_instance__all_fields__ok(mocker):
         is_external=is_external,
         is_urgent=is_urgent,
         due_date=due_date,
-        ancestor_task=ancestor_task
+        ancestor_task=ancestor_task,
     )
 
     # assert
     create_workflow_name_mock.assert_called_once_with(
         workflow_starter=owner,
         template=template,
-        user_provided_name=None
+        user_provided_name=None,
     )
     contains_fields_vars_mock.assert_called_once_with(workflow_name)
     string_abbreviation_mock.assert_not_called()
@@ -161,21 +161,21 @@ def test_create_instance__external_workflow__ok(mocker):
         user=owner,
         is_active=True,
         tasks_count=1,
-        finalizable=True
+        finalizable=True,
     )
     create_workflow_name_mock = mocker.patch(
         'src.processes.services.workflows.workflow.'
         'WorkflowService._create_workflow_name',
-        return_value=workflow_name
+        return_value=workflow_name,
     )
     contains_fields_vars_mock = mocker.patch(
         'src.processes.services.workflows.workflow.'
         'contains_fields_vars',
-        return_value=False
+        return_value=False,
     )
     string_abbreviation_mock = mocker.patch(
         'src.processes.services.workflows.workflow.'
-        'string_abbreviation'
+        'string_abbreviation',
     )
     service = WorkflowService(
         user=owner,
@@ -194,7 +194,7 @@ def test_create_instance__external_workflow__ok(mocker):
     create_workflow_name_mock.assert_called_once_with(
         workflow_starter=None,
         template=template,
-        user_provided_name=None
+        user_provided_name=None,
     )
     contains_fields_vars_mock.assert_called_once_with(workflow_name)
     string_abbreviation_mock.assert_not_called()
@@ -217,16 +217,16 @@ def test_create_instance__insert_kickoff_fields__ok(mocker):
     create_workflow_name_mock = mocker.patch(
         'src.processes.services.workflows.workflow.'
         'WorkflowService._create_workflow_name',
-        return_value=workflow_name
+        return_value=workflow_name,
     )
     contains_fields_vars_mock = mocker.patch(
         'src.processes.services.workflows.workflow.'
         'contains_fields_vars',
-        return_value=True
+        return_value=True,
     )
     string_abbreviation_mock = mocker.patch(
         'src.processes.services.workflows.workflow.'
-        'string_abbreviation'
+        'string_abbreviation',
     )
     field_template = FieldTemplate.objects.create(
         name='Date',
@@ -234,7 +234,7 @@ def test_create_instance__insert_kickoff_fields__ok(mocker):
         is_required=True,
         kickoff=template.kickoff_instance,
         template=template,
-        api_name=field_api_name
+        api_name=field_api_name,
     )
     service = WorkflowService(
         user=owner,
@@ -253,7 +253,7 @@ def test_create_instance__insert_kickoff_fields__ok(mocker):
     create_workflow_name_mock.assert_called_once_with(
         workflow_starter=owner,
         template=template,
-        user_provided_name=None
+        user_provided_name=None,
     )
     contains_fields_vars_mock.assert_called_once_with(workflow_name)
     string_abbreviation_mock.assert_not_called()
@@ -268,7 +268,7 @@ def test_create_instance__insert_kickoff_fields__ok(mocker):
         is_required=field_template.is_required,
         workflow=workflow,
         api_name=field_api_name,
-        value=str(field_value)
+        value=str(field_value),
     )
 
 
@@ -284,32 +284,32 @@ def test_create_related__ok(mocker):
     )
     workflow = create_test_workflow(
         user=owner,
-        template=template
+        template=template,
     )
     service = WorkflowService(
         user=owner,
         is_superuser=False,
         auth_type=AuthTokenType.USER,
-        instance=workflow
+        instance=workflow,
     )
     update_owners_mock = mocker.patch(
         'src.processes.services.workflows.workflow.'
-        'WorkflowService.update_owners'
+        'WorkflowService.update_owners',
     )
     task_service_init_mock = mocker.patch.object(
         TaskService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     task_service_create_mock = mocker.patch(
         'src.processes.services.workflows.workflow.'
-        'TaskService.create'
+        'TaskService.create',
     )
 
     # act
     service._create_related(
         instance_template=template,
-        redefined_performer=None
+        redefined_performer=None,
     )
 
     # assert
@@ -317,6 +317,6 @@ def test_create_related__ok(mocker):
     task_service_create_mock.assert_called_once_with(
         instance_template=template.tasks.get(number=1),
         workflow=workflow,
-        redefined_performer=None
+        redefined_performer=None,
     )
     update_owners_mock.assert_called_once()

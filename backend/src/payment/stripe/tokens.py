@@ -24,7 +24,7 @@ class ConfirmToken(Token):
     def __init__(
         self,
         token: Optional[str] = None,
-        verify: bool = True
+        verify: bool = True,
     ):
         super().__init__(token, verify)
         if token:
@@ -34,12 +34,12 @@ class ConfirmToken(Token):
         try:
             return UserModel.objects.get(
                 account_id=self.payload['account_id'],
-                id=self.payload['user_id']
+                id=self.payload['user_id'],
             )
         except ObjectDoesNotExist:
             try:
                 return Account.objects.get(
-                    id=self.payload['account_id']
+                    id=self.payload['account_id'],
                 ).get_owner()
             except ObjectDoesNotExist as ex:
                 raise TokenError(MSG_BL_0001) from ex

@@ -36,11 +36,11 @@ from src.accounts.services import (
 )
 from src.accounts.services.exceptions import (
     AccountServiceException,
-    UserServiceException
+    UserServiceException,
 )
 from src.utils.validation import raise_validation_error
 from src.processes.services.system_workflows import (
-    SystemWorkflowService
+    SystemWorkflowService,
 )
 from src.payment.stripe.service import StripeService
 from src.payment.stripe.exceptions import StripeServiceException
@@ -55,11 +55,11 @@ class TenantsViewSet(
     CustomViewSetMixin,
     DestroyModelMixin,
     ListModelMixin,
-    GenericViewSet
+    GenericViewSet,
 ):
     filter_backends = [PneumaticFilterBackend]
     action_filterset_classes = {
-        'list': TenantsFilterSet
+        'list': TenantsFilterSet,
     }
     serializer_class = TenantSerializer
 
@@ -134,7 +134,7 @@ class TenantsViewSet(
         serializer = self.get_serializer(
             instance=instance,
             data=request.data,
-            partial=True
+            partial=True,
         )
         serializer.is_valid(raise_exception=True)
         new_tenant_name = serializer.validated_data.get('tenant_name')
@@ -179,7 +179,7 @@ class TenantsViewSet(
                 )
                 tenant_user = user_service.create_tenant_account_owner(
                     tenant_account=tenant_account,
-                    master_account=master_account
+                    master_account=master_account,
                 )
                 account_service.user = tenant_user
                 account_service.update_users_counts()
@@ -214,9 +214,9 @@ class TenantsViewSet(
                             products=[
                                 {
                                     'code': 'unlimited_month',
-                                    'quantity': 1
-                                }
-                            ]
+                                    'quantity': 1,
+                                },
+                            ],
                         )
                     except StripeServiceException as ex:
                         raise_validation_error(message=ex.message)
@@ -225,7 +225,7 @@ class TenantsViewSet(
                     master_user=request.user,
                     tenant_account=tenant_account,
                     is_superuser=request.is_superuser,
-                    auth_type=request.token_type
+                    auth_type=request.token_type,
                 )
         response_slz = self.serializer_class(instance=tenant_account)
         return self.response_ok(response_slz.data)
@@ -238,7 +238,7 @@ class TenantsViewSet(
             user=account_owner,
             user_agent=request.headers.get(
                 'User-Agent',
-                request.META.get('HTTP_USER_AGENT')
+                request.META.get('HTTP_USER_AGENT'),
             ),
             user_ip=request.META.get('HTTP_X_REAL_IP'),
             superuser_mode=True,
@@ -247,12 +247,12 @@ class TenantsViewSet(
             master_user=request.user,
             tenant_account=tenant_account,
             is_superuser=request.is_superuser,
-            auth_type=request.token_type
+            auth_type=request.token_type,
         )
         return self.response_ok({'token': token})
 
     @action(methods=('GET',), detail=False)
     def count(self, request, **kwargs):
         return self.response_ok({
-            'count': self.get_queryset().count()
+            'count': self.get_queryset().count(),
         })

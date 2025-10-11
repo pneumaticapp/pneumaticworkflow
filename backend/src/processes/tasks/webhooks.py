@@ -15,8 +15,8 @@ class WebhookTask(CeleryTask):
         ConnectionError,
         requests.ConnectionError,
         requests.HTTPError,
-        ObjectDoesNotExist
-    ),
+        ObjectDoesNotExist,
+    )
     retry_backoff = True
     retry_kwargs = {'max_retries': 2}
 

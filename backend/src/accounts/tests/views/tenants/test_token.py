@@ -26,23 +26,23 @@ def test_token__partner__ok(
         name='tenant',
         plan=BillingPlanType.UNLIMITED,
         lease_level=LeaseLevel.TENANT,
-        master_account=master_account
+        master_account=master_account,
     )
     tenant_account_owner = create_test_user(
         account=tenant_account,
-        email='tenant_owner@test.test'
+        email='tenant_owner@test.test',
     )
     token_data = {
-        'token': 'some token'
+        'token': 'some token',
     }
     authenticate_mock = mocker.patch(
         'src.authentication.services.AuthService'
         '.get_auth_token',
-        return_value=token_data
+        return_value=token_data,
     )
     tenants_accessed_mock = mocker.patch(
         'src.analytics.services.AnalyticService.'
-        'tenants_accessed'
+        'tenants_accessed',
     )
     api_client.token_authenticate(master_account_owner)
 
@@ -56,7 +56,7 @@ def test_token__partner__ok(
         master_user=master_account_owner,
         tenant_account=tenant_account,
         is_superuser=False,
-        auth_type=AuthTokenType.USER
+        auth_type=AuthTokenType.USER,
     )
     authenticate_mock.assert_called_once_with(
         user=tenant_account_owner,
@@ -75,31 +75,31 @@ def test_token__any_premium_plan__ok(
     # arrange
     master_account = create_test_account(
         plan=plan,
-        lease_level=LeaseLevel.STANDARD
+        lease_level=LeaseLevel.STANDARD,
     )
     master_account_owner = create_test_user(account=master_account)
     tenant_account = create_test_account(
         name='tenant',
         plan=plan,
         lease_level=LeaseLevel.TENANT,
-        master_account=master_account
+        master_account=master_account,
     )
     tenant_account_owner = create_test_user(
         account=tenant_account,
-        email='tenant_owner@test.test'
+        email='tenant_owner@test.test',
     )
     api_client.token_authenticate(master_account_owner)
     token_data = {
-        'token': 'some token'
+        'token': 'some token',
     }
     authenticate_mock = mocker.patch(
         'src.authentication.services.AuthService'
         '.get_auth_token',
-        return_value=token_data
+        return_value=token_data,
     )
     tenants_accessed_mock = mocker.patch(
         'src.analytics.services.AnalyticService.'
-        'tenants_accessed'
+        'tenants_accessed',
     )
 
     # act
@@ -112,7 +112,7 @@ def test_token__any_premium_plan__ok(
         master_user=master_account_owner,
         tenant_account=tenant_account,
         is_superuser=False,
-        auth_type=AuthTokenType.USER
+        auth_type=AuthTokenType.USER,
     )
     authenticate_mock.assert_called_once_with(
         user=tenant_account_owner,
@@ -129,18 +129,18 @@ def test_token__tenant__permission_denied(
     # arrange
     account = create_test_account(
         plan=BillingPlanType.UNLIMITED,
-        lease_level=LeaseLevel.TENANT
+        lease_level=LeaseLevel.TENANT,
     )
     account_owner = create_test_user(account=account)
     tenant_account = create_test_account(
         name='tenant',
         plan=BillingPlanType.UNLIMITED,
         lease_level=LeaseLevel.TENANT,
-        master_account=account
+        master_account=account,
     )
     create_test_user(
         account=tenant_account,
-        email='tenant_owner@test.test'
+        email='tenant_owner@test.test',
     )
     api_client.token_authenticate(account_owner)
     authenticate_mock = mocker.patch(
@@ -149,7 +149,7 @@ def test_token__tenant__permission_denied(
     )
     tenants_accessed_mock = mocker.patch(
         'src.analytics.services.AnalyticService.'
-        'tenants_accessed'
+        'tenants_accessed',
     )
 
     # act
@@ -167,31 +167,31 @@ def test_token__free_plan__ok(
 ):
     # arrange
     master_account = create_test_account(
-        lease_level=LeaseLevel.STANDARD
+        lease_level=LeaseLevel.STANDARD,
     )
     master_account_owner = create_test_user(account=master_account)
     tenant_account = create_test_account(
         name='tenant',
         plan=BillingPlanType.FREEMIUM,
         lease_level=LeaseLevel.TENANT,
-        master_account=master_account
+        master_account=master_account,
     )
     tenant_account_owner = create_test_user(
         account=tenant_account,
-        email='tenant_owner@test.test'
+        email='tenant_owner@test.test',
     )
     api_client.token_authenticate(master_account_owner)
     token_data = {
-        'token': 'some token'
+        'token': 'some token',
     }
     authenticate_mock = mocker.patch(
         'src.authentication.services.AuthService'
         '.get_auth_token',
-        return_value=token_data
+        return_value=token_data,
     )
     tenants_accessed_mock = mocker.patch(
         'src.analytics.services.AnalyticService.'
-        'tenants_accessed'
+        'tenants_accessed',
     )
 
     # act
@@ -204,7 +204,7 @@ def test_token__free_plan__ok(
         master_user=master_account_owner,
         tenant_account=tenant_account,
         is_superuser=False,
-        auth_type=AuthTokenType.USER
+        auth_type=AuthTokenType.USER,
     )
     authenticate_mock.assert_called_once_with(
         user=tenant_account_owner,
@@ -221,18 +221,18 @@ def test_token__expired_subscription__permission_denied(
     # arrange
     account = create_test_account(
         plan=BillingPlanType.UNLIMITED,
-        plan_expiration=timezone.now() - datetime.timedelta(hours=1)
+        plan_expiration=timezone.now() - datetime.timedelta(hours=1),
     )
     account_owner = create_test_user(account=account)
     tenant_account = create_test_account(
         name='tenant',
         plan=BillingPlanType.UNLIMITED,
         lease_level=LeaseLevel.TENANT,
-        master_account=account
+        master_account=account,
     )
     create_test_user(
         account=tenant_account,
-        email='tenant_owner@test.test'
+        email='tenant_owner@test.test',
     )
     api_client.token_authenticate(account_owner)
     authenticate_mock = mocker.patch(
@@ -255,27 +255,27 @@ def test_token__another_account_tenant__permission_denied(
     # arrange
     account = create_test_account(
         plan=BillingPlanType.UNLIMITED,
-        lease_level=LeaseLevel.STANDARD
+        lease_level=LeaseLevel.STANDARD,
     )
     account_owner = create_test_user(account=account)
     another_account = create_test_account(
         name='another account',
         plan=BillingPlanType.UNLIMITED,
-        lease_level=LeaseLevel.STANDARD
+        lease_level=LeaseLevel.STANDARD,
     )
     create_test_user(
         account=another_account,
-        email='another_owner@test.test'
+        email='another_owner@test.test',
     )
     another_tenant_account = create_test_account(
         name='tenant',
         plan=BillingPlanType.UNLIMITED,
         lease_level=LeaseLevel.TENANT,
-        master_account=another_account
+        master_account=another_account,
     )
     create_test_user(
         account=another_tenant_account,
-        email='tenant_owner@test.test'
+        email='tenant_owner@test.test',
     )
     api_client.token_authenticate(account_owner)
     authenticate_mock = mocker.patch(
@@ -285,7 +285,7 @@ def test_token__another_account_tenant__permission_denied(
 
     # act
     response = api_client.get(
-        f'/tenants/{another_tenant_account.id}/token'
+        f'/tenants/{another_tenant_account.id}/token',
     )
 
     # assert
@@ -304,17 +304,17 @@ def test_token__not_admin__permission_denied(
     master_account_not_admin = create_test_user(
         account=master_account,
         is_admin=False,
-        is_account_owner=False
+        is_account_owner=False,
     )
     tenant_account = create_test_account(
         name='tenant',
         plan=BillingPlanType.UNLIMITED,
         lease_level=LeaseLevel.TENANT,
-        master_account=master_account
+        master_account=master_account,
     )
     create_test_user(
         account=tenant_account,
-        email='tenant_owner@test.test'
+        email='tenant_owner@test.test',
     )
     authenticate_mock = mocker.patch(
         'src.authentication.services.AuthService'
@@ -339,12 +339,12 @@ def test_token__not_tenant__permission_denied(
     # arrange
     master_account = create_test_account(
         plan=BillingPlanType.UNLIMITED,
-        lease_level=lease_level
+        lease_level=lease_level,
     )
     master_account_not_admin = create_test_user(
         account=master_account,
         is_admin=False,
-        is_account_owner=False
+        is_account_owner=False,
     )
     another_tenant_account = create_test_account(
         name='tenant',
@@ -359,7 +359,7 @@ def test_token__not_tenant__permission_denied(
 
     # act
     response = api_client.get(
-        f'/tenants/{another_tenant_account.id}/token'
+        f'/tenants/{another_tenant_account.id}/token',
     )
 
     # assert

@@ -24,6 +24,6 @@ def send_email_via_customerio(
         message_data=dynamic_data or {},
         identifiers={
             'id': user_id,
-        }
+        },
     )
     client.send_email(request)

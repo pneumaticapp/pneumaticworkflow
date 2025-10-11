@@ -39,12 +39,12 @@ from src.processes.serializers.workflows.task import (
     TaskCompleteSerializer,
 )
 from src.processes.serializers.workflows.due_date import (
-    DueDateSerializer
+    DueDateSerializer,
 )
 from src.processes.serializers.workflows.task_performer import (
     TaskPerformerSerializer,
     TaskGuestPerformerSerializer,
-    TaskGroupPerformerSerializer
+    TaskGroupPerformerSerializer,
 )
 from src.processes.serializers.workflows.events import (
     WorkflowEventSerializer,
@@ -52,25 +52,25 @@ from src.processes.serializers.workflows.events import (
 from src.processes.services.tasks.exceptions import (
     PerformersServiceException,
     TaskServiceException,
-    GroupPerformerServiceException, TaskFieldException
+    GroupPerformerServiceException, TaskFieldException,
 )
 from src.processes.services.tasks.groups import (
-    GroupPerformerService
+    GroupPerformerService,
 )
 from src.processes.services.tasks.performers import (
-    TaskPerformersService
+    TaskPerformersService,
 )
 from src.processes.services.tasks.guests import (
-    GuestPerformersService
+    GuestPerformersService,
 )
 from src.processes.serializers.workflows.task import (
-    TaskRevertSerializer
+    TaskRevertSerializer,
 )
 from src.processes.services.exceptions import (
-    WorkflowActionServiceException
+    WorkflowActionServiceException,
 )
 from src.processes.services.workflow_action import (
-    WorkflowActionService
+    WorkflowActionService,
 )
 from src.utils.validation import raise_validation_error
 from src.processes.throttling import TaskPerformerGuestThrottle
@@ -87,7 +87,7 @@ from src.processes.services.events import (
     CommentService,
 )
 from src.processes.services.exceptions import (
-    CommentServiceException
+    CommentServiceException,
 )
 from src.processes.serializers.comments import (
     CommentCreateSerializer,
@@ -110,12 +110,12 @@ class TasksListView(ListAPIView):
         user = request.user
         filter_slz = TaskListFilterSerializer(
             data=request.GET,
-            context={'user': user}
+            context={'user': user},
         )
         filter_slz.is_valid(raise_exception=True)
         query = TaskListQuery(
             user=user,
-            **filter_slz.validated_data
+            **filter_slz.validated_data,
         )
         self.queryset = TaskForList.objects.execute_raw(query)
         search_text = filter_slz.validated_data.get('search')
@@ -125,7 +125,7 @@ class TasksListView(ListAPIView):
                 page='tasks',
                 search_text=search_text,
                 is_superuser=request.is_superuser,
-                auth_type=request.token_type
+                auth_type=request.token_type,
             )
         return super().list(request, *args, **kwargs)
 
@@ -229,7 +229,7 @@ class TaskViewSet(
             queryset = queryset.with_date_first_started()
         elif self.action == 'webhook_example':
             queryset = queryset.filter(
-                workflow__owners=user.id
+                workflow__owners=user.id,
             ).order_by('-date_started')
         return self.prefetch_queryset(queryset)
 
@@ -257,7 +257,7 @@ class TaskViewSet(
                 'output__selections',
                 'output__attachments',
             ).select_related(
-                'workflow'
+                'workflow',
             )
         elif self.action in {'revert', 'complete', 'comment'}:
             queryset = queryset.select_related('workflow')
@@ -283,7 +283,7 @@ class TaskViewSet(
         task = self.get_object()
         request_slz = self.get_serializer(
             data=request.data,
-            extra_fields={'task': task}
+            extra_fields={'task': task},
         )
         request_slz.is_valid(raise_exception=True)
         user_id = request_slz.validated_data['user_id']
@@ -294,7 +294,7 @@ class TaskViewSet(
                 user_key=user_id,
                 current_url=request.META.get('HTTP_X_CURRENT_URL'),
                 is_superuser=request.is_superuser,
-                auth_type=request.token_type
+                auth_type=request.token_type,
             )
         except PerformersServiceException as ex:
             raise_validation_error(message=ex.message)
@@ -306,7 +306,7 @@ class TaskViewSet(
         task = self.get_object()
         request_slz = self.get_serializer(
             data=request.data,
-            extra_fields={'task': task}
+            extra_fields={'task': task},
         )
         request_slz.is_valid(raise_exception=True)
         group_id = request_slz.validated_data['group_id']
@@ -328,7 +328,7 @@ class TaskViewSet(
         task = self.get_object()
         slz = self.get_serializer(
             data=request.data,
-            extra_fields={'task': task}
+            extra_fields={'task': task},
         )
         slz.is_valid(raise_exception=True)
         user_id = slz.validated_data['user_id']
@@ -338,7 +338,7 @@ class TaskViewSet(
                 request_user=request.user,
                 user_key=user_id,
                 is_superuser=request.is_superuser,
-                auth_type=request.token_type
+                auth_type=request.token_type,
             )
         except PerformersServiceException as ex:
             raise_validation_error(message=ex.message)
@@ -350,7 +350,7 @@ class TaskViewSet(
         task = self.get_object()
         request_slz = self.get_serializer(
             data=request.data,
-            extra_fields={'task': task}
+            extra_fields={'task': task},
         )
         request_slz.is_valid(raise_exception=True)
         group_id = request_slz.validated_data['group_id']
@@ -373,7 +373,7 @@ class TaskViewSet(
         task = self.get_object()
         request_slz = self.get_serializer(
             data=request.data,
-            extra_fields={'task': task}
+            extra_fields={'task': task},
         )
         request_slz.is_valid(raise_exception=True)
         email = request_slz.validated_data['email']
@@ -384,7 +384,7 @@ class TaskViewSet(
                 user_key=email,
                 current_url=request.META.get('HTTP_X_CURRENT_URL'),
                 is_superuser=request.is_superuser,
-                auth_type=request.token_type
+                auth_type=request.token_type,
             )
         except PerformersServiceException as ex:
             raise_validation_error(message=ex.message)
@@ -397,7 +397,7 @@ class TaskViewSet(
         task = self.get_object()
         request_slz = self.get_serializer(
             data=request.data,
-            extra_fields={'task': task}
+            extra_fields={'task': task},
         )
         request_slz.is_valid(raise_exception=True)
         email = request_slz.validated_data['email']
@@ -419,7 +419,7 @@ class TaskViewSet(
         task = self.get_object()
         if request.method == 'POST':
             request_slz = self.get_serializer(
-                data=request.data
+                data=request.data,
             )
             request_slz.is_valid(raise_exception=True)
             due_date = request_slz.validated_data['due_date_tsp']
@@ -438,7 +438,7 @@ class TaskViewSet(
         task = self.get_object()
         qst = (
             WorkflowEvent.objects
-            .prefetch_related('attachments',)
+            .prefetch_related('attachments')
             .on_task(task.id)
             .type_in(WorkflowEventType.TASK_EVENTS)
         )
@@ -454,12 +454,12 @@ class TaskViewSet(
             workflow=task.workflow,
             user=request.user,
             auth_type=request.token_type,
-            is_superuser=request.is_superuser
+            is_superuser=request.is_superuser,
         )
         try:
             service.revert(
                 revert_from_task=task,
-                comment=serializer.validated_data['comment']
+                comment=serializer.validated_data['comment'],
             )
         except WorkflowActionServiceException as ex:
             raise_validation_error(message=ex.message)
@@ -474,12 +474,12 @@ class TaskViewSet(
             workflow=task.workflow,
             user=request.user,
             auth_type=request.token_type,
-            is_superuser=request.is_superuser
+            is_superuser=request.is_superuser,
         )
         try:
             task = service.complete_task_for_user(
                 task=task,
-                fields_values=serializer.validated_data.get('output')
+                fields_values=serializer.validated_data.get('output'),
             )
             service.check_delay_workflow()
         except WorkflowActionServiceException as ex:
@@ -487,11 +487,11 @@ class TaskViewSet(
         except TaskFieldException as ex:
             raise_validation_error(
                 message=ex.message,
-                api_name=ex.api_name
+                api_name=ex.api_name,
             )
         response_slz = TaskSerializer(
             instance=task,
-            context={'user': request.user}
+            context={'user': request.user},
         )
         return self.response_ok(response_slz.data)
 
@@ -500,23 +500,23 @@ class TaskViewSet(
         task = self.get_object()
         slz = self.get_serializer(
             data=request.data,
-            extra_fields={'workflow': task.workflow}
+            extra_fields={'workflow': task.workflow},
         )
         slz.is_valid(raise_exception=True)
         service = CommentService(
             user=request.user,
             auth_type=request.token_type,
-            is_superuser=request.is_superuser
+            is_superuser=request.is_superuser,
         )
         try:
             event = service.create(
                 task=task,
-                **slz.validated_data
+                **slz.validated_data,
             )
         except CommentServiceException as ex:
             raise_validation_error(message=ex.message)
         return self.response_ok(
-            WorkflowEventSerializer(instance=event).data
+            WorkflowEventSerializer(instance=event).data,
         )
 
     @action(methods=['get'], url_path='webhook-example', detail=False)
@@ -532,8 +532,8 @@ class TaskViewSet(
                         else HookEvent.TASK_RETURNED
                     ),
                     'id': 123,
-                    "target": 'https://example.com/webhooks/'
+                    "target": 'https://example.com/webhooks/',
                 },
-                **task.webhook_payload()
-            }
+                **task.webhook_payload(),
+            },
         )

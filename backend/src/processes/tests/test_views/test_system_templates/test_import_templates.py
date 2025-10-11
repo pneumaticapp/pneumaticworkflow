@@ -6,7 +6,7 @@ from src.processes.enums import (
 )
 from src.processes.models import (
     SystemTemplateCategory,
-    SystemTemplate
+    SystemTemplate,
 )
 from src.processes.tests.fixtures import (
     create_test_user,
@@ -39,40 +39,42 @@ def test_import_templates__category_not_exists__create(api_client):
               "dueIn": {
                 "days": 0,
                 "hours": 12,
-                "minutes": 30
-              }
+                "minutes": 30,
+              },
             },
             {
               "stepName": "Communicate Expectations",
-              "stepDescription": "Once the peand what is expected of them."
+              "stepDescription": "Once the peand what is expected of them.",
             },
             {
               "stepName": "Measure Actual Performance",
-              "stepDescription": "This step invbservable behaviors or results."
+              "stepDescription": (
+                  "This step invbservable behaviors or results."
+              ),
             },
             {
               "stepName": "Compare Actual Performance with Standards",
-              "stepDescription": "In this gaps."
+              "stepDescription": "In this gaps.",
             },
             {
               "stepName": "Discuss Appraisal with the Employee",
-              "stepDescription": "Next, the manance gaps should be addressed."
+              "stepDescription": "Next, the manance gaps should be addressed.",
             },
             {
               "stepName": "Design and Implement a Performance Plan",
-              "stepDescription": "The final step invoving their performance."
-            }
+              "stepDescription": "The final step invoving their performance.",
+            },
           ],
-          "category": category_name
+          "category": category_name,
         },
-      ]
+      ],
     }
     api_client.token_authenticate(user)
 
     # act
     response = api_client.post(
         '/templates/system/import',
-        data=data
+        data=data,
     )
 
     # assert
@@ -108,7 +110,7 @@ def test_import_templates__existent_category__use_existent(api_client):
     user = create_test_user(is_staff=True)
     category_name = "Human Resources"
     category = SystemTemplateCategory.objects.create(
-        name=category_name
+        name=category_name,
     )
     template_name = "Performance Appraisal"
     data = {
@@ -121,23 +123,23 @@ def test_import_templates__existent_category__use_existent(api_client):
           "steps": [
             {
               "stepName": "Establish Performance Standards",
-              "stepDescription": "The first step of the requirements."
+              "stepDescription": "The first step of the requirements.",
             },
             {
               "stepName": "Communicate Expectations",
-              "stepDescription": "Once the peand what is expected of them."
-            }
+              "stepDescription": "Once the peand what is expected of them.",
+            },
           ],
-          "category": category_name
+          "category": category_name,
         },
-      ]
+      ],
     }
     api_client.token_authenticate(user)
 
     # act
     response = api_client.post(
         '/templates/system/import',
-        data=data
+        data=data,
     )
 
     # assert
@@ -173,7 +175,7 @@ def test_import_templates__existent_template__update(api_client):
                         'rule': DueDateRule.AFTER_WORKFLOW_STARTED,
                         'duration_months': 1,
                         'duration': '0 0:1:00',
-                    }
+                    },
                 },
                 {
                     'name': 'Finding reasons of request',
@@ -186,9 +188,9 @@ def test_import_templates__existent_template__update(api_client):
                 {
                     'name': 'Creating report',
                     'number': 4,
-                }
+                },
             ],
-        }
+        },
     )
     # new data
     category_name = "Human Resources"
@@ -209,40 +211,42 @@ def test_import_templates__existent_template__update(api_client):
               "dueIn": {
                   "days": 1,
                   "hours": 2,
-                  "minutes": 0
-              }
+                  "minutes": 0,
+              },
             },
             {
               "stepName": "Communicate Expectations",
-              "stepDescription": "Once the peand what is expected of them."
+              "stepDescription": "Once the peand what is expected of them.",
             },
             {
               "stepName": "Measure Actual Performance",
-              "stepDescription": "This step invbservable behaviors or results."
+              "stepDescription": (
+                  "This step invbservable behaviors or results."
+              ),
             },
             {
               "stepName": "Compare Actual Performance with Standards",
-              "stepDescription": "In this gaps."
+              "stepDescription": "In this gaps.",
             },
             {
               "stepName": "Discuss Appraisal with the Employee",
-              "stepDescription": "Next, the manance gaps should be addressed."
+              "stepDescription": "Next, the manance gaps should be addressed.",
             },
             {
               "stepName": "Design and Implement a Performance Plan",
-              "stepDescription": "The final step invoving their performance."
-            }
+              "stepDescription": "The final step invoving their performance.",
+            },
           ],
-          "category": category_name
+          "category": category_name,
         },
-      ]
+      ],
     }
     api_client.token_authenticate(user)
 
     # act
     response = api_client.post(
         '/templates/system/import',
-        data=data
+        data=data,
     )
 
     # assert
@@ -277,7 +281,7 @@ def test_import_templates__not_library_type__not_update(api_client):
     name = 'another name'
     desc = 'another desc'
     another_category = SystemTemplateCategory.objects.create(
-        name='another category'
+        name='another category',
     )
     step_name = 'Another first step'
     step_desc = 'Another step desc'
@@ -308,9 +312,9 @@ def test_import_templates__not_library_type__not_update(api_client):
                 {
                     'name': 'Creating report',
                     'number': 4,
-                }
+                },
             ],
-        }
+        },
     )
     # new data
     data = {
@@ -323,39 +327,41 @@ def test_import_templates__not_library_type__not_update(api_client):
           "steps": [
             {
               "stepName": 'Firs tstep',
-              "stepDescription": 'first desc'
+              "stepDescription": 'first desc',
             },
             {
               "stepName": "Communicate Expectations",
-              "stepDescription": "Once the peand what is expected of them."
+              "stepDescription": "Once the peand what is expected of them.",
             },
             {
               "stepName": "Measure Actual Performance",
-              "stepDescription": "This step invbservable behaviors or results."
+              "stepDescription": (
+                  "This step invbservable behaviors or results."
+              ),
             },
             {
               "stepName": "Compare Actual Performance with Standards",
-              "stepDescription": "In this gaps."
+              "stepDescription": "In this gaps.",
             },
             {
               "stepName": "Discuss Appraisal with the Employee",
-              "stepDescription": "Next, the manance gaps should be addressed."
+              "stepDescription": "Next, the manance gaps should be addressed.",
             },
             {
               "stepName": "Design and Implement a Performance Plan",
-              "stepDescription": "The final step invoving their performance."
-            }
+              "stepDescription": "The final step invoving their performance.",
+            },
           ],
-          "category": 'new category'
+          "category": 'new category',
         },
-      ]
+      ],
     }
     api_client.token_authenticate(user)
 
     # act
     response = api_client.post(
         '/templates/system/import',
-        data=data
+        data=data,
     )
 
     # assert
@@ -400,10 +406,10 @@ def test_import_templates__create_and_update__ok(api_client):
           "steps": [
             {
               "stepName": step_name_2,
-              "stepDescription": step_desc_2
+              "stepDescription": step_desc_2,
             },
           ],
-          "category": category_name
+          "category": category_name,
         },
         {
             "title": template_name_1,
@@ -412,12 +418,12 @@ def test_import_templates__create_and_update__ok(api_client):
             "steps": [
                 {
                     "stepName": step_name_1,
-                    "stepDescription": step_desc_1
-                }
+                    "stepDescription": step_desc_1,
+                },
             ],
-            "category": category_name
-        }
-      ]
+            "category": category_name,
+        },
+      ],
     }
 
     sys_template_2 = SystemTemplate.objects.create(
@@ -432,16 +438,16 @@ def test_import_templates__create_and_update__ok(api_client):
                 {
                     'name': 'Checking data',
                     'number': 1,
-                }
-            ]
-        }
+                },
+            ],
+        },
     )
     api_client.token_authenticate(user)
 
     # act
     response = api_client.post(
         '/templates/system/import',
-        data=data
+        data=data,
     )
 
     # assert
@@ -493,23 +499,23 @@ def test_import_templates__kickoff_fields__names_transferred(api_client):
                     'initiator': 'user',
                     "Contractor Information": "largeText",
                     "prospectiveInvestmentName": "text",
-                    "Start": "date"
+                    "Start": "date",
                 },
                 "steps": [
                     {
                         "stepName": 'name',
                         "stepDescription": 'desc',
-                    }
-                ]
-            }
-        ]
+                    },
+                ],
+            },
+        ],
     }
     api_client.token_authenticate(user)
 
     # act
     response = api_client.post(
         '/templates/system/import',
-        data=data
+        data=data,
     )
 
     # assert
@@ -565,19 +571,19 @@ def test_import_templates__escape_quote__ok(api_client):
               "dueIn": {
                 "days": 0,
                 "hours": 12,
-                "minutes": 30
-              }
-            }
-          ]
-        }
-      ]
+                "minutes": 30,
+              },
+            },
+          ],
+        },
+      ],
     }
     api_client.token_authenticate(user)
 
     # act
     response = api_client.post(
         '/templates/system/import',
-        data=data
+        data=data,
     )
 
     # assert
@@ -619,40 +625,40 @@ def test_create_template__from_imported_template__ok(api_client):
                         "dueIn": {
                             "days": 12,
                             "hours": 2,
-                            "minutes": 3
-                        }
+                            "minutes": 3,
+                        },
                     },
                     {
                         "stepName": "Communicate Expectations",
-                        "stepDescription": "Once the them."
+                        "stepDescription": "Once the them.",
                     },
                     {
                         "stepName": "Measure Actual Performance",
-                        "stepDescription": "This step or results."
+                        "stepDescription": "This step or results.",
                     },
                     {
                         "stepName": "Compare Actual with Standards",
-                        "stepDescription": "In this gaps."
+                        "stepDescription": "In this gaps.",
                     },
                     {
                         "stepName": "Discuss Appraisal with the Employee",
-                        "stepDescription": "Next, be addressed."
+                        "stepDescription": "Next, be addressed.",
                     },
                     {
                         "stepName": "Design and Implement a Performance Plan",
-                        "stepDescription": "The their performance."
-                    }
+                        "stepDescription": "The their performance.",
+                    },
                 ],
-                "category": category_name
+                "category": category_name,
             },
-        ]
+        ],
     }
     api_client.token_authenticate(user)
 
     # create sys template
     response_import = api_client.post(
         '/templates/system/import',
-        data=data
+        data=data,
     )
 
     # get sys template
@@ -661,13 +667,13 @@ def test_create_template__from_imported_template__ok(api_client):
 
     # fill sys template
     response_fill = api_client.post(
-        f'/templates/system/{sys_template_id}/fill'
+        f'/templates/system/{sys_template_id}/fill',
     )
 
     # act
     response = api_client.post(
         path='/templates',
-        data=response_fill.data
+        data=response_fill.data,
     )
 
     # assert
@@ -709,23 +715,23 @@ def test_create_template__kickoff_fields__ok(api_client):
                     'initiator': 'user',
                     "Contractor Information": "largeText",
                     "prospectiveInvestmentName": "text",
-                    "Start": "date"
+                    "Start": "date",
                 },
                 "steps": [
                     {
                         "stepName": "Communicate Expectations",
-                        "stepDescription": "Once the peand them."
-                    }
-                ]
-            }
-        ]
+                        "stepDescription": "Once the peand them.",
+                    },
+                ],
+            },
+        ],
     }
     api_client.token_authenticate(user)
 
     # create sys template
     response_import = api_client.post(
         '/templates/system/import',
-        data=data
+        data=data,
     )
 
     # get sys template
@@ -734,13 +740,13 @@ def test_create_template__kickoff_fields__ok(api_client):
 
     # fill sys template
     response_fill = api_client.post(
-        f'/templates/system/{sys_template_id}/fill'
+        f'/templates/system/{sys_template_id}/fill',
     )
 
     # act
     response = api_client.post(
         path='/templates',
-        data=response_fill.data
+        data=response_fill.data,
     )
 
     # assert

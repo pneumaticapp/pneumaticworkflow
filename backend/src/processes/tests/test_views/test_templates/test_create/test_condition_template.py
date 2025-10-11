@@ -12,7 +12,7 @@ from src.processes.enums import (
     PredicateOperator,
     FieldType,
     PredicateType,
-    OwnerType, ConditionAction
+    OwnerType, ConditionAction,
 )
 from src.processes.models import Template, ConditionTemplate
 from src.authentication.enums import AuthTokenType
@@ -33,7 +33,7 @@ class TestCreateConditionTemplate:
         # arrange
         condition_create_analytics_mock = mocker.patch(
             'src.processes.serializers.templates.'
-            'condition.AnalyticService.templates_task_condition_created'
+            'condition.AnalyticService.templates_task_condition_created',
         )
         user = create_test_user()
         account = user.account
@@ -50,7 +50,7 @@ class TestCreateConditionTemplate:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'kickoff': {
@@ -61,8 +61,8 @@ class TestCreateConditionTemplate:
                             'type': FieldType.USER,
                             'api_name': 'user-field-1',
                             'is_required': True,
-                        }
-                    ]
+                        },
+                    ],
                 },
                 'tasks': [
                     {
@@ -73,12 +73,12 @@ class TestCreateConditionTemplate:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': user.id
-                            }
-                        ]
+                                'source_id': user.id,
+                            },
+                        ],
                     },
-                ]
-            }
+                ],
+            },
         )
 
         # assert
@@ -99,7 +99,7 @@ class TestCreateConditionTemplate:
         # arrange
         condition_create_analytics_mock = mocker.patch(
             'src.processes.serializers.templates.'
-            'condition.AnalyticService.templates_task_condition_created'
+            'condition.AnalyticService.templates_task_condition_created',
         )
         user = create_test_user()
         account = user.account
@@ -116,7 +116,7 @@ class TestCreateConditionTemplate:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'kickoff': {},
@@ -128,9 +128,9 @@ class TestCreateConditionTemplate:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': user.id
-                            }
-                        ]
+                                'source_id': user.id,
+                            },
+                        ],
                     },
                     {
                         'number': 2,
@@ -140,12 +140,12 @@ class TestCreateConditionTemplate:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': user.id
-                            }
-                        ]
+                                'source_id': user.id,
+                            },
+                        ],
                     },
-                ]
-            }
+                ],
+            },
         )
 
         # assert
@@ -167,7 +167,7 @@ class TestCreateConditionTemplate:
         # arrange
         condition_create_analytics_mock = mocker.patch(
             'src.processes.serializers.templates.'
-            'condition.AnalyticService.templates_task_condition_created'
+            'condition.AnalyticService.templates_task_condition_created',
         )
         account = create_test_account(plan=BillingPlanType.PREMIUM)
         user = create_test_user(account=account)
@@ -184,12 +184,12 @@ class TestCreateConditionTemplate:
                                 'field_type': PredicateType.USER,
                                 'operator': PredicateOperator.EQUAL,
                                 'value': user.id,
-                            }
-                        ]
-                    }
-                ]
+                            },
+                        ],
+                    },
+                ],
             },
-            None
+            None,
         ]
 
         # act
@@ -201,7 +201,7 @@ class TestCreateConditionTemplate:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'kickoff': {
@@ -212,8 +212,8 @@ class TestCreateConditionTemplate:
                             'type': FieldType.USER,
                             'api_name': 'user-field-1',
                             'is_required': True,
-                        }
-                    ]
+                        },
+                    ],
                 },
                 'tasks': [
                     {
@@ -223,13 +223,13 @@ class TestCreateConditionTemplate:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': user.id
-                            }
+                                'source_id': user.id,
+                            },
                         ],
-                        'conditions': conditions
-                    }
-                ]
-            }
+                        'conditions': conditions,
+                    },
+                ],
+            },
         )
 
         # assert
@@ -251,7 +251,7 @@ class TestCreateConditionTemplate:
         # arrange
         condition_create_analytics_mock = mocker.patch(
             'src.processes.serializers.templates.'
-            'condition.AnalyticService.templates_task_condition_created'
+            'condition.AnalyticService.templates_task_condition_created',
         )
         account = create_test_account(plan=BillingPlanType.PREMIUM)
         user = create_test_user(account=account)
@@ -260,9 +260,9 @@ class TestCreateConditionTemplate:
             {
                 'order': 1,
                 'action': ConditionAction.SKIP_TASK,
-                'rules': None
+                'rules': None,
             },
-            None
+            None,
         ]
 
         # act
@@ -274,7 +274,7 @@ class TestCreateConditionTemplate:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'kickoff': {
@@ -285,8 +285,8 @@ class TestCreateConditionTemplate:
                             'type': FieldType.USER,
                             'api_name': 'user-field-1',
                             'is_required': True,
-                        }
-                    ]
+                        },
+                    ],
                 },
                 'tasks': [
                     {
@@ -296,19 +296,19 @@ class TestCreateConditionTemplate:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': user.id
-                            }
+                                'source_id': user.id,
+                            },
                         ],
-                        'conditions': conditions
-                    }
-                ]
-            }
+                        'conditions': conditions,
+                    },
+                ],
+            },
         )
 
         # assert
         message = {
             'Conditions: this field may not be null.',
-            'Rules: this field may not be null.'
+            'Rules: this field may not be null.',
         }
         assert response.status_code == 400
         assert response.data['code'] == ErrorCode.VALIDATION_ERROR
@@ -326,7 +326,7 @@ class TestCreateConditionTemplate:
         # arrange
         condition_create_analytics_mock = mocker.patch(
             'src.processes.serializers.templates.'
-            'condition.AnalyticService.templates_task_condition_created'
+            'condition.AnalyticService.templates_task_condition_created',
         )
         user = create_test_user()
         account = user.account
@@ -343,7 +343,7 @@ class TestCreateConditionTemplate:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'kickoff': {
@@ -354,8 +354,8 @@ class TestCreateConditionTemplate:
                             'type': FieldType.USER,
                             'api_name': 'user-field-1',
                             'is_required': True,
-                        }
-                    ]
+                        },
+                    ],
                 },
                 'tasks': [
                     {
@@ -366,12 +366,12 @@ class TestCreateConditionTemplate:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': user.id
-                            }
+                                'source_id': user.id,
+                            },
                         ],
                     },
-                ]
-            }
+                ],
+            },
         )
 
         # assert
@@ -392,7 +392,7 @@ class TestCreateConditionTemplate:
         # arrange
         condition_create_analytics_mock = mocker.patch(
             'src.processes.serializers.templates.'
-            'condition.AnalyticService.templates_task_condition_created'
+            'condition.AnalyticService.templates_task_condition_created',
         )
         user = create_test_user()
         account = user.account
@@ -409,7 +409,7 @@ class TestCreateConditionTemplate:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'kickoff': {
@@ -420,8 +420,8 @@ class TestCreateConditionTemplate:
                             'type': FieldType.USER,
                             'api_name': 'user-field-1',
                             'is_required': True,
-                        }
-                    ]
+                        },
+                    ],
                 },
                 'tasks': [
                     {
@@ -432,12 +432,12 @@ class TestCreateConditionTemplate:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': user.id
-                            }
+                                'source_id': user.id,
+                            },
                         ],
                     },
-                ]
-            }
+                ],
+            },
         )
 
         # assert
@@ -458,7 +458,7 @@ class TestCreateConditionTemplate:
         # arrange
         condition_create_analytics_mock = mocker.patch(
             'src.processes.serializers.templates.'
-            'condition.AnalyticService.templates_task_condition_created'
+            'condition.AnalyticService.templates_task_condition_created',
         )
         user = create_test_user()
         account = user.account
@@ -481,7 +481,7 @@ class TestCreateConditionTemplate:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'kickoff': {
@@ -492,8 +492,8 @@ class TestCreateConditionTemplate:
                             'type': FieldType.USER,
                             'api_name': 'user-field-1',
                             'is_required': True,
-                        }
-                    ]
+                        },
+                    ],
                 },
                 'tasks': [
                     {
@@ -504,12 +504,12 @@ class TestCreateConditionTemplate:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': user.id
-                            }
+                                'source_id': user.id,
+                            },
                         ],
                     },
-                ]
-            }
+                ],
+            },
         )
 
         # assert
@@ -528,7 +528,7 @@ class TestCreateConditionTemplate:
         # arrange
         condition_create_analytics_mock = mocker.patch(
             'src.processes.serializers.templates.'
-            'condition.AnalyticService.templates_task_condition_created'
+            'condition.AnalyticService.templates_task_condition_created',
         )
         user = create_test_user()
         account = user.account
@@ -544,9 +544,9 @@ class TestCreateConditionTemplate:
                             'field_type': PredicateType.USER,
                             'operator': PredicateOperator.EQUAL,
                             'value': user.id,
-                        }
-                    ]
-                }
+                        },
+                    ],
+                },
             ],
             'order': 1,
             'action': ConditionAction.SKIP_TASK,
@@ -561,7 +561,7 @@ class TestCreateConditionTemplate:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'kickoff': {
@@ -572,8 +572,8 @@ class TestCreateConditionTemplate:
                             'type': FieldType.USER,
                             'api_name': 'user-field-1',
                             'is_required': True,
-                        }
-                    ]
+                        },
+                    ],
                 },
                 'tasks': [
                     {
@@ -583,12 +583,12 @@ class TestCreateConditionTemplate:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': user.id
-                            }
+                                'source_id': user.id,
+                            },
                         ],
                     },
-                ]
-            }
+                ],
+            },
         )
 
         # assert
@@ -600,7 +600,7 @@ class TestCreateConditionTemplate:
 
         template = Template.objects.get(id=response.data['id'])
         condition = ConditionTemplate.objects.get(
-            api_name=condition_data['api_name']
+            api_name=condition_data['api_name'],
         )
         condition_create_analytics_mock.assert_called_once_with(
             user=user,
@@ -627,7 +627,7 @@ class TestCreateConditionTemplate:
         # arrange
         mocker.patch(
             'src.processes.serializers.templates.'
-            'condition.AnalyticService.templates_task_condition_created'
+            'condition.AnalyticService.templates_task_condition_created',
         )
         user = create_test_user()
         account = user.account
@@ -642,9 +642,9 @@ class TestCreateConditionTemplate:
                             'field': 'user-field-1',
                             'field_type': data[1],
                             'operator': data[0],
-                        }
-                    ]
-                }
+                        },
+                    ],
+                },
             ],
             'order': 1,
             'action': ConditionAction.SKIP_TASK,
@@ -659,7 +659,7 @@ class TestCreateConditionTemplate:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'kickoff': {
@@ -670,8 +670,8 @@ class TestCreateConditionTemplate:
                             'type': FieldType.USER,
                             'api_name': 'user-field-1',
                             'is_required': True,
-                        }
-                    ]
+                        },
+                    ],
                 },
                 'tasks': [
                     {
@@ -681,12 +681,12 @@ class TestCreateConditionTemplate:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': user.id
-                            }
+                                'source_id': user.id,
+                            },
                         ],
                     },
-                ]
-            }
+                ],
+            },
         )
 
         # assert
@@ -709,7 +709,7 @@ class TestCreateConditionTemplate:
         # arrange
         condition_create_analytics_mock = mocker.patch(
             'src.processes.serializers.templates.'
-            'condition.AnalyticService.templates_task_condition_created'
+            'condition.AnalyticService.templates_task_condition_created',
         )
         user = create_test_user()
         account = user.account
@@ -728,9 +728,9 @@ class TestCreateConditionTemplate:
                             'operator': PredicateOperator.EQUAL,
                             'value': value,
                             'api_name': api_name,
-                        }
-                    ]
-                }
+                        },
+                    ],
+                },
             ],
             'order': 1,
             'action': ConditionAction.SKIP_TASK,
@@ -745,7 +745,7 @@ class TestCreateConditionTemplate:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'kickoff': {
@@ -756,8 +756,8 @@ class TestCreateConditionTemplate:
                             'type': FieldType.USER,
                             'api_name': 'user-field-1',
                             'is_required': True,
-                        }
-                    ]
+                        },
+                    ],
                 },
                 'tasks': [
                     {
@@ -767,12 +767,12 @@ class TestCreateConditionTemplate:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': user.id
-                            }
+                                'source_id': user.id,
+                            },
                         ],
                     },
-                ]
-            }
+                ],
+            },
         )
 
         # assert
@@ -793,7 +793,7 @@ class TestCreateConditionTemplate:
             (FieldType.RADIO, 'disallowed-api-name'),
             (FieldType.DROPDOWN, 'disallowed-api-name'),
             (FieldType.CHECKBOX, 'disallowed-api-name'),
-        ]
+        ],
     )
     def test_create__selection_field_incorrect_value__validation_error(
         self,
@@ -805,7 +805,7 @@ class TestCreateConditionTemplate:
         # arrange
         condition_create_analytics_mock = mocker.patch(
             'src.processes.serializers.templates.'
-            'condition.AnalyticService.templates_task_condition_created'
+            'condition.AnalyticService.templates_task_condition_created',
         )
         field = 'selection-field-1'
         user = create_test_user()
@@ -824,10 +824,10 @@ class TestCreateConditionTemplate:
                             'field_type': field_type,
                             'operator': PredicateOperator.EQUAL,
                             'value': value,
-                            'api_name': predicate_api_name
-                        }
-                    ]
-                }
+                            'api_name': predicate_api_name,
+                        },
+                    ],
+                },
             ],
             'order': 1,
             'action': ConditionAction.SKIP_TASK,
@@ -842,7 +842,7 @@ class TestCreateConditionTemplate:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'kickoff': {
@@ -855,9 +855,9 @@ class TestCreateConditionTemplate:
                             'selections': [
                                 {'value': 1},
                                 {'value': 2},
-                            ]
-                        }
-                    ]
+                            ],
+                        },
+                    ],
                 },
                 'tasks': [
                     {
@@ -867,19 +867,19 @@ class TestCreateConditionTemplate:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': user.id
-                            }
-                        ]
-                    }
-                ]
-            }
+                                'source_id': user.id,
+                            },
+                        ],
+                    },
+                ],
+            },
         )
 
         # assert
         assert response.status_code == 400
         message = messages.MSG_PT_0045(
             task=task_name,
-            selection_api_name=value
+            selection_api_name=value,
         )
         assert response.data['code'] == ErrorCode.VALIDATION_ERROR
         assert response.data['message'] == message
@@ -899,7 +899,7 @@ class TestCreateConditionTemplate:
             (FieldType.STRING, PredicateOperator.MORE_THAN),
             (FieldType.TEXT, PredicateOperator.LESS_THAN),
             (FieldType.DATE, PredicateOperator.CONTAIN),
-        ]
+        ],
     )
     def test_create__disallowed_operator__validation_error(
         self,
@@ -911,7 +911,7 @@ class TestCreateConditionTemplate:
         # arrange
         condition_create_analytics_mock = mocker.patch(
             'src.processes.serializers.templates.'
-            'condition.AnalyticService.templates_task_condition_created'
+            'condition.AnalyticService.templates_task_condition_created',
         )
         field = 'selection-field-1'
         user = create_test_user()
@@ -931,9 +931,9 @@ class TestCreateConditionTemplate:
                             'operator': operator,
                             'value': 1,
                             'api_name': predicate_api_name,
-                        }
-                    ]
-                }
+                        },
+                    ],
+                },
             ],
             'order': 1,
             'action': ConditionAction.SKIP_TASK,
@@ -948,7 +948,7 @@ class TestCreateConditionTemplate:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'kickoff': {
@@ -962,9 +962,9 @@ class TestCreateConditionTemplate:
                             'selections': [
                                 {'value': 1},
                                 {'value': 2},
-                            ]
-                        }
-                    ]
+                            ],
+                        },
+                    ],
                 },
                 'tasks': [
                     {
@@ -974,12 +974,12 @@ class TestCreateConditionTemplate:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': user.id
-                            }
+                                'source_id': user.id,
+                            },
                         ],
                     },
-                ]
-            }
+                ],
+            },
         )
 
         # assert
@@ -1003,7 +1003,7 @@ class TestCreateConditionTemplate:
         # arrange
         condition_create_analytics_mock = mocker.patch(
             'src.processes.serializers.templates.'
-            'condition.AnalyticService.templates_task_condition_created'
+            'condition.AnalyticService.templates_task_condition_created',
         )
         user = create_test_owner()
         task_name = 'Task 1'
@@ -1018,9 +1018,9 @@ class TestCreateConditionTemplate:
                             'field_type': PredicateType.USER,
                             'operator': PredicateOperator.EQUAL,
                             'value': user.id,
-                        }
-                    ]
-                }
+                        },
+                    ],
+                },
             ],
             'order': 1,
             'action': ConditionAction.SKIP_TASK,
@@ -1035,7 +1035,7 @@ class TestCreateConditionTemplate:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'kickoff': {},
@@ -1048,12 +1048,12 @@ class TestCreateConditionTemplate:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': user.id
-                            }
+                                'source_id': user.id,
+                            },
                         ],
                     },
-                ]
-            }
+                ],
+            },
         )
 
         # assert
@@ -1071,7 +1071,7 @@ class TestCreateConditionTemplate:
         # arrange
         mocker.patch(
             'src.processes.serializers.templates.'
-            'condition.AnalyticService.templates_task_condition_created'
+            'condition.AnalyticService.templates_task_condition_created',
         )
         user = create_test_owner()
         task_name = 'Task 1'
@@ -1088,9 +1088,9 @@ class TestCreateConditionTemplate:
                             'field_type': field_type,
                             'operator': PredicateOperator.EQUAL,
                             'value': user.id,
-                        }
-                    ]
-                }
+                        },
+                    ],
+                },
             ],
             'order': 1,
             'action': ConditionAction.SKIP_TASK,
@@ -1105,7 +1105,7 @@ class TestCreateConditionTemplate:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'kickoff': {
@@ -1116,8 +1116,8 @@ class TestCreateConditionTemplate:
                             'type': field_type,
                             'api_name': field_api_name,
                             'is_required': True,
-                        }
-                    ]
+                        },
+                    ],
                 },
                 'tasks': [
                     {
@@ -1128,12 +1128,12 @@ class TestCreateConditionTemplate:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': user.id
-                            }
+                                'source_id': user.id,
+                            },
                         ],
                     },
-                ]
-            }
+                ],
+            },
         )
 
         # assert
@@ -1147,7 +1147,7 @@ class TestCreateConditionTemplate:
         # arrange
         mocker.patch(
             'src.processes.serializers.templates.'
-            'condition.AnalyticService.templates_task_condition_created'
+            'condition.AnalyticService.templates_task_condition_created',
         )
         step = 'First step'
         condition_api_name = 'cond-1'
@@ -1165,13 +1165,13 @@ class TestCreateConditionTemplate:
                             'field_type': PredicateType.USER,
                             'operator': PredicateOperator.EQUAL,
                             'value': user.id,
-                        }
-                    ]
-                }
+                        },
+                    ],
+                },
             ],
             'order': 1,
             'action': ConditionAction.SKIP_TASK,
-            'api_name': condition_api_name
+            'api_name': condition_api_name,
         }
         condition_2 = {
             'rules': [
@@ -1182,13 +1182,13 @@ class TestCreateConditionTemplate:
                             'field_type': PredicateType.USER,
                             'operator': PredicateOperator.EQUAL,
                             'value': user.id,
-                        }
-                    ]
-                }
+                        },
+                    ],
+                },
             ],
             'order': 1,
             'action': ConditionAction.SKIP_TASK,
-            'api_name': condition_api_name
+            'api_name': condition_api_name,
         }
 
         # act
@@ -1200,7 +1200,7 @@ class TestCreateConditionTemplate:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'kickoff': {
@@ -1211,8 +1211,8 @@ class TestCreateConditionTemplate:
                             'type': FieldType.USER,
                             'api_name': 'user-field-1',
                             'is_required': True,
-                        }
-                    ]
+                        },
+                    ],
                 },
                 'tasks': [
                     {
@@ -1222,8 +1222,8 @@ class TestCreateConditionTemplate:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': user.id
-                            }
+                                'source_id': user.id,
+                            },
                         ],
                     },
                     {
@@ -1233,19 +1233,19 @@ class TestCreateConditionTemplate:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': user.id
-                            }
+                                'source_id': user.id,
+                            },
                         ],
                     },
-                ]
-            }
+                ],
+            },
         )
 
         # assert
         assert response.status_code == 400
         message = messages.MSG_PT_0049(
             name=step,
-            api_name=condition_api_name
+            api_name=condition_api_name,
         )
         assert response.data['message'] == message
         assert response.data['details']['reason'] == message
@@ -1259,7 +1259,7 @@ class TestCreateConditionTemplate:
         # arrange
         mocker.patch(
             'src.processes.serializers.templates.'
-            'condition.AnalyticService.templates_task_condition_created'
+            'condition.AnalyticService.templates_task_condition_created',
         )
         rule_api_name = 'rule-1'
         step = 'First step'
@@ -1277,10 +1277,10 @@ class TestCreateConditionTemplate:
                             'field_type': PredicateType.USER,
                             'operator': PredicateOperator.EQUAL,
                             'value': user.id,
-                        }
+                        },
                     ],
-                    'api_name': rule_api_name
-                }
+                    'api_name': rule_api_name,
+                },
             ],
             'order': 1,
             'action': ConditionAction.SKIP_TASK,
@@ -1294,10 +1294,10 @@ class TestCreateConditionTemplate:
                             'field_type': PredicateType.USER,
                             'operator': PredicateOperator.EQUAL,
                             'value': user.id,
-                        }
+                        },
                     ],
-                    'api_name': rule_api_name
-                }
+                    'api_name': rule_api_name,
+                },
             ],
             'order': 1,
             'action': ConditionAction.SKIP_TASK,
@@ -1312,7 +1312,7 @@ class TestCreateConditionTemplate:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'kickoff': {
@@ -1323,8 +1323,8 @@ class TestCreateConditionTemplate:
                             'type': FieldType.USER,
                             'api_name': 'user-field-1',
                             'is_required': True,
-                        }
-                    ]
+                        },
+                    ],
                 },
                 'tasks': [
                     {
@@ -1334,8 +1334,8 @@ class TestCreateConditionTemplate:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': user.id
-                            }
+                                'source_id': user.id,
+                            },
                         ],
                     },
                     {
@@ -1345,19 +1345,19 @@ class TestCreateConditionTemplate:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': user.id
-                            }
+                                'source_id': user.id,
+                            },
                         ],
                     },
-                ]
-            }
+                ],
+            },
         )
 
         # assert
         assert response.status_code == 400
         message = messages.MSG_PT_0053(
             name=step,
-            api_name=rule_api_name
+            api_name=rule_api_name,
         )
         assert response.data['message'] == message
         assert response.data['details']['reason'] == message
@@ -1371,7 +1371,7 @@ class TestCreateConditionTemplate:
         # arrange
         mocker.patch(
             'src.processes.serializers.templates.'
-            'condition.AnalyticService.templates_task_condition_created'
+            'condition.AnalyticService.templates_task_condition_created',
         )
         predicate_api_name = 'predicate-1'
         step = 'First step'
@@ -1390,9 +1390,9 @@ class TestCreateConditionTemplate:
                             'operator': PredicateOperator.EQUAL,
                             'value': user.id,
                             'api_name': predicate_api_name,
-                        }
-                    ]
-                }
+                        },
+                    ],
+                },
             ],
             'order': 1,
             'action': ConditionAction.SKIP_TASK,
@@ -1407,9 +1407,9 @@ class TestCreateConditionTemplate:
                             'operator': PredicateOperator.EQUAL,
                             'value': user.id,
                             'api_name': predicate_api_name,
-                        }
-                    ]
-                }
+                        },
+                    ],
+                },
             ],
             'order': 1,
             'action': ConditionAction.SKIP_TASK,
@@ -1424,7 +1424,7 @@ class TestCreateConditionTemplate:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'kickoff': {
@@ -1435,8 +1435,8 @@ class TestCreateConditionTemplate:
                             'type': FieldType.USER,
                             'api_name': 'user-field-1',
                             'is_required': True,
-                        }
-                    ]
+                        },
+                    ],
                 },
                 'tasks': [
                     {
@@ -1446,8 +1446,8 @@ class TestCreateConditionTemplate:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': user.id
-                            }
+                                'source_id': user.id,
+                            },
                         ],
                     },
                     {
@@ -1457,19 +1457,19 @@ class TestCreateConditionTemplate:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': user.id
-                            }
+                                'source_id': user.id,
+                            },
                         ],
                     },
-                ]
-            }
+                ],
+            },
         )
 
         # assert
         assert response.status_code == 400
         message = messages.MSG_PT_0051(
             name=step,
-            api_name=predicate_api_name
+            api_name=predicate_api_name,
         )
         assert response.data['message'] == message
         assert response.data['details']['reason'] == message
@@ -1485,7 +1485,7 @@ class TestCreateConditionTemplate:
         user = create_test_user(account=account)
         mocker.patch(
             'src.processes.serializers.templates.'
-            'condition.AnalyticService.templates_task_condition_created'
+            'condition.AnalyticService.templates_task_condition_created',
         )
         predicate_api_name = 'predicate-1'
         condition_data = {
@@ -1500,10 +1500,10 @@ class TestCreateConditionTemplate:
                             'api_name': predicate_api_name,
                             'field': None,
                             'value': None,
-                        }
-                    ]
-                }
-            ]
+                        },
+                    ],
+                },
+            ],
         }
         api_client.token_authenticate(user)
 
@@ -1516,7 +1516,7 @@ class TestCreateConditionTemplate:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'kickoff': {
@@ -1527,8 +1527,8 @@ class TestCreateConditionTemplate:
                             'type': FieldType.USER,
                             'api_name': 'user-field-1',
                             'is_required': True,
-                        }
-                    ]
+                        },
+                    ],
                 },
                 'tasks': [
                     {
@@ -1538,12 +1538,12 @@ class TestCreateConditionTemplate:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': user.id
-                            }
-                        ]
-                    }
-                ]
-            }
+                                'source_id': user.id,
+                            },
+                        ],
+                    },
+                ],
+            },
         )
 
         # assert
@@ -1566,7 +1566,7 @@ class TestCreateConditionTemplate:
         user = create_test_user(account=account)
         mocker.patch(
             'src.processes.serializers.templates.'
-            'condition.AnalyticService.templates_task_condition_created'
+            'condition.AnalyticService.templates_task_condition_created',
         )
         predicate_api_name = 'predicate-1'
         task_1_api_name = 'task-1'
@@ -1583,10 +1583,10 @@ class TestCreateConditionTemplate:
                             'api_name': predicate_api_name,
                             'field': task_1_api_name,
                             'value': None,
-                        }
-                    ]
-                }
-            ]
+                        },
+                    ],
+                },
+            ],
         }
         api_client.token_authenticate(user)
 
@@ -1599,7 +1599,7 @@ class TestCreateConditionTemplate:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'kickoff': {
@@ -1610,8 +1610,8 @@ class TestCreateConditionTemplate:
                             'type': FieldType.USER,
                             'api_name': 'user-field-1',
                             'is_required': True,
-                        }
-                    ]
+                        },
+                    ],
                 },
                 'tasks': [
                     {
@@ -1621,9 +1621,9 @@ class TestCreateConditionTemplate:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': user.id
-                            }
-                        ]
+                                'source_id': user.id,
+                            },
+                        ],
                     },
                     {
                         'number': 2,
@@ -1633,12 +1633,12 @@ class TestCreateConditionTemplate:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': user.id
-                            }
-                        ]
-                    }
-                ]
-            }
+                                'source_id': user.id,
+                            },
+                        ],
+                    },
+                ],
+            },
         )
 
         # assert
@@ -1660,8 +1660,8 @@ class TestCreateConditionTemplate:
             (PredicateOperator.EXIST, FieldType.STRING, 'yes'),
             (PredicateOperator.NOT_EXIST, FieldType.STRING, 'yes'),
             (PredicateOperator.CONTAIN, FieldType.STRING, 'yes'),
-            (PredicateOperator.NOT_CONTAIN, FieldType.STRING, 'yes')
-        )
+            (PredicateOperator.NOT_CONTAIN, FieldType.STRING, 'yes'),
+        ),
     )
     def test_create__action_start_task_with_incompatible_operators__ok(
         self,
@@ -1675,7 +1675,7 @@ class TestCreateConditionTemplate:
         user = create_test_user(account=account)
         mocker.patch(
             'src.processes.serializers.templates.'
-            'condition.AnalyticService.templates_task_condition_created'
+            'condition.AnalyticService.templates_task_condition_created',
         )
         task_name = 'Task 1'
         predicate_api_name = 'predicate-1'
@@ -1692,10 +1692,10 @@ class TestCreateConditionTemplate:
                             'api_name': predicate_api_name,
                             'field': field_api_name,
                             'value': value,
-                        }
-                    ]
-                }
-            ]
+                        },
+                    ],
+                },
+            ],
         }
         api_client.token_authenticate(user)
 
@@ -1708,7 +1708,7 @@ class TestCreateConditionTemplate:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'kickoff': {
@@ -1719,8 +1719,8 @@ class TestCreateConditionTemplate:
                             'type': field_type,
                             'api_name': field_api_name,
                             'is_required': True,
-                        }
-                    ]
+                        },
+                    ],
                 },
                 'tasks': [
                     {
@@ -1730,12 +1730,12 @@ class TestCreateConditionTemplate:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': user.id
-                            }
-                        ]
-                    }
-                ]
-            }
+                                'source_id': user.id,
+                            },
+                        ],
+                    },
+                ],
+            },
         )
 
         # assert
@@ -1753,7 +1753,7 @@ class TestCreateConditionTemplate:
             PredicateOperator.LESS_THAN,
             PredicateOperator.EXIST,
             PredicateOperator.NOT_EXIST,
-        )
+        ),
     )
     def test_create__predicate_type_number_allowed_operators__ok(
         self,
@@ -1766,7 +1766,7 @@ class TestCreateConditionTemplate:
         user = create_test_user(account=account)
         mocker.patch(
             'src.processes.serializers.templates.'
-            'condition.AnalyticService.templates_task_condition_created'
+            'condition.AnalyticService.templates_task_condition_created',
         )
         predicate_api_name = 'predicate-1'
         field_api_name = 'number-field-1'
@@ -1783,10 +1783,10 @@ class TestCreateConditionTemplate:
                             'api_name': predicate_api_name,
                             'field': field_api_name,
                             'value': value,
-                        }
-                    ]
-                }
-            ]
+                        },
+                    ],
+                },
+            ],
         }
         api_client.token_authenticate(user)
 
@@ -1799,7 +1799,7 @@ class TestCreateConditionTemplate:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'kickoff': {
@@ -1809,8 +1809,8 @@ class TestCreateConditionTemplate:
                             'name': 'Price',
                             'type': FieldType.NUMBER,
                             'api_name': field_api_name,
-                        }
-                    ]
+                        },
+                    ],
                 },
                 'tasks': [
                     {
@@ -1820,12 +1820,12 @@ class TestCreateConditionTemplate:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': user.id
-                            }
-                        ]
-                    }
-                ]
-            }
+                                'source_id': user.id,
+                            },
+                        ],
+                    },
+                ],
+            },
         )
 
         # assert
@@ -1843,7 +1843,7 @@ class TestCreateConditionTemplate:
             PredicateOperator.CONTAIN,
             PredicateOperator.NOT_CONTAIN,
             PredicateOperator.COMPLETED,
-        )
+        ),
     )
     def test_create__predicate_type_number_not_allowed_operators__valid_error(
         self,
@@ -1856,7 +1856,7 @@ class TestCreateConditionTemplate:
         user = create_test_user(account=account)
         mocker.patch(
             'src.processes.serializers.templates.'
-            'condition.AnalyticService.templates_task_condition_created'
+            'condition.AnalyticService.templates_task_condition_created',
         )
         predicate_api_name = 'predicate-1'
         field_api_name = 'number-field-1'
@@ -1874,10 +1874,10 @@ class TestCreateConditionTemplate:
                             'api_name': predicate_api_name,
                             'field': field_api_name,
                             'value': value,
-                        }
-                    ]
-                }
-            ]
+                        },
+                    ],
+                },
+            ],
         }
         api_client.token_authenticate(user)
 
@@ -1890,7 +1890,7 @@ class TestCreateConditionTemplate:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'kickoff': {
@@ -1900,8 +1900,8 @@ class TestCreateConditionTemplate:
                             'name': 'Price',
                             'type': FieldType.NUMBER,
                             'api_name': field_api_name,
-                        }
-                    ]
+                        },
+                    ],
                 },
                 'tasks': [
                     {
@@ -1911,12 +1911,12 @@ class TestCreateConditionTemplate:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': user.id
-                            }
-                        ]
-                    }
-                ]
-            }
+                                'source_id': user.id,
+                            },
+                        ],
+                    },
+                ],
+            },
         )
 
         # assert
@@ -1935,7 +1935,7 @@ class TestCreateConditionTemplate:
             ('1-', messages.MSG_PT_0063),
             (None, 'Task "Step 1": operator "equals" should have some value.'),
             ('', 'Value: this field may not be blank.'),
-        )
+        ),
     )
     def test_create__predicate_type_number_invalid_value__validation_error(
         self,
@@ -1949,7 +1949,7 @@ class TestCreateConditionTemplate:
         user = create_test_user(account=account)
         condition_create_analytics_mock = mocker.patch(
             'src.processes.serializers.templates.'
-            'condition.AnalyticService.templates_task_condition_created'
+            'condition.AnalyticService.templates_task_condition_created',
         )
         predicate_api_name = 'predicate-1'
         field_api_name = 'number-field-1'
@@ -1965,10 +1965,10 @@ class TestCreateConditionTemplate:
                             'api_name': predicate_api_name,
                             'field': field_api_name,
                             'value': value,
-                        }
-                    ]
-                }
-            ]
+                        },
+                    ],
+                },
+            ],
         }
         api_client.token_authenticate(user)
 
@@ -1981,7 +1981,7 @@ class TestCreateConditionTemplate:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'kickoff': {
@@ -1991,8 +1991,8 @@ class TestCreateConditionTemplate:
                             'name': 'Price',
                             'type': FieldType.NUMBER,
                             'api_name': field_api_name,
-                        }
-                    ]
+                        },
+                    ],
                 },
                 'tasks': [
                     {
@@ -2002,12 +2002,12 @@ class TestCreateConditionTemplate:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': user.id
-                            }
-                        ]
-                    }
-                ]
-            }
+                                'source_id': user.id,
+                            },
+                        ],
+                    },
+                ],
+            },
         )
 
         # assert
@@ -2029,7 +2029,7 @@ class TestCreateConditionTemplate:
         owner = create_test_owner(account=account)
         mocker.patch(
             'src.processes.serializers.templates.'
-            'condition.AnalyticService.templates_task_condition_created'
+            'condition.AnalyticService.templates_task_condition_created',
         )
         predicate_1_api_name = 'predicate-1'
         task_1_api_name = 'task-1'
@@ -2047,10 +2047,10 @@ class TestCreateConditionTemplate:
                             'api_name': task_2_api_name,
                             'field': task_1_api_name,
                             'value': None,
-                        }
-                    ]
-                }
-            ]
+                        },
+                    ],
+                },
+            ],
         }
         condition_2_data = {
             'order': 1,
@@ -2064,10 +2064,10 @@ class TestCreateConditionTemplate:
                             'api_name': predicate_1_api_name,
                             'field': task_1_api_name,
                             'value': None,
-                        }
-                    ]
-                }
-            ]
+                        },
+                    ],
+                },
+            ],
         }
         api_client.token_authenticate(owner)
 
@@ -2080,7 +2080,7 @@ class TestCreateConditionTemplate:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': owner.id
+                        'source_id': owner.id,
                     },
                 ],
                 'kickoff': {},
@@ -2093,9 +2093,9 @@ class TestCreateConditionTemplate:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': owner.id
-                            }
-                        ]
+                                'source_id': owner.id,
+                            },
+                        ],
                     },
                     {
                         'number': 2,
@@ -2105,12 +2105,12 @@ class TestCreateConditionTemplate:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': owner.id
-                            }
-                        ]
-                    }
-                ]
-            }
+                                'source_id': owner.id,
+                            },
+                        ],
+                    },
+                ],
+            },
         )
 
         # assert
@@ -2129,7 +2129,7 @@ class TestCreateConditionTemplate:
         owner = create_test_owner(account=account)
         mocker.patch(
             'src.processes.serializers.templates.'
-            'condition.AnalyticService.templates_task_condition_created'
+            'condition.AnalyticService.templates_task_condition_created',
         )
         predicate_1_api_name = 'predicate-1'
         not_existent_api_name = 'not-existent'
@@ -2147,10 +2147,10 @@ class TestCreateConditionTemplate:
                             'api_name': predicate_1_api_name,
                             'field': not_existent_api_name,
                             'value': None,
-                        }
-                    ]
-                }
-            ]
+                        },
+                    ],
+                },
+            ],
         }
         api_client.token_authenticate(owner)
 
@@ -2163,7 +2163,7 @@ class TestCreateConditionTemplate:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': owner.id
+                        'source_id': owner.id,
                     },
                 ],
                 'kickoff': {},
@@ -2176,12 +2176,12 @@ class TestCreateConditionTemplate:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': owner.id
-                            }
-                        ]
-                    }
-                ]
-            }
+                                'source_id': owner.id,
+                            },
+                        ],
+                    },
+                ],
+            },
         )
 
         # assert
@@ -2202,7 +2202,7 @@ class TestCreateConditionTemplate:
         owner = create_test_owner(account=account)
         mocker.patch(
             'src.processes.serializers.templates.'
-            'condition.AnalyticService.templates_task_condition_created'
+            'condition.AnalyticService.templates_task_condition_created',
         )
         predicate_1_api_name = 'predicate-1'
         not_existent_api_name = 'not-existent'
@@ -2220,10 +2220,10 @@ class TestCreateConditionTemplate:
                             'api_name': predicate_1_api_name,
                             'field': not_existent_api_name,
                             'value': None,
-                        }
-                    ]
-                }
-            ]
+                        },
+                    ],
+                },
+            ],
         }
         api_client.token_authenticate(owner)
 
@@ -2236,7 +2236,7 @@ class TestCreateConditionTemplate:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': owner.id
+                        'source_id': owner.id,
                     },
                 ],
                 'kickoff': {},
@@ -2249,12 +2249,12 @@ class TestCreateConditionTemplate:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': owner.id
-                            }
-                        ]
-                    }
-                ]
-            }
+                                'source_id': owner.id,
+                            },
+                        ],
+                    },
+                ],
+            },
         )
 
         # assert
@@ -2275,7 +2275,7 @@ class TestCreateConditionTemplate:
         owner = create_test_owner(account=account)
         mocker.patch(
             'src.processes.serializers.templates.'
-            'condition.AnalyticService.templates_task_condition_created'
+            'condition.AnalyticService.templates_task_condition_created',
         )
         predicate_1_api_name = 'predicate-1'
         task_api_name = 'task-1'
@@ -2293,10 +2293,10 @@ class TestCreateConditionTemplate:
                             'api_name': predicate_1_api_name,
                             'field': task_api_name,
                             'value': None,
-                        }
-                    ]
-                }
-            ]
+                        },
+                    ],
+                },
+            ],
         }
         api_client.token_authenticate(owner)
 
@@ -2309,7 +2309,7 @@ class TestCreateConditionTemplate:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': owner.id
+                        'source_id': owner.id,
                     },
                 ],
                 'kickoff': {},
@@ -2321,9 +2321,9 @@ class TestCreateConditionTemplate:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': owner.id
-                            }
-                        ]
+                                'source_id': owner.id,
+                            },
+                        ],
                     },
                     {
                         'number': 2,
@@ -2333,12 +2333,12 @@ class TestCreateConditionTemplate:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': owner.id
-                            }
-                        ]
-                    }
-                ]
-            }
+                                'source_id': owner.id,
+                            },
+                        ],
+                    },
+                ],
+            },
         )
 
         # assert

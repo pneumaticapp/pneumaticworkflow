@@ -2,11 +2,11 @@ from typing import Dict
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist
 from src.processes.models.templates.checklist import (
-    ChecklistTemplate
+    ChecklistTemplate,
 )
 from src.processes.models import (
     Checklist,
-    ChecklistSelection
+    ChecklistSelection,
 )
 from src.processes.services.tasks import exceptions
 from src.processes.services.tasks.checklist_selection import (
@@ -25,32 +25,32 @@ class ChecklistService(BaseWorkflowService):
     def _create_instance(
         self,
         instance_template: ChecklistTemplate,
-        **kwargs
+        **kwargs,
     ):
         self.instance = Checklist.objects.create(
             api_name=instance_template.api_name,
-            task=kwargs['task']
+            task=kwargs['task'],
         )
 
     def _create_related(
         self,
         instance_template: ChecklistTemplate,
-        **kwargs
+        **kwargs,
     ):
         for selection_template in instance_template.selections.all():
             selection_service = ChecklistSelectionService(user=self.user)
             selection_service.create(
                 checklist=self.instance,
-                instance_template=selection_template
+                instance_template=selection_template,
             )
 
     def _get_selection(self, selection_id: int) -> ChecklistSelection:
         try:
             selection = ChecklistSelection.objects.prefetch_related(
-                'checklist__task__workflow'
+                'checklist__task__workflow',
             ).get(
                 checklist=self.instance,
-                id=selection_id
+                id=selection_id,
             )
         except ObjectDoesNotExist as ex:
             raise exceptions.ChecklistSelectionNotFound() from ex
@@ -64,7 +64,7 @@ class ChecklistService(BaseWorkflowService):
         for selection in self.instance.selections.all():
             selection_service = ChecklistSelectionService(
                 instance=selection,
-                user=self.user
+                user=self.user,
             )
             selection_service.insert_fields_values(fields_values)
             selections.append(selection_service.instance)
@@ -72,22 +72,22 @@ class ChecklistService(BaseWorkflowService):
 
     def mark(
         self,
-        selection_id: int
+        selection_id: int,
     ):
         selection = self._get_selection(selection_id)
         selection_service = ChecklistSelectionService(
             instance=selection,
-            user=self.user
+            user=self.user,
         )
         selection_service.mark()
 
     def unmark(
         self,
-        selection_id: int
+        selection_id: int,
     ):
         selection = self._get_selection(selection_id)
         selection_service = ChecklistSelectionService(
             instance=selection,
-            user=self.user
+            user=self.user,
         )
         selection_service.unmark()

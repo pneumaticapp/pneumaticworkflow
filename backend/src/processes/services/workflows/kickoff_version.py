@@ -23,13 +23,13 @@ class KickoffUpdateVersionService(BaseUpdateVersionService):
                 'type': template['type'],
                 'is_required': template['is_required'],
                 'order': template['order'],
-                'workflow': self.instance.workflow
-            }
+                'workflow': self.instance.workflow,
+            },
         )
 
     def _update_fields(
         self,
-        data: List[Dict]
+        data: List[Dict],
     ):
 
         # TODO Move to TaskFieldService
@@ -46,7 +46,7 @@ class KickoffUpdateVersionService(BaseUpdateVersionService):
                         api_name=selection_data['api_name'],
                         defaults={
                             'value': selection_data['value'],
-                        }
+                        },
                     )
                     selection_ids.add(selection.id)
                 field.selections.exclude(id__in=selection_ids).delete()
@@ -55,7 +55,7 @@ class KickoffUpdateVersionService(BaseUpdateVersionService):
     def update_from_version(
         self,
         data: dict,
-        version: int
+        version: int,
     ):
         """
             data = {

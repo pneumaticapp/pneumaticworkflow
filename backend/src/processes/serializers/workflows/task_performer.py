@@ -4,12 +4,12 @@ from rest_framework.serializers import (
     IntegerField,
     EmailField,
     SerializerMethodField,
-    ModelSerializer
+    ModelSerializer,
 )
 from src.generics.fields import TimeStampField
 from src.processes.models.workflows.task import TaskPerformer
 from src.generics.mixins.serializers import (
-    CustomValidationErrorMixin
+    CustomValidationErrorMixin,
 )
 
 UserModel = get_user_model()
@@ -17,7 +17,7 @@ UserModel = get_user_model()
 
 class TaskPerformerSerializer(
     CustomValidationErrorMixin,
-    Serializer
+    Serializer,
 ):
 
     user_id = IntegerField(required=True)
@@ -25,7 +25,7 @@ class TaskPerformerSerializer(
 
 class TaskUserGroupPerformerSerializer(
     CustomValidationErrorMixin,
-    ModelSerializer
+    ModelSerializer,
 ):
     class Meta:
         model = TaskPerformer
@@ -47,7 +47,7 @@ class TaskUserGroupPerformerSerializer(
 
 class TaskGuestPerformerSerializer(
     CustomValidationErrorMixin,
-    Serializer
+    Serializer,
 ):
 
     email = EmailField(required=True)
@@ -58,6 +58,6 @@ class TaskGuestPerformerSerializer(
 
 class TaskGroupPerformerSerializer(
     CustomValidationErrorMixin,
-    Serializer
+    Serializer,
 ):
     group_id = IntegerField(required=True)

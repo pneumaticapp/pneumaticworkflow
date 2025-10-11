@@ -11,7 +11,7 @@ from src.authentication.tokens import (
 )
 from src.accounts.enums import BillingPlanType
 from src.processes.messages.workflow import (
-    MSG_PW_0001
+    MSG_PW_0001,
 )
 
 pytestmark = pytest.mark.django_db
@@ -19,7 +19,7 @@ pytestmark = pytest.mark.django_db
 
 def test_delete__public_token__ok(
     api_client,
-    mocker
+    mocker,
 ):
 
     # arrange
@@ -34,23 +34,23 @@ def test_delete__public_token__ok(
     get_token_mock = mocker.patch(
         'src.authentication.services.public_auth.'
         'PublicAuthService.get_token',
-        return_value=token
+        return_value=token,
     )
     get_template_mock = mocker.patch(
         'src.authentication.services.public_auth.'
         'PublicAuthService.get_template',
-        return_value=template
+        return_value=template,
     )
     mocker.patch(
         'src.processes.views.public.file_attachment'
         '.StoragePermission.has_permission',
-        return_value=True
+        return_value=True,
     )
     attachment = FileAttachment.objects.create(
         name='filename.png',
         size=24214,
         url='https://link.to.file/filename.png',
-        account_id=user.account_id
+        account_id=user.account_id,
     )
 
     # act
@@ -64,13 +64,13 @@ def test_delete__public_token__ok(
     get_template_mock.assert_called_once_with(token)
     assert response.status_code == 204
     assert not FileAttachment.objects.filter(
-        id=attachment.id
+        id=attachment.id,
     ).exists()
 
 
 def test_delete__disabled_billing__permission_error(
     api_client,
-    mocker
+    mocker,
 ):
 
     # arrange
@@ -85,23 +85,23 @@ def test_delete__disabled_billing__permission_error(
     get_token_mock = mocker.patch(
         'src.authentication.services.public_auth.'
         'PublicAuthService.get_token',
-        return_value=token
+        return_value=token,
     )
     get_template_mock = mocker.patch(
         'src.authentication.services.public_auth.'
         'PublicAuthService.get_template',
-        return_value=template
+        return_value=template,
     )
     mocker.patch(
         'src.processes.views.public.file_attachment'
         '.StoragePermission.has_permission',
-        return_value=False
+        return_value=False,
     )
     attachment = FileAttachment.objects.create(
         name='filename.png',
         size=24214,
         url='https://link.to.file/filename.png',
-        account_id=user.account_id
+        account_id=user.account_id,
     )
 
     # act
@@ -120,28 +120,28 @@ def test_delete__disabled_billing__permission_error(
 
 def test_delete__no_authenticated__permission_denied(
     mocker,
-    api_client
+    api_client,
 ):
 
     # arrange
     get_token_mock = mocker.patch(
         'src.authentication.services.public_auth.'
         'PublicAuthService.get_token',
-        return_value=None
+        return_value=None,
     )
     get_template_mock = mocker.patch(
         'src.authentication.services.public_auth.'
-        'PublicAuthService.get_template'
+        'PublicAuthService.get_template',
     )
     mocker.patch(
         'src.processes.views.public.file_attachment'
         '.StoragePermission.has_permission',
-        return_value=True
+        return_value=True,
     )
 
     # act
     response = api_client.delete(
-        '/workflows/public/attachments/1'
+        '/workflows/public/attachments/1',
     )
 
     # assert
@@ -165,23 +165,23 @@ def test_delete__embedded_token__ok(api_client, mocker):
     get_token_mock = mocker.patch(
         'src.authentication.services.public_auth.'
         'PublicAuthService.get_token',
-        return_value=token
+        return_value=token,
     )
     get_template_mock = mocker.patch(
         'src.authentication.services.public_auth.'
         'PublicAuthService.get_template',
-        return_value=template
+        return_value=template,
     )
     mocker.patch(
         'src.processes.views.public.file_attachment'
         '.StoragePermission.has_permission',
-        return_value=True
+        return_value=True,
     )
     attachment = FileAttachment.objects.create(
         name='filename.png',
         size=24214,
         url='https://link.to.file/filename.png',
-        account_id=account.id
+        account_id=account.id,
     )
 
     # act
@@ -195,5 +195,5 @@ def test_delete__embedded_token__ok(api_client, mocker):
     get_template_mock.assert_called_once_with(token)
     assert response.status_code == 204
     assert not FileAttachment.objects.filter(
-        id=attachment.id
+        id=attachment.id,
     ).exists()

@@ -1,16 +1,16 @@
 from src.analytics.customerio.permissions import (
-    WebhookAPIPermission
+    WebhookAPIPermission,
 )
 from rest_framework.views import APIView
 from rest_framework.serializers import ValidationError
 from src.analytics.customerio.services import WebHookService
 from src.analytics.customerio.serializers import (
-    WebHookSerializer
+    WebHookSerializer,
 )
 from src.analytics.customerio.exceptions import (
     WebHookException,
     UnsupportedMetric,
-    WebhookUserNotFound
+    WebhookUserNotFound,
 )
 from src.generics.mixins.views import BaseResponseMixin
 from src.utils import logging
@@ -18,7 +18,7 @@ from src.utils import logging
 
 class WebhooksView(
     APIView,
-    BaseResponseMixin
+    BaseResponseMixin,
 ):
 
     permission_classes = (WebhookAPIPermission,)
@@ -34,14 +34,14 @@ class WebhooksView(
             logging.capture_sentry_message(
                 message='customer.io webhook service error',
                 data={'message': ex.message},
-                level=logging.SentryLogLevel.ERROR
+                level=logging.SentryLogLevel.ERROR,
             )
             return self.response_bad_request()
         except ValidationError as ex:
             logging.capture_sentry_message(
                 message='customer.io webhook: validation error',
                 data=ex.detail,
-                level=logging.SentryLogLevel.ERROR
+                level=logging.SentryLogLevel.ERROR,
             )
             return self.response_bad_request()
         else:

@@ -19,7 +19,7 @@ class RawPerformerTemplate(
                 fields=['template', 'api_name'],
                 condition=Q(is_deleted=False),
                 name='processes_rawperformertemplate_template_api_name_unique',
-            )
+            ),
         ]
 
     api_name_prefix = 'raw-performer'
@@ -32,11 +32,11 @@ class RawPerformerTemplate(
     task = models.ForeignKey(
         TaskTemplate,
         on_delete=models.CASCADE,
-        related_name='raw_performers'
+        related_name='raw_performers',
     )
     field = models.ForeignKey(
         FieldTemplate,
         on_delete=models.CASCADE,
         related_name='raw_performers',
-        null=True
+        null=True,
     )

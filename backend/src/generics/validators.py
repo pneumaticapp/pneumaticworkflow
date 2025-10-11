@@ -3,7 +3,7 @@ from urllib.parse import urlsplit, urlunsplit
 from django.core.validators import (
     URLValidator,
     validate_ipv6_address,
-    _lazy_re_compile
+    _lazy_re_compile,
 )
 from django.core.exceptions import ValidationError
 
@@ -71,7 +71,7 @@ class NoSchemaURLValidator(URLValidator):
             # Now verify IPv6 in the netloc part
             host_match = re.search(
                 r'^\[(.+)\](?::\d{2,5})?$',
-                urlsplit(value).netloc
+                urlsplit(value).netloc,
             )
             if host_match:
                 potential_ip = host_match.groups()[0]

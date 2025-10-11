@@ -17,7 +17,7 @@ class TestAuthService:
         token = AuthService.get_auth_token(
             user=user,
             user_agent='',
-            user_ip='0.0.0.0'
+            user_ip='0.0.0.0',
         )
 
         assert token

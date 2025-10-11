@@ -12,10 +12,10 @@ class SoftDeleteUserManager(NormalizeEmailMixin, BaseUserManager):
             super().get_queryset()
             .filter(
                 is_deleted=False,
-                type=UserType.USER
+                type=UserType.USER,
             )
             .exclude(
-                status=UserStatus.INACTIVE
+                status=UserStatus.INACTIVE,
             )
         )
 
@@ -32,7 +32,7 @@ class SoftDeleteUserManager(NormalizeEmailMixin, BaseUserManager):
         except MultipleObjectsReturned:
             return self.get(
                 status=UserStatus.ACTIVE,
-                email=email
+                email=email,
             )
 
 
@@ -43,9 +43,9 @@ class SoftDeleteGuestManager(NormalizeEmailMixin, BaseUserManager):
             super().get_queryset()
             .filter(
                 is_deleted=False,
-                type=UserType.GUEST
+                type=UserType.GUEST,
             )
             .exclude(
-                status=UserStatus.INACTIVE
+                status=UserStatus.INACTIVE,
             )
         )

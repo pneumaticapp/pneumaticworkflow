@@ -24,7 +24,7 @@ from src.utils.validation import raise_validation_error
 
 from src.accounts.services.group import UserGroupService
 from src.accounts.services.exceptions import (
-    UserGroupServiceException
+    UserGroupServiceException,
 )
 from src.accounts.filters import (
     GroupsListFilterSet,
@@ -38,12 +38,12 @@ UserModel = get_user_model()
 
 class GroupViewSet(
     CustomViewSetMixin,
-    GenericViewSet
+    GenericViewSet,
 ):
     filter_backends = [PneumaticFilterBackend]
     serializer_class = GroupSerializer
     action_filterset_classes = {
-        'list': GroupsListFilterSet
+        'list': GroupsListFilterSet,
     }
 
     def get_serializer_context(self, **kwargs):
@@ -79,8 +79,8 @@ class GroupViewSet(
                 queryset=(
                     UserModel.objects
                     .on_account(account_id)
-                    .order_by('last_name'))
-            )
+                    .order_by('last_name')),
+            ),
         )
         return queryset
 
@@ -97,7 +97,7 @@ class GroupViewSet(
         service = UserGroupService(
             user=request.user,
             is_superuser=request.is_superuser,
-            auth_type=request.token_type
+            auth_type=request.token_type,
         )
         try:
             service.create(**slz.validated_data)
@@ -119,12 +119,12 @@ class GroupViewSet(
             user=request.user,
             instance=group,
             is_superuser=request.is_superuser,
-            auth_type=request.token_type
+            auth_type=request.token_type,
         )
         try:
             instance = service.partial_update(
                 force_save=True,
-                **slz.validated_data
+                **slz.validated_data,
             )
         except UserGroupServiceException as ex:
             raise_validation_error(message=ex.message)
@@ -138,7 +138,7 @@ class GroupViewSet(
             user=request.user,
             instance=group,
             is_superuser=request.is_superuser,
-            auth_type=request.token_type
+            auth_type=request.token_type,
         )
         service.delete()
         return self.response_ok()
@@ -164,5 +164,5 @@ class GroupViewSet(
         result = list(RawSqlExecutor.fetch(*query.get_sql()))
         count = sum(item['count'] for item in result)
         return self.response_ok(
-            data={'count': count}
+            data={'count': count},
         )

@@ -11,7 +11,7 @@ from src.processes.enums import (
     PerformerType,
     FieldType,
     DueDateRule,
-    OwnerType
+    OwnerType,
 )
 
 pytestmark = pytest.mark.django_db
@@ -45,9 +45,9 @@ def test_fill__ok(api_client):
                         {'value': 'Sales'},
                         {'value': 'B2B'},
                         {'value': 'IT'},
-                        {'value': 'Other'}
+                        {'value': 'Other'},
                     ],
-                }
+                },
             ],
         },
         'tasks': [
@@ -58,8 +58,8 @@ def test_fill__ok(api_client):
                     {
                         'type': PerformerType.FIELD,
                         'source_id': 'client-name-4',
-                        'label': 'Client name'
-                    }
+                        'label': 'Client name',
+                    },
                 ],
                 'raw_due_date': {
                     'api_name': 'raw-due-date-1',
@@ -78,9 +78,9 @@ def test_fill__ok(api_client):
                         'description': 'Reasons of client requesting',
                         'is_required': False,
                         'api_name': 'reasons-3',
-                    }
+                    },
                 ],
-                'require_completion_by_all': False
+                'require_completion_by_all': False,
             },
             {
                 'name': 'Responsing to client',
@@ -91,33 +91,33 @@ def test_fill__ok(api_client):
                     {
                         'type': PerformerType.WORKFLOW_STARTER,
                         'source_id': None,
-                        'label': 'Workflow starter'
-                    }
-                ]
+                        'label': 'Workflow starter',
+                    },
+                ],
             },
             {
                 'name': 'Creating report',
                 'number': 4,
-                'require_completion_by_all': False
+                'require_completion_by_all': False,
             },
             {
                 'name': 'Create card',
                 'number': 5,
-                'require_completion_by_all': False
-            }
-        ]
+                'require_completion_by_all': False,
+            },
+        ],
     }
     template = SystemTemplate.objects.create(
         is_active=True,
         name='System template',
-        template=system_template
+        template=system_template,
     )
 
     # act
     response = api_client.post(f'/templates/system/{template.id}/fill')
     response = api_client.post(
         path='/templates',
-        data=response.data
+        data=response.data,
     )
 
     # assert
@@ -186,22 +186,22 @@ def test_fill__set_wf_name_template__ok(api_client):
                 'raw_performers': [
                     {
                         'type': PerformerType.WORKFLOW_STARTER,
-                    }
+                    },
                 ],
             },
-        ]
+        ],
     }
     template = SystemTemplate.objects.create(
         is_active=True,
         name='System template',
-        template=system_template
+        template=system_template,
     )
 
     # act
     response = api_client.post(f'/templates/system/{template.id}/fill')
     response = api_client.post(
         path='/templates',
-        data=response.data
+        data=response.data,
     )
 
     # assert
@@ -229,22 +229,22 @@ def test_create__save_task_api_name__ok(api_client):
                     {
                         'type': PerformerType.FIELD,
                         'source_id': 'client-name-4',
-                        'label': 'Client name'
-                    }
+                        'label': 'Client name',
+                    },
                 ],
             },
-        ]
+        ],
     }
     template = SystemTemplate.objects.create(
         is_active=True,
         name='System template',
-        template=system_template
+        template=system_template,
     )
 
     response = api_client.post(f'/templates/system/{template.id}/fill')
     response = api_client.post(
         path='/templates',
-        data=response.data
+        data=response.data,
     )
     assert response.status_code == 200
     task_data = response.data['tasks'][0]
@@ -280,9 +280,9 @@ def test_create_public__ok(api_client):
                         {'value': 'Sales'},
                         {'value': 'B2B'},
                         {'value': 'IT'},
-                        {'value': 'Other'}
+                        {'value': 'Other'},
                     ],
-                }
+                },
             ],
         },
         'tasks': [
@@ -293,9 +293,9 @@ def test_create_public__ok(api_client):
                     {
                         'type': PerformerType.FIELD,
                         'source_id': 'client-name-4',
-                        'label': 'Client name'
-                    }
-                ]
+                        'label': 'Client name',
+                    },
+                ],
             },
             {
                 'name': 'Finding reasons of request',
@@ -308,9 +308,9 @@ def test_create_public__ok(api_client):
                         'description': 'Reasons of client requesting',
                         'is_required': False,
                         'api_name': 'reasons-3',
-                    }
+                    },
                 ],
-                'require_completion_by_all': False
+                'require_completion_by_all': False,
             },
             {
                 'name': 'Responsing to client',
@@ -321,34 +321,34 @@ def test_create_public__ok(api_client):
                     {
                         'type': PerformerType.WORKFLOW_STARTER,
                         'source_id': None,
-                        'label': 'Workflow starter'
-                    }
-                ]
+                        'label': 'Workflow starter',
+                    },
+                ],
             },
             {
                 'name': 'Creating report',
                 'number': 4,
-                'require_completion_by_all': False
+                'require_completion_by_all': False,
             },
             {
                 'name': 'Create card',
                 'number': 5,
-                'require_completion_by_all': False
-            }
-        ]
+                'require_completion_by_all': False,
+            },
+        ],
     }
     system_template = SystemTemplate.objects.create(
         is_active=True,
         name='System template',
-        template=system_template
+        template=system_template,
     )
 
     response = api_client.post(
-        path=f'/templates/system/{system_template.id}/fill'
+        path=f'/templates/system/{system_template.id}/fill',
     )
     response = api_client.post(
         path='/templates',
-        data=response.data
+        data=response.data,
     )
     assert response.status_code == 200
     response_data = response.data

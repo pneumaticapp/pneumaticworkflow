@@ -27,13 +27,13 @@ class FileAttachment(
         WorkflowEvent,
         on_delete=models.CASCADE,
         null=True,
-        related_name='attachments'
+        related_name='attachments',
     )
     output = models.ForeignKey(
         TaskField,
         on_delete=models.CASCADE,
         null=True,
-        related_name='attachments'
+        related_name='attachments',
     )
     workflow = models.ForeignKey(
         Workflow,

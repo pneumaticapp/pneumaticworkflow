@@ -24,7 +24,7 @@ UserModel = get_user_model()
 
 class AccountView(
     GenericAPIView,
-    BaseResponseMixin
+    BaseResponseMixin,
 ):
 
     serializer_class = AccountSerializer
@@ -56,12 +56,12 @@ class AccountView(
         instance = self.get_object()
         slz = self.get_serializer(
             instance=instance,
-            data=request.data
+            data=request.data,
         )
         slz.is_valid(raise_exception=True)
         service = AccountService(
             instance=slz.instance,
-            user=self.request.user
+            user=self.request.user,
         )
         service.partial_update(**slz.validated_data, force_save=True)
         return self.response_ok(slz.data)
@@ -69,7 +69,7 @@ class AccountView(
 
 class AccountPlanView(
     GenericAPIView,
-    BaseResponseMixin
+    BaseResponseMixin,
 ):
     permission_classes = (
         UserIsAuthenticated,

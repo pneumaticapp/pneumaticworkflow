@@ -6,7 +6,7 @@ from src.processes.utils.common import create_api_name
 
 class BaseApiNameModel(
     SoftDeleteModel,
-    ApiNameMixin
+    ApiNameMixin,
 ):
 
     class Meta:

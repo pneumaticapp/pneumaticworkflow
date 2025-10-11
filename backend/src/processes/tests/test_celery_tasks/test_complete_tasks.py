@@ -4,7 +4,7 @@ from src.authentication.enums import AuthTokenType
 from src.processes.tasks.tasks import complete_tasks
 from src.processes.tests.fixtures import (
     create_test_user,
-    create_test_workflow
+    create_test_workflow,
 )
 
 
@@ -21,10 +21,10 @@ def test_complete_tasks__ok(api_client):
         account=user.account,
     )
     workflow = create_test_workflow(
-        user=user
+        user=user,
     )
     second_workflow = create_test_workflow(
-        user=user
+        user=user,
     )
     second_workflow_first_task = second_workflow.tasks.get(number=1)
     second_workflow_first_task.performers.add(second_user)
@@ -37,14 +37,14 @@ def test_complete_tasks__ok(api_client):
         is_completed=True,
     )
     second_workflow_first_task.taskperformer_set.filter(
-        user=user
+        user=user,
     ).update(is_completed=True)
 
     # act
     complete_tasks(
         is_superuser=False,
         auth_type=AuthTokenType.USER,
-        user_id=user.id
+        user_id=user.id,
     )
 
     # assert

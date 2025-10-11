@@ -2,7 +2,7 @@ import re
 from typing import Optional
 from datetime import timedelta
 from typing import (
-    Type, List, Set, Dict, Union
+    Type, List, Set, Dict, Union,
 )
 from django.contrib.auth import get_user_model
 from rest_framework.serializers import ModelSerializer, ListSerializer
@@ -17,7 +17,7 @@ from src.utils.salt import get_salt
 VAR_PATTERN = re.compile(r'{{\s*([^\{\}\s]+)\s*}}')
 VAR_PATTERN_TEMPLATE = r'\{\{(\s*?)%s(\s*?)\}\}'
 VAR_PATTERN_FIELD = re.compile(
-    r'\{\{(\s*?)((?!date|template-name).)+(\s*?)\}\}'
+    r'\{\{(\s*?)((?!date|template-name).)+(\s*?)\}\}',
 )
 
 
@@ -32,7 +32,7 @@ def is_tasks_ordering_correct(tasks: List[int]) -> bool:
 
 def are_users_in_process_account(
     user_ids: Union[Set[int], List[int]],
-    account_id: Type[int]
+    account_id: Type[int],
 ) -> bool:
 
     UserModel = get_user_model()
@@ -40,7 +40,7 @@ def are_users_in_process_account(
         return True
     return UserModel.objects.are_users_in_account(
         account_id,
-        user_ids
+        user_ids,
     )
 
 
@@ -72,7 +72,7 @@ def string_abbreviation(
     name: str,
     length: int,
     postfix: str = '',
-    with_ellipsis: bool = True
+    with_ellipsis: bool = True,
 ) -> str:
     if name is None:
         return postfix[:length]
@@ -105,7 +105,7 @@ def contains_vars(value: Optional[str] = None) -> bool:
 
 def insert_fields_values_to_text(
     text: Optional[str],
-    fields_values: Dict[str, str]
+    fields_values: Dict[str, str],
 ) -> str:
 
     if contains_vars(text):
@@ -140,7 +140,7 @@ def get_duration_format(duration: timedelta) -> str:
 def get_user_agent(request) -> Optional[str]:
     return request.headers.get(
         'User-Agent',
-        request.META.get('HTTP_USER_AGENT')
+        request.META.get('HTTP_USER_AGENT'),
     )
 
 
@@ -173,7 +173,7 @@ def get_tasks_parents(tasks_data: List[Dict]) -> dict:
                                 and p['field'] in available_api_names
                             ):
                                 parents_by_tasks[task_api_name].append(
-                                    p['field']
+                                    p['field'],
                                 )
                         except KeyError:
                             pass

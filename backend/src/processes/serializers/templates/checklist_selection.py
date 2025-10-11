@@ -4,11 +4,11 @@ from rest_framework.serializers import (
     CharField,
 )
 from src.processes.models.templates.checklist import (
-    ChecklistTemplateSelection
+    ChecklistTemplateSelection,
 )
 from src.generics.mixins.serializers import (
     AdditionalValidationMixin,
-    CustomValidationErrorMixin
+    CustomValidationErrorMixin,
 )
 from src.processes.serializers.templates.mixins import (
     CreateOrUpdateInstanceMixin,
@@ -16,7 +16,7 @@ from src.processes.serializers.templates.mixins import (
 from src.utils.validation import raise_validation_error
 from src.processes.messages.template import MSG_PT_0048
 from src.processes.messages.workflow import (
-    MSG_PW_0056
+    MSG_PW_0056,
 )
 
 
@@ -24,7 +24,7 @@ class ChecklistTemplateSelectionSerializer(
     CreateOrUpdateInstanceMixin,
     AdditionalValidationMixin,
     CustomValidationErrorMixin,
-    ModelSerializer
+    ModelSerializer,
 ):
 
     class Meta:
@@ -49,7 +49,7 @@ class ChecklistTemplateSelectionSerializer(
             raise_validation_error(
                 message=MSG_PW_0056,
                 api_name=data.get('api_name'),
-                name='value'
+                name='value',
             )
         return value
 
@@ -59,18 +59,18 @@ class ChecklistTemplateSelectionSerializer(
             validated_data={
                 'template': self.context['template'],
                 'checklist':  self.context['checklist'],
-                **validated_data
+                **validated_data,
             },
             not_unique_exception_msg=MSG_PT_0048(
                 name=self.context['task'].name,
-                api_name=validated_data.get('api_name')
-            )
+                api_name=validated_data.get('api_name'),
+            ),
         )
 
     def update(
         self,
         instance: ChecklistTemplateSelection,
-        validated_data: Dict[str, Any]
+        validated_data: Dict[str, Any],
     ):
         self.additional_validate(validated_data)
         return self.create_or_update_instance(
@@ -78,10 +78,10 @@ class ChecklistTemplateSelectionSerializer(
             validated_data={
                 'template': self.context['template'],
                 'checklist':  self.context['checklist'],
-                **validated_data
+                **validated_data,
             },
             not_unique_exception_msg=MSG_PT_0048(
                 name=self.context['task'].name,
-                api_name=validated_data.get('api_name')
-            )
+                api_name=validated_data.get('api_name'),
+            ),
         )

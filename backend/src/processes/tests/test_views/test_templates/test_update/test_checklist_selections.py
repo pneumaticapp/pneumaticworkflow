@@ -1,15 +1,15 @@
 import pytest
 from src.processes.tests.fixtures import (
     create_test_user,
-    create_test_template
+    create_test_template,
 )
 from src.processes.models import (
     ChecklistTemplate,
-    ChecklistTemplateSelection
+    ChecklistTemplateSelection,
 )
 from src.processes.enums import (
     PerformerType,
-    OwnerType
+    OwnerType,
 )
 from src.utils.validation import ErrorCode
 from src.processes.messages import template as messages
@@ -26,27 +26,27 @@ def test_update__create__ok(api_client, mocker):
     template = create_test_template(
         user=user,
         tasks_count=1,
-        is_active=True
+        is_active=True,
     )
     task = template.tasks.first()
     checklist = ChecklistTemplate.objects.create(
         template=template,
         task=task,
-        api_name='checklist-1'
+        api_name='checklist-1',
     )
     checklist_selection = ChecklistTemplateSelection.objects.create(
         checklist=checklist,
         template=template,
         value='some value',
-        api_name='cl-selection-1'
+        api_name='cl-selection-1',
     )
     mocker.patch(
         'src.processes.services.templates.'
-        'integrations.TemplateIntegrationsService.template_updated'
+        'integrations.TemplateIntegrationsService.template_updated',
     )
     mocker.patch(
         'src.analytics.services.AnalyticService'
-        '.checklist_created'
+        '.checklist_created',
     )
     checklists_data = [
         {
@@ -56,14 +56,14 @@ def test_update__create__ok(api_client, mocker):
                 {
                     'id': checklist_selection.id,
                     'api_name': checklist_selection.api_name,
-                    'value': checklist_selection.value
+                    'value': checklist_selection.value,
                 },
                 {
                     'api_name': 'selection-2',
-                    'value': 'some value 2'
-                }
-            ]
-        }
+                    'value': 'some value 2',
+                },
+            ],
+        },
     ]
 
     # act
@@ -76,7 +76,7 @@ def test_update__create__ok(api_client, mocker):
             'owners': [
                 {
                     'type': OwnerType.USER,
-                    'source_id': user.id
+                    'source_id': user.id,
                 },
             ],
             'kickoff': {},
@@ -89,13 +89,13 @@ def test_update__create__ok(api_client, mocker):
                     'raw_performers': [
                         {
                             'type': PerformerType.USER,
-                            'source_id': user.id
-                        }
+                            'source_id': user.id,
+                        },
                     ],
-                    'checklists': checklists_data
-                }
-            ]
-        }
+                    'checklists': checklists_data,
+                },
+            ],
+        },
     )
 
     # assert
@@ -118,7 +118,7 @@ def test_update__create__ok(api_client, mocker):
         template_id=template_id,
         checklist_id=checklist.id,
         api_name='selection-2',
-        value='some value 2'
+        value='some value 2',
     ).exists()
 
 
@@ -130,33 +130,33 @@ def test_update__delete__ok(api_client, mocker):
     template = create_test_template(
         user=user,
         tasks_count=1,
-        is_active=True
+        is_active=True,
     )
     task = template.tasks.first()
     checklist = ChecklistTemplate.objects.create(
         template=template,
         task=task,
-        api_name='checklist-1'
+        api_name='checklist-1',
     )
     checklist_selection = ChecklistTemplateSelection.objects.create(
         checklist=checklist,
         template=template,
         value='some value',
-        api_name='cl-selection-1'
+        api_name='cl-selection-1',
     )
     checklist_selection_2 = ChecklistTemplateSelection.objects.create(
         checklist=checklist,
         template=template,
         value='some value 2',
-        api_name='cl-selection-2'
+        api_name='cl-selection-2',
     )
     mocker.patch(
         'src.processes.services.templates.'
-        'integrations.TemplateIntegrationsService.template_updated'
+        'integrations.TemplateIntegrationsService.template_updated',
     )
     mocker.patch(
         'src.analytics.services.AnalyticService'
-        '.checklist_created'
+        '.checklist_created',
     )
     checklists_data = [
         {
@@ -166,10 +166,10 @@ def test_update__delete__ok(api_client, mocker):
                 {
                     'id': checklist_selection.id,
                     'api_name': checklist_selection.api_name,
-                    'value': checklist_selection.value
-                }
-            ]
-        }
+                    'value': checklist_selection.value,
+                },
+            ],
+        },
     ]
 
     # act
@@ -182,7 +182,7 @@ def test_update__delete__ok(api_client, mocker):
             'owners': [
                 {
                     'type': OwnerType.USER,
-                    'source_id': user.id
+                    'source_id': user.id,
                 },
             ],
             'kickoff': {},
@@ -195,13 +195,13 @@ def test_update__delete__ok(api_client, mocker):
                     'raw_performers': [
                         {
                             'type': PerformerType.USER,
-                            'source_id': user.id
-                        }
+                            'source_id': user.id,
+                        },
                     ],
-                    'checklists': checklists_data
-                }
-            ]
-        }
+                    'checklists': checklists_data,
+                },
+            ],
+        },
     )
 
     # assert
@@ -213,7 +213,7 @@ def test_update__delete__ok(api_client, mocker):
     assert selection_1_data['api_name'] == checklist_selection.api_name
     assert selection_1_data['value'] == checklist_selection.value
     assert not ChecklistTemplateSelection.objects.filter(
-        id=checklist_selection_2.id
+        id=checklist_selection_2.id,
     ).exists()
 
 
@@ -225,23 +225,23 @@ def test_update__api_name_null__validation_error(api_client, mocker):
     template = create_test_template(
         user=user,
         tasks_count=1,
-        is_active=True
+        is_active=True,
     )
     task = template.tasks.first()
     checklist = ChecklistTemplate.objects.create(
         template=template,
         task=task,
-        api_name='checklist-1'
+        api_name='checklist-1',
     )
     checklist_selection = ChecklistTemplateSelection.objects.create(
         checklist=checklist,
         template=template,
         value='some value',
-        api_name='cl-selection-1'
+        api_name='cl-selection-1',
     )
     mocker.patch(
         'src.processes.services.templates.'
-        'integrations.TemplateIntegrationsService.template_updated'
+        'integrations.TemplateIntegrationsService.template_updated',
     )
     checklists_data = [
         {
@@ -252,9 +252,9 @@ def test_update__api_name_null__validation_error(api_client, mocker):
                     'id': checklist_selection.id,
                     'value': checklist_selection.value,
                     'api_name': None,
-                }
-            ]
-        }
+                },
+            ],
+        },
     ]
 
     # act
@@ -267,7 +267,7 @@ def test_update__api_name_null__validation_error(api_client, mocker):
             'owners': [
                 {
                     'type': OwnerType.USER,
-                    'source_id': user.id
+                    'source_id': user.id,
                 },
             ],
             'kickoff': {},
@@ -280,13 +280,13 @@ def test_update__api_name_null__validation_error(api_client, mocker):
                     'raw_performers': [
                         {
                             'type': PerformerType.USER,
-                            'source_id': user.id
-                        }
+                            'source_id': user.id,
+                        },
                     ],
-                    'checklists': checklists_data
-                }
-            ]
-        }
+                    'checklists': checklists_data,
+                },
+            ],
+        },
     )
 
     # assert
@@ -306,38 +306,38 @@ def test_update__union_two_checklists__ok(api_client, mocker):
     template = create_test_template(
         user=user,
         tasks_count=1,
-        is_active=True
+        is_active=True,
     )
     task = template.tasks.first()
     checklist = ChecklistTemplate.objects.create(
         template=template,
         task=task,
-        api_name='checklist-1'
+        api_name='checklist-1',
     )
     checklist_selection = ChecklistTemplateSelection.objects.create(
         checklist=checklist,
         template=template,
         value='some value',
-        api_name='cl-selection-1'
+        api_name='cl-selection-1',
     )
     checklist_2 = ChecklistTemplate.objects.create(
         template=template,
         task=task,
-        api_name='checklist-2'
+        api_name='checklist-2',
     )
     checklist_selection_2 = ChecklistTemplateSelection.objects.create(
         checklist=checklist_2,
         template=template,
         value='some value 2',
-        api_name='cl-selection-2'
+        api_name='cl-selection-2',
     )
     mocker.patch(
         'src.processes.services.templates.'
-        'integrations.TemplateIntegrationsService.template_updated'
+        'integrations.TemplateIntegrationsService.template_updated',
     )
     mocker.patch(
         'src.analytics.services.AnalyticService'
-        '.checklist_created'
+        '.checklist_created',
     )
     checklists_data = [
         {
@@ -345,14 +345,14 @@ def test_update__union_two_checklists__ok(api_client, mocker):
             'selections': [
                 {
                     'api_name': checklist_selection.api_name,
-                    'value': checklist_selection.value
+                    'value': checklist_selection.value,
                 },
                 {
                     'api_name': checklist_selection_2.api_name,
-                    'value': checklist_selection_2.value
-                }
-            ]
-        }
+                    'value': checklist_selection_2.value,
+                },
+            ],
+        },
     ]
 
     # act
@@ -365,7 +365,7 @@ def test_update__union_two_checklists__ok(api_client, mocker):
             'owners': [
                 {
                     'type': OwnerType.USER,
-                    'source_id': user.id
+                    'source_id': user.id,
                 },
             ],
             'kickoff': {},
@@ -378,13 +378,13 @@ def test_update__union_two_checklists__ok(api_client, mocker):
                     'raw_performers': [
                         {
                             'type': PerformerType.USER,
-                            'source_id': user.id
-                        }
+                            'source_id': user.id,
+                        },
                     ],
-                    'checklists': checklists_data
-                }
-            ]
-        }
+                    'checklists': checklists_data,
+                },
+            ],
+        },
     )
 
     # assert
@@ -404,7 +404,7 @@ def test_update__union_two_checklists__ok(api_client, mocker):
 
 def test_update__move_selection_to_another_checklist__ok(
     api_client,
-    mocker
+    mocker,
 ):
 
     # arrange
@@ -413,44 +413,44 @@ def test_update__move_selection_to_another_checklist__ok(
     template = create_test_template(
         user=user,
         tasks_count=1,
-        is_active=True
+        is_active=True,
     )
     task = template.tasks.first()
     checklist = ChecklistTemplate.objects.create(
         template=template,
         task=task,
-        api_name='checklist-1'
+        api_name='checklist-1',
     )
     checklist_selection = ChecklistTemplateSelection.objects.create(
         checklist=checklist,
         template=template,
         value='some value',
-        api_name='cl-selection-1'
+        api_name='cl-selection-1',
     )
     checklist_2 = ChecklistTemplate.objects.create(
         template=template,
         task=task,
-        api_name='checklist-2'
+        api_name='checklist-2',
     )
     checklist_selection_2 = ChecklistTemplateSelection.objects.create(
         checklist=checklist_2,
         template=template,
         value='some value 2',
-        api_name='cl-selection-2'
+        api_name='cl-selection-2',
     )
     checklist_selection_3 = ChecklistTemplateSelection.objects.create(
         checklist=checklist_2,
         template=template,
         value='some value 3',
-        api_name='cl-selection-3'
+        api_name='cl-selection-3',
     )
     mocker.patch(
         'src.processes.services.templates.'
-        'integrations.TemplateIntegrationsService.template_updated'
+        'integrations.TemplateIntegrationsService.template_updated',
     )
     mocker.patch(
         'src.analytics.services.AnalyticService'
-        '.checklist_created'
+        '.checklist_created',
     )
     checklists_data = [
         {
@@ -458,23 +458,23 @@ def test_update__move_selection_to_another_checklist__ok(
             'selections': [
                 {
                     'api_name': checklist_selection.api_name,
-                    'value': checklist_selection.value
+                    'value': checklist_selection.value,
                 },
                 {
                     'api_name': checklist_selection_2.api_name,
-                    'value': checklist_selection_2.value
-                }
-            ]
+                    'value': checklist_selection_2.value,
+                },
+            ],
         },
         {
             'api_name': checklist_2.api_name,
             'selections': [
                 {
                     'api_name': checklist_selection_3.api_name,
-                    'value': checklist_selection_3.value
-                }
-            ]
-        }
+                    'value': checklist_selection_3.value,
+                },
+            ],
+        },
     ]
 
     # act
@@ -487,7 +487,7 @@ def test_update__move_selection_to_another_checklist__ok(
             'owners': [
                 {
                     'type': OwnerType.USER,
-                    'source_id': user.id
+                    'source_id': user.id,
                 },
             ],
             'kickoff': {},
@@ -500,13 +500,13 @@ def test_update__move_selection_to_another_checklist__ok(
                     'raw_performers': [
                         {
                             'type': PerformerType.USER,
-                            'source_id': user.id
-                        }
+                            'source_id': user.id,
+                        },
                     ],
-                    'checklists': checklists_data
-                }
-            ]
-        }
+                    'checklists': checklists_data,
+                },
+            ],
+        },
     )
 
     # assert
@@ -532,7 +532,7 @@ def test_update__move_selection_to_another_checklist__ok(
 
 def test_update__move_selection_to_new_checklist__ok(
     api_client,
-    mocker
+    mocker,
 ):
 
     # arrange
@@ -541,33 +541,33 @@ def test_update__move_selection_to_new_checklist__ok(
     template = create_test_template(
         user=user,
         tasks_count=1,
-        is_active=True
+        is_active=True,
     )
     task = template.tasks.first()
     checklist = ChecklistTemplate.objects.create(
         template=template,
         task=task,
-        api_name='checklist-1'
+        api_name='checklist-1',
     )
     checklist_selection = ChecklistTemplateSelection.objects.create(
         checklist=checklist,
         template=template,
         value='some value',
-        api_name='cl-selection-1'
+        api_name='cl-selection-1',
     )
     checklist_selection_2 = ChecklistTemplateSelection.objects.create(
         checklist=checklist,
         template=template,
         value='some value 2',
-        api_name='cl-selection-2'
+        api_name='cl-selection-2',
     )
     mocker.patch(
         'src.processes.services.templates.'
-        'integrations.TemplateIntegrationsService.template_updated'
+        'integrations.TemplateIntegrationsService.template_updated',
     )
     mocker.patch(
         'src.analytics.services.AnalyticService'
-        '.checklist_created'
+        '.checklist_created',
     )
     checklists_data = [
         {
@@ -575,23 +575,23 @@ def test_update__move_selection_to_new_checklist__ok(
             'selections': [
                 {
                     'api_name': checklist_selection_2.api_name,
-                    'value': checklist_selection_2.value
+                    'value': checklist_selection_2.value,
                 },
                 {
                     'api_name': 'new-selection',
-                    'value': 'new value'
-                }
-            ]
+                    'value': 'new value',
+                },
+            ],
         },
         {
             'api_name': checklist.api_name,
             'selections': [
                 {
                     'api_name': checklist_selection.api_name,
-                    'value': checklist_selection.value
-                }
-            ]
-        }
+                    'value': checklist_selection.value,
+                },
+            ],
+        },
     ]
 
     # act
@@ -604,7 +604,7 @@ def test_update__move_selection_to_new_checklist__ok(
             'owners': [
                 {
                     'type': OwnerType.USER,
-                    'source_id': user.id
+                    'source_id': user.id,
                 },
             ],
             'kickoff': {},
@@ -617,13 +617,13 @@ def test_update__move_selection_to_new_checklist__ok(
                     'raw_performers': [
                         {
                             'type': PerformerType.USER,
-                            'source_id': user.id
-                        }
+                            'source_id': user.id,
+                        },
                     ],
-                    'checklists': checklists_data
-                }
-            ]
-        }
+                    'checklists': checklists_data,
+                },
+            ],
+        },
     )
 
     # assert
@@ -649,7 +649,7 @@ def test_update__move_selection_to_new_checklist__ok(
 
 def test_update__duplicate_api_name_in_one_checklist__save_last(
     api_client,
-    mocker
+    mocker,
 ):
 
     # arrange
@@ -658,27 +658,27 @@ def test_update__duplicate_api_name_in_one_checklist__save_last(
     template = create_test_template(
         user=user,
         tasks_count=1,
-        is_active=True
+        is_active=True,
     )
     task = template.tasks.first()
     checklist = ChecklistTemplate.objects.create(
         template=template,
         task=task,
-        api_name='checklist-1'
+        api_name='checklist-1',
     )
     checklist_selection = ChecklistTemplateSelection.objects.create(
         checklist=checklist,
         template=template,
         value='some value',
-        api_name='cl-selection-1'
+        api_name='cl-selection-1',
     )
     mocker.patch(
         'src.processes.services.templates.'
-        'integrations.TemplateIntegrationsService.template_updated'
+        'integrations.TemplateIntegrationsService.template_updated',
     )
     mocker.patch(
         'src.analytics.services.AnalyticService'
-        '.checklist_created'
+        '.checklist_created',
     )
     checklists_data = [
         {
@@ -686,14 +686,14 @@ def test_update__duplicate_api_name_in_one_checklist__save_last(
             'selections': [
                 {
                     'api_name': checklist_selection.api_name,
-                    'value': checklist_selection.value
+                    'value': checklist_selection.value,
                 },
                 {
                     'api_name': checklist_selection.api_name,
-                    'value': 'new value'
-                }
-            ]
-        }
+                    'value': 'new value',
+                },
+            ],
+        },
     ]
 
     # act
@@ -706,7 +706,7 @@ def test_update__duplicate_api_name_in_one_checklist__save_last(
             'owners': [
                 {
                     'type': OwnerType.USER,
-                    'source_id': user.id
+                    'source_id': user.id,
                 },
             ],
             'kickoff': {},
@@ -719,13 +719,13 @@ def test_update__duplicate_api_name_in_one_checklist__save_last(
                     'raw_performers': [
                         {
                             'type': PerformerType.USER,
-                            'source_id': user.id
-                        }
+                            'source_id': user.id,
+                        },
                     ],
-                    'checklists': checklists_data
-                }
-            ]
-        }
+                    'checklists': checklists_data,
+                },
+            ],
+        },
     )
 
     # assert
@@ -746,7 +746,7 @@ def test_update__equal_api_names_in_different_checklists__validation_error(
     # arrange
     mocker.patch(
         'src.analytics.services.AnalyticService'
-        '.checklist_created'
+        '.checklist_created',
     )
     user = create_test_user()
     api_client.token_authenticate(user)
@@ -755,19 +755,19 @@ def test_update__equal_api_names_in_different_checklists__validation_error(
     template = create_test_template(
         user=user,
         tasks_count=1,
-        is_active=True
+        is_active=True,
     )
     task = template.tasks.first()
     checklist = ChecklistTemplate.objects.create(
         template=template,
         task=task,
-        api_name='checklist-1'
+        api_name='checklist-1',
     )
     checklist_selection = ChecklistTemplateSelection.objects.create(
         checklist=checklist,
         template=template,
         value='some value',
-        api_name=checklist_item_api_name
+        api_name=checklist_item_api_name,
     )
 
     # act
@@ -780,7 +780,7 @@ def test_update__equal_api_names_in_different_checklists__validation_error(
             'owners': [
                 {
                     'type': OwnerType.USER,
-                    'source_id': user.id
+                    'source_id': user.id,
                 },
             ],
             'kickoff': {},
@@ -793,8 +793,8 @@ def test_update__equal_api_names_in_different_checklists__validation_error(
                     'raw_performers': [
                         {
                             'type': PerformerType.USER,
-                            'source_id': user.id
-                        }
+                            'source_id': user.id,
+                        },
                     ],
                     'checklists': [
                         {
@@ -802,30 +802,30 @@ def test_update__equal_api_names_in_different_checklists__validation_error(
                             'selections': [
                                 {
                                     'api_name': checklist_selection.api_name,
-                                    'value': checklist_selection.value
-                                }
-                            ]
+                                    'value': checklist_selection.value,
+                                },
+                            ],
                         },
                         {
                             'api_name': 'checklist-2',
                             'selections': [
                                 {
                                     'api_name': checklist_selection.api_name,
-                                    'value': 'another value'
-                                }
-                            ]
-                        }
-                    ]
-                }
-            ]
-        }
+                                    'value': 'another value',
+                                },
+                            ],
+                        },
+                    ],
+                },
+            ],
+        },
     )
 
     # assert
     assert response.status_code == 400
     message = messages.MSG_PT_0048(
         name=step,
-        api_name=checklist_item_api_name
+        api_name=checklist_item_api_name,
     )
     assert response.data['message'] == message
     assert response.data['details']['reason'] == message

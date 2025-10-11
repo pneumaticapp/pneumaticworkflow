@@ -28,13 +28,13 @@ class AccountEvent(
         UserModel,
         on_delete=models.SET_NULL,
         null=True,
-        blank=True
+        blank=True,
     )
     date_created = models.DateTimeField(auto_now_add=True)
     response_data = JSONField(
         blank=True,
         null=True,
-        encoder=DjangoJSONEncoder
+        encoder=DjangoJSONEncoder,
     )
     ip = models.CharField(max_length=50, blank=True, null=True)
     user_agent = models.CharField(max_length=500, blank=True, null=True)
@@ -45,28 +45,28 @@ class AccountEvent(
     request_data = JSONField(
         blank=True,
         null=True,
-        encoder=DjangoJSONEncoder
+        encoder=DjangoJSONEncoder,
     )
     http_status = models.IntegerField(blank=True, null=True)
     event_type = models.CharField(
         max_length=100,
         choices=AccountEventType.CHOICES,
-        default=AccountEventType.API
+        default=AccountEventType.API,
     )
     direction = models.CharField(
         max_length=100,
         choices=RequestDirection.CHOICES,
-        default=RequestDirection.RECEIVED
+        default=RequestDirection.RECEIVED,
     )
     contractor = models.CharField(
         max_length=255,
         null=True,
-        blank=True
+        blank=True,
     )
     status = models.CharField(
         max_length=100,
         choices=AccountEventStatus.CHOICES,
-        default=AccountEventStatus.PENDING
+        default=AccountEventStatus.PENDING,
     )
     objects = BaseSoftDeleteManager.from_queryset(AccountEventQuerySet)()
 

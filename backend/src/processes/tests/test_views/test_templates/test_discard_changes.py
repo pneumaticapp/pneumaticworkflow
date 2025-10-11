@@ -6,10 +6,10 @@ from src.processes.tests.fixtures import (
 from src.processes.enums import (
     PerformerType,
     FieldType,
-    OwnerType
+    OwnerType,
 )
 from src.processes.models import (
-    Template
+    Template,
 )
 from src.processes.messages.template import (
     MSG_PT_0023,
@@ -28,7 +28,7 @@ def test_discard_changes__active_template__not_change(api_client):
         'owners': [
             {
                 'type': OwnerType.USER,
-                'source_id': user.id
+                'source_id': user.id,
             },
         ],
         'is_active': True,
@@ -43,17 +43,17 @@ def test_discard_changes__active_template__not_change(api_client):
                 'raw_performers': [
                     {
                         'type': PerformerType.USER,
-                        'source_id': user.id
-                    }
-                ]
-            }
-        ]
+                        'source_id': user.id,
+                    },
+                ],
+            },
+        ],
     }
     api_client.token_authenticate(user)
 
     response_create = api_client.post(
         path='/templates',
-        data=request_data
+        data=request_data,
     )
     template_id = response_create.data['id']
 
@@ -92,7 +92,7 @@ def test_discard_changes__draft_template__discard_changes(api_client):
         'owners': [
             {
                 'type': OwnerType.USER,
-                'source_id': user.id
+                'source_id': user.id,
             },
         ],
         'is_active': True,
@@ -107,17 +107,17 @@ def test_discard_changes__draft_template__discard_changes(api_client):
                 'raw_performers': [
                     {
                         'type': PerformerType.USER,
-                        'source_id': user.id
-                    }
-                ]
-            }
-        ]
+                        'source_id': user.id,
+                    },
+                ],
+            },
+        ],
     }
     api_client.token_authenticate(user)
 
     response_create = api_client.post(
         path='/templates',
-        data=request_data
+        data=request_data,
     )
     template_id = response_create.data['id']
     template_data = response_create.data
@@ -137,9 +137,9 @@ def test_discard_changes__draft_template__discard_changes(api_client):
             'api_name': 'text-field-1',
             'default': 'default value',
             'selections': [
-                {'value': 'First selection'}
-            ]
-        }
+                {'value': 'First selection'},
+            ],
+        },
     ]
 
     template_data['tasks'].append(
@@ -150,10 +150,10 @@ def test_discard_changes__draft_template__discard_changes(api_client):
             'raw_performers': [
                 {
                     'type': PerformerType.USER,
-                    'source_id': user.id
-                }
-            ]
-        }
+                    'source_id': user.id,
+                },
+            ],
+        },
     )
     template_data['kickoff']['fields'] = [
         {
@@ -163,13 +163,13 @@ def test_discard_changes__draft_template__discard_changes(api_client):
             'order': 1,
             'is_required': True,
             'api_name': 'user-field-1',
-            'default': 'default value'
-        }
+            'default': 'default value',
+        },
     ]
 
     response_update = api_client.put(
         path=f'/templates/{template_id}',
-        data=template_data
+        data=template_data,
     )
 
     # act
@@ -208,7 +208,7 @@ def test_retrieve__not_template_owner__permission_denied(api_client):
         email='user2@pneumaticapp',
         account=user.account,
         is_admin=True,
-        is_account_owner=False
+        is_account_owner=False,
     )
     api_client.token_authenticate(user2)
 
@@ -230,7 +230,7 @@ def test_discard_changes__draft_unused_template__delete_template(api_client):
         'owners': [
             {
                 'type': OwnerType.USER,
-                'source_id': user.id
+                'source_id': user.id,
             },
         ],
         'is_active': False,
@@ -245,16 +245,16 @@ def test_discard_changes__draft_unused_template__delete_template(api_client):
                 'raw_performers': [
                     {
                         'type': PerformerType.USER,
-                        'source_id': user.id
-                    }
-                ]
-            }
-        ]
+                        'source_id': user.id,
+                    },
+                ],
+            },
+        ],
     }
     api_client.token_authenticate(user)
     response_create = api_client.post(
         path='/templates',
-        data=request_data
+        data=request_data,
     )
     template_id = response_create.data['id']
 

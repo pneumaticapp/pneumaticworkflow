@@ -51,10 +51,10 @@ application = ProtocolTypeRouter({
                 SessionMiddleware(
                     WebsocketAuthMiddleware(
                         URLRouter(
-                            urls.websocket_urlpatterns
-                        )
+                            urls.websocket_urlpatterns,
+                        ),
                     ),
-                )
-            )
+                ),
+            ),
         ),
 })

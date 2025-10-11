@@ -10,7 +10,7 @@ from src.processes.tests.fixtures import (
 )
 from src.utils.validation import ErrorCode
 from src.processes.services.exceptions import (
-    WorkflowActionServiceException
+    WorkflowActionServiceException,
 )
 from src.processes.enums import (
     OwnerType,
@@ -33,7 +33,7 @@ def test_resume__body__ok(api_client):
     workflow = create_test_workflow(
         user,
         tasks_count=1,
-        status=WorkflowStatus.DELAYED
+        status=WorkflowStatus.DELAYED,
     )
     task = workflow.tasks.get(number=1)
     task.status = TaskStatus.DELAYED
@@ -42,7 +42,7 @@ def test_resume__body__ok(api_client):
         task=task,
         start_date=timezone.now(),
         duration=timedelta(days=7),
-        workflow=workflow
+        workflow=workflow,
     )
     api_client.token_authenticate(user)
 
@@ -82,7 +82,7 @@ def test_resume__body__ok(api_client):
             'type': 'user',
             'is_completed': False,
             'date_completed_tsp': None,
-        }
+        },
     ]
     template_data = response.data['template']
     assert template_data['id'] == workflow.template_id
@@ -96,7 +96,7 @@ def test_resume__body__ok(api_client):
 
 def test_resume__account_owner__ok(
     mocker,
-    api_client
+    api_client,
 ):
     # arrange
     account = create_test_account()
@@ -105,7 +105,7 @@ def test_resume__account_owner__ok(
     workflow = create_test_workflow(user, tasks_count=1)
     resume_mock = mocker.patch(
         'src.processes.services.workflow_action.'
-        'WorkflowActionService.force_resume_workflow'
+        'WorkflowActionService.force_resume_workflow',
     )
     api_client.token_authenticate(account_owner)
 
@@ -119,7 +119,7 @@ def test_resume__account_owner__ok(
 
 def test_resume__template_owner_admin__ok(
     mocker,
-    api_client
+    api_client,
 ):
     # arrange
     user = create_test_user(is_account_owner=False, is_admin=True)
@@ -127,7 +127,7 @@ def test_resume__template_owner_admin__ok(
     api_client.token_authenticate(user)
     resume_mock = mocker.patch(
         'src.processes.services.workflow_action.'
-        'WorkflowActionService.force_resume_workflow'
+        'WorkflowActionService.force_resume_workflow',
     )
 
     # act
@@ -140,7 +140,7 @@ def test_resume__template_owner_admin__ok(
 
 def test_resume__template_owner__not_admin__permission_denied(
     mocker,
-    api_client
+    api_client,
 ):
     # arrange
     account_owner = create_test_user()
@@ -148,12 +148,12 @@ def test_resume__template_owner__not_admin__permission_denied(
         account=account_owner.account,
         is_admin=False,
         is_account_owner=False,
-        email='t@t.t'
+        email='t@t.t',
     )
     template = create_test_template(
         user=account_owner,
         is_active=True,
-        tasks_count=1
+        tasks_count=1,
     )
     TemplateOwner.objects.create(
         template=template,
@@ -167,7 +167,7 @@ def test_resume__template_owner__not_admin__permission_denied(
     )
     resume_mock = mocker.patch(
         'src.processes.services.workflow_action.'
-        'WorkflowActionService.force_resume_workflow'
+        'WorkflowActionService.force_resume_workflow',
     )
     api_client.token_authenticate(user_not_admin)
 
@@ -181,7 +181,7 @@ def test_resume__template_owner__not_admin__permission_denied(
 
 def test_resume__service_exception__validation_error(
     mocker,
-    api_client
+    api_client,
 ):
     # arrange
     account_owner = create_test_user()
@@ -189,7 +189,7 @@ def test_resume__service_exception__validation_error(
         account=account_owner.account,
         is_admin=True,
         is_account_owner=False,
-        email='t@t.t'
+        email='t@t.t',
     )
     message = 'message'
     workflow = create_test_workflow(user_admin, tasks_count=1)
@@ -197,7 +197,7 @@ def test_resume__service_exception__validation_error(
     resume_mock = mocker.patch(
         'src.processes.services.workflow_action.'
         'WorkflowActionService.force_resume_workflow',
-        side_effect=WorkflowActionServiceException(message)
+        side_effect=WorkflowActionServiceException(message),
     )
 
     # act

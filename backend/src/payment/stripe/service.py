@@ -9,11 +9,11 @@ from django.conf import settings
 from django.utils import timezone
 from django.core.exceptions import (
     MultipleObjectsReturned,
-    ObjectDoesNotExist
+    ObjectDoesNotExist,
 )
 from django.contrib.auth import get_user_model
 from src.payment.services.account import (
-    AccountSubscriptionService
+    AccountSubscriptionService,
 )
 from src.payment.stripe import exceptions
 from src.accounts.models import Account
@@ -29,7 +29,7 @@ from src.payment.stripe.entities import (
 from src.payment.models import Price
 from src.utils.logging import (
     capture_sentry_message,
-    SentryLogLevel
+    SentryLogLevel,
 )
 from src.payment.stripe.mixins import StripeMixin
 
@@ -50,7 +50,7 @@ class StripeService(StripeMixin):
         user: UserModel,
         subscription_account: Optional[Account] = None,
         auth_type: AuthTokenType.LITERALS = AuthTokenType.USER,
-        is_superuser: bool = False
+        is_superuser: bool = False,
     ):
         self.user = user
         self.account = user.account
@@ -74,7 +74,7 @@ class StripeService(StripeMixin):
         self.customer = self._get_or_create_customer()
         self.subscription = self._get_current_subscription()
         self.payment_method = self._get_current_payment_method(
-            customer=self.customer
+            customer=self.customer,
         )
 
     def _get_or_create_customer(self) -> stripe.Customer:
@@ -99,11 +99,11 @@ class StripeService(StripeMixin):
                 user=self.user,
                 instance=self.account,
                 is_superuser=self.is_superuser,
-                auth_type=self.auth_type
+                auth_type=self.auth_type,
             )
             account_service.partial_update(
                 stripe_id=customer.id,
-                force_save=True
+                force_save=True,
             )
         return customer
 
@@ -111,7 +111,7 @@ class StripeService(StripeMixin):
 
         subscription = self._get_subscription_for_account(
             customer=self.customer,
-            subscription_account=self.subscription_account
+            subscription_account=self.subscription_account,
         )
         if self.account.billing_sync:
             if subscription and not self.subscription_account.is_subscribed:
@@ -120,13 +120,13 @@ class StripeService(StripeMixin):
                 )
             elif not subscription and self.subscription_account.is_subscribed:
                 self.subscription_service.expired(
-                    plan_expiration=timezone.now()
+                    plan_expiration=timezone.now(),
                 )
         return subscription
 
     def _get_confirm_token(
         self,
-        subscription_data: Optional[TokenSubscriptionData] = None
+        subscription_data: Optional[TokenSubscriptionData] = None,
     ) -> ConfirmToken:
 
         token = ConfirmToken()
@@ -141,7 +141,7 @@ class StripeService(StripeMixin):
     def _get_success_url_with_token(
         self,
         url: str,
-        subscription_data: Optional[TokenSubscriptionData] = None
+        subscription_data: Optional[TokenSubscriptionData] = None,
     ) -> str:
 
         """ Add confirm token for identification account """
@@ -156,7 +156,7 @@ class StripeService(StripeMixin):
         self,
         success_url: str,
         cancel_url: str,
-        **kwargs
+        **kwargs,
     ) -> str:
 
         """ Check if checkout link already exist, prevent duplicate """
@@ -164,7 +164,7 @@ class StripeService(StripeMixin):
         client_reference_id = self._get_idempotency_key(
             stripe_id=self.customer.stripe_id,
             account_id=self.subscription_account.id,
-            **kwargs
+            **kwargs,
         )
         open_sessions = stripe.checkout.Session.list(
             customer=self.customer,
@@ -179,7 +179,7 @@ class StripeService(StripeMixin):
             client_reference_id=client_reference_id,
             success_url=success_url,
             cancel_url=cancel_url,
-            **kwargs
+            **kwargs,
         )
         return session.url
 
@@ -207,7 +207,7 @@ class StripeService(StripeMixin):
             {
                 "price": item.price.stripe_id,
                 "quantity": item.quantity,
-            }
+            },
         ]
         self.subscription = stripe.Subscription.create(
             customer=self.customer,
@@ -220,14 +220,14 @@ class StripeService(StripeMixin):
                 add_invoice_items=add_invoice_items,
                 trial_period_days=trial_period_days,
                 stripe_id=self.subscription_account.stripe_id,
-                date=timezone.now().strftime('%Y-%m-%dT%H:%M')
+                date=timezone.now().strftime('%Y-%m-%dT%H:%M'),
             ),
             metadata={'account_id': self.subscription_account.id},
             description=(
                 self.subscription_account.tenant_name
                 if self.subscription_account.is_tenant
                 else 'Main'
-            )
+            ),
         )
         self.subscription_service.create(
             details=self.get_subscription_details(self.subscription),
@@ -248,7 +248,7 @@ class StripeService(StripeMixin):
                 {
                     "id": current_item.id,
                     "quantity": item.quantity,
-                }
+                },
             ]
         else:
             items = [
@@ -259,7 +259,7 @@ class StripeService(StripeMixin):
                 {
                     "price": item.price.stripe_id,
                     "quantity": item.quantity,
-                }
+                },
             ]
         add_invoice_items = [
             {
@@ -278,7 +278,7 @@ class StripeService(StripeMixin):
                 self.subscription_account.tenant_name
                 if self.subscription_account.is_tenant
                 else 'Main'
-            )
+            ),
         )
         self.subscription_service.update(
             details=self.get_subscription_details(self.subscription),
@@ -290,14 +290,14 @@ class StripeService(StripeMixin):
 
         invoice = stripe.Invoice.create(
             customer=self.customer,
-            collection_method='charge_automatically'
+            collection_method='charge_automatically',
         )
         for invoice_item in invoice_items:
             stripe.InvoiceItem.create(
                 invoice=invoice,
                 customer=self.customer,
                 price=invoice_item.price.stripe_id,
-                quantity=invoice_item.quantity
+                quantity=invoice_item.quantity,
             )
         invoice.finalize_invoice()
         try:
@@ -319,12 +319,12 @@ class StripeService(StripeMixin):
             if self.subscription:
                 self._update_subscription(
                     item=subscription_item,
-                    invoice_items=invoice_items
+                    invoice_items=invoice_items,
                 )
             else:
                 self._create_subscription(
                     item=subscription_item,
-                    invoice_items=invoice_items
+                    invoice_items=invoice_items,
                 )
         elif invoice_items:
             self._create_invoice(invoice_items)
@@ -343,7 +343,7 @@ class StripeService(StripeMixin):
             {
                 "price": item.price.stripe_id,
                 "quantity": item.quantity,
-            }
+            },
         ]
         if invoice_items:
             for invoice_item in invoice_items:
@@ -357,7 +357,7 @@ class StripeService(StripeMixin):
                 self.subscription_account.tenant_name
                 if self.subscription_account.is_tenant
                 else 'Main'
-            )
+            ),
         }
         if item.price.trial_days and not self.subscription_account.trial_ended:
             subscription_data["trial_period_days"] = item.price.trial_days
@@ -370,8 +370,8 @@ class StripeService(StripeMixin):
             subscription_data=TokenSubscriptionData(
                 max_users=item.quantity,
                 billing_plan=item.price.product.code,
-                trial_days=trial_days
-            )
+                trial_days=trial_days,
+            ),
         )
         return self._get_checkout_session_url(
             success_url=success_url_with_token,
@@ -379,7 +379,7 @@ class StripeService(StripeMixin):
             line_items=line_items,
             mode='subscription',
             allow_promotion_codes=True,
-            subscription_data=subscription_data
+            subscription_data=subscription_data,
         )
 
     def _get_payment_checkout_link(
@@ -401,8 +401,8 @@ class StripeService(StripeMixin):
                 "adjustable_quantity": {
                     'enabled': True,
                     'maximum': invoice_item.price.max_quantity,
-                    'minimum': invoice_item.min_quantity
-                }
+                    'minimum': invoice_item.min_quantity,
+                },
             })
         return self._get_checkout_session_url(
             success_url=self._get_success_url_with_token(url=success_url),
@@ -442,17 +442,17 @@ class StripeService(StripeMixin):
     def _get_valid_premium_subscription_item(
         self,
         price: Price,
-        quantity: int
+        quantity: int,
     ):
         if quantity > price.max_quantity:
             raise exceptions.SubsMaxQuantityReached(
                 quantity=price.max_quantity,
-                product_name=price.product.name
+                product_name=price.product.name,
             )
         if quantity < price.min_quantity:
             raise exceptions.SubsMinQuantityReached(
                 quantity=price.min_quantity,
-                product_name=price.product.name
+                product_name=price.product.name,
             )
         if (
             self.subscription_account.billing_plan == BillingPlanType.PREMIUM
@@ -462,56 +462,56 @@ class StripeService(StripeMixin):
         return PurchaseItem(
             price=price,
             quantity=quantity,
-            min_quantity=None
+            min_quantity=None,
         )
 
     def _get_valid_fractionalcoo_subscription_item(
         self,
         price: Price,
-        quantity: int
+        quantity: int,
     ) -> PurchaseItem:
 
         if quantity > price.max_quantity:
             raise exceptions.SubsMaxQuantityReached(
                 quantity=price.max_quantity,
-                product_name=price.product.name
+                product_name=price.product.name,
             )
         if quantity < price.min_quantity:
             raise exceptions.SubsMinQuantityReached(
                 quantity=price.min_quantity,
-                product_name=price.product.name
+                product_name=price.product.name,
             )
         return PurchaseItem(
             price=price,
             quantity=quantity,
-            min_quantity=None
+            min_quantity=None,
         )
 
     def _get_valid_unlimited_subscription_item(
         self,
         price: Price,
-        quantity: int
+        quantity: int,
     ) -> PurchaseItem:
 
         if quantity > price.max_quantity:
             raise exceptions.SubsMaxQuantityReached(
                 quantity=price.max_quantity,
-                product_name=price.product.name
+                product_name=price.product.name,
             )
         if quantity < price.min_quantity:
             raise exceptions.SubsMinQuantityReached(
                 quantity=price.min_quantity,
-                product_name=price.product.name
+                product_name=price.product.name,
             )
         return PurchaseItem(
             price=price,
             quantity=quantity,
-            min_quantity=None
+            min_quantity=None,
         )
 
     def _get_valid_subscription_item(
         self,
-        products: List[dict]
+        products: List[dict],
     ) -> Optional[PurchaseItem]:
 
         products_dict = {
@@ -528,7 +528,7 @@ class StripeService(StripeMixin):
             quantity = products_dict[new_price.code]
             if self.subscription:
                 current_price = Price.objects.filter(
-                    stripe_id=self.subscription['items'].data[0].price.id
+                    stripe_id=self.subscription['items'].data[0].price.id,
                 ).first()
                 if current_price.currency != new_price.currency:
                     # Modify subscription to another with another currency
@@ -546,18 +546,18 @@ class StripeService(StripeMixin):
             validate_product_method = getattr(
                 self,
                 f'_get_valid_{new_price.product.code}_subscription_item',
-                None
+                None,
             )
             if not validate_product_method:
                 raise exceptions.UnsupportedPlan()
             return validate_product_method(
                 price=new_price,
-                quantity=quantity
+                quantity=quantity,
             )
 
     def _get_valid_invoice_items(
         self,
-        products: List[dict]
+        products: List[dict],
     ) -> List[PurchaseItem]:
 
         invoice_items = []
@@ -568,7 +568,7 @@ class StripeService(StripeMixin):
         for product in products:
             try:
                 price = Price.objects.not_subscriptions().active().get(
-                    code=product['code']
+                    code=product['code'],
                 )
             except ObjectDoesNotExist:
                 pass
@@ -577,12 +577,12 @@ class StripeService(StripeMixin):
                 if quantity > price.max_quantity:
                     raise exceptions.MaxQuantityReached(
                         quantity=price.max_quantity,
-                        product_name=price.product.name
+                        product_name=price.product.name,
                     )
                 if quantity < price.min_quantity:
                     raise exceptions.MinQuantityReached(
                         quantity=price.min_quantity,
-                        product_name=price.product.name
+                        product_name=price.product.name,
                     )
                 if (
                     current_item
@@ -595,15 +595,15 @@ class StripeService(StripeMixin):
                     PurchaseItem(
                         price=price,
                         quantity=quantity,
-                        min_quantity=price.min_quantity
-                    )
+                        min_quantity=price.min_quantity,
+                    ),
                 )
         return invoice_items
 
     def _log_stripe_error(
         self,
         ex: stripe.error.StripeError,
-        level: SentryLogLevel.LITERALS = SentryLogLevel.ERROR
+        level: SentryLogLevel.LITERALS = SentryLogLevel.ERROR,
     ):
         capture_sentry_message(
             message=f'Stripe {level}. Account ({self.account.id})',
@@ -624,28 +624,28 @@ class StripeService(StripeMixin):
                     'cls': ex.__class__,
                     'message': ex.user_message,
                     'code': ex.code,
-                    'json_body': ex.json_body
-                }
-            }
+                    'json_body': ex.json_body,
+                },
+            },
         )
 
     def update_customer(
         self,
-        customer: Optional[stripe.Customer] = None
+        customer: Optional[stripe.Customer] = None,
     ):
         customer = customer or self.customer
         stripe.Customer.modify(
             id=customer.id,
             name=self.account.name,
             phone=self.user.phone,
-            description=self.user.name
+            description=self.user.name,
         )
 
     def update_subscription_description(self):
         if self.subscription and self.subscription_account.is_tenant:
             stripe.Subscription.modify(
                 id=self.subscription.id,
-                description=self.subscription_account.tenant_name
+                description=self.subscription_account.tenant_name,
             )
 
     def create_purchase(
@@ -676,13 +676,13 @@ class StripeService(StripeMixin):
                     return self._get_checkout_link(
                         success_url=success_url,
                         cancel_url=cancel_url,
-                        products=products
+                        products=products,
                     )
         else:
             return self._get_checkout_link(
                 success_url=success_url,
                 cancel_url=cancel_url,
-                products=products
+                products=products,
             )
 
     def get_payment_method_checkout_link(
@@ -702,7 +702,7 @@ class StripeService(StripeMixin):
 
     def confirm(
         self,
-        subscription_data: Optional[TokenSubscriptionData] = None
+        subscription_data: Optional[TokenSubscriptionData] = None,
     ):
 
         """ Call after payment from stripe hosted page
@@ -713,7 +713,7 @@ class StripeService(StripeMixin):
             activate subscription changes immediately """
 
         data = {
-            'force_save': True
+            'force_save': True,
         }
 
         # If the webhook "subscription created" has not yet been processed
@@ -736,14 +736,14 @@ class StripeService(StripeMixin):
                 trial_start = timezone.now()
                 data['trial_start'] = trial_start
                 data['trial_end'] = trial_start + timedelta(
-                    days=subscription_data['trial_days']
+                    days=subscription_data['trial_days'],
                 )
 
         account_service = AccountService(
             instance=self.subscription_account,
             user=self.subscription_account.get_owner(),
             is_superuser=self.is_superuser,
-            auth_type=self.auth_type
+            auth_type=self.auth_type,
         )
         account_service.partial_update(**data)
 
@@ -761,7 +761,7 @@ class StripeService(StripeMixin):
                 {
                     "id": current_item.id,
                     "quantity": quantity,
-                }
+                },
             ],
             trial_end='now',
             metadata={'account_id': self.subscription_account.id},
@@ -769,7 +769,7 @@ class StripeService(StripeMixin):
                 self.subscription_account.tenant_name
                 if self.subscription_account.is_tenant
                 else 'Main'
-            )
+            ),
         )
         self.subscription_service.update(
             details=self.get_subscription_details(self.subscription),
@@ -780,7 +780,7 @@ class StripeService(StripeMixin):
         if self.subscription:
             self.subscription = stripe.Subscription.modify(
                 id=self.subscription.id,
-                cancel_at_period_end=True
+                cancel_at_period_end=True,
             )
             details = self.get_subscription_details(self.subscription)
             self.subscription_service.cancel(details.plan_expiration)
@@ -789,7 +789,7 @@ class StripeService(StripeMixin):
         if self.payment_method:
             return CardDetails(
                 last4=self.payment_method.card['last4'],
-                brand=self.payment_method.card['brand']
+                brand=self.payment_method.card['brand'],
             )
         return None
 

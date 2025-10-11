@@ -1,5 +1,5 @@
 from src.authentication.permissions import (
-    StaffPermission
+    StaffPermission,
 )
 from src.accounts.permissions import (
     BillingPlanPermission,
@@ -11,14 +11,14 @@ from src.generics.permissions import (
     UserIsAuthenticated,
 )
 from src.processes.filters import (
-    SystemTemplateFilter
+    SystemTemplateFilter,
 )
 from src.processes.models import (
     SystemTemplate,
     SystemTemplateCategory,
 )
 from rest_framework.mixins import (
-    ListModelMixin
+    ListModelMixin,
 )
 from rest_framework.decorators import action
 from rest_framework.viewsets import GenericViewSet
@@ -45,7 +45,7 @@ from src.generics.filters import PneumaticFilterBackend
 class SystemTemplateViewSet(
     CustomViewSetMixin,
     ListModelMixin,
-    GenericViewSet
+    GenericViewSet,
 ):
     pagination_class = LimitOffsetPagination
     filter_backends = (PneumaticFilterBackend, )
@@ -85,7 +85,7 @@ class SystemTemplateViewSet(
         service = TemplateService(
             user=request.user,
             is_superuser=request.is_superuser,
-            auth_type=request.token_type
+            auth_type=request.token_type,
         )
         data = service.get_from_sys_template(system_template)
         return self.response_ok(data)
@@ -98,7 +98,7 @@ class SystemTemplateViewSet(
 
 class SystemTemplatesImportViewSet(
     CustomViewSetMixin,
-    GenericViewSet
+    GenericViewSet,
 ):
     parser_classes = [ImportSystemTemplateParser]
     permission_classes = (
@@ -112,7 +112,7 @@ class SystemTemplatesImportViewSet(
     def create(self, request, *args, **kwargs):
         slz = self.get_serializer(
             data=request.data.get('templates'),
-            many=True
+            many=True,
         )
         slz.is_valid(raise_exception=True)
         service = SystemTemplateService(

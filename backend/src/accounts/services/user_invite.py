@@ -36,7 +36,7 @@ from src.accounts.models import (
 from src.services.email import EmailService
 from src.accounts.tokens import TransferToken
 from src.processes.services.system_workflows import (
-    SystemWorkflowService
+    SystemWorkflowService,
 )
 from src.accounts.services import AccountService
 from src.payment.tasks import increase_plan_users
@@ -49,7 +49,7 @@ UserModel = get_user_model()
 
 
 class UserInviteService(
-    BaseIdentifyMixin
+    BaseIdentifyMixin,
 ):
 
     def __init__(
@@ -58,7 +58,7 @@ class UserInviteService(
         is_superuser: bool = False,
         request_user: Optional[UserModel] = None,
         auth_type: AuthTokenType.LITERALS = AuthTokenType.USER,
-        send_email: bool = True
+        send_email: bool = True,
     ):
         if request_user:
             self.account = request_user.account
@@ -79,7 +79,7 @@ class UserInviteService(
     def _get_transfer_token(
         self,
         current_account_user: UserModel,
-        another_account_user: UserModel
+        another_account_user: UserModel,
     ) -> str:
 
         token = TransferToken()
@@ -120,9 +120,9 @@ class UserInviteService(
 
         return UserModel.objects.filter(
             status=UserStatus.ACTIVE,
-            email=email
+            email=email,
         ).exclude(
-            account_id=self.account.id
+            account_id=self.account.id,
         ).first()
 
     def _get_account_user(self, email) -> Optional[UserModel]:
@@ -131,7 +131,7 @@ class UserInviteService(
     def _create_user_invite(
         self,
         user: UserModel,
-        invited_from: SourceType.LITERALS
+        invited_from: SourceType.LITERALS,
     ):
 
         UserInvite.objects.create(
@@ -148,7 +148,7 @@ class UserInviteService(
             user=user,
             name=user.get_full_name(),
             account_id=user.account_id,
-            key=PneumaticToken.create(user, for_api_key=True)
+            key=PneumaticToken.create(user, for_api_key=True),
         )
         send_user_created_notification.delay(
             logging=user.account.log_api_requests,
@@ -162,37 +162,37 @@ class UserInviteService(
         AnalyticService.users_invited(
             invite_to=user,
             is_superuser=self.is_superuser,
-            invite_token=self._get_invite_token(user)
+            invite_token=self._get_invite_token(user),
         )
         AnalyticService.users_invite_sent(
             invite_from=self.request_user,
             invite_to=user,
             current_url=self.current_url,
-            is_superuser=self.is_superuser
+            is_superuser=self.is_superuser,
         )
 
     def _send_transfer_email(
         self,
         current_account_user: UserModel,
-        another_account_user: UserModel
+        another_account_user: UserModel,
     ):
 
         transfer_token_str = self._get_transfer_token(
             current_account_user=current_account_user,
-            another_account_user=another_account_user
+            another_account_user=another_account_user,
         )
         EmailService.send_user_transfer_email(
             email=another_account_user.email,
             invited_by=self.request_user,
             token=transfer_token_str,
             user_id=current_account_user.id,
-            logo_lg=current_account_user.account.logo_lg
+            logo_lg=current_account_user.account.logo_lg,
         )
 
     def _validate_already_accepted(self, user: UserModel):
         if user.status == UserStatus.ACTIVE:
             raise AlreadyAcceptedInviteException(
-                invites_data=[{'email': user.email}]
+                invites_data=[{'email': user.email}],
             )
 
     def _validate_limit_invites(self):
@@ -211,7 +211,7 @@ class UserInviteService(
     def _user_transfer_actions(
         self,
         current_account_user: UserModel,
-        another_account_user: UserModel
+        another_account_user: UserModel,
     ):
         self.identify(current_account_user)
         # TODO Do not send invite_token.
@@ -219,13 +219,13 @@ class UserInviteService(
         AnalyticService.users_invited(
             invite_to=another_account_user,
             is_superuser=self.is_superuser,
-            invite_token=self._get_invite_token(another_account_user)
+            invite_token=self._get_invite_token(another_account_user),
         )
         AnalyticService.users_invite_sent(
             invite_from=self.request_user,
             invite_to=another_account_user,
             current_url=self.current_url,
-            is_superuser=self.is_superuser
+            is_superuser=self.is_superuser,
         )
 
     def _transfer_existent_user(
@@ -236,7 +236,7 @@ class UserInviteService(
         first_name: Optional[str] = None,
         last_name: Optional[str] = None,
         photo: Optional[str] = None,
-        groups: Optional[List[int]] = None
+        groups: Optional[List[int]] = None,
     ):
 
         """ Creates in current account user
@@ -253,23 +253,23 @@ class UserInviteService(
                 first_name=first_name,
                 last_name=last_name,
                 photo=photo,
-                password=another_account_user.password
+                password=another_account_user.password,
             )
             self._create_user_invite(
                 user=current_account_user,
-                invited_from=invited_from
+                invited_from=invited_from,
             )
             if groups:
                 current_account_user.user_groups.set(groups)
             self._user_create_actions(current_account_user)
             self._user_transfer_actions(
                 current_account_user=current_account_user,
-                another_account_user=another_account_user
+                another_account_user=another_account_user,
             )
             if self.send_email:
                 self._send_transfer_email(
                     current_account_user=current_account_user,
-                    another_account_user=another_account_user
+                    another_account_user=another_account_user,
                 )
 
     def _invite_new_user(
@@ -279,7 +279,7 @@ class UserInviteService(
         first_name: Optional[str] = None,
         last_name: Optional[str] = None,
         photo: Optional[str] = None,
-        groups: Optional[List[int]] = None
+        groups: Optional[List[int]] = None,
     ):
 
         """ if user with email already invited just skip and return ok """
@@ -297,7 +297,7 @@ class UserInviteService(
             )
             self._create_user_invite(
                 user=user,
-                invited_from=invited_from
+                invited_from=invited_from,
             )
             if groups:
                 user.user_groups.set(groups)
@@ -339,9 +339,9 @@ class UserInviteService(
             Contact.objects.filter(
                 account=self.account,
                 email=email,
-                status=UserStatus.ACTIVE
+                status=UserStatus.ACTIVE,
             ).update(
-                status=UserStatus.INVITED
+                status=UserStatus.INVITED,
             )
 
     def invite_users(self, data: List[InviteData]):
@@ -359,7 +359,7 @@ class UserInviteService(
             raise UserNotFoundException()
         elif user.status == UserStatus.ACTIVE:
             raise AlreadyAcceptedInviteException(
-                invites_data=[{'email': user.email}]
+                invites_data=[{'email': user.email}],
             )
         elif user.status == UserStatus.INVITED:
             another_account_user = self._get_another_account_user(user.email)
@@ -370,7 +370,7 @@ class UserInviteService(
                 )
                 self._user_transfer_actions(
                     current_account_user=user,
-                    another_account_user=another_account_user
+                    another_account_user=another_account_user,
                 )
             else:
                 self._user_invite_actions(user)
@@ -382,7 +382,7 @@ class UserInviteService(
         last_name: str,
         language: Optional[Language] = None,
         timezone: Optional[Timezone] = None,
-        password: Optional[str] = None
+        password: Optional[str] = None,
     ) -> UserModel:
 
         with transaction.atomic():
@@ -409,7 +409,7 @@ class UserInviteService(
             service.create_activated_workflows()
             account_service = AccountService(
                 instance=user.account,
-                user=user
+                user=user,
             )
             account_service.update_users_counts()
         if (
@@ -420,7 +420,7 @@ class UserInviteService(
             increase_plan_users.delay(
                 account_id=user.account_id,
                 is_superuser=self.is_superuser,
-                auth_type=self.auth_type
+                auth_type=self.auth_type,
             )
         send_user_updated_notification.delay(
             logging=user.account.log_api_requests,

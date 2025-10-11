@@ -1,17 +1,17 @@
 from src.accounts.views.accounts import (
     AccountView,
-    AccountPlanView
+    AccountPlanView,
 )
 from src.accounts.views.api_key import (
     APIKeyView,
 )
 from src.accounts.views.notifications import (
     NotificationsViewSet,
-    NotificationsReadView
+    NotificationsReadView,
 )
 from src.accounts.views.unsubscribes import (
     UnsubscribeDigestView,
-    UnsubscribeEmailView
+    UnsubscribeEmailView,
 )
 from src.accounts.views.user_invites import (
     UserInviteViewSet,
@@ -23,5 +23,5 @@ from src.accounts.views.users import (
     UsersViewSet,
 )
 from src.accounts.views.tenants import (
-    TenantsViewSet
+    TenantsViewSet,
 )

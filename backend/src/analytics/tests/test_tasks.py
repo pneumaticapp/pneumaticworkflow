@@ -1,18 +1,18 @@
 import pytest
 from src.accounts.enums import UserStatus
 from src.accounts.models import (
-    AccountSignupData
+    AccountSignupData,
 )
 from src.processes.tests.fixtures import (
     create_test_account,
     create_test_user,
     create_invited_user,
     create_test_guest,
-    create_test_group
+    create_test_group,
 )
 from src.analytics.tasks import (
     _identify_users,
-    track_group_analytics
+    track_group_analytics,
 )
 from src.analytics.events import GroupsAnalyticsEvent
 from src.authentication.enums import AuthTokenType
@@ -33,13 +33,13 @@ def test_identify_users__ok(identify_mock):
     )
     inactive_user = create_test_user(
         account=account,
-        status=UserStatus.INACTIVE
+        status=UserStatus.INACTIVE,
     )
     guest = create_test_guest(account=account)
 
     # act
     _identify_users(user_ids=[
-        user.id, invited_user.id, inactive_user.id, guest.id
+        user.id, invited_user.id, inactive_user.id, guest.id,
     ])
 
     # assert
@@ -47,7 +47,7 @@ def test_identify_users__ok(identify_mock):
 
 
 def test_track_group_analytics__create_group_all_fields__ok(
-    mocker
+    mocker,
 ):
     # arrange
     user = create_test_user()
@@ -55,7 +55,7 @@ def test_track_group_analytics__create_group_all_fields__ok(
     is_superuser = False
     photo = 'photo.jpg'
     analytics_service_mock = mocker.patch(
-        'src.analytics.tasks.AnalyticService'
+        'src.analytics.tasks.AnalyticService',
     )
 
     # act
@@ -134,7 +134,7 @@ def test_track_group_analytics__create_group_required_fields__ok(mocker):
     is_superuser = False
 
     analytics_service_mock = mocker.patch(
-        'src.analytics.tasks.AnalyticService'
+        'src.analytics.tasks.AnalyticService',
     )
 
     # act
@@ -177,7 +177,7 @@ def test_track_group_analytics__create_group_with_photo__ok(mocker):
     is_superuser = False
     photo = 'photo.jpg'
     analytics_service_mock = mocker.patch(
-        'src.analytics.tasks.AnalyticService'
+        'src.analytics.tasks.AnalyticService',
     )
 
     # act
@@ -231,14 +231,14 @@ def test_track_group_analytics__create_group_with_photo__ok(mocker):
 
 
 def test_track_group_analytics__create_group_with_user__ok(
-    mocker
+    mocker,
 ):
     # arrange
     user = create_test_user()
     group = create_test_group(user.account)
     is_superuser = False
     analytics_service_mock = mocker.patch(
-        'src.analytics.tasks.AnalyticService'
+        'src.analytics.tasks.AnalyticService',
     )
 
     # act
@@ -296,7 +296,7 @@ def test_track_group_analytics__update_group_name__ok(mocker):
     is_superuser = False
     new_name = "New Group Name"
     analytics_service_mock = mocker.patch(
-        'src.analytics.tasks.AnalyticService'
+        'src.analytics.tasks.AnalyticService',
     )
 
     # act
@@ -343,7 +343,7 @@ def test_track_group_analytics__update_group_photo__ok(mocker):
     is_superuser = False
     new_photo = 'photo.jpg'
     analytics_service_mock = mocker.patch(
-        'src.analytics.tasks.AnalyticService'
+        'src.analytics.tasks.AnalyticService',
     )
 
     # act
@@ -389,7 +389,7 @@ def test_track_group_analytics__delete_group_photo__ok(mocker):
     group = create_test_group(user.account, photo='url')
     is_superuser = False
     analytics_service_mock = mocker.patch(
-        'src.analytics.tasks.AnalyticService'
+        'src.analytics.tasks.AnalyticService',
     )
     delete_photo = ''
 
@@ -438,7 +438,7 @@ def test_track_group_analytics__update_group_add_users__ok(mocker):
     new_users_ids = [user.id]
 
     analytics_service_mock = mocker.patch(
-        'src.analytics.tasks.AnalyticService'
+        'src.analytics.tasks.AnalyticService',
     )
 
     # act
@@ -483,7 +483,7 @@ def test_track_group_analytics__remove_users__ok(mocker):
     removed_users_ids = [user.id]
 
     analytics_service_mock = mocker.patch(
-        'src.analytics.tasks.AnalyticService'
+        'src.analytics.tasks.AnalyticService',
     )
 
     # act
@@ -526,7 +526,7 @@ def test_track_group_analytics__delete_group__ok(mocker):
     group = create_test_group(user.account)
     is_superuser = False
     analytics_service_mock = mocker.patch(
-        'src.analytics.tasks.AnalyticService'
+        'src.analytics.tasks.AnalyticService',
     )
 
     # act

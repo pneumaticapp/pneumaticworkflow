@@ -43,7 +43,7 @@ from src.generics.mixins.views import (
 )
 from src.analytics.mixins import BaseIdentifyMixin
 from src.accounts.services.reassign import (
-    ReassignService
+    ReassignService,
 )
 from src.generics.permissions import (
     UserIsAuthenticated,
@@ -56,7 +56,7 @@ from src.accounts.services.exceptions import (
     ReassignServiceException,
 )
 from src.accounts.enums import (
-    UserInviteStatus
+    UserInviteStatus,
 )
 from src.utils.validation import raise_validation_error
 
@@ -124,7 +124,7 @@ class UsersViewSet(
 
         return super().prefetch_queryset(
             queryset=queryset,
-            extra_fields=extra_fields
+            extra_fields=extra_fields,
         )
 
     def get_queryset(self):
@@ -133,12 +133,12 @@ class UsersViewSet(
         elif self.action in {'list', 'privileges'}:
             account_id = self.request.user.account_id
             queryset = UserModel.include_inactive.all_account_users(
-                account_id
+                account_id,
             )
         elif self.action == 'toggle_admin':
             account = self.request.user.account
             queryset = UserModel.objects.on_account(account.id).exclude(
-                is_account_owner=True
+                is_account_owner=True,
             ).exclude(id=self.request.user.id)
         else:
             queryset = self.request.user.account.users
@@ -181,7 +181,7 @@ class UsersViewSet(
             service = ReassignService(
                 is_superuser=request.is_superuser,
                 auth_type=request.token_type,
-                **serializer.validated_data
+                **serializer.validated_data,
             )
             service.reassign_everywhere()
         except ReassignServiceException as ex:
@@ -230,7 +230,7 @@ class UsersViewSet(
             data={
                 'user_id': pk,
                 'token': request.GET.get('token'),
-            }
+            },
         )
         try:
             slz.is_valid(raise_exception=True)
@@ -242,7 +242,7 @@ class UsersViewSet(
         try:
             service.accept_transfer(
                 token_str=slz.validated_data['token'],
-                user_id=slz.validated_data['user_id']
+                user_id=slz.validated_data['user_id'],
             )
         except AlreadyAcceptedInviteException:
             return self.redirect(host)
@@ -273,7 +273,7 @@ class UsersViewSet(
             if UserInvite.objects.filter(
                 status=UserInviteStatus.PENDING,
                 account=request.user.account,
-                invited_user_id=pk
+                invited_user_id=pk,
             ).exists():
                 user = UserModel.objects.get(id=pk)
             else:
@@ -285,16 +285,16 @@ class UsersViewSet(
         result = list(RawSqlExecutor.fetch(*query.get_sql()))
         count = sum(item['count'] for item in result)
         return self.response_ok(
-            data={'count': count}
+            data={'count': count},
         )
 
     @action(
         detail=False,
         methods=('get',),
-        url_path='active-count'
+        url_path='active-count',
     )
     def active_count(self, request, *args, **kwargs):
         account_data = AccountService.get_cached_data(
-            request.user.account_id
+            request.user.account_id,
         )
         return self.response_ok(data=account_data)

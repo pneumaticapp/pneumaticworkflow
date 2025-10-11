@@ -9,7 +9,7 @@ from src.processes.tests.fixtures import (
     create_test_guest,
     create_test_workflow,
     create_test_account,
-    create_test_group, create_test_owner, create_test_admin
+    create_test_group, create_test_owner, create_test_admin,
 )
 from src.processes.enums import (
     PerformerType,
@@ -18,7 +18,7 @@ from src.processes.enums import (
 from src.authentication.services import GuestJWTAuthService
 from src.authentication.enums import AuthTokenType
 from src.processes.services.workflow_action import (
-    WorkflowActionService
+    WorkflowActionService,
 )
 
 
@@ -27,7 +27,7 @@ pytestmark = pytest.mark.django_db
 
 def test_complete__account_owner_not_performer__ok(
     mocker,
-    api_client
+    api_client,
 ):
 
     # arrange
@@ -39,12 +39,12 @@ def test_complete__account_owner_not_performer__ok(
     service_init_mock = mocker.patch.object(
         WorkflowActionService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     complete_task_for_user_mock = mocker.patch(
         'src.processes.services.'
         'workflow_action.WorkflowActionService.'
-        'complete_task_for_user'
+        'complete_task_for_user',
     )
     api_client.token_authenticate(owner)
 
@@ -52,8 +52,8 @@ def test_complete__account_owner_not_performer__ok(
     response = api_client.post(
         f'/workflows/{workflow.id}/task-complete',
         data={
-            'task_api_name': task.api_name
-        }
+            'task_api_name': task.api_name,
+        },
     )
 
     # assert
@@ -62,11 +62,11 @@ def test_complete__account_owner_not_performer__ok(
         workflow=workflow,
         user=owner,
         auth_type=AuthTokenType.USER,
-        is_superuser=False
+        is_superuser=False,
     )
     complete_task_for_user_mock.assert_called_once_with(
         task=task,
-        fields_values=None
+        fields_values=None,
     )
 
 
@@ -82,18 +82,18 @@ def test_complete__user_performer__ok(
     user = create_test_user(account=account)
     TaskPerformer.objects.create(
         task_id=task.id,
-        user_id=user.id
+        user_id=user.id,
     )
 
     service_init_mock = mocker.patch.object(
         WorkflowActionService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     complete_task_for_user_mock = mocker.patch(
         'src.processes.services.'
         'workflow_action.WorkflowActionService.'
-        'complete_task_for_user'
+        'complete_task_for_user',
     )
     api_client.token_authenticate(user)
 
@@ -101,8 +101,8 @@ def test_complete__user_performer__ok(
     response = api_client.post(
         f'/workflows/{workflow.id}/task-complete',
         data={
-            'task_api_name': task.api_name
-        }
+            'task_api_name': task.api_name,
+        },
     )
 
     # assert
@@ -111,11 +111,11 @@ def test_complete__user_performer__ok(
         workflow=workflow,
         user=user,
         auth_type=AuthTokenType.USER,
-        is_superuser=False
+        is_superuser=False,
     )
     complete_task_for_user_mock.assert_called_once_with(
         task=task,
-        fields_values=None
+        fields_values=None,
     )
 
 
@@ -133,12 +133,12 @@ def test_complete__user_not_performer__call_service(
     service_init_mock = mocker.patch.object(
         WorkflowActionService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     complete_task_for_user_mock = mocker.patch(
         'src.processes.services.'
         'workflow_action.WorkflowActionService.'
-        'complete_task_for_user'
+        'complete_task_for_user',
     )
     api_client.token_authenticate(user)
 
@@ -146,8 +146,8 @@ def test_complete__user_not_performer__call_service(
     response = api_client.post(
         f'/workflows/{workflow.id}/task-complete',
         data={
-            'task_api_name': task.api_name
-        }
+            'task_api_name': task.api_name,
+        },
     )
 
     # assert
@@ -156,11 +156,11 @@ def test_complete__user_not_performer__call_service(
         workflow=workflow,
         user=user,
         auth_type=AuthTokenType.USER,
-        is_superuser=False
+        is_superuser=False,
     )
     complete_task_for_user_mock.assert_called_once_with(
         task=task,
-        fields_values=None
+        fields_values=None,
     )
 
 
@@ -176,32 +176,32 @@ def test_complete__guest__ok(
     task = workflow.tasks.first()
     TaskPerformer.objects.create(
         task_id=task.id,
-        user_id=guest.id
+        user_id=guest.id,
     )
     str_token = GuestJWTAuthService.get_str_token(
         task_id=task.id,
         user_id=guest.id,
-        account_id=account.id
+        account_id=account.id,
     )
 
     service_init_mock = mocker.patch.object(
         WorkflowActionService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     complete_task_for_user_mock = mocker.patch(
         'src.processes.services.'
         'workflow_action.WorkflowActionService.'
-        'complete_task_for_user'
+        'complete_task_for_user',
     )
 
     # act
     response = api_client.post(
         f'/workflows/{workflow.id}/task-complete',
         data={
-            'task_api_name': task.api_name
+            'task_api_name': task.api_name,
         },
-        **{'X-Guest-Authorization': str_token}
+        **{'X-Guest-Authorization': str_token},
     )
 
     # assert
@@ -210,17 +210,17 @@ def test_complete__guest__ok(
         workflow=workflow,
         user=guest,
         auth_type=AuthTokenType.GUEST,
-        is_superuser=False
+        is_superuser=False,
     )
     complete_task_for_user_mock.assert_called_once_with(
         task=task,
-        fields_values=None
+        fields_values=None,
     )
 
 
 def test_complete__task_id__ok(
     mocker,
-    api_client
+    api_client,
 ):
 
     # arrange
@@ -230,19 +230,19 @@ def test_complete__task_id__ok(
     performer = create_test_user(
         account=account,
         email='test@test.test',
-        is_account_owner=False
+        is_account_owner=False,
     )
     task = workflow.tasks.get(number=1)
     task.performers.add(performer)
     service_init_mock = mocker.patch.object(
         WorkflowActionService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     complete_task_for_user_mock = mocker.patch(
         'src.processes.services.'
         'workflow_action.WorkflowActionService.'
-        'complete_task_for_user'
+        'complete_task_for_user',
     )
     api_client.token_authenticate(performer)
 
@@ -250,8 +250,8 @@ def test_complete__task_id__ok(
     response = api_client.post(
         f'/workflows/{workflow.id}/task-complete',
         data={
-            'task_id': task.id
-        }
+            'task_id': task.id,
+        },
     )
 
     # assert
@@ -260,17 +260,17 @@ def test_complete__task_id__ok(
         workflow=workflow,
         user=performer,
         auth_type=AuthTokenType.USER,
-        is_superuser=False
+        is_superuser=False,
     )
     complete_task_for_user_mock.assert_called_once_with(
         task=task,
-        fields_values=None
+        fields_values=None,
     )
 
 
 def test_complete__task_performer_is_group__ok(
     mocker,
-    api_client
+    api_client,
 ):
 
     # arrange
@@ -279,7 +279,7 @@ def test_complete__task_performer_is_group__ok(
     performer = create_test_user(
         account=account,
         email='test@test.test',
-        is_account_owner=False
+        is_account_owner=False,
     )
     group = create_test_group(account, users=[performer])
     workflow = create_test_workflow(owner, tasks_count=1)
@@ -288,17 +288,17 @@ def test_complete__task_performer_is_group__ok(
         task_id=task.id,
         type=PerformerType.GROUP,
         group_id=group.id,
-        directly_status=DirectlyStatus.CREATED
+        directly_status=DirectlyStatus.CREATED,
     )
     service_init_mock = mocker.patch.object(
         WorkflowActionService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     complete_task_for_user_mock = mocker.patch(
         'src.processes.services.'
         'workflow_action.WorkflowActionService.'
-        'complete_task_for_user'
+        'complete_task_for_user',
     )
     api_client.token_authenticate(performer)
 
@@ -306,8 +306,8 @@ def test_complete__task_performer_is_group__ok(
     response = api_client.post(
         f'/workflows/{workflow.id}/task-complete',
         data={
-            'task_api_name': task.api_name
-        }
+            'task_api_name': task.api_name,
+        },
     )
 
     # assert
@@ -316,17 +316,17 @@ def test_complete__task_performer_is_group__ok(
         workflow=workflow,
         user=performer,
         auth_type=AuthTokenType.USER,
-        is_superuser=False
+        is_superuser=False,
     )
     complete_task_for_user_mock.assert_called_once_with(
         task=task,
-        fields_values=None
+        fields_values=None,
     )
 
 
 def test_complete__task_api_name__ok(
     mocker,
-    api_client
+    api_client,
 ):
 
     # arrange
@@ -335,7 +335,7 @@ def test_complete__task_api_name__ok(
     performer = create_test_user(
         account=account,
         email='test@test.test',
-        is_account_owner=False
+        is_account_owner=False,
     )
     workflow = create_test_workflow(owner, tasks_count=1)
     task = workflow.tasks.get(number=1)
@@ -343,12 +343,12 @@ def test_complete__task_api_name__ok(
     service_init_mock = mocker.patch.object(
         WorkflowActionService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     complete_task_for_user_mock = mocker.patch(
         'src.processes.services.'
         'workflow_action.WorkflowActionService.'
-        'complete_task_for_user'
+        'complete_task_for_user',
     )
     api_client.token_authenticate(performer)
 
@@ -356,8 +356,8 @@ def test_complete__task_api_name__ok(
     response = api_client.post(
         f'/workflows/{workflow.id}/task-complete',
         data={
-            'task_api_name': task.api_name
-        }
+            'task_api_name': task.api_name,
+        },
     )
 
     # assert
@@ -366,17 +366,17 @@ def test_complete__task_api_name__ok(
         workflow=workflow,
         user=performer,
         auth_type=AuthTokenType.USER,
-        is_superuser=False
+        is_superuser=False,
     )
     complete_task_for_user_mock.assert_called_once_with(
         task=task,
-        fields_values=None
+        fields_values=None,
     )
 
 
 def test_complete__fields_values__ok(
     mocker,
-    api_client
+    api_client,
 ):
 
     # arrange
@@ -385,7 +385,7 @@ def test_complete__fields_values__ok(
     performer = create_test_user(
         account=account,
         email='test@test.test',
-        is_account_owner=False
+        is_account_owner=False,
     )
     workflow = create_test_workflow(owner, tasks_count=1)
     task = workflow.tasks.get(number=1)
@@ -393,16 +393,16 @@ def test_complete__fields_values__ok(
     service_init_mock = mocker.patch.object(
         WorkflowActionService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     complete_task_by_user_mock = mocker.patch(
         'src.processes.services.'
         'workflow_action.WorkflowActionService.'
-        'complete_task_for_user'
+        'complete_task_for_user',
     )
     fields_data = {
         'field_1': 'value_1',
-        'field_2': 2
+        'field_2': 2,
     }
     api_client.token_authenticate(performer)
     task = workflow.tasks.get(number=1)
@@ -412,8 +412,8 @@ def test_complete__fields_values__ok(
         f'/workflows/{workflow.id}/task-complete',
         data={
             'task_api_name': task.api_name,
-            'output': fields_data
-        }
+            'output': fields_data,
+        },
     )
 
     # assert
@@ -422,17 +422,17 @@ def test_complete__fields_values__ok(
         workflow=workflow,
         user=performer,
         auth_type=AuthTokenType.USER,
-        is_superuser=False
+        is_superuser=False,
     )
     complete_task_by_user_mock.assert_called_once_with(
         task=task,
-        fields_values=fields_data
+        fields_values=fields_data,
     )
 
 
 def test_complete__empty_fields_data__ok(
     mocker,
-    api_client
+    api_client,
 ):
 
     # arrange
@@ -443,13 +443,13 @@ def test_complete__empty_fields_data__ok(
     service_init_mock = mocker.patch.object(
         WorkflowActionService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     complete_task_by_user_mock = mocker.patch(
         'src.processes.services.'
         'workflow_action.WorkflowActionService.'
         'complete_task_for_user',
-        return_value=task
+        return_value=task,
     )
     api_client.token_authenticate(owner)
     task = workflow.tasks.get(number=1)
@@ -459,8 +459,8 @@ def test_complete__empty_fields_data__ok(
         f'/workflows/{workflow.id}/task-complete',
         data={
             'task_api_name': task.api_name,
-            'output': {}
-        }
+            'output': {},
+        },
     )
 
     # assert
@@ -469,11 +469,11 @@ def test_complete__empty_fields_data__ok(
         workflow=workflow,
         user=owner,
         auth_type=AuthTokenType.USER,
-        is_superuser=False
+        is_superuser=False,
     )
     complete_task_by_user_mock.assert_called_once_with(
         task=task,
-        fields_values={}
+        fields_values={},
     )
 
 
@@ -483,7 +483,7 @@ def test_complete__empty_fields_data__ok(
         ([], 'Expected a dictionary of items but got type "list".'),
         ('null', 'Expected a dictionary of items but got type "str".'),
         (123, 'Expected a dictionary of items but got type "int".'),
-    )
+    ),
 )
 def test_complete__invalid_output__validation_error(
     mocker,
@@ -500,13 +500,13 @@ def test_complete__invalid_output__validation_error(
     service_init_mock = mocker.patch.object(
         WorkflowActionService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     complete_task_by_user_mock = mocker.patch(
         'src.processes.services.'
         'workflow_action.WorkflowActionService.'
         'complete_task_for_user',
-        return_value=task
+        return_value=task,
     )
     api_client.token_authenticate(owner)
     task = workflow.tasks.get(number=1)
@@ -516,8 +516,8 @@ def test_complete__invalid_output__validation_error(
         f'/workflows/{workflow.id}/task-complete',
         data={
             'task_api_name': task.api_name,
-            'output': output
-        }
+            'output': output,
+        },
     )
 
     # assert
@@ -530,7 +530,7 @@ def test_complete__invalid_output__validation_error(
 
 def test_complete__not_active_task__validation_error(
     mocker,
-    api_client
+    api_client,
 ):
 
     # arrange
@@ -540,13 +540,13 @@ def test_complete__not_active_task__validation_error(
     service_init_mock = mocker.patch.object(
         WorkflowActionService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     task = workflow.tasks.get(number=2)
     complete_task_for_user_mock = mocker.patch(
         'src.processes.services.'
         'workflow_action.WorkflowActionService.'
-        'complete_task_for_user'
+        'complete_task_for_user',
     )
     api_client.token_authenticate(user)
 
@@ -555,8 +555,8 @@ def test_complete__not_active_task__validation_error(
         f'/workflows/{workflow.id}/task-complete',
         data={
             'task_api_name': task.api_name,
-            'task_id': task.id
-        }
+            'task_id': task.id,
+        },
     )
 
     # assert
@@ -569,7 +569,7 @@ def test_complete__not_active_task__validation_error(
 
 def test_complete__guest_another_workflow__permission_denied(
     mocker,
-    api_client
+    api_client,
 ):
 
     # arrange
@@ -580,38 +580,38 @@ def test_complete__guest_another_workflow__permission_denied(
     guest_1 = create_test_guest(account=account)
     TaskPerformer.objects.create(
         task_id=task_1.id,
-        user_id=guest_1.id
+        user_id=guest_1.id,
     )
     GuestJWTAuthService.get_str_token(
         task_id=task_1.id,
         user_id=guest_1.id,
-        account_id=account.id
+        account_id=account.id,
     )
 
     workflow_2 = create_test_workflow(account_owner, tasks_count=1)
     task_2 = workflow_2.tasks.get(number=1)
     guest_2 = create_test_guest(
         account=account,
-        email='guest2@test.test'
+        email='guest2@test.test',
     )
     TaskPerformer.objects.create(
         task_id=task_2.id,
-        user_id=guest_2.id
+        user_id=guest_2.id,
     )
     str_token_2 = GuestJWTAuthService.get_str_token(
         task_id=task_2.id,
         user_id=guest_2.id,
-        account_id=account.id
+        account_id=account.id,
     )
     service_init_mock = mocker.patch.object(
         WorkflowActionService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     complete_task_for_user_mock = mocker.patch(
         'src.processes.services.'
         'workflow_action.WorkflowActionService.'
-        'complete_task_for_user'
+        'complete_task_for_user',
     )
 
     # act
@@ -620,7 +620,7 @@ def test_complete__guest_another_workflow__permission_denied(
         data={
             'task_api_name': task_1.api_name,
         },
-        **{'X-Guest-Authorization': str_token_2}
+        **{'X-Guest-Authorization': str_token_2},
     )
 
     # assert
@@ -631,7 +631,7 @@ def test_complete__guest_another_workflow__permission_denied(
 
 def test_complete__guest_another_workflow_task__permission_denied(
     mocker,
-    api_client
+    api_client,
 ):
 
     # arrange
@@ -645,44 +645,44 @@ def test_complete__guest_another_workflow_task__permission_denied(
     guest_1 = create_test_guest(account=account)
     TaskPerformer.objects.create(
         task_id=task_1.id,
-        user_id=guest_1.id
+        user_id=guest_1.id,
     )
     GuestJWTAuthService.get_str_token(
         task_id=task_1.id,
         user_id=guest_1.id,
-        account_id=account.id
+        account_id=account.id,
     )
 
     task_2 = workflow.tasks.get(number=2)
     guest_2 = create_test_guest(
         account=account,
-        email='guest2@test.test'
+        email='guest2@test.test',
     )
     TaskPerformer.objects.create(
         task_id=task_2.id,
-        user_id=guest_2.id
+        user_id=guest_2.id,
     )
     str_token_2 = GuestJWTAuthService.get_str_token(
         task_id=task_2.id,
         user_id=guest_2.id,
-        account_id=account.id
+        account_id=account.id,
     )
     service_init_mock = mocker.patch.object(
         WorkflowActionService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     complete_task_for_user_mock = mocker.patch(
         'src.processes.services.'
         'workflow_action.WorkflowActionService.'
-        'complete_task_for_user'
+        'complete_task_for_user',
     )
 
     # act
     response = api_client.post(
         f'/workflows/{workflow.id}/task-complete',
         data={'task_id': task_1.id},
-        **{'X-Guest-Authorization': str_token_2}
+        **{'X-Guest-Authorization': str_token_2},
     )
 
     # assert

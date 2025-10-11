@@ -5,7 +5,7 @@ from src.generics.serializers import DateTimeRangeSerializer
 from src.generics.fields import TimeStampField
 from src.generics.mixins.serializers import (
     CustomValidationErrorMixin,
-    ValidationUtilsMixin
+    ValidationUtilsMixin,
 )
 from src.processes.models import (
     Workflow,
@@ -14,7 +14,7 @@ from src.processes.models import (
     WorkflowEvent,
 )
 from src.processes.serializers.workflows.field import (
-    TaskFieldSerializer
+    TaskFieldSerializer,
 )
 
 
@@ -81,7 +81,7 @@ class ActivityWorkflowSerializer(serializers.ModelSerializer):
 class HighlightsFilterSerializer(
     CustomValidationErrorMixin,
     ValidationUtilsMixin,
-    serializers.Serializer
+    serializers.Serializer,
 ):
     templates = serializers.CharField(required=False)
     current_performer_ids = serializers.CharField(required=False)

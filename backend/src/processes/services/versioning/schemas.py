@@ -199,11 +199,11 @@ class TaskSchemaV1(serializers.ModelSerializer):
     raw_performers = RawPerformerTemplateSchemaV1(
         many=True,
         allow_null=True,
-        allow_empty=True
+        allow_empty=True,
     )
     checklists = CheckListTemplateSchemeV1(
         many=True,
-        required=False
+        required=False,
     )
     raw_due_date = RawDueDateTemplateSchemaV1(required=False)
     clear_description = serializers.SerializerMethodField(allow_null=True)

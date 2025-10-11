@@ -1,7 +1,7 @@
 from django.contrib import admin
 from src.payment.models import (
     Price,
-    Product
+    Product,
 )
 from src.payment.forms import PriceInlineForm
 

@@ -11,13 +11,13 @@ from src.processes.models import (
 )
 from src.processes.utils.common import create_api_name
 from src.processes.utils.common import (
-    insert_fields_values_to_text
+    insert_fields_values_to_text,
 )
 
 from src.processes.enums import (
     PerformerType,
     sys_template_type_map,
-    OwnerType
+    OwnerType,
 )
 
 from src.processes.models import (
@@ -27,7 +27,7 @@ from src.generics.base.service import BaseModelService
 from rest_framework.serializers import ValidationError
 from src.utils.logging import (
     capture_sentry_message,
-    SentryLogLevel
+    SentryLogLevel,
 )
 from src.analytics.services import AnalyticService
 
@@ -38,13 +38,13 @@ class TemplateService(BaseModelService):
 
     def _create_related(
         self,
-        **kwargs
+        **kwargs,
     ):
         pass
 
     def _create_instance(
         self,
-        **kwargs
+        **kwargs,
     ):
         pass
 
@@ -65,14 +65,14 @@ class TemplateService(BaseModelService):
             'owners': [
                 {
                     'type': OwnerType.USER,
-                    'source_id': f'{self.user.id}'
-                }
+                    'source_id': f'{self.user.id}',
+                },
             ],
             'kickoff': {
                 'description': initial_kickoff_data.get('description', ''),
-                'fields': initial_kickoff_data.get('fields', [])
+                'fields': initial_kickoff_data.get('fields', []),
             },
-            'tasks': deepcopy(initial_tasks_data)
+            'tasks': deepcopy(initial_tasks_data),
         }
 
         fields_values = {}
@@ -82,12 +82,12 @@ class TemplateService(BaseModelService):
                 fields_values[api_name] = '{{%s}}' % api_name
             else:
                 field_data['api_name'] = create_api_name(
-                    prefix=FieldTemplate.api_name_prefix
+                    prefix=FieldTemplate.api_name_prefix,
                 )
         for task_data in data['tasks']:
             task_data['api_name'] = task_data.get(
                 'api_name',
-                create_api_name(prefix=TaskTemplate.api_name_prefix)
+                create_api_name(prefix=TaskTemplate.api_name_prefix),
             )
             raw_performers = task_data.get('raw_performers')
             if not raw_performers:
@@ -95,8 +95,8 @@ class TemplateService(BaseModelService):
                     {
                         'type': PerformerType.USER,
                         'source_id': self.user.id,
-                        'label': self.user.name
-                    }
+                        'label': self.user.name,
+                    },
                 ]
             task_fields = task_data.get('fields', [])
             for field_data in task_fields:
@@ -105,46 +105,46 @@ class TemplateService(BaseModelService):
                     fields_values[api_name] = '{{%s}}' % api_name
                 else:
                     field_data['api_name'] = create_api_name(
-                        prefix=TaskTemplate.api_name_prefix
+                        prefix=TaskTemplate.api_name_prefix,
                     )
             if task_data.get('description'):
                 task_data['description'] = insert_fields_values_to_text(
                     text=task_data['description'],
-                    fields_values=fields_values
+                    fields_values=fields_values,
                 )
         return data
 
     def get_from_sys_template(
         self,
-        sys_template: SystemTemplate
+        sys_template: SystemTemplate,
     ) -> dict:
 
         data = self.fill_template_data(
-            initial_data=sys_template.template
+            initial_data=sys_template.template,
         )
         AnalyticService.library_template_opened(
             user=self.user,
             sys_template=sys_template,
             auth_type=self.auth_type,
-            is_superuser=self.is_superuser
+            is_superuser=self.is_superuser,
         )
         return data
 
     def create_template_by_steps(
         self,
         name: str,
-        tasks: List[dict]
+        tasks: List[dict],
     ) -> Template:
 
         data = self.fill_template_data(
             initial_data={
                 'name': name,
                 'is_active': True,
-                'tasks': tasks
-            }
+                'tasks': tasks,
+            },
         )
         from src.processes.serializers.templates.template import (
-            TemplateSerializer
+            TemplateSerializer,
         )
         slz = TemplateSerializer(
             data=data,
@@ -152,8 +152,8 @@ class TemplateService(BaseModelService):
                 'user': self.user,
                 'account': self.account,
                 'is_superuser': self.is_superuser,
-                'auth_type': self.auth_type
-            }
+                'auth_type': self.auth_type,
+            },
         )
         try:
             slz.is_valid(raise_exception=True)
@@ -164,8 +164,8 @@ class TemplateService(BaseModelService):
                 level=SentryLogLevel.ERROR,
                 data={
                     'initial_data': data,
-                    'error': ex
-                }
+                    'error': ex,
+                },
             )
             raise
         else:
@@ -173,7 +173,7 @@ class TemplateService(BaseModelService):
                 template=self.instance,
                 user=self.user,
                 auth_type=self.auth_type,
-                is_superuser=self.is_superuser
+                is_superuser=self.is_superuser,
             )
             return self.instance
 
@@ -189,12 +189,12 @@ class TemplateService(BaseModelService):
         template_data['tasks'] = template_data.get('tasks', [])
         template_data['name'] = insert_fields_values_to_text(
             text=template_data.get('name', ''),
-            fields_values=self.user.get_dynamic_mapping()
+            fields_values=self.user.get_dynamic_mapping(),
         )
         user_owners = [
             {
                 'type': OwnerType.USER,
-                'source_id': user.id
+                'source_id': user.id,
             }
             for user in
             UserModel.objects.on_account(self.account.id).order_by('id')
@@ -202,7 +202,7 @@ class TemplateService(BaseModelService):
         group_owners = [
             {
                 'type': OwnerType.GROUP,
-                'source_id': group.id
+                'source_id': group.id,
             }
             for group in
             UserGroup.objects.filter(account_id=self.account.id).order_by('id')
@@ -217,8 +217,8 @@ class TemplateService(BaseModelService):
                 task_data['raw_performers'] = [
                     {
                         'type': PerformerType.USER,
-                        'source_id': self.user.id
-                    }
+                        'source_id': self.user.id,
+                    },
                 ]
 
         generic_name = template_data.pop('generic_name', None)
@@ -227,7 +227,7 @@ class TemplateService(BaseModelService):
         # TemplateSerializer does not support 'type' and 'generic_name' fields,
         # for this reason the fields are passed through the form context
         from src.processes.serializers.templates.template import (
-            TemplateSerializer
+            TemplateSerializer,
         )
         template_slz = TemplateSerializer(
             data=template_data,
@@ -239,7 +239,7 @@ class TemplateService(BaseModelService):
                 'is_superuser': False,
                 'auth_type': self.auth_type,
                 'automatically_created': True,
-            }
+            },
         )
         try:
             template_slz.is_valid(raise_exception=True)
@@ -252,11 +252,11 @@ class TemplateService(BaseModelService):
 
     def create_template_from_library_template(
         self,
-        system_template: SystemTemplate
+        system_template: SystemTemplate,
     ) -> Template:
 
         template = self.create_template_from_sys_template(
-            system_template=system_template
+            system_template=system_template,
         )
         AnalyticService.template_created_from_landing_library(
             user=self.user,

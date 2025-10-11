@@ -16,18 +16,18 @@ from src.processes.models import (
     ConditionTemplate,
     RuleTemplate,
     FieldTemplateSelection,
-    RawPerformerTemplate
+    RawPerformerTemplate,
 )
 from src.utils.validation import ErrorCode
 from src.processes.messages import template as messages
 from src.accounts.models import (
-    UserInvite
+    UserInvite,
 )
 from src.processes.enums import (
     PerformerType,
     PredicateOperator,
     FieldType,
-    OwnerType
+    OwnerType,
 )
 from src.authentication.tokens import (
     PublicToken,
@@ -36,14 +36,14 @@ from src.authentication.tokens import (
 from src.accounts.services.user import UserService
 from src.authentication.enums import AuthTokenType
 from src.processes.services.templates.integrations import (
-    TemplateIntegrationsService
+    TemplateIntegrationsService,
 )
 pytestmark = pytest.mark.django_db
 
 
 def test_create__only_required_fields__defaults_ok(
     mocker,
-    api_client
+    api_client,
 ):
 
     # arrange
@@ -53,7 +53,7 @@ def test_create__only_required_fields__defaults_ok(
     create_integrations_mock = mocker.patch(
         'src.processes.services.templates.'
         'integrations.TemplateIntegrationsService.'
-        'create_integrations_for_template'
+        'create_integrations_for_template',
     )
     api_request_mock = mocker.patch(
         'src.processes.services.templates.'
@@ -61,18 +61,18 @@ def test_create__only_required_fields__defaults_ok(
     )
     template_create_mock = mocker.patch(
         'src.processes.views.template.'
-        'AnalyticService.templates_created'
+        'AnalyticService.templates_created',
     )
     kickoff_create_mock = mocker.patch(
         'src.processes.views.template.'
-        'AnalyticService.templates_kickoff_created'
+        'AnalyticService.templates_kickoff_created',
     )
     request_data = {
         'name': 'Template',
         'owners': [
             {
                 'type': OwnerType.USER,
-                'source_id': user.id
+                'source_id': user.id,
             },
         ],
         'is_active': True,
@@ -84,17 +84,17 @@ def test_create__only_required_fields__defaults_ok(
                 'raw_performers': [
                     {
                         'type': PerformerType.USER,
-                        'source_id': user.id
-                    }
-                ]
-            }
-        ]
+                        'source_id': user.id,
+                    },
+                ],
+            },
+        ],
     }
 
     # act
     response = api_client.post(
         path='/templates',
-        data=request_data
+        data=request_data,
     )
 
     # assert
@@ -121,7 +121,7 @@ def test_create__only_required_fields__defaults_ok(
     assert template.wf_name_template is None
     account.refresh_from_db()
     create_integrations_mock.assert_called_with(
-        template=template
+        template=template,
     )
     api_request_mock.assert_not_called()
     template_create_mock.assert_called_once()
@@ -130,7 +130,7 @@ def test_create__only_required_fields__defaults_ok(
 
 def test_create__only_required_fields_with_group__defaults_ok(
     mocker,
-    api_client
+    api_client,
 ):
 
     # arrange
@@ -138,14 +138,14 @@ def test_create__only_required_fields_with_group__defaults_ok(
     user = create_test_user(account=account)
     user_in_group = create_test_user(
         account=account,
-        email='test2@pneumatic.app'
+        email='test2@pneumatic.app',
     )
     group = create_test_group(account, users=[user_in_group])
     api_client.token_authenticate(user)
     create_integrations_mock = mocker.patch(
         'src.processes.services.templates.'
         'integrations.TemplateIntegrationsService.'
-        'create_integrations_for_template'
+        'create_integrations_for_template',
     )
     api_request_mock = mocker.patch(
         'src.processes.services.templates.'
@@ -153,11 +153,11 @@ def test_create__only_required_fields_with_group__defaults_ok(
     )
     template_create_mock = mocker.patch(
         'src.processes.views.template.'
-        'AnalyticService.templates_created'
+        'AnalyticService.templates_created',
     )
     kickoff_create_mock = mocker.patch(
         'src.processes.views.template.'
-        'AnalyticService.templates_kickoff_created'
+        'AnalyticService.templates_kickoff_created',
     )
     request_data = {
         'name': 'Template',
@@ -165,12 +165,12 @@ def test_create__only_required_fields_with_group__defaults_ok(
             {
                 'api_name': 'owner-gft3g3625',
                 'type': OwnerType.USER,
-                'source_id': user.id
+                'source_id': user.id,
             },
             {
                 'api_name': 'owner-gf216g1625',
                 'type': OwnerType.GROUP,
-                'source_id': group.id
+                'source_id': group.id,
             },
         ],
         'is_active': True,
@@ -182,17 +182,17 @@ def test_create__only_required_fields_with_group__defaults_ok(
                 'raw_performers': [
                     {
                         'type': PerformerType.USER,
-                        'source_id': user.id
-                    }
-                ]
-            }
-        ]
+                        'source_id': user.id,
+                    },
+                ],
+            },
+        ],
     }
 
     # act
     response = api_client.post(
         path='/templates',
-        data=request_data
+        data=request_data,
     )
 
     # assert
@@ -222,7 +222,7 @@ def test_create__only_required_fields_with_group__defaults_ok(
     assert template.wf_name_template is None
     account.refresh_from_db()
     create_integrations_mock.assert_called_with(
-        template=template
+        template=template,
     )
     api_request_mock.assert_not_called()
     template_create_mock.assert_called_once()
@@ -239,7 +239,7 @@ def test_create__all_fields__ok(
     user = create_test_user(account=account)
     user2 = create_test_user(
         account=account,
-        email='test2@pneumatic.app'
+        email='test2@pneumatic.app',
     )
     conditions = [
         {
@@ -252,15 +252,15 @@ def test_create__all_fields__ok(
                             'operator': PredicateOperator.EQUAL,
                             'value': 'selection-1',
                             'api_name': 'predicate-1',
-                        }
+                        },
                     ],
                     'api_name': 'rule-1',
-                }
+                },
             ],
             'api_name': 'condition-1',
             'order': 1,
             'action': 'skip_task',
-        }
+        },
     ]
     kickoff_fields = [
         {
@@ -272,23 +272,23 @@ def test_create__all_fields__ok(
                 {
                     'value': 'First selection',
                     'api_name': 'selection-1',
-                }
-            ]
-        }
+                },
+            ],
+        },
     ]
     api_client.token_authenticate(user)
     mocker.patch(
         'src.processes.services.templates.'
         'integrations.TemplateIntegrationsService.'
-        'create_integrations_for_template'
+        'create_integrations_for_template',
     )
     template_create_mock = mocker.patch(
         'src.processes.views.template.'
-        'AnalyticService.templates_created'
+        'AnalyticService.templates_created',
     )
     kickoff_create_mock = mocker.patch(
         'src.processes.views.template.'
-        'AnalyticService.templates_kickoff_created'
+        'AnalyticService.templates_kickoff_created',
     )
     request_data = {
         'description': 'Desc',
@@ -296,11 +296,11 @@ def test_create__all_fields__ok(
         'owners': [
             {
                 'type': OwnerType.USER,
-                'source_id': user.id
+                'source_id': user.id,
             },
             {
                 'type': OwnerType.USER,
-                'source_id': user2.id
+                'source_id': user2.id,
             },
         ],
         'is_active': True,
@@ -316,8 +316,8 @@ def test_create__all_fields__ok(
                 'raw_performers': [
                     {
                         'type': PerformerType.USER,
-                        'source_id': user.id
-                    }
+                        'source_id': user.id,
+                    },
                 ],
                 'fields': [
                     {
@@ -329,11 +329,11 @@ def test_create__all_fields__ok(
                             {
                                 'value': 'First selection',
                                 'api_name': 'selection-2',
-                            }
-                        ]
-                    }
+                            },
+                        ],
+                    },
                 ],
-                'conditions': conditions
+                'conditions': conditions,
             },
             {
                 'number': 2,
@@ -342,8 +342,8 @@ def test_create__all_fields__ok(
                 'raw_performers': [
                     {
                         'type': PerformerType.USER,
-                        'source_id': user.id
-                    }
+                        'source_id': user.id,
+                    },
                 ],
                 'fields': [
                     {
@@ -355,16 +355,16 @@ def test_create__all_fields__ok(
                             {
                                 'value': 'First selection',
                                 'api_name': 'selection-3',
-                            }
-                        ]
-                    }
+                            },
+                        ],
+                    },
                 ],
                 'raw_due_date': {
                     'api_name': 'raw-due-date-bwybf0',
                     'rule': 'after task started',
                     'duration_months': 0,
                     'duration': '0 00:05:00',
-                    'source_id': 'task-1'
+                    'source_id': 'task-1',
                 },
             },
             {
@@ -373,8 +373,8 @@ def test_create__all_fields__ok(
                 'raw_performers': [
                     {
                         'type': PerformerType.USER,
-                        'source_id': user.id
-                    }
+                        'source_id': user.id,
+                    },
                 ],
                 'fields': [
                     {
@@ -386,19 +386,19 @@ def test_create__all_fields__ok(
                             {
                                 'value': 'First selection',
                                 'api_name': 'selection-4',
-                            }
-                        ]
-                    }
+                            },
+                        ],
+                    },
                 ],
                 'delay': '1 12:00:00',
-            }
-        ]
+            },
+        ],
     }
 
     # act
     response = api_client.post(
         path='/templates',
-        data=request_data
+        data=request_data,
     )
 
     # assert
@@ -420,7 +420,7 @@ def test_create__all_fields__ok(
 
     template = Template.objects.get(id=response_data['id'])
     template_owners = list(template.owners.order_by(
-        'id'
+        'id',
     ).values_list('user_id', 'type'))
     assert template_owners[0][0] == user.id
     assert template_owners[0][1] == OwnerType.USER
@@ -461,7 +461,7 @@ def test_create__all_fields__ok(
 
 def test_create__current_user_in_group__ok(
     mocker,
-    api_client
+    api_client,
 ):
 
     # arrange
@@ -469,22 +469,22 @@ def test_create__current_user_in_group__ok(
     user = create_test_user(is_account_owner=False, account=account)
     another_user = create_test_user(
         account=account,
-        email='another@pneumatic.app'
+        email='another@pneumatic.app',
     )
     api_client.token_authenticate(another_user)
     group = create_test_group(account, users=[another_user])
     mocker.patch(
         'src.processes.services.templates.'
         'integrations.TemplateIntegrationsService.'
-        'create_integrations_for_template'
+        'create_integrations_for_template',
     )
     template_create_mock = mocker.patch(
         'src.processes.views.template.'
-        'AnalyticService.templates_created'
+        'AnalyticService.templates_created',
     )
     kickoff_create_mock = mocker.patch(
         'src.processes.views.template.'
-        'AnalyticService.templates_kickoff_created'
+        'AnalyticService.templates_kickoff_created',
     )
 
     # act
@@ -496,7 +496,7 @@ def test_create__current_user_in_group__ok(
                 {
                     'api_name': 'owner-gft3g3625',
                     'type': OwnerType.GROUP,
-                    'source_id': group.id
+                    'source_id': group.id,
                 },
             ],
             'is_active': True,
@@ -509,12 +509,12 @@ def test_create__current_user_in_group__ok(
                     'raw_performers': [
                         {
                             'type': PerformerType.USER,
-                            'source_id': user.id
-                        }
-                    ]
-                }
-            ]
-        }
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+            ],
+        },
     )
 
     # assert
@@ -553,47 +553,47 @@ def test_create__draft__ok(
     # arrange
     template_create_mock = mocker.patch(
         'src.processes.views.template.'
-        'AnalyticService.templates_created'
+        'AnalyticService.templates_created',
     )
     kickoff_create_mock = mocker.patch(
         'src.processes.views.template.'
-        'AnalyticService.templates_kickoff_created'
+        'AnalyticService.templates_kickoff_created',
     )
     user = create_test_user()
     user_2 = create_test_user(
         is_account_owner=False,
         email='test@test.test',
-        account=user.account
+        account=user.account,
     )
     api_client.token_authenticate(user)
     create_integrations_mock = mocker.patch(
         'src.processes.services.templates.'
         'integrations.TemplateIntegrationsService.'
-        'create_integrations_for_template'
+        'create_integrations_for_template',
     )
     request_data = {
         'owners': [
             {
                 'type': OwnerType.USER,
-                'source_id': user.id
+                'source_id': user.id,
             },
             {
                 'type': OwnerType.USER,
-                'source_id': user_2.id
+                'source_id': user_2.id,
             },
         ],
         'is_active': False,
         'kickoff': {
             'fields': [],
-            'description': ""
+            'description': "",
         },
-        'tasks': []
+        'tasks': [],
     }
 
     # act
     response = api_client.post(
         path='/templates',
-        data=request_data
+        data=request_data,
     )
 
     # assert
@@ -659,7 +659,7 @@ def test_create__draft__ok(
         is_superuser=False,
     )
     create_integrations_mock.assert_called_with(
-        template=template
+        template=template,
     )
 
 
@@ -673,32 +673,32 @@ def test_create__draft_null_tasks__create_empty_tasks(
     mocker.patch(
         'src.processes.services.templates.'
         'integrations.TemplateIntegrationsService.'
-        'create_integrations_for_template'
+        'create_integrations_for_template',
     )
     mocker.patch(
         'src.processes.views.template.'
-        'AnalyticService.templates_created'
+        'AnalyticService.templates_created',
     )
     mocker.patch(
         'src.processes.views.template.'
-        'AnalyticService.templates_kickoff_created'
+        'AnalyticService.templates_kickoff_created',
     )
     request_data = {
         'owners': [
             {
                 'type': OwnerType.USER,
-                'source_id': user.id
+                'source_id': user.id,
             },
         ],
         'is_active': False,
         'kickoff': {},
-        'tasks': None
+        'tasks': None,
     }
 
     # act
     response = api_client.post(
         path='/templates',
-        data=request_data
+        data=request_data,
     )
 
     # assert
@@ -716,21 +716,21 @@ def test_create__draft_skip_tasks__create_empty_tasks(
     mocker.patch(
         'src.processes.services.templates.'
         'integrations.TemplateIntegrationsService.'
-        'create_integrations_for_template'
+        'create_integrations_for_template',
     )
     mocker.patch(
         'src.processes.views.template.'
-        'AnalyticService.templates_created'
+        'AnalyticService.templates_created',
     )
     mocker.patch(
         'src.processes.views.template.'
-        'AnalyticService.templates_kickoff_created'
+        'AnalyticService.templates_kickoff_created',
     )
     request_data = {
         'owners': [
             {
                 'type': OwnerType.USER,
-                'source_id': user.id
+                'source_id': user.id,
             },
         ],
         'is_active': False,
@@ -740,7 +740,7 @@ def test_create__draft_skip_tasks__create_empty_tasks(
     # act
     response = api_client.post(
         path='/templates',
-        data=request_data
+        data=request_data,
     )
 
     # assert
@@ -758,27 +758,27 @@ def test_create__draft_null_owners__create_default_owner(
     mocker.patch(
         'src.processes.services.templates.'
         'integrations.TemplateIntegrationsService.'
-        'create_integrations_for_template'
+        'create_integrations_for_template',
     )
     mocker.patch(
         'src.processes.views.template.'
-        'AnalyticService.templates_created'
+        'AnalyticService.templates_created',
     )
     mocker.patch(
         'src.processes.views.template.'
-        'AnalyticService.templates_kickoff_created'
+        'AnalyticService.templates_kickoff_created',
     )
     request_data = {
         'owners': None,
         'is_active': False,
         'kickoff': {},
-        'tasks': None
+        'tasks': None,
     }
 
     # act
     response = api_client.post(
         path='/templates',
-        data=request_data
+        data=request_data,
     )
 
     # assert
@@ -794,18 +794,18 @@ def test_create__draft_null_owners__create_default_owner(
         {
             'type': None,
             'source_id': '1',
-            'api_name': 'some'
+            'api_name': 'some',
         },
         {
             'source_id': '1',
-            'api_name': 'some'
+            'api_name': 'some',
         },
         1,
         {
             'type': OwnerType.USER,
-            'api_name': 'some'
+            'api_name': 'some',
         },
-    )
+    ),
 )
 def test_create__draft_invalid_owners__create_default_owner(
     mocker,
@@ -818,27 +818,27 @@ def test_create__draft_invalid_owners__create_default_owner(
     mocker.patch(
         'src.processes.services.templates.'
         'integrations.TemplateIntegrationsService.'
-        'create_integrations_for_template'
+        'create_integrations_for_template',
     )
     mocker.patch(
         'src.processes.views.template.'
-        'AnalyticService.templates_created'
+        'AnalyticService.templates_created',
     )
     mocker.patch(
         'src.processes.views.template.'
-        'AnalyticService.templates_kickoff_created'
+        'AnalyticService.templates_kickoff_created',
     )
     request_data = {
         'owners': [owner],
         'is_active': False,
         'kickoff': {},
-        'tasks': None
+        'tasks': None,
     }
 
     # act
     response = api_client.post(
         path='/templates',
-        data=request_data
+        data=request_data,
     )
 
     # assert
@@ -854,11 +854,11 @@ def test_create__public__ok(mocker, api_client):
     # arrange
     template_create_mock = mocker.patch(
         'src.processes.views.template.'
-        'AnalyticService.templates_created'
+        'AnalyticService.templates_created',
     )
     kickoff_create_mock = mocker.patch(
         'src.processes.views.template.'
-        'AnalyticService.templates_kickoff_created'
+        'AnalyticService.templates_kickoff_created',
     )
     user = create_test_user()
     api_client.token_authenticate(user)
@@ -867,12 +867,12 @@ def test_create__public__ok(mocker, api_client):
     token_mock = mocker.patch.object(
         PublicToken,
         attribute='__str__',
-        return_value=token
+        return_value=token,
     )
     mocker.patch(
         'src.processes.services.templates.'
         'integrations.TemplateIntegrationsService.'
-        'create_integrations_for_template'
+        'create_integrations_for_template',
     )
 
     # act
@@ -883,7 +883,7 @@ def test_create__public__ok(mocker, api_client):
             'owners': [
                 {
                     'type': OwnerType.USER,
-                    'source_id': user.id
+                    'source_id': user.id,
                 },
             ],
             'is_active': True,
@@ -896,12 +896,12 @@ def test_create__public__ok(mocker, api_client):
                     'raw_performers': [
                         {
                             'type': PerformerType.USER,
-                            'source_id': user.id
-                        }
-                    ]
-                }
-            ]
-        }
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+            ],
+        },
     )
 
     # assert
@@ -927,12 +927,12 @@ def test_create__embed__ok(api_client, mocker):
     token_mock = mocker.patch.object(
         EmbedToken,
         attribute='__str__',
-        return_value=token
+        return_value=token,
     )
     mocker.patch(
         'src.processes.services.templates.'
         'integrations.TemplateIntegrationsService.'
-        'create_integrations_for_template'
+        'create_integrations_for_template',
     )
 
     # act
@@ -943,7 +943,7 @@ def test_create__embed__ok(api_client, mocker):
             'owners': [
                 {
                     'type': OwnerType.USER,
-                    'source_id': user.id
+                    'source_id': user.id,
                 },
             ],
             'is_active': True,
@@ -956,12 +956,12 @@ def test_create__embed__ok(api_client, mocker):
                     'raw_performers': [
                         {
                             'type': PerformerType.USER,
-                            'source_id': user.id
-                        }
-                    ]
-                }
-            ]
-        }
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+            ],
+        },
     )
 
     # assert
@@ -985,7 +985,7 @@ def test_create__embed__ok(api_client, mocker):
         'http://my.pneumatic.app',
         'my.pneumatic.app',
         'my.pneumatic.app/templates?param=12;param2=',
-    ]
+    ],
 )
 def test_create__public_success_url__ok(value, api_client, mocker):
 
@@ -996,15 +996,15 @@ def test_create__public_success_url__ok(value, api_client, mocker):
     mocker.patch(
         'src.processes.services.templates.'
         'integrations.TemplateIntegrationsService.'
-        'create_integrations_for_template'
+        'create_integrations_for_template',
     )
     template_create_mock = mocker.patch(
         'src.processes.views.template.'
-        'AnalyticService.templates_created'
+        'AnalyticService.templates_created',
     )
     kickoff_create_mock = mocker.patch(
         'src.processes.views.template.'
-        'AnalyticService.templates_kickoff_created'
+        'AnalyticService.templates_kickoff_created',
     )
 
     # act
@@ -1015,7 +1015,7 @@ def test_create__public_success_url__ok(value, api_client, mocker):
             'owners': [
                 {
                     'type': OwnerType.USER,
-                    'source_id': user.id
+                    'source_id': user.id,
                 },
             ],
             'is_active': True,
@@ -1029,12 +1029,12 @@ def test_create__public_success_url__ok(value, api_client, mocker):
                     'raw_performers': [
                         {
                             'type': PerformerType.USER,
-                            'source_id': user.id
-                        }
-                    ]
-                }
-            ]
-        }
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+            ],
+        },
     )
 
     # assert
@@ -1056,23 +1056,23 @@ def test_create__public_success_url__ok(value, api_client, mocker):
         'relative/path/to',
         'relative/path',
         '/relative/path/',
-        '://my.pneumatic.app'
-    ]
+        '://my.pneumatic.app',
+    ],
 )
 def test_create__public_success_url_invalid__validation_error(
     value,
     mocker,
-    api_client
+    api_client,
 ):
 
     # arrange
     template_create_mock = mocker.patch(
         'src.processes.views.template.'
-        'AnalyticService.templates_created'
+        'AnalyticService.templates_created',
     )
     kickoff_create_mock = mocker.patch(
         'src.processes.views.template.'
-        'AnalyticService.templates_kickoff_created'
+        'AnalyticService.templates_kickoff_created',
     )
     account = create_test_account(plan=BillingPlanType.PREMIUM)
     user = create_test_user(account=account)
@@ -1082,7 +1082,7 @@ def test_create__public_success_url_invalid__validation_error(
         'owners': [
             {
                 'type': OwnerType.USER,
-                'source_id': user.id
+                'source_id': user.id,
             },
         ],
         'is_active': True,
@@ -1096,17 +1096,17 @@ def test_create__public_success_url_invalid__validation_error(
                 'raw_performers': [
                     {
                         'type': PerformerType.USER,
-                        'source_id': user.id
-                    }
-                ]
-            }
-        ]
+                        'source_id': user.id,
+                    },
+                ],
+            },
+        ],
     }
 
     # act
     response = api_client.post(
         path='/templates',
-        data=request_data
+        data=request_data,
     )
 
     # assert
@@ -1120,17 +1120,17 @@ def test_create__public_success_url_invalid__validation_error(
 
 def test_create__name_is_required__validation_error(
     mocker,
-    api_client
+    api_client,
 ):
 
     # arrange
     template_create_mock = mocker.patch(
         'src.processes.views.template.'
-        'AnalyticService.templates_created'
+        'AnalyticService.templates_created',
     )
     kickoff_create_mock = mocker.patch(
         'src.processes.views.template.'
-        'AnalyticService.templates_kickoff_created'
+        'AnalyticService.templates_kickoff_created',
     )
     user = create_test_user()
     api_client.token_authenticate(user)
@@ -1139,7 +1139,7 @@ def test_create__name_is_required__validation_error(
         'owners': [
             {
                 'type': OwnerType.USER,
-                'source_id': user.id
+                'source_id': user.id,
             },
         ],
         'is_active': True,
@@ -1151,17 +1151,17 @@ def test_create__name_is_required__validation_error(
                 'raw_performers': [
                     {
                         'type': PerformerType.USER,
-                        'source_id': user.id
-                    }
-                ]
-            }
-        ]
+                        'source_id': user.id,
+                    },
+                ],
+            },
+        ],
     }
 
     # act
     response = api_client.post(
         path='/templates',
-        data=request_data
+        data=request_data,
     )
 
     # assert
@@ -1183,36 +1183,36 @@ def test_create__not_name_in_draft__ok(
     # arrange
     template_create_mock = mocker.patch(
         'src.processes.views.template.'
-        'AnalyticService.templates_created'
+        'AnalyticService.templates_created',
     )
     kickoff_create_mock = mocker.patch(
         'src.processes.views.template.'
-        'AnalyticService.templates_kickoff_created'
+        'AnalyticService.templates_kickoff_created',
     )
     user = create_test_user()
     api_client.token_authenticate(user)
     mocker.patch(
         'src.processes.services.templates.'
         'integrations.TemplateIntegrationsService.'
-        'create_integrations_for_template'
+        'create_integrations_for_template',
     )
     request_data = {
         'owners': [
             {
                 'type': OwnerType.USER,
-                'source_id': user.id
+                'source_id': user.id,
             },
         ],
         'is_active': False,
         'is_public': True,
         'kickoff': {},
-        'tasks': []
+        'tasks': [],
     }
 
     # act
     response = api_client.post(
         path='/templates',
-        data=request_data
+        data=request_data,
     )
 
     # assert
@@ -1238,11 +1238,11 @@ def test_create__name_is_required_two_errors__validation_error(
     # arrange
     template_create_mock = mocker.patch(
         'src.processes.views.template.'
-        'AnalyticService.templates_created'
+        'AnalyticService.templates_created',
     )
     kickoff_create_mock = mocker.patch(
         'src.processes.views.template.'
-        'AnalyticService.templates_kickoff_created'
+        'AnalyticService.templates_kickoff_created',
     )
 
     user = create_test_user()
@@ -1256,7 +1256,7 @@ def test_create__name_is_required_two_errors__validation_error(
             'owners': [
                 {
                     'type': OwnerType.USER,
-                    'source_id': user.id
+                    'source_id': user.id,
                 },
             ],
             'is_active': True,
@@ -1266,10 +1266,10 @@ def test_create__name_is_required_two_errors__validation_error(
                     'number': 1,
                     'name': 'First step',
                     'api_name': 'task-55',
-                    'performers': None
-                }
-            ]
-        }
+                    'performers': None,
+                },
+            ],
+        },
     )
 
     # assert
@@ -1286,24 +1286,24 @@ def test_create__name_is_required_two_errors__validation_error(
 
 def test_create__user_field_in_public_task__ok(
     mocker,
-    api_client
+    api_client,
 ):
 
     # arrange
     template_create_mock = mocker.patch(
         'src.processes.views.template.'
-        'AnalyticService.templates_created'
+        'AnalyticService.templates_created',
     )
     kickoff_create_mock = mocker.patch(
         'src.processes.views.template.'
-        'AnalyticService.templates_kickoff_created'
+        'AnalyticService.templates_kickoff_created',
     )
     user = create_test_user()
     api_client.token_authenticate(user)
     mocker.patch(
         'src.processes.services.templates.'
         'integrations.TemplateIntegrationsService.'
-        'create_integrations_for_template'
+        'create_integrations_for_template',
     )
     request_data = {
         'description': 'Desc',
@@ -1311,7 +1311,7 @@ def test_create__user_field_in_public_task__ok(
         'owners': [
             {
                 'type': OwnerType.USER,
-                'source_id': user.id
+                'source_id': user.id,
             },
         ],
         'is_active': True,
@@ -1325,8 +1325,8 @@ def test_create__user_field_in_public_task__ok(
                 'raw_performers': [
                     {
                         'type': PerformerType.USER,
-                        'source_id': user.id
-                    }
+                        'source_id': user.id,
+                    },
                 ],
                 'fields': [
                     {
@@ -1336,16 +1336,16 @@ def test_create__user_field_in_public_task__ok(
                         'order': 1,
                         'is_required': True,
                         'api_name': 'user-field-1',
-                    }
-                ]
+                    },
+                ],
             },
-        ]
+        ],
     }
 
     # act
     response = api_client.post(
         path='/templates',
-        data=request_data
+        data=request_data,
     )
 
     # assert
@@ -1357,18 +1357,18 @@ def test_create__user_field_in_public_task__ok(
 def test_create__public_url__ok(mocker):
     mocker.patch(
         'src.processes.views.template.'
-        'AnalyticService.templates_created'
+        'AnalyticService.templates_created',
     )
     mocker.patch(
         'src.processes.views.template.'
-        'AnalyticService.templates_kickoff_created'
+        'AnalyticService.templates_kickoff_created',
     )
     user = create_test_user()
     template = create_test_template(
         user=user,
         is_active=True,
         is_public=True,
-        tasks_count=1
+        tasks_count=1,
     )
     host = settings.FORMS_URL
     assert len(template.public_id) == 8
@@ -1377,16 +1377,16 @@ def test_create__public_url__ok(mocker):
 
 def test_create__public_url_limit_is_reached__validation_error(
     mocker,
-    api_client
+    api_client,
 ):
     # assert
     template_create_mock = mocker.patch(
         'src.processes.views.template.'
-        'AnalyticService.templates_created'
+        'AnalyticService.templates_created',
     )
     kickoff_create_mock = mocker.patch(
         'src.processes.views.template.'
-        'AnalyticService.templates_kickoff_created'
+        'AnalyticService.templates_kickoff_created',
     )
     user = create_test_user()
     api_client.token_authenticate(user)
@@ -1394,19 +1394,19 @@ def test_create__public_url_limit_is_reached__validation_error(
     template = create_test_template(
         user=user,
         is_active=True,
-        is_public=True
+        is_public=True,
     )
     template.public_id = token
     template.save(update_fields=('public_id',))
     token_mock = mocker.patch.object(
         PublicToken,
         attribute='__str__',
-        return_value=token
+        return_value=token,
     )
     mocker.patch(
         'src.processes.services.templates.'
         'integrations.TemplateIntegrationsService.'
-        'create_integrations_for_template'
+        'create_integrations_for_template',
     )
 
     # act
@@ -1418,7 +1418,7 @@ def test_create__public_url_limit_is_reached__validation_error(
             'owners': [
                 {
                     'type': OwnerType.USER,
-                    'source_id': user.id
+                    'source_id': user.id,
                 },
             ],
             'is_active': True,
@@ -1432,12 +1432,12 @@ def test_create__public_url_limit_is_reached__validation_error(
                     'raw_performers': [
                         {
                             'type': PerformerType.USER,
-                            'source_id': user.id
-                        }
-                    ]
-                }
-            ]
-        }
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+            ],
+        },
     )
 
     # assert
@@ -1451,16 +1451,16 @@ def test_create__public_url_limit_is_reached__validation_error(
 
 def test_create__embed_url_limit_is_reached__validation_error(
     mocker,
-    api_client
+    api_client,
 ):
     # assert
     template_create_mock = mocker.patch(
         'src.processes.views.template.'
-        'AnalyticService.templates_created'
+        'AnalyticService.templates_created',
     )
     kickoff_create_mock = mocker.patch(
         'src.processes.views.template.'
-        'AnalyticService.templates_kickoff_created'
+        'AnalyticService.templates_kickoff_created',
     )
     user = create_test_user()
     api_client.token_authenticate(user)
@@ -1468,14 +1468,14 @@ def test_create__embed_url_limit_is_reached__validation_error(
     template = create_test_template(
         user=user,
         is_active=True,
-        is_embedded=True
+        is_embedded=True,
     )
     template.embed_id = token
     template.save(update_fields=('embed_id',))
     token_mock = mocker.patch.object(
         EmbedToken,
         attribute='__str__',
-        return_value=token
+        return_value=token,
     )
 
     # act
@@ -1487,7 +1487,7 @@ def test_create__embed_url_limit_is_reached__validation_error(
             'owners': [
                 {
                     'type': OwnerType.USER,
-                    'source_id': user.id
+                    'source_id': user.id,
                 },
             ],
             'is_active': True,
@@ -1501,12 +1501,12 @@ def test_create__embed_url_limit_is_reached__validation_error(
                     'raw_performers': [
                         {
                             'type': PerformerType.USER,
-                            'source_id': user.id
-                        }
-                    ]
-                }
-            ]
-        }
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+            ],
+        },
     )
 
     # assert
@@ -1525,17 +1525,17 @@ def test_create__create_with_equal_api_names__ok(api_client, mocker):
     # arrange
     mocker.patch(
         'src.processes.views.template.'
-        'AnalyticService.templates_created'
+        'AnalyticService.templates_created',
     )
     mocker.patch(
         'src.processes.views.template.'
-        'AnalyticService.templates_kickoff_created'
+        'AnalyticService.templates_kickoff_created',
     )
     account = create_test_account(plan=BillingPlanType.PREMIUM)
     user = create_test_user(account=account)
     user2 = create_test_user(
         account=account,
-        email='test2@pneumatic.app'
+        email='test2@pneumatic.app',
     )
     conditions = [
         {
@@ -1548,15 +1548,15 @@ def test_create__create_with_equal_api_names__ok(api_client, mocker):
                             'operator': PredicateOperator.EQUAL,
                             'value': 'selection-1',
                             'api_name': 'predicate-1',
-                        }
+                        },
                     ],
                     'api_name': 'rule-1',
-                }
+                },
             ],
             'api_name': 'condition-1',
             'order': 1,
             'action': 'skip_task',
-        }
+        },
     ]
     fields = [
         {
@@ -1568,9 +1568,9 @@ def test_create__create_with_equal_api_names__ok(api_client, mocker):
                 {
                     'value': 'First selection',
                     'api_name': 'selection-1',
-                }
-            ]
-        }
+                },
+            ],
+        },
     ]
     api_client.token_authenticate(user)
     request_data = {
@@ -1579,11 +1579,11 @@ def test_create__create_with_equal_api_names__ok(api_client, mocker):
         'owners': [
             {
                 'type': OwnerType.USER,
-                'source_id': user.id
+                'source_id': user.id,
             },
             {
                 'type': OwnerType.USER,
-                'source_id': user2.id
+                'source_id': user2.id,
             },
         ],
         'is_active': True,
@@ -1601,27 +1601,27 @@ def test_create__create_with_equal_api_names__ok(api_client, mocker):
                 'raw_performers': [
                     {
                         'type': PerformerType.USER,
-                        'source_id': user.id
-                    }
+                        'source_id': user.id,
+                    },
                 ],
                 'conditions': conditions,
-            }
-        ]
+            },
+        ],
     }
     mocker.patch(
         'src.processes.services.templates.'
         'integrations.TemplateIntegrationsService.'
-        'create_integrations_for_template'
+        'create_integrations_for_template',
     )
 
     # act
     api_client.post(
         path='/templates',
-        data=request_data
+        data=request_data,
     )
     api_client.post(
         path='/templates',
-        data=request_data
+        data=request_data,
     )
 
     # assert
@@ -1629,30 +1629,30 @@ def test_create__create_with_equal_api_names__ok(api_client, mocker):
     assert TaskTemplate.objects.filter(api_name='task-1').count() == 2
     assert FieldTemplate.objects.filter(api_name='field-1').count() == 2
     assert FieldTemplateSelection.objects.filter(
-        api_name='selection-1'
+        api_name='selection-1',
     ).count() == 2
     assert ConditionTemplate.objects.filter(
-        api_name='condition-1'
+        api_name='condition-1',
     ).count() == 2
     assert RuleTemplate.objects.filter(api_name='rule-1').count() == 2
     assert PredicateTemplate.objects.filter(
-        api_name='predicate-1'
+        api_name='predicate-1',
     ).count() == 2
 
 
 def test_create__template_owners_from_another_account__validation_error(
     mocker,
-    api_client
+    api_client,
 ):
 
     # arrange
     template_create_mock = mocker.patch(
         'src.processes.views.template.'
-        'AnalyticService.templates_created'
+        'AnalyticService.templates_created',
     )
     kickoff_create_mock = mocker.patch(
         'src.processes.views.template.'
-        'AnalyticService.templates_kickoff_created'
+        'AnalyticService.templates_kickoff_created',
     )
     user = create_test_user()
     api_client.token_authenticate(user)
@@ -1668,11 +1668,11 @@ def test_create__template_owners_from_another_account__validation_error(
             'owners': [
                 {
                     'type': OwnerType.USER,
-                    'source_id': user.id
+                    'source_id': user.id,
                 },
                 {
                     'type': OwnerType.USER,
-                    'source_id': another_user.id
+                    'source_id': another_user.id,
                 },
             ],
             'is_active': True,
@@ -1685,12 +1685,12 @@ def test_create__template_owners_from_another_account__validation_error(
                     'raw_performers': [
                         {
                             'type': PerformerType.USER,
-                            'source_id': user.id
-                        }
-                    ]
-                }
-            ]
-        }
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+            ],
+        },
     )
 
     # assert
@@ -1705,17 +1705,17 @@ def test_create__template_owners_from_another_account__validation_error(
 
 def test_create__template_owners_without_current_user__validation_error(
     mocker,
-    api_client
+    api_client,
 ):
 
     # arrange
     template_create_mock = mocker.patch(
         'src.processes.views.template.'
-        'AnalyticService.templates_created'
+        'AnalyticService.templates_created',
     )
     kickoff_create_mock = mocker.patch(
         'src.processes.views.template.'
-        'AnalyticService.templates_kickoff_created'
+        'AnalyticService.templates_kickoff_created',
     )
     account = create_test_account(plan=BillingPlanType.PREMIUM)
     user = create_test_user(is_account_owner=False, account=account)
@@ -1730,7 +1730,7 @@ def test_create__template_owners_without_current_user__validation_error(
             'owners': [
                 {
                     'type': OwnerType.USER,
-                    'source_id': invited_user.id
+                    'source_id': invited_user.id,
                 },
             ],
             'is_active': True,
@@ -1743,12 +1743,12 @@ def test_create__template_owners_without_current_user__validation_error(
                     'raw_performers': [
                         {
                             'type': PerformerType.USER,
-                            'source_id': user.id
-                        }
-                    ]
-                }
-            ]
-        }
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+            ],
+        },
     )
 
     # assert
@@ -1763,17 +1763,17 @@ def test_create__template_owners_without_current_user__validation_error(
 
 def test_create__template_owners_user_source_id_none__validation_error(
     mocker,
-    api_client
+    api_client,
 ):
 
     # arrange
     template_create_mock = mocker.patch(
         'src.processes.views.template.'
-        'AnalyticService.templates_created'
+        'AnalyticService.templates_created',
     )
     kickoff_create_mock = mocker.patch(
         'src.processes.views.template.'
-        'AnalyticService.templates_kickoff_created'
+        'AnalyticService.templates_kickoff_created',
     )
     account = create_test_account(plan=BillingPlanType.PREMIUM)
     user = create_test_user(is_account_owner=False, account=account)
@@ -1787,12 +1787,12 @@ def test_create__template_owners_user_source_id_none__validation_error(
             'owners': [
                 {
                     'type': OwnerType.USER,
-                    'source_id': user.id
+                    'source_id': user.id,
                 },
                 {
                     'type': OwnerType.USER,
-                    'source_id': None
-                }
+                    'source_id': None,
+                },
             ],
             'is_active': True,
             'description': '',
@@ -1804,12 +1804,12 @@ def test_create__template_owners_user_source_id_none__validation_error(
                     'raw_performers': [
                         {
                             'type': PerformerType.USER,
-                            'source_id': user.id
-                        }
-                    ]
-                }
-            ]
-        }
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+            ],
+        },
     )
 
     # assert
@@ -1824,17 +1824,17 @@ def test_create__template_owners_user_source_id_none__validation_error(
 
 def test_create__template_owners_group_source_id_none__validation_error(
     mocker,
-    api_client
+    api_client,
 ):
 
     # arrange
     template_create_mock = mocker.patch(
         'src.processes.views.template.'
-        'AnalyticService.templates_created'
+        'AnalyticService.templates_created',
     )
     kickoff_create_mock = mocker.patch(
         'src.processes.views.template.'
-        'AnalyticService.templates_kickoff_created'
+        'AnalyticService.templates_kickoff_created',
     )
     account = create_test_account(plan=BillingPlanType.PREMIUM)
     user = create_test_user(is_account_owner=False, account=account)
@@ -1848,12 +1848,12 @@ def test_create__template_owners_group_source_id_none__validation_error(
             'owners': [
                 {
                     'type': OwnerType.USER,
-                    'source_id': user.id
+                    'source_id': user.id,
                 },
                 {
                     'type': OwnerType.GROUP,
-                    'source_id': None
-                }
+                    'source_id': None,
+                },
             ],
             'is_active': True,
             'description': '',
@@ -1865,12 +1865,12 @@ def test_create__template_owners_group_source_id_none__validation_error(
                     'raw_performers': [
                         {
                             'type': PerformerType.USER,
-                            'source_id': user.id
-                        }
-                    ]
-                }
-            ]
-        }
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+            ],
+        },
     )
 
     # assert
@@ -1885,17 +1885,17 @@ def test_create__template_owners_group_source_id_none__validation_error(
 
 def test_create__template_owners_pending_transfer__ok(
     mocker,
-    api_client
+    api_client,
 ):
 
     # arrange
     template_create_mock = mocker.patch(
         'src.processes.views.template.'
-        'AnalyticService.templates_created'
+        'AnalyticService.templates_created',
     )
     kickoff_create_mock = mocker.patch(
         'src.processes.views.template.'
-        'AnalyticService.templates_kickoff_created'
+        'AnalyticService.templates_kickoff_created',
     )
     user = create_test_user()
     invited_user = create_test_user(email='another@pneumatic.app')
@@ -1909,7 +1909,7 @@ def test_create__template_owners_pending_transfer__ok(
     mocker.patch(
         'src.processes.services.templates.'
         'integrations.TemplateIntegrationsService.'
-        'create_integrations_for_template'
+        'create_integrations_for_template',
     )
 
     # act
@@ -1920,11 +1920,11 @@ def test_create__template_owners_pending_transfer__ok(
             'owners': [
                 {
                     'type': OwnerType.USER,
-                    'source_id': user.id
+                    'source_id': user.id,
                 },
                 {
                     'type': OwnerType.USER,
-                    'source_id': invited_user.id
+                    'source_id': invited_user.id,
                 },
             ],
             'is_active': True,
@@ -1937,12 +1937,12 @@ def test_create__template_owners_pending_transfer__ok(
                     'raw_performers': [
                         {
                             'type': PerformerType.USER,
-                            'source_id': user.id
-                        }
-                    ]
-                }
-            ]
-        }
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+            ],
+        },
     )
 
     # assert
@@ -1953,17 +1953,17 @@ def test_create__template_owners_pending_transfer__ok(
 
 def test_create__template_owners_inactive_user__validation_error(
     mocker,
-    api_client
+    api_client,
 ):
 
     # arrange
     template_create_mock = mocker.patch(
         'src.processes.views.template.'
-        'AnalyticService.templates_created'
+        'AnalyticService.templates_created',
     )
     kickoff_create_mock = mocker.patch(
         'src.processes.views.template.'
-        'AnalyticService.templates_kickoff_created'
+        'AnalyticService.templates_kickoff_created',
     )
     user = create_test_user()
     inactive_user = create_test_user(
@@ -1981,7 +1981,7 @@ def test_create__template_owners_inactive_user__validation_error(
             'owners': [
                 {
                     'type': OwnerType.USER,
-                    'source_id': inactive_user.id
+                    'source_id': inactive_user.id,
                 },
             ],
             'kickoff': {},
@@ -1993,12 +1993,12 @@ def test_create__template_owners_inactive_user__validation_error(
                     'raw_performers': [
                         {
                             'type': PerformerType.USER,
-                            'source_id': user.id
-                        }
-                    ]
-                }
-            ]
-        }
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+            ],
+        },
     )
 
     # assert
@@ -2009,17 +2009,17 @@ def test_create__template_owners_inactive_user__validation_error(
 
 def test_create__change_template_owners__ok(
     mocker,
-    api_client
+    api_client,
 ):
 
     # arrange
     template_create_mock = mocker.patch(
         'src.processes.views.template.'
-        'AnalyticService.templates_created'
+        'AnalyticService.templates_created',
     )
     kickoff_create_mock = mocker.patch(
         'src.processes.views.template.'
-        'AnalyticService.templates_kickoff_created'
+        'AnalyticService.templates_kickoff_created',
     )
     account = create_test_account(plan=BillingPlanType.PREMIUM)
     user = create_test_user(account=account)
@@ -2030,7 +2030,7 @@ def test_create__change_template_owners__ok(
         'owners': [
             {
                 'type': OwnerType.USER,
-                'source_id': user.id
+                'source_id': user.id,
             },
         ],
         'is_active': True,
@@ -2042,22 +2042,22 @@ def test_create__change_template_owners__ok(
                 'raw_performers': [
                     {
                         'type': PerformerType.USER,
-                        'source_id': user.id
-                    }
-                ]
-            }
-        ]
+                        'source_id': user.id,
+                    },
+                ],
+            },
+        ],
     }
     mocker.patch(
         'src.processes.services.templates.'
         'integrations.TemplateIntegrationsService.'
-        'create_integrations_for_template'
+        'create_integrations_for_template',
     )
 
     # act
     response = api_client.post(
         path='/templates',
-        data=request_data
+        data=request_data,
     )
 
     # assert
@@ -2072,17 +2072,17 @@ def test_create__change_template_owners__ok(
 
 def test_create_draft__skip_template_owners__set_default(
     mocker,
-    api_client
+    api_client,
 ):
 
     # arrange
     template_create_mock = mocker.patch(
         'src.processes.views.template.'
-        'AnalyticService.templates_created'
+        'AnalyticService.templates_created',
     )
     kickoff_create_mock = mocker.patch(
         'src.processes.views.template.'
-        'AnalyticService.templates_kickoff_created'
+        'AnalyticService.templates_kickoff_created',
     )
     account = create_test_account(plan=BillingPlanType.PREMIUM)
     user = create_test_user(account=account)
@@ -2090,7 +2090,7 @@ def test_create_draft__skip_template_owners__set_default(
     mocker.patch(
         'src.processes.services.templates.'
         'integrations.TemplateIntegrationsService.'
-        'create_integrations_for_template'
+        'create_integrations_for_template',
     )
 
     # act
@@ -2102,8 +2102,8 @@ def test_create_draft__skip_template_owners__set_default(
             'kickoff': {
                 'fields': [],
             },
-            'tasks': []
-        }
+            'tasks': [],
+        },
     )
 
     # assert
@@ -2120,28 +2120,28 @@ def test_create_draft__skip_template_owners__set_default(
 def test_create__non_admin_in_template_owners_premium__ok(
     plan,
     mocker,
-    api_client
+    api_client,
 ):
     # arrange
     template_create_mock = mocker.patch(
         'src.processes.views.template.'
-        'AnalyticService.templates_created'
+        'AnalyticService.templates_created',
     )
     kickoff_create_mock = mocker.patch(
         'src.processes.views.template.'
-        'AnalyticService.templates_kickoff_created'
+        'AnalyticService.templates_kickoff_created',
     )
     account = create_test_account(plan=plan)
     owner = create_test_user(
         email='owner@test.test',
         is_account_owner=True,
-        account=account
+        account=account,
     )
     non_admin = create_test_user(is_admin=False, account=account)
     mocker.patch(
         'src.processes.services.templates.'
         'integrations.TemplateIntegrationsService.'
-        'create_integrations_for_template'
+        'create_integrations_for_template',
     )
     api_client.token_authenticate(owner)
 
@@ -2153,11 +2153,11 @@ def test_create__non_admin_in_template_owners_premium__ok(
             'owners': [
                 {
                     'type': OwnerType.USER,
-                    'source_id': owner.id
+                    'source_id': owner.id,
                 },
                 {
                     'type': OwnerType.USER,
-                    'source_id': non_admin.id
+                    'source_id': non_admin.id,
                 },
             ],
             'is_active': True,
@@ -2169,12 +2169,12 @@ def test_create__non_admin_in_template_owners_premium__ok(
                     'raw_performers': [
                         {
                             'type': PerformerType.USER,
-                            'source_id': non_admin.id
-                        }
-                    ]
-                }
-            ]
-        }
+                            'source_id': non_admin.id,
+                        },
+                    ],
+                },
+            ],
+        },
     )
 
     # assert
@@ -2196,28 +2196,28 @@ def test_create__non_admin_in_template_owners_premium__ok(
 
 def test_create__non_admin_in_template_owners_freemium__ok(
     mocker,
-    api_client
+    api_client,
 ):
     # arrange
     template_create_mock = mocker.patch(
         'src.processes.views.template.'
-        'AnalyticService.templates_created'
+        'AnalyticService.templates_created',
     )
     kickoff_create_mock = mocker.patch(
         'src.processes.views.template.'
-        'AnalyticService.templates_kickoff_created'
+        'AnalyticService.templates_kickoff_created',
     )
     account = create_test_account(plan=BillingPlanType.FREEMIUM)
     owner = create_test_user(
         email='owner@test.test',
         is_account_owner=True,
-        account=account
+        account=account,
     )
     non_admin = create_test_user(is_admin=False, account=account)
     mocker.patch(
         'src.processes.services.templates.'
         'integrations.TemplateIntegrationsService.'
-        'create_integrations_for_template'
+        'create_integrations_for_template',
     )
     api_client.token_authenticate(owner)
 
@@ -2229,11 +2229,11 @@ def test_create__non_admin_in_template_owners_freemium__ok(
             'owners': [
                 {
                     'type': OwnerType.USER,
-                    'source_id': non_admin.id
+                    'source_id': non_admin.id,
                 },
                 {
                     'type': OwnerType.USER,
-                    'source_id': owner.id
+                    'source_id': owner.id,
                 },
             ],
             'is_active': True,
@@ -2245,12 +2245,12 @@ def test_create__non_admin_in_template_owners_freemium__ok(
                     'raw_performers': [
                         {
                             'type': PerformerType.USER,
-                            'source_id': non_admin.id
-                        }
-                    ]
-                }
-            ]
-        }
+                            'source_id': non_admin.id,
+                        },
+                    ],
+                },
+            ],
+        },
     )
 
     # assert
@@ -2266,7 +2266,7 @@ def test_create__non_admin_in_template_owners_freemium__ok(
     template = Template.objects.get(id=response_data['id'])
     assert template.owners.count() == 2
     assert template.owners.filter(
-        type=OwnerType.USER, user_id=non_admin.id
+        type=OwnerType.USER, user_id=non_admin.id,
     ).exists()
     template_create_mock.assert_called_once()
     kickoff_create_mock.assert_called_once()
@@ -2274,7 +2274,7 @@ def test_create__non_admin_in_template_owners_freemium__ok(
 
 def test_create__api_request__ok(
     mocker,
-    api_client
+    api_client,
 ):
 
     # arrange
@@ -2283,20 +2283,20 @@ def test_create__api_request__ok(
     create_integrations_mock = mocker.patch(
         'src.processes.services.templates.'
         'integrations.TemplateIntegrationsService.'
-        'create_integrations_for_template'
+        'create_integrations_for_template',
     )
     template_create_mock = mocker.patch(
         'src.processes.views.template.'
-        'AnalyticService.templates_created'
+        'AnalyticService.templates_created',
     )
     kickoff_create_mock = mocker.patch(
         'src.processes.views.template.'
-        'AnalyticService.templates_kickoff_created'
+        'AnalyticService.templates_kickoff_created',
     )
     user_agent = 'Mozilla'
     get_user_agent_mock = mocker.patch(
         'src.processes.views.template.get_user_agent',
-        return_value=user_agent
+        return_value=user_agent,
     )
     api_request_mock = mocker.patch(
         'src.processes.services.templates.'
@@ -2304,12 +2304,12 @@ def test_create__api_request__ok(
     )
     api_client.token_authenticate(
         user=user,
-        token_type=AuthTokenType.API
+        token_type=AuthTokenType.API,
     )
     service_init_mock = mocker.patch.object(
         TemplateIntegrationsService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
 
     # act
@@ -2320,7 +2320,7 @@ def test_create__api_request__ok(
             'owners': [
                 {
                     'type': OwnerType.USER,
-                    'source_id': user.id
+                    'source_id': user.id,
                 },
             ],
             'is_active': True,
@@ -2332,29 +2332,29 @@ def test_create__api_request__ok(
                     'raw_performers': [
                         {
                             'type': PerformerType.USER,
-                            'source_id': user.id
-                        }
-                    ]
-                }
-            ]
-        }
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+            ],
+        },
     )
 
     # assert
     assert response.status_code == 200
     template = Template.objects.get(id=response.data['id'])
     create_integrations_mock.assert_called_with(
-        template=template
+        template=template,
     )
     get_user_agent_mock.assert_called_once()
     assert service_init_mock.call_count == 2
     service_init_mock.has_calls([
         mocker.call(account=user.account, is_superuser=False, user=user),
-        mocker.call(account=user.account, is_superuser=False, user=user)
+        mocker.call(account=user.account, is_superuser=False, user=user),
     ])
     api_request_mock.assert_called_once_with(
         template=template,
-        user_agent=user_agent
+        user_agent=user_agent,
     )
     template_create_mock.assert_called_once()
     kickoff_create_mock.assert_called_once()
@@ -2362,17 +2362,17 @@ def test_create__api_request__ok(
 
 def test_create__draft_invalid_template_owners_format__set_default(
     mocker,
-    api_client
+    api_client,
 ):
 
     # arrange
     template_create_mock = mocker.patch(
         'src.processes.views.template.'
-        'AnalyticService.templates_created'
+        'AnalyticService.templates_created',
     )
     kickoff_create_mock = mocker.patch(
         'src.processes.views.template.'
-        'AnalyticService.templates_kickoff_created'
+        'AnalyticService.templates_kickoff_created',
     )
     account = create_test_account()
     user = create_test_user(account=account)
@@ -2383,11 +2383,11 @@ def test_create__draft_invalid_template_owners_format__set_default(
         'owners': [
             {
                 'type': OwnerType.USER,
-                'source_id': user.id
+                'source_id': user.id,
             },
             {
                 'type': OwnerType.USER,
-                'source_id': {'user_id': user_2.id}
+                'source_id': {'user_id': user_2.id},
             },
         ],
         'is_active': False,
@@ -2399,17 +2399,17 @@ def test_create__draft_invalid_template_owners_format__set_default(
                 'raw_performers': [
                     {
                         'type': PerformerType.USER,
-                        'source_id': user.id
-                    }
-                ]
-            }
-        ]
+                        'source_id': user.id,
+                    },
+                ],
+            },
+        ],
     }
 
     # act
     response = api_client.post(
         path='/templates',
-        data=request_data
+        data=request_data,
     )
 
     # assert
@@ -2423,17 +2423,17 @@ def test_create__draft_invalid_template_owners_format__set_default(
 
 def test_create__draft_another_acc_users_in_template_owners__set_default(
     mocker,
-    api_client
+    api_client,
 ):
 
     # arrange
     template_create_mock = mocker.patch(
         'src.processes.views.template.'
-        'AnalyticService.templates_created'
+        'AnalyticService.templates_created',
     )
     kickoff_create_mock = mocker.patch(
         'src.processes.views.template.'
-        'AnalyticService.templates_kickoff_created'
+        'AnalyticService.templates_kickoff_created',
     )
     user = create_test_user()
     another_user = create_test_user(email='another@t.t')
@@ -2443,11 +2443,11 @@ def test_create__draft_another_acc_users_in_template_owners__set_default(
         'owners': [
             {
                 'type': OwnerType.USER,
-                'source_id': user.id
+                'source_id': user.id,
             },
             {
                 'type': OwnerType.USER,
-                'source_id': another_user.id
+                'source_id': another_user.id,
             },
         ],
         'is_active': False,
@@ -2459,17 +2459,17 @@ def test_create__draft_another_acc_users_in_template_owners__set_default(
                 'raw_performers': [
                     {
                         'type': PerformerType.USER,
-                        'source_id': user.id
-                    }
-                ]
-            }
-        ]
+                        'source_id': user.id,
+                    },
+                ],
+            },
+        ],
     }
 
     # act
     response = api_client.post(
         path='/templates',
-        data=request_data
+        data=request_data,
     )
 
     # assert
@@ -2491,11 +2491,11 @@ def test_create__active_template__wf_name_template__sys_vars__ok(
     # arrange
     template_create_mock = mocker.patch(
         'src.processes.views.template.'
-        'AnalyticService.templates_created'
+        'AnalyticService.templates_created',
     )
     kickoff_create_mock = mocker.patch(
         'src.processes.views.template.'
-        'AnalyticService.templates_kickoff_created'
+        'AnalyticService.templates_kickoff_created',
     )
     account = create_test_account()
     user = create_test_user(account=account)
@@ -2507,7 +2507,7 @@ def test_create__active_template__wf_name_template__sys_vars__ok(
         'owners': [
             {
                 'type': OwnerType.USER,
-                'source_id': user.id
+                'source_id': user.id,
             },
         ],
         'is_active': True,
@@ -2519,17 +2519,17 @@ def test_create__active_template__wf_name_template__sys_vars__ok(
                 'raw_performers': [
                     {
                         'type': PerformerType.USER,
-                        'source_id': user.id
-                    }
-                ]
-            }
-        ]
+                        'source_id': user.id,
+                    },
+                ],
+            },
+        ],
     }
 
     # act
     response = api_client.post(
         path='/templates',
-        data=request_data
+        data=request_data,
     )
 
     # assert
@@ -2551,11 +2551,11 @@ def test_create__draft_template__wf_name_template__sys_vars__ok(
     # arrange
     template_create_mock = mocker.patch(
         'src.processes.views.template.'
-        'AnalyticService.templates_created'
+        'AnalyticService.templates_created',
     )
     kickoff_create_mock = mocker.patch(
         'src.processes.views.template.'
-        'AnalyticService.templates_kickoff_created'
+        'AnalyticService.templates_kickoff_created',
     )
     account = create_test_account()
     user = create_test_user(account=account)
@@ -2567,7 +2567,7 @@ def test_create__draft_template__wf_name_template__sys_vars__ok(
         'owners': [
             {
                 'type': OwnerType.USER,
-                'source_id': user.id
+                'source_id': user.id,
             },
         ],
         'is_active': False,
@@ -2579,17 +2579,17 @@ def test_create__draft_template__wf_name_template__sys_vars__ok(
                 'raw_performers': [
                     {
                         'type': PerformerType.USER,
-                        'source_id': user.id
-                    }
-                ]
-            }
-        ]
+                        'source_id': user.id,
+                    },
+                ],
+            },
+        ],
     }
 
     # act
     response = api_client.post(
         path='/templates',
-        data=request_data
+        data=request_data,
     )
 
     # assert
@@ -2611,11 +2611,11 @@ def test_create__wf_name_template__only_sys_vars__ok(
     # arrange
     template_create_mock = mocker.patch(
         'src.processes.views.template.'
-        'AnalyticService.templates_created'
+        'AnalyticService.templates_created',
     )
     kickoff_create_mock = mocker.patch(
         'src.processes.views.template.'
-        'AnalyticService.templates_kickoff_created'
+        'AnalyticService.templates_kickoff_created',
     )
     account = create_test_account()
     user = create_test_user(account=account)
@@ -2627,7 +2627,7 @@ def test_create__wf_name_template__only_sys_vars__ok(
         'owners': [
             {
                 'type': OwnerType.USER,
-                'source_id': user.id
+                'source_id': user.id,
             },
         ],
         'is_active': True,
@@ -2639,17 +2639,17 @@ def test_create__wf_name_template__only_sys_vars__ok(
                 'raw_performers': [
                     {
                         'type': PerformerType.USER,
-                        'source_id': user.id
-                    }
-                ]
-            }
-        ]
+                        'source_id': user.id,
+                    },
+                ],
+            },
+        ],
     }
 
     # act
     response = api_client.post(
         path='/templates',
-        data=request_data
+        data=request_data,
     )
 
     # assert
@@ -2671,7 +2671,7 @@ def test_create__wf_name_template__only_sys_vars__ok(
         FieldType.URL,
         FieldType.FILE,
         FieldType.USER,
-    )
+    ),
 )
 def test_create__wf_name_template__field__ok(
     mocker,
@@ -2682,11 +2682,11 @@ def test_create__wf_name_template__field__ok(
     # arrange
     template_create_mock = mocker.patch(
         'src.processes.views.template.'
-        'AnalyticService.templates_created'
+        'AnalyticService.templates_created',
     )
     kickoff_create_mock = mocker.patch(
         'src.processes.views.template.'
-        'AnalyticService.templates_kickoff_created'
+        'AnalyticService.templates_kickoff_created',
     )
 
     account = create_test_account()
@@ -2700,7 +2700,7 @@ def test_create__wf_name_template__field__ok(
         'owners': [
             {
                 'type': OwnerType.USER,
-                'source_id': user.id
+                'source_id': user.id,
             },
         ],
         'is_active': True,
@@ -2711,9 +2711,9 @@ def test_create__wf_name_template__field__ok(
                     'name': 'Field name',
                     'is_required': True,
                     'order': 1,
-                    'api_name': field_api_name
-                }
-            ]
+                    'api_name': field_api_name,
+                },
+            ],
         },
         'tasks': [
             {
@@ -2722,17 +2722,17 @@ def test_create__wf_name_template__field__ok(
                 'raw_performers': [
                     {
                         'type': PerformerType.USER,
-                        'source_id': user.id
-                    }
-                ]
-            }
-        ]
+                        'source_id': user.id,
+                    },
+                ],
+            },
+        ],
     }
 
     # act
     response = api_client.post(
         path='/templates',
-        data=request_data
+        data=request_data,
     )
 
     # assert
@@ -2751,7 +2751,7 @@ def test_create__wf_name_template__field__ok(
         FieldType.DROPDOWN,
         FieldType.CHECKBOX,
         FieldType.RADIO,
-    )
+    ),
 )
 def test_create__wf_name_template__field_with_selections__ok(
     mocker,
@@ -2762,11 +2762,11 @@ def test_create__wf_name_template__field_with_selections__ok(
     # arrange
     template_create_mock = mocker.patch(
         'src.processes.views.template.'
-        'AnalyticService.templates_created'
+        'AnalyticService.templates_created',
     )
     kickoff_create_mock = mocker.patch(
         'src.processes.views.template.'
-        'AnalyticService.templates_kickoff_created'
+        'AnalyticService.templates_kickoff_created',
     )
     account = create_test_account()
     user = create_test_user(account=account)
@@ -2779,7 +2779,7 @@ def test_create__wf_name_template__field_with_selections__ok(
         'owners': [
             {
                 'type': OwnerType.USER,
-                'source_id': user.id
+                'source_id': user.id,
             },
         ],
         'is_active': True,
@@ -2795,10 +2795,10 @@ def test_create__wf_name_template__field_with_selections__ok(
                         {
                             'value': 'First selection',
                             'api_name': 'selection-1',
-                        }
-                    ]
-                }
-            ]
+                        },
+                    ],
+                },
+            ],
         },
         'tasks': [
             {
@@ -2807,17 +2807,17 @@ def test_create__wf_name_template__field_with_selections__ok(
                 'raw_performers': [
                     {
                         'type': PerformerType.USER,
-                        'source_id': user.id
-                    }
-                ]
-            }
-        ]
+                        'source_id': user.id,
+                    },
+                ],
+            },
+        ],
     }
 
     # act
     response = api_client.post(
         path='/templates',
-        data=request_data
+        data=request_data,
     )
 
     # assert
@@ -2839,11 +2839,11 @@ def test_create__wf_name_template__only_fields__not_required__validation_error(
     # arrange
     template_create_mock = mocker.patch(
         'src.processes.views.template.'
-        'AnalyticService.templates_created'
+        'AnalyticService.templates_created',
     )
     kickoff_create_mock = mocker.patch(
         'src.processes.views.template.'
-        'AnalyticService.templates_kickoff_created'
+        'AnalyticService.templates_kickoff_created',
     )
     account = create_test_account()
     user = create_test_user(account=account)
@@ -2857,7 +2857,7 @@ def test_create__wf_name_template__only_fields__not_required__validation_error(
         'owners': [
             {
                 'type': OwnerType.USER,
-                'source_id': user.id
+                'source_id': user.id,
             },
         ],
         'is_active': True,
@@ -2879,11 +2879,11 @@ def test_create__wf_name_template__only_fields__not_required__validation_error(
                     'selections': [
                         {
                             'api_name': 'sl-2',
-                            'value': 'value 2'
-                        }
-                    ]
-                }
-            ]
+                            'value': 'value 2',
+                        },
+                    ],
+                },
+            ],
         },
         'tasks': [
             {
@@ -2892,17 +2892,17 @@ def test_create__wf_name_template__only_fields__not_required__validation_error(
                 'raw_performers': [
                     {
                         'type': PerformerType.USER,
-                        'source_id': user.id
-                    }
-                ]
-            }
-        ]
+                        'source_id': user.id,
+                    },
+                ],
+            },
+        ],
     }
 
     # act
     response = api_client.post(
         path='/templates',
-        data=request_data
+        data=request_data,
     )
 
     # assert
@@ -2923,11 +2923,11 @@ def test_create__wf_name_template__not_existent_field__validation_error(
     # arrange
     template_create_mock = mocker.patch(
         'src.processes.views.template.'
-        'AnalyticService.templates_created'
+        'AnalyticService.templates_created',
     )
     kickoff_create_mock = mocker.patch(
         'src.processes.views.template.'
-        'AnalyticService.templates_kickoff_created'
+        'AnalyticService.templates_kickoff_created',
     )
     account = create_test_account()
     user = create_test_user(account=account)
@@ -2939,7 +2939,7 @@ def test_create__wf_name_template__not_existent_field__validation_error(
         'owners': [
             {
                 'type': OwnerType.USER,
-                'source_id': user.id
+                'source_id': user.id,
             },
         ],
         'is_active': True,
@@ -2951,8 +2951,8 @@ def test_create__wf_name_template__not_existent_field__validation_error(
                     'is_required': True,
                     'order': 1,
                     'api_name': 'some-api-name',
-                }
-            ]
+                },
+            ],
         },
         'tasks': [
             {
@@ -2961,17 +2961,17 @@ def test_create__wf_name_template__not_existent_field__validation_error(
                 'raw_performers': [
                     {
                         'type': PerformerType.USER,
-                        'source_id': user.id
-                    }
-                ]
-            }
-        ]
+                        'source_id': user.id,
+                    },
+                ],
+            },
+        ],
     }
 
     # act
     response = api_client.post(
         path='/templates',
-        data=request_data
+        data=request_data,
     )
 
     # assert
@@ -2994,11 +2994,11 @@ def test_create__wf_name_template__blank_value__ok(
     # arrange
     template_create_mock = mocker.patch(
         'src.processes.views.template.'
-        'AnalyticService.templates_created'
+        'AnalyticService.templates_created',
     )
     kickoff_create_mock = mocker.patch(
         'src.processes.views.template.'
-        'AnalyticService.templates_kickoff_created'
+        'AnalyticService.templates_kickoff_created',
     )
     account = create_test_account()
     user = create_test_user(account=account)
@@ -3009,7 +3009,7 @@ def test_create__wf_name_template__blank_value__ok(
         'owners': [
             {
                 'type': OwnerType.USER,
-                'source_id': user.id
+                'source_id': user.id,
             },
         ],
         'is_active': True,
@@ -3021,17 +3021,17 @@ def test_create__wf_name_template__blank_value__ok(
                 'raw_performers': [
                     {
                         'type': PerformerType.USER,
-                        'source_id': user.id
-                    }
-                ]
-            }
-        ]
+                        'source_id': user.id,
+                    },
+                ],
+            },
+        ],
     }
 
     # act
     response = api_client.post(
         path='/templates',
-        data=request_data
+        data=request_data,
     )
 
     # assert
@@ -3045,7 +3045,7 @@ def test_create__wf_name_template__blank_value__ok(
 
 def test_create__raw_performers_group__ok(
     mocker,
-    api_client
+    api_client,
 ):
 
     # arrange
@@ -3056,7 +3056,7 @@ def test_create__raw_performers_group__ok(
     mocker.patch(
         'src.processes.services.templates.'
         'integrations.TemplateIntegrationsService.'
-        'create_integrations_for_template'
+        'create_integrations_for_template',
     )
     mocker.patch(
         'src.processes.services.templates.'
@@ -3064,18 +3064,18 @@ def test_create__raw_performers_group__ok(
     )
     mocker.patch(
         'src.processes.views.template.'
-        'AnalyticService.templates_created'
+        'AnalyticService.templates_created',
     )
     mocker.patch(
         'src.processes.views.template.'
-        'AnalyticService.templates_kickoff_created'
+        'AnalyticService.templates_kickoff_created',
     )
     request_data = {
         'name': 'Template',
         'owners': [
             {
                 'type': OwnerType.USER,
-                'source_id': user.id
+                'source_id': user.id,
             },
         ],
         'is_active': True,
@@ -3087,17 +3087,17 @@ def test_create__raw_performers_group__ok(
                 'raw_performers': [
                     {
                         'type': PerformerType.GROUP,
-                        'source_id': group.id
-                    }
-                ]
-            }
-        ]
+                        'source_id': group.id,
+                    },
+                ],
+            },
+        ],
     }
 
     # act
     response = api_client.post(
         path='/templates',
-        data=request_data
+        data=request_data,
     )
 
     # assert

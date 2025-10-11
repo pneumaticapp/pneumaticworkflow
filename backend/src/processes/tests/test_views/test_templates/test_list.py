@@ -16,11 +16,11 @@ from src.processes.models import (
 )
 from src.processes.enums import (
     PerformerType,
-    OwnerType
+    OwnerType,
 )
 from src.processes.enums import TemplateType
 from src.accounts.messages import (
-    MSG_A_0035
+    MSG_A_0035,
 )
 
 
@@ -42,7 +42,7 @@ class TestListTemplate:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'kickoff': {
@@ -55,12 +55,12 @@ class TestListTemplate:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': user.id
-                            }
-                        ]
-                    }
-                ]
-            }
+                                'source_id': user.id,
+                            },
+                        ],
+                    },
+                ],
+            },
         )
         active_template = Template.objects.get(id=response_1.data['id'])
 
@@ -74,7 +74,7 @@ class TestListTemplate:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'kickoff': {},
@@ -85,12 +85,12 @@ class TestListTemplate:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': user.id
-                            }
-                        ]
-                    }
-                ]
-            }
+                                'source_id': user.id,
+                            },
+                        ],
+                    },
+                ],
+            },
         )
         draft_template = Template.objects.get(id=response_2.data['id'])
 
@@ -124,7 +124,7 @@ class TestListTemplate:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'kickoff': {
@@ -137,12 +137,12 @@ class TestListTemplate:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': user.id
-                            }
-                        ]
-                    }
-                ]
-            }
+                                'source_id': user.id,
+                            },
+                        ],
+                    },
+                ],
+            },
         )
 
         # act
@@ -159,18 +159,18 @@ class TestListTemplate:
         create_test_template(
             user=any_user,
             tasks_count=1,
-            is_active=True
+            is_active=True,
         )
         account = create_test_account(plan=BillingPlanType.FREEMIUM)
         user = create_test_user(account=account)
         user2 = create_test_user(
             account=account,
-            email='t@t.t'
+            email='t@t.t',
         )
         template = create_test_template(
             user=user,
             tasks_count=1,
-            is_active=True
+            is_active=True,
         )
         TemplateOwner.objects.create(
             template=template,
@@ -197,7 +197,7 @@ class TestListTemplate:
         create_test_template(
             user=user,
             tasks_count=1,
-            is_active=True
+            is_active=True,
         )
         TemplateOwner.objects.filter(user_id=user.id).delete()
         api_client.token_authenticate(user)
@@ -270,7 +270,7 @@ class TestListTemplate:
 
         # act
         response = api_client.get(
-            path='/templates?ordering=DROP OWNED BY CURRENT_USER'
+            path='/templates?ordering=DROP OWNED BY CURRENT_USER',
         )
 
         # assert
@@ -298,7 +298,7 @@ class TestListTemplate:
         user = create_test_user()
         template_one = create_test_template(
             user=user,
-            is_active=True
+            is_active=True,
         )
         template_two = create_test_template(user)
         template_three = create_test_template(user)
@@ -320,15 +320,15 @@ class TestListTemplate:
         another_user = create_test_user(email='another@pneumatic.app')
         template = create_test_template(
             user=user,
-            is_active=True
+            is_active=True,
         )
         create_test_template(
             user=user,
-            is_active=False
+            is_active=False,
         )
         create_test_template(
             user=another_user,
-            is_active=True
+            is_active=True,
         )
         api_client.token_authenticate(user)
 
@@ -349,11 +349,11 @@ class TestListTemplate:
         user_not_account_owner = create_test_user(
             is_account_owner=False,
             account=user.account,
-            email='aaher@pneumatic.app'
+            email='aaher@pneumatic.app',
         )
         template = create_test_template(
             user=user,
-            is_active=True
+            is_active=True,
         )
         TemplateOwner.objects.create(
             template=template,
@@ -363,7 +363,7 @@ class TestListTemplate:
         )
         template_2 = create_test_template(
             user=user,
-            is_active=False
+            is_active=False,
         )
         TemplateOwner.objects.create(
             template=template_2,
@@ -375,7 +375,7 @@ class TestListTemplate:
         another_user = create_test_user(email='another@pneumatic.app')
         create_test_template(
             user=another_user,
-            is_active=True
+            is_active=True,
         )
         api_client.token_authenticate(user_not_account_owner)
 
@@ -438,7 +438,7 @@ class TestListTemplate:
 
         analytics_mock = mocker.patch(
             'src.analytics.services.AnalyticService.'
-            'search_search'
+            'search_search',
         )
         api_client.token_authenticate(user)
 
@@ -502,7 +502,7 @@ class TestListTemplate:
 
     def test_list__filter_is_not_public__ok(
         self,
-        api_client
+        api_client,
     ):
 
         # arrange
@@ -511,12 +511,12 @@ class TestListTemplate:
         template = create_test_template(
             user=user,
             is_active=True,
-            is_public=False
+            is_public=False,
         )
         create_test_template(
             user=user,
             is_active=True,
-            is_public=True
+            is_public=True,
         )
 
         # act
@@ -530,7 +530,7 @@ class TestListTemplate:
 
     def test_list__filter_is_public_is_embedded__ok(
         self,
-        api_client
+        api_client,
     ):
 
         # arrange
@@ -541,12 +541,12 @@ class TestListTemplate:
             user=user,
             is_active=True,
             is_embedded=True,
-            is_public=True
+            is_public=True,
         )
         create_test_template(
             user=user,
             is_active=True,
-            is_public=False
+            is_public=False,
         )
 
         # act
@@ -567,12 +567,12 @@ class TestListTemplate:
         create_test_template(
             user=user,
             is_active=True,
-            is_public=True
+            is_public=True,
         )
         create_test_template(
             user=user,
             is_active=True,
-            is_public=False
+            is_public=False,
         )
 
         # act
@@ -584,7 +584,7 @@ class TestListTemplate:
 
     def test_list__invalid_filter_is_public__validation_error(
         self,
-        api_client
+        api_client,
     ):
         # arrange
         user = create_test_user()
@@ -592,12 +592,12 @@ class TestListTemplate:
         create_test_template(
             user=user,
             is_active=True,
-            is_public=True
+            is_public=True,
         )
 
         # act
         response = api_client.get(
-            path='/templates?is_public=DROP OWNED BY CURRENT_USER'
+            path='/templates?is_public=DROP OWNED BY CURRENT_USER',
         )
 
         # assert
@@ -609,7 +609,7 @@ class TestListTemplate:
     def test_list__user_is_performer_in_draft__empty_list(
         self,
         mocker,
-        api_client
+        api_client,
     ):
 
         # arrange
@@ -618,7 +618,7 @@ class TestListTemplate:
         admin_user = create_test_user(
             account=user.account,
             email='admin@test.test',
-            is_account_owner=False
+            is_account_owner=False,
         )
         user.account.billing_plan = BillingPlanType.PREMIUM
         user.account.save()
@@ -628,7 +628,7 @@ class TestListTemplate:
             'owners': [
                 {
                     'type': OwnerType.USER,
-                    'source_id': user.id
+                    'source_id': user.id,
                 },
             ],
             'kickoff': {},
@@ -639,9 +639,9 @@ class TestListTemplate:
                     'raw_performers': [
                         {
                             'type': PerformerType.USER,
-                            'source_id': user.id
-                        }
-                    ]
+                            'source_id': user.id,
+                        },
+                    ],
                 },
                 {
                     'number': 2,
@@ -649,11 +649,11 @@ class TestListTemplate:
                     'raw_performers': [
                         {
                             'type': PerformerType.USER,
-                            'source_id': user.id
-                        }
-                    ]
-                }
-            ]
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+            ],
         }
         request_data_2 = {
             'is_active': True,
@@ -661,7 +661,7 @@ class TestListTemplate:
             'owners': [
                 {
                     'type': OwnerType.USER,
-                    'source_id': user.id
+                    'source_id': user.id,
                 },
             ],
             'kickoff': {},
@@ -672,9 +672,9 @@ class TestListTemplate:
                     'raw_performers': [
                         {
                             'type': PerformerType.USER,
-                            'source_id': user.id
-                        }
-                    ]
+                            'source_id': user.id,
+                        },
+                    ],
                 },
                 {
                     'number': 2,
@@ -682,44 +682,44 @@ class TestListTemplate:
                     'raw_performers': [
                         {
                             'type': PerformerType.USER,
-                            'source_id': user.id
-                        }
-                    ]
-                }
-            ]
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+            ],
         }
 
         response = api_client.post(
             path='/templates',
-            data=request_data_1
+            data=request_data_1,
         )
         template_1_id = response.data['id']
         response.data['is_active'] = False
         response.data['tasks'][0]['raw_performers'].append({
             'type': PerformerType.USER,
-            'source_id': admin_user.id
+            'source_id': admin_user.id,
         })
         mocker.patch(
             'src.processes.services.templates.'
-            'integrations.TemplateIntegrationsService.template_updated'
+            'integrations.TemplateIntegrationsService.template_updated',
         )
         api_client.put(
             path=f'/templates/{template_1_id}',
-            data=response.data
+            data=response.data,
         )
         response = api_client.post(
             path='/templates',
-            data=request_data_2
+            data=request_data_2,
         )
         template_2_id = response.data['id']
         response.data['is_active'] = False
         response.data['tasks'][1]['raw_performers'] = [{
             'type': PerformerType.USER,
-            'source_id': admin_user.id
+            'source_id': admin_user.id,
         }]
         api_client.put(
             path=f'/templates/{template_2_id}',
-            data=response.data
+            data=response.data,
         )
         api_client.token_authenticate(admin_user)
 
@@ -737,15 +737,15 @@ class TestListTemplate:
         api_client.token_authenticate(user)
         create_test_template(
             user,
-            type_=TemplateType.ONBOARDING_NON_ADMIN
+            type_=TemplateType.ONBOARDING_NON_ADMIN,
         )
         create_test_template(
             user,
-            type_=TemplateType.ONBOARDING_ADMIN
+            type_=TemplateType.ONBOARDING_ADMIN,
         )
         create_test_template(
             user,
-            type_=TemplateType.ONBOARDING_ACCOUNT_OWNER
+            type_=TemplateType.ONBOARDING_ACCOUNT_OWNER,
         )
 
         # act
@@ -771,8 +771,8 @@ class TestListTemplate:
             data={
                 'limit': 1,
                 'offset': 2,
-                'ordering': 'date'
-            }
+                'ordering': 'date',
+            },
         )
 
         # assert

@@ -1,11 +1,11 @@
 from django.contrib import admin
 from django.contrib.admin import (
     ModelAdmin,
-    StackedInline
+    StackedInline,
 )
 from src.ai.models import (
     OpenAiPrompt,
-    OpenAiMessage
+    OpenAiMessage,
 )
 from django.forms.models import BaseInlineFormSet
 from django.forms import ModelForm, ValidationError
@@ -41,10 +41,11 @@ class OpenAiPromptForm(ModelForm):
         if not is_active and self.instance.id:
             target = self.cleaned_data['target']
             if OpenAiPrompt.objects.active().by_target(target).filter(
-                id=self.instance.id
+                id=self.instance.id,
             ).count() == 1:
                 raise ValidationError(
-                    'You cannot deactivate the last active prompt for a target'
+                    'You cannot deactivate the last '
+                    'active prompt for a target',
                 )
 
 
@@ -73,7 +74,7 @@ class OpenAiPromptAdmin(ModelAdmin):
     def has_delete_permission(self, request, obj=None):
         result = super().has_delete_permission(request, obj)
         if obj and obj.is_active and OpenAiPrompt.objects.active().by_target(
-            obj.target
+            obj.target,
         ).count() == 1:
             result = False
         return result
@@ -82,5 +83,5 @@ class OpenAiPromptAdmin(ModelAdmin):
         super().save_model(request, obj, form, change)
         if obj.is_active:
             OpenAiPrompt.objects.active().by_target(obj.target).exclude(
-                id=obj.id
+                id=obj.id,
             ).update(is_active=False)

@@ -17,7 +17,7 @@ class BaseResponseMixin:
     def response_bad_request(self, data: Optional[dict] = None):
         return Response(
             data=data or self.default_bad_request_data,
-            status=status.HTTP_400_BAD_REQUEST
+            status=status.HTTP_400_BAD_REQUEST,
         )
 
     def response_ok(self, data=None):
@@ -80,7 +80,7 @@ class BaseContextMixin:
     def get_serializer(self, *args, **kwargs):
         serializer_class = self.get_serializer_class()
         kwargs['context'] = self.get_serializer_context(
-            **kwargs.pop('extra_fields', {})
+            **kwargs.pop('extra_fields', {}),
         )
         return serializer_class(*args, **kwargs)
 
@@ -147,7 +147,7 @@ class AnonymousMixin:
 
     def get_cache_key(self, key_parts: Tuple) -> str:
         return self.cache_prefix + hashlib.md5(
-            ''.join(key_parts).encode('utf-8')
+            ''.join(key_parts).encode('utf-8'),
         ).hexdigest()
 
     def get_user_ip(self, request: Request) -> Optional[str]:
@@ -157,14 +157,14 @@ class AnonymousMixin:
         else:
             ip = request.headers.get(
                 'Remote-Addr',
-                request.META.get('REMOTE_ADDR')
+                request.META.get('REMOTE_ADDR'),
             )
         return ip
 
     def get_user_agent(self, request: Request) -> str:
         return request.headers.get(
             'User-Agent',
-            request.META.get('HTTP_USER_AGENT')
+            request.META.get('HTTP_USER_AGENT'),
         )
 
 
@@ -173,7 +173,7 @@ class AnonymousWorkflowMixin(AnonymousMixin):
     def anonymous_user_workflow_exists(
         self,
         request: Request,
-        template: Template
+        template: Template,
     ) -> Optional[bool]:
 
         """ Returns True if the anonymous user has already
@@ -190,7 +190,7 @@ class AnonymousWorkflowMixin(AnonymousMixin):
     def inc_anonymous_user_workflow_counter(
         self,
         request,
-        template: Template
+        template: Template,
     ):
 
         """ Increases the counter of the number of workflow created by
@@ -207,7 +207,7 @@ class AnonymousAccountMixin(AnonymousMixin):
 
     def anonymous_user_account_exists(
         self,
-        request
+        request,
     ) -> Optional[bool]:
 
         """ Returns True if the anonymous user has already

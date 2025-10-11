@@ -2,7 +2,7 @@ import pytest
 import pytz
 
 from src.processes.models import (
-    TaskPerformer
+    TaskPerformer,
 )
 from src.accounts.enums import (
     UserType,
@@ -38,7 +38,7 @@ def test_context__ok(api_client):
         logo_lg=logo_lg,
         plan=plan,
         period=period,
-        tenant_name=tenant_name
+        tenant_name=tenant_name,
     )
     user = create_test_user(
         account=account,
@@ -132,23 +132,23 @@ def test_context__guest__ok(api_client):
     guest = create_test_guest(account=account)
     workflow = create_test_workflow(
         owner,
-        tasks_count=1
+        tasks_count=1,
     )
     task = workflow.tasks.first()
     TaskPerformer.objects.create(
         task_id=task.id,
-        user_id=guest.id
+        user_id=guest.id,
     )
     str_token = GuestJWTAuthService.get_str_token(
         task_id=task.id,
         user_id=guest.id,
-        account_id=account.id
+        account_id=account.id,
     )
 
     # act
     response = api_client.get(
         '/auth/context',
-        **{'X-Guest-Authorization': str_token}
+        **{'X-Guest-Authorization': str_token},
     )
 
     # assert

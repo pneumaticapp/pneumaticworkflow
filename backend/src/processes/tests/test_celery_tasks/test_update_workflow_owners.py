@@ -2,14 +2,14 @@ import pytest
 from django.contrib.auth import get_user_model
 from src.processes.models import (
     TaskPerformer,
-    TemplateOwner
+    TemplateOwner,
 )
 from src.processes.tests.fixtures import (
     create_test_user,
     create_test_account,
     create_test_group,
     create_test_template,
-    create_test_workflow
+    create_test_workflow,
 )
 from src.processes.enums import (
     PerformerType,
@@ -36,7 +36,7 @@ def test__delete_group_owner_only__ok():
     template = create_test_template(
         user=user,
         is_active=True,
-        tasks_count=1
+        tasks_count=1,
     )
     TemplateOwner.objects.all().delete()
     group = create_test_group(account, users=[user])
@@ -48,7 +48,7 @@ def test__delete_group_owner_only__ok():
     )
     workflow = create_test_workflow(
         user=user,
-        template=template
+        template=template,
     )
     group.delete()
 
@@ -70,13 +70,13 @@ def test__add_template_owner_is_deleted__ok():
     template = create_test_template(
         user=user,
         is_active=True,
-        tasks_count=1
+        tasks_count=1,
     )
     TemplateOwner.objects.all().delete()
     group = create_test_group(account, users=[user])
     workflow = create_test_workflow(
         user=user,
-        template=template
+        template=template,
     )
     task = workflow.tasks.get(number=1)
     task.performers.all().delete()
@@ -85,7 +85,7 @@ def test__add_template_owner_is_deleted__ok():
         account=account,
         type=OwnerType.GROUP,
         group_id=group.id,
-        is_deleted=True
+        is_deleted=True,
     )
 
     # act
@@ -108,7 +108,7 @@ def test__delete_group_owner_user_owner_persists_same_user__ok():
     template = create_test_template(
         user=user,
         is_active=True,
-        tasks_count=1
+        tasks_count=1,
     )
     group_to_delete = create_test_group(account, users=[user])
     TemplateOwner.objects.create(
@@ -119,7 +119,7 @@ def test__delete_group_owner_user_owner_persists_same_user__ok():
     )
     workflow = create_test_workflow(
         user=user,
-        template=template
+        template=template,
     )
     group_to_delete.delete()
 
@@ -144,7 +144,7 @@ def test__delete_group_owner_user_owner_persists_different_user__ok():
     template = create_test_template(
         user_2,
         is_active=True,
-        tasks_count=1
+        tasks_count=1,
     )
     group_to_delete = create_test_group(account, users=[user])
     TemplateOwner.objects.create(
@@ -155,7 +155,7 @@ def test__delete_group_owner_user_owner_persists_different_user__ok():
     )
     workflow = create_test_workflow(
         user=user_2,
-        template=template
+        template=template,
     )
     group_to_delete.delete()
 
@@ -179,7 +179,7 @@ def test__delete_group_owner_with_users_user_owner_persists__ok():
     template = create_test_template(
         user=user,
         is_active=True,
-        tasks_count=1
+        tasks_count=1,
     )
     group_to_delete = create_test_group(account, users=[user_2, user_3])
     TemplateOwner.objects.create(
@@ -190,7 +190,7 @@ def test__delete_group_owner_with_users_user_owner_persists__ok():
     )
     workflow = create_test_workflow(
         user=user_2,
-        template=template
+        template=template,
     )
     group_to_delete.delete()
 
@@ -214,7 +214,7 @@ def test__delete_one_group_owner_user_owner_persists_empty_group__ok():
     template = create_test_template(
         user=user,
         is_active=True,
-        tasks_count=1
+        tasks_count=1,
     )
     group_to_delete = create_test_group(account, users=[user_2, user_3])
     group = create_test_group(account)
@@ -232,7 +232,7 @@ def test__delete_one_group_owner_user_owner_persists_empty_group__ok():
     )
     workflow = create_test_workflow(
         user=user_2,
-        template=template
+        template=template,
     )
     group_to_delete.delete()
 
@@ -255,7 +255,7 @@ def test__delete_one_group_owner_other_group_owner_persists__ok():
     template = create_test_template(
         user=user,
         is_active=True,
-        tasks_count=1
+        tasks_count=1,
     )
     TemplateOwner.objects.filter(user_id=user.id).delete()
     group = create_test_group(account, users=[user])
@@ -274,7 +274,7 @@ def test__delete_one_group_owner_other_group_owner_persists__ok():
     )
     workflow = create_test_workflow(
         user=user,
-        template=template
+        template=template,
     )
     group_to_delete.delete()
 
@@ -296,12 +296,12 @@ def test__delete_group_owner_other_template_unchanged__ok():
     template = create_test_template(
         user=user,
         is_active=True,
-        tasks_count=1
+        tasks_count=1,
     )
     template_2 = create_test_template(
         user=user,
         is_active=True,
-        tasks_count=1
+        tasks_count=1,
     )
     TemplateOwner.objects.filter(user_id=user.id).delete()
     group = create_test_group(account, users=[user])
@@ -320,11 +320,11 @@ def test__delete_group_owner_other_template_unchanged__ok():
     )
     workflow = create_test_workflow(
         user=user,
-        template=template
+        template=template,
     )
     workflow_2 = create_test_workflow(
         user=user,
-        template=template_2
+        template=template_2,
     )
     group_to_delete.delete()
 
@@ -350,7 +350,7 @@ def test__delete_group_owner_different_account_unchanged__ok():
     template = create_test_template(
         user=user,
         is_active=True,
-        tasks_count=1
+        tasks_count=1,
     )
     TemplateOwner.objects.filter(user_id=user.id).delete()
     group = create_test_group(account, users=[user])
@@ -362,25 +362,25 @@ def test__delete_group_owner_different_account_unchanged__ok():
     )
     workflow = create_test_workflow(
         user=user,
-        template=template
+        template=template,
     )
     account_another = create_test_account()
     user_account_another = create_test_user(
         account=account_another,
-        email='test1@test.test'
+        email='test1@test.test',
     )
     template_account_another = create_test_template(
         user_account_another,
         is_active=True,
-        tasks_count=1
+        tasks_count=1,
     )
     TemplateOwner.objects.filter(
         type=OwnerType.USER,
-        user_id=user_account_another.id
+        user_id=user_account_another.id,
     ).delete()
     group_to_delete = create_test_group(
         account,
-        users=[user_account_another]
+        users=[user_account_another],
     )
     TemplateOwner.objects.create(
         template=template_account_another,
@@ -390,7 +390,7 @@ def test__delete_group_owner_different_account_unchanged__ok():
     )
     workflow_account_another = create_test_workflow(
         user=user_account_another,
-        template=template_account_another
+        template=template_account_another,
     )
     group_to_delete.delete()
 
@@ -414,7 +414,7 @@ def test__update_group_owner_user_in_owners_and_members__ok():
     template = create_test_template(
         user=user,
         is_active=True,
-        tasks_count=1
+        tasks_count=1,
     )
     TemplateOwner.objects.filter(user_id=user.id).delete()
     group = create_test_group(account, users=[user])
@@ -426,7 +426,7 @@ def test__update_group_owner_user_in_owners_and_members__ok():
     )
     workflow = create_test_workflow(
         user=user,
-        template=template
+        template=template,
     )
 
     # act
@@ -447,12 +447,12 @@ def test__update_group_owner_new_user_one_owner_two_members__ok():
     user = create_test_user(account=account)
     user_2 = create_test_user(
         account=account,
-        email='master@test.test'
+        email='master@test.test',
     )
     template = create_test_template(
         user=user,
         is_active=True,
-        tasks_count=1
+        tasks_count=1,
     )
     TemplateOwner.objects.filter(user_id=user.id).delete()
     group = create_test_group(account, users=[user])
@@ -464,7 +464,7 @@ def test__update_group_owner_new_user_one_owner_two_members__ok():
     )
     workflow = create_test_workflow(
         user=user,
-        template=template
+        template=template,
     )
     group.users.set([user_2])
     group.save()
@@ -486,23 +486,23 @@ def test__add_group_in_taskperformer__ok():
     user = create_test_user(account=account)
     user_in_group = create_test_user(
         account=account,
-        email='groupuser@test.test'
+        email='groupuser@test.test',
     )
     template = create_test_template(
         user=user,
         is_active=True,
-        tasks_count=1
+        tasks_count=1,
     )
     workflow = create_test_workflow(
         user=user,
-        template=template
+        template=template,
     )
     group = create_test_group(account, users=[user_in_group])
     task = workflow.tasks.first()
     TaskPerformer.objects.create(
         task=task,
         group=group,
-        type=PerformerType.GROUP
+        type=PerformerType.GROUP,
     )
 
     # act
@@ -518,22 +518,22 @@ def test__add_user_in_taskperformer__ok():
     user = create_test_user(account=account)
     task_performer_user = create_test_user(
         account=account,
-        email='taskperformer@test.test'
+        email='taskperformer@test.test',
     )
     template = create_test_template(
         user=user,
         is_active=True,
-        tasks_count=1
+        tasks_count=1,
     )
     workflow = create_test_workflow(
         user=user,
-        template=template
+        template=template,
     )
     task = workflow.tasks.first()
     TaskPerformer.objects.create(
         task=task,
         user=task_performer_user,
-        type=PerformerType.USER
+        type=PerformerType.USER,
     )
 
     # act
@@ -549,32 +549,32 @@ def test__add_group_and_user_in_taskperformer__ok():
     user = create_test_user(account=account)
     group_user = create_test_user(
         account=account,
-        email='groupuser@test.test'
+        email='groupuser@test.test',
     )
     direct_user = create_test_user(
         account=account,
-        email='directuser@test.test'
+        email='directuser@test.test',
     )
     template = create_test_template(
         user=user,
         is_active=True,
-        tasks_count=1
+        tasks_count=1,
     )
     workflow = create_test_workflow(
         user=user,
-        template=template
+        template=template,
     )
     group = create_test_group(account, users=[group_user])
     task = workflow.tasks.first()
     TaskPerformer.objects.create(
         task=task,
         group=group,
-        type=PerformerType.GROUP
+        type=PerformerType.GROUP,
     )
     TaskPerformer.objects.create(
         task=task,
         user=direct_user,
-        type=PerformerType.USER
+        type=PerformerType.USER,
     )
 
     # act
@@ -591,28 +591,28 @@ def test__add_user_in_owner_and_taskperformer__ok():
     user = create_test_user(account=account)
     common_user = create_test_user(
         account=account,
-        email='common@test.test'
+        email='common@test.test',
     )
     template = create_test_template(
         user=user,
         is_active=True,
-        tasks_count=1
+        tasks_count=1,
     )
     TemplateOwner.objects.create(
         template=template,
         account=account,
         type=OwnerType.USER,
-        user=common_user
+        user=common_user,
     )
     workflow = create_test_workflow(
         user=user,
-        template=template
+        template=template,
     )
     task = workflow.tasks.first()
     TaskPerformer.objects.create(
         task=task,
         user=common_user,
-        type=PerformerType.USER
+        type=PerformerType.USER,
     )
 
     # act
@@ -628,23 +628,23 @@ def test__add_performer_with_status_deleted__ok():
     user = create_test_user(account=account)
     deleted_performer = create_test_user(
         account=account,
-        email='deleted@test.test'
+        email='deleted@test.test',
     )
     template = create_test_template(
         user=user,
         is_active=True,
-        tasks_count=1
+        tasks_count=1,
     )
     workflow = create_test_workflow(
         user=user,
-        template=template
+        template=template,
     )
     task = workflow.tasks.first()
     TaskPerformer.objects.create(
         task=task,
         user=deleted_performer,
         type=PerformerType.USER,
-        directly_status=DirectlyStatus.DELETED
+        directly_status=DirectlyStatus.DELETED,
     )
 
     # act
@@ -660,23 +660,23 @@ def test__update_group_taskperformer_add_members__ok(api_client):
     user = create_test_user(account=account)
     user_in_group = create_test_user(
         account=account,
-        email='groupuser@test.test'
+        email='groupuser@test.test',
     )
     template = create_test_template(
         user=user,
         is_active=True,
-        tasks_count=1
+        tasks_count=1,
     )
     workflow = create_test_workflow(
         user=user,
-        template=template
+        template=template,
     )
     group = create_test_group(account)
     task = workflow.tasks.first()
     TaskPerformer.objects.create(
         task=task,
         group=group,
-        type=PerformerType.GROUP
+        type=PerformerType.GROUP,
     )
     update_workflow_owners([template.id])
     group.users.set([user, user_in_group])
