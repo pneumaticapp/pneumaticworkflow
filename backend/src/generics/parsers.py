@@ -67,7 +67,7 @@ class CamelCaseJSONParser(JSONParser):
             new_dict = {}
             if isinstance(data, MultiValueDict):
                 new_data = MultiValueDict()
-                for key, value in data.items():
+                for key in data.keys():
                     new_data.setlist(
                         self.camel_to_underscore(key),
                         data.getlist(key)

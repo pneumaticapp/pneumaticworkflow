@@ -301,7 +301,7 @@ class CustomValidationErrorMixin:
 
         if data.keys():
             errors = []
-            for key, value in data.items():
+            for _, value in data.items():
                 if value not in self._null_values:
                     if isinstance(value, list):
                         errors.extend(self._get_errors_from_list(

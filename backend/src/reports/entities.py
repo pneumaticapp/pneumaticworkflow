@@ -1,3 +1,4 @@
+# ruff: noqa: B010
 from dataclasses import dataclass, field
 from typing import List
 
