@@ -72,8 +72,8 @@ def _update_workflows(
         'countdown': 2,
     },
 )
-def update_workflows(*args, **kwargs):
-    _update_workflows(sync=True, *args, **kwargs)
+def update_workflows(**kwargs):
+    _update_workflows(sync=True, **kwargs)
 
 
 @shared_task(

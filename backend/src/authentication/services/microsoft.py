@@ -490,7 +490,7 @@ class MicrosoftAuthService(
             http_status = 400
             response_data['message'] = str(ex)
             response_data['exception_type'] = type(ex)
-            response_data['details'] = getattr(ex, 'details')
+            response_data['details'] = getattr(ex, 'details') # noqa B009
         finally:
             if user.account.log_api_requests:
                 AccountLogService().contacts_request(

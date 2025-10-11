@@ -51,7 +51,7 @@ class NoSchemaURLValidator(URLValidator):
         # Then check full URL
         try:
             self._validate_url_by_regex(value)
-        except ValidationError as e:
+        except ValidationError:
             # Trivial case failed. Try for possible IDN domain
             if value:
                 try:
