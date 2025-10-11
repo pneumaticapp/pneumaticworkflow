@@ -586,7 +586,7 @@ class CommentService(BaseModelService):
     ) -> Tuple[int]:
         list_of_ids = re.findall(r'\[.*?\|\s*([0-9]+)\]', text)
         if not list_of_ids:
-            return tuple()
+            return ()
         return UserModel.objects.filter(
             id__in=list_of_ids,
         ).exclude(id__in=exclude_ids).on_account(
@@ -619,7 +619,7 @@ class CommentService(BaseModelService):
 
         """ Return mentioned users and comment notification receipenes """
 
-        mentioned_users_ids = tuple()
+        mentioned_users_ids = ()
         notify_users_ids = task.taskperformer_set.exclude_directly_deleted(
         ).exclude(user_id=self.user.id).user_ids()
         if self.instance.text:
@@ -637,7 +637,7 @@ class CommentService(BaseModelService):
         """ Return only new mentioned users """
 
         workflow = self.instance.workflow
-        mentioned_users_ids = tuple()
+        mentioned_users_ids = ()
         if self.instance.text:
             # Only new mentioned users
             mentioned_users_ids = self._get_mentioned_users_ids(

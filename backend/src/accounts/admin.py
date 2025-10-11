@@ -647,7 +647,7 @@ class AccountAdmin(ModelAdmin):
         self.prev_bucket_is_public = None
 
     def list_tenants(self, obj):
-        result = list()
+        result = []
         for acc in obj.tenants.only_tenants():
             url = resolve_url(admin_urlname(acc._meta, 'change'), acc.id)
             result.append(

@@ -137,15 +137,15 @@ class UserQuerySet(AccountBaseQuerySet):
 
     def user_ids_set(self) -> set:
         qst = self.values_list('id', flat=True)
-        return set(elem for elem in qst)
+        return set(qst)
 
     def user_ids_emails_list(self) -> list:
         qst = self.values_list('id', 'email')
-        return [elem for elem in qst]
+        return list(qst)
 
     def user_ids_emails_subscriber_list(self) -> list:
         qst = self.values_list('id', 'email', 'is_new_tasks_subscriber')
-        return [elem for elem in qst]
+        return list(qst)
 
     def get_users_task_except_group(self, task, exclude_group):
         query = Q(

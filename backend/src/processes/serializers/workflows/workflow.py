@@ -113,7 +113,7 @@ class WorkflowListSerializer(serializers.ModelSerializer):
         return []
 
     def get_owners(self, instance: Workflow):
-        return list(e.id for e in instance.owners_ids)
+        return [e.id for e in instance.owners_ids]
 
 
 class WorkflowCreateSerializer(

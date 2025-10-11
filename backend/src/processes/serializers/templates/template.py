@@ -308,7 +308,7 @@ class TemplateSerializer(
         sys_vars_is_used = bool(api_names_in_name & sys_vars)
         api_names_in_name -= sys_vars
         available_fields = self._get_raw_fields_from_kickoff(data)
-        available_api_names = set(f['api_name'] for f in available_fields)
+        available_api_names = {f['api_name'] for f in available_fields}
         failed_api_names = api_names_in_name - available_api_names
         if failed_api_names:
             self.raise_validation_error(
@@ -349,7 +349,7 @@ class TemplateSerializer(
                 name='tasks',
             )
         # Validate tasks "revert task"
-        revert_task_api_names = dict()
+        revert_task_api_names = {}
         task_api_names = set()
         for task in value:
             revert_task_api_name = task.get('revert_task')

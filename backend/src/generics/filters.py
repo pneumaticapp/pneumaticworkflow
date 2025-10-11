@@ -71,9 +71,9 @@ class ListFilter(Filter):
 
     def __init__(self, *args, choices=None, map_to_db=None, **kwargs):
         self.map_to_db = map_to_db
-        self.allowed_values = set(
+        self.allowed_values = {
             str(choice[0]) for choice in choices
-        ) if choices else None
+        } if choices else None
         super().__init__(*args, **kwargs)
 
     def validate(self, values: set):

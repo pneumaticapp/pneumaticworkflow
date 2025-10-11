@@ -801,7 +801,7 @@ class WorkflowActionService:
         elif task.sub_workflows.running().exists():
             raise exceptions.SubWorkflowsIncompleted()
 
-        fields_values = fields_values or dict()
+        fields_values = fields_values or {}
         with transaction.atomic():
             for task_field in task.output.all():
                 service = TaskFieldService(
