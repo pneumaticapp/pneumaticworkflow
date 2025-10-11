@@ -81,7 +81,7 @@ class UrgentService:
     ):
         event_type = cls._get_event_type(workflow)
         notification_type = cls._get_notification_type(workflow)
-        task_ids = list(e.id for e in workflow.tasks.active().only('id'))
+        task_ids = [e.id for e in workflow.tasks.active().only('id')]
         if notification_type == NotificationType.URGENT:
             send_urgent_notification.delay(
                 logging=user.account.log_api_requests,

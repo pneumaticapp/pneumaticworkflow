@@ -86,11 +86,13 @@ class PurchaseSerializer(
         if not attrs:
             raise ValidationError(MSG_BL_0002)
         request_codes = {elem['code'] for elem in attrs}
-        existent_codes = {
-            elem for elem in Price.objects.active_or_archived().filter(
-                code__in=request_codes,
-            ).order_by('code').values_list('code', flat=True)
-        }
+        existent_codes = set(
+            Price.objects
+            .active_or_archived()
+            .filter(code__in=request_codes)
+            .order_by('code')
+            .values_list('code', flat=True),
+        )
         non_existent_codes = request_codes - existent_codes
         if non_existent_codes:
             raise ValidationError(MSG_BL_0003(non_existent_codes))

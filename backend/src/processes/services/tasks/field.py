@@ -452,7 +452,7 @@ class TaskFieldService(BaseWorkflowService):
         #   instead of call DELETE /workflows/attachments/:id
         current_attach_ids = self.instance.attachments.ids_set()
         if value:
-            new_attach_ids = set(int(e) for e in attachment_ids)
+            new_attach_ids = {int(e) for e in attachment_ids}
             deleted_attach_ids = current_attach_ids - new_attach_ids
         else:
             deleted_attach_ids = current_attach_ids

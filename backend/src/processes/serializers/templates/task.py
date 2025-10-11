@@ -131,10 +131,10 @@ class TaskTemplateSerializer(
         }
         if not raw_performers_data:
             return context
-        performers_types = set(
+        performers_types = {
             elem.get('type')
             for elem in raw_performers_data
-        )
+        }
         if PerformerType.FIELD in performers_types:
             context['available_api_names'] = (
                 task_template.get_prev_tasks_fields_api_names()
@@ -175,7 +175,7 @@ class TaskTemplateSerializer(
             return
 
         available_fields = self._get_task_available_fields()
-        available_api_names = set(field.api_name for field in available_fields)
+        available_api_names = {field.api_name for field in available_fields}
         failed_api_names = api_names_in_name - available_api_names
         if failed_api_names:
             self.raise_validation_error(
@@ -215,9 +215,9 @@ class TaskTemplateSerializer(
         if not api_names_in_description:
             return True
 
-        available_api_names_for_description = set(
+        available_api_names_for_description = {
             field.api_name for field in self._get_task_available_fields()
-        )
+        }
 
         failed_api_names_exist = (
             api_names_in_description - available_api_names_for_description
@@ -240,10 +240,10 @@ class TaskTemplateSerializer(
                 api_name=data.get('api_name'),
             )
 
-        unique_performers = set(
+        unique_performers = {
             (elem.get('type'), elem.get('source_id'))
             for elem in value
-        )
+        }
         if len(value) != len(unique_performers):
             self.raise_validation_error(
                 message=messages.MSG_PT_0003,
@@ -260,17 +260,17 @@ class TaskTemplateSerializer(
             # TODO move validation to PredicateTemplateSerializer
             #  add task api_names validation
             #  https://my.pneumatic.app/workflows/35698/
-            api_names_in_conditions = set(
+            api_names_in_conditions = {
                 predicate['field']
                 for condition in value
                 for rule in condition['rules']
                 for predicate in rule['predicates']
                 if predicate['field_type'] in PredicateType.FIELD_TYPES
-            )
-            available_api_names_for_conditions = set(
+            }
+            available_api_names_for_conditions = {
                 field.api_name
                 for field in self._get_task_available_fields()
-            )
+            }
 
             failed_api_names_exist = (
                 api_names_in_conditions - available_api_names_for_conditions

@@ -690,7 +690,7 @@ class FileAttachmentQuerySet(AccountBaseQuerySet):
 
     def ids_set(self):
         qst = self.values_list('id', flat=True)
-        return set(elem for elem in qst)
+        return set(qst)
 
 
 class TemplateDraftQuerySet(BaseQuerySet):
@@ -820,7 +820,7 @@ class TaskPerformerQuerySet(BaseHardQuerySet):
 
     def user_ids_set(self) -> set:
         qst = self.values_list('user_id', flat=True)
-        return set(elem for elem in qst)
+        return set(qst)
 
     def guests(self):
         return self.filter(user__type=UserType.GUEST)

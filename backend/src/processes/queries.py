@@ -1843,6 +1843,9 @@ class UpdateWorkflowOwnersQuery(
             'template_id': template_id,
         }
 
+    def get_sql(self) -> Tuple[str, dict]:
+        pass
+
     def insert_sql(self):
         return f"""
             WITH
@@ -1873,6 +1876,9 @@ class UpdateWorkflowMemberQuery(
         self.params = {
             'template_id': template_id,
         }
+
+    def get_sql(self) -> Tuple[str, dict]:
+        pass
 
     def insert_sql(self):
         return f"""
