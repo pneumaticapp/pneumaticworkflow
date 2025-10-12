@@ -27,8 +27,8 @@ class AsgiHandler(ChannelsAsgiHandler):
     async def __call__(self, scope, receive, send):
         if scope["type"] != "http":
             raise ValueError(
-                "The AsgiHandler can only handle HTTP connections, not %s"
-                % scope["type"],
+                f'The AsgiHandler can only handle HTTP connections, '
+                f'not {scope["type"]}',
             )
         self.scope = scope
         self.send = send

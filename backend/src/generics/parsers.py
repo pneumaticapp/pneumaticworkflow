@@ -107,4 +107,4 @@ class CamelCaseJSONParser(JSONParser):
             data = stream.read().decode(encoding)
             return self.underscoreize(json.loads(data))
         except ValueError as ex:
-            raise ParseError("JSON parse error - %s" % str(ex)) from ex
+            raise ParseError(f"JSON parse error - {str(ex)}") from ex

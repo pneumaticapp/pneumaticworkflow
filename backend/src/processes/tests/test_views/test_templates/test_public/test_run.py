@@ -1,3 +1,4 @@
+# ruff: noqa: UP031
 import pytz
 import pytest
 from django.utils import timezone

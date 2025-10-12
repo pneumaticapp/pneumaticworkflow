@@ -1,3 +1,4 @@
+# ruff: noqa: UP031
 import pytest
 from datetime import timedelta
 from src.processes.tests.fixtures import (
