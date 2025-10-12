@@ -1,3 +1,4 @@
+# ruff: noqa: UP031
 import pytest
 import pytz
 from datetime import timedelta

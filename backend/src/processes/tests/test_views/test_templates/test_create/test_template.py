@@ -1,3 +1,4 @@
+# ruff: noqa: UP031
 import pytest
 from django.conf import settings
 from src.accounts.enums import BillingPlanType

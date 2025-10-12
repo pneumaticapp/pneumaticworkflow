@@ -1,4 +1,4 @@
-# ruff: noqa: PLC0415
+# ruff: noqa: PLC0415 UP031
 from typing import List
 from copy import deepcopy
 from django.contrib.auth import get_user_model

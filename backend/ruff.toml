@@ -41,7 +41,6 @@ select = [
 ]
 ignore = [
     "E731",   # lambda expressions used in the messages
-    "UP031",  # Use format specifiers instead of percent format
     "F401",   # imported but unused
     "PLR2004", # Use constans
     "PLR0915", # Too many statements

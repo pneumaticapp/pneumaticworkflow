@@ -169,10 +169,7 @@ class TestCustomSimpleRateThrottle:
 
         # assert
         get_ident_mock.assert_called_once_with(request)
-        assert result == 'throttle_%(scope)s_%(ident)s' % {
-            'scope': scope,
-            'ident': str(ident),
-        }
+        assert result == f'throttle_{scope}_{ident}'
 
     def test_throttle_success__ok(self, mocker):
 

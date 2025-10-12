@@ -1,3 +1,4 @@
+# ruff: noqa: UP031
 import pytest
 from django.contrib.auth import get_user_model
 from src.authentication.enums import AuthTokenType

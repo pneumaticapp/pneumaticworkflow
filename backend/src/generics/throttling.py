@@ -24,9 +24,8 @@ class CustomSimpleRateThrottle(SimpleRateThrottle):
         """
         if not getattr(self, 'scope', None):
             msg = (
-                "You must set either `.scope` or "
-                "`.rate` for '%s' throttle" %
-                self.__class__.__name__
+                f"You must set either `.scope` or "
+                f"`.rate` for '{self.__class__.__name__}' throttle"
             )
             raise ImproperlyConfigured(msg)
 
