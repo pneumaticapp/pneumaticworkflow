@@ -1,20 +1,24 @@
 from rest_framework import serializers
 from src.services.markdown import MarkdownService
-from src.processes.models import (
-    Template,
-    TemplateOwner,
-    TaskTemplate,
-    Kickoff,
+from src.processes.models.templates.template import Template
+from src.processes.models.templates.kickoff import Kickoff
+from src.processes.models.templates.task import TaskTemplate
+from src.processes.models.templates.owner import TemplateOwner
+from src.processes.models.templates.raw_due_date import RawDueDateTemplate
+from src.processes.models.templates.fields import (
     FieldTemplate,
     FieldTemplateSelection,
-    PredicateTemplate,
-    RuleTemplate,
-    ConditionTemplate,
-    RawPerformerTemplate,
+)
+from src.processes.models.templates.checklist import (
     ChecklistTemplate,
     ChecklistTemplateSelection,
-    RawDueDateTemplate,
 )
+from src.processes.models.templates.conditions import (
+    ConditionTemplate,
+    PredicateTemplate,
+    RuleTemplate,
+)
+from src.processes.models.templates.raw_performer import RawPerformerTemplate
 
 
 class SelectionSchemaV1(serializers.ModelSerializer):

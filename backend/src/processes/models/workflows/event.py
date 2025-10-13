@@ -11,7 +11,8 @@ from src.processes.querysets import (
     WorkflowEventActionQuerySet,
 )
 from src.generics.managers import BaseSoftDeleteManager
-from src.processes.models import Workflow, Task
+from src.processes.models.workflows.workflow import Workflow
+from src.processes.models.workflows.task import Task
 from src.processes.enums import (
     WorkflowEventType,
     WorkflowEventActionType,

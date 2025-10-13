@@ -1,15 +1,28 @@
 from typing import List
-
-from src.processes.models import Condition, Rule, Predicate
-from src.processes.services.condition_check.resolvers import (
-    DateResolver,
-    StringResolver,
-    UserResolver,
-    FileResolver,
-    DropdownResolver,
+from src.processes.models.workflows.conditions import (
+    Condition,
+    Predicate,
+    Rule,
+)
+from src.processes.services.condition_check.resolvers.checkbox import (
     CheckboxResolver,
-    TaskResolver,
+)
+from src.processes.services.condition_check.resolvers.date import DateResolver
+from src.processes.services.condition_check.resolvers.dropdown import (
+    DropdownResolver,
+)
+from src.processes.services.condition_check.resolvers.file import (
+    FileResolver,
+)
+from src.processes.services.condition_check.resolvers.string import (
+    StringResolver,
+)
+from src.processes.services.condition_check.resolvers.user import UserResolver
+from src.processes.services.condition_check.resolvers.task import TaskResolver
+from src.processes.services.condition_check.resolvers.kickoff import (
     KickoffResolver,
+)
+from src.processes.services.condition_check.resolvers.number import (
     NumberResolver,
 )
 from src.processes.enums import PredicateType

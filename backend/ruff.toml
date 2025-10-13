@@ -41,7 +41,6 @@ select = [
 ]
 ignore = [
     "E731",   # lambda expressions used in the messages
-    "F401",   # imported but unused
     "PLR2004", # Use constans
     "PLR0915", # Too many statements
     "PLR0912", # Too many branches

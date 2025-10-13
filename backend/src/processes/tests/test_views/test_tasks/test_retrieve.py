@@ -4,19 +4,25 @@ from django.utils import timezone
 from src.accounts.enums import (
     BillingPlanType,
 )
-from src.processes.models import (
+from src.processes.models.templates.template import Template
+from src.processes.models.templates.fields import (
     FieldTemplate,
-    Delay,
-    Workflow,
-    Template,
     FieldTemplateSelection,
-    TaskPerformer,
-    Checklist,
-    ChecklistSelection,
+)
+from src.processes.models.templates.checklist import (
     ChecklistTemplate,
     ChecklistTemplateSelection,
-    FileAttachment,
 )
+from src.processes.models.workflows.workflow import Workflow
+from src.processes.models.workflows.checklist import (
+    Checklist,
+    ChecklistSelection,
+)
+from src.processes.models.workflows.task import (
+    TaskPerformer,
+    Delay,
+)
+from src.processes.models.workflows.attachment import FileAttachment
 from src.processes.tasks.update_workflow import update_workflows
 from src.processes.tests.fixtures import (
     create_test_user,
@@ -39,7 +45,7 @@ from src.processes.enums import (
     OwnerType,
     TaskStatus,
 )
-from src.authentication.services import GuestJWTAuthService
+from src.authentication.services.guest_auth import GuestJWTAuthService
 from src.processes.services.events import WorkflowEventService
 from src.utils.dates import date_format
 

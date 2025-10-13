@@ -3,7 +3,7 @@ from rest_framework import serializers
 from src.processes.enums import (
     FieldType,
 )
-from src.processes.models import (
+from src.processes.models.workflows.fields import (
     TaskField,
     FieldSelection,
 )

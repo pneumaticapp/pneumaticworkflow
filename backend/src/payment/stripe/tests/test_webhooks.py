@@ -36,7 +36,7 @@ from src.accounts.enums import LeaseLevel
 from src.authentication.enums import AuthTokenType
 from src.payment import messages
 from src.utils.logging import SentryLogLevel
-from src.accounts.services import UserService
+from src.accounts.services.user import UserService
 
 
 pytestmark = pytest.mark.django_db

@@ -3,11 +3,8 @@ import pytest
 from django.contrib.auth import get_user_model
 from django.db.models import F
 from django.utils import timezone
-
-from src.processes.models import (
-    Workflow,
-    Template,
-)
+from src.processes.models.workflows.workflow import Workflow
+from src.processes.models.templates.template import Template
 from src.reports.tasks import (
     send_digest,
 )

@@ -1,6 +1,6 @@
 import pytest
 from src.accounts.enums import BillingPlanType
-from src.processes.models import (
+from src.processes.models.templates.system_template import (
     SystemTemplate,
 )
 from src.processes.tests.fixtures import (

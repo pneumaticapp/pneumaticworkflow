@@ -1,9 +1,7 @@
 import pytest
 from django.contrib.auth import get_user_model
-from src.processes.models import (
-    TaskPerformer,
-    TemplateOwner,
-)
+from src.processes.models.workflows.task import TaskPerformer
+from src.processes.models.templates.owner import TemplateOwner
 from src.processes.tests.fixtures import (
     create_test_user,
     create_test_account,

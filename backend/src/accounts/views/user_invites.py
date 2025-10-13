@@ -21,7 +21,7 @@ from src.accounts.tokens import (
 )
 from src.authentication.enums import AuthTokenType
 from src.authentication.permissions import PrivateApiPermission
-from src.authentication.services import AuthService
+from src.authentication.services.user_auth import AuthService
 from src.accounts.throttling import (
     InvitesTokenThrottle,
 )
@@ -36,9 +36,7 @@ from src.accounts.services.exceptions import (
     InvalidOrExpiredToken,
     AlreadyRegisteredException,
 )
-from src.accounts.services import (
-    UserInviteService,
-)
+from src.accounts.services.user_invite import UserInviteService
 from src.utils.validation import raise_validation_error
 from src.analytics.mixins import (
     BaseIdentifyMixin,

@@ -3,19 +3,28 @@ from django.utils import timezone
 from django.contrib.auth import get_user_model
 from django.utils.dateparse import parse_duration
 
-from src.notifications.tasks import send_new_task_notification, \
-    send_removed_task_notification
-from src.processes.models import (
-    Task,
+from src.notifications.tasks import (
+    send_new_task_notification,
+    send_removed_task_notification,
+)
+from src.processes.models.workflows.raw_due_date import RawDueDate
+from src.processes.models.workflows.fields import (
+    TaskField,
+    FieldSelection,
+)
+from src.processes.models.workflows.conditions import (
     Condition,
     Predicate,
     Rule,
-    FieldSelection,
-    TaskField,
-    ChecklistSelection,
+)
+from src.processes.models.workflows.workflow import Workflow
+from src.processes.models.workflows.task import (
+    TaskPerformer,
+    Task,
     Delay,
-    RawDueDate,
-    Workflow, TaskPerformer,
+)
+from src.processes.models.workflows.checklist import (
+    ChecklistSelection,
 )
 from src.processes.enums import TaskStatus
 from src.processes.services.tasks.checklist_version import (

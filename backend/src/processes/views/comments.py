@@ -8,9 +8,7 @@ from src.accounts.permissions import (
     BillingPlanPermission,
     ExpiredSubscriptionPermission,
 )
-from src.processes.models import (
-    WorkflowEvent,
-)
+from src.processes.models.workflows.event import WorkflowEvent
 from src.processes.serializers.comments import (
     CommentCreateSerializer,
     CommentReactionSerializer,

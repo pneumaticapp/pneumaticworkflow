@@ -4,7 +4,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from src.processes.models.templates.checklist import (
     ChecklistTemplate,
 )
-from src.processes.models import (
+from src.processes.models.workflows.checklist import (
     Checklist,
     ChecklistSelection,
 )

@@ -5,7 +5,7 @@ from src.processes.tests.fixtures import (
     create_test_group,
 )
 from src.accounts.enums import BillingPlanType
-from src.processes.models import (
+from src.processes.models.templates.template import (
     TemplateDraft,
     Template,
 )

@@ -4,9 +4,9 @@ from src.processes.enums import (
     DueDateRule,
     FieldType,
 )
-from src.processes.models import (
-    SystemTemplateCategory,
+from src.processes.models.templates.system_template import (
     SystemTemplate,
+    SystemTemplateCategory,
 )
 from src.processes.tests.fixtures import (
     create_test_user,

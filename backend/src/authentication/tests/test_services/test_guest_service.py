@@ -4,7 +4,7 @@ from rest_framework_simplejwt.exceptions import (
     AuthenticationFailed,
     InvalidToken,
 )
-from src.authentication.services import GuestJWTAuthService
+from src.authentication.services.guest_auth import GuestJWTAuthService
 from src.authentication.tokens import GuestToken
 from src.processes.tests.fixtures import (
     create_test_workflow,
@@ -22,7 +22,7 @@ from src.authentication.enums import (
 from src.accounts.enums import (
     UserStatus,
 )
-from src.processes.models import TaskPerformer
+from src.processes.models.workflows.task import TaskPerformer
 from src.authentication import messages
 
 
@@ -405,7 +405,7 @@ class TestGuestJWTAuthService:
         task_id = 55
         user_id = 45
         set_guest_cache_mock = mocker.patch(
-            'src.authentication.services.GuestJWTAuthService'
+            'src.authentication.services.guest_auth.GuestJWTAuthService'
             '._set_guest_cache',
         )
 
@@ -428,7 +428,7 @@ class TestGuestJWTAuthService:
         task_id = 55
         user_id = 45
         set_guest_cache_mock = mocker.patch(
-            'src.authentication.services.GuestJWTAuthService'
+            'src.authentication.services.guest_auth.GuestJWTAuthService'
             '._set_guest_cache',
         )
 

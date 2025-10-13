@@ -8,13 +8,9 @@ from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.permissions import AllowAny
 from rest_framework.viewsets import GenericViewSet
 from rest_framework.mixins import RetrieveModelMixin, ListModelMixin
-from src.accounts.services import (
-    UserService,
-)
-from src.accounts.filters import (
-    UsersListFilterSet,
-)
-from src.accounts.services import AccountService
+from src.accounts.services.user import UserService
+from src.accounts.filters import UsersListFilterSet
+from src.accounts.services.account import AccountService
 from src.accounts.models import UserInvite
 from src.accounts.permissions import (
     UserIsAdminOrAccountOwner,
@@ -22,9 +18,7 @@ from src.accounts.permissions import (
     BillingPlanPermission,
     AccountOwnerPermission,
 )
-from src.accounts.queries import (
-    CountTemplatesByUserQuery,
-)
+from src.accounts.queries import CountTemplatesByUserQuery
 from src.accounts.serializers.user import (
     UserSerializer,
     UserPrivilegesSerializer,
@@ -212,7 +206,7 @@ class UsersViewSet(
     #     except InvalidTransferTokenException as ex:
     #         raise_validation_error(message=ex.message)
     #     else:
-    #         from src.authentication.services import AuthService
+    #         from src.authentication.services.user_auth import AuthService
     #         token = AuthService.get_auth_token(
     #             user=service.get_user(),
     #             user_agent=request.headers.get(

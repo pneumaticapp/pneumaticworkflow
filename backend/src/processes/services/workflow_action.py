@@ -12,9 +12,9 @@ from src.notifications.tasks import (
     send_complete_task_notification,
     send_removed_task_notification, send_new_task_websocket,
 )
-from src.processes.models import (
+from src.processes.models.workflows.workflow import Workflow
+from src.processes.models.workflows.task import (
     Task,
-    Workflow,
     TaskPerformer,
     Delay,
 )
@@ -34,7 +34,7 @@ from src.processes.enums import (
     TaskStatus,
     ConditionAction,
 )
-from src.authentication.services import GuestJWTAuthService
+from src.authentication.services.guest_auth import GuestJWTAuthService
 from src.processes.services.tasks.task import TaskService
 from src.authentication.enums import AuthTokenType
 from src.processes.services import exceptions

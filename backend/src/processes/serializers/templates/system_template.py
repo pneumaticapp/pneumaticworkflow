@@ -5,11 +5,11 @@ from src.processes.enums import (
     DueDateRule,
     FieldType,
 )
-from src.processes.models import (
+from src.processes.models.templates.system_template import (
     SystemTemplate,
     SystemTemplateCategory,
-    TaskTemplate,
 )
+from src.processes.models.templates.task import TaskTemplate
 from src.generics.serializers import CustomValidationErrorMixin
 from src.processes.utils.common import create_api_name
 

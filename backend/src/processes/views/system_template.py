@@ -13,7 +13,7 @@ from src.generics.permissions import (
 from src.processes.filters import (
     SystemTemplateFilter,
 )
-from src.processes.models import (
+from src.processes.models.templates.system_template import (
     SystemTemplate,
     SystemTemplateCategory,
 )

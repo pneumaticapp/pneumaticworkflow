@@ -24,9 +24,7 @@ from src.accounts.services.exceptions import (
     UserIsPerformerException,
     AlreadyRegisteredException,
 )
-from src.accounts.services import (
-    UserService,
-)
+from src.accounts.services.user import UserService
 from src.accounts.messages import MSG_A_0005
 
 
@@ -1116,7 +1114,7 @@ def test_private_deactivate__ok(mocker):
         'remove_user_from_draft',
     )
     update_users_counts_mock = mocker.patch(
-        'src.accounts.services.AccountService.'
+        'src.accounts.services.account.AccountService.'
         'update_users_counts',
     )
     identify_mock = mocker.patch(
@@ -1159,7 +1157,7 @@ def test_private_deactivate__activate_contacts__ok(mocker):
         'remove_user_from_draft',
     )
     mocker.patch(
-        'src.accounts.services.AccountService.'
+        'src.accounts.services.account.AccountService.'
         'update_users_counts',
     )
     mocker.patch(

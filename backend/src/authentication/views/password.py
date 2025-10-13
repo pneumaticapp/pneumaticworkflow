@@ -19,7 +19,7 @@ from src.authentication.permissions import (
     PrivateApiPermission,
 )
 from src.authentication.tokens import PneumaticToken
-from src.authentication.services import AuthService
+from src.authentication.services.user_auth import AuthService
 from src.authentication.serializers import (
     ResetPasswordSerializer,
     ConfirmPasswordSerializer,

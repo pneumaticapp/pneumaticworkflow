@@ -6,12 +6,10 @@ from src.authentication.enums import AuthTokenType
 from src.processes.services.events import (
     WorkflowEventService,
 )
-from src.processes.models import (
-    Delay,
-    FieldTemplate,
-    Workflow,
-    WorkflowEvent,
-)
+from src.processes.models.templates.fields import FieldTemplate
+from src.processes.models.workflows.task import Delay
+from src.processes.models.workflows.workflow import Workflow
+from src.processes.models.workflows.event import WorkflowEvent
 from src.processes.tests.fixtures import (
     create_test_user,
     create_invited_user,

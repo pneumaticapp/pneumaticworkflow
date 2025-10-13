@@ -6,12 +6,11 @@ from src.processes.tests.fixtures import (
     create_test_template,
     create_invited_user,
 )
-from src.processes.models import (
-    FieldTemplate,
-    TaskTemplate,
-    Template,
-    Workflow, RawDueDateTemplate,
-)
+from src.processes.models.templates.template import Template
+from src.processes.models.templates.task import TaskTemplate
+from src.processes.models.templates.raw_due_date import RawDueDateTemplate
+from src.processes.models.templates.fields import FieldTemplate
+from src.processes.models.workflows.workflow import Workflow
 from src.processes.services.workflow_action import (
     WorkflowActionService,
 )

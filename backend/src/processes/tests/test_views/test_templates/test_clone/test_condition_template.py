@@ -1,9 +1,7 @@
 import pytest
 
 from src.accounts.enums import BillingPlanType
-from src.processes.models import (
-    Template,
-)
+from src.processes.models.templates.template import Template
 from src.processes.tests.fixtures import (
     create_test_user,
 )

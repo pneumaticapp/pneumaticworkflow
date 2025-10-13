@@ -5,10 +5,8 @@ from django.contrib.auth import get_user_model
 from src.processes.services.base import (
     BaseWorkflowService,
 )
-from src.processes.models import (
-    Template,
-    Workflow,
-)
+from src.processes.models.templates.template import Template
+from src.processes.models.workflows.workflow import Workflow
 from src.utils.dates import date_to_user_fmt
 from src.processes.utils.common import (
     string_abbreviation,

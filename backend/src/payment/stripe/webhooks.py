@@ -25,7 +25,7 @@ from src.utils.logging import (
     capture_sentry_message,
     SentryLogLevel,
 )
-from src.accounts.services import UserService
+from src.accounts.services.user import UserService
 
 
 class WebhookService(StripeMixin):

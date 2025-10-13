@@ -3,7 +3,7 @@ from rest_framework.serializers import (
     ModelSerializer,
     CharField,
 )
-from src.processes.models import FieldTemplate
+from src.processes.models.templates.fields import FieldTemplate
 from src.generics.mixins.serializers import (
     CustomValidationErrorMixin,
     AdditionalValidationMixin,
@@ -12,7 +12,7 @@ from src.processes.serializers.templates.mixins import (
     CreateOrUpdateInstanceMixin,
     CreateOrUpdateRelatedMixin,
 )
-from src.processes.models import (
+from src.processes.models.templates.raw_due_date import (
     RawDueDateTemplate,
 )
 from src.processes.enums import (

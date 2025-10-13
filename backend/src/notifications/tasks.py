@@ -33,21 +33,21 @@ from src.notifications.queries import (
 from src.notifications.services.websockets import (
     WebSocketService,
 )
-from src.processes.models import (
+from src.processes.models.workflows.workflow import Workflow
+from src.processes.models.workflows.task import (
     TaskPerformer,
-    Workflow,
+    Task,
+)
+from src.processes.models.workflows.event import (
     WorkflowEvent,
     WorkflowEventAction,
-    Task,
 )
 from src.processes.serializers.workflows.events import (
     WorkflowEventSerializer,
 )
 from src.executor import RawSqlExecutor
 from src.celery import periodic_lock
-from src.authentication.services import (
-    GuestJWTAuthService,
-)
+from src.authentication.services.guest_auth import GuestJWTAuthService
 from src.notifications.messages import MSG_NF_0001
 from src.processes.utils.common import get_duration_format
 from src.services.html_converter import convert_text_to_html

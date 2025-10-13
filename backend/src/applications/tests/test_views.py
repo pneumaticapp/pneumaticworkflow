@@ -1,6 +1,6 @@
 import pytest
 from src.applications.models import Integration
-from src.processes.models import SystemTemplate
+from src.processes.models.templates.system_template import SystemTemplate
 from src.processes.tests.fixtures import create_test_user
 
 

@@ -2,7 +2,7 @@ import openai.error
 import pytest
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from src.processes.models import TaskTemplate
+from src.processes.models.templates.task import TaskTemplate
 from src.processes.enums import (
     PerformerType,
     OwnerType, ConditionAction, PredicateType, PredicateOperator,

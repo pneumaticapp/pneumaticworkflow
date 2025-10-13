@@ -19,9 +19,9 @@ from django.contrib.auth import get_user_model
 from django.core.exceptions import (
     ValidationError as ValidationCoreError,
 )
-from src.processes.models import (
-    TemplateOwner,
-    Kickoff,
+from src.processes.models.templates.kickoff import Kickoff
+from src.processes.models.templates.owner import TemplateOwner
+from src.processes.models.templates.template import (
     Template,
     TemplateDraft,
 )

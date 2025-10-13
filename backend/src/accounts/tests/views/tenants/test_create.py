@@ -9,10 +9,8 @@ from src.accounts.services.exceptions import (
     AccountServiceException,
     UserServiceException,
 )
-from src.accounts.services import (
-    AccountService,
-    UserService,
-)
+from src.accounts.services.account import AccountService
+from src.accounts.services.user import UserService
 from src.processes.tests.fixtures import (
     create_test_user,
     create_test_account,
@@ -68,15 +66,15 @@ def test_create__premium_plan__increase_master_acc_subscription(
         return_value=None,
     )
     account_create_mock = mocker.patch(
-        'src.accounts.services.AccountService.create',
+        'src.accounts.services.account.AccountService.create',
         return_value=tenant_account,
     )
     update_users_counts_mock = mocker.patch(
-        'src.accounts.services.AccountService'
+        'src.accounts.services.account.AccountService'
         '.update_users_counts',
     )
     create_tenant_account_owner_mock = mocker.patch(
-        'src.accounts.services.UserService'
+        'src.accounts.services.user.UserService'
         '.create_tenant_account_owner',
         return_value=tenant_account_owner,
     )
@@ -205,15 +203,15 @@ def test_create__premium_plan__billing_disabled__not_increase_master_acc_subs(
         return_value=None,
     )
     account_create_mock = mocker.patch(
-        'src.accounts.services.AccountService.create',
+        'src.accounts.services.account.AccountService.create',
         return_value=tenant_account,
     )
     update_users_counts_mock = mocker.patch(
-        'src.accounts.services.AccountService'
+        'src.accounts.services.account.AccountService'
         '.update_users_counts',
     )
     create_tenant_account_owner_mock = mocker.patch(
-        'src.accounts.services.UserService'
+        'src.accounts.services.user.UserService'
         '.create_tenant_account_owner',
         return_value=tenant_account_owner,
     )
@@ -330,15 +328,15 @@ def test_create__unlimited_plan__buy_subscription(
         return_value=None,
     )
     account_create_mock = mocker.patch(
-        'src.accounts.services.AccountService.create',
+        'src.accounts.services.account.AccountService.create',
         return_value=tenant_account,
     )
     update_users_counts_mock = mocker.patch(
-        'src.accounts.services.AccountService'
+        'src.accounts.services.account.AccountService'
         '.update_users_counts',
     )
     create_tenant_account_owner_mock = mocker.patch(
-        'src.accounts.services.UserService'
+        'src.accounts.services.user.UserService'
         '.create_tenant_account_owner',
         return_value=tenant_account_owner,
     )
@@ -468,15 +466,15 @@ def test_create__free_plan__not_buy_subscription(
         return_value=None,
     )
     account_create_mock = mocker.patch(
-        'src.accounts.services.AccountService.create',
+        'src.accounts.services.account.AccountService.create',
         return_value=tenant_account,
     )
     update_users_counts_mock = mocker.patch(
-        'src.accounts.services.AccountService'
+        'src.accounts.services.account.AccountService'
         '.update_users_counts',
     )
     create_tenant_account_owner_mock = mocker.patch(
-        'src.accounts.services.UserService'
+        'src.accounts.services.user.UserService'
         '.create_tenant_account_owner',
         return_value=tenant_account_owner,
     )
@@ -636,7 +634,7 @@ def test_create__account_service_exception__validation_error(
     )
     message = 'some message'
     account_create_mock = mocker.patch(
-        'src.accounts.services.AccountService.create',
+        'src.accounts.services.account.AccountService.create',
         side_effect=AccountServiceException(message),
     )
     sys_workflow_service_init_mock = mocker.patch.object(
@@ -708,15 +706,15 @@ def test_create__stripe_service_exception__validation_error(
         return_value=None,
     )
     mocker.patch(
-        'src.accounts.services.AccountService.create',
+        'src.accounts.services.account.AccountService.create',
         return_value=tenant_account,
     )
     mocker.patch(
-        'src.accounts.services.AccountService'
+        'src.accounts.services.account.AccountService'
         '.update_users_counts',
     )
     mocker.patch(
-        'src.accounts.services.UserService'
+        'src.accounts.services.user.UserService'
         '.create_tenant_account_owner',
         return_value=tenant_account_owner,
     )
@@ -793,12 +791,12 @@ def test_create__user_service_exception__validation_error(
     )
     tenant_account = mocker.Mock()
     account_create_mock = mocker.patch(
-        'src.accounts.services.AccountService.create',
+        'src.accounts.services.account.AccountService.create',
         return_value=tenant_account,
     )
     message = 'some message'
     user_create_mock = mocker.patch(
-        'src.accounts.services.UserService'
+        'src.accounts.services.user.UserService'
         '.create_tenant_account_owner',
         side_effect=UserServiceException(message),
     )

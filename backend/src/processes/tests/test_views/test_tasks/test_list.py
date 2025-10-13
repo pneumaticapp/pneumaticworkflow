@@ -18,11 +18,9 @@ from src.processes.enums import (
     FieldType,
     TaskStatus,
 )
-from src.processes.models import (
-    FileAttachment,
-    TaskField,
-    TaskPerformer,
-)
+from src.processes.models.workflows.attachment import FileAttachment
+from src.processes.models.workflows.fields import TaskField
+from src.processes.models.workflows.task import TaskPerformer
 from src.processes.services.workflow_action import (
     WorkflowActionService,
 )

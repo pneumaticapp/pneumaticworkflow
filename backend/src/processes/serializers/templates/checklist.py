@@ -7,7 +7,7 @@ from src.processes.messages.template import (
     MSG_PT_0040,
     MSG_PT_0047,
 )
-from src.processes.models import FieldTemplate
+from src.processes.models.templates.fields import FieldTemplate
 from src.generics.mixins.serializers import (
     CustomValidationErrorMixin,
     AdditionalValidationMixin,

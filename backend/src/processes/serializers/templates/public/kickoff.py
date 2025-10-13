@@ -3,9 +3,7 @@ from rest_framework.serializers import (
     ModelSerializer,
     CharField,
 )
-from src.processes.models import (
-    Kickoff,
-)
+from src.processes.models.templates.kickoff import Kickoff
 from src.processes.serializers.templates.field import (
     PublicFieldTemplateSerializer,
 )

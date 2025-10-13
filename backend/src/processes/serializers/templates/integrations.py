@@ -9,7 +9,7 @@ from src.generics.mixins.serializers import (
     CustomValidationErrorMixin,
     ValidationUtilsMixin,
 )
-from src.processes.models import TemplateIntegrations
+from src.processes.models.templates.template import TemplateIntegrations
 
 
 class TemplateIntegrationsFilterSerializer(

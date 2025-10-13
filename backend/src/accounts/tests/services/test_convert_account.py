@@ -7,9 +7,7 @@ from src.accounts.enums import (
     BillingPlanType,
 )
 from src.authentication.enums import AuthTokenType
-from src.accounts.services import (
-    AccountService,
-)
+from src.accounts.services.account import AccountService
 from src.processes.tests.fixtures import (
     create_test_user,
     create_test_account,
@@ -104,7 +102,7 @@ class TestAccountLLConverter:
             return_value=None,
         )
         update_users_counts_mock = mocker.patch(
-            'src.accounts.services.AccountService.'
+            'src.accounts.services.account.AccountService.'
             'update_users_counts',
         )
 
@@ -173,7 +171,7 @@ class TestAccountLLConverter:
             return_value=None,
         )
         partial_update_mock = mocker.patch(
-            'src.accounts.services.AccountService.partial_update',
+            'src.accounts.services.account.AccountService.partial_update',
         )
         increase_plan_users_mock = mocker.patch(
             'src.payment.tasks.increase_plan_users.delay',
@@ -272,7 +270,7 @@ class TestAccountLLConverter:
             return_value=None,
         )
         partial_update_mock = mocker.patch(
-            'src.accounts.services.AccountService.partial_update',
+            'src.accounts.services.account.AccountService.partial_update',
         )
         increase_plan_users_mock = mocker.patch(
             'src.payment.tasks.increase_plan_users.delay',
@@ -373,7 +371,7 @@ class TestAccountLLConverter:
             return_value=None,
         )
         partial_update_mock = mocker.patch(
-            'src.accounts.services.AccountService.partial_update',
+            'src.accounts.services.account.AccountService.partial_update',
         )
         increase_plan_users_mock = mocker.patch(
             'src.payment.tasks.increase_plan_users.delay',
@@ -481,7 +479,7 @@ class TestAccountLLConverter:
             return_value=None,
         )
         partial_update_mock = mocker.patch(
-            'src.accounts.services.AccountService.partial_update',
+            'src.accounts.services.account.AccountService.partial_update',
         )
         increase_plan_users_mock = mocker.patch(
             'src.payment.tasks.increase_plan_users.delay',
@@ -582,7 +580,7 @@ class TestAccountLLConverter:
             return_value=None,
         )
         partial_update_mock = mocker.patch(
-            'src.accounts.services.AccountService.partial_update',
+            'src.accounts.services.account.AccountService.partial_update',
         )
         increase_plan_users_mock = mocker.patch(
             'src.payment.tasks.increase_plan_users.delay',
@@ -667,7 +665,7 @@ class TestAccountLLConverter:
             return_value=None,
         )
         partial_update_mock = mocker.patch(
-            'src.accounts.services.AccountService.partial_update',
+            'src.accounts.services.account.AccountService.partial_update',
         )
         increase_plan_users_mock = mocker.patch(
             'src.payment.tasks.increase_plan_users.delay',

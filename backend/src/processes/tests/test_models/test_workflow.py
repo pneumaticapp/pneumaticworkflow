@@ -1,9 +1,7 @@
 import pytest
 from django.contrib.auth import get_user_model
-from src.processes.models import (
-    Workflow,
-    Task,
-)
+from src.processes.models.workflows.workflow import Workflow
+from src.processes.models.workflows.task import Task
 from src.processes.tests.fixtures import (
     create_test_user,
     create_test_workflow,
@@ -72,7 +70,7 @@ class TestWorkflow:
             markdown_value='test',
         )
         kickoff_output_fields_mock = mocker.patch(
-            'src.processes.models.Workflow.'
+            'src.processes.models.workflows.workflow.Workflow.'
             'get_kickoff_output_fields',
             return_value=[field_mock],
         )

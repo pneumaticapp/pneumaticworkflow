@@ -10,10 +10,10 @@ from src.processes.tests.fixtures import (
     create_test_account,
     create_test_template,
 )
-from src.processes.models import (
+from src.processes.models.templates.fields import FieldTemplate
+from src.processes.models.templates.system_template import (
     SystemTemplate,
     SystemWorkflowKickoffData,
-    FieldTemplate,
 )
 from src.processes.services.system_workflows import (
     SystemWorkflowService,

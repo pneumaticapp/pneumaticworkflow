@@ -1,13 +1,14 @@
 import pytest
 from django.contrib.auth import get_user_model
-
-from src.processes.models import (
+from src.processes.models.workflows.attachment import FileAttachment
+from src.processes.models.workflows.conditions import (
     Condition,
-    Rule,
     Predicate,
+    Rule,
+)
+from src.processes.models.workflows.fields import (
     TaskField,
     FieldSelection,
-    FileAttachment,
 )
 from src.processes.services.condition_check.service import (
     ConditionCheckService,

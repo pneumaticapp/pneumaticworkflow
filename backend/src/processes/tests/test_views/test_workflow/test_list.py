@@ -3,16 +3,19 @@ from string import punctuation
 from datetime import timedelta
 from django.utils import timezone
 from src.authentication.enums import AuthTokenType
-from src.processes.models import (
-    TaskPerformer,
-    FileAttachment,
-    TaskField,
-    Delay,
-    TemplateOwner,
+
+from src.processes.models.templates.owner import TemplateOwner
+from src.processes.models.templates.conditions import (
     ConditionTemplate,
     PredicateTemplate,
     RuleTemplate,
 )
+from src.processes.models.workflows.task import (
+    TaskPerformer,
+    Delay,
+)
+from src.processes.models.workflows.fields import TaskField
+from src.processes.models.workflows.attachment import FileAttachment
 from src.processes.tests.fixtures import (
     create_test_user,
     create_test_workflow,

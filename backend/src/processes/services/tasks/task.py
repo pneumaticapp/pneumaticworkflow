@@ -2,17 +2,23 @@ from datetime import datetime, timedelta
 from typing import Dict, Optional
 from django.db.models import Q
 from django.contrib.auth import get_user_model
-from src.processes.models import (
-    Task,
-    TaskTemplate,
+from src.processes.models.templates.task import TaskTemplate
+from src.processes.models.templates.checklist import (
     ChecklistTemplateSelection,
+)
+from src.processes.models.workflows.task import (
+    Task,
+    Delay,
+)
+from src.processes.models.workflows.conditions import (
     Condition,
     Predicate,
     Rule,
-    Delay,
-    RawDueDate,
+)
+from src.processes.models.workflows.fields import (
     TaskField,
 )
+from src.processes.models.workflows.raw_due_date import RawDueDate
 from src.processes.enums import (
     DueDateRule,
     FieldType,

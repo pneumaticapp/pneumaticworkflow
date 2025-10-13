@@ -20,10 +20,10 @@ from src.processes.enums import (
     CommentStatus,
     WorkflowEventActionType, TaskStatus,
 )
-from src.processes.models import (
+from src.processes.models.workflows.attachment import FileAttachment
+from src.processes.models.workflows.event import (
     WorkflowEvent,
     WorkflowEventAction,
-    FileAttachment,
 )
 from src.authentication.enums import AuthTokenType
 from src.processes.messages import workflow as messages

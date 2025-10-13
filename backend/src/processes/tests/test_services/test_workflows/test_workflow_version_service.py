@@ -2,21 +2,27 @@
 import pytest
 from django.contrib.auth import get_user_model
 from src.authentication.enums import AuthTokenType
-from src.processes.models import (
-    TaskTemplate,
-    Workflow,
-    Task,
+from src.processes.models.templates.task import TaskTemplate
+from src.processes.models.templates.owner import TemplateOwner
+from src.processes.models.templates.fields import (
     FieldTemplate,
     FieldTemplateSelection,
-    Checklist,
-    ChecklistSelection,
+)
+from src.processes.models.templates.conditions import (
+    ConditionTemplate,
+    PredicateTemplate,
+    RuleTemplate,
+)
+from src.processes.models.workflows.workflow import Workflow
+from src.processes.models.workflows.task import Task
+from src.processes.models.workflows.attachment import FileAttachment
+from src.processes.models.workflows.fields import (
     TaskField,
     FieldSelection,
-    FileAttachment,
-    ConditionTemplate,
-    RuleTemplate,
-    PredicateTemplate,
-    TemplateOwner,
+)
+from src.processes.models.workflows.checklist import (
+    Checklist,
+    ChecklistSelection,
 )
 from src.processes.services.versioning.schemas import (
     TemplateSchemaV1,

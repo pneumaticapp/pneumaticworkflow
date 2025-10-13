@@ -34,16 +34,14 @@ from src.processes.enums import (
     OwnerType,
     TaskStatus,
 )
-from src.processes.models import (
-    Predicate,
-    PredicateTemplate,
-    RawPerformer,
-    RawPerformerTemplate,
-    TaskPerformer,
-    TemplateOwner,
-    Workflow,
-    Template,
-)
+from src.processes.models.workflows.task import TaskPerformer
+from src.processes.models.workflows.conditions import Predicate
+from src.processes.models.workflows.workflow import Workflow
+from src.processes.models.workflows.raw_performer import RawPerformer
+from src.processes.models.templates.template import Template
+from src.processes.models.templates.conditions import PredicateTemplate
+from src.processes.models.templates.raw_performer import RawPerformerTemplate
+from src.processes.models.templates.owner import TemplateOwner
 from src.processes.queries import UpdateWorkflowOwnersQuery
 from src.processes.tasks.tasks import complete_tasks
 

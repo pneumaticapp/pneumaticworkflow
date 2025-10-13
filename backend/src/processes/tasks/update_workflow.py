@@ -4,10 +4,10 @@ from typing import List
 
 from src.processes.enums import WorkflowStatus
 from src.processes.tasks.tasks import UserModel
-from src.processes.models import (
+from src.processes.models.workflows.workflow import Workflow
+from src.processes.models.templates.template import (
     Template,
     TemplateVersion,
-    Workflow,
 )
 from src.processes.queries import (
     UpdateWorkflowOwnersQuery,

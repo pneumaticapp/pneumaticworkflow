@@ -27,10 +27,10 @@ from src.accounts.permissions import (
 from src.generics.mixins.views import (
     CustomViewSetMixin,
 )
-from src.processes.models import (
+from src.processes.models.workflows.event import WorkflowEvent
+from src.processes.models.workflows.task import (
     Task,
     TaskForList,
-    WorkflowEvent,
 )
 from src.processes.serializers.workflows.task import (
     TaskSerializer,

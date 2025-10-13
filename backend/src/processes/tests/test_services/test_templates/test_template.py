@@ -20,8 +20,8 @@ from src.processes.enums import (
     TemplateType,
     OwnerType,
 )
-from src.processes.models import (
-    Template,
+from src.processes.models.templates.template import Template
+from src.processes.models.templates.system_template import (
     SystemTemplate,
     SystemTemplateCategory,
 )

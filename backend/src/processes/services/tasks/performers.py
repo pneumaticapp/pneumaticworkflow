@@ -1,7 +1,7 @@
 from django.contrib.auth import get_user_model
 from src.accounts.enums import UserStatus
 from src.analytics.services import AnalyticService
-from src.processes.models import Task
+from src.processes.models.workflows.task import Task
 from src.processes.messages.workflow import (
     MSG_PW_0014,
 )

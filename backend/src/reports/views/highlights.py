@@ -5,7 +5,7 @@ from src.accounts.permissions import (
     ExpiredSubscriptionPermission,
     BillingPlanPermission,
 )
-from src.processes.models import WorkflowEvent
+from src.processes.models.workflows.event import WorkflowEvent 
 from src.reports.serializers import (
     EventHighlightsSerializer,
     HighlightsFilterSerializer,

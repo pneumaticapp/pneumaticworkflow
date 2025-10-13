@@ -8,9 +8,7 @@ from src.processes.enums import (
     FieldType,
     OwnerType,
 )
-from src.processes.models import (
-    Template,
-)
+from src.processes.models.templates.template import Template
 from src.processes.messages.template import (
     MSG_PT_0023,
 )

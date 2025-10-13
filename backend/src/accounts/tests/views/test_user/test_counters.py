@@ -1,7 +1,5 @@
 import pytest
-from src.processes.models import (
-    TaskPerformer,
-)
+from src.processes.models.workflows.task import TaskPerformer
 from src.processes.tests.fixtures import (
     create_test_workflow,
     create_test_group,

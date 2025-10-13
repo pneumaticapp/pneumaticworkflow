@@ -221,9 +221,9 @@ class Common(Configuration):
             'rest_framework.permissions.IsAuthenticated',
         ),
         'DEFAULT_AUTHENTICATION_CLASSES': (
-            'src.authentication.services.PublicAuthService',
-            'src.authentication.services.GuestJWTAuthService',
-            'src.authentication.services.'
+            'src.authentication.services.public_auth.PublicAuthService',
+            'src.authentication.services.guest_auth.GuestJWTAuthService',
+            'src.authentication.services.user_auth.'
             'PneumaticTokenAuthentication',
             'rest_framework_simplejwt.authentication.JWTAuthentication',
         ),
@@ -426,7 +426,6 @@ class Common(Configuration):
 
 class Testing(Common):
 
-    INSTALLED_APPS = Common.INSTALLED_APPS + ['pylint_django']
     TEST_RUNNER = 'djcelery.contrib.test_runner.CeleryTestSuiteRunner'
 
     # CELERY_ALWAYS_EAGER mean that Celery will not schedule tasks

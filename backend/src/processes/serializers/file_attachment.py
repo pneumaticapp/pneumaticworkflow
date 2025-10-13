@@ -1,7 +1,7 @@
 from django.conf import settings
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
-from src.processes.models import FileAttachment
+from src.processes.models.workflows.attachment import FileAttachment
 from src.processes.messages.workflow import (
     MSG_PW_0050,
 )

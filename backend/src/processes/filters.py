@@ -14,11 +14,9 @@ from src.generics.filters import (
     DefaultOrderingFilter,
 )
 from src.processes.enums import TaskStatus, WorkflowStatus
-from src.processes.models import (
-    Template,
-    SystemTemplate,
-    WorkflowEvent,
-)
+from src.processes.models.templates.system_template import SystemTemplate
+from src.processes.models.templates.template import Template
+from src.processes.models.workflows.event import WorkflowEvent
 
 
 class TemplateOrderingFilter(OrderingFilter):

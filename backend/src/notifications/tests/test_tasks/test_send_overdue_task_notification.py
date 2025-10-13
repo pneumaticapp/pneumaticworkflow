@@ -187,7 +187,7 @@ def test_send_overdue_task_notification__guest__ok(mocker):
     )
     token = '1!@#23!3'
     get_token_mock = mocker.patch(
-        'src.authentication.services.GuestJWTAuthService.'
+        'src.authentication.services.guest_auth.GuestJWTAuthService.'
         'get_str_token',
         return_value=token,
     )

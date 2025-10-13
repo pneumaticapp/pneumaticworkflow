@@ -8,18 +8,22 @@ from src.processes.services.events import (
 from src.processes.services.tasks.groups import (
     GroupPerformerService,
 )
-from src.processes.models import (
-    Workflow,
-    Delay,
-    FileAttachment,
-    TaskPerformer,
+from src.processes.models.templates.fields import (
     FieldTemplate,
     FieldTemplateSelection,
-    ConditionTemplate,
-    RuleTemplate,
-    PredicateTemplate,
-    WorkflowEvent,
 )
+from src.processes.models.templates.conditions import (
+    ConditionTemplate,
+    PredicateTemplate,
+    RuleTemplate,
+)
+from src.processes.models.workflows.workflow import Workflow
+from src.processes.models.workflows.task import (
+    TaskPerformer,
+    Delay,
+)
+from src.processes.models.workflows.event import WorkflowEvent
+from src.processes.models.workflows.attachment import FileAttachment
 from src.processes.tests.fixtures import (
     create_test_user,
     create_test_template,
@@ -43,7 +47,7 @@ from src.processes.enums import (
 from src.processes.services.tasks.performers import (
     TaskPerformersService,
 )
-from src.authentication.services import GuestJWTAuthService
+from src.authentication.services.guest_auth import GuestJWTAuthService
 
 pytestmark = pytest.mark.django_db
 datetime_format = '%Y-%m-%dT%H:%M:%S.%fZ'

@@ -3,10 +3,8 @@ from rest_framework.serializers import ValidationError
 from src.authentication.enums import AuthTokenType
 from src.utils.validation import ErrorCode
 from src.accounts.enums import Language
-from src.accounts.services import (
-    AccountService,
-    UserService,
-)
+from src.accounts.services.account import AccountService
+from src.accounts.services.user import UserService
 from src.accounts.services.exceptions import (
     AccountServiceException,
     UserServiceException,
@@ -77,11 +75,11 @@ def test_create__all_fields__ok(
     )
     user = create_test_user()
     account_create_mock = mocker.patch(
-        'src.accounts.services.AccountService.create',
+        'src.accounts.services.account.AccountService.create',
         return_value=user.account,
     )
     user_create_mock = mocker.patch(
-        'src.accounts.services.UserService.create',
+        'src.accounts.services.user.UserService.create',
         return_value=user,
     )
     settings_mock = mocker.patch(
@@ -252,11 +250,11 @@ def test_create__account_service_exception__validation_error(
     user = create_test_user()
     message = 'some message'
     account_create_mock = mocker.patch(
-        'src.accounts.services.AccountService.create',
+        'src.accounts.services.account.AccountService.create',
         side_effect=AccountServiceException(message=message),
     )
     user_create_mock = mocker.patch(
-        'src.accounts.services.UserService.create',
+        'src.accounts.services.user.UserService.create',
         return_value=user,
     )
     settings_mock = mocker.patch(
@@ -374,12 +372,12 @@ def test_create__user_service_exception__validation_error(
     )
     user = create_test_user(is_account_owner=True)
     account_create_mock = mocker.patch(
-        'src.accounts.services.AccountService.create',
+        'src.accounts.services.account.AccountService.create',
         return_value=user.account,
     )
     message = 'some message'
     user_create_mock = mocker.patch(
-        'src.accounts.services.UserService.create',
+        'src.accounts.services.user.UserService.create',
         side_effect=UserServiceException(message=message),
     )
     settings_mock = mocker.patch(
@@ -517,11 +515,11 @@ def test_create__stripe_service_exception__skip_sync(
     )
     user = create_test_user()
     account_create_mock = mocker.patch(
-        'src.accounts.services.AccountService.create',
+        'src.accounts.services.account.AccountService.create',
         return_value=user.account,
     )
     user_create_mock = mocker.patch(
-        'src.accounts.services.UserService.create',
+        'src.accounts.services.user.UserService.create',
         return_value=user,
     )
     settings_mock = mocker.patch(
@@ -702,11 +700,11 @@ def test_create__disable_billing__skip_stripe_call(
     )
     user = create_test_user(is_account_owner=True)
     account_create_mock = mocker.patch(
-        'src.accounts.services.AccountService.create',
+        'src.accounts.services.account.AccountService.create',
         return_value=user.account,
     )
     user_create_mock = mocker.patch(
-        'src.accounts.services.UserService.create',
+        'src.accounts.services.user.UserService.create',
         return_value=user,
     )
     settings_mock = mocker.patch(

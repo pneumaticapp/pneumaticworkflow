@@ -17,10 +17,8 @@ from src.processes.serializers.workflows.events import (
     TaskEventJsonSerializer,
     WorkflowEventSerializer,
 )
-from src.processes.models import (
-    FileAttachment,
-    WorkflowEvent,
-)
+from src.processes.models.workflows.attachment import FileAttachment
+from src.processes.models.workflows.event import WorkflowEvent
 from src.utils.dates import date_format
 
 

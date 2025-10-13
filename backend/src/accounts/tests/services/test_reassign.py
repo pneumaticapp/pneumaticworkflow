@@ -13,11 +13,9 @@ from src.processes.enums import (
     OwnerType,
 )
 from src.processes.enums import FieldType
-from src.processes.models import (
-    Predicate,
-    PredicateTemplate,
-    Workflow,
-)
+from src.processes.models.workflows.workflow import Workflow
+from src.processes.models.workflows.conditions import Predicate
+from src.processes.models.templates.conditions import PredicateTemplate
 
 
 pytestmark = pytest.mark.django_db
@@ -1115,7 +1113,7 @@ class TestReassignService:
         template = create_test_template(user, tasks_count=1, is_active=True)
 
         workflow_owners_filter_mock = mocker.patch(
-            'src.processes.models.'
+            'src.processes.models.workflows.workflow.'
             'Workflow.owners.through.objects.filter',
         )
         workflow_owners_delete_mock = (
@@ -1164,7 +1162,7 @@ class TestReassignService:
         new_user = create_test_user(account=account, email='new@example.com')
 
         workflow_owners_filter_mock = mocker.patch(
-            'src.processes.models.'
+            'src.processes.models.workflows.workflow.'
             'Workflow.owners.through.objects.filter',
         )
         workflow_owners_delete_mock = (

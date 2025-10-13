@@ -3,7 +3,7 @@ from rest_framework.serializers import (
     Serializer,
     IntegerField,
 )
-from src.processes.models import Checklist
+from src.processes.models.workflows.checklist import Checklist
 from src.processes.serializers.workflows.checklist_selection import (
     CheckListSelectionSerializer,
 )

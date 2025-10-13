@@ -2,7 +2,7 @@ from rest_framework.serializers import (
     ModelSerializer,
     ReadOnlyField,
 )
-from src.processes.models import ChecklistSelection
+from src.processes.models.workflows.checklist import ChecklistSelection
 
 
 class CheckListSelectionSerializer(ModelSerializer):

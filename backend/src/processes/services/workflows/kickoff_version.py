@@ -2,9 +2,9 @@ from typing import Dict, List
 from src.processes.services.base import (
     BaseUpdateVersionService,
 )
-from src.processes.models import (
-    FieldSelection,
+from src.processes.models.workflows.fields import (
     TaskField,
+    FieldSelection,
 )
 
 

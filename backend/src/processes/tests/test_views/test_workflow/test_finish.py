@@ -5,7 +5,7 @@ from src.processes.enums import (
     WorkflowStatus,
     DirectlyStatus,
 )
-from src.processes.models import TaskPerformer
+from src.processes.models.workflows.task import TaskPerformer
 from src.processes.tests.fixtures import (
     create_test_user,
     create_test_workflow,
@@ -40,7 +40,7 @@ class TestFinishWorkflow:
         task_1 = workflow.tasks.get(number=1)
         task_2 = workflow.tasks.get(number=2)
         deactivate_cache_mock = mocker.patch(
-            'src.authentication.services.'
+            'src.authentication.services.guest_auth.'
             'GuestJWTAuthService.deactivate_task_guest_cache',
         )
         send_removed_task_notification_mock = mocker.patch(
@@ -175,7 +175,7 @@ class TestFinishWorkflow:
         )
 
         mocker.patch(
-            'src.authentication.services.'
+            'src.authentication.services.guest_auth.'
             'GuestJWTAuthService.deactivate_task_guest_cache',
         )
         send_removed_task_notification_mock = mocker.patch(

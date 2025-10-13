@@ -3,7 +3,7 @@ from django.utils import timezone
 from django.contrib.auth import get_user_model
 from typing_extensions import OrderedDict
 from src.processes.enums import TaskStatus, WorkflowStatus
-from src.processes.models import Workflow
+from src.processes.models.workflows.workflow import Workflow
 from src.processes.tests.fixtures import (
     create_test_workflow,
     create_test_owner,

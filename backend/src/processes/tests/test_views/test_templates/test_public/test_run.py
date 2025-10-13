@@ -12,14 +12,14 @@ from src.utils.validation import ErrorCode
 from src.processes.messages.workflow import (
     MSG_PW_0023,
 )
-from src.processes.models import (
-    Workflow,
-    FieldTemplate,
+from src.processes.models.templates.fields import FieldTemplate
+from src.processes.models.templates.conditions import (
     ConditionTemplate,
-    RuleTemplate,
     PredicateTemplate,
-    WorkflowEvent,
+    RuleTemplate,
 )
+from src.processes.models.workflows.workflow import Workflow
+from src.processes.models.workflows.event import WorkflowEvent
 from src.processes.enums import (
     PredicateOperator,
     FieldType,

@@ -9,7 +9,7 @@ from src.processes.enums import (
     SysTemplateType,
     OwnerType,
 )
-from src.processes.models import (
+from src.processes.models.templates.system_template import (
     SystemTemplate,
 )
 from src.processes.services.exceptions import (

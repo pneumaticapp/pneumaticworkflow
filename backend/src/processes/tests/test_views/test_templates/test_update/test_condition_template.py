@@ -2,12 +2,14 @@ import pytest
 from src.accounts.enums import BillingPlanType
 from src.utils.validation import ErrorCode
 from src.processes.messages import template as messages
-from src.processes.models import (
+from src.processes.models.templates.template import Template
+from src.processes.models.templates.fields import (
     FieldTemplate,
-    PredicateTemplate,
+)
+from src.processes.models.templates.conditions import (
     ConditionTemplate,
+    PredicateTemplate,
     RuleTemplate,
-    Template,
 )
 from src.processes.tests.fixtures import (
     create_test_user,

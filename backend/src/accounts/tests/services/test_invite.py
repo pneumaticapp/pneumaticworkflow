@@ -31,10 +31,8 @@ from src.accounts.tokens import (
     TransferToken,
     InviteToken,
 )
-from src.accounts.services import (
-    UserInviteService,
-    AccountService,
-)
+from src.accounts.services.account import AccountService
+from src.accounts.services.user_invite import UserInviteService
 from src.accounts.entities import InviteData
 from src.processes.services.system_workflows import (
     SystemWorkflowService,
@@ -493,7 +491,7 @@ def test_send_transfer_email__ok(mocker):
     is_superuser = False
     transfer_token_str = '!@#wweqasd'
     transfer_token_mock = mocker.patch(
-        'src.accounts.services.UserInviteService.'
+        'src.accounts.services.user_invite.UserInviteService.'
         '_get_transfer_token',
         return_value=transfer_token_str,
     )
@@ -669,11 +667,11 @@ def test__user_invite_actions__ok(mocker):
     is_superuser = False
     invite_token_str = '!@#wweqasd'
     identify_mock = mocker.patch(
-        'src.accounts.services.UserInviteService.'
+        'src.accounts.services.user_invite.UserInviteService.'
         'identify',
     )
     invite_token_mock = mocker.patch(
-        'src.accounts.services.UserInviteService.'
+        'src.accounts.services.user_invite.UserInviteService.'
         '_get_invite_token',
         return_value=invite_token_str,
     )
@@ -720,11 +718,11 @@ def test__user_transfer_actions__ok(mocker):
     is_superuser = False
     invite_token_str = '!@#wweqasd'
     identify_mock = mocker.patch(
-        'src.accounts.services.UserInviteService.'
+        'src.accounts.services.user_invite.UserInviteService.'
         'identify',
     )
     invite_token_mock = mocker.patch(
-        'src.accounts.services.UserInviteService.'
+        'src.accounts.services.user_invite.UserInviteService.'
         '_get_invite_token',
         return_value=invite_token_str,
     )
@@ -786,33 +784,33 @@ def test_invite_new_user__all_fields__ok(mocker):
         request_user=request_user,
     )
     get_account_user_mock = mocker.patch(
-        'src.accounts.services.UserInviteService.'
+        'src.accounts.services.user_invite.UserInviteService.'
         '_get_account_user',
         return_value=None,
     )
     validate_already_accepted_mock = mocker.patch(
-        'src.accounts.services.UserInviteService.'
+        'src.accounts.services.user_invite.UserInviteService.'
         '_validate_already_accepted',
     )
     validate_limit_invites_mock = mocker.patch(
-        'src.accounts.services.UserInviteService.'
+        'src.accounts.services.user_invite.UserInviteService.'
         '_validate_limit_invites',
     )
     create_invited_user_mock = mocker.patch(
-        'src.accounts.services.UserInviteService.'
+        'src.accounts.services.user_invite.UserInviteService.'
         '_create_invited_user',
         return_value=invited_user,
     )
     create_user_invite_mock = mocker.patch(
-        'src.accounts.services.UserInviteService.'
+        'src.accounts.services.user_invite.UserInviteService.'
         '_create_user_invite',
     )
     user_create_actions_mock = mocker.patch(
-        'src.accounts.services.UserInviteService.'
+        'src.accounts.services.user_invite.UserInviteService.'
         '_user_create_actions',
     )
     user_invite_actions_mock = mocker.patch(
-        'src.accounts.services.UserInviteService.'
+        'src.accounts.services.user_invite.UserInviteService.'
         '_user_invite_actions',
     )
 
@@ -856,33 +854,33 @@ def test_invite_new_user__only_required_fields__ok(mocker):
         request_user=request_user,
     )
     get_account_user_mock = mocker.patch(
-        'src.accounts.services.UserInviteService.'
+        'src.accounts.services.user_invite.UserInviteService.'
         '_get_account_user',
         return_value=None,
     )
     validate_already_accepted_mock = mocker.patch(
-        'src.accounts.services.UserInviteService.'
+        'src.accounts.services.user_invite.UserInviteService.'
         '_validate_already_accepted',
     )
     validate_limit_invites_mock = mocker.patch(
-        'src.accounts.services.UserInviteService.'
+        'src.accounts.services.user_invite.UserInviteService.'
         '_validate_limit_invites',
     )
     create_invited_user_mock = mocker.patch(
-        'src.accounts.services.UserInviteService.'
+        'src.accounts.services.user_invite.UserInviteService.'
         '_create_invited_user',
         return_value=invited_user,
     )
     create_user_invite_mock = mocker.patch(
-        'src.accounts.services.UserInviteService.'
+        'src.accounts.services.user_invite.UserInviteService.'
         '_create_user_invite',
     )
     user_create_actions_mock = mocker.patch(
-        'src.accounts.services.UserInviteService.'
+        'src.accounts.services.user_invite.UserInviteService.'
         '_user_create_actions',
     )
     user_invite_actions_mock = mocker.patch(
-        'src.accounts.services.UserInviteService.'
+        'src.accounts.services.user_invite.UserInviteService.'
         '_user_invite_actions',
     )
 
@@ -930,32 +928,32 @@ def test_invite_new_user__already_accepted__ok(mocker):
         request_user=request_user,
     )
     get_account_user_mock = mocker.patch(
-        'src.accounts.services.UserInviteService.'
+        'src.accounts.services.user_invite.UserInviteService.'
         '_get_account_user',
         return_value=invited_user,
     )
     validate_already_accepted_mock = mocker.patch(
-        'src.accounts.services.UserInviteService.'
+        'src.accounts.services.user_invite.UserInviteService.'
         '_validate_already_accepted',
     )
     validate_limit_invites_mock = mocker.patch(
-        'src.accounts.services.UserInviteService.'
+        'src.accounts.services.user_invite.UserInviteService.'
         '_validate_limit_invites',
     )
     create_invited_user_mock = mocker.patch(
-        'src.accounts.services.UserInviteService.'
+        'src.accounts.services.user_invite.UserInviteService.'
         '_create_invited_user',
     )
     create_user_invite_mock = mocker.patch(
-        'src.accounts.services.UserInviteService.'
+        'src.accounts.services.user_invite.UserInviteService.'
         '_create_user_invite',
     )
     user_create_actions_mock = mocker.patch(
-        'src.accounts.services.UserInviteService.'
+        'src.accounts.services.user_invite.UserInviteService.'
         '_user_create_actions',
     )
     user_invite_actions_mock = mocker.patch(
-        'src.accounts.services.UserInviteService.'
+        'src.accounts.services.user_invite.UserInviteService.'
         '_user_invite_actions',
     )
 
@@ -994,33 +992,33 @@ def test_invite_new_user__not_send_email__ok(mocker):
         send_email=False,
     )
     get_account_user_mock = mocker.patch(
-        'src.accounts.services.UserInviteService.'
+        'src.accounts.services.user_invite.UserInviteService.'
         '_get_account_user',
         return_value=None,
     )
     validate_already_accepted_mock = mocker.patch(
-        'src.accounts.services.UserInviteService.'
+        'src.accounts.services.user_invite.UserInviteService.'
         '_validate_already_accepted',
     )
     validate_limit_invites_mock = mocker.patch(
-        'src.accounts.services.UserInviteService.'
+        'src.accounts.services.user_invite.UserInviteService.'
         '_validate_limit_invites',
     )
     create_invited_user_mock = mocker.patch(
-        'src.accounts.services.UserInviteService.'
+        'src.accounts.services.user_invite.UserInviteService.'
         '_create_invited_user',
         return_value=invited_user,
     )
     create_user_invite_mock = mocker.patch(
-        'src.accounts.services.UserInviteService.'
+        'src.accounts.services.user_invite.UserInviteService.'
         '_create_user_invite',
     )
     user_create_actions_mock = mocker.patch(
-        'src.accounts.services.UserInviteService.'
+        'src.accounts.services.user_invite.UserInviteService.'
         '_user_create_actions',
     )
     user_invite_actions_mock = mocker.patch(
-        'src.accounts.services.UserInviteService.'
+        'src.accounts.services.user_invite.UserInviteService.'
         '_user_invite_actions',
     )
 
@@ -1070,37 +1068,37 @@ def test_transfer_existent_user__all_fields__ok(mocker):
         request_user=request_user,
     )
     get_account_user_mock = mocker.patch(
-        'src.accounts.services.UserInviteService.'
+        'src.accounts.services.user_invite.UserInviteService.'
         '_get_account_user',
         return_value=None,
     )
     validate_already_accepted_mock = mocker.patch(
-        'src.accounts.services.UserInviteService.'
+        'src.accounts.services.user_invite.UserInviteService.'
         '_validate_already_accepted',
     )
     validate_limit_invites_mock = mocker.patch(
-        'src.accounts.services.UserInviteService.'
+        'src.accounts.services.user_invite.UserInviteService.'
         '_validate_limit_invites',
     )
     create_invited_user_mock = mocker.patch(
-        'src.accounts.services.UserInviteService.'
+        'src.accounts.services.user_invite.UserInviteService.'
         '_create_invited_user',
         return_value=invited_user,
     )
     create_user_invite_mock = mocker.patch(
-        'src.accounts.services.UserInviteService.'
+        'src.accounts.services.user_invite.UserInviteService.'
         '_create_user_invite',
     )
     user_create_actions_mock = mocker.patch(
-        'src.accounts.services.UserInviteService.'
+        'src.accounts.services.user_invite.UserInviteService.'
         '_user_create_actions',
     )
     user_transfer_actions_mock = mocker.patch(
-        'src.accounts.services.UserInviteService.'
+        'src.accounts.services.user_invite.UserInviteService.'
         '_user_transfer_actions',
     )
     send_transfer_email_mock = mocker.patch(
-        'src.accounts.services.UserInviteService.'
+        'src.accounts.services.user_invite.UserInviteService.'
         '_send_transfer_email',
     )
 
@@ -1158,37 +1156,37 @@ def test_transfer_existent_user__only_required_fields__ok(mocker):
         request_user=request_user,
     )
     get_account_user_mock = mocker.patch(
-        'src.accounts.services.UserInviteService.'
+        'src.accounts.services.user_invite.UserInviteService.'
         '_get_account_user',
         return_value=None,
     )
     validate_already_accepted_mock = mocker.patch(
-        'src.accounts.services.UserInviteService.'
+        'src.accounts.services.user_invite.UserInviteService.'
         '_validate_already_accepted',
     )
     validate_limit_invites_mock = mocker.patch(
-        'src.accounts.services.UserInviteService.'
+        'src.accounts.services.user_invite.UserInviteService.'
         '_validate_limit_invites',
     )
     create_invited_user_mock = mocker.patch(
-        'src.accounts.services.UserInviteService.'
+        'src.accounts.services.user_invite.UserInviteService.'
         '_create_invited_user',
         return_value=invited_user,
     )
     create_user_invite_mock = mocker.patch(
-        'src.accounts.services.UserInviteService.'
+        'src.accounts.services.user_invite.UserInviteService.'
         '_create_user_invite',
     )
     user_create_actions_mock = mocker.patch(
-        'src.accounts.services.UserInviteService.'
+        'src.accounts.services.user_invite.UserInviteService.'
         '_user_create_actions',
     )
     user_transfer_actions_mock = mocker.patch(
-        'src.accounts.services.UserInviteService.'
+        'src.accounts.services.user_invite.UserInviteService.'
         '_user_transfer_actions',
     )
     send_transfer_email_mock = mocker.patch(
-        'src.accounts.services.UserInviteService.'
+        'src.accounts.services.user_invite.UserInviteService.'
         '_send_transfer_email',
     )
 
@@ -1251,36 +1249,36 @@ def test_transfer_existent_user__already_accepted__ok(mocker):
         request_user=request_user,
     )
     get_account_user_mock = mocker.patch(
-        'src.accounts.services.UserInviteService.'
+        'src.accounts.services.user_invite.UserInviteService.'
         '_get_account_user',
         return_value=invited_user,
     )
     validate_already_accepted_mock = mocker.patch(
-        'src.accounts.services.UserInviteService.'
+        'src.accounts.services.user_invite.UserInviteService.'
         '_validate_already_accepted',
     )
     validate_limit_invites_mock = mocker.patch(
-        'src.accounts.services.UserInviteService.'
+        'src.accounts.services.user_invite.UserInviteService.'
         '_validate_limit_invites',
     )
     create_invited_user_mock = mocker.patch(
-        'src.accounts.services.UserInviteService.'
+        'src.accounts.services.user_invite.UserInviteService.'
         '_create_invited_user',
     )
     create_user_invite_mock = mocker.patch(
-        'src.accounts.services.UserInviteService.'
+        'src.accounts.services.user_invite.UserInviteService.'
         '_create_user_invite',
     )
     user_create_actions_mock = mocker.patch(
-        'src.accounts.services.UserInviteService.'
+        'src.accounts.services.user_invite.UserInviteService.'
         '_user_create_actions',
     )
     user_transfer_actions_mock = mocker.patch(
-        'src.accounts.services.UserInviteService.'
+        'src.accounts.services.user_invite.UserInviteService.'
         '_user_transfer_actions',
     )
     send_transfer_email_mock = mocker.patch(
-        'src.accounts.services.UserInviteService.'
+        'src.accounts.services.user_invite.UserInviteService.'
         '_send_transfer_email',
     )
 
@@ -1326,37 +1324,37 @@ def test_transfer_existent_user__not_send_email__ok(mocker):
         send_email=False,
     )
     get_account_user_mock = mocker.patch(
-        'src.accounts.services.UserInviteService.'
+        'src.accounts.services.user_invite.UserInviteService.'
         '_get_account_user',
         return_value=None,
     )
     validate_already_accepted_mock = mocker.patch(
-        'src.accounts.services.UserInviteService.'
+        'src.accounts.services.user_invite.UserInviteService.'
         '_validate_already_accepted',
     )
     validate_limit_invites_mock = mocker.patch(
-        'src.accounts.services.UserInviteService.'
+        'src.accounts.services.user_invite.UserInviteService.'
         '_validate_limit_invites',
     )
     create_invited_user_mock = mocker.patch(
-        'src.accounts.services.UserInviteService.'
+        'src.accounts.services.user_invite.UserInviteService.'
         '_create_invited_user',
         return_value=invited_user,
     )
     create_user_invite_mock = mocker.patch(
-        'src.accounts.services.UserInviteService.'
+        'src.accounts.services.user_invite.UserInviteService.'
         '_create_user_invite',
     )
     user_create_actions_mock = mocker.patch(
-        'src.accounts.services.UserInviteService.'
+        'src.accounts.services.user_invite.UserInviteService.'
         '_user_create_actions',
     )
     user_transfer_actions_mock = mocker.patch(
-        'src.accounts.services.UserInviteService.'
+        'src.accounts.services.user_invite.UserInviteService.'
         '_user_transfer_actions',
     )
     send_transfer_email_mock = mocker.patch(
-        'src.accounts.services.UserInviteService.'
+        'src.accounts.services.user_invite.UserInviteService.'
         '_send_transfer_email',
     )
 
@@ -1403,15 +1401,15 @@ def test_resend_invite__ok(mocker):
         request_user=request_user,
     )
     user_invite_actions_mock = mocker.patch(
-        'src.accounts.services.UserInviteService.'
+        'src.accounts.services.user_invite.UserInviteService.'
         '_user_invite_actions',
     )
     send_transfer_email_mock = mocker.patch(
-        'src.accounts.services.UserInviteService.'
+        'src.accounts.services.user_invite.UserInviteService.'
         '_send_transfer_email',
     )
     user_transfer_actions_mock = mocker.patch(
-        'src.accounts.services.UserInviteService.'
+        'src.accounts.services.user_invite.UserInviteService.'
         '_user_transfer_actions',
     )
 
@@ -1444,15 +1442,15 @@ def test_resend_invite_transfer__ok(mocker):
         request_user=request_user,
     )
     user_invite_actions_mock = mocker.patch(
-        'src.accounts.services.UserInviteService.'
+        'src.accounts.services.user_invite.UserInviteService.'
         '_user_invite_actions',
     )
     send_transfer_email_mock = mocker.patch(
-        'src.accounts.services.UserInviteService.'
+        'src.accounts.services.user_invite.UserInviteService.'
         '_send_transfer_email',
     )
     user_transfer_actions_mock = mocker.patch(
-        'src.accounts.services.UserInviteService.'
+        'src.accounts.services.user_invite.UserInviteService.'
         '_user_transfer_actions',
     )
 
@@ -1485,15 +1483,15 @@ def test_resend_invite__invite_yourself__raise_exception(mocker):
         request_user=request_user,
     )
     user_invite_actions_mock = mocker.patch(
-        'src.accounts.services.UserInviteService.'
+        'src.accounts.services.user_invite.UserInviteService.'
         '_user_invite_actions',
     )
     send_transfer_email_mock = mocker.patch(
-        'src.accounts.services.UserInviteService.'
+        'src.accounts.services.user_invite.UserInviteService.'
         '_send_transfer_email',
     )
     user_transfer_actions_mock = mocker.patch(
-        'src.accounts.services.UserInviteService.'
+        'src.accounts.services.user_invite.UserInviteService.'
         '_user_transfer_actions',
     )
 
@@ -1524,15 +1522,15 @@ def test_resend_invite__non_existent_user__raise_exception(mocker):
         request_user=request_user,
     )
     user_invite_actions_mock = mocker.patch(
-        'src.accounts.services.UserInviteService.'
+        'src.accounts.services.user_invite.UserInviteService.'
         '_user_invite_actions',
     )
     send_transfer_email_mock = mocker.patch(
-        'src.accounts.services.UserInviteService.'
+        'src.accounts.services.user_invite.UserInviteService.'
         '_send_transfer_email',
     )
     user_transfer_actions_mock = mocker.patch(
-        'src.accounts.services.UserInviteService.'
+        'src.accounts.services.user_invite.UserInviteService.'
         '_user_transfer_actions',
     )
 
@@ -1560,15 +1558,15 @@ def test_resend_invite__already_active_user__raise_exception(mocker):
         request_user=request_user,
     )
     user_invite_actions_mock = mocker.patch(
-        'src.accounts.services.UserInviteService.'
+        'src.accounts.services.user_invite.UserInviteService.'
         '_user_invite_actions',
     )
     send_transfer_email_mock = mocker.patch(
-        'src.accounts.services.UserInviteService.'
+        'src.accounts.services.user_invite.UserInviteService.'
         '_send_transfer_email',
     )
     user_transfer_actions_mock = mocker.patch(
-        'src.accounts.services.UserInviteService.'
+        'src.accounts.services.user_invite.UserInviteService.'
         '_user_transfer_actions',
     )
 
@@ -1603,11 +1601,11 @@ def test_invite_user__ok(mocker):
         request_user=request_user,
     )
     invite_new_user_mock = mocker.patch(
-        'src.accounts.services.UserInviteService.'
+        'src.accounts.services.user_invite.UserInviteService.'
         '_invite_new_user',
     )
     transfer_existent_user_mock = mocker.patch(
-        'src.accounts.services.UserInviteService.'
+        'src.accounts.services.user_invite.UserInviteService.'
         '_transfer_existent_user',
     )
 
@@ -1641,11 +1639,11 @@ def test_invite_user__transfer_invite__ok(mocker):
         request_user=request_user,
     )
     invite_new_user_mock = mocker.patch(
-        'src.accounts.services.UserInviteService.'
+        'src.accounts.services.user_invite.UserInviteService.'
         '_invite_new_user',
     )
     transfer_existent_user_mock = mocker.patch(
-        'src.accounts.services.UserInviteService.'
+        'src.accounts.services.user_invite.UserInviteService.'
         '_transfer_existent_user',
     )
 
@@ -1690,11 +1688,11 @@ def test_invite_user__update_contacts__ok(mocker):
         request_user=request_user,
     )
     invite_new_user_mock = mocker.patch(
-        'src.accounts.services.UserInviteService.'
+        'src.accounts.services.user_invite.UserInviteService.'
         '_invite_new_user',
     )
     transfer_existent_user_mock = mocker.patch(
-        'src.accounts.services.UserInviteService.'
+        'src.accounts.services.user_invite.UserInviteService.'
         '_transfer_existent_user',
     )
     google_contact = Contact.objects.create(
@@ -1780,7 +1778,7 @@ def test_invite_users__ok(mocker):
         request_user=request_user,
     )
     invite_user_mock = mocker.patch(
-        'src.accounts.services.UserInviteService.invite_user',
+        'src.accounts.services.user_invite.UserInviteService.invite_user',
     )
 
     # act

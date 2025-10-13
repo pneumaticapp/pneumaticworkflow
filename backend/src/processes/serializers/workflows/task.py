@@ -1,15 +1,14 @@
 # ruff: noqa: PLC0415
 import re
 from typing import List, Optional, Dict, Any
-
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
-from src.processes.models import (
+from src.processes.models.workflows.task import (
     Task,
     TaskForList,
-    Workflow,
-    TaskTemplate,
 )
+from src.processes.models.workflows.workflow import Workflow
+from src.processes.models.templates.task import TaskTemplate
 from src.generics.fields import TimeStampField
 from src.processes.enums import TaskOrdering
 from src.processes.serializers.workflows.field import (

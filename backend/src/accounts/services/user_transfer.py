@@ -28,7 +28,7 @@ from src.analytics.mixins import BaseIdentifyMixin
 from src.analytics.services import AnalyticService
 from src.accounts.services.user import UserService
 from src.payment.tasks import increase_plan_users
-from src.accounts.services import AccountService
+from src.accounts.services.account import AccountService
 from src.notifications.tasks import send_user_updated_notification
 
 UserModel = get_user_model()

@@ -5,10 +5,8 @@ from django.db.models import F
 from django.utils import timezone
 from src.authentication.enums import AuthTokenType
 from src.accounts.enums import BillingPlanType
-from src.processes.models import (
-    Workflow,
-    Template,
-)
+from src.processes.models.workflows.workflow import Workflow
+from src.processes.models.templates.template import Template
 from src.reports.tasks import (
     send_tasks_digest,
 )

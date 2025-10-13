@@ -12,10 +12,8 @@ from src.analytics.tasks import track_group_analytics
 from src.analytics.events import GroupsAnalyticsEvent
 from src.generics.base.service import BaseModelService
 from src.accounts.models import UserGroup
-from src.processes.models import (
-    TemplateOwner,
-    TaskPerformer,
-)
+from src.processes.models.templates.owner import TemplateOwner
+from src.processes.models.workflows.task import TaskPerformer
 from src.processes.enums import (
     OwnerType,
     PerformerType,

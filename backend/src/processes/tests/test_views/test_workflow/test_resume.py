@@ -17,10 +17,9 @@ from src.processes.enums import (
     TaskStatus,
     WorkflowStatus,
 )
-from src.processes.models import (
-    TemplateOwner,
-    Delay,
-)
+from src.processes.models.templates.owner import TemplateOwner
+from src.processes.models.workflows.task import Delay
+
 
 pytestmark = pytest.mark.django_db
 UserModel = get_user_model()

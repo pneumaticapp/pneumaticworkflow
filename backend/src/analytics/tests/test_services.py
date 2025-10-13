@@ -42,7 +42,7 @@ from src.analytics.actions import (
 )
 from src.analytics.services import exceptions
 from src.authentication.enums import AuthTokenType
-from src.processes.models import (
+from src.processes.models.templates.system_template import (
     SystemTemplate,
     SystemTemplateCategory,
 )

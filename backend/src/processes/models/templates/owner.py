@@ -7,10 +7,8 @@ from src.accounts.models import (
     AccountBaseMixin,
     UserGroup,
 )
-from src.processes.models.base import (
-    BaseApiNameModel,
-)
-from src.processes.models import Template
+from src.processes.models.base import BaseApiNameModel
+from src.processes.models.templates.template import Template
 
 
 UserModel = get_user_model()

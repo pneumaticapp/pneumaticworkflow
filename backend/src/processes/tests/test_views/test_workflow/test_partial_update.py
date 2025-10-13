@@ -6,14 +6,16 @@ from django.utils import timezone
 from src.processes.services.events import (
     WorkflowEventService,
 )
-from src.processes.models import (
-    FieldTemplateSelection,
+from src.processes.models.templates.raw_due_date import RawDueDateTemplate
+from src.processes.models.templates.fields import (
     FieldTemplate,
-    Workflow,
-    FileAttachment,
-    TaskPerformer,
-    RawDueDateTemplate,
+    FieldTemplateSelection,
 )
+from src.processes.models.workflows.workflow import Workflow
+from src.processes.models.workflows.task import (
+    TaskPerformer,
+)
+from src.processes.models.workflows.attachment import FileAttachment
 from src.processes.tests.fixtures import (
     create_test_template,
     create_test_workflow,
@@ -41,9 +43,7 @@ from src.accounts.enums import (
     NotificationType,
     SourceType,
 )
-from src.accounts.services import (
-    UserInviteService,
-)
+from src.accounts.services.user_invite import UserInviteService
 from src.authentication.enums import AuthTokenType
 from src.utils.dates import date_format
 

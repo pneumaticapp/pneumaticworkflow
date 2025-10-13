@@ -4,9 +4,9 @@ from django.contrib.auth import get_user_model
 from src.processes.models.templates.checklist import (
     ChecklistTemplateSelection,
 )
-from src.processes.models import (
+from src.processes.models.workflows.task import Task
+from src.processes.models.workflows.checklist import (
     ChecklistSelection,
-    Task,
 )
 from src.processes.services.tasks import exceptions
 from src.processes.services.base import (

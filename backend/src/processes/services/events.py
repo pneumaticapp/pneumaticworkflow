@@ -4,14 +4,16 @@ from django.db import transaction
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 from src.accounts.models import UserGroup
-from src.processes.models import (
-    WorkflowEvent,
+from src.processes.models.workflows.workflow import Workflow
+from src.processes.models.workflows.task import (
     Task,
-    Workflow,
     Delay,
-    FileAttachment,
+)
+from src.processes.models.workflows.event import (
+    WorkflowEvent,
     WorkflowEventAction,
 )
+from src.processes.models.workflows.attachment import FileAttachment
 from src.notifications.tasks import (
     send_mention_notification,
     send_comment_notification,

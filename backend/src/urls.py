@@ -15,15 +15,11 @@ from src.processes.views.task import (
     TasksListView,
 )
 from src import views
-from src.accounts.views import (
-    AccountPlanView,
-    TenantsViewSet,
-)
-from src.webhooks.views import (
-    WebHookViewSet,
-    WebHookEventViewSet,
-    WebHookBufferViewSet,
-)
+from src.accounts.views.tenants import TenantsViewSet
+from src.accounts.views.accounts import AccountPlanView
+from src.webhooks.views.events import WebHookEventViewSet
+from src.webhooks.views.webhooks import WebHookViewSet
+from src.webhooks.views.buffer import WebHookBufferViewSet
 from src.services.views import ServicesViewSet
 from src.payment.views import (
     PaymentViewSet,

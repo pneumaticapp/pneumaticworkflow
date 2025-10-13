@@ -22,7 +22,7 @@ from src.accounts.serializers.notifications import (
 from src.analytics.enums import MailoutType
 from src.authentication.tokens import PneumaticToken
 from src.authentication.enums import AuthTokenType
-from src.processes.models import (
+from src.processes.models.workflows.task import (
     Delay,
     Task,
 )

@@ -9,16 +9,18 @@ from src.processes.tests.fixtures import (
     create_invited_user,
     create_test_group, create_test_owner,
 )
-from src.processes.models import (
-    Template,
+from src.processes.models.templates.template import Template
+from src.processes.models.templates.task import TaskTemplate
+from src.processes.models.templates.fields import (
     FieldTemplate,
-    PredicateTemplate,
-    TaskTemplate,
-    ConditionTemplate,
-    RuleTemplate,
     FieldTemplateSelection,
-    RawPerformerTemplate,
 )
+from src.processes.models.templates.conditions import (
+    ConditionTemplate,
+    PredicateTemplate,
+    RuleTemplate,
+)
+from src.processes.models.templates.raw_performer import RawPerformerTemplate
 from src.utils.validation import ErrorCode
 from src.processes.messages import template as messages
 from src.accounts.models import (

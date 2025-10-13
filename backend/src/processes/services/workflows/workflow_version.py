@@ -12,9 +12,7 @@ from src.processes.services.workflows.kickoff_version import (
 from src.processes.services.workflows.workflow import (
     WorkflowService,
 )
-from src.processes.models import (
-    Template,
-)
+from src.processes.models.templates.template import Template
 from src.notifications.tasks import (
     send_removed_task_notification,
 )

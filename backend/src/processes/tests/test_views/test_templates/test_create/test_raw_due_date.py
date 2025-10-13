@@ -3,10 +3,8 @@ from datetime import timedelta
 from src.processes.tests.fixtures import (
     create_test_user,
 )
-from src.processes.models import (
-    RawDueDateTemplate,
-    TaskTemplate,
-)
+from src.processes.models.templates.raw_due_date import RawDueDateTemplate
+from src.processes.models.templates.task import TaskTemplate
 from src.processes.enums import (
     DueDateRule,
     PerformerType,

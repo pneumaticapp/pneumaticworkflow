@@ -4,9 +4,7 @@ from rest_framework.serializers import (
     CharField,
 )
 from django.contrib.auth import get_user_model
-from src.processes.models import (
-    Template,
-)
+from src.processes.models.templates.template import Template
 from src.processes.serializers.templates.public.kickoff import (
         PublicKickoffSerializer,
     )

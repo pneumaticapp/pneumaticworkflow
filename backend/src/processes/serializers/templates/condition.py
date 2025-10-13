@@ -13,7 +13,7 @@ from src.processes.serializers.templates.rule import (
     RuleTemplateSerializer,
 )
 from src.processes.messages.template import MSG_PT_0049
-from src.processes.models import ConditionTemplate
+from src.processes.models.templates.conditions import ConditionTemplate
 from src.analytics.services import AnalyticService
 
 

@@ -24,7 +24,7 @@ from src.analytics.services import AnalyticService
 from src.authentication.permissions import (
     PrivateApiPermission,
 )
-from src.authentication.services import AuthService
+from src.authentication.services.user_auth import AuthService
 from src.authentication.messages import (
     MSG_AU_0001,
     MSG_AU_0002,

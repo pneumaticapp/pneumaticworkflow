@@ -14,9 +14,8 @@ from src.utils.validation import ErrorCode
 from src.processes.enums import (
     OwnerType,
 )
-from src.processes.models import (
-    TemplateOwner,
-)
+from src.processes.models.templates.owner import TemplateOwner
+
 
 pytestmark = pytest.mark.django_db
 UserModel = get_user_model()

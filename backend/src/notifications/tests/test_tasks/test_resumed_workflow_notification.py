@@ -15,7 +15,7 @@ from src.accounts.enums import (
     NotificationType,
 )
 from src.accounts.models import Notification
-from src.processes.models import TaskPerformer
+from src.processes.models.workflows.task import TaskPerformer
 from src.processes.enums import (
     DirectlyStatus,
     PerformerType,

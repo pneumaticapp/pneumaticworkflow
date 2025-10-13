@@ -19,7 +19,7 @@ from src.payment.stripe import exceptions
 from src.accounts.models import Account
 from src.accounts.enums import BillingPlanType
 from src.authentication.enums import AuthTokenType
-from src.accounts.services import AccountService
+from src.accounts.services.account import AccountService
 from src.payment.stripe.tokens import ConfirmToken
 from src.payment.stripe.entities import (
     CardDetails,
