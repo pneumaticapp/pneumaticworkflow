@@ -31,6 +31,8 @@ import { EColumnWidthMinWidth, ETableViewFieldsWidth } from './Columns/Cells/Wor
 import { WorkflowsTableActions } from './WorkflowsTableActions';
 import { useCheckDevice } from '../../../../hooks/useCheckDevice';
 import { createResizeHandler } from './utils/resizeUtils';
+import { SKELETON_ROWS } from './constants';
+import { defaultSystemColumns } from './Columns/Cells';
 
 type CustomHeaderGroup<T extends object> = HeaderGroup<T> & {
   columnType: keyof typeof EColumnWidthMinWidth;
@@ -363,16 +365,7 @@ export function WorkflowsTable({
       minWidth: EColumnWidthMinWidth[field.type],
     })) || [];
 
-  const defaultWorkflowColumn = {
-    Header: renderSearch(),
-    accessor: 'workflow',
-    Cell: renderWorkflowColumn,
-    width: savedGlobalWidths.workflow || ETableViewFieldsWidth.workflow,
-    minWidth: EColumnWidthMinWidth.workflow,
-    columnType: 'workflow',
-  };
-
-  const previousColumnsRef = useRef<Column<TableColumns>[]>([defaultWorkflowColumn]);
+  const previousColumnsRef = useRef<Column<TableColumns>[]>(defaultSystemColumns);
 
   const columns: Column<TableColumns>[] = React.useMemo(() => {
     if (workflowsLoadingStatus !== EWorkflowsLoadingStatus.Loaded) {
@@ -380,7 +373,18 @@ export function WorkflowsTable({
     }
 
     const newColumns = [
-      ...(selectedFieldsSet.has('workflow') ? [defaultWorkflowColumn] : []),
+      ...(selectedFieldsSet.has('workflow')
+        ? [
+            {
+              Header: renderSearch(),
+              accessor: 'workflow',
+              Cell: renderWorkflowColumn,
+              width: savedGlobalWidths.workflow || ETableViewFieldsWidth.workflow,
+              minWidth: EColumnWidthMinWidth.workflow,
+              columnType: 'workflow',
+            },
+          ]
+        : []),
       ...(selectedFieldsSet.has('templateName')
         ? [
             {
@@ -391,7 +395,7 @@ export function WorkflowsTable({
               ),
               accessor: 'templateName',
               Cell: ColumnCells.TemplateNameColumn,
-              width: savedGlobalWidths.workflow || ETableViewFieldsWidth.workflow,
+              width: savedGlobalWidths.templateName || ETableViewFieldsWidth.templateName,
               minWidth: EColumnWidthMinWidth.templateName,
               columnType: 'templateName',
             },
@@ -490,19 +494,21 @@ export function WorkflowsTable({
   };
 
   useEffect(() => {
-    setColWidths((prev) => {
-      const newWidths = { ...prev };
+    if (workflowsLoadingStatus === EWorkflowsLoadingStatus.Loaded) {
+      setColWidths((prev) => {
+        const newWidths = { ...prev };
 
-      columns.forEach((col) => {
-        const id = col.accessor as string;
-        if (!newWidths[id]) {
-          newWidths[id] = col.width as number;
-        }
+        columns.forEach((col) => {
+          const id = col.accessor as string;
+          if (!newWidths[id]) {
+            newWidths[id] = col.width as number;
+          }
+        });
+
+        return newWidths;
       });
-
-      return newWidths;
-    });
-  }, [columns.length]);
+    }
+  }, [columns.length, workflowsLoadingStatus]);
 
   const handleMouseDown = createResizeHandler(colWidths, setColWidths, currentUser?.id, templatesIdsFilter[0]);
 
@@ -512,46 +518,73 @@ export function WorkflowsTable({
     return (
       <table {...getTableProps()} className={styles['table']} ref={tableRef}>
         <thead className={styles['thead']}>
-          {headerGroups.map((headerGroup) => (
-            <tr {...headerGroup.getHeaderGroupProps()}>
-              {headerGroup.headers.map((column: CustomHeaderGroup<TableColumns>) => (
+          {workflowsLoadingStatus === EWorkflowsLoadingStatus.LoadingList ? (
+            <tr>
+              {defaultSystemColumns.map((column) => (
                 <th
-                  {...column.getHeaderProps({
-                    style: {
-                      position: 'relative',
-                      width: colWidths[column.id],
-                      maxWidth: colWidths[column.id],
-                      minWidth: colWidths[column.id],
-                    },
-                  })}
+                  key={column.accessor as string}
+                  style={{
+                    position: 'relative',
+                    width: (column as any).width,
+                    maxWidth: (column as any).width,
+                    minWidth: (column as any).width,
+                  }}
                   className={classNames(styles['column-header'], styles['column'])}
                 >
-                  {column.render('Header')}
-                  <div className={styles['column-header__hover-zone']} style={{ height: tableHeight }}>
-                    <div
-                      className={styles['column-header__resize']}
-                      style={{ height: tableHeight }}
-                      onMouseDown={(e) => handleMouseDown(e, column.id, column.minWidth)}
-                      role="button"
-                      aria-label={`Resize column ${column.id}`}
-                      tabIndex={0}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' || e.key === ' ') {
-                          e.preventDefault();
-                        }
-                      }}
-                    >
-                      <div className={styles['column-header__dashed-line']} style={{ height: tableHeight }}></div>
-                    </div>
-                  </div>
+                  {(column as any).Header}
                 </th>
               ))}
             </tr>
-          ))}
+          ) : (
+            headerGroups.map((headerGroup) => (
+              <tr {...headerGroup.getHeaderGroupProps()}>
+                {headerGroup.headers.map((column: CustomHeaderGroup<TableColumns>) => (
+                  <th
+                    {...column.getHeaderProps({
+                      style: {
+                        position: 'relative',
+                        width: colWidths[column.id],
+                        maxWidth: colWidths[column.id],
+                        minWidth: colWidths[column.id],
+                      },
+                    })}
+                    className={classNames(styles['column-header'], styles['column'])}
+                  >
+                    {column.render('Header')}
+                    <div className={styles['column-header__hover-zone']} style={{ height: tableHeight }}>
+                      <div
+                        className={styles['column-header__resize']}
+                        style={{ height: tableHeight }}
+                        onMouseDown={(e) => handleMouseDown(e, column.id, column.minWidth)}
+                        role="button"
+                        aria-label={`Resize column ${column.id}`}
+                        tabIndex={0}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                          }
+                        }}
+                      >
+                        <div className={styles['column-header__dashed-line']} style={{ height: tableHeight }}></div>
+                      </div>
+                    </div>
+                  </th>
+                ))}
+              </tr>
+            ))
+          )}
         </thead>
         <tbody {...getTableBodyProps()}>
           {workflowsLoadingStatus === EWorkflowsLoadingStatus.LoadingList
-            ? renderLoader()
+            ? SKELETON_ROWS.map((row) => (
+                <tr className={styles['row']} key={row}>
+                  {defaultSystemColumns.map((column) => (
+                    <td key={column.accessor as string} className={styles['column']}>
+                      {(column as any).Cell({})}
+                    </td>
+                  ))}
+                </tr>
+              ))
             : rows.map((row) => {
                 prepareRow(row);
 
