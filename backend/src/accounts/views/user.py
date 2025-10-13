@@ -18,9 +18,7 @@ from src.generics.filters import PneumaticFilterBackend
 from src.generics.mixins.views import (
     CustomViewSetMixin,
 )
-from src.processes.models import (
-    Task,
-)
+from src.processes.models.workflows.task import Task
 from src.accounts.permissions import (
     ExpiredSubscriptionPermission,
     BillingPlanPermission,

@@ -18,9 +18,10 @@ from src.processes.services.workflow_action import (
 from src.processes.services.tasks.task_version import (
     TaskUpdateVersionService,
 )
-from src.processes.models import (
+from src.processes.models.workflows.raw_due_date import RawDueDate
+from src.processes.models.workflows.task import (
     Delay,
-    RawDueDate, TaskPerformer,
+    TaskPerformer,
 )
 from src.processes.enums import (
     DirectlyStatus,

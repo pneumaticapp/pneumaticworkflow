@@ -13,7 +13,7 @@ from src.processes.serializers.templates.mixins import (
 from src.processes.serializers.templates.predicate import (
     PredicateTemplateSerializer,
 )
-from src.processes.models import RuleTemplate
+from src.processes.models.templates.conditions import RuleTemplate
 from src.processes.messages.template import MSG_PT_0053
 
 

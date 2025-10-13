@@ -3,9 +3,7 @@ from src.processes.tests.fixtures import (
     create_test_user,
     create_test_template,
 )
-from src.processes.models import (
-    FieldTemplate,
-)
+from src.processes.models.templates.fields import FieldTemplate
 from src.processes.enums import (
     FieldType,
 )

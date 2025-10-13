@@ -2,9 +2,7 @@ import pytest
 from src.processes.tests.fixtures import (
     create_test_user,
 )
-from src.processes.models import (
-    FieldTemplate,
-)
+from src.processes.models.templates.fields import FieldTemplate
 from src.processes.enums import (
     PerformerType,
     FieldType,

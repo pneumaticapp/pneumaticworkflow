@@ -15,11 +15,9 @@ from src.processes.services.tasks.exceptions import (
 from src.processes.services.tasks.performers import (
     PerformersServiceException,
 )
-from src.processes.models import TaskPerformer
 from src.utils.validation import ErrorCode
-from src.processes.models.templates.owner import (
-    TemplateOwner,
-)
+from src.processes.models.templates.owner import TemplateOwner
+from src.processes.models.workflows.task import TaskPerformer
 from src.processes.enums import OwnerType
 
 UserModel = get_user_model()

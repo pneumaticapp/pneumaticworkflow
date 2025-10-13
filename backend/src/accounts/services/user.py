@@ -225,7 +225,7 @@ class UserService(
             ).update(
                 status=UserStatus.INVITED,
             )
-            from src.accounts.services import AccountService
+            from src.accounts.services.account import AccountService
             service = AccountService(
                 instance=user.account,
                 user=user,

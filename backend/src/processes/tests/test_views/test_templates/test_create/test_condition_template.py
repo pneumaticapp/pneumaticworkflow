@@ -14,7 +14,8 @@ from src.processes.enums import (
     PredicateType,
     OwnerType, ConditionAction,
 )
-from src.processes.models import Template, ConditionTemplate
+from src.processes.models.templates.template import Template
+from src.processes.models.templates.conditions import ConditionTemplate
 from src.authentication.enums import AuthTokenType
 
 

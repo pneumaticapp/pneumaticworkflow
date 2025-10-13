@@ -20,7 +20,7 @@ from src.accounts.models import (
     SystemMessage,
     UserGroup,
 )
-from src.accounts.services import AccountService
+from src.accounts.services.account import AccountService
 from src.payment.enums import BillingPeriod
 from src.accounts.enums import (
     LeaseLevel,

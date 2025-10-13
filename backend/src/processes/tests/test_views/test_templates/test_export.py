@@ -1,21 +1,20 @@
 import pytest
 from datetime import timedelta
-from src.authentication.services import GuestJWTAuthService
-from src.processes.models import (
-    TaskPerformer,
-)
-from src.processes.models import (
+from src.authentication.services.guest_auth import GuestJWTAuthService
+from src.processes.models.templates.kickoff import Kickoff
+from src.processes.models.templates.owner import TemplateOwner
+from src.processes.models.templates.task import TaskTemplate
+from src.processes.models.templates.conditions import (
     ConditionTemplate,
+    PredicateTemplate,
+    RuleTemplate,
+)
+from src.processes.models.templates.raw_due_date import RawDueDateTemplate
+from src.processes.models.templates.fields import (
     FieldTemplate,
     FieldTemplateSelection,
-    Kickoff,
-    PredicateTemplate,
-    RawDueDateTemplate,
-    RuleTemplate,
-    TaskTemplate,
-    TemplateOwner,
 )
-
+from src.processes.models.workflows.task import TaskPerformer
 from src.processes.enums import (
     FieldType,
     DueDateRule,

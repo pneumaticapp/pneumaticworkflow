@@ -1,6 +1,10 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
-from src.processes.models import Delay, Task, Workflow
+from src.processes.models.workflows.workflow import Workflow
+from src.processes.models.workflows.task import (
+    Delay,
+    Task,
+)
 from src.accounts.models import Notification
 from src.accounts.enums import NotificationType
 from src.generics.fields import TimeStampField

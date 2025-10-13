@@ -8,10 +8,7 @@ from src.processes.tests.fixtures import (
     create_invited_user,
     create_test_group,
 )
-
-from src.processes.models import (
-    Template,
-)
+from src.processes.models.templates.template import Template
 from src.processes.enums import (
     PerformerType,
     FieldType,

@@ -3,7 +3,7 @@ from rest_framework.serializers import (
     ModelSerializer,
     CharField,
 )
-from src.processes.models import (
+from src.processes.models.templates.fields import (
     FieldTemplateSelection,
 )
 from src.generics.mixins.serializers import (

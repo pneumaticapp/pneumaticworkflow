@@ -6,16 +6,14 @@ from src.processes.services.events import (
     WorkflowEventService,
     CommentService,
 )
-from src.processes.models import (
-    TaskPerformer,
-)
+from src.processes.models.workflows.task import TaskPerformer
 from src.processes.tests.fixtures import (
     create_test_user,
     create_test_workflow,
     create_test_guest,
     create_test_account,
 )
-from src.authentication.services import GuestJWTAuthService
+from src.authentication.services.guest_auth import GuestJWTAuthService
 from src.authentication.enums import AuthTokenType
 from src.utils.validation import ErrorCode
 

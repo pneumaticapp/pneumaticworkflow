@@ -13,21 +13,13 @@ from src.processes.enums import (
     PerformerType,
     OwnerType,
 )
-from src.accounts.tokens import (
-    TransferToken,
-)
-from src.accounts.services.user_transfer import (
-    UserTransferService,
-)
+from src.accounts.tokens import TransferToken
+from src.accounts.services.user_transfer import UserTransferService
 from src.accounts.services import exceptions
-from src.accounts.services import (
-    UserInviteService,
-)
-from src.accounts.services import AccountService
+from src.accounts.services.user_invite import UserInviteService
+from src.accounts.services.account import AccountService
 from src.authentication.enums import AuthTokenType
-from src.payment.stripe.service import (
-    StripeService,
-)
+from src.payment.stripe.service import StripeService
 
 pytestmark = pytest.mark.django_db
 
@@ -824,7 +816,7 @@ def test_activate_user__ok(mocker):
         return_value=None,
     )
     update_users_counts_mock = mocker.patch(
-        'src.accounts.services.'
+        'src.accounts.services.account.'
         'AccountService.update_users_counts',
     )
 

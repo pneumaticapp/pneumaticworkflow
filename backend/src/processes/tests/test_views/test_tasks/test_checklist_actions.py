@@ -9,9 +9,9 @@ from src.processes.tests.fixtures import (
     create_test_guest,
     create_test_account,
 )
-from src.processes.models import (
+from src.processes.models.workflows.task import TaskPerformer
+from src.processes.models.workflows.checklist import (
     ChecklistSelection,
-    TaskPerformer,
 )
 from src.processes.services.tasks.exceptions import (
     ChecklistServiceException,
@@ -19,7 +19,7 @@ from src.processes.services.tasks.exceptions import (
 from src.processes.services.tasks.performers import (
     TaskPerformersService,
 )
-from src.authentication.services import GuestJWTAuthService
+from src.authentication.services.guest_auth import GuestJWTAuthService
 from src.utils.validation import ErrorCode
 
 

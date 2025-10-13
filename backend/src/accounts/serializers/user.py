@@ -19,12 +19,10 @@ from src.accounts.enums import (
 from src.accounts.serializers.group import (
     GroupNameSerializer,
 )
-from src.processes.models import (
-    RawPerformerTemplate,
-    TemplateOwner,
-    Template,
-    TaskTemplate,
-)
+from src.processes.models.templates.template import Template
+from src.processes.models.templates.owner import TemplateOwner
+from src.processes.models.templates.task import TaskTemplate
+from src.processes.models.templates.raw_performer import RawPerformerTemplate
 from src.processes.enums import (
     OwnerType,
     PerformerType,

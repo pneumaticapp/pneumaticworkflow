@@ -2,9 +2,9 @@ import pytest
 from src.processes.tests.fixtures import (
     create_test_user,
 )
-from src.processes.models import (
+from src.processes.models.templates.kickoff import Kickoff
+from src.processes.models.templates.fields import (
     FieldTemplateSelection,
-    Kickoff,
 )
 from src.processes.enums import (
     PerformerType,

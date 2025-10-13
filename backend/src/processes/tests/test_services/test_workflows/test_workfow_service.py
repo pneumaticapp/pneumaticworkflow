@@ -3,7 +3,7 @@ import pytest
 from datetime import timedelta
 from django.utils import timezone
 from src.processes.services.tasks.task import TaskService
-from src.processes.models import FieldTemplate
+from src.processes.models.templates.fields import FieldTemplate
 from src.processes.tests.fixtures import (
     create_test_owner,
     create_test_template,
@@ -214,7 +214,7 @@ def test_create_instance__insert_kickoff_fields__ok(mocker):
         is_active=True,
         tasks_count=1,
     )
-    workflow_name = f'Feedback from {field_api_name}'
+    workflow_name = 'Feedback from {{%s}}' % field_api_name
     create_workflow_name_mock = mocker.patch(
         'src.processes.services.workflows.workflow.'
         'WorkflowService._create_workflow_name',

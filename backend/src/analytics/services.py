@@ -7,15 +7,13 @@ from src.accounts.models import (
     Account,
     UserGroup,
 )
-from src.processes.models import (
-    Workflow,
-    Template,
-    TaskTemplate,
-    FileAttachment,
-    Task,
-    SystemTemplate,
-    ConditionTemplate,
-)
+from src.processes.models.templates.template import Template
+from src.processes.models.templates.system_template import SystemTemplate
+from src.processes.models.templates.task import TaskTemplate
+from src.processes.models.templates.conditions import ConditionTemplate
+from src.processes.models.workflows.workflow import Workflow
+from src.processes.models.workflows.task import Task
+from src.processes.models.workflows.attachment import FileAttachment
 from src.analytics.labels import Label
 from src.analytics.actions import (
     WorkflowActions,

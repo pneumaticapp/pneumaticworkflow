@@ -1,6 +1,6 @@
 import pytest
 from src.processes.enums import SysTemplateType
-from src.processes.models import (
+from src.processes.models.templates.system_template import (
     SystemTemplate,
     SystemTemplateCategory,
 )

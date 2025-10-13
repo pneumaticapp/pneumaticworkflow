@@ -15,10 +15,8 @@ from src.notifications.tasks import (
 from src.accounts.services.group import UserGroupService
 from src.analytics.events import GroupsAnalyticsEvent
 from src.authentication.enums import AuthTokenType
-from src.processes.models import (
-    TaskPerformer,
-    TemplateOwner,
-)
+from src.processes.models.workflows.task import TaskPerformer
+from src.processes.models.templates.owner import TemplateOwner
 from src.processes.enums import (
     PerformerType,
     OwnerType,

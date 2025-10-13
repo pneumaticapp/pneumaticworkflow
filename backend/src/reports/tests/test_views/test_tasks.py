@@ -2,13 +2,13 @@ import pytest
 from datetime import timedelta, datetime, time
 from django.contrib.auth import get_user_model
 from django.utils import timezone
-from src.processes.models import (
-    TaskPerformer,
-    FieldTemplate,
+from src.processes.models.templates.fields import FieldTemplate
+from src.processes.models.templates.conditions import (
     ConditionTemplate,
-    RuleTemplate,
     PredicateTemplate,
+    RuleTemplate,
 )
+from src.processes.models.workflows.task import TaskPerformer
 from src.processes.tests.fixtures import (
     create_test_template,
     create_test_workflow,

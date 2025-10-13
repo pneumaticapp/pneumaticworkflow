@@ -16,11 +16,9 @@ from src.generics.mixins.serializers import (
     ValidationUtilsMixin,
     AdditionalValidationMixin,
 )
-from src.processes.models import (
-    Workflow,
-    Task,
-    TaskTemplate,
-)
+from src.processes.models.workflows.workflow import Workflow
+from src.processes.models.workflows.task import Task
+from src.processes.models.templates.task import TaskTemplate
 from src.processes.enums import (
     WorkflowStatus,
     WorkflowApiStatus,

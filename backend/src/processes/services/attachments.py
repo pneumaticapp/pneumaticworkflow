@@ -7,7 +7,7 @@ from src.accounts.models import Account
 from src.analytics.services import AnalyticService
 from src.authentication.enums import AuthTokenType
 from src.processes.services import exceptions
-from src.processes.models import FileAttachment
+from src.processes.models.workflows.attachment import FileAttachment
 from src.storage.google_cloud import GoogleCloudService
 from src.utils.logging import (
     capture_sentry_message,

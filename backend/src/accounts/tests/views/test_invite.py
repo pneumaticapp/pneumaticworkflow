@@ -15,9 +15,7 @@ from src.processes.tests.fixtures import (
 from src.accounts.tokens import (
     InviteToken,
 )
-from src.accounts.services import (
-    UserInviteService,
-)
+from src.accounts.services.user_invite import UserInviteService
 from src.accounts.services.exceptions import (
     AlreadyAcceptedInviteException,
     UserNotFoundException,
@@ -58,7 +56,7 @@ class TestCreate:
             return_value=None,
         )
         invite_users_mock = mocker.patch(
-            'src.accounts.services.UserInviteService.'
+            'src.accounts.services.user_invite.UserInviteService.'
             'invite_users',
         )
         api_client.token_authenticate(user)
@@ -114,7 +112,7 @@ class TestCreate:
             return_value=None,
         )
         invite_users_mock = mocker.patch(
-            'src.accounts.services.UserInviteService.'
+            'src.accounts.services.user_invite.UserInviteService.'
             'invite_users',
         )
         api_client.token_authenticate(user)
@@ -157,7 +155,7 @@ class TestCreate:
             return_value=None,
         )
         invite_users_mock = mocker.patch(
-            'src.accounts.services.UserInviteService.'
+            'src.accounts.services.user_invite.UserInviteService.'
             'invite_users',
         )
         api_client.token_authenticate(user)
@@ -221,7 +219,7 @@ class TestCreate:
             return_value=None,
         )
         invite_users_mock = mocker.patch(
-            'src.accounts.services.UserInviteService.'
+            'src.accounts.services.user_invite.UserInviteService.'
             'invite_users',
             side_effect=AlreadyAcceptedInviteException(
                 invites_data=[
@@ -282,7 +280,7 @@ class TestCreate:
             return_value=None,
         )
         invite_users_mock = mocker.patch(
-            'src.accounts.services.UserInviteService.'
+            'src.accounts.services.user_invite.UserInviteService.'
             'invite_users',
             side_effect=UsersLimitInvitesException(),
         )
@@ -332,7 +330,7 @@ class TestCreate:
             return_value=None,
         )
         invite_users_mock = mocker.patch(
-            'src.accounts.services.UserInviteService.'
+            'src.accounts.services.user_invite.UserInviteService.'
             'invite_users',
         )
         api_client.token_authenticate(user)
@@ -375,7 +373,7 @@ class TestCreate:
             return_value=None,
         )
         invite_users_mock = mocker.patch(
-            'src.accounts.services.UserInviteService.'
+            'src.accounts.services.user_invite.UserInviteService.'
             'invite_users',
         )
         api_client.token_authenticate(user)
@@ -414,7 +412,7 @@ class TestCreate:
             return_value=None,
         )
         invite_users_mock = mocker.patch(
-            'src.accounts.services.UserInviteService.'
+            'src.accounts.services.user_invite.UserInviteService.'
             'invite_users',
         )
         api_client.token_authenticate(user)
@@ -458,7 +456,7 @@ class TestCreate:
             return_value=None,
         )
         invite_users_mock = mocker.patch(
-            'src.accounts.services.UserInviteService.'
+            'src.accounts.services.user_invite.UserInviteService.'
             'invite_users',
         )
         api_client.token_authenticate(user)
@@ -505,7 +503,7 @@ class TestCreate:
             return_value=None,
         )
         invite_users_mock = mocker.patch(
-            'src.accounts.services.UserInviteService.'
+            'src.accounts.services.user_invite.UserInviteService.'
             'invite_users',
         )
         api_client.token_authenticate(user)
@@ -549,7 +547,7 @@ class TestCreate:
             return_value=None,
         )
         invite_users_mock = mocker.patch(
-            'src.accounts.services.UserInviteService.'
+            'src.accounts.services.user_invite.UserInviteService.'
             'invite_users',
         )
         api_client.token_authenticate(user)
@@ -959,13 +957,13 @@ class TestAccept:
             return_value=None,
         )
         accept_mock = mocker.patch(
-            'src.accounts.services.UserInviteService.'
+            'src.accounts.services.user_invite.UserInviteService.'
             'accept',
             return_value=user,
         )
         token = '!@fghgh!@#'
         authenticate_mock = mocker.patch(
-            'src.authentication.services.AuthService'
+            'src.authentication.services.user_auth.AuthService'
             '.get_auth_token',
             return_value=token,
         )
@@ -1029,13 +1027,13 @@ class TestAccept:
             return_value=None,
         )
         accept_mock = mocker.patch(
-            'src.accounts.services.UserInviteService.'
+            'src.accounts.services.user_invite.UserInviteService.'
             'accept',
             return_value=user,
         )
         token = '!@fghgh!@#'
         authenticate_mock = mocker.patch(
-            'src.authentication.services.AuthService'
+            'src.authentication.services.user_auth.AuthService'
             '.get_auth_token',
             return_value=token,
         )
@@ -1096,7 +1094,7 @@ class TestAccept:
             return_value=None,
         )
         authenticate_mock = mocker.patch(
-            'src.authentication.services.AuthService'
+            'src.authentication.services.user_auth.AuthService'
             '.get_auth_token',
         )
         data = {
@@ -1146,7 +1144,7 @@ class TestAccept:
             return_value=None,
         )
         authenticate_mock = mocker.patch(
-            'src.authentication.services.AuthService'
+            'src.authentication.services.user_auth.AuthService'
             '.get_auth_token',
         )
         data[field] = ''
@@ -1191,7 +1189,7 @@ class TestAccept:
             return_value=None,
         )
         authenticate_mock = mocker.patch(
-            'src.authentication.services.AuthService'
+            'src.authentication.services.user_auth.AuthService'
             '.get_auth_token',
         )
         data[field] = None
@@ -1234,7 +1232,7 @@ class TestAccept:
             return_value=None,
         )
         authenticate_mock = mocker.patch(
-            'src.authentication.services.AuthService'
+            'src.authentication.services.user_auth.AuthService'
             '.get_auth_token',
         )
 
@@ -1276,7 +1274,7 @@ class TestAccept:
             return_value=None,
         )
         authenticate_mock = mocker.patch(
-            'src.authentication.services.AuthService'
+            'src.authentication.services.user_auth.AuthService'
             '.get_auth_token',
         )
 
@@ -1318,7 +1316,7 @@ class TestAccept:
             return_value=None,
         )
         authenticate_mock = mocker.patch(
-            'src.authentication.services.AuthService'
+            'src.authentication.services.user_auth.AuthService'
             '.get_auth_token',
         )
 
@@ -1360,7 +1358,7 @@ class TestAccept:
             return_value=None,
         )
         authenticate_mock = mocker.patch(
-            'src.authentication.services.AuthService'
+            'src.authentication.services.user_auth.AuthService'
             '.get_auth_token',
         )
 
@@ -1403,7 +1401,7 @@ class TestAccept:
             return_value=None,
         )
         authenticate_mock = mocker.patch(
-            'src.authentication.services.AuthService'
+            'src.authentication.services.user_auth.AuthService'
             '.get_auth_token',
         )
 
@@ -1446,7 +1444,7 @@ class TestAccept:
             return_value=None,
         )
         authenticate_mock = mocker.patch(
-            'src.authentication.services.AuthService'
+            'src.authentication.services.user_auth.AuthService'
             '.get_auth_token',
         )
 
@@ -1489,7 +1487,7 @@ class TestAccept:
             return_value=None,
         )
         authenticate_mock = mocker.patch(
-            'src.authentication.services.AuthService'
+            'src.authentication.services.user_auth.AuthService'
             '.get_auth_token',
         )
 
@@ -1532,7 +1530,7 @@ class TestAccept:
             return_value=None,
         )
         authenticate_mock = mocker.patch(
-            'src.authentication.services.AuthService'
+            'src.authentication.services.user_auth.AuthService'
             '.get_auth_token',
         )
 
@@ -1574,12 +1572,12 @@ class TestAccept:
             return_value=None,
         )
         accept_mock = mocker.patch(
-            'src.accounts.services.UserInviteService.'
+            'src.accounts.services.user_invite.UserInviteService.'
             'accept',
             side_effect=AlreadyRegisteredException(),
         )
         authenticate_mock = mocker.patch(
-            'src.authentication.services.AuthService'
+            'src.authentication.services.user_auth.AuthService'
             '.get_auth_token',
         )
         current_url = 'https://my.pneumatic.app/team'
@@ -1653,7 +1651,7 @@ class TestResend:
             return_value=None,
         )
         resend_mock = mocker.patch(
-            'src.accounts.services.UserInviteService.'
+            'src.accounts.services.user_invite.UserInviteService.'
             'resend_invite',
         )
 
@@ -1689,7 +1687,7 @@ class TestResend:
             return_value=None,
         )
         resend_mock = mocker.patch(
-            'src.accounts.services.UserInviteService.'
+            'src.accounts.services.user_invite.UserInviteService.'
             'resend_invite',
             side_effect=AlreadyAcceptedInviteException(),
         )
@@ -1728,7 +1726,7 @@ class TestResend:
             return_value=None,
         )
         resend_mock = mocker.patch(
-            'src.accounts.services.UserInviteService.'
+            'src.accounts.services.user_invite.UserInviteService.'
             'resend_invite',
             side_effect=UserNotFoundException(),
         )

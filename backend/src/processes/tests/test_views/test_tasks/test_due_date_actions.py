@@ -19,10 +19,8 @@ from src.processes.enums import (
     DirectlyStatus,
     OwnerType,
 )
-from src.processes.models import (
-    TaskPerformer,
-    TemplateOwner,
-)
+from src.processes.models.templates.owner import TemplateOwner
+from src.processes.models.workflows.task import TaskPerformer
 
 UserModel = get_user_model()
 pytestmark = pytest.mark.django_db

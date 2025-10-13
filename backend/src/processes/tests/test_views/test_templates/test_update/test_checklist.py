@@ -3,10 +3,10 @@ from src.processes.tests.fixtures import (
     create_test_user,
     create_test_template,
 )
-from src.processes.models import (
+from src.processes.models.templates.task import TaskTemplate
+from src.processes.models.templates.checklist import (
     ChecklistTemplate,
     ChecklistTemplateSelection,
-    TaskTemplate,
 )
 from src.processes.enums import (
     PerformerType,

@@ -1,11 +1,8 @@
 from rest_framework import serializers
 from src.processes.enums import WorkflowEventType
-from src.processes.models import (
-    Task,
-    Delay,
-    Workflow,
-    WorkflowEvent,
-)
+from src.processes.models.workflows.workflow import Workflow
+from src.processes.models.workflows.task import Task, Delay
+from src.processes.models.workflows.event import WorkflowEvent
 from src.processes.serializers.workflows.field import (
     TaskFieldSerializer,
 )

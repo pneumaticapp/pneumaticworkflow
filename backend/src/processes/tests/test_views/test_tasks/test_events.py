@@ -3,8 +3,7 @@ from django.contrib.auth import get_user_model
 from src.processes.services.events import (
     WorkflowEventService,
 )
-from src.processes.models import TaskPerformer
-
+from src.processes.models.workflows.task import TaskPerformer
 from src.processes.tests.fixtures import (
     create_test_user,
     create_test_workflow,
@@ -16,7 +15,7 @@ from src.processes.tests.fixtures import (
     create_test_attachment,
 )
 from src.processes.enums import WorkflowEventType
-from src.authentication.services import GuestJWTAuthService
+from src.authentication.services.guest_auth import GuestJWTAuthService
 
 UserModel = get_user_model()
 pytestmark = pytest.mark.django_db

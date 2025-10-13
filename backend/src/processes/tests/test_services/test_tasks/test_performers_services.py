@@ -37,11 +37,9 @@ from src.processes.services.tasks.exceptions import (
     GroupPerformerServiceException,
 )
 from src.processes.messages import workflow as messages
-from src.processes.models import (
-    TaskPerformer,
-    WorkflowEvent,
-    TemplateOwner,
-)
+from src.processes.models.workflows.task import TaskPerformer
+from src.processes.models.workflows.event import WorkflowEvent
+from src.processes.models.templates.owner import TemplateOwner
 from src.processes.enums import (
     WorkflowStatus,
     WorkflowEventType,
@@ -2119,7 +2117,7 @@ class TestGuestPerformersService:
         task.save(update_fields=['due_date'])
         token_str = str(GuestToken())
         get_token_mock = mocker.patch(
-            'src.authentication.services.'
+            'src.authentication.services.guest_auth.'
             'GuestJWTAuthService.get_str_token',
             return_value=token_str,
         )
@@ -2135,7 +2133,7 @@ class TestGuestPerformersService:
             'users_guest_invited',
         )
         activate_cache_mock = mocker.patch(
-            'src.authentication.services.'
+            'src.authentication.services.guest_auth.'
             'GuestJWTAuthService.activate_task_guest_cache',
         )
         current_url = '/page'
@@ -2228,7 +2226,7 @@ class TestGuestPerformersService:
             directly_status=DirectlyStatus.DELETED,
         )
         deactivate_cache_mock = mocker.patch(
-            'src.authentication.services.'
+            'src.authentication.services.guest_auth.'
             'GuestJWTAuthService.deactivate_task_guest_cache',
         )
         workflow_action_service_init_mock = mocker.patch.object(
@@ -2296,7 +2294,7 @@ class TestGuestPerformersService:
             directly_status=DirectlyStatus.DELETED,
         )
         deactivate_cache_mock = mocker.patch(
-            'src.authentication.services.'
+            'src.authentication.services.guest_auth.'
             'GuestJWTAuthService.deactivate_task_guest_cache',
         )
         workflow_action_service_init_mock = mocker.patch.object(
@@ -2371,7 +2369,7 @@ class TestGuestPerformersService:
             directly_status=DirectlyStatus.DELETED,
         )
         deactivate_cache_mock = mocker.patch(
-            'src.authentication.services.'
+            'src.authentication.services.guest_auth.'
             'GuestJWTAuthService.deactivate_task_guest_cache',
         )
         workflow_action_service_init_mock = mocker.patch.object(

@@ -2,14 +2,16 @@
 import pytest
 from datetime import timedelta
 from django.utils import timezone
-from src.processes.models import (
+from src.processes.models.templates.fields import (
     FieldTemplate,
-    Workflow,
     FieldTemplateSelection,
-    FileAttachment,
-    Delay,
-    TaskPerformer,
 )
+from src.processes.models.workflows.workflow import Workflow
+from src.processes.models.workflows.task import (
+    TaskPerformer,
+    Delay,
+)
+from src.processes.models.workflows.attachment import FileAttachment
 from src.processes.tests.fixtures import (
     create_test_user,
     create_test_workflow,

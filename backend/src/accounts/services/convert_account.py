@@ -6,7 +6,7 @@ from src.accounts.enums import (
     BillingPlanType,
 )
 from src.accounts.models import Account
-from src.accounts.services import AccountService
+from src.accounts.services.account import AccountService
 from src.authentication.enums import AuthTokenType
 from src.payment.tasks import (
     increase_plan_users,

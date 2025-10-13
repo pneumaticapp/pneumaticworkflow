@@ -1,32 +1,20 @@
 from os import environ
 from django.contrib.auth import get_user_model
-from src.processes.models import Task
-from src.processes.services.tasks.exceptions import (
-    PerformersServiceException,
-)
-from src.processes.services.tasks.base import (
-    BasePerformersService,
-)
+from src.processes.models.workflows.task import Task
+from src.processes.services.tasks.exceptions import PerformersServiceException
+from src.processes.services.tasks.base import BasePerformersService
 from src.accounts.services.guests import GuestService
 from src.processes.messages.workflow import (
     MSG_PW_0014,
     MSG_PW_0015,
 )
 from src.processes.enums import PerformerType
-from src.authentication.services import (
-    GuestJWTAuthService,
-)
+from src.authentication.services.guest_auth import GuestJWTAuthService
 from src.analytics.services import AnalyticService
-from src.notifications.tasks import (
-    send_guest_new_task,
-)
+from src.notifications.tasks import send_guest_new_task
 from src.authentication.enums import AuthTokenType
-from src.processes.services.workflow_action import (
-    WorkflowEventService,
-)
-from src.processes.services.workflow_action import (
-    WorkflowActionService,
-)
+from src.processes.services.workflow_action import WorkflowEventService
+from src.processes.services.workflow_action import WorkflowActionService
 
 
 UserModel = get_user_model()

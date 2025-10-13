@@ -8,11 +8,13 @@ from django.core.exceptions import (
     ValidationError as ValidationCoreError,
 )
 from src.processes.messages import workflow as messages
-from src.processes.models import (
-    FieldTemplate,
-    FileAttachment,
-    TaskField,
+from src.processes.models.workflows.attachment import FileAttachment
+from src.processes.models.templates.fields import (
     FieldTemplateSelection,
+    FieldTemplate,
+)
+from src.processes.models.workflows.fields import (
+    TaskField,
 )
 from src.processes.services.base import (
     BaseWorkflowService,

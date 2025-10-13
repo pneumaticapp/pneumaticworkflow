@@ -24,7 +24,7 @@ from src.processes.services.attachments import (
 from src.processes.services.exceptions import (
     AttachmentServiceException,
 )
-from src.processes.models import FileAttachment
+from src.processes.models.workflows.attachment import FileAttachment
 from src.processes.permissions import StoragePermission
 from src.utils.validation import raise_validation_error
 

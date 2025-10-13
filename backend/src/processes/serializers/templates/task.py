@@ -13,10 +13,8 @@ from rest_framework.serializers import (
 from src.processes.serializers.templates.condition import (
     ConditionTemplateSerializer,
 )
-from src.processes.models import (
-    TaskTemplate,
-    FieldTemplate,
-)
+from src.processes.models.templates.task import TaskTemplate
+from src.processes.models.templates.fields import FieldTemplate
 from src.processes.serializers.templates.checklist import (
     ChecklistTemplateSerializer,
 )
@@ -343,7 +341,7 @@ class TaskTemplateSerializer(
         # TODO Remove in https://my.pneumatic.app/workflows/18128
         if not data:
             return
-        from src.processes.models import (
+        from src.processes.models.templates.checklist import (
             ChecklistTemplateSelection,
         )
         pairs = {}

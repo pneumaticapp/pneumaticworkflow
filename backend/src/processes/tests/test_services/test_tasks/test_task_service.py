@@ -1,9 +1,9 @@
 import pytest
 from datetime import timedelta, datetime
 from django.utils import timezone
-from src.processes.models import (
-    TaskField,
-    RawDueDate,
+from src.processes.models.workflows.fields import TaskField
+from src.processes.models.workflows.raw_due_date import RawDueDate
+from src.processes.models.templates.checklist import (
     ChecklistTemplate,
     ChecklistTemplateSelection,
 )

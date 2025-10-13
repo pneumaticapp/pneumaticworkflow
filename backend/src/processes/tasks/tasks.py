@@ -5,9 +5,8 @@ from src.authentication.enums import AuthTokenType
 from src.processes.services.workflow_action import (
     WorkflowActionService,
 )
-from src.processes.models import (
-    Task,
-)
+from src.processes.models.workflows.task import Task
+
 
 UserModel = get_user_model()
 

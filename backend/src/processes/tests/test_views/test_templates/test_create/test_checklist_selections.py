@@ -2,9 +2,9 @@ import pytest
 from src.processes.tests.fixtures import (
     create_test_user,
 )
-from src.processes.models import (
-    ChecklistTemplateSelection,
+from src.processes.models.templates.checklist import (
     ChecklistTemplate,
+    ChecklistTemplateSelection,
 )
 from src.processes.enums import (
     PerformerType,

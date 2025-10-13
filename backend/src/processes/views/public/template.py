@@ -1,9 +1,7 @@
 from django.conf import settings
 from rest_framework.viewsets import GenericViewSet
 from rest_framework.decorators import action
-from src.processes.models import (
-    Template,
-)
+from src.processes.models.templates.template import Template
 from src.processes.serializers.templates.public.template import (
     PublicTemplateSerializer,
 )

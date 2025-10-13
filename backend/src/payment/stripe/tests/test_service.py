@@ -45,7 +45,7 @@ from src.payment.stripe.entities import (
 )
 from src.payment.stripe.tokens import ConfirmToken
 from src.payment import messages
-from src.accounts.services import AccountService
+from src.accounts.services.account import AccountService
 
 
 pytestmark = pytest.mark.django_db

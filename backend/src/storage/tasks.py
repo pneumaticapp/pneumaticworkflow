@@ -12,12 +12,12 @@ from src.processes.enums import (
     WorkflowEventType,
     FieldType,
 )
-from src.processes.models import (
-    FileAttachment,
-    TaskTemplate,
-    Task,
-    WorkflowEvent, TaskField, TemplateDraft,
-)
+from src.processes.models.templates.template import TemplateDraft
+from src.processes.models.templates.task import TaskTemplate
+from src.processes.models.workflows.task import Task
+from src.processes.models.workflows.event import WorkflowEvent
+from src.processes.models.workflows.attachment import FileAttachment
+from src.processes.models.workflows.fields import TaskField
 from src.accounts.models import Notification
 from src.storage.google_cloud import GoogleCloudService
 

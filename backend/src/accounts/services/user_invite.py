@@ -38,7 +38,7 @@ from src.accounts.tokens import TransferToken
 from src.processes.services.system_workflows import (
     SystemWorkflowService,
 )
-from src.accounts.services import AccountService
+from src.accounts.services.account import AccountService
 from src.payment.tasks import increase_plan_users
 from src.notifications.tasks import (
     send_user_created_notification,

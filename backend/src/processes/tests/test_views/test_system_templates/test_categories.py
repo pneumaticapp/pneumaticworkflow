@@ -1,5 +1,5 @@
 import pytest
-from src.processes.models import (
+from src.processes.models.templates.system_template import (
     SystemTemplateCategory,
 )
 from src.processes.tests.fixtures import (

@@ -28,12 +28,10 @@ from src.accounts.enums import (
 )
 from src.accounts.serializers.tenant import TenantSerializer
 from src.accounts.filters import TenantsFilterSet
-from src.authentication.services import AuthService
+from src.authentication.services.user_auth import AuthService
 from src.generics.filters import PneumaticFilterBackend
-from src.accounts.services import (
-    AccountService,
-    UserService,
-)
+from src.accounts.services.account import AccountService
+from src.accounts.services.user import UserService
 from src.accounts.services.exceptions import (
     AccountServiceException,
     UserServiceException,

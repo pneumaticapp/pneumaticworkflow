@@ -1,19 +1,13 @@
 import pytest
 from django.contrib.auth import get_user_model
 from src.authentication.enums import AuthTokenType
-from src.processes.models import (
-    Workflow,
-    TaskPerformer,
-)
-from src.processes.services.versioning.schemas import (
-    TemplateSchemaV1,
-)
+from src.processes.models.workflows.workflow import Workflow
+from src.processes.models.workflows.task import TaskPerformer
+from src.processes.services.versioning.schemas import TemplateSchemaV1
 from src.processes.services.versioning.versioning import (
     TemplateVersioningService,
 )
-from src.processes.tasks.update_workflow import (
-    update_workflows,
-)
+from src.processes.tasks.update_workflow import update_workflows
 from src.processes.tests.fixtures import (
     create_test_user,
     create_test_group,

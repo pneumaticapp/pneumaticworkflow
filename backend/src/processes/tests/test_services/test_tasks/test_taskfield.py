@@ -11,13 +11,15 @@ from src.processes.enums import (
     FieldType,
     WorkflowEventType,
 )
-from src.processes.models import (
+from src.processes.models.templates.fields import (
     FieldTemplate,
-    TaskField,
     FieldTemplateSelection,
+)
+from src.processes.models.workflows.event import WorkflowEvent
+from src.processes.models.workflows.attachment import FileAttachment
+from src.processes.models.workflows.fields import (
+    TaskField,
     FieldSelection,
-    FileAttachment,
-    WorkflowEvent,
 )
 from src.processes.services.tasks.selection import (
     SelectionService,

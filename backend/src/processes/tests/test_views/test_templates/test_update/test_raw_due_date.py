@@ -4,9 +4,7 @@ from src.processes.tests.fixtures import (
     create_test_user,
     create_test_template,
 )
-from src.processes.models import (
-    RawDueDateTemplate,
-)
+from src.processes.models.templates.raw_due_date import RawDueDateTemplate
 from src.processes.enums import (
     PerformerType,
     DueDateRule,

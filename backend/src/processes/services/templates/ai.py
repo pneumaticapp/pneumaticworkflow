@@ -18,9 +18,7 @@ from src.utils.logging import (
     SentryLogLevel,
     capture_sentry_message,
 )
-from src.processes.models.templates.task import (
-    TaskTemplate,
-)
+from src.processes.models.templates.task import TaskTemplate
 from src.accounts.services.account import AccountService
 from src.analytics.services import AnalyticService
 from src.processes.services.templates.template import (

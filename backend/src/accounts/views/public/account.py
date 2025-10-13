@@ -3,7 +3,7 @@ from rest_framework.viewsets import GenericViewSet
 from src.generics.mixins.views import (
     CustomViewSetMixin,
 )
-from src.accounts.serializers.public import (
+from src.accounts.serializers.public.accounts import (
     PublicAccountSerializer,
 )
 from src.processes.permissions import PublicTemplatePermission

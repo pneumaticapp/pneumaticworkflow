@@ -11,7 +11,7 @@ from src.notifications.services.exceptions import (
 )
 from src.accounts.enums import UserType, NotificationType
 from src.accounts.models import Notification
-from src.processes.models import Delay
+from src.processes.models.workflows.task import Delay
 from src.accounts.serializers.notifications import (
     NotificationTaskSerializer,
     NotificationWorkflowSerializer,

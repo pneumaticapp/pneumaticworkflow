@@ -6,7 +6,7 @@ from django.http import HttpResponse, HttpResponseRedirect
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.request import Request
-from src.processes.models import Template
+from src.processes.models.templates.template import Template
 from src.processes.utils.common import get_prefetch_fields
 
 

@@ -8,11 +8,8 @@ from rest_framework.serializers import (
     ChoiceField,
 )
 
-from src.processes.models import (
-    FieldTemplate,
-    RawPerformerTemplate,
-)
-
+from src.processes.models.templates.raw_performer import RawPerformerTemplate
+from src.processes.models.templates.fields import FieldTemplate
 from src.generics.mixins.serializers import (
     CustomValidationErrorMixin,
     AdditionalValidationMixin,

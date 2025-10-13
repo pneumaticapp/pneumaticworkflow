@@ -7,9 +7,7 @@ from src.processes.tests.fixtures import (
     create_test_template,
     create_test_account,
 )
-from src.processes.models import (
-    TemplateOwner,
-)
+from src.processes.models.templates.owner import TemplateOwner
 from src.processes.enums import (
     OwnerType,
 )

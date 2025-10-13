@@ -1,14 +1,12 @@
 import pytest
 from django.contrib.auth import get_user_model
 from django.utils import timezone
-from src.processes.models import (
-    Template,
-    TaskTemplate,
-    Workflow,
-    Kickoff,
-    FieldTemplate,
-    TemplateOwner,
-)
+from src.processes.models.templates.template import Template
+from src.processes.models.templates.kickoff import Kickoff
+from src.processes.models.templates.task import TaskTemplate
+from src.processes.models.templates.owner import TemplateOwner
+from src.processes.models.templates.fields import FieldTemplate
+from src.processes.models.workflows.workflow import Workflow
 from src.processes.tests.fixtures import (
     create_test_user,
     create_test_template,

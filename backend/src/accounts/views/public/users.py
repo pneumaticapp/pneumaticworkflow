@@ -4,7 +4,7 @@ from rest_framework.viewsets import GenericViewSet
 from src.generics.mixins.views import (
     CustomViewSetMixin,
 )
-from src.accounts.serializers.public import PublicUserSerializer
+from src.accounts.serializers.public.users import PublicUserSerializer
 from src.processes.permissions import PublicTemplatePermission
 
 UserModel = get_user_model()

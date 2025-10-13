@@ -36,7 +36,7 @@ def test_token__partner__ok(
         'token': 'some token',
     }
     authenticate_mock = mocker.patch(
-        'src.authentication.services.AuthService'
+        'src.authentication.services.user_auth.AuthService'
         '.get_auth_token',
         return_value=token_data,
     )
@@ -93,7 +93,7 @@ def test_token__any_premium_plan__ok(
         'token': 'some token',
     }
     authenticate_mock = mocker.patch(
-        'src.authentication.services.AuthService'
+        'src.authentication.services.user_auth.AuthService'
         '.get_auth_token',
         return_value=token_data,
     )
@@ -144,7 +144,7 @@ def test_token__tenant__permission_denied(
     )
     api_client.token_authenticate(account_owner)
     authenticate_mock = mocker.patch(
-        'src.authentication.services.AuthService'
+        'src.authentication.services.user_auth.AuthService'
         '.get_auth_token',
     )
     tenants_accessed_mock = mocker.patch(
@@ -185,7 +185,7 @@ def test_token__free_plan__ok(
         'token': 'some token',
     }
     authenticate_mock = mocker.patch(
-        'src.authentication.services.AuthService'
+        'src.authentication.services.user_auth.AuthService'
         '.get_auth_token',
         return_value=token_data,
     )
@@ -236,7 +236,7 @@ def test_token__expired_subscription__permission_denied(
     )
     api_client.token_authenticate(account_owner)
     authenticate_mock = mocker.patch(
-        'src.authentication.services.AuthService'
+        'src.authentication.services.user_auth.AuthService'
         '.get_auth_token',
     )
 
@@ -279,7 +279,7 @@ def test_token__another_account_tenant__permission_denied(
     )
     api_client.token_authenticate(account_owner)
     authenticate_mock = mocker.patch(
-        'src.authentication.services.AuthService'
+        'src.authentication.services.user_auth.AuthService'
         '.get_auth_token',
     )
 
@@ -317,7 +317,7 @@ def test_token__not_admin__permission_denied(
         email='tenant_owner@test.test',
     )
     authenticate_mock = mocker.patch(
-        'src.authentication.services.AuthService'
+        'src.authentication.services.user_auth.AuthService'
         '.get_auth_token',
     )
     api_client.token_authenticate(master_account_not_admin)
@@ -352,7 +352,7 @@ def test_token__not_tenant__permission_denied(
         lease_level=LeaseLevel.TENANT,
     )
     authenticate_mock = mocker.patch(
-        'src.authentication.services.AuthService'
+        'src.authentication.services.user_auth.AuthService'
         '.get_auth_token',
     )
     api_client.token_authenticate(master_account_not_admin)

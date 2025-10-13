@@ -1,9 +1,7 @@
 from django.utils import timezone
 from src.processes.enums import TaskStatus
-from src.processes.services.workflow_action import (
-    WorkflowActionService,
-)
-from src.processes.models import Delay
+from src.processes.services.workflow_action import WorkflowActionService
+from src.processes.models.workflows.task import Delay
 from src.authentication.enums import AuthTokenType
 from django.contrib.auth import get_user_model
 

@@ -10,10 +10,8 @@ from src.processes.services.workflows.workflow import (
 from src.processes.services.exceptions import (
     WorkflowServiceException,
 )
-from src.processes.models import (
-    Template,
-    SystemTemplate,
-)
+from src.processes.models.templates.system_template import SystemTemplate
+from src.processes.models.templates.template import Template
 from src.processes.enums import (
     FieldType,
 )

@@ -12,7 +12,7 @@ from src.accounts.models import (
 )
 from src.generics.managers import BaseSoftDeleteManager
 from src.generics.models import SoftDeleteModel
-from src.processes.models import Workflow
+from src.processes.models.workflows.workflow import Workflow
 from src.processes.models.mixins import (
     TaskMixin,
     TaskRawPerformersMixin,
@@ -128,9 +128,7 @@ class Task(
 
         """ Returns new a raw performer object with given data """
 
-        from src.processes.models.workflows\
-            .raw_performer import RawPerformer
-
+        from src.processes.models.workflows.raw_performer import RawPerformer
         result = RawPerformer(
             account=self.account,
             task=self,
@@ -245,10 +243,8 @@ class Task(
             if task_template is None,
             the task_template specified in task_template_id will be used """
 
-        from src.processes.models.templates\
-            .task import TaskTemplate
-        from src.processes.models.workflows\
-            .raw_performer import RawPerformer
+        from src.processes.models.templates.task import TaskTemplate
+        from src.processes.models.workflows.raw_performer import RawPerformer
 
         raw_performers_templates = ()
         if isinstance(task_template, TaskTemplate):

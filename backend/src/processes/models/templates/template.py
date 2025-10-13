@@ -181,8 +181,7 @@ class Template(
         return qst
 
     def get_tasks(self, performer_id: int):
-        from src.processes.models.templates\
-            .task import TaskTemplate
+        from src.processes.models.templates.task import TaskTemplate
 
         return TaskTemplate.objects.with_tasks_in_progress(
             template_id=self.id,

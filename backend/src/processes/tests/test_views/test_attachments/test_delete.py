@@ -1,5 +1,5 @@
 import pytest
-from src.processes.models import FileAttachment
+from src.processes.models.workflows.attachment import FileAttachment
 from src.processes.tests.fixtures import create_test_user
 from src.processes.messages.workflow import (
     MSG_PW_0001,

@@ -8,12 +8,12 @@ from src.processes.tests.fixtures import (
     create_test_workflow,
     create_test_group,
 )
-from src.processes.models import TaskPerformer
+from src.processes.models.workflows.task import TaskPerformer
 from src.accounts.enums import (
     UserDateFormat,
     BillingPlanType,
 )
-from src.authentication.services import GuestJWTAuthService
+from src.authentication.services.guest_auth import GuestJWTAuthService
 from src.utils.dates import date_format
 
 

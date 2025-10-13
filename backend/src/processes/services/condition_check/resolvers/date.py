@@ -1,9 +1,7 @@
 from datetime import datetime
-
 from django.db.models import Q
-
-from src.processes.models import TaskField
-from .base import Resolver
+from src.processes.models.workflows.fields import TaskField
+from src.processes.services.condition_check.resolvers.base import Resolver
 
 
 class DateResolver(Resolver):

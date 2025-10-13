@@ -19,7 +19,7 @@ from src.processes.services.exceptions import (
     WorkflowActionServiceException,
 )
 from src.utils.validation import ErrorCode
-from src.processes.models import TemplateOwner
+from src.processes.models.templates.owner import TemplateOwner
 from src.generics.messages import MSG_GE_0007
 
 

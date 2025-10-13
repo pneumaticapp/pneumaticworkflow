@@ -3,10 +3,8 @@ from src.processes.services.tasks.base import (
     BasePerformerService2,
 )
 from src.accounts.models import UserGroup
+from src.processes.models.workflows.task import TaskPerformer
 from src.analytics.services import AnalyticService
-from src.processes.models import (
-    TaskPerformer,
-)
 from src.authentication.enums import AuthTokenType
 from src.processes.services.tasks.exceptions import (
     GroupPerformerServiceException,

@@ -10,9 +10,7 @@ from src.processes.tests.fixtures import (
     create_test_user,
     create_test_account,
 )
-from src.accounts.services import (
-    AccountService,
-)
+from src.accounts.services.account import AccountService
 from src.authentication.enums import AuthTokenType
 from src.payment.stripe.service import StripeService
 from src.payment.stripe.exceptions import StripeServiceException
@@ -46,7 +44,7 @@ def test_delete__premium_plan__ok(
         return_value=None,
     )
     update_users_counts_mock = mocker.patch(
-        'src.accounts.services.AccountService'
+        'src.accounts.services.account.AccountService'
         '.update_users_counts',
     )
     cancel_subscription_mock = mocker.patch(
@@ -109,7 +107,7 @@ def test_delete__premium_plan__billing_disabled__ok(
         return_value=None,
     )
     update_users_counts_mock = mocker.patch(
-        'src.accounts.services.AccountService'
+        'src.accounts.services.account.AccountService'
         '.update_users_counts',
     )
     cancel_subscription_mock = mocker.patch(
@@ -168,7 +166,7 @@ def test_delete__unlimited_plan__ok(
         return_value=None,
     )
     update_users_counts_mock = mocker.patch(
-        'src.accounts.services.AccountService'
+        'src.accounts.services.account.AccountService'
         '.update_users_counts',
     )
     stripe_service_init_mock = mocker.patch.object(
@@ -238,7 +236,7 @@ def test_delete__unlimited_plan__billing_disabled__ok(
         return_value=None,
     )
     update_users_counts_mock = mocker.patch(
-        'src.accounts.services.AccountService'
+        'src.accounts.services.account.AccountService'
         '.update_users_counts',
     )
     stripe_service_init_mock = mocker.patch.object(
@@ -305,7 +303,7 @@ def test_delete__fractionalcoo_plan__ok(
         return_value=None,
     )
     update_users_counts_mock = mocker.patch(
-        'src.accounts.services.AccountService'
+        'src.accounts.services.account.AccountService'
         '.update_users_counts',
     )
     stripe_service_init_mock = mocker.patch.object(
@@ -372,7 +370,7 @@ def test_delete__free_plan__ok(
         return_value=None,
     )
     update_users_counts_mock = mocker.patch(
-        'src.accounts.services.AccountService'
+        'src.accounts.services.account.AccountService'
         '.update_users_counts',
     )
     stripe_service_init_mock = mocker.patch.object(
@@ -606,7 +604,7 @@ def test_delete__stripe_exception__validation_error(
         return_value=None,
     )
     update_users_counts_mock = mocker.patch(
-        'src.accounts.services.AccountService'
+        'src.accounts.services.account.AccountService'
         '.update_users_counts',
     )
     message = 'message'
@@ -674,7 +672,7 @@ def test_delete__disable_billing__permission_denied(
         return_value=None,
     )
     update_users_counts_mock = mocker.patch(
-        'src.accounts.services.AccountService'
+        'src.accounts.services.account.AccountService'
         '.update_users_counts',
     )
     stripe_service_init_mock = mocker.patch.object(

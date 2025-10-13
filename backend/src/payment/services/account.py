@@ -3,7 +3,7 @@ from django.utils import timezone
 from django.contrib.auth import get_user_model
 
 from src.analytics.services import AnalyticService
-from src.accounts.services import AccountService
+from src.accounts.services.account import AccountService
 from src.accounts.enums import (
     BillingPlanType,
 )

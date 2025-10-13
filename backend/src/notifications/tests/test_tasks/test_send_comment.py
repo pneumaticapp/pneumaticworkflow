@@ -4,7 +4,7 @@ from src.processes.tests.fixtures import (
     create_test_user,
     create_test_account,
 )
-from src.processes.models import WorkflowEvent
+from src.processes.models.workflows.event import WorkflowEvent
 from src.processes.enums import WorkflowEventType
 from src.processes.serializers.workflows.events import (
     TaskEventJsonSerializer,

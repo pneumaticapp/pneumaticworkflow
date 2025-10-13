@@ -5,15 +5,13 @@ from django.contrib.auth import get_user_model
 from django.http import HttpRequest
 from src.authentication.enums import AuthTokenType
 from src.accounts.enums import Language
-from src.accounts.services import (
-    AccountService,
-    UserService,
-)
+from src.accounts.services.account import AccountService
+from src.accounts.services.user import UserService
 from src.accounts.services.exceptions import (
     AccountServiceException,
     UserServiceException,
 )
-from src.authentication.services import AuthService
+from src.authentication.services.user_auth import AuthService
 from src.utils.validation import raise_validation_error
 from src.processes.services.system_workflows import (
     SystemWorkflowService,

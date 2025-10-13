@@ -2,7 +2,7 @@ import pytest
 from django.utils import timezone
 from datetime import timedelta
 from django.contrib.auth import get_user_model
-from src.accounts.services import AccountService
+from src.accounts.services.account import AccountService
 from src.processes.tests.fixtures import (
     create_test_account,
     create_test_user,
@@ -301,7 +301,7 @@ def test_create__freemium_to_trial__ok(mocker, identify_mock):
         return_value=None,
     )
     account_service_partial_update_mock = mocker.patch(
-        'src.accounts.services.'
+        'src.accounts.services.account.'
         'AccountService.partial_update',
     )
     analytics_trial_subscription_created_mock = mocker.patch(
@@ -373,7 +373,7 @@ def test_create__trial_ended__not_trial(mocker, identify_mock):
         return_value=None,
     )
     account_service_partial_update_mock = mocker.patch(
-        'src.accounts.services.'
+        'src.accounts.services.account.'
         'AccountService.partial_update',
     )
     analytics_trial_subscription_created_mock = mocker.patch(
@@ -442,7 +442,7 @@ def test_create__freemium_to_premium__ok(mocker, identify_mock):
         return_value=None,
     )
     account_service_partial_update_mock = mocker.patch(
-        'src.accounts.services.'
+        'src.accounts.services.account.'
         'AccountService.partial_update',
     )
     analytics_subscription_created_mock = mocker.patch(
@@ -515,7 +515,7 @@ def test_create__tmp_subscription_to_premium_trial__ok(mocker, identify_mock):
         return_value=None,
     )
     account_service_partial_update_mock = mocker.patch(
-        'src.accounts.services.'
+        'src.accounts.services.account.'
         'AccountService.partial_update',
     )
     analytics_subscription_created_mock = mocker.patch(
@@ -666,7 +666,7 @@ def test_update__trial_to_premium__ok(mocker, identify_mock):
         return_value=None,
     )
     account_service_partial_update_mock = mocker.patch(
-        'src.accounts.services.'
+        'src.accounts.services.account.'
         'AccountService.partial_update',
     )
     analytics_subscription_converted_mock = mocker.patch(
@@ -729,7 +729,7 @@ def test_update__premium_to_premium__ok(mocker, identify_mock):
         return_value=None,
     )
     account_service_partial_update_mock = mocker.patch(
-        'src.accounts.services.'
+        'src.accounts.services.account.'
         'AccountService.partial_update',
     )
     analytics_subscription_updated_mock = mocker.patch(
@@ -863,7 +863,7 @@ def test_expired__ok(mocker):
         return_value=None,
     )
     account_service_partial_update_mock = mocker.patch(
-        'src.accounts.services.'
+        'src.accounts.services.account.'
         'AccountService.partial_update',
     )
     is_superuser = True

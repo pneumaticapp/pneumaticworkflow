@@ -1,11 +1,9 @@
 from typing import Tuple
 from django.contrib.auth import get_user_model
-from src.processes.models import (
-    Checklist,
-)
+from src.processes.models.workflows.checklist import Checklist
 from src.processes.services.tasks.checklist_selection import (
-        ChecklistSelectionVersionService,
-    )
+    ChecklistSelectionVersionService,
+)
 from src.processes.services.base import (
     BaseUpdateVersionService,
 )

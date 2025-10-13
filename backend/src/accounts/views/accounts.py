@@ -7,7 +7,7 @@ from src.accounts.permissions import (
     ExpiredSubscriptionPermission,
     BillingPlanPermission,
 )
-from src.accounts.services import AccountService
+from src.accounts.services.account import AccountService
 from src.accounts.serializers.accounts import (
     AccountSerializer,
     AccountPlanSerializer,

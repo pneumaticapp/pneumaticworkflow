@@ -17,9 +17,7 @@ from src.processes.enums import (
 from src.processes.messages.workflow import (
     MSG_PW_0067,
 )
-from src.processes.models import (
-    TaskTemplate,
-)
+from src.processes.models.templates.task import TaskTemplate
 
 
 class WorkflowCountsResponseSerializer(Serializer):

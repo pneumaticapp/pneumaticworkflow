@@ -3,10 +3,8 @@ from typing import Optional, Union, Tuple
 from django.contrib.auth import get_user_model
 from src.authentication.enums import AuthTokenType
 from src.accounts.models import UserGroup
-from src.processes.models import (
-    TaskPerformer,
-    Template,
-)
+from src.processes.models.workflows.task import TaskPerformer
+from src.processes.models.templates.template import Template
 from src.processes.enums import (
     DirectlyStatus,
     PerformerType,
@@ -21,7 +19,7 @@ from src.processes.messages.workflow import (
     MSG_PW_0018,
     MSG_PW_0021,
 )
-from src.processes.models import Task
+from src.processes.models.workflows.task import Task
 
 
 UserModel = get_user_model()

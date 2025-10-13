@@ -8,14 +8,14 @@ from src.processes.messages.workflow import (
 from src.processes.messages.template import (
     MSG_PT_0023,
 )
-from src.processes.models import (
-    Template,
-    Workflow,
-    Task,
-    WorkflowEvent,
-    Checklist,
+from src.processes.models.templates.template import Template
+from src.processes.models.workflows.workflow import Workflow
+from src.processes.models.workflows.task import (
     TaskPerformer,
+    Task,
 )
+from src.processes.models.workflows.event import WorkflowEvent
+from src.processes.models.workflows.checklist import Checklist
 from src.accounts.enums import UserType
 
 

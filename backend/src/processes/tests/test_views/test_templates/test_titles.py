@@ -1,5 +1,5 @@
 import pytest
-from src.authentication.services import GuestJWTAuthService
+from src.authentication.services.guest_auth import GuestJWTAuthService
 from src.processes.tests.fixtures import (
     create_test_user,
     create_test_template,
@@ -20,10 +20,8 @@ from src.processes.enums import (
     TemplateType,
     TaskStatus,
 )
-from src.processes.models import (
-    TemplateOwner,
-    TaskPerformer,
-)
+from src.processes.models.templates.owner import TemplateOwner
+from src.processes.models.workflows.task import TaskPerformer
 from src.processes.messages import template as messages
 from src.utils.validation import ErrorCode
 

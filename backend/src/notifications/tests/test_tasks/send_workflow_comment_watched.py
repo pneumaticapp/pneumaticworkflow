@@ -3,7 +3,7 @@ from django.utils import timezone
 from src.processes.enums import (
     WorkflowEventActionType,
 )
-from src.processes.models import (
+from src.processes.models.workflows.event import (
     WorkflowEventAction,
 )
 from src.processes.tests.fixtures import (

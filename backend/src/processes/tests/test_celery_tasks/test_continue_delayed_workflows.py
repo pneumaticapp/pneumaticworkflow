@@ -3,9 +3,7 @@ import pytest
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 from src.authentication.enums import AuthTokenType
-from src.processes.models import (
-    Delay,
-)
+from src.processes.models.workflows.task import Delay
 from src.processes.tasks.delay import (
     continue_delayed_workflows,
 )

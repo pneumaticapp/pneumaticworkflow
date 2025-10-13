@@ -12,10 +12,8 @@ from src.processes.serializers.templates.mixins import (
     CreateOrUpdateInstanceMixin,
     CustomValidationApiNameMixin,
 )
-from src.processes.models import (
-    PredicateTemplate,
-    FieldTemplateSelection,
-)
+from src.processes.models.templates.conditions import PredicateTemplate
+from src.processes.models.templates.fields import FieldTemplateSelection
 from src.processes.enums import (
     FieldType,
     PredicateOperator,

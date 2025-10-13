@@ -7,12 +7,10 @@ from src.generics.mixins.serializers import (
     CustomValidationErrorMixin,
     ValidationUtilsMixin,
 )
-from src.processes.models import (
-    Workflow,
-    Template,
-    KickoffValue,
-    WorkflowEvent,
-)
+from src.processes.models.templates.template import Template
+from src.processes.models.workflows.workflow import Workflow
+from src.processes.models.workflows.event import WorkflowEvent
+from src.processes.models.workflows.kickoff import KickoffValue
 from src.processes.serializers.workflows.field import (
     TaskFieldSerializer,
 )

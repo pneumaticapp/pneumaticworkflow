@@ -8,10 +8,8 @@ from src.processes.services.attachments import (
 )
 from src.processes.enums import FieldType
 from src.processes.messages import workflow as messages
-from src.processes.models import (
-    FileAttachment,
-    TaskField,
-)
+from src.processes.models.workflows.attachment import FileAttachment
+from src.processes.models.workflows.fields import TaskField
 from src.processes.tests.fixtures import (
     create_test_user,
     create_test_workflow,

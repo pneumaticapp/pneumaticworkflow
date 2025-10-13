@@ -6,7 +6,7 @@ from src.authentication.tokens import (
     PublicToken,
     EmbedToken,
 )
-from src.processes.models import Template
+from src.processes.models.templates.template import Template
 
 
 class PublicAuthService(BaseAuthentication):

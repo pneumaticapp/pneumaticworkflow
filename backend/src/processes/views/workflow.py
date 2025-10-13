@@ -14,26 +14,19 @@ from src.accounts.permissions import (
     BillingPlanPermission,
     AccountOwnerPermission,
 )
-from src.analytics.actions import (
-    WorkflowActions,
-)
+from src.analytics.actions import WorkflowActions
 from src.generics.filters import PneumaticFilterBackend
 from src.processes.paginations import WorkflowListPagination
 from src.generics.paginations import DefaultPagination
-
-from src.processes.models import (
-    Workflow,
-    WorkflowEvent,
-)
+from src.processes.models.workflows.workflow import Workflow
+from src.processes.models.workflows.event import WorkflowEvent
 from src.processes.permissions import (
     WorkflowOwnerPermission,
     WorkflowMemberPermission,
     GuestWorkflowPermission,
     GuestWorkflowEventsPermission,
 )
-from src.processes.serializers.comments import (
-    CommentCreateSerializer,
-)
+from src.processes.serializers.comments import CommentCreateSerializer
 from src.processes.serializers.workflows.workflow import (
     WorkflowDetailsSerializer,
     WorkflowTaskCompleteSerializer,
@@ -46,9 +39,7 @@ from src.processes.serializers.workflows.workflow import (
     WorkflowSnoozeSerializer,
     WorkflowFieldsFilterSerializer,
 )
-from src.processes.serializers.workflows.events import (
-    WorkflowEventSerializer,
-)
+from src.processes.serializers.workflows.events import WorkflowEventSerializer
 from src.accounts.enums import UserType
 from src.generics.mixins.views import CustomViewSetMixin
 from src.generics.permissions import (
@@ -59,21 +50,13 @@ from src.processes.filters import (
     WorkflowEventFilter,
     WorkflowWebhookFilterSet,
 )
-from src.processes.services.exceptions import (
-    WorkflowActionServiceException,
-)
-from src.processes.services.workflow_action import (
-    WorkflowActionService,
-)
-from src.processes.services.events import (
-    CommentService,
-)
+from src.processes.services.exceptions import WorkflowActionServiceException
+from src.processes.services.workflow_action import WorkflowActionService
+from src.processes.services.events import CommentService
 from src.processes.services.exceptions import (
     CommentServiceException,
 )
-from src.processes.services.tasks.exceptions import (
-    TaskFieldException,
-)
+from src.processes.services.tasks.exceptions import TaskFieldException
 from src.processes.enums import WorkflowEventType
 from src.webhooks.enums import HookEvent
 

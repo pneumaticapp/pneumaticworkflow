@@ -15,9 +15,7 @@ from src.accounts.enums import (
     UserStatus,
     BillingPlanType,
 )
-from src.accounts.services import (
-    AccountService,
-)
+from src.accounts.services.account import AccountService
 from src.processes.tests.fixtures import (
     create_test_guest,
     create_test_user,

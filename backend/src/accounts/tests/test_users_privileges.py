@@ -1,5 +1,5 @@
 import pytest
-from src.authentication.services import GuestJWTAuthService
+from src.authentication.services.guest_auth import GuestJWTAuthService
 from src.accounts.enums import (
     UserDateFormat,
     UserStatus,
@@ -7,12 +7,10 @@ from src.accounts.enums import (
 )
 from src.accounts.services.user import UserService
 from src.processes.enums import OwnerType
-from src.processes.models import (
-    TaskPerformer,
-    TemplateOwner,
-    TaskTemplate,
-    RawPerformerTemplate,
-)
+from src.processes.models.workflows.task import TaskPerformer
+from src.processes.models.templates.owner import TemplateOwner
+from src.processes.models.templates.task import TaskTemplate
+from src.processes.models.templates.raw_performer import RawPerformerTemplate
 from src.processes.tests.fixtures import (
     create_test_template,
     create_test_user,

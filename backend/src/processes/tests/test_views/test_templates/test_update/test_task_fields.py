@@ -3,10 +3,10 @@ from src.processes.tests.fixtures import (
     create_test_user,
     create_test_template,
 )
-from src.processes.models import (
-    FieldTemplate,
+from src.processes.models.workflows.workflow import Workflow
+from src.processes.models.templates.fields import (
     FieldTemplateSelection,
-    Workflow,
+    FieldTemplate,
 )
 from src.processes.enums import (
     PerformerType,

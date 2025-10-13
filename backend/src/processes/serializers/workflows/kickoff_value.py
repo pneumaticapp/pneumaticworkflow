@@ -1,13 +1,11 @@
 from typing import Any, Dict
 from rest_framework import serializers
-from src.processes.models import KickoffValue
 from src.processes.serializers.workflows.field import (
     TaskFieldSerializer,
 )
-from src.processes.models import (
-    Workflow,
-    Kickoff,
-)
+from src.processes.models.workflows.workflow import Workflow
+from src.processes.models.templates.kickoff import Kickoff
+from src.processes.models.workflows.kickoff import KickoffValue
 from src.generics.serializers import CustomValidationErrorMixin
 from src.processes.services.tasks.task import (
     TaskFieldService,

@@ -10,10 +10,9 @@ from src.processes.tests.fixtures import (
     create_test_workflow,
     create_test_account,
 )
-from src.processes.models import (
-    Template,
-    TemplateOwner,
-)
+from src.processes.models.templates.template import Template
+from src.processes.models.templates.owner import TemplateOwner
+
 from src.processes.enums import (
     PerformerType,
     OwnerType,

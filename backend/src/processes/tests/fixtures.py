@@ -38,25 +38,31 @@ from src.processes.enums import (
     PerformerType,
     FieldType,
 )
-from src.processes.models import (
-    Kickoff,
-    KickoffValue,
-    Template,
-    TaskTemplate,
-    Workflow,
-    FileAttachment,
-    ChecklistTemplateSelection,
+from src.processes.models.templates.template import Template
+from src.processes.models.templates.kickoff import Kickoff
+from src.processes.models.templates.task import TaskTemplate
+from src.processes.models.templates.checklist import (
     ChecklistTemplate,
-    WorkflowEvent,
-    TaskField,
-    Task,
-    TemplateOwner,
+    ChecklistTemplateSelection,
+)
+from src.processes.models.templates.owner import TemplateOwner
+from src.processes.models.templates.conditions import (
     ConditionTemplate,
-    RuleTemplate,
     PredicateTemplate,
+    RuleTemplate,
+)
+from src.processes.models.workflows.workflow import Workflow
+from src.processes.models.workflows.task import Task
+from src.processes.models.workflows.event import WorkflowEvent
+from src.processes.models.workflows.kickoff import KickoffValue
+from src.processes.models.workflows.attachment import FileAttachment
+from src.processes.models.workflows.conditions import (
     Condition,
-    Rule,
     Predicate,
+    Rule,
+)
+from src.processes.models.workflows.fields import (
+    TaskField,
 )
 from src.processes.services.tasks.task import TaskService
 from src.accounts.models import UserGroup

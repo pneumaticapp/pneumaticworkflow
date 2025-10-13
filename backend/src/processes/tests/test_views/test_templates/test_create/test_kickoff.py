@@ -3,7 +3,7 @@ from django.contrib.auth import get_user_model
 from src.processes.tests.fixtures import (
     create_test_user,
 )
-from src.processes.models import Kickoff
+from src.processes.models.templates.kickoff import Kickoff
 from src.processes.enums import (
     PerformerType,
     OwnerType,

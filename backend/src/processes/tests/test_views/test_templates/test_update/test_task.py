@@ -1,7 +1,6 @@
 # ruff: noqa: UP031
 import pytest
 from datetime import timedelta
-
 from src.utils.validation import ErrorCode
 from src.processes.messages import template as messages
 from src.processes.tests.fixtures import (
@@ -11,11 +10,13 @@ from src.processes.tests.fixtures import (
     create_test_account,
     create_test_workflow,
 )
-from src.processes.models import (
+from src.processes.models.templates.task import TaskTemplate
+from src.processes.models.templates.raw_due_date import RawDueDateTemplate
+from src.processes.models.templates.fields import (
     FieldTemplate,
-    TaskTemplate,
-    RawDueDateTemplate,
-    Workflow,
+)
+from src.processes.models.workflows.workflow import Workflow
+from src.processes.models.workflows.fields import (
     TaskField,
 )
 from src.processes.services.versioning.versioning import (

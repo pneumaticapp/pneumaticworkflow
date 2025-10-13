@@ -239,7 +239,7 @@ class TemplateQuerySet(WorkflowsBaseQuerySet):
         owners_group_ids: Optional[List[int]] = None,
         **kwargs,
     ):
-        from src.processes.models import TemplateOwner
+        from src.processes.models.templates.owner import TemplateOwner
         if owners_ids:
             group_ids = (
                 UserGroup.objects
@@ -325,7 +325,7 @@ class WorkflowQuerySet(WorkflowsBaseQuerySet):
             qst = qst.filter(status=status)
         qst = qst.order_by('-date_created')
         if fields:
-            from src.processes.models import TaskField
+            from src.processes.models.workflows.fields import TaskField
             qst = qst.prefetch_related(
                 Prefetch(
                     lookup='fields',
@@ -442,7 +442,7 @@ class WorkflowQuerySet(WorkflowsBaseQuerySet):
             ),
         ]
         if fields:
-            from src.processes.models import TaskField
+            from src.processes.models.workflows.fields import TaskField
             prefetch_args.append(
                 Prefetch(
                     lookup='fields',

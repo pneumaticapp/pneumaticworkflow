@@ -6,7 +6,7 @@ from src.processes.enums import (
     PerformerType,
 )
 from src.accounts.enums import BillingPlanType
-from src.processes.models import TaskPerformer
+from src.processes.models.workflows.task import TaskPerformer
 from src.processes.tests.fixtures import (
     create_test_workflow,
     create_test_user,

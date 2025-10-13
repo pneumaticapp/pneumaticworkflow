@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.contrib.admin import ModelAdmin
 from django.contrib.postgres import fields as pg_fields
 from django_json_widget.widgets import JSONEditorWidget
-from src.processes.models import (
+from src.processes.models.templates.system_template import (
     SystemTemplate,
     SystemWorkflowKickoffData,
     SystemTemplateCategory,

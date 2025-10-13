@@ -3,10 +3,7 @@ from src.processes.tests.fixtures import (
     create_test_user,
     create_test_template,
 )
-from src.processes.models import (
-    Template,
-)
-
+from src.processes.models.templates.template import Template
 from src.processes.enums import (
     PerformerType,
     OwnerType,

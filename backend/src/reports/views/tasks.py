@@ -7,7 +7,7 @@ from src.accounts.permissions import (
     BillingPlanPermission,
 )
 from src.executor import RawSqlExecutor
-from src.processes.models import Template
+from src.processes.models.templates.template import Template
 from src.reports.queries.tasks import (
     TasksOverviewQuery,
     TasksBreakdownQuery,

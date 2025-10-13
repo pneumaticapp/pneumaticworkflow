@@ -22,11 +22,11 @@ from src.processes.serializers.templates.task import (
     TemplateStepFilterSerializer,
     TemplateStepNameSerializer,
 )
-from src.processes.models import (
-    Template,
-    TaskTemplate,
-    SystemTemplate, Kickoff, FieldTemplate,
-)
+from src.processes.models.templates.template import Template
+from src.processes.models.templates.task import TaskTemplate
+from src.processes.models.templates.system_template import SystemTemplate
+from src.processes.models.templates.kickoff import Kickoff
+from src.processes.models.templates.fields import FieldTemplate
 from src.processes.serializers.templates.template import (
     TemplateSerializer,
     TemplateListFilterSerializer,

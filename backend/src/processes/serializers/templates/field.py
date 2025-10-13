@@ -4,7 +4,7 @@ from rest_framework.serializers import (
     IntegerField,
     CharField,
 )
-from src.processes.models import FieldTemplate
+from src.processes.models.templates.fields import FieldTemplate
 from src.processes.serializers.templates.selection import (
     FieldTemplateSelectionSerializer,
     FieldTemplateSelectionListSerializer,

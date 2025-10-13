@@ -2,10 +2,8 @@ import pytest
 from src.accounts.models import (
     UserInvite,
 )
-from src.processes.models import (
-    Template,
-    TemplateOwner,
-)
+from src.processes.models.templates.template import Template
+from src.processes.models.templates.owner import TemplateOwner
 from src.processes.tests.fixtures import (
     create_invited_user,
     create_test_workflow,

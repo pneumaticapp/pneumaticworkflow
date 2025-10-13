@@ -3,9 +3,7 @@ from rest_framework.serializers import (
     ModelSerializer,
     CharField,
 )
-from src.processes.models import (
-    TemplateOwner,
-)
+from src.processes.models.templates.owner import TemplateOwner
 from src.generics.mixins.serializers import (
     AdditionalValidationMixin,
 )

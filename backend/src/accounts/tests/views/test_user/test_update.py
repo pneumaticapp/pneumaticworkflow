@@ -7,7 +7,7 @@ from src.processes.tests.fixtures import (
     create_test_guest,
     create_test_workflow,
 )
-from src.processes.models import TaskPerformer
+from src.processes.models.workflows.task import TaskPerformer
 from src.utils.validation import ErrorCode
 from src.accounts.enums import (
     LeaseLevel,
@@ -19,7 +19,7 @@ from src.accounts.enums import (
 from src.authentication.enums import AuthTokenType
 from src.payment.stripe.service import StripeService
 from src.payment.stripe.exceptions import StripeServiceException
-from src.authentication.services import GuestJWTAuthService
+from src.authentication.services.guest_auth import GuestJWTAuthService
 from src.utils.dates import date_format
 
 

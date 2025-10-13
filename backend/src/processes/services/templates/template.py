@@ -4,24 +4,16 @@ from copy import deepcopy
 from django.contrib.auth import get_user_model
 
 from src.accounts.models import UserGroup
-from src.processes.models import (
-    TaskTemplate,
-    FieldTemplate,
-    SystemTemplate,
-)
+from src.processes.models.templates.task import TaskTemplate
+from src.processes.models.templates.fields import FieldTemplate
+from src.processes.models.templates.template import Template
+from src.processes.models.templates.system_template import SystemTemplate
 from src.processes.utils.common import create_api_name
-from src.processes.utils.common import (
-    insert_fields_values_to_text,
-)
-
+from src.processes.utils.common import insert_fields_values_to_text
 from src.processes.enums import (
     PerformerType,
     sys_template_type_map,
     OwnerType,
-)
-
-from src.processes.models import (
-    Template,
 )
 from src.generics.base.service import BaseModelService
 from rest_framework.serializers import ValidationError

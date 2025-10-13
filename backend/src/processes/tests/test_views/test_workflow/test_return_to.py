@@ -1,19 +1,23 @@
 from datetime import timedelta
 import pytest
 from django.utils import timezone
-from src.processes.models import (
-    Workflow,
-    Delay,
+from src.processes.models.templates.fields import (
     FieldTemplate,
-    ConditionTemplate,
-    RuleTemplate,
-    PredicateTemplate,
     FieldTemplateSelection,
 )
-from src.processes.services.exceptions import \
-    WorkflowActionServiceException
-from src.processes.services.workflow_action import \
-    WorkflowActionService
+from src.processes.models.templates.conditions import (
+    ConditionTemplate,
+    PredicateTemplate,
+    RuleTemplate,
+)
+from src.processes.models.workflows.workflow import Workflow
+from src.processes.models.workflows.task import Delay
+from src.processes.services.exceptions import (
+    WorkflowActionServiceException,
+)
+from src.processes.services.workflow_action import (
+    WorkflowActionService,
+)
 from src.processes.tests.fixtures import (
     create_test_workflow,
     create_test_user,
@@ -259,7 +263,7 @@ def test_return_to__ok(mocker, api_client):
         '.send_removed_task_notification.delay',
     )
     delete_task_guest_cache_mock = mocker.patch(
-        'src.authentication.services.'
+        'src.authentication.services.guest_auth.'
         'GuestJWTAuthService.delete_task_guest_cache',
     )
     send_new_task_notification_mock = mocker.patch(
@@ -522,7 +526,7 @@ def test_return_to__force_snooze_and_return_to__snooze_not_running_again(
         'send_new_task_notification.delay',
     )
     mocker.patch(
-        'src.authentication.services.'
+        'src.authentication.services.guest_auth.'
         'GuestJWTAuthService.delete_task_guest_cache',
     )
     date = timezone.now() + timedelta(days=1)
@@ -582,7 +586,7 @@ def test_return_to__force_snooze_and_resume__snooze_not_running_again(
         'send_new_task_notification.delay',
     )
     mocker.patch(
-        'src.authentication.services.'
+        'src.authentication.services.guest_auth.'
         'GuestJWTAuthService.delete_task_guest_cache',
     )
     date = timezone.now() + timedelta(days=1)
@@ -636,7 +640,7 @@ def test_return_to__task_skipped_by_kickoff_field__update_status_to_pending(
         '.send_removed_task_notification.delay',
     )
     mocker.patch(
-        'src.authentication.services.'
+        'src.authentication.services.guest_auth.'
         'GuestJWTAuthService.delete_task_guest_cache',
     )
     mocker.patch(
@@ -748,7 +752,7 @@ def test_return_to__completed_workflow__ok(
     response_complete = api_client.post(f'/v2/tasks/{task_1.id}/complete')
 
     delete_task_guest_cache_mock = mocker.patch(
-        'src.authentication.services.'
+        'src.authentication.services.guest_auth.'
         'GuestJWTAuthService.delete_task_guest_cache',
     )
     send_new_task_notification_mock = mocker.patch(

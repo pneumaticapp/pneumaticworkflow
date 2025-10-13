@@ -7,9 +7,7 @@ from src.processes.tests.fixtures import (
     create_test_account,
     create_invited_user, create_test_owner, create_test_admin,
 )
-from src.processes.models import (
-    TemplateOwner,
-)
+from src.processes.models.templates.owner import TemplateOwner
 from src.processes.enums import (
     WorkflowStatus,
 )

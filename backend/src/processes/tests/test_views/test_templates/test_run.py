@@ -4,21 +4,24 @@ import pytest
 from datetime import timedelta
 from django.utils import timezone
 from src.analytics.actions import WorkflowActions
-from src.processes.models import (
+from src.processes.models.templates.template import Template
+from src.processes.models.templates.owner import TemplateOwner
+from src.processes.models.templates.raw_due_date import RawDueDateTemplate
+from src.processes.models.templates.fields import (
     FieldTemplate,
-    Workflow,
-    Template,
     FieldTemplateSelection,
-    ConditionTemplate,
-    RuleTemplate,
-    PredicateTemplate,
-    TaskPerformer,
-    RawDueDateTemplate,
-    WorkflowEvent,
-    KickoffValue,
-    FileAttachment,
-    TemplateOwner,
 )
+from src.processes.models.templates.conditions import (
+    ConditionTemplate,
+    PredicateTemplate,
+    RuleTemplate,
+)
+from src.processes.models.workflows.workflow import Workflow
+from src.processes.models.workflows.task import TaskPerformer
+from src.processes.models.workflows.event import WorkflowEvent
+from src.processes.models.workflows.kickoff import KickoffValue
+from src.processes.models.workflows.attachment import FileAttachment
+
 from src.processes.tests.fixtures import (
     create_test_user,
     create_test_template,
@@ -50,9 +53,7 @@ from src.processes.enums import (
 from src.processes.services.workflow_action import (
     WorkflowActionService,
 )
-from src.accounts.services import (
-    UserInviteService,
-)
+from src.accounts.services.user_invite import UserInviteService
 from src.accounts.enums import (
     SourceType,
     BillingPlanType,
@@ -62,7 +63,7 @@ from src.processes.enums import DirectlyStatus
 from src.processes.services.templates.integrations import (
     TemplateIntegrationsService,
 )
-from src.authentication.services import GuestJWTAuthService
+from src.authentication.services.guest_auth import GuestJWTAuthService
 from src.accounts.messages import MSG_A_0037
 from src.generics.messages import MSG_GE_0007
 from src.processes.messages.workflow import (

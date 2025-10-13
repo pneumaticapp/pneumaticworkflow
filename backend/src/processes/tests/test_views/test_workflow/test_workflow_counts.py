@@ -17,11 +17,10 @@ from src.processes.enums import (
 )
 from src.utils.validation import ErrorCode
 from src.processes.messages import workflow as messages
-from src.processes.models import (
-    TaskPerformer,
-    TemplateOwner,
-)
+from src.processes.models.workflows.task import TaskPerformer
+from src.processes.models.templates.owner import TemplateOwner
 from src.processes.enums import OwnerType
+
 
 pytestmark = pytest.mark.django_db
 

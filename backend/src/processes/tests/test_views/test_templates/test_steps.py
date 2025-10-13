@@ -1,6 +1,6 @@
 import pytest
 
-from src.authentication.services import GuestJWTAuthService
+from src.authentication.services.guest_auth import GuestJWTAuthService
 from src.processes.tests.fixtures import (
     create_test_template,
     create_test_workflow,
@@ -17,10 +17,8 @@ from src.processes.enums import (
     TemplateType,
     OwnerType, PerformerType, TaskStatus,
 )
-from src.processes.models import (
-    TemplateOwner,
-    TaskPerformer,
-)
+from src.processes.models.templates.owner import TemplateOwner
+from src.processes.models.workflows.task import TaskPerformer
 
 
 pytestmark = pytest.mark.django_db

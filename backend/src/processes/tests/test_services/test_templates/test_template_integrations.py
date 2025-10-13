@@ -12,7 +12,7 @@ from src.processes.entities import (
     PrivateTemplateIntegrationsData,
 )
 from src.processes.enums import TemplateIntegrationType
-from src.processes.models import TemplateIntegrations
+from src.processes.models.templates.template import TemplateIntegrations
 from src.processes.serializers.templates.integrations import (
     TemplateIntegrationsSerializer,
 )

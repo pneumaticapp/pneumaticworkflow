@@ -1,9 +1,7 @@
 from src.accounts.models import User
 from src.processes.enums import TaskStatus
-from src.processes.models import (
-    Task,
-    TaskTemplate,
-)
+from src.processes.models.workflows.task import Task
+from src.processes.models.templates.task import TaskTemplate
 
 
 def user_is_last_performer(user: User):

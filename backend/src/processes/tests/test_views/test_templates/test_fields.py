@@ -1,6 +1,6 @@
 import pytest
 
-from src.authentication.services import GuestJWTAuthService
+from src.authentication.services.guest_auth import GuestJWTAuthService
 from src.authentication.tokens import PublicToken
 from src.processes.tests.fixtures import (
     create_test_account,
@@ -10,11 +10,10 @@ from src.processes.tests.fixtures import (
     create_test_admin,
     create_test_not_admin, create_test_guest,
 )
-from src.processes.models import (
-    Template,
-    TemplateOwner,
-    FieldTemplate, TaskPerformer,
-)
+from src.processes.models.templates.template import Template
+from src.processes.models.templates.owner import TemplateOwner
+from src.processes.models.templates.fields import FieldTemplate
+from src.processes.models.workflows.task import TaskPerformer
 from src.processes.enums import (
     PerformerType,
     FieldType,
