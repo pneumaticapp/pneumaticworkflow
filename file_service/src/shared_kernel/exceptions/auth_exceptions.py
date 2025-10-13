@@ -1,0 +1,54 @@
+"""Authentication exceptions"""
+
+from typing import Any, Optional
+
+from .base_exceptions import BaseAppException
+from .error_codes import AUTH_ERROR_CODES
+
+
+class AuthenticationError(BaseAppException):
+    """Authentication error"""
+
+    def __init__(
+        self,
+        details: Optional[str] = None,
+        **kwargs: Any,
+    ) -> None:
+        error_code = AUTH_ERROR_CODES['AUTHENTICATION_FAILED']
+        super().__init__(error_code, details, **kwargs)
+
+
+class TokenExpiredError(AuthenticationError):
+    """Token expired error"""
+
+    def __init__(self, details: Optional[str] = None) -> None:
+        super().__init__(details)
+        # Override error_code for this specific exception
+        self.error_code = AUTH_ERROR_CODES['TOKEN_EXPIRED']
+
+
+class InvalidTokenError(AuthenticationError):
+    """Invalid token error"""
+
+    def __init__(self, details: Optional[str] = None) -> None:
+        super().__init__(details)
+        # Override error_code for this specific exception
+        self.error_code = AUTH_ERROR_CODES['INVALID_TOKEN']
+
+
+class TokenIdentificationError(AuthenticationError):
+    """Token identification error"""
+
+    def __init__(self, details: Optional[str] = None) -> None:
+        super().__init__(details)
+        # Override error_code for this specific exception
+        self.error_code = AUTH_ERROR_CODES['TOKEN_IDENTIFICATION_ERROR']
+
+
+class MissingAccountIdError(AuthenticationError):
+    """Missing account ID error"""
+
+    def __init__(self, details: Optional[str] = None) -> None:
+        super().__init__(details)
+        # Override error_code for this specific exception
+        self.error_code = AUTH_ERROR_CODES['MISSING_ACCOUNT_ID']

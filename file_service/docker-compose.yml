@@ -1,0 +1,88 @@
+services:
+  postgres:
+    image: postgres:15-bookworm
+    container_name: pneumatic-files-db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+    env_file:
+      - .env
+    networks:
+      - pneumatic-network
+
+  files-service:
+    build: .
+    container_name: pneumatic-files-web
+    ports:
+      - "8001:8000"
+    depends_on:
+      - postgres
+    env_file:
+      - .env
+    networks:
+      - pneumatic-network
+
+  seaweedfs-master:
+    image: chrislusf/seaweedfs:3.95
+    container_name: pneumatic-seaweedfs-master
+    profiles:
+      - local-storage
+    command: master -ip=seaweedfs-master -port=9333
+    ports:
+      - "9333:9333"
+      - "19333:19333"
+    volumes:
+      - seaweedfs_master_data:/data
+    networks:
+      - pneumatic-network
+
+  seaweedfs-volume:
+    image: chrislusf/seaweedfs:3.95
+    container_name: pneumatic-seaweedfs-volume
+    profiles:
+      - local-storage
+    command:
+        - volume
+        - -mserver=seaweedfs-master:9333
+        - -port=8080
+        - -ip=seaweedfs-volume
+        - -publicUrl=localhost:8080
+    ports:
+      - "8080:8080"
+      - "18080:18080"
+    depends_on:
+      - seaweedfs-master
+    volumes:
+      - seaweedfs_volume_data:/data
+    networks:
+      - pneumatic-network
+
+  seaweedfs-filer:
+    image: chrislusf/seaweedfs:3.95
+    container_name: pneumatic-seaweedfs-filer
+    profiles:
+      - local-storage
+    command: filer -master="seaweedfs-master:9333" -s3 -s3.port=8333
+    ports:
+      - "8888:8888"  # Filer HTTP port
+      - "8333:8333"  # S3 port
+      - "18888:18888"
+    depends_on:
+      - seaweedfs-master
+      - seaweedfs-volume
+    volumes:
+      - ./seaweedfs/filer.toml:/etc/seaweedfs/filer.toml
+      - seaweedfs_filer_data:/data
+    networks:
+      - pneumatic-network
+
+volumes:
+  postgres_data:
+  seaweedfs_master_data:
+  seaweedfs_volume_data:
+  seaweedfs_filer_data:
+
+networks:
+  pneumatic-network:
+    driver: bridge
