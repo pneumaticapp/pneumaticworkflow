@@ -49,10 +49,12 @@ select = [
     "ISC",
     "ICN",
     "INP",
+    "Q",
     "LOG",
     "FAST",
     "PL",
     "PLE",
+    # "PT", Add later
     "PYI",
     # "S", Maybe add later
     "T20",
@@ -61,12 +63,13 @@ ignore = [
     "DJ001",   # Maybe add later
     "DJ012",   # Maybe add later
     "E731",    # Lambda expressions used in the messages
-    "PLR2004", # Use constans
+    "PLR2004", # Maybe add later
     "PLR0915", # Too many statements
     "PLR0912", # Too many branches
     "PLR0911", # Too many return statements
     "PLR0913", # Too many arguments in function definition
     "S101",    # Allow asserts
+    "Q000",    # Add later
 ]
 extend-select = [
     "E501", # maximum line length

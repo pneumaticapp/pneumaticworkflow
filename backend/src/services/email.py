@@ -19,14 +19,14 @@ class EmailService:
         data: dict,
     ):
         print( # noqa: T201
-            f'''
+            f"""
             -------------------------
             ------EMAIL-MESSAGE------
             To email: {recipient_email}
             Template name: {template_code}
             Message args: {data}
             -------------------------
-            ''',
+            """,
         )
 
     @staticmethod
