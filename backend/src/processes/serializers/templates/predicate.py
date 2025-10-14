@@ -100,7 +100,7 @@ class PredicateTemplateSerializer(
         if value is None and operator in PredicateOperator.UNARY_OPERATORS:
             return value
 
-        elif value is None:
+        if value is None:
             raise raise_validation_error(
                 message=MSG_PT_0046(
                     task=self.context['task'].name,

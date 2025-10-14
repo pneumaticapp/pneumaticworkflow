@@ -48,7 +48,7 @@ class Auth0ViewSet(
     def throttle_classes(self):
         if self.action == 'token':
             return (Auth0TokenThrottle,)
-        elif self.action == 'auth_uri':
+        if self.action == 'auth_uri':
             return (Auth0AuthUriThrottle,)
         return ()
 

@@ -57,23 +57,22 @@ class GroupViewSet(
                 IsAuthenticated(),
                 BillingPlanPermission(),
             )
-        elif self.action == 'retrieve':
+        if self.action == 'retrieve':
             return (
                 UserIsAuthenticated(),
                 BillingPlanPermission(),
                 UserIsAdminOrAccountOwner(),
             )
-        else:
-            return (
-                UserIsAuthenticated(),
-                BillingPlanPermission(),
-                UserIsAdminOrAccountOwner(),
-                ExpiredSubscriptionPermission(),
-            )
+        return (
+            UserIsAuthenticated(),
+            BillingPlanPermission(),
+            UserIsAdminOrAccountOwner(),
+            ExpiredSubscriptionPermission(),
+        )
 
     def get_queryset(self):
         account_id = self.request.user.account_id
-        queryset = UserGroup.objects.on_account(account_id).prefetch_related(
+        return UserGroup.objects.on_account(account_id).prefetch_related(
             Prefetch(
                 'users',
                 queryset=(
@@ -82,7 +81,6 @@ class GroupViewSet(
                     .order_by('last_name')),
             ),
         )
-        return queryset
 
     def list(self, request, *args, **kwargs):
         slz = GroupRequestSerializer(data=request.GET)

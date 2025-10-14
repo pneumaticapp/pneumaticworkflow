@@ -113,5 +113,4 @@ class PublicTemplateViewSet(
             if account.is_subscribed and template.public_success_url:
                 redirect_url = template.public_success_url
             return self.response_ok(data={'redirect_url': redirect_url})
-        else:
-            return self.response_ok()
+        return self.response_ok()

@@ -394,26 +394,25 @@ class UserInlineForm(forms.ModelForm):
         )
         if self.instance.id:
             return super().save(commit=commit)
-        else:
-            # invite and accept new user
-            account = self.cleaned_data['account']
-            email = self.cleaned_data['email']
-            service = UserInviteService(
-                request_user=account.get_owner(),
-                current_url='https://api.pneumatic.app/__cp/',
-                send_email=False,
-            )
-            service.invite_user(
-                email=self.cleaned_data['email'],
-                invited_from=SourceType.EMAIL,
-            )
-            user = account.users.invited().type_user().get(email=email)
-            service.accept(
-                first_name=self.cleaned_data['first_name'],
-                last_name=self.cleaned_data.get('last_name'),
-                invite=user.invite,
-            )
-            return user
+        # invite and accept new user
+        account = self.cleaned_data['account']
+        email = self.cleaned_data['email']
+        service = UserInviteService(
+            request_user=account.get_owner(),
+            current_url='https://api.pneumatic.app/__cp/',
+            send_email=False,
+        )
+        service.invite_user(
+            email=self.cleaned_data['email'],
+            invited_from=SourceType.EMAIL,
+        )
+        user = account.users.invited().type_user().get(email=email)
+        service.accept(
+            first_name=self.cleaned_data['first_name'],
+            last_name=self.cleaned_data.get('last_name'),
+            invite=user.invite,
+        )
+        return user
 
 
 class UserInlineAdmin(StackedInline):
@@ -657,8 +656,7 @@ class AccountAdmin(ModelAdmin):
         result = ''.join(result)
         if result:
             return mark_safe(f'<ul>{result}</ul>')
-        else:
-            return '-'
+        return '-'
     list_tenants.short_description = 'Tenants'
 
     def get_object(self, request, object_id, from_field=None):

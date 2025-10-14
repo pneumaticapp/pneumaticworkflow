@@ -148,8 +148,7 @@ class UserService(
                 number=number + 1,
                 domain=domain,
             )
-        else:
-            return email
+        return email
 
     def _get_incremented_email(self, user: UserModel) -> str:
 

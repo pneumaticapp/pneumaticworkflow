@@ -527,15 +527,14 @@ class Task(
 
         if self.is_completed is True:
             return False
-        else:
-            task_performers = self.taskperformer_set.exclude_directly_deleted()
-            completed_performers = task_performers.completed().exists()
-            incompleted_performers = task_performers.not_completed().exists()
-            by_all = self.require_completion_by_all
-            return (
-                not by_all and completed_performers or
-                by_all and not incompleted_performers
-            )
+        task_performers = self.taskperformer_set.exclude_directly_deleted()
+        completed_performers = task_performers.completed().exists()
+        incompleted_performers = task_performers.not_completed().exists()
+        by_all = self.require_completion_by_all
+        return (
+            not by_all and completed_performers or
+            by_all and not incompleted_performers
+        )
 
     def get_revert_tasks(self):
 
@@ -544,13 +543,12 @@ class Task(
                 api_name=self.revert_task,
                 workflow_id=self.workflow_id,
             )
-        elif self.parents:
+        if self.parents:
             return Task.objects.filter(
                 api_name__in=self.parents,
                 workflow_id=self.workflow_id,
             )
-        else:
-            return []
+        return []
 
     def get_data_for_list(self):
 
@@ -691,8 +689,7 @@ class Delay(
     def is_expired(self):
         if self.estimated_end_date:
             return self.estimated_end_date < timezone.now()
-        else:
-            return False
+        return False
 
     objects = BaseSoftDeleteManager.from_queryset(DelayBaseQuerySet)()
 

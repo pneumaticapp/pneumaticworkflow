@@ -357,11 +357,11 @@ class UserInviteService(
         user = self.account.users.filter(id=user_id).first()
         if not user:
             raise UserNotFoundException
-        elif user.status == UserStatus.ACTIVE:
+        if user.status == UserStatus.ACTIVE:
             raise AlreadyAcceptedInviteException(
                 invites_data=[{'email': user.email}],
             )
-        elif user.status == UserStatus.INVITED:
+        if user.status == UserStatus.INVITED:
             another_account_user = self._get_another_account_user(user.email)
             if another_account_user:
                 self._send_transfer_email(

@@ -70,21 +70,20 @@ class TenantsViewSet(
                 MasterAccountPermission(),
                 UserIsAdminOrAccountOwner(),
             )
-        elif self.action in ('list', 'count'):
+        if self.action in ('list', 'count'):
             return (
                 UserIsAuthenticated(),
                 ExpiredSubscriptionPermission(),
                 MasterAccountPermission(),
                 UserIsAdminOrAccountOwner(),
             )
-        else:
-            return (
-                UserIsAuthenticated(),
-                BillingPlanPermission(),
-                ExpiredSubscriptionPermission(),
-                MasterAccountAccessPermission(),
-                UserIsAdminOrAccountOwner(),
-            )
+        return (
+            UserIsAuthenticated(),
+            BillingPlanPermission(),
+            ExpiredSubscriptionPermission(),
+            MasterAccountAccessPermission(),
+            UserIsAdminOrAccountOwner(),
+        )
 
     def get_queryset(self):
         return self.request.user.account.tenants.only_tenants()

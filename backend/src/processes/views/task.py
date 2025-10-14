@@ -151,7 +151,7 @@ class TaskViewSet(
                 TaskWorkflowMemberPermission(),
                 GuestTaskPermission(),
             )
-        elif self.action in (
+        if self.action in (
             'create_performer',
             'delete_performer',
             'create_group_performer',
@@ -168,7 +168,7 @@ class TaskViewSet(
                 TaskWorkflowOwnerPermission(),
                 UsersOverlimitedPermission(),
             )
-        elif self.action == 'revert':
+        if self.action == 'revert':
             return (
                 UserIsAuthenticated(),
                 ExpiredSubscriptionPermission(),
@@ -176,7 +176,7 @@ class TaskViewSet(
                 UsersOverlimitedPermission(),
                 TaskRevertPermission(),
             )
-        elif self.action == 'complete':
+        if self.action == 'complete':
             return (
                 IsAuthenticated(),
                 ExpiredSubscriptionPermission(),
@@ -184,7 +184,7 @@ class TaskViewSet(
                 UsersOverlimitedPermission(),
                 TaskCompletePermission(),
             )
-        elif self.action == 'webhook_example':
+        if self.action == 'webhook_example':
             return (
                 UserIsAuthenticated(),
                 ExpiredSubscriptionPermission(),
@@ -268,8 +268,7 @@ class TaskViewSet(
     def throttle_classes(self):
         if self.action == 'create_guest_performer':
             return (TaskPerformerGuestThrottle,)
-        else:
-            return ()
+        return ()
 
     def retrieve(self, request, *args, **kwargs):
         task = self.get_object()

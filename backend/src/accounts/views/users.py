@@ -79,24 +79,23 @@ class UsersViewSet(
     def get_permissions(self):
         if self.action == 'transfer':
             return (AllowAny(),)
-        elif self.action in {'list', 'active_count'}:
+        if self.action in {'list', 'active_count'}:
             return (
                 IsAuthenticated(),
                 BillingPlanPermission(),
             )
-        elif self.action == 'privileges':
+        if self.action == 'privileges':
             return (
                 AccountOwnerPermission(),
                 ExpiredSubscriptionPermission(),
                 BillingPlanPermission(),
             )
-        else:
-            return (
-                UserIsAuthenticated(),
-                BillingPlanPermission(),
-                ExpiredSubscriptionPermission(),
-                UserIsAdminOrAccountOwner(),
-            )
+        return (
+            UserIsAuthenticated(),
+            BillingPlanPermission(),
+            ExpiredSubscriptionPermission(),
+            UserIsAdminOrAccountOwner(),
+        )
 
     def get_serializer_context(self, **kwargs):
         context = super().get_serializer_context(**kwargs)
@@ -136,8 +135,7 @@ class UsersViewSet(
             ).exclude(id=self.request.user.id)
         else:
             queryset = self.request.user.account.users
-        queryset = self.prefetch_queryset(queryset)
-        return queryset
+        return self.prefetch_queryset(queryset)
 
     @action(detail=False, methods=('get',))
     def privileges(self, request, *args, **kwargs):

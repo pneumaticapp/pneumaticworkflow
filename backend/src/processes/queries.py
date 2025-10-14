@@ -562,7 +562,7 @@ class WorkflowCountsByCPerformerQuery(
         return where
 
     def _get_from(self):
-        result = f"""
+        return f"""
         FROM processes_workflow pw
             LEFT JOIN processes_workflow_owners ptra
               ON pw.id = ptra.workflow_id
@@ -573,7 +573,6 @@ class WorkflowCountsByCPerformerQuery(
             INNER JOIN processes_taskperformer ptp
               ON pt.id = ptp.task_id
         """
-        return result
 
     def _get_inner_sql(self):
         return f"""
@@ -847,7 +846,7 @@ class WorkflowCountsByTemplateTaskQuery(
         return where
 
     def _get_from(self):
-        result = f"""
+        return f"""
         FROM processes_workflow pw
             INNER JOIN processes_task pt
               ON pw.id = pt.workflow_id
@@ -855,7 +854,6 @@ class WorkflowCountsByTemplateTaskQuery(
             INNER JOIN processes_taskperformer ptp
               ON pt.id = ptp.task_id
         """
-        return result
 
     def _get_inner_sql(self):
         return f"""
@@ -964,8 +962,7 @@ class TaskListQuery(
     def get_is_completed_where(self):
         if self.is_completed:
             return 'ptp.is_completed IS TRUE'
-        else:
-            return f"""
+        return f"""
                 pt.status = '{TaskStatus.ACTIVE}'
                 AND ptp.is_completed IS FALSE
                 AND pw.status = '{WorkflowStatus.RUNNING}'

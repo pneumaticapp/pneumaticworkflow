@@ -62,8 +62,7 @@ class AnalyticService:
             and settings.ANALYTICS_WRITE_KEY
         ):
             return kwargs.get('is_superuser', False)
-        else:
-            return True
+        return True
 
     @classmethod
     def _track(cls, *args, **kwargs) -> bool:

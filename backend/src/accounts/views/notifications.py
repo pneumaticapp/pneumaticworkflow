@@ -54,10 +54,9 @@ class NotificationsViewSet(
                 BillingPlanPermission(),
                 ExpiredSubscriptionPermission(),
             )
-        else:
-            return (
-                UserIsAuthenticated(),
-            )
+        return (
+            UserIsAuthenticated(),
+        )
 
     def get_queryset(self):
         return self.request.user.notifications

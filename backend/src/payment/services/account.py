@@ -34,7 +34,7 @@ class AccountSubscriptionService(BaseIdentifyMixin):
 
         """ Skip updating if webhook already processes """
 
-        plan_changed = (
+        return (
             details.plan_expiration != self.instance.plan_expiration
             or details.billing_period != self.instance.billing_period
             or details.billing_plan != self.instance.billing_plan
@@ -43,7 +43,6 @@ class AccountSubscriptionService(BaseIdentifyMixin):
             or details.trial_start != self.instance.trial_start
             or details.trial_end != self.instance.trial_end
         )
-        return plan_changed
 
     def _create(
         self,

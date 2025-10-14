@@ -39,11 +39,10 @@ class UrgentService:
                 NotificationType.NOT_URGENT if workflow.is_urgent
                 else NotificationType.URGENT
             )
-        else:
-            return (
-                NotificationType.URGENT if workflow.is_urgent
-                else NotificationType.NOT_URGENT
-            )
+        return (
+            NotificationType.URGENT if workflow.is_urgent
+            else NotificationType.NOT_URGENT
+        )
 
     @classmethod
     def _get_prev_urgent_event(

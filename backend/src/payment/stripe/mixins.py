@@ -75,7 +75,7 @@ class StripeMixin:
                 ):
                     # Main account subscription without metadata
                     return elem
-                elif (
+                if (
                     int(account_id) == subscription_account.id
                     and elem.status in self.active_subscription_status
                 ):
@@ -108,12 +108,10 @@ class StripeMixin:
             account_id = subscription.metadata.get('account_id')
             if account_id is None:
                 return account
-            else:
-                account_id = int(account_id)
-                if account_id == account.id:
-                    return account
-                else:
-                    return account.tenants.only_tenants().get(id=account_id)
+            account_id = int(account_id)
+            if account_id == account.id:
+                return account
+            return account.tenants.only_tenants().get(id=account_id)
         except (ValueError, TypeError, ObjectDoesNotExist) as ex:
             raise exceptions.NotFoundAccountForSubscription(
                 account_id=account.id,
@@ -255,12 +253,11 @@ class StripeMixin:
         instance = Price.objects.filter(stripe_id=stripe_id).first()
         if instance:
             return instance.code
-        else:
-            code = self._get_normalized_code('_'.join(code_parts))
-            another_price = Price.objects.filter(code=code).first()
-            if another_price:
-                code = f'{code}_{get_salt(6, exclude=("upper",))}'
-            return code
+        code = self._get_normalized_code('_'.join(code_parts))
+        another_price = Price.objects.filter(code=code).first()
+        if another_price:
+            code = f'{code}_{get_salt(6, exclude=("upper",))}'
+        return code
 
     def _get_product_code(
         self,
@@ -274,13 +271,11 @@ class StripeMixin:
         instance = Product.objects.filter(stripe_id=stripe_id).first()
         if instance:
             return instance.code
-        else:
-            code = self._get_normalized_code(name)
-            another_product = Product.objects.filter(code=code).first()
-            if another_product:
-                return f'{code}_{get_salt(6, exclude=("upper",))}'
-            else:
-                return code
+        code = self._get_normalized_code(name)
+        another_product = Product.objects.filter(code=code).first()
+        if another_product:
+            return f'{code}_{get_salt(6, exclude=("upper",))}'
+        return code
 
     def _get_idempotency_key(self, **kwargs) -> str:
         str_value = json.dumps(kwargs, sort_keys=True, ensure_ascii=True)

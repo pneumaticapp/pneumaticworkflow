@@ -81,25 +81,23 @@ class UserInviteViewSet(
             return (
                 InvitesTokenThrottle,
             )
-        else:
-            return ()
+        return ()
 
     def get_permissions(self):
         if self.action in ('retrieve', 'token'):
             return (
                 PrivateApiPermission(),
             )
-        elif self.action == 'accept':
+        if self.action == 'accept':
             return (
                 AllowAny(),
             )
-        else:
-            return (
-                UserIsAuthenticated(),
-                BillingPlanPermission(),
-                ExpiredSubscriptionPermission(),
-                UserIsAdminOrAccountOwner(),
-            )
+        return (
+            UserIsAuthenticated(),
+            BillingPlanPermission(),
+            ExpiredSubscriptionPermission(),
+            UserIsAdminOrAccountOwner(),
+        )
 
     def get_serializer_context(self, **kwargs):
         context = super().get_serializer_context(**kwargs)

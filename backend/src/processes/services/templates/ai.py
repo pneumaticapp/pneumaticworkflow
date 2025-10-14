@@ -205,10 +205,9 @@ class BaseAiService:
         for number, step in enumerate(steps_data):
             if len(step) != 2:
                 continue
-            else:
-                limit = TaskTemplate.NAME_MAX_LENGTH
-                name = step[0].strip()[:limit]
-                description = step[1].strip()
+            limit = TaskTemplate.NAME_MAX_LENGTH
+            name = step[0].strip()[:limit]
+            description = step[1].strip()
             task_data = self._get_step_data_from_text(
                 number=number + 1,
                 name=name,

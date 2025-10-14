@@ -198,5 +198,4 @@ def get_tasks_ancestors(data: Dict[str, set]) -> Dict[str, set]:
 
     if new_ancestors_found:
         return get_tasks_ancestors(ancestors_by_tasks)
-    else:
-        return ancestors_by_tasks
+    return ancestors_by_tasks

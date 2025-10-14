@@ -112,8 +112,7 @@ class WorkflowMixin(models.Model):
             {field.api_name: str} """
 
         fields = self.get_kickoff_output_fields()
-        values = {field.api_name: field.markdown_value for field in fields}
-        return values
+        return {field.api_name: field.markdown_value for field in fields}
 
     def get_fields_markdown_values(
         self,

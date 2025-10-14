@@ -57,6 +57,7 @@ select = [
     # "PT", Add later
     "PYI",
     "RSE",
+    "RET",
     # "S", Maybe add later
     "T20",
 ]

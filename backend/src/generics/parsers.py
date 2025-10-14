@@ -49,8 +49,7 @@ class CamelCaseJSONParser(JSONParser):
     def _get_iterable(self, data):
         if isinstance(data, QueryDict):
             return data.lists()
-        else:
-            return data.items()
+        return data.items()
 
     def is_iterable(self, obj):
         try:

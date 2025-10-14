@@ -35,8 +35,7 @@ class WorkflowCountsViewSet(
     def get_serializer_class(self):
         if self.action == 'by_template_task':
             return WorkflowCountsByTemplateTaskResponseSerializer
-        else:
-            return WorkflowCountsResponseSerializer
+        return WorkflowCountsResponseSerializer
 
     @action(methods=['get'], detail=False, url_path='by-workflow-starter')
     def by_workflow_starter(self, request, *args, **kwargs):

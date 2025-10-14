@@ -41,13 +41,12 @@ class SendWorkflowsDigest(SendDigest):
             user_id=self._user_id,
             force=self._force,
         )
-        data = RawSqlExecutor.fetch(
+        return RawSqlExecutor.fetch(
             *query.get_sql(),
             stream=True,
             fetch_size=self._fetch_size,
             db=settings.REPLICA,
         )
-        return data
 
     def _add_user_data(self, user_digest: WorkflowsDigest, row):
         user_digest.started += row['started']

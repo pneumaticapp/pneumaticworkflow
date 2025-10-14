@@ -48,3 +48,4 @@ class ConfirmToken(Token):
         data = self.payload.get('subscription')
         if data:
             return TokenSubscriptionData(**data)
+        return None
