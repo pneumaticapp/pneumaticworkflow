@@ -639,6 +639,8 @@ class TaskForList(
 
     objects = BaseSoftDeleteManager.from_queryset(TasksQuerySet)()
 
+    def __str__(self):
+        return self.name
 
 class Delay(
     SoftDeleteModel,

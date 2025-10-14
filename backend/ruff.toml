@@ -34,6 +34,7 @@ select = [
     "B",
     "BLE",
     "C4",
+    "DJ",
     "DTZ",
     "E4",
     "E7",
@@ -45,7 +46,9 @@ select = [
     #"S", Maybe add later
 ]
 ignore = [
-    "E731",   # lambda expressions used in the messages
+    "DJ001",   # Maybe add later
+    "DJ012",   # Maybe add later
+    "E731",    # Lambda expressions used in the messages
     "PLR2004", # Use constans
     "PLR0915", # Too many statements
     "PLR0912", # Too many branches

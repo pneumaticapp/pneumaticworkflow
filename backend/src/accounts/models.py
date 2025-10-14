@@ -535,6 +535,8 @@ class APIKey(
 
     objects = BaseSoftDeleteManager.from_queryset(APIKeyQuerySet)()
 
+    def __str__(self):
+        return self.key
 
 class SystemMessage(models.Model):
     title = models.CharField(max_length=200)
@@ -544,6 +546,8 @@ class SystemMessage(models.Model):
 
     objects = Manager.from_queryset(SystemMessageQuerySet)()
 
+    def __str__(self):
+        return self.title
 
 class Notification(
     SoftDeleteModel,
@@ -592,6 +596,9 @@ class Notification(
     objects = BaseSoftDeleteManager.from_queryset(
         NotificationsQuerySet,
     )()
+
+    def __str__(self):
+        return self.text
 
 
 class Contact(

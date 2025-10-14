@@ -6,7 +6,7 @@ class PriceInlineForm(forms.ModelForm):
 
     class Meta:
         model = Price
-        fields = '__all__'
+        fields = '__all__' # noqa: DJ007
 
     def clean_min_quantity(self):
         min_quantity = self.cleaned_data.get('min_quantity')
