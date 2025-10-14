@@ -51,7 +51,7 @@ class TestTemplatePresetService:
         instance = service._create_instance(
             template=template,
             name=name,
-            preset_type=PresetType.PERSONAL
+            type=PresetType.PERSONAL
         )
 
         # assert
@@ -81,7 +81,7 @@ class TestTemplatePresetService:
             template=template,
             name=name,
             is_default=is_default,
-            preset_type=PresetType.ACCOUNT
+            type=PresetType.ACCOUNT
         )
 
         # assert
@@ -100,7 +100,7 @@ class TestTemplatePresetService:
         preset = create_test_template_preset(
             template=template,
             author=user,
-            preset_type=PresetType.PERSONAL
+            type=PresetType.PERSONAL
         )
         is_superuser = False
         service = TemplatePresetService(
@@ -145,7 +145,7 @@ class TestTemplatePresetService:
         preset = create_test_template_preset(
             template=template,
             author=user,
-            preset_type=PresetType.PERSONAL
+            type=PresetType.PERSONAL
         )
         is_superuser = False
         service = TemplatePresetService(
@@ -174,7 +174,7 @@ class TestTemplatePresetService:
         preset = create_test_template_preset(
             template=template,
             author=user,
-            preset_type=PresetType.PERSONAL,
+            type=PresetType.PERSONAL,
             fields=[
                 {'api_name': 'old_field', 'order': 1, 'width': 100}
             ]
@@ -237,7 +237,7 @@ class TestTemplatePresetService:
         preset = create_test_template_preset(
             template=template,
             author=user,
-            preset_type=PresetType.PERSONAL,
+            type=PresetType.PERSONAL,
             fields=[
                 {'api_name': 'existing_field', 'order': 1, 'width': 100}
             ]
@@ -277,7 +277,7 @@ class TestTemplatePresetService:
         preset = create_test_template_preset(
             template=template,
             author=user,
-            preset_type=PresetType.PERSONAL
+            type=PresetType.PERSONAL
         )
         is_superuser = False
         service = TemplatePresetService(
@@ -303,7 +303,7 @@ class TestTemplatePresetService:
         preset = create_test_template_preset(
             template=template,
             author=user,
-            preset_type=PresetType.PERSONAL
+            type=PresetType.PERSONAL
         )
         is_superuser = False
         service = TemplatePresetService(
@@ -331,19 +331,19 @@ class TestTemplatePresetService:
         preset1_user1 = create_test_template_preset(
             template=template,
             author=user1,
-            preset_type=PresetType.PERSONAL,
+            type=PresetType.PERSONAL,
             is_default=True
         )
         preset2_user1 = create_test_template_preset(
             template=template,
             author=user1,
-            preset_type=PresetType.PERSONAL,
+            type=PresetType.PERSONAL,
             is_default=True
         )
         preset_user2 = create_test_template_preset(
             template=template,
             author=user2,
-            preset_type=PresetType.PERSONAL,
+            type=PresetType.PERSONAL,
             is_default=True
         )
 
@@ -376,13 +376,13 @@ class TestTemplatePresetService:
         preset1_user1 = create_test_template_preset(
             template=template,
             author=user1,
-            preset_type=PresetType.ACCOUNT,
+            type=PresetType.ACCOUNT,
             is_default=True
         )
         preset2_user2 = create_test_template_preset(
             template=template,
             author=user2,
-            preset_type=PresetType.ACCOUNT,
+            type=PresetType.ACCOUNT,
             is_default=True
         )
 
@@ -429,7 +429,7 @@ class TestTemplatePresetService:
             template=template,
             name='Test Preset',
             is_default=False,
-            preset_type=PresetType.PERSONAL,
+            type=PresetType.PERSONAL,
             fields=fields_data
         )
 
@@ -464,7 +464,7 @@ class TestTemplatePresetService:
             template=template,
             name='Default Preset',
             is_default=True,
-            preset_type=PresetType.PERSONAL
+            type=PresetType.PERSONAL
         )
 
         # assert
