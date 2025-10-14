@@ -30,7 +30,7 @@ class Auth0Service(SignUpMixin, CacheMixin):
     cache_key_prefix = 'auth0'
     cache_timeout = 600  # 10 min
     MGMT_TOKEN_CACHE_KEY = 'mgmt_token'
-    TOKEN_EXPIRY = 3600  # 1 hour default
+    TOKEN_EXPIRY = 86400  # 24 hour
 
     def __init__(self, request: Optional[HttpRequest] = None):
         self.tokens = None
@@ -76,25 +76,26 @@ class Auth0Service(SignUpMixin, CacheMixin):
         state = self._get_cache(key=auth_response['state'])
         if not state:
             raise exceptions.TokenInvalidOrExpired()
-        response = requests.post(
-            f'https://{self.domain}/oauth/token',
-            data={
-                'grant_type': 'authorization_code',
-                'client_id': self.client_id,
-                'client_secret': self.client_secret,
-                'code': auth_response['code'],
-                'redirect_uri': self.redirect_uri,
-            }
-        )
-        if not response.ok:
+        try:
+            response = requests.post(
+                f'https://{self.domain}/oauth/token',
+                data={
+                    'grant_type': 'authorization_code',
+                    'client_id': self.client_id,
+                    'client_secret': self.client_secret,
+                    'code': auth_response['code'],
+                    'redirect_uri': self.redirect_uri,
+                }
+            )
+            response.raise_for_status()
+            self.tokens = response.json()
+            return self.tokens["access_token"]
+        except requests.RequestException as ex:
             capture_sentry_message(
-                message='Get Auth0 access token return an error',
-                data={'content': response.content},
+                message=f'Get Auth0 access token return an error: {ex}',
                 level=SentryLogLevel.ERROR
             )
             raise exceptions.TokenInvalidOrExpired()
-        self.tokens = response.json()
-        return self.tokens["access_token"]
 
     def _get_user_profile(self, access_token: str) -> dict:
 
@@ -114,18 +115,25 @@ class Auth0Service(SignUpMixin, CacheMixin):
         }
         """
 
-        response = requests.get(
-            f'https://{self.domain}/userinfo',
-            headers={'Authorization': f'Bearer {access_token}'}
-        )
-        if not response.ok:
+        cache_key = f'user_profile_{access_token}'
+        cached_profile = self._get_cache(key=cache_key)
+        if cached_profile:
+            return cached_profile
+
+        url = f'https://{self.domain}/userinfo'
+        headers = {'Authorization': f'Bearer {access_token}'}
+        try:
+            response = requests.get(url, headers=headers, timeout=10)
+            response.raise_for_status()
+            profile = response.json()
+            self._set_cache(value=profile, key=cache_key)
+            return profile
+        except requests.RequestException as ex:
             capture_sentry_message(
-                message='Get Auth0 user profile return an error',
-                data={'content': response.content},
+                message=f'Auth0 user profile request failed: {ex}',
                 level=SentryLogLevel.ERROR
             )
             raise exceptions.TokenInvalidOrExpired()
-        return response.json()
 
     def get_auth_uri(self) -> str:
 
@@ -142,14 +150,9 @@ class Auth0Service(SignUpMixin, CacheMixin):
         query = requests.compat.urlencode(query_params)
         return f'https://{self.domain}/authorize?{query}'
 
-    def get_user_data(self, auth_response: dict) -> UserData:
-
+    def get_user_data(self, user_profile: dict) -> UserData:
         """ Retrieve user details during signin / signup process """
-
-        access_token = self._get_first_access_token(auth_response)
-        user_profile = self._get_user_profile(access_token)
-        email = user_profile['email']
-        photo = user_profile['picture']
+        email = user_profile.get('email')
         if not email:
             raise exceptions.EmailNotExist(
                 details={
@@ -157,7 +160,17 @@ class Auth0Service(SignUpMixin, CacheMixin):
                     'email': email
                 }
             )
-        first_name = user_profile['given_name'] or email.split('@')[0]
+        first_name = (
+            user_profile.get('given_name') or
+            user_profile.get('name', '').split(' ')[0] or
+            email.split('@')[0]
+        )
+        last_name = (
+            user_profile.get('family_name') or
+            ' '.join(user_profile.get('name', '').split(' ')[1:])
+        )
+        job_title = user_profile.get('job_title')
+        photo = user_profile.get('picture')
         capture_sentry_message(
             message=f'Auth0 user profile {email}',
             data={
@@ -171,8 +184,8 @@ class Auth0Service(SignUpMixin, CacheMixin):
         return UserData(
             email=email,
             first_name=first_name,
-            last_name=user_profile['family_name'],
-            job_title=None,
+            last_name=last_name,
+            job_title=job_title,
             photo=photo,
             company_name=None,
         )
@@ -255,82 +268,56 @@ class Auth0Service(SignUpMixin, CacheMixin):
             )
             return []
 
-    def update_user_contacts(self, user: UserModel):
+    def update_user_contacts(self, user: UserModel) -> dict:
         """ Save all organization users in contacts """
         response_data = {'created_contacts': [], 'updated_contacts': []}
-        try:
-            access_token = self._get_access_token(user.id)
-            user_profile = self._get_user_profile(access_token)
-            user_id = user_profile.get('sub')
-            if not user_id:
-                capture_sentry_message(
-                    message='Auth0 user ID not found in profile',
-                    data={'user_email': user.email},
-                    level=SentryLogLevel.WARNING
-                )
-                return response_data
-            organizations = self._get_user_organizations(user_id)
-            for org in organizations:
-                org_id = org.get('id')
-                if not org_id:
-                    continue
-                # Get organization members
-                members_data = self._get_users(org_id)
-                for member in members_data:
-                    email = member.get('email')
-                    if email and email != user.email:
-                        first_name = (
-                            member.get('given_name') or
-                            member.get('name', '').split(' ')[0] or
-                            email.split('@')[0]
-                        )
-                        last_name = (
-                            member.get('family_name') or
-                            ' '.join(member.get('name', '').split(' ')[1:])
-                        )
-                        _, created = Contact.objects.update_or_create(
-                            account=user.account,
-                            user=user,
-                            source=SourceType.AUTH0,
-                            email=email,
-                            defaults={
-                                'photo': member.get('picture'),
-                                'first_name': first_name,
-                                'last_name': last_name,
-                                'job_title': member.get('job_title'),
-                                'source_id': member.get('user_id'),
-                            }
-                        )
-                        if created:
-                            response_data['created_contacts'].append(email)
-                        else:
-                            response_data['updated_contacts'].append(email)
-        except Exception as ex:  # pylint: disable=broad-except
+        access_token = self._get_access_token(user.id)
+        user_profile = self._get_user_profile(access_token)
+        user_id = user_profile.get('sub')
+        if not user_id:
             capture_sentry_message(
-                message=f'Auth0 contacts update failed: {ex}',
-                data={'user_id': user.id, 'user_email': user.email},
-                level=SentryLogLevel.ERROR
-            )
-        return response_data
-
-    def get_user_organizations(self, user_data: dict) -> list:
-        """ Get user's organizations during authentication """
-        try:
-            user_id = user_data.get('sub')
-            if not user_id:
-                return []
-            return self._get_user_organizations(user_id)
-        except Exception as ex:  # pylint: disable=broad-except
-            capture_sentry_message(
-                message=f'Failed to get user organizations: {ex}',
-                data={'user_data': user_data},
+                message='Auth0 user ID not found in profile',
+                data={'user_email': user.email},
                 level=SentryLogLevel.WARNING
             )
-            return []
+            return response_data
+        organizations = self._get_user_organizations(user_id)
+        for org in organizations:
+            org_id = org.get('id')
+            if not org_id:
+                continue
+            # Get organization members
+            members_data = self._get_users(org_id)
+            for member in members_data:
+                try:
+                    member_data = self.get_user_data(member)
+                except exceptions.EmailNotExist:
+                    continue
+                email = member_data['email']
+                if email == user.email:
+                    continue
+                _, created = Contact.objects.update_or_create(
+                    account=user.account,
+                    user=user,
+                    source=SourceType.AUTH0,
+                    email=email,
+                    defaults={
+                        'photo': member_data['photo'],
+                        'first_name': member_data['first_name'],
+                        'last_name': member_data['last_name'],
+                        'job_title': member_data['job_title'],
+                        'source_id': member.get('user_id'),
+                    }
+                )
+                if created:
+                    response_data['created_contacts'].append(email)
+                else:
+                    response_data['updated_contacts'].append(email)
+        return response_data
 
     def _get_management_api_token(self) -> str:
         """ Get Management API token for Auth0 """
-        cached_token = self._get_cache(self.MGMT_TOKEN_CACHE_KEY)
+        cached_token = self._get_cache(key=self.MGMT_TOKEN_CACHE_KEY)
         if cached_token:
             return cached_token
         url = f'https://{self.domain}/oauth/token'
@@ -350,7 +337,7 @@ class Auth0Service(SignUpMixin, CacheMixin):
             )
             original_timeout = self.cache_timeout
             self.cache_timeout = cache_timeout
-            self._set_cache(self.MGMT_TOKEN_CACHE_KEY, access_token)
+            self._set_cache(key=self.MGMT_TOKEN_CACHE_KEY, value=access_token)
             self.cache_timeout = original_timeout
             return access_token
         except requests.RequestException as ex:
@@ -359,7 +346,6 @@ class Auth0Service(SignUpMixin, CacheMixin):
                 level=SentryLogLevel.ERROR
             )
             raise exceptions.TokenInvalidOrExpired()
-
 
     def authenticate_user(
         self,
@@ -372,8 +358,9 @@ class Auth0Service(SignUpMixin, CacheMixin):
         gclid: Optional[str] = None,
     ) -> Tuple[UserModel, PneumaticToken]:
         """Authenticate user via Auth0 and create/join account"""
-
-        user_data = self.get_user_data(auth_response)
+        access_token = self._get_first_access_token(auth_response)
+        user_profile = self._get_user_profile(access_token)
+        user_data = self.get_user_data(user_profile)
 
         try:
             user = UserModel.objects.active().get(email=user_data['email'])
@@ -390,9 +377,10 @@ class Auth0Service(SignUpMixin, CacheMixin):
             if not settings.PROJECT_CONF['SIGNUP']:
                 raise AuthenticationFailed(MSG_AU_0003)
 
-            user_profile = self._get_user_profile(self.tokens['access_token'])
-            organizations = self.get_user_organizations(user_profile)
-
+            user_id = user_profile.get('sub')
+            organizations = (
+                self._get_user_organizations(user_id) if user_id else []
+            )
             existing_account = None
             if organizations:
                 org_ids = [
@@ -403,7 +391,6 @@ class Auth0Service(SignUpMixin, CacheMixin):
                         external_id__in=org_ids,
                         is_deleted=False
                     ).first()
-            
             if existing_account:
                 # Join existing account
                 user, token = self.join_existing_account(
