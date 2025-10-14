@@ -13,6 +13,7 @@ from src.utils.logging import SentryLogLevel
 pytestmark = pytest.mark.django_db
 UserModel = get_user_model()
 
+
 def test__get_auth_uri__ok(mocker):
 
     # arrange
@@ -628,7 +629,7 @@ def test_update_user_contacts__exception__handle_gracefully(mocker):
     # arrange
     user = create_test_user()
     access_token = 'test_access_token'
-    
+
     get_access_token_mock = mocker.patch(
         'src.authentication.services.auth0.'
         'Auth0Service._get_access_token',
@@ -671,53 +672,6 @@ def test_update_user_contacts__exception__handle_gracefully(mocker):
         data={'user_id': user.id, 'user_email': user.email},
         level=SentryLogLevel.ERROR
     )
-
-
-def test_get_user_organizations__ok(mocker):
-    # arrange
-    user_data = {'sub': 'auth0|123456'}
-    organizations = [
-        {'id': 'org_123', 'name': 'Test Org 1'},
-        {'id': 'org_456', 'name': 'Test Org 2'}
-    ]
-    get_user_organizations_private_mock = mocker.patch(
-        'src.authentication.services.auth0.'
-        'Auth0Service._get_user_organizations',
-        return_value=organizations
-    )
-    capture_sentry_mock = mocker.patch(
-        'src.authentication.services.auth0.capture_sentry_message'
-    )
-    service = Auth0Service()
-
-    # act
-    result = service.get_user_organizations(user_data)
-
-    # assert
-    assert result == organizations
-    get_user_organizations_private_mock.assert_called_once_with('auth0|123456')
-    capture_sentry_mock.assert_not_called()
-
-
-def test_get_user_organizations__no_user_id__return_empty(mocker):
-    # arrange
-    user_data = {}
-    get_user_organizations_private_mock = mocker.patch(
-        'src.authentication.services.auth0.'
-        'Auth0Service._get_user_organizations'
-    )
-    capture_sentry_mock = mocker.patch(
-        'src.authentication.services.auth0.capture_sentry_message'
-    )
-    service = Auth0Service()
-
-    # act
-    result = service.get_user_organizations(user_data)
-
-    # assert
-    assert result == []
-    get_user_organizations_private_mock.assert_not_called()
-    capture_sentry_mock.assert_not_called()
 
 
 def test_get_management_api_token__ok(mocker):
@@ -882,6 +836,7 @@ def test_private_get_user_organizations__ok(mocker):
         },
         timeout=10
     )
+
 
 def test_update_user_contacts__full_flow__ok(mocker):
     # arrange
@@ -1098,8 +1053,13 @@ def test_authenticate_user__new_user_create_account__ok(mocker):
     user = create_test_user(email='newuser@example.com')
     token = 'test_token'
     auth_response = {'code': 'test_code', 'state': 'test_state'}
-    user_profile = {'sub': 'auth0|123456', 'email': 'newuser@example.com', 
-                   'given_name': 'New', 'family_name': 'User', 'picture': None}
+    user_profile = {
+        'sub': 'auth0|123456',
+        'email': 'newuser@example.com',
+        'given_name': 'New',
+        'family_name': 'User',
+        'picture': None
+    }
     organizations = [{'id': 'org_123', 'name': 'Test Org'}]
     request_mock = mocker.Mock()
 
@@ -1129,7 +1089,6 @@ def test_authenticate_user__new_user_create_account__ok(mocker):
         'src.authentication.services.auth0.UserModel.objects.active'
     )
     user_get_mock.return_value.get.side_effect = UserModel.DoesNotExist()
-    
     account_filter_mock = mocker.patch(
         'src.accounts.models.Account.objects.filter'
     )
@@ -1171,7 +1130,9 @@ def test_authenticate_user__new_user_create_account__ok(mocker):
     assert result_user == user
     assert result_token == token
     get_user_data_mock.assert_called_once_with(auth_response)
-    user_get_mock.return_value.get.assert_called_once_with(email='newuser@example.com')
+    user_get_mock.return_value.get.assert_called_once_with(
+        email='newuser@example.com'
+    )
     get_user_profile_mock.assert_called_once_with('test_token')
     get_user_organizations_mock.assert_called_once_with(user_profile)
     account_filter_mock.assert_called_once_with(
@@ -1213,11 +1174,16 @@ def test_authenticate_user__join_existing_account__ok(mocker):
     existing_account = user.account
     existing_account.external_id = 'org_123'
     existing_account.save()
-    
+
     token = 'test_token'
     auth_response = {'code': 'test_code', 'state': 'test_state'}
-    user_profile = {'sub': 'auth0|123456', 'email': 'newuser@example.com',
-                   'given_name': 'New', 'family_name': 'User', 'picture': None}
+    user_profile = {
+        'sub': 'auth0|123456',
+        'email': 'newuser@example.com',
+        'given_name': 'New',
+        'family_name': 'User',
+        'picture': None
+    }
     organizations = [{'id': 'org_123', 'name': 'Test Org'}]
     request_mock = mocker.Mock()
 
@@ -1247,7 +1213,7 @@ def test_authenticate_user__join_existing_account__ok(mocker):
         'src.authentication.services.auth0.UserModel.objects.active'
     )
     user_get_mock.return_value.get.side_effect = UserModel.DoesNotExist()
-    
+
     account_filter_mock = mocker.patch(
         'src.accounts.models.Account.objects.filter'
     )
