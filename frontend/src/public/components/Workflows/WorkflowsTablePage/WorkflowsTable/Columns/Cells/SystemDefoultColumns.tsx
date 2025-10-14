@@ -10,33 +10,29 @@ const SKELETON_SIZES = {
   LARGE: '24rem',
 } as const;
 
-const SkeletonDefaultCell80 = () => (
-  <Skeleton width={SKELETON_SIZES.MEDIUM} height={SKELETON_SIZES.SMALL} aria-label="Loading header" />
-);
+export const SkeletonDefaultCell80 = () => <Skeleton width={SKELETON_SIZES.MEDIUM} height={SKELETON_SIZES.SMALL} />;
 
 const WorkflowSkeletonCell = () => (
   <div style={{ display: 'flex', gap: '1.6rem' }}>
-    <Skeleton width={SKELETON_SIZES.SMALL} height={SKELETON_SIZES.SMALL} aria-label="Loading icon" />
-    <Skeleton width={SKELETON_SIZES.SMALL} height={SKELETON_SIZES.SMALL} aria-label="Loading status" />
-    <Skeleton width={SKELETON_SIZES.LARGE} height={SKELETON_SIZES.SMALL} aria-label="Loading workflow name" />
+    <Skeleton width={SKELETON_SIZES.SMALL} height={SKELETON_SIZES.SMALL} />
+    <Skeleton width={SKELETON_SIZES.SMALL} height={SKELETON_SIZES.SMALL} />
+    <Skeleton width={SKELETON_SIZES.LARGE} height={SKELETON_SIZES.SMALL} />
   </div>
 );
 
 const StarterSkeletonCell20 = () => (
   <div style={{ display: 'flex', justifyContent: 'center' }}>
-    <Skeleton width={SKELETON_SIZES.SMALL} height={SKELETON_SIZES.SMALL} aria-label="Loading starter" />
+    <Skeleton width={SKELETON_SIZES.SMALL} height={SKELETON_SIZES.SMALL} />
   </div>
 );
 
-const TaskSkeletonCell240 = () => (
-  <Skeleton width={SKELETON_SIZES.LARGE} height={SKELETON_SIZES.SMALL} aria-label="Loading task" />
-);
+const TaskSkeletonCell240 = () => <Skeleton width={SKELETON_SIZES.LARGE} height={SKELETON_SIZES.SMALL} />;
 
 const PerformerSkeletonCell = () => (
   <div style={{ display: 'flex', gap: '0.2rem' }}>
-    <Skeleton width={SKELETON_SIZES.SMALL} height={SKELETON_SIZES.SMALL} aria-label="Loading performer 1" />
-    <Skeleton width={SKELETON_SIZES.SMALL} height={SKELETON_SIZES.SMALL} aria-label="Loading performer 2" />
-    <Skeleton width={SKELETON_SIZES.SMALL} height={SKELETON_SIZES.SMALL} aria-label="Loading performer 3" />
+    <Skeleton width={SKELETON_SIZES.SMALL} height={SKELETON_SIZES.SMALL} />
+    <Skeleton width={SKELETON_SIZES.SMALL} height={SKELETON_SIZES.SMALL} />
+    <Skeleton width={SKELETON_SIZES.SMALL} height={SKELETON_SIZES.SMALL} />
   </div>
 );
 

@@ -33,6 +33,8 @@ import { useCheckDevice } from '../../../../hooks/useCheckDevice';
 import { createResizeHandler } from './utils/resizeUtils';
 import { SKELETON_ROWS } from './constants';
 import { defaultSystemColumns } from './Columns/Cells';
+import { SkeletonDefaultCell80 } from './Columns/Cells/SystemDefoultColumns';
+import { Skeleton } from '../../../UI/Skeleton';
 
 type CustomHeaderGroup<T extends object> = HeaderGroup<T> & {
   columnType: keyof typeof EColumnWidthMinWidth;
@@ -368,7 +370,7 @@ export function WorkflowsTable({
   const previousColumnsRef = useRef<Column<TableColumns>[]>(defaultSystemColumns);
 
   const columns: Column<TableColumns>[] = React.useMemo(() => {
-    if (workflowsLoadingStatus !== EWorkflowsLoadingStatus.Loaded) {
+    if (workflowsLoadingStatus === EWorkflowsLoadingStatus.LoadingList) {
       return previousColumnsRef.current;
     }
 
@@ -514,11 +516,17 @@ export function WorkflowsTable({
 
   const { getTableProps, getTableBodyProps, headerGroups, rows, prepareRow } = useTable<TableColumns>(options);
 
+  const shouldSkeletonTable =
+    workflowsLoadingStatus === EWorkflowsLoadingStatus.LoadingList && workflowsList.items.length === 0;
+
+  const shouldSkeleton =
+    workflowsLoadingStatus === EWorkflowsLoadingStatus.LoadingList && workflowsList.items.length > 0;
+
   const renderTable = () => {
     return (
       <table {...getTableProps()} className={styles['table']} ref={tableRef}>
         <thead className={styles['thead']}>
-          {workflowsLoadingStatus === EWorkflowsLoadingStatus.LoadingList ? (
+          {shouldSkeletonTable ? (
             <tr>
               {defaultSystemColumns.map((column) => (
                 <th
@@ -550,7 +558,7 @@ export function WorkflowsTable({
                     })}
                     className={classNames(styles['column-header'], styles['column'])}
                   >
-                    {column.render('Header')}
+                    {shouldSkeleton ? <SkeletonDefaultCell80 /> : column.render('Header')}
                     <div className={styles['column-header__hover-zone']} style={{ height: tableHeight }}>
                       <div
                         className={styles['column-header__resize']}
@@ -575,7 +583,7 @@ export function WorkflowsTable({
           )}
         </thead>
         <tbody {...getTableBodyProps()}>
-          {workflowsLoadingStatus === EWorkflowsLoadingStatus.LoadingList
+          {shouldSkeletonTable
             ? SKELETON_ROWS.map((row) => (
                 <tr className={styles['row']} key={row}>
                   {defaultSystemColumns.map((column) => (
@@ -604,7 +612,11 @@ export function WorkflowsTable({
                           })}
                           className={styles['column']}
                         >
-                          {cell.render('Cell')}
+                          {shouldSkeleton ? (
+                            <Skeleton width={`${Math.max(colWidths[cell.column.id] * 0.7, 80)}px`} height="2rem" />
+                          ) : (
+                            cell.render('Cell')
+                          )}
                         </td>
                       );
                     })}
