@@ -10,4 +10,4 @@ repos:
       name: ruff
       types: [python]
       language: system
-      entry: ruff check
+      entry: ruff check --fix

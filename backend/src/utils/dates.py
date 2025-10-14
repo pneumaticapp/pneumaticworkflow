@@ -1,5 +1,5 @@
 from pytz import timezone
-from datetime import datetime
+from datetime import datetime, timezone as tz
 from django.utils import translation
 from django.contrib.auth import get_user_model
 from src.generics import messages
@@ -47,5 +47,5 @@ def date_tsp_to_user_fmt(
     date_tsp: float,
     user: UserModel,
 ) -> str:
-    utc_date = datetime.fromtimestamp(date_tsp)
+    utc_date = datetime.fromtimestamp(date_tsp, tz=tz.utc)
     return date_to_user_fmt(date=utc_date, user=user)

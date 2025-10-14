@@ -1,5 +1,5 @@
 import pytest
-from datetime import timedelta, datetime
+from datetime import timedelta, datetime, timezone as tz
 from django.utils import timezone
 from src.processes.models.workflows.fields import TaskField
 from src.processes.models.workflows.raw_due_date import RawDueDate
@@ -145,7 +145,10 @@ def test_get_task_due_date__rule_before_field__prev_task_field__ok():
     due_date = service.get_task_due_date()
 
     # assert
-    assert due_date == datetime.fromtimestamp(tsp_end_date) - duration
+    assert due_date == datetime.fromtimestamp(
+        tsp_end_date,
+        tz=tz.utc,
+    ) - duration
 
 
 def test_get_task_due_date__rule_after_field__prev_task_field__ok():
@@ -182,8 +185,10 @@ def test_get_task_due_date__rule_after_field__prev_task_field__ok():
     due_date = service.get_task_due_date()
 
     # assert
-    assert due_date == datetime.fromtimestamp(tsp_end_date) + duration
-
+    assert due_date == datetime.fromtimestamp(
+        tsp_end_date,
+        tz=tz.utc,
+    ) + duration
 
 def test_get_task_due_date__rule_after_field__kickoff_field__ok():
 
@@ -218,8 +223,10 @@ def test_get_task_due_date__rule_after_field__kickoff_field__ok():
     due_date = service.get_task_due_date()
 
     # assert
-    assert due_date == datetime.fromtimestamp(tsp_end_date) + duration
-
+    assert due_date == datetime.fromtimestamp(
+        tsp_end_date,
+        tz=tz.utc,
+    ) + duration
 
 @pytest.mark.parametrize('rule', DueDateRule.FIELD_RULES)
 def test_get_task_due_date__field_rules__field_not_exists__return_none(rule):

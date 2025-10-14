@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone as tz
 from typing import Dict, Optional
 from django.db.models import Q
 from django.contrib.auth import get_user_model
@@ -291,9 +291,15 @@ class TaskService(
                 ).first()
                 if field and field.value:
                     if rule == DueDateRule.AFTER_FIELD:
-                        start_date = datetime.fromtimestamp(float(field.value))
+                        start_date = datetime.fromtimestamp(
+                            float(field.value),
+                            tz=tz.utc,
+                        )
                     if rule == DueDateRule.BEFORE_FIELD:
-                        end_date = datetime.fromtimestamp(float(field.value))
+                        end_date = datetime.fromtimestamp(
+                            float(field.value),
+                            tz=tz.utc,
+                        )
             elif rule == DueDateRule.AFTER_WORKFLOW_STARTED:
                 start_date = self.instance.workflow.date_created
 
