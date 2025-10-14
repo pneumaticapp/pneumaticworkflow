@@ -85,7 +85,8 @@ class Auth0Service(SignUpMixin, CacheMixin):
                     'client_secret': self.client_secret,
                     'code': auth_response['code'],
                     'redirect_uri': self.redirect_uri,
-                }
+                },
+                timeout=10
             )
             response.raise_for_status()
             self.tokens = response.json()
@@ -372,6 +373,7 @@ class Auth0Service(SignUpMixin, CacheMixin):
                 ),
                 user_ip=self.request.META.get('HTTP_X_REAL_IP'),
             )
+            self.save_tokens_for_user(user)
             return user, token
         except UserModel.DoesNotExist:
             if not settings.PROJECT_CONF['SIGNUP']:
