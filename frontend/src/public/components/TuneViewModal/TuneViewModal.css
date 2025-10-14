@@ -43,12 +43,14 @@
   }
 
   .tune-view-modal__footer {
-    flex-shrink: 0;
+    justify-content: space-around;
     margin-right: 3.2rem;
+    display: flex;
+    flex-shrink: 0;
     height: 4rem;
 
     .footer-button {
-      width: 100%;
+      width: 17.2rem;
     }
   }
 }
