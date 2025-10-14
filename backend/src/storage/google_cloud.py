@@ -114,7 +114,7 @@ class GoogleCloudService:
                 data={'message': str(ex)},
                 level=SentryLogLevel.ERROR,
             )
-            raise exceptions.CloudServiceException() from ex
+            raise exceptions.CloudServiceException from ex
         if self.account:
             account_service = AccountService(
                 user=self.account.get_owner(),

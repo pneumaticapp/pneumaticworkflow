@@ -64,7 +64,7 @@ class Auth0Service(CacheMixin):
 
         state = self._get_cache(key=auth_response['state'])
         if not state:
-            raise exceptions.TokenInvalidOrExpired()
+            raise exceptions.TokenInvalidOrExpired
         response = requests.post(
             f'https://{self.domain}/oauth/token',
             data={
@@ -81,7 +81,7 @@ class Auth0Service(CacheMixin):
                 data={'content': response.content},
                 level=SentryLogLevel.ERROR,
             )
-            raise exceptions.TokenInvalidOrExpired()
+            raise exceptions.TokenInvalidOrExpired
         self.tokens = response.json()
         return f'{self.tokens["token_type"]} {self.tokens["access_token"]}'
 
@@ -113,7 +113,7 @@ class Auth0Service(CacheMixin):
                 data={'content': response.content},
                 level=SentryLogLevel.ERROR,
             )
-            raise exceptions.TokenInvalidOrExpired()
+            raise exceptions.TokenInvalidOrExpired
         return response.json()
 
     def get_auth_uri(self) -> str:

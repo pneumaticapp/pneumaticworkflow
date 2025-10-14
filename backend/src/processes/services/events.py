@@ -606,7 +606,7 @@ class CommentService(BaseModelService):
             ).with_event_or_not_attached(self.instance.id).by_ids(ids)
 
             if qst.count() < len(ids):
-                raise AttachmentNotFound()
+                raise AttachmentNotFound
             qst.update(
                 event=self.instance,
                 workflow=self.instance.workflow,
@@ -659,9 +659,9 @@ class CommentService(BaseModelService):
 
     def _validate_comment_action(self):
         if self.instance.status == CommentStatus.DELETED:
-            raise CommentIsDeleted()
+            raise CommentIsDeleted
         if self.instance.workflow.is_completed:
-            raise CommentedWorkflowNotRunning()
+            raise CommentedWorkflowNotRunning
 
     def create(
         self,
@@ -674,14 +674,14 @@ class CommentService(BaseModelService):
             then only a notification about a new comment
             will be sent to him """
         if task is None:
-            raise CommentedNotTask()
+            raise CommentedNotTask
         if not (task.is_active or task.is_delayed):
-            raise CommentedTaskNotActive()
+            raise CommentedTaskNotActive
         workflow = task.workflow
         if workflow.is_completed:
-            raise CommentedWorkflowNotRunning()
+            raise CommentedWorkflowNotRunning
         if not text and not attachments:
-            raise CommentTextRequired()
+            raise CommentTextRequired
         clear_text = MarkdownService.clear(text) if text else None
         if not attachments:
             # find attachment ids in the text
@@ -752,9 +752,9 @@ class CommentService(BaseModelService):
         self._validate_comment_action()
         task = self.instance.task
         if task is not None and not (task.is_active or task.is_delayed):
-            raise CommentedTaskNotActive()
+            raise CommentedTaskNotActive
         if not text and not attachments:
-            raise CommentTextRequired()
+            raise CommentTextRequired
         clear_text = MarkdownService.clear(text) if text else None
         if not attachments:
             # find attachment ids in the text
@@ -806,7 +806,7 @@ class CommentService(BaseModelService):
         self._validate_comment_action()
         task = self.instance.task
         if task is not None and not (task.is_active or task.is_delayed):
-            raise CommentedTaskNotActive()
+            raise CommentedTaskNotActive
         self.instance.attachments.delete()
         super().partial_update(
             status=CommentStatus.DELETED,

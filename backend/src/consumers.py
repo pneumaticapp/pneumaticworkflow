@@ -15,7 +15,7 @@ class PneumaticBaseConsumer(AsyncWebsocketConsumer):
 
     async def validate_connection(self):
         if self.scope['user'].is_anonymous:
-            raise DenyConnection()
+            raise DenyConnection
 
     async def connect(self):
         await self.validate_connection()

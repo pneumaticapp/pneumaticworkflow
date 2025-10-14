@@ -47,12 +47,12 @@ class UserTransferService(
         try:
             user = UserModel.objects.get(id=user_id)
         except UserModel.DoesNotExist as ex:
-            raise InvalidTransferTokenException() from ex
+            raise InvalidTransferTokenException from ex
         else:
             if self.token['new_user_id'] != user.id:
-                raise InvalidTransferTokenException()
+                raise InvalidTransferTokenException
             if user.status == UserStatus.ACTIVE:
-                raise AlreadyAcceptedInviteException()
+                raise AlreadyAcceptedInviteException
             return user
 
     def _get_valid_prev_user(self) -> UserModel:
@@ -65,16 +65,16 @@ class UserTransferService(
                 status=UserStatus.ACTIVE,
             )
         except UserModel.DoesNotExist as ex:
-            raise ExpiredTransferTokenException() from ex
+            raise ExpiredTransferTokenException from ex
 
     def _get_valid_token(self, token_str: str) -> TransferToken:
         try:
             token = TransferToken(token=token_str)
         except TokenError as ex:
-            raise InvalidTransferTokenException() from ex
+            raise InvalidTransferTokenException from ex
         else:
             if not token.get('new_user_id') or not token.get('prev_user_id'):
-                raise InvalidTransferTokenException()
+                raise InvalidTransferTokenException
             return token
 
     def _after_transfer_actions(self):

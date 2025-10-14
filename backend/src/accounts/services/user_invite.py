@@ -206,7 +206,7 @@ class UserInviteService(
                 self.account.max_users
             )
             if self.account.active_users >= account_invites_limit:
-                raise UsersLimitInvitesException()
+                raise UsersLimitInvitesException
 
     def _user_transfer_actions(
         self,
@@ -356,7 +356,7 @@ class UserInviteService(
 
         user = self.account.users.filter(id=user_id).first()
         if not user:
-            raise UserNotFoundException()
+            raise UserNotFoundException
         elif user.status == UserStatus.ACTIVE:
             raise AlreadyAcceptedInviteException(
                 invites_data=[{'email': user.email}],
@@ -400,7 +400,7 @@ class UserInviteService(
             try:
                 user.save()
             except IntegrityError as ex:
-                raise AlreadyRegisteredException() from ex
+                raise AlreadyRegisteredException from ex
 
             invite.status = UserInviteStatus.ACCEPTED
             invite.save(update_fields=['status', 'date_updated'])
