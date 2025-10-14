@@ -51,9 +51,9 @@
   }
 
   .tune-view-modal__footer {
-    justify-content: space-between;
     margin-right: 3.2rem;
     display: flex;
+    gap: 0.8rem;
     flex-shrink: 0;
     height: 4rem;
 
