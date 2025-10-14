@@ -132,7 +132,7 @@ class TestUpdateConditionTemplate:
         assert response.data['message'] == message
         assert response.data['details']['api_name'] == condition.api_name
         assert response.data['details']['reason'] == message
-        assert 'name' not in response.data['details'].keys()
+        assert 'name' not in response.data['details']
 
     def test_update__delete_one_rule_of_two__ok(
         self,

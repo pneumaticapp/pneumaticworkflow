@@ -28,7 +28,7 @@ class SignOutView(
     def post(self, request, *args, **kwargs):
         auth = get_authorization_header(request).split()
         token = auth[1].decode()
-        if not request.user.apikey.key == token:
+        if request.user.apikey.key != token:
             # API key cannot be expired from logout
             PneumaticToken.expire_token(token)
         return self.response_ok()

@@ -80,6 +80,6 @@ class PneumaticTokenAuthentication(TokenAuthentication):
 
             # Create lost api key data in the cache
             PneumaticToken.create(user=user, for_api_key=True, token=token)
-        if not user.status == UserStatus.ACTIVE:
+        if user.status != UserStatus.ACTIVE:
             return None
         return user, PneumaticToken(token, user)

@@ -17,7 +17,7 @@ class StripeWebhookPermission(BasePermission):
         ):
             return True
 
-        if not (
+        if not (  # noqa: SIM103
             request.META.get('HTTP_REMOTE_ADDR') in self.whitelist
             or request.META.get('HTTP_X_REAL_IP') in self.whitelist
         ):

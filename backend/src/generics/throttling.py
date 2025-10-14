@@ -113,9 +113,7 @@ class BaseAuthThrottle(CustomSimpleRateThrottle):
         user = request.user
         if not user.is_authenticated:
             return True
-        if self.skip_for_paid_accounts and user.account.is_paid:
-            return True
-        return False
+        return bool(self.skip_for_paid_accounts and user.account.is_paid)
 
 
 class TokenThrottle(BaseAuthThrottle):
@@ -130,9 +128,7 @@ class TokenThrottle(BaseAuthThrottle):
 
         if super().skip_condition(request):
             return True
-        if request.token_type != AuthTokenType.USER:
-            return True
-        return False
+        return request.token_type != AuthTokenType.USER
 
 
 class ApiKeyThrottle(BaseAuthThrottle):
@@ -148,6 +144,4 @@ class ApiKeyThrottle(BaseAuthThrottle):
 
         if super().skip_condition(request):
             return True
-        if request.token_type != AuthTokenType.API:
-            return True
-        return False
+        return request.token_type != AuthTokenType.API

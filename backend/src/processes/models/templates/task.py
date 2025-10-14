@@ -108,11 +108,13 @@ class TaskTemplate(
 
         """ Creates and returns a raw performer for a task with given data """
 
-        if performer_type != PerformerType.WORKFLOW_STARTER:
-            if not user and not user_id and not group and not field:
-                raise Exception(
-                    'Raw performer should be linked with field or user',
-                )
+        if (
+            performer_type != PerformerType.WORKFLOW_STARTER
+            and not user and not user_id and not group and not field
+        ):
+            raise Exception(
+                'Raw performer should be linked with field or user',
+            )
 
         raw_performer = self._get_raw_performer(
             api_name=api_name,

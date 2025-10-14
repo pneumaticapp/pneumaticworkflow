@@ -888,7 +888,7 @@ def test_get_confirm_token__ok(mocker):
     assert result.payload['is_superuser'] == is_superuser
     assert result.payload['account_id'] == account.id
     assert result.payload['user_id'] == user.id
-    assert 'subscription' not in result.payload.keys()
+    assert 'subscription' not in result.payload
 
 
 def test_get_confirm_token__with_subscription__ok(mocker):

@@ -3517,7 +3517,7 @@ def test_delete_reaction__last__remove_reaction(mocker):
     # assert
     validate_comment_action_mock.assert_called_once()
     event.refresh_from_db()
-    assert reaction not in event.reactions.keys()
+    assert reaction not in event.reactions
     reaction_deleted_analytics_mock.assert_called_once_with(
         text=reaction,
         user=user,

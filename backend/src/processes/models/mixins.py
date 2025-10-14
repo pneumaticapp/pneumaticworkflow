@@ -264,11 +264,13 @@ class TaskRawPerformersMixin:
         """ Delete a raw_performer
             and returns the number of objects deleted """
 
-        if performer_type != PerformerType.WORKFLOW_STARTER:
-            if user is None and group is None and field is None:
-                raise Exception(
-                    'Raw performer should be linked with field or user',
-                )
+        if (
+            performer_type != PerformerType.WORKFLOW_STARTER
+            and user is None and group is None and field is None
+        ):
+            raise Exception(
+                'Raw performer should be linked with field or user',
+            )
 
         return self.raw_performers.filter(
             type=performer_type,

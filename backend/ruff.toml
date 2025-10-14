@@ -59,6 +59,7 @@ select = [
     "RSE",
     "RET",
     # "S", Maybe add later
+    "SIM",
     "T20",
 ]
 ignore = [

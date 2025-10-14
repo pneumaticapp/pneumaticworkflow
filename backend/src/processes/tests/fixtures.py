@@ -103,18 +103,17 @@ def create_test_account(
         else BillingPeriod.MONTHLY
     )
 
-    if lease_level == LeaseLevel.TENANT:
-        if not master_account:
-            master_account = create_test_account(
-                plan=BillingPlanType.PREMIUM,
-                plan_expiration=plan_expiration,
-                period=period,
-                name='master',
-                billing_sync=billing_sync,
-            )
-            plan = master_account.billing_plan
-            plan_expiration = master_account.plan_expiration
-            period = master_account.billing_period
+    if lease_level == LeaseLevel.TENANT and not master_account:
+        master_account = create_test_account(
+            plan=BillingPlanType.PREMIUM,
+            plan_expiration=plan_expiration,
+            period=period,
+            name='master',
+            billing_sync=billing_sync,
+        )
+        plan = master_account.billing_plan
+        plan_expiration = master_account.plan_expiration
+        period = master_account.billing_period
 
     account = Account.objects.create(
         name=name,

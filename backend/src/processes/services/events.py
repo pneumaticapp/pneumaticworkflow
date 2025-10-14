@@ -829,7 +829,7 @@ class CommentService(BaseModelService):
         """ The value is not entered directly to avoid concurrent entry """
 
         self._validate_comment_action()
-        if not self.user == self.instance.user:
+        if self.user != self.instance.user:
             watched = {el['user_id'] for el in self.instance.watched}
             if self.user.id not in watched:
                 WorkflowEventAction.objects.get_or_create(

@@ -221,10 +221,7 @@ class StripeMixin:
                 stripe_id=price_stripe_id,
                 code_parts=(product.name,),
             )
-        if data.active:
-            status = PriceStatus.ACTIVE
-        else:
-            status = PriceStatus.INACTIVE
+        status = PriceStatus.ACTIVE if data.active else PriceStatus.INACTIVE
 
         return Price.objects.create(
             product=product,

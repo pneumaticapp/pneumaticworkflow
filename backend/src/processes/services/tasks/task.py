@@ -112,12 +112,12 @@ class TaskService(
         force_save=False,
         **update_kwargs,
     ):
-        if 'description' in update_kwargs.keys():
+        if 'description' in update_kwargs:
             update_kwargs['clear_description'] = MarkdownService.clear(
                 update_kwargs['description'],
             )
         super().partial_update(**update_kwargs)
-        if 'date_started' in update_kwargs.keys():
+        if 'date_started' in update_kwargs: # noqa: SIM102
             if self.instance.date_first_started is None:
                 self.instance.date_first_started = (
                     update_kwargs['date_started']

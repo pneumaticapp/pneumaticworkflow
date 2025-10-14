@@ -25,9 +25,7 @@ def is_tasks_ordering_correct(tasks: List[int]) -> bool:
     tasks_set = set(tasks)
     if len(tasks) > len(tasks_set):
         return False
-    if tasks_set and tasks_set != set(range(1, max(tasks_set) + 1)):
-        return False
-    return True
+    return not (tasks_set and tasks_set != set(range(1, max(tasks_set) + 1)))
 
 
 def are_users_in_process_account(

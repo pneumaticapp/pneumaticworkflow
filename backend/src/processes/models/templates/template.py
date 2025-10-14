@@ -210,9 +210,11 @@ class TemplateDraft(SoftDeleteModel):
         user_id: int,
     ) -> list:
         for num, performer in enumerate(raw_performers):
-            if isinstance(performer, dict):
-                if performer.get('source_id') == user_id:
-                    raw_performers.pop(num)
+            if (
+                isinstance(performer, dict)
+                and performer.get('source_id') == user_id
+            ):
+                raw_performers.pop(num)
         return raw_performers
 
     def remove_user(self, user_id: int):

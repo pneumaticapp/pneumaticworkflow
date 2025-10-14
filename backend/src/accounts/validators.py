@@ -22,12 +22,10 @@ def user_is_last_performer(user: User):
         ).exists()
     ):
         return True
-    if (
+    return bool(
         TaskTemplate.objects
-            .filter(template__is_active=True)
-            .on_raw_performer(user.id)
-            .raw_performers_count(1)
-            .exists()
-    ):
-        return True
-    return False
+        .filter(template__is_active=True)
+        .on_raw_performer(user.id)
+        .raw_performers_count(1)
+        .exists(),
+    )

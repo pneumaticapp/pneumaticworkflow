@@ -24,9 +24,8 @@ class CommentCreateSerializer(
     def validate_text(self, value):
         if not value:
             return None
-        if isinstance(value, str):
-            if not value.strip():
-                return None
+        if isinstance(value, str) and not value.strip():
+            return None
         return value
 
     def validate_attachments(self, value):

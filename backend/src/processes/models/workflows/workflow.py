@@ -92,10 +92,9 @@ class Workflow(
         return version > self.version
 
     def save(self, update_fields=None, **kwargs):
-        if update_fields is not None:
-            if 'status' in update_fields:
-                self.status_updated = timezone.now()
-                update_fields.append('status_updated')
+        if update_fields is not None and 'status' in update_fields:
+            self.status_updated = timezone.now()
+            update_fields.append('status_updated')
         super().save(update_fields=update_fields, **kwargs)
 
     def _get_kickoff(self):

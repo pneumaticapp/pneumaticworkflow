@@ -780,10 +780,10 @@ def test_get_template_integrations_data__ok(
 
     # assert
     get_template_integrations_data_mock.assert_called_once_with(template_id)
-    assert 'shared_date_tsp' not in result.keys()
-    assert 'api_date_tsp' not in result.keys()
-    assert 'zapier_date_tsp' not in result.keys()
-    assert 'webhooks_date_tsp' not in result.keys()
+    assert 'shared_date_tsp' not in result
+    assert 'api_date_tsp' not in result
+    assert 'zapier_date_tsp' not in result
+    assert 'webhooks_date_tsp' not in result
 
 
 def test_create_integrations_for_template__ok(mocker):

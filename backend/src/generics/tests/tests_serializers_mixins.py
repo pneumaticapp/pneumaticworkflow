@@ -119,7 +119,7 @@ class TestCustomValidationErrorMixin:
         error = e.value.detail
         assert error['code'] == ErrorCode.VALIDATION_ERROR
         assert error['message'] == message
-        assert 'details' not in error.keys()
+        assert 'details' not in error
 
     def test_raise_validation_error__before_is_valid__exception(self):
 

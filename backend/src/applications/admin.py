@@ -38,9 +38,11 @@ class IntegrationCreateForm(ModelForm):
     def clean(self):
         cleaned_data = super().clean()
         cleaned_file = cleaned_data.get("image_file")
-        if cleaned_file:
-            if os.path.splitext(cleaned_file.name)[1].lower() != '.svg':
-                self.add_error('image_file', 'SVG image required')
+        if (
+            cleaned_file
+            and os.path.splitext(cleaned_file.name)[1].lower() != '.svg'
+        ):
+            self.add_error('image_file', 'SVG image required')
         return cleaned_data
 
     def clean_image_file(self):

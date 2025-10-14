@@ -30,7 +30,7 @@ class Common(Configuration):
     USE_L10N = True  # Enable will display numbers and dates using locale
     LANGUAGE_CODE = env.get('LANGUAGE_CODE', 'en')
     from src.accounts.enums import Language
-    if LANGUAGE_CODE == Language.ru:
+    if Language.ru == LANGUAGE_CODE:
         LANGUAGES = Language.CHOICES
     else:
         LANGUAGES = Language.EURO_CHOICES

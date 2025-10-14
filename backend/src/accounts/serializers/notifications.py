@@ -46,9 +46,11 @@ class NotificationTaskSerializer(serializers.ModelSerializer):
         super().__init__(*args, **kwargs)
         if self.notification_type != NotificationType.DELAY_WORKFLOW:
             self.fields.pop('delay', None)
-        if self.notification_type != NotificationType.DUE_DATE_CHANGED:
-            if not self.instance.due_date:
-                self.fields.pop('due_date_tsp', None)
+        if (
+            self.notification_type != NotificationType.DUE_DATE_CHANGED
+            and not self.instance.due_date
+        ):
+            self.fields.pop('due_date_tsp', None)
 
     def get_delay(self, instance):
         delay = instance.get_active_delay()
