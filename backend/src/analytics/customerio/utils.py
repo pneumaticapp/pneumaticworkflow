@@ -12,12 +12,11 @@ def get_webhook_hash(
     key_bytes = settings.CUSTOMERIO_WEBHOOK_API_KEY.encode('utf-8')
     api_version = settings.CUSTOMERIO_WEBHOOK_API_VERSION
     msg_bytes = f'{api_version}:{timestamp}:'.encode() + request_body
-    result = hmac.new(
+    return hmac.new(
         key=key_bytes,
         msg=msg_bytes,
         digestmod=sha256,
     ).hexdigest()
-    return result
 
 
 def check_webhook_hash(

@@ -139,8 +139,7 @@ class TaskFieldService(BaseWorkflowService):
                 api_name=self.instance.api_name,
                 message=messages.MSG_PW_0031,
             )
-        else:
-            value = ', '.join(selections_values)
+        value = ', '.join(selections_values)
         return FieldData(
             value=value,
             markdown_value=value,
@@ -273,11 +272,9 @@ class TaskFieldService(BaseWorkflowService):
                     api_name=self.instance.api_name,
                     message=messages.MSG_PW_0023,
                 )
-            else:
-                return FieldData()
-        else:
-            func = getattr(self, f'_get_valid_{self.instance.type}_value')
-            return func(raw_value, **kwargs)
+            return FieldData()
+        func = getattr(self, f'_get_valid_{self.instance.type}_value')
+        return func(raw_value, **kwargs)
 
     def _create_instance(
         self,

@@ -20,5 +20,4 @@ class PublicUsersViewSet(
     serializer_class = PublicUserSerializer
 
     def get_queryset(self):
-        queryset = self.request.public_template.account.users
-        return queryset
+        return self.request.public_template.account.users

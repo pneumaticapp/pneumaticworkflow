@@ -47,6 +47,7 @@ class CustomSimpleRateThrottle(SimpleRateThrottle):
 
         if self.get_rate() is None:
             return True
+        return None
 
     def _get_period(self):
         num_requests, duration = self.parse_rate(self.rate)
@@ -112,10 +113,9 @@ class BaseAuthThrottle(CustomSimpleRateThrottle):
         user = request.user
         if not user.is_authenticated:
             return True
-        elif self.skip_for_paid_accounts and user.account.is_paid:
+        if self.skip_for_paid_accounts and user.account.is_paid:
             return True
-        else:
-            return False
+        return False
 
 
 class TokenThrottle(BaseAuthThrottle):
@@ -130,10 +130,9 @@ class TokenThrottle(BaseAuthThrottle):
 
         if super().skip_condition(request):
             return True
-        elif request.token_type != AuthTokenType.USER:
+        if request.token_type != AuthTokenType.USER:
             return True
-        else:
-            return False
+        return False
 
 
 class ApiKeyThrottle(BaseAuthThrottle):
@@ -143,14 +142,12 @@ class ApiKeyThrottle(BaseAuthThrottle):
 
     def get_ident(self, request) -> str:
         auth_header = request.META.get('HTTP_AUTHORIZATION')
-        token = auth_header.split()[1]
-        return token
+        return auth_header.split()[1]
 
     def skip_condition(self, request) -> bool:
 
         if super().skip_condition(request):
             return True
-        elif request.token_type != AuthTokenType.API:
+        if request.token_type != AuthTokenType.API:
             return True
-        else:
-            return False
+        return False

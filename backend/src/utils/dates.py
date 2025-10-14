@@ -39,8 +39,7 @@ def date_to_user_fmt(
     month_abbreviation = month_abbreviation_map[local_date.month]
     str_date = local_date.strftime(user.date_fmt)
     with translation.override(user.language):
-        str_date = str_date.replace(month, str(month_abbreviation))
-    return str_date
+        return str_date.replace(month, str(month_abbreviation))
 
 
 def date_tsp_to_user_fmt(

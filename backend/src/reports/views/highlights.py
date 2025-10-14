@@ -41,5 +41,4 @@ class HighlightsView(
             user_id=self.request.user.id,
             **filter_serializer.validated_data,
         )
-        queryset = self.prefetch_queryset(queryset)
-        return queryset
+        return self.prefetch_queryset(queryset)

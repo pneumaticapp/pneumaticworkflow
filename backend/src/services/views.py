@@ -35,8 +35,7 @@ class ServicesViewSet(
     def throttle_classes(self):
         if self.action == 'steps_by_description':
             return (StepsByDescriptionThrottle,)
-        else:
-            return ()
+        return ()
 
     @action(methods=['GET'], detail=False, url_path='steps-by-description')
     def steps_by_description(self, request, *args, **kwargs):

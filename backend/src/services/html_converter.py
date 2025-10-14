@@ -99,8 +99,7 @@ class RichEditorChecklistToHTMLService(BaseListToHTML):
             html_str = str(self._current_list)
             self._current_list = None
             return html_str + '\n'
-        else:
-            return ''
+        return ''
 
     def _process_list_item(self, list_item: str):
         if self._current_list is None:
@@ -154,5 +153,4 @@ def convert_text_to_html(text: str) -> str:
     # TODO delete it when fix editor on frontend
     text = _normalize_markdown_blocks(text)
 
-    text = markdown(text, extensions=['tables'])
-    return text
+    return markdown(text, extensions=['tables'])

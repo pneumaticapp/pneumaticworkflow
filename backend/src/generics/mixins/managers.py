@@ -19,8 +19,7 @@ class SearchSqlQueryMixin:
             Uses r'\\\1' in re.sub, where '\\' produces one backslash,
             and '\1' refers to the captured character.
         """
-        escaped = re.sub(r'([&|!():\\])', r'\\\1', text)
-        return escaped
+        return re.sub(r'([&|!():\\])', r'\\\1', text)
 
     def _get_tsquery(self) -> Tuple[str, dict]:
 

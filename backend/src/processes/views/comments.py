@@ -56,7 +56,7 @@ class CommentViewSet(
                 UsersOverlimitedPermission(),
                 CommentEditPermission(),
             )
-        elif self.action in (
+        if self.action in (
             'watched',
             'create_reaction',
             'delete_reaction',

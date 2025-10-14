@@ -55,7 +55,7 @@ class PaymentViewSet(
     def get_permissions(self):
         if self.action == 'confirm':
             return (ProjectBillingPermission(),)
-        elif self.action in {
+        if self.action in {
             'purchase',
             'card_setup',
             'default_payment_method',
@@ -67,13 +67,12 @@ class PaymentViewSet(
                 AccountOwnerPermission(),
                 DisallowForTenantPermission(),
             )
-        else:
-            return (
-                ProjectBillingPermission(),
-                UserIsAuthenticated(),
-                UserIsAdminOrAccountOwner(),
-                DisallowForTenantPermission(),
-            )
+        return (
+            ProjectBillingPermission(),
+            UserIsAuthenticated(),
+            UserIsAdminOrAccountOwner(),
+            DisallowForTenantPermission(),
+        )
 
     @property
     def throttle_classes(self):
@@ -82,8 +81,7 @@ class PaymentViewSet(
                 PurchaseApiThrottle,
                 PurchaseTokenThrottle,
             )
-        else:
-            return ()
+        return ()
 
     @action(methods=('POST',), detail=False)
     def purchase(self, request):

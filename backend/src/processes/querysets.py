@@ -98,11 +98,10 @@ class TemplateQuerySet(WorkflowsBaseQuerySet):
         return self.filter(is_public=True)
 
     def with_template_owner(self, user_id: int):
-        query = self.filter(
+        return self.filter(
             Q(owners__type='user', owners__user_id=user_id) |
             Q(owners__type='group', owners__group__users__id=user_id),
         ).distinct()
-        return query
 
     def get_owners_as_users(self):
         user_owners = self.filter(
@@ -783,8 +782,7 @@ class TaskPerformerQuerySet(BaseHardQuerySet):
             self.filter(group__users__type=UserType.USER)
             .values_list('group__users__id', flat=True)
         )
-        result = set(direct_user_ids).union(set(group_user_ids))
-        return result
+        return set(direct_user_ids).union(set(group_user_ids))
 
     def get_user_emails_and_ids_set(self):
         direct_users = self.filter(
@@ -794,8 +792,7 @@ class TaskPerformerQuerySet(BaseHardQuerySet):
             self.filter(group__users__type=UserType.USER)
             .values_list('group__users__id', 'group__users__email')
         )
-        result = set(direct_users).union(set(group_users))
-        return result
+        return set(direct_users).union(set(group_users))
 
     def get_user_ids_emails_subscriber_set(self):
         direct_users = self.filter(user__isnull=False).values_list(

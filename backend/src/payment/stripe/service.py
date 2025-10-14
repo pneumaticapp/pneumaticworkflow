@@ -149,8 +149,7 @@ class StripeService(StripeMixin):
         token = self._get_confirm_token(subscription_data)
         if url.find('?') > 0:
             return f'{url}&token={token}'
-        else:
-            return f'{url}?token={token}'
+        return f'{url}?token={token}'
 
     def _get_checkout_session_url(
         self,
@@ -430,14 +429,13 @@ class StripeService(StripeMixin):
                 success_url=success_url,
                 cancel_url=cancel_url,
             )
-        elif invoice_items:
+        if invoice_items:
             return self._get_payment_checkout_link(
                 invoice_items=invoice_items,
                 success_url=success_url,
                 cancel_url=cancel_url,
             )
-        else:
-            return None
+        return None
 
     def _get_valid_premium_subscription_item(
         self,
@@ -534,7 +532,7 @@ class StripeService(StripeMixin):
                     # Modify subscription to another with another currency
                     raise exceptions.ChangeCurrencyDisallowed
                 # Allow update if account on archived price
-                elif (
+                if (
                     new_price.is_archived
                     and current_price.id != new_price.id
                 ):
@@ -669,15 +667,13 @@ class StripeService(StripeMixin):
                     self._log_stripe_error(ex)
                     if isinstance(ex, CardError):
                         raise exceptions.CardError from ex
-                    else:
-                        raise exceptions.PaymentError from ex
-                else:
-                    self._log_stripe_error(ex, level=SentryLogLevel.WARNING)
-                    return self._get_checkout_link(
-                        success_url=success_url,
-                        cancel_url=cancel_url,
-                        products=products,
-                    )
+                    raise exceptions.PaymentError from ex
+                self._log_stripe_error(ex, level=SentryLogLevel.WARNING)
+                return self._get_checkout_link(
+                    success_url=success_url,
+                    cancel_url=cancel_url,
+                    products=products,
+                )
         else:
             return self._get_checkout_link(
                 success_url=success_url,
@@ -813,5 +809,4 @@ class StripeService(StripeMixin):
             self._log_stripe_error(ex)
             if isinstance(ex, CardError):
                 raise exceptions.CardError from ex
-            else:
-                raise exceptions.PaymentError from ex
+            raise exceptions.PaymentError from ex

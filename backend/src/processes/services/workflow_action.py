@@ -171,7 +171,7 @@ class WorkflowActionService:
 
         if self.workflow.is_running:
             return
-        elif self.workflow.is_completed:
+        if self.workflow.is_completed:
             raise exceptions.ResumeCompletedWorkflow
 
         with transaction.atomic():
@@ -339,7 +339,7 @@ class WorkflowActionService:
             if condition_passed:
                 if condition.action == ConditionAction.END_WORKFLOW:
                     return self.end_process
-                elif condition.action == ConditionAction.SKIP_TASK:
+                if condition.action == ConditionAction.SKIP_TASK:
                     skip_task_condition_passed = True
         if skip_task_condition_passed:
             return self.skip_task
@@ -376,20 +376,17 @@ class WorkflowActionService:
             skip_action = self._execute_skip_conditions(task)
             if skip_action:
                 return skip_action, True
-            else:
-                return self.start_task, False
-        else:  # noqa: PLR5501
-            if start_condition_passed:
-                # Start task condition passed
-                # - check skip conditions before start
-                skip_action = self._execute_skip_conditions(task)
-                if skip_action:
-                    return skip_action, True
-                else:
-                    return self.start_task, False
-            else:
-                # Start task condition not passed - task continues to wait
-                return None, False
+            return self.start_task, False
+        # noqa: PLR5501
+        if start_condition_passed:
+            # Start task condition passed
+            # - check skip conditions before start
+            skip_action = self._execute_skip_conditions(task)
+            if skip_action:
+                return skip_action, True
+            return self.start_task, False
+        # Start task condition not passed - task continues to wait
+        return None, False
 
     def start_workflow(self):
 
@@ -752,24 +749,23 @@ class WorkflowActionService:
 
         if task.is_completed is True:
             return False
-        else:
-            task_performers = (
-                task.taskperformer_set.exclude_directly_deleted()
-            )
-            completed_performers = task_performers.filter(
-                Q(is_completed=True)
-                | Q(is_completed=False, user_id=self.user.id)
-                | Q(is_completed=False, group__users=self.user.id),
-            ).exists()
-            incompleted_performers = task_performers.not_completed().exclude(
-                Q(user_id=self.user.id)
-                | Q(is_completed=False, group__users=self.user.id),
-            ).exists()
-            by_all = task.require_completion_by_all
-            return (
-                not by_all and completed_performers or
-                by_all and not incompleted_performers
-            )
+        task_performers = (
+            task.taskperformer_set.exclude_directly_deleted()
+        )
+        completed_performers = task_performers.filter(
+            Q(is_completed=True)
+            | Q(is_completed=False, user_id=self.user.id)
+            | Q(is_completed=False, group__users=self.user.id),
+        ).exists()
+        incompleted_performers = task_performers.not_completed().exclude(
+            Q(user_id=self.user.id)
+            | Q(is_completed=False, group__users=self.user.id),
+        ).exists()
+        by_all = task.require_completion_by_all
+        return (
+            not by_all and completed_performers or
+            by_all and not incompleted_performers
+        )
 
     def complete_task_for_user(
         self,
@@ -778,7 +774,7 @@ class WorkflowActionService:
     ):
         if self.workflow.is_delayed:
             raise exceptions.CompleteDelayedWorkflow
-        elif self.workflow.is_completed:
+        if self.workflow.is_completed:
             raise exceptions.CompleteCompletedWorkflow
         if not task.is_active:
             raise exceptions.CompleteInactiveTask
@@ -798,7 +794,7 @@ class WorkflowActionService:
 
         if not task.checklists_completed:
             raise exceptions.ChecklistIncompleted
-        elif task.sub_workflows.running().exists():
+        if task.sub_workflows.running().exists():
             raise exceptions.SubWorkflowsIncompleted
 
         fields_values = fields_values or {}
@@ -904,10 +900,9 @@ class WorkflowActionService:
             raise exceptions.RevertToSkippedTask(
                 messages.MSG_PW_0080(revert_to_tasks[0].name),
             )
-        else:
-            raise exceptions.RevertToSkippedTask(
-                messages.MSG_PW_0079(revert_to_tasks[0].name),
-            )
+        raise exceptions.RevertToSkippedTask(
+            messages.MSG_PW_0079(revert_to_tasks[0].name),
+        )
 
     def _deactivate_task(self, parent_task: Task):
 

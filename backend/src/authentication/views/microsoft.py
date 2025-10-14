@@ -49,7 +49,7 @@ class MSAuthViewSet(
     def throttle_classes(self):
         if self.action == 'token':
             return (AuthMSTokenThrottle,)
-        elif self.action == 'auth_uri':
+        if self.action == 'auth_uri':
             return (AuthMSAuthUriThrottle,)
         return ()
 

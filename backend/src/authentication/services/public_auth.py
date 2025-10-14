@@ -58,13 +58,12 @@ class PublicAuthService(BaseAuthentication):
         elif token.is_embedded:
             filter_kwargs['embed_id'] = str(token)
             filter_kwargs['is_embedded'] = True
-        template = (
+        return (
             Template.objects.exclude_onboarding()
             .active()
             .filter(**filter_kwargs)
             .first()
         )
-        return template
 
     def authenticate_header(self, request):
         return f'{self.header_prefix} realm="api"'

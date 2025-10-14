@@ -205,8 +205,7 @@ class GuestWorkflowPermission(BasePermission):
                 id=request.task_id,
                 workflow_id=workflow_id,
             ).active().exists()
-        else:
-            return True
+        return True
 
 
 class GuestWorkflowEventsPermission(BasePermission):
@@ -330,13 +329,12 @@ class CommentReactionPermission(BasePermission):
         ).type_comment()
         if request.user.is_account_owner:
             return qst.exists()
-        elif request.user.type == UserType.GUEST:
+        if request.user.type == UserType.GUEST:
             return qst.by_task(request.task_id).exists()
-        else:
-            return qst.filter(
-                Q(workflow__members=request.user.id) |
-                Q(workflow__tasks__taskperformer__group__users=request.user.id),
-            ).exists()
+        return qst.filter(
+            Q(workflow__members=request.user.id) |
+            Q(workflow__tasks__taskperformer__group__users=request.user.id),
+        ).exists()
 
 
 class StoragePermission(BasePermission):

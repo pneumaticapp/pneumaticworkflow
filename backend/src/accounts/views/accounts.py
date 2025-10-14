@@ -36,13 +36,12 @@ class AccountView(
                 BillingPlanPermission(),
                 ExpiredSubscriptionPermission(),
             )
-        else:
-            return (
-                UserIsAuthenticated(),
-                BillingPlanPermission(),
-                UserIsAdminOrAccountOwner(),
-                ExpiredSubscriptionPermission(),
-            )
+        return (
+            UserIsAuthenticated(),
+            BillingPlanPermission(),
+            UserIsAdminOrAccountOwner(),
+            ExpiredSubscriptionPermission(),
+        )
 
     def get_object(self):
         return self.request.user.account

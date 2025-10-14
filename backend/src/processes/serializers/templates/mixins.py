@@ -60,8 +60,7 @@ class CreateOrUpdateInstanceMixin:
     ):
         data = self._get_create_or_update_data(validated_data)
         with transaction.atomic():
-            instance = self.Meta.model.objects.create(**data)
-        return instance
+            return self.Meta.model.objects.create(**data)
 
     def create_or_update_instance(
         self,

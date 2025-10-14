@@ -134,7 +134,7 @@ class TemplateViewSet(
                 UserIsAdminOrAccountOwner(),
                 TemplateOwnerPermission(),
             )
-        elif self.action == 'run':
+        if self.action == 'run':
             return (
                 UserIsAuthenticated(),
                 ExpiredSubscriptionPermission(),
@@ -142,7 +142,7 @@ class TemplateViewSet(
                 UsersOverlimitedPermission(),
                 TemplateOwnerPermission(),
             )
-        elif self.action in (
+        if self.action in (
             'list',
             'titles',
             'titles_by_events',
@@ -154,7 +154,7 @@ class TemplateViewSet(
                 ExpiredSubscriptionPermission(),
                 BillingPlanPermission(),
             )
-        elif self.action == 'ai':
+        if self.action == 'ai':
             return (
                 AIPermission(),
                 UserIsAuthenticated(),
@@ -163,27 +163,25 @@ class TemplateViewSet(
                 UsersOverlimitedPermission(),
                 UserIsAdminOrAccountOwner(),
             )
-        elif self.action == 'export':
+        if self.action == 'export':
             return (
                 AccountOwnerPermission(),
                 ExpiredSubscriptionPermission(),
                 BillingPlanPermission(),
             )
-        else:
-            return (
-                UserIsAuthenticated(),
-                ExpiredSubscriptionPermission(),
-                BillingPlanPermission(),
-                UsersOverlimitedPermission(),
-                UserIsAdminOrAccountOwner(),
-            )
+        return (
+            UserIsAuthenticated(),
+            ExpiredSubscriptionPermission(),
+            BillingPlanPermission(),
+            UsersOverlimitedPermission(),
+            UserIsAdminOrAccountOwner(),
+        )
 
     @property
     def throttle_classes(self):
         if self.action == 'ai':
             return (AiTemplateGenThrottle,)
-        else:
-            return ()
+        return ()
 
     def get_queryset(self):
         user = self.request.user

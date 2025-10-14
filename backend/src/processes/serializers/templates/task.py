@@ -204,7 +204,7 @@ class TaskTemplateSerializer(
              (created in previous steps) """
 
         if not value:
-            return
+            return None
 
         api_names_in_description = {
             api_name.strip()
@@ -225,6 +225,7 @@ class TaskTemplateSerializer(
                 message=messages.MSG_PT_0037(data['number']),
                 api_name=data.get('api_name'),
             )
+        return None
 
     def additional_validate_raw_performers(
         self,
@@ -307,7 +308,7 @@ class TaskTemplateSerializer(
 
         if not validated_data.get('delay'):
             validated_data['delay'] = None
-        instance = super().create_or_update_instance(
+        return super().create_or_update_instance(
             validated_data=validated_data,
             instance=instance,
             not_unique_exception_msg=messages.MSG_PT_0055(
@@ -315,7 +316,6 @@ class TaskTemplateSerializer(
                 api_name=validated_data.get('api_name'),
             ),
         )
-        return instance
 
     def to_representation(self, instance):
         data = super().to_representation(instance)

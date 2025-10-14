@@ -61,22 +61,22 @@ class UserViewSet(
                 BillingPlanPermission(),
                 ExpiredSubscriptionPermission(),
             )
-        elif self.action == 'list':
+        if self.action == 'list':
             return (
                 IsAuthenticated(),
                 BillingPlanPermission(),
             )
-        else:
-            return (
-                UserIsAuthenticated(),
-                BillingPlanPermission(),
-            )
+        return (
+            UserIsAuthenticated(),
+            BillingPlanPermission(),
+        )
 
     def get_queryset(self):
         if self.action == 'contacts':
             return Contact.objects.by_user(
                 user_id=self.request.user.id,
             ).active()
+        return None
 
     @action(methods=('GET',), detail=False)
     def counters(self, request, *args, **kwargs):

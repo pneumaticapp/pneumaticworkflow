@@ -110,8 +110,7 @@ class PneumaticToken:
 
     @classmethod
     def get_user_tokens(cls, user: UserModel):
-        tokens = cls.cache.get(user.pk)
-        return tokens
+        return cls.cache.get(user.pk)
 
     @classmethod
     def get_user_from_token(
@@ -121,15 +120,14 @@ class PneumaticToken:
         cached_data = cls._get_cached_data(token)
         if cached_data:
             return UserModel.objects.get(pk=cached_data['user_id'])
-        else:
-            raise UserModel.DoesNotExist
+        raise UserModel.DoesNotExist
 
     @classmethod
     def expire_token(cls, token: str):
         encrypted_token = cls.encrypt(token)
         user_info = cls.cache.get(encrypted_token)
         if not user_info:
-            return None
+            return
 
         user_pk = user_info.get('user_id')
         tokens = cls.cache.get(user_pk)

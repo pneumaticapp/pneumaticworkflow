@@ -35,10 +35,9 @@ class ValidationUtilsMixin:
     @staticmethod
     def get_valid_list_strings(raw_value: str) -> List[str]:
         if isinstance(raw_value, str):
-            items = [
+            return [
                 item.strip() for item in raw_value.split(',') if item.strip()
             ]
-            return items
         return []
 
     @staticmethod
@@ -314,8 +313,7 @@ class CustomValidationErrorMixin:
                             default=error,
                         ))
             return errors
-        else:
-            return [error]
+        return [error]
 
     def _get_formatted_error(self, error: dict) -> ValidationErrorData:
 
@@ -335,7 +333,7 @@ class CustomValidationErrorMixin:
                 message=message,
                 code=ErrorCode.VALIDATION_ERROR,
             )
-        elif api_name:
+        if api_name:
             message = f'{name.capitalize()}: {message.lower()}'
             return ValidationErrorData(
                 message=message,
@@ -345,15 +343,14 @@ class CustomValidationErrorMixin:
                     'reason': message,
                 },
             )
-        else:
-            return ValidationErrorData(
-                message=message,
-                code=ErrorCode.VALIDATION_ERROR,
-                details={
-                    'name': name,
-                    'reason': message,
-                },
-            )
+        return ValidationErrorData(
+            message=message,
+            code=ErrorCode.VALIDATION_ERROR,
+            details={
+                'name': name,
+                'reason': message,
+            },
+        )
 
     def run_validation(self, data=empty):
 

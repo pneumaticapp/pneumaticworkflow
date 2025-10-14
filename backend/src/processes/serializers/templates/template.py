@@ -428,8 +428,7 @@ class TemplateSerializer(
     def get_response_data(self) -> Dict[str, Any]:
         if self.instance.is_active:
             return self.data
-        else:
-            return self.instance.get_draft()
+        return self.instance.get_draft()
 
     def _update_draft(self, data: Dict[str, Any]):
 
@@ -810,8 +809,7 @@ class TemplateOnlyFieldsSerializer(ModelSerializer):
     def get_response_data(self) -> Dict[str, Any]:
         if self.instance.is_active:
             return self.data
-        else:
-            return self.instance.get_draft()
+        return self.instance.get_draft()
 
 
 class TemplateTitlesRequestSerializer(

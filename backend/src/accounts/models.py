@@ -154,10 +154,10 @@ class Account(SoftDeleteModel):
         if self.billing_plan == BillingPlanType.FREEMIUM:
             # Free plan
             return False
-        elif self.trial_is_active:
+        if self.trial_is_active:
             # Active trial
             return False
-        elif self.plan_expiration < timezone.now():
+        if self.plan_expiration < timezone.now():
             # Expired premium
             return False
         # Active premium
@@ -188,13 +188,12 @@ class Account(SoftDeleteModel):
     @property
     def trial_is_active(self):
         current_date = timezone.now()
-        r = bool(
+        return bool(
             not self.trial_ended
             and self.billing_plan in BillingPlanType.PAYMENT_PLANS
             and self.plan_expiration and self.plan_expiration > current_date
             and self.trial_end and self.trial_end > current_date,
         )
-        return r
 
     @property
     def total_active_users(self) -> int:
@@ -236,11 +235,10 @@ class Account(SoftDeleteModel):
                     status=UserStatus.ACTIVE,
                 ),
             ).count()
-        else:
-            return User.objects.filter(
-                account_id=self.id,
-                status=UserStatus.ACTIVE,
-            ).count()
+        return User.objects.filter(
+            account_id=self.id,
+            status=UserStatus.ACTIVE,
+        ).count()
 
     @property
     def is_tenant(self):
@@ -494,8 +492,7 @@ class User(AbstractUser, SoftDeleteModel):
     def name_by_status(self):
         if self.status == UserStatus.INVITED:
             return f'{self.email} (invited user)'
-        else:
-            return self.name
+        return self.name
 
     @property
     def company_name(self):

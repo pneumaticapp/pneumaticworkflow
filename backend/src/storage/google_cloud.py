@@ -68,8 +68,7 @@ class GoogleCloudService:
         """
         formatted_text = text.lower().replace(' ', '_')
         formatted_text = re.sub(r'[^a-z0-9_-]', '', formatted_text)
-        formatted_text = formatted_text[:62]
-        return formatted_text
+        return formatted_text[:62]
 
     def _create_bucket(self, bucket_name: str = None):
         if not bucket_name:
@@ -150,9 +149,8 @@ class GoogleCloudService:
         )
         if self.account.bucket_is_public:
             return signed_url, blob.public_url
-        else:
 
-            return signed_url, self.get_authenticated_url(filename)
+        return signed_url, self.get_authenticated_url(filename)
 
     def make_public(self, filename: str):
         if not self.account.bucket_is_public:

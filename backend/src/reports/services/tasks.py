@@ -46,14 +46,13 @@ class SendTasksDigest(SendDigest):
             force=self._force,
         )
         sql, params = query.get_sql()
-        data = RawSqlExecutor.fetch(
+        return RawSqlExecutor.fetch(
             sql,
             params,
             stream=True,
             fetch_size=self._fetch_size,
             db=settings.REPLICA,
         )
-        return data
 
     def _replace_api_name(
         self,

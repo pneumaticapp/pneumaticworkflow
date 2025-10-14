@@ -65,14 +65,12 @@ class SystemTemplateViewSet(
     def get_queryset(self):
         if self.action == 'categories':
             return SystemTemplateCategory.objects.active()
-        else:
-            return SystemTemplate.objects.library().active()
+        return SystemTemplate.objects.library().active()
 
     def get_serializer_class(self):
         if self.action == 'categories':
             return SystemTemplateCategorySerializer
-        else:
-            return SystemTemplateSerializer
+        return SystemTemplateSerializer
 
     def list(self, request, *args, **kwargs):
         qst = self.get_queryset()

@@ -140,20 +140,20 @@ class WorkflowViewSet(
                 ExpiredSubscriptionPermission(),
                 UserIsAdminOrAccountOwner(),
             )
-        elif self.action == 'fields':
+        if self.action == 'fields':
             return (
                 AccountOwnerPermission(),
                 BillingPlanPermission(),
                 ExpiredSubscriptionPermission(),
             )
-        elif self.action == 'retrieve':
+        if self.action == 'retrieve':
             return (
                 UserIsAuthenticated(),
                 BillingPlanPermission(),
                 ExpiredSubscriptionPermission(),
                 WorkflowMemberPermission(),
             )
-        elif self.action in (
+        if self.action in (
             'destroy',
             'terminate',
             'resume',
@@ -169,7 +169,7 @@ class WorkflowViewSet(
                 WorkflowOwnerPermission(),
                 UsersOverlimitedPermission(),
             )
-        elif self.action == 'partial_update':
+        if self.action == 'partial_update':
             return (
                 UserIsAuthenticated(),
                 BillingPlanPermission(),
@@ -177,7 +177,7 @@ class WorkflowViewSet(
                 WorkflowOwnerPermission(),
                 UsersOverlimitedPermission(),
             )
-        elif self.action == 'comment':
+        if self.action == 'comment':
             return (
                 IsAuthenticated(),
                 BillingPlanPermission(),
@@ -186,7 +186,7 @@ class WorkflowViewSet(
                 GuestWorkflowPermission(),
                 WorkflowMemberPermission(),
             )
-        elif self.action == 'complete':
+        if self.action == 'complete':
             return (
                 IsAuthenticated(),
                 BillingPlanPermission(),
@@ -194,7 +194,7 @@ class WorkflowViewSet(
                 UsersOverlimitedPermission(),
                 GuestWorkflowPermission(),
             )
-        elif self.action == 'events':
+        if self.action == 'events':
             return (
                 IsAuthenticated(),
                 BillingPlanPermission(),
@@ -202,7 +202,7 @@ class WorkflowViewSet(
                 GuestWorkflowEventsPermission(),
                 WorkflowMemberPermission(),
             )
-        elif self.action == 'webhook_example':
+        if self.action == 'webhook_example':
             return (
                 UserIsAuthenticated(),
                 ExpiredSubscriptionPermission(),

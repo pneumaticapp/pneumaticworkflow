@@ -15,19 +15,17 @@ class TemplateVersioningService:
         self.schema = schema
 
     def map_to_dict(self, template: Template) -> Dict[str, Any]:
-        template_data = self.schema(instance=template).data
-        return template_data
+        return self.schema(instance=template).data
 
     def get_template_dict(
         self,
         template_id: int,
         version: int,
     ) -> Dict[str, Any]:
-        template_dict = TemplateVersion.objects.get(
+        return TemplateVersion.objects.get(
             template_id=template_id,
             version=version,
         ).data
-        return template_dict
 
     def save(self, template: Template) -> TemplateVersion:
         template_dict = self.map_to_dict(template)

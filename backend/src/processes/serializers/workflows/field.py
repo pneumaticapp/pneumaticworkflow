@@ -55,10 +55,8 @@ class TaskFieldSerializer(serializers.ModelSerializer):
         if instance.type == FieldType.USER:
             if instance.user_id:
                 return str(instance.user_id)
-            else:
-                return ''
-        else:
-            return instance.value
+            return ''
+        return instance.value
 
 
 class TaskFieldListSerializer(serializers.ModelSerializer):

@@ -118,7 +118,7 @@ class AccountEventAdmin(admin.ModelAdmin):
     def colored_status(self, obj):
         if obj.status == AccountEventStatus.SUCCESS:
             return '✔️'
-        elif obj.status == AccountEventStatus.FAILED:
+        if obj.status == AccountEventStatus.FAILED:
             return '🔴'
         return '🔵'
     colored_status.short_description = 'status'
@@ -140,8 +140,7 @@ class AccountEventAdmin(admin.ModelAdmin):
             response = highlight(response, json_lexer, formatter)
             style = "<style>" + formatter.get_style_defs() + "</style><br>"
             return mark_safe(style + response)
-        else:
-            return '-'
+        return '-'
     formatted_request_data.short_description = 'request_data'
 
     def formatted_response_data(self, instance):
@@ -155,6 +154,5 @@ class AccountEventAdmin(admin.ModelAdmin):
             response = highlight(response, json_lexer, formatter)
             style = "<style>" + formatter.get_style_defs() + "</style><br>"
             return mark_safe(style + response)
-        else:
-            return '-'
+        return '-'
     formatted_response_data.short_description = 'response_data'

@@ -93,8 +93,7 @@ class ListFilter(Filter):
         values = set(value.replace(' ', '').split(','))
         self.validate(values)
         values = self._perform_mapping_values(values)
-        qs = super().filter(qs, values)
-        return qs
+        return super().filter(qs, values)
 
 
 class TsQuerySearchFilter(CharFilter):
