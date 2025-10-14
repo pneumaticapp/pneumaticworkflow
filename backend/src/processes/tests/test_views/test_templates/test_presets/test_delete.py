@@ -22,7 +22,7 @@ class TestTemplatePresetDeleteView:
         preset = create_test_template_preset(
             template=template,
             author=user,
-            preset_type=PresetType.PERSONAL
+            type=PresetType.PERSONAL
         )
 
         api_client.token_authenticate(user)
@@ -94,7 +94,7 @@ class TestTemplatePresetDeleteView:
         preset = create_test_template_preset(
             template=template,
             author=user1,
-            preset_type=PresetType.PERSONAL
+            type=PresetType.PERSONAL
         )
 
         api_client.token_authenticate(user2)
@@ -125,7 +125,7 @@ class TestTemplatePresetDeleteView:
         preset = create_test_template_preset(
             template=template,
             author=user1,
-            preset_type=PresetType.PERSONAL
+            type=PresetType.PERSONAL
         )
 
         api_client.token_authenticate(user2)
@@ -154,7 +154,7 @@ class TestTemplatePresetDeleteView:
         preset = create_test_template_preset(
             template=template,
             author=user1,
-            preset_type=PresetType.ACCOUNT
+            type=PresetType.ACCOUNT
         )
 
         api_client.token_authenticate(user2)

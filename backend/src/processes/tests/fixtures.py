@@ -686,7 +686,7 @@ def create_test_template_preset(
     author: UserModel,
     name: str = 'Test Preset',
     is_default: bool = False,
-    preset_type: str = 'personal',
+    type: str = 'personal',  # pylint: disable=redefined-builtin
     fields: Optional[List[dict]] = None,
 ):
     preset = TemplatePreset.objects.create(
@@ -695,7 +695,7 @@ def create_test_template_preset(
         account=author.account,
         name=name,
         is_default=is_default,
-        type=preset_type,
+        type=type,
     )
 
     if fields:
