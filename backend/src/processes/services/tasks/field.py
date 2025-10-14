@@ -1,6 +1,6 @@
 from typing import List, Any, Union, Optional, Iterable, Set
 from decimal import Decimal, DecimalException
-from collections import namedtuple
+from typing import NamedTuple
 from django.db.models import ObjectDoesNotExist
 from django.contrib.auth import get_user_model
 from src.generics.validators import NoSchemaURLValidator
@@ -13,35 +13,24 @@ from src.processes.models.templates.fields import (
     FieldTemplateSelection,
     FieldTemplate,
 )
-from src.processes.models.workflows.fields import (
-    TaskField,
-)
-from src.processes.services.base import (
-    BaseWorkflowService,
-)
-from src.processes.services.tasks.exceptions import (
-    TaskFieldException,
-)
-from src.processes.services.tasks.selection import (
-    SelectionService,
-)
+from src.processes.models.workflows.fields import TaskField
+from src.processes.services.base import BaseWorkflowService
+from src.processes.services.tasks.exceptions import TaskFieldException
+from src.processes.services.tasks.selection import SelectionService
 from src.services.markdown import MarkdownService
 from src.processes.enums import FieldType
 from src.utils.dates import date_tsp_to_user_fmt
 
 
 UserModel = get_user_model()
-FieldData = namedtuple(
-    typename='FieldData',
-    field_names=[
-        'value',
-        'markdown_value',
-        'clear_value',
-        'user_id',
-        'group_id',
-    ],
-    defaults=['', '', '', None, None],
-)
+
+
+class FieldData(NamedTuple):
+    value: str = ''
+    markdown_value: str = ''
+    clear_value: str = ''
+    user_id: Optional[str] = None
+    group_id: Optional[str] = None
 
 
 class TaskFieldService(BaseWorkflowService):

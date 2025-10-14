@@ -1,6 +1,5 @@
 import pytz
 from datetime import datetime
-from typing import Union
 from django.conf import settings
 from rest_framework.utils import html
 from rest_framework.fields import empty
@@ -87,7 +86,7 @@ class TimeStampField(serializers.DateTimeField):
             return None
         return value.timestamp()
 
-    def to_internal_value(self, value: Union[float, int]):
+    def to_internal_value(self, value: float):
         if isinstance(value, str):
             try:
                 value = float(value)

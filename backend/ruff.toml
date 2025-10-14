@@ -53,6 +53,7 @@ select = [
     "FAST",
     "PL",
     "PLE",
+    "PYI",
     # "S", Maybe add later
     "T20",
 ]
