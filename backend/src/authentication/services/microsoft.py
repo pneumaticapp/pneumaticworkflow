@@ -319,7 +319,8 @@ class MicrosoftAuthService(
             if email.find('@') < 1:
                 login, domain = email.rsplit('_', 1)
                 email = '@'.join((login, domain))
-        except Exception:
+        # TODO Fix the broad "try except"
+        except Exception:  # noqa: BLE001
             email = None
         return email
 
@@ -485,8 +486,8 @@ class MicrosoftAuthService(
                         response_data['created_contacts'].append(email)
                     else:
                         response_data['updated_contacts'].append(email)
-
-        except Exception as ex:
+        # TODO Fix the broad "try except"
+        except Exception as ex: # noqa: BLE001
             http_status = 400
             response_data['message'] = str(ex)
             response_data['exception_type'] = type(ex)
