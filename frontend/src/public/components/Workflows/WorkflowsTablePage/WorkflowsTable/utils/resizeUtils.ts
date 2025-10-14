@@ -1,6 +1,6 @@
 import { debounce } from 'throttle-debounce';
 
-const GLOBAL_COLUMNS_IDS = new Set(['workflow', 'starter', 'progress', 'step', 'performer']);
+const GLOBAL_COLUMNS_IDS = new Set(['workflow', 'templateName', 'starter', 'progress', 'step', 'performer']);
 const startX = { current: 0 };
 const startWidth = { current: 0 };
 const resizingCol = { current: null as string | null };
