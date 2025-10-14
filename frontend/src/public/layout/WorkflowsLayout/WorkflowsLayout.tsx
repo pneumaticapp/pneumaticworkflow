@@ -229,12 +229,12 @@ export function WorkflowsLayoutComponent({
             optionIdKey="id"
             optionLabelKey="name"
             onChange={(templateId: number) => {
-              sessionStorage.setItem('shouldLoadPresets', 'true');
+              sessionStorage.setItem('isInternalNavigation', 'true');
               setStepsFilter([]);
               setTemplatesFilter([templateId]);
             }}
             resetFilter={() => {
-              sessionStorage.setItem('shouldLoadPresets', 'true');
+              sessionStorage.setItem('isInternalNavigation', 'true');
               setStepsFilter([]);
               setTemplatesFilter([]);
             }}
