@@ -58,7 +58,6 @@ class TestSendDigest:
         api_client.token_authenticate(user)
 
         create_1_response = api_client.post('/templates', data=template_data)
-        print(create_1_response.data)
         template_1 = Template.objects.get(id=create_1_response.data['id'])
         create_2_response = api_client.post('/templates', data=template_data)
         template_2 = Template.objects.get(id=create_2_response.data['id'])
