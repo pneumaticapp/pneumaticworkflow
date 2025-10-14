@@ -1,15 +1,17 @@
 import json
 from urllib.parse import parse_qs
+
+from django.contrib.auth.middleware import AuthenticationMiddleware
 from django.contrib.auth.models import AnonymousUser
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils.deprecation import MiddlewareMixin
-from src.authentication.tokens import PneumaticToken
-from src.authentication.enums import AuthTokenType
-from src.utils.user_agent import get_user_agent
-from src.logs.service import AccountLogService
 from rest_framework.authentication import get_authorization_header
-from django.contrib.auth.middleware import AuthenticationMiddleware
+
+from src.authentication.enums import AuthTokenType
+from src.authentication.tokens import PneumaticToken
 from src.generics.mixins.views import AnonymousMixin
+from src.logs.service import AccountLogService
+from src.utils.user_agent import get_user_agent
 
 
 class UserAgentMiddleware(MiddlewareMixin):

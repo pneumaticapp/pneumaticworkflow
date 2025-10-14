@@ -1,20 +1,22 @@
 # ruff: noqa: PLC0415
-from typing import Optional, Dict
+from typing import Dict, Optional
+
 from django.contrib.auth import get_user_model
 from django.contrib.postgres.search import SearchVectorField
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.utils import timezone
+
 from src.accounts.models import AccountBaseMixin
 from src.generics.managers import BaseSoftDeleteManager
 from src.generics.models import SoftDeleteModel
-from src.processes.models.mixins import WorkflowMixin
-from src.processes.querysets import (
-    WorkflowQuerySet,
-    TaskFieldQuerySet,
-)
 from src.processes.enums import WorkflowStatus
+from src.processes.models.mixins import WorkflowMixin
 from src.processes.models.templates.template import Template
+from src.processes.querysets import (
+    TaskFieldQuerySet,
+    WorkflowQuerySet,
+)
 
 UserModel = get_user_model()
 

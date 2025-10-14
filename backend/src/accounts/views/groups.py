@@ -1,37 +1,37 @@
-from django.db.models import Prefetch
 from django.contrib.auth import get_user_model
+from django.db.models import Prefetch
 from django.http import Http404
 from rest_framework.decorators import action
 from rest_framework.viewsets import GenericViewSet
-from src.accounts.serializers.group import (
-    GroupSerializer,
-    GroupRequestSerializer,
+
+from src.accounts.filters import (
+    GroupsListFilterSet,
 )
+from src.accounts.models import UserGroup
 from src.accounts.permissions import (
     BillingPlanPermission,
-    UserIsAdminOrAccountOwner,
     ExpiredSubscriptionPermission,
+    UserIsAdminOrAccountOwner,
+)
+from src.accounts.queries import CountTemplatesByGroupQuery
+from src.accounts.serializers.group import (
+    GroupRequestSerializer,
+    GroupSerializer,
+)
+from src.accounts.services.exceptions import (
+    UserGroupServiceException,
+)
+from src.accounts.services.group import UserGroupService
+from src.executor import RawSqlExecutor
+from src.generics.filters import PneumaticFilterBackend
+from src.generics.mixins.views import (
+    CustomViewSetMixin,
 )
 from src.generics.permissions import (
     IsAuthenticated,
     UserIsAuthenticated,
 )
-from src.accounts.models import UserGroup
-from src.generics.mixins.views import (
-    CustomViewSetMixin,
-)
 from src.utils.validation import raise_validation_error
-
-from src.accounts.services.group import UserGroupService
-from src.accounts.services.exceptions import (
-    UserGroupServiceException,
-)
-from src.accounts.filters import (
-    GroupsListFilterSet,
-)
-from src.accounts.queries import CountTemplatesByGroupQuery
-from src.executor import RawSqlExecutor
-from src.generics.filters import PneumaticFilterBackend
 
 UserModel = get_user_model()
 

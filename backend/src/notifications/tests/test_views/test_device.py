@@ -1,7 +1,7 @@
 import pytest
+
 from src.notifications.models import Device, UserNotifications
 from src.processes.tests.fixtures import create_test_user
-
 
 pytestmark = pytest.mark.django_db
 

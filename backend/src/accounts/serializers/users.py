@@ -1,11 +1,11 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
+
+from src.accounts.models import UserGroup
 from src.generics.fields import AccountPrimaryKeyRelatedField
 from src.generics.mixins.serializers import (
     CustomValidationErrorMixin,
 )
-from src.accounts.models import UserGroup
-
 
 UserModel = get_user_model()
 

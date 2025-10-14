@@ -1,20 +1,20 @@
 import pytest
+
 from src.accounts.models import (
     UserInvite,
 )
-from src.processes.models.templates.template import Template
+from src.processes.enums import (
+    OwnerType,
+    PerformerType,
+)
 from src.processes.models.templates.owner import TemplateOwner
+from src.processes.models.templates.template import Template
 from src.processes.tests.fixtures import (
     create_invited_user,
-    create_test_workflow,
     create_test_template,
     create_test_user,
+    create_test_workflow,
 )
-from src.processes.enums import (
-    PerformerType,
-    OwnerType,
-)
-
 
 pytestmark = pytest.mark.django_db
 

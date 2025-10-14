@@ -1,41 +1,42 @@
-import pytest
 from datetime import timedelta
+
+import pytest
+
 from src.authentication.services.guest_auth import GuestJWTAuthService
-from src.processes.models.templates.kickoff import Kickoff
-from src.processes.models.templates.owner import TemplateOwner
-from src.processes.models.templates.task import TaskTemplate
+from src.processes.enums import (
+    ConditionAction,
+    DueDateRule,
+    FieldType,
+    OwnerType,
+    PredicateOperator,
+)
 from src.processes.models.templates.conditions import (
     ConditionTemplate,
     PredicateTemplate,
     RuleTemplate,
 )
-from src.processes.models.templates.raw_due_date import RawDueDateTemplate
 from src.processes.models.templates.fields import (
     FieldTemplate,
     FieldTemplateSelection,
 )
+from src.processes.models.templates.kickoff import Kickoff
+from src.processes.models.templates.owner import TemplateOwner
+from src.processes.models.templates.raw_due_date import RawDueDateTemplate
+from src.processes.models.templates.task import TaskTemplate
 from src.processes.models.workflows.task import TaskPerformer
-from src.processes.enums import (
-    FieldType,
-    DueDateRule,
-    OwnerType,
-    PredicateOperator,
-    ConditionAction,
-)
 from src.processes.tests.fixtures import (
+    create_test_account,
+    create_test_admin,
+    create_test_group,
+    create_test_guest,
+    create_test_not_admin,
+    create_test_owner,
     create_test_template,
     create_test_user,
-    create_test_account,
-    create_test_guest,
     create_test_workflow,
-    create_test_group,
-    create_test_not_admin,
-    create_test_admin,
-    create_test_owner,
 )
 from src.utils.dates import date_format
 from src.utils.validation import ErrorCode
-
 
 pytestmark = pytest.mark.django_db
 

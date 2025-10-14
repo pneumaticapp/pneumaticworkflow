@@ -1,8 +1,9 @@
 import pytest
+
 from src.processes.enums import (
-    PredicateType,
-    PredicateOperator,
     ConditionAction,
+    PredicateOperator,
+    PredicateType,
 )
 from src.processes.utils.common import (
     get_tasks_parents,

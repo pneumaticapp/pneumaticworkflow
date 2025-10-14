@@ -1,10 +1,12 @@
-from typing import Dict, Any, List, Optional, Set
+import contextlib
+from typing import Any, Dict, List, Optional, Set
+
 from django.contrib.auth import get_user_model
 from django.db import IntegrityError, transaction
 from rest_framework.serializers import Serializer
-from src.utils.validation import raise_validation_error
+
 from src.processes.messages.template import MSG_PT_0041
-import contextlib
+from src.utils.validation import raise_validation_error
 
 UserModel = get_user_model()
 

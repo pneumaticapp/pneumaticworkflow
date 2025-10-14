@@ -1,13 +1,14 @@
-from celery import shared_task
 from django.db import transaction
+
+from celery import shared_task
 from src.accounts.models import (
-    SystemMessage,
     Notification,
+    SystemMessage,
 )
 from src.accounts.queries import CreateSystemNotificationsQuery
 from src.executor import RawSqlExecutor
-from src.notifications.tasks import _send_notification
 from src.notifications.enums import NotificationMethod
+from src.notifications.tasks import _send_notification
 
 
 @shared_task

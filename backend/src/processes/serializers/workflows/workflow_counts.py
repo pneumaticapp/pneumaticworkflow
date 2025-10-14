@@ -1,17 +1,18 @@
 from rest_framework.serializers import (
-    Serializer,
-    IntegerField,
+    BooleanField,
     CharField,
     ChoiceField,
-    BooleanField,
+    IntegerField,
+    Serializer,
     ValidationError,
 )
-from src.processes.enums import PerformerType
+
 from src.generics.mixins.serializers import (
     CustomValidationErrorMixin,
     ValidationUtilsMixin,
 )
 from src.processes.enums import (
+    PerformerType,
     WorkflowApiStatus,
 )
 from src.processes.messages.workflow import (

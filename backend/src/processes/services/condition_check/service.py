@@ -1,4 +1,6 @@
 from typing import List
+
+from src.processes.enums import PredicateType
 from src.processes.models.workflows.conditions import (
     Condition,
     Predicate,
@@ -14,18 +16,17 @@ from src.processes.services.condition_check.resolvers.dropdown import (
 from src.processes.services.condition_check.resolvers.file import (
     FileResolver,
 )
-from src.processes.services.condition_check.resolvers.string import (
-    StringResolver,
-)
-from src.processes.services.condition_check.resolvers.user import UserResolver
-from src.processes.services.condition_check.resolvers.task import TaskResolver
 from src.processes.services.condition_check.resolvers.kickoff import (
     KickoffResolver,
 )
 from src.processes.services.condition_check.resolvers.number import (
     NumberResolver,
 )
-from src.processes.enums import PredicateType
+from src.processes.services.condition_check.resolvers.string import (
+    StringResolver,
+)
+from src.processes.services.condition_check.resolvers.task import TaskResolver
+from src.processes.services.condition_check.resolvers.user import UserResolver
 
 
 class ConditionCheckService:

@@ -1,15 +1,16 @@
 from django.db import models
-from django.db.models import UniqueConstraint, Q
+from django.db.models import Q, UniqueConstraint
+
 from src.generics.managers import BaseSoftDeleteManager
+from src.processes.models.base import BaseApiNameModel
 from src.processes.models.mixins import FieldMixin
-from src.processes.querysets import (
-    FieldTemplateValuesQuerySet,
-    FieldTemplateQuerySet,
-)
+from src.processes.models.templates.kickoff import Kickoff
 from src.processes.models.templates.task import TaskTemplate
 from src.processes.models.templates.template import Template
-from src.processes.models.templates.kickoff import Kickoff
-from src.processes.models.base import BaseApiNameModel
+from src.processes.querysets import (
+    FieldTemplateQuerySet,
+    FieldTemplateValuesQuerySet,
+)
 
 
 class FieldTemplate(

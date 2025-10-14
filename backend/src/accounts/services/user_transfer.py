@@ -1,35 +1,35 @@
 from django.conf import settings
-from django.db import transaction
 from django.contrib.auth import get_user_model
+from django.db import transaction
 from rest_framework_simplejwt.exceptions import TokenError
 
-from src.authentication.enums import AuthTokenType
+from src.accounts.enums import (
+    BillingPlanType,
+    UserInviteStatus,
+    UserStatus,
+)
 from src.accounts.models import UserInvite
-from src.accounts.tokens import TransferToken
 from src.accounts.serializers.user import UserWebsocketSerializer
+from src.accounts.services.account import AccountService
 from src.accounts.services.exceptions import (
-    InvalidTransferTokenException,
     AlreadyAcceptedInviteException,
     ExpiredTransferTokenException,
-)
-from src.payment.stripe.service import StripeService
-from src.accounts.enums import (
-    UserStatus,
-    UserInviteStatus,
-    BillingPlanType,
+    InvalidTransferTokenException,
 )
 from src.accounts.services.reassign import (
     ReassignService,
 )
+from src.accounts.services.user import UserService
+from src.accounts.tokens import TransferToken
+from src.analytics.mixins import BaseIdentifyMixin
+from src.analytics.services import AnalyticService
+from src.authentication.enums import AuthTokenType
+from src.notifications.tasks import send_user_updated_notification
+from src.payment.stripe.service import StripeService
+from src.payment.tasks import increase_plan_users
 from src.processes.services.remove_user_from_draft import (
     remove_user_from_draft,
 )
-from src.analytics.mixins import BaseIdentifyMixin
-from src.analytics.services import AnalyticService
-from src.accounts.services.user import UserService
-from src.payment.tasks import increase_plan_users
-from src.accounts.services.account import AccountService
-from src.notifications.tasks import send_user_updated_notification
 
 UserModel = get_user_model()
 

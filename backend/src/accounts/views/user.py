@@ -2,11 +2,16 @@ from django.contrib.auth import get_user_model
 from rest_framework.decorators import action
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.viewsets import GenericViewSet
+
 from src.accounts.filters import (
     ContactsFilterSet,
 )
 from src.accounts.models import (
     Contact,
+)
+from src.accounts.permissions import (
+    BillingPlanPermission,
+    ExpiredSubscriptionPermission,
 )
 from src.accounts.serializers.user import (
     ContactRequestSerializer,
@@ -14,25 +19,21 @@ from src.accounts.serializers.user import (
     UserSerializer,
     UserWebsocketSerializer,
 )
+from src.analytics.mixins import BaseIdentifyMixin
+from src.analytics.services import AnalyticService
 from src.generics.filters import PneumaticFilterBackend
 from src.generics.mixins.views import (
     CustomViewSetMixin,
-)
-from src.processes.models.workflows.task import Task
-from src.accounts.permissions import (
-    ExpiredSubscriptionPermission,
-    BillingPlanPermission,
 )
 from src.generics.permissions import (
     IsAuthenticated,
     UserIsAuthenticated,
 )
 from src.notifications.tasks import send_user_updated_notification
-from src.analytics.mixins import BaseIdentifyMixin
-from src.analytics.services import AnalyticService
-from src.utils.validation import raise_validation_error
-from src.payment.stripe.service import StripeService
 from src.payment.stripe.exceptions import StripeServiceException
+from src.payment.stripe.service import StripeService
+from src.processes.models.workflows.task import Task
+from src.utils.validation import raise_validation_error
 
 UserModel = get_user_model()
 

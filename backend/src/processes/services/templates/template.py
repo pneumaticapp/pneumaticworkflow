@@ -1,27 +1,30 @@
 # ruff: noqa: PLC0415 UP031
-from typing import List
 from copy import deepcopy
+from typing import List
+
 from django.contrib.auth import get_user_model
+from rest_framework.serializers import ValidationError
 
 from src.accounts.models import UserGroup
-from src.processes.models.templates.task import TaskTemplate
-from src.processes.models.templates.fields import FieldTemplate
-from src.processes.models.templates.template import Template
-from src.processes.models.templates.system_template import SystemTemplate
-from src.processes.utils.common import create_api_name
-from src.processes.utils.common import insert_fields_values_to_text
+from src.analytics.services import AnalyticService
+from src.generics.base.service import BaseModelService
 from src.processes.enums import (
+    OwnerType,
     PerformerType,
     sys_template_type_map,
-    OwnerType,
 )
-from src.generics.base.service import BaseModelService
-from rest_framework.serializers import ValidationError
+from src.processes.models.templates.fields import FieldTemplate
+from src.processes.models.templates.system_template import SystemTemplate
+from src.processes.models.templates.task import TaskTemplate
+from src.processes.models.templates.template import Template
+from src.processes.utils.common import (
+    create_api_name,
+    insert_fields_values_to_text,
+)
 from src.utils.logging import (
-    capture_sentry_message,
     SentryLogLevel,
+    capture_sentry_message,
 )
-from src.analytics.services import AnalyticService
 
 UserModel = get_user_model()
 

@@ -1,12 +1,12 @@
 import pytest
 from django.contrib.auth import get_user_model
-from src.processes.models.workflows.workflow import Workflow
+
 from src.processes.models.workflows.task import Task
+from src.processes.models.workflows.workflow import Workflow
 from src.processes.tests.fixtures import (
     create_test_user,
     create_test_workflow,
 )
-
 
 UserModel = get_user_model()
 

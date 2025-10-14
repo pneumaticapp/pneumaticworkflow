@@ -1,21 +1,8 @@
 from typing import Dict, Tuple
-from django.utils import timezone
+
 from django.contrib.auth import get_user_model
-from src.processes.models.templates.checklist import (
-    ChecklistTemplateSelection,
-)
-from src.processes.models.workflows.task import Task
-from src.processes.models.workflows.checklist import (
-    ChecklistSelection,
-)
-from src.processes.services.tasks import exceptions
-from src.processes.services.base import (
-    BaseWorkflowService,
-    BaseUpdateVersionService,
-)
-from src.processes.utils.common import (
-    insert_fields_values_to_text,
-)
+from django.utils import timezone
+
 from src.processes.enums import WorkflowStatus
 from src.processes.messages.workflow import (
     MSG_PW_0017,
@@ -23,7 +10,21 @@ from src.processes.messages.workflow import (
     MSG_PW_0019,
     MSG_PW_0020,
 )
-
+from src.processes.models.templates.checklist import (
+    ChecklistTemplateSelection,
+)
+from src.processes.models.workflows.checklist import (
+    ChecklistSelection,
+)
+from src.processes.models.workflows.task import Task
+from src.processes.services.base import (
+    BaseUpdateVersionService,
+    BaseWorkflowService,
+)
+from src.processes.services.tasks import exceptions
+from src.processes.utils.common import (
+    insert_fields_values_to_text,
+)
 
 UserModel = get_user_model()
 

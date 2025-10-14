@@ -1,37 +1,41 @@
-import pytest
 from datetime import timedelta
-from django.utils import timezone
+
+import pytest
 from django.contrib.auth import get_user_model
-from src.processes.tests.fixtures import (
-    create_test_template,
-    create_test_workflow,
-    create_test_owner,
-    create_test_account,
-    create_test_admin,
-    create_test_not_admin,
-    create_test_group,
-)
+from django.utils import timezone
+
 from src.authentication.enums import AuthTokenType
-from src.processes.services.workflow_action import (
-    WorkflowActionService,
-)
-from src.processes.services.tasks.task_version import (
-    TaskUpdateVersionService,
+from src.processes.enums import (
+    DirectlyStatus,
+    DueDateRule,
+    FieldType,
+    PerformerType,
+    PredicateOperator,
+    TaskStatus,
+    WorkflowStatus,
 )
 from src.processes.models.workflows.raw_due_date import RawDueDate
 from src.processes.models.workflows.task import (
     Delay,
     TaskPerformer,
 )
-from src.processes.enums import (
-    DirectlyStatus,
-    WorkflowStatus,
-    DueDateRule,
-    FieldType,
-    PredicateOperator, TaskStatus, PerformerType,
+from src.processes.services.tasks.task_version import (
+    TaskUpdateVersionService,
 )
 from src.processes.services.versioning.schemas import (
     TaskSchemaV1,
+)
+from src.processes.services.workflow_action import (
+    WorkflowActionService,
+)
+from src.processes.tests.fixtures import (
+    create_test_account,
+    create_test_admin,
+    create_test_group,
+    create_test_not_admin,
+    create_test_owner,
+    create_test_template,
+    create_test_workflow,
 )
 
 UserModel = get_user_model()

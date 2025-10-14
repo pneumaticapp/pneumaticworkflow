@@ -1,10 +1,12 @@
 from typing import Optional, Tuple
+
 from django.contrib.auth.models import AnonymousUser
 from rest_framework.authentication import BaseAuthentication
+
 from src.authentication.tokens import (
+    EmbedToken,
     PublicBaseToken,
     PublicToken,
-    EmbedToken,
 )
 from src.processes.models.templates.template import Template
 

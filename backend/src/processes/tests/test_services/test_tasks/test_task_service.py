@@ -1,24 +1,26 @@
+from datetime import datetime, timedelta
+from datetime import timezone as tz
+
 import pytest
-from datetime import timedelta, datetime, timezone as tz
 from django.utils import timezone
-from src.processes.models.workflows.fields import TaskField
-from src.processes.models.workflows.raw_due_date import RawDueDate
+
+from src.processes.enums import (
+    DirectlyStatus,
+    DueDateRule,
+    FieldType,
+)
 from src.processes.models.templates.checklist import (
     ChecklistTemplate,
     ChecklistTemplateSelection,
 )
+from src.processes.models.workflows.fields import TaskField
+from src.processes.models.workflows.raw_due_date import RawDueDate
+from src.processes.services.tasks.task import TaskService
 from src.processes.tests.fixtures import (
-    create_test_user,
     create_test_template,
+    create_test_user,
     create_test_workflow,
 )
-from src.processes.enums import (
-    FieldType,
-    DueDateRule,
-    DirectlyStatus,
-)
-from src.processes.services.tasks.task import TaskService
-
 
 pytestmark = pytest.mark.django_db
 

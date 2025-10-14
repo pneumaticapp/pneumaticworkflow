@@ -1,23 +1,22 @@
-import pytest
 from datetime import timedelta
-from django.utils import timezone
+
+import pytest
 from django.conf import settings
-from src.payment.enums import BillingPeriod
+from django.utils import timezone
+
 from src.accounts.enums import (
     BillingPlanType,
     LeaseLevel,
 )
+from src.accounts.services.account import AccountService
+from src.payment.enums import BillingPeriod
 from src.processes.tests.fixtures import (
-    create_test_template,
     create_test_account,
+    create_test_guest,
+    create_test_template,
     create_test_user,
 )
-from src.processes.tests.fixtures import (
-    create_test_guest,
-)
-from src.accounts.services.account import AccountService
 from src.utils.dates import date_format
-
 
 pytestmark = pytest.mark.django_db
 

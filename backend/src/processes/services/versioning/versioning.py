@@ -1,11 +1,12 @@
-from typing import Dict, Any, Type
+from typing import Any, Dict, Type
 
 from rest_framework.serializers import Serializer
 
 from src.processes.models.templates.template import (
-    TemplateVersion,
     Template,
+    TemplateVersion,
 )
+
 
 class TemplateVersioningService:
     def __init__(

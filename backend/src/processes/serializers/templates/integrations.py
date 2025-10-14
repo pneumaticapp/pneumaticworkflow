@@ -1,9 +1,10 @@
 from rest_framework.serializers import (
-    Serializer,
-    ModelSerializer,
     CharField,
     IntegerField,
+    ModelSerializer,
+    Serializer,
 )
+
 from src.generics.fields import TimeStampField
 from src.generics.mixins.serializers import (
     CustomValidationErrorMixin,

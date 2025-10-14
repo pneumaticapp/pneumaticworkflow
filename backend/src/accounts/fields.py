@@ -1,5 +1,5 @@
-from django.db import models
 from django import forms
+from django.db import models
 
 
 class LowerField(models.Field):

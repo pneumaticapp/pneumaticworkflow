@@ -2,12 +2,12 @@ import pytest
 from django.utils import timezone
 
 from src.accounts.enums import (
-    NotificationType,
     NotificationStatus,
+    NotificationType,
 )
 from src.accounts.models import (
-    SystemMessage,
     Notification,
+    SystemMessage,
 )
 from src.accounts.tasks import (
     send_system_notification,
@@ -15,7 +15,6 @@ from src.accounts.tasks import (
 from src.processes.tests.fixtures import (
     create_test_user,
 )
-
 
 pytestmark = pytest.mark.django_db
 

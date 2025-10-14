@@ -1,17 +1,19 @@
 import json
-import requests
-from typing import Union, Optional
+from typing import Optional, Union
 from uuid import uuid4
+
+import requests
 from django.conf import settings
 from django.contrib.auth import get_user_model
+
 from src.accounts.enums import SourceType
-from src.authentication.models import AccessToken
 from src.authentication.entities import UserData
-from src.generics.mixins.services import CacheMixin
+from src.authentication.models import AccessToken
 from src.authentication.services import exceptions
+from src.generics.mixins.services import CacheMixin
 from src.utils.logging import (
-    capture_sentry_message,
     SentryLogLevel,
+    capture_sentry_message,
 )
 
 UserModel = get_user_model()

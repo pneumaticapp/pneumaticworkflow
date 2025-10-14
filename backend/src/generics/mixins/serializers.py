@@ -1,23 +1,20 @@
 from ast import literal_eval
 from collections import OrderedDict
-from collections.abc import Iterable
-from collections.abc import Mapping
+from collections.abc import Iterable, Mapping
+from typing import Any, Dict, List, Optional, Union
+
 from django.core.exceptions import ValidationError as DjangoValidationError
-from typing import Dict, Any, List, Optional, Union
 from rest_framework.exceptions import ValidationError
-from rest_framework.settings import api_settings
-from rest_framework.serializers import as_serializer_error
 from rest_framework.fields import (
     Field,
     SkipField,
+    empty,
     get_error_detail,
     set_value,
-    empty,
 )
-from src.utils.validation import (
-    raise_validation_error,
-    ErrorCode,
-)
+from rest_framework.serializers import as_serializer_error
+from rest_framework.settings import api_settings
+
 from src.generics.entities import (
     ValidationErrorData,
 )
@@ -25,6 +22,10 @@ from src.generics.messages import (
     MSG_GE_0003,
     MSG_GE_0004,
     MSG_GE_0005,
+)
+from src.utils.validation import (
+    ErrorCode,
+    raise_validation_error,
 )
 
 

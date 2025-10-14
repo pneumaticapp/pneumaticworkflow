@@ -29,6 +29,7 @@ exclude = [
 # McCabe complexity (`C901`) by default.
 select = [
     "A",
+    #"ARG", Maybe add later
     "COM",
     "ASYNC",
     "B",
@@ -41,6 +42,7 @@ select = [
     "E4",
     "E7",
     "E9",
+    "I",
     "F",
     # "FA", Maybe add later
     # "FBT", Maybe add later
@@ -52,8 +54,10 @@ select = [
     "Q",
     "LOG",
     "FAST",
+    "FLY",
     "PL",
     "PLE",
+    # "PTH", Add later
     # "PT", Add later
     "PYI",
     "RSE",
@@ -61,6 +65,9 @@ select = [
     # "S", Maybe add later
     "SIM",
     "T20",
+    "TC",
+    # "TD", Maybe add later
+    "TID",
 ]
 ignore = [
     "DJ001",   # Maybe add later

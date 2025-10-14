@@ -1,31 +1,32 @@
 # ruff: noqa: UP031
-import pytest
 from datetime import timedelta
+
+import pytest
 from django.utils import timezone
+
+from src.processes.enums import (
+    FieldType,
+    PerformerType,
+    TaskStatus,
+    WorkflowStatus,
+)
 from src.processes.models.templates.fields import (
     FieldTemplate,
     FieldTemplateSelection,
 )
-from src.processes.models.workflows.workflow import Workflow
-from src.processes.models.workflows.task import (
-    TaskPerformer,
-    Delay,
-)
 from src.processes.models.workflows.attachment import FileAttachment
+from src.processes.models.workflows.task import (
+    Delay,
+    TaskPerformer,
+)
+from src.processes.models.workflows.workflow import Workflow
 from src.processes.tests.fixtures import (
-    create_test_user,
-    create_test_workflow,
-    create_test_template,
     create_test_admin,
     create_test_group,
+    create_test_template,
+    create_test_user,
+    create_test_workflow,
 )
-from src.processes.enums import (
-    FieldType,
-    WorkflowStatus,
-    TaskStatus,
-    PerformerType,
-)
-
 
 pytestmark = pytest.mark.django_db
 

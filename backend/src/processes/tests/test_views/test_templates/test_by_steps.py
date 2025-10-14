@@ -1,23 +1,23 @@
 import pytest
-from src.processes.consts import TEMPLATE_NAME_LENGTH
-from src.processes.tests.fixtures import (
-    create_test_user,
-    create_test_account,
-    create_test_template,
-)
+
 from src.authentication.enums import AuthTokenType
+from src.processes.consts import TEMPLATE_NAME_LENGTH
+from src.processes.enums import (
+    OwnerType,
+)
 from src.processes.models.templates.task import TaskTemplate
 from src.processes.services.exceptions import (
     TemplateServiceException,
 )
-from src.processes.enums import (
-    OwnerType,
-)
 from src.processes.services.templates.template import (
     TemplateService,
 )
+from src.processes.tests.fixtures import (
+    create_test_account,
+    create_test_template,
+    create_test_user,
+)
 from src.utils.validation import ErrorCode
-
 
 pytestmark = pytest.mark.django_db
 

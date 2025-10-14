@@ -1,18 +1,20 @@
-from typing import Dict, Any
+from typing import Any, Dict
+
 from rest_framework.serializers import (
-    ModelSerializer,
     CharField,
+    ModelSerializer,
 )
-from src.processes.models.templates.owner import TemplateOwner
+
 from src.generics.mixins.serializers import (
     AdditionalValidationMixin,
 )
+from src.processes.enums import OwnerType
+from src.processes.messages.template import MSG_PT_0058
+from src.processes.models.templates.owner import TemplateOwner
 from src.processes.serializers.templates.mixins import (
     CreateOrUpdateInstanceMixin,
     CreateOrUpdateRelatedMixin,
 )
-from src.processes.enums import OwnerType
-from src.processes.messages.template import MSG_PT_0058
 
 
 class TemplateOwnerSerializer(

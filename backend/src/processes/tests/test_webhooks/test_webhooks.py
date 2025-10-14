@@ -1,18 +1,19 @@
 import pytest
-from django.utils import timezone
 from django.contrib.auth import get_user_model
+from django.utils import timezone
 from typing_extensions import OrderedDict
+
 from src.processes.enums import TaskStatus, WorkflowStatus
 from src.processes.models.workflows.workflow import Workflow
 from src.processes.tests.fixtures import (
-    create_test_workflow,
-    create_test_owner,
-    create_wf_created_webhook,
     create_task_completed_webhook,
     create_task_returned_webhook,
-    create_test_template, create_wf_completed_webhook,
+    create_test_owner,
+    create_test_template,
+    create_test_workflow,
+    create_wf_completed_webhook,
+    create_wf_created_webhook,
 )
-
 
 UserModel = get_user_model()
 pytestmark = pytest.mark.django_db

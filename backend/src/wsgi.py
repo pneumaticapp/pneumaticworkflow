@@ -14,7 +14,6 @@ os.environ.setdefault('DJANGO_CONFIGURATION', configuration)
 from configurations.wsgi import get_wsgi_application
 from django.conf import settings
 
-
 if (
     configuration in {'Staging', 'Production'}
     and settings.PROJECT_CONF['SENTRY_DSN']

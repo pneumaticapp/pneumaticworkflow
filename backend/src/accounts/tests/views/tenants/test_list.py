@@ -1,16 +1,17 @@
 import datetime
-from django.utils import timezone
+
 import pytest
+from django.utils import timezone
+
 from src.accounts.enums import (
     BillingPlanType,
     LeaseLevel,
 )
 from src.processes.tests.fixtures import (
-    create_test_user,
     create_test_account,
+    create_test_user,
 )
 from src.utils.dates import date_format
-
 
 pytestmark = pytest.mark.django_db
 

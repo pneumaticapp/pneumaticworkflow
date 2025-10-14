@@ -2,21 +2,20 @@ import pytest
 from django.contrib.auth.models import AnonymousUser
 
 from src.authentication.enums import AuthTokenType
-from src.processes.services import exceptions
-from src.processes.services.attachments import (
-    AttachmentService,
-)
 from src.processes.enums import FieldType
 from src.processes.messages import workflow as messages
 from src.processes.models.workflows.attachment import FileAttachment
 from src.processes.models.workflows.fields import TaskField
+from src.processes.services import exceptions
+from src.processes.services.attachments import (
+    AttachmentService,
+)
 from src.processes.tests.fixtures import (
+    create_test_account,
     create_test_user,
     create_test_workflow,
-    create_test_account,
 )
 from src.storage.google_cloud import GoogleCloudService
-
 
 pytestmark = pytest.mark.django_db
 

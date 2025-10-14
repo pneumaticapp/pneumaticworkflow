@@ -1,53 +1,55 @@
-import pytest
 from datetime import timedelta
+
+import pytest
 from django.utils import timezone
+
 from src.authentication.enums import AuthTokenType
-from src.processes.services.events import (
-    WorkflowEventService,
-)
-from src.processes.services.tasks.groups import (
-    GroupPerformerService,
-)
-from src.processes.models.templates.fields import (
-    FieldTemplate,
-    FieldTemplateSelection,
+from src.authentication.services.guest_auth import GuestJWTAuthService
+from src.processes.enums import (
+    CommentStatus,
+    ConditionAction,
+    DirectlyStatus,
+    FieldType,
+    PerformerType,
+    PredicateOperator,
+    PredicateType,
+    TaskStatus,
+    WorkflowEventType,
 )
 from src.processes.models.templates.conditions import (
     ConditionTemplate,
     PredicateTemplate,
     RuleTemplate,
 )
-from src.processes.models.workflows.workflow import Workflow
-from src.processes.models.workflows.task import (
-    TaskPerformer,
-    Delay,
+from src.processes.models.templates.fields import (
+    FieldTemplate,
+    FieldTemplateSelection,
 )
-from src.processes.models.workflows.event import WorkflowEvent
 from src.processes.models.workflows.attachment import FileAttachment
-from src.processes.tests.fixtures import (
-    create_test_user,
-    create_test_template,
-    create_test_workflow,
-    create_test_account,
-    create_test_guest,
-    create_test_group,
-    create_test_owner,
+from src.processes.models.workflows.event import WorkflowEvent
+from src.processes.models.workflows.task import (
+    Delay,
+    TaskPerformer,
 )
-from src.processes.enums import (
-    PerformerType,
-    DirectlyStatus,
-    FieldType,
-    WorkflowEventType,
-    CommentStatus,
-    TaskStatus,
-    ConditionAction,
-    PredicateOperator,
-    PredicateType,
+from src.processes.models.workflows.workflow import Workflow
+from src.processes.services.events import (
+    WorkflowEventService,
+)
+from src.processes.services.tasks.groups import (
+    GroupPerformerService,
 )
 from src.processes.services.tasks.performers import (
     TaskPerformersService,
 )
-from src.authentication.services.guest_auth import GuestJWTAuthService
+from src.processes.tests.fixtures import (
+    create_test_account,
+    create_test_group,
+    create_test_guest,
+    create_test_owner,
+    create_test_template,
+    create_test_user,
+    create_test_workflow,
+)
 
 pytestmark = pytest.mark.django_db
 datetime_format = '%Y-%m-%dT%H:%M:%S.%fZ'

@@ -1,28 +1,38 @@
 # ruff: noqa: UP031
 import pytest
 from django.contrib.auth import get_user_model
+
 from src.authentication.enums import AuthTokenType
-from src.processes.models.templates.task import TaskTemplate
-from src.processes.models.templates.owner import TemplateOwner
-from src.processes.models.templates.fields import (
-    FieldTemplate,
-    FieldTemplateSelection,
+from src.processes.enums import (
+    ConditionAction,
+    FieldType,
+    OwnerType,
+    PredicateOperator,
 )
 from src.processes.models.templates.conditions import (
     ConditionTemplate,
     PredicateTemplate,
     RuleTemplate,
 )
-from src.processes.models.workflows.workflow import Workflow
-from src.processes.models.workflows.task import Task
-from src.processes.models.workflows.attachment import FileAttachment
-from src.processes.models.workflows.fields import (
-    TaskField,
-    FieldSelection,
+from src.processes.models.templates.fields import (
+    FieldTemplate,
+    FieldTemplateSelection,
 )
+from src.processes.models.templates.owner import TemplateOwner
+from src.processes.models.templates.task import TaskTemplate
+from src.processes.models.workflows.attachment import FileAttachment
 from src.processes.models.workflows.checklist import (
     Checklist,
     ChecklistSelection,
+)
+from src.processes.models.workflows.fields import (
+    FieldSelection,
+    TaskField,
+)
+from src.processes.models.workflows.task import Task
+from src.processes.models.workflows.workflow import Workflow
+from src.processes.services.tasks.checklist_selection import (
+    ChecklistSelectionService,
 )
 from src.processes.services.versioning.schemas import (
     TemplateSchemaV1,
@@ -30,28 +40,18 @@ from src.processes.services.versioning.schemas import (
 from src.processes.services.versioning.versioning import (
     TemplateVersioningService,
 )
+from src.processes.services.workflows.workflow_version import (
+    WorkflowUpdateVersionService,
+)
 from src.processes.tests.fixtures import (
+    create_checklist_template,
+    create_invited_user,
     create_test_account,
-    create_test_owner,
     create_test_admin,
+    create_test_owner,
     create_test_template,
     create_test_workflow,
-    create_invited_user,
-    create_checklist_template,
 )
-from src.processes.enums import (
-    FieldType,
-    PredicateOperator,
-    OwnerType,
-    ConditionAction,
-)
-from src.processes.services.workflows.workflow_version import (
-        WorkflowUpdateVersionService,
-    )
-from src.processes.services.tasks.checklist_selection import (
-        ChecklistSelectionService,
-    )
-
 
 UserModel = get_user_model()
 

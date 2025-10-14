@@ -1,22 +1,22 @@
 # ruff: noqa: PLC0415
+from django.contrib.auth import get_user_model
+from rest_framework import serializers
 from rest_framework.serializers import (
-    ModelSerializer,
-    IntegerField,
     CharField,
+    IntegerField,
+    ModelSerializer,
     ValidationError,
 )
-from django.contrib.auth import get_user_model
-from src.generics.mixins.serializers import (
-    CustomValidationErrorMixin,
-)
-from src.accounts.messages import MSG_A_0039
-from src.accounts.models import UserGroup
+
 from src.accounts.enums import (
     UserStatus,
 )
-from src.generics.fields import RelatedListField
-from rest_framework import serializers
-from src.generics.fields import CommaSeparatedListField
+from src.accounts.messages import MSG_A_0039
+from src.accounts.models import UserGroup
+from src.generics.fields import CommaSeparatedListField, RelatedListField
+from src.generics.mixins.serializers import (
+    CustomValidationErrorMixin,
+)
 
 UserModel = get_user_model()
 

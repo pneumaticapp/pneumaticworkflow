@@ -1,12 +1,5 @@
 import pytest
-from src.processes.tests.fixtures import (
-    create_test_workflow,
-    create_test_user,
-    create_test_account,
-)
-from src.notifications.tasks import (
-    _send_delayed_workflow_notification,
-)
+
 from src.accounts.enums import (
     NotificationType,
 )
@@ -14,7 +7,14 @@ from src.accounts.models import Notification
 from src.notifications.services.push import (
     PushNotificationService,
 )
-
+from src.notifications.tasks import (
+    _send_delayed_workflow_notification,
+)
+from src.processes.tests.fixtures import (
+    create_test_account,
+    create_test_user,
+    create_test_workflow,
+)
 
 pytestmark = pytest.mark.django_db
 

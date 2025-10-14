@@ -1,52 +1,53 @@
+from datetime import timedelta
+
 import pytest
 import stripe
 from django.utils import timezone
-from datetime import timedelta
-from src.authentication.enums import (
-    AuthTokenType,
-)
+
 from src.accounts.enums import (
     BillingPlanType,
     LeaseLevel,
+)
+from src.accounts.services.account import AccountService
+from src.authentication.enums import (
+    AuthTokenType,
+)
+from src.payment import messages
+from src.payment.enums import (
+    PriceStatus,
+)
+from src.payment.services.account import (
+    AccountSubscriptionService,
+)
+from src.payment.stripe.entities import (
+    PurchaseItem,
+    TokenSubscriptionData,
+)
+from src.payment.stripe.exceptions import (
+    CardError,
+    ChangeCurrencyDisallowed,
+    DecreaseSubscription,
+    MaxQuantityReached,
+    MinQuantityReached,
+    MultipleSubscriptionsNotAllowed,
+    PaymentError,
+    PurchaseArchivedPrice,
+    SubscriptionNotExist,
+    SubsMaxQuantityReached,
+    SubsMinQuantityReached,
+    UnsupportedPlan,
+)
+from src.payment.stripe.service import StripeService
+from src.payment.stripe.tokens import ConfirmToken
+from src.payment.tests.fixtures import (
+    create_test_invoice_price,
+    create_test_product,
+    create_test_recurring_price,
 )
 from src.processes.tests.fixtures import (
     create_test_account,
     create_test_user,
 )
-from src.payment.enums import (
-    PriceStatus,
-)
-from src.payment.stripe.exceptions import (
-    CardError,
-    PaymentError,
-    DecreaseSubscription,
-    MultipleSubscriptionsNotAllowed,
-    ChangeCurrencyDisallowed,
-    MaxQuantityReached,
-    MinQuantityReached,
-    SubsMaxQuantityReached,
-    SubsMinQuantityReached,
-    UnsupportedPlan,
-    PurchaseArchivedPrice,
-    SubscriptionNotExist,
-)
-from src.payment.stripe.service import StripeService
-from src.payment.services.account import (
-    AccountSubscriptionService,
-)
-from src.payment.tests.fixtures import (
-    create_test_recurring_price,
-    create_test_invoice_price,
-    create_test_product,
-)
-from src.payment.stripe.entities import (
-    TokenSubscriptionData,
-    PurchaseItem,
-)
-from src.payment.stripe.tokens import ConfirmToken
-from src.payment import messages
-from src.accounts.services.account import AccountService
-
 
 pytestmark = pytest.mark.django_db
 

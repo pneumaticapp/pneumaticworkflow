@@ -1,12 +1,15 @@
-import pytest
 from collections import OrderedDict
-from src.processes.enums import WorkflowStatus, TaskStatus
+
+import pytest
+
+from src.processes.enums import TaskStatus, WorkflowStatus
 from src.processes.tests.fixtures import (
+    create_test_account,
+    create_test_admin,
+    create_test_owner,
     create_test_workflow,
-    create_test_owner, create_test_account, create_test_admin,
 )
 from src.webhooks.enums import HookEvent
-
 
 pytestmark = pytest.mark.django_db
 

@@ -1,16 +1,18 @@
 from typing import List
+
 from django.db.models import Prefetch
 from rest_framework.viewsets import GenericViewSet
-from src.generics.mixins.views import CustomViewSetMixin
-from src.navigation.serializers import (
-    MenuSerializer,
+
+from src.accounts.permissions import (
+    BillingPlanPermission,
 )
-from src.navigation.models import Menu, MenuItem
+from src.generics.mixins.views import CustomViewSetMixin
 from src.generics.permissions import (
     IsAuthenticated,
 )
-from src.accounts.permissions import (
-    BillingPlanPermission,
+from src.navigation.models import Menu, MenuItem
+from src.navigation.serializers import (
+    MenuSerializer,
 )
 
 

@@ -1,56 +1,57 @@
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.http import Http404
-from rest_framework.serializers import ValidationError
 from rest_framework.decorators import action
 from rest_framework.generics import get_object_or_404
+from rest_framework.mixins import ListModelMixin, RetrieveModelMixin
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.permissions import AllowAny
+from rest_framework.serializers import ValidationError
 from rest_framework.viewsets import GenericViewSet
-from rest_framework.mixins import RetrieveModelMixin, ListModelMixin
-from src.accounts.services.user import UserService
+
+from src.accounts.enums import (
+    UserInviteStatus,
+)
 from src.accounts.filters import UsersListFilterSet
-from src.accounts.services.account import AccountService
 from src.accounts.models import UserInvite
 from src.accounts.permissions import (
-    UserIsAdminOrAccountOwner,
-    ExpiredSubscriptionPermission,
-    BillingPlanPermission,
     AccountOwnerPermission,
+    BillingPlanPermission,
+    ExpiredSubscriptionPermission,
+    UserIsAdminOrAccountOwner,
 )
 from src.accounts.queries import CountTemplatesByUserQuery
 from src.accounts.serializers.user import (
-    UserSerializer,
     UserPrivilegesSerializer,
+    UserSerializer,
 )
 from src.accounts.serializers.users import (
-    ReassignSerializer,
     AcceptTransferSerializer,
+    ReassignSerializer,
 )
+from src.accounts.services.account import AccountService
+from src.accounts.services.exceptions import (
+    AlreadyAcceptedInviteException,
+    InvalidTransferTokenException,
+    ReassignServiceException,
+    UserIsPerformerException,
+)
+from src.accounts.services.reassign import (
+    ReassignService,
+)
+from src.accounts.services.user import UserService
 from src.accounts.services.user_transfer import (
     UserTransferService,
 )
+from src.analytics.mixins import BaseIdentifyMixin
 from src.executor import RawSqlExecutor
 from src.generics.filters import PneumaticFilterBackend
 from src.generics.mixins.views import (
     CustomViewSetMixin,
 )
-from src.analytics.mixins import BaseIdentifyMixin
-from src.accounts.services.reassign import (
-    ReassignService,
-)
 from src.generics.permissions import (
-    UserIsAuthenticated,
     IsAuthenticated,
-)
-from src.accounts.services.exceptions import (
-    AlreadyAcceptedInviteException,
-    InvalidTransferTokenException,
-    UserIsPerformerException,
-    ReassignServiceException,
-)
-from src.accounts.enums import (
-    UserInviteStatus,
+    UserIsAuthenticated,
 )
 from src.utils.validation import raise_validation_error
 

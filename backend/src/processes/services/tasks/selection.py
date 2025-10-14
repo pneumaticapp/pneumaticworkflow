@@ -1,10 +1,10 @@
 from django.contrib.auth import get_user_model
-from src.processes.models.workflows.fields import FieldSelection
+
 from src.processes.models.templates.fields import FieldTemplateSelection
+from src.processes.models.workflows.fields import FieldSelection
 from src.processes.services.base import (
     BaseWorkflowService,
 )
-
 
 UserModel = get_user_model()
 

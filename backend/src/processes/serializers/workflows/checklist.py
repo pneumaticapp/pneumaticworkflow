@@ -1,13 +1,14 @@
 from rest_framework.serializers import (
+    IntegerField,
     ModelSerializer,
     Serializer,
-    IntegerField,
 )
+
+from src.generics.serializers import CustomValidationErrorMixin
 from src.processes.models.workflows.checklist import Checklist
 from src.processes.serializers.workflows.checklist_selection import (
     CheckListSelectionSerializer,
 )
-from src.generics.serializers import CustomValidationErrorMixin
 
 
 class CheckListSerializer(ModelSerializer):

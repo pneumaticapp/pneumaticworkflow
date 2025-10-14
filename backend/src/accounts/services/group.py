@@ -1,32 +1,34 @@
-from django.contrib.auth import get_user_model
+from collections import defaultdict
 from typing import List, Optional
-from src.executor import RawSqlExecutor
+
+from django.contrib.auth import get_user_model
+
+from src.accounts.models import UserGroup
 from src.accounts.queries import (
     FetchGroupTaskNotificationRecipientsQuery,
 )
 from src.accounts.serializers.group import (
     GroupWebsocketSerializer,
 )
-from collections import defaultdict
-from src.analytics.tasks import track_group_analytics
 from src.analytics.events import GroupsAnalyticsEvent
+from src.analytics.tasks import track_group_analytics
+from src.executor import RawSqlExecutor
 from src.generics.base.service import BaseModelService
-from src.accounts.models import UserGroup
-from src.processes.models.templates.owner import TemplateOwner
-from src.processes.models.workflows.task import TaskPerformer
+from src.notifications.tasks import (
+    send_group_created_notification,
+    send_group_deleted_notification,
+    send_group_updated_notification,
+    send_new_task_websocket,
+    send_removed_task_notification,
+)
 from src.processes.enums import (
     OwnerType,
     PerformerType,
 )
+from src.processes.models.templates.owner import TemplateOwner
+from src.processes.models.workflows.task import TaskPerformer
 from src.processes.tasks.update_workflow import (
     update_workflow_owners,
-)
-from src.notifications.tasks import (
-    send_removed_task_notification,
-    send_new_task_websocket,
-    send_group_created_notification,
-    send_group_updated_notification,
-    send_group_deleted_notification,
 )
 
 UserModel = get_user_model()

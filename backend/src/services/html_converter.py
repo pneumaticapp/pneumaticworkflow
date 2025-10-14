@@ -1,9 +1,10 @@
+import re
 from abc import abstractmethod
 from typing import Optional
-from src.services.markdown import MarkdownPatterns
-from markdown import markdown
-import re
 
+from markdown import markdown
+
+from src.services.markdown import MarkdownPatterns
 
 list_block_pattern = re.compile(
     pattern=r'(^(?:\s*(?:(?:\d+\.)|[\-\+\*])\s+.*?(?:\n|$))+)',

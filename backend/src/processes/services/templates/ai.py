@@ -1,36 +1,43 @@
-import openai
 from abc import abstractmethod
 from typing import Optional, Union
+
+import openai
 from django.conf import settings
 from django.contrib.auth import get_user_model
+
+from src.accounts.services.account import AccountService
+from src.ai.models import (
+    OpenAiPrompt,
+)
+from src.analytics.services import AnalyticService
 from src.authentication.enums import AuthTokenType
-from src.processes.enums import PerformerType, ConditionAction, \
-    PredicateType, PredicateOperator
+from src.processes.consts import TEMPLATE_NAME_LENGTH
+from src.processes.enums import (
+    ConditionAction,
+    PerformerType,
+    PredicateOperator,
+    PredicateType,
+)
+from src.processes.models.templates.task import TaskTemplate
 from src.processes.services.exceptions import (
-    OpenAiServiceUnavailable,
-    OpenAiServiceFailed,
     OpenAiLimitTemplateGenerations,
-    OpenAiTemplateStepsNotExist,
-    OpenAiStepsPromptNotExist,
     OpenAiServiceException,
+    OpenAiServiceFailed,
+    OpenAiServiceUnavailable,
+    OpenAiStepsPromptNotExist,
+    OpenAiTemplateStepsNotExist,
+)
+from src.processes.services.templates.template import (
+    TemplateService,
+)
+from src.processes.utils.common import (
+    create_api_name,
+    insert_fields_values_to_text,
 )
 from src.utils.logging import (
     SentryLogLevel,
     capture_sentry_message,
 )
-from src.processes.models.templates.task import TaskTemplate
-from src.accounts.services.account import AccountService
-from src.analytics.services import AnalyticService
-from src.processes.services.templates.template import (
-    TemplateService,
-)
-from src.ai.models import (
-    OpenAiPrompt,
-)
-from src.processes.utils.common import (
-    insert_fields_values_to_text, create_api_name,
-)
-from src.processes.consts import TEMPLATE_NAME_LENGTH
 
 UserModel = get_user_model()
 

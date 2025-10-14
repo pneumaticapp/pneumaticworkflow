@@ -1,14 +1,15 @@
 import pytest
 from django.contrib.auth import get_user_model
-from src.processes.tests.fixtures import (
-    create_test_user,
-)
+
 from src.authentication.enums import AuthTokenType
-from src.payment.stripe.service import StripeService
+from src.payment import messages
 from src.payment.stripe.exceptions import (
     StripeServiceException,
 )
-from src.payment import messages
+from src.payment.stripe.service import StripeService
+from src.processes.tests.fixtures import (
+    create_test_user,
+)
 from src.utils.validation import ErrorCode
 
 UserModel = get_user_model()

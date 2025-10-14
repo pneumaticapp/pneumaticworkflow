@@ -2,39 +2,38 @@ import pytest
 from django.conf import settings
 
 from src.accounts.enums import BillingPlanType
-from src.processes.tests.fixtures import (
-    create_test_user,
-    create_test_template,
-    create_test_workflow,
-    create_invited_user,
-    create_test_account,
-    create_test_group,
-)
-from src.processes.models.templates.raw_performer import RawPerformerTemplate
-from src.processes.models.templates.fields import FieldTemplate
-from src.processes.models.templates.template import Template
-from src.processes.messages import template as messages
-from src.processes.enums import (
-    PerformerType,
-    FieldType,
-    OwnerType,
-    WorkflowStatus,
+from src.accounts.services.user_transfer import (
+    UserTransferService,
 )
 from src.accounts.tokens import (
     TransferToken,
 )
-from src.accounts.services.user_transfer import (
-    UserTransferService,
-)
-from src.authentication.tokens import (
-    PublicToken,
-    EmbedToken,
-)
 from src.authentication.enums import AuthTokenType
+from src.authentication.tokens import (
+    EmbedToken,
+    PublicToken,
+)
+from src.processes.enums import (
+    FieldType,
+    OwnerType,
+    PerformerType,
+    WorkflowStatus,
+)
+from src.processes.messages import template as messages
+from src.processes.models.templates.fields import FieldTemplate
+from src.processes.models.templates.raw_performer import RawPerformerTemplate
+from src.processes.models.templates.template import Template
 from src.processes.services.templates.integrations import (
     TemplateIntegrationsService,
 )
-
+from src.processes.tests.fixtures import (
+    create_invited_user,
+    create_test_account,
+    create_test_group,
+    create_test_template,
+    create_test_user,
+    create_test_workflow,
+)
 
 pytestmark = pytest.mark.django_db
 

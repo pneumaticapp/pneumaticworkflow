@@ -1,29 +1,12 @@
 import pytest
+
 from src.accounts.enums import (
-    UserInviteStatus,
-    SourceType,
-    UserStatus,
-    Timezone,
     Language,
+    SourceType,
+    Timezone,
+    UserInviteStatus,
+    UserStatus,
 )
-from src.processes.tests.fixtures import (
-    create_test_account,
-    create_test_user,
-    create_invited_user,
-    create_test_group,
-)
-from src.accounts.tokens import (
-    InviteToken,
-)
-from src.accounts.services.user_invite import UserInviteService
-from src.accounts.services.exceptions import (
-    AlreadyAcceptedInviteException,
-    UserNotFoundException,
-    UsersLimitInvitesException,
-    UserIsPerformerException,
-    AlreadyRegisteredException,
-)
-from src.authentication.enums import AuthTokenType
 from src.accounts.messages import (
     MSG_A_0002,
     MSG_A_0005,
@@ -33,8 +16,25 @@ from src.accounts.messages import (
     MSG_A_0013,
     MSG_A_0040,
 )
+from src.accounts.services.exceptions import (
+    AlreadyAcceptedInviteException,
+    AlreadyRegisteredException,
+    UserIsPerformerException,
+    UserNotFoundException,
+    UsersLimitInvitesException,
+)
+from src.accounts.services.user_invite import UserInviteService
+from src.accounts.tokens import (
+    InviteToken,
+)
+from src.authentication.enums import AuthTokenType
+from src.processes.tests.fixtures import (
+    create_invited_user,
+    create_test_account,
+    create_test_group,
+    create_test_user,
+)
 from src.utils.validation import ErrorCode
-
 
 pytestmark = pytest.mark.django_db
 

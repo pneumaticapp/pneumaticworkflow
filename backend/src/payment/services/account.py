@@ -1,18 +1,20 @@
 from datetime import datetime
-from django.utils import timezone
-from django.contrib.auth import get_user_model
 
-from src.analytics.services import AnalyticService
-from src.accounts.services.account import AccountService
+from django.contrib.auth import get_user_model
+from django.utils import timezone
+
 from src.accounts.enums import (
     BillingPlanType,
 )
 from src.accounts.models import Account
-from src.authentication.enums import AuthTokenType
+from src.accounts.services.account import AccountService
 from src.analytics.mixins import BaseIdentifyMixin
+from src.analytics.services import AnalyticService
+from src.authentication.enums import AuthTokenType
 from src.payment.entities import (
     SubscriptionDetails,
 )
+
 UserModel = get_user_model()
 
 

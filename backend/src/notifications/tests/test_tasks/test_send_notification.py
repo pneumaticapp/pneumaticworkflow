@@ -1,21 +1,21 @@
 import pytest
-from src.processes.tests.fixtures import (
-    create_test_user,
-    create_test_guest,
-    create_test_account,
-)
+
 from src.notifications.enums import NotificationMethod
-from src.notifications.tasks import _send_notification
 from src.notifications.services.email import (
     EmailService,
-)
-from src.notifications.services.websockets import (
-    WebSocketService,
 )
 from src.notifications.services.push import (
     PushNotificationService,
 )
-
+from src.notifications.services.websockets import (
+    WebSocketService,
+)
+from src.notifications.tasks import _send_notification
+from src.processes.tests.fixtures import (
+    create_test_account,
+    create_test_guest,
+    create_test_user,
+)
 
 pytestmark = pytest.mark.django_db
 

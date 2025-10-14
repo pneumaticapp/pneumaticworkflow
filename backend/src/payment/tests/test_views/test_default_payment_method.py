@@ -1,14 +1,14 @@
 import pytest
 from django.contrib.auth import get_user_model
-from src.processes.tests.fixtures import (
-    create_test_user,
-    create_test_account,
-)
-from src.payment.stripe.service import StripeService
-from src.payment.stripe.entities import CardDetails
+
 from src.authentication.enums import AuthTokenType
 from src.payment import messages
-
+from src.payment.stripe.entities import CardDetails
+from src.payment.stripe.service import StripeService
+from src.processes.tests.fixtures import (
+    create_test_account,
+    create_test_user,
+)
 
 UserModel = get_user_model()
 pytestmark = pytest.mark.django_db

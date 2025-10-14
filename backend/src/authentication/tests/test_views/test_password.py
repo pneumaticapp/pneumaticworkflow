@@ -1,17 +1,17 @@
 import pytest
+
+from src.accounts.enums import UserStatus
 from src.accounts.tokens import (
     ResetPasswordToken,
 )
+from src.authentication import messages
 from src.authentication.enums import ResetPasswordStatus
-from src.accounts.enums import UserStatus
 from src.processes.tests.fixtures import (
-    create_test_user,
-    create_test_guest,
     create_invited_user,
+    create_test_guest,
+    create_test_user,
 )
 from src.utils.validation import ErrorCode
-from src.authentication import messages
-
 
 pytestmark = pytest.mark.django_db
 

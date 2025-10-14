@@ -1,7 +1,8 @@
 import pytest
+
 from src.processes.tests.fixtures import create_test_user
-from src.webhooks import exceptions
 from src.utils.validation import ErrorCode
+from src.webhooks import exceptions
 from src.webhooks.views.events import (
     WebhookService,
 )

@@ -1,7 +1,8 @@
+from django.conf import settings
+
 from src.payment.stripe.permissions import (
     StripeWebhookPermission,
 )
-from django.conf import settings
 
 
 def test_stripe_permission__signature__ok(mocker):

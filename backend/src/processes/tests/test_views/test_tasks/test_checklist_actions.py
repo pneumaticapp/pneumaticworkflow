@@ -1,27 +1,27 @@
 import pytest
 from django.contrib.auth import get_user_model
+
 from src.authentication.enums import AuthTokenType
-from src.processes.tests.fixtures import (
-    create_test_user,
-    create_test_template,
-    create_test_workflow,
-    create_checklist_template,
-    create_test_guest,
-    create_test_account,
-)
-from src.processes.models.workflows.task import TaskPerformer
+from src.authentication.services.guest_auth import GuestJWTAuthService
 from src.processes.models.workflows.checklist import (
     ChecklistSelection,
 )
+from src.processes.models.workflows.task import TaskPerformer
 from src.processes.services.tasks.exceptions import (
     ChecklistServiceException,
 )
 from src.processes.services.tasks.performers import (
     TaskPerformersService,
 )
-from src.authentication.services.guest_auth import GuestJWTAuthService
+from src.processes.tests.fixtures import (
+    create_checklist_template,
+    create_test_account,
+    create_test_guest,
+    create_test_template,
+    create_test_user,
+    create_test_workflow,
+)
 from src.utils.validation import ErrorCode
-
 
 UserModel = get_user_model()
 pytestmark = pytest.mark.django_db

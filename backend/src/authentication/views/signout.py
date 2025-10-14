@@ -3,6 +3,7 @@ from rest_framework.authentication import get_authorization_header
 from rest_framework.generics import (
     CreateAPIView,
 )
+
 from src.authentication.permissions import (
     PrivateApiPermission,
 )
@@ -13,7 +14,6 @@ from src.generics.mixins.views import (
 from src.generics.permissions import (
     UserIsAuthenticated,
 )
-
 
 UserModel = get_user_model()
 

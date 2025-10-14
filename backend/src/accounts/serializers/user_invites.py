@@ -1,19 +1,19 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
-from src.accounts.models import (
-    UserInvite,
-    UserGroup,
-)
+
 from src.accounts.enums import (
-    SourceType,
     Language,
+    SourceType,
 )
 from src.accounts.messages import MSG_A_0002, MSG_A_0040
+from src.accounts.models import (
+    UserGroup,
+    UserInvite,
+)
 from src.generics.mixins.serializers import (
     CustomValidationErrorMixin,
 )
-
 
 UserModel = get_user_model()
 

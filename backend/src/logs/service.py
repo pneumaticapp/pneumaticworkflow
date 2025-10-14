@@ -1,13 +1,14 @@
 from typing import Optional
-from src.generics.base.service import BaseModelService
-from src.logs.models import AccountEvent
+
 from django.contrib.auth import get_user_model
+
+from src.generics.base.service import BaseModelService
 from src.logs.enums import (
     AccountEventStatus,
     AccountEventType,
     RequestDirection,
 )
-
+from src.logs.models import AccountEvent
 
 UserModel = get_user_model()
 

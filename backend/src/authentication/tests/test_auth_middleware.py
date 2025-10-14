@@ -1,16 +1,16 @@
 import pytest
-from src.processes.tests.fixtures import (
-    create_test_user,
-    create_test_account,
-)
-from src.logs.models import AccountEvent
+
+from src.authentication.enums import AuthTokenType
 from src.logs.enums import (
-    AccountEventType,
     AccountEventStatus,
+    AccountEventType,
     RequestDirection,
 )
-from src.authentication.enums import AuthTokenType
-
+from src.logs.models import AccountEvent
+from src.processes.tests.fixtures import (
+    create_test_account,
+    create_test_user,
+)
 
 pytestmark = pytest.mark.django_db
 

@@ -1,22 +1,20 @@
 import pytest
-from src.processes.tests.fixtures import (
-    create_test_user,
-    create_test_account,
-)
-from src.processes.tests.fixtures import (
-    create_test_template,
-)
+
 from src.accounts.enums import (
-    Timezone,
     Language,
+    Timezone,
     UserDateFormat,
     UserFirstDayWeek,
 )
 from src.authentication.tokens import (
-    PublicToken,
     EmbedToken,
+    PublicToken,
 )
-
+from src.processes.tests.fixtures import (
+    create_test_account,
+    create_test_template,
+    create_test_user,
+)
 
 pytestmark = pytest.mark.django_db
 

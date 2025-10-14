@@ -1,7 +1,8 @@
 from typing import Optional
+
 from django.conf import settings
+from sentry_sdk import capture_exception, capture_message, push_scope
 from typing_extensions import Literal
-from sentry_sdk import capture_message, push_scope, capture_exception
 
 
 class SentryLogLevel:

@@ -1,52 +1,53 @@
 # ruff: noqa: PLC0415
-from typing import Dict, Any, List, Optional
+from typing import Any, Dict, List, Optional
+
 from django.contrib.auth import get_user_model
 from rest_framework.serializers import (
-    ModelSerializer,
-    IntegerField,
-    CharField,
-    Serializer,
     BooleanField,
+    CharField,
+    IntegerField,
+    ModelSerializer,
     ReadOnlyField,
+    Serializer,
 )
 
-from src.processes.serializers.templates.condition import (
-    ConditionTemplateSerializer,
-)
-from src.processes.models.templates.task import TaskTemplate
-from src.processes.models.templates.fields import FieldTemplate
-from src.processes.serializers.templates.checklist import (
-    ChecklistTemplateSerializer,
-)
-from src.processes.serializers.templates.raw_due_date import (
-    RawDueDateTemplateSerializer,
-)
-from src.processes.serializers.templates.field import (
-    FieldTemplateSerializer,
-    FieldTemplateShortViewSerializer,
-)
+from src.analytics.services import AnalyticService
 from src.generics.mixins.serializers import (
     AdditionalValidationMixin,
     CustomValidationErrorMixin,
-)
-from src.processes.serializers.templates.raw_performer import (
-    RawPerformerSerializer,
-)
-from src.processes.serializers.templates.mixins import (
-    CreateOrUpdateRelatedMixin,
-    CreateOrUpdateInstanceMixin,
-    CustomValidationApiNameMixin,
-)
-from src.processes.utils.common import (
-    VAR_PATTERN, create_api_name,
 )
 from src.processes.enums import (
     PerformerType,
     PredicateType,
 )
-from src.analytics.services import AnalyticService
 from src.processes.messages import template as messages
-
+from src.processes.models.templates.fields import FieldTemplate
+from src.processes.models.templates.task import TaskTemplate
+from src.processes.serializers.templates.checklist import (
+    ChecklistTemplateSerializer,
+)
+from src.processes.serializers.templates.condition import (
+    ConditionTemplateSerializer,
+)
+from src.processes.serializers.templates.field import (
+    FieldTemplateSerializer,
+    FieldTemplateShortViewSerializer,
+)
+from src.processes.serializers.templates.mixins import (
+    CreateOrUpdateInstanceMixin,
+    CreateOrUpdateRelatedMixin,
+    CustomValidationApiNameMixin,
+)
+from src.processes.serializers.templates.raw_due_date import (
+    RawDueDateTemplateSerializer,
+)
+from src.processes.serializers.templates.raw_performer import (
+    RawPerformerSerializer,
+)
+from src.processes.utils.common import (
+    VAR_PATTERN,
+    create_api_name,
+)
 
 UserModel = get_user_model()
 

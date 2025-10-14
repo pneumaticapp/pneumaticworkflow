@@ -1,17 +1,27 @@
 from datetime import timedelta
+
 import pytest
 from django.utils import timezone
-from src.processes.models.templates.fields import (
-    FieldTemplate,
-    FieldTemplateSelection,
+
+from src.authentication.enums import AuthTokenType
+from src.processes.enums import (
+    ConditionAction,
+    FieldType,
+    PredicateOperator,
+    WorkflowStatus,
 )
+from src.processes.messages import workflow as messages
 from src.processes.models.templates.conditions import (
     ConditionTemplate,
     PredicateTemplate,
     RuleTemplate,
 )
-from src.processes.models.workflows.workflow import Workflow
+from src.processes.models.templates.fields import (
+    FieldTemplate,
+    FieldTemplateSelection,
+)
 from src.processes.models.workflows.task import Delay
+from src.processes.models.workflows.workflow import Workflow
 from src.processes.services.exceptions import (
     WorkflowActionServiceException,
 )
@@ -19,23 +29,15 @@ from src.processes.services.workflow_action import (
     WorkflowActionService,
 )
 from src.processes.tests.fixtures import (
-    create_test_workflow,
-    create_test_user,
-    create_test_template,
-    create_test_account,
     create_task_returned_webhook,
-    create_test_owner,
+    create_test_account,
     create_test_admin,
+    create_test_owner,
+    create_test_template,
+    create_test_user,
+    create_test_workflow,
 )
-from src.processes.messages import workflow as messages
 from src.utils.validation import ErrorCode
-from src.processes.enums import (
-    PredicateOperator,
-    FieldType,
-    WorkflowStatus,
-    ConditionAction,
-)
-from src.authentication.enums import AuthTokenType
 
 pytestmark = pytest.mark.django_db
 

@@ -1,32 +1,32 @@
 import pytest
 from django.contrib.auth.hashers import check_password
-from src.accounts.models import (
-    UserInvite,
-    APIKey,
-    Contact,
-)
-from src.authentication.enums import AuthTokenType
+
 from src.accounts.enums import (
-    UserStatus,
+    Language,
     LeaseLevel,
     SourceType,
-    Language,
     UserDateFormat,
     UserFirstDayWeek,
+    UserStatus,
 )
-from src.processes.tests.fixtures import (
-    create_test_user,
-    create_test_account,
-    create_test_guest,
-    create_invited_user,
+from src.accounts.messages import MSG_A_0005
+from src.accounts.models import (
+    APIKey,
+    Contact,
+    UserInvite,
 )
 from src.accounts.services.exceptions import (
-    UserIsPerformerException,
     AlreadyRegisteredException,
+    UserIsPerformerException,
 )
 from src.accounts.services.user import UserService
-from src.accounts.messages import MSG_A_0005
-
+from src.authentication.enums import AuthTokenType
+from src.processes.tests.fixtures import (
+    create_invited_user,
+    create_test_account,
+    create_test_guest,
+    create_test_user,
+)
 
 pytestmark = pytest.mark.django_db
 

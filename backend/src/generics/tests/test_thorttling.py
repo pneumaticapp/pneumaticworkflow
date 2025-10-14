@@ -1,12 +1,12 @@
 import pytest
+
+from src.authentication.enums import AuthTokenType
 from src.generics.throttling import (
+    AnonThrottle,
+    ApiKeyThrottle,
     CustomSimpleRateThrottle,
     TokenThrottle,
-    ApiKeyThrottle,
-    AnonThrottle,
 )
-from src.authentication.enums import AuthTokenType
-
 
 pytestmark = pytest.mark.django_db
 

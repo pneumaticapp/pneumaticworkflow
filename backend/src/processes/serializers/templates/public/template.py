@@ -1,13 +1,15 @@
-from typing import Dict, Any
-from rest_framework.serializers import (
-    ModelSerializer,
-    CharField,
-)
+from typing import Any, Dict
+
 from django.contrib.auth import get_user_model
+from rest_framework.serializers import (
+    CharField,
+    ModelSerializer,
+)
+
 from src.processes.models.templates.template import Template
 from src.processes.serializers.templates.public.kickoff import (
-        PublicKickoffSerializer,
-    )
+    PublicKickoffSerializer,
+)
 
 UserModel = get_user_model()
 

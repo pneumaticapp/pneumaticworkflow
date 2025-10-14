@@ -1,25 +1,26 @@
 from django.contrib.auth import get_user_model
 from rest_framework.decorators import action
 from rest_framework.viewsets import GenericViewSet
-from src.generics.permissions import IsAuthenticated
-from src.processes.permissions import GuestTaskPermission
+
+from src.accounts.enums import UserType
 from src.accounts.permissions import (
-    ExpiredSubscriptionPermission,
     BillingPlanPermission,
+    ExpiredSubscriptionPermission,
 )
+from src.analytics.mixins import BaseIdentifyMixin
 from src.generics.mixins.views import CustomViewSetMixin
+from src.generics.permissions import IsAuthenticated
 from src.processes.models.workflows.checklist import Checklist
+from src.processes.permissions import GuestTaskPermission
+from src.processes.serializers.workflows.checklist import (
+    CheckListRequestSerializer,
+    CheckListSerializer,
+)
+from src.processes.services.tasks.checklist import ChecklistService
 from src.processes.services.tasks.exceptions import (
     ChecklistServiceException,
 )
 from src.utils.validation import raise_validation_error
-from src.analytics.mixins import BaseIdentifyMixin
-from src.processes.services.tasks.checklist import ChecklistService
-from src.processes.serializers.workflows.checklist import (
-    CheckListSerializer,
-    CheckListRequestSerializer,
-)
-from src.accounts.enums import UserType
 
 UserModel = get_user_model()
 

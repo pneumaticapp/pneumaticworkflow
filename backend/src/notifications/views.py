@@ -4,10 +4,11 @@ from rest_framework.generics import (
     DestroyAPIView,
 )
 from rest_framework.viewsets import GenericViewSet
-from src.generics.permissions import UserIsAuthenticated
-from src.notifications.permissions import PushPermission
+
 from src.generics.mixins.views import CustomViewSetMixin
+from src.generics.permissions import UserIsAuthenticated
 from src.notifications.models import Device
+from src.notifications.permissions import PushPermission
 from src.notifications.serializers import DeviceSerializer
 
 

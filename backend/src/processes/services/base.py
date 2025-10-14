@@ -1,10 +1,12 @@
 from abc import abstractmethod
-from django.db.models import Model
+
 from django.contrib.auth import get_user_model
-from src.generics.base.service import BaseModelService
+from django.db.models import Model
+
 from src.authentication.enums import (
     AuthTokenType,
 )
+from src.generics.base.service import BaseModelService
 
 UserModel = get_user_model()
 

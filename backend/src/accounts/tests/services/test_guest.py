@@ -2,12 +2,13 @@ import pytest
 import pytz
 from django.conf import settings
 from django.contrib.auth import get_user_model
+
 from src.accounts.enums import (
-    UserType,
-    UserStatus,
     Language,
     UserDateFormat,
     UserFirstDayWeek,
+    UserStatus,
+    UserType,
 )
 from src.accounts.services.guests import (
     GuestService,

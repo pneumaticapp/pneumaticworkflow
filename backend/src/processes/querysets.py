@@ -1,39 +1,42 @@
 # ruff: noqa: PLC0415
 from datetime import datetime
-from typing import List, Optional, Union, Iterable
+from typing import Iterable, List, Optional, Union
+
 from django.contrib.auth import get_user_model
 from django.db import transaction
 from django.db.models import (
-    Count,
-    Q,
-    F,
     Avg,
+    Count,
+    F,
     Max,
     Prefetch,
+    Q,
 )
-from src.processes.queries import (
-    WorkflowListQuery,
-    RunningTaskTemplateQuery,
-    TemplateListQuery,
-    TemplateExportQuery,
-)
+
 from src.accounts.enums import UserType
 from src.accounts.models import UserGroup
 from src.generics.querysets import (
     AccountBaseQuerySet,
-    BaseQuerySet,
     BaseHardQuerySet,
+    BaseQuerySet,
 )
 from src.processes.enums import (
-    WorkflowStatus,
-    TemplateType,
-    WorkflowEventType,
+    ConditionAction,
     DirectlyStatus,
+    PerformerType,
     SysTemplateType,
-    WorkflowEventActionType,
-    TemplateOrdering,
     TaskStatus,
-    PerformerType, ConditionAction,
+    TemplateOrdering,
+    TemplateType,
+    WorkflowEventActionType,
+    WorkflowEventType,
+    WorkflowStatus,
+)
+from src.processes.queries import (
+    RunningTaskTemplateQuery,
+    TemplateExportQuery,
+    TemplateListQuery,
+    WorkflowListQuery,
 )
 
 UserModel = get_user_model()
@@ -396,8 +399,8 @@ class WorkflowQuerySet(WorkflowsBaseQuerySet):
             Template,
         )
         from src.processes.models.workflows.task import (
-            Task,
             Delay,
+            Task,
             TaskPerformer,
         )
         prefetch_args = [

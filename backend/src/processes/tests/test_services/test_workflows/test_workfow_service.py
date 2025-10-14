@@ -1,19 +1,20 @@
 # ruff: noqa: UP031
-import pytest
 from datetime import timedelta
+
+import pytest
 from django.utils import timezone
-from src.processes.services.tasks.task import TaskService
+
+from src.authentication.enums import AuthTokenType
+from src.processes.enums import FieldType
 from src.processes.models.templates.fields import FieldTemplate
+from src.processes.services.tasks.task import TaskService
+from src.processes.services.workflows.workflow import WorkflowService
 from src.processes.tests.fixtures import (
+    create_test_account,
     create_test_owner,
     create_test_template,
-    create_test_account,
     create_test_workflow,
 )
-from src.processes.enums import FieldType
-from src.authentication.enums import AuthTokenType
-from src.processes.services.workflows.workflow import WorkflowService
-
 
 pytestmark = pytest.mark.django_db
 

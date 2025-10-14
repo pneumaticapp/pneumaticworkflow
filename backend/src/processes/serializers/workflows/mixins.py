@@ -1,15 +1,16 @@
-from typing import Optional, Dict, Any
+from typing import Any, Dict, Optional
+
 from django.contrib.auth import get_user_model
+
 from src.processes.consts import WORKFLOW_NAME_LENGTH
 from src.processes.enums import TaskStatus
-from src.processes.utils.common import (
-    string_abbreviation,
-)
 from src.processes.serializers.workflows.kickoff_value import (
     KickoffValueSerializer,
 )
 from src.processes.services.tasks.task import TaskService
-
+from src.processes.utils.common import (
+    string_abbreviation,
+)
 
 UserModel = get_user_model()
 

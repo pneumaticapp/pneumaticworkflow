@@ -1,16 +1,17 @@
 from django.contrib.auth import get_user_model
 from rest_framework.serializers import (
-    Serializer,
-    IntegerField,
     EmailField,
-    SerializerMethodField,
+    IntegerField,
     ModelSerializer,
+    Serializer,
+    SerializerMethodField,
 )
+
 from src.generics.fields import TimeStampField
-from src.processes.models.workflows.task import TaskPerformer
 from src.generics.mixins.serializers import (
     CustomValidationErrorMixin,
 )
+from src.processes.models.workflows.task import TaskPerformer
 
 UserModel = get_user_model()
 

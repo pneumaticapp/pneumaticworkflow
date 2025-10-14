@@ -1,12 +1,12 @@
 import pytest
 from django.contrib.auth import get_user_model
+
 from src.authentication.enums import AuthTokenType
 from src.processes.tasks.tasks import complete_tasks
 from src.processes.tests.fixtures import (
     create_test_user,
     create_test_workflow,
 )
-
 
 UserModel = get_user_model()
 pytestmark = pytest.mark.django_db

@@ -1,19 +1,20 @@
 import json
+
 import pytest
 from django.core.serializers.json import DjangoJSONEncoder
-from src.processes.tests.fixtures import (
-    create_test_user,
-    create_test_account,
-)
-from src.webhooks.enums import HookEvent
+
 from src.logs.enums import (
     AccountEventStatus,
 )
+from src.processes.tests.fixtures import (
+    create_test_account,
+    create_test_user,
+)
+from src.webhooks.enums import HookEvent
+from src.webhooks.services import WebhookDeliverer
 from src.webhooks.tests.fixtures import (
     create_test_webhook,
 )
-from src.webhooks.services import WebhookDeliverer
-
 
 pytestmark = pytest.mark.django_db
 

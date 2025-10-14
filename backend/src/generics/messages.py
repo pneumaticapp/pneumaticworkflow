@@ -1,5 +1,5 @@
-from django.utils.translation import gettext_lazy as _
 from django.utils.text import format_lazy
+from django.utils.translation import gettext_lazy as _
 
 # Translators: Invalid choice for any list query parameter
 MSG_GE_0001 = lambda choice: format_lazy(

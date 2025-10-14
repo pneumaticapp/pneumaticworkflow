@@ -1,30 +1,31 @@
-import pytest
 from datetime import timedelta
-from django.utils import timezone
+
+import pytest
+from channels.testing import WebsocketCommunicator
 from django.core.exceptions import ObjectDoesNotExist
-from src.notifications.enums import NotificationMethod
-from src.notifications.services.websockets import (
-    WebSocketService,
-)
-from src.notifications.services.exceptions import (
-    NotificationServiceError,
-)
-from src.accounts.enums import UserType, NotificationType
+from django.utils import timezone
+
+from src.accounts.enums import NotificationType, UserType
 from src.accounts.models import Notification
-from src.processes.models.workflows.task import Delay
 from src.accounts.serializers.notifications import (
     NotificationTaskSerializer,
     NotificationWorkflowSerializer,
 )
-from src.processes.tests.fixtures import (
-    create_test_user,
-    create_invited_user,
-    create_test_workflow,
-)
-from channels.testing import WebsocketCommunicator
 from src.asgi import application
 from src.consumers import PneumaticBaseConsumer
-
+from src.notifications.enums import NotificationMethod
+from src.notifications.services.exceptions import (
+    NotificationServiceError,
+)
+from src.notifications.services.websockets import (
+    WebSocketService,
+)
+from src.processes.models.workflows.task import Delay
+from src.processes.tests.fixtures import (
+    create_invited_user,
+    create_test_user,
+    create_test_workflow,
+)
 
 pytestmark = pytest.mark.django_db
 

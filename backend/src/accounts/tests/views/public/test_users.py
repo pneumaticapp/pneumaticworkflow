@@ -1,19 +1,18 @@
 import pytest
+
+from src.accounts.enums import UserStatus
+from src.accounts.services.user import UserService
+from src.authentication.tokens import (
+    EmbedToken,
+    PublicToken,
+)
 from src.processes.tests.fixtures import (
-    create_test_user,
     create_invited_user,
     create_test_account,
-)
-from src.processes.tests.fixtures import (
-    create_test_template,
     create_test_guest,
+    create_test_template,
+    create_test_user,
 )
-from src.accounts.enums import UserStatus
-from src.authentication.tokens import (
-    PublicToken,
-    EmbedToken,
-)
-from src.accounts.services.user import UserService
 
 pytestmark = pytest.mark.django_db
 

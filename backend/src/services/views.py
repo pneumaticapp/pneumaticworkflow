@@ -1,21 +1,22 @@
-from rest_framework.viewsets import GenericViewSet
 from rest_framework.decorators import action
+from rest_framework.viewsets import GenericViewSet
+
 from src.generics.mixins.views import (
+    AnonymousMixin,
     CustomViewSetMixin,
 )
 from src.processes.serializers.templates.template import (
     TemplateAiSerializer,
 )
-from src.services.throttling import StepsByDescriptionThrottle
-from src.processes.services.templates.ai import (
-    AnonOpenAiService,
-)
 from src.processes.services.exceptions import (
     OpenAiServiceException,
 )
-from src.utils.validation import raise_validation_error
-from src.generics.mixins.views import AnonymousMixin
+from src.processes.services.templates.ai import (
+    AnonOpenAiService,
+)
 from src.services.permissions import AIPermission
+from src.services.throttling import StepsByDescriptionThrottle
+from src.utils.validation import raise_validation_error
 
 
 class ServicesViewSet(

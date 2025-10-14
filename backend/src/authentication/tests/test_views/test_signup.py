@@ -1,14 +1,14 @@
 import pytest
-from src.authentication import messages
-from src.utils.validation import ErrorCode
 from drf_recaptcha.validators import ReCaptchaV2Validator
-from src.processes.tests.fixtures import (
-    create_test_user,
-    create_test_account,
-)
-from src.authentication.views.signup import SignUpView
-from src.accounts.enums import Language, Timezone
 
+from src.accounts.enums import Language, Timezone
+from src.authentication import messages
+from src.authentication.views.signup import SignUpView
+from src.processes.tests.fixtures import (
+    create_test_account,
+    create_test_user,
+)
+from src.utils.validation import ErrorCode
 
 pytestmark = pytest.mark.django_db
 

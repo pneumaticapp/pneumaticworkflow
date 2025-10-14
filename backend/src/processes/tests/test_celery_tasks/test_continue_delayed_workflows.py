@@ -1,9 +1,17 @@
 from datetime import timedelta
+
 import pytest
 from django.contrib.auth import get_user_model
 from django.utils import timezone
+
 from src.authentication.enums import AuthTokenType
+from src.processes.enums import (
+    TaskStatus,
+)
 from src.processes.models.workflows.task import Delay
+from src.processes.services.workflow_action import (
+    WorkflowActionService,
+)
 from src.processes.tasks.delay import (
     continue_delayed_workflows,
 )
@@ -11,16 +19,9 @@ from src.processes.tests.fixtures import (
     create_test_owner,
     create_test_workflow,
 )
-from src.processes.enums import (
-    TaskStatus,
-)
 from src.processes.utils.workflows import (
     resume_delayed_workflows,
 )
-from src.processes.services.workflow_action import (
-    WorkflowActionService,
-)
-
 
 UserModel = get_user_model()
 pytestmark = pytest.mark.django_db

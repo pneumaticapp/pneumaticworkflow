@@ -1,13 +1,15 @@
 from datetime import timedelta
+
 import pytest
 from django.conf import settings
 from django.utils import timezone
-from src.services.email import EmailService
+
+from src.notifications.enums import EmailTemplate
 from src.processes.tests.fixtures import (
     create_test_account,
     create_test_user,
 )
-from src.notifications.enums import EmailTemplate
+from src.services.email import EmailService
 
 pytestmark = pytest.mark.django_db
 

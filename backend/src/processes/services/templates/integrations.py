@@ -1,21 +1,24 @@
 # ruff: noqa: SIM102
-from typing import Optional, List
+from typing import List, Optional
+
 from django.contrib.auth import get_user_model
 from django.utils import timezone
-from src.generics.mixins.services import ClsCacheMixin
-from src.processes.models.templates.template import Template
-from src.processes.models.templates.template import TemplateIntegrations
-from src.processes.enums import TemplateIntegrationType
-from src.processes.entities import (
-    TemplateIntegrationsData,
-    PrivateTemplateIntegrationsData,
-)
+
 from src.accounts.models import Account
+from src.analytics.services import AnalyticService
+from src.generics.mixins.services import ClsCacheMixin
+from src.processes.entities import (
+    PrivateTemplateIntegrationsData,
+    TemplateIntegrationsData,
+)
+from src.processes.enums import TemplateIntegrationType
+from src.processes.models.templates.template import (
+    Template,
+    TemplateIntegrations,
+)
 from src.processes.serializers.templates.integrations import (
     TemplateIntegrationsSerializer,
 )
-from src.analytics.services import AnalyticService
-
 
 UserModel = get_user_model()
 

@@ -1,32 +1,33 @@
 # ruff: noqa: PLC0415
 from typing import Optional
+
 from django.conf import settings
-from django.db import transaction
 from django.contrib.auth import get_user_model
+from django.db import transaction
+
+from src.accounts.enums import (
+    BillingPlanType,
+    LeaseLevel,
+    UserStatus,
+)
 from src.accounts.models import (
     Account,
     AccountSignupData,
 )
-from src.analytics.mixins import BaseIdentifyMixin
-from src.generics.mixins.services import ClsCacheMixin
-from src.generics.base.service import BaseModelService
-from src.accounts.services.exceptions import (
-    AccountServiceException,
-)
 from src.accounts.serializers.accounts import (
     AccountCacheSerializer,
 )
+from src.accounts.services.exceptions import (
+    AccountServiceException,
+)
+from src.analytics.mixins import BaseIdentifyMixin
 from src.analytics.tasks import identify_users
-from src.accounts.enums import (
-    LeaseLevel,
-    UserStatus,
-    BillingPlanType,
-)
+from src.generics.base.service import BaseModelService
+from src.generics.mixins.services import ClsCacheMixin
 from src.utils.logging import (
-    capture_sentry_message,
     SentryLogLevel,
+    capture_sentry_message,
 )
-
 
 UserModel = get_user_model()
 configuration = settings.CONFIGURATION_CURRENT
@@ -239,10 +240,10 @@ class AccountService(
             and not self.instance.is_tenant
             and (name or phone)
         ):
-            from src.payment.stripe.service import StripeService
             from src.payment.stripe.exceptions import (
                 StripeServiceException,
             )
+            from src.payment.stripe.service import StripeService
             try:
                 service = StripeService(
                     user=self.user,

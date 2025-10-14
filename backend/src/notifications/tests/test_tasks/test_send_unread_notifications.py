@@ -1,20 +1,9 @@
-import pytest
 from datetime import timedelta
+
+import pytest
 from django.conf import settings
 from django.utils import timezone
-from src.accounts.serializers.notifications import (
-    NotificationTaskSerializer,
-    NotificationWorkflowSerializer,
-)
-from src.processes.tests.fixtures import (
-    create_test_workflow,
-    create_test_user,
-    create_test_account,
-)
-from src.notifications.tasks import (
-    _send_unread_notifications,
-)
-from src.notifications.enums import NotificationMethod
+
 from src.accounts.enums import (
     NotificationType,
 )
@@ -22,11 +11,24 @@ from src.accounts.models import (
     Notification,
     UserInvite,
 )
+from src.accounts.serializers.notifications import (
+    NotificationTaskSerializer,
+    NotificationWorkflowSerializer,
+)
+from src.notifications.enums import NotificationMethod
+from src.notifications.services.email import (
+    EmailService,
+)
+from src.notifications.tasks import (
+    _send_unread_notifications,
+)
 from src.processes.services.events import (
     WorkflowEventService,
 )
-from src.notifications.services.email import (
-    EmailService,
+from src.processes.tests.fixtures import (
+    create_test_account,
+    create_test_user,
+    create_test_workflow,
 )
 
 pytestmark = pytest.mark.django_db

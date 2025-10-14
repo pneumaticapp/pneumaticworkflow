@@ -1,9 +1,9 @@
 from django.contrib.auth import get_user_model
-from src.accounts.enums import (
-    UserType,
-    UserStatus,
-)
 
+from src.accounts.enums import (
+    UserStatus,
+    UserType,
+)
 
 UserModel = get_user_model()
 

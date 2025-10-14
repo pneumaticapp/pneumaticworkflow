@@ -1,4 +1,5 @@
 from abc import abstractmethod
+
 from src.generics.models import SoftDeleteModel
 from src.processes.models.mixins import ApiNameMixin
 from src.processes.utils.common import create_api_name

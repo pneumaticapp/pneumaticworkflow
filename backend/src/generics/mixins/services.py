@@ -1,7 +1,8 @@
-from typing import Union, Optional
+from typing import Optional, Union
+
 from django.core.cache import caches
-from rest_framework.serializers import ModelSerializer
 from django.db.models import Model
+from rest_framework.serializers import ModelSerializer
 
 
 class BaseClsCache:

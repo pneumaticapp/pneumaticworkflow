@@ -1,6 +1,7 @@
 from django.conf import settings
 from rest_framework.permissions import BasePermission
 from rest_framework.request import Request
+
 from src.accounts.enums import UserType
 
 

@@ -1,16 +1,16 @@
 import pytest
-from src.processes.tests.fixtures import (
-    create_test_user,
-    create_test_account,
+
+from src.accounts.messages import (
+    MSG_A_0011,
 )
 from src.accounts.services.exceptions import (
     UserIsPerformerException,
 )
-from src.accounts.messages import (
-    MSG_A_0011,
+from src.processes.tests.fixtures import (
+    create_test_account,
+    create_test_user,
 )
 from src.utils.validation import ErrorCode
-
 
 pytestmark = pytest.mark.django_db
 

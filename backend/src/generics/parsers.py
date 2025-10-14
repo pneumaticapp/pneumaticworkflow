@@ -1,11 +1,12 @@
-import re
 import json
-from django.http import QueryDict
-from django.core.files import File
-from django.utils.datastructures import MultiValueDict
+import re
+
 from django.conf import settings
-from rest_framework.parsers import JSONParser
+from django.core.files import File
+from django.http import QueryDict
+from django.utils.datastructures import MultiValueDict
 from rest_framework.exceptions import ParseError
+from rest_framework.parsers import JSONParser
 
 
 class CamelCaseJSONParser(JSONParser):

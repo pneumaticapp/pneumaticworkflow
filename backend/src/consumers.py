@@ -1,10 +1,10 @@
-import json
 import contextlib
-from websockets.exceptions import ConnectionClosedError
+import json
+
 from channels.exceptions import DenyConnection
 from channels.generic.websocket import AsyncWebsocketConsumer
 from django.contrib.auth import get_user_model
-
+from websockets.exceptions import ConnectionClosedError
 
 UserModel = get_user_model()
 

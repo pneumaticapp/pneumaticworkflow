@@ -1,17 +1,18 @@
 import hashlib
 import secrets
+from abc import abstractmethod
 from datetime import timedelta
 from typing import Any, Optional
-from abc import abstractmethod
-from django.utils.encoding import force_bytes
+
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.cache import caches
-from rest_framework_simplejwt.tokens import Token
+from django.utils.encoding import force_bytes
 from rest_framework_simplejwt.exceptions import TokenError
+from rest_framework_simplejwt.tokens import Token
+
 from src.authentication.enums import AuthTokenType
 from src.utils.salt import get_salt
-
 
 UserModel = get_user_model()
 

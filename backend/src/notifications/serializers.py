@@ -1,4 +1,5 @@
 from rest_framework.serializers import ModelSerializer
+
 from src.notifications.models import Device, UserNotifications
 
 

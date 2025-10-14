@@ -1,22 +1,21 @@
-from datetime import timedelta
 import os
-from typing import Optional
 import re
+from datetime import timedelta
+from typing import Optional
 
 from django.conf import settings
-from google.cloud import storage
 from google.cloud import exceptions as gcloud_exceptions
+from google.cloud import storage
+from google.cloud.storage.blob import _quote
 
 from src.accounts.models import Account
 from src.accounts.services.account import AccountService
-from src.utils.salt import get_salt
-from src.utils.logging import (
-    capture_sentry_message,
-    SentryLogLevel,
-)
 from src.processes.services import exceptions
-from google.cloud.storage.blob import _quote
-
+from src.utils.logging import (
+    SentryLogLevel,
+    capture_sentry_message,
+)
+from src.utils.salt import get_salt
 
 configuration = os.getenv('ENVIRONMENT', 'development').title()
 # TODO Remove file in https://my.pneumatic.app/workflows/41526

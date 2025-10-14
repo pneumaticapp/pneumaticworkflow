@@ -1,18 +1,19 @@
 from typing import Optional
+
 from django.conf import settings
 from django.contrib.auth import get_user_model
+
 from src.accounts.enums import (
-    LeaseLevel,
     BillingPlanType,
+    LeaseLevel,
 )
 from src.accounts.models import Account
 from src.accounts.services.account import AccountService
 from src.authentication.enums import AuthTokenType
+from src.payment.stripe.service import StripeService
 from src.payment.tasks import (
     increase_plan_users,
 )
-from src.payment.stripe.service import StripeService
-
 
 UserModel = get_user_model()
 

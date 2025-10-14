@@ -5,43 +5,43 @@ from django.db import transaction
 
 from src.accounts.models import UserGroup
 from src.accounts.queries import (
+    DeleteGroupFromRawPerformerQuery,
+    DeleteGroupFromRawPerformerTemplateQuery,
+    DeleteGroupFromTaskPerformerQuery,
+    DeleteGroupFromTemplateOwnerQuery,
+    DeleteGroupUserFromRawPerformerQuery,
+    DeleteGroupUserFromRawPerformerTemplateQuery,
+    DeleteGroupUserFromTaskPerformerQuery,
+    DeleteGroupUserFromTemplateOwnerQuery,
     DeleteUserFromConditionsQuery,
     DeleteUserFromRawPerformerQuery,
     DeleteUserFromRawPerformerTemplateQuery,
+    DeleteUserFromTaskPerformerQuery,
     DeleteUserFromTemplateConditionsQuery,
+    DeleteUserFromTemplateOwnerQuery,
     DeleteUserFromWorkflowMembersQuery,
     DeleteUserGroupFromRawPerformerQuery,
-    DeleteGroupFromRawPerformerQuery,
-    DeleteGroupUserFromRawPerformerQuery,
-    DeleteGroupFromRawPerformerTemplateQuery,
-    DeleteGroupUserFromRawPerformerTemplateQuery,
     DeleteUserGroupFromRawPerformerTemplateQuery,
-    DeleteGroupFromTaskPerformerQuery,
-    DeleteGroupUserFromTaskPerformerQuery,
     DeleteUserGroupFromTaskPerformerQuery,
-    DeleteUserFromTaskPerformerQuery,
-    DeleteGroupFromTemplateOwnerQuery,
-    DeleteGroupUserFromTemplateOwnerQuery,
     DeleteUserGroupFromTemplateOwnerQuery,
-    DeleteUserFromTemplateOwnerQuery,
 )
 from src.accounts.services import exceptions
 from src.authentication.enums import AuthTokenType
 from src.executor import RawSqlExecutor
 from src.processes.enums import (
     FieldType,
-    PerformerType,
     OwnerType,
+    PerformerType,
     TaskStatus,
 )
-from src.processes.models.workflows.task import TaskPerformer
-from src.processes.models.workflows.conditions import Predicate
-from src.processes.models.workflows.workflow import Workflow
-from src.processes.models.workflows.raw_performer import RawPerformer
-from src.processes.models.templates.template import Template
 from src.processes.models.templates.conditions import PredicateTemplate
-from src.processes.models.templates.raw_performer import RawPerformerTemplate
 from src.processes.models.templates.owner import TemplateOwner
+from src.processes.models.templates.raw_performer import RawPerformerTemplate
+from src.processes.models.templates.template import Template
+from src.processes.models.workflows.conditions import Predicate
+from src.processes.models.workflows.raw_performer import RawPerformer
+from src.processes.models.workflows.task import TaskPerformer
+from src.processes.models.workflows.workflow import Workflow
 from src.processes.queries import UpdateWorkflowOwnersQuery
 from src.processes.tasks.tasks import complete_tasks
 

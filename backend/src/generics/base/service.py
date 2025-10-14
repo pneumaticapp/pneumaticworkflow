@@ -1,10 +1,11 @@
-from typing import Optional
 from abc import abstractmethod
-from django.db.models import Model
-from django.db import transaction
-from django.contrib.auth import get_user_model
-from src.authentication.enums import AuthTokenType
+from typing import Optional
 
+from django.contrib.auth import get_user_model
+from django.db import transaction
+from django.db.models import Model
+
+from src.authentication.enums import AuthTokenType
 
 UserModel = get_user_model()
 

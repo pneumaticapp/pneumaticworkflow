@@ -1,16 +1,16 @@
 import pytest
+
 from src.processes.messages import workflow as messages
-from src.processes.tests.fixtures import (
-    create_test_user,
+from src.processes.messages.workflow import (
+    MSG_PW_0001,
 )
 from src.processes.services.exceptions import (
     AttachmentServiceException,
 )
-from src.processes.messages.workflow import (
-    MSG_PW_0001,
+from src.processes.tests.fixtures import (
+    create_test_user,
 )
 from src.utils.validation import ErrorCode
-
 
 pytestmark = pytest.mark.django_db
 

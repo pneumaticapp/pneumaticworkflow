@@ -1,11 +1,12 @@
-from rest_framework.viewsets import GenericViewSet
-from rest_framework.mixins import RetrieveModelMixin, ListModelMixin
-from src.generics.mixins.views import CustomViewSetMixin
+from rest_framework.mixins import ListModelMixin, RetrieveModelMixin
 from rest_framework.permissions import AllowAny
+from rest_framework.viewsets import GenericViewSet
+
+from src.generics.mixins.views import CustomViewSetMixin
+from src.pages.models import Page
 from src.pages.serializers import (
     PageSerializer,
 )
-from src.pages.models import Page
 
 
 class PublicPageViewSet(

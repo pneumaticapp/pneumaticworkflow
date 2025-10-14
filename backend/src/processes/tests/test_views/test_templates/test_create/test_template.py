@@ -1,46 +1,49 @@
 # ruff: noqa: UP031
 import pytest
 from django.conf import settings
+
 from src.accounts.enums import BillingPlanType
-from src.processes.tests.fixtures import (
-    create_test_user,
-    create_test_template,
-    create_test_account,
-    create_invited_user,
-    create_test_group, create_test_owner,
+from src.accounts.models import (
+    UserInvite,
 )
-from src.processes.models.templates.template import Template
-from src.processes.models.templates.task import TaskTemplate
-from src.processes.models.templates.fields import (
-    FieldTemplate,
-    FieldTemplateSelection,
+from src.accounts.services.user import UserService
+from src.authentication.enums import AuthTokenType
+from src.authentication.tokens import (
+    EmbedToken,
+    PublicToken,
 )
+from src.processes.enums import (
+    FieldType,
+    OwnerType,
+    PerformerType,
+    PredicateOperator,
+)
+from src.processes.messages import template as messages
 from src.processes.models.templates.conditions import (
     ConditionTemplate,
     PredicateTemplate,
     RuleTemplate,
 )
+from src.processes.models.templates.fields import (
+    FieldTemplate,
+    FieldTemplateSelection,
+)
 from src.processes.models.templates.raw_performer import RawPerformerTemplate
-from src.utils.validation import ErrorCode
-from src.processes.messages import template as messages
-from src.accounts.models import (
-    UserInvite,
-)
-from src.processes.enums import (
-    PerformerType,
-    PredicateOperator,
-    FieldType,
-    OwnerType,
-)
-from src.authentication.tokens import (
-    PublicToken,
-    EmbedToken,
-)
-from src.accounts.services.user import UserService
-from src.authentication.enums import AuthTokenType
+from src.processes.models.templates.task import TaskTemplate
+from src.processes.models.templates.template import Template
 from src.processes.services.templates.integrations import (
     TemplateIntegrationsService,
 )
+from src.processes.tests.fixtures import (
+    create_invited_user,
+    create_test_account,
+    create_test_group,
+    create_test_owner,
+    create_test_template,
+    create_test_user,
+)
+from src.utils.validation import ErrorCode
+
 pytestmark = pytest.mark.django_db
 
 

@@ -1,20 +1,45 @@
-from django.db.models import Prefetch, Q
 from typing import List
-from django.db import transaction, DataError
+
+from django.db import DataError, transaction
+from django.db.models import Prefetch, Q
 from django.http import Http404
-from rest_framework.viewsets import GenericViewSet
 from rest_framework.decorators import action
 from rest_framework.pagination import LimitOffsetPagination
+from rest_framework.viewsets import GenericViewSet
+
 from src.accounts.permissions import (
     AccountOwnerPermission,
+    BillingPlanPermission,
+    ExpiredSubscriptionPermission,
     UserIsAdminOrAccountOwner,
     UsersOverlimitedPermission,
-    ExpiredSubscriptionPermission,
-    BillingPlanPermission,
 )
+from src.analytics.services import AnalyticService
+from src.authentication.enums import AuthTokenType
 from src.executor import RawSqlExecutor
-from src.services.permissions import AIPermission
 from src.generics.filters import PneumaticFilterBackend
+from src.generics.mixins.views import (
+    CustomViewSetMixin,
+)
+from src.generics.permissions import (
+    UserIsAuthenticated,
+)
+from src.processes.filters import (
+    TemplateFilter,
+)
+from src.processes.models.templates.fields import FieldTemplate
+from src.processes.models.templates.kickoff import Kickoff
+from src.processes.models.templates.system_template import SystemTemplate
+from src.processes.models.templates.task import TaskTemplate
+from src.processes.models.templates.template import Template
+from src.processes.permissions import (
+    TemplateOwnerPermission,
+)
+from src.processes.queries import (
+    TemplateStepsQuery,
+    TemplateTitlesEventsQuery,
+    TemplateTitlesQuery,
+)
 from src.processes.serializers.templates.integrations import (
     TemplateIntegrationsFilterSerializer,
 )
@@ -22,80 +47,55 @@ from src.processes.serializers.templates.task import (
     TemplateStepFilterSerializer,
     TemplateStepNameSerializer,
 )
-from src.processes.models.templates.template import Template
-from src.processes.models.templates.task import TaskTemplate
-from src.processes.models.templates.system_template import SystemTemplate
-from src.processes.models.templates.kickoff import Kickoff
-from src.processes.models.templates.fields import FieldTemplate
 from src.processes.serializers.templates.template import (
-    TemplateSerializer,
-    TemplateListFilterSerializer,
-    TemplateOnlyFieldsSerializer,
-    TemplateListSerializer,
-    TemplateTitlesRequestSerializer,
-    TemplateTitlesEventsRequestSerializer,
     TemplateAiSerializer,
-    TemplateByStepsSerializer,
     TemplateByNameSerializer,
+    TemplateByStepsSerializer,
     TemplateExportFilterSerializer,
-)
-from src.processes.serializers.templates.template import (
+    TemplateListFilterSerializer,
+    TemplateListSerializer,
+    TemplateOnlyFieldsSerializer,
+    TemplateSerializer,
+    TemplateTitlesEventsRequestSerializer,
+    TemplateTitlesRequestSerializer,
     TemplateTitlesSerializer,
 )
 from src.processes.serializers.workflows.workflow import (
     WorkflowCreateSerializer,
     WorkflowDetailsSerializer,
 )
-from src.processes.filters import (
-    TemplateFilter,
-)
-from src.processes.services.templates.template import (
-    TemplateService,
-)
 from src.processes.services.clone import (
     CloneService,
 )
-from src.processes.tasks.update_workflow import (
-    update_workflows,
-)
-from src.generics.mixins.views import (
-    CustomViewSetMixin,
-)
-from src.processes.queries import (
-    TemplateStepsQuery,
-    TemplateTitlesEventsQuery,
-    TemplateTitlesQuery,
-)
-from src.processes.permissions import (
-    TemplateOwnerPermission,
-)
-from src.analytics.services import AnalyticService
-from src.processes.services.workflows.workflow import (
-    WorkflowService,
-    TemplateIntegrationsService,
-)
-from src.generics.permissions import (
-    UserIsAuthenticated,
-)
-from src.processes.services.templates.ai import (
-    OpenAiService,
-)
-from src.authentication.enums import AuthTokenType
-from src.processes.utils.common import get_user_agent
 from src.processes.services.exceptions import (
     OpenAiServiceException,
     TemplateServiceException,
     WorkflowServiceException,
 )
-from src.utils.validation import raise_validation_error
-from src.processes.throttling import AiTemplateGenThrottle
-from src.utils.logging import (
-    capture_sentry_message,
-    SentryLogLevel,
+from src.processes.services.templates.ai import (
+    OpenAiService,
+)
+from src.processes.services.templates.template import (
+    TemplateService,
 )
 from src.processes.services.workflow_action import (
     WorkflowActionService,
 )
+from src.processes.services.workflows.workflow import (
+    TemplateIntegrationsService,
+    WorkflowService,
+)
+from src.processes.tasks.update_workflow import (
+    update_workflows,
+)
+from src.processes.throttling import AiTemplateGenThrottle
+from src.processes.utils.common import get_user_agent
+from src.services.permissions import AIPermission
+from src.utils.logging import (
+    SentryLogLevel,
+    capture_sentry_message,
+)
+from src.utils.validation import raise_validation_error
 
 
 class TemplateViewSet(

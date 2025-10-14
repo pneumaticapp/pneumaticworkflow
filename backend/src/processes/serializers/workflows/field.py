@@ -1,11 +1,12 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
+
 from src.processes.enums import (
     FieldType,
 )
 from src.processes.models.workflows.fields import (
-    TaskField,
     FieldSelection,
+    TaskField,
 )
 from src.processes.serializers.file_attachment import (
     FileAttachmentSerializer,

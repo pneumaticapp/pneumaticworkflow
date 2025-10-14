@@ -1,12 +1,13 @@
-from src.queries import SqlQueryObject
 from src.accounts.enums import (
-    UserType,
     UserStatus,
+    UserType,
 )
 from src.processes.enums import (
     DirectlyStatus,
-    WorkflowStatus, TaskStatus,
+    TaskStatus,
+    WorkflowStatus,
 )
+from src.queries import SqlQueryObject
 
 
 class GetGuestQuery(SqlQueryObject):

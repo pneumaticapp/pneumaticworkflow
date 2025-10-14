@@ -1,25 +1,27 @@
 import uuid
-from django.utils import timezone
-from typing import Dict, Optional
 from asyncio import get_event_loop
-from django.contrib.auth import get_user_model
-from channels.layers import get_channel_layer
+from typing import Dict, Optional
+
 from asgiref.sync import async_to_sync
-from src.notifications.enums import NotificationMethod
-from src.notifications.services.base import (
-    NotificationService,
-)
+from channels.layers import get_channel_layer
+from django.contrib.auth import get_user_model
+from django.utils import timezone
+
 from src.accounts.enums import UserType
 from src.accounts.models import Notification
 from src.accounts.serializers.notifications import (
     NotificationsSerializer,
 )
 from src.notifications.consumers import (
-    NotificationsConsumer,
-    WorkflowEventConsumer,
-    NewTaskConsumer,
-    RemovedTaskConsumer,
     EventsConsumer,
+    NewTaskConsumer,
+    NotificationsConsumer,
+    RemovedTaskConsumer,
+    WorkflowEventConsumer,
+)
+from src.notifications.enums import NotificationMethod
+from src.notifications.services.base import (
+    NotificationService,
 )
 
 UserModel = get_user_model()

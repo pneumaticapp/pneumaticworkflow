@@ -1,12 +1,12 @@
 import pytest
+
 from src.accounts.enums import (
     UserDateFormat,
 )
 from src.processes.tests.fixtures import (
-    create_test_user,
     create_test_group,
+    create_test_user,
 )
-
 
 pytestmark = pytest.mark.django_db
 date_format = '%Y-%m-%dT%H:%M:%S.%fZ'

@@ -1,4 +1,5 @@
 import pytest
+
 from src.navigation.tests.fixtures import create_test_menu
 from src.processes.tests.fixtures import create_test_user
 

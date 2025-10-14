@@ -1,16 +1,18 @@
-import pytest
 import datetime
+
+import pytest
 from django.utils import timezone
-from src.processes.tests.fixtures import (
-    create_test_user,
-    create_test_group,
-    create_test_account,
-)
+
 from src.accounts.enums import (
     BillingPlanType,
 )
 from src.accounts.services.group import UserGroupService
 from src.authentication.enums import AuthTokenType
+from src.processes.tests.fixtures import (
+    create_test_account,
+    create_test_group,
+    create_test_user,
+)
 
 pytestmark = pytest.mark.django_db
 

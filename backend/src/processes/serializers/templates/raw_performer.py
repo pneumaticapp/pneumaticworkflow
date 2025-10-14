@@ -1,19 +1,19 @@
-from typing import Dict, Any
+from typing import Any, Dict
+
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist
 from rest_framework.serializers import (
-    Serializer,
-    IntegerField,
     CharField,
     ChoiceField,
+    IntegerField,
+    Serializer,
 )
 
-from src.processes.models.templates.raw_performer import RawPerformerTemplate
-from src.processes.models.templates.fields import FieldTemplate
 from src.generics.mixins.serializers import (
-    CustomValidationErrorMixin,
     AdditionalValidationMixin,
+    CustomValidationErrorMixin,
 )
+from src.processes.enums import PerformerType
 from src.processes.messages.template import (
     MSG_PT_0032,
     MSG_PT_0033,
@@ -22,7 +22,8 @@ from src.processes.messages.template import (
     MSG_PT_0036,
     MSG_PT_0056,
 )
-from src.processes.enums import PerformerType
+from src.processes.models.templates.fields import FieldTemplate
+from src.processes.models.templates.raw_performer import RawPerformerTemplate
 from src.processes.serializers.templates.mixins import (
     CreateOrUpdateInstanceMixin,
 )

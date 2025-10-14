@@ -1,7 +1,8 @@
 from django.db import models
-from src.processes.models.mixins import ApiNameMixin
-from src.generics.models import SoftDeleteModel
+
 from src.generics.managers import BaseSoftDeleteManager
+from src.generics.models import SoftDeleteModel
+from src.processes.models.mixins import ApiNameMixin
 from src.processes.models.workflows.task import Task
 from src.processes.querysets import (
     ChecklistQuerySet,

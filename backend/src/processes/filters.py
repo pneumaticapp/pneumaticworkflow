@@ -1,17 +1,17 @@
 from django_filters import (
-    ChoiceFilter,
     BooleanFilter,
+    ChoiceFilter,
     OrderingFilter,
 )
-from django_filters.rest_framework import (
-    IsoDateTimeFilter,
-    FilterSet,
-)
 from django_filters.constants import EMPTY_VALUES
+from django_filters.rest_framework import (
+    FilterSet,
+    IsoDateTimeFilter,
+)
 
 from src.generics.filters import (
-    TsQuerySearchFilter,
     DefaultOrderingFilter,
+    TsQuerySearchFilter,
 )
 from src.processes.enums import TaskStatus, WorkflowStatus
 from src.processes.models.templates.system_template import SystemTemplate

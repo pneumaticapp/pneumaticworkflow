@@ -1,10 +1,11 @@
 from django.db import models
-from django.db.models import UniqueConstraint, Q
+from django.db.models import Q, UniqueConstraint
+
 from src.accounts.models import AccountBaseMixin
 from src.generics.managers import BaseSoftDeleteManager
 from src.generics.models import SoftDeleteModel
-from src.processes.querysets import KickoffQuerySet
 from src.processes.models.templates.template import Template
+from src.processes.querysets import KickoffQuerySet
 
 
 class Kickoff(

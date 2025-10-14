@@ -1,4 +1,5 @@
 import pytest
+
 from src.generics.mixins.managers import SearchSqlQueryMixin
 
 

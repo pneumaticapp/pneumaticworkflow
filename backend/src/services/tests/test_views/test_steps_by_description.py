@@ -1,12 +1,12 @@
 import pytest
-from src.processes.services.templates.ai import (
-    AnonOpenAiService,
-)
+
 from src.processes.services.exceptions import (
     OpenAiServiceException,
 )
+from src.processes.services.templates.ai import (
+    AnonOpenAiService,
+)
 from src.utils.validation import ErrorCode
-
 
 pytestmark = pytest.mark.django_db
 

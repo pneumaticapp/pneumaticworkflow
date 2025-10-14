@@ -1,18 +1,18 @@
 import pytest
-from src.authentication import messages
+
 from src.accounts.enums import (
     SourceType,
 )
+from src.authentication import messages
+from src.authentication.models import AccessToken
+from src.authentication.services import exceptions
 from src.authentication.services.auth0 import (
     Auth0Service,
 )
-from src.authentication.models import AccessToken
-from src.authentication.services import exceptions
-from src.utils.logging import SentryLogLevel
 from src.processes.tests.fixtures import (
     create_test_user,
 )
-
+from src.utils.logging import SentryLogLevel
 
 pytestmark = pytest.mark.django_db
 

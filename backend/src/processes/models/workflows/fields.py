@@ -1,20 +1,20 @@
-from django.db import models
 from django.contrib.auth import get_user_model
 from django.contrib.postgres.search import SearchVectorField
+from django.db import models
+
 from src.generics.managers import BaseSoftDeleteManager
 from src.generics.models import SoftDeleteModel
 from src.processes.models.mixins import (
-    FieldMixin,
     ApiNameMixin,
+    FieldMixin,
 )
+from src.processes.models.workflows.kickoff import KickoffValue
+from src.processes.models.workflows.task import Task
+from src.processes.models.workflows.workflow import Workflow
 from src.processes.querysets import (
     FieldSelectionQuerySet,
     TaskFieldQuerySet,
 )
-from src.processes.models.workflows.task import Task
-from src.processes.models.workflows.workflow import Workflow
-from src.processes.models.workflows.kickoff import KickoffValue
-
 
 UserModel = get_user_model()
 

@@ -1,39 +1,38 @@
 # ruff: noqa: PLC0415
 import re
 from typing import Optional
+
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.hashers import make_password
-from django.db import transaction, IntegrityError
-from django.conf import settings
-from src.analytics.mixins import BaseIdentifyMixin
-from src.accounts.serializers.user import UserWebsocketSerializer
-from src.processes.services.remove_user_from_draft import (
-    remove_user_from_draft,
-)
-from src.accounts.validators import user_is_last_performer
-from src.accounts.services.exceptions import (
-    UserIsPerformerException,
-)
+from django.db import IntegrityError, transaction
+
 from src.accounts.enums import (
-    UserStatus,
     Language,
     UserDateFormat,
     UserFirstDayWeek,
+    UserStatus,
 )
 from src.accounts.models import (
-    APIKey,
     Account,
+    APIKey,
     Contact,
 )
-from src.generics.base.service import BaseModelService
-from src.authentication.tokens import PneumaticToken
+from src.accounts.serializers.user import UserWebsocketSerializer
 from src.accounts.services.exceptions import (
     AlreadyRegisteredException,
+    UserIsPerformerException,
+)
+from src.accounts.validators import user_is_last_performer
+from src.analytics.mixins import BaseIdentifyMixin
+from src.analytics.services import AnalyticService
+from src.authentication.tokens import PneumaticToken
+from src.generics.base.service import BaseModelService
+from src.notifications.tasks import send_user_deleted_notification
+from src.processes.services.remove_user_from_draft import (
+    remove_user_from_draft,
 )
 from src.services.email import EmailService
-from src.analytics.services import AnalyticService
-from src.notifications.tasks import send_user_deleted_notification
-
 
 UserModel = get_user_model()
 

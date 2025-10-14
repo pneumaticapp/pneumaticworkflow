@@ -1,7 +1,7 @@
 import pytest
+
 from src.processes.tests.fixtures import create_test_user
 from src.utils.validation import ErrorCode
-
 
 pytestmark = pytest.mark.django_db
 

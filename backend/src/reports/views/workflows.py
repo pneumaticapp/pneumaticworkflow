@@ -2,29 +2,30 @@ from rest_framework.decorators import action
 from rest_framework.generics import get_object_or_404
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.viewsets import GenericViewSet
+
 from src.accounts.permissions import (
-    UserIsAdminOrAccountOwner,
-    ExpiredSubscriptionPermission,
     BillingPlanPermission,
+    ExpiredSubscriptionPermission,
+    UserIsAdminOrAccountOwner,
 )
 from src.executor import RawSqlExecutor
+from src.generics.mixins.views import CustomViewSetMixin
+from src.generics.permissions import (
+    UserIsAuthenticated,
+)
 from src.processes.models.templates.template import Template
 from src.reports.queries.workflows import (
-    OverviewQuery,
-    WorkflowBreakdownQuery,
     OverviewNowQuery,
-    WorkflowBreakdownNowQuery,
-    WorkflowBreakdownByTasksQuery,
+    OverviewQuery,
     WorkflowBreakdownByTasksNowQuery,
+    WorkflowBreakdownByTasksQuery,
+    WorkflowBreakdownNowQuery,
+    WorkflowBreakdownQuery,
 )
 from src.reports.serializers import (
     AccountDashboardOverviewSerializer,
     BreakdownByStepsFilterSerializer,
     DashboardFilterSerializer,
-)
-from src.generics.mixins.views import CustomViewSetMixin
-from src.generics.permissions import (
-    UserIsAuthenticated,
 )
 
 

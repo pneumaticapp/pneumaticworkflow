@@ -1,11 +1,11 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
-from src.accounts.models import Account
-from src.generics.serializers import CustomValidationErrorMixin
-from src.accounts.messages import MSG_A_0003
-from src.generics.fields import TimeStampField
 
+from src.accounts.messages import MSG_A_0003
+from src.accounts.models import Account
+from src.generics.fields import TimeStampField
+from src.generics.serializers import CustomValidationErrorMixin
 
 UserModel = get_user_model()
 

@@ -1,15 +1,16 @@
 from django.db import models
+
+from src.generics.managers import BaseSoftDeleteManager
+from src.generics.models import SoftDeleteModel
 from src.payment.enums import (
-    PriceType,
     BillingPeriod,
     PriceStatus,
+    PriceType,
 )
 from src.payment.querysets import (
     PriceQuerySet,
     ProductQuerySet,
 )
-from src.generics.managers import BaseSoftDeleteManager
-from src.generics.models import SoftDeleteModel
 
 
 class Product(SoftDeleteModel):

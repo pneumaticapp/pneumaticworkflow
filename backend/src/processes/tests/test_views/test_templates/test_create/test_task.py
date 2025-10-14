@@ -1,37 +1,38 @@
 # ruff: noqa: UP031
-import pytest
 from datetime import timedelta
-from src.processes.tests.fixtures import (
-    create_test_user,
-    create_test_template,
-    create_invited_user,
-)
-from src.processes.models.templates.template import Template
-from src.processes.models.templates.task import TaskTemplate
-from src.processes.models.templates.raw_due_date import RawDueDateTemplate
-from src.processes.models.templates.fields import FieldTemplate
-from src.processes.models.workflows.workflow import Workflow
-from src.processes.services.workflow_action import (
-    WorkflowActionService,
-)
-from src.processes.enums import (
-    PerformerType,
-    FieldType,
-    DueDateRule,
-    OwnerType,
-    TaskStatus,
-    ConditionAction,
-    PredicateType,
-    PredicateOperator,
-)
+
+import pytest
+
 from src.accounts.models import (
     UserInvite,
 )
 from src.accounts.services.user import UserService
 from src.authentication.enums import AuthTokenType
-from src.utils.validation import ErrorCode
+from src.processes.enums import (
+    ConditionAction,
+    DueDateRule,
+    FieldType,
+    OwnerType,
+    PerformerType,
+    PredicateOperator,
+    PredicateType,
+    TaskStatus,
+)
 from src.processes.messages import template as messages
-
+from src.processes.models.templates.fields import FieldTemplate
+from src.processes.models.templates.raw_due_date import RawDueDateTemplate
+from src.processes.models.templates.task import TaskTemplate
+from src.processes.models.templates.template import Template
+from src.processes.models.workflows.workflow import Workflow
+from src.processes.services.workflow_action import (
+    WorkflowActionService,
+)
+from src.processes.tests.fixtures import (
+    create_invited_user,
+    create_test_template,
+    create_test_user,
+)
+from src.utils.validation import ErrorCode
 
 pytestmark = pytest.mark.django_db
 

@@ -1,14 +1,14 @@
 import pytest
 from django.conf import settings
-from src.processes.tests.fixtures import (
-    create_test_user,
-    create_test_account,
-)
-from src.accounts.services.exceptions import (
-    InvalidTransferTokenException,
-    AlreadyAcceptedInviteException,
-)
 
+from src.accounts.services.exceptions import (
+    AlreadyAcceptedInviteException,
+    InvalidTransferTokenException,
+)
+from src.processes.tests.fixtures import (
+    create_test_account,
+    create_test_user,
+)
 
 pytestmark = pytest.mark.django_db
 

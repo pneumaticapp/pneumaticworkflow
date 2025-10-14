@@ -1,16 +1,17 @@
 import pytest
+
+from src.authentication.enums import AuthTokenType
+from src.processes.enums import TemplateType
 from src.processes.models.templates.template import Template
 from src.processes.tests.fixtures import (
-    create_test_user,
-    create_test_template,
-    create_test_workflow,
     create_test_account,
+    create_test_template,
+    create_test_user,
+    create_test_workflow,
 )
-from src.authentication.enums import AuthTokenType
 from src.processes.views.template import (
     TemplateIntegrationsService,
 )
-from src.processes.enums import TemplateType
 
 pytestmark = pytest.mark.django_db
 

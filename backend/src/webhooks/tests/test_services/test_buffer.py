@@ -1,6 +1,6 @@
 import pytest
-from src.webhooks.services import WebhookBufferService
 
+from src.webhooks.services import WebhookBufferService
 
 pytestmark = pytest.mark.django_db
 

@@ -1,23 +1,23 @@
 import pytest
 from django.contrib.auth import get_user_model
 from django.utils import timezone
-from src.processes.models.templates.template import Template
-from src.processes.models.templates.kickoff import Kickoff
-from src.processes.models.templates.task import TaskTemplate
-from src.processes.models.templates.owner import TemplateOwner
-from src.processes.models.templates.fields import FieldTemplate
-from src.processes.models.workflows.workflow import Workflow
-from src.processes.tests.fixtures import (
-    create_test_user,
-    create_test_template,
-    create_test_group,
-    create_test_account,
-)
+
 from src.processes.enums import (
     FieldType,
     OwnerType,
 )
-
+from src.processes.models.templates.fields import FieldTemplate
+from src.processes.models.templates.kickoff import Kickoff
+from src.processes.models.templates.owner import TemplateOwner
+from src.processes.models.templates.task import TaskTemplate
+from src.processes.models.templates.template import Template
+from src.processes.models.workflows.workflow import Workflow
+from src.processes.tests.fixtures import (
+    create_test_account,
+    create_test_group,
+    create_test_template,
+    create_test_user,
+)
 
 UserModel = get_user_model()
 

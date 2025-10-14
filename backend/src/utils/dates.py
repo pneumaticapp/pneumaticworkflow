@@ -1,7 +1,10 @@
-from pytz import timezone
-from datetime import datetime, timezone as tz
-from django.utils import translation
+from datetime import datetime
+from datetime import timezone as tz
+
 from django.contrib.auth import get_user_model
+from django.utils import translation
+from pytz import timezone
+
 from src.generics import messages
 
 UserModel = get_user_model()

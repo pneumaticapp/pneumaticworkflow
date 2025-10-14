@@ -2,24 +2,24 @@ import pytest
 
 from src.authentication.services.guest_auth import GuestJWTAuthService
 from src.authentication.tokens import PublicToken
+from src.processes.enums import (
+    FieldType,
+    OwnerType,
+    PerformerType,
+)
+from src.processes.models.templates.fields import FieldTemplate
+from src.processes.models.templates.owner import TemplateOwner
+from src.processes.models.templates.template import Template
+from src.processes.models.workflows.task import TaskPerformer
 from src.processes.tests.fixtures import (
     create_test_account,
+    create_test_admin,
+    create_test_guest,
+    create_test_not_admin,
+    create_test_owner,
     create_test_template,
     create_test_workflow,
-    create_test_owner,
-    create_test_admin,
-    create_test_not_admin, create_test_guest,
 )
-from src.processes.models.templates.template import Template
-from src.processes.models.templates.owner import TemplateOwner
-from src.processes.models.templates.fields import FieldTemplate
-from src.processes.models.workflows.task import TaskPerformer
-from src.processes.enums import (
-    PerformerType,
-    FieldType,
-)
-from src.processes.enums import OwnerType
-
 
 pytestmark = pytest.mark.django_db
 

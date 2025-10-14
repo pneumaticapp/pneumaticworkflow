@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/2.2/ref/settings/
 import datetime
 import os
 from os import environ as env
+
 from configurations import Configuration, values
 from corsheaders.defaults import default_headers
 

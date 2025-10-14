@@ -3,23 +3,23 @@ from django.contrib.postgres.fields import (
     ArrayField,
     JSONField,
 )
-from django.db import models
 from django.contrib.postgres.search import SearchVectorField
+from django.db import models
 
-from src.processes.querysets import (
-    WorkflowEventQuerySet,
-    WorkflowEventActionQuerySet,
-)
-from src.generics.managers import BaseSoftDeleteManager
-from src.processes.models.workflows.workflow import Workflow
-from src.processes.models.workflows.task import Task
-from src.processes.enums import (
-    WorkflowEventType,
-    WorkflowEventActionType,
-    CommentStatus,
-)
 from src.accounts.models import AccountBaseMixin
+from src.generics.managers import BaseSoftDeleteManager
 from src.generics.models import SoftDeleteModel
+from src.processes.enums import (
+    CommentStatus,
+    WorkflowEventActionType,
+    WorkflowEventType,
+)
+from src.processes.models.workflows.task import Task
+from src.processes.models.workflows.workflow import Workflow
+from src.processes.querysets import (
+    WorkflowEventActionQuerySet,
+    WorkflowEventQuerySet,
+)
 
 UserModel = get_user_model()
 

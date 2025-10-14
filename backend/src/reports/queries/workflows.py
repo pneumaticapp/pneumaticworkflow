@@ -2,9 +2,10 @@ from datetime import datetime
 from typing import Optional
 
 from django.utils import timezone
-from src.processes.enums import TemplateType
+
 from src.accounts.enums import UserStatus
-from src.processes.enums import WorkflowStatus
+from src.generics.mixins.queries import DereferencedOwnersMixin
+from src.processes.enums import TemplateType, WorkflowStatus
 from src.queries import SqlQueryObject
 from src.reports.queries.mixins import (
     WorkflowsMixin,
@@ -12,7 +13,6 @@ from src.reports.queries.mixins import (
     WorkflowTasksMixin,
     WorkflowTasksNowMixin,
 )
-from src.generics.mixins.queries import DereferencedOwnersMixin
 
 
 class OverviewQuery(

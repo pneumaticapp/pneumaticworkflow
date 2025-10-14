@@ -2,12 +2,13 @@ from django.urls import path
 from rest_framework.routers import DefaultRouter
 
 from src.reports.views.highlights import HighlightsView
-from src.reports.views.workflows import (
-    WorkflowsDashboardViewSet,
-)
 from src.reports.views.tasks import (
     TasksDashboardViewSet,
 )
+from src.reports.views.workflows import (
+    WorkflowsDashboardViewSet,
+)
+
 router = DefaultRouter(trailing_slash=False)
 router.register(
     prefix='dashboard/workflows',

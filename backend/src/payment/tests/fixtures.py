@@ -1,10 +1,11 @@
 from typing import Optional
-from src.payment.models import Price, Product
+
 from src.payment.enums import (
-    PriceType,
     BillingPeriod,
     PriceStatus,
+    PriceType,
 )
+from src.payment.models import Price, Product
 
 
 def create_test_product(

@@ -1,6 +1,6 @@
 from rest_framework.decorators import action
-from rest_framework.viewsets import GenericViewSet
 from rest_framework.permissions import AllowAny
+from rest_framework.viewsets import GenericViewSet
 
 from src.generics.mixins.views import (
     CustomViewSetMixin,

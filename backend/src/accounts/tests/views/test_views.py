@@ -1,41 +1,41 @@
-import pytest
 from datetime import timedelta
-from django.utils import timezone
+
+import pytest
 from django.conf import settings
+from django.utils import timezone
 
 from src.accounts.enums import (
     NotificationStatus,
     NotificationType,
 )
+from src.accounts.messages import (
+    MSG_A_0008,
+    MSG_A_0014,
+)
 from src.accounts.models import (
     APIKey,
     Notification,
-)
-from src.accounts.tokens import (
-    DigestUnsubscribeToken,
-    UnsubscribeEmailToken,
 )
 from src.accounts.serializers.notifications import (
     NotificationTaskSerializer,
     NotificationWorkflowSerializer,
 )
+from src.accounts.tokens import (
+    DigestUnsubscribeToken,
+    UnsubscribeEmailToken,
+)
 from src.analytics.enums import MailoutType
-from src.authentication.tokens import PneumaticToken
 from src.authentication.enums import AuthTokenType
+from src.authentication.tokens import PneumaticToken
 from src.processes.models.workflows.task import (
     Delay,
     Task,
 )
 from src.processes.tests.fixtures import (
-    create_test_workflow,
     create_test_user,
-)
-from src.accounts.messages import (
-    MSG_A_0008,
-    MSG_A_0014,
+    create_test_workflow,
 )
 from src.utils.dates import date_format
-
 
 pytestmark = pytest.mark.django_db
 

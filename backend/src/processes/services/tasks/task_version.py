@@ -1,40 +1,38 @@
-from typing import Dict, Optional, List
-from django.utils import timezone
+from typing import Dict, List, Optional
+
 from django.contrib.auth import get_user_model
+from django.utils import timezone
 from django.utils.dateparse import parse_duration
 
 from src.notifications.tasks import (
     send_new_task_notification,
     send_removed_task_notification,
 )
-from src.processes.models.workflows.raw_due_date import RawDueDate
-from src.processes.models.workflows.fields import (
-    TaskField,
-    FieldSelection,
+from src.processes.enums import TaskStatus
+from src.processes.models.workflows.checklist import (
+    ChecklistSelection,
 )
 from src.processes.models.workflows.conditions import (
     Condition,
     Predicate,
     Rule,
 )
-from src.processes.models.workflows.workflow import Workflow
+from src.processes.models.workflows.fields import (
+    FieldSelection,
+    TaskField,
+)
+from src.processes.models.workflows.raw_due_date import RawDueDate
 from src.processes.models.workflows.task import (
-    TaskPerformer,
-    Task,
     Delay,
+    Task,
+    TaskPerformer,
 )
-from src.processes.models.workflows.checklist import (
-    ChecklistSelection,
-)
-from src.processes.enums import TaskStatus
-from src.processes.services.tasks.checklist_version import (
-        ChecklistUpdateVersionService,
-    )
+from src.processes.models.workflows.workflow import Workflow
 from src.processes.services.base import (
     BaseUpdateVersionService,
 )
-from src.processes.utils.common import (
-    insert_fields_values_to_text,
+from src.processes.services.tasks.checklist_version import (
+    ChecklistUpdateVersionService,
 )
 from src.processes.services.tasks.mixins import (
     ConditionMixin,
@@ -42,7 +40,9 @@ from src.processes.services.tasks.mixins import (
 from src.processes.services.tasks.task import (
     TaskService,
 )
-
+from src.processes.utils.common import (
+    insert_fields_values_to_text,
+)
 
 UserModel = get_user_model()
 

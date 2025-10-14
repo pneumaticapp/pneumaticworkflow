@@ -1,20 +1,20 @@
 from typing import Optional
-from django.utils import timezone as tz
+
 from django.contrib.auth import get_user_model
-from src.processes.models.workflows.event import WorkflowEvent
-from src.processes.models.workflows.workflow import Workflow
-from src.notifications.tasks import (
-    send_urgent_notification,
-    send_not_urgent_notification,
-)
-from src.processes.enums import WorkflowEventType
+from django.utils import timezone as tz
+
 from src.accounts.enums import NotificationType
 from src.accounts.models import Notification
-
+from src.notifications.tasks import (
+    send_not_urgent_notification,
+    send_urgent_notification,
+)
+from src.processes.enums import WorkflowEventType
+from src.processes.models.workflows.event import WorkflowEvent
+from src.processes.models.workflows.workflow import Workflow
 from src.processes.services.events import (
     WorkflowEventService,
 )
-
 
 UserModel = get_user_model()
 

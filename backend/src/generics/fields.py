@@ -1,18 +1,20 @@
-import pytz
 from datetime import datetime
+
+import pytz
 from django.conf import settings
-from rest_framework.utils import html
-from rest_framework.fields import empty
-from rest_framework.exceptions import ValidationError
 from rest_framework import serializers
+from rest_framework.exceptions import ValidationError
+from rest_framework.fields import empty
+from rest_framework.utils import html
+
+from src.accounts.enums import (
+    UserDateFormat,
+)
 from src.accounts.models import Account
 from src.generics.messages import (
     MSG_GE_0002,
     MSG_GE_0007,
     MSG_GE_0020,
-)
-from src.accounts.enums import (
-    UserDateFormat,
 )
 
 

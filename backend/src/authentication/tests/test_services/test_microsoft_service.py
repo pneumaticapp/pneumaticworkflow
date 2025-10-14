@@ -23,7 +23,6 @@ from src.processes.tests.fixtures import (
 from src.storage.google_cloud import GoogleCloudService
 from src.utils.logging import SentryLogLevel
 
-
 pytestmark = pytest.mark.django_db
 
 

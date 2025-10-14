@@ -15,8 +15,8 @@ from src.generics.mixins.services import CacheMixin
 from src.logs.service import AccountLogService
 from src.storage.google_cloud import GoogleCloudService
 from src.utils.logging import (
-    capture_sentry_message,
     SentryLogLevel,
+    capture_sentry_message,
 )
 from src.utils.salt import get_salt
 
@@ -318,7 +318,7 @@ class MicrosoftAuthService(
             email = value.split('#EXT#')[0]
             if email.find('@') < 1:
                 login, domain = email.rsplit('_', 1)
-                email = '@'.join((login, domain))
+                email = f'{login}@{domain}'
         # TODO Fix the broad "try except"
         except Exception:  # noqa: BLE001
             email = None

@@ -1,12 +1,13 @@
 from django.db.models import (
-    Model,
+    CASCADE,
+    BooleanField,
     CharField,
     ForeignKey,
+    Model,
     PositiveIntegerField,
     URLField,
-    BooleanField,
-    CASCADE,
 )
+
 from src.navigation.enums import MenuType
 
 

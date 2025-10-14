@@ -1,28 +1,28 @@
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from rest_framework.generics import (
-    RetrieveAPIView,
     CreateAPIView,
+    RetrieveAPIView,
 )
+
 from src.accounts.tokens import (
     VerificationToken,
 )
-from src.services.email import EmailService
+from src.analytics.mixins import BaseIdentifyMixin
 from src.authentication.permissions import (
     PrivateApiPermission,
     SignupPermission,
 )
+from src.authentication.serializers import (
+    SecuredSignUpSerializer,
+    SignUpSerializer,
+)
+from src.authentication.views.mixins import SignUpMixin
 from src.generics.mixins.views import (
     AnonymousAccountMixin,
     BaseResponseMixin,
 )
-from src.authentication.serializers import (
-    SignUpSerializer,
-    SecuredSignUpSerializer,
-)
-from src.analytics.mixins import BaseIdentifyMixin
-from src.authentication.views.mixins import SignUpMixin
-
+from src.services.email import EmailService
 
 UserModel = get_user_model()
 

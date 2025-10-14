@@ -1,43 +1,45 @@
-from typing import Optional, List
-import analytics
 from datetime import timedelta
-from django.contrib.auth import get_user_model
+from typing import List, Optional
+
 from django.conf import settings
+from django.contrib.auth import get_user_model
+
+import analytics
+from src.accounts.enums import SourceType
 from src.accounts.models import (
     Account,
     UserGroup,
 )
-from src.processes.models.templates.template import Template
-from src.processes.models.templates.system_template import SystemTemplate
-from src.processes.models.templates.task import TaskTemplate
-from src.processes.models.templates.conditions import ConditionTemplate
-from src.processes.models.workflows.workflow import Workflow
-from src.processes.models.workflows.task import Task
-from src.processes.models.workflows.attachment import FileAttachment
-from src.analytics.labels import Label
+from src.analytics import exceptions
 from src.analytics.actions import (
     WorkflowActions,
 )
-from src.accounts.enums import SourceType
 from src.analytics.events import (
+    AccountAnalyticsEvent,
+    AttachmentAnalyticsEvent,
+    CommentAnalyticsEvent,
+    EventCategory,
+    GroupsAnalyticsEvent,
+    LibraryTemplateAnalyticsEvent,
+    MentionsAnalyticsEvent,
+    SearchAnalyticsEvent,
+    SubscriptionAnalyticsEvent,
+    TaskAnalyticsEvent,
+    TemplateAnalyticsEvent,
+    TenantsAnalyticsEvent,
     UserAnalyticsEvent,
     WorkflowAnalyticsEvent,
-    TemplateAnalyticsEvent,
-    EventCategory,
-    SubscriptionAnalyticsEvent,
-    SearchAnalyticsEvent,
-    AttachmentAnalyticsEvent,
-    AccountAnalyticsEvent,
-    TaskAnalyticsEvent,
-    LibraryTemplateAnalyticsEvent,
-    TenantsAnalyticsEvent,
-    MentionsAnalyticsEvent,
-    CommentAnalyticsEvent,
-    GroupsAnalyticsEvent,
 )
+from src.analytics.labels import Label
 from src.authentication.enums import AuthTokenType
-from src.analytics import exceptions
 from src.processes.enums import TemplateIntegrationType
+from src.processes.models.templates.conditions import ConditionTemplate
+from src.processes.models.templates.system_template import SystemTemplate
+from src.processes.models.templates.task import TaskTemplate
+from src.processes.models.templates.template import Template
+from src.processes.models.workflows.attachment import FileAttachment
+from src.processes.models.workflows.task import Task
+from src.processes.models.workflows.workflow import Workflow
 
 UserModel = get_user_model()
 

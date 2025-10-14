@@ -1,9 +1,9 @@
 from datetime import datetime, time
 
 from django.utils import timezone
-from src.generics.fields import TimeStampField
 from rest_framework.serializers import Serializer
 
+from src.generics.fields import TimeStampField
 from src.generics.mixins.serializers import (
     CustomValidationErrorMixin,
 )

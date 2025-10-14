@@ -1,10 +1,11 @@
-from django.db import models
 from datetime import timedelta
-from django.utils import timezone
-from django.contrib.auth import get_user_model
-from src.generics.models import SoftDeleteModel
-from src.accounts.enums import SourceType
 
+from django.contrib.auth import get_user_model
+from django.db import models
+from django.utils import timezone
+
+from src.accounts.enums import SourceType
+from src.generics.models import SoftDeleteModel
 
 UserModel = get_user_model()
 

@@ -1,22 +1,22 @@
 import pytest
+
 from src.accounts.enums import UserStatus
 from src.accounts.models import (
     AccountSignupData,
 )
-from src.processes.tests.fixtures import (
-    create_test_account,
-    create_test_user,
-    create_invited_user,
-    create_test_guest,
-    create_test_group,
-)
+from src.analytics.events import GroupsAnalyticsEvent
 from src.analytics.tasks import (
     _identify_users,
     track_group_analytics,
 )
-from src.analytics.events import GroupsAnalyticsEvent
 from src.authentication.enums import AuthTokenType
-
+from src.processes.tests.fixtures import (
+    create_invited_user,
+    create_test_account,
+    create_test_group,
+    create_test_guest,
+    create_test_user,
+)
 
 pytestmark = pytest.mark.django_db
 

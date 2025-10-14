@@ -1,5 +1,7 @@
 from typing import Optional
+
 from django.contrib.auth import get_user_model
+
 from src.accounts.enums import BillingPlanType
 from src.accounts.models import (
     Account,

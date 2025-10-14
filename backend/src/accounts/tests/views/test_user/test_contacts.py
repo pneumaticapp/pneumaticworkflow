@@ -1,16 +1,16 @@
 import pytest
-from src.processes.tests.fixtures import (
-    create_test_user,
-    create_test_account,
-)
+
 from src.accounts.enums import (
-    UserStatus,
     SourceType,
+    UserStatus,
 )
 from src.accounts.models import (
     Contact,
 )
-
+from src.processes.tests.fixtures import (
+    create_test_account,
+    create_test_user,
+)
 
 pytestmark = pytest.mark.django_db
 

@@ -1,9 +1,10 @@
 import pytest
+
 from src.processes.permissions import GuestTaskPermission
 from src.processes.tests.fixtures import (
-    create_test_template,
     create_checklist_template,
     create_test_guest,
+    create_test_template,
     create_test_user,
     create_test_workflow,
 )

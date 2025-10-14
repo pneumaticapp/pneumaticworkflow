@@ -1,20 +1,22 @@
-from typing import Dict, Any
+from typing import Any, Dict
+
 from rest_framework.serializers import (
-    ModelSerializer,
     CharField,
+    ModelSerializer,
 )
-from src.processes.models.templates.fields import (
-    FieldTemplateSelection,
-)
+
 from src.generics.mixins.serializers import (
     AdditionalValidationMixin,
     CustomValidationErrorMixin,
+)
+from src.processes.messages.template import MSG_PT_0054
+from src.processes.models.templates.fields import (
+    FieldTemplateSelection,
 )
 from src.processes.serializers.templates.mixins import (
     CreateOrUpdateInstanceMixin,
     CustomValidationApiNameMixin,
 )
-from src.processes.messages.template import MSG_PT_0054
 
 
 class FieldTemplateSelectionSerializer(

@@ -1,28 +1,30 @@
-from typing import Dict, Any
+from typing import Any, Dict
+
 from rest_framework.serializers import (
-    ModelSerializer,
     CharField,
+    ModelSerializer,
+)
+
+from src.analytics.services import AnalyticService
+from src.generics.mixins.serializers import (
+    AdditionalValidationMixin,
+    CustomValidationErrorMixin,
 )
 from src.processes.messages.template import (
     MSG_PT_0040,
     MSG_PT_0047,
 )
+from src.processes.models.templates.checklist import (
+    ChecklistTemplate,
+)
 from src.processes.models.templates.fields import FieldTemplate
-from src.generics.mixins.serializers import (
-    CustomValidationErrorMixin,
-    AdditionalValidationMixin,
+from src.processes.serializers.templates.checklist_selection import (
+    ChecklistTemplateSelectionSerializer,
 )
 from src.processes.serializers.templates.mixins import (
     CreateOrUpdateInstanceMixin,
     CreateOrUpdateRelatedMixin,
 )
-from src.processes.models.templates.checklist import (
-    ChecklistTemplate,
-)
-from src.processes.serializers.templates.checklist_selection import (
-    ChecklistTemplateSelectionSerializer,
-)
-from src.analytics.services import AnalyticService
 
 
 class ChecklistTemplateSerializer(

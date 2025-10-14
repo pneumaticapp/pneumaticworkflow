@@ -1,10 +1,12 @@
-import pytest
 from datetime import timedelta
+
+import pytest
+
 from src.processes.utils.common import (
+    get_duration_format,
+    insert_fields_values_to_text,
     is_tasks_ordering_correct,
     string_abbreviation,
-    insert_fields_values_to_text,
-    get_duration_format,
 )
 
 

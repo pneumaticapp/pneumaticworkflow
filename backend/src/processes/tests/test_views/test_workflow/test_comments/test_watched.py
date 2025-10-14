@@ -1,24 +1,25 @@
 import pytest
+
+from src.authentication.enums import AuthTokenType
+from src.authentication.services.guest_auth import GuestJWTAuthService
+from src.processes.enums import PerformerType
+from src.processes.models.workflows.task import TaskPerformer
+from src.processes.services.events import (
+    CommentService,
+    WorkflowEventService,
+)
 from src.processes.services.exceptions import (
     CommentServiceException,
 )
-from src.processes.services.events import (
-    WorkflowEventService,
-    CommentService,
-)
-from src.processes.models.workflows.task import TaskPerformer
 from src.processes.tests.fixtures import (
-    create_test_user,
-    create_test_workflow,
-    create_test_guest,
     create_test_account,
     create_test_admin,
     create_test_group,
+    create_test_guest,
+    create_test_user,
+    create_test_workflow,
 )
-from src.authentication.services.guest_auth import GuestJWTAuthService
-from src.authentication.enums import AuthTokenType
 from src.utils.validation import ErrorCode
-from src.processes.enums import PerformerType
 
 pytestmark = pytest.mark.django_db
 

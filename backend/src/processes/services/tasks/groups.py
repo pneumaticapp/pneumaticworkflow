@@ -1,29 +1,26 @@
 from django.contrib.auth import get_user_model
+
+from src.accounts.models import UserGroup
+from src.analytics.services import AnalyticService
+from src.authentication.enums import AuthTokenType
+from src.notifications.tasks import (
+    send_new_task_notification,
+    send_new_task_websocket,
+    send_removed_task_notification,
+)
+from src.processes.enums import DirectlyStatus, PerformerType
+from src.processes.messages.workflow import MSG_PW_0082
+from src.processes.models.workflows.task import TaskPerformer
 from src.processes.services.tasks.base import (
     BasePerformerService2,
 )
-from src.accounts.models import UserGroup
-from src.processes.models.workflows.task import TaskPerformer
-from src.analytics.services import AnalyticService
-from src.authentication.enums import AuthTokenType
 from src.processes.services.tasks.exceptions import (
     GroupPerformerServiceException,
 )
-from src.processes.enums import DirectlyStatus
-from src.processes.messages.workflow import MSG_PW_0082
-from src.processes.enums import PerformerType
-from src.notifications.tasks import (
-    send_new_task_notification,
-    send_removed_task_notification,
-    send_new_task_websocket,
-)
-from src.processes.services.workflow_action import (
-    WorkflowEventService,
-)
 from src.processes.services.workflow_action import (
     WorkflowActionService,
+    WorkflowEventService,
 )
-
 
 UserModel = get_user_model()
 

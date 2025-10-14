@@ -1,24 +1,25 @@
-import pytest
 from datetime import timedelta
-from django.utils import timezone
+
+import pytest
 from django.contrib.auth import get_user_model
-from src.processes.tests.fixtures import (
-    create_test_account,
-    create_test_user,
-)
+from django.utils import timezone
+
 from src.accounts.enums import (
     BillingPlanType,
     LeaseLevel,
 )
-from src.payment.tasks import _increase_plan_users
+from src.authentication.enums import AuthTokenType
 from src.payment.stripe.exceptions import (
     StripeServiceException,
 )
 from src.payment.stripe.service import (
     StripeService,
 )
-from src.authentication.enums import AuthTokenType
-
+from src.payment.tasks import _increase_plan_users
+from src.processes.tests.fixtures import (
+    create_test_account,
+    create_test_user,
+)
 
 UserModel = get_user_model()
 pytestmark = pytest.mark.django_db

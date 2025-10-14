@@ -1,20 +1,20 @@
 from django.contrib.auth import get_user_model
 from rest_framework.generics import ListAPIView
+
 from src.accounts.permissions import (
-    UserIsAdminOrAccountOwner,
-    ExpiredSubscriptionPermission,
     BillingPlanPermission,
-)
-from src.processes.models.workflows.event import WorkflowEvent 
-from src.reports.serializers import (
-    EventHighlightsSerializer,
-    HighlightsFilterSerializer,
+    ExpiredSubscriptionPermission,
+    UserIsAdminOrAccountOwner,
 )
 from src.generics.mixins.views import BasePrefetchMixin
 from src.generics.permissions import (
     UserIsAuthenticated,
 )
-
+from src.processes.models.workflows.event import WorkflowEvent
+from src.reports.serializers import (
+    EventHighlightsSerializer,
+    HighlightsFilterSerializer,
+)
 
 UserModel = get_user_model()
 

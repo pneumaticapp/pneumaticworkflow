@@ -1,18 +1,18 @@
 import pytest
-from src.processes.tests.fixtures import (
-    create_test_user,
+
+from src.processes.enums import (
+    FieldType,
+    OwnerType,
+    PerformerType,
 )
-from src.processes.models.templates.kickoff import Kickoff
+from src.processes.messages import template as messages
 from src.processes.models.templates.fields import (
     FieldTemplateSelection,
 )
-from src.processes.enums import (
-    PerformerType,
-    FieldType,
-    OwnerType,
+from src.processes.models.templates.kickoff import Kickoff
+from src.processes.tests.fixtures import (
+    create_test_user,
 )
-from src.processes.messages import template as messages
-
 
 pytestmark = pytest.mark.django_db
 

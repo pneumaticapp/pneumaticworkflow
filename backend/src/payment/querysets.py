@@ -1,7 +1,8 @@
 from django.db.models import QuerySet
+
 from src.payment.enums import (
-    PriceType,
     PriceStatus,
+    PriceType,
 )
 
 

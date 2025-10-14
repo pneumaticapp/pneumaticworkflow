@@ -1,10 +1,11 @@
 import pytest
-from src.processes.tests.fixtures import create_test_user
+
+from src.analytics.customerio.enums import MetricType
 from src.analytics.customerio.exceptions import (
     WebhookInvalidData,
     WebhookUserNotFound,
 )
-from src.analytics.customerio.enums import MetricType
+from src.processes.tests.fixtures import create_test_user
 
 pytestmark = pytest.mark.django_db
 

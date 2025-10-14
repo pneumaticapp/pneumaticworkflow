@@ -1,12 +1,12 @@
-from celery import shared_task
 from django.contrib.auth import get_user_model
-from src.processes.enums import WorkflowStatus, TaskStatus
+
+from celery import shared_task
 from src.authentication.enums import AuthTokenType
+from src.processes.enums import TaskStatus, WorkflowStatus
+from src.processes.models.workflows.task import Task
 from src.processes.services.workflow_action import (
     WorkflowActionService,
 )
-from src.processes.models.workflows.task import Task
-
 
 UserModel = get_user_model()
 

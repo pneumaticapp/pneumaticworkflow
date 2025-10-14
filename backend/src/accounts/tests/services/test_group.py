@@ -1,30 +1,30 @@
 import pytest
+from django.contrib.auth import get_user_model
 from django.utils import timezone
-from src.processes.tests.fixtures import (
-    create_test_admin,
-    create_test_account,
-    create_test_group,
-    create_test_template,
-    create_test_workflow,
-    create_test_owner,
-)
+
+from src.accounts.services.group import UserGroupService
+from src.analytics.events import GroupsAnalyticsEvent
+from src.authentication.enums import AuthTokenType
 from src.notifications.tasks import (
     send_new_task_websocket,
     send_removed_task_notification,
 )
-from src.accounts.services.group import UserGroupService
-from src.analytics.events import GroupsAnalyticsEvent
-from src.authentication.enums import AuthTokenType
-from src.processes.models.workflows.task import TaskPerformer
-from src.processes.models.templates.owner import TemplateOwner
 from src.processes.enums import (
-    PerformerType,
-    OwnerType,
     DirectlyStatus,
+    OwnerType,
+    PerformerType,
     TaskStatus,
 )
-from django.contrib.auth import get_user_model
-
+from src.processes.models.templates.owner import TemplateOwner
+from src.processes.models.workflows.task import TaskPerformer
+from src.processes.tests.fixtures import (
+    create_test_account,
+    create_test_admin,
+    create_test_group,
+    create_test_owner,
+    create_test_template,
+    create_test_workflow,
+)
 
 UserModel = get_user_model()
 pytestmark = pytest.mark.django_db

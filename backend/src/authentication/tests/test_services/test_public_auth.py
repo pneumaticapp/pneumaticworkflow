@@ -1,18 +1,19 @@
 import pytest
-from src.processes.tests.fixtures import (
-    create_test_template,
-    create_test_account,
-    create_test_user,
-)
+
+from src.accounts.enums import BillingPlanType
 from src.authentication.services.public_auth import (
     PublicAuthService,
 )
-from src.processes.enums import TemplateType
 from src.authentication.tokens import (
-    PublicToken,
     EmbedToken,
+    PublicToken,
 )
-from src.accounts.enums import BillingPlanType
+from src.processes.enums import TemplateType
+from src.processes.tests.fixtures import (
+    create_test_account,
+    create_test_template,
+    create_test_user,
+)
 
 pytestmark = pytest.mark.django_db
 

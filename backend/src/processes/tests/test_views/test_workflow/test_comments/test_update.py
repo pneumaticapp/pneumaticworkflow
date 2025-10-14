@@ -1,28 +1,29 @@
-import pytest
 from datetime import timedelta
+
+import pytest
 from django.utils import timezone
-from src.processes.services.exceptions import (
-    CommentServiceException,
-)
-from src.processes.services.events import (
-    WorkflowEventService,
-    CommentService,
-)
-from src.processes.models.workflows.attachment import FileAttachment
-from src.processes.models.workflows.task import TaskPerformer
+
+from src.authentication.enums import AuthTokenType
+from src.authentication.services.guest_auth import GuestJWTAuthService
 from src.processes.enums import (
     CommentStatus,
 )
+from src.processes.models.workflows.attachment import FileAttachment
+from src.processes.models.workflows.task import TaskPerformer
+from src.processes.services.events import (
+    CommentService,
+    WorkflowEventService,
+)
+from src.processes.services.exceptions import (
+    CommentServiceException,
+)
 from src.processes.tests.fixtures import (
+    create_test_account,
+    create_test_guest,
     create_test_user,
     create_test_workflow,
-    create_test_guest,
-    create_test_account,
 )
-from src.authentication.services.guest_auth import GuestJWTAuthService
-from src.authentication.enums import AuthTokenType
 from src.utils.validation import ErrorCode
-
 
 pytestmark = pytest.mark.django_db
 datetime_format = '%Y-%m-%dT%H:%M:%S.%fZ'

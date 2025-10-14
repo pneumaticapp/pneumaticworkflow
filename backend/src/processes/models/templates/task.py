@@ -1,27 +1,28 @@
 # ruff: noqa: PLC0415
 from typing import Optional, Set
+
 from django.contrib.auth import get_user_model
 from django.contrib.postgres.fields import ArrayField
 from django.contrib.postgres.search import SearchVectorField
 from django.db import models
-from django.db.models import UniqueConstraint, Q
+from django.db.models import Q, UniqueConstraint
+
 from src.accounts.models import (
     AccountBaseMixin,
     UserGroup,
 )
 from src.generics.managers import BaseSoftDeleteManager
+from src.processes.enums import (
+    FieldType,
+    PerformerType,
+)
+from src.processes.models.base import BaseApiNameModel
 from src.processes.models.mixins import (
     TaskMixin,
     TaskRawPerformersMixin,
 )
-from src.processes.querysets import TaskTemplateQuerySet
-from src.processes.enums import (
-    PerformerType,
-    FieldType,
-)
 from src.processes.models.templates.template import Template
-from src.processes.models.base import BaseApiNameModel
-
+from src.processes.querysets import TaskTemplateQuerySet
 
 UserModel = get_user_model()
 
@@ -77,8 +78,9 @@ class TaskTemplate(
 
         """ Returns new a raw performer object with given data """
 
-        from src.processes.models.templates.raw_performer\
-            import RawPerformerTemplate
+        from src.processes.models.templates.raw_performer import (
+            RawPerformerTemplate,
+        )
 
         result = RawPerformerTemplate(
             account=self.account,
