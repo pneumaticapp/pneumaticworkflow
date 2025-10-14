@@ -68,8 +68,8 @@ def test_comment_created_event__ok(mocker):
     )
     task = workflow.tasks.get(number=1)
     text = (
-        "(![avatar.jpg](https://storage.com/dev/avatar.jpg "
-        "\"attachment_id:3349 entityType:image\")"
+        '(![avatar.jpg](https://storage.com/dev/avatar.jpg '
+        '"attachment_id:3349 entityType:image")'
     )
     attach = FileAttachment.objects.create(
         account_id=user.account_id,

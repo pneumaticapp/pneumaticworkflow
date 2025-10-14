@@ -384,7 +384,7 @@ def test_create__with_attachments__ok(mocker):
 
     text = (
         "(![avatar.jpg](https://storage.com/dev/avatar.jpg "
-        "\"attachment_id:3349 entityType:image\")"
+        '"attachment_id:3349 entityType:image")'
     )
     clear_text = 'clear text'
     is_superuser = True
@@ -497,7 +497,7 @@ def test_create__with_attachments__ok(mocker):
             [2482],
         ),
         (
-            '[ZIP-folder.zip](https://storage.zip \"attachment_id:2482\")',
+            '[ZIP-folder.zip](https://storage.zip "attachment_id:2482")',
             [2482],
         ),
 
@@ -1918,7 +1918,7 @@ def test_update__attachments__ok(mocker):
             [2482],
         ),
         (
-            '[ZIP-folder.zip](https://storage.zip \"attachment_id:2482\")',
+            '[ZIP-folder.zip](https://storage.zip "attachment_id:2482")',
             [2482],
         ),
     ),
@@ -3817,7 +3817,7 @@ def test_get_mentioned_users_ids__check_timeout__ok():
             '2756_bn9i0garicp520a9/Lo8VohifLmtLGQq0B5eGnwlfc896'
             'X_SQL9fhrew09wehv2hhhf09whreoif[phhh9HObnvcpedosn'
             '.poifhvc20phv02pjmv29jmv2v2vkj2mwvj2wviumw2vj'
-            '.pdf \"attachment_id:4782 entityType:file\")\n\n'
+            '.pdf "attachment_id:4782 entityType:file")\n\n'
             f'test [Tim Berzon|{user.id}] ')
 
     # act

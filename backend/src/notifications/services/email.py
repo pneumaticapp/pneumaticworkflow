@@ -54,7 +54,7 @@ class EmailService(NotificationService):
         for key, val in data.items():
             '\n'.join(f'- {key}: {val}')
         print( # noqa: T201
-            f'''
+            f"""
             -------------------------
             ------EMAIL-MESSAGE------
             To email: {user_email}
@@ -62,7 +62,7 @@ class EmailService(NotificationService):
             Message args:
             {message_vars}
             -------------------------
-            ''',
+            """,
         )
 
     def _send_email_via_customerio(
