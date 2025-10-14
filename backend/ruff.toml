@@ -36,14 +36,25 @@ select = [
     "C4",
     "DJ",
     "DTZ",
+    #"EM", Add later
+    "EXE",
     "E4",
     "E7",
     "E9",
     "F",
-    #"FBT", Maybe add later
+    # "FA", Maybe add later
+    # "FBT", Maybe add later
+    "G",
+    "INT",
+    "ISC",
+    "ICN",
+    "INP",
+    "LOG",
     "FAST",
     "PL",
-    #"S", Maybe add later
+    "PLE",
+    # "S", Maybe add later
+    "T20",
 ]
 ignore = [
     "DJ001",   # Maybe add later

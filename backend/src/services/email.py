@@ -18,7 +18,7 @@ class EmailService:
         template_code: str,
         data: dict,
     ):
-        print(
+        print( # noqa: T201
             f'''
             -------------------------
             ------EMAIL-MESSAGE------
