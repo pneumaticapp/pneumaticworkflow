@@ -40,6 +40,7 @@ class SignUpMixin:
         self,
         account: Account,
         email: str,
+        company_name: Optional[str] = None,
         phone: Optional[str] = None,
         first_name: Optional[str] = None,
         last_name: Optional[str] = None,
