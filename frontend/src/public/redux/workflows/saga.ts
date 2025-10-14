@@ -133,6 +133,7 @@ import { getTemplatePresets, TGetTemplatePresetsResponse } from '../../api/getTe
 import { getCorrectPresetFields } from '../../components/Workflows/utils/getCorrectPresetFields';
 import { updateTemplatePresets } from '../../api/updateTemplatePresets';
 import { addTemplatePreset } from '../../api/addTemplatePreset';
+import { ALL_SYSTEM_FIELD_NAMES } from '../../components/Workflows/WorkflowsTablePage/WorkflowsTable/constants';
 
 function* handleLoadWorkflow({ workflowId, showLoader = true }: { workflowId: number; showLoader?: boolean }) {
   const {
@@ -253,37 +254,42 @@ function* fetchWorkflowsList({ payload: offset = 0 }: TLoadWorkflowsList) {
   const lastLoadedTemplateId: number | null = yield select(
     (state: IApplicationState) => state.workflows.workflowsSettings.lastLoadedTemplateId,
   );
-  const onlySystemFields =
-    sessionStorage.getItem('shouldLoadPresets') === 'true' &&
-    Boolean(view === EWorkflowsView.Table && offset === 0 && templatesIdsFilter.length === 0);
-  const shouldLoadFields =
-    sessionStorage.getItem('shouldLoadPresets') === 'true' &&
+
+  const shouldGetAllDefaultFields =
+    sessionStorage.getItem('isInternalNavigation') === 'true' &&
+    Boolean(view === EWorkflowsView.Table && offset === 0 && offset === 0 && templatesIdsFilter.length === 0);
+
+  const shouldGetPresets =
+    sessionStorage.getItem('isInternalNavigation') === 'true' &&
     Boolean(
       view === EWorkflowsView.Table &&
         offset === 0 &&
         currentTemplateId &&
         String(lastLoadedTemplateId) !== String(currentTemplateId),
     );
-  sessionStorage.setItem('shouldLoadPresets', 'false');
 
-  let newSelectedFields: string[] | undefined;
-  if (shouldLoadFields) {
+  sessionStorage.setItem('isInternalNavigation', 'false');
+
+  let newSelectedFields: string[] = [];
+  let shouldResetFields = false;
+
+  if (shouldGetPresets) {
     try {
+      shouldResetFields = true;
       const presets: TGetTemplatePresetsResponse = yield call(getTemplatePresets, String(currentTemplateId));
       yield put(setWorkflowsPresetsRedux(presets));
-      newSelectedFields = getCorrectPresetFields(presets);
 
-      if (newSelectedFields) {
-        yield put(setWorkflowsFilterSelectedFields(newSelectedFields));
-      }
+      newSelectedFields = getCorrectPresetFields(presets);
+      yield put(setWorkflowsFilterSelectedFields(newSelectedFields));
       yield put(setLastLoadedTemplateId(String(currentTemplateId)));
     } catch (error) {
       console.error('fetchWorkflowsList: Failed to load fields for template', currentTemplateId, ':', error);
     }
-  } else if (onlySystemFields) {
+  } else if (shouldGetAllDefaultFields) {
+    shouldResetFields = true;
     yield put(setLastLoadedTemplateId(null));
-    newSelectedFields = [];
-    yield put(setWorkflowsFilterSelectedFields([]));
+    newSelectedFields = ALL_SYSTEM_FIELD_NAMES;
+    yield put(setWorkflowsFilterSelectedFields(newSelectedFields));
   }
   try {
     const { count, results }: { count: number; results: TWorkflowResponse[] } = yield getWorkflows({
@@ -296,7 +302,7 @@ function* fetchWorkflowsList({ payload: offset = 0 }: TLoadWorkflowsList) {
       performersIdsFilter,
       workflowStartersIdsFilter,
       searchText,
-      fields: shouldLoadFields ? newSelectedFields : selectedFields,
+      fields: shouldResetFields ? newSelectedFields : selectedFields,
     });
     const formattedResults = mapWorkflowsToISOStringToRedux(results);
     const items = offset > 0 ? uniqBy([...workflowsList.items, ...formattedResults], 'id') : formattedResults;

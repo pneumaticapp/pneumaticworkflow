@@ -11,3 +11,10 @@ export type TableColumns = {
 } & {
   [key: string]: ITableViewFields;
 };
+
+export type TSystemField = {
+  apiName: string;
+  name: string;
+  isDisabled: boolean;
+  hasNotTooltip: boolean;
+};

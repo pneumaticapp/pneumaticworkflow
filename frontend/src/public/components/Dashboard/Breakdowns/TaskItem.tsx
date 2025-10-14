@@ -126,7 +126,7 @@ export function TaskItem({ task, index, mode, templateId }: ITaskItemProps) {
             mode === EDashboardModes.Tasks && styles['my_tasks__name'],
           )}
           onClick={() => {
-            sessionStorage.setItem('shouldLoadPresets', 'true');
+            sessionStorage.setItem('isInternalNavigation', 'true');
           }}
         >
           <StepName initialStepName={task.name} templateId={templateId} />
