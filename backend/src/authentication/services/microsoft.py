@@ -332,8 +332,8 @@ class MicrosoftAuthService(
             because it is created only in the organization’s domain """
 
         is_work_account = (
-            'userType' in user_profile.keys()
-            or 'creationType' in user_profile.keys()
+            'userType' in user_profile
+            or 'creationType' in user_profile
         )
         if is_work_account:
             email = self._get_email_from_principal_name(

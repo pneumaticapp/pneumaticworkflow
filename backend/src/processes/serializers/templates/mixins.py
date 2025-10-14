@@ -4,6 +4,7 @@ from django.db import IntegrityError, transaction
 from rest_framework.serializers import Serializer
 from src.utils.validation import raise_validation_error
 from src.processes.messages.template import MSG_PT_0041
+import contextlib
 
 UserModel = get_user_model()
 
@@ -36,10 +37,8 @@ class CreateOrUpdateInstanceMixin:
         data = {}
         create_or_update_fields = self._get_create_or_update_fields()
         for field_name in create_or_update_fields:
-            try:
+            with contextlib.suppress(KeyError):
                 data[field_name] = validated_data[field_name]
-            except KeyError:
-                pass
         return data
 
     def _update(
@@ -226,11 +225,16 @@ class CustomValidationApiNameMixin:
         value: Any,
         **kwargs,
     ):
-        if self.instance:
-            if not value or self.instance.api_name != value:
-                raise_validation_error(
-                    message=MSG_PT_0041(
-                        old_api_name=self.instance.api_name,
-                        new_api_name=value,
-                    ),
-                )
+        if (
+            self.instance
+            and (
+                not value
+                or self.instance.api_name != value
+            )
+        ):
+            raise_validation_error(
+                message=MSG_PT_0041(
+                    old_api_name=self.instance.api_name,
+                    new_api_name=value,
+                ),
+            )

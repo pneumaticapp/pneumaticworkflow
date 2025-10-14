@@ -1244,4 +1244,4 @@ def test_change_password__ok():
     # assert
     user.refresh_from_db()
     assert check_password(new_password, user.password)
-    assert not new_password == user.password
+    assert new_password != user.password

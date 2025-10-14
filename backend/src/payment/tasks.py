@@ -43,10 +43,7 @@ def _increase_plan_users(
         return
     paid_users_count = account.get_paid_users_count()
     if paid_users_count > account.max_users:
-        if increment:
-            quantity = account.max_users + 1
-        else:
-            quantity = paid_users_count
+        quantity = account.max_users + 1 if increment else paid_users_count
         if quantity > 0:
             user = account.get_owner()
             try:

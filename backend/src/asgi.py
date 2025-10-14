@@ -21,27 +21,29 @@ from src.authentication.middleware import WebsocketAuthMiddleware
 from src import urls
 
 
-if configuration in {'Staging', 'Production'}:
-    if settings.PROJECT_CONF['SENTRY_DSN']:
-        import sentry_sdk
-        from sentry_sdk.integrations.django import DjangoIntegration
+if (
+    configuration in {'Staging', 'Production'}
+    and settings.PROJECT_CONF['SENTRY_DSN']
+):
+    import sentry_sdk
+    from sentry_sdk.integrations.django import DjangoIntegration
 
-        def traces_sampler(sampling_context: dict) -> float:
-            scheme = sampling_context['asgi_scope']['scheme']
-            if scheme not in {'http', 'https'}:
-                return 0
-            http_method = sampling_context['asgi_scope']['method']
-            if http_method in {'HEAD', 'OPTIONS'}:
-                return 0
-            return 0.2
+    def traces_sampler(sampling_context: dict) -> float:
+        scheme = sampling_context['asgi_scope']['scheme']
+        if scheme not in {'http', 'https'}:
+            return 0
+        http_method = sampling_context['asgi_scope']['method']
+        if http_method in {'HEAD', 'OPTIONS'}:
+            return 0
+        return 0.2
 
-        kwargs = {
-            'dsn': settings.PROJECT_CONF['SENTRY_DSN'],
-            'integrations': [DjangoIntegration()],
-            'send_default_pii': True,
-            'traces_sampler': traces_sampler,
-        }
-        sentry_sdk.init(**kwargs)
+    kwargs = {
+        'dsn': settings.PROJECT_CONF['SENTRY_DSN'],
+        'integrations': [DjangoIntegration()],
+        'send_default_pii': True,
+        'traces_sampler': traces_sampler,
+    }
+    sentry_sdk.init(**kwargs)
 
 application = ProtocolTypeRouter({
     'http': SentryAsgiMiddleware(AsgiHandler()),

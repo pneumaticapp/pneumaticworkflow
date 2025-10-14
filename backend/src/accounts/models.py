@@ -157,7 +157,7 @@ class Account(SoftDeleteModel):
         if self.trial_is_active:
             # Active trial
             return False
-        if self.plan_expiration < timezone.now():
+        if self.plan_expiration < timezone.now(): # noqa: SIM103
             # Expired premium
             return False
         # Active premium

@@ -1,3 +1,4 @@
+# ruff: noqa: SIM102
 from typing import Optional, List
 from django.contrib.auth import get_user_model
 from django.utils import timezone

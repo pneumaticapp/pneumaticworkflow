@@ -69,9 +69,7 @@ class UserInviteViewSet(
         elif self.action == 'list':
             account_id = self.request.user.account_id
             queryset = queryset.on_account(account_id).order_by_date_desc()
-        elif self.action == 'accept':
-            queryset = queryset.pending()
-        elif self.action == 'retrieve':
+        elif self.action in {'accept', 'retrieve'}:
             queryset = queryset.pending()
         return queryset
 

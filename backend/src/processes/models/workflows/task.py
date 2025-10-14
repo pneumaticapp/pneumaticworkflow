@@ -158,11 +158,16 @@ class Task(
         """ Creates and returns a raw performer for a task with given data
             Optionally updates the performers after create raw performers """
 
-        if performer_type != PerformerType.WORKFLOW_STARTER:
-            if not group_id and not user and not user_id and not field:
-                raise Exception(
-                    'Raw performer should be linked with field or user',
-                )
+        if (
+            performer_type != PerformerType.WORKFLOW_STARTER
+            and not group_id
+            and not user
+            and not user_id
+            and not field
+        ):
+            raise Exception(
+                'Raw performer should be linked with field or user',
+            )
 
         raw_performer = self._get_raw_performer(
             api_name=api_name,
@@ -216,9 +221,8 @@ class Task(
         for raw_performer_template in raw_performers_templates:
             if raw_performer_template['api_name'] not in (
                 existent_raw_performer_api_names
-            ):
-                if raw_performer_template['type'] == PerformerType.FIELD:
-                    api_names.add(raw_performer_template['field']['api_name'])
+            ) and raw_performer_template['type'] == PerformerType.FIELD:
+                api_names.add(raw_performer_template['field']['api_name'])
         if api_names:
             fields_dict = self.workflow.get_fields_as_dict(
                 tasks_filter_kwargs={'task__number__lt': self.number},

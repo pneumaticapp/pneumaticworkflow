@@ -1604,7 +1604,7 @@ def test_list__filter_invalid_is_external__validation_error(api_client):
     assert response.data['message'] == message
     assert response.data['details']['reason'] == message
     assert response.data['details']['name'] == 'is_external'
-    assert 'api_name' not in response.data['details'].keys()
+    assert 'api_name' not in response.data['details']
 
 
 @pytest.mark.parametrize(
@@ -1909,7 +1909,7 @@ def test_list__filter_current_performer_not_running__validation_error(
     assert response.status_code == 400
     assert response.data['code'] == ErrorCode.VALIDATION_ERROR
     assert response.data['message'] == messages.MSG_PW_0067
-    assert 'details' not in response.data.keys()
+    assert 'details' not in response.data
 
 
 @pytest.mark.parametrize('status', WorkflowApiStatus.NOT_RUNNING)
@@ -1933,7 +1933,7 @@ def test_list__filter_current_performer_group_not_running__validation_error(
     assert response.status_code == 400
     assert response.data['code'] == ErrorCode.VALIDATION_ERROR
     assert response.data['message'] == messages.MSG_PW_0067
-    assert 'details' not in response.data.keys()
+    assert 'details' not in response.data
 
 
 def test_list__filter_invalid_current_performer__validation_error(api_client):
@@ -2560,7 +2560,7 @@ def test_list__invalid_ordering__validation_error(value, api_client):
     assert response.data['message'] == message
     assert response.data['details']['reason'] == message
     assert response.data['details']['name'] == 'ordering'
-    assert 'api_name' not in response.data['details'].keys()
+    assert 'api_name' not in response.data['details']
 
 
 def test_list__legacy_template_on_freemium__ok(api_client):

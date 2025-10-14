@@ -177,7 +177,7 @@ class CustomValidationErrorMixin:
                             field=field,
                         )
             elif isinstance(detail, dict):
-                if self._enriched_key not in detail.keys():
+                if self._enriched_key not in detail:
                     for key, _sub_detail in detail.items():
                         if isinstance(_sub_detail, str):
                             sub_detail = {self._message_key: _sub_detail}

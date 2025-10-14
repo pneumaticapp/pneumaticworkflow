@@ -356,9 +356,11 @@ class TaskTemplateSerializer(
             api_name__in=pairs.keys(),
         ):
             checklist_api_name = pairs.get(selection.api_name)
-            if checklist_api_name:
-                if selection.checklist.api_name != checklist_api_name:
-                    selection.delete()
+            if (
+                checklist_api_name
+                and selection.checklist.api_name != checklist_api_name
+            ):
+                selection.delete()
 
     def create(self, validated_data: Dict[str, Any]):
         self.additional_validate(validated_data)

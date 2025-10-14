@@ -62,9 +62,11 @@ class RelatedListField(serializers.ListField):
 class CommaSeparatedListField(serializers.ListField):
 
     def get_value(self, dictionary):
-        if self.field_name not in dictionary:
-            if getattr(self.root, 'partial', False):
-                return empty
+        if (
+            self.field_name not in dictionary
+            and getattr(self.root, 'partial', False)
+        ):
+            return empty
         if html.is_html_input(dictionary):
             val = dictionary.get(self.field_name, '')
             # Split result by comma

@@ -104,7 +104,7 @@ class UserSerializer(
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        if settings.LANGUAGE_CODE == Language.ru:
+        if Language.ru == settings.LANGUAGE_CODE:
             self.fields['language'].choices = Language.CHOICES
         else:
             self.fields['language'].choices = Language.EURO_CHOICES

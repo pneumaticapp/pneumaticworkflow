@@ -173,7 +173,7 @@ class GuestJWTAuthService(JWTAuthentication):
         if user_id:
             value[str(user_id)] = status
         else:
-            for elem in value.keys():
+            for elem in value:
                 value[elem] = status
         cls.cache.set(key, json.dumps(value), cls.CACHE_TIMEOUT)
 
