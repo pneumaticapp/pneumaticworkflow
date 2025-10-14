@@ -32,7 +32,9 @@ from src.processes.enums import (
     WorkflowEventActionType,
     TemplateOrdering,
     TaskStatus,
-    PerformerType, ConditionAction,
+    PerformerType,
+    ConditionAction,
+    PresetType
 )
 
 UserModel = get_user_model()
@@ -1000,5 +1002,20 @@ class ConditionQuerySet(BaseQuerySet):
         return self.filter(action__in=(
                 ConditionAction.SKIP_TASK,
                 ConditionAction.END_WORKFLOW,
+            )
+        )
+
+
+class TemplatePresetQuerySet(AccountBaseQuerySet):
+
+    def by_user(self, user, template_id):
+        return self.filter(
+            Q(
+                author_id=user.id,
+                template_id=template_id,
+                type=PresetType.PERSONAL
+            ) | Q(
+                template_id=template_id,
+                type=PresetType.ACCOUNT
             )
         )
