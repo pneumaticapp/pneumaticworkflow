@@ -378,7 +378,6 @@ class WorkflowActionService:
             if skip_action:
                 return skip_action, True
             return self.start_task, False
-        # noqa: PLR5501
         if start_condition_passed:
             # Start task condition passed
             # - check skip conditions before start
@@ -644,7 +643,7 @@ class WorkflowActionService:
             else:
                 self._start_next_tasks(parent_task=task)
         else: # noqa: PLR5501
-            if is_returned: # noqa: PLR5501
+            if is_returned:
                 self.continue_workflow(task=task, is_returned=is_returned)
             else:
                 delay = task.get_active_delay()
@@ -764,8 +763,8 @@ class WorkflowActionService:
         ).exists()
         by_all = task.require_completion_by_all
         return (
-            not by_all and completed_performers or
-            by_all and not incompleted_performers
+            (not by_all and completed_performers) or
+            (by_all and not incompleted_performers)
         )
 
     def complete_task_for_user(

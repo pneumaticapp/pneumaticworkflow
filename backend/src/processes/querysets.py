@@ -944,7 +944,7 @@ class WorkflowEventQuerySet(AccountBaseQuerySet):
         self,
         account_id: int,
         user_id: int,
-        templates: str = None,
+        templates: Optional[str] = None,
         current_performer_ids: Optional[List[int]] = None,
         current_performer_group_ids: Optional[List[int]] = None,
         date_before_tsp: Optional[datetime] = None,

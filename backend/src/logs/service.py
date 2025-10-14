@@ -30,7 +30,7 @@ class AccountLogService(BaseModelService):
         user_id: Optional[int] = None,
         account_id: Optional[int] = None,
         response_data: Optional[dict] = None,
-        contractor: str = None,
+        contractor: Optional[str] = None,
         status: AccountEventStatus = AccountEventStatus.PENDING,
         direction: RequestDirection = RequestDirection.RECEIVED,
         **kwargs,

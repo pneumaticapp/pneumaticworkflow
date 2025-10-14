@@ -53,7 +53,7 @@ def log_operation(user, log_title: str, account_id: int):
         with transaction.atomic():
             yield
     # TODO Fix the broad "try except"
-    except Exception as ex:  # noqa: BLE001
+    except Exception as ex:
         service = AccountLogService(user)
         service.system_log(
             title=log_title,

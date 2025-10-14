@@ -18,7 +18,7 @@ class CreateOrUpdateInstanceMixin:
         if value is None:
             raise Exception(
                 f'You should set a Meta.create_or_update_fields value for'
-                f' the {str(self.__class__)}',
+                f' the {self.__class__!s}',
             )
         if not isinstance(value, set):
             raise Exception(
@@ -97,7 +97,7 @@ class CreateOrUpdateRelatedMixin:
         if api_primary_field is None:
             raise Exception(
                 f'You should set a Meta.api_primary_field value for'
-                f' the {str(slz_cls)}',
+                f' the {slz_cls!s}',
             )
         return api_primary_field
 

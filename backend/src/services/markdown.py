@@ -30,7 +30,7 @@ class MarkdownPatterns:
     )
     CHECKLIST_ITEM_PATTERN = re.compile(
         r'\[clist:(?:[\w-]+)\|(?:[\w-]+)\](?P<text>.*)\[\/clist]',
-        flags=re.M,
+        flags=re.MULTILINE,
     )
     IMAGE_MARKDOWN_PATTERN = re.compile(
         r'!\[(?P<name>(?:[^\]].+))\]'
@@ -39,7 +39,7 @@ class MarkdownPatterns:
 
     LIST_PATTERN = re.compile(
         r'^(?P<depth>\s*)(?P<label>(?:\d+\.)|(?:\-))(?P<text>.*)$',
-        flags=re.M,
+        flags=re.MULTILINE,
     )
 
     TABLE_MARKDOWN_PATTERN = re.compile(
