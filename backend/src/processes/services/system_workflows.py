@@ -131,7 +131,8 @@ class SystemWorkflowService:
                 self.template_service.create_template_from_sys_template(
                     system_template=system_template,
                 )
-            except Exception as ex:
+            # TODO Fix the broad "try except"
+            except Exception as ex: # noqa: BLE001
                 self._resolve_exception(ex)
 
     def create_onboarding_templates(self):
@@ -143,7 +144,8 @@ class SystemWorkflowService:
                 self.template_service.create_template_from_sys_template(
                     system_template=system_template,
                 )
-            except Exception as ex:
+            # TODO Fix the broad "try except"
+            except Exception as ex: # noqa: BLE001
                 self._resolve_exception(ex)
 
     def create_onboarding_workflows(self):
@@ -179,7 +181,8 @@ class SystemWorkflowService:
                 self.template_service.create_template_from_sys_template(
                     system_template=system_template,
                 )
-            except Exception as ex:
+            # TODO Fix the broad "try except"
+            except Exception as ex: # noqa: BLE001
                 self._resolve_exception(ex)
 
     def create_activated_workflows(self):
