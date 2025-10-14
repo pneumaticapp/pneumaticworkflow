@@ -67,6 +67,7 @@ export function TuneViewModal() {
     fieldsContainer: styles['tune-view-modal__fields-container'],
     fieldItem: styles['tune-view-modal__field-item'],
     label: styles['tune-view-modal__label'],
+    labelClassName: styles['tune-view-modal__label-class-name'],
     fieldName: styles['tune-view-modal__field-name'],
     footer: styles['tune-view-modal__footer'],
     footerButton: styles['footer-button'],
@@ -185,6 +186,7 @@ export function TuneViewModal() {
                             title={fieldName}
                             titlePosition="external"
                             checkboxId={fieldApiName}
+                            labelClassName={STYLES.labelClassName}
                           />
                         </label>
                       </div>

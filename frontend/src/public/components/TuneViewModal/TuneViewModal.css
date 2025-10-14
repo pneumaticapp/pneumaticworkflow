@@ -1,3 +1,5 @@
+/* stylelint-disable selector-max-specificity */
+/* stylelint-disable selector-max-compound-selectors */
 .tune-view-modal__container {
   display: flex;
   flex-direction: column;
@@ -49,7 +51,7 @@
   }
 
   .tune-view-modal__footer {
-    justify-content: space-around;
+    justify-content: space-between;
     margin-right: 3.2rem;
     display: flex;
     flex-shrink: 0;
@@ -98,4 +100,20 @@
 
 .tune-view-modal__tooltip {
   padding: 0.4rem 0.8rem;
+}
+
+.tune-view-modal__label-class-name div {
+  border-color: var(--pneumatic-color-black72);
+}
+
+.tune-view-modal__label:hover .tune-view-modal__label-class-name div {
+  border-color: var(--pneumatic-color-white);
+}
+
+.tune-view-modal__label:hover .tune-view-modal__label-class-name input:checked + div {
+  background-color: var(--pneumatic-color-link-hover);
+}
+
+.tune-view-modal__label:hover .tune-view-modal__label-class-name input:checked + div::before {
+  background-image: url("data:image/svg+xml,%0A%3Csvg width='16' height='16' viewBox='0 0 16 16' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M5.81818 10.7166L2.95455 7.79121L2 8.76633L5.81818 12.6668L14 4.30862L13.0455 3.3335L5.81818 10.7166Z' fill='white'/%3E%3C/svg%3E%0A");
 }
