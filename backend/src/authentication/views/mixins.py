@@ -48,7 +48,8 @@ class SignUpMixin:
         language: Language.LITERALS = None,
         timezone: str = None,
         password: Optional[str] = None,
-    ):
+    ) -> Tuple[UserModel, PneumaticToken]:
+
         request = getattr(self, 'request', None)
         is_superuser = getattr(request, 'is_superuser', False)
         user_service = UserService(
