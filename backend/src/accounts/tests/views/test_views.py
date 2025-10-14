@@ -1,5 +1,5 @@
 import pytest
-from datetime import datetime, timedelta
+from datetime import timedelta
 from django.utils import timezone
 from django.conf import settings
 
@@ -438,21 +438,21 @@ class TestUserNotifications:
             account=user.account,
             type=NotificationType.SYSTEM,
         )
-        notification_1.datetime = datetime.now() + timedelta(seconds=1)
+        notification_1.datetime = timezone.now() + timedelta(seconds=1)
         notification_1.save()
         notification_2 = Notification.objects.create(
             user=user,
             account=user.account,
             type=NotificationType.SYSTEM,
         )
-        notification_2.datetime = datetime.now() + timedelta(seconds=2)
+        notification_2.datetime = timezone.now() + timedelta(seconds=2)
         notification_2.save()
         notification_3 = Notification.objects.create(
             user=user,
             account=user.account,
             type=NotificationType.SYSTEM,
         )
-        notification_3.datetime = datetime.now() + timedelta(seconds=3)
+        notification_3.datetime = timezone.now() + timedelta(seconds=3)
         notification_3.save()
 
         # act

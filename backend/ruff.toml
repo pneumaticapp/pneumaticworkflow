@@ -34,13 +34,15 @@ select = [
     "B",
     "BLE",
     "C4",
+    "DTZ",
     "E4",
     "E7",
     "E9",
     "F",
+    #"FBT", Maybe add later
     "FAST",
     "PL",
-    #"S", # Maybe add later
+    #"S", Maybe add later
 ]
 ignore = [
     "E731",   # lambda expressions used in the messages

@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone as tz
 from django.db.models import Q
 from src.processes.models.workflows.fields import TaskField
 from src.processes.services.condition_check.resolvers.base import Resolver
@@ -13,7 +13,7 @@ class DateResolver(Resolver):
                 pass
         if isinstance(value, int):
             try:
-                return datetime.fromtimestamp(value)
+                return datetime.fromtimestamp(value, tz=tz.utc)
             except (ValueError, TypeError):
                 pass
         return None
