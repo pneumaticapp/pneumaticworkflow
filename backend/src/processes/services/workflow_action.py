@@ -157,7 +157,7 @@ class WorkflowActionService:
     def resume_task(self, task: Task):
 
         if self.workflow.is_completed:
-            raise exceptions.ResumeCompletedWorkflow()
+            raise exceptions.ResumeCompletedWorkflow
 
         with transaction.atomic():
             self.continue_task(task)
@@ -172,7 +172,7 @@ class WorkflowActionService:
         if self.workflow.is_running:
             return
         elif self.workflow.is_completed:
-            raise exceptions.ResumeCompletedWorkflow()
+            raise exceptions.ResumeCompletedWorkflow
 
         with transaction.atomic():
             self.workflow.status = WorkflowStatus.RUNNING
@@ -777,11 +777,11 @@ class WorkflowActionService:
         fields_values: Optional[dict] = None,
     ):
         if self.workflow.is_delayed:
-            raise exceptions.CompleteDelayedWorkflow()
+            raise exceptions.CompleteDelayedWorkflow
         elif self.workflow.is_completed:
-            raise exceptions.CompleteCompletedWorkflow()
+            raise exceptions.CompleteCompletedWorkflow
         if not task.is_active:
-            raise exceptions.CompleteInactiveTask()
+            raise exceptions.CompleteInactiveTask
 
         task_performer = (
             TaskPerformer.objects
@@ -792,14 +792,14 @@ class WorkflowActionService:
         )
         if task_performer:
             if task_performer.is_completed:
-                raise exceptions.UserAlreadyCompleteTask()
+                raise exceptions.UserAlreadyCompleteTask
         elif not self.user.is_account_owner:
-            raise exceptions.UserNotPerformer()
+            raise exceptions.UserNotPerformer
 
         if not task.checklists_completed:
-            raise exceptions.ChecklistIncompleted()
+            raise exceptions.ChecklistIncompleted
         elif task.sub_workflows.running().exists():
-            raise exceptions.SubWorkflowsIncompleted()
+            raise exceptions.SubWorkflowsIncompleted
 
         fields_values = fields_values or {}
         with transaction.atomic():
@@ -880,7 +880,7 @@ class WorkflowActionService:
     ):
 
         if not revert_to_tasks:
-            raise exceptions.FirstTaskCannotBeReverted()
+            raise exceptions.FirstTaskCannotBeReverted
 
         next_depth_revert_tasks_exists = False
         for revert_to_task in revert_to_tasks:
@@ -1024,16 +1024,16 @@ class WorkflowActionService:
         """ Can only be applied to a running workflow """
 
         if self.user.is_guest:
-            raise exceptions.PermissionDenied()
+            raise exceptions.PermissionDenied
         if not revert_from_task.is_active:
-            raise exceptions.RevertInactiveTask()
+            raise exceptions.RevertInactiveTask
         if self.workflow.is_running:
             if revert_from_task.sub_workflows.running().exists():
-                raise exceptions.BlockedBySubWorkflows()
+                raise exceptions.BlockedBySubWorkflows
         elif self.workflow.is_delayed:
-            raise exceptions.DelayedWorkflowCannotBeChanged()
+            raise exceptions.DelayedWorkflowCannotBeChanged
         elif self.workflow.is_completed:
-            raise exceptions.CompletedWorkflowCannotBeChanged()
+            raise exceptions.CompletedWorkflowCannotBeChanged
 
         task_performer = (
             TaskPerformer.objects
@@ -1044,9 +1044,9 @@ class WorkflowActionService:
         )
         if task_performer:
             if task_performer.is_completed:
-                raise exceptions.CompletedTaskCannotBeReturned()
+                raise exceptions.CompletedTaskCannotBeReturned
         elif not self.user.is_account_owner:
-            raise exceptions.UserNotPerformer()
+            raise exceptions.UserNotPerformer
 
         revert_to_tasks = revert_from_task.get_revert_tasks()
         self._validate_revert_is_possible(revert_to_tasks)
@@ -1077,7 +1077,7 @@ class WorkflowActionService:
 
         # validate revert to task
         if revert_to_task.is_pending:
-            raise exceptions.ReturnToFutureTask()
+            raise exceptions.ReturnToFutureTask
         action_method, _ = self.execute_conditions(revert_to_task)
         if (
             action_method is None  # Need different error text
@@ -1092,7 +1092,7 @@ class WorkflowActionService:
         if self.workflow.is_running:
             for revert_from_task in revert_from_tasks:
                 if revert_from_task.sub_workflows.running().exists():
-                    raise exceptions.BlockedBySubWorkflows()
+                    raise exceptions.BlockedBySubWorkflows
 
         with transaction.atomic():
             # Need run after update revert_to_task task (and performers)

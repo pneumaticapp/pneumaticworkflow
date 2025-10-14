@@ -71,16 +71,16 @@ class ReassignService:
         self.new_group = new_group
 
         if not (old_user or old_group):
-            raise exceptions.ReassignOldUserDoesNotExist()
+            raise exceptions.ReassignOldUserDoesNotExist
 
         if not (new_user or new_group):
-            raise exceptions.ReassignNewUserDoesNotExist()
+            raise exceptions.ReassignNewUserDoesNotExist
 
         if old_user and new_user and old_user == new_user:
-            raise exceptions.ReassignUserSameUser()
+            raise exceptions.ReassignUserSameUser
 
         if old_group and new_group and old_group == new_group:
-            raise exceptions.ReassignUserSameGroup()
+            raise exceptions.ReassignUserSameGroup
 
         if old_user:
             self.account = old_user.account

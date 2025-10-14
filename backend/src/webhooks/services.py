@@ -40,7 +40,7 @@ class WebhookService:
 
     def _validate_event(self, event: str):
         if event not in self._get_events():
-            raise exceptions.InvalidEventException()
+            raise exceptions.InvalidEventException
 
     def unsubscribe(self):
         WebHook.objects.on_account(self.account.id).delete()

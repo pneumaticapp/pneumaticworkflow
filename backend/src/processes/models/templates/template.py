@@ -41,7 +41,7 @@ UserModel = get_user_model()
 
 def get_new_public_id(deep: int = 1):
     if deep > 3:
-        raise PublicIdCreateMaxDeepException()
+        raise PublicIdCreateMaxDeepException
     public_id = str(PublicToken())
     if Template.objects.filter(public_id=public_id).exists():
         public_id = get_new_public_id(deep=deep + 1)
@@ -50,7 +50,7 @@ def get_new_public_id(deep: int = 1):
 
 def get_new_embed_id(deep: int = 1):
     if deep > 3:
-        raise EmbedIdCreateMaxDeepException()
+        raise EmbedIdCreateMaxDeepException
     embed_id = str(EmbedToken())
     if Template.objects.filter(embed_id=embed_id).exists():
         embed_id = get_new_embed_id(deep=deep + 1)

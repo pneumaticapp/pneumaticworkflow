@@ -32,4 +32,4 @@ class SoftDeleteMixin:
                         protected_objects=None,
                     )
             else:
-                raise NotImplementedError()
+                raise NotImplementedError

@@ -458,7 +458,7 @@ class StripeService(StripeMixin):
             self.subscription_account.billing_plan == BillingPlanType.PREMIUM
             and quantity < self.subscription_account.max_users
         ):
-            raise exceptions.DecreaseSubscription()
+            raise exceptions.DecreaseSubscription
         return PurchaseItem(
             price=price,
             quantity=quantity,
@@ -521,7 +521,7 @@ class StripeService(StripeMixin):
             new_price = Price.objects.subscriptions().active_or_archived(
             ).get(code__in=products_dict.keys())
         except MultipleObjectsReturned as ex:
-            raise exceptions.MultipleSubscriptionsNotAllowed() from ex
+            raise exceptions.MultipleSubscriptionsNotAllowed from ex
         except ObjectDoesNotExist:
             return None
         else:
@@ -532,16 +532,16 @@ class StripeService(StripeMixin):
                 ).first()
                 if current_price.currency != new_price.currency:
                     # Modify subscription to another with another currency
-                    raise exceptions.ChangeCurrencyDisallowed()
+                    raise exceptions.ChangeCurrencyDisallowed
                 # Allow update if account on archived price
                 elif (
                     new_price.is_archived
                     and current_price.id != new_price.id
                 ):
-                    raise exceptions.PurchaseArchivedPrice()
+                    raise exceptions.PurchaseArchivedPrice
             else:  # noqa: PLR5501
                 if new_price.is_archived:
-                    raise exceptions.PurchaseArchivedPrice()
+                    raise exceptions.PurchaseArchivedPrice
 
             validate_product_method = getattr(
                 self,
@@ -549,7 +549,7 @@ class StripeService(StripeMixin):
                 None,
             )
             if not validate_product_method:
-                raise exceptions.UnsupportedPlan()
+                raise exceptions.UnsupportedPlan
             return validate_product_method(
                 price=new_price,
                 quantity=quantity,
@@ -589,7 +589,7 @@ class StripeService(StripeMixin):
                     and current_item.price.currency != price.currency
                 ):
                     # Modify subscription to another with another currency
-                    raise exceptions.ChangeCurrencyDisallowed()
+                    raise exceptions.ChangeCurrencyDisallowed
 
                 invoice_items.append(
                     PurchaseItem(
@@ -668,9 +668,9 @@ class StripeService(StripeMixin):
                 if self.subscription:
                     self._log_stripe_error(ex)
                     if isinstance(ex, CardError):
-                        raise exceptions.CardError() from ex
+                        raise exceptions.CardError from ex
                     else:
-                        raise exceptions.PaymentError() from ex
+                        raise exceptions.PaymentError from ex
                 else:
                     self._log_stripe_error(ex, level=SentryLogLevel.WARNING)
                     return self._get_checkout_link(
@@ -753,7 +753,7 @@ class StripeService(StripeMixin):
             without change the "price" """
 
         if not self.subscription:
-            raise exceptions.SubscriptionNotExist()
+            raise exceptions.SubscriptionNotExist
         current_item = self.subscription['items'].data[0]
         self.subscription = stripe.Subscription.modify(
             id=self.subscription.id,
@@ -806,12 +806,12 @@ class StripeService(StripeMixin):
     def create_off_session_subscription(self, products):
 
         if not self.payment_method:
-            raise exceptions.CardError()
+            raise exceptions.CardError
         try:
             self._off_session_purchase(products=products)
         except StripeError as ex:
             self._log_stripe_error(ex)
             if isinstance(ex, CardError):
-                raise exceptions.CardError() from ex
+                raise exceptions.CardError from ex
             else:
-                raise exceptions.PaymentError() from ex
+                raise exceptions.PaymentError from ex

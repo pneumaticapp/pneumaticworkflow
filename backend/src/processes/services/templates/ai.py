@@ -104,7 +104,7 @@ class BaseAiService:
                 prompt=prompt,
                 user_description=user_description,
             )
-            raise OpenAiServiceUnavailable() from ex
+            raise OpenAiServiceUnavailable from ex
         else:
             if not completion.choices:
                 self._log(
@@ -112,7 +112,7 @@ class BaseAiService:
                     message='Response has no choices',
                     prompt=prompt,
                 )
-                raise OpenAiServiceFailed()
+                raise OpenAiServiceFailed
             choice = completion.choices[0]
             finish_reason = getattr(choice.message, 'finish_reason', None)
             if finish_reason:
@@ -122,7 +122,7 @@ class BaseAiService:
                     message='Response has finish reason',
                     response_text=finish_reason,
                 )
-                raise OpenAiServiceFailed()
+                raise OpenAiServiceFailed
             return choice.message.content
 
     def _test_response(self):
@@ -327,10 +327,10 @@ class OpenAiService(BaseAiService):
         """ Generate template data dict from user description """
 
         if self.account.ai_template_generations_limit_exceeded:
-            raise OpenAiLimitTemplateGenerations()
+            raise OpenAiLimitTemplateGenerations
         prompt = OpenAiPrompt.objects.active().target_steps().first()
         if not prompt or not prompt.messages.active().exists():
-            raise OpenAiStepsPromptNotExist()
+            raise OpenAiStepsPromptNotExist
 
         response_text = self._get_response(
             prompt=prompt,
@@ -344,7 +344,7 @@ class OpenAiService(BaseAiService):
                 message='Template steps not found',
                 response_text=response_text,
             )
-            raise OpenAiTemplateStepsNotExist()
+            raise OpenAiTemplateStepsNotExist
         initial_data = {
             'name': user_description[:TEMPLATE_NAME_LENGTH],
             'tasks': initial_tasks_data,
@@ -471,7 +471,7 @@ class AnonOpenAiService(BaseAiService):
 
         prompt = OpenAiPrompt.objects.active().target_steps().first()
         if not prompt or not prompt.messages.active().exists():
-            raise OpenAiStepsPromptNotExist()
+            raise OpenAiStepsPromptNotExist
 
         response_text = self._get_response(
             prompt=prompt,
@@ -485,7 +485,7 @@ class AnonOpenAiService(BaseAiService):
                 message='Template steps not found',
                 response_text=response_text,
             )
-            raise OpenAiTemplateStepsNotExist()
+            raise OpenAiTemplateStepsNotExist
         return {
             'name': user_description[:TEMPLATE_NAME_LENGTH],
             'tasks': initial_tasks_data,

@@ -76,7 +76,7 @@ class MicrosoftGraphApiMixin:
                     },
                     level=SentryLogLevel.ERROR,
                 )
-            raise exceptions.GraphApiRequestError()
+            raise exceptions.GraphApiRequestError
         return response
 
     def _get_user(self, access_token: str) -> dict:
@@ -265,7 +265,7 @@ class MicrosoftAuthService(
 
         flow_data = self._get_cache(key=auth_response['state'])
         if not flow_data:
-            raise exceptions.TokenInvalidOrExpired()
+            raise exceptions.TokenInvalidOrExpired
         response = self.auth_client.acquire_token_by_auth_code_flow(
             auth_code_flow=flow_data,
             auth_response=auth_response,
@@ -276,7 +276,7 @@ class MicrosoftAuthService(
                 data=response,
                 level=SentryLogLevel.WARNING,
             )
-            raise exceptions.TokenInvalidOrExpired()
+            raise exceptions.TokenInvalidOrExpired
         self.tokens = response
         return f'{response["token_type"]} {response["access_token"]}'
 
@@ -295,7 +295,7 @@ class MicrosoftAuthService(
                 data={'user_id': user_id},
                 level=SentryLogLevel.ERROR,
             )
-            raise exceptions.AccessTokenNotFound() from ex
+            raise exceptions.AccessTokenNotFound from ex
         else:
             if token.is_expired:
                 tokens_data = self.auth_client.acquire_token_by_refresh_token(

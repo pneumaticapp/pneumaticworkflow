@@ -560,7 +560,7 @@ class AnalyticService:
     ) -> bool:
 
         if not user and not anonymous_id:
-            raise exceptions.InvalidUserCredentials()
+            raise exceptions.InvalidUserCredentials
 
         if auth_type in AuthTokenType.EXTERNAL_TYPES:
             label = Label.external_workflow
@@ -691,7 +691,7 @@ class AnalyticService:
     ):
 
         if not user.is_authenticated and not anonymous_id:
-            raise exceptions.InvalidUserCredentials()
+            raise exceptions.InvalidUserCredentials
 
         analytics_data = {
             'event': AttachmentAnalyticsEvent.uploaded,
@@ -730,7 +730,7 @@ class AnalyticService:
     ) -> bool:
 
         if not user and not anonymous_id:
-            raise exceptions.InvalidUserCredentials()
+            raise exceptions.InvalidUserCredentials
 
         params = {
             'event': TemplateAnalyticsEvent.integrated,

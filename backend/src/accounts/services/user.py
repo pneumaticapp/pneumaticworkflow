@@ -105,7 +105,7 @@ class UserService(
                 date_fdw=date_fdw,
             )
         except IntegrityError as ex:
-            raise AlreadyRegisteredException() from ex
+            raise AlreadyRegisteredException from ex
         return self.instance
 
     def _create_related(self, **kwargs):
@@ -202,7 +202,7 @@ class UserService(
     @classmethod
     def _validate_deactivate(cls, user):
         if user_is_last_performer(user):
-            raise UserIsPerformerException()
+            raise UserIsPerformerException
 
     @classmethod
     def _deactivate(
