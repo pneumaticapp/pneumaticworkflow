@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 
 from django.contrib.auth import get_user_model
 from rest_framework.decorators import action
@@ -250,7 +250,11 @@ class TaskViewSet(
         self.check_object_permissions(self.request, obj)
         return obj
 
-    def prefetch_queryset(self, queryset, extra_fields: List[str] = None):
+    def prefetch_queryset(
+        self,
+        queryset,
+        extra_fields: Optional[List[str]] = None,
+    ):
         if self.action == 'retrieve':
             queryset = queryset.prefetch_related(
                 'checklists__selections',

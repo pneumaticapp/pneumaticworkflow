@@ -533,7 +533,7 @@ class TestCreate:
         service_mock.assert_not_called()
         invite_users_mock.assert_not_called()
 
-    def test_accept__group_is_None__validation_error(
+    def test_accept__group_is_none__validation_error(
         self,
         mocker,
         api_client,
@@ -1618,7 +1618,7 @@ class TestRetrieve:
         invite = user.invite
 
         # act
-        response = api_client.get(f'/accounts/invites/{str(invite.id)}')
+        response = api_client.get(f'/accounts/invites/{invite.id!s}')
 
         # assert
         assert response.status_code == 200

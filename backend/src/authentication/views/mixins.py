@@ -47,7 +47,7 @@ class SignUpMixin:
         photo: Optional[str] = None,
         job_title: Optional[str] = None,
         language: Language.LITERALS = None,
-        timezone: str = None,
+        timezone: Optional[str] = None,
         password: Optional[str] = None,
         utm_source: Optional[str] = None,
         utm_medium: Optional[str] = None,

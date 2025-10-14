@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 
 from django.db import DataError, transaction
 from django.db.models import Prefetch, Q
@@ -195,7 +195,11 @@ class TemplateViewSet(
             ).distinct()
         return self.prefetch_queryset(qst)
 
-    def prefetch_queryset(self, queryset, extra_fields: List[str] = None):
+    def prefetch_queryset(
+        self,
+        queryset,
+        extra_fields: Optional[List[str]] = None,
+    ):
 
         # Original method "prefetch_queryset"
         # does not working with custom defined Prefetch(...) fields

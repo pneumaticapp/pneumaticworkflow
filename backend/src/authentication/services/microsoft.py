@@ -329,7 +329,7 @@ class MicrosoftAuthService(
         """ Work accounts do have 'userType' and 'creationType' fields
             We cannot trust the email specified in the work account,
             because it is not confirmed, but we can trust userPrincipalName
-            because it is created only in the organization’s domain """
+            because it is created only in the organization's domain """
 
         is_work_account = (
             'userType' in user_profile

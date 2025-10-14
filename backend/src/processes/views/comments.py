@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 
 from rest_framework.decorators import action
 from rest_framework.viewsets import GenericViewSet
@@ -77,7 +77,11 @@ class CommentViewSet(
             qst = qst.by_user(user.id)
         return self.prefetch_queryset(qst)
 
-    def prefetch_queryset(self, queryset, extra_fields: List[str] = None):
+    def prefetch_queryset(
+        self,
+        queryset,
+        extra_fields: Optional[List[str]] = None,
+    ):
         if self.action in ('create_reaction', 'delete_reaction'):
             extra_fields = ['workflow']
         return super().prefetch_queryset(

@@ -8,16 +8,16 @@ from src.services.markdown import MarkdownPatterns
 
 list_block_pattern = re.compile(
     pattern=r'(^(?:\s*(?:(?:\d+\.)|[\-\+\*])\s+.*?(?:\n|$))+)',
-    flags=re.M,
+    flags=re.MULTILINE,
 )
 
 table_block_pattern = re.compile(
     pattern=r'(^(?:\|[^\n]+\|\r?\n)+)',
-    flags=re.M,
+    flags=re.MULTILINE,
 )
 paragraph_block_pattern = re.compile(
     pattern=r'^(?P<paragraph>(?:([*_`]|\*\*|\[){0,1}[a-zA-Z]+)(.*))',
-    flags=re.M,
+    flags=re.MULTILINE,
 )
 
 
@@ -143,7 +143,7 @@ def _normalize_markdown_blocks(text: str) -> str:
 
     text = list_block_pattern.sub(lambda m: normalize_block(m, text), text)
     text = table_block_pattern.sub(lambda m: normalize_block(m, text), text)
-    text = paragraph_block_pattern.sub('\g<paragraph>\n\n', text)
+    text = paragraph_block_pattern.sub('\\g<paragraph>\n\n', text)
 
     return re.sub(r'\n{3,}', '\n\n', text).strip('\n')
 

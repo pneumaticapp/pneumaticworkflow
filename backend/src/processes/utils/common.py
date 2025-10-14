@@ -38,10 +38,9 @@ def are_users_in_process_account(
     account_id: Type[int],
 ) -> bool:
 
-    UserModel = get_user_model()
     if not user_ids:
         return True
-    return UserModel.objects.are_users_in_account(
+    return get_user_model().objects.are_users_in_account(
         account_id,
         user_ids,
     )
