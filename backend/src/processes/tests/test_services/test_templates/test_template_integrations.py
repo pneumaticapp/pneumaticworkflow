@@ -1,23 +1,23 @@
 import pytest
 from django.utils import timezone
-from src.processes.services.templates.integrations import (
-    TemplateIntegrationsService,
-)
-from src.processes.tests.fixtures import (
-    create_test_user,
-    create_test_template,
-)
+
 from src.processes.entities import (
-    TemplateIntegrationsData,
     PrivateTemplateIntegrationsData,
+    TemplateIntegrationsData,
 )
-from src.processes.enums import TemplateIntegrationType
+from src.processes.enums import TemplateIntegrationType, TemplateType
 from src.processes.models.templates.template import TemplateIntegrations
 from src.processes.serializers.templates.integrations import (
     TemplateIntegrationsSerializer,
 )
+from src.processes.services.templates.integrations import (
+    TemplateIntegrationsService,
+)
+from src.processes.tests.fixtures import (
+    create_test_template,
+    create_test_user,
+)
 from src.webhooks.tests.fixtures import create_test_webhook
-from src.processes.enums import TemplateType
 
 pytestmark = pytest.mark.django_db
 

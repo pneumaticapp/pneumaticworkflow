@@ -1,11 +1,11 @@
+from src.accounts.models import Account
 from src.processes.permissions import (
     PublicTemplatePermission,
+    StoragePermission,
 )
-from src.accounts.models import Account
 from src.processes.views.file_attachment import (
     BaseFileAttachmentViewSet,
 )
-from src.processes.permissions import StoragePermission
 
 
 class PublicFileAttachmentViewSet(

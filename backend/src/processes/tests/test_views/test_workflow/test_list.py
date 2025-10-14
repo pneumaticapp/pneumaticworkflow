@@ -1,52 +1,55 @@
-import pytest
-from string import punctuation
 from datetime import timedelta
-from django.utils import timezone
-from src.authentication.enums import AuthTokenType
+from string import punctuation
 
-from src.processes.models.templates.owner import TemplateOwner
+import pytest
+from django.utils import timezone
+
+from src.accounts.enums import BillingPlanType
+from src.authentication.enums import AuthTokenType
+from src.processes.enums import (
+    ConditionAction,
+    DirectlyStatus,
+    FieldType,
+    OwnerType,
+    PerformerType,
+    PredicateOperator,
+    PredicateType,
+    TaskStatus,
+    WorkflowApiStatus,
+    WorkflowStatus,
+)
+from src.processes.messages import workflow as messages
 from src.processes.models.templates.conditions import (
     ConditionTemplate,
     PredicateTemplate,
     RuleTemplate,
 )
-from src.processes.models.workflows.task import (
-    TaskPerformer,
-    Delay,
-)
-from src.processes.models.workflows.fields import TaskField
+from src.processes.models.templates.owner import TemplateOwner
 from src.processes.models.workflows.attachment import FileAttachment
-from src.processes.tests.fixtures import (
-    create_test_user,
-    create_test_workflow,
-    create_test_template,
-    create_test_account,
-    create_invited_user,
-    create_test_guest,
-    create_test_group,
-    create_test_owner,
-    create_test_admin,
-)
-from src.utils.validation import ErrorCode
-from src.processes.messages import workflow as messages
-from src.accounts.enums import BillingPlanType
-from src.processes.enums import (
-    WorkflowStatus,
-    WorkflowApiStatus,
-    DirectlyStatus,
-    FieldType,
-    TaskStatus,
-    PerformerType,
-    OwnerType, ConditionAction, PredicateOperator, PredicateType,
-)
-from src.processes.services.tasks.performers import (
-    TaskPerformersService,
+from src.processes.models.workflows.fields import TaskField
+from src.processes.models.workflows.task import (
+    Delay,
+    TaskPerformer,
 )
 from src.processes.services.events import (
     WorkflowEventService,
 )
+from src.processes.services.tasks.performers import (
+    TaskPerformersService,
+)
+from src.processes.tests.fixtures import (
+    create_invited_user,
+    create_test_account,
+    create_test_admin,
+    create_test_group,
+    create_test_guest,
+    create_test_owner,
+    create_test_template,
+    create_test_user,
+    create_test_workflow,
+)
 from src.services.markdown import MarkdownService
-
+from src.utils.validation import ErrorCode
 
 pytestmark = pytest.mark.django_db
 

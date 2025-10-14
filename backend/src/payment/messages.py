@@ -1,6 +1,5 @@
-from django.utils.translation import gettext_lazy as _
 from django.utils.text import format_lazy
-
+from django.utils.translation import gettext_lazy as _
 
 MSG_BL_0001 = _('Token is expired.')
 MSG_BL_0002 = _('Products list cannot be empty.')

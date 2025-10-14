@@ -1,36 +1,36 @@
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db.models import ObjectDoesNotExist
-from django.conf import settings
-from rest_framework.viewsets import GenericViewSet
 from rest_framework.decorators import action
 from rest_framework.exceptions import AuthenticationFailed
-from src.generics.mixins.views import CustomViewSetMixin
-from src.authentication.permissions import Auth0Permission
+from rest_framework.viewsets import GenericViewSet
+
 from src.analytics.mixins import BaseIdentifyMixin
-from src.authentication.services.user_auth import (
-    AuthService,
-)
-from src.authentication.services.exceptions import (
-    AuthException,
+from src.authentication.messages import MSG_AU_0003
+from src.authentication.permissions import Auth0Permission
+from src.authentication.serializers import (
+    Auth0TokenSerializer,
 )
 from src.authentication.services.auth0 import (
     Auth0Service,
 )
-from src.authentication.serializers import (
-    Auth0TokenSerializer,
+from src.authentication.services.exceptions import (
+    AuthException,
 )
-from src.authentication.views.mixins import SignUpMixin
-from src.utils.validation import raise_validation_error
+from src.authentication.services.user_auth import (
+    AuthService,
+)
 from src.authentication.throttling import (
     Auth0AuthUriThrottle,
     Auth0TokenThrottle,
 )
+from src.authentication.views.mixins import SignUpMixin
+from src.generics.mixins.views import CustomViewSetMixin
 from src.utils.logging import (
-    capture_sentry_message,
     SentryLogLevel,
+    capture_sentry_message,
 )
-from src.authentication.messages import MSG_AU_0003
-
+from src.utils.validation import raise_validation_error
 
 UserModel = get_user_model()
 

@@ -2,13 +2,15 @@ from collections import defaultdict
 from dataclasses import asdict
 from datetime import timedelta
 from typing import Dict
+
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.utils import timezone
+
 from src.executor import RawSqlExecutor
 from src.reports.entities import (
-    WorkflowsDigest,
     TemplateForWorkflowsDigest,
+    WorkflowsDigest,
 )
 from src.reports.queries.workflows import (
     WorkflowDigestQuery,
@@ -17,7 +19,6 @@ from src.reports.services.base import (
     SendDigest,
 )
 from src.services.email import EmailService
-
 
 UserModel = get_user_model()
 

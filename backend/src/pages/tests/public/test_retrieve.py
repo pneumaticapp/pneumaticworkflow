@@ -1,7 +1,7 @@
 import pytest
-from src.pages.models import Page
-from src.pages.enums import PageType
 
+from src.pages.enums import PageType
+from src.pages.models import Page
 
 pytestmark = pytest.mark.django_db
 

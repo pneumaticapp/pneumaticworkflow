@@ -1,32 +1,32 @@
+from datetime import datetime, time, timedelta
+
 import pytest
-from datetime import timedelta, datetime, time
 from django.contrib.auth import get_user_model
 from django.utils import timezone
-from src.processes.models.templates.fields import FieldTemplate
+
+from src.processes.enums import (
+    ConditionAction,
+    DirectlyStatus,
+    FieldType,
+    PerformerType,
+    PredicateOperator,
+    TaskStatus,
+    WorkflowStatus,
+)
 from src.processes.models.templates.conditions import (
     ConditionTemplate,
     PredicateTemplate,
     RuleTemplate,
 )
+from src.processes.models.templates.fields import FieldTemplate
 from src.processes.models.workflows.task import TaskPerformer
 from src.processes.tests.fixtures import (
-    create_test_template,
-    create_test_workflow,
     create_test_account,
-    create_test_owner,
     create_test_admin,
     create_test_group,
-)
-from src.processes.enums import (
-    WorkflowStatus,
-    PredicateOperator,
-    TaskStatus,
-    ConditionAction,
-    PerformerType,
-)
-from src.processes.enums import (
-    FieldType,
-    DirectlyStatus,
+    create_test_owner,
+    create_test_template,
+    create_test_workflow,
 )
 
 UserModel = get_user_model()

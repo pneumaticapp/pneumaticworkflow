@@ -1,12 +1,13 @@
 import pytest
-from src.processes.tests.fixtures import (
-    create_test_user,
-)
+
 from src.processes.enums import (
-    PerformerType,
     DueDateRule,
     FieldType,
     OwnerType,
+    PerformerType,
+)
+from src.processes.tests.fixtures import (
+    create_test_user,
 )
 
 pytestmark = pytest.mark.django_db

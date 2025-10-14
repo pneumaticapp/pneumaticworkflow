@@ -1,7 +1,8 @@
 import json
 from typing import Optional, Tuple
-from django.core.cache import cache as default_cache
+
 from django.contrib.auth import get_user_model
+from django.core.cache import cache as default_cache
 from rest_framework import HTTP_HEADER_ENCODING
 from rest_framework_simplejwt.authentication import (
     JWTAuthentication,
@@ -11,19 +12,19 @@ from rest_framework_simplejwt.exceptions import (
     InvalidToken,
     TokenError,
 )
+
 from src.authentication.enums import (
-    GuestCachedStatus,
     AuthTokenType,
+    GuestCachedStatus,
 )
-from src.authentication.tokens import GuestToken
-from src.authentication.queries import GetGuestQuery
 from src.authentication.messages import (
     MSG_AU_0007,
     MSG_AU_0009,
     MSG_AU_0010,
     MSG_AU_0011,
 )
-
+from src.authentication.queries import GetGuestQuery
+from src.authentication.tokens import GuestToken
 
 UserModel = get_user_model()
 

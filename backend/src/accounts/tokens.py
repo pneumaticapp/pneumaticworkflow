@@ -3,21 +3,22 @@ from datetime import timedelta
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist
-from rest_framework_simplejwt.tokens import Token
-from rest_framework_simplejwt.settings import api_settings
 from rest_framework_simplejwt.exceptions import TokenError
-from src.analytics.enums import MailoutType
+from rest_framework_simplejwt.settings import api_settings
+from rest_framework_simplejwt.tokens import Token
+
 from src.accounts.enums import (
     UserStatus,
-)
-from src.accounts.services.exceptions import (
-    InvalidOrExpiredToken,
-    AlreadyAcceptedInviteException,
-    AlreadyRegisteredException,
 )
 from src.accounts.messages import (
     MSG_A_0008,
 )
+from src.accounts.services.exceptions import (
+    AlreadyAcceptedInviteException,
+    AlreadyRegisteredException,
+    InvalidOrExpiredToken,
+)
+from src.analytics.enums import MailoutType
 
 UserModel = get_user_model()
 

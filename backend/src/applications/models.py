@@ -1,8 +1,8 @@
 from django.db import models
 
 from src.applications.querysets import IntegrationsQuerySet
-from src.generics.models import SoftDeleteModel
 from src.generics.managers import BaseSoftDeleteManager
+from src.generics.models import SoftDeleteModel
 
 
 class Integration(SoftDeleteModel):

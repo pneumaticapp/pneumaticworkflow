@@ -1,16 +1,18 @@
-from typing import Dict, Any
+from typing import Any, Dict
+
 from rest_framework.serializers import (
     ModelSerializer,
 )
-from src.processes.models.templates.kickoff import Kickoff
-from src.processes.serializers.templates.field import (
-    FieldTemplateSerializer,
-    FieldTemplateShortViewSerializer,
-    FieldTemplateListSerializer,
-)
+
 from src.generics.mixins.serializers import (
     AdditionalValidationMixin,
     CustomValidationErrorMixin,
+)
+from src.processes.models.templates.kickoff import Kickoff
+from src.processes.serializers.templates.field import (
+    FieldTemplateListSerializer,
+    FieldTemplateSerializer,
+    FieldTemplateShortViewSerializer,
 )
 from src.processes.serializers.templates.mixins import (
     CreateOrUpdateInstanceMixin,

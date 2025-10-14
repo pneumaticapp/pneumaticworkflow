@@ -1,5 +1,5 @@
-from src.processes.services.base import BaseWorkflowService
 from src.processes.models.workflows.kickoff import KickoffValue
+from src.processes.services.base import BaseWorkflowService
 
 
 class KickoffService(BaseWorkflowService):

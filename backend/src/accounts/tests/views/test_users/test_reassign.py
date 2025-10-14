@@ -1,14 +1,15 @@
 import pytest
+
 from src.accounts.messages import MSG_A_0004
-from src.authentication.services.guest_auth import GuestJWTAuthService
 from src.accounts.services.exceptions import (
     ReassignUserSameUser,
 )
+from src.authentication.services.guest_auth import GuestJWTAuthService
 from src.processes.models.workflows.task import TaskPerformer
 from src.processes.tests.fixtures import (
     create_invited_user,
-    create_test_user,
     create_test_guest,
+    create_test_user,
     create_test_workflow,
 )
 from src.utils.validation import ErrorCode

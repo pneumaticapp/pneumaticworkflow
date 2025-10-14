@@ -2,43 +2,43 @@ from django.contrib.auth import get_user_model
 from rest_framework.exceptions import (
     AuthenticationFailed,
 )
-from rest_framework.viewsets import GenericViewSet
 from rest_framework.generics import (
-    get_object_or_404,
     CreateAPIView,
+    get_object_or_404,
 )
-from src.authentication.permissions import GoogleAuthPermission
+from rest_framework.viewsets import GenericViewSet
 from rest_framework_simplejwt.tokens import TokenError
-from src.authentication.enums import AuthTokenType
+
 from src.accounts.enums import (
+    SourceType,
     UserInviteStatus,
     UserStatus,
-    SourceType,
 )
 from src.accounts.tokens import (
     AuthToken,
     VerificationToken,
 )
-from src.services.email import EmailService
+from src.analytics.mixins import BaseIdentifyMixin
 from src.analytics.services import AnalyticService
-from src.authentication.permissions import (
-    PrivateApiPermission,
-)
-from src.authentication.services.user_auth import AuthService
+from src.authentication.enums import AuthTokenType
 from src.authentication.messages import (
     MSG_AU_0001,
     MSG_AU_0002,
 )
-from src.generics.mixins.views import (
-    CustomViewSetMixin,
-    BaseResponseMixin,
+from src.authentication.permissions import (
+    GoogleAuthPermission,
+    PrivateApiPermission,
 )
 from src.authentication.serializers import (
     SignInWithGoogleSerializer,
 )
-from src.analytics.mixins import BaseIdentifyMixin
+from src.authentication.services.user_auth import AuthService
+from src.generics.mixins.views import (
+    BaseResponseMixin,
+    CustomViewSetMixin,
+)
+from src.services.email import EmailService
 from src.utils.validation import raise_validation_error
-
 
 UserModel = get_user_model()
 

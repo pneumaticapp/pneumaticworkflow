@@ -1,8 +1,9 @@
 from django.db.models import (
+    CharField,
     Model,
     TextField,
-    CharField,
 )
+
 from src.pages.enums import PageType
 from src.pages.querysets import PageQuerySet
 

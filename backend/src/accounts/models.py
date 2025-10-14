@@ -1,49 +1,51 @@
 import uuid
 from datetime import timedelta
-from typing import Set, Dict
+from typing import Dict, Set
+
 from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.contrib.postgres.fields import JSONField
 from django.contrib.postgres.search import SearchVectorField
 from django.db import models
-from django.db.models import UniqueConstraint, Q, Manager
+from django.db.models import Manager, Q, UniqueConstraint
 from django.utils import timezone
+
 from src.accounts.enums import (
-    NotificationType,
-    NotificationStatus,
-    UserStatus,
-    UserType,
     BillingPlanType,
-    SourceType,
-    UserInviteStatus,
-    LeaseLevel,
     Language,
+    LeaseLevel,
+    NotificationStatus,
+    NotificationType,
+    SourceType,
+    Timezone,
     UserDateFormat,
     UserFirstDayWeek,
-    Timezone,
+    UserInviteStatus,
+    UserStatus,
+    UserType,
 )
 from src.accounts.fields import (
     EmailLowerField,
     TruncatingCharField,
 )
+from src.accounts.managers import (
+    SoftDeleteGuestManager,
+    SoftDeleteUserManager,
+)
 from src.accounts.querysets import (
-    UserInviteQuerySet,
-    UserQuerySet,
     AccountQuerySet,
     AccountSystemTemplateQuerySet,
     APIKeyQuerySet,
-    NotificationsQuerySet,
-    InactiveUserQuerySet,
-    SystemMessageQuerySet,
-    GuestQuerySet,
     ContactQuerySet,
     GroupQuerySet,
+    GuestQuerySet,
+    InactiveUserQuerySet,
+    NotificationsQuerySet,
+    SystemMessageQuerySet,
+    UserInviteQuerySet,
+    UserQuerySet,
 )
 from src.generics.managers import BaseSoftDeleteManager
-from src.accounts.managers import (
-    SoftDeleteUserManager,
-    SoftDeleteGuestManager,
-)
 from src.generics.models import SoftDeleteModel
 from src.payment.enums import BillingPeriod
 

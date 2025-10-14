@@ -1,33 +1,33 @@
 from datetime import datetime, timedelta
-from django.utils import timezone
-from typing import Dict, Optional, Union, Any
-from django.contrib.auth import get_user_model
+from typing import Any, Dict, Optional, Union
+
+from customerio import APIClient, SendEmailRequest
 from django.conf import settings
+from django.contrib.auth import get_user_model
+from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 
-from src.notifications.enums import NotificationMethod
-from src.notifications.services.base import (
-    NotificationService,
-)
-from customerio import SendEmailRequest, APIClient
-from src.analytics.enums import MailoutType
 from src.accounts.enums import UserType
-from src.services.html_converter import convert_text_to_html
-from src.processes.utils.common import get_duration_format
-from src.notifications.enums import (
-    EmailTemplate,
-    cio_template_ids,
-)
 from src.accounts.tokens import (
-    UnsubscribeEmailToken,
     ResetPasswordToken,
+    UnsubscribeEmailToken,
 )
-from src.logs.service import AccountLogService
+from src.analytics.enums import MailoutType
 from src.logs.enums import (
     AccountEventStatus,
 )
+from src.logs.service import AccountLogService
 from src.notifications import messages
-
+from src.notifications.enums import (
+    EmailTemplate,
+    NotificationMethod,
+    cio_template_ids,
+)
+from src.notifications.services.base import (
+    NotificationService,
+)
+from src.processes.utils.common import get_duration_format
+from src.services.html_converter import convert_text_to_html
 
 UserModel = get_user_model()
 

@@ -1,31 +1,31 @@
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from rest_framework.generics import (
-    get_object_or_404,
     CreateAPIView,
     ListAPIView,
+    get_object_or_404,
 )
 from rest_framework_simplejwt.exceptions import TokenError
-from src.analytics.services import AnalyticService
-from src.authentication.enums import AuthTokenType
+
 from src.accounts.permissions import UserIsAdminOrAccountOwner
 from src.accounts.tokens import (
     VerificationToken,
 )
-from src.services.email import EmailService
+from src.analytics.services import AnalyticService
+from src.authentication.enums import AuthTokenType
+from src.authentication.messages import MSG_AU_0008
 from src.authentication.permissions import (
     PrivateApiPermission,
 )
 from src.authentication.serializers import TokenSerializer
-from src.utils.validation import raise_validation_error
-from src.authentication.messages import MSG_AU_0008
 from src.generics.mixins.views import (
     BaseResponseMixin,
 )
 from src.generics.permissions import (
     UserIsAuthenticated,
 )
-
+from src.services.email import EmailService
+from src.utils.validation import raise_validation_error
 
 UserModel = get_user_model()
 

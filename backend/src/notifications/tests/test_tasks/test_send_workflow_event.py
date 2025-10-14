@@ -1,27 +1,27 @@
 import pytest
-from src.processes.enums import (
-    DirectlyStatus,
-)
-from src.processes.models.workflows.task import TaskPerformer
-from src.processes.tests.fixtures import (
-    create_test_workflow,
-    create_test_user,
-    create_test_account,
-    create_test_guest,
+
+from src.notifications.services.websockets import (
+    WebSocketService,
 )
 from src.notifications.tasks import (
     _send_workflow_event,
 )
+from src.processes.enums import (
+    DirectlyStatus,
+)
+from src.processes.models.workflows.task import TaskPerformer
 from src.processes.serializers.workflows.events import (
     WorkflowEventSerializer,
 )
 from src.processes.services.events import (
     WorkflowEventService,
 )
-from src.notifications.services.websockets import (
-    WebSocketService,
+from src.processes.tests.fixtures import (
+    create_test_account,
+    create_test_guest,
+    create_test_user,
+    create_test_workflow,
 )
-
 
 pytestmark = pytest.mark.django_db
 

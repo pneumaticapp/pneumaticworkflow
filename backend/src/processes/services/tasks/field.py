@@ -1,26 +1,26 @@
-from typing import List, Any, Union, Optional, Iterable, Set
 from decimal import Decimal, DecimalException
-from typing import NamedTuple
-from django.db.models import ObjectDoesNotExist
+from typing import Any, Iterable, List, NamedTuple, Optional, Set, Union
+
 from django.contrib.auth import get_user_model
-from src.generics.validators import NoSchemaURLValidator
 from django.core.exceptions import (
     ValidationError as ValidationCoreError,
 )
+from django.db.models import ObjectDoesNotExist
+
+from src.generics.validators import NoSchemaURLValidator
+from src.processes.enums import FieldType
 from src.processes.messages import workflow as messages
-from src.processes.models.workflows.attachment import FileAttachment
 from src.processes.models.templates.fields import (
-    FieldTemplateSelection,
     FieldTemplate,
+    FieldTemplateSelection,
 )
+from src.processes.models.workflows.attachment import FileAttachment
 from src.processes.models.workflows.fields import TaskField
 from src.processes.services.base import BaseWorkflowService
 from src.processes.services.tasks.exceptions import TaskFieldException
 from src.processes.services.tasks.selection import SelectionService
 from src.services.markdown import MarkdownService
-from src.processes.enums import FieldType
 from src.utils.dates import date_tsp_to_user_fmt
-
 
 UserModel = get_user_model()
 

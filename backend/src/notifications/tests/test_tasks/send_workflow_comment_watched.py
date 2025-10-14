@@ -1,18 +1,14 @@
 import pytest
 from django.utils import timezone
+
+from src.notifications.tasks import (
+    _send_workflow_comment_watched,
+)
 from src.processes.enums import (
     WorkflowEventActionType,
 )
 from src.processes.models.workflows.event import (
     WorkflowEventAction,
-)
-from src.processes.tests.fixtures import (
-    create_test_workflow,
-    create_test_user,
-    create_test_account,
-)
-from src.notifications.tasks import (
-    _send_workflow_comment_watched,
 )
 from src.processes.serializers.workflows.events import (
     WorkflowEventSerializer,
@@ -20,7 +16,11 @@ from src.processes.serializers.workflows.events import (
 from src.processes.services.events import (
     WorkflowEventService,
 )
-
+from src.processes.tests.fixtures import (
+    create_test_account,
+    create_test_user,
+    create_test_workflow,
+)
 
 pytestmark = pytest.mark.django_db
 

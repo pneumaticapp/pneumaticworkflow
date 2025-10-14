@@ -1,11 +1,12 @@
 import re
 from urllib.parse import urlsplit, urlunsplit
+
+from django.core.exceptions import ValidationError
 from django.core.validators import (
     URLValidator,
-    validate_ipv6_address,
     _lazy_re_compile,
+    validate_ipv6_address,
 )
-from django.core.exceptions import ValidationError
 
 
 class NoSchemaURLValidator(URLValidator):

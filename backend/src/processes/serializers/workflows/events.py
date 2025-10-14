@@ -1,15 +1,16 @@
 from rest_framework import serializers
+
+from src.generics.fields import TimeStampField
 from src.processes.enums import WorkflowEventType
-from src.processes.models.workflows.workflow import Workflow
-from src.processes.models.workflows.task import Task, Delay
 from src.processes.models.workflows.event import WorkflowEvent
-from src.processes.serializers.workflows.field import (
-    TaskFieldSerializer,
-)
+from src.processes.models.workflows.task import Delay, Task
+from src.processes.models.workflows.workflow import Workflow
 from src.processes.serializers.file_attachment import (
     FileAttachmentSerializer,
 )
-from src.generics.fields import TimeStampField
+from src.processes.serializers.workflows.field import (
+    TaskFieldSerializer,
+)
 from src.processes.serializers.workflows.task_performer import (
     TaskUserGroupPerformerSerializer,
 )

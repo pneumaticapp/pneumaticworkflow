@@ -1,8 +1,10 @@
 # ruff: noqa: PLC0415
 from typing import Any, Dict
-from django.db import models
-from django.db.models import UniqueConstraint, Q
+
 from django.contrib.postgres.search import SearchVectorField
+from django.db import models
+from django.db.models import Q, UniqueConstraint
+
 from src.accounts.models import AccountBaseMixin
 from src.generics.managers import BaseSoftDeleteManager
 from src.generics.models import SoftDeleteModel

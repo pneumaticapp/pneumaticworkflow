@@ -1,20 +1,20 @@
-from celery import shared_task
 from django.contrib.auth import get_user_model
-from src.authentication.enums import AuthTokenType
-from src.accounts.models import Account
+
+from celery import shared_task
 from src.accounts.enums import BillingPlanType
-from src.utils.logging import (
-    capture_sentry_message,
-    SentryLogLevel,
-)
+from src.accounts.models import Account
+from src.authentication.enums import AuthTokenType
 from src.payment.messages import (
     MSG_BL_0023,
     MSG_BL_0024,
 )
+from src.payment.stripe.exceptions import StripeServiceException
 from src.payment.stripe.service import StripeService
 from src.payment.stripe.webhooks import WebhookService
-from src.payment.stripe.exceptions import StripeServiceException
-
+from src.utils.logging import (
+    SentryLogLevel,
+    capture_sentry_message,
+)
 
 UserModel = get_user_model()
 

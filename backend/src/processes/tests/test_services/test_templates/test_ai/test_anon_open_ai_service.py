@@ -1,17 +1,20 @@
 import pytest
 from django.contrib.auth import get_user_model
+
+from src.ai.tests.fixtures import create_test_prompt
+from src.processes.enums import (
+    ConditionAction,
+    PredicateOperator,
+    PredicateType,
+)
+from src.processes.messages import workflow as messages
+from src.processes.services.exceptions import (
+    OpenAiStepsPromptNotExist,
+    OpenAiTemplateStepsNotExist,
+)
 from src.processes.services.templates.ai import (
     AnonOpenAiService,
 )
-from src.processes.services.exceptions import (
-    OpenAiTemplateStepsNotExist,
-    OpenAiStepsPromptNotExist,
-)
-from src.processes.enums import ConditionAction, PredicateType, \
-    PredicateOperator
-from src.processes.messages import workflow as messages
-from src.ai.tests.fixtures import create_test_prompt
-
 
 UserModel = get_user_model()
 pytestmark = pytest.mark.django_db

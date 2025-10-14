@@ -1,10 +1,12 @@
 # ruff: noqa: PLC0415
-from django.utils import timezone
-from typing import List, Optional, Set, Tuple
 from collections import defaultdict
+from typing import List, Optional, Set, Tuple
+
 from django.contrib.auth import get_user_model
 from django.contrib.postgres.search import SearchVectorField
 from django.db import models
+from django.utils import timezone
+
 from src.accounts.models import (
     AccountBaseMixin,
     Notification,
@@ -12,22 +14,22 @@ from src.accounts.models import (
 )
 from src.generics.managers import BaseSoftDeleteManager
 from src.generics.models import SoftDeleteModel
-from src.processes.models.workflows.workflow import Workflow
-from src.processes.models.mixins import (
-    TaskMixin,
-    TaskRawPerformersMixin,
-    ApiNameMixin,
-)
-from src.processes.querysets import (
-    TasksQuerySet,
-    DelayBaseQuerySet,
-    TaskPerformerQuerySet,
-)
 from src.processes.enums import (
-    PerformerType,
     DirectlyStatus,
     FieldType,
+    PerformerType,
     TaskStatus,
+)
+from src.processes.models.mixins import (
+    ApiNameMixin,
+    TaskMixin,
+    TaskRawPerformersMixin,
+)
+from src.processes.models.workflows.workflow import Workflow
+from src.processes.querysets import (
+    DelayBaseQuerySet,
+    TaskPerformerQuerySet,
+    TasksQuerySet,
 )
 
 UserModel = get_user_model()
@@ -104,8 +106,7 @@ class Task(
         return delay
 
     def webhook_payload(self):
-        from src.processes.serializers.workflows.task \
-            import TaskSerializer
+        from src.processes.serializers.workflows.task import TaskSerializer
         task_data = TaskSerializer(instance=self).data
         task_data.update(**self.workflow.webhook_payload())
         return {'task': task_data}

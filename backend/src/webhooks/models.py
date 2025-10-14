@@ -1,18 +1,18 @@
 from django.contrib.auth import get_user_model
 from django.db.models import (
-    UniqueConstraint,
-    Q,
+    CASCADE,
+    CharField,
     DateTimeField,
     ForeignKey,
-    CharField,
+    Q,
+    UniqueConstraint,
     URLField,
-    CASCADE,
 )
+
 from src.accounts.models import AccountBaseMixin
 from src.generics.managers import BaseSoftDeleteManager
 from src.generics.models import SoftDeleteModel
 from src.webhooks.querysets import WebHookQuerySet
-
 
 UserModel = get_user_model()
 

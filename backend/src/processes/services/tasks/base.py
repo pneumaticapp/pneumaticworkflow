@@ -1,17 +1,13 @@
 from abc import abstractmethod
-from typing import Optional, Union, Tuple
+from typing import Optional, Tuple, Union
+
 from django.contrib.auth import get_user_model
-from src.authentication.enums import AuthTokenType
+
 from src.accounts.models import UserGroup
-from src.processes.models.workflows.task import TaskPerformer
-from src.processes.models.templates.template import Template
+from src.authentication.enums import AuthTokenType
 from src.processes.enums import (
     DirectlyStatus,
     PerformerType,
-)
-from src.processes.services.tasks.exceptions import (
-    PerformersServiceException,
-    GroupPerformerServiceException,
 )
 from src.processes.messages.workflow import (
     MSG_PW_0016,
@@ -19,8 +15,12 @@ from src.processes.messages.workflow import (
     MSG_PW_0018,
     MSG_PW_0021,
 )
-from src.processes.models.workflows.task import Task
-
+from src.processes.models.templates.template import Template
+from src.processes.models.workflows.task import Task, TaskPerformer
+from src.processes.services.tasks.exceptions import (
+    GroupPerformerServiceException,
+    PerformersServiceException,
+)
 
 UserModel = get_user_model()
 

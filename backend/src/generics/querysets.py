@@ -1,6 +1,8 @@
 from typing import List, Optional
+
 from django.db import transaction
-from django.db.models import QuerySet, Q
+from django.db.models import Q, QuerySet
+
 from src.generics.mixins.models import SoftDeleteMixin
 from src.queries import SqlQueryObject
 

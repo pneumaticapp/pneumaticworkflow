@@ -1,11 +1,12 @@
 import pytest
 from django.utils import timezone
-from src.processes.tests.fixtures import (
-    create_test_workflow,
-    create_test_user,
-    create_test_account,
-    create_test_guest,
-    create_test_group,
+
+from src.accounts.enums import (
+    NotificationType,
+)
+from src.accounts.models import Notification
+from src.notifications.enums import (
+    NotificationMethod,
 )
 from src.notifications.services.websockets import (
     WebSocketService,
@@ -13,20 +14,18 @@ from src.notifications.services.websockets import (
 from src.notifications.tasks import (
     _send_urgent_notification,
 )
-
 from src.processes.enums import (
     DirectlyStatus,
     PerformerType,
 )
-from src.accounts.enums import (
-    NotificationType,
-)
-from src.accounts.models import Notification
 from src.processes.models.workflows.task import TaskPerformer
-from src.notifications.enums import (
-    NotificationMethod,
+from src.processes.tests.fixtures import (
+    create_test_account,
+    create_test_group,
+    create_test_guest,
+    create_test_user,
+    create_test_workflow,
 )
-
 
 pytestmark = pytest.mark.django_db
 

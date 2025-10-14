@@ -1,18 +1,18 @@
 import pytest
+
+from src.authentication.enums import AuthTokenType
+from src.processes.enums import (
+    ConditionAction,
+    FieldType,
+    OwnerType,
+    PerformerType,
+    PredicateOperator,
+    PredicateType,
+)
+from src.processes.models.templates.template import Template
 from src.processes.tests.fixtures import (
     create_test_user,
 )
-from src.processes.models.templates.template import Template
-from src.processes.enums import (
-    PerformerType,
-    FieldType,
-    OwnerType,
-    ConditionAction,
-    PredicateType,
-    PredicateOperator,
-)
-from src.authentication.enums import AuthTokenType
-
 
 pytestmark = pytest.mark.django_db
 

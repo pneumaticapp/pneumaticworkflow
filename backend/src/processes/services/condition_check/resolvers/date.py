@@ -1,8 +1,11 @@
-from datetime import datetime, timezone as tz
+import contextlib
+from datetime import datetime
+from datetime import timezone as tz
+
 from django.db.models import Q
+
 from src.processes.models.workflows.fields import TaskField
 from src.processes.services.condition_check.resolvers.base import Resolver
-import contextlib
 
 
 class DateResolver(Resolver):

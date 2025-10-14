@@ -1,5 +1,5 @@
-from django.utils.translation import gettext_lazy as _
 from django.utils.text import format_lazy
+from django.utils.translation import gettext_lazy as _
 
 MSG_A_0001 = _(
     'Saving files is not available, file storage does\'t '

@@ -1,8 +1,8 @@
-from django.core.exceptions import MultipleObjectsReturned
 from django.contrib.auth.base_user import BaseUserManager
-from src.accounts.enums import UserStatus
+from django.core.exceptions import MultipleObjectsReturned
+
+from src.accounts.enums import UserStatus, UserType
 from src.generics.mixins.managers import NormalizeEmailMixin
-from src.accounts.enums import UserType
 
 
 class SoftDeleteUserManager(NormalizeEmailMixin, BaseUserManager):

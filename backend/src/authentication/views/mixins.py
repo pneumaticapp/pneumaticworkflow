@@ -1,32 +1,33 @@
-from typing import Tuple, Optional
+from typing import Optional, Tuple
+
 from django.conf import settings
-from django.db import transaction
 from django.contrib.auth import get_user_model
+from django.db import transaction
 from django.http import HttpRequest
-from src.authentication.enums import AuthTokenType
+
 from src.accounts.enums import Language
 from src.accounts.services.account import AccountService
-from src.accounts.services.user import UserService
 from src.accounts.services.exceptions import (
     AccountServiceException,
     UserServiceException,
 )
+from src.accounts.services.user import UserService
+from src.authentication.enums import AuthTokenType
 from src.authentication.services.user_auth import AuthService
-from src.utils.validation import raise_validation_error
-from src.processes.services.system_workflows import (
-    SystemWorkflowService,
-)
 from src.authentication.tasks import (
     send_new_signup_notification,
 )
 from src.authentication.tokens import PneumaticToken
-from src.payment.stripe.service import StripeService
 from src.payment.stripe.exceptions import StripeServiceException
-from src.utils.logging import (
-    capture_sentry_message,
-    SentryLogLevel,
+from src.payment.stripe.service import StripeService
+from src.processes.services.system_workflows import (
+    SystemWorkflowService,
 )
-
+from src.utils.logging import (
+    SentryLogLevel,
+    capture_sentry_message,
+)
+from src.utils.validation import raise_validation_error
 
 UserModel = get_user_model()
 

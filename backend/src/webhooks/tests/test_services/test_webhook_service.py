@@ -1,15 +1,16 @@
 import pytest
+
 from src.processes.tests.fixtures import create_test_user
-from src.webhooks.tests.fixtures import (
-    create_test_webhooks,
-    create_test_webhook,
-)
-from src.webhooks.models import WebHook
-from src.webhooks.services import WebhookService
-from src.webhooks import exceptions
-from src.webhooks.messages import MSG_WH_0001
 from src.processes.views.template import (
     TemplateIntegrationsService,
+)
+from src.webhooks import exceptions
+from src.webhooks.messages import MSG_WH_0001
+from src.webhooks.models import WebHook
+from src.webhooks.services import WebhookService
+from src.webhooks.tests.fixtures import (
+    create_test_webhook,
+    create_test_webhooks,
 )
 
 pytestmark = pytest.mark.django_db

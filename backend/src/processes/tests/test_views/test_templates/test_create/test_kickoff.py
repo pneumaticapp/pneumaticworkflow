@@ -1,14 +1,15 @@
 import pytest
 from django.contrib.auth import get_user_model
+
+from src.authentication.enums import AuthTokenType
+from src.processes.enums import (
+    OwnerType,
+    PerformerType,
+)
+from src.processes.models.templates.kickoff import Kickoff
 from src.processes.tests.fixtures import (
     create_test_user,
 )
-from src.processes.models.templates.kickoff import Kickoff
-from src.processes.enums import (
-    PerformerType,
-    OwnerType,
-)
-from src.authentication.enums import AuthTokenType
 
 UserModel = get_user_model()
 pytestmark = pytest.mark.django_db

@@ -1,14 +1,15 @@
 import json
+
 from django.contrib import admin
 from django.utils.safestring import mark_safe
-from src.logs.models import AccountEvent
-from src.logs.enums import AccountEventStatus
-from src.utils.dates import date_to_user_fmt
-from src.logs.filters import AccountAdminFilter
 from pygments import highlight
-from pygments.lexers import get_lexer_by_name
 from pygments.formatters import get_formatter_by_name
+from pygments.lexers import get_lexer_by_name
 
+from src.logs.enums import AccountEventStatus
+from src.logs.filters import AccountAdminFilter
+from src.logs.models import AccountEvent
+from src.utils.dates import date_to_user_fmt
 
 json_lexer = get_lexer_by_name('json')
 formatter = get_formatter_by_name('html', style='colorful')

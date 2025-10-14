@@ -1,16 +1,17 @@
-import pytest
 from datetime import timedelta
-from src.accounts.models import UserInvite
-from src.authentication.enums import AuthTokenType
+
+import pytest
+
 from src.accounts.enums import (
+    SourceType,
     UserStatus,
 )
+from src.accounts.models import UserInvite
+from src.authentication import messages
+from src.authentication.enums import AuthTokenType
 from src.processes.tests.fixtures import (
     create_test_user,
 )
-from src.accounts.enums import SourceType
-from src.authentication import messages
-
 
 pytestmark = pytest.mark.django_db
 

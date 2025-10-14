@@ -1,5 +1,6 @@
 from abc import abstractmethod
 from typing import List
+
 from src.accounts.enums import (
     NotificationStatus,
     NotificationType,
@@ -7,11 +8,11 @@ from src.accounts.enums import (
 )
 from src.processes.enums import (
     DirectlyStatus,
+    FieldType,
+    PerformerType,
     TaskStatus,
     WorkflowStatus,
-    PerformerType,
 )
-from src.processes.enums import FieldType
 from src.queries import SqlQueryObject
 
 

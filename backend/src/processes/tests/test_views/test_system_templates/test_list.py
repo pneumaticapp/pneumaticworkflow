@@ -1,4 +1,5 @@
 import pytest
+
 from src.processes.enums import SysTemplateType
 from src.processes.models.templates.system_template import (
     SystemTemplate,
@@ -7,7 +8,6 @@ from src.processes.models.templates.system_template import (
 from src.processes.tests.fixtures import (
     create_test_user,
 )
-
 
 pytestmark = pytest.mark.django_db
 

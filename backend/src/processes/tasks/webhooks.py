@@ -1,11 +1,11 @@
 import requests
-from django.db.models import ObjectDoesNotExist
 from celery.task import Task as CeleryTask
-from celery import shared_task
 from django.contrib.auth import get_user_model
+from django.db.models import ObjectDoesNotExist
+
+from celery import shared_task
 from src.webhooks.enums import HookEvent
 from src.webhooks.services import WebhookDeliverer
-
 
 UserModel = get_user_model()
 

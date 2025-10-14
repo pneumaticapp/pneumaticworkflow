@@ -1,12 +1,13 @@
 from django.db import models
-from src.generics.managers import BaseSoftDeleteManager
-from src.processes.models.mixins import RawPerformerMixin
-from src.processes.querysets import TaskPerformerQuerySet
-from src.processes.models.workflows.task import Task
-from src.processes.models.workflows.fields import TaskField
-from src.processes.models.workflows.workflow import Workflow
+
 from src.accounts.models import AccountBaseMixin
+from src.generics.managers import BaseSoftDeleteManager
 from src.processes.models.base import BaseApiNameModel
+from src.processes.models.mixins import RawPerformerMixin
+from src.processes.models.workflows.fields import TaskField
+from src.processes.models.workflows.task import Task
+from src.processes.models.workflows.workflow import Workflow
+from src.processes.querysets import TaskPerformerQuerySet
 
 
 class RawPerformer(

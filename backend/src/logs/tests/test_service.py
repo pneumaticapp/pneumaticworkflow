@@ -1,10 +1,11 @@
 import pytest
-from src.logs.service import AccountLogService
+
 from src.logs.enums import (
     AccountEventStatus,
     AccountEventType,
     RequestDirection,
 )
+from src.logs.service import AccountLogService
 from src.processes.tests.fixtures import (
     create_test_user,
 )

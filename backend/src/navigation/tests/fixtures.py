@@ -1,8 +1,8 @@
+from src.navigation.enums import MenuType
 from src.navigation.models import (
     Menu,
     MenuItem,
 )
-from src.navigation.enums import MenuType
 
 
 def create_test_menu(

@@ -1,15 +1,16 @@
 import pytest
-from src.processes.models.workflows.task import TaskPerformer
-from src.processes.tests.fixtures import (
-    create_test_workflow,
-    create_test_group,
-    create_test_user,
-    create_invited_user,
-    create_test_account,
-)
+
 from src.processes.enums import (
     DirectlyStatus,
     PerformerType,
+)
+from src.processes.models.workflows.task import TaskPerformer
+from src.processes.tests.fixtures import (
+    create_invited_user,
+    create_test_account,
+    create_test_group,
+    create_test_user,
+    create_test_workflow,
 )
 
 pytestmark = pytest.mark.django_db

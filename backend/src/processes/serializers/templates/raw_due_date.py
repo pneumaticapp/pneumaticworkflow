@@ -1,23 +1,17 @@
-from typing import Dict, Any
+from typing import Any, Dict
+
 from rest_framework.serializers import (
-    ModelSerializer,
     CharField,
+    ModelSerializer,
 )
-from src.processes.models.templates.fields import FieldTemplate
+
 from src.generics.mixins.serializers import (
-    CustomValidationErrorMixin,
     AdditionalValidationMixin,
-)
-from src.processes.serializers.templates.mixins import (
-    CreateOrUpdateInstanceMixin,
-    CreateOrUpdateRelatedMixin,
-)
-from src.processes.models.templates.raw_due_date import (
-    RawDueDateTemplate,
+    CustomValidationErrorMixin,
 )
 from src.processes.enums import (
-    FieldType,
     DueDateRule,
+    FieldType,
 )
 from src.processes.messages.template import (
     MSG_PT_0027,
@@ -26,6 +20,14 @@ from src.processes.messages.template import (
     MSG_PT_0030,
     MSG_PT_0031,
     MSG_PT_0052,
+)
+from src.processes.models.templates.fields import FieldTemplate
+from src.processes.models.templates.raw_due_date import (
+    RawDueDateTemplate,
+)
+from src.processes.serializers.templates.mixins import (
+    CreateOrUpdateInstanceMixin,
+    CreateOrUpdateRelatedMixin,
 )
 
 

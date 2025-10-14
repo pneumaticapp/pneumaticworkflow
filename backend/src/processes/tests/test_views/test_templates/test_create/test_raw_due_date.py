@@ -1,17 +1,19 @@
-import pytest
 from datetime import timedelta
+
+import pytest
+
+from src.processes.enums import (
+    DueDateRule,
+    FieldType,
+    OwnerType,
+    PerformerType,
+)
+from src.processes.messages import template as messages
+from src.processes.models.templates.raw_due_date import RawDueDateTemplate
+from src.processes.models.templates.task import TaskTemplate
 from src.processes.tests.fixtures import (
     create_test_user,
 )
-from src.processes.models.templates.raw_due_date import RawDueDateTemplate
-from src.processes.models.templates.task import TaskTemplate
-from src.processes.enums import (
-    DueDateRule,
-    PerformerType,
-    FieldType,
-    OwnerType,
-)
-from src.processes.messages import template as messages
 from src.utils.validation import ErrorCode
 
 pytestmark = pytest.mark.django_db

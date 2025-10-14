@@ -1,17 +1,19 @@
-import pytest
 from datetime import timedelta
+
+import pytest
 from django.utils import timezone
-from src.notifications.tasks import _send_new_task_notification
+
 from src.notifications.enums import NotificationMethod
 from src.notifications.services.push import (
     PushNotificationService,
 )
+from src.notifications.tasks import _send_new_task_notification
 from src.processes.tests.fixtures import (
+    create_test_account,
+    create_test_admin,
     create_test_owner,
     create_test_template,
     create_test_workflow,
-    create_test_admin,
-    create_test_account,
 )
 
 pytestmark = pytest.mark.django_db

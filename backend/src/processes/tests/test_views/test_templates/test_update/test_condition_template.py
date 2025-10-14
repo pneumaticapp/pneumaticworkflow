@@ -1,30 +1,31 @@
 import pytest
+
 from src.accounts.enums import BillingPlanType
-from src.utils.validation import ErrorCode
-from src.processes.messages import template as messages
-from src.processes.models.templates.template import Template
-from src.processes.models.templates.fields import (
-    FieldTemplate,
+from src.processes.enums import (
+    ConditionAction,
+    FieldType,
+    OwnerType,
+    PerformerType,
+    PredicateOperator,
+    PredicateType,
 )
+from src.processes.messages import template as messages
 from src.processes.models.templates.conditions import (
     ConditionTemplate,
     PredicateTemplate,
     RuleTemplate,
 )
+from src.processes.models.templates.fields import (
+    FieldTemplate,
+)
+from src.processes.models.templates.template import Template
 from src.processes.tests.fixtures import (
-    create_test_user,
+    create_test_account,
+    create_test_owner,
     create_test_template,
-    create_test_account, create_test_owner,
+    create_test_user,
 )
-from src.processes.enums import (
-    PerformerType,
-    PredicateOperator,
-    FieldType,
-    PredicateType,
-    OwnerType,
-    ConditionAction,
-)
-
+from src.utils.validation import ErrorCode
 
 pytestmark = pytest.mark.django_db
 

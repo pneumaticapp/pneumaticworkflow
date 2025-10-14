@@ -1,22 +1,22 @@
 import pytest
+
+from src.accounts.services import exceptions
+from src.accounts.services.reassign import ReassignService
+from src.processes.enums import (
+    FieldType,
+    OwnerType,
+    PerformerType,
+)
+from src.processes.models.templates.conditions import PredicateTemplate
+from src.processes.models.workflows.conditions import Predicate
+from src.processes.models.workflows.workflow import Workflow
 from src.processes.tests.fixtures import (
-    create_test_template,
-    create_test_workflow,
-    create_test_user,
     create_test_account,
     create_test_group,
+    create_test_template,
+    create_test_user,
+    create_test_workflow,
 )
-from src.accounts.services.reassign import ReassignService
-from src.accounts.services import exceptions
-from src.processes.enums import (
-    PerformerType,
-    OwnerType,
-)
-from src.processes.enums import FieldType
-from src.processes.models.workflows.workflow import Workflow
-from src.processes.models.workflows.conditions import Predicate
-from src.processes.models.templates.conditions import PredicateTemplate
-
 
 pytestmark = pytest.mark.django_db
 

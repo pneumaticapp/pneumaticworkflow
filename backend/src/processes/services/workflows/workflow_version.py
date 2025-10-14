@@ -1,23 +1,25 @@
 from typing import Dict, List
+
 from django.contrib.auth import get_user_model
+
+from src.notifications.tasks import (
+    send_removed_task_notification,
+)
+from src.processes.models.templates.template import Template
 from src.processes.services.base import (
     BaseUpdateVersionService,
 )
 from src.processes.services.tasks.task_version import (
     TaskUpdateVersionService,
 )
-from src.processes.services.workflows.kickoff_version import (
-        KickoffUpdateVersionService,
-    )
-from src.processes.services.workflows.workflow import (
-    WorkflowService,
-)
-from src.processes.models.templates.template import Template
-from src.notifications.tasks import (
-    send_removed_task_notification,
-)
 from src.processes.services.workflow_action import (
     WorkflowActionService,
+)
+from src.processes.services.workflows.kickoff_version import (
+    KickoffUpdateVersionService,
+)
+from src.processes.services.workflows.workflow import (
+    WorkflowService,
 )
 
 UserModel = get_user_model()

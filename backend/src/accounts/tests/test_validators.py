@@ -1,15 +1,18 @@
 import pytest
 from django.contrib.auth import get_user_model
+
+from src.accounts.validators import (
+    user_is_last_performer,
+)
 from src.processes.enums import PerformerType, TaskStatus
 from src.processes.models.workflows.task import TaskPerformer
 from src.processes.tests.fixtures import (
-    create_test_workflow,
-    create_test_template,
-    create_test_user, create_test_owner, create_test_account,
+    create_test_account,
     create_test_admin,
-)
-from src.accounts.validators import (
-    user_is_last_performer,
+    create_test_owner,
+    create_test_template,
+    create_test_user,
+    create_test_workflow,
 )
 
 pytestmark = pytest.mark.django_db

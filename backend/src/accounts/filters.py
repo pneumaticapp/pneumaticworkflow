@@ -2,26 +2,25 @@ from django_filters import ChoiceFilter
 from django_filters.rest_framework import (
     FilterSet,
 )
+
+from src.accounts.enums import (
+    NotificationStatus,
+    SourceType,
+    UserStatus,
+    UserType,
+)
+from src.accounts.models import (
+    Account,
+    Contact,
+    Notification,
+    User,
+    UserGroup,
+)
 from src.generics.filters import (
     DefaultOrderingFilter,
     ListFilter,
-)
-from src.accounts.enums import (
-    NotificationStatus,
-    UserType,
-    UserStatus,
-    SourceType,
-)
-from src.accounts.models import (
-    Notification,
-    User,
-    Account,
-    Contact,
-)
-from src.generics.filters import (
     TsQuerySearchFilter,
 )
-from src.accounts.models import UserGroup
 
 
 class NotificationFilter(FilterSet):

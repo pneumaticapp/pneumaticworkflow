@@ -1,16 +1,17 @@
-from django.db import models
 from django.core.validators import (
-    MinValueValidator,
     MaxValueValidator,
+    MinValueValidator,
 )
+from django.db import models
+
 from src.ai.enums import (
     OpenAiModel,
-    OpenAIRole,
     OpenAIPromptTarget,
+    OpenAIRole,
 )
 from src.ai.querysets import (
-    OpenAiPromptQueryset,
     OpenAiPromptMessageQueryset,
+    OpenAiPromptQueryset,
 )
 
 

@@ -1,15 +1,14 @@
-from django.db import models
-from django.db.models import UniqueConstraint, Q
 from django.contrib.auth import get_user_model
+from django.db import models
+from django.db.models import Q, UniqueConstraint
 
-from src.processes.enums import OwnerType
 from src.accounts.models import (
     AccountBaseMixin,
     UserGroup,
 )
+from src.processes.enums import OwnerType
 from src.processes.models.base import BaseApiNameModel
 from src.processes.models.templates.template import Template
-
 
 UserModel = get_user_model()
 

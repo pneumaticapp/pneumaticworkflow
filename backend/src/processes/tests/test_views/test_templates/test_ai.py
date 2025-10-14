@@ -1,16 +1,16 @@
 import pytest
-from src.processes.tests.fixtures import (
-    create_test_user,
-)
+
 from src.authentication.enums import AuthTokenType
-from src.processes.services.templates.ai import (
-    OpenAiService,
-)
 from src.processes.services.exceptions import (
     OpenAiServiceException,
 )
+from src.processes.services.templates.ai import (
+    OpenAiService,
+)
+from src.processes.tests.fixtures import (
+    create_test_user,
+)
 from src.utils.validation import ErrorCode
-
 
 pytestmark = pytest.mark.django_db
 

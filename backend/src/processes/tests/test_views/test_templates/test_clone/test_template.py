@@ -1,19 +1,19 @@
 import pytest
+
+from src.accounts.enums import BillingPlanType
+from src.processes.enums import (
+    OwnerType,
+    PerformerType,
+)
+from src.processes.models.templates.template import (
+    Template,
+    TemplateDraft,
+)
 from src.processes.tests.fixtures import (
-    create_test_user,
     create_test_account,
     create_test_group,
+    create_test_user,
 )
-from src.accounts.enums import BillingPlanType
-from src.processes.models.templates.template import (
-    TemplateDraft,
-    Template,
-)
-from src.processes.enums import (
-    PerformerType,
-    OwnerType,
-)
-
 
 pytestmark = pytest.mark.django_db
 

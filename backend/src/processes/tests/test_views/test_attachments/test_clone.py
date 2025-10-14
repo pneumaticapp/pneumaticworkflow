@@ -1,9 +1,9 @@
 import pytest
+
+from src.processes.models.workflows.attachment import FileAttachment
 from src.processes.tests.fixtures import (
     create_test_user,
 )
-from src.processes.models.workflows.attachment import FileAttachment
-
 
 pytestmark = pytest.mark.django_db
 

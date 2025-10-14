@@ -1,5 +1,13 @@
 import pytest
 from django.contrib.auth import get_user_model
+
+from src.processes.enums import (
+    ConditionAction,
+    FieldType,
+    PredicateOperator,
+    PredicateType,
+    TaskStatus,
+)
 from src.processes.models.workflows.attachment import FileAttachment
 from src.processes.models.workflows.conditions import (
     Condition,
@@ -7,8 +15,8 @@ from src.processes.models.workflows.conditions import (
     Rule,
 )
 from src.processes.models.workflows.fields import (
-    TaskField,
     FieldSelection,
+    TaskField,
 )
 from src.processes.services.condition_check.service import (
     ConditionCheckService,
@@ -16,13 +24,6 @@ from src.processes.services.condition_check.service import (
 from src.processes.tests.fixtures import (
     create_test_user,
     create_test_workflow,
-)
-from src.processes.enums import (
-    FieldType,
-    PredicateType,
-    PredicateOperator,
-    TaskStatus,
-    ConditionAction,
 )
 
 UserModel = get_user_model()

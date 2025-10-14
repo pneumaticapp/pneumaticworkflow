@@ -1,8 +1,10 @@
-from typing import Dict, Any
+from typing import Any, Dict
+
 from rest_framework.serializers import (
-    ModelSerializer,
     CharField,
+    ModelSerializer,
 )
+
 from src.processes.models.templates.kickoff import Kickoff
 from src.processes.serializers.templates.field import (
     PublicFieldTemplateSerializer,

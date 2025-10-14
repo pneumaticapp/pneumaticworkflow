@@ -1,14 +1,14 @@
 import pytest
+
+from src.processes.enums import (
+    FieldType,
+    OwnerType,
+    PerformerType,
+)
+from src.processes.models.templates.fields import FieldTemplate
 from src.processes.tests.fixtures import (
     create_test_user,
 )
-from src.processes.models.templates.fields import FieldTemplate
-from src.processes.enums import (
-    PerformerType,
-    FieldType,
-    OwnerType,
-)
-
 
 pytestmark = pytest.mark.django_db
 

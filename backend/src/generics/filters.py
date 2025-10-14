@@ -1,18 +1,19 @@
 from typing import Optional
-from django_filters.rest_framework import (
-    DjangoFilterBackend,
-    FilterSet,
-    OrderingFilter,
-    Filter,
-)
+
+from django.contrib.postgres.search import SearchQuery
 from django_filters import CharFilter
 from django_filters.constants import EMPTY_VALUES
-from django.contrib.postgres.search import SearchQuery
-from rest_framework.viewsets import ViewSet
+from django_filters.rest_framework import (
+    DjangoFilterBackend,
+    Filter,
+    FilterSet,
+    OrderingFilter,
+)
 from rest_framework.serializers import ValidationError
+from rest_framework.viewsets import ViewSet
 
-from src.generics.querysets import BaseQuerySet
 from src.generics.messages import MSG_GE_0001
+from src.generics.querysets import BaseQuerySet
 
 
 class PneumaticFilterBackend(DjangoFilterBackend):

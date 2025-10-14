@@ -1,60 +1,69 @@
 import re
-from typing import Dict, Any, List, Optional, Set
+from typing import Any, Dict, List, Optional, Set
 
-from django.db import transaction
-from src.processes.consts import TEMPLATE_NAME_LENGTH
-from rest_framework.serializers import (
-    Serializer,
-    ModelSerializer,
-    BooleanField,
-    IntegerField,
-    DateTimeField,
-    CharField,
-    ValidationError,
-    ChoiceField,
-    SerializerMethodField,
-)
-from django.utils import timezone
 from django.contrib.auth import get_user_model
 from django.core.exceptions import (
     ValidationError as ValidationCoreError,
 )
+from django.db import transaction
+from django.utils import timezone
+from rest_framework.serializers import (
+    BooleanField,
+    CharField,
+    ChoiceField,
+    DateTimeField,
+    IntegerField,
+    ModelSerializer,
+    Serializer,
+    SerializerMethodField,
+    ValidationError,
+)
+
+from src.generics.exceptions import BaseServiceException
+from src.generics.fields import (
+    TimeStampField,
+)
+from src.generics.mixins.serializers import (
+    AdditionalValidationMixin,
+    CustomValidationErrorMixin,
+    ValidationUtilsMixin,
+)
+from src.generics.validators import NoSchemaURLValidator
+from src.processes.consts import TEMPLATE_NAME_LENGTH
+from src.processes.enums import (
+    OwnerType,
+    PerformerType,
+    TemplateOrdering,
+    TemplateType,
+    WorkflowApiStatus,
+)
+from src.processes.messages import template as messages
 from src.processes.models.templates.kickoff import Kickoff
 from src.processes.models.templates.owner import TemplateOwner
 from src.processes.models.templates.template import (
     Template,
     TemplateDraft,
 )
-from src.generics.mixins.serializers import (
-    AdditionalValidationMixin,
-    ValidationUtilsMixin,
-    CustomValidationErrorMixin,
+from src.processes.serializers.templates.kickoff import (
+    KickoffListSerializer,
+    KickoffOnlyFieldsSerializer,
+    KickoffSerializer,
 )
 from src.processes.serializers.templates.mixins import (
     CreateOrUpdateInstanceMixin,
     CreateOrUpdateRelatedMixin,
 )
-from src.processes.serializers.templates.task import (
-    TaskTemplateSerializer,
-    TemplateTaskOnlyFieldsSerializer,
-    TaskTemplatePrivilegesSerializer,
-)
-from src.processes.serializers.templates.kickoff import (
-    KickoffSerializer,
-    KickoffOnlyFieldsSerializer,
-    KickoffListSerializer,
+from src.processes.serializers.templates.owner import (
+    TemplateOwnerSerializer,
 )
 from src.processes.serializers.templates.task import (
     ShortTaskSerializer,
+    TaskTemplatePrivilegesSerializer,
+    TaskTemplateSerializer,
+    TemplateTaskOnlyFieldsSerializer,
 )
-from src.processes.utils.common import (
-    create_api_name,
-    get_tasks_parents,
-    get_tasks_ancestors,
-)
-from src.processes.utils.common import (
-    string_abbreviation,
-    is_tasks_ordering_correct,
+from src.processes.services.templates.integrations import (
+    TemplateIntegrationsService,
 )
 from src.processes.services.versioning.schemas import (
     TemplateSchemaV1,
@@ -62,29 +71,13 @@ from src.processes.services.versioning.schemas import (
 from src.processes.services.versioning.versioning import (
     TemplateVersioningService,
 )
-from src.processes.messages import template as messages
-from src.generics.validators import NoSchemaURLValidator
-from src.processes.enums import (
-    PerformerType,
-    TemplateOrdering,
-    WorkflowApiStatus,
-)
-from src.generics.exceptions import BaseServiceException
-from src.processes.services.templates.integrations import (
-    TemplateIntegrationsService,
-)
-from src.processes.serializers.templates.owner import (
-    TemplateOwnerSerializer,
-)
-from src.generics.fields import (
-    TimeStampField,
-)
-from src.processes.enums import (
-    TemplateType,
-    OwnerType,
-)
 from src.processes.utils.common import (
     VAR_PATTERN,
+    create_api_name,
+    get_tasks_ancestors,
+    get_tasks_parents,
+    is_tasks_ordering_correct,
+    string_abbreviation,
 )
 
 UserModel = get_user_model()

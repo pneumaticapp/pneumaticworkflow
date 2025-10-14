@@ -1,16 +1,17 @@
 import pytest
+
 from src.accounts.enums import (
     BillingPlanType,
     LeaseLevel,
 )
-from src.processes.tests.fixtures import (
-    create_test_user,
-    create_test_account,
-)
-from src.utils.validation import ErrorCode
 from src.accounts.messages import (
     MSG_A_0003,
 )
+from src.processes.tests.fixtures import (
+    create_test_account,
+    create_test_user,
+)
+from src.utils.validation import ErrorCode
 
 pytestmark = pytest.mark.django_db
 

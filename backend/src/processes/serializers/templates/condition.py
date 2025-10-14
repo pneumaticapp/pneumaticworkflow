@@ -1,9 +1,13 @@
 from rest_framework.fields import CharField
 from rest_framework.serializers import ModelSerializer
+
+from src.analytics.services import AnalyticService
 from src.generics.mixins.serializers import (
     AdditionalValidationMixin,
     CustomValidationErrorMixin,
 )
+from src.processes.messages.template import MSG_PT_0049
+from src.processes.models.templates.conditions import ConditionTemplate
 from src.processes.serializers.templates.mixins import (
     CreateOrUpdateInstanceMixin,
     CreateOrUpdateRelatedMixin,
@@ -12,9 +16,6 @@ from src.processes.serializers.templates.mixins import (
 from src.processes.serializers.templates.rule import (
     RuleTemplateSerializer,
 )
-from src.processes.messages.template import MSG_PT_0049
-from src.processes.models.templates.conditions import ConditionTemplate
-from src.analytics.services import AnalyticService
 
 
 class ConditionTemplateSerializer(

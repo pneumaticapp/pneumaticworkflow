@@ -14,6 +14,8 @@ from src.generics.mixins.views import (
     CustomViewSetMixin,
 )
 from src.generics.permissions import IsAuthenticated
+from src.processes.models.workflows.attachment import FileAttachment
+from src.processes.permissions import StoragePermission
 from src.processes.serializers.file_attachment import (
     FileAttachmentCreateSerializer,
     FileAttachmentSerializer,
@@ -24,8 +26,6 @@ from src.processes.services.attachments import (
 from src.processes.services.exceptions import (
     AttachmentServiceException,
 )
-from src.processes.models.workflows.attachment import FileAttachment
-from src.processes.permissions import StoragePermission
 from src.utils.validation import raise_validation_error
 
 

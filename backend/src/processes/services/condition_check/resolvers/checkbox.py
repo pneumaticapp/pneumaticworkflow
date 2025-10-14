@@ -1,8 +1,10 @@
 from django.db.models import Q
-from src.processes.models.workflows.fields import TaskField
+
 from src.processes.enums import (
     PredicateOperator,
 )
+from src.processes.models.workflows.fields import TaskField
+
 from .base import Resolver
 
 

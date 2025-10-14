@@ -1,16 +1,21 @@
 import re
-from typing import Optional
 from datetime import timedelta
 from typing import (
-    Type, List, Set, Dict, Union,
+    Dict,
+    List,
+    Optional,
+    Set,
+    Type,
+    Union,
 )
+
 from django.contrib.auth import get_user_model
-from rest_framework.serializers import ModelSerializer, ListSerializer
+from rest_framework.serializers import ListSerializer, ModelSerializer
 
 from src.processes.enums import (
+    ConditionAction,
     PredicateOperator,
     PredicateType,
-    ConditionAction,
 )
 from src.utils.salt import get_salt
 

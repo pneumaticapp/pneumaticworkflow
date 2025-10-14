@@ -1,11 +1,11 @@
 import pytest
+
+from src.accounts.models import APIKey
 from src.authentication.enums import AuthTokenType
+from src.authentication.tokens import PneumaticToken
 from src.processes.tests.fixtures import (
     create_test_user,
 )
-from src.accounts.models import APIKey
-from src.authentication.tokens import PneumaticToken
-
 
 pytestmark = pytest.mark.django_db
 

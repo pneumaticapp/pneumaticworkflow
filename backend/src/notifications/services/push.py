@@ -1,38 +1,42 @@
 from typing import Dict
+
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from firebase_admin import messaging
 from firebase_admin.exceptions import (
-    InvalidArgumentError,
     FirebaseError,
+    InvalidArgumentError,
+)
+from firebase_admin.messaging import (
+    APNSConfig as Config,
+)
+from firebase_admin.messaging import (
+    APNSPayload,
+    Aps,
+    SenderIdMismatchError,
+    UnregisteredError,
 )
 from firebase_admin.messaging import (
     Notification as PushNotification,
-    UnregisteredError,
-    SenderIdMismatchError,
-    Aps,
-    APNSPayload,
-    APNSConfig as Config,
 )
 
 from src.accounts.enums import UserType
+from src.logs.enums import (
+    AccountEventStatus,
+)
+from src.logs.service import AccountLogService
+from src.notifications import messages
 from src.notifications.enums import (
     NotificationMethod,
 )
-from src.notifications import messages
 from src.notifications.models import Device, UserNotifications
 from src.notifications.services.base import (
     NotificationService,
 )
 from src.utils.logging import (
-    capture_sentry_message,
     SentryLogLevel,
+    capture_sentry_message,
 )
-from src.logs.service import AccountLogService
-from src.logs.enums import (
-    AccountEventStatus,
-)
-
 
 UserModel = get_user_model()
 

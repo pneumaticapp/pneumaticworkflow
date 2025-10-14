@@ -1,9 +1,9 @@
+from src.generics.exceptions import (
+    BaseApiNameException,
+    BaseServiceException,
+)
 from src.processes.messages.workflow import (
     MSG_PW_0058,
-)
-from src.generics.exceptions import (
-    BaseServiceException,
-    BaseApiNameException,
 )
 
 

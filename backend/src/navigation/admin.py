@@ -3,6 +3,7 @@ from django.contrib.admin import (
     ModelAdmin,
     StackedInline,
 )
+
 from src.navigation.models import Menu, MenuItem
 
 

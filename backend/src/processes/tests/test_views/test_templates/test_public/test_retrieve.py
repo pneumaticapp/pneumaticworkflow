@@ -1,16 +1,18 @@
 import pytest
-from src.processes.tests.fixtures import (
-    create_test_user,
-    create_test_template,
+
+from src.authentication.tokens import (
+    EmbedToken,
+    PublicToken,
 )
-from src.processes.models.templates.fields import FieldTemplate
 from src.processes.enums import (
     FieldType,
 )
-from src.authentication.tokens import (
-    PublicToken,
-    EmbedToken,
+from src.processes.models.templates.fields import FieldTemplate
+from src.processes.tests.fixtures import (
+    create_test_template,
+    create_test_user,
 )
+
 pytestmark = pytest.mark.django_db
 
 

@@ -1,8 +1,8 @@
 import pytest
-
-from src.storage.google_cloud import GoogleCloudService
-from src.processes.tests.fixtures import create_test_account
 from google.cloud.exceptions import NotFound
+
+from src.processes.tests.fixtures import create_test_account
+from src.storage.google_cloud import GoogleCloudService
 
 pytestmark = pytest.mark.django_db
 

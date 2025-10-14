@@ -1,4 +1,5 @@
 import pytest
+
 from src.notifications.models import UserNotifications
 from src.processes.tests.fixtures import create_test_user
 

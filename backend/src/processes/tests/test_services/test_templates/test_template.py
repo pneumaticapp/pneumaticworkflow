@@ -1,32 +1,33 @@
-import pytest
 from copy import deepcopy
+
+import pytest
 from django.contrib.auth import get_user_model
 from rest_framework.serializers import ValidationError
-from src.processes.tests.fixtures import (
-    create_test_user,
-    create_test_account,
-    create_test_template,
+
+from src.accounts.enums import BillingPlanType
+from src.authentication.enums import AuthTokenType
+from src.processes.enums import (
+    OwnerType,
+    PerformerType,
+    SysTemplateType,
+    TemplateType,
 )
+from src.processes.models.templates.system_template import (
+    SystemTemplate,
+    SystemTemplateCategory,
+)
+from src.processes.models.templates.template import Template
 from src.processes.serializers.templates.template import (
     TemplateSerializer,
 )
 from src.processes.services.templates.template import (
     TemplateService,
 )
-from src.accounts.enums import BillingPlanType
-from src.processes.enums import (
-    SysTemplateType,
-    PerformerType,
-    TemplateType,
-    OwnerType,
+from src.processes.tests.fixtures import (
+    create_test_account,
+    create_test_template,
+    create_test_user,
 )
-from src.processes.models.templates.template import Template
-from src.processes.models.templates.system_template import (
-    SystemTemplate,
-    SystemTemplateCategory,
-)
-from src.authentication.enums import AuthTokenType
-
 
 UserModel = get_user_model()
 pytestmark = pytest.mark.django_db

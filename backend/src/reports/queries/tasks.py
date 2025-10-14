@@ -1,14 +1,15 @@
 from datetime import datetime
 from typing import Optional
+
 from django.utils import timezone
+
 from src.accounts.enums import UserStatus
+from src.processes.enums import DirectlyStatus, TemplateType
 from src.queries import SqlQueryObject
-from src.processes.enums import DirectlyStatus
 from src.reports.queries.mixins import (
     TasksMixin,
     TasksNowMixin,
 )
-from src.processes.enums import TemplateType
 
 
 class TasksOverviewQuery(

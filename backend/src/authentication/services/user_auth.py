@@ -1,14 +1,16 @@
-from typing import Tuple, Optional
-from django.core.exceptions import ObjectDoesNotExist
+from typing import Optional, Tuple
+
 from django.contrib.auth import get_user_model
+from django.core.exceptions import ObjectDoesNotExist
 from django.utils import timezone
 from rest_framework.authentication import TokenAuthentication
+
 from src.accounts.enums import UserStatus
-from src.accounts.models import User, APIKey
-from src.authentication.tokens import PneumaticToken
+from src.accounts.models import APIKey, User
 from src.authentication.enums import (
     AuthTokenType,
 )
+from src.authentication.tokens import PneumaticToken
 
 UserModel = get_user_model()
 

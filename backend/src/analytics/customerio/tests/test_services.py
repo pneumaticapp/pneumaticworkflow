@@ -1,14 +1,14 @@
 import pytest
+
+from src.analytics import messages
+from src.analytics.customerio import exceptions
+from src.analytics.customerio.enums import MetricType
 from src.analytics.customerio.services import (
     WebHookService,
 )
 from src.processes.tests.fixtures import (
     create_test_user,
 )
-from src.analytics.customerio.enums import MetricType
-from src.analytics.customerio import exceptions
-from src.analytics import messages
-
 
 pytestmark = pytest.mark.django_db
 

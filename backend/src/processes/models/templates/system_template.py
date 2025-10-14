@@ -1,19 +1,18 @@
 from django.contrib.auth import get_user_model
 from django.contrib.postgres.fields import JSONField
+from django.contrib.postgres.search import SearchVectorField
 from django.db import models
 
 from src.generics.managers import BaseSoftDeleteManager
 from src.generics.models import SoftDeleteModel
-from src.processes.querysets import (
-    SystemTemplateQuerySet,
-    SystemWorkflowKickoffDataQuerySet,
-    SystemTemplateCategoryQuerySet,
-)
 from src.processes.enums import (
     SysTemplateType,
 )
-from django.contrib.postgres.search import SearchVectorField
-
+from src.processes.querysets import (
+    SystemTemplateCategoryQuerySet,
+    SystemTemplateQuerySet,
+    SystemWorkflowKickoffDataQuerySet,
+)
 
 UserModel = get_user_model()
 

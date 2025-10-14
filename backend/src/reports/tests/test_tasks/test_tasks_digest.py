@@ -1,27 +1,28 @@
 from datetime import timedelta
+
 import pytest
 from django.contrib.auth import get_user_model
 from django.db.models import F
 from django.utils import timezone
-from src.authentication.enums import AuthTokenType
+
 from src.accounts.enums import BillingPlanType
-from src.processes.models.workflows.workflow import Workflow
+from src.authentication.enums import AuthTokenType
+from src.processes.enums import TemplateType
 from src.processes.models.templates.template import Template
-from src.reports.tasks import (
-    send_tasks_digest,
-)
-from src.processes.tests.fixtures import (
-    create_test_user,
-    create_test_workflow,
-    get_workflow_create_data,
-    create_test_template,
-    create_test_account,
-)
+from src.processes.models.workflows.workflow import Workflow
 from src.processes.services.tasks.performers import (
     TaskPerformersService,
 )
-from src.processes.enums import TemplateType
-
+from src.processes.tests.fixtures import (
+    create_test_account,
+    create_test_template,
+    create_test_user,
+    create_test_workflow,
+    get_workflow_create_data,
+)
+from src.reports.tasks import (
+    send_tasks_digest,
+)
 
 UserModel = get_user_model()
 pytestmark = pytest.mark.django_db

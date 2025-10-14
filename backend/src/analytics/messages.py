@@ -1,6 +1,5 @@
-from django.utils.translation import gettext_lazy as _
 from django.utils.text import format_lazy
-
+from django.utils.translation import gettext_lazy as _
 
 # Translators: Call analytics need specify any user id
 MSG_AS_0001 = _('You must specify "user_id" or "anonymous_id"')

@@ -1,12 +1,16 @@
-import pytest
 from datetime import timedelta
-from django.utils import timezone
+
+import pytest
 from django.conf import settings
+from django.utils import timezone
+
 from src.accounts.enums import UserType
+from src.analytics.enums import MailoutType
 from src.logs.enums import AccountEventStatus
+from src.notifications import messages
 from src.notifications.enums import (
-    NotificationMethod,
     EmailTemplate,
+    NotificationMethod,
 )
 from src.notifications.services.email import (
     EmailService,
@@ -14,9 +18,6 @@ from src.notifications.services.email import (
 from src.notifications.services.exceptions import (
     NotificationServiceError,
 )
-from src.analytics.enums import MailoutType
-from src.notifications import messages
-
 
 pytestmark = pytest.mark.django_db
 

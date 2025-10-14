@@ -2,39 +2,39 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db.models import Prefetch, Q
 from rest_framework import serializers
+
+from src.accounts.enums import (
+    Language,
+    SourceType,
+    Timezone,
+)
 from src.accounts.models import Contact
+from src.accounts.serializers.group import (
+    GroupNameSerializer,
+)
 from src.accounts.serializers.user_invites import (
     UserListInviteSerializer,
 )
 from src.generics.fields import (
-    TimeStampField,
+    CommaSeparatedListField,
     DateFormatField,
     RelatedListField,
+    TimeStampField,
 )
-from src.accounts.enums import (
-    SourceType,
-    Language,
-    Timezone,
+from src.generics.mixins.serializers import (
+    CustomValidationErrorMixin,
 )
-from src.accounts.serializers.group import (
-    GroupNameSerializer,
-)
-from src.processes.models.templates.template import Template
-from src.processes.models.templates.owner import TemplateOwner
-from src.processes.models.templates.task import TaskTemplate
-from src.processes.models.templates.raw_performer import RawPerformerTemplate
 from src.processes.enums import (
     OwnerType,
     PerformerType,
 )
+from src.processes.models.templates.owner import TemplateOwner
+from src.processes.models.templates.raw_performer import RawPerformerTemplate
+from src.processes.models.templates.task import TaskTemplate
+from src.processes.models.templates.template import Template
 from src.processes.serializers.templates.template import (
     TemplateUserPrivilegesSerializer,
 )
-from src.generics.fields import CommaSeparatedListField
-from src.generics.mixins.serializers import (
-    CustomValidationErrorMixin,
-)
-
 
 UserModel = get_user_model()
 

@@ -1,20 +1,21 @@
 import pytest
 from django.contrib.auth import get_user_model
 from django.db import IntegrityError
+
 from src.accounts.enums import (
     BillingPlanType,
     LeaseLevel,
     UserStatus,
 )
-from src.processes.tests.fixtures import (
-    create_test_user,
-    create_test_account,
-    create_invited_user,
-    create_test_guest,
-)
 from src.accounts.models import (
     Account,
     UserInvite,
+)
+from src.processes.tests.fixtures import (
+    create_invited_user,
+    create_test_account,
+    create_test_guest,
+    create_test_user,
 )
 
 UserModel = get_user_model()

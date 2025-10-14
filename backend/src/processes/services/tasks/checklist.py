@@ -1,6 +1,8 @@
 from typing import Dict
+
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist
+
 from src.processes.models.templates.checklist import (
     ChecklistTemplate,
 )
@@ -8,14 +10,13 @@ from src.processes.models.workflows.checklist import (
     Checklist,
     ChecklistSelection,
 )
-from src.processes.services.tasks import exceptions
-from src.processes.services.tasks.checklist_selection import (
-        ChecklistSelectionService,
-    )
 from src.processes.services.base import (
     BaseWorkflowService,
 )
-
+from src.processes.services.tasks import exceptions
+from src.processes.services.tasks.checklist_selection import (
+    ChecklistSelectionService,
+)
 
 UserModel = get_user_model()
 

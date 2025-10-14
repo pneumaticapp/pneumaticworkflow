@@ -1,16 +1,16 @@
 import pytest
 from django.contrib.auth import get_user_model
 from rest_framework_simplejwt.tokens import TokenError
-from src.processes.tests.fixtures import (
-    create_test_user,
-    create_test_account,
-)
-from src.authentication.enums import AuthTokenType
-from src.payment.stripe.service import StripeService
-from src.utils.validation import ErrorCode
-from src.payment import messages
-from src.payment.stripe.tokens import ConfirmToken
 
+from src.authentication.enums import AuthTokenType
+from src.payment import messages
+from src.payment.stripe.service import StripeService
+from src.payment.stripe.tokens import ConfirmToken
+from src.processes.tests.fixtures import (
+    create_test_account,
+    create_test_user,
+)
+from src.utils.validation import ErrorCode
 
 UserModel = get_user_model()
 pytestmark = pytest.mark.django_db

@@ -1,15 +1,19 @@
-from datetime import datetime, timedelta, timezone as tz
+from datetime import datetime, timedelta
+from datetime import timezone as tz
 from typing import Dict, Optional
-from django.db.models import Q
+
 from django.contrib.auth import get_user_model
-from src.processes.models.templates.task import TaskTemplate
+from django.db.models import Q
+
+from src.notifications.tasks import send_due_date_changed
+from src.processes.enums import (
+    DueDateRule,
+    FieldType,
+)
 from src.processes.models.templates.checklist import (
     ChecklistTemplateSelection,
 )
-from src.processes.models.workflows.task import (
-    Task,
-    Delay,
-)
+from src.processes.models.templates.task import TaskTemplate
 from src.processes.models.workflows.conditions import (
     Condition,
     Predicate,
@@ -19,28 +23,27 @@ from src.processes.models.workflows.fields import (
     TaskField,
 )
 from src.processes.models.workflows.raw_due_date import RawDueDate
-from src.processes.enums import (
-    DueDateRule,
-    FieldType,
-)
-from src.processes.services.tasks.checklist import (
-    ChecklistService,
+from src.processes.models.workflows.task import (
+    Delay,
+    Task,
 )
 from src.processes.services.base import (
     BaseWorkflowService,
 )
+from src.processes.services.events import (
+    WorkflowEventService,
+)
+from src.processes.services.tasks.checklist import (
+    ChecklistService,
+)
 from src.processes.services.tasks.field import (
     TaskFieldService,
-)
-from src.processes.utils.common import (
-    insert_fields_values_to_text,
 )
 from src.processes.services.tasks.mixins import (
     ConditionMixin,
 )
-from src.notifications.tasks import send_due_date_changed
-from src.processes.services.events import (
-    WorkflowEventService,
+from src.processes.utils.common import (
+    insert_fields_values_to_text,
 )
 from src.services.markdown import MarkdownService
 

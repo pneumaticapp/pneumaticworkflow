@@ -1,19 +1,19 @@
 import pytest
-from src.processes.tests.fixtures import (
-    create_test_user,
-    create_test_template,
+
+from src.processes.enums import (
+    OwnerType,
+    PerformerType,
 )
+from src.processes.messages import template as messages
 from src.processes.models.templates.checklist import (
     ChecklistTemplate,
     ChecklistTemplateSelection,
 )
-from src.processes.enums import (
-    PerformerType,
-    OwnerType,
+from src.processes.tests.fixtures import (
+    create_test_template,
+    create_test_user,
 )
 from src.utils.validation import ErrorCode
-from src.processes.messages import template as messages
-
 
 pytestmark = pytest.mark.django_db
 

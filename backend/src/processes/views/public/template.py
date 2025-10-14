@@ -1,7 +1,14 @@
 from django.conf import settings
-from rest_framework.viewsets import GenericViewSet
 from rest_framework.decorators import action
+from rest_framework.viewsets import GenericViewSet
+
+from src.authentication.enums import AuthTokenType
+from src.generics.mixins.views import (
+    AnonymousWorkflowMixin,
+    CustomViewSetMixin,
+)
 from src.processes.models.templates.template import Template
+from src.processes.permissions import PublicTemplatePermission
 from src.processes.serializers.templates.public.template import (
     PublicTemplateSerializer,
 )
@@ -9,23 +16,17 @@ from src.processes.serializers.workflows.external.workflow import (
     ExternalWorkflowCreateSerializer,
     SecuredExternalWorkflowCreateSerializer,
 )
-from src.processes.permissions import PublicTemplatePermission
-from src.generics.mixins.views import (
-    CustomViewSetMixin,
-    AnonymousWorkflowMixin,
-)
-from src.authentication.enums import AuthTokenType
-from src.processes.utils.common import get_user_agent
-from src.processes.services.workflows.workflow import (
-    WorkflowService,
-)
 from src.processes.services.exceptions import (
     WorkflowServiceException,
 )
-from src.utils.validation import raise_validation_error
 from src.processes.services.workflow_action import (
     WorkflowActionService,
 )
+from src.processes.services.workflows.workflow import (
+    WorkflowService,
+)
+from src.processes.utils.common import get_user_agent
+from src.utils.validation import raise_validation_error
 
 
 class PublicTemplateViewSet(

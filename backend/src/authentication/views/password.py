@@ -1,37 +1,37 @@
 from django.contrib.auth import get_user_model
-
 from rest_framework.decorators import action
-from rest_framework.viewsets import GenericViewSet
 from rest_framework.generics import (
-    get_object_or_404,
     CreateAPIView,
+    get_object_or_404,
 )
 from rest_framework.permissions import AllowAny
+from rest_framework.viewsets import GenericViewSet
 from rest_framework_simplejwt.exceptions import TokenError
+
+from src.accounts.services.user import UserService
 from src.accounts.tokens import (
     ResetPasswordToken,
 )
-from src.accounts.services.user import UserService
 from src.authentication.enums import (
     ResetPasswordStatus,
 )
 from src.authentication.permissions import (
     PrivateApiPermission,
 )
-from src.authentication.tokens import PneumaticToken
-from src.authentication.services.user_auth import AuthService
 from src.authentication.serializers import (
-    ResetPasswordSerializer,
-    ConfirmPasswordSerializer,
-    TokenSerializer,
     ChangePasswordSerializer,
+    ConfirmPasswordSerializer,
+    ResetPasswordSerializer,
+    TokenSerializer,
 )
-from src.generics.mixins.views import (
-    CustomViewSetMixin,
-    BaseResponseMixin,
-)
+from src.authentication.services.user_auth import AuthService
 from src.authentication.throttling import (
     AuthResetPasswordThrottle,
+)
+from src.authentication.tokens import PneumaticToken
+from src.generics.mixins.views import (
+    BaseResponseMixin,
+    CustomViewSetMixin,
 )
 from src.generics.permissions import (
     UserIsAuthenticated,
@@ -39,6 +39,7 @@ from src.generics.permissions import (
 from src.notifications.tasks import (
     send_reset_password_notification,
 )
+
 UserModel = get_user_model()
 
 

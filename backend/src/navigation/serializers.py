@@ -1,4 +1,5 @@
 from rest_framework.serializers import ModelSerializer
+
 from src.navigation.models import (
     Menu,
     MenuItem,

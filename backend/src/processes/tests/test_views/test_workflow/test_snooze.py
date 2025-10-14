@@ -1,27 +1,28 @@
-import pytest
 from datetime import timedelta
-from django.utils import timezone
-from django.contrib.auth import get_user_model
 
-from src.analytics.customerio.tests.fixtures import \
-    create_test_account
+import pytest
+from django.contrib.auth import get_user_model
+from django.utils import timezone
+
+from src.analytics.customerio.tests.fixtures import create_test_account
+from src.generics.messages import MSG_GE_0007
 from src.processes.enums import (
-    WorkflowStatus,
     OwnerType,
     TaskStatus,
+    WorkflowStatus,
 )
-from src.processes.tests.fixtures import (
-    create_test_user,
-    create_test_workflow,
-    create_test_template, create_test_owner, create_test_admin,
-)
+from src.processes.models.templates.owner import TemplateOwner
 from src.processes.services.exceptions import (
     WorkflowActionServiceException,
 )
+from src.processes.tests.fixtures import (
+    create_test_admin,
+    create_test_owner,
+    create_test_template,
+    create_test_user,
+    create_test_workflow,
+)
 from src.utils.validation import ErrorCode
-from src.processes.models.templates.owner import TemplateOwner
-from src.generics.messages import MSG_GE_0007
-
 
 pytestmark = pytest.mark.django_db
 UserModel = get_user_model()

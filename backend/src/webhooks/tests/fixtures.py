@@ -1,7 +1,7 @@
 from django.contrib.auth import get_user_model
-from src.webhooks.models import WebHook
-from src.webhooks.enums import HookEvent
 
+from src.webhooks.enums import HookEvent
+from src.webhooks.models import WebHook
 
 UserModel = get_user_model()
 

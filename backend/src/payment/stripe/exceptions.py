@@ -1,4 +1,5 @@
 from typing import Optional
+
 from src.generics.exceptions import BaseServiceException
 from src.payment import messages
 

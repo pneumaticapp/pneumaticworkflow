@@ -1,19 +1,19 @@
 import pytest
+
+from src.accounts.enums import (
+    SourceType,
+    UserInviteStatus,
+)
 from src.accounts.models import User, UserInvite
+from src.accounts.services.user import UserService
 from src.accounts.tokens import (
     AuthToken,
 )
-from src.accounts.enums import (
-    UserInviteStatus,
-)
-from src.processes.tests.fixtures import (
-    create_test_user,
-    create_invited_user,
-)
-from src.accounts.enums import SourceType
-from src.accounts.services.user import UserService
 from src.authentication.enums import AuthTokenType
-
+from src.processes.tests.fixtures import (
+    create_invited_user,
+    create_test_user,
+)
 
 pytestmark = pytest.mark.django_db
 

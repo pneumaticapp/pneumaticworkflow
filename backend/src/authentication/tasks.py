@@ -1,8 +1,10 @@
 import contextlib
-from celery import shared_task
+
 from django.conf import settings
 from slack import WebClient
-from src.accounts.models import User, Account
+
+from celery import shared_task
+from src.accounts.models import Account, User
 from src.authentication.services.exceptions import (
     AuthException,
 )

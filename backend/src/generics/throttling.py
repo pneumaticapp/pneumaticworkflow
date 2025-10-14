@@ -1,6 +1,8 @@
 from typing import Optional
-from rest_framework.throttling import SimpleRateThrottle
+
 from django.core.exceptions import ImproperlyConfigured
+from rest_framework.throttling import SimpleRateThrottle
+
 from src.authentication.enums import AuthTokenType
 
 

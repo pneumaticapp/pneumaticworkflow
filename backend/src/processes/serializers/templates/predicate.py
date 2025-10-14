@@ -1,5 +1,5 @@
-from typing import Dict, Any, Optional
 from decimal import Decimal, DecimalException
+from typing import Any, Dict, Optional
 
 from rest_framework.fields import CharField
 from rest_framework.serializers import ModelSerializer
@@ -8,19 +8,12 @@ from src.generics.mixins.serializers import (
     AdditionalValidationMixin,
     CustomValidationErrorMixin,
 )
-from src.processes.serializers.templates.mixins import (
-    CreateOrUpdateInstanceMixin,
-    CustomValidationApiNameMixin,
-)
-from src.processes.models.templates.conditions import PredicateTemplate
-from src.processes.models.templates.fields import FieldTemplateSelection
 from src.processes.enums import (
+    ConditionAction,
     FieldType,
     PredicateOperator,
-    ConditionAction,
     PredicateType,
 )
-from src.utils.validation import raise_validation_error
 from src.processes.messages.template import (
     MSG_PT_0043,
     MSG_PT_0044,
@@ -34,6 +27,13 @@ from src.processes.messages.template import (
     MSG_PT_0067,
     MSG_PT_0068,
 )
+from src.processes.models.templates.conditions import PredicateTemplate
+from src.processes.models.templates.fields import FieldTemplateSelection
+from src.processes.serializers.templates.mixins import (
+    CreateOrUpdateInstanceMixin,
+    CustomValidationApiNameMixin,
+)
+from src.utils.validation import raise_validation_error
 
 
 class PredicateTemplateSerializer(

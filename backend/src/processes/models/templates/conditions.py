@@ -1,5 +1,6 @@
 from django.db import models
-from django.db.models import UniqueConstraint, Q
+from django.db.models import Q, UniqueConstraint
+
 from src.processes.models.base import (
     BaseApiNameModel,
 )
@@ -7,8 +8,8 @@ from src.processes.models.mixins import (
     ConditionMixin,
     PredicateMixin,
 )
-from src.processes.models.templates.template import Template
 from src.processes.models.templates.task import TaskTemplate
+from src.processes.models.templates.template import Template
 
 
 class ConditionTemplate(

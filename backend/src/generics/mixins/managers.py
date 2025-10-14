@@ -1,5 +1,5 @@
-from typing import Optional, Tuple
 import re
+from typing import Optional, Tuple
 
 
 class NormalizeEmailMixin:

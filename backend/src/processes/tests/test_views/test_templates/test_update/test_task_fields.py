@@ -1,19 +1,19 @@
 import pytest
-from src.processes.tests.fixtures import (
-    create_test_user,
-    create_test_template,
-)
-from src.processes.models.workflows.workflow import Workflow
-from src.processes.models.templates.fields import (
-    FieldTemplateSelection,
-    FieldTemplate,
-)
+
 from src.processes.enums import (
-    PerformerType,
     FieldType,
     OwnerType,
+    PerformerType,
 )
-
+from src.processes.models.templates.fields import (
+    FieldTemplate,
+    FieldTemplateSelection,
+)
+from src.processes.models.workflows.workflow import Workflow
+from src.processes.tests.fixtures import (
+    create_test_template,
+    create_test_user,
+)
 
 pytestmark = pytest.mark.django_db
 

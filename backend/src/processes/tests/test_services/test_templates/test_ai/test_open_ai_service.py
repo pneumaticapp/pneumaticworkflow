@@ -2,33 +2,36 @@ import openai.error
 import pytest
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from src.processes.models.templates.task import TaskTemplate
-from src.processes.enums import (
-    PerformerType,
-    OwnerType, ConditionAction, PredicateType, PredicateOperator,
+
+from src.ai.enums import (
+    OpenAIRole,
 )
-from src.processes.tests.fixtures import (
-    create_test_user,
-)
+from src.ai.tests.fixtures import create_test_prompt
 from src.authentication.enums import (
     AuthTokenType,
+)
+from src.processes.enums import (
+    ConditionAction,
+    OwnerType,
+    PerformerType,
+    PredicateOperator,
+    PredicateType,
+)
+from src.processes.messages import workflow as messages
+from src.processes.models.templates.task import TaskTemplate
+from src.processes.services.exceptions import (
+    OpenAiLimitTemplateGenerations,
+    OpenAiServiceFailed,
+    OpenAiServiceUnavailable,
+    OpenAiStepsPromptNotExist,
+    OpenAiTemplateStepsNotExist,
 )
 from src.processes.services.templates.ai import (
     OpenAiService,
 )
-from src.ai.enums import (
-    OpenAIRole,
+from src.processes.tests.fixtures import (
+    create_test_user,
 )
-from src.processes.services.exceptions import (
-    OpenAiServiceUnavailable,
-    OpenAiServiceFailed,
-    OpenAiLimitTemplateGenerations,
-    OpenAiTemplateStepsNotExist,
-    OpenAiStepsPromptNotExist,
-)
-from src.processes.messages import workflow as messages
-from src.ai.tests.fixtures import create_test_prompt
-
 
 UserModel = get_user_model()
 pytestmark = pytest.mark.django_db

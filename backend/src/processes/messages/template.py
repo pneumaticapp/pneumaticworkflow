@@ -1,6 +1,5 @@
-from django.utils.translation import ugettext_lazy as _
 from django.utils.text import format_lazy
-
+from django.utils.translation import ugettext_lazy as _
 
 MSG_PT_0001 = _('You can\'t pass "snooze" for the first task.')
 MSG_PT_0002 = _(

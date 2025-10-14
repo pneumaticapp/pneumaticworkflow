@@ -1,18 +1,18 @@
 import pytest
-from src.processes.tests.fixtures import (
-    create_test_user,
-    create_test_template,
-    create_test_account,
-)
-from src.authentication.tokens import (
-    PublicToken,
-    EmbedToken,
-)
+
 from src.accounts.enums import BillingPlanType
+from src.authentication.tokens import (
+    EmbedToken,
+    PublicToken,
+)
 from src.processes.messages.workflow import (
     MSG_PW_0001,
 )
-
+from src.processes.tests.fixtures import (
+    create_test_account,
+    create_test_template,
+    create_test_user,
+)
 
 pytestmark = pytest.mark.django_db
 

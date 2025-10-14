@@ -1,10 +1,12 @@
-from typing import Dict, Any
-from celery import shared_task
-from customerio import SendEmailRequest, APIClient
+from typing import Any, Dict
+
+from customerio import APIClient, SendEmailRequest
 from django.conf import settings
+
+from celery import shared_task
 from src.notifications.enums import (
-    cio_template_ids,
     EmailTemplate,
+    cio_template_ids,
 )
 
 

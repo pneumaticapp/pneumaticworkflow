@@ -1,18 +1,20 @@
 from abc import abstractmethod
 from typing import Dict, Optional
+
 from django.contrib.auth import get_user_model
 from django.contrib.postgres.fields import ArrayField
-from django.db.models.query import QuerySet
 from django.core.validators import MinValueValidator
 from django.db import models
-from src.accounts.models import UserGroup
-from src.processes.enums import PerformerType, ConditionAction
-from src.processes.enums import (
-    FieldType,
-    PredicateType,
-    PredicateOperator,
-)
+from django.db.models.query import QuerySet
 
+from src.accounts.models import UserGroup
+from src.processes.enums import (
+    ConditionAction,
+    FieldType,
+    PerformerType,
+    PredicateOperator,
+    PredicateType,
+)
 
 UserModel = get_user_model()
 

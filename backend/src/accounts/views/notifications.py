@@ -1,15 +1,17 @@
 from typing import List
+
 from django.contrib.auth import get_user_model
 from rest_framework.decorators import action
-from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.generics import (
     CreateAPIView,
 )
-from rest_framework.viewsets import GenericViewSet
 from rest_framework.mixins import (
-    ListModelMixin,
     DestroyModelMixin,
+    ListModelMixin,
 )
+from rest_framework.pagination import LimitOffsetPagination
+from rest_framework.viewsets import GenericViewSet
+
 from src.accounts.enums import (
     NotificationStatus,
 )
@@ -17,21 +19,20 @@ from src.accounts.filters import (
     NotificationFilter,
 )
 from src.accounts.permissions import (
-    ExpiredSubscriptionPermission,
     BillingPlanPermission,
+    ExpiredSubscriptionPermission,
 )
 from src.accounts.serializers.notifications import (
     NotificationsSerializer,
 )
 from src.generics.filters import PneumaticFilterBackend
+from src.generics.mixins.views import (
+    BaseResponseMixin,
+    CustomViewSetMixin,
+)
 from src.generics.permissions import (
     UserIsAuthenticated,
 )
-from src.generics.mixins.views import (
-    CustomViewSetMixin,
-    BaseResponseMixin,
-)
-
 
 UserModel = get_user_model()
 

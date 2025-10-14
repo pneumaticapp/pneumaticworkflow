@@ -1,26 +1,27 @@
-import pytest
 from datetime import timedelta
-from django.utils import timezone
+
+import pytest
 from django.contrib.auth import get_user_model
-from src.processes.tests.fixtures import (
-    create_test_user,
-    create_test_workflow,
-    create_test_account,
-    create_test_group,
-)
+from django.utils import timezone
+
 from src.processes.enums import (
-    WorkflowEventType,
     CommentStatus,
+    WorkflowEventType,
 )
-from src.processes.services.events import WorkflowEventService
+from src.processes.models.workflows.attachment import FileAttachment
+from src.processes.models.workflows.event import WorkflowEvent
 from src.processes.serializers.workflows.events import (
     TaskEventJsonSerializer,
     WorkflowEventSerializer,
 )
-from src.processes.models.workflows.attachment import FileAttachment
-from src.processes.models.workflows.event import WorkflowEvent
+from src.processes.services.events import WorkflowEventService
+from src.processes.tests.fixtures import (
+    create_test_account,
+    create_test_group,
+    create_test_user,
+    create_test_workflow,
+)
 from src.utils.dates import date_format
-
 
 UserModel = get_user_model()
 pytestmark = pytest.mark.django_db

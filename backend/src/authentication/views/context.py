@@ -2,16 +2,16 @@ from django.contrib.auth import get_user_model
 from rest_framework.generics import (
     ListAPIView,
 )
-from src.generics.mixins.views import (
-    BaseResponseMixin,
-)
+
 from src.authentication.serializers import (
     ContextUserSerializer,
+)
+from src.generics.mixins.views import (
+    BaseResponseMixin,
 )
 from src.generics.permissions import (
     IsAuthenticated,
 )
-
 
 UserModel = get_user_model()
 

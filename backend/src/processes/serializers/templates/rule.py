@@ -5,16 +5,16 @@ from src.generics.mixins.serializers import (
     AdditionalValidationMixin,
     CustomValidationErrorMixin,
 )
+from src.processes.messages.template import MSG_PT_0053
+from src.processes.models.templates.conditions import RuleTemplate
 from src.processes.serializers.templates.mixins import (
-    CreateOrUpdateRelatedMixin,
     CreateOrUpdateInstanceMixin,
+    CreateOrUpdateRelatedMixin,
     CustomValidationApiNameMixin,
 )
 from src.processes.serializers.templates.predicate import (
     PredicateTemplateSerializer,
 )
-from src.processes.models.templates.conditions import RuleTemplate
-from src.processes.messages.template import MSG_PT_0053
 
 
 class RuleTemplateSerializer(

@@ -1,10 +1,11 @@
 import pytest
+
+from src.processes.enums import (
+    OwnerType,
+    PerformerType,
+)
 from src.processes.tests.fixtures import (
     create_test_user,
-)
-from src.processes.enums import (
-    PerformerType,
-    OwnerType,
 )
 
 pytestmark = pytest.mark.django_db

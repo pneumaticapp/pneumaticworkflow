@@ -1,23 +1,24 @@
-from celery import shared_task
-from django.db import transaction
 from typing import List
 
+from django.db import transaction
+
+from celery import shared_task
+from src.authentication.enums import AuthTokenType
+from src.executor import RawSqlExecutor
 from src.processes.enums import WorkflowStatus
-from src.processes.tasks.tasks import UserModel
-from src.processes.models.workflows.workflow import Workflow
 from src.processes.models.templates.template import (
     Template,
     TemplateVersion,
 )
+from src.processes.models.workflows.workflow import Workflow
 from src.processes.queries import (
-    UpdateWorkflowOwnersQuery,
     UpdateWorkflowMemberQuery,
+    UpdateWorkflowOwnersQuery,
 )
 from src.processes.services.workflows.workflow_version import (
-        WorkflowUpdateVersionService,
-    )
-from src.executor import RawSqlExecutor
-from src.authentication.enums import AuthTokenType
+    WorkflowUpdateVersionService,
+)
+from src.processes.tasks.tasks import UserModel
 
 
 def _update_workflows(

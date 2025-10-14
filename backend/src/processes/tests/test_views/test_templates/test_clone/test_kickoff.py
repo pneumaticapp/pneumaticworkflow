@@ -1,11 +1,12 @@
 import pytest
-from src.processes.tests.fixtures import (
-    create_test_user,
+
+from src.processes.enums import (
+    OwnerType,
+    PerformerType,
 )
 from src.processes.models.templates.template import Template
-from src.processes.enums import (
-    PerformerType,
-    OwnerType,
+from src.processes.tests.fixtures import (
+    create_test_user,
 )
 
 pytestmark = pytest.mark.django_db

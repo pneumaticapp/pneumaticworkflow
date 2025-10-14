@@ -1,4 +1,5 @@
-from typing import Dict, Any, List
+from typing import Any, Dict, List
+
 from src.processes.consts import TEMPLATE_NAME_LENGTH
 from src.processes.utils.common import (
     string_abbreviation,

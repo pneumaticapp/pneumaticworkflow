@@ -1,50 +1,51 @@
 import re
-from typing import Optional, List, Tuple
-from django.db import transaction
+from typing import List, Optional, Tuple
+
 from django.contrib.auth import get_user_model
+from django.db import transaction
 from django.utils import timezone
+
 from src.accounts.models import UserGroup
-from src.processes.models.workflows.workflow import Workflow
-from src.processes.models.workflows.task import (
-    Task,
-    Delay,
+from src.analytics.services import AnalyticService
+from src.generics.base.service import BaseModelService
+from src.notifications.tasks import (
+    send_comment_notification,
+    send_mention_notification,
+    send_reaction_notification,
+    send_workflow_event,
 )
+from src.processes.enums import (
+    CommentStatus,
+    WorkflowEventActionType,
+    WorkflowEventType,
+)
+from src.processes.models.workflows.attachment import FileAttachment
 from src.processes.models.workflows.event import (
     WorkflowEvent,
     WorkflowEventAction,
 )
-from src.processes.models.workflows.attachment import FileAttachment
-from src.notifications.tasks import (
-    send_mention_notification,
-    send_comment_notification,
-    send_reaction_notification,
+from src.processes.models.workflows.task import (
+    Delay,
+    Task,
 )
-from src.processes.enums import (
-    WorkflowEventType,
-    WorkflowEventActionType,
-    CommentStatus,
-)
-from src.processes.services.exceptions import (
-    AttachmentNotFound,
-    CommentTextRequired,
-    CommentedWorkflowNotRunning,
-    CommentIsDeleted,
-    CommentedTaskNotActive,
-    CommentedNotTask,
-)
+from src.processes.models.workflows.workflow import Workflow
 from src.processes.serializers.workflows.events import (
     DelayEventJsonSerializer,
     TaskEventJsonSerializer,
     WorkflowEventSerializer,
 )
-from src.analytics.services import AnalyticService
-from src.generics.base.service import BaseModelService
-from src.notifications.tasks import send_workflow_event
-from src.services.markdown import (
-    MarkdownService,
-    MarkdownPatterns,
+from src.processes.services.exceptions import (
+    AttachmentNotFound,
+    CommentedNotTask,
+    CommentedTaskNotActive,
+    CommentedWorkflowNotRunning,
+    CommentIsDeleted,
+    CommentTextRequired,
 )
-
+from src.services.markdown import (
+    MarkdownPatterns,
+    MarkdownService,
+)
 
 UserModel = get_user_model()
 

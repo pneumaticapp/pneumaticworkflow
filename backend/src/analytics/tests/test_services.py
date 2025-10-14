@@ -1,50 +1,51 @@
-import pytest
 from datetime import timedelta
+
+import pytest
 from django.contrib.auth.models import AnonymousUser
-from src.accounts.enums import BillingPlanType
-from src.analytics.events import (
-    UserAnalyticsEvent,
-    EventCategory,
-    TemplateAnalyticsEvent,
-    WorkflowAnalyticsEvent,
-    SubscriptionAnalyticsEvent,
-    SearchAnalyticsEvent,
-    AttachmentAnalyticsEvent,
-    AccountAnalyticsEvent,
-    TaskAnalyticsEvent,
-    LibraryTemplateAnalyticsEvent,
-    TenantsAnalyticsEvent,
-    CommentAnalyticsEvent,
-    MentionsAnalyticsEvent,
-    GroupsAnalyticsEvent,
-)
-from src.analytics.services import (
-    AnalyticService,
-)
-from src.accounts.enums import SourceType
-from src.processes.tests.fixtures import (
-    create_test_account,
-    create_test_user,
-    create_invited_user,
-    create_test_template,
-    create_test_workflow,
-    create_test_attachment,
-    create_test_group,
-)
-from src.processes.enums import (
-    TemplateIntegrationType,
-    SysTemplateType,
-)
+
+from src.accounts.enums import BillingPlanType, SourceType
 from src.analytics import messages
-from src.analytics.labels import Label
 from src.analytics.actions import (
     WorkflowActions,
 )
-from src.analytics.services import exceptions
+from src.analytics.events import (
+    AccountAnalyticsEvent,
+    AttachmentAnalyticsEvent,
+    CommentAnalyticsEvent,
+    EventCategory,
+    GroupsAnalyticsEvent,
+    LibraryTemplateAnalyticsEvent,
+    MentionsAnalyticsEvent,
+    SearchAnalyticsEvent,
+    SubscriptionAnalyticsEvent,
+    TaskAnalyticsEvent,
+    TemplateAnalyticsEvent,
+    TenantsAnalyticsEvent,
+    UserAnalyticsEvent,
+    WorkflowAnalyticsEvent,
+)
+from src.analytics.labels import Label
+from src.analytics.services import (
+    AnalyticService,
+    exceptions,
+)
 from src.authentication.enums import AuthTokenType
+from src.processes.enums import (
+    SysTemplateType,
+    TemplateIntegrationType,
+)
 from src.processes.models.templates.system_template import (
     SystemTemplate,
     SystemTemplateCategory,
+)
+from src.processes.tests.fixtures import (
+    create_invited_user,
+    create_test_account,
+    create_test_attachment,
+    create_test_group,
+    create_test_template,
+    create_test_user,
+    create_test_workflow,
 )
 
 pytestmark = pytest.mark.django_db

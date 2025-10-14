@@ -1,13 +1,14 @@
 import pytest
 from django.contrib.auth import get_user_model
-from src.processes.tests.fixtures import (
-    create_test_user,
-    create_test_template, create_test_account,
-)
+
 from src.processes.services.remove_user_from_draft import (
     remove_user_from_draft,
 )
-
+from src.processes.tests.fixtures import (
+    create_test_account,
+    create_test_template,
+    create_test_user,
+)
 
 UserModel = get_user_model()
 pytestmark = pytest.mark.django_db

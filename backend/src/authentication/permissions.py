@@ -1,7 +1,8 @@
 from django.conf import settings
 from rest_framework.permissions import BasePermission
-from src.generics.permissions import BaseAuthPermission
+
 from src.authentication.enums import AuthTokenType
+from src.generics.permissions import BaseAuthPermission
 
 
 class NoAuthApiPermission(BasePermission):

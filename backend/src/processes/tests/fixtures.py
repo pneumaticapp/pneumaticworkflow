@@ -1,74 +1,73 @@
-from datetime import timedelta, datetime
-from typing import Optional, List
+from datetime import datetime, timedelta
+from typing import List, Optional
+
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.utils import timezone
-from django.conf import settings
-from src.utils.salt import get_salt
-from src.authentication.enums import AuthTokenType
-from src.accounts.services.guests import GuestService
-from src.processes.enums import (
-    OwnerType,
-    TemplateType,
-    WorkflowStatus,
-    TaskStatus,
-    PredicateOperator,
-    PredicateType,
-    ConditionAction,
-)
-from src.payment.enums import BillingPeriod
+
 from src.accounts.enums import (
-    UserStatus,
     BillingPlanType,
-    LeaseLevel,
     Language,
+    LeaseLevel,
     UserDateFormat,
     UserFirstDayWeek,
     UserInviteStatus,
+    UserStatus,
 )
 from src.accounts.models import (
     Account,
-    UserInvite,
     AccountSignupData,
+    UserGroup,
+    UserInvite,
 )
-from src.processes.enums import WorkflowEventType
-from src.processes.serializers.templates.template import (
-    TemplateSerializer,
-)
+from src.accounts.services.guests import GuestService
+from src.authentication.enums import AuthTokenType
+from src.payment.enums import BillingPeriod
 from src.processes.enums import (
-    PerformerType,
+    ConditionAction,
     FieldType,
+    OwnerType,
+    PerformerType,
+    PredicateOperator,
+    PredicateType,
+    TaskStatus,
+    TemplateType,
+    WorkflowEventType,
+    WorkflowStatus,
 )
-from src.processes.models.templates.template import Template
-from src.processes.models.templates.kickoff import Kickoff
-from src.processes.models.templates.task import TaskTemplate
 from src.processes.models.templates.checklist import (
     ChecklistTemplate,
     ChecklistTemplateSelection,
 )
-from src.processes.models.templates.owner import TemplateOwner
 from src.processes.models.templates.conditions import (
     ConditionTemplate,
     PredicateTemplate,
     RuleTemplate,
 )
-from src.processes.models.workflows.workflow import Workflow
-from src.processes.models.workflows.task import Task
-from src.processes.models.workflows.event import WorkflowEvent
-from src.processes.models.workflows.kickoff import KickoffValue
+from src.processes.models.templates.kickoff import Kickoff
+from src.processes.models.templates.owner import TemplateOwner
+from src.processes.models.templates.task import TaskTemplate
+from src.processes.models.templates.template import Template
 from src.processes.models.workflows.attachment import FileAttachment
 from src.processes.models.workflows.conditions import (
     Condition,
     Predicate,
     Rule,
 )
+from src.processes.models.workflows.event import WorkflowEvent
 from src.processes.models.workflows.fields import (
     TaskField,
 )
+from src.processes.models.workflows.kickoff import KickoffValue
+from src.processes.models.workflows.task import Task
+from src.processes.models.workflows.workflow import Workflow
+from src.processes.serializers.templates.template import (
+    TemplateSerializer,
+)
 from src.processes.services.tasks.task import TaskService
-from src.accounts.models import UserGroup
-from src.webhooks.models import WebHook
+from src.utils.salt import get_salt
 from src.webhooks.enums import HookEvent
-
+from src.webhooks.models import WebHook
 
 UserModel = get_user_model()
 

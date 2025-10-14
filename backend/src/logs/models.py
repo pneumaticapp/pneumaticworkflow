@@ -1,16 +1,17 @@
 from django.contrib.auth import get_user_model
-from django.db import models
 from django.contrib.postgres.fields import JSONField
-from src.generics.managers import BaseSoftDeleteManager
-from src.logs.querysets import AccountEventQuerySet
-from src.generics.models import SoftDeleteModel
+from django.core.serializers.json import DjangoJSONEncoder
+from django.db import models
+
 from src.accounts.models import AccountBaseMixin
+from src.generics.managers import BaseSoftDeleteManager
+from src.generics.models import SoftDeleteModel
 from src.logs.enums import (
-    AccountEventType,
     AccountEventStatus,
+    AccountEventType,
     RequestDirection,
 )
-from django.core.serializers.json import DjangoJSONEncoder
+from src.logs.querysets import AccountEventQuerySet
 
 UserModel = get_user_model()
 

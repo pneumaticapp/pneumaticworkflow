@@ -1,14 +1,14 @@
 import pytest
+
 from src.accounts.tokens import (
     VerificationToken,
 )
+from src.authentication import messages
+from src.authentication.enums import AuthTokenType
 from src.processes.tests.fixtures import (
     create_test_user,
 )
 from src.utils.validation import ErrorCode
-from src.authentication import messages
-from src.authentication.enums import AuthTokenType
-
 
 pytestmark = pytest.mark.django_db
 

@@ -1,16 +1,17 @@
 from rest_framework import serializers
 from rest_framework.serializers import ValidationError
 from rest_framework_simplejwt.tokens import TokenError
+
 from src.generics.mixins.serializers import (
     CustomValidationErrorMixin,
 )
-from src.payment.stripe.tokens import ConfirmToken
-from src.payment.models import Product, Price
 from src.payment.messages import (
     MSG_BL_0001,
     MSG_BL_0002,
     MSG_BL_0003,
 )
+from src.payment.models import Price, Product
+from src.payment.stripe.tokens import ConfirmToken
 
 
 class PriceSerializer(serializers.ModelSerializer):

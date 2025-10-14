@@ -1,40 +1,39 @@
+from django.conf import settings
 from django.contrib import admin
 from django.urls import include, path, re_path
-from django.conf import settings
 from rest_framework.routers import DefaultRouter
 
-from src.processes.views.workflow import WorkflowViewSet
-from src.processes.views.template import (
-    TemplateViewSet,
-)
-from src.processes.views.checklist import (
-    CheckListViewSet,
-)
-from src.processes.views.task import (
-    TaskViewSet,
-    TasksListView,
-)
 from src import views
-from src.accounts.views.tenants import TenantsViewSet
 from src.accounts.views.accounts import AccountPlanView
-from src.webhooks.views.events import WebHookEventViewSet
-from src.webhooks.views.webhooks import WebHookViewSet
-from src.webhooks.views.buffer import WebHookBufferViewSet
-from src.services.views import ServicesViewSet
+from src.accounts.views.tenants import TenantsViewSet
+from src.faq.views import FaqViewSet
+from src.notifications.consumers import (
+    EventsConsumer,
+    NewTaskConsumer,
+    NotificationsConsumer,
+    RemovedTaskConsumer,
+    WorkflowEventConsumer,
+)
 from src.payment.views import (
     PaymentViewSet,
     StripeViewSet,
     SubscriptionViewSet,
 )
-from src.faq.views import FaqViewSet
-from src.notifications.consumers import (
-    NotificationsConsumer,
-    NewTaskConsumer,
-    RemovedTaskConsumer,
-    WorkflowEventConsumer,
-    EventsConsumer,
+from src.processes.views.checklist import (
+    CheckListViewSet,
 )
-
+from src.processes.views.task import (
+    TasksListView,
+    TaskViewSet,
+)
+from src.processes.views.template import (
+    TemplateViewSet,
+)
+from src.processes.views.workflow import WorkflowViewSet
+from src.services.views import ServicesViewSet
+from src.webhooks.views.buffer import WebHookBufferViewSet
+from src.webhooks.views.events import WebHookEventViewSet
+from src.webhooks.views.webhooks import WebHookViewSet
 
 router = DefaultRouter(trailing_slash=False)
 router.register('templates', TemplateViewSet, basename='templates')

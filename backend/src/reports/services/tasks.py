@@ -13,18 +13,17 @@ from src.processes.utils.common import (
     insert_fields_values_to_text,
 )
 from src.reports.entities import (
+    TaskForTasksDigest,
     TasksDigest,
     TemplateForTasksDigest,
-    TaskForTasksDigest,
-)
-from src.reports.services.base import (
-    SendDigest,
 )
 from src.reports.queries.tasks import (
     TasksDigestQuery,
 )
+from src.reports.services.base import (
+    SendDigest,
+)
 from src.services.email import EmailService
-
 
 UserModel = get_user_model()
 

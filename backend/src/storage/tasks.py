@@ -1,26 +1,26 @@
 from contextlib import contextmanager
-from django.db import transaction
-from django.contrib.auth import get_user_model
-from celery import shared_task
+
 from celery.task import Task as TaskCelery
+from django.contrib.auth import get_user_model
+from django.db import transaction
+
+from celery import shared_task
 from src.accounts.enums import NotificationType
-from src.accounts.models import Account, Contact, UserGroup
-from src.logs.models import AccountEvent
+from src.accounts.models import Account, Contact, Notification, UserGroup
 from src.logs.enums import AccountEventStatus
+from src.logs.models import AccountEvent
 from src.logs.service import AccountLogService
 from src.processes.enums import (
-    WorkflowEventType,
     FieldType,
+    WorkflowEventType,
 )
-from src.processes.models.templates.template import TemplateDraft
 from src.processes.models.templates.task import TaskTemplate
-from src.processes.models.workflows.task import Task
-from src.processes.models.workflows.event import WorkflowEvent
+from src.processes.models.templates.template import TemplateDraft
 from src.processes.models.workflows.attachment import FileAttachment
+from src.processes.models.workflows.event import WorkflowEvent
 from src.processes.models.workflows.fields import TaskField
-from src.accounts.models import Notification
+from src.processes.models.workflows.task import Task
 from src.storage.google_cloud import GoogleCloudService
-
 
 # TODO Remove file in https://my.pneumatic.app/workflows/41526
 fields_text_types = (

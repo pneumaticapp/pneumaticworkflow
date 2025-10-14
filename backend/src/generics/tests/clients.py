@@ -1,10 +1,11 @@
 from typing import Optional
-from rest_framework.test import APIClient
-from django.contrib.auth import get_user_model
-from src.authentication.enums import AuthTokenType
-from src.accounts.models import APIKey
-from src.authentication.tokens import PneumaticToken
 
+from django.contrib.auth import get_user_model
+from rest_framework.test import APIClient
+
+from src.accounts.models import APIKey
+from src.authentication.enums import AuthTokenType
+from src.authentication.tokens import PneumaticToken
 
 UserModel = get_user_model()
 

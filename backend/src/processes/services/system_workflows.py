@@ -1,26 +1,18 @@
-from typing import List, Dict, Optional
+from typing import Dict, List, Optional
+
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import QuerySet
+
 from src.authentication.enums import AuthTokenType
-from src.processes.services.workflows.workflow import (
-    WorkflowService,
-)
-from src.processes.services.exceptions import (
-    WorkflowServiceException,
-)
-from src.processes.models.templates.system_template import SystemTemplate
-from src.processes.models.templates.template import Template
 from src.processes.enums import (
     FieldType,
 )
-from src.processes.utils.common import (
-    insert_fields_values_to_text,
-)
-from src.utils.logging import (
-    capture_sentry_message,
-    SentryLogLevel,
+from src.processes.models.templates.system_template import SystemTemplate
+from src.processes.models.templates.template import Template
+from src.processes.services.exceptions import (
+    WorkflowServiceException,
 )
 from src.processes.services.templates.template import (
     TemplateService,
@@ -28,7 +20,16 @@ from src.processes.services.templates.template import (
 from src.processes.services.workflow_action import (
     WorkflowActionService,
 )
-
+from src.processes.services.workflows.workflow import (
+    WorkflowService,
+)
+from src.processes.utils.common import (
+    insert_fields_values_to_text,
+)
+from src.utils.logging import (
+    SentryLogLevel,
+    capture_sentry_message,
+)
 
 UserModel = get_user_model()
 

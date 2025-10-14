@@ -1,14 +1,15 @@
 import pytest
 from rest_framework.serializers import ValidationError
-from src.generics.mixins.serializers import (
-    ValidationUtilsMixin,
-    CustomValidationErrorMixin,
-)
-from src.utils.validation import ErrorCode
+
 from src.generics.messages import (
     MSG_GE_0003,
     MSG_GE_0004,
 )
+from src.generics.mixins.serializers import (
+    CustomValidationErrorMixin,
+    ValidationUtilsMixin,
+)
+from src.utils.validation import ErrorCode
 
 
 class TestValidationUtilsMixin:

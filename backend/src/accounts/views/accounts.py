@@ -2,16 +2,17 @@ from django.contrib.auth import get_user_model
 from rest_framework.generics import (
     GenericAPIView,
 )
+
 from src.accounts.permissions import (
-    UserIsAdminOrAccountOwner,
-    ExpiredSubscriptionPermission,
     BillingPlanPermission,
+    ExpiredSubscriptionPermission,
+    UserIsAdminOrAccountOwner,
+)
+from src.accounts.serializers.accounts import (
+    AccountPlanSerializer,
+    AccountSerializer,
 )
 from src.accounts.services.account import AccountService
-from src.accounts.serializers.accounts import (
-    AccountSerializer,
-    AccountPlanSerializer,
-)
 from src.generics.mixins.views import (
     BaseResponseMixin,
 )

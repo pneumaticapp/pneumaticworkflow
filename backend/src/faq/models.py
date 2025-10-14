@@ -1,10 +1,11 @@
 from django.db.models import (
-    TextField,
     BooleanField,
     PositiveIntegerField,
+    TextField,
 )
-from src.generics.models import SoftDeleteModel
+
 from src.faq.querysets import FaqItemQuerySet
+from src.generics.models import SoftDeleteModel
 
 
 class FaqItem(SoftDeleteModel):

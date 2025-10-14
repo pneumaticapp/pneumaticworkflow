@@ -1,5 +1,6 @@
 # ruff: noqa: E402
 import os
+
 import django
 from channels.routing import ProtocolTypeRouter, URLRouter
 from channels.sessions import CookieMiddleware, SessionMiddleware
@@ -11,15 +12,14 @@ configuration = os.getenv('ENVIRONMENT', 'development').title()
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'src.settings')
 os.environ.setdefault('DJANGO_CONFIGURATION', configuration)
 
-from django.conf import settings
 from configurations import importer
+from django.conf import settings
 
 importer.install()
 django.setup()
 
-from src.authentication.middleware import WebsocketAuthMiddleware
 from src import urls
-
+from src.authentication.middleware import WebsocketAuthMiddleware
 
 if (
     configuration in {'Staging', 'Production'}

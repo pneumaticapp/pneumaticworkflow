@@ -1,18 +1,18 @@
 import pytest
+
+from src.authentication.enums import AuthTokenType
+from src.processes.enums import (
+    OwnerType,
+    PerformerType,
+)
+from src.processes.messages import template as messages
+from src.processes.models.templates.checklist import ChecklistTemplate
+from src.processes.models.templates.task import TaskTemplate
+from src.processes.models.templates.template import Template
 from src.processes.tests.fixtures import (
     create_test_user,
 )
-from src.processes.models.templates.checklist import ChecklistTemplate
-from src.processes.models.templates.template import Template
-from src.processes.models.templates.task import TaskTemplate
-from src.processes.enums import (
-    PerformerType,
-    OwnerType,
-)
-from src.processes.messages import template as messages
 from src.utils.validation import ErrorCode
-from src.authentication.enums import AuthTokenType
-
 
 pytestmark = pytest.mark.django_db
 

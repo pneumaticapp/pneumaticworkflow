@@ -1,17 +1,17 @@
-from rest_framework import serializers
-from django.contrib.auth import get_user_model, authenticate
-from drf_recaptcha.fields import ReCaptchaV2Field
+from django.contrib.auth import authenticate, get_user_model
 from django.core.validators import RegexValidator
-from src.accounts.models import Account
-from src.generics.fields import TimeStampField, DateFormatField
-from src.generics.serializers import CustomValidationErrorMixin
-from src.accounts.enums import Language
-from src.authentication.messages import (
-    MSG_AU_0013,
-    MSG_AU_0012,
-    MSG_AU_0006,
-)
+from drf_recaptcha.fields import ReCaptchaV2Field
+from rest_framework import serializers
 
+from src.accounts.enums import Language
+from src.accounts.models import Account
+from src.authentication.messages import (
+    MSG_AU_0006,
+    MSG_AU_0012,
+    MSG_AU_0013,
+)
+from src.generics.fields import DateFormatField, TimeStampField
+from src.generics.serializers import CustomValidationErrorMixin
 
 UserModel = get_user_model()
 

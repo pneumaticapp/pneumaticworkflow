@@ -1,21 +1,22 @@
 import pytest
 from django.contrib.auth import get_user_model
-from src.processes.models.workflows.task import TaskPerformer
+
+from src.processes.enums import (
+    DirectlyStatus,
+    OwnerType,
+    PerformerType,
+)
 from src.processes.models.templates.owner import TemplateOwner
+from src.processes.models.workflows.task import TaskPerformer
+from src.processes.tasks.update_workflow import (
+    update_workflow_owners,
+)
 from src.processes.tests.fixtures import (
-    create_test_user,
     create_test_account,
     create_test_group,
     create_test_template,
+    create_test_user,
     create_test_workflow,
-)
-from src.processes.enums import (
-    PerformerType,
-    OwnerType,
-    DirectlyStatus,
-)
-from src.processes.tasks.update_workflow import (
-    update_workflow_owners,
 )
 
 UserModel = get_user_model()

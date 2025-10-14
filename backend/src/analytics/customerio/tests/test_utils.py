@@ -1,8 +1,9 @@
 import hmac
 from hashlib import sha256
+
 from src.analytics.customerio.utils import (
-    get_webhook_hash,
     check_webhook_hash,
+    get_webhook_hash,
 )
 
 

@@ -1,16 +1,16 @@
 import pytest
-from src.authentication.services.exceptions import (
-    AuthException,
-)
+
+from src.authentication.entities import UserData
 from src.authentication.services.auth0 import (
     Auth0Service,
 )
-from src.authentication.entities import UserData
+from src.authentication.services.exceptions import (
+    AuthException,
+)
 from src.processes.tests.fixtures import (
     create_test_user,
 )
 from src.utils.validation import ErrorCode
-
 
 pytestmark = pytest.mark.django_db
 

@@ -3,12 +3,13 @@ from django.contrib.admin import (
     ModelAdmin,
     StackedInline,
 )
-from src.ai.models import (
-    OpenAiPrompt,
-    OpenAiMessage,
-)
-from django.forms.models import BaseInlineFormSet
 from django.forms import ModelForm, ValidationError
+from django.forms.models import BaseInlineFormSet
+
+from src.ai.models import (
+    OpenAiMessage,
+    OpenAiPrompt,
+)
 
 
 class OpenAiMessageFormset(BaseInlineFormSet):

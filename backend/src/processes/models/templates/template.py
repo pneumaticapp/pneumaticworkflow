@@ -1,40 +1,41 @@
 # ruff: noqa: PLC0415
-from typing import Optional, Dict
+from typing import Dict, Optional
+
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.postgres.fields import JSONField
 from django.contrib.postgres.search import SearchVectorField
 from django.core.exceptions import (
     ObjectDoesNotExist,
 )
-from django.conf import settings
 from django.db import models
+
 from src.accounts.models import (
     AccountBaseMixin,
 )
+from src.authentication.tokens import (
+    EmbedToken,
+    PublicToken,
+)
 from src.generics.managers import BaseSoftDeleteManager
 from src.generics.models import SoftDeleteModel
-from src.processes.models.mixins import (
-    WorkflowMixin,
-)
-from src.processes.querysets import (
-    TemplateQuerySet,
-    FieldTemplateQuerySet,
-    TemplateDraftQuerySet,
-)
 from src.processes.consts import TEMPLATE_NAME_LENGTH
 from src.processes.enums import (
     PerformerType,
     TemplateType,
 )
-from src.authentication.tokens import (
-    PublicToken,
-    EmbedToken,
+from src.processes.models.mixins import (
+    WorkflowMixin,
+)
+from src.processes.querysets import (
+    FieldTemplateQuerySet,
+    TemplateDraftQuerySet,
+    TemplateQuerySet,
 )
 from src.processes.services.exceptions import (
     EmbedIdCreateMaxDeepException,
     PublicIdCreateMaxDeepException,
 )
-
 
 UserModel = get_user_model()
 

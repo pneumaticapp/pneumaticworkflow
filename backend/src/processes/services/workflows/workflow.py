@@ -1,31 +1,33 @@
 
 from typing import Optional
-from django.utils import timezone
+
 from django.contrib.auth import get_user_model
-from src.processes.services.base import (
-    BaseWorkflowService,
-)
-from src.processes.models.templates.template import Template
-from src.processes.models.workflows.workflow import Workflow
-from src.utils.dates import date_to_user_fmt
-from src.processes.utils.common import (
-    string_abbreviation,
-    insert_fields_values_to_text,
-    contains_fields_vars,
-)
-from src.processes.serializers.workflows.kickoff_value import (
-    KickoffValueSerializer,
-)
-from src.processes.consts import WORKFLOW_NAME_LENGTH
-from src.processes.services.templates.integrations \
-    import TemplateIntegrationsService
-from src.processes.services.tasks.task import TaskService
+from django.utils import timezone
+
 from src.analytics.actions import (
     WorkflowActions,
 )
 from src.analytics.services import AnalyticService
 from src.authentication.enums import AuthTokenType
-
+from src.processes.consts import WORKFLOW_NAME_LENGTH
+from src.processes.models.templates.template import Template
+from src.processes.models.workflows.workflow import Workflow
+from src.processes.serializers.workflows.kickoff_value import (
+    KickoffValueSerializer,
+)
+from src.processes.services.base import (
+    BaseWorkflowService,
+)
+from src.processes.services.tasks.task import TaskService
+from src.processes.services.templates.integrations import (
+    TemplateIntegrationsService,
+)
+from src.processes.utils.common import (
+    contains_fields_vars,
+    insert_fields_values_to_text,
+    string_abbreviation,
+)
+from src.utils.dates import date_to_user_fmt
 
 UserModel = get_user_model()
 

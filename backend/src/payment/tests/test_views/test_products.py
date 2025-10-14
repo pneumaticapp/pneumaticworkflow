@@ -1,17 +1,17 @@
 import pytest
 from django.contrib.auth import get_user_model
+
+from src.payment import messages
 from src.payment.enums import PriceStatus
-from src.processes.tests.fixtures import (
-    create_test_user,
-    create_test_account,
-)
 from src.payment.tests.fixtures import (
     create_test_invoice_price,
     create_test_product,
     create_test_recurring_price,
 )
-from src.payment import messages
-
+from src.processes.tests.fixtures import (
+    create_test_account,
+    create_test_user,
+)
 
 UserModel = get_user_model()
 pytestmark = pytest.mark.django_db

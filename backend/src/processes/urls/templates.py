@@ -1,16 +1,16 @@
 from django.urls import path
 from rest_framework.routers import DefaultRouter
+
 from src.processes.views.public.template import (
     PublicTemplateViewSet,
 )
 from src.processes.views.system_template import (
-    SystemTemplateViewSet,
     SystemTemplatesImportViewSet,
+    SystemTemplateViewSet,
 )
 from src.processes.views.template import (
     TemplateIntegrationsViewSet,
 )
-
 
 router = DefaultRouter(trailing_slash=False)
 router.register(

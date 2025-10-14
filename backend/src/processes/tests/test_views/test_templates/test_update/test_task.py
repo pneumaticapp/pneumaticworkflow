@@ -1,45 +1,46 @@
 # ruff: noqa: UP031
-import pytest
 from datetime import timedelta
-from src.utils.validation import ErrorCode
-from src.processes.messages import template as messages
-from src.processes.tests.fixtures import (
-    create_test_user,
-    create_test_template,
-    create_invited_user,
-    create_test_account,
-    create_test_workflow,
+
+import pytest
+
+from src.authentication.enums import AuthTokenType
+from src.processes.enums import (
+    ConditionAction,
+    DueDateRule,
+    FieldType,
+    OwnerType,
+    PerformerType,
+    PredicateOperator,
+    PredicateType,
+    TaskStatus,
 )
-from src.processes.models.templates.task import TaskTemplate
-from src.processes.models.templates.raw_due_date import RawDueDateTemplate
+from src.processes.messages import template as messages
 from src.processes.models.templates.fields import (
     FieldTemplate,
 )
-from src.processes.models.workflows.workflow import Workflow
+from src.processes.models.templates.raw_due_date import RawDueDateTemplate
+from src.processes.models.templates.task import TaskTemplate
 from src.processes.models.workflows.fields import (
     TaskField,
+)
+from src.processes.models.workflows.workflow import Workflow
+from src.processes.services.versioning.schemas import (
+    TemplateSchemaV1,
 )
 from src.processes.services.versioning.versioning import (
     TemplateVersioningService,
 )
-from src.processes.services.versioning.schemas import (
-    TemplateSchemaV1,
-)
-
-from src.processes.enums import (
-    PerformerType,
-    FieldType,
-    DueDateRule,
-    OwnerType,
-    TaskStatus,
-    ConditionAction,
-    PredicateType,
-    PredicateOperator,
-)
 from src.processes.services.workflows.workflow_version import (
-        WorkflowUpdateVersionService,
-    )
-from src.authentication.enums import AuthTokenType
+    WorkflowUpdateVersionService,
+)
+from src.processes.tests.fixtures import (
+    create_invited_user,
+    create_test_account,
+    create_test_template,
+    create_test_user,
+    create_test_workflow,
+)
+from src.utils.validation import ErrorCode
 
 pytestmark = pytest.mark.django_db
 

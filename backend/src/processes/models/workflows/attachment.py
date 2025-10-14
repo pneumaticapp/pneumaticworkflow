@@ -1,14 +1,16 @@
 from typing import Optional
 from urllib.parse import unquote
-from django.db import models
+
 from django.contrib.postgres.search import SearchVectorField
+from django.db import models
+
 from src.accounts.models import AccountBaseMixin
 from src.generics.managers import BaseSoftDeleteManager
 from src.generics.models import SoftDeleteModel
-from src.processes.querysets import FileAttachmentQuerySet
+from src.processes.models.workflows.event import WorkflowEvent
 from src.processes.models.workflows.fields import TaskField
 from src.processes.models.workflows.workflow import Workflow
-from src.processes.models.workflows.event import WorkflowEvent
+from src.processes.querysets import FileAttachmentQuerySet
 
 
 class FileAttachment(
