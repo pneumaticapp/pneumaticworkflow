@@ -4,15 +4,16 @@ import { useSelector, useDispatch } from 'react-redux';
 
 import { useDelayUnmount } from '../../hooks/useDelayUnmount';
 import { IApplicationState } from '../../types/redux';
-import { closeTuneViewModal, setWorkflowsFilterSelectedFields } from '../../redux/actions';
+import { closeTuneViewModal, saveWorkflowsPreset, setWorkflowsFilterSelectedFields } from '../../redux/actions';
 
-import { IExtraField, TTransformedTask } from '../../types/template';
+import { IExtraField, TOrderedFields, TTransformedTask } from '../../types/template';
 import { Button, Checkbox, SideModal, Tooltip } from '../UI';
 import { ShortArrowIcon } from '../icons';
 import { StepName } from '../StepName';
 
 import styles from './TuneViewModal.css';
 import { TooltipRichContent } from '../TemplateEdit/TooltipRichContent';
+import { TSystemField } from '../Workflows/WorkflowsTablePage/WorkflowsTable/types';
 
 export function TuneViewModal() {
   const dispatch = useDispatch();
@@ -29,15 +30,13 @@ export function TuneViewModal() {
   const templateTasks: TTransformedTask[] = useSelector(
     (state: IApplicationState) => state.templates.templatesTasksMap[templateId],
   );
-  const selectedFieldsByTemplate = useSelector(
-    (state: IApplicationState) => state.workflows.workflowsSettings.selectedFieldsByTemplate,
-  );
-  const currentUser = useSelector((state: IApplicationState) => state.authUser);
+
+  const savedFields = useSelector((state: IApplicationState) => state.workflows.workflowsSettings.selectedFields);
+
   const variables = useSelector((state: IApplicationState) => state.templates.templatesVariablesMap[templateId] || []);
 
   useEffect(() => {
     if (isOpen && templateId) {
-      const savedFields = selectedFieldsByTemplate[templateId] || [];
       const savedFieldsSet = new Set(savedFields);
       setSelectedFields(savedFieldsSet);
 
@@ -50,17 +49,13 @@ export function TuneViewModal() {
       });
       setOpenedTasks(tasksToOpen);
     }
-  }, [isOpen, templateId, selectedFieldsByTemplate, templateTasks]);
+  }, [isOpen, templateId, templateTasks]);
 
   const shouldRender = useDelayUnmount(isOpen, 150);
   if (!shouldRender) {
     return null;
   }
 
-  const COLORS = {
-    white: 'rgba(255, 255, 255, 1)',
-    black72: 'rgba(98, 98, 95, 1)',
-  };
   const STYLES = {
     container: styles['tune-view-modal__container'],
     header: styles['tune-view-modal__header'],
@@ -72,6 +67,7 @@ export function TuneViewModal() {
     fieldsContainer: styles['tune-view-modal__fields-container'],
     fieldItem: styles['tune-view-modal__field-item'],
     label: styles['tune-view-modal__label'],
+    labelClassName: styles['tune-view-modal__label-class-name'],
     fieldName: styles['tune-view-modal__field-name'],
     footer: styles['tune-view-modal__footer'],
     footerButton: styles['footer-button'],
@@ -80,6 +76,7 @@ export function TuneViewModal() {
   const MESSAGES = {
     title: 'workflow.tune-view-modal-title',
     applyChanges: 'workflow.tune-view-modal-applay-changes',
+    saveForAll: 'workflow.tune-view-modal-save-for-all',
   };
 
   const handleClose = () => {
@@ -104,14 +101,27 @@ export function TuneViewModal() {
     setSelectedFields((prev) => getNewSet(prev, fieldId));
   };
 
-  const saveFieldsToLocalStorage = (localtemplateId: number, fields: string[]) => {
-    const key = `workflows_fields_user_${currentUser?.id}_template_${localtemplateId}`;
-    localStorage.setItem(key, JSON.stringify(fields));
+  const isSystemField = (field: IExtraField | TSystemField): field is TSystemField => {
+    return 'hasNotTooltip' in field && 'isDisabled' in field;
   };
 
-  const handleApplyChanges = () => {
-    dispatch(setWorkflowsFilterSelectedFields({ templateId, selectedFields: Array.from(selectedFields) }));
-    saveFieldsToLocalStorage(templateId, Array.from(selectedFields));
+  const handleApplyChanges = (type: 'personal' | 'account') => {
+    const orderedFields: TOrderedFields[] = [];
+    let orderIndex = 0;
+    templateTasks.forEach(({ fields }) => {
+      fields.forEach(({ apiName }) => {
+        if (selectedFields.has(apiName)) {
+          orderedFields.push({
+            order: (orderIndex += 1),
+            width: 1,
+            apiName,
+          });
+        }
+      });
+    });
+
+    dispatch(setWorkflowsFilterSelectedFields(Array.from(selectedFields)));
+    dispatch(saveWorkflowsPreset({ orderedFields, type, templateId }));
     handleClose();
   };
 
@@ -147,29 +157,41 @@ export function TuneViewModal() {
               </div>
 
               <div className={`${STYLES.taskArrow} ${openedTasks.has(taskApiname) && STYLES.taskArrowRotated}`}>
-                <ShortArrowIcon fill={openedTasks.has(taskApiname) ? COLORS.white : COLORS.black72} />
+                <ShortArrowIcon />
               </div>
             </div>
 
             <div>
               {openedTasks.has(taskApiname) && (
                 <div className={fields.length > 0 ? STYLES.fieldsContainer : ''}>
-                  {fields.map(({ apiName: fieldApiName, name: fieldName }: IExtraField) => (
-                    <div key={fieldApiName} className={STYLES.fieldItem}>
-                      <label htmlFor={fieldApiName} className={STYLES.label}>
-                        <Tooltip content={fieldName} interactive={false} contentClassName={STYLES.tooltip}>
-                          <span className={STYLES.fieldName}>{fieldName}</span>
-                        </Tooltip>
-                        <Checkbox
-                          checked={selectedFields.has(fieldApiName)}
-                          onChange={() => onFieldToggle(fieldApiName)}
-                          title={fieldName}
-                          titlePosition="external"
-                          checkboxId={fieldApiName}
-                        />
-                      </label>
-                    </div>
-                  ))}
+                  {fields.map((field: IExtraField | TSystemField) => {
+                    const { apiName: fieldApiName, name: fieldName } = field;
+                    const hasNotTooltip = isSystemField(field) ? field.hasNotTooltip : null;
+                    const isDisabled = isSystemField(field) ? field.isDisabled : null;
+
+                    return (
+                      <div key={fieldApiName} className={STYLES.fieldItem}>
+                        <label htmlFor={fieldApiName} className={STYLES.label}>
+                          {hasNotTooltip ? (
+                            <span className={STYLES.fieldName}>{fieldName}</span>
+                          ) : (
+                            <Tooltip content={fieldName} interactive={false} contentClassName={STYLES.tooltip}>
+                              <span className={STYLES.fieldName}>{fieldName}</span>
+                            </Tooltip>
+                          )}
+                          <Checkbox
+                            {...(isDisabled ? { disabled: isDisabled } : {})}
+                            checked={selectedFields.has(fieldApiName)}
+                            onChange={() => onFieldToggle(fieldApiName)}
+                            title={fieldName}
+                            titlePosition="external"
+                            checkboxId={fieldApiName}
+                            labelClassName={STYLES.labelClassName}
+                          />
+                        </label>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -181,9 +203,14 @@ export function TuneViewModal() {
         <Button
           buttonStyle="yellow"
           label={formatMessage({ id: MESSAGES.applyChanges })}
-          size="md"
           className={STYLES.footerButton}
-          onClick={handleApplyChanges}
+          onClick={() => handleApplyChanges('personal')}
+        />
+        <Button
+          buttonStyle="transparent-yellow"
+          label={formatMessage({ id: MESSAGES.saveForAll })}
+          className={STYLES.footerButton}
+          onClick={() => handleApplyChanges('account')}
         />
       </SideModal.Footer>
     </SideModal>

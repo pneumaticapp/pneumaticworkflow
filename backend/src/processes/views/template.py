@@ -21,20 +21,15 @@ from src.generics.filters import PneumaticFilterBackend
 from src.generics.mixins.views import (
     CustomViewSetMixin,
 )
-from src.generics.permissions import (
-    UserIsAuthenticated,
-)
-from src.processes.filters import (
-    TemplateFilter,
-)
+from src.generics.permissions import UserIsAuthenticated
+from src.processes.filters import TemplateFilter
 from src.processes.models.templates.fields import FieldTemplate
 from src.processes.models.templates.kickoff import Kickoff
+from src.processes.models.templates.preset import TemplatePreset
 from src.processes.models.templates.system_template import SystemTemplate
 from src.processes.models.templates.task import TaskTemplate
 from src.processes.models.templates.template import Template
-from src.processes.permissions import (
-    TemplateOwnerPermission,
-)
+from src.processes.permissions import TemplateOwnerPermission
 from src.processes.queries import (
     TemplateStepsQuery,
     TemplateTitlesEventsQuery,
@@ -42,6 +37,9 @@ from src.processes.queries import (
 )
 from src.processes.serializers.templates.integrations import (
     TemplateIntegrationsFilterSerializer,
+)
+from src.processes.serializers.templates.preset import (
+    TemplatePresetSerializer,
 )
 from src.processes.serializers.templates.task import (
     TemplateStepFilterSerializer,
@@ -69,12 +67,14 @@ from src.processes.services.clone import (
 )
 from src.processes.services.exceptions import (
     OpenAiServiceException,
+    TemplatePresetServiceException,
     TemplateServiceException,
     WorkflowServiceException,
 )
 from src.processes.services.templates.ai import (
     OpenAiService,
 )
+from src.processes.services.templates.preset import TemplatePresetService
 from src.processes.services.templates.template import (
     TemplateService,
 )
@@ -116,6 +116,8 @@ class TemplateViewSet(
         'titles': TemplateTitlesSerializer,
         'titles_by_events': TemplateTitlesSerializer,
         'fields': TemplateOnlyFieldsSerializer,
+        'presets': TemplatePresetSerializer,
+        'preset': TemplatePresetSerializer,
     }
 
     def get_permissions(self):
@@ -125,6 +127,8 @@ class TemplateViewSet(
             'clone',
             'destroy',
             'discard_changes',
+            'presets',
+            'preset',
         ):
             return (
                 UserIsAuthenticated(),
@@ -642,6 +646,40 @@ class TemplateViewSet(
             **filter_slz.validated_data,
         )
         return self.paginated_response(queryset)
+
+    @action(methods=['GET'], detail=True, url_path='presets')
+    def presets(self, request, *args, **kwargs):
+        template = self.get_object()
+        user_presets = (
+            TemplatePreset.objects
+            .by_user(request.user, template.id)
+            .select_related('author', 'template')
+            .prefetch_related('fields')
+        )
+        serializer = self.get_serializer(user_presets, many=True)
+        return self.response_ok(serializer.data)
+
+    @action(methods=['POST'], detail=True, url_path='preset')
+    def preset(self, request, *args, **kwargs):
+        template = self.get_object()
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        service = TemplatePresetService(
+            user=request.user,
+            is_superuser=request.is_superuser,
+            auth_type=request.token_type,
+        )
+
+        try:
+            preset = service.create(
+                template=template,
+                **serializer.validated_data,
+            )
+        except TemplatePresetServiceException as ex:
+            raise_validation_error(message=ex.message)
+
+        return self.response_ok(self.get_serializer(preset).data)
 
 
 class TemplateIntegrationsViewSet(

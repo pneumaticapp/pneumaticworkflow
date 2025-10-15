@@ -5,12 +5,14 @@ from django.db.models import Count, Q
 from rest_framework.permissions import BasePermission
 
 from src.accounts.enums import UserType
+from src.processes.enums import PresetType
 from src.processes.messages.template import (
     MSG_PT_0023,
 )
 from src.processes.messages.workflow import (
     MSG_PW_0001,
 )
+from src.processes.models.templates.preset import TemplatePreset
 from src.processes.models.templates.template import Template
 from src.processes.models.workflows.checklist import Checklist
 from src.processes.models.workflows.event import WorkflowEvent
@@ -345,3 +347,25 @@ class StoragePermission(BasePermission):
 
     def has_permission(self, request, view):
         return settings.PROJECT_CONF['STORAGE']
+
+
+class TemplatePresetPermission(BasePermission):
+
+    def has_permission(self, request, view):
+        try:
+            preset_id = int(view.kwargs.get('pk'))
+        except (ValueError, TypeError):
+            return False
+        else:
+            user = request.user
+            preset = TemplatePreset.objects.filter(
+                id=preset_id,
+                account_id=user.account_id,
+            ).first()
+            if not preset:
+                return False
+            if preset.author_id == user.id or user.is_account_owner:
+                return True
+            if preset.type == PresetType.ACCOUNT:
+                return preset.template.owners.filter(user_id=user.id).exists()
+            return False
