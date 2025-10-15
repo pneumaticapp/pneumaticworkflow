@@ -6,15 +6,14 @@ from django.contrib.auth import get_user_model
 from src.accounts.models import Account
 from src.analytics.services import AnalyticService
 from src.authentication.enums import AuthTokenType
+from src.processes.models.workflows.attachment import FileAttachment
 from src.processes.services import exceptions
-from src.processes.models import FileAttachment
 from src.storage.google_cloud import GoogleCloudService
 from src.utils.logging import (
-    capture_sentry_message,
     SentryLogLevel,
+    capture_sentry_message,
 )
 from src.utils.salt import get_salt
-
 
 UserModel = get_user_model()
 
@@ -36,15 +35,16 @@ class AttachmentService:
             cloud_service = self._get_cloud_service()
             upload_url, public_url = cloud_service.get_new_file_urls(
                 filename=filename,
-                content_type=content_type
+                content_type=content_type,
             )
-        except Exception as ex:
+        # TODO Fix the broad "try except"
+        except Exception as ex: # noqa: BLE001
             capture_sentry_message(
                 message='Cloud service: get_new_file_urls exception',
                 data={'message': str(ex)},
-                level=SentryLogLevel.ERROR
+                level=SentryLogLevel.ERROR,
             )
-            raise exceptions.CloudServiceException()
+            raise exceptions.CloudServiceException from ex
         return upload_url, public_url
 
     def _publish_file(self, url: str):
@@ -53,16 +53,17 @@ class AttachmentService:
             filename = url.split('/')[-1]
             filename = unquote(filename)
             file_blob = cloud_service.make_public(filename)
-        except Exception as ex:
+        # TODO Fix the broad "try except"
+        except Exception as ex: # noqa: BLE001
             capture_sentry_message(
                 message='Cloud service: make_public exception',
                 data={'message': str(ex)},
-                level=SentryLogLevel.ERROR
+                level=SentryLogLevel.ERROR,
             )
-            raise exceptions.CloudServiceException()
+            raise exceptions.CloudServiceException from ex
         else:
             if not file_blob:
-                raise exceptions.AttachmentEmptyBlobException()
+                raise exceptions.AttachmentEmptyBlobException
 
     def _create_attachment(
         self,
@@ -95,12 +96,12 @@ class AttachmentService:
         unique_filename = self._get_unique_filename(filename)
         upload_url, public_url = self._get_new_file_urls(
             filename=unique_filename,
-            content_type=content_type
+            content_type=content_type,
         )
         if thumbnail:
             thumb_upload_url, thumb_public_url = self._get_new_file_urls(
                 filename=f'thumb_{unique_filename}',
-                content_type=content_type
+                content_type=content_type,
             )
         else:
             thumb_upload_url, thumb_public_url = None, None
@@ -129,7 +130,7 @@ class AttachmentService:
             user=request_user,
             anonymous_id=anonymous_id,
             is_superuser=is_superuser,
-            auth_type=auth_type
+            auth_type=auth_type,
         )
 
     def create_clone(
@@ -143,7 +144,7 @@ class AttachmentService:
             name=instance.name,
             url=instance.url,
             thumbnail_url=instance.thumbnail_url,
-            size=instance.size
+            size=instance.size,
         )
         if not orphan:
             clone.workflow = instance.workflow

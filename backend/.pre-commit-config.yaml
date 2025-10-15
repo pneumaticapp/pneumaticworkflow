@@ -6,22 +6,8 @@ default_language_version:
 repos:
   - repo: local
     hooks:
-      - id: py_linter
-        name: py_linter
-        types: [python]
-        language: system
-        entry: poetry run pylint src --rcfile=.pylintrc
-        args:
-          - src/
-          - --rcfile=.pylintrc
-  - repo: local
-    hooks:
-      - id: py_codestyle
-        name: py_codestyle
-        types: [python]
-        language: system
-        entry: poetry run pycodestyle src --config=codestyle.ini
-        args:
-          - src/
-          - --config=codestyle.ini
-        exclude: 'migrations|settings.py|messages.py|wsgi.py|asgi.py'
+    - id: ruff
+      name: ruff
+      types: [python]
+      language: system
+      entry: ruff check --fix

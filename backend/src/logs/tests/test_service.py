@@ -1,12 +1,13 @@
 import pytest
-from src.logs.service import AccountLogService
+
 from src.logs.enums import (
     AccountEventStatus,
     AccountEventType,
     RequestDirection,
 )
+from src.logs.service import AccountLogService
 from src.processes.tests.fixtures import (
-    create_test_user
+    create_test_user,
 )
 
 pytestmark = pytest.mark.django_db
@@ -31,15 +32,15 @@ def test_create_instance():
         'users_data': {
             '@odata.context': "https://graph.lName,userType,creationType",
             'value': [
-                {'id': 'e8d1dc71-123d-bd527526ee92', }
-            ]
-        }
+                {'id': 'e8d1dc71-123d-bd527526ee92' },
+            ],
+        },
     }
     request_data = {
       "body": "Workflow: 04",
       "method": "new_task",
       "performer": (123,),
-      "title": "You have a new task"
+      "title": "You have a new task",
     }
     contractor = 'Some contractor'
     direction = RequestDirection.SENT

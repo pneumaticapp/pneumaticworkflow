@@ -1,15 +1,21 @@
 from typing import List
 
-from rest_framework.viewsets import GenericViewSet
 from rest_framework.decorators import action
-from src.utils.validation import raise_validation_error
+from rest_framework.viewsets import GenericViewSet
+
 from src.accounts.permissions import (
-    UsersOverlimitedPermission,
     BillingPlanPermission,
     ExpiredSubscriptionPermission,
+    UsersOverlimitedPermission,
 )
-from src.processes.models import (
-    WorkflowEvent,
+from src.generics.mixins.views import CustomViewSetMixin
+from src.generics.permissions import (
+    IsAuthenticated,
+)
+from src.processes.models.workflows.event import WorkflowEvent
+from src.processes.permissions import (
+    CommentEditPermission,
+    CommentReactionPermission,
 )
 from src.processes.serializers.comments import (
     CommentCreateSerializer,
@@ -18,26 +24,18 @@ from src.processes.serializers.comments import (
 from src.processes.serializers.workflows.events import (
     WorkflowEventSerializer,
 )
-from src.generics.mixins.views import CustomViewSetMixin
-from src.generics.permissions import (
-    IsAuthenticated,
-)
-
-from src.processes.permissions import (
-    CommentEditPermission,
-    CommentReactionPermission,
-)
 from src.processes.services.events import (
     CommentService,
 )
 from src.processes.services.exceptions import (
-    CommentServiceException
+    CommentServiceException,
 )
+from src.utils.validation import raise_validation_error
 
 
 class CommentViewSet(
     CustomViewSetMixin,
-    GenericViewSet
+    GenericViewSet,
 ):
 
     action_serializer_classes = {
@@ -49,7 +47,7 @@ class CommentViewSet(
     def get_permissions(self):
         if self.action in (
             'partial_update',
-            'destroy'
+            'destroy',
         ):
             return (
                 IsAuthenticated(),
@@ -58,7 +56,7 @@ class CommentViewSet(
                 UsersOverlimitedPermission(),
                 CommentEditPermission(),
             )
-        elif self.action in (
+        if self.action in (
             'watched',
             'create_reaction',
             'delete_reaction',
@@ -84,7 +82,7 @@ class CommentViewSet(
             extra_fields = ['workflow']
         return super().prefetch_queryset(
             queryset=queryset,
-            extra_fields=extra_fields
+            extra_fields=extra_fields,
         )
 
     def partial_update(self, request, *args, **kwargs):
@@ -95,17 +93,17 @@ class CommentViewSet(
             instance=comment_event,
             user=request.user,
             auth_type=request.token_type,
-            is_superuser=request.is_superuser
+            is_superuser=request.is_superuser,
         )
         try:
             event = service.update(
                 **slz.validated_data,
-                force_save=True
+                force_save=True,
             )
         except CommentServiceException as ex:
             raise_validation_error(message=ex.message)
         return self.response_ok(
-            WorkflowEventSerializer(instance=event).data
+            WorkflowEventSerializer(instance=event).data,
         )
 
     def destroy(self, request, *args, **kwargs):
@@ -114,14 +112,14 @@ class CommentViewSet(
             instance=comment_event,
             user=request.user,
             auth_type=request.token_type,
-            is_superuser=request.is_superuser
+            is_superuser=request.is_superuser,
         )
         try:
             event = service.delete()
         except CommentServiceException as ex:
             raise_validation_error(message=ex.message)
         return self.response_ok(
-            WorkflowEventSerializer(instance=event).data
+            WorkflowEventSerializer(instance=event).data,
         )
 
     @action(methods=('post',), detail=True)
@@ -131,7 +129,7 @@ class CommentViewSet(
             instance=comment_event,
             user=request.user,
             auth_type=request.token_type,
-            is_superuser=request.is_superuser
+            is_superuser=request.is_superuser,
         )
         try:
             service.watched()
@@ -148,7 +146,7 @@ class CommentViewSet(
             instance=comment_event,
             user=request.user,
             auth_type=request.token_type,
-            is_superuser=request.is_superuser
+            is_superuser=request.is_superuser,
         )
         try:
             service.create_reaction(value=slz.validated_data['value'])
@@ -165,7 +163,7 @@ class CommentViewSet(
             instance=comment_event,
             user=request.user,
             auth_type=request.token_type,
-            is_superuser=request.is_superuser
+            is_superuser=request.is_superuser,
         )
         try:
             service.delete_reaction(value=slz.validated_data['value'])

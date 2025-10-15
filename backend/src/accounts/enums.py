@@ -17,7 +17,7 @@ class NotificationType:
 
     URGENT_TYPES = (
         URGENT,
-        NOT_URGENT
+        NOT_URGENT,
     )
 
     CHOICES = (
@@ -57,7 +57,7 @@ class UserStatus:
         (INACTIVE, INACTIVE),
     )
     NOT_ACTIVE = {INVITED, INACTIVE}
-    LITERALS = Literal[INVITED, ACTIVE, INVITED]
+    LITERALS = Literal[INVITED, ACTIVE]
 
 
 class UserType:
@@ -226,7 +226,7 @@ class UserInviteStatus:
 
     NOT_FAILED_STATUSES = {
         PENDING,
-        ACCEPTED
+        ACCEPTED,
     }
 
     CHOICES = (
@@ -266,7 +266,7 @@ class Timezone:
         ('Asia/Tokyo', '+09 Asia/Tokyo'),
         ('Australia/Sydney', '+10 Australia/Sydney'),
         ('Pacific/Guadalcanal', '+11 Pacific/Guadalcanal'),
-        ('Pacific/Fiji', '+12 Pacific/Fiji')
+        ('Pacific/Fiji', '+12 Pacific/Fiji'),
     ]
 
 

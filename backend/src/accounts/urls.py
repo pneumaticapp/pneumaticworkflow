@@ -1,22 +1,25 @@
 from django.urls import path
 from rest_framework.routers import DefaultRouter
 
+from src.accounts.views.accounts import AccountView
+from src.accounts.views.api_key import APIKeyView
 from src.accounts.views.groups import GroupViewSet
-from src.accounts.views.public.users import PublicUsersViewSet
-from src.accounts.views.public.account import (
-    PublicAccountViewSet
-)
-from src.accounts.views import (
-    UsersViewSet,
-    UserInviteViewSet,
-    AccountView,
-    UserViewSet,
-    UnsubscribeDigestView,
-    APIKeyView,
+from src.accounts.views.notifications import (
     NotificationsReadView,
     NotificationsViewSet,
+)
+from src.accounts.views.public.account import (
+    PublicAccountViewSet,
+)
+from src.accounts.views.public.users import PublicUsersViewSet
+from src.accounts.views.unsubscribes import (
+    UnsubscribeDigestView,
     UnsubscribeEmailView,
 )
+from src.accounts.views.user import UserViewSet
+from src.accounts.views.user_invites import UserInviteViewSet
+from src.accounts.views.users import UsersViewSet
+
 app_name = 'accounts'
 
 
@@ -31,7 +34,7 @@ router.register('invites', UserInviteViewSet, basename='invites')
 router.register(
     'notifications',
     NotificationsViewSet,
-    basename='notifications'
+    basename='notifications',
 )
 
 urlpatterns = [

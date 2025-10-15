@@ -1,16 +1,16 @@
 import pytest
-from src.authentication.services.exceptions import (
-    AuthException
-)
-from src.authentication.services.auth0 import (
-    Auth0Service
-)
+
 from src.authentication.entities import UserData
+from src.authentication.services.auth0 import (
+    Auth0Service,
+)
+from src.authentication.services.exceptions import (
+    AuthException,
+)
 from src.processes.tests.fixtures import (
-    create_test_user
+    create_test_user,
 )
 from src.utils.validation import ErrorCode
-
 
 pytestmark = pytest.mark.django_db
 
@@ -23,7 +23,7 @@ def test_token__existent_user__authenticate(
     mocker.patch(
         'src.authentication.views.auth0.Auth0Permission.'
         'has_permission',
-        return_value=True
+        return_value=True,
     )
     email = 'test@test.test'
     user = create_test_user(email=email)
@@ -49,7 +49,7 @@ def test_token__existent_user__authenticate(
         '/auth/auth0/token',
         data=auth_response,
         HTTP_USER_AGENT=user_agent,
-        HTTP_X_REAL_IP=user_ip
+        HTTP_X_REAL_IP=user_ip,
     )
 
     # assert
@@ -75,16 +75,16 @@ def test_token__disable_auth0_auth__permission_denied(
     mocker.patch(
         'src.authentication.views.auth0.Auth0Permission.'
         'has_permission',
-        return_value=False
+        return_value=False,
     )
     auth0_service_init_mock = mocker.patch.object(
         Auth0Service,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     auth0_get_user_data_mock = mocker.patch(
         'src.authentication.services.auth0.'
-        'Auth0Service.get_user_data'
+        'Auth0Service.get_user_data',
     )
     user_agent = 'Some/Mozilla'
     user_ip = '128.18.0.99'
@@ -106,7 +106,7 @@ def test_token__disable_auth0_auth__permission_denied(
         '/auth/auth0/token',
         data=auth_response,
         HTTP_USER_AGENT=user_agent,
-        HTTP_X_REAL_IP=user_ip
+        HTTP_X_REAL_IP=user_ip,
     )
 
     # assert
@@ -125,18 +125,18 @@ def test_token__service_exception__validation_error(
     mocker.patch(
         'src.authentication.views.auth0.Auth0Permission.'
         'has_permission',
-        return_value=True
+        return_value=True,
     )
     auth0_service_init_mock = mocker.patch.object(
         Auth0Service,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     message = 'Some error'
     auth0_get_user_data_mock = mocker.patch(
         'src.authentication.services.auth0.'
         'Auth0Service.get_user_data',
-        side_effect=AuthException(message)
+        side_effect=AuthException(message),
     )
     authenticate_user_mock = mocker.patch(
         'src.authentication.services.auth0.'
@@ -155,7 +155,7 @@ def test_token__service_exception__validation_error(
     # act
     response = api_client.get(
         '/auth/auth0/token',
-        data=auth_response
+        data=auth_response,
     )
 
     # assert
@@ -176,16 +176,16 @@ def test_token__skip__code__validation_error(
     mocker.patch(
         'src.authentication.views.auth0.Auth0Permission.'
         'has_permission',
-        return_value=True
+        return_value=True,
     )
     auth0_service_init_mock = mocker.patch.object(
         Auth0Service,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     auth0_get_user_data_mock = mocker.patch(
         'src.authentication.services.auth0.'
-        'Auth0Service.get_user_data'
+        'Auth0Service.get_user_data',
     )
     authenticate_user_mock = mocker.patch(
         'src.authentication.services.auth0.'
@@ -198,7 +198,7 @@ def test_token__skip__code__validation_error(
     # act
     response = api_client.get(
         '/auth/auth0/token',
-        data=auth_response
+        data=auth_response,
     )
 
     # assert
@@ -219,16 +219,16 @@ def test_token__code_blank__validation_error(
     mocker.patch(
         'src.authentication.views.auth0.Auth0Permission.'
         'has_permission',
-        return_value=True
+        return_value=True,
     )
     auth0_service_init_mock = mocker.patch.object(
         Auth0Service,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     auth0_get_user_data_mock = mocker.patch(
         'src.authentication.services.auth0.'
-        'Auth0Service.get_user_data'
+        'Auth0Service.get_user_data',
     )
     authenticate_user_mock = mocker.patch(
         'src.authentication.services.auth0.'
@@ -242,7 +242,7 @@ def test_token__code_blank__validation_error(
     # act
     response = api_client.get(
         '/auth/auth0/token',
-        data=auth_response
+        data=auth_response,
     )
 
     # assert
@@ -263,18 +263,18 @@ def test_auth_uri__ok(
     mocker.patch(
         'src.authentication.views.auth0.Auth0Permission.'
         'has_permission',
-        return_value=True
+        return_value=True,
     )
     auth0_service_init_mock = mocker.patch.object(
         Auth0Service,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     auth_uri = 'https://login.auth0.com/authorize'
     auth0_get_auth_uri_mock = mocker.patch(
         'src.authentication.services.auth0.'
         'Auth0Service.get_auth_uri',
-        return_value=auth_uri
+        return_value=auth_uri,
     )
 
     # act
@@ -295,16 +295,16 @@ def test_auth_uri__disable_auth0_auth__permission_denied(
     mocker.patch(
         'src.authentication.views.auth0.Auth0Permission.'
         'has_permission',
-        return_value=False
+        return_value=False,
     )
     auth0_service_init_mock = mocker.patch.object(
         Auth0Service,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     auth0_get_auth_uri_mock = mocker.patch(
         'src.authentication.services.auth0.'
-        'Auth0Service.get_auth_uri'
+        'Auth0Service.get_auth_uri',
     )
 
     # act
@@ -324,18 +324,18 @@ def test_auth_uri__service_exception__validation_error(
     mocker.patch(
         'src.authentication.views.auth0.Auth0Permission.'
         'has_permission',
-        return_value=True
+        return_value=True,
     )
     auth0_service_init_mock = mocker.patch.object(
         Auth0Service,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     message = 'Some error'
     auth0_get_auth_uri_mock = mocker.patch(
         'src.authentication.services.auth0.'
         'Auth0Service.get_auth_uri',
-        side_effect=AuthException(message)
+        side_effect=AuthException(message),
     )
 
     # act

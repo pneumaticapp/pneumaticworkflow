@@ -1,23 +1,23 @@
-# pylint:disable=anomalous-backslash-in-string
+import re
 from abc import abstractmethod
 from typing import Optional
-from src.services.markdown import MarkdownPatterns
-from markdown import markdown
-import re
 
+from markdown import markdown
+
+from src.services.markdown import MarkdownPatterns
 
 list_block_pattern = re.compile(
     pattern=r'(^(?:\s*(?:(?:\d+\.)|[\-\+\*])\s+.*?(?:\n|$))+)',
-    flags=re.M
+    flags=re.M,
 )
 
 table_block_pattern = re.compile(
     pattern=r'(^(?:\|[^\n]+\|\r?\n)+)',
-    flags=re.M
+    flags=re.M,
 )
 paragraph_block_pattern = re.compile(
     pattern=r'^(?P<paragraph>(?:([*_`]|\*\*|\[){0,1}[a-zA-Z]+)(.*))',
-    flags=re.M
+    flags=re.M,
 )
 
 
@@ -37,7 +37,7 @@ class HTMLList:
 
     def close_li(self):
         if self._is_open_li:
-            self._html += f'</li>'
+            self._html += '</li>'
             self._is_open_li = False
 
     def close(self):
@@ -100,8 +100,7 @@ class RichEditorChecklistToHTMLService(BaseListToHTML):
             html_str = str(self._current_list)
             self._current_list = None
             return html_str + '\n'
-        else:
-            return ''
+        return ''
 
     def _process_list_item(self, list_item: str):
         if self._current_list is None:
@@ -155,5 +154,4 @@ def convert_text_to_html(text: str) -> str:
     # TODO delete it when fix editor on frontend
     text = _normalize_markdown_blocks(text)
 
-    text = markdown(text, extensions=['tables'])
-    return text
+    return markdown(text, extensions=['tables'])

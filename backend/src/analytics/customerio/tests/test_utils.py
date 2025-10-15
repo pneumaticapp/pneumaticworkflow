@@ -1,8 +1,9 @@
 import hmac
 from hashlib import sha256
+
 from src.analytics.customerio.utils import (
+    check_webhook_hash,
     get_webhook_hash,
-    check_webhook_hash
 )
 
 
@@ -24,19 +25,19 @@ def test__get_webhook_hash__ok(mocker):
     mocker.patch(
         'src.analytics.customerio.utils.settings',
         CUSTOMERIO_WEBHOOK_API_KEY=key,
-        CUSTOMERIO_WEBHOOK_API_VERSION=api_version
+        CUSTOMERIO_WEBHOOK_API_VERSION=api_version,
     )
-    msg = f'{api_version}:{timestamp}:'.encode('utf-8') + request_body_bytes
+    msg = f'{api_version}:{timestamp}:'.encode() + request_body_bytes
     valid_result = hmac.new(
         key=key.encode('utf-8'),
         msg=msg,
-        digestmod=sha256
+        digestmod=sha256,
     ).hexdigest()
 
     # act
     util_result = get_webhook_hash(
         timestamp=timestamp,
-        request_body=request_body_bytes
+        request_body=request_body_bytes,
     )
 
     # assert
@@ -53,7 +54,7 @@ def test__check_webhook_hash__ok(mocker):
     mocker.patch(
         'src.analytics.customerio.utils.settings',
         CUSTOMERIO_WEBHOOK_API_KEY=key,
-        CUSTOMERIO_WEBHOOK_API_VERSION=api_version
+        CUSTOMERIO_WEBHOOK_API_VERSION=api_version,
     )
     request_body_bytes = (
         b'{"data":{"action_id":42,"campaign_id":23,"content":"Welcome to the '
@@ -67,13 +68,13 @@ def test__check_webhook_hash__ok(mocker):
     request_mock = mocker.Mock(
         headers={
             'X-CIO-Timestamp': timestamp,
-            'X-CIO-Signature': request_hash
+            'X-CIO-Signature': request_hash,
         },
-        body=request_body_bytes
+        body=request_body_bytes,
     )
     get_webhook_hash_mock = mocker.patch(
         'src.analytics.customerio.utils.get_webhook_hash',
-        return_value=request_hash
+        return_value=request_hash,
     )
 
     # act
@@ -83,5 +84,5 @@ def test__check_webhook_hash__ok(mocker):
     assert result is True
     get_webhook_hash_mock.assert_called_once_with(
         timestamp=timestamp,
-        request_body=request_body_bytes
+        request_body=request_body_bytes,
     )

@@ -1,24 +1,26 @@
+from datetime import datetime, timedelta
+from datetime import timezone as tz
+
 import pytest
-from datetime import timedelta, datetime
 from django.utils import timezone
-from src.processes.models import (
-    TaskField,
-    RawDueDate,
+
+from src.processes.enums import (
+    DirectlyStatus,
+    DueDateRule,
+    FieldType,
+)
+from src.processes.models.templates.checklist import (
     ChecklistTemplate,
     ChecklistTemplateSelection,
 )
+from src.processes.models.workflows.fields import TaskField
+from src.processes.models.workflows.raw_due_date import RawDueDate
+from src.processes.services.tasks.task import TaskService
 from src.processes.tests.fixtures import (
-    create_test_user,
     create_test_template,
+    create_test_user,
     create_test_workflow,
 )
-from src.processes.enums import (
-    FieldType,
-    DueDateRule,
-    DirectlyStatus,
-)
-from src.processes.services.tasks.task import TaskService
-
 
 pytestmark = pytest.mark.django_db
 
@@ -63,17 +65,17 @@ def test_create_instance__all_fields__ok(mocker):
     clear_description = 'Some \n clear description'
     clear_mock = mocker.patch(
         'src.services.markdown.MarkdownService.clear',
-        return_value=clear_description
+        return_value=clear_description,
     )
     service = TaskService(
         user=user,
-        instance=task
+        instance=task,
     )
 
     # act
     service._create_instance(
         instance_template=template_task,
-        workflow=workflow
+        workflow=workflow,
     )
 
     # assert
@@ -102,7 +104,7 @@ def test_get_task_due_date__raw_due_date_not_exist__return_none():
     task = workflow.tasks.first()
     service = TaskService(
         user=user,
-        instance=task
+        instance=task,
     )
 
     # act
@@ -129,7 +131,7 @@ def test_get_task_due_date__rule_before_field__prev_task_field__ok():
         api_name='date-1',
         type=FieldType.DATE,
         value=tsp_end_date,
-        workflow=workflow
+        workflow=workflow,
     )
     RawDueDate.objects.create(
         task=task_2,
@@ -139,13 +141,16 @@ def test_get_task_due_date__rule_before_field__prev_task_field__ok():
     )
     service = TaskService(
         user=user,
-        instance=task_2
+        instance=task_2,
     )
     # act
     due_date = service.get_task_due_date()
 
     # assert
-    assert due_date == datetime.fromtimestamp(tsp_end_date) - duration
+    assert due_date == datetime.fromtimestamp(
+        tsp_end_date,
+        tz=tz.utc,
+    ) - duration
 
 
 def test_get_task_due_date__rule_after_field__prev_task_field__ok():
@@ -165,7 +170,7 @@ def test_get_task_due_date__rule_after_field__prev_task_field__ok():
         api_name='date-1',
         type=FieldType.DATE,
         value=tsp_end_date,
-        workflow=workflow
+        workflow=workflow,
     )
     RawDueDate.objects.create(
         task=task_2,
@@ -175,15 +180,17 @@ def test_get_task_due_date__rule_after_field__prev_task_field__ok():
     )
     service = TaskService(
         user=user,
-        instance=task_2
+        instance=task_2,
     )
 
     # act
     due_date = service.get_task_due_date()
 
     # assert
-    assert due_date == datetime.fromtimestamp(tsp_end_date) + duration
-
+    assert due_date == datetime.fromtimestamp(
+        tsp_end_date,
+        tz=tz.utc,
+    ) + duration
 
 def test_get_task_due_date__rule_after_field__kickoff_field__ok():
 
@@ -201,7 +208,7 @@ def test_get_task_due_date__rule_after_field__kickoff_field__ok():
         api_name='date-1',
         type=FieldType.DATE,
         value=tsp_end_date,
-        workflow=workflow
+        workflow=workflow,
     )
     RawDueDate.objects.create(
         task=task,
@@ -211,15 +218,17 @@ def test_get_task_due_date__rule_after_field__kickoff_field__ok():
     )
     service = TaskService(
         user=user,
-        instance=task
+        instance=task,
     )
 
     # act
     due_date = service.get_task_due_date()
 
     # assert
-    assert due_date == datetime.fromtimestamp(tsp_end_date) + duration
-
+    assert due_date == datetime.fromtimestamp(
+        tsp_end_date,
+        tz=tz.utc,
+    ) + duration
 
 @pytest.mark.parametrize('rule', DueDateRule.FIELD_RULES)
 def test_get_task_due_date__field_rules__field_not_exists__return_none(rule):
@@ -236,7 +245,7 @@ def test_get_task_due_date__field_rules__field_not_exists__return_none(rule):
     )
     service = TaskService(
         user=user,
-        instance=task_2
+        instance=task_2,
     )
 
     # act
@@ -260,7 +269,7 @@ def test_get_task_due_date__rule_after_workflow_started__ok():
     )
     service = TaskService(
         user=user,
-        instance=task
+        instance=task,
     )
 
     # act
@@ -287,7 +296,7 @@ def test_get_task_due_date__rule_after_task_started__active_task__ok():
     )
     service = TaskService(
         user=user,
-        instance=task
+        instance=task,
     )
 
     # act
@@ -314,7 +323,7 @@ def test_get_task_due_date__rule_after_task_started__prev_task__ok():
     )
     service = TaskService(
         user=user,
-        instance=task_2
+        instance=task_2,
     )
 
     # act
@@ -343,7 +352,7 @@ def test_get_task_due_date__rule_after_task_completed__prev_task__ok():
     )
     service = TaskService(
         user=user,
-        instance=task_2
+        instance=task_2,
     )
 
     # act
@@ -368,7 +377,7 @@ def test_get_task_due_date__task_rules__task_not_exists__return_none(rule):
     )
     service = TaskService(
         user=user,
-        instance=task_2
+        instance=task_2,
     )
 
     # act
@@ -394,7 +403,7 @@ def test_get_task_due_date__duration_months__ok():
     )
     service = TaskService(
         user=user,
-        instance=task
+        instance=task,
     )
 
     # act
@@ -408,11 +417,11 @@ def test_get_task_due_date__duration_months__ok():
 
 @pytest.mark.parametrize(
     'directly_status',
-    (DirectlyStatus.CREATED, DirectlyStatus.DELETED)
+    (DirectlyStatus.CREATED, DirectlyStatus.DELETED),
 )
 def test_set_due_date_from_template__directly_changed__skip(
     directly_status,
-    mocker
+    mocker,
 ):
 
     # arrange
@@ -423,11 +432,11 @@ def test_set_due_date_from_template__directly_changed__skip(
     task.save(update_fields=['due_date_directly_status'])
     get_task_due_date_mock = mocker.patch(
         'src.processes.services.tasks.task.'
-        'TaskService.get_task_due_date'
+        'TaskService.get_task_due_date',
     )
     service = TaskService(
         user=user,
-        instance=task
+        instance=task,
     )
 
     # act
@@ -447,11 +456,11 @@ def test_set_due_date_from_template__ok(mocker):
     get_task_due_date_mock = mocker.patch(
         'src.processes.services.tasks.task.'
         'TaskService.get_task_due_date',
-        return_value=due_date
+        return_value=due_date,
     )
     service = TaskService(
         user=user,
-        instance=task
+        instance=task,
     )
 
     # act
@@ -472,16 +481,16 @@ def test_set_due_date_from_template__not_exist__skip(mocker):
     get_task_due_date_mock = mocker.patch(
         'src.processes.services.tasks.task.'
         'TaskService.get_task_due_date',
-        return_value=due_date
+        return_value=due_date,
     )
     partial_update_mock = mocker.patch(
         'src.processes.services.tasks.task.'
         'TaskService.partial_update',
-        return_value=due_date
+        return_value=due_date,
     )
     service = TaskService(
         user=user,
-        instance=task
+        instance=task,
     )
 
     # act
@@ -504,16 +513,16 @@ def test_set_due_date_from_template__not_changed__skip(mocker):
     get_task_due_date_mock = mocker.patch(
         'src.processes.services.tasks.task.'
         'TaskService.get_task_due_date',
-        return_value=due_date
+        return_value=due_date,
     )
     partial_update_mock = mocker.patch(
         'src.processes.services.tasks.task.'
         'TaskService.partial_update',
-        return_value=due_date
+        return_value=due_date,
     )
     service = TaskService(
         user=user,
-        instance=task
+        instance=task,
     )
 
     # act
@@ -536,11 +545,11 @@ def test_set_due_date_directly__ok(mocker):
         'TaskService.partial_update',
     )
     send_notifications_mock = mocker.patch(
-        'src.notifications.tasks.send_due_date_changed.delay'
+        'src.notifications.tasks.send_due_date_changed.delay',
     )
     due_date_changed_event_mock = mocker.patch(
         'src.processes.services.events.WorkflowEventService.'
-        'due_date_changed_event'
+        'due_date_changed_event',
     )
     service = TaskService(instance=task, user=user)
 
@@ -550,7 +559,7 @@ def test_set_due_date_directly__ok(mocker):
     # assert
     partial_update_mock.assert_called_once_with(
         due_date=due_date,
-        force_save=True
+        force_save=True,
     )
     send_notifications_mock.assert_called_once_with(
         logging=user.account.log_api_requests,

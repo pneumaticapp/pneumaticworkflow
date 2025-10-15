@@ -1,14 +1,15 @@
 import pytest
 from rest_framework.serializers import ValidationError
-from src.generics.mixins.serializers import (
-    ValidationUtilsMixin,
-    CustomValidationErrorMixin
-)
-from src.utils.validation import ErrorCode
+
 from src.generics.messages import (
     MSG_GE_0003,
     MSG_GE_0004,
 )
+from src.generics.mixins.serializers import (
+    CustomValidationErrorMixin,
+    ValidationUtilsMixin,
+)
+from src.utils.validation import ErrorCode
 
 
 class TestValidationUtilsMixin:
@@ -41,11 +42,11 @@ class TestValidationUtilsMixin:
 
     @pytest.mark.parametrize(
         'raw_value',
-        ('undefined', None, [], '1,a', '1 23', ',1,23,')
+        ('undefined', None, [], '1,a', '1 23', ',1,23,'),
     )
     def test_get_valid_list_integers__invalid_value__validation_error(
         self,
-        raw_value
+        raw_value,
     ):
         # arrange
         mixin = ValidationUtilsMixin()
@@ -72,7 +73,7 @@ class TestCustomValidationErrorMixin:
         with pytest.raises(ValidationError) as e:
             mixin.raise_validation_error(
                 message=message,
-                api_name=api_name
+                api_name=api_name,
             )
 
         # assert
@@ -94,7 +95,7 @@ class TestCustomValidationErrorMixin:
         with pytest.raises(ValidationError) as e:
             mixin.raise_validation_error(
                 message=message,
-                name=name
+                name=name,
             )
 
         # assert
@@ -119,7 +120,7 @@ class TestCustomValidationErrorMixin:
         error = e.value.detail
         assert error['code'] == ErrorCode.VALIDATION_ERROR
         assert error['message'] == message
-        assert 'details' not in error.keys()
+        assert 'details' not in error
 
     def test_raise_validation_error__before_is_valid__exception(self):
 

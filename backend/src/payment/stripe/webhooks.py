@@ -1,31 +1,32 @@
 import stripe
 from django.conf import settings
 from django.db import transaction
+
 from src.accounts.models import Account
+from src.accounts.services.user import UserService
 from src.authentication.enums import AuthTokenType
 from src.payment.enums import (
-    PriceType,
     PriceStatus,
+    PriceType,
 )
 from src.payment.models import (
-    Product,
     Price,
+    Product,
 )
 from src.payment.services.account import (
-    AccountSubscriptionService
+    AccountSubscriptionService,
 )
-from src.payment.stripe.mixins import StripeMixin
 from src.payment.stripe.exceptions import (
     AccountNotFound,
     AccountOwnerNotFound,
     StripeServiceException,
     WebhookServiceException,
 )
+from src.payment.stripe.mixins import StripeMixin
 from src.utils.logging import (
+    SentryLogLevel,
     capture_sentry_message,
-    SentryLogLevel
 )
-from src.accounts.services import UserService
 
 
 class WebhookService(StripeMixin):
@@ -38,7 +39,7 @@ class WebhookService(StripeMixin):
 
     def _get_valid_webhook_account_by_stripe_id(
         self,
-        stripe_id: str
+        stripe_id: str,
     ) -> Account:
 
         """ Check that requested account and account owner exists
@@ -54,18 +55,18 @@ class WebhookService(StripeMixin):
 
     def _get_valid_webhook_account_by_subs(
         self,
-        subscription: stripe.Subscription
+        subscription: stripe.Subscription,
     ) -> Account:
 
         """ Check that requested account and account owner exists
             Return master or tenant account for a given subscription """
 
         webhook_account = self._get_valid_webhook_account_by_stripe_id(
-            stripe_id=subscription.customer
+            stripe_id=subscription.customer,
         )
         subscription_account = self._get_account_for_subscription(
             account=webhook_account,
-            subscription=subscription
+            subscription=subscription,
         )
         if not subscription_account:
             raise AccountNotFound(subs_id=subscription.id)
@@ -93,14 +94,14 @@ class WebhookService(StripeMixin):
         subs_stripe_id = event.data['object']['id']
         subscription = self._get_subscription_by_id(subs_stripe_id)
         subscription_account = self._get_valid_webhook_account_by_subs(
-            subscription
+            subscription,
         )
         if subscription_account.billing_sync:
             subscription_details = self.get_subscription_details(subscription)
             subscription_service = AccountSubscriptionService(
                 instance=subscription_account,
                 user=subscription_account.get_owner(),
-                auth_type=AuthTokenType.WEBHOOK
+                auth_type=AuthTokenType.WEBHOOK,
             )
             subscription_service.create(
                 details=subscription_details,
@@ -115,17 +116,17 @@ class WebhookService(StripeMixin):
         subs_stripe_id = event.data['object']['id']
         subscription = self._get_subscription_by_id(subs_stripe_id)
         subscription_account = self._get_valid_webhook_account_by_subs(
-            subscription
+            subscription,
         )
         if subscription_account.billing_sync:
             subscription_service = AccountSubscriptionService(
                 instance=subscription_account,
                 user=subscription_account.get_owner(),
-                auth_type=AuthTokenType.WEBHOOK
+                auth_type=AuthTokenType.WEBHOOK,
             )
             if event.data['object']['cancel_at']:
                 plan_expiration = self._get_aware_datetime_from_timestamp(
-                    event.data['object']['cancel_at']
+                    event.data['object']['cancel_at'],
                 )
                 subscription_service.cancel(plan_expiration)
             else:
@@ -141,16 +142,16 @@ class WebhookService(StripeMixin):
         subs_stripe_id = event.data['object']['id']
         subscription = self._get_subscription_by_id(subs_stripe_id)
         subscription_account = self._get_valid_webhook_account_by_subs(
-            subscription
+            subscription,
         )
         if subscription_account.billing_sync:
             subscription_service = AccountSubscriptionService(
                 instance=subscription_account,
                 user=subscription_account.get_owner(),
-                auth_type=AuthTokenType.WEBHOOK
+                auth_type=AuthTokenType.WEBHOOK,
             )
             plan_expiration = self._get_aware_datetime_from_timestamp(
-                event.data['object']['ended_at']
+                event.data['object']['ended_at'],
             )
             subscription_service.expired(plan_expiration)
 
@@ -167,8 +168,8 @@ class WebhookService(StripeMixin):
             is_subscription=False,
             code=self._get_product_code(
                 stripe_id=stripe_id,
-                name=name
-            )
+                name=name,
+            ),
         )
 
     def _product_updated(self, event: stripe.Event):
@@ -178,7 +179,7 @@ class WebhookService(StripeMixin):
         stripe_id = event.data['object']['id']
         Product.objects.filter(stripe_id=stripe_id).update(
             name=event.data['object']['name'],
-            is_active=event.data['object']['active']
+            is_active=event.data['object']['active'],
         )
 
     def _product_deleted(self, event: stripe.Event):
@@ -228,7 +229,7 @@ class WebhookService(StripeMixin):
             price=event.data['object']['unit_amount'],
             trial_days=trial_days,
             billing_period=billing_period,
-            currency=event.data['object']['currency']
+            currency=event.data['object']['currency'],
         )
 
     def _price_deleted(self, event: stripe.Event):
@@ -245,31 +246,31 @@ class WebhookService(StripeMixin):
         if account.billing_sync:
             account_owner = account.users.filter(
                 is_account_owner=True,
-                email=event.data['object']['email']
+                email=event.data['object']['email'],
             ).first()
             if not account_owner:
                 raise AccountOwnerNotFound(
                     account_id=account.id,
                     customer_email=event.data['object']['email'],
-                    owner_email=account.get_owner().email
+                    owner_email=account.get_owner().email,
                 )
             service = UserService(
                 auth_type=AuthTokenType.WEBHOOK,
-                instance=account_owner
+                instance=account_owner,
             )
             service.partial_update(
                 phone=event.data['object']['phone'],
-                force_save=True
+                force_save=True,
             )
 
     def handle(self, data: dict):
         try:
             event = stripe.Event.construct_from(
                 values=data,
-                key=self.secret
+                key=self.secret,
             )
-        except ValueError:
-            raise WebhookServiceException('Invalid payload')
+        except ValueError as ex:
+            raise WebhookServiceException('Invalid payload') from ex
         else:
             handler_name = f"_{event.type.replace('.', '_')}"
             handler = getattr(self, handler_name, None)
@@ -279,15 +280,15 @@ class WebhookService(StripeMixin):
                         handler(event)
                     except (
                         WebhookServiceException,
-                        StripeServiceException
+                        StripeServiceException,
                     ) as ex:
                         capture_sentry_message(
                             message=ex.message,
                             level=SentryLogLevel.ERROR,
                             data={
                                 'event_type': event.type,
-                                **ex.details
-                            }
+                                **ex.details,
+                            },
                         )
                         raise
             else:
@@ -297,5 +298,5 @@ class WebhookService(StripeMixin):
                     data={
                         'event_id': event.id,
                         'event_type': event.type,
-                    }
+                    },
                 )

@@ -1,4 +1,4 @@
-# pylint: disable=W,C,R
+# ruff: noqa: PLC0415
 """
 Django settings for src project.
 
@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/2.2/ref/settings/
 import datetime
 import os
 from os import environ as env
+
 from configurations import Configuration, values
 from corsheaders.defaults import default_headers
 
@@ -30,7 +31,7 @@ class Common(Configuration):
     USE_L10N = True  # Enable will display numbers and dates using locale
     LANGUAGE_CODE = env.get('LANGUAGE_CODE', 'en')
     from src.accounts.enums import Language
-    if LANGUAGE_CODE == Language.ru:
+    if Language.ru == LANGUAGE_CODE:
         LANGUAGES = Language.CHOICES
     else:
         LANGUAGES = Language.EURO_CHOICES
@@ -64,7 +65,7 @@ class Common(Configuration):
 
     # Auth
     AUTH_USER_MODEL = 'accounts.User'
-    AUTH_TOKEN_ITERATIONS = int(env.get('AUTH_TOKEN_ITERATIONS', 1))
+    AUTH_TOKEN_ITERATIONS = int(env.get('AUTH_TOKEN_ITERATIONS', '1'))
 
     # Tokens lifetime
     DIGEST_UNSUB_TOKEN_IN_DAYS = 7
@@ -184,8 +185,8 @@ class Common(Configuration):
     ASGI_APPLICATION = 'src.asgi.application'
     CHANNEL_LAYERS = {
         'default': {
-            'BACKEND': 'channels.layers.InMemoryChannelLayer'
-        }
+            'BACKEND': 'channels.layers.InMemoryChannelLayer',
+        },
     }
 
     AUTH_PASSWORD_VALIDATORS = [
@@ -221,9 +222,9 @@ class Common(Configuration):
             'rest_framework.permissions.IsAuthenticated',
         ),
         'DEFAULT_AUTHENTICATION_CLASSES': (
-            'src.authentication.services.PublicAuthService',
-            'src.authentication.services.GuestJWTAuthService',
-            'src.authentication.services.'
+            'src.authentication.services.public_auth.PublicAuthService',
+            'src.authentication.services.guest_auth.GuestJWTAuthService',
+            'src.authentication.services.user_auth.'
             'PneumaticTokenAuthentication',
             'rest_framework_simplejwt.authentication.JWTAuthentication',
         ),
@@ -246,7 +247,7 @@ class Common(Configuration):
             '09_auth0__token': env.get('THROTTLE_09'),
             '10_auth0__auth_uri': env.get('THROTTLE_10'),
             '11_auth__reset_password': env.get('THROTTLE_11'),
-        }
+        },
     }
 
     SIMPLE_JWT = {
@@ -255,13 +256,13 @@ class Common(Configuration):
         'AUTH_TOKEN_CLASSES': (
             'rest_framework_simplejwt.tokens.AccessToken',
             'src.authentication.tokens.GuestToken',
-        )
+        ),
     }
 
     # Email
     DEFAULT_FROM_EMAIL = env.get(
         'DEFAULT_FROM_EMAIL',
-        'Pneumatic <no-reply@pneumatic.app>'
+        'Pneumatic <no-reply@pneumatic.app>',
     )
     EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
     EMAIL_DATE_FORMAT = '%a, %d %b %Y %I:%M:%S %p UTC'
@@ -277,13 +278,13 @@ class Common(Configuration):
     CONFIGURATION_STAGING = 'Staging'
     CONFIGURATION_PROD = 'Production'
     CONFIGURATION_CURRENT = env.get(
-        'ENVIRONMENT', CONFIGURATION_DEV
+        'ENVIRONMENT', CONFIGURATION_DEV,
     ).title()
 
     # Stripe
     STRIPE_SECRET_KEY = env.get('STRIPE_SECRET_KEY')
     STRIPE_WEBHOOK_SECRET = env.get('STRIPE_WEBHOOK_SECRET')
-    STRIPE_WEBHOOK_IP_WHITELIST = env.get('STRIPE_WEBHOOK_IP_WHITELIST', [])
+    STRIPE_WEBHOOK_IP_WHITELIST = env.get('STRIPE_WEBHOOK_IP_WHITELIST')
     if STRIPE_WEBHOOK_IP_WHITELIST:
         STRIPE_WEBHOOK_IP_WHITELIST = STRIPE_WEBHOOK_IP_WHITELIST.split(' ')
     else:
@@ -325,7 +326,7 @@ class Common(Configuration):
     # Notifications
     # In seconds - default 10 min
     UNREAD_NOTIFICATIONS_TIMEOUT = int(
-        env.get('UNREAD_NOTIFICATIONS_TIMEOUT', 600)
+        env.get('UNREAD_NOTIFICATIONS_TIMEOUT', '600'),
     )
 
     # Celery
@@ -350,7 +351,7 @@ class Common(Configuration):
 
     # Firebase Credentials
     FIREBASE_PUSH_APPLICATION_CREDENTIALS = env.get(
-        'FIREBASE_PUSH_APPLICATION_CREDENTIALS'
+        'FIREBASE_PUSH_APPLICATION_CREDENTIALS',
     )
 
     # OpenAI
@@ -377,7 +378,7 @@ class Common(Configuration):
             'PASSWORD': env.get('POSTGRES_PASSWORD', 'pneumatic'),
             'HOST': env.get('POSTGRES_HOST', 'localhost'),
             'PORT': env.get('POSTGRES_PORT', '5432'),
-        }
+        },
     }
 
     # False value to disable some features.
@@ -419,14 +420,13 @@ class Common(Configuration):
                     'handlers': ['file'],
                     'level': 'DEBUG',
                     'propagate': False,
-                }
-            }
+                },
+            },
         }
 
 
 class Testing(Common):
 
-    INSTALLED_APPS = Common.INSTALLED_APPS + ['pylint_django']
     TEST_RUNNER = 'djcelery.contrib.test_runner.CeleryTestSuiteRunner'
 
     # CELERY_ALWAYS_EAGER mean that Celery will not schedule tasks
@@ -462,7 +462,7 @@ class Testing(Common):
         'session': {
             'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
             'LOCATION': 'session',
-        }
+        },
     }
 
 
@@ -477,7 +477,7 @@ class Development(Common):
                 "CONNECTION_POOL_KWARGS": {
                     "retry_on_timeout": True,
                     "health_check_interval": 30,
-                }
+                },
             },
             "KEY_PREFIX": "default",
         },
@@ -489,7 +489,7 @@ class Development(Common):
                 "CONNECTION_POOL_KWARGS": {
                     "retry_on_timeout": True,
                     "health_check_interval": 30,
-                }
+                },
             },
             'KEY_PREFIX': '',
         },
@@ -501,7 +501,7 @@ class Development(Common):
                 "CONNECTION_POOL_KWARGS": {
                     "retry_on_timeout": True,
                     "health_check_interval": 30,
-                }
+                },
             },
             'KEY_PREFIX': '',
         },
@@ -512,9 +512,9 @@ class Development(Common):
         'default': {
             'BACKEND': 'channels_redis.core.RedisChannelLayer',
             'CONFIG': {
-                'hosts': [env.get('CHANNELS_REDIS_URL', '')]
-            }
-        }
+                'hosts': [env.get('CHANNELS_REDIS_URL', '')],
+            },
+        },
     }
 
 
@@ -535,8 +535,8 @@ class Staging(Development):
             'USER': env.get('POSTGRES_REPLICA_USER', 'pneumatic'),
             'PASSWORD': env.get('POSTGRES_REPLICA_PASSWORD', 'pneumatic'),
             'HOST': env.get('POSTGRES_REPLICA_HOST', 'localhost'),
-            'PORT': env.get('POSTGRES_REPLICA_PORT', '5432')
-        }
+            'PORT': env.get('POSTGRES_REPLICA_PORT', '5432'),
+        },
     }
 
 

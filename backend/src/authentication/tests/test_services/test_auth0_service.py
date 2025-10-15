@@ -3,15 +3,20 @@ import requests
 from unittest.mock import Mock
 from django.contrib.auth import get_user_model
 from rest_framework.exceptions import AuthenticationFailed
-from src.accounts.enums import SourceType
+from src.accounts.enums import (
+    SourceType,
+)
 from src.accounts.models import Contact, Account
+from src.authentication.messages import MSG_AU_0009
 from src.authentication.models import AccessToken
 from src.authentication.services import exceptions
-from src.authentication.services.auth0 import Auth0Service
-from src.authentication.messages import MSG_AU_0009
-from src.processes.tests.fixtures import create_test_user
+from src.authentication.services.auth0 import (
+    Auth0Service,
+)
+from src.processes.tests.fixtures import (
+    create_test_user,
+)
 from src.utils.logging import SentryLogLevel
-
 
 pytestmark = pytest.mark.django_db
 UserModel = get_user_model()
@@ -25,7 +30,7 @@ def test__get_auth_uri__ok(mocker):
     redirect_uri = 'test_redirect_uri'
     state = 'YrtkHpALzeTDnliK'
     settings_mock = mocker.patch(
-        'src.authentication.services.auth0.settings'
+        'src.authentication.services.auth0.settings',
     )
     settings_mock.AUTH0_DOMAIN = domain
     settings_mock.AUTH0_CLIENT_ID = client_id
@@ -142,7 +147,7 @@ def test_get_first_access_token__ok(mocker):
         return_value=True
     )
     settings_mock = mocker.patch(
-        'src.authentication.services.auth0.settings'
+        'src.authentication.services.auth0.settings',
     )
     settings_mock.AUTH0_DOMAIN = domain
     settings_mock.AUTH0_CLIENT_ID = client_id
@@ -206,7 +211,7 @@ def test_get_first_access_token__request_return_error__raise_exception(mocker):
     }
     request_mock = mocker.patch(
         'src.authentication.services.auth0.requests.post',
-        return_value=response_mock
+        return_value=response_mock,
     )
     get_cache_mock = mocker.patch(
         'src.authentication.services.auth0.Auth0Service._get_cache',
@@ -216,7 +221,7 @@ def test_get_first_access_token__request_return_error__raise_exception(mocker):
         'src.authentication.services.auth0.capture_sentry_message'
     )
     settings_mock = mocker.patch(
-        'src.authentication.services.auth0.settings'
+        'src.authentication.services.auth0.settings',
     )
     settings_mock.AUTH0_DOMAIN = domain
     service = Auth0Service()
@@ -248,7 +253,7 @@ def test_get_user_profile__ok(mocker):
     response_mock.json.return_value = response_data
     request_mock = mocker.patch(
         'src.authentication.services.auth0.requests.get',
-        return_value=response_mock
+        return_value=response_mock,
     )
     mocker.patch(
         'src.authentication.services.auth0.Auth0Service._get_cache',
@@ -258,7 +263,7 @@ def test_get_user_profile__ok(mocker):
         'src.authentication.services.auth0.Auth0Service._set_cache'
     )
     settings_mock = mocker.patch(
-        'src.authentication.services.auth0.settings'
+        'src.authentication.services.auth0.settings',
     )
     settings_mock.AUTH0_DOMAIN = domain
     service = Auth0Service()
@@ -290,12 +295,12 @@ def test_get_user_profile__response_error__raise_exception(mocker):
     )
     request_mock = mocker.patch(
         'src.authentication.services.auth0.requests.get',
-        return_value=response_mock
+        return_value=response_mock,
     )
     access_token = 'Q@#!@adad123'
     domain = 'test_client_domain'
     settings_mock = mocker.patch(
-        'src.authentication.services.auth0.settings'
+        'src.authentication.services.auth0.settings',
     )
     sentry_mock = mocker.patch(
         'src.authentication.services.auth0.capture_sentry_message'
@@ -366,13 +371,13 @@ def test_save_tokens_for_user__update__ok():
         user=user,
         refresh_token='ahsdsdasd23ggfn',
         access_token=f'{token_type} !@#asas',
-        expires_in=360
+        expires_in=360,
     )
     new_tokens_data = {
         'refresh_token': 'new refresh',
         'access_token': 'new access token',
         'token_type': token_type,
-        'expires_in': 400
+        'expires_in': 400,
     }
     service = Auth0Service()
     service.tokens = new_tokens_data

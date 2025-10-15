@@ -1,12 +1,15 @@
-from celery import shared_task
+import contextlib
+
 from django.conf import settings
 from slack import WebClient
-from src.accounts.models import User, Account
+
+from celery import shared_task
+from src.accounts.models import Account, User
 from src.authentication.services.exceptions import (
-    AuthException
+    AuthException,
 )
 from src.authentication.services.microsoft import (
-    MicrosoftAuthService
+    MicrosoftAuthService,
 )
 from src.authentication.services.auth0 import (
     Auth0Service
@@ -41,11 +44,11 @@ def send_new_signup_notification(account_id: int):
                 'type': 'section',
                 'text': {
                     'type': 'mrkdwn',
-                    'text': text
-                }
-            }
+                    'text': text,
+                },
+            },
         ],
-        text='A new account just signed up'
+        text='A new account just signed up',
     )
 
 
@@ -53,10 +56,8 @@ def send_new_signup_notification(account_id: int):
 def update_microsoft_contacts(user_id: int):
     user = User.objects.get(id=user_id)
     service = MicrosoftAuthService()
-    try:
+    with contextlib.suppress(AuthException):
         service.update_user_contacts(user)
-    except AuthException:
-        pass
 
 
 @shared_task(ignore_result=True)

@@ -1,7 +1,8 @@
 from django.conf import settings
 from rest_framework.permissions import BasePermission
-from src.generics.permissions import BaseAuthPermission
+
 from src.authentication.enums import AuthTokenType
+from src.generics.permissions import BaseAuthPermission
 
 
 class NoAuthApiPermission(BasePermission):
@@ -31,7 +32,7 @@ class IsSuperuserPermission(BaseAuthPermission):
     def has_permission(self, request, view):
         return bool(
             self._user_is_authenticated(request)
-            and request.user.is_superuser
+            and request.user.is_superuser,
         )
 
 
@@ -40,7 +41,7 @@ class StaffPermission(BaseAuthPermission):
     def has_permission(self, request, view):
         return bool(
             self._user_is_authenticated(request)
-            and request.user.is_staff
+            and request.user.is_staff,
         )
 
 
