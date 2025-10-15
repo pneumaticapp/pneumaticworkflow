@@ -255,11 +255,10 @@ function* fetchWorkflowsList({ payload: offset = 0 }: TLoadWorkflowsList) {
     (state: IApplicationState) => state.workflows.workflowsSettings.lastLoadedTemplateId,
   );
 
-  const shouldGetAllDefaultFields =
-    sessionStorage.getItem('isInternalNavigation') === 'true' &&
-    Boolean(view === EWorkflowsView.Table && offset === 0 && offset === 0 && templatesIdsFilter.length === 0);
-
-  const shouldGetPresets =
+  const shouldGetAllDefaultFields = Boolean(
+    view === EWorkflowsView.Table && offset === 0 && templatesIdsFilter.length === 0,
+  );
+  const internalNavigation =
     sessionStorage.getItem('isInternalNavigation') === 'true' &&
     Boolean(
       view === EWorkflowsView.Table &&
@@ -267,7 +266,9 @@ function* fetchWorkflowsList({ payload: offset = 0 }: TLoadWorkflowsList) {
         currentTemplateId &&
         String(lastLoadedTemplateId) !== String(currentTemplateId),
     );
+  const externalNavigation = Boolean(view === EWorkflowsView.Table && currentTemplateId && selectedFields.length === 0);
 
+  const shouldGetPresets = internalNavigation || externalNavigation;
   sessionStorage.setItem('isInternalNavigation', 'false');
 
   let newSelectedFields: string[] = [];
