@@ -84,7 +84,7 @@ class DefaultClsCacheMixin(BaseClsCache):
 
     """ Use if one cache key is enough """
 
-    default_cache_key: str = None
+    default_cache_key: Optional[str] = None
 
     @classmethod
     def _set_cache(

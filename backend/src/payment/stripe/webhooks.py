@@ -136,7 +136,7 @@ class WebhookService(StripeMixin):
 
     def _customer_subscription_deleted(self, event: stripe.Event):
 
-        """ Occurs whenever a customer’s subscription
+        """ Occurs whenever a customer's subscription
             cancel immediately. """
 
         subs_stripe_id = event.data['object']['id']

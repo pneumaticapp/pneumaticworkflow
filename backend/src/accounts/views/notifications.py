@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 
 from django.contrib.auth import get_user_model
 from rest_framework.decorators import action
@@ -62,7 +62,11 @@ class NotificationsViewSet(
     def get_queryset(self):
         return self.request.user.notifications
 
-    def prefetch_queryset(self, queryset, extra_fields: List[str] = None):
+    def prefetch_queryset(
+        self,
+        queryset,
+        extra_fields: Optional[List[str]] = None,
+    ):
         if self.action == 'list':
             extra_fields = ('task__workflow', 'comment')
         return super().prefetch_queryset(

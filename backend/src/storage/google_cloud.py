@@ -69,7 +69,7 @@ class GoogleCloudService:
         formatted_text = re.sub(r'[^a-z0-9_-]', '', formatted_text)
         return formatted_text[:62]
 
-    def _create_bucket(self, bucket_name: str = None):
+    def _create_bucket(self, bucket_name: Optional[str] = None):
         if not bucket_name:
             salt = get_salt(length=16, exclude=('upper',))
             if configuration == settings.CONFIGURATION_PROD:

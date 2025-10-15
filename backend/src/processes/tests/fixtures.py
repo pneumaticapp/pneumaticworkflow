@@ -76,13 +76,13 @@ def create_test_account(
     name: Optional[str] = 'Test Company',
     max_users: int = settings.DEFAULT_MAX_USERS,
     lease_level: LeaseLevel.LITERALS = LeaseLevel.STANDARD,
-    logo_sm: str = None,
-    logo_lg: str = None,
+    logo_sm: Optional[str] = None,
+    logo_lg: Optional[str] = None,
     master_account: Optional[Account] = None,
     plan: Optional[BillingPlanType.LITERALS] = BillingPlanType.FREEMIUM,
     period: Optional[BillingPeriod.LITERALS] = None,
     plan_expiration: Optional[datetime] = None,
-    stripe_id: str = None,
+    stripe_id: Optional[str] = None,
     trial_ended: bool = False,
     trial_start: Optional[datetime] = None,
     trial_end: Optional[datetime] = None,
@@ -249,7 +249,7 @@ def create_invited_user(
 def create_checklist_template(
     task_template: TaskTemplate,
     selections_count: int = 1,
-    api_name_prefix: str = None,
+    api_name_prefix: Optional[str] = None,
 ) -> ChecklistTemplate:
     if api_name_prefix is None:
         api_name_prefix = ''
@@ -631,7 +631,7 @@ def create_test_event(
 def create_test_group(
     account: Account,
     name: str = 'Group_test',
-    photo: str = None,
+    photo: Optional[str] = None,
     users: Optional[List[UserModel]] = None,
 ):
     group = UserGroup.objects.create(
