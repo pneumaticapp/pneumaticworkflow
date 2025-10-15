@@ -207,7 +207,12 @@ export function WorkflowsLayoutComponent({
                 label: formatMessage({ id: 'workflows.grid-view' }),
               },
             ]}
-            onChange={setWorkflowsView}
+            onChange={(view) => {
+              if (view === EWorkflowsView.Table) {
+                sessionStorage.setItem('isInternalNavigation', 'true');
+              }
+              setWorkflowsView(view);
+            }}
           />
 
           {workflowsView === EWorkflowsView.Table && renderFilters()}
