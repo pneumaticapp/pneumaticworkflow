@@ -73,4 +73,4 @@ class FileAttachment(
             if abs(size) < 1024.0:
                 return '%3.1f%s' % (size, unit)  # noqa: UP031
             size /= 1024.0
-        return "%.1f%s" % (size, 'MiB') # noqa: UP031
+        return "%.1f%s" % (size, 'MiB')  # noqa: UP031

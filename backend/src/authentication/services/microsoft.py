@@ -487,11 +487,11 @@ class MicrosoftAuthService(
                     else:
                         response_data['updated_contacts'].append(email)
         # TODO Fix the broad "try except"
-        except Exception as ex: # noqa: BLE001
+        except Exception as ex:  # noqa: BLE001
             http_status = 400
             response_data['message'] = str(ex)
             response_data['exception_type'] = type(ex)
-            response_data['details'] = getattr(ex, 'details') # noqa B009
+            response_data['details'] = getattr(ex, 'details')  # noqa B009
         finally:
             if user.account.log_api_requests:
                 AccountLogService().contacts_request(

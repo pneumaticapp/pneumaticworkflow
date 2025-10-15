@@ -159,7 +159,7 @@ class Account(SoftDeleteModel):
         if self.trial_is_active:
             # Active trial
             return False
-        if self.plan_expiration < timezone.now(): # noqa: SIM103
+        if self.plan_expiration < timezone.now():  # noqa: SIM103
             # Expired premium
             return False
         # Active premium
@@ -537,6 +537,7 @@ class APIKey(
     def __str__(self):
         return self.key
 
+
 class SystemMessage(models.Model):
     title = models.CharField(max_length=200)
     text = models.TextField()
@@ -547,6 +548,7 @@ class SystemMessage(models.Model):
 
     def __str__(self):
         return self.title
+
 
 class Notification(
     SoftDeleteModel,

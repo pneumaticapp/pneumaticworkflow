@@ -237,7 +237,7 @@ class Task(
 
     def update_raw_performers_from_task_template(
         self,
-        task_template, # Union['TaskTemplate', dict, None] = None
+        task_template,  # Union['TaskTemplate', dict, None] = None
     ):
 
         """
@@ -645,9 +645,8 @@ class TaskForList(
     def __str__(self):
         return self.name
 
-class Delay(
-    SoftDeleteModel,
-):
+
+class Delay(SoftDeleteModel):
 
     task = models.ForeignKey(
         Task,

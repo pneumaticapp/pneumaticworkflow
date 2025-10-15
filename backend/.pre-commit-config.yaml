@@ -18,8 +18,4 @@ repos:
         name: py_codestyle
         types: [python]
         language: system
-        entry: pycodestyle src --config=codestyle.ini
-        args:
-          - src/
-          - --config=codestyle.ini
-        exclude: 'migrations|'
+        entry: pycodestyle --config=pycodestyle.ini

@@ -252,7 +252,7 @@ def test_privileges__filter_group__ok(api_client):
     )
     group = create_test_group(
         account=account,
-        users=[user, another_user ],
+        users=[user, another_user],
     )
     api_client.token_authenticate(user)
 

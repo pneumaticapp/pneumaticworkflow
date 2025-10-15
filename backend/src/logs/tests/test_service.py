@@ -32,7 +32,7 @@ def test_create_instance():
         'users_data': {
             '@odata.context': "https://graph.lName,userType,creationType",
             'value': [
-                {'id': 'e8d1dc71-123d-bd527526ee92' },
+                {'id': 'e8d1dc71-123d-bd527526ee92'},
             ],
         },
     }

@@ -19,7 +19,7 @@ from src.generics.querysets import BaseQuerySet
 class PneumaticFilterBackend(DjangoFilterBackend):
     def _set_filterset_class(self, view):
         action_filterset_class = view.action_filterset_classes[view.action]
-        setattr(view, 'filterset_class', action_filterset_class) # noqa: B010
+        setattr(view, 'filterset_class', action_filterset_class)  # noqa: B010
 
     def get_filterset_class(
         self,
