@@ -62,15 +62,13 @@ markdown = "3.4.4"
 isort = "4.3.21"
 pytest = "6.1.2"
 pytest-django = "3.5.1"
-pylint = "2.3.0"
-pylint-django = "2.3.0"
 py = "1.9.0"
 mock = "4.0.3"
 pytest-mock = "3.3.1"
-pycodestyle = "2.5.0"
 pytest-asyncio = "0.14.0"
 pre-commit = "2.19.0"
 pytest-cov = "3.0.0"
+ruff = "^0.14.0"
 
 [build-system]
 requires = ["poetry-core"]

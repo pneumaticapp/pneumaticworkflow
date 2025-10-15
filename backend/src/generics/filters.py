@@ -1,25 +1,25 @@
-# pylint: disable=unsupported-membership-test
 from typing import Optional
-from django_filters.rest_framework import (
-    DjangoFilterBackend,
-    FilterSet,
-    OrderingFilter,
-    Filter
-)
+
+from django.contrib.postgres.search import SearchQuery
 from django_filters import CharFilter
 from django_filters.constants import EMPTY_VALUES
-from django.contrib.postgres.search import SearchQuery
-from rest_framework.viewsets import ViewSet
+from django_filters.rest_framework import (
+    DjangoFilterBackend,
+    Filter,
+    FilterSet,
+    OrderingFilter,
+)
 from rest_framework.serializers import ValidationError
+from rest_framework.viewsets import ViewSet
 
-from src.generics.querysets import BaseQuerySet
 from src.generics.messages import MSG_GE_0001
+from src.generics.querysets import BaseQuerySet
 
 
 class PneumaticFilterBackend(DjangoFilterBackend):
     def _set_filterset_class(self, view):
         action_filterset_class = view.action_filterset_classes[view.action]
-        setattr(view, 'filterset_class', action_filterset_class)
+        setattr(view, 'filterset_class', action_filterset_class) # noqa: B010
 
     def get_filterset_class(
         self,
@@ -72,9 +72,9 @@ class ListFilter(Filter):
 
     def __init__(self, *args, choices=None, map_to_db=None, **kwargs):
         self.map_to_db = map_to_db
-        self.allowed_values = set(
+        self.allowed_values = {
             str(choice[0]) for choice in choices
-        ) if choices else None
+        } if choices else None
         super().__init__(*args, **kwargs)
 
     def validate(self, values: set):
@@ -94,8 +94,7 @@ class ListFilter(Filter):
         values = set(value.replace(' ', '').split(','))
         self.validate(values)
         values = self._perform_mapping_values(values)
-        qs = super().filter(qs, values)
-        return qs
+        return super().filter(qs, values)
 
 
 class TsQuerySearchFilter(CharFilter):
@@ -110,6 +109,6 @@ class TsQuerySearchFilter(CharFilter):
         value = ' | '.join(words)
         value = SearchQuery(
             value=value,
-            search_type='raw'
+            search_type='raw',
         )
         return super().filter(qs, value)

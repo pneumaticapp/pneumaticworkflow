@@ -1,15 +1,16 @@
-import pytest
 from datetime import timedelta
-from src.processes.tests.fixtures import (
-    create_test_workflow,
-    create_test_user,
-    create_test_guest,
-    create_test_account,
-)
-from src.notifications.tasks import (
-    _send_guest_new_task
-)
 
+import pytest
+
+from src.notifications.tasks import (
+    _send_guest_new_task,
+)
+from src.processes.tests.fixtures import (
+    create_test_account,
+    create_test_guest,
+    create_test_user,
+    create_test_workflow,
+)
 
 pytestmark = pytest.mark.django_db
 
@@ -28,7 +29,7 @@ def test_send_guest_new_task__call_all_services__ok(mocker):
     token = '!@#@wqe1'
     send_email_mock = mocker.patch(
         'src.notifications.services.email.EmailService'
-        '.send_guest_new_task'
+        '.send_guest_new_task',
     )
 
     # act
@@ -43,7 +44,7 @@ def test_send_guest_new_task__call_all_services__ok(mocker):
         task_due_date=task.due_date,
         logo_lg=logo_lg,
         account_id=account.id,
-        logging=account.log_api_requests
+        logging=account.log_api_requests,
     )
 
     # assert

@@ -1,14 +1,16 @@
 from typing import Optional
 from urllib.parse import unquote
-from django.db import models
+
 from django.contrib.postgres.search import SearchVectorField
+from django.db import models
+
 from src.accounts.models import AccountBaseMixin
 from src.generics.managers import BaseSoftDeleteManager
 from src.generics.models import SoftDeleteModel
-from src.processes.querysets import FileAttachmentQuerySet
+from src.processes.models.workflows.event import WorkflowEvent
 from src.processes.models.workflows.fields import TaskField
 from src.processes.models.workflows.workflow import Workflow
-from src.processes.models.workflows.event import WorkflowEvent
+from src.processes.querysets import FileAttachmentQuerySet
 
 
 class FileAttachment(
@@ -27,13 +29,13 @@ class FileAttachment(
         WorkflowEvent,
         on_delete=models.CASCADE,
         null=True,
-        related_name='attachments'
+        related_name='attachments',
     )
     output = models.ForeignKey(
         TaskField,
         on_delete=models.CASCADE,
         null=True,
-        related_name='attachments'
+        related_name='attachments',
     )
     workflow = models.ForeignKey(
         Workflow,
@@ -69,6 +71,6 @@ class FileAttachment(
         size = float(self.size)
         for unit in ['B', 'KiB', 'MiB']:
             if abs(size) < 1024.0:
-                return '%3.1f%s' % (size, unit)
+                return '%3.1f%s' % (size, unit)  # noqa: UP031
             size /= 1024.0
-        return "%.1f%s" % (size, 'MiB')
+        return "%.1f%s" % (size, 'MiB') # noqa: UP031

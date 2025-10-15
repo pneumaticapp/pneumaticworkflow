@@ -2,26 +2,25 @@ from django_filters import ChoiceFilter
 from django_filters.rest_framework import (
     FilterSet,
 )
-from src.generics.filters import (
-    DefaultOrderingFilter,
-    ListFilter
-)
+
 from src.accounts.enums import (
     NotificationStatus,
-    UserType,
-    UserStatus,
     SourceType,
+    UserStatus,
+    UserType,
 )
 from src.accounts.models import (
-    Notification,
-    User,
     Account,
     Contact,
+    Notification,
+    User,
+    UserGroup,
 )
 from src.generics.filters import (
-    TsQuerySearchFilter
+    DefaultOrderingFilter,
+    ListFilter,
+    TsQuerySearchFilter,
 )
-from src.accounts.models import UserGroup
 
 
 class NotificationFilter(FilterSet):
@@ -38,7 +37,7 @@ class NotificationFilter(FilterSet):
         fields=(
             ('datetime', 'datetime'),
         ),
-        default=('-datetime',)
+        default=('-datetime',),
     )
 
 
@@ -59,19 +58,19 @@ class UsersListFilterSet(FilterSet):
             ('last_name', 'last_name'),
             ('status', 'status'),
         ),
-        default=('last_name',)
+        default=('last_name',),
     )
 
     type = ListFilter(
         field_name='type',
         lookup_expr='in',
-        choices=UserType.CHOICES
+        choices=UserType.CHOICES,
     )
 
     status = ListFilter(
         field_name='status',
         lookup_expr='in',
-        choices=UserStatus.CHOICES
+        choices=UserStatus.CHOICES,
     )
 
     groups = ListFilter(
@@ -93,7 +92,7 @@ class TenantsFilterSet(FilterSet):
             ('tenant_name', 'tenant_name'),
             ('date_joined', 'date_joined'),
         ),
-        default=('tenant_name',)
+        default=('tenant_name',),
     )
 
 
@@ -113,13 +112,13 @@ class ContactsFilterSet(FilterSet):
             ('last_name', 'last_name'),
             ('source', 'source'),
         ),
-        default=('last_name',)
+        default=('last_name',),
     )
     search = TsQuerySearchFilter(
         field_name='search_content',
     )
     source = ChoiceFilter(
-        choices=SourceType.CHOICES
+        choices=SourceType.CHOICES,
     )
 
 
@@ -135,5 +134,5 @@ class GroupsListFilterSet(FilterSet):
         fields=(
             ('name', 'name'),
         ),
-        default=('name',)
+        default=('name',),
     )

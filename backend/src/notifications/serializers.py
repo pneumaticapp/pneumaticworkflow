@@ -1,4 +1,5 @@
 from rest_framework.serializers import ModelSerializer
+
 from src.notifications.models import Device, UserNotifications
 
 
@@ -19,10 +20,10 @@ class DeviceSerializer(ModelSerializer):
             defaults={
                 'user': validated_data['user'],
                 'description': validated_data['description'],
-                'is_app': validated_data['is_app']
+                'is_app': validated_data['is_app'],
             },
         )
         UserNotifications.objects.get_or_create(
-            user=validated_data['user']
+            user=validated_data['user'],
         )
         return instance

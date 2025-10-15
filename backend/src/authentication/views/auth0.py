@@ -1,29 +1,30 @@
 from django.contrib.auth import get_user_model
-from rest_framework.viewsets import GenericViewSet
 from rest_framework.decorators import action
-from src.generics.mixins.views import CustomViewSetMixin
-from src.authentication.permissions import Auth0Permission
+from rest_framework.viewsets import GenericViewSet
+
 from src.analytics.mixins import BaseIdentifyMixin
-from src.authentication.services.exceptions import (
-    AuthException
-)
-from src.authentication.services.auth0 import (
-    Auth0Service
-)
+from src.authentication.permissions import Auth0Permission
 from src.authentication.serializers import (
     Auth0TokenSerializer,
 )
-from src.utils.validation import raise_validation_error
+from src.authentication.services.auth0 import (
+    Auth0Service,
+)
+from src.authentication.services.exceptions import (
+    AuthException,
+)
 from src.authentication.throttling import (
     Auth0AuthUriThrottle,
     Auth0TokenThrottle,
 )
+from src.generics.mixins.views import CustomViewSetMixin
 from src.utils.logging import (
-    capture_sentry_message,
     SentryLogLevel,
+    capture_sentry_message,
 )
 from src.authentication.tasks import update_auth0_contacts
 
+from src.utils.validation import raise_validation_error
 
 UserModel = get_user_model()
 
@@ -31,7 +32,7 @@ UserModel = get_user_model()
 class Auth0ViewSet(
     CustomViewSetMixin,
     BaseIdentifyMixin,
-    GenericViewSet
+    GenericViewSet,
 ):
     permission_classes = (Auth0Permission,)
     serializer_class = Auth0TokenSerializer
@@ -40,7 +41,7 @@ class Auth0ViewSet(
     def throttle_classes(self):
         if self.action == 'token':
             return (Auth0TokenThrottle,)
-        elif self.action == 'auth_uri':
+        if self.action == 'auth_uri':
             return (Auth0AuthUriThrottle,)
         return ()
 
@@ -77,7 +78,7 @@ class Auth0ViewSet(
             raise_validation_error(message=ex.message)
         else:
             return self.response_ok({
-                'auth_uri': auth_uri
+                'auth_uri': auth_uri,
             })
 
     @action(methods=('GET',), detail=False)
@@ -85,6 +86,6 @@ class Auth0ViewSet(
         capture_sentry_message(
             message='Auth0 logout request',
             data=self.request.GET,
-            level=SentryLogLevel.INFO
+            level=SentryLogLevel.INFO,
         )
         return self.response_ok()

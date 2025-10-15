@@ -1,32 +1,33 @@
 from datetime import datetime, timedelta
-from django.utils import timezone
-from typing import Dict, Optional, Union, Any
-from django.contrib.auth import get_user_model
-from django.conf import settings
+from typing import Any, Dict, Optional, Union
 
-from src.notifications.enums import NotificationMethod
-from src.notifications.services.base import (
-    NotificationService,
-)
-from customerio import SendEmailRequest, APIClient
-from src.analytics.enums import MailoutType
+from customerio import APIClient, SendEmailRequest
+from django.conf import settings
+from django.contrib.auth import get_user_model
+from django.utils import timezone
+from django.utils.dateparse import parse_datetime
+
 from src.accounts.enums import UserType
-from src.services.html_converter import convert_text_to_html
-from src.processes.utils.common import get_duration_format
-from src.notifications.enums import (
-    EmailTemplate,
-    cio_template_ids,
-)
 from src.accounts.tokens import (
-    UnsubscribeEmailToken,
     ResetPasswordToken,
+    UnsubscribeEmailToken,
 )
-from src.logs.service import AccountLogService
+from src.analytics.enums import MailoutType
 from src.logs.enums import (
     AccountEventStatus,
 )
+from src.logs.service import AccountLogService
 from src.notifications import messages
-
+from src.notifications.enums import (
+    EmailTemplate,
+    NotificationMethod,
+    cio_template_ids,
+)
+from src.notifications.services.base import (
+    NotificationService,
+)
+from src.processes.utils.common import get_duration_format
+from src.services.html_converter import convert_text_to_html
 
 UserModel = get_user_model()
 
@@ -40,20 +41,20 @@ class EmailService(NotificationService):
         NotificationMethod.guest_new_task,
         NotificationMethod.unread_notifications,
         NotificationMethod.reset_password,
-        NotificationMethod.mention
+        NotificationMethod.mention,
     }
 
     def _send_email_to_console(
         self,
         user_email: str,
         template_code: str,
-        data: dict
+        data: dict,
     ):
         message_vars = ''
         for key, val in data.items():
             '\n'.join(f'- {key}: {val}')
-        print(
-            f'''
+        print( # noqa: T201
+            f"""
             -------------------------
             ------EMAIL-MESSAGE------
             To email: {user_email}
@@ -61,7 +62,7 @@ class EmailService(NotificationService):
             Message args:
             {message_vars}
             -------------------------
-            '''
+            """,
         )
 
     def _send_email_via_customerio(
@@ -78,7 +79,7 @@ class EmailService(NotificationService):
             to=user_email,
             transactional_message_id=message_id,
             message_data=data,
-            identifiers={'id': user_id}
+            identifiers={'id': user_id},
         )
         client.send_email(request)
         if self.logging:
@@ -87,7 +88,7 @@ class EmailService(NotificationService):
                 request_data=data,
                 account_id=self.account_id,
                 status=AccountEventStatus.SUCCESS,
-                contractor='Customer.io'
+                contractor='Customer.io',
             )
 
     def _send(
@@ -107,7 +108,7 @@ class EmailService(NotificationService):
 
         if settings.CONFIGURATION_CURRENT in (
             settings.CONFIGURATION_DEV,
-            settings.CONFIGURATION_TESTING
+            settings.CONFIGURATION_TESTING,
         ):
             self._send_email_to_console(
                 user_email=user_email,
@@ -120,7 +121,7 @@ class EmailService(NotificationService):
                 user_id=user_id,
                 user_email=user_email,
                 template_code=template_code,
-                data=data
+                data=data,
             )
 
     def _handle_error(self, *args, **kwargs):
@@ -139,7 +140,7 @@ class EmailService(NotificationService):
         wf_starter_photo: Optional[str] = None,
         due_in: Optional[str] = None,
         overdue: Optional[str] = None,
-        **kwargs
+        **kwargs,
     ):
 
         unsubscribe_token = UnsubscribeEmailToken.create_token(
@@ -160,7 +161,7 @@ class EmailService(NotificationService):
             'started_by': {
                 'name': wf_starter_name,
                 'avatar': wf_starter_photo,
-            }
+            },
         }
         self._send(
             title=str(messages.MSG_NF_0002),
@@ -168,7 +169,7 @@ class EmailService(NotificationService):
             user_email=user_email,
             template_code=EmailTemplate.NEW_TASK,
             method_name=NotificationMethod.new_task,
-            data=data
+            data=data,
         )
 
     def send_returned_task(
@@ -184,7 +185,7 @@ class EmailService(NotificationService):
         wf_starter_photo: Optional[str] = None,
         due_in: Optional[str] = None,
         overdue: Optional[str] = None,
-        **kwargs
+        **kwargs,
     ):
 
         unsubscribe_token = UnsubscribeEmailToken.create_token(
@@ -205,7 +206,7 @@ class EmailService(NotificationService):
             'started_by': {
                 'name': wf_starter_name,
                 'avatar': wf_starter_photo,
-            }
+            },
         }
         self._send(
             title=str(messages.MSG_NF_0003),
@@ -213,7 +214,7 @@ class EmailService(NotificationService):
             user_email=user_email,
             template_code=EmailTemplate.TASK_RETURNED,
             method_name=NotificationMethod.returned_task,
-            data=data
+            data=data,
         )
 
     def send_overdue_task(
@@ -230,7 +231,7 @@ class EmailService(NotificationService):
         workflow_starter_first_name: str,
         workflow_starter_last_name: str,
         token: Optional[str] = None,
-        **kwargs
+        **kwargs,
     ):
         self._send(
             title=str(messages.MSG_NF_0004),
@@ -250,7 +251,7 @@ class EmailService(NotificationService):
                 'logo_lg': self.logo_lg,
                 'user_type': user_type,
                 'token': token,
-            }
+            },
         )
 
     def send_guest_new_task(
@@ -263,7 +264,7 @@ class EmailService(NotificationService):
         task_name: str,
         task_description: str,
         task_due_date: Union[datetime, str, None] = None,
-        **kwargs
+        **kwargs,
     ):
         description = (
             convert_text_to_html(task_description)
@@ -281,7 +282,6 @@ class EmailService(NotificationService):
         if task_due_date:
             # floating bug when task_estimated_end_date is string
             if isinstance(task_due_date, str):
-                from django.utils.dateparse import parse_datetime
                 task_due_date = parse_datetime(task_due_date)
             due_in: timedelta = task_due_date - timezone.now()
             formatted_date = get_duration_format(duration=due_in)
@@ -304,7 +304,7 @@ class EmailService(NotificationService):
         user_id: int,
         user_email: str,
         user_first_name: str,
-        **kwargs
+        **kwargs,
     ):
         unsubscribe_token = UnsubscribeEmailToken.create_token(
             user_id=user_id,
@@ -320,14 +320,14 @@ class EmailService(NotificationService):
                 'user_name': user_first_name,
                 'unsubscribe_token': unsubscribe_token,
                 'logo_lg': self.logo_lg,
-            }
+            },
         )
 
     def send_reset_password(
         self,
         user_id: int,
         user_email: str,
-        **kwargs
+        **kwargs,
     ):
 
         token = ResetPasswordToken.for_user_id(user_id).__str__()
@@ -340,7 +340,7 @@ class EmailService(NotificationService):
             data={
                 'token': token,
                 'logo_lg': self.logo_lg,
-            }
+            },
         )
 
     def send_mention(
@@ -349,7 +349,7 @@ class EmailService(NotificationService):
         user_id: int,
         user_email: str,
         user_first_name: str,
-        **kwargs
+        **kwargs,
     ):
         self._send(
             title=str(messages.MSG_NF_0005),
@@ -361,5 +361,5 @@ class EmailService(NotificationService):
                 'logo_lg': self.logo_lg,
                 'user_first_name': user_first_name,
                 'task_id': task_id,
-            }
+            },
         )

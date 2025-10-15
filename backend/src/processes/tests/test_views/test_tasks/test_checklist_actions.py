@@ -1,27 +1,27 @@
 import pytest
 from django.contrib.auth import get_user_model
+
 from src.authentication.enums import AuthTokenType
-from src.processes.tests.fixtures import (
-    create_test_user,
-    create_test_template,
-    create_test_workflow,
-    create_checklist_template,
-    create_test_guest,
-    create_test_account,
-)
-from src.processes.models import (
+from src.authentication.services.guest_auth import GuestJWTAuthService
+from src.processes.models.workflows.checklist import (
     ChecklistSelection,
-    TaskPerformer,
 )
+from src.processes.models.workflows.task import TaskPerformer
 from src.processes.services.tasks.exceptions import (
-    ChecklistServiceException
+    ChecklistServiceException,
 )
 from src.processes.services.tasks.performers import (
-    TaskPerformersService
+    TaskPerformersService,
 )
-from src.authentication.services import GuestJWTAuthService
+from src.processes.tests.fixtures import (
+    create_checklist_template,
+    create_test_account,
+    create_test_guest,
+    create_test_template,
+    create_test_user,
+    create_test_workflow,
+)
 from src.utils.validation import ErrorCode
-
 
 UserModel = get_user_model()
 pytestmark = pytest.mark.django_db
@@ -31,7 +31,7 @@ class TestChecklistRetrieve:
 
     def test_retrieve__performer__ok(
         self,
-        api_client
+        api_client,
     ):
 
         # arrange
@@ -39,13 +39,13 @@ class TestChecklistRetrieve:
         user_2 = create_test_user(
             account=user.account,
             email='t@t.t',
-            is_account_owner=False
+            is_account_owner=False,
         )
         api_client.token_authenticate(user_2)
         template = create_test_template(
             user=user,
             is_active=True,
-            tasks_count=1
+            tasks_count=1,
         )
         create_checklist_template(task_template=template.tasks.first())
         workflow = create_test_workflow(template=template, user=user)
@@ -65,7 +65,7 @@ class TestChecklistRetrieve:
         selection = ChecklistSelection.objects.get(
             checklist=checklist,
             api_name='cl-selection-1',
-            value='some value 1'
+            value='some value 1',
         )
         assert selection_data['id'] == selection.id
         assert selection_data['api_name'] == selection.api_name
@@ -74,7 +74,7 @@ class TestChecklistRetrieve:
 
     def test_retrieve__account_owner__ok(
         self,
-        api_client
+        api_client,
     ):
 
         # arrange
@@ -83,7 +83,7 @@ class TestChecklistRetrieve:
         template = create_test_template(
             user=user,
             is_active=True,
-            tasks_count=1
+            tasks_count=1,
         )
         create_checklist_template(task_template=template.tasks.first())
         workflow = create_test_workflow(template=template, user=user)
@@ -101,7 +101,7 @@ class TestChecklistRetrieve:
         selection = ChecklistSelection.objects.get(
             checklist=checklist,
             api_name='cl-selection-1',
-            value='some value 1'
+            value='some value 1',
         )
         assert selection_data['id'] == selection.id
         assert selection_data['api_name'] == selection.api_name
@@ -110,7 +110,7 @@ class TestChecklistRetrieve:
 
     def test_retrieve__guest__ok(
         self,
-        api_client
+        api_client,
     ):
 
         # arrange
@@ -130,20 +130,20 @@ class TestChecklistRetrieve:
         task = workflow.tasks.first()
         TaskPerformer.objects.create(
             task_id=task.id,
-            user_id=guest.id
+            user_id=guest.id,
         )
 
         str_token = GuestJWTAuthService.get_str_token(
             task_id=task.id,
             user_id=guest.id,
-            account_id=account.id
+            account_id=account.id,
         )
         checklist = task.checklists.first()
 
         # act
         response = api_client.get(
             f'/v2/tasks/checklists/{checklist.id}',
-            **{'X-Guest-Authorization': str_token}
+            **{'X-Guest-Authorization': str_token},
         )
 
         # assert
@@ -151,7 +151,7 @@ class TestChecklistRetrieve:
 
     def test_retrieve__not_permission__not_found(
         self,
-        api_client
+        api_client,
     ):
 
         # arrange
@@ -159,12 +159,12 @@ class TestChecklistRetrieve:
         user_2 = create_test_user(
             account=user.account,
             email='t@t.t',
-            is_account_owner=False
+            is_account_owner=False,
         )
         template = create_test_template(
             user=user,
             is_active=True,
-            tasks_count=1
+            tasks_count=1,
         )
         create_checklist_template(task_template=template.tasks.first())
         workflow = create_test_workflow(template=template, user=user)
@@ -184,7 +184,7 @@ class TestChecklistRetrieve:
 
     def test_retrieve__deleted_performer__ok(
         self,
-        api_client
+        api_client,
     ):
 
         # arrange
@@ -192,13 +192,13 @@ class TestChecklistRetrieve:
         user_2 = create_test_user(
             account=user.account,
             email='t@t.t',
-            is_account_owner=False
+            is_account_owner=False,
         )
         api_client.token_authenticate(user_2)
         template = create_test_template(
             user=user,
             is_active=True,
-            tasks_count=1
+            tasks_count=1,
         )
         create_checklist_template(task_template=template.tasks.first())
         workflow = create_test_workflow(template=template, user=user)
@@ -211,14 +211,14 @@ class TestChecklistRetrieve:
             run_actions=False,
             current_url='/page',
             is_superuser=False,
-            auth_type=AuthTokenType.USER
+            auth_type=AuthTokenType.USER,
         )
         TaskPerformersService.delete_performer(
             request_user=user,
             user_key=user_2.id,
             task=task,
             is_superuser=False,
-            auth_type=AuthTokenType.USER
+            auth_type=AuthTokenType.USER,
         )
         checklist = task.checklists.first()
 
@@ -234,7 +234,7 @@ class TestChecklistMark:
     def test_mark__performer__ok(
         self,
         mocker,
-        api_client
+        api_client,
     ):
 
         # arrange
@@ -243,7 +243,7 @@ class TestChecklistMark:
         template = create_test_template(
             user=user,
             is_active=True,
-            tasks_count=1
+            tasks_count=1,
         )
         create_checklist_template(task_template=template.tasks.first())
         workflow = create_test_workflow(template=template, user=user)
@@ -251,19 +251,19 @@ class TestChecklistMark:
         checklist = task.checklists.first()
         selection = ChecklistSelection.objects.get(
             checklist=checklist,
-            api_name='cl-selection-1'
+            api_name='cl-selection-1',
         )
         mark_mock = mocker.patch(
             'src.processes.views.checklist.'
-            'ChecklistService.mark'
+            'ChecklistService.mark',
         )
 
         # act
         response = api_client.post(
             path=f'/v2/tasks/checklists/{checklist.id}/mark',
             data={
-                'selection_id': selection.id
-            }
+                'selection_id': selection.id,
+            },
         )
 
         # assert
@@ -277,7 +277,7 @@ class TestChecklistMark:
         assert selection_data['is_selected'] is False
         assert selection_data['value'] == selection.value
         mark_mock.assert_called_once_with(
-            selection_id=selection.id
+            selection_id=selection.id,
         )
 
     @pytest.mark.parametrize('value', ('undefined', []))
@@ -285,7 +285,7 @@ class TestChecklistMark:
         self,
         value,
         mocker,
-        api_client
+        api_client,
     ):
 
         # arrange
@@ -294,7 +294,7 @@ class TestChecklistMark:
         template = create_test_template(
             user=user,
             is_active=True,
-            tasks_count=1
+            tasks_count=1,
         )
         create_checklist_template(task_template=template.tasks.first())
         workflow = create_test_workflow(template=template, user=user)
@@ -302,15 +302,15 @@ class TestChecklistMark:
         checklist = task.checklists.first()
         mark_mock = mocker.patch(
             'src.processes.views.checklist.'
-            'ChecklistService.mark'
+            'ChecklistService.mark',
         )
 
         # act
         response = api_client.post(
             path=f'/v2/tasks/checklists/{checklist.id}/mark',
             data={
-                'selection_id': value
-            }
+                'selection_id': value,
+            },
         )
 
         # assert
@@ -325,7 +325,7 @@ class TestChecklistMark:
     def test_mark__selection_id_is_null__validation_error(
         self,
         mocker,
-        api_client
+        api_client,
     ):
 
         # arrange
@@ -334,7 +334,7 @@ class TestChecklistMark:
         template = create_test_template(
             user=user,
             is_active=True,
-            tasks_count=1
+            tasks_count=1,
         )
         create_checklist_template(task_template=template.tasks.first())
         workflow = create_test_workflow(template=template, user=user)
@@ -342,15 +342,15 @@ class TestChecklistMark:
         checklist = task.checklists.first()
         mark_mock = mocker.patch(
             'src.processes.views.checklist.'
-            'ChecklistService.mark'
+            'ChecklistService.mark',
         )
 
         # act
         response = api_client.post(
             path=f'/v2/tasks/checklists/{checklist.id}/mark',
             data={
-                'selection_id': None
-            }
+                'selection_id': None,
+            },
         )
 
         # assert
@@ -365,7 +365,7 @@ class TestChecklistMark:
     def test_mark__service_exception__validation_error(
         self,
         mocker,
-        api_client
+        api_client,
     ):
 
         # arrange
@@ -374,7 +374,7 @@ class TestChecklistMark:
         template = create_test_template(
             user=user,
             is_active=True,
-            tasks_count=1
+            tasks_count=1,
         )
         create_checklist_template(task_template=template.tasks.first())
         workflow = create_test_workflow(template=template, user=user)
@@ -382,21 +382,21 @@ class TestChecklistMark:
         checklist = task.checklists.first()
         selection = ChecklistSelection.objects.get(
             checklist=checklist,
-            api_name='cl-selection-1'
+            api_name='cl-selection-1',
         )
         message = 'some message'
         mark_mock = mocker.patch(
             'src.processes.views.checklist.'
             'ChecklistService.mark',
-            side_effect=ChecklistServiceException(message)
+            side_effect=ChecklistServiceException(message),
         )
 
         # act
         response = api_client.post(
             path=f'/v2/tasks/checklists/{checklist.id}/mark',
             data={
-                'selection_id': selection.id
-            }
+                'selection_id': selection.id,
+            },
         )
 
         # assert
@@ -404,13 +404,13 @@ class TestChecklistMark:
         assert response.data['code'] == ErrorCode.VALIDATION_ERROR
         assert response.data['message'] == message
         mark_mock.assert_called_once_with(
-            selection_id=selection.id
+            selection_id=selection.id,
         )
 
     def test_mark__guest__ok(
         self,
         mocker,
-        api_client
+        api_client,
     ):
 
         # arrange
@@ -424,43 +424,43 @@ class TestChecklistMark:
         template = create_test_template(
             user=account_owner,
             is_active=True,
-            tasks_count=1
+            tasks_count=1,
         )
         create_checklist_template(task_template=template.tasks.first())
         workflow = create_test_workflow(template=template, user=account_owner)
         task = workflow.tasks.first()
         TaskPerformer.objects.create(
             task_id=task.id,
-            user_id=guest.id
+            user_id=guest.id,
         )
         checklist = task.checklists.first()
         selection = ChecklistSelection.objects.get(
             checklist=checklist,
-            api_name='cl-selection-1'
+            api_name='cl-selection-1',
         )
         mark_mock = mocker.patch(
             'src.processes.views.checklist.'
-            'ChecklistService.mark'
+            'ChecklistService.mark',
         )
         str_token = GuestJWTAuthService.get_str_token(
             task_id=task.id,
             user_id=guest.id,
-            account_id=account.id
+            account_id=account.id,
         )
 
         # act
         response = api_client.post(
             path=f'/v2/tasks/checklists/{checklist.id}/mark',
             data={
-                'selection_id': selection.id
+                'selection_id': selection.id,
             },
-            **{'X-Guest-Authorization': str_token}
+            **{'X-Guest-Authorization': str_token},
         )
 
         # assert
         assert response.status_code == 200
         mark_mock.assert_called_once_with(
-            selection_id=selection.id
+            selection_id=selection.id,
         )
 
 
@@ -469,7 +469,7 @@ class TestChecklistUnMark:
     def test_unmark__performer__ok(
         self,
         mocker,
-        api_client
+        api_client,
     ):
 
         # arrange
@@ -478,7 +478,7 @@ class TestChecklistUnMark:
         template = create_test_template(
             user=user,
             is_active=True,
-            tasks_count=1
+            tasks_count=1,
         )
         create_checklist_template(task_template=template.tasks.first())
         workflow = create_test_workflow(template=template, user=user)
@@ -486,19 +486,19 @@ class TestChecklistUnMark:
         checklist = task.checklists.first()
         selection = ChecklistSelection.objects.get(
             checklist=checklist,
-            api_name='cl-selection-1'
+            api_name='cl-selection-1',
         )
         unmark_mock = mocker.patch(
             'src.processes.views.checklist.'
-            'ChecklistService.unmark'
+            'ChecklistService.unmark',
         )
 
         # act
         response = api_client.post(
             path=f'/v2/tasks/checklists/{checklist.id}/unmark',
             data={
-                'selection_id': selection.id
-            }
+                'selection_id': selection.id,
+            },
         )
 
         # assert
@@ -512,7 +512,7 @@ class TestChecklistUnMark:
         assert selection_data['is_selected'] is False
         assert selection_data['value'] == selection.value
         unmark_mock.assert_called_once_with(
-            selection_id=selection.id
+            selection_id=selection.id,
         )
 
     @pytest.mark.parametrize('value', ('undefined', []))
@@ -520,7 +520,7 @@ class TestChecklistUnMark:
         self,
         value,
         mocker,
-        api_client
+        api_client,
     ):
 
         # arrange
@@ -529,7 +529,7 @@ class TestChecklistUnMark:
         template = create_test_template(
             user=user,
             is_active=True,
-            tasks_count=1
+            tasks_count=1,
         )
         create_checklist_template(task_template=template.tasks.first())
         workflow = create_test_workflow(template=template, user=user)
@@ -538,15 +538,15 @@ class TestChecklistUnMark:
 
         mark_mock = mocker.patch(
             'src.processes.views.checklist.'
-            'ChecklistService.mark'
+            'ChecklistService.mark',
         )
 
         # act
         response = api_client.post(
             path=f'/v2/tasks/checklists/{checklist.id}/unmark',
             data={
-                'selection_id': value
-            }
+                'selection_id': value,
+            },
         )
 
         # assert
@@ -561,7 +561,7 @@ class TestChecklistUnMark:
     def test_unmark__selection_id_is_null__validation_error(
         self,
         mocker,
-        api_client
+        api_client,
     ):
 
         # arrange
@@ -570,7 +570,7 @@ class TestChecklistUnMark:
         template = create_test_template(
             user=user,
             is_active=True,
-            tasks_count=1
+            tasks_count=1,
         )
         create_checklist_template(task_template=template.tasks.first())
         workflow = create_test_workflow(template=template, user=user)
@@ -578,15 +578,15 @@ class TestChecklistUnMark:
         checklist = task.checklists.first()
         unmark_mock = mocker.patch(
             'src.processes.views.checklist.'
-            'ChecklistService.unmark'
+            'ChecklistService.unmark',
         )
 
         # act
         response = api_client.post(
             path=f'/v2/tasks/checklists/{checklist.id}/unmark',
             data={
-                'selection_id': None
-            }
+                'selection_id': None,
+            },
         )
 
         # assert
@@ -601,7 +601,7 @@ class TestChecklistUnMark:
     def test_unmark__service_exception__validation_error(
         self,
         mocker,
-        api_client
+        api_client,
     ):
 
         # arrange
@@ -610,7 +610,7 @@ class TestChecklistUnMark:
         template = create_test_template(
             user=user,
             is_active=True,
-            tasks_count=1
+            tasks_count=1,
         )
         create_checklist_template(task_template=template.tasks.first())
         workflow = create_test_workflow(template=template, user=user)
@@ -618,21 +618,21 @@ class TestChecklistUnMark:
         checklist = task.checklists.first()
         selection = ChecklistSelection.objects.get(
             checklist=checklist,
-            api_name='cl-selection-1'
+            api_name='cl-selection-1',
         )
         message = 'some message'
         unmark_mock = mocker.patch(
             'src.processes.views.checklist.'
             'ChecklistService.unmark',
-            side_effect=ChecklistServiceException(message)
+            side_effect=ChecklistServiceException(message),
         )
 
         # act
         response = api_client.post(
             path=f'/v2/tasks/checklists/{checklist.id}/unmark',
             data={
-                'selection_id': selection.id
-            }
+                'selection_id': selection.id,
+            },
         )
 
         # assert
@@ -640,13 +640,13 @@ class TestChecklistUnMark:
         assert response.data['code'] == ErrorCode.VALIDATION_ERROR
         assert response.data['message'] == message
         unmark_mock.assert_called_once_with(
-            selection_id=selection.id
+            selection_id=selection.id,
         )
 
     def test_unmark__guest__ok(
         self,
         mocker,
-        api_client
+        api_client,
     ):
 
         # arrange
@@ -660,41 +660,41 @@ class TestChecklistUnMark:
         template = create_test_template(
             user=account_owner,
             is_active=True,
-            tasks_count=1
+            tasks_count=1,
         )
         create_checklist_template(task_template=template.tasks.first())
         workflow = create_test_workflow(template=template, user=account_owner)
         task = workflow.tasks.first()
         TaskPerformer.objects.create(
             task_id=task.id,
-            user_id=guest.id
+            user_id=guest.id,
         )
         checklist = task.checklists.first()
         selection = ChecklistSelection.objects.get(
             checklist=checklist,
-            api_name='cl-selection-1'
+            api_name='cl-selection-1',
         )
         unmark_mock = mocker.patch(
             'src.processes.views.checklist.'
-            'ChecklistService.unmark'
+            'ChecklistService.unmark',
         )
         str_token = GuestJWTAuthService.get_str_token(
             task_id=task.id,
             user_id=guest.id,
-            account_id=account.id
+            account_id=account.id,
         )
 
         # act
         response = api_client.post(
             path=f'/v2/tasks/checklists/{checklist.id}/unmark',
             data={
-                'selection_id': selection.id
+                'selection_id': selection.id,
             },
-            **{'X-Guest-Authorization': str_token}
+            **{'X-Guest-Authorization': str_token},
         )
 
         # assert
         assert response.status_code == 200
         unmark_mock.assert_called_once_with(
-            selection_id=selection.id
+            selection_id=selection.id,
         )

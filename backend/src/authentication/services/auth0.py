@@ -1,23 +1,27 @@
 import json
-import requests
-from typing import Union, Optional, Tuple
+from typing import Optional, Union, Tuple
 from uuid import uuid4
+
+import requests
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.http import HttpRequest
+
 from src.accounts.enums import SourceType
 from src.accounts.models import Contact, Account
-from src.authentication.models import AccessToken
 from src.authentication.entities import UserData
-from src.authentication.services import AuthService
+from src.authentication.models import AccessToken
+from src.authentication.services import (
+    AuthService,
+    exceptions
+)
 from src.authentication.tokens import PneumaticToken
-from src.authentication.views.mixins import SignUpMixin
 from src.generics.mixins.services import CacheMixin
-from src.authentication.services import exceptions
+from src.authentication.views.mixins import SignUpMixin
 from src.logs.service import AccountLogService
 from src.utils.logging import (
-    capture_sentry_message,
     SentryLogLevel,
+    capture_sentry_message,
 )
 from src.authentication.messages import MSG_AU_0003
 from rest_framework.exceptions import AuthenticationFailed
@@ -158,8 +162,8 @@ class Auth0Service(SignUpMixin, CacheMixin):
             raise exceptions.EmailNotExist(
                 details={
                     'user_profile': user_profile,
-                    'email': email
-                }
+                    'email': email,
+                },
             )
         first_name = (
             user_profile.get('given_name') or

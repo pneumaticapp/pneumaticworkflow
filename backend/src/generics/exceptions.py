@@ -9,7 +9,7 @@ class BaseServiceException(Exception):
         message = message or self.default_message
         if message is None:
             raise Exception(
-                'You should specify "message" or "default_message" attribute'
+                'You should specify "message" or "default_message" attribute',
             )
         super().__init__()
         self.message = message

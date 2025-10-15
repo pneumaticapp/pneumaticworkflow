@@ -1,47 +1,48 @@
-from django.db import transaction
-from django.contrib.auth import get_user_model, password_validation
+# ruff: noqa: PLC0415
+from django import forms
 from django.conf import settings
 from django.contrib import admin
 from django.contrib import messages as sys_messages
-from django import forms
 from django.contrib.admin import ModelAdmin, StackedInline
 from django.contrib.admin.templatetags.admin_urls import admin_urlname
+from django.contrib.auth import get_user_model, password_validation
 from django.contrib.auth.admin import UserAdmin
+from django.contrib.auth.forms import UserChangeForm, UserCreationForm
+from django.db import transaction
 from django.shortcuts import resolve_url
 from django.utils.html import escape
 from django.utils.safestring import mark_safe
-from django.contrib.auth.forms import UserCreationForm, UserChangeForm
+
+from src.accounts import messages
+from src.accounts.enums import (
+    BillingPlanType,
+    Language,
+    LeaseLevel,
+    SourceType,
+    Timezone,
+    UserStatus,
+    UserType,
+)
+from src.accounts.forms import ContactAdminForm
 from src.accounts.models import (
     Account,
     Contact,
-    User,
-    UserInvite,
     SystemMessage,
+    User,
     UserGroup,
+    UserInvite,
 )
-from src.accounts.services import AccountService
-from src.payment.enums import BillingPeriod
-from src.accounts.enums import (
-    LeaseLevel,
-    BillingPlanType,
-    UserType,
-    SourceType,
-    UserStatus,
-    Language,
-    Timezone,
-)
+from src.accounts.services.account import AccountService
 from src.accounts.services.convert_account import (
-    AccountLLConverter
+    AccountLLConverter,
 )
-from src.accounts.forms import ContactAdminForm
 from src.authentication.views.mixins import SignUpMixin
-from src.accounts import messages
+from src.payment.enums import BillingPeriod
 from src.reports.tasks import (
     send_digest,
     send_tasks_digest,
 )
 from src.storage.tasks import switch_access_to_files
-
 
 UserModel = get_user_model()
 
@@ -58,12 +59,12 @@ class UserAdminCreationForm(UserCreationForm):
     email = forms.EmailField(
         label=messages.MSG_A_0015,
         max_length=254,
-        required=True
+        required=True,
     )
     first_name = forms.CharField(
         label=messages.MSG_A_0016,
         max_length=30,
-        required=True
+        required=True,
     )
     language = forms.ChoiceField(
         choices=Language.CHOICES,
@@ -87,7 +88,7 @@ class UserAdminCreationForm(UserCreationForm):
     def clean_email(self):
         email = self.cleaned_data.get('email')
         already_exists = UserModel.objects.active().type_user().filter(
-            email=email
+            email=email,
         ).exists()
         if already_exists:
             raise forms.ValidationError(messages.MSG_A_0005)
@@ -111,7 +112,7 @@ class GroupAdmin(ModelAdmin):
     list_display = (
         'name',
         'photo',
-        'account'
+        'account',
     )
     readonly_fields = [
         'users',
@@ -128,9 +129,7 @@ class GroupInline(StackedInline):
     show_change_link = True
 
     def formfield_for_foreignkey(self, db_field, request=None, **kwargs):
-        field = super(
-            GroupInline, self
-        ).formfield_for_foreignkey(db_field, request, **kwargs)
+        field = super().formfield_for_foreignkey(db_field, request, **kwargs)
 
         if db_field.name == 'usergroup':
             if request._obj_ is not None:
@@ -209,14 +208,14 @@ class UsersAdmin(UserAdmin, SignUpMixin):
                 'date_fdw',
                 'api_key',
                 'account_link',
-            )}
+            )},
         ),
         (
             messages.MSG_A_0021,
             {'fields': (
                 'is_active',
                 'status',
-            )}
+            )},
         ),
         (
             messages.MSG_A_0022,
@@ -224,7 +223,7 @@ class UsersAdmin(UserAdmin, SignUpMixin):
                 'is_admin',
                 'is_staff',
                 'is_superuser',
-            )}
+            )},
         ),
         (
             messages.MSG_A_0023,
@@ -233,7 +232,7 @@ class UsersAdmin(UserAdmin, SignUpMixin):
                 'date_joined',
                 'last_digest_send_time',
                 'last_tasks_digest_send_time',
-            )}
+            )},
         ),
         (
             'Subscription to emails',
@@ -245,8 +244,8 @@ class UsersAdmin(UserAdmin, SignUpMixin):
                 'is_new_tasks_subscriber',
                 'is_complete_tasks_subscriber',
                 'is_comments_mentions_subscriber',
-            )}
-        )
+            )},
+        ),
     )
     list_display = (
         'name',
@@ -254,7 +253,7 @@ class UsersAdmin(UserAdmin, SignUpMixin):
         'is_account_owner',
         'type',
         'status',
-        'account_link'
+        'account_link',
     )
     readonly_fields = (
         'type',
@@ -272,7 +271,7 @@ class UsersAdmin(UserAdmin, SignUpMixin):
 
     def get_form(self, request, obj=None, **kwargs):
         request._obj_ = obj
-        return super(UsersAdmin, self).get_form(request, obj, **kwargs)
+        return super().get_form(request, obj, **kwargs)
 
     def api_key(self, obj):
         return obj.apikey.key
@@ -281,7 +280,7 @@ class UsersAdmin(UserAdmin, SignUpMixin):
     def account_link(self, obj):
         url = resolve_url(
             admin_urlname(Account._meta, 'change'),
-            obj.account.id
+            obj.account.id,
         )
         name = obj.account.name
         return mark_safe(f'<a href={url}>{escape(name)}</a>')
@@ -309,7 +308,7 @@ class UsersAdmin(UserAdmin, SignUpMixin):
         super().delete_model(request, obj)
         service = AccountService(
             instance=account,
-            user=account.get_owner()
+            user=account.get_owner(),
         )
         service.update_users_counts()
 
@@ -325,7 +324,7 @@ class UsersAdmin(UserAdmin, SignUpMixin):
                 last_name=obj.last_name,
                 password=obj._password,
                 billing_sync=False,
-                request=request
+                request=request,
             )
 
     def send_digest(self, request, queryset):
@@ -365,12 +364,12 @@ class UserInlineForm(forms.ModelForm):
     email = forms.EmailField(
         label=messages.MSG_A_0015,
         max_length=254,
-        required=True
+        required=True,
     )
     first_name = forms.CharField(
         label=messages.MSG_A_0016,
         max_length=30,
-        required=False
+        required=False,
     )
 
     def clean_email(self):
@@ -391,30 +390,29 @@ class UserInlineForm(forms.ModelForm):
 
     def save(self, commit=True):
         from src.accounts.services.user_invite import (
-            UserInviteService
+            UserInviteService,
         )
         if self.instance.id:
             return super().save(commit=commit)
-        else:
-            # invite and accept new user
-            account = self.cleaned_data['account']
-            email = self.cleaned_data['email']
-            service = UserInviteService(
-                request_user=account.get_owner(),
-                current_url='https://api.pneumatic.app/__cp/',
-                send_email=False
-            )
-            service.invite_user(
-                email=self.cleaned_data['email'],
-                invited_from=SourceType.EMAIL,
-            )
-            user = account.users.invited().type_user().get(email=email)
-            service.accept(
-                first_name=self.cleaned_data['first_name'],
-                last_name=self.cleaned_data.get('last_name'),
-                invite=user.invite
-            )
-            return user
+        # invite and accept new user
+        account = self.cleaned_data['account']
+        email = self.cleaned_data['email']
+        service = UserInviteService(
+            request_user=account.get_owner(),
+            current_url='https://api.pneumatic.app/__cp/',
+            send_email=False,
+        )
+        service.invite_user(
+            email=self.cleaned_data['email'],
+            invited_from=SourceType.EMAIL,
+        )
+        user = account.users.invited().type_user().get(email=email)
+        service.accept(
+            first_name=self.cleaned_data['first_name'],
+            last_name=self.cleaned_data.get('last_name'),
+            invite=user.invite,
+        )
+        return user
 
 
 class UserInlineAdmin(StackedInline):
@@ -490,12 +488,12 @@ class AccountAdminForm(forms.ModelForm):
                 if account is None:
                     self.add_error(
                         field='master_account',
-                        error=messages.MSG_A_0025
+                        error=messages.MSG_A_0025,
                     )
                 elif not account.is_subscribed:
                     self.add_error(
                         field='master_account',
-                        error=messages.MSG_A_0026
+                        error=messages.MSG_A_0026,
                     )
                 else:
                     # TODO remove in https://my.pneumatic.app/workflows/21349/
@@ -506,13 +504,13 @@ class AccountAdminForm(forms.ModelForm):
                     ):
                         self.add_error(
                             field='master_account',
-                            error=messages.MSG_A_0027
+                            error=messages.MSG_A_0027,
                         )
                     return account
             else:
                 self.add_error(
                     field='master_account',
-                    error=messages.MSG_A_0028
+                    error=messages.MSG_A_0028,
                 )
 
         elif not value and lease_level == LeaseLevel.TENANT:
@@ -536,7 +534,7 @@ class AccountAdminForm(forms.ModelForm):
             if not allowed_changes:
                 self.add_error(
                     field='lease_level',
-                    error=messages.MSG_A_0030(prev, new)
+                    error=messages.MSG_A_0030(prev, new),
                 )
         return new
 
@@ -577,8 +575,8 @@ class AccountAdmin(ModelAdmin):
                     'log_api_requests',
                     'bucket_name',
                     'bucket_is_public',
-                )
-            }
+                ),
+            },
         ),
         (
             messages.MSG_A_0032,
@@ -599,17 +597,17 @@ class AccountAdmin(ModelAdmin):
                     'max_invites',
                     'ai_templates_generations',
                     'max_ai_templates_generations',
-                )
-            }
+                ),
+            },
         ),
         (
             messages.MSG_A_0033,
             {
                 'fields': (
                     'list_tenants',
-                )
-            }
-        )
+                ),
+            },
+        ),
     ]
     readonly_fields = [
         'stripe_id',
@@ -651,18 +649,17 @@ class AccountAdmin(ModelAdmin):
         self.prev_bucket_is_public = None
 
     def list_tenants(self, obj):
-        result = list()
+        result = []
         for acc in obj.tenants.only_tenants():
             url = resolve_url(admin_urlname(acc._meta, 'change'), acc.id)
             result.append(
                 f'<li><a target="_blank" '
-                f'href={url}>{escape(acc.name)} [{acc.id}]</a></li>'
+                f'href={url}>{escape(acc.name)} [{acc.id}]</a></li>',
             )
         result = ''.join(result)
         if result:
             return mark_safe(f'<ul>{result}</ul>')
-        else:
-            return '-'
+        return '-'
     list_tenants.short_description = 'Tenants'
 
     def get_object(self, request, object_id, from_field=None):
@@ -679,7 +676,7 @@ class AccountAdmin(ModelAdmin):
 
         service = AccountService(
             instance=obj,
-            user=request.user
+            user=request.user,
         )
         with transaction.atomic():
             if obj.billing_plan == BillingPlanType.PREMIUM:
@@ -709,21 +706,21 @@ class AccountAdmin(ModelAdmin):
                 log_api_requests=obj.log_api_requests,
                 bucket_name=obj.bucket_name,
                 bucket_is_public=obj.bucket_is_public,
-                force_save=True
+                force_save=True,
             )
             converter = AccountLLConverter(
                 instance=obj,
-                user=request.user
+                user=request.user,
             )
             converter.handle(
                 prev=self.prev_lease_level,
-                new=obj.lease_level
+                new=obj.lease_level,
             )
             if self.prev_bucket_is_public != obj.bucket_is_public:
                 switch_access_to_files.delay(
                     user_id=request.user.id,
                     account_id=obj.id,
-                    public_access=obj.bucket_is_public
+                    public_access=obj.bucket_is_public,
                 )
 
     def delete_model(self, request, obj):
@@ -738,7 +735,7 @@ class AccountAdmin(ModelAdmin):
         if master_account:
             service = AccountService(
                 instance=master_account,
-                user=master_account.get_owner()
+                user=master_account.get_owner(),
             )
             service.update_users_counts()
 
@@ -757,7 +754,7 @@ class ContactAdmin(ModelAdmin):
     def photo_preview(self, obj):
         if obj.photo:
             return mark_safe(
-                f'<image src={obj.photo} style="max-width: 200px;">'
+                f'<image src={obj.photo} style="max-width: 200px;">',
             )
         return '-'
 
@@ -799,7 +796,7 @@ class ContactAdmin(ModelAdmin):
         'job_title',
         'source',
         'user',
-        'photo_exists'
+        'photo_exists',
     )
     search_fields = (
         'email',

@@ -1,17 +1,18 @@
 import hashlib
 import secrets
+from abc import abstractmethod
 from datetime import timedelta
 from typing import Any, Optional
-from abc import abstractmethod
-from django.utils.encoding import force_bytes
+
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.cache import caches
-from rest_framework_simplejwt.tokens import Token
+from django.utils.encoding import force_bytes
 from rest_framework_simplejwt.exceptions import TokenError
+from rest_framework_simplejwt.tokens import Token
+
 from src.authentication.enums import AuthTokenType
 from src.utils.salt import get_salt
-
 
 UserModel = get_user_model()
 
@@ -110,8 +111,7 @@ class PneumaticToken:
 
     @classmethod
     def get_user_tokens(cls, user: UserModel):
-        tokens = cls.cache.get(user.pk)
-        return tokens
+        return cls.cache.get(user.pk)
 
     @classmethod
     def get_user_from_token(
@@ -121,15 +121,14 @@ class PneumaticToken:
         cached_data = cls._get_cached_data(token)
         if cached_data:
             return UserModel.objects.get(pk=cached_data['user_id'])
-        else:
-            raise UserModel.DoesNotExist
+        raise UserModel.DoesNotExist
 
     @classmethod
     def expire_token(cls, token: str):
         encrypted_token = cls.encrypt(token)
         user_info = cls.cache.get(encrypted_token)
         if not user_info:
-            return None
+            return
 
         user_pk = user_info.get('user_id')
         tokens = cls.cache.get(user_pk)
