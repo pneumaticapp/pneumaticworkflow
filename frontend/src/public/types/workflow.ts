@@ -353,7 +353,7 @@ export interface IWorkflowsSettings {
     workflowStartersCounters: TUserCounter[];
     performersCounters: TUserCounter[];
   };
-  lastLoadedTemplateId: string | null;
+  lastLoadedTemplateIdForTable: string | null;
 }
 
 export enum EWorkflowsView {

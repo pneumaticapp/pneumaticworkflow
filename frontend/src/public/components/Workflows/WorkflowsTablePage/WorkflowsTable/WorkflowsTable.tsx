@@ -375,7 +375,7 @@ export function WorkflowsTable({
   const previousColumnsRef = useRef<Column<TableColumns>[]>([defaultWorkflowColumn]);
 
   const columns: Column<TableColumns>[] = React.useMemo(() => {
-    if (workflowsLoadingStatus !== EWorkflowsLoadingStatus.Loaded) {
+    if (workflowsLoadingStatus !== EWorkflowsLoadingStatus.Loaded || selectedFields.length === 0) {
       return previousColumnsRef.current;
     }
 
@@ -391,7 +391,7 @@ export function WorkflowsTable({
               ),
               accessor: 'templateName',
               Cell: ColumnCells.TemplateNameColumn,
-              width: savedGlobalWidths.workflow || ETableViewFieldsWidth.workflow,
+              width: savedGlobalWidths.templateName || ETableViewFieldsWidth.templateName,
               minWidth: EColumnWidthMinWidth.templateName,
               columnType: 'templateName',
             },
@@ -550,7 +550,7 @@ export function WorkflowsTable({
           ))}
         </thead>
         <tbody {...getTableBodyProps()}>
-          {workflowsLoadingStatus === EWorkflowsLoadingStatus.LoadingList
+          {workflowsLoadingStatus === EWorkflowsLoadingStatus.LoadingList || selectedFields.length === 0
             ? renderLoader()
             : rows.map((row) => {
                 prepareRow(row);
