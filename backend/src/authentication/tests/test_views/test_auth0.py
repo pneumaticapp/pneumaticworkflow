@@ -7,9 +7,7 @@ from src.authentication.services.auth0 import (
 from src.authentication.services.exceptions import (
     AuthException,
 )
-from src.processes.tests.fixtures import (
-    create_test_user,
-)
+from src.processes.tests.fixtures import create_test_account, create_test_user
 from src.utils.validation import ErrorCode
 
 pytestmark = pytest.mark.django_db
@@ -33,7 +31,7 @@ def test_token__existent_user__authenticate(
     authenticate_user_mock = mocker.patch(
         'src.authentication.services.auth0.'
         'Auth0Service.authenticate_user',
-        return_value=(user, token)
+        return_value=(user, token),
     )
     auth_response = {
         'code': '0.Ab0Aa_jrV8Qkv...9UWtS972sufQ',
@@ -41,7 +39,7 @@ def test_token__existent_user__authenticate(
     }
 
     update_auth0_contacts_mock = mocker.patch(
-        'src.authentication.tasks.update_auth0_contacts.delay'
+        'src.authentication.tasks.update_auth0_contacts.delay',
     )
 
     # act
@@ -62,7 +60,7 @@ def test_token__existent_user__authenticate(
         utm_term=None,
         utm_content=None,
         gclid=None,
-        utm_campaign=None
+        utm_campaign=None,
     )
     update_auth0_contacts_mock.assert_called_once_with(user.id)
 
@@ -90,7 +88,7 @@ def test_token__disable_auth0_auth__permission_denied(
     user_ip = '128.18.0.99'
     authenticate_user_mock = mocker.patch(
         'src.authentication.services.auth0.'
-        'Auth0Service.authenticate_user'
+        'Auth0Service.authenticate_user',
     )
     save_tokens_for_user_mock = mocker.patch(
         'src.authentication.services.auth0.'
@@ -141,7 +139,7 @@ def test_token__service_exception__validation_error(
     authenticate_user_mock = mocker.patch(
         'src.authentication.services.auth0.'
         'Auth0Service.authenticate_user',
-        side_effect=AuthException(message)
+        side_effect=AuthException(message),
     )
     save_tokens_for_user_mock = mocker.patch(
         'src.authentication.services.auth0.'
@@ -189,7 +187,7 @@ def test_token__skip__code__validation_error(
     )
     authenticate_user_mock = mocker.patch(
         'src.authentication.services.auth0.'
-        'Auth0Service.authenticate_user'
+        'Auth0Service.authenticate_user',
     )
     auth_response = {
         'state': 'KvpfgTSUmwtOaPny',
@@ -232,7 +230,7 @@ def test_token__code_blank__validation_error(
     )
     authenticate_user_mock = mocker.patch(
         'src.authentication.services.auth0.'
-        'Auth0Service.authenticate_user'
+        'Auth0Service.authenticate_user',
     )
     auth_response = {
         'code': '',
@@ -357,18 +355,18 @@ def test_token__join_existing_account__ok(
     mocker.patch(
         'src.authentication.views.auth0.Auth0Permission.'
         'has_permission',
-        return_value=True
+        return_value=True,
     )
     user = create_test_user(email='test@test.test')
     token = 'test_token'
     mocker.patch(
         'src.authentication.services.auth0.'
         'Auth0Service.authenticate_user',
-        return_value=(user, token)
+        return_value=(user, token),
     )
     auth0_service_mock_instance = mocker.Mock()
     auth0_service_mock_instance.tokens = {
-        'access_token': 'mock_access_token'
+        'access_token': 'mock_access_token',
     }
     auth0_service_mock_instance.domain = 'mock-domain'
     auth0_service_mock_instance.client_id = 'mock-client-id'
@@ -377,7 +375,7 @@ def test_token__join_existing_account__ok(
     auth0_service_mock_instance.scope = 'mock-scope'
     mocker.patch(
         'src.authentication.views.auth0.Auth0Service',
-        return_value=auth0_service_mock_instance
+        return_value=auth0_service_mock_instance,
     )
     email = 'test@test.test'
     user_data = UserData(
@@ -386,40 +384,39 @@ def test_token__join_existing_account__ok(
         last_name='User',
         company_name='',
         photo=None,
-        job_title=''
+        job_title='',
     )
     auth0_service_mock_instance.get_user_data = mocker.Mock(
-        return_value=user_data
+        return_value=user_data,
     )
     mocker.patch(
         'src.authentication.services.auth0.'
         'Auth0Service._get_user_profile',
-        return_value={'sub': 'test_user_id'}
+        return_value={'sub': 'test_user_id'},
     )
     organizations = [{'id': 'org_123', 'name': 'Test Org'}]
     auth0_service_mock_instance.get_user_organizations = mocker.Mock(
-        return_value=organizations
+        return_value=organizations,
     )
-    from src.processes.tests.fixtures import create_test_account
     existing_account = create_test_account()
     existing_account.external_id = 'org_123'
     existing_account.save()
     auth0_service_mock_instance.authenticate_user = mocker.Mock(
-        return_value=(user, token)
+        return_value=(user, token),
     )
     user_agent = 'Some/Mozilla'
     user_ip = '128.18.0.99'
     mocker.patch(
             'src.authentication.services.user_auth.'
-            'AuthService.get_auth_token'
+            'AuthService.get_auth_token',
     )
     token = 'test_token'
     auth0_service_mock_instance.save_tokens_for_user = mocker.Mock()
     mocker.patch(
-        'src.authentication.views.auth0.update_auth0_contacts.delay'
+        'src.authentication.views.auth0.update_auth0_contacts.delay',
     )
     mocker.patch(
-        'src.authentication.views.auth0.capture_sentry_message'
+        'src.authentication.views.auth0.capture_sentry_message',
     )
     auth_response = {
         'code': '0.Ab0Aa_jrV8Qkv...9UWtS972sufQ',
@@ -431,7 +428,7 @@ def test_token__join_existing_account__ok(
         '/auth/auth0/token',
         data=auth_response,
         HTTP_USER_AGENT=user_agent,
-        HTTP_X_REAL_IP=user_ip
+        HTTP_X_REAL_IP=user_ip,
     )
 
     # assert
@@ -447,7 +444,7 @@ def test_token__join_existing_account__ok(
         utm_term=None,
         utm_content=None,
         gclid=None,
-        utm_campaign=None
+        utm_campaign=None,
     )
 
 
@@ -459,23 +456,23 @@ def test_token__create_new_account_with_external_id__ok(
     mocker.patch(
         'src.authentication.views.auth0.Auth0Permission.'
         'has_permission',
-        return_value=True
+        return_value=True,
     )
     user = create_test_user(email='test@test.test')
     token = 'test_token'
     mocker.patch(
         'src.authentication.services.auth0.'
         'Auth0Service.authenticate_user',
-        return_value=(user, token)
+        return_value=(user, token),
     )
     auth0_service_mock_instance = mocker.Mock()
     auth0_service_mock_instance.tokens = {
-        'access_token': 'mock_access_token'
+        'access_token': 'mock_access_token',
     }
     auth0_service_mock_instance.domain = 'mock-domain'
     mocker.patch(
         'src.authentication.views.auth0.Auth0Service',
-        return_value=auth0_service_mock_instance
+        return_value=auth0_service_mock_instance,
     )
     email = 'test@test.test'
     user_data = UserData(
@@ -484,38 +481,38 @@ def test_token__create_new_account_with_external_id__ok(
         last_name='User',
         company_name='',
         photo=None,
-        job_title=''
+        job_title='',
     )
     auth0_service_mock_instance.get_user_data = mocker.Mock(
-        return_value=user_data
+        return_value=user_data,
     )
     mocker.patch(
         'src.authentication.services.auth0.'
         'Auth0Service._get_user_profile',
-        return_value={'sub': 'test_user_id'}
+        return_value={'sub': 'test_user_id'},
     )
     organizations = [{'id': 'org_456', 'name': 'New Org'}]
     auth0_service_mock_instance.get_user_organizations = mocker.Mock(
-        return_value=organizations
+        return_value=organizations,
     )
     auth0_service_mock_instance.authenticate_user = mocker.Mock(
-        return_value=(user, token)
+        return_value=(user, token),
     )
     user_agent = 'Some/Mozilla'
     user_ip = '128.18.0.99'
     mocker.patch(
             'src.authentication.services.user_auth.'
-            'AuthService.get_auth_token'
+            'AuthService.get_auth_token',
     )
     token = 'test_token'
     new_account = mocker.Mock()
     new_account.save = mocker.Mock()
     auth0_service_mock_instance.save_tokens_for_user = mocker.Mock()
     mocker.patch(
-        'src.authentication.views.auth0.update_auth0_contacts.delay'
+        'src.authentication.views.auth0.update_auth0_contacts.delay',
     )
     mocker.patch(
-        'src.authentication.views.auth0.capture_sentry_message'
+        'src.authentication.views.auth0.capture_sentry_message',
     )
     auth_response = {
         'code': '0.Ab0Aa_jrV8Qkv...9UWtS972sufQ',
@@ -527,7 +524,7 @@ def test_token__create_new_account_with_external_id__ok(
         '/auth/auth0/token',
         data=auth_response,
         HTTP_USER_AGENT=user_agent,
-        HTTP_X_REAL_IP=user_ip
+        HTTP_X_REAL_IP=user_ip,
     )
 
     # assert
@@ -543,5 +540,5 @@ def test_token__create_new_account_with_external_id__ok(
         utm_term=None,
         utm_content=None,
         gclid=None,
-        utm_campaign=None
+        utm_campaign=None,
     )

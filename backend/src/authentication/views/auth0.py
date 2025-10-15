@@ -13,6 +13,7 @@ from src.authentication.services.auth0 import (
 from src.authentication.services.exceptions import (
     AuthException,
 )
+from src.authentication.tasks import update_auth0_contacts
 from src.authentication.throttling import (
     Auth0AuthUriThrottle,
     Auth0TokenThrottle,
@@ -22,8 +23,6 @@ from src.utils.logging import (
     SentryLogLevel,
     capture_sentry_message,
 )
-from src.authentication.tasks import update_auth0_contacts
-
 from src.utils.validation import raise_validation_error
 
 UserModel = get_user_model()
@@ -61,7 +60,7 @@ class Auth0ViewSet(
                 utm_term=slz.validated_data.get('utm_term'),
                 utm_content=slz.validated_data.get('utm_content'),
                 gclid=slz.validated_data.get('gclid'),
-                utm_campaign=slz.validated_data.get('utm_campaign')
+                utm_campaign=slz.validated_data.get('utm_campaign'),
             )
         except AuthException as ex:
             raise_validation_error(message=ex.message)
