@@ -2438,7 +2438,8 @@ def test_list__filter_fields_and_another_template_id__empty_list(api_client):
 
     # act
     response = api_client.get(
-        f'/workflows?fields={field_api_name};template_id={another_template.id}',
+        f'/workflows?fields={field_api_name};'
+        f'template_id={another_template.id}',
     )
 
     # assert

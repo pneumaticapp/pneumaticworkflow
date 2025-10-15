@@ -53,7 +53,7 @@ class EmailService(NotificationService):
         message_vars = ''
         for key, val in data.items():
             '\n'.join(f'- {key}: {val}')
-        print( # noqa: T201
+        print(  # noqa: T201
             f"""
             -------------------------
             ------EMAIL-MESSAGE------
