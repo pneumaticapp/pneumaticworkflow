@@ -76,6 +76,7 @@ select = [
     "TC",
     # "TD", Maybe add later
     "TID",
+    # "TRY", Maybe add later
     "UP",
     "W",
 ]

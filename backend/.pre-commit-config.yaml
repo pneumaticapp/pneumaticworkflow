@@ -11,3 +11,15 @@ repos:
       types: [python]
       language: system
       entry: ruff check --fix
+
+  - repo: local
+    hooks:
+      - id: py_codestyle
+        name: py_codestyle
+        types: [python]
+        language: system
+        entry: pycodestyle src --config=codestyle.ini
+        args:
+          - src/
+          - --config=codestyle.ini
+        exclude: 'migrations|'
