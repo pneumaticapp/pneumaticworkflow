@@ -33,7 +33,7 @@ class TemplateIntegrationsService(ClsCacheMixin):
         self,
         account: Account,
         user: Optional[UserModel] = None,
-        anonymous_id: str = None,
+        anonymous_id: Optional[str] = None,
         is_superuser: bool = False,
     ):
         self.account = account

@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 
 from django.db.models import Prefetch
 from rest_framework.viewsets import GenericViewSet
@@ -32,7 +32,7 @@ class MenuViewSet(
     def prefetch_queryset(
         self,
         queryset,
-        extra_fields: List[str] = None,
+        extra_fields: Optional[List[str]] = None,
     ):
 
         return queryset.prefetch_related(

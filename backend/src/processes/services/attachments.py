@@ -38,7 +38,7 @@ class AttachmentService:
                 content_type=content_type,
             )
         # TODO Fix the broad "try except"
-        except Exception as ex: # noqa: BLE001
+        except Exception as ex:
             capture_sentry_message(
                 message='Cloud service: get_new_file_urls exception',
                 data={'message': str(ex)},
@@ -54,7 +54,7 @@ class AttachmentService:
             filename = unquote(filename)
             file_blob = cloud_service.make_public(filename)
         # TODO Fix the broad "try except"
-        except Exception as ex: # noqa: BLE001
+        except Exception as ex:
             capture_sentry_message(
                 message='Cloud service: make_public exception',
                 data={'message': str(ex)},
@@ -70,7 +70,7 @@ class AttachmentService:
         name: str,
         url: str,
         size: int,
-        thumbnail_url: str = None,
+        thumbnail_url: Optional[str] = None,
     ) -> FileAttachment:
 
         return FileAttachment.objects.create(

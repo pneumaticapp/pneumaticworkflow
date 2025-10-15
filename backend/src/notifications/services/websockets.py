@@ -84,10 +84,10 @@ class WebSocketService(NotificationService):
         group_name: str,
         data: Dict[str, str],
     ):
-
+        background_tasks = set()
         layer = get_channel_layer()
         loop = get_event_loop()
-        loop.create_task(
+        task = loop.create_task(
             layer.group_send(
                 group_name,
                 {
@@ -98,6 +98,7 @@ class WebSocketService(NotificationService):
                 },
             ),
         )
+        task.add_done_callback(background_tasks.discard)
 
     def _send(
         self,

@@ -60,7 +60,11 @@ class ActionViewMixin:
 
 
 class BasePrefetchMixin:
-    def prefetch_queryset(self, queryset, extra_fields: List[str] = None):
+    def prefetch_queryset(
+        self,
+        queryset,
+        extra_fields: Optional[List[str]] = None,
+    ):
         prefetch_fields = []
 
         try:

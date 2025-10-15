@@ -537,8 +537,8 @@ class Task(
         incompleted_performers = task_performers.not_completed().exists()
         by_all = self.require_completion_by_all
         return (
-            not by_all and completed_performers or
-            by_all and not incompleted_performers
+            (not by_all and completed_performers) or
+            (by_all and not incompleted_performers)
         )
 
     def get_revert_tasks(self):

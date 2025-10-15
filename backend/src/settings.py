@@ -55,7 +55,7 @@ class Common(Configuration):
     ]
     SECRET_KEY = values.SecretValue()
     DEBUG = env.get('DJANGO_DEBUG') == 'yes'
-    
+
     # Frontend
     FRONTEND_URL = env.get('FRONTEND_URL')
     EXPIRED_INVITE_PAGE = f'{FRONTEND_URL}/auth/expired-invite'
@@ -97,10 +97,11 @@ class Common(Configuration):
     # CORS_ALLOW_HEADERS the list of non-standard HTTP headers that you permit
     # in requests from the browser. Sets the Access-Control-Allow-Headers
     # header in responses to preflight requests.
-    CORS_ALLOW_HEADERS = list(default_headers) + [
+    CORS_ALLOW_HEADERS = [
         'X-Guest-Authorization',
         'X-Public-Authorization',
         'Stripe-Signature',
+        *default_headers,
     ]
 
     # A list of origins that are authorized to make cross-site HTTP requests.

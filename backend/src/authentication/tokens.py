@@ -66,8 +66,8 @@ class PneumaticToken:
         cls,
         user: UserModel,
         token: Optional[str] = None,
-        user_agent: str = None,
-        user_ip: str = None,
+        user_agent: Optional[str] = None,
+        user_ip: Optional[str] = None,
         for_api_key: bool = False,
         for_superuser: bool = False,
     ) -> str:

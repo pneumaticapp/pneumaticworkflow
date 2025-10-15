@@ -56,7 +56,7 @@ class UserService(
         is_admin: bool = True,
         is_account_owner: bool = False,
         language: Language.LITERALS = None,
-        timezone: str = None,
+        timezone: Optional[str] = None,
         date_fmt: UserDateFormat = None,
         date_fdw: UserFirstDayWeek = None,
         **kwargs,
