@@ -391,7 +391,7 @@ export function WorkflowsTable({
               ),
               accessor: 'templateName',
               Cell: ColumnCells.TemplateNameColumn,
-              width: savedGlobalWidths.workflow || ETableViewFieldsWidth.workflow,
+              width: savedGlobalWidths.templateName || ETableViewFieldsWidth.templateName,
               minWidth: EColumnWidthMinWidth.templateName,
               columnType: 'templateName',
             },
