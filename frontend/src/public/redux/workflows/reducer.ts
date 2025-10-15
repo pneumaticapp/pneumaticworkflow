@@ -74,7 +74,7 @@ export const INIT_STATE: IStoreWorkflows = {
       workflowStartersCounters: [],
       performersCounters: [],
     },
-    lastLoadedTemplateId: null,
+    lastLoadedTemplateIdForTable: null,
   },
   WorkflowsTuneViewModal: {
     isOpen: false,
@@ -346,7 +346,7 @@ export const reducer = (state = INIT_STATE, action: TWorkflowsActions | TGeneral
 
     case EWorkflowsActions.SetLastLoadedTemplateId:
       return produce(state, (draftState) => {
-        draftState.workflowsSettings.lastLoadedTemplateId = action.payload;
+        draftState.workflowsSettings.lastLoadedTemplateIdForTable = action.payload;
       });
     case EWorkflowsActions.SetWorkflowsPresetsRedux:
       return produce(state, (draftState) => {

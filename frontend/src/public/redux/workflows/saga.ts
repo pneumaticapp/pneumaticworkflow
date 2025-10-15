@@ -251,27 +251,36 @@ function* fetchWorkflowsList({ payload: offset = 0 }: TLoadWorkflowsList) {
 
   const searchText: ReturnType<typeof getWorkflowsSearchText> = yield select(getWorkflowsSearchText);
   const currentTemplateId = templatesIdsFilter.length === 1 ? templatesIdsFilter[0] : null;
-  const lastLoadedTemplateId: number | null = yield select(
-    (state: IApplicationState) => state.workflows.workflowsSettings.lastLoadedTemplateId,
+  const severalTemplateIds = templatesIdsFilter.length > 1 || templatesIdsFilter.length === 0;
+
+  const lastLoadedTemplateIdForTable: number | null = yield select(
+    (state: IApplicationState) => state.workflows.workflowsSettings.lastLoadedTemplateIdForTable,
   );
 
-  const shouldGetAllDefaultFields =
-    sessionStorage.getItem('isInternalNavigation') === 'true' &&
-    Boolean(view === EWorkflowsView.Table && offset === 0 && offset === 0 && templatesIdsFilter.length === 0);
+  const shouldGetAllDefaultFields = Boolean(view === EWorkflowsView.Table && offset === 0 && severalTemplateIds);
 
-  const shouldGetPresets =
+  const internalNavigation =
     sessionStorage.getItem('isInternalNavigation') === 'true' &&
     Boolean(
       view === EWorkflowsView.Table &&
         offset === 0 &&
         currentTemplateId &&
-        String(lastLoadedTemplateId) !== String(currentTemplateId),
+        String(lastLoadedTemplateIdForTable) !== String(currentTemplateId),
     );
+  const externalNavigation = Boolean(view === EWorkflowsView.Table && currentTemplateId && selectedFields.length === 0);
 
+  const shouldGetPresets = internalNavigation || externalNavigation;
   sessionStorage.setItem('isInternalNavigation', 'false');
 
   let newSelectedFields: string[] = [];
   let shouldResetFields = false;
+
+  if (view === EWorkflowsView.Grid) {
+    shouldResetFields = true;
+    newSelectedFields = [];
+    yield put(setWorkflowsFilterSelectedFields(newSelectedFields));
+    yield put(setLastLoadedTemplateId(null));
+  }
 
   if (shouldGetPresets) {
     try {
