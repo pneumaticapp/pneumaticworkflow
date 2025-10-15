@@ -6,9 +6,9 @@ from django.db import transaction
 from django.http import HttpRequest
 
 from src.accounts.enums import Language
+from src.accounts.models import Account
 from src.accounts.services.account import (
     AccountService,
-    UserService,
 )
 from src.accounts.services.exceptions import (
     AccountServiceException,
@@ -17,9 +17,6 @@ from src.accounts.services.exceptions import (
 from src.accounts.services.user import UserService
 from src.authentication.enums import AuthTokenType
 from src.authentication.services.user_auth import AuthService
-from src.authentication.tasks import (
-    send_new_signup_notification,
-)
 from src.authentication.tokens import PneumaticToken
 from src.payment.stripe.exceptions import StripeServiceException
 from src.payment.stripe.service import StripeService
@@ -51,7 +48,7 @@ class SignUpMixin:
         photo: Optional[str] = None,
         job_title: Optional[str] = None,
         language: Language.LITERALS = None,
-        timezone: str = None,
+        timezone: Optional[str] = None,
         password: Optional[str] = None,
     ) -> Tuple[UserModel, PneumaticToken]:
 
@@ -59,7 +56,7 @@ class SignUpMixin:
         is_superuser = getattr(request, 'is_superuser', False)
         user_service = UserService(
             is_superuser=is_superuser,
-            auth_type=AuthTokenType.USER
+            auth_type=AuthTokenType.USER,
         )
         with transaction.atomic():
             try:
@@ -82,7 +79,7 @@ class SignUpMixin:
                     user=user,
                     user_agent=request.headers.get(
                         'User-Agent',
-                        request.META.get('HTTP_USER_AGENT')
+                        request.META.get('HTTP_USER_AGENT'),
                     ),
                     user_ip=request.META.get('HTTP_X_REAL_IP'),
                 )
@@ -171,8 +168,8 @@ class SignUpMixin:
                     settings.SLACK
                     and settings.SLACK_CONFIG['NOTIFY_ON_SIGNUP']
                 ):
-                    from src.authentication.tasks import (
-                        send_new_signup_notification
+                    from src.authentication.tasks import (  # noqa: PLC0415
+                        send_new_signup_notification,
                     )
                     send_new_signup_notification.delay(account.id)
                 self.after_signup(account_owner)

@@ -217,5 +217,5 @@ class AccountLogService(BaseModelService):
             event_type=AccountEventType.AUTH,
             title=title,
             status=status,
-            response_data=data
+            response_data=data,
         )
