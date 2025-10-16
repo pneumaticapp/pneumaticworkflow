@@ -642,7 +642,7 @@ class WorkflowActionService:
                 self._start_prev_tasks(task)
             else:
                 self._start_next_tasks(parent_task=task)
-        else: # noqa: PLR5501
+        else:  # noqa: PLR5501
             if is_returned:
                 self.continue_workflow(task=task, is_returned=is_returned)
             else:

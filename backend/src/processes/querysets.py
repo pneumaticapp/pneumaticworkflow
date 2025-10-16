@@ -24,6 +24,7 @@ from src.processes.enums import (
     ConditionAction,
     DirectlyStatus,
     PerformerType,
+    PresetType,
     SysTemplateType,
     TaskStatus,
     TemplateOrdering,
@@ -1002,5 +1003,20 @@ class ConditionQuerySet(BaseQuerySet):
         return self.filter(action__in=(
                 ConditionAction.SKIP_TASK,
                 ConditionAction.END_WORKFLOW,
+            ),
+        )
+
+
+class TemplatePresetQuerySet(AccountBaseQuerySet):
+
+    def by_user(self, user, template_id):
+        return self.filter(
+            Q(
+                author_id=user.id,
+                template_id=template_id,
+                type=PresetType.PERSONAL,
+            ) | Q(
+                template_id=template_id,
+                type=PresetType.ACCOUNT,
             ),
         )
