@@ -120,7 +120,7 @@ class TaskService(
                 update_kwargs['description'],
             )
         super().partial_update(**update_kwargs)
-        if 'date_started' in update_kwargs: # noqa: SIM102
+        if 'date_started' in update_kwargs:  # noqa: SIM102
             if self.instance.date_first_started is None:
                 self.instance.date_first_started = (
                     update_kwargs['date_started']

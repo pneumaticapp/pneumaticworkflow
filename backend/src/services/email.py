@@ -20,7 +20,7 @@ class EmailService:
         template_code: str,
         data: dict,
     ):
-        print( # noqa: T201
+        print(  # noqa: T201
             f"""
             -------------------------
             ------EMAIL-MESSAGE------

@@ -113,11 +113,11 @@ class UserSerializer(
 class UserPrivilegesSerializer(UserSerializer):
     class Meta(UserSerializer.Meta):
         model = UserModel
-        fields = UserSerializer.Meta.fields + ( # noqa : RUF005
+        fields = UserSerializer.Meta.fields + (  # noqa : RUF005
             'templates',
         )
         read_only_fields = (
-            UserSerializer.Meta.read_only_fields + ( # noqa : RUF005
+            UserSerializer.Meta.read_only_fields + (  # noqa : RUF005
                 'templates',
             )
         )
