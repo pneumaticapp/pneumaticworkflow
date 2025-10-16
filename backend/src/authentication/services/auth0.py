@@ -18,7 +18,6 @@ from src.authentication.services.user_auth import AuthService
 from src.authentication.tokens import PneumaticToken
 from src.authentication.views.mixins import SignUpMixin
 from src.generics.mixins.services import CacheMixin
-from src.logs.service import AccountLogService
 from src.utils.logging import (
     SentryLogLevel,
     capture_sentry_message,
@@ -33,6 +32,7 @@ class Auth0Service(SignUpMixin, CacheMixin):
     cache_timeout = 600  # 10 min
     MGMT_TOKEN_CACHE_KEY = 'mgmt_token'
     TOKEN_EXPIRY = 86400  # 24 hour
+    source = SourceType.AUTH0
 
     def __init__(self, request: Optional[HttpRequest] = None):
         self.tokens = None
@@ -90,7 +90,16 @@ class Auth0Service(SignUpMixin, CacheMixin):
                 },
                 timeout=10,
             )
-            response.raise_for_status()
+            if response.status_code != 200:
+                capture_sentry_message(
+                    message='Get Auth0 access token failed',
+                    data={
+                        'status_code': response.status_code,
+                        'response': response.text,
+                    },
+                    level=SentryLogLevel.ERROR,
+                )
+                raise exceptions.TokenInvalidOrExpired
             self.tokens = response.json()
             return self.tokens["access_token"]
         except requests.RequestException as ex:
@@ -127,7 +136,16 @@ class Auth0Service(SignUpMixin, CacheMixin):
         headers = {'Authorization': f'Bearer {access_token}'}
         try:
             response = requests.get(url, headers=headers, timeout=10)
-            response.raise_for_status()
+            if response.status_code != 200:
+                capture_sentry_message(
+                    message='Auth0 user profile request failed',
+                    data={
+                        'status_code': response.status_code,
+                        'response': response.text,
+                    },
+                    level=SentryLogLevel.ERROR,
+                )
+                raise exceptions.TokenInvalidOrExpired
             profile = response.json()
             self._set_cache(value=profile, key=cache_key)
             return profile
@@ -158,10 +176,7 @@ class Auth0Service(SignUpMixin, CacheMixin):
         email = user_profile.get('email')
         if not email:
             raise exceptions.EmailNotExist(
-                details={
-                    'user_profile': user_profile,
-                    'email': email,
-                },
+                details={'user_profile': user_profile},
             )
         first_name = (
             user_profile.get('given_name') or
@@ -235,7 +250,17 @@ class Auth0Service(SignUpMixin, CacheMixin):
         }
         try:
             response = requests.get(url, headers=headers, timeout=10)
-            response.raise_for_status()
+            if response.status_code != 200:
+                capture_sentry_message(
+                    message='Auth0 organization members request failed',
+                    data={
+                        'org_id': org_id,
+                        'status_code': response.status_code,
+                        'response': response.text,
+                    },
+                    level=SentryLogLevel.ERROR,
+                )
+                raise exceptions.FailedFetchMembers
             return response.json()
         except requests.RequestException as ex:
             capture_sentry_message(
@@ -258,7 +283,17 @@ class Auth0Service(SignUpMixin, CacheMixin):
         }
         try:
             response = requests.get(url, headers=headers, timeout=10)
-            response.raise_for_status()
+            if response.status_code != 200:
+                capture_sentry_message(
+                    message='Auth0 user organizations request failed',
+                    data={
+                        'user_id': user_id,
+                        'status_code': response.status_code,
+                        'response': response.text,
+                    },
+                    level=SentryLogLevel.ERROR,
+                )
+                return []
             return response.json()
         except requests.RequestException as ex:
             capture_sentry_message(
@@ -332,7 +367,16 @@ class Auth0Service(SignUpMixin, CacheMixin):
         }
         try:
             response = requests.post(url, json=data, timeout=10)
-            response.raise_for_status()
+            if response.status_code != 200:
+                capture_sentry_message(
+                    message='Failed to get Management API token',
+                    data={
+                        'status_code': response.status_code,
+                        'response': response.text,
+                    },
+                    level=SentryLogLevel.ERROR,
+                )
+                raise exceptions.TokenInvalidOrExpired
             token_data = response.json()
             access_token = token_data['access_token']
             cache_timeout = (
@@ -394,22 +438,12 @@ class Auth0Service(SignUpMixin, CacheMixin):
                     existing_account = Account.objects.filter(
                         external_id__in=org_ids,
                         is_deleted=False,
-                    ).first()
+                    ).order_by('date_created').first()
             if existing_account:
                 # Join existing account
                 user, token = self.join_existing_account(
                     account=existing_account,
                     **user_data,
-                )
-                service = AccountLogService(user)
-                service.log_auth0(
-                    title='Auth0 user joined existing account',
-                    data={
-                        'user_email': user_data['email'],
-                        'account_id': user.account.id,
-                        'external_id': user.account.external_id,
-                        'organizations': organizations,
-                    },
                 )
             else:
                 # Create new account
@@ -427,16 +461,6 @@ class Auth0Service(SignUpMixin, CacheMixin):
                     if first_org_id:
                         user.account.external_id = first_org_id
                         user.account.save(update_fields=['external_id'])
-                service = AccountLogService(user)
-                service.log_auth0(
-                    title='Auth0 user created new account',
-                    data={
-                        'user_email': user_data['email'],
-                        'account_id': user.account.id,
-                        'external_id': user.account.external_id,
-                        'organizations': organizations,
-                    },
-                )
 
             self.save_tokens_for_user(user)
             return user, token

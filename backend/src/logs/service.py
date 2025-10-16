@@ -206,16 +206,21 @@ class AccountLogService(BaseModelService):
             response_data=data,
         )
 
-    def log_auth0(
+    def signup(
         self,
-        title: str,
-        status: AccountEventStatus.LITERALS = AccountEventStatus.SUCCESS,
-        data: Optional[dict] = None,
+        user: UserModel,
+        source: str,
     ):
-
+        """Log user signup with source information"""
         self.create(
             event_type=AccountEventType.AUTH,
-            title=title,
-            status=status,
-            response_data=data,
+            title=f'User signed up via {source}',
+            status=AccountEventStatus.SUCCESS,
+            user_id=user.id,
+            account_id=user.account_id,
+            response_data={
+                'source': source,
+                'email': user.email,
+                'account_id': user.account_id,
+            },
         )

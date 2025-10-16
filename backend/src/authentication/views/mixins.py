@@ -18,6 +18,7 @@ from src.accounts.services.user import UserService
 from src.authentication.enums import AuthTokenType
 from src.authentication.services.user_auth import AuthService
 from src.authentication.tokens import PneumaticToken
+from src.logs.service import AccountLogService
 from src.payment.stripe.exceptions import StripeServiceException
 from src.payment.stripe.service import StripeService
 from src.processes.services.system_workflows import (
@@ -34,8 +35,18 @@ UserModel = get_user_model()
 
 class SignUpMixin:
 
+    source = None
+
     def after_signup(self, user: UserModel):
-        pass
+        """Create signup log and send notification if enabled"""
+        if user.account.log_api_requests and self.source:
+            service = AccountLogService(user)
+            service.signup(user=user, source=self.source)
+        if settings.SLACK and settings.SLACK_CONFIG['NOTIFY_ON_SIGNUP']:
+            from src.authentication.tasks import (  # noqa: PLC0415
+                send_new_signup_notification,
+            )
+            send_new_signup_notification.delay(user.account_id)
 
     def join_existing_account(
         self,
@@ -164,14 +175,6 @@ class SignUpMixin:
                 service.create_onboarding_workflows()
                 service.create_activated_templates()
                 service.create_activated_workflows()
-                if (
-                    settings.SLACK
-                    and settings.SLACK_CONFIG['NOTIFY_ON_SIGNUP']
-                ):
-                    from src.authentication.tasks import (  # noqa: PLC0415
-                        send_new_signup_notification,
-                    )
-                    send_new_signup_notification.delay(account.id)
                 self.after_signup(account_owner)
                 token = AuthService.get_auth_token(
                     user=account_owner,
