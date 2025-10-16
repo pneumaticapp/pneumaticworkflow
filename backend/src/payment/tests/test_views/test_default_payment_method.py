@@ -1,14 +1,14 @@
 import pytest
 from django.contrib.auth import get_user_model
-from src.processes.tests.fixtures import (
-    create_test_user,
-    create_test_account,
-)
-from src.payment.stripe.service import StripeService
-from src.payment.stripe.entities import CardDetails
+
 from src.authentication.enums import AuthTokenType
 from src.payment import messages
-
+from src.payment.stripe.entities import CardDetails
+from src.payment.stripe.service import StripeService
+from src.processes.tests.fixtures import (
+    create_test_account,
+    create_test_user,
+)
 
 UserModel = get_user_model()
 pytestmark = pytest.mark.django_db
@@ -16,7 +16,7 @@ pytestmark = pytest.mark.django_db
 
 def test_default_payment_method__ok(
     api_client,
-    mocker
+    mocker,
 ):
     # arrange
     account = create_test_account()
@@ -26,17 +26,17 @@ def test_default_payment_method__ok(
     service_init_mock = mocker.patch.object(
         StripeService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     get_payment_method_mock = mocker.patch(
         'src.payment.stripe.service.StripeService'
         '.get_payment_method',
-        return_value=CardDetails(last4=last4, brand=brand)
+        return_value=CardDetails(last4=last4, brand=brand),
     )
     mocker.patch(
         'src.payment.views.ProjectBillingPermission'
         '.has_permission',
-        return_value=True
+        return_value=True,
     )
 
     api_client.token_authenticate(user)
@@ -51,14 +51,14 @@ def test_default_payment_method__ok(
     service_init_mock.assert_called_once_with(
         user=user,
         auth_type=AuthTokenType.USER,
-        is_superuser=False
+        is_superuser=False,
     )
     get_payment_method_mock.assert_called_once()
 
 
 def test_default_payment_method__not_exist__not_found(
     api_client,
-    mocker
+    mocker,
 ):
     # arrange
     account = create_test_account()
@@ -66,17 +66,17 @@ def test_default_payment_method__not_exist__not_found(
     service_init_mock = mocker.patch.object(
         StripeService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     get_payment_method_mock = mocker.patch(
         'src.payment.stripe.service.StripeService'
         '.get_payment_method',
-        return_value=None
+        return_value=None,
     )
     mocker.patch(
         'src.payment.views.ProjectBillingPermission'
         '.has_permission',
-        return_value=True
+        return_value=True,
     )
 
     api_client.token_authenticate(user)
@@ -89,14 +89,14 @@ def test_default_payment_method__not_exist__not_found(
     service_init_mock.assert_called_once_with(
         user=user,
         auth_type=AuthTokenType.USER,
-        is_superuser=False
+        is_superuser=False,
     )
     get_payment_method_mock.assert_called_once()
 
 
 def test_default_payment_method__disable_billing__permission_denied(
     api_client,
-    mocker
+    mocker,
 ):
     # arrange
     account = create_test_account()
@@ -106,17 +106,17 @@ def test_default_payment_method__disable_billing__permission_denied(
     service_init_mock = mocker.patch.object(
         StripeService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     get_payment_method_mock = mocker.patch(
         'src.payment.stripe.service.StripeService'
         '.get_payment_method',
-        return_value=CardDetails(last4=last4, brand=brand)
+        return_value=CardDetails(last4=last4, brand=brand),
     )
     mocker.patch(
         'src.payment.views.ProjectBillingPermission'
         '.has_permission',
-        return_value=False
+        return_value=False,
     )
 
     api_client.token_authenticate(user)

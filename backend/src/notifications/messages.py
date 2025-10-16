@@ -1,9 +1,8 @@
-from django.utils.translation import gettext_lazy as _
 from django.utils.text import format_lazy
-
+from django.utils.translation import gettext_lazy as _
 
 MSG_NF_0001 = lambda reaction: _('Reacted {reaction} to your comment').format(
-    reaction=reaction
+    reaction=reaction,
 )
 MSG_NF_0002 = _('You have a new task')
 MSG_NF_0003 = _('Task was returned')

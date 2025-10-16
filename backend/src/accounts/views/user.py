@@ -2,39 +2,38 @@ from django.contrib.auth import get_user_model
 from rest_framework.decorators import action
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.viewsets import GenericViewSet
+
 from src.accounts.filters import (
     ContactsFilterSet,
 )
 from src.accounts.models import (
     Contact,
 )
+from src.accounts.permissions import (
+    BillingPlanPermission,
+    ExpiredSubscriptionPermission,
+)
 from src.accounts.serializers.user import (
     ContactRequestSerializer,
     ContactResponseSerializer,
     UserSerializer,
-    UserWebsocketSerializer
+    UserWebsocketSerializer,
 )
+from src.analytics.mixins import BaseIdentifyMixin
+from src.analytics.services import AnalyticService
 from src.generics.filters import PneumaticFilterBackend
 from src.generics.mixins.views import (
     CustomViewSetMixin,
-)
-from src.processes.models import (
-    Task
-)
-from src.accounts.permissions import (
-    ExpiredSubscriptionPermission,
-    BillingPlanPermission,
 )
 from src.generics.permissions import (
     IsAuthenticated,
     UserIsAuthenticated,
 )
 from src.notifications.tasks import send_user_updated_notification
-from src.analytics.mixins import BaseIdentifyMixin
-from src.analytics.services import AnalyticService
-from src.utils.validation import raise_validation_error
-from src.payment.stripe.service import StripeService
 from src.payment.stripe.exceptions import StripeServiceException
+from src.payment.stripe.service import StripeService
+from src.processes.models.workflows.task import Task
+from src.utils.validation import raise_validation_error
 
 UserModel = get_user_model()
 
@@ -63,22 +62,22 @@ class UserViewSet(
                 BillingPlanPermission(),
                 ExpiredSubscriptionPermission(),
             )
-        elif self.action == 'list':
+        if self.action == 'list':
             return (
                 IsAuthenticated(),
                 BillingPlanPermission(),
             )
-        else:
-            return (
-                UserIsAuthenticated(),
-                BillingPlanPermission(),
-            )
+        return (
+            UserIsAuthenticated(),
+            BillingPlanPermission(),
+        )
 
     def get_queryset(self):
         if self.action == 'contacts':
             return Contact.objects.by_user(
-                user_id=self.request.user.id
+                user_id=self.request.user.id,
             ).active()
+        return None
 
     @action(methods=('GET',), detail=False)
     def counters(self, request, *args, **kwargs):
@@ -88,7 +87,7 @@ class UserViewSet(
                 .active_for_user(request.user.id)
                 .distinct()
                 .count()
-            )
+            ),
         })
 
     @action(methods=('GET',), detail=False)
@@ -96,7 +95,7 @@ class UserViewSet(
         slz = ContactRequestSerializer(data=request.GET)
         slz.is_valid(raise_exception=True)
         return self.paginated_response(
-            self.filter_queryset(self.get_queryset())
+            self.filter_queryset(self.get_queryset()),
         )
 
     def list(self, request, *args, **kwargs):
@@ -107,7 +106,7 @@ class UserViewSet(
         slz = self.get_serializer(
             instance=request.user,
             data=request.data,
-            partial=False
+            partial=False,
         )
         slz.is_valid(raise_exception=True)
         user = slz.save()
@@ -120,7 +119,7 @@ class UserViewSet(
                 service = StripeService(
                     user=user,
                     auth_type=self.request.token_type,
-                    is_superuser=self.request.is_superuser
+                    is_superuser=self.request.is_superuser,
                 )
                 service.update_customer()
             except StripeServiceException as ex:
@@ -130,7 +129,7 @@ class UserViewSet(
             AnalyticService.users_digest(
                 user=user,
                 auth_type=self.request.token_type,
-                is_superuser=self.request.is_superuser
+                is_superuser=self.request.is_superuser,
             )
         send_user_updated_notification.delay(
             logging=user.account.log_api_requests,

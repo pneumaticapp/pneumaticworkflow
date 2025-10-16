@@ -1,31 +1,31 @@
 import pytest
-from src.processes.enums import (
-    SysTemplateType,
-    PerformerType,
-    FieldType,
-)
+
 from src.authentication.enums import AuthTokenType
-from src.processes.tests.fixtures import (
-    create_test_user,
-    create_test_account,
-    create_test_template,
+from src.processes.enums import (
+    FieldType,
+    PerformerType,
+    SysTemplateType,
 )
-from src.processes.models import (
+from src.processes.models.templates.fields import FieldTemplate
+from src.processes.models.templates.system_template import (
     SystemTemplate,
     SystemWorkflowKickoffData,
-    FieldTemplate
+)
+from src.processes.services.exceptions import (
+    WorkflowServiceException,
 )
 from src.processes.services.system_workflows import (
-    SystemWorkflowService
-)
-from src.processes.services.workflows.workflow import WorkflowService
-from src.processes.services.exceptions import (
-    WorkflowServiceException
+    SystemWorkflowService,
 )
 from src.processes.services.workflow_action import (
     WorkflowActionService,
 )
-
+from src.processes.services.workflows.workflow import WorkflowService
+from src.processes.tests.fixtures import (
+    create_test_account,
+    create_test_template,
+    create_test_user,
+)
 
 pytestmark = pytest.mark.django_db
 
@@ -48,13 +48,13 @@ def test_get_system_workflow_kickoff_data():
                     "raw_performers": [
                         {
                             'type': PerformerType.FIELD,
-                            'source_id': 'performer'
-                        }
-                    ]
-                }
-            ]
+                            'source_id': 'performer',
+                        },
+                    ],
+                },
+            ],
         },
-        is_active=True
+        is_active=True,
     )
 
     kickoff_data = SystemWorkflowKickoffData.objects.create(
@@ -65,7 +65,7 @@ def test_get_system_workflow_kickoff_data():
         order=1,
         kickoff_data={
             "name": "Some workflow for owner",
-        }
+        },
     )
 
     SystemWorkflowKickoffData.objects.create(
@@ -76,7 +76,7 @@ def test_get_system_workflow_kickoff_data():
         order=1,
         kickoff_data={
             "name": "Some workflow for admin",
-        }
+        },
     )
 
     SystemWorkflowKickoffData.objects.create(
@@ -87,7 +87,7 @@ def test_get_system_workflow_kickoff_data():
         order=1,
         kickoff_data={
             "name": "Some workflow for non admin",
-        }
+        },
     )
     service = SystemWorkflowService(user=user)
 
@@ -118,13 +118,13 @@ def test_get_system_workflow_kickoff_data__account_owner__ok():
                     "raw_performers": [
                         {
                             'type': PerformerType.FIELD,
-                            'source_id': 'performer'
-                        }
-                    ]
-                }
-            ]
+                            'source_id': 'performer',
+                        },
+                    ],
+                },
+            ],
         },
-        is_active=True
+        is_active=True,
     )
 
     kickoff_data = SystemWorkflowKickoffData.objects.create(
@@ -135,7 +135,7 @@ def test_get_system_workflow_kickoff_data__account_owner__ok():
         order=1,
         kickoff_data={
             "name": "Some workflow for owner",
-        }
+        },
     )
 
     SystemWorkflowKickoffData.objects.create(
@@ -146,7 +146,7 @@ def test_get_system_workflow_kickoff_data__account_owner__ok():
         order=1,
         kickoff_data={
             "name": "Some workflow for admin",
-        }
+        },
     )
 
     SystemWorkflowKickoffData.objects.create(
@@ -157,7 +157,7 @@ def test_get_system_workflow_kickoff_data__account_owner__ok():
         order=1,
         kickoff_data={
             "name": "Some workflow for non admin",
-        }
+        },
     )
     service = SystemWorkflowService(user=user)
 
@@ -175,7 +175,7 @@ def test_get_system_workflow_kickoff_data__admin__ok():
     # arrange
     user = create_test_user(
         is_account_owner=False,
-        is_admin=True
+        is_admin=True,
     )
     system_template = SystemTemplate.objects.create(
         name='One of Task',
@@ -191,13 +191,13 @@ def test_get_system_workflow_kickoff_data__admin__ok():
                     "raw_performers": [
                         {
                             'type': PerformerType.FIELD,
-                            'source_id': 'performer'
-                        }
-                    ]
-                }
-            ]
+                            'source_id': 'performer',
+                        },
+                    ],
+                },
+            ],
         },
-        is_active=True
+        is_active=True,
     )
 
     SystemWorkflowKickoffData.objects.create(
@@ -208,7 +208,7 @@ def test_get_system_workflow_kickoff_data__admin__ok():
         order=1,
         kickoff_data={
             "name": "Some workflow for owner",
-        }
+        },
     )
 
     kickoff_data = SystemWorkflowKickoffData.objects.create(
@@ -219,7 +219,7 @@ def test_get_system_workflow_kickoff_data__admin__ok():
         order=1,
         kickoff_data={
             "name": "Some workflow for admin",
-        }
+        },
     )
 
     SystemWorkflowKickoffData.objects.create(
@@ -230,7 +230,7 @@ def test_get_system_workflow_kickoff_data__admin__ok():
         order=1,
         kickoff_data={
             "name": "Some workflow for non admin",
-        }
+        },
     )
     service = SystemWorkflowService(user=user)
 
@@ -248,7 +248,7 @@ def test_get_system_workflow_kickoff_data__not_admin__ok():
     # arrange
     user = create_test_user(
         is_account_owner=False,
-        is_admin=False
+        is_admin=False,
     )
     system_template = SystemTemplate.objects.create(
         name='One of Task',
@@ -264,13 +264,13 @@ def test_get_system_workflow_kickoff_data__not_admin__ok():
                     "raw_performers": [
                         {
                             'type': PerformerType.FIELD,
-                            'source_id': 'performer'
-                        }
-                    ]
-                }
-            ]
+                            'source_id': 'performer',
+                        },
+                    ],
+                },
+            ],
         },
-        is_active=True
+        is_active=True,
     )
 
     SystemWorkflowKickoffData.objects.create(
@@ -281,7 +281,7 @@ def test_get_system_workflow_kickoff_data__not_admin__ok():
         order=1,
         kickoff_data={
             "name": "Some workflow for owner",
-        }
+        },
     )
 
     SystemWorkflowKickoffData.objects.create(
@@ -292,7 +292,7 @@ def test_get_system_workflow_kickoff_data__not_admin__ok():
         order=1,
         kickoff_data={
             "name": "Some workflow for admin",
-        }
+        },
     )
 
     kickoff_data = SystemWorkflowKickoffData.objects.create(
@@ -303,7 +303,7 @@ def test_get_system_workflow_kickoff_data__not_admin__ok():
         order=1,
         kickoff_data={
             "name": "Some workflow for non admin",
-        }
+        },
     )
     service = SystemWorkflowService(user=user)
 
@@ -330,17 +330,17 @@ def get_kickoff_fields_values__user_field__set_current_user():
         is_required=True,
         kickoff=template.kickoff_instance,
         template=template,
-        api_name=api_name
+        api_name=api_name,
     )
     fields_data = {
-        api_name: account_owner.id
+        api_name: account_owner.id,
     }
     service = SystemWorkflowService(user=user)
 
     # act
     result = service.get_kickoff_fields_values(
         template=template,
-        fields_data=fields_data
+        fields_data=fields_data,
     )
 
     # assert
@@ -360,7 +360,7 @@ def get_kickoff_fields_values__existent_field_value__ok():
         is_required=True,
         kickoff=template.kickoff_instance,
         template=template,
-        api_name=api_name
+        api_name=api_name,
     )
     text = 'some text'
     service = SystemWorkflowService(user=user)
@@ -369,8 +369,8 @@ def get_kickoff_fields_values__existent_field_value__ok():
     result = service.get_kickoff_fields_values(
         template=template,
         fields_data={
-            api_name: text
-        }
+            api_name: text,
+        },
     )
 
     # assert
@@ -391,13 +391,13 @@ def get_kickoff_fields_values__default_field_value__ok():
         kickoff=template.kickoff_instance,
         template=template,
         api_name=api_name,
-        default='some {{user_first_name}} text'
+        default='some {{user_first_name}} text',
     )
     service = SystemWorkflowService(user=user)
 
     # act
     result = service.get_kickoff_fields_values(
-        template=template
+        template=template,
     )
 
     # assert
@@ -412,33 +412,33 @@ def test_create_onboarding_workflows__ok(mocker):
     get_onboarding_templates_for_user_mock = mocker.patch(
         'src.processes.services.system_workflows.'
         'SystemWorkflowService._get_onboarding_templates_for_user',
-        return_value=[template_mock]
+        return_value=[template_mock],
     )
     kickoff_fields_data_mock = mocker.Mock()
     get_kickoff_fields_values_mock = mocker.patch(
         'src.processes.services.system_workflows.'
         'SystemWorkflowService.get_kickoff_fields_values',
-        return_value=kickoff_fields_data_mock
+        return_value=kickoff_fields_data_mock,
     )
     wf_service_init_mock = mocker.patch.object(
         WorkflowService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     workflow_mock = mocker.Mock()
     wf_service_create_mock = mocker.patch(
         'src.processes.services.workflows.workflow.'
         'WorkflowService.create',
-        return_value=workflow_mock
+        return_value=workflow_mock,
     )
     workflow_action_service_init_mock = mocker.patch.object(
         WorkflowActionService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     start_workflow_mock = mocker.patch(
         'src.processes.services.workflow_action.'
-        'WorkflowActionService.start_workflow'
+        'WorkflowActionService.start_workflow',
     )
     service = SystemWorkflowService(user=user)
 
@@ -451,7 +451,7 @@ def test_create_onboarding_workflows__ok(mocker):
     wf_service_init_mock.assert_called_once_with(
         user=user,
         is_superuser=False,
-        auth_type=AuthTokenType.USER
+        auth_type=AuthTokenType.USER,
     )
     wf_service_create_mock.assert_called_once_with(
         instance_template=template_mock,
@@ -463,7 +463,7 @@ def test_create_onboarding_workflows__ok(mocker):
         workflow=workflow_mock,
         user=user,
         is_superuser=False,
-        auth_type=AuthTokenType.USER
+        auth_type=AuthTokenType.USER,
     )
     start_workflow_mock.assert_called_once_with()
 
@@ -487,13 +487,13 @@ def test_create_activated_workflows__ok(mocker):
                     'raw_performers': [
                         {
                             'type': PerformerType.FIELD,
-                            'source_id': 'performer'
-                        }
-                    ]
-                }
-            ]
+                            'source_id': 'performer',
+                        },
+                    ],
+                },
+            ],
         },
-        is_active=True
+        is_active=True,
     )
     kickoff_fields_data = {'some-api-name-1': 'some value 1'}
     workflow_name = "Some workflow name"
@@ -506,14 +506,14 @@ def test_create_activated_workflows__ok(mocker):
         kickoff_data={
             'name': workflow_name,
             'is_urgent': True,
-            'kickoff': kickoff_fields_data
-        }
+            'kickoff': kickoff_fields_data,
+        },
     )
     fields_data = {'some-api-name-2': 'some value 2'}
     get_kickoff_fields_values_mock = mocker.patch(
         'src.processes.services.system_workflows.'
         'SystemWorkflowService.get_kickoff_fields_values',
-        return_value=fields_data
+        return_value=fields_data,
     )
 
     template = create_test_template(user=user, tasks_count=1)
@@ -522,22 +522,22 @@ def test_create_activated_workflows__ok(mocker):
     wf_service_init_mock = mocker.patch.object(
         WorkflowService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     workflow_mock = mocker.Mock()
     wf_service_create_mock = mocker.patch(
         'src.processes.services.workflows.workflow.'
         'WorkflowService.create',
-        return_value=workflow_mock
+        return_value=workflow_mock,
     )
     workflow_action_service_init_mock = mocker.patch.object(
         WorkflowActionService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     start_workflow_mock = mocker.patch(
         'src.processes.services.workflow_action.'
-        'WorkflowActionService.start_workflow'
+        'WorkflowActionService.start_workflow',
     )
     service = SystemWorkflowService(user=user)
 
@@ -547,12 +547,12 @@ def test_create_activated_workflows__ok(mocker):
     # assert
     get_kickoff_fields_values_mock.assert_called_once_with(
         template=template,
-        fields_data=kickoff_fields_data
+        fields_data=kickoff_fields_data,
     )
     wf_service_init_mock.assert_called_once_with(
         user=user,
         is_superuser=False,
-        auth_type=AuthTokenType.USER
+        auth_type=AuthTokenType.USER,
     )
     wf_service_create_mock.assert_called_once_with(
         instance_template=template,
@@ -565,7 +565,7 @@ def test_create_activated_workflows__ok(mocker):
         workflow=workflow_mock,
         user=user,
         is_superuser=False,
-        auth_type=AuthTokenType.USER
+        auth_type=AuthTokenType.USER,
     )
     start_workflow_mock.assert_called_once_with()
 
@@ -589,13 +589,13 @@ def test_create_activated_workflows__template_not_found__logging_ex(mocker):
                     'raw_performers': [
                         {
                             'type': PerformerType.FIELD,
-                            'source_id': 'performer'
-                        }
-                    ]
-                }
-            ]
+                            'source_id': 'performer',
+                        },
+                    ],
+                },
+            ],
         },
-        is_active=True
+        is_active=True,
     )
     SystemWorkflowKickoffData.objects.create(
         is_active=True,
@@ -606,8 +606,8 @@ def test_create_activated_workflows__template_not_found__logging_ex(mocker):
         kickoff_data={
             'name': 'Workflow',
             'is_urgent': True,
-            'kickoff': {}
-        }
+            'kickoff': {},
+        },
     )
     resolve_exception_mock = mocker.patch(
         'src.processes.services.system_workflows.'
@@ -616,15 +616,15 @@ def test_create_activated_workflows__template_not_found__logging_ex(mocker):
     wf_service_init_mock = mocker.patch.object(
         WorkflowService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     wf_service_create_mock = mocker.patch(
         'src.processes.services.workflows.workflow.'
-        'WorkflowService.create'
+        'WorkflowService.create',
     )
     start_workflow_mock = mocker.patch(
         'src.processes.services.workflow_action.'
-        'WorkflowActionService.start_workflow'
+        'WorkflowActionService.start_workflow',
     )
     service = SystemWorkflowService(user=user)
 
@@ -657,13 +657,13 @@ def test_create_activated_workflows__not_sys_kickoff_data__skip(mocker):
                     'raw_performers': [
                         {
                             'type': PerformerType.FIELD,
-                            'source_id': 'performer'
-                        }
-                    ]
-                }
-            ]
+                            'source_id': 'performer',
+                        },
+                    ],
+                },
+            ],
         },
-        is_active=True
+        is_active=True,
     )
     resolve_exception_mock = mocker.patch(
         'src.processes.services.system_workflows.'
@@ -672,15 +672,15 @@ def test_create_activated_workflows__not_sys_kickoff_data__skip(mocker):
     wf_service_init_mock = mocker.patch.object(
         WorkflowService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     wf_service_create_mock = mocker.patch(
         'src.processes.services.workflows.workflow.'
-        'WorkflowService.create'
+        'WorkflowService.create',
     )
     start_workflow_mock = mocker.patch(
         'src.processes.services.workflow_action.'
-        'WorkflowActionService.start_workflow'
+        'WorkflowActionService.start_workflow',
     )
     service = SystemWorkflowService(user=user)
 
@@ -713,13 +713,13 @@ def test_create_activated_workflows__service_exception__not_create(mocker):
                     'raw_performers': [
                         {
                             'type': PerformerType.FIELD,
-                            'source_id': 'performer'
-                        }
-                    ]
-                }
-            ]
+                            'source_id': 'performer',
+                        },
+                    ],
+                },
+            ],
         },
-        is_active=True
+        is_active=True,
     )
     kickoff_fields_data = {'some-api-name-1': 'some value 1'}
     workflow_name = "Some workflow name"
@@ -731,14 +731,14 @@ def test_create_activated_workflows__service_exception__not_create(mocker):
         order=1,
         kickoff_data={
             'name': workflow_name,
-            'kickoff': kickoff_fields_data
-        }
+            'kickoff': kickoff_fields_data,
+        },
     )
     fields_data = {'some-api-name-2': 'some value 2'}
     get_kickoff_fields_values_mock = mocker.patch(
         'src.processes.services.system_workflows.'
         'SystemWorkflowService.get_kickoff_fields_values',
-        return_value=fields_data
+        return_value=fields_data,
     )
 
     template = create_test_template(user=user, tasks_count=1)
@@ -747,17 +747,17 @@ def test_create_activated_workflows__service_exception__not_create(mocker):
     wf_service_init_mock = mocker.patch.object(
         WorkflowService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     exception = WorkflowServiceException('Some ex')
     wf_service_create_mock = mocker.patch(
         'src.processes.services.workflows.workflow.'
         'WorkflowService.create',
-        side_effect=exception
+        side_effect=exception,
     )
     start_workflow_mock = mocker.patch(
         'src.processes.services.workflow_action.'
-        'WorkflowActionService.start_workflow'
+        'WorkflowActionService.start_workflow',
     )
     resolve_exception_mock = mocker.patch(
         'src.processes.services.system_workflows.'
@@ -771,12 +771,12 @@ def test_create_activated_workflows__service_exception__not_create(mocker):
     # assert
     get_kickoff_fields_values_mock.assert_called_once_with(
         template=template,
-        fields_data=kickoff_fields_data
+        fields_data=kickoff_fields_data,
     )
     wf_service_init_mock.assert_called_once_with(
         user=user,
         is_superuser=False,
-        auth_type=AuthTokenType.USER
+        auth_type=AuthTokenType.USER,
     )
     wf_service_create_mock.assert_called_once_with(
         instance_template=template,
@@ -811,13 +811,13 @@ def test_create_library_templates__ok(mocker):
                     "raw_performers": [
                         {
                             'type': PerformerType.FIELD,
-                            'source_id': 'performer'
-                        }
-                    ]
-                }
-            ]
+                            'source_id': 'performer',
+                        },
+                    ],
+                },
+            ],
         },
-        is_active=True
+        is_active=True,
     )
     onboarding = SystemTemplate.objects.create(
         name='Onboarding',
@@ -833,13 +833,13 @@ def test_create_library_templates__ok(mocker):
                     "raw_performers": [
                         {
                             'type': PerformerType.FIELD,
-                            'source_id': 'performer'
-                        }
-                    ]
-                }
-            ]
+                            'source_id': 'performer',
+                        },
+                    ],
+                },
+            ],
         },
-        is_active=True
+        is_active=True,
     )
     inactive = SystemTemplate.objects.create(
         name='Inactive library',
@@ -855,13 +855,13 @@ def test_create_library_templates__ok(mocker):
                     "raw_performers": [
                         {
                             'type': PerformerType.FIELD,
-                            'source_id': 'performer'
-                        }
-                    ]
-                }
-            ]
+                            'source_id': 'performer',
+                        },
+                    ],
+                },
+            ],
         },
-        is_active=False
+        is_active=False,
     )
     system_template = SystemTemplate.objects.create(
         name='Active library',
@@ -877,28 +877,28 @@ def test_create_library_templates__ok(mocker):
                     "raw_performers": [
                         {
                             'type': PerformerType.FIELD,
-                            'source_id': 'performer'
-                        }
-                    ]
-                }
-            ]
+                            'source_id': 'performer',
+                        },
+                    ],
+                },
+            ],
         },
-        is_active=True
+        is_active=True,
     )
     user.account.system_templates.add(
         system_template,
         inactive,
         activated,
-        onboarding
+        onboarding,
     )
 
     create_template_from_sys_template_mock = mocker.patch(
         'src.processes.services.templates.template.'
-        'TemplateService.create_template_from_sys_template'
+        'TemplateService.create_template_from_sys_template',
     )
     resolve_exception_mock = mocker.patch(
         'src.processes.services.system_workflows.'
-        'SystemWorkflowService._resolve_exception'
+        'SystemWorkflowService._resolve_exception',
     )
     service = SystemWorkflowService(user=user)
 
@@ -907,7 +907,7 @@ def test_create_library_templates__ok(mocker):
 
     # assert
     create_template_from_sys_template_mock.assert_called_once_with(
-        system_template=system_template
+        system_template=system_template,
     )
     resolve_exception_mock.assert_not_called()
 
@@ -930,24 +930,24 @@ def test_create_library_templates__exception__resolve(mocker):
                     "raw_performers": [
                         {
                             'type': PerformerType.FIELD,
-                            'source_id': 'performer'
-                        }
-                    ]
-                }
-            ]
+                            'source_id': 'performer',
+                        },
+                    ],
+                },
+            ],
         },
-        is_active=True
+        is_active=True,
     )
     user.account.system_templates.add(system_template)
     ex = Exception('some bad situation')
     create_template_from_sys_template_mock = mocker.patch(
         'src.processes.services.templates.template.'
         'TemplateService.create_template_from_sys_template',
-        side_effect=ex
+        side_effect=ex,
     )
     resolve_exception_mock = mocker.patch(
         'src.processes.services.system_workflows.'
-        'SystemWorkflowService._resolve_exception'
+        'SystemWorkflowService._resolve_exception',
     )
     service = SystemWorkflowService(user=user)
 
@@ -956,7 +956,7 @@ def test_create_library_templates__exception__resolve(mocker):
 
     # assert
     create_template_from_sys_template_mock.assert_called_once_with(
-        system_template=system_template
+        system_template=system_template,
     )
     resolve_exception_mock.assert_called_once_with(ex)
 
@@ -979,13 +979,13 @@ def test_create_activated_templates__ok(mocker):
                     "raw_performers": [
                         {
                             'type': PerformerType.FIELD,
-                            'source_id': 'performer'
-                        }
-                    ]
-                }
-            ]
+                            'source_id': 'performer',
+                        },
+                    ],
+                },
+            ],
         },
-        is_active=False
+        is_active=False,
     )
     system_template = SystemTemplate.objects.create(
         name='Activated',
@@ -1001,13 +1001,13 @@ def test_create_activated_templates__ok(mocker):
                     "raw_performers": [
                         {
                             'type': PerformerType.FIELD,
-                            'source_id': 'performer'
-                        }
-                    ]
-                }
-            ]
+                            'source_id': 'performer',
+                        },
+                    ],
+                },
+            ],
         },
-        is_active=True
+        is_active=True,
     )
     onboarding = SystemTemplate.objects.create(
         name='Onboarding',
@@ -1023,13 +1023,13 @@ def test_create_activated_templates__ok(mocker):
                     "raw_performers": [
                         {
                             'type': PerformerType.FIELD,
-                            'source_id': 'performer'
-                        }
-                    ]
-                }
-            ]
+                            'source_id': 'performer',
+                        },
+                    ],
+                },
+            ],
         },
-        is_active=True
+        is_active=True,
     )
     library = SystemTemplate.objects.create(
         name='Active library',
@@ -1045,28 +1045,28 @@ def test_create_activated_templates__ok(mocker):
                     "raw_performers": [
                         {
                             'type': PerformerType.FIELD,
-                            'source_id': 'performer'
-                        }
-                    ]
-                }
-            ]
+                            'source_id': 'performer',
+                        },
+                    ],
+                },
+            ],
         },
-        is_active=True
+        is_active=True,
     )
     user.account.system_templates.add(
         system_template,
         inactive,
         library,
-        onboarding
+        onboarding,
     )
 
     create_template_from_sys_template_mock = mocker.patch(
         'src.processes.services.templates.template.'
-        'TemplateService.create_template_from_sys_template'
+        'TemplateService.create_template_from_sys_template',
     )
     resolve_exception_mock = mocker.patch(
         'src.processes.services.system_workflows.'
-        'SystemWorkflowService._resolve_exception'
+        'SystemWorkflowService._resolve_exception',
     )
     service = SystemWorkflowService(user=user)
 
@@ -1075,7 +1075,7 @@ def test_create_activated_templates__ok(mocker):
 
     # assert
     create_template_from_sys_template_mock.assert_called_once_with(
-        system_template=system_template
+        system_template=system_template,
     )
     resolve_exception_mock.assert_not_called()
 
@@ -1098,24 +1098,24 @@ def test_create_create_activated_templates__exception__resolve(mocker):
                     "raw_performers": [
                         {
                             'type': PerformerType.FIELD,
-                            'source_id': 'performer'
-                        }
-                    ]
-                }
-            ]
+                            'source_id': 'performer',
+                        },
+                    ],
+                },
+            ],
         },
-        is_active=True
+        is_active=True,
     )
     user.account.system_templates.add(system_template)
     ex = Exception('some bad situation')
     create_template_from_sys_template_mock = mocker.patch(
         'src.processes.services.templates.template.'
         'TemplateService.create_template_from_sys_template',
-        side_effect=ex
+        side_effect=ex,
     )
     resolve_exception_mock = mocker.patch(
         'src.processes.services.system_workflows.'
-        'SystemWorkflowService._resolve_exception'
+        'SystemWorkflowService._resolve_exception',
     )
     service = SystemWorkflowService(user=user)
 
@@ -1124,6 +1124,6 @@ def test_create_create_activated_templates__exception__resolve(mocker):
 
     # assert
     create_template_from_sys_template_mock.assert_called_once_with(
-        system_template=system_template
+        system_template=system_template,
     )
     resolve_exception_mock.assert_called_once_with(ex)

@@ -1,52 +1,53 @@
+from datetime import timedelta
+
 import pytest
 import stripe
 from django.utils import timezone
-from datetime import timedelta
-from src.authentication.enums import (
-    AuthTokenType
-)
+
 from src.accounts.enums import (
     BillingPlanType,
     LeaseLevel,
+)
+from src.accounts.services.account import AccountService
+from src.authentication.enums import (
+    AuthTokenType,
+)
+from src.payment import messages
+from src.payment.enums import (
+    PriceStatus,
+)
+from src.payment.services.account import (
+    AccountSubscriptionService,
+)
+from src.payment.stripe.entities import (
+    PurchaseItem,
+    TokenSubscriptionData,
+)
+from src.payment.stripe.exceptions import (
+    CardError,
+    ChangeCurrencyDisallowed,
+    DecreaseSubscription,
+    MaxQuantityReached,
+    MinQuantityReached,
+    MultipleSubscriptionsNotAllowed,
+    PaymentError,
+    PurchaseArchivedPrice,
+    SubscriptionNotExist,
+    SubsMaxQuantityReached,
+    SubsMinQuantityReached,
+    UnsupportedPlan,
+)
+from src.payment.stripe.service import StripeService
+from src.payment.stripe.tokens import ConfirmToken
+from src.payment.tests.fixtures import (
+    create_test_invoice_price,
+    create_test_product,
+    create_test_recurring_price,
 )
 from src.processes.tests.fixtures import (
     create_test_account,
     create_test_user,
 )
-from src.payment.enums import (
-    PriceStatus
-)
-from src.payment.stripe.exceptions import (
-    CardError,
-    PaymentError,
-    DecreaseSubscription,
-    MultipleSubscriptionsNotAllowed,
-    ChangeCurrencyDisallowed,
-    MaxQuantityReached,
-    MinQuantityReached,
-    SubsMaxQuantityReached,
-    SubsMinQuantityReached,
-    UnsupportedPlan,
-    PurchaseArchivedPrice,
-    SubscriptionNotExist,
-)
-from src.payment.stripe.service import StripeService
-from src.payment.services.account import (
-    AccountSubscriptionService
-)
-from src.payment.tests.fixtures import (
-    create_test_recurring_price,
-    create_test_invoice_price,
-    create_test_product,
-)
-from src.payment.stripe.entities import (
-    TokenSubscriptionData,
-    PurchaseItem,
-)
-from src.payment.stripe.tokens import ConfirmToken
-from src.payment import messages
-from src.accounts.services import AccountService
-
 
 pytestmark = pytest.mark.django_db
 
@@ -62,24 +63,24 @@ def test_init__master_subscription__ok(mocker):
     mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_current_subscription',
-        return_value=subscription_mock
+        return_value=subscription_mock,
     )
     method_mock = mocker.Mock()
     mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_current_payment_method',
-        return_value=method_mock
+        return_value=method_mock,
     )
     account_subscription_service_init_mock = mocker.patch.object(
         AccountSubscriptionService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     customer_mock = mocker.Mock()
     mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_or_create_customer',
-        return_value=customer_mock
+        return_value=customer_mock,
     )
 
     # act
@@ -103,7 +104,7 @@ def test_init__master_subscription__ok(mocker):
         instance=account,
         user=user,
         is_superuser=is_superuser,
-        auth_type=auth_type
+        auth_type=auth_type,
     )
 
 
@@ -115,7 +116,7 @@ def test_init__tenant_subscription__ok(mocker):
     tenant = create_test_account(
         lease_level=LeaseLevel.TENANT,
         master_account=master_account,
-        name='Tenant'
+        name='Tenant',
     )
     tenant_owner = create_test_user(account=tenant)
     is_superuser = True
@@ -124,24 +125,24 @@ def test_init__tenant_subscription__ok(mocker):
     mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_current_subscription',
-        return_value=subscription_mock
+        return_value=subscription_mock,
     )
     method_mock = mocker.Mock()
     mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_current_payment_method',
-        return_value=method_mock
+        return_value=method_mock,
     )
     account_subscription_service_init_mock = mocker.patch.object(
         AccountSubscriptionService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     customer_mock = mocker.Mock()
     mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_or_create_customer',
-        return_value=customer_mock
+        return_value=customer_mock,
     )
 
     # act
@@ -166,7 +167,7 @@ def test_init__tenant_subscription__ok(mocker):
         instance=tenant,
         user=tenant_owner,
         is_superuser=is_superuser,
-        auth_type=auth_type
+        auth_type=auth_type,
     )
 
 
@@ -183,18 +184,18 @@ def test_get_or_create_customer__ok(mocker):
     mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_current_subscription',
-        return_value=subscription_mock
+        return_value=subscription_mock,
     )
     method_mock = mocker.Mock()
     mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_current_payment_method',
-        return_value=method_mock
+        return_value=method_mock,
     )
     mocker.patch.object(
         AccountSubscriptionService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     # end init mock
 
@@ -202,7 +203,7 @@ def test_get_or_create_customer__ok(mocker):
     get_customer_mock = mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_customer',
-        return_value=customer_mock
+        return_value=customer_mock,
     )
     create_customer_mock = mocker.patch(
         'src.payment.stripe.service.'
@@ -210,16 +211,16 @@ def test_get_or_create_customer__ok(mocker):
     )
     update_customer_mock = mocker.patch(
         'src.payment.stripe.service.'
-        'StripeService.update_customer'
+        'StripeService.update_customer',
     )
     account_service_init_mock = mocker.patch.object(
         AccountService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     account_service_update_mock = mocker.patch(
         'src.payment.stripe.service.'
-        'AccountService.partial_update'
+        'AccountService.partial_update',
     )
 
     # act
@@ -251,31 +252,31 @@ def test_get_or_create_customer__get_by_email__ok(mocker):
     mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_current_subscription',
-        return_value=subscription_mock
+        return_value=subscription_mock,
     )
     method_mock = mocker.Mock()
     mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_current_payment_method',
-        return_value=method_mock
+        return_value=method_mock,
     )
     mocker.patch.object(
         AccountSubscriptionService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     # end init mock
 
     get_customer_mock = mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_customer',
-        return_value=None
+        return_value=None,
     )
     customer_mock = mocker.Mock(id=123)
     get_customer_by_email_mock = mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_customer_by_email',
-        return_value=customer_mock
+        return_value=customer_mock,
     )
     create_customer_mock = mocker.patch(
         'src.payment.stripe.service.'
@@ -283,16 +284,16 @@ def test_get_or_create_customer__get_by_email__ok(mocker):
     )
     update_customer_mock = mocker.patch(
         'src.payment.stripe.service.'
-        'StripeService.update_customer'
+        'StripeService.update_customer',
     )
     account_service_init_mock = mocker.patch.object(
         AccountService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     account_service_update_mock = mocker.patch(
         'src.payment.stripe.service.'
-        'AccountService.partial_update'
+        'AccountService.partial_update',
     )
 
     # act
@@ -312,11 +313,11 @@ def test_get_or_create_customer__get_by_email__ok(mocker):
         user=user,
         instance=account,
         is_superuser=is_superuser,
-        auth_type=auth_type
+        auth_type=auth_type,
     )
     account_service_update_mock.assert_called_once_with(
         stripe_id=customer_mock.id,
-        force_save=True
+        force_save=True,
     )
 
 
@@ -335,7 +336,7 @@ def test_get_or_create_customer__not_exist_customer__create(mocker):
     )
     user = create_test_user(
         account=account,
-        is_account_owner=False
+        is_account_owner=False,
     )
     is_superuser = True
     auth_type = AuthTokenType.API
@@ -343,49 +344,49 @@ def test_get_or_create_customer__not_exist_customer__create(mocker):
     mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_current_subscription',
-        return_value=subscription_mock
+        return_value=subscription_mock,
     )
     method_mock = mocker.Mock()
     mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_current_payment_method',
-        return_value=method_mock
+        return_value=method_mock,
     )
     mocker.patch.object(
         AccountSubscriptionService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     # end init mock
 
     get_customer_mock = mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_customer',
-        return_value=None
+        return_value=None,
     )
     get_customer_by_email_mock = mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_customer_by_email',
-        return_value=None
+        return_value=None,
     )
     customer_mock = mocker.Mock(id=123)
     create_customer_mock = mocker.patch(
         'src.payment.stripe.service.'
         'stripe.Customer.create',
-        return_value=customer_mock
+        return_value=customer_mock,
     )
     update_customer_mock = mocker.patch(
         'src.payment.stripe.service.'
-        'StripeService.update_customer'
+        'StripeService.update_customer',
     )
     account_service_init_mock = mocker.patch.object(
         AccountService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     account_service_update_mock = mocker.patch(
         'src.payment.stripe.service.'
-        'AccountService.partial_update'
+        'AccountService.partial_update',
     )
 
     # act
@@ -399,24 +400,24 @@ def test_get_or_create_customer__not_exist_customer__create(mocker):
     assert service.customer == customer_mock
     get_customer_mock.assert_not_called()
     get_customer_by_email_mock.assert_called_once_with(
-        account_owner.email
+        account_owner.email,
     )
     create_customer_mock.assert_called_once_with(
         email=account_owner.email,
         name=account.name,
         phone=account_owner.phone,
-        description=f'{account_owner.first_name} {account_owner.last_name}'
+        description=f'{account_owner.first_name} {account_owner.last_name}',
     )
     update_customer_mock.assert_not_called()
     account_service_init_mock.assert_called_once_with(
         user=user,
         instance=account,
         is_superuser=is_superuser,
-        auth_type=auth_type
+        auth_type=auth_type,
     )
     account_service_update_mock.assert_called_once_with(
         stripe_id=customer_mock.id,
-        force_save=True
+        force_save=True,
     )
 
 
@@ -435,18 +436,18 @@ def test_get_current_subscription__ok(mocker):
     mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_or_create_customer',
-        return_value=customer_mock
+        return_value=customer_mock,
     )
     method_mock = mocker.Mock()
     mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_current_payment_method',
-        return_value=method_mock
+        return_value=method_mock,
     )
     mocker.patch.object(
         AccountSubscriptionService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     # end init
 
@@ -454,15 +455,15 @@ def test_get_current_subscription__ok(mocker):
     get_subscription_for_account_mock = mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_subscription_for_account',
-        return_value=subscription_mock
+        return_value=subscription_mock,
     )
     account_subscription_service_create_mock = mocker.patch(
         'src.payment.stripe.service.'
-        'AccountSubscriptionService.create'
+        'AccountSubscriptionService.create',
     )
     account_subscription_service_expired_mock = mocker.patch(
         'src.payment.stripe.service.'
-        'AccountSubscriptionService.expired'
+        'AccountSubscriptionService.expired',
     )
 
     # act
@@ -476,7 +477,7 @@ def test_get_current_subscription__ok(mocker):
     assert service.subscription == subscription_mock
     get_subscription_for_account_mock.assert_called_once_with(
         customer=customer_mock,
-        subscription_account=account
+        subscription_account=account,
     )
     account_subscription_service_create_mock.assert_not_called()
     account_subscription_service_expired_mock.assert_not_called()
@@ -497,18 +498,18 @@ def test_get_current_subscription__create__ok(mocker):
     mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_or_create_customer',
-        return_value=customer_mock
+        return_value=customer_mock,
     )
     method_mock = mocker.Mock()
     mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_current_payment_method',
-        return_value=method_mock
+        return_value=method_mock,
     )
     mocker.patch.object(
         AccountSubscriptionService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     # end init
 
@@ -516,21 +517,21 @@ def test_get_current_subscription__create__ok(mocker):
     get_subscription_for_account_mock = mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_subscription_for_account',
-        return_value=subscription_mock
+        return_value=subscription_mock,
     )
     account_subscription_service_create_mock = mocker.patch(
         'src.payment.stripe.service.'
-        'AccountSubscriptionService.create'
+        'AccountSubscriptionService.create',
     )
     account_subscription_service_expired_mock = mocker.patch(
         'src.payment.stripe.service.'
-        'AccountSubscriptionService.expired'
+        'AccountSubscriptionService.expired',
     )
     subscription_details_mock = mocker.Mock()
     get_subscription_details_mock = mocker.patch(
         'src.payment.stripe.service.'
         'StripeService.get_subscription_details',
-        return_value=subscription_details_mock
+        return_value=subscription_details_mock,
     )
 
     # act
@@ -544,10 +545,10 @@ def test_get_current_subscription__create__ok(mocker):
     assert service.subscription == subscription_mock
     get_subscription_for_account_mock.assert_called_once_with(
         customer=customer_mock,
-        subscription_account=account
+        subscription_account=account,
     )
     get_subscription_details_mock.assert_called_once_with(
-        subscription_mock
+        subscription_mock,
     )
     account_subscription_service_create_mock.assert_called_once_with(
         details=subscription_details_mock,
@@ -570,38 +571,38 @@ def test_get_current_subscription__expire__ok(mocker):
     mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_or_create_customer',
-        return_value=customer_mock
+        return_value=customer_mock,
     )
     method_mock = mocker.Mock()
     mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_current_payment_method',
-        return_value=method_mock
+        return_value=method_mock,
     )
     mocker.patch.object(
         AccountSubscriptionService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     # end init
 
     get_subscription_for_account_mock = mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_subscription_for_account',
-        return_value=None
+        return_value=None,
     )
     account_subscription_service_create_mock = mocker.patch(
         'src.payment.stripe.service.'
-        'AccountSubscriptionService.create'
+        'AccountSubscriptionService.create',
     )
     account_subscription_service_expired_mock = mocker.patch(
         'src.payment.stripe.service.'
-        'AccountSubscriptionService.expired'
+        'AccountSubscriptionService.expired',
     )
     now_date = timezone.now()
     mocker.patch(
         'src.payment.stripe.service.timezone.now',
-        return_value=now_date
+        return_value=now_date,
     )
 
     # act
@@ -615,11 +616,11 @@ def test_get_current_subscription__expire__ok(mocker):
     assert service.subscription is None
     get_subscription_for_account_mock.assert_called_once_with(
         customer=customer_mock,
-        subscription_account=account
+        subscription_account=account,
     )
     account_subscription_service_create_mock.assert_not_called()
     account_subscription_service_expired_mock.assert_called_once_with(
-        plan_expiration=now_date
+        plan_expiration=now_date,
     )
 
 
@@ -628,7 +629,7 @@ def test_get_current_subscription__tenant_create__ok(mocker):
     # arrange
     # init
     master_account = create_test_account(
-        lease_level=LeaseLevel.STANDARD
+        lease_level=LeaseLevel.STANDARD,
     )
     user = create_test_user(account=master_account)
     tenant_name = 'some tenant name'
@@ -646,18 +647,18 @@ def test_get_current_subscription__tenant_create__ok(mocker):
     mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_or_create_customer',
-        return_value=customer_mock
+        return_value=customer_mock,
     )
     method_mock = mocker.Mock()
     mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_current_payment_method',
-        return_value=method_mock
+        return_value=method_mock,
     )
     mocker.patch.object(
         AccountSubscriptionService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     # end init
 
@@ -665,21 +666,21 @@ def test_get_current_subscription__tenant_create__ok(mocker):
     get_subscription_for_account_mock = mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_subscription_for_account',
-        return_value=subscription_mock
+        return_value=subscription_mock,
     )
     account_subscription_service_create_mock = mocker.patch(
         'src.payment.stripe.service.'
-        'AccountSubscriptionService.create'
+        'AccountSubscriptionService.create',
     )
     account_subscription_service_expired_mock = mocker.patch(
         'src.payment.stripe.service.'
-        'AccountSubscriptionService.expired'
+        'AccountSubscriptionService.expired',
     )
     subscription_details_mock = mocker.Mock()
     mocker.patch(
         'src.payment.stripe.service.'
         'StripeService.get_subscription_details',
-        return_value=subscription_details_mock
+        return_value=subscription_details_mock,
     )
 
     # act
@@ -687,14 +688,14 @@ def test_get_current_subscription__tenant_create__ok(mocker):
         user=user,
         is_superuser=is_superuser,
         auth_type=auth_type,
-        subscription_account=tenant_account
+        subscription_account=tenant_account,
     )
 
     # assert
     assert service.subscription == subscription_mock
     get_subscription_for_account_mock.assert_called_once_with(
         customer=customer_mock,
-        subscription_account=tenant_account
+        subscription_account=tenant_account,
     )
     account_subscription_service_create_mock.assert_called_once_with(
         details=subscription_details_mock,
@@ -715,18 +716,18 @@ def test_get_current_payment_method__ok(mocker):
     mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_or_create_customer',
-        return_value=customer_mock
+        return_value=customer_mock,
     )
     subscription_mock = mocker.Mock()
     mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_current_subscription',
-        return_value=subscription_mock
+        return_value=subscription_mock,
     )
     mocker.patch.object(
         AccountSubscriptionService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     # end init
 
@@ -734,7 +735,7 @@ def test_get_current_payment_method__ok(mocker):
     get_current_payment_method_mock = mocker.patch(
         'src.payment.stripe.mixins.'
         'StripeMixin._get_current_payment_method',
-        return_value=payment_method_mock
+        return_value=payment_method_mock,
     )
 
     # act
@@ -764,18 +765,18 @@ def test_get_current_payment_method__enable__ok(mocker):
     mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_or_create_customer',
-        return_value=customer_mock
+        return_value=customer_mock,
     )
     subscription_mock = mocker.Mock()
     mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_current_subscription',
-        return_value=subscription_mock
+        return_value=subscription_mock,
     )
     mocker.patch.object(
         AccountSubscriptionService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     # end init
 
@@ -783,7 +784,7 @@ def test_get_current_payment_method__enable__ok(mocker):
     get_current_payment_method_mock = mocker.patch(
         'src.payment.stripe.mixins.'
         'StripeMixin._get_current_payment_method',
-        return_value=payment_method_mock
+        return_value=payment_method_mock,
     )
 
     # act
@@ -813,25 +814,25 @@ def test_get_current_payment_method__disable__ok(mocker):
     mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_or_create_customer',
-        return_value=customer_mock
+        return_value=customer_mock,
     )
     subscription_mock = mocker.Mock()
     mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_current_subscription',
-        return_value=subscription_mock
+        return_value=subscription_mock,
     )
     mocker.patch.object(
         AccountSubscriptionService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     # end init
 
     get_current_payment_method_mock = mocker.patch(
         'src.payment.stripe.mixins.'
         'StripeMixin._get_current_payment_method',
-        return_value=None
+        return_value=None,
     )
 
     # act
@@ -855,15 +856,15 @@ def test_get_confirm_token__ok(mocker):
     # mock init
     mocker.patch(
         'src.payment.stripe.service.'
-        'StripeService._get_or_create_customer'
+        'StripeService._get_or_create_customer',
     )
     mocker.patch(
         'src.payment.stripe.service.'
-        'StripeService._get_current_payment_method'
+        'StripeService._get_current_payment_method',
     )
     mocker.patch(
         'src.payment.stripe.service.'
-        'StripeService._get_current_subscription'
+        'StripeService._get_current_subscription',
     )
     # end mock init
 
@@ -876,7 +877,7 @@ def test_get_confirm_token__ok(mocker):
     service = StripeService(
         user=user,
         is_superuser=is_superuser,
-        auth_type=auth_type
+        auth_type=auth_type,
     )
 
     # act
@@ -888,7 +889,7 @@ def test_get_confirm_token__ok(mocker):
     assert result.payload['is_superuser'] == is_superuser
     assert result.payload['account_id'] == account.id
     assert result.payload['user_id'] == user.id
-    assert 'subscription' not in result.payload.keys()
+    assert 'subscription' not in result.payload
 
 
 def test_get_confirm_token__with_subscription__ok(mocker):
@@ -898,15 +899,15 @@ def test_get_confirm_token__with_subscription__ok(mocker):
     # mock init
     mocker.patch(
         'src.payment.stripe.service.'
-        'StripeService._get_or_create_customer'
+        'StripeService._get_or_create_customer',
     )
     mocker.patch(
         'src.payment.stripe.service.'
-        'StripeService._get_current_payment_method'
+        'StripeService._get_current_payment_method',
     )
     mocker.patch(
         'src.payment.stripe.service.'
-        'StripeService._get_current_subscription'
+        'StripeService._get_current_subscription',
     )
     # end mock init
 
@@ -920,12 +921,12 @@ def test_get_confirm_token__with_subscription__ok(mocker):
     service = StripeService(
         user=user,
         is_superuser=is_superuser,
-        auth_type=auth_type
+        auth_type=auth_type,
     )
 
     # act
     result = service._get_confirm_token(
-        subscription_data=subscription_data
+        subscription_data=subscription_data,
     )
 
     # assert
@@ -943,15 +944,15 @@ def test_get_success_url_with_token__without_query_params__ok(mocker):
     # mock init
     mocker.patch(
         'src.payment.stripe.service.'
-        'StripeService._get_or_create_customer'
+        'StripeService._get_or_create_customer',
     )
     mocker.patch(
         'src.payment.stripe.service.'
-        'StripeService._get_current_payment_method'
+        'StripeService._get_current_payment_method',
     )
     mocker.patch(
         'src.payment.stripe.service.'
-        'StripeService._get_current_subscription'
+        'StripeService._get_current_subscription',
     )
     # end mock init
 
@@ -964,7 +965,7 @@ def test_get_success_url_with_token__without_query_params__ok(mocker):
     mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_confirm_token',
-        return_value=token
+        return_value=token,
     )
 
     service = StripeService(user=user)
@@ -972,7 +973,7 @@ def test_get_success_url_with_token__without_query_params__ok(mocker):
     # act
     result = service._get_success_url_with_token(
         url=url,
-        subscription_data=subscription_data
+        subscription_data=subscription_data,
     )
 
     # assert
@@ -986,15 +987,15 @@ def test_get_success_url_with_token__with_query_params__ok(mocker):
     # mock init
     mocker.patch(
         'src.payment.stripe.service.'
-        'StripeService._get_or_create_customer'
+        'StripeService._get_or_create_customer',
     )
     mocker.patch(
         'src.payment.stripe.service.'
-        'StripeService._get_current_payment_method'
+        'StripeService._get_current_payment_method',
     )
     mocker.patch(
         'src.payment.stripe.service.'
-        'StripeService._get_current_subscription'
+        'StripeService._get_current_subscription',
     )
     # end mock init
 
@@ -1007,7 +1008,7 @@ def test_get_success_url_with_token__with_query_params__ok(mocker):
     mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_confirm_token',
-        return_value=token
+        return_value=token,
     )
 
     service = StripeService(user=user)
@@ -1015,7 +1016,7 @@ def test_get_success_url_with_token__with_query_params__ok(mocker):
     # act
     result = service._get_success_url_with_token(
         url=url,
-        subscription_data=subscription_data
+        subscription_data=subscription_data,
     )
 
     # assert
@@ -1031,23 +1032,23 @@ def test_create_subscription__trial_not_ended__ok(mocker):
     mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_or_create_customer',
-        return_value=customer_mock
+        return_value=customer_mock,
     )
     mocker.patch(
         'src.payment.stripe.service.'
-        'StripeService._get_current_payment_method'
+        'StripeService._get_current_payment_method',
     )
     mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_current_subscription',
-        return_value=None
+        return_value=None,
     )
     # end mock init
 
     customer_stripe_id = "cus_testNx9XuHa4xteob3"
     account = create_test_account(
         stripe_id=customer_stripe_id,
-        trial_ended=False
+        trial_ended=False,
     )
     user = create_test_user(account=account)
     quantity = 10
@@ -1058,37 +1059,37 @@ def test_create_subscription__trial_not_ended__ok(mocker):
     item.quantity = quantity
     item.price = mocker.Mock(
         trial_days=trial_days,
-        stripe_id=price_stripe_id
+        stripe_id=price_stripe_id,
     )
     invoice_item_price_stripe_id = 'pr_iwdasd'
     invoice_item_mock = mocker.Mock()
     invoice_item_mock.quantity = 1
     invoice_item_mock.price = mocker.Mock(
-        stripe_id=invoice_item_price_stripe_id
+        stripe_id=invoice_item_price_stripe_id,
     )
     invoice_items = [invoice_item_mock]
     subscription_mock = mocker.Mock()
     subscription_create_mock = mocker.patch(
         'src.payment.stripe.service.'
         'stripe.Subscription.create',
-        return_value=subscription_mock
+        return_value=subscription_mock,
     )
     idempotency_key = '12312asdw'
     get_idempotency_key_mock = mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_idempotency_key',
-        return_value=idempotency_key
+        return_value=idempotency_key,
     )
     date = timezone.now()
     mocker.patch(
         'src.payment.stripe.service.timezone.now',
-        return_value=date
+        return_value=date,
     )
     subscription_details_mock = mocker.Mock()
     get_subscription_details_mock = mocker.patch(
         'src.payment.stripe.service.'
         'StripeService.get_subscription_details',
-        return_value=subscription_details_mock
+        return_value=subscription_details_mock,
     )
 
     service = StripeService(user=user)
@@ -1097,7 +1098,7 @@ def test_create_subscription__trial_not_ended__ok(mocker):
     # act
     service._create_subscription(
         item=item,
-        invoice_items=invoice_items
+        invoice_items=invoice_items,
     )
 
     # assert
@@ -1105,13 +1106,13 @@ def test_create_subscription__trial_not_ended__ok(mocker):
         {
             "price": price_stripe_id,
             "quantity": quantity,
-        }
+        },
     ]
     add_invoice_items = [
         {
             "price": invoice_item_price_stripe_id,
             "quantity": 1,
-        }
+        },
     ]
     subscription_create_mock.assert_called_once_with(
         customer=customer_mock,
@@ -1120,7 +1121,7 @@ def test_create_subscription__trial_not_ended__ok(mocker):
         trial_period_days=trial_days,
         idempotency_key=idempotency_key,
         metadata={'account_id': account.id},
-        description='Main'
+        description='Main',
     )
     get_idempotency_key_mock.assert_called_once_with(
         account_id=account.id,
@@ -1128,7 +1129,7 @@ def test_create_subscription__trial_not_ended__ok(mocker):
         add_invoice_items=add_invoice_items,
         trial_period_days=trial_days,
         stripe_id=customer_stripe_id,
-        date=date.strftime('%Y-%m-%dT%H:%M')
+        date=date.strftime('%Y-%m-%dT%H:%M'),
     )
     get_subscription_details_mock.assert_called_once_with(subscription_mock)
     service.subscription_service.create.assert_called_once_with(
@@ -1144,23 +1145,23 @@ def test_create_subscription__trial_ended__ok(mocker):
     mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_or_create_customer',
-        return_value=customer_mock
+        return_value=customer_mock,
     )
     mocker.patch(
         'src.payment.stripe.service.'
-        'StripeService._get_current_payment_method'
+        'StripeService._get_current_payment_method',
     )
     mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_current_subscription',
-        return_value=None
+        return_value=None,
     )
     # end mock init
 
     customer_stripe_id = "cus_testNx9XuHa4xteob3"
     account = create_test_account(
         stripe_id=customer_stripe_id,
-        trial_ended=True
+        trial_ended=True,
     )
     user = create_test_user(account=account)
     quantity = 10
@@ -1169,30 +1170,30 @@ def test_create_subscription__trial_ended__ok(mocker):
     item = mocker.Mock()
     item.quantity = quantity
     item.price = mocker.Mock(
-        stripe_id=price_stripe_id
+        stripe_id=price_stripe_id,
     )
     subscription_mock = mocker.Mock()
     subscription_create_mock = mocker.patch(
         'src.payment.stripe.service.'
         'stripe.Subscription.create',
-        return_value=subscription_mock
+        return_value=subscription_mock,
     )
     idempotency_key = '12312asdw'
     get_idempotency_key_mock = mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_idempotency_key',
-        return_value=idempotency_key
+        return_value=idempotency_key,
     )
     date = timezone.now()
     mocker.patch(
         'src.payment.stripe.service.timezone.now',
-        return_value=date
+        return_value=date,
     )
     subscription_details_mock = mocker.Mock()
     get_subscription_details_mock = mocker.patch(
         'src.payment.stripe.service.'
         'StripeService.get_subscription_details',
-        return_value=subscription_details_mock
+        return_value=subscription_details_mock,
     )
 
     service = StripeService(user=user)
@@ -1201,7 +1202,7 @@ def test_create_subscription__trial_ended__ok(mocker):
     # act
     service._create_subscription(
         item=item,
-        invoice_items=[]
+        invoice_items=[],
     )
 
     # assert
@@ -1209,7 +1210,7 @@ def test_create_subscription__trial_ended__ok(mocker):
         {
             "price": price_stripe_id,
             "quantity": quantity,
-        }
+        },
     ]
     subscription_create_mock.assert_called_once_with(
         customer=customer_mock,
@@ -1218,7 +1219,7 @@ def test_create_subscription__trial_ended__ok(mocker):
         trial_period_days=None,
         idempotency_key=idempotency_key,
         metadata={'account_id': account.id},
-        description='Main'
+        description='Main',
     )
     get_idempotency_key_mock.assert_called_once_with(
         account_id=account.id,
@@ -1226,7 +1227,7 @@ def test_create_subscription__trial_ended__ok(mocker):
         add_invoice_items=[],
         trial_period_days=None,
         stripe_id=customer_stripe_id,
-        date=date.strftime('%Y-%m-%dT%H:%M')
+        date=date.strftime('%Y-%m-%dT%H:%M'),
     )
     get_subscription_details_mock.assert_called_once_with(subscription_mock)
     service.subscription_service.create.assert_called_once_with(
@@ -1243,23 +1244,23 @@ def test_create_subscription__tenant_subscription__ok(mocker):
     mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_or_create_customer',
-        return_value=customer_mock
+        return_value=customer_mock,
     )
     mocker.patch(
         'src.payment.stripe.service.'
-        'StripeService._get_current_payment_method'
+        'StripeService._get_current_payment_method',
     )
     mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_current_subscription',
-        return_value=None
+        return_value=None,
     )
     # end mock init
 
     customer_stripe_id = "cus_testNx9XuHa4xteob3"
     master_account = create_test_account(
         trial_ended=False,
-        lease_level=LeaseLevel.STANDARD
+        lease_level=LeaseLevel.STANDARD,
     )
     user = create_test_user(account=master_account)
     tenant_name = 'some teant name'
@@ -1268,7 +1269,7 @@ def test_create_subscription__tenant_subscription__ok(mocker):
         lease_level=LeaseLevel.TENANT,
         master_account=master_account,
         name='tenant',
-        tenant_name=tenant_name
+        tenant_name=tenant_name,
     )
     quantity = 10
     trial_days = 11
@@ -1278,49 +1279,49 @@ def test_create_subscription__tenant_subscription__ok(mocker):
     item.quantity = quantity
     item.price = mocker.Mock(
         trial_days=trial_days,
-        stripe_id=price_stripe_id
+        stripe_id=price_stripe_id,
     )
     invoice_item_price_stripe_id = 'pr_iwdasd'
     invoice_item_mock = mocker.Mock()
     invoice_item_mock.quantity = 1
     invoice_item_mock.price = mocker.Mock(
-        stripe_id=invoice_item_price_stripe_id
+        stripe_id=invoice_item_price_stripe_id,
     )
     invoice_items = [invoice_item_mock]
     subscription_mock = mocker.Mock()
     subscription_create_mock = mocker.patch(
         'src.payment.stripe.service.'
         'stripe.Subscription.create',
-        return_value=subscription_mock
+        return_value=subscription_mock,
     )
     idempotency_key = '12312asdw'
     get_idempotency_key_mock = mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_idempotency_key',
-        return_value=idempotency_key
+        return_value=idempotency_key,
     )
     date = timezone.now()
     mocker.patch(
         'src.payment.stripe.service.timezone.now',
-        return_value=date
+        return_value=date,
     )
     subscription_details_mock = mocker.Mock()
     get_subscription_details_mock = mocker.patch(
         'src.payment.stripe.service.'
         'StripeService.get_subscription_details',
-        return_value=subscription_details_mock
+        return_value=subscription_details_mock,
     )
 
     service = StripeService(
         user=user,
-        subscription_account=tenant_account
+        subscription_account=tenant_account,
     )
     service.subscription_service = mocker.Mock(create=mocker.Mock())
 
     # act
     service._create_subscription(
         item=item,
-        invoice_items=invoice_items
+        invoice_items=invoice_items,
     )
 
     # assert
@@ -1328,13 +1329,13 @@ def test_create_subscription__tenant_subscription__ok(mocker):
         {
             "price": price_stripe_id,
             "quantity": quantity,
-        }
+        },
     ]
     add_invoice_items = [
         {
             "price": invoice_item_price_stripe_id,
             "quantity": 1,
-        }
+        },
     ]
     subscription_create_mock.assert_called_once_with(
         customer=customer_mock,
@@ -1343,7 +1344,7 @@ def test_create_subscription__tenant_subscription__ok(mocker):
         trial_period_days=trial_days,
         idempotency_key=idempotency_key,
         metadata={'account_id': tenant_account.id},
-        description=tenant_name
+        description=tenant_name,
     )
     get_idempotency_key_mock.assert_called_once_with(
         account_id=tenant_account.id,
@@ -1351,7 +1352,7 @@ def test_create_subscription__tenant_subscription__ok(mocker):
         add_invoice_items=add_invoice_items,
         trial_period_days=trial_days,
         stripe_id=customer_stripe_id,
-        date=date.strftime('%Y-%m-%dT%H:%M')
+        date=date.strftime('%Y-%m-%dT%H:%M'),
     )
     get_subscription_details_mock.assert_called_once_with(subscription_mock)
     service.subscription_service.create.assert_called_once_with(
@@ -1367,11 +1368,11 @@ def test_update_subscription__same_price__ok(mocker):
     mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_or_create_customer',
-        return_value=customer_mock
+        return_value=customer_mock,
     )
     mocker.patch(
         'src.payment.stripe.service.'
-        'StripeService._get_current_payment_method'
+        'StripeService._get_current_payment_method',
     )
 
     # old subscription data
@@ -1379,7 +1380,7 @@ def test_update_subscription__same_price__ok(mocker):
     old_sub_price_mock = mocker.Mock(id=old_price_id)
     old_item_mock = mocker.MagicMock(
         id=old_price_id,
-        price=old_sub_price_mock
+        price=old_sub_price_mock,
     )
     old_sub_data = {'items': mocker.Mock(data=[old_item_mock])}
     old_sub_id = 'sub_123AD'
@@ -1388,13 +1389,13 @@ def test_update_subscription__same_price__ok(mocker):
     mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_current_subscription',
-        return_value=old_subs_mock
+        return_value=old_subs_mock,
     )
 
     customer_stripe_id = "cus_testNx9XuHa4xteob3"
     account = create_test_account(
         stripe_id=customer_stripe_id,
-        trial_ended=True
+        trial_ended=True,
     )
     user = create_test_user(account=account)
 
@@ -1404,26 +1405,26 @@ def test_update_subscription__same_price__ok(mocker):
     new_item = PurchaseItem(
         price=old_price,
         quantity=new_quantity,
-        min_quantity=1
+        min_quantity=1,
     )
     new_sub_mock = mocker.Mock()
     sub_modify_mock = mocker.patch(
         'src.payment.stripe.service.'
         'stripe.Subscription.modify',
-        return_value=new_sub_mock
+        return_value=new_sub_mock,
     )
     subscription_details_mock = mocker.Mock()
     get_subscription_details_mock = mocker.patch(
         'src.payment.stripe.service.'
         'StripeService.get_subscription_details',
-        return_value=subscription_details_mock
+        return_value=subscription_details_mock,
     )
 
     invoice_item_price_stripe_id = 'pr_iwdasd'
     invoice_item_mock = mocker.Mock()
     invoice_item_mock.quantity = 1
     invoice_item_mock.price = mocker.Mock(
-        stripe_id=invoice_item_price_stripe_id
+        stripe_id=invoice_item_price_stripe_id,
     )
     invoice_items = [invoice_item_mock]
 
@@ -1433,7 +1434,7 @@ def test_update_subscription__same_price__ok(mocker):
     # act
     service._update_subscription(
         item=new_item,
-        invoice_items=invoice_items
+        invoice_items=invoice_items,
     )
 
     # assert
@@ -1443,17 +1444,17 @@ def test_update_subscription__same_price__ok(mocker):
             {
                 "id": old_item_mock.id,
                 "quantity": new_item.quantity,
-            }
+            },
         ],
         add_invoice_items=[
             {
                 "price": invoice_item_price_stripe_id,
                 "quantity": 1,
-            }
+            },
         ],
         trial_end='now',
         metadata={'account_id': account.id},
-        description='Main'
+        description='Main',
     )
     get_subscription_details_mock.assert_called_once_with(new_sub_mock)
     service.subscription_service.update.assert_called_once_with(
@@ -1470,18 +1471,18 @@ def test_update_subscription__new_price__ok(mocker):
     mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_or_create_customer',
-        return_value=customer_mock
+        return_value=customer_mock,
     )
     mocker.patch(
         'src.payment.stripe.service.'
-        'StripeService._get_current_payment_method'
+        'StripeService._get_current_payment_method',
     )
     # old subscription data
     old_price_id = 'price_old1213ad'
     old_sub_price_mock = mocker.Mock(id=old_price_id, currency='usd')
     old_item_mock = mocker.MagicMock(
         id=old_price_id,
-        price=old_sub_price_mock
+        price=old_sub_price_mock,
     )
     old_sub_data = {'items': mocker.Mock(data=[old_item_mock])}
     sub_id = 'sub_123AD'
@@ -1490,13 +1491,13 @@ def test_update_subscription__new_price__ok(mocker):
     mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_current_subscription',
-        return_value=old_subs_mock
+        return_value=old_subs_mock,
     )
 
     customer_stripe_id = "cus_testNx9XuHa4xteob3"
     account = create_test_account(
         stripe_id=customer_stripe_id,
-        trial_ended=True
+        trial_ended=True,
     )
     user = create_test_user(account=account)
 
@@ -1504,25 +1505,25 @@ def test_update_subscription__new_price__ok(mocker):
     new_price_id = 'price_new123'
     new_price = create_test_recurring_price(
         stripe_id=new_price_id,
-        currency='usd'
+        currency='usd',
     )
     new_quantity = 12
     new_item = PurchaseItem(
         price=new_price,
         quantity=new_quantity,
-        min_quantity=11
+        min_quantity=11,
     )
     new_sub_mock = mocker.Mock()
     sub_modify_mock = mocker.patch(
         'src.payment.stripe.service.'
         'stripe.Subscription.modify',
-        return_value=new_sub_mock
+        return_value=new_sub_mock,
     )
     subscription_details_mock = mocker.Mock()
     get_subscription_details_mock = mocker.patch(
         'src.payment.stripe.service.'
         'StripeService.get_subscription_details',
-        return_value=subscription_details_mock
+        return_value=subscription_details_mock,
     )
     service = StripeService(user=user)
     service.subscription_service = mocker.Mock(create=mocker.Mock())
@@ -1530,7 +1531,7 @@ def test_update_subscription__new_price__ok(mocker):
     # act
     service._update_subscription(
         item=new_item,
-        invoice_items=[]
+        invoice_items=[],
     )
 
     # assert
@@ -1544,12 +1545,12 @@ def test_update_subscription__new_price__ok(mocker):
             {
                 "price": new_price_id,
                 "quantity": new_item.quantity,
-            }
+            },
         ],
         add_invoice_items=[],
         trial_end='now',
         metadata={'account_id': account.id},
-        description='Main'
+        description='Main',
     )
     get_subscription_details_mock.assert_called_once_with(new_sub_mock)
     service.subscription_service.update.assert_called_once_with(
@@ -1565,11 +1566,11 @@ def test_update_subscription__tenant_subscription__ok(mocker):
     mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_or_create_customer',
-        return_value=customer_mock
+        return_value=customer_mock,
     )
     mocker.patch(
         'src.payment.stripe.service.'
-        'StripeService._get_current_payment_method'
+        'StripeService._get_current_payment_method',
     )
 
     # old subscription data
@@ -1577,7 +1578,7 @@ def test_update_subscription__tenant_subscription__ok(mocker):
     old_sub_price_mock = mocker.Mock(id=old_price_id)
     old_item_mock = mocker.MagicMock(
         id=old_price_id,
-        price=old_sub_price_mock
+        price=old_sub_price_mock,
     )
     old_sub_data = {'items': mocker.Mock(data=[old_item_mock])}
     old_sub_id = 'sub_123AD'
@@ -1586,13 +1587,13 @@ def test_update_subscription__tenant_subscription__ok(mocker):
     mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_current_subscription',
-        return_value=old_subs_mock
+        return_value=old_subs_mock,
     )
 
     customer_stripe_id = "cus_testNx9XuHa4xteob3"
     master_account = create_test_account(
         trial_ended=False,
-        lease_level=LeaseLevel.STANDARD
+        lease_level=LeaseLevel.STANDARD,
     )
     user = create_test_user(account=master_account)
     tenant_name = 'some tenant name'
@@ -1601,7 +1602,7 @@ def test_update_subscription__tenant_subscription__ok(mocker):
         lease_level=LeaseLevel.TENANT,
         master_account=master_account,
         name='tenant',
-        tenant_name=tenant_name
+        tenant_name=tenant_name,
     )
 
     # new subscription data
@@ -1610,39 +1611,39 @@ def test_update_subscription__tenant_subscription__ok(mocker):
     new_item = PurchaseItem(
         price=old_price,
         quantity=new_quantity,
-        min_quantity=1
+        min_quantity=1,
     )
     new_sub_mock = mocker.Mock()
     sub_modify_mock = mocker.patch(
         'src.payment.stripe.service.'
         'stripe.Subscription.modify',
-        return_value=new_sub_mock
+        return_value=new_sub_mock,
     )
     subscription_details_mock = mocker.Mock()
     get_subscription_details_mock = mocker.patch(
         'src.payment.stripe.service.'
         'StripeService.get_subscription_details',
-        return_value=subscription_details_mock
+        return_value=subscription_details_mock,
     )
 
     invoice_item_price_stripe_id = 'pr_iwdasd'
     invoice_item_mock = mocker.Mock()
     invoice_item_mock.quantity = 1
     invoice_item_mock.price = mocker.Mock(
-        stripe_id=invoice_item_price_stripe_id
+        stripe_id=invoice_item_price_stripe_id,
     )
     invoice_items = [invoice_item_mock]
 
     service = StripeService(
         user=user,
-        subscription_account=tenant_account
+        subscription_account=tenant_account,
     )
     service.subscription_service = mocker.Mock(create=mocker.Mock())
 
     # act
     service._update_subscription(
         item=new_item,
-        invoice_items=invoice_items
+        invoice_items=invoice_items,
     )
 
     # assert
@@ -1652,17 +1653,17 @@ def test_update_subscription__tenant_subscription__ok(mocker):
             {
                 "id": old_item_mock.id,
                 "quantity": new_item.quantity,
-            }
+            },
         ],
         add_invoice_items=[
             {
                 "price": invoice_item_price_stripe_id,
                 "quantity": 1,
-            }
+            },
         ],
         trial_end='now',
         metadata={'account_id': tenant_account.id},
-        description=tenant_name
+        description=tenant_name,
     )
     get_subscription_details_mock.assert_called_once_with(new_sub_mock)
     service.subscription_service.update.assert_called_once_with(
@@ -1678,15 +1679,15 @@ def test_create_invoice__ok(mocker):
     mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_or_create_customer',
-        return_value=customer_mock
+        return_value=customer_mock,
     )
     mocker.patch(
         'src.payment.stripe.service.'
-        'StripeService._get_current_payment_method'
+        'StripeService._get_current_payment_method',
     )
     mocker.patch(
         'src.payment.stripe.service.'
-        'StripeService._get_current_subscription'
+        'StripeService._get_current_subscription',
     )
     # end mock init
 
@@ -1697,25 +1698,25 @@ def test_create_invoice__ok(mocker):
     invoice_create_mock = mocker.patch(
         'src.payment.stripe.service.'
         'stripe.Invoice.create',
-        return_value=invoice_mock
+        return_value=invoice_mock,
     )
     invoice_item_create_mock = mocker.patch(
         'src.payment.stripe.service.'
-        'stripe.InvoiceItem.create'
+        'stripe.InvoiceItem.create',
     )
     product = create_test_product(
         code='some code',
-        stripe_id='product_123'
+        stripe_id='product_123',
     )
     invoice_item_1 = PurchaseItem(
         price=create_test_recurring_price(product=product),
         quantity=1,
-        min_quantity=1
+        min_quantity=1,
     )
     invoice_item_2 = PurchaseItem(
         price=create_test_invoice_price(),
         quantity=2,
-        min_quantity=1
+        min_quantity=1,
     )
     service = StripeService(user=user)
 
@@ -1725,7 +1726,7 @@ def test_create_invoice__ok(mocker):
     # assert
     invoice_create_mock.assert_called_once_with(
         customer=customer_mock,
-        collection_method='charge_automatically'
+        collection_method='charge_automatically',
     )
     assert invoice_item_create_mock.call_count == 2
     invoice_item_create_mock.has_calls([
@@ -1733,14 +1734,14 @@ def test_create_invoice__ok(mocker):
             invoice=invoice_mock,
             customer=customer_mock,
             price=invoice_item_1.price.stripe_id,
-            quantity=invoice_item_1.quantity
+            quantity=invoice_item_1.quantity,
         ),
         mocker.call(
             invoice=invoice_mock,
             customer=customer_mock,
             price=invoice_item_2.price.stripe_id,
-            quantity=invoice_item_2.quantity
-        )
+            quantity=invoice_item_2.quantity,
+        ),
     ])
     invoice_mock.finalize_invoice.assert_called_once()
     invoice_mock.pay.assert_called_once()
@@ -1754,15 +1755,15 @@ def test_create_invoice__invoice_is_already_paid__ok(mocker):
     mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_or_create_customer',
-        return_value=customer_mock
+        return_value=customer_mock,
     )
     mocker.patch(
         'src.payment.stripe.service.'
-        'StripeService._get_current_payment_method'
+        'StripeService._get_current_payment_method',
     )
     mocker.patch(
         'src.payment.stripe.service.'
-        'StripeService._get_current_subscription'
+        'StripeService._get_current_subscription',
     )
     # end mock init
 
@@ -1773,24 +1774,24 @@ def test_create_invoice__invoice_is_already_paid__ok(mocker):
     invoice_create_mock = mocker.patch(
         'src.payment.stripe.service.'
         'stripe.Invoice.create',
-        return_value=invoice_mock
+        return_value=invoice_mock,
     )
     invoice_mock.pay.side_effect = stripe.error.InvalidRequestError(
         message='Invoice is already paid',
-        param=('some param',)
+        param=('some param',),
     )
     invoice_item_create_mock = mocker.patch(
         'src.payment.stripe.service.'
-        'stripe.InvoiceItem.create'
+        'stripe.InvoiceItem.create',
     )
     product = create_test_product(
         code='some code',
-        stripe_id='product_123'
+        stripe_id='product_123',
     )
     invoice_item_1 = PurchaseItem(
         price=create_test_recurring_price(product=product),
         quantity=1,
-        min_quantity=1
+        min_quantity=1,
     )
     service = StripeService(user=user)
 
@@ -1800,13 +1801,13 @@ def test_create_invoice__invoice_is_already_paid__ok(mocker):
     # assert
     invoice_create_mock.assert_called_once_with(
         customer=customer_mock,
-        collection_method='charge_automatically'
+        collection_method='charge_automatically',
     )
     invoice_item_create_mock.assert_called_once_with(
         invoice=invoice_mock,
         customer=customer_mock,
         price=invoice_item_1.price.stripe_id,
-        quantity=invoice_item_1.quantity
+        quantity=invoice_item_1.quantity,
     )
     invoice_mock.finalize_invoice.assert_called_once()
     invoice_mock.pay.assert_called_once()
@@ -1820,15 +1821,15 @@ def test_create_invoice__invoice_request_error__raise_exception(mocker):
     mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_or_create_customer',
-        return_value=customer_mock
+        return_value=customer_mock,
     )
     mocker.patch(
         'src.payment.stripe.service.'
-        'StripeService._get_current_payment_method'
+        'StripeService._get_current_payment_method',
     )
     mocker.patch(
         'src.payment.stripe.service.'
-        'StripeService._get_current_subscription'
+        'StripeService._get_current_subscription',
     )
     # end mock init
 
@@ -1839,25 +1840,25 @@ def test_create_invoice__invoice_request_error__raise_exception(mocker):
     invoice_create_mock = mocker.patch(
         'src.payment.stripe.service.'
         'stripe.Invoice.create',
-        return_value=invoice_mock
+        return_value=invoice_mock,
     )
     error_message = 'Some invoice request error'
     invoice_mock.pay.side_effect = stripe.error.InvalidRequestError(
         message=error_message,
-        param=('some param',)
+        param=('some param',),
     )
     invoice_item_create_mock = mocker.patch(
         'src.payment.stripe.service.'
-        'stripe.InvoiceItem.create'
+        'stripe.InvoiceItem.create',
     )
     product = create_test_product(
         code='some code',
-        stripe_id='product_123'
+        stripe_id='product_123',
     )
     invoice_item_1 = PurchaseItem(
         price=create_test_recurring_price(product=product),
         quantity=1,
-        min_quantity=1
+        min_quantity=1,
     )
     service = StripeService(user=user)
 
@@ -1869,13 +1870,13 @@ def test_create_invoice__invoice_request_error__raise_exception(mocker):
     assert ex.value.user_message == error_message
     invoice_create_mock.assert_called_once_with(
         customer=customer_mock,
-        collection_method='charge_automatically'
+        collection_method='charge_automatically',
     )
     invoice_item_create_mock.assert_called_once_with(
         invoice=invoice_mock,
         customer=customer_mock,
         price=invoice_item_1.price.stripe_id,
-        quantity=invoice_item_1.quantity
+        quantity=invoice_item_1.quantity,
     )
     invoice_mock.finalize_invoice.assert_called_once()
     invoice_mock.pay.assert_called_once()
@@ -1891,12 +1892,12 @@ def test_off_session_purchase__create_subscription__ok(mocker):
     )
     mocker.patch(
         'src.payment.stripe.service.'
-        'StripeService._get_current_payment_method'
+        'StripeService._get_current_payment_method',
     )
     mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_current_subscription',
-        return_value=None
+        return_value=None,
     )
     # end mock init
 
@@ -1906,27 +1907,27 @@ def test_off_session_purchase__create_subscription__ok(mocker):
     get_valid_subscription_item_mock = mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_valid_subscription_item',
-        return_value=subscription_item_mock
+        return_value=subscription_item_mock,
     )
     invoice_items_mock = mocker.Mock()
     get_valid_invoice_items_mock = mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_valid_invoice_items',
-        return_value=invoice_items_mock
+        return_value=invoice_items_mock,
     )
     service = StripeService(user=user)
     products_mock = mocker.Mock()
     create_subscription_mock = mocker.patch(
         'src.payment.stripe.service.'
-        'StripeService._create_subscription'
+        'StripeService._create_subscription',
     )
     update_subscription_mock = mocker.patch(
         'src.payment.stripe.service.'
-        'StripeService._update_subscription'
+        'StripeService._update_subscription',
     )
     create_invoice_mock = mocker.patch(
         'src.payment.stripe.service.'
-        'StripeService._create_invoice'
+        'StripeService._create_invoice',
     )
 
     # act
@@ -1938,7 +1939,7 @@ def test_off_session_purchase__create_subscription__ok(mocker):
     update_subscription_mock.assert_not_called()
     create_subscription_mock.assert_called_once_with(
         item=subscription_item_mock,
-        invoice_items=invoice_items_mock
+        invoice_items=invoice_items_mock,
     )
     create_invoice_mock.assert_not_called()
 
@@ -1953,13 +1954,13 @@ def test_off_session_purchase_update_subscription__ok(mocker):
     )
     mocker.patch(
         'src.payment.stripe.service.'
-        'StripeService._get_current_payment_method'
+        'StripeService._get_current_payment_method',
     )
     subscription_mock = mocker.Mock()
     mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_current_subscription',
-        return_value=subscription_mock
+        return_value=subscription_mock,
     )
     # end mock init
 
@@ -1969,27 +1970,27 @@ def test_off_session_purchase_update_subscription__ok(mocker):
     get_valid_subscription_item_mock = mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_valid_subscription_item',
-        return_value=subscription_item_mock
+        return_value=subscription_item_mock,
     )
     invoice_items_mock = mocker.Mock()
     get_valid_invoice_items_mock = mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_valid_invoice_items',
-        return_value=invoice_items_mock
+        return_value=invoice_items_mock,
     )
     service = StripeService(user=user)
     products_mock = mocker.Mock()
     create_subscription_mock = mocker.patch(
         'src.payment.stripe.service.'
-        'StripeService._create_subscription'
+        'StripeService._create_subscription',
     )
     update_subscription_mock = mocker.patch(
         'src.payment.stripe.service.'
-        'StripeService._update_subscription'
+        'StripeService._update_subscription',
     )
     create_invoice_mock = mocker.patch(
         'src.payment.stripe.service.'
-        'StripeService._create_invoice'
+        'StripeService._create_invoice',
     )
 
     # act
@@ -2000,7 +2001,7 @@ def test_off_session_purchase_update_subscription__ok(mocker):
     get_valid_invoice_items_mock.assert_called_once_with(products_mock)
     update_subscription_mock.assert_called_once_with(
         item=subscription_item_mock,
-        invoice_items=invoice_items_mock
+        invoice_items=invoice_items_mock,
     )
     create_subscription_mock.assert_not_called()
     create_invoice_mock.assert_not_called()
@@ -2016,12 +2017,12 @@ def test_off_session_purchase__invoice_items__ok(mocker):
     )
     mocker.patch(
         'src.payment.stripe.service.'
-        'StripeService._get_current_payment_method'
+        'StripeService._get_current_payment_method',
     )
     mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_current_subscription',
-        return_value=None
+        return_value=None,
     )
     # end mock init
 
@@ -2030,27 +2031,27 @@ def test_off_session_purchase__invoice_items__ok(mocker):
     get_valid_subscription_item_mock = mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_valid_subscription_item',
-        return_value=None
+        return_value=None,
     )
     invoice_items_mock = mocker.Mock()
     get_valid_invoice_items_mock = mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_valid_invoice_items',
-        return_value=invoice_items_mock
+        return_value=invoice_items_mock,
     )
     service = StripeService(user=user)
     products_mock = mocker.Mock()
     create_subscription_mock = mocker.patch(
         'src.payment.stripe.service.'
-        'StripeService._create_subscription'
+        'StripeService._create_subscription',
     )
     update_subscription_mock = mocker.patch(
         'src.payment.stripe.service.'
-        'StripeService._update_subscription'
+        'StripeService._update_subscription',
     )
     create_invoice_mock = mocker.patch(
         'src.payment.stripe.service.'
-        'StripeService._create_invoice'
+        'StripeService._create_invoice',
     )
 
     # act
@@ -2072,16 +2073,16 @@ def test_get_subscription_checkout_link__not_trial__ok(mocker):
     mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_or_create_customer',
-        return_value=customer_mock
+        return_value=customer_mock,
     )
     mocker.patch(
         'src.payment.stripe.service.'
-        'StripeService._get_current_payment_method'
+        'StripeService._get_current_payment_method',
     )
     mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_current_subscription',
-        return_value=None
+        return_value=None,
     )
     # end mock init
 
@@ -2097,7 +2098,7 @@ def test_get_subscription_checkout_link__not_trial__ok(mocker):
         trial_days=None,
         stripe_id=sub_price_stripe_id,
         code=sub_price_code,
-        product=mocker.Mock(code=product_code)
+        product=mocker.Mock(code=product_code),
     )
     invoice_item_1 = mocker.Mock(quantity=1)
     invoice_item_1.price = mocker.Mock(stripe_id='price_item_1awd')
@@ -2113,13 +2114,13 @@ def test_get_subscription_checkout_link__not_trial__ok(mocker):
     get_success_url_with_token_mock = mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_success_url_with_token',
-        return_value=success_url_with_token
+        return_value=success_url_with_token,
     )
     checkout_link = 'http://stripe.com/some-link'
     get_checkout_session_url_mock = mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_checkout_session_url',
-        return_value=checkout_link
+        return_value=checkout_link,
     )
     service = StripeService(user=user)
 
@@ -2128,7 +2129,7 @@ def test_get_subscription_checkout_link__not_trial__ok(mocker):
         item=sub_item,
         success_url=success_url,
         cancel_url=cancel_url,
-        invoice_items=invoice_items
+        invoice_items=invoice_items,
     )
 
     # assert
@@ -2138,23 +2139,23 @@ def test_get_subscription_checkout_link__not_trial__ok(mocker):
         subscription_data=TokenSubscriptionData(
             billing_plan=product_code,
             max_users=sub_item_quantity,
-            trial_days=None
-        )
+            trial_days=None,
+        ),
     )
     get_checkout_session_url_mock.assert_called_once_with(
         line_items=[
             {
                 "price": sub_price_stripe_id,
-                "quantity": sub_item_quantity
+                "quantity": sub_item_quantity,
             },
             {
                 "price": invoice_item_1.price.stripe_id,
-                "quantity": invoice_item_1.quantity
+                "quantity": invoice_item_1.quantity,
             },
             {
                 "price": invoice_item_2.price.stripe_id,
-                "quantity": invoice_item_2.quantity
-            }
+                "quantity": invoice_item_2.quantity,
+            },
         ],
         success_url=success_url_with_token,
         cancel_url=cancel_url,
@@ -2163,7 +2164,7 @@ def test_get_subscription_checkout_link__not_trial__ok(mocker):
         subscription_data={
             'metadata': {'account_id': account.id},
             'description': 'Main',
-        }
+        },
     )
 
 
@@ -2175,16 +2176,16 @@ def test_get_subscription_checkout_link__with_trial__ok(mocker):
     mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_or_create_customer',
-        return_value=customer_mock
+        return_value=customer_mock,
     )
     mocker.patch(
         'src.payment.stripe.service.'
-        'StripeService._get_current_payment_method'
+        'StripeService._get_current_payment_method',
     )
     mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_current_subscription',
-        return_value=None
+        return_value=None,
     )
     # end mock init
 
@@ -2201,7 +2202,7 @@ def test_get_subscription_checkout_link__with_trial__ok(mocker):
         trial_days=sub_trial_days,
         stripe_id=sub_price_stripe_id,
         code=sub_price_code,
-        product=mocker.Mock(code=product_code)
+        product=mocker.Mock(code=product_code),
     )
     invoice_item_1 = mocker.Mock(quantity=1)
     invoice_item_1.price = mocker.Mock(stripe_id='price_item_1awd')
@@ -2217,13 +2218,13 @@ def test_get_subscription_checkout_link__with_trial__ok(mocker):
     get_success_url_with_token_mock = mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_success_url_with_token',
-        return_value=success_url_with_token
+        return_value=success_url_with_token,
     )
     checkout_link = 'http://stripe.com/some-link'
     get_checkout_session_url_mock = mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_checkout_session_url',
-        return_value=checkout_link
+        return_value=checkout_link,
     )
     service = StripeService(user=user)
 
@@ -2232,7 +2233,7 @@ def test_get_subscription_checkout_link__with_trial__ok(mocker):
         item=sub_item,
         success_url=success_url,
         cancel_url=cancel_url,
-        invoice_items=invoice_items
+        invoice_items=invoice_items,
     )
 
     # assert
@@ -2242,23 +2243,23 @@ def test_get_subscription_checkout_link__with_trial__ok(mocker):
         subscription_data=TokenSubscriptionData(
             billing_plan=product_code,
             max_users=sub_item_quantity,
-            trial_days=sub_trial_days
-        )
+            trial_days=sub_trial_days,
+        ),
     )
     get_checkout_session_url_mock.assert_called_once_with(
         line_items=[
             {
                 "price": sub_price_stripe_id,
-                "quantity": sub_item_quantity
+                "quantity": sub_item_quantity,
             },
             {
                 "price": invoice_item_1.price.stripe_id,
-                "quantity": invoice_item_1.quantity
+                "quantity": invoice_item_1.quantity,
             },
             {
                 "price": invoice_item_2.price.stripe_id,
-                "quantity": invoice_item_2.quantity
-            }
+                "quantity": invoice_item_2.quantity,
+            },
         ],
         success_url=success_url_with_token,
         cancel_url=cancel_url,
@@ -2268,7 +2269,7 @@ def test_get_subscription_checkout_link__with_trial__ok(mocker):
             "trial_period_days": sub_trial_days,
             'metadata': {'account_id': account.id},
             'description': 'Main',
-        }
+        },
     )
 
 
@@ -2280,16 +2281,16 @@ def test_get_subscription_checkout_link__trial_ended__not_start_trial(mocker):
     mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_or_create_customer',
-        return_value=customer_mock
+        return_value=customer_mock,
     )
     mocker.patch(
         'src.payment.stripe.service.'
-        'StripeService._get_current_payment_method'
+        'StripeService._get_current_payment_method',
     )
     mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_current_subscription',
-        return_value=None
+        return_value=None,
     )
     # end mock init
 
@@ -2306,7 +2307,7 @@ def test_get_subscription_checkout_link__trial_ended__not_start_trial(mocker):
         trial_days=sub_trial_days,
         stripe_id=sub_price_stripe_id,
         code=sub_price_code,
-        product=mocker.Mock(code=product_code)
+        product=mocker.Mock(code=product_code),
     )
     invoice_item_1 = mocker.Mock(quantity=1)
     invoice_item_1.price = mocker.Mock(stripe_id='price_item_1awd')
@@ -2322,13 +2323,13 @@ def test_get_subscription_checkout_link__trial_ended__not_start_trial(mocker):
     get_success_url_with_token_mock = mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_success_url_with_token',
-        return_value=success_url_with_token
+        return_value=success_url_with_token,
     )
     checkout_link = 'http://stripe.com/some-link'
     get_checkout_session_url_mock = mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_checkout_session_url',
-        return_value=checkout_link
+        return_value=checkout_link,
     )
     service = StripeService(user=user)
 
@@ -2337,7 +2338,7 @@ def test_get_subscription_checkout_link__trial_ended__not_start_trial(mocker):
         item=sub_item,
         success_url=success_url,
         cancel_url=cancel_url,
-        invoice_items=invoice_items
+        invoice_items=invoice_items,
     )
 
     # assert
@@ -2347,23 +2348,23 @@ def test_get_subscription_checkout_link__trial_ended__not_start_trial(mocker):
         subscription_data=TokenSubscriptionData(
             billing_plan=product_code,
             max_users=sub_item_quantity,
-            trial_days=None
-        )
+            trial_days=None,
+        ),
     )
     get_checkout_session_url_mock.assert_called_once_with(
         line_items=[
             {
                 "price": sub_price_stripe_id,
-                "quantity": sub_item_quantity
+                "quantity": sub_item_quantity,
             },
             {
                 "price": invoice_item_1.price.stripe_id,
-                "quantity": invoice_item_1.quantity
+                "quantity": invoice_item_1.quantity,
             },
             {
                 "price": invoice_item_2.price.stripe_id,
-                "quantity": invoice_item_2.quantity
-            }
+                "quantity": invoice_item_2.quantity,
+            },
         ],
         success_url=success_url_with_token,
         cancel_url=cancel_url,
@@ -2372,7 +2373,7 @@ def test_get_subscription_checkout_link__trial_ended__not_start_trial(mocker):
         subscription_data={
             'metadata': {'account_id': account.id},
             'description': 'Main',
-        }
+        },
     )
 
 
@@ -2384,16 +2385,16 @@ def test_get_subscription_checkout_link__tenant__ok(mocker):
     mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_or_create_customer',
-        return_value=customer_mock
+        return_value=customer_mock,
     )
     mocker.patch(
         'src.payment.stripe.service.'
-        'StripeService._get_current_payment_method'
+        'StripeService._get_current_payment_method',
     )
     mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_current_subscription',
-        return_value=None
+        return_value=None,
     )
     # end mock init
 
@@ -2403,11 +2404,11 @@ def test_get_subscription_checkout_link__tenant__ok(mocker):
     tenant = create_test_account(
         lease_level=LeaseLevel.TENANT,
         master_account=master_account,
-        tenant_name=tenant_name
+        tenant_name=tenant_name,
     )
     create_test_user(
         account=tenant,
-        email='tenant@owner.com'
+        email='tenant@owner.com',
     )
 
     product_code = 'my_premium'
@@ -2419,7 +2420,7 @@ def test_get_subscription_checkout_link__tenant__ok(mocker):
         trial_days=None,
         stripe_id=sub_price_stripe_id,
         code=sub_price_code,
-        product=mocker.Mock(code=product_code)
+        product=mocker.Mock(code=product_code),
     )
     cancel_url = 'http://pneumatic.com/some-cancel'
     success_url = 'http://pneumatic.com/some-success'
@@ -2428,17 +2429,17 @@ def test_get_subscription_checkout_link__tenant__ok(mocker):
     get_success_url_with_token_mock = mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_success_url_with_token',
-        return_value=success_url_with_token
+        return_value=success_url_with_token,
     )
     checkout_link = 'http://stripe.com/some-link'
     get_checkout_session_url_mock = mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_checkout_session_url',
-        return_value=checkout_link
+        return_value=checkout_link,
     )
     service = StripeService(
         user=user,
-        subscription_account=tenant
+        subscription_account=tenant,
     )
 
     # act
@@ -2455,15 +2456,15 @@ def test_get_subscription_checkout_link__tenant__ok(mocker):
         subscription_data=TokenSubscriptionData(
             billing_plan=product_code,
             max_users=sub_item_quantity,
-            trial_days=None
-        )
+            trial_days=None,
+        ),
     )
     get_checkout_session_url_mock.assert_called_once_with(
         line_items=[
             {
                 "price": sub_price_stripe_id,
-                "quantity": sub_item_quantity
-            }
+                "quantity": sub_item_quantity,
+            },
         ],
         success_url=success_url_with_token,
         cancel_url=cancel_url,
@@ -2472,7 +2473,7 @@ def test_get_subscription_checkout_link__tenant__ok(mocker):
         subscription_data={
             'metadata': {'account_id': tenant.id},
             'description': tenant_name,
-        }
+        },
     )
 
 
@@ -2484,16 +2485,16 @@ def test_get_payment_checkout_link__ok(mocker):
     mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_or_create_customer',
-        return_value=customer_mock
+        return_value=customer_mock,
     )
     mocker.patch(
         'src.payment.stripe.service.'
-        'StripeService._get_current_payment_method'
+        'StripeService._get_current_payment_method',
     )
     mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_current_subscription',
-        return_value=None
+        return_value=None,
     )
     # end mock init
 
@@ -2502,20 +2503,20 @@ def test_get_payment_checkout_link__ok(mocker):
 
     invoice_item_1 = mocker.Mock(
         quantity=1,
-        min_quantity=1
+        min_quantity=1,
     )
     invoice_item_1.price = mocker.Mock(
         stripe_id='price_item_1awd',
-        max_quantity=2
+        max_quantity=2,
     )
 
     invoice_item_2 = mocker.Mock(
         quantity=10,
-        min_quantity=5
+        min_quantity=5,
     )
     invoice_item_2.price = mocker.Mock(
         stripe_id='price_item_2zxc',
-        max_quantity=100
+        max_quantity=100,
     )
 
     invoice_items = [invoice_item_1, invoice_item_2]
@@ -2526,13 +2527,13 @@ def test_get_payment_checkout_link__ok(mocker):
     get_success_url_with_token_mock = mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_success_url_with_token',
-        return_value=success_url_with_token
+        return_value=success_url_with_token,
     )
     checkout_link = 'http://stripe.com/some-link'
     get_checkout_session_url_mock = mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_checkout_session_url',
-        return_value=checkout_link
+        return_value=checkout_link,
     )
     service = StripeService(user=user)
 
@@ -2540,7 +2541,7 @@ def test_get_payment_checkout_link__ok(mocker):
     result = service._get_payment_checkout_link(
         success_url=success_url,
         cancel_url=cancel_url,
-        invoice_items=invoice_items
+        invoice_items=invoice_items,
     )
 
     # assert
@@ -2554,8 +2555,8 @@ def test_get_payment_checkout_link__ok(mocker):
                 "adjustable_quantity": {
                     'enabled': True,
                     'maximum': invoice_item_1.price.max_quantity,
-                    'minimum': invoice_item_1.min_quantity
-                }
+                    'minimum': invoice_item_1.min_quantity,
+                },
             },
             {
                 "price": invoice_item_2.price.stripe_id,
@@ -2563,9 +2564,9 @@ def test_get_payment_checkout_link__ok(mocker):
                 "adjustable_quantity": {
                     'enabled': True,
                     'maximum': invoice_item_2.price.max_quantity,
-                    'minimum': invoice_item_2.min_quantity
-                }
-            }
+                    'minimum': invoice_item_2.min_quantity,
+                },
+            },
         ],
         success_url=success_url_with_token,
         cancel_url=cancel_url,
@@ -2582,16 +2583,16 @@ def test_get_payment_checkout_link__not_invoice_items__return_none(mocker):
     mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_or_create_customer',
-        return_value=customer_mock
+        return_value=customer_mock,
     )
     mocker.patch(
         'src.payment.stripe.service.'
-        'StripeService._get_current_payment_method'
+        'StripeService._get_current_payment_method',
     )
     mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_current_subscription',
-        return_value=None
+        return_value=None,
     )
     # end mock init
 
@@ -2604,11 +2605,11 @@ def test_get_payment_checkout_link__not_invoice_items__return_none(mocker):
 
     get_success_url_with_token_mock = mocker.patch(
         'src.payment.stripe.service.'
-        'StripeService._get_success_url_with_token'
+        'StripeService._get_success_url_with_token',
     )
     get_checkout_session_url_mock = mocker.patch(
         'src.payment.stripe.service.'
-        'StripeService._get_checkout_session_url'
+        'StripeService._get_checkout_session_url',
     )
     service = StripeService(user=user)
 
@@ -2616,7 +2617,7 @@ def test_get_payment_checkout_link__not_invoice_items__return_none(mocker):
     result = service._get_payment_checkout_link(
         success_url=success_url,
         cancel_url=cancel_url,
-        invoice_items=invoice_items
+        invoice_items=invoice_items,
     )
 
     # assert
@@ -2635,12 +2636,12 @@ def test_get_checkout_link__for_subscription__ok(mocker):
     )
     mocker.patch(
         'src.payment.stripe.service.'
-        'StripeService._get_current_payment_method'
+        'StripeService._get_current_payment_method',
     )
     mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_current_subscription',
-        return_value=None
+        return_value=None,
     )
     # end mock init
 
@@ -2655,23 +2656,23 @@ def test_get_checkout_link__for_subscription__ok(mocker):
     get_valid_subscription_item_mock = mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_valid_subscription_item',
-        return_value=subscription_item_mock
+        return_value=subscription_item_mock,
     )
     invoice_items_mock = mocker.Mock()
     get_valid_invoice_items_mock = mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_valid_invoice_items',
-        return_value=invoice_items_mock
+        return_value=invoice_items_mock,
     )
     checkout_link = 'http://stripe.com/some-checkout'
     get_subscription_checkout_link_mock = mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_subscription_checkout_link',
-        return_value=checkout_link
+        return_value=checkout_link,
     )
     get_payment_checkout_link_mock = mocker.patch(
         'src.payment.stripe.service.'
-        'StripeService._get_payment_checkout_link'
+        'StripeService._get_payment_checkout_link',
     )
     service = StripeService(user=user)
 
@@ -2705,12 +2706,12 @@ def test_get_checkout_link__for_invoice_items__ok(mocker):
     )
     mocker.patch(
         'src.payment.stripe.service.'
-        'StripeService._get_current_payment_method'
+        'StripeService._get_current_payment_method',
     )
     mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_current_subscription',
-        return_value=None
+        return_value=None,
     )
     # end mock init
 
@@ -2724,23 +2725,23 @@ def test_get_checkout_link__for_invoice_items__ok(mocker):
     get_valid_subscription_item_mock = mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_valid_subscription_item',
-        return_value=None
+        return_value=None,
     )
     invoice_items_mock = mocker.Mock()
     get_valid_invoice_items_mock = mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_valid_invoice_items',
-        return_value=invoice_items_mock
+        return_value=invoice_items_mock,
     )
     get_subscription_checkout_link_mock = mocker.patch(
         'src.payment.stripe.service.'
-        'StripeService._get_subscription_checkout_link'
+        'StripeService._get_subscription_checkout_link',
     )
     checkout_link = 'http://stripe.com/some-checkout'
     get_payment_checkout_link_mock = mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_payment_checkout_link',
-        return_value=checkout_link
+        return_value=checkout_link,
     )
     service = StripeService(user=user)
 
@@ -2773,12 +2774,12 @@ def test_get_checkout_link__not_valid_products__return_none(mocker):
     )
     mocker.patch(
         'src.payment.stripe.service.'
-        'StripeService._get_current_payment_method'
+        'StripeService._get_current_payment_method',
     )
     mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_current_subscription',
-        return_value=None
+        return_value=None,
     )
     # end mock init
 
@@ -2792,16 +2793,16 @@ def test_get_checkout_link__not_valid_products__return_none(mocker):
     get_valid_subscription_item_mock = mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_valid_subscription_item',
-        return_value=None
+        return_value=None,
     )
     get_valid_invoice_items_mock = mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_valid_invoice_items',
-        return_value=None
+        return_value=None,
     )
     get_subscription_checkout_link_mock = mocker.patch(
         'src.payment.stripe.service.'
-        'StripeService._get_subscription_checkout_link'
+        'StripeService._get_subscription_checkout_link',
     )
     get_payment_checkout_link_mock = mocker.patch(
         'src.payment.stripe.service.'
@@ -2834,22 +2835,22 @@ def test_get_valid_premium_subscription_item__ok(mocker):
     )
     mocker.patch(
         'src.payment.stripe.service.'
-        'StripeService._get_current_payment_method'
+        'StripeService._get_current_payment_method',
     )
     subscription_mock = mocker.Mock()
     mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_current_subscription',
-        return_value=subscription_mock
+        return_value=subscription_mock,
     )
     # end mock init
     account = create_test_account(
-        max_users=6
+        max_users=6,
     )
     user = create_test_user(account=account)
     price = create_test_recurring_price(
         min_quantity=5,
-        max_quantity=999999
+        max_quantity=999999,
     )
     service = StripeService(user=user)
     quantity = 7
@@ -2857,7 +2858,7 @@ def test_get_valid_premium_subscription_item__ok(mocker):
     # act
     result = service._get_valid_premium_subscription_item(
         price=price,
-        quantity=quantity
+        quantity=quantity,
     )
 
     # assert
@@ -2868,7 +2869,7 @@ def test_get_valid_premium_subscription_item__ok(mocker):
 
 
 def test_get_valid_premium_subscription_item__decrease_subscription__raise(
-    mocker
+    mocker,
 ):
 
     """ Decrease less than account.max_users """
@@ -2881,23 +2882,23 @@ def test_get_valid_premium_subscription_item__decrease_subscription__raise(
     )
     mocker.patch(
         'src.payment.stripe.service.'
-        'StripeService._get_current_payment_method'
+        'StripeService._get_current_payment_method',
     )
     subscription_mock = mocker.Mock()
     mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_current_subscription',
-        return_value=subscription_mock
+        return_value=subscription_mock,
     )
     # end mock init
     account = create_test_account(
         max_users=10,
-        plan=BillingPlanType.PREMIUM
+        plan=BillingPlanType.PREMIUM,
     )
     user = create_test_user(account=account)
     price = create_test_recurring_price(
         min_quantity=5,
-        max_quantity=99999
+        max_quantity=99999,
     )
     service = StripeService(user=user)
     quantity = 9
@@ -2906,7 +2907,7 @@ def test_get_valid_premium_subscription_item__decrease_subscription__raise(
     with pytest.raises(DecreaseSubscription) as ex:
         service._get_valid_premium_subscription_item(
             price=price,
-            quantity=quantity
+            quantity=quantity,
         )
 
     # assert
@@ -2914,7 +2915,7 @@ def test_get_valid_premium_subscription_item__decrease_subscription__raise(
 
 
 def test_get_valid_premium_subscription_item__min_quantity_reached__raise(
-    mocker
+    mocker,
 ):
 
     # arrange
@@ -2925,23 +2926,23 @@ def test_get_valid_premium_subscription_item__min_quantity_reached__raise(
     )
     mocker.patch(
         'src.payment.stripe.service.'
-        'StripeService._get_current_payment_method'
+        'StripeService._get_current_payment_method',
     )
     subscription_mock = mocker.Mock()
     mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_current_subscription',
-        return_value=subscription_mock
+        return_value=subscription_mock,
     )
     # end mock init
     account = create_test_account(
         max_users=1,
-        plan=BillingPlanType.PREMIUM
+        plan=BillingPlanType.PREMIUM,
     )
     user = create_test_user(account=account)
     price = create_test_recurring_price(
         min_quantity=3,
-        max_quantity=999999
+        max_quantity=999999,
     )
     service = StripeService(user=user)
     quantity = 2
@@ -2950,18 +2951,18 @@ def test_get_valid_premium_subscription_item__min_quantity_reached__raise(
     with pytest.raises(SubsMinQuantityReached) as ex:
         service._get_valid_premium_subscription_item(
             price=price,
-            quantity=quantity
+            quantity=quantity,
         )
 
     # assert
     assert ex.value.message == messages.MSG_BL_0012(
         price.min_quantity,
-        price.product.name
+        price.product.name,
     )
 
 
 def test_get_valid_premium_subscription_item__max_quantity_reached__raise(
-    mocker
+    mocker,
 ):
 
     # arrange
@@ -2972,20 +2973,20 @@ def test_get_valid_premium_subscription_item__max_quantity_reached__raise(
     )
     mocker.patch(
         'src.payment.stripe.service.'
-        'StripeService._get_current_payment_method'
+        'StripeService._get_current_payment_method',
     )
     subscription_mock = mocker.Mock()
     mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_current_subscription',
-        return_value=subscription_mock
+        return_value=subscription_mock,
     )
     # end mock init
     account = create_test_account(max_users=1)
     user = create_test_user(account=account)
     price = create_test_recurring_price(
         min_quantity=2,
-        max_quantity=5
+        max_quantity=5,
     )
     service = StripeService(user=user)
     quantity = 6
@@ -2994,18 +2995,18 @@ def test_get_valid_premium_subscription_item__max_quantity_reached__raise(
     with pytest.raises(SubsMaxQuantityReached) as ex:
         service._get_valid_premium_subscription_item(
             price=price,
-            quantity=quantity
+            quantity=quantity,
         )
 
     # assert
     assert ex.value.message == messages.MSG_BL_0011(
         price.max_quantity,
-        price.product.name
+        price.product.name,
     )
 
 
 def test_get_valid_premium_subscription_item__current_fractionalcoo__ok(
-    mocker
+    mocker,
 ):
 
     # arrange
@@ -3016,23 +3017,23 @@ def test_get_valid_premium_subscription_item__current_fractionalcoo__ok(
     )
     mocker.patch(
         'src.payment.stripe.service.'
-        'StripeService._get_current_payment_method'
+        'StripeService._get_current_payment_method',
     )
     subscription_mock = mocker.Mock()
     mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_current_subscription',
-        return_value=subscription_mock
+        return_value=subscription_mock,
     )
     # end mock init
     account = create_test_account(
         plan=BillingPlanType.FRACTIONALCOO,
-        max_users=99999
+        max_users=99999,
     )
     user = create_test_user(account=account)
     price = create_test_recurring_price(
         min_quantity=5,
-        max_quantity=999999
+        max_quantity=999999,
     )
     service = StripeService(user=user)
     quantity = 5
@@ -3040,7 +3041,7 @@ def test_get_valid_premium_subscription_item__current_fractionalcoo__ok(
     # act
     result = service._get_valid_premium_subscription_item(
         price=price,
-        quantity=quantity
+        quantity=quantity,
     )
 
     # assert
@@ -3060,22 +3061,22 @@ def test_get_valid_fractionalcoo_subscription_item__ok(mocker):
     )
     mocker.patch(
         'src.payment.stripe.service.'
-        'StripeService._get_current_payment_method'
+        'StripeService._get_current_payment_method',
     )
     subscription_mock = mocker.Mock()
     mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_current_subscription',
-        return_value=subscription_mock
+        return_value=subscription_mock,
     )
     # end mock init
     account = create_test_account(
-        max_users=5
+        max_users=5,
     )
     user = create_test_user(account=account)
     price = create_test_recurring_price(
         max_quantity=1,
-        min_quantity=0
+        min_quantity=0,
     )
     service = StripeService(user=user)
     quantity = 1
@@ -3083,7 +3084,7 @@ def test_get_valid_fractionalcoo_subscription_item__ok(mocker):
     # act
     result = service._get_valid_fractionalcoo_subscription_item(
         price=price,
-        quantity=quantity
+        quantity=quantity,
     )
 
     # assert
@@ -3103,13 +3104,13 @@ def test_get_valid_unlimited_subscription_item__ok(mocker):
     )
     mocker.patch(
         'src.payment.stripe.service.'
-        'StripeService._get_current_payment_method'
+        'StripeService._get_current_payment_method',
     )
     subscription_mock = mocker.Mock()
     mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_current_subscription',
-        return_value=subscription_mock
+        return_value=subscription_mock,
     )
     # end mock init
     account = create_test_account(plan=BillingPlanType.PREMIUM)
@@ -3117,7 +3118,7 @@ def test_get_valid_unlimited_subscription_item__ok(mocker):
     user = create_test_user(account=account)
     price = create_test_recurring_price(
         max_quantity=2,
-        min_quantity=0
+        min_quantity=0,
     )
     service = StripeService(user=user)
     quantity = 1
@@ -3125,7 +3126,7 @@ def test_get_valid_unlimited_subscription_item__ok(mocker):
     # act
     result = service._get_valid_unlimited_subscription_item(
         price=price,
-        quantity=quantity
+        quantity=quantity,
     )
 
     # assert
@@ -3136,7 +3137,7 @@ def test_get_valid_unlimited_subscription_item__ok(mocker):
 
 
 def test_get_valid_fractionalcoo_subscription_item__min_quantity_reached__r(
-    mocker
+    mocker,
 ):
 
     # arrange
@@ -3147,20 +3148,20 @@ def test_get_valid_fractionalcoo_subscription_item__min_quantity_reached__r(
     )
     mocker.patch(
         'src.payment.stripe.service.'
-        'StripeService._get_current_payment_method'
+        'StripeService._get_current_payment_method',
     )
     subscription_mock = mocker.Mock()
     mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_current_subscription',
-        return_value=subscription_mock
+        return_value=subscription_mock,
     )
     # end mock init
     account = create_test_account(max_users=1)
     user = create_test_user(account=account)
     price = create_test_recurring_price(
         min_quantity=0,
-        max_quantity=1
+        max_quantity=1,
     )
     service = StripeService(user=user)
     quantity = -1
@@ -3169,18 +3170,18 @@ def test_get_valid_fractionalcoo_subscription_item__min_quantity_reached__r(
     with pytest.raises(SubsMinQuantityReached) as ex:
         service._get_valid_fractionalcoo_subscription_item(
             price=price,
-            quantity=quantity
+            quantity=quantity,
         )
 
     # assert
     assert ex.value.message == messages.MSG_BL_0012(
         price.min_quantity,
-        price.product.name
+        price.product.name,
     )
 
 
 def test_get_valid_fractionalcoo_subscription_item__max_quantity_reached__r(
-    mocker
+    mocker,
 ):
 
     """ Decrease less than account.max_users """
@@ -3193,20 +3194,20 @@ def test_get_valid_fractionalcoo_subscription_item__max_quantity_reached__r(
     )
     mocker.patch(
         'src.payment.stripe.service.'
-        'StripeService._get_current_payment_method'
+        'StripeService._get_current_payment_method',
     )
     subscription_mock = mocker.Mock()
     mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_current_subscription',
-        return_value=subscription_mock
+        return_value=subscription_mock,
     )
     # end mock init
     account = create_test_account(max_users=1)
     user = create_test_user(account=account)
     price = create_test_recurring_price(
         min_quantity=0,
-        max_quantity=1
+        max_quantity=1,
     )
     service = StripeService(user=user)
     quantity = 2
@@ -3215,13 +3216,13 @@ def test_get_valid_fractionalcoo_subscription_item__max_quantity_reached__r(
     with pytest.raises(SubsMaxQuantityReached) as ex:
         service._get_valid_fractionalcoo_subscription_item(
             price=price,
-            quantity=quantity
+            quantity=quantity,
         )
 
     # assert
     assert ex.value.message == messages.MSG_BL_0011(
         price.max_quantity,
-        price.product.name
+        price.product.name,
     )
 
 
@@ -3235,18 +3236,18 @@ def test_get_valid_subscription_item__update_subs__ok(mocker):
     )
     mocker.patch(
         'src.payment.stripe.service.'
-        'StripeService._get_current_payment_method'
+        'StripeService._get_current_payment_method',
     )
     # old subscription data
     product = create_test_product(code=BillingPlanType.PREMIUM)
     price_code = 'pneumatic_monthly'
     price = create_test_recurring_price(
         code=price_code,
-        product=product
+        product=product,
     )
     old_sub_price_mock = mocker.Mock(
         currency='usd',
-        id=price.stripe_id
+        id=price.stripe_id,
     )
     old_item_mock = mocker.MagicMock(price=old_sub_price_mock)
     old_sub_data = {'items': mocker.Mock(data=[old_item_mock])}
@@ -3255,7 +3256,7 @@ def test_get_valid_subscription_item__update_subs__ok(mocker):
     mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_current_subscription',
-        return_value=old_subs_mock
+        return_value=old_subs_mock,
     )
     # end mock init
     account_max_users = 9
@@ -3266,31 +3267,31 @@ def test_get_valid_subscription_item__update_subs__ok(mocker):
         {
             'code': price_code,
             'quantity': product_quantity,
-        }
+        },
     ]
     subscription_item_mock = mocker.Mock()
     get_valid_premium_subscription_item_mock = mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_valid_premium_subscription_item',
-        return_value=subscription_item_mock
+        return_value=subscription_item_mock,
     )
     service = StripeService(user=user)
 
     # act
     result = service._get_valid_subscription_item(
-        products=products
+        products=products,
     )
 
     # assert
     assert result == subscription_item_mock
     get_valid_premium_subscription_item_mock.assert_called_once_with(
         price=price,
-        quantity=product_quantity
+        quantity=product_quantity,
     )
 
 
 def test_get_valid_subscription_item__create_archived_price__raise_exception(
-    mocker
+    mocker,
 ):
 
     # arrange
@@ -3301,12 +3302,12 @@ def test_get_valid_subscription_item__create_archived_price__raise_exception(
     )
     mocker.patch(
         'src.payment.stripe.service.'
-        'StripeService._get_current_payment_method'
+        'StripeService._get_current_payment_method',
     )
     mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_current_subscription',
-        return_value=None
+        return_value=None,
     )
     # end mock init
     account_max_users = 9
@@ -3318,26 +3319,26 @@ def test_get_valid_subscription_item__create_archived_price__raise_exception(
         {
             'code': price_code,
             'quantity': product_quantity,
-        }
+        },
     ]
     product = create_test_product(code=BillingPlanType.PREMIUM)
     create_test_recurring_price(
         code=price_code,
         product=product,
-        status=PriceStatus.ARCHIVED
+        status=PriceStatus.ARCHIVED,
     )
     subscription_item_mock = mocker.Mock()
     get_valid_premium_subscription_item_mock = mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_valid_premium_subscription_item',
-        return_value=subscription_item_mock
+        return_value=subscription_item_mock,
     )
     service = StripeService(user=user)
 
     # act
     with pytest.raises(PurchaseArchivedPrice) as ex:
         service._get_valid_subscription_item(
-            products=products
+            products=products,
         )
 
     # assert
@@ -3346,7 +3347,7 @@ def test_get_valid_subscription_item__create_archived_price__raise_exception(
 
 
 def test_get_valid_subscription_item__update_to_archived_price__raise_ex(
-    mocker
+    mocker,
 ):
 
     # arrange
@@ -3357,7 +3358,7 @@ def test_get_valid_subscription_item__update_to_archived_price__raise_ex(
     )
     mocker.patch(
         'src.payment.stripe.service.'
-        'StripeService._get_current_payment_method'
+        'StripeService._get_current_payment_method',
     )
     price_stripe_id = 'price_123'
     price_mock = mocker.Mock(id=price_stripe_id)
@@ -3368,14 +3369,14 @@ def test_get_valid_subscription_item__update_to_archived_price__raise_ex(
     mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_current_subscription',
-        return_value=subscription_mock
+        return_value=subscription_mock,
     )
     product = create_test_product(code=BillingPlanType.PREMIUM)
     create_test_recurring_price(
         stripe_id=price_stripe_id,
         status=PriceStatus.ACTIVE,
         currency='usd',
-        product=product
+        product=product,
     )
     # end mock init
     account_max_users = 9
@@ -3387,12 +3388,12 @@ def test_get_valid_subscription_item__update_to_archived_price__raise_ex(
         {
             'code': new_price_code,
             'quantity': product_quantity,
-        }
+        },
     ]
     create_test_recurring_price(
         code=new_price_code,
         status=PriceStatus.ARCHIVED,
-        product=product
+        product=product,
     )
     get_valid_premium_subscription_item_mock = mocker.patch(
         'src.payment.stripe.service.'
@@ -3403,7 +3404,7 @@ def test_get_valid_subscription_item__update_to_archived_price__raise_ex(
     # act
     with pytest.raises(PurchaseArchivedPrice) as ex:
         service._get_valid_subscription_item(
-            products=products
+            products=products,
         )
 
     # assert
@@ -3412,7 +3413,7 @@ def test_get_valid_subscription_item__update_to_archived_price__raise_ex(
 
 
 def test_get_valid_subscription_item__update_archived_price__ok(
-    mocker
+    mocker,
 ):
 
     # arrange
@@ -3423,7 +3424,7 @@ def test_get_valid_subscription_item__update_archived_price__ok(
     )
     mocker.patch(
         'src.payment.stripe.service.'
-        'StripeService._get_current_payment_method'
+        'StripeService._get_current_payment_method',
     )
     price_stripe_id = 'price_123'
     price_mock = mocker.Mock(id=price_stripe_id)
@@ -3434,12 +3435,12 @@ def test_get_valid_subscription_item__update_archived_price__ok(
     mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_current_subscription',
-        return_value=subscription_mock
+        return_value=subscription_mock,
     )
     current_price = create_test_recurring_price(
         stripe_id=price_stripe_id,
         status=PriceStatus.ARCHIVED,
-        currency='usd'
+        currency='usd',
     )
     # end mock init
     account_max_users = 9
@@ -3450,26 +3451,26 @@ def test_get_valid_subscription_item__update_archived_price__ok(
         {
             'code': current_price.code,
             'quantity': product_quantity,
-        }
+        },
     ]
     subscription_item_mock = mocker.Mock()
     get_valid_premium_subscription_item_mock = mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_valid_premium_subscription_item',
-        return_value=subscription_item_mock
+        return_value=subscription_item_mock,
     )
     service = StripeService(user=user)
 
     # act
     result = service._get_valid_subscription_item(
-        products=products
+        products=products,
     )
 
     # assert
     assert result == subscription_item_mock
     get_valid_premium_subscription_item_mock.assert_called_once_with(
         price=current_price,
-        quantity=product_quantity
+        quantity=product_quantity,
     )
 
 
@@ -3483,13 +3484,13 @@ def test_get_valid_subscription_item__price_not_exist__skip(mocker):
     )
     mocker.patch(
         'src.payment.stripe.service.'
-        'StripeService._get_current_payment_method'
+        'StripeService._get_current_payment_method',
     )
     subscription_mock = mocker.Mock()
     mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_current_subscription',
-        return_value=subscription_mock
+        return_value=subscription_mock,
     )
     # end mock init
     account = create_test_account()
@@ -3499,14 +3500,14 @@ def test_get_valid_subscription_item__price_not_exist__skip(mocker):
         {
             'code': price_code,
             'quantity': 10,
-        }
+        },
     ]
     create_test_invoice_price(code=price_code)
     service = StripeService(user=user)
 
     # act
     result = service._get_valid_subscription_item(
-        products=products
+        products=products,
     )
 
     # assert
@@ -3523,13 +3524,13 @@ def test_get_valid_subscription_item__price_inactive__skip(mocker):
     )
     mocker.patch(
         'src.payment.stripe.service.'
-        'StripeService._get_current_payment_method'
+        'StripeService._get_current_payment_method',
     )
     subscription_mock = mocker.Mock()
     mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_current_subscription',
-        return_value=subscription_mock
+        return_value=subscription_mock,
     )
     # end mock init
     account = create_test_account()
@@ -3539,17 +3540,17 @@ def test_get_valid_subscription_item__price_inactive__skip(mocker):
         {
             'code': price_code,
             'quantity': 10,
-        }
+        },
     ]
     create_test_recurring_price(
         code=price_code,
-        status=PriceStatus.INACTIVE
+        status=PriceStatus.INACTIVE,
     )
     service = StripeService(user=user)
 
     # act
     result = service._get_valid_subscription_item(
-        products=products
+        products=products,
     )
 
     # assert
@@ -3566,13 +3567,13 @@ def test_get_valid_subscription_item__multiple_subs__raise_exception(mocker):
     )
     mocker.patch(
         'src.payment.stripe.service.'
-        'StripeService._get_current_payment_method'
+        'StripeService._get_current_payment_method',
     )
     subscription_mock = mocker.Mock()
     mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_current_subscription',
-        return_value=subscription_mock
+        return_value=subscription_mock,
     )
     # end mock init
     account_max_users = 9
@@ -3588,7 +3589,7 @@ def test_get_valid_subscription_item__multiple_subs__raise_exception(mocker):
         {
             'code': price_code_2,
             'quantity': 12,
-        }
+        },
     ]
     create_test_recurring_price(code=price_code_1)
     product = create_test_product(
@@ -3598,14 +3599,14 @@ def test_get_valid_subscription_item__multiple_subs__raise_exception(mocker):
     create_test_recurring_price(
         code=price_code_2,
         stripe_id='price_123',
-        product=product
+        product=product,
     )
     service = StripeService(user=user)
 
     # act
     with pytest.raises(MultipleSubscriptionsNotAllowed) as ex:
         service._get_valid_subscription_item(
-            products=products
+            products=products,
         )
 
     # assert
@@ -3613,7 +3614,7 @@ def test_get_valid_subscription_item__multiple_subs__raise_exception(mocker):
 
 
 def test_get_valid_subscription_item__change_currency__raise_exception(
-    mocker
+    mocker,
 ):
 
     # arrange
@@ -3624,7 +3625,7 @@ def test_get_valid_subscription_item__change_currency__raise_exception(
     )
     mocker.patch(
         'src.payment.stripe.service.'
-        'StripeService._get_current_payment_method'
+        'StripeService._get_current_payment_method',
     )
     # old subscription data
     product = create_test_product()
@@ -3632,11 +3633,11 @@ def test_get_valid_subscription_item__change_currency__raise_exception(
     create_test_recurring_price(
         code='some_code',
         product=product,
-        stripe_id=current_price_stripe_id
+        stripe_id=current_price_stripe_id,
     )
     old_sub_price_mock = mocker.Mock(
         id=current_price_stripe_id,
-        currency='usd'
+        currency='usd',
     )
     old_item_mock = mocker.MagicMock(price=old_sub_price_mock)
     old_sub_data = {'items': mocker.Mock(data=[old_item_mock])}
@@ -3645,7 +3646,7 @@ def test_get_valid_subscription_item__change_currency__raise_exception(
     mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_current_subscription',
-        return_value=old_subs_mock
+        return_value=old_subs_mock,
     )
 
     # end mock init
@@ -3657,20 +3658,20 @@ def test_get_valid_subscription_item__change_currency__raise_exception(
         {
             'code': price_code,
             'quantity': product_quantity,
-        }
+        },
     ]
     create_test_recurring_price(
         code=price_code,
         max_quantity=2,
         currency='eur',
-        product=product
+        product=product,
     )
     service = StripeService(user=user)
 
     # act
     with pytest.raises(ChangeCurrencyDisallowed) as ex:
         service._get_valid_subscription_item(
-            products=products
+            products=products,
         )
 
     # assert
@@ -3687,18 +3688,18 @@ def test_get_valid_subscription_item__undefined_plan__raise(mocker):
     )
     mocker.patch(
         'src.payment.stripe.service.'
-        'StripeService._get_current_payment_method'
+        'StripeService._get_current_payment_method',
     )
     # old subscription data
     price_code = 'some_price'
     product = create_test_product(code='undefined')
     current_price = create_test_recurring_price(
         code=price_code,
-        product=product
+        product=product,
     )
     old_sub_price_mock = mocker.Mock(
         id=current_price.stripe_id,
-        currency='usd'
+        currency='usd',
     )
     old_item_mock = mocker.MagicMock(price=old_sub_price_mock)
     old_sub_data = {'items': mocker.Mock(data=[old_item_mock])}
@@ -3707,7 +3708,7 @@ def test_get_valid_subscription_item__undefined_plan__raise(mocker):
     mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_current_subscription',
-        return_value=old_subs_mock
+        return_value=old_subs_mock,
     )
     # end mock init
     account_max_users = 9
@@ -3718,14 +3719,14 @@ def test_get_valid_subscription_item__undefined_plan__raise(mocker):
         {
             'code': price_code,
             'quantity': product_quantity,
-        }
+        },
     ]
     service = StripeService(user=user)
 
     # act
     with pytest.raises(UnsupportedPlan) as ex:
         service._get_valid_subscription_item(
-            products=products
+            products=products,
         )
 
     # assert
@@ -3742,7 +3743,7 @@ def test_get_valid_invoice_items__ok(mocker):
     )
     mocker.patch(
         'src.payment.stripe.service.'
-        'StripeService._get_current_payment_method'
+        'StripeService._get_current_payment_method',
     )
     # old subscription data
     old_sub_price_mock = mocker.Mock(currency='usd')
@@ -3753,7 +3754,7 @@ def test_get_valid_invoice_items__ok(mocker):
     mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_current_subscription',
-        return_value=old_subs_mock
+        return_value=old_subs_mock,
     )
     # end mock init
     user = create_test_user()
@@ -3763,7 +3764,7 @@ def test_get_valid_invoice_items__ok(mocker):
         {
             'code': price_code,
             'quantity': product_quantity,
-        }
+        },
     ]
     price = create_test_invoice_price(
         code=price_code,
@@ -3774,7 +3775,7 @@ def test_get_valid_invoice_items__ok(mocker):
 
     # act
     result = service._get_valid_invoice_items(
-        products=products
+        products=products,
     )
 
     # assert
@@ -3795,7 +3796,7 @@ def test_get_valid_invoice_items__product_not_exist__skip(mocker):
     )
     mocker.patch(
         'src.payment.stripe.service.'
-        'StripeService._get_current_payment_method'
+        'StripeService._get_current_payment_method',
     )
     # old subscription data
     old_sub_price_mock = mocker.Mock(currency='usd')
@@ -3806,7 +3807,7 @@ def test_get_valid_invoice_items__product_not_exist__skip(mocker):
     mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_current_subscription',
-        return_value=old_subs_mock
+        return_value=old_subs_mock,
     )
     # end mock init
     user = create_test_user()
@@ -3816,14 +3817,14 @@ def test_get_valid_invoice_items__product_not_exist__skip(mocker):
         {
             'code': price_code,
             'quantity': product_quantity,
-        }
+        },
     ]
     create_test_recurring_price(code=price_code)
     service = StripeService(user=user)
 
     # act
     result = service._get_valid_invoice_items(
-        products=products
+        products=products,
     )
 
     # assert
@@ -3840,7 +3841,7 @@ def test_get_valid_invoice_items__price_inactive__skip(mocker):
     )
     mocker.patch(
         'src.payment.stripe.service.'
-        'StripeService._get_current_payment_method'
+        'StripeService._get_current_payment_method',
     )
     # old subscription data
     old_sub_price_mock = mocker.Mock(currency='usd')
@@ -3851,7 +3852,7 @@ def test_get_valid_invoice_items__price_inactive__skip(mocker):
     mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_current_subscription',
-        return_value=old_subs_mock
+        return_value=old_subs_mock,
     )
     # end mock init
     user = create_test_user()
@@ -3861,17 +3862,17 @@ def test_get_valid_invoice_items__price_inactive__skip(mocker):
         {
             'code': price_code,
             'quantity': product_quantity,
-        }
+        },
     ]
     create_test_invoice_price(
         code=price_code,
-        status=PriceStatus.INACTIVE
+        status=PriceStatus.INACTIVE,
     )
     service = StripeService(user=user)
 
     # act
     result = service._get_valid_invoice_items(
-        products=products
+        products=products,
     )
 
     # assert
@@ -3879,7 +3880,7 @@ def test_get_valid_invoice_items__price_inactive__skip(mocker):
 
 
 def test_get_valid_invoice_items__max_quantity_reached__raise_exception(
-    mocker
+    mocker,
 ):
 
     # arrange
@@ -3890,7 +3891,7 @@ def test_get_valid_invoice_items__max_quantity_reached__raise_exception(
     )
     mocker.patch(
         'src.payment.stripe.service.'
-        'StripeService._get_current_payment_method'
+        'StripeService._get_current_payment_method',
     )
     # old subscription data
     old_sub_price_mock = mocker.Mock(currency='usd')
@@ -3901,7 +3902,7 @@ def test_get_valid_invoice_items__max_quantity_reached__raise_exception(
     mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_current_subscription',
-        return_value=old_subs_mock
+        return_value=old_subs_mock,
     )
     # end mock init
     user = create_test_user()
@@ -3911,7 +3912,7 @@ def test_get_valid_invoice_items__max_quantity_reached__raise_exception(
         {
             'code': price_code,
             'quantity': product_quantity,
-        }
+        },
     ]
     price = create_test_invoice_price(
         code=price_code,
@@ -3923,18 +3924,18 @@ def test_get_valid_invoice_items__max_quantity_reached__raise_exception(
     # act
     with pytest.raises(MaxQuantityReached) as ex:
         service._get_valid_invoice_items(
-            products=products
+            products=products,
         )
 
     # assert
     assert ex.value.message == messages.MSG_BL_0013(
         price.max_quantity,
-        price.product.name
+        price.product.name,
     )
 
 
 def test_get_valid_invoice_items__min_quantity_reached__raise_exception(
-    mocker
+    mocker,
 ):
 
     # arrange
@@ -3945,7 +3946,7 @@ def test_get_valid_invoice_items__min_quantity_reached__raise_exception(
     )
     mocker.patch(
         'src.payment.stripe.service.'
-        'StripeService._get_current_payment_method'
+        'StripeService._get_current_payment_method',
     )
     # old subscription data
     old_sub_price_mock = mocker.Mock(currency='usd')
@@ -3956,7 +3957,7 @@ def test_get_valid_invoice_items__min_quantity_reached__raise_exception(
     mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_current_subscription',
-        return_value=old_subs_mock
+        return_value=old_subs_mock,
     )
     # end mock init
     user = create_test_user()
@@ -3966,25 +3967,25 @@ def test_get_valid_invoice_items__min_quantity_reached__raise_exception(
         {
             'code': price_code,
             'quantity': product_quantity,
-        }
+        },
     ]
     price = create_test_invoice_price(
         code=price_code,
         min_quantity=3,
-        max_quantity=10
+        max_quantity=10,
     )
     service = StripeService(user=user)
 
     # act
     with pytest.raises(MinQuantityReached) as ex:
         service._get_valid_invoice_items(
-            products=products
+            products=products,
         )
 
     # assert
     assert ex.value.message == messages.MSG_BL_0014(
         price.min_quantity,
-        price.product.name
+        price.product.name,
     )
 
 
@@ -3996,16 +3997,16 @@ def test_get_customer_portal_link__ok(mocker):
     mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_or_create_customer',
-        return_value=customer_mock
+        return_value=customer_mock,
     )
     mocker.patch(
         'src.payment.stripe.service.'
-        'StripeService._get_current_payment_method'
+        'StripeService._get_current_payment_method',
     )
     mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_current_subscription',
-        return_value=None
+        return_value=None,
     )
     # end mock init
 
@@ -4018,7 +4019,7 @@ def test_get_customer_portal_link__ok(mocker):
     get_valid_subscription_item_mock = mocker.patch(
         'src.payment.stripe.service.'
         'stripe.billing_portal.session.Session.create',
-        return_value=session_mock
+        return_value=session_mock,
     )
     service = StripeService(user=user)
 
@@ -4044,15 +4045,15 @@ def test_update_customer__current__ok(mocker):
     mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_or_create_customer',
-        return_value=customer_mock
+        return_value=customer_mock,
     )
     mocker.patch(
         'src.payment.stripe.service.'
-        'StripeService._get_current_payment_method'
+        'StripeService._get_current_payment_method',
     )
     mocker.patch(
         'src.payment.stripe.service.'
-        'StripeService._get_current_subscription'
+        'StripeService._get_current_subscription',
     )
     # end mock init
     new_acc_name = 'new name'
@@ -4062,11 +4063,11 @@ def test_update_customer__current__ok(mocker):
         account=account,
         phone=new_phone,
         first_name='Lisa',
-        last_name='Witson'
+        last_name='Witson',
     )
     customer_modify_mock = mocker.patch(
         'src.payment.stripe.service.'
-        'stripe.Customer.modify'
+        'stripe.Customer.modify',
     )
     service = StripeService(user=user)
 
@@ -4078,7 +4079,7 @@ def test_update_customer__current__ok(mocker):
         id=cus_id,
         name=new_acc_name,
         phone=new_phone,
-        description=f'{user.first_name} {user.last_name}'
+        description=f'{user.first_name} {user.last_name}',
     )
 
 
@@ -4089,15 +4090,15 @@ def test_update_customer__specified__ok(mocker):
     mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_or_create_customer',
-        return_value=None
+        return_value=None,
     )
     mocker.patch(
         'src.payment.stripe.service.'
-        'StripeService._get_current_payment_method'
+        'StripeService._get_current_payment_method',
     )
     mocker.patch(
         'src.payment.stripe.service.'
-        'StripeService._get_current_subscription'
+        'StripeService._get_current_subscription',
     )
     # end mock init
     new_acc_name = 'new name'
@@ -4107,16 +4108,16 @@ def test_update_customer__specified__ok(mocker):
         account=account,
         phone=new_phone,
         first_name='Lisa',
-        last_name='Witson'
+        last_name='Witson',
     )
     customer_modify_mock = mocker.patch(
         'src.payment.stripe.service.'
-        'stripe.Customer.modify'
+        'stripe.Customer.modify',
     )
     service = StripeService(user=user)
     cus_id = 'cus_123'
     customer_mock = mocker.Mock(
-        id=cus_id
+        id=cus_id,
     )
     # act
     service.update_customer(customer_mock)
@@ -4126,7 +4127,7 @@ def test_update_customer__specified__ok(mocker):
         id=cus_id,
         name=new_acc_name,
         phone=new_phone,
-        description=f'{user.first_name} {user.last_name}'
+        description=f'{user.first_name} {user.last_name}',
     )
 
 
@@ -4142,13 +4143,13 @@ def test_create_purchase__off_session__ok(mocker):
     mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_current_payment_method',
-        return_value=payment_method_mock
+        return_value=payment_method_mock,
     )
     sub_mock = mocker.Mock()
     mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_current_subscription',
-        return_value=sub_mock
+        return_value=sub_mock,
     )
     # end mock init
     user = create_test_user()
@@ -4157,7 +4158,7 @@ def test_create_purchase__off_session__ok(mocker):
     success_url = 'http://pneumatic.com/some-success'
     off_session_purchase_mock = mocker.patch(
         'src.payment.stripe.service.'
-        'StripeService._off_session_purchase'
+        'StripeService._off_session_purchase',
     )
 
     service = StripeService(user=user)
@@ -4166,13 +4167,13 @@ def test_create_purchase__off_session__ok(mocker):
     result = service.create_purchase(
         products=products_mock,
         success_url=success_url,
-        cancel_url=cancel_url
+        cancel_url=cancel_url,
     )
 
     # assert
     assert result is None
     off_session_purchase_mock.assert_called_once_with(
-        products=products_mock
+        products=products_mock,
     )
 
 
@@ -4188,12 +4189,12 @@ def test_create_purchase__off_session_exception__get_checkout_link(mocker):
     mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_current_payment_method',
-        return_value=payment_method_mock
+        return_value=payment_method_mock,
     )
     mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_current_subscription',
-        return_value=None
+        return_value=None,
     )
     # end mock init
     user = create_test_user()
@@ -4203,17 +4204,17 @@ def test_create_purchase__off_session_exception__get_checkout_link(mocker):
     off_session_purchase_mock = mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._off_session_purchase',
-        side_effect=stripe.error.StripeError('some_message')
+        side_effect=stripe.error.StripeError('some_message'),
     )
     link = 'some link'
     get_checkout_link_mock = mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_checkout_link',
-        return_value=link
+        return_value=link,
     )
     log_stripe_error_mock = mocker.patch(
         'src.payment.stripe.service.'
-        'StripeService._log_stripe_error'
+        'StripeService._log_stripe_error',
     )
 
     service = StripeService(user=user)
@@ -4222,7 +4223,7 @@ def test_create_purchase__off_session_exception__get_checkout_link(mocker):
     result = service.create_purchase(
         products=products_mock,
         success_url=success_url,
-        cancel_url=cancel_url
+        cancel_url=cancel_url,
     )
 
     # assert
@@ -4248,13 +4249,13 @@ def test_create_purchase__off_session_card_error__raise_exception(mocker):
     mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_current_payment_method',
-        return_value=payment_method_mock
+        return_value=payment_method_mock,
     )
     subs_mock = mocker.Mock()
     mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_current_subscription',
-        return_value=subs_mock
+        return_value=subs_mock,
     )
     # end mock init
     user = create_test_user()
@@ -4267,18 +4268,18 @@ def test_create_purchase__off_session_card_error__raise_exception(mocker):
         side_effect=stripe.error.CardError(
             message='some_message',
             param='some body',
-            code=400
-        )
+            code=400,
+        ),
     )
     link = 'some link'
     get_checkout_link_mock = mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_checkout_link',
-        return_value=link
+        return_value=link,
     )
     log_stripe_error_mock = mocker.patch(
         'src.payment.stripe.service.'
-        'StripeService._log_stripe_error'
+        'StripeService._log_stripe_error',
     )
 
     service = StripeService(user=user)
@@ -4288,7 +4289,7 @@ def test_create_purchase__off_session_card_error__raise_exception(mocker):
         service.create_purchase(
             products=products_mock,
             success_url=success_url,
-            cancel_url=cancel_url
+            cancel_url=cancel_url,
         )
 
     # assert
@@ -4310,13 +4311,13 @@ def test_create_purchase__off_session_payment_error__raise_exception(mocker):
     mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_current_payment_method',
-        return_value=payment_method_mock
+        return_value=payment_method_mock,
     )
     subs_mock = mocker.Mock()
     mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_current_subscription',
-        return_value=subs_mock
+        return_value=subs_mock,
     )
     # end mock init
     user = create_test_user()
@@ -4326,17 +4327,17 @@ def test_create_purchase__off_session_payment_error__raise_exception(mocker):
     off_session_purchase_mock = mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._off_session_purchase',
-        side_effect=stripe.error.StripeError('some_message')
+        side_effect=stripe.error.StripeError('some_message'),
     )
     link = 'some link'
     get_checkout_link_mock = mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_checkout_link',
-        return_value=link
+        return_value=link,
     )
     log_stripe_error_mock = mocker.patch(
         'src.payment.stripe.service.'
-        'StripeService._log_stripe_error'
+        'StripeService._log_stripe_error',
     )
 
     service = StripeService(user=user)
@@ -4346,7 +4347,7 @@ def test_create_purchase__off_session_payment_error__raise_exception(mocker):
         service.create_purchase(
             products=products_mock,
             success_url=success_url,
-            cancel_url=cancel_url
+            cancel_url=cancel_url,
         )
 
     # assert
@@ -4367,11 +4368,11 @@ def test_create_purchase__not_card__return_checkout_link(mocker):
     mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_current_payment_method',
-        return_value=None
+        return_value=None,
     )
     mocker.patch(
         'src.payment.stripe.service.'
-        'StripeService._get_current_subscription'
+        'StripeService._get_current_subscription',
     )
     # end mock init
     user = create_test_user()
@@ -4380,13 +4381,13 @@ def test_create_purchase__not_card__return_checkout_link(mocker):
     success_url = 'http://pneumatic.com/some-success'
     off_session_purchase_mock = mocker.patch(
         'src.payment.stripe.service.'
-        'StripeService._off_session_purchase'
+        'StripeService._off_session_purchase',
     )
     link = 'some link'
     get_checkout_link_mock = mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_checkout_link',
-        return_value=link
+        return_value=link,
     )
     service = StripeService(user=user)
 
@@ -4394,7 +4395,7 @@ def test_create_purchase__not_card__return_checkout_link(mocker):
     result = service.create_purchase(
         products=products_mock,
         success_url=success_url,
-        cancel_url=cancel_url
+        cancel_url=cancel_url,
     )
 
     # assert
@@ -4403,7 +4404,7 @@ def test_create_purchase__not_card__return_checkout_link(mocker):
     get_checkout_link_mock.assert_called_once_with(
         products=products_mock,
         success_url=success_url,
-        cancel_url=cancel_url
+        cancel_url=cancel_url,
     )
 
 
@@ -4415,16 +4416,16 @@ def test_get_payment_method_checkout_link__ok(mocker):
     mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_or_create_customer',
-        return_value=customer_mock
+        return_value=customer_mock,
     )
     mocker.patch(
         'src.payment.stripe.service.'
-        'StripeService._get_current_payment_method'
+        'StripeService._get_current_payment_method',
     )
     mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_current_subscription',
-        return_value=None
+        return_value=None,
     )
     # end mock init
 
@@ -4437,13 +4438,13 @@ def test_get_payment_method_checkout_link__ok(mocker):
     get_success_url_with_token_mock = mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_success_url_with_token',
-        return_value=success_url_with_token
+        return_value=success_url_with_token,
     )
     card_setup_url = 'https://stripe.com/my-portal'
     get_checkout_session_url_mock = mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_checkout_session_url',
-        return_value=card_setup_url
+        return_value=card_setup_url,
     )
     service = StripeService(user=user)
 
@@ -4478,7 +4479,7 @@ def test_confirm__ok(mocker):
     )
     mocker.patch(
         'src.payment.stripe.service.'
-        'StripeService._get_current_subscription'
+        'StripeService._get_current_subscription',
     )
     # end mock init
 
@@ -4488,11 +4489,11 @@ def test_confirm__ok(mocker):
     account_service_init_mock = mocker.patch.object(
         AccountService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     account_service_update_mock = mocker.patch(
         'src.payment.stripe.service.AccountService.'
-        'partial_update'
+        'partial_update',
     )
 
     service = StripeService(user=user)
@@ -4505,7 +4506,7 @@ def test_confirm__ok(mocker):
         instance=account,
         user=user,
         is_superuser=False,
-        auth_type=AuthTokenType.USER
+        auth_type=AuthTokenType.USER,
     )
     account_service_update_mock.assert_called_once_with(
         force_save=True,
@@ -4526,7 +4527,7 @@ def test_confirm__activate_subscription__from_freemium__ok(mocker):
     )
     mocker.patch(
         'src.payment.stripe.service.'
-        'StripeService._get_current_subscription'
+        'StripeService._get_current_subscription',
     )
     # end mock init
 
@@ -4540,24 +4541,24 @@ def test_confirm__activate_subscription__from_freemium__ok(mocker):
     mocker.patch(
         'src.payment.stripe.service.'
         'timezone.now',
-        return_value=now_datetime
+        return_value=now_datetime,
     )
     quantity = 11
     account_service_init_mock = mocker.patch.object(
         AccountService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     account_service_update_mock = mocker.patch(
         'src.payment.stripe.service.AccountService.'
-        'partial_update'
+        'partial_update',
     )
     trial_days = 7
     product_code = 'some premium'
     subscription_data = TokenSubscriptionData(
         billing_plan=product_code,
         max_users=quantity,
-        trial_days=trial_days
+        trial_days=trial_days,
     )
 
     is_superuser = True
@@ -4565,7 +4566,7 @@ def test_confirm__activate_subscription__from_freemium__ok(mocker):
     service = StripeService(
         user=user,
         is_superuser=is_superuser,
-        auth_type=auth_type
+        auth_type=auth_type,
     )
 
     # act
@@ -4576,7 +4577,7 @@ def test_confirm__activate_subscription__from_freemium__ok(mocker):
         instance=account,
         user=user,
         is_superuser=is_superuser,
-        auth_type=auth_type
+        auth_type=auth_type,
     )
     account_service_update_mock.assert_called_once_with(
         max_users=quantity,
@@ -4603,7 +4604,7 @@ def test_confirm__activate_subscription__from_premium__ok(mocker):
     )
     mocker.patch(
         'src.payment.stripe.service.'
-        'StripeService._get_current_subscription'
+        'StripeService._get_current_subscription',
     )
     # end mock init
 
@@ -4617,24 +4618,24 @@ def test_confirm__activate_subscription__from_premium__ok(mocker):
     mocker.patch(
         'src.payment.stripe.service.'
         'timezone.now',
-        return_value=now_datetime
+        return_value=now_datetime,
     )
     quantity = 11
     account_service_init_mock = mocker.patch.object(
         AccountService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     account_service_update_mock = mocker.patch(
         'src.payment.stripe.service.AccountService.'
-        'partial_update'
+        'partial_update',
     )
     trial_days = 7
     product_code = 'some premium'
     subscription_data = TokenSubscriptionData(
         billing_plan=product_code,
         max_users=quantity,
-        trial_days=trial_days
+        trial_days=trial_days,
     )
 
     is_superuser = True
@@ -4642,7 +4643,7 @@ def test_confirm__activate_subscription__from_premium__ok(mocker):
     service = StripeService(
         user=user,
         is_superuser=is_superuser,
-        auth_type=auth_type
+        auth_type=auth_type,
     )
 
     # act
@@ -4653,7 +4654,7 @@ def test_confirm__activate_subscription__from_premium__ok(mocker):
         instance=account,
         user=user,
         is_superuser=is_superuser,
-        auth_type=auth_type
+        auth_type=auth_type,
     )
     account_service_update_mock.assert_called_once_with(
         max_users=quantity,
@@ -4680,7 +4681,7 @@ def test_confirm__subscription_already_activated__skip(mocker):
     )
     mocker.patch(
         'src.payment.stripe.service.'
-        'StripeService._get_current_subscription'
+        'StripeService._get_current_subscription',
     )
     # end mock init
 
@@ -4693,16 +4694,16 @@ def test_confirm__subscription_already_activated__skip(mocker):
     account_service_init_mock = mocker.patch.object(
         AccountService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     account_service_update_mock = mocker.patch(
         'src.payment.stripe.service.AccountService.'
-        'partial_update'
+        'partial_update',
     )
     subscription_data = TokenSubscriptionData(
         billing_plan='some premium',
         max_users=10,
-        trial_days=7
+        trial_days=7,
     )
     service = StripeService(user=user)
 
@@ -4714,7 +4715,7 @@ def test_confirm__subscription_already_activated__skip(mocker):
         instance=account,
         user=user,
         is_superuser=False,
-        auth_type=AuthTokenType.USER
+        auth_type=AuthTokenType.USER,
     )
     account_service_update_mock.assert_called_once_with(
         force_save=True,
@@ -4738,7 +4739,7 @@ def test_increase_subscription__ok(mocker):
     old_sub_price_mock = mocker.Mock(id=old_price_id)
     old_item_mock = mocker.MagicMock(
         id=old_price_id,
-        price=old_sub_price_mock
+        price=old_sub_price_mock,
     )
     old_sub_data = {'items': mocker.Mock(data=[old_item_mock])}
     sub_id = 'sub_123AD'
@@ -4747,14 +4748,14 @@ def test_increase_subscription__ok(mocker):
     mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_current_subscription',
-        return_value=old_subs_mock
+        return_value=old_subs_mock,
     )
     # end mock init
     old_plan = BillingPlanType.PREMIUM
     new_plan_expiration = timezone.now() + timedelta(days=30)
     account = create_test_account(
         plan=old_plan,
-        plan_expiration=new_plan_expiration
+        plan_expiration=new_plan_expiration,
     )
     user = create_test_user(account=account)
     new_quantity = 15
@@ -4763,17 +4764,17 @@ def test_increase_subscription__ok(mocker):
     stripe_subscription_modify_mock = mocker.patch(
         'src.payment.stripe.service.'
         'stripe.Subscription.modify',
-        return_value=new_subscription
+        return_value=new_subscription,
     )
     subscription_details_mock = mocker.Mock()
     get_subscription_details_mock = mocker.patch(
         'src.payment.stripe.service.'
         'StripeService.get_subscription_details',
-        return_value=subscription_details_mock
+        return_value=subscription_details_mock,
     )
     account_subs_service_update = mocker.patch(
         'src.payment.stripe.service.'
-        'AccountSubscriptionService.update'
+        'AccountSubscriptionService.update',
     )
     service = StripeService(user=user)
 
@@ -4787,11 +4788,11 @@ def test_increase_subscription__ok(mocker):
             {
                 "id": old_item_mock.id,
                 "quantity": new_quantity,
-            }
+            },
         ],
         trial_end='now',
         metadata={'account_id': account.id},
-        description='Main'
+        description='Main',
     )
     get_subscription_details_mock.assert_called_once_with(new_subscription)
     account_subs_service_update.assert_called_once_with(
@@ -4816,7 +4817,7 @@ def test_increase_subscription__tenant__ok(mocker):
     old_sub_price_mock = mocker.Mock(id=old_price_id)
     old_item_mock = mocker.MagicMock(
         id=old_price_id,
-        price=old_sub_price_mock
+        price=old_sub_price_mock,
     )
     old_sub_data = {'items': mocker.Mock(data=[old_item_mock])}
     sub_id = 'sub_123AD'
@@ -4825,12 +4826,12 @@ def test_increase_subscription__tenant__ok(mocker):
     mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_current_subscription',
-        return_value=old_subs_mock
+        return_value=old_subs_mock,
     )
     # end mock init
     master_account = create_test_account(
         trial_ended=False,
-        lease_level=LeaseLevel.STANDARD
+        lease_level=LeaseLevel.STANDARD,
     )
     user = create_test_user(account=master_account)
     tenant_name = 'some teant name'
@@ -4838,7 +4839,7 @@ def test_increase_subscription__tenant__ok(mocker):
         lease_level=LeaseLevel.TENANT,
         master_account=master_account,
         name='tenant',
-        tenant_name=tenant_name
+        tenant_name=tenant_name,
     )
 
     new_quantity = 2
@@ -4847,21 +4848,21 @@ def test_increase_subscription__tenant__ok(mocker):
     stripe_subscription_modify_mock = mocker.patch(
         'src.payment.stripe.service.'
         'stripe.Subscription.modify',
-        return_value=new_subscription
+        return_value=new_subscription,
     )
     subscription_details_mock = mocker.Mock()
     get_subscription_details_mock = mocker.patch(
         'src.payment.stripe.service.'
         'StripeService.get_subscription_details',
-        return_value=subscription_details_mock
+        return_value=subscription_details_mock,
     )
     account_subs_service_update = mocker.patch(
         'src.payment.stripe.service.'
-        'AccountSubscriptionService.update'
+        'AccountSubscriptionService.update',
     )
     service = StripeService(
         user=user,
-        subscription_account=tenant_account
+        subscription_account=tenant_account,
     )
 
     # act
@@ -4874,11 +4875,11 @@ def test_increase_subscription__tenant__ok(mocker):
             {
                 "id": old_item_mock.id,
                 "quantity": new_quantity,
-            }
+            },
         ],
         trial_end='now',
         metadata={'account_id': tenant_account.id},
-        description=tenant_name
+        description=tenant_name,
     )
     get_subscription_details_mock.assert_called_once_with(new_subscription)
     account_subs_service_update.assert_called_once_with(
@@ -4902,7 +4903,7 @@ def test_increase_subscription__not_exist__raise_exception(mocker):
     mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_current_subscription',
-        return_value=None
+        return_value=None,
     )
     # end mock init
     account = create_test_account()
@@ -4936,7 +4937,7 @@ def test_cancel_subscription__ok(mocker):
     mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_current_subscription',
-        return_value=subscription_mock
+        return_value=subscription_mock,
     )
     # end mock init
 
@@ -4946,17 +4947,17 @@ def test_cancel_subscription__ok(mocker):
     stripe_subscription_modify_mock = mocker.patch(
         'src.payment.stripe.service.'
         'stripe.Subscription.modify',
-        return_value=new_subscription
+        return_value=new_subscription,
     )
     subscription_details_mock = mocker.Mock(plan_expiration=mocker.Mock())
     get_subscription_details_mock = mocker.patch(
         'src.payment.stripe.service.'
         'StripeService.get_subscription_details',
-        return_value=subscription_details_mock
+        return_value=subscription_details_mock,
     )
     account_subs_service_cancel = mocker.patch(
         'src.payment.stripe.service.'
-        'AccountSubscriptionService.cancel'
+        'AccountSubscriptionService.cancel',
     )
     service = StripeService(user=user)
 
@@ -4966,11 +4967,11 @@ def test_cancel_subscription__ok(mocker):
     # assert
     stripe_subscription_modify_mock.assert_called_once_with(
         id=subs_id,
-        cancel_at_period_end=True
+        cancel_at_period_end=True,
     )
     get_subscription_details_mock.assert_called_once_with(new_subscription)
     account_subs_service_cancel.assert_called_once_with(
-        subscription_details_mock.plan_expiration
+        subscription_details_mock.plan_expiration,
     )
 
 
@@ -4989,7 +4990,7 @@ def test_cancel_subscription__not_subscription__skip(mocker):
     mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_current_subscription',
-        return_value=None
+        return_value=None,
     )
     # end mock init
 
@@ -5004,7 +5005,7 @@ def test_cancel_subscription__not_subscription__skip(mocker):
     )
     account_subs_service_cancel = mocker.patch(
         'src.payment.stripe.service.'
-        'AccountSubscriptionService.cancel'
+        'AccountSubscriptionService.cancel',
     )
     service = StripeService(user=user)
 
@@ -5025,7 +5026,7 @@ def test_get_payment_method__ok(mocker):
     mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_or_create_customer',
-        return_value=customer_mock
+        return_value=customer_mock,
     )
     card_last4 = '6644'
     card_brand = 'MasterCard'
@@ -5033,16 +5034,16 @@ def test_get_payment_method__ok(mocker):
         card={
             'last4': card_last4,
             'brand': card_brand,
-        }
+        },
     )
     mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_current_payment_method',
-        return_value=method_mock
+        return_value=method_mock,
     )
     mocker.patch(
         'src.payment.stripe.service.'
-        'StripeService._get_current_subscription'
+        'StripeService._get_current_subscription',
     )
     # end mock init
 
@@ -5074,16 +5075,16 @@ def test_update_subscription_description__not_tenant__skip(mocker):
     description = 'old'
     subscription_mock = mocker.Mock(
         description=description,
-        id=subs_id
+        id=subs_id,
     )
     mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_current_subscription',
-        return_value=subscription_mock
+        return_value=subscription_mock,
     )
     sub_modify_mock = mocker.patch(
         'src.payment.stripe.service.'
-        'stripe.Subscription.modify'
+        'stripe.Subscription.modify',
     )
 
     # end mock init
@@ -5104,25 +5105,25 @@ def test_update_subscription_description__tenant__ok(mocker):
     # mock init
     mocker.patch(
         'src.payment.stripe.service.'
-        'StripeService._get_or_create_customer'
+        'StripeService._get_or_create_customer',
     )
     mocker.patch(
         'src.payment.stripe.service.'
-        'StripeService._get_current_payment_method'
+        'StripeService._get_current_payment_method',
     )
     subs_id = 'sub_123'
     subscription_mock = mocker.Mock(
         description='old',
-        id=subs_id
+        id=subs_id,
     )
     mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_current_subscription',
-        return_value=subscription_mock
+        return_value=subscription_mock,
     )
     sub_modify_mock = mocker.patch(
         'src.payment.stripe.service.'
-        'stripe.Subscription.modify'
+        'stripe.Subscription.modify',
     )
     # end mock init
     master_account = create_test_account(lease_level=LeaseLevel.STANDARD)
@@ -5132,11 +5133,11 @@ def test_update_subscription_description__tenant__ok(mocker):
         lease_level=LeaseLevel.TENANT,
         master_account=master_account,
         tenant_name=new_tenant_name,
-        name='Tenant'
+        name='Tenant',
     )
     service = StripeService(
         user=user,
-        subscription_account=tenant
+        subscription_account=tenant,
     )
 
     # act
@@ -5145,7 +5146,7 @@ def test_update_subscription_description__tenant__ok(mocker):
     # assert
     sub_modify_mock.assert_called_once_with(
         id=subs_id,
-        description=new_tenant_name
+        description=new_tenant_name,
     )
 
 
@@ -5164,7 +5165,7 @@ def test_update_subscription_description__not_subs__skip(mocker):
     mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_current_subscription',
-        return_value=None
+        return_value=None,
     )
     # end mock init
     master_account = create_test_account(lease_level=LeaseLevel.STANDARD)
@@ -5174,15 +5175,15 @@ def test_update_subscription_description__not_subs__skip(mocker):
         lease_level=LeaseLevel.TENANT,
         master_account=master_account,
         tenant_name=new_tenant_name,
-        name='Tenant'
+        name='Tenant',
     )
     service = StripeService(
         user=user,
-        subscription_account=tenant
+        subscription_account=tenant,
     )
     sub_modify_mock = mocker.patch(
         'src.payment.stripe.service.'
-        'stripe.Subscription.modify'
+        'stripe.Subscription.modify',
     )
 
     # act
@@ -5201,7 +5202,7 @@ def test_get_checkout_session_url__create__ok(mocker):
     mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_or_create_customer',
-        return_value=customer_mock
+        return_value=customer_mock,
     )
     mocker.patch(
         'src.payment.stripe.service.'
@@ -5209,19 +5210,19 @@ def test_get_checkout_session_url__create__ok(mocker):
     )
     mocker.patch(
         'src.payment.stripe.service.'
-        'StripeService._get_current_subscription'
+        'StripeService._get_current_subscription',
     )
     mocker.patch.object(
         AccountSubscriptionService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     # end mock init
 
     checkout_session_list_mock = mocker.patch(
         'src.payment.stripe.service.'
         'stripe.checkout.Session.list',
-        return_value=[]
+        return_value=[],
     )
 
     checkout_link = 'http://stripe.com/some-link'
@@ -5229,13 +5230,13 @@ def test_get_checkout_session_url__create__ok(mocker):
     checkout_session_create_mock = mocker.patch(
         'src.payment.stripe.service.'
         'stripe.checkout.Session.create',
-        return_value=session
+        return_value=session,
     )
     idempotency_key = '12312asdw'
     get_idempotency_key_mock = mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_idempotency_key',
-        return_value=idempotency_key
+        return_value=idempotency_key,
     )
     account = create_test_account()
     user = create_test_user(account=account)
@@ -5262,7 +5263,7 @@ def test_get_checkout_session_url__create__ok(mocker):
         mode='subscription',
         allow_promotion_codes=True,
         stripe_id=stripe_id,
-        account_id=account.id
+        account_id=account.id,
     )
     checkout_session_create_mock.assert_called_once_with(
         customer=customer_mock,
@@ -5283,7 +5284,7 @@ def test_get_checkout_session_url__duplicate__return_existent(mocker):
     mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_or_create_customer',
-        return_value=customer_mock
+        return_value=customer_mock,
     )
     mocker.patch(
         'src.payment.stripe.service.'
@@ -5291,12 +5292,12 @@ def test_get_checkout_session_url__duplicate__return_existent(mocker):
     )
     mocker.patch(
         'src.payment.stripe.service.'
-        'StripeService._get_current_subscription'
+        'StripeService._get_current_subscription',
     )
     mocker.patch.object(
         AccountSubscriptionService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     # end mock init
 
@@ -5304,17 +5305,17 @@ def test_get_checkout_session_url__duplicate__return_existent(mocker):
     get_idempotency_key_mock = mocker.patch(
         'src.payment.stripe.service.'
         'StripeService._get_idempotency_key',
-        return_value=idempotency_key
+        return_value=idempotency_key,
     )
 
     checkout_link = 'http://stripe.com/some-link'
     session_mock = mocker.Mock(
         url=checkout_link,
-        client_reference_id=idempotency_key
+        client_reference_id=idempotency_key,
     )
     another_session_mock = mocker.Mock(
         url='http://stripe.com/another-link',
-        client_reference_id=None
+        client_reference_id=None,
     )
     checkout_session_list_mock = mocker.patch(
         'src.payment.stripe.service.'
@@ -5322,12 +5323,12 @@ def test_get_checkout_session_url__duplicate__return_existent(mocker):
         return_value=[
             another_session_mock,
             session_mock,
-        ]
+        ],
     )
 
     checkout_session_create_mock = mocker.patch(
         'src.payment.stripe.service.'
-        'stripe.checkout.Session.create'
+        'stripe.checkout.Session.create',
     )
     account = create_test_account()
     user = create_test_user(account=account)
@@ -5354,6 +5355,6 @@ def test_get_checkout_session_url__duplicate__return_existent(mocker):
         mode='subscription',
         allow_promotion_codes=True,
         stripe_id=stripe_id,
-        account_id=account.id
+        account_id=account.id,
     )
     checkout_session_create_mock.assert_not_called()

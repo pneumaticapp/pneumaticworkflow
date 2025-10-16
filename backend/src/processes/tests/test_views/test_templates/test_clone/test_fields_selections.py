@@ -1,14 +1,13 @@
 import pytest
-from src.processes.tests.fixtures import (
-    create_test_user
-)
-from src.processes.models import (
-    Template
-)
+
 from src.processes.enums import (
-    PerformerType,
     FieldType,
-    OwnerType
+    OwnerType,
+    PerformerType,
+)
+from src.processes.models.templates.template import Template
+from src.processes.tests.fixtures import (
+    create_test_user,
 )
 
 pytestmark = pytest.mark.django_db
@@ -24,7 +23,7 @@ class TestCopyFieldSelections:
 
         request_data = {
             'value': 'Changed first selection',
-            'api_name': 'selection-1'
+            'api_name': 'selection-1',
         }
 
         response = api_client.post(
@@ -35,7 +34,7 @@ class TestCopyFieldSelections:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'kickoff': {},
@@ -46,8 +45,8 @@ class TestCopyFieldSelections:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': user.id
-                            }
+                                'source_id': user.id,
+                            },
                         ],
                         'fields': [
                             {
@@ -57,12 +56,12 @@ class TestCopyFieldSelections:
                                 'is_required': False,
                                 'order': 1,
                                 'api_name': 'field-name-1',
-                                'selections': [request_data]
-                            }
-                        ]
-                    }
-                ]
-            }
+                                'selections': [request_data],
+                            },
+                        ],
+                    },
+                ],
+            },
         )
         template = Template.objects.get(id=response.data['id'])
         response_1_data = (
@@ -71,13 +70,13 @@ class TestCopyFieldSelections:
 
         # act
         response = api_client.post(
-            f'/templates/{template.id}/clone'
+            f'/templates/{template.id}/clone',
         )
 
         # assert
         assert response.status_code == 200
         assert len(
-            response.data['tasks'][0]['fields'][0]['selections']
+            response.data['tasks'][0]['fields'][0]['selections'],
         ) == 1
         response_2_data = (
             response.data['tasks'][0]['fields'][0]['selections'][0]

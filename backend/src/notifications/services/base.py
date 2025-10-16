@@ -1,10 +1,10 @@
 from abc import abstractmethod
 from typing import Optional
 
+from src.notifications.enums import NotificationMethod
 from src.notifications.services.exceptions import (
     NotificationServiceError,
 )
-from src.notifications.enums import NotificationMethod
 
 
 class NotificationService:

@@ -1,26 +1,28 @@
+# ruff: noqa: PLC0415
 from typing import Optional, Set
+
 from django.contrib.auth import get_user_model
 from django.contrib.postgres.fields import ArrayField
 from django.contrib.postgres.search import SearchVectorField
 from django.db import models
-from django.db.models import UniqueConstraint, Q
+from django.db.models import Q, UniqueConstraint
+
 from src.accounts.models import (
     AccountBaseMixin,
-    UserGroup
+    UserGroup,
 )
 from src.generics.managers import BaseSoftDeleteManager
+from src.processes.enums import (
+    FieldType,
+    PerformerType,
+)
+from src.processes.models.base import BaseApiNameModel
 from src.processes.models.mixins import (
     TaskMixin,
-    TaskRawPerformersMixin
-)
-from src.processes.querysets import TaskTemplateQuerySet
-from src.processes.enums import (
-    PerformerType,
-    FieldType
+    TaskRawPerformersMixin,
 )
 from src.processes.models.templates.template import Template
-from src.processes.models.base import BaseApiNameModel
-
+from src.processes.querysets import TaskTemplateQuerySet
 
 UserModel = get_user_model()
 
@@ -41,7 +43,7 @@ class TaskTemplate(
                 fields=['template', 'api_name'],
                 condition=Q(is_deleted=False),
                 name='processes_tasktemplate_template_api_name_unique',
-            )
+            ),
         ]
 
     api_name_prefix = 'task'
@@ -49,7 +51,7 @@ class TaskTemplate(
     template = models.ForeignKey(
         Template,
         on_delete=models.CASCADE,
-        related_name='tasks'
+        related_name='tasks',
     )
     delay = models.DurationField(
         blank=True,
@@ -58,7 +60,7 @@ class TaskTemplate(
     ancestors = ArrayField(
         base_field=models.CharField(max_length=200),
         default=list,
-        help_text='Api names of task ancestors'
+        help_text='Api names of task ancestors',
     )
     search_content = SearchVectorField(null=True)
 
@@ -71,20 +73,21 @@ class TaskTemplate(
         user_id: Optional[int] = None,
         field=None,  # Optional[TaskField]
         performer_type: PerformerType = PerformerType.USER,
-        **kwargs
+        **kwargs,
     ):  # -> RawPerformerTemplate
 
         """ Returns new a raw performer object with given data """
 
-        from src.processes.models.templates.raw_performer\
-            import RawPerformerTemplate
+        from src.processes.models.templates.raw_performer import (
+            RawPerformerTemplate,
+        )
 
         result = RawPerformerTemplate(
             account=self.account,
             task=self,
             template=self.template,
             field=field,
-            type=performer_type
+            type=performer_type,
         )
         if group:
             result.group = group
@@ -102,16 +105,18 @@ class TaskTemplate(
         field=None,
         api_name: Optional[str] = None,
         performer_type: PerformerType = PerformerType.USER,
-        **kwargs
+        **kwargs,
     ) -> object:
 
         """ Creates and returns a raw performer for a task with given data """
 
-        if performer_type != PerformerType.WORKFLOW_STARTER:
-            if not user and not user_id and not group and not field:
-                raise Exception(
-                    'Raw performer should be linked with field or user'
-                )
+        if (
+            performer_type != PerformerType.WORKFLOW_STARTER
+            and not user and not user_id and not group and not field
+        ):
+            raise Exception(
+                'Raw performer should be linked with field or user',
+            )
 
         raw_performer = self._get_raw_performer(
             api_name=api_name,
@@ -119,7 +124,7 @@ class TaskTemplate(
             user=user,
             group=group,
             user_id=user_id,
-            field=field
+            field=field,
         )
         raw_performer.save()
         return raw_performer
@@ -127,7 +132,7 @@ class TaskTemplate(
     def get_prev_tasks_fields_api_names(self) -> Set[str]:
 
         prev_tasks_fields_api_names = self.template.get_fields(
-            fields_filter_kwargs={'type': FieldType.USER}
+            fields_filter_kwargs={'type': FieldType.USER},
         )
         return set(prev_tasks_fields_api_names.api_names())
 

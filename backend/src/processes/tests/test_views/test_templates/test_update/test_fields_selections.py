@@ -1,17 +1,18 @@
 import pytest
-from src.processes.tests.fixtures import (
-    create_test_user,
-    create_test_template
+
+from src.processes.enums import (
+    FieldType,
+    OwnerType,
+    PerformerType,
 )
-from src.processes.models import (
+from src.processes.messages import template as messages
+from src.processes.models.templates.fields import (
     FieldTemplate,
     FieldTemplateSelection,
 )
-from src.processes.messages import template as messages
-from src.processes.enums import (
-    PerformerType,
-    FieldType,
-    OwnerType
+from src.processes.tests.fixtures import (
+    create_test_template,
+    create_test_user,
 )
 
 pytestmark = pytest.mark.django_db
@@ -22,7 +23,7 @@ class TestUpdateFieldSelections:
     def test_update__all_fields__ok(
         self,
         mocker,
-        api_client
+        api_client,
     ):
 
         # arrange
@@ -31,7 +32,7 @@ class TestUpdateFieldSelections:
         template = create_test_template(
             user,
             is_active=True,
-            tasks_count=1
+            tasks_count=1,
         )
         task = template.tasks.first()
         field = FieldTemplate.objects.create(
@@ -49,11 +50,11 @@ class TestUpdateFieldSelections:
         )
         mocker.patch(
             'src.processes.services.templates.'
-            'integrations.TemplateIntegrationsService.template_updated'
+            'integrations.TemplateIntegrationsService.template_updated',
         )
         request_data = {
             'value': 'Changed first selection',
-            'api_name': selection.api_name
+            'api_name': selection.api_name,
         }
 
         # act
@@ -67,7 +68,7 @@ class TestUpdateFieldSelections:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'tasks': [
@@ -79,8 +80,8 @@ class TestUpdateFieldSelections:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': user.id
-                            }
+                                'source_id': user.id,
+                            },
                         ],
                         'fields': [
                             {
@@ -88,12 +89,12 @@ class TestUpdateFieldSelections:
                                 'api_name': field.api_name,
                                 'type': field.type,
                                 'order': field.order,
-                                'selections': [request_data]
-                            }
-                        ]
-                    }
-                ]
-            }
+                                'selections': [request_data],
+                            },
+                        ],
+                    },
+                ],
+            },
         )
         # assert
         assert response.status_code == 200
@@ -109,13 +110,13 @@ class TestUpdateFieldSelections:
 
         assert FieldTemplateSelection.objects.get(
             api_name=request_data['api_name'],
-            value=request_data['value']
+            value=request_data['value'],
         )
 
     def test_update__delete__ok(
         self,
         mocker,
-        api_client
+        api_client,
     ):
 
         # arrange
@@ -124,7 +125,7 @@ class TestUpdateFieldSelections:
         template = create_test_template(
             user,
             is_active=True,
-            tasks_count=1
+            tasks_count=1,
         )
         task = template.tasks.first()
         field = FieldTemplate.objects.create(
@@ -147,7 +148,7 @@ class TestUpdateFieldSelections:
         )
         mocker.patch(
             'src.processes.services.templates.'
-            'integrations.TemplateIntegrationsService.template_updated'
+            'integrations.TemplateIntegrationsService.template_updated',
         )
 
         # act
@@ -160,7 +161,7 @@ class TestUpdateFieldSelections:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'kickoff': {},
@@ -173,8 +174,8 @@ class TestUpdateFieldSelections:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': user.id
-                            }
+                                'source_id': user.id,
+                            },
                         ],
                         'fields': [
                             {
@@ -185,14 +186,14 @@ class TestUpdateFieldSelections:
                                 'selections': [
                                     {
                                         'value': selection.value,
-                                        'api_name': selection.api_name
-                                    }
-                                ]
-                            }
-                        ]
-                    }
-                ]
-            }
+                                        'api_name': selection.api_name,
+                                    },
+                                ],
+                            },
+                        ],
+                    },
+                ],
+            },
         )
 
         # assert
@@ -202,7 +203,7 @@ class TestUpdateFieldSelections:
         assert field.selections.count() == 1
         assert len(data['tasks'][0]['fields'][0]['selections']) == 1
         assert not FieldTemplateSelection.objects.filter(
-            api_name=selection2.api_name
+            api_name=selection2.api_name,
         ).exists()
 
     def test_update__change_selection_api_name__create_new(
@@ -217,7 +218,7 @@ class TestUpdateFieldSelections:
         template = create_test_template(
             user=user,
             tasks_count=1,
-            is_active=True
+            is_active=True,
         )
         task = template.tasks.first()
         field = FieldTemplate.objects.create(
@@ -235,7 +236,7 @@ class TestUpdateFieldSelections:
         )
         mocker.patch(
             'src.processes.services.templates.'
-            'integrations.TemplateIntegrationsService.template_updated'
+            'integrations.TemplateIntegrationsService.template_updated',
         )
         new_api_name = 'new-api-name'
 
@@ -249,7 +250,7 @@ class TestUpdateFieldSelections:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'kickoff': {},
@@ -262,8 +263,8 @@ class TestUpdateFieldSelections:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': user.id
-                            }
+                                'source_id': user.id,
+                            },
                         ],
                         'fields': [
                             {
@@ -277,13 +278,13 @@ class TestUpdateFieldSelections:
                                     {
                                         'value': selection.value,
                                         'api_name': new_api_name,
-                                    }
-                                ]
-                            }
-                        ]
-                    }
-                ]
-            }
+                                    },
+                                ],
+                            },
+                        ],
+                    },
+                ],
+            },
         )
 
         # assert
@@ -309,7 +310,7 @@ class TestUpdateFieldSelections:
         template = create_test_template(
             user=user,
             tasks_count=1,
-            is_active=True
+            is_active=True,
         )
         task = template.tasks.first()
         field = FieldTemplate.objects.create(
@@ -327,7 +328,7 @@ class TestUpdateFieldSelections:
         )
         mocker.patch(
             'src.processes.services.templates.'
-            'integrations.TemplateIntegrationsService.template_updated'
+            'integrations.TemplateIntegrationsService.template_updated',
         )
 
         # act
@@ -340,7 +341,7 @@ class TestUpdateFieldSelections:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'kickoff': {},
@@ -353,8 +354,8 @@ class TestUpdateFieldSelections:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': user.id
-                            }
+                                'source_id': user.id,
+                            },
                         ],
                         'fields': [
                             {
@@ -367,13 +368,13 @@ class TestUpdateFieldSelections:
                                 'selections': [
                                     {
                                         'value': selection.value,
-                                    }
-                                ]
-                            }
-                        ]
-                    }
-                ]
-            }
+                                    },
+                                ],
+                            },
+                        ],
+                    },
+                ],
+            },
         )
 
         # assert
@@ -390,7 +391,7 @@ class TestUpdateFieldSelections:
     def test_update__selection_with_equal_api_names__validation_error(
         self,
         mocker,
-        api_client
+        api_client,
     ):
 
         # arrange
@@ -403,7 +404,7 @@ class TestUpdateFieldSelections:
         template = create_test_template(
             user,
             is_active=True,
-            tasks_count=1
+            tasks_count=1,
         )
         task = template.tasks.first()
         field = FieldTemplate.objects.create(
@@ -422,7 +423,7 @@ class TestUpdateFieldSelections:
         )
         mocker.patch(
             'src.processes.services.templates.'
-            'integrations.TemplateIntegrationsService.template_updated'
+            'integrations.TemplateIntegrationsService.template_updated',
         )
 
         # act
@@ -436,7 +437,7 @@ class TestUpdateFieldSelections:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'tasks': [
@@ -448,8 +449,8 @@ class TestUpdateFieldSelections:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': user.id
-                            }
+                                'source_id': user.id,
+                            },
                         ],
                         'fields': [
                             {
@@ -462,9 +463,9 @@ class TestUpdateFieldSelections:
                                     {
                                         'id': selection.id,
                                         'value': 'Changed first selection',
-                                        'api_name': selection_api_name
-                                    }
-                                ]
+                                        'api_name': selection_api_name,
+                                    },
+                                ],
                             },
                             {
                                 'name': field_name,
@@ -473,14 +474,14 @@ class TestUpdateFieldSelections:
                                 'selections': [
                                     {
                                         'value': selection_value,
-                                        'api_name': selection_api_name
-                                    }
-                                ]
-                            }
-                        ]
-                    }
-                ]
-            }
+                                        'api_name': selection_api_name,
+                                    },
+                                ],
+                            },
+                        ],
+                    },
+                ],
+            },
         )
 
         # assert
@@ -489,7 +490,7 @@ class TestUpdateFieldSelections:
             name=step_name,
             field_name=field_name,
             value=selection_value,
-            api_name=selection_api_name
+            api_name=selection_api_name,
         )
         assert response.data['message'] == message
         assert response.data['details']['reason'] == message

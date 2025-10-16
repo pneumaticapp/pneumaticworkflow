@@ -1,4 +1,5 @@
 from django.db.models import QuerySet
+
 from src.ai.enums import OpenAIPromptTarget
 
 

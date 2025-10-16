@@ -1,25 +1,23 @@
 import pytest
-from src.processes.consts import TEMPLATE_NAME_LENGTH
-from src.processes.tests.fixtures import (
-    create_test_user,
-    create_test_account,
-    create_test_template,
-)
+
 from src.authentication.enums import AuthTokenType
-from src.processes.models import (
-    TaskTemplate,
-)
-from src.processes.services.exceptions import (
-    TemplateServiceException
-)
+from src.processes.consts import TEMPLATE_NAME_LENGTH
 from src.processes.enums import (
-    OwnerType
+    OwnerType,
+)
+from src.processes.models.templates.task import TaskTemplate
+from src.processes.services.exceptions import (
+    TemplateServiceException,
 )
 from src.processes.services.templates.template import (
-    TemplateService
+    TemplateService,
+)
+from src.processes.tests.fixtures import (
+    create_test_account,
+    create_test_template,
+    create_test_user,
 )
 from src.utils.validation import ErrorCode
-
 
 pytestmark = pytest.mark.django_db
 
@@ -33,29 +31,29 @@ def test_create__account_owner__ok(mocker, api_client):
         {
           "number": 1,
           "name": 'Step 1',
-          "description": 'some desc'
-        }
+          "description": 'some desc',
+        },
     ]
     service_init_mock = mocker.patch.object(
         TemplateService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     template = create_test_template(user, tasks_count=1)
     create_template_by_steps_mock = mocker.patch(
         'src.processes.services.templates.'
         'template.TemplateService.create_template_by_steps',
-        return_value=template
+        return_value=template,
     )
     api_client.token_authenticate(user)
 
     # act
     response = api_client.post(
-        path=f'/templates/by-steps',
+        path='/templates/by-steps',
         data={
             'name': name,
-            'tasks': tasks
-        }
+            'tasks': tasks,
+        },
     )
 
     # assert
@@ -73,17 +71,17 @@ def test_create__account_owner__ok(mocker, api_client):
     service_init_mock.assert_called_once_with(
         user=user,
         is_superuser=False,
-        auth_type=AuthTokenType.USER
+        auth_type=AuthTokenType.USER,
     )
     create_template_by_steps_mock.assert_called_once_with(
         name=name,
-        tasks=tasks
+        tasks=tasks,
     )
 
 
 def test_create__admin__ok(
     mocker,
-    api_client
+    api_client,
 ):
 
     # arrange
@@ -91,41 +89,41 @@ def test_create__admin__ok(
     create_test_user(
         is_account_owner=True,
         account=account,
-        email='owner@test.test'
+        email='owner@test.test',
     )
     user = create_test_user(
         is_admin=True,
         is_account_owner=False,
-        account=account
+        account=account,
     )
     name = 'My unbelievable processes name'
     tasks = [
         {
           "number": 1,
           "name": 'Step 1',
-          "description": 'some desc'
-        }
+          "description": 'some desc',
+        },
     ]
     service_init_mock = mocker.patch.object(
         TemplateService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     template = create_test_template(user, tasks_count=1)
     create_template_by_steps_mock = mocker.patch(
         'src.processes.services.templates.'
         'template.TemplateService.create_template_by_steps',
-        return_value=template
+        return_value=template,
     )
     api_client.token_authenticate(user)
 
     # act
     response = api_client.post(
-        path=f'/templates/by-steps',
+        path='/templates/by-steps',
         data={
             'name': name,
-            'tasks': tasks
-        }
+            'tasks': tasks,
+        },
     )
 
     # assert
@@ -133,17 +131,17 @@ def test_create__admin__ok(
     service_init_mock.assert_called_once_with(
         user=user,
         is_superuser=False,
-        auth_type=AuthTokenType.USER
+        auth_type=AuthTokenType.USER,
     )
     create_template_by_steps_mock.assert_called_once_with(
         name=name,
-        tasks=tasks
+        tasks=tasks,
     )
 
 
 def test_create__request_user_is_not_authenticated__permission_denied(
     mocker,
-    api_client
+    api_client,
 ):
 
     # arrange
@@ -152,26 +150,26 @@ def test_create__request_user_is_not_authenticated__permission_denied(
         {
             "number": 1,
             "name": 'Step 1',
-            "description": 'some desc'
-        }
+            "description": 'some desc',
+        },
     ]
     service_init_mock = mocker.patch.object(
         TemplateService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     create_template_by_steps_mock = mocker.patch(
         'src.processes.services.templates.'
-        'template.TemplateService.create_template_by_steps'
+        'template.TemplateService.create_template_by_steps',
     )
 
     # act
     response = api_client.post(
-        path=f'/templates/by-steps',
+        path='/templates/by-steps',
         data={
             'name': name,
-            'tasks': tasks
-        }
+            'tasks': tasks,
+        },
     )
 
     # assert
@@ -182,7 +180,7 @@ def test_create__request_user_is_not_authenticated__permission_denied(
 
 def test_create__task_over_limit__cut_to_max_len(
     mocker,
-    api_client
+    api_client,
 ):
 
     # arrange
@@ -192,29 +190,29 @@ def test_create__task_over_limit__cut_to_max_len(
         {
           "number": 1,
           "name": 'b' * (TaskTemplate.NAME_MAX_LENGTH + 2),
-          "description": 'a' * 502
-        }
+          "description": 'a' * 502,
+        },
     ]
     service_init_mock = mocker.patch.object(
         TemplateService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     template = create_test_template(user)
     create_template_by_steps_mock = mocker.patch(
         'src.processes.services.templates.'
         'template.TemplateService.create_template_by_steps',
-        return_value=template
+        return_value=template,
     )
     api_client.token_authenticate(user)
 
     # act
     response = api_client.post(
-        path=f'/templates/by-steps',
+        path='/templates/by-steps',
         data={
             'name': name,
-            'tasks': tasks
-        }
+            'tasks': tasks,
+        },
     )
 
     # assert
@@ -222,7 +220,7 @@ def test_create__task_over_limit__cut_to_max_len(
     service_init_mock.assert_called_once_with(
         user=user,
         is_superuser=False,
-        auth_type=AuthTokenType.USER
+        auth_type=AuthTokenType.USER,
     )
     create_template_by_steps_mock.assert_called_once_with(
         name='c' * TEMPLATE_NAME_LENGTH,
@@ -230,15 +228,15 @@ def test_create__task_over_limit__cut_to_max_len(
             {
               "number": 1,
               "name": 'b' * TaskTemplate.NAME_MAX_LENGTH,
-              "description": 'a' * 500
-            }
-        ]
+              "description": 'a' * 500,
+            },
+        ],
     )
 
 
 def test_create__task_description_null__validation_error(
     mocker,
-    api_client
+    api_client,
 ):
 
     # arrange
@@ -248,27 +246,27 @@ def test_create__task_description_null__validation_error(
         {
           "number": 1,
           "name": 'Step 1',
-          "description": None
-        }
+          "description": None,
+        },
     ]
     service_init_mock = mocker.patch.object(
         TemplateService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     create_template_by_steps_mock = mocker.patch(
         'src.processes.services.templates.'
-        'template.TemplateService.create_template_by_steps'
+        'template.TemplateService.create_template_by_steps',
     )
     api_client.token_authenticate(user)
 
     # act
     response = api_client.post(
-        path=f'/templates/by-steps',
+        path='/templates/by-steps',
         data={
             'name': name,
-            'tasks': tasks
-        }
+            'tasks': tasks,
+        },
     )
 
     # assert
@@ -284,7 +282,7 @@ def test_create__task_description_null__validation_error(
 
 def test_create__task_description_blank__validation_error(
     mocker,
-    api_client
+    api_client,
 ):
 
     # arrange
@@ -294,27 +292,27 @@ def test_create__task_description_blank__validation_error(
         {
           "number": 1,
           "name": 'Step 1',
-          "description": ''
-        }
+          "description": '',
+        },
     ]
     service_init_mock = mocker.patch.object(
         TemplateService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     create_template_by_steps_mock = mocker.patch(
         'src.processes.services.templates.'
-        'template.TemplateService.create_template_by_steps'
+        'template.TemplateService.create_template_by_steps',
     )
     api_client.token_authenticate(user)
 
     # act
     response = api_client.post(
-        path=f'/templates/by-steps',
+        path='/templates/by-steps',
         data={
             'name': name,
-            'tasks': tasks
-        }
+            'tasks': tasks,
+        },
     )
 
     # assert
@@ -332,7 +330,7 @@ def test_create__task_description_blank__validation_error(
 def test_create__task_description__invalid_value__validation_error(
     description,
     mocker,
-    api_client
+    api_client,
 ):
 
     # arrange
@@ -342,27 +340,27 @@ def test_create__task_description__invalid_value__validation_error(
         {
           "number": 1,
           "name": 'Step 1',
-          "description": description
-        }
+          "description": description,
+        },
     ]
     service_init_mock = mocker.patch.object(
         TemplateService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     create_template_by_steps_mock = mocker.patch(
         'src.processes.services.templates.'
-        'template.TemplateService.create_template_by_steps'
+        'template.TemplateService.create_template_by_steps',
     )
     api_client.token_authenticate(user)
 
     # act
     response = api_client.post(
-        path=f'/templates/by-steps',
+        path='/templates/by-steps',
         data={
             'name': name,
-            'tasks': tasks
-        }
+            'tasks': tasks,
+        },
     )
 
     # assert
@@ -378,7 +376,7 @@ def test_create__task_description__invalid_value__validation_error(
 
 def test_create__task_name_null__validation_error(
     mocker,
-    api_client
+    api_client,
 ):
 
     # arrange
@@ -388,27 +386,27 @@ def test_create__task_name_null__validation_error(
         {
           "number": 1,
           "name": None,
-          "description": 'desc'
-        }
+          "description": 'desc',
+        },
     ]
     service_init_mock = mocker.patch.object(
         TemplateService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     create_template_by_steps_mock = mocker.patch(
         'src.processes.services.templates.'
-        'template.TemplateService.create_template_by_steps'
+        'template.TemplateService.create_template_by_steps',
     )
     api_client.token_authenticate(user)
 
     # act
     response = api_client.post(
-        path=f'/templates/by-steps',
+        path='/templates/by-steps',
         data={
             'name': name,
-            'tasks': tasks
-        }
+            'tasks': tasks,
+        },
     )
 
     # assert
@@ -424,7 +422,7 @@ def test_create__task_name_null__validation_error(
 
 def test_create__task_name_blank__validation_error(
     mocker,
-    api_client
+    api_client,
 ):
 
     # arrange
@@ -434,27 +432,27 @@ def test_create__task_name_blank__validation_error(
         {
           "number": 1,
           "name": '',
-          "description": 'desc'
-        }
+          "description": 'desc',
+        },
     ]
     service_init_mock = mocker.patch.object(
         TemplateService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     create_template_by_steps_mock = mocker.patch(
         'src.processes.services.templates.'
-        'template.TemplateService.create_template_by_steps'
+        'template.TemplateService.create_template_by_steps',
     )
     api_client.token_authenticate(user)
 
     # act
     response = api_client.post(
-        path=f'/templates/by-steps',
+        path='/templates/by-steps',
         data={
             'name': name,
-            'tasks': tasks
-        }
+            'tasks': tasks,
+        },
     )
 
     # assert
@@ -468,7 +466,7 @@ def test_create__task_name_blank__validation_error(
 
 def test_create__name_null__validation_error(
     mocker,
-    api_client
+    api_client,
 ):
 
     # arrange
@@ -478,27 +476,27 @@ def test_create__name_null__validation_error(
         {
           "number": 1,
           "name": 'Step 1',
-          "description": 'desc'
-        }
+          "description": 'desc',
+        },
     ]
     service_init_mock = mocker.patch.object(
         TemplateService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     create_template_by_steps_mock = mocker.patch(
         'src.processes.services.templates.'
-        'template.TemplateService.create_template_by_steps'
+        'template.TemplateService.create_template_by_steps',
     )
     api_client.token_authenticate(user)
 
     # act
     response = api_client.post(
-        path=f'/templates/by-steps',
+        path='/templates/by-steps',
         data={
             'name': name,
-            'tasks': tasks
-        }
+            'tasks': tasks,
+        },
     )
 
     # assert
@@ -514,7 +512,7 @@ def test_create__name_null__validation_error(
 
 def test_create__name_blank__validation_error(
     mocker,
-    api_client
+    api_client,
 ):
 
     # arrange
@@ -524,27 +522,27 @@ def test_create__name_blank__validation_error(
         {
           "number": 1,
           "name": 'Step 1',
-          "description": 'desc'
-        }
+          "description": 'desc',
+        },
     ]
     service_init_mock = mocker.patch.object(
         TemplateService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     create_template_by_steps_mock = mocker.patch(
         'src.processes.services.templates.'
-        'template.TemplateService.create_template_by_steps'
+        'template.TemplateService.create_template_by_steps',
     )
     api_client.token_authenticate(user)
 
     # act
     response = api_client.post(
-        path=f'/templates/by-steps',
+        path='/templates/by-steps',
         data={
             'name': name,
-            'tasks': tasks
-        }
+            'tasks': tasks,
+        },
     )
 
     # assert
@@ -560,7 +558,7 @@ def test_create__name_blank__validation_error(
 
 def test_create__service_exception__validation_error(
     mocker,
-    api_client
+    api_client,
 ):
 
     # arrange
@@ -570,28 +568,28 @@ def test_create__service_exception__validation_error(
         {
             "number": 1,
             "name": 'Step 1',
-            "description": 'value'
-        }
+            "description": 'value',
+        },
     ]
     service_init_mock = mocker.patch.object(
         TemplateService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     error_message = 'some message'
     create_template_by_steps_mock = mocker.patch(
         'src.processes.services.templates.'
         'template.TemplateService.create_template_by_steps',
-        side_effect=TemplateServiceException(message=error_message)
+        side_effect=TemplateServiceException(message=error_message),
     )
     api_client.token_authenticate(user)
 
     response = api_client.post(
-        path=f'/templates/by-steps',
+        path='/templates/by-steps',
         data={
             'name': name,
-            'tasks': tasks
-        }
+            'tasks': tasks,
+        },
     )
 
     # assert
@@ -601,9 +599,9 @@ def test_create__service_exception__validation_error(
     service_init_mock.assert_called_once_with(
         user=user,
         is_superuser=False,
-        auth_type=AuthTokenType.USER
+        auth_type=AuthTokenType.USER,
     )
     create_template_by_steps_mock.assert_called_once_with(
         name=name,
-        tasks=tasks
+        tasks=tasks,
     )

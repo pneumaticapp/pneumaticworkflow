@@ -1,4 +1,5 @@
 import pytest
+
 from src.navigation.tests.fixtures import create_test_menu
 from src.processes.tests.fixtures import create_test_user
 
@@ -98,7 +99,7 @@ def test_menu__not_exists__not_found(api_client):
     api_client.token_authenticate(user)
 
     # act
-    response = api_client.get(f'/navigation/menu/help-center')
+    response = api_client.get('/navigation/menu/help-center')
 
     # assert
     assert response.status_code == 404

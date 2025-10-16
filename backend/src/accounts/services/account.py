@@ -1,31 +1,33 @@
+# ruff: noqa: PLC0415
 from typing import Optional
+
 from django.conf import settings
-from django.db import transaction
 from django.contrib.auth import get_user_model
+from django.db import transaction
+
+from src.accounts.enums import (
+    BillingPlanType,
+    LeaseLevel,
+    UserStatus,
+)
 from src.accounts.models import (
     Account,
     AccountSignupData,
 )
-from src.analytics.mixins import BaseIdentifyMixin
-from src.generics.mixins.services import ClsCacheMixin
-from src.generics.base.service import BaseModelService
+from src.accounts.serializers.accounts import (
+    AccountCacheSerializer,
+)
 from src.accounts.services.exceptions import (
     AccountServiceException,
 )
-from src.accounts.serializers.accounts import (
-    AccountCacheSerializer
-)
+from src.analytics.mixins import BaseIdentifyMixin
 from src.analytics.tasks import identify_users
-from src.accounts.enums import (
-    LeaseLevel,
-    UserStatus,
-    BillingPlanType,
-)
+from src.generics.base.service import BaseModelService
+from src.generics.mixins.services import ClsCacheMixin
 from src.utils.logging import (
+    SentryLogLevel,
     capture_sentry_message,
-    SentryLogLevel
 )
-
 
 UserModel = get_user_model()
 configuration = settings.CONFIGURATION_CURRENT
@@ -34,7 +36,7 @@ configuration = settings.CONFIGURATION_CURRENT
 class AccountService(
     BaseModelService,
     ClsCacheMixin,
-    BaseIdentifyMixin
+    BaseIdentifyMixin,
 ):
 
     cache_timeout = 86400  # day
@@ -70,7 +72,7 @@ class AccountService(
             account.trial_ended = master_account.trial_ended
         elif master_account.billing_plan in (
             BillingPlanType.FRACTIONALCOO,
-            BillingPlanType.FREEMIUM
+            BillingPlanType.FREEMIUM,
         ):
             account.billing_plan = BillingPlanType.FREEMIUM
         elif master_account.billing_plan == BillingPlanType.UNLIMITED:
@@ -95,20 +97,20 @@ class AccountService(
         tenant_name: Optional[str] = None,
         master_account: Optional[Account] = None,
         billing_sync: bool = True,
-        **kwargs
+        **kwargs,
     ) -> Account:
 
         if master_account:
             self.instance = self._create_tenant(
                 master_account=master_account,
-                tenant_name=tenant_name
+                tenant_name=tenant_name,
             )
         else:
             billing_enabled = settings.PROJECT_CONF['BILLING'] and billing_sync
             self.instance = Account(
                 is_verified=is_verified,
                 name=name or 'Company name',
-                billing_sync=billing_sync
+                billing_sync=billing_sync,
             )
             if not billing_enabled:
                 self.instance.billing_plan = BillingPlanType.FREEMIUM
@@ -124,7 +126,7 @@ class AccountService(
         utm_term: Optional[str] = None,
         utm_content: Optional[str] = None,
         gclid: Optional[str] = None,
-        **kwargs
+        **kwargs,
     ):
         AccountSignupData.objects.create(
             account=self.instance,
@@ -141,13 +143,13 @@ class AccountService(
             ai_templates_generations=(
                 self.instance.ai_templates_generations + 1
             ),
-            force_save=True
+            force_save=True,
         )
 
     def update_bucket_name(self, bucket_name):
         self.partial_update(
             bucket_name=bucket_name,
-            force_save=True
+            force_save=True,
         )
 
     def update_users_counts(self):
@@ -158,11 +160,11 @@ class AccountService(
         if self.instance.is_tenant:
             self.partial_update(
                 active_users=self.instance.users.active().count(),
-                force_save=True
+                force_save=True,
             )
             service = AccountService(
                 instance=self.instance.master_account,
-                user=self.instance.master_account.get_owner()
+                user=self.instance.master_account.get_owner(),
             )
             service.update_users_counts()
         else:
@@ -171,14 +173,14 @@ class AccountService(
                 tenants_active_users=UserModel.objects.filter(
                     status=UserStatus.ACTIVE,
                     account__lease_level=LeaseLevel.TENANT,
-                    account__master_account_id=self.instance.id
+                    account__master_account_id=self.instance.id,
                 ).count(),
-                force_save=True
+                force_save=True,
             )
 
         self._set_cache(
             key=self.instance.id,
-            value=self.instance
+            value=self.instance,
         )
 
     def _update_tenants(self):
@@ -198,7 +200,7 @@ class AccountService(
             self.instance.tenants.only_tenants().update(
                 logo_lg=self.instance.logo_lg,
                 logo_sm=self.instance.logo_sm,
-                billing_sync=self.instance.billing_sync
+                billing_sync=self.instance.billing_sync,
             )
 
     def _identify_users(self):
@@ -209,12 +211,12 @@ class AccountService(
         if self.instance.is_subscribed:
             user_ids = (
                 UserModel.objects.on_account(
-                    self.instance.id
+                    self.instance.id,
                 ).union(
                     UserModel.objects.filter(
                         account__master_account=self.instance,
-                        account__lease_level=LeaseLevel.TENANT
-                    )
+                        account__lease_level=LeaseLevel.TENANT,
+                    ),
                 )
             ).order_by('id').only_ids()
         else:
@@ -225,11 +227,11 @@ class AccountService(
         self,
         name: Optional[str] = None,
         phone: Optional[str] = None,
-        **kwargs
+        **kwargs,
     ):
         if configuration not in {
             settings.CONFIGURATION_STAGING,
-            settings.CONFIGURATION_PROD
+            settings.CONFIGURATION_PROD,
         }:
             return
 
@@ -238,15 +240,15 @@ class AccountService(
             and not self.instance.is_tenant
             and (name or phone)
         ):
-            from src.payment.stripe.service import StripeService
             from src.payment.stripe.exceptions import (
-                StripeServiceException
+                StripeServiceException,
             )
+            from src.payment.stripe.service import StripeService
             try:
                 service = StripeService(
                     user=self.user,
                     is_superuser=self.is_superuser,
-                    auth_type=self.auth_type
+                    auth_type=self.auth_type,
                 )
                 service.update_customer()
             except StripeServiceException as ex:
@@ -265,13 +267,13 @@ class AccountService(
     def partial_update(
         self,
         force_save=False,
-        **update_kwargs
+        **update_kwargs,
     ) -> Account:
 
         with transaction.atomic():
             super().partial_update(
                 **update_kwargs,
-                force_save=force_save
+                force_save=force_save,
             )
             self._update_tenants()
             if settings.PROJECT_CONF['BILLING'] and self.instance.billing_sync:
@@ -290,7 +292,7 @@ class AccountService(
             try:
                 account = Account.objects.get(id=account_id)
             except Account.DoesNotExist as ex:
-                raise AccountServiceException(str(ex))
+                raise AccountServiceException(str(ex)) from ex
             else:
                 value = cls._set_cache(key=account.id, value=account)
         return value

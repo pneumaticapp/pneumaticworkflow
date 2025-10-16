@@ -2,13 +2,15 @@ from collections import defaultdict
 from dataclasses import asdict
 from datetime import timedelta
 from typing import Dict
+
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.utils import timezone
+
 from src.executor import RawSqlExecutor
 from src.reports.entities import (
-    WorkflowsDigest,
     TemplateForWorkflowsDigest,
+    WorkflowsDigest,
 )
 from src.reports.queries.workflows import (
     WorkflowDigestQuery,
@@ -17,7 +19,6 @@ from src.reports.services.base import (
     SendDigest,
 )
 from src.services.email import EmailService
-
 
 UserModel = get_user_model()
 
@@ -41,13 +42,12 @@ class SendWorkflowsDigest(SendDigest):
             user_id=self._user_id,
             force=self._force,
         )
-        data = RawSqlExecutor.fetch(
+        return RawSqlExecutor.fetch(
             *query.get_sql(),
             stream=True,
             fetch_size=self._fetch_size,
             db=settings.REPLICA,
         )
-        return data
 
     def _add_user_data(self, user_digest: WorkflowsDigest, row):
         user_digest.started += row['started']
@@ -62,12 +62,12 @@ class SendWorkflowsDigest(SendDigest):
                 in_progress=row['in_progress'],
                 overdue=row['overdue'],
                 completed=row['completed'],
-            )
+            ),
         )
 
     def _send_emails(self, digests: Dict[int, WorkflowsDigest]):
         users = UserModel.objects.select_related(
-            'account'
+            'account',
         ).by_ids(list(digests.keys()))
         for user in users:
             digest = digests.get(user.id)
@@ -77,7 +77,7 @@ class SendWorkflowsDigest(SendDigest):
                     date_to=self._date_to - timedelta(days=1),  # Last Sunday
                     date_from=self._date_from,  # Last Monday
                     digest=asdict(digest),
-                    logo_lg=user.account.logo_lg
+                    logo_lg=user.account.logo_lg,
                 )
                 user.last_digest_send_time = self._now
                 user.save(update_fields=['last_digest_send_time'])

@@ -1,17 +1,15 @@
 import pytest
-from src.processes.tests.fixtures import (
-    create_test_user,
-    create_test_template
-)
-from src.processes.models import (
-    FieldTemplate
-)
-from src.processes.enums import (
-    PerformerType,
-    FieldType,
-    OwnerType
-)
 
+from src.processes.enums import (
+    FieldType,
+    OwnerType,
+    PerformerType,
+)
+from src.processes.models.templates.fields import FieldTemplate
+from src.processes.tests.fixtures import (
+    create_test_template,
+    create_test_user,
+)
 
 pytestmark = pytest.mark.django_db
 
@@ -21,7 +19,7 @@ class TestUpdateKickoffFields:
     def test_update__all_fields__ok(
         self,
         mocker,
-        api_client
+        api_client,
     ):
 
         # arrange
@@ -30,7 +28,7 @@ class TestUpdateKickoffFields:
         template = create_test_template(
             user,
             is_active=True,
-            tasks_count=1
+            tasks_count=1,
         )
         kickoff = template.kickoff_instance
         task = template.tasks.first()
@@ -50,11 +48,11 @@ class TestUpdateKickoffFields:
             'type': FieldType.TEXT,
             'is_required': True,
             'order': 2,
-            'api_name': 'field-name-1'
+            'api_name': 'field-name-1',
         }
         mocker.patch(
             'src.processes.services.templates.'
-            'integrations.TemplateIntegrationsService.template_updated'
+            'integrations.TemplateIntegrationsService.template_updated',
         )
 
         # act
@@ -67,11 +65,11 @@ class TestUpdateKickoffFields:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'kickoff': {
-                    'fields': [request_data]
+                    'fields': [request_data],
                 },
                 'tasks': [
                     {
@@ -80,12 +78,12 @@ class TestUpdateKickoffFields:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': user.id
-                            }
-                        ]
-                    }
-                ]
-            }
+                                'source_id': user.id,
+                            },
+                        ],
+                    },
+                ],
+            },
         )
         # assert
         assert response.status_code == 200
@@ -113,7 +111,7 @@ class TestUpdateKickoffFields:
     def test_update__delete__ok(
         self,
         mocker,
-        api_client
+        api_client,
     ):
 
         # arrange
@@ -122,7 +120,7 @@ class TestUpdateKickoffFields:
         template = create_test_template(
             user,
             is_active=True,
-            tasks_count=1
+            tasks_count=1,
         )
         kickoff = template.kickoff_instance
         task = template.tasks.first()
@@ -137,7 +135,7 @@ class TestUpdateKickoffFields:
         )
         mocker.patch(
             'src.processes.services.templates.'
-            'integrations.TemplateIntegrationsService.template_updated'
+            'integrations.TemplateIntegrationsService.template_updated',
         )
 
         # act
@@ -150,11 +148,11 @@ class TestUpdateKickoffFields:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'kickoff': {
-                    'fields': []
+                    'fields': [],
                 },
                 'tasks': [
                     {
@@ -163,12 +161,12 @@ class TestUpdateKickoffFields:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': user.id
-                            }
-                        ]
-                    }
-                ]
-            }
+                                'source_id': user.id,
+                            },
+                        ],
+                    },
+                ],
+            },
         )
 
         # assert
@@ -192,7 +190,7 @@ class TestUpdateKickoffFields:
         template = create_test_template(
             user,
             is_active=True,
-            tasks_count=1
+            tasks_count=1,
         )
         task = template.tasks.first()
         field = FieldTemplate.objects.create(
@@ -206,7 +204,7 @@ class TestUpdateKickoffFields:
         )
         mocker.patch(
             'src.processes.services.templates.'
-            'integrations.TemplateIntegrationsService.template_updated'
+            'integrations.TemplateIntegrationsService.template_updated',
         )
         api_client.token_authenticate(user)
 
@@ -220,7 +218,7 @@ class TestUpdateKickoffFields:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'kickoff': {
@@ -231,15 +229,15 @@ class TestUpdateKickoffFields:
                             'type': FieldType.STRING,
                             'is_required': True,
                             'order': 1,
-                            'api_name': field_api_name
+                            'api_name': field_api_name,
                         },
                         {
                             'name': field_name,
                             'type': FieldType.TEXT,
                             'order': 2,
-                            'api_name': field_api_name
-                        }
-                    ]
+                            'api_name': field_api_name,
+                        },
+                    ],
                 },
                 'tasks': [
                     {
@@ -248,12 +246,12 @@ class TestUpdateKickoffFields:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': user.id
-                            }
-                        ]
-                    }
-                ]
-            }
+                                'source_id': user.id,
+                            },
+                        ],
+                    },
+                ],
+            },
         )
 
         # assert

@@ -1,11 +1,12 @@
 from django.contrib.auth import get_user_model
 from rest_framework.generics import (
-    ListAPIView
+    ListAPIView,
 )
+
 from src.accounts.permissions import (
-    UserIsAdminOrAccountOwner,
     BillingPlanPermission,
     ExpiredSubscriptionPermission,
+    UserIsAdminOrAccountOwner,
 )
 from src.authentication.permissions import PrivateApiPermission
 from src.generics.mixins.views import (
@@ -15,13 +16,12 @@ from src.generics.permissions import (
     UserIsAuthenticated,
 )
 
-
 UserModel = get_user_model()
 
 
 class APIKeyView(
     ListAPIView,
-    BaseResponseMixin
+    BaseResponseMixin,
 ):
 
     permission_classes = (

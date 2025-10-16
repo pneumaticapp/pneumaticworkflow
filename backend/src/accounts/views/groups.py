@@ -1,49 +1,49 @@
-from django.db.models import Prefetch
 from django.contrib.auth import get_user_model
+from django.db.models import Prefetch
 from django.http import Http404
 from rest_framework.decorators import action
 from rest_framework.viewsets import GenericViewSet
-from src.accounts.serializers.group import (
-    GroupSerializer,
-    GroupRequestSerializer,
+
+from src.accounts.filters import (
+    GroupsListFilterSet,
 )
+from src.accounts.models import UserGroup
 from src.accounts.permissions import (
     BillingPlanPermission,
-    UserIsAdminOrAccountOwner,
     ExpiredSubscriptionPermission,
+    UserIsAdminOrAccountOwner,
+)
+from src.accounts.queries import CountTemplatesByGroupQuery
+from src.accounts.serializers.group import (
+    GroupRequestSerializer,
+    GroupSerializer,
+)
+from src.accounts.services.exceptions import (
+    UserGroupServiceException,
+)
+from src.accounts.services.group import UserGroupService
+from src.executor import RawSqlExecutor
+from src.generics.filters import PneumaticFilterBackend
+from src.generics.mixins.views import (
+    CustomViewSetMixin,
 )
 from src.generics.permissions import (
     IsAuthenticated,
     UserIsAuthenticated,
 )
-from src.accounts.models import UserGroup
-from src.generics.mixins.views import (
-    CustomViewSetMixin,
-)
 from src.utils.validation import raise_validation_error
-
-from src.accounts.services.group import UserGroupService
-from src.accounts.services.exceptions import (
-    UserGroupServiceException
-)
-from src.accounts.filters import (
-    GroupsListFilterSet,
-)
-from src.accounts.queries import CountTemplatesByGroupQuery
-from src.executor import RawSqlExecutor
-from src.generics.filters import PneumaticFilterBackend
 
 UserModel = get_user_model()
 
 
 class GroupViewSet(
     CustomViewSetMixin,
-    GenericViewSet
+    GenericViewSet,
 ):
     filter_backends = [PneumaticFilterBackend]
     serializer_class = GroupSerializer
     action_filterset_classes = {
-        'list': GroupsListFilterSet
+        'list': GroupsListFilterSet,
     }
 
     def get_serializer_context(self, **kwargs):
@@ -57,32 +57,30 @@ class GroupViewSet(
                 IsAuthenticated(),
                 BillingPlanPermission(),
             )
-        elif self.action == 'retrieve':
+        if self.action == 'retrieve':
             return (
                 UserIsAuthenticated(),
                 BillingPlanPermission(),
                 UserIsAdminOrAccountOwner(),
             )
-        else:
-            return (
-                UserIsAuthenticated(),
-                BillingPlanPermission(),
-                UserIsAdminOrAccountOwner(),
-                ExpiredSubscriptionPermission(),
-            )
+        return (
+            UserIsAuthenticated(),
+            BillingPlanPermission(),
+            UserIsAdminOrAccountOwner(),
+            ExpiredSubscriptionPermission(),
+        )
 
     def get_queryset(self):
         account_id = self.request.user.account_id
-        queryset = UserGroup.objects.on_account(account_id).prefetch_related(
+        return UserGroup.objects.on_account(account_id).prefetch_related(
             Prefetch(
                 'users',
                 queryset=(
                     UserModel.objects
                     .on_account(account_id)
-                    .order_by('last_name'))
-            )
+                    .order_by('last_name')),
+            ),
         )
-        return queryset
 
     def list(self, request, *args, **kwargs):
         slz = GroupRequestSerializer(data=request.GET)
@@ -97,7 +95,7 @@ class GroupViewSet(
         service = UserGroupService(
             user=request.user,
             is_superuser=request.is_superuser,
-            auth_type=request.token_type
+            auth_type=request.token_type,
         )
         try:
             service.create(**slz.validated_data)
@@ -119,12 +117,12 @@ class GroupViewSet(
             user=request.user,
             instance=group,
             is_superuser=request.is_superuser,
-            auth_type=request.token_type
+            auth_type=request.token_type,
         )
         try:
             instance = service.partial_update(
                 force_save=True,
-                **slz.validated_data
+                **slz.validated_data,
             )
         except UserGroupServiceException as ex:
             raise_validation_error(message=ex.message)
@@ -138,7 +136,7 @@ class GroupViewSet(
             user=request.user,
             instance=group,
             is_superuser=request.is_superuser,
-            auth_type=request.token_type
+            auth_type=request.token_type,
         )
         service.delete()
         return self.response_ok()
@@ -155,8 +153,8 @@ class GroupViewSet(
 
         try:
             group = self.get_queryset().get(id=pk)
-        except UserGroup.DoesNotExist:
-            raise Http404
+        except UserGroup.DoesNotExist as ex:
+            raise Http404 from ex
         query = CountTemplatesByGroupQuery(
             group_id=group.id,
             account_id=request.user.account_id,
@@ -164,5 +162,5 @@ class GroupViewSet(
         result = list(RawSqlExecutor.fetch(*query.get_sql()))
         count = sum(item['count'] for item in result)
         return self.response_ok(
-            data={'count': count}
+            data={'count': count},
         )

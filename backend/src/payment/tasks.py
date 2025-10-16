@@ -1,20 +1,20 @@
-from celery import shared_task
 from django.contrib.auth import get_user_model
-from src.authentication.enums import AuthTokenType
-from src.accounts.models import Account
+
+from celery import shared_task
 from src.accounts.enums import BillingPlanType
-from src.utils.logging import (
-    capture_sentry_message,
-    SentryLogLevel,
-)
+from src.accounts.models import Account
+from src.authentication.enums import AuthTokenType
 from src.payment.messages import (
     MSG_BL_0023,
     MSG_BL_0024,
 )
+from src.payment.stripe.exceptions import StripeServiceException
 from src.payment.stripe.service import StripeService
 from src.payment.stripe.webhooks import WebhookService
-from src.payment.stripe.exceptions import StripeServiceException
-
+from src.utils.logging import (
+    SentryLogLevel,
+    capture_sentry_message,
+)
 
 UserModel = get_user_model()
 
@@ -43,17 +43,14 @@ def _increase_plan_users(
         return
     paid_users_count = account.get_paid_users_count()
     if paid_users_count > account.max_users:
-        if increment:
-            quantity = account.max_users + 1
-        else:
-            quantity = paid_users_count
+        quantity = account.max_users + 1 if increment else paid_users_count
         if quantity > 0:
             user = account.get_owner()
             try:
                 service = StripeService(
                     user=user,
                     is_superuser=is_superuser,
-                    auth_type=auth_type
+                    auth_type=auth_type,
                 )
                 service.increase_subscription(quantity=quantity)
             except StripeServiceException as ex:
@@ -63,7 +60,7 @@ def _increase_plan_users(
                     ),
                     data={
                         'account_id': account.id,
-                        'ex': str(ex)
+                        'ex': str(ex),
                     },
                     level=SentryLogLevel.ERROR,
                 )
@@ -74,7 +71,7 @@ def increase_plan_users(
     account_id: int,
     is_superuser: bool,
     auth_type: AuthTokenType.LITERALS,
-    increment=True
+    increment=True,
 ):
     _increase_plan_users(
         account_id=account_id,

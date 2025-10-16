@@ -1,17 +1,16 @@
 import pytest
-from src.processes.models import (
-    TaskPerformer,
-)
-from src.processes.tests.fixtures import (
-    create_test_workflow,
-    create_test_group,
-    create_test_user,
-    create_invited_user,
-    create_test_account
-)
+
 from src.processes.enums import (
     DirectlyStatus,
     PerformerType,
+)
+from src.processes.models.workflows.task import TaskPerformer
+from src.processes.tests.fixtures import (
+    create_invited_user,
+    create_test_account,
+    create_test_group,
+    create_test_user,
+    create_test_workflow,
 )
 
 pytestmark = pytest.mark.django_db
@@ -44,7 +43,7 @@ def test_counters__with_group__ok(api_client):
         task_id=task.id,
         type=PerformerType.GROUP,
         group_id=group.id,
-        directly_status=DirectlyStatus.CREATED
+        directly_status=DirectlyStatus.CREATED,
     )
     create_test_workflow(user)
     api_client.token_authenticate(user)
@@ -88,7 +87,7 @@ def test_counters__complete_by_all__ok(api_client):
     raw_performer = task.add_raw_performer(other_user)
     task.update_performers(raw_performer)
     TaskPerformer.objects.by_task(task.id).by_user(user.id).update(
-        is_completed=True
+        is_completed=True,
     )
     task.save()
     api_client.token_authenticate(user)
@@ -108,30 +107,30 @@ def test_counters__task_performer_changed__ok(mocker, api_client):
     account_owner = create_test_user(
         is_account_owner=True,
         account=account,
-        email='owner@test.test'
+        email='owner@test.test',
     )
     user_performer = create_test_user(
         is_account_owner=False,
         account=account,
-        email='performer@test.test'
+        email='performer@test.test',
     )
     workflow = create_test_workflow(
         user=account_owner,
-        tasks_count=2
+        tasks_count=2,
     )
     task = workflow.tasks.get(number=1)
     mocker.patch(
         'src.processes.services.tasks.performers.'
-        'send_new_task_notification.delay'
+        'send_new_task_notification.delay',
     )
     api_client.token_authenticate(account_owner)
     response_create = api_client.post(
         f'/v2/tasks/{task.id}/create-performer',
-        data={'user_id': user_performer.id}
+        data={'user_id': user_performer.id},
     )
     response_delete = api_client.post(
         f'/v2/tasks/{task.id}/delete-performer',
-        data={'user_id': account_owner.id}
+        data={'user_id': account_owner.id},
     )
 
     api_client.token_authenticate(user_performer)

@@ -1,12 +1,13 @@
-from src.queries import SqlQueryObject
 from src.accounts.enums import (
+    UserStatus,
     UserType,
-    UserStatus
 )
 from src.processes.enums import (
     DirectlyStatus,
-    WorkflowStatus, TaskStatus
+    TaskStatus,
+    WorkflowStatus,
 )
+from src.queries import SqlQueryObject
 
 
 class GetGuestQuery(SqlQueryObject):
@@ -15,7 +16,7 @@ class GetGuestQuery(SqlQueryObject):
         self,
         user_id: int,
         task_id: int,
-        account_id: int
+        account_id: int,
     ):
         self.params = {
             'user_id': user_id,
@@ -26,7 +27,7 @@ class GetGuestQuery(SqlQueryObject):
     def _get_wf_filter(self):
         result, params = self._to_sql_list(
             values=WorkflowStatus.DONE,
-            prefix='wf_status'
+            prefix='wf_status',
         )
         self.params.update(params)
         return f'pw.status NOT IN {result}'

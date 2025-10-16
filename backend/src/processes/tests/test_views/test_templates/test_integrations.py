@@ -1,17 +1,17 @@
 import pytest
-from src.processes.tests.fixtures import (
-    create_test_user,
-    create_test_template,
+
+from src.generics.messages import (
+    MSG_GE_0003,
 )
 from src.processes.entities import TemplateIntegrationsData
-from src.utils.validation import ErrorCode
+from src.processes.tests.fixtures import (
+    create_test_template,
+    create_test_user,
+)
 from src.processes.views.template import (
-    TemplateIntegrationsService
+    TemplateIntegrationsService,
 )
-from src.generics.messages import (
-    MSG_GE_0003
-)
-
+from src.utils.validation import ErrorCode
 
 pytestmark = pytest.mark.django_db
 
@@ -29,18 +29,18 @@ class TestTemplateIntegrations:
             webhooks=True,
             shared=True,
             zapier=True,
-            api=False
+            api=False,
         )
         service_init_mock = mocker.patch.object(
             TemplateIntegrationsService,
             attribute='__init__',
-            return_value=None
+            return_value=None,
         )
         service_mock = mocker.patch(
             'src.processes.services.templates.'
             'integrations.TemplateIntegrationsService'
             '.get_template_integrations_data',
-            return_value=integration_data
+            return_value=integration_data,
         )
 
         # act
@@ -52,16 +52,16 @@ class TestTemplateIntegrations:
         service_init_mock.assert_called_once_with(
             account=user.account,
             is_superuser=False,
-            user=user
+            user=user,
         )
         service_mock.assert_called_once_with(
-            template_id=template.id
+            template_id=template.id,
         )
 
     def test_template_integrations__non_existent_template__not_found(
         self,
         api_client,
-        mocker
+        mocker,
     ):
 
         # arrange
@@ -72,7 +72,7 @@ class TestTemplateIntegrations:
         service_mock = mocker.patch(
             'src.processes.services.templates.'
             'integrations.TemplateIntegrationsService'
-            '.get_template_integrations_data'
+            '.get_template_integrations_data',
         )
 
         # act
@@ -85,7 +85,7 @@ class TestTemplateIntegrations:
     def test_template_integrations__not_admin__permission_denied(
         self,
         api_client,
-        mocker
+        mocker,
     ):
 
         # arrange
@@ -95,7 +95,7 @@ class TestTemplateIntegrations:
         service_mock = mocker.patch(
             'src.processes.services.templates.'
             'integrations.TemplateIntegrationsService'
-            '.get_template_integrations_data'
+            '.get_template_integrations_data',
         )
 
         # act
@@ -119,29 +119,29 @@ class TestIntegrations:
                 webhooks=True,
                 shared=True,
                 zapier=True,
-                api=False
+                api=False,
             ),
             TemplateIntegrationsData(
                 id=2,
                 webhooks=True,
                 shared=True,
                 zapier=True,
-                api=False
-            )
+                api=False,
+            ),
         ]
         service_init_mock = mocker.patch.object(
             TemplateIntegrationsService,
             attribute='__init__',
-            return_value=None
+            return_value=None,
         )
         service_mock = mocker.patch(
             'src.processes.services.templates.'
             'integrations.TemplateIntegrationsService.get_integrations',
-            return_value=integrations_data
+            return_value=integrations_data,
         )
 
         # act
-        response = api_client.get(f'/templates/integrations')
+        response = api_client.get('/templates/integrations')
 
         # assert
         assert response.status_code == 200
@@ -149,14 +149,14 @@ class TestIntegrations:
         service_init_mock.assert_called_once_with(
             account=user.account,
             is_superuser=False,
-            user=user
+            user=user,
         )
         service_mock.assert_called_once_with()
 
     def test_list_template_integrations__not_admin__permission_denied(
         self,
         api_client,
-        mocker
+        mocker,
     ):
 
         # arrange
@@ -164,11 +164,11 @@ class TestIntegrations:
         api_client.token_authenticate(user)
         service_mock = mocker.patch(
             'src.processes.services.templates.'
-            'integrations.TemplateIntegrationsService.get_integrations'
+            'integrations.TemplateIntegrationsService.get_integrations',
         )
 
         # act
-        response = api_client.get(f'/templates/integrations')
+        response = api_client.get('/templates/integrations')
 
         # assert
         assert response.status_code == 403
@@ -177,7 +177,7 @@ class TestIntegrations:
     def test_list_template_integrations__filter_by_template__ok(
         self,
         api_client,
-        mocker
+        mocker,
     ):
 
         # arrange
@@ -190,23 +190,23 @@ class TestIntegrations:
                 webhooks=True,
                 shared=True,
                 zapier=True,
-                api=False
+                api=False,
             ),
         ]
         service_init_mock = mocker.patch.object(
             TemplateIntegrationsService,
             attribute='__init__',
-            return_value=None
+            return_value=None,
         )
         service_mock = mocker.patch(
             'src.processes.services.templates.'
             'integrations.TemplateIntegrationsService.get_integrations',
-            return_value=integrations_data
+            return_value=integrations_data,
         )
 
         # act
         response = api_client.get(
-            f'/templates/integrations?template_id={template.id}'
+            f'/templates/integrations?template_id={template.id}',
         )
 
         # assert
@@ -215,16 +215,16 @@ class TestIntegrations:
         service_init_mock.assert_called_once_with(
             account=user.account,
             is_superuser=False,
-            user=user
+            user=user,
         )
         service_mock.assert_called_once_with(
-            template_id=[template.id]
+            template_id=[template.id],
         )
 
     def test_list_template_integrations__filter_by_many_template__ok(
         self,
         api_client,
-        mocker
+        mocker,
     ):
 
         # arrange
@@ -238,31 +238,31 @@ class TestIntegrations:
                 webhooks=True,
                 shared=True,
                 zapier=True,
-                api=False
+                api=False,
             ),
             TemplateIntegrationsData(
                 id=template_2.id,
                 webhooks=True,
                 shared=True,
                 zapier=True,
-                api=False
-            )
+                api=False,
+            ),
         ]
         service_init_mock = mocker.patch.object(
             TemplateIntegrationsService,
             attribute='__init__',
-            return_value=None
+            return_value=None,
         )
         service_mock = mocker.patch(
             'src.processes.services.templates.'
             'integrations.TemplateIntegrationsService.get_integrations',
-            return_value=integrations_data
+            return_value=integrations_data,
         )
 
         # act
         response = api_client.get(
             path='/templates/integrations',
-            data={'template_id': f'{template.id}, {template_2.id}'}
+            data={'template_id': f'{template.id}, {template_2.id}'},
         )
 
         # assert
@@ -270,15 +270,15 @@ class TestIntegrations:
         service_init_mock.assert_called_once_with(
             account=user.account,
             is_superuser=False,
-            user=user
+            user=user,
         )
         service_mock.assert_called_once_with(
-            template_id=[template.id, template_2.id]
+            template_id=[template.id, template_2.id],
         )
 
     def test_list__filter_by_invalid_template__validation_error(
         self,
-        api_client
+        api_client,
     ):
         # arrange
         user = create_test_user()

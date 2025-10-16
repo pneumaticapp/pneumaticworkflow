@@ -3,29 +3,30 @@ from django.contrib.postgres.fields import (
     ArrayField,
     JSONField,
 )
-from django.db import models
 from django.contrib.postgres.search import SearchVectorField
+from django.db import models
 
-from src.processes.querysets import (
-    WorkflowEventQuerySet,
-    WorkflowEventActionQuerySet,
-)
-from src.generics.managers import BaseSoftDeleteManager
-from src.processes.models import Workflow, Task
-from src.processes.enums import (
-    WorkflowEventType,
-    WorkflowEventActionType,
-    CommentStatus,
-)
 from src.accounts.models import AccountBaseMixin
+from src.generics.managers import BaseSoftDeleteManager
 from src.generics.models import SoftDeleteModel
+from src.processes.enums import (
+    CommentStatus,
+    WorkflowEventActionType,
+    WorkflowEventType,
+)
+from src.processes.models.workflows.task import Task
+from src.processes.models.workflows.workflow import Workflow
+from src.processes.querysets import (
+    WorkflowEventActionQuerySet,
+    WorkflowEventQuerySet,
+)
 
 UserModel = get_user_model()
 
 
 class WorkflowEvent(
     SoftDeleteModel,
-    AccountBaseMixin
+    AccountBaseMixin,
 ):
 
     class Meta:
@@ -33,12 +34,12 @@ class WorkflowEvent(
 
     type = models.IntegerField(
         choices=WorkflowEventType.CHOICES,
-        verbose_name='type'
+        verbose_name='type',
     )
     status = models.CharField(
         default=CommentStatus.CREATED,
         choices=CommentStatus.CHOICES,
-        max_length=20
+        max_length=20,
     )
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(null=True)
@@ -52,7 +53,7 @@ class WorkflowEvent(
         on_delete=models.SET_NULL,
         related_name='events',
         null=True,
-        help_text='Not null for task events and comments'
+        help_text='Not null for task events and comments',
     )
     task_json = JSONField(null=True)
     text = models.TextField(blank=True, null=True)
@@ -92,5 +93,5 @@ class WorkflowEventAction(
     )
     type = models.IntegerField(choices=WorkflowEventActionType.CHOICES)
     objects = BaseSoftDeleteManager.from_queryset(
-        WorkflowEventActionQuerySet
+        WorkflowEventActionQuerySet,
     )()

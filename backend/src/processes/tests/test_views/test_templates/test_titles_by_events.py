@@ -1,18 +1,20 @@
-import pytest
 from datetime import timedelta
+
+import pytest
 from django.utils import timezone
+
+from src.generics.messages import MSG_GE_0007
 from src.processes.enums import (
     WorkflowEventType,
     WorkflowStatus,
 )
-from src.utils.validation import ErrorCode
 from src.processes.tests.fixtures import (
-    create_test_user,
-    create_test_template,
-    create_test_workflow,
     create_test_event,
+    create_test_template,
+    create_test_user,
+    create_test_workflow,
 )
-from src.generics.messages import MSG_GE_0007
+from src.utils.validation import ErrorCode
 
 pytestmark = pytest.mark.django_db
 
@@ -38,7 +40,7 @@ def test_titles_by_events__response_data_templates__ok(api_client):
 
 
 def test_titles_by_events__completed_workflow__ok(
-    api_client
+    api_client,
 ):
 
     # arrange
@@ -48,7 +50,7 @@ def test_titles_by_events__completed_workflow__ok(
     workflow = create_test_workflow(
         user=user,
         template=template,
-        status=WorkflowStatus.DONE
+        status=WorkflowStatus.DONE,
     )
     create_test_event(workflow=workflow, user=user)
 
@@ -62,7 +64,7 @@ def test_titles_by_events__completed_workflow__ok(
 
 
 def test_titles_by_events__ended_workflow__ok(
-    api_client
+    api_client,
 ):
 
     # arrange
@@ -72,7 +74,7 @@ def test_titles_by_events__ended_workflow__ok(
     workflow = create_test_workflow(
         user=user,
         template=template,
-        status=WorkflowStatus.DONE
+        status=WorkflowStatus.DONE,
     )
     create_test_event(workflow=workflow, user=user)
 
@@ -193,7 +195,7 @@ def test_titles_by_events__default_second_ordering_by_name__ok(api_client):
 
 
 def test_titles_by_events__calc_most_popular_by_status_running_only__ok(
-    api_client
+    api_client,
 ):
 
     # arrange
@@ -203,13 +205,13 @@ def test_titles_by_events__calc_most_popular_by_status_running_only__ok(
     workflow_1_1 = create_test_workflow(
         user=user,
         template=template_1,
-        status=WorkflowStatus.DONE
+        status=WorkflowStatus.DONE,
     )
     create_test_event(workflow=workflow_1_1, user=user)
     workflow_1_2 = create_test_workflow(
         user=user,
         template=template_1,
-        status=WorkflowStatus.DONE
+        status=WorkflowStatus.DONE,
     )
     create_test_event(workflow=workflow_1_2, user=user)
     create_test_template(user=user, is_active=True)
@@ -217,13 +219,13 @@ def test_titles_by_events__calc_most_popular_by_status_running_only__ok(
     workflow_2_1 = create_test_workflow(
         user=user,
         template=template_2,
-        status=WorkflowStatus.DELAYED
+        status=WorkflowStatus.DELAYED,
     )
     create_test_event(workflow=workflow_2_1, user=user)
     workflow_2_2 = create_test_workflow(
         user=user,
         template=template_2,
-        status=WorkflowStatus.DELAYED
+        status=WorkflowStatus.DELAYED,
     )
     create_test_event(workflow=workflow_2_2, user=user)
     template_3 = create_test_template(user=user, is_active=True)
@@ -279,7 +281,7 @@ def test_titles_by_events__filter_tsp_datetime__ok(api_client):
         data={
             'date_from_tsp': date_from.timestamp(),
             'date_to_tsp': date_to.timestamp(),
-        }
+        },
     )
 
     # assert
@@ -298,15 +300,15 @@ def test_titles_by_events__date_from_tsp__ok(api_client):
     create_test_event(
         workflow=workflow,
         user=user,
-        data_create=timezone.now() + timedelta(hours=1)
+        data_create=timezone.now() + timedelta(hours=1),
     )
 
     # act
     response = api_client.get(
         '/templates/titles-by-events',
         data={
-            'date_from_tsp': (timezone.now() - timedelta(hours=1)).timestamp()
-        }
+            'date_from_tsp': (timezone.now() - timedelta(hours=1)).timestamp(),
+        },
     )
 
     # assert
@@ -325,15 +327,15 @@ def test_titles_by_events__date_to_tsp__ok(api_client):
     create_test_event(
         workflow=workflow,
         user=user,
-        data_create=timezone.now() - timedelta(hours=1)
+        data_create=timezone.now() - timedelta(hours=1),
     )
 
     # act
     response = api_client.get(
         '/templates/titles-by-events',
         data={
-            'date_to_tsp': (timezone.now() + timedelta(hours=1)).timestamp()
-        }
+            'date_to_tsp': (timezone.now() + timedelta(hours=1)).timestamp(),
+        },
     )
 
     # assert
@@ -350,29 +352,29 @@ def test_titles_by_events__date_from_tsp_blank__ok(api_client):
     template = create_test_template(
         name='First',
         user=user,
-        is_active=True
+        is_active=True,
     )
     workflow = create_test_workflow(user=user, template=template)
     create_test_event(
         workflow=workflow,
         user=user,
-        data_create=timezone.now() + timedelta(days=1)
+        data_create=timezone.now() + timedelta(days=1),
     )
     template_2 = create_test_template(
         name='Second',
         user=user,
-        is_active=True
+        is_active=True,
     )
     workflow_2 = create_test_workflow(user=user, template=template_2)
     create_test_event(
         workflow=workflow_2,
         user=user,
-        data_create=timezone.now() - timedelta(days=1)
+        data_create=timezone.now() - timedelta(days=1),
     )
 
     # act
     response = api_client.get(
-        '/templates/titles-by-events?date_from_tsp='
+        '/templates/titles-by-events?date_from_tsp=',
     )
 
     # assert
@@ -390,29 +392,29 @@ def test_titles_by_events__date_to_tsp_blank__ok(api_client):
     template = create_test_template(
         name='First',
         user=user,
-        is_active=True
+        is_active=True,
     )
     workflow = create_test_workflow(user=user, template=template)
     create_test_event(
         workflow=workflow,
         user=user,
-        data_create=timezone.now() + timedelta(days=1)
+        data_create=timezone.now() + timedelta(days=1),
     )
     template_2 = create_test_template(
         name='Second',
         user=user,
-        is_active=True
+        is_active=True,
     )
     workflow_2 = create_test_workflow(user=user, template=template_2)
     create_test_event(
         workflow=workflow_2,
         user=user,
-        data_create=timezone.now() - timedelta(days=1)
+        data_create=timezone.now() - timedelta(days=1),
     )
 
     # act
     response = api_client.get(
-        '/templates/titles-by-events?date_to_tsp='
+        '/templates/titles-by-events?date_to_tsp=',
     )
 
     # assert
@@ -439,7 +441,7 @@ def test_titles_by_events__empty_string_tsp_datetime__ok(api_client):
         data={
             'date_from_tsp': date_from_tsp,
             'date_to_tsp': date_to_tsp,
-        }
+        },
     )
 
     # assert
@@ -465,7 +467,7 @@ def test_titles_by_events__invalid_tsp_date_period__not_show(api_client):
         data={
             'date_from_tsp': date_from_tsp.timestamp(),
             'date_to_tsp': date_to_tsp.timestamp(),
-        }
+        },
     )
 
     # assert
@@ -483,7 +485,7 @@ def test_titles_by_events__invalid_tsp_date_period__not_show(api_client):
 )
 def test_titles_by_events__invalid_date_from_tsp__validation_error(
     api_client,
-    date_from_tsp
+    date_from_tsp,
 ):
 
     # arrange
@@ -496,7 +498,7 @@ def test_titles_by_events__invalid_date_from_tsp__validation_error(
     # act
     response = api_client.get(
         '/templates/titles-by-events',
-        data={'date_from_tsp': date_from_tsp}
+        data={'date_from_tsp': date_from_tsp},
     )
 
     # assert
@@ -517,7 +519,7 @@ def test_titles_by_events__invalid_date_from_tsp__validation_error(
 )
 def test_titles_by_events__invalid_date_to_tsp__validation_error(
     api_client,
-    date_to_tsp
+    date_to_tsp,
 ):
 
     # arrange
@@ -530,7 +532,7 @@ def test_titles_by_events__invalid_date_to_tsp__validation_error(
     # act
     response = api_client.get(
         '/templates/titles-by-events',
-        data={'date_to_tsp': date_to_tsp}
+        data={'date_to_tsp': date_to_tsp},
     )
 
     # assert
@@ -542,7 +544,7 @@ def test_titles_by_events__invalid_date_to_tsp__validation_error(
 
 
 def test_titles_by_events__incorrect_tsp_datetime__validation_error(
-    api_client
+    api_client,
 ):
 
     # arrange
@@ -560,7 +562,7 @@ def test_titles_by_events__incorrect_tsp_datetime__validation_error(
         data={
             'date_from_tsp': date_from_tsp,
             'date_to_tsp': date_to_tsp,
-        }
+        },
     )
 
     # assert
@@ -602,7 +604,7 @@ def test_titles_by_events__allowed_type_event__ok(api_client, type_event):
     create_test_event(
         workflow=workflow,
         user=user,
-        type_event=type_event
+        type_event=type_event,
     )
 
     # act
@@ -626,7 +628,7 @@ def test_titles_by_events__allowed_type_event__ok(api_client, type_event):
 )
 def test_titles_by_events__disallow_type_event__not_show(
     api_client,
-    type_event
+    type_event,
 ):
 
     # arrange
@@ -637,7 +639,7 @@ def test_titles_by_events__disallow_type_event__not_show(
     create_test_event(
         workflow=workflow,
         user=user,
-        type_event=type_event
+        type_event=type_event,
     )
 
     # act
@@ -649,7 +651,7 @@ def test_titles_by_events__disallow_type_event__not_show(
 
 
 def test_titles_by_events__user_failed_authenticate__permission_denied(
-    api_client
+    api_client,
 ):
 
     # arrange
@@ -666,7 +668,7 @@ def test_titles_by_events__user_failed_authenticate__permission_denied(
 
 
 def test_titles_by_events__user_not_receive_data_another_account__not_show(
-    api_client
+    api_client,
 ):
 
     # arrange

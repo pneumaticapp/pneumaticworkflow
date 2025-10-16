@@ -2,12 +2,12 @@ import pytest
 from django.utils import timezone
 
 from src.accounts.enums import (
-    NotificationType,
     NotificationStatus,
+    NotificationType,
 )
 from src.accounts.models import (
-    SystemMessage,
     Notification,
+    SystemMessage,
 )
 from src.accounts.tasks import (
     send_system_notification,
@@ -15,7 +15,6 @@ from src.accounts.tasks import (
 from src.processes.tests.fixtures import (
     create_test_user,
 )
-
 
 pytestmark = pytest.mark.django_db
 
@@ -28,7 +27,7 @@ class TestSendSystemNotification:
         another_user = create_test_user(email='another@pneumatic.app')
 
         send_notification_mock = mocker.patch(
-            'src.accounts.tasks._send_notification'
+            'src.accounts.tasks._send_notification',
         )
         SystemMessage.objects.create(
             text='If you smell what The Rock is cooking!',
@@ -50,7 +49,7 @@ class TestSendSystemNotification:
         another_user = create_test_user(email='another@pneumatic.app')
 
         send_notification_mock = mocker.patch(
-            'src.accounts.tasks._send_notification'
+            'src.accounts.tasks._send_notification',
         )
 
         system_message = SystemMessage.objects.create(
@@ -82,7 +81,7 @@ class TestSendSystemNotification:
         another_user = create_test_user(email='another@pneumatic.app')
 
         send_notification_mock = mocker.patch(
-            'src.accounts.tasks._send_notification'
+            'src.accounts.tasks._send_notification',
         )
 
         SystemMessage.objects.create(

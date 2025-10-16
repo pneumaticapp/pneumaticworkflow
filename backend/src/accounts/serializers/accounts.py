@@ -1,11 +1,11 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
-from src.accounts.models import Account
-from src.generics.serializers import CustomValidationErrorMixin
-from src.accounts.messages import MSG_A_0003
-from src.generics.fields import TimeStampField
 
+from src.accounts.messages import MSG_A_0003
+from src.accounts.models import Account
+from src.generics.fields import TimeStampField
+from src.generics.serializers import CustomValidationErrorMixin
 
 UserModel = get_user_model()
 
@@ -22,7 +22,7 @@ class AccountCacheSerializer(serializers.ModelSerializer):
 
 class AccountSerializer(
     CustomValidationErrorMixin,
-    serializers.ModelSerializer
+    serializers.ModelSerializer,
 ):
 
     class Meta:
@@ -49,23 +49,21 @@ class AccountSerializer(
 
     date_joined_tsp = TimeStampField(
         source='date_joined',
-        read_only=True
+        read_only=True,
     )
     plan_expiration_tsp = TimeStampField(
         source='plan_expiration',
-        read_only=True
+        read_only=True,
     )
 
     def validate_logo_lg(self, value):
-        if value:
-            if self.instance.is_tenant:
-                raise ValidationError(MSG_A_0003)
+        if value and self.instance.is_tenant:
+            raise ValidationError(MSG_A_0003)
         return value
 
     def validate_logo_sm(self, value):
-        if value:
-            if self.instance.is_tenant:
-                raise ValidationError(MSG_A_0003)
+        if value and self.instance.is_tenant:
+            raise ValidationError(MSG_A_0003)
         return value
 
 
@@ -89,5 +87,5 @@ class AccountPlanSerializer(serializers.ModelSerializer):
 
     plan_expiration_tsp = TimeStampField(
         read_only=True,
-        source='plan_expiration'
+        source='plan_expiration',
     )

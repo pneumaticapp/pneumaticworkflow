@@ -1,8 +1,9 @@
 import pytest
+
 from src.processes.enums import (
-    PredicateType,
+    ConditionAction,
     PredicateOperator,
-    ConditionAction
+    PredicateType,
 )
 from src.processes.utils.common import (
     get_tasks_parents,
@@ -18,7 +19,7 @@ def test_get_parents__task_without_conditions__ok():
         {
             'number': 1,
             'name': 'Task 1',
-            'api_name': task_1_api_name
+            'api_name': task_1_api_name,
         },
         {
             'number': 2,
@@ -37,13 +38,13 @@ def test_get_parents__task_without_conditions__ok():
                                     'api_name': 'predicate-1',
                                     'field': task_1_api_name,
                                     'value': None,
-                                }
-                            ]
-                        }
-                    ]
-                }
-            ]
-        }
+                                },
+                            ],
+                        },
+                    ],
+                },
+            ],
+        },
     ]
 
     # act
@@ -56,7 +57,7 @@ def test_get_parents__task_without_conditions__ok():
 
 @pytest.mark.parametrize(
     'cond_action',
-    (ConditionAction.SKIP_TASK, ConditionAction.END_WORKFLOW)
+    (ConditionAction.SKIP_TASK, ConditionAction.END_WORKFLOW),
 )
 def test_get_parents__task_with_not_start_conditions__ok(cond_action):
 
@@ -67,7 +68,7 @@ def test_get_parents__task_with_not_start_conditions__ok(cond_action):
         {
             'number': 1,
             'name': 'Task 1',
-            'api_name': task_1_api_name
+            'api_name': task_1_api_name,
         },
         {
             'number': 2,
@@ -86,13 +87,13 @@ def test_get_parents__task_with_not_start_conditions__ok(cond_action):
                                     'api_name': 'predicate-1',
                                     'field': task_1_api_name,
                                     'value': None,
-                                }
-                            ]
-                        }
-                    ]
-                }
-            ]
-        }
+                                },
+                            ],
+                        },
+                    ],
+                },
+            ],
+        },
     ]
 
     # act
@@ -132,23 +133,23 @@ def test_get_parents__two_start_predicates__ok():
                                     'operator': PredicateOperator.COMPLETED,
                                     'field': task_3_api_name,
                                     'value': None,
-                                }
-                            ]
-                        }
-                    ]
-                }
-            ]
+                                },
+                            ],
+                        },
+                    ],
+                },
+            ],
         },
         {
             'number': 2,
             'name': 'Task 2',
-            'api_name': task_2_api_name
+            'api_name': task_2_api_name,
         },
         {
             'number': 3,
             'name': 'Task 3',
-            'api_name': task_3_api_name
-        }
+            'api_name': task_3_api_name,
+        },
     ]
 
     # act
@@ -183,12 +184,12 @@ def test_get_parents__linear_template__ok():
                                     'api_name': 'predicate-1',
                                     'field': None,
                                     'value': None,
-                                }
-                            ]
-                        }
-                    ]
-                }
-            ]
+                                },
+                            ],
+                        },
+                    ],
+                },
+            ],
         },
         {
             'number': 2,
@@ -207,13 +208,13 @@ def test_get_parents__linear_template__ok():
                                     'api_name': 'predicate-1',
                                     'field': task_1_api_name,
                                     'value': None,
-                                }
-                            ]
-                        }
-                    ]
-                }
-            ]
-        }
+                                },
+                            ],
+                        },
+                    ],
+                },
+            ],
+        },
     ]
 
     # act
@@ -248,12 +249,12 @@ def test_get_parents__deleted_task_in_conditions__skip():
                                     'api_name': 'predicate-1',
                                     'field': deleted_task_api_name,
                                     'value': None,
-                                }
-                            ]
-                        }
-                    ]
-                }
-            ]
+                                },
+                            ],
+                        },
+                    ],
+                },
+            ],
         },
         {
             'number': 2,
@@ -272,13 +273,13 @@ def test_get_parents__deleted_task_in_conditions__skip():
                                     'api_name': 'predicate-1',
                                     'field': task_1_api_name,
                                     'value': None,
-                                }
-                            ]
-                        }
-                    ]
-                }
-            ]
-        }
+                                },
+                            ],
+                        },
+                    ],
+                },
+            ],
+        },
     ]
 
     # act

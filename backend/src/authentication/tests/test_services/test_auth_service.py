@@ -1,7 +1,7 @@
 import pytest
 
 from src.accounts.models import Account, User
-from src.authentication.services import AuthService
+from src.authentication.services.user_auth import AuthService
 
 
 class TestAuthService:
@@ -17,7 +17,7 @@ class TestAuthService:
         token = AuthService.get_auth_token(
             user=user,
             user_agent='',
-            user_ip='0.0.0.0'
+            user_ip='0.0.0.0',
         )
 
         assert token

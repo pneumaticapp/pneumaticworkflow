@@ -1,4 +1,5 @@
 import pytest
+
 from src.services.markdown import MarkdownService
 
 
@@ -11,7 +12,7 @@ from src.services.markdown import MarkdownService
         ('Is ** *italic* inside bold**', 'Is  *italic* inside bold'),
         ('*Is **bold** inside italic*', '*Is bold inside italic*'),
         ('**Work\n in multiline**', 'Work\n in multiline'),
-    ]
+    ],
 )
 def test_clear_bold__ok(text, expected):
 
@@ -30,7 +31,7 @@ def test_clear_bold__ok(text, expected):
         ('***Bold Italic***', '**Bold Italic**'),
         ('*Is **bold** inside italic*', 'Is bold inside italic'),
         ('*Work\n in multiline*', 'Work\n in multiline'),
-    ]
+    ],
 )
 def test_clear_italic__ok(text, expected):
 
@@ -46,11 +47,11 @@ def test_clear_italic__ok(text, expected):
     [
         (
             '![[backend] Task, 🐛](https://g.com/07.png "attachment_id:2398")',
-            '[backend] Task, 🐛'
+            '[backend] Task, 🐛',
         ),
         (
             'Embedded image:\n![image.jpg](https://storage.com/)',
-            'Embedded image:\nimage.jpg'
+            'Embedded image:\nimage.jpg',
         ),
         (
             'Embedded image:\n![some.jpg](https://storage.com/ "desc")',
@@ -58,9 +59,9 @@ def test_clear_italic__ok(text, expected):
         ),
         (
             '[name of link.webm](https://www.pneumatic.app/test.webm)',
-            '[name of link.webm](https://www.pneumatic.app/test.webm)'
-        )
-    ]
+            '[name of link.webm](https://www.pneumatic.app/test.webm)',
+        ),
+    ],
 )
 def test_clear_images__ok(text, expected):
 
@@ -93,8 +94,8 @@ def test_clear_images__ok(text, expected):
         (
             'Raw link https://ama-assn.org/regeneron_photo.jpg to file',
             'Raw link https://ama-assn.org/regeneron_photo.jpg to file',
-        )
-    ]
+        ),
+    ],
 )
 def test_clear_links__ok(text, expected):
 
@@ -110,7 +111,7 @@ def test_clear_links__ok(text, expected):
     [
         (
             'This paragraph:\n\n2. One\n3. Two\n4. Three',
-            'This paragraph:\n\nOne, Two, Three'
+            'This paragraph:\n\nOne, Two, Three',
         ),
         (
             'This paragraph won\'t be converted '
@@ -122,7 +123,7 @@ def test_clear_links__ok(text, expected):
             'because starting number is not 1. or -:\n\n'
             '* One\n'
             '* Two\n'
-            '* Three'
+            '* Three',
         ),
         (
             'This paragraph will be converted:\n'
@@ -134,7 +135,7 @@ def test_clear_links__ok(text, expected):
             '    1. Two.two.two\n'
             '3. Three',
             'This paragraph will be converted:\n'
-            'One, Two, Two.one, Two.two, Two.two.one, Two.two.two, Three'
+            'One, Two, Two.one, Two.two, Two.two.one, Two.two.two, Three',
         ),
         (
             'First list:\n'
@@ -146,9 +147,9 @@ def test_clear_links__ok(text, expected):
             'First list:\n'
             'One, Two\n'
             'Second list:\n'
-            'Two.one, Two.two'
-        )
-    ]
+            'Two.one, Two.two',
+        ),
+    ],
 )
 def test_clear_list__ok(text, expected):
 
@@ -166,17 +167,17 @@ def test_clear_list__ok(text, expected):
         ('**[12N@yantara-Pat|1]** please', '**12N@yantara-Pat** please'),
         (
             '[Man|9] please read [file.jpg](https://g.com/file.txt)',
-            'Man please read [file.jpg](https://g.com/file.txt)'
+            'Man please read [file.jpg](https://g.com/file.txt)',
         ),
         (
             '[John (Smith)|123] and [Mary (Jones)|456] hello',
-            'John (Smith) and Mary (Jones) hello'
+            'John (Smith) and Mary (Jones) hello',
         ),
         (
             '[User (admin)|789] check task [Document (final).pdf|999]',
-            'User (admin) check task Document (final).pdf'
-        )
-    ]
+            'User (admin) check task Document (final).pdf',
+        ),
+    ],
 )
 def test_clear_mentions__ok(text, expected):
 
@@ -195,14 +196,14 @@ def test_clear_mentions__ok(text, expected):
             '|---|---|\n'
             '| Line 1, cell 1 | Line 1, cell 2 |\n'
             '| Line 2, cell 1 | Line 2, cell 2 |\n\n',
-            'Table\n'
+            'Table\n',
         ),
         (
             '| Heading 1 |\n'
             '|---|\n'
             '| Line 1, cell 1 |\n'
             '| Line 2, cell 1 |\n\n',
-            'Table\n'
+            'Table\n',
         ),
         (
             '| Heading 1 | Heading 2 |\n'
@@ -214,13 +215,13 @@ def test_clear_mentions__ok(text, expected):
             '| Line 1, cell 1 | Line 1, cell 2 |\n'
             '| Line 2, cell 1 | Line 2, cell 2 |\n\n',
             'Table\n'
-            'Table\n'
+            'Table\n',
         ),
         # (
         #     '[Man|9] please read [file.jpg](https://g.com/file.txt)',
         #     'Man please read [file.jpg](https://g.com/file.txt)'
         # )
-    ]
+    ],
 )
 def test_clear_table__ok(text, expected):
 
@@ -266,8 +267,8 @@ def test_clear_table__ok(text, expected):
             'One image, Two some file.jpg, Two.one, Two.tw\n'
             'o\n'
             'End text https://g.com/file2.txt with link',
-        )
-    ]
+        ),
+    ],
 )
 def test_clear__mixed_styles__ok(text, expected):
 

@@ -1,24 +1,22 @@
 import pytest
-from src.processes.services.exceptions import (
-    CommentServiceException
-)
+
+from src.authentication.enums import AuthTokenType
+from src.authentication.services.guest_auth import GuestJWTAuthService
+from src.processes.models.workflows.task import TaskPerformer
 from src.processes.services.events import (
+    CommentService,
     WorkflowEventService,
-    CommentService
 )
-from src.processes.models import (
-    TaskPerformer,
+from src.processes.services.exceptions import (
+    CommentServiceException,
 )
 from src.processes.tests.fixtures import (
+    create_test_account,
+    create_test_guest,
     create_test_user,
     create_test_workflow,
-    create_test_guest,
-    create_test_account,
 )
-from src.authentication.services import GuestJWTAuthService
-from src.authentication.enums import AuthTokenType
 from src.utils.validation import ErrorCode
-
 
 pytestmark = pytest.mark.django_db
 
@@ -30,7 +28,7 @@ def test_create_reaction__account_owner__ok(api_client, mocker):
     user = create_test_user(
         account=owner.account,
         email='member@test.test',
-        is_account_owner=False
+        is_account_owner=False,
     )
     workflow = create_test_workflow(user)
     task = workflow.tasks.get(number=1)
@@ -39,17 +37,17 @@ def test_create_reaction__account_owner__ok(api_client, mocker):
         text='Some comment',
         task=task,
         user=user,
-        after_create_actions=False
+        after_create_actions=False,
     )
 
     service_init_mock = mocker.patch.object(
         CommentService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     create_reaction_mock = mocker.patch(
         'src.processes.views.comments.'
-        'CommentService.create_reaction'
+        'CommentService.create_reaction',
     )
     api_client.token_authenticate(owner)
     value = '=b'
@@ -66,7 +64,7 @@ def test_create_reaction__account_owner__ok(api_client, mocker):
         instance=event,
         user=owner,
         auth_type=AuthTokenType.USER,
-        is_superuser=False
+        is_superuser=False,
     )
     create_reaction_mock.assert_called_once_with(value=value)
     assert not workflow.members.filter(id=owner.id).exists()
@@ -79,7 +77,7 @@ def test_create_reaction__workflow_member__ok(api_client, mocker):
     user = create_test_user(
         account=owner.account,
         email='member@test.test',
-        is_account_owner=False
+        is_account_owner=False,
     )
     workflow = create_test_workflow(owner)
     workflow.members.add(user)
@@ -88,17 +86,17 @@ def test_create_reaction__workflow_member__ok(api_client, mocker):
         text='Some comment',
         task=task,
         user=owner,
-        after_create_actions=False
+        after_create_actions=False,
     )
 
     service_init_mock = mocker.patch.object(
         CommentService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     create_reaction_mock = mocker.patch(
         'src.processes.views.comments.'
-        'CommentService.create_reaction'
+        'CommentService.create_reaction',
     )
     api_client.token_authenticate(user)
     value = '=b'
@@ -115,14 +113,14 @@ def test_create_reaction__workflow_member__ok(api_client, mocker):
         instance=event,
         user=user,
         auth_type=AuthTokenType.USER,
-        is_superuser=False
+        is_superuser=False,
     )
     create_reaction_mock.assert_called_once_with(value=value)
 
 
 def test_create_reaction__user_not_member__permission_denied(
     api_client,
-    mocker
+    mocker,
 ):
 
     # arrange
@@ -133,7 +131,7 @@ def test_create_reaction__user_not_member__permission_denied(
         text='Some comment',
         task=task,
         user=owner,
-        after_create_actions=False
+        after_create_actions=False,
     )
     user = create_test_user(
         account=owner.account,
@@ -143,11 +141,11 @@ def test_create_reaction__user_not_member__permission_denied(
     service_init_mock = mocker.patch.object(
         CommentService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     create_reaction_mock = mocker.patch(
         'src.processes.views.comments.'
-        'CommentService.create_reaction'
+        'CommentService.create_reaction',
     )
     value = '=b'
     api_client.token_authenticate(user)
@@ -178,28 +176,28 @@ def test_create_reaction__guest__ok(mocker, api_client):
     task = workflow.tasks.first()
     TaskPerformer.objects.create(
         task_id=task.id,
-        user_id=guest.id
+        user_id=guest.id,
     )
     str_token = GuestJWTAuthService.get_str_token(
         task_id=task.id,
         user_id=guest.id,
-        account_id=account.id
+        account_id=account.id,
     )
     task = workflow.tasks.get(number=1)
     event = WorkflowEventService.comment_created_event(
         user=owner,
         text='Some comment',
         task=task,
-        after_create_actions=False
+        after_create_actions=False,
     )
     service_init_mock = mocker.patch.object(
         CommentService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     create_reaction_mock = mocker.patch(
         'src.processes.views.comments.'
-        'CommentService.create_reaction'
+        'CommentService.create_reaction',
     )
     value = '=b'
 
@@ -216,14 +214,14 @@ def test_create_reaction__guest__ok(mocker, api_client):
         instance=event,
         user=guest,
         auth_type=AuthTokenType.GUEST,
-        is_superuser=False
+        is_superuser=False,
     )
     create_reaction_mock.assert_called_once_with(value=value)
 
 
 def test_create_reaction__another_task_guest__permission_denied(
     mocker,
-    api_client
+    api_client,
 ):
 
     # arrange
@@ -240,28 +238,28 @@ def test_create_reaction__another_task_guest__permission_denied(
     task_2 = workflow_2.tasks.get(number=1)
     TaskPerformer.objects.create(
         task_id=task_2.id,
-        user_id=guest.id
+        user_id=guest.id,
     )
     str_token = GuestJWTAuthService.get_str_token(
         task_id=task_2.id,
         user_id=guest.id,
-        account_id=account.id
+        account_id=account.id,
     )
     task = workflow.tasks.get(number=1)
     event = WorkflowEventService.comment_created_event(
         user=owner,
         text='Some comment',
         task=task,
-        after_create_actions=False
+        after_create_actions=False,
     )
     service_init_mock = mocker.patch.object(
         CommentService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     create_reaction_mock = mocker.patch(
         'src.processes.views.comments.'
-        'CommentService.create_reaction'
+        'CommentService.create_reaction',
     )
     value = '=b'
 
@@ -280,7 +278,7 @@ def test_create_reaction__another_task_guest__permission_denied(
 
 def test_create_reaction__not_active_task_guest__not_authenticated(
     mocker,
-    api_client
+    api_client,
 ):
 
     # arrange
@@ -296,27 +294,27 @@ def test_create_reaction__not_active_task_guest__not_authenticated(
     task_2 = workflow.tasks.get(number=2)
     TaskPerformer.objects.create(
         task_id=task_2.id,
-        user_id=guest.id
+        user_id=guest.id,
     )
     str_token = GuestJWTAuthService.get_str_token(
         task_id=task_2.id,
         user_id=guest.id,
-        account_id=account.id
+        account_id=account.id,
     )
     event = WorkflowEventService.comment_created_event(
         user=owner,
         text='Some comment',
         task=task,
-        after_create_actions=False
+        after_create_actions=False,
     )
     service_init_mock = mocker.patch.object(
         CommentService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     create_reaction_mock = mocker.patch(
         'src.processes.views.comments.'
-        'CommentService.create_reaction'
+        'CommentService.create_reaction',
     )
     value = '=b'
 
@@ -335,7 +333,7 @@ def test_create_reaction__not_active_task_guest__not_authenticated(
 
 def test_create_reaction__guest_another_workflow__permission_denied(
     mocker,
-    api_client
+    api_client,
 ):
 
     # arrange
@@ -351,43 +349,43 @@ def test_create_reaction__guest_another_workflow__permission_denied(
         text='Some comment',
         task=task,
         user=owner,
-        after_create_actions=False
+        after_create_actions=False,
     )
     task_1 = workflow_1.tasks.get(number=1)
     guest_1 = create_test_guest(account=account)
     TaskPerformer.objects.create(
         task_id=task_1.id,
-        user_id=guest_1.id
+        user_id=guest_1.id,
     )
     GuestJWTAuthService.get_str_token(
         task_id=task_1.id,
         user_id=guest_1.id,
-        account_id=account.id
+        account_id=account.id,
     )
 
     workflow_2 = create_test_workflow(owner, tasks_count=1)
     task_2 = workflow_2.tasks.get(number=1)
     guest_2 = create_test_guest(
         account=account,
-        email='guest2@test.test'
+        email='guest2@test.test',
     )
     TaskPerformer.objects.create(
         task_id=task_2.id,
-        user_id=guest_2.id
+        user_id=guest_2.id,
     )
     str_token_2 = GuestJWTAuthService.get_str_token(
         task_id=task_2.id,
         user_id=guest_2.id,
-        account_id=account.id
+        account_id=account.id,
     )
     service_init_mock = mocker.patch.object(
         CommentService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     create_reaction_mock = mocker.patch(
         'src.processes.views.comments.'
-        'CommentService.create_reaction'
+        'CommentService.create_reaction',
     )
     value = '=b'
 
@@ -395,7 +393,7 @@ def test_create_reaction__guest_another_workflow__permission_denied(
     response = api_client.post(
         f'/workflows/comments/{event.id}/create-reaction',
         data={'value': value},
-        **{'X-Guest-Authorization': str_token_2}
+        **{'X-Guest-Authorization': str_token_2},
     )
 
     # assert
@@ -412,17 +410,17 @@ def test_create_reaction__not_comment__permission_denied(api_client, mocker):
     task = workflow.tasks.get(number=1)
     event = WorkflowEventService.task_complete_event(
         user=user,
-        task=task
+        task=task,
     )
 
     service_init_mock = mocker.patch.object(
         CommentService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     create_reaction_mock = mocker.patch(
         'src.processes.views.comments.'
-        'CommentService.create_reaction'
+        'CommentService.create_reaction',
     )
     value = '=b'
     api_client.token_authenticate(user)
@@ -441,7 +439,7 @@ def test_create_reaction__not_comment__permission_denied(api_client, mocker):
 
 def test_create_reaction__service_exception__validation_error(
     api_client,
-    mocker
+    mocker,
 ):
 
     # arrange
@@ -452,18 +450,18 @@ def test_create_reaction__service_exception__validation_error(
         text='Some comment',
         task=task,
         user=user,
-        after_create_actions=False
+        after_create_actions=False,
     )
     service_init_mock = mocker.patch.object(
         CommentService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     message = 'some message'
     create_reaction_mock = mocker.patch(
         'src.processes.views.comments.'
         'CommentService.create_reaction',
-        side_effect=CommentServiceException(message)
+        side_effect=CommentServiceException(message),
     )
     value = '=b'
     api_client.token_authenticate(user)
@@ -482,14 +480,14 @@ def test_create_reaction__service_exception__validation_error(
         instance=event,
         user=user,
         auth_type=AuthTokenType.USER,
-        is_superuser=False
+        is_superuser=False,
     )
     create_reaction_mock.assert_called_once()
 
 
 def test_create_reaction__value_limit_reached__validation_error(
     api_client,
-    mocker
+    mocker,
 ):
 
     # arrange
@@ -500,16 +498,16 @@ def test_create_reaction__value_limit_reached__validation_error(
         text='Some comment',
         task=task,
         user=user,
-        after_create_actions=False
+        after_create_actions=False,
     )
     service_init_mock = mocker.patch.object(
         CommentService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     create_reaction_mock = mocker.patch(
         'src.processes.views.comments.'
-        'CommentService.create_reaction'
+        'CommentService.create_reaction',
     )
     value = '12345678910'
     api_client.token_authenticate(user)
@@ -532,7 +530,7 @@ def test_create_reaction__value_limit_reached__validation_error(
 
 def test_create_reaction__value_is_null__validation_error(
     api_client,
-    mocker
+    mocker,
 ):
 
     # arrange
@@ -543,16 +541,16 @@ def test_create_reaction__value_is_null__validation_error(
         text='Some comment',
         task=task,
         user=user,
-        after_create_actions=False
+        after_create_actions=False,
     )
     service_init_mock = mocker.patch.object(
         CommentService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     create_reaction_mock = mocker.patch(
         'src.processes.views.comments.'
-        'CommentService.create_reaction'
+        'CommentService.create_reaction',
     )
     api_client.token_authenticate(user)
 
@@ -573,7 +571,7 @@ def test_create_reaction__value_is_null__validation_error(
 
 def test_create_reaction__value_is_blank__validation_error(
     api_client,
-    mocker
+    mocker,
 ):
 
     # arrange
@@ -584,16 +582,16 @@ def test_create_reaction__value_is_blank__validation_error(
         text='Some comment',
         task=task,
         user=user,
-        after_create_actions=False
+        after_create_actions=False,
     )
     service_init_mock = mocker.patch.object(
         CommentService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     create_reaction_mock = mocker.patch(
         'src.processes.views.comments.'
-        'CommentService.create_reaction'
+        'CommentService.create_reaction',
     )
     api_client.token_authenticate(user)
 
@@ -614,7 +612,7 @@ def test_create_reaction__value_is_blank__validation_error(
 
 def test_create_reaction__value_invalid_type__validation_error(
     api_client,
-    mocker
+    mocker,
 ):
 
     # arrange
@@ -625,16 +623,16 @@ def test_create_reaction__value_invalid_type__validation_error(
         text='Some comment',
         task=task,
         user=user,
-        after_create_actions=False
+        after_create_actions=False,
     )
     service_init_mock = mocker.patch.object(
         CommentService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     create_reaction_mock = mocker.patch(
         'src.processes.views.comments.'
-        'CommentService.create_reaction'
+        'CommentService.create_reaction',
     )
     api_client.token_authenticate(user)
 

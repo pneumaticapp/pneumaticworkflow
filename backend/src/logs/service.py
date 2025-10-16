@@ -1,13 +1,14 @@
 from typing import Optional
-from src.generics.base.service import BaseModelService
-from src.logs.models import AccountEvent
+
 from django.contrib.auth import get_user_model
+
+from src.generics.base.service import BaseModelService
 from src.logs.enums import (
     AccountEventStatus,
     AccountEventType,
     RequestDirection,
 )
-
+from src.logs.models import AccountEvent
 
 UserModel = get_user_model()
 
@@ -29,10 +30,10 @@ class AccountLogService(BaseModelService):
         user_id: Optional[int] = None,
         account_id: Optional[int] = None,
         response_data: Optional[dict] = None,
-        contractor: str = None,
+        contractor: Optional[str] = None,
         status: AccountEventStatus = AccountEventStatus.PENDING,
         direction: RequestDirection = RequestDirection.RECEIVED,
-        **kwargs
+        **kwargs,
     ):
 
         self.instance = AccountEvent.objects.create(
@@ -71,7 +72,7 @@ class AccountLogService(BaseModelService):
         direction: RequestDirection = RequestDirection.RECEIVED,
         request_data: Optional[dict] = None,
         response_data: Optional[dict] = None,
-        contractor: Optional[str] = None
+        contractor: Optional[str] = None,
     ):
         if 200 <= http_status < 300:
             status = AccountEventStatus.SUCCESS
@@ -144,7 +145,7 @@ class AccountLogService(BaseModelService):
         status: AccountEventStatus,
         http_status: int,
         response_data: Optional[dict] = None,
-        user_id: Optional[int] = None
+        user_id: Optional[int] = None,
     ):
         self.create(
             event_type=AccountEventType.WEBHOOK,
@@ -166,7 +167,7 @@ class AccountLogService(BaseModelService):
         path: str,
         http_status: int,
         response_data: Optional[dict] = None,
-        contractor: Optional[str] = None
+        contractor: Optional[str] = None,
     ):
         if 200 <= http_status < 300:
             status = AccountEventStatus.SUCCESS
@@ -202,5 +203,24 @@ class AccountLogService(BaseModelService):
             status=status,
             user=user,
             account_id=user.account_id,
-            response_data=data
+            response_data=data,
+        )
+
+    def signup(
+        self,
+        user: UserModel,
+        source: str,
+    ):
+        """Log user signup with source information"""
+        self.create(
+            event_type=AccountEventType.AUTH,
+            title=f'User signed up via {source}',
+            status=AccountEventStatus.SUCCESS,
+            user_id=user.id,
+            account_id=user.account_id,
+            response_data={
+                'source': source,
+                'email': user.email,
+                'account_id': user.account_id,
+            },
         )

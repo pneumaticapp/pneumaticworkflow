@@ -1,9 +1,8 @@
 from django.core.management.base import BaseCommand
 from django.db import transaction
-from src.accounts.services import (
-    AccountService,
-    UserService,
-)
+
+from src.accounts.services.account import AccountService
+from src.accounts.services.user import UserService
 from src.reports.serializers import UserModel
 
 
@@ -21,7 +20,7 @@ class Command(BaseCommand):
 
         if UserModel.objects.filter(email=email).exists():
             self.stdout.write(
-                self.style.ERROR('User with the given email already exists.')
+                self.style.ERROR('User with the given email already exists.'),
             )
             return
 
@@ -42,5 +41,5 @@ class Command(BaseCommand):
             account_owner.is_staff = True
             account_owner.save()
             self.stdout.write(
-                self.style.SUCCESS('User successfully created.')
+                self.style.SUCCESS('User successfully created.'),
             )

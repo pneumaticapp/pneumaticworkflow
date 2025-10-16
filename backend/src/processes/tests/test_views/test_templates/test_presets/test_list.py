@@ -1,14 +1,14 @@
 import pytest
+
+from src.processes.enums import PresetType
 from src.processes.tests.fixtures import (
-    create_test_admin,
     create_test_account,
+    create_test_admin,
+    create_test_not_admin,
+    create_test_owner,
     create_test_template,
     create_test_template_preset,
-    create_test_owner,
-    create_test_not_admin
 )
-from src.processes.enums import PresetType
-
 
 pytestmark = pytest.mark.django_db
 
@@ -31,9 +31,9 @@ class TestTemplatePresetsListView:
                 {
                     'api_name': 'field_1',
                     'order': 1,
-                    'width': 200
-                }
-            ]
+                    'width': 200,
+                },
+            ],
         )
 
         api_client.token_authenticate(user)
@@ -44,7 +44,7 @@ class TestTemplatePresetsListView:
         by_presets_mock = mocker.patch(
             'src.processes.models.templates.preset.'
             'TemplatePreset.objects.by_user',
-            return_value=mock_queryset
+            return_value=mock_queryset,
         )
 
         # act
@@ -52,7 +52,7 @@ class TestTemplatePresetsListView:
 
         # assert
         by_presets_mock.assert_called_once_with(
-            user, template.id
+            user, template.id,
         )
         assert response.status_code == 200
         data = response.data
@@ -73,7 +73,7 @@ class TestTemplatePresetsListView:
     def test_presets__account_owner_template_owner__ok(
         self,
         api_client,
-        mocker
+        mocker,
     ):
         # arrange
         account = create_test_account()
@@ -85,7 +85,7 @@ class TestTemplatePresetsListView:
             author=account_owner,
             name='Owner Preset',
             is_default=True,
-            type=PresetType.ACCOUNT
+            type=PresetType.ACCOUNT,
         )
 
         api_client.token_authenticate(account_owner)
@@ -96,7 +96,7 @@ class TestTemplatePresetsListView:
         by_presets_mock = mocker.patch(
             'src.processes.models.templates.preset.'
             'TemplatePreset.objects.by_user',
-            return_value=mock_queryset
+            return_value=mock_queryset,
         )
 
         # act
@@ -105,20 +105,20 @@ class TestTemplatePresetsListView:
         # assert
         assert response.status_code == 200
         by_presets_mock.assert_called_once_with(
-            account_owner, template.id
+            account_owner, template.id,
         )
 
     def test_presets__admin_not_template_owner__permission_denied(
         self,
         api_client,
-        mocker
+        mocker,
     ):
         # arrange
         account = create_test_account()
         admin = create_test_admin(account=account)
         template_owner = create_test_admin(
             account=account,
-            email='template_owner@test.com'
+            email='template_owner@test.com',
         )
         template = create_test_template(template_owner, is_active=True)
 
@@ -126,7 +126,7 @@ class TestTemplatePresetsListView:
 
         by_presets_mock = mocker.patch(
             'src.processes.models.templates.preset.'
-            'TemplatePreset.objects.by_user'
+            'TemplatePreset.objects.by_user',
         )
 
         # act
@@ -139,7 +139,7 @@ class TestTemplatePresetsListView:
     def test_presets__not_admin_not_template_owner__permission_denied(
         self,
         api_client,
-        mocker
+        mocker,
     ):
         # arrange
         account = create_test_account()
@@ -154,7 +154,7 @@ class TestTemplatePresetsListView:
 
         by_presets_mock = mocker.patch(
             'src.processes.models.templates.preset.'
-            'TemplatePreset.objects.by_user'
+            'TemplatePreset.objects.by_user',
         )
 
         # act
@@ -167,7 +167,7 @@ class TestTemplatePresetsListView:
     def test_presets__template_not_found__permission_denied(
         self,
         api_client,
-        mocker
+        mocker,
     ):
         # arrange
         account = create_test_account()
@@ -178,7 +178,7 @@ class TestTemplatePresetsListView:
 
         by_presets_mock = mocker.patch(
             'src.processes.models.templates.preset.'
-            'TemplatePreset.objects.by_user'
+            'TemplatePreset.objects.by_user',
         )
 
         # act
@@ -191,14 +191,14 @@ class TestTemplatePresetsListView:
     def test_presets__not_authenticated__unauthorized(
         self,
         api_client,
-        mocker
+        mocker,
     ):
         # arrange
         fake_template_id = 1
 
         by_presets_mock = mocker.patch(
             'src.processes.models.templates.preset.'
-            'TemplatePreset.objects.by_user'
+            'TemplatePreset.objects.by_user',
         )
 
         # act
@@ -211,7 +211,7 @@ class TestTemplatePresetsListView:
     def test_presets__different_account__permission_denied(
         self,
         api_client,
-        mocker
+        mocker,
     ):
         # arrange
         account1 = create_test_account()
@@ -224,7 +224,7 @@ class TestTemplatePresetsListView:
 
         by_presets_mock = mocker.patch(
             'src.processes.models.templates.preset.'
-            'TemplatePreset.objects.by_user'
+            'TemplatePreset.objects.by_user',
         )
 
         # act
@@ -248,7 +248,7 @@ class TestTemplatePresetsListView:
         by_presets_mock = mocker.patch(
             'src.processes.models.templates.preset.'
             'TemplatePreset.objects.by_user',
-            return_value=mock_queryset
+            return_value=mock_queryset,
         )
 
         # act

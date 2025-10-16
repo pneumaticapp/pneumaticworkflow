@@ -1,42 +1,42 @@
-import pytest
 from datetime import timedelta
-from src.authentication.services import GuestJWTAuthService
-from src.processes.models import (
-    TaskPerformer,
-)
-from src.processes.models import (
-    ConditionTemplate,
-    FieldTemplate,
-    FieldTemplateSelection,
-    Kickoff,
-    PredicateTemplate,
-    RawDueDateTemplate,
-    RuleTemplate,
-    TaskTemplate,
-    TemplateOwner
-)
 
+import pytest
+
+from src.authentication.services.guest_auth import GuestJWTAuthService
 from src.processes.enums import (
-    FieldType,
+    ConditionAction,
     DueDateRule,
+    FieldType,
     OwnerType,
     PredicateOperator,
-    ConditionAction,
 )
+from src.processes.models.templates.conditions import (
+    ConditionTemplate,
+    PredicateTemplate,
+    RuleTemplate,
+)
+from src.processes.models.templates.fields import (
+    FieldTemplate,
+    FieldTemplateSelection,
+)
+from src.processes.models.templates.kickoff import Kickoff
+from src.processes.models.templates.owner import TemplateOwner
+from src.processes.models.templates.raw_due_date import RawDueDateTemplate
+from src.processes.models.templates.task import TaskTemplate
+from src.processes.models.workflows.task import TaskPerformer
 from src.processes.tests.fixtures import (
+    create_test_account,
+    create_test_admin,
+    create_test_group,
+    create_test_guest,
+    create_test_not_admin,
+    create_test_owner,
     create_test_template,
     create_test_user,
-    create_test_account,
-    create_test_guest,
     create_test_workflow,
-    create_test_group,
-    create_test_not_admin,
-    create_test_admin,
-    create_test_owner
 )
 from src.utils.dates import date_format
 from src.utils.validation import ErrorCode
-
 
 pytestmark = pytest.mark.django_db
 
@@ -51,7 +51,7 @@ def test_export__response_format__ok(api_client):
     template = create_test_template(
         user=account_owner,
         kickoff=kickoff,
-        tasks_count=0
+        tasks_count=0,
     )
     field_kickoff = FieldTemplate.objects.create(
         name='test_field',
@@ -60,14 +60,14 @@ def test_export__response_format__ok(api_client):
         api_name='test_field',
         kickoff=kickoff,
         template=template,
-        description='description'
+        description='description',
     )
     task = TaskTemplate.objects.create(
         name='Task №{number}',
         number=1,
         template=template,
         account=account_owner.account,
-        description='description'
+        description='description',
     )
     raw_due_date = RawDueDateTemplate.objects.create(
         task=task,
@@ -75,7 +75,7 @@ def test_export__response_format__ok(api_client):
         duration=timedelta(hours=24),
         duration_months=0,
         rule=DueDateRule.AFTER_TASK_STARTED,
-        source_id=task.api_name
+        source_id=task.api_name,
     )
     performer = task.add_raw_performer(account_owner)
     field_task = FieldTemplate.objects.create(
@@ -213,18 +213,18 @@ def test_export__guest__permission_denied(api_client):
     guest = create_test_guest(account=user.account)
     TaskPerformer.objects.create(
         task_id=task.id,
-        user_id=guest.id
+        user_id=guest.id,
     )
     str_token = GuestJWTAuthService.get_str_token(
         task_id=task.id,
         user_id=guest.id,
-        account_id=user.account.id
+        account_id=user.account.id,
     )
 
     # act
     response = api_client.get(
         path='/templates/export',
-        **{'X-Guest-Authorization': str_token}
+        **{'X-Guest-Authorization': str_token},
     )
 
     # assert
@@ -299,7 +299,7 @@ def test_export__filter_is_active__ok(api_client):
     api_client.token_authenticate(owner_account)
     template = create_test_template(
         user=owner_account,
-        is_active=True
+        is_active=True,
     )
     create_test_template(user=owner_account)
 
@@ -319,15 +319,15 @@ def test_export__filter_is_public__ok(api_client):
     api_client.token_authenticate(account_owner)
     template = create_test_template(
         user=account_owner,
-        is_public=True
+        is_public=True,
     )
     create_test_template(
         user=account_owner,
-        is_public=False
+        is_public=False,
     )
 
     # act
-    response = api_client.get(f'/templates/export?is_public=true')
+    response = api_client.get('/templates/export?is_public=true')
 
     # assert
     assert response.status_code == 200
@@ -472,7 +472,7 @@ def test_export__filter_owners_ids__ok(api_client):
 
     # act
     response = api_client.get(
-        f'/templates/export?owners_ids={owner_account.id}'
+        f'/templates/export?owners_ids={owner_account.id}',
     )
 
     # assert
@@ -499,7 +499,7 @@ def test_export__filter_owners_ids_user_in_group__ok(api_client):
 
     # act
     response = api_client.get(
-        f'/templates/export?owners_ids={user.id}'
+        f'/templates/export?owners_ids={user.id}',
     )
 
     # assert
@@ -525,7 +525,7 @@ def test_export__filter_owners_group_ids__ok(api_client):
 
     # act
     response = api_client.get(
-        f'/templates/export?owners_group_ids={group.id}'
+        f'/templates/export?owners_group_ids={group.id}',
     )
 
     # assert
@@ -540,7 +540,7 @@ def test_export__mix_filter__ok(api_client):
     user1 = create_test_owner(account=account)
     user2 = create_test_admin(
         email='test@bou.tr',
-        account=account
+        account=account,
     )
     group = create_test_group(account, users=[user1])
     api_client.token_authenticate(user1)
@@ -557,7 +557,7 @@ def test_export__mix_filter__ok(api_client):
     response = api_client.get(
         '/templates/export'
         f'?owners_ids={user1.id}'
-        f'&owners_group_ids={group.id}'
+        f'&owners_group_ids={group.id}',
     )
 
     # assert
@@ -581,8 +581,8 @@ def test_export__pagination__ok(api_client):
         '/templates/export',
         data={
             'limit': 1,
-            'offset': 2
-        }
+            'offset': 2,
+        },
     )
 
     # assert

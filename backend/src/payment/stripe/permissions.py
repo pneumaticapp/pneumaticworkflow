@@ -13,11 +13,11 @@ class StripeWebhookPermission(BasePermission):
     def has_permission(self, request, view):
         if self.configuration not in (
             settings.CONFIGURATION_STAGING,
-            settings.CONFIGURATION_PROD
+            settings.CONFIGURATION_PROD,
         ):
             return True
 
-        if not (
+        if not (  # noqa: SIM103
             request.META.get('HTTP_REMOTE_ADDR') in self.whitelist
             or request.META.get('HTTP_X_REAL_IP') in self.whitelist
         ):
