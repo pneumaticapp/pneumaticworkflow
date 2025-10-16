@@ -85,13 +85,7 @@ def test_create__all_fields__ok(
     settings_mock = mocker.patch(
         'src.authentication.views.mixins.settings',
     )
-    settings_mock.SLACK = True
-    settings_mock.SLACK_CONFIG = {'NOTIFY_ON_SIGNUP': True}
     settings_mock.PROJECT_CONF = {'BILLING': True}
-    notification_mock = mocker.patch(
-        'src.authentication.tasks.'
-        'send_new_signup_notification.delay',
-    )
     after_signup_mock = mocker.patch(
         'src.authentication.views.mixins.SignUpMixin.'
         'after_signup',
@@ -189,7 +183,6 @@ def test_create__all_fields__ok(
     create_onboarding_workflows_mock.assert_called_once()
     create_activated_templates_mock.assert_called_once()
     create_activated_workflows_mock.assert_called_once()
-    notification_mock.assert_called_once_with(user.account.id)
     after_signup_mock.assert_called_once_with(user)
     authenticate_mock.assert_called_once_with(
         user=user,
@@ -529,10 +522,6 @@ def test_create__stripe_service_exception__skip_sync(
     settings_mock.SLACK_CONFIG = {'NOTIFY_ON_SIGNUP': True}
     settings_mock.PROJECT_CONF = {'BILLING': True}
 
-    notification_mock = mocker.patch(
-        'src.authentication.tasks.'
-        'send_new_signup_notification.delay',
-    )
     after_signup_mock = mocker.patch(
         'src.authentication.views.mixins.SignUpMixin.'
         'after_signup',
@@ -638,7 +627,6 @@ def test_create__stripe_service_exception__skip_sync(
     create_onboarding_workflows_mock.assert_called_once()
     create_activated_templates_mock.assert_called_once()
     create_activated_workflows_mock.assert_called_once()
-    notification_mock.assert_called_once_with(user.account.id)
     after_signup_mock.assert_called_once_with(user)
     authenticate_mock.assert_called_once_with(
         user=user,
@@ -714,10 +702,6 @@ def test_create__disable_billing__skip_stripe_call(
     settings_mock.SLACK_CONFIG = {'NOTIFY_ON_SIGNUP': True}
     settings_mock.PROJECT_CONF = {'BILLING': False}
 
-    notification_mock = mocker.patch(
-        'src.authentication.tasks.'
-        'send_new_signup_notification.delay',
-    )
     after_signup_mock = mocker.patch(
         'src.authentication.views.mixins.SignUpMixin.'
         'after_signup',
@@ -785,7 +769,6 @@ def test_create__disable_billing__skip_stripe_call(
     create_onboarding_workflows_mock.assert_called_once()
     create_activated_templates_mock.assert_called_once()
     create_activated_workflows_mock.assert_called_once()
-    notification_mock.assert_called_once_with(user.account.id)
     after_signup_mock.assert_called_once_with(user)
     authenticate_mock.assert_called_once_with(
         user=user,

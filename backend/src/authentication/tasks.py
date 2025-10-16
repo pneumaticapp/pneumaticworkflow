@@ -50,7 +50,11 @@ def send_new_signup_notification(account_id: int):
     )
 
 
-@shared_task(ignore_result=True)
+@shared_task(
+    autoretry_for=(User.DoesNotExist,),
+    retry_kwargs={'max_retries': 3},
+    retry_backoff=True,
+)
 def update_microsoft_contacts(user_id: int):
     user = User.objects.get(id=user_id)
     service = MicrosoftAuthService()
@@ -58,7 +62,11 @@ def update_microsoft_contacts(user_id: int):
         service.update_user_contacts(user)
 
 
-@shared_task(ignore_result=True)
+@shared_task(
+    autoretry_for=(User.DoesNotExist,),
+    retry_kwargs={'max_retries': 3},
+    retry_backoff=True,
+)
 def update_auth0_contacts(user_id: int):
     user = User.objects.get(id=user_id)
     service = Auth0Service()
