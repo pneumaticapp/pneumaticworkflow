@@ -122,7 +122,11 @@ export function OptionalFieldColumn({ value }: TProps) {
     if (type === EExtraFieldType.User) {
       const users = useSelector((state: IApplicationState) => state.accounts.users);
       const user = getUserById(users, fieldValue.userId);
-      return <Avatar user={user as TAvatarUser} size="sm" />;
+      return (
+        <div className={styles['field-column__avatar']}>
+          <Avatar user={user as TAvatarUser} size="sm" withTooltip />
+        </div>
+      );
     }
     if (type === EExtraFieldType.Url) {
       return (
