@@ -36,7 +36,7 @@ const PerformerSkeletonCell = () => (
   </div>
 );
 
-export const defaultSystemColumns: Column<TableColumns>[] = [
+export const defaultSystemSkeletonTable: Column<TableColumns>[] = [
   {
     Header: <SkeletonDefaultCell80 />,
     accessor: 'workflow',
