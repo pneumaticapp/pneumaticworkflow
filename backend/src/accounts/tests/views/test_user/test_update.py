@@ -68,7 +68,7 @@ def test_update__all_fields__ok(mocker, api_client):
         'update_customer',
     )
     task_field_filter_mock = mocker.patch(
-        'src.processes.models.TaskField.objects.filter',
+        'src.processes.models.workflows.fields.TaskField.objects.filter',
         return_value=mocker.Mock(update=mocker.Mock(return_value=None)),
     )
     send_user_updated_mock = mocker.patch(
@@ -237,7 +237,7 @@ def test_update__partial__update_request_fields(mocker, api_client):
         'update_customer',
     )
     task_field_filter_mock = mocker.patch(
-        'src.processes.models.TaskField.objects.filter',
+        'src.processes.models.workflows.fields.TaskField.objects.filter',
         return_value=mocker.Mock(update=mocker.Mock(return_value=None)),
     )
     send_user_updated_mock = mocker.patch(
@@ -347,7 +347,7 @@ def test_update__no_call_analytics__ok(mocker, api_client):
         'update_customer',
     )
     task_field_filter_mock = mocker.patch(
-        'src.processes.models.TaskField.objects.filter',
+        'src.processes.models.workflows.fields.TaskField.objects.filter',
         return_value=mocker.Mock(update=mocker.Mock(return_value=None)),
     )
     send_user_updated_mock = mocker.patch(
@@ -413,7 +413,7 @@ def test_update__only_first_name__ok(mocker, api_client):
         'update_customer',
     )
     task_field_filter_mock = mocker.patch(
-        'src.processes.models.TaskField.objects.filter',
+        'src.processes.models.workflows.fields.TaskField.objects.filter',
         return_value=mocker.Mock(update=mocker.Mock(return_value=None)),
     )
     api_client.token_authenticate(user)
@@ -474,7 +474,7 @@ def test_update__only_last_name__ok(mocker, api_client):
         'update_customer',
     )
     task_field_filter_mock = mocker.patch(
-        'src.processes.models.TaskField.objects.filter',
+        'src.processes.models.workflows.fields.TaskField.objects.filter',
         return_value=mocker.Mock(update=mocker.Mock(return_value=None)),
     )
     api_client.token_authenticate(user)
@@ -535,7 +535,7 @@ def test_update__both_first_and_last_name__ok(mocker, api_client):
         'update_customer',
     )
     task_field_filter_mock = mocker.patch(
-        'src.processes.models.TaskField.objects.filter',
+        'src.processes.models.workflows.fields.TaskField.objects.filter',
         return_value=mocker.Mock(update=mocker.Mock(return_value=None)),
     )
     api_client.token_authenticate(user)
@@ -597,7 +597,7 @@ def test_update__only_date_fmt__ok(mocker, api_client):
         'send_user_updated_notification.delay',
     )
     task_field_filter_mock = mocker.patch(
-        'src.processes.models.TaskField.objects.filter',
+        'src.processes.models.workflows.fields.TaskField.objects.filter',
         return_value=mocker.Mock(update=mocker.Mock(return_value=None)),
     )
     api_client.token_authenticate(user)
@@ -661,7 +661,7 @@ def test_update__only_date_fdw__ok(mocker, api_client):
         'update_customer',
     )
     task_field_filter_mock = mocker.patch(
-        'src.processes.models.TaskField.objects.filter',
+        'src.processes.models.workflows.fields.TaskField.objects.filter',
         return_value=mocker.Mock(update=mocker.Mock(return_value=None)),
     )
     send_user_updated_mock = mocker.patch(
@@ -740,7 +740,7 @@ def test_update__invalid_date_fmt__validation_error(
         'update_customer',
     )
     task_field_filter_mock = mocker.patch(
-        'src.processes.models.TaskField.objects.filter',
+        'src.processes.models.workflows.fields.TaskField.objects.filter',
         return_value=mocker.Mock(update=mocker.Mock(return_value=None)),
     )
     send_user_updated_mock = mocker.patch(
@@ -805,7 +805,7 @@ def test_update__invalid_date_fdw__validation_error(
         'update_customer',
     )
     task_field_filter_mock = mocker.patch(
-        'src.processes.models.TaskField.objects.filter',
+        'src.processes.models.workflows.fields.TaskField.objects.filter',
         return_value=mocker.Mock(update=mocker.Mock(return_value=None)),
     )
     send_user_updated_mock = mocker.patch(
@@ -864,7 +864,7 @@ def test_update__invalid_photo__validation_error(
         'update_customer',
     )
     task_field_filter_mock = mocker.patch(
-        'src.processes.models.TaskField.objects.filter',
+        'src.processes.models.workflows.fields.TaskField.objects.filter',
         return_value=mocker.Mock(update=mocker.Mock(return_value=None)),
     )
     send_user_updated_mock = mocker.patch(
@@ -927,7 +927,7 @@ def test_update__not_account_owner__not_update_customer(
         'send_user_updated_notification.delay',
     )
     task_field_filter_mock = mocker.patch(
-        'src.processes.models.TaskField.objects.filter',
+        'src.processes.models.workflows.fields.TaskField.objects.filter',
         return_value=mocker.Mock(update=mocker.Mock(return_value=None)),
     )
     api_client.token_authenticate(user)
@@ -991,7 +991,7 @@ def test_update__tenant_account__not_update_customer(
         'update_customer',
     )
     task_field_filter_mock = mocker.patch(
-        'src.processes.models.TaskField.objects.filter',
+        'src.processes.models.workflows.fields.TaskField.objects.filter',
         return_value=mocker.Mock(update=mocker.Mock(return_value=None)),
     )
     send_user_updated_mock = mocker.patch(
@@ -1060,7 +1060,7 @@ def test_update__stripe_exception__validation_error(
         side_effect=StripeServiceException(message),
     )
     task_field_filter_mock = mocker.patch(
-        'src.processes.models.TaskField.objects.filter',
+        'src.processes.models.workflows.fields.TaskField.objects.filter',
         return_value=mocker.Mock(update=mocker.Mock(return_value=None)),
     )
     send_user_updated_mock = mocker.patch(
@@ -1124,7 +1124,7 @@ def test_update__is_digest_subscriber__anaytics_call(
         'update_customer',
     )
     task_field_filter_mock = mocker.patch(
-        'src.processes.models.TaskField.objects.filter',
+        'src.processes.models.workflows.fields.TaskField.objects.filter',
         return_value=mocker.Mock(update=mocker.Mock(return_value=None)),
     )
     send_user_updated_mock = mocker.patch(
@@ -1195,7 +1195,7 @@ def test_update__euro_languages__ok(
         'update_customer',
     )
     task_field_filter_mock = mocker.patch(
-        'src.processes.models.TaskField.objects.filter',
+        'src.processes.models.workflows.fields.TaskField.objects.filter',
         return_value=mocker.Mock(update=mocker.Mock(return_value=None)),
     )
     settings_mock = mocker.patch(
@@ -1271,7 +1271,7 @@ def test_update__system_euro_language_not_allow_ru__validation_error(
         'update_customer',
     )
     task_field_filter_mock = mocker.patch(
-        'src.processes.models.TaskField.objects.filter',
+        'src.processes.models.workflows.fields.TaskField.objects.filter',
         return_value=mocker.Mock(update=mocker.Mock(return_value=None)),
     )
     send_user_updated_mock = mocker.patch(
@@ -1331,7 +1331,7 @@ def test_update__system_ru_language_allow_all__ok(
         'update_customer',
     )
     task_field_filter_mock = mocker.patch(
-        'src.processes.models.TaskField.objects.filter',
+        'src.processes.models.workflows.fields.TaskField.objects.filter',
         return_value=mocker.Mock(update=mocker.Mock(return_value=None)),
     )
     settings_mock = mocker.patch(
@@ -1405,7 +1405,7 @@ def test_update__unsupported_language__validation_error(
         'update_customer',
     )
     task_field_filter_mock = mocker.patch(
-        'src.processes.models.TaskField.objects.filter',
+        'src.processes.models.workflows.fields.TaskField.objects.filter',
         return_value=mocker.Mock(update=mocker.Mock(return_value=None)),
     )
     api_client.token_authenticate(user)
@@ -1446,7 +1446,7 @@ def test_update__timezone__ok(
         '.UserViewSet.identify',
     )
     task_field_filter_mock = mocker.patch(
-        'src.processes.models.TaskField.objects.filter',
+        'src.processes.models.workflows.fields.TaskField.objects.filter',
         return_value=mocker.Mock(update=mocker.Mock(return_value=None)),
     )
     user = create_test_owner()
@@ -1511,7 +1511,7 @@ def test_update__invalid_timezone__validation_error(
         '.UserViewSet.identify',
     )
     task_field_filter_mock = mocker.patch(
-        'src.processes.models.TaskField.objects.filter',
+        'src.processes.models.workflows.fields.TaskField.objects.filter',
         return_value=mocker.Mock(update=mocker.Mock(return_value=None)),
     )
     user = create_test_owner()
@@ -1565,7 +1565,7 @@ def test_update__not_authenticated__unauthorized(mocker, api_client):
         '.UserViewSet.identify',
     )
     task_field_filter_mock = mocker.patch(
-        'src.processes.models.TaskField.objects.filter',
+        'src.processes.models.workflows.fields.TaskField.objects.filter',
         return_value=mocker.Mock(update=mocker.Mock(return_value=None)),
     )
     stripe_service_init_mock = mocker.patch.object(
@@ -1610,7 +1610,7 @@ def test_update__guest__permission_denied(mocker, api_client):
         '.UserViewSet.identify',
     )
     task_field_filter_mock = mocker.patch(
-        'src.processes.models.TaskField.objects.filter',
+        'src.processes.models.workflows.fields.TaskField.objects.filter',
         return_value=mocker.Mock(update=mocker.Mock(return_value=None)),
     )
     account = create_test_account()
@@ -1673,7 +1673,7 @@ def test_update__expired_subscription__permission_denied(
         '.UserViewSet.identify',
     )
     task_field_filter_mock = mocker.patch(
-        'src.processes.models.TaskField.objects.filter',
+        'src.processes.models.workflows.fields.TaskField.objects.filter',
         return_value=mocker.Mock(update=mocker.Mock(return_value=None)),
     )
     account = create_test_account(
