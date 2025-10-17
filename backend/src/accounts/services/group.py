@@ -27,8 +27,8 @@ from src.processes.enums import (
     PerformerType,
 )
 from src.processes.models.templates.owner import TemplateOwner
-from src.processes.models.workflows.task import TaskPerformer
 from src.processes.models.workflows.fields import TaskField
+from src.processes.models.workflows.task import TaskPerformer
 from src.processes.tasks.update_workflow import (
     update_workflow_owners,
 )
