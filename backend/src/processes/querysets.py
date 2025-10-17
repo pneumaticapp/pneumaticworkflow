@@ -197,7 +197,6 @@ class TemplateQuerySet(WorkflowsBaseQuerySet):
         self,
         account_id: int,
         user_id: int,
-        is_account_owner: bool,
         ordering: Optional[TemplateOrdering] = None,
         search: Optional[str] = None,
         is_active: Optional[bool] = None,
@@ -209,7 +208,6 @@ class TemplateQuerySet(WorkflowsBaseQuerySet):
 
         query = TemplateListQuery(
             user_id=user_id,
-            is_account_owner=is_account_owner,
             account_id=account_id,
             ordering=ordering,
             search_text=search,
