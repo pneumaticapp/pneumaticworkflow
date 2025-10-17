@@ -1,3 +1,5 @@
+/* stylelint-disable selector-max-specificity */
+/* stylelint-disable selector-max-compound-selectors */
 .tune-view-modal__container {
   display: flex;
   flex-direction: column;
@@ -27,28 +29,36 @@
       border-radius: 0.2rem;
     }
 
-    .tune-view-modal__task-box-title {
-      margin-bottom: 1.6rem;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      height: 2rem;
-      cursor: pointer;
-    }
-
     .tune-view-modal__fields-container {
       margin-left: 1.6rem;
-      padding-bottom: 1.6rem;
+      padding-bottom: 0.8rem;
+    }
+  }
+
+  .tune-view-modal__task-box-title {
+    margin-bottom: 1.6rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    height: 2rem;
+    cursor: pointer;
+
+    &:hover {
+      .tune-view-modal__task-arrow {
+        color: var(--pneumatic-color-white);
+      }
     }
   }
 
   .tune-view-modal__footer {
-    flex-shrink: 0;
     margin-right: 3.2rem;
+    display: flex;
+    gap: 0.8rem;
+    flex-shrink: 0;
     height: 4rem;
 
     .footer-button {
-      width: 100%;
+      width: 17.2rem;
     }
   }
 }
@@ -62,7 +72,8 @@
 
 .tune-view-modal__task-arrow {
   margin-right: 0.7rem;
-  transition: transform 0.3s;
+  color: var(--pneumatic-color-black72);
+  transition: transform 0.3s, color 0.3s;
 }
 
 .tune-view-modal__task-arrow-rotated {
@@ -89,4 +100,20 @@
 
 .tune-view-modal__tooltip {
   padding: 0.4rem 0.8rem;
+}
+
+.tune-view-modal__label-class-name div {
+  border-color: var(--pneumatic-color-black72);
+}
+
+.tune-view-modal__label:hover .tune-view-modal__label-class-name div {
+  border-color: var(--pneumatic-color-white);
+}
+
+.tune-view-modal__label:hover .tune-view-modal__label-class-name input:checked + div {
+  background-color: var(--pneumatic-color-link-hover);
+}
+
+.tune-view-modal__label:hover .tune-view-modal__label-class-name input:checked + div::before {
+  background-image: url("data:image/svg+xml,%0A%3Csvg width='16' height='16' viewBox='0 0 16 16' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M5.81818 10.7166L2.95455 7.79121L2 8.76633L5.81818 12.6668L14 4.30862L13.0455 3.3335L5.81818 10.7166Z' fill='white'/%3E%3C/svg%3E%0A");
 }

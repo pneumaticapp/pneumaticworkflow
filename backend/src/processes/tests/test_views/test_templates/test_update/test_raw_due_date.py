@@ -1,19 +1,18 @@
-import pytest
 from datetime import timedelta
-from src.processes.tests.fixtures import (
-    create_test_user,
-    create_test_template
-)
-from src.processes.models import (
-    RawDueDateTemplate,
-)
+
+import pytest
+
 from src.processes.enums import (
-    PerformerType,
     DueDateRule,
-    OwnerType
+    OwnerType,
+    PerformerType,
 )
 from src.processes.messages import template as messages
-
+from src.processes.models.templates.raw_due_date import RawDueDateTemplate
+from src.processes.tests.fixtures import (
+    create_test_template,
+    create_test_user,
+)
 
 pytestmark = pytest.mark.django_db
 
@@ -26,7 +25,7 @@ def test_update__ok(api_client, mocker):
     template = create_test_template(
         user=user,
         tasks_count=1,
-        is_active=True
+        is_active=True,
     )
     task_template = template.tasks.first()
     raw_due_date = RawDueDateTemplate.objects.create(
@@ -34,13 +33,13 @@ def test_update__ok(api_client, mocker):
         duration_months=2,
         rule=DueDateRule.AFTER_WORKFLOW_STARTED,
         template=template,
-        task=task_template
+        task=task_template,
     )
     new_duration = timedelta(minutes=1)
     new_duration_months = 0
     mocker.patch(
         'src.processes.services.templates.'
-        'integrations.TemplateIntegrationsService.template_updated'
+        'integrations.TemplateIntegrationsService.template_updated',
     )
 
     # act
@@ -53,7 +52,7 @@ def test_update__ok(api_client, mocker):
             'owners': [
                 {
                     'type': OwnerType.USER,
-                    'source_id': user.id
+                    'source_id': user.id,
                 },
             ],
             'kickoff': {},
@@ -72,12 +71,12 @@ def test_update__ok(api_client, mocker):
                     'raw_performers': [
                         {
                             'type': PerformerType.USER,
-                            'source_id': user.id
-                        }
-                    ]
-                }
-            ]
-        }
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+            ],
+        },
     )
 
     # assert
@@ -98,12 +97,12 @@ def test_update__create__ok(api_client, mocker):
     template = create_test_template(
         user=user,
         tasks_count=1,
-        is_active=True
+        is_active=True,
     )
     task_template = template.tasks.first()
     mocker.patch(
         'src.processes.services.templates.'
-        'integrations.TemplateIntegrationsService.template_updated'
+        'integrations.TemplateIntegrationsService.template_updated',
     )
     api_name = 'raw-due-date-1'
     duration = '01:00:00'
@@ -119,7 +118,7 @@ def test_update__create__ok(api_client, mocker):
             'owners': [
                 {
                     'type': OwnerType.USER,
-                    'source_id': user.id
+                    'source_id': user.id,
                 },
             ],
             'kickoff': {},
@@ -139,12 +138,12 @@ def test_update__create__ok(api_client, mocker):
                         {
                             'api_name': 'raw_due_date-1',
                             'type': PerformerType.USER,
-                            'source_id': user.id
-                        }
-                    ]
-                }
-            ]
-        }
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+            ],
+        },
     )
 
     # assert
@@ -161,7 +160,7 @@ def test_update__create__ok(api_client, mocker):
         rule=DueDateRule.AFTER_WORKFLOW_STARTED,
         source_id=None,
         duration=timedelta(hours=1),
-        duration_months=duration_months
+        duration_months=duration_months,
     ).exists()
 
 
@@ -173,18 +172,18 @@ def test_update__delete__ok(api_client, mocker):
     template = create_test_template(
         user=user,
         tasks_count=1,
-        is_active=True
+        is_active=True,
     )
     task_template = template.tasks.first()
     raw_due_date = RawDueDateTemplate.objects.create(
         duration=timedelta(hours=1),
         rule=DueDateRule.AFTER_WORKFLOW_STARTED,
         template=template,
-        task=task_template
+        task=task_template,
     )
     mocker.patch(
         'src.processes.services.templates.'
-        'integrations.TemplateIntegrationsService.template_updated'
+        'integrations.TemplateIntegrationsService.template_updated',
     )
 
     # act
@@ -197,7 +196,7 @@ def test_update__delete__ok(api_client, mocker):
             'owners': [
                 {
                     'type': OwnerType.USER,
-                    'source_id': user.id
+                    'source_id': user.id,
                 },
             ],
             'kickoff': {},
@@ -210,13 +209,13 @@ def test_update__delete__ok(api_client, mocker):
                     'raw_performers': [
                         {
                             'type': PerformerType.USER,
-                            'source_id': user.id
-                        }
+                            'source_id': user.id,
+                        },
                     ],
-                    'raw_due_date': None
-                }
-            ]
-        }
+                    'raw_due_date': None,
+                },
+            ],
+        },
     )
 
     # assert
@@ -235,7 +234,7 @@ def test_update__change_api_name__validation_error(api_client, mocker):
     template = create_test_template(
         user=user,
         tasks_count=1,
-        is_active=False
+        is_active=False,
     )
     task_template = template.tasks.first()
     raw_due_date = RawDueDateTemplate.objects.create(
@@ -248,7 +247,7 @@ def test_update__change_api_name__validation_error(api_client, mocker):
     new_duration = timedelta(minutes=1)
     mocker.patch(
         'src.processes.services.templates.'
-        'integrations.TemplateIntegrationsService.template_updated'
+        'integrations.TemplateIntegrationsService.template_updated',
     )
 
     # act
@@ -261,7 +260,7 @@ def test_update__change_api_name__validation_error(api_client, mocker):
             'owners': [
                 {
                     'type': OwnerType.USER,
-                    'source_id': user.id
+                    'source_id': user.id,
                 },
             ],
             'kickoff': {},
@@ -279,9 +278,9 @@ def test_update__change_api_name__validation_error(api_client, mocker):
                     'raw_performers': [
                         {
                             'type': PerformerType.USER,
-                            'source_id': user.id
-                        }
-                    ]
+                            'source_id': user.id,
+                        },
+                    ],
                 },
                 {
                     'number': 2,
@@ -292,24 +291,24 @@ def test_update__change_api_name__validation_error(api_client, mocker):
                         'duration': '01:00:00',
                         'duration_months': 0,
                         'rule': DueDateRule.AFTER_TASK_STARTED,
-                        'source_id': 'task-2'
+                        'source_id': 'task-2',
                     },
                     'raw_performers': [
                         {
                             'type': PerformerType.USER,
-                            'source_id': user.id
-                        }
-                    ]
-                }
-            ]
-        }
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+            ],
+        },
     )
 
     # assert
     assert response.status_code == 400
     message = messages.MSG_PT_0052(
         name=step,
-        api_name=due_date_api_name
+        api_name=due_date_api_name,
     )
     assert response.data['message'] == message
     assert response.data['details']['reason'] == message

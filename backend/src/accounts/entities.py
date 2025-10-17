@@ -1,5 +1,7 @@
-from typing import Optional, List
+from typing import List, Optional
+
 from typing_extensions import TypedDict
+
 from src.accounts.enums import SourceType
 
 

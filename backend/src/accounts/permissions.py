@@ -1,13 +1,14 @@
 from django.utils import timezone
 from rest_framework.permissions import BasePermission
-from src.generics.permissions import BaseAuthPermission
+
+from src.accounts.enums import BillingPlanType
 from src.accounts.messages import (
     MSG_A_0035,
     MSG_A_0036,
     MSG_A_0037,
     MSG_A_0041,
 )
-from src.accounts.enums import BillingPlanType
+from src.generics.permissions import BaseAuthPermission
 
 
 class ExpiredSubscriptionPermission(BaseAuthPermission):
@@ -46,7 +47,7 @@ class AccountOwnerPermission(BaseAuthPermission):
     def has_permission(self, request, view):
         return bool(
             self._user_is_authenticated(request)
-            and request.user.is_account_owner
+            and request.user.is_account_owner,
         )
 
 

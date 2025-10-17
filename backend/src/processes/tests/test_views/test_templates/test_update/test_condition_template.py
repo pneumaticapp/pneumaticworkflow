@@ -1,30 +1,32 @@
 import pytest
+
 from src.accounts.enums import BillingPlanType
-from src.utils.validation import ErrorCode
-from src.processes.messages import template as messages
-from src.processes.models import (
-    FieldTemplate,
-    PredicateTemplate,
-    ConditionTemplate,
-    RuleTemplate,
-    Template
+from src.processes.enums import (
+    ConditionAction,
+    FieldType,
+    OwnerType,
+    PerformerType,
+    PredicateOperator,
+    PredicateType,
 )
+from src.processes.messages import template as messages
+from src.processes.models.templates.conditions import (
+    ConditionTemplate,
+    PredicateTemplate,
+    RuleTemplate,
+)
+from src.processes.models.templates.fields import (
+    FieldTemplate,
+)
+from src.processes.models.templates.template import Template
 from src.processes.tests.fixtures import (
-    create_test_user,
-    create_test_template,
     create_test_account,
     create_test_group,
     create_test_owner,
+    create_test_template,
+    create_test_user,
 )
-from src.processes.enums import (
-    PerformerType,
-    PredicateOperator,
-    FieldType,
-    PredicateType,
-    OwnerType,
-    ConditionAction,
-)
-
+from src.utils.validation import ErrorCode
 
 pytestmark = pytest.mark.django_db
 
@@ -34,7 +36,7 @@ class TestUpdateConditionTemplate:
     def test_update__delete_all_rules__validation_error(
         self,
         mocker,
-        api_client
+        api_client,
     ):
         # arrange
         account = create_test_account()
@@ -42,7 +44,7 @@ class TestUpdateConditionTemplate:
         api_client.token_authenticate(user)
         template = create_test_template(
             user=user,
-            is_active=True
+            is_active=True,
         )
         kickoff = template.kickoff_instance
         field = FieldTemplate.objects.create(
@@ -73,7 +75,7 @@ class TestUpdateConditionTemplate:
         )
         mocker.patch(
             'src.processes.services.templates.'
-            'integrations.TemplateIntegrationsService.template_updated'
+            'integrations.TemplateIntegrationsService.template_updated',
         )
         request_data = {
             'api_name': condition.api_name,
@@ -91,7 +93,7 @@ class TestUpdateConditionTemplate:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'kickoff': {
@@ -103,8 +105,8 @@ class TestUpdateConditionTemplate:
                             'type': field.type,
                             'api_name': field.api_name,
                             'is_required': True,
-                        }
-                    ]
+                        },
+                    ],
                 },
                 'tasks': [
                     {
@@ -116,13 +118,13 @@ class TestUpdateConditionTemplate:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': user.id
-                            }
+                                'source_id': user.id,
+                            },
                         ],
                     },
                 ],
                 'is_active': True,
-            }
+            },
         )
 
         # assert
@@ -132,7 +134,7 @@ class TestUpdateConditionTemplate:
         assert response.data['message'] == message
         assert response.data['details']['api_name'] == condition.api_name
         assert response.data['details']['reason'] == message
-        assert 'name' not in response.data['details'].keys()
+        assert 'name' not in response.data['details']
 
     def test_update__delete_one_rule_of_two__ok(
         self,
@@ -187,7 +189,7 @@ class TestUpdateConditionTemplate:
         )
         mocker.patch(
             'src.processes.services.templates.'
-            'integrations.TemplateIntegrationsService.template_updated'
+            'integrations.TemplateIntegrationsService.template_updated',
         )
         request_data = {
             'api_name': condition.api_name,
@@ -202,10 +204,10 @@ class TestUpdateConditionTemplate:
                             'field_type': second_predicate.field_type,
                             'field': second_predicate.field,
                             'operator': second_predicate.operator,
-                        }
-                    ]
-                }
-            ]
+                        },
+                    ],
+                },
+            ],
         }
 
         # act
@@ -217,7 +219,7 @@ class TestUpdateConditionTemplate:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'kickoff': {
@@ -229,8 +231,8 @@ class TestUpdateConditionTemplate:
                             'type': field.type,
                             'api_name': field.api_name,
                             'is_required': True,
-                        }
-                    ]
+                        },
+                    ],
                 },
                 'tasks': [
                     {
@@ -242,13 +244,13 @@ class TestUpdateConditionTemplate:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': user.id
-                            }
+                                'source_id': user.id,
+                            },
                         ],
                     },
                 ],
                 'is_active': True,
-            }
+            },
         )
 
         # assert
@@ -295,7 +297,7 @@ class TestUpdateConditionTemplate:
         )
         mocker.patch(
             'src.processes.services.templates.'
-            'integrations.TemplateIntegrationsService.template_updated'
+            'integrations.TemplateIntegrationsService.template_updated',
         )
         request_data = {
             'api_name': condition.api_name,
@@ -310,10 +312,10 @@ class TestUpdateConditionTemplate:
                             'field': predicate.field,
                             'field_type': predicate.field_type,
                             'operator': predicate.operator,
-                        }
-                    ]
-                }
-            ]
+                        },
+                    ],
+                },
+            ],
         }
 
         # act
@@ -326,7 +328,7 @@ class TestUpdateConditionTemplate:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'kickoff': {
@@ -338,8 +340,8 @@ class TestUpdateConditionTemplate:
                             'type': field.type,
                             'api_name': field.api_name,
                             'is_required': True,
-                        }
-                    ]
+                        },
+                    ],
                 },
                 'tasks': [
                     {
@@ -351,12 +353,12 @@ class TestUpdateConditionTemplate:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': user.id
-                            }
+                                'source_id': user.id,
+                            },
                         ],
                     },
-                ]
-            }
+                ],
+            },
         )
 
         # assert
@@ -374,12 +376,12 @@ class TestUpdateConditionTemplate:
         user = create_test_user(account=account)
         mocker.patch(
             'src.processes.services.templates.'
-            'integrations.TemplateIntegrationsService.template_updated'
+            'integrations.TemplateIntegrationsService.template_updated',
         )
         template = create_test_template(
             user=user,
             tasks_count=3,
-            is_active=True
+            is_active=True,
         )
         first_task = template.tasks.order_by('number').first()
         condition = ConditionTemplate.objects.create(
@@ -415,10 +417,10 @@ class TestUpdateConditionTemplate:
                             'operator': PredicateOperator.COMPLETED,
                             'field': None,
                             'value': None,
-                        }
-                    ]
-                }
-            ]
+                        },
+                    ],
+                },
+            ],
         }
         api_client.token_authenticate(user)
 
@@ -432,7 +434,7 @@ class TestUpdateConditionTemplate:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'kickoff': {'id': template.kickoff_instance.id},
@@ -446,12 +448,12 @@ class TestUpdateConditionTemplate:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': user.id
-                            }
-                        ]
-                    }
-                ]
-            }
+                                'source_id': user.id,
+                            },
+                        ],
+                    },
+                ],
+            },
         )
 
         # assert
@@ -478,12 +480,12 @@ class TestUpdateConditionTemplate:
         user = create_test_user(account=account)
         mocker.patch(
             'src.processes.services.templates.'
-            'integrations.TemplateIntegrationsService.template_updated'
+            'integrations.TemplateIntegrationsService.template_updated',
         )
         template = create_test_template(
             user=user,
             tasks_count=3,
-            is_active=True
+            is_active=True,
         )
         first_task = template.tasks.order_by('number').first()
         condition = ConditionTemplate.objects.create(
@@ -521,10 +523,10 @@ class TestUpdateConditionTemplate:
                             'operator': PredicateOperator.EQUAL,
                             'field': field_api_name,
                             'value': value,
-                        }
-                    ]
-                }
-            ]
+                        },
+                    ],
+                },
+            ],
         }
         api_client.token_authenticate(user)
 
@@ -538,7 +540,7 @@ class TestUpdateConditionTemplate:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'kickoff': {
@@ -548,8 +550,8 @@ class TestUpdateConditionTemplate:
                             'name': 'Price',
                             'type': FieldType.NUMBER,
                             'api_name': field_api_name,
-                        }
-                    ]
+                        },
+                    ],
                 },
                 'tasks': [
                     {
@@ -561,12 +563,12 @@ class TestUpdateConditionTemplate:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': user.id
-                            }
-                        ]
-                    }
-                ]
-            }
+                                'source_id': user.id,
+                            },
+                        ],
+                    },
+                ],
+            },
         )
 
         # assert
@@ -631,7 +633,7 @@ class TestUpdateConditionTemplate:
         )
         mocker.patch(
             'src.processes.services.templates.'
-            'integrations.TemplateIntegrationsService.template_updated'
+            'integrations.TemplateIntegrationsService.template_updated',
         )
         request_data = {
             'api_name': condition.api_name,
@@ -646,8 +648,8 @@ class TestUpdateConditionTemplate:
                             'field': predicate.field,
                             'field_type': predicate.field_type,
                             'operator': predicate.operator,
-                        }
-                    ]
+                        },
+                    ],
                 },
                 {
                     'predicates': [
@@ -656,10 +658,10 @@ class TestUpdateConditionTemplate:
                             'field': second_predicate.field,
                             'field_type': second_predicate.field_type,
                             'operator': second_predicate.operator,
-                        }
-                    ]
-                }
-            ]
+                        },
+                    ],
+                },
+            ],
         }
 
         # act
@@ -672,7 +674,7 @@ class TestUpdateConditionTemplate:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'kickoff': {
@@ -684,8 +686,8 @@ class TestUpdateConditionTemplate:
                             'type': field.type,
                             'api_name': field.api_name,
                             'is_required': True,
-                        }
-                    ]
+                        },
+                    ],
                 },
                 'tasks': [
                     {
@@ -697,12 +699,12 @@ class TestUpdateConditionTemplate:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': user.id
-                            }
+                                'source_id': user.id,
+                            },
                         ],
                     },
-                ]
-            }
+                ],
+            },
         )
 
         # assert
@@ -710,7 +712,7 @@ class TestUpdateConditionTemplate:
         condition.refresh_from_db()
         assert condition.action == ConditionAction.END_WORKFLOW
         second_predicate = PredicateTemplate.objects.filter(
-            id=second_predicate.id
+            id=second_predicate.id,
         )
         assert second_predicate.exists() is False
         assert condition.rules.last().predicates.exists()
@@ -762,7 +764,7 @@ class TestUpdateConditionTemplate:
         )
         mocker.patch(
             'src.processes.services.templates.'
-            'integrations.TemplateIntegrationsService.template_updated'
+            'integrations.TemplateIntegrationsService.template_updated',
         )
         request_data = {
             'api_name': condition.api_name,
@@ -777,9 +779,9 @@ class TestUpdateConditionTemplate:
                             'api_name': predicate.api_name,
                             'field_type': data[1],
                             'operator': data[0],
-                        }
-                    ]
-                }
+                        },
+                    ],
+                },
             ],
         }
 
@@ -793,7 +795,7 @@ class TestUpdateConditionTemplate:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'kickoff': {
@@ -805,8 +807,8 @@ class TestUpdateConditionTemplate:
                             'type': field.type,
                             'api_name': field.api_name,
                             'is_required': True,
-                        }
-                    ]
+                        },
+                    ],
                 },
                 'tasks': [
                     {
@@ -818,12 +820,12 @@ class TestUpdateConditionTemplate:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': user.id
-                            }
+                                'source_id': user.id,
+                            },
                         ],
                     },
-                ]
-            }
+                ],
+            },
         )
 
         # assert
@@ -875,7 +877,7 @@ class TestUpdateConditionTemplate:
         )
         mocker.patch(
             'src.processes.services.templates.'
-            'integrations.TemplateIntegrationsService.template_updated'
+            'integrations.TemplateIntegrationsService.template_updated',
         )
         request_data = {
             'api_name': condition.api_name,
@@ -891,10 +893,10 @@ class TestUpdateConditionTemplate:
                             'field_type': predicate.field_type,
                             'operator': predicate.operator,
                             'value': value,
-                        }
-                    ]
-                }
-            ]
+                        },
+                    ],
+                },
+            ],
         }
 
         # act
@@ -907,7 +909,7 @@ class TestUpdateConditionTemplate:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'kickoff': {
@@ -918,8 +920,8 @@ class TestUpdateConditionTemplate:
                             'name': field.name,
                             'type': field.type,
                             'api_name': field.api_name,
-                        }
-                    ]
+                        },
+                    ],
                 },
                 'tasks': [
                     {
@@ -931,12 +933,12 @@ class TestUpdateConditionTemplate:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': user.id
-                            }
-                        ]
-                    }
-                ]
-            }
+                                'source_id': user.id,
+                            },
+                        ],
+                    },
+                ],
+            },
         )
 
         # assert
@@ -956,7 +958,7 @@ class TestUpdateConditionTemplate:
             (FieldType.RADIO, 'disallowed-api-name'),
             (FieldType.DROPDOWN, 'disallowed-api-name'),
             (FieldType.CHECKBOX, 'disallowed-api-name'),
-        ]
+        ],
     )
     def test_update__selection_field_incorrect_value__validation_error(
         self,
@@ -999,7 +1001,7 @@ class TestUpdateConditionTemplate:
         )
         mocker.patch(
             'src.processes.services.templates.'
-            'integrations.TemplateIntegrationsService.template_updated'
+            'integrations.TemplateIntegrationsService.template_updated',
         )
         request_data = {
             'api_name': condition.api_name,
@@ -1013,9 +1015,9 @@ class TestUpdateConditionTemplate:
                             'field_type': field_type,
                             'operator': predicate.operator,
                             'value': value,
-                        }
-                    ]
-                }
+                        },
+                    ],
+                },
             ],
             'order': condition.order,
             'action': ConditionAction.END_WORKFLOW,
@@ -1031,7 +1033,7 @@ class TestUpdateConditionTemplate:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'kickoff': {
@@ -1042,8 +1044,8 @@ class TestUpdateConditionTemplate:
                             'name': field.name,
                             'type': field.type,
                             'api_name': field.api_name,
-                        }
-                    ]
+                        },
+                    ],
                 },
                 'tasks': [
                     {
@@ -1055,19 +1057,19 @@ class TestUpdateConditionTemplate:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': user.id
-                            }
-                        ]
-                    }
-                ]
-            }
+                                'source_id': user.id,
+                            },
+                        ],
+                    },
+                ],
+            },
         )
 
         # assert
         assert response.status_code == 400
         message = messages.MSG_PT_0045(
             task=first_task.name,
-            selection_api_name=value
+            selection_api_name=value,
         )
         assert response.data['code'] == ErrorCode.VALIDATION_ERROR
         assert response.data['message'] == message
@@ -1086,7 +1088,7 @@ class TestUpdateConditionTemplate:
             (FieldType.STRING, PredicateOperator.MORE_THAN),
             (FieldType.TEXT, PredicateOperator.LESS_THAN),
             (FieldType.DATE, PredicateOperator.CONTAIN),
-        ]
+        ],
     )
     def test_update__disallowed_operator__validation_error(
         self,
@@ -1128,7 +1130,7 @@ class TestUpdateConditionTemplate:
         )
         mocker.patch(
             'src.processes.services.templates.'
-            'integrations.TemplateIntegrationsService.template_updated'
+            'integrations.TemplateIntegrationsService.template_updated',
         )
         request_data = {
             'api_name': condition.api_name,
@@ -1142,9 +1144,9 @@ class TestUpdateConditionTemplate:
                             'field_type': field_type,
                             'operator': operator,
                             'value': 1,
-                        }
-                    ]
-                }
+                        },
+                    ],
+                },
             ],
             'order': condition.order,
             'action': ConditionAction.END_WORKFLOW,
@@ -1160,7 +1162,7 @@ class TestUpdateConditionTemplate:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'kickoff': {
@@ -1171,8 +1173,8 @@ class TestUpdateConditionTemplate:
                             'name': field.name,
                             'type': field.type,
                             'api_name': field.api_name,
-                        }
-                    ]
+                        },
+                    ],
                 },
                 'tasks': [
                     {
@@ -1184,12 +1186,12 @@ class TestUpdateConditionTemplate:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': user.id
-                            }
+                                'source_id': user.id,
+                            },
                         ],
                     },
-                ]
-            }
+                ],
+            },
         )
 
         # assert
@@ -1217,7 +1219,7 @@ class TestUpdateConditionTemplate:
         template = create_test_template(
             user=user,
             tasks_count=2,
-            is_active=True
+            is_active=True,
         )
         kickoff = template.kickoff_instance
         field = FieldTemplate.objects.create(
@@ -1248,7 +1250,7 @@ class TestUpdateConditionTemplate:
         )
         mocker.patch(
             'src.processes.services.templates.'
-            'integrations.TemplateIntegrationsService.template_updated'
+            'integrations.TemplateIntegrationsService.template_updated',
         )
         new_api_name = 'new-api-name'
 
@@ -1262,7 +1264,7 @@ class TestUpdateConditionTemplate:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'kickoff': {
@@ -1274,8 +1276,8 @@ class TestUpdateConditionTemplate:
                             'type': field.type,
                             'api_name': field.api_name,
                             'is_required': field.is_required,
-                        }
-                    ]
+                        },
+                    ],
                 },
                 'tasks': [
                     {
@@ -1286,8 +1288,8 @@ class TestUpdateConditionTemplate:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': user.id
-                            }
+                                'source_id': user.id,
+                            },
                         ],
                         'conditions': [
                             {
@@ -1305,15 +1307,15 @@ class TestUpdateConditionTemplate:
                                                     predicate.field_type
                                                 ),
                                                 'operator': predicate.operator,
-                                            }
-                                        ]
-                                    }
-                                ]
-                            }
-                        ]
-                    }
-                ]
-            }
+                                            },
+                                        ],
+                                    },
+                                ],
+                            },
+                        ],
+                    },
+                ],
+            },
         )
 
         # assert
@@ -1324,14 +1326,14 @@ class TestUpdateConditionTemplate:
             template=template,
             action=condition.action,
             api_name=new_api_name,
-            order=condition.order
+            order=condition.order,
         )
 
         assert not RuleTemplate.objects.filter(id=rule.id).exists()
         assert new_condition.rules.all().count() == 1
         new_rule = new_condition.rules.get(
             template=template,
-            api_name=rule.api_name
+            api_name=rule.api_name,
         )
 
         assert not PredicateTemplate.objects.filter(id=predicate.id).exists()
@@ -1357,7 +1359,7 @@ class TestUpdateConditionTemplate:
         template = create_test_template(
             user=user,
             tasks_count=2,
-            is_active=True
+            is_active=True,
         )
         kickoff = template.kickoff_instance
         field = FieldTemplate.objects.create(
@@ -1388,7 +1390,7 @@ class TestUpdateConditionTemplate:
         )
         mocker.patch(
             'src.processes.services.templates.'
-            'integrations.TemplateIntegrationsService.template_updated'
+            'integrations.TemplateIntegrationsService.template_updated',
         )
 
         # act
@@ -1401,7 +1403,7 @@ class TestUpdateConditionTemplate:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'kickoff': {
@@ -1413,8 +1415,8 @@ class TestUpdateConditionTemplate:
                             'type': field.type,
                             'api_name': field.api_name,
                             'is_required': field.is_required,
-                        }
-                    ]
+                        },
+                    ],
                 },
                 'tasks': [
                     {
@@ -1425,8 +1427,8 @@ class TestUpdateConditionTemplate:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': user.id
-                            }
+                                'source_id': user.id,
+                            },
                         ],
                         'conditions': [
                             {
@@ -1443,15 +1445,15 @@ class TestUpdateConditionTemplate:
                                                     predicate.field_type
                                                 ),
                                                 'operator': predicate.operator,
-                                            }
-                                        ]
-                                    }
-                                ]
-                            }
-                        ]
-                    }
-                ]
-            }
+                                            },
+                                        ],
+                                    },
+                                ],
+                            },
+                        ],
+                    },
+                ],
+            },
         )
 
         # assert
@@ -1469,7 +1471,7 @@ class TestUpdateConditionTemplate:
         assert new_condition.rules.all().count() == 1
         new_rule = new_condition.rules.get(
             template=template,
-            api_name=rule.api_name
+            api_name=rule.api_name,
         )
 
         assert not PredicateTemplate.objects.filter(id=predicate.id).exists()
@@ -1495,7 +1497,7 @@ class TestUpdateConditionTemplate:
         template = create_test_template(
             user=user,
             tasks_count=2,
-            is_active=True
+            is_active=True,
         )
         kickoff = template.kickoff_instance
         field = FieldTemplate.objects.create(
@@ -1526,7 +1528,7 @@ class TestUpdateConditionTemplate:
         )
         mocker.patch(
             'src.processes.services.templates.'
-            'integrations.TemplateIntegrationsService.template_updated'
+            'integrations.TemplateIntegrationsService.template_updated',
         )
         new_api_name = 'new-api-name'
 
@@ -1540,7 +1542,7 @@ class TestUpdateConditionTemplate:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'kickoff': {
@@ -1552,8 +1554,8 @@ class TestUpdateConditionTemplate:
                             'type': field.type,
                             'api_name': field.api_name,
                             'is_required': field.is_required,
-                        }
-                    ]
+                        },
+                    ],
                 },
                 'tasks': [
                     {
@@ -1564,8 +1566,8 @@ class TestUpdateConditionTemplate:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': user.id
-                            }
+                                'source_id': user.id,
+                            },
                         ],
                         'conditions': [
                             {
@@ -1582,15 +1584,15 @@ class TestUpdateConditionTemplate:
                                                     predicate.field_type
                                                 ),
                                                 'operator': predicate.operator,
-                                            }
-                                        ]
-                                    }
-                                ]
-                            }
-                        ]
-                    }
-                ]
-            }
+                                            },
+                                        ],
+                                    },
+                                ],
+                            },
+                        ],
+                    },
+                ],
+            },
         )
 
         # assert
@@ -1599,7 +1601,7 @@ class TestUpdateConditionTemplate:
         assert condition.rules.all().count() == 1
         new_rule = condition.rules.get(
             template=template,
-            api_name=new_api_name
+            api_name=new_api_name,
         )
         assert not PredicateTemplate.objects.filter(id=predicate.id).exists()
         assert new_rule.predicates.all().count() == 1
@@ -1624,7 +1626,7 @@ class TestUpdateConditionTemplate:
         template = create_test_template(
             user=user,
             tasks_count=2,
-            is_active=True
+            is_active=True,
         )
         kickoff = template.kickoff_instance
         field = FieldTemplate.objects.create(
@@ -1655,7 +1657,7 @@ class TestUpdateConditionTemplate:
         )
         mocker.patch(
             'src.processes.services.templates.'
-            'integrations.TemplateIntegrationsService.template_updated'
+            'integrations.TemplateIntegrationsService.template_updated',
         )
 
         # act
@@ -1668,7 +1670,7 @@ class TestUpdateConditionTemplate:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'kickoff': {
@@ -1680,8 +1682,8 @@ class TestUpdateConditionTemplate:
                             'type': field.type,
                             'api_name': field.api_name,
                             'is_required': field.is_required,
-                        }
-                    ]
+                        },
+                    ],
                 },
                 'tasks': [
                     {
@@ -1692,8 +1694,8 @@ class TestUpdateConditionTemplate:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': user.id
-                            }
+                                'source_id': user.id,
+                            },
                         ],
                         'conditions': [
                             {
@@ -1709,15 +1711,15 @@ class TestUpdateConditionTemplate:
                                                     predicate.field_type
                                                 ),
                                                 'operator': predicate.operator,
-                                            }
-                                        ]
-                                    }
-                                ]
-                            }
-                        ]
-                    }
-                ]
-            }
+                                            },
+                                        ],
+                                    },
+                                ],
+                            },
+                        ],
+                    },
+                ],
+            },
         )
 
         # assert
@@ -1750,7 +1752,7 @@ class TestUpdateConditionTemplate:
         template = create_test_template(
             user=user,
             tasks_count=2,
-            is_active=True
+            is_active=True,
         )
         kickoff = template.kickoff_instance
         field = FieldTemplate.objects.create(
@@ -1781,7 +1783,7 @@ class TestUpdateConditionTemplate:
         )
         mocker.patch(
             'src.processes.services.templates.'
-            'integrations.TemplateIntegrationsService.template_updated'
+            'integrations.TemplateIntegrationsService.template_updated',
         )
         new_api_name = 'new-api-name'
 
@@ -1795,7 +1797,7 @@ class TestUpdateConditionTemplate:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'kickoff': {
@@ -1807,8 +1809,8 @@ class TestUpdateConditionTemplate:
                             'type': field.type,
                             'api_name': field.api_name,
                             'is_required': field.is_required,
-                        }
-                    ]
+                        },
+                    ],
                 },
                 'tasks': [
                     {
@@ -1819,8 +1821,8 @@ class TestUpdateConditionTemplate:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': user.id
-                            }
+                                'source_id': user.id,
+                            },
                         ],
                         'conditions': [
                             {
@@ -1837,15 +1839,15 @@ class TestUpdateConditionTemplate:
                                                     predicate.field_type
                                                 ),
                                                 'operator': predicate.operator,
-                                            }
-                                        ]
-                                    }
-                                ]
-                            }
-                        ]
-                    }
-                ]
-            }
+                                            },
+                                        ],
+                                    },
+                                ],
+                            },
+                        ],
+                    },
+                ],
+            },
         )
 
         # assert
@@ -1874,7 +1876,7 @@ class TestUpdateConditionTemplate:
         template = create_test_template(
             user=user,
             tasks_count=2,
-            is_active=True
+            is_active=True,
         )
         kickoff = template.kickoff_instance
         field = FieldTemplate.objects.create(
@@ -1905,7 +1907,7 @@ class TestUpdateConditionTemplate:
         )
         mocker.patch(
             'src.processes.services.templates.'
-            'integrations.TemplateIntegrationsService.template_updated'
+            'integrations.TemplateIntegrationsService.template_updated',
         )
 
         # act
@@ -1918,7 +1920,7 @@ class TestUpdateConditionTemplate:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'kickoff': {
@@ -1930,8 +1932,8 @@ class TestUpdateConditionTemplate:
                             'type': field.type,
                             'api_name': field.api_name,
                             'is_required': field.is_required,
-                        }
-                    ]
+                        },
+                    ],
                 },
                 'tasks': [
                     {
@@ -1942,8 +1944,8 @@ class TestUpdateConditionTemplate:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': user.id
-                            }
+                                'source_id': user.id,
+                            },
                         ],
                         'conditions': [
                             {
@@ -1959,15 +1961,15 @@ class TestUpdateConditionTemplate:
                                                     predicate.field_type
                                                 ),
                                                 'operator': predicate.operator,
-                                            }
-                                        ]
-                                    }
-                                ]
-                            }
-                        ]
-                    }
-                ]
-            }
+                                            },
+                                        ],
+                                    },
+                                ],
+                            },
+                        ],
+                    },
+                ],
+            },
         )
 
         # assert
@@ -2000,9 +2002,9 @@ class TestUpdateConditionTemplate:
                             'field': 'user-field-1',
                             'field_type': 'user',
                             'operator': PredicateOperator.EXIST,
-                        }
-                    ]
-                }
+                        },
+                    ],
+                },
             ],
             'order': 1,
             'action': 'skip_task',
@@ -2016,7 +2018,7 @@ class TestUpdateConditionTemplate:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'kickoff': {
@@ -2027,8 +2029,8 @@ class TestUpdateConditionTemplate:
                             'type': FieldType.USER,
                             'api_name': 'user-field-1',
                             'is_required': True,
-                        }
-                    ]
+                        },
+                    ],
                 },
                 'tasks': [
                     {
@@ -2038,12 +2040,12 @@ class TestUpdateConditionTemplate:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': user.id
-                            }
+                                'source_id': user.id,
+                            },
                         ],
                     },
-                ]
-            }
+                ],
+            },
         )
 
         template = Template.objects.get(id=response_create.data['id'])
@@ -2059,9 +2061,9 @@ class TestUpdateConditionTemplate:
                             'field': 'user-field-1',
                             'field_type': 'user',
                             'operator': PredicateOperator.EXIST,
-                        }
-                    ]
-                }
+                        },
+                    ],
+                },
             ],
             'api_name': condition.api_name,
             'order': 1,
@@ -2069,7 +2071,7 @@ class TestUpdateConditionTemplate:
         }
         mocker.patch(
             'src.processes.services.templates.'
-            'integrations.TemplateIntegrationsService.template_updated'
+            'integrations.TemplateIntegrationsService.template_updated',
         )
 
         # act
@@ -2082,7 +2084,7 @@ class TestUpdateConditionTemplate:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'kickoff': {
@@ -2094,8 +2096,8 @@ class TestUpdateConditionTemplate:
                             'type': FieldType.USER,
                             'api_name': field.api_name,
                             'is_required': True,
-                        }
-                    ]
+                        },
+                    ],
                 },
                 'tasks': [
                     {
@@ -2107,12 +2109,12 @@ class TestUpdateConditionTemplate:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': user.id
-                            }
+                                'source_id': user.id,
+                            },
                         ],
                     },
-                ]
-            }
+                ],
+            },
         )
 
         # assert
@@ -2126,7 +2128,7 @@ class TestUpdateConditionTemplate:
         # arrange
         mocker.patch(
             'src.processes.services.templates.'
-            'integrations.TemplateIntegrationsService.template_updated'
+            'integrations.TemplateIntegrationsService.template_updated',
         )
         step = 'Second step'
         condition_api_name = 'cond-1'
@@ -2176,10 +2178,10 @@ class TestUpdateConditionTemplate:
                             'field': predicate.field,
                             'field_type': predicate.field_type,
                             'operator': predicate.operator,
-                        }
-                    ]
-                }
-            ]
+                        },
+                    ],
+                },
+            ],
         }
 
         condition_2 = {
@@ -2193,10 +2195,10 @@ class TestUpdateConditionTemplate:
                             'field': field.api_name,
                             'field_type': FieldType.USER,
                             'operator': PredicateOperator.EXIST,
-                        }
-                    ]
-                }
-            ]
+                        },
+                    ],
+                },
+            ],
         }
 
         # act
@@ -2209,7 +2211,7 @@ class TestUpdateConditionTemplate:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'kickoff': {
@@ -2221,8 +2223,8 @@ class TestUpdateConditionTemplate:
                             'type': field.type,
                             'api_name': field.api_name,
                             'is_required': True,
-                        }
-                    ]
+                        },
+                    ],
                 },
                 'tasks': [
                     {
@@ -2234,8 +2236,8 @@ class TestUpdateConditionTemplate:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': user.id
-                            }
+                                'source_id': user.id,
+                            },
                         ],
                     },
                     {
@@ -2245,19 +2247,19 @@ class TestUpdateConditionTemplate:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': user.id
-                            }
-                        ]
-                    }
-                ]
-            }
+                                'source_id': user.id,
+                            },
+                        ],
+                    },
+                ],
+            },
         )
 
         # assert
         assert response.status_code == 400
         message = messages.MSG_PT_0049(
             name=step,
-            api_name=condition_api_name
+            api_name=condition_api_name,
         )
         assert response.data['message'] == message
         assert response.data['details']['reason'] == message
@@ -2271,7 +2273,7 @@ class TestUpdateConditionTemplate:
         # arrange
         mocker.patch(
             'src.processes.serializers.templates.'
-            'condition.AnalyticService.templates_task_condition_created'
+            'condition.AnalyticService.templates_task_condition_created',
         )
         rule_api_name = 'rule-1'
         step = 'First step'
@@ -2298,7 +2300,7 @@ class TestUpdateConditionTemplate:
         rule = RuleTemplate.objects.create(
             condition=condition,
             template=template,
-            api_name=rule_api_name
+            api_name=rule_api_name,
         )
         predicate = PredicateTemplate.objects.create(
             rule=rule,
@@ -2322,10 +2324,10 @@ class TestUpdateConditionTemplate:
                             'field': predicate.field,
                             'field_type': predicate.field_type,
                             'operator': predicate.operator,
-                        }
-                    ]
-                }
-            ]
+                        },
+                    ],
+                },
+            ],
         }
 
         condition_2 = {
@@ -2339,10 +2341,10 @@ class TestUpdateConditionTemplate:
                             'field': field.api_name,
                             'field_type': FieldType.USER,
                             'operator': PredicateOperator.EXIST,
-                        }
-                    ]
-                }
-            ]
+                        },
+                    ],
+                },
+            ],
         }
 
         # act
@@ -2355,7 +2357,7 @@ class TestUpdateConditionTemplate:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'kickoff': {
@@ -2367,8 +2369,8 @@ class TestUpdateConditionTemplate:
                             'type': field.type,
                             'api_name': field.api_name,
                             'is_required': True,
-                        }
-                    ]
+                        },
+                    ],
                 },
                 'tasks': [
                     {
@@ -2380,8 +2382,8 @@ class TestUpdateConditionTemplate:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': user.id
-                            }
+                                'source_id': user.id,
+                            },
                         ],
                     },
                     {
@@ -2391,19 +2393,19 @@ class TestUpdateConditionTemplate:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': user.id
-                            }
-                        ]
-                    }
-                ]
-            }
+                                'source_id': user.id,
+                            },
+                        ],
+                    },
+                ],
+            },
         )
 
         # assert
         assert response.status_code == 400
         message = messages.MSG_PT_0053(
             name=step,
-            api_name=rule_api_name
+            api_name=rule_api_name,
         )
         assert response.data['message'] == message
         assert response.data['details']['reason'] == message
@@ -2417,7 +2419,7 @@ class TestUpdateConditionTemplate:
         # arrange
         mocker.patch(
             'src.processes.serializers.templates.'
-            'condition.AnalyticService.templates_task_condition_created'
+            'condition.AnalyticService.templates_task_condition_created',
         )
         predicate_api_name = 'predicate-1'
         step = 'First step'
@@ -2468,10 +2470,10 @@ class TestUpdateConditionTemplate:
                             'field': predicate.field,
                             'field_type': predicate.field_type,
                             'operator': predicate.operator,
-                        }
-                    ]
-                }
-            ]
+                        },
+                    ],
+                },
+            ],
         }
 
         condition_2 = {
@@ -2485,10 +2487,10 @@ class TestUpdateConditionTemplate:
                             'field': field.api_name,
                             'field_type': FieldType.USER,
                             'operator': PredicateOperator.EXIST,
-                        }
-                    ]
-                }
-            ]
+                        },
+                    ],
+                },
+            ],
         }
 
         # act
@@ -2501,7 +2503,7 @@ class TestUpdateConditionTemplate:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'kickoff': {
@@ -2513,8 +2515,8 @@ class TestUpdateConditionTemplate:
                             'type': field.type,
                             'api_name': field.api_name,
                             'is_required': True,
-                        }
-                    ]
+                        },
+                    ],
                 },
                 'tasks': [
                     {
@@ -2526,8 +2528,8 @@ class TestUpdateConditionTemplate:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': user.id
-                            }
+                                'source_id': user.id,
+                            },
                         ],
                     },
                     {
@@ -2537,19 +2539,19 @@ class TestUpdateConditionTemplate:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': user.id
-                            }
-                        ]
-                    }
-                ]
-            }
+                                'source_id': user.id,
+                            },
+                        ],
+                    },
+                ],
+            },
         )
 
         # assert
         assert response.status_code == 400
         message = messages.MSG_PT_0051(
             name=step,
-            api_name=predicate_api_name
+            api_name=predicate_api_name,
         )
         assert response.data['message'] == message
         assert response.data['details']['reason'] == message
@@ -2590,7 +2592,7 @@ class TestUpdateConditionTemplate:
         )
         mocker.patch(
             'src.processes.serializers.templates.'
-            'condition.AnalyticService.templates_task_condition_created'
+            'condition.AnalyticService.templates_task_condition_created',
         )
         not_existent_api_name = 'not-existent'
         condition_data = {
@@ -2607,10 +2609,10 @@ class TestUpdateConditionTemplate:
                             'api_name': predicate.api_name,
                             'field': not_existent_api_name,
                             'value': None,
-                        }
-                    ]
-                }
-            ]
+                        },
+                    ],
+                },
+            ],
         }
         api_client.token_authenticate(user)
 
@@ -2624,7 +2626,7 @@ class TestUpdateConditionTemplate:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'kickoff': {},
@@ -2638,12 +2640,12 @@ class TestUpdateConditionTemplate:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': user.id
-                            }
-                        ]
-                    }
-                ]
-            }
+                                'source_id': user.id,
+                            },
+                        ],
+                    },
+                ],
+            },
         )
 
         # assert
@@ -2689,7 +2691,7 @@ class TestUpdateConditionTemplate:
         )
         mocker.patch(
             'src.processes.serializers.templates.'
-            'condition.AnalyticService.templates_task_condition_created'
+            'condition.AnalyticService.templates_task_condition_created',
         )
         not_existent_api_name = 'not-existent'
         condition_data = {
@@ -2706,10 +2708,10 @@ class TestUpdateConditionTemplate:
                             'api_name': predicate.api_name,
                             'field': not_existent_api_name,
                             'value': None,
-                        }
-                    ]
-                }
-            ]
+                        },
+                    ],
+                },
+            ],
         }
         api_client.token_authenticate(user)
 
@@ -2723,7 +2725,7 @@ class TestUpdateConditionTemplate:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'kickoff': {},
@@ -2737,12 +2739,12 @@ class TestUpdateConditionTemplate:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': user.id
-                            }
-                        ]
-                    }
-                ]
-            }
+                                'source_id': user.id,
+                            },
+                        ],
+                    },
+                ],
+            },
         )
 
         # assert
@@ -2789,7 +2791,7 @@ class TestUpdateConditionTemplate:
         )
         mocker.patch(
             'src.processes.serializers.templates.'
-            'condition.AnalyticService.templates_task_condition_created'
+            'condition.AnalyticService.templates_task_condition_created',
         )
         condition_data = {
             'api_name': condition.api_name,
@@ -2805,10 +2807,10 @@ class TestUpdateConditionTemplate:
                             'api_name': predicate.api_name,
                             'field': task_1.api_name,
                             'value': None,
-                        }
-                    ]
-                }
-            ]
+                        },
+                    ],
+                },
+            ],
         }
         api_client.token_authenticate(user)
 
@@ -2822,7 +2824,7 @@ class TestUpdateConditionTemplate:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'kickoff': {},
@@ -2835,9 +2837,9 @@ class TestUpdateConditionTemplate:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': user.id
-                            }
-                        ]
+                                'source_id': user.id,
+                            },
+                        ],
                     },
                     {
                         'number': task_2.number,
@@ -2848,12 +2850,12 @@ class TestUpdateConditionTemplate:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': user.id
-                            }
-                        ]
-                    }
-                ]
-            }
+                                'source_id': user.id,
+                            },
+                        ],
+                    },
+                ],
+            },
         )
 
         # assert
@@ -2875,12 +2877,12 @@ class TestUpdateConditionTemplate:
         group = create_test_group(account=account)
         mocker.patch(
             'src.processes.services.templates.'
-            'integrations.TemplateIntegrationsService.template_updated'
+            'integrations.TemplateIntegrationsService.template_updated',
         )
         template = create_test_template(
             user=user,
             tasks_count=3,
-            is_active=True
+            is_active=True,
         )
         first_task = template.tasks.order_by('number').first()
         condition = ConditionTemplate.objects.create(
@@ -2918,10 +2920,10 @@ class TestUpdateConditionTemplate:
                             'operator': PredicateOperator.EQUAL,
                             'field': field_api_name,
                             'value': value,
-                        }
-                    ]
-                }
-            ]
+                        },
+                    ],
+                },
+            ],
         }
         api_client.token_authenticate(user)
 
@@ -2935,7 +2937,7 @@ class TestUpdateConditionTemplate:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'kickoff': {
@@ -2946,8 +2948,8 @@ class TestUpdateConditionTemplate:
                             'type': FieldType.USER,
                             'api_name': field_api_name,
                             'is_required': True,
-                        }
-                    ]
+                        },
+                    ],
                 },
                 'tasks': [
                     {
@@ -2959,12 +2961,12 @@ class TestUpdateConditionTemplate:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': user.id
-                            }
-                        ]
-                    }
-                ]
-            }
+                                'source_id': user.id,
+                            },
+                        ],
+                    },
+                ],
+            },
         )
 
         # assert
@@ -2995,12 +2997,12 @@ class TestUpdateConditionTemplate:
         create_test_group(account=account)
         mocker.patch(
             'src.processes.services.templates.'
-            'integrations.TemplateIntegrationsService.template_updated'
+            'integrations.TemplateIntegrationsService.template_updated',
         )
         template = create_test_template(
             user=user,
             tasks_count=3,
-            is_active=True
+            is_active=True,
         )
         first_task = template.tasks.order_by('number').first()
         condition = ConditionTemplate.objects.create(
@@ -3030,10 +3032,10 @@ class TestUpdateConditionTemplate:
                             'operator': PredicateOperator.EQUAL,
                             'field': field_api_name,
                             'value': invalid_value,
-                        }
-                    ]
-                }
-            ]
+                        },
+                    ],
+                },
+            ],
         }
         api_client.token_authenticate(user)
 
@@ -3047,7 +3049,7 @@ class TestUpdateConditionTemplate:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'kickoff': {
@@ -3058,8 +3060,8 @@ class TestUpdateConditionTemplate:
                             'type': FieldType.USER,
                             'api_name': field_api_name,
                             'is_required': True,
-                        }
-                    ]
+                        },
+                    ],
                 },
                 'tasks': [
                     {
@@ -3071,19 +3073,19 @@ class TestUpdateConditionTemplate:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': user.id
-                            }
-                        ]
-                    }
-                ]
-            }
+                                'source_id': user.id,
+                            },
+                        ],
+                    },
+                ],
+            },
         )
 
         # assert
         assert response.status_code == 400
         message = messages.MSG_PT_0062(
             task=first_task.name,
-            group_id=invalid_value
+            group_id=invalid_value,
         )
         assert response.data['code'] == ErrorCode.VALIDATION_ERROR
         assert response.data['message'] == message

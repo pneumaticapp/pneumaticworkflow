@@ -1,5 +1,5 @@
 from typing import List, Optional
-from src.generics.exceptions import BaseServiceException
+
 from src.accounts.messages import (
     MSG_A_0004,
     MSG_A_0005,
@@ -13,8 +13,9 @@ from src.accounts.messages import (
     MSG_A_0013,
     MSG_A_0042,
     MSG_A_0043,
-    MSG_A_0044
+    MSG_A_0044,
 )
+from src.generics.exceptions import BaseServiceException
 
 
 class GuestServiceException(BaseServiceException):

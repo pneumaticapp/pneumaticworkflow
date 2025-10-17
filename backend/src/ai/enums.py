@@ -15,7 +15,7 @@ class OpenAiModel:
     LITERALS = Literal[
         GPT_35_turbo,
         GPT_4_turbo_preview,
-        GPT_4
+        GPT_4,
     ]
 
 

@@ -1,4 +1,5 @@
 from typing_extensions import TypedDict
+
 from src.analytics.customerio.enums import MetricType
 
 
