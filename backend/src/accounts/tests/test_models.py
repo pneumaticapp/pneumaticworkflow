@@ -1,21 +1,21 @@
-# pylint:disable=redefined-outer-name
 import pytest
 from django.contrib.auth import get_user_model
 from django.db import IntegrityError
+
 from src.accounts.enums import (
     BillingPlanType,
     LeaseLevel,
     UserStatus,
 )
-from src.processes.tests.fixtures import (
-    create_test_user,
-    create_test_account,
-    create_invited_user,
-    create_test_guest
-)
 from src.accounts.models import (
     Account,
     UserInvite,
+)
+from src.processes.tests.fixtures import (
+    create_invited_user,
+    create_test_account,
+    create_test_guest,
+    create_test_user,
 )
 
 UserModel = get_user_model()
@@ -69,7 +69,7 @@ class TestAccountModels:
         # assert
         assert Account.objects.raw(
             account_sql,
-            {'acc_id': account.id}
+            {'acc_id': account.id},
         )[0].is_deleted is True
 
     def test_account_str(self):
@@ -87,20 +87,20 @@ class TestAccountModels:
 
         # arrange
         master_account = create_test_account(
-            plan=BillingPlanType.UNLIMITED
+            plan=BillingPlanType.UNLIMITED,
         )
         user = create_test_user(
             account=master_account,
-            email='master@test.test'
+            email='master@test.test',
         )
         create_invited_user(
             user=user,
-            email='invited_master@test.test'
+            email='invited_master@test.test',
         )
         create_test_user(
             account=master_account,
             email='inactive@test.test',
-            status=UserStatus.INACTIVE
+            status=UserStatus.INACTIVE,
         )
         create_test_guest(account=master_account)
 
@@ -108,20 +108,20 @@ class TestAccountModels:
         tenant_account = create_test_account(
             plan=BillingPlanType.PREMIUM,
             lease_level=LeaseLevel.TENANT,
-            master_account=master_account
+            master_account=master_account,
         )
         tenant_user = create_test_user(
             account=tenant_account,
-            email='tenant@test.test'
+            email='tenant@test.test',
         )
         create_invited_user(
             user=tenant_user,
-            email='invited_tenant@test.test'
+            email='invited_tenant@test.test',
         )
         create_test_user(
             account=tenant_account,
             email='inactive@test.test',
-            status=UserStatus.INACTIVE
+            status=UserStatus.INACTIVE,
         )
         create_test_guest(account=tenant_account)
 
@@ -129,12 +129,12 @@ class TestAccountModels:
         another_account = create_test_account()
         another_user = create_test_user(
             account=another_account,
-            email='another@test.test'
+            email='another@test.test',
         )
         create_invited_user(user=another_user)
         create_test_user(
             account=another_account,
-            status=UserStatus.INACTIVE
+            status=UserStatus.INACTIVE,
         )
         create_test_guest(account=another_account)
 
@@ -147,26 +147,26 @@ class TestAccountModels:
     @pytest.mark.parametrize('lease_level', LeaseLevel.NOT_PARTNER_LEVELS)
     def test_get_paid_users_count__lease_level_not_partner__ok(
         self,
-        lease_level
+        lease_level,
     ):
 
         # arrange
         master_account = create_test_account(
             lease_level=lease_level,
-            plan=BillingPlanType.PREMIUM
+            plan=BillingPlanType.PREMIUM,
         )
         user = create_test_user(
             account=master_account,
-            email='master@test.test'
+            email='master@test.test',
         )
         create_invited_user(
             user=user,
-            email='invited_master@test.test'
+            email='invited_master@test.test',
         )
         create_test_user(
             account=master_account,
             email='inactive@test.test',
-            status=UserStatus.INACTIVE
+            status=UserStatus.INACTIVE,
         )
         create_test_guest(account=master_account)
 
@@ -174,12 +174,12 @@ class TestAccountModels:
         another_account = create_test_account()
         another_user = create_test_user(
             account=another_account,
-            email='another@test.test'
+            email='another@test.test',
         )
         create_invited_user(user=another_user)
         create_test_user(
             account=another_account,
-            status=UserStatus.INACTIVE
+            status=UserStatus.INACTIVE,
         )
         create_test_guest(account=another_account)
 

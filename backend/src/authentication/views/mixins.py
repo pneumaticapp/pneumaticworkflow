@@ -1,34 +1,33 @@
-from typing import Tuple, Optional
+from typing import Optional, Tuple
+
 from django.conf import settings
-from django.db import transaction
 from django.contrib.auth import get_user_model
+from django.db import transaction
 from django.http import HttpRequest
-from src.authentication.enums import AuthTokenType
+
 from src.accounts.enums import Language
-from src.accounts.services import (
-    AccountService,
-    UserService,
-)
+from src.accounts.services.account import AccountService
 from src.accounts.services.exceptions import (
     AccountServiceException,
     UserServiceException,
 )
-from src.authentication.services import AuthService
-from src.utils.validation import raise_validation_error
-from src.processes.services.system_workflows import (
-    SystemWorkflowService
-)
+from src.accounts.services.user import UserService
+from src.authentication.enums import AuthTokenType
+from src.authentication.services.user_auth import AuthService
 from src.authentication.tasks import (
-    send_new_signup_notification
+    send_new_signup_notification,
 )
 from src.authentication.tokens import PneumaticToken
-from src.payment.stripe.service import StripeService
 from src.payment.stripe.exceptions import StripeServiceException
-from src.utils.logging import (
-    capture_sentry_message,
-    SentryLogLevel,
+from src.payment.stripe.service import StripeService
+from src.processes.services.system_workflows import (
+    SystemWorkflowService,
 )
-
+from src.utils.logging import (
+    SentryLogLevel,
+    capture_sentry_message,
+)
+from src.utils.validation import raise_validation_error
 
 UserModel = get_user_model()
 
@@ -48,7 +47,7 @@ class SignUpMixin:
         photo: Optional[str] = None,
         job_title: Optional[str] = None,
         language: Language.LITERALS = None,
-        timezone: str = None,
+        timezone: Optional[str] = None,
         password: Optional[str] = None,
         utm_source: Optional[str] = None,
         utm_medium: Optional[str] = None,
@@ -64,11 +63,11 @@ class SignUpMixin:
         is_superuser = getattr(request, 'is_superuser', False)  # for Admin
         account_service = AccountService(
             is_superuser=is_superuser,
-            auth_type=AuthTokenType.USER
+            auth_type=AuthTokenType.USER,
         )
         user_service = UserService(
             is_superuser=is_superuser,
-            auth_type=AuthTokenType.USER
+            auth_type=AuthTokenType.USER,
         )
         with transaction.atomic():
             try:
@@ -109,7 +108,7 @@ class SignUpMixin:
                                 'stripe_id': account.stripe_id,
                                 'exception': str(ex),
                             },
-                            level=SentryLogLevel.ERROR
+                            level=SentryLogLevel.ERROR,
                         )
                 service = SystemWorkflowService(user=account_owner)
                 service.create_onboarding_templates()
@@ -126,7 +125,7 @@ class SignUpMixin:
                     user=account_owner,
                     user_agent=request.headers.get(
                         'User-Agent',
-                        request.META.get('HTTP_USER_AGENT')
+                        request.META.get('HTTP_USER_AGENT'),
                     ),
                     user_ip=request.META.get('HTTP_X_REAL_IP'),
                 )

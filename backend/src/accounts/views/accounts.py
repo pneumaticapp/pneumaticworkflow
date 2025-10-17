@@ -2,16 +2,17 @@ from django.contrib.auth import get_user_model
 from rest_framework.generics import (
     GenericAPIView,
 )
+
 from src.accounts.permissions import (
-    UserIsAdminOrAccountOwner,
-    ExpiredSubscriptionPermission,
     BillingPlanPermission,
+    ExpiredSubscriptionPermission,
+    UserIsAdminOrAccountOwner,
 )
-from src.accounts.services import AccountService
 from src.accounts.serializers.accounts import (
-    AccountSerializer,
     AccountPlanSerializer,
+    AccountSerializer,
 )
+from src.accounts.services.account import AccountService
 from src.generics.mixins.views import (
     BaseResponseMixin,
 )
@@ -24,7 +25,7 @@ UserModel = get_user_model()
 
 class AccountView(
     GenericAPIView,
-    BaseResponseMixin
+    BaseResponseMixin,
 ):
 
     serializer_class = AccountSerializer
@@ -36,13 +37,12 @@ class AccountView(
                 BillingPlanPermission(),
                 ExpiredSubscriptionPermission(),
             )
-        else:
-            return (
-                UserIsAuthenticated(),
-                BillingPlanPermission(),
-                UserIsAdminOrAccountOwner(),
-                ExpiredSubscriptionPermission(),
-            )
+        return (
+            UserIsAuthenticated(),
+            BillingPlanPermission(),
+            UserIsAdminOrAccountOwner(),
+            ExpiredSubscriptionPermission(),
+        )
 
     def get_object(self):
         return self.request.user.account
@@ -56,12 +56,12 @@ class AccountView(
         instance = self.get_object()
         slz = self.get_serializer(
             instance=instance,
-            data=request.data
+            data=request.data,
         )
         slz.is_valid(raise_exception=True)
         service = AccountService(
             instance=slz.instance,
-            user=self.request.user
+            user=self.request.user,
         )
         service.partial_update(**slz.validated_data, force_save=True)
         return self.response_ok(slz.data)
@@ -69,7 +69,7 @@ class AccountView(
 
 class AccountPlanView(
     GenericAPIView,
-    BaseResponseMixin
+    BaseResponseMixin,
 ):
     permission_classes = (
         UserIsAuthenticated,

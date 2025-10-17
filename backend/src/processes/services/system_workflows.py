@@ -1,37 +1,35 @@
-# pylint: disable=broad-except,
-from typing import List, Dict, Optional
+from typing import Dict, List, Optional
+
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import QuerySet
+
 from src.authentication.enums import AuthTokenType
-from src.processes.services.workflows.workflow import (
-    WorkflowService
-)
-from src.processes.services.exceptions import (
-    WorkflowServiceException
-)
-from src.processes.models import (
-    Template,
-    SystemTemplate,
-)
 from src.processes.enums import (
     FieldType,
 )
-from src.processes.utils.common import (
-    insert_fields_values_to_text
-)
-from src.utils.logging import (
-    capture_sentry_message,
-    SentryLogLevel
+from src.processes.models.templates.system_template import SystemTemplate
+from src.processes.models.templates.template import Template
+from src.processes.services.exceptions import (
+    WorkflowServiceException,
 )
 from src.processes.services.templates.template import (
-    TemplateService
+    TemplateService,
 )
 from src.processes.services.workflow_action import (
     WorkflowActionService,
 )
-
+from src.processes.services.workflows.workflow import (
+    WorkflowService,
+)
+from src.processes.utils.common import (
+    insert_fields_values_to_text,
+)
+from src.utils.logging import (
+    SentryLogLevel,
+    capture_sentry_message,
+)
 
 UserModel = get_user_model()
 
@@ -43,7 +41,7 @@ class SystemWorkflowService:
         user: UserModel = None,
         is_superuser: bool = False,
         auth_type: AuthTokenType = AuthTokenType.USER,
-        sync: bool = False
+        sync: bool = False,
     ):
         self.user = user
         self.account = user.account if user else None
@@ -53,7 +51,7 @@ class SystemWorkflowService:
         self.template_service = TemplateService(
             user=user,
             is_superuser=is_superuser,
-            auth_type=auth_type
+            auth_type=auth_type,
         )
 
     def _get_onboarding_templates_for_user(self) -> List[Template]:
@@ -68,7 +66,7 @@ class SystemWorkflowService:
 
     def _get_system_workflow_kickoff_data(
         self,
-        system_template: SystemTemplate
+        system_template: SystemTemplate,
     ) -> QuerySet:
 
         qst = system_template.system_workflow_kickoff_data.active()
@@ -96,9 +94,9 @@ class SystemWorkflowService:
                     'user_id': self.user.id,
                     'user_email': self.user.email,
                     'exception': str(ex),
-                    **kwargs
+                    **kwargs,
                 },
-                level=SentryLogLevel.INFO
+                level=SentryLogLevel.INFO,
             )
         else:
             raise ex
@@ -106,7 +104,7 @@ class SystemWorkflowService:
     def get_kickoff_fields_values(
         self,
         template: Template,
-        fields_data: Optional[Dict[str, str]] = None
+        fields_data: Optional[Dict[str, str]] = None,
     ) -> Dict[str, str]:
 
         if fields_data is None:
@@ -116,13 +114,13 @@ class SystemWorkflowService:
 
         for field in template.kickoff_instance.fields.all():
             if field.type == FieldType.USER:
-                result[field.api_name] = str(self.user.id)
+                result[field.api_name] = self.user.email
             elif fields_data.get(field.api_name):
                 result[field.api_name] = fields_data[field.api_name]
             elif field.default is not None:
                 result[field.api_name] = insert_fields_values_to_text(
                     text=field.default,
-                    fields_values=user_vars
+                    fields_values=user_vars,
                 )
         return result
 
@@ -132,9 +130,10 @@ class SystemWorkflowService:
         ).active():
             try:
                 self.template_service.create_template_from_sys_template(
-                    system_template=system_template
+                    system_template=system_template,
                 )
-            except Exception as ex:
+            # TODO Fix the broad "try except"
+            except Exception as ex:  # noqa: BLE001
                 self._resolve_exception(ex)
 
     def create_onboarding_templates(self):
@@ -144,16 +143,17 @@ class SystemWorkflowService:
         ):
             try:
                 self.template_service.create_template_from_sys_template(
-                    system_template=system_template
+                    system_template=system_template,
                 )
-            except Exception as ex:
+            # TODO Fix the broad "try except"
+            except Exception as ex:  # noqa: BLE001
                 self._resolve_exception(ex)
 
     def create_onboarding_workflows(self):
         service = WorkflowService(
             user=self.user,
             is_superuser=self.is_superuser,
-            auth_type=self.auth_type
+            auth_type=self.auth_type,
         )
         for template in self._get_onboarding_templates_for_user():
             kickoff_fields_data = self.get_kickoff_fields_values(template)
@@ -171,7 +171,7 @@ class SystemWorkflowService:
                     workflow=workflow,
                     user=self.user,
                     is_superuser=self.is_superuser,
-                    auth_type=self.auth_type
+                    auth_type=self.auth_type,
                 )
                 workflow_action_service.start_workflow()
 
@@ -182,19 +182,20 @@ class SystemWorkflowService:
                 self.template_service.create_template_from_sys_template(
                     system_template=system_template,
                 )
-            except Exception as ex:
+            # TODO Fix the broad "try except"
+            except Exception as ex:  # noqa: BLE001
                 self._resolve_exception(ex)
 
     def create_activated_workflows(self):
 
         for system_template in SystemTemplate.objects.activated().active():
             system_kickoffs = self._get_system_workflow_kickoff_data(
-                system_template
+                system_template,
             )
             if system_kickoffs.exists():
                 try:
                     template = self.account.template_set.get(
-                        system_template_id=system_template.id
+                        system_template_id=system_template.id,
                     )
                 except ObjectDoesNotExist as ex:
                     self._resolve_exception(
@@ -206,12 +207,12 @@ class SystemWorkflowService:
                     service = WorkflowService(
                         user=self.user,
                         is_superuser=self.is_superuser,
-                        auth_type=self.auth_type
+                        auth_type=self.auth_type,
                     )
                     for kickoff_data in system_kickoffs:
                         kickoff_fields_data = self.get_kickoff_fields_values(
                             template=template,
-                            fields_data=kickoff_data.get('kickoff', {})
+                            fields_data=kickoff_data.get('kickoff', {}),
                         )
                         try:
                             workflow = service.create(

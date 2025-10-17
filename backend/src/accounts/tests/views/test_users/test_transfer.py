@@ -1,14 +1,14 @@
 import pytest
 from django.conf import settings
-from src.processes.tests.fixtures import (
-    create_test_user,
-    create_test_account
-)
-from src.accounts.services.exceptions import (
-    InvalidTransferTokenException,
-    AlreadyAcceptedInviteException,
-)
 
+from src.accounts.services.exceptions import (
+    AlreadyAcceptedInviteException,
+    InvalidTransferTokenException,
+)
+from src.processes.tests.fixtures import (
+    create_test_account,
+    create_test_user,
+)
 
 pytestmark = pytest.mark.django_db
 
@@ -27,17 +27,17 @@ class TestDeprecatedTransfer:
         token = '1@ad!'
         accept_transfer_mock = mocker.patch(
             'src.accounts.services.user_transfer.'
-            'UserTransferService.accept_transfer'
+            'UserTransferService.accept_transfer',
         )
         mocker.patch(
             'src.accounts.services.user_transfer.'
             'UserTransferService.get_account',
-            return_value=account_to_transfer
+            return_value=account_to_transfer,
         )
 
         # act
         response = api_client.get(
-            f'/accounts/users/{user_to_transfer.id}/transfer?token={token}'
+            f'/accounts/users/{user_to_transfer.id}/transfer?token={token}',
         )
 
         # assert
@@ -47,7 +47,7 @@ class TestDeprecatedTransfer:
         )
         accept_transfer_mock.assert_called_once_with(
             token_str=token,
-            user_id=user_to_transfer.id
+            user_id=user_to_transfer.id,
         )
 
     def test_transfer__skip_token__redirect(
@@ -59,12 +59,12 @@ class TestDeprecatedTransfer:
         user_to_transfer = create_test_user()
         accept_transfer_mock = mocker.patch(
             'src.accounts.services.user_transfer.'
-            'UserTransferService.accept_transfer'
+            'UserTransferService.accept_transfer',
         )
 
         # act
         response = api_client.get(
-            f'/accounts/users/{user_to_transfer.id}/transfer?token='
+            f'/accounts/users/{user_to_transfer.id}/transfer?token=',
         )
 
         # assert
@@ -81,12 +81,12 @@ class TestDeprecatedTransfer:
         token = '!2wds@'
         accept_transfer_mock = mocker.patch(
             'src.accounts.services.user_transfer.'
-            'UserTransferService.accept_transfer'
+            'UserTransferService.accept_transfer',
         )
 
         # act
         response = api_client.get(
-            f'/accounts/users/lol/transfer?token={token}'
+            f'/accounts/users/lol/transfer?token={token}',
         )
 
         # assert
@@ -105,12 +105,12 @@ class TestDeprecatedTransfer:
         accept_transfer_mock = mocker.patch(
             'src.accounts.services.user_transfer.'
             'UserTransferService.accept_transfer',
-            side_effect=AlreadyAcceptedInviteException
+            side_effect=AlreadyAcceptedInviteException,
         )
 
         # act
         response = api_client.get(
-            f'/accounts/users/{user_to_transfer.id}/transfer?token={token}'
+            f'/accounts/users/{user_to_transfer.id}/transfer?token={token}',
         )
 
         # assert
@@ -118,7 +118,7 @@ class TestDeprecatedTransfer:
         assert response.url == settings.FRONTEND_URL
         accept_transfer_mock.assert_called_once_with(
             token_str=token,
-            user_id=user_to_transfer.id
+            user_id=user_to_transfer.id,
         )
 
     def test_transfer__invalid_token__redirect(
@@ -132,12 +132,12 @@ class TestDeprecatedTransfer:
         accept_transfer_mock = mocker.patch(
             'src.accounts.services.user_transfer.'
             'UserTransferService.accept_transfer',
-            side_effect=InvalidTransferTokenException
+            side_effect=InvalidTransferTokenException,
         )
 
         # act
         response = api_client.get(
-            f'/accounts/users/{user_to_transfer.id}/transfer?token={token}'
+            f'/accounts/users/{user_to_transfer.id}/transfer?token={token}',
         )
 
         # assert
@@ -145,7 +145,7 @@ class TestDeprecatedTransfer:
         assert response.url == settings.EXPIRED_INVITE_PAGE
         accept_transfer_mock.assert_called_once_with(
             token_str=token,
-            user_id=user_to_transfer.id
+            user_id=user_to_transfer.id,
         )
 
 

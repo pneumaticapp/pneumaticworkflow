@@ -1,9 +1,10 @@
 import pytest
+
 from src.processes.permissions import GuestTaskPermission
 from src.processes.tests.fixtures import (
-    create_test_template,
     create_checklist_template,
     create_test_guest,
+    create_test_template,
     create_test_user,
     create_test_workflow,
 )
@@ -24,7 +25,7 @@ class TestGuestPermission:
         # act
         result = permission.has_permission(
             request=request_mock,
-            view=mocker.Mock()
+            view=mocker.Mock(),
         )
 
         # assert
@@ -40,18 +41,18 @@ class TestGuestPermission:
         request_to_task_mock = mocker.patch(
             'src.processes.permissions.GuestTaskPermission.'
             '_request_to_task',
-            return_value=False
+            return_value=False,
         )
         request_to_checklist = mocker.patch(
             'src.processes.permissions.GuestTaskPermission.'
             '_request_to_checklist',
-            return_value=False
+            return_value=False,
         )
 
         # act
         result = permission.has_permission(
             request=request_mock,
-            view=mocker.Mock()
+            view=mocker.Mock(),
         )
 
         # assert
@@ -63,8 +64,8 @@ class TestGuestPermission:
         'path',
         (
             '/v2/tasks/1',
-            '/v2/tasks/1/'
-        )
+            '/v2/tasks/1/',
+        ),
     )
     def test_request_to_task__return_true(self, path, mocker):
 
@@ -87,8 +88,8 @@ class TestGuestPermission:
             '/v2/tasks/a/'
             '/v2/tasks/null/'
             '/tasks/1'
-            '/tasks/1/checklists'
-        )
+            '/tasks/1/checklists',
+        ),
     )
     def test_request_to_task__invalid_path__return_false(self, path, mocker):
 
@@ -106,7 +107,7 @@ class TestGuestPermission:
 
     def test_request_to_task__invalid_task_id__return_false(
         self,
-        mocker
+        mocker,
     ):
 
         # arrange
@@ -130,7 +131,7 @@ class TestGuestPermission:
             '/v2/tasks/checklists/%d/mark/',
             '/v2/tasks/checklists/%d/unmark',
             '/v2/tasks/checklists/%d/unmark/',
-        )
+        ),
     )
     def test_request_to_checklist__return_true(self, path, mocker):
 
@@ -162,12 +163,12 @@ class TestGuestPermission:
             '/v2/tasks/checklists/null',
             '/v2/tasks/checklists/a/mark',
             '/v2/tasks/performers/null/mark ',
-        )
+        ),
     )
     def test_request_to_checklist__invalid_path_return_false(
         self,
         path,
-        mocker
+        mocker,
     ):
 
         # arrange
@@ -183,7 +184,7 @@ class TestGuestPermission:
 
     def test_request_to_checklist__invalid_task_id__return_false(
         self,
-        mocker
+        mocker,
     ):
 
         # arrange

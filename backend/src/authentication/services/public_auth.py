@@ -1,12 +1,14 @@
 from typing import Optional, Tuple
+
 from django.contrib.auth.models import AnonymousUser
 from rest_framework.authentication import BaseAuthentication
+
 from src.authentication.tokens import (
+    EmbedToken,
     PublicBaseToken,
     PublicToken,
-    EmbedToken,
 )
-from src.processes.models import Template
+from src.processes.models.templates.template import Template
 
 
 class PublicAuthService(BaseAuthentication):
@@ -25,7 +27,7 @@ class PublicAuthService(BaseAuthentication):
         """
         return request.headers.get(
             'X-Public-Authorization',
-            request.META.get('X-Public-Authorization')
+            request.META.get('X-Public-Authorization'),
         )
 
     @classmethod
@@ -58,13 +60,12 @@ class PublicAuthService(BaseAuthentication):
         elif token.is_embedded:
             filter_kwargs['embed_id'] = str(token)
             filter_kwargs['is_embedded'] = True
-        template = (
+        return (
             Template.objects.exclude_onboarding()
             .active()
             .filter(**filter_kwargs)
             .first()
         )
-        return template
 
     def authenticate_header(self, request):
         return f'{self.header_prefix} realm="api"'

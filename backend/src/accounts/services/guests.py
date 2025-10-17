@@ -1,9 +1,9 @@
 from django.contrib.auth import get_user_model
-from src.accounts.enums import (
-    UserType,
-    UserStatus
-)
 
+from src.accounts.enums import (
+    UserStatus,
+    UserType,
+)
 
 UserModel = get_user_model()
 
@@ -14,11 +14,11 @@ class GuestService:
     def create(
         cls,
         email: str,
-        account_id: int
+        account_id: int,
     ) -> UserModel:
         owner = UserModel.objects.get(
             account_id=account_id,
-            is_account_owner=True
+            is_account_owner=True,
         )
         user = UserModel(
             email=email,
@@ -50,7 +50,7 @@ class GuestService:
     def get_or_create(
         cls,
         email: str,
-        account_id: int
+        account_id: int,
     ) -> UserModel:
 
         try:
@@ -58,10 +58,10 @@ class GuestService:
                 email=email,
                 account_id=account_id,
                 type=UserType.GUEST,
-                status=UserStatus.ACTIVE
+                status=UserStatus.ACTIVE,
             )
         except UserModel.DoesNotExist:
             return cls.create(
                 account_id=account_id,
-                email=email
+                email=email,
             )

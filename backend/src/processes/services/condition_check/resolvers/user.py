@@ -1,6 +1,7 @@
 from django.db.models import Q
 
-from src.processes.models import TaskField
+from src.processes.models.workflows.fields import TaskField
+
 from .base import Resolver
 
 
@@ -16,8 +17,4 @@ class UserResolver(Resolver):
             Q(kickoff__workflow_id=self._workflow_id),
             api_name=self._predicate.field,
         )
-        self.field_value = (
-            field.user_id
-            if field.user_id
-            else None
-        )
+        self.field_value = field.user_id if field.user_id else None

@@ -1,28 +1,28 @@
 import pytest
-from src.processes.models import FileAttachment
-from src.processes.tests.fixtures import (
-    create_test_user,
-    create_test_template,
-    create_test_account,
-)
-from src.authentication.tokens import (
-    PublicToken,
-    EmbedToken,
-)
+from django.contrib.auth.models import AnonymousUser
+
 from src.accounts.enums import BillingPlanType
 from src.authentication.enums import AuthTokenType
-from django.contrib.auth.models import AnonymousUser
-from src.processes.messages.workflow import (
-    MSG_PW_0001
+from src.authentication.tokens import (
+    EmbedToken,
+    PublicToken,
 )
-
+from src.processes.messages.workflow import (
+    MSG_PW_0001,
+)
+from src.processes.models.workflows.attachment import FileAttachment
+from src.processes.tests.fixtures import (
+    create_test_account,
+    create_test_template,
+    create_test_user,
+)
 
 pytestmark = pytest.mark.django_db
 
 
 def test_publish__public_token__ok(
     api_client,
-    mocker
+    mocker,
 ):
 
     # arrange
@@ -36,35 +36,35 @@ def test_publish__public_token__ok(
         name='filename.png',
         url='https://some.url',
         size=249128,
-        account_id=user.account_id
+        account_id=user.account_id,
     )
     auth_header_value = f'Token {template.public_id}'
     token = PublicToken(template.public_id)
     get_token_mock = mocker.patch(
         'src.authentication.services.public_auth.'
         'PublicAuthService.get_token',
-        return_value=token
+        return_value=token,
     )
     get_template_mock = mocker.patch(
         'src.authentication.services.public_auth.'
         'PublicAuthService.get_template',
-        return_value=template
+        return_value=template,
     )
 
     service_mock = mocker.patch(
         'src.processes.services.attachments.'
-        'AttachmentService.publish'
+        'AttachmentService.publish',
     )
     ip = 'some ip'
     get_user_ip_mock = mocker.patch(
         'src.processes.views.public.file_attachment.'
         'BaseFileAttachmentViewSet.get_user_ip',
-        return_value=ip
+        return_value=ip,
     )
     mocker.patch(
         'src.processes.views.public.file_attachment'
         '.StoragePermission.has_permission',
-        return_value=True
+        return_value=True,
     )
     api_client.token_authenticate(user)
 
@@ -89,29 +89,29 @@ def test_publish__public_token__ok(
         attachment=attachment,
         request_user=AnonymousUser(),
         auth_type=AuthTokenType.PUBLIC,
-        anonymous_id=ip
+        anonymous_id=ip,
     )
 
 
 def test_publish__not_authenticated__permission_denied(
     api_client,
-    mocker
+    mocker,
 ):
 
     # arrange
     get_token_mock = mocker.patch(
         'src.authentication.services.public_auth.'
         'PublicAuthService.get_token',
-        return_value=None
+        return_value=None,
     )
     get_template_mock = mocker.patch(
         'src.authentication.services.public_auth.'
-        'PublicAuthService.get_template'
+        'PublicAuthService.get_template',
     )
     mocker.patch(
         'src.processes.views.public.file_attachment'
         '.StoragePermission.has_permission',
-        return_value=True
+        return_value=True,
     )
     user = create_test_user()
     attachment = FileAttachment.objects.create(
@@ -119,7 +119,7 @@ def test_publish__not_authenticated__permission_denied(
         url='https://file.png',
         thumbnail_url='https://storage.thumb.png',
         size=249128,
-        account_id=user.account_id
+        account_id=user.account_id,
     )
 
     # act
@@ -135,7 +135,7 @@ def test_publish__not_authenticated__permission_denied(
 
 def test_publish__embeded_token__ok(
     api_client,
-    mocker
+    mocker,
 ):
 
     # arrange
@@ -150,34 +150,34 @@ def test_publish__embeded_token__ok(
         name='filename.png',
         url='https://some.url',
         size=249128,
-        account_id=user.account_id
+        account_id=user.account_id,
     )
     auth_header_value = f'Token {template.embed_id}'
     token = EmbedToken(template.embed_id)
     get_token_mock = mocker.patch(
         'src.authentication.services.public_auth.'
         'PublicAuthService.get_token',
-        return_value=token
+        return_value=token,
     )
     get_template_mock = mocker.patch(
         'src.authentication.services.public_auth.'
         'PublicAuthService.get_template',
-        return_value=template
+        return_value=template,
     )
     mocker.patch(
         'src.processes.views.public.file_attachment'
         '.StoragePermission.has_permission',
-        return_value=True
+        return_value=True,
     )
     service_mock = mocker.patch(
         'src.processes.services.attachments.'
-        'AttachmentService.publish'
+        'AttachmentService.publish',
     )
     ip = 'some ip'
     get_user_ip_mock = mocker.patch(
         'src.processes.views.public.file_attachment.'
         'BaseFileAttachmentViewSet.get_user_ip',
-        return_value=ip
+        return_value=ip,
     )
     api_client.token_authenticate(user)
 
@@ -201,13 +201,13 @@ def test_publish__embeded_token__ok(
         attachment=attachment,
         request_user=AnonymousUser(),
         auth_type=AuthTokenType.EMBEDDED,
-        anonymous_id=ip
+        anonymous_id=ip,
     )
 
 
 def test_publish__disabled_billing__permission_error(
     api_client,
-    mocker
+    mocker,
 ):
 
     # arrange
@@ -221,35 +221,35 @@ def test_publish__disabled_billing__permission_error(
         name='filename.png',
         url='https://some.url',
         size=249128,
-        account_id=user.account_id
+        account_id=user.account_id,
     )
     auth_header_value = f'Token {template.public_id}'
     token = PublicToken(template.public_id)
     get_token_mock = mocker.patch(
         'src.authentication.services.public_auth.'
         'PublicAuthService.get_token',
-        return_value=token
+        return_value=token,
     )
     get_template_mock = mocker.patch(
         'src.authentication.services.public_auth.'
         'PublicAuthService.get_template',
-        return_value=template
+        return_value=template,
     )
 
     service_mock = mocker.patch(
         'src.processes.services.attachments.'
-        'AttachmentService.publish'
+        'AttachmentService.publish',
     )
     ip = 'some ip'
     get_user_ip_mock = mocker.patch(
         'src.processes.views.public.file_attachment.'
         'BaseFileAttachmentViewSet.get_user_ip',
-        return_value=ip
+        return_value=ip,
     )
     mocker.patch(
         'src.processes.views.public.file_attachment'
         '.StoragePermission.has_permission',
-        return_value=False
+        return_value=False,
     )
     api_client.token_authenticate(user)
 

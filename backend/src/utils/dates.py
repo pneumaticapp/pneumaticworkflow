@@ -1,7 +1,10 @@
-from pytz import timezone
 from datetime import datetime
-from django.utils import translation
+from datetime import timezone as tz
+
 from django.contrib.auth import get_user_model
+from django.utils import translation
+from pytz import timezone
+
 from src.generics import messages
 
 UserModel = get_user_model()
@@ -32,20 +35,19 @@ def date_to_tz(
 
 def date_to_user_fmt(
     date: datetime,
-    user: UserModel
+    user: UserModel,
 ) -> str:
     local_date = date.astimezone(timezone(user.timezone))
     month = date.strftime('%B')
     month_abbreviation = month_abbreviation_map[local_date.month]
     str_date = local_date.strftime(user.date_fmt)
     with translation.override(user.language):
-        str_date = str_date.replace(month, str(month_abbreviation))
-    return str_date
+        return str_date.replace(month, str(month_abbreviation))
 
 
 def date_tsp_to_user_fmt(
     date_tsp: float,
-    user: UserModel
+    user: UserModel,
 ) -> str:
-    utc_date = datetime.fromtimestamp(date_tsp)
+    utc_date = datetime.fromtimestamp(date_tsp, tz=tz.utc)
     return date_to_user_fmt(date=utc_date, user=user)

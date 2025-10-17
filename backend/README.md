@@ -60,6 +60,7 @@ Open a terminal in the "backend" directory and run the following commands:
 6. Install the poetry package manager with the command: ``pip install --upgrade pip && pip install poetry``
 7. Create a virtual environment and install the project dependencies. Command: ``poetry install && poetry shell``
 8. Display the virtual environment directory with the command: ``poetry env info``. Use this directory when creating scripts in your IDE.
+9. Install pre-commit hooks. Command: ``pre-commit install``
 
 ### Project Initialization
 #### Initializing a clean database

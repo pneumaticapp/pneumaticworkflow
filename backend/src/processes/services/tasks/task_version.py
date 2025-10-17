@@ -1,39 +1,48 @@
-from typing import Dict, Optional, List
-from django.utils import timezone
+from typing import Dict, List, Optional
+
 from django.contrib.auth import get_user_model
+from django.utils import timezone
 from django.utils.dateparse import parse_duration
 
-from src.notifications.tasks import send_new_task_notification, \
-    send_removed_task_notification
-from src.processes.models import (
-    Task,
+from src.notifications.tasks import (
+    send_new_task_notification,
+    send_removed_task_notification,
+)
+from src.processes.enums import TaskStatus
+from src.processes.models.workflows.checklist import (
+    ChecklistSelection,
+)
+from src.processes.models.workflows.conditions import (
     Condition,
     Predicate,
     Rule,
+)
+from src.processes.models.workflows.fields import (
     FieldSelection,
     TaskField,
-    ChecklistSelection,
-    Delay,
-    RawDueDate,
-    Workflow, TaskPerformer,
 )
-from src.processes.enums import TaskStatus
-from src.processes.services.tasks.checklist_version import (
-        ChecklistUpdateVersionService,
-    )
+from src.processes.models.workflows.raw_due_date import RawDueDate
+from src.processes.models.workflows.task import (
+    Delay,
+    Task,
+    TaskPerformer,
+)
+from src.processes.models.workflows.workflow import Workflow
 from src.processes.services.base import (
     BaseUpdateVersionService,
 )
-from src.processes.utils.common import (
-    insert_fields_values_to_text
+from src.processes.services.tasks.checklist_version import (
+    ChecklistUpdateVersionService,
 )
 from src.processes.services.tasks.mixins import (
     ConditionMixin,
 )
 from src.processes.services.tasks.task import (
-    TaskService
+    TaskService,
 )
-
+from src.processes.utils.common import (
+    insert_fields_values_to_text,
+)
 
 UserModel = get_user_model()
 
@@ -47,7 +56,7 @@ class TaskUpdateVersionService(
 
     def _update_fields(
         self,
-        data: Optional[List[Dict]] = None
+        data: Optional[List[Dict]] = None,
     ):
 
         # TODO Move to TaskFieldService
@@ -66,7 +75,7 @@ class TaskUpdateVersionService(
                                 api_name=selection_data['api_name'],
                                 defaults={
                                     'value': selection_data['value'],
-                                }
+                                },
                             )
                         )
                         selection_ids.add(selection.id)
@@ -89,9 +98,9 @@ class TaskUpdateVersionService(
                 Delay.objects.create(
                     task=self.instance,
                     duration=new_duration,
-                    workflow=self.instance.workflow
+                    workflow=self.instance.workflow,
                 )
-        else:
+        else:  # noqa: PLR5501
             if existent_delay:
                 if self.instance.is_active:
                     if not existent_delay.directly_status:
@@ -104,7 +113,7 @@ class TaskUpdateVersionService(
 
     def _update_conditions(
         self,
-        data: Optional[List[dict]] = None
+        data: Optional[List[dict]] = None,
     ):
         self.instance.conditions.all().delete()
         if not data:
@@ -120,7 +129,7 @@ class TaskUpdateVersionService(
                     order=condition_data['order'],
                     api_name=condition_data['api_name'],
                     task=self.instance,
-                )
+                ),
             )
             rules_tree = []
             for rule_template in rules:
@@ -133,10 +142,12 @@ class TaskUpdateVersionService(
                         value=predicate_template['value'],
                         field=predicate_template['field'],
                         api_name=predicate_template['api_name'],
+                        user_id=predicate_template['user_id'],
+                        group_id=predicate_template['group_id'],
                     ))
                 rules_tree.append((
                     Rule(api_name=rule_template['api_name']),
-                    predicates
+                    predicates,
                 ))
             conditions_tree[condition_data['api_name']] = rules_tree
         conditions = Condition.objects.bulk_create(conditions)
@@ -155,8 +166,8 @@ class TaskUpdateVersionService(
                 'type': template['type'],
                 'is_required': template['is_required'],
                 'order': template['order'],
-                'workflow': self.instance.workflow
-            }
+                'workflow': self.instance.workflow,
+            },
         )
 
     def _update_checklists(
@@ -171,31 +182,31 @@ class TaskUpdateVersionService(
                 checklist_service = ChecklistUpdateVersionService(
                     user=self.user,
                     is_superuser=self.is_superuser,
-                    auth_type=self.auth_type
+                    auth_type=self.auth_type,
                 )
                 checklist_service.update_from_version(
                     data=checklist_data,
                     version=version,
                     fields_values=fields_values,
-                    task=self.instance
+                    task=self.instance,
                 )
                 api_names.add(checklist_data['api_name'])
         self.instance.checklists.exclude(api_name__in=api_names).delete()
         self.instance.checklists_total = (
             ChecklistSelection.objects.filter(
-                checklist__task=self.instance
+                checklist__task=self.instance,
             ).count()
         )
         self.instance.checklists_marked = (
             ChecklistSelection.objects.filter(
-                checklist__task=self.instance
+                checklist__task=self.instance,
             ).marked().count()
         )
         self.instance.save(
             update_fields=[
                 'checklists_total',
-                'checklists_marked'
-            ]
+                'checklists_marked',
+            ],
         )
 
     def _update_raw_due_date(
@@ -214,14 +225,14 @@ class TaskUpdateVersionService(
                     'duration': parse_duration(data['duration']),
                     'duration_months': data.get('duration_months', 0),
                     'source_id': data['source_id'],
-                }
+                },
             )
 
     def _create_or_update_instance(
         self,
         data: dict,
         workflow: Workflow,
-        fields_values: Dict[str, str]
+        fields_values: Dict[str, str],
     ):
 
         defaults = {
@@ -252,7 +263,7 @@ class TaskUpdateVersionService(
             account=workflow.account,
             workflow=workflow,
             api_name=data['api_name'],
-            defaults=defaults
+            defaults=defaults,
         )
         return self.instance
 
@@ -296,8 +307,8 @@ class TaskUpdateVersionService(
                 (
                     default_performer.id,
                     default_performer.email,
-                    default_performer.is_new_tasks_subscriber
-                )
+                    default_performer.is_new_tasks_subscriber,
+                ),
             )
         if deleted_group_ids:
             for user in (
@@ -323,7 +334,7 @@ class TaskUpdateVersionService(
             ):
                 if user.id not in performer_before:
                     send_new_task_recipients.add(
-                        (user.id, user.email, user.is_new_tasks_subscriber)
+                        (user.id, user.email, user.is_new_tasks_subscriber),
                     )
         if created_group_ids:
             for user in (
@@ -333,7 +344,7 @@ class TaskUpdateVersionService(
             ):
                 if user.id not in performer_before:
                     send_new_task_recipients.add(
-                        (user.id, user.email, user.is_new_tasks_subscriber)
+                        (user.id, user.email, user.is_new_tasks_subscriber),
                     )
         task_data = None
         if send_new_task_recipients:
@@ -358,7 +369,7 @@ class TaskUpdateVersionService(
                     if self.instance.due_date else None
                 ),
                 logo_lg=account.logo_lg,
-                is_returned=False
+                is_returned=False,
             )
         if send_removed_task_recipients:
             task_data = task_data or self.instance.get_data_for_list()
@@ -366,14 +377,14 @@ class TaskUpdateVersionService(
                 task_id=self.instance.id,
                 recipients=list(send_removed_task_recipients),
                 account_id=account.id,
-                task_data=task_data
+                task_data=task_data,
             )
 
     def update_from_version(
         self,
         data: dict,
         version: int,
-        **kwargs
+        **kwargs,
     ):
         """
             data = {
@@ -396,19 +407,19 @@ class TaskUpdateVersionService(
 
         workflow = kwargs['workflow']
         completed_tasks_fields_values = workflow.get_fields_markdown_values(
-            tasks_filter_kwargs={'task__status': TaskStatus.COMPLETED}
+            tasks_filter_kwargs={'task__status': TaskStatus.COMPLETED},
         )
         self._create_or_update_instance(
             data=data,
             workflow=workflow,
-            fields_values=completed_tasks_fields_values
+            fields_values=completed_tasks_fields_values,
         )
         self._update_fields(data=data.get('fields'))
         self._update_conditions(data=data.get('conditions'))
         self._update_checklists(
             data=data.get('checklists'),
             version=version,
-            fields_values=completed_tasks_fields_values
+            fields_values=completed_tasks_fields_values,
         )
         self._update_delay(new_duration=data.get('delay'))
         # Don't snooze active tasks if delay created
@@ -423,5 +434,5 @@ class TaskUpdateVersionService(
             self.instance.taskperformer_set.exclude_directly_deleted(
                 ).update(
                     is_completed=False,
-                    date_completed=None
+                    date_completed=None,
                 )

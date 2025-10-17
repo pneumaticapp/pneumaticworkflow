@@ -1,8 +1,11 @@
-from typing import Dict, Any, Type
+from typing import Any, Dict, Type
 
 from rest_framework.serializers import Serializer
 
-from src.processes.models import TemplateVersion, Template
+from src.processes.models.templates.template import (
+    Template,
+    TemplateVersion,
+)
 
 
 class TemplateVersioningService:
@@ -13,19 +16,17 @@ class TemplateVersioningService:
         self.schema = schema
 
     def map_to_dict(self, template: Template) -> Dict[str, Any]:
-        template_data = self.schema(instance=template).data
-        return template_data
+        return self.schema(instance=template).data
 
     def get_template_dict(
         self,
         template_id: int,
         version: int,
     ) -> Dict[str, Any]:
-        template_dict = TemplateVersion.objects.get(
+        return TemplateVersion.objects.get(
             template_id=template_id,
             version=version,
         ).data
-        return template_dict
 
     def save(self, template: Template) -> TemplateVersion:
         template_dict = self.map_to_dict(template)
@@ -33,7 +34,7 @@ class TemplateVersioningService:
             template_id=template.id,
             version=template.version,
             defaults={
-                "data": template_dict
-            }
+                "data": template_dict,
+            },
         )
         return instance

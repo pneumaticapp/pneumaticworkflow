@@ -1,4 +1,4 @@
-from typing import Union, List, Optional
+from typing import List, Optional, Union
 
 
 class Comparator:

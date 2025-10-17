@@ -1,5 +1,5 @@
 from typing import Optional
-from src.generics.exceptions import BaseServiceException
+
 from src.authentication.messages import (
     MSG_AU_0001,
     MSG_AU_0004,
@@ -7,6 +7,7 @@ from src.authentication.messages import (
     MSG_AU_0008,
     MSG_AU_0009,
 )
+from src.generics.exceptions import BaseServiceException
 
 
 class AuthException(BaseServiceException):
@@ -14,7 +15,7 @@ class AuthException(BaseServiceException):
     def __init__(
         self,
         message: Optional[str] = None,
-        details: Optional[dict] = None
+        details: Optional[dict] = None,
     ):
         self.details = details
         super().__init__(message)

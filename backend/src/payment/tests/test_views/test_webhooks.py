@@ -10,21 +10,21 @@ def test_webhook__ok(api_client, mocker):
       "api_version": "2022-11-15",
       "created": 1633887337,
       "data": {
-        "object": {}
-      }
+        "object": {},
+      },
     }
     task_mock = mocker.patch(
-        'src.payment.views.handle_webhook.delay'
+        'src.payment.views.handle_webhook.delay',
     )
     has_permission_mock = mocker.patch(
         'src.payment.views.StripeWebhookPermission'
         '.has_permission',
-        return_value=True
+        return_value=True,
     )
     mocker.patch(
         'src.payment.views.ProjectBillingPermission'
         '.has_permission',
-        return_value=True
+        return_value=True,
     )
 
     # act
@@ -37,7 +37,7 @@ def test_webhook__ok(api_client, mocker):
     assert response.status_code == 204
     has_permission_mock.assert_called_once()
     task_mock.assert_called_once_with(
-        data=data
+        data=data,
     )
 
 
@@ -51,21 +51,21 @@ def test_webhook__disable_billing__permission_denied(api_client, mocker):
       "api_version": "2022-11-15",
       "created": 1633887337,
       "data": {
-        "object": {}
-      }
+        "object": {},
+      },
     }
     task_mock = mocker.patch(
-        'src.payment.views.handle_webhook.delay'
+        'src.payment.views.handle_webhook.delay',
     )
     has_permission_mock = mocker.patch(
         'src.payment.views.StripeWebhookPermission'
         '.has_permission',
-        return_value=True
+        return_value=True,
     )
     mocker.patch(
         'src.payment.views.ProjectBillingPermission'
         '.has_permission',
-        return_value=False
+        return_value=False,
     )
 
     # act

@@ -3,4 +3,4 @@ from django.apps import AppConfig
 
 class AccountsConfig(AppConfig):
     name = 'src.accounts'
-    verbose_name = u'Accounts'
+    verbose_name = 'Accounts'

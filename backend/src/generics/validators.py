@@ -1,11 +1,12 @@
 import re
 from urllib.parse import urlsplit, urlunsplit
+
+from django.core.exceptions import ValidationError
 from django.core.validators import (
     URLValidator,
+    _lazy_re_compile,
     validate_ipv6_address,
-    _lazy_re_compile
 )
-from django.core.exceptions import ValidationError
 
 
 class NoSchemaURLValidator(URLValidator):
@@ -51,18 +52,18 @@ class NoSchemaURLValidator(URLValidator):
         # Then check full URL
         try:
             self._validate_url_by_regex(value)
-        except ValidationError as e:
+        except ValidationError:
             # Trivial case failed. Try for possible IDN domain
             if value:
                 try:
                     scheme, netloc, path, query, fragment = urlsplit(value)
-                except ValueError:  # for example, "Invalid IPv6 URL"
-                    raise ValidationError(self.message, code=self.code)
+                except ValueError as ex:  # for example, "Invalid IPv6 URL"
+                    raise ValidationError(self.message, code=self.code) from ex
                 try:
                     # IDN -> ACE
                     netloc = netloc.encode('idna').decode('ascii')
                 except UnicodeError:  # invalid domain part
-                    raise e
+                    raise
                 url = urlunsplit((scheme, netloc, path, query, fragment))
                 self._validate_url_by_regex(url)
             else:
@@ -71,14 +72,14 @@ class NoSchemaURLValidator(URLValidator):
             # Now verify IPv6 in the netloc part
             host_match = re.search(
                 r'^\[(.+)\](?::\d{2,5})?$',
-                urlsplit(value).netloc
+                urlsplit(value).netloc,
             )
             if host_match:
                 potential_ip = host_match.groups()[0]
                 try:
                     validate_ipv6_address(potential_ip)
-                except ValidationError:
-                    raise ValidationError(self.message, code=self.code)
+                except ValidationError as ex:
+                    raise ValidationError(self.message, code=self.code) from ex
 
         # The maximum length of a full host name is 253 characters per RFC 1034
         # section 3.1. It's defined to be 255 bytes or less, but this includes

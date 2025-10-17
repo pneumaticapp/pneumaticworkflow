@@ -2,9 +2,9 @@ from celery import shared_task
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from slack import WebClient
-from src.reports.services.workflows import SendWorkflowsDigest
-from src.reports.services.tasks import SendTasksDigest
 
+from src.reports.services.tasks import SendTasksDigest
+from src.reports.services.workflows import SendWorkflowsDigest
 
 UserModel = get_user_model()
 
@@ -56,9 +56,9 @@ def send_digest_notification(count: int):
                 'text': {
                     'type': 'mrkdwn',
                     'text': text,
-                }
-            }
-        ]
+                },
+            },
+        ],
     )
 
 
@@ -77,7 +77,7 @@ def send_tasks_digest_notification(count: int):
                 'text': {
                     'type': 'mrkdwn',
                     'text': text,
-                }
-            }
-        ]
+                },
+            },
+        ],
     )

@@ -1,20 +1,20 @@
-from django.db import models
 from django.contrib.auth import get_user_model
 from django.contrib.postgres.search import SearchVectorField
+from django.db import models
+
 from src.generics.managers import BaseSoftDeleteManager
 from src.generics.models import SoftDeleteModel
 from src.processes.models.mixins import (
-    FieldMixin,
     ApiNameMixin,
+    FieldMixin,
 )
+from src.processes.models.workflows.kickoff import KickoffValue
+from src.processes.models.workflows.task import Task
+from src.processes.models.workflows.workflow import Workflow
 from src.processes.querysets import (
     FieldSelectionQuerySet,
     TaskFieldQuerySet,
 )
-from src.processes.models.workflows.task import Task
-from src.processes.models.workflows.workflow import Workflow
-from src.processes.models.workflows.kickoff import KickoffValue
-
 
 UserModel = get_user_model()
 
@@ -22,7 +22,7 @@ UserModel = get_user_model()
 class TaskField(
     SoftDeleteModel,
     FieldMixin,
-    ApiNameMixin
+    ApiNameMixin,
 ):
 
     class Meta:
@@ -30,17 +30,17 @@ class TaskField(
 
     value = models.TextField(
         blank=True,
-        help_text='Human readable value'
+        help_text='Human readable value',
     )
     clear_value = models.TextField(
         null=True,
         blank=True,
-        help_text='Does not contains markdown'
+        help_text='Does not contains markdown',
     )
     markdown_value = models.TextField(
         null=True,
         blank=True,
-        help_text='Contains markdown representation'
+        help_text='Contains markdown representation',
     )
     task = models.ForeignKey(
         Task,
@@ -76,11 +76,11 @@ class FieldSelection(
     field = models.ForeignKey(
         TaskField,
         on_delete=models.CASCADE,
-        related_name='selections'
+        related_name='selections',
     )
     is_selected = models.BooleanField(default=False)
     value = models.CharField(max_length=200)
 
     objects = BaseSoftDeleteManager.from_queryset(
-        FieldSelectionQuerySet
+        FieldSelectionQuerySet,
     )()

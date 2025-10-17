@@ -1,6 +1,6 @@
 from src.generics.throttling import (
-    CustomSimpleRateThrottle,
     AnonThrottle,
+    CustomSimpleRateThrottle,
 )
 
 

@@ -1,19 +1,22 @@
-from typing import Optional, Dict
+# ruff: noqa: PLC0415
+from typing import Dict, Optional
+
 from django.contrib.auth import get_user_model
 from django.contrib.postgres.search import SearchVectorField
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.utils import timezone
+
 from src.accounts.models import AccountBaseMixin
 from src.generics.managers import BaseSoftDeleteManager
 from src.generics.models import SoftDeleteModel
-from src.processes.models.mixins import WorkflowMixin
-from src.processes.querysets import (
-    WorkflowQuerySet,
-    TaskFieldQuerySet,
-)
 from src.processes.enums import WorkflowStatus
+from src.processes.models.mixins import WorkflowMixin
 from src.processes.models.templates.template import Template
+from src.processes.querysets import (
+    TaskFieldQuerySet,
+    WorkflowQuerySet,
+)
 
 UserModel = get_user_model()
 
@@ -38,7 +41,7 @@ class Workflow(
     )
     status = models.IntegerField(
         choices=WorkflowStatus.CHOICES,
-        default=WorkflowStatus.RUNNING
+        default=WorkflowStatus.RUNNING,
     )
     status_updated = models.DateTimeField(db_index=True)
     is_external = models.BooleanField(default=False)
@@ -54,13 +57,13 @@ class Workflow(
     owners = models.ManyToManyField(
         UserModel,
         related_name='owners',
-        verbose_name='owners'
+        verbose_name='owners',
     )
     workflow_starter = models.ForeignKey(
         UserModel,
         on_delete=models.SET_NULL,
         related_name='started_workflow',
-        null=True
+        null=True,
     )
     date_completed = models.DateTimeField(null=True)
     due_date = models.DateTimeField(null=True)
@@ -69,7 +72,7 @@ class Workflow(
         null=True,
         help_text='The task within which the subprocess should be executed',
         on_delete=models.SET_NULL,
-        related_name='sub_workflows'
+        related_name='sub_workflows',
     )
 
     objects = BaseSoftDeleteManager.from_queryset(WorkflowQuerySet)()
@@ -81,7 +84,7 @@ class Workflow(
             WorkflowDetailsSerializer,
         )
         return {
-            'workflow': WorkflowDetailsSerializer(instance=self).data
+            'workflow': WorkflowDetailsSerializer(instance=self).data,
         }
 
     def __str__(self):
@@ -91,10 +94,9 @@ class Workflow(
         return version > self.version
 
     def save(self, update_fields=None, **kwargs):
-        if update_fields is not None:
-            if 'status' in update_fields:
-                self.status_updated = timezone.now()
-                update_fields.append('status_updated')
+        if update_fields is not None and 'status' in update_fields:
+            self.status_updated = timezone.now()
+            update_fields.append('status_updated')
         super().save(update_fields=update_fields, **kwargs)
 
     def _get_kickoff(self):
@@ -104,7 +106,7 @@ class Workflow(
                 .kickoff import KickoffValue
             kickoff = KickoffValue(
                 workflow=self,
-                account_id=self.account_id
+                account_id=self.account_id,
             )
         return kickoff
 
@@ -116,12 +118,12 @@ class Workflow(
             .task import Task
         return Task(
             workflow=self,
-            number=number
+            number=number,
         )
 
     def get_kickoff_output_fields(
         self,
-        fields_filter_kwargs: Optional[Dict] = None
+        fields_filter_kwargs: Optional[Dict] = None,
     ) -> TaskFieldQuerySet:
 
         """ Return the output fields from kickoff """
@@ -140,7 +142,7 @@ class Workflow(
         self,
         tasks_filter_kwargs: Optional[Dict] = None,
         tasks_exclude_kwargs: Optional[Dict] = None,
-        fields_filter_kwargs: Optional[Dict] = None
+        fields_filter_kwargs: Optional[Dict] = None,
     ) -> TaskFieldQuerySet:
 
         """ Return the output fields from tasks """
@@ -151,7 +153,7 @@ class Workflow(
         if tasks_filter_kwargs is None:
             tasks_filter_kwargs = {
                 'task__workflow_id': self.id,
-                'task__account_id': self.account_id
+                'task__account_id': self.account_id,
             }
         else:
             tasks_filter_kwargs['task__workflow_id'] = self.id

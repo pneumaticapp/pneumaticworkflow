@@ -1,21 +1,20 @@
 from typing import Optional
-from django.utils import timezone as tz
+
 from django.contrib.auth import get_user_model
-from src.processes.models import WorkflowEvent
-from src.notifications.tasks import (
-    send_urgent_notification,
-    send_not_urgent_notification,
-)
-from src.processes.enums import WorkflowEventType
+from django.utils import timezone as tz
+
 from src.accounts.enums import NotificationType
 from src.accounts.models import Notification
-from src.processes.models import (
-    Workflow,
+from src.notifications.tasks import (
+    send_not_urgent_notification,
+    send_urgent_notification,
 )
+from src.processes.enums import WorkflowEventType
+from src.processes.models.workflows.event import WorkflowEvent
+from src.processes.models.workflows.workflow import Workflow
 from src.processes.services.events import (
-    WorkflowEventService
+    WorkflowEventService,
 )
-
 
 UserModel = get_user_model()
 
@@ -33,42 +32,41 @@ class UrgentService:
     def _get_notification_type(
         cls,
         workflow: Workflow,
-        reverse: bool = False
+        reverse: bool = False,
     ) -> NotificationType:
         if reverse:
             return (
                 NotificationType.NOT_URGENT if workflow.is_urgent
                 else NotificationType.URGENT
             )
-        else:
-            return (
-                NotificationType.URGENT if workflow.is_urgent
-                else NotificationType.NOT_URGENT
-            )
+        return (
+            NotificationType.URGENT if workflow.is_urgent
+            else NotificationType.NOT_URGENT
+        )
 
     @classmethod
     def _get_prev_urgent_event(
         cls,
-        workflow: Workflow
+        workflow: Workflow,
     ) -> Optional[WorkflowEvent]:
 
         return WorkflowEvent.objects.on_workflow(
-            workflow.id
+            workflow.id,
         ).filter(
-            type__in=WorkflowEventType.URGENT_TYPES
+            type__in=WorkflowEventType.URGENT_TYPES,
         ).last_created()
 
     @classmethod
     def _delete_urgent_notification(
         cls,
         workflow: Workflow,
-        user: UserModel
+        user: UserModel,
     ):
 
         notification = Notification.objects.filter(
             user=user,
             type=cls._get_notification_type(workflow, reverse=True),
-            task__workflow=workflow.id
+            task__workflow=workflow.id,
         ).last_created()
         if notification:
             notification.delete()
@@ -77,18 +75,18 @@ class UrgentService:
     def _create_urgent_actions(
         cls,
         workflow: Workflow,
-        user: UserModel
+        user: UserModel,
     ):
         event_type = cls._get_event_type(workflow)
         notification_type = cls._get_notification_type(workflow)
-        task_ids = list(e.id for e in workflow.tasks.active().only('id'))
+        task_ids = [e.id for e in workflow.tasks.active().only('id')]
         if notification_type == NotificationType.URGENT:
             send_urgent_notification.delay(
                 logging=user.account.log_api_requests,
                 logo_lg=user.account.logo_lg,
                 author_id=user.id,
                 task_ids=task_ids,
-                account_id=user.account_id
+                account_id=user.account_id,
             )
         else:
             send_not_urgent_notification.delay(
@@ -96,7 +94,7 @@ class UrgentService:
                 logging=user.account.log_api_requests,
                 logo_lg=user.account.logo_lg,
                 task_ids=task_ids,
-                account_id=user.account_id
+                account_id=user.account_id,
             )
         WorkflowEventService.workflow_urgent_event(
             event_type=event_type,
@@ -108,7 +106,7 @@ class UrgentService:
     def resolve(
         cls,
         workflow: Workflow,
-        user: UserModel
+        user: UserModel,
     ):
 
         """ Urgent management logic:
@@ -124,7 +122,7 @@ class UrgentService:
         prev_urgent_event = cls._get_prev_urgent_event(workflow)
         if not prev_urgent_event:
             cls._create_urgent_actions(workflow, user)
-        else:
+        else:  # noqa: PLR5501
             if prev_urgent_event.type != cls._get_event_type(workflow):
                 delete_period = tz.now() - tz.timedelta(minutes=1)
                 if prev_urgent_event.created >= delete_period:

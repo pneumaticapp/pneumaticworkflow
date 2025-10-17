@@ -1,14 +1,14 @@
 import pytest
+
 from src.accounts.tokens import (
     VerificationToken,
 )
+from src.authentication import messages
+from src.authentication.enums import AuthTokenType
 from src.processes.tests.fixtures import (
     create_test_user,
 )
 from src.utils.validation import ErrorCode
-from src.authentication import messages
-from src.authentication.enums import AuthTokenType
-
 
 pytestmark = pytest.mark.django_db
 
@@ -24,7 +24,7 @@ class TestTokenVerificationView:
         token = str(VerificationToken.for_user(user))
         analytics_mock = mocker.patch(
             'src.accounts.services.user.'
-            'AnalyticService.account_verified'
+            'AnalyticService.account_verified',
         )
 
         # act
@@ -45,7 +45,7 @@ class TestTokenVerificationView:
         self,
         mocker,
         api_client,
-        token
+        token,
     ):
         # arrange
         user = create_test_user()
@@ -54,7 +54,7 @@ class TestTokenVerificationView:
         account.save()
         analytics_mock = mocker.patch(
             'src.accounts.services.user.'
-            'AnalyticService.account_verified'
+            'AnalyticService.account_verified',
         )
 
         # act
@@ -74,7 +74,7 @@ class TestTokenVerificationView:
         self,
         mocker,
         api_client,
-        token
+        token,
     ):
         # arrange
         user = create_test_user()
@@ -83,7 +83,7 @@ class TestTokenVerificationView:
         account.save()
         analytics_mock = mocker.patch(
             'src.accounts.services.user.'
-            'AnalyticService.account_verified'
+            'AnalyticService.account_verified',
         )
 
         # act
@@ -111,7 +111,7 @@ class TestTokenVerificationView:
         token = str(VerificationToken.for_user(user))
         analytics_mock = mocker.patch(
             'src.accounts.services.user.'
-            'AnalyticService.account_verified'
+            'AnalyticService.account_verified',
         )
 
         # act
@@ -139,7 +139,7 @@ class TestTokenVerificationView:
         token = '12345'
         analytics_mock = mocker.patch(
             'src.accounts.services.user.'
-            'AnalyticService.account_verified'
+            'AnalyticService.account_verified',
         )
 
         # act
@@ -167,7 +167,7 @@ class TestVerificationTokenResendView:
         account.save()
 
         mailing_mock = mocker.patch(
-            'src.authentication.views.verification.EmailService'
+            'src.authentication.views.verification.EmailService',
         )
         api_client.token_authenticate(user)
 
@@ -180,7 +180,7 @@ class TestVerificationTokenResendView:
     def test_resend_mail__disable_verification__not_sent(
         self,
         mocker,
-        api_client
+        api_client,
     ):
         # arrange
         user = create_test_user(is_account_owner=True, is_admin=True)
@@ -189,7 +189,7 @@ class TestVerificationTokenResendView:
         account.save()
 
         mailing_mock = mocker.patch(
-            'src.authentication.views.verification.EmailService'
+            'src.authentication.views.verification.EmailService',
         )
 
         api_client.token_authenticate(user)
@@ -206,7 +206,7 @@ class TestVerificationTokenResendView:
 
         user = create_test_user(is_account_owner=True, is_admin=True)
         mailing_mock = mocker.patch(
-            'src.authentication.views.verification.EmailService'
+            'src.authentication.views.verification.EmailService',
         )
         api_client.token_authenticate(user)
 

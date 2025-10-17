@@ -1,7 +1,10 @@
+# ruff: noqa: PLC0415
 from typing import Any, Dict
-from django.db import models
-from django.db.models import UniqueConstraint, Q
+
 from django.contrib.postgres.search import SearchVectorField
+from django.db import models
+from django.db.models import Q, UniqueConstraint
+
 from src.accounts.models import AccountBaseMixin
 from src.generics.managers import BaseSoftDeleteManager
 from src.generics.models import SoftDeleteModel
@@ -19,7 +22,7 @@ class KickoffValue(
                 fields=['workflow'],
                 condition=Q(is_deleted=False),
                 name='kickoff_value_workflow_unique',
-            )
+            ),
         ]
 
     workflow = models.ForeignKey(
@@ -30,7 +33,7 @@ class KickoffValue(
     clear_description = models.TextField(
         null=True,
         blank=True,
-        help_text='Does not contains markdown'
+        help_text='Does not contains markdown',
     )
     search_content = SearchVectorField(null=True)
     objects = BaseSoftDeleteManager()
@@ -49,6 +52,6 @@ class KickoffValue(
                 'is_required': template['is_required'],
                 'api_name': template['api_name'],
                 'order': template['order'],
-                'workflow': self.workflow
-            }
+                'workflow': self.workflow,
+            },
         )

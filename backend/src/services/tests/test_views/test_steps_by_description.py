@@ -1,12 +1,12 @@
 import pytest
-from src.processes.services.templates.ai import (
-    AnonOpenAiService
-)
+
 from src.processes.services.exceptions import (
-    OpenAiServiceException
+    OpenAiServiceException,
+)
+from src.processes.services.templates.ai import (
+    AnonOpenAiService,
 )
 from src.utils.validation import ErrorCode
-
 
 pytestmark = pytest.mark.django_db
 
@@ -17,33 +17,33 @@ def test_create__not_auth__ok(mocker, api_client):
     user_ip = '1.2.3.4'
     get_ip_mock = mocker.patch(
         'src.services.views.ServicesViewSet.get_user_ip',
-        return_value=user_ip
+        return_value=user_ip,
     )
     user_agent = 'Some agent'
     get_user_agent_mock = mocker.patch(
         'src.services.views.ServicesViewSet.get_user_agent',
-        return_value=user_agent
+        return_value=user_agent,
     )
     service_init_mock = mocker.patch.object(
         AnonOpenAiService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     description = 'My unbelievable processes name'
     template_data = {'name': description}
     get_short_template_data_mock = mocker.patch(
         'src.processes.services.templates.'
         'ai.AnonOpenAiService.get_short_template_data',
-        return_value=template_data
+        return_value=template_data,
     )
     mocker.patch(
         'src.services.views.AIPermission.has_permission',
-        return_value=True
+        return_value=True,
     )
 
     # act
     response = api_client.get(
-        path=f'/services/steps-by-description?description={description}'
+        path=f'/services/steps-by-description?description={description}',
     )
 
     # assert
@@ -55,13 +55,13 @@ def test_create__not_auth__ok(mocker, api_client):
         user_agent=user_agent,
     )
     get_short_template_data_mock.assert_called_once_with(
-        user_description=description
+        user_description=description,
     )
 
 
 def test_create__description_over_limit__validation_error(
     mocker,
-    api_client
+    api_client,
 ):
 
     # arrange
@@ -69,20 +69,20 @@ def test_create__description_over_limit__validation_error(
     service_init_mock = mocker.patch.object(
         AnonOpenAiService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     get_short_template_data_mock = mocker.patch(
         'src.processes.services.templates.'
-        'ai.AnonOpenAiService.get_short_template_data'
+        'ai.AnonOpenAiService.get_short_template_data',
     )
     mocker.patch(
         'src.services.views.AIPermission.has_permission',
-        return_value=True
+        return_value=True,
     )
 
     # act
     response = api_client.get(
-        path=f'/services/steps-by-description?description={description}'
+        path=f'/services/steps-by-description?description={description}',
     )
 
     # assert
@@ -98,28 +98,28 @@ def test_create__description_over_limit__validation_error(
 def test_create__description__invalid_value__validation_error(
     description,
     mocker,
-    api_client
+    api_client,
 ):
 
     # arrange
     service_init_mock = mocker.patch.object(
         AnonOpenAiService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     get_short_template_data_mock = mocker.patch(
         'src.processes.services.templates.'
-        'ai.AnonOpenAiService.get_short_template_data'
+        'ai.AnonOpenAiService.get_short_template_data',
     )
     mocker.patch(
         'src.services.views.AIPermission.has_permission',
-        return_value=True
+        return_value=True,
     )
 
     # act
     response = api_client.get(
-        path=f'/services/steps-by-description',
-        data={'description': description}
+        path='/services/steps-by-description',
+        data={'description': description},
     )
 
     # assert
@@ -131,40 +131,40 @@ def test_create__description__invalid_value__validation_error(
 
 def test_create__service_exception__validation_error(
     mocker,
-    api_client
+    api_client,
 ):
 
     # arrange
     user_ip = '1.2.3.4'
     get_ip_mock = mocker.patch(
         'src.services.views.ServicesViewSet.get_user_ip',
-        return_value=user_ip
+        return_value=user_ip,
     )
     user_agent = 'Some agent'
     get_user_agent_mock = mocker.patch(
         'src.services.views.ServicesViewSet.get_user_agent',
-        return_value=user_agent
+        return_value=user_agent,
     )
     description = 'My unbelievable processes name'
     service_init_mock = mocker.patch.object(
         AnonOpenAiService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     error_message = 'error message'
     get_short_template_data_mock = mocker.patch(
         'src.processes.services.templates.'
         'ai.AnonOpenAiService.get_short_template_data',
-        side_effect=OpenAiServiceException(message=error_message)
+        side_effect=OpenAiServiceException(message=error_message),
     )
     mocker.patch(
         'src.services.views.AIPermission.has_permission',
-        return_value=True
+        return_value=True,
     )
 
     # act
     response = api_client.get(
-        path=f'/services/steps-by-description?description={description}'
+        path=f'/services/steps-by-description?description={description}',
     )
 
     # assert
@@ -178,7 +178,7 @@ def test_create__service_exception__validation_error(
         user_agent=user_agent,
     )
     get_short_template_data_mock.assert_called_once_with(
-        user_description=description
+        user_description=description,
     )
 
 
@@ -188,33 +188,33 @@ def test_create__disabled_ai__permission_error(mocker, api_client):
     user_ip = '1.2.3.4'
     get_ip_mock = mocker.patch(
         'src.services.views.ServicesViewSet.get_user_ip',
-        return_value=user_ip
+        return_value=user_ip,
     )
     user_agent = 'Some agent'
     get_user_agent_mock = mocker.patch(
         'src.services.views.ServicesViewSet.get_user_agent',
-        return_value=user_agent
+        return_value=user_agent,
     )
     service_init_mock = mocker.patch.object(
         AnonOpenAiService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     description = 'My unbelievable processes name'
     template_data = {'name': description}
     get_short_template_data_mock = mocker.patch(
         'src.processes.services.templates.'
         'ai.AnonOpenAiService.get_short_template_data',
-        return_value=template_data
+        return_value=template_data,
     )
     mocker.patch(
         'src.services.views.AIPermission.has_permission',
-        return_value=False
+        return_value=False,
     )
 
     # act
     response = api_client.get(
-        path=f'/services/steps-by-description?description={description}'
+        path=f'/services/steps-by-description?description={description}',
     )
 
     # assert

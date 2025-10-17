@@ -1,20 +1,25 @@
 from rest_framework import serializers
-from src.services.markdown import MarkdownService
-from src.processes.models import (
-    Template,
-    TemplateOwner,
-    TaskTemplate,
-    Kickoff,
-    FieldTemplate,
-    FieldTemplateSelection,
-    PredicateTemplate,
-    RuleTemplate,
-    ConditionTemplate,
-    RawPerformerTemplate,
+
+from src.processes.models.templates.checklist import (
     ChecklistTemplate,
     ChecklistTemplateSelection,
-    RawDueDateTemplate,
 )
+from src.processes.models.templates.conditions import (
+    ConditionTemplate,
+    PredicateTemplate,
+    RuleTemplate,
+)
+from src.processes.models.templates.fields import (
+    FieldTemplate,
+    FieldTemplateSelection,
+)
+from src.processes.models.templates.kickoff import Kickoff
+from src.processes.models.templates.owner import TemplateOwner
+from src.processes.models.templates.raw_due_date import RawDueDateTemplate
+from src.processes.models.templates.raw_performer import RawPerformerTemplate
+from src.processes.models.templates.task import TaskTemplate
+from src.processes.models.templates.template import Template
+from src.services.markdown import MarkdownService
 
 
 class SelectionSchemaV1(serializers.ModelSerializer):
@@ -82,6 +87,8 @@ class PredicateSchemaV1(serializers.ModelSerializer):
             'field_type',
             'value',
             'api_name',
+            'user_id',
+            'group_id',
         )
 
 
@@ -199,11 +206,11 @@ class TaskSchemaV1(serializers.ModelSerializer):
     raw_performers = RawPerformerTemplateSchemaV1(
         many=True,
         allow_null=True,
-        allow_empty=True
+        allow_empty=True,
     )
     checklists = CheckListTemplateSchemeV1(
         many=True,
-        required=False
+        required=False,
     )
     raw_due_date = RawDueDateTemplateSchemaV1(required=False)
     clear_description = serializers.SerializerMethodField(allow_null=True)
