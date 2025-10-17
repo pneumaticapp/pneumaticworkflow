@@ -1,20 +1,24 @@
-from typing import Optional, List
+# ruff: noqa: SIM102
+from typing import List, Optional
+
 from django.contrib.auth import get_user_model
 from django.utils import timezone
-from src.generics.mixins.services import ClsCacheMixin
-from src.processes.models import Template
-from src.processes.enums import TemplateIntegrationType
-from src.processes.entities import (
-    TemplateIntegrationsData,
-    PrivateTemplateIntegrationsData
-)
-from src.accounts.models import Account
-from src.processes.models import TemplateIntegrations
-from src.processes.serializers.templates.integrations import (
-    TemplateIntegrationsSerializer
-)
-from src.analytics.services import AnalyticService
 
+from src.accounts.models import Account
+from src.analytics.services import AnalyticService
+from src.generics.mixins.services import ClsCacheMixin
+from src.processes.entities import (
+    PrivateTemplateIntegrationsData,
+    TemplateIntegrationsData,
+)
+from src.processes.enums import TemplateIntegrationType
+from src.processes.models.templates.template import (
+    Template,
+    TemplateIntegrations,
+)
+from src.processes.serializers.templates.integrations import (
+    TemplateIntegrationsSerializer,
+)
 
 UserModel = get_user_model()
 
@@ -29,8 +33,8 @@ class TemplateIntegrationsService(ClsCacheMixin):
         self,
         account: Account,
         user: Optional[UserModel] = None,
-        anonymous_id: str = None,
-        is_superuser: bool = False
+        anonymous_id: Optional[str] = None,
+        is_superuser: bool = False,
     ):
         self.account = account
         self.user = user if user else None
@@ -41,11 +45,11 @@ class TemplateIntegrationsService(ClsCacheMixin):
         self,
         attr_name: TemplateIntegrationType.LITERALS,
         value: bool,
-        template_id: int
+        template_id: int,
     ) -> TemplateIntegrations:
 
         instance = TemplateIntegrations.objects.get(
-            template_id=template_id
+            template_id=template_id,
         )
         setattr(instance, attr_name, value)
         if value is True:
@@ -57,7 +61,7 @@ class TemplateIntegrationsService(ClsCacheMixin):
                         is_superuser=self.is_superuser,
                         user=self.user,
                         anonymous_id=self.anonymous_id,
-                        integration_type=attr_name
+                        integration_type=attr_name,
                     )
             setattr(instance, f'{attr_name}_date', timezone.now())
         instance.save()
@@ -67,13 +71,13 @@ class TemplateIntegrationsService(ClsCacheMixin):
         self,
         attr_name: TemplateIntegrationType.LITERALS,
         value: bool,
-        template_id: int
+        template_id: int,
     ):
 
         instance = self._update_instance_attr(
             template_id=template_id,
             attr_name=attr_name,
-            value=value
+            value=value,
         )
         self._set_cache(
             key=template_id,
@@ -83,7 +87,7 @@ class TemplateIntegrationsService(ClsCacheMixin):
     def create_integrations_for_template(
         self,
         template: Template,
-        webhooks: Optional[bool] = None
+        webhooks: Optional[bool] = None,
     ) -> TemplateIntegrations:
 
         instance = TemplateIntegrations.objects.create(
@@ -97,7 +101,7 @@ class TemplateIntegrationsService(ClsCacheMixin):
             self._set_attr_value(
                 template_id=template.id,
                 attr_name=TemplateIntegrationType.WEBHOOKS,
-                value=True
+                value=True,
             )
         return instance
 
@@ -107,7 +111,7 @@ class TemplateIntegrationsService(ClsCacheMixin):
 
     def _get_template_integrations_data(
         self,
-        template_id: int
+        template_id: int,
     ) -> PrivateTemplateIntegrationsData:
 
         """ Returns template integrations data """
@@ -115,17 +119,17 @@ class TemplateIntegrationsService(ClsCacheMixin):
         data = self._get_cache(key=template_id)
         if data is None:
             instance = TemplateIntegrations.objects.get(
-                template_id=template_id
+                template_id=template_id,
             )
             data = self._set_cache(
                 key=template_id,
-                value=instance
+                value=instance,
             )
         return data
 
     def get_template_integrations_data(
         self,
-        template_id: int
+        template_id: int,
     ) -> TemplateIntegrationsData:
 
         data = self._get_template_integrations_data(template_id)
@@ -148,7 +152,7 @@ class TemplateIntegrationsService(ClsCacheMixin):
         result = []
         if template_id is None:
             template_id = Template.objects.on_account(
-                self.account.id
+                self.account.id,
             ).exclude_onboarding().only_ids()
         for elem in template_id:
             result.append(self.get_template_integrations_data(elem))
@@ -167,7 +171,7 @@ class TemplateIntegrationsService(ClsCacheMixin):
             self._set_attr_value(
                 attr_name=TemplateIntegrationType.SHARED,
                 value=True,
-                template_id=template.id
+                template_id=template.id,
             )
 
     def template_updated(
@@ -197,19 +201,19 @@ class TemplateIntegrationsService(ClsCacheMixin):
                 self._set_attr_value(
                     attr_name=TemplateIntegrationType.SHARED,
                     value=True,
-                    template_id=template.id
+                    template_id=template.id,
                 )
         elif not share_enabled and share_value:
             self._set_attr_value(
                 attr_name=TemplateIntegrationType.SHARED,
                 value=False,
-                template_id=template.id
+                template_id=template.id,
             )
 
     def api_request(
         self,
         template: Template,
-        user_agent: Optional[str] = None
+        user_agent: Optional[str] = None,
     ):
 
         """ Sets API and Zapier flag in for template integrations """
@@ -219,7 +223,7 @@ class TemplateIntegrationsService(ClsCacheMixin):
             self._set_attr_value(
                 attr_name=TemplateIntegrationType.API,
                 value=True,
-                template_id=template.id
+                template_id=template.id,
             )
         if (
             user_agent == 'Zapier'
@@ -228,7 +232,7 @@ class TemplateIntegrationsService(ClsCacheMixin):
             self._set_attr_value(
                 attr_name=TemplateIntegrationType.ZAPIER,
                 value=True,
-                template_id=template.id
+                template_id=template.id,
             )
 
     def webhooks_subscribed(self):
@@ -240,7 +244,7 @@ class TemplateIntegrationsService(ClsCacheMixin):
                 self._set_attr_value(
                     attr_name=TemplateIntegrationType.WEBHOOKS,
                     value=True,
-                    template_id=data['id']
+                    template_id=data['id'],
                 )
 
     def webhooks_unsubscribed(self):
@@ -252,5 +256,5 @@ class TemplateIntegrationsService(ClsCacheMixin):
                 self._set_attr_value(
                     attr_name=TemplateIntegrationType.WEBHOOKS,
                     value=False,
-                    template_id=data['id']
+                    template_id=data['id'],
                 )

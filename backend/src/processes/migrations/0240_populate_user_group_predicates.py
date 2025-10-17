@@ -19,7 +19,7 @@ class Migration(migrations.Migration):
               AND ppt.value ~ '^[0-9]+$' 
               AND au.id = CAST(ppt.value AS INTEGER) 
               AND au.is_deleted = false;
-            """
+            """,
         ),
 
         migrations.RunSQL(
@@ -31,6 +31,6 @@ class Migration(migrations.Migration):
               AND pp.value ~ '^[0-9]+$' 
               AND au.id = CAST(pp.value AS INTEGER) 
               AND au.is_deleted = false;
-            """
-        )
+            """,
+        ),
     ]

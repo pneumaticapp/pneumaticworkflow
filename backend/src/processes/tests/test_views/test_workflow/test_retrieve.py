@@ -1,28 +1,32 @@
-import pytest
+# ruff: noqa: UP031
 from datetime import timedelta
+
+import pytest
 from django.utils import timezone
-from src.processes.models import (
+
+from src.processes.enums import (
+    FieldType,
+    PerformerType,
+    TaskStatus,
+    WorkflowStatus,
+)
+from src.processes.models.templates.fields import (
     FieldTemplate,
-    Workflow,
     FieldTemplateSelection,
-    FileAttachment,
+)
+from src.processes.models.workflows.attachment import FileAttachment
+from src.processes.models.workflows.task import (
     Delay,
     TaskPerformer,
 )
+from src.processes.models.workflows.workflow import Workflow
 from src.processes.tests.fixtures import (
-    create_test_user,
-    create_test_workflow,
-    create_test_template,
     create_test_admin,
     create_test_group,
+    create_test_template,
+    create_test_user,
+    create_test_workflow,
 )
-from src.processes.enums import (
-    FieldType,
-    WorkflowStatus,
-    TaskStatus,
-    PerformerType,
-)
-
 
 pytestmark = pytest.mark.django_db
 
@@ -70,7 +74,7 @@ def test_retrieve__workflow_data__ok(api_client):
             'type': 'user',
             'is_completed': False,
             'date_completed_tsp': None,
-        }
+        },
     ]
     assert task_data['checklists_total'] == 0
     assert task_data['checklists_marked'] == 0
@@ -163,7 +167,7 @@ def test_retrieve__workflow_due_date__ok(api_client):
     workflow = create_test_workflow(
         user=user,
         tasks_count=1,
-        due_date=due_date
+        due_date=due_date,
     )
 
     # act
@@ -214,7 +218,7 @@ def test_retrieve__status_snoozed__ok(api_client):
         task=task,
         start_date=timezone.now() - timedelta(hours=1),
         duration=timedelta(days=1),
-        workflow=workflow
+        workflow=workflow,
     )
 
     # act
@@ -239,7 +243,7 @@ def test_retrieve__kickoff_field_user__ok(api_client):
     template = create_test_template(
         user=user,
         is_active=True,
-        tasks_count=1
+        tasks_count=1,
     )
     field_template = FieldTemplate.objects.create(
         name='User',
@@ -247,7 +251,7 @@ def test_retrieve__kickoff_field_user__ok(api_client):
         is_required=True,
         kickoff=template.kickoff_instance,
         order=1,
-        template=template
+        template=template,
     )
 
     response = api_client.post(
@@ -255,9 +259,9 @@ def test_retrieve__kickoff_field_user__ok(api_client):
         data={
             'name': 'Workflow',
             'kickoff': {
-                field_template.api_name: user.email
-            }
-        }
+                field_template.api_name: user.email,
+            },
+        },
     )
     workflow = Workflow.objects.get(id=response.data['id'])
     field = workflow.kickoff_instance.output.first()
@@ -290,7 +294,7 @@ def test_retrieve__kickoff_field_date__ok(api_client):
     template = create_test_template(
         user=user,
         is_active=True,
-        tasks_count=1
+        tasks_count=1,
     )
     field_template = FieldTemplate.objects.create(
         name='Date',
@@ -298,7 +302,7 @@ def test_retrieve__kickoff_field_date__ok(api_client):
         is_required=True,
         kickoff=template.kickoff_instance,
         order=1,
-        template=template
+        template=template,
     )
 
     response = api_client.post(
@@ -306,9 +310,9 @@ def test_retrieve__kickoff_field_date__ok(api_client):
         data={
             'name': 'Workflow',
             'kickoff': {
-                field_template.api_name: 321651
-            }
-        }
+                field_template.api_name: 321651,
+            },
+        },
     )
     workflow = Workflow.objects.get(id=response.data['id'])
     field = workflow.kickoff_instance.output.first()
@@ -339,7 +343,7 @@ def test_retrieve__kickoff_field_with_selections__ok(api_client):
     template = create_test_template(
         user=user,
         is_active=True,
-        tasks_count=1
+        tasks_count=1,
     )
     field_template = FieldTemplate.objects.create(
         name='Selections',
@@ -347,7 +351,7 @@ def test_retrieve__kickoff_field_with_selections__ok(api_client):
         is_required=True,
         kickoff=template.kickoff_instance,
         order=1,
-        template=template
+        template=template,
     )
     selection_template = FieldTemplateSelection.objects.create(
         field_template=field_template,
@@ -360,9 +364,9 @@ def test_retrieve__kickoff_field_with_selections__ok(api_client):
         data={
             'name': 'Workflow',
             'kickoff': {
-                field_template.api_name: [selection_template.api_name]
-            }
-        }
+                field_template.api_name: [selection_template.api_name],
+            },
+        },
     )
     workflow = Workflow.objects.get(id=response.data['id'])
     field = workflow.kickoff_instance.output.first()
@@ -399,7 +403,7 @@ def test_retrieve__kickoff_field_with_attachments__ok(api_client):
     template = create_test_template(
         user=user,
         is_active=True,
-        tasks_count=1
+        tasks_count=1,
     )
     field_template = FieldTemplate.objects.create(
         name='Selections',
@@ -407,7 +411,7 @@ def test_retrieve__kickoff_field_with_attachments__ok(api_client):
         is_required=True,
         kickoff=template.kickoff_instance,
         order=1,
-        template=template
+        template=template,
     )
     attachment = FileAttachment.objects.create(
         name='john.cena',
@@ -421,9 +425,9 @@ def test_retrieve__kickoff_field_with_attachments__ok(api_client):
         data={
             'name': 'Workflow',
             'kickoff': {
-                field_template.api_name: [attachment.id]
-            }
-        }
+                field_template.api_name: [attachment.id],
+            },
+        },
     )
     workflow = Workflow.objects.get(id=response.data['id'])
     field = workflow.kickoff_instance.output.first()
@@ -457,7 +461,7 @@ def test_retrieve__not_admin_user_workflow_member__ok(api_client):
         account=user.account,
         email='not_admin@test.test',
         is_admin=False,
-        is_account_owner=False
+        is_account_owner=False,
     )
     workflow = create_test_workflow(user, tasks_count=1)
     workflow.members.add(not_admin_user)
@@ -477,7 +481,7 @@ def test_retrieve__with_kickoff(api_client):
     user = create_test_user()
     template = create_test_template(
         user=user,
-        is_active=True
+        is_active=True,
     )
     kickoff_field = FieldTemplate.objects.create(
         name='User name',
@@ -534,7 +538,7 @@ def test_retrieve__with_kickoff(api_client):
         'kickoff': {
             kickoff_field.api_name: 'JOHN CENA',
             kickoff_field_2.api_name: None,
-        }
+        },
     }
 
     api_client.token_authenticate(user)
@@ -585,12 +589,12 @@ def test_retrieve__is_urgent__ok(api_client):
     template = create_test_template(
         user=user,
         is_active=True,
-        tasks_count=1
+        tasks_count=1,
     )
     workflow = create_test_workflow(
         user=user,
         is_urgent=True,
-        template=template
+        template=template,
     )
 
     # act
@@ -610,14 +614,14 @@ def test_retrieve__subprocess__ok(api_client):
     template = create_test_template(user=user, tasks_count=1)
     parent_workflow = create_test_workflow(
         user=user,
-        template=template
+        template=template,
     )
     ancestor_task = parent_workflow.tasks.get(number=1)
     sub_workflow = create_test_workflow(
         name='Subworkflow',
         user=user,
         ancestor_task=ancestor_task,
-        template=template
+        template=template,
     )
 
     # act

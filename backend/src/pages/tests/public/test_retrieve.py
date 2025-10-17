@@ -1,7 +1,7 @@
 import pytest
-from src.pages.models import Page
-from src.pages.enums import PageType
 
+from src.pages.enums import PageType
+from src.pages.models import Page
 
 pytestmark = pytest.mark.django_db
 
@@ -12,7 +12,7 @@ def test_retrieve_public_page__existent__ok(api_client):
     page = Page.objects.create(
         title='Test title',
         description='Test desc',
-        slug=PageType.SIGNIN
+        slug=PageType.SIGNIN,
     )
 
     # act
@@ -29,7 +29,7 @@ def test_retrieve_public_page__empty_description__ok(api_client):
     # arrange
     page = Page.objects.create(
         title='Test title',
-        slug=PageType.SIGNIN
+        slug=PageType.SIGNIN,
     )
 
     # act
@@ -47,11 +47,11 @@ def test_retrieve_public_page_not_existent__not_found(api_client):
     Page.objects.create(
         title='Test title',
         description='Test desc',
-        slug=PageType.SIGNIN
+        slug=PageType.SIGNIN,
     )
 
     # act
-    response = api_client.get(f'/pages/public/blabla')
+    response = api_client.get('/pages/public/blabla')
 
     # assert
     assert response.status_code == 404

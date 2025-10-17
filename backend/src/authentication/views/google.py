@@ -1,58 +1,60 @@
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db.models import ObjectDoesNotExist
-from django.conf import settings
+from rest_framework.decorators import action
 from rest_framework.exceptions import (
     AuthenticationFailed,
 )
-from rest_framework.viewsets import GenericViewSet
-from rest_framework.decorators import action
 from rest_framework.generics import (
-    get_object_or_404,
     CreateAPIView,
+    get_object_or_404,
 )
-from src.authentication.permissions import GoogleAuthPermission
+from rest_framework.viewsets import GenericViewSet
 from rest_framework_simplejwt.tokens import TokenError
-from src.authentication.enums import AuthTokenType
+
 from src.accounts.enums import (
+    SourceType,
     UserInviteStatus,
     UserStatus,
-    SourceType,
 )
 from src.accounts.tokens import (
     AuthToken,
     VerificationToken,
 )
-from src.services.email import EmailService
+from src.analytics.mixins import BaseIdentifyMixin
 from src.analytics.services import AnalyticService
-from src.authentication.services import AuthService
-from src.authentication.services.exceptions import AuthException
-from src.authentication.services.google import GoogleAuthService
+from src.authentication.enums import AuthTokenType
 from src.authentication.messages import (
     MSG_AU_0001,
     MSG_AU_0002,
     MSG_AU_0003,
 )
-from src.generics.mixins.views import (
-    CustomViewSetMixin,
-    BaseResponseMixin
+from src.authentication.permissions import (
+    GoogleAuthPermission,
 )
 from src.authentication.serializers import (
-    SignInWithGoogleSerializer,
     GoogleTokenSerializer,
+    SignInWithGoogleSerializer,
 )
-from src.authentication.views.mixins import SignUpMixin
-from src.analytics.mixins import BaseIdentifyMixin
-from src.utils.validation import raise_validation_error
+from src.authentication.services.exceptions import AuthException
+from src.authentication.services.google import GoogleAuthService
+from src.authentication.services.user_auth import AuthService
+from src.authentication.tasks import update_google_contacts
 from src.authentication.throttling import (
     AuthGoogleAuthUriThrottle,
     AuthGoogleTokenThrottle,
 )
-from src.authentication.tasks import update_google_contacts
-from src.utils.logging import (
-    capture_sentry_message,
-    SentryLogLevel,
+from src.authentication.views.mixins import SignUpMixin
+from src.generics.mixins.views import (
+    BaseResponseMixin,
+    CustomViewSetMixin,
 )
-
+from src.services.email import EmailService
+from src.utils.logging import (
+    SentryLogLevel,
+    capture_sentry_message,
+)
+from src.utils.validation import raise_validation_error
 
 UserModel = get_user_model()
 
@@ -61,7 +63,7 @@ class GoogleAuthViewSet(
     SignUpMixin,
     CustomViewSetMixin,
     BaseIdentifyMixin,
-    GenericViewSet
+    GenericViewSet,
 ):
     permission_classes = (
         GoogleAuthPermission,
@@ -72,7 +74,7 @@ class GoogleAuthViewSet(
     def throttle_classes(self):
         if self.action == 'token':
             return (AuthGoogleTokenThrottle,)
-        elif self.action == 'auth_uri':
+        if self.action == 'auth_uri':
             return (AuthGoogleAuthUriThrottle,)
         return ()
 
@@ -90,7 +92,7 @@ class GoogleAuthViewSet(
         try:
             instance = UserModel.objects.get(
                 status=UserStatus.ACTIVE,
-                email=token_decoded.get('email')
+                email=token_decoded.get('email'),
             )
             self.identify(instance)
             self.group(instance)
@@ -98,7 +100,7 @@ class GoogleAuthViewSet(
                 user=instance,
                 user_agent=request.headers.get(
                     'User-Agent',
-                    request.META.get('HTTP_USER_AGENT')
+                    request.META.get('HTTP_USER_AGENT'),
                 ),
                 user_ip=request.META.get('HTTP_X_REAL_IP'),
             )
@@ -121,7 +123,7 @@ class GoogleAuthViewSet(
                 auth_response={
                     'code': slz.validated_data['code'],
                     'state': slz.validated_data['state'],
-                }
+                },
             )
         except AuthException as ex:
             raise_validation_error(message=ex.message)
@@ -132,11 +134,11 @@ class GoogleAuthViewSet(
                     user=user,
                     user_agent=request.headers.get(
                         'User-Agent',
-                        request.META.get('HTTP_USER_AGENT')
+                        request.META.get('HTTP_USER_AGENT'),
                     ),
                     user_ip=request.META.get('HTTP_X_REAL_IP'),
                 )
-            except ObjectDoesNotExist:
+            except ObjectDoesNotExist as err:
                 if settings.PROJECT_CONF['SIGNUP']:
                     user, token = self.signup(
                         **user_data,
@@ -148,7 +150,7 @@ class GoogleAuthViewSet(
                         gclid=slz.validated_data.get('gclid'),
                     )
                 else:
-                    raise AuthenticationFailed(MSG_AU_0003)
+                    raise AuthenticationFailed(MSG_AU_0003) from err
 
             service.save_tokens_for_user(user)
             update_google_contacts.delay(user.id)
@@ -163,7 +165,7 @@ class GoogleAuthViewSet(
             raise_validation_error(message=ex.message)
         else:
             return self.response_ok({
-                'auth_uri': auth_uri
+                'auth_uri': auth_uri,
             })
 
     @action(methods=('GET',), detail=False)
@@ -171,7 +173,7 @@ class GoogleAuthViewSet(
         capture_sentry_message(
             message='Google logout request',
             data=self.request.GET,
-            level=SentryLogLevel.INFO
+            level=SentryLogLevel.INFO,
         )
         return self.response_ok({})
 
@@ -189,14 +191,14 @@ class SignInWithGoogleView(
         serializer.is_valid(raise_exception=True)
         user = get_object_or_404(
             UserModel.objects.active(),
-            email=serializer.validated_data['email']
+            email=serializer.validated_data['email'],
         )
         if user.account.is_verification_timed_out():
             owner = user.account.get_owner()
             EmailService.send_verification_email(
                 user=owner,
                 token=str(VerificationToken.for_user(owner)),
-                logo_lg=user.account.logo_lg
+                logo_lg=user.account.logo_lg,
             )
             raise AuthenticationFailed(MSG_AU_0002(owner.email))
         invite = user.invite
@@ -216,7 +218,7 @@ class SignInWithGoogleView(
             user=user,
             user_agent=request.headers.get(
                 'User-Agent',
-                request.META.get('HTTP_USER_AGENT')
+                request.META.get('HTTP_USER_AGENT'),
             ),
             user_ip=request.META.get('HTTP_X_REAL_IP'),
         )

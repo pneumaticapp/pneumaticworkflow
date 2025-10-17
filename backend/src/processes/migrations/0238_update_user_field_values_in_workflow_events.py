@@ -63,6 +63,6 @@ class Migration(migrations.Migration):
                 FROM jsonb_array_elements(task_json->'output') AS field
                 WHERE field->>'type' = 'user' 
               );
-            """
-        )
+            """,
+        ),
     ]

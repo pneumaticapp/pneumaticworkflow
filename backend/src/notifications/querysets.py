@@ -2,7 +2,6 @@ from django.contrib.auth import get_user_model
 
 from src.generics.querysets import BaseQuerySet
 
-
 UserModel = get_user_model()
 
 

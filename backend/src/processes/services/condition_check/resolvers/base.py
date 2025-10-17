@@ -1,6 +1,6 @@
-from src.processes.models import Predicate
-from ..comparator import Comparator
 from src.processes.enums import PredicateOperator
+from src.processes.models.workflows.conditions import Predicate
+from src.processes.services.condition_check.comparator import Comparator
 
 
 class Resolver:

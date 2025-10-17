@@ -1,46 +1,48 @@
-from typing import Optional, Dict
+# ruff: noqa: PLC0415
+from typing import Dict, Optional
+
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.postgres.fields import JSONField
 from django.contrib.postgres.search import SearchVectorField
 from django.core.exceptions import (
-    ObjectDoesNotExist
+    ObjectDoesNotExist,
 )
-from django.conf import settings
 from django.db import models
+
 from src.accounts.models import (
     AccountBaseMixin,
 )
+from src.authentication.tokens import (
+    EmbedToken,
+    PublicToken,
+)
 from src.generics.managers import BaseSoftDeleteManager
 from src.generics.models import SoftDeleteModel
-from src.processes.models.mixins import (
-    WorkflowMixin,
-)
-from src.processes.querysets import (
-    TemplateQuerySet,
-    FieldTemplateQuerySet,
-    TemplateDraftQuerySet,
-)
 from src.processes.consts import TEMPLATE_NAME_LENGTH
 from src.processes.enums import (
     PerformerType,
     TemplateType,
 )
-from src.authentication.tokens import (
-    PublicToken,
-    EmbedToken
+from src.processes.models.mixins import (
+    WorkflowMixin,
+)
+from src.processes.querysets import (
+    FieldTemplateQuerySet,
+    TemplateDraftQuerySet,
+    TemplateQuerySet,
 )
 from src.processes.services.exceptions import (
     EmbedIdCreateMaxDeepException,
     PublicIdCreateMaxDeepException,
 )
 
-
 UserModel = get_user_model()
 
 
 def get_new_public_id(deep: int = 1):
     if deep > 3:
-        raise PublicIdCreateMaxDeepException()
+        raise PublicIdCreateMaxDeepException
     public_id = str(PublicToken())
     if Template.objects.filter(public_id=public_id).exists():
         public_id = get_new_public_id(deep=deep + 1)
@@ -49,7 +51,7 @@ def get_new_public_id(deep: int = 1):
 
 def get_new_embed_id(deep: int = 1):
     if deep > 3:
-        raise EmbedIdCreateMaxDeepException()
+        raise EmbedIdCreateMaxDeepException
     embed_id = str(EmbedToken())
     if Template.objects.filter(embed_id=embed_id).exists():
         embed_id = get_new_embed_id(deep=deep + 1)
@@ -59,7 +61,7 @@ def get_new_embed_id(deep: int = 1):
 class Template(
     SoftDeleteModel,
     WorkflowMixin,
-    AccountBaseMixin
+    AccountBaseMixin,
 ):
     name = models.CharField(max_length=TEMPLATE_NAME_LENGTH, default=None)
     generic_name = models.CharField(
@@ -69,7 +71,7 @@ class Template(
         help_text=(
             'Used in system templates. Possible dynamic values: '
             'account_name, user_first_name, user_last_name, user_email'
-        )
+        ),
     )
     wf_name_template = models.TextField(null=True, blank=True)
     is_active = models.BooleanField(default=False)
@@ -77,11 +79,11 @@ class Template(
     is_embedded = models.BooleanField(default=False)
     public_id = models.CharField(
         max_length=32,
-        default=get_new_public_id
+        default=get_new_public_id,
     )
     embed_id = models.CharField(
         max_length=32,
-        default=get_new_embed_id
+        default=get_new_embed_id,
     )
     public_success_url = models.TextField(blank=True, null=True)
     performers = models.ManyToManyField(
@@ -92,7 +94,7 @@ class Template(
     type = models.CharField(
         choices=TemplateType.CHOICES,
         default=TemplateType.CUSTOM,
-        max_length=48
+        max_length=48,
     )
     system_template_id = models.IntegerField(null=True)
     objects = BaseSoftDeleteManager.from_queryset(TemplateQuerySet)()
@@ -134,7 +136,7 @@ class Template(
 
     def get_kickoff_output_fields(
         self,
-        fields_filter_kwargs: Optional[Dict] = None
+        fields_filter_kwargs: Optional[Dict] = None,
     ) -> FieldTemplateQuerySet:
 
         """ Return the output fields from kickoff """
@@ -154,7 +156,7 @@ class Template(
         self,
         tasks_filter_kwargs: Optional[Dict] = None,
         tasks_exclude_kwargs: Optional[Dict] = None,
-        fields_filter_kwargs: Optional[Dict] = None
+        fields_filter_kwargs: Optional[Dict] = None,
     ) -> FieldTemplateQuerySet:
 
         """ Return the output fields from tasks """
@@ -165,7 +167,7 @@ class Template(
         if tasks_filter_kwargs is None:
             tasks_filter_kwargs = {
                 'task__template_id': self.id,
-                'task__account_id': self.account_id
+                'task__account_id': self.account_id,
             }
         else:
             tasks_filter_kwargs['task__template_id'] = self.id
@@ -180,8 +182,7 @@ class Template(
         return qst
 
     def get_tasks(self, performer_id: int):
-        from src.processes.models.templates\
-            .task import TaskTemplate
+        from src.processes.models.templates.task import TaskTemplate
 
         return TaskTemplate.objects.with_tasks_in_progress(
             template_id=self.id,
@@ -199,7 +200,7 @@ class TemplateDraft(SoftDeleteModel):
     template = models.OneToOneField(
         Template,
         on_delete=models.CASCADE,
-        related_name='draft'
+        related_name='draft',
     )
 
     objects = BaseSoftDeleteManager.from_queryset(TemplateDraftQuerySet)()
@@ -207,15 +208,16 @@ class TemplateDraft(SoftDeleteModel):
     @staticmethod
     def _remove_raw_performer_from_list(
         raw_performers: list,
-        user_id: int
+        user_id: int,
     ) -> list:
         for num, performer in enumerate(raw_performers):
-            if isinstance(performer, dict):
-                if performer.get('source_id') == user_id:
-                    raw_performers.pop(num)
+            if (
+                isinstance(performer, dict)
+                and performer.get('source_id') == user_id
+            ):
+                raw_performers.pop(num)
         return raw_performers
 
-    # pylint: disable=unsubscriptable-object,unsupported-assignment-operation
     def remove_user(self, user_id: int):
         if self.draft is None:
             return
@@ -262,31 +264,31 @@ class TemplateVersion(SoftDeleteModel):
 
 class TemplateIntegrations(
     SoftDeleteModel,
-    AccountBaseMixin
+    AccountBaseMixin,
 ):
 
     template = models.OneToOneField(
         Template,
         on_delete=models.CASCADE,
-        related_name='integrations'
+        related_name='integrations',
     )
     shared = models.BooleanField(default=False)
     shared_date = models.DateTimeField(
         null=True,
-        verbose_name='Last "shared" activation date'
+        verbose_name='Last "shared" activation date',
     )
     api = models.BooleanField(default=False)
     api_date = models.DateTimeField(
         null=True,
-        verbose_name='Last "API" activation date'
+        verbose_name='Last "API" activation date',
     )
     zapier = models.BooleanField(default=False)
     zapier_date = models.DateTimeField(
         null=True,
-        verbose_name='Last "zapier" activation date'
+        verbose_name='Last "zapier" activation date',
     )
     webhooks = models.BooleanField(default=False)
     webhooks_date = models.DateTimeField(
         null=True,
-        verbose_name='Last "webhooks" activation date'
+        verbose_name='Last "webhooks" activation date',
     )
