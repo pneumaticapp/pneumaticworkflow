@@ -19,5 +19,5 @@ repos:
         name: py_codestyle
         types: [python]
         language: system
-        entry: pycodestyle --ignore E731,E121,E123,E126,E133,E226,E241,E242,E704,W503,W504,W505,W605
+        entry: pycodestyle --config backend/pycodestyle.ini
         exclude: 'migrations|settings.py|messages.py|wsgi.py|asgi.py'
