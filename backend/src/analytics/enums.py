@@ -33,5 +33,5 @@ class MailoutType:
     }
 
     CUSTOMERIO_TYPES = {
-        NEWSLETTER
+        NEWSLETTER,
     }

@@ -1,7 +1,7 @@
 import pytest
+
 from src.processes.tests.fixtures import create_test_user
 from src.utils.validation import ErrorCode
-
 
 pytestmark = pytest.mark.django_db
 
@@ -13,13 +13,13 @@ def test_subscribe__ok(api_client, mocker):
     api_client.token_authenticate(user)
     url = 'http://test.test'
     service_mock = mocker.patch(
-        'src.webhooks.views.webhooks.WebhookService.subscribe'
+        'src.webhooks.views.webhooks.WebhookService.subscribe',
     )
 
     # act
     response = api_client.post(
         path='/webhooks/subscribe',
-        data={'url': url}
+        data={'url': url},
     )
 
     # assert
@@ -34,13 +34,13 @@ def test_subscribe__invalid_url__validation_error(api_client, mocker):
     api_client.token_authenticate(user)
     url = 'undefined'
     service_mock = mocker.patch(
-        'src.webhooks.views.webhooks.WebhookService.subscribe'
+        'src.webhooks.views.webhooks.WebhookService.subscribe',
     )
 
     # act
     response = api_client.post(
         path='/webhooks/subscribe',
-        data={'url': url}
+        data={'url': url},
     )
 
     # assert
@@ -60,13 +60,13 @@ def test_subscribe__not_admin__permission_denied(api_client, mocker):
     api_client.token_authenticate(user)
     url = 'http://test.test'
     service_mock = mocker.patch(
-        'src.webhooks.views.webhooks.WebhookService.subscribe'
+        'src.webhooks.views.webhooks.WebhookService.subscribe',
     )
 
     # act
     response = api_client.post(
         path='/webhooks/subscribe',
-        data={'url': url}
+        data={'url': url},
     )
 
     # assert
@@ -80,7 +80,7 @@ def test_unsubscribe__ok(api_client, mocker):
     user = create_test_user()
     api_client.token_authenticate(user)
     service_mock = mocker.patch(
-        'src.webhooks.views.webhooks.WebhookService.unsubscribe'
+        'src.webhooks.views.webhooks.WebhookService.unsubscribe',
     )
 
     # act

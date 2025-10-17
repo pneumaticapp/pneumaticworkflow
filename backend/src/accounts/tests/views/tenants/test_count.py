@@ -1,15 +1,16 @@
 import datetime
-from django.utils import timezone
+
 import pytest
+from django.utils import timezone
+
 from src.accounts.enums import (
     BillingPlanType,
     LeaseLevel,
 )
 from src.processes.tests.fixtures import (
-    create_test_user,
     create_test_account,
+    create_test_user,
 )
-
 
 pytestmark = pytest.mark.django_db
 
@@ -22,20 +23,20 @@ def test_count__any_premium_plan__ok(
     # arrange
     master_account = create_test_account(
         plan=plan,
-        lease_level=LeaseLevel.STANDARD
+        lease_level=LeaseLevel.STANDARD,
     )
     master_account_owner = create_test_user(account=master_account)
     create_test_account(
         name='tenant 1',
         plan=plan,
         lease_level=LeaseLevel.TENANT,
-        master_account=master_account
+        master_account=master_account,
     )
     create_test_account(
         name='tenant 2',
         plan=plan,
         lease_level=LeaseLevel.TENANT,
-        master_account=master_account
+        master_account=master_account,
     )
 
     api_client.token_authenticate(master_account_owner)
@@ -76,13 +77,13 @@ def test_count__free_plan__ok(
         name='tenant 1',
         plan=BillingPlanType.FREEMIUM,
         lease_level=LeaseLevel.TENANT,
-        master_account=master_account
+        master_account=master_account,
     )
     create_test_account(
         name='tenant 2',
         plan=BillingPlanType.FREEMIUM,
         lease_level=LeaseLevel.TENANT,
-        master_account=master_account
+        master_account=master_account,
     )
     api_client.token_authenticate(master_account_owner)
 
@@ -100,7 +101,7 @@ def test_count__expired_subscription__permission_denied(
     # arrange
     account = create_test_account(
         plan=BillingPlanType.UNLIMITED,
-        plan_expiration=timezone.now() - datetime.timedelta(hours=1)
+        plan_expiration=timezone.now() - datetime.timedelta(hours=1),
     )
     account_owner = create_test_user(account=account)
     api_client.token_authenticate(account_owner)
@@ -122,7 +123,7 @@ def test_count__not_admin__permission_denied(
     master_account_owner = create_test_user(
         account=master_account,
         is_account_owner=False,
-        is_admin=False
+        is_admin=False,
     )
     api_client.token_authenticate(master_account_owner)
 

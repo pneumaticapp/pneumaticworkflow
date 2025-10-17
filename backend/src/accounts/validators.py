@@ -1,9 +1,7 @@
 from src.accounts.models import User
 from src.processes.enums import TaskStatus
-from src.processes.models import (
-    Task,
-    TaskTemplate,
-)
+from src.processes.models.templates.task import TaskTemplate
+from src.processes.models.workflows.task import Task
 
 
 def user_is_last_performer(user: User):
@@ -19,17 +17,15 @@ def user_is_last_performer(user: User):
             status__in=(
                 TaskStatus.PENDING,
                 TaskStatus.DELAYED,
-                TaskStatus.ACTIVE
-            )
+                TaskStatus.ACTIVE,
+            ),
         ).exists()
     ):
         return True
-    if (
+    return bool(
         TaskTemplate.objects
-            .filter(template__is_active=True)
-            .on_raw_performer(user.id)
-            .raw_performers_count(1)
-            .exists()
-    ):
-        return True
-    return False
+        .filter(template__is_active=True)
+        .on_raw_performer(user.id)
+        .raw_performers_count(1)
+        .exists(),
+    )

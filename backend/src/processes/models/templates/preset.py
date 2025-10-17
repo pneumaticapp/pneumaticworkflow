@@ -1,13 +1,13 @@
 from django.contrib.auth import get_user_model
 from django.db import models
 from django.db.models import UniqueConstraint
+
 from src.accounts.models import AccountBaseMixin
 from src.generics.managers import BaseSoftDeleteManager
 from src.generics.models import SoftDeleteModel
-from src.processes.models import Template
 from src.processes.enums import PresetType
+from src.processes.models.templates.template import Template
 from src.processes.querysets import TemplatePresetQuerySet
-
 
 UserModel = get_user_model()
 
@@ -34,6 +34,9 @@ class TemplatePreset(SoftDeleteModel, AccountBaseMixin):
 
     objects = BaseSoftDeleteManager.from_queryset(TemplatePresetQuerySet)()
 
+    def __str__(self):
+        return self.name
+
 
 class TemplatePresetField(models.Model):
 
@@ -43,7 +46,7 @@ class TemplatePresetField(models.Model):
             UniqueConstraint(
                 fields=['preset', 'api_name'],
                 name='processes_templatepresetfield_preset_api_name_unique',
-            )
+            ),
         ]
 
     preset = models.ForeignKey(
@@ -54,3 +57,6 @@ class TemplatePresetField(models.Model):
     api_name = models.CharField(max_length=200)
     order = models.IntegerField(default=0)
     width = models.IntegerField(default=100)
+
+    def __str__(self):
+        return self.api_name

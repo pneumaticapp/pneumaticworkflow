@@ -1,14 +1,14 @@
 from django.conf import settings
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
-from src.processes.models import FileAttachment
+
+from src.generics.mixins.serializers import (
+    CustomValidationErrorMixin,
+)
 from src.processes.messages.workflow import (
     MSG_PW_0050,
 )
-from src.generics.mixins.serializers import (
-    CustomValidationErrorMixin
-)
-
+from src.processes.models.workflows.attachment import FileAttachment
 
 ATTACHMENT_MAX_SIZE_BYTES = settings.ATTACHMENT_MAX_SIZE_BYTES
 

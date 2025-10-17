@@ -1,7 +1,7 @@
 from celery import shared_task
 from src.celery import periodic_lock
 from src.processes.utils.workflows import (
-    resume_delayed_workflows
+    resume_delayed_workflows,
 )
 
 

@@ -1,22 +1,24 @@
-from typing import List
+from typing import List, Optional
+
 from django.db.models import Prefetch
 from rest_framework.viewsets import GenericViewSet
-from src.generics.mixins.views import CustomViewSetMixin
-from src.navigation.serializers import (
-    MenuSerializer
-)
-from src.navigation.models import Menu, MenuItem
-from src.generics.permissions import (
-    IsAuthenticated
-)
+
 from src.accounts.permissions import (
     BillingPlanPermission,
+)
+from src.generics.mixins.views import CustomViewSetMixin
+from src.generics.permissions import (
+    IsAuthenticated,
+)
+from src.navigation.models import Menu, MenuItem
+from src.navigation.serializers import (
+    MenuSerializer,
 )
 
 
 class MenuViewSet(
     CustomViewSetMixin,
-    GenericViewSet
+    GenericViewSet,
 ):
 
     lookup_field = 'slug'
@@ -30,14 +32,14 @@ class MenuViewSet(
     def prefetch_queryset(
         self,
         queryset,
-        extra_fields: List[str] = None
+        extra_fields: Optional[List[str]] = None,
     ):
 
         return queryset.prefetch_related(
             Prefetch(
                 'items',
                 queryset=MenuItem.objects.filter(show=True),
-             )
+             ),
         )
 
     def get_queryset(self):

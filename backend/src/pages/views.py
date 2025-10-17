@@ -1,18 +1,19 @@
-from rest_framework.viewsets import GenericViewSet
-from rest_framework.mixins import RetrieveModelMixin, ListModelMixin
-from src.generics.mixins.views import CustomViewSetMixin
+from rest_framework.mixins import ListModelMixin, RetrieveModelMixin
 from rest_framework.permissions import AllowAny
-from src.pages.serializers import (
-    PageSerializer
-)
+from rest_framework.viewsets import GenericViewSet
+
+from src.generics.mixins.views import CustomViewSetMixin
 from src.pages.models import Page
+from src.pages.serializers import (
+    PageSerializer,
+)
 
 
 class PublicPageViewSet(
     CustomViewSetMixin,
     ListModelMixin,
     RetrieveModelMixin,
-    GenericViewSet
+    GenericViewSet,
 ):
 
     lookup_field = 'slug'

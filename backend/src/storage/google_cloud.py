@@ -1,22 +1,21 @@
-from datetime import timedelta
 import os
-from typing import Optional
 import re
+from datetime import timedelta
+from typing import Optional
 
 from django.conf import settings
-from google.cloud import storage
 from google.cloud import exceptions as gcloud_exceptions
+from google.cloud import storage
+from google.cloud.storage.blob import _quote
 
 from src.accounts.models import Account
 from src.accounts.services.account import AccountService
-from src.utils.salt import get_salt
-from src.utils.logging import (
-    capture_sentry_message,
-    SentryLogLevel,
-)
 from src.processes.services import exceptions
-from google.cloud.storage.blob import _quote
-
+from src.utils.logging import (
+    SentryLogLevel,
+    capture_sentry_message,
+)
+from src.utils.salt import get_salt
 
 configuration = os.getenv('ENVIRONMENT', 'development').title()
 # TODO Remove file in https://my.pneumatic.app/workflows/41526
@@ -45,18 +44,18 @@ class GoogleCloudService:
                     )
                 except gcloud_exceptions.NotFound:
                     self.bucket = self._create_bucket(
-                        bucket_name=account.bucket_name
+                        bucket_name=account.bucket_name,
                     )
             else:
                 self.bucket = self._create_bucket()
         else:
             try:
                 self.bucket = self.client.get_bucket(
-                    settings.GCLOUD_DEFAULT_BUCKET_NAME
+                    settings.GCLOUD_DEFAULT_BUCKET_NAME,
                 )
             except gcloud_exceptions.NotFound:
                 self.bucket = self._create_bucket(
-                    bucket_name=settings.GCLOUD_DEFAULT_BUCKET_NAME
+                    bucket_name=settings.GCLOUD_DEFAULT_BUCKET_NAME,
                 )
 
     def get_normalized_name(self, text: str) -> str:
@@ -68,10 +67,9 @@ class GoogleCloudService:
         """
         formatted_text = text.lower().replace(' ', '_')
         formatted_text = re.sub(r'[^a-z0-9_-]', '', formatted_text)
-        formatted_text = formatted_text[:62]
-        return formatted_text
+        return formatted_text[:62]
 
-    def _create_bucket(self, bucket_name: str = None):
+    def _create_bucket(self, bucket_name: Optional[str] = None):
         if not bucket_name:
             salt = get_salt(length=16, exclude=('upper',))
             if configuration == settings.CONFIGURATION_PROD:
@@ -83,17 +81,17 @@ class GoogleCloudService:
                 "origin": ["*"],
                 "method": ["GET"],
                 "responseHeader": ["Content-Type"],
-                "maxAgeSeconds": 3600
+                "maxAgeSeconds": 3600,
             },
             {
                 "origin": ["*"],
                 "method": ["PUT"],
                 "responseHeader": [
                     "Content-Type",
-                    "Access-Control-Allow-Origin"
+                    "Access-Control-Allow-Origin",
                 ],
-                "maxAgeSeconds": 300
-            }
+                "maxAgeSeconds": 300,
+            },
         ]
         try:
             bucket = self.client.bucket(bucket_name)
@@ -103,7 +101,7 @@ class GoogleCloudService:
                     self.account.name)
                 bucket.labels = {
                     'account_id': str(self.account.id),
-                    'account_name': formatted_label_name
+                    'account_name': formatted_label_name,
                 }
             bucket.cors = cors_rule
             bucket.patch()
@@ -112,13 +110,13 @@ class GoogleCloudService:
                 message='Cloud service: bucket creation, '
                         'CORS/labels configuration failed',
                 data={'message': str(ex)},
-                level=SentryLogLevel.ERROR
+                level=SentryLogLevel.ERROR,
             )
-            raise exceptions.CloudServiceException()
+            raise exceptions.CloudServiceException from ex
         if self.account:
             account_service = AccountService(
                 user=self.account.get_owner(),
-                instance=self.account
+                instance=self.account,
             )
             account_service.update_bucket_name(bucket_name)
         return bucket
@@ -143,16 +141,15 @@ class GoogleCloudService:
         blob = self.bucket.blob(filename)
         signed_url = blob.generate_signed_url(
             expiration=timedelta(
-                minutes=settings.ATTACHMENT_SIGNED_URL_LIFETIME_MIN
+                minutes=settings.ATTACHMENT_SIGNED_URL_LIFETIME_MIN,
             ),
             method='PUT',
             content_type=content_type,
         )
         if self.account.bucket_is_public:
             return signed_url, blob.public_url
-        else:
 
-            return signed_url, self.get_authenticated_url(filename)
+        return signed_url, self.get_authenticated_url(filename)
 
     def make_public(self, filename: str):
         if not self.account.bucket_is_public:

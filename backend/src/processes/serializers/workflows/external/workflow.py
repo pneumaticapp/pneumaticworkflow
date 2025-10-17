@@ -1,20 +1,20 @@
 from django.contrib.auth import get_user_model
-from rest_framework.serializers import (
-    Serializer,
-    DictField,
-)
 from drf_recaptcha.fields import ReCaptchaV2Field
-from src.generics.mixins.serializers import (
-    CustomValidationErrorMixin
+from rest_framework.serializers import (
+    DictField,
+    Serializer,
 )
 
+from src.generics.mixins.serializers import (
+    CustomValidationErrorMixin,
+)
 
 UserModel = get_user_model()
 
 
 class ExternalWorkflowCreateSerializer(
     CustomValidationErrorMixin,
-    Serializer
+    Serializer,
 ):
 
     class Meta:
@@ -30,7 +30,7 @@ class ExternalWorkflowCreateSerializer(
 
 
 class SecuredExternalWorkflowCreateSerializer(
-    ExternalWorkflowCreateSerializer
+    ExternalWorkflowCreateSerializer,
 ):
     class Meta:
         fields = (

@@ -28,6 +28,6 @@ def get_salt(
         )
     if not letters:
         raise ExcludeLetterError(
-            'Salt should consist at least one type of letters'
+            'Salt should consist at least one type of letters',
         )
     return ''.join(random.choice(letters) for _ in range(0, length))

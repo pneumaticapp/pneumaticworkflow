@@ -1,6 +1,8 @@
 from typing import List, Optional
+
 from django.db import transaction
-from django.db.models import QuerySet, Q
+from django.db.models import Q, QuerySet
+
 from src.generics.mixins.models import SoftDeleteMixin
 from src.queries import SqlQueryObject
 
@@ -13,7 +15,6 @@ class BaseQuerySet(SoftDeleteMixin, QuerySet):
         self._q_filters = Q()
         super().__init__(*args, **kwargs)
 
-    # pylint:disable=protected-access
     def _clone(self):
         c = super()._clone()
         for _filter_props in self._custom_filter_props:
@@ -41,7 +42,7 @@ class BaseQuerySet(SoftDeleteMixin, QuerySet):
     def execute_raw(
         self,
         query: SqlQueryObject,
-        using: Optional[str] = None
+        using: Optional[str] = None,
     ):
         query, raw_params = query.get_sql()
         return self.raw(query, raw_params, using=using)

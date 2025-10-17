@@ -1,4 +1,5 @@
 from django.db.models import QuerySet
+
 from src.pages.enums import PageType
 
 

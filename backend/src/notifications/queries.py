@@ -1,14 +1,16 @@
 from typing import Tuple
+
 from django.contrib.auth import get_user_model
+
+from src.accounts.enums import NotificationType
+from src.processes.enums import (
+    DirectlyStatus,
+    TaskStatus,
+    WorkflowStatus,
+)
 from src.queries import (
     SqlQueryObject,
 )
-from src.processes.enums import (
-    WorkflowStatus,
-    DirectlyStatus, TaskStatus
-)
-from src.accounts.enums import NotificationType
-
 
 UserModel = get_user_model()
 
@@ -19,7 +21,7 @@ class UsersWithOverdueTaskQuery(SqlQueryObject):
         self.params = {
             'workflow_status': WorkflowStatus.RUNNING,
             'directly_status': DirectlyStatus.DELETED,
-            'notification_type': NotificationType.OVERDUE_TASK
+            'notification_type': NotificationType.OVERDUE_TASK,
         }
 
     def get_sql(self) -> Tuple[str, dict]:

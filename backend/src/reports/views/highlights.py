@@ -1,20 +1,20 @@
 from django.contrib.auth import get_user_model
 from rest_framework.generics import ListAPIView
+
 from src.accounts.permissions import (
-    UserIsAdminOrAccountOwner,
-    ExpiredSubscriptionPermission,
     BillingPlanPermission,
-)
-from src.processes.models import WorkflowEvent
-from src.reports.serializers import (
-    EventHighlightsSerializer,
-    HighlightsFilterSerializer
+    ExpiredSubscriptionPermission,
+    UserIsAdminOrAccountOwner,
 )
 from src.generics.mixins.views import BasePrefetchMixin
 from src.generics.permissions import (
     UserIsAuthenticated,
 )
-
+from src.processes.models.workflows.event import WorkflowEvent
+from src.reports.serializers import (
+    EventHighlightsSerializer,
+    HighlightsFilterSerializer,
+)
 
 UserModel = get_user_model()
 
@@ -33,13 +33,12 @@ class HighlightsView(
 
     def get_queryset(self):
         filter_serializer = HighlightsFilterSerializer(
-            data=self.request.query_params
+            data=self.request.query_params,
         )
         filter_serializer.is_valid(raise_exception=True)
         queryset = WorkflowEvent.objects.highlights(
             account_id=self.request.user.account.id,
             user_id=self.request.user.id,
-            **filter_serializer.validated_data
+            **filter_serializer.validated_data,
         )
-        queryset = self.prefetch_queryset(queryset)
-        return queryset
+        return self.prefetch_queryset(queryset)

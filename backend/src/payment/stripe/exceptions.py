@@ -1,4 +1,5 @@
 from typing import Optional
+
 from src.generics.exceptions import BaseServiceException
 from src.payment import messages
 
@@ -8,7 +9,7 @@ class WebhookServiceException(BaseServiceException):
     def __init__(
         self,
         message: Optional[str] = None,
-        **kwargs: dict
+        **kwargs: dict,
     ):
         super().__init__(message)
         self.details = kwargs
@@ -19,7 +20,7 @@ class StripeServiceException(BaseServiceException):
     def __init__(
         self,
         message: Optional[str] = None,
-        **kwargs: dict
+        **kwargs: dict,
     ):
         super().__init__(message)
         self.details = kwargs

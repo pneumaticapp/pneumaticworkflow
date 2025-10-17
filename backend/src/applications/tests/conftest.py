@@ -1,8 +1,8 @@
 import pytest
 from django.contrib.auth import get_user_model
-from src.generics.tests.clients import PneumaticApiClient
-from src.accounts.models import Account
 
+from src.accounts.models import Account
+from src.generics.tests.clients import PneumaticApiClient
 
 UserModel = get_user_model()
 

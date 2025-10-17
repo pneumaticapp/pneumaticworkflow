@@ -1,11 +1,11 @@
-from src.ai.models import (
-    OpenAiPrompt,
-    OpenAiMessage,
-)
 from src.ai.enums import (
+    OpenAiModel,
     OpenAIPromptTarget,
     OpenAIRole,
-    OpenAiModel,
+)
+from src.ai.models import (
+    OpenAiMessage,
+    OpenAiPrompt,
 )
 
 

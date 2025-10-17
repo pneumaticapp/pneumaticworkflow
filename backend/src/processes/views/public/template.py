@@ -1,9 +1,14 @@
 from django.conf import settings
-from rest_framework.viewsets import GenericViewSet
 from rest_framework.decorators import action
-from src.processes.models import (
-    Template
+from rest_framework.viewsets import GenericViewSet
+
+from src.authentication.enums import AuthTokenType
+from src.generics.mixins.views import (
+    AnonymousWorkflowMixin,
+    CustomViewSetMixin,
 )
+from src.processes.models.templates.template import Template
+from src.processes.permissions import PublicTemplatePermission
 from src.processes.serializers.templates.public.template import (
     PublicTemplateSerializer,
 )
@@ -11,23 +16,17 @@ from src.processes.serializers.workflows.external.workflow import (
     ExternalWorkflowCreateSerializer,
     SecuredExternalWorkflowCreateSerializer,
 )
-from src.processes.permissions import PublicTemplatePermission
-from src.generics.mixins.views import (
-    CustomViewSetMixin,
-    AnonymousWorkflowMixin
-)
-from src.authentication.enums import AuthTokenType
-from src.processes.utils.common import get_user_agent
-from src.processes.services.workflows.workflow import (
-    WorkflowService,
-)
 from src.processes.services.exceptions import (
     WorkflowServiceException,
 )
-from src.utils.validation import raise_validation_error
 from src.processes.services.workflow_action import (
     WorkflowActionService,
 )
+from src.processes.services.workflows.workflow import (
+    WorkflowService,
+)
+from src.processes.utils.common import get_user_agent
+from src.utils.validation import raise_validation_error
 
 
 class PublicTemplateViewSet(
@@ -78,17 +77,17 @@ class PublicTemplateViewSet(
             serializer_cls = ExternalWorkflowCreateSerializer
         serializer = serializer_cls(
             data=request.data,
-            context={'request': request}  # for ReCaptchaV2Field
+            context={'request': request},  # for ReCaptchaV2Field
         )
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
         service = WorkflowService(
             user=user,
             is_superuser=request.is_superuser,
-            auth_type=request.token_type
+            auth_type=request.token_type,
         )
         anonymous_id = self.request.data.get(
-            'anonymous_id', self.get_user_ip(request)
+            'anonymous_id', self.get_user_ip(request),
         )
         try:
             workflow = service.create(
@@ -96,7 +95,7 @@ class PublicTemplateViewSet(
                 kickoff_fields_data=data['fields'],
                 is_external=True,
                 user_agent=get_user_agent(request),
-                anonymous_id=anonymous_id
+                anonymous_id=anonymous_id,
             )
         except WorkflowServiceException as ex:
             raise_validation_error(ex.message)
@@ -105,7 +104,7 @@ class PublicTemplateViewSet(
             workflow=workflow,
             user=user,
             is_superuser=request.is_superuser,
-            auth_type=request.token_type
+            auth_type=request.token_type,
         )
         workflow_action_service.start_workflow()
 
@@ -115,5 +114,4 @@ class PublicTemplateViewSet(
             if account.is_subscribed and template.public_success_url:
                 redirect_url = template.public_success_url
             return self.response_ok(data={'redirect_url': redirect_url})
-        else:
-            return self.response_ok()
+        return self.response_ok()

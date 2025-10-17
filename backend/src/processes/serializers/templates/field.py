@@ -1,28 +1,30 @@
-from typing import Dict, Any, List
+from typing import Any, Dict, List
+
 from rest_framework.serializers import (
-    ModelSerializer,
-    IntegerField,
     CharField,
+    IntegerField,
+    ModelSerializer,
 )
-from src.processes.models import FieldTemplate
-from src.processes.serializers.templates.selection import (
-    FieldTemplateSelectionSerializer,
-    FieldTemplateSelectionListSerializer
-)
+
 from src.generics.mixins.serializers import (
     AdditionalValidationMixin,
-    CustomValidationErrorMixin
-)
-from src.processes.serializers.templates.mixins import (
-    CreateOrUpdateInstanceMixin,
-    CreateOrUpdateRelatedMixin,
-    CustomValidationApiNameMixin,
+    CustomValidationErrorMixin,
 )
 from src.processes.enums import FieldType
 from src.processes.messages.template import (
     MSG_PT_0005,
     MSG_PT_0006,
     MSG_PT_0050,
+)
+from src.processes.models.templates.fields import FieldTemplate
+from src.processes.serializers.templates.mixins import (
+    CreateOrUpdateInstanceMixin,
+    CreateOrUpdateRelatedMixin,
+    CustomValidationApiNameMixin,
+)
+from src.processes.serializers.templates.selection import (
+    FieldTemplateSelectionListSerializer,
+    FieldTemplateSelectionSerializer,
 )
 
 
@@ -45,7 +47,7 @@ class PublicFieldTemplateSerializer(ModelSerializer):
     api_name = CharField(required=False, max_length=200)
     selections = FieldTemplateSelectionSerializer(
         many=True,
-        required=False
+        required=False,
     )
 
 
@@ -55,7 +57,7 @@ class FieldTemplateSerializer(
     CreateOrUpdateInstanceMixin,
     CreateOrUpdateRelatedMixin,
     CustomValidationApiNameMixin,
-    ModelSerializer
+    ModelSerializer,
 ):
 
     class Meta:
@@ -88,13 +90,13 @@ class FieldTemplateSerializer(
     api_name = CharField(required=False, max_length=200)
     selections = FieldTemplateSelectionSerializer(
         many=True,
-        required=False
+        required=False,
     )
 
     def additional_validate_selections(
         self,
         value: List[Dict[str, Any]],
-        data: Dict[str, Any]
+        data: Dict[str, Any],
     ):
 
         # TODO Need API test
@@ -105,7 +107,7 @@ class FieldTemplateSerializer(
         if selection_not_provided:
             self.raise_validation_error(
                 message=MSG_PT_0005,
-                api_name=data.get('api_name')
+                api_name=data.get('api_name'),
             )
 
     def additional_validate_type(self, value: str, data: Dict[str, Any]):
@@ -115,7 +117,7 @@ class FieldTemplateSerializer(
             if not required:
                 self.raise_validation_error(
                     message=MSG_PT_0006,
-                    api_name=data.get('api_name')
+                    api_name=data.get('api_name'),
                 )
 
     def to_representation(self, data: Dict[str, Any]):
@@ -136,32 +138,32 @@ class FieldTemplateSerializer(
                 'template': self.context['template'],
                 'kickoff': kickoff,
                 'task': task,
-                **validated_data
+                **validated_data,
             },
             not_unique_exception_msg=MSG_PT_0050(
                 name=step,
                 field_name=validated_data.get("name"),
                 api_name=validated_data.get('api_name'),
-            )
+            ),
         )
         self.create_or_update_related(
             data=validated_data.get('selections'),
             ancestors_data={
                 'field_template': instance,
-                'template': self.context['template']
+                'template': self.context['template'],
             },
             slz_cls=FieldTemplateSelectionSerializer,
             slz_context={
                 'field_template': instance,
-                **self.context
-            }
+                **self.context,
+            },
         )
         return instance
 
     def update(
         self,
         instance: FieldTemplate,
-        validated_data: Dict[str, Any]
+        validated_data: Dict[str, Any],
     ):
         self.additional_validate(validated_data)
         task = self.context.get('task')
@@ -173,24 +175,24 @@ class FieldTemplateSerializer(
                 'template': self.context['template'],
                 'kickoff': kickoff,
                 'task': task,
-                **validated_data
+                **validated_data,
             },
             not_unique_exception_msg=MSG_PT_0050(
                 name=step,
                 field_name=validated_data.get("name"),
                 api_name=validated_data.get('api_name'),
-            )
+            ),
         )
         self.create_or_update_related(
             data=validated_data.get('selections'),
             ancestors_data={
                 'field_template': instance,
-                'template': self.context['template']
+                'template': self.context['template'],
             },
             slz_cls=FieldTemplateSelectionSerializer,
             slz_context={
                 'field_template': instance,
-                **self.context
+                **self.context,
             },
         )
         return instance

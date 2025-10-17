@@ -1,23 +1,17 @@
-from typing import Dict, Any
+from typing import Any, Dict
+
 from rest_framework.serializers import (
-    ModelSerializer,
     CharField,
+    ModelSerializer,
 )
-from src.processes.models import FieldTemplate
+
 from src.generics.mixins.serializers import (
-    CustomValidationErrorMixin,
     AdditionalValidationMixin,
-)
-from src.processes.serializers.templates.mixins import (
-    CreateOrUpdateInstanceMixin,
-    CreateOrUpdateRelatedMixin,
-)
-from src.processes.models import (
-    RawDueDateTemplate
+    CustomValidationErrorMixin,
 )
 from src.processes.enums import (
-    FieldType,
     DueDateRule,
+    FieldType,
 )
 from src.processes.messages.template import (
     MSG_PT_0027,
@@ -27,6 +21,14 @@ from src.processes.messages.template import (
     MSG_PT_0031,
     MSG_PT_0052,
 )
+from src.processes.models.templates.fields import FieldTemplate
+from src.processes.models.templates.raw_due_date import (
+    RawDueDateTemplate,
+)
+from src.processes.serializers.templates.mixins import (
+    CreateOrUpdateInstanceMixin,
+    CreateOrUpdateRelatedMixin,
+)
 
 
 class RawDueDateTemplateSerializer(
@@ -34,7 +36,7 @@ class RawDueDateTemplateSerializer(
     AdditionalValidationMixin,
     CreateOrUpdateInstanceMixin,
     CreateOrUpdateRelatedMixin,
-    ModelSerializer
+    ModelSerializer,
 ):
 
     """ Required slz context:
@@ -75,20 +77,20 @@ class RawDueDateTemplateSerializer(
             if not field_api_name:
                 self.raise_validation_error(
                     message=MSG_PT_0027,
-                    api_name=api_name
+                    api_name=api_name,
                 )
             available_fields_api_names = set(
                 task_template.template.get_fields(
                     fields_filter_kwargs={'type': FieldType.DATE},
                     tasks_exclude_kwargs={
-                        'task__api_name': task_template.api_name
-                    }
-                ).api_names()
+                        'task__api_name': task_template.api_name,
+                    },
+                ).api_names(),
             )
             if field_api_name not in available_fields_api_names:
                 self.raise_validation_error(
                     message=MSG_PT_0028,
-                    api_name=api_name
+                    api_name=api_name,
                 )
         elif rule in DueDateRule.TASK_RULES:
             template = self.context['template']
@@ -96,27 +98,27 @@ class RawDueDateTemplateSerializer(
             if not task_api_name:
                 self.raise_validation_error(
                     message=MSG_PT_0029,
-                    api_name=api_name
+                    api_name=api_name,
                 )
             if rule == DueDateRule.AFTER_TASK_COMPLETED:
                 available_tasks_api_names = set(
                     template.tasks.exclude(
-                        api_name=task_template.api_name
-                    ).values_list('api_name', flat=True)
+                        api_name=task_template.api_name,
+                    ).values_list('api_name', flat=True),
                 )
                 if task_api_name not in available_tasks_api_names:
                     self.raise_validation_error(
                         message=MSG_PT_0030,
-                        api_name=api_name
+                        api_name=api_name,
                     )
             elif rule == DueDateRule.AFTER_TASK_STARTED:
                 tasks_api_names = set(
-                    template.tasks.all().values_list('api_name', flat=True)
+                    template.tasks.all().values_list('api_name', flat=True),
                 )
                 if task_api_name not in tasks_api_names:
                     self.raise_validation_error(
                         message=MSG_PT_0031,
-                        api_name=api_name
+                        api_name=api_name,
                     )
 
     def create(self, validated_data: Dict[str, Any]):
@@ -125,18 +127,18 @@ class RawDueDateTemplateSerializer(
             validated_data={
                 'template': self.context['template'],
                 'task':  self.context['task'],
-                **validated_data
+                **validated_data,
             },
             not_unique_exception_msg=MSG_PT_0052(
                 name=self.context['task'].name,
                 api_name=validated_data.get('api_name'),
-            )
+            ),
         )
 
     def update(
         self,
         instance: FieldTemplate,
-        validated_data: Dict[str, Any]
+        validated_data: Dict[str, Any],
     ):
         self.additional_validate(validated_data)
         return self.create_or_update_instance(
@@ -144,10 +146,10 @@ class RawDueDateTemplateSerializer(
             validated_data={
                 'template': self.context['template'],
                 'task':  self.context['task'],
-                **validated_data
+                **validated_data,
             },
             not_unique_exception_msg=MSG_PT_0052(
                 name=self.context['task'].name,
                 api_name=validated_data.get('api_name'),
-            )
+            ),
         )

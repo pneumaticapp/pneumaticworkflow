@@ -1,14 +1,15 @@
 import pytest
 from django.contrib.auth import get_user_model
-from src.processes.tests.fixtures import (
-    create_test_user
-)
-from src.processes.models import Kickoff
-from src.processes.enums import (
-    PerformerType,
-    OwnerType
-)
+
 from src.authentication.enums import AuthTokenType
+from src.processes.enums import (
+    OwnerType,
+    PerformerType,
+)
+from src.processes.models.templates.kickoff import Kickoff
+from src.processes.tests.fixtures import (
+    create_test_user,
+)
 
 UserModel = get_user_model()
 pytestmark = pytest.mark.django_db
@@ -19,13 +20,13 @@ class TestCreateKickoff:
     def test_create__only_required_fields__defaults_ok(
         self,
         mocker,
-        api_client
+        api_client,
     ):
 
         # arrange
         kickoff_create_mock = mocker.patch(
             'src.processes.views.template.'
-            'AnalyticService.templates_kickoff_created'
+            'AnalyticService.templates_kickoff_created',
         )
         user = create_test_user()
         api_client.token_authenticate(user)
@@ -38,7 +39,7 @@ class TestCreateKickoff:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'is_active': True,
@@ -51,11 +52,11 @@ class TestCreateKickoff:
                         'name': 'First step',
                         'raw_performers': [{
                             'type': PerformerType.USER,
-                            'source_id': user.id
-                        }]
-                    }
-                ]
-            }
+                            'source_id': user.id,
+                        }],
+                    },
+                ],
+            },
         )
 
         # assert
@@ -77,12 +78,12 @@ class TestCreateKickoff:
         # arrange
         kickoff_create_mock = mocker.patch(
             'src.processes.views.template.'
-            'AnalyticService.templates_kickoff_created'
+            'AnalyticService.templates_kickoff_created',
         )
         user = create_test_user()
         api_client.token_authenticate(user)
         request_data = {
-            'fields': []
+            'fields': [],
         }
 
         # act
@@ -94,7 +95,7 @@ class TestCreateKickoff:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'kickoff': request_data,
@@ -105,12 +106,12 @@ class TestCreateKickoff:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': user.id
-                            }
-                        ]
-                    }
-                ]
-            }
+                                'source_id': user.id,
+                            },
+                        ],
+                    },
+                ],
+            },
         )
 
         # assert
@@ -131,13 +132,13 @@ class TestCreateKickoff:
     def test_create__kickoff_not_provided__validation_error(
         self,
         mocker,
-        api_client
+        api_client,
     ):
 
         # arrange
         mocker.patch(
             'src.processes.views.template.'
-            'AnalyticService.templates_kickoff_created'
+            'AnalyticService.templates_kickoff_created',
         )
         user = create_test_user()
         api_client.token_authenticate(user)
@@ -151,7 +152,7 @@ class TestCreateKickoff:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'tasks': [
@@ -161,12 +162,12 @@ class TestCreateKickoff:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': user.id
-                            }
-                        ]
-                    }
-                ]
-            }
+                                'source_id': user.id,
+                            },
+                        ],
+                    },
+                ],
+            },
         )
 
         # assert
@@ -175,13 +176,13 @@ class TestCreateKickoff:
     def test_create_draft__not_kickoff__ok(
         self,
         mocker,
-        api_client
+        api_client,
     ):
 
         # arrange
         kickoff_create_mock = mocker.patch(
             'src.processes.views.template.'
-            'AnalyticService.templates_kickoff_created'
+            'AnalyticService.templates_kickoff_created',
         )
         user = create_test_user()
         api_client.token_authenticate(user)
@@ -194,17 +195,17 @@ class TestCreateKickoff:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'is_active': False,
                 'tasks': [
                     {
                         'number': 1,
-                        'name': 'First step'
-                    }
-                ]
-            }
+                        'name': 'First step',
+                    },
+                ],
+            },
         )
 
         # assert
@@ -218,13 +219,13 @@ class TestCreateKickoff:
     def test_create_draft__kickoff_is_null__ok(
         self,
         mocker,
-        api_client
+        api_client,
     ):
 
         # arrange
         kickoff_create_mock = mocker.patch(
             'src.processes.views.template.'
-            'AnalyticService.templates_kickoff_created'
+            'AnalyticService.templates_kickoff_created',
         )
         user = create_test_user()
         api_client.token_authenticate(user)
@@ -237,7 +238,7 @@ class TestCreateKickoff:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'is_active': False,
@@ -245,10 +246,10 @@ class TestCreateKickoff:
                 'tasks': [
                     {
                         'number': 1,
-                        'name': 'First step'
-                    }
-                ]
-            }
+                        'name': 'First step',
+                    },
+                ],
+            },
         )
 
         # assert

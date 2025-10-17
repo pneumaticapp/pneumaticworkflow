@@ -1,13 +1,14 @@
-from typing import Dict, Any, Optional, List
+from typing import Any, Dict, List, Optional
+
 from django.contrib.auth import get_user_model
+
 from src.generics.base.service import BaseModelService
+from src.processes.enums import PresetType
 from src.processes.models.templates.preset import (
     TemplatePreset,
-    TemplatePresetField
+    TemplatePresetField,
 )
 from src.processes.models.templates.template import Template
-from src.processes.enums import PresetType
-
 
 UserModel = get_user_model()
 
@@ -18,8 +19,8 @@ class TemplatePresetService(BaseModelService):
         template: Template,
         name: str,
         is_default: bool = False,
-        type: str = PresetType.PERSONAL,  # pylint: disable=redefined-builtin
-        **kwargs
+        type: str = PresetType.PERSONAL,  # noqa: A002
+        **kwargs,
     ):
         self.instance = TemplatePreset.objects.create(
             template=template,
@@ -27,7 +28,7 @@ class TemplatePresetService(BaseModelService):
             account=self.account,
             name=name,
             is_default=is_default,
-            type=type
+            type=type,
         )
         return self.instance
 
@@ -35,7 +36,7 @@ class TemplatePresetService(BaseModelService):
         self,
         fields: Optional[List[Dict[str, Any]]] = None,
         is_default: bool = False,
-        **kwargs
+        **kwargs,
     ):
         if is_default:
             self._reset_default_presets()
@@ -45,7 +46,7 @@ class TemplatePresetService(BaseModelService):
     def partial_update(
         self,
         force_save: bool = False,
-        **update_kwargs
+        **update_kwargs,
     ) -> TemplatePreset:
         fields = update_kwargs.pop('fields', None)
         is_default = update_kwargs.get('is_default')
@@ -73,7 +74,7 @@ class TemplatePresetService(BaseModelService):
             .filter(
                 template_id=self.instance.template_id,
                 type=self.instance.type,
-                is_default=True
+                is_default=True,
             )
             .exclude(id=self.instance.id)
         )
@@ -84,7 +85,7 @@ class TemplatePresetService(BaseModelService):
 
     def _create_or_update_preset_fields(
         self,
-        fields_data: List[Dict[str, Any]]
+        fields_data: List[Dict[str, Any]],
     ):
         self.instance.fields.all().delete()
 
@@ -93,7 +94,7 @@ class TemplatePresetService(BaseModelService):
                 preset=self.instance,
                 api_name=field_data['api_name'],
                 order=field_data.get('order', 0),
-                width=field_data.get('width', 100)
+                width=field_data.get('width', 100),
             )
             for field_data in fields_data
         ]

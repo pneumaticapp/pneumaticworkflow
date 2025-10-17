@@ -1,14 +1,14 @@
 import pytest
+
 from src.accounts.enums import (
     BillingPlanType,
     LeaseLevel,
 )
 from src.processes.tests.fixtures import (
-    create_test_user,
     create_test_account,
+    create_test_user,
 )
 from src.utils.dates import date_format
-
 
 pytestmark = pytest.mark.django_db
 
@@ -23,12 +23,12 @@ def test_retrieve__not_admin__ok(api_client):
         logo_lg=logo_lg,
         logo_sm=logo_sm,
         lease_level=LeaseLevel.TENANT,
-        plan=BillingPlanType.PREMIUM
+        plan=BillingPlanType.PREMIUM,
     )
     user = create_test_user(
         account=account,
         is_admin=False,
-        is_account_owner=False
+        is_account_owner=False,
     )
     api_client.token_authenticate(user)
     response = api_client.get('/accounts/account')

@@ -1,41 +1,41 @@
+from datetime import timedelta
+
 import pytest
-from datetime import datetime, timedelta
-from django.utils import timezone
 from django.conf import settings
+from django.utils import timezone
 
 from src.accounts.enums import (
     NotificationStatus,
     NotificationType,
 )
+from src.accounts.messages import (
+    MSG_A_0008,
+    MSG_A_0014,
+)
 from src.accounts.models import (
     APIKey,
-    Notification
-)
-from src.accounts.tokens import (
-    DigestUnsubscribeToken,
-    UnsubscribeEmailToken,
+    Notification,
 )
 from src.accounts.serializers.notifications import (
     NotificationTaskSerializer,
     NotificationWorkflowSerializer,
 )
+from src.accounts.tokens import (
+    DigestUnsubscribeToken,
+    UnsubscribeEmailToken,
+)
 from src.analytics.enums import MailoutType
-from src.authentication.tokens import PneumaticToken
 from src.authentication.enums import AuthTokenType
-from src.processes.models import (
+from src.authentication.tokens import PneumaticToken
+from src.processes.models.workflows.task import (
     Delay,
-    Task
+    Task,
 )
 from src.processes.tests.fixtures import (
-    create_test_workflow,
     create_test_user,
-)
-from src.accounts.messages import (
-    MSG_A_0008,
-    MSG_A_0014,
+    create_test_workflow,
 )
 from src.utils.dates import date_format
-
 
 pytestmark = pytest.mark.django_db
 
@@ -49,7 +49,7 @@ class TestAPIKeyGenerationView:
             user=user,
             name=user.get_full_name(),
             account_id=user.account_id,
-            key=PneumaticToken.create(user, for_api_key=True)
+            key=PneumaticToken.create(user, for_api_key=True),
         )
 
         api_client.token_authenticate(user)
@@ -72,7 +72,7 @@ class TestUnsubscribeDigestView:
         """
         analytics_mock = mocker.patch(
             'src.accounts.views.unsubscribes.'
-            'AnalyticService.users_digest'
+            'AnalyticService.users_digest',
         )
 
         # act
@@ -88,7 +88,7 @@ class TestUnsubscribeDigestView:
         analytics_mock.assert_called_with(
             user=user,
             is_superuser=False,
-            auth_type=AuthTokenType.USER
+            auth_type=AuthTokenType.USER,
         )
 
     def test_unsub_incorrect_token(self, api_client):
@@ -132,7 +132,7 @@ class TestUnsubscribeEmailView:
             MailoutType.WF_DIGEST,
             MailoutType.COMMENTS,
             MailoutType.NEW_TASK,
-        ]
+        ],
     )
     def test_unsub(
         self,
@@ -226,23 +226,23 @@ class TestUserNotifications:
         user_author = create_test_user(
             email='t@t.t',
             account=user.account,
-            is_account_owner=False
+            is_account_owner=False,
         )
         workflow = create_test_workflow(user, tasks_count=1)
         task = workflow.tasks.first()
         notification = Notification.objects.create(
             task_json=NotificationTaskSerializer(
                 instance=task,
-                notification_type=NotificationType.COMMENT
+                notification_type=NotificationType.COMMENT,
             ).data,
             workflow_json=NotificationWorkflowSerializer(
-                instance=task.workflow
+                instance=task.workflow,
             ).data,
             user_id=user.id,
             account_id=user.account.id,
             type=NotificationType.COMMENT,
             text='text',
-            author_id=user_author.id
+            author_id=user_author.id,
         )
         api_client.token_authenticate(user)
 
@@ -274,7 +274,7 @@ class TestUserNotifications:
         user_author = create_test_user(
             email='t@t.t',
             account=user.account,
-            is_account_owner=False
+            is_account_owner=False,
         )
         workflow = create_test_workflow(user, tasks_count=1)
         task = workflow.tasks.first()
@@ -282,21 +282,21 @@ class TestUserNotifications:
             task=task,
             start_date=timezone.now(),
             duration=timedelta(days=1),
-            workflow=workflow
+            workflow=workflow,
         )
         notification = Notification.objects.create(
             task_json=NotificationTaskSerializer(
                 instance=task,
-                notification_type=NotificationType.DELAY_WORKFLOW
+                notification_type=NotificationType.DELAY_WORKFLOW,
             ).data,
             workflow_json=NotificationWorkflowSerializer(
-                instance=task.workflow
+                instance=task.workflow,
             ).data,
             user_id=user.id,
             account_id=user.account.id,
             type=NotificationType.DELAY_WORKFLOW,
             text='text',
-            author_id=user_author.id
+            author_id=user_author.id,
         )
         api_client.token_authenticate(user)
 
@@ -333,7 +333,7 @@ class TestUserNotifications:
         user_author = create_test_user(
             email='t@t.t',
             account=user.account,
-            is_account_owner=False
+            is_account_owner=False,
         )
         workflow = create_test_workflow(user, tasks_count=1)
         task = workflow.tasks.first()
@@ -342,27 +342,27 @@ class TestUserNotifications:
             start_date=timezone.now(),
             end_date=(timezone.now() + timedelta(hours=2)),
             duration=timedelta(days=1),
-            workflow=workflow
+            workflow=workflow,
         )
         delay = Delay.objects.create(
             task=task,
             start_date=timezone.now(),
             duration=timedelta(hours=1),
-            workflow=workflow
+            workflow=workflow,
         )
         Notification.objects.create(
             task_json=NotificationTaskSerializer(
                 instance=task,
-                notification_type=NotificationType.DELAY_WORKFLOW
+                notification_type=NotificationType.DELAY_WORKFLOW,
             ).data,
             workflow_json=NotificationWorkflowSerializer(
-                instance=task.workflow
+                instance=task.workflow,
             ).data,
             user_id=user.id,
             account_id=user.account.id,
             type=NotificationType.DELAY_WORKFLOW,
             text='text',
-            author_id=user_author.id
+            author_id=user_author.id,
         )
         api_client.token_authenticate(user)
 
@@ -385,7 +385,7 @@ class TestUserNotifications:
         user_author = create_test_user(
             email='t@t.t',
             account=user.account,
-            is_account_owner=False
+            is_account_owner=False,
         )
         workflow = create_test_workflow(user, tasks_count=1)
         task = workflow.tasks.first()
@@ -395,15 +395,15 @@ class TestUserNotifications:
         notification = Notification.objects.create(
             task_json=NotificationTaskSerializer(
                 instance=task,
-                notification_type=NotificationType.DUE_DATE_CHANGED
+                notification_type=NotificationType.DUE_DATE_CHANGED,
             ).data,
             workflow_json=NotificationWorkflowSerializer(
-                instance=task.workflow
+                instance=task.workflow,
             ).data,
             user_id=user.id,
             account_id=user.account.id,
             type=NotificationType.DUE_DATE_CHANGED,
-            author_id=user_author.id
+            author_id=user_author.id,
         )
         api_client.token_authenticate(user)
 
@@ -438,21 +438,21 @@ class TestUserNotifications:
             account=user.account,
             type=NotificationType.SYSTEM,
         )
-        notification_1.datetime = datetime.now() + timedelta(seconds=1)
+        notification_1.datetime = timezone.now() + timedelta(seconds=1)
         notification_1.save()
         notification_2 = Notification.objects.create(
             user=user,
             account=user.account,
             type=NotificationType.SYSTEM,
         )
-        notification_2.datetime = datetime.now() + timedelta(seconds=2)
+        notification_2.datetime = timezone.now() + timedelta(seconds=2)
         notification_2.save()
         notification_3 = Notification.objects.create(
             user=user,
             account=user.account,
             type=NotificationType.SYSTEM,
         )
-        notification_3.datetime = datetime.now() + timedelta(seconds=3)
+        notification_3.datetime = timezone.now() + timedelta(seconds=3)
         notification_3.save()
 
         # act
@@ -461,7 +461,7 @@ class TestUserNotifications:
             data={
               'limit': 1,
               'offset': 1,
-            }
+            },
         )
 
         # assert
@@ -479,7 +479,7 @@ class TestUserNotifications:
             user=user,
             account=user.account,
             type=NotificationType.SYSTEM,
-            status=NotificationStatus.READ
+            status=NotificationStatus.READ,
         )
         notification = Notification.objects.create(
             user=user,
@@ -490,7 +490,7 @@ class TestUserNotifications:
         # act
         response = api_client.get(
             '/accounts/notifications',
-            data={'status': NotificationStatus.NEW}
+            data={'status': NotificationStatus.NEW},
         )
 
         # assert
@@ -507,7 +507,7 @@ class TestUserNotifications:
             user=user,
             account=user.account,
             type=NotificationType.SYSTEM,
-            status=NotificationStatus.READ
+            status=NotificationStatus.READ,
         )
         Notification.objects.create(
             user=user,
@@ -518,7 +518,7 @@ class TestUserNotifications:
         # act
         response = api_client.get(
             '/accounts/notifications/count',
-            data={'status': NotificationStatus.NEW}
+            data={'status': NotificationStatus.NEW},
         )
 
         # assert
@@ -534,7 +534,7 @@ class TestUserNotifications:
             user=user,
             account=user.account,
             type=NotificationType.SYSTEM,
-            status=NotificationStatus.READ
+            status=NotificationStatus.READ,
         )
         notification = Notification.objects.create(
             user=user,
@@ -544,7 +544,7 @@ class TestUserNotifications:
 
         # act
         response = api_client.get(
-            '/accounts/notifications?ordering=-datetime'
+            '/accounts/notifications?ordering=-datetime',
         )
 
         # assert
@@ -580,7 +580,7 @@ class TestUserNotifications:
         user_author = create_test_user(
             email='t@t.t',
             account=user.account,
-            is_account_owner=False
+            is_account_owner=False,
         )
         workflow = create_test_workflow(user)
         task = workflow.tasks.get(number=1)
@@ -588,21 +588,21 @@ class TestUserNotifications:
             task=task,
             start_date=timezone.now(),
             duration=timedelta(days=1),
-            workflow=workflow
+            workflow=workflow,
         )
         notification = Notification.objects.create(
             task_json=NotificationTaskSerializer(
                 instance=task,
-                notification_type=NotificationType.DELAY_WORKFLOW
+                notification_type=NotificationType.DELAY_WORKFLOW,
             ).data,
             workflow_json=NotificationWorkflowSerializer(
-                instance=task.workflow
+                instance=task.workflow,
             ).data,
             user_id=user.id,
             account_id=user.account.id,
             type=NotificationType.DELAY_WORKFLOW,
             text='text',
-            author_id=user_author.id
+            author_id=user_author.id,
         )
         Task.objects.filter(id=task.id).delete()
         api_client.token_authenticate(user)
@@ -631,13 +631,13 @@ class TestUserNotifications:
 
         # act
         response = api_client.delete(
-            f'/accounts/notifications/{notification.id}'
+            f'/accounts/notifications/{notification.id}',
         )
 
         # assert
         assert response.status_code == 204
         assert Notification.objects.filter(
-            id=notification.id
+            id=notification.id,
         ).exists() is False
 
     def test_delete__not_exist_notification__not_found(self, api_client):
@@ -671,7 +671,7 @@ class TestNotificationsReadView:
             user=user,
             account=user.account,
             type=NotificationType.SYSTEM,
-            status=NotificationStatus.READ
+            status=NotificationStatus.READ,
         )
         n2 = Notification.objects.create(
             user=user,
@@ -689,8 +689,8 @@ class TestNotificationsReadView:
         response = api_client.post(
             '/accounts/notifications/read',
             data={
-                'notifications': [n1.id, n2.id, n3.id]
-            }
+                'notifications': [n1.id, n2.id, n3.id],
+            },
         )
 
         # assert
@@ -712,8 +712,8 @@ class TestNotificationsReadView:
         response = api_client.post(
             '/accounts/notifications/read',
             data={
-                'notifications': []
-            }
+                'notifications': [],
+            },
         )
 
         # assert

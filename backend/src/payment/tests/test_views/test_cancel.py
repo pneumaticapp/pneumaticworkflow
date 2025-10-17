@@ -1,14 +1,15 @@
 import pytest
 from django.contrib.auth import get_user_model
-from src.processes.tests.fixtures import (
-    create_test_user,
-)
+
 from src.authentication.enums import AuthTokenType
-from src.payment.stripe.service import StripeService
+from src.payment import messages
 from src.payment.stripe.exceptions import (
     StripeServiceException,
 )
-from src.payment import messages
+from src.payment.stripe.service import StripeService
+from src.processes.tests.fixtures import (
+    create_test_user,
+)
 from src.utils.validation import ErrorCode
 
 UserModel = get_user_model()
@@ -24,12 +25,12 @@ def test_cancel_subscription__ok(
     service_init_mock = mocker.patch.object(
         StripeService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     mocker.patch(
         'src.payment.views.ProjectBillingPermission'
         '.has_permission',
-        return_value=True
+        return_value=True,
     )
     cancel_subscription_mock = mocker.patch(
         'src.payment.stripe.'
@@ -45,7 +46,7 @@ def test_cancel_subscription__ok(
     service_init_mock.assert_called_once_with(
         user=user,
         auth_type=AuthTokenType.USER,
-        is_superuser=False
+        is_superuser=False,
     )
     cancel_subscription_mock.assert_called_once()
 
@@ -59,18 +60,18 @@ def test_cancel_service_exception__validation_error(
     service_init_mock = mocker.patch.object(
         StripeService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     message = 'some message'
     mocker.patch(
         'src.payment.views.ProjectBillingPermission'
         '.has_permission',
-        return_value=True
+        return_value=True,
     )
     cancel_subscription_mock = mocker.patch(
         'src.payment.stripe.'
         'service.StripeService.cancel_subscription',
-        side_effect=StripeServiceException(message)
+        side_effect=StripeServiceException(message),
     )
     api_client.token_authenticate(user)
 
@@ -84,7 +85,7 @@ def test_cancel_service_exception__validation_error(
     service_init_mock.assert_called_once_with(
         user=user,
         auth_type=AuthTokenType.USER,
-        is_superuser=False
+        is_superuser=False,
     )
     cancel_subscription_mock.assert_called_once()
 
@@ -98,12 +99,12 @@ def test_cancel_subscription__disable_billing__permission_denied(
     service_init_mock = mocker.patch.object(
         StripeService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     mocker.patch(
         'src.payment.views.ProjectBillingPermission'
         '.has_permission',
-        return_value=False
+        return_value=False,
     )
     cancel_subscription_mock = mocker.patch(
         'src.payment.stripe.'

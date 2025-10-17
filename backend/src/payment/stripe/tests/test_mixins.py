@@ -1,30 +1,31 @@
+from datetime import timedelta
+
 import pytest
 import stripe
 from django.utils import timezone
-from datetime import timedelta
+
 from src.accounts.enums import (
-    LeaseLevel,
     BillingPlanType,
+    LeaseLevel,
 )
-from src.payment.stripe.exceptions import (
-    NotFoundAccountForSubscription
-)
-from src.payment.stripe.mixins import StripeMixin
-from src.processes.tests.fixtures import (
-    create_test_account,
-)
-from src.payment.models import Price
+from src.payment import messages
 from src.payment.enums import (
     BillingPeriod,
     PriceStatus,
     PriceType,
 )
-from src.payment.tests.fixtures import (
-    create_test_recurring_price,
-    create_test_product,
+from src.payment.models import Price
+from src.payment.stripe.exceptions import (
+    NotFoundAccountForSubscription,
 )
-from src.payment import messages
-
+from src.payment.stripe.mixins import StripeMixin
+from src.payment.tests.fixtures import (
+    create_test_product,
+    create_test_recurring_price,
+)
+from src.processes.tests.fixtures import (
+    create_test_account,
+)
 
 pytestmark = pytest.mark.django_db
 
@@ -37,7 +38,7 @@ def test_get_customer__ok(mocker):
     customer_retrieve_mock = mocker.patch(
         'src.payment.stripe.mixins.'
         'stripe.Customer.retrieve',
-        return_value=customer_mock
+        return_value=customer_mock,
     )
     service = StripeMixin()
 
@@ -58,8 +59,8 @@ def test_get_customer__not_existent_stripe_id__return_none(mocker):
         'stripe.Customer.retrieve',
         side_effect=stripe.error.InvalidRequestError(
             param='id',
-            message='not found'
-        )
+            message='not found',
+        ),
     )
     service = StripeMixin()
 
@@ -80,7 +81,7 @@ def test_get_customer_by_email__ok(mocker):
     customer_search_mock = mocker.patch(
         'src.payment.stripe.mixins.'
         'stripe.Customer.search',
-        return_value=result_mock
+        return_value=result_mock,
     )
     service = StripeMixin()
 
@@ -101,7 +102,7 @@ def test_get_customer_by_email__multiple_result__return_first(mocker):
     customer_search_mock = mocker.patch(
         'src.payment.stripe.mixins.'
         'stripe.Customer.search',
-        return_value=result_mock
+        return_value=result_mock,
     )
     service = StripeMixin()
 
@@ -121,7 +122,7 @@ def test_get_customer_by_email__not_found__return_none(mocker):
     customer_search_mock = mocker.patch(
         'src.payment.stripe.mixins.'
         'stripe.Customer.search',
-        return_value=result_mock
+        return_value=result_mock,
     )
     service = StripeMixin()
 
@@ -141,13 +142,13 @@ def test_get_subscription_by_id__ok(mocker):
     customer_retrieve_mock = mocker.patch(
         'src.payment.stripe.mixins.'
         'stripe.Subscription.retrieve',
-        return_value=subscription_mock
+        return_value=subscription_mock,
     )
     service = StripeMixin()
 
     # act
     result = service._get_subscription_by_id(
-        stripe_id=subscription_stripe_id
+        stripe_id=subscription_stripe_id,
     )
 
     # assert
@@ -163,7 +164,7 @@ def test_get_payment_method__ok(mocker):
     method_retrieve_mock = mocker.patch(
         'src.payment.stripe.mixins.'
         'stripe.PaymentMethod.retrieve',
-        return_value=method_mock
+        return_value=method_mock,
     )
     service = StripeMixin()
 
@@ -182,11 +183,11 @@ def test_get_account__ok(lease_level):
     customer_stripe_id = "cus_Nx9XuHa4xteob3"
     create_test_account(
         stripe_id=customer_stripe_id,
-        lease_level=LeaseLevel.TENANT
+        lease_level=LeaseLevel.TENANT,
     )
     account = create_test_account(
         stripe_id=customer_stripe_id,
-        lease_level=lease_level
+        lease_level=lease_level,
     )
 
     service = StripeMixin()
@@ -204,7 +205,7 @@ def test__get_account__not_found__return_none():
     customer_stripe_id = "cus_Nx9XuHa4xteob3"
     create_test_account(
         stripe_id=customer_stripe_id,
-        lease_level=LeaseLevel.TENANT
+        lease_level=LeaseLevel.TENANT,
     )
     service = StripeMixin()
 
@@ -218,7 +219,7 @@ def test__get_account__not_found__return_none():
 @pytest.mark.parametrize('status', ('active', 'trialing', 'past_due'))
 def test_get_subscription_for_account__main_subs_empty_metadata__ok(
     status,
-    mocker
+    mocker,
 ):
 
     # arrange
@@ -235,14 +236,14 @@ def test_get_subscription_for_account__main_subs_empty_metadata__ok(
     subscription_list_mock = mocker.patch(
         'src.payment.stripe.mixins.'
         'stripe.Subscription.list',
-        return_value=subscriptions_mock
+        return_value=subscriptions_mock,
     )
     service = StripeMixin()
 
     # act
     result = service._get_subscription_for_account(
         customer=customer,
-        subscription_account=account
+        subscription_account=account,
     )
 
     # assert
@@ -251,7 +252,7 @@ def test_get_subscription_for_account__main_subs_empty_metadata__ok(
 
 
 def test_get_subscription_for_account__main_subscription__ok(
-    mocker
+    mocker,
 ):
 
     # arrange
@@ -259,7 +260,7 @@ def test_get_subscription_for_account__main_subscription__ok(
     customer = mocker.Mock()
     main_subscription_mock = mocker.Mock(
         metadata={'account_id': str(account.id)},
-        status='trialing'
+        status='trialing',
     )
     tenant_1_subscription_mock = mocker.Mock()
     tenant_2_subscription_mock = mocker.Mock()
@@ -270,14 +271,14 @@ def test_get_subscription_for_account__main_subscription__ok(
             tenant_1_subscription_mock,
             main_subscription_mock,
             tenant_2_subscription_mock,
-        ]
+        ],
     )
     service = StripeMixin()
 
     # act
     result = service._get_subscription_for_account(
         customer=customer,
-        subscription_account=account
+        subscription_account=account,
     )
 
     # assert
@@ -288,7 +289,7 @@ def test_get_subscription_for_account__main_subscription__ok(
 @pytest.mark.parametrize('status', ('active', 'trialing', 'past_due'))
 def test_get_subscription_for_account__tenant__ok(
     status,
-    mocker
+    mocker,
 ):
 
     # arrange
@@ -296,22 +297,22 @@ def test_get_subscription_for_account__tenant__ok(
     tenant_1 = create_test_account(
         master_account=master_account,
         lease_level=LeaseLevel.TENANT,
-        tenant_name='Tenant 1'
+        tenant_name='Tenant 1',
     )
     tenant_2 = create_test_account(
         master_account=master_account,
         lease_level=LeaseLevel.TENANT,
-        tenant_name='Tenant 2'
+        tenant_name='Tenant 2',
     )
     customer = mocker.Mock()
     main_subscription_mock = mocker.Mock(metadata={}, status=status)
     tenant_1_subscription_mock = mocker.Mock(
         metadata={'account_id': str(tenant_1.id)},
-        status=status
+        status=status,
     )
     tenant_2_subscription_mock = mocker.Mock(
         metadata={'account_id': str(tenant_2.id)},
-        status=status
+        status=status,
     )
     subscription_list_mock = mocker.patch(
         'src.payment.stripe.mixins.'
@@ -320,14 +321,14 @@ def test_get_subscription_for_account__tenant__ok(
             main_subscription_mock,
             tenant_1_subscription_mock,
             tenant_2_subscription_mock,
-        ]
+        ],
     )
     service = StripeMixin()
 
     # act
     result = service._get_subscription_for_account(
         customer=customer,
-        subscription_account=tenant_2
+        subscription_account=tenant_2,
     )
 
     # assert
@@ -336,7 +337,7 @@ def test_get_subscription_for_account__tenant__ok(
 
 
 def test_get_subscription_for_account__tenant_invalid_metadata__skip(
-    mocker
+    mocker,
 ):
 
     # arrange
@@ -344,29 +345,29 @@ def test_get_subscription_for_account__tenant_invalid_metadata__skip(
     tenant = create_test_account(
         master_account=master_account,
         lease_level=LeaseLevel.TENANT,
-        tenant_name='Tenant'
+        tenant_name='Tenant',
     )
     customer = mocker.Mock()
     tenant_subscription_mock = mocker.Mock(
         metadata={'account_id': f'{tenant.id}a'},
-        status='active'
+        status='active',
     )
     subscription_list_mock = mocker.patch(
         'src.payment.stripe.mixins.'
         'stripe.Subscription.list',
         return_value=[
             tenant_subscription_mock,
-        ]
+        ],
     )
     capture_sentry_message_mock = mocker.patch(
-        'src.payment.stripe.mixins.capture_sentry_message'
+        'src.payment.stripe.mixins.capture_sentry_message',
     )
     service = StripeMixin()
 
     # act
     result = service._get_subscription_for_account(
         customer=customer,
-        subscription_account=tenant
+        subscription_account=tenant,
     )
 
     # assert
@@ -383,14 +384,14 @@ def test_get_subscription_for_account__not_found__return_none(mocker):
     subscription_list_mock = mocker.patch(
         'src.payment.stripe.mixins.'
         'stripe.Subscription.list',
-        return_value=[]
+        return_value=[],
     )
     service = StripeMixin()
 
     # act
     result = service._get_subscription_for_account(
         customer=customer,
-        subscription_account=master_account
+        subscription_account=master_account,
     )
 
     # assert
@@ -441,14 +442,14 @@ def test_get_subscription_details__premium_trial__ok(mocker):
     create_test_recurring_price(
         stripe_id=price_stripe_id,
         product=product,
-        period=billing_period
+        period=billing_period,
     )
     quantity = 10
     price_mock = mocker.Mock(id=price_stripe_id)
     item_mock = mocker.MagicMock(price=price_mock)
     create_price_mock = mocker.patch(
         'src.payment.stripe.mixins.'
-        'StripeMixin._create_price'
+        'StripeMixin._create_price',
     )
     subscription = {
         'current_period_end': period_end_date_timestamp,
@@ -485,14 +486,14 @@ def test_get_subscription_details__premium__ok(mocker):
     create_test_recurring_price(
         stripe_id=price_stripe_id,
         product=product,
-        period=billing_period
+        period=billing_period,
     )
     quantity = 11
     price_mock = mocker.Mock(id=price_stripe_id)
     item_mock = mocker.MagicMock(price=price_mock)
     create_price_mock = mocker.patch(
         'src.payment.stripe.mixins.'
-        'StripeMixin._create_price'
+        'StripeMixin._create_price',
     )
     subscription = {
         'current_period_end': period_end_date_timestamp,
@@ -526,18 +527,18 @@ def test_get_subscription_details__fractionalcoo__ok(mocker):
     create_test_recurring_price(
         product=product,
         stripe_id=price_stripe_id,
-        period=billing_period
+        period=billing_period,
     )
     period_end_date = timezone.now() + timedelta(days=30)
     period_end_date_timestamp = period_end_date.timestamp()
     quantity = 11
     price_mock = mocker.Mock(id=price_stripe_id)
     item_mock = mocker.MagicMock(
-        price=price_mock
+        price=price_mock,
     )
     create_price_mock = mocker.patch(
         'src.payment.stripe.mixins.'
-        'StripeMixin._create_price'
+        'StripeMixin._create_price',
     )
     subscription = {
         'current_period_end': period_end_date_timestamp,
@@ -577,14 +578,14 @@ def test_get_subscription_details__fractionalcoo_trial__ok(mocker):
     create_test_recurring_price(
         product=product,
         stripe_id=price_stripe_id,
-        period=billing_period
+        period=billing_period,
     )
     quantity = 11
     price_mock = mocker.Mock(id=price_stripe_id)
     item_mock = mocker.MagicMock(price=price_mock)
     create_price_mock = mocker.patch(
         'src.payment.stripe.mixins.'
-        'StripeMixin._create_price'
+        'StripeMixin._create_price',
     )
     subscription = {
         'current_period_end': period_end_date_timestamp,
@@ -618,18 +619,18 @@ def test_get_subscription_details__unlimited__ok(mocker):
     create_test_recurring_price(
         product=product,
         stripe_id=price_stripe_id,
-        period=billing_period
+        period=billing_period,
     )
     period_end_date = timezone.now() + timedelta(days=30)
     period_end_date_timestamp = period_end_date.timestamp()
     quantity = 11
     price_mock = mocker.Mock(id=price_stripe_id)
     item_mock = mocker.MagicMock(
-        price=price_mock
+        price=price_mock,
     )
     create_price_mock = mocker.patch(
         'src.payment.stripe.mixins.'
-        'StripeMixin._create_price'
+        'StripeMixin._create_price',
     )
     subscription = {
         'current_period_end': period_end_date_timestamp,
@@ -669,14 +670,14 @@ def test_get_subscription_details__unlimited_trial__ok(mocker):
     create_test_recurring_price(
         product=product,
         stripe_id=price_stripe_id,
-        period=billing_period
+        period=billing_period,
     )
     quantity = 11
     price_mock = mocker.Mock(id=price_stripe_id)
     item_mock = mocker.MagicMock(price=price_mock)
     create_price_mock = mocker.patch(
         'src.payment.stripe.mixins.'
-        'StripeMixin._create_price'
+        'StripeMixin._create_price',
     )
     subscription = {
         'current_period_end': period_end_date_timestamp,
@@ -710,7 +711,7 @@ def test_get_subscription_details__price_not_exist__create(mocker):
     quantity = 11
     price_mock = mocker.Mock(id=price_stripe_id)
     item_mock = mocker.MagicMock(
-        price=price_mock
+        price=price_mock,
     )
     subscription = {
         'current_period_end': period_end_date_timestamp,
@@ -725,12 +726,12 @@ def test_get_subscription_details__price_not_exist__create(mocker):
     billing_period = BillingPeriod.YEARLY
     created_price_mock = mocker.Mock(
         product=product,
-        billing_period=billing_period
+        billing_period=billing_period,
     )
     create_price_mock = mocker.patch(
         'src.payment.stripe.mixins.'
         'StripeMixin._create_price',
-        return_value=created_price_mock
+        return_value=created_price_mock,
     )
     service = StripeMixin()
 
@@ -772,7 +773,7 @@ def test_set_default_payment_method__existent_method__ok(mocker):
     subscription_list_mock = mocker.patch(
         'src.payment.stripe.mixins.'
         'stripe.Subscription.list',
-        return_value=[subscription_mock, subscriptn_2_mock]
+        return_value=[subscription_mock, subscriptn_2_mock],
     )
     method_mock = mocker.Mock()
     method_mock.id = 13
@@ -781,7 +782,7 @@ def test_set_default_payment_method__existent_method__ok(mocker):
     # act
     result = service._set_default_payment_method(
         customer=customer_mock,
-        method=method_mock
+        method=method_mock,
     )
 
     # assert
@@ -814,7 +815,7 @@ def test_set_default_payment_method__get_first_method__ok(mocker):
     subscription_list_mock = mocker.patch(
         'src.payment.stripe.mixins.'
         'stripe.Subscription.list',
-        return_value=[subscription_mock]
+        return_value=[subscription_mock],
     )
 
     method_mock = mocker.Mock()
@@ -824,7 +825,7 @@ def test_set_default_payment_method__get_first_method__ok(mocker):
     methods_list_mock = mocker.patch(
         'src.payment.stripe.mixins.'
         'stripe.PaymentMethod.list',
-        return_value=methods_mock
+        return_value=methods_mock,
     )
     service = StripeMixin()
 
@@ -861,14 +862,14 @@ def test_set_default_payment_method__methods_not_exists__skip(mocker):
     subscription_list_mock = mocker.patch(
         'src.payment.stripe.mixins.'
         'stripe.Subscription.list',
-        return_value=[subscription_mock]
+        return_value=[subscription_mock],
     )
     methods_mock = mocker.Mock()
     methods_mock.data = []
     methods_list_mock = mocker.patch(
         'src.payment.stripe.mixins.'
         'stripe.PaymentMethod.list',
-        return_value=methods_mock
+        return_value=methods_mock,
     )
     service = StripeMixin()
 
@@ -894,11 +895,11 @@ def test_get_current_payment_method__exists__ok(mocker):
     get_payment_method_mock = mocker.patch(
         'src.payment.stripe.mixins.'
         'StripeMixin._get_payment_method',
-        return_value=method
+        return_value=method,
     )
     set_default_payment_method_mock = mocker.patch(
         'src.payment.stripe.mixins.'
-        'StripeMixin._set_default_payment_method'
+        'StripeMixin._set_default_payment_method',
     )
     service = StripeMixin()
 
@@ -923,7 +924,7 @@ def test_get_current_payment_method__not_exists__set(mocker):
     set_default_payment_method_mock = mocker.patch(
         'src.payment.stripe.mixins.'
         'StripeMixin._set_default_payment_method',
-        return_value=method
+        return_value=method,
     )
     service = StripeMixin()
 
@@ -945,7 +946,7 @@ def test_get_price_code__price_exists__code_not_changed():
     price_code = 'some_code'
     price = create_test_recurring_price(
         stripe_id=stripe_id,
-        code=price_code
+        code=price_code,
     )
     product_name = price.product.name
     interval = BillingPeriod.MONTHLY
@@ -954,7 +955,7 @@ def test_get_price_code__price_exists__code_not_changed():
     # act
     result = service._get_price_code(
         stripe_id=stripe_id,
-        code_parts=(product_name, interval)
+        code_parts=(product_name, interval),
     )
 
     # assert
@@ -973,7 +974,7 @@ def test_get_price_code__new_price__ok():
     # act
     result = service._get_price_code(
         stripe_id=stripe_id,
-        code_parts=(product_name, interval)
+        code_parts=(product_name, interval),
     )
 
     # assert
@@ -993,13 +994,13 @@ def test_get_price_code__duplicate_code__return_with_hash(mocker):
     salt = '!@#sdcxv'
     get_salt_mock = mocker.patch(
         'src.payment.stripe.mixins.get_salt',
-        return_value=salt
+        return_value=salt,
     )
 
     # act
     result = service._get_price_code(
         stripe_id=stripe_id,
-        code_parts=(product_name, interval)
+        code_parts=(product_name, interval),
     )
 
     # assert
@@ -1016,7 +1017,7 @@ def test_get_product_code__product_exists__code_not_changed():
     create_test_product(
         stripe_id=stripe_id,
         code=product_code,
-        name=product_name
+        name=product_name,
     )
     service = StripeMixin()
 
@@ -1058,7 +1059,7 @@ def test_get_product_code__duplicate_code__return_with_hash(mocker):
     salt = '!@#sdcxv'
     get_salt_mock = mocker.patch(
         'src.payment.stripe.mixins.get_salt',
-        return_value=salt
+        return_value=salt,
     )
     service = StripeMixin()
 
@@ -1092,7 +1093,7 @@ def test_get_idempotency_key__same_kwargs__same_result():
     data = {
         'key': [{'c': 1, 'a': 'cad'}],
         'avd': 'str',
-        '0': None
+        '0': None,
     }
     value_1 = service._get_idempotency_key(**data)
 
@@ -1139,34 +1140,34 @@ def test_create_price__recurring__ok(mocker):
             "interval": interval,
             "interval_count": 1,
             "trial_period_days": trial_days,
-            "usage_type": "licensed"
+            "usage_type": "licensed",
           },
           "tax_behavior": "unspecified",
           "tiers_mode": None,
           "transform_quantity": None,
           "type": PriceType.RECURRING,
           "unit_amount": unit_amount,
-          "unit_amount_decimal": "100"
-        }
+          "unit_amount_decimal": "100",
+        },
       },
       "livemode": False,
       "pending_webhooks": 1,
       "request": {
         "id": "req_7nqnxNbq2uZMqX",
-        "idempotency_key": "d7d2b29b-f591-4581-8670-8d90d2f2f394"
+        "idempotency_key": "d7d2b29b-f591-4581-8670-8d90d2f2f394",
       },
-      "type": "price.created"
+      "type": "price.created",
     }
     event = stripe.Event.construct_from(
         values=data,
-        key='!!@#'
+        key='!!@#',
     )
     service = StripeMixin()
     price_code = 'some_code'
     get_subscription_details_mock = mocker.patch(
         'src.payment.stripe.mixins.'
         'StripeMixin._get_price_code',
-        return_value=price_code
+        return_value=price_code,
     )
 
     # act
@@ -1175,7 +1176,7 @@ def test_create_price__recurring__ok(mocker):
     # assert
     get_subscription_details_mock.assert_called_once_with(
         stripe_id=stripe_id,
-        code_parts=(product.name, interval)
+        code_parts=(product.name, interval),
     )
     assert Price.objects.filter(
         product=product,
@@ -1189,7 +1190,7 @@ def test_create_price__recurring__ok(mocker):
         price=unit_amount,
         trial_days=trial_days,
         billing_period=interval,
-        currency=currency
+        currency=currency,
     ).exists()
 
 
@@ -1228,27 +1229,27 @@ def test_create_price__one_time__ok(mocker):
           "transform_quantity": None,
           "type": PriceType.ONE_TIME,
           "unit_amount": unit_amount,
-          "unit_amount_decimal": "100"
-        }
+          "unit_amount_decimal": "100",
+        },
       },
       "livemode": False,
       "pending_webhooks": 1,
       "request": {
         "id": "req_7nqnxNbq2uZMqX",
-        "idempotency_key": "d7d2b29b-f591-4581-8670-8d90d2f2f394"
+        "idempotency_key": "d7d2b29b-f591-4581-8670-8d90d2f2f394",
       },
-      "type": "price.created"
+      "type": "price.created",
     }
     event = stripe.Event.construct_from(
         values=data,
-        key='!!@#'
+        key='!!@#',
     )
     service = StripeMixin()
     price_code = 'some_code'
     get_subscription_details_mock = mocker.patch(
         'src.payment.stripe.mixins.'
         'StripeMixin._get_price_code',
-        return_value=price_code
+        return_value=price_code,
     )
 
     # act
@@ -1257,7 +1258,7 @@ def test_create_price__one_time__ok(mocker):
     # assert
     get_subscription_details_mock.assert_called_once_with(
         stripe_id=stripe_id,
-        code_parts=(product.name,)
+        code_parts=(product.name,),
     )
     assert Price.objects.filter(
         product=product,
@@ -1271,19 +1272,19 @@ def test_create_price__one_time__ok(mocker):
         price=unit_amount,
         trial_days=None,
         billing_period=None,
-        currency=currency
+        currency=currency,
     ).exists()
 
 
 def test_get_account_for_subscription__main_with_metadata__ok(
-    mocker
+    mocker,
 ):
 
     # arrange
     account = create_test_account(lease_level=LeaseLevel.STANDARD)
     create_test_account(
         lease_level=LeaseLevel.TENANT,
-        master_account=account
+        master_account=account,
     )
     subscription_mock = mocker.Mock(metadata={'account_id': str(account.id)})
     service = StripeMixin()
@@ -1291,7 +1292,7 @@ def test_get_account_for_subscription__main_with_metadata__ok(
     # act
     result = service._get_account_for_subscription(
         account=account,
-        subscription=subscription_mock
+        subscription=subscription_mock,
     )
 
     # assert
@@ -1299,14 +1300,14 @@ def test_get_account_for_subscription__main_with_metadata__ok(
 
 
 def test_get_account_for_subscription__main_without_metadata__ok(
-    mocker
+    mocker,
 ):
 
     # arrange
     account = create_test_account(lease_level=LeaseLevel.STANDARD)
     create_test_account(
         lease_level=LeaseLevel.TENANT,
-        master_account=account
+        master_account=account,
     )
     subscription_mock = mocker.Mock(metadata={})
     service = StripeMixin()
@@ -1314,7 +1315,7 @@ def test_get_account_for_subscription__main_without_metadata__ok(
     # act
     result = service._get_account_for_subscription(
         account=account,
-        subscription=subscription_mock
+        subscription=subscription_mock,
     )
 
     # assert
@@ -1322,7 +1323,7 @@ def test_get_account_for_subscription__main_without_metadata__ok(
 
 
 def test_get_account_for_subscription__tenant__ok(
-    mocker
+    mocker,
 ):
 
     # arrange
@@ -1330,7 +1331,7 @@ def test_get_account_for_subscription__tenant__ok(
     tenant = create_test_account(
         lease_level=LeaseLevel.TENANT,
         master_account=account,
-        name='Tenant'
+        name='Tenant',
     )
     subscription_mock = mocker.Mock(metadata={'account_id': str(tenant.id)})
     service = StripeMixin()
@@ -1338,7 +1339,7 @@ def test_get_account_for_subscription__tenant__ok(
     # act
     result = service._get_account_for_subscription(
         account=account,
-        subscription=subscription_mock
+        subscription=subscription_mock,
     )
 
     # assert
@@ -1351,7 +1352,7 @@ def test_get_account_for_subscription__invalid_metadata__raise(mocker):
     account = create_test_account(lease_level=LeaseLevel.STANDARD)
     tenant = create_test_account(
         lease_level=LeaseLevel.TENANT,
-        master_account=account
+        master_account=account,
     )
     metadata = {'account_id': f'{tenant.id}a'}
     subscription_mock = mocker.Mock(metadata=metadata)
@@ -1361,7 +1362,7 @@ def test_get_account_for_subscription__invalid_metadata__raise(mocker):
     with pytest.raises(NotFoundAccountForSubscription) as ex:
         service._get_account_for_subscription(
             account=account,
-            subscription=subscription_mock
+            subscription=subscription_mock,
         )
 
     # assert
@@ -1382,7 +1383,7 @@ def test_get_account_for_subscription__not_found__raise(mocker):
     with pytest.raises(NotFoundAccountForSubscription) as ex:
         service._get_account_for_subscription(
             account=account,
-            subscription=subscription_mock
+            subscription=subscription_mock,
         )
 
     # assert

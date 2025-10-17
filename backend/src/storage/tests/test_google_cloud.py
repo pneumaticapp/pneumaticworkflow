@@ -1,8 +1,8 @@
 import pytest
-
-from src.storage.google_cloud import GoogleCloudService
-from src.processes.tests.fixtures import create_test_account
 from google.cloud.exceptions import NotFound
+
+from src.processes.tests.fixtures import create_test_account
+from src.storage.google_cloud import GoogleCloudService
 
 pytestmark = pytest.mark.django_db
 
@@ -16,7 +16,7 @@ class TestGoogleCloudService:
         client_mock.get_bucket = mocker.Mock(return_value=bucket_mock)
         mocker.patch(
             'src.storage.google_cloud.storage.Client',
-            return_value=client_mock
+            return_value=client_mock,
         )
 
         # act
@@ -36,7 +36,7 @@ class TestGoogleCloudService:
         client_mock.get_bucket = mocker.Mock(return_value=bucket_mock)
         mocker.patch(
             'src.storage.google_cloud.storage.Client',
-            return_value=client_mock
+            return_value=client_mock,
         )
 
         # act
@@ -55,12 +55,12 @@ class TestGoogleCloudService:
         client_mock = mocker.Mock()
         mocker.patch(
             'src.storage.google_cloud.storage.Client',
-            return_value=client_mock
+            return_value=client_mock,
         )
         create_bucket_mock = mocker.patch(
             'src.storage.google_cloud.GoogleCloudService.'
             '_create_bucket',
-            return_value=bucket_mock
+            return_value=bucket_mock,
         )
 
         # act
@@ -81,15 +81,15 @@ class TestGoogleCloudService:
 
         mocker.patch(
             'src.storage.google_cloud.storage.Client',
-            return_value=client_mock
+            return_value=client_mock,
         )
         mocker.patch(
             'src.storage.google_cloud.get_salt',
-            return_value='salt'
+            return_value='salt',
         )
         mocker.patch(
             'src.storage.google_cloud.AccountService',
-            return_value=mocker.Mock()
+            return_value=mocker.Mock(),
         )
 
         # act
@@ -107,16 +107,16 @@ class TestGoogleCloudService:
         bucket_mock = mocker.Mock()
         client_mock = mocker.Mock()
         client_mock.get_bucket = mocker.Mock(
-            side_effect=NotFound('Bucket not found')
+            side_effect=NotFound('Bucket not found'),
         )
         mocker.patch(
             'src.storage.google_cloud.storage.Client',
-            return_value=client_mock
+            return_value=client_mock,
         )
         create_bucket_mock = mocker.patch(
             'src.storage.google_cloud.GoogleCloudService.'
             '_create_bucket',
-            return_value=bucket_mock
+            return_value=bucket_mock,
         )
 
         # act
@@ -125,29 +125,29 @@ class TestGoogleCloudService:
         # assert
         client_mock.get_bucket.assert_called_once_with('non-existent-bucket')
         create_bucket_mock.assert_called_once_with(
-            bucket_name='non-existent-bucket'
+            bucket_name='non-existent-bucket',
         )
         assert service.account == account
         assert service.bucket == bucket_mock
 
     def test_init__without_account_default_bucket_not_found__ok(
-        self, mocker, settings
+        self, mocker, settings,
     ):
         # arrange
         settings.GCLOUD_DEFAULT_BUCKET_NAME = 'default-bucket'
         bucket_mock = mocker.Mock()
         client_mock = mocker.Mock()
         client_mock.get_bucket = mocker.Mock(
-            side_effect=NotFound('Bucket not found')
+            side_effect=NotFound('Bucket not found'),
         )
         mocker.patch(
             'src.storage.google_cloud.storage.Client',
-            return_value=client_mock
+            return_value=client_mock,
         )
         create_bucket_mock = mocker.patch(
             'src.storage.google_cloud.GoogleCloudService.'
             '_create_bucket',
-            return_value=bucket_mock
+            return_value=bucket_mock,
         )
 
         # act
@@ -156,7 +156,7 @@ class TestGoogleCloudService:
         # assert
         client_mock.get_bucket.assert_called_once_with('default-bucket')
         create_bucket_mock.assert_called_once_with(
-            bucket_name='default-bucket'
+            bucket_name='default-bucket',
         )
         assert service.account is None
         assert service.bucket == bucket_mock
@@ -173,22 +173,22 @@ class TestGoogleCloudService:
         mocker.patch.object(
             GoogleCloudService,
             '__init__',
-            return_value=None
+            return_value=None,
         )
         service = GoogleCloudService()
         service.account = account
         service.client = client_mock
         mocker.patch(
             'src.storage.google_cloud.AccountService',
-            return_value=account_service_mock
+            return_value=account_service_mock,
         )
         mocker.patch(
             'src.storage.google_cloud.storage.Client',
-            return_value=client_mock
+            return_value=client_mock,
         )
         mocker.patch(
             'src.storage.google_cloud.get_salt',
-            return_value='salt'
+            return_value='salt',
         )
 
         # act
@@ -199,11 +199,11 @@ class TestGoogleCloudService:
         client_mock.bucket.assert_called_once_with(expected_bucket_name)
         assert bucket_mock.labels == {
             'account_id': str(account.id),
-            'account_name': 'test_company'
+            'account_name': 'test_company',
         }
         bucket_mock.create.assert_called_once()
         account_service_mock.update_bucket_name.assert_called_once_with(
-            expected_bucket_name
+            expected_bucket_name,
         )
 
     def test_create_bucket__with_specified_name__ok(self, mocker):
@@ -219,7 +219,7 @@ class TestGoogleCloudService:
         mocker.patch.object(
             GoogleCloudService,
             '__init__',
-            return_value=None
+            return_value=None,
         )
 
         service = GoogleCloudService()
@@ -228,7 +228,7 @@ class TestGoogleCloudService:
 
         mocker.patch(
             'src.storage.google_cloud.AccountService',
-            return_value=account_service_mock
+            return_value=account_service_mock,
         )
 
         # act
@@ -238,11 +238,11 @@ class TestGoogleCloudService:
         client_mock.bucket.assert_called_once_with(specified_bucket_name)
         assert bucket_mock.labels == {
             'account_id': str(account.id),
-            'account_name': 'test_company'
+            'account_name': 'test_company',
         }
         bucket_mock.create.assert_called_once()
         account_service_mock.update_bucket_name.assert_called_once_with(
-            specified_bucket_name
+            specified_bucket_name,
         )
         assert result == bucket_mock
 
@@ -260,7 +260,7 @@ class TestGoogleCloudService:
         client_mock.get_bucket = mocker.Mock(return_value=bucket_mock)
         mocker.patch(
             'src.storage.google_cloud.storage.Client',
-            return_value=client_mock
+            return_value=client_mock,
         )
         storage = GoogleCloudService()
 
@@ -268,14 +268,14 @@ class TestGoogleCloudService:
         result = storage.upload_from_binary(
             binary=binary_file,
             filepath=filepath,
-            content_type=content_type
+            content_type=content_type,
         )
 
         # assert
         bucket_mock.blob.assert_called_once_with(filepath)
         blob_mock.upload_from_string.assert_called_once_with(
             data=binary_file,
-            content_type=content_type
+            content_type=content_type,
         )
         blob_mock.make_public.assert_called_once()
         assert result == public_url

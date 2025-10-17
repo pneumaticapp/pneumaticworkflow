@@ -1,5 +1,5 @@
 from src.generics.throttling import (
-    TokenThrottle
+    TokenThrottle,
 )
 
 

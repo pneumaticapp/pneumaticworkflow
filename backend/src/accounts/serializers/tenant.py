@@ -1,10 +1,11 @@
-from src.accounts.models import Account
 from rest_framework.serializers import (
-    ModelSerializer,
     CharField,
+    ModelSerializer,
 )
-from src.generics.serializers import CustomValidationErrorMixin
+
+from src.accounts.models import Account
 from src.generics.fields import TimeStampField
+from src.generics.serializers import CustomValidationErrorMixin
 
 
 class TenantSerializer(
@@ -29,6 +30,6 @@ class TenantSerializer(
     tenant_name = CharField(
         allow_null=False,
         allow_blank=False,
-        max_length=255
+        max_length=255,
     )
     date_joined_tsp = TimeStampField(source='date_joined', read_only=True)

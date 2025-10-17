@@ -1,6 +1,8 @@
-import analytics
 from typing import Optional
+
 from django.conf import settings
+
+import analytics
 
 
 class BaseIdentifyMixin:
@@ -8,7 +10,7 @@ class BaseIdentifyMixin:
     @staticmethod
     def identify(
         user,
-        invited_from: Optional[str] = None
+        invited_from: Optional[str] = None,
     ):
 
         # TODO need mock calls in the tests
@@ -76,5 +78,5 @@ class BaseIdentifyMixin:
                     'plan': account.billing_plan,
                     'billing_plan': account.billing_plan,
                     'lease_level': account.lease_level,
-                }
+                },
             )

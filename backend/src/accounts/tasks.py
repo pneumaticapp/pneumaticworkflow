@@ -1,13 +1,14 @@
-from celery import shared_task
 from django.db import transaction
+
+from celery import shared_task
 from src.accounts.models import (
-    SystemMessage,
     Notification,
+    SystemMessage,
 )
 from src.accounts.queries import CreateSystemNotificationsQuery
 from src.executor import RawSqlExecutor
-from src.notifications.tasks import _send_notification
 from src.notifications.enums import NotificationMethod
+from src.notifications.tasks import _send_notification
 
 
 @shared_task
@@ -19,7 +20,7 @@ def send_system_notification():
             system_message.is_delivery_completed = True
             system_message.save()
         notifications = Notification.objects.filter(
-            system_message=system_message
+            system_message=system_message,
         ).select_related('user', 'account').exclude_read()
         for notification in notifications:
             _send_notification(

@@ -1,22 +1,23 @@
-import pytest
 from datetime import timedelta
-from django.utils import timezone
+
+import pytest
 from django.conf import settings
+from django.utils import timezone
+
 from src.accounts.enums import UserType
+from src.analytics.enums import MailoutType
 from src.logs.enums import AccountEventStatus
+from src.notifications import messages
 from src.notifications.enums import (
-    NotificationMethod,
     EmailTemplate,
+    NotificationMethod,
 )
 from src.notifications.services.email import (
-    EmailService
+    EmailService,
 )
 from src.notifications.services.exceptions import (
     NotificationServiceError,
 )
-from src.analytics.enums import MailoutType
-from src.notifications import messages
-
 
 pytestmark = pytest.mark.django_db
 
@@ -28,10 +29,10 @@ def test_send_email_via_customerio__ok(mocker):
     template_code = 'new_task'
     mocker.patch(
         'src.notifications.services.email.cio_template_ids',
-        {template_code: template_id}
+        {template_code: template_id},
     )
     settings_mock = mocker.patch(
-        'src.notifications.services.email.settings'
+        'src.notifications.services.email.settings',
     )
     api_key = '!@#'
     settings_mock.CUSTOMERIO_TRANSACTIONAL_API_KEY = api_key
@@ -39,19 +40,19 @@ def test_send_email_via_customerio__ok(mocker):
     client_mock = mocker.Mock()
     api_client_mock = mocker.patch(
         'src.notifications.services.email.APIClient',
-        return_value=client_mock
+        return_value=client_mock,
     )
     request_mock = mocker.Mock()
     send_email_request_mock = mocker.patch(
         'src.notifications.services.email.SendEmailRequest',
-        return_value=request_mock
+        return_value=request_mock,
     )
     user_id = 1
     email = 'test@pneumatic.app'
     data = {'test': 'data'}
     create_account_log_mock = mocker.patch(
         'src.notifications.services.email.AccountLogService'
-        '.email_message'
+        '.email_message',
     )
     logo_lg = 'https://logo.jpg'
     logging = False
@@ -61,7 +62,7 @@ def test_send_email_via_customerio__ok(mocker):
     service = EmailService(
         logo_lg=logo_lg,
         logging=logging,
-        account_id=account_id
+        account_id=account_id,
     )
 
     # act
@@ -80,7 +81,7 @@ def test_send_email_via_customerio__ok(mocker):
         to=email,
         transactional_message_id=template_id,
         message_data=data,
-        identifiers={'id': user_id}
+        identifiers={'id': user_id},
     )
     client_mock.send_email.assert_called_once_with(request_mock)
     create_account_log_mock.assert_not_called()
@@ -93,10 +94,10 @@ def test_send_email_via_customerio__enable_logging__ok(mocker):
     template_code = 'new_task'
     mocker.patch(
         'src.notifications.services.email.cio_template_ids',
-        {template_code: template_id}
+        {template_code: template_id},
     )
     settings_mock = mocker.patch(
-        'src.notifications.services.email.settings'
+        'src.notifications.services.email.settings',
     )
     api_key = '!@#'
     settings_mock.CUSTOMERIO_TRANSACTIONAL_API_KEY = api_key
@@ -104,16 +105,16 @@ def test_send_email_via_customerio__enable_logging__ok(mocker):
     client_mock = mocker.Mock()
     api_client_mock = mocker.patch(
         'src.notifications.services.email.APIClient',
-        return_value=client_mock
+        return_value=client_mock,
     )
     request_mock = mocker.Mock()
     send_email_request_mock = mocker.patch(
         'src.notifications.services.email.SendEmailRequest',
-        return_value=request_mock
+        return_value=request_mock,
     )
     create_account_log_mock = mocker.patch(
         'src.notifications.services.email.AccountLogService'
-        '.email_message'
+        '.email_message',
     )
     user_id = 1
     email = 'test@pneumatic.app'
@@ -127,7 +128,7 @@ def test_send_email_via_customerio__enable_logging__ok(mocker):
     service = EmailService(
         logo_lg=logo_lg,
         logging=logging,
-        account_id=account_id
+        account_id=account_id,
     )
 
     # act
@@ -145,7 +146,7 @@ def test_send_email_via_customerio__enable_logging__ok(mocker):
         to=email,
         transactional_message_id=template_id,
         message_data=data,
-        identifiers={'id': user_id}
+        identifiers={'id': user_id},
     )
     client_mock.send_email.assert_called_once_with(request_mock)
     create_account_log_mock.assert_called_once_with(
@@ -153,7 +154,7 @@ def test_send_email_via_customerio__enable_logging__ok(mocker):
         request_data=data,
         account_id=account_id,
         status=AccountEventStatus.SUCCESS,
-        contractor='Customer.io'
+        contractor='Customer.io',
     )
 
 
@@ -161,15 +162,15 @@ def test_send__dev_environment__console_print(mocker):
 
     # arrange
     settings_mock = mocker.patch(
-        'src.notifications.services.email.settings'
+        'src.notifications.services.email.settings',
     )
     send_to_console_mock = mocker.patch(
         'src.notifications.services.email.'
-        'EmailService._send_email_to_console'
+        'EmailService._send_email_to_console',
     )
     send_via_customerio_mock = mocker.patch(
         'src.notifications.services.email.EmailService.'
-        '_send_email_via_customerio'
+        '_send_email_via_customerio',
     )
     title = 'Test title'
     user_id = 1
@@ -187,7 +188,7 @@ def test_send__dev_environment__console_print(mocker):
     service = EmailService(
         logo_lg=logo_lg,
         logging=logging,
-        account_id=account_id
+        account_id=account_id,
     )
 
     # act
@@ -197,7 +198,7 @@ def test_send__dev_environment__console_print(mocker):
         user_email=email,
         template_code=EmailTemplate.OVERDUE_TASK,
         method_name=NotificationMethod.overdue_task,
-        data=data
+        data=data,
     )
 
     # assert
@@ -213,15 +214,15 @@ def test_send__prod_environment__send_email(mocker):
 
     # arrange
     settings_mock = mocker.patch(
-        'src.notifications.services.email.settings'
+        'src.notifications.services.email.settings',
     )
     send_to_console_mock = mocker.patch(
         'src.notifications.services.email.'
-        'EmailService._send_email_to_console'
+        'EmailService._send_email_to_console',
     )
     send_via_customerio_mock = mocker.patch(
         'src.notifications.services.email.EmailService.'
-        '_send_email_via_customerio'
+        '_send_email_via_customerio',
     )
     user_id = 1
     email = 'john@cena.com'
@@ -237,7 +238,7 @@ def test_send__prod_environment__send_email(mocker):
     service = EmailService(
         logo_lg=logo_lg,
         logging=logging,
-        account_id=account_id
+        account_id=account_id,
     )
 
     # act
@@ -247,7 +248,7 @@ def test_send__prod_environment__send_email(mocker):
         user_email=email,
         template_code=EmailTemplate.OVERDUE_TASK,
         method_name=NotificationMethod.overdue_task,
-        data=data
+        data=data,
     )
 
     # assert
@@ -267,18 +268,18 @@ def test_send__not_allowed_method__raise_exception(mocker):
     mocker.patch(
         'src.notifications.services.email.'
         'EmailService.ALLOWED_METHODS',
-        {NotificationMethod.new_task}
+        {NotificationMethod.new_task},
     )
     send_to_console_mock = mocker.patch(
         'src.notifications.services.email.'
-        'EmailService._send_email_to_console'
+        'EmailService._send_email_to_console',
     )
     send_via_customerio_mock = mocker.patch(
         'src.notifications.services.email.EmailService.'
-        '_send_email_via_customerio'
+        '_send_email_via_customerio',
     )
     settings_mock = mocker.patch(
-        'src.notifications.services.email.settings'
+        'src.notifications.services.email.settings',
     )
     settings_mock.PROJECT_CONF = {'EMAIL': True}
     user_id = 1
@@ -292,7 +293,7 @@ def test_send__not_allowed_method__raise_exception(mocker):
     service = EmailService(
         logo_lg=logo_lg,
         logging=logging,
-        account_id=account_id
+        account_id=account_id,
     )
 
     # act
@@ -303,7 +304,7 @@ def test_send__not_allowed_method__raise_exception(mocker):
             user_email=email,
             template_code=EmailTemplate.OVERDUE_TASK,
             method_name=NotificationMethod.overdue_task,
-            data=data
+            data=data,
         )
 
     # assert
@@ -318,15 +319,15 @@ def test_send__disable_email__skip(mocker):
 
     # arrange
     settings_mock = mocker.patch(
-        'src.notifications.services.email.settings'
+        'src.notifications.services.email.settings',
     )
     send_to_console_mock = mocker.patch(
         'src.notifications.services.email.'
-        'EmailService._send_email_to_console'
+        'EmailService._send_email_to_console',
     )
     send_via_customerio_mock = mocker.patch(
         'src.notifications.services.email.EmailService.'
-        '_send_email_via_customerio'
+        '_send_email_via_customerio',
     )
     user_id = 1
     email = 'john@cena.com'
@@ -342,7 +343,7 @@ def test_send__disable_email__skip(mocker):
     service = EmailService(
         logo_lg=logo_lg,
         logging=logging,
-        account_id=account_id
+        account_id=account_id,
     )
 
     # act
@@ -352,7 +353,7 @@ def test_send__disable_email__skip(mocker):
         user_email=email,
         template_code=EmailTemplate.OVERDUE_TASK,
         method_name=NotificationMethod.overdue_task,
-        data=data
+        data=data,
     )
 
     # assert
@@ -365,7 +366,7 @@ def test_send_overdue_task__type_user__ok(mocker):
     # arrange
     send_mock = mocker.patch(
         'src.notifications.services.email.'
-        'EmailService._send'
+        'EmailService._send',
     )
     user_id = 12
     task_id = 11
@@ -385,7 +386,7 @@ def test_send_overdue_task__type_user__ok(mocker):
     service = EmailService(
         logo_lg=logo_lg,
         logging=logging,
-        account_id=account_id
+        account_id=account_id,
     )
 
     # act
@@ -421,8 +422,8 @@ def test_send_overdue_task__type_user__ok(mocker):
             'template_name': template_name,
             'logo_lg': logo_lg,
             'user_type': UserType.USER,
-            'token': None
-        }
+            'token': None,
+        },
     )
 
 
@@ -431,7 +432,7 @@ def test_send_overdue_task__type_guest__ok(mocker):
     # arrange
     send_mock = mocker.patch(
         'src.notifications.services.email.'
-        'EmailService._send'
+        'EmailService._send',
     )
     user_id = 12
     task_id = 11
@@ -452,7 +453,7 @@ def test_send_overdue_task__type_guest__ok(mocker):
     service = EmailService(
         logo_lg=logo_lg,
         logging=logging,
-        account_id=account_id
+        account_id=account_id,
     )
 
     # act
@@ -468,7 +469,7 @@ def test_send_overdue_task__type_guest__ok(mocker):
         workflow_starter_first_name=workflow_starter_first_name,
         workflow_starter_last_name=workflow_starter_last_name,
         template_name=template_name,
-        token=token
+        token=token,
     )
 
     # assert
@@ -489,8 +490,8 @@ def test_send_overdue_task__type_guest__ok(mocker):
             'template_name': template_name,
             'logo_lg': logo_lg,
             'user_type': UserType.GUEST,
-            'token': token
-        }
+            'token': token,
+        },
     )
 
 
@@ -510,11 +511,11 @@ def test_send_guest_new_task__due_in__ok(mocker):
     html_description = '<div>text</div>'
     html_service_mock = mocker.patch(
         'src.notifications.services.email.convert_text_to_html',
-        return_value=html_description
+        return_value=html_description,
     )
     send_mock = mocker.patch(
         'src.notifications.services.email.'
-        'EmailService._send'
+        'EmailService._send',
     )
     formatted_task_due_in = '1 hour'
     get_duration_format_mock = mocker.patch(
@@ -528,7 +529,7 @@ def test_send_guest_new_task__due_in__ok(mocker):
     service = EmailService(
         logo_lg=logo_lg,
         logging=logging,
-        account_id=account_id
+        account_id=account_id,
     )
 
     # act
@@ -560,8 +561,8 @@ def test_send_guest_new_task__due_in__ok(mocker):
             'task_description': html_description,
             'sender_name': sender_name,
             'logo_lg': logo_lg,
-            'due_in': formatted_task_due_in
-        }
+            'due_in': formatted_task_due_in,
+        },
     )
 
 
@@ -581,11 +582,11 @@ def test_send_guest_new_task__overdue__ok(mocker):
     html_description = '<div>text</div>'
     html_service_mock = mocker.patch(
         'src.notifications.services.email.convert_text_to_html',
-        return_value=html_description
+        return_value=html_description,
     )
     send_mock = mocker.patch(
         'src.notifications.services.email.'
-        'EmailService._send'
+        'EmailService._send',
     )
     formatted_task_due_in = '1 hour'
     get_duration_format_mock = mocker.patch(
@@ -599,7 +600,7 @@ def test_send_guest_new_task__overdue__ok(mocker):
     service = EmailService(
         logo_lg=logo_lg,
         logging=logging,
-        account_id=account_id
+        account_id=account_id,
     )
 
     # act
@@ -631,8 +632,8 @@ def test_send_guest_new_task__overdue__ok(mocker):
             'task_description': html_description,
             'sender_name': sender_name,
             'logo_lg': None,
-            'overdue': formatted_task_due_in
-        }
+            'overdue': formatted_task_due_in,
+        },
     )
 
 
@@ -641,11 +642,11 @@ def test_send_guest_new_task__overdue__ok(mocker):
     (
         '2000-02-15T15:49:56.564519Z',
         '2023-04-11T00:00:00Z',
-    )
+    ),
 )
 def test_send_guest_new_task__task_due_date__is_str__ok(
     task_due_date,
-    mocker
+    mocker,
 ):
 
     # arrange
@@ -660,11 +661,11 @@ def test_send_guest_new_task__task_due_date__is_str__ok(
     html_description = '<div>text</div>'
     html_service_mock = mocker.patch(
         'src.notifications.services.email.convert_text_to_html',
-        return_value=html_description
+        return_value=html_description,
     )
     send_mock = mocker.patch(
         'src.notifications.services.email.'
-        'EmailService._send'
+        'EmailService._send',
     )
     formatted_task_due_in = '1 hour'
     get_duration_format_mock = mocker.patch(
@@ -678,7 +679,7 @@ def test_send_guest_new_task__task_due_date__is_str__ok(
     service = EmailService(
         logo_lg=logo_lg,
         logging=logging,
-        account_id=account_id
+        account_id=account_id,
     )
 
     # act
@@ -710,8 +711,8 @@ def test_send_guest_new_task__task_due_date__is_str__ok(
             'task_description': html_description,
             'sender_name': sender_name,
             'logo_lg': logo_lg,
-            'overdue': formatted_task_due_in
-        }
+            'overdue': formatted_task_due_in,
+        },
     )
 
 
@@ -724,13 +725,13 @@ def test_send_unread_notifications__ok(mocker):
 
     send_mock = mocker.patch(
         'src.notifications.services.email.'
-        'EmailService._send'
+        'EmailService._send',
     )
     unsubscribe_token = '!@#sadd1'
     unsubscribe_token_mock = mocker.patch(
         'src.notifications.services.email.'
         'UnsubscribeEmailToken.create_token',
-        return_value=unsubscribe_token
+        return_value=unsubscribe_token,
     )
     logo_lg = None
     logging = False
@@ -739,7 +740,7 @@ def test_send_unread_notifications__ok(mocker):
     service = EmailService(
         logo_lg=logo_lg,
         logging=logging,
-        account_id=account_id
+        account_id=account_id,
     )
 
     # act
@@ -763,8 +764,8 @@ def test_send_unread_notifications__ok(mocker):
         data={
             'user_name': recipient_first_name,
             'unsubscribe_token': unsubscribe_token,
-            'logo_lg': logo_lg
-        }
+            'logo_lg': logo_lg,
+        },
     )
 
 
@@ -787,11 +788,11 @@ def test_send_new_task__ok(mocker):
     create_unsubscribe_token_mock = mocker.patch(
         'src.notifications.services.email.'
         'UnsubscribeEmailToken.create_token',
-        return_value=unsubscribe_token
+        return_value=unsubscribe_token,
     )
     send_mock = mocker.patch(
         'src.notifications.services.email.'
-        'EmailService._send'
+        'EmailService._send',
     )
     logo_lg = 'https://logo.jpg'
     logging = False
@@ -800,7 +801,7 @@ def test_send_new_task__ok(mocker):
     service = EmailService(
         logo_lg=logo_lg,
         logging=logging,
-        account_id=account_id
+        account_id=account_id,
     )
 
     # act
@@ -817,7 +818,7 @@ def test_send_new_task__ok(mocker):
         wf_starter_photo=wf_starter_photo,
         due_in=due_in,
         overdue=overdue,
-        sync=True
+        sync=True,
     )
 
     # assert
@@ -840,8 +841,8 @@ def test_send_new_task__ok(mocker):
             'started_by': {
                 'name': wf_starter_name,
                 'avatar': wf_starter_photo,
-            }
-        }
+            },
+        },
     )
     create_unsubscribe_token_mock.assert_called_once_with(
         user_id=recipient_id,
@@ -868,11 +869,11 @@ def test_send_returned_task__ok(mocker):
     create_unsubscribe_token_mock = mocker.patch(
         'src.notifications.services.email.'
         'UnsubscribeEmailToken.create_token',
-        return_value=unsubscribe_token
+        return_value=unsubscribe_token,
     )
     send_mock = mocker.patch(
         'src.notifications.services.email.'
-        'EmailService._send'
+        'EmailService._send',
     )
     logo_lg = 'https://logo.jpg'
     logging = False
@@ -881,7 +882,7 @@ def test_send_returned_task__ok(mocker):
     service = EmailService(
         logo_lg=logo_lg,
         logging=logging,
-        account_id=account_id
+        account_id=account_id,
     )
 
     # act
@@ -898,7 +899,7 @@ def test_send_returned_task__ok(mocker):
         wf_starter_photo=wf_starter_photo,
         due_in=due_in,
         overdue=overdue,
-        sync=True
+        sync=True,
     )
 
     # assert
@@ -921,8 +922,8 @@ def test_send_returned_task__ok(mocker):
             'started_by': {
                 'name': wf_starter_name,
                 'avatar': wf_starter_photo,
-            }
-        }
+            },
+        },
     )
     create_unsubscribe_token_mock.assert_called_once_with(
         user_id=recipient_id,
@@ -939,11 +940,11 @@ def test_send_reset_password__ok(mocker):
     reset_password_token_mock = mocker.patch(
         'src.notifications.services.email.'
         'ResetPasswordToken.for_user_id',
-        return_value=token
+        return_value=token,
     )
     send_mock = mocker.patch(
         'src.notifications.services.email.'
-        'EmailService._send'
+        'EmailService._send',
     )
     logo_lg = 'https://logo.jpg'
     logging = False
@@ -952,7 +953,7 @@ def test_send_reset_password__ok(mocker):
     service = EmailService(
         logo_lg=logo_lg,
         logging=logging,
-        account_id=account_id
+        account_id=account_id,
     )
 
     # act
@@ -972,7 +973,7 @@ def test_send_reset_password__ok(mocker):
         data={
             'token': token,
             'logo_lg': logo_lg,
-        }
+        },
     )
 
 
@@ -985,7 +986,7 @@ def test_send_mention__ok(mocker):
     user_first_name = 'John'
     send_mock = mocker.patch(
         'src.notifications.services.email.'
-        'EmailService._send'
+        'EmailService._send',
     )
     logo_lg = 'https://logo.jpg'
     logging = False
@@ -994,7 +995,7 @@ def test_send_mention__ok(mocker):
     service = EmailService(
         logo_lg=logo_lg,
         logging=logging,
-        account_id=account_id
+        account_id=account_id,
     )
 
     # act
@@ -1016,5 +1017,5 @@ def test_send_mention__ok(mocker):
             'task_id': task_id,
             'logo_lg': logo_lg,
             'user_first_name': user_first_name,
-        }
+        },
     )

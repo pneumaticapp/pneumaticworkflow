@@ -1,18 +1,18 @@
 import pytest
-from src.processes.tests.fixtures import (
-    create_test_user
-)
-from src.processes.models import (
-    FieldTemplateSelection,
-    Kickoff
-)
+
 from src.processes.enums import (
-    PerformerType,
     FieldType,
-    OwnerType
+    OwnerType,
+    PerformerType,
 )
 from src.processes.messages import template as messages
-
+from src.processes.models.templates.fields import (
+    FieldTemplateSelection,
+)
+from src.processes.models.templates.kickoff import Kickoff
+from src.processes.tests.fixtures import (
+    create_test_user,
+)
 
 pytestmark = pytest.mark.django_db
 
@@ -21,14 +21,14 @@ class TestCreateFieldSelections:
 
     def test_create__all_fields__ok(
         self,
-        api_client
+        api_client,
     ):
 
         # arrange
         user = create_test_user()
         api_client.token_authenticate(user)
         request_data = {
-            'value': 'First selection'
+            'value': 'First selection',
         }
 
         # act
@@ -37,7 +37,7 @@ class TestCreateFieldSelections:
             'owners': [
                 {
                     'type': OwnerType.USER,
-                    'source_id': user.id
+                    'source_id': user.id,
                 },
             ],
             'is_active': True,
@@ -49,8 +49,8 @@ class TestCreateFieldSelections:
                     'raw_performers': [
                         {
                             'type': PerformerType.USER,
-                            'source_id': user.id
-                        }
+                            'source_id': user.id,
+                        },
                     ],
                     'fields': [
                         {
@@ -58,11 +58,11 @@ class TestCreateFieldSelections:
                             'name': 'Radio field',
                             'order': 1,
                             'api_name': 'radio-field-1',
-                            'selections': [request_data]
-                        }
-                    ]
-                }
-            ]
+                            'selections': [request_data],
+                        },
+                    ],
+                },
+            ],
         })
         # assert
         assert response.status_code == 200
@@ -75,7 +75,7 @@ class TestCreateFieldSelections:
         response_data = field_data['selections'][0]
         selection = FieldTemplateSelection.objects.get(
             api_name=response_data['api_name'],
-            value=request_data['value']
+            value=request_data['value'],
         )
         assert response_data['api_name'] == selection.api_name
         assert response_data['value'] == selection.value
@@ -97,8 +97,8 @@ class TestCreateFieldSelections:
                 'is_required': True,
                 'selections': [
                     {'value': 'First'},
-                    {'value': 'Second'}
-                ]
+                    {'value': 'Second'},
+                ],
             },
             {
                 'type': FieldType.RADIO,
@@ -108,8 +108,8 @@ class TestCreateFieldSelections:
                 'is_required': True,
                 'selections': [
                     {'value': 'First'},
-                    {'value': 'Second'}
-                ]
+                    {'value': 'Second'},
+                ],
             },
             {
                 'type': FieldType.DROPDOWN,
@@ -119,9 +119,9 @@ class TestCreateFieldSelections:
                 'is_required': True,
                 'selections': [
                     {'value': 'First'},
-                    {'value': 'Second'}
-                ]
-            }
+                    {'value': 'Second'},
+                ],
+            },
         ]
 
         # act
@@ -132,12 +132,12 @@ class TestCreateFieldSelections:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'is_active': True,
                 'kickoff': {
-                    'fields': request_data
+                    'fields': request_data,
                 },
                 'tasks': [
                     {
@@ -146,12 +146,12 @@ class TestCreateFieldSelections:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': user.id
-                            }
-                        ]
-                    }
-                ]
-            }
+                                'source_id': user.id,
+                            },
+                        ],
+                    },
+                ],
+            },
         )
 
         # assert
@@ -190,7 +190,7 @@ class TestCreateFieldSelections:
             'owners': [
                 {
                     'type': OwnerType.USER,
-                    'source_id': user.id
+                    'source_id': user.id,
                 },
             ],
             'is_active': True,
@@ -202,8 +202,8 @@ class TestCreateFieldSelections:
                     'raw_performers': [
                         {
                             'type': PerformerType.USER,
-                            'source_id': user.id
-                        }
+                            'source_id': user.id,
+                        },
                     ],
                     'fields': [
                         {
@@ -211,9 +211,9 @@ class TestCreateFieldSelections:
                             'name': 'Radio field',
                             'order': 1,
                             'api_name': 'radio-field-1',
-                            'selections': [request_data]
-                        }
-                    ]
+                            'selections': [request_data],
+                        },
+                    ],
                 },
                 {
                     'number': 2,
@@ -221,8 +221,8 @@ class TestCreateFieldSelections:
                     'raw_performers': [
                         {
                             'type': PerformerType.USER,
-                            'source_id': user.id
-                        }
+                            'source_id': user.id,
+                        },
                     ],
                     'fields': [
                         {
@@ -230,11 +230,11 @@ class TestCreateFieldSelections:
                             'name': field_name,
                             'order': 1,
                             'api_name': 'radio-field-2',
-                            'selections': [request_data]
-                        }
-                    ]
-                }
-            ]
+                            'selections': [request_data],
+                        },
+                    ],
+                },
+            ],
         })
 
         # assert
@@ -243,7 +243,7 @@ class TestCreateFieldSelections:
             name=step_name,
             field_name=field_name,
             value=selection_value,
-            api_name=selection_api_name
+            api_name=selection_api_name,
         )
         assert response.data['message'] == message
         assert response.data['details']['reason'] == message
