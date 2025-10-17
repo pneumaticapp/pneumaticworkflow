@@ -2,33 +2,34 @@ from rest_framework.decorators import action
 from rest_framework.generics import get_object_or_404
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.viewsets import GenericViewSet
+
 from src.accounts.permissions import (
-    ExpiredSubscriptionPermission,
     BillingPlanPermission,
+    ExpiredSubscriptionPermission,
 )
 from src.executor import RawSqlExecutor
-from src.processes.models import Template
+from src.generics.mixins.views import CustomViewSetMixin
+from src.generics.permissions import (
+    UserIsAuthenticated,
+)
+from src.processes.models.templates.template import Template
 from src.reports.queries.tasks import (
-    TasksOverviewQuery,
-    TasksBreakdownQuery,
-    TasksBreakdownByStepsQuery,
-    TasksOverviewNowQuery,
-    TasksBreakdownNowQuery,
     TasksBreakdownByStepsNowQuery,
+    TasksBreakdownByStepsQuery,
+    TasksBreakdownNowQuery,
+    TasksBreakdownQuery,
+    TasksOverviewNowQuery,
+    TasksOverviewQuery,
 )
 from src.reports.serializers import (
     BreakdownByStepsFilterSerializer,
     DashboardFilterSerializer,
 )
-from src.generics.permissions import (
-    UserIsAuthenticated,
-)
-from src.generics.mixins.views import CustomViewSetMixin
 
 
 class TasksDashboardViewSet(
     CustomViewSetMixin,
-    GenericViewSet
+    GenericViewSet,
 ):
     pagination_class = LimitOffsetPagination
     permission_classes = (
@@ -51,7 +52,7 @@ class TasksDashboardViewSet(
             query = TasksOverviewQuery(
                 account_id=request.user.account_id,
                 user_id=request.user.id,
-                **filters
+                **filters,
             )
         data = RawSqlExecutor.fetchone(*query.get_sql())
         return self.response_ok(data)
@@ -70,10 +71,10 @@ class TasksDashboardViewSet(
             query = TasksBreakdownQuery(
                 account_id=request.user.account_id,
                 user_id=request.user.id,
-                **filters
+                **filters,
             )
         data = list(
-            RawSqlExecutor.fetch(*query.get_sql())
+            RawSqlExecutor.fetch(*query.get_sql()),
         )
         return self.response_ok(data)
 
@@ -94,9 +95,9 @@ class TasksDashboardViewSet(
         else:
             query = TasksBreakdownByStepsQuery(
                 user_id=request.user.id,
-                **filters
+                **filters,
             )
         data = list(
-            RawSqlExecutor.fetch(*query.get_sql())
+            RawSqlExecutor.fetch(*query.get_sql()),
         )
         return self.response_ok(data)

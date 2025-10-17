@@ -7,5 +7,5 @@ class MetricType:
 
     CHOICES = (
         (SUBSCRIBED, SUBSCRIBED),
-        (UNSUBSCRIBED, UNSUBSCRIBED)
+        (UNSUBSCRIBED, UNSUBSCRIBED),
     )

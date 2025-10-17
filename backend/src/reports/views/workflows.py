@@ -2,35 +2,36 @@ from rest_framework.decorators import action
 from rest_framework.generics import get_object_or_404
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.viewsets import GenericViewSet
+
 from src.accounts.permissions import (
-    UserIsAdminOrAccountOwner,
-    ExpiredSubscriptionPermission,
     BillingPlanPermission,
+    ExpiredSubscriptionPermission,
+    UserIsAdminOrAccountOwner,
 )
 from src.executor import RawSqlExecutor
-from src.processes.models import Template
+from src.generics.mixins.views import CustomViewSetMixin
+from src.generics.permissions import (
+    UserIsAuthenticated,
+)
+from src.processes.models.templates.template import Template
 from src.reports.queries.workflows import (
-    OverviewQuery,
-    WorkflowBreakdownQuery,
     OverviewNowQuery,
-    WorkflowBreakdownNowQuery,
-    WorkflowBreakdownByTasksQuery,
+    OverviewQuery,
     WorkflowBreakdownByTasksNowQuery,
+    WorkflowBreakdownByTasksQuery,
+    WorkflowBreakdownNowQuery,
+    WorkflowBreakdownQuery,
 )
 from src.reports.serializers import (
     AccountDashboardOverviewSerializer,
     BreakdownByStepsFilterSerializer,
     DashboardFilterSerializer,
 )
-from src.generics.mixins.views import CustomViewSetMixin
-from src.generics.permissions import (
-    UserIsAuthenticated,
-)
 
 
 class WorkflowsDashboardViewSet(
     CustomViewSetMixin,
-    GenericViewSet
+    GenericViewSet,
 ):
     pagination_class = LimitOffsetPagination
     permission_classes = (
@@ -57,7 +58,7 @@ class WorkflowsDashboardViewSet(
             query = OverviewQuery(
                 account_id=request.user.account_id,
                 user_id=request.user.id,
-                **filters
+                **filters,
             )
         data = RawSqlExecutor.fetchone(*query.get_sql())
         return self.response_ok(data)
@@ -76,7 +77,7 @@ class WorkflowsDashboardViewSet(
             query = WorkflowBreakdownQuery(
                 account_id=request.user.account_id,
                 user_id=request.user.id,
-                **filters
+                **filters,
             )
         data = list(RawSqlExecutor.fetch(*query.get_sql()))
         return self.response_ok(data)
@@ -98,7 +99,7 @@ class WorkflowsDashboardViewSet(
             )
         else:
             query = WorkflowBreakdownByTasksQuery(
-                **filters
+                **filters,
             )
         data = list(RawSqlExecutor.fetch(*query.get_sql()))
         return self.response_ok(data)

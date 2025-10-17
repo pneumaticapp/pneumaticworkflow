@@ -1,16 +1,17 @@
 from abc import abstractmethod
 from typing import List
+
 from src.accounts.enums import (
     NotificationStatus,
     NotificationType,
-    UserStatus
+    UserStatus,
 )
 from src.processes.enums import (
     DirectlyStatus,
+    PerformerType,
+    PredicateType,
     TaskStatus,
     WorkflowStatus,
-    PerformerType,
-    PredicateType
 )
 from src.queries import SqlQueryObject
 
@@ -29,7 +30,7 @@ class CountTemplatesByUserQuery(SqlQueryObject):
         }
 
     def get_sql(self):
-        return f"""
+        return """
           SELECT count(*) FROM (
             SELECT DISTINCT ON (t.id) t.id FROM processes_template t
             JOIN processes_templateowner AS pto
@@ -73,7 +74,7 @@ class CountTemplatesByGroupQuery(SqlQueryObject):
         }
 
     def get_sql(self):
-        return f"""
+        return """
           SELECT count(*) FROM (
             SELECT DISTINCT ON (t.id) t.id FROM processes_template t
             JOIN processes_templateowner AS pto
@@ -134,28 +135,28 @@ class BaseDeleteRawPerformerTemplateQuery(SqlQueryObject):
 
 
 class DeleteGroupFromRawPerformerTemplateQuery(
-    BaseDeleteRawPerformerTemplateQuery
+    BaseDeleteRawPerformerTemplateQuery,
 ):
     delete_field = "group_id"
     substitution_field = "group_id"
 
 
 class DeleteGroupUserFromRawPerformerTemplateQuery(
-    BaseDeleteRawPerformerTemplateQuery
+    BaseDeleteRawPerformerTemplateQuery,
 ):
     delete_field = "group_id"
     substitution_field = "user_id"
 
 
 class DeleteUserGroupFromRawPerformerTemplateQuery(
-    BaseDeleteRawPerformerTemplateQuery
+    BaseDeleteRawPerformerTemplateQuery,
 ):
     delete_field = "user_id"
     substitution_field = "group_id"
 
 
 class DeleteUserFromRawPerformerTemplateQuery(
-    BaseDeleteRawPerformerTemplateQuery
+    BaseDeleteRawPerformerTemplateQuery,
 ):
     delete_field = "user_id"
     substitution_field = "user_id"
@@ -397,7 +398,7 @@ class BaseDeleteTemplateConditionsQuery(SqlQueryObject):
 
 
 class DeleteGroupFromTemplateConditionsQuery(
-    BaseDeleteTemplateConditionsQuery
+    BaseDeleteTemplateConditionsQuery,
 ):
     delete_field = "group_id"
     substitution_field = "group_id"
@@ -406,7 +407,7 @@ class DeleteGroupFromTemplateConditionsQuery(
 
 
 class DeleteGroupUserFromTemplateConditionsQuery(
-    BaseDeleteTemplateConditionsQuery
+    BaseDeleteTemplateConditionsQuery,
 ):
     delete_field = "group_id"
     substitution_field = "user_id"
@@ -415,7 +416,7 @@ class DeleteGroupUserFromTemplateConditionsQuery(
 
 
 class DeleteUserGroupFromTemplateConditionsQuery(
-    BaseDeleteTemplateConditionsQuery
+    BaseDeleteTemplateConditionsQuery,
 ):
     delete_field = "user_id"
     substitution_field = "group_id"
@@ -424,7 +425,7 @@ class DeleteUserGroupFromTemplateConditionsQuery(
 
 
 class DeleteUserFromTemplateConditionsQuery(
-    BaseDeleteTemplateConditionsQuery
+    BaseDeleteTemplateConditionsQuery,
 ):
     delete_field = "user_id"
     substitution_field = "user_id"
@@ -543,13 +544,13 @@ class FetchGroupTaskNotificationRecipientsQuery(SqlQueryObject):
         self.user_ids = user_ids
         self.params = {
             'group_id': group_id,
-            'account_id': account_id
+            'account_id': account_id,
         }
 
     def _get_user_ids(self):
         result, params = self._to_sql_list(
             values=self.user_ids,
-            prefix='user'
+            prefix='user',
         )
         self.params.update(params)
         return result

@@ -1,45 +1,45 @@
 import pytest
 from django.utils import timezone
+
+from src.processes.entities import (
+    PrivateTemplateIntegrationsData,
+    TemplateIntegrationsData,
+)
+from src.processes.enums import TemplateIntegrationType, TemplateType
+from src.processes.models.templates.template import TemplateIntegrations
+from src.processes.serializers.templates.integrations import (
+    TemplateIntegrationsSerializer,
+)
 from src.processes.services.templates.integrations import (
-    TemplateIntegrationsService
+    TemplateIntegrationsService,
 )
 from src.processes.tests.fixtures import (
+    create_test_template,
     create_test_user,
-    create_test_template
-)
-from src.processes.entities import (
-    TemplateIntegrationsData,
-    PrivateTemplateIntegrationsData
-)
-from src.processes.enums import TemplateIntegrationType
-from src.processes.models import TemplateIntegrations
-from src.processes.serializers.templates.integrations import (
-    TemplateIntegrationsSerializer
 )
 from src.webhooks.tests.fixtures import create_test_webhook
-from src.processes.enums import TemplateType
 
 pytestmark = pytest.mark.django_db
 
 
 def test_webhooks_unsubscribed__webhooks_attr_is_false__skip(
-    mocker
+    mocker,
 ):
 
     # arrange
     user = create_test_user()
     integration_data = TemplateIntegrationsData(
         id=1,
-        webhooks=False
+        webhooks=False,
     )
     get_integrations_mock = mocker.patch(
         'src.processes.services.templates.'
         'integrations.TemplateIntegrationsService.get_integrations',
-        return_value=[integration_data]
+        return_value=[integration_data],
     )
     set_attr_value_mock = mocker.patch(
         'src.processes.services.templates.'
-        'integrations.TemplateIntegrationsService._set_attr_value'
+        'integrations.TemplateIntegrationsService._set_attr_value',
     )
     service = TemplateIntegrationsService(account=user.account)
 
@@ -52,23 +52,23 @@ def test_webhooks_unsubscribed__webhooks_attr_is_false__skip(
 
 
 def test_webhooks_unsubscribed__webhooks_attr_is_true__disable_webhooks_attr(
-    mocker
+    mocker,
 ):
 
     # arrange
     user = create_test_user()
     integration_data = TemplateIntegrationsData(
         id=1,
-        webhooks=True
+        webhooks=True,
     )
     get_integrations_mock = mocker.patch(
         'src.processes.services.templates.'
         'integrations.TemplateIntegrationsService.get_integrations',
-        return_value=[integration_data]
+        return_value=[integration_data],
     )
     set_attr_value_mock = mocker.patch(
         'src.processes.services.templates.'
-        'integrations.TemplateIntegrationsService._set_attr_value'
+        'integrations.TemplateIntegrationsService._set_attr_value',
     )
     service = TemplateIntegrationsService(account=user.account)
 
@@ -80,28 +80,28 @@ def test_webhooks_unsubscribed__webhooks_attr_is_true__disable_webhooks_attr(
     set_attr_value_mock.assert_called_once_with(
         attr_name=TemplateIntegrationType.WEBHOOKS,
         value=False,
-        template_id=integration_data['id']
+        template_id=integration_data['id'],
     )
 
 
 def test_webhooks_subscribed__webhooks_attr_is_true__skip(
-    mocker
+    mocker,
 ):
 
     # arrange
     user = create_test_user()
     integration_data = TemplateIntegrationsData(
         id=1,
-        webhooks=True
+        webhooks=True,
     )
     get_integrations_mock = mocker.patch(
         'src.processes.services.templates.'
         'integrations.TemplateIntegrationsService.get_integrations',
-        return_value=[integration_data]
+        return_value=[integration_data],
     )
     set_attr_value_mock = mocker.patch(
         'src.processes.services.templates.'
-        'integrations.TemplateIntegrationsService._set_attr_value'
+        'integrations.TemplateIntegrationsService._set_attr_value',
     )
     service = TemplateIntegrationsService(account=user.account)
 
@@ -114,23 +114,23 @@ def test_webhooks_subscribed__webhooks_attr_is_true__skip(
 
 
 def test_webhooks_subscribed__webhooks_attr_is_false__enable_webhooks_attr(
-    mocker
+    mocker,
 ):
 
     # arrange
     user = create_test_user()
     integration_data = TemplateIntegrationsData(
         id=1,
-        webhooks=False
+        webhooks=False,
     )
     get_integrations_mock = mocker.patch(
         'src.processes.services.templates.'
         'integrations.TemplateIntegrationsService.get_integrations',
-        return_value=[integration_data]
+        return_value=[integration_data],
     )
     set_attr_value_mock = mocker.patch(
         'src.processes.services.templates.'
-        'integrations.TemplateIntegrationsService._set_attr_value'
+        'integrations.TemplateIntegrationsService._set_attr_value',
     )
     service = TemplateIntegrationsService(account=user.account)
 
@@ -142,12 +142,12 @@ def test_webhooks_subscribed__webhooks_attr_is_false__enable_webhooks_attr(
     set_attr_value_mock.assert_called_once_with(
         attr_name=TemplateIntegrationType.WEBHOOKS,
         value=True,
-        template_id=integration_data['id']
+        template_id=integration_data['id'],
     )
 
 
 def test_api_request__api_attr_is_true__skip(
-    mocker
+    mocker,
 ):
 
     # arrange
@@ -156,17 +156,17 @@ def test_api_request__api_attr_is_true__skip(
     integration_data = TemplateIntegrationsData(
         id=template_id,
         api=True,
-        zapier=True
+        zapier=True,
     )
     get_template_integrations_data_mock = mocker.patch(
         'src.processes.services.templates.'
         'integrations.TemplateIntegrationsService.'
         '_get_template_integrations_data',
-        return_value=integration_data
+        return_value=integration_data,
     )
     set_attr_value_mock = mocker.patch(
         'src.processes.services.templates.'
-        'integrations.TemplateIntegrationsService._set_attr_value'
+        'integrations.TemplateIntegrationsService._set_attr_value',
     )
     template = mocker.Mock(id=template_id)
     service = TemplateIntegrationsService(account=mocker.Mock())
@@ -174,7 +174,7 @@ def test_api_request__api_attr_is_true__skip(
     # act
     service.api_request(
         template=template,
-        user_agent=user_agent
+        user_agent=user_agent,
     )
 
     # assert
@@ -183,7 +183,7 @@ def test_api_request__api_attr_is_true__skip(
 
 
 def test_api_request__api_attr_is_false__enable_api_attr(
-    mocker
+    mocker,
 ):
 
     # arrange
@@ -192,17 +192,17 @@ def test_api_request__api_attr_is_false__enable_api_attr(
     integration_data = TemplateIntegrationsData(
         id=template_id,
         api=False,
-        zapier=True
+        zapier=True,
     )
     get_template_integrations_data_mock = mocker.patch(
         'src.processes.services.templates.'
         'integrations.TemplateIntegrationsService.'
         '_get_template_integrations_data',
-        return_value=integration_data
+        return_value=integration_data,
     )
     set_attr_value_mock = mocker.patch(
         'src.processes.services.templates.'
-        'integrations.TemplateIntegrationsService._set_attr_value'
+        'integrations.TemplateIntegrationsService._set_attr_value',
     )
     template = mocker.Mock(id=template_id)
     service = TemplateIntegrationsService(account=mocker.Mock())
@@ -210,7 +210,7 @@ def test_api_request__api_attr_is_false__enable_api_attr(
     # act
     service.api_request(
         template=template,
-        user_agent=user_agent
+        user_agent=user_agent,
     )
 
     # assert
@@ -218,12 +218,12 @@ def test_api_request__api_attr_is_false__enable_api_attr(
     set_attr_value_mock.assert_called_once_with(
         attr_name=TemplateIntegrationType.API,
         value=True,
-        template_id=template.id
+        template_id=template.id,
     )
 
 
 def test_api_request__zapier_attr_is_true__skip(
-    mocker
+    mocker,
 ):
 
     # arrange
@@ -232,17 +232,17 @@ def test_api_request__zapier_attr_is_true__skip(
     integration_data = TemplateIntegrationsData(
         id=template_id,
         api=True,
-        zapier=True
+        zapier=True,
     )
     get_template_integrations_data_mock = mocker.patch(
         'src.processes.services.templates.'
         'integrations.TemplateIntegrationsService.'
         '_get_template_integrations_data',
-        return_value=integration_data
+        return_value=integration_data,
     )
     set_attr_value_mock = mocker.patch(
         'src.processes.services.templates.'
-        'integrations.TemplateIntegrationsService._set_attr_value'
+        'integrations.TemplateIntegrationsService._set_attr_value',
     )
     template = mocker.Mock(id=template_id)
     service = TemplateIntegrationsService(account=mocker.Mock())
@@ -250,7 +250,7 @@ def test_api_request__zapier_attr_is_true__skip(
     # act
     service.api_request(
         template=template,
-        user_agent=user_agent
+        user_agent=user_agent,
     )
 
     # assert
@@ -259,7 +259,7 @@ def test_api_request__zapier_attr_is_true__skip(
 
 
 def test_api_request__zapier_attr_is_false__enable_zapier_attr(
-    mocker
+    mocker,
 ):
 
     # arrange
@@ -268,17 +268,17 @@ def test_api_request__zapier_attr_is_false__enable_zapier_attr(
     integration_data = TemplateIntegrationsData(
         id=template_id,
         api=True,
-        zapier=False
+        zapier=False,
     )
     get_template_integrations_data_mock = mocker.patch(
         'src.processes.services.templates.'
         'integrations.TemplateIntegrationsService.'
         '_get_template_integrations_data',
-        return_value=integration_data
+        return_value=integration_data,
     )
     set_attr_value_mock = mocker.patch(
         'src.processes.services.templates.'
-        'integrations.TemplateIntegrationsService._set_attr_value'
+        'integrations.TemplateIntegrationsService._set_attr_value',
     )
     template = mocker.Mock(id=template_id)
     service = TemplateIntegrationsService(account=mocker.Mock())
@@ -286,7 +286,7 @@ def test_api_request__zapier_attr_is_false__enable_zapier_attr(
     # act
     service.api_request(
         template=template,
-        user_agent=user_agent
+        user_agent=user_agent,
     )
 
     # assert
@@ -294,12 +294,12 @@ def test_api_request__zapier_attr_is_false__enable_zapier_attr(
     set_attr_value_mock.assert_called_once_with(
         attr_name=TemplateIntegrationType.ZAPIER,
         value=True,
-        template_id=template.id
+        template_id=template.id,
     )
 
 
 def test_template_updated__template_is_active_and_public__skip(
-    mocker
+    mocker,
 ):
 
     # arrange
@@ -309,11 +309,11 @@ def test_template_updated__template_is_active_and_public__skip(
         'src.processes.services.templates.'
         'integrations.TemplateIntegrationsService.'
         '_get_template_integrations_data',
-        return_value=integrations_data
+        return_value=integrations_data,
     )
     set_attr_value_mock = mocker.patch(
         'src.processes.services.templates.'
-        'integrations.TemplateIntegrationsService._set_attr_value'
+        'integrations.TemplateIntegrationsService._set_attr_value',
     )
     template = mocker.Mock(
         id=template_id,
@@ -330,13 +330,13 @@ def test_template_updated__template_is_active_and_public__skip(
 
     # assert
     get_template_integrations_data_mock.assert_called_once_with(
-        template_id
+        template_id,
     )
     set_attr_value_mock.assert_not_called()
 
 
 def test_template_updated__template_is_draft__disable_shared_attr(
-    mocker
+    mocker,
 ):
 
     # arrange
@@ -349,11 +349,11 @@ def test_template_updated__template_is_draft__disable_shared_attr(
         'src.processes.services.templates.'
         'integrations.TemplateIntegrationsService.'
         '_get_template_integrations_data',
-        return_value=integration_data
+        return_value=integration_data,
     )
     set_attr_value_mock = mocker.patch(
         'src.processes.services.templates.'
-        'integrations.TemplateIntegrationsService._set_attr_value'
+        'integrations.TemplateIntegrationsService._set_attr_value',
     )
     template = mocker.Mock(
         id=template_id,
@@ -373,12 +373,12 @@ def test_template_updated__template_is_draft__disable_shared_attr(
     set_attr_value_mock.assert_called_once_with(
         attr_name=TemplateIntegrationType.SHARED,
         value=False,
-        template_id=template.id
+        template_id=template.id,
     )
 
 
 def test_template_updated__template_not_public__disable_shared_attr(
-    mocker
+    mocker,
 ):
 
     # arrange
@@ -391,11 +391,11 @@ def test_template_updated__template_not_public__disable_shared_attr(
         'src.processes.services.templates.'
         'integrations.TemplateIntegrationsService.'
         '_get_template_integrations_data',
-        return_value=integration_data
+        return_value=integration_data,
     )
     set_attr_value_mock = mocker.patch(
         'src.processes.services.templates.'
-        'integrations.TemplateIntegrationsService._set_attr_value'
+        'integrations.TemplateIntegrationsService._set_attr_value',
     )
     template = mocker.Mock(
         id=template_id,
@@ -415,12 +415,12 @@ def test_template_updated__template_not_public__disable_shared_attr(
     set_attr_value_mock.assert_called_once_with(
         attr_name=TemplateIntegrationType.SHARED,
         value=False,
-        template_id=template.id
+        template_id=template.id,
     )
 
 
 def test_template_updated__share_date_not_expired__enable_shared_attr(
-    mocker
+    mocker,
 ):
 
     # arrange
@@ -434,17 +434,17 @@ def test_template_updated__share_date_not_expired__enable_shared_attr(
         'src.processes.services.templates.'
         'integrations.TemplateIntegrationsService.'
         '_get_template_integrations_data',
-        return_value=integration_data
+        return_value=integration_data,
     )
     shared_date_expired_mock = mocker.patch(
         'src.processes.services.templates.'
         'integrations.TemplateIntegrationsService.'
         '_shared_date_expired',
-        return_value=False
+        return_value=False,
     )
     set_attr_value_mock = mocker.patch(
         'src.processes.services.templates.'
-        'integrations.TemplateIntegrationsService._set_attr_value'
+        'integrations.TemplateIntegrationsService._set_attr_value',
     )
     template = mocker.Mock(
         id=template_id,
@@ -462,34 +462,34 @@ def test_template_updated__share_date_not_expired__enable_shared_attr(
     # assert
     get_template_integrations_data_mock.assert_called_once_with(template.id)
     shared_date_expired_mock.assert_called_once_with(
-        integration_data['shared_date_tsp']
+        integration_data['shared_date_tsp'],
     )
     set_attr_value_mock.assert_called_once_with(
         attr_name=TemplateIntegrationType.SHARED,
         value=True,
-        template_id=template.id
+        template_id=template.id,
     )
 
 
 def test_public_api_request__shared_attr_is_false__ok(
-    mocker
+    mocker,
 ):
 
     # arrange
     template_id = 1
     integration_data = TemplateIntegrationsData(
         id=template_id,
-        shared=False
+        shared=False,
     )
     get_template_integrations_data_mock = mocker.patch(
         'src.processes.services.templates.'
         'integrations.TemplateIntegrationsService.'
         '_get_template_integrations_data',
-        return_value=integration_data
+        return_value=integration_data,
     )
     set_attr_value_mock = mocker.patch(
         'src.processes.services.templates.'
-        'integrations.TemplateIntegrationsService._set_attr_value'
+        'integrations.TemplateIntegrationsService._set_attr_value',
     )
     template = mocker.Mock(id=template_id)
     service = TemplateIntegrationsService(account=mocker.Mock())
@@ -504,29 +504,29 @@ def test_public_api_request__shared_attr_is_false__ok(
     set_attr_value_mock.assert_called_once_with(
         attr_name=TemplateIntegrationType.SHARED,
         value=True,
-        template_id=template.id
+        template_id=template.id,
     )
 
 
 def test_public_api_request__shared_attr_is_true__skip(
-    mocker
+    mocker,
 ):
 
     # arrange
     template_id = 1
     integration_data = TemplateIntegrationsData(
         id=template_id,
-        shared=True
+        shared=True,
     )
     get_template_integrations_data_mock = mocker.patch(
         'src.processes.services.templates.'
         'integrations.TemplateIntegrationsService.'
         '_get_template_integrations_data',
-        return_value=integration_data
+        return_value=integration_data,
     )
     set_attr_value_mock = mocker.patch(
         'src.processes.services.templates.'
-        'integrations.TemplateIntegrationsService._set_attr_value'
+        'integrations.TemplateIntegrationsService._set_attr_value',
     )
     template = mocker.Mock(id=template_id)
     service = TemplateIntegrationsService(account=mocker.Mock())
@@ -542,7 +542,7 @@ def test_public_api_request__shared_attr_is_true__skip(
 
 
 def test_get_integrations__all_templates__ok(
-    mocker
+    mocker,
 ):
 
     # arrange
@@ -551,7 +551,7 @@ def test_get_integrations__all_templates__ok(
     template = create_test_template(user)
     create_test_template(
         user=user,
-        type_=TemplateType.ONBOARDING_ADMIN
+        type_=TemplateType.ONBOARDING_ADMIN,
     )
     create_test_template(another_account_user)
     integration_data = PrivateTemplateIntegrationsData(
@@ -569,7 +569,7 @@ def test_get_integrations__all_templates__ok(
         'src.processes.services.templates.'
         'integrations.TemplateIntegrationsService.'
         '_get_template_integrations_data',
-        return_value=integration_data
+        return_value=integration_data,
     )
     service = TemplateIntegrationsService(account=user.account)
 
@@ -583,7 +583,7 @@ def test_get_integrations__all_templates__ok(
 
 
 def test_get_integrations__filter_by_template_ids__ok(
-    mocker
+    mocker,
 ):
 
     # arrange
@@ -605,13 +605,13 @@ def test_get_integrations__filter_by_template_ids__ok(
         'src.processes.services.templates.'
         'integrations.TemplateIntegrationsService.'
         '_get_template_integrations_data',
-        return_value=integration_data
+        return_value=integration_data,
     )
     service = TemplateIntegrationsService(account=user.account)
 
     # act
     result = service.get_integrations(
-        template_id=[template_1.id]
+        template_id=[template_1.id],
     )
 
     # assert
@@ -626,22 +626,22 @@ def test_shared_date_expired__expired__ok():
     user = create_test_user()
     template = create_test_template(user)
     expired_period = timezone.timedelta(
-        seconds=TemplateIntegrationsService.cache_timeout + 60
+        seconds=TemplateIntegrationsService.cache_timeout + 60,
     )
     template_integrations = TemplateIntegrations.objects.create(
         account_id=user.account_id,
         template_id=template.id,
         shared=True,
-        shared_date=(timezone.now() - expired_period)
+        shared_date=(timezone.now() - expired_period),
     )
     template_integrations_data = TemplateIntegrationsSerializer(
-        instance=template_integrations
+        instance=template_integrations,
     ) .data
     service = TemplateIntegrationsService(account=user.account)
 
     # act
     result = service._shared_date_expired(
-        template_integrations_data['shared_date_tsp']
+        template_integrations_data['shared_date_tsp'],
     )
 
     # assert
@@ -654,22 +654,22 @@ def test_shared_date_expired__not_expired__ok():
     user = create_test_user()
     template = create_test_template(user)
     expired_period = timezone.timedelta(
-        seconds=TemplateIntegrationsService.cache_timeout - 60
+        seconds=TemplateIntegrationsService.cache_timeout - 60,
     )
     template_integrations = TemplateIntegrations.objects.create(
         account_id=user.account_id,
         template_id=template.id,
         shared=True,
-        shared_date=(timezone.now() - expired_period)
+        shared_date=(timezone.now() - expired_period),
     )
     template_integrations_data = TemplateIntegrationsSerializer(
-        instance=template_integrations
+        instance=template_integrations,
     ).data
     service = TemplateIntegrationsService(account=user.account)
 
     # act
     result = service._shared_date_expired(
-        template_integrations_data['shared_date_tsp']
+        template_integrations_data['shared_date_tsp'],
     )
 
     # assert
@@ -677,7 +677,7 @@ def test_shared_date_expired__not_expired__ok():
 
 
 def test_private_get_template_integrations_data__from_cache__ok(
-    mocker
+    mocker,
 ):
 
     # arrange
@@ -688,18 +688,18 @@ def test_private_get_template_integrations_data__from_cache__ok(
         'src.processes.services.templates.'
         'integrations.TemplateIntegrationsService.'
         '_get_cache',
-        return_value=integration_data
+        return_value=integration_data,
     )
     set_cache_mock = mocker.patch(
         'src.processes.services.templates.'
         'integrations.TemplateIntegrationsService.'
-        '_set_cache'
+        '_set_cache',
     )
     service = TemplateIntegrationsService(account=mocker.Mock())
 
     # act
     result = service._get_template_integrations_data(
-        template_id=template_id
+        template_id=template_id,
     )
 
     # assert
@@ -709,7 +709,7 @@ def test_private_get_template_integrations_data__from_cache__ok(
 
 
 def test_private_get_template_integrations_data__empty_cache__ok(
-    mocker
+    mocker,
 ):
 
     # arrange
@@ -717,39 +717,39 @@ def test_private_get_template_integrations_data__empty_cache__ok(
     template = create_test_template(user)
     template_integrations = TemplateIntegrations.objects.create(
         account_id=template.account_id,
-        template_id=template.id
+        template_id=template.id,
     )
     get_cache_mock = mocker.patch(
         'src.processes.services.templates.'
         'integrations.TemplateIntegrationsService.'
         '_get_cache',
-        return_value=None
+        return_value=None,
     )
     data_mock = mocker.Mock()
     set_cache_mock = mocker.patch(
         'src.processes.services.templates.'
         'integrations.TemplateIntegrationsService.'
         '_set_cache',
-        return_value=data_mock
+        return_value=data_mock,
     )
     service = TemplateIntegrationsService(account=user.account)
 
     # act
     result = service._get_template_integrations_data(
-        template_id=template.id
+        template_id=template.id,
     )
 
     # assert
     get_cache_mock.assert_called_once_with(key=template.id)
     set_cache_mock.assert_called_once_with(
         key=template.id,
-        value=template_integrations
+        value=template_integrations,
     )
     assert result == data_mock
 
 
 def test_get_template_integrations_data__ok(
-    mocker
+    mocker,
 ):
 
     # arrange
@@ -769,21 +769,21 @@ def test_get_template_integrations_data__ok(
         'src.processes.services.templates.'
         'integrations.TemplateIntegrationsService.'
         '_get_template_integrations_data',
-        return_value=integration_data
+        return_value=integration_data,
     )
     service = TemplateIntegrationsService(account=mocker.Mock())
 
     # act
     result = service.get_template_integrations_data(
-        template_id=template_id
+        template_id=template_id,
     )
 
     # assert
     get_template_integrations_data_mock.assert_called_once_with(template_id)
-    assert 'shared_date_tsp' not in result.keys()
-    assert 'api_date_tsp' not in result.keys()
-    assert 'zapier_date_tsp' not in result.keys()
-    assert 'webhooks_date_tsp' not in result.keys()
+    assert 'shared_date_tsp' not in result
+    assert 'api_date_tsp' not in result
+    assert 'zapier_date_tsp' not in result
+    assert 'webhooks_date_tsp' not in result
 
 
 def test_create_integrations_for_template__ok(mocker):
@@ -799,7 +799,7 @@ def test_create_integrations_for_template__ok(mocker):
     )
     set_attr_value_mock = mocker.patch(
         'src.processes.services.templates.'
-        'integrations.TemplateIntegrationsService._set_attr_value'
+        'integrations.TemplateIntegrationsService._set_attr_value',
     )
 
     # assert
@@ -823,14 +823,14 @@ def test_create_integrations_for_template__webhooks_is_true__ok(mocker):
     template = create_test_template(user)
     set_attr_value_mock = mocker.patch(
         'src.processes.services.templates.'
-        'integrations.TemplateIntegrationsService._set_attr_value'
+        'integrations.TemplateIntegrationsService._set_attr_value',
     )
     service = TemplateIntegrationsService(account=user.account)
 
     # act
     result = service.create_integrations_for_template(
         template=template,
-        webhooks=True
+        webhooks=True,
     )
 
     # assert
@@ -847,7 +847,7 @@ def test_create_integrations_for_template__webhooks_is_true__ok(mocker):
     set_attr_value_mock.assert_called_once_with(
         template_id=template.id,
         attr_name=TemplateIntegrationType.WEBHOOKS,
-        value=True
+        value=True,
     )
 
 
@@ -862,7 +862,7 @@ def test_create_integrations_for_template__webhooks_exists__ok(mocker):
     )
     set_attr_value_mock = mocker.patch(
         'src.processes.services.templates.'
-        'integrations.TemplateIntegrationsService._set_attr_value'
+        'integrations.TemplateIntegrationsService._set_attr_value',
     )
     service = TemplateIntegrationsService(account=user.account)
 
@@ -875,7 +875,7 @@ def test_create_integrations_for_template__webhooks_exists__ok(mocker):
     set_attr_value_mock.assert_called_once_with(
         template_id=template.id,
         attr_name=TemplateIntegrationType.WEBHOOKS,
-        value=True
+        value=True,
     )
     assert result.template_id == template.id
 
@@ -892,13 +892,13 @@ def test_set_attr_value__ok(mocker):
         'src.processes.services.templates.'
         'integrations.TemplateIntegrationsService.'
         '_update_instance_attr',
-        return_value=template_integrations
+        return_value=template_integrations,
     )
 
     set_cache_mock = mocker.patch(
         'src.processes.services.templates.'
         'integrations.TemplateIntegrationsService.'
-        '_set_cache'
+        '_set_cache',
     )
     service = TemplateIntegrationsService(account=mocker.Mock())
 
@@ -906,18 +906,18 @@ def test_set_attr_value__ok(mocker):
     service._set_attr_value(
         attr_name=attr_name,
         template_id=template_id,
-        value=value
+        value=value,
     )
 
     # assert
     update_instance_attr_mock.assert_called_once_with(
         template_id=template_id,
         attr_name=attr_name,
-        value=value
+        value=value,
     )
     set_cache_mock.assert_called_once_with(
         key=template.id,
-        value=template_integrations
+        value=template_integrations,
     )
 
 
@@ -928,15 +928,15 @@ def test_update_instance_attr__first_activation__ok(mocker):
     template = create_test_template(user)
     TemplateIntegrations.objects.create(
         account_id=template.account_id,
-        template_id=template.id
+        template_id=template.id,
     )
     analytics_mock = mocker.patch(
         'src.processes.services.templates.'
-        'integrations.AnalyticService.templates_integrated'
+        'integrations.AnalyticService.templates_integrated',
     )
     service = TemplateIntegrationsService(
         account=user.account,
-        user=user
+        user=user,
     )
 
     # act
@@ -955,7 +955,7 @@ def test_update_instance_attr__first_activation__ok(mocker):
         integration_type=TemplateIntegrationType.API,
         is_superuser=False,
         user=user,
-        anonymous_id=None
+        anonymous_id=None,
     )
 
 
@@ -968,11 +968,11 @@ def test_update_instance_attr__second_activation__ok(mocker):
         account_id=template.account_id,
         template_id=template.id,
         webhooks=True,
-        webhooks_date=timezone.now()
+        webhooks_date=timezone.now(),
     )
     analytics_mock = mocker.patch(
         'src.processes.services.templates.'
-        'integrations.AnalyticService.templates_integrated'
+        'integrations.AnalyticService.templates_integrated',
     )
     service = TemplateIntegrationsService(account=user.account)
 
@@ -998,11 +998,11 @@ def test_update_instance_attr__deactivation__ok(mocker):
         account_id=template.account_id,
         template_id=template.id,
         webhooks=True,
-        webhooks_date=timezone.now()
+        webhooks_date=timezone.now(),
     )
     analytics_mock = mocker.patch(
         'src.processes.services.templates.'
-        'integrations.AnalyticService.templates_integrated'
+        'integrations.AnalyticService.templates_integrated',
     )
     service = TemplateIntegrationsService(account=user.account)
 
@@ -1026,15 +1026,15 @@ def test_update_instance_attr__webhooks__analytics_not_called(mocker):
     template = create_test_template(user)
     TemplateIntegrations.objects.create(
         account_id=template.account_id,
-        template_id=template.id
+        template_id=template.id,
     )
     analytics_mock = mocker.patch(
         'src.processes.services.templates.'
-        'integrations.AnalyticService.templates_integrated'
+        'integrations.AnalyticService.templates_integrated',
     )
     service = TemplateIntegrationsService(
         account=user.account,
-        user=user
+        user=user,
     )
 
     # act

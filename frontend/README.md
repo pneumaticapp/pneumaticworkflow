@@ -41,6 +41,10 @@ Open a terminal in the "frontend" directory and run the following commands:
 5. Run the production version with the command:
    * ``npm run build-client:prod``
    * ``pm2-runtime start pm2.json``
+6. How to initialize a database, see [here](https://github.com/pneumaticapp/pneumaticworkflow/blob/master/backend/README.md#project-initialization).
+7. Open the admin interface in your browser and log in: [http://localhost:8001/admin/](http://localhost:8001/admin/) (Use the email and password from step 3).
+8. Open the user interface in your browser and log in: [http://localhost:8000](http://localhost:8000).
+
 
 ### Run tests
 * `npm t`
