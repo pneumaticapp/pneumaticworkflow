@@ -10,3 +10,5 @@ export const SYSTEM_FIELDS: TSystemField[] = [
   { apiName: 'step', name: 'step', isDisabled: false, hasNotTooltip: true },
   { apiName: 'performer', name: 'performer', isDisabled: false, hasNotTooltip: true },
 ];
+
+export const SKELETON_ROWS = Array.from({ length: 5 }, (_, index) => `skeleton-row-${index}`);

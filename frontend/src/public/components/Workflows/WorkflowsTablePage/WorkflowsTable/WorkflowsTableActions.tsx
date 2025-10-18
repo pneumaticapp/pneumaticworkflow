@@ -29,7 +29,10 @@ export function WorkflowsTableActions({
   const templatesIdsFilter = useSelector(
     (state: IApplicationState) => state.workflows.workflowsSettings.values.templatesIdsFilter,
   );
-  const isDisabled = templatesIdsFilter.length === 0 || workflowsLoadingStatus !== EWorkflowsLoadingStatus.Loaded;
+  const isDisabled =
+    templatesIdsFilter.length !== 1 &&
+    (workflowsLoadingStatus === EWorkflowsLoadingStatus.Loaded ||
+      workflowsLoadingStatus === EWorkflowsLoadingStatus.EmptyList);
 
   const handleTuneViewClick = () => {
     dispatch(openTuneViewModal());
