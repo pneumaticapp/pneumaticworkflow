@@ -33,7 +33,7 @@ import { useCheckDevice } from '../../../../hooks/useCheckDevice';
 import { createResizeHandler } from './utils/resizeUtils';
 import { ALL_SYSTEM_FIELD_NAMES, SKELETON_ROWS } from './constants';
 import { defaultSystemSkeletonTable } from './Columns/Cells';
-import { SkeletonDefaultCell80 } from './Columns/Cells/SystemDefoultColumns';
+import { SkeletonDefaultCell80 } from './Columns/Cells/SystemDefaultColumns';
 import { Skeleton } from '../../../UI/Skeleton';
 
 type CustomHeaderGroup<T extends object> = HeaderGroup<T> & {
@@ -650,7 +650,14 @@ export function WorkflowsTable({
                           className={styles['column']}
                         >
                           {shouldSkeletonOptionalTable || shouldSkeletonBody ? (
-                            <Skeleton width={`${Math.max(colWidths[cell.column.id] * 0.7, 80)}px`} height="2rem" />
+                            <Skeleton
+                              width={`${
+                                cell.column.id && colWidths[cell.column.id]
+                                  ? Math.max(colWidths[cell.column.id] * 0.7, 80)
+                                  : 80
+                              }px`}
+                              height="2rem"
+                            />
                           ) : (
                             cell.render('Cell')
                           )}
