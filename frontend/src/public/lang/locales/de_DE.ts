@@ -1,4 +1,4 @@
-const esMessages = {
+export const deMessages = {
  "general.attach": "Anfügen",
  "general.comment": "Kommentar",
  "general.show-more": "Mehr",
