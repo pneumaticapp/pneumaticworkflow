@@ -1,19 +1,20 @@
 import json
+
 import pytest
 from django.core.serializers.json import DjangoJSONEncoder
-from src.processes.tests.fixtures import (
-    create_test_user,
-    create_test_account,
-)
-from src.webhooks.enums import HookEvent
+
 from src.logs.enums import (
     AccountEventStatus,
 )
+from src.processes.tests.fixtures import (
+    create_test_account,
+    create_test_user,
+)
+from src.webhooks.enums import HookEvent
+from src.webhooks.services import WebhookDeliverer
 from src.webhooks.tests.fixtures import (
     create_test_webhook,
 )
-from src.webhooks.services import WebhookDeliverer
-
 
 pytestmark = pytest.mark.django_db
 
@@ -30,13 +31,13 @@ def test_send__ok(mocker):
     post_mock = mocker.Mock(return_value=response_mock)
     mocker.patch(
         'src.webhooks.services.requests',
-        post=post_mock
+        post=post_mock,
     )
     webhook_log_mock = mocker.patch(
-        'src.webhooks.services.AccountLogService.webhook'
+        'src.webhooks.services.AccountLogService.webhook',
     )
     capture_sentry_mock = mocker.patch(
-        'src.webhooks.services.capture_sentry_message'
+        'src.webhooks.services.capture_sentry_message',
     )
     service = WebhookDeliverer()
 
@@ -45,7 +46,7 @@ def test_send__ok(mocker):
         event=event,
         user_id=user.id,
         account_id=account.id,
-        payload=payload
+        payload=payload,
     )
 
     # assert
@@ -58,11 +59,11 @@ def test_send__ok(mocker):
                     'event': webhook.event,
                     'target': webhook.target,
                 },
-                'workflow': 'value'
+                'workflow': 'value',
             },
-            cls=DjangoJSONEncoder
+            cls=DjangoJSONEncoder,
         ),
-        headers={'Content-Type': 'application/json'}
+        headers={'Content-Type': 'application/json'},
     )
     webhook_log_mock.assert_called_once_with(
         title=f'Webhook: {event}',
@@ -71,15 +72,15 @@ def test_send__ok(mocker):
             'hook': {
                 'id': webhook.id,
                 'event': event,
-                'target': webhook.target
+                'target': webhook.target,
             },
-            'workflow': 'value'
+            'workflow': 'value',
         },
         account_id=account.id,
         status=AccountEventStatus.SUCCESS,
         http_status=204,
         response_data={},
-        user_id=user.id
+        user_id=user.id,
     )
     capture_sentry_mock.assert_not_called()
 
@@ -94,10 +95,10 @@ def test_send__webhook_with_another_event__skip(mocker):
     post_mock = mocker.Mock()
     mocker.patch(
         'src.webhooks.services.requests',
-        post=post_mock
+        post=post_mock,
     )
     webhook_log_mock = mocker.patch(
-        'src.webhooks.services.AccountLogService.webhook'
+        'src.webhooks.services.AccountLogService.webhook',
     )
     service = WebhookDeliverer()
 
@@ -106,7 +107,7 @@ def test_send__webhook_with_another_event__skip(mocker):
         event=HookEvent.WORKFLOW_COMPLETED,
         user_id=user.id,
         account_id=account.id,
-        payload=payload
+        payload=payload,
     )
 
     # assert
@@ -125,10 +126,10 @@ def test_send__webhook_with_another_account__skip(mocker):
     post_mock = mocker.Mock()
     mocker.patch(
         'src.webhooks.services.requests',
-        post=post_mock
+        post=post_mock,
     )
     webhook_log_mock = mocker.patch(
-        'src.webhooks.services.AccountLogService.webhook'
+        'src.webhooks.services.AccountLogService.webhook',
     )
     service = WebhookDeliverer()
 
@@ -137,7 +138,7 @@ def test_send__webhook_with_another_account__skip(mocker):
         event=event,
         user_id=user.id,
         account_id=another_account.id,
-        payload=payload
+        payload=payload,
     )
 
     # assert
@@ -156,13 +157,13 @@ def test_send__connection_error__create_log(mocker):
     ex = ConnectionError('=(')
     post_mock = mocker.patch(
         'src.webhooks.services.requests.post',
-        side_effect=ex
+        side_effect=ex,
     )
     webhook_log_mock = mocker.patch(
-        'src.webhooks.services.AccountLogService.webhook'
+        'src.webhooks.services.AccountLogService.webhook',
     )
     capture_sentry_mock = mocker.patch(
-        'src.webhooks.services.capture_sentry_message'
+        'src.webhooks.services.capture_sentry_message',
     )
     service = WebhookDeliverer()
 
@@ -172,7 +173,7 @@ def test_send__connection_error__create_log(mocker):
             event=event,
             user_id=user.id,
             account_id=account.id,
-            payload=payload
+            payload=payload,
         )
 
     # assert
@@ -186,11 +187,11 @@ def test_send__connection_error__create_log(mocker):
                     'event': webhook.event,
                     'target': webhook.target,
                 },
-                'workflow': 'value'
+                'workflow': 'value',
             },
-            cls=DjangoJSONEncoder
+            cls=DjangoJSONEncoder,
         ),
-        headers={'Content-Type': 'application/json'}
+        headers={'Content-Type': 'application/json'},
     )
     webhook_log_mock.assert_called_once_with(
         title=f'Webhook: {event}',
@@ -199,15 +200,15 @@ def test_send__connection_error__create_log(mocker):
             'hook': {
                 'id': webhook.id,
                 'event': event,
-                'target': webhook.target
+                'target': webhook.target,
             },
-            'workflow': 'value'
+            'workflow': 'value',
         },
         account_id=account.id,
         status=AccountEventStatus.FAILED,
         http_status=None,
         response_data={'ConnectionError': str(ex.value)},
-        user_id=user.id
+        user_id=user.id,
     )
     capture_sentry_mock.assert_called_once()
 
@@ -225,18 +226,18 @@ def test_send__bad_request_content_type_json__ok(mocker):
         ok=False,
         status_code=400,
         headers={'content-type': 'application/json'},
-        json=mocker.Mock(return_value=bad_response_data)
+        json=mocker.Mock(return_value=bad_response_data),
     )
     post_mock = mocker.Mock(return_value=response_mock)
     mocker.patch(
         'src.webhooks.services.requests',
-        post=post_mock
+        post=post_mock,
     )
     webhook_log_mock = mocker.patch(
-        'src.webhooks.services.AccountLogService.webhook'
+        'src.webhooks.services.AccountLogService.webhook',
     )
     capture_sentry_mock = mocker.patch(
-        'src.webhooks.services.capture_sentry_message'
+        'src.webhooks.services.capture_sentry_message',
     )
     service = WebhookDeliverer()
 
@@ -245,7 +246,7 @@ def test_send__bad_request_content_type_json__ok(mocker):
         event=event,
         user_id=user.id,
         account_id=account.id,
-        payload=payload
+        payload=payload,
     )
 
     # assert
@@ -258,11 +259,11 @@ def test_send__bad_request_content_type_json__ok(mocker):
                     'event': webhook.event,
                     'target': webhook.target,
                 },
-                'workflow': 'value'
+                'workflow': 'value',
             },
-            cls=DjangoJSONEncoder
+            cls=DjangoJSONEncoder,
         ),
-        headers={'Content-Type': 'application/json'}
+        headers={'Content-Type': 'application/json'},
     )
     webhook_log_mock.assert_called_once_with(
         title=f'Webhook: {event}',
@@ -271,9 +272,9 @@ def test_send__bad_request_content_type_json__ok(mocker):
             'hook': {
                 'id': webhook.id,
                 'event': event,
-                'target': webhook.target
+                'target': webhook.target,
             },
-            'workflow': 'value'
+            'workflow': 'value',
         },
         account_id=account.id,
         status=AccountEventStatus.FAILED,
@@ -283,9 +284,9 @@ def test_send__bad_request_content_type_json__ok(mocker):
                 'request_url': webhook.target,
                 'response_status': 400,
                 'response_json': bad_response_data,
-            }
+            },
         },
-        user_id=user.id
+        user_id=user.id,
     )
     capture_sentry_mock.assert_called_once()
 
@@ -303,18 +304,18 @@ def test_send__permission_denied_type_text__ok(mocker):
         ok=False,
         status_code=403,
         headers={'content-type': 'text/html'},
-        text=bad_response_text
+        text=bad_response_text,
     )
     post_mock = mocker.Mock(return_value=response_mock)
     mocker.patch(
         'src.webhooks.services.requests',
-        post=post_mock
+        post=post_mock,
     )
     webhook_log_mock = mocker.patch(
-        'src.webhooks.services.AccountLogService.webhook'
+        'src.webhooks.services.AccountLogService.webhook',
     )
     capture_sentry_mock = mocker.patch(
-        'src.webhooks.services.capture_sentry_message'
+        'src.webhooks.services.capture_sentry_message',
     )
     service = WebhookDeliverer()
 
@@ -323,7 +324,7 @@ def test_send__permission_denied_type_text__ok(mocker):
         event=event,
         user_id=user.id,
         account_id=account.id,
-        payload=payload
+        payload=payload,
     )
 
     # assert
@@ -336,11 +337,11 @@ def test_send__permission_denied_type_text__ok(mocker):
                     'event': webhook.event,
                     'target': webhook.target,
                 },
-                'workflow': 'value'
+                'workflow': 'value',
             },
-            cls=DjangoJSONEncoder
+            cls=DjangoJSONEncoder,
         ),
-        headers={'Content-Type': 'application/json'}
+        headers={'Content-Type': 'application/json'},
     )
     webhook_log_mock.assert_called_once_with(
         title=f'Webhook: {event}',
@@ -349,9 +350,9 @@ def test_send__permission_denied_type_text__ok(mocker):
             'hook': {
                 'id': webhook.id,
                 'event': event,
-                'target': webhook.target
+                'target': webhook.target,
             },
-            'workflow': 'value'
+            'workflow': 'value',
         },
         account_id=account.id,
         status=AccountEventStatus.FAILED,
@@ -361,9 +362,9 @@ def test_send__permission_denied_type_text__ok(mocker):
                 'request_url': webhook.target,
                 'response_status': 403,
                 'response_text': bad_response_text,
-            }
+            },
         },
-        user_id=user.id
+        user_id=user.id,
     )
     capture_sentry_mock.assert_called_once()
 
@@ -381,18 +382,18 @@ def test_send__not_found__ok(mocker):
         ok=False,
         status_code=404,
         headers={'content-type': 'text/html'},
-        text=bad_response_text
+        text=bad_response_text,
     )
     post_mock = mocker.Mock(return_value=response_mock)
     mocker.patch(
         'src.webhooks.services.requests',
-        post=post_mock
+        post=post_mock,
     )
     webhook_log_mock = mocker.patch(
-        'src.webhooks.services.AccountLogService.webhook'
+        'src.webhooks.services.AccountLogService.webhook',
     )
     capture_sentry_mock = mocker.patch(
-        'src.webhooks.services.capture_sentry_message'
+        'src.webhooks.services.capture_sentry_message',
     )
     service = WebhookDeliverer()
 
@@ -401,7 +402,7 @@ def test_send__not_found__ok(mocker):
         event=event,
         user_id=user.id,
         account_id=account.id,
-        payload=payload
+        payload=payload,
     )
 
     # assert
@@ -414,11 +415,11 @@ def test_send__not_found__ok(mocker):
                     'event': webhook.event,
                     'target': webhook.target,
                 },
-                'workflow': 'value'
+                'workflow': 'value',
             },
-            cls=DjangoJSONEncoder
+            cls=DjangoJSONEncoder,
         ),
-        headers={'Content-Type': 'application/json'}
+        headers={'Content-Type': 'application/json'},
     )
     webhook_log_mock.assert_called_once_with(
         title=f'Webhook: {event}',
@@ -427,9 +428,9 @@ def test_send__not_found__ok(mocker):
             'hook': {
                 'id': webhook.id,
                 'event': event,
-                'target': webhook.target
+                'target': webhook.target,
             },
-            'workflow': 'value'
+            'workflow': 'value',
         },
         account_id=account.id,
         status=AccountEventStatus.FAILED,
@@ -438,9 +439,9 @@ def test_send__not_found__ok(mocker):
             'response': {
                 'request_url': webhook.target,
                 'response_status': 404,
-            }
+            },
         },
-        user_id=user.id
+        user_id=user.id,
     )
     capture_sentry_mock.assert_called_once()
 
@@ -457,18 +458,18 @@ def test_send__internal_server_error__raise_exception(mocker):
         ok=False,
         status_code=500,
         headers={'content-type': 'text/html'},
-        text='internal server error'
+        text='internal server error',
     )
     post_mock = mocker.Mock(return_value=response_mock)
     mocker.patch(
         'src.webhooks.services.requests',
-        post=post_mock
+        post=post_mock,
     )
     webhook_log_mock = mocker.patch(
-        'src.webhooks.services.AccountLogService.webhook'
+        'src.webhooks.services.AccountLogService.webhook',
     )
     capture_sentry_mock = mocker.patch(
-        'src.webhooks.services.capture_sentry_message'
+        'src.webhooks.services.capture_sentry_message',
     )
     service = WebhookDeliverer()
 
@@ -478,7 +479,7 @@ def test_send__internal_server_error__raise_exception(mocker):
             event=event,
             user_id=user.id,
             account_id=account.id,
-            payload=payload
+            payload=payload,
         )
 
     # assert
@@ -492,11 +493,11 @@ def test_send__internal_server_error__raise_exception(mocker):
                     'event': webhook.event,
                     'target': webhook.target,
                 },
-                'workflow': 'value'
+                'workflow': 'value',
             },
-            cls=DjangoJSONEncoder
+            cls=DjangoJSONEncoder,
         ),
-        headers={'Content-Type': 'application/json'}
+        headers={'Content-Type': 'application/json'},
     )
     webhook_log_mock.assert_called_once_with(
         title=f'Webhook: {event}',
@@ -505,9 +506,9 @@ def test_send__internal_server_error__raise_exception(mocker):
             'hook': {
                 'id': webhook.id,
                 'event': event,
-                'target': webhook.target
+                'target': webhook.target,
             },
-            'workflow': 'value'
+            'workflow': 'value',
         },
         account_id=account.id,
         status=AccountEventStatus.FAILED,
@@ -516,9 +517,9 @@ def test_send__internal_server_error__raise_exception(mocker):
             'response': {
                 'request_url': webhook.target,
                 'response_status': 500,
-                'response_text': 'internal server error'
-            }
+                'response_text': 'internal server error',
+            },
         },
-        user_id=user.id
+        user_id=user.id,
     )
     capture_sentry_mock.assert_called_once()

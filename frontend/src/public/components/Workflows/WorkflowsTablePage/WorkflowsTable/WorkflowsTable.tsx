@@ -96,6 +96,8 @@ export function WorkflowsTable({
   const groups = useSelector((state: IApplicationState) => state.groups.list);
   const currentUser = useSelector((state: IApplicationState) => state.authUser);
   const [searchQuery, setSearchQuery] = useState(searchText);
+  const selectedFields = useSelector((state: IApplicationState) => state.workflows.workflowsSettings.selectedFields);
+  const selectedFieldsSet = useMemo(() => new Set(selectedFields), [selectedFields]);
 
   const savedGlobalWidths = JSON.parse(
     localStorage.getItem(`workflow-column-widths-${currentUser?.id}-global`) || '{}',
@@ -361,69 +363,113 @@ export function WorkflowsTable({
       minWidth: EColumnWidthMinWidth[field.type],
     })) || [];
 
-  const columns: Column<TableColumns>[] = React.useMemo(
-    () => [
-      {
-        Header: renderSearch(),
-        accessor: 'workflow',
-        Cell: renderWorkflowColumn,
-        width: savedGlobalWidths.workflow || ETableViewFieldsWidth.workflow,
-        minWidth: EColumnWidthMinWidth.workflow,
-        columnType: 'workflow',
-      },
-      {
-        Header: renderWorkflowStarterFilter(),
-        accessor: 'starter',
-        Cell: ColumnCells.StarterColumn,
-        width: savedGlobalWidths.starter || ETableViewFieldsWidth.starter,
-        minWidth: EColumnWidthMinWidth.starter,
-        columnType: 'starter',
-      },
-      {
-        Header: formatMessage({ id: 'workflows.filter-column-progress' }),
-        accessor: 'progress',
-        Cell: ColumnCells.ProgressColumn,
-        width: savedGlobalWidths.progress || ETableViewFieldsWidth.progress,
-        minWidth: EColumnWidthMinWidth.progress,
-        columnType: 'progress',
-      },
-      {
-        Header: renderStepFilter(),
-        accessor: 'step',
-        Cell: ColumnCells.StepColumn,
-        width: savedGlobalWidths.step || ETableViewFieldsWidth.step,
-        minWidth: EColumnWidthMinWidth.step,
-        columnType: 'step',
-      },
-      {
-        Header: renderPerformersFilter(),
-        accessor: 'performer',
-        Cell: ColumnCells.PerformerColumn,
-        width: savedGlobalWidths.performer || ETableViewFieldsWidth.performer,
-        minWidth: EColumnWidthMinWidth.performer,
-        columnType: 'performer',
-      },
+  const defaultWorkflowColumn = {
+    Header: renderSearch(),
+    accessor: 'workflow',
+    Cell: renderWorkflowColumn,
+    width: savedGlobalWidths.workflow || ETableViewFieldsWidth.workflow,
+    minWidth: EColumnWidthMinWidth.workflow,
+    columnType: 'workflow',
+  };
+
+  const previousColumnsRef = useRef<Column<TableColumns>[]>([defaultWorkflowColumn]);
+
+  const columns: Column<TableColumns>[] = React.useMemo(() => {
+    if (workflowsLoadingStatus !== EWorkflowsLoadingStatus.Loaded || selectedFields.length === 0) {
+      return previousColumnsRef.current;
+    }
+
+    const newColumns = [
+      ...(selectedFieldsSet.has('workflow') ? [defaultWorkflowColumn] : []),
+      ...(selectedFieldsSet.has('templateName')
+        ? [
+            {
+              Header: (
+                <div className={styles['column-header__template-name']}>
+                  {formatMessage({ id: 'workflows.filter-column-template-name' })}
+                </div>
+              ),
+              accessor: 'templateName',
+              Cell: ColumnCells.TemplateNameColumn,
+              width: savedGlobalWidths.templateName || ETableViewFieldsWidth.templateName,
+              minWidth: EColumnWidthMinWidth.templateName,
+              columnType: 'templateName',
+            },
+          ]
+        : []),
+      ...(selectedFieldsSet.has('starter')
+        ? [
+            {
+              Header: renderWorkflowStarterFilter(),
+              accessor: 'starter',
+              Cell: ColumnCells.StarterColumn,
+              width: savedGlobalWidths.starter || ETableViewFieldsWidth.starter,
+              minWidth: EColumnWidthMinWidth.starter,
+              columnType: 'starter',
+            },
+          ]
+        : []),
+      ...(selectedFieldsSet.has('progress')
+        ? [
+            {
+              Header: formatMessage({ id: 'workflows.filter-column-progress' }),
+              accessor: 'progress',
+              Cell: ColumnCells.ProgressColumn,
+              width: savedGlobalWidths.progress || ETableViewFieldsWidth.progress,
+              minWidth: EColumnWidthMinWidth.progress,
+              columnType: 'progress',
+            },
+          ]
+        : []),
+      ...(selectedFieldsSet.has('step')
+        ? [
+            {
+              Header: renderStepFilter(),
+              accessor: 'step',
+              Cell: ColumnCells.StepColumn,
+              width: savedGlobalWidths.step || ETableViewFieldsWidth.step,
+              minWidth: EColumnWidthMinWidth.step,
+              columnType: 'step',
+            },
+          ]
+        : []),
+      ...(selectedFieldsSet.has('performer')
+        ? [
+            {
+              Header: renderPerformersFilter(),
+              accessor: 'performer',
+              Cell: ColumnCells.PerformerColumn,
+              width: savedGlobalWidths.performer || ETableViewFieldsWidth.performer,
+              minWidth: EColumnWidthMinWidth.performer,
+              columnType: 'performer',
+            },
+          ]
+        : []),
       ...fieldsColumns,
-    ],
-    [
-      searchQuery,
-      users.length,
-      workflowStartersIdsFilter.length,
-      templatesIdsFilter.length,
-      filterTemplates,
-      stepsIdsFilter.length,
-      performersIdsFilter.length,
-      statusFilter,
-      performersCounters,
-      workflowStartersCounters,
-      fieldsColumns.length,
-    ],
-  );
+    ];
+    previousColumnsRef.current = newColumns;
+    return newColumns;
+  }, [
+    workflowsLoadingStatus,
+    searchQuery,
+    users.length,
+    workflowStartersIdsFilter.length,
+    templatesIdsFilter.length,
+    filterTemplates,
+    stepsIdsFilter.length,
+    performersIdsFilter.length,
+    statusFilter,
+    performersCounters,
+    workflowStartersCounters,
+    fieldsColumns.length,
+    selectedFieldsSet,
+  ]);
 
   const data = useMemo((): TableColumns[] => {
     return workflowsList.items.map((workflow) => {
       const baseData: TableColumns = {
         workflow,
+        templateName: workflow,
         starter: workflow,
         progress: workflow,
         step: workflow,
@@ -504,7 +550,7 @@ export function WorkflowsTable({
           ))}
         </thead>
         <tbody {...getTableBodyProps()}>
-          {workflowsLoadingStatus === EWorkflowsLoadingStatus.LoadingList
+          {workflowsLoadingStatus === EWorkflowsLoadingStatus.LoadingList || selectedFields.length === 0
             ? renderLoader()
             : rows.map((row) => {
                 prepareRow(row);

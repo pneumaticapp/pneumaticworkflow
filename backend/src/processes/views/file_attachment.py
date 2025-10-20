@@ -14,6 +14,8 @@ from src.generics.mixins.views import (
     CustomViewSetMixin,
 )
 from src.generics.permissions import IsAuthenticated
+from src.processes.models.workflows.attachment import FileAttachment
+from src.processes.permissions import StoragePermission
 from src.processes.serializers.file_attachment import (
     FileAttachmentCreateSerializer,
     FileAttachmentSerializer,
@@ -24,8 +26,6 @@ from src.processes.services.attachments import (
 from src.processes.services.exceptions import (
     AttachmentServiceException,
 )
-from src.processes.models import FileAttachment
-from src.processes.permissions import StoragePermission
 from src.utils.validation import raise_validation_error
 
 
@@ -68,7 +68,7 @@ class BaseFileAttachmentViewSet(
             (
                 attachment,
                 upload_url,
-                thumb_upload_url
+                thumb_upload_url,
             ) = service.create(**slz.validated_data)
         except AttachmentServiceException as ex:
             raise_validation_error(message=ex.message)
@@ -77,7 +77,7 @@ class BaseFileAttachmentViewSet(
             return self.response_ok({
                 'id': attachment.id,
                 'file_upload_url': upload_url,
-                'thumbnail_upload_url': thumb_upload_url
+                'thumbnail_upload_url': thumb_upload_url,
             })
 
     @action(methods=['POST'], detail=True)
@@ -91,8 +91,8 @@ class BaseFileAttachmentViewSet(
                 auth_type=request.token_type,
                 anonymous_id=request.data.get(
                     'anonymous_id',
-                    self.get_user_ip(self.request)
-                )
+                    self.get_user_ip(self.request),
+                ),
             )
         except AttachmentServiceException as ex:
             raise_validation_error(message=ex.message)
@@ -102,7 +102,7 @@ class BaseFileAttachmentViewSet(
 
 
 class FileAttachmentViewSet(
-    BaseFileAttachmentViewSet
+    BaseFileAttachmentViewSet,
 ):
     permission_classes = (
         StoragePermission,

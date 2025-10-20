@@ -1,31 +1,30 @@
 import datetime
-from django.utils import timezone
+
 import pytest
+from django.utils import timezone
+
 from src.accounts.enums import (
     BillingPlanType,
     LeaseLevel,
 )
+from src.accounts.services.account import AccountService
 from src.accounts.services.exceptions import (
     AccountServiceException,
     UserServiceException,
 )
-from src.accounts.services import (
-    AccountService,
-    UserService,
+from src.accounts.services.user import UserService
+from src.authentication.enums import AuthTokenType
+from src.payment.stripe.exceptions import StripeServiceException
+from src.payment.stripe.service import StripeService
+from src.processes.services.system_workflows import (
+    SystemWorkflowService,
 )
 from src.processes.tests.fixtures import (
-    create_test_user,
     create_test_account,
+    create_test_user,
 )
-from src.authentication.enums import AuthTokenType
-from src.utils.validation import ErrorCode
-from src.processes.services.system_workflows import (
-    SystemWorkflowService
-)
-from src.payment.stripe.service import StripeService
-from src.payment.stripe.exceptions import StripeServiceException
 from src.utils.dates import date_format
-
+from src.utils.validation import ErrorCode
 
 pytestmark = pytest.mark.django_db
 
@@ -37,12 +36,12 @@ def test_create__premium_plan__increase_master_acc_subscription(
 
     # arrange
     settings_mock = mocker.patch(
-        'src.accounts.views.tenants.settings'
+        'src.accounts.views.tenants.settings',
     )
     settings_mock.PROJECT_CONF = {'BILLING': True}
     master_account = create_test_account(
         plan=BillingPlanType.PREMIUM,
-        billing_sync=True
+        billing_sync=True,
     )
     master_account_owner = create_test_user(account=master_account)
     tenant_name = 'some name'
@@ -51,73 +50,73 @@ def test_create__premium_plan__increase_master_acc_subscription(
         tenant_name=tenant_name,
         plan=BillingPlanType.PREMIUM,
         lease_level=LeaseLevel.TENANT,
-        master_account=master_account
+        master_account=master_account,
     )
     tenant_account_owner = create_test_user(
         account=tenant_account,
-        email='tenant_owner@test.test'
+        email='tenant_owner@test.test',
     )
     account_service_init_mock = mocker.patch.object(
         AccountService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     user_service_init_mock = mocker.patch.object(
         UserService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     account_create_mock = mocker.patch(
-        'src.accounts.services.AccountService.create',
-        return_value=tenant_account
+        'src.accounts.services.account.AccountService.create',
+        return_value=tenant_account,
     )
     update_users_counts_mock = mocker.patch(
-        'src.accounts.services.AccountService'
-        '.update_users_counts'
+        'src.accounts.services.account.AccountService'
+        '.update_users_counts',
     )
     create_tenant_account_owner_mock = mocker.patch(
-        'src.accounts.services.UserService'
+        'src.accounts.services.user.UserService'
         '.create_tenant_account_owner',
-        return_value=tenant_account_owner
+        return_value=tenant_account_owner,
     )
     sys_workflow_service_init_mock = mocker.patch.object(
         SystemWorkflowService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     create_onboarding_templates_mock = mocker.patch(
         'src.processes.services.system_workflows.'
-        'SystemWorkflowService.create_onboarding_templates'
+        'SystemWorkflowService.create_onboarding_templates',
     )
     create_activated_templates_mock = mocker.patch(
         'src.processes.services.system_workflows.'
-        'SystemWorkflowService.create_activated_templates'
+        'SystemWorkflowService.create_activated_templates',
     )
     stripe_service_init_mock = mocker.patch.object(
         StripeService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     create_off_session_subscription_mock = mocker.patch(
         'src.payment.stripe.service.StripeService.'
-        'create_off_session_subscription'
+        'create_off_session_subscription',
     )
     increase_plan_users_mock = mocker.patch(
         'src.accounts.views.'
-        'tenants.increase_plan_users.delay'
+        'tenants.increase_plan_users.delay',
     )
     tenants_added_mock = mocker.patch(
         'src.analytics.services.AnalyticService.'
-        'tenants_added'
+        'tenants_added',
     )
     api_client.token_authenticate(master_account_owner)
 
     # act
     response = api_client.post(
-        f'/tenants',
+        '/tenants',
         data={
-            'tenant_name': tenant_name
-        }
+            'tenant_name': tenant_name,
+        },
     )
 
     # assert
@@ -132,11 +131,11 @@ def test_create__premium_plan__increase_master_acc_subscription(
     )
     account_service_init_mock.assert_called_once_with(
         is_superuser=False,
-        auth_type=AuthTokenType.USER
+        auth_type=AuthTokenType.USER,
     )
     user_service_init_mock.assert_called_once_with(
         is_superuser=False,
-        auth_type=AuthTokenType.USER
+        auth_type=AuthTokenType.USER,
     )
     account_create_mock.assert_called_once_with(
         tenant_name=tenant_name,
@@ -144,11 +143,11 @@ def test_create__premium_plan__increase_master_acc_subscription(
     )
     create_tenant_account_owner_mock.assert_called_once_with(
         tenant_account=tenant_account,
-        master_account=master_account
+        master_account=master_account,
     )
     update_users_counts_mock.assert_called_once()
     sys_workflow_service_init_mock.assert_called_once_with(
-        user=tenant_account_owner
+        user=tenant_account_owner,
     )
     create_onboarding_templates_mock.assert_called_once()
     create_activated_templates_mock.assert_called_once()
@@ -163,7 +162,7 @@ def test_create__premium_plan__increase_master_acc_subscription(
         master_user=master_account_owner,
         tenant_account=tenant_account,
         is_superuser=False,
-        auth_type=AuthTokenType.USER
+        auth_type=AuthTokenType.USER,
     )
 
 
@@ -174,12 +173,12 @@ def test_create__premium_plan__billing_disabled__not_increase_master_acc_subs(
 
     # arrange
     settings_mock = mocker.patch(
-        'src.accounts.views.tenants.settings'
+        'src.accounts.views.tenants.settings',
     )
     settings_mock.PROJECT_CONF = {'BILLING': True}
     master_account = create_test_account(
         plan=BillingPlanType.PREMIUM,
-        billing_sync=False
+        billing_sync=False,
     )
     master_account_owner = create_test_user(account=master_account)
     tenant_name = 'some name'
@@ -188,73 +187,73 @@ def test_create__premium_plan__billing_disabled__not_increase_master_acc_subs(
         tenant_name=tenant_name,
         plan=BillingPlanType.PREMIUM,
         lease_level=LeaseLevel.TENANT,
-        master_account=master_account
+        master_account=master_account,
     )
     tenant_account_owner = create_test_user(
         account=tenant_account,
-        email='tenant_owner@test.test'
+        email='tenant_owner@test.test',
     )
     account_service_init_mock = mocker.patch.object(
         AccountService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     user_service_init_mock = mocker.patch.object(
         UserService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     account_create_mock = mocker.patch(
-        'src.accounts.services.AccountService.create',
-        return_value=tenant_account
+        'src.accounts.services.account.AccountService.create',
+        return_value=tenant_account,
     )
     update_users_counts_mock = mocker.patch(
-        'src.accounts.services.AccountService'
-        '.update_users_counts'
+        'src.accounts.services.account.AccountService'
+        '.update_users_counts',
     )
     create_tenant_account_owner_mock = mocker.patch(
-        'src.accounts.services.UserService'
+        'src.accounts.services.user.UserService'
         '.create_tenant_account_owner',
-        return_value=tenant_account_owner
+        return_value=tenant_account_owner,
     )
     sys_workflow_service_init_mock = mocker.patch.object(
         SystemWorkflowService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     create_onboarding_templates_mock = mocker.patch(
         'src.processes.services.system_workflows.'
-        'SystemWorkflowService.create_onboarding_templates'
+        'SystemWorkflowService.create_onboarding_templates',
     )
     create_activated_templates_mock = mocker.patch(
         'src.processes.services.system_workflows.'
-        'SystemWorkflowService.create_activated_templates'
+        'SystemWorkflowService.create_activated_templates',
     )
     stripe_service_init_mock = mocker.patch.object(
         StripeService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     create_off_session_subscription_mock = mocker.patch(
         'src.payment.stripe.service.StripeService.'
-        'create_off_session_subscription'
+        'create_off_session_subscription',
     )
     increase_plan_users_mock = mocker.patch(
         'src.accounts.views.'
-        'tenants.increase_plan_users.delay'
+        'tenants.increase_plan_users.delay',
     )
     tenants_added_mock = mocker.patch(
         'src.analytics.services.AnalyticService.'
-        'tenants_added'
+        'tenants_added',
     )
     api_client.token_authenticate(master_account_owner)
 
     # act
     response = api_client.post(
-        f'/tenants',
+        '/tenants',
         data={
-            'tenant_name': tenant_name
-        }
+            'tenant_name': tenant_name,
+        },
     )
 
     # assert
@@ -269,11 +268,11 @@ def test_create__premium_plan__billing_disabled__not_increase_master_acc_subs(
     )
     account_service_init_mock.assert_called_once_with(
         is_superuser=False,
-        auth_type=AuthTokenType.USER
+        auth_type=AuthTokenType.USER,
     )
     user_service_init_mock.assert_called_once_with(
         is_superuser=False,
-        auth_type=AuthTokenType.USER
+        auth_type=AuthTokenType.USER,
     )
     account_create_mock.assert_called_once_with(
         tenant_name=tenant_name,
@@ -281,11 +280,11 @@ def test_create__premium_plan__billing_disabled__not_increase_master_acc_subs(
     )
     create_tenant_account_owner_mock.assert_called_once_with(
         tenant_account=tenant_account,
-        master_account=master_account
+        master_account=master_account,
     )
     update_users_counts_mock.assert_called_once()
     sys_workflow_service_init_mock.assert_called_once_with(
-        user=tenant_account_owner
+        user=tenant_account_owner,
     )
     create_onboarding_templates_mock.assert_called_once()
     create_activated_templates_mock.assert_called_once()
@@ -296,7 +295,7 @@ def test_create__premium_plan__billing_disabled__not_increase_master_acc_subs(
         master_user=master_account_owner,
         tenant_account=tenant_account,
         is_superuser=False,
-        auth_type=AuthTokenType.USER
+        auth_type=AuthTokenType.USER,
     )
 
 
@@ -313,73 +312,73 @@ def test_create__unlimited_plan__buy_subscription(
         tenant_name=tenant_name,
         plan=None,
         lease_level=LeaseLevel.TENANT,
-        master_account=master_account
+        master_account=master_account,
     )
     tenant_account_owner = create_test_user(
         account=tenant_account,
-        email='tenant_owner@test.test'
+        email='tenant_owner@test.test',
     )
     account_service_init_mock = mocker.patch.object(
         AccountService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     user_service_init_mock = mocker.patch.object(
         UserService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     account_create_mock = mocker.patch(
-        'src.accounts.services.AccountService.create',
-        return_value=tenant_account
+        'src.accounts.services.account.AccountService.create',
+        return_value=tenant_account,
     )
     update_users_counts_mock = mocker.patch(
-        'src.accounts.services.AccountService'
-        '.update_users_counts'
+        'src.accounts.services.account.AccountService'
+        '.update_users_counts',
     )
     create_tenant_account_owner_mock = mocker.patch(
-        'src.accounts.services.UserService'
+        'src.accounts.services.user.UserService'
         '.create_tenant_account_owner',
-        return_value=tenant_account_owner
+        return_value=tenant_account_owner,
     )
     sys_workflow_service_init_mock = mocker.patch.object(
         SystemWorkflowService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     create_onboarding_templates_mock = mocker.patch(
         'src.processes.services.system_workflows.'
-        'SystemWorkflowService.create_onboarding_templates'
+        'SystemWorkflowService.create_onboarding_templates',
     )
     create_activated_templates_mock = mocker.patch(
         'src.processes.services.system_workflows.'
-        'SystemWorkflowService.create_activated_templates'
+        'SystemWorkflowService.create_activated_templates',
     )
     stripe_service_init_mock = mocker.patch.object(
         StripeService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     create_off_session_subscription_mock = mocker.patch(
         'src.payment.stripe.service.StripeService.'
-        'create_off_session_subscription'
+        'create_off_session_subscription',
     )
     increase_plan_users_mock = mocker.patch(
         'src.accounts.views.'
-        'tenants.increase_plan_users.delay'
+        'tenants.increase_plan_users.delay',
     )
     tenants_added_mock = mocker.patch(
         'src.analytics.services.AnalyticService.'
-        'tenants_added'
+        'tenants_added',
     )
     api_client.token_authenticate(master_account_owner)
 
     # act
     response = api_client.post(
-        f'/tenants',
+        '/tenants',
         data={
-            'tenant_name': tenant_name
-        }
+            'tenant_name': tenant_name,
+        },
     )
 
     # assert
@@ -394,11 +393,11 @@ def test_create__unlimited_plan__buy_subscription(
     )
     account_service_init_mock.assert_called_once_with(
         is_superuser=False,
-        auth_type=AuthTokenType.USER
+        auth_type=AuthTokenType.USER,
     )
     user_service_init_mock.assert_called_once_with(
         is_superuser=False,
-        auth_type=AuthTokenType.USER
+        auth_type=AuthTokenType.USER,
     )
     account_create_mock.assert_called_once_with(
         tenant_name=tenant_name,
@@ -406,11 +405,11 @@ def test_create__unlimited_plan__buy_subscription(
     )
     create_tenant_account_owner_mock.assert_called_once_with(
         tenant_account=tenant_account,
-        master_account=master_account
+        master_account=master_account,
     )
     update_users_counts_mock.assert_called_once()
     sys_workflow_service_init_mock.assert_called_once_with(
-        user=tenant_account_owner
+        user=tenant_account_owner,
     )
     create_onboarding_templates_mock.assert_called_once()
     create_activated_templates_mock.assert_called_once()
@@ -419,22 +418,22 @@ def test_create__unlimited_plan__buy_subscription(
         user=master_account_owner,
         subscription_account=tenant_account,
         is_superuser=False,
-        auth_type=AuthTokenType.USER
+        auth_type=AuthTokenType.USER,
     )
     create_off_session_subscription_mock.assert_called_once_with(
         products=[
             {
                 'code': 'unlimited_month',
-                'quantity': 1
-            }
-        ]
+                'quantity': 1,
+            },
+        ],
     )
 
     tenants_added_mock.assert_called_once_with(
         master_user=master_account_owner,
         tenant_account=tenant_account,
         is_superuser=False,
-        auth_type=AuthTokenType.USER
+        auth_type=AuthTokenType.USER,
     )
 
 
@@ -451,73 +450,73 @@ def test_create__free_plan__not_buy_subscription(
         tenant_name=tenant_name,
         plan=BillingPlanType.FREEMIUM,
         lease_level=LeaseLevel.TENANT,
-        master_account=master_account
+        master_account=master_account,
     )
     tenant_account_owner = create_test_user(
         account=tenant_account,
-        email='tenant_owner@test.test'
+        email='tenant_owner@test.test',
     )
     account_service_init_mock = mocker.patch.object(
         AccountService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     user_service_init_mock = mocker.patch.object(
         UserService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     account_create_mock = mocker.patch(
-        'src.accounts.services.AccountService.create',
-        return_value=tenant_account
+        'src.accounts.services.account.AccountService.create',
+        return_value=tenant_account,
     )
     update_users_counts_mock = mocker.patch(
-        'src.accounts.services.AccountService'
-        '.update_users_counts'
+        'src.accounts.services.account.AccountService'
+        '.update_users_counts',
     )
     create_tenant_account_owner_mock = mocker.patch(
-        'src.accounts.services.UserService'
+        'src.accounts.services.user.UserService'
         '.create_tenant_account_owner',
-        return_value=tenant_account_owner
+        return_value=tenant_account_owner,
     )
     sys_workflow_service_init_mock = mocker.patch.object(
         SystemWorkflowService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     create_onboarding_templates_mock = mocker.patch(
         'src.processes.services.system_workflows.'
-        'SystemWorkflowService.create_onboarding_templates'
+        'SystemWorkflowService.create_onboarding_templates',
     )
     create_activated_templates_mock = mocker.patch(
         'src.processes.services.system_workflows.'
-        'SystemWorkflowService.create_activated_templates'
+        'SystemWorkflowService.create_activated_templates',
     )
     increase_plan_users_mock = mocker.patch(
         'src.accounts.views.'
-        'tenants.increase_plan_users.delay'
+        'tenants.increase_plan_users.delay',
     )
     stripe_service_init_mock = mocker.patch.object(
         StripeService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     create_off_session_subscription_mock = mocker.patch(
         'src.payment.stripe.service.StripeService.'
-        'create_off_session_subscription'
+        'create_off_session_subscription',
     )
     tenants_added_mock = mocker.patch(
         'src.analytics.services.AnalyticService.'
-        'tenants_added'
+        'tenants_added',
     )
     api_client.token_authenticate(master_account_owner)
 
     # act
     response = api_client.post(
-        f'/tenants',
+        '/tenants',
         data={
-            'tenant_name': tenant_name
-        }
+            'tenant_name': tenant_name,
+        },
     )
 
     # assert
@@ -532,11 +531,11 @@ def test_create__free_plan__not_buy_subscription(
     )
     account_service_init_mock.assert_called_once_with(
         is_superuser=False,
-        auth_type=AuthTokenType.USER
+        auth_type=AuthTokenType.USER,
     )
     user_service_init_mock.assert_called_once_with(
         is_superuser=False,
-        auth_type=AuthTokenType.USER
+        auth_type=AuthTokenType.USER,
     )
     account_create_mock.assert_called_once_with(
         tenant_name=tenant_name,
@@ -544,11 +543,11 @@ def test_create__free_plan__not_buy_subscription(
     )
     create_tenant_account_owner_mock.assert_called_once_with(
         tenant_account=tenant_account,
-        master_account=master_account
+        master_account=master_account,
     )
     update_users_counts_mock.assert_called_once()
     sys_workflow_service_init_mock.assert_called_once_with(
-        user=tenant_account_owner
+        user=tenant_account_owner,
     )
     create_onboarding_templates_mock.assert_called_once()
     create_activated_templates_mock.assert_called_once()
@@ -559,7 +558,7 @@ def test_create__free_plan__not_buy_subscription(
         master_user=master_account_owner,
         tenant_account=tenant_account,
         is_superuser=False,
-        auth_type=AuthTokenType.USER
+        auth_type=AuthTokenType.USER,
     )
 
 
@@ -573,34 +572,34 @@ def test_create__blank_tenant_name__validation_error(
     account_service_init_mock = mocker.patch.object(
         AccountService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     user_service_init_mock = mocker.patch.object(
         UserService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     sys_workflow_service_init_mock = mocker.patch.object(
         SystemWorkflowService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     create_off_session_subscription_mock = mocker.patch(
         'src.payment.stripe.service.StripeService.'
-        'create_off_session_subscription'
+        'create_off_session_subscription',
     )
     tenants_added_mock = mocker.patch(
         'src.analytics.services.AnalyticService.'
-        'tenants_added'
+        'tenants_added',
     )
     api_client.token_authenticate(master_account_owner)
 
     # act
     response = api_client.post(
-        f'/tenants',
+        '/tenants',
         data={
-            'tenant_name': ''
-        }
+            'tenant_name': '',
+        },
     )
 
     # assert
@@ -627,35 +626,35 @@ def test_create__account_service_exception__validation_error(
     account_service_init_mock = mocker.patch.object(
         AccountService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     user_service_init_mock = mocker.patch.object(
         UserService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     message = 'some message'
     account_create_mock = mocker.patch(
-        'src.accounts.services.AccountService.create',
-        side_effect=AccountServiceException(message)
+        'src.accounts.services.account.AccountService.create',
+        side_effect=AccountServiceException(message),
     )
     sys_workflow_service_init_mock = mocker.patch.object(
         SystemWorkflowService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     create_off_session_subscription_mock = mocker.patch(
         'src.payment.stripe.service.StripeService.'
-        'create_off_session_subscription'
+        'create_off_session_subscription',
     )
     api_client.token_authenticate(master_account_owner)
 
     # act
     response = api_client.post(
-        f'/tenants',
+        '/tenants',
         data={
-            'tenant_name': tenant_name
-        }
+            'tenant_name': tenant_name,
+        },
     )
 
     # assert
@@ -664,11 +663,11 @@ def test_create__account_service_exception__validation_error(
     assert response.data['message'] == message
     account_service_init_mock.assert_called_once_with(
         is_superuser=False,
-        auth_type=AuthTokenType.USER
+        auth_type=AuthTokenType.USER,
     )
     user_service_init_mock.assert_called_once_with(
         is_superuser=False,
-        auth_type=AuthTokenType.USER
+        auth_type=AuthTokenType.USER,
     )
     account_create_mock.assert_called_once_with(
         tenant_name=tenant_name,
@@ -691,71 +690,71 @@ def test_create__stripe_service_exception__validation_error(
         tenant_name=tenant_name,
         plan=None,
         lease_level=LeaseLevel.TENANT,
-        master_account=master_account
+        master_account=master_account,
     )
     tenant_account_owner = create_test_user(
         account=tenant_account,
-        email='tenant_owner@test.test'
+        email='tenant_owner@test.test',
     )
     mocker.patch.object(
         AccountService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     mocker.patch.object(
         UserService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     mocker.patch(
-        'src.accounts.services.AccountService.create',
-        return_value=tenant_account
+        'src.accounts.services.account.AccountService.create',
+        return_value=tenant_account,
     )
     mocker.patch(
-        'src.accounts.services.AccountService'
-        '.update_users_counts'
+        'src.accounts.services.account.AccountService'
+        '.update_users_counts',
     )
     mocker.patch(
-        'src.accounts.services.UserService'
+        'src.accounts.services.user.UserService'
         '.create_tenant_account_owner',
-        return_value=tenant_account_owner
+        return_value=tenant_account_owner,
     )
     mocker.patch.object(
         SystemWorkflowService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     mocker.patch(
         'src.processes.services.system_workflows.'
-        'SystemWorkflowService.create_onboarding_templates'
+        'SystemWorkflowService.create_onboarding_templates',
     )
     mocker.patch(
         'src.processes.services.system_workflows.'
-        'SystemWorkflowService.create_activated_templates'
+        'SystemWorkflowService.create_activated_templates',
     )
     mocker.patch.object(
         StripeService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     message = 'Some Error'
     create_off_session_subscription_mock = mocker.patch(
         'src.payment.stripe.service.StripeService.'
         'create_off_session_subscription',
-        side_effect=StripeServiceException(message)
+        side_effect=StripeServiceException(message),
     )
     tenants_added_mock = mocker.patch(
         'src.analytics.services.AnalyticService.'
-        'tenants_added'
+        'tenants_added',
     )
     api_client.token_authenticate(master_account_owner)
 
     # act
     response = api_client.post(
-        f'/tenants',
+        '/tenants',
         data={
-            'tenant_name': tenant_name
-        }
+            'tenant_name': tenant_name,
+        },
     )
 
     # assert
@@ -766,9 +765,9 @@ def test_create__stripe_service_exception__validation_error(
         products=[
             {
                 'code': 'unlimited_month',
-                'quantity': 1
-            }
-        ]
+                'quantity': 1,
+            },
+        ],
     )
     tenants_added_mock.assert_not_called()
 
@@ -784,37 +783,37 @@ def test_create__user_service_exception__validation_error(
     account_service_init_mock = mocker.patch.object(
         AccountService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     user_service_init_mock = mocker.patch.object(
         UserService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     tenant_account = mocker.Mock()
     account_create_mock = mocker.patch(
-        'src.accounts.services.AccountService.create',
-        return_value=tenant_account
+        'src.accounts.services.account.AccountService.create',
+        return_value=tenant_account,
     )
     message = 'some message'
     user_create_mock = mocker.patch(
-        'src.accounts.services.UserService'
+        'src.accounts.services.user.UserService'
         '.create_tenant_account_owner',
-        side_effect=UserServiceException(message)
+        side_effect=UserServiceException(message),
     )
     sys_workflow_service_init_mock = mocker.patch.object(
         SystemWorkflowService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     api_client.token_authenticate(master_account_owner)
 
     # act
     response = api_client.post(
-        f'/tenants',
+        '/tenants',
         data={
-            'tenant_name': tenant_name
-        }
+            'tenant_name': tenant_name,
+        },
     )
 
     # assert
@@ -823,11 +822,11 @@ def test_create__user_service_exception__validation_error(
     assert response.data['message'] == message
     account_service_init_mock.assert_called_once_with(
         is_superuser=False,
-        auth_type=AuthTokenType.USER
+        auth_type=AuthTokenType.USER,
     )
     user_service_init_mock.assert_called_once_with(
         is_superuser=False,
-        auth_type=AuthTokenType.USER
+        auth_type=AuthTokenType.USER,
     )
     account_create_mock.assert_called_once_with(
         tenant_name=tenant_name,
@@ -835,7 +834,7 @@ def test_create__user_service_exception__validation_error(
     )
     user_create_mock.assert_called_once_with(
         tenant_account=tenant_account,
-        master_account=master_account
+        master_account=master_account,
     )
     sys_workflow_service_init_mock.assert_not_called()
 
@@ -850,26 +849,26 @@ def test_create__null_tenant_name__validation_error(
     account_service_init_mock = mocker.patch.object(
         AccountService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     user_service_init_mock = mocker.patch.object(
         UserService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     sys_workflow_service_init_mock = mocker.patch.object(
         SystemWorkflowService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     api_client.token_authenticate(master_account_owner)
 
     # act
     response = api_client.post(
-        f'/tenants',
+        '/tenants',
         data={
-            'tenant_name': None
-        }
+            'tenant_name': None,
+        },
     )
 
     # assert
@@ -893,24 +892,24 @@ def test_create__skip_tenant_name__validation_error(
     account_service_init_mock = mocker.patch.object(
         AccountService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     user_service_init_mock = mocker.patch.object(
         UserService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     sys_workflow_service_init_mock = mocker.patch.object(
         SystemWorkflowService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     api_client.token_authenticate(master_account_owner)
 
     # act
     response = api_client.post(
-        f'/tenants',
-        data={}
+        '/tenants',
+        data={},
     )
 
     # assert
@@ -934,26 +933,26 @@ def test_create__tenant_name_over_limit__validation_error(
     account_service_init_mock = mocker.patch.object(
         AccountService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     user_service_init_mock = mocker.patch.object(
         UserService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     sys_workflow_service_init_mock = mocker.patch.object(
         SystemWorkflowService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     api_client.token_authenticate(master_account_owner)
 
     # act
     response = api_client.post(
-        f'/tenants',
+        '/tenants',
         data={
-            'tenant_name': 'a' * 256
-        }
+            'tenant_name': 'a' * 256,
+        },
     )
 
     # assert
@@ -974,33 +973,33 @@ def test_create__tenant__permission_denied(
     # arrange
     master_account = create_test_account(
         plan=BillingPlanType.UNLIMITED,
-        lease_level=LeaseLevel.TENANT
+        lease_level=LeaseLevel.TENANT,
     )
     master_account_owner = create_test_user(account=master_account)
     tenant_name = 'some name'
     account_service_init_mock = mocker.patch.object(
         AccountService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     user_service_init_mock = mocker.patch.object(
         UserService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     sys_workflow_service_init_mock = mocker.patch.object(
         SystemWorkflowService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     api_client.token_authenticate(master_account_owner)
 
     # act
     response = api_client.post(
-        f'/tenants',
+        '/tenants',
         data={
-            'tenant_name': tenant_name
-        }
+            'tenant_name': tenant_name,
+        },
     )
 
     # assert
@@ -1017,24 +1016,24 @@ def test_create__expired_subscription__permission_denied(
     # arrange
     master_account = create_test_account(
         plan=BillingPlanType.UNLIMITED,
-        plan_expiration=timezone.now() - datetime.timedelta(hours=1)
+        plan_expiration=timezone.now() - datetime.timedelta(hours=1),
     )
     master_account_owner = create_test_user(account=master_account)
     tenant_name = 'some name'
     account_service_init_mock = mocker.patch.object(
         AccountService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     user_service_init_mock = mocker.patch.object(
         UserService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     sys_workflow_service_init_mock = mocker.patch.object(
         SystemWorkflowService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     api_client.token_authenticate(master_account_owner)
 
@@ -1042,8 +1041,8 @@ def test_create__expired_subscription__permission_denied(
     response = api_client.post(
         '/tenants',
         data={
-            'tenant_name': tenant_name
-        }
+            'tenant_name': tenant_name,
+        },
     )
 
     # assert
@@ -1064,32 +1063,32 @@ def test_create__not_admin__permission_denied(
     master_account_not_admin = create_test_user(
         account=master_account,
         is_admin=False,
-        is_account_owner=False
+        is_account_owner=False,
     )
     tenant_name = 'some name'
     account_service_init_mock = mocker.patch.object(
         AccountService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     user_service_init_mock = mocker.patch.object(
         UserService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     sys_workflow_service_init_mock = mocker.patch.object(
         SystemWorkflowService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     api_client.token_authenticate(master_account_not_admin)
 
     # act
     response = api_client.post(
-        f'/tenants',
+        '/tenants',
         data={
-            'tenant_name': tenant_name
-        }
+            'tenant_name': tenant_name,
+        },
     )
 
     # assert
@@ -1106,32 +1105,32 @@ def test_create__not_authenticated__auth_error(
     # arrange
     master_account = create_test_account(
         plan=BillingPlanType.UNLIMITED,
-        lease_level=LeaseLevel.TENANT
+        lease_level=LeaseLevel.TENANT,
     )
     create_test_user(account=master_account)
     tenant_name = 'some name'
     account_service_init_mock = mocker.patch.object(
         AccountService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     user_service_init_mock = mocker.patch.object(
         UserService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     sys_workflow_service_init_mock = mocker.patch.object(
         SystemWorkflowService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
 
     # act
     response = api_client.post(
         '/tenants',
         data={
-            'tenant_name': tenant_name
-        }
+            'tenant_name': tenant_name,
+        },
     )
 
     # assert

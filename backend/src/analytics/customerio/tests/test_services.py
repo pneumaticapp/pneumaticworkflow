@@ -1,14 +1,14 @@
 import pytest
+
+from src.analytics import messages
+from src.analytics.customerio import exceptions
+from src.analytics.customerio.enums import MetricType
 from src.analytics.customerio.services import (
-    WebHookService
+    WebHookService,
 )
 from src.processes.tests.fixtures import (
-    create_test_user
+    create_test_user,
 )
-from src.analytics.customerio.enums import MetricType
-from src.analytics.customerio import exceptions
-from src.analytics import messages
-
 
 pytestmark = pytest.mark.django_db
 
@@ -21,7 +21,7 @@ class TestWebHookService:
         data = {
             'identifiers': {
                 'id': user.id,
-            }
+            },
         }
 
         # act
@@ -32,17 +32,17 @@ class TestWebHookService:
 
     def test_get_webhook_user__user_not_found_prod_env__raise_exception(
         self,
-        mocker
+        mocker,
     ):
         # arrange
         data = {
             'identifiers': {
                 'id': 999,
-            }
+            },
         }
         mocker.patch(
             'src.analytics.customerio.services.configuration',
-            'Production'
+            'Production',
         )
 
         # act
@@ -54,17 +54,17 @@ class TestWebHookService:
 
     def test_get_webhook_user__user_not_found_dev_env__return_none(
         self,
-        mocker
+        mocker,
     ):
         # arrange
         data = {
             'identifiers': {
                 'id': 999,
-            }
+            },
         }
         mocker.patch(
             'src.analytics.customerio.services.configuration',
-            'Staging'
+            'Staging',
         )
 
         # act
@@ -79,15 +79,15 @@ class TestWebHookService:
         metric_data = {
             'identifiers': {
                 'email': 'example@mail.ru',
-            }
+            },
         }
         webhook_data = {
             'metric': MetricType.SUBSCRIBED,
-            'data': metric_data
+            'data': metric_data,
         }
         subscribe_handler_mock = mocker.patch(
             'src.analytics.customerio.services'
-            '.WebHookService._subscribe_handler'
+            '.WebHookService._subscribe_handler',
         )
 
         # act
@@ -95,7 +95,7 @@ class TestWebHookService:
 
         # assert
         subscribe_handler_mock.assert_called_once_with(
-            metric_data
+            metric_data,
         )
 
     def test_handle__unsubscribe_metric__ok(self, mocker):
@@ -104,15 +104,15 @@ class TestWebHookService:
         metric_data = {
             'identifiers': {
                 'email': 'example@mail.ru',
-            }
+            },
         }
         webhook_data = {
             'metric': MetricType.UNSUBSCRIBED,
-            'data': metric_data
+            'data': metric_data,
         }
         unsubscribe_handler_mock = mocker.patch(
             'src.analytics.customerio.services'
-            '.WebHookService._unsubscribe_handler'
+            '.WebHookService._unsubscribe_handler',
         )
 
         # act
@@ -120,7 +120,7 @@ class TestWebHookService:
 
         # assert
         unsubscribe_handler_mock.assert_called_once_with(
-            metric_data
+            metric_data,
         )
 
     def test_handle__unsupported_metric__raise_exception(self, mocker):
@@ -129,11 +129,11 @@ class TestWebHookService:
         metric = 'undefined'
         webhook_data = {
             'metric': metric,
-            'data': {}
+            'data': {},
         }
         unsubscribe_handler_mock = mocker.patch(
             'src.analytics.customerio.services'
-            '.WebHookService._unsubscribe_handler'
+            '.WebHookService._unsubscribe_handler',
         )
 
         # act
@@ -154,8 +154,8 @@ class TestWebHookService:
             'data': {
                 'user': {
                     'id': 999,
-                }
-            }
+                },
+            },
         }
 
         # act
@@ -172,12 +172,12 @@ class TestWebHookService:
         data = {
             'identifiers': {
                 'id': user.id,
-            }
+            },
         }
         get_user_mock = mocker.patch(
             'src.analytics.customerio.services'
             '.WebHookService._get_webhook_user',
-            return_value=user
+            return_value=user,
         )
 
         # act
@@ -194,12 +194,12 @@ class TestWebHookService:
         data = {
             'identifiers': {
                 'id': 999,
-            }
+            },
         }
         get_user_mock = mocker.patch(
             'src.analytics.customerio.services'
             '.WebHookService._get_webhook_user',
-            return_value=None
+            return_value=None,
         )
 
         # act
@@ -214,12 +214,12 @@ class TestWebHookService:
         data = {
             'identifiers': {
                 'id': 999,
-            }
+            },
         }
         get_user_mock = mocker.patch(
             'src.analytics.customerio.services'
             '.WebHookService._get_webhook_user',
-            return_value=None
+            return_value=None,
         )
 
         # act
@@ -235,12 +235,12 @@ class TestWebHookService:
         data = {
             'identifiers': {
                 'id': user.id,
-            }
+            },
         }
         get_user_mock = mocker.patch(
             'src.analytics.customerio.services'
             '.WebHookService._get_webhook_user',
-            return_value=user
+            return_value=user,
         )
 
         # act
