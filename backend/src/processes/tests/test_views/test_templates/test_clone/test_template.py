@@ -1,19 +1,19 @@
 import pytest
-from src.processes.tests.fixtures import (
-    create_test_user,
-    create_test_account,
-    create_test_group
-)
-from src.accounts.enums import BillingPlanType
-from src.processes.models import (
-    TemplateDraft,
-    Template,
-)
-from src.processes.enums import (
-    PerformerType,
-    OwnerType
-)
 
+from src.accounts.enums import BillingPlanType
+from src.processes.enums import (
+    OwnerType,
+    PerformerType,
+)
+from src.processes.models.templates.template import (
+    Template,
+    TemplateDraft,
+)
+from src.processes.tests.fixtures import (
+    create_test_account,
+    create_test_group,
+    create_test_user,
+)
 
 pytestmark = pytest.mark.django_db
 
@@ -25,7 +25,7 @@ class TestCopyTemplate:
         self,
         mocker,
         is_active,
-        api_client
+        api_client,
     ):
 
         # arrange
@@ -42,7 +42,7 @@ class TestCopyTemplate:
             'owners': [
                 {
                     'type': OwnerType.USER,
-                    'source_id': user.id
+                    'source_id': user.id,
                 },
             ],
             'kickoff': {},
@@ -53,28 +53,28 @@ class TestCopyTemplate:
                     'raw_performers': [
                         {
                             'type': PerformerType.USER,
-                            'source_id': user.id
-                        }
-                    ]
-                }
-            ]
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+            ],
         }
 
         response = api_client.post(
             path='/templates',
-            data=request_data
+            data=request_data,
         )
         response_1_data = response.json()
         template = Template.objects.get(id=response.data['id'])
         create_integrations_mock = mocker.patch(
             'src.processes.services.templates.'
             'integrations.TemplateIntegrationsService.'
-            'create_integrations_for_template'
+            'create_integrations_for_template',
         )
 
         # act
         response = api_client.post(
-            f'/templates/{template.id}/clone'
+            f'/templates/{template.id}/clone',
         )
 
         # assert
@@ -102,13 +102,13 @@ class TestCopyTemplate:
         draft = TemplateDraft.objects.get(template_id=response_2_data['id'])
         assert draft.draft == response_2_data
         create_integrations_mock.assert_called_once_with(
-            template=draft.template
+            template=draft.template,
         )
 
     def test_copy__api_names_equal_param_name__ok(
         self,
         mocker,
-        api_client
+        api_client,
     ):
         """ https://trello.com/c/NKD5YQr6 """
         # arrange
@@ -124,10 +124,10 @@ class TestCopyTemplate:
                     'raw_performers': [
                         {
                             'type': PerformerType.USER,
-                            'source_id': user.id
-                        }
+                            'source_id': user.id,
+                        },
                     ],
-                    "require_completion_by_all": False
+                    "require_completion_by_all": False,
                 },
             ],
             "kickoff": {
@@ -138,10 +138,10 @@ class TestCopyTemplate:
                         "order": 7,
                         "api_name": "name",
                         "description": "",
-                        "is_required": False
+                        "is_required": False,
                     },
                 ],
-                "description": ""
+                "description": "",
             },
             "is_active": False,
             "updated_by": None,
@@ -150,7 +150,7 @@ class TestCopyTemplate:
             "owners": [
                 {
                     'type': OwnerType.USER,
-                    'source_id': user.id
+                    'source_id': user.id,
                 },
             ],
             "tasks_count": 7,
@@ -170,12 +170,12 @@ class TestCopyTemplate:
         template_id = data['id']
         mocker.patch(
             'src.processes.services.templates.'
-            'integrations.TemplateIntegrationsService.template_updated'
+            'integrations.TemplateIntegrationsService.template_updated',
         )
 
         response = api_client.put(
             f'/templates/{template_id}',
-            data=data
+            data=data,
         )
 
         assert response.status_code == 200
@@ -198,7 +198,7 @@ class TestCopyTemplate:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'kickoff': {},
@@ -209,17 +209,17 @@ class TestCopyTemplate:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': user.id
-                            }
-                        ]
-                    }
-                ]
-            }
+                                'source_id': user.id,
+                            },
+                        ],
+                    },
+                ],
+            },
         )
 
         # act
         response = api_client.post(
-            f'/templates/{response.data["id"]}/clone'
+            f'/templates/{response.data["id"]}/clone',
         )
 
         # assert
@@ -230,7 +230,7 @@ class TestCopyTemplate:
     def test_clone__raw_performers_group__ok(
         self,
         mocker,
-        api_client
+        api_client,
     ):
 
         # arrange
@@ -244,7 +244,7 @@ class TestCopyTemplate:
             'owners': [
                 {
                     'type': OwnerType.USER,
-                    'source_id': user.id
+                    'source_id': user.id,
                 },
             ],
             'kickoff': {},
@@ -255,27 +255,27 @@ class TestCopyTemplate:
                     'raw_performers': [
                         {
                             'type': PerformerType.GROUP,
-                            'source_id': group.id
-                        }
-                    ]
-                }
-            ]
+                            'source_id': group.id,
+                        },
+                    ],
+                },
+            ],
         }
 
         response = api_client.post(
             path='/templates',
-            data=request_data
+            data=request_data,
         )
         template = Template.objects.get(id=response.data['id'])
         mocker.patch(
             'src.processes.services.templates.'
             'integrations.TemplateIntegrationsService.'
-            'create_integrations_for_template'
+            'create_integrations_for_template',
         )
 
         # act
         response = api_client.post(
-            f'/templates/{template.id}/clone'
+            f'/templates/{template.id}/clone',
         )
 
         # assert

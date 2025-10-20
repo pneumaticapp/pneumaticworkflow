@@ -1,18 +1,18 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
+
+from src.accounts.models import UserGroup
 from src.generics.fields import AccountPrimaryKeyRelatedField
 from src.generics.mixins.serializers import (
-    CustomValidationErrorMixin
+    CustomValidationErrorMixin,
 )
-from src.accounts.models import UserGroup
-
 
 UserModel = get_user_model()
 
 
 class ReassignSerializer(
     CustomValidationErrorMixin,
-    serializers.Serializer
+    serializers.Serializer,
 ):
 
     """ Old user/group from can be reassigned to new user/group
@@ -43,7 +43,7 @@ class ReassignSerializer(
 
 class AcceptTransferSerializer(
     CustomValidationErrorMixin,
-    serializers.Serializer
+    serializers.Serializer,
 ):
     user_id = serializers.IntegerField(required=True)
     token = serializers.CharField(required=True)

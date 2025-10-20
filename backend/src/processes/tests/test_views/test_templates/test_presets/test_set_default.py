@@ -1,13 +1,13 @@
 import pytest
+
+from src.authentication.enums import AuthTokenType
+from src.processes.enums import PresetType
 from src.processes.tests.fixtures import (
-    create_test_admin,
     create_test_account,
+    create_test_admin,
     create_test_template,
     create_test_template_preset,
 )
-from src.processes.enums import PresetType
-from src.authentication.enums import AuthTokenType
-
 
 pytestmark = pytest.mark.django_db
 
@@ -23,7 +23,7 @@ class TestTemplatePresetSetDefaultView:
             template=template,
             author=user,
             is_default=False,
-            type=PresetType.PERSONAL
+            type=PresetType.PERSONAL,
         )
 
         api_client.token_authenticate(user)
@@ -32,7 +32,7 @@ class TestTemplatePresetSetDefaultView:
 
         service_class_mock = mocker.patch(
             'src.processes.views.template_preset.TemplatePresetService',
-            return_value=mock_service
+            return_value=mock_service,
         )
 
         # act
@@ -44,14 +44,14 @@ class TestTemplatePresetSetDefaultView:
             user=user,
             instance=preset,
             is_superuser=False,
-            auth_type=AuthTokenType.USER
+            auth_type=AuthTokenType.USER,
         )
         mock_service.set_default.assert_called_once()
 
     def test_set_default__preset_not_found__not_found(
         self,
         api_client,
-        mocker
+        mocker,
     ):
         # arrange
         account = create_test_account()
@@ -61,12 +61,12 @@ class TestTemplatePresetSetDefaultView:
         fake_preset_id = 99999
 
         service_class_mock = mocker.patch(
-            'src.processes.views.template_preset.TemplatePresetService'
+            'src.processes.views.template_preset.TemplatePresetService',
         )
 
         # act
         response = api_client.post(
-            f'/templates/presets/{fake_preset_id}/default'
+            f'/templates/presets/{fake_preset_id}/default',
         )
 
         # assert
@@ -76,18 +76,18 @@ class TestTemplatePresetSetDefaultView:
     def test_set_default__not_authenticated__unauthorized(
         self,
         api_client,
-        mocker
+        mocker,
     ):
         # arrange
         fake_preset_id = 1
 
         service_class_mock = mocker.patch(
-            'src.processes.views.template_preset.TemplatePresetService'
+            'src.processes.views.template_preset.TemplatePresetService',
         )
 
         # act
         response = api_client.post(
-            f'/templates/presets/{fake_preset_id}/default'
+            f'/templates/presets/{fake_preset_id}/default',
         )
 
         # assert
@@ -97,7 +97,7 @@ class TestTemplatePresetSetDefaultView:
     def test_set_default__not_author__permission_denied(
         self,
         api_client,
-        mocker
+        mocker,
     ):
         # arrange
         account = create_test_account()
@@ -108,13 +108,13 @@ class TestTemplatePresetSetDefaultView:
             template=template,
             author=user1,
             is_default=False,
-            type=PresetType.PERSONAL
+            type=PresetType.PERSONAL,
         )
 
         api_client.token_authenticate(user2)
 
         service_class_mock = mocker.patch(
-            'src.processes.views.template_preset.TemplatePresetService'
+            'src.processes.views.template_preset.TemplatePresetService',
         )
 
         # act
@@ -127,7 +127,7 @@ class TestTemplatePresetSetDefaultView:
     def test_set_default__different_account__permission_denied(
         self,
         api_client,
-        mocker
+        mocker,
     ):
         # arrange
         account1 = create_test_account()
@@ -140,13 +140,13 @@ class TestTemplatePresetSetDefaultView:
             template=template,
             author=user1,
             is_default=False,
-            type=PresetType.PERSONAL
+            type=PresetType.PERSONAL,
         )
 
         api_client.token_authenticate(user2)
 
         service_class_mock = mocker.patch(
-            'src.processes.views.template_preset.TemplatePresetService'
+            'src.processes.views.template_preset.TemplatePresetService',
         )
 
         # act
@@ -159,7 +159,7 @@ class TestTemplatePresetSetDefaultView:
     def test_set_default__account_preset_by_admin__permission_denied(
         self,
         api_client,
-        mocker
+        mocker,
     ):
         # arrange
         account = create_test_account()
@@ -170,13 +170,13 @@ class TestTemplatePresetSetDefaultView:
             template=template,
             author=user1,
             is_default=False,
-            type=PresetType.ACCOUNT
+            type=PresetType.ACCOUNT,
         )
 
         api_client.token_authenticate(user2)
 
         service_class_mock = mocker.patch(
-            'src.processes.views.template_preset.TemplatePresetService'
+            'src.processes.views.template_preset.TemplatePresetService',
         )
 
         # act
@@ -195,7 +195,7 @@ class TestTemplatePresetSetDefaultView:
             template=template,
             author=user,
             is_default=True,
-            type=PresetType.PERSONAL
+            type=PresetType.PERSONAL,
         )
 
         api_client.token_authenticate(user)
@@ -204,7 +204,7 @@ class TestTemplatePresetSetDefaultView:
 
         service_class_mock = mocker.patch(
             'src.processes.views.template_preset.TemplatePresetService',
-            return_value=mock_service
+            return_value=mock_service,
         )
 
         # act
@@ -216,6 +216,6 @@ class TestTemplatePresetSetDefaultView:
             user=user,
             instance=preset,
             is_superuser=False,
-            auth_type=AuthTokenType.USER
+            auth_type=AuthTokenType.USER,
         )
         mock_service.set_default.assert_called_once()

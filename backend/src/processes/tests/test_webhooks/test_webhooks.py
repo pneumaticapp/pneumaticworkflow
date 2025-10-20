@@ -1,18 +1,19 @@
 import pytest
-from django.utils import timezone
 from django.contrib.auth import get_user_model
+from django.utils import timezone
 from typing_extensions import OrderedDict
+
 from src.processes.enums import TaskStatus, WorkflowStatus
-from src.processes.models import Workflow
+from src.processes.models.workflows.workflow import Workflow
 from src.processes.tests.fixtures import (
-    create_test_workflow,
-    create_test_owner,
-    create_wf_created_webhook,
     create_task_completed_webhook,
     create_task_returned_webhook,
-    create_test_template, create_wf_completed_webhook
+    create_test_owner,
+    create_test_template,
+    create_test_workflow,
+    create_wf_completed_webhook,
+    create_wf_created_webhook,
 )
-
 
 UserModel = get_user_model()
 pytestmark = pytest.mark.django_db
@@ -24,7 +25,7 @@ def test_send_task_completed_webhook__ok(api_client, mocker):
     user = create_test_owner()
     workflow = create_test_workflow(
         user=user,
-        tasks_count=2
+        tasks_count=2,
     )
     template = workflow.template
     create_task_completed_webhook(user)
@@ -32,7 +33,7 @@ def test_send_task_completed_webhook__ok(api_client, mocker):
     api_client.token_authenticate(user)
     complete_task_webhook_mock = mocker.patch(
         'src.processes.tasks.webhooks.'
-        'send_task_completed_webhook.delay'
+        'send_task_completed_webhook.delay',
     )
 
     # act
@@ -67,11 +68,11 @@ def test_send_task_completed_webhook__ok(api_client, mocker):
                     ('is_completed', True),
                     (
                         'date_completed_tsp',
-                        task_performer.date_completed.timestamp()
+                        task_performer.date_completed.timestamp(),
                     ),
                     ('type', 'user'),
-                    ('source_id', user.id)
-                ])
+                    ('source_id', user.id),
+                ]),
             ],
             'is_urgent': False,
             'checklists_marked': 0,
@@ -100,11 +101,11 @@ def test_send_task_completed_webhook__ok(api_client, mocker):
                     ('id', template.id),
                     ('name', 'Test workflow'),
                     ('is_active', True),
-                    ('wf_name_template', None)
+                    ('wf_name_template', None),
                 ]),
                 'kickoff': {
                     'id': workflow.kickoff_instance.id,
-                    'output': []
+                    'output': [],
                 },
                 'tasks': [
                     OrderedDict([
@@ -118,18 +119,18 @@ def test_send_task_completed_webhook__ok(api_client, mocker):
                         ('date_started_tsp', task_1.date_started.timestamp()),
                         (
                             'date_completed_tsp',
-                            task_1.date_completed.timestamp()
+                            task_1.date_completed.timestamp(),
                         ),
                         ('performers', [
                             OrderedDict([
                                 ('is_completed', True),
                                 (
                                     'date_completed_tsp',
-                                    task_performer.date_completed.timestamp()
+                                    task_performer.date_completed.timestamp(),
                                 ),
                                 ('type', 'user'),
-                                ('source_id', user.id)
-                            ])
+                                ('source_id', user.id),
+                            ]),
                         ]),
                         ('checklists_total', 0),
                         ('checklists_marked', 0),
@@ -150,21 +151,21 @@ def test_send_task_completed_webhook__ok(api_client, mocker):
                                 ('is_completed', False),
                                 ('date_completed_tsp', None),
                                 ('type', 'user'),
-                                ('source_id', user.id)
-                            ])
+                                ('source_id', user.id),
+                            ]),
                         ]),
                         ('checklists_total', 0),
                         ('checklists_marked', 0),
                         ('status', 'active'),
-                    ])
-                ]
-            }
-        }
+                    ]),
+                ],
+            },
+        },
     }
     complete_task_webhook_mock.assert_called_once_with(
         user_id=user.id,
         account_id=user.account_id,
-        payload=payload
+        payload=payload,
     )
 
 
@@ -174,7 +175,7 @@ def test_send_task_completed_webhook__sub_workflows__ok(api_client, mocker):
     user = create_test_owner()
     workflow = create_test_workflow(
         user=user,
-        tasks_count=2
+        tasks_count=2,
     )
     template = workflow.template
     create_task_completed_webhook(user)
@@ -183,22 +184,22 @@ def test_send_task_completed_webhook__sub_workflows__ok(api_client, mocker):
         user=user,
         tasks_count=1,
         ancestor_task=task_1,
-        status=WorkflowStatus.DONE
+        status=WorkflowStatus.DONE,
     )
     sub_workflow.tasks.update(
         status=TaskStatus.COMPLETED,
-        date_completed=timezone.now()
+        date_completed=timezone.now(),
     )
     sub_task = sub_workflow.tasks.first()
     sub_task.taskperformer_set.update(
         is_completed=True,
-        date_completed=timezone.now()
+        date_completed=timezone.now(),
     )
     sub_task_performer = sub_task.taskperformer_set.get(user=user)
     api_client.token_authenticate(user)
     complete_task_webhook_mock = mocker.patch(
         'src.processes.tasks.webhooks.'
-        'send_task_completed_webhook.delay'
+        'send_task_completed_webhook.delay',
     )
 
     # act
@@ -233,11 +234,11 @@ def test_send_task_completed_webhook__sub_workflows__ok(api_client, mocker):
                     ('is_completed', True),
                     (
                         'date_completed_tsp',
-                        task_performer.date_completed.timestamp()
+                        task_performer.date_completed.timestamp(),
                     ),
                     ('type', 'user'),
-                    ('source_id', user.id)
-                ])
+                    ('source_id', user.id),
+                ]),
             ],
             'is_urgent': False,
             'checklists_marked': 0,
@@ -256,11 +257,11 @@ def test_send_task_completed_webhook__sub_workflows__ok(api_client, mocker):
                     ('is_urgent', False),
                     (
                         'date_created_tsp',
-                        sub_workflow.date_created.timestamp()
+                        sub_workflow.date_created.timestamp(),
                     ),
                     (
                         'date_completed_tsp',
-                        sub_workflow.date_completed.timestamp()
+                        sub_workflow.date_completed.timestamp(),
                     ),
                     ('workflow_starter', user.id),
                     ('ancestor_task_id', task_1.id),
@@ -272,7 +273,7 @@ def test_send_task_completed_webhook__sub_workflows__ok(api_client, mocker):
                             ('id', sub_workflow.template_id),
                             ('name', 'Test workflow'),
                             ('is_active', True),
-                        ])
+                        ]),
                     ),
                     ('owners', [user.id]),
                     ('tasks', [
@@ -286,11 +287,11 @@ def test_send_task_completed_webhook__sub_workflows__ok(api_client, mocker):
                             ('due_date_tsp', None),
                             (
                                 'date_started_tsp',
-                                sub_task.date_started.timestamp()
+                                sub_task.date_started.timestamp(),
                             ),
                             (
                                 'date_completed_tsp',
-                                sub_task.date_completed.timestamp()
+                                sub_task.date_completed.timestamp(),
                             ),
                             ('performers', [
                                 OrderedDict([
@@ -298,20 +299,20 @@ def test_send_task_completed_webhook__sub_workflows__ok(api_client, mocker):
                                     (
                                         'date_completed_tsp',
                                         sub_task_performer.
-                                        date_completed.timestamp()
+                                        date_completed.timestamp(),
                                     ),
                                     ('type', 'user'),
-                                    ('source_id', user.id)
-                                ])
+                                    ('source_id', user.id),
+                                ]),
                             ]),
                             ('checklists_total', 0),
                             ('checklists_marked', 0),
                             ('status', 'completed'),
-                        ])
+                        ]),
                     ]),
                     ('fields', []),
                     ('due_date_tsp', None),
-                ])
+                ]),
             ],
             'workflow': {
                 'id': workflow.id,
@@ -333,11 +334,11 @@ def test_send_task_completed_webhook__sub_workflows__ok(api_client, mocker):
                     ('id', template.id),
                     ('name', 'Test workflow'),
                     ('is_active', True),
-                    ('wf_name_template', None)
+                    ('wf_name_template', None),
                 ]),
                 'kickoff': {
                     'id': workflow.kickoff_instance.id,
-                    'output': []
+                    'output': [],
                 },
                 'tasks': [
                     OrderedDict([
@@ -351,18 +352,18 @@ def test_send_task_completed_webhook__sub_workflows__ok(api_client, mocker):
                         ('date_started_tsp', task_1.date_started.timestamp()),
                         (
                             'date_completed_tsp',
-                            task_1.date_completed.timestamp()
+                            task_1.date_completed.timestamp(),
                         ),
                         ('performers', [
                             OrderedDict([
                                 ('is_completed', True),
                                 (
                                     'date_completed_tsp',
-                                    task_performer.date_completed.timestamp()
+                                    task_performer.date_completed.timestamp(),
                                 ),
                                 ('type', 'user'),
-                                ('source_id', user.id)
-                            ])
+                                ('source_id', user.id),
+                            ]),
                         ]),
                         ('checklists_total', 0),
                         ('checklists_marked', 0),
@@ -383,21 +384,21 @@ def test_send_task_completed_webhook__sub_workflows__ok(api_client, mocker):
                                 ('is_completed', False),
                                 ('date_completed_tsp', None),
                                 ('type', 'user'),
-                                ('source_id', user.id)
-                            ])
+                                ('source_id', user.id),
+                            ]),
                         ]),
                         ('checklists_total', 0),
                         ('checklists_marked', 0),
                         ('status', 'active'),
-                    ])
-                ]
-            }
-        }
+                    ]),
+                ],
+            },
+        },
     }
     complete_task_webhook_mock.assert_called_once_with(
         user_id=user.id,
         account_id=user.account_id,
-        payload=payload
+        payload=payload,
     )
 
 
@@ -408,7 +409,7 @@ def test_send_task_returned_webhook__ok(api_client, mocker):
     workflow = create_test_workflow(
         user=user,
         tasks_count=2,
-        active_task_number=2
+        active_task_number=2,
     )
     template = workflow.template
     create_task_returned_webhook(user)
@@ -416,13 +417,13 @@ def test_send_task_returned_webhook__ok(api_client, mocker):
     api_client.token_authenticate(user)
     send_task_returned_webhook_mock = mocker.patch(
         'src.processes.tasks.webhooks.'
-        'send_task_returned_webhook.delay'
+        'send_task_returned_webhook.delay',
     )
 
     # act
     response = api_client.post(
         f'/v2/tasks/{task_2.id}/revert',
-        data={'comment': 'test'}
+        data={'comment': 'test'},
     )
 
     # assert
@@ -451,8 +452,8 @@ def test_send_task_returned_webhook__ok(api_client, mocker):
                     ('is_completed', False),
                     ('date_completed_tsp', None),
                     ('type', 'user'),
-                    ('source_id', user.id)
-                ])
+                    ('source_id', user.id),
+                ]),
             ],
             'is_urgent': False,
             'checklists_marked': 0,
@@ -464,8 +465,8 @@ def test_send_task_returned_webhook__ok(api_client, mocker):
                 OrderedDict([
                     ('id', task_1.id),
                     ('name', task_1.name),
-                    ('api_name', task_1.api_name)
-                ])
+                    ('api_name', task_1.api_name),
+                ]),
             ],
             'workflow': {
                 'id': workflow.id,
@@ -487,11 +488,11 @@ def test_send_task_returned_webhook__ok(api_client, mocker):
                     ('id', template.id),
                     ('name', 'Test workflow'),
                     ('is_active', True),
-                    ('wf_name_template', None)
+                    ('wf_name_template', None),
                 ]),
                 'kickoff': {
                     'id': workflow.kickoff_instance.id,
-                    'output': []
+                    'output': [],
                 },
                 'tasks': [
                     OrderedDict([
@@ -509,8 +510,8 @@ def test_send_task_returned_webhook__ok(api_client, mocker):
                                 ('is_completed', False),
                                 ('date_completed_tsp', None),
                                 ('type', 'user'),
-                                ('source_id', user.id)
-                            ])
+                                ('source_id', user.id),
+                            ]),
                         ]),
                         ('checklists_total', 0),
                         ('checklists_marked', 0),
@@ -531,21 +532,21 @@ def test_send_task_returned_webhook__ok(api_client, mocker):
                                 ('is_completed', False),
                                 ('date_completed_tsp', None),
                                 ('type', 'user'),
-                                ('source_id', user.id)
-                            ])
+                                ('source_id', user.id),
+                            ]),
                         ]),
                         ('checklists_total', 0),
                         ('checklists_marked', 0),
                         ('status', 'pending'),
-                    ])
-                ]
-            }
-        }
+                    ]),
+                ],
+            },
+        },
     }
     send_task_returned_webhook_mock.assert_called_once_with(
         user_id=user.id,
         account_id=user.account_id,
-        payload=payload
+        payload=payload,
     )
 
 
@@ -558,7 +559,7 @@ def test_send_workflow_started_webhook__ok(api_client, mocker):
     api_client.token_authenticate(user)
     send_workflow_started_webhook_mock = mocker.patch(
         'src.processes.tasks.webhooks.'
-        'send_workflow_started_webhook.delay'
+        'send_workflow_started_webhook.delay',
     )
 
     # act
@@ -592,11 +593,11 @@ def test_send_workflow_started_webhook__ok(api_client, mocker):
                 ('id', template.id),
                 ('name', 'Test workflow'),
                 ('is_active', True),
-                ('wf_name_template', None)
+                ('wf_name_template', None),
             ]),
             'kickoff': {
                 'id': workflow.kickoff_instance.id,
-                'output': []
+                'output': [],
             },
             'tasks': [
                 OrderedDict([
@@ -614,8 +615,8 @@ def test_send_workflow_started_webhook__ok(api_client, mocker):
                             ('is_completed', False),
                             ('date_completed_tsp', None),
                             ('type', 'user'),
-                            ('source_id', user.id)
-                        ])
+                            ('source_id', user.id),
+                        ]),
                     ]),
                     ('checklists_total', 0),
                     ('checklists_marked', 0),
@@ -635,14 +636,14 @@ def test_send_workflow_started_webhook__ok(api_client, mocker):
                     ('checklists_total', 0),
                     ('checklists_marked', 0),
                     ('status', 'pending'),
-                ])
-            ]
-        }
+                ]),
+            ],
+        },
     }
     send_workflow_started_webhook_mock.assert_called_once_with(
         user_id=user.id,
         account_id=user.account_id,
-        payload=payload
+        payload=payload,
     )
 
 
@@ -656,7 +657,7 @@ def test_send_workflow_completed_webhook__ok(api_client, mocker):
     api_client.token_authenticate(user)
     send_workflow_completed_webhook_mock = mocker.patch(
         'src.processes.tasks.webhooks.'
-        'send_workflow_completed_webhook.delay'
+        'send_workflow_completed_webhook.delay',
     )
 
     # act
@@ -694,11 +695,11 @@ def test_send_workflow_completed_webhook__ok(api_client, mocker):
                 ('id', workflow.template_id),
                 ('name', 'Test workflow'),
                 ('is_active', True),
-                ('wf_name_template', None)
+                ('wf_name_template', None),
             ]),
             'kickoff': {
                 'id': workflow.kickoff_instance.id,
-                'output': []
+                'output': [],
             },
             'tasks': [
                 OrderedDict([
@@ -716,11 +717,11 @@ def test_send_workflow_completed_webhook__ok(api_client, mocker):
                             ('is_completed', True),
                             (
                                 'date_completed_tsp',
-                                performer_1.date_completed.timestamp()
+                                performer_1.date_completed.timestamp(),
                             ),
                             ('type', 'user'),
-                            ('source_id', user.id)
-                        ])
+                            ('source_id', user.id),
+                        ]),
                     ]),
                     ('checklists_total', 0),
                     ('checklists_marked', 0),
@@ -741,21 +742,21 @@ def test_send_workflow_completed_webhook__ok(api_client, mocker):
                             ('is_completed', True),
                             (
                                 'date_completed_tsp',
-                                performer_2.date_completed.timestamp()
+                                performer_2.date_completed.timestamp(),
                             ),
                             ('type', 'user'),
-                            ('source_id', user.id)
-                        ])
+                            ('source_id', user.id),
+                        ]),
                     ]),
                     ('checklists_total', 0),
                     ('checklists_marked', 0),
                     ('status', 'completed'),
-                ])
-            ]
-        }
+                ]),
+            ],
+        },
     }
     send_workflow_completed_webhook_mock.assert_called_once_with(
         user_id=user.id,
         account_id=user.account_id,
-        payload=payload
+        payload=payload,
     )

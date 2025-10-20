@@ -1,18 +1,18 @@
 import pytest
-from src.processes.tests.fixtures import (
-    create_test_user,
-    create_test_template,
-)
-from src.processes.models import (
-    FieldTemplate,
+
+from src.authentication.tokens import (
+    EmbedToken,
+    PublicToken,
 )
 from src.processes.enums import (
-    FieldType
+    FieldType,
 )
-from src.authentication.tokens import (
-    PublicToken,
-    EmbedToken,
+from src.processes.models.templates.fields import FieldTemplate
+from src.processes.tests.fixtures import (
+    create_test_template,
+    create_test_user,
 )
+
 pytestmark = pytest.mark.django_db
 
 
@@ -26,7 +26,7 @@ class TestRetrievePublicTemplate:
             user=user,
             is_active=True,
             is_public=True,
-            tasks_count=1
+            tasks_count=1,
         )
         FieldTemplate.objects.create(
             order=1,
@@ -40,22 +40,22 @@ class TestRetrievePublicTemplate:
         get_token_mock = mocker.patch(
             'src.authentication.services.public_auth.'
             'PublicAuthService.get_token',
-            return_value=token
+            return_value=token,
         )
         get_template_mock = mocker.patch(
             'src.authentication.services.public_auth.'
             'PublicAuthService.get_template',
-            return_value=template
+            return_value=template,
         )
         settings_mock = mocker.patch(
-            'src.processes.views.public.template.settings'
+            'src.processes.views.public.template.settings',
         )
         settings_mock.PROJECT_CONF = {'CAPTCHA': True}
 
         # act
         response = api_client.get(
-            path=f'/templates/public',
-            **{'X-Public-Authorization': auth_header_value}
+            path='/templates/public',
+            **{'X-Public-Authorization': auth_header_value},
         )
 
         # assert
@@ -75,7 +75,7 @@ class TestRetrievePublicTemplate:
     def test_retrieve__not_authenticated__permission_denied(
         self,
         api_client,
-        mocker
+        mocker,
     ):
 
         # arrange
@@ -84,27 +84,27 @@ class TestRetrievePublicTemplate:
             user=user,
             is_active=True,
             is_public=True,
-            tasks_count=1
+            tasks_count=1,
         )
         auth_header_value = f'Token {template.public_id}'
         get_token_mock = mocker.patch(
             'src.authentication.services.public_auth.'
             'PublicAuthService.get_token',
-            return_value=None
+            return_value=None,
         )
         get_template_mock = mocker.patch(
             'src.authentication.services.public_auth.'
             'PublicAuthService.get_template',
         )
         settings_mock = mocker.patch(
-            'src.processes.views.public.template.settings'
+            'src.processes.views.public.template.settings',
         )
         settings_mock.PROJECT_CONF = {'CAPTCHA': True}
 
         # act
         response = api_client.get(
-            path=f'/templates/public',
-            **{'X-Public-Authorization': auth_header_value}
+            path='/templates/public',
+            **{'X-Public-Authorization': auth_header_value},
         )
 
         # assert
@@ -124,22 +124,22 @@ class TestRetrievePublicTemplate:
             user=user,
             is_active=True,
             is_public=True,
-            tasks_count=1
+            tasks_count=1,
         )
         auth_header_value = f'Token {template.public_id}'
         token = PublicToken(template.public_id)
         mocker.patch(
             'src.authentication.services.public_auth.'
             'PublicAuthService.get_token',
-            return_value=token
+            return_value=token,
         )
         mocker.patch(
             'src.authentication.services.public_auth.'
             'PublicAuthService.get_template',
-            return_value=template
+            return_value=template,
         )
         settings_mock = mocker.patch(
-            'src.processes.views.public.template.settings'
+            'src.processes.views.public.template.settings',
         )
         settings_mock.PROJECT_CONF = {'CAPTCHA': True}
         mocker.patch(
@@ -147,24 +147,24 @@ class TestRetrievePublicTemplate:
             'integrations.TemplateIntegrationsService.public_api_request',
         )
         response_1 = api_client.get(
-            path=f'/templates/public',
-            **{'X-Public-Authorization': auth_header_value}
+            path='/templates/public',
+            **{'X-Public-Authorization': auth_header_value},
         )
         response_2 = api_client.post(
-            path=f'/templates/public/run',
+            path='/templates/public/run',
             data={'fields': {}},
-            **{'X-Public-Authorization': auth_header_value}
+            **{'X-Public-Authorization': auth_header_value},
         )
         anonymous_user_workflow_exists_mock = mocker.patch(
             'src.processes.views.public.template.'
             'PublicTemplateViewSet.anonymous_user_workflow_exists',
-            return_value=True
+            return_value=True,
         )
 
         # act
         response_3 = api_client.get(
-            path=f'/templates/public',
-            **{'X-Public-Authorization': auth_header_value}
+            path='/templates/public',
+            **{'X-Public-Authorization': auth_header_value},
         )
 
         # assert
@@ -182,34 +182,34 @@ class TestRetrievePublicTemplate:
             user=user,
             is_active=True,
             is_public=True,
-            tasks_count=1
+            tasks_count=1,
         )
         auth_header_value = f'Token {template.public_id}'
         token = PublicToken(template.public_id)
         get_token_mock = mocker.patch(
             'src.authentication.services.public_auth.'
             'PublicAuthService.get_token',
-            return_value=token
+            return_value=token,
         )
         get_template_mock = mocker.patch(
             'src.authentication.services.public_auth.'
             'PublicAuthService.get_template',
-            return_value=template
+            return_value=template,
         )
         settings_mock = mocker.patch(
-            'src.processes.views.public.template.settings'
+            'src.processes.views.public.template.settings',
         )
         settings_mock.PROJECT_CONF = {'CAPTCHA': False}
         anonymous_user_workflow_exists_mock = mocker.patch(
             'src.processes.views.public.template.'
             'PublicTemplateViewSet.anonymous_user_workflow_exists',
-            return_value=True
+            return_value=True,
         )
 
         # act
         response = api_client.get(
-            path=f'/templates/public',
-            **{'X-Public-Authorization': auth_header_value}
+            path='/templates/public',
+            **{'X-Public-Authorization': auth_header_value},
         )
 
         # assert
@@ -230,7 +230,7 @@ class TestRetrieveEmbedTemplate:
             user=user,
             is_active=True,
             is_embedded=True,
-            tasks_count=1
+            tasks_count=1,
         )
         FieldTemplate.objects.create(
             order=1,
@@ -244,22 +244,22 @@ class TestRetrieveEmbedTemplate:
         get_token_mock = mocker.patch(
             'src.authentication.services.public_auth.'
             'PublicAuthService.get_token',
-            return_value=token
+            return_value=token,
         )
         get_template_mock = mocker.patch(
             'src.authentication.services.public_auth.'
             'PublicAuthService.get_template',
-            return_value=template
+            return_value=template,
         )
         settings_mock = mocker.patch(
-            'src.processes.views.public.template.settings'
+            'src.processes.views.public.template.settings',
         )
         settings_mock.PROJECT_CONF = {'CAPTCHA': True}
 
         # act
         response = api_client.get(
-            path=f'/templates/public',
-            **{'X-Public-Authorization': auth_header_value}
+            path='/templates/public',
+            **{'X-Public-Authorization': auth_header_value},
         )
 
         # assert
@@ -279,7 +279,7 @@ class TestRetrieveEmbedTemplate:
     def test_retrieve__not_authenticated__permission_denied(
         self,
         api_client,
-        mocker
+        mocker,
     ):
 
         # arrange
@@ -288,27 +288,27 @@ class TestRetrieveEmbedTemplate:
             user=user,
             is_active=True,
             is_embedded=True,
-            tasks_count=1
+            tasks_count=1,
         )
         auth_header_value = f'Token {template.embed_id}'
         get_token_mock = mocker.patch(
             'src.authentication.services.public_auth.'
             'PublicAuthService.get_token',
-            return_value=None
+            return_value=None,
         )
         get_template_mock = mocker.patch(
             'src.authentication.services.public_auth.'
             'PublicAuthService.get_template',
         )
         settings_mock = mocker.patch(
-            'src.processes.views.public.template.settings'
+            'src.processes.views.public.template.settings',
         )
         settings_mock.PROJECT_CONF = {'CAPTCHA': True}
 
         # act
         response = api_client.get(
-            path=f'/templates/public',
-            **{'X-Public-Authorization': auth_header_value}
+            path='/templates/public',
+            **{'X-Public-Authorization': auth_header_value},
         )
 
         # assert
@@ -328,48 +328,48 @@ class TestRetrieveEmbedTemplate:
             user=user,
             is_active=True,
             is_embedded=True,
-            tasks_count=1
+            tasks_count=1,
         )
         auth_header_value = f'Token {template.embed_id}'
         token = EmbedToken(template.embed_id)
         mocker.patch(
             'src.authentication.services.public_auth.'
             'PublicAuthService.get_token',
-            return_value=token
+            return_value=token,
         )
         mocker.patch(
             'src.authentication.services.public_auth.'
             'PublicAuthService.get_template',
-            return_value=template
+            return_value=template,
         )
         settings_mock = mocker.patch(
-            'src.processes.views.public.template.settings'
+            'src.processes.views.public.template.settings',
         )
         settings_mock.PROJECT_CONF = {'CAPTCHA': True}
 
         response_1 = api_client.get(
-            path=f'/templates/public',
-            **{'X-Public-Authorization': auth_header_value}
+            path='/templates/public',
+            **{'X-Public-Authorization': auth_header_value},
         )
         mocker.patch(
             'src.processes.services.templates.'
             'integrations.TemplateIntegrationsService.public_api_request',
         )
         response_2 = api_client.post(
-            path=f'/templates/public/run',
+            path='/templates/public/run',
             data={'fields': {}},
-            **{'X-Public-Authorization': auth_header_value}
+            **{'X-Public-Authorization': auth_header_value},
         )
         anonymous_user_workflow_exists_mock = mocker.patch(
             'src.processes.views.public.template.'
             'PublicTemplateViewSet.anonymous_user_workflow_exists',
-            return_value=True
+            return_value=True,
         )
 
         # act
         response_3 = api_client.get(
-            path=f'/templates/public',
-            **{'X-Public-Authorization': auth_header_value}
+            path='/templates/public',
+            **{'X-Public-Authorization': auth_header_value},
         )
 
         # assert
@@ -387,7 +387,7 @@ class TestRetrieveEmbedTemplate:
             user=user,
             is_active=True,
             is_embedded=True,
-            tasks_count=1
+            tasks_count=1,
         )
         FieldTemplate.objects.create(
             order=1,
@@ -401,27 +401,27 @@ class TestRetrieveEmbedTemplate:
         get_token_mock = mocker.patch(
             'src.authentication.services.public_auth.'
             'PublicAuthService.get_token',
-            return_value=token
+            return_value=token,
         )
         get_template_mock = mocker.patch(
             'src.authentication.services.public_auth.'
             'PublicAuthService.get_template',
-            return_value=template
+            return_value=template,
         )
         settings_mock = mocker.patch(
-            'src.processes.views.public.template.settings'
+            'src.processes.views.public.template.settings',
         )
         settings_mock.PROJECT_CONF = {'CAPTCHA': False}
         anonymous_user_workflow_exists_mock = mocker.patch(
             'src.processes.views.public.template.'
             'PublicTemplateViewSet.anonymous_user_workflow_exists',
-            return_value=True
+            return_value=True,
         )
 
         # act
         response = api_client.get(
-            path=f'/templates/public',
-            **{'X-Public-Authorization': auth_header_value}
+            path='/templates/public',
+            **{'X-Public-Authorization': auth_header_value},
         )
 
         # assert

@@ -1,4 +1,5 @@
 import pytest
+
 from src.generics.tests.clients import PneumaticApiClient
 
 
@@ -10,5 +11,5 @@ def api_client():
 @pytest.fixture
 def identify_mock(mocker):
     return mocker.patch(
-        'src.analytics.mixins.BaseIdentifyMixin.identify'
+        'src.analytics.mixins.BaseIdentifyMixin.identify',
     )
