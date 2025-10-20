@@ -626,3 +626,14 @@ class WorkflowEventActionType:
     CHOICES = (
         (WATCHED, 'Watched'),
     )
+
+
+class PresetType:
+
+    PERSONAL = 'personal'
+    ACCOUNT = 'account'
+
+    CHOICES = (
+        (PERSONAL, 'Personal'),
+        (ACCOUNT, 'Account'),
+    )
