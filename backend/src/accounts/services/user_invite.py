@@ -37,6 +37,8 @@ from src.analytics.mixins import (
 from src.analytics.services import AnalyticService
 from src.authentication.enums import AuthTokenType
 from src.authentication.tokens import PneumaticToken
+from src.logs.enums import AccountEventStatus
+from src.logs.service import AccountLogService
 from src.notifications.tasks import (
     send_user_created_notification,
     send_user_updated_notification,
@@ -161,11 +163,24 @@ class UserInviteService(
     def _user_invite_actions(self, user: UserModel):
 
         self.identify(user)
+        invite_token = self._get_invite_token(user)
         AnalyticService.users_invited(
             invite_to=user,
             is_superuser=self.is_superuser,
-            invite_token=self._get_invite_token(user),
+            invite_token=invite_token,
         )
+        if self.account.log_api_requests:
+            AccountLogService().email_message(
+                title=f'Email to: {user.email}: Invite sent',
+                request_data={
+                    'token': invite_token,
+                    'from': self.request_user.email,
+                    'to': user.email,
+                },
+                account_id=self.account.id,
+                status=AccountEventStatus.SUCCESS,
+                contractor='Customer.io',
+            )
         AnalyticService.users_invite_sent(
             invite_from=self.request_user,
             invite_to=user,
