@@ -1,11 +1,10 @@
 from django.contrib.auth import get_user_model
 from django.db import models
-from django.db.models import UniqueConstraint, Q
+from django.db.models import Q, UniqueConstraint
 
 from src.generics.managers import BaseSoftDeleteManager
 from src.generics.models import SoftDeleteModel
 from src.notifications.querysets import DeviceQuerySet
-
 
 UserModel = get_user_model()
 
@@ -34,11 +33,11 @@ class Device(SoftDeleteModel):
     description = models.TextField(
         verbose_name='Device, OS and browser info',
         blank=True,
-        null=True
+        null=True,
     )
     is_app = models.BooleanField(
         default=False,
-        help_text='Indicates that the device is an Android or IOS application'
+        help_text='Indicates that the device is an Android or IOS application',
     )
     objects = BaseSoftDeleteManager.from_queryset(DeviceQuerySet)()
 
@@ -62,6 +61,6 @@ class UserNotifications(SoftDeleteModel):
     user = models.ForeignKey(
         UserModel,
         on_delete=models.CASCADE,
-        related_name='user_notifications'
+        related_name='user_notifications',
     )
     count_unread_push_in_ios_app = models.PositiveIntegerField(default=0)

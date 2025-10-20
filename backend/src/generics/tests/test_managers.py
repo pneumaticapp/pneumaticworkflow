@@ -1,4 +1,5 @@
 import pytest
+
 from src.generics.mixins.managers import SearchSqlQueryMixin
 
 
@@ -13,7 +14,7 @@ def test_get_tsquery__normal_text__ok():
     assert tsquery_params == {
         'search_0': 'normal',
         'search_1': 'search',
-        'search_2': 'text'
+        'search_2': 'text',
     }
 
 
@@ -24,8 +25,8 @@ def test_get_tsquery__normal_text__ok():
             {
                 'search_0': "'';",
                 'search_1': 'DROP',
-                'search_2': "''test\\\\''\\:"
-            }
+                'search_2': "''test\\\\''\\:",
+            },
         ),
         (
             "1' OR '1'='1 test",
@@ -33,14 +34,14 @@ def test_get_tsquery__normal_text__ok():
                 'search_0': "1''",
                 'search_1': 'OR',
                 'search_2': "''1''=''1",
-                'search_3': 'test'
-            }
+                'search_3': 'test',
+            },
         ),
         (
             "test'--",
             {
-                'search_0': "test''--"
-            }
+                'search_0': "test''--",
+            },
         ),
         (
             "test ' UNION SELECT * FROM accounts_user --",
@@ -52,8 +53,8 @@ def test_get_tsquery__normal_text__ok():
                 'search_4': '*',
                 'search_5': 'FROM',
                 'search_6': 'accounts_user',
-                'search_7': '--'
-            }
+                'search_7': '--',
+            },
         ),
         (
             "\\'; DELETE FROM processes_task; -- test",
@@ -63,8 +64,8 @@ def test_get_tsquery__normal_text__ok():
                 'search_2': 'FROM',
                 'search_3': 'processes_task;',
                 'search_4': '--',
-                'search_5': 'test'
-            }
+                'search_5': 'test',
+            },
         ),
         (
             "test'); INSERT INTO users VALUES ('hack'); --",
@@ -75,10 +76,10 @@ def test_get_tsquery__normal_text__ok():
                 'search_3': 'users',
                 'search_4': 'VALUES',
                 'search_5': "\\(''hack''\\);",
-                'search_6': '--'
-            }
+                'search_6': '--',
+            },
         ),
-    ]
+    ],
 )
 def test_get_tsquery__sql_injection_protection__ok(injection, expected_params):
     mixin = SearchSqlQueryMixin()
@@ -96,7 +97,7 @@ def test_get_tsquery__sql_injection_protection__ok(injection, expected_params):
         ("user's data", {'search_0': "user''s", 'search_1': 'data'}),
         ("normal text", {'search_0': 'normal', 'search_1': 'text'}),
         ("test''quotes", {'search_0': "test''''quotes"}),
-    ]
+    ],
 )
 def test_get_tsquery__single_quotes__ok(text_with_quotes, escaped_quotes):
     mixin = SearchSqlQueryMixin()

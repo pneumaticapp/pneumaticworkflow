@@ -1,28 +1,27 @@
-import pytest
 from datetime import timedelta
-from django.utils import timezone
+
+import pytest
 from django.contrib.auth import get_user_model
-from src.processes.tests.fixtures import (
-    create_test_user,
-    create_test_workflow,
-    create_test_account,
-    create_test_group
-)
+from django.utils import timezone
+
 from src.processes.enums import (
-    WorkflowEventType,
     CommentStatus,
+    WorkflowEventType,
 )
-from src.processes.services.events import WorkflowEventService
+from src.processes.models.workflows.attachment import FileAttachment
+from src.processes.models.workflows.event import WorkflowEvent
 from src.processes.serializers.workflows.events import (
     TaskEventJsonSerializer,
     WorkflowEventSerializer,
 )
-from src.processes.models import (
-    FileAttachment,
-    WorkflowEvent,
+from src.processes.services.events import WorkflowEventService
+from src.processes.tests.fixtures import (
+    create_test_account,
+    create_test_group,
+    create_test_user,
+    create_test_workflow,
 )
 from src.utils.dates import date_format
-
 
 UserModel = get_user_model()
 pytestmark = pytest.mark.django_db
@@ -45,7 +44,7 @@ def test_after_create_actions(mocker):
     data = WorkflowEventSerializer(event).data
     send_workflow_event_mock = mocker.patch(
         'src.processes.services.events.'
-        'send_workflow_event.delay'
+        'send_workflow_event.delay',
     )
 
     # act
@@ -56,7 +55,7 @@ def test_after_create_actions(mocker):
         logging=account.log_api_requests,
         logo_lg=account.logo_lg,
         account_id=account.id,
-        data=data
+        data=data,
     )
 
 
@@ -66,12 +65,12 @@ def test_comment_created_event__ok(mocker):
     user = create_test_user()
     workflow = create_test_workflow(
         user=user,
-        tasks_count=1
+        tasks_count=1,
     )
     task = workflow.tasks.get(number=1)
     text = (
-        "(![avatar.jpg](https://storage.com/dev/avatar.jpg "
-        "\"attachment_id:3349 entityType:image\")"
+        '(![avatar.jpg](https://storage.com/dev/avatar.jpg '
+        '"attachment_id:3349 entityType:image")'
     )
     attach = FileAttachment.objects.create(
         account_id=user.account_id,
@@ -81,7 +80,7 @@ def test_comment_created_event__ok(mocker):
     )
     after_create_actions_mock = mocker.patch(
         'src.processes.services.events.'
-        'WorkflowEventService._after_create_actions'
+        'WorkflowEventService._after_create_actions',
     )
 
     # act
@@ -113,7 +112,7 @@ def test_comment_created_event__ok(mocker):
             'type': 'user',
             'is_completed': False,
             'date_completed_tsp': None,
-        }
+        },
     ]
     assert event.task_json['due_date_tsp'] is None
     assert event.task_json['output'] is None
@@ -125,13 +124,13 @@ def test_sub_workflow_run_event__ok(mocker):
     # arrange
     after_create_actions_mock = mocker.patch(
         'src.processes.services.events.'
-        'WorkflowEventService._after_create_actions'
+        'WorkflowEventService._after_create_actions',
     )
     user = create_test_user()
     workflow = create_test_workflow(
         name='Parent workflow',
         user=user,
-        tasks_count=1
+        tasks_count=1,
     )
     ancestor_task = workflow.tasks.get(number=1)
     ancestor_task.name = 'Ancestor task name'
@@ -148,7 +147,7 @@ def test_sub_workflow_run_event__ok(mocker):
         name='New sub workflow',
         ancestor_task=ancestor_task,
         is_urgent=True,
-        due_date=timezone.now() + timedelta(days=30)
+        due_date=timezone.now() + timedelta(days=30),
     )
 
     # act
@@ -177,7 +176,7 @@ def test_sub_workflow_run_event__ok(mocker):
             'type': 'user',
             'is_completed': False,
             'date_completed_tsp': None,
-        }
+        },
     ]
     sub_workflow_data = event.task_json['sub_workflow']
     assert sub_workflow_data['id'] == sub_workflow.id
@@ -203,13 +202,13 @@ def test_sub_workflow_run_event__skip_after_create_actions__ok(mocker):
     # arrange
     after_create_actions_mock = mocker.patch(
         'src.processes.services.events.'
-        'WorkflowEventService._after_create_actions'
+        'WorkflowEventService._after_create_actions',
     )
     user = create_test_user()
     workflow = create_test_workflow(
         name='Parent workflow',
         user=user,
-        tasks_count=1
+        tasks_count=1,
     )
     ancestor_task = workflow.tasks.get(number=1)
     sub_workflow = create_test_workflow(
@@ -222,7 +221,7 @@ def test_sub_workflow_run_event__skip_after_create_actions__ok(mocker):
         user=user,
         workflow=workflow,
         sub_workflow=sub_workflow,
-        after_create_actions=False
+        after_create_actions=False,
     )
 
     # assert
@@ -238,14 +237,14 @@ def test_performer_group_created_event__ok(mocker):
     # arrange
     after_create_actions_mock = mocker.patch(
         'src.processes.services.events.'
-        'WorkflowEventService._after_create_actions'
+        'WorkflowEventService._after_create_actions',
     )
     user = create_test_user()
     group = create_test_group(user.account, users=[user])
     workflow = create_test_workflow(
         name='Parent workflow',
         user=user,
-        tasks_count=1
+        tasks_count=1,
     )
     task = workflow.tasks.get(number=1)
 
@@ -254,7 +253,7 @@ def test_performer_group_created_event__ok(mocker):
         user=user,
         task=task,
         performer=group,
-        after_create_actions=False
+        after_create_actions=False,
     )
 
     # assert
@@ -273,8 +272,8 @@ def test_performer_group_created_event__ok(mocker):
         task_json=TaskEventJsonSerializer(
             instance=task,
             context={
-                'event_type': WorkflowEventType.TASK_PERFORMER_GROUP_CREATED
-            }
+                'event_type': WorkflowEventType.TASK_PERFORMER_GROUP_CREATED,
+            },
         ).data,
     ).count() == 1
 
@@ -284,14 +283,14 @@ def test_performer_group_deleted_event__ok(mocker):
     # arrange
     after_create_actions_mock = mocker.patch(
         'src.processes.services.events.'
-        'WorkflowEventService._after_create_actions'
+        'WorkflowEventService._after_create_actions',
     )
     user = create_test_user()
     group = create_test_group(user.account, users=[user])
     workflow = create_test_workflow(
         name='Parent workflow',
         user=user,
-        tasks_count=1
+        tasks_count=1,
     )
     task = workflow.tasks.get(number=1)
 
@@ -300,7 +299,7 @@ def test_performer_group_deleted_event__ok(mocker):
         user=user,
         task=task,
         performer=group,
-        after_create_actions=False
+        after_create_actions=False,
     )
 
     # assert
@@ -319,7 +318,7 @@ def test_performer_group_deleted_event__ok(mocker):
         task_json=TaskEventJsonSerializer(
             instance=task,
             context={
-                'event_type': WorkflowEventType.TASK_PERFORMER_GROUP_DELETED
-            }
+                'event_type': WorkflowEventType.TASK_PERFORMER_GROUP_DELETED,
+            },
         ).data,
     ).count() == 1

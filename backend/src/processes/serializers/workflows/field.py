@@ -1,8 +1,9 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
-from src.processes.models import (
-    TaskField,
+
+from src.processes.models.workflows.fields import (
     FieldSelection,
+    TaskField,
 )
 from src.processes.serializers.file_attachment import (
     FileAttachmentSerializer,
@@ -18,7 +19,7 @@ class FieldSelectionListSerializer(serializers.ModelSerializer):
             'id',
             'value',
             'is_selected',
-            'api_name'
+            'api_name',
         )
 
 

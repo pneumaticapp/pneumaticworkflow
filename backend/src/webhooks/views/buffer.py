@@ -1,19 +1,19 @@
 from rest_framework.decorators import action
-from rest_framework.viewsets import GenericViewSet
 from rest_framework.permissions import AllowAny
+from rest_framework.viewsets import GenericViewSet
 
 from src.generics.mixins.views import (
     CustomViewSetMixin,
 )
 from src.generics.permissions import StagingPermission
 from src.webhooks.services import (
-    WebhookBufferService
+    WebhookBufferService,
 )
 
 
 class WebHookBufferViewSet(
     CustomViewSetMixin,
-    GenericViewSet
+    GenericViewSet,
 ):
     permission_classes = (
         AllowAny,

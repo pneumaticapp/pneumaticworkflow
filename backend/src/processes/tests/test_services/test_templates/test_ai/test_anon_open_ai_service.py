@@ -1,20 +1,20 @@
 import pytest
 from django.contrib.auth import get_user_model
-from src.processes.services.templates.ai import (
-    AnonOpenAiService
-)
-from src.processes.services.exceptions import (
-    OpenAiTemplateStepsNotExist,
-    OpenAiStepsPromptNotExist,
-)
+
+from src.ai.tests.fixtures import create_test_prompt
 from src.processes.enums import (
     ConditionAction,
+    PredicateOperator,
     PredicateType,
-    PredicateOperator
 )
 from src.processes.messages import workflow as messages
-from src.ai.tests.fixtures import create_test_prompt
-
+from src.processes.services.exceptions import (
+    OpenAiStepsPromptNotExist,
+    OpenAiTemplateStepsNotExist,
+)
+from src.processes.services.templates.ai import (
+    AnonOpenAiService,
+)
 
 UserModel = get_user_model()
 pytestmark = pytest.mark.django_db
@@ -34,7 +34,7 @@ def test_get_short_template_data__ok(mocker):
     get_response_mock = mocker.patch(
         'src.processes.services.templates.'
         'ai.AnonOpenAiService._get_response',
-        return_value=ai_response
+        return_value=ai_response,
     )
     ip = '168.01.01.8'
     user_agent = 'Some browser'
@@ -46,13 +46,13 @@ def test_get_short_template_data__ok(mocker):
 
     # act
     template_data = service.get_short_template_data(
-        user_description=description
+        user_description=description,
     )
 
     # assert
     get_response_mock.assert_called_once_with(
         user_description=description,
-        prompt=prompt
+        prompt=prompt,
     )
     assert template_data['name'] == description
     task_1_data = template_data['tasks'][0]
@@ -111,12 +111,12 @@ def test_get_template_data__not_steps__raise_exception(mocker):
     get_response_mock = mocker.patch(
         'src.processes.services.templates.'
         'ai.AnonOpenAiService._get_response',
-        return_value=response_mock
+        return_value=response_mock,
     )
     get_tasks_data_from_text_mock = mocker.patch(
         'src.processes.services.templates.'
         'ai.AnonOpenAiService._get_steps_data_from_text',
-        return_value=[]
+        return_value=[],
     )
     log_mock = mocker.patch(
         'src.processes.services.templates.'
@@ -133,13 +133,13 @@ def test_get_template_data__not_steps__raise_exception(mocker):
     # act
     with pytest.raises(OpenAiTemplateStepsNotExist) as ex:
         service.get_short_template_data(
-            user_description=description
+            user_description=description,
         )
 
     # assert
     get_response_mock.assert_called_once_with(
         user_description=description,
-        prompt=prompt
+        prompt=prompt,
     )
     get_tasks_data_from_text_mock.assert_called_once_with(response_mock)
     assert ex.value.message == messages.MSG_PW_0045
@@ -147,7 +147,7 @@ def test_get_template_data__not_steps__raise_exception(mocker):
         message='Template steps not found',
         user_description=description,
         prompt=prompt,
-        response_text=response_mock
+        response_text=response_mock,
     )
 
 
@@ -178,7 +178,7 @@ def test_get_template_data__not_prompt__raise_exception(mocker):
     # act
     with pytest.raises(OpenAiStepsPromptNotExist) as ex:
         service.get_short_template_data(
-            user_description=description
+            user_description=description,
         )
 
     # assert

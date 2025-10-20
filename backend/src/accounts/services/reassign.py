@@ -5,51 +5,49 @@ from django.db import transaction
 
 from src.accounts.models import UserGroup
 from src.accounts.queries import (
+    DeleteGroupFromConditionsQuery,
+    DeleteGroupFromRawPerformerQuery,
+    DeleteGroupFromRawPerformerTemplateQuery,
+    DeleteGroupFromTaskPerformerQuery,
+    DeleteGroupFromTemplateConditionsQuery,
+    DeleteGroupFromTemplateOwnerQuery,
+    DeleteGroupUserFromConditionsQuery,
+    DeleteGroupUserFromRawPerformerQuery,
+    DeleteGroupUserFromRawPerformerTemplateQuery,
+    DeleteGroupUserFromTaskPerformerQuery,
+    DeleteGroupUserFromTemplateConditionsQuery,
+    DeleteGroupUserFromTemplateOwnerQuery,
     DeleteUserFromConditionsQuery,
     DeleteUserFromRawPerformerQuery,
     DeleteUserFromRawPerformerTemplateQuery,
-    DeleteUserFromTemplateConditionsQuery,
-    DeleteUserFromWorkflowMembersQuery,
-    DeleteUserGroupFromRawPerformerQuery,
-    DeleteGroupFromRawPerformerQuery,
-    DeleteGroupUserFromRawPerformerQuery,
-    DeleteGroupFromRawPerformerTemplateQuery,
-    DeleteGroupUserFromRawPerformerTemplateQuery,
-    DeleteUserGroupFromRawPerformerTemplateQuery,
-    DeleteGroupFromTaskPerformerQuery,
-    DeleteGroupUserFromTaskPerformerQuery,
-    DeleteUserGroupFromTaskPerformerQuery,
     DeleteUserFromTaskPerformerQuery,
-    DeleteGroupFromTemplateOwnerQuery,
-    DeleteGroupUserFromTemplateOwnerQuery,
-    DeleteUserGroupFromTemplateOwnerQuery,
+    DeleteUserFromTemplateConditionsQuery,
     DeleteUserFromTemplateOwnerQuery,
-    DeleteGroupFromTemplateConditionsQuery,
-    DeleteGroupUserFromTemplateConditionsQuery,
-    DeleteUserGroupFromTemplateConditionsQuery,
-    DeleteGroupFromConditionsQuery,
-    DeleteGroupUserFromConditionsQuery,
+    DeleteUserFromWorkflowMembersQuery,
     DeleteUserGroupFromConditionsQuery,
+    DeleteUserGroupFromRawPerformerQuery,
+    DeleteUserGroupFromRawPerformerTemplateQuery,
+    DeleteUserGroupFromTaskPerformerQuery,
+    DeleteUserGroupFromTemplateConditionsQuery,
+    DeleteUserGroupFromTemplateOwnerQuery,
 )
 from src.accounts.services import exceptions
 from src.authentication.enums import AuthTokenType
 from src.executor import RawSqlExecutor
 from src.processes.enums import (
-    PerformerType,
     OwnerType,
+    PerformerType,
+    PredicateType,
     TaskStatus,
-    PredicateType
 )
-from src.processes.models import (
-    Predicate,
-    PredicateTemplate,
-    RawPerformer,
-    RawPerformerTemplate,
-    TaskPerformer,
-    TemplateOwner,
-    Workflow,
-    Template
-)
+from src.processes.models.templates.conditions import PredicateTemplate
+from src.processes.models.templates.owner import TemplateOwner
+from src.processes.models.templates.raw_performer import RawPerformerTemplate
+from src.processes.models.templates.template import Template
+from src.processes.models.workflows.conditions import Predicate
+from src.processes.models.workflows.raw_performer import RawPerformer
+from src.processes.models.workflows.task import TaskPerformer
+from src.processes.models.workflows.workflow import Workflow
 from src.processes.queries import UpdateWorkflowOwnersQuery
 from src.processes.tasks.tasks import complete_tasks
 
@@ -79,16 +77,16 @@ class ReassignService:
         self.new_group = new_group
 
         if not (old_user or old_group):
-            raise exceptions.ReassignOldUserDoesNotExist()
+            raise exceptions.ReassignOldUserDoesNotExist
 
         if not (new_user or new_group):
-            raise exceptions.ReassignNewUserDoesNotExist()
+            raise exceptions.ReassignNewUserDoesNotExist
 
         if old_user and new_user and old_user == new_user:
-            raise exceptions.ReassignUserSameUser()
+            raise exceptions.ReassignUserSameUser
 
         if old_group and new_group and old_group == new_group:
-            raise exceptions.ReassignUserSameGroup()
+            raise exceptions.ReassignUserSameGroup
 
         if old_user:
             self.account = old_user.account
@@ -105,7 +103,7 @@ class ReassignService:
                 RawSqlExecutor.execute(*delete_query.get_sql())
                 RawPerformerTemplate.objects.filter(
                     group_id=self.old_group.id,
-                    account=self.account
+                    account=self.account,
                 ).update(
                     group_id=self.new_group.id,
                 )
@@ -117,11 +115,11 @@ class ReassignService:
                 RawSqlExecutor.execute(*delete_query.get_sql())
                 RawPerformerTemplate.objects.filter(
                     group_id=self.old_group.id,
-                    account=self.account
+                    account=self.account,
                 ).update(
                     type=PerformerType.USER,
                     user_id=self.new_user.id,
-                    group_id=None
+                    group_id=None,
                 )
         elif self.old_user:
             if self.new_group:
@@ -132,11 +130,11 @@ class ReassignService:
                 RawSqlExecutor.execute(*delete_query.get_sql())
                 RawPerformerTemplate.objects.filter(
                     user_id=self.old_user.id,
-                    account=self.account
+                    account=self.account,
                 ).update(
                     type=PerformerType.GROUP,
                     group_id=self.new_group.id,
-                    user_id=None
+                    user_id=None,
                 )
             elif self.new_user:
                 delete_query = DeleteUserFromRawPerformerTemplateQuery(
@@ -146,7 +144,7 @@ class ReassignService:
                 RawSqlExecutor.execute(*delete_query.get_sql())
                 RawPerformerTemplate.objects.filter(
                     user_id=self.old_user.id,
-                    account=self.account
+                    account=self.account,
                 ).update(user_id=self.new_user.id)
 
     def _reassign_in_raw_performers(self):
@@ -159,7 +157,7 @@ class ReassignService:
                 RawSqlExecutor.execute(*delete_query.get_sql())
                 RawPerformer.objects.filter(
                     group_id=self.old_group.id,
-                    account=self.account
+                    account=self.account,
                 ).update(
                     group_id=self.new_group.id,
                 )
@@ -171,11 +169,11 @@ class ReassignService:
                 RawSqlExecutor.execute(*delete_query.get_sql())
                 RawPerformer.objects.filter(
                     group_id=self.old_group.id,
-                    account=self.account
+                    account=self.account,
                 ).update(
                     type=PerformerType.USER,
                     user_id=self.new_user.id,
-                    group_id=None
+                    group_id=None,
                 )
         elif self.old_user:
             if self.new_group:
@@ -186,11 +184,11 @@ class ReassignService:
                 RawSqlExecutor.execute(*delete_query.get_sql())
                 RawPerformer.objects.filter(
                     user_id=self.old_user.id,
-                    account=self.account
+                    account=self.account,
                 ).update(
                     type=PerformerType.GROUP,
                     group_id=self.new_group.id,
-                    user_id=None
+                    user_id=None,
                 )
             elif self.new_user:
                 delete_query = DeleteUserFromRawPerformerQuery(
@@ -200,7 +198,7 @@ class ReassignService:
                 RawSqlExecutor.execute(*delete_query.get_sql())
                 RawPerformer.objects.filter(
                     user_id=self.old_user.id,
-                    account=self.account
+                    account=self.account,
                 ).update(user_id=self.new_user.id)
 
     def _reassign_in_performers(self):
@@ -233,7 +231,7 @@ class ReassignService:
                 ).update(
                     type=PerformerType.USER,
                     user_id=self.new_user.id,
-                    group_id=None
+                    group_id=None,
                 )
         elif self.old_user:
             if self.new_group:
@@ -250,7 +248,7 @@ class ReassignService:
                 ).update(
                     type=PerformerType.GROUP,
                     group_id=self.new_group.id,
-                    user_id=None
+                    user_id=None,
                 )
             elif self.new_user:
                 delete_query = DeleteUserFromTaskPerformerQuery(
@@ -277,7 +275,7 @@ class ReassignService:
                     group_id=self.old_group.id,
                     template__account=self.account,
                 ).update(
-                    group_id=self.new_group.id
+                    group_id=self.new_group.id,
                 )
             elif self.new_user:
                 delete_query = DeleteGroupUserFromTemplateOwnerQuery(
@@ -291,7 +289,7 @@ class ReassignService:
                 ).update(
                     type=PerformerType.USER,
                     user_id=self.new_user.id,
-                    group_id=None
+                    group_id=None,
                 )
         elif self.old_user:
             if self.new_group:
@@ -306,7 +304,7 @@ class ReassignService:
                 ).update(
                     type=PerformerType.GROUP,
                     group_id=self.new_group.id,
-                    user_id=None
+                    user_id=None,
                 )
             elif self.new_user:
                 delete_query = DeleteUserFromTemplateOwnerQuery(
@@ -340,16 +338,16 @@ class ReassignService:
                 Template.objects.filter(
                     owners__user=self.old_user,
                     owners__type=OwnerType.USER,
-                    account=self.account
-                ).distinct().values_list('id', flat=True)
+                    account=self.account,
+                ).distinct().values_list('id', flat=True),
             )
         elif self.old_group and not self.old_user:
             affected_template_ids = list(
                 Template.objects.filter(
                     owners__group=self.old_group,
                     owners__type=OwnerType.GROUP,
-                    account=self.account
-                ).distinct().values_list('id', flat=True)
+                    account=self.account,
+                ).distinct().values_list('id', flat=True),
             )
         return affected_template_ids
 
@@ -360,12 +358,12 @@ class ReassignService:
         with transaction.atomic():
             Workflow.owners.through.objects.filter(
                 workflow__template_id__in=affected_template_ids,
-                workflow__account=self.account
+                workflow__account=self.account,
             ).delete()
 
             for template_id in affected_template_ids:
                 query = UpdateWorkflowOwnersQuery(
-                    template_id=template_id
+                    template_id=template_id,
                 )
                 RawSqlExecutor.execute(*query.insert_sql())
 
@@ -395,7 +393,7 @@ class ReassignService:
                 ).update(
                     field_type=PredicateType.USER,
                     user=self.new_user,
-                    group=None
+                    group=None,
                 )
         elif self.old_user:
             if self.new_group:
@@ -410,7 +408,7 @@ class ReassignService:
                 ).update(
                     field_type=PredicateType.GROUP,
                     group=self.new_group,
-                    user=None
+                    user=None,
                 )
             elif self.new_user:
                 delete_query = DeleteUserFromTemplateConditionsQuery(
@@ -449,7 +447,7 @@ class ReassignService:
                 ).update(
                     field_type=PredicateType.USER,
                     user=self.new_user,
-                    group=None
+                    group=None,
                 )
         elif self.old_user:
             if self.new_group:
@@ -464,7 +462,7 @@ class ReassignService:
                 ).update(
                     field_type=PredicateType.GROUP,
                     group=self.new_group,
-                    user=None
+                    user=None,
                 )
             elif self.new_user:
                 delete_query = DeleteUserFromConditionsQuery(
@@ -497,5 +495,5 @@ class ReassignService:
             complete_tasks.delay(
                 user_id=user_id,
                 is_superuser=self.is_superuser,
-                auth_type=self.auth_type
+                auth_type=self.auth_type,
             )

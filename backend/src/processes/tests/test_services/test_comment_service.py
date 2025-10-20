@@ -1,33 +1,34 @@
 import pytest
-from django.utils import timezone
 from django.contrib.auth import get_user_model
-from src.processes.tests.fixtures import (
-    create_test_user,
-    create_test_account,
-    create_test_workflow,
-    create_test_owner
-)
-from src.processes.services import exceptions
-from src.processes.serializers.workflows.events import (
-    TaskEventJsonSerializer
-)
-from src.processes.services.events import (
-    CommentService
-)
+from django.utils import timezone
+
+from src.authentication.enums import AuthTokenType
 from src.processes.enums import (
+    CommentStatus,
+    TaskStatus,
+    WorkflowEventActionType,
     WorkflowEventType,
     WorkflowStatus,
-    CommentStatus,
-    WorkflowEventActionType, TaskStatus,
 )
-from src.processes.models import (
+from src.processes.messages import workflow as messages
+from src.processes.models.workflows.attachment import FileAttachment
+from src.processes.models.workflows.event import (
     WorkflowEvent,
     WorkflowEventAction,
-    FileAttachment,
 )
-from src.authentication.enums import AuthTokenType
-from src.processes.messages import workflow as messages
-
+from src.processes.serializers.workflows.events import (
+    TaskEventJsonSerializer,
+)
+from src.processes.services import exceptions
+from src.processes.services.events import (
+    CommentService,
+)
+from src.processes.tests.fixtures import (
+    create_test_account,
+    create_test_owner,
+    create_test_user,
+    create_test_workflow,
+)
 
 UserModel = get_user_model()
 pytestmark = pytest.mark.django_db
@@ -42,7 +43,7 @@ def test_create__not_another_performers__ok(mocker):
         account=account,
         email='user@test.test',
         is_account_owner=False,
-        is_admin=True
+        is_admin=True,
     )
     workflow = create_test_workflow(account_owner, tasks_count=1)
     task = workflow.tasks.get(number=1)
@@ -65,42 +66,42 @@ def test_create__not_another_performers__ok(mocker):
     comment_created_event_mock = mocker.patch(
         'src.processes.services.events.'
         'WorkflowEventService.comment_created_event',
-        return_value=event
+        return_value=event,
     )
     clear_text_mock = mocker.patch(
         'src.processes.services.events.'
         'MarkdownService.clear',
-        return_value=clear_text
+        return_value=clear_text,
     )
     update_attachments_mock = mocker.patch(
         'src.processes.services.events.'
-        'CommentService._update_attachments'
+        'CommentService._update_attachments',
     )
     get_new_comment_recipients_mock = mocker.patch(
         'src.processes.services.events.'
         'CommentService._get_new_comment_recipients',
-        return_value=((), ())
+        return_value=((), ()),
     )
     send_comment_notification_mock = mocker.patch(
         'src.processes.services.events.'
-        'send_comment_notification.delay'
+        'send_comment_notification.delay',
     )
     send_mention_notification_mock = mocker.patch(
         'src.processes.services.events.'
-        'send_mention_notification.delay'
+        'send_mention_notification.delay',
     )
     comment_added_analytics_mock = mocker.patch(
         'src.processes.services.events.'
-        'AnalyticService.comment_added'
+        'AnalyticService.comment_added',
     )
     mention_created_analytics_mock = mocker.patch(
         'src.processes.services.events.'
-        'AnalyticService.mentions_created'
+        'AnalyticService.mentions_created',
     )
     service = CommentService(
         user=account_owner,
         is_superuser=is_superuser,
-        auth_type=auth_type
+        auth_type=auth_type,
     )
 
     # act
@@ -117,7 +118,7 @@ def test_create__not_another_performers__ok(mocker):
         task=task,
         text=text,
         clear_text=clear_text,
-        attachments=[]
+        attachments=[],
     )
     get_new_comment_recipients_mock.assert_called_once_with(task)
     update_attachments_mock.assert_not_called()
@@ -134,7 +135,7 @@ def test_create__not_another_performers__ok(mocker):
     (
         TaskStatus.ACTIVE,
         TaskStatus.DELAYED,
-    )
+    ),
 )
 def test_create__notified_users__ok(mocker, status):
 
@@ -145,7 +146,7 @@ def test_create__notified_users__ok(mocker, status):
         account=account,
         email='user@test.test',
         is_account_owner=False,
-        is_admin=True
+        is_admin=True,
     )
     workflow = create_test_workflow(account_owner, tasks_count=1)
     task = workflow.tasks.get(number=1)
@@ -167,49 +168,49 @@ def test_create__notified_users__ok(mocker, status):
         task=task,
         task_json=TaskEventJsonSerializer(
             instance=task,
-            context={'event_type': WorkflowEventType.COMMENT}
+            context={'event_type': WorkflowEventType.COMMENT},
         ).data,
         user=account_owner,
     )
     comment_created_event_mock = mocker.patch(
         'src.processes.services.events.'
         'WorkflowEventService.comment_created_event',
-        return_value=event
+        return_value=event,
     )
     clear_text_mock = mocker.patch(
         'src.processes.services.events.'
         'MarkdownService.clear',
-        return_value=clear_text
+        return_value=clear_text,
     )
     update_attachments_mock = mocker.patch(
         'src.processes.services.events.'
-        'CommentService._update_attachments'
+        'CommentService._update_attachments',
     )
     get_new_comment_recipients_mock = mocker.patch(
         'src.processes.services.events.'
         'CommentService._get_new_comment_recipients',
-        return_value=((), (user.id,))
+        return_value=((), (user.id,)),
     )
     send_comment_notification_mock = mocker.patch(
         'src.processes.services.events.'
-        'send_comment_notification.delay'
+        'send_comment_notification.delay',
     )
     send_mention_notification_mock = mocker.patch(
         'src.processes.services.events.'
-        'send_mention_notification.delay'
+        'send_mention_notification.delay',
     )
     comment_added_analytics_mock = mocker.patch(
         'src.processes.services.events.'
-        'AnalyticService.comment_added'
+        'AnalyticService.comment_added',
     )
     mention_created_analytics_mock = mocker.patch(
         'src.processes.services.events.'
-        'AnalyticService.mentions_created'
+        'AnalyticService.mentions_created',
     )
     service = CommentService(
         user=account_owner,
         is_superuser=is_superuser,
-        auth_type=auth_type
+        auth_type=auth_type,
     )
 
     # act
@@ -226,7 +227,7 @@ def test_create__notified_users__ok(mocker, status):
         task=task,
         text=text,
         clear_text=clear_text,
-        attachments=[]
+        attachments=[],
     )
     get_new_comment_recipients_mock.assert_called_once_with(task)
     update_attachments_mock.assert_not_called()
@@ -235,7 +236,7 @@ def test_create__notified_users__ok(mocker, status):
         user=account_owner,
         is_superuser=is_superuser,
         auth_type=auth_type,
-        workflow=workflow
+        workflow=workflow,
     )
     send_comment_notification_mock.assert_called_once_with(
         logging=account.log_api_requests,
@@ -244,7 +245,7 @@ def test_create__notified_users__ok(mocker, status):
         event_id=event.id,
         account_id=account.id,
         users_ids=(user.id,),
-        text=text
+        text=text,
     )
     mention_created_analytics_mock.assert_not_called()
     send_mention_notification_mock.assert_not_called()
@@ -261,7 +262,7 @@ def test_create_mentioned_users__ok(mocker):
         account=account,
         email='user@test.test',
         is_account_owner=False,
-        is_admin=True
+        is_admin=True,
     )
     workflow = create_test_workflow(account_owner, tasks_count=1)
     task = workflow.tasks.get(number=1)
@@ -281,49 +282,49 @@ def test_create_mentioned_users__ok(mocker):
         task=task,
         task_json=TaskEventJsonSerializer(
             instance=task,
-            context={'event_type': WorkflowEventType.COMMENT}
+            context={'event_type': WorkflowEventType.COMMENT},
         ).data,
         user=account_owner,
     )
     comment_created_event_mock = mocker.patch(
         'src.processes.services.events.'
         'WorkflowEventService.comment_created_event',
-        return_value=event
+        return_value=event,
     )
     clear_text_mock = mocker.patch(
         'src.processes.services.events.'
         'MarkdownService.clear',
-        return_value=clear_text
+        return_value=clear_text,
     )
     update_attachments_mock = mocker.patch(
         'src.processes.services.events.'
-        'CommentService._update_attachments'
+        'CommentService._update_attachments',
     )
     get_new_comment_recipients_mock = mocker.patch(
         'src.processes.services.events.'
         'CommentService._get_new_comment_recipients',
-        return_value=((user.id,), ())
+        return_value=((user.id,), ()),
     )
     send_comment_notification_mock = mocker.patch(
         'src.processes.services.events.'
-        'send_comment_notification.delay'
+        'send_comment_notification.delay',
     )
     send_mention_notification_mock = mocker.patch(
         'src.processes.services.events.'
-        'send_mention_notification.delay'
+        'send_mention_notification.delay',
     )
     comment_added_analytics_mock = mocker.patch(
         'src.processes.services.events.'
-        'AnalyticService.comment_added'
+        'AnalyticService.comment_added',
     )
     mention_created_analytics_mock = mocker.patch(
         'src.processes.services.events.'
-        'AnalyticService.mentions_created'
+        'AnalyticService.mentions_created',
     )
     service = CommentService(
         user=account_owner,
         is_superuser=is_superuser,
-        auth_type=auth_type
+        auth_type=auth_type,
     )
 
     # act
@@ -340,7 +341,7 @@ def test_create_mentioned_users__ok(mocker):
         task=task,
         text=text,
         clear_text=clear_text,
-        attachments=[]
+        attachments=[],
     )
     get_new_comment_recipients_mock.assert_called_once_with(task)
     update_attachments_mock.assert_not_called()
@@ -349,7 +350,7 @@ def test_create_mentioned_users__ok(mocker):
         user=account_owner,
         is_superuser=is_superuser,
         auth_type=auth_type,
-        workflow=workflow
+        workflow=workflow,
     )
     send_mention_notification_mock.assert_called_once_with(
         logging=account.log_api_requests,
@@ -358,7 +359,7 @@ def test_create_mentioned_users__ok(mocker):
         event_id=event.id,
         account_id=account.id,
         users_ids=(user.id,),
-        text=text
+        text=text,
     )
     comment_added_analytics_mock.assert_not_called()
     send_comment_notification_mock.assert_not_called()
@@ -376,7 +377,7 @@ def test_create__with_attachments__ok(mocker):
         account=account,
         email='user@test.test',
         is_account_owner=False,
-        is_admin=True
+        is_admin=True,
     )
     workflow = create_test_workflow(account_owner, tasks_count=1)
     task = workflow.tasks.get(number=1)
@@ -384,7 +385,7 @@ def test_create__with_attachments__ok(mocker):
 
     text = (
         "(![avatar.jpg](https://storage.com/dev/avatar.jpg "
-        "\"attachment_id:3349 entityType:image\")"
+        '"attachment_id:3349 entityType:image")'
     )
     clear_text = 'clear text'
     is_superuser = True
@@ -403,49 +404,49 @@ def test_create__with_attachments__ok(mocker):
     comment_created_event_mock = mocker.patch(
         'src.processes.services.events.'
         'WorkflowEventService.comment_created_event',
-        return_value=event
+        return_value=event,
     )
     clear_text_mock = mocker.patch(
         'src.processes.services.events.'
         'MarkdownService.clear',
-        return_value=clear_text
+        return_value=clear_text,
     )
     update_attachments_mock = mocker.patch(
         'src.processes.services.events.'
-        'CommentService._update_attachments'
+        'CommentService._update_attachments',
     )
     get_new_comment_recipients_mock = mocker.patch(
         'src.processes.services.events.'
         'CommentService._get_new_comment_recipients',
-        return_value=((), ())
+        return_value=((), ()),
     )
     send_comment_notification_mock = mocker.patch(
         'src.processes.services.events.'
-        'send_comment_notification.delay'
+        'send_comment_notification.delay',
     )
     send_mention_notification_mock = mocker.patch(
         'src.processes.services.events.'
-        'send_mention_notification.delay'
+        'send_mention_notification.delay',
     )
     comment_added_analytics_mock = mocker.patch(
         'src.processes.services.events.'
-        'AnalyticService.comment_added'
+        'AnalyticService.comment_added',
     )
     mention_created_analytics_mock = mocker.patch(
         'src.processes.services.events.'
-        'AnalyticService.mentions_created'
+        'AnalyticService.mentions_created',
     )
     service = CommentService(
         user=account_owner,
         is_superuser=is_superuser,
-        auth_type=auth_type
+        auth_type=auth_type,
     )
 
     # act
     result = service.create(
         task=task,
         text=text,
-        attachments=attachments
+        attachments=attachments,
     )
 
     # assert
@@ -456,7 +457,7 @@ def test_create__with_attachments__ok(mocker):
         task=task,
         text=text,
         clear_text=clear_text,
-        attachments=attachments
+        attachments=attachments,
     )
     get_new_comment_recipients_mock.assert_called_once_with(task)
     update_attachments_mock.assert_called_once_with(attachments)
@@ -474,34 +475,34 @@ def test_create__with_attachments__ok(mocker):
         (
             '(![avatar.jpg](https://storage.com/dev/avatar.jpg '
             '"attachment_id:3349 entityType:image")',
-            [3349]
+            [3349],
         ),
         (
             '[file.txt](http://file.txt "attachment_id:4187 entityType:file")',
-            [4187]
+            [4187],
         ),
         (
             '[video.mp4](https://video.mp4 "attachment_id:4188 '
             'entityType:video")',
-            [4188]
+            [4188],
         ),
         (
             'some [video.mp4](https://video.mp4 "attachment_id:4188 '
             'entityType:video") text \n(![avatar.jpg]'
             '(https://storage.com/dev/avatar.jpg '
             '"attachment_id:3349 entityType:image")',
-            [4188, 3349]
+            [4188, 3349],
         ),
         (
             '[ZIP-folder.zip](https://storage.zip "attachment_id:2482")',
-            [2482]
+            [2482],
         ),
         (
-            '[ZIP-folder.zip](https://storage.zip \"attachment_id:2482\")',
-            [2482]
-        )
+            '[ZIP-folder.zip](https://storage.zip "attachment_id:2482")',
+            [2482],
+        ),
 
-    )
+    ),
 )
 def test_create__find_attachments_in_text__ok(data, mocker):
 
@@ -513,7 +514,7 @@ def test_create__find_attachments_in_text__ok(data, mocker):
         account=account,
         email='user@test.test',
         is_account_owner=False,
-        is_admin=True
+        is_admin=True,
     )
     workflow = create_test_workflow(account_owner, tasks_count=1)
     task = workflow.tasks.get(number=1)
@@ -536,42 +537,42 @@ def test_create__find_attachments_in_text__ok(data, mocker):
     comment_created_event_mock = mocker.patch(
         'src.processes.services.events.'
         'WorkflowEventService.comment_created_event',
-        return_value=event
+        return_value=event,
     )
     clear_text_mock = mocker.patch(
         'src.processes.services.events.'
         'MarkdownService.clear',
-        return_value=clear_text
+        return_value=clear_text,
     )
     update_attachments_mock = mocker.patch(
         'src.processes.services.events.'
-        'CommentService._update_attachments'
+        'CommentService._update_attachments',
     )
     get_new_comment_recipients_mock = mocker.patch(
         'src.processes.services.events.'
         'CommentService._get_new_comment_recipients',
-        return_value=((), ())
+        return_value=((), ()),
     )
     send_comment_notification_mock = mocker.patch(
         'src.processes.services.events.'
-        'send_comment_notification.delay'
+        'send_comment_notification.delay',
     )
     send_mention_notification_mock = mocker.patch(
         'src.processes.services.events.'
-        'send_mention_notification.delay'
+        'send_mention_notification.delay',
     )
     comment_added_analytics_mock = mocker.patch(
         'src.processes.services.events.'
-        'AnalyticService.comment_added'
+        'AnalyticService.comment_added',
     )
     mention_created_analytics_mock = mocker.patch(
         'src.processes.services.events.'
-        'AnalyticService.mentions_created'
+        'AnalyticService.mentions_created',
     )
     service = CommentService(
         user=account_owner,
         is_superuser=is_superuser,
-        auth_type=auth_type
+        auth_type=auth_type,
     )
 
     # act
@@ -588,7 +589,7 @@ def test_create__find_attachments_in_text__ok(data, mocker):
         task=task,
         text=text,
         clear_text=clear_text,
-        attachments=attachment_ids
+        attachments=attachment_ids,
     )
     get_new_comment_recipients_mock.assert_called_once_with(task)
     update_attachments_mock.assert_called_once_with(attachment_ids)
@@ -607,7 +608,7 @@ def test_create__find_attachments_in_text__ok(data, mocker):
         '[file.txt](http://file.txt "attachment_id:4187 entityType:music")',
         '[video.mp4] (https://v.mp4 "attachment_id:4188 entityType:video")',
         '[video.mp4](ftp://video.mp4 "attachment_id:4188 entityType:video")',
-    )
+    ),
 )
 def test_create__not_found_attachments_in_text__ok(text, mocker):
 
@@ -618,7 +619,7 @@ def test_create__not_found_attachments_in_text__ok(text, mocker):
         account=account,
         email='user@test.test',
         is_account_owner=False,
-        is_admin=True
+        is_admin=True,
     )
     workflow = create_test_workflow(account_owner, tasks_count=1)
     task = workflow.tasks.get(number=1)
@@ -641,42 +642,42 @@ def test_create__not_found_attachments_in_text__ok(text, mocker):
     comment_created_event_mock = mocker.patch(
         'src.processes.services.events.'
         'WorkflowEventService.comment_created_event',
-        return_value=event
+        return_value=event,
     )
     clear_text_mock = mocker.patch(
         'src.processes.services.events.'
         'MarkdownService.clear',
-        return_value=clear_text
+        return_value=clear_text,
     )
     update_attachments_mock = mocker.patch(
         'src.processes.services.events.'
-        'CommentService._update_attachments'
+        'CommentService._update_attachments',
     )
     get_new_comment_recipients_mock = mocker.patch(
         'src.processes.services.events.'
         'CommentService._get_new_comment_recipients',
-        return_value=((), ())
+        return_value=((), ()),
     )
     send_comment_notification_mock = mocker.patch(
         'src.processes.services.events.'
-        'send_comment_notification.delay'
+        'send_comment_notification.delay',
     )
     send_mention_notification_mock = mocker.patch(
         'src.processes.services.events.'
-        'send_mention_notification.delay'
+        'send_mention_notification.delay',
     )
     comment_added_analytics_mock = mocker.patch(
         'src.processes.services.events.'
-        'AnalyticService.comment_added'
+        'AnalyticService.comment_added',
     )
     mention_created_analytics_mock = mocker.patch(
         'src.processes.services.events.'
-        'AnalyticService.mentions_created'
+        'AnalyticService.mentions_created',
     )
     service = CommentService(
         user=account_owner,
         is_superuser=is_superuser,
-        auth_type=auth_type
+        auth_type=auth_type,
     )
 
     # act
@@ -693,7 +694,7 @@ def test_create__not_found_attachments_in_text__ok(text, mocker):
         task=task,
         text=text,
         clear_text=clear_text,
-        attachments=[]
+        attachments=[],
     )
     get_new_comment_recipients_mock.assert_called_once_with(task)
     update_attachments_mock.assert_not_called()
@@ -714,11 +715,11 @@ def test_create__task_delete__raise_exception(mocker):
         account=account,
         email='user@test.test',
         is_account_owner=False,
-        is_admin=True
+        is_admin=True,
     )
     workflow = create_test_workflow(
         account_owner,
-        tasks_count=1
+        tasks_count=1,
     )
     task = workflow.tasks.get(number=1)
     task.performers.add(user)
@@ -732,32 +733,32 @@ def test_create__task_delete__raise_exception(mocker):
     clear_text_mock = mocker.patch(
         'src.processes.services.events.'
         'MarkdownService.clear',
-        return_value=clear_text
+        return_value=clear_text,
     )
     update_attachments_mock = mocker.patch(
         'src.processes.services.events.'
-        'CommentService._update_attachments'
+        'CommentService._update_attachments',
     )
     send_notifications_mock = mocker.patch(
         'src.processes.services.events.'
         'CommentService._get_new_comment_recipients',
-        return_value=((), ())
+        return_value=((), ()),
     )
     send_comment_notification_mock = mocker.patch(
         'src.processes.services.events.'
-        'send_comment_notification.delay'
+        'send_comment_notification.delay',
     )
     send_mention_notification_mock = mocker.patch(
         'src.processes.services.events.'
-        'send_mention_notification.delay'
+        'send_mention_notification.delay',
     )
     comment_added_analytics_mock = mocker.patch(
         'src.processes.services.events.'
-        'AnalyticService.comment_added'
+        'AnalyticService.comment_added',
     )
     mention_created_analytics_mock = mocker.patch(
         'src.processes.services.events.'
-        'AnalyticService.mentions_created'
+        'AnalyticService.mentions_created',
     )
     service = CommentService(user=account_owner)
 
@@ -791,12 +792,12 @@ def test_create__workflow_ended__raise_exception(mocker):
         account=account,
         email='user@test.test',
         is_account_owner=False,
-        is_admin=True
+        is_admin=True,
     )
     workflow = create_test_workflow(
         account_owner,
         tasks_count=1,
-        status=WorkflowStatus.DONE
+        status=WorkflowStatus.DONE,
     )
     task = workflow.tasks.get(number=1)
     task.performers.add(user)
@@ -810,32 +811,32 @@ def test_create__workflow_ended__raise_exception(mocker):
     clear_text_mock = mocker.patch(
         'src.processes.services.events.'
         'MarkdownService.clear',
-        return_value=clear_text
+        return_value=clear_text,
     )
     update_attachments_mock = mocker.patch(
         'src.processes.services.events.'
-        'CommentService._update_attachments'
+        'CommentService._update_attachments',
     )
     get_new_comment_recipients_mock = mocker.patch(
         'src.processes.services.events.'
         'CommentService._get_new_comment_recipients',
-        return_value=((), ())
+        return_value=((), ()),
     )
     send_comment_notification_mock = mocker.patch(
         'src.processes.services.events.'
-        'send_comment_notification.delay'
+        'send_comment_notification.delay',
     )
     send_mention_notification_mock = mocker.patch(
         'src.processes.services.events.'
-        'send_mention_notification.delay'
+        'send_mention_notification.delay',
     )
     comment_added_analytics_mock = mocker.patch(
         'src.processes.services.events.'
-        'AnalyticService.comment_added'
+        'AnalyticService.comment_added',
     )
     mention_created_analytics_mock = mocker.patch(
         'src.processes.services.events.'
-        'AnalyticService.mentions_created'
+        'AnalyticService.mentions_created',
     )
     service = CommentService(user=account_owner)
 
@@ -869,7 +870,7 @@ def test_create__not_text_and_attachment__raise_exception(mocker):
         account=account,
         email='user@test.test',
         is_account_owner=False,
-        is_admin=True
+        is_admin=True,
     )
     workflow = create_test_workflow(account_owner, tasks_count=1)
     task = workflow.tasks.get(number=1)
@@ -881,31 +882,31 @@ def test_create__not_text_and_attachment__raise_exception(mocker):
     )
     clear_text_mock = mocker.patch(
         'src.processes.services.events.'
-        'MarkdownService.clear'
+        'MarkdownService.clear',
     )
     update_attachments_mock = mocker.patch(
         'src.processes.services.events.'
-        'CommentService._update_attachments'
+        'CommentService._update_attachments',
     )
     get_new_comment_recipients_mock = mocker.patch(
         'src.processes.services.events.'
-        'CommentService._get_new_comment_recipients'
+        'CommentService._get_new_comment_recipients',
     )
     send_comment_notification_mock = mocker.patch(
         'src.processes.services.events.'
-        'send_comment_notification.delay'
+        'send_comment_notification.delay',
     )
     send_mention_notification_mock = mocker.patch(
         'src.processes.services.events.'
-        'send_mention_notification.delay'
+        'send_mention_notification.delay',
     )
     comment_added_analytics_mock = mocker.patch(
         'src.processes.services.events.'
-        'AnalyticService.comment_added'
+        'AnalyticService.comment_added',
     )
     mention_created_analytics_mock = mocker.patch(
         'src.processes.services.events.'
-        'AnalyticService.mentions_created'
+        'AnalyticService.mentions_created',
     )
     service = CommentService(user=account_owner)
 
@@ -914,7 +915,7 @@ def test_create__not_text_and_attachment__raise_exception(mocker):
         service.create(
             task=task,
             text=None,
-            attachments=None
+            attachments=None,
         )
 
     # assert
@@ -937,7 +938,7 @@ def test_create__not_text_and_attachment__raise_exception(mocker):
         TaskStatus.COMPLETED,
         TaskStatus.PENDING,
         TaskStatus.SKIPPED,
-    )
+    ),
 )
 def test_create__inactive_task__raise_exception(mocker, status):
 
@@ -959,32 +960,32 @@ def test_create__inactive_task__raise_exception(mocker, status):
     clear_text_mock = mocker.patch(
         'src.processes.services.events.'
         'MarkdownService.clear',
-        return_value=clear_text
+        return_value=clear_text,
     )
     update_attachments_mock = mocker.patch(
         'src.processes.services.events.'
-        'CommentService._update_attachments'
+        'CommentService._update_attachments',
     )
     get_new_comment_recipients_mock = mocker.patch(
         'src.processes.services.events.'
         'CommentService._get_new_comment_recipients',
-        return_value=((), ())
+        return_value=((), ()),
     )
     send_comment_notification_mock = mocker.patch(
         'src.processes.services.events.'
-        'send_comment_notification.delay'
+        'send_comment_notification.delay',
     )
     send_mention_notification_mock = mocker.patch(
         'src.processes.services.events.'
-        'send_mention_notification.delay'
+        'send_mention_notification.delay',
     )
     comment_added_analytics_mock = mocker.patch(
         'src.processes.services.events.'
-        'AnalyticService.comment_added'
+        'AnalyticService.comment_added',
     )
     mention_created_analytics_mock = mocker.patch(
         'src.processes.services.events.'
-        'AnalyticService.mentions_created'
+        'AnalyticService.mentions_created',
     )
     service = CommentService(user=account_owner)
 
@@ -1015,7 +1016,7 @@ def test_update_attachments__create_new_attachments__ok():
     account = create_test_account()
     account_owner = create_test_user(
         is_account_owner=True,
-        account=account
+        account=account,
     )
     workflow = create_test_workflow(account_owner, tasks_count=1)
     task = workflow.tasks.get(number=1)
@@ -1037,7 +1038,7 @@ def test_update_attachments__create_new_attachments__ok():
 
     service = CommentService(
         user=account_owner,
-        instance=event
+        instance=event,
     )
 
     # act
@@ -1055,7 +1056,7 @@ def test_update_attachments__delete_old_attachments__ok():
     account = create_test_account()
     account_owner = create_test_user(
         is_account_owner=True,
-        account=account
+        account=account,
     )
     workflow = create_test_workflow(account_owner, tasks_count=1)
     task = workflow.tasks.get(number=1)
@@ -1073,7 +1074,7 @@ def test_update_attachments__delete_old_attachments__ok():
         url='https://path.to.file/filename2.png',
         size=123,
         account_id=account.id,
-        event=event
+        event=event,
     )
     attachment = FileAttachment.objects.create(
         name='filename.png',
@@ -1084,7 +1085,7 @@ def test_update_attachments__delete_old_attachments__ok():
 
     service = CommentService(
         user=account_owner,
-        instance=event
+        instance=event,
     )
 
     # act
@@ -1103,7 +1104,7 @@ def test_update_attachments__already_attached__ok():
     account = create_test_account()
     account_owner = create_test_user(
         is_account_owner=True,
-        account=account
+        account=account,
     )
     workflow = create_test_workflow(account_owner, tasks_count=1)
     task = workflow.tasks.get(number=1)
@@ -1121,7 +1122,7 @@ def test_update_attachments__already_attached__ok():
         url='https://path.to.file/filename2.png',
         size=123,
         account_id=account.id,
-        event=event
+        event=event,
     )
     new_attachment = FileAttachment.objects.create(
         name='filename.png',
@@ -1132,7 +1133,7 @@ def test_update_attachments__already_attached__ok():
 
     service = CommentService(
         user=account_owner,
-        instance=event
+        instance=event,
     )
 
     # act
@@ -1153,7 +1154,7 @@ def test_update_attachments__attachments_is_null__not_update():
     account = create_test_account()
     account_owner = create_test_user(
         is_account_owner=True,
-        account=account
+        account=account,
     )
     workflow = create_test_workflow(account_owner, tasks_count=1)
     task = workflow.tasks.get(number=1)
@@ -1177,12 +1178,12 @@ def test_update_attachments__attachments_is_null__not_update():
         url='https://path.to.file/filename.png',
         size=141352,
         account_id=account.id,
-        event=event
+        event=event,
     )
 
     service = CommentService(
         user=account_owner,
-        instance=event
+        instance=event,
     )
 
     # act
@@ -1201,7 +1202,7 @@ def test_update_attachments__not_found__raise_exception():
     account = create_test_account()
     account_owner = create_test_user(
         is_account_owner=True,
-        account=account
+        account=account,
     )
     workflow = create_test_workflow(account_owner, tasks_count=1)
     task = workflow.tasks.get(number=1)
@@ -1224,7 +1225,7 @@ def test_update_attachments__not_found__raise_exception():
 
     service = CommentService(
         user=account_owner,
-        instance=event
+        instance=event,
     )
 
     # act
@@ -1241,7 +1242,7 @@ def test_get_new_comment_recipients__notify_users__ok():
     account = create_test_account()
     account_owner = create_test_user(
         is_account_owner=True,
-        account=account
+        account=account,
     )
     workflow = create_test_workflow(account_owner, tasks_count=1)
     task = workflow.tasks.get(number=1)
@@ -1249,7 +1250,7 @@ def test_get_new_comment_recipients__notify_users__ok():
         account=account,
         email='user@test.test',
         is_account_owner=False,
-        is_admin=True
+        is_admin=True,
     )
     task.performers.add(user)
     text = 'New comment'
@@ -1284,7 +1285,7 @@ def test_get_new_comment_recipients__performer_mentioned__send_notify():
     account = create_test_account()
     account_owner = create_test_user(
         is_account_owner=True,
-        account=account
+        account=account,
     )
     workflow = create_test_workflow(account_owner, tasks_count=1)
     task = workflow.tasks.get(number=1)
@@ -1292,7 +1293,7 @@ def test_get_new_comment_recipients__performer_mentioned__send_notify():
         account=account,
         email='user@test.test',
         is_account_owner=False,
-        is_admin=True
+        is_admin=True,
     )
     task.performers.add(user)
     text = f'Go [Joe Stalin|{user.id}] testing'
@@ -1327,7 +1328,7 @@ def test_get_new_comment_recipients__not_performer_mentioned__send_mention():
     account = create_test_account()
     account_owner = create_test_user(
         is_account_owner=True,
-        account=account
+        account=account,
     )
     workflow = create_test_workflow(account_owner, tasks_count=1)
     task = workflow.tasks.get(number=1)
@@ -1335,7 +1336,7 @@ def test_get_new_comment_recipients__not_performer_mentioned__send_mention():
         account=account,
         email='user@test.test',
         is_account_owner=False,
-        is_admin=True
+        is_admin=True,
     )
     text = f'Go [Joe (Stalin)|{user.id}] testing'
     event = WorkflowEvent.objects.create(
@@ -1368,7 +1369,7 @@ def test_get_updated_comment_recipients__new_mentioned__send_mention():
     account = create_test_account()
     account_owner = create_test_user(
         is_account_owner=True,
-        account=account
+        account=account,
     )
     workflow = create_test_workflow(account_owner, tasks_count=1)
     task = workflow.tasks.get(number=1)
@@ -1376,7 +1377,7 @@ def test_get_updated_comment_recipients__new_mentioned__send_mention():
         account=account,
         email='user@test.test',
         is_account_owner=False,
-        is_admin=True
+        is_admin=True,
     )
     text = f'Go [Joe Stalin|{user.id}] testing'
     event = WorkflowEvent.objects.create(
@@ -1408,7 +1409,7 @@ def test_get_updated_comment_recipients__already_mentioned__not_send():
     account = create_test_account()
     account_owner = create_test_user(
         is_account_owner=True,
-        account=account
+        account=account,
     )
     workflow = create_test_workflow(account_owner, tasks_count=1)
     task = workflow.tasks.get(number=1)
@@ -1416,7 +1417,7 @@ def test_get_updated_comment_recipients__already_mentioned__not_send():
         account=account,
         email='user@test.test',
         is_account_owner=False,
-        is_admin=True
+        is_admin=True,
     )
     workflow.members.add(user)
     text = f'Go [Joe Stalin|{user.id}] testing'
@@ -1448,7 +1449,7 @@ def test_get_updated_comment_recipients__not_mention__not_send():
     account = create_test_account()
     account_owner = create_test_user(
         is_account_owner=True,
-        account=account
+        account=account,
     )
     workflow = create_test_workflow(account_owner, tasks_count=1)
     task = workflow.tasks.get(number=1)
@@ -1456,7 +1457,7 @@ def test_get_updated_comment_recipients__not_mention__not_send():
         account=account,
         email='user@test.test',
         is_account_owner=False,
-        is_admin=True
+        is_admin=True,
     )
     workflow.members.add(user)
     text = f'Go {user.name} testing'
@@ -1487,7 +1488,7 @@ def test_get_updated_comment_recipients__not_mention__not_send():
     (
         TaskStatus.ACTIVE,
         TaskStatus.DELAYED,
-    )
+    ),
 )
 def test_validate_comment_action__ok(status):
 
@@ -1495,7 +1496,7 @@ def test_validate_comment_action__ok(status):
     user = create_test_user()
     workflow = create_test_workflow(
         user=user,
-        status=WorkflowStatus.RUNNING
+        status=WorkflowStatus.RUNNING,
     )
     task = workflow.tasks.get(number=1)
     task.status = status
@@ -1508,7 +1509,7 @@ def test_validate_comment_action__ok(status):
         workflow=workflow,
         task=task,
         user=user,
-        status=CommentStatus.CREATED
+        status=CommentStatus.CREATED,
     )
     service = CommentService(
         instance=event,
@@ -1524,7 +1525,7 @@ def test_validate_comment_action__deleted__raise_exception():
     user = create_test_user()
     workflow = create_test_workflow(
         user=user,
-        status=WorkflowStatus.RUNNING
+        status=WorkflowStatus.RUNNING,
     )
     task = workflow.tasks.get(number=1)
     event = WorkflowEvent.objects.create(
@@ -1535,7 +1536,7 @@ def test_validate_comment_action__deleted__raise_exception():
         workflow=workflow,
         task=task,
         user=user,
-        status=CommentStatus.DELETED
+        status=CommentStatus.DELETED,
     )
     service = CommentService(
         instance=event,
@@ -1555,7 +1556,7 @@ def test_validate_comment_action__workflow_ended__raise_exception():
     workflow = create_test_workflow(
         user=user,
         status=WorkflowStatus.DONE,
-        tasks_count=1
+        tasks_count=1,
     )
     task = workflow.tasks.get(number=1)
     event = WorkflowEvent.objects.create(
@@ -1598,65 +1599,65 @@ def test_update__text__ok(mocker):
         task=task,
         task_json=TaskEventJsonSerializer(
             instance=task,
-            context={'event_type': WorkflowEventType.COMMENT}
+            context={'event_type': WorkflowEventType.COMMENT},
         ).data,
         user=account_owner,
     )
     validate_comment_action_mock = mocker.patch(
         'src.processes.services.events.'
-        'CommentService._validate_comment_action'
+        'CommentService._validate_comment_action',
     )
     update_attachments_mock = mocker.patch(
         'src.processes.services.events.'
-        'CommentService._update_attachments'
+        'CommentService._update_attachments',
     )
     get_updated_comment_recipients_mock = mocker.patch(
         'src.processes.services.events.'
         'CommentService._get_updated_comment_recipients',
-        return_value=()
+        return_value=(),
     )
     send_workflow_event_mock = mocker.patch(
         'src.processes.services.events.'
-        'CommentService._send_workflow_event'
+        'CommentService._send_workflow_event',
     )
     clear_text = 'clear text'
     clear_text_mock = mocker.patch(
         'src.processes.services.events.'
         'MarkdownService.clear',
-        return_value=clear_text
+        return_value=clear_text,
     )
     partial_update_mock = mocker.patch(
         'src.processes.services.events.'
         'BaseModelService.partial_update',
-        return_value=event
+        return_value=event,
     )
     send_mention_notification_mock = mocker.patch(
         'src.processes.services.events.'
-        'send_mention_notification.delay'
+        'send_mention_notification.delay',
     )
     comment_edited_analytics_mock = mocker.patch(
         'src.processes.services.events.'
-        'AnalyticService.comment_edited'
+        'AnalyticService.comment_edited',
     )
 
     service = CommentService(
         instance=event,
         user=account_owner,
         is_superuser=is_superuser,
-        auth_type=auth_type
+        auth_type=auth_type,
     )
     date_updated = timezone.now()
     mocker.patch(
         'src.processes.services.events.'
         'timezone.now',
-        return_value=date_updated
+        return_value=date_updated,
     )
     text = 'Text comment'
 
     # act
     result = service.update(
         text=text,
-        force_save=True
+        force_save=True,
     )
 
     # assert
@@ -1672,7 +1673,7 @@ def test_update__text__ok(mocker):
         status=CommentStatus.UPDATED,
         updated=date_updated,
         with_attachments=False,
-        force_save=True
+        force_save=True,
     )
     send_mention_notification_mock.assert_not_called()
     comment_edited_analytics_mock.assert_called_once_with(
@@ -1680,7 +1681,7 @@ def test_update__text__ok(mocker):
         user=account_owner,
         is_superuser=is_superuser,
         auth_type=auth_type,
-        workflow=workflow
+        workflow=workflow,
     )
 
 
@@ -1703,65 +1704,65 @@ def test_update__task_delete__ok(mocker):
         task=None,
         task_json=TaskEventJsonSerializer(
             instance=task,
-            context={'event_type': WorkflowEventType.COMMENT}
+            context={'event_type': WorkflowEventType.COMMENT},
         ).data,
         user=account_owner,
     )
     validate_comment_action_mock = mocker.patch(
         'src.processes.services.events.'
-        'CommentService._validate_comment_action'
+        'CommentService._validate_comment_action',
     )
     update_attachments_mock = mocker.patch(
         'src.processes.services.events.'
-        'CommentService._update_attachments'
+        'CommentService._update_attachments',
     )
     get_updated_comment_recipients_mock = mocker.patch(
         'src.processes.services.events.'
         'CommentService._get_updated_comment_recipients',
-        return_value=()
+        return_value=(),
     )
     send_workflow_event_mock = mocker.patch(
         'src.processes.services.events.'
-        'CommentService._send_workflow_event'
+        'CommentService._send_workflow_event',
     )
     clear_text = 'clear text'
     clear_text_mock = mocker.patch(
         'src.processes.services.events.'
         'MarkdownService.clear',
-        return_value=clear_text
+        return_value=clear_text,
     )
     partial_update_mock = mocker.patch(
         'src.processes.services.events.'
         'BaseModelService.partial_update',
-        return_value=event
+        return_value=event,
     )
     send_mention_notification_mock = mocker.patch(
         'src.processes.services.events.'
-        'send_mention_notification.delay'
+        'send_mention_notification.delay',
     )
     comment_edited_analytics_mock = mocker.patch(
         'src.processes.services.events.'
-        'AnalyticService.comment_edited'
+        'AnalyticService.comment_edited',
     )
 
     service = CommentService(
         instance=event,
         user=account_owner,
         is_superuser=is_superuser,
-        auth_type=auth_type
+        auth_type=auth_type,
     )
     date_updated = timezone.now()
     mocker.patch(
         'src.processes.services.events.'
         'timezone.now',
-        return_value=date_updated
+        return_value=date_updated,
     )
     text = 'Text comment'
 
     # act
     result = service.update(
         text=text,
-        force_save=True
+        force_save=True,
     )
 
     # assert
@@ -1777,7 +1778,7 @@ def test_update__task_delete__ok(mocker):
         status=CommentStatus.UPDATED,
         updated=date_updated,
         with_attachments=False,
-        force_save=True
+        force_save=True,
     )
     send_mention_notification_mock.assert_not_called()
     comment_edited_analytics_mock.assert_called_once_with(
@@ -1785,7 +1786,7 @@ def test_update__task_delete__ok(mocker):
         user=account_owner,
         is_superuser=is_superuser,
         auth_type=auth_type,
-        workflow=workflow
+        workflow=workflow,
     )
 
 
@@ -1811,57 +1812,57 @@ def test_update__attachments__ok(mocker):
     )
     validate_comment_action_mock = mocker.patch(
         'src.processes.services.events.'
-        'CommentService._validate_comment_action'
+        'CommentService._validate_comment_action',
     )
     update_attachments_mock = mocker.patch(
         'src.processes.services.events.'
-        'CommentService._update_attachments'
+        'CommentService._update_attachments',
     )
     get_updated_comment_recipients_mock = mocker.patch(
         'src.processes.services.events.'
         'CommentService._get_updated_comment_recipients',
-        return_value=()
+        return_value=(),
     )
     send_workflow_event_mock = mocker.patch(
         'src.processes.services.events.'
-        'CommentService._send_workflow_event'
+        'CommentService._send_workflow_event',
     )
     date_updated = timezone.now()
     mocker.patch(
         'src.processes.services.events.'
         'timezone.now',
-        return_value=date_updated
+        return_value=date_updated,
     )
     partial_update_mock = mocker.patch(
         'src.processes.services.events.'
         'BaseModelService.partial_update',
-        return_value=event
+        return_value=event,
     )
     clear_text_mock = mocker.patch(
         'src.processes.services.events.'
-        'MarkdownService.clear'
+        'MarkdownService.clear',
     )
     comment_edited_analytics_mock = mocker.patch(
         'src.processes.services.events.'
-        'AnalyticService.comment_edited'
+        'AnalyticService.comment_edited',
     )
     send_mention_notification_mock = mocker.patch(
         'src.processes.services.events.'
-        'send_mention_notification.delay'
+        'send_mention_notification.delay',
     )
 
     service = CommentService(
         instance=event,
         user=account_owner,
         is_superuser=is_superuser,
-        auth_type=auth_type
+        auth_type=auth_type,
     )
     attachments = [1, 2]
 
     # act
     result = service.update(
         attachments=attachments,
-        force_save=True
+        force_save=True,
     )
 
     # assert
@@ -1876,7 +1877,7 @@ def test_update__attachments__ok(mocker):
         updated=date_updated,
         text=None,
         clear_text=None,
-        force_save=True
+        force_save=True,
     )
     clear_text_mock.assert_not_called()
     comment_edited_analytics_mock.assert_called_once_with(
@@ -1884,7 +1885,7 @@ def test_update__attachments__ok(mocker):
         user=account_owner,
         is_superuser=is_superuser,
         auth_type=auth_type,
-        workflow=workflow
+        workflow=workflow,
     )
     send_mention_notification_mock.assert_not_called()
 
@@ -1895,33 +1896,33 @@ def test_update__attachments__ok(mocker):
         (
             '(![avatar.jpg](https://storage.com/dev/avatar.jpg '
             '"attachment_id:3349 entityType:image")',
-            [3349]
+            [3349],
         ),
         (
             '[file.txt](http://file.txt "attachment_id:4187 entityType:file")',
-            [4187]
+            [4187],
         ),
         (
             '[video.mp4](https://video.mp4 "attachment_id:4188 '
             'entityType:video")',
-            [4188]
+            [4188],
         ),
         (
             'some [video.mp4](https://video.mp4 "attachment_id:4188 '
             'entityType:video") text \n(![avatar.jpg]'
             '(https://storage.com/dev/avatar.jpg '
             '"attachment_id:3349 entityType:image")',
-            [4188, 3349]
+            [4188, 3349],
         ),
         (
             '[ZIP-folder.zip](https://storage.zip "attachment_id:2482")',
-            [2482]
+            [2482],
         ),
         (
-            '[ZIP-folder.zip](https://storage.zip \"attachment_id:2482\")',
-            [2482]
-        )
-    )
+            '[ZIP-folder.zip](https://storage.zip "attachment_id:2482")',
+            [2482],
+        ),
+    ),
 )
 def test_update__find_attachments_in_text__ok(data, mocker):
 
@@ -1945,45 +1946,45 @@ def test_update__find_attachments_in_text__ok(data, mocker):
     )
     validate_comment_action_mock = mocker.patch(
         'src.processes.services.events.'
-        'CommentService._validate_comment_action'
+        'CommentService._validate_comment_action',
     )
     update_attachments_mock = mocker.patch(
         'src.processes.services.events.'
-        'CommentService._update_attachments'
+        'CommentService._update_attachments',
     )
     get_updated_comment_recipients_mock = mocker.patch(
         'src.processes.services.events.'
         'CommentService._get_updated_comment_recipients',
-        return_value=()
+        return_value=(),
     )
     send_workflow_event_mock = mocker.patch(
         'src.processes.services.events.'
-        'CommentService._send_workflow_event'
+        'CommentService._send_workflow_event',
     )
     date_updated = timezone.now()
     mocker.patch(
         'src.processes.services.events.'
         'timezone.now',
-        return_value=date_updated
+        return_value=date_updated,
     )
     partial_update_mock = mocker.patch(
         'src.processes.services.events.'
         'BaseModelService.partial_update',
-        return_value=event
+        return_value=event,
     )
     clear_text = 'clear text'
     clear_text_mock = mocker.patch(
         'src.processes.services.events.'
         'MarkdownService.clear',
-        return_value=clear_text
+        return_value=clear_text,
     )
     comment_edited_analytics_mock = mocker.patch(
         'src.processes.services.events.'
-        'AnalyticService.comment_edited'
+        'AnalyticService.comment_edited',
     )
     send_mention_notification_mock = mocker.patch(
         'src.processes.services.events.'
-        'send_mention_notification.delay'
+        'send_mention_notification.delay',
     )
 
     text = f'*text* \n -(123) {media}text'
@@ -1991,13 +1992,13 @@ def test_update__find_attachments_in_text__ok(data, mocker):
         instance=event,
         user=account_owner,
         is_superuser=is_superuser,
-        auth_type=auth_type
+        auth_type=auth_type,
     )
 
     # act
     result = service.update(
         text=text,
-        force_save=True
+        force_save=True,
     )
 
     # assert
@@ -2012,7 +2013,7 @@ def test_update__find_attachments_in_text__ok(data, mocker):
         updated=date_updated,
         text=text,
         clear_text=clear_text,
-        force_save=True
+        force_save=True,
     )
     clear_text_mock.assert_called_once_with(text)
     comment_edited_analytics_mock.assert_called_once_with(
@@ -2020,7 +2021,7 @@ def test_update__find_attachments_in_text__ok(data, mocker):
         user=account_owner,
         is_superuser=is_superuser,
         auth_type=auth_type,
-        workflow=workflow
+        workflow=workflow,
     )
     send_mention_notification_mock.assert_not_called()
 
@@ -2032,7 +2033,7 @@ def test_update__find_attachments_in_text__ok(data, mocker):
         '[file.txt](http://file.txt "attachment_id:4187 entityType:music")',
         '[video.mp4] (https://v.mp4 "attachment_id:4188 entityType:video")',
         '[video.mp4](ftp://video.mp4 "attachment_id:4188 entityType:video")',
-    )
+    ),
 )
 def test_update__not_found_attachments_in_text__ok(text, mocker):
 
@@ -2055,45 +2056,45 @@ def test_update__not_found_attachments_in_text__ok(text, mocker):
     )
     validate_comment_action_mock = mocker.patch(
         'src.processes.services.events.'
-        'CommentService._validate_comment_action'
+        'CommentService._validate_comment_action',
     )
     update_attachments_mock = mocker.patch(
         'src.processes.services.events.'
-        'CommentService._update_attachments'
+        'CommentService._update_attachments',
     )
     get_updated_comment_recipients_mock = mocker.patch(
         'src.processes.services.events.'
         'CommentService._get_updated_comment_recipients',
-        return_value=()
+        return_value=(),
     )
     send_workflow_event_mock = mocker.patch(
         'src.processes.services.events.'
-        'CommentService._send_workflow_event'
+        'CommentService._send_workflow_event',
     )
     date_updated = timezone.now()
     mocker.patch(
         'src.processes.services.events.'
         'timezone.now',
-        return_value=date_updated
+        return_value=date_updated,
     )
     partial_update_mock = mocker.patch(
         'src.processes.services.events.'
         'BaseModelService.partial_update',
-        return_value=event
+        return_value=event,
     )
     clear_text = 'clear text'
     clear_text_mock = mocker.patch(
         'src.processes.services.events.'
         'MarkdownService.clear',
-        return_value=clear_text
+        return_value=clear_text,
     )
     comment_edited_analytics_mock = mocker.patch(
         'src.processes.services.events.'
-        'AnalyticService.comment_edited'
+        'AnalyticService.comment_edited',
     )
     send_mention_notification_mock = mocker.patch(
         'src.processes.services.events.'
-        'send_mention_notification.delay'
+        'send_mention_notification.delay',
     )
 
     text = f'*text* \n -(123) {text}text'
@@ -2101,13 +2102,13 @@ def test_update__not_found_attachments_in_text__ok(text, mocker):
         instance=event,
         user=account_owner,
         is_superuser=is_superuser,
-        auth_type=auth_type
+        auth_type=auth_type,
     )
 
     # act
     result = service.update(
         text=text,
-        force_save=True
+        force_save=True,
     )
 
     # assert
@@ -2122,7 +2123,7 @@ def test_update__not_found_attachments_in_text__ok(text, mocker):
         updated=date_updated,
         text=text,
         clear_text=clear_text,
-        force_save=True
+        force_save=True,
     )
     clear_text_mock.assert_called_once_with(text)
     comment_edited_analytics_mock.assert_called_once_with(
@@ -2130,7 +2131,7 @@ def test_update__not_found_attachments_in_text__ok(text, mocker):
         user=account_owner,
         is_superuser=is_superuser,
         auth_type=auth_type,
-        workflow=workflow
+        workflow=workflow,
     )
     send_mention_notification_mock.assert_not_called()
 
@@ -2141,14 +2142,14 @@ def test_update__notified_users__ok(mocker):
     account = create_test_account(log_api_requests=True)
     account_owner = create_test_user(
         is_account_owner=True,
-        account=account
+        account=account,
     )
     workflow = create_test_workflow(account_owner, tasks_count=1)
     task = workflow.tasks.get(number=1)
     user = create_test_user(
         is_account_owner=False,
         account=account,
-        email='test@test.test'
+        email='test@test.test',
     )
 
     is_superuser = True
@@ -2163,58 +2164,58 @@ def test_update__notified_users__ok(mocker):
         task=task,
         task_json=TaskEventJsonSerializer(
             instance=task,
-            context={'event_type': WorkflowEventType.COMMENT}
+            context={'event_type': WorkflowEventType.COMMENT},
         ).data,
         user=account_owner,
     )
     validate_comment_action_mock = mocker.patch(
         'src.processes.services.events.'
-        'CommentService._validate_comment_action'
+        'CommentService._validate_comment_action',
     )
     update_attachments_mock = mocker.patch(
         'src.processes.services.events.'
-        'CommentService._update_attachments'
+        'CommentService._update_attachments',
     )
     get_updated_comment_recipients_mock = mocker.patch(
         'src.processes.services.events.'
         'CommentService._get_updated_comment_recipients',
-        return_value=(user.id,)
+        return_value=(user.id,),
     )
     send_workflow_event_mock = mocker.patch(
         'src.processes.services.events.'
-        'CommentService._send_workflow_event'
+        'CommentService._send_workflow_event',
     )
     date_updated = timezone.now()
     mocker.patch(
         'src.processes.services.events.'
         'timezone.now',
-        return_value=date_updated
+        return_value=date_updated,
     )
     partial_update_mock = mocker.patch(
         'src.processes.services.events.'
         'BaseModelService.partial_update',
-        return_value=event
+        return_value=event,
     )
     clear_text = 'clear text'
     clear_text_mock = mocker.patch(
         'src.processes.services.events.'
         'MarkdownService.clear',
-        return_value=clear_text
+        return_value=clear_text,
     )
     comment_edited_analytics_mock = mocker.patch(
         'src.processes.services.events.'
-        'AnalyticService.comment_edited'
+        'AnalyticService.comment_edited',
     )
     send_mention_notification_mock = mocker.patch(
         'src.processes.services.events.'
-        'send_mention_notification.delay'
+        'send_mention_notification.delay',
     )
 
     service = CommentService(
         instance=event,
         user=account_owner,
         is_superuser=is_superuser,
-        auth_type=auth_type
+        auth_type=auth_type,
     )
     new_text = 'New text'
     attachments = [1, 2]
@@ -2223,7 +2224,7 @@ def test_update__notified_users__ok(mocker):
     result = service.update(
         text=new_text,
         attachments=attachments,
-        force_save=True
+        force_save=True,
     )
 
     # assert
@@ -2239,14 +2240,14 @@ def test_update__notified_users__ok(mocker):
         with_attachments=True,
         status=CommentStatus.UPDATED,
         updated=date_updated,
-        force_save=True
+        force_save=True,
     )
     comment_edited_analytics_mock.assert_called_once_with(
         text=clear_text,
         user=account_owner,
         is_superuser=is_superuser,
         auth_type=auth_type,
-        workflow=workflow
+        workflow=workflow,
     )
     send_mention_notification_mock.assert_called_once_with(
         logging=account.log_api_requests,
@@ -2255,7 +2256,7 @@ def test_update__notified_users__ok(mocker):
         event_id=event.id,
         account_id=account.id,
         users_ids=(user.id,),
-        text=event.text
+        text=event.text,
     )
     assert workflow.members.filter(id=user.id).exists()
 
@@ -2270,7 +2271,7 @@ def test_update__mentioned_users__ok(mocker):
     user = create_test_user(
         email='text@test.text',
         account=account,
-        is_account_owner=False
+        is_account_owner=False,
     )
 
     is_superuser = True
@@ -2285,61 +2286,61 @@ def test_update__mentioned_users__ok(mocker):
         task=task,
         task_json=TaskEventJsonSerializer(
             instance=task,
-            context={'event_type': WorkflowEventType.COMMENT}
+            context={'event_type': WorkflowEventType.COMMENT},
         ).data,
         user=account_owner,
     )
     validate_comment_action_mock = mocker.patch(
         'src.processes.services.events.'
-        'CommentService._validate_comment_action'
+        'CommentService._validate_comment_action',
     )
     update_attachments_mock = mocker.patch(
         'src.processes.services.events.'
-        'CommentService._update_attachments'
+        'CommentService._update_attachments',
     )
     get_updated_comment_recipients_mock = mocker.patch(
         'src.processes.services.events.'
         'CommentService._get_updated_comment_recipients',
-        return_value=(user.id,)
+        return_value=(user.id,),
     )
     send_workflow_event_mock = mocker.patch(
         'src.processes.services.events.'
-        'CommentService._send_workflow_event'
+        'CommentService._send_workflow_event',
     )
     date_updated = timezone.now()
     mocker.patch(
         'src.processes.services.events.'
         'timezone.now',
-        return_value=date_updated
+        return_value=date_updated,
     )
     clear_text = 'clear text'
     clear_text_mock = mocker.patch(
         'src.processes.services.events.'
         'MarkdownService.clear',
-        return_value=clear_text
+        return_value=clear_text,
     )
     partial_update_mock = mocker.patch(
         'src.processes.services.events.'
         'BaseModelService.partial_update',
-        return_value=event
+        return_value=event,
     )
     comment_edited_analytics_mock = mocker.patch(
         'src.processes.services.events.'
-        'AnalyticService.comment_edited'
+        'AnalyticService.comment_edited',
     )
 
     service = CommentService(
         instance=event,
         user=account_owner,
         is_superuser=is_superuser,
-        auth_type=auth_type
+        auth_type=auth_type,
     )
     text = 'New text'
 
     # act
     result = service.update(
         text=text,
-        force_save=True
+        force_save=True,
     )
 
     # assert
@@ -2355,7 +2356,7 @@ def test_update__mentioned_users__ok(mocker):
         status=CommentStatus.UPDATED,
         updated=date_updated,
         with_attachments=False,
-        force_save=True
+        force_save=True,
     )
     assert workflow.members.filter(id=user.id).exists()
     comment_edited_analytics_mock.assert_called_once_with(
@@ -2363,7 +2364,7 @@ def test_update__mentioned_users__ok(mocker):
         user=account_owner,
         is_superuser=is_superuser,
         auth_type=auth_type,
-        workflow=workflow
+        workflow=workflow,
     )
 
 
@@ -2387,39 +2388,39 @@ def test_update__remove_text__ok(mocker):
     )
     validate_comment_action_mock = mocker.patch(
         'src.processes.services.events.'
-        'CommentService._validate_comment_action'
+        'CommentService._validate_comment_action',
     )
     update_attachments_mock = mocker.patch(
         'src.processes.services.events.'
-        'CommentService._update_attachments'
+        'CommentService._update_attachments',
     )
     get_updated_comment_recipients_mock = mocker.patch(
         'src.processes.services.events.'
         'CommentService._get_updated_comment_recipients',
-        return_value=()
+        return_value=(),
     )
     send_workflow_event_mock = mocker.patch(
         'src.processes.services.events.'
-        'CommentService._send_workflow_event'
+        'CommentService._send_workflow_event',
     )
     date_updated = timezone.now()
     mocker.patch(
         'src.processes.services.events.'
         'timezone.now',
-        return_value=date_updated
+        return_value=date_updated,
     )
     partial_update_mock = mocker.patch(
         'src.processes.services.events.'
         'BaseModelService.partial_update',
-        return_value=event
+        return_value=event,
     )
     clear_text_mock = mocker.patch(
         'src.processes.services.events.'
-        'MarkdownService.clear'
+        'MarkdownService.clear',
     )
     comment_edited_analytics_mock = mocker.patch(
         'src.processes.services.events.'
-        'AnalyticService.comment_edited'
+        'AnalyticService.comment_edited',
     )
 
     service = CommentService(
@@ -2432,7 +2433,7 @@ def test_update__remove_text__ok(mocker):
     result = service.update(
         text=None,
         attachments=attachments,
-        force_save=True
+        force_save=True,
     )
 
     # assert
@@ -2447,7 +2448,7 @@ def test_update__remove_text__ok(mocker):
         status=CommentStatus.UPDATED,
         updated=date_updated,
         with_attachments=True,
-        force_save=True
+        force_save=True,
     )
     clear_text_mock.assert_not_called()
     comment_edited_analytics_mock.assert_called_once_with(
@@ -2455,7 +2456,7 @@ def test_update__remove_text__ok(mocker):
         user=account_owner,
         is_superuser=False,
         auth_type=AuthTokenType.USER,
-        workflow=workflow
+        workflow=workflow,
     )
 
 
@@ -2477,41 +2478,41 @@ def test_update__remove_attachments__ok(mocker):
     )
     validate_comment_action_mock = mocker.patch(
         'src.processes.services.events.'
-        'CommentService._validate_comment_action'
+        'CommentService._validate_comment_action',
     )
     update_attachments_mock = mocker.patch(
         'src.processes.services.events.'
-        'CommentService._update_attachments'
+        'CommentService._update_attachments',
     )
     get_updated_comment_recipients_mock = mocker.patch(
         'src.processes.services.events.'
         'CommentService._get_updated_comment_recipients',
-        return_value=()
+        return_value=(),
     )
     send_workflow_event_mock = mocker.patch(
         'src.processes.services.events.'
-        'CommentService._send_workflow_event'
+        'CommentService._send_workflow_event',
     )
     date_updated = timezone.now()
     mocker.patch(
         'src.processes.services.events.'
         'timezone.now',
-        return_value=date_updated
+        return_value=date_updated,
     )
     partial_update_mock = mocker.patch(
         'src.processes.services.events.'
         'BaseModelService.partial_update',
-        return_value=event
+        return_value=event,
     )
     clear_text = 'clear text'
     clear_text_mock = mocker.patch(
         'src.processes.services.events.'
         'MarkdownService.clear',
-        return_value=clear_text
+        return_value=clear_text,
     )
     comment_edited_analytics_mock = mocker.patch(
         'src.processes.services.events.'
-        'AnalyticService.comment_edited'
+        'AnalyticService.comment_edited',
     )
     text = 'text'
 
@@ -2523,7 +2524,7 @@ def test_update__remove_attachments__ok(mocker):
     # act
     result = service.update(
         text=text,
-        force_save=True
+        force_save=True,
     )
 
     # assert
@@ -2539,14 +2540,14 @@ def test_update__remove_attachments__ok(mocker):
         status=CommentStatus.UPDATED,
         updated=date_updated,
         with_attachments=False,
-        force_save=True
+        force_save=True,
     )
     comment_edited_analytics_mock.assert_called_once_with(
         text=clear_text,
         user=account_owner,
         is_superuser=False,
         auth_type=AuthTokenType.USER,
-        workflow=workflow
+        workflow=workflow,
     )
 
 
@@ -2568,32 +2569,32 @@ def test_update__remove_text__raise_exception(mocker):
     )
     validate_comment_action_mock = mocker.patch(
         'src.processes.services.events.'
-        'CommentService._validate_comment_action'
+        'CommentService._validate_comment_action',
     )
     update_attachments_mock = mocker.patch(
         'src.processes.services.events.'
-        'CommentService._update_attachments'
+        'CommentService._update_attachments',
     )
     get_new_comment_recipients_mock = mocker.patch(
         'src.processes.services.events.'
         'CommentService._get_new_comment_recipients',
-        return_value=((), ())
+        return_value=((), ()),
     )
     send_workflow_event_mock = mocker.patch(
         'src.processes.services.events.'
-        'CommentService._send_workflow_event'
+        'CommentService._send_workflow_event',
     )
     partial_update_mock = mocker.patch(
         'src.processes.services.events.'
-        'BaseModelService.partial_update'
+        'BaseModelService.partial_update',
     )
     comment_edited_analytics_mock = mocker.patch(
         'src.processes.services.events.'
-        'AnalyticService.comment_edited'
+        'AnalyticService.comment_edited',
     )
     clear_text_mock = mocker.patch(
         'src.processes.services.events.'
-        'MarkdownService.clear'
+        'MarkdownService.clear',
     )
 
     service = CommentService(
@@ -2605,7 +2606,7 @@ def test_update__remove_text__raise_exception(mocker):
     with pytest.raises(exceptions.CommentTextRequired) as ex:
         service.update(
             text=None,
-            force_save=True
+            force_save=True,
         )
 
     # assert
@@ -2637,28 +2638,28 @@ def test_update__remove_attachment__raise_exception(mocker):
     )
     validate_comment_action_mock = mocker.patch(
         'src.processes.services.events.'
-        'CommentService._validate_comment_action'
+        'CommentService._validate_comment_action',
     )
     update_attachments_mock = mocker.patch(
         'src.processes.services.events.'
-        'CommentService._update_attachments'
+        'CommentService._update_attachments',
     )
     get_updated_comment_recipients_mock = mocker.patch(
         'src.processes.services.events.'
         'CommentService._get_updated_comment_recipients',
-        return_value=()
+        return_value=(),
     )
     send_workflow_event_mock = mocker.patch(
         'src.processes.services.events.'
-        'CommentService._send_workflow_event'
+        'CommentService._send_workflow_event',
     )
     partial_update_mock = mocker.patch(
         'src.processes.services.events.'
-        'BaseModelService.partial_update'
+        'BaseModelService.partial_update',
     )
     comment_edited_analytics_mock = mocker.patch(
         'src.processes.services.events.'
-        'AnalyticService.comment_edited'
+        'AnalyticService.comment_edited',
     )
 
     service = CommentService(
@@ -2670,7 +2671,7 @@ def test_update__remove_attachment__raise_exception(mocker):
     with pytest.raises(exceptions.CommentTextRequired) as ex:
         service.update(
             attachments=None,
-            force_save=True
+            force_save=True,
         )
 
     # assert
@@ -2689,7 +2690,7 @@ def test_update__remove_attachment__raise_exception(mocker):
         TaskStatus.COMPLETED,
         TaskStatus.PENDING,
         TaskStatus.SKIPPED,
-    )
+    ),
 )
 def test_update_inactive_task__raise_exception(status, mocker):
 
@@ -2712,32 +2713,32 @@ def test_update_inactive_task__raise_exception(status, mocker):
     )
     validate_comment_action_mock = mocker.patch(
         'src.processes.services.events.'
-        'CommentService._validate_comment_action'
+        'CommentService._validate_comment_action',
     )
     update_attachments_mock = mocker.patch(
         'src.processes.services.events.'
-        'CommentService._update_attachments'
+        'CommentService._update_attachments',
     )
     get_updated_comment_recipients_mock = mocker.patch(
         'src.processes.services.events.'
         'CommentService._get_new_comment_recipients',
-        return_value=((), ())
+        return_value=((), ()),
     )
     send_workflow_event_mock = mocker.patch(
         'src.processes.services.events.'
-        'CommentService._send_workflow_event'
+        'CommentService._send_workflow_event',
     )
     partial_update_mock = mocker.patch(
         'src.processes.services.events.'
-        'BaseModelService.partial_update'
+        'BaseModelService.partial_update',
     )
     comment_edited_analytics_mock = mocker.patch(
         'src.processes.services.events.'
-        'AnalyticService.comment_edited'
+        'AnalyticService.comment_edited',
     )
     clear_text_mock = mocker.patch(
         'src.processes.services.events.'
-        'MarkdownService.clear'
+        'MarkdownService.clear',
     )
 
     service = CommentService(
@@ -2749,7 +2750,7 @@ def test_update_inactive_task__raise_exception(status, mocker):
     with pytest.raises(exceptions.CommentedTaskNotActive) as ex:
         service.update(
             text='text',
-            force_save=True
+            force_save=True,
         )
 
     # assert
@@ -2785,29 +2786,29 @@ def test_delete__ok(mocker):
         url='https://path.to.file/filename.png',
         size=141352,
         account_id=account.id,
-        event=event
+        event=event,
     )
     validate_comment_action_mock = mocker.patch(
         'src.processes.services.events.'
-        'CommentService._validate_comment_action'
+        'CommentService._validate_comment_action',
     )
     partial_update_mock = mocker.patch(
         'src.processes.services.events.'
         'BaseModelService.partial_update',
-        return_value=event
+        return_value=event,
     )
     comment_deleted_analytics_mock = mocker.patch(
         'src.processes.services.events.'
-        'AnalyticService.comment_deleted'
+        'AnalyticService.comment_deleted',
     )
     send_workflow_event_mock = mocker.patch(
         'src.processes.services.events.'
-        'CommentService._send_workflow_event'
+        'CommentService._send_workflow_event',
     )
 
     service = CommentService(
         instance=event,
-        user=account_owner
+        user=account_owner,
     )
 
     # act
@@ -2821,7 +2822,7 @@ def test_delete__ok(mocker):
         status=CommentStatus.DELETED,
         with_attachments=False,
         text=None,
-        force_save=True
+        force_save=True,
     )
     assert event.attachments.count() == 0
     comment_deleted_analytics_mock.assert_called_once_with(
@@ -2829,7 +2830,7 @@ def test_delete__ok(mocker):
         user=account_owner,
         is_superuser=False,
         auth_type=AuthTokenType.USER,
-        workflow=workflow
+        workflow=workflow,
     )
     send_workflow_event_mock.assert_called_once()
 
@@ -2856,29 +2857,29 @@ def test_delete__task_delete__ok(mocker):
         url='https://path.to.file/filename.png',
         size=141352,
         account_id=account.id,
-        event=event
+        event=event,
     )
     validate_comment_action_mock = mocker.patch(
         'src.processes.services.events.'
-        'CommentService._validate_comment_action'
+        'CommentService._validate_comment_action',
     )
     partial_update_mock = mocker.patch(
         'src.processes.services.events.'
         'BaseModelService.partial_update',
-        return_value=event
+        return_value=event,
     )
     comment_deleted_analytics_mock = mocker.patch(
         'src.processes.services.events.'
-        'AnalyticService.comment_deleted'
+        'AnalyticService.comment_deleted',
     )
     send_workflow_event_mock = mocker.patch(
         'src.processes.services.events.'
-        'CommentService._send_workflow_event'
+        'CommentService._send_workflow_event',
     )
 
     service = CommentService(
         instance=event,
-        user=account_owner
+        user=account_owner,
     )
 
     # act
@@ -2892,7 +2893,7 @@ def test_delete__task_delete__ok(mocker):
         status=CommentStatus.DELETED,
         with_attachments=False,
         text=None,
-        force_save=True
+        force_save=True,
     )
     assert event.attachments.count() == 0
     comment_deleted_analytics_mock.assert_called_once_with(
@@ -2900,7 +2901,7 @@ def test_delete__task_delete__ok(mocker):
         user=account_owner,
         is_superuser=False,
         auth_type=AuthTokenType.USER,
-        workflow=workflow
+        workflow=workflow,
     )
     send_workflow_event_mock.assert_called_once()
 
@@ -2911,7 +2912,7 @@ def test_delete__task_delete__ok(mocker):
         TaskStatus.COMPLETED,
         TaskStatus.PENDING,
         TaskStatus.SKIPPED,
-    )
+    ),
 )
 def test_delete_inactive_task__raise_exception(status, mocker):
 
@@ -2935,25 +2936,25 @@ def test_delete_inactive_task__raise_exception(status, mocker):
     )
     validate_comment_action_mock = mocker.patch(
         'src.processes.services.events.'
-        'CommentService._validate_comment_action'
+        'CommentService._validate_comment_action',
     )
     partial_update_mock = mocker.patch(
         'src.processes.services.events.'
         'BaseModelService.partial_update',
-        return_value=event
+        return_value=event,
     )
     comment_deleted_analytics_mock = mocker.patch(
         'src.processes.services.events.'
-        'AnalyticService.comment_deleted'
+        'AnalyticService.comment_deleted',
     )
     send_workflow_event_mock = mocker.patch(
         'src.processes.services.events.'
-        'CommentService._send_workflow_event'
+        'CommentService._send_workflow_event',
     )
 
     service = CommentService(
         instance=event,
-        user=account_owner
+        user=account_owner,
     )
 
     # act
@@ -2976,7 +2977,7 @@ def test_watched__ok(mocker):
     user = create_test_user(
         email='test@test.test',
         is_account_owner=False,
-        account=account
+        account=account,
     )
     workflow = create_test_workflow(account_owner, tasks_count=1)
     task = workflow.tasks.get(number=1)
@@ -2991,12 +2992,12 @@ def test_watched__ok(mocker):
     )
     validate_comment_action_mock = mocker.patch(
         'src.processes.services.events.'
-        'CommentService._validate_comment_action'
+        'CommentService._validate_comment_action',
     )
 
     service = CommentService(
         instance=event,
-        user=user
+        user=user,
     )
 
     # act
@@ -3030,11 +3031,11 @@ def test_watched__comment_author__skip(mocker):
 
     service = CommentService(
         instance=event,
-        user=account_owner
+        user=account_owner,
     )
     validate_comment_action_mock = mocker.patch(
         'src.processes.services.events.'
-        'CommentService._validate_comment_action'
+        'CommentService._validate_comment_action',
     )
 
     # act
@@ -3057,7 +3058,7 @@ def test_watched__already_watched__skip(mocker):
     user = create_test_user(
         email='test@test.test',
         is_account_owner=False,
-        account=account
+        account=account,
     )
     workflow = create_test_workflow(account_owner, tasks_count=1)
     task = workflow.tasks.get(number=1)
@@ -3073,17 +3074,17 @@ def test_watched__already_watched__skip(mocker):
     event.watched = [
         {
             'date':  timezone.now().strftime('%Y-%m-%dT%H:%M'),
-            'user_id': user.id
-        }
+            'user_id': user.id,
+        },
     ]
     event.save()
     service = CommentService(
         instance=event,
-        user=user
+        user=user,
     )
     validate_comment_action_mock = mocker.patch(
         'src.processes.services.events.'
-        'CommentService._validate_comment_action'
+        'CommentService._validate_comment_action',
     )
 
     # act
@@ -3106,7 +3107,7 @@ def test_create_reaction__first__ok(mocker):
     user = create_test_user(
         email='test@test.test',
         is_account_owner=False,
-        account=account
+        account=account,
     )
     workflow = create_test_workflow(account_owner, tasks_count=1)
     task = workflow.tasks.get(number=1)
@@ -3118,19 +3119,19 @@ def test_create_reaction__first__ok(mocker):
         with_attachments=False,
         workflow=workflow,
         user=account_owner,
-        task=task
+        task=task,
     )
     create_reaction_analytics_mock = mocker.patch(
         'src.processes.services.events.'
-        'AnalyticService.comment_reaction_added'
+        'AnalyticService.comment_reaction_added',
     )
     send_reaction_notification_mock = mocker.patch(
         'src.processes.services.events.'
-        'send_reaction_notification.delay'
+        'send_reaction_notification.delay',
     )
     send_workflow_event_mock = mocker.patch(
         'src.processes.services.events.'
-        'CommentService._send_workflow_event'
+        'CommentService._send_workflow_event',
     )
     reaction = ':dumb face:'
     is_superuser = True
@@ -3139,11 +3140,11 @@ def test_create_reaction__first__ok(mocker):
         instance=event,
         user=user,
         auth_type=auth_type,
-        is_superuser=is_superuser
+        is_superuser=is_superuser,
     )
     validate_comment_action_mock = mocker.patch(
         'src.processes.services.events.'
-        'CommentService._validate_comment_action'
+        'CommentService._validate_comment_action',
     )
 
     # act
@@ -3158,7 +3159,7 @@ def test_create_reaction__first__ok(mocker):
         user=user,
         workflow=workflow,
         is_superuser=is_superuser,
-        auth_type=auth_type
+        auth_type=auth_type,
     )
     send_workflow_event_mock.assert_called_once()
     send_reaction_notification_mock.assert_called_once_with(
@@ -3182,7 +3183,7 @@ def test_create_reaction__long_comment__cut_off(mocker):
     user = create_test_user(
         email='test@test.test',
         is_account_owner=False,
-        account=account
+        account=account,
     )
     workflow = create_test_workflow(account_owner, tasks_count=1)
     task = workflow.tasks.get(number=1)
@@ -3194,19 +3195,19 @@ def test_create_reaction__long_comment__cut_off(mocker):
         with_attachments=False,
         workflow=workflow,
         user=account_owner,
-        task=task
+        task=task,
     )
     create_reaction_analytics_mock = mocker.patch(
         'src.processes.services.events.'
-        'AnalyticService.comment_reaction_added'
+        'AnalyticService.comment_reaction_added',
     )
     send_reaction_notification_mock = mocker.patch(
         'src.processes.services.events.'
-        'send_reaction_notification.delay'
+        'send_reaction_notification.delay',
     )
     send_workflow_event_mock = mocker.patch(
         'src.processes.services.events.'
-        'CommentService._send_workflow_event'
+        'CommentService._send_workflow_event',
     )
     reaction = ':dumb face:'
     is_superuser = True
@@ -3215,11 +3216,11 @@ def test_create_reaction__long_comment__cut_off(mocker):
         instance=event,
         user=user,
         auth_type=auth_type,
-        is_superuser=is_superuser
+        is_superuser=is_superuser,
     )
     validate_comment_action_mock = mocker.patch(
         'src.processes.services.events.'
-        'CommentService._validate_comment_action'
+        'CommentService._validate_comment_action',
     )
 
     # act
@@ -3234,7 +3235,7 @@ def test_create_reaction__long_comment__cut_off(mocker):
         user=user,
         workflow=workflow,
         is_superuser=is_superuser,
-        auth_type=auth_type
+        auth_type=auth_type,
     )
     send_workflow_event_mock.assert_called_once()
     send_reaction_notification_mock.assert_called_once_with(
@@ -3258,7 +3259,7 @@ def test_create_reaction__not_comment_text__ok(mocker):
     user = create_test_user(
         email='test@test.test',
         is_account_owner=False,
-        account=account
+        account=account,
     )
     workflow = create_test_workflow(account_owner, tasks_count=1)
     task = workflow.tasks.get(number=1)
@@ -3268,19 +3269,19 @@ def test_create_reaction__not_comment_text__ok(mocker):
         with_attachments=True,
         workflow=workflow,
         user=account_owner,
-        task=task
+        task=task,
     )
     create_reaction_analytics_mock = mocker.patch(
         'src.processes.services.events.'
-        'AnalyticService.comment_reaction_added'
+        'AnalyticService.comment_reaction_added',
     )
     send_reaction_notification_mock = mocker.patch(
         'src.processes.services.events.'
-        'send_reaction_notification.delay'
+        'send_reaction_notification.delay',
     )
     send_workflow_event_mock = mocker.patch(
         'src.processes.services.events.'
-        'CommentService._send_workflow_event'
+        'CommentService._send_workflow_event',
     )
     reaction = ':dumb face:'
     is_superuser = True
@@ -3289,11 +3290,11 @@ def test_create_reaction__not_comment_text__ok(mocker):
         instance=event,
         user=user,
         auth_type=auth_type,
-        is_superuser=is_superuser
+        is_superuser=is_superuser,
     )
     validate_comment_action_mock = mocker.patch(
         'src.processes.services.events.'
-        'CommentService._validate_comment_action'
+        'CommentService._validate_comment_action',
     )
 
     # act
@@ -3308,7 +3309,7 @@ def test_create_reaction__not_comment_text__ok(mocker):
         user=user,
         workflow=workflow,
         is_superuser=is_superuser,
-        auth_type=auth_type
+        auth_type=auth_type,
     )
     send_workflow_event_mock.assert_called_once()
     send_reaction_notification_mock.assert_called_once_with(
@@ -3332,7 +3333,7 @@ def test_create_reaction__second__ok(mocker):
     user = create_test_user(
         email='test@test.test',
         is_account_owner=False,
-        account=account
+        account=account,
     )
     workflow = create_test_workflow(account_owner, tasks_count=1)
     task = workflow.tasks.get(number=1)
@@ -3352,15 +3353,15 @@ def test_create_reaction__second__ok(mocker):
     event.save()
     create_reaction_analytics_mock = mocker.patch(
         'src.processes.services.events.'
-        'AnalyticService.comment_reaction_added'
+        'AnalyticService.comment_reaction_added',
     )
     send_reaction_notification_mock = mocker.patch(
         'src.processes.services.events.'
-        'send_reaction_notification.delay'
+        'send_reaction_notification.delay',
     )
     send_workflow_event_mock = mocker.patch(
         'src.processes.services.events.'
-        'CommentService._send_workflow_event'
+        'CommentService._send_workflow_event',
     )
     is_superuser = True
     auth_type = AuthTokenType.API
@@ -3368,11 +3369,11 @@ def test_create_reaction__second__ok(mocker):
         instance=event,
         user=user,
         auth_type=auth_type,
-        is_superuser=is_superuser
+        is_superuser=is_superuser,
     )
     validate_comment_action_mock = mocker.patch(
         'src.processes.services.events.'
-        'CommentService._validate_comment_action'
+        'CommentService._validate_comment_action',
     )
 
     # act
@@ -3387,7 +3388,7 @@ def test_create_reaction__second__ok(mocker):
         user=user,
         workflow=workflow,
         is_superuser=is_superuser,
-        auth_type=auth_type
+        auth_type=auth_type,
     )
     send_workflow_event_mock.assert_called_once()
     send_reaction_notification_mock.assert_called_once_with(
@@ -3411,7 +3412,7 @@ def test_create_reaction__duplicate__skip(mocker):
     user = create_test_user(
         email='test@test.test',
         is_account_owner=False,
-        account=account
+        account=account,
     )
     workflow = create_test_workflow(account_owner, tasks_count=1)
     task = workflow.tasks.get(number=1)
@@ -3430,15 +3431,15 @@ def test_create_reaction__duplicate__skip(mocker):
 
     create_reaction_analytics_mock = mocker.patch(
         'src.processes.services.events.'
-        'AnalyticService.comment_reaction_added'
+        'AnalyticService.comment_reaction_added',
     )
     send_workflow_event_mock = mocker.patch(
         'src.processes.services.events.'
-        'CommentService._send_workflow_event'
+        'CommentService._send_workflow_event',
     )
     send_reaction_notification_mock = mocker.patch(
         'src.processes.services.events.'
-        'send_reaction_notification.delay'
+        'send_reaction_notification.delay',
     )
     is_superuser = True
     auth_type = AuthTokenType.API
@@ -3446,11 +3447,11 @@ def test_create_reaction__duplicate__skip(mocker):
         instance=event,
         user=user,
         auth_type=auth_type,
-        is_superuser=is_superuser
+        is_superuser=is_superuser,
     )
     validate_comment_action_mock = mocker.patch(
         'src.processes.services.events.'
-        'CommentService._validate_comment_action'
+        'CommentService._validate_comment_action',
     )
 
     # act
@@ -3473,7 +3474,7 @@ def test_delete_reaction__last__remove_reaction(mocker):
     user = create_test_user(
         email='test@test.test',
         is_account_owner=False,
-        account=account
+        account=account,
     )
     workflow = create_test_workflow(account_owner, tasks_count=1)
     task = workflow.tasks.get(number=1)
@@ -3492,11 +3493,11 @@ def test_delete_reaction__last__remove_reaction(mocker):
 
     reaction_deleted_analytics_mock = mocker.patch(
         'src.processes.services.events.'
-        'AnalyticService.comment_reaction_deleted'
+        'AnalyticService.comment_reaction_deleted',
     )
     send_workflow_event_mock = mocker.patch(
         'src.processes.services.events.'
-        'CommentService._send_workflow_event'
+        'CommentService._send_workflow_event',
     )
     is_superuser = True
     auth_type = AuthTokenType.API
@@ -3504,11 +3505,11 @@ def test_delete_reaction__last__remove_reaction(mocker):
         instance=event,
         user=user,
         auth_type=auth_type,
-        is_superuser=is_superuser
+        is_superuser=is_superuser,
     )
     validate_comment_action_mock = mocker.patch(
         'src.processes.services.events.'
-        'CommentService._validate_comment_action'
+        'CommentService._validate_comment_action',
     )
 
     # act
@@ -3517,13 +3518,13 @@ def test_delete_reaction__last__remove_reaction(mocker):
     # assert
     validate_comment_action_mock.assert_called_once()
     event.refresh_from_db()
-    assert reaction not in event.reactions.keys()
+    assert reaction not in event.reactions
     reaction_deleted_analytics_mock.assert_called_once_with(
         text=reaction,
         user=user,
         workflow=workflow,
         is_superuser=is_superuser,
-        auth_type=auth_type
+        auth_type=auth_type,
     )
     send_workflow_event_mock.assert_called_once()
 
@@ -3536,7 +3537,7 @@ def test_delete_reaction__not_last__remove_only_user_id(mocker):
     user = create_test_user(
         email='test@test.test',
         is_account_owner=False,
-        account=account
+        account=account,
     )
     workflow = create_test_workflow(account_owner, tasks_count=1)
     task = workflow.tasks.get(number=1)
@@ -3555,11 +3556,11 @@ def test_delete_reaction__not_last__remove_only_user_id(mocker):
 
     reaction_deleted_analytics_mock = mocker.patch(
         'src.processes.services.events.'
-        'AnalyticService.comment_reaction_deleted'
+        'AnalyticService.comment_reaction_deleted',
     )
     send_workflow_event_mock = mocker.patch(
         'src.processes.services.events.'
-        'CommentService._send_workflow_event'
+        'CommentService._send_workflow_event',
     )
     is_superuser = True
     auth_type = AuthTokenType.API
@@ -3567,11 +3568,11 @@ def test_delete_reaction__not_last__remove_only_user_id(mocker):
         instance=event,
         user=user,
         auth_type=auth_type,
-        is_superuser=is_superuser
+        is_superuser=is_superuser,
     )
     validate_comment_action_mock = mocker.patch(
         'src.processes.services.events.'
-        'CommentService._validate_comment_action'
+        'CommentService._validate_comment_action',
     )
 
     # act
@@ -3586,7 +3587,7 @@ def test_delete_reaction__not_last__remove_only_user_id(mocker):
         user=user,
         workflow=workflow,
         is_superuser=is_superuser,
-        auth_type=auth_type
+        auth_type=auth_type,
     )
     send_workflow_event_mock.assert_called_once()
 
@@ -3599,7 +3600,7 @@ def test_delete_reaction__not_exist_reaction__skip(mocker):
     user = create_test_user(
         email='test@test.test',
         is_account_owner=False,
-        account=account
+        account=account,
     )
     workflow = create_test_workflow(account_owner, tasks_count=1)
     task = workflow.tasks.get(number=1)
@@ -3616,11 +3617,11 @@ def test_delete_reaction__not_exist_reaction__skip(mocker):
 
     reaction_deleted_analytics_mock = mocker.patch(
         'src.processes.services.events.'
-        'AnalyticService.comment_reaction_deleted'
+        'AnalyticService.comment_reaction_deleted',
     )
     send_workflow_event_mock = mocker.patch(
         'src.processes.services.events.'
-        'CommentService._send_workflow_event'
+        'CommentService._send_workflow_event',
     )
     is_superuser = True
     auth_type = AuthTokenType.API
@@ -3628,11 +3629,11 @@ def test_delete_reaction__not_exist_reaction__skip(mocker):
         instance=event,
         user=user,
         auth_type=auth_type,
-        is_superuser=is_superuser
+        is_superuser=is_superuser,
     )
     validate_comment_action_mock = mocker.patch(
         'src.processes.services.events.'
-        'CommentService._validate_comment_action'
+        'CommentService._validate_comment_action',
     )
 
     # act
@@ -3654,7 +3655,7 @@ def test_delete_reaction__not_exist_user_id__skip(mocker):
     user = create_test_user(
         email='test@test.test',
         is_account_owner=False,
-        account=account
+        account=account,
     )
     workflow = create_test_workflow(account_owner, tasks_count=1)
     task = workflow.tasks.get(number=1)
@@ -3671,11 +3672,11 @@ def test_delete_reaction__not_exist_user_id__skip(mocker):
 
     reaction_deleted_analytics_mock = mocker.patch(
         'src.processes.services.events.'
-        'AnalyticService.comment_reaction_deleted'
+        'AnalyticService.comment_reaction_deleted',
     )
     send_workflow_event_mock = mocker.patch(
         'src.processes.services.events.'
-        'CommentService._send_workflow_event'
+        'CommentService._send_workflow_event',
     )
     is_superuser = True
     auth_type = AuthTokenType.API
@@ -3683,11 +3684,11 @@ def test_delete_reaction__not_exist_user_id__skip(mocker):
         instance=event,
         user=user,
         auth_type=auth_type,
-        is_superuser=is_superuser
+        is_superuser=is_superuser,
     )
     validate_comment_action_mock = mocker.patch(
         'src.processes.services.events.'
-        'CommentService._validate_comment_action'
+        'CommentService._validate_comment_action',
     )
 
     # act
@@ -3709,7 +3710,7 @@ def test_create_reaction__to_yourself_comment__ok(mocker):
     user = create_test_user(
         email='test@test.test',
         is_account_owner=False,
-        account=account
+        account=account,
     )
     workflow = create_test_workflow(account_owner, tasks_count=1)
     task = workflow.tasks.get(number=1)
@@ -3721,19 +3722,19 @@ def test_create_reaction__to_yourself_comment__ok(mocker):
         with_attachments=False,
         workflow=workflow,
         user=user,
-        task=task
+        task=task,
     )
     reaction_deleted_analytics_mock = mocker.patch(
         'src.processes.services.events.'
-        'AnalyticService.comment_reaction_added'
+        'AnalyticService.comment_reaction_added',
     )
     send_reaction_notification_mock = mocker.patch(
         'src.processes.services.events.'
-        'send_reaction_notification.delay'
+        'send_reaction_notification.delay',
     )
     send_workflow_event_mock = mocker.patch(
         'src.processes.services.events.'
-        'CommentService._send_workflow_event'
+        'CommentService._send_workflow_event',
     )
     reaction = ':dumb face:'
     is_superuser = True
@@ -3742,11 +3743,11 @@ def test_create_reaction__to_yourself_comment__ok(mocker):
         instance=event,
         user=user,
         auth_type=auth_type,
-        is_superuser=is_superuser
+        is_superuser=is_superuser,
     )
     validate_comment_action_mock = mocker.patch(
         'src.processes.services.events.'
-        'CommentService._validate_comment_action'
+        'CommentService._validate_comment_action',
     )
 
     # act
@@ -3761,7 +3762,7 @@ def test_create_reaction__to_yourself_comment__ok(mocker):
         user=user,
         workflow=workflow,
         is_superuser=is_superuser,
-        auth_type=auth_type
+        auth_type=auth_type,
     )
     send_workflow_event_mock.assert_called_once()
     send_reaction_notification_mock.assert_not_called()
@@ -3778,8 +3779,8 @@ def test_create_reaction__to_yourself_comment__ok(mocker):
         'John \\Smith\\',
         'John }Smith{',
         'John )Smith(',
-        'User ]Smith['
-    ]
+        'User ]Smith[',
+    ],
 )
 def test_get_mentioned_users_ids_with_parentheses__ok(name):
 
@@ -3788,7 +3789,7 @@ def test_get_mentioned_users_ids_with_parentheses__ok(name):
     user = create_test_user(
         account=account_owner.account,
         email='user@test.test',
-        is_account_owner=False
+        is_account_owner=False,
     )
     service = CommentService(user=account_owner)
     text = f'Hello [{name}|{user.id}], please check this task.'
@@ -3796,7 +3797,7 @@ def test_get_mentioned_users_ids_with_parentheses__ok(name):
     # act
     mentioned_ids = service._get_mentioned_users_ids(
         text=text,
-        exclude_ids=[]
+        exclude_ids=[],
     )
 
     # assert
@@ -3809,7 +3810,7 @@ def test_get_mentioned_users_ids__check_timeout__ok():
     user = create_test_user(
         account=account_owner.account,
         email='user@test.test',
-        is_account_owner=False
+        is_account_owner=False,
     )
     service = CommentService(user=account_owner)
     text = ('\n [SQL for users  - '
@@ -3817,13 +3818,13 @@ def test_get_mentioned_users_ids__check_timeout__ok():
             '2756_bn9i0garicp520a9/Lo8VohifLmtLGQq0B5eGnwlfc896'
             'X_SQL9fhrew09wehv2hhhf09whreoif[phhh9HObnvcpedosn'
             '.poifhvc20phv02pjmv29jmv2v2vkj2mwvj2wviumw2vj'
-            '.pdf \"attachment_id:4782 entityType:file\")\n\n'
+            '.pdf "attachment_id:4782 entityType:file")\n\n'
             f'test [Tim Berzon|{user.id}] ')
 
     # act
     mentioned_ids = service._get_mentioned_users_ids(
         text=text,
-        exclude_ids=[]
+        exclude_ids=[],
     )
 
     # assert

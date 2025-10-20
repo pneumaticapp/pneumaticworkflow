@@ -1,43 +1,44 @@
+from datetime import timedelta
+
 import pytest
 import stripe
-from datetime import timedelta
 from django.utils import timezone
+
+from src.accounts.enums import LeaseLevel
+from src.accounts.services.user import UserService
+from src.authentication.enums import AuthTokenType
+from src.payment import messages
 from src.payment.enums import (
     BillingPeriod,
-    PriceType,
     PriceStatus,
+    PriceType,
 )
 from src.payment.models import (
+    Price,
     Product,
-    Price
+)
+from src.payment.services.account import (
+    AccountSubscriptionService,
+)
+from src.payment.stripe.exceptions import (
+    AccountNotFound,
+    AccountOwnerNotFound,
+    NotFoundAccountForSubscription,
+    WebhookServiceException,
+)
+from src.payment.stripe.webhooks import (
+    WebhookService,
+)
+from src.payment.tests.fixtures import (
+    create_test_invoice_price,
+    create_test_product,
+    create_test_recurring_price,
 )
 from src.processes.tests.fixtures import (
     create_test_account,
     create_test_user,
 )
-from src.payment.tests.fixtures import (
-    create_test_product,
-    create_test_recurring_price,
-    create_test_invoice_price
-)
-from src.payment.stripe.exceptions import (
-    WebhookServiceException,
-    AccountNotFound,
-    AccountOwnerNotFound,
-    NotFoundAccountForSubscription,
-)
-from src.payment.stripe.webhooks import (
-    WebhookService,
-)
-from src.payment.services.account import (
-    AccountSubscriptionService
-)
-from src.accounts.enums import LeaseLevel
-from src.authentication.enums import AuthTokenType
-from src.payment import messages
 from src.utils.logging import SentryLogLevel
-from src.accounts.services import UserService
-
 
 pytestmark = pytest.mark.django_db
 
@@ -51,7 +52,7 @@ def test_get_valid_webhook_account_by_stripe_id__ok(mocker):
     get_account_mock = mocker.patch(
         'src.payment.stripe.webhooks.'
         'WebhookService._get_account',
-        return_value=account
+        return_value=account,
     )
     service = WebhookService()
 
@@ -70,7 +71,7 @@ def test_get_valid_webhook_account_by_stripe_id__not_account__raise(mocker):
     get_account_mock = mocker.patch(
         'src.payment.stripe.webhooks.'
         'WebhookService._get_account',
-        return_value=None
+        return_value=None,
     )
     service = WebhookService()
 
@@ -92,7 +93,7 @@ def test_get_valid_webhook_account_by_stripe_id__not_owner__raise(mocker):
     get_account_mock = mocker.patch(
         'src.payment.stripe.webhooks.'
         'WebhookService._get_account',
-        return_value=account
+        return_value=account,
     )
     service = WebhookService()
 
@@ -117,12 +118,12 @@ def test_get_valid_webhook_account_by_subs__ok(mocker):
     get_valid_webhook_account_by_stripe_id_mock = mocker.patch(
         'src.payment.stripe.webhooks.'
         'WebhookService._get_valid_webhook_account_by_stripe_id',
-        return_value=account
+        return_value=account,
     )
     get_account_for_subscription_mock = mocker.patch(
         'src.payment.stripe.webhooks.'
         'WebhookService._get_account_for_subscription',
-        return_value=account
+        return_value=account,
     )
     service = WebhookService()
 
@@ -132,11 +133,11 @@ def test_get_valid_webhook_account_by_subs__ok(mocker):
     # assert
     assert result == account
     get_valid_webhook_account_by_stripe_id_mock.assert_called_once_with(
-        stripe_id=stripe_id
+        stripe_id=stripe_id,
     )
     get_account_for_subscription_mock.assert_called_once_with(
         account=account,
-        subscription=subscription_mock
+        subscription=subscription_mock,
     )
 
 
@@ -148,12 +149,12 @@ def test_get_valid_webhook_account_by_subs__tenant__ok(mocker):
     tenant = create_test_account(
         name='Tenant',
         lease_level=LeaseLevel.TENANT,
-        master_account=master_account
+        master_account=master_account,
     )
     create_test_user(
         account=tenant,
         is_account_owner=True,
-        email='tenant@owner.com'
+        email='tenant@owner.com',
     )
 
     stripe_id = 'cus_123sd'
@@ -162,12 +163,12 @@ def test_get_valid_webhook_account_by_subs__tenant__ok(mocker):
     get_valid_webhook_account_by_stripe_id_mock = mocker.patch(
         'src.payment.stripe.webhooks.'
         'WebhookService._get_valid_webhook_account_by_stripe_id',
-        return_value=master_account
+        return_value=master_account,
     )
     get_account_for_subscription_mock = mocker.patch(
         'src.payment.stripe.webhooks.'
         'WebhookService._get_account_for_subscription',
-        return_value=tenant
+        return_value=tenant,
     )
     service = WebhookService()
 
@@ -177,11 +178,11 @@ def test_get_valid_webhook_account_by_subs__tenant__ok(mocker):
     # assert
     assert result == tenant
     get_valid_webhook_account_by_stripe_id_mock.assert_called_once_with(
-        stripe_id=stripe_id
+        stripe_id=stripe_id,
     )
     get_account_for_subscription_mock.assert_called_once_with(
         account=master_account,
-        subscription=subscription_mock
+        subscription=subscription_mock,
     )
 
 
@@ -197,12 +198,12 @@ def test_get_valid_webhook_account_by_subs__tenant_not_account__raise(mocker):
     get_valid_webhook_account_by_stripe_id_mock = mocker.patch(
         'src.payment.stripe.webhooks.'
         'WebhookService._get_valid_webhook_account_by_stripe_id',
-        return_value=master_account
+        return_value=master_account,
     )
     get_account_for_subscription_mock = mocker.patch(
         'src.payment.stripe.webhooks.'
         'WebhookService._get_account_for_subscription',
-        return_value=None
+        return_value=None,
     )
     service = WebhookService()
 
@@ -214,16 +215,16 @@ def test_get_valid_webhook_account_by_subs__tenant_not_account__raise(mocker):
     assert ex.value.message == messages.MSG_BL_0019
     assert ex.value.details == {'subs_id': subscription_mock.id}
     get_valid_webhook_account_by_stripe_id_mock.assert_called_once_with(
-        stripe_id=stripe_id
+        stripe_id=stripe_id,
     )
     get_account_for_subscription_mock.assert_called_once_with(
         account=master_account,
-        subscription=subscription_mock
+        subscription=subscription_mock,
     )
 
 
 def test_get_valid_webhook_account_by_subs__tenant_not_account_owner__raise(
-    mocker
+    mocker,
 ):
 
     # arrange
@@ -232,7 +233,7 @@ def test_get_valid_webhook_account_by_subs__tenant_not_account_owner__raise(
     tenant = create_test_account(
         name='Tenant',
         lease_level=LeaseLevel.TENANT,
-        master_account=master_account
+        master_account=master_account,
     )
     stripe_id = 'cus_123sd'
     subscription_mock = mocker.Mock()
@@ -241,12 +242,12 @@ def test_get_valid_webhook_account_by_subs__tenant_not_account_owner__raise(
     get_valid_webhook_account_by_stripe_id_mock = mocker.patch(
         'src.payment.stripe.webhooks.'
         'WebhookService._get_valid_webhook_account_by_stripe_id',
-        return_value=master_account
+        return_value=master_account,
     )
     get_account_for_subscription_mock = mocker.patch(
         'src.payment.stripe.webhooks.'
         'WebhookService._get_account_for_subscription',
-        return_value=tenant
+        return_value=tenant,
     )
     service = WebhookService()
 
@@ -258,11 +259,11 @@ def test_get_valid_webhook_account_by_subs__tenant_not_account_owner__raise(
     assert ex.value.message == messages.MSG_BL_0020
     assert ex.value.details == {'account_id': tenant.id}
     get_valid_webhook_account_by_stripe_id_mock.assert_called_once_with(
-        stripe_id=stripe_id
+        stripe_id=stripe_id,
     )
     get_account_for_subscription_mock.assert_called_once_with(
         account=master_account,
-        subscription=subscription_mock
+        subscription=subscription_mock,
     )
 
 
@@ -287,18 +288,18 @@ def test_payment_method_attached__ok(mocker):
               "line1": None,
               "line2": None,
               "postal_code": "35004",
-              "state": None
+              "state": None,
             },
             "email": "admin@pneumatic.app",
             "name": "New York",
-            "phone": None
+            "phone": None,
           },
           "card": {
             "brand": "discover",
             "checks": {
               "address_line1_check": None,
               "address_postal_code_check": "pass",
-              "cvc_check": "pass"
+              "cvc_check": "pass",
             },
             "country": "US",
             "exp_month": 1,
@@ -309,50 +310,50 @@ def test_payment_method_attached__ok(mocker):
             "last4": "1117",
             "networks": {
               "available": [
-                "discover"
+                "discover",
               ],
-              "preferred": None
+              "preferred": None,
             },
             "three_d_secure_usage": {
-              "supported": True
+              "supported": True,
             },
-            "wallet": None
+            "wallet": None,
           },
           "created": 1686084878,
           "customer": customer_stripe_id,
           "livemode": False,
           "metadata": {
           },
-          "type": "card"
-        }
+          "type": "card",
+        },
       },
       "livemode": False,
       "pending_webhooks": 1,
       "request": {
         "id": "req_bvoxgSnbqQINqB",
-        "idempotency_key": "bd41da5f-32ff-4326-8605-f2349d505630"
+        "idempotency_key": "bd41da5f-32ff-4326-8605-f2349d505630",
       },
-      "type": "payment_method.attached"
+      "type": "payment_method.attached",
     }
     event = stripe.Event.construct_from(
         values=data,
-        key='!!@#'
+        key='!!@#',
     )
     set_default_payment_method_mock = mocker.patch(
         'src.payment.stripe.webhooks.'
-        'WebhookService._set_default_payment_method'
+        'WebhookService._set_default_payment_method',
     )
     method = mocker.Mock(customer=customer_stripe_id)
     get_method_mock = mocker.patch(
         'src.payment.stripe.webhooks.'
         'WebhookService._get_payment_method',
-        return_value=method
+        return_value=method,
     )
     customer = mocker.Mock()
     get_customer_mock = mocker.patch(
         'src.payment.stripe.webhooks.'
         'WebhookService._get_customer',
-        return_value=customer
+        return_value=customer,
     )
     service = WebhookService()
 
@@ -387,7 +388,7 @@ def test_customer_subscription_created__ok(mocker):
           "application": None,
           "application_fee_percent": None,
           "automatic_tax": {
-            "enabled": False
+            "enabled": False,
           },
           "billing_cycle_anchor": 1686663046,
           "billing_thresholds": None,
@@ -397,7 +398,7 @@ def test_customer_subscription_created__ok(mocker):
           "cancellation_details": {
             "comment": None,
             "feedback": None,
-            "reason": None
+            "reason": None,
           },
           "collection_method": "charge_automatically",
           "created": 1686058246,
@@ -443,7 +444,7 @@ def test_customer_subscription_created__ok(mocker):
                   "tiers_mode": None,
                   "transform_usage": None,
                   "trial_period_days": 7,
-                  "usage_type": "licensed"
+                  "usage_type": "licensed",
                 },
                 "price": {
                   "id": "price_1N8JnDBM2UVM1VfGDN6IsDDg",
@@ -464,24 +465,24 @@ def test_customer_subscription_created__ok(mocker):
                     "interval": "month",
                     "interval_count": 1,
                     "trial_period_days": 7,
-                    "usage_type": "licensed"
+                    "usage_type": "licensed",
                   },
                   "tax_behavior": "unspecified",
                   "tiers_mode": None,
                   "transform_quantity": None,
                   "type": "recurring",
                   "unit_amount": 1000,
-                  "unit_amount_decimal": "1000"
+                  "unit_amount_decimal": "1000",
                 },
                 "quantity": 5,
                 "subscription": "sub_1NFzyEBM2UVM1VfGJdLHZKWx",
                 "tax_rates": [
-                ]
-              }
+                ],
+              },
             ],
             "has_more": False,
             "total_count": 1,
-            "url": "/v1/subscription_items?subscription=sub_1NFzyJdLHZKWx"
+            "url": "/v1/subscription_items?subscription=sub_1NFzyJdLHZKWx",
           },
           "latest_invoice": "in_1NFzyEBM2UVM1VfGuP3XdHle",
           "livemode": False,
@@ -493,7 +494,7 @@ def test_customer_subscription_created__ok(mocker):
           "payment_settings": {
             "payment_method_options": None,
             "payment_method_types": None,
-            "save_default_payment_method": "off"
+            "save_default_payment_method": "off",
           },
           "pending_invoice_item_interval": None,
           "pending_setup_intent": None,
@@ -518,7 +519,7 @@ def test_customer_subscription_created__ok(mocker):
             "tiers_mode": None,
             "transform_usage": None,
             "trial_period_days": 7,
-            "usage_type": "licensed"
+            "usage_type": "licensed",
           },
           "quantity": 5,
           "schedule": None,
@@ -529,23 +530,23 @@ def test_customer_subscription_created__ok(mocker):
           "trial_end": 1686663046,
           "trial_settings": {
             "end_behavior": {
-              "missing_payment_method": "create_invoice"
-            }
+              "missing_payment_method": "create_invoice",
+            },
           },
-          "trial_start": 1686058246
-        }
+          "trial_start": 1686058246,
+        },
       },
       "livemode": False,
       "pending_webhooks": 1,
       "request": {
         "id": None,
-        "idempotency_key": None
+        "idempotency_key": None,
       },
-      "type": "customer.subscription.created"
+      "type": "customer.subscription.created",
     }
     event = stripe.Event.construct_from(
         values=data,
-        key='!!@#'
+        key='!!@#',
     )
     customer_mock = mocker.Mock()
     subscription_mock = mocker.Mock()
@@ -553,27 +554,27 @@ def test_customer_subscription_created__ok(mocker):
     get_subscription_by_id_mock = mocker.patch(
         'src.payment.stripe.webhooks.'
         'WebhookService._get_subscription_by_id',
-        return_value=subscription_mock
+        return_value=subscription_mock,
     )
     get_valid_webhook_account_mock = mocker.patch(
         'src.payment.stripe.webhooks.'
         'WebhookService._get_valid_webhook_account_by_subs',
-        return_value=account
+        return_value=account,
     )
     subscription_details_mock = mocker.Mock()
     get_subscription_details_mock = mocker.patch(
         'src.payment.stripe.webhooks.'
         'WebhookService.get_subscription_details',
-        return_value=subscription_details_mock
+        return_value=subscription_details_mock,
     )
     account_service_init_mock = mocker.patch.object(
         AccountSubscriptionService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     account_service_create_mock = mocker.patch(
         'src.payment.services.account.'
-        'AccountSubscriptionService.create'
+        'AccountSubscriptionService.create',
     )
     service = WebhookService()
 
@@ -602,12 +603,12 @@ def test_customer_subscription_created__tenant__ok(mocker):
     tenant = create_test_account(
         name='Tenant',
         lease_level=LeaseLevel.TENANT,
-        master_account=master_account
+        master_account=master_account,
     )
     tenant_owner = create_test_user(
         account=tenant,
         is_account_owner=True,
-        email='tenant@owner.com'
+        email='tenant@owner.com',
     )
 
     subscription_stripe_id = 'sub_1NG6tmBM2UVM1VfG3Gnat77h'
@@ -623,7 +624,7 @@ def test_customer_subscription_created__tenant__ok(mocker):
           "application": None,
           "application_fee_percent": None,
           "automatic_tax": {
-            "enabled": False
+            "enabled": False,
           },
           "billing_cycle_anchor": 1686663046,
           "billing_thresholds": None,
@@ -633,7 +634,7 @@ def test_customer_subscription_created__tenant__ok(mocker):
           "cancellation_details": {
             "comment": None,
             "feedback": None,
-            "reason": None
+            "reason": None,
           },
           "collection_method": "charge_automatically",
           "created": 1686058246,
@@ -679,7 +680,7 @@ def test_customer_subscription_created__tenant__ok(mocker):
                   "tiers_mode": None,
                   "transform_usage": None,
                   "trial_period_days": 7,
-                  "usage_type": "licensed"
+                  "usage_type": "licensed",
                 },
                 "price": {
                   "id": "price_1N8JnDBM2UVM1VfGDN6IsDDg",
@@ -700,24 +701,24 @@ def test_customer_subscription_created__tenant__ok(mocker):
                     "interval": "month",
                     "interval_count": 1,
                     "trial_period_days": 7,
-                    "usage_type": "licensed"
+                    "usage_type": "licensed",
                   },
                   "tax_behavior": "unspecified",
                   "tiers_mode": None,
                   "transform_quantity": None,
                   "type": "recurring",
                   "unit_amount": 1000,
-                  "unit_amount_decimal": "1000"
+                  "unit_amount_decimal": "1000",
                 },
                 "quantity": 5,
                 "subscription": "sub_1NFzyEBM2UVM1VfGJdLHZKWx",
                 "tax_rates": [
-                ]
-              }
+                ],
+              },
             ],
             "has_more": False,
             "total_count": 1,
-            "url": "/v1/subscription_items?subscription=sub_1NFzyJdLHZKWx"
+            "url": "/v1/subscription_items?subscription=sub_1NFzyJdLHZKWx",
           },
           "latest_invoice": "in_1NFzyEBM2UVM1VfGuP3XdHle",
           "livemode": False,
@@ -729,7 +730,7 @@ def test_customer_subscription_created__tenant__ok(mocker):
           "payment_settings": {
             "payment_method_options": None,
             "payment_method_types": None,
-            "save_default_payment_method": "off"
+            "save_default_payment_method": "off",
           },
           "pending_invoice_item_interval": None,
           "pending_setup_intent": None,
@@ -754,7 +755,7 @@ def test_customer_subscription_created__tenant__ok(mocker):
             "tiers_mode": None,
             "transform_usage": None,
             "trial_period_days": 7,
-            "usage_type": "licensed"
+            "usage_type": "licensed",
           },
           "quantity": 5,
           "schedule": None,
@@ -765,23 +766,23 @@ def test_customer_subscription_created__tenant__ok(mocker):
           "trial_end": 1686663046,
           "trial_settings": {
             "end_behavior": {
-              "missing_payment_method": "create_invoice"
-            }
+              "missing_payment_method": "create_invoice",
+            },
           },
-          "trial_start": 1686058246
-        }
+          "trial_start": 1686058246,
+        },
       },
       "livemode": False,
       "pending_webhooks": 1,
       "request": {
         "id": None,
-        "idempotency_key": None
+        "idempotency_key": None,
       },
-      "type": "customer.subscription.created"
+      "type": "customer.subscription.created",
     }
     event = stripe.Event.construct_from(
         values=data,
-        key='!!@#'
+        key='!!@#',
     )
     customer_mock = mocker.Mock()
     subscription_mock = mocker.Mock()
@@ -789,27 +790,27 @@ def test_customer_subscription_created__tenant__ok(mocker):
     get_subscription_by_id_mock = mocker.patch(
         'src.payment.stripe.webhooks.'
         'WebhookService._get_subscription_by_id',
-        return_value=subscription_mock
+        return_value=subscription_mock,
     )
     get_valid_webhook_account_mock = mocker.patch(
         'src.payment.stripe.webhooks.'
         'WebhookService._get_valid_webhook_account_by_subs',
-        return_value=tenant
+        return_value=tenant,
     )
     subscription_details_mock = mocker.Mock()
     get_subscription_details_mock = mocker.patch(
         'src.payment.stripe.webhooks.'
         'WebhookService.get_subscription_details',
-        return_value=subscription_details_mock
+        return_value=subscription_details_mock,
     )
     account_service_init_mock = mocker.patch.object(
         AccountSubscriptionService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     account_service_create_mock = mocker.patch(
         'src.payment.services.account.'
-        'AccountSubscriptionService.create'
+        'AccountSubscriptionService.create',
     )
     service = WebhookService()
 
@@ -850,7 +851,7 @@ def test_customer_subscription_updated__update__ok(mocker):
           "application": None,
           "application_fee_percent": None,
           "automatic_tax": {
-            "enabled": False
+            "enabled": False,
           },
           "billing_cycle_anchor": 1686121200,
           "billing_thresholds": None,
@@ -860,7 +861,7 @@ def test_customer_subscription_updated__update__ok(mocker):
           "cancellation_details": {
             "comment": None,
             "feedback": None,
-            "reason": "cancellation_requested"
+            "reason": "cancellation_requested",
           },
           "collection_method": "charge_automatically",
           "created": 1685949994,
@@ -906,7 +907,7 @@ def test_customer_subscription_updated__update__ok(mocker):
                   "tiers_mode": None,
                   "transform_usage": None,
                   "trial_period_days": 7,
-                  "usage_type": "licensed"
+                  "usage_type": "licensed",
                 },
                 "price": {
                   "id": "price_1N8JnDBM2UVM1VfGDN6IsDDg",
@@ -927,24 +928,24 @@ def test_customer_subscription_updated__update__ok(mocker):
                     "interval": "month",
                     "interval_count": 1,
                     "trial_period_days": 7,
-                    "usage_type": "licensed"
+                    "usage_type": "licensed",
                   },
                   "tax_behavior": "unspecified",
                   "tiers_mode": None,
                   "transform_quantity": None,
                   "type": "recurring",
                   "unit_amount": 1000,
-                  "unit_amount_decimal": "1000"
+                  "unit_amount_decimal": "1000",
                 },
                 "quantity": 5,
                 "subscription": "sub_1NFXoEBM2UVM1VfGmlBiJnqI",
                 "tax_rates": [
-                ]
-              }
+                ],
+              },
             ],
             "has_more": False,
             "total_count": 1,
-            "url": "/v1/subscription_items?subscription=sub_1NFXoEiJnqI"
+            "url": "/v1/subscription_items?subscription=sub_1NFXoEiJnqI",
           },
           "latest_invoice": "in_1NFXoEBM2UVM1VfGpC9ydp1w",
           "livemode": False,
@@ -956,7 +957,7 @@ def test_customer_subscription_updated__update__ok(mocker):
           "payment_settings": {
             "payment_method_options": None,
             "payment_method_types": None,
-            "save_default_payment_method": "off"
+            "save_default_payment_method": "off",
           },
           "pending_invoice_item_interval": None,
           "pending_setup_intent": None,
@@ -981,7 +982,7 @@ def test_customer_subscription_updated__update__ok(mocker):
             "tiers_mode": None,
             "transform_usage": None,
             "trial_period_days": 7,
-            "usage_type": "licensed"
+            "usage_type": "licensed",
           },
           "quantity": 5,
           "schedule": None,
@@ -992,33 +993,33 @@ def test_customer_subscription_updated__update__ok(mocker):
           "trial_end": 1686121200,
           "trial_settings": {
             "end_behavior": {
-              "missing_payment_method": "create_invoice"
-            }
+              "missing_payment_method": "create_invoice",
+            },
           },
-          "trial_start": 1685949994
+          "trial_start": 1685949994,
         },
         "previous_attributes": {
           "billing_cycle_anchor": 1686554794,
           "cancel_at": None,
           "canceled_at": None,
           "cancellation_details": {
-            "reason": None
+            "reason": None,
           },
           "current_period_end": 1686554794,
-          "trial_end": 1686554794
-        }
+          "trial_end": 1686554794,
+        },
       },
       "livemode": False,
       "pending_webhooks": 1,
       "request": {
         "id": "req_FtfEvVazoAgQNy",
-        "idempotency_key": "2c90d3c6-ce72-44cd-ba29-80c391629b82"
+        "idempotency_key": "2c90d3c6-ce72-44cd-ba29-80c391629b82",
       },
-      "type": "customer.subscription.updated"
+      "type": "customer.subscription.updated",
     }
     event = stripe.Event.construct_from(
         values=data,
-        key='!!@#'
+        key='!!@#',
     )
     customer_mock = mocker.Mock()
     subscription_mock = mocker.Mock()
@@ -1026,27 +1027,27 @@ def test_customer_subscription_updated__update__ok(mocker):
     get_subscription_by_id_mock = mocker.patch(
         'src.payment.stripe.webhooks.'
         'WebhookService._get_subscription_by_id',
-        return_value=subscription_mock
+        return_value=subscription_mock,
     )
     get_valid_webhook_account_mock = mocker.patch(
         'src.payment.stripe.webhooks.'
         'WebhookService._get_valid_webhook_account_by_subs',
-        return_value=account
+        return_value=account,
     )
     subscription_details_mock = mocker.Mock()
     get_subscription_details_mock = mocker.patch(
         'src.payment.stripe.webhooks.'
         'WebhookService.get_subscription_details',
-        return_value=subscription_details_mock
+        return_value=subscription_details_mock,
     )
     account_service_init_mock = mocker.patch.object(
         AccountSubscriptionService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     account_service_update_mock = mocker.patch(
         'src.payment.services.account.'
-        'AccountSubscriptionService.update'
+        'AccountSubscriptionService.update',
     )
     service = WebhookService()
 
@@ -1060,7 +1061,7 @@ def test_customer_subscription_updated__update__ok(mocker):
     account_service_init_mock.assert_called_once_with(
         instance=account,
         user=user,
-        auth_type=AuthTokenType.WEBHOOK
+        auth_type=AuthTokenType.WEBHOOK,
     )
     account_service_update_mock.assert_called_once_with(
         details=subscription_details_mock,
@@ -1088,7 +1089,7 @@ def test_customer_subscription_updated__cancel__ok(mocker):
           "application": None,
           "application_fee_percent": None,
           "automatic_tax": {
-            "enabled": False
+            "enabled": False,
           },
           "billing_cycle_anchor": 1686121200,
           "billing_thresholds": None,
@@ -1098,7 +1099,7 @@ def test_customer_subscription_updated__cancel__ok(mocker):
           "cancellation_details": {
             "comment": None,
             "feedback": None,
-            "reason": "cancellation_requested"
+            "reason": "cancellation_requested",
           },
           "collection_method": "charge_automatically",
           "created": 1685949994,
@@ -1144,7 +1145,7 @@ def test_customer_subscription_updated__cancel__ok(mocker):
                   "tiers_mode": None,
                   "transform_usage": None,
                   "trial_period_days": 7,
-                  "usage_type": "licensed"
+                  "usage_type": "licensed",
                 },
                 "price": {
                   "id": "price_1N8JnDBM2UVM1VfGDN6IsDDg",
@@ -1165,24 +1166,24 @@ def test_customer_subscription_updated__cancel__ok(mocker):
                     "interval": "month",
                     "interval_count": 1,
                     "trial_period_days": 7,
-                    "usage_type": "licensed"
+                    "usage_type": "licensed",
                   },
                   "tax_behavior": "unspecified",
                   "tiers_mode": None,
                   "transform_quantity": None,
                   "type": "recurring",
                   "unit_amount": 1000,
-                  "unit_amount_decimal": "1000"
+                  "unit_amount_decimal": "1000",
                 },
                 "quantity": 5,
                 "subscription": "sub_1NFXoEBM2UVM1VfGmlBiJnqI",
                 "tax_rates": [
-                ]
-              }
+                ],
+              },
             ],
             "has_more": False,
             "total_count": 1,
-            "url": "/v1/subscription_items?subscription=sub_1NFXoEiJnqI"
+            "url": "/v1/subscription_items?subscription=sub_1NFXoEiJnqI",
           },
           "latest_invoice": "in_1NFXoEBM2UVM1VfGpC9ydp1w",
           "livemode": False,
@@ -1194,7 +1195,7 @@ def test_customer_subscription_updated__cancel__ok(mocker):
           "payment_settings": {
             "payment_method_options": None,
             "payment_method_types": None,
-            "save_default_payment_method": "off"
+            "save_default_payment_method": "off",
           },
           "pending_invoice_item_interval": None,
           "pending_setup_intent": None,
@@ -1219,7 +1220,7 @@ def test_customer_subscription_updated__cancel__ok(mocker):
             "tiers_mode": None,
             "transform_usage": None,
             "trial_period_days": 7,
-            "usage_type": "licensed"
+            "usage_type": "licensed",
           },
           "quantity": 5,
           "schedule": None,
@@ -1230,33 +1231,33 @@ def test_customer_subscription_updated__cancel__ok(mocker):
           "trial_end": 1686121200,
           "trial_settings": {
             "end_behavior": {
-              "missing_payment_method": "create_invoice"
-            }
+              "missing_payment_method": "create_invoice",
+            },
           },
-          "trial_start": 1685949994
+          "trial_start": 1685949994,
         },
         "previous_attributes": {
           "billing_cycle_anchor": 1686554794,
           "cancel_at": None,
           "canceled_at": None,
           "cancellation_details": {
-            "reason": None
+            "reason": None,
           },
           "current_period_end": 1686554794,
-          "trial_end": 1686554794
-        }
+          "trial_end": 1686554794,
+        },
       },
       "livemode": False,
       "pending_webhooks": 1,
       "request": {
         "id": "req_FtfEvVazoAgQNy",
-        "idempotency_key": "2c90d3c6-ce72-44cd-ba29-80c391629b82"
+        "idempotency_key": "2c90d3c6-ce72-44cd-ba29-80c391629b82",
       },
-      "type": "customer.subscription.updated"
+      "type": "customer.subscription.updated",
     }
     event = stripe.Event.construct_from(
         values=data,
-        key='!!@#'
+        key='!!@#',
     )
     customer_mock = mocker.Mock()
     subscription_mock = mocker.Mock()
@@ -1264,12 +1265,12 @@ def test_customer_subscription_updated__cancel__ok(mocker):
     get_subscription_by_id_mock = mocker.patch(
         'src.payment.stripe.webhooks.'
         'WebhookService._get_subscription_by_id',
-        return_value=subscription_mock
+        return_value=subscription_mock,
     )
     get_valid_webhook_account_mock = mocker.patch(
         'src.payment.stripe.webhooks.'
         'WebhookService._get_valid_webhook_account_by_subs',
-        return_value=account
+        return_value=account,
     )
     get_subscription_details_mock = mocker.patch(
         'src.payment.stripe.webhooks.'
@@ -1278,15 +1279,15 @@ def test_customer_subscription_updated__cancel__ok(mocker):
     account_service_init_mock = mocker.patch.object(
         AccountSubscriptionService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     account_service_update_mock = mocker.patch(
         'src.payment.services.account.'
-        'AccountSubscriptionService.update'
+        'AccountSubscriptionService.update',
     )
     account_service_cancel_mock = mocker.patch(
         'src.payment.services.account.'
-        'AccountSubscriptionService.cancel'
+        'AccountSubscriptionService.cancel',
     )
     service = WebhookService()
 
@@ -1299,7 +1300,7 @@ def test_customer_subscription_updated__cancel__ok(mocker):
     account_service_init_mock.assert_called_once_with(
         instance=account,
         user=user,
-        auth_type=AuthTokenType.WEBHOOK
+        auth_type=AuthTokenType.WEBHOOK,
     )
     account_service_cancel_mock.assert_called_once_with(cancel_at)
     get_subscription_details_mock.assert_not_called()
@@ -1315,12 +1316,12 @@ def test_customer_subscription_updated__tenant__update__ok(mocker):
     tenant = create_test_account(
         name='Tenant',
         lease_level=LeaseLevel.TENANT,
-        master_account=master_account
+        master_account=master_account,
     )
     tenant_owner = create_test_user(
         account=tenant,
         is_account_owner=True,
-        email='tenant@owner.com'
+        email='tenant@owner.com',
     )
 
     subscription_stripe_id = 'sub_1NG6tmBM2UVM1VfG3Gnat77h'
@@ -1337,7 +1338,7 @@ def test_customer_subscription_updated__tenant__update__ok(mocker):
           "application": None,
           "application_fee_percent": None,
           "automatic_tax": {
-            "enabled": False
+            "enabled": False,
           },
           "billing_cycle_anchor": 1686121200,
           "billing_thresholds": None,
@@ -1347,7 +1348,7 @@ def test_customer_subscription_updated__tenant__update__ok(mocker):
           "cancellation_details": {
             "comment": None,
             "feedback": None,
-            "reason": "cancellation_requested"
+            "reason": "cancellation_requested",
           },
           "collection_method": "charge_automatically",
           "created": 1685949994,
@@ -1393,7 +1394,7 @@ def test_customer_subscription_updated__tenant__update__ok(mocker):
                   "tiers_mode": None,
                   "transform_usage": None,
                   "trial_period_days": 7,
-                  "usage_type": "licensed"
+                  "usage_type": "licensed",
                 },
                 "price": {
                   "id": "price_1N8JnDBM2UVM1VfGDN6IsDDg",
@@ -1414,24 +1415,24 @@ def test_customer_subscription_updated__tenant__update__ok(mocker):
                     "interval": "month",
                     "interval_count": 1,
                     "trial_period_days": 7,
-                    "usage_type": "licensed"
+                    "usage_type": "licensed",
                   },
                   "tax_behavior": "unspecified",
                   "tiers_mode": None,
                   "transform_quantity": None,
                   "type": "recurring",
                   "unit_amount": 1000,
-                  "unit_amount_decimal": "1000"
+                  "unit_amount_decimal": "1000",
                 },
                 "quantity": 5,
                 "subscription": "sub_1NFXoEBM2UVM1VfGmlBiJnqI",
                 "tax_rates": [
-                ]
-              }
+                ],
+              },
             ],
             "has_more": False,
             "total_count": 1,
-            "url": "/v1/subscription_items?subscription=sub_1NFXoEiJnqI"
+            "url": "/v1/subscription_items?subscription=sub_1NFXoEiJnqI",
           },
           "latest_invoice": "in_1NFXoEBM2UVM1VfGpC9ydp1w",
           "livemode": False,
@@ -1443,7 +1444,7 @@ def test_customer_subscription_updated__tenant__update__ok(mocker):
           "payment_settings": {
             "payment_method_options": None,
             "payment_method_types": None,
-            "save_default_payment_method": "off"
+            "save_default_payment_method": "off",
           },
           "pending_invoice_item_interval": None,
           "pending_setup_intent": None,
@@ -1468,7 +1469,7 @@ def test_customer_subscription_updated__tenant__update__ok(mocker):
             "tiers_mode": None,
             "transform_usage": None,
             "trial_period_days": 7,
-            "usage_type": "licensed"
+            "usage_type": "licensed",
           },
           "quantity": 5,
           "schedule": None,
@@ -1479,33 +1480,33 @@ def test_customer_subscription_updated__tenant__update__ok(mocker):
           "trial_end": 1686121200,
           "trial_settings": {
             "end_behavior": {
-              "missing_payment_method": "create_invoice"
-            }
+              "missing_payment_method": "create_invoice",
+            },
           },
-          "trial_start": 1685949994
+          "trial_start": 1685949994,
         },
         "previous_attributes": {
           "billing_cycle_anchor": 1686554794,
           "cancel_at": None,
           "canceled_at": None,
           "cancellation_details": {
-            "reason": None
+            "reason": None,
           },
           "current_period_end": 1686554794,
-          "trial_end": 1686554794
-        }
+          "trial_end": 1686554794,
+        },
       },
       "livemode": False,
       "pending_webhooks": 1,
       "request": {
         "id": "req_FtfEvVazoAgQNy",
-        "idempotency_key": "2c90d3c6-ce72-44cd-ba29-80c391629b82"
+        "idempotency_key": "2c90d3c6-ce72-44cd-ba29-80c391629b82",
       },
-      "type": "customer.subscription.updated"
+      "type": "customer.subscription.updated",
     }
     event = stripe.Event.construct_from(
         values=data,
-        key='!!@#'
+        key='!!@#',
     )
     customer_mock = mocker.Mock()
     subscription_mock = mocker.Mock()
@@ -1513,27 +1514,27 @@ def test_customer_subscription_updated__tenant__update__ok(mocker):
     get_subscription_by_id_mock = mocker.patch(
         'src.payment.stripe.webhooks.'
         'WebhookService._get_subscription_by_id',
-        return_value=subscription_mock
+        return_value=subscription_mock,
     )
     get_valid_webhook_account_mock = mocker.patch(
         'src.payment.stripe.webhooks.'
         'WebhookService._get_valid_webhook_account_by_subs',
-        return_value=tenant
+        return_value=tenant,
     )
     subscription_details_mock = mocker.Mock()
     get_subscription_details_mock = mocker.patch(
         'src.payment.stripe.webhooks.'
         'WebhookService.get_subscription_details',
-        return_value=subscription_details_mock
+        return_value=subscription_details_mock,
     )
     account_service_init_mock = mocker.patch.object(
         AccountSubscriptionService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     account_service_update_mock = mocker.patch(
         'src.payment.services.account.'
-        'AccountSubscriptionService.update'
+        'AccountSubscriptionService.update',
     )
     service = WebhookService()
 
@@ -1547,7 +1548,7 @@ def test_customer_subscription_updated__tenant__update__ok(mocker):
     account_service_init_mock.assert_called_once_with(
         instance=tenant,
         user=tenant_owner,
-        auth_type=AuthTokenType.WEBHOOK
+        auth_type=AuthTokenType.WEBHOOK,
     )
     account_service_update_mock.assert_called_once_with(
         details=subscription_details_mock,
@@ -1575,7 +1576,7 @@ def test_customer_subscription_deleted__ok(mocker):
           "application": None,
           "application_fee_percent": None,
           "automatic_tax": {
-            "enabled": False
+            "enabled": False,
           },
           "billing_cycle_anchor": 1686339894,
           "billing_thresholds": None,
@@ -1585,7 +1586,7 @@ def test_customer_subscription_deleted__ok(mocker):
           "cancellation_details": {
             "comment": None,
             "feedback": None,
-            "reason": "cancellation_requested"
+            "reason": "cancellation_requested",
           },
           "collection_method": "charge_automatically",
           "created": 1685735094,
@@ -1631,7 +1632,7 @@ def test_customer_subscription_deleted__ok(mocker):
                   "tiers_mode": None,
                   "transform_usage": None,
                   "trial_period_days": 7,
-                  "usage_type": "licensed"
+                  "usage_type": "licensed",
                 },
                 "price": {
                   "id": "price_1N8JnDBM2UVM1VfGDN6IsDDg",
@@ -1652,24 +1653,24 @@ def test_customer_subscription_deleted__ok(mocker):
                     "interval": "month",
                     "interval_count": 1,
                     "trial_period_days": 7,
-                    "usage_type": "licensed"
+                    "usage_type": "licensed",
                   },
                   "tax_behavior": "unspecified",
                   "tiers_mode": None,
                   "transform_quantity": None,
                   "type": "recurring",
                   "unit_amount": 1000,
-                  "unit_amount_decimal": "1000"
+                  "unit_amount_decimal": "1000",
                 },
                 "quantity": 5,
                 "subscription": "sub_1NEdu6BM2UVM1VfG6s72BJVo",
                 "tax_rates": [
-                ]
-              }
+                ],
+              },
             ],
             "has_more": False,
             "total_count": 1,
-            "url": "/v1/subscription_items?subscription=sub_1NEdG6s72BJVo"
+            "url": "/v1/subscription_items?subscription=sub_1NEdG6s72BJVo",
           },
           "latest_invoice": "in_1NEdu6BM2UVM1VfGW5ceYbF5",
           "livemode": False,
@@ -1681,7 +1682,7 @@ def test_customer_subscription_deleted__ok(mocker):
           "payment_settings": {
             "payment_method_options": None,
             "payment_method_types": None,
-            "save_default_payment_method": "off"
+            "save_default_payment_method": "off",
           },
           "pending_invoice_item_interval": None,
           "pending_setup_intent": None,
@@ -1706,7 +1707,7 @@ def test_customer_subscription_deleted__ok(mocker):
             "tiers_mode": None,
             "transform_usage": None,
             "trial_period_days": 7,
-            "usage_type": "licensed"
+            "usage_type": "licensed",
           },
           "quantity": 5,
           "schedule": None,
@@ -1717,23 +1718,23 @@ def test_customer_subscription_deleted__ok(mocker):
           "trial_end": 1686339894,
           "trial_settings": {
             "end_behavior": {
-              "missing_payment_method": "create_invoice"
-            }
+              "missing_payment_method": "create_invoice",
+            },
           },
-          "trial_start": 1685735094
-        }
+          "trial_start": 1685735094,
+        },
       },
       "livemode": False,
       "pending_webhooks": 1,
       "request": {
         "id": "req_Wba3rJCrwj7mdX",
-        "idempotency_key": None
+        "idempotency_key": None,
       },
-      "type": "customer.subscription.deleted"
+      "type": "customer.subscription.deleted",
     }
     event = stripe.Event.construct_from(
         values=data,
-        key='!!@#'
+        key='!!@#',
     )
     customer_mock = mocker.Mock()
     subscription_mock = mocker.Mock()
@@ -1741,21 +1742,21 @@ def test_customer_subscription_deleted__ok(mocker):
     get_subscription_by_id_mock = mocker.patch(
         'src.payment.stripe.webhooks.'
         'WebhookService._get_subscription_by_id',
-        return_value=subscription_mock
+        return_value=subscription_mock,
     )
     get_valid_webhook_account_mock = mocker.patch(
         'src.payment.stripe.webhooks.'
         'WebhookService._get_valid_webhook_account_by_subs',
-        return_value=account
+        return_value=account,
     )
     account_service_init_mock = mocker.patch.object(
         AccountSubscriptionService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     account_service_expired_mock = mocker.patch(
         'src.payment.services.account.'
-        'AccountSubscriptionService.expired'
+        'AccountSubscriptionService.expired',
     )
     service = WebhookService()
 
@@ -1768,7 +1769,7 @@ def test_customer_subscription_deleted__ok(mocker):
     account_service_init_mock.assert_called_once_with(
         instance=account,
         user=user,
-        auth_type=AuthTokenType.WEBHOOK
+        auth_type=AuthTokenType.WEBHOOK,
     )
     account_service_expired_mock.assert_called_once_with(ended_at)
 
@@ -1782,12 +1783,12 @@ def test_customer_subscription_deleted__tenant__ok(mocker):
     tenant = create_test_account(
         name='Tenant',
         lease_level=LeaseLevel.TENANT,
-        master_account=master_account
+        master_account=master_account,
     )
     tenant_owner = create_test_user(
         account=tenant,
         is_account_owner=True,
-        email='tenant@owner.com'
+        email='tenant@owner.com',
     )
 
     subscription_stripe_id = 'sub_1NG6tmBM2UVM1VfG3Gnat77h'
@@ -1805,7 +1806,7 @@ def test_customer_subscription_deleted__tenant__ok(mocker):
           "application": None,
           "application_fee_percent": None,
           "automatic_tax": {
-            "enabled": False
+            "enabled": False,
           },
           "billing_cycle_anchor": 1686339894,
           "billing_thresholds": None,
@@ -1815,7 +1816,7 @@ def test_customer_subscription_deleted__tenant__ok(mocker):
           "cancellation_details": {
             "comment": None,
             "feedback": None,
-            "reason": "cancellation_requested"
+            "reason": "cancellation_requested",
           },
           "collection_method": "charge_automatically",
           "created": 1685735094,
@@ -1861,7 +1862,7 @@ def test_customer_subscription_deleted__tenant__ok(mocker):
                   "tiers_mode": None,
                   "transform_usage": None,
                   "trial_period_days": 7,
-                  "usage_type": "licensed"
+                  "usage_type": "licensed",
                 },
                 "price": {
                   "id": "price_1N8JnDBM2UVM1VfGDN6IsDDg",
@@ -1882,24 +1883,24 @@ def test_customer_subscription_deleted__tenant__ok(mocker):
                     "interval": "month",
                     "interval_count": 1,
                     "trial_period_days": 7,
-                    "usage_type": "licensed"
+                    "usage_type": "licensed",
                   },
                   "tax_behavior": "unspecified",
                   "tiers_mode": None,
                   "transform_quantity": None,
                   "type": "recurring",
                   "unit_amount": 1000,
-                  "unit_amount_decimal": "1000"
+                  "unit_amount_decimal": "1000",
                 },
                 "quantity": 5,
                 "subscription": "sub_1NEdu6BM2UVM1VfG6s72BJVo",
                 "tax_rates": [
-                ]
-              }
+                ],
+              },
             ],
             "has_more": False,
             "total_count": 1,
-            "url": "/v1/subscription_items?subscription=sub_1NEdG6s72BJVo"
+            "url": "/v1/subscription_items?subscription=sub_1NEdG6s72BJVo",
           },
           "latest_invoice": "in_1NEdu6BM2UVM1VfGW5ceYbF5",
           "livemode": False,
@@ -1911,7 +1912,7 @@ def test_customer_subscription_deleted__tenant__ok(mocker):
           "payment_settings": {
             "payment_method_options": None,
             "payment_method_types": None,
-            "save_default_payment_method": "off"
+            "save_default_payment_method": "off",
           },
           "pending_invoice_item_interval": None,
           "pending_setup_intent": None,
@@ -1936,7 +1937,7 @@ def test_customer_subscription_deleted__tenant__ok(mocker):
             "tiers_mode": None,
             "transform_usage": None,
             "trial_period_days": 7,
-            "usage_type": "licensed"
+            "usage_type": "licensed",
           },
           "quantity": 5,
           "schedule": None,
@@ -1947,23 +1948,23 @@ def test_customer_subscription_deleted__tenant__ok(mocker):
           "trial_end": 1686339894,
           "trial_settings": {
             "end_behavior": {
-              "missing_payment_method": "create_invoice"
-            }
+              "missing_payment_method": "create_invoice",
+            },
           },
-          "trial_start": 1685735094
-        }
+          "trial_start": 1685735094,
+        },
       },
       "livemode": False,
       "pending_webhooks": 1,
       "request": {
         "id": "req_Wba3rJCrwj7mdX",
-        "idempotency_key": None
+        "idempotency_key": None,
       },
-      "type": "customer.subscription.deleted"
+      "type": "customer.subscription.deleted",
     }
     event = stripe.Event.construct_from(
         values=data,
-        key='!!@#'
+        key='!!@#',
     )
     customer_mock = mocker.Mock()
     subscription_mock = mocker.Mock()
@@ -1971,21 +1972,21 @@ def test_customer_subscription_deleted__tenant__ok(mocker):
     get_subscription_by_id_mock = mocker.patch(
         'src.payment.stripe.webhooks.'
         'WebhookService._get_subscription_by_id',
-        return_value=subscription_mock
+        return_value=subscription_mock,
     )
     get_valid_webhook_account_mock = mocker.patch(
         'src.payment.stripe.webhooks.'
         'WebhookService._get_valid_webhook_account_by_subs',
-        return_value=tenant
+        return_value=tenant,
     )
     account_service_init_mock = mocker.patch.object(
         AccountSubscriptionService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     account_service_expired_mock = mocker.patch(
         'src.payment.services.account.'
-        'AccountSubscriptionService.expired'
+        'AccountSubscriptionService.expired',
     )
     service = WebhookService()
 
@@ -1998,7 +1999,7 @@ def test_customer_subscription_deleted__tenant__ok(mocker):
     account_service_init_mock.assert_called_once_with(
         instance=tenant,
         user=tenant_owner,
-        auth_type=AuthTokenType.WEBHOOK
+        auth_type=AuthTokenType.WEBHOOK,
     )
     account_service_expired_mock.assert_called_once_with(ended_at)
 
@@ -2037,26 +2038,26 @@ def test_product_created__ok(mocker):
           "type": "service",
           "unit_label": None,
           "updated": 1686092022,
-          "url": None
-        }
+          "url": None,
+        },
       },
       "livemode": False,
       "pending_webhooks": 1,
       "request": {
         "id": "req_y1g0sf9xfEl4uv",
-        "idempotency_key": "0d8ee425-6445-425d-8521-fdd46b6fe4c4"
+        "idempotency_key": "0d8ee425-6445-425d-8521-fdd46b6fe4c4",
       },
-      "type": "product.created"
+      "type": "product.created",
     }
     event = stripe.Event.construct_from(
         values=data,
-        key='!!@#'
+        key='!!@#',
     )
     product_code = 'some code'
     get_product_code_mock = mocker.patch(
         'src.payment.stripe.webhooks.'
         'WebhookService._get_product_code',
-        return_value=product_code
+        return_value=product_code,
     )
     service = WebhookService()
 
@@ -2072,7 +2073,7 @@ def test_product_created__ok(mocker):
     ).exists()
     get_product_code_mock.assert_called_once_with(
         stripe_id=stripe_id,
-        name=name
+        name=name,
     )
 
 
@@ -2111,23 +2112,23 @@ def test_product_updated__ok():
           "type": "service",
           "unit_label": None,
           "updated": 1686091165,
-          "url": None
+          "url": None,
         },
         "previous_attributes": {
-          "updated": 1686091164
-        }
+          "updated": 1686091164,
+        },
       },
       "livemode": False,
       "pending_webhooks": 1,
       "request": {
         "id": "req_Dd4K0wIP5khFtA",
-        "idempotency_key": "7bebe648-6102-4988-85f3-f33cbf8f731d"
+        "idempotency_key": "7bebe648-6102-4988-85f3-f33cbf8f731d",
       },
-      "type": "product.updated"
+      "type": "product.updated",
     }
     event = stripe.Event.construct_from(
         values=data,
-        key='!!@#'
+        key='!!@#',
     )
     code = 'some code'
     product = create_test_product(stripe_id=stripe_id, code=code)
@@ -2176,20 +2177,20 @@ def test_product_deleted():
           "type": "service",
           "unit_label": None,
           "updated": 1686092147,
-          "url": None
-        }
+          "url": None,
+        },
       },
       "livemode": False,
       "pending_webhooks": 1,
       "request": {
         "id": "req_oxf7W64DISLKeL",
-        "idempotency_key": None
+        "idempotency_key": None,
       },
-      "type": "product.deleted"
+      "type": "product.deleted",
     }
     event = stripe.Event.construct_from(
         values=data,
-        key='!!@#'
+        key='!!@#',
     )
     product = create_test_product(stripe_id=stripe_id)
     create_test_recurring_price(product=product)
@@ -2232,31 +2233,31 @@ def test_price_created__ok(mocker):
             "interval": 'year',
             "interval_count": 1,
             "trial_period_days": 5,
-            "usage_type": "licensed"
+            "usage_type": "licensed",
           },
           "tax_behavior": "unspecified",
           "tiers_mode": None,
           "transform_quantity": None,
           "type": 'recurring',
           "unit_amount": 1000,
-          "unit_amount_decimal": "100"
-        }
+          "unit_amount_decimal": "100",
+        },
       },
       "livemode": False,
       "pending_webhooks": 1,
       "request": {
         "id": "req_7nqnxNbq2uZMqX",
-        "idempotency_key": "d7d2b29b-f591-4581-8670-8d90d2f2f394"
+        "idempotency_key": "d7d2b29b-f591-4581-8670-8d90d2f2f394",
       },
-      "type": "price.created"
+      "type": "price.created",
     }
     event = stripe.Event.construct_from(
         values=data,
-        key='!!@#'
+        key='!!@#',
     )
     create_price_mock = mocker.patch(
         'src.payment.stripe.webhooks.'
-        'WebhookService._create_price'
+        'WebhookService._create_price',
     )
     service = WebhookService()
 
@@ -2265,7 +2266,7 @@ def test_price_created__ok(mocker):
 
     # assert
     create_price_mock.assert_called_once_with(
-        event.data['object']
+        event.data['object'],
     )
 
 
@@ -2283,7 +2284,7 @@ def test_price_updated__recurring__ok():
     price = create_test_recurring_price(
         stripe_id=stripe_id,
         product=product,
-        code=price_code
+        code=price_code,
     )
     data = {
       "id": "evt_1NG8l0BM2UVM1VfGZo5GSCLu",
@@ -2310,27 +2311,27 @@ def test_price_updated__recurring__ok():
             "interval": interval,
             "interval_count": 1,
             "trial_period_days": trial_days,
-            "usage_type": "licensed"
+            "usage_type": "licensed",
           },
           "tax_behavior": "unspecified",
           "tiers_mode": None,
           "transform_quantity": None,
           "type": PriceType.RECURRING,
           "unit_amount": unit_amount,
-          "unit_amount_decimal": "100"
-        }
+          "unit_amount_decimal": "100",
+        },
       },
       "livemode": False,
       "pending_webhooks": 1,
       "request": {
         "id": "req_7nqnxNbq2uZMqX",
-        "idempotency_key": "d7d2b29b-f591-4581-8670-8d90d2f2f394"
+        "idempotency_key": "d7d2b29b-f591-4581-8670-8d90d2f2f394",
       },
-      "type": "price.updated"
+      "type": "price.updated",
     }
     event = stripe.Event.construct_from(
         values=data,
-        key='!!@#'
+        key='!!@#',
     )
     service = WebhookService()
 
@@ -2386,20 +2387,20 @@ def test_price_updated__one_time__ok():
           "transform_quantity": None,
           "type": PriceType.ONE_TIME,
           "unit_amount": unit_amount,
-          "unit_amount_decimal": "100"
-        }
+          "unit_amount_decimal": "100",
+        },
       },
       "livemode": False,
       "pending_webhooks": 1,
       "request": {
         "id": "req_7nqnxNbq2uZMqX",
-        "idempotency_key": "d7d2b29b-f591-4581-8670-8d90d2f2f394"
+        "idempotency_key": "d7d2b29b-f591-4581-8670-8d90d2f2f394",
       },
-      "type": "price.update"
+      "type": "price.update",
     }
     event = stripe.Event.construct_from(
         values=data,
-        key='!!@#'
+        key='!!@#',
     )
     service = WebhookService()
 
@@ -2418,7 +2419,7 @@ def test_price_updated__one_time__ok():
         price=unit_amount,
         trial_days=None,
         billing_period=None,
-        currency=currency
+        currency=currency,
     ).exists()
 
 
@@ -2464,27 +2465,27 @@ def test_price_updated__archived_to_active__archived():
             "interval": interval,
             "interval_count": 1,
             "trial_period_days": trial_days,
-            "usage_type": "licensed"
+            "usage_type": "licensed",
           },
           "tax_behavior": "unspecified",
           "tiers_mode": None,
           "transform_quantity": None,
           "type": PriceType.RECURRING,
           "unit_amount": unit_amount,
-          "unit_amount_decimal": "100"
-        }
+          "unit_amount_decimal": "100",
+        },
       },
       "livemode": False,
       "pending_webhooks": 1,
       "request": {
         "id": "req_7nqnxNbq2uZMqX",
-        "idempotency_key": "d7d2b29b-f591-4581-8670-8d90d2f2f394"
+        "idempotency_key": "d7d2b29b-f591-4581-8670-8d90d2f2f394",
       },
-      "type": "price.updated"
+      "type": "price.updated",
     }
     event = stripe.Event.construct_from(
         values=data,
-        key='!!@#'
+        key='!!@#',
     )
     service = WebhookService()
 
@@ -2540,27 +2541,27 @@ def test_price_updated__archived_to_inactive__ok():
             "interval": interval,
             "interval_count": 1,
             "trial_period_days": trial_days,
-            "usage_type": "licensed"
+            "usage_type": "licensed",
           },
           "tax_behavior": "unspecified",
           "tiers_mode": None,
           "transform_quantity": None,
           "type": PriceType.RECURRING,
           "unit_amount": unit_amount,
-          "unit_amount_decimal": "100"
-        }
+          "unit_amount_decimal": "100",
+        },
       },
       "livemode": False,
       "pending_webhooks": 1,
       "request": {
         "id": "req_7nqnxNbq2uZMqX",
-        "idempotency_key": "d7d2b29b-f591-4581-8670-8d90d2f2f394"
+        "idempotency_key": "d7d2b29b-f591-4581-8670-8d90d2f2f394",
       },
-      "type": "price.updated"
+      "type": "price.updated",
     }
     event = stripe.Event.construct_from(
         values=data,
-        key='!!@#'
+        key='!!@#',
     )
     service = WebhookService()
 
@@ -2606,20 +2607,20 @@ def test_price_deleted():
           "type": "service",
           "unit_label": None,
           "updated": 1686092147,
-          "url": None
-        }
+          "url": None,
+        },
       },
       "livemode": False,
       "pending_webhooks": 1,
       "request": {
         "id": "req_oxf7W64DISLKeL",
-        "idempotency_key": None
+        "idempotency_key": None,
       },
-      "type": "product.deleted"
+      "type": "product.deleted",
     }
     event = stripe.Event.construct_from(
         values=data,
-        key='!!@#'
+        key='!!@#',
     )
     create_test_recurring_price(stripe_id=stripe_id)
 
@@ -2664,30 +2665,30 @@ def test_handle__handler_exist__ok(mocker):
           "type": "service",
           "unit_label": None,
           "updated": 1686092147,
-          "url": None
-        }
+          "url": None,
+        },
       },
       "livemode": False,
       "pending_webhooks": 1,
       "request": {
         "id": "req_oxf7W64DISLKeL",
-        "idempotency_key": None
+        "idempotency_key": None,
       },
-      "type": "product.deleted"
+      "type": "product.deleted",
     }
     handler_mock = mocker.patch(
         'src.payment.stripe.webhooks.WebhookService'
-        '._product_deleted'
+        '._product_deleted',
     )
     key = '!@#d'
     event = stripe.Event.construct_from(
         values=data,
-        key=key
+        key=key,
     )
     construct_from_mock = mocker.patch(
         'src.payment.stripe.webhooks.stripe'
         '.Event.construct_from',
-        return_value=event
+        return_value=event,
     )
 
     service = WebhookService()
@@ -2699,7 +2700,7 @@ def test_handle__handler_exist__ok(mocker):
     # assert
     construct_from_mock.assert_called_once_with(
         values=data,
-        key=key
+        key=key,
     )
     handler_mock.assert_called_once_with(event)
 
@@ -2736,29 +2737,29 @@ def test_handle__handler_not_exist__log(mocker):
           "type": "service",
           "unit_label": None,
           "updated": 1686092147,
-          "url": None
-        }
+          "url": None,
+        },
       },
       "livemode": False,
       "pending_webhooks": 1,
       "request": {
         "id": "req_oxf7W64DISLKeL",
-        "idempotency_key": None
+        "idempotency_key": None,
       },
-      "type": "payment_method.deatached"
+      "type": "payment_method.deatached",
     }
     key = '!@#d'
     event = stripe.Event.construct_from(
         values=data,
-        key=key
+        key=key,
     )
     construct_from_mock = mocker.patch(
         'src.payment.stripe.webhooks.stripe'
         '.Event.construct_from',
-        return_value=event
+        return_value=event,
     )
     capture_sentry_message_mock = mocker.patch(
-        'src.payment.stripe.webhooks.capture_sentry_message'
+        'src.payment.stripe.webhooks.capture_sentry_message',
     )
     service = WebhookService()
     service.secret = key
@@ -2769,7 +2770,7 @@ def test_handle__handler_not_exist__log(mocker):
     # assert
     construct_from_mock.assert_called_once_with(
         values=data,
-        key=key
+        key=key,
     )
     capture_sentry_message_mock.assert_called_once_with(
         message='Webhook handler not found',
@@ -2777,7 +2778,7 @@ def test_handle__handler_not_exist__log(mocker):
         data={
             'event_id': event.id,
             'event_type': event.type,
-        }
+        },
     )
 
 
@@ -2813,26 +2814,26 @@ def test_handle__invalid_event__raise_exception(mocker):
           "type": "service",
           "unit_label": None,
           "updated": 1686092147,
-          "url": None
-        }
+          "url": None,
+        },
       },
       "livemode": False,
       "pending_webhooks": 1,
       "request": {
         "id": "req_oxf7W64DISLKeL",
-        "idempotency_key": None
+        "idempotency_key": None,
       },
-      "type": "product.deleted"
+      "type": "product.deleted",
     }
     handler_mock = mocker.patch(
         'src.payment.stripe.webhooks.WebhookService'
-        '._product_deleted'
+        '._product_deleted',
     )
     message = 'some message'
     construct_from_mock = mocker.patch(
         'src.payment.stripe.webhooks.stripe'
         '.Event.construct_from',
-        side_effect=WebhookServiceException(message)
+        side_effect=WebhookServiceException(message),
     )
     key = '!@#'
     service = WebhookService()
@@ -2846,7 +2847,7 @@ def test_handle__invalid_event__raise_exception(mocker):
     assert ex.value.message == message
     construct_from_mock.assert_called_once_with(
         values=data,
-        key=key
+        key=key,
     )
     handler_mock.assert_not_called()
 
@@ -2883,38 +2884,38 @@ def test_handle__subscription_not_found__raise(mocker):
           "type": "service",
           "unit_label": None,
           "updated": 1686092147,
-          "url": None
-        }
+          "url": None,
+        },
       },
       "livemode": False,
       "pending_webhooks": 1,
       "request": {
         "id": "req_oxf7W64DISLKeL",
-        "idempotency_key": None
+        "idempotency_key": None,
       },
-      "type": "customer.subscription.updated"
+      "type": "customer.subscription.updated",
     }
     details = {
         'account_id': 1,
-        'subs_metadata': {'account_id': 'incorrect'}
+        'subs_metadata': {'account_id': 'incorrect'},
     }
     handler_mock = mocker.patch(
         'src.payment.stripe.webhooks.WebhookService'
         '._customer_subscription_updated',
         side_effect=NotFoundAccountForSubscription(
             account_id=1,
-            subs_metadata={'account_id': 'incorrect'}
-        )
+            subs_metadata={'account_id': 'incorrect'},
+        ),
     )
     key = '!@#d'
     event = stripe.Event.construct_from(
         values=data,
-        key=key
+        key=key,
     )
     construct_from_mock = mocker.patch(
         'src.payment.stripe.webhooks.stripe'
         '.Event.construct_from',
-        return_value=event
+        return_value=event,
     )
 
     service = WebhookService()
@@ -2929,7 +2930,7 @@ def test_handle__subscription_not_found__raise(mocker):
     assert ex.value.details == details
     construct_from_mock.assert_called_once_with(
         values=data,
-        key=key
+        key=key,
     )
     handler_mock.assert_called_once_with(event)
 
@@ -2945,7 +2946,7 @@ def test_handle__customer_updated__ok(mocker):
         account=account,
         is_account_owner=True,
         email=email,
-        phone='+12015457887'
+        phone='+12015457887',
     )
 
     data = {
@@ -2971,7 +2972,7 @@ def test_handle__customer_updated__ok(mocker):
                 "custom_fields": None,
                 "default_payment_method": "pm_1OAp4OBM2UVM1VfGx8grVlhS",
                 "footer": None,
-                "rendering_options": None
+                "rendering_options": None,
               },
               "livemode": False,
               "metadata": {
@@ -2983,37 +2984,37 @@ def test_handle__customer_updated__ok(mocker):
               ],
               "shipping": None,
               "tax_exempt": "none",
-              "test_clock": None
+              "test_clock": None,
             },
             "previous_attributes": {
-              "phone": "+12015457887"
-            }
+              "phone": "+12015457887",
+            },
           },
           "livemode": False,
           "pending_webhooks": 1,
           "request": {
             "id": "req_SpaTTpAkluT9qr",
-            "idempotency_key": "768cc3a8-7fea-404e-9ef8-d273a2edce4d"
+            "idempotency_key": "768cc3a8-7fea-404e-9ef8-d273a2edce4d",
           },
-          "type": "customer.updated"
+          "type": "customer.updated",
         }
     key = '!@#d'
     event = stripe.Event.construct_from(
         values=data,
-        key=key
+        key=key,
     )
     get_valid_webhook_account_by_stripe_id_mock = mocker.patch(
         'src.payment.stripe.webhooks.'
         'WebhookService._get_valid_webhook_account_by_stripe_id',
-        return_value=account
+        return_value=account,
     )
     user_service_init_mock = mocker.patch.object(
         UserService,
         '__init__',
-        return_value=None
+        return_value=None,
     )
     user_service_update_mock = mocker.patch(
-        'src.payment.stripe.webhooks.UserService.partial_update'
+        'src.payment.stripe.webhooks.UserService.partial_update',
     )
 
     service = WebhookService()
@@ -3024,15 +3025,15 @@ def test_handle__customer_updated__ok(mocker):
 
     # assert
     get_valid_webhook_account_by_stripe_id_mock.assert_called_once_with(
-        stripe_id
+        stripe_id,
     )
     user_service_init_mock.assert_called_once_with(
         auth_type=AuthTokenType.WEBHOOK,
-        instance=account_owner
+        instance=account_owner,
     )
     user_service_update_mock.assert_called_once_with(
         phone=phone,
-        force_save=True
+        force_save=True,
     )
 
 
@@ -3047,7 +3048,7 @@ def test_handle__customer_updated__account_owner_not_found__raise(mocker):
         account=account,
         is_account_owner=True,
         email='another@test.test',
-        phone='+12015457887'
+        phone='+12015457887',
     )
 
     data = {
@@ -3073,7 +3074,7 @@ def test_handle__customer_updated__account_owner_not_found__raise(mocker):
                     "custom_fields": None,
                     "default_payment_method": "pm_1OAp4OBM2UVM1VfGx8grVlhS",
                     "footer": None,
-                    "rendering_options": None
+                    "rendering_options": None,
                 },
                 "livemode": False,
                 "metadata": {
@@ -3085,37 +3086,37 @@ def test_handle__customer_updated__account_owner_not_found__raise(mocker):
                 ],
                 "shipping": None,
                 "tax_exempt": "none",
-                "test_clock": None
+                "test_clock": None,
             },
             "previous_attributes": {
-                "phone": "+12015457887"
-            }
+                "phone": "+12015457887",
+            },
         },
         "livemode": False,
         "pending_webhooks": 1,
         "request": {
             "id": "req_SpaTTpAkluT9qr",
-            "idempotency_key": "768cc3a8-7fea-404e-9ef8-d273a2edce4d"
+            "idempotency_key": "768cc3a8-7fea-404e-9ef8-d273a2edce4d",
         },
-        "type": "customer.updated"
+        "type": "customer.updated",
     }
     key = '!@#d'
     event = stripe.Event.construct_from(
         values=data,
-        key=key
+        key=key,
     )
     get_valid_webhook_account_by_stripe_id_mock = mocker.patch(
         'src.payment.stripe.webhooks.'
         'WebhookService._get_valid_webhook_account_by_stripe_id',
-        return_value=account
+        return_value=account,
     )
     user_service_init_mock = mocker.patch.object(
         UserService,
         '__init__',
-        return_value=None
+        return_value=None,
     )
     user_service_update_mock = mocker.patch(
-        'src.payment.stripe.webhooks.UserService.partial_update'
+        'src.payment.stripe.webhooks.UserService.partial_update',
     )
 
     service = WebhookService()
@@ -3134,7 +3135,7 @@ def test_handle__customer_updated__account_owner_not_found__raise(mocker):
     }
 
     get_valid_webhook_account_by_stripe_id_mock.assert_called_once_with(
-        stripe_id
+        stripe_id,
     )
     user_service_init_mock.assert_not_called()
     user_service_update_mock.assert_not_called()

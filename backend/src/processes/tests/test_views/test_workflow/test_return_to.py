@@ -1,37 +1,43 @@
 from datetime import timedelta
+
 import pytest
 from django.utils import timezone
-from src.processes.models import (
-    Workflow,
-    Delay,
-    FieldTemplate,
-    ConditionTemplate,
-    RuleTemplate,
-    PredicateTemplate,
-    FieldTemplateSelection,
-)
-from src.processes.services.exceptions import \
-    WorkflowActionServiceException
-from src.processes.services.workflow_action import \
-    WorkflowActionService
-from src.processes.tests.fixtures import (
-    create_test_workflow,
-    create_test_user,
-    create_test_template,
-    create_test_account,
-    create_task_returned_webhook,
-    create_test_owner,
-    create_test_admin,
+
+from src.authentication.enums import AuthTokenType
+from src.processes.enums import (
+    ConditionAction,
+    FieldType,
+    PredicateOperator,
+    WorkflowStatus,
 )
 from src.processes.messages import workflow as messages
-from src.utils.validation import ErrorCode
-from src.processes.enums import (
-    PredicateOperator,
-    FieldType,
-    WorkflowStatus,
-    ConditionAction,
+from src.processes.models.templates.conditions import (
+    ConditionTemplate,
+    PredicateTemplate,
+    RuleTemplate,
 )
-from src.authentication.enums import AuthTokenType
+from src.processes.models.templates.fields import (
+    FieldTemplate,
+    FieldTemplateSelection,
+)
+from src.processes.models.workflows.task import Delay
+from src.processes.models.workflows.workflow import Workflow
+from src.processes.services.exceptions import (
+    WorkflowActionServiceException,
+)
+from src.processes.services.workflow_action import (
+    WorkflowActionService,
+)
+from src.processes.tests.fixtures import (
+    create_task_returned_webhook,
+    create_test_account,
+    create_test_admin,
+    create_test_owner,
+    create_test_template,
+    create_test_user,
+    create_test_workflow,
+)
+from src.utils.validation import ErrorCode
 
 pytestmark = pytest.mark.django_db
 
@@ -45,24 +51,24 @@ def test_return_to__by_task_id__ok(
     workflow = create_test_workflow(
         user=user,
         tasks_count=3,
-        active_task_number=3
+        active_task_number=3,
     )
     task_1 = workflow.tasks.get(number=1)
     service_init_mock = mocker.patch.object(
         WorkflowActionService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     service_revert_mock = mocker.patch(
         'src.processes.services.workflow_action.'
-        'WorkflowActionService.return_to'
+        'WorkflowActionService.return_to',
     )
     api_client.token_authenticate(user)
 
     # act
     response = api_client.post(
         f'/workflows/{workflow.id}/return-to',
-        data={'task_api_name': task_1.api_name}
+        data={'task_api_name': task_1.api_name},
     )
 
     # assert
@@ -71,7 +77,7 @@ def test_return_to__by_task_id__ok(
         workflow=workflow,
         user=user,
         auth_type=AuthTokenType.USER,
-        is_superuser=False
+        is_superuser=False,
     )
     service_revert_mock.assert_called_once_with(
         revert_to_task=task_1,
@@ -87,25 +93,25 @@ def test_return_to__by_task_api_name__ok(
     workflow = create_test_workflow(
         user=user,
         tasks_count=3,
-        active_task_number=3
+        active_task_number=3,
     )
     workflow.save()
     task_1 = workflow.tasks.get(number=1)
     service_init_mock = mocker.patch.object(
         WorkflowActionService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     service_revert_mock = mocker.patch(
         'src.processes.services.workflow_action.'
-        'WorkflowActionService.return_to'
+        'WorkflowActionService.return_to',
     )
     api_client.token_authenticate(user)
 
     # act
     response = api_client.post(
         f'/workflows/{workflow.id}/return-to',
-        data={'task_api_name': task_1.api_name}
+        data={'task_api_name': task_1.api_name},
     )
 
     # assert
@@ -114,7 +120,7 @@ def test_return_to__by_task_api_name__ok(
         workflow=workflow,
         user=user,
         auth_type=AuthTokenType.USER,
-        is_superuser=False
+        is_superuser=False,
     )
     service_revert_mock.assert_called_once_with(
         revert_to_task=task_1,
@@ -129,16 +135,16 @@ def test_return_to__skip_task_key__validation_error(
     user = create_test_user(is_account_owner=True)
     workflow = create_test_workflow(
         user=user,
-        tasks_count=3
+        tasks_count=3,
     )
     service_init_mock = mocker.patch.object(
         WorkflowActionService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     service_revert_mock = mocker.patch(
         'src.processes.services.workflow_action.'
-        'WorkflowActionService.return_to'
+        'WorkflowActionService.return_to',
     )
     api_client.token_authenticate(user)
 
@@ -167,18 +173,18 @@ def test_return_to__another_workflow_task__validation_error(
     service_init_mock = mocker.patch.object(
         WorkflowActionService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     service_revert_mock = mocker.patch(
         'src.processes.services.workflow_action.'
-        'WorkflowActionService.return_to'
+        'WorkflowActionService.return_to',
     )
     api_client.token_authenticate(user)
 
     # act
     response = api_client.post(
         f'/workflows/{workflow.id}/return-to',
-        data={'task_api_name': another_task.api_name}
+        data={'task_api_name': another_task.api_name},
     )
 
     # assert
@@ -198,13 +204,13 @@ def test_revert_service_exception__validation_error(
     workflow = create_test_workflow(
         user=user,
         tasks_count=3,
-        active_task_number=3
+        active_task_number=3,
     )
     task_1 = workflow.tasks.get(number=1)
     service_init_mock = mocker.patch.object(
         WorkflowActionService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     message = 'Some message'
     ex = WorkflowActionServiceException(message)
@@ -218,7 +224,7 @@ def test_revert_service_exception__validation_error(
     # act
     response = api_client.post(
         f'/workflows/{workflow.id}/return-to',
-        data={'task_api_name': task_1.api_name}
+        data={'task_api_name': task_1.api_name},
     )
 
     # assert
@@ -229,7 +235,7 @@ def test_revert_service_exception__validation_error(
         workflow=workflow,
         user=user,
         auth_type=AuthTokenType.USER,
-        is_superuser=False
+        is_superuser=False,
     )
     service_revert_mock.assert_called_once_with(
         revert_to_task=task_1,
@@ -256,15 +262,15 @@ def test_return_to__ok(mocker, api_client):
 
     send_removed_task_notification_mock = mocker.patch(
         'src.notifications.tasks'
-        '.send_removed_task_notification.delay'
+        '.send_removed_task_notification.delay',
     )
     delete_task_guest_cache_mock = mocker.patch(
-        'src.authentication.services.'
-        'GuestJWTAuthService.delete_task_guest_cache'
+        'src.authentication.services.guest_auth.'
+        'GuestJWTAuthService.delete_task_guest_cache',
     )
     send_new_task_notification_mock = mocker.patch(
         'src.processes.services.workflow_action.'
-        'send_new_task_notification.delay'
+        'send_new_task_notification.delay',
     )
     mocker.patch(
         'src.processes.tasks.webhooks.'
@@ -272,13 +278,13 @@ def test_return_to__ok(mocker, api_client):
     )
     mocker.patch(
         'src.processes.tasks.webhooks.'
-        'send_task_completed_webhook.delay'
+        'send_task_completed_webhook.delay',
     )
     webhook_payload = mocker.Mock()
     mocker.patch(
         'src.processes.models.workflows.task.Task'
         '.webhook_payload',
-        return_value=webhook_payload
+        return_value=webhook_payload,
     )
     revert_task_webhook_mock = mocker.patch(
         'src.processes.tasks.webhooks.'
@@ -286,21 +292,21 @@ def test_return_to__ok(mocker, api_client):
     )
     revert_workflow_event_mock = mocker.patch(
         'src.processes.services.workflow_action.'
-        'WorkflowEventService.workflow_revert_event'
+        'WorkflowEventService.workflow_revert_event',
     )
     start_workflow_event_mock = mocker.patch(
         'src.processes.services.workflow_action.'
-        'WorkflowEventService.task_started_event'
+        'WorkflowEventService.task_started_event',
     )
     analytics_return_workflow_mock = mocker.patch(
         'src.processes.services.workflow_action.'
-        'AnalyticService.workflow_returned'
+        'AnalyticService.workflow_returned',
     )
 
     # act
     response = api_client.post(
         path=f'/workflows/{workflow.id}/return-to',
-        data={'task_api_name': task_1.api_name}
+        data={'task_api_name': task_1.api_name},
     )
 
     # assert
@@ -318,21 +324,21 @@ def test_return_to__ok(mocker, api_client):
         task=task_1,
         workflow=workflow,
         is_superuser=False,
-        auth_type=AuthTokenType.USER
+        auth_type=AuthTokenType.USER,
     )
     delete_task_guest_cache_mock.assert_called_once_with(
-        task_id=task_2.id
+        task_id=task_2.id,
     )
     revert_task_webhook_mock.assert_called_once_with(
         user_id=user.id,
         account_id=user.account_id,
-        payload=webhook_payload
+        payload=webhook_payload,
     )
     task_3 = workflow.tasks.get(number=3)
     assert task_3.is_pending
     revert_workflow_event_mock.assert_called_once_with(
         task=task_3,
-        user=user
+        user=user,
     )
     start_workflow_event_mock.assert_called_once_with(task_1)
 
@@ -350,7 +356,7 @@ def test_return_to__task_with_delay__reset_delay(
     )
     mocker.patch(
         'src.processes.tasks.webhooks.'
-        'send_task_completed_webhook.delay'
+        'send_task_completed_webhook.delay',
     )
     mocker.patch(
         'src.processes.tasks.webhooks.'
@@ -363,7 +369,7 @@ def test_return_to__task_with_delay__reset_delay(
     delay = Delay.objects.create(
         task=task_2,
         duration=timedelta(seconds=10),
-        workflow=workflow
+        workflow=workflow,
     )
 
     api_client.token_authenticate(user)
@@ -373,7 +379,7 @@ def test_return_to__task_with_delay__reset_delay(
     # act
     response = api_client.post(
         f'/workflows/{workflow.id}/return-to',
-        data={'task_api_name': task_1.api_name}
+        data={'task_api_name': task_1.api_name},
     )
 
     # assert
@@ -463,9 +469,9 @@ def test_return_to__skip_condition__validation_error(
         f'/templates/{template.id}/run',
         data={
             'kickoff': {
-                field_template.api_name: user.email
-            }
-        }
+                field_template.api_name: user.email,
+            },
+        },
     )
     workflow = Workflow.objects.get(id=response.data['id'])
     task_1 = workflow.tasks.get(number=1)
@@ -473,7 +479,7 @@ def test_return_to__skip_condition__validation_error(
     # act
     response = api_client.post(
         f'/workflows/{workflow.id}/return-to',
-        data={'task_api_name': task_1.api_name}
+        data={'task_api_name': task_1.api_name},
     )
 
     # assert
@@ -492,7 +498,7 @@ def test_return_to__skip_condition__validation_error(
 
 def test_return_to__force_snooze_and_return_to__snooze_not_running_again(
     mocker,
-    api_client
+    api_client,
 ):
 
     # arrange
@@ -515,27 +521,27 @@ def test_return_to__force_snooze_and_return_to__snooze_not_running_again(
 
     mocker.patch(
         'src.notifications.tasks'
-        '.send_removed_task_notification.delay'
+        '.send_removed_task_notification.delay',
     )
     mocker.patch(
         'src.processes.services.workflow_action.'
-        'send_new_task_notification.delay'
+        'send_new_task_notification.delay',
     )
     mocker.patch(
-        'src.authentication.services.'
-        'GuestJWTAuthService.delete_task_guest_cache'
+        'src.authentication.services.guest_auth.'
+        'GuestJWTAuthService.delete_task_guest_cache',
     )
     date = timezone.now() + timedelta(days=1)
 
     response_snooze = api_client.post(
         f'/workflows/{workflow.id}/snooze',
-        data={'date': date.timestamp()}
+        data={'date': date.timestamp()},
     )
     workflow.refresh_from_db()
 
     response_return_to = api_client.post(
         f'/workflows/{workflow.id}/return-to',
-        data={'task_api_name': task_1.api_name}
+        data={'task_api_name': task_1.api_name},
     )
     workflow.refresh_from_db()
     task_1 = workflow.tasks.get(number=1)
@@ -554,7 +560,7 @@ def test_return_to__force_snooze_and_return_to__snooze_not_running_again(
 
 def test_return_to__force_snooze_and_resume__snooze_not_running_again(
     mocker,
-    api_client
+    api_client,
 ):
 
     # arrange
@@ -575,28 +581,28 @@ def test_return_to__force_snooze_and_resume__snooze_not_running_again(
 
     mocker.patch(
         'src.notifications.tasks'
-        '.send_removed_task_notification.delay'
+        '.send_removed_task_notification.delay',
     )
     mocker.patch(
         'src.processes.services.workflow_action.'
-        'send_new_task_notification.delay'
+        'send_new_task_notification.delay',
     )
     mocker.patch(
-        'src.authentication.services.'
-        'GuestJWTAuthService.delete_task_guest_cache'
+        'src.authentication.services.guest_auth.'
+        'GuestJWTAuthService.delete_task_guest_cache',
     )
     date = timezone.now() + timedelta(days=1)
 
     response_snooze = api_client.post(
         f'/workflows/{workflow.id}/snooze',
-        data={'date': date.timestamp()}
+        data={'date': date.timestamp()},
     )
     workflow.refresh_from_db()
     response_resume = api_client.post(f'/workflows/{workflow.id}/resume')
 
     response_return_to = api_client.post(
         f'/workflows/{workflow.id}/return-to',
-        data={'task_api_name': task_1.api_name}
+        data={'task_api_name': task_1.api_name},
     )
     workflow.refresh_from_db()
 
@@ -615,7 +621,7 @@ def test_return_to__force_snooze_and_resume__snooze_not_running_again(
 
 def test_return_to__task_skipped_by_kickoff_field__update_status_to_pending(
     mocker,
-    api_client
+    api_client,
 ):
 
     # arrange
@@ -629,19 +635,19 @@ def test_return_to__task_skipped_by_kickoff_field__update_status_to_pending(
     )
     mocker.patch(
         'src.notifications.tasks'
-        '.send_new_task_notification.delay'
+        '.send_new_task_notification.delay',
     )
     mocker.patch(
         'src.notifications.tasks'
-        '.send_removed_task_notification.delay'
+        '.send_removed_task_notification.delay',
     )
     mocker.patch(
-        'src.authentication.services.'
-        'GuestJWTAuthService.delete_task_guest_cache'
+        'src.authentication.services.guest_auth.'
+        'GuestJWTAuthService.delete_task_guest_cache',
     )
     mocker.patch(
         'src.processes.services.workflow_action.'
-        'send_new_task_notification.delay'
+        'send_new_task_notification.delay',
     )
     account = create_test_account()
     create_test_owner(account=account)
@@ -649,12 +655,12 @@ def test_return_to__task_skipped_by_kickoff_field__update_status_to_pending(
     # Specific performer for second step
     user_2 = create_test_admin(
         email='performer_2_task@test.test',
-        account=account
+        account=account,
     )
     template = create_test_template(
         user=user,
         is_active=True,
-        tasks_count=3
+        tasks_count=3,
     )
     task_template_2 = template.tasks.get(number=2)
     task_template_2.add_raw_performer(user_2)
@@ -700,9 +706,9 @@ def test_return_to__task_skipped_by_kickoff_field__update_status_to_pending(
         data={
             'name': 'Test name',
             'kickoff': {
-                field_template.api_name: [selection_template.api_name]
-            }
-        }
+                field_template.api_name: [selection_template.api_name],
+            },
+        },
     )
 
     workflow = Workflow.objects.get(id=response_run.data['id'])
@@ -715,7 +721,7 @@ def test_return_to__task_skipped_by_kickoff_field__update_status_to_pending(
     # act
     response_return = api_client.post(
         path=f'/workflows/{workflow.id}/return-to',
-        data={'task_api_name': task_1.api_name}
+        data={'task_api_name': task_1.api_name},
     )
 
     # assert
@@ -748,12 +754,12 @@ def test_return_to__completed_workflow__ok(
     response_complete = api_client.post(f'/v2/tasks/{task_1.id}/complete')
 
     delete_task_guest_cache_mock = mocker.patch(
-        'src.authentication.services.'
-        'GuestJWTAuthService.delete_task_guest_cache'
+        'src.authentication.services.guest_auth.'
+        'GuestJWTAuthService.delete_task_guest_cache',
     )
     send_new_task_notification_mock = mocker.patch(
         'src.processes.services.workflow_action.'
-        'send_new_task_notification.delay'
+        'send_new_task_notification.delay',
     )
     mocker.patch(
         'src.processes.tasks.webhooks.'
@@ -763,7 +769,7 @@ def test_return_to__completed_workflow__ok(
     mocker.patch(
         'src.processes.models.workflows.task.Task'
         '.webhook_payload',
-        return_value=webhook_payload
+        return_value=webhook_payload,
     )
     revert_task_webhook_mock = mocker.patch(
         'src.processes.tasks.webhooks.'
@@ -771,13 +777,13 @@ def test_return_to__completed_workflow__ok(
     )
     send_removed_task_notification_mock = mocker.patch(
         'src.notifications.tasks'
-        '.send_removed_task_notification.delay'
+        '.send_removed_task_notification.delay',
     )
 
     # act
     response = api_client.post(
         path=f'/workflows/{workflow.id}/return-to',
-        data={'task_api_name': task_1.api_name}
+        data={'task_api_name': task_1.api_name},
     )
 
     # assert
@@ -803,7 +809,7 @@ def test_return_to__sub_workflow_incompleted__validation_error(
     workflow = create_test_workflow(
         user=user,
         tasks_count=2,
-        active_task_number=2
+        active_task_number=2,
     )
     task_1 = workflow.tasks.get(number=1)
     task_2 = workflow.tasks.get(number=2)
@@ -811,14 +817,14 @@ def test_return_to__sub_workflow_incompleted__validation_error(
         user=user,
         tasks_count=1,
         ancestor_task=task_2,
-        status=status
+        status=status,
     )
     api_client.token_authenticate(user=user)
 
     # act
     response = api_client.post(
         f'/workflows/{workflow.id}/return-to',
-        data={'task_api_name': task_1.api_name}
+        data={'task_api_name': task_1.api_name},
     )
 
     # assert
@@ -838,7 +844,7 @@ def test_return_to__sub_workflow_completed__ok(api_client):
     workflow = create_test_workflow(
         user=user,
         tasks_count=2,
-        active_task_number=2
+        active_task_number=2,
     )
     task_1 = workflow.tasks.get(number=1)
     task_2 = workflow.tasks.get(number=2)
@@ -846,14 +852,14 @@ def test_return_to__sub_workflow_completed__ok(api_client):
         user=user,
         tasks_count=1,
         ancestor_task=task_2,
-        status=WorkflowStatus.DONE
+        status=WorkflowStatus.DONE,
     )
     api_client.token_authenticate(user=user)
 
     # act
     response = api_client.post(
         path=f'/workflows/{workflow.id}/return-to',
-        data={'task_api_name': task_1.api_name}
+        data={'task_api_name': task_1.api_name},
     )
 
     # assert

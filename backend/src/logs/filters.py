@@ -1,4 +1,5 @@
 from django.contrib.admin import SimpleListFilter
+
 from src.accounts.models import Account
 
 
