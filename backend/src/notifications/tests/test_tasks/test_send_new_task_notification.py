@@ -1,17 +1,19 @@
-import pytest
 from datetime import timedelta
+
+import pytest
 from django.utils import timezone
-from src.notifications.tasks import _send_new_task_notification
+
 from src.notifications.enums import NotificationMethod
 from src.notifications.services.push import (
-    PushNotificationService
+    PushNotificationService,
 )
+from src.notifications.tasks import _send_new_task_notification
 from src.processes.tests.fixtures import (
+    create_test_account,
+    create_test_admin,
     create_test_owner,
     create_test_template,
     create_test_workflow,
-    create_test_admin,
-    create_test_account,
 )
 
 pytestmark = pytest.mark.django_db
@@ -32,37 +34,37 @@ def test_send_new_task_notification__external_workflow__ok(api_client, mocker):
     mocker.patch(
         'src.notifications.tasks.'
         'convert_text_to_html',
-        return_value=html_description
+        return_value=html_description,
     )
     text_description = 'Text'
     mocker.patch(
         'src.notifications.tasks.'
         'MarkdownService.clear',
-        return_value=text_description
+        return_value=text_description,
     )
     formatted_date = '15 days 6 hours 23 minutes'
     now_date = timezone.now()
     mocker.patch(
         'src.notifications.tasks.'
         'timezone.now',
-        return_value=now_date
+        return_value=now_date,
     )
     mocker.patch(
         'src.notifications.tasks.'
         'get_duration_format',
-        return_value=formatted_date
+        return_value=formatted_date,
     )
     send_notification_mock = mocker.patch(
-        'src.notifications.tasks._send_notification'
+        'src.notifications.tasks._send_notification',
     )
     task_data = {'id': task.id}
     mocker.patch(
         'src.processes.models.workflows.'
         'task.Task.get_data_for_list',
-        return_value=task_data
+        return_value=task_data,
     )
     recipients = [
-        (user.id, user.email, True)
+        (user.id, user.email, True),
     ]
 
     # act
@@ -79,7 +81,7 @@ def test_send_new_task_notification__external_workflow__ok(api_client, mocker):
         workflow_starter_name=owner.name,
         workflow_starter_photo=owner.photo,
         due_date_timestamp=None,
-        is_returned=False
+        is_returned=False,
     )
 
     # assert
@@ -101,7 +103,7 @@ def test_send_new_task_notification__external_workflow__ok(api_client, mocker):
         text_description=text_description,
         due_in=None,
         overdue=None,
-        sync=True
+        sync=True,
     )
 
 
@@ -116,7 +118,7 @@ def test_send_new_task_notification__is_returned_true__call_services(mocker):
     html_description = '<b>Text</b>'
     account = create_test_account(
         logo_lg=logo_lg,
-        log_api_requests=logging
+        log_api_requests=logging,
     )
     owner = create_test_owner(account=account, photo=photo)
     user = create_test_admin(account=account)
@@ -132,46 +134,46 @@ def test_send_new_task_notification__is_returned_true__call_services(mocker):
     convert_text_to_html_mock = mocker.patch(
         'src.notifications.tasks.'
         'convert_text_to_html',
-        return_value=html_description
+        return_value=html_description,
     )
     text_description = 'Text'
     clear_markdown_mock = mocker.patch(
         'src.notifications.tasks.'
         'MarkdownService.clear',
-        return_value=text_description
+        return_value=text_description,
     )
     formatted_date = '15 days 6 hours 23 minutes'
     mocker.patch(
         'src.notifications.tasks.'
         'timezone.now',
-        return_value=now_date
+        return_value=now_date,
     )
     get_duration_format_mock = mocker.patch(
         'src.notifications.tasks.'
         'get_duration_format',
-        return_value=formatted_date
+        return_value=formatted_date,
     )
     push_notification_service_mock = mocker.patch.object(
         PushNotificationService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     push_notification_mock = mocker.patch(
         'src.notifications.services.push.'
-        'PushNotificationService.send_returned_task'
+        'PushNotificationService.send_returned_task',
     )
     email_notification_mock = mocker.patch(
         'src.notifications.services.email.'
-        'EmailService.send_returned_task'
+        'EmailService.send_returned_task',
     )
     task_data = {'id': task.id}
     mocker.patch(
         'src.processes.models.workflows.'
         'task.Task.get_data_for_list',
-        return_value=task_data
+        return_value=task_data,
     )
     recipients = [
-        (user.id, user.email, True)
+        (user.id, user.email, True),
     ]
     # act
     _send_new_task_notification(
@@ -187,14 +189,14 @@ def test_send_new_task_notification__is_returned_true__call_services(mocker):
         workflow_starter_name=owner.name,
         workflow_starter_photo=owner.photo,
         due_date_timestamp=due_date_timestamp,
-        is_returned=True
+        is_returned=True,
     )
 
     # assert
     convert_text_to_html_mock.assert_called_once_with(text=task_description)
     clear_markdown_mock.assert_called_once_with(text=task_description)
     get_duration_format_mock.assert_called_once_with(
-        duration=task.due_date - now_date
+        duration=task.due_date - now_date,
     )
     push_notification_service_mock.assert_called_once_with(
         logging=logging,
@@ -215,7 +217,7 @@ def test_send_new_task_notification__is_returned_true__call_services(mocker):
         html_description=html_description,
         text_description=text_description,
         due_in=formatted_date,
-        overdue=None
+        overdue=None,
     )
     email_notification_mock.assert_called_once_with(
         task_data=task_data,
@@ -231,7 +233,7 @@ def test_send_new_task_notification__is_returned_true__call_services(mocker):
         html_description=html_description,
         text_description=text_description,
         due_in=formatted_date,
-        overdue=None
+        overdue=None,
     )
 
 
@@ -246,7 +248,7 @@ def test_send_new_task_notification__is_returned_false__call_services(mocker):
     html_description = '<b>Text</b>'
     account = create_test_account(
         logo_lg=logo_lg,
-        log_api_requests=logging
+        log_api_requests=logging,
     )
     owner = create_test_owner(account=account, photo=photo)
     user = create_test_admin(account=account)
@@ -262,46 +264,46 @@ def test_send_new_task_notification__is_returned_false__call_services(mocker):
     convert_text_to_html_mock = mocker.patch(
         'src.notifications.tasks.'
         'convert_text_to_html',
-        return_value=html_description
+        return_value=html_description,
     )
     text_description = 'Text'
     clear_markdown_mock = mocker.patch(
         'src.notifications.tasks.'
         'MarkdownService.clear',
-        return_value=text_description
+        return_value=text_description,
     )
     formatted_date = '15 days 6 hours 23 minutes'
     mocker.patch(
         'src.notifications.tasks.'
         'timezone.now',
-        return_value=now_date
+        return_value=now_date,
     )
     get_duration_format_mock = mocker.patch(
         'src.notifications.tasks.'
         'get_duration_format',
-        return_value=formatted_date
+        return_value=formatted_date,
     )
     push_notification_service_mock = mocker.patch.object(
         PushNotificationService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     push_notification_mock = mocker.patch(
         'src.notifications.services.push.'
-        'PushNotificationService.send_new_task'
+        'PushNotificationService.send_new_task',
     )
     email_notification_mock = mocker.patch(
         'src.notifications.services.email.'
-        'EmailService.send_new_task'
+        'EmailService.send_new_task',
     )
     task_data = {'id': task.id}
     mocker.patch(
         'src.processes.models.workflows.'
         'task.Task.get_data_for_list',
-        return_value=task_data
+        return_value=task_data,
     )
     recipients = [
-        (user.id, user.email, True)
+        (user.id, user.email, True),
     ]
 
     # act
@@ -318,14 +320,14 @@ def test_send_new_task_notification__is_returned_false__call_services(mocker):
         workflow_starter_name=owner.name,
         workflow_starter_photo=owner.photo,
         due_date_timestamp=due_date_timestamp,
-        is_returned=False
+        is_returned=False,
     )
 
     # assert
     convert_text_to_html_mock.assert_called_once_with(text=task_description)
     clear_markdown_mock.assert_called_once_with(text=task_description)
     get_duration_format_mock.assert_called_once_with(
-        duration=task.due_date - now_date
+        duration=task.due_date - now_date,
     )
     push_notification_service_mock.assert_called_once_with(
         logging=logging,
@@ -346,7 +348,7 @@ def test_send_new_task_notification__is_returned_false__call_services(mocker):
         html_description=html_description,
         text_description=text_description,
         due_in=formatted_date,
-        overdue=None
+        overdue=None,
     )
     email_notification_mock.assert_called_once_with(
         task_data=task_data,
@@ -362,15 +364,15 @@ def test_send_new_task_notification__is_returned_false__call_services(mocker):
         html_description=html_description,
         text_description=text_description,
         due_in=formatted_date,
-        overdue=None
+        overdue=None,
     )
 
 
 @pytest.mark.parametrize(
     'value', (
         (True, NotificationMethod.new_task),
-        (False, NotificationMethod.returned_task)
-    )
+        (False, NotificationMethod.returned_task),
+    ),
 )
 def test_send_new_task_notification__ok(mocker, value):
 
@@ -386,28 +388,28 @@ def test_send_new_task_notification__ok(mocker, value):
     task = workflow.tasks.get(number=1)
     convert_text_to_html_mock = mocker.patch(
         'src.notifications.tasks.'
-        'convert_text_to_html'
+        'convert_text_to_html',
     )
     clear_markdown_mock = mocker.patch(
         'src.notifications.tasks.'
-        'MarkdownService.clear'
+        'MarkdownService.clear',
     )
     get_duration_format_mock = mocker.patch(
         'src.notifications.tasks.'
-        'get_duration_format'
+        'get_duration_format',
     )
     send_notification_mock = mocker.patch(
-        'src.notifications.tasks._send_notification'
+        'src.notifications.tasks._send_notification',
     )
     task_data = {'id': task.id}
     mocker.patch(
         'src.processes.models.workflows.'
         'task.Task.get_data_for_list',
-        return_value=task_data
+        return_value=task_data,
     )
     recipients = [
         (owner.id, owner.email, True),
-        (user.id, user.email, True)
+        (user.id, user.email, True),
     ]
 
     # act
@@ -424,7 +426,7 @@ def test_send_new_task_notification__ok(mocker, value):
         workflow_starter_photo=owner.photo,
         due_date_timestamp=None,
         logo_lg=account_logo,
-        is_returned=is_returned
+        is_returned=is_returned,
     )
 
     # assert
@@ -477,7 +479,7 @@ def test_send_new_task_notification__ok(mocker, value):
 
 def test_send_new_task_notification__unsubscribed__not_send(
     api_client,
-    mocker
+    mocker,
 ):
 
     # arrange
@@ -485,7 +487,7 @@ def test_send_new_task_notification__unsubscribed__not_send(
     owner = create_test_owner(account=account)
     user = create_test_admin(
         account=account,
-        is_new_tasks_subscriber=False
+        is_new_tasks_subscriber=False,
     )
     workflow = create_test_workflow(user=owner, tasks_count=1)
     task = workflow.tasks.get(number=1)
@@ -493,37 +495,37 @@ def test_send_new_task_notification__unsubscribed__not_send(
     mocker.patch(
         'src.notifications.tasks.'
         'convert_text_to_html',
-        return_value=html_description
+        return_value=html_description,
     )
     text_description = 'Text'
     mocker.patch(
         'src.notifications.tasks.'
         'MarkdownService.clear',
-        return_value=text_description
+        return_value=text_description,
     )
     formatted_date = '15 days 6 hours 23 minutes'
     now_date = timezone.now()
     mocker.patch(
         'src.notifications.tasks.'
         'timezone.now',
-        return_value=now_date
+        return_value=now_date,
     )
     mocker.patch(
         'src.notifications.tasks.'
         'get_duration_format',
-        return_value=formatted_date
+        return_value=formatted_date,
     )
     send_notification_mock = mocker.patch(
-        'src.notifications.tasks._send_notification'
+        'src.notifications.tasks._send_notification',
     )
     task_data = {'id': task.id}
     mocker.patch(
         'src.processes.models.workflows.'
         'task.Task.get_data_for_list',
-        return_value=task_data
+        return_value=task_data,
     )
     recipients = [
-        (user.id, user.email, user.is_new_tasks_subscriber)
+        (user.id, user.email, user.is_new_tasks_subscriber),
     ]
 
     # act
@@ -540,7 +542,7 @@ def test_send_new_task_notification__unsubscribed__not_send(
         workflow_starter_name=owner.name,
         workflow_starter_photo=owner.photo,
         due_date_timestamp=None,
-        is_returned=False
+        is_returned=False,
     )
 
     # assert
@@ -560,18 +562,18 @@ def test_send_new_task_notification__task_data__ok(mocker):
     task = workflow.tasks.get(number=1)
     convert_text_to_html_mock = mocker.patch(
         'src.notifications.tasks.'
-        'convert_text_to_html'
+        'convert_text_to_html',
     )
     clear_markdown_mock = mocker.patch(
         'src.notifications.tasks.'
-        'MarkdownService.clear'
+        'MarkdownService.clear',
     )
     get_duration_format_mock = mocker.patch(
         'src.notifications.tasks.'
-        'get_duration_format'
+        'get_duration_format',
     )
     send_notification_mock = mocker.patch(
-        'src.notifications.tasks._send_notification'
+        'src.notifications.tasks._send_notification',
     )
     task_data = {'id': task.id}
     get_data_for_list_mock = mocker.patch(
@@ -594,7 +596,7 @@ def test_send_new_task_notification__task_data__ok(mocker):
         due_date_timestamp=None,
         logo_lg=account_logo,
         is_returned=False,
-        task_data=task_data
+        task_data=task_data,
     )
 
     # assert

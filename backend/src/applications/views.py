@@ -1,13 +1,14 @@
+from rest_framework.generics import ListAPIView, RetrieveAPIView
 from rest_framework.pagination import LimitOffsetPagination
-from rest_framework.generics import RetrieveAPIView, ListAPIView
+
 from src.accounts.permissions import (
-    UserIsAdminOrAccountOwner,
     BillingPlanPermission,
+    UserIsAdminOrAccountOwner,
 )
 from src.applications.models import Integration
 from src.applications.serializers import (
+    IntegrationSerializer,
     IntegrationsListSerializer,
-    IntegrationSerializer
 )
 from src.generics.permissions import (
     UserIsAuthenticated,

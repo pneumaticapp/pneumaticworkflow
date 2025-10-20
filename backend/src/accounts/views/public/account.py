@@ -1,13 +1,13 @@
 from django.contrib.auth import get_user_model
 from rest_framework.viewsets import GenericViewSet
+
+from src.accounts.serializers.public.accounts import (
+    PublicAccountSerializer,
+)
 from src.generics.mixins.views import (
     CustomViewSetMixin,
 )
-from src.accounts.serializers.public import (
-    PublicAccountSerializer
-)
 from src.processes.permissions import PublicTemplatePermission
-
 
 UserModel = get_user_model()
 

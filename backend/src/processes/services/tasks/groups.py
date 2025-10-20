@@ -1,31 +1,26 @@
 from django.contrib.auth import get_user_model
-from src.processes.services.tasks.base import (
-    BasePerformerService2
-)
+
 from src.accounts.models import UserGroup
 from src.analytics.services import AnalyticService
-from src.processes.models import (
-    TaskPerformer
-)
 from src.authentication.enums import AuthTokenType
-from src.processes.services.tasks.exceptions import (
-    GroupPerformerServiceException
-)
-from src.processes.enums import DirectlyStatus
-from src.processes.messages.workflow import MSG_PW_0082
-from src.processes.enums import PerformerType
 from src.notifications.tasks import (
     send_new_task_notification,
+    send_new_task_websocket,
     send_removed_task_notification,
-    send_new_task_websocket
+)
+from src.processes.enums import DirectlyStatus, PerformerType
+from src.processes.messages.workflow import MSG_PW_0082
+from src.processes.models.workflows.task import TaskPerformer
+from src.processes.services.tasks.base import (
+    BasePerformerService2,
+)
+from src.processes.services.tasks.exceptions import (
+    GroupPerformerServiceException,
 )
 from src.processes.services.workflow_action import (
-    WorkflowEventService
+    WorkflowActionService,
+    WorkflowEventService,
 )
-from src.processes.services.workflow_action import (
-    WorkflowActionService
-)
-
 
 UserModel = get_user_model()
 
@@ -38,10 +33,10 @@ class GroupPerformerService(BasePerformerService2):
         try:
             return UserGroup.objects.get(
                 account_id=self.user.account_id,
-                id=group_id
+                id=group_id,
             )
-        except UserGroup.DoesNotExist:
-            raise GroupPerformerServiceException(MSG_PW_0082)
+        except UserGroup.DoesNotExist as ex:
+            raise GroupPerformerServiceException(MSG_PW_0082) from ex
 
     def create_performer(
         self,
@@ -55,7 +50,7 @@ class GroupPerformerService(BasePerformerService2):
             task_id=self.task.id,
             type=PerformerType.GROUP,
             group_id=group.id,
-            defaults={'directly_status': DirectlyStatus.CREATED}
+            defaults={'directly_status': DirectlyStatus.CREATED},
         )
         if task_performer.directly_status == DirectlyStatus.DELETED:
             task_performer.directly_status = DirectlyStatus.CREATED
@@ -67,7 +62,7 @@ class GroupPerformerService(BasePerformerService2):
     def delete_performer(
         self,
         group_id: int,
-        run_actions: bool = True
+        run_actions: bool = True,
     ) -> None:
         self._validate()
         group = self._get_group(group_id=group_id)
@@ -82,14 +77,14 @@ class GroupPerformerService(BasePerformerService2):
         WorkflowEventService.performer_group_deleted_event(
             user=self.user,
             task=self.task,
-            performer=group
+            performer=group,
         )
         AnalyticService.task_group_performer_deleted(
             user=self.user,
             performer=group,
             task=self.task,
             auth_type=self.auth_type,
-            is_superuser=self.is_superuser
+            is_superuser=self.is_superuser,
         )
         if self.task.can_be_completed():
             first_completed_user = (
@@ -111,7 +106,7 @@ class GroupPerformerService(BasePerformerService2):
                 user=first_completed_user,
                 workflow=self.task.workflow,
                 is_superuser=False,
-                auth_type=AuthTokenType.USER
+                auth_type=AuthTokenType.USER,
             )
             service.complete_task(task=self.task)
         else:
@@ -119,7 +114,7 @@ class GroupPerformerService(BasePerformerService2):
             task_performers = set(
                 UserModel.objects
                 .get_users_task(task=self.task)
-                .user_ids_emails_list()
+                .user_ids_emails_list(),
             )
             recipients = list(group_users - task_performers)
             if recipients:
@@ -133,14 +128,14 @@ class GroupPerformerService(BasePerformerService2):
         WorkflowEventService.performer_group_created_event(
             user=self.user,
             task=self.task,
-            performer=group
+            performer=group,
         )
         AnalyticService.task_group_performer_created(
             user=self.user,
             performer=group,
             task=self.task,
             auth_type=self.auth_type,
-            is_superuser=self.is_superuser
+            is_superuser=self.is_superuser,
         )
         group_users = set(group.users.values_list('id', flat=True))
         task_performer_users = (
@@ -159,15 +154,15 @@ class GroupPerformerService(BasePerformerService2):
                         (
                             self.user.id,
                             self.user.email,
-                            self.user.is_new_tasks_subscriber
-                        )
+                            self.user.is_new_tasks_subscriber,
+                        ),
                     ],
                     account_id=self.task.account_id,
                 )
             recipients = (
                 UserModel.objects.get_users_in_account(
                     account_id=self.user.account_id,
-                    user_ids=users
+                    user_ids=users,
                 ).exclude(id=self.user.id)
                 .user_ids_emails_subscriber_list()
             )
