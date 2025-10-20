@@ -1,50 +1,18 @@
-export enum EInvitesType {
+export enum InvitesType {
   Google = 'google',
   Microsoft = 'microsoft',
   Email = 'email',
 }
 
-export interface IUserInviteMicrosoft {
-  id: number;
+export interface UserInvite {
   email: string;
-  source: 'microsoft' | 'google' | 'email';
   firstName?: string;
+  id: number;
+  jobTitle?: string;
   lastName?: string;
   photo?: string;
-  jobTitle?: string;
+  source: InvitesType;
 }
-
-export interface IUserInvite {
-  email: string;
-  type: TInviteType;
-  firstName?: string;
-  lastName?: string;
-  avatar?: string;
-}
-
-export interface IOAuthInviteView extends IUserInvite {
-  avatar: string;
-  firstName: string;
-  lastName: string;
-  phone: string;
-  type: 'google';
-}
-
-export interface IUserInviteItem {
-  id: string;
-  invitedBy: number | null;
-  byUsername: string;
-  dateCreated: string;
-  invitedFrom: string;
-}
-
-export interface IUserInviteResponse {
-  id: string;
-}
-
-export type TTeamInvitesPopup = boolean;
-
-export type TInviteType = 'google' | 'microsoft' | 'email';
 
 export interface IGroup {
   id: number;
@@ -56,4 +24,10 @@ export interface IGroup {
 export enum ETeamPages {
   Users = 'users',
   Groups = 'groups',
+}
+
+export interface UserInvitePayload {
+  email: string;
+  type: InvitesType;
+  groups?: number[];
 }

@@ -41,6 +41,8 @@
       "oAuthSSO": "/oauth/auth0",
       "getMicrosoftAuthUri": "/auth/microsoft/auth-uri",
       "getMicrosoftAuthToken": "/auth/microsoft/token",
+      "getGoogleAuthUri": "/auth/google/auth-uri",
+      "getGoogleAuthToken": "/auth/google/token",
       "getSSOAuthUri": "/auth/auth0/auth-uri",
       "getSSOAuthToken": "/auth/auth0/token",
       "resendVerification": "api/auth/resend-verification",

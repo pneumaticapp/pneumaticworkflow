@@ -1,5 +1,5 @@
 import { all, fork, takeEvery, put, select, takeLatest } from 'redux-saga/effects';
-import { IInviteResponse, sendInvites } from '../../api/sendInvites';
+import { InviteResponse, sendInvites } from '../../api/sendInvites';
 import { NotificationManager } from '../../components/UI/Notifications';
 import { TUserListItem } from '../../types/user';
 import { getErrorMessage } from '../../utils/getErrorMessage';
@@ -13,12 +13,12 @@ import { getUsers } from '../selectors/user';
 import {
   changeTeamActiveTab,
   ETeamActions,
-  loadMicrosoftInvitesSuccess,
+  loadInvitesUsersSuccess,
   setRecentInvitedUsers,
   TInviteUsers,
   TSetTeamActivePage,
 } from './actions';
-import { ETeamPages, IUserInviteMicrosoft } from '../../types/team';
+import { ETeamPages, UserInvite } from '../../types/team';
 import { getInvites } from '../../api/team/getInvites';
 import { ERoutes } from '../../constants/routes';
 
@@ -31,7 +31,7 @@ function* inviteUsersSaga({
       yield put(setGeneralLoaderVisibility(true));
     }
 
-    const sendInvitesResult: IInviteResponse | undefined = yield sendInvites(invites, history.location.pathname);
+    const sendInvitesResult: InviteResponse | undefined = yield sendInvites(invites, history.location.pathname);
     yield fetchUsers();
 
     if (!sendInvitesResult) {
@@ -63,14 +63,14 @@ function* inviteUsersSaga({
   }
 }
 
-function* loadMicrosoftInvitesSaga() {
+function* loadInvitesUsersSaga() {
   try {
-    const invites: IUserInviteMicrosoft[] = yield getInvites();
+    const invites: UserInvite[] = yield getInvites();
 
-    yield put(loadMicrosoftInvitesSuccess(invites));
+    yield put(loadInvitesUsersSuccess(invites));
   } catch (error) {
     NotificationManager.warning({ message: getErrorMessage(error) });
-    logger.error('failed to load microsoft invites', error);
+    logger.error('failed to load invites users', error);
   }
 }
 
@@ -94,10 +94,10 @@ export function* watchInviteUsers() {
   yield takeEvery(ETeamActions.InviteUsers, inviteUsersSaga);
 }
 
-export function* watchLoadMicrosoftInvites() {
-  yield takeEvery(ETeamActions.LoadMicrosoftInvites, loadMicrosoftInvitesSaga);
+export function* watchLoadInvitesUsers() {
+  yield takeEvery(ETeamActions.LoadInvitesUsers, loadInvitesUsersSaga);
 }
 
 export function* rootSaga() {
-  yield all([fork(watchInviteUsers), fork(watchLoadMicrosoftInvites), fork(watchSetProcessTypeSorting)]);
+  yield all([fork(watchInviteUsers), fork(watchLoadInvitesUsers), fork(watchSetProcessTypeSorting)]);
 }

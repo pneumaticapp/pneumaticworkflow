@@ -1,18 +1,19 @@
 import { actionGenerator } from '../../utils/redux';
 import { ITypedReduxAction } from '../../types/redux';
 import { TUserListItem } from '../../types/user';
-import { ETeamPages, IOAuthInviteView, IUserInvite, IUserInviteMicrosoft } from '../../types/team';
+import { ETeamPages, UserInvite, UserInvitePayload } from '../../types/team';
+
+
 
 export const enum ETeamActions {
   OpenPopup = 'OPEN_TEAM_INVITES_POPUP',
   ClosePopup = 'CLOSE_TEAM_INVITES_POPUP',
   InviteUsers = 'INVITE_USERS',
   SetRecentInvitedUsers = 'SET_RECENT_INVITED_USERS',
-  ChangeGoogleInvites = 'CHANGE_GOOGLE_INVITES',
 
-  LoadMicrosoftInvites = 'LOAD_MICROSOFT_INVITES',
-  LoadMicrosoftInvitesSuccess = 'LOAD_MICROSOFT_INVITES_SUCCESS',
-  LoadMicrosoftInvitesFailed = 'LOAD_MICROSOFT_INVITES_FAILED',
+  LoadInvitesUsers = 'LOAD_INVITES_USERS',
+  LoadInvitesUsersSuccess = 'LOAD_INVITES_USERS_SUCCESS',
+  LoadInvitesUsersFailed = 'LOAD_INVITES_USERS_FAILED',
 
   UpdateTeamActiveTab = '_TEAM_ACTIVE_TAB',
   ChangeTeamActiveTab = 'CHANGE_TEAM_ACTIVE_TAB',
@@ -48,7 +49,7 @@ export const closeTeamInvitesPopup: (payload?: void) => TCloseAction = actionGen
 );
 
 export type TInviteUsersPayload = {
-  invites: IUserInvite[];
+  invites: UserInvitePayload[];
   withGeneralLoader?: boolean;
   withSuccessNotification?: boolean;
   onStartUploading?(): void;
@@ -67,42 +68,37 @@ export const setRecentInvitedUsers: (payload: TUserListItem[]) => TSetRecentInvi
   TUserListItem[]
 >(ETeamActions.SetRecentInvitedUsers);
 
-export type TChangGoogleInvites = ITypedReduxAction<ETeamActions.ChangeGoogleInvites, IOAuthInviteView[]>;
-export const changeGoogleInvites: (payload: IOAuthInviteView[]) => TChangGoogleInvites = actionGenerator<
-  ETeamActions.ChangeGoogleInvites,
-  IOAuthInviteView[]
->(ETeamActions.ChangeGoogleInvites);
-
-export type TLoadMicrosoftInvites = ITypedReduxAction<ETeamActions.LoadMicrosoftInvites, void>;
-export const loadMicrosoftInvites: (payload?: void) => TLoadMicrosoftInvites = actionGenerator<
-  ETeamActions.LoadMicrosoftInvites,
+export type TLoadInvitesUsers = ITypedReduxAction<ETeamActions.LoadInvitesUsers, void>;
+export const loadInvitesUsers: (payload?: void) => TLoadInvitesUsers = actionGenerator<
+  ETeamActions.LoadInvitesUsers,
   void
->(ETeamActions.LoadMicrosoftInvites);
+>(ETeamActions.LoadInvitesUsers);
 
-export type TLoadMicrosoftInvitesSuccess = ITypedReduxAction<
-  ETeamActions.LoadMicrosoftInvitesSuccess,
-  IUserInviteMicrosoft[]
+export type TLoadInvitesUsersSuccess = ITypedReduxAction<
+  ETeamActions.LoadInvitesUsersSuccess,
+  UserInvite[]
 >;
-export const loadMicrosoftInvitesSuccess: (payload: IUserInviteMicrosoft[]) => TLoadMicrosoftInvitesSuccess =
-  actionGenerator<ETeamActions.LoadMicrosoftInvitesSuccess, IUserInviteMicrosoft[]>(
-    ETeamActions.LoadMicrosoftInvitesSuccess,
+export const loadInvitesUsersSuccess: (payload: UserInvite[]) => TLoadInvitesUsersSuccess =
+  actionGenerator<ETeamActions.LoadInvitesUsersSuccess, UserInvite[]>(
+    ETeamActions.LoadInvitesUsersSuccess,
   );
 
-export type TLoadMicrosoftInvitesFailed = ITypedReduxAction<ETeamActions.LoadMicrosoftInvitesFailed, void>;
-export const loadMicrosoftInvitesFailed: (payload?: void) => TLoadMicrosoftInvitesFailed = actionGenerator<
-  ETeamActions.LoadMicrosoftInvitesFailed,
+export type TLoadInvitesUsersFailed = ITypedReduxAction<ETeamActions.LoadInvitesUsersFailed, void>;
+export const loadInvitesUsersFailed: (payload?: void) => TLoadInvitesUsersFailed = actionGenerator<
+  ETeamActions.LoadInvitesUsersFailed,
   void
->(ETeamActions.LoadMicrosoftInvitesFailed);
+>(ETeamActions.LoadInvitesUsersFailed);
+
+
 
 export type TTeamModalActions =
   | TOpenAction
   | TCloseAction
   | TInviteUsers
   | TSetRecentInvitedUsers
-  | TChangGoogleInvites
-  | TLoadMicrosoftInvites
-  | TLoadMicrosoftInvitesSuccess
-  | TLoadMicrosoftInvitesFailed
+  | TLoadInvitesUsers
+  | TLoadInvitesUsersSuccess
+  | TLoadInvitesUsersFailed
   | TChangeTeamActiveTab
   | TUpdateTeamActiveTab
   | TSetTeamActivePage;

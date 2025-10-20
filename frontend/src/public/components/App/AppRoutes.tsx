@@ -34,7 +34,6 @@ const REDIRECT_FORBIDDEN_ROUTES = [
   ERoutes.Login,
   ERoutes.SuperuserLogin,
   ERoutes.Register,
-  ERoutes.SignUpGoogle,
   ERoutes.SignUpInvite,
   ERoutes.ForgotPassword,
   ERoutes.ResetPassword,

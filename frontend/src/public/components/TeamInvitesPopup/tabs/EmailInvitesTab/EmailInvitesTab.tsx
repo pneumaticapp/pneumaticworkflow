@@ -9,16 +9,13 @@ import { isArrayWithItems } from '../../../../utils/helpers';
 import { validateInviteEmail } from '../../../../utils/validators';
 import { SuccessCheckIcon, ErrorBlockIcon } from '../../../icons';
 import { Button, InputField, Loader } from '../../../UI';
+import { TUploadingInvite, TUploadingInviteStatus } from './types';
+import { InvitesType } from '../../../../types/team';
 
 import styles from './EmailInvitesTab.css';
 import popupStyles from '../../TeamInvitesPopup.css';
 
-type TUploadingInviteStatus = 'initial' | 'uploading' | 'success' | 'error';
-type TUploadingInvite = {
-  id: string;
-  email: string;
-  status: TUploadingInviteStatus;
-};
+
 
 const ScrollBar = PerfectScrollbar as unknown as Function;
 
@@ -55,7 +52,7 @@ export function EmailInvitesTab() {
       setInputValue('');
       dispatch(
         inviteUsers({
-          invites: [{ email: newInvite.email, type: 'email' }],
+          invites: [{ email: newInvite.email, type: InvitesType.Email }],
           withSuccessNotification: true,
           onStartUploading: () => {
             setIsLoading(true);

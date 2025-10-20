@@ -1,5 +1,6 @@
 import { connect } from 'react-redux';
-import { IUsersProps, Users } from './Users';
+import { Users } from './Users';
+import { IUsersProps } from './types';
 import { IApplicationState } from '../../../types/redux';
 import { getIsUserSubsribed } from '../../../redux/selectors/user';
 import {
@@ -8,7 +9,7 @@ import {
   openDeleteUserModal,
   openTeamInvitesPopup,
   setGeneralLoaderVisibility,
-  loadMicrosoftInvites,
+  loadInvitesUsers,
   changeUserListSorting,
 } from '../../../redux/actions';
 import { EUserListSorting } from '../../../types/user';
@@ -32,7 +33,7 @@ type TTeamDispatchProps = Pick<
   | 'openModal'
   | 'openTeamInvitesPopup'
   | 'setGeneralLoaderVisibility'
-  | 'loadMicrosoftInvites'
+  | 'loadInvitesUsers'
 >;
 
 export function mapStateToProps(state: IApplicationState): TTeamProps {
@@ -64,7 +65,7 @@ export const mapDispatchToProps: TTeamDispatchProps = {
   openModal: openDeleteUserModal,
   openTeamInvitesPopup,
   setGeneralLoaderVisibility,
-  loadMicrosoftInvites,
+  loadInvitesUsers,
 };
 
 const SyncedUsers = withSyncedQueryString<TTeamProps>([
