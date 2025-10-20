@@ -1,11 +1,13 @@
-from celery import shared_task
-from typing import List, Optional
-from src.analytics.services import AnalyticService
-from src.analytics.events import GroupsAnalyticsEvent
-from src.authentication.enums import AuthTokenType
-from django.contrib.auth import get_user_model
-from src.analytics.mixins import BaseIdentifyMixin
 import time
+from typing import List, Optional
+
+from celery import shared_task
+from django.contrib.auth import get_user_model
+
+from src.analytics.events import GroupsAnalyticsEvent
+from src.analytics.mixins import BaseIdentifyMixin
+from src.analytics.services import AnalyticService
+from src.authentication.enums import AuthTokenType
 
 UserModel = get_user_model()
 
@@ -13,11 +15,11 @@ UserModel = get_user_model()
 def _identify_users(user_ids: List[int]):
 
     users = UserModel.objects.select_related(
-        'account'
+        'account',
     ).prefetch_related(
-        'account__accountsignupdata_set'
+        'account__accountsignupdata_set',
     ).prefetch_related(
-        'incoming_invites'
+        'incoming_invites',
     ).by_ids(user_ids).active().order_by('id')
 
     for user in users:
@@ -32,13 +34,13 @@ def identify_users(user_ids: List[int]):
 def _track_user_changes(
     user_ids: List[int],
     text: str,
-    **props
+    **props,
 ):
     emails = UserModel.objects.filter(id__in=user_ids).only_emails()
     for email in emails:
         AnalyticService.groups_updated(
             text=f"{text} {email}.",
-            **props
+            **props,
         )
 
 
@@ -79,21 +81,21 @@ def track_group_analytics(
     if event == GroupsAnalyticsEvent.created:
         AnalyticService.groups_created(
             text=base_text,
-            **common_props
+            **common_props,
         )
         time.sleep(1)
         if new_photo:
             text_photo = f'{base_text} Added group photo (url: {new_photo}).'
             AnalyticService.groups_updated(
                 text=text_photo,
-                **common_props
+                **common_props,
             )
         if new_users_ids:
             text_add_user = f"{base_text} Added user:"
             _track_user_changes(
                 user_ids=new_users_ids,
                 text=text_add_user,
-                **common_props
+                **common_props,
             )
 
     elif event == GroupsAnalyticsEvent.updated:
@@ -101,20 +103,20 @@ def track_group_analytics(
             text_name = f'{base_text} Changed the group name to "{new_name}".'
             AnalyticService.groups_updated(
                 text=text_name,
-                **common_props
+                **common_props,
             )
 
         if new_photo:
             text_photo = f'{base_text} Added group photo (url: {new_photo}).'
             AnalyticService.groups_updated(
                 text=text_photo,
-                **common_props
+                **common_props,
             )
         elif new_photo == '':
             text_photo = f'{base_text} Delete group photo.'
             AnalyticService.groups_updated(
                 text=text_photo,
-                **common_props
+                **common_props,
             )
 
         if new_users_ids:
@@ -122,7 +124,7 @@ def track_group_analytics(
             _track_user_changes(
                 user_ids=new_users_ids,
                 text=text_add_user,
-                **common_props
+                **common_props,
             )
 
         if removed_users_ids:
@@ -130,7 +132,7 @@ def track_group_analytics(
             _track_user_changes(
                 user_ids=removed_users_ids,
                 text=text_remove_user,
-                **common_props
+                **common_props,
             )
 
     elif event == GroupsAnalyticsEvent.deleted:

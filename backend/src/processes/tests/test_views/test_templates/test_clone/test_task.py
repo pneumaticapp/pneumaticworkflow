@@ -1,20 +1,18 @@
 import pytest
+
+from src.authentication.enums import AuthTokenType
+from src.processes.enums import (
+    ConditionAction,
+    FieldType,
+    OwnerType,
+    PerformerType,
+    PredicateOperator,
+    PredicateType,
+)
+from src.processes.models.templates.template import Template
 from src.processes.tests.fixtures import (
     create_test_user,
 )
-from src.processes.models import (
-    Template,
-)
-from src.processes.enums import (
-    PerformerType,
-    FieldType,
-    OwnerType,
-    ConditionAction,
-    PredicateType,
-    PredicateOperator,
-)
-from src.authentication.enums import AuthTokenType
-
 
 pytestmark = pytest.mark.django_db
 
@@ -36,9 +34,9 @@ class TestCopyTemplateTask:
             'raw_performers': [
                 {
                     'type': PerformerType.USER,
-                    'source_id': str(user.id)
-                }
-            ]
+                    'source_id': str(user.id),
+                },
+            ],
         }
 
         response = api_client.post(
@@ -49,7 +47,7 @@ class TestCopyTemplateTask:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'kickoff': {
@@ -67,17 +65,17 @@ class TestCopyTemplateTask:
                             'type': FieldType.USER,
                             'api_name': 'without_prefix_name',
                             'is_required': True,
-                        }
-                    ]
+                        },
+                    ],
                 },
-                'tasks': [request_data]
-            }
+                'tasks': [request_data],
+            },
         )
         template = Template.objects.get(id=response.data['id'])
 
         # act
         response = api_client.post(
-            f'/templates/{template.id}/clone'
+            f'/templates/{template.id}/clone',
         )
 
         # assert
@@ -106,7 +104,7 @@ class TestCopyTemplateTask:
         # arrange
         analytics_mock = mocker.patch(
             'src.processes.serializers.templates.task.'
-            'AnalyticService.templates_task_due_date_created'
+            'AnalyticService.templates_task_due_date_created',
         )
         user = create_test_user()
         api_client.token_authenticate(user)
@@ -120,7 +118,7 @@ class TestCopyTemplateTask:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'kickoff': {},
@@ -131,24 +129,24 @@ class TestCopyTemplateTask:
                         'api_name': 'task-1',
                         'raw_performers': [{
                             'type': PerformerType.USER,
-                            'source_id': user.id
+                            'source_id': user.id,
                         }],
                         'raw_due_date': {
                             'api_name': 'raw-due-date-bwybf0',
                             'rule': 'after task started',
                             'duration_months': 0,
                             'duration': duration,
-                            'source_id': 'task-1'
-                        }
-                    }
-                ]
-            }
+                            'source_id': 'task-1',
+                        },
+                    },
+                ],
+            },
         )
         template = Template.objects.get(id=response.data['id'])
 
         # act
         response = api_client.post(
-            f'/templates/{template.id}/clone'
+            f'/templates/{template.id}/clone',
         )
 
         # assert
@@ -174,7 +172,7 @@ class TestCopyTemplateTask:
         user = create_test_user()
         mocker.patch(
             'src.processes.serializers.templates.task.'
-            'AnalyticService.templates_task_due_date_created'
+            'AnalyticService.templates_task_due_date_created',
         )
         conditions = [
             {
@@ -188,11 +186,11 @@ class TestCopyTemplateTask:
                                 'operator': PredicateOperator.COMPLETED,
                                 'field': task_1_api_name,
                                 'value': None,
-                            }
-                        ]
-                    }
-                ]
-            }
+                            },
+                        ],
+                    },
+                ],
+            },
         ]
 
         api_client.token_authenticate(user)
@@ -204,7 +202,7 @@ class TestCopyTemplateTask:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'kickoff': {},
@@ -215,7 +213,7 @@ class TestCopyTemplateTask:
                         'api_name': task_1_api_name,
                         'raw_performers': [{
                             'type': PerformerType.USER,
-                            'source_id': user.id
+                            'source_id': user.id,
                         }],
                     },
                     {
@@ -223,19 +221,19 @@ class TestCopyTemplateTask:
                         'name': 'Second Step',
                         'raw_performers': [{
                             'type': PerformerType.USER,
-                            'source_id': user.id
+                            'source_id': user.id,
                         }],
                         'conditions': conditions,
-                        'revert_task': task_1_api_name
-                    }
-                ]
-            }
+                        'revert_task': task_1_api_name,
+                    },
+                ],
+            },
         )
         template = Template.objects.get(id=response.data['id'])
 
         # act
         response = api_client.post(
-            f'/templates/{template.id}/clone'
+            f'/templates/{template.id}/clone',
         )
 
         # assert

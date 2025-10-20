@@ -1,40 +1,40 @@
 import pytest
-from src.processes.tests.fixtures import (
-    create_test_user,
-    create_test_account
+
+from src.accounts.messages import (
+    MSG_A_0011,
 )
 from src.accounts.services.exceptions import (
     UserIsPerformerException,
 )
-from src.accounts.messages import (
-    MSG_A_0011,
+from src.processes.tests.fixtures import (
+    create_test_account,
+    create_test_user,
 )
 from src.utils.validation import ErrorCode
-
 
 pytestmark = pytest.mark.django_db
 
 
 def test_delete_user__ok(
     mocker,
-    api_client
+    api_client,
 ):
     # arrange
     account = create_test_account()
     request_user = create_test_user(account=account)
     deleted_user = create_test_user(
         account=account,
-        email='deleted@test.test'
+        email='deleted@test.test',
     )
     deactivate_mock = mocker.patch(
         'src.accounts.services.user.UserService'
-        '.deactivate'
+        '.deactivate',
     )
     api_client.token_authenticate(request_user)
 
     # act
     response = api_client.post(
-        f'/accounts/users/{deleted_user.id}/delete'
+        f'/accounts/users/{deleted_user.id}/delete',
     )
 
     # assert
@@ -44,19 +44,19 @@ def test_delete_user__ok(
 
 def test_delete__user_is_performer__validation_error(
     mocker,
-    api_client
+    api_client,
 ):
     # arrange
     account = create_test_account()
     request_user = create_test_user(account=account)
     deleted_user = create_test_user(
         account=account,
-        email='deleted@test.test'
+        email='deleted@test.test',
     )
     deactivate_mock = mocker.patch(
         'src.accounts.services.user.UserService'
         '.deactivate',
-        side_effect=UserIsPerformerException()
+        side_effect=UserIsPerformerException(),
     )
     api_client.token_authenticate(request_user)
 
@@ -72,20 +72,20 @@ def test_delete__user_is_performer__validation_error(
 
 def test_delete_user__another_account_user__not_found(
     mocker,
-    api_client
+    api_client,
 ):
     # arrange
     request_user = create_test_user()
     another_user = create_test_user(email='another@test.test')
     deactivate_mock = mocker.patch(
         'src.accounts.services.user.UserService'
-        '.deactivate'
+        '.deactivate',
     )
     api_client.token_authenticate(request_user)
 
     # act
     response = api_client.post(
-        f'/accounts/users/{another_user.id}/delete'
+        f'/accounts/users/{another_user.id}/delete',
     )
 
     # assert
@@ -95,7 +95,7 @@ def test_delete_user__another_account_user__not_found(
 
 def test_delete_user__not_admin__permission_denied(
     mocker,
-    api_client
+    api_client,
 ):
     # arrange
     account = create_test_account()
@@ -104,21 +104,21 @@ def test_delete_user__not_admin__permission_denied(
         account=account,
         is_admin=False,
         is_account_owner=False,
-        email='test@test.test'
+        email='test@test.test',
     )
     deleted_user = create_test_user(
         email='deleted@test.test',
-        account=account
+        account=account,
     )
     deactivate_mock = mocker.patch(
         'src.accounts.services.user.UserService'
-        '.deactivate'
+        '.deactivate',
     )
     api_client.token_authenticate(request_user)
 
     # act
     response = api_client.post(
-        f'/accounts/users/{deleted_user.id}/delete'
+        f'/accounts/users/{deleted_user.id}/delete',
     )
 
     # assert

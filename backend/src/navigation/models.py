@@ -1,12 +1,13 @@
 from django.db.models import (
-    Model,
+    CASCADE,
+    BooleanField,
     CharField,
     ForeignKey,
+    Model,
     PositiveIntegerField,
     URLField,
-    BooleanField,
-    CASCADE
 )
+
 from src.navigation.enums import MenuType
 
 
@@ -14,7 +15,7 @@ class Menu(Model):
     slug = CharField(
         max_length=50,
         unique=True,
-        choices=MenuType.CHOICES
+        choices=MenuType.CHOICES,
     )
     label = CharField(max_length=120)
     link = URLField(null=True, blank=True)
@@ -30,7 +31,7 @@ class MenuItem(Model):
     menu = ForeignKey(
         Menu,
         on_delete=CASCADE,
-        related_name='items'
+        related_name='items',
     )
     label = CharField(max_length=120)
     link = URLField()

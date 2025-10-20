@@ -76,7 +76,7 @@ class PerformerType:
         (USER, USER),
         (GROUP, GROUP),
         (WORKFLOW_STARTER, WORKFLOW_STARTER),
-        (FIELD, FIELD)
+        (FIELD, FIELD),
     )
 
     filter_choices = (
@@ -144,11 +144,11 @@ class FieldType:
     TYPES_WITH_SELECTIONS = {
         DROPDOWN,
         CHECKBOX,
-        RADIO
+        RADIO,
     }
     TYPES_WITH_SELECTION = {
         DROPDOWN,
-        RADIO
+        RADIO,
     }
     CHOICES = (
         (STRING, 'String'),
@@ -393,7 +393,7 @@ class TaskStatus:
     STARTED_STATUS = (
         ACTIVE,
         DELAYED,
-        COMPLETED
+        COMPLETED,
     )
 
     INACTIVE_STATUS = (
@@ -423,7 +423,7 @@ class TemplateIntegrationType:
         'shared',
         'zapier',
         'api',
-        'webhooks'
+        'webhooks',
     ]
 
 
@@ -446,12 +446,12 @@ class TemplateType:
     TYPES_ONBOARDING = {
         ONBOARDING_ADMIN,
         ONBOARDING_NON_ADMIN,
-        ONBOARDING_ACCOUNT_OWNER
+        ONBOARDING_ACCOUNT_OWNER,
     }
 
     USER_TYPES = {
         LIBRARY,
-        CUSTOM
+        CUSTOM,
     }
 
 
@@ -468,7 +468,7 @@ class SysTemplateType:
         (ONBOARDING_ACCOUNT_OWNER, 'Onboarding account owners'),
         (ONBOARDING_ADMIN, 'Onboarding admin users'),
         (ONBOARDING_NON_ADMIN, 'Onboarding non-admin users'),
-        (ACTIVATED, 'Activated')
+        (ACTIVATED, 'Activated'),
     )
 
     ONBOARDING_CHOICES = (
@@ -480,7 +480,7 @@ class SysTemplateType:
     TYPES_ONBOARDING = {
         ONBOARDING_ACCOUNT_OWNER,
         ONBOARDING_ADMIN,
-        ONBOARDING_NON_ADMIN
+        ONBOARDING_NON_ADMIN,
     }
 
     TYPES_ONBOARDING_AND_ACTIVATED = {
@@ -516,12 +516,12 @@ class DueDateRule:
 
     TASK_RULES = {
         AFTER_TASK_STARTED,
-        AFTER_TASK_COMPLETED
+        AFTER_TASK_COMPLETED,
     }
 
     FIELD_RULES = {
         AFTER_FIELD,
-        BEFORE_FIELD
+        BEFORE_FIELD,
     }
 
     LITERALS = Literal[
@@ -571,7 +571,7 @@ class WorkflowEventType:
 
     URGENT_TYPES = (
         URGENT,
-        NOT_URGENT
+        NOT_URGENT,
     )
 
     TASK_EVENTS = (
@@ -607,7 +607,7 @@ class WorkflowEventType:
         (NOT_URGENT, 'Workflow is not urgent'),
         (
             TASK_SKIP_NO_PERFORMERS,
-            'Task skipped as no performers were assigned'
+            'Task skipped as no performers were assigned',
         ),
         (TASK_PERFORMER_CREATED, 'Performer added to task'),
         (TASK_PERFORMER_DELETED, 'Performer deleted from task'),
