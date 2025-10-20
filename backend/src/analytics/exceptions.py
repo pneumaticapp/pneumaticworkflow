@@ -1,5 +1,5 @@
-from src.generics.exceptions import BaseServiceException
 from src.analytics.messages import MSG_AS_0001
+from src.generics.exceptions import BaseServiceException
 
 
 class AnalyticServiceException(BaseServiceException):

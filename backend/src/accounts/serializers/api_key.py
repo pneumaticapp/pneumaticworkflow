@@ -1,9 +1,9 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
+
 from src.accounts.models import (
     APIKey,
 )
-
 
 UserModel = get_user_model()
 

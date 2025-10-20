@@ -1,6 +1,7 @@
 from django.conf import settings
 from rest_framework.permissions import BasePermission
 from rest_framework.request import Request
+
 from src.accounts.enums import UserType
 
 
@@ -9,14 +10,14 @@ class BaseAuthPermission(BasePermission):
     def _is_authenticated(self, request: Request) -> bool:
         return bool(
             request.user
-            and request.user.is_authenticated
+            and request.user.is_authenticated,
         )
 
     def _user_is_authenticated(self, request: Request) -> bool:
         return bool(
             request.user
             and request.user.is_authenticated
-            and request.user.type == UserType.USER
+            and request.user.type == UserType.USER,
         )
 
 

@@ -1,20 +1,9 @@
-import pytest
 from datetime import timedelta
+
+import pytest
 from django.conf import settings
 from django.utils import timezone
-from src.accounts.serializers.notifications import (
-    NotificationTaskSerializer,
-    NotificationWorkflowSerializer,
-)
-from src.processes.tests.fixtures import (
-    create_test_workflow,
-    create_test_user,
-    create_test_account,
-)
-from src.notifications.tasks import (
-    _send_unread_notifications
-)
-from src.notifications.enums import NotificationMethod
+
 from src.accounts.enums import (
     NotificationType,
 )
@@ -22,11 +11,24 @@ from src.accounts.models import (
     Notification,
     UserInvite,
 )
-from src.processes.services.events import (
-    WorkflowEventService
+from src.accounts.serializers.notifications import (
+    NotificationTaskSerializer,
+    NotificationWorkflowSerializer,
 )
+from src.notifications.enums import NotificationMethod
 from src.notifications.services.email import (
-    EmailService
+    EmailService,
+)
+from src.notifications.tasks import (
+    _send_unread_notifications,
+)
+from src.processes.services.events import (
+    WorkflowEventService,
+)
+from src.processes.tests.fixtures import (
+    create_test_account,
+    create_test_user,
+    create_test_workflow,
 )
 
 pytestmark = pytest.mark.django_db
@@ -40,7 +42,7 @@ def test_send_unread_notifications__call_all_services__ok(mocker):
     user = create_test_user(account=account)
     user_2 = create_test_user(
         email='t@t.t',
-        account=account
+        account=account,
     )
     workflow = create_test_workflow(user, tasks_count=1)
     task = workflow.tasks.get(number=1)
@@ -49,7 +51,7 @@ def test_send_unread_notifications__call_all_services__ok(mocker):
         user=user_2,
         text='Notify',
         task=task,
-        after_create_actions=False
+        after_create_actions=False,
     )
     not_read_timeout_date = (
         timezone.now()
@@ -64,10 +66,10 @@ def test_send_unread_notifications__call_all_services__ok(mocker):
         text=comment.text,
         task_json=NotificationTaskSerializer(
             instance=comment.task,
-            notification_type=NotificationType.COMMENT
+            notification_type=NotificationType.COMMENT,
         ).data,
         workflow_json=NotificationWorkflowSerializer(
-            instance=comment.task.workflow
+            instance=comment.task.workflow,
         ).data,
     )
     notification.datetime = not_read_timeout_date
@@ -75,11 +77,11 @@ def test_send_unread_notifications__call_all_services__ok(mocker):
     email_service_init_mock = mocker.patch.object(
         EmailService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     send_email_mock = mocker.patch(
         'src.notifications.services.email.EmailService'
-        '.send_unread_notifications'
+        '.send_unread_notifications',
     )
 
     # act
@@ -108,7 +110,7 @@ def test_send_unread_notifications__second_mailing__not_sent(mocker):
     user = create_test_user(account=account)
     user_2 = create_test_user(
         email='t@t.t',
-        account=account
+        account=account,
     )
     workflow = create_test_workflow(user, tasks_count=1)
     task = workflow.tasks.get(number=1)
@@ -117,7 +119,7 @@ def test_send_unread_notifications__second_mailing__not_sent(mocker):
         user=user_2,
         text='Notify',
         task=task,
-        after_create_actions=False
+        after_create_actions=False,
     )
 
     not_read_timeout_date = (
@@ -133,17 +135,17 @@ def test_send_unread_notifications__second_mailing__not_sent(mocker):
         text=comment.text,
         task_json=NotificationTaskSerializer(
             instance=comment.task,
-            notification_type=NotificationType.COMMENT
+            notification_type=NotificationType.COMMENT,
         ).data,
         workflow_json=NotificationWorkflowSerializer(
-            instance=comment.task.workflow
+            instance=comment.task.workflow,
         ).data,
     )
     notification.datetime = not_read_timeout_date
     notification.save(update_fields=['datetime'])
     _send_unread_notifications()
     send_notification_mock = mocker.patch(
-        'src.notifications.tasks._send_notification'
+        'src.notifications.tasks._send_notification',
     )
 
     # act
@@ -163,7 +165,7 @@ def test_send_unread_notifications__not_read_timeout__not_sent(mocker):
     user = create_test_user(account=account)
     user_2 = create_test_user(
         email='t@t.t',
-        account=account
+        account=account,
     )
     workflow = create_test_workflow(user, tasks_count=1)
     task = workflow.tasks.get(number=1)
@@ -172,7 +174,7 @@ def test_send_unread_notifications__not_read_timeout__not_sent(mocker):
         user=user_2,
         text='Notify',
         task=task,
-        after_create_actions=False
+        after_create_actions=False,
     )
     not_read_timeout_date = (
         timezone.now()
@@ -187,16 +189,16 @@ def test_send_unread_notifications__not_read_timeout__not_sent(mocker):
         text=comment.text,
         task_json=NotificationTaskSerializer(
             instance=comment.task,
-            notification_type=NotificationType.COMMENT
+            notification_type=NotificationType.COMMENT,
         ).data,
         workflow_json=NotificationWorkflowSerializer(
-            instance=comment.task.workflow
+            instance=comment.task.workflow,
         ).data,
     )
     notification.datetime = not_read_timeout_date
     notification.save(update_fields=['datetime'])
     send_notification_mock = mocker.patch(
-        'src.notifications.tasks._send_notification'
+        'src.notifications.tasks._send_notification',
     )
 
     # act
@@ -214,7 +216,7 @@ def test_send_unread_notifications__deleted__not_sent(mocker):
     user = create_test_user()
     user_2 = create_test_user(
         email='t@t.t',
-        account=user.account
+        account=user.account,
     )
 
     workflow = create_test_workflow(user, tasks_count=1)
@@ -224,7 +226,7 @@ def test_send_unread_notifications__deleted__not_sent(mocker):
         user=user_2,
         text='Notify',
         task=task,
-        after_create_actions=False
+        after_create_actions=False,
     )
     not_read_timeout_date = (
         timezone.now()
@@ -239,17 +241,17 @@ def test_send_unread_notifications__deleted__not_sent(mocker):
         text=comment.text,
         task_json=NotificationTaskSerializer(
             instance=comment.task,
-            notification_type=NotificationType.COMMENT
+            notification_type=NotificationType.COMMENT,
         ).data,
         workflow_json=NotificationWorkflowSerializer(
-            instance=comment.task.workflow
+            instance=comment.task.workflow,
         ).data,
     )
     notification.datetime = not_read_timeout_date
     notification.save(update_fields=['datetime'])
     notification.delete()
     send_notification_mock = mocker.patch(
-        'src.notifications.tasks._send_notification'
+        'src.notifications.tasks._send_notification',
     )
 
     # act
@@ -269,7 +271,7 @@ def test_send_unread_notifications__not_subscriber__not_sent(mocker):
     user.save(update_fields=['is_comments_mentions_subscriber'])
     user_2 = create_test_user(
         email='t@t.t',
-        account=user.account
+        account=user.account,
     )
 
     workflow = create_test_workflow(user, tasks_count=1)
@@ -279,7 +281,7 @@ def test_send_unread_notifications__not_subscriber__not_sent(mocker):
         user=user_2,
         text='Notify',
         task=task,
-        after_create_actions=False
+        after_create_actions=False,
     )
     not_read_timeout_date = (
         timezone.now()
@@ -294,16 +296,16 @@ def test_send_unread_notifications__not_subscriber__not_sent(mocker):
         text=comment.text,
         task_json=NotificationTaskSerializer(
             instance=comment.task,
-            notification_type=NotificationType.COMMENT
+            notification_type=NotificationType.COMMENT,
         ).data,
         workflow_json=NotificationWorkflowSerializer(
-            instance=comment.task.workflow
+            instance=comment.task.workflow,
         ).data,
     )
     notification.datetime = not_read_timeout_date
     notification.save(update_fields=['datetime'])
     send_notification_mock = mocker.patch(
-        'src.notifications.tasks._send_notification'
+        'src.notifications.tasks._send_notification',
     )
 
     # act
@@ -320,7 +322,7 @@ def test_send_unread_notifications__owner_invited_in_another_acc__ok(mocker):
     # arrange
     account = create_test_account(
         logo_lg='https://logo.jpg',
-        log_api_requests=True
+        log_api_requests=True,
     )
     account_owner = create_test_user(
         account=account,
@@ -340,10 +342,10 @@ def test_send_unread_notifications__owner_invited_in_another_acc__ok(mocker):
         type=NotificationType.URGENT,
         task_json=NotificationTaskSerializer(
             instance=task,
-            notification_type=NotificationType.URGENT
+            notification_type=NotificationType.URGENT,
         ).data,
         workflow_json=NotificationWorkflowSerializer(
-            instance=workflow
+            instance=workflow,
         ).data,
     )
     not_read_timeout_date = (
@@ -354,7 +356,7 @@ def test_send_unread_notifications__owner_invited_in_another_acc__ok(mocker):
     notification.datetime = not_read_timeout_date
     notification.save(update_fields=['datetime'])
     send_notification_mock = mocker.patch(
-        'src.notifications.tasks._send_notification'
+        'src.notifications.tasks._send_notification',
     )
     another_account = create_test_account()
     UserInvite.objects.create(
@@ -376,5 +378,5 @@ def test_send_unread_notifications__owner_invited_in_another_acc__ok(mocker):
         user_first_name=account_owner.first_name,
         user_email=account_owner.email,
         logo_lg=account.logo_lg,
-        account_id=account.id
+        account_id=account.id,
     )

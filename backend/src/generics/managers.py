@@ -1,4 +1,5 @@
 from django.db.models import Manager
+
 from src.generics.mixins.managers import NormalizeEmailMixin
 
 

@@ -1,13 +1,13 @@
 import pytest
+
+from src.authentication.enums import AuthTokenType
+from src.processes.enums import PresetType
 from src.processes.tests.fixtures import (
-    create_test_admin,
     create_test_account,
+    create_test_admin,
     create_test_template,
     create_test_template_preset,
 )
-from src.processes.enums import PresetType
-from src.authentication.enums import AuthTokenType
-
 
 pytestmark = pytest.mark.django_db
 
@@ -22,7 +22,7 @@ class TestTemplatePresetDeleteView:
         preset = create_test_template_preset(
             template=template,
             author=user,
-            type=PresetType.PERSONAL
+            type=PresetType.PERSONAL,
         )
 
         api_client.token_authenticate(user)
@@ -31,7 +31,7 @@ class TestTemplatePresetDeleteView:
 
         service_class_mock = mocker.patch(
             'src.processes.views.template_preset.TemplatePresetService',
-            return_value=mock_service
+            return_value=mock_service,
         )
 
         # act
@@ -43,14 +43,14 @@ class TestTemplatePresetDeleteView:
             user=user,
             instance=preset,
             is_superuser=False,
-            auth_type=AuthTokenType.USER
+            auth_type=AuthTokenType.USER,
         )
         mock_service.delete.assert_called_once()
 
     def test_delete__preset_not_found__permission_denied(
         self,
         api_client,
-        mocker
+        mocker,
     ):
         # arrange
         account = create_test_account()
@@ -60,7 +60,7 @@ class TestTemplatePresetDeleteView:
         fake_preset_id = 99999
 
         service_class_mock = mocker.patch(
-            'src.processes.views.template_preset.TemplatePresetService'
+            'src.processes.views.template_preset.TemplatePresetService',
         )
 
         # act
@@ -75,7 +75,7 @@ class TestTemplatePresetDeleteView:
         fake_preset_id = 1
 
         service_class_mock = mocker.patch(
-            'src.processes.views.template_preset.TemplatePresetService'
+            'src.processes.views.template_preset.TemplatePresetService',
         )
 
         # act
@@ -94,13 +94,13 @@ class TestTemplatePresetDeleteView:
         preset = create_test_template_preset(
             template=template,
             author=user1,
-            type=PresetType.PERSONAL
+            type=PresetType.PERSONAL,
         )
 
         api_client.token_authenticate(user2)
 
         service_class_mock = mocker.patch(
-            'src.processes.views.template_preset.TemplatePresetService'
+            'src.processes.views.template_preset.TemplatePresetService',
         )
 
         # act
@@ -113,7 +113,7 @@ class TestTemplatePresetDeleteView:
     def test_delete__different_account__permission_denied(
         self,
         api_client,
-        mocker
+        mocker,
     ):
         # arrange
         account1 = create_test_account()
@@ -125,13 +125,13 @@ class TestTemplatePresetDeleteView:
         preset = create_test_template_preset(
             template=template,
             author=user1,
-            type=PresetType.PERSONAL
+            type=PresetType.PERSONAL,
         )
 
         api_client.token_authenticate(user2)
 
         service_class_mock = mocker.patch(
-            'src.processes.views.template_preset.TemplatePresetService'
+            'src.processes.views.template_preset.TemplatePresetService',
         )
 
         # act
@@ -144,7 +144,7 @@ class TestTemplatePresetDeleteView:
     def test_delete__account_preset_by_admin__permission_denied(
         self,
         api_client,
-        mocker
+        mocker,
     ):
         # arrange
         account = create_test_account()
@@ -154,13 +154,13 @@ class TestTemplatePresetDeleteView:
         preset = create_test_template_preset(
             template=template,
             author=user1,
-            type=PresetType.ACCOUNT
+            type=PresetType.ACCOUNT,
         )
 
         api_client.token_authenticate(user2)
 
         service_class_mock = mocker.patch(
-            'src.processes.views.template_preset.TemplatePresetService'
+            'src.processes.views.template_preset.TemplatePresetService',
         )
 
         # act
