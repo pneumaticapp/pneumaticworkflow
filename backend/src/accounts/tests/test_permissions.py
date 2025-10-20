@@ -11,8 +11,8 @@ from src.accounts.permissions import (
     UsersOverlimitedPermission,
 )
 from src.processes.tests.fixtures import (
+    create_test_account,
     create_test_user,
-    create_test_account
 )
 
 pytestmark = pytest.mark.django_db
@@ -89,14 +89,14 @@ class TestUsersOverlimitedPermission:
             BillingPlanType.FREEMIUM,
             BillingPlanType.UNLIMITED,
             BillingPlanType.FRACTIONALCOO,
-        )
+        ),
     )
     def test__overlimit__plan_not_premium__skip(self, plan, mocker):
 
         # arrange
         account = create_test_account(
             max_users=5,
-            plan=plan
+            plan=plan,
         )
         account.active_users = 6
         account.save()
@@ -116,7 +116,7 @@ class TestUsersOverlimitedPermission:
         # arrange
         account = create_test_account(
             max_users=5,
-            plan=BillingPlanType.PREMIUM
+            plan=BillingPlanType.PREMIUM,
         )
         account.active_users = 6
         account.save()
@@ -136,7 +136,7 @@ class TestUsersOverlimitedPermission:
         # arrange
         account = create_test_account(
             max_users=5,
-            plan=BillingPlanType.PREMIUM
+            plan=BillingPlanType.PREMIUM,
         )
         account.active_users = 5
         account.save()

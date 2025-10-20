@@ -1,48 +1,55 @@
-import pytest
 from datetime import timedelta
+
+import pytest
 from django.utils import timezone
+
 from src.accounts.enums import (
     BillingPlanType,
 )
-from src.processes.models import (
-    FieldTemplate,
-    Delay,
-    Workflow,
-    Template,
-    FieldTemplateSelection,
-    TaskPerformer,
-    Checklist,
-    ChecklistSelection,
+from src.authentication.enums import AuthTokenType
+from src.authentication.services.guest_auth import GuestJWTAuthService
+from src.processes.enums import (
+    FieldType,
+    OwnerType,
+    PerformerType,
+    TaskStatus,
+    WorkflowStatus,
+)
+from src.processes.models.templates.checklist import (
     ChecklistTemplate,
     ChecklistTemplateSelection,
-    FileAttachment,
+)
+from src.processes.models.templates.fields import (
+    FieldTemplate,
+    FieldTemplateSelection,
+)
+from src.processes.models.templates.template import Template
+from src.processes.models.workflows.attachment import FileAttachment
+from src.processes.models.workflows.checklist import (
+    Checklist,
+    ChecklistSelection,
+)
+from src.processes.models.workflows.task import (
+    Delay,
+    TaskPerformer,
+)
+from src.processes.models.workflows.workflow import Workflow
+from src.processes.services.events import WorkflowEventService
+from src.processes.services.tasks.performers import (
+    TaskPerformersService,
 )
 from src.processes.tasks.update_workflow import update_workflows
 from src.processes.tests.fixtures import (
-    create_test_user,
-    create_test_workflow,
-    create_test_template,
     create_test_account,
-    create_test_owner,
-    create_test_guest,
     create_test_admin,
     create_test_group,
+    create_test_guest,
+    create_test_owner,
+    create_test_template,
+    create_test_user,
+    create_test_workflow,
 )
-from src.processes.services.tasks.performers import (
-    TaskPerformersService
-)
-from src.authentication.enums import AuthTokenType
-from src.processes.enums import (
-    PerformerType,
-    FieldType,
-    WorkflowStatus,
-    OwnerType,
-    TaskStatus,
-)
-from src.authentication.services import GuestJWTAuthService
-from src.processes.services.events import WorkflowEventService
 from src.utils.dates import date_format
-
 
 pytestmark = pytest.mark.django_db
 
@@ -58,11 +65,11 @@ def test_retrieve__ok(api_client, mocker):
 
     identify_mock = mocker.patch(
         'src.processes.views.task.TaskViewSet.'
-        'identify'
+        'identify',
     )
     group_mock = mocker.patch(
         'src.processes.views.task.TaskViewSet.'
-        'group'
+        'group',
     )
 
     # act
@@ -102,10 +109,10 @@ def test_retrieve__delayed__ok(api_client, mocker):
     # arrange
     mocker.patch(
         'src.processes.views.task.TaskViewSet.'
-        'identify'
+        'identify',
     )
     mocker.patch(
-        'src.processes.views.task.TaskViewSet.group'
+        'src.processes.views.task.TaskViewSet.group',
     )
     user = create_test_user()
     api_client.token_authenticate(user)
@@ -117,7 +124,7 @@ def test_retrieve__delayed__ok(api_client, mocker):
         duration=timedelta(days=2),
         task=task,
         start_date=timezone.now(),
-        workflow=workflow
+        workflow=workflow,
     )
 
     # act
@@ -160,7 +167,7 @@ def test_retrieve__workflow_member__ok(api_client):
     another_user = create_test_user(
         account=user.account,
         email='admin@test.test',
-        is_account_owner=False
+        is_account_owner=False,
     )
     workflow = create_test_workflow(user)
     workflow.members.add(another_user)
@@ -204,7 +211,7 @@ def test_retrieve__admin_not_workflow_member__permission_denied(api_client):
     another_user = create_test_user(
         account=user.account,
         email='admin@test.test',
-        is_account_owner=False
+        is_account_owner=False,
     )
     workflow = create_test_workflow(user)
     workflow.members.remove(another_user)
@@ -225,7 +232,7 @@ def test_retrieve__delayed_task__not_found(api_client, mocker):
     # arrange
     mocker.patch(
         'src.processes.tasks.webhooks.'
-        'send_task_completed_webhook.delay'
+        'send_task_completed_webhook.delay',
     )
     user = create_test_user()
     workflow = create_test_workflow(user)
@@ -234,7 +241,7 @@ def test_retrieve__delayed_task__not_found(api_client, mocker):
     Delay.objects.create(
         task=task_2,
         duration=timedelta(seconds=1000),
-        workflow=workflow
+        workflow=workflow,
     )
 
     api_client.token_authenticate(user)
@@ -249,7 +256,7 @@ def test_retrieve__delayed_task__not_found(api_client, mocker):
 
 def test_retrieve__delete_delay_before_active_task__found(
     mocker,
-    api_client
+    api_client,
 ):
 
     """ Caused by bug: https://my.pneumatic.app/workflows/11741"""
@@ -261,7 +268,7 @@ def test_retrieve__delete_delay_before_active_task__found(
     )
     mocker.patch(
         'src.processes.tasks.webhooks.'
-        'send_task_completed_webhook.delay'
+        'send_task_completed_webhook.delay',
     )
     user = create_test_user()
     api_client.token_authenticate(user)
@@ -270,7 +277,7 @@ def test_retrieve__delete_delay_before_active_task__found(
         'owners': [
             {
                 'type': OwnerType.USER,
-                'source_id': user.id
+                'source_id': user.id,
             },
         ],
         'is_active': True,
@@ -282,9 +289,9 @@ def test_retrieve__delete_delay_before_active_task__found(
                 'raw_performers': [
                     {
                         'type': PerformerType.USER,
-                        'source_id': user.id
-                    }
-                ]
+                        'source_id': user.id,
+                    },
+                ],
             },
             {
                 'number': 2,
@@ -293,15 +300,15 @@ def test_retrieve__delete_delay_before_active_task__found(
                 'raw_performers': [
                     {
                         'type': PerformerType.USER,
-                        'source_id': user.id
-                    }
-                ]
-            }
-        ]
+                        'source_id': user.id,
+                    },
+                ],
+            },
+        ],
     }
     response = api_client.post(
         path='/templates',
-        data=request_data
+        data=request_data,
     )
     template = Template.objects.get(id=response.data['id'])
 
@@ -311,12 +318,12 @@ def test_retrieve__delete_delay_before_active_task__found(
     workflow.refresh_from_db()
 
     template_data = api_client.get(
-        f'/templates/{workflow.template_id}'
+        f'/templates/{workflow.template_id}',
     ).data
     template_data['tasks'][1].pop('delay')
     mocker.patch(
         'src.processes.services.templates.'
-        'integrations.TemplateIntegrationsService.template_updated'
+        'integrations.TemplateIntegrationsService.template_updated',
     )
 
     api_client.put(
@@ -329,7 +336,7 @@ def test_retrieve__delete_delay_before_active_task__found(
         version=template.version,
         updated_by=user.id,
         is_superuser=False,
-        auth_type=AuthTokenType.USER
+        auth_type=AuthTokenType.USER,
     )
 
     # act
@@ -344,7 +351,7 @@ def test_retrieve__completed_task__ok(api_client, mocker):
     # arrange
     mocker.patch(
         'src.processes.tasks.webhooks.'
-        'send_task_completed_webhook.delay'
+        'send_task_completed_webhook.delay',
     )
     user = create_test_user()
     workflow = create_test_workflow(user)
@@ -375,7 +382,7 @@ def test_retrieve__completed_task__ok(api_client, mocker):
             'type': 'user',
             'is_completed': True,
             'date_completed_tsp': performer.date_completed.timestamp(),
-        }
+        },
     ]
 
 
@@ -387,7 +394,7 @@ def test_retrieve__user_completed_task__return_as_completed(
     # arrange
     mocker.patch(
         'src.processes.tasks.webhooks.'
-        'send_task_completed_webhook.delay'
+        'send_task_completed_webhook.delay',
     )
     user = create_test_user()
     another_user = create_test_user(
@@ -415,13 +422,13 @@ def test_retrieve__user_completed_task__return_as_completed(
 
 def test_retrieve__revert_delayed_task__not_found(
     mocker,
-    api_client
+    api_client,
 ):
 
     # arrange
     mocker.patch(
         'src.processes.tasks.webhooks.'
-        'send_task_completed_webhook.delay'
+        'send_task_completed_webhook.delay',
     )
     mocker.patch(
         'src.processes.tasks.webhooks.'
@@ -431,14 +438,14 @@ def test_retrieve__revert_delayed_task__not_found(
     api_client.token_authenticate(user)
     workflow = create_test_workflow(
         user=user,
-        tasks_count=2
+        tasks_count=2,
     )
     task_1 = workflow.tasks.get(number=1)
     task_2 = workflow.tasks.get(number=2)
     Delay.objects.create(
         task=task_2,
         duration=timedelta(hours=1),
-        workflow=workflow
+        workflow=workflow,
     )
 
     response_complete_1 = api_client.post(f'/v2/tasks/{task_1.id}/complete')
@@ -467,7 +474,7 @@ def test_retrieve__reverted_task__ok(mocker, api_client):
     # arrange
     mocker.patch(
         'src.processes.tasks.webhooks.'
-        'send_task_completed_webhook.delay'
+        'send_task_completed_webhook.delay',
     )
     mocker.patch(
         'src.processes.tasks.webhooks.'
@@ -477,7 +484,7 @@ def test_retrieve__reverted_task__ok(mocker, api_client):
     api_client.token_authenticate(user)
     workflow = create_test_workflow(
         user=user,
-        tasks_count=2
+        tasks_count=2,
     )
     task_1 = workflow.tasks.get(number=1)
     api_client.post(f'/v2/tasks/{task_1.id}/complete')
@@ -488,7 +495,7 @@ def test_retrieve__reverted_task__ok(mocker, api_client):
         f'/v2/tasks/{task_2.id}/revert',
         data={
             'comment': 'text_comment',
-        }
+        },
     )
     workflow.refresh_from_db()
 
@@ -519,7 +526,7 @@ def test_retrieve__deleted_performer__ok(api_client):
     template = create_test_template(
         user=user,
         is_active=True,
-        tasks_count=1
+        tasks_count=1,
     )
     workflow = create_test_workflow(user, template)
     task = workflow.tasks.get(number=1)
@@ -554,7 +561,7 @@ def test_retrieve__deleted_performer__ok(api_client):
             'type': 'user',
             'is_completed': False,
             'date_completed_tsp': None,
-        }
+        },
     ]
 
 
@@ -563,14 +570,14 @@ def test_retrieve__get_performers_type_field__ok(api_client):
     user = create_test_user()
     user2 = create_test_user(
         email='test2@pneumatic.app',
-        account=user.account
+        account=user.account,
     )
     api_client.token_authenticate(user)
 
     template = create_test_template(
         user=user,
         tasks_count=2,
-        is_active=True
+        is_active=True,
     )
 
     field_template = FieldTemplate.objects.create(
@@ -582,21 +589,21 @@ def test_retrieve__get_performers_type_field__ok(api_client):
     )
 
     template_first_task = template.tasks.order_by(
-        'number'
+        'number',
     ).first()
     template_first_task.delete_raw_performers()
     template_first_task.add_raw_performer(
         performer_type=PerformerType.FIELD,
-        field=field_template
+        field=field_template,
     )
     response = api_client.post(
         f'/templates/{template.id}/run',
         data={
             'name': 'Test template',
             'kickoff': {
-                field_template.api_name: user2.id
-            }
-        }
+                field_template.api_name: user2.id,
+            },
+        },
     )
     workflow_id = response.data['id']
     workflow = Workflow.objects.get(pk=workflow_id)
@@ -614,7 +621,7 @@ def test_retrieve__get_performers_type_field__ok(api_client):
             'type': 'user',
             'is_completed': False,
             'date_completed_tsp': None,
-        }
+        },
     ]
 
 
@@ -626,7 +633,7 @@ def test_retrieve__is_urgent__ok(api_client):
     workflow = create_test_workflow(
         user=user,
         is_urgent=True,
-        tasks_count=1
+        tasks_count=1,
     )
     task = workflow.tasks.get(number=1)
 
@@ -647,7 +654,7 @@ def test_retrieve__field_user__ok(api_client):
     template = create_test_template(
         user=user,
         is_active=True,
-        tasks_count=1
+        tasks_count=1,
     )
     template_task = template.tasks.first()
     FieldTemplate.objects.create(
@@ -662,7 +669,7 @@ def test_retrieve__field_user__ok(api_client):
         path=f'/templates/{template.id}/run',
         data={
             'name': 'Test name',
-        }
+        },
     )
     workflow = Workflow.objects.get(id=response.data['id'])
     task = workflow.tasks.get(number=1)
@@ -700,7 +707,7 @@ def test_retrieve__field_date__ok(api_client):
     template = create_test_template(
         user=user,
         is_active=True,
-        tasks_count=1
+        tasks_count=1,
     )
     template_task = template.tasks.first()
     FieldTemplate.objects.create(
@@ -715,7 +722,7 @@ def test_retrieve__field_date__ok(api_client):
         path=f'/templates/{template.id}/run',
         data={
             'name': 'Test name',
-        }
+        },
     )
     workflow = Workflow.objects.get(id=response.data['id'])
     task = workflow.tasks.get(number=1)
@@ -750,7 +757,7 @@ def test_retrieve__field_url__ok(api_client):
     template = create_test_template(
         user=user,
         is_active=True,
-        tasks_count=1
+        tasks_count=1,
     )
     template_task = template.tasks.first()
     FieldTemplate.objects.create(
@@ -765,7 +772,7 @@ def test_retrieve__field_url__ok(api_client):
         path=f'/templates/{template.id}/run',
         data={
             'name': 'Test name',
-        }
+        },
     )
     workflow = Workflow.objects.get(id=response.data['id'])
     task = workflow.tasks.get(number=1)
@@ -800,7 +807,7 @@ def test_retrieve__field_with_selections__ok(api_client):
     template = create_test_template(
         user=user,
         is_active=True,
-        tasks_count=1
+        tasks_count=1,
     )
     template_task = template.tasks.first()
     field_template = FieldTemplate.objects.create(
@@ -819,8 +826,8 @@ def test_retrieve__field_with_selections__ok(api_client):
     response = api_client.post(
         path=f'/templates/{template.id}/run',
         data={
-            'name': 'Test name'
-        }
+            'name': 'Test name',
+        },
     )
 
     workflow = Workflow.objects.get(id=response.data['id'])
@@ -863,7 +870,7 @@ def test_retrieve__field_with_attachments__ok(api_client):
     template = create_test_template(
         user=user,
         is_active=True,
-        tasks_count=1
+        tasks_count=1,
     )
     template_task = template.tasks.first()
     FieldTemplate.objects.create(
@@ -878,8 +885,8 @@ def test_retrieve__field_with_attachments__ok(api_client):
     response = api_client.post(
         path=f'/templates/{template.id}/run',
         data={
-            'name': 'Test name'
-        }
+            'name': 'Test name',
+        },
     )
 
     workflow = Workflow.objects.get(id=response.data['id'])
@@ -890,7 +897,7 @@ def test_retrieve__field_with_attachments__ok(api_client):
         url='https://john.cena/john.cena',
         size=1488,
         account_id=user.account_id,
-        output=field
+        output=field,
     )
     field.value = attachment.url
     field.save(update_fields=['value'])
@@ -926,7 +933,7 @@ def test_retrieve__fields_ordering__ok(api_client):
     template = create_test_template(
         user=user,
         is_active=True,
-        tasks_count=1
+        tasks_count=1,
     )
     template_task = template.tasks.first()
     field_template_1 = FieldTemplate.objects.create(
@@ -961,8 +968,8 @@ def test_retrieve__fields_ordering__ok(api_client):
     response = api_client.post(
         path=f'/templates/{template.id}/run',
         data={
-            'name': 'Test name'
-        }
+            'name': 'Test name',
+        },
     )
 
     workflow = Workflow.objects.get(id=response.data['id'])
@@ -997,27 +1004,27 @@ def test_retrieve__guest__ok(api_client, mocker):
     task = workflow.tasks.get(number=1)
     TaskPerformer.objects.create(
         task_id=task.id,
-        user_id=guest.id
+        user_id=guest.id,
     )
 
     str_token = GuestJWTAuthService.get_str_token(
         task_id=task.id,
         user_id=guest.id,
-        account_id=account.id
+        account_id=account.id,
     )
     identify_mock = mocker.patch(
         'src.processes.views.task.TaskViewSet.'
-        'identify'
+        'identify',
     )
     group_mock = mocker.patch(
         'src.processes.views.task.TaskViewSet.'
-        'group'
+        'group',
     )
 
     # act
     response = api_client.get(
         f'/v2/tasks/{task.id}',
-        **{'X-Guest-Authorization': str_token}
+        **{'X-Guest-Authorization': str_token},
     )
 
     # assert
@@ -1030,7 +1037,7 @@ def test_retrieve__guest__ok(api_client, mocker):
 
 def test_retrieve__guest_from_another_task__permission_denied(
     mocker,
-    api_client
+    api_client,
 ):
     # TODO Deprecated, case checked in GuestPermission test
 
@@ -1046,42 +1053,42 @@ def test_retrieve__guest_from_another_task__permission_denied(
     guest_1 = create_test_guest(account=account)
     TaskPerformer.objects.create(
         task_id=task_1.id,
-        user_id=guest_1.id
+        user_id=guest_1.id,
     )
     GuestJWTAuthService.get_str_token(
         task_id=task_1.id,
         user_id=guest_1.id,
-        account_id=account.id
+        account_id=account.id,
     )
 
     workflow_2 = create_test_workflow(account_owner, tasks_count=1)
     task_2 = workflow_2.tasks.get(number=1)
     guest_2 = create_test_guest(
         account=account,
-        email='guest2@test.test'
+        email='guest2@test.test',
     )
     TaskPerformer.objects.create(
         task_id=task_2.id,
-        user_id=guest_2.id
+        user_id=guest_2.id,
     )
     str_token_2 = GuestJWTAuthService.get_str_token(
         task_id=task_2.id,
         user_id=guest_2.id,
-        account_id=account.id
+        account_id=account.id,
     )
     mocker.patch(
         'src.processes.views.task.TaskViewSet.'
-        'identify'
+        'identify',
     )
     mocker.patch(
         'src.processes.views.task.TaskViewSet.'
-        'group'
+        'group',
     )
 
     # act
     response = api_client.get(
         f'/v2/tasks/{task_1.id}',
-        **{'X-Guest-Authorization': str_token_2}
+        **{'X-Guest-Authorization': str_token_2},
     )
 
     # assert
@@ -1097,36 +1104,36 @@ def test_retrieve__checklists__ok(api_client, mocker):
     template = create_test_template(
         user=user,
         is_active=True,
-        tasks_count=1
+        tasks_count=1,
     )
     template_task = template.tasks.first()
     checklist_template = ChecklistTemplate.objects.create(
         template=template,
         task=template_task,
-        api_name='checklist-1'
+        api_name='checklist-1',
     )
     (
         ChecklistTemplateSelection.objects.create(
             checklist=checklist_template,
             template=template,
             value='some value',
-            api_name='cl-selection-1'
+            api_name='cl-selection-1',
         )
     )
 
     response = api_client.post(
         path=f'/templates/{template.id}/run',
-        data={'name': 'Test name'}
+        data={'name': 'Test name'},
     )
     workflow = Workflow.objects.get(id=response.data['id'])
     task = workflow.tasks.get(number=1)
     mocker.patch(
         'src.processes.views.task.TaskViewSet.'
-        'identify'
+        'identify',
     )
     mocker.patch(
         'src.processes.views.task.TaskViewSet.'
-        'group'
+        'group',
     )
 
     # act
@@ -1142,7 +1149,7 @@ def test_retrieve__checklists__ok(api_client, mocker):
     checklist = Checklist.objects.get(api_name='checklist-1')
     selection = ChecklistSelection.objects.get(
         checklist=checklist,
-        api_name='cl-selection-1'
+        api_name='cl-selection-1',
     )
     assert checklist_data['id'] == checklist.id
     assert checklist_data['api_name'] == checklist.api_name
@@ -1163,18 +1170,18 @@ def test_retrieve__with_comment__ok(api_client, mocker):
 
     mocker.patch(
         'src.processes.views.task.TaskViewSet.'
-        'identify'
+        'identify',
     )
     mocker.patch(
         'src.processes.views.task.TaskViewSet.'
-        'group'
+        'group',
     )
     WorkflowEventService.workflow_run_event(workflow)
     WorkflowEventService.comment_created_event(
         user=user,
         task=task,
         text='Some text',
-        after_create_actions=False
+        after_create_actions=False,
     )
 
     # act
@@ -1190,11 +1197,11 @@ def test_retrieve__sub_workflows_ordering__ok(api_client, mocker):
     # arrange
     mocker.patch(
         'src.processes.views.task.TaskViewSet.'
-        'identify'
+        'identify',
     )
     mocker.patch(
         'src.processes.views.task.TaskViewSet.'
-        'group'
+        'group',
     )
     user = create_test_user()
     api_client.token_authenticate(user)
@@ -1203,12 +1210,12 @@ def test_retrieve__sub_workflows_ordering__ok(api_client, mocker):
     sub_wf_1 = create_test_workflow(
         user=user,
         tasks_count=1,
-        ancestor_task=ancestor_task
+        ancestor_task=ancestor_task,
     )
     sub_wf_2 = create_test_workflow(
         user=user,
         tasks_count=1,
-        ancestor_task=ancestor_task
+        ancestor_task=ancestor_task,
     )
 
     # act
@@ -1226,11 +1233,11 @@ def test_retrieve__sub_workflows__ok(api_client, mocker):
     # arrange
     mocker.patch(
         'src.processes.views.task.TaskViewSet.'
-        'identify'
+        'identify',
     )
     mocker.patch(
         'src.processes.views.task.TaskViewSet.'
-        'group'
+        'group',
     )
     user = create_test_user()
     api_client.token_authenticate(user)
@@ -1243,7 +1250,7 @@ def test_retrieve__sub_workflows__ok(api_client, mocker):
         ancestor_task=ancestor_task,
         due_date=timezone.now() + timedelta(days=3),
         is_urgent=True,
-        status=WorkflowStatus.DELAYED
+        status=WorkflowStatus.DELAYED,
     )
     task_1 = sub_wf.tasks.get(number=1)
     task_1.due_date = timezone.now() + timedelta(hours=8)
@@ -1252,7 +1259,7 @@ def test_retrieve__sub_workflows__ok(api_client, mocker):
         duration=timedelta(days=2),
         task=task_1,
         start_date=timezone.now(),
-        workflow=workflow
+        workflow=workflow,
     )
     # act
     response = api_client.get(f'/v2/tasks/{ancestor_task.id}')
@@ -1292,7 +1299,7 @@ def test_retrieve__sub_workflows__ok(api_client, mocker):
             'type': 'user',
             'is_completed': False,
             'date_completed_tsp': None,
-        }
+        },
     ]
     assert data['tasks'][0]['checklists_total'] == 0
     assert data['tasks'][0]['checklists_marked'] == 0
@@ -1316,11 +1323,11 @@ def test_retrieve__sub_workflows_multiple_tasks__ok(api_client, mocker):
     # arrange
     mocker.patch(
         'src.processes.views.task.TaskViewSet.'
-        'identify'
+        'identify',
     )
     mocker.patch(
         'src.processes.views.task.TaskViewSet.'
-        'group'
+        'group',
     )
     user = create_test_user()
     api_client.token_authenticate(user)
@@ -1333,7 +1340,7 @@ def test_retrieve__sub_workflows_multiple_tasks__ok(api_client, mocker):
         ancestor_task=ancestor_task,
         due_date=timezone.now() + timedelta(days=3),
         is_urgent=True,
-        status=WorkflowStatus.DELAYED
+        status=WorkflowStatus.DELAYED,
     )
     task_1 = workflow.tasks.get(number=1)
     task_2 = workflow.tasks.get(number=2)
@@ -1355,17 +1362,17 @@ def test_retrieve__sub_workflows_multiple_tasks__ok(api_client, mocker):
 
 def test_retrieve__sub_workflows_not_return_skipped_tasks__ok(
     api_client,
-    mocker
+    mocker,
 ):
 
     # arrange
     mocker.patch(
         'src.processes.views.task.TaskViewSet.'
-        'identify'
+        'identify',
     )
     mocker.patch(
         'src.processes.views.task.TaskViewSet.'
-        'group'
+        'group',
     )
     user = create_test_user()
     api_client.token_authenticate(user)
@@ -1379,7 +1386,7 @@ def test_retrieve__sub_workflows_not_return_skipped_tasks__ok(
         due_date=timezone.now() + timedelta(days=3),
         is_urgent=True,
         status=WorkflowStatus.DELAYED,
-        active_task_number=2
+        active_task_number=2,
     )
     task_1 = workflow.tasks.get(number=1)
     task_1.status = TaskStatus.SKIPPED
@@ -1417,11 +1424,11 @@ def test_retrieve__user_in_group_task_performer__ok(api_client, mocker):
     # arrange
     identify_mock = mocker.patch(
         'src.processes.views.task.TaskViewSet.'
-        'identify'
+        'identify',
     )
     group_mock = mocker.patch(
         'src.processes.views.task.TaskViewSet.'
-        'group'
+        'group',
     )
     account = create_test_account()
     owner = create_test_owner(account=account)
@@ -1491,17 +1498,17 @@ def test_retrieve__default_revert_tasks__ok(api_client, mocker):
     workflow = create_test_workflow(
         user=user,
         tasks_count=3,
-        active_task_number=2
+        active_task_number=2,
     )
     task_1 = workflow.tasks.get(number=1)
     task_2 = workflow.tasks.get(number=2)
     mocker.patch(
         'src.processes.views.task.TaskViewSet.'
-        'identify'
+        'identify',
     )
     mocker.patch(
         'src.processes.views.task.TaskViewSet.'
-        'group'
+        'group',
     )
 
     # act
@@ -1515,7 +1522,7 @@ def test_retrieve__default_revert_tasks__ok(api_client, mocker):
             'id': task_1.id,
             'name': task_1.name,
             'api_name': task_1.api_name,
-        }
+        },
     ]
 
 
@@ -1527,7 +1534,7 @@ def test_retrieve__custom_revert_tasks__ok(api_client, mocker):
     workflow = create_test_workflow(
         user=user,
         tasks_count=3,
-        active_task_number=2
+        active_task_number=2,
     )
     task_3 = workflow.tasks.get(number=3)
     task_2 = workflow.tasks.get(number=2)
@@ -1536,11 +1543,11 @@ def test_retrieve__custom_revert_tasks__ok(api_client, mocker):
 
     mocker.patch(
         'src.processes.views.task.TaskViewSet.'
-        'identify'
+        'identify',
     )
     mocker.patch(
         'src.processes.views.task.TaskViewSet.'
-        'group'
+        'group',
     )
 
     # act
@@ -1554,5 +1561,5 @@ def test_retrieve__custom_revert_tasks__ok(api_client, mocker):
             'id': task_3.id,
             'name': task_3.name,
             'api_name': task_3.api_name,
-        }
+        },
     ]

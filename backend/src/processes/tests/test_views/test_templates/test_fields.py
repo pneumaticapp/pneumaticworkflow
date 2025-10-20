@@ -1,26 +1,25 @@
 import pytest
 
-from src.authentication.services import GuestJWTAuthService
+from src.authentication.services.guest_auth import GuestJWTAuthService
 from src.authentication.tokens import PublicToken
+from src.processes.enums import (
+    FieldType,
+    OwnerType,
+    PerformerType,
+)
+from src.processes.models.templates.fields import FieldTemplate
+from src.processes.models.templates.owner import TemplateOwner
+from src.processes.models.templates.template import Template
+from src.processes.models.workflows.task import TaskPerformer
 from src.processes.tests.fixtures import (
     create_test_account,
+    create_test_admin,
+    create_test_guest,
+    create_test_not_admin,
+    create_test_owner,
     create_test_template,
     create_test_workflow,
-    create_test_owner,
-    create_test_admin,
-    create_test_not_admin, create_test_guest,
 )
-from src.processes.models import (
-    Template,
-    TemplateOwner,
-    FieldTemplate, TaskPerformer,
-)
-from src.processes.enums import (
-    PerformerType,
-    FieldType,
-)
-from src.processes.enums import OwnerType
-
 
 pytestmark = pytest.mark.django_db
 
@@ -39,7 +38,7 @@ def test_fields__active_template__ok(api_client):
         kickoff=kickoff,
         template=template,
         order=1,
-        api_name='field-1'
+        api_name='field-1',
     )
     task = template.tasks.first()
     task_field = FieldTemplate.objects.create(
@@ -49,7 +48,7 @@ def test_fields__active_template__ok(api_client):
         task=task,
         template=template,
         order=2,
-        api_name='field-2'
+        api_name='field-2',
     )
 
     # act
@@ -94,8 +93,8 @@ def test_fields__draft_template__return_from_db(api_client):
         'owners': [
             {
                 'type': OwnerType.USER,
-                'source_id': user.id
-            }
+                'source_id': user.id,
+            },
         ],
         'is_active': False,
         'kickoff': {
@@ -108,9 +107,9 @@ def test_fields__draft_template__return_from_db(api_client):
                     'order': 1,
                     'is_required': True,
                     'api_name': 'user-field-1',
-                    'default': 'default value'
-                }
-            ]
+                    'default': 'default value',
+                },
+            ],
         },
         'tasks': [
             {
@@ -121,8 +120,8 @@ def test_fields__draft_template__return_from_db(api_client):
                 'raw_performers': [
                     {
                         'type': PerformerType.USER,
-                        'source_id': user.id
-                    }
+                        'source_id': user.id,
+                    },
                 ],
                 'fields': [
                     {
@@ -134,16 +133,16 @@ def test_fields__draft_template__return_from_db(api_client):
                         'api_name': 'text-field-1',
                         'default': 'default value',
                         'selections': [
-                            {'value': 'First selection'}
-                        ]
-                    }
-                ]
-            }
-        ]
+                            {'value': 'First selection'},
+                        ],
+                    },
+                ],
+            },
+        ],
     }
     response = api_client.post(
         path='/templates',
-        data=request_data
+        data=request_data,
     )
     template = Template.objects.get(id=response.data['id'])
 
@@ -206,7 +205,7 @@ def test_fields__not_workflow_member_not_owner__not_found(api_client):
     user = create_test_owner(
         email='user2@pneumaticapp',
         account=account,
-        is_account_owner=False
+        is_account_owner=False,
     )
     api_client.token_authenticate(user)
 
@@ -272,7 +271,7 @@ def test_fields__guest_performer__permission_denied(api_client):
     template = create_test_template(
         owner,
         is_active=True,
-        tasks_count=1
+        tasks_count=1,
     )
     workflow = create_test_workflow(
         user=owner,
@@ -290,13 +289,13 @@ def test_fields__guest_performer__permission_denied(api_client):
     str_token = GuestJWTAuthService.get_str_token(
         task_id=task.id,
         user_id=guest.id,
-        account_id=account.id
+        account_id=account.id,
     )
 
     # act
     response = api_client.get(
         f'/templates/{template.id}/fields',
-        **{'X-Guest-Authorization': str_token}
+        **{'X-Guest-Authorization': str_token},
     )
 
     # assert
@@ -312,25 +311,25 @@ def test_fields__public_auth__permission_denied(api_client, mocker):
         owner,
         is_active=True,
         is_public=True,
-        tasks_count=1
+        tasks_count=1,
     )
     auth_header_value = f'Token {template.public_id}'
     token = PublicToken(template.public_id)
     mocker.patch(
         'src.authentication.services.public_auth.'
         'PublicAuthService.get_token',
-        return_value=token
+        return_value=token,
     )
     mocker.patch(
         'src.authentication.services.public_auth.'
         'PublicAuthService.get_template',
-        return_value=template
+        return_value=template,
     )
 
     # act
     response = api_client.get(
         f'/templates/{template.id}/fields',
-        **{'X-Public-Authorization': auth_header_value}
+        **{'X-Public-Authorization': auth_header_value},
     )
 
     # assert

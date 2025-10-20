@@ -1,15 +1,16 @@
 from rest_framework.serializers import (
-    Serializer,
-    ModelSerializer,
     CharField,
     IntegerField,
+    ModelSerializer,
+    Serializer,
 )
+
 from src.generics.fields import TimeStampField
 from src.generics.mixins.serializers import (
     CustomValidationErrorMixin,
     ValidationUtilsMixin,
 )
-from src.processes.models import TemplateIntegrations
+from src.processes.models.templates.template import TemplateIntegrations
 
 
 class TemplateIntegrationsFilterSerializer(
@@ -25,7 +26,7 @@ class TemplateIntegrationsFilterSerializer(
 
 
 class TemplateIntegrationsSerializer(
-    ModelSerializer
+    ModelSerializer,
 ):
 
     class Meta:

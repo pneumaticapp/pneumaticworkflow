@@ -1,30 +1,29 @@
-import pytest
 from datetime import timedelta
+
+import pytest
 from django.utils import timezone
-from src.processes.services.exceptions import (
-    CommentServiceException
-)
-from src.processes.services.events import (
-    WorkflowEventService,
-    CommentService
-)
-from src.processes.models import (
-    FileAttachment,
-    TaskPerformer,
-)
+
+from src.authentication.enums import AuthTokenType
+from src.authentication.services.guest_auth import GuestJWTAuthService
 from src.processes.enums import (
     CommentStatus,
 )
+from src.processes.models.workflows.attachment import FileAttachment
+from src.processes.models.workflows.task import TaskPerformer
+from src.processes.services.events import (
+    CommentService,
+    WorkflowEventService,
+)
+from src.processes.services.exceptions import (
+    CommentServiceException,
+)
 from src.processes.tests.fixtures import (
+    create_test_account,
+    create_test_guest,
     create_test_user,
     create_test_workflow,
-    create_test_guest,
-    create_test_account,
 )
-from src.authentication.services import GuestJWTAuthService
-from src.authentication.enums import AuthTokenType
 from src.utils.validation import ErrorCode
-
 
 pytestmark = pytest.mark.django_db
 datetime_format = '%Y-%m-%dT%H:%M:%S.%fZ'
@@ -37,7 +36,7 @@ def test_update__author__only_text__ok(api_client, mocker):
     user = create_test_user(
         is_account_owner=False,
         email='user@test.test',
-        account=owner.account
+        account=owner.account,
     )
     workflow = create_test_workflow(user)
     task = workflow.tasks.get(number=1)
@@ -45,18 +44,18 @@ def test_update__author__only_text__ok(api_client, mocker):
         text='Some comment',
         task=task,
         user=user,
-        after_create_actions=False
+        after_create_actions=False,
     )
 
     service_init_mock = mocker.patch.object(
         CommentService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     comment_update_mock = mocker.patch(
         'src.processes.services.events.'
         'CommentService.update',
-        return_value=event
+        return_value=event,
     )
     api_client.token_authenticate(owner)
     new_text = 'New comment text'
@@ -64,7 +63,7 @@ def test_update__author__only_text__ok(api_client, mocker):
     # act
     response = api_client.patch(
         f'/workflows/comments/{event.id}',
-        data={'text': new_text}
+        data={'text': new_text},
     )
 
     # assert
@@ -84,7 +83,7 @@ def test_update_text_and_attachment__ok(mocker, api_client):
         text='Some comment',
         task=task,
         attachments=[1, 2],
-        after_create_actions=False
+        after_create_actions=False,
     )
     attach_1 = FileAttachment.objects.create(
         account_id=user.account_id,
@@ -92,24 +91,24 @@ def test_update_text_and_attachment__ok(mocker, api_client):
         size=384812,
         url='https://cloud.google.com/bucket/filename_salt.png',
         thumbnail_url='https://cloud.google.com/bucket/filename_thumb.png',
-        event=event
+        event=event,
     )
     attach_2 = FileAttachment.objects.create(
         account_id=user.account_id,
         name='doc.docx',
         size=2412413,
         url='https://cloud.google.com/bucket/doc_salt.docx',
-        event=event
+        event=event,
     )
     service_init_mock = mocker.patch.object(
         CommentService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     comment_update_mock = mocker.patch(
         'src.processes.services.events.'
         'CommentService.update',
-        return_value=event
+        return_value=event,
     )
     api_client.token_authenticate(user)
     new_text = 'New comment text'
@@ -121,9 +120,9 @@ def test_update_text_and_attachment__ok(mocker, api_client):
             'text': new_text,
             'attachments': [
                 attach_1.id,
-                attach_2.id
-            ]
-        }
+                attach_2.id,
+            ],
+        },
     )
 
     # arrange
@@ -141,7 +140,7 @@ def test_update_text_and_attachment__ok(mocker, api_client):
         instance=event,
         user=user,
         auth_type=AuthTokenType.USER,
-        is_superuser=False
+        is_superuser=False,
     )
     comment_update_mock.assert_called_once_with(
         text=new_text,
@@ -161,7 +160,7 @@ def test_update__remove_attachment__null__ok(mocker, api_client):
         text='Some comment',
         task=task,
         attachments=[1],
-        after_create_actions=False
+        after_create_actions=False,
     )
     FileAttachment.objects.create(
         account_id=user.account_id,
@@ -169,17 +168,17 @@ def test_update__remove_attachment__null__ok(mocker, api_client):
         size=384812,
         url='https://cloud.google.com/bucket/filename_salt.png',
         thumbnail_url='https://cloud.google.com/bucket/filename_thumb.png',
-        event=event
+        event=event,
     )
     service_init_mock = mocker.patch.object(
         CommentService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     comment_update_mock = mocker.patch(
         'src.processes.services.events.'
         'CommentService.update',
-        return_value=event
+        return_value=event,
     )
     api_client.token_authenticate(user)
 
@@ -187,8 +186,8 @@ def test_update__remove_attachment__null__ok(mocker, api_client):
     response = api_client.patch(
         f'/workflows/comments/{event.id}',
         data={
-            'attachments': None
-        }
+            'attachments': None,
+        },
     )
 
     # arrange
@@ -197,7 +196,7 @@ def test_update__remove_attachment__null__ok(mocker, api_client):
         instance=event,
         user=user,
         auth_type=AuthTokenType.USER,
-        is_superuser=False
+        is_superuser=False,
     )
     comment_update_mock.assert_called_once_with(
         attachments=None,
@@ -216,7 +215,7 @@ def test_update__remove_attachment__empty_list__ok(mocker, api_client):
         text='Some comment',
         task=task,
         attachments=[1],
-        after_create_actions=False
+        after_create_actions=False,
     )
     FileAttachment.objects.create(
         account_id=user.account_id,
@@ -224,17 +223,17 @@ def test_update__remove_attachment__empty_list__ok(mocker, api_client):
         size=384812,
         url='https://cloud.google.com/bucket/filename_salt.png',
         thumbnail_url='https://cloud.google.com/bucket/filename_thumb.png',
-        event=event
+        event=event,
     )
     service_init_mock = mocker.patch.object(
         CommentService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     comment_update_mock = mocker.patch(
         'src.processes.services.events.'
         'CommentService.update',
-        return_value=event
+        return_value=event,
     )
     api_client.token_authenticate(user)
 
@@ -242,8 +241,8 @@ def test_update__remove_attachment__empty_list__ok(mocker, api_client):
     response = api_client.patch(
         f'/workflows/comments/{event.id}',
         data={
-            'attachments': []
-        }
+            'attachments': [],
+        },
     )
 
     # arrange
@@ -252,7 +251,7 @@ def test_update__remove_attachment__empty_list__ok(mocker, api_client):
         instance=event,
         user=user,
         auth_type=AuthTokenType.USER,
-        is_superuser=False
+        is_superuser=False,
     )
     comment_update_mock.assert_called_once_with(
         attachments=None,
@@ -271,7 +270,7 @@ def test_update_remove_text__null__ok(mocker, api_client):
         text='Some comment',
         task=task,
         attachments=[1, 2],
-        after_create_actions=False
+        after_create_actions=False,
     )
     attach_1 = FileAttachment.objects.create(
         account_id=user.account_id,
@@ -279,24 +278,24 @@ def test_update_remove_text__null__ok(mocker, api_client):
         size=384812,
         url='https://cloud.google.com/bucket/filename_salt.png',
         thumbnail_url='https://cloud.google.com/bucket/filename_thumb.png',
-        event=event
+        event=event,
     )
     attach_2 = FileAttachment.objects.create(
         account_id=user.account_id,
         name='doc.docx',
         size=2412413,
         url='https://cloud.google.com/bucket/doc_salt.docx',
-        event=event
+        event=event,
     )
     service_init_mock = mocker.patch.object(
         CommentService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     comment_update_mock = mocker.patch(
         'src.processes.services.events.'
         'CommentService.update',
-        return_value=event
+        return_value=event,
     )
     api_client.token_authenticate(user)
 
@@ -307,9 +306,9 @@ def test_update_remove_text__null__ok(mocker, api_client):
             'text': None,
             'attachments': [
                 attach_1.id,
-                attach_2.id
-            ]
-        }
+                attach_2.id,
+            ],
+        },
     )
 
     # arrange
@@ -327,7 +326,7 @@ def test_update_remove_text__null__ok(mocker, api_client):
         instance=event,
         user=user,
         auth_type=AuthTokenType.USER,
-        is_superuser=False
+        is_superuser=False,
     )
     comment_update_mock.assert_called_once_with(
         text=None,
@@ -347,7 +346,7 @@ def test_update_remove_text__blank__ok(mocker, api_client):
         text='Some comment',
         task=task,
         attachments=[1, 2],
-        after_create_actions=False
+        after_create_actions=False,
     )
     attach_1 = FileAttachment.objects.create(
         account_id=user.account_id,
@@ -355,17 +354,17 @@ def test_update_remove_text__blank__ok(mocker, api_client):
         size=384812,
         url='https://cloud.google.com/bucket/filename_salt.png',
         thumbnail_url='https://cloud.google.com/bucket/filename_thumb.png',
-        event=event
+        event=event,
     )
     service_init_mock = mocker.patch.object(
         CommentService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     comment_update_mock = mocker.patch(
         'src.processes.services.events.'
         'CommentService.update',
-        return_value=event
+        return_value=event,
     )
     api_client.token_authenticate(user)
 
@@ -376,8 +375,8 @@ def test_update_remove_text__blank__ok(mocker, api_client):
             'text': ' ',
             'attachments': [
                 attach_1.id,
-            ]
-        }
+            ],
+        },
     )
 
     # arrange
@@ -395,7 +394,7 @@ def test_update_remove_text__blank__ok(mocker, api_client):
         instance=event,
         user=user,
         auth_type=AuthTokenType.USER,
-        is_superuser=False
+        is_superuser=False,
     )
     comment_update_mock.assert_called_once_with(
         text=None,
@@ -412,7 +411,7 @@ def test_update__admin__ok(api_client, mocker):
         account=owner.account,
         email='admin@test.test',
         is_account_owner=False,
-        is_admin=True
+        is_admin=True,
     )
     workflow = create_test_workflow(owner)
     task = workflow.tasks.get(number=1)
@@ -423,19 +422,19 @@ def test_update__admin__ok(api_client, mocker):
         text='Some comment',
         task=task,
         user=user,
-        after_create_actions=False
+        after_create_actions=False,
     )
     event.updated = timezone.now() + timedelta(hours=1)
     event.save()
     service_init_mock = mocker.patch.object(
         CommentService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     comment_update_mock = mocker.patch(
         'src.processes.services.events.'
         'CommentService.update',
-        return_value=event
+        return_value=event,
     )
     api_client.token_authenticate(user)
     new_text = 'New comment text'
@@ -443,7 +442,7 @@ def test_update__admin__ok(api_client, mocker):
     # act
     response = api_client.patch(
         f'/workflows/comments/{event.id}',
-        data={'text': new_text}
+        data={'text': new_text},
     )
 
     # assert
@@ -465,7 +464,7 @@ def test_update__admin__ok(api_client, mocker):
         instance=event,
         user=user,
         auth_type=AuthTokenType.USER,
-        is_superuser=False
+        is_superuser=False,
     )
     comment_update_mock.assert_called_once_with(
         text=new_text,
@@ -481,7 +480,7 @@ def test_update__not_admin__ok(api_client, mocker):
         account=owner.account,
         email='admin@test.test',
         is_account_owner=False,
-        is_admin=False
+        is_admin=False,
     )
     workflow = create_test_workflow(owner)
     task = workflow.tasks.get(number=1)
@@ -492,19 +491,19 @@ def test_update__not_admin__ok(api_client, mocker):
         text='Some comment',
         task=task,
         user=user,
-        after_create_actions=False
+        after_create_actions=False,
     )
     event.updated = timezone.now() + timedelta(hours=1)
     event.save()
     service_init_mock = mocker.patch.object(
         CommentService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     comment_update_mock = mocker.patch(
         'src.processes.services.events.'
         'CommentService.update',
-        return_value=event
+        return_value=event,
     )
     api_client.token_authenticate(user)
     new_text = 'New comment text'
@@ -512,7 +511,7 @@ def test_update__not_admin__ok(api_client, mocker):
     # act
     response = api_client.patch(
         f'/workflows/comments/{event.id}',
-        data={'text': new_text}
+        data={'text': new_text},
     )
 
     # assert
@@ -533,7 +532,7 @@ def test_update__not_admin__ok(api_client, mocker):
         instance=event,
         user=user,
         auth_type=AuthTokenType.USER,
-        is_superuser=False
+        is_superuser=False,
     )
     comment_update_mock.assert_called_once_with(
         text=new_text,
@@ -555,30 +554,30 @@ def test_update__guest__ok(mocker, api_client):
     task = workflow.tasks.get(number=1)
     TaskPerformer.objects.create(
         task_id=task.id,
-        user_id=guest.id
+        user_id=guest.id,
     )
     str_token = GuestJWTAuthService.get_str_token(
         task_id=task.id,
         user_id=guest.id,
-        account_id=account.id
+        account_id=account.id,
     )
     event = WorkflowEventService.comment_created_event(
         user=guest,
         text='Some comment',
         task=task,
-        after_create_actions=False
+        after_create_actions=False,
     )
     event.updated = timezone.now() + timedelta(hours=1)
     event.save()
     service_init_mock = mocker.patch.object(
         CommentService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     comment_update_mock = mocker.patch(
         'src.processes.services.events.'
         'CommentService.update',
-        return_value=event
+        return_value=event,
     )
     new_text = 'New comment text'
 
@@ -586,7 +585,7 @@ def test_update__guest__ok(mocker, api_client):
     response = api_client.patch(
         f'/workflows/comments/{event.id}',
         data={'text': new_text},
-        **{'X-Guest-Authorization': str_token}
+        **{'X-Guest-Authorization': str_token},
     )
 
     # assert
@@ -607,7 +606,7 @@ def test_update__guest__ok(mocker, api_client):
         instance=event,
         user=guest,
         auth_type=AuthTokenType.GUEST,
-        is_superuser=False
+        is_superuser=False,
     )
     comment_update_mock.assert_called_once_with(
         text=new_text,
@@ -617,7 +616,7 @@ def test_update__guest__ok(mocker, api_client):
 
 def test_update__guest_another_workflow__permission_denied(
     mocker,
-    api_client
+    api_client,
 ):
 
     # arrange
@@ -633,50 +632,50 @@ def test_update__guest_another_workflow__permission_denied(
         text='Some comment',
         task=task,
         user=account_owner,
-        after_create_actions=False
+        after_create_actions=False,
     )
     task_1 = workflow_1.tasks.get(number=1)
     guest_1 = create_test_guest(account=account)
     TaskPerformer.objects.create(
         task_id=task_1.id,
-        user_id=guest_1.id
+        user_id=guest_1.id,
     )
     GuestJWTAuthService.get_str_token(
         task_id=task_1.id,
         user_id=guest_1.id,
-        account_id=account.id
+        account_id=account.id,
     )
 
     workflow_2 = create_test_workflow(account_owner, tasks_count=1)
     task_2 = workflow_2.tasks.get(number=1)
     guest_2 = create_test_guest(
         account=account,
-        email='guest2@test.test'
+        email='guest2@test.test',
     )
     TaskPerformer.objects.create(
         task_id=task_2.id,
-        user_id=guest_2.id
+        user_id=guest_2.id,
     )
     str_token_2 = GuestJWTAuthService.get_str_token(
         task_id=task_2.id,
         user_id=guest_2.id,
-        account_id=account.id
+        account_id=account.id,
     )
     service_init_mock = mocker.patch.object(
         CommentService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     comment_update_mock = mocker.patch(
         'src.processes.services.events.'
-        'CommentService.update'
+        'CommentService.update',
     )
 
     # act
     response = api_client.patch(
         f'/workflows/comments/{event.id}',
         data={'text': 'Test text'},
-        **{'X-Guest-Authorization': str_token_2}
+        **{'X-Guest-Authorization': str_token_2},
     )
 
     # assert
@@ -687,7 +686,7 @@ def test_update__guest_another_workflow__permission_denied(
 
 def test_update__service_exception__validation_error(
     api_client,
-    mocker
+    mocker,
 ):
 
     # arrange
@@ -698,25 +697,25 @@ def test_update__service_exception__validation_error(
         text='Some comment',
         task=task,
         user=user,
-        after_create_actions=False
+        after_create_actions=False,
     )
     service_init_mock = mocker.patch.object(
         CommentService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     message = 'some message'
     comment_update_mock = mocker.patch(
         'src.processes.services.events.'
         'CommentService.update',
-        side_effect=CommentServiceException(message)
+        side_effect=CommentServiceException(message),
     )
     api_client.token_authenticate(user)
 
     # act
     response = api_client.patch(
         f'/workflows/comments/{event.id}',
-        data={'text': 'Raise'}
+        data={'text': 'Raise'},
     )
 
     # assert
@@ -727,7 +726,7 @@ def test_update__service_exception__validation_error(
         instance=event,
         user=user,
         auth_type=AuthTokenType.USER,
-        is_superuser=False
+        is_superuser=False,
     )
     comment_update_mock.assert_called_once_with(
         text='Raise',
@@ -743,7 +742,7 @@ def test_update__another_user_comment__permission_denied(api_client, mocker):
         account=owner.account,
         email='admin@test.test',
         is_account_owner=False,
-        is_admin=True
+        is_admin=True,
     )
     workflow = create_test_workflow(owner)
     task = workflow.tasks.get(number=1)
@@ -752,25 +751,25 @@ def test_update__another_user_comment__permission_denied(api_client, mocker):
         text='Some comment',
         task=task,
         user=owner,
-        after_create_actions=False
+        after_create_actions=False,
     )
 
     service_init_mock = mocker.patch.object(
         CommentService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     comment_update_mock = mocker.patch(
         'src.processes.services.events.'
         'CommentService.update',
-        return_value=event
+        return_value=event,
     )
     api_client.token_authenticate(user)
 
     # act
     response = api_client.patch(
         f'/workflows/comments/{event.id}',
-        data={'text': 'New comment text'}
+        data={'text': 'New comment text'},
     )
 
     # assert
@@ -787,25 +786,25 @@ def test_update__not_comment__permission_denied(api_client, mocker):
     task = workflow.tasks.get(number=1)
     event = WorkflowEventService.task_complete_event(
         user=user,
-        task=task
+        task=task,
     )
 
     service_init_mock = mocker.patch.object(
         CommentService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     comment_update_mock = mocker.patch(
         'src.processes.services.events.'
         'CommentService.update',
-        return_value=event
+        return_value=event,
     )
     api_client.token_authenticate(user)
 
     # act
     response = api_client.patch(
         f'/workflows/comments/{event.id}',
-        data={'text': 'New comment text'}
+        data={'text': 'New comment text'},
     )
 
     # assert

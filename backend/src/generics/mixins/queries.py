@@ -4,7 +4,7 @@ from src.processes.enums import DirectlyStatus, PerformerType
 class DereferencedOwnersMixin:
     @staticmethod
     def dereferenced_owners():
-        return f"""
+        return """
             SELECT pto.template_id, g.user_id AS user_id
             FROM processes_templateowner AS pto
             JOIN accounts_usergroup_users AS g
@@ -26,7 +26,7 @@ class DereferencedOwnersMixin:
             (returns all template owner, either user_id, or via group__user_id)
             for template_id"""
 
-        return f"""
+        return """
             SELECT DISTINCT
               pto.template_id,
               COALESCE(pto.user_id, ug.user_id) AS user_id
@@ -44,7 +44,7 @@ class DereferencedOwnersMixin:
         Returns workflow_id and user_id for task performers
         (groups and users) linked to a template, excluding directly_status=1.
         """
-        return f"""
+        return """
             SELECT DISTINCT
               pt.workflow_id,
               COALESCE(ug.user_id, ptp.user_id) AS user_id

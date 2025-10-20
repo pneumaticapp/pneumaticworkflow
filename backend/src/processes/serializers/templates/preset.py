@@ -1,22 +1,23 @@
 from rest_framework.serializers import (
-    ModelSerializer,
-    IntegerField,
-    CharField,
     BooleanField,
+    CharField,
     ChoiceField,
+    IntegerField,
+    ModelSerializer,
 )
-from src.generics.mixins.serializers import CustomValidationErrorMixin
+
 from src.generics.fields import TimeStampField
+from src.generics.mixins.serializers import CustomValidationErrorMixin
+from src.processes.enums import PresetType
 from src.processes.models.templates.preset import (
     TemplatePreset,
     TemplatePresetField,
 )
-from src.processes.enums import PresetType
 
 
 class TemplatePresetFieldSerializer(
     CustomValidationErrorMixin,
-    ModelSerializer
+    ModelSerializer,
 ):
     class Meta:
         model = TemplatePresetField
@@ -33,7 +34,7 @@ class TemplatePresetFieldSerializer(
 
 class TemplatePresetSerializer(
     CustomValidationErrorMixin,
-    ModelSerializer
+    ModelSerializer,
 ):
     class Meta:
         model = TemplatePreset

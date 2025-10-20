@@ -1,14 +1,15 @@
 from datetime import datetime
 from typing import Optional
+
 from django.utils import timezone
+
 from src.accounts.enums import UserStatus
+from src.processes.enums import DirectlyStatus, TemplateType
 from src.queries import SqlQueryObject
-from src.processes.enums import DirectlyStatus
 from src.reports.queries.mixins import (
     TasksMixin,
-    TasksNowMixin
+    TasksNowMixin,
 )
-from src.processes.enums import TemplateType
 
 
 class TasksOverviewQuery(
@@ -21,7 +22,7 @@ class TasksOverviewQuery(
         user_id: int,
         date_from_tsp: datetime,
         date_to_tsp: datetime,
-        **kwargs
+        **kwargs,
     ):
         self.params = {
             'account_id': account_id,
@@ -122,7 +123,7 @@ class TasksBreakdownQuery(
         user_id: int,
         date_from_tsp: datetime,
         date_to_tsp: datetime,
-        **kwargs
+        **kwargs,
     ):
         self.params = {
             'account_id': account_id,
@@ -239,7 +240,7 @@ class TasksBreakdownByStepsQuery(
         template_id: int,
         date_from_tsp: datetime,
         date_to_tsp: datetime,
-        **kwargs
+        **kwargs,
     ):
         self.params = {
             'user_id': user_id,

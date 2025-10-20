@@ -1,14 +1,18 @@
 import pytest
 from django.contrib.auth import get_user_model
-from src.processes.enums import PerformerType, TaskStatus
-from src.processes.models import TaskPerformer
-from src.processes.tests.fixtures import (
-    create_test_workflow,
-    create_test_template,
-    create_test_user,
-)
+
 from src.accounts.validators import (
     user_is_last_performer,
+)
+from src.processes.enums import PerformerType, TaskStatus
+from src.processes.models.workflows.task import TaskPerformer
+from src.processes.tests.fixtures import (
+    create_test_account,
+    create_test_admin,
+    create_test_owner,
+    create_test_template,
+    create_test_user,
+    create_test_workflow,
 )
 
 pytestmark = pytest.mark.django_db
@@ -40,7 +44,7 @@ class TestTemplateTask:
         template_task = template.tasks.get(number=1)
         template_task.raw_performers.all().delete()
         template_task.add_raw_performer(
-            performer_type=PerformerType.WORKFLOW_STARTER
+            performer_type=PerformerType.WORKFLOW_STARTER,
         )
 
         # act
@@ -146,18 +150,20 @@ class TestWorkflowTask:
         """ Invalid case """
 
         # arrange
-        user = create_test_user()
-        workflow = create_test_workflow(user, tasks_count=1)
+        account = create_test_account()
+        owner = create_test_owner(account=account)
+        workflow = create_test_workflow(owner, tasks_count=1)
+        performer = create_test_admin(account=account)
         task = workflow.tasks.get(number=1)
         task.performers.all().delete()
         task.raw_performers.all().delete()
         TaskPerformer.objects.create(
             task_id=task.id,
-            user_id=user.id,
+            user_id=performer.id,
         )
 
         # act
-        result = user_is_last_performer(user)
+        result = user_is_last_performer(performer)
 
         # assert
         assert result is False
@@ -165,7 +171,7 @@ class TestWorkflowTask:
     @pytest.mark.parametrize('status', (
         TaskStatus.PENDING,
         TaskStatus.DELAYED,
-        TaskStatus.ACTIVE
+        TaskStatus.ACTIVE,
     ))
     def test_user_is_last_performer__active_task__ok(self, status):
 

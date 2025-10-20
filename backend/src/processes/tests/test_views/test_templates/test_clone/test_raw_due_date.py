@@ -1,12 +1,13 @@
 import pytest
-from src.processes.tests.fixtures import (
-    create_test_user
-)
+
 from src.processes.enums import (
-    PerformerType,
     DueDateRule,
     FieldType,
-    OwnerType
+    OwnerType,
+    PerformerType,
+)
+from src.processes.tests.fixtures import (
+    create_test_user,
 )
 
 pytestmark = pytest.mark.django_db
@@ -24,7 +25,7 @@ def test_clone__ok(is_active, api_client):
             'owners': [
                 {
                     'type': OwnerType.USER,
-                    'source_id': user.id
+                    'source_id': user.id,
                 },
             ],
             'is_active': is_active,
@@ -34,9 +35,9 @@ def test_clone__ok(is_active, api_client):
                         'name': 'Date field',
                         'order': 1,
                         'type': FieldType.DATE,
-                        'api_name': 'field-1'
-                    }
-                ]
+                        'api_name': 'field-1',
+                    },
+                ],
             },
             'tasks': [
                 {
@@ -47,23 +48,23 @@ def test_clone__ok(is_active, api_client):
                         'duration': '01:00:00',
                         'duration_months': 10,
                         'rule': DueDateRule.AFTER_FIELD,
-                        'source_id': 'field-1'
+                        'source_id': 'field-1',
                     },
                     'raw_performers': [
                         {
                             'type': PerformerType.USER,
-                            'source_id': user.id
-                        }
-                    ]
-                }
-            ]
-        }
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+            ],
+        },
     )
     origin_data = response_1.data['tasks'][0]['raw_due_date']
 
     # act
     response = api_client.post(
-        f'/templates/{response_1.data["id"]}/clone'
+        f'/templates/{response_1.data["id"]}/clone',
     )
 
     # assert

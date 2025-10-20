@@ -1,52 +1,51 @@
-from django.http import Http404
 from django.contrib.auth import get_user_model
+from django.http import Http404
 from rest_framework.decorators import action
 from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import AllowAny
 from rest_framework.viewsets import GenericViewSet
+
 from src.accounts.models import UserInvite
 from src.accounts.permissions import (
-    UserIsAdminOrAccountOwner,
-    ExpiredSubscriptionPermission,
     BillingPlanPermission,
+    ExpiredSubscriptionPermission,
+    UserIsAdminOrAccountOwner,
 )
 from src.accounts.serializers.user_invites import (
-    UserInviteSerializer,
-    InviteUsersSerializer,
     AcceptInviteSerializer,
+    InviteUsersSerializer,
     TokenSerializer,
+    UserInviteSerializer,
+)
+from src.accounts.services.exceptions import (
+    AlreadyAcceptedInviteException,
+    AlreadyRegisteredException,
+    InvalidOrExpiredToken,
+    UserIsPerformerException,
+    UserNotFoundException,
+    UsersLimitInvitesException,
+)
+from src.accounts.services.user import UserService
+from src.accounts.services.user_invite import UserInviteService
+from src.accounts.throttling import (
+    InvitesTokenThrottle,
 )
 from src.accounts.tokens import (
     InviteToken,
 )
+from src.analytics.mixins import (
+    BaseIdentifyMixin,
+)
 from src.authentication.enums import AuthTokenType
 from src.authentication.permissions import PrivateApiPermission
-from src.authentication.services import AuthService
-from src.accounts.throttling import (
-    InvitesTokenThrottle
+from src.authentication.services.user_auth import AuthService
+from src.generics.mixins.views import (
+    CustomViewSetMixin,
 )
 from src.generics.permissions import (
     UserIsAuthenticated,
 )
-from src.accounts.services.exceptions import (
-    UsersLimitInvitesException,
-    AlreadyAcceptedInviteException,
-    UserNotFoundException,
-    UserIsPerformerException,
-    InvalidOrExpiredToken,
-    AlreadyRegisteredException,
-)
-from src.accounts.services import (
-    UserInviteService
-)
 from src.utils.validation import raise_validation_error
-from src.analytics.mixins import (
-    BaseIdentifyMixin,
-)
-from src.generics.mixins.views import (
-    CustomViewSetMixin
-)
-from src.accounts.services.user import UserService
 
 UserModel = get_user_model()
 
@@ -54,7 +53,7 @@ UserModel = get_user_model()
 class UserInviteViewSet(
     CustomViewSetMixin,
     GenericViewSet,
-    BaseIdentifyMixin
+    BaseIdentifyMixin,
 ):
 
     action_serializer_classes = {
@@ -71,9 +70,7 @@ class UserInviteViewSet(
         elif self.action == 'list':
             account_id = self.request.user.account_id
             queryset = queryset.on_account(account_id).order_by_date_desc()
-        elif self.action == 'accept':
-            queryset = queryset.pending()
-        elif self.action == 'retrieve':
+        elif self.action in {'accept', 'retrieve'}:
             queryset = queryset.pending()
         return queryset
 
@@ -83,25 +80,23 @@ class UserInviteViewSet(
             return (
                 InvitesTokenThrottle,
             )
-        else:
-            return ()
+        return ()
 
     def get_permissions(self):
         if self.action in ('retrieve', 'token'):
             return (
                 PrivateApiPermission(),
             )
-        elif self.action == 'accept':
+        if self.action == 'accept':
             return (
                 AllowAny(),
             )
-        else:
-            return (
-                UserIsAuthenticated(),
-                BillingPlanPermission(),
-                ExpiredSubscriptionPermission(),
-                UserIsAdminOrAccountOwner(),
-            )
+        return (
+            UserIsAuthenticated(),
+            BillingPlanPermission(),
+            ExpiredSubscriptionPermission(),
+            UserIsAdminOrAccountOwner(),
+        )
 
     def get_serializer_context(self, **kwargs):
         context = super().get_serializer_context(**kwargs)
@@ -115,13 +110,13 @@ class UserInviteViewSet(
         service = UserInviteService(
             is_superuser=request.is_superuser,
             request_user=request.user,
-            current_url=request.META.get('HTTP_X_CURRENT_URL')
+            current_url=request.META.get('HTTP_X_CURRENT_URL'),
         )
         try:
             service.invite_users(data=slz.validated_data['users'])
         except AlreadyAcceptedInviteException as ex:
             return self.response_ok({
-                'already_accepted': ex.invites_data
+                'already_accepted': ex.invites_data,
             })
         except UsersLimitInvitesException as ex:
             raise_validation_error(message=ex.message)
@@ -146,7 +141,7 @@ class UserInviteViewSet(
         except (
             InvalidOrExpiredToken,
             AlreadyRegisteredException,
-            AlreadyAcceptedInviteException
+            AlreadyAcceptedInviteException,
         ) as ex:
             raise_validation_error(message=ex.message)
         else:
@@ -166,12 +161,12 @@ class UserInviteViewSet(
         service = UserInviteService(
             current_url=request.META.get('HTTP_X_CURRENT_URL'),
             is_superuser=False,
-            auth_type=AuthTokenType.USER
+            auth_type=AuthTokenType.USER,
         )
         try:
             user = service.accept(
                 invite=self.get_object(),
-                **slz.validated_data
+                **slz.validated_data,
             )
         except AlreadyRegisteredException as ex:
             raise_validation_error(message=ex.message)
@@ -180,7 +175,7 @@ class UserInviteViewSet(
                 user=user,
                 user_agent=request.headers.get(
                     'User-Agent',
-                    request.META.get('HTTP_USER_AGENT')
+                    request.META.get('HTTP_USER_AGENT'),
                 ),
                 user_ip=request.META.get('HTTP_X_REAL_IP'),
             )
@@ -201,12 +196,12 @@ class UserInviteViewSet(
         service = UserInviteService(
             is_superuser=request.is_superuser,
             request_user=request.user,
-            current_url=request.META.get('HTTP_X_CURRENT_URL')
+            current_url=request.META.get('HTTP_X_CURRENT_URL'),
         )
         try:
             service.resend_invite(user_id=pk)
         except AlreadyAcceptedInviteException as ex:
             raise_validation_error(message=ex.message)
-        except UserNotFoundException:
-            raise Http404
+        except UserNotFoundException as ex:
+            raise Http404 from ex
         return self.response_ok()

@@ -1,16 +1,17 @@
 import datetime
-from django.utils import timezone
+
 import pytest
+from django.utils import timezone
+
 from src.accounts.enums import (
     BillingPlanType,
     LeaseLevel,
 )
 from src.processes.tests.fixtures import (
-    create_test_user,
     create_test_account,
+    create_test_user,
 )
 from src.utils.dates import date_format
-
 
 pytestmark = pytest.mark.django_db
 
@@ -23,18 +24,18 @@ def test_list__any_premium_plan__ok(
     # arrange
     master_account = create_test_account(
         plan=plan,
-        lease_level=LeaseLevel.STANDARD
+        lease_level=LeaseLevel.STANDARD,
     )
     master_account_owner = create_test_user(account=master_account)
     tenant_account = create_test_account(
         name='tenant',
         plan=plan,
         lease_level=LeaseLevel.TENANT,
-        master_account=master_account
+        master_account=master_account,
     )
     create_test_user(
         account=tenant_account,
-        email='tenant_owner@test.test'
+        email='tenant_owner@test.test',
     )
     api_client.token_authenticate(master_account_owner)
 
@@ -59,18 +60,18 @@ def test_list__free__ok(
 ):
     # arrange
     master_account = create_test_account(
-        lease_level=LeaseLevel.STANDARD
+        lease_level=LeaseLevel.STANDARD,
     )
     master_account_owner = create_test_user(account=master_account)
     tenant_account = create_test_account(
         name='tenant',
         plan=BillingPlanType.FREEMIUM,
         lease_level=LeaseLevel.TENANT,
-        master_account=master_account
+        master_account=master_account,
     )
     create_test_user(
         account=tenant_account,
-        email='tenant_owner@test.test'
+        email='tenant_owner@test.test',
     )
     api_client.token_authenticate(master_account_owner)
 
@@ -113,7 +114,7 @@ def test_list__expired_subscription__permission_denied(
     # arrange
     account = create_test_account(
         plan=BillingPlanType.UNLIMITED,
-        plan_expiration=timezone.now() - datetime.timedelta(hours=1)
+        plan_expiration=timezone.now() - datetime.timedelta(hours=1),
     )
     account_owner = create_test_user(account=account)
     api_client.token_authenticate(account_owner)
@@ -133,7 +134,7 @@ def test_list__not_admin__permission_denied(
     master_account_owner = create_test_user(
         account=master_account,
         is_account_owner=False,
-        is_admin=False
+        is_admin=False,
     )
     api_client.token_authenticate(master_account_owner)
 
@@ -168,14 +169,14 @@ def test_list__ordering_by_tenant_name__ok(
         tenant_name='second tenant',
         plan=BillingPlanType.UNLIMITED,
         lease_level=LeaseLevel.TENANT,
-        master_account=master_account
+        master_account=master_account,
     )
     tenant_account_2 = create_test_account(
         name='tenant',
         tenant_name='first tenant',
         plan=BillingPlanType.UNLIMITED,
         lease_level=LeaseLevel.TENANT,
-        master_account=master_account
+        master_account=master_account,
     )
     api_client.token_authenticate(master_account_owner)
 
@@ -202,14 +203,14 @@ def test_list__default_ordering__ok(
         tenant_name='second tenant',
         plan=BillingPlanType.UNLIMITED,
         lease_level=LeaseLevel.TENANT,
-        master_account=master_account
+        master_account=master_account,
     )
     tenant_account_2 = create_test_account(
         name='tenant',
         tenant_name='first tenant',
         plan=BillingPlanType.UNLIMITED,
         lease_level=LeaseLevel.TENANT,
-        master_account=master_account
+        master_account=master_account,
     )
     api_client.token_authenticate(master_account_owner)
 
@@ -236,14 +237,14 @@ def test_list__ordering_by_reverse_tenant_name__ok(
         tenant_name='second tenant',
         plan=BillingPlanType.UNLIMITED,
         lease_level=LeaseLevel.TENANT,
-        master_account=master_account
+        master_account=master_account,
     )
     tenant_account_2 = create_test_account(
         name='tenant',
         tenant_name='first tenant',
         plan=BillingPlanType.UNLIMITED,
         lease_level=LeaseLevel.TENANT,
-        master_account=master_account
+        master_account=master_account,
     )
     api_client.token_authenticate(master_account_owner)
 
@@ -269,13 +270,13 @@ def test_list__ordering_by_date_joined__ok(
         name='second tenant',
         plan=BillingPlanType.UNLIMITED,
         lease_level=LeaseLevel.TENANT,
-        master_account=master_account
+        master_account=master_account,
     )
     tenant_account_2 = create_test_account(
         name='first tenant',
         plan=BillingPlanType.UNLIMITED,
         lease_level=LeaseLevel.TENANT,
-        master_account=master_account
+        master_account=master_account,
     )
     tenant_account_2.date_joined = (
         tenant_account_2.date_joined - datetime.timedelta(hours=1)
@@ -305,13 +306,13 @@ def test_list__ordering_by_reverse_date_joined__ok(
         name='second tenant',
         plan=BillingPlanType.UNLIMITED,
         lease_level=LeaseLevel.TENANT,
-        master_account=master_account
+        master_account=master_account,
     )
     tenant_account_2 = create_test_account(
         name='first tenant',
         plan=BillingPlanType.UNLIMITED,
         lease_level=LeaseLevel.TENANT,
-        master_account=master_account
+        master_account=master_account,
     )
     tenant_account_2.date_joined = (
         tenant_account_2.date_joined - datetime.timedelta(hours=1)

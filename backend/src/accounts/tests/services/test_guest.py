@@ -2,15 +2,16 @@ import pytest
 import pytz
 from django.conf import settings
 from django.contrib.auth import get_user_model
+
 from src.accounts.enums import (
-    UserType,
-    UserStatus,
     Language,
     UserDateFormat,
     UserFirstDayWeek,
+    UserStatus,
+    UserType,
 )
 from src.accounts.services.guests import (
-    GuestService
+    GuestService,
 )
 from src.processes.tests.fixtures import (
     create_test_account,
@@ -45,7 +46,7 @@ class TestGuestsService:
         # act
         user = GuestService.create(
             email=email,
-            account_id=account.id
+            account_id=account.id,
         )
 
         # assert
@@ -88,7 +89,7 @@ class TestGuestsService:
         # act
         user = GuestService.create(
             email=email_more_150_chars,
-            account_id=account.id
+            account_id=account.id,
         )
 
         # assert
@@ -132,7 +133,7 @@ class TestGuestsService:
         # act
         user = GuestService.create(
             email=email,
-            account_id=account.id
+            account_id=account.id,
         )
 
         # assert
@@ -158,7 +159,7 @@ class TestGuestsService:
         # act
         user = GuestService.create(
             email=email,
-            account_id=account.id
+            account_id=account.id,
         )
 
         # assert
@@ -182,7 +183,7 @@ class TestGuestsService:
         # act
         user = GuestService.get_or_create(
             email=email,
-            account_id=account.id
+            account_id=account.id,
         )
 
         # assert
@@ -198,24 +199,24 @@ class TestGuestsService:
             email=email,
             type=UserType.USER,
             status=UserStatus.ACTIVE,
-            password='123'
+            password='123',
         )
 
         create_guest_mock = mocker.patch(
             'src.accounts.services.guests'
-            '.GuestService.create'
+            '.GuestService.create',
         )
 
         # act
         GuestService.get_or_create(
             email=email,
-            account_id=account.id
+            account_id=account.id,
         )
 
         # assert
         create_guest_mock.assert_called_once_with(
             account_id=account.id,
-            email=email
+            email=email,
         )
 
     def test_get_or_create__guest_inactive__create_guest(self, mocker):
@@ -228,23 +229,23 @@ class TestGuestsService:
             email=email,
             type=UserType.GUEST,
             status=UserStatus.INACTIVE,
-            password='123'
+            password='123',
         )
         create_guest_mock = mocker.patch(
             'src.accounts.services.guests'
-            '.GuestService.create'
+            '.GuestService.create',
         )
 
         # act
         GuestService.get_or_create(
             email=email,
-            account_id=account.id
+            account_id=account.id,
         )
 
         # assert
         create_guest_mock.assert_called_once_with(
             account_id=account.id,
-            email=email
+            email=email,
         )
 
     def test_get_or_create__guest_exists__not_create(self, mocker):
@@ -257,17 +258,17 @@ class TestGuestsService:
             email=email,
             type=UserType.GUEST,
             status=UserStatus.ACTIVE,
-            password='123'
+            password='123',
         )
         create_guest_mock = mocker.patch(
             'src.accounts.services.guests'
-            '.GuestService.create'
+            '.GuestService.create',
         )
 
         # act
         user = GuestService.get_or_create(
             email=email,
-            account_id=account.id
+            account_id=account.id,
         )
 
         # assert

@@ -1,16 +1,16 @@
 import pytest
-from src.processes.tests.fixtures import (
-    create_test_user,
-    create_test_account
-)
+
 from src.accounts.enums import (
-    UserStatus,
     SourceType,
+    UserStatus,
 )
 from src.accounts.models import (
     Contact,
 )
-
+from src.processes.tests.fixtures import (
+    create_test_account,
+    create_test_user,
+)
 
 pytestmark = pytest.mark.django_db
 
@@ -81,7 +81,7 @@ def test_contacts__inactive_contact__skip(api_client):
         source_id='1as23rioweqe!',
         email='contact1@mail.ru',
         user=user,
-        status=UserStatus.INACTIVE
+        status=UserStatus.INACTIVE,
     )
     contact_2 = Contact.objects.create(
         account=user.account,
@@ -112,7 +112,7 @@ def test_contacts__another_user_contact__skip(api_client):
     user = create_test_user(account=account)
     another_user = create_test_user(
         account=account,
-        email='another@test.test'
+        email='another@test.test',
     )
     Contact.objects.create(
         account=user.account,
@@ -346,7 +346,7 @@ def test_contacts__ordering__last_name__ok(api_client):
 
     # act
     response = api_client.get(
-        '/accounts/user/contacts?ordering=last_name'
+        '/accounts/user/contacts?ordering=last_name',
     )
 
     # assert
@@ -384,7 +384,7 @@ def test_contacts__ordering__last_name_reversed__ok(api_client):
 
     # act
     response = api_client.get(
-        '/accounts/user/contacts?ordering=-last_name'
+        '/accounts/user/contacts?ordering=-last_name',
     )
 
     # assert
@@ -423,7 +423,7 @@ def test_contacts__ordering__first_name__ok(api_client):
 
     # act
     response = api_client.get(
-        '/accounts/user/contacts?ordering=first_name'
+        '/accounts/user/contacts?ordering=first_name',
     )
 
     # assert
@@ -462,7 +462,7 @@ def test_contacts__ordering__first_name_reversed__ok(api_client):
 
     # act
     response = api_client.get(
-        '/accounts/user/contacts?ordering=-first_name'
+        '/accounts/user/contacts?ordering=-first_name',
     )
 
     # assert
@@ -501,7 +501,7 @@ def test_contacts__ordering__source__ok(api_client):
 
     # act
     response = api_client.get(
-        f'/accounts/user/contacts?ordering=source'
+        '/accounts/user/contacts?ordering=source',
     )
 
     # assert
@@ -540,7 +540,7 @@ def test_contacts__ordering__source_reversed__ok(api_client):
 
     # act
     response = api_client.get(
-        f'/accounts/user/contacts?ordering=-source'
+        '/accounts/user/contacts?ordering=-source',
     )
 
     # assert
@@ -579,7 +579,7 @@ def test_contacts__ordering__multiple_values__ok(api_client):
 
     # act
     response = api_client.get(
-        f'/accounts/user/contacts?ordering=-source,first_name'
+        '/accounts/user/contacts?ordering=-source,first_name',
     )
 
     # assert
@@ -618,7 +618,7 @@ def test_contacts__filter_source__ok(api_client):
 
     # act
     response = api_client.get(
-        f'/accounts/user/contacts?source={SourceType.GOOGLE}'
+        f'/accounts/user/contacts?source={SourceType.GOOGLE}',
     )
 
     # assert
@@ -666,7 +666,7 @@ def test_contacts__pagination__ok(api_client):
 
     # act
     response = api_client.get(
-        '/accounts/user/contacts?limit=2&offset=1'
+        '/accounts/user/contacts?limit=2&offset=1',
     )
 
     # assert

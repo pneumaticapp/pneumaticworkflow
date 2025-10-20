@@ -1,16 +1,17 @@
 from rest_framework import serializers
 from rest_framework.serializers import ValidationError
 from rest_framework_simplejwt.tokens import TokenError
+
 from src.generics.mixins.serializers import (
-    CustomValidationErrorMixin
+    CustomValidationErrorMixin,
 )
-from src.payment.stripe.tokens import ConfirmToken
-from src.payment.models import Product, Price
 from src.payment.messages import (
     MSG_BL_0001,
     MSG_BL_0002,
     MSG_BL_0003,
 )
+from src.payment.models import Price, Product
+from src.payment.stripe.tokens import ConfirmToken
 
 
 class PriceSerializer(serializers.ModelSerializer):
@@ -46,7 +47,7 @@ class ProductSerializer(serializers.ModelSerializer):
 
 class PurchaseProductSerializer(
     CustomValidationErrorMixin,
-    serializers.Serializer
+    serializers.Serializer,
 ):
 
     code = serializers.CharField(
@@ -63,18 +64,18 @@ class PurchaseProductSerializer(
 
 class PurchaseSerializer(
     CustomValidationErrorMixin,
-    serializers.Serializer
+    serializers.Serializer,
 ):
 
     success_url = serializers.URLField(
         required=True,
         allow_null=False,
-        allow_blank=False
+        allow_blank=False,
     )
     cancel_url = serializers.URLField(
         required=False,
         allow_null=True,
-        allow_blank=False
+        allow_blank=False,
     )
     products = PurchaseProductSerializer(
         many=True,
@@ -86,11 +87,13 @@ class PurchaseSerializer(
         if not attrs:
             raise ValidationError(MSG_BL_0002)
         request_codes = {elem['code'] for elem in attrs}
-        existent_codes = {
-            elem for elem in Price.objects.active_or_archived().filter(
-                code__in=request_codes
-            ).order_by('code').values_list('code', flat=True)
-        }
+        existent_codes = set(
+            Price.objects
+            .active_or_archived()
+            .filter(code__in=request_codes)
+            .order_by('code')
+            .values_list('code', flat=True),
+        )
         non_existent_codes = request_codes - existent_codes
         if non_existent_codes:
             raise ValidationError(MSG_BL_0003(non_existent_codes))
@@ -99,24 +102,24 @@ class PurchaseSerializer(
 
 class CardSetupSerializer(
     CustomValidationErrorMixin,
-    serializers.Serializer
+    serializers.Serializer,
 ):
 
     success_url = serializers.URLField(
         required=True,
         allow_null=False,
-        allow_blank=False
+        allow_blank=False,
     )
     cancel_url = serializers.URLField(
         required=False,
         allow_null=True,
-        allow_blank=False
+        allow_blank=False,
     )
 
 
 class ConfirmSerializer(
     CustomValidationErrorMixin,
-    serializers.Serializer
+    serializers.Serializer,
 ):
     token = serializers.CharField(
         required=True,
@@ -127,19 +130,19 @@ class ConfirmSerializer(
     def validate_token(self, value) -> ConfirmToken:
         try:
             token = ConfirmToken(value)
-        except TokenError:
-            raise ValidationError(MSG_BL_0001)
+        except TokenError as ex:
+            raise ValidationError(MSG_BL_0001) from ex
         else:
             return token
 
 
 class CustomerPortalSerializer(
     CustomValidationErrorMixin,
-    serializers.Serializer
+    serializers.Serializer,
 ):
 
     cancel_url = serializers.URLField(
         required=True,
         allow_null=False,
-        allow_blank=False
+        allow_blank=False,
     )

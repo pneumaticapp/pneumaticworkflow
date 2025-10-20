@@ -1,19 +1,19 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
-from src.accounts.models import (
-    UserInvite,
-    UserGroup
-)
+
 from src.accounts.enums import (
-    SourceType,
     Language,
+    SourceType,
 )
 from src.accounts.messages import MSG_A_0002, MSG_A_0040
-from src.generics.mixins.serializers import (
-    CustomValidationErrorMixin
+from src.accounts.models import (
+    UserGroup,
+    UserInvite,
 )
-
+from src.generics.mixins.serializers import (
+    CustomValidationErrorMixin,
+)
 
 UserModel = get_user_model()
 
@@ -78,21 +78,21 @@ class AcceptInviteSerializer(
 
 class InviteUserSerializer(
     CustomValidationErrorMixin,
-    serializers.Serializer
+    serializers.Serializer,
 ):
 
     email = serializers.EmailField(required=True)
     type = serializers.ChoiceField(
         choices=SourceType.CHOICES,
-        required=False
+        required=False,
     )
     groups = serializers.ListField(
         required=False,
-        child=serializers.IntegerField()
+        child=serializers.IntegerField(),
     )
     invited_from = serializers.ChoiceField(
         choices=SourceType.CHOICES,
-        required=False
+        required=False,
     )
     first_name = serializers.CharField(
         required=False,
@@ -108,7 +108,7 @@ class InviteUserSerializer(
         required=False,
         allow_blank=True,
         allow_null=True,
-        source='avatar'
+        source='avatar',
     )
 
     def validate_email(self, value):
@@ -117,7 +117,7 @@ class InviteUserSerializer(
     def validate_groups(self, value):
         groups = UserGroup.objects.filter(
             account=self.context['account_id'],
-            id__in=value
+            id__in=value,
         )
         if groups.count() != len(value):
             raise ValidationError(MSG_A_0040)
@@ -134,7 +134,7 @@ class InviteUserSerializer(
 
 class InviteUsersSerializer(
     CustomValidationErrorMixin,
-    serializers.Serializer
+    serializers.Serializer,
 ):
 
     users = InviteUserSerializer(many=True, required=True)
@@ -142,10 +142,10 @@ class InviteUsersSerializer(
 
 class TokenSerializer(
     CustomValidationErrorMixin,
-    serializers.Serializer
+    serializers.Serializer,
 ):
     token = serializers.CharField(
         required=True,
         allow_null=False,
-        allow_blank=False
+        allow_blank=False,
     )

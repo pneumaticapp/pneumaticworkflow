@@ -1,19 +1,19 @@
-import pytest
 from datetime import timedelta
-from src.processes.tests.fixtures import (
-    create_test_user
-)
-from src.processes.models import (
-    RawDueDateTemplate,
-    TaskTemplate,
-)
+
+import pytest
+
 from src.processes.enums import (
     DueDateRule,
-    PerformerType,
     FieldType,
-    OwnerType
+    OwnerType,
+    PerformerType,
 )
 from src.processes.messages import template as messages
+from src.processes.models.templates.raw_due_date import RawDueDateTemplate
+from src.processes.models.templates.task import TaskTemplate
+from src.processes.tests.fixtures import (
+    create_test_user,
+)
 from src.utils.validation import ErrorCode
 
 pytestmark = pytest.mark.django_db
@@ -28,7 +28,7 @@ def test_create__after_task_started__ok(api_client):
         'duration': '01:00:00',
         'duration_months': 2,
         'rule': DueDateRule.AFTER_TASK_STARTED,
-        'source_id': 'task-1'
+        'source_id': 'task-1',
     }
     task_api_name = 'task-2'
     api_client.token_authenticate(user)
@@ -41,7 +41,7 @@ def test_create__after_task_started__ok(api_client):
             'owners': [
                 {
                     'type': OwnerType.USER,
-                    'source_id': user.id
+                    'source_id': user.id,
                 },
             ],
             'is_active': True,
@@ -54,9 +54,9 @@ def test_create__after_task_started__ok(api_client):
                     'raw_performers': [
                         {
                             'type': PerformerType.USER,
-                            'source_id': user.id
-                        }
-                    ]
+                            'source_id': user.id,
+                        },
+                    ],
                 },
                 {
                     'number': 2,
@@ -66,12 +66,12 @@ def test_create__after_task_started__ok(api_client):
                     'raw_performers': [
                         {
                             'type': PerformerType.USER,
-                            'source_id': user.id
-                        }
-                    ]
-                }
-            ]
-        }
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+            ],
+        },
     )
 
     # assert
@@ -104,7 +104,7 @@ def test_create__after_task_started__active_task__ok(
         'duration': '01:00:00',
         'duration_months': 0,
         'rule': DueDateRule.AFTER_TASK_STARTED,
-        'source_id': 'task-1'
+        'source_id': 'task-1',
     }
     api_client.token_authenticate(user)
 
@@ -116,7 +116,7 @@ def test_create__after_task_started__active_task__ok(
             'owners': [
                 {
                     'type': OwnerType.USER,
-                    'source_id': user.id
+                    'source_id': user.id,
                 },
             ],
             'is_active': True,
@@ -130,12 +130,12 @@ def test_create__after_task_started__active_task__ok(
                     'raw_performers': [
                         {
                             'type': PerformerType.USER,
-                            'source_id': user.id
-                        }
-                    ]
-                }
-            ]
-        }
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+            ],
+        },
     )
 
     # assert
@@ -155,7 +155,7 @@ def test_create__after_task_started__active_task__ok(
 
 
 def test_create__after_task_started__next_task__validation_error(
-    api_client
+    api_client,
 ):
 
     # arrange
@@ -166,7 +166,7 @@ def test_create__after_task_started__next_task__validation_error(
         'duration': '01:00:00',
         'duration_months': 0,
         'rule': DueDateRule.AFTER_TASK_STARTED,
-        'source_id': 'task-2'
+        'source_id': 'task-2',
     }
     api_client.token_authenticate(user)
 
@@ -178,7 +178,7 @@ def test_create__after_task_started__next_task__validation_error(
             'owners': [
                 {
                     'type': OwnerType.USER,
-                    'source_id': user.id
+                    'source_id': user.id,
                 },
             ],
             'is_active': True,
@@ -192,9 +192,9 @@ def test_create__after_task_started__next_task__validation_error(
                     'raw_performers': [
                         {
                             'type': PerformerType.USER,
-                            'source_id': user.id
-                        }
-                    ]
+                            'source_id': user.id,
+                        },
+                    ],
                 },
                 {
                     'number': 2,
@@ -203,12 +203,12 @@ def test_create__after_task_started__next_task__validation_error(
                     'raw_performers': [
                         {
                             'type': PerformerType.USER,
-                            'source_id': user.id
-                        }
-                    ]
-                }
-            ]
-        }
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+            ],
+        },
     )
 
     # assert
@@ -220,7 +220,7 @@ def test_create__after_task_started__next_task__validation_error(
 
 
 def test_create__after_task_started__not_existent_task__validation_error(
-    api_client
+    api_client,
 ):
 
     # arrange
@@ -231,7 +231,7 @@ def test_create__after_task_started__not_existent_task__validation_error(
         'duration': '01:00:00',
         'duration_months': 10,
         'rule': DueDateRule.AFTER_TASK_STARTED,
-        'source_id': 'task-undefined'
+        'source_id': 'task-undefined',
     }
     api_client.token_authenticate(user)
 
@@ -243,7 +243,7 @@ def test_create__after_task_started__not_existent_task__validation_error(
             'owners': [
                 {
                     'type': OwnerType.USER,
-                    'source_id': user.id
+                    'source_id': user.id,
                 },
             ],
             'is_active': True,
@@ -257,12 +257,12 @@ def test_create__after_task_started__not_existent_task__validation_error(
                     'raw_performers': [
                         {
                             'type': PerformerType.USER,
-                            'source_id': user.id
-                        }
-                    ]
-                }
-            ]
-        }
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+            ],
+        },
     )
 
     # assert
@@ -282,7 +282,7 @@ def test_create__after_task_completed__ok(api_client):
         'duration': '01:00:00',
         'duration_months': 10,
         'rule': DueDateRule.AFTER_TASK_COMPLETED,
-        'source_id': 'task-1'
+        'source_id': 'task-1',
     }
     api_client.token_authenticate(user)
 
@@ -294,7 +294,7 @@ def test_create__after_task_completed__ok(api_client):
             'owners': [
                 {
                     'type': OwnerType.USER,
-                    'source_id': user.id
+                    'source_id': user.id,
                 },
             ],
             'is_active': True,
@@ -307,9 +307,9 @@ def test_create__after_task_completed__ok(api_client):
                     'raw_performers': [
                         {
                             'type': PerformerType.USER,
-                            'source_id': user.id
-                        }
-                    ]
+                            'source_id': user.id,
+                        },
+                    ],
                 },
                 {
                     'number': 2,
@@ -318,12 +318,12 @@ def test_create__after_task_completed__ok(api_client):
                     'raw_performers': [
                         {
                             'type': PerformerType.USER,
-                            'source_id': user.id
-                        }
-                    ]
-                }
-            ]
-        }
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+            ],
+        },
     )
 
     # assert
@@ -343,7 +343,7 @@ def test_create__after_task_completed__ok(api_client):
 
 
 def test_create__after_task_completed__active_task__validation_error(
-    api_client
+    api_client,
 ):
 
     # arrange
@@ -354,7 +354,7 @@ def test_create__after_task_completed__active_task__validation_error(
         'duration': '01:00:00',
         'duration_months': 10,
         'rule': DueDateRule.AFTER_TASK_COMPLETED,
-        'source_id': 'task-1'
+        'source_id': 'task-1',
     }
     api_client.token_authenticate(user)
 
@@ -366,7 +366,7 @@ def test_create__after_task_completed__active_task__validation_error(
             'owners': [
                 {
                     'type': OwnerType.USER,
-                    'source_id': user.id
+                    'source_id': user.id,
                 },
             ],
             'is_active': True,
@@ -380,12 +380,12 @@ def test_create__after_task_completed__active_task__validation_error(
                     'raw_performers': [
                         {
                             'type': PerformerType.USER,
-                            'source_id': user.id
-                        }
-                    ]
-                }
-            ]
-        }
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+            ],
+        },
     )
 
     # assert
@@ -397,7 +397,7 @@ def test_create__after_task_completed__active_task__validation_error(
 
 
 def test_create__after_task_completed__next_task__validation_error(
-    api_client
+    api_client,
 ):
 
     # arrange
@@ -408,7 +408,7 @@ def test_create__after_task_completed__next_task__validation_error(
         'duration': '01:00:00',
         'duration_months': 10,
         'rule': DueDateRule.AFTER_TASK_COMPLETED,
-        'source_id': 'task-2'
+        'source_id': 'task-2',
     }
     api_client.token_authenticate(user)
 
@@ -420,7 +420,7 @@ def test_create__after_task_completed__next_task__validation_error(
             'owners': [
                 {
                     'type': OwnerType.USER,
-                    'source_id': user.id
+                    'source_id': user.id,
                 },
             ],
             'is_active': True,
@@ -434,9 +434,9 @@ def test_create__after_task_completed__next_task__validation_error(
                     'raw_performers': [
                         {
                             'type': PerformerType.USER,
-                            'source_id': user.id
-                        }
-                    ]
+                            'source_id': user.id,
+                        },
+                    ],
                 },
                 {
                     'number': 2,
@@ -445,12 +445,12 @@ def test_create__after_task_completed__next_task__validation_error(
                     'raw_performers': [
                         {
                             'type': PerformerType.USER,
-                            'source_id': user.id
-                        }
-                    ]
-                }
-            ]
-        }
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+            ],
+        },
     )
 
     # assert
@@ -462,7 +462,7 @@ def test_create__after_task_completed__next_task__validation_error(
 
 
 def test_create__after_task_completed__not_existent_task__validation_error(
-    api_client
+    api_client,
 ):
 
     # arrange
@@ -473,7 +473,7 @@ def test_create__after_task_completed__not_existent_task__validation_error(
         'duration': '01:00:00',
         'duration_months': 10,
         'rule': DueDateRule.AFTER_TASK_COMPLETED,
-        'source_id': 'task-undefined'
+        'source_id': 'task-undefined',
     }
     api_client.token_authenticate(user)
 
@@ -485,7 +485,7 @@ def test_create__after_task_completed__not_existent_task__validation_error(
             'owners': [
                 {
                     'type': OwnerType.USER,
-                    'source_id': user.id
+                    'source_id': user.id,
                 },
             ],
             'is_active': True,
@@ -499,12 +499,12 @@ def test_create__after_task_completed__not_existent_task__validation_error(
                     'raw_performers': [
                         {
                             'type': PerformerType.USER,
-                            'source_id': user.id
-                        }
-                    ]
-                }
-            ]
-        }
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+            ],
+        },
     )
 
     # assert
@@ -524,7 +524,7 @@ def test_create__after_workflow_started__ok(api_client):
         'duration': '01:00:00',
         'duration_months': 10,
         'rule': DueDateRule.AFTER_WORKFLOW_STARTED,
-        'source_id': None
+        'source_id': None,
     }
     api_client.token_authenticate(user)
 
@@ -536,7 +536,7 @@ def test_create__after_workflow_started__ok(api_client):
             'owners': [
                 {
                     'type': OwnerType.USER,
-                    'source_id': user.id
+                    'source_id': user.id,
                 },
             ],
             'is_active': True,
@@ -550,12 +550,12 @@ def test_create__after_workflow_started__ok(api_client):
                     'raw_performers': [
                         {
                             'type': PerformerType.USER,
-                            'source_id': user.id
-                        }
-                    ]
-                }
-            ]
-        }
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+            ],
+        },
     )
 
     # assert
@@ -584,7 +584,7 @@ def test_create__after_field__ok(is_required, api_client):
         'duration': '01:00:00',
         'duration_months': 10,
         'rule': DueDateRule.AFTER_FIELD,
-        'source_id': 'field-1'
+        'source_id': 'field-1',
     }
     api_client.token_authenticate(user)
 
@@ -596,7 +596,7 @@ def test_create__after_field__ok(is_required, api_client):
             'owners': [
                 {
                     'type': OwnerType.USER,
-                    'source_id': user.id
+                    'source_id': user.id,
                 },
             ],
             'is_active': True,
@@ -607,9 +607,9 @@ def test_create__after_field__ok(is_required, api_client):
                         'order': 1,
                         'type': FieldType.DATE,
                         'is_required': is_required,
-                        'api_name': 'field-1'
-                    }
-                ]
+                        'api_name': 'field-1',
+                    },
+                ],
             },
             'tasks': [
                 {
@@ -620,12 +620,12 @@ def test_create__after_field__ok(is_required, api_client):
                     'raw_performers': [
                         {
                             'type': PerformerType.USER,
-                            'source_id': user.id
-                        }
-                    ]
-                }
-            ]
-        }
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+            ],
+        },
     )
 
     # assert
@@ -645,7 +645,7 @@ def test_create__after_field__ok(is_required, api_client):
 
 
 def test_create__after_field__not_source_id__validation_error(
-    api_client
+    api_client,
 ):
 
     # arrange
@@ -667,7 +667,7 @@ def test_create__after_field__not_source_id__validation_error(
             'owners': [
                 {
                     'type': OwnerType.USER,
-                    'source_id': user.id
+                    'source_id': user.id,
                 },
             ],
             'is_active': True,
@@ -681,12 +681,12 @@ def test_create__after_field__not_source_id__validation_error(
                     'raw_performers': [
                         {
                             'type': PerformerType.USER,
-                            'source_id': user.id
-                        }
-                    ]
-                }
-            ]
-        }
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+            ],
+        },
     )
 
     # assert
@@ -698,7 +698,7 @@ def test_create__after_field__not_source_id__validation_error(
 
 
 def test_create__after_field__source_id_is_null__validation_error(
-    api_client
+    api_client,
 ):
     # arrange
     user = create_test_user()
@@ -708,7 +708,7 @@ def test_create__after_field__source_id_is_null__validation_error(
         'duration': '01:00:00',
         'duration_months': 10,
         'rule': DueDateRule.AFTER_FIELD,
-        'source_id': None
+        'source_id': None,
     }
     api_client.token_authenticate(user)
 
@@ -720,7 +720,7 @@ def test_create__after_field__source_id_is_null__validation_error(
             'owners': [
                 {
                     'type': OwnerType.USER,
-                    'source_id': user.id
+                    'source_id': user.id,
                 },
             ],
             'is_active': True,
@@ -734,12 +734,12 @@ def test_create__after_field__source_id_is_null__validation_error(
                     'raw_performers': [
                         {
                             'type': PerformerType.USER,
-                            'source_id': user.id
-                        }
-                    ]
-                }
-            ]
-        }
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+            ],
+        },
     )
 
     # assert
@@ -751,7 +751,7 @@ def test_create__after_field__source_id_is_null__validation_error(
 
 
 def test_create__after_field__active_task_field__validation_error(
-    api_client
+    api_client,
 ):
 
     # arrange
@@ -762,7 +762,7 @@ def test_create__after_field__active_task_field__validation_error(
         'duration': '01:00:00',
         'duration_months': 10,
         'rule': DueDateRule.AFTER_FIELD,
-        'source_id': 'field-1'
+        'source_id': 'field-1',
     }
     api_client.token_authenticate(user)
 
@@ -774,7 +774,7 @@ def test_create__after_field__active_task_field__validation_error(
             'owners': [
                 {
                     'type': OwnerType.USER,
-                    'source_id': user.id
+                    'source_id': user.id,
                 },
             ],
             'is_active': True,
@@ -789,19 +789,19 @@ def test_create__after_field__active_task_field__validation_error(
                             'name': 'Date field',
                             'order': 1,
                             'type': FieldType.DATE,
-                            'api_name': 'field-1'
-                        }
+                            'api_name': 'field-1',
+                        },
                     ],
                     'raw_due_date': raw_due_date_data,
                     'raw_performers': [
                         {
                             'type': PerformerType.USER,
-                            'source_id': user.id
-                        }
-                    ]
-                }
-            ]
-        }
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+            ],
+        },
     )
 
     # assert
@@ -813,7 +813,7 @@ def test_create__after_field__active_task_field__validation_error(
 
 
 def test_create__after_field__next_task_field__validation_error(
-    api_client
+    api_client,
 ):
 
     # arrange
@@ -824,7 +824,7 @@ def test_create__after_field__next_task_field__validation_error(
         'duration': '01:00:00',
         'duration_months': 10,
         'rule': DueDateRule.AFTER_FIELD,
-        'source_id': 'field-1'
+        'source_id': 'field-1',
     }
     api_client.token_authenticate(user)
 
@@ -836,7 +836,7 @@ def test_create__after_field__next_task_field__validation_error(
             'owners': [
                 {
                     'type': OwnerType.USER,
-                    'source_id': user.id
+                    'source_id': user.id,
                 },
             ],
             'is_active': True,
@@ -850,9 +850,9 @@ def test_create__after_field__next_task_field__validation_error(
                     'raw_performers': [
                         {
                             'type': PerformerType.USER,
-                            'source_id': user.id
-                        }
-                    ]
+                            'source_id': user.id,
+                        },
+                    ],
                 },
                 {
                     'number': 2,
@@ -862,18 +862,18 @@ def test_create__after_field__next_task_field__validation_error(
                             'name': 'Date field',
                             'order': 1,
                             'type': FieldType.DATE,
-                            'api_name': 'field-1'
-                        }
+                            'api_name': 'field-1',
+                        },
                     ],
                     'raw_performers': [
                         {
                             'type': PerformerType.USER,
-                            'source_id': user.id
-                        }
-                    ]
-                }
-            ]
-        }
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+            ],
+        },
     )
 
     # assert
@@ -885,7 +885,7 @@ def test_create__after_field__next_task_field__validation_error(
 
 
 def test_create__after_field__not_existent_field__validation_error(
-    api_client
+    api_client,
 ):
 
     # arrange
@@ -896,7 +896,7 @@ def test_create__after_field__not_existent_field__validation_error(
         'duration': '01:00:00',
         'duration_months': 10,
         'rule': DueDateRule.AFTER_FIELD,
-        'source_id': 'field-1'
+        'source_id': 'field-1',
     }
     api_client.token_authenticate(user)
 
@@ -908,7 +908,7 @@ def test_create__after_field__not_existent_field__validation_error(
             'owners': [
                 {
                     'type': OwnerType.USER,
-                    'source_id': user.id
+                    'source_id': user.id,
                 },
             ],
             'is_active': True,
@@ -922,12 +922,12 @@ def test_create__after_field__not_existent_field__validation_error(
                     'raw_performers': [
                         {
                             'type': PerformerType.USER,
-                            'source_id': user.id
-                        }
-                    ]
-                }
-            ]
-        }
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+            ],
+        },
     )
 
     # assert
@@ -939,7 +939,7 @@ def test_create__after_field__not_existent_field__validation_error(
 
 
 def test_create__after_field__field_type_is_not_date__validation_error(
-    api_client
+    api_client,
 ):
 
     # arrange
@@ -950,7 +950,7 @@ def test_create__after_field__field_type_is_not_date__validation_error(
         'duration': '01:00:00',
         'duration_months': 10,
         'rule': DueDateRule.AFTER_FIELD,
-        'source_id': 'field-1'
+        'source_id': 'field-1',
     }
     api_client.token_authenticate(user)
 
@@ -962,7 +962,7 @@ def test_create__after_field__field_type_is_not_date__validation_error(
             'owners': [
                 {
                     'type': OwnerType.USER,
-                    'source_id': user.id
+                    'source_id': user.id,
                 },
             ],
             'is_active': True,
@@ -972,9 +972,9 @@ def test_create__after_field__field_type_is_not_date__validation_error(
                         'name': 'Date field',
                         'order': 1,
                         'type': FieldType.TEXT,
-                        'api_name': 'field-1'
-                    }
-                ]
+                        'api_name': 'field-1',
+                    },
+                ],
             },
             'tasks': [
                 {
@@ -985,12 +985,12 @@ def test_create__after_field__field_type_is_not_date__validation_error(
                     'raw_performers': [
                         {
                             'type': PerformerType.USER,
-                            'source_id': user.id
-                        }
-                    ]
-                }
-            ]
-        }
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+            ],
+        },
     )
 
     # assert
@@ -1011,7 +1011,7 @@ def test_create__before_field__ok(is_required, api_client):
         'duration': '01:00:00',
         'duration_months': 10,
         'rule': DueDateRule.BEFORE_FIELD,
-        'source_id': 'field-1'
+        'source_id': 'field-1',
     }
     api_client.token_authenticate(user)
 
@@ -1023,7 +1023,7 @@ def test_create__before_field__ok(is_required, api_client):
             'owners': [
                 {
                     'type': OwnerType.USER,
-                    'source_id': user.id
+                    'source_id': user.id,
                 },
             ],
             'is_active': True,
@@ -1034,9 +1034,9 @@ def test_create__before_field__ok(is_required, api_client):
                         'order': 1,
                         'type': FieldType.DATE,
                         'is_required': is_required,
-                        'api_name': 'field-1'
-                    }
-                ]
+                        'api_name': 'field-1',
+                    },
+                ],
             },
             'tasks': [
                 {
@@ -1047,12 +1047,12 @@ def test_create__before_field__ok(is_required, api_client):
                     'raw_performers': [
                         {
                             'type': PerformerType.USER,
-                            'source_id': user.id
-                        }
-                    ]
-                }
-            ]
-        }
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+            ],
+        },
     )
 
     # assert
@@ -1072,7 +1072,7 @@ def test_create__before_field__ok(is_required, api_client):
 
 
 def test_create__before_field__not_source_id__validation_error(
-    api_client
+    api_client,
 ):
 
     # arrange
@@ -1094,7 +1094,7 @@ def test_create__before_field__not_source_id__validation_error(
             'owners': [
                 {
                     'type': OwnerType.USER,
-                    'source_id': user.id
+                    'source_id': user.id,
                 },
             ],
             'is_active': True,
@@ -1108,12 +1108,12 @@ def test_create__before_field__not_source_id__validation_error(
                     'raw_performers': [
                         {
                             'type': PerformerType.USER,
-                            'source_id': user.id
-                        }
-                    ]
-                }
-            ]
-        }
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+            ],
+        },
     )
 
     # assert
@@ -1125,7 +1125,7 @@ def test_create__before_field__not_source_id__validation_error(
 
 
 def test_create__before_field__active_task_field__validation_error(
-    api_client
+    api_client,
 ):
     # arrange
     user = create_test_user()
@@ -1135,7 +1135,7 @@ def test_create__before_field__active_task_field__validation_error(
         'duration': '01:00:00',
         'duration_months': 10,
         'rule': DueDateRule.BEFORE_FIELD,
-        'source_id': None
+        'source_id': None,
     }
     api_client.token_authenticate(user)
 
@@ -1147,7 +1147,7 @@ def test_create__before_field__active_task_field__validation_error(
             'owners': [
                 {
                     'type': OwnerType.USER,
-                    'source_id': user.id
+                    'source_id': user.id,
                 },
             ],
             'is_active': True,
@@ -1161,12 +1161,12 @@ def test_create__before_field__active_task_field__validation_error(
                     'raw_performers': [
                         {
                             'type': PerformerType.USER,
-                            'source_id': user.id
-                        }
-                    ]
-                }
-            ]
-        }
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+            ],
+        },
     )
 
     # assert
@@ -1178,7 +1178,7 @@ def test_create__before_field__active_task_field__validation_error(
 
 
 def test_create__before_field__next_task_field__validation_error(
-    api_client
+    api_client,
 ):
 
     # arrange
@@ -1189,7 +1189,7 @@ def test_create__before_field__next_task_field__validation_error(
         'duration': '01:00:00',
         'duration_months': 10,
         'rule': DueDateRule.BEFORE_FIELD,
-        'source_id': 'field-1'
+        'source_id': 'field-1',
     }
     api_client.token_authenticate(user)
 
@@ -1201,7 +1201,7 @@ def test_create__before_field__next_task_field__validation_error(
             'owners': [
                 {
                     'type': OwnerType.USER,
-                    'source_id': user.id
+                    'source_id': user.id,
                 },
             ],
             'is_active': True,
@@ -1215,9 +1215,9 @@ def test_create__before_field__next_task_field__validation_error(
                     'raw_performers': [
                         {
                             'type': PerformerType.USER,
-                            'source_id': user.id
-                        }
-                    ]
+                            'source_id': user.id,
+                        },
+                    ],
                 },
                 {
                     'number': 2,
@@ -1227,18 +1227,18 @@ def test_create__before_field__next_task_field__validation_error(
                             'name': 'Date field',
                             'order': 1,
                             'type': FieldType.DATE,
-                            'api_name': 'field-1'
-                        }
+                            'api_name': 'field-1',
+                        },
                     ],
                     'raw_performers': [
                         {
                             'type': PerformerType.USER,
-                            'source_id': user.id
-                        }
-                    ]
-                }
-            ]
-        }
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+            ],
+        },
     )
 
     # assert
@@ -1250,7 +1250,7 @@ def test_create__before_field__next_task_field__validation_error(
 
 
 def test_create__before_field__not_existent_field__validation_error(
-    api_client
+    api_client,
 ):
 
     # arrange
@@ -1261,7 +1261,7 @@ def test_create__before_field__not_existent_field__validation_error(
         'duration': '01:00:00',
         'duration_months': 10,
         'rule': DueDateRule.BEFORE_FIELD,
-        'source_id': 'field-1'
+        'source_id': 'field-1',
     }
     api_client.token_authenticate(user)
 
@@ -1273,7 +1273,7 @@ def test_create__before_field__not_existent_field__validation_error(
             'owners': [
                 {
                     'type': OwnerType.USER,
-                    'source_id': user.id
+                    'source_id': user.id,
                 },
             ],
             'is_active': True,
@@ -1287,12 +1287,12 @@ def test_create__before_field__not_existent_field__validation_error(
                     'raw_performers': [
                         {
                             'type': PerformerType.USER,
-                            'source_id': user.id
-                        }
-                    ]
-                }
-            ]
-        }
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+            ],
+        },
     )
 
     # assert
@@ -1304,7 +1304,7 @@ def test_create__before_field__not_existent_field__validation_error(
 
 
 def test_create__before_field__field_is_not_date__validation_error(
-    api_client
+    api_client,
 ):
 
     # arrange
@@ -1315,7 +1315,7 @@ def test_create__before_field__field_is_not_date__validation_error(
         'duration': '01:00:00',
         'duration_months': 10,
         'rule': DueDateRule.BEFORE_FIELD,
-        'source_id': 'field-1'
+        'source_id': 'field-1',
     }
     api_client.token_authenticate(user)
 
@@ -1327,7 +1327,7 @@ def test_create__before_field__field_is_not_date__validation_error(
             'owners': [
                 {
                     'type': OwnerType.USER,
-                    'source_id': user.id
+                    'source_id': user.id,
                 },
             ],
             'is_active': True,
@@ -1337,9 +1337,9 @@ def test_create__before_field__field_is_not_date__validation_error(
                         'name': 'Date field',
                         'order': 1,
                         'type': FieldType.TEXT,
-                        'api_name': 'field-1'
-                    }
-                ]
+                        'api_name': 'field-1',
+                    },
+                ],
             },
             'tasks': [
                 {
@@ -1350,12 +1350,12 @@ def test_create__before_field__field_is_not_date__validation_error(
                     'raw_performers': [
                         {
                             'type': PerformerType.USER,
-                            'source_id': user.id
-                        }
-                    ]
-                }
-            ]
-        }
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+            ],
+        },
     )
 
     # assert
@@ -1367,7 +1367,7 @@ def test_create__before_field__field_is_not_date__validation_error(
 
 
 def test_create__non_existent_rule__validation_error(
-    api_client
+    api_client,
 ):
 
     # arrange
@@ -1378,7 +1378,7 @@ def test_create__non_existent_rule__validation_error(
         'duration': '01:00:00',
         'duration_months': 10,
         'rule': 'undefined',
-        'source_id': 'field-1'
+        'source_id': 'field-1',
     }
     api_client.token_authenticate(user)
 
@@ -1390,7 +1390,7 @@ def test_create__non_existent_rule__validation_error(
             'owners': [
                 {
                     'type': OwnerType.USER,
-                    'source_id': user.id
+                    'source_id': user.id,
                 },
             ],
             'is_active': True,
@@ -1404,12 +1404,12 @@ def test_create__non_existent_rule__validation_error(
                     'raw_performers': [
                         {
                             'type': PerformerType.USER,
-                            'source_id': user.id
-                        }
-                    ]
-                }
-            ]
-        }
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+            ],
+        },
     )
 
     # assert
@@ -1422,7 +1422,7 @@ def test_create__non_existent_rule__validation_error(
 
 
 def test_create__rule_is_null__validation_error(
-    api_client
+    api_client,
 ):
 
     # arrange
@@ -1444,7 +1444,7 @@ def test_create__rule_is_null__validation_error(
             'owners': [
                 {
                     'type': OwnerType.USER,
-                    'source_id': user.id
+                    'source_id': user.id,
                 },
             ],
             'is_active': True,
@@ -1458,12 +1458,12 @@ def test_create__rule_is_null__validation_error(
                     'raw_performers': [
                         {
                             'type': PerformerType.USER,
-                            'source_id': user.id
-                        }
-                    ]
-                }
-            ]
-        }
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+            ],
+        },
     )
 
     # assert
@@ -1476,7 +1476,7 @@ def test_create__rule_is_null__validation_error(
 
 
 def test_create__invalid_duration__validation_error(
-    api_client
+    api_client,
 ):
 
     # arrange
@@ -1498,7 +1498,7 @@ def test_create__invalid_duration__validation_error(
             'owners': [
                 {
                     'type': OwnerType.USER,
-                    'source_id': user.id
+                    'source_id': user.id,
                 },
             ],
             'is_active': True,
@@ -1512,12 +1512,12 @@ def test_create__invalid_duration__validation_error(
                     'raw_performers': [
                         {
                             'type': PerformerType.USER,
-                            'source_id': user.id
-                        }
-                    ]
-                }
-            ]
-        }
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+            ],
+        },
     )
 
     # assert
@@ -1533,7 +1533,7 @@ def test_create__invalid_duration__validation_error(
 
 
 def test_create__duration_is_null__validation_error(
-    api_client
+    api_client,
 ):
 
     # arrange
@@ -1555,7 +1555,7 @@ def test_create__duration_is_null__validation_error(
             'owners': [
                 {
                     'type': OwnerType.USER,
-                    'source_id': user.id
+                    'source_id': user.id,
                 },
             ],
             'is_active': True,
@@ -1569,12 +1569,12 @@ def test_create__duration_is_null__validation_error(
                     'raw_performers': [
                         {
                             'type': PerformerType.USER,
-                            'source_id': user.id
-                        }
-                    ]
-                }
-            ]
-        }
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+            ],
+        },
     )
 
     # assert
@@ -1602,7 +1602,7 @@ def test_create__equal_api_names__validation_error(api_client):
             'owners': [
                 {
                     'type': OwnerType.USER,
-                    'source_id': user.id
+                    'source_id': user.id,
                 },
             ],
             'is_active': True,
@@ -1617,14 +1617,14 @@ def test_create__equal_api_names__validation_error(api_client):
                         'duration': '01:00:00',
                         'duration_months': 0,
                         'rule': DueDateRule.AFTER_TASK_STARTED,
-                        'source_id': 'task-1'
+                        'source_id': 'task-1',
                     },
                     'raw_performers': [
                         {
                             'type': PerformerType.USER,
-                            'source_id': user.id
-                        }
-                    ]
+                            'source_id': user.id,
+                        },
+                    ],
                 },
                 {
                     'number': 2,
@@ -1635,24 +1635,24 @@ def test_create__equal_api_names__validation_error(api_client):
                         'duration': '01:00:00',
                         'duration_months': 0,
                         'rule': DueDateRule.AFTER_TASK_STARTED,
-                        'source_id': 'task-2'
+                        'source_id': 'task-2',
                     },
                     'raw_performers': [
                         {
                             'type': PerformerType.USER,
-                            'source_id': user.id
-                        }
-                    ]
-                }
-            ]
-        }
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+            ],
+        },
     )
 
     # assert
     assert response.status_code == 400
     message = messages.MSG_PT_0052(
         name=step,
-        api_name=due_date_api_name
+        api_name=due_date_api_name,
     )
     assert response.data['message'] == message
     assert response.data['details']['reason'] == message

@@ -1,19 +1,19 @@
 import pytest
-from src.processes.tests.fixtures import (
-    create_test_user,
-    create_test_template
+
+from src.processes.enums import (
+    FieldType,
+    OwnerType,
+    PerformerType,
 )
-from src.processes.models import (
+from src.processes.models.templates.fields import (
     FieldTemplate,
     FieldTemplateSelection,
-    Workflow
 )
-from src.processes.enums import (
-    PerformerType,
-    FieldType,
-    OwnerType
+from src.processes.models.workflows.workflow import Workflow
+from src.processes.tests.fixtures import (
+    create_test_template,
+    create_test_user,
 )
-
 
 pytestmark = pytest.mark.django_db
 
@@ -23,7 +23,7 @@ class TestUpdateTaskFields:
     def test_update__all_fields__ok(
         self,
         mocker,
-        api_client
+        api_client,
     ):
 
         # arrange
@@ -32,7 +32,7 @@ class TestUpdateTaskFields:
         template = create_test_template(
             user,
             is_active=True,
-            tasks_count=1
+            tasks_count=1,
         )
         task = template.tasks.first()
         field = FieldTemplate.objects.create(
@@ -46,7 +46,7 @@ class TestUpdateTaskFields:
         )
         mocker.patch(
             'src.processes.services.templates.'
-            'integrations.TemplateIntegrationsService.template_updated'
+            'integrations.TemplateIntegrationsService.template_updated',
         )
 
         request_data = {
@@ -55,7 +55,7 @@ class TestUpdateTaskFields:
             'type': FieldType.TEXT,
             'is_required': True,
             'order': 2,
-            'api_name': 'field-name-1'
+            'api_name': 'field-name-1',
         }
 
         # act
@@ -68,7 +68,7 @@ class TestUpdateTaskFields:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'kickoff': {},
@@ -81,13 +81,13 @@ class TestUpdateTaskFields:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': user.id
-                            }
+                                'source_id': user.id,
+                            },
                         ],
-                        'fields': [request_data]
-                    }
-                ]
-            }
+                        'fields': [request_data],
+                    },
+                ],
+            },
         )
         task.refresh_from_db()
         template.refresh_from_db()
@@ -118,7 +118,7 @@ class TestUpdateTaskFields:
     def test_update__delete__ok(
         self,
         mocker,
-        api_client
+        api_client,
     ):
 
         # arrange
@@ -127,7 +127,7 @@ class TestUpdateTaskFields:
         template = create_test_template(
             user,
             is_active=True,
-            tasks_count=1
+            tasks_count=1,
         )
         task = template.tasks.first()
         field = FieldTemplate.objects.create(
@@ -141,7 +141,7 @@ class TestUpdateTaskFields:
         )
         mocker.patch(
             'src.processes.services.templates.'
-            'integrations.TemplateIntegrationsService.template_updated'
+            'integrations.TemplateIntegrationsService.template_updated',
         )
 
         # act
@@ -154,7 +154,7 @@ class TestUpdateTaskFields:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'kickoff': {},
@@ -167,13 +167,13 @@ class TestUpdateTaskFields:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': user.id
-                            }
+                                'source_id': user.id,
+                            },
                         ],
-                        'fields': []
-                    }
-                ]
-            }
+                        'fields': [],
+                    },
+                ],
+            },
         )
 
         # assert
@@ -187,7 +187,7 @@ class TestUpdateTaskFields:
     def test_update__ordering__ok(
         self,
         mocker,
-        api_client
+        api_client,
     ):
 
         """ Fields should be returned in descending ordering (2,1,0) """
@@ -198,7 +198,7 @@ class TestUpdateTaskFields:
         template = create_test_template(
             user,
             is_active=True,
-            tasks_count=1
+            tasks_count=1,
         )
         task = template.tasks.first()
         request_data_3 = {
@@ -209,7 +209,7 @@ class TestUpdateTaskFields:
             'is_required': True,
             'selections': [
                 {'value': 'First'},
-                {'value': 'Second'}
+                {'value': 'Second'},
             ],
         }
         request_data_1 = {
@@ -220,8 +220,8 @@ class TestUpdateTaskFields:
             'is_required': True,
             'selections': [
                 {'value': 'First'},
-                {'value': 'Second'}
-            ]
+                {'value': 'Second'},
+            ],
         }
         request_data_5 = {
             'order': 5,
@@ -230,12 +230,12 @@ class TestUpdateTaskFields:
             'is_required': True,
             'selections': [
                 {'value': 'First'},
-                {'value': 'Second'}
+                {'value': 'Second'},
             ],
         }
         mocker.patch(
             'src.processes.services.templates.'
-            'integrations.TemplateIntegrationsService.template_updated'
+            'integrations.TemplateIntegrationsService.template_updated',
         )
 
         # act
@@ -248,7 +248,7 @@ class TestUpdateTaskFields:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'kickoff': {},
@@ -261,17 +261,17 @@ class TestUpdateTaskFields:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': user.id
-                            }
+                                'source_id': user.id,
+                            },
                         ],
                         'fields': [
                             request_data_3,
                             request_data_5,
                             request_data_1,
-                        ]
-                    }
-                ]
-            }
+                        ],
+                    },
+                ],
+            },
         )
 
         # assert
@@ -287,7 +287,7 @@ class TestUpdateTaskFields:
     def test_update_task_fields_ordering__ok(
         self,
         mocker,
-        api_client
+        api_client,
     ):
 
         # arrange
@@ -296,7 +296,7 @@ class TestUpdateTaskFields:
         template = create_test_template(
             user=user,
             is_active=True,
-            tasks_count=1
+            tasks_count=1,
         )
         template_task = template.tasks.first()
         field_template_1 = FieldTemplate.objects.create(
@@ -332,13 +332,13 @@ class TestUpdateTaskFields:
         response = api_client.post(
             path=f'/templates/{template.id}/run',
             data={
-                'name': 'Test name'
-            }
+                'name': 'Test name',
+            },
         )
         workflow = Workflow.objects.get(id=response.data['id'])
         mocker.patch(
             'src.processes.services.templates.'
-            'integrations.TemplateIntegrationsService.template_updated'
+            'integrations.TemplateIntegrationsService.template_updated',
         )
 
         # act
@@ -351,7 +351,7 @@ class TestUpdateTaskFields:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'kickoff': {
@@ -366,8 +366,8 @@ class TestUpdateTaskFields:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': user.id
-                            }
+                                'source_id': user.id,
+                            },
                         ],
                         'fields': [
                             {
@@ -377,7 +377,7 @@ class TestUpdateTaskFields:
                                 'type': field_template_1.type,
                                 'is_required': field_template_1.is_required,
                                 'order': 0,
-                                'api_name': field_template_1.api_name
+                                'api_name': field_template_1.api_name,
                             },
                             {
                                 'id': field_template_2.id,
@@ -389,9 +389,9 @@ class TestUpdateTaskFields:
                                 'api_name': field_template_2.api_name,
                                 'selections': [
                                     {
-                                        'value': selection_template.value
-                                    }
-                                ]
+                                        'value': selection_template.value,
+                                    },
+                                ],
                             },
                             {
                                 'id': field_template_0.id,
@@ -402,10 +402,10 @@ class TestUpdateTaskFields:
                                 'order': 2,
                                 'api_name': field_template_0.api_name,
                             },
-                        ]
-                    }
-                ]
-            }
+                        ],
+                    },
+                ],
+            },
         )
         task = workflow.tasks.first()
 
@@ -431,7 +431,7 @@ class TestUpdateTaskFields:
         template = create_test_template(
             user=user,
             tasks_count=1,
-            is_active=True
+            is_active=True,
         )
         task = template.tasks.first()
         field = FieldTemplate.objects.create(
@@ -442,11 +442,11 @@ class TestUpdateTaskFields:
             order=1,
             api_name='field-name-1',
             template=template,
-            description=''
+            description='',
         )
         mocker.patch(
             'src.processes.services.templates.'
-            'integrations.TemplateIntegrationsService.template_updated'
+            'integrations.TemplateIntegrationsService.template_updated',
         )
         new_api_name = 'new-api-name'
 
@@ -460,7 +460,7 @@ class TestUpdateTaskFields:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'kickoff': {},
@@ -473,8 +473,8 @@ class TestUpdateTaskFields:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': user.id
-                            }
+                                'source_id': user.id,
+                            },
                         ],
                         'fields': [
                             {
@@ -483,12 +483,12 @@ class TestUpdateTaskFields:
                                 'type': field.type,
                                 'is_required': field.is_required,
                                 'order': field.order,
-                                'api_name': new_api_name
-                            }
-                        ]
-                    }
-                ]
-            }
+                                'api_name': new_api_name,
+                            },
+                        ],
+                    },
+                ],
+            },
         )
 
         # assert
@@ -513,7 +513,7 @@ class TestUpdateTaskFields:
         template = create_test_template(
             user=user,
             tasks_count=1,
-            is_active=True
+            is_active=True,
         )
         task = template.tasks.first()
         field = FieldTemplate.objects.create(
@@ -524,11 +524,11 @@ class TestUpdateTaskFields:
             order=1,
             api_name='field-name-1',
             template=template,
-            description=''
+            description='',
         )
         mocker.patch(
             'src.processes.services.templates.'
-            'integrations.TemplateIntegrationsService.template_updated'
+            'integrations.TemplateIntegrationsService.template_updated',
         )
 
         # act
@@ -541,7 +541,7 @@ class TestUpdateTaskFields:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'kickoff': {},
@@ -554,8 +554,8 @@ class TestUpdateTaskFields:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': user.id
-                            }
+                                'source_id': user.id,
+                            },
                         ],
                         'fields': [
                             {
@@ -564,11 +564,11 @@ class TestUpdateTaskFields:
                                 'type': field.type,
                                 'is_required': field.is_required,
                                 'order': field.order,
-                            }
-                        ]
-                    }
-                ]
-            }
+                            },
+                        ],
+                    },
+                ],
+            },
         )
 
         # assert
@@ -598,7 +598,7 @@ class TestUpdateTaskFields:
         template = create_test_template(
             user=user,
             tasks_count=1,
-            is_active=True
+            is_active=True,
         )
         task = template.tasks.first()
         field = FieldTemplate.objects.create(
@@ -612,7 +612,7 @@ class TestUpdateTaskFields:
         )
         mocker.patch(
             'src.processes.services.templates.'
-            'integrations.TemplateIntegrationsService.template_updated'
+            'integrations.TemplateIntegrationsService.template_updated',
         )
         api_client.token_authenticate(user)
 
@@ -626,7 +626,7 @@ class TestUpdateTaskFields:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'kickoff': {},
@@ -639,8 +639,8 @@ class TestUpdateTaskFields:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': user.id
-                            }
+                                'source_id': user.id,
+                            },
                         ],
                         'fields': [
                             {
@@ -656,11 +656,11 @@ class TestUpdateTaskFields:
                                 'type': field.type,
                                 'order': 2,
                                 'is_required': field.is_required,
-                            }
-                        ]
-                    }
-                ]
-            }
+                            },
+                        ],
+                    },
+                ],
+            },
         )
 
         # assert

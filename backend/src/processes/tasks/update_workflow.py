@@ -1,23 +1,24 @@
-from celery import shared_task
-from django.db import transaction
 from typing import List
 
+from celery import shared_task
+from django.db import transaction
+
+from src.authentication.enums import AuthTokenType
+from src.executor import RawSqlExecutor
 from src.processes.enums import WorkflowStatus
-from src.processes.tasks.tasks import UserModel
-from src.processes.models import (
+from src.processes.models.templates.template import (
     Template,
     TemplateVersion,
-    Workflow,
 )
+from src.processes.models.workflows.workflow import Workflow
 from src.processes.queries import (
+    UpdateWorkflowMemberQuery,
     UpdateWorkflowOwnersQuery,
-    UpdateWorkflowMemberQuery
 )
 from src.processes.services.workflows.workflow_version import (
-        WorkflowUpdateVersionService
-    )
-from src.executor import RawSqlExecutor
-from src.authentication.enums import AuthTokenType
+    WorkflowUpdateVersionService,
+)
+from src.processes.tasks.tasks import UserModel
 
 
 def _update_workflows(
@@ -26,7 +27,7 @@ def _update_workflows(
     updated_by: int,
     sync: bool,
     auth_type: AuthTokenType,
-    is_superuser: bool
+    is_superuser: bool,
 ):
     template = Template.objects.by_id(template_id).first()
     if not template or template.version > version:
@@ -38,16 +39,16 @@ def _update_workflows(
         version=version,
     ).first().data
 
-    for workflow in template.workflows.all().only('id'):
+    for _workflow in template.workflows.all().only('id'):
         with transaction.atomic():
             workflow = Workflow.objects.select_for_update().get(
-                id=workflow.id
+                id=_workflow.id,
             )
             if not workflow.is_version_lower(version):
                 return
             if workflow.status == WorkflowStatus.DONE:
                 template_owner_ids = Template.objects.filter(
-                    id=workflow.template_id
+                    id=workflow.template_id,
                 ).get_owners_as_users()
                 workflow.owners.set(template_owner_ids)
             else:
@@ -56,11 +57,11 @@ def _update_workflows(
                     user=updated_by,
                     auth_type=auth_type,
                     is_superuser=is_superuser,
-                    sync=sync
+                    sync=sync,
                 )
                 version_service.update_from_version(
                     data=version_dict,
-                    version=version
+                    version=version,
                 )
 
 
@@ -72,8 +73,8 @@ def _update_workflows(
         'countdown': 2,
     },
 )
-def update_workflows(*args, **kwargs):
-    _update_workflows(sync=True, *args, **kwargs)
+def update_workflows(**kwargs):
+    _update_workflows(sync=True, **kwargs)
 
 
 @shared_task(
@@ -87,14 +88,14 @@ def update_workflows(*args, **kwargs):
 def update_workflow_owners(template_ids: List[int]):
     with transaction.atomic():
         Workflow.owners.through.objects.filter(
-            workflow__template_id__in=template_ids
+            workflow__template_id__in=template_ids,
         ).delete()
         for template_id in template_ids:
             query_workflow = UpdateWorkflowOwnersQuery(
-                template_id=template_id
+                template_id=template_id,
             )
             RawSqlExecutor.execute(*query_workflow.insert_sql())
             query_member = UpdateWorkflowMemberQuery(
-                template_id=template_id
+                template_id=template_id,
             )
             RawSqlExecutor.execute(*query_member.insert_sql())

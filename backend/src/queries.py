@@ -1,4 +1,4 @@
-from abc import ABC
+from abc import ABC, abstractmethod
 from typing import Dict, Optional, Tuple
 
 
@@ -30,7 +30,7 @@ class OrderByMixin:
         self,
         pre_columns: Optional[str] = None,
         post_columns: Optional[str] = None,
-        default_column: Optional[str] = None
+        default_column: Optional[str] = None,
     ) -> str:
 
         """ Returns ORDER BY clause for SQL query
@@ -63,6 +63,7 @@ class OrderByMixin:
 
 class SqlQueryObject(ABC):
 
+    @abstractmethod
     def get_sql(self) -> Tuple[str, dict]:
         pass
 

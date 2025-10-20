@@ -1,17 +1,17 @@
 import pytest
-from src.utils.validation import ErrorCode
-from src.processes.tests.fixtures import (
-    create_test_admin,
-    create_test_account,
-    create_test_template,
-    create_test_user,
-    create_test_owner,
-    create_test_template_preset,
-)
+
+from src.authentication.enums import AuthTokenType
 from src.processes.enums import PresetType
 from src.processes.services.exceptions import TemplatePresetServiceException
-from src.authentication.enums import AuthTokenType
-
+from src.processes.tests.fixtures import (
+    create_test_account,
+    create_test_admin,
+    create_test_owner,
+    create_test_template,
+    create_test_template_preset,
+    create_test_user,
+)
+from src.utils.validation import ErrorCode
 
 pytestmark = pytest.mark.django_db
 
@@ -34,15 +34,15 @@ class TestTemplatePresetsCreateView:
                 {
                     'api_name': 'field_1',
                     'order': 1,
-                    'width': 200
-                }
-            ]
+                    'width': 200,
+                },
+            ],
         }
 
         service_init_mock = mocker.patch(
             'src.processes.services.templates.preset.'
             'TemplatePresetService.__init__',
-            return_value=None
+            return_value=None,
         )
 
         preset = create_test_template_preset(
@@ -51,30 +51,30 @@ class TestTemplatePresetsCreateView:
             name=request_data['name'],
             is_default=request_data['is_default'],
             type=request_data['type'],
-            fields=request_data['fields']
+            fields=request_data['fields'],
         )
 
         service_create_mock = mocker.patch(
             'src.processes.services.templates.preset.'
             'TemplatePresetService.create',
-            return_value=preset
+            return_value=preset,
         )
 
         # act
         response = api_client.post(
             f'/templates/{template.id}/preset',
-            data=request_data
+            data=request_data,
         )
 
         # assert
         service_init_mock.assert_called_once_with(
             user=user,
             is_superuser=False,
-            auth_type=AuthTokenType.USER
+            auth_type=AuthTokenType.USER,
         )
         service_create_mock.assert_called_once_with(
             template=template,
-            **request_data
+            **request_data,
         )
         assert response.status_code == 200
         data = response.data
@@ -98,13 +98,13 @@ class TestTemplatePresetsCreateView:
             'name': 'Empty Preset',
             'is_default': False,
             'type': PresetType.PERSONAL,
-            'fields': []
+            'fields': [],
         }
 
         service_init_mock = mocker.patch(
             'src.processes.services.templates.preset.'
             'TemplatePresetService.__init__',
-            return_value=None
+            return_value=None,
         )
 
         preset = create_test_template_preset(
@@ -113,30 +113,30 @@ class TestTemplatePresetsCreateView:
             name=request_data['name'],
             is_default=request_data['is_default'],
             type=request_data['type'],
-            fields=request_data['fields']
+            fields=request_data['fields'],
         )
 
         service_create_mock = mocker.patch(
             'src.processes.services.templates.preset.'
             'TemplatePresetService.create',
-            return_value=preset
+            return_value=preset,
         )
 
         # act
         response = api_client.post(
             f'/templates/{template.id}/preset',
-            data=request_data
+            data=request_data,
         )
 
         # assert
         service_init_mock.assert_called_once_with(
             user=user,
             is_superuser=False,
-            auth_type=AuthTokenType.USER
+            auth_type=AuthTokenType.USER,
         )
         service_create_mock.assert_called_once_with(
             template=template,
-            **request_data
+            **request_data,
         )
         assert response.status_code == 200
         data = response.data
@@ -160,13 +160,13 @@ class TestTemplatePresetsCreateView:
             'name': 'Empty Preset',
             'is_default': False,
             'type': PresetType.ACCOUNT,
-            'fields': []
+            'fields': [],
         }
 
         service_init_mock = mocker.patch(
             'src.processes.services.templates.preset.'
             'TemplatePresetService.__init__',
-            return_value=None
+            return_value=None,
         )
 
         preset = create_test_template_preset(
@@ -175,30 +175,30 @@ class TestTemplatePresetsCreateView:
             name=request_data['name'],
             is_default=request_data['is_default'],
             type=request_data['type'],
-            fields=request_data['fields']
+            fields=request_data['fields'],
         )
 
         service_create_mock = mocker.patch(
             'src.processes.services.templates.preset.'
             'TemplatePresetService.create',
-            return_value=preset
+            return_value=preset,
         )
 
         # act
         response = api_client.post(
             f'/templates/{template.id}/preset',
-            data=request_data
+            data=request_data,
         )
 
         # assert
         service_init_mock.assert_called_once_with(
             user=user,
             is_superuser=False,
-            auth_type=AuthTokenType.USER
+            auth_type=AuthTokenType.USER,
         )
         service_create_mock.assert_called_once_with(
             template=template,
-            **request_data
+            **request_data,
         )
         assert response.status_code == 200
         data = response.data
@@ -213,7 +213,7 @@ class TestTemplatePresetsCreateView:
     def test_create__service_exception__validation_error(
         self,
         api_client,
-        mocker
+        mocker,
     ):
         # arrange
         account = create_test_account()
@@ -226,26 +226,26 @@ class TestTemplatePresetsCreateView:
             'name': 'Test Preset',
             'is_default': False,
             'type': PresetType.PERSONAL,
-            'fields': []
+            'fields': [],
         }
 
         service_init_mock = mocker.patch(
             'src.processes.services.templates.preset.'
             'TemplatePresetService.__init__',
-            return_value=None
+            return_value=None,
         )
 
         error_message = 'Service error occurred'
         service_create_mock = mocker.patch(
             'src.processes.services.templates.preset.'
             'TemplatePresetService.create',
-            side_effect=TemplatePresetServiceException(error_message)
+            side_effect=TemplatePresetServiceException(error_message),
         )
 
         # act
         response = api_client.post(
             f'/templates/{template.id}/preset',
-            data=data
+            data=data,
         )
 
         # assert
@@ -253,11 +253,11 @@ class TestTemplatePresetsCreateView:
         service_init_mock.assert_called_once_with(
             user=user,
             is_superuser=False,
-            auth_type=AuthTokenType.USER
+            auth_type=AuthTokenType.USER,
         )
         service_create_mock.assert_called_once_with(
             template=template,
-            **data
+            **data,
         )
 
         assert response.data['code'] == ErrorCode.VALIDATION_ERROR
@@ -275,24 +275,24 @@ class TestTemplatePresetsCreateView:
             'name': 'Test Preset',
             'is_default': False,
             'type': 'invalid_type',
-            'fields': []
+            'fields': [],
         }
 
         service_init_mock = mocker.patch(
             'src.processes.services.templates.preset.'
             'TemplatePresetService.__init__',
-            return_value=None
+            return_value=None,
         )
 
         service_create_mock = mocker.patch(
             'src.processes.services.templates.preset.'
-            'TemplatePresetService.create'
+            'TemplatePresetService.create',
         )
 
         # act
         response = api_client.post(
             f'/templates/{template.id}/preset',
-            data=data
+            data=data,
         )
 
         # assert
@@ -305,7 +305,7 @@ class TestTemplatePresetsCreateView:
     def test_create__template_not_found__permission_denied(
         self,
         api_client,
-        mocker
+        mocker,
     ):
         # arrange
         account = create_test_account()
@@ -317,24 +317,24 @@ class TestTemplatePresetsCreateView:
             'name': 'Test Preset',
             'is_default': False,
             'type': PresetType.PERSONAL,
-            'fields': []
+            'fields': [],
         }
 
         service_init_mock = mocker.patch(
             'src.processes.services.templates.preset.'
             'TemplatePresetService.__init__',
-            return_value=None
+            return_value=None,
         )
 
         service_create_mock = mocker.patch(
             'src.processes.services.templates.preset.'
-            'TemplatePresetService.create'
+            'TemplatePresetService.create',
         )
 
         # act
         response = api_client.post(
             f'/templates/{fake_template_id}/preset',
-            data=data
+            data=data,
         )
 
         # assert
@@ -351,24 +351,24 @@ class TestTemplatePresetsCreateView:
             'name': 'Test Preset',
             'is_default': False,
             'type': PresetType.PERSONAL,
-            'fields': []
+            'fields': [],
         }
 
         service_init_mock = mocker.patch(
             'src.processes.services.templates.preset.'
             'TemplatePresetService.__init__',
-            return_value=None
+            return_value=None,
         )
 
         service_create_mock = mocker.patch(
             'src.processes.services.templates.preset.'
-            'TemplatePresetService.create'
+            'TemplatePresetService.create',
         )
 
         # act
         response = api_client.post(
             f'/templates/{template.id}/preset',
-            data=data
+            data=data,
         )
 
         # assert
@@ -379,7 +379,7 @@ class TestTemplatePresetsCreateView:
     def test_create__different_account__permission_denied(
         self,
         api_client,
-        mocker
+        mocker,
     ):
         # arrange
         account1 = create_test_account()
@@ -394,24 +394,24 @@ class TestTemplatePresetsCreateView:
             'name': 'Test Preset',
             'is_default': False,
             'type': PresetType.PERSONAL,
-            'fields': []
+            'fields': [],
         }
 
         service_init_mock = mocker.patch(
             'src.processes.services.templates.preset.'
             'TemplatePresetService.__init__',
-            return_value=None
+            return_value=None,
         )
 
         service_create_mock = mocker.patch(
             'src.processes.services.templates.preset.'
-            'TemplatePresetService.create'
+            'TemplatePresetService.create',
         )
 
         # act
         response = api_client.post(
             f'/templates/{template.id}/preset',
-            data=data
+            data=data,
         )
 
         # assert
@@ -431,7 +431,7 @@ class TestTemplatePresetsCreateView:
             'name': 'Owner Preset',
             'is_default': False,
             'type': PresetType.ACCOUNT,
-            'fields': []
+            'fields': [],
         }
 
         preset = create_test_template_preset(
@@ -440,7 +440,7 @@ class TestTemplatePresetsCreateView:
             name=request_data['name'],
             is_default=request_data['is_default'],
             type=request_data['type'],
-            fields=request_data['fields']
+            fields=request_data['fields'],
         )
 
         mock_service = mocker.MagicMock()
@@ -448,24 +448,24 @@ class TestTemplatePresetsCreateView:
 
         service_class_mock = mocker.patch(
             'src.processes.views.template.TemplatePresetService',
-            return_value=mock_service
+            return_value=mock_service,
         )
 
         # act
         response = api_client.post(
             f'/templates/{template.id}/preset',
-            data=request_data
+            data=request_data,
         )
 
         # assert
         service_class_mock.assert_called_once_with(
             user=account_owner,
             is_superuser=False,
-            auth_type=AuthTokenType.USER
+            auth_type=AuthTokenType.USER,
         )
         mock_service.create.assert_called_once_with(
             template=template,
-            **request_data
+            **request_data,
         )
         assert response.status_code == 200
         data = response.data
@@ -485,7 +485,7 @@ class TestTemplatePresetsCreateView:
             account=account,
             email='regular@test.com',
             is_admin=False,
-            is_account_owner=False
+            is_account_owner=False,
         )
         template = create_test_template(admin_user, is_active=True)
 
@@ -495,17 +495,17 @@ class TestTemplatePresetsCreateView:
             'name': 'Regular User Preset',
             'is_default': False,
             'type': PresetType.PERSONAL,
-            'fields': []
+            'fields': [],
         }
 
         service_class_mock = mocker.patch(
-            'src.processes.views.template.TemplatePresetService'
+            'src.processes.views.template.TemplatePresetService',
         )
 
         # act
         response = api_client.post(
             f'/templates/{template.id}/preset',
-            data=request_data
+            data=request_data,
         )
 
         # assert
@@ -515,14 +515,14 @@ class TestTemplatePresetsCreateView:
     def test_create__admin_not_template_owner__permission_denied(
         self,
         api_client,
-        mocker
+        mocker,
     ):
         # arrange
         account = create_test_account()
         admin = create_test_admin(account=account)
         template_owner = create_test_admin(
             account=account,
-            email='template_owner@test.com'
+            email='template_owner@test.com',
         )
         template = create_test_template(template_owner, is_active=True)
 
@@ -532,17 +532,17 @@ class TestTemplatePresetsCreateView:
             'name': 'Test Preset',
             'is_default': False,
             'type': PresetType.PERSONAL,
-            'fields': []
+            'fields': [],
         }
 
         service_class_mock = mocker.patch(
-            'src.processes.views.template.TemplatePresetService'
+            'src.processes.views.template.TemplatePresetService',
         )
 
         # act
         response = api_client.post(
             f'/templates/{template.id}/preset',
-            data=request_data
+            data=request_data,
         )
 
         # assert
@@ -552,7 +552,7 @@ class TestTemplatePresetsCreateView:
     def test_create__account_owner_and_template_owner__ok(
         self,
         api_client,
-        mocker
+        mocker,
     ):
         # arrange
         account = create_test_account()
@@ -565,7 +565,7 @@ class TestTemplatePresetsCreateView:
             'name': 'Test Preset',
             'is_default': False,
             'type': PresetType.PERSONAL,
-            'fields': []
+            'fields': [],
         }
 
         preset = create_test_template_preset(
@@ -573,11 +573,11 @@ class TestTemplatePresetsCreateView:
             author=account_owner,
             name=request_data['name'],
             is_default=request_data['is_default'],
-            type=request_data['type']
+            type=request_data['type'],
         )
 
         service_class_mock = mocker.patch(
-            'src.processes.views.template.TemplatePresetService'
+            'src.processes.views.template.TemplatePresetService',
         )
         mock_service = mocker.MagicMock()
         mock_service.create.return_value = preset
@@ -586,7 +586,7 @@ class TestTemplatePresetsCreateView:
         # act
         response = api_client.post(
             f'/templates/{template.id}/preset',
-            data=request_data
+            data=request_data,
         )
 
         # assert
@@ -594,9 +594,9 @@ class TestTemplatePresetsCreateView:
         service_class_mock.assert_called_once_with(
             user=account_owner,
             is_superuser=False,
-            auth_type=AuthTokenType.USER
+            auth_type=AuthTokenType.USER,
         )
         mock_service.create.assert_called_once_with(
             template=template,
-            **request_data
+            **request_data,
         )

@@ -1,6 +1,8 @@
-from typing import Optional
-from typing_extensions import TypedDict
 from dataclasses import dataclass
+from typing import Optional
+
+from typing_extensions import TypedDict
+
 from src.accounts.enums import BillingPlanType
 from src.payment.models import Price
 

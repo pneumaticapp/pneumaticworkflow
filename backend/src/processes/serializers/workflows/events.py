@@ -1,20 +1,18 @@
 from rest_framework import serializers
+
+from src.generics.fields import TimeStampField
 from src.processes.enums import WorkflowEventType
-from src.processes.models import (
-    Task,
-    Delay,
-    Workflow,
-    WorkflowEvent,
+from src.processes.models.workflows.event import WorkflowEvent
+from src.processes.models.workflows.task import Delay, Task
+from src.processes.models.workflows.workflow import Workflow
+from src.processes.serializers.file_attachment import (
+    FileAttachmentSerializer,
 )
 from src.processes.serializers.workflows.field import (
     TaskFieldSerializer,
 )
-from src.processes.serializers.file_attachment import (
-    FileAttachmentSerializer
-)
-from src.generics.fields import TimeStampField
 from src.processes.serializers.workflows.task_performer import (
-    TaskUserGroupPerformerSerializer
+    TaskUserGroupPerformerSerializer,
 )
 
 
@@ -54,7 +52,7 @@ class DelayEventJsonSerializer(serializers.ModelSerializer):
     end_date_tsp = TimeStampField(source='end_date', read_only=True)
     estimated_end_date_tsp = TimeStampField(
         source='estimated_end_date',
-        read_only=True
+        read_only=True,
     )
 
 
@@ -75,7 +73,7 @@ class TaskEventJsonSerializer(serializers.ModelSerializer):
 
     performers = TaskUserGroupPerformerSerializer(
         many=True,
-        source='exclude_directly_deleted_taskperformer_set'
+        source='exclude_directly_deleted_taskperformer_set',
     )
     output = serializers.SerializerMethodField()
     due_date_tsp = TimeStampField(source='due_date')
@@ -85,14 +83,14 @@ class TaskEventJsonSerializer(serializers.ModelSerializer):
         if self.context['event_type'] == WorkflowEventType.TASK_COMPLETE:
             return TaskFieldSerializer(
                 instance=instance.output.all(),
-                many=True
+                many=True,
             ).data
         return None
 
     def get_sub_workflow(self, instance):
         if self.context['event_type'] == WorkflowEventType.SUB_WORKFLOW_RUN:
             return SubWorkflowEventSerializer(
-                instance=self.context['sub_workflow']
+                instance=self.context['sub_workflow'],
             ).data
         return None
 

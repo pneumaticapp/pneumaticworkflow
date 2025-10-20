@@ -1,8 +1,10 @@
 from typing import List
+
 from django.contrib.auth import get_user_model
-from src.processes.models import (
-    Rule,
+
+from src.processes.models.workflows.conditions import (
     Predicate,
+    Rule,
 )
 
 UserModel = get_user_model()
@@ -32,7 +34,7 @@ class ConditionMixin:
     @staticmethod
     def _create_predicates(
         rules: List[Rule],
-        rules_tree: dict
+        rules_tree: dict,
     ):
 
         # TODO Move to PredicateService

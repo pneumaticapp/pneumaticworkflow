@@ -1,30 +1,31 @@
 import json
+
 import pytest
 from rest_framework_simplejwt.exceptions import (
     AuthenticationFailed,
-    InvalidToken
+    InvalidToken,
 )
-from src.authentication.services import GuestJWTAuthService
-from src.authentication.tokens import GuestToken
-from src.processes.tests.fixtures import (
-    create_test_workflow,
-    create_test_account,
-    create_test_user,
-    create_test_guest
-)
-from src.processes.enums import (
-    WorkflowStatus,
-    DirectlyStatus
-)
-from src.authentication.enums import (
-    GuestCachedStatus
-)
-from src.accounts.enums import (
-    UserStatus
-)
-from src.processes.models import TaskPerformer
-from src.authentication import messages
 
+from src.accounts.enums import (
+    UserStatus,
+)
+from src.authentication import messages
+from src.authentication.enums import (
+    GuestCachedStatus,
+)
+from src.authentication.services.guest_auth import GuestJWTAuthService
+from src.authentication.tokens import GuestToken
+from src.processes.enums import (
+    DirectlyStatus,
+    WorkflowStatus,
+)
+from src.processes.models.workflows.task import TaskPerformer
+from src.processes.tests.fixtures import (
+    create_test_account,
+    create_test_guest,
+    create_test_user,
+    create_test_workflow,
+)
 
 pytestmark = pytest.mark.django_db
 
@@ -48,7 +49,7 @@ class TestGuestJWTAuthService:
         str_token = GuestJWTAuthService.get_str_token(
             task_id=task.id,
             user_id=guest.id,
-            account_id=account.id
+            account_id=account.id,
         )
 
         # assert
@@ -71,13 +72,13 @@ class TestGuestJWTAuthService:
         task = workflow.tasks.first()
         TaskPerformer.objects.create(
             task_id=task.id,
-            user_id=guest.id
+            user_id=guest.id,
         )
 
         str_token = GuestJWTAuthService.get_str_token(
             task_id=task.id,
             user_id=guest.id,
-            account_id=account.id
+            account_id=account.id,
         )
         request = mocker.Mock(
             headers={'X-Guest-Authorization': str_token},
@@ -108,13 +109,13 @@ class TestGuestJWTAuthService:
         task = workflow.tasks.first()
         TaskPerformer.objects.create(
             task_id=task.id,
-            user_id=guest.id
+            user_id=guest.id,
         )
 
         str_token = GuestJWTAuthService.get_str_token(
             task_id=task.id,
             user_id=guest.id,
-            account_id=account.id
+            account_id=account.id,
         )
         request = mocker.Mock(
             headers={'X-Guest-Authorization': f'Bearer {str_token}'},
@@ -142,12 +143,12 @@ class TestGuestJWTAuthService:
         task = workflow.tasks.first()
         TaskPerformer.objects.create(
             task_id=task.id,
-            user_id=guest.id
+            user_id=guest.id,
         )
 
         str_invalid_token = 'qwesdsgr.gdfhywefsdd.aeqw3ryr'
         request = mocker.Mock(
-            headers={'X-Guest-Authorization': str_invalid_token}
+            headers={'X-Guest-Authorization': str_invalid_token},
         )
 
         # act
@@ -175,7 +176,7 @@ class TestGuestJWTAuthService:
         task = workflow.tasks.first()
         TaskPerformer.objects.create(
             task_id=task.id,
-            user_id=guest.id
+            user_id=guest.id,
         )
 
         request = mocker.Mock(
@@ -208,16 +209,16 @@ class TestGuestJWTAuthService:
         task = workflow.tasks.first()
         TaskPerformer.objects.create(
             task_id=task.id,
-            user_id=guest.id
+            user_id=guest.id,
         )
 
         str_invalid_token = GuestJWTAuthService.get_str_token(
             task_id=task.id,
             user_id=guest.id,
-            account_id=account.id
+            account_id=account.id,
         )
         request = mocker.Mock(
-            headers={'X-Guest-Authorization': str_invalid_token}
+            headers={'X-Guest-Authorization': str_invalid_token},
         )
 
         # act
@@ -242,15 +243,15 @@ class TestGuestJWTAuthService:
         TaskPerformer.objects.create(
             task_id=task.id,
             user_id=guest.id,
-            directly_status=DirectlyStatus.DELETED
+            directly_status=DirectlyStatus.DELETED,
         )
         str_invalid_token = GuestJWTAuthService.get_str_token(
             task_id=task.id,
             user_id=guest.id,
-            account_id=account.id
+            account_id=account.id,
         )
         request = mocker.Mock(
-            headers={'X-Guest-Authorization': str_invalid_token}
+            headers={'X-Guest-Authorization': str_invalid_token},
         )
 
         # act
@@ -281,10 +282,10 @@ class TestGuestJWTAuthService:
         str_invalid_token = GuestJWTAuthService.get_str_token(
             task_id=task.id,
             user_id=guest.id,
-            account_id=account.id
+            account_id=account.id,
         )
         request = mocker.Mock(
-            headers={'X-Guest-Authorization': str_invalid_token}
+            headers={'X-Guest-Authorization': str_invalid_token},
         )
 
         # act
@@ -304,11 +305,11 @@ class TestGuestJWTAuthService:
         cache_get_mock = mocker.patch(
             'src.authentication.services.guest_auth.'
             'GuestJWTAuthService.cache.get',
-            return_value=None
+            return_value=None,
         )
         cache_set_mock = mocker.patch(
             'src.authentication.services.guest_auth.'
-            'GuestJWTAuthService.cache.set'
+            'GuestJWTAuthService.cache.set',
         )
         service = GuestJWTAuthService()
 
@@ -316,13 +317,13 @@ class TestGuestJWTAuthService:
         service._set_guest_cache(
             task_id=task_id,
             user_id=user_id,
-            status=GuestCachedStatus.ACTIVE
+            status=GuestCachedStatus.ACTIVE,
         )
 
         # assert
         cache_get_mock.assert_called_once_with(key, {})
         cache_set_mock.assert_called_once_with(
-            key, result_json_value, service.CACHE_TIMEOUT
+            key, result_json_value, service.CACHE_TIMEOUT,
         )
 
     def test_set_guest_cache__update_existent__ok(self, mocker):
@@ -333,20 +334,20 @@ class TestGuestJWTAuthService:
         key = f'task-{task_id}-guests'
         cache_json_value = json.dumps({
             user_id: GuestCachedStatus.INACTIVE,
-            45: GuestCachedStatus.INACTIVE
+            45: GuestCachedStatus.INACTIVE,
         })
         result_json_value = json.dumps({
             user_id: GuestCachedStatus.ACTIVE,
-            45: GuestCachedStatus.INACTIVE
+            45: GuestCachedStatus.INACTIVE,
         })
         cache_get_mock = mocker.patch(
             'src.authentication.services.guest_auth.'
             'GuestJWTAuthService.cache.get',
-            return_value=cache_json_value
+            return_value=cache_json_value,
         )
         cache_set_mock = mocker.patch(
             'src.authentication.services.guest_auth.'
-            'GuestJWTAuthService.cache.set'
+            'GuestJWTAuthService.cache.set',
         )
         service = GuestJWTAuthService()
 
@@ -354,13 +355,13 @@ class TestGuestJWTAuthService:
         service._set_guest_cache(
             task_id=task_id,
             user_id=user_id,
-            status=GuestCachedStatus.ACTIVE
+            status=GuestCachedStatus.ACTIVE,
         )
 
         # assert
         cache_get_mock.assert_called_once_with(key, {})
         cache_set_mock.assert_called_once_with(
-            key, result_json_value, service.CACHE_TIMEOUT
+            key, result_json_value, service.CACHE_TIMEOUT,
         )
 
     def test_set_guest_cache__for_all_guest_users__ok(self, mocker):
@@ -370,16 +371,16 @@ class TestGuestJWTAuthService:
         key = f'task-{task_id}-guests'
         cache_json_value = json.dumps({
             44: GuestCachedStatus.INACTIVE,
-            45: GuestCachedStatus.INACTIVE
+            45: GuestCachedStatus.INACTIVE,
         })
         result_json_value = json.dumps({
             44: GuestCachedStatus.ACTIVE,
-            45: GuestCachedStatus.ACTIVE
+            45: GuestCachedStatus.ACTIVE,
         })
         cache_get_mock = mocker.patch(
             'src.authentication.services.guest_auth'
             '.GuestJWTAuthService.cache.get',
-            return_value=cache_json_value
+            return_value=cache_json_value,
         )
         cache_set_mock = mocker.patch(
             'src.authentication.services.guest_auth'
@@ -390,13 +391,13 @@ class TestGuestJWTAuthService:
         # act
         service._set_guest_cache(
             task_id=task_id,
-            status=GuestCachedStatus.ACTIVE
+            status=GuestCachedStatus.ACTIVE,
         )
 
         # assert
         cache_get_mock.assert_called_once_with(key, {})
         cache_set_mock.assert_called_once_with(
-            key, result_json_value, service.CACHE_TIMEOUT
+            key, result_json_value, service.CACHE_TIMEOUT,
         )
 
     def test_deactivate_task_guest_cache__ok(self, mocker):
@@ -405,21 +406,21 @@ class TestGuestJWTAuthService:
         task_id = 55
         user_id = 45
         set_guest_cache_mock = mocker.patch(
-            'src.authentication.services.GuestJWTAuthService'
-            '._set_guest_cache'
+            'src.authentication.services.guest_auth.GuestJWTAuthService'
+            '._set_guest_cache',
         )
 
         # act
         GuestJWTAuthService.deactivate_task_guest_cache(
             task_id=task_id,
-            user_id=user_id
+            user_id=user_id,
         )
 
         # assert
         set_guest_cache_mock.assert_called_once_with(
             task_id=task_id,
             user_id=user_id,
-            status=GuestCachedStatus.INACTIVE
+            status=GuestCachedStatus.INACTIVE,
         )
 
     def test_activate_task_guest_cache__ok(self, mocker):
@@ -428,21 +429,21 @@ class TestGuestJWTAuthService:
         task_id = 55
         user_id = 45
         set_guest_cache_mock = mocker.patch(
-            'src.authentication.services.GuestJWTAuthService'
-            '._set_guest_cache'
+            'src.authentication.services.guest_auth.GuestJWTAuthService'
+            '._set_guest_cache',
         )
 
         # act
         GuestJWTAuthService.activate_task_guest_cache(
             task_id=task_id,
-            user_id=user_id
+            user_id=user_id,
         )
 
         # assert
         set_guest_cache_mock.assert_called_once_with(
             task_id=task_id,
             user_id=user_id,
-            status=GuestCachedStatus.ACTIVE
+            status=GuestCachedStatus.ACTIVE,
         )
 
     def test_get_cached_user__active_and_user_exists__ok(self, mocker):
@@ -459,7 +460,7 @@ class TestGuestJWTAuthService:
         token = service.get_token(
             task_id=task_id,
             user_id=guest.id,
-            account_id=guest.account_id
+            account_id=guest.account_id,
         )
         cache_json_value = json.dumps({
             guest.id: GuestCachedStatus.ACTIVE,
@@ -467,16 +468,16 @@ class TestGuestJWTAuthService:
         cache_get_mock = mocker.patch(
             'src.authentication.services.guest_auth.'
             'GuestJWTAuthService.cache.get',
-            return_value=cache_json_value
+            return_value=cache_json_value,
         )
         cache_set_mock = mocker.patch(
             'src.authentication.services.guest_auth.'
-            'GuestJWTAuthService.cache.set'
+            'GuestJWTAuthService.cache.set',
         )
 
         # act
         user = service.get_cached_user(
-            validated_token=token
+            validated_token=token,
         )
 
         # assert
@@ -486,7 +487,7 @@ class TestGuestJWTAuthService:
 
     def test_get_cached_user__active_and_not_user_exists__raise_exception(
         self,
-        mocker
+        mocker,
     ):
 
         # arrange
@@ -498,7 +499,7 @@ class TestGuestJWTAuthService:
         token = service.get_token(
             task_id=task_id,
             user_id=user_id,
-            account_id=account_id
+            account_id=account_id,
         )
         cache_json_value = json.dumps({
             user_id: GuestCachedStatus.ACTIVE,
@@ -509,11 +510,11 @@ class TestGuestJWTAuthService:
         cache_get_mock = mocker.patch(
             'src.authentication.services.guest_auth.'
             'GuestJWTAuthService.cache.get',
-            return_value=cache_json_value
+            return_value=cache_json_value,
         )
         cache_set_mock = mocker.patch(
             'src.authentication.services.guest_auth.'
-            'GuestJWTAuthService.cache.set'
+            'GuestJWTAuthService.cache.set',
         )
 
         # act
@@ -525,12 +526,12 @@ class TestGuestJWTAuthService:
         cache_set_mock.assert_called_once_with(
             key,
             result_json_value,
-            service.CACHE_TIMEOUT
+            service.CACHE_TIMEOUT,
         )
 
     def test_get_cached_user__inactive__raise_exception(
         self,
-        mocker
+        mocker,
     ):
 
         # arrange
@@ -542,7 +543,7 @@ class TestGuestJWTAuthService:
         token = service.get_token(
             task_id=task_id,
             user_id=user_id,
-            account_id=account_id
+            account_id=account_id,
         )
         cache_json_value = json.dumps({
             user_id: GuestCachedStatus.INACTIVE,
@@ -550,11 +551,11 @@ class TestGuestJWTAuthService:
         cache_get_mock = mocker.patch(
             'src.authentication.services.guest_auth.'
             'GuestJWTAuthService.cache.get',
-            return_value=cache_json_value
+            return_value=cache_json_value,
         )
         cache_set_mock = mocker.patch(
             'src.authentication.services.guest_auth.'
-            'GuestJWTAuthService.cache.set'
+            'GuestJWTAuthService.cache.set',
         )
 
         # act
@@ -579,7 +580,7 @@ class TestGuestJWTAuthService:
         token = service.get_token(
             task_id=task_id,
             user_id=guest.id,
-            account_id=guest.account_id
+            account_id=guest.account_id,
         )
         result_json_value = json.dumps({
             guest.id: GuestCachedStatus.ACTIVE,
@@ -587,21 +588,21 @@ class TestGuestJWTAuthService:
         cache_get_mock = mocker.patch(
             'src.authentication.services.guest_auth.'
             'GuestJWTAuthService.cache.get',
-            return_value=None
+            return_value=None,
         )
         cache_set_mock = mocker.patch(
             'src.authentication.services.guest_auth.'
-            'GuestJWTAuthService.cache.set'
+            'GuestJWTAuthService.cache.set',
         )
         get_user_mock = mocker.patch(
             'src.authentication.services.guest_auth.'
             'GuestJWTAuthService.get_user',
-            return_value=guest
+            return_value=guest,
         )
 
         # act
         user = service.get_cached_user(
-            validated_token=token
+            validated_token=token,
         )
 
         # assert
@@ -610,13 +611,13 @@ class TestGuestJWTAuthService:
         cache_set_mock.assert_called_once_with(
             key,
             result_json_value,
-            service.CACHE_TIMEOUT
+            service.CACHE_TIMEOUT,
         )
         get_user_mock.assert_called_once_with(token)
 
     def test_get_cached_user__not_in_cache_not_in_db__raise_exception(
         self,
-        mocker
+        mocker,
     ):
 
         # arrange
@@ -628,7 +629,7 @@ class TestGuestJWTAuthService:
         token = service.get_token(
             task_id=task_id,
             user_id=user_id,
-            account_id=account_id
+            account_id=account_id,
         )
         result_json_value = json.dumps({
             user_id: GuestCachedStatus.INACTIVE,
@@ -636,16 +637,16 @@ class TestGuestJWTAuthService:
         cache_get_mock = mocker.patch(
             'src.authentication.services.guest_auth.'
             'GuestJWTAuthService.cache.get',
-            return_value=None
+            return_value=None,
         )
         cache_set_mock = mocker.patch(
             'src.authentication.services.guest_auth.'
-            'GuestJWTAuthService.cache.set'
+            'GuestJWTAuthService.cache.set',
         )
         get_user_mock = mocker.patch(
             'src.authentication.services.guest_auth.'
             'GuestJWTAuthService.get_user',
-            side_effect=AuthenticationFailed()
+            side_effect=AuthenticationFailed(),
         )
 
         # act
@@ -657,7 +658,7 @@ class TestGuestJWTAuthService:
         cache_set_mock.assert_called_once_with(
             key,
             result_json_value,
-            service.CACHE_TIMEOUT
+            service.CACHE_TIMEOUT,
         )
         get_user_mock.assert_called_once_with(token)
 
@@ -667,20 +668,20 @@ class TestGuestJWTAuthService:
         account = create_test_account()
         account_owner = create_test_user(
             account=account,
-            is_account_owner=True
+            is_account_owner=True,
         )
         guest = create_test_guest(account=account)
         workflow = create_test_workflow(user=account_owner, tasks_count=2)
         task_1 = workflow.tasks.get(number=1)
         TaskPerformer.objects.create(
             task_id=task_1.id,
-            user_id=guest.id
+            user_id=guest.id,
         )
         service = GuestJWTAuthService()
         token = service.get_token(
             task_id=task_1.id,
             user_id=guest.id,
-            account_id=account.id
+            account_id=account.id,
         )
 
         # act
@@ -695,20 +696,20 @@ class TestGuestJWTAuthService:
         account = create_test_account()
         account_owner = create_test_user(
             account=account,
-            is_account_owner=True
+            is_account_owner=True,
         )
         guest = create_test_guest(account=account)
         workflow = create_test_workflow(user=account_owner, tasks_count=2)
         task_2 = workflow.tasks.get(number=2)
         TaskPerformer.objects.create(
             task_id=task_2.id,
-            user_id=guest.id
+            user_id=guest.id,
         )
         service = GuestJWTAuthService()
         token = service.get_token(
             task_id=task_2.id,
             user_id=guest.id,
-            account_id=account.id
+            account_id=account.id,
         )
 
         # act

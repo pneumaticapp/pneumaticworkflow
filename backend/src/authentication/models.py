@@ -1,10 +1,11 @@
-from django.db import models
 from datetime import timedelta
-from django.utils import timezone
-from django.contrib.auth import get_user_model
-from src.generics.models import SoftDeleteModel
-from src.accounts.enums import SourceType
 
+from django.contrib.auth import get_user_model
+from django.db import models
+from django.utils import timezone
+
+from src.accounts.enums import SourceType
+from src.generics.models import SoftDeleteModel
 
 UserModel = get_user_model()
 
@@ -18,7 +19,7 @@ class AccessToken(SoftDeleteModel):
                 fields=['user_id', 'source'],
                 condition=(models.Q(is_deleted=False)),
                 name='auth_access_token_user_unique',
-            )
+            ),
         ]
 
     access_token = models.CharField(max_length=3000)
@@ -28,11 +29,11 @@ class AccessToken(SoftDeleteModel):
     user = models.ForeignKey(
         UserModel,
         on_delete=models.CASCADE,
-        related_name='access_tokens'
+        related_name='access_tokens',
     )
     source = models.CharField(
         max_length=255,
-        choices=SourceType.CHOICES
+        choices=SourceType.CHOICES,
     )
     date_updated = models.DateTimeField(auto_now=True)
 

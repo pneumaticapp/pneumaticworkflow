@@ -2,17 +2,17 @@ from datetime import datetime
 from typing import Optional
 
 from django.utils import timezone
-from src.processes.enums import TemplateType
+
 from src.accounts.enums import UserStatus
-from src.processes.enums import WorkflowStatus
+from src.generics.mixins.queries import DereferencedOwnersMixin
+from src.processes.enums import TemplateType, WorkflowStatus
 from src.queries import SqlQueryObject
 from src.reports.queries.mixins import (
     WorkflowsMixin,
     WorkflowsNowMixin,
     WorkflowTasksMixin,
-    WorkflowTasksNowMixin
+    WorkflowTasksNowMixin,
 )
-from src.generics.mixins.queries import DereferencedOwnersMixin
 
 
 class OverviewQuery(
@@ -25,7 +25,7 @@ class OverviewQuery(
         user_id: int,
         date_from_tsp: datetime,
         date_to_tsp: datetime,
-        **kwargs
+        **kwargs,
     ):
         self.params = {
             'account_id': account_id,
@@ -127,7 +127,7 @@ class OverviewNowQuery(
 class WorkflowBreakdownQuery(
     WorkflowsMixin,
     SqlQueryObject,
-    DereferencedOwnersMixin
+    DereferencedOwnersMixin,
 ):
     def __init__(
         self,
@@ -135,7 +135,7 @@ class WorkflowBreakdownQuery(
         user_id: int,
         date_from_tsp: datetime,
         date_to_tsp: datetime,
-        **kwargs
+        **kwargs,
     ):
         self.params = {
             'account_id': account_id,
@@ -184,7 +184,7 @@ class WorkflowBreakdownQuery(
 class WorkflowBreakdownNowQuery(
     WorkflowsNowMixin,
     SqlQueryObject,
-    DereferencedOwnersMixin
+    DereferencedOwnersMixin,
 ):
     def __init__(
         self,
@@ -252,11 +252,11 @@ class WorkflowDigestQuery(
         self.params = {
             'date_from_tsp': date_from,
             'date_to_tsp': date_to,
-            'active_user': UserStatus.ACTIVE
+            'active_user': UserStatus.ACTIVE,
         }
         self.template_types, template_types_params = self._to_sql_list(
             [TemplateType.CUSTOM, TemplateType.LIBRARY],
-            'type'
+            'type',
         )
         self.params.update(template_types_params)
 
@@ -338,7 +338,7 @@ class WorkflowBreakdownByTasksQuery(
         template_id: int,
         date_from_tsp: datetime,
         date_to_tsp: datetime,
-        **kwargs
+        **kwargs,
     ):
         self.params = {
             'template_id': template_id,

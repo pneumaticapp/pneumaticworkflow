@@ -1,13 +1,13 @@
-from typing import Dict, Any
+from typing import Any, Dict
+
 from rest_framework.serializers import (
+    CharField,
     ModelSerializer,
-    CharField
 )
-from src.processes.models import (
-    Kickoff
-)
+
+from src.processes.models.templates.kickoff import Kickoff
 from src.processes.serializers.templates.field import (
-    PublicFieldTemplateSerializer
+    PublicFieldTemplateSerializer,
 )
 
 
@@ -17,7 +17,7 @@ class PublicKickoffSerializer(ModelSerializer):
         model = Kickoff
         fields = (
             'description',
-            'fields'
+            'fields',
         )
 
     description = CharField(allow_blank=True, default='')

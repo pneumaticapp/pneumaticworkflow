@@ -1,24 +1,22 @@
 from django_filters import (
-    ChoiceFilter,
     BooleanFilter,
+    ChoiceFilter,
     OrderingFilter,
 )
-from django_filters.rest_framework import (
-    IsoDateTimeFilter,
-    FilterSet,
-)
 from django_filters.constants import EMPTY_VALUES
+from django_filters.rest_framework import (
+    FilterSet,
+    IsoDateTimeFilter,
+)
 
 from src.generics.filters import (
+    DefaultOrderingFilter,
     TsQuerySearchFilter,
-    DefaultOrderingFilter
 )
 from src.processes.enums import TaskStatus, WorkflowStatus
-from src.processes.models import (
-    Template,
-    SystemTemplate,
-    WorkflowEvent,
-)
+from src.processes.models.templates.system_template import SystemTemplate
+from src.processes.models.templates.template import Template
+from src.processes.models.workflows.event import WorkflowEvent
 
 
 class TemplateOrderingFilter(OrderingFilter):
@@ -34,8 +32,8 @@ class TemplateFilter(FilterSet):
     ordering = TemplateOrderingFilter(
         fields=(
             ('name', 'name'),
-            ('date_created', 'date')
-        )
+            ('date_created', 'date'),
+        ),
     )
 
     class Meta:
@@ -89,7 +87,7 @@ class WorkflowWebhookFilterSet(FilterSet):
             ('date_created', 'date_created'),
             ('-date_created', '-date_created'),
         ),
-        default=('-date_created',)
+        default=('-date_created',),
     )
 
 
@@ -106,7 +104,7 @@ class TaskWebhookFilterSet(FilterSet):
             ('date_started', 'date_started'),
             ('-date_started', '-date_started'),
         ),
-        default=('-date_started',)
+        default=('-date_started',),
     )
 
 
@@ -123,7 +121,7 @@ class WorkflowEventFilter(FilterSet):
     ordering = OrderingFilter(
         fields=(
             ('created', 'created'),
-        )
+        ),
     )
     include_comments = BooleanFilter(method='filter_comments')
     only_attachments = BooleanFilter(method='filter_only_attachments')
@@ -146,7 +144,7 @@ class SystemTemplateFilter(FilterSet):
         model = SystemTemplate
         fields = (
             'category',
-            'search'
+            'search',
         )
 
     search = TsQuerySearchFilter(

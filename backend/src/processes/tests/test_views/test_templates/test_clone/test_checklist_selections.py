@@ -1,10 +1,11 @@
 import pytest
-from src.processes.tests.fixtures import (
-    create_test_user
-)
+
 from src.processes.enums import (
+    OwnerType,
     PerformerType,
-    OwnerType
+)
+from src.processes.tests.fixtures import (
+    create_test_user,
 )
 
 pytestmark = pytest.mark.django_db
@@ -22,7 +23,7 @@ def test_clone__ok(is_active, api_client):
             'owners': [
                 {
                     'type': OwnerType.USER,
-                    'source_id': user.id
+                    'source_id': user.id,
                 },
             ],
             'is_active': is_active,
@@ -37,27 +38,27 @@ def test_clone__ok(is_active, api_client):
                             'selections': [
                                 {
                                     'api_name': 'cl-selection-1',
-                                    'value': 'some value 1'
-                                }
-                            ]
-                        }
+                                    'value': 'some value 1',
+                                },
+                            ],
+                        },
                     ],
                     'raw_performers': [
                         {
                             'type': PerformerType.USER,
-                            'source_id': user.id
-                        }
-                    ]
-                }
-            ]
-        }
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+            ],
+        },
     )
     origin_checklist_data = response_1.data['tasks'][0]['checklists'][0]
     origin_selection_data = origin_checklist_data['selections'][0]
 
     # act
     response = api_client.post(
-        f'/templates/{response_1.data["id"]}/clone'
+        f'/templates/{response_1.data["id"]}/clone',
     )
 
     # assert

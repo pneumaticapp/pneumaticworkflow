@@ -3,6 +3,7 @@ from django.contrib.admin import ModelAdmin
 from django.forms import ModelForm
 from django.forms.fields import CharField
 from django.forms.widgets import Textarea
+
 from src.pages.models import Page
 
 
@@ -12,7 +13,7 @@ class PageAdminForm(ModelForm):
         fields = (
             'slug',
             'title',
-            'description'
+            'description',
         )
     title = CharField(widget=Textarea)
 

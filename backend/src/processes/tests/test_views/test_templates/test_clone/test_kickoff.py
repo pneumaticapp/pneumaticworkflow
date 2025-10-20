@@ -1,13 +1,12 @@
 import pytest
-from src.processes.tests.fixtures import (
-    create_test_user
-)
-from src.processes.models import (
-    Template
-)
+
 from src.processes.enums import (
+    OwnerType,
     PerformerType,
-    OwnerType
+)
+from src.processes.models.templates.template import Template
+from src.processes.tests.fixtures import (
+    create_test_user,
 )
 
 pytestmark = pytest.mark.django_db
@@ -29,7 +28,7 @@ class TestCopyKickoff:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'kickoff': {},
@@ -40,18 +39,18 @@ class TestCopyKickoff:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': user.id
-                            }
+                                'source_id': user.id,
+                            },
                         ],
-                    }
-                ]
-            }
+                    },
+                ],
+            },
         )
         template = Template.objects.get(id=response.data['id'])
 
         # act
         response = api_client.post(
-            f'/templates/{template.id}/clone'
+            f'/templates/{template.id}/clone',
         )
 
         # assert
