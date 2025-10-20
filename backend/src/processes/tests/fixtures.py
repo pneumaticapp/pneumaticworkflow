@@ -58,6 +58,10 @@ from src.processes.models import (
     Rule,
     Predicate,
 )
+from src.processes.models.templates.preset import (
+    TemplatePreset,
+    TemplatePresetField,
+)
 from src.processes.services.tasks.task import TaskService
 from src.accounts.models import UserGroup
 from src.webhooks.models import WebHook
@@ -675,3 +679,32 @@ def create_task_returned_webhook(user: UserModel):
         account_id=user.account.id,
         target='http://test.test'
     )
+
+
+def create_test_template_preset(
+    template: Template,
+    author: UserModel,
+    name: str = 'Test Preset',
+    is_default: bool = False,
+    type: str = 'personal',  # pylint: disable=redefined-builtin
+    fields: Optional[List[dict]] = None,
+):
+    preset = TemplatePreset.objects.create(
+        template=template,
+        author=author,
+        account=author.account,
+        name=name,
+        is_default=is_default,
+        type=type,
+    )
+
+    if fields:
+        for field_data in fields:
+            TemplatePresetField.objects.create(
+                preset=preset,
+                api_name=field_data['api_name'],
+                order=field_data['order'],
+                width=field_data['width'],
+            )
+
+    return preset
