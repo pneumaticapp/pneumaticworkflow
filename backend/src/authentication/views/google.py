@@ -1,6 +1,6 @@
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db.models import ObjectDoesNotExist
-from django.conf import settings
 from rest_framework.decorators import action
 from rest_framework.exceptions import (
     AuthenticationFailed,
@@ -33,8 +33,8 @@ from src.authentication.permissions import (
     GoogleAuthPermission,
 )
 from src.authentication.serializers import (
-    SignInWithGoogleSerializer,
     GoogleTokenSerializer,
+    SignInWithGoogleSerializer,
 )
 from src.authentication.services.exceptions import AuthException
 from src.authentication.services.google import GoogleAuthService
@@ -51,8 +51,8 @@ from src.generics.mixins.views import (
 )
 from src.services.email import EmailService
 from src.utils.logging import (
-    capture_sentry_message,
     SentryLogLevel,
+    capture_sentry_message,
 )
 from src.utils.validation import raise_validation_error
 
@@ -74,7 +74,7 @@ class GoogleAuthViewSet(
     def throttle_classes(self):
         if self.action == 'token':
             return (AuthGoogleTokenThrottle,)
-        elif self.action == 'auth_uri':
+        if self.action == 'auth_uri':
             return (AuthGoogleAuthUriThrottle,)
         return ()
 
@@ -123,7 +123,7 @@ class GoogleAuthViewSet(
                 auth_response={
                     'code': slz.validated_data['code'],
                     'state': slz.validated_data['state'],
-                }
+                },
             )
         except AuthException as ex:
             raise_validation_error(message=ex.message)
@@ -134,11 +134,11 @@ class GoogleAuthViewSet(
                     user=user,
                     user_agent=request.headers.get(
                         'User-Agent',
-                        request.META.get('HTTP_USER_AGENT')
+                        request.META.get('HTTP_USER_AGENT'),
                     ),
                     user_ip=request.META.get('HTTP_X_REAL_IP'),
                 )
-            except ObjectDoesNotExist:
+            except ObjectDoesNotExist as err:
                 if settings.PROJECT_CONF['SIGNUP']:
                     user, token = self.signup(
                         **user_data,
@@ -150,7 +150,7 @@ class GoogleAuthViewSet(
                         gclid=slz.validated_data.get('gclid'),
                     )
                 else:
-                    raise AuthenticationFailed(MSG_AU_0003)
+                    raise AuthenticationFailed(MSG_AU_0003) from err
 
             service.save_tokens_for_user(user)
             update_google_contacts.delay(user.id)
@@ -165,7 +165,7 @@ class GoogleAuthViewSet(
             raise_validation_error(message=ex.message)
         else:
             return self.response_ok({
-                'auth_uri': auth_uri
+                'auth_uri': auth_uri,
             })
 
     @action(methods=('GET',), detail=False)
@@ -173,7 +173,7 @@ class GoogleAuthViewSet(
         capture_sentry_message(
             message='Google logout request',
             data=self.request.GET,
-            level=SentryLogLevel.INFO
+            level=SentryLogLevel.INFO,
         )
         return self.response_ok({})
 
