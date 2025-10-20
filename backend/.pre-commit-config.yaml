@@ -6,11 +6,12 @@ default_language_version:
 repos:
   - repo: local
     hooks:
-    - id: ruff
-      name: ruff
-      types: [python]
-      language: system
-      entry: ruff check --fix
+      - id: ruff
+        name: ruff
+        types: [python]
+        language: system
+        entry: ruff check --fix --config backend/ruff.toml
+        exclude: 'migrations|settings.py|messages.py|wsgi.py|asgi.py'
 
   - repo: local
     hooks:
@@ -18,4 +19,5 @@ repos:
         name: py_codestyle
         types: [python]
         language: system
-        entry: pycodestyle --config=pycodestyle.ini
+        entry: pycodestyle backend/ --config backend/pycodestyle.ini
+        exclude: 'migrations|settings.py|messages.py|wsgi.py|asgi.py'
