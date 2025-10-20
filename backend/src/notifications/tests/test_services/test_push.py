@@ -4,28 +4,30 @@ from firebase_admin.exceptions import (
     InvalidArgumentError,
 )
 from firebase_admin.messaging import (
-    UnregisteredError,
-    SenderIdMismatchError,
     Notification as PushNotification,
 )
-from src.notifications.models import Device, UserNotifications
-from src.accounts.enums import UserType
-from src.notifications.enums import NotificationMethod
-from src.notifications.services.push import (
-    PushNotificationService
+from firebase_admin.messaging import (
+    SenderIdMismatchError,
+    UnregisteredError,
 )
+
+from src.accounts.enums import UserType
+from src.logs.enums import AccountEventStatus
+from src.logs.service import AccountLogService
+from src.notifications.enums import NotificationMethod
+from src.notifications.models import Device, UserNotifications
 from src.notifications.services.exceptions import (
     NotificationServiceError,
 )
+from src.notifications.services.push import (
+    PushNotificationService,
+)
 from src.processes.tests.fixtures import (
-    create_test_user,
-    create_test_guest,
     create_test_account,
+    create_test_guest,
+    create_test_user,
 )
 from src.utils.logging import SentryLogLevel
-from src.logs.service import AccountLogService
-from src.logs.enums import AccountEventStatus
-
 
 pytestmark = pytest.mark.django_db
 
@@ -37,7 +39,7 @@ class TestPushNotificationService:
         # arrange
         account = create_test_account(
             logo_lg='https://logo.com',
-            log_api_requests=False
+            log_api_requests=False,
         )
         user = create_test_user(account=account)
         method_name = 'test_method_name'
@@ -45,26 +47,26 @@ class TestPushNotificationService:
         body = 'body message'
         extra_data = {'extra': 'extra'}
         settings_mock = mocker.patch(
-            'src.notifications.services.push.settings'
+            'src.notifications.services.push.settings',
         )
         settings_mock.PROJECT_CONF = {'PUSH': True}
         mocker.patch(
             'src.notifications.services.push.'
             'PushNotificationService.ALLOWED_METHODS',
-            {method_name}
+            {method_name},
         )
         send_to_browsers_mock = mocker.patch(
             'src.notifications.services.push.'
-            'PushNotificationService._send_to_browsers'
+            'PushNotificationService._send_to_browsers',
         )
         send_to_apps_mock = mocker.patch(
             'src.notifications.services.push.'
-            'PushNotificationService._send_to_apps'
+            'PushNotificationService._send_to_apps',
         )
         service = PushNotificationService(
             account_id=account.id,
             logo_lg=account.logo_lg,
-            logging=account.log_api_requests
+            logging=account.log_api_requests,
         )
         handle_error_mock = mocker.patch.object(service, '_handle_error')
 
@@ -89,8 +91,8 @@ class TestPushNotificationService:
                 'method': method_name,
                 'title': title,
                 'body': body,
-                **extra_data
-            }
+                **extra_data,
+            },
         )
         send_to_apps_mock.assert_called_once_with(
             title=title,
@@ -101,8 +103,8 @@ class TestPushNotificationService:
                 'method': method_name,
                 'title': title,
                 'body': body,
-                **extra_data
-            }
+                **extra_data,
+            },
         )
 
     def test_send__not_allowed_method__raise_error(self, mocker):
@@ -110,7 +112,7 @@ class TestPushNotificationService:
         # arrange
         account = create_test_account(
             logo_lg='https://logo.com',
-            log_api_requests=False
+            log_api_requests=False,
         )
         user = create_test_user(account=account)
         title = 'test title'
@@ -118,20 +120,20 @@ class TestPushNotificationService:
         service = PushNotificationService(
             account_id=account.id,
             logo_lg=account.logo_lg,
-            logging=account.log_api_requests
+            logging=account.log_api_requests,
         )
         settings_mock = mocker.patch(
-            'src.notifications.services.push.settings'
+            'src.notifications.services.push.settings',
         )
         settings_mock.PROJECT_CONF = {'PUSH': True}
         handle_error_mock = mocker.patch.object(service, '_handle_error')
         send_to_browsers_mock = mocker.patch(
             'src.notifications.services.push.'
-            'PushNotificationService._send_to_browsers'
+            'PushNotificationService._send_to_browsers',
         )
         send_to_apps_mock = mocker.patch(
             'src.notifications.services.push.'
-            'PushNotificationService._send_to_apps'
+            'PushNotificationService._send_to_apps',
         )
 
         # act
@@ -142,7 +144,7 @@ class TestPushNotificationService:
                 method_name='error',
                 user_id=user.id,
                 user_email=user.email,
-                extra_data={}
+                extra_data={},
             )
 
         # assert
@@ -156,7 +158,7 @@ class TestPushNotificationService:
         # arrange
         account = create_test_account(
             logo_lg='https://logo.com',
-            log_api_requests=False
+            log_api_requests=False,
         )
         user = create_test_user(account=account)
         method_name = 'test_method_name'
@@ -164,26 +166,26 @@ class TestPushNotificationService:
         title = 'test title'
         extra_data = {'extra': 'extra'}
         settings_mock = mocker.patch(
-            'src.notifications.services.push.settings'
+            'src.notifications.services.push.settings',
         )
         settings_mock.PROJECT_CONF = {'PUSH': False}
         mocker.patch(
             'src.notifications.services.push.'
             'PushNotificationService.ALLOWED_METHODS',
-            {method_name}
+            {method_name},
         )
         send_to_browsers_mock = mocker.patch(
             'src.notifications.services.push.'
-            'PushNotificationService._send_to_browsers'
+            'PushNotificationService._send_to_browsers',
         )
         send_to_apps_mock = mocker.patch(
             'src.notifications.services.push.'
-            'PushNotificationService._send_to_apps'
+            'PushNotificationService._send_to_apps',
         )
         service = PushNotificationService(
             account_id=account.id,
             logo_lg=account.logo_lg,
-            logging=account.log_api_requests
+            logging=account.log_api_requests,
         )
 
         # act
@@ -202,19 +204,19 @@ class TestPushNotificationService:
 
     def test_send_to_browsers__ok(
         self,
-        mocker
+        mocker,
     ):
         # arrange
 
         account = create_test_account(
             logo_lg='https://logo.com',
-            log_api_requests=False
+            log_api_requests=False,
         )
         user = create_test_user(account=account)
         device = Device.objects.create(
             user=user,
             token='token',
-            is_app=False
+            is_app=False,
         )
         title = 'test title'
         body = 'test body'
@@ -223,35 +225,35 @@ class TestPushNotificationService:
         push_notification = PushNotification(title=title, body=body)
         push_notification_mock = mocker.patch(
             'src.notifications.services.push.PushNotification',
-            return_value=push_notification
+            return_value=push_notification,
         )
 
         message_mock = mocker.Mock()
         create_message_mock = mocker.patch(
             'src.notifications.services.push.messaging.Message',
-            return_value=message_mock
+            return_value=message_mock,
         )
         send_mock = mocker.patch(
             'src.notifications.services.push.messaging.send',
-            return_value='msg_id'
+            return_value='msg_id',
         )
         log_service_init_mock = mocker.patch.object(
             AccountLogService,
             attribute='__init__',
-            return_value=None
+            return_value=None,
         )
         log_push_mock = mocker.patch(
             'src.notifications.services.push.AccountLogService'
-            '.push_notification'
+            '.push_notification',
         )
         handle_error_mock = mocker.patch(
             'src.notifications.services.push.'
-            'PushNotificationService._handle_error'
+            'PushNotificationService._handle_error',
         )
         service = PushNotificationService(
             account_id=account.id,
             logo_lg=account.logo_lg,
-            logging=account.log_api_requests
+            logging=account.log_api_requests,
         )
 
         # act
@@ -260,18 +262,18 @@ class TestPushNotificationService:
             body=body,
             user_id=user.id,
             user_email=user.email,
-            data=data
+            data=data,
         )
 
         # assert
         push_notification_mock.assert_called_once_with(
             title=title,
-            body=body
+            body=body,
         )
         create_message_mock.assert_called_once_with(
             data=data,
             notification=push_notification,
-            token=device.token
+            token=device.token,
         )
         handle_error_mock.assert_not_called()
         send_mock.assert_called_once_with(message_mock)
@@ -280,18 +282,18 @@ class TestPushNotificationService:
 
     def test_send_to_browsers__enable_logging__ok(
         self,
-        mocker
+        mocker,
     ):
         # arrange
         account = create_test_account(
             logo_lg='https://logo.com',
-            log_api_requests=True
+            log_api_requests=True,
         )
         user = create_test_user(account=account)
         device = Device.objects.create(
             user=user,
             token='token',
-            is_app=False
+            is_app=False,
         )
         title = 'test title'
         body = 'test body'
@@ -300,35 +302,35 @@ class TestPushNotificationService:
         push_notification = PushNotification(title=title, body=body)
         push_notification_mock = mocker.patch(
             'src.notifications.services.push.PushNotification',
-            return_value=push_notification
+            return_value=push_notification,
         )
 
         message_mock = mocker.Mock()
         create_message_mock = mocker.patch(
             'src.notifications.services.push.messaging.Message',
-            return_value=message_mock
+            return_value=message_mock,
         )
         send_mock = mocker.patch(
             'src.notifications.services.push.messaging.send',
-            return_value='msg_id'
+            return_value='msg_id',
         )
         log_service_init_mock = mocker.patch.object(
             AccountLogService,
             attribute='__init__',
-            return_value=None
+            return_value=None,
         )
         log_push_mock = mocker.patch(
             'src.notifications.services.push.AccountLogService'
-            '.push_notification'
+            '.push_notification',
         )
         handle_error_mock = mocker.patch(
             'src.notifications.services.push.'
-            'PushNotificationService._handle_error'
+            'PushNotificationService._handle_error',
         )
         service = PushNotificationService(
             account_id=account.id,
             logo_lg=account.logo_lg,
-            logging=account.log_api_requests
+            logging=account.log_api_requests,
         )
 
         # act
@@ -337,18 +339,18 @@ class TestPushNotificationService:
             body=body,
             user_id=user.id,
             user_email=user.email,
-            data=data
+            data=data,
         )
 
         # assert
         push_notification_mock.assert_called_once_with(
             title=title,
-            body=body
+            body=body,
         )
         create_message_mock.assert_called_once_with(
             data=data,
             notification=push_notification,
-            token=device.token
+            token=device.token,
         )
         handle_error_mock.assert_not_called()
         send_mock.assert_called_once_with(message_mock)
@@ -362,12 +364,12 @@ class TestPushNotificationService:
 
     def test_send_to_browsers__not_browser_device__skip(
         self,
-        mocker
+        mocker,
     ):
         # arrange
         account = create_test_account(
             logo_lg='https://logo.com',
-            log_api_requests=False
+            log_api_requests=False,
         )
         user = create_test_user(account=account)
         Device.objects.create(user=user, token='token', is_app=True)
@@ -376,17 +378,17 @@ class TestPushNotificationService:
         data = {'title': title, 'extra': 'extra'}
 
         create_message_mock = mocker.patch(
-            'src.notifications.services.push.messaging.Message'
+            'src.notifications.services.push.messaging.Message',
         )
         handle_error_mock = mocker.patch(
             'src.notifications.services.push.'
-            'PushNotificationService._handle_error'
+            'PushNotificationService._handle_error',
         )
 
         service = PushNotificationService(
             account_id=account.id,
             logo_lg=account.logo_lg,
-            logging=account.log_api_requests
+            logging=account.log_api_requests,
         )
 
         # act
@@ -395,7 +397,7 @@ class TestPushNotificationService:
             body=body,
             user_id=user.id,
             user_email=user.email,
-            data=data
+            data=data,
         )
 
         # assert
@@ -404,18 +406,18 @@ class TestPushNotificationService:
 
     def test_send_to_browsers__error_response__call_handle_error(
         self,
-        mocker
+        mocker,
     ):
         # arrange
         account = create_test_account(
             logo_lg='https://logo.com',
-            log_api_requests=False
+            log_api_requests=False,
         )
         user = create_test_user(account=account)
         device = Device.objects.create(
             user=user,
             token='token',
-            is_app=False
+            is_app=False,
         )
         title = 'test title'
         body = 'test body'
@@ -424,36 +426,36 @@ class TestPushNotificationService:
         push_notification = PushNotification(title=title, body=body)
         push_notification_mock = mocker.patch(
             'src.notifications.services.push.PushNotification',
-            return_value=push_notification
+            return_value=push_notification,
         )
 
         message_mock = mocker.Mock()
         create_message_mock = mocker.patch(
             'src.notifications.services.push.messaging.Message',
-            return_value=message_mock
+            return_value=message_mock,
         )
         exception = FirebaseError(message='Error', code=13)
         send_mock = mocker.patch(
             'src.notifications.services.push.messaging.send',
-            side_effect=exception
+            side_effect=exception,
         )
         log_service_init_mock = mocker.patch.object(
             AccountLogService,
             attribute='__init__',
-            return_value=None
+            return_value=None,
         )
         log_push_mock = mocker.patch(
             'src.notifications.services.push.AccountLogService'
-            '.push_notification'
+            '.push_notification',
         )
         handle_error_mock = mocker.patch(
             'src.notifications.services.push.'
-            'PushNotificationService._handle_error'
+            'PushNotificationService._handle_error',
         )
         service = PushNotificationService(
             account_id=account.id,
             logo_lg=account.logo_lg,
-            logging=account.log_api_requests
+            logging=account.log_api_requests,
         )
 
         # act
@@ -462,18 +464,18 @@ class TestPushNotificationService:
             body=body,
             user_id=user.id,
             user_email=user.email,
-            data=data
+            data=data,
         )
 
         # assert
         create_message_mock.assert_called_once_with(
             data=data,
             notification=push_notification,
-            token=device.token
+            token=device.token,
         )
         push_notification_mock.assert_called_once_with(
             title=title,
-            body=body
+            body=body,
         )
         send_mock.assert_called_once_with(message_mock)
         handle_error_mock.assert_called_once_with(
@@ -482,69 +484,69 @@ class TestPushNotificationService:
             user_id=user.id,
             user_email=user.email,
             data=data,
-            device='browser'
+            device='browser',
         )
         log_service_init_mock.assert_not_called()
         log_push_mock.assert_not_called()
 
     def test_send_to_apps__enable_logging__ok(
         self,
-        mocker
+        mocker,
     ):
         # arrange
         account = create_test_account(
             logo_lg='https://logo.com',
-            log_api_requests=True
+            log_api_requests=True,
         )
         user = create_test_user(account=account)
         counter = UserNotifications.objects.create(
             user=user,
-            count_unread_push_in_ios_app=1
+            count_unread_push_in_ios_app=1,
         )
         device = Device.objects.create(user=user, token='token', is_app=True)
         title = 'test title'
         body = 'test body'
         data = {
             'extra': 'extra',
-            'title': 'title'
+            'title': 'title',
         }
 
         push_notification = PushNotification(title=title, body=body)
         push_notification_mock = mocker.patch(
             'src.notifications.services.push.PushNotification',
-            return_value=push_notification
+            return_value=push_notification,
         )
         config_mock = mocker.Mock()
         apns_config_mock = mocker.patch(
             'src.notifications.services.push.Config',
-            return_value=config_mock
+            return_value=config_mock,
         )
         message_mock = mocker.Mock()
         create_message_mock = mocker.patch(
             'src.notifications.services.push.messaging.Message',
-            return_value=message_mock
+            return_value=message_mock,
         )
         send_mock = mocker.patch(
             'src.notifications.services.push.messaging.send',
-            return_value='msg_id'
+            return_value='msg_id',
         )
         log_service_init_mock = mocker.patch.object(
             AccountLogService,
             attribute='__init__',
-            return_value=None
+            return_value=None,
         )
         log_push_mock = mocker.patch(
             'src.notifications.services.push.AccountLogService'
-            '.push_notification'
+            '.push_notification',
         )
         handle_error_mock = mocker.patch(
             'src.notifications.services.push.'
-            'PushNotificationService._handle_error'
+            'PushNotificationService._handle_error',
         )
         service = PushNotificationService(
             account_id=account.id,
             logo_lg=account.logo_lg,
-            logging=account.log_api_requests
+            logging=account.log_api_requests,
         )
 
         # act
@@ -553,19 +555,19 @@ class TestPushNotificationService:
             body=body,
             user_id=user.id,
             user_email=user.email,
-            data=data
+            data=data,
         )
 
         # assert
         push_notification_mock.assert_called_once_with(
             title=title,
-            body=body
+            body=body,
         )
         create_message_mock.assert_called_once_with(
             data=data,
             notification=push_notification,
             token=device.token,
-            apns=config_mock
+            apns=config_mock,
         )
         handle_error_mock.assert_not_called()
         send_mock.assert_called_once_with(message_mock)
@@ -582,17 +584,17 @@ class TestPushNotificationService:
 
     def test_send_to_apps__ok(
         self,
-        mocker
+        mocker,
     ):
         # arrange
         account = create_test_account(
             logo_lg='https://logo.com',
-            log_api_requests=False
+            log_api_requests=False,
         )
         user = create_test_user(account=account)
         counter = UserNotifications.objects.create(
             user=user,
-            count_unread_push_in_ios_app=1
+            count_unread_push_in_ios_app=1,
         )
         device = Device.objects.create(user=user, token='token', is_app=True)
         title = 'test title'
@@ -602,40 +604,40 @@ class TestPushNotificationService:
         push_notification = PushNotification(title=title, body=body)
         push_notification_mock = mocker.patch(
             'src.notifications.services.push.PushNotification',
-            return_value=push_notification
+            return_value=push_notification,
         )
         config_mock = mocker.Mock()
         apns_config_mock = mocker.patch(
             'src.notifications.services.push.Config',
-            return_value=config_mock
+            return_value=config_mock,
         )
         message_mock = mocker.Mock()
         create_message_mock = mocker.patch(
             'src.notifications.services.push.messaging.Message',
-            return_value=message_mock
+            return_value=message_mock,
         )
         send_mock = mocker.patch(
             'src.notifications.services.push.messaging.send',
-            return_value='msg_id'
+            return_value='msg_id',
         )
         log_service_init_mock = mocker.patch.object(
             AccountLogService,
             attribute='__init__',
-            return_value=None
+            return_value=None,
         )
         log_push_mock = mocker.patch(
             'src.notifications.services.push.AccountLogService'
-            '.push_notification'
+            '.push_notification',
         )
         handle_error_mock = mocker.patch(
             'src.notifications.services.push.'
-            'PushNotificationService._handle_error'
+            'PushNotificationService._handle_error',
         )
 
         service = PushNotificationService(
             account_id=account.id,
             logo_lg=account.logo_lg,
-            logging=account.log_api_requests
+            logging=account.log_api_requests,
         )
 
         # act
@@ -644,19 +646,19 @@ class TestPushNotificationService:
             body=body,
             user_id=user.id,
             user_email=user.email,
-            data=data
+            data=data,
         )
 
         # assert
         push_notification_mock.assert_called_once_with(
             title=title,
-            body=body
+            body=body,
         )
         create_message_mock.assert_called_once_with(
             data=data,
             notification=push_notification,
             token=device.token,
-            apns=config_mock
+            apns=config_mock,
         )
         handle_error_mock.assert_not_called()
         send_mock.assert_called_once_with(message_mock)
@@ -668,12 +670,12 @@ class TestPushNotificationService:
 
     def test_send_to_apps__not_app_device__skip(
         self,
-        mocker
+        mocker,
     ):
         # arrange
         account = create_test_account(
             logo_lg='https://logo.com',
-            log_api_requests=False
+            log_api_requests=False,
         )
         user = create_test_user(account=account)
         Device.objects.create(user=user, token='token', is_app=False)
@@ -682,26 +684,26 @@ class TestPushNotificationService:
         data = {'title': title, 'extra': 'extra'}
 
         create_message_mock = mocker.patch(
-            'src.notifications.services.push.messaging.Message'
+            'src.notifications.services.push.messaging.Message',
         )
         log_service_init_mock = mocker.patch.object(
             AccountLogService,
             attribute='__init__',
-            return_value=None
+            return_value=None,
         )
         log_push_mock = mocker.patch(
             'src.notifications.services.push.AccountLogService'
-            '.push_notification'
+            '.push_notification',
         )
         handle_error_mock = mocker.patch(
             'src.notifications.services.push.'
-            'PushNotificationService._handle_error'
+            'PushNotificationService._handle_error',
         )
 
         service = PushNotificationService(
             account_id=account.id,
             logo_lg=account.logo_lg,
-            logging=account.log_api_requests
+            logging=account.log_api_requests,
         )
 
         # act
@@ -710,7 +712,7 @@ class TestPushNotificationService:
             body=body,
             user_id=user.id,
             user_email=user.email,
-            data=data
+            data=data,
         )
 
         # assert
@@ -721,12 +723,12 @@ class TestPushNotificationService:
 
     def test_send_to_apps__error_response__call_handle_error(
         self,
-        mocker
+        mocker,
     ):
         # arrange
         account = create_test_account(
             logo_lg='https://logo.com',
-            log_api_requests=False
+            log_api_requests=False,
         )
         user = create_test_user(account=account)
         UserNotifications.objects.create(user=user)
@@ -738,41 +740,41 @@ class TestPushNotificationService:
         push_notification = PushNotification(title=title, body=body)
         push_notification_mock = mocker.patch(
             'src.notifications.services.push.PushNotification',
-            return_value=push_notification
+            return_value=push_notification,
         )
         config_mock = mocker.Mock()
         apns_config_mock = mocker.patch(
             'src.notifications.services.push.Config',
-            return_value=config_mock
+            return_value=config_mock,
         )
         message_mock = mocker.Mock()
         create_message_mock = mocker.patch(
             'src.notifications.services.push.messaging.Message',
-            return_value=message_mock
+            return_value=message_mock,
         )
         exception = FirebaseError(message='Error', code=13)
         send_mock = mocker.patch(
             'src.notifications.services.push.messaging.send',
-            side_effect=exception
+            side_effect=exception,
         )
         log_service_init_mock = mocker.patch.object(
             AccountLogService,
             attribute='__init__',
-            return_value=None
+            return_value=None,
         )
         log_push_mock = mocker.patch(
             'src.notifications.services.push.AccountLogService'
-            '.push_notification'
+            '.push_notification',
         )
         handle_error_mock = mocker.patch(
             'src.notifications.services.push.'
-            'PushNotificationService._handle_error'
+            'PushNotificationService._handle_error',
         )
 
         service = PushNotificationService(
             account_id=account.id,
             logo_lg=account.logo_lg,
-            logging=account.log_api_requests
+            logging=account.log_api_requests,
         )
 
         # act
@@ -781,19 +783,19 @@ class TestPushNotificationService:
             body=body,
             user_id=user.id,
             user_email=user.email,
-            data=data
+            data=data,
         )
 
         # assert
         push_notification_mock.assert_called_once_with(
             title=title,
-            body=body
+            body=body,
         )
         create_message_mock.assert_called_once_with(
             data=data,
             notification=push_notification,
             token=device.token,
-            apns=config_mock
+            apns=config_mock,
         )
         send_mock.assert_called_once_with(message_mock)
         handle_error_mock.assert_called_once_with(
@@ -802,7 +804,7 @@ class TestPushNotificationService:
             user_id=user.id,
             user_email=user.email,
             data=data,
-            device='app'
+            device='app',
         )
         apns_config_mock.assert_called_once()
         log_service_init_mock.assert_not_called()
@@ -818,12 +820,12 @@ class TestPushNotificationService:
     def test_handle_error__broken_token__delete_device(
         self,
         exception,
-        mocker
+        mocker,
     ):
         # arrange
         account = create_test_account(
             logo_lg='https://logo.com',
-            log_api_requests=False
+            log_api_requests=False,
         )
         user = create_test_user(account=account)
         device = Device(
@@ -839,17 +841,17 @@ class TestPushNotificationService:
         log_service_init_mock = mocker.patch.object(
             AccountLogService,
             attribute='__init__',
-            return_value=None
+            return_value=None,
         )
         log_push_mock = mocker.patch(
             'src.notifications.services.push.AccountLogService'
-            '.push_notification'
+            '.push_notification',
         )
         data = mocker.Mock()
         service = PushNotificationService(
             account_id=account.id,
             logo_lg=account.logo_lg,
-            logging=account.log_api_requests
+            logging=account.log_api_requests,
         )
 
         # act
@@ -859,7 +861,7 @@ class TestPushNotificationService:
             user_id=user.id,
             user_email=user.email,
             data=data,
-            device='browser'
+            device='browser',
         )
 
         # assert
@@ -871,7 +873,7 @@ class TestPushNotificationService:
         # arrange
         account = create_test_account(
             logo_lg='https://logo.com',
-            log_api_requests=False
+            log_api_requests=False,
         )
         user = create_test_user(account=account)
         device = Device(
@@ -900,20 +902,20 @@ class TestPushNotificationService:
         log_service_init_mock = mocker.patch.object(
             AccountLogService,
             attribute='__init__',
-            return_value=None
+            return_value=None,
         )
         log_push_mock = mocker.patch(
             'src.notifications.services.push.AccountLogService'
-            '.push_notification'
+            '.push_notification',
         )
         data = {
-            'title': 'Some title'
+            'title': 'Some title',
         }
 
         service = PushNotificationService(
             account_id=account.id,
             logo_lg=account.logo_lg,
-            logging=account.log_api_requests
+            logging=account.log_api_requests,
         )
 
         # act
@@ -923,7 +925,7 @@ class TestPushNotificationService:
             user_id=user.id,
             user_email=user.email,
             data=data,
-            device='browser'
+            device='browser',
         )
 
         # assert
@@ -937,7 +939,7 @@ class TestPushNotificationService:
                 'message': message,
                 'code': str(code),
                 'cause': str(None),
-                'http_response': str(response_mock)
+                'http_response': str(response_mock),
             },
             level=SentryLogLevel.ERROR,
         )
@@ -949,7 +951,7 @@ class TestPushNotificationService:
         # arrange
         account = create_test_account(
             logo_lg='https://logo.com',
-            log_api_requests=True
+            log_api_requests=True,
         )
         user = create_test_user(account=account)
         Device.objects.create(
@@ -977,17 +979,17 @@ class TestPushNotificationService:
         log_service_init_mock = mocker.patch.object(
             AccountLogService,
             attribute='__init__',
-            return_value=None
+            return_value=None,
         )
         log_push_mock = mocker.patch(
             'src.notifications.services.push.AccountLogService'
-            '.push_notification'
+            '.push_notification',
         )
         data = {'title': 'Some title'}
         service = PushNotificationService(
             account_id=account.id,
             logo_lg=account.logo_lg,
-            logging=account.log_api_requests
+            logging=account.log_api_requests,
         )
 
         # act
@@ -997,7 +999,7 @@ class TestPushNotificationService:
             user_id=user.id,
             user_email=user.email,
             data=data,
-            device='browser'
+            device='browser',
         )
 
         # assert
@@ -1017,8 +1019,8 @@ class TestPushNotificationService:
                 'exception_type': str(type(exception)),
                 'code': str(code),
                 'cause': str(None),
-                'http_response': str(response_mock)
-            }
+                'http_response': str(response_mock),
+            },
         )
 
     def test_send_new_task(self, mocker):
@@ -1026,7 +1028,7 @@ class TestPushNotificationService:
         # arrange
         account = create_test_account(
             logo_lg='https://logo.com',
-            log_api_requests=False
+            log_api_requests=False,
         )
         user = create_test_user(account=account)
         task_name = 'Task'
@@ -1035,11 +1037,11 @@ class TestPushNotificationService:
         service = PushNotificationService(
             account_id=account.id,
             logo_lg=account.logo_lg,
-            logging=account.log_api_requests
+            logging=account.log_api_requests,
         )
         send_mock = mocker.patch(
             'src.notifications.services.push.'
-            'PushNotificationService._send'
+            'PushNotificationService._send',
         )
 
         # act
@@ -1068,7 +1070,7 @@ class TestPushNotificationService:
         # arrange
         account = create_test_account(
             logo_lg='https://logo.com',
-            log_api_requests=False
+            log_api_requests=False,
         )
         user = create_test_user(account=account)
         task_name = 'Task'
@@ -1076,12 +1078,12 @@ class TestPushNotificationService:
         text_description = 'text description'
         send_mock = mocker.patch(
             'src.notifications.services.push.'
-            'PushNotificationService._send'
+            'PushNotificationService._send',
         )
         service = PushNotificationService(
             account_id=account.id,
             logo_lg=account.logo_lg,
-            logging=account.log_api_requests
+            logging=account.log_api_requests,
         )
 
         # act
@@ -1110,18 +1112,18 @@ class TestPushNotificationService:
         # arrange
         account = create_test_account(
             logo_lg='https://logo.com',
-            log_api_requests=False
+            log_api_requests=False,
         )
         user = create_test_user(account=account)
 
         service = PushNotificationService(
             account_id=account.id,
             logo_lg=account.logo_lg,
-            logging=account.log_api_requests
+            logging=account.log_api_requests,
         )
         send_mock = mocker.patch(
             'src.notifications.services.push.'
-            'PushNotificationService._send'
+            'PushNotificationService._send',
         )
         task_name = 'Task'
         workflow_name = 'Workflow'
@@ -1133,7 +1135,7 @@ class TestPushNotificationService:
             workflow_name=workflow_name,
             user_id=user.id,
             user_email=user.email,
-            user_type=UserType.USER
+            user_type=UserType.USER,
         )
 
         # assert
@@ -1151,19 +1153,19 @@ class TestPushNotificationService:
         # arrange
         account = create_test_account(
             logo_lg='https://logo.com',
-            log_api_requests=False
+            log_api_requests=False,
         )
         user = create_test_user(account=account)
         guest = create_test_guest(account=user.account)
         service = PushNotificationService(
             account_id=account.id,
             logo_lg=account.logo_lg,
-            logging=account.log_api_requests
+            logging=account.log_api_requests,
         )
 
         send_mock = mocker.patch(
             'src.notifications.services.push.'
-            'PushNotificationService._send'
+            'PushNotificationService._send',
         )
 
         # act
@@ -1173,7 +1175,7 @@ class TestPushNotificationService:
             workflow_name='Workflow',
             user_id=guest.id,
             user_email=user.email,
-            user_type=UserType.GUEST
+            user_type=UserType.GUEST,
         )
 
         # assert
@@ -1185,19 +1187,19 @@ class TestPushNotificationService:
 
         account = create_test_account(
             logo_lg='https://logo.com',
-            log_api_requests=False
+            log_api_requests=False,
         )
         user = create_test_user(account=account)
 
         service = PushNotificationService(
             account_id=account.id,
             logo_lg=account.logo_lg,
-            logging=account.log_api_requests
+            logging=account.log_api_requests,
         )
 
         send_mock = mocker.patch(
             'src.notifications.services.push.'
-            'PushNotificationService._send'
+            'PushNotificationService._send',
         )
         task_name = 'Task'
         workflow_name = 'Workflow'
@@ -1227,17 +1229,17 @@ class TestPushNotificationService:
         # arrange
         account = create_test_account(
             logo_lg='https://logo.com',
-            log_api_requests=False
+            log_api_requests=False,
         )
         user = create_test_user(account=account)
         service = PushNotificationService(
             account_id=account.id,
             logo_lg=account.logo_lg,
-            logging=account.log_api_requests
+            logging=account.log_api_requests,
         )
         send_mock = mocker.patch(
             'src.notifications.services.push.'
-            'PushNotificationService._send'
+            'PushNotificationService._send',
         )
 
         # act
@@ -1262,17 +1264,17 @@ class TestPushNotificationService:
         # arrange
         account = create_test_account(
             logo_lg='https://logo.com',
-            log_api_requests=False
+            log_api_requests=False,
         )
         user = create_test_user(account=account)
         service = PushNotificationService(
             account_id=account.id,
             logo_lg=account.logo_lg,
-            logging=account.log_api_requests
+            logging=account.log_api_requests,
         )
         send_mock = mocker.patch(
             'src.notifications.services.push.'
-            'PushNotificationService._send'
+            'PushNotificationService._send',
         )
 
         # act
@@ -1298,22 +1300,22 @@ class TestPushNotificationService:
         workflow_name = 'Workflow'
         account = create_test_account(
             logo_lg='https://logo.com',
-            log_api_requests=False
+            log_api_requests=False,
         )
         user = create_test_user(account=account)
         author = create_test_user(
             account=user.account,
             is_account_owner=False,
-            email='t@t.t'
+            email='t@t.t',
         )
         service = PushNotificationService(
             account_id=account.id,
             logo_lg=account.logo_lg,
-            logging=account.log_api_requests
+            logging=account.log_api_requests,
         )
         send_mock = mocker.patch(
             'src.notifications.services.push.'
-            'PushNotificationService._send'
+            'PushNotificationService._send',
         )
 
         # act
@@ -1322,7 +1324,7 @@ class TestPushNotificationService:
             user_email=user.email,
             task_id=1,
             workflow_name=workflow_name,
-            author_id=author.id
+            author_id=author.id,
         )
 
         # assert
@@ -1332,7 +1334,7 @@ class TestPushNotificationService:
             body=workflow_name,
             extra_data={
                 'task_id': '1',
-                'author_id': str(author.id)
+                'author_id': str(author.id),
             },
             user_id=user.id,
             user_email=user.email,
@@ -1343,23 +1345,23 @@ class TestPushNotificationService:
         # arrange
         account = create_test_account(
             logo_lg='https://logo.com',
-            log_api_requests=False
+            log_api_requests=False,
         )
         user = create_test_user(account=account)
         author = create_test_user(
             account=user.account,
             is_account_owner=False,
-            email='t@t.t'
+            email='t@t.t',
         )
         workflow_name = 'Workflow'
         service = PushNotificationService(
             account_id=account.id,
             logo_lg=account.logo_lg,
-            logging=account.log_api_requests
+            logging=account.log_api_requests,
         )
         send_mock = mocker.patch(
             'src.notifications.services.push.'
-            'PushNotificationService._send'
+            'PushNotificationService._send',
         )
 
         # act
@@ -1368,7 +1370,7 @@ class TestPushNotificationService:
             user_email=user.email,
             task_id=1,
             workflow_name=workflow_name,
-            author_id=author.id
+            author_id=author.id,
         )
 
         # assert
@@ -1378,7 +1380,7 @@ class TestPushNotificationService:
             body=workflow_name,
             extra_data={
                 'task_id': '1',
-                'author_id': str(author.id)
+                'author_id': str(author.id),
             },
             user_id=user.id,
             user_email=user.email,
@@ -1389,17 +1391,17 @@ class TestPushNotificationService:
         # arrange
         account = create_test_account(
             logo_lg='https://logo.com',
-            log_api_requests=False
+            log_api_requests=False,
         )
         user = create_test_user(account=account)
         service = PushNotificationService(
             account_id=account.id,
             logo_lg=account.logo_lg,
-            logging=account.log_api_requests
+            logging=account.log_api_requests,
         )
         send_mock = mocker.patch(
             'src.notifications.services.push.'
-            'PushNotificationService._send'
+            'PushNotificationService._send',
         )
         task_name = 'Task'
         workflow_name = 'Workflow'
@@ -1410,7 +1412,7 @@ class TestPushNotificationService:
             task_name=task_name,
             workflow_name=workflow_name,
             user_id=user.id,
-            user_email=user.email
+            user_email=user.email,
         )
 
         # assert
@@ -1428,7 +1430,7 @@ class TestPushNotificationService:
         # arrange
         account = create_test_account(
             logo_lg='https://logo.com',
-            log_api_requests=False
+            log_api_requests=False,
         )
         user = create_test_user(account=account)
         reaction_user = create_test_user(
@@ -1436,16 +1438,16 @@ class TestPushNotificationService:
             email='t@t.t',
             is_account_owner=False,
             first_name='author',
-            last_name='message'
+            last_name='message',
         )
         service = PushNotificationService(
             account_id=account.id,
             logo_lg=account.logo_lg,
-            logging=account.log_api_requests
+            logging=account.log_api_requests,
         )
         send_mock = mocker.patch(
             'src.notifications.services.push.'
-            'PushNotificationService._send'
+            'PushNotificationService._send',
         )
         text = ':dumb face:'
         workflow_name = 'some name'

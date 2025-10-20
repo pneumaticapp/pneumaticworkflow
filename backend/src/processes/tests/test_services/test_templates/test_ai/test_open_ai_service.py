@@ -2,33 +2,36 @@ import openai.error
 import pytest
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from src.processes.models import TaskTemplate
+
+from src.ai.enums import (
+    OpenAIRole,
+)
+from src.ai.tests.fixtures import create_test_prompt
+from src.authentication.enums import (
+    AuthTokenType,
+)
 from src.processes.enums import (
+    ConditionAction,
+    OwnerType,
     PerformerType,
-    OwnerType, ConditionAction, PredicateType, PredicateOperator
+    PredicateOperator,
+    PredicateType,
+)
+from src.processes.messages import workflow as messages
+from src.processes.models.templates.task import TaskTemplate
+from src.processes.services.exceptions import (
+    OpenAiLimitTemplateGenerations,
+    OpenAiServiceFailed,
+    OpenAiServiceUnavailable,
+    OpenAiStepsPromptNotExist,
+    OpenAiTemplateStepsNotExist,
+)
+from src.processes.services.templates.ai import (
+    OpenAiService,
 )
 from src.processes.tests.fixtures import (
     create_test_user,
 )
-from src.authentication.enums import (
-    AuthTokenType
-)
-from src.processes.services.templates.ai import (
-    OpenAiService
-)
-from src.ai.enums import (
-    OpenAIRole,
-)
-from src.processes.services.exceptions import (
-    OpenAiServiceUnavailable,
-    OpenAiServiceFailed,
-    OpenAiLimitTemplateGenerations,
-    OpenAiTemplateStepsNotExist,
-    OpenAiStepsPromptNotExist,
-)
-from src.processes.messages import workflow as messages
-from src.ai.tests.fixtures import create_test_prompt
-
 
 UserModel = get_user_model()
 pytestmark = pytest.mark.django_db
@@ -37,8 +40,8 @@ pytestmark = pytest.mark.django_db
 @pytest.mark.parametrize(
     'conf', (
         settings.CONFIGURATION_TESTING,
-        settings.CONFIGURATION_DEV
-    )
+        settings.CONFIGURATION_DEV,
+    ),
 )
 def test_get_response__ci_configuration__return_test_response(mocker, conf):
 
@@ -48,26 +51,26 @@ def test_get_response__ci_configuration__return_test_response(mocker, conf):
     mocker.patch(
         'src.processes.services.templates.'
         'ai.settings.CONFIGURATION_CURRENT',
-        conf
+        conf,
     )
     user = create_test_user()
     service = OpenAiService(
         ident=user.id,
         user=user,
-        auth_type=AuthTokenType.USER
+        auth_type=AuthTokenType.USER,
     )
 
     test_response = mocker.Mock()
     test_response_mock = mocker.patch(
         'src.processes.services.templates.'
         'ai.OpenAiService._test_response',
-        return_value=test_response
+        return_value=test_response,
     )
 
     # act
     response = service._get_response(
         user_description=description,
-        prompt=prompt
+        prompt=prompt,
     )
 
     # assert
@@ -88,35 +91,35 @@ def test_get_response__ok(mocker):
     mocker.patch(
         'src.processes.services.templates.'
         'ai.settings.CONFIGURATION_CURRENT',
-        settings.CONFIGURATION_PROD
+        settings.CONFIGURATION_PROD,
     )
     user = create_test_user()
     service = OpenAiService(
         ident=user.id,
         user=user,
-        auth_type=AuthTokenType.USER
+        auth_type=AuthTokenType.USER,
     )
     ai_response = 'some ai response'
     message_mock = mocker.Mock(
         content=ai_response,
-        finish_reason=None
+        finish_reason=None,
     )
     choice_mock = mocker.Mock(
-        message=message_mock
+        message=message_mock,
     )
     completion_mock = mocker.Mock(
-        choices=[choice_mock]
+        choices=[choice_mock],
     )
     create_completion_mock = mocker.patch(
         'src.processes.services.templates.'
         'ai.openai.ChatCompletion.create',
-        return_value=completion_mock
+        return_value=completion_mock,
     )
 
     # act
     response = service._get_response(
         user_description=description,
-        prompt=prompt
+        prompt=prompt,
     )
 
     # assert
@@ -131,13 +134,13 @@ def test_get_response__ok(mocker):
         messages=[
             {
                 "role": OpenAIRole.USER,
-                "content": f'Some {description} text'
+                "content": f'Some {description} text',
             },
             {
                 "role": message_2.role,
-                "content": message_2.content
-            }
-        ]
+                "content": message_2.content,
+            },
+        ],
     )
 
 
@@ -149,13 +152,13 @@ def test_get_response__openai_error__raise_exception(mocker):
     mocker.patch(
         'src.processes.services.templates.'
         'ai.settings.CONFIGURATION_CURRENT',
-        settings.CONFIGURATION_PROD
+        settings.CONFIGURATION_PROD,
     )
     user = create_test_user()
     service = OpenAiService(
         ident=user.id,
         user=user,
-        auth_type=AuthTokenType.USER
+        auth_type=AuthTokenType.USER,
     )
     log_exception_mock = mocker.patch(
         'src.processes.services.templates.'
@@ -165,14 +168,14 @@ def test_get_response__openai_error__raise_exception(mocker):
     create_completion_mock = mocker.patch(
         'src.processes.services.templates.'
         'ai.openai.ChatCompletion.create',
-        side_effect=error
+        side_effect=error,
     )
 
     # act
     with pytest.raises(OpenAiServiceUnavailable) as ex:
         service._get_response(
             user_description=description,
-            prompt=prompt
+            prompt=prompt,
         )
 
     # assert
@@ -186,14 +189,14 @@ def test_get_response__openai_error__raise_exception(mocker):
         messages=[
             {
                 "role": OpenAIRole.USER,
-                "content": f'Some {description} text'
-            }
-        ]
+                "content": f'Some {description} text',
+            },
+        ],
     )
     log_exception_mock.assert_called_once_with(
         ex=error,
         user_description=description,
-        prompt=prompt
+        prompt=prompt,
     )
     assert ex.value.message == messages.MSG_PW_0042
 
@@ -206,32 +209,32 @@ def test_get_response__not_completion_choices__raise_exception(mocker):
     mocker.patch(
         'src.processes.services.templates.'
         'ai.settings.CONFIGURATION_CURRENT',
-        settings.CONFIGURATION_PROD
+        settings.CONFIGURATION_PROD,
     )
     user = create_test_user()
     service = OpenAiService(
         ident=user.id,
         user=user,
-        auth_type=AuthTokenType.USER
+        auth_type=AuthTokenType.USER,
     )
     log_mock = mocker.patch(
         'src.processes.services.templates.'
         'ai.OpenAiService._log',
     )
     completion_mock = mocker.Mock(
-        choices=[]
+        choices=[],
     )
     create_completion_mock = mocker.patch(
         'src.processes.services.templates.'
         'ai.openai.ChatCompletion.create',
-        return_value=completion_mock
+        return_value=completion_mock,
     )
 
     # act
     with pytest.raises(OpenAiServiceFailed) as ex:
         service._get_response(
             user_description=description,
-            prompt=prompt
+            prompt=prompt,
         )
 
     # assert
@@ -239,7 +242,7 @@ def test_get_response__not_completion_choices__raise_exception(mocker):
     log_mock.assert_called_once_with(
         message='Response has no choices',
         user_description=description,
-        prompt=prompt
+        prompt=prompt,
     )
     assert ex.value.message == messages.MSG_PW_0043
 
@@ -252,13 +255,13 @@ def test_get_response__finish_reason__raise_exception(mocker):
     mocker.patch(
         'src.processes.services.templates.'
         'ai.settings.CONFIGURATION_CURRENT',
-        settings.CONFIGURATION_PROD
+        settings.CONFIGURATION_PROD,
     )
     user = create_test_user()
     service = OpenAiService(
         ident=user.id,
         user=user,
-        auth_type=AuthTokenType.USER
+        auth_type=AuthTokenType.USER,
     )
     log_mock = mocker.patch(
         'src.processes.services.templates.'
@@ -266,25 +269,25 @@ def test_get_response__finish_reason__raise_exception(mocker):
     )
     finish_reason = 'Some finish'
     message_mock = mocker.Mock(
-        finish_reason=finish_reason
+        finish_reason=finish_reason,
     )
     choice_mock = mocker.Mock(
-        message=message_mock
+        message=message_mock,
     )
     completion_mock = mocker.Mock(
-        choices=[choice_mock]
+        choices=[choice_mock],
     )
     create_completion_mock = mocker.patch(
         'src.processes.services.templates.'
         'ai.openai.ChatCompletion.create',
-        return_value=completion_mock
+        return_value=completion_mock,
     )
 
     # act
     with pytest.raises(OpenAiServiceFailed) as ex:
         service._get_response(
             user_description=description,
-            prompt=prompt
+            prompt=prompt,
         )
 
     # assert
@@ -293,7 +296,7 @@ def test_get_response__finish_reason__raise_exception(mocker):
         message='Response has finish reason',
         response_text=finish_reason,
         user_description=description,
-        prompt=prompt
+        prompt=prompt,
     )
     assert ex.value.message == messages.MSG_PW_0043
 
@@ -304,13 +307,13 @@ def test_get_steps_data_from_text__ok(mocker):
     mocker.patch(
         'src.processes.services.templates.'
         'ai.settings.CONFIGURATION_CURRENT',
-        settings.CONFIGURATION_PROD
+        settings.CONFIGURATION_PROD,
     )
     user = create_test_user()
     service = OpenAiService(
         ident=user.id,
         user=user,
-        auth_type=AuthTokenType.USER
+        auth_type=AuthTokenType.USER,
     )
     text = 'prefix text\nTitle 1 | desc 1\n Title 2|desc 2\npostfix text'
 
@@ -326,8 +329,8 @@ def test_get_steps_data_from_text__ok(mocker):
         {
             'type': PerformerType.USER,
             'source_id': user.id,
-            'label': user.name
-        }
+            'label': user.name,
+        },
     ]
 
     assert result[1]['number'] == 2
@@ -337,8 +340,8 @@ def test_get_steps_data_from_text__ok(mocker):
         {
             'type': PerformerType.USER,
             'source_id': user.id,
-            'label': user.name
-        }
+            'label': user.name,
+        },
     ]
 
 
@@ -349,7 +352,7 @@ def test_get_steps_data_from_text__limit_task_name__ok(mocker):
     mocker.patch(
         'src.processes.services.templates.'
         'ai.settings.CONFIGURATION_CURRENT',
-        settings.CONFIGURATION_PROD
+        settings.CONFIGURATION_PROD,
     )
     limit = TaskTemplate.NAME_MAX_LENGTH
     task_name = 'o' * (limit + 1)
@@ -358,7 +361,7 @@ def test_get_steps_data_from_text__limit_task_name__ok(mocker):
     service = OpenAiService(
         ident=user.id,
         user=user,
-        auth_type=AuthTokenType.USER
+        auth_type=AuthTokenType.USER,
     )
 
     # act
@@ -374,13 +377,13 @@ def test_get_steps_data_from_text__not_delimiter__skip(mocker):
     mocker.patch(
         'src.processes.services.templates.'
         'ai.settings.CONFIGURATION_CURRENT',
-        settings.CONFIGURATION_PROD
+        settings.CONFIGURATION_PROD,
     )
     user = create_test_user()
     service = OpenAiService(
         ident=user.id,
         user=user,
-        auth_type=AuthTokenType.USER
+        auth_type=AuthTokenType.USER,
     )
     text = 'Title desc'
 
@@ -397,18 +400,18 @@ def test_get_post_template_generation_actions__ok(mocker):
     description = 'text'
     inc_template_generations_count_mock = mocker.patch(
         'src.processes.services.templates.'
-        'ai.AccountService.inc_template_generations_count'
+        'ai.AccountService.inc_template_generations_count',
     )
     user = create_test_user()
     service = OpenAiService(
         ident=user.id,
         user=user,
-        auth_type=AuthTokenType.USER
+        auth_type=AuthTokenType.USER,
     )
 
     # act
     service._post_template_generation_actions(
-        user_description=description
+        user_description=description,
     )
 
     # assert
@@ -430,7 +433,7 @@ def test_get_template_data__ok(mocker):
     get_response_mock = mocker.patch(
         'src.processes.services.templates.'
         'ai.OpenAiService._get_response',
-        return_value=ai_response
+        return_value=ai_response,
     )
     post_template_generation_actions_mock = mocker.patch(
         'src.processes.services.templates.'
@@ -438,12 +441,12 @@ def test_get_template_data__ok(mocker):
     )
     template_generation_init_mock = mocker.patch(
         'src.processes.services.templates.'
-        'ai.AnalyticService.template_generation_init'
+        'ai.AnalyticService.template_generation_init',
     )
     service = OpenAiService(
         ident=user.id,
         user=user,
-        auth_type=AuthTokenType.USER
+        auth_type=AuthTokenType.USER,
     )
 
     # act
@@ -452,17 +455,17 @@ def test_get_template_data__ok(mocker):
     # assert
     get_response_mock.assert_called_once_with(
         user_description=description,
-        prompt=prompt
+        prompt=prompt,
     )
     post_template_generation_actions_mock.assert_called_once_with(
-        description
+        description,
     )
     template_generation_init_mock.assert_called_once_with(
         user=user,
         auth_type=AuthTokenType.USER,
         is_superuser=False,
         description=description,
-        success=True
+        success=True,
     )
 
     assert template_data['name'] == description
@@ -474,12 +477,12 @@ def test_get_template_data__ok(mocker):
     assert template_data['owners'] == [
         {
             'type': OwnerType.USER,
-            'source_id': str(user.id)
-        }
+            'source_id': str(user.id),
+        },
     ]
     assert template_data['kickoff'] == {
         'description': '',
-        'fields': []
+        'fields': [],
     }
     task_1_data = template_data['tasks'][0]
     assert task_1_data['number'] == 1
@@ -493,8 +496,8 @@ def test_get_template_data__ok(mocker):
         {
             'type': PerformerType.USER,
             'source_id': user.id,
-            'label': user.name
-        }
+            'label': user.name,
+        },
     ]
     assert len(task_1_data['conditions']) == 1
     task_1_condition = task_1_data['conditions'][0]
@@ -523,8 +526,8 @@ def test_get_template_data__ok(mocker):
         {
             'type': PerformerType.USER,
             'source_id': user.id,
-            'label': user.name
-        }
+            'label': user.name,
+        },
     ]
     assert len(task_2_data['conditions']) == 1
     task_2_condition = task_2_data['conditions'][0]
@@ -552,8 +555,8 @@ def test_get_template_data__limit_exceeded__raise_exception(mocker):
     account.save(
         update_fields=[
             'ai_templates_generations',
-            'max_ai_templates_generations'
-        ]
+            'max_ai_templates_generations',
+        ],
     )
 
     description = 'My lovely business process'
@@ -563,13 +566,13 @@ def test_get_template_data__limit_exceeded__raise_exception(mocker):
     )
     template_generation_init_mock = mocker.patch(
         'src.processes.services.templates.'
-        'ai.AnalyticService.template_generation_init'
+        'ai.AnalyticService.template_generation_init',
     )
 
     service = OpenAiService(
         ident=user.id,
         user=user,
-        auth_type=AuthTokenType.USER
+        auth_type=AuthTokenType.USER,
     )
 
     # act
@@ -584,7 +587,7 @@ def test_get_template_data__limit_exceeded__raise_exception(mocker):
         auth_type=AuthTokenType.USER,
         is_superuser=False,
         description=description,
-        success=False
+        success=False,
     )
 
 
@@ -599,12 +602,12 @@ def test_get_template_data__not_prompt__raise_exception(mocker):
     )
     template_generation_init_mock = mocker.patch(
         'src.processes.services.templates.'
-        'ai.AnalyticService.template_generation_init'
+        'ai.AnalyticService.template_generation_init',
     )
     service = OpenAiService(
         ident=user.id,
         user=user,
-        auth_type=AuthTokenType.USER
+        auth_type=AuthTokenType.USER,
     )
 
     # act
@@ -619,7 +622,7 @@ def test_get_template_data__not_prompt__raise_exception(mocker):
         auth_type=AuthTokenType.USER,
         is_superuser=False,
         description=description,
-        success=False
+        success=False,
     )
 
 
@@ -635,12 +638,12 @@ def test_get_template_data__not_prompt_message__raise_exception(mocker):
     )
     template_generation_init_mock = mocker.patch(
         'src.processes.services.templates.'
-        'ai.AnalyticService.template_generation_init'
+        'ai.AnalyticService.template_generation_init',
     )
     service = OpenAiService(
         ident=user.id,
         user=user,
-        auth_type=AuthTokenType.USER
+        auth_type=AuthTokenType.USER,
     )
 
     # act
@@ -655,7 +658,7 @@ def test_get_template_data__not_prompt_message__raise_exception(mocker):
         auth_type=AuthTokenType.USER,
         is_superuser=False,
         description=description,
-        success=False
+        success=False,
     )
 
 
@@ -669,12 +672,12 @@ def test_get_template_data__not_steps__raise_exception(mocker):
     get_response_mock = mocker.patch(
         'src.processes.services.templates.'
         'ai.OpenAiService._get_response',
-        return_value=response_mock
+        return_value=response_mock,
     )
     get_tasks_data_from_text_mock = mocker.patch(
         'src.processes.services.templates.'
         'ai.OpenAiService._get_steps_data_from_text',
-        return_value=[]
+        return_value=[],
     )
     log_mock = mocker.patch(
         'src.processes.services.templates.'
@@ -682,13 +685,13 @@ def test_get_template_data__not_steps__raise_exception(mocker):
     )
     template_generation_init_mock = mocker.patch(
         'src.processes.services.templates.'
-        'ai.AnalyticService.template_generation_init'
+        'ai.AnalyticService.template_generation_init',
     )
 
     service = OpenAiService(
         ident=user.id,
         user=user,
-        auth_type=AuthTokenType.USER
+        auth_type=AuthTokenType.USER,
     )
 
     # act
@@ -698,7 +701,7 @@ def test_get_template_data__not_steps__raise_exception(mocker):
     # assert
     get_response_mock.assert_called_once_with(
         user_description=description,
-        prompt=prompt
+        prompt=prompt,
     )
     get_tasks_data_from_text_mock.assert_called_once_with(response_mock)
     assert ex.value.message == messages.MSG_PW_0045
@@ -706,12 +709,12 @@ def test_get_template_data__not_steps__raise_exception(mocker):
         message='Template steps not found',
         user_description=description,
         prompt=prompt,
-        response_text=response_mock
+        response_text=response_mock,
     )
     template_generation_init_mock.assert_called_once_with(
         user=user,
         auth_type=AuthTokenType.USER,
         is_superuser=False,
         description=description,
-        success=False
+        success=False,
     )

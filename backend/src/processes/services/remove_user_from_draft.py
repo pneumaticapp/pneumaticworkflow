@@ -1,4 +1,4 @@
-from src.processes.models import TemplateDraft
+from src.processes.models.templates.template import TemplateDraft
 
 
 def remove_user_from_draft(account_id: int, user_id: int):

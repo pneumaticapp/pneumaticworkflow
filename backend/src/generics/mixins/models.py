@@ -1,4 +1,3 @@
-# pylint:disable=protected-access
 from django.db import models
 from django.db.models import ProtectedError, QuerySet
 
@@ -33,4 +32,4 @@ class SoftDeleteMixin:
                         protected_objects=None,
                     )
             else:
-                raise NotImplementedError()
+                raise NotImplementedError

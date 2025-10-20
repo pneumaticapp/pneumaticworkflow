@@ -1,16 +1,16 @@
 import pytest
+
+from src.authentication.enums import AuthTokenType
+from src.processes.services.exceptions import (
+    OpenAiServiceException,
+)
+from src.processes.services.templates.ai import (
+    OpenAiService,
+)
 from src.processes.tests.fixtures import (
     create_test_user,
 )
-from src.authentication.enums import AuthTokenType
-from src.processes.services.templates.ai import (
-    OpenAiService
-)
-from src.processes.services.exceptions import (
-    OpenAiServiceException
-)
 from src.utils.validation import ErrorCode
-
 
 pytestmark = pytest.mark.django_db
 
@@ -24,24 +24,24 @@ def test_create__account_owner__ok(mocker, api_client):
     service_init_mock = mocker.patch.object(
         OpenAiService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     get_template_data_mock = mocker.patch(
         'src.processes.services.templates.'
         'ai.OpenAiService.get_template_data',
-        return_value=template_data
+        return_value=template_data,
     )
     mocker.patch(
         'src.processes.views.template.'
         'AIPermission.has_permission',
-        return_value=True
+        return_value=True,
     )
     api_client.token_authenticate(user)
 
     # act
     response = api_client.post(
-        path=f'/templates/ai',
-        data={'description': description}
+        path='/templates/ai',
+        data={'description': description},
     )
 
     # assert
@@ -50,16 +50,16 @@ def test_create__account_owner__ok(mocker, api_client):
         ident=user.id,
         user=user,
         is_superuser=False,
-        auth_type=AuthTokenType.USER
+        auth_type=AuthTokenType.USER,
     )
     get_template_data_mock.assert_called_once_with(
-        user_description=description
+        user_description=description,
     )
 
 
 def test_create__admin__ok(
     mocker,
-    api_client
+    api_client,
 ):
     # arrange
     user = create_test_user(is_account_owner=False, is_admin=True)
@@ -68,24 +68,24 @@ def test_create__admin__ok(
     service_init_mock = mocker.patch.object(
         OpenAiService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     get_template_data_mock = mocker.patch(
         'src.processes.services.templates.'
         'ai.OpenAiService.get_template_data',
-        return_value=template_data
+        return_value=template_data,
     )
     mocker.patch(
         'src.processes.views.template.'
         'AIPermission.has_permission',
-        return_value=True
+        return_value=True,
     )
     api_client.token_authenticate(user)
 
     # act
     response = api_client.post(
-        path=f'/templates/ai',
-        data={'description': description}
+        path='/templates/ai',
+        data={'description': description},
     )
 
     # assert
@@ -94,16 +94,16 @@ def test_create__admin__ok(
         ident=user.id,
         user=user,
         is_superuser=False,
-        auth_type=AuthTokenType.USER
+        auth_type=AuthTokenType.USER,
     )
     get_template_data_mock.assert_called_once_with(
-        user_description=description
+        user_description=description,
     )
 
 
 def test_create__request_user_is_not_authenticated__permission_denied(
     mocker,
-    api_client
+    api_client,
 ):
     # arrange
     description = 'My unbelievable processes name'
@@ -111,23 +111,23 @@ def test_create__request_user_is_not_authenticated__permission_denied(
     service_init_mock = mocker.patch.object(
         OpenAiService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     get_template_data_mock = mocker.patch(
         'src.processes.services.templates.'
         'ai.OpenAiService.get_template_data',
-        return_value=template_data
+        return_value=template_data,
     )
     mocker.patch(
         'src.processes.views.template.'
         'AIPermission.has_permission',
-        return_value=True
+        return_value=True,
     )
 
     # act
     response = api_client.post(
-        path=f'/templates/ai',
-        data={'description': description}
+        path='/templates/ai',
+        data={'description': description},
     )
 
     # assert
@@ -138,7 +138,7 @@ def test_create__request_user_is_not_authenticated__permission_denied(
 
 def test_create__user_not_admin__permission_denied(
     mocker,
-    api_client
+    api_client,
 ):
     # arrange
     user = create_test_user(is_admin=False, is_account_owner=False)
@@ -147,24 +147,24 @@ def test_create__user_not_admin__permission_denied(
     service_init_mock = mocker.patch.object(
         OpenAiService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     get_template_data_mock = mocker.patch(
         'src.processes.services.templates.'
         'ai.OpenAiService.get_template_data',
-        return_value=template_data
+        return_value=template_data,
     )
     mocker.patch(
         'src.processes.views.template.'
         'AIPermission.has_permission',
-        return_value=True
+        return_value=True,
     )
     api_client.token_authenticate(user)
 
     # act
     response = api_client.post(
-        path=f'/templates/ai',
-        data={'description': description}
+        path='/templates/ai',
+        data={'description': description},
     )
 
     # assert
@@ -175,7 +175,7 @@ def test_create__user_not_admin__permission_denied(
 
 def test_create__description_over_limit__validation_error(
     mocker,
-    api_client
+    api_client,
 ):
 
     # arrange
@@ -184,23 +184,23 @@ def test_create__description_over_limit__validation_error(
     service_init_mock = mocker.patch.object(
         OpenAiService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     get_template_data_mock = mocker.patch(
         'src.processes.services.templates.'
-        'ai.OpenAiService.get_template_data'
+        'ai.OpenAiService.get_template_data',
     )
     mocker.patch(
         'src.processes.views.template.'
         'AIPermission.has_permission',
-        return_value=True
+        return_value=True,
     )
     api_client.token_authenticate(user)
 
     # act
     response = api_client.post(
-        path=f'/templates/ai',
-        data={'description': description}
+        path='/templates/ai',
+        data={'description': description},
     )
 
     # assert
@@ -214,7 +214,7 @@ def test_create__description_over_limit__validation_error(
 
 def test_create__description_null__validation_error(
     mocker,
-    api_client
+    api_client,
 ):
 
     # arrange
@@ -222,23 +222,23 @@ def test_create__description_null__validation_error(
     service_init_mock = mocker.patch.object(
         OpenAiService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     get_template_data_mock = mocker.patch(
         'src.processes.services.templates.'
-        'ai.OpenAiService.get_template_data'
+        'ai.OpenAiService.get_template_data',
     )
     mocker.patch(
         'src.processes.views.template.'
         'AIPermission.has_permission',
-        return_value=True
+        return_value=True,
     )
     api_client.token_authenticate(user)
 
     # act
     response = api_client.post(
-        path=f'/templates/ai',
-        data={'description': None}
+        path='/templates/ai',
+        data={'description': None},
     )
 
     # assert
@@ -254,7 +254,7 @@ def test_create__description_null__validation_error(
 def test_create__description__invalid_value__validation_error(
     description,
     mocker,
-    api_client
+    api_client,
 ):
 
     # arrange
@@ -262,23 +262,23 @@ def test_create__description__invalid_value__validation_error(
     service_init_mock = mocker.patch.object(
         OpenAiService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     get_template_data_mock = mocker.patch(
         'src.processes.services.templates.'
-        'ai.OpenAiService.get_template_data'
+        'ai.OpenAiService.get_template_data',
     )
     mocker.patch(
         'src.processes.views.template.'
         'AIPermission.has_permission',
-        return_value=True
+        return_value=True,
     )
     api_client.token_authenticate(user)
 
     # act
     response = api_client.post(
-        path=f'/templates/ai',
-        data={'description': description}
+        path='/templates/ai',
+        data={'description': description},
     )
 
     # assert
@@ -290,7 +290,7 @@ def test_create__description__invalid_value__validation_error(
 
 def test_create__service_exception__validation_error(
     mocker,
-    api_client
+    api_client,
 ):
 
     # arrange
@@ -299,25 +299,25 @@ def test_create__service_exception__validation_error(
     service_init_mock = mocker.patch.object(
         OpenAiService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     error_message = 'error message'
     get_template_data_mock = mocker.patch(
         'src.processes.services.templates.'
         'ai.OpenAiService.get_template_data',
-        side_effect=OpenAiServiceException(message=error_message)
+        side_effect=OpenAiServiceException(message=error_message),
     )
     mocker.patch(
         'src.processes.views.template.'
         'AIPermission.has_permission',
-        return_value=True
+        return_value=True,
     )
     api_client.token_authenticate(user)
 
     # act
     response = api_client.post(
-        path=f'/templates/ai',
-        data={'description': description}
+        path='/templates/ai',
+        data={'description': description},
     )
 
     # assert
@@ -328,8 +328,8 @@ def test_create__service_exception__validation_error(
         ident=user.id,
         user=user,
         is_superuser=False,
-        auth_type=AuthTokenType.USER
+        auth_type=AuthTokenType.USER,
     )
     get_template_data_mock.assert_called_once_with(
-        user_description=description
+        user_description=description,
     )

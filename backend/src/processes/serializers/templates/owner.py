@@ -1,27 +1,27 @@
-from typing import Dict, Any
+from typing import Any, Dict
+
 from rest_framework.serializers import (
-    ModelSerializer,
     CharField,
+    ModelSerializer,
 )
-from src.processes.models import (
-    TemplateOwner
-)
+
 from src.generics.mixins.serializers import (
     AdditionalValidationMixin,
 )
+from src.processes.enums import OwnerType
+from src.processes.messages.template import MSG_PT_0058
+from src.processes.models.templates.owner import TemplateOwner
 from src.processes.serializers.templates.mixins import (
     CreateOrUpdateInstanceMixin,
     CreateOrUpdateRelatedMixin,
 )
-from src.processes.enums import OwnerType
-from src.processes.messages.template import MSG_PT_0058
 
 
 class TemplateOwnerSerializer(
     CreateOrUpdateInstanceMixin,
     CreateOrUpdateRelatedMixin,
     AdditionalValidationMixin,
-    ModelSerializer
+    ModelSerializer,
 ):
     class Meta:
         model = TemplateOwner
@@ -60,14 +60,14 @@ class TemplateOwnerSerializer(
             validated_data=raw_performer_data,
             not_unique_exception_msg=MSG_PT_0058(
                 name=self.context['template'].name,
-                api_name=validated_data.get('api_name')
-            )
+                api_name=validated_data.get('api_name'),
+            ),
         )
 
     def update(
         self,
         instance: TemplateOwner,
-        validated_data: Dict[str, Any]
+        validated_data: Dict[str, Any],
     ):
         self.additional_validate(validated_data)
         return self.create_or_update_instance(
@@ -75,12 +75,12 @@ class TemplateOwnerSerializer(
             validated_data={
                 'template': self.context['template'],
                 'account':  self.context.get('account'),
-                **validated_data
+                **validated_data,
             },
             not_unique_exception_msg=MSG_PT_0058(
                 name=self.context['template'].name,
-                api_name=validated_data.get('api_name')
-            )
+                api_name=validated_data.get('api_name'),
+            ),
         )
 
     def to_representation(self, instance):

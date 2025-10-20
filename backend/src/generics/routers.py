@@ -1,7 +1,7 @@
 from rest_framework.routers import (
     DefaultRouter,
+    DynamicRoute,
     Route,
-    DynamicRoute
 )
 
 
@@ -15,11 +15,11 @@ class PrefixLessRouter(DefaultRouter):
             url=r'^{trailing_slash}$',
             mapping={
                 'get': 'list',
-                'post': 'create'
+                'post': 'create',
             },
             name='{basename}-list',
             detail=False,
-            initkwargs={'suffix': 'List'}
+            initkwargs={'suffix': 'List'},
         ),
         # Dynamically generated list routes. Generated using
         # @action(detail=False) decorator on methods of the viewset.
@@ -27,7 +27,7 @@ class PrefixLessRouter(DefaultRouter):
             url=r'^{url_path}{trailing_slash}$',
             name='{basename}-{url_name}',
             detail=False,
-            initkwargs={}
+            initkwargs={},
         ),
         # Detail route.
         Route(
@@ -36,11 +36,11 @@ class PrefixLessRouter(DefaultRouter):
                 'get': 'retrieve',
                 'put': 'update',
                 'patch': 'partial_update',
-                'delete': 'destroy'
+                'delete': 'destroy',
             },
             name='{basename}-detail',
             detail=True,
-            initkwargs={'suffix': 'Instance'}
+            initkwargs={'suffix': 'Instance'},
         ),
         # Dynamically generated detail routes. Generated using
         # @action(detail=True) decorator on methods of the viewset.
@@ -48,6 +48,6 @@ class PrefixLessRouter(DefaultRouter):
             url=r'^{lookup}/{url_path}{trailing_slash}$',
             name='{basename}-{url_name}',
             detail=True,
-            initkwargs={}
+            initkwargs={},
         ),
     ]

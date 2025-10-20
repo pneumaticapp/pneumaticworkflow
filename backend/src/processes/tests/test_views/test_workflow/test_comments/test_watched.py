@@ -1,26 +1,25 @@
 import pytest
-from src.processes.services.exceptions import (
-    CommentServiceException
-)
+
+from src.authentication.enums import AuthTokenType
+from src.authentication.services.guest_auth import GuestJWTAuthService
+from src.processes.enums import PerformerType
+from src.processes.models.workflows.task import TaskPerformer
 from src.processes.services.events import (
+    CommentService,
     WorkflowEventService,
-    CommentService
 )
-from src.processes.models import (
-    TaskPerformer,
+from src.processes.services.exceptions import (
+    CommentServiceException,
 )
 from src.processes.tests.fixtures import (
-    create_test_user,
-    create_test_workflow,
-    create_test_guest,
     create_test_account,
     create_test_admin,
     create_test_group,
+    create_test_guest,
+    create_test_user,
+    create_test_workflow,
 )
-from src.authentication.services import GuestJWTAuthService
-from src.authentication.enums import AuthTokenType
 from src.utils.validation import ErrorCode
-from src.processes.enums import PerformerType
 
 pytestmark = pytest.mark.django_db
 
@@ -41,17 +40,17 @@ def test_watched__account_owner__ok(api_client, mocker):
         text='Some comment',
         task=task,
         user=user,
-        after_create_actions=False
+        after_create_actions=False,
     )
 
     service_init_mock = mocker.patch.object(
         CommentService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     comment_watched_mock = mocker.patch(
         'src.processes.services.events.'
-        'CommentService.watched'
+        'CommentService.watched',
     )
     api_client.token_authenticate(owner)
 
@@ -64,7 +63,7 @@ def test_watched__account_owner__ok(api_client, mocker):
         instance=event,
         user=owner,
         auth_type=AuthTokenType.USER,
-        is_superuser=False
+        is_superuser=False,
     )
     comment_watched_mock.assert_called_once()
     assert not workflow.members.filter(id=owner.id).exists()
@@ -77,7 +76,7 @@ def test_watched__workflow_member__ok(api_client, mocker):
     user = create_test_user(
         account=owner.account,
         email='member@test.test',
-        is_account_owner=False
+        is_account_owner=False,
     )
     workflow = create_test_workflow(owner)
     workflow.members.add(user)
@@ -86,17 +85,17 @@ def test_watched__workflow_member__ok(api_client, mocker):
         text='Some comment',
         task=task,
         user=owner,
-        after_create_actions=False
+        after_create_actions=False,
     )
 
     service_init_mock = mocker.patch.object(
         CommentService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     comment_watched_mock = mocker.patch(
         'src.processes.services.events.'
-        'CommentService.watched'
+        'CommentService.watched',
     )
     api_client.token_authenticate(user)
 
@@ -109,7 +108,7 @@ def test_watched__workflow_member__ok(api_client, mocker):
         instance=event,
         user=user,
         auth_type=AuthTokenType.USER,
-        is_superuser=False
+        is_superuser=False,
     )
     comment_watched_mock.assert_called_once()
 
@@ -134,17 +133,17 @@ def test_watched__user_in_group_task_performer__ok(api_client, mocker):
         text='Some comment',
         task=task,
         user=user,
-        after_create_actions=False
+        after_create_actions=False,
     )
 
     service_init_mock = mocker.patch.object(
         CommentService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     comment_watched_mock = mocker.patch(
         'src.processes.services.events.'
-        'CommentService.watched'
+        'CommentService.watched',
     )
     api_client.token_authenticate(group_user)
 
@@ -157,7 +156,7 @@ def test_watched__user_in_group_task_performer__ok(api_client, mocker):
         instance=event,
         user=group_user,
         auth_type=AuthTokenType.USER,
-        is_superuser=False
+        is_superuser=False,
     )
     comment_watched_mock.assert_called_once()
 
@@ -172,7 +171,7 @@ def test_watched__user_not_member__permission_denied(api_client, mocker):
         text='Some comment',
         task=task,
         user=owner,
-        after_create_actions=False
+        after_create_actions=False,
     )
     user = create_test_user(
         account=owner.account,
@@ -182,11 +181,11 @@ def test_watched__user_not_member__permission_denied(api_client, mocker):
     service_init_mock = mocker.patch.object(
         CommentService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     comment_watched_mock = mocker.patch(
         'src.processes.services.events.'
-        'CommentService.watched'
+        'CommentService.watched',
     )
     api_client.token_authenticate(user)
 
@@ -213,27 +212,27 @@ def test_watched__guest__ok(mocker, api_client):
     task = workflow.tasks.first()
     TaskPerformer.objects.create(
         task_id=task.id,
-        user_id=guest.id
+        user_id=guest.id,
     )
     str_token = GuestJWTAuthService.get_str_token(
         task_id=task.id,
         user_id=guest.id,
-        account_id=account.id
+        account_id=account.id,
     )
     event = WorkflowEventService.comment_created_event(
         user=owner,
         text='Some comment',
         task=task,
-        after_create_actions=False
+        after_create_actions=False,
     )
     service_init_mock = mocker.patch.object(
         CommentService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     comment_watched_mock = mocker.patch(
         'src.processes.services.events.'
-        'CommentService.watched'
+        'CommentService.watched',
     )
 
     # act
@@ -248,7 +247,7 @@ def test_watched__guest__ok(mocker, api_client):
         instance=event,
         user=guest,
         auth_type=AuthTokenType.GUEST,
-        is_superuser=False
+        is_superuser=False,
     )
     comment_watched_mock.assert_called_once()
 
@@ -269,27 +268,27 @@ def test_watched__another_task_guest__permission_denied(mocker, api_client):
     task_2 = workflow_2.tasks.get(number=1)
     TaskPerformer.objects.create(
         task_id=task_2.id,
-        user_id=guest.id
+        user_id=guest.id,
     )
     str_token = GuestJWTAuthService.get_str_token(
         task_id=task_2.id,
         user_id=guest.id,
-        account_id=account.id
+        account_id=account.id,
     )
     event = WorkflowEventService.comment_created_event(
         user=owner,
         text='Some comment',
         task=task,
-        after_create_actions=False
+        after_create_actions=False,
     )
     service_init_mock = mocker.patch.object(
         CommentService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     comment_watched_mock = mocker.patch(
         'src.processes.services.events.'
-        'CommentService.watched'
+        'CommentService.watched',
     )
 
     # act
@@ -306,7 +305,7 @@ def test_watched__another_task_guest__permission_denied(mocker, api_client):
 
 def test_watched__not_active_task_guest__not_authentcated(
     mocker,
-    api_client
+    api_client,
 ):
 
     # arrange
@@ -322,27 +321,27 @@ def test_watched__not_active_task_guest__not_authentcated(
     task_2 = workflow.tasks.get(number=2)
     TaskPerformer.objects.create(
         task_id=task_2.id,
-        user_id=guest.id
+        user_id=guest.id,
     )
     str_token = GuestJWTAuthService.get_str_token(
         task_id=task_2.id,
         user_id=guest.id,
-        account_id=account.id
+        account_id=account.id,
     )
     event = WorkflowEventService.comment_created_event(
         user=owner,
         text='Some comment',
         task=task,
-        after_create_actions=False
+        after_create_actions=False,
     )
     service_init_mock = mocker.patch.object(
         CommentService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     comment_watched_mock = mocker.patch(
         'src.processes.services.events.'
-        'CommentService.watched'
+        'CommentService.watched',
     )
 
     # act
@@ -359,7 +358,7 @@ def test_watched__not_active_task_guest__not_authentcated(
 
 def test_watched__guest_another_workflow__permission_denied(
     mocker,
-    api_client
+    api_client,
 ):
 
     # arrange
@@ -375,49 +374,49 @@ def test_watched__guest_another_workflow__permission_denied(
         text='Some comment',
         task=task,
         user=owner,
-        after_create_actions=False
+        after_create_actions=False,
     )
     task_1 = workflow_1.tasks.get(number=1)
     guest_1 = create_test_guest(account=account)
     TaskPerformer.objects.create(
         task_id=task_1.id,
-        user_id=guest_1.id
+        user_id=guest_1.id,
     )
     GuestJWTAuthService.get_str_token(
         task_id=task_1.id,
         user_id=guest_1.id,
-        account_id=account.id
+        account_id=account.id,
     )
 
     workflow_2 = create_test_workflow(owner, tasks_count=1)
     task_2 = workflow_2.tasks.get(number=1)
     guest_2 = create_test_guest(
         account=account,
-        email='guest2@test.test'
+        email='guest2@test.test',
     )
     TaskPerformer.objects.create(
         task_id=task_2.id,
-        user_id=guest_2.id
+        user_id=guest_2.id,
     )
     str_token_2 = GuestJWTAuthService.get_str_token(
         task_id=task_2.id,
         user_id=guest_2.id,
-        account_id=account.id
+        account_id=account.id,
     )
     service_init_mock = mocker.patch.object(
         CommentService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     comment_watched_mock = mocker.patch(
         'src.processes.services.events.'
-        'CommentService.watched'
+        'CommentService.watched',
     )
 
     # act
     response = api_client.post(
         f'/workflows/comments/{event.id}/watched',
-        **{'X-Guest-Authorization': str_token_2}
+        **{'X-Guest-Authorization': str_token_2},
     )
 
     # assert
@@ -434,17 +433,17 @@ def test_watched__not_comment__permission_denied(api_client, mocker):
     task = workflow.tasks.get(number=1)
     event = WorkflowEventService.task_complete_event(
         user=user,
-        task=task
+        task=task,
     )
 
     service_init_mock = mocker.patch.object(
         CommentService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     comment_watched_mock = mocker.patch(
         'src.processes.services.events.'
-        'CommentService.watched'
+        'CommentService.watched',
     )
     api_client.token_authenticate(user)
 
@@ -459,7 +458,7 @@ def test_watched__not_comment__permission_denied(api_client, mocker):
 
 def test_watched__service_exception__validation_error(
     api_client,
-    mocker
+    mocker,
 ):
 
     # arrange
@@ -470,18 +469,18 @@ def test_watched__service_exception__validation_error(
         text='Some comment',
         task=task,
         user=user,
-        after_create_actions=False
+        after_create_actions=False,
     )
     service_init_mock = mocker.patch.object(
         CommentService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     message = 'some message'
     comment_watched_mock = mocker.patch(
         'src.processes.services.events.'
         'CommentService.watched',
-        side_effect=CommentServiceException(message)
+        side_effect=CommentServiceException(message),
     )
     api_client.token_authenticate(user)
 
@@ -496,6 +495,6 @@ def test_watched__service_exception__validation_error(
         instance=event,
         user=user,
         auth_type=AuthTokenType.USER,
-        is_superuser=False
+        is_superuser=False,
     )
     comment_watched_mock.assert_called_once()

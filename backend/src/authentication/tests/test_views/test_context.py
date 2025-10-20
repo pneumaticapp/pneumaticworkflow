@@ -1,27 +1,24 @@
 import pytest
 import pytz
 
-from src.processes.models import (
-    TaskPerformer
-)
 from src.accounts.enums import (
-    UserType,
-    LeaseLevel,
     BillingPlanType,
     Language,
+    LeaseLevel,
     UserDateFormat,
     UserFirstDayWeek,
+    UserType,
 )
+from src.authentication.services.guest_auth import GuestJWTAuthService
 from src.payment.enums import BillingPeriod
+from src.processes.models.workflows.task import TaskPerformer
 from src.processes.tests.fixtures import (
-    create_test_workflow,
     create_test_account,
-    create_test_user,
     create_test_guest,
+    create_test_user,
+    create_test_workflow,
 )
-from src.authentication.services import GuestJWTAuthService
 from src.utils.dates import date_format
-
 
 pytestmark = pytest.mark.django_db
 
@@ -38,7 +35,7 @@ def test_context__ok(api_client):
         logo_lg=logo_lg,
         plan=plan,
         period=period,
-        tenant_name=tenant_name
+        tenant_name=tenant_name,
     )
     user = create_test_user(
         account=account,
@@ -132,23 +129,23 @@ def test_context__guest__ok(api_client):
     guest = create_test_guest(account=account)
     workflow = create_test_workflow(
         owner,
-        tasks_count=1
+        tasks_count=1,
     )
     task = workflow.tasks.first()
     TaskPerformer.objects.create(
         task_id=task.id,
-        user_id=guest.id
+        user_id=guest.id,
     )
     str_token = GuestJWTAuthService.get_str_token(
         task_id=task.id,
         user_id=guest.id,
-        account_id=account.id
+        account_id=account.id,
     )
 
     # act
     response = api_client.get(
-        f'/auth/context',
-        **{'X-Guest-Authorization': str_token}
+        '/auth/context',
+        **{'X-Guest-Authorization': str_token},
     )
 
     # assert

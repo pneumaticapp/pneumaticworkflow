@@ -1,25 +1,23 @@
 import pytest
 from rest_framework.serializers import ValidationError
-from src.authentication.enums import AuthTokenType
-from src.utils.validation import ErrorCode
+
 from src.accounts.enums import Language
-from src.accounts.services import (
-    AccountService,
-    UserService,
-)
+from src.accounts.services.account import AccountService
 from src.accounts.services.exceptions import (
     AccountServiceException,
     UserServiceException,
 )
-from src.processes.tests.fixtures import create_test_user
-from src.processes.services.system_workflows import (
-    SystemWorkflowService
-)
+from src.accounts.services.user import UserService
+from src.authentication.enums import AuthTokenType
 from src.authentication.views.mixins import SignUpMixin
-from src.payment.stripe.service import StripeService
 from src.payment.stripe.exceptions import StripeServiceException
+from src.payment.stripe.service import StripeService
+from src.processes.services.system_workflows import (
+    SystemWorkflowService,
+)
+from src.processes.tests.fixtures import create_test_user
 from src.utils.logging import SentryLogLevel
-
+from src.utils.validation import ErrorCode
 
 pytestmark = pytest.mark.django_db
 
@@ -33,70 +31,70 @@ def test_create__all_fields__ok(
     authenticate_mock = mocker.patch(
         'src.authentication.views.mixins.'
         'AuthService.get_auth_token',
-        return_value=token
+        return_value=token,
     )
     stripe_service_init_mock = mocker.patch.object(
         StripeService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     update_customer_mock = mocker.patch(
         'src.payment.stripe.service.'
-        'StripeService.update_customer'
+        'StripeService.update_customer',
     )
     sys_workflow_service_init_mock = mocker.patch.object(
         SystemWorkflowService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     create_onboarding_templates_mock = mocker.patch(
         'src.processes.services.system_workflows.'
-        'SystemWorkflowService.create_onboarding_templates'
+        'SystemWorkflowService.create_onboarding_templates',
     )
     create_onboarding_workflows_mock = mocker.patch(
         'src.processes.services.system_workflows.'
-        'SystemWorkflowService.create_onboarding_workflows'
+        'SystemWorkflowService.create_onboarding_workflows',
     )
     create_activated_templates_mock = mocker.patch(
         'src.processes.services.system_workflows.'
-        'SystemWorkflowService.create_activated_templates'
+        'SystemWorkflowService.create_activated_templates',
     )
     create_activated_workflows_mock = mocker.patch(
         'src.processes.services.system_workflows.'
-        'SystemWorkflowService.create_activated_workflows'
+        'SystemWorkflowService.create_activated_workflows',
     )
     account_service_init_mock = mocker.patch.object(
         AccountService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     user_service_init_mock = mocker.patch.object(
         UserService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     user = create_test_user()
     account_create_mock = mocker.patch(
-        'src.accounts.services.AccountService.create',
-        return_value=user.account
+        'src.accounts.services.account.AccountService.create',
+        return_value=user.account,
     )
     user_create_mock = mocker.patch(
-        'src.accounts.services.UserService.create',
-        return_value=user
+        'src.accounts.services.user.UserService.create',
+        return_value=user,
     )
     settings_mock = mocker.patch(
-        'src.authentication.views.mixins.settings'
+        'src.authentication.views.mixins.settings',
     )
     settings_mock.SLACK = True
     settings_mock.SLACK_CONFIG = {'NOTIFY_ON_SIGNUP': True}
     settings_mock.PROJECT_CONF = {'BILLING': True}
     notification_mock = mocker.patch(
         'src.authentication.views.mixins.'
-        'send_new_signup_notification.delay'
+        'send_new_signup_notification.delay',
     )
     after_signup_mock = mocker.patch(
         'src.authentication.views.mixins.SignUpMixin.'
-        'after_signup'
+        'after_signup',
     )
 
     email = 'Test@pneumatiC.App'
@@ -121,11 +119,11 @@ def test_create__all_fields__ok(
     request_mock = mocker.Mock(
         is_superuser=is_superuser,
         headers={
-            'User-Agent': user_agent
+            'User-Agent': user_agent,
         },
         META={
-            'HTTP_X_REAL_IP': ip
-        }
+            'HTTP_X_REAL_IP': ip,
+        },
     )
 
     view = SignUpMixin()
@@ -148,7 +146,7 @@ def test_create__all_fields__ok(
         utm_campaign=utm_campaign,
         utm_term=utm_term,
         utm_content=utm_content,
-        gclid=gclid
+        gclid=gclid,
     )
 
     # assert
@@ -156,11 +154,11 @@ def test_create__all_fields__ok(
     assert result[1] == token
     account_service_init_mock.assert_called_once_with(
         is_superuser=is_superuser,
-        auth_type=AuthTokenType.USER
+        auth_type=AuthTokenType.USER,
     )
     user_service_init_mock.assert_called_once_with(
         is_superuser=is_superuser,
-        auth_type=AuthTokenType.USER
+        auth_type=AuthTokenType.USER,
     )
     account_create_mock.assert_called_once_with(
         name=company_name,
@@ -170,7 +168,7 @@ def test_create__all_fields__ok(
         utm_term=utm_term,
         utm_content=utm_content,
         gclid=gclid,
-        billing_sync=True
+        billing_sync=True,
     )
     user_create_mock.assert_called_once_with(
         account=user.account,
@@ -207,71 +205,71 @@ def test_create__account_service_exception__validation_error(
     # arrange
     authenticate_mock = mocker.patch(
         'src.authentication.views.mixins.'
-        'AuthService.get_auth_token'
+        'AuthService.get_auth_token',
     )
     stripe_service_init_mock = mocker.patch.object(
         StripeService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     update_customer_mock = mocker.patch(
         'src.payment.stripe.service.'
-        'StripeService.update_customer'
+        'StripeService.update_customer',
     )
     mocker.patch.object(
         SystemWorkflowService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     create_onboarding_templates_mock = mocker.patch(
         'src.processes.services.system_workflows.'
-        'SystemWorkflowService.create_onboarding_templates'
+        'SystemWorkflowService.create_onboarding_templates',
     )
     create_onboarding_workflows_mock = mocker.patch(
         'src.processes.services.system_workflows.'
-        'SystemWorkflowService.create_onboarding_workflows'
+        'SystemWorkflowService.create_onboarding_workflows',
     )
     create_activated_templates_mock = mocker.patch(
         'src.processes.services.system_workflows.'
-        'SystemWorkflowService.create_activated_templates'
+        'SystemWorkflowService.create_activated_templates',
     )
     create_activated_workflows_mock = mocker.patch(
         'src.processes.services.system_workflows.'
-        'SystemWorkflowService.create_activated_workflows'
+        'SystemWorkflowService.create_activated_workflows',
     )
     account_service_init_mock = mocker.patch.object(
         AccountService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     user_service_init_mock = mocker.patch.object(
         UserService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     user = create_test_user()
     message = 'some message'
     account_create_mock = mocker.patch(
-        'src.accounts.services.AccountService.create',
-        side_effect=AccountServiceException(message=message)
+        'src.accounts.services.account.AccountService.create',
+        side_effect=AccountServiceException(message=message),
     )
     user_create_mock = mocker.patch(
-        'src.accounts.services.UserService.create',
-        return_value=user
+        'src.accounts.services.user.UserService.create',
+        return_value=user,
     )
     settings_mock = mocker.patch(
-        'src.authentication.views.mixins.settings'
+        'src.authentication.views.mixins.settings',
     )
     settings_mock.SLACK = True
     settings_mock.SLACK_CONFIG = {'NOTIFY_ON_SIGNUP': False}
     settings_mock.PROJECT_CONF = {'BILLING': True}
     notification_mock = mocker.patch(
         'src.authentication.views.mixins.'
-        'send_new_signup_notification.delay'
+        'send_new_signup_notification.delay',
     )
     after_signup_mock = mocker.patch(
         'src.authentication.views.mixins.SignUpMixin.'
-        'after_signup'
+        'after_signup',
     )
 
     email = 'test@test.test'
@@ -295,11 +293,11 @@ def test_create__account_service_exception__validation_error(
     assert ex.value.detail['message'] == message
     account_service_init_mock.assert_called_once_with(
         is_superuser=is_superuser,
-        auth_type=AuthTokenType.USER
+        auth_type=AuthTokenType.USER,
     )
     user_service_init_mock.assert_called_once_with(
         is_superuser=is_superuser,
-        auth_type=AuthTokenType.USER
+        auth_type=AuthTokenType.USER,
     )
     account_create_mock.assert_called_once_with(
         name=None,
@@ -309,7 +307,7 @@ def test_create__account_service_exception__validation_error(
         utm_term=None,
         utm_content=None,
         gclid=None,
-        billing_sync=True
+        billing_sync=True,
     )
     user_create_mock.assert_not_called()
     stripe_service_init_mock.assert_not_called()
@@ -330,71 +328,71 @@ def test_create__user_service_exception__validation_error(
     # arrange
     authenticate_mock = mocker.patch(
         'src.authentication.views.mixins.'
-        'AuthService.get_auth_token'
+        'AuthService.get_auth_token',
     )
     stripe_service_init_mock = mocker.patch.object(
         StripeService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     update_customer_mock = mocker.patch(
         'src.payment.stripe.service.'
-        'StripeService.update_customer'
+        'StripeService.update_customer',
     )
     mocker.patch.object(
         SystemWorkflowService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     create_onboarding_templates_mock = mocker.patch(
         'src.processes.services.system_workflows.'
-        'SystemWorkflowService.create_onboarding_templates'
+        'SystemWorkflowService.create_onboarding_templates',
     )
     create_onboarding_workflows_mock = mocker.patch(
         'src.processes.services.system_workflows.'
-        'SystemWorkflowService.create_onboarding_workflows'
+        'SystemWorkflowService.create_onboarding_workflows',
     )
     create_activated_templates_mock = mocker.patch(
         'src.processes.services.system_workflows.'
-        'SystemWorkflowService.create_activated_templates'
+        'SystemWorkflowService.create_activated_templates',
     )
     create_activated_workflows_mock = mocker.patch(
         'src.processes.services.system_workflows.'
-        'SystemWorkflowService.create_activated_workflows'
+        'SystemWorkflowService.create_activated_workflows',
     )
     account_service_init_mock = mocker.patch.object(
         AccountService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     user_service_init_mock = mocker.patch.object(
         UserService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     user = create_test_user(is_account_owner=True)
     account_create_mock = mocker.patch(
-        'src.accounts.services.AccountService.create',
-        return_value=user.account
+        'src.accounts.services.account.AccountService.create',
+        return_value=user.account,
     )
     message = 'some message'
     user_create_mock = mocker.patch(
-        'src.accounts.services.UserService.create',
-        side_effect=UserServiceException(message=message)
+        'src.accounts.services.user.UserService.create',
+        side_effect=UserServiceException(message=message),
     )
     settings_mock = mocker.patch(
-        'src.authentication.views.mixins.settings'
+        'src.authentication.views.mixins.settings',
     )
     settings_mock.SLACK = True
     settings_mock.SLACK_CONFIG = {'NOTIFY_ON_SIGNUP': True}
     settings_mock.PROJECT_CONF = {'BILLING': True}
     notification_mock = mocker.patch(
         'src.authentication.views.mixins.'
-        'send_new_signup_notification.delay'
+        'send_new_signup_notification.delay',
     )
     after_signup_mock = mocker.patch(
         'src.authentication.views.mixins.SignUpMixin.'
-        'after_signup'
+        'after_signup',
     )
 
     email = 'test@test.test'
@@ -418,11 +416,11 @@ def test_create__user_service_exception__validation_error(
     assert ex.value.detail['message'] == message
     account_service_init_mock.assert_called_once_with(
         is_superuser=is_superuser,
-        auth_type=AuthTokenType.USER
+        auth_type=AuthTokenType.USER,
     )
     user_service_init_mock.assert_called_once_with(
         is_superuser=is_superuser,
-        auth_type=AuthTokenType.USER
+        auth_type=AuthTokenType.USER,
     )
     account_create_mock.assert_called_once_with(
         name=None,
@@ -432,7 +430,7 @@ def test_create__user_service_exception__validation_error(
         utm_term=None,
         utm_content=None,
         gclid=None,
-        billing_sync=True
+        billing_sync=True,
     )
     user_create_mock.assert_called_once_with(
         account=user.account,
@@ -467,65 +465,65 @@ def test_create__stripe_service_exception__skip_sync(
     authenticate_mock = mocker.patch(
         'src.authentication.views.mixins.'
         'AuthService.get_auth_token',
-        return_value=token
+        return_value=token,
     )
     stripe_service_init_mock = mocker.patch.object(
         StripeService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     message = 'Error'
     ex = StripeServiceException(message=message)
     update_customer_mock = mocker.patch(
         'src.payment.stripe.service.'
         'StripeService.update_customer',
-        side_effect=ex
+        side_effect=ex,
     )
     capture_sentry_message_mock = mocker.patch(
-        'src.authentication.views.mixins.capture_sentry_message'
+        'src.authentication.views.mixins.capture_sentry_message',
     )
     sys_workflow_service_init_mock = mocker.patch.object(
         SystemWorkflowService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     create_onboarding_templates_mock = mocker.patch(
         'src.processes.services.system_workflows.'
-        'SystemWorkflowService.create_onboarding_templates'
+        'SystemWorkflowService.create_onboarding_templates',
     )
     create_onboarding_workflows_mock = mocker.patch(
         'src.processes.services.system_workflows.'
-        'SystemWorkflowService.create_onboarding_workflows'
+        'SystemWorkflowService.create_onboarding_workflows',
     )
     create_activated_templates_mock = mocker.patch(
         'src.processes.services.system_workflows.'
-        'SystemWorkflowService.create_activated_templates'
+        'SystemWorkflowService.create_activated_templates',
     )
     create_activated_workflows_mock = mocker.patch(
         'src.processes.services.system_workflows.'
-        'SystemWorkflowService.create_activated_workflows'
+        'SystemWorkflowService.create_activated_workflows',
     )
     account_service_init_mock = mocker.patch.object(
         AccountService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     user_service_init_mock = mocker.patch.object(
         UserService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     user = create_test_user()
     account_create_mock = mocker.patch(
-        'src.accounts.services.AccountService.create',
-        return_value=user.account
+        'src.accounts.services.account.AccountService.create',
+        return_value=user.account,
     )
     user_create_mock = mocker.patch(
-        'src.accounts.services.UserService.create',
-        return_value=user
+        'src.accounts.services.user.UserService.create',
+        return_value=user,
     )
     settings_mock = mocker.patch(
-        'src.authentication.views.mixins.settings'
+        'src.authentication.views.mixins.settings',
     )
     settings_mock.SLACK = True
     settings_mock.SLACK_CONFIG = {'NOTIFY_ON_SIGNUP': True}
@@ -533,11 +531,11 @@ def test_create__stripe_service_exception__skip_sync(
 
     notification_mock = mocker.patch(
         'src.authentication.views.mixins.'
-        'send_new_signup_notification.delay'
+        'send_new_signup_notification.delay',
     )
     after_signup_mock = mocker.patch(
         'src.authentication.views.mixins.SignUpMixin.'
-        'after_signup'
+        'after_signup',
     )
 
     email = 'Test@pneumatiC.App'
@@ -561,11 +559,11 @@ def test_create__stripe_service_exception__skip_sync(
     request_mock = mocker.Mock(
         is_superuser=is_superuser,
         headers={
-            'User-Agent': user_agent
+            'User-Agent': user_agent,
         },
         META={
-            'HTTP_X_REAL_IP': ip
-        }
+            'HTTP_X_REAL_IP': ip,
+        },
     )
 
     view = SignUpMixin()
@@ -587,7 +585,7 @@ def test_create__stripe_service_exception__skip_sync(
         utm_campaign=utm_campaign,
         utm_term=utm_term,
         utm_content=utm_content,
-        gclid=gclid
+        gclid=gclid,
     )
 
     # assert
@@ -595,11 +593,11 @@ def test_create__stripe_service_exception__skip_sync(
     assert result[1] == token
     account_service_init_mock.assert_called_once_with(
         is_superuser=is_superuser,
-        auth_type=AuthTokenType.USER
+        auth_type=AuthTokenType.USER,
     )
     user_service_init_mock.assert_called_once_with(
         is_superuser=is_superuser,
-        auth_type=AuthTokenType.USER
+        auth_type=AuthTokenType.USER,
     )
     account_create_mock.assert_called_once_with(
         name=company_name,
@@ -609,7 +607,7 @@ def test_create__stripe_service_exception__skip_sync(
         utm_term=utm_term,
         utm_content=utm_content,
         gclid=gclid,
-        billing_sync=True
+        billing_sync=True,
     )
     user_create_mock.assert_called_once_with(
         account=user.account,
@@ -632,7 +630,7 @@ def test_create__stripe_service_exception__skip_sync(
             'stripe_id': user.account.stripe_id,
             'exception': str(ex),
         },
-        level=SentryLogLevel.ERROR
+        level=SentryLogLevel.ERROR,
     )
 
     sys_workflow_service_init_mock.assert_called_once_with(user=user)
@@ -658,59 +656,59 @@ def test_create__disable_billing__skip_stripe_call(
     authenticate_mock = mocker.patch(
         'src.authentication.views.mixins.'
         'AuthService.get_auth_token',
-        return_value=token
+        return_value=token,
     )
     stripe_service_init_mock = mocker.patch.object(
         StripeService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     update_customer_mock = mocker.patch(
         'src.payment.stripe.service.'
-        'StripeService.update_customer'
+        'StripeService.update_customer',
     )
     sys_workflow_service_init_mock = mocker.patch.object(
         SystemWorkflowService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     create_onboarding_templates_mock = mocker.patch(
         'src.processes.services.system_workflows.'
-        'SystemWorkflowService.create_onboarding_templates'
+        'SystemWorkflowService.create_onboarding_templates',
     )
     create_onboarding_workflows_mock = mocker.patch(
         'src.processes.services.system_workflows.'
-        'SystemWorkflowService.create_onboarding_workflows'
+        'SystemWorkflowService.create_onboarding_workflows',
     )
     create_activated_templates_mock = mocker.patch(
         'src.processes.services.system_workflows.'
-        'SystemWorkflowService.create_activated_templates'
+        'SystemWorkflowService.create_activated_templates',
     )
     create_activated_workflows_mock = mocker.patch(
         'src.processes.services.system_workflows.'
-        'SystemWorkflowService.create_activated_workflows'
+        'SystemWorkflowService.create_activated_workflows',
     )
     account_service_init_mock = mocker.patch.object(
         AccountService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     user_service_init_mock = mocker.patch.object(
         UserService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     user = create_test_user(is_account_owner=True)
     account_create_mock = mocker.patch(
-        'src.accounts.services.AccountService.create',
-        return_value=user.account
+        'src.accounts.services.account.AccountService.create',
+        return_value=user.account,
     )
     user_create_mock = mocker.patch(
-        'src.accounts.services.UserService.create',
-        return_value=user
+        'src.accounts.services.user.UserService.create',
+        return_value=user,
     )
     settings_mock = mocker.patch(
-        'src.authentication.views.mixins.settings'
+        'src.authentication.views.mixins.settings',
     )
     settings_mock.SLACK = True
     settings_mock.SLACK_CONFIG = {'NOTIFY_ON_SIGNUP': True}
@@ -718,11 +716,11 @@ def test_create__disable_billing__skip_stripe_call(
 
     notification_mock = mocker.patch(
         'src.authentication.views.mixins.'
-        'send_new_signup_notification.delay'
+        'send_new_signup_notification.delay',
     )
     after_signup_mock = mocker.patch(
         'src.authentication.views.mixins.SignUpMixin.'
-        'after_signup'
+        'after_signup',
     )
 
     email = 'Test@pneumatiC.App'
@@ -732,11 +730,11 @@ def test_create__disable_billing__skip_stripe_call(
     request_mock = mocker.Mock(
         is_superuser=is_superuser,
         headers={
-            'User-Agent': user_agent
+            'User-Agent': user_agent,
         },
         META={
-            'HTTP_X_REAL_IP': ip
-        }
+            'HTTP_X_REAL_IP': ip,
+        },
     )
 
     view = SignUpMixin()
@@ -752,11 +750,11 @@ def test_create__disable_billing__skip_stripe_call(
     assert result[1] == token
     account_service_init_mock.assert_called_once_with(
         is_superuser=is_superuser,
-        auth_type=AuthTokenType.USER
+        auth_type=AuthTokenType.USER,
     )
     user_service_init_mock.assert_called_once_with(
         is_superuser=is_superuser,
-        auth_type=AuthTokenType.USER
+        auth_type=AuthTokenType.USER,
     )
     account_create_mock.assert_called_once_with(
         name=None,
@@ -766,7 +764,7 @@ def test_create__disable_billing__skip_stripe_call(
         utm_term=None,
         utm_content=None,
         gclid=None,
-        billing_sync=True
+        billing_sync=True,
     )
     user_create_mock.assert_called_once_with(
         account=user.account,
