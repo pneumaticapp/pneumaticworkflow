@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 import { Column } from 'react-table';
 import { TableColumns } from '../../types';
 import { Skeleton } from '../../../../../UI/Skeleton';
