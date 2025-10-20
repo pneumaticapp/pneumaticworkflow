@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 import { Column } from 'react-table';
 import { TableColumns } from '../../types';
 import { Skeleton } from '../../../../../UI/Skeleton';
@@ -36,7 +36,7 @@ const PerformerSkeletonCell = () => (
   </div>
 );
 
-export const defaultSystemColumns: Column<TableColumns>[] = [
+export const defaultSystemSkeletonTable: Column<TableColumns>[] = [
   {
     Header: <SkeletonDefaultCell80 />,
     accessor: 'workflow',

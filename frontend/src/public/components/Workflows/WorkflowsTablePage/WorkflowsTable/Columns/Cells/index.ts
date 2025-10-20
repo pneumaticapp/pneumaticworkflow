@@ -5,4 +5,4 @@ export * from './StepColumn';
 export * from './WorkflowColumn';
 export * from './OptionalFieldColumn';
 export * from './TemplateNameColumn';
-export * from './SystemDefoultColumns';
+export * from './SystemDefaultColumns';
