@@ -1,30 +1,31 @@
-# pylint: disable=no-name-in-module
 from ast import literal_eval
-from collections import OrderedDict, Iterable
-from collections.abc import Mapping
+from collections import OrderedDict
+from collections.abc import Iterable, Mapping
+from typing import Any, Dict, List, Optional, Union
+
 from django.core.exceptions import ValidationError as DjangoValidationError
-from typing import Dict, Any, List, Optional, Union
 from rest_framework.exceptions import ValidationError
-from rest_framework.settings import api_settings
-from rest_framework.serializers import as_serializer_error
 from rest_framework.fields import (
     Field,
     SkipField,
+    empty,
     get_error_detail,
     set_value,
-    empty
 )
-from src.utils.validation import (
-    raise_validation_error,
-    ErrorCode
-)
+from rest_framework.serializers import as_serializer_error
+from rest_framework.settings import api_settings
+
 from src.generics.entities import (
-    ValidationErrorData
+    ValidationErrorData,
 )
 from src.generics.messages import (
     MSG_GE_0003,
     MSG_GE_0004,
     MSG_GE_0005,
+)
+from src.utils.validation import (
+    ErrorCode,
+    raise_validation_error,
 )
 
 
@@ -35,10 +36,9 @@ class ValidationUtilsMixin:
     @staticmethod
     def get_valid_list_strings(raw_value: str) -> List[str]:
         if isinstance(raw_value, str):
-            items = [
+            return [
                 item.strip() for item in raw_value.split(',') if item.strip()
             ]
-            return items
         return []
 
     @staticmethod
@@ -51,8 +51,8 @@ class ValidationUtilsMixin:
         result = []
         try:
             value = literal_eval(raw_value)
-        except (TypeError, ValueError, SyntaxError):
-            raise validation_error
+        except (TypeError, ValueError, SyntaxError) as ex:
+            raise validation_error from ex
         else:
             if isinstance(value, int):
                 result = [value]
@@ -62,8 +62,8 @@ class ValidationUtilsMixin:
                 for number in value:
                     try:
                         result.append(int(number))
-                    except (TypeError, ValueError):
-                        raise validation_error
+                    except (TypeError, ValueError) as ex:
+                        raise validation_error from ex
             else:
                 raise validation_error
             return result
@@ -111,7 +111,7 @@ class CustomValidationErrorMixin:
     def _get_data_for_enrichment(
         self,
         fields_data: Mapping,
-        field: Optional[Field] = None
+        field: Optional[Field] = None,
     ) -> dict:
 
         """ The method determines what additional data
@@ -128,14 +128,14 @@ class CustomValidationErrorMixin:
         return {
             self._name_key: name,
             self._api_name_key: api_name,
-            self._enriched_key: True
+            self._enriched_key: True,
         }
 
     def _enrich_error_detail(
         self,
         fields_data: Mapping,
         detail: Union[Iterable, Mapping, str],
-        field: Optional[Field] = None
+        field: Optional[Field] = None,
     ) -> dict:
 
         """ Adds additional information to the error body.
@@ -161,53 +161,53 @@ class CustomValidationErrorMixin:
 
         if detail:
             if isinstance(detail, list):
-                for number, sub_detail in enumerate(detail):
-                    if isinstance(sub_detail, str):
-                        sub_detail = {self._message_key: sub_detail}
+                for number, _sub_detail in enumerate(detail):
+                    if isinstance(_sub_detail, str):
+                        sub_detail = {self._message_key: _sub_detail}
                         sub_detail.update(
                             self._get_data_for_enrichment(
                                 fields_data=fields_data,
-                                field=field
-                            )
+                                field=field,
+                            ),
                         )
                         detail[number] = sub_detail
                     else:
                         detail[number] = self._enrich_error_detail(
                             fields_data=fields_data,
-                            detail=sub_detail,
-                            field=field
+                            detail=_sub_detail,
+                            field=field,
                         )
             elif isinstance(detail, dict):
-                if self._enriched_key not in detail.keys():
-                    for key, sub_detail in detail.items():
-                        if isinstance(sub_detail, str):
-                            sub_detail = {self._message_key: sub_detail}
+                if self._enriched_key not in detail:
+                    for key, _sub_detail in detail.items():
+                        if isinstance(_sub_detail, str):
+                            sub_detail = {self._message_key: _sub_detail}
                             sub_detail.update(
                                 self._get_data_for_enrichment(
                                     fields_data=fields_data,
-                                    field=field
-                                )
+                                    field=field,
+                                ),
                             )
                             detail[key] = sub_detail
                         else:
                             detail[key] = self._enrich_error_detail(
                                 fields_data=fields_data,
-                                detail=sub_detail,
-                                field=field
+                                detail=_sub_detail,
+                                field=field,
                             )
                     detail.update(
                         self._get_data_for_enrichment(
                             fields_data=fields_data,
-                            field=field
-                        )
+                            field=field,
+                        ),
                     )
             elif isinstance(detail, str):
                 detail = {self._message_key: detail}
                 detail.update(
                     self._get_data_for_enrichment(
                         fields_data=fields_data,
-                        field=field
-                    )
+                        field=field,
+                    ),
                 )
         return detail
 
@@ -243,8 +243,8 @@ class CustomValidationErrorMixin:
                     errors.extend(
                         self._get_errors_from_dict(
                             data=value,
-                            default=default
-                        )
+                            default=default,
+                        ),
                     )
                 elif isinstance(value, list):
                     for sub_value in value:
@@ -253,15 +253,15 @@ class CustomValidationErrorMixin:
                                 errors.extend(
                                     self._get_errors_from_dict(
                                         data=sub_value,
-                                        default=default
-                                    )
+                                        default=default,
+                                    ),
                                 )
                             elif isinstance(sub_value, list):
                                 errors.extend(
                                     self._get_errors_from_list(
                                         data=sub_value,
-                                        default=default
-                                    )
+                                        default=default,
+                                    ),
                                 )
         return errors
 
@@ -301,21 +301,20 @@ class CustomValidationErrorMixin:
 
         if data.keys():
             errors = []
-            for key, value in data.items():
+            for _, value in data.items():
                 if value not in self._null_values:
                     if isinstance(value, list):
                         errors.extend(self._get_errors_from_list(
                             data=value,
-                            default=error
+                            default=error,
                         ))
                     if isinstance(value, dict):
                         errors.extend(self._get_errors_from_dict(
                             data=value,
-                            default=error
+                            default=error,
                         ))
             return errors
-        else:
-            return [error]
+        return [error]
 
     def _get_formatted_error(self, error: dict) -> ValidationErrorData:
 
@@ -333,27 +332,26 @@ class CustomValidationErrorMixin:
         if name == api_settings.NON_FIELD_ERRORS_KEY:
             return ValidationErrorData(
                 message=message,
-                code=ErrorCode.VALIDATION_ERROR
+                code=ErrorCode.VALIDATION_ERROR,
             )
-        elif api_name:
+        if api_name:
             message = f'{name.capitalize()}: {message.lower()}'
             return ValidationErrorData(
                 message=message,
                 code=ErrorCode.VALIDATION_ERROR,
                 details={
                     'api_name': api_name,
-                    'reason': message
-                }
+                    'reason': message,
+                },
             )
-        else:
-            return ValidationErrorData(
-                message=message,
-                code=ErrorCode.VALIDATION_ERROR,
-                details={
-                    'name': name,
-                    'reason': message
-                }
-            )
+        return ValidationErrorData(
+            message=message,
+            code=ErrorCode.VALIDATION_ERROR,
+            details={
+                'name': name,
+                'reason': message,
+            },
+        )
 
     def run_validation(self, data=empty):
 
@@ -371,12 +369,12 @@ class CustomValidationErrorMixin:
             msg = '.validate() should return the validated data'
             assert value is not None, msg
 
-        except (ValidationError, DjangoValidationError) as exc:
+        except (ValidationError, DjangoValidationError) as ex:
             detail = self._enrich_error_detail(
-                detail=as_serializer_error(exc),
-                fields_data=value
+                detail=as_serializer_error(ex),
+                fields_data=value,
             )
-            raise ValidationError(detail)
+            raise ValidationError(detail) from ex
 
         return value
 
@@ -387,11 +385,11 @@ class CustomValidationErrorMixin:
 
         if not isinstance(data, Mapping):
             message = self.error_messages['invalid'].format(
-                datatype=type(data).__name__
+                datatype=type(data).__name__,
             )
             error_detail = self._enrich_error_detail(
                 detail={api_settings.NON_FIELD_ERRORS_KEY: [message]},
-                fields_data=data
+                fields_data=data,
             )
             raise ValidationError(error_detail, code='invalid')
 
@@ -411,13 +409,13 @@ class CustomValidationErrorMixin:
                 errors[field.field_name] = self._enrich_error_detail(
                     detail=exc.detail,
                     fields_data=data,
-                    field=field
+                    field=field,
                 )
             except DjangoValidationError as exc:
                 errors[field.field_name] = self._enrich_error_detail(
                     detail=get_error_detail(exc),
                     fields_data=data,
-                    field=field
+                    field=field,
                 )
             except SkipField:
                 pass
@@ -474,7 +472,7 @@ class CustomValidationErrorMixin:
         name: Optional[str] = None,
         api_name: Optional[str] = None,
         error_code: ErrorCode = ErrorCode.VALIDATION_ERROR,
-        **kwargs
+        **kwargs,
     ):
         if not hasattr(self, '_validated_data'):
             raise Exception(MSG_GE_0004)
@@ -483,5 +481,5 @@ class CustomValidationErrorMixin:
             name=name,
             api_name=api_name,
             error_code=error_code,
-            **kwargs
+            **kwargs,
         )

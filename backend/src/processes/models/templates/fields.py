@@ -1,20 +1,21 @@
 from django.db import models
-from django.db.models import UniqueConstraint, Q
+from django.db.models import Q, UniqueConstraint
+
 from src.generics.managers import BaseSoftDeleteManager
+from src.processes.models.base import BaseApiNameModel
 from src.processes.models.mixins import FieldMixin
-from src.processes.querysets import (
-    FieldTemplateValuesQuerySet,
-    FieldTemplateQuerySet,
-)
+from src.processes.models.templates.kickoff import Kickoff
 from src.processes.models.templates.task import TaskTemplate
 from src.processes.models.templates.template import Template
-from src.processes.models.templates.kickoff import Kickoff
-from src.processes.models.base import BaseApiNameModel
+from src.processes.querysets import (
+    FieldTemplateQuerySet,
+    FieldTemplateValuesQuerySet,
+)
 
 
 class FieldTemplate(
     BaseApiNameModel,
-    FieldMixin
+    FieldMixin,
 ):
 
     class Meta:
@@ -24,7 +25,7 @@ class FieldTemplate(
                 fields=['template', 'api_name'],
                 condition=Q(is_deleted=False),
                 name='processes_fieldtemplate_template_api_name_unique',
-            )
+            ),
         ]
 
     api_name_prefix = 'field'
@@ -38,13 +39,13 @@ class FieldTemplate(
         Kickoff,
         on_delete=models.CASCADE,
         null=True,
-        related_name='fields'
+        related_name='fields',
     )
     task = models.ForeignKey(
         TaskTemplate,
         on_delete=models.CASCADE,
         null=True,
-        related_name='fields'
+        related_name='fields',
     )
     date_created = models.DateTimeField(auto_now_add=True)
     default = models.TextField(blank=True)
@@ -66,7 +67,7 @@ class FieldTemplateSelection(
                     'processes_fieldtemplateselection'
                     '_template_api_name_unique'
                 ),
-            )
+            ),
         ]
 
     api_name_prefix = 'selection'
@@ -79,10 +80,10 @@ class FieldTemplateSelection(
     field_template = models.ForeignKey(
         FieldTemplate,
         on_delete=models.CASCADE,
-        related_name='selections'
+        related_name='selections',
     )
     value = models.CharField(max_length=200)
 
     objects = BaseSoftDeleteManager.from_queryset(
-        FieldTemplateValuesQuerySet
+        FieldTemplateValuesQuerySet,
     )()

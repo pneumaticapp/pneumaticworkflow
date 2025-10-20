@@ -1,22 +1,20 @@
 import pytest
+
 from src.accounts.models import (
     UserInvite,
 )
-from src.processes.models import (
-    Template,
-    TemplateOwner
+from src.processes.enums import (
+    OwnerType,
+    PerformerType,
 )
+from src.processes.models.templates.owner import TemplateOwner
+from src.processes.models.templates.template import Template
 from src.processes.tests.fixtures import (
     create_invited_user,
-    create_test_workflow,
     create_test_template,
     create_test_user,
+    create_test_workflow,
 )
-from src.processes.enums import (
-    PerformerType,
-    OwnerType
-)
-
 
 pytestmark = pytest.mark.django_db
 
@@ -31,7 +29,7 @@ def test_count_templates__user_from_another_acc__404(api_client):
 
     # act
     response = api_client.get(
-        f'/accounts/users/{invited_user.id}/count-workflows'
+        f'/accounts/users/{invited_user.id}/count-workflows',
     )
 
     # assert
@@ -52,7 +50,7 @@ def test_count_templates__invited_user_from_another_account__ok(api_client):
 
     # act
     response = api_client.get(
-        f'/accounts/users/{invited_user.id}/count-workflows'
+        f'/accounts/users/{invited_user.id}/count-workflows',
     )
 
     # assert
@@ -79,7 +77,7 @@ def test_count_templates(api_client):
 
     # act
     response = api_client.get(
-        f'/accounts/users/{invited_user.id}/count-workflows'
+        f'/accounts/users/{invited_user.id}/count-workflows',
     )
 
     # assert
@@ -108,7 +106,7 @@ def test_count_templates__only_template_owners__ok(api_client):
 
     # act
     response = api_client.get(
-        f'/accounts/users/{invited_user.id}/count-workflows'
+        f'/accounts/users/{invited_user.id}/count-workflows',
     )
 
     # assert
@@ -128,7 +126,7 @@ def test_count_templates__template_owners_is_deleted__ok(api_client):
 
     # act
     response = api_client.get(
-        f'/accounts/users/{user.id}/count-workflows'
+        f'/accounts/users/{user.id}/count-workflows',
     )
 
     # assert
@@ -158,7 +156,7 @@ def test_count_templates__only_template_performer__ok(api_client):
 
     # act
     response = api_client.get(
-        f'/accounts/users/{invited_user.id}/count-workflows'
+        f'/accounts/users/{invited_user.id}/count-workflows',
     )
 
     # assert
@@ -173,7 +171,7 @@ def test_count_templates__raw_performer__ok(api_client):
     request_template_owners = [
         {
             'type': OwnerType.USER,
-            'source_id': f'{user.id}'
+            'source_id': f'{user.id}',
         },
     ]
     # act
@@ -192,16 +190,16 @@ def test_count_templates__raw_performer__ok(api_client):
                     'raw_performers': [
                         {
                             'type': PerformerType.USER,
-                            'source_id': user.id
+                            'source_id': user.id,
                         },
-                    ]
-                }
-            ]
-        }
+                    ],
+                },
+            ],
+        },
     )
     # act
     response = api_client.get(
-        f'/accounts/users/{user.id}/count-workflows'
+        f'/accounts/users/{user.id}/count-workflows',
     )
 
     # assert
@@ -223,7 +221,7 @@ def test_count_templates__only_task_performer__ok(api_client):
 
     # act
     response = api_client.get(
-        f'/accounts/users/{invited_user.id}/count-workflows'
+        f'/accounts/users/{invited_user.id}/count-workflows',
     )
 
     # assert

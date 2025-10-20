@@ -1,22 +1,19 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
-from src.generics.serializers import DateTimeRangeSerializer
 from src.generics.fields import TimeStampField
 from src.generics.mixins.serializers import (
     CustomValidationErrorMixin,
-    ValidationUtilsMixin
+    ValidationUtilsMixin,
 )
-from src.processes.models import (
-    Workflow,
-    Template,
-    KickoffValue,
-    WorkflowEvent,
-)
+from src.generics.serializers import DateTimeRangeSerializer
+from src.processes.models.templates.template import Template
+from src.processes.models.workflows.event import WorkflowEvent
+from src.processes.models.workflows.kickoff import KickoffValue
+from src.processes.models.workflows.workflow import Workflow
 from src.processes.serializers.workflows.field import (
-    TaskFieldSerializer
+    TaskFieldSerializer,
 )
-
 
 UserModel = get_user_model()
 
@@ -81,7 +78,7 @@ class ActivityWorkflowSerializer(serializers.ModelSerializer):
 class HighlightsFilterSerializer(
     CustomValidationErrorMixin,
     ValidationUtilsMixin,
-    serializers.Serializer
+    serializers.Serializer,
 ):
     templates = serializers.CharField(required=False)
     current_performer_ids = serializers.CharField(required=False)

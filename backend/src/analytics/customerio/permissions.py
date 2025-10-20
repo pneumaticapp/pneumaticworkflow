@@ -1,4 +1,5 @@
 from rest_framework.permissions import BasePermission
+
 from src.analytics.customerio.utils import check_webhook_hash
 from src.utils import logging
 
@@ -14,6 +15,6 @@ class WebhookAPIPermission(BasePermission):
                     'request_data': request.data,
                     'request_headers': request.headers,
                 },
-                level=logging.SentryLogLevel.ERROR
+                level=logging.SentryLogLevel.ERROR,
             )
         return result

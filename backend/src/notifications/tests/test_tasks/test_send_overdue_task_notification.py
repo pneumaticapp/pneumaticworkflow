@@ -1,32 +1,34 @@
-import pytest
 from datetime import timedelta
+
+import pytest
 from django.utils import timezone
+
+from src.accounts.enums import (
+    NotificationStatus,
+    NotificationType,
+)
+from src.accounts.models import Notification
 from src.accounts.serializers.notifications import (
     NotificationTaskSerializer,
     NotificationWorkflowSerializer,
 )
-from src.processes.tests.fixtures import (
-    create_test_workflow,
-    create_test_user,
-    create_test_guest,
-    create_test_account,
-)
+from src.notifications.enums import NotificationMethod
 from src.notifications.services.push import (
-    PushNotificationService
+    PushNotificationService,
+)
+from src.notifications.tasks import (
+    _send_overdue_task_notification,
+)
+from src.processes.enums import (
+    DirectlyStatus,
+    WorkflowStatus,
 )
 from src.processes.models.workflows.task import TaskPerformer
-from src.notifications.tasks import (
-    _send_overdue_task_notification
-)
-from src.notifications.enums import NotificationMethod
-from src.accounts.enums import (
-    NotificationType,
-    NotificationStatus
-)
-from src.accounts.models import Notification
-from src.processes.enums import (
-    WorkflowStatus,
-    DirectlyStatus,
+from src.processes.tests.fixtures import (
+    create_test_account,
+    create_test_guest,
+    create_test_user,
+    create_test_workflow,
 )
 
 pytestmark = pytest.mark.django_db
@@ -44,20 +46,20 @@ def test_send_overdue_task_notification__call_all_services__ok(mocker):
     task.save(update_fields=['due_date'])
     send_email_mock = mocker.patch(
         'src.notifications.services.email.EmailService'
-        '.send_overdue_task'
+        '.send_overdue_task',
     )
     send_ws_mock = mocker.patch(
         'src.notifications.services.websockets.WebSocketService'
-        '.send_overdue_task'
+        '.send_overdue_task',
     )
     push_notification_service_init_mock = mocker.patch.object(
         PushNotificationService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     send_push_mock = mocker.patch(
         'src.notifications.services.push.'
-        'PushNotificationService.send_overdue_task'
+        'PushNotificationService.send_overdue_task',
     )
 
     # act
@@ -68,7 +70,7 @@ def test_send_overdue_task_notification__call_all_services__ok(mocker):
         task_id=task.id,
         user_id=user.id,
         type=NotificationType.OVERDUE_TASK,
-        status=NotificationStatus.NEW
+        status=NotificationStatus.NEW,
     )
     send_email_mock.assert_called_once_with(
         user_id=user.id,
@@ -84,7 +86,7 @@ def test_send_overdue_task_notification__call_all_services__ok(mocker):
         workflow_starter_last_name=user.last_name,
         token=None,
         notification=notification,
-        sync=True
+        sync=True,
     )
 
     send_ws_mock.assert_called_once_with(
@@ -101,7 +103,7 @@ def test_send_overdue_task_notification__call_all_services__ok(mocker):
         workflow_starter_last_name=user.last_name,
         token=None,
         notification=notification,
-        sync=True
+        sync=True,
     )
     push_notification_service_init_mock.assert_called_once_with(
         logging=account.log_api_requests,
@@ -122,7 +124,7 @@ def test_send_overdue_task_notification__call_all_services__ok(mocker):
         workflow_starter_last_name=user.last_name,
         token=None,
         notification=notification,
-        sync=True
+        sync=True,
     )
 
 
@@ -135,20 +137,20 @@ def test_send_overdue_task_notification__already_sent__not_sent(mocker):
     task.due_date = timezone.now() - timedelta(minutes=5)
     task.save(update_fields=['due_date'])
     send_notification_mock = mocker.patch(
-        'src.notifications.tasks._send_notification'
+        'src.notifications.tasks._send_notification',
     )
     notification = Notification.objects.create(
         task_id=task.id,
         task_json=NotificationTaskSerializer(
             instance=task,
-            notification_type=NotificationType.OVERDUE_TASK
+            notification_type=NotificationType.OVERDUE_TASK,
         ).data,
         workflow_json=NotificationWorkflowSerializer(
-            instance=task.workflow
+            instance=task.workflow,
         ).data,
         user_id=user.id,
         type=NotificationType.OVERDUE_TASK,
-        account_id=user.account.id
+        account_id=user.account.id,
     )
 
     # act
@@ -159,7 +161,7 @@ def test_send_overdue_task_notification__already_sent__not_sent(mocker):
         task_id=task.id,
         user_id=user.id,
         type=NotificationType.OVERDUE_TASK,
-        account_id=user.account.id
+        account_id=user.account.id,
     ).exclude(id=notification.id).exists()
     send_notification_mock.assert_not_called()
 
@@ -169,7 +171,7 @@ def test_send_overdue_task_notification__guest__ok(mocker):
     # arrange
     account = create_test_account(
         logo_lg='https://logo.jpg',
-        log_api_requests=True
+        log_api_requests=True,
     )
     user = create_test_user(account=account)
     workflow = create_test_workflow(user, tasks_count=2)
@@ -178,18 +180,18 @@ def test_send_overdue_task_notification__guest__ok(mocker):
     guest = create_test_guest(account=account, email='t@t.t')
     TaskPerformer.objects.create(
         task_id=task.id,
-        user_id=guest.id
+        user_id=guest.id,
     )
     task.due_date = timezone.now() - timedelta(minutes=5)
     task.save(update_fields=['due_date'])
     send_notification_mock = mocker.patch(
-        'src.notifications.tasks._send_notification'
+        'src.notifications.tasks._send_notification',
     )
     token = '1!@#23!3'
     get_token_mock = mocker.patch(
-        'src.authentication.services.GuestJWTAuthService.'
+        'src.authentication.services.guest_auth.GuestJWTAuthService.'
         'get_str_token',
-        return_value=token
+        return_value=token,
     )
 
     # act
@@ -219,12 +221,12 @@ def test_send_overdue_task_notification__guest__ok(mocker):
         workflow_starter_last_name=user.last_name,
         notification=notification,
         sync=True,
-        token=token
+        token=token,
     )
     get_token_mock.assert_called_once_with(
         task_id=task.id,
         user_id=guest.id,
-        account_id=user.account.id
+        account_id=user.account.id,
     )
 
 
@@ -238,25 +240,25 @@ def test_send_overdue_task_notification__guest_already_sent__not_sent(mocker):
     guest = create_test_guest(account=user.account, email='t@t.t')
     TaskPerformer.objects.create(
         task_id=task.id,
-        user_id=guest.id
+        user_id=guest.id,
     )
     task.due_date = timezone.now() - timedelta(minutes=5)
     task.save(update_fields=['due_date'])
     send_notification_mock = mocker.patch(
-        'src.notifications.tasks._send_notification'
+        'src.notifications.tasks._send_notification',
     )
     notification = Notification.objects.create(
         task_id=task.id,
         task_json=NotificationTaskSerializer(
             instance=task,
-            notification_type=NotificationType.OVERDUE_TASK
+            notification_type=NotificationType.OVERDUE_TASK,
         ).data,
         workflow_json=NotificationWorkflowSerializer(
-            instance=task.workflow
+            instance=task.workflow,
         ).data,
         user_id=guest.id,
         type=NotificationType.OVERDUE_TASK,
-        account_id=guest.account.id
+        account_id=guest.account.id,
     )
 
     # act
@@ -267,7 +269,7 @@ def test_send_overdue_task_notification__guest_already_sent__not_sent(mocker):
         task_id=task.id,
         user_id=user.id,
         type=NotificationType.OVERDUE_TASK,
-        account_id=user.account.id
+        account_id=user.account.id,
     ).exclude(id=notification.id).exists()
     send_notification_mock.assert_not_called()
 
@@ -281,7 +283,7 @@ def test_send_overdue_task_notification__not_overdue__skip(mocker):
     task.due_date = timezone.now() + timedelta(minutes=5)
     task.save(update_fields=['due_date'])
     send_notification_mock = mocker.patch(
-        'src.notifications.tasks._send_notification'
+        'src.notifications.tasks._send_notification',
     )
 
     # act
@@ -292,7 +294,7 @@ def test_send_overdue_task_notification__not_overdue__skip(mocker):
         task_id=task.id,
         user_id=user.id,
         type=NotificationType.OVERDUE_TASK,
-        account_id=user.account.id
+        account_id=user.account.id,
     ).exists()
     send_notification_mock.assert_not_called()
 
@@ -304,7 +306,7 @@ def test_send_overdue_task_notification__two_performers__ok(mocker):
     user_2 = create_test_user(
         is_account_owner=False,
         account=user.account,
-        email='t@t.t'
+        email='t@t.t',
     )
     workflow = create_test_workflow(user, tasks_count=2)
     task = workflow.tasks.get(number=1)
@@ -313,7 +315,7 @@ def test_send_overdue_task_notification__two_performers__ok(mocker):
     task.add_raw_performer(user_2)
     task.update_performers()
     send_notification_mock = mocker.patch(
-        'src.notifications.tasks._send_notification'
+        'src.notifications.tasks._send_notification',
     )
 
     # act
@@ -324,13 +326,13 @@ def test_send_overdue_task_notification__two_performers__ok(mocker):
         task_id=task.id,
         user_id=user.id,
         type=NotificationType.OVERDUE_TASK,
-        status=NotificationStatus.NEW
+        status=NotificationStatus.NEW,
     )
     notification_2 = Notification.objects.get(
         task_id=task.id,
         user_id=user_2.id,
         type=NotificationType.OVERDUE_TASK,
-        status=NotificationStatus.NEW
+        status=NotificationStatus.NEW,
     )
     assert send_notification_mock.call_count == 2
     send_notification_mock.has_calls([
@@ -369,13 +371,13 @@ def test_send_overdue_task_notification__two_performers__ok(mocker):
             workflow_starter_first_name=user.first_name,
             workflow_starter_last_name=user.last_name,
             notification=notification_2,
-        )
+        ),
     ])
 
 
 def test_send_overdue_task_notification__completed_task__skip(
     mocker,
-    api_client
+    api_client,
 ):
 
     # arrange
@@ -387,10 +389,10 @@ def test_send_overdue_task_notification__completed_task__skip(
     TaskPerformer.objects.filter(user_id=user.id).update(is_completed=True)
 
     mocker.patch(
-        'src.notifications.tasks._send_notification'
+        'src.notifications.tasks._send_notification',
     )
     send_notification_mock = mocker.patch(
-        'src.notifications.tasks._send_notification'
+        'src.notifications.tasks._send_notification',
     )
 
     api_client.token_authenticate(user)
@@ -403,14 +405,14 @@ def test_send_overdue_task_notification__completed_task__skip(
         task_id=task.id,
         user_id=user.id,
         type=NotificationType.OVERDUE_TASK,
-        account_id=user.account.id
+        account_id=user.account.id,
     ).exists()
     send_notification_mock.assert_not_called()
 
 
 def test_send_overdue_task_notification__terminated_workflow__skip(
     mocker,
-    api_client
+    api_client,
 ):
 
     # arrange
@@ -423,10 +425,10 @@ def test_send_overdue_task_notification__terminated_workflow__skip(
     response = api_client.delete(f'/workflows/{workflow.id}')
     mocker.patch(
         'src.notifications.tasks'
-        '.send_new_task_notification.delay'
+        '.send_new_task_notification.delay',
     )
     send_notification_mock = mocker.patch(
-        'src.notifications.tasks._send_notification'
+        'src.notifications.tasks._send_notification',
     )
 
     # act
@@ -438,14 +440,14 @@ def test_send_overdue_task_notification__terminated_workflow__skip(
         task_id=task.id,
         user_id=user.id,
         type=NotificationType.OVERDUE_TASK,
-        account_id=user.account.id
+        account_id=user.account.id,
     ).exists()
     send_notification_mock.assert_not_called()
 
 
 def test_send_overdue_task_notification__ended__workflow__skip(
     mocker,
-    api_client
+    api_client,
 ):
 
     # arrange
@@ -454,7 +456,7 @@ def test_send_overdue_task_notification__ended__workflow__skip(
         user=user,
         tasks_count=2,
         finalizable=True,
-        status=WorkflowStatus.DONE
+        status=WorkflowStatus.DONE,
     )
     task = workflow.tasks.get(number=1)
     task.due_date = timezone.now() - timedelta(minutes=5)
@@ -462,10 +464,10 @@ def test_send_overdue_task_notification__ended__workflow__skip(
     api_client.token_authenticate(user)
     mocker.patch(
         'src.notifications.tasks'
-        '.send_new_task_notification.delay'
+        '.send_new_task_notification.delay',
     )
     send_notification_mock = mocker.patch(
-        'src.notifications.tasks._send_notification'
+        'src.notifications.tasks._send_notification',
     )
 
     # act
@@ -476,7 +478,7 @@ def test_send_overdue_task_notification__ended__workflow__skip(
         task_id=task.id,
         user_id=user.id,
         type=NotificationType.OVERDUE_TASK,
-        account_id=user.account.id
+        account_id=user.account.id,
     ).exists()
     send_notification_mock.assert_not_called()
     assert workflow.status == WorkflowStatus.DONE
@@ -484,7 +486,7 @@ def test_send_overdue_task_notification__ended__workflow__skip(
 
 def test_send_overdue_task_notification__delayed_workflow__skip(
     mocker,
-    api_client
+    api_client,
 ):
 
     # arrange
@@ -492,7 +494,7 @@ def test_send_overdue_task_notification__delayed_workflow__skip(
     workflow = create_test_workflow(
         user=user,
         tasks_count=2,
-        finalizable=True
+        finalizable=True,
     )
     workflow.status = WorkflowStatus.DELAYED
     workflow.save(update_fields=['status'])
@@ -503,10 +505,10 @@ def test_send_overdue_task_notification__delayed_workflow__skip(
     workflow.refresh_from_db()
     mocker.patch(
         'src.notifications.tasks'
-        '.send_new_task_notification.delay'
+        '.send_new_task_notification.delay',
     )
     send_notification_mock = mocker.patch(
-        'src.notifications.tasks._send_notification'
+        'src.notifications.tasks._send_notification',
     )
 
     # act
@@ -517,7 +519,7 @@ def test_send_overdue_task_notification__delayed_workflow__skip(
         task_id=task.id,
         user_id=user.id,
         type=NotificationType.OVERDUE_TASK,
-        account_id=user.account.id
+        account_id=user.account.id,
     ).exists()
     send_notification_mock.assert_not_called()
 
@@ -529,7 +531,7 @@ def test_send_overdue_task_notification__deleted_performer__skip(mocker):
     user_2 = create_test_user(
         is_account_owner=False,
         account=user.account,
-        email='t@t.t'
+        email='t@t.t',
     )
     workflow = create_test_workflow(user, tasks_count=1)
     task = workflow.tasks.get(number=1)
@@ -538,10 +540,10 @@ def test_send_overdue_task_notification__deleted_performer__skip(mocker):
     TaskPerformer.objects.create(
         task=task,
         user=user_2,
-        directly_status=DirectlyStatus.DELETED
+        directly_status=DirectlyStatus.DELETED,
     )
     send_notification_mock = mocker.patch(
-        'src.notifications.tasks._send_notification'
+        'src.notifications.tasks._send_notification',
     )
 
     # act
@@ -552,13 +554,13 @@ def test_send_overdue_task_notification__deleted_performer__skip(mocker):
         task_id=task.id,
         user_id=user_2.id,
         type=NotificationType.OVERDUE_TASK,
-        account_id=user_2.account.id
+        account_id=user_2.account.id,
     ).exists()
     notification = Notification.objects.get(
         task_id=task.id,
         user_id=user.id,
         type=NotificationType.OVERDUE_TASK,
-        status=NotificationStatus.NEW
+        status=NotificationStatus.NEW,
     )
     send_notification_mock.assert_called_once_with(
         logging=user.account.log_api_requests,
@@ -578,7 +580,7 @@ def test_send_overdue_task_notification__deleted_performer__skip(mocker):
         workflow_starter_last_name=user.last_name,
         notification=notification,
         sync=True,
-        token=None
+        token=None,
     )
 
 
@@ -589,7 +591,7 @@ def test_send_overdue_task_notification__completed_performer__skip(mocker):
     user_2 = create_test_user(
         is_account_owner=False,
         account=user.account,
-        email='t@t.t'
+        email='t@t.t',
     )
     workflow = create_test_workflow(user, tasks_count=1)
     task = workflow.tasks.get(number=1)
@@ -599,10 +601,10 @@ def test_send_overdue_task_notification__completed_performer__skip(mocker):
         task=task,
         user=user_2,
         is_completed=True,
-        date_completed=timezone.now()
+        date_completed=timezone.now(),
     )
     send_notification_mock = mocker.patch(
-        'src.notifications.tasks._send_notification'
+        'src.notifications.tasks._send_notification',
     )
 
     # act
@@ -613,13 +615,13 @@ def test_send_overdue_task_notification__completed_performer__skip(mocker):
         task_id=task.id,
         user_id=user_2.id,
         type=NotificationType.OVERDUE_TASK,
-        account_id=user_2.account.id
+        account_id=user_2.account.id,
     ).exists()
     notification = Notification.objects.get(
         task_id=task.id,
         user_id=user.id,
         type=NotificationType.OVERDUE_TASK,
-        status=NotificationStatus.NEW
+        status=NotificationStatus.NEW,
     )
     send_notification_mock.assert_called_once_with(
         logging=user.account.log_api_requests,
