@@ -2,7 +2,6 @@ from datetime import datetime, timedelta
 from typing import List, Optional, Tuple
 
 import pytz
-from celery import shared_task
 from celery.task import Task as TaskCelery
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -10,6 +9,7 @@ from django.db import transaction
 from django.utils import timezone
 from firebase_admin.exceptions import FirebaseError
 
+from celery import shared_task
 from src.accounts.enums import (
     NotificationType,
     UserStatus,

@@ -1,8 +1,8 @@
 from typing import List
 
-from celery import shared_task
 from django.db import transaction
 
+from celery import shared_task
 from src.authentication.enums import AuthTokenType
 from src.executor import RawSqlExecutor
 from src.processes.enums import WorkflowStatus
