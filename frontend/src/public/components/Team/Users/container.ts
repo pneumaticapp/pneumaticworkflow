@@ -7,11 +7,10 @@ import {
   teamFetchStarted,
   loadChangeUserAdmin,
   openDeleteUserModal,
-  openTeamInvitesPopup,
   setGeneralLoaderVisibility,
-  loadInvitesUsers,
   changeUserListSorting,
 } from '../../../redux/actions';
+import { openTeamInvitesPopup, loadInvitesUsers } from '../../../redux/team/slice';
 import { EUserListSorting } from '../../../types/user';
 import { withSyncedQueryString } from '../../../HOCs/withSyncedQueryString';
 
@@ -43,7 +42,7 @@ export function mapStateToProps(state: IApplicationState): TTeamProps {
     accounts: {
       planInfo: { trialEnded },
     },
-    teamInvites: { isInvitesPopupOpen: isTeamInvitesOpened },
+    team: { isInvitesPopupOpen: isTeamInvitesOpened },
   } = state;
   const isSubscribed = getIsUserSubsribed(state);
 

@@ -1,6 +1,6 @@
 import { commonRequest } from '../commonRequest';
 import { getBrowserConfigEnv } from '../../utils/getConfig';
-import { UserInvite } from '../../types/team';
+import { UserInvite } from '../../redux/team/types';
 
 export function getInvites() {
   const {

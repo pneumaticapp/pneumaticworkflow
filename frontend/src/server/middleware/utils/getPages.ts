@@ -1,7 +1,7 @@
 import { logger } from '../../../public/utils/logger';
 import { serverApi } from '../../utils';
 import { getConfig } from '../../../public/utils/getConfig';
-import { IPages } from '../../../public/types/page';
+import { IPages } from '../../../public/redux/pages/types';
 
 const {
   api: { urls },

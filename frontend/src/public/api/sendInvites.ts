@@ -2,7 +2,7 @@ import { commonRequest } from './commonRequest';
 import { mapRequestBody } from '../utils/mappers';
 import { ETimeouts } from '../constants/defaultValues';
 import { getBrowserConfigEnv } from '../utils/getConfig';
-import { UserInvitePayload } from '../types/team';
+import { UserInvitePayload } from '../redux/team/types';
 
 interface InviteFailed {
   email: string;

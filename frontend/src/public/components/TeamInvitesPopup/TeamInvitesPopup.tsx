@@ -5,7 +5,7 @@ import classnames from 'classnames';
 import { EmailInvitesTab } from './tabs/EmailInvitesTab';
 import { OAuthInvitesTab } from './tabs/OAuthInvitesTab';
 import { useDelayUnmount } from '../../hooks/useDelayUnmount';
-import { InvitesType } from '../../types/team';
+import { InvitesType } from '../../redux/team/types';
 import { ITeamInvitesPopupProps } from './types';
 import { Header, SideModal } from '../UI';
 import { IntlMessages } from '../IntlMessages';

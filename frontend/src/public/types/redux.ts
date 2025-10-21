@@ -40,8 +40,8 @@ import { ESubscriptionPlan } from './account';
 import { IMenuItem } from './menu';
 import { EWebhooksTypeEvent, IWebhook } from './webhooks';
 import { ETenantsSorting, ITenant } from './tenants';
-import { IPagesStore } from './page';
-import { ETeamPages, IGroup, UserInvite } from './team';
+import { IPagesStore } from '../redux/pages/types';
+import { TeamPages, IGroup, UserInvite } from '../redux/team/types';
 
 export interface IApplicationState {
   general: IGeneralStore;
@@ -63,13 +63,10 @@ export interface IApplicationState {
   buyPlanModal: IBuyPlanModalStore;
   webhooks: IWebhookStore;
   pages: IPagesStore;
-
   tasks: IStoreTasks;
   task: IStoreTask;
-
-  teamInvites: ITeamStore;
+  team: ITeamStore;
   groups: IGroupsStore;
-
   tenants: ITenantsStore;
 }
 
@@ -337,7 +334,7 @@ export interface IStoreProfile {
 }
 
 export type ITeamStore = {
-  page: ETeamPages;
+  page: TeamPages;
   isInvitesPopupOpen: boolean;
   recentInvitedUsers: TUserListItem[];
   invitesUsersList: UserInvite[];
