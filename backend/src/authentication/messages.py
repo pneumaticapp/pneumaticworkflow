@@ -30,3 +30,5 @@ MSG_AU_0012 = _('The current password is incorrect.')
 MSG_AU_0013 = _('The new password and its confirmation don\'t match.')
 # Translators: Google authorization
 MSG_AU_0014 = _('Error while retrieving Google profile data.')
+# Translators: Auth0 organization members request failed
+MSG_AU_0015 = _('Failed to fetch organization members.')

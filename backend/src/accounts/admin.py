@@ -456,6 +456,7 @@ class AccountAdminForm(forms.ModelForm):
         model = Account
         fields = (
             'name',
+            'external_id',
             'billing_plan',
             'billing_period',
             'plan_expiration',
@@ -565,6 +566,7 @@ class AccountAdmin(ModelAdmin):
             {
                 'fields': (
                     'name',
+                    'external_id',
                     'lease_level',
                     'master_account',
                     'logo_lg',
@@ -618,6 +620,7 @@ class AccountAdmin(ModelAdmin):
     ]
     list_display = (
         'name',
+        'external_id',
         'owner_email',
         'billing_sync',
         'active_subscription',
@@ -637,7 +640,7 @@ class AccountAdmin(ModelAdmin):
         'billing_sync',
         'log_api_requests',
     )
-    search_fields = ('name', 'users__email', 'stripe_id')
+    search_fields = ('name', 'users__email', 'stripe_id', 'external_id')
     ordering = ('-id',)
 
     def __init__(self, *args, **kwargs):
@@ -684,6 +687,7 @@ class AccountAdmin(ModelAdmin):
                 max_users = 1000
             obj = service.partial_update(
                 name=obj.name,
+                external_id=obj.external_id,
                 billing_sync=obj.billing_sync,
                 billing_plan=obj.billing_plan,
                 billing_period=obj.billing_period,
