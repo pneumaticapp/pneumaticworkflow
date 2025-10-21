@@ -46,7 +46,6 @@
     "express": "^4.18.2",
     "firebase": "^9.15.0",
     "formik": "^2.2.9",
-    "googleapis": "^43.0.0",
     "history": "^4.9.0",
     "immer": "^7.0.5",
     "jest-css-modules-transform": "^4.4.2",
