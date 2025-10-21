@@ -71,7 +71,7 @@ describe('server', () => {
       appListenCallback();
 
       expect(app.use).toHaveBeenCalledTimes(6);
-      expect(app.get).toHaveBeenCalledTimes(9);
+      expect(app.get).toHaveBeenCalledTimes(8);
       expect(log).toHaveBeenCalledWith('App listening on port 8000');
     });
 
@@ -90,7 +90,7 @@ describe('server', () => {
     it('starts the server for the development environment', () => {
       initServer();
       expect(app.use).toHaveBeenCalledTimes(6);
-      expect(app.get).toHaveBeenCalledTimes(9);
+      expect(app.get).toHaveBeenCalledTimes(8);
     });
   });
 });

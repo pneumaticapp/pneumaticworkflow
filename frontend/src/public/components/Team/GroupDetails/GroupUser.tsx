@@ -12,7 +12,7 @@ import { TrashIcon } from '../../icons';
 import { Header, Avatar } from '../../UI';
 import { getDate } from '../../../utils/strings';
 import { useCheckDevice } from '../../../hooks/useCheckDevice';
-import { IGroup } from '../../../types/team';
+import { IGroup } from '../../../redux/team/types';
 
 import styles from './User.css';
 

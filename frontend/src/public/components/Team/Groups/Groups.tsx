@@ -11,7 +11,7 @@ import { EGroupsListSorting } from '../../../types/user';
 import { SearchLargeIcon } from '../../icons';
 import { InputField, Placeholder } from '../../UI';
 import { AddButton } from '../../UI/Buttons/AddButton';
-import { IGroup } from '../../../types/team';
+import { IGroup } from '../../../redux/team/types';
 import { CreateGroupModal } from './CreateGroupModal';
 import { EditGroupModal } from './EditGroupModal';
 import { Group } from './Group';

@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { createPortal } from 'react-dom';
-import * as classnames from 'classnames';
+import classnames from 'classnames';
 import OutsideClickHandler from 'react-outside-click-handler';
 import InfiniteScroll from 'react-infinite-scroll-component';
 import { useIntl } from 'react-intl';
