@@ -5,7 +5,7 @@ import { ITeamInvitesPopupProps } from './types';
 
 import {
   closeTeamInvitesPopup,
-} from '../../redux/actions';
+} from '../../redux/team/slice';
 
 type TStoreProps = Pick<ITeamInvitesPopupProps,
 | 'isTeamInvitesOpened'
@@ -17,7 +17,7 @@ type TDispatchProps = Pick<ITeamInvitesPopupProps,
 >;
 
 export function mapStateToProps({
-  teamInvites: { isInvitesPopupOpen: isTeamInvitesOpened, invitesUsersList },
+  team: { isInvitesPopupOpen: isTeamInvitesOpened, invitesUsersList },
   accounts,
 }: IApplicationState): TStoreProps {
 

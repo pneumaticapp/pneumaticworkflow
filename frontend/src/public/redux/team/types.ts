@@ -1,3 +1,4 @@
+
 export enum InvitesType {
   Google = 'google',
   Microsoft = 'microsoft',
@@ -21,7 +22,7 @@ export interface IGroup {
   users: number[];
 }
 
-export enum ETeamPages {
+export enum TeamPages {
   Users = 'users',
   Groups = 'groups',
 }
@@ -31,3 +32,12 @@ export interface UserInvitePayload {
   type: InvitesType;
   groups?: number[];
 }
+
+export type TInviteUsersPayload = {
+  invites: UserInvitePayload[];
+  withGeneralLoader?: boolean;
+  withSuccessNotification?: boolean;
+  onStartUploading?(): void;
+  onEndUploading?(): void;
+  onError?(): void;
+};

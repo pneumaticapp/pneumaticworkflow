@@ -1,5 +1,5 @@
-import { UserInvite } from "../../types/team";
 import { TUserListItem } from "../../types/user";
+import { UserInvite } from "../../redux/team/types";
 
 export interface ITeamInvitesPopupProps {
   children?: any,

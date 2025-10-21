@@ -6,7 +6,7 @@ import { useDispatch } from 'react-redux';
 import { getNotDeletedUsers, getUserFullName } from '../../../../utils/users';
 import { isArrayWithItems, omit } from '../../../../utils/helpers';
 import { Avatar, Button, InputField, Placeholder } from '../../../UI';
-import { inviteUsers } from '../../../../redux/actions';
+import { inviteUsers } from '../../../../redux/team/slice';
 import { isMatchingSearchQuery } from '../../../../utils/strings';
 import { TeamPlaceholderNoUsersIcon } from '../../../icons';
 import { IOAuthInvitesTabProps } from './types';

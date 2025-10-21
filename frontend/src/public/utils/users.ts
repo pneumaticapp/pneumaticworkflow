@@ -5,7 +5,7 @@ import { capitalize } from './strings';
 import { NotificationManager } from '../components/UI/Notifications';
 import { getPluralNoun } from './helpers';
 import { TDropdownOptionBase } from '../components/UI';
-import { UserInvitePayload } from '../types/team';
+import { UserInvitePayload } from '../redux/team/types';
 
 export const EXTERNAL_USER_ID = -1;
 

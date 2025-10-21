@@ -4,7 +4,7 @@ import { TUserListItem } from '../../../../types/user';
 import { getUserFullName } from '../../../../utils/users';
 import { TTaskVariable } from '../../types';
 import { EOptionTypes, TUsersDropdownOption } from '../../../UI/form/UsersDropdown';
-import { IGroup } from '../../../../types/team';
+import { IGroup } from '../../../../redux/team/types';
 
 export function getPerformersForDropdown(
   users: TUserListItem[],

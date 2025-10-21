@@ -8,7 +8,7 @@ import { IInvitedUser } from '../types/redux';
 // @ts-ignore
 import * as merge from 'lodash.merge';
 import { get, set } from '../../server/utils/helpers';
-import { IPages } from '../types/page';
+import { IPages } from '../redux/pages/types';
 
 export type TEnvironment = 'local' | 'staging' | 'prod';
 
