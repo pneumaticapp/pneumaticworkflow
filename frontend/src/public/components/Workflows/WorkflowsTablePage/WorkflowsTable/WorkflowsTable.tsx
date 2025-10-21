@@ -406,19 +406,19 @@ export function WorkflowsTable({
     }
 
     const systemColumns = [
-      ...(selectedFieldsSet.has('workflow')
+      ...(selectedFieldsSet.has('system-column-workflow')
         ? [
             {
               Header: renderSearch(),
-              accessor: 'workflow',
+              accessor: 'system-column-workflow',
               Cell: renderWorkflowColumn,
-              width: savedGlobalWidths.workflow || ETableViewFieldsWidth.workflow,
-              minWidth: EColumnWidthMinWidth.workflow,
-              columnType: 'workflow',
+              width: savedGlobalWidths['system-column-workflow'] || ETableViewFieldsWidth['system-column-workflow'],
+              minWidth: EColumnWidthMinWidth['system-column-workflow'],
+              columnType: 'system-column-workflow',
             },
           ]
         : []),
-      ...(selectedFieldsSet.has('templateName')
+      ...(selectedFieldsSet.has('system-column-templateName')
         ? [
             {
               Header: (
@@ -426,59 +426,60 @@ export function WorkflowsTable({
                   {formatMessage({ id: 'workflows.filter-column-template-name' })}
                 </div>
               ),
-              accessor: 'templateName',
+              accessor: 'system-column-templateName',
               Cell: ColumnCells.TemplateNameColumn,
-              width: savedGlobalWidths.templateName || ETableViewFieldsWidth.templateName,
-              minWidth: EColumnWidthMinWidth.templateName,
-              columnType: 'templateName',
+              width:
+                savedGlobalWidths['system-column-templateName'] || ETableViewFieldsWidth['system-column-templateName'],
+              minWidth: EColumnWidthMinWidth['system-column-templateName'],
+              columnType: 'system-column-templateName',
             },
           ]
         : []),
-      ...(selectedFieldsSet.has('starter')
+      ...(selectedFieldsSet.has('system-column-starter')
         ? [
             {
               Header: renderWorkflowStarterFilter(),
-              accessor: 'starter',
+              accessor: 'system-column-starter',
               Cell: ColumnCells.StarterColumn,
-              width: savedGlobalWidths.starter || ETableViewFieldsWidth.starter,
-              minWidth: EColumnWidthMinWidth.starter,
-              columnType: 'starter',
+              width: savedGlobalWidths['system-column-starter'] || ETableViewFieldsWidth['system-column-starter'],
+              minWidth: EColumnWidthMinWidth['system-column-starter'],
+              columnType: 'system-column-starter',
             },
           ]
         : []),
-      ...(selectedFieldsSet.has('progress')
+      ...(selectedFieldsSet.has('system-column-progress')
         ? [
             {
               Header: formatMessage({ id: 'workflows.filter-column-progress' }),
-              accessor: 'progress',
+              accessor: 'system-column-progress',
               Cell: ColumnCells.ProgressColumn,
-              width: savedGlobalWidths.progress || ETableViewFieldsWidth.progress,
-              minWidth: EColumnWidthMinWidth.progress,
-              columnType: 'progress',
+              width: savedGlobalWidths['system-column-progress'] || ETableViewFieldsWidth['system-column-progress'],
+              minWidth: EColumnWidthMinWidth['system-column-progress'],
+              columnType: 'system-column-progress',
             },
           ]
         : []),
-      ...(selectedFieldsSet.has('step')
+      ...(selectedFieldsSet.has('system-column-step')
         ? [
             {
               Header: renderStepFilter(),
-              accessor: 'step',
+              accessor: 'system-column-step',
               Cell: ColumnCells.StepColumn,
-              width: savedGlobalWidths.step || ETableViewFieldsWidth.step,
-              minWidth: EColumnWidthMinWidth.step,
-              columnType: 'step',
+              width: savedGlobalWidths['system-column-step'] || ETableViewFieldsWidth['system-column-step'],
+              minWidth: EColumnWidthMinWidth['system-column-step'],
+              columnType: 'system-column-step',
             },
           ]
         : []),
-      ...(selectedFieldsSet.has('performer')
+      ...(selectedFieldsSet.has('system-column-performer')
         ? [
             {
               Header: renderPerformersFilter(),
-              accessor: 'performer',
+              accessor: 'system-column-performer',
               Cell: ColumnCells.PerformerColumn,
-              width: savedGlobalWidths.performer || ETableViewFieldsWidth.performer,
-              minWidth: EColumnWidthMinWidth.performer,
-              columnType: 'performer',
+              width: savedGlobalWidths['system-column-performer'] || ETableViewFieldsWidth['system-column-performer'],
+              minWidth: EColumnWidthMinWidth['system-column-performer'],
+              columnType: 'system-column-performer',
             },
           ]
         : []),
@@ -518,12 +519,12 @@ export function WorkflowsTable({
   const data = useMemo((): TableColumns[] => {
     return workflowsList.items.map((workflow) => {
       const baseData: TableColumns = {
-        workflow,
-        templateName: workflow,
-        starter: workflow,
-        progress: workflow,
-        step: workflow,
-        performer: workflow,
+        'system-column-workflow': workflow,
+        'system-column-templateName': workflow,
+        'system-column-starter': workflow,
+        'system-column-progress': workflow,
+        'system-column-step': workflow,
+        'system-column-performer': workflow,
       } as TableColumns;
 
       workflow.fields?.forEach((field: ITableViewFields) => {
@@ -633,7 +634,7 @@ export function WorkflowsTable({
             : rows.map((row) => {
                 prepareRow(row);
 
-                const workflowId = row.original.workflow.id;
+                const workflowId = row.original['system-column-workflow'].id;
 
                 return (
                   <tr {...row.getRowProps()} className={styles['row']} key={workflowId}>

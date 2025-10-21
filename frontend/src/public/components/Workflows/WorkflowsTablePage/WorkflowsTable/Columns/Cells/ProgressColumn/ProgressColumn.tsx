@@ -9,7 +9,7 @@ import { ProgressbarTooltipContents } from '../../../../../utils/ProgressbarTool
 
 import { TableColumns } from '../../../types';
 
-type TProps = React.PropsWithChildren<CellProps<TableColumns, TableColumns['workflow']>>;
+type TProps = React.PropsWithChildren<CellProps<TableColumns, TableColumns['system-column-progress']>>;
 
 export function ProgressColumn({ value: workflow }: TProps) {
   const { completedTasks, tasksCountWithoutSkipped, status, oldestDeadline, areOverdueTasks } = workflow;

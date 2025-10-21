@@ -39,32 +39,32 @@ const PerformerSkeletonCell = () => (
 export const defaultSystemSkeletonTable: Column<TableColumns>[] = [
   {
     Header: <SkeletonDefaultCell80 />,
-    accessor: 'workflow',
+    accessor: 'system-column-workflow',
     Cell: WorkflowSkeletonCell,
-    width: ETableViewFieldsWidth.workflow,
+    width: ETableViewFieldsWidth['system-column-workflow'],
   },
   {
     Header: <SkeletonDefaultCell80 />,
-    accessor: 'starter',
+    accessor: 'system-column-starter',
     Cell: StarterSkeletonCell20,
-    width: ETableViewFieldsWidth.starter,
+    width: ETableViewFieldsWidth['system-column-starter'],
   },
   {
     Header: <SkeletonDefaultCell80 />,
-    accessor: 'progress',
+    accessor: 'system-column-progress',
     Cell: SkeletonDefaultCell80,
-    width: ETableViewFieldsWidth.progress,
+    width: ETableViewFieldsWidth['system-column-progress'],
   },
   {
     Header: <SkeletonDefaultCell80 />,
-    accessor: 'step',
+    accessor: 'system-column-step',
     Cell: TaskSkeletonCell240,
-    width: ETableViewFieldsWidth.step,
+    width: ETableViewFieldsWidth['system-column-step'],
   },
   {
     Header: <SkeletonDefaultCell80 />,
-    accessor: 'performer',
+    accessor: 'system-column-performer',
     Cell: PerformerSkeletonCell,
-    width: ETableViewFieldsWidth.performer,
+    width: ETableViewFieldsWidth['system-column-performer'],
   },
 ];
