@@ -560,6 +560,71 @@ export function WorkflowsTable({
   const handleMouseDown = createResizeHandler(colWidths, setColWidths, currentUser?.id, templatesIdsFilter[0]);
 
   const { getTableProps, getTableBodyProps, headerGroups, rows, prepareRow } = useTable<TableColumns>(options);
+
+  const getTableBodyContent = () => {
+    if (shouldSkeletonDefaultTable) {
+      return SKELETON_ROWS.map((row) => (
+        <tr className={styles['row']} key={row}>
+          {defaultSystemSkeletonTable.map((column) => (
+            <td key={column.accessor as string} className={styles['column']}>
+              {(column as any).Cell({})}
+            </td>
+          ))}
+        </tr>
+      ));
+    }
+    if (workflowsList.items.length === 0 && (shouldSkeletonBody || shouldSkeletonOptionalTable)) {
+      return SKELETON_ROWS.map((row) => (
+        <tr className={styles['row']} key={row}>
+          {columns.map((column) => {
+            return (
+              <td key={column.accessor as string} className={styles['column']} aria-label="Loading">
+                <Skeleton
+                  width={`${(column as any).width ? Math.max((column as any).width * 0.7, 80) : 80}px`}
+                  height="2rem"
+                />
+              </td>
+            );
+          })}
+        </tr>
+      ));
+    }
+
+    return rows.map((row) => {
+      prepareRow(row);
+      const workflowId = row.original['system-column-workflow'].id;
+      return (
+        <tr {...row.getRowProps()} className={styles['row']} key={workflowId}>
+          {row.cells.map((cell) => {
+            return (
+              <td
+                {...cell.getCellProps({
+                  style: {
+                    width: colWidths[cell.column.id],
+                    maxWidth: colWidths[cell.column.id],
+                    minWidth: colWidths[cell.column.id],
+                  },
+                })}
+                className={styles['column']}
+              >
+                {shouldSkeletonOptionalTable || shouldSkeletonBody ? (
+                  <Skeleton
+                    width={`${
+                      cell.column.id && colWidths[cell.column.id] ? Math.max(colWidths[cell.column.id] * 0.7, 80) : 80
+                    }px`}
+                    height="2rem"
+                  />
+                ) : (
+                  cell.render('Cell')
+                )}
+              </td>
+            );
+          })}
+        </tr>
+      );
+    });
+  };
+
   const renderTable = () => {
     return (
       <table {...getTableProps()} className={styles['table']} ref={tableRef}>
@@ -620,55 +685,7 @@ export function WorkflowsTable({
             ))
           )}
         </thead>
-        <tbody {...getTableBodyProps()}>
-          {shouldSkeletonDefaultTable
-            ? SKELETON_ROWS.map((row) => (
-                <tr className={styles['row']} key={row}>
-                  {defaultSystemSkeletonTable.map((column) => (
-                    <td key={column.accessor as string} className={styles['column']}>
-                      {(column as any).Cell({})}
-                    </td>
-                  ))}
-                </tr>
-              ))
-            : rows.map((row) => {
-                prepareRow(row);
-
-                const workflowId = row.original['system-column-workflow'].id;
-
-                return (
-                  <tr {...row.getRowProps()} className={styles['row']} key={workflowId}>
-                    {row.cells.map((cell) => {
-                      return (
-                        <td
-                          {...cell.getCellProps({
-                            style: {
-                              width: colWidths[cell.column.id],
-                              maxWidth: colWidths[cell.column.id],
-                              minWidth: colWidths[cell.column.id],
-                            },
-                          })}
-                          className={styles['column']}
-                        >
-                          {shouldSkeletonOptionalTable || shouldSkeletonBody ? (
-                            <Skeleton
-                              width={`${
-                                cell.column.id && colWidths[cell.column.id]
-                                  ? Math.max(colWidths[cell.column.id] * 0.7, 80)
-                                  : 80
-                              }px`}
-                              height="2rem"
-                            />
-                          ) : (
-                            cell.render('Cell')
-                          )}
-                        </td>
-                      );
-                    })}
-                  </tr>
-                );
-              })}
-        </tbody>
+        <tbody {...getTableBodyProps()}>{getTableBodyContent()}</tbody>
       </table>
     );
   };
