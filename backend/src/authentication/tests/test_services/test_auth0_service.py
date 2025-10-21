@@ -229,10 +229,11 @@ def test_get_first_access_token__clear_cache__raise_exception(mocker):
     )
     service = Auth0Service()
 
-    # act & assert
+    # act
     with pytest.raises(exceptions.TokenInvalidOrExpired):
         service._get_first_access_token(auth_response)
 
+    # assert
     get_cache_mock.assert_called_once_with(key=state)
     request_mock.assert_not_called()
     sentry_mock.assert_not_called()
@@ -268,10 +269,11 @@ def test_get_first_access_token__request_return_error__raise_exception(mocker):
     settings_mock.AUTH0_REDIRECT_URI = redirect_uri
     service = Auth0Service()
 
-    # act & assert
+    # act
     with pytest.raises(exceptions.TokenInvalidOrExpired):
         service._get_first_access_token(auth_response)
 
+    # assert
     get_cache_mock.assert_called_once_with(key=state)
     request_mock.assert_called_once_with(
         f'https://{domain}/oauth/token',
@@ -366,11 +368,12 @@ def test_get_user_profile__response_error__raise_exception(mocker):
     settings_mock.AUTH0_DOMAIN = domain
     service = Auth0Service()
 
-    # act & assert
+    # act
     with pytest.raises(exceptions.TokenInvalidOrExpired) as ex:
         service._get_user_profile(access_token)
-    assert str(ex.value) == "Token is expired."
 
+    # assert
+    assert str(ex.value) == "Token is expired."
     get_cache_mock.assert_called_once_with(key=f'user_profile_{access_token}')
     request_mock.assert_called_once_with(
         f'https://{domain}/userinfo',
@@ -475,10 +478,11 @@ def test_get_access_token__not_found__raise_exception(mocker):
 
     service = Auth0Service()
 
-    # act & assert
+    # act
     with pytest.raises(exceptions.AccessTokenNotFound):
         service._get_access_token(user.id)
 
+    # assert
     sentry_mock.assert_called_once()
 
 
@@ -711,10 +715,11 @@ def test_update_user_contacts__exception__not_handled(mocker):
     )
     service = Auth0Service()
 
-    # act & assert
+    # act
     with pytest.raises(Exception, match='API Error'):
         service.update_user_contacts(user)
 
+    # assert
     get_access_token_mock.assert_called_once_with(user.id)
 
 
@@ -922,10 +927,11 @@ def test_authenticate_user__new_user_signup_disabled__raise_exception(
     settings_mock.PROJECT_CONF = {'SIGNUP': False}
     service = Auth0Service(request=request_mock)
 
-    # act & assert
+    # act
     with pytest.raises(AuthenticationFailed):
         service.authenticate_user(auth_response)
 
+    # assert
     get_first_access_token_mock.assert_called_once_with(auth_response)
     get_user_profile_mock.assert_called_once_with(access_token)
     get_user_data_mock.assert_called_once_with(user_profile)
