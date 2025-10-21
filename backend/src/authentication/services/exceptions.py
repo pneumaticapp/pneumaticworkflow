@@ -6,7 +6,7 @@ from src.authentication.messages import (
     MSG_AU_0005,
     MSG_AU_0008,
     MSG_AU_0009,
-    MSG_AU_0014,
+    MSG_AU_0015,
 )
 from src.generics.exceptions import BaseServiceException
 
@@ -39,7 +39,7 @@ class EmailNotExist(AuthException):
 
 class FailedFetchMembers(AuthException):
 
-    default_message = MSG_AU_0014
+    default_message = MSG_AU_0015
 
 
 class GraphApiRequestError(AuthException):
