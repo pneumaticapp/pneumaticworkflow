@@ -4,9 +4,9 @@ import { useSelector } from 'react-redux';
 import { useIntl } from 'react-intl';
 import AutosizeInput from 'react-input-autosize';
 
-import { EOptionTypes, TUsersDropdownOption, UsersDropdown } from '../../../UI/form/UsersDropdown';
+import { EOptionTypes, UsersDropdown } from '../../../UI/form/UsersDropdown';
 import { getUsers } from '../../../../redux/selectors/user';
-import { TUserListItem } from '../../../../types/user';
+import { EUserDropdownOptionType, TUserListItem } from '../../../../types/user';
 import { trackInviteTeamInPage } from '../../../../utils/analytics';
 import { fitInputWidth } from '../utils/fitInputWidth';
 import { getInputNameBackground } from '../utils/getInputNameBackground';
@@ -21,6 +21,7 @@ import { getNotDeletedUsers, getUserFullName } from '../../../../utils/users';
 import styles from '../../KickoffRedux/KickoffRedux.css';
 import inputStyles from './ExtraFieldUser.css';
 import { IApplicationState } from '../../../../types/redux';
+import { IGroupDropdownOption } from '../../../../types/team';
 
 const DEFAULT_FIELD_INPUT_WIDTH = 120;
 
@@ -124,8 +125,15 @@ export function ExtraFieldUser({
       editField({ value });
     };
 
-    const handleUserDropdownChange = ({ id }: TUsersDropdownOption) => {
-      editField({ value: String(id) });
+    const handleUserDropdownChange = (option: TUserListItem | IGroupDropdownOption) => {
+      if (option.type === EUserDropdownOptionType.User) {
+        editField({ value: (option as TUserListItem).email });
+        return;
+      }
+      if (option.type === EUserDropdownOptionType.UserGroup) {
+        editField({ value: (option as IGroupDropdownOption).name });
+        
+      }
     };
 
     return (
