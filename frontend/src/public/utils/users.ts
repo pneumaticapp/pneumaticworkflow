@@ -1,11 +1,11 @@
 /* eslint-disable @typescript-eslint/no-shadow */
 import { EUserStatus, TUserListItem } from '../types/user';
-import { IInviteResponse } from '../api/sendInvites';
+import { InviteResponse } from '../api/sendInvites';
 import { capitalize } from './strings';
 import { NotificationManager } from '../components/UI/Notifications';
 import { getPluralNoun } from './helpers';
-import { IUserInvite } from '../types/team';
 import { TDropdownOptionBase } from '../components/UI';
+import { UserInvitePayload } from '../redux/team/types';
 
 export const EXTERNAL_USER_ID = -1;
 
@@ -95,12 +95,12 @@ export const sortUsersByNameDesc = (users: TUserListItem[]) => {
 };
 
 export interface IShowNotification {
-  (type: 'success' | 'warning', invites: IUserInvite[], title?: string): void;
+  (type: 'success' | 'warning', invites: UserInvitePayload[], title?: string): void;
 }
 
 export interface IShowInvitesNotification {
-  invites: IUserInvite[];
-  sendInvitesResult: IInviteResponse;
+  invites: UserInvitePayload[];
+  sendInvitesResult: InviteResponse;
 }
 
 export const showInvitesNotification = ({ invites, sendInvitesResult }: IShowInvitesNotification) => {

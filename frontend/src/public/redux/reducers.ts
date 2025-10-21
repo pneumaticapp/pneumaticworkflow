@@ -9,7 +9,6 @@ import { authUser } from './auth';
 import { dashboard } from './dashboard';
 import { genericTemplates } from './genericTemplates';
 import { initialState } from './store';
-import { teamInvites } from './team';
 import { menu } from './menu';
 import { notifications } from './notifications';
 import { workflows } from './workflows';
@@ -25,9 +24,10 @@ import { runWorkflowModal } from './runWorkflowModal';
 import { tasks } from './tasks';
 import { webhooks } from './webhooks';
 import { tenants } from './tenants';
-import { pages } from './pages';
 import { EAuthActions } from './actions';
 import { groups } from './groups';
+import pages from './pages/slice';
+import team from './team/slice';
 
 export const reducers = combineReducers({
   general,
@@ -40,7 +40,7 @@ export const reducers = combineReducers({
   workflows,
   profile,
   settings,
-  teamInvites,
+  team,
   groups,
   task,
   tasks,

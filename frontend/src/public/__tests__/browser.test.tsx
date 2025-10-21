@@ -5,7 +5,6 @@ import { AppContainer } from '../components/App'
 jest.mock('../utils/getConfig', () => ({
   getBrowserConfigEnv: () => ({ api: { urls: {} } }),
   getBrowserConfig: () => ({
-    googleAuthUserInfo: {},
     invitedUser: {},
   }),
 }))

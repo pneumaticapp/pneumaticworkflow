@@ -27,11 +27,11 @@ import { isEnvAnalytics, isEnvPush } from '../../constants/enviroment';
 import { IUnsavedUser, TUserListItem } from '../../types/user';
 import { getAccountPlan } from '../../redux/selectors/accounts';
 import { checkIsTemplateOwner, loadGroups } from '../../redux/actions';
-
-import styles from './MainLayout.css';
 import { getIsAdmin } from '../../redux/selectors/user';
 import { closeAllConnections, hasActiveConnections } from '../../redux/utils/webSocketConnections';
 import { promiseDelay } from '../../utils/timeouts';
+
+import styles from './MainLayout.css';
 
 export interface IMainLayoutComponentStoreProps {
   user: IAuthUser;
@@ -59,7 +59,6 @@ const EXPIRED_TRIAL_PERMITTED_ROUTES = [
   ERoutes.Login,
   ERoutes.SuperuserLogin,
   ERoutes.Register,
-  ERoutes.SignUpGoogle,
   ERoutes.SignUpInvite,
   ERoutes.ForgotPassword,
   ERoutes.ResetPassword,

@@ -14,8 +14,6 @@ export * from './runWorkflowModal/actions';
 export * from './tasks/actions';
 export * from './groups/actions';
 export * from './dashboard/actions';
-export * from './team/actions';
 export * from './highlights/actions';
 export * from './webhooks/actions';
 export * from './tenants/actions';
-export * from './pages/actions';

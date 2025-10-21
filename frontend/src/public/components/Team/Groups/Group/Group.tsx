@@ -7,7 +7,7 @@ import { useDispatch } from 'react-redux';
 import { Dropdown, TDropdownOption } from '../../../UI';
 import { GroupIcon, IntegrateIcon, MoreIcon, PencilIcon, TrashIcon, UnionIcon } from '../../../icons';
 import { WorkflowCardUsers } from '../../../WorkflowCardUsers';
-import { IGroup } from '../../../../types/team';
+import { IGroup } from '../../../../redux/team/types';
 import { ERoutes } from '../../../../constants/routes';
 import { createGroup, deleteGroup, editModalOpen, updateUsersGroup } from '../../../../redux/actions';
 import { UserSelection } from '../../UserSelection';

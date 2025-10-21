@@ -1,36 +1,30 @@
-import * as React from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import * as PerfectScrollbar from 'react-perfect-scrollbar';
 import { useIntl } from 'react-intl';
 import { useDispatch } from 'react-redux';
 
-import { TeamPlaceholderIcon } from '../../TeamPlaceholderIcon';
-
 import { getNotDeletedUsers, getUserFullName } from '../../../../utils/users';
-import { connectGoogle, isArrayWithItems, omit } from '../../../../utils/helpers';
-import { TUserListItem } from '../../../../types/user';
+import { isArrayWithItems, omit } from '../../../../utils/helpers';
 import { Avatar, Button, InputField, Placeholder } from '../../../UI';
-import { inviteUsers } from '../../../../redux/actions';
+import { inviteUsers } from '../../../../redux/team/slice';
 import { isMatchingSearchQuery } from '../../../../utils/strings';
-import { GoogleButton } from '../../../OAuthButtons';
-import { IOAuthInviteView } from '../../../../types/team';
+import { TeamPlaceholderNoUsersIcon } from '../../../icons';
+import { IOAuthInvitesTabProps } from './types';
 
 import styles from './OAuthInvitesTab.css';
 import popupStyles from '../../TeamInvitesPopup.css';
 
-interface IOAuthInvitesTabProps {
-  users: IOAuthInviteView[];
-  teamUsers: TUserListItem[];
-  type: 'google';
-}
+
 
 const ScrollBar = PerfectScrollbar as unknown as Function;
 
 export function OAuthInvitesTab({ type, users, teamUsers }: IOAuthInvitesTabProps) {
   const { formatMessage } = useIntl();
-  const { useState, useCallback, useMemo } = React;
   const dispatch = useDispatch();
+
   const [pendingInvites, setPendingsInvites] = useState<string[]>([]);
   const [searchText, setSearchText] = useState('');
+
   const addPendingInvite = (email: string) => setPendingsInvites([...pendingInvites, email]);
   const removePendingInvite = (email: string) =>
     setPendingsInvites(pendingInvites.filter((invite) => invite !== email));
@@ -38,6 +32,7 @@ export function OAuthInvitesTab({ type, users, teamUsers }: IOAuthInvitesTabProp
   const filteredUsers = useMemo(() => {
     return users.filter((user) => isMatchingSearchQuery(searchText, [user.email, getUserFullName(user)]));
   }, [users, searchText]);
+  
   const sendInvite = useCallback(
     (email: string) => () => {
       dispatch(
@@ -59,22 +54,13 @@ export function OAuthInvitesTab({ type, users, teamUsers }: IOAuthInvitesTabProp
     [],
   );
 
-  const renderConnectButton = () => {
-    const buttonsMap = {
-      google: <GoogleButton onClick={connectGoogle} />,
-    };
-
-    return buttonsMap[type];
-  };
-
   const renderList = () => {
     if (!isArrayWithItems(filteredUsers)) {
       return (
         <Placeholder
           title={formatMessage({ id: 'team.empty-placeholder-title' })}
           description={formatMessage({ id: 'team.empty-placeholder-description' })}
-          Icon={TeamPlaceholderIcon}
-          mood="bad"
+          Icon={TeamPlaceholderNoUsersIcon}
           containerClassName={styles['empty-list-placeholder']}
         />
       );
@@ -84,8 +70,8 @@ export function OAuthInvitesTab({ type, users, teamUsers }: IOAuthInvitesTabProp
       <ScrollBar options={{ suppressScrollX: true, wheelPropagation: false }} className={styles['scrollbar']}>
         <div className={styles['users']}>
           {filteredUsers.map((user) => {
-            const { avatar, email } = user;
-            const avatarUser = { ...omit(user, ['type', 'avatar']), photo: avatar };
+            const { photo, email } = user;
+            const avatarUser = { ...omit(user, ['source', 'photo']), photo };
             const isInvited = getNotDeletedUsers(teamUsers).some((invitedUser) => invitedUser.email === user.email);
 
             return (
@@ -113,11 +99,6 @@ export function OAuthInvitesTab({ type, users, teamUsers }: IOAuthInvitesTabProp
       </ScrollBar>
     );
   };
-
-  const isConnected = isArrayWithItems(users);
-  if (!isConnected) {
-    return renderConnectButton();
-  }
 
   return (
     <>

@@ -4,9 +4,8 @@ import { NotificationManager } from '../../components/UI/Notifications';
 import { getErrorMessage } from '../../utils/getErrorMessage';
 import { logger } from '../../utils/logger';
 
-import { EPagesActions, loadPagesFailed, loadPagesSuccess } from './actions';
-
-import { IPages } from '../../types/page';
+import { loadPagesSuccess, loadPagesFailed, loadPages } from './slice';
+import { IPages } from './types';
 import { getPages } from '../../api/getPages';
 
 function* loadPagesSaga() {
@@ -21,7 +20,7 @@ function* loadPagesSaga() {
 }
 
 export function* watchLoadPages() {
-  yield takeEvery(EPagesActions.LoadPages, loadPagesSaga);
+  yield takeEvery(loadPages.type, loadPagesSaga);
 }
 
 export function* rootSaga() {

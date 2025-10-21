@@ -1,5 +1,6 @@
 import { all, fork, takeEvery, put, select, takeLatest } from 'redux-saga/effects';
-import { IInviteResponse, sendInvites } from '../../api/sendInvites';
+import { PayloadAction } from '@reduxjs/toolkit';
+import { InviteResponse, sendInvites } from '../../api/sendInvites';
 import { NotificationManager } from '../../components/UI/Notifications';
 import { TUserListItem } from '../../types/user';
 import { getErrorMessage } from '../../utils/getErrorMessage';
@@ -10,28 +11,30 @@ import { fetchUsers } from '../accounts/saga';
 import { loadActiveUsersCount, teamFetchStarted } from '../actions';
 import { setGeneralLoaderVisibility } from '../general/actions';
 import { getUsers } from '../selectors/user';
-import {
-  changeTeamActiveTab,
-  ETeamActions,
-  loadMicrosoftInvitesSuccess,
-  setRecentInvitedUsers,
-  TInviteUsers,
-  TSetTeamActivePage,
-} from './actions';
-import { ETeamPages, IUserInviteMicrosoft } from '../../types/team';
 import { getInvites } from '../../api/team/getInvites';
 import { ERoutes } from '../../constants/routes';
+import { TeamPages, TInviteUsersPayload, UserInvite } from './types';
+import { 
+  changeTeamActiveTab, 
+  inviteUsers, 
+  loadInvitesUsers, 
+  loadInvitesUsersSuccess, 
+  setRecentInvitedUsers, 
+  setTeamActivePage 
+} from './slice';
+
+
 
 function* inviteUsersSaga({
   payload: { invites, withGeneralLoader, withSuccessNotification, onStartUploading, onEndUploading, onError },
-}: TInviteUsers) {
+}: PayloadAction<TInviteUsersPayload>) {
   try {
     onStartUploading?.();
     if (withGeneralLoader) {
       yield put(setGeneralLoaderVisibility(true));
     }
 
-    const sendInvitesResult: IInviteResponse | undefined = yield sendInvites(invites, history.location.pathname);
+    const sendInvitesResult: InviteResponse | undefined = yield sendInvites(invites, history.location.pathname);
     yield fetchUsers();
 
     if (!sendInvitesResult) {
@@ -63,41 +66,41 @@ function* inviteUsersSaga({
   }
 }
 
-function* loadMicrosoftInvitesSaga() {
+function* loadInvitesUsersSaga() {
   try {
-    const invites: IUserInviteMicrosoft[] = yield getInvites();
+    const invites: UserInvite[] = yield getInvites();
 
-    yield put(loadMicrosoftInvitesSuccess(invites));
+    yield put(loadInvitesUsersSuccess(invites));
   } catch (error) {
     NotificationManager.warning({ message: getErrorMessage(error) });
-    logger.error('failed to load microsoft invites', error);
+    logger.error('failed to load invites users', error);
   }
 }
 
-function* setTeamActiveTab({ payload: processesType }: TSetTeamActivePage) {
+function* setTeamActiveTab({ payload: processesType }: PayloadAction<TeamPages>) {
   yield put(changeTeamActiveTab(processesType));
 
-  if (processesType === ETeamPages.Groups) {
+  if (processesType === TeamPages.Groups) {
     history.push(ERoutes.Groups);
   }
 
-  if (processesType === ETeamPages.Users) {
+  if (processesType === TeamPages.Users) {
     history.push(ERoutes.Team);
   }
 }
 
 export function* watchSetProcessTypeSorting() {
-  yield takeLatest(ETeamActions.SetTeamActivePage, setTeamActiveTab);
+  yield takeLatest(setTeamActivePage.type, setTeamActiveTab);
 }
 
 export function* watchInviteUsers() {
-  yield takeEvery(ETeamActions.InviteUsers, inviteUsersSaga);
+  yield takeEvery(inviteUsers.type, inviteUsersSaga);
 }
 
-export function* watchLoadMicrosoftInvites() {
-  yield takeEvery(ETeamActions.LoadMicrosoftInvites, loadMicrosoftInvitesSaga);
+export function* watchLoadInvitesUsers() {
+  yield takeEvery(loadInvitesUsers.type, loadInvitesUsersSaga);
 }
 
 export function* rootSaga() {
-  yield all([fork(watchInviteUsers), fork(watchLoadMicrosoftInvites), fork(watchSetProcessTypeSorting)]);
+  yield all([fork(watchInviteUsers), fork(watchLoadInvitesUsers), fork(watchSetProcessTypeSorting)]);
 }

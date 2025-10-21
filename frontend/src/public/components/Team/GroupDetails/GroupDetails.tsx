@@ -15,7 +15,7 @@ import {
   userListSortingChanged,
 } from '../../../redux/actions';
 import { IApplicationState } from '../../../types/redux';
-import { IGroup } from '../../../types/team';
+import { IGroup } from '../../../redux/team/types';
 import { EUserListSorting, TUserListItem } from '../../../types/user';
 import {
   IntegrateIcon,

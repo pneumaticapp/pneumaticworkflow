@@ -10,7 +10,6 @@ import { RegisterInviteContainer } from './RegisterInvite';
 import { ResetPasswordContainer } from './ResetPassword';
 import { SuperuserLoginContainer } from './SuperuserLogin';
 import { UserLayoutContainer } from '../../layout/UserLayout/container';
-import { RegisterGoogleContainer } from './RegisterGoogle'
 import { isEnvSignup } from '../../constants/enviroment';
 
 export const User = ({ match }: RouteComponentProps) => {
@@ -24,7 +23,6 @@ export const User = ({ match }: RouteComponentProps) => {
           <Redirect exact from={`${match.url}/`} to={ERoutes.Login} />
           <Route path={ERoutes.Login} component={LoginContainer} />
           <Route path={ERoutes.SignUpInvite} component={RegisterInviteContainer} />
-          <Route path={ERoutes.SignUpGoogle} component={RegisterGoogleContainer} />
           {isEnvSignup && <Route path={ERoutes.Register} component={RegisterContainer} />}
           <Route path={ERoutes.SuperuserLogin} component={SuperuserLoginContainer} />
           <Redirect to={ERoutes.Error} />

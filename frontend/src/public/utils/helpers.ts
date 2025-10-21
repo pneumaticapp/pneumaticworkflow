@@ -8,7 +8,6 @@ import { EPayPeriod } from '../types/pricing';
 import { TAX_RATES } from '../constants/taxRates';
 import { NAVBAR_HEIGHT, MOBILE_NAVBAR_HEIGHT } from '../constants/defaultValues';
 const { MOBILE_MAX_WIDTH_BREAKPOINT } = require('../constants/breakpoints');
-import { ERoutes } from '../constants/routes';
 
 export const isClient = (): boolean => typeof window !== 'undefined';
 
@@ -164,11 +163,6 @@ export const isLessEqualThanUserLimit = (users: number, currentUsersLimit: numbe
   }
 
   return false;
-};
-
-export const connectGoogle = async () => {
-  const windowParams = 'width=620,height=620,resizable,scrollbars=yes,status=1';
-  window.open(ERoutes.InvitesGoogle, undefined, windowParams);
 };
 
 export function findAncestor(el: Element, className: string) {

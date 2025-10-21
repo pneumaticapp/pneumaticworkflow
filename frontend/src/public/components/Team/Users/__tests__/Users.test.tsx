@@ -1,7 +1,8 @@
 import * as React from 'react';
 import { shallow } from 'enzyme';
 
-import { Users, IUsersProps } from '../Users';
+import { Users } from '../Users';
+import { IUsersProps } from '../types';
 import { mockLastNameUsers } from '../../../../__stubs__/users';
 import { EUserListSorting } from '../../../../types/user';
 import { TeamUser } from '../TeamUser';
@@ -16,7 +17,7 @@ const mockProps: IUsersProps = {
   openTeamInvitesPopup: jest.fn(),
   setGeneralLoaderVisibility: jest.fn(),
   trialEnded: null,
-  loadMicrosoftInvites: jest.fn(),
+  loadInvitesUsers: jest.fn(),
 };
 
 describe('Team', () => {

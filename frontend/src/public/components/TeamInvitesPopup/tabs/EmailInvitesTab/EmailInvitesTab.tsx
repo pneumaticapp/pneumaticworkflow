@@ -3,22 +3,19 @@ import { useIntl } from 'react-intl';
 import { useDispatch } from 'react-redux';
 import * as PerfectScrollbar from 'react-perfect-scrollbar';
 
-import { inviteUsers } from '../../../../redux/actions';
+import { inviteUsers } from '../../../../redux/team/slice';
 import { createUniqueId } from '../../../../utils/createId';
 import { isArrayWithItems } from '../../../../utils/helpers';
 import { validateInviteEmail } from '../../../../utils/validators';
 import { SuccessCheckIcon, ErrorBlockIcon } from '../../../icons';
 import { Button, InputField, Loader } from '../../../UI';
+import { TUploadingInvite, TUploadingInviteStatus } from './types';
+import { InvitesType } from '../../../../redux/team/types';
 
 import styles from './EmailInvitesTab.css';
 import popupStyles from '../../TeamInvitesPopup.css';
 
-type TUploadingInviteStatus = 'initial' | 'uploading' | 'success' | 'error';
-type TUploadingInvite = {
-  id: string;
-  email: string;
-  status: TUploadingInviteStatus;
-};
+
 
 const ScrollBar = PerfectScrollbar as unknown as Function;
 
@@ -55,7 +52,7 @@ export function EmailInvitesTab() {
       setInputValue('');
       dispatch(
         inviteUsers({
-          invites: [{ email: newInvite.email, type: 'email' }],
+          invites: [{ email: newInvite.email, type: InvitesType.Email }],
           withSuccessNotification: true,
           onStartUploading: () => {
             setIsLoading(true);

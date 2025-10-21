@@ -3,12 +3,12 @@
 /* tslint:disable:no-any */
 const commonConfig = require('../../../config/common.json');
 
-import { IUnsavedUser, TGoogleAuthUserInfo } from '../types/user';
+import { IUnsavedUser } from '../types/user';
 import { IInvitedUser } from '../types/redux';
 // @ts-ignore
 import * as merge from 'lodash.merge';
 import { get, set } from '../../server/utils/helpers';
-import { IPages } from '../types/page';
+import { IPages } from '../redux/pages/types';
 
 export type TEnvironment = 'local' | 'staging' | 'prod';
 
@@ -39,7 +39,6 @@ export interface IBrowserConfig {
 
 interface IConfig {
   config: IBrowserConfig;
-  googleAuthUserInfo: TGoogleAuthUserInfo | {};
   invitedUser: IInvitedUser;
   user: Partial<IUnsavedUser>;
   env?: TEnvironment;
@@ -93,8 +92,6 @@ export function getConfig(): TConfig {
     FIREBASE_MEASUREMENT_ID,
     RECAPTCHA_SITE_KEY,
     ANALYTICS_WRITE_KEY,
-    GOOGLE_CLIENT_ID,
-    GOOGLE_CLIENT_SECRET,
   } = process.env;
 
   return merge(commonConfig, { env }, {
@@ -105,10 +102,6 @@ export function getConfig(): TConfig {
       "privateUrl": BACKEND_PRIVATE_URL,
       "publicUrl": BACKEND_URL,
       "wsPublicUrl": WSS_URL
-    },
-    "google": {
-      "clientId": GOOGLE_CLIENT_ID,
-      "clientSecret": GOOGLE_CLIENT_SECRET
     },
     "analyticsId": ANALYTICS_WRITE_KEY,
     "recaptchaSecret": RECAPTCHA_SITE_KEY,

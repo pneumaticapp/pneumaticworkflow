@@ -168,3 +168,4 @@ export * from './ShortArrowIcon';
 export * from './WorkflowOpen';
 export * from './WorkflowMinimize';
 export * from './TuneViewIcon';
+export * from './TeamPlaceholderNoUsersIcon';

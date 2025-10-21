@@ -11,7 +11,7 @@ import { EAuthActions, EAuthUserFailType, TAuthActions } from './actions';
 import { ESubscriptionPlan } from '../../types/account';
 import { EAccountsActions, TAccountsActions } from '../actions';
 
-const { googleAuthUserInfo, invitedUser } = getBrowserConfig();
+const { invitedUser } = getBrowserConfig();
 
 const EMPTY_USER: IAuthUser = {
   email: '',
@@ -40,7 +40,6 @@ const EMPTY_USER: IAuthUser = {
   photo: '',
   loading: false,
   status: EUserStatus.Active,
-  googleAuthUserInfo,
   invitedUser,
   isAccountOwner: true,
   isDigestSubscriber: false,
@@ -98,8 +97,6 @@ export const reducer = (state = INIT_STATE, action: TAuthActions | TAccountsActi
     case EAuthActions.ResetPasswordFail:
     case EAuthActions.ChangePasswordFail:
       return { ...state, error: EAuthUserFailType.Common, loading: false };
-    case EAuthActions.RemoveGoogleUser:
-      return { ...state, googleAuthUserInfo: {} };
     case EAuthActions.SetToken:
       return { ...state, token: action.payload };
     case EAuthActions.SetUserPhoto:

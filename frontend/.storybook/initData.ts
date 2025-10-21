@@ -167,7 +167,6 @@ window['__pneumaticConfig'] = {
       },
     },
   },
-  googleAuthUserInfo: {},
   user: {
     id: 7821,
     email: 'chris.evans@pneumatic.app',

@@ -3,7 +3,7 @@ import * as React from 'react';
 export function useDelayUnmount(isMounted: boolean, delayTime: number) {
   const [shouldRender, setShouldRender] = React.useState(false);
 
-  React.useEffect(() => {
+  React.useLayoutEffect(() => {
     let timeoutId: NodeJS.Timeout | number;
     if (isMounted && !shouldRender) {
       setShouldRender(true);

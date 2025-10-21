@@ -10,9 +10,9 @@ import { checkSomeRouteIsActive, history } from '../../utils/history';
 import { GroupListSortingContainer } from './GroupListSortingContainer';
 import { UserListSortingContainer } from './UserListSortingContainer';
 import { ReturnLink, Tabs } from '../../components/UI';
-import { ETeamPages } from '../../types/team';
-import { resetUsers, setTeamActivePage, updateTeamActiveTab } from '../../redux/actions';
-
+import { resetUsers } from '../../redux/actions';
+import { TeamPages } from '../../redux/team/types';
+import { updateTeamActiveTab, setTeamActivePage } from '../../redux/team/slice';
 import styles from './TeamLayout.css';
 
 export interface ITeamLayoutProps {
@@ -22,14 +22,14 @@ export interface ITeamLayoutProps {
 export function TeamLayout({ children }: ITeamLayoutProps) {
   const dispatch = useDispatch();
   const { formatMessage } = useIntl();
-  const page = useSelector((state: IApplicationState) => state.teamInvites.page);
+  const page = useSelector((state: IApplicationState) => state.team.page);
 
   useEffect(() => {
     dispatch(
       updateTeamActiveTab(
         checkSomeRouteIsActive(ERoutes.Groups) || checkSomeRouteIsActive(ERoutes.GroupDetails)
-          ? ETeamPages.Groups
-          : ETeamPages.Users,
+          ? TeamPages.Groups
+          : TeamPages.Users,
       ),
     );
 
@@ -44,15 +44,15 @@ export function TeamLayout({ children }: ITeamLayoutProps) {
         <div className={styles['top-nav__item']}>
           <Tabs
             values={[
-              { id: ETeamPages.Users, label: formatMessage({ id: 'team.users' }) },
-              { id: ETeamPages.Groups, label: formatMessage({ id: 'team.groups' }) },
+              { id: TeamPages.Users, label: formatMessage({ id: 'team.users' }) },
+              { id: TeamPages.Groups, label: formatMessage({ id: 'team.groups' }) },
             ]}
             activeValueId={page}
             onChange={(activeTab) => dispatch(setTeamActivePage(activeTab))}
           />
         </div>
         <div className={styles['top-nav__item']}>
-          {page === ETeamPages.Users ? <UserListSortingContainer /> : <GroupListSortingContainer />}
+          {page === TeamPages.Users ? <UserListSortingContainer /> : <GroupListSortingContainer />}
         </div>
       </div>
     );

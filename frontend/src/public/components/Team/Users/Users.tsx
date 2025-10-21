@@ -7,13 +7,8 @@ import { DeleteTeamUserPopupContainer } from './DeleteTeamUserPopup';
 import { AddGuestsBanner } from './AddGuestsBanner';
 
 import { resendInvite } from '../../../api/resendInvite';
-import { EUserListSorting, TUserListItem } from '../../../types/user';
+import { TUserListItem } from '../../../types/user';
 import { getErrorMessage } from '../../../utils/getErrorMessage';
-import {
-  IChangeUserAdminProps,
-  TOpenDeleteUserModalPayload,
-  ITeamFetchStartedProps,
-} from '../../../redux/accounts/actions';
 import { trackInviteTeamInPage } from '../../../utils/analytics';
 import { SearchLargeIcon } from '../../icons';
 import { InputField } from '../../UI';
@@ -23,32 +18,18 @@ import { TeamUserSkeleton } from '../TeamUserSkeleton';
 import { TITLES } from '../../../constants/titles';
 import { PageTitle } from '../../PageTitle';
 import { EPageTitle } from '../../../constants/defaultValues';
-
-import styles from './Users.css';
 import { getSubscriptionPlan } from '../../../redux/selectors/user';
 import { ESubscriptionPlan } from '../../../types/account';
+import { IUsersProps } from './types';
+
+import styles from './Users.css';
+
+
 
 export const STATUS_TITLE_MAP: { [key: string]: string } = {
   active: 'team.title-group-active',
   invited: 'team.title-group-invited',
 };
-
-export interface IUsersProps {
-  currentUserId: number;
-  isLoading?: boolean;
-  sorting?: EUserListSorting;
-  users: TUserListItem[];
-  isTeamInvitesOpened?: boolean;
-  isSubscribed?: boolean;
-  trialEnded: boolean | null;
-  userListSorting: EUserListSorting;
-  fetchUsers(payload: ITeamFetchStartedProps): void;
-  loadChangeUserAdmin(payload: IChangeUserAdminProps): void;
-  openModal(params: TOpenDeleteUserModalPayload): void;
-  openTeamInvitesPopup(): void;
-  loadMicrosoftInvites(): void;
-  setGeneralLoaderVisibility(isVisible: boolean): void;
-}
 
 export function Users({
   currentUserId,
@@ -60,7 +41,7 @@ export function Users({
   openModal,
   openTeamInvitesPopup,
   setGeneralLoaderVisibility,
-  loadMicrosoftInvites,
+  loadInvitesUsers,
 }: IUsersProps) {
   const { formatMessage } = useIntl();
 
@@ -72,7 +53,7 @@ export function Users({
 
   React.useEffect(() => {
     fetchUsers({});
-    loadMicrosoftInvites();
+    loadInvitesUsers();
     document.title = TITLES.Team;
   }, []);
 

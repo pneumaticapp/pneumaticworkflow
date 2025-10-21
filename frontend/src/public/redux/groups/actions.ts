@@ -1,6 +1,6 @@
 import { actionGenerator } from '../../utils/redux';
 import { ITypedReduxAction } from '../../types/redux';
-import { IGroup } from '../../types/team';
+import { IGroup } from '../team/types';
 import { EGroupsListSorting, EUserListSorting } from '../../types/user';
 
 export const enum EGroupsActions {

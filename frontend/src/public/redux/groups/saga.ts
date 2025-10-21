@@ -14,7 +14,6 @@ import {
   updateGroupSuccess,
 } from '../actions';
 import { getGroups } from '../../api/team/getGroups';
-import { IGroup } from '../../types/team';
 import { createGroup } from '../../api/team/createGroup';
 import { deleteGroup } from '../../api/team/deleteGroup';
 import { NotificationManager } from '../../components/UI/Notifications';
@@ -24,6 +23,9 @@ import { updateGroupApi } from '../../api/team/updateGroupApi';
 import { getGroup } from '../../api/team/getGroup';
 import { ERoutes } from '../../constants/routes';
 import { EResponseStatuses } from '../../constants/defaultValues';
+import { IGroup } from '../team/types';
+
+
 
 function* loadGroupsSaga() {
   try {

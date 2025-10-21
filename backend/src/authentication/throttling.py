@@ -22,3 +22,11 @@ class Auth0AuthUriThrottle(CustomSimpleRateThrottle):
 
 class AuthResetPasswordThrottle(AnonThrottle):
     scope = '11_auth__reset_password'
+
+
+class AuthGoogleTokenThrottle(CustomSimpleRateThrottle):
+    scope = '12_auth_google__token'
+
+
+class AuthGoogleAuthUriThrottle(CustomSimpleRateThrottle):
+    scope = '13_auth_google__auth_uri'
