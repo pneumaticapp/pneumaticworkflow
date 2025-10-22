@@ -1,36 +1,34 @@
-import pytest
 from datetime import timedelta
-from src.processes.tests.fixtures import (
-    create_test_user,
-    create_test_workflow,
-    create_test_template,
-    create_test_group,
-    create_test_owner
-)
-from src.utils.validation import ErrorCode
-from src.processes.messages import workflow as messages
-from src.authentication.enums import AuthTokenType
 
+import pytest
+
+from src.authentication.enums import AuthTokenType
 from src.processes.enums import (
     DirectlyStatus,
-    PerformerType,
-    WorkflowStatus,
     FieldType,
+    PerformerType,
     TaskStatus,
+    WorkflowStatus,
 )
-from src.processes.models import (
-    FileAttachment,
-    TaskField,
-    TaskPerformer
+from src.processes.messages import workflow as messages
+from src.processes.models.workflows.attachment import FileAttachment
+from src.processes.models.workflows.fields import TaskField
+from src.processes.models.workflows.task import TaskPerformer
+from src.processes.services.events import (
+    WorkflowEventService,
 )
 from src.processes.services.workflow_action import (
     WorkflowActionService,
 )
-from src.processes.services.events import (
-    WorkflowEventService
+from src.processes.tests.fixtures import (
+    create_test_group,
+    create_test_owner,
+    create_test_template,
+    create_test_user,
+    create_test_workflow,
 )
 from src.services.markdown import MarkdownService
-
+from src.utils.validation import ErrorCode
 
 pytestmark = pytest.mark.django_db
 datetime_format = '%Y-%m-%dT%H:%M:%S.%fZ'
@@ -46,7 +44,7 @@ def test_list__default_ordering__ok(mocker, api_client):
     workflow_2 = create_test_workflow(
         user,
         name='Workflow 2',
-        tasks_count=1
+        tasks_count=1,
     )
     task_21 = workflow_2.tasks.get(number=1)
     task_11.due_date = task_11.date_first_started + timedelta(hours=1)
@@ -56,7 +54,7 @@ def test_list__default_ordering__ok(mocker, api_client):
     task = completed_workflow.tasks.get(number=1)
     mocker.patch(
         'src.processes.tasks.webhooks.'
-        'send_task_completed_webhook.delay'
+        'send_task_completed_webhook.delay',
     )
     api_client.post(f'/v2/tasks/{task.id}/complete')
 
@@ -91,20 +89,20 @@ def test_list__user_in_group__ok(api_client):
     user = create_test_user()
     another_user = create_test_user(
         account=user.account,
-        email='another@pneumatic.app'
+        email='another@pneumatic.app',
     )
     group = create_test_group(user.account, users=[another_user])
     api_client.token_authenticate(user=another_user)
     workflow_1 = create_test_workflow(user, tasks_count=1)
     task_11 = workflow_1.tasks.get(number=1)
     TaskPerformer.objects.filter(
-        task=task_11
+        task=task_11,
     ).update(directly_status=DirectlyStatus.DELETED)
     TaskPerformer.objects.create(
         task_id=task_11.id,
         type=PerformerType.GROUP,
         group_id=group.id,
-        directly_status=DirectlyStatus.CREATED
+        directly_status=DirectlyStatus.CREATED,
     )
     workflow_2 = create_test_workflow(user, tasks_count=1, is_urgent=True)
     task_21 = workflow_2.tasks.get(number=1)
@@ -112,7 +110,7 @@ def test_list__user_in_group__ok(api_client):
         task_id=task_21.id,
         type=PerformerType.GROUP,
         group_id=group.id,
-        directly_status=DirectlyStatus.CREATED
+        directly_status=DirectlyStatus.CREATED,
     )
     create_test_workflow(user, tasks_count=1)
 
@@ -132,7 +130,7 @@ def test_list__task_performer_group_empty__ok(api_client):
     user = create_test_user()
     another_user = create_test_user(
         account=user.account,
-        email='another@pneumatic.app'
+        email='another@pneumatic.app',
     )
     group = create_test_group(user.account, users=[another_user])
     create_test_group(user.account)
@@ -140,13 +138,13 @@ def test_list__task_performer_group_empty__ok(api_client):
     workflow_1 = create_test_workflow(user, tasks_count=1)
     task_11 = workflow_1.tasks.get(number=1)
     TaskPerformer.objects.filter(
-        task=task_11
+        task=task_11,
     ).update(directly_status=DirectlyStatus.DELETED)
     TaskPerformer.objects.create(
         task_id=task_11.id,
         type=PerformerType.GROUP,
         group_id=group.id,
-        directly_status=DirectlyStatus.CREATED
+        directly_status=DirectlyStatus.CREATED,
     )
     workflow_2 = create_test_workflow(user, tasks_count=1, is_urgent=True)
     task_21 = workflow_2.tasks.get(number=1)
@@ -154,7 +152,7 @@ def test_list__task_performer_group_empty__ok(api_client):
         task_id=task_21.id,
         type=PerformerType.GROUP,
         group_id=group.id,
-        directly_status=DirectlyStatus.CREATED
+        directly_status=DirectlyStatus.CREATED,
     )
     create_test_workflow(user, tasks_count=1)
 
@@ -209,7 +207,7 @@ def test_list__search__ok(api_client, mocker):
     api_client.token_authenticate(user)
     analytics_mock = mocker.patch(
         'src.analytics.services.AnalyticService.'
-        'search_search'
+        'search_search',
     )
 
     # act
@@ -225,7 +223,7 @@ def test_list__search__ok(api_client, mocker):
         page='tasks',
         search_text=clear_search_text,
         is_superuser=False,
-        auth_type=AuthTokenType.USER
+        auth_type=AuthTokenType.USER,
     )
 
 
@@ -239,7 +237,7 @@ def test_list__search__not_found__ok(api_client, mocker):
     api_client.token_authenticate(user)
     analytics_mock = mocker.patch(
         'src.analytics.services.AnalyticService.'
-        'search_search'
+        'search_search',
     )
     search_text = 'DROP TABLE accounts_account'
 
@@ -255,7 +253,7 @@ def test_list__search__not_found__ok(api_client, mocker):
         page='tasks',
         search_text=search_text,
         is_superuser=False,
-        auth_type=AuthTokenType.USER
+        auth_type=AuthTokenType.USER,
     )
 
 
@@ -268,7 +266,7 @@ def test_list__search__comment__ok(api_client, mocker):
     WorkflowEventService.comment_created_event(
         user=user,
         task=task,
-        text='some comment text'
+        text='some comment text',
     )
     search_text = 'com tex'
     workflow_2 = create_test_workflow(user=user, tasks_count=1)
@@ -276,13 +274,13 @@ def test_list__search__comment__ok(api_client, mocker):
     WorkflowEventService.comment_created_event(
         user=user,
         task=task_2,
-        text='some camera retext'
+        text='some camera retext',
     )
 
     api_client.token_authenticate(user)
     analytics_mock = mocker.patch(
         'src.analytics.services.AnalyticService.'
-        'search_search'
+        'search_search',
     )
 
     # act
@@ -298,7 +296,7 @@ def test_list__search__comment__ok(api_client, mocker):
         page='tasks',
         search_text=search_text,
         is_superuser=False,
-        auth_type=AuthTokenType.USER
+        auth_type=AuthTokenType.USER,
     )
 
 
@@ -313,13 +311,13 @@ def test_list__search__comment__url_as_text__ok(api_client, mocker):
         user=user,
         task=task,
         text=text,
-        clear_text=MarkdownService.clear(text)
+        clear_text=MarkdownService.clear(text),
     )
     search_text = 'pneumo.app'
     api_client.token_authenticate(user)
     analytics_mock = mocker.patch(
         'src.analytics.services.AnalyticService.'
-        'search_search'
+        'search_search',
     )
 
     # act
@@ -335,7 +333,7 @@ def test_list__search__comment__url_as_text__ok(api_client, mocker):
         page='tasks',
         search_text=search_text,
         is_superuser=False,
-        auth_type=AuthTokenType.USER
+        auth_type=AuthTokenType.USER,
     )
 
 
@@ -350,13 +348,13 @@ def test_list__search__comment__markdown__ok(api_client, mocker):
         user=user,
         task=task,
         text=text,
-        clear_text=MarkdownService.clear(text)
+        clear_text=MarkdownService.clear(text),
     )
     search_text = 'file'
     api_client.token_authenticate(user)
     analytics_mock = mocker.patch(
         'src.analytics.services.AnalyticService.'
-        'search_search'
+        'search_search',
     )
 
     # act
@@ -372,7 +370,7 @@ def test_list__search__comment__markdown__ok(api_client, mocker):
         page='tasks',
         search_text=search_text,
         is_superuser=False,
-        auth_type=AuthTokenType.USER
+        auth_type=AuthTokenType.USER,
     )
 
 
@@ -385,7 +383,7 @@ def test_list__search__not_comment_event__not_found(api_client, mocker):
     task = workflow.tasks.get(number=1)
     event = WorkflowEventService.task_complete_event(
         user=user,
-        task=task
+        task=task,
     )
     event.text = search_text
     event.save()
@@ -393,7 +391,7 @@ def test_list__search__not_comment_event__not_found(api_client, mocker):
     api_client.token_authenticate(user)
     analytics_mock = mocker.patch(
         'src.analytics.services.AnalyticService.'
-        'search_search'
+        'search_search',
     )
 
     # act
@@ -407,7 +405,7 @@ def test_list__search__not_comment_event__not_found(api_client, mocker):
         page='tasks',
         search_text=search_text,
         is_superuser=False,
-        auth_type=AuthTokenType.USER
+        auth_type=AuthTokenType.USER,
     )
 
 
@@ -418,7 +416,7 @@ def test_list__search__another_task_comment__not_found(api_client, mocker):
     workflow = create_test_workflow(
         user=user,
         tasks_count=2,
-        active_task_number=2
+        active_task_number=2,
     )
     text = 'some comment text'
     task = workflow.tasks.get(number=1)
@@ -426,13 +424,13 @@ def test_list__search__another_task_comment__not_found(api_client, mocker):
         user=user,
         task=task,
         text=text,
-        clear_text=MarkdownService.clear(text)
+        clear_text=MarkdownService.clear(text),
     )
     search_text = 'com tex'
     api_client.token_authenticate(user)
     analytics_mock = mocker.patch(
         'src.analytics.services.AnalyticService.'
-        'search_search'
+        'search_search',
     )
 
     # act
@@ -446,7 +444,7 @@ def test_list__search__another_task_comment__not_found(api_client, mocker):
         page='tasks',
         search_text=search_text,
         is_superuser=False,
-        auth_type=AuthTokenType.USER
+        auth_type=AuthTokenType.USER,
     )
 
 
@@ -459,7 +457,7 @@ def test_list__search__comment_attachment__ok(api_client, mocker):
     event = WorkflowEventService.comment_created_event(
         user=user,
         task=task,
-        text='comment'
+        text='comment',
     )
     FileAttachment.objects.create(
         name='fred cena',
@@ -467,13 +465,13 @@ def test_list__search__comment_attachment__ok(api_client, mocker):
         size=1488,
         account_id=user.account_id,
         workflow=workflow,
-        event=event
+        event=event,
     )
 
     api_client.token_authenticate(user)
     mocker.patch(
         'src.analytics.services.AnalyticService.'
-        'search_search'
+        'search_search',
     )
     search_text = 'cena'
 
@@ -489,7 +487,7 @@ def test_list__search__comment_attachment__ok(api_client, mocker):
 
 def test_list__search__another_task_comment_attachment__not_found(
     api_client,
-    mocker
+    mocker,
 ):
 
     # arrange
@@ -497,13 +495,13 @@ def test_list__search__another_task_comment_attachment__not_found(
     workflow = create_test_workflow(
         user=user,
         tasks_count=2,
-        active_task_number=2
+        active_task_number=2,
     )
     task = workflow.tasks.get(number=1)
     event = WorkflowEventService.comment_created_event(
         user=user,
         task=task,
-        text='comment'
+        text='comment',
     )
     FileAttachment.objects.create(
         name='fred.cena',
@@ -511,13 +509,13 @@ def test_list__search__another_task_comment_attachment__not_found(
         size=1488,
         account_id=user.account_id,
         workflow=workflow,
-        event=event
+        event=event,
     )
 
     api_client.token_authenticate(user)
     mocker.patch(
         'src.analytics.services.AnalyticService.'
-        'search_search'
+        'search_search',
     )
     search_text = 'cen'
 
@@ -531,7 +529,7 @@ def test_list__search__another_task_comment_attachment__not_found(
 
 def test_list__search__completed_prev_task_output_attachment__not_found(
     api_client,
-    mocker
+    mocker,
 ):
 
     # arrange
@@ -539,14 +537,14 @@ def test_list__search__completed_prev_task_output_attachment__not_found(
     workflow = create_test_workflow(
         user=user,
         tasks_count=2,
-        active_task_number=2
+        active_task_number=2,
     )
     task_1 = workflow.tasks.get(number=1)
     field = TaskField.objects.create(
         task=task_1,
         api_name='api-name-1',
         type=FieldType.FILE,
-        workflow=workflow
+        workflow=workflow,
     )
     FileAttachment.objects.create(
         name='fred.cena',
@@ -554,13 +552,13 @@ def test_list__search__completed_prev_task_output_attachment__not_found(
         size=1488,
         account_id=user.account_id,
         workflow=workflow,
-        output=field
+        output=field,
     )
 
     api_client.token_authenticate(user)
     mocker.patch(
         'src.analytics.services.AnalyticService.'
-        'search_search'
+        'search_search',
     )
     search_text = 'cena'
 
@@ -574,7 +572,7 @@ def test_list__search__completed_prev_task_output_attachment__not_found(
 
 def test_list__search__active_task_field_attachment__ok(
     api_client,
-    mocker
+    mocker,
 ):
 
     # arrange
@@ -585,7 +583,7 @@ def test_list__search__active_task_field_attachment__ok(
         task=task_1,
         api_name='api-name-1',
         type=FieldType.FILE,
-        workflow=workflow
+        workflow=workflow,
     )
     FileAttachment.objects.create(
         name='fred.cena',
@@ -593,13 +591,13 @@ def test_list__search__active_task_field_attachment__ok(
         size=1488,
         account_id=user.account_id,
         workflow=workflow,
-        output=field
+        output=field,
     )
 
     api_client.token_authenticate(user)
     mocker.patch(
         'src.analytics.services.AnalyticService.'
-        'search_search'
+        'search_search',
     )
     search_text = 'fred'
 
@@ -614,7 +612,7 @@ def test_list__search__active_task_field_attachment__ok(
 
 def test_list__search__active_task_description__ok(
     api_client,
-    mocker
+    mocker,
 ):
 
     # arrange
@@ -627,7 +625,7 @@ def test_list__search__active_task_description__ok(
     task_1.save()
     api_client.token_authenticate(user)
     mocker.patch(
-        'src.analytics.services.AnalyticService.search_search'
+        'src.analytics.services.AnalyticService.search_search',
     )
     search_text = 'file.here'
 
@@ -642,7 +640,7 @@ def test_list__search__active_task_description__ok(
 
 def test_list__search__not_active_task_description__not_found(
     api_client,
-    mocker
+    mocker,
 ):
 
     # arrange
@@ -650,7 +648,7 @@ def test_list__search__not_active_task_description__not_found(
     workflow = create_test_workflow(
         user=user,
         tasks_count=3,
-        active_task_number=2
+        active_task_number=2,
     )
     description = 'some [file.here](http://google.com/) value'
     task_1 = workflow.tasks.get(number=1)
@@ -664,7 +662,7 @@ def test_list__search__not_active_task_description__not_found(
     create_test_workflow(user)
     search_text = 'file'
     mocker.patch(
-        'src.analytics.services.AnalyticService.search_search'
+        'src.analytics.services.AnalyticService.search_search',
     )
     api_client.token_authenticate(user)
 
@@ -691,7 +689,7 @@ def test_list__search__kickoff_description__ok(api_client, mocker):
     search_text = 'file'
     api_client.token_authenticate(user)
     mocker.patch(
-        'src.analytics.services.AnalyticService.search_search'
+        'src.analytics.services.AnalyticService.search_search',
     )
     # act
     response = api_client.get(f'/v3/tasks?search={search_text}')
@@ -713,7 +711,7 @@ def test_list__search__kickoff_description__ok(api_client, mocker):
         FieldType.DATE,
         FieldType.USER,
         FieldType.URL,
-    )
+    ),
 )
 def test_list__search__in_active_task_field_value__ok(
     api_client,
@@ -732,12 +730,12 @@ def test_list__search__in_active_task_field_value__ok(
         type=field_type,
         workflow=workflow,
         value=value,
-        clear_value=MarkdownService.clear(value)
+        clear_value=MarkdownService.clear(value),
     )
     api_client.token_authenticate(user)
     mocker.patch(
         'src.analytics.services.AnalyticService.'
-        'search_search'
+        'search_search',
     )
     search_text = 'fred'
 
@@ -761,7 +759,7 @@ def test_list__search__in_active_task_field_value__ok(
         FieldType.DATE,
         FieldType.USER,
         FieldType.URL,
-    )
+    ),
 )
 def test_list__search__in_kickoff_field_value__ok(
     api_client,
@@ -780,12 +778,12 @@ def test_list__search__in_kickoff_field_value__ok(
         type=field_type,
         workflow=workflow,
         value=value,
-        clear_value=MarkdownService.clear(value)
+        clear_value=MarkdownService.clear(value),
     )
     api_client.token_authenticate(user)
     mocker.patch(
         'src.analytics.services.AnalyticService.'
-        'search_search'
+        'search_search',
     )
     search_text = 'fred'
 
@@ -802,7 +800,7 @@ def test_list__search__in_kickoff_field_value__ok(
     'field_type',
     (
         FieldType.FILE,
-    )
+    ),
 )
 def test_list__search__in_excluded_field_value__not_found(
     api_client,
@@ -821,12 +819,12 @@ def test_list__search__in_excluded_field_value__not_found(
         type=field_type,
         workflow=workflow,
         value=value,
-        clear_value=MarkdownService.clear(value)
+        clear_value=MarkdownService.clear(value),
     )
     api_client.token_authenticate(user)
     mocker.patch(
         'src.analytics.services.AnalyticService.'
-        'search_search'
+        'search_search',
     )
     search_text = 'fred'
 
@@ -854,18 +852,18 @@ def test_list__search___full_uri_in_field___ok(
         type=FieldType.URL,
         workflow=workflow,
         value=value,
-        clear_value=MarkdownService.clear(value)
+        clear_value=MarkdownService.clear(value),
     )
     api_client.token_authenticate(user)
     mocker.patch(
         'src.analytics.services.AnalyticService.'
-        'search_search'
+        'search_search',
     )
 
     # act
     response = api_client.get(
         '/v3/tasks',
-        data={'search': value}
+        data={'search': value},
     )
 
     # assert
@@ -890,12 +888,12 @@ def test_list__search___partional_uri_in_field___ok(
         type=FieldType.URL,
         workflow=workflow,
         value=value,
-        clear_value=MarkdownService.clear(value)
+        clear_value=MarkdownService.clear(value),
     )
     api_client.token_authenticate(user)
     mocker.patch(
         'src.analytics.services.AnalyticService.'
-        'search_search'
+        'search_search',
     )
     search_text = 'https://translate.com/some-page'
 
@@ -910,7 +908,7 @@ def test_list__search___partional_uri_in_field___ok(
 
 def test_list__search__markdown_filename_in_text_field__ok(
     api_client,
-    mocker
+    mocker,
 ):
 
     # arrange
@@ -928,13 +926,13 @@ def test_list__search__markdown_filename_in_text_field__ok(
         api_name='api-name-1',
         type=FieldType.TEXT,
         value=value,
-        clear_value=MarkdownService.clear(value)
+        clear_value=MarkdownService.clear(value),
     )
 
     api_client.token_authenticate(user)
     mocker.patch(
         'src.analytics.services.AnalyticService.'
-        'search_search'
+        'search_search',
     )
     search_text = 'somefile'
 
@@ -949,7 +947,7 @@ def test_list__search__markdown_filename_in_text_field__ok(
 
 def test_list__search__url_in_text_field__ok(
     api_client,
-    mocker
+    mocker,
 ):
 
     # arrange
@@ -965,13 +963,13 @@ def test_list__search__url_in_text_field__ok(
         api_name='api-name-1',
         type=FieldType.TEXT,
         value=value,
-        clear_value=MarkdownService.clear(value)
+        clear_value=MarkdownService.clear(value),
     )
 
     api_client.token_authenticate(user)
     mocker.patch(
         'src.analytics.services.AnalyticService.'
-        'search_search'
+        'search_search',
     )
     search_text = 'search'
 
@@ -986,7 +984,7 @@ def test_list__search__url_in_text_field__ok(
 
 def test_list__search__email_in_text_field__ok(
     api_client,
-    mocker
+    mocker,
 ):
 
     # arrange
@@ -1002,13 +1000,13 @@ def test_list__search__email_in_text_field__ok(
         api_name='api-name-1',
         type=FieldType.TEXT,
         value=value,
-        clear_value=MarkdownService.clear(value)
+        clear_value=MarkdownService.clear(value),
     )
 
     api_client.token_authenticate(user)
     mocker.patch(
         'src.analytics.services.AnalyticService.'
-        'search_search'
+        'search_search',
     )
     search_text = 'master'
 
@@ -1023,7 +1021,7 @@ def test_list__search__email_in_text_field__ok(
 
 def test_list__search__prev_task_markdown_filename_in_text__not_found(
     api_client,
-    mocker
+    mocker,
 ):
 
     # arrange
@@ -1031,7 +1029,7 @@ def test_list__search__prev_task_markdown_filename_in_text__not_found(
     workflow = create_test_workflow(
         user=user,
         tasks_count=2,
-        active_task_number=2
+        active_task_number=2,
     )
     task_1 = workflow.tasks.get(number=1)
     value = (
@@ -1045,13 +1043,13 @@ def test_list__search__prev_task_markdown_filename_in_text__not_found(
         api_name='api-name-1',
         type=FieldType.TEXT,
         value=value,
-        clear_value=MarkdownService.clear(value)
+        clear_value=MarkdownService.clear(value),
     )
 
     api_client.token_authenticate(user)
     mocker.patch(
         'src.analytics.services.AnalyticService.'
-        'search_search'
+        'search_search',
     )
     search_text = 'somefile.txt'
 
@@ -1112,21 +1110,21 @@ def test_list__ordering_by_completed__ok(mocker, api_client):
     task_11 = workflow_1.tasks.get(number=1)
     mocker.patch(
         'src.processes.tasks.webhooks.'
-        'send_task_completed_webhook.delay'
+        'send_task_completed_webhook.delay',
     )
     response_complete_1 = api_client.post(
-        f'/v2/tasks/{task_11.id}/complete'
+        f'/v2/tasks/{task_11.id}/complete',
     )
     workflow_2 = create_test_workflow(user, tasks_count=1)
     task_21 = workflow_2.tasks.get(number=1)
     response_complete_2 = api_client.post(
-        f'/v2/tasks/{task_21.id}/complete'
+        f'/v2/tasks/{task_21.id}/complete',
     )
     create_test_workflow(user, tasks_count=1)
 
     # act
     response = api_client.get(
-        '/v3/tasks?ordering=completed&is_completed=true'
+        '/v3/tasks?ordering=completed&is_completed=true',
     )
 
     # assert
@@ -1158,7 +1156,7 @@ def test_list__ordering_by_reversed_completed__ok(mocker, api_client):
     task_11 = workflow_1.tasks.get(number=1)
     mocker.patch(
         'src.processes.tasks.webhooks.'
-        'send_task_completed_webhook.delay'
+        'send_task_completed_webhook.delay',
     )
     api_client.post(f'/v2/tasks/{task_11.id}/complete')
 
@@ -1170,7 +1168,7 @@ def test_list__ordering_by_reversed_completed__ok(mocker, api_client):
 
     # act
     response = api_client.get(
-        '/v3/tasks?ordering=-completed&is_completed=true'
+        '/v3/tasks?ordering=-completed&is_completed=true',
     )
 
     # assert
@@ -1182,7 +1180,7 @@ def test_list__ordering_by_reversed_completed__ok(mocker, api_client):
 
 def test_list__ordering_by_completed_required_completion_by_all__ok(
     mocker,
-    api_client
+    api_client,
 ):
 
     # arrange
@@ -1190,7 +1188,7 @@ def test_list__ordering_by_completed_required_completion_by_all__ok(
     user_2 = create_test_user(account=user.account, email='user2@test.test')
     template = create_test_template(
         user=user,
-        tasks_count=1
+        tasks_count=1,
     )
     template_task = template.tasks.get(number=1)
     template_task.require_completion_by_all = True
@@ -1201,7 +1199,7 @@ def test_list__ordering_by_completed_required_completion_by_all__ok(
     task_11 = workflow_1.tasks.get(number=1)
     mocker.patch(
         'src.processes.tasks.webhooks.'
-        'send_task_completed_webhook.delay'
+        'send_task_completed_webhook.delay',
     )
     api_client.token_authenticate(user=user)
     api_client.post(f'/v2/tasks/{task_11.id}/complete')
@@ -1214,7 +1212,7 @@ def test_list__ordering_by_completed_required_completion_by_all__ok(
 
     # act
     response = api_client.get(
-        '/v3/tasks?ordering=completed&is_completed=true'
+        '/v3/tasks?ordering=completed&is_completed=true',
     )
 
     # assert
@@ -1245,7 +1243,7 @@ def test_list__ordering_by_completed_required_completion_by_all__ok(
 
 def test_list__ordering_by_completed_reversed_required_completion_by_all__ok(
     mocker,
-    api_client
+    api_client,
 ):
 
     # arrange
@@ -1253,7 +1251,7 @@ def test_list__ordering_by_completed_reversed_required_completion_by_all__ok(
     user_2 = create_test_user(account=user.account, email='user2@test.test')
     template = create_test_template(
         user=user,
-        tasks_count=1
+        tasks_count=1,
     )
     template_task = template.tasks.get(number=1)
     template_task.require_completion_by_all = True
@@ -1263,7 +1261,7 @@ def test_list__ordering_by_completed_reversed_required_completion_by_all__ok(
     task_11 = workflow_1.tasks.get(number=1)
     mocker.patch(
         'src.processes.tasks.webhooks.'
-        'send_task_completed_webhook.delay'
+        'send_task_completed_webhook.delay',
     )
     api_client.token_authenticate(user=user)
     api_client.post(f'/v2/tasks/{task_11.id}/complete')
@@ -1275,7 +1273,7 @@ def test_list__ordering_by_completed_reversed_required_completion_by_all__ok(
 
     # act
     response = api_client.get(
-        '/v3/tasks?ordering=-completed&is_completed=true'
+        '/v3/tasks?ordering=-completed&is_completed=true',
     )
 
     # assert
@@ -1287,19 +1285,19 @@ def test_list__ordering_by_completed_reversed_required_completion_by_all__ok(
 
 def test_list__completed__non_completed_performers__not_view_in_list(
     mocker,
-    api_client
+    api_client,
 ):
 
     # arrange
     mocker.patch(
         'src.processes.tasks.webhooks.'
-        'send_task_completed_webhook.delay'
+        'send_task_completed_webhook.delay',
     )
     user = create_test_user(is_account_owner=True)
     user_2 = create_test_user(
         email='test@test.test',
         account=user.account,
-        is_account_owner=False
+        is_account_owner=False,
     )
     template = create_test_template(user=user, tasks_count=2, is_active=True)
     template_task_1 = template.tasks.get(number=1)
@@ -1390,7 +1388,7 @@ def test_list__invalid_ordering__validation_error(api_client):
 
     # act
     response = api_client.get(
-        f'/v3/tasks?ordering={invalid_ordering}'
+        f'/v3/tasks?ordering={invalid_ordering}',
     )
 
     # assert
@@ -1428,7 +1426,7 @@ def test_list__filter_assigned_to_not_number__validation_error(api_client):
     api_client.token_authenticate(user=user)
 
     # act
-    response = api_client.get(f'/v3/tasks?assigned_to=DROP DATABASE')
+    response = api_client.get('/v3/tasks?assigned_to=DROP DATABASE')
 
     # assert
     message = 'A valid integer is required.'
@@ -1481,19 +1479,19 @@ def test_list__filter_is_completed_false__running_wf__ok(api_client):
 
 def test_list__filter_is_completed_false__running_wf_completed_task__ok(
     mocker,
-    api_client
+    api_client,
 ):
 
     # arrange
     mocker.patch(
         'src.processes.tasks.webhooks.'
-        'send_task_completed_webhook.delay'
+        'send_task_completed_webhook.delay',
     )
     user = create_test_user()
     workflow = create_test_workflow(
         name='Workflow with completed task',
         user=user,
-        tasks_count=2
+        tasks_count=2,
     )
     task = workflow.tasks.get(number=1)
     api_client.token_authenticate(user)
@@ -1511,7 +1509,7 @@ def test_list__filter_is_completed_false__running_wf_completed_task__ok(
 
 
 def test_list__filter_is_completed_false__another_user_task__not_found(
-    api_client
+    api_client,
 ):
 
     # arrange
@@ -1520,7 +1518,7 @@ def test_list__filter_is_completed_false__another_user_task__not_found(
     create_test_workflow(
         name='Another user running task',
         user=user_2,
-        tasks_count=1
+        tasks_count=1,
     )
     api_client.token_authenticate(user)
 
@@ -1534,7 +1532,7 @@ def test_list__filter_is_completed_false__another_user_task__not_found(
 
 def test_list__filter_is_completed_false__done_wf__not_found(
     mocker,
-    api_client
+    api_client,
 ):
 
     # arrange
@@ -1558,13 +1556,13 @@ def test_list__filter_is_completed_false__done_wf__not_found(
 
 def test_list__filter_is_completed_false_delayed_wf__not_found(
     mocker,
-    api_client
+    api_client,
 ):
 
     # arrange
     mocker.patch(
         'src.processes.tasks.webhooks.'
-        'send_task_completed_webhook.delay'
+        'send_task_completed_webhook.delay',
     )
     user = create_test_user()
     workflow = create_test_workflow(
@@ -1588,13 +1586,13 @@ def test_list__filter_is_completed_false_delayed_wf__not_found(
 
 def test_list__filter_is_completed_false_terminated_wf__not_found(
     mocker,
-    api_client
+    api_client,
 ):
 
     # arrange
     mocker.patch(
         'src.processes.tasks.webhooks.'
-        'send_task_completed_webhook.delay'
+        'send_task_completed_webhook.delay',
     )
     user = create_test_user()
     workflow = create_test_workflow(
@@ -1619,13 +1617,13 @@ def test_list__filter_is_completed_false_terminated_wf__not_found(
 
 def test_list__filter_is_completed_false_ended_wf__not_found(
     mocker,
-    api_client
+    api_client,
 ):
 
     # arrange
     mocker.patch(
         'src.processes.tasks.webhooks.'
-        'send_task_completed_webhook.delay'
+        'send_task_completed_webhook.delay',
     )
     user = create_test_user()
     workflow = create_test_workflow(
@@ -1655,7 +1653,7 @@ def test_list__filter_is_completed_not_bool__validation_error(api_client):
 
     # act
     response = api_client.get(
-        '/v3/tasks?is_completed=<script src="some.xss"></script>'
+        '/v3/tasks?is_completed=<script src="some.xss"></script>',
     )
 
     # assert
@@ -1688,19 +1686,19 @@ def test_list__filter_is_completed_true__running_wf__not_found(api_client):
 
 def test_list__filter_is_completed_true__running_wf_completed_task__ok(
     mocker,
-    api_client
+    api_client,
 ):
 
     # arrange
     mocker.patch(
         'src.processes.tasks.webhooks.'
-        'send_task_completed_webhook.delay'
+        'send_task_completed_webhook.delay',
     )
     user = create_test_user()
     workflow = create_test_workflow(
         name='Workflow with completed task',
         user=user,
-        tasks_count=2
+        tasks_count=2,
     )
     task = workflow.tasks.get(number=1)
     api_client.token_authenticate(user)
@@ -1717,20 +1715,20 @@ def test_list__filter_is_completed_true__running_wf_completed_task__ok(
 
 def test_list__filter_is_completed_true__another_user_task__not_found(
     mocker,
-    api_client
+    api_client,
 ):
 
     # arrange
     mocker.patch(
         'src.processes.tasks.webhooks.'
-        'send_task_completed_webhook.delay'
+        'send_task_completed_webhook.delay',
     )
     user = create_test_user()
     user_2 = create_test_user(email='test@test.test')
     workflow = create_test_workflow(
         name='Another user running task',
         user=user_2,
-        tasks_count=1
+        tasks_count=1,
     )
     task = workflow.tasks.get(number=1)
     api_client.token_authenticate(user_2)
@@ -1747,13 +1745,13 @@ def test_list__filter_is_completed_true__another_user_task__not_found(
 
 def test_list__filter_is_completed_true__done_wf__ok(
     mocker,
-    api_client
+    api_client,
 ):
 
     # arrange
     mocker.patch(
         'src.processes.tasks.webhooks.'
-        'send_task_completed_webhook.delay'
+        'send_task_completed_webhook.delay',
     )
     user = create_test_user()
     workflow = create_test_workflow(
@@ -1777,13 +1775,13 @@ def test_list__filter_is_completed_true__done_wf__ok(
 
 def test_list__filter_is_completed_true__delayed_wf__ok(
     mocker,
-    api_client
+    api_client,
 ):
 
     # arrange
     mocker.patch(
         'src.processes.tasks.webhooks.'
-        'send_task_completed_webhook.delay'
+        'send_task_completed_webhook.delay',
     )
     user = create_test_user()
     workflow = create_test_workflow(
@@ -1810,13 +1808,13 @@ def test_list__filter_is_completed_true__delayed_wf__ok(
 
 def test_list__filter_is_completed_true_terminated_wf__not_found(
     mocker,
-    api_client
+    api_client,
 ):
 
     # arrange
     mocker.patch(
         'src.processes.tasks.webhooks.'
-        'send_task_completed_webhook.delay'
+        'send_task_completed_webhook.delay',
     )
     user = create_test_user()
     workflow = create_test_workflow(
@@ -1841,13 +1839,13 @@ def test_list__filter_is_completed_true_terminated_wf__not_found(
 
 def test_list__filter_is_completed_true_ended_wf__ok(
     mocker,
-    api_client
+    api_client,
 ):
 
     # arrange
     mocker.patch(
         'src.processes.tasks.webhooks.'
-        'send_task_completed_webhook.delay'
+        'send_task_completed_webhook.delay',
     )
     user = create_test_user()
     workflow = create_test_workflow(
@@ -1902,7 +1900,7 @@ def test_list__filter_template_id_not_number__validation_error(api_client):
     api_client.token_authenticate(user=user)
 
     # act
-    response = api_client.get(f"/v3/tasks?template_id=' OR 1='1")
+    response = api_client.get("/v3/tasks?template_id=' OR 1='1")
 
     # assert
     message = 'A valid integer is required.'
@@ -1932,7 +1930,7 @@ def test_list__filter_template_task_api_name__ok(api_client):
         path='/v3/tasks',
         data={
             'template_task_api_name': task_11.api_name,
-        }
+        },
     )
 
     # assert
@@ -1955,7 +1953,7 @@ def test_list__filter_template_task_api_name__not_found(api_client):
         path='/v3/tasks',
         data={
             'template_task_api_name': 'not_found',
-        }
+        },
     )
 
     # assert
@@ -1990,7 +1988,7 @@ def test_list__exclude_delayed_tasks__ok(api_client):
     delayed_workflow = create_test_workflow(
         user=user,
         tasks_count=2,
-        with_delay=True
+        with_delay=True,
     )
     task = delayed_workflow.tasks.get(number=1)
     api_client.post(f'/v2/tasks/{task.id}/complete')
@@ -2009,7 +2007,7 @@ def test_list__uml_backslash_search__ok(api_client):
     workflow = create_test_workflow(
         user=user,
         tasks_count=1,
-        name='UML Project'
+        name='UML Project',
     )
     task = workflow.tasks.first()
     task.name = 'Create UML diagrams'
@@ -2019,7 +2017,7 @@ def test_list__uml_backslash_search__ok(api_client):
         user=user,
         task=task,
         text='create UML class',
-        after_create_actions=False
+        after_create_actions=False,
     )
 
     other_workflow = create_test_workflow(
@@ -2031,7 +2029,7 @@ def test_list__uml_backslash_search__ok(api_client):
         user=user,
         task=other_task,
         text='task',
-        after_create_actions=False
+        after_create_actions=False,
     )
 
     api_client.token_authenticate(user)
@@ -2045,8 +2043,8 @@ def test_list__uml_backslash_search__ok(api_client):
             'search': search_query,
             'limit': 20,
             'offset': 0,
-            'ordering': 'date'
-        }
+            'ordering': 'date',
+        },
     )
 
     # assert
@@ -2064,7 +2062,7 @@ def test_list__uml_backslash_search__ok(api_client):
         "test ' UNION SELECT * FROM accounts_user --",
         "\\'; DELETE FROM processes_task; -- test",
         "test'); INSERT INTO users VALUES ('hack'); --",
-    ]
+    ],
 )
 def test_list__sql_injection_in_search__ok(api_client, injection):
     # arrange
@@ -2082,8 +2080,8 @@ def test_list__sql_injection_in_search__ok(api_client, injection):
             'search': injection,
             'limit': 10,
             'offset': 0,
-            'ordering': 'date'
-        }
+            'ordering': 'date',
+        },
     )
 
     # assert

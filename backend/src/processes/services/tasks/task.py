@@ -1,40 +1,49 @@
 from datetime import datetime, timedelta
+from datetime import timezone as tz
 from typing import Dict, Optional
-from django.db.models import Q
+
 from django.contrib.auth import get_user_model
-from src.processes.models import (
-    Task,
-    TaskTemplate,
-    ChecklistTemplateSelection,
-    Condition,
-    Predicate,
-    Rule,
-    Delay,
-    RawDueDate,
-    TaskField,
-)
+from django.db.models import Q
+
+from src.notifications.tasks import send_due_date_changed
 from src.processes.enums import (
     DueDateRule,
     FieldType,
 )
-from src.processes.services.tasks.checklist import (
-    ChecklistService,
+from src.processes.models.templates.checklist import (
+    ChecklistTemplateSelection,
+)
+from src.processes.models.templates.task import TaskTemplate
+from src.processes.models.workflows.conditions import (
+    Condition,
+    Predicate,
+    Rule,
+)
+from src.processes.models.workflows.fields import (
+    TaskField,
+)
+from src.processes.models.workflows.raw_due_date import RawDueDate
+from src.processes.models.workflows.task import (
+    Delay,
+    Task,
 )
 from src.processes.services.base import (
     BaseWorkflowService,
 )
-from src.processes.services.tasks.field import (
-    TaskFieldService
+from src.processes.services.events import (
+    WorkflowEventService,
 )
-from src.processes.utils.common import (
-    insert_fields_values_to_text
+from src.processes.services.tasks.checklist import (
+    ChecklistService,
+)
+from src.processes.services.tasks.field import (
+    TaskFieldService,
 )
 from src.processes.services.tasks.mixins import (
     ConditionMixin,
 )
-from src.notifications.tasks import send_due_date_changed
-from src.processes.services.events import (
-    WorkflowEventService,
+from src.processes.utils.common import (
+    insert_fields_values_to_text,
 )
 from src.services.markdown import MarkdownService
 
@@ -75,20 +84,20 @@ class TaskService(
             ),
             is_urgent=workflow.is_urgent,
             checklists_total=ChecklistTemplateSelection.objects.filter(
-                checklist__task=instance_template
+                checklist__task=instance_template,
             ).count(),
-            parents=instance_template.parents
+            parents=instance_template.parents,
         )
 
     def _create_related(
         self,
         instance_template: TaskTemplate,
-        **kwargs
+        **kwargs,
     ):
 
         self.create_raw_performers_from_template(
             instance_template=instance_template,
-            redefined_performer=kwargs.get('redefined_performer')
+            redefined_performer=kwargs.get('redefined_performer'),
         )
         self.create_fields_from_template(instance_template)
         self.create_conditions_from_template(instance_template)
@@ -98,20 +107,20 @@ class TaskService(
             Delay.objects.create(
                 task=self.instance,
                 duration=instance_template.delay,
-                workflow=self.instance.workflow
+                workflow=self.instance.workflow,
             )
 
     def partial_update(
         self,
         force_save=False,
-        **update_kwargs
+        **update_kwargs,
     ):
-        if 'description' in update_kwargs.keys():
+        if 'description' in update_kwargs:
             update_kwargs['clear_description'] = MarkdownService.clear(
-                update_kwargs['description']
+                update_kwargs['description'],
             )
         super().partial_update(**update_kwargs)
-        if 'date_started' in update_kwargs.keys():
+        if 'date_started' in update_kwargs:  # noqa: SIM102
             if self.instance.date_first_started is None:
                 self.instance.date_first_started = (
                     update_kwargs['date_started']
@@ -126,10 +135,10 @@ class TaskService(
     ):
         self.instance.description = insert_fields_values_to_text(
             text=self.instance.description_template,
-            fields_values=fields_values
+            fields_values=fields_values,
         )
         self.instance.clear_description = MarkdownService.clear(
-            self.instance.description
+            self.instance.description,
         )
         self.update_fields.add('description')
         self.update_fields.add('clear_description')
@@ -150,7 +159,7 @@ class TaskService(
 
     def create_conditions_from_template(
         self,
-        instance_template: TaskTemplate
+        instance_template: TaskTemplate,
     ):
 
         # TODO Move to ConditionService
@@ -166,7 +175,7 @@ class TaskService(
                         order=template.order,
                         task=self.instance,
                         api_name=template.api_name,
-                    )
+                    ),
                 )
                 rules_tree = []
                 for rule_template in template.rules.all():
@@ -181,7 +190,7 @@ class TaskService(
                         ))
                     rules_tree.append((
                         Rule(api_name=rule_template.api_name),
-                        predicates
+                        predicates,
                     ))
                 conditions_tree[template.api_name] = rules_tree
             conditions = Condition.objects.bulk_create(conditions)
@@ -195,7 +204,7 @@ class TaskService(
                 instance_template=field_template,
                 workflow_id=self.instance.workflow_id,
                 task_id=self.instance.id,
-                skip_value=True
+                skip_value=True,
             )
 
     def create_checklists_from_template(self, instance_template: TaskTemplate):
@@ -207,29 +216,29 @@ class TaskService(
             )
             checklist_service.create(
                 instance_template=checklist_template,
-                task=self.instance
+                task=self.instance,
             )
 
     def create_raw_performers_from_template(
         self,
         instance_template: TaskTemplate,
-        redefined_performer: Optional[UserModel] = None
+        redefined_performer: Optional[UserModel] = None,
     ):
         if redefined_performer:
             self.instance.add_raw_performer(user=redefined_performer)
         else:
             self.instance.update_raw_performers_from_task_template(
-                instance_template
+                instance_template,
             )
 
     def create_raw_due_date_from_template(
         self,
-        instance_template: TaskTemplate
+        instance_template: TaskTemplate,
     ):
         raw_due_date_template = getattr(
             instance_template,
             'raw_due_date',
-            None
+            None,
         )
         if raw_due_date_template:
             RawDueDate.objects.create(
@@ -238,7 +247,7 @@ class TaskService(
                 duration_months=raw_due_date_template.duration_months,
                 rule=raw_due_date_template.rule,
                 source_id=raw_due_date_template.source_id,
-                api_name=raw_due_date_template.api_name
+                api_name=raw_due_date_template.api_name,
             )
 
     def get_task_due_date(self) -> Optional[datetime]:
@@ -285,9 +294,15 @@ class TaskService(
                 ).first()
                 if field and field.value:
                     if rule == DueDateRule.AFTER_FIELD:
-                        start_date = datetime.fromtimestamp(float(field.value))
+                        start_date = datetime.fromtimestamp(
+                            float(field.value),
+                            tz=tz.utc,
+                        )
                     if rule == DueDateRule.BEFORE_FIELD:
-                        end_date = datetime.fromtimestamp(float(field.value))
+                        end_date = datetime.fromtimestamp(
+                            float(field.value),
+                            tz=tz.utc,
+                        )
             elif rule == DueDateRule.AFTER_WORKFLOW_STARTED:
                 start_date = self.instance.workflow.date_created
 
@@ -307,14 +322,14 @@ class TaskService(
         if due_date != self.instance.due_date:
             self.partial_update(
                 due_date=due_date,
-                force_save=True
+                force_save=True,
             )
 
     def set_due_date_directly(self, value: Optional[datetime] = None):
 
         self.partial_update(
             due_date=value,
-            force_save=True
+            force_save=True,
         )
         send_due_date_changed.delay(
             logging=self.user.account.log_api_requests,
@@ -325,5 +340,5 @@ class TaskService(
         )
         WorkflowEventService.due_date_changed_event(
             task=self.instance,
-            user=self.user
+            user=self.user,
         )

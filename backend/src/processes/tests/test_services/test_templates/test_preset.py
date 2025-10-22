@@ -1,14 +1,14 @@
 import pytest
+
+from src.authentication.enums import AuthTokenType
+from src.processes.enums import PresetType
+from src.processes.services.templates.preset import TemplatePresetService
 from src.processes.tests.fixtures import (
-    create_test_admin,
     create_test_account,
+    create_test_admin,
     create_test_template,
     create_test_template_preset,
 )
-from src.processes.services.templates.preset import TemplatePresetService
-from src.processes.enums import PresetType
-from src.authentication.enums import AuthTokenType
-
 
 pytestmark = pytest.mark.django_db
 
@@ -51,7 +51,7 @@ class TestTemplatePresetService:
         instance = service._create_instance(
             template=template,
             name=name,
-            type=PresetType.PERSONAL
+            type=PresetType.PERSONAL,
         )
 
         # assert
@@ -81,7 +81,7 @@ class TestTemplatePresetService:
             template=template,
             name=name,
             is_default=is_default,
-            type=PresetType.ACCOUNT
+            type=PresetType.ACCOUNT,
         )
 
         # assert
@@ -100,7 +100,7 @@ class TestTemplatePresetService:
         preset = create_test_template_preset(
             template=template,
             author=user,
-            type=PresetType.PERSONAL
+            type=PresetType.PERSONAL,
         )
         is_superuser = False
         service = TemplatePresetService(
@@ -113,18 +113,18 @@ class TestTemplatePresetService:
             {
                 'api_name': 'field1',
                 'order': 1,
-                'width': 200
+                'width': 200,
             },
             {
                 'api_name': 'field2',
                 'order': 2,
-                'width': 150
-            }
+                'width': 150,
+            },
         ]
 
         bulk_create_mock = mocker.patch(
             'src.processes.models.templates.preset.'
-            'TemplatePresetField.objects.bulk_create'
+            'TemplatePresetField.objects.bulk_create',
         )
 
         # act
@@ -145,7 +145,7 @@ class TestTemplatePresetService:
         preset = create_test_template_preset(
             template=template,
             author=user,
-            type=PresetType.PERSONAL
+            type=PresetType.PERSONAL,
         )
         is_superuser = False
         service = TemplatePresetService(
@@ -157,7 +157,7 @@ class TestTemplatePresetService:
 
         create_preset_fields_mock = mocker.patch.object(
             service,
-            '_create_or_update_preset_fields'
+            '_create_or_update_preset_fields',
         )
 
         # act
@@ -176,8 +176,8 @@ class TestTemplatePresetService:
             author=user,
             type=PresetType.PERSONAL,
             fields=[
-                {'api_name': 'old_field', 'order': 1, 'width': 100}
-            ]
+                {'api_name': 'old_field', 'order': 1, 'width': 100},
+            ],
         )
         is_superuser = False
         service = TemplatePresetService(
@@ -191,22 +191,22 @@ class TestTemplatePresetService:
             {
                 'api_name': 'new_field1',
                 'order': 1,
-                'width': 200
+                'width': 200,
             },
             {
                 'api_name': 'new_field2',
                 'order': 2,
-                'width': 150
-            }
+                'width': 150,
+            },
         ]
 
         create_preset_fields_mock = mocker.patch.object(
             service,
-            '_create_or_update_preset_fields'
+            '_create_or_update_preset_fields',
         )
         reset_default_mock = mocker.patch.object(
             service,
-            '_reset_default_presets'
+            '_reset_default_presets',
         )
 
         # act
@@ -215,12 +215,12 @@ class TestTemplatePresetService:
             is_default=True,
             type=PresetType.ACCOUNT,
             fields=new_fields,
-            force_save=True
+            force_save=True,
         )
 
         # assert
         create_preset_fields_mock.assert_called_once_with(
-            fields_data=new_fields
+            fields_data=new_fields,
         )
         reset_default_mock.assert_called_once_with()
 
@@ -239,8 +239,8 @@ class TestTemplatePresetService:
             author=user,
             type=PresetType.PERSONAL,
             fields=[
-                {'api_name': 'existing_field', 'order': 1, 'width': 100}
-            ]
+                {'api_name': 'existing_field', 'order': 1, 'width': 100},
+            ],
         )
         is_superuser = False
         service = TemplatePresetService(
@@ -252,17 +252,17 @@ class TestTemplatePresetService:
 
         create_preset_fields_mock = mocker.patch.object(
             service,
-            '_create_or_update_preset_fields'
+            '_create_or_update_preset_fields',
         )
         reset_default_mock = mocker.patch.object(
             service,
-            '_reset_default_presets'
+            '_reset_default_presets',
         )
 
         # act
         service.partial_update(
             name="Updated Preset",
-            force_save=True
+            force_save=True,
         )
 
         # assert
@@ -277,7 +277,7 @@ class TestTemplatePresetService:
         preset = create_test_template_preset(
             template=template,
             author=user,
-            type=PresetType.PERSONAL
+            type=PresetType.PERSONAL,
         )
         is_superuser = False
         service = TemplatePresetService(
@@ -303,7 +303,7 @@ class TestTemplatePresetService:
         preset = create_test_template_preset(
             template=template,
             author=user,
-            type=PresetType.PERSONAL
+            type=PresetType.PERSONAL,
         )
         is_superuser = False
         service = TemplatePresetService(
@@ -332,19 +332,19 @@ class TestTemplatePresetService:
             template=template,
             author=user1,
             type=PresetType.PERSONAL,
-            is_default=True
+            is_default=True,
         )
         preset2_user1 = create_test_template_preset(
             template=template,
             author=user1,
             type=PresetType.PERSONAL,
-            is_default=True
+            is_default=True,
         )
         preset_user2 = create_test_template_preset(
             template=template,
             author=user2,
             type=PresetType.PERSONAL,
-            is_default=True
+            is_default=True,
         )
 
         service = TemplatePresetService(
@@ -377,13 +377,13 @@ class TestTemplatePresetService:
             template=template,
             author=user1,
             type=PresetType.ACCOUNT,
-            is_default=True
+            is_default=True,
         )
         preset2_user2 = create_test_template_preset(
             template=template,
             author=user2,
             type=PresetType.ACCOUNT,
-            is_default=True
+            is_default=True,
         )
 
         service = TemplatePresetService(
@@ -416,12 +416,12 @@ class TestTemplatePresetService:
 
         fields_data = [
             {'api_name': 'field_1', 'order': 1, 'width': 200},
-            {'api_name': 'field_2', 'order': 2, 'width': 150}
+            {'api_name': 'field_2', 'order': 2, 'width': 150},
         ]
 
         create_preset_fields_mock = mocker.patch(
             'src.processes.services.templates.preset.'
-            'TemplatePresetService._create_or_update_preset_fields'
+            'TemplatePresetService._create_or_update_preset_fields',
         )
 
         # act
@@ -430,7 +430,7 @@ class TestTemplatePresetService:
             name='Test Preset',
             is_default=False,
             type=PresetType.PERSONAL,
-            fields=fields_data
+            fields=fields_data,
         )
 
         # assert
@@ -440,7 +440,7 @@ class TestTemplatePresetService:
         assert preset.is_default is False
         assert preset.type == PresetType.PERSONAL
         create_preset_fields_mock.assert_called_once_with(
-            fields_data=fields_data
+            fields_data=fields_data,
         )
 
     def test_create__with_default__resets_other_defaults(self, mocker):
@@ -456,7 +456,7 @@ class TestTemplatePresetService:
 
         reset_default_mock = mocker.patch(
             'src.processes.services.templates.preset.'
-            'TemplatePresetService._reset_default_presets'
+            'TemplatePresetService._reset_default_presets',
         )
 
         # act
@@ -464,7 +464,7 @@ class TestTemplatePresetService:
             template=template,
             name='Default Preset',
             is_default=True,
-            type=PresetType.PERSONAL
+            type=PresetType.PERSONAL,
         )
 
         # assert
