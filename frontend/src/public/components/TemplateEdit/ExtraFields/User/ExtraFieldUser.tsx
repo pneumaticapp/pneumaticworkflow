@@ -132,7 +132,6 @@ export function ExtraFieldUser({
       }
       if (option.type === EUserDropdownOptionType.UserGroup) {
         editField({ value: (option as IGroupDropdownOption).name });
-        
       }
     };
 
@@ -143,6 +142,7 @@ export function ExtraFieldUser({
           onChange={handleUserDropdownChange}
           placeholder={description}
           isDisabled={isDisabled}
+          // check userField.value:id => userField.value = user email / group name
           value={selectionsDropdownOption.find((item) => item.value === field.value)}
           onClickInvite={() => trackInviteTeamInPage('From users field')}
           inviteLabel={formatMessage({ id: 'template.invite-team-member' })}
