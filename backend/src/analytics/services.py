@@ -1,10 +1,10 @@
 from datetime import timedelta
 from typing import List, Optional
 
-import analytics
 from django.conf import settings
 from django.contrib.auth import get_user_model
 
+import analytics
 from src.accounts.enums import SourceType
 from src.accounts.models import (
     Account,
