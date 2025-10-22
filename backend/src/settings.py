@@ -136,7 +136,7 @@ class Common(Configuration):
         'src.authentication',
         'src.applications',
         'src.notifications',
-        'src.celery',
+        'src.celery_app',
         'src.processes',
         'src.reports',
         'src.generics',
