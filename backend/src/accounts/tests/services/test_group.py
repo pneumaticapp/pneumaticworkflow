@@ -615,7 +615,7 @@ class TestUserGroupService:
             return_value=mocker.Mock(update=mocker.Mock(return_value=None)),
         )
         analysis_mock = mocker.patch(
-            'src.analytics.tasks.track_group_analytics.delay',
+            'src.analysis.tasks.track_group_analytics.delay',
         )
         send_group_updated_mock = mocker.patch(
             'src.notifications.tasks.'
