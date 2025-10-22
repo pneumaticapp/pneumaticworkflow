@@ -16,6 +16,9 @@ from src.processes.services.condition_check.resolvers.dropdown import (
 from src.processes.services.condition_check.resolvers.file import (
     FileResolver,
 )
+from src.processes.services.condition_check.resolvers.group import (
+    GroupResolver,
+)
 from src.processes.services.condition_check.resolvers.kickoff import (
     KickoffResolver,
 )
@@ -41,6 +44,7 @@ class ConditionCheckService:
         PredicateType.RADIO: DropdownResolver,
         PredicateType.CHECKBOX: CheckboxResolver,
         PredicateType.USER: UserResolver,
+        PredicateType.GROUP: GroupResolver,
         PredicateType.DATE: DateResolver,
         PredicateType.TASK: TaskResolver,
         PredicateType.KICKOFF: KickoffResolver,

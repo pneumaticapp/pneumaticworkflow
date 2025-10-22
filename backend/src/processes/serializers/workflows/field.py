@@ -1,9 +1,6 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
-from src.processes.enums import (
-    FieldType,
-)
 from src.processes.models.workflows.fields import (
     FieldSelection,
     TaskField,
@@ -49,15 +46,6 @@ class TaskFieldSerializer(serializers.ModelSerializer):
 
     selections = FieldSelectionListSerializer(many=True, required=False)
     attachments = FileAttachmentSerializer(many=True)
-    value = serializers.SerializerMethodField(method_name='get_v')
-
-    # TODO Remove in https://my.pneumatic.app/workflows/40801/
-    def get_v(self, instance: TaskField):
-        if instance.type == FieldType.USER:
-            if instance.user_id:
-                return str(instance.user_id)
-            return ''
-        return instance.value
 
 
 class TaskFieldListSerializer(serializers.ModelSerializer):

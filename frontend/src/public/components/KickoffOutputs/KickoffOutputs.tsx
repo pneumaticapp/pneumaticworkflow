@@ -76,7 +76,7 @@ export function KickoffOutputs({
 
     return outputs?.map((output, index) => {
       const OutputComponent = outputsMap[output.type];
-
+      // check userField.value: id => userField.value = user email / group name
       const isEmpty = !(
         output.value ||
         output.attachments?.length ||

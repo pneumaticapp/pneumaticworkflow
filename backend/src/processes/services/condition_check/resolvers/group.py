@@ -5,7 +5,7 @@ from src.processes.models.workflows.fields import TaskField
 from .base import Resolver
 
 
-class UserResolver(Resolver):
+class GroupResolver(Resolver):
     def _prepare_args(self):
         self.predicate_value = (
             int(self._predicate.value)
@@ -17,4 +17,4 @@ class UserResolver(Resolver):
             Q(kickoff__workflow_id=self._workflow_id),
             api_name=self._predicate.field,
         )
-        self.field_value = field.user_id if field.user_id else None
+        self.field_value = field.group_id if field.group_id else None

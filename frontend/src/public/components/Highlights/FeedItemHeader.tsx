@@ -68,6 +68,7 @@ export function FeedItemHeader({
       return null;
     }
 
+    // check userField.value: id => userField.value = user email / group name
     const filteredOutputs = outputs.filter(
       (output) =>
         output.value || output.attachments?.length || output?.selections?.some((selection) => selection.isSelected),
