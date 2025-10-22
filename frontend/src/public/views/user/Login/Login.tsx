@@ -12,7 +12,7 @@ import { NavLink } from '../../../components/NavLink';
 import { validateEmail, validatePassword } from '../../../utils/validators';
 import { getQueryStringParams, history } from '../../../utils/history';
 import { Button, FormikCheckbox, Header, InputField } from '../../../components/UI';
-import { GoogleButton, MicrosoftButton } from '../../../components/OAuthButtons';
+import { GoogleButton, MicrosoftButton, SSOButton } from '../../../components/OAuthButtons';
 import { saveUTMParams } from '../utils/utmParams';
 import { getErrorsObject } from '../../../utils/formik/getErrorsObject';
 import { isEnvGoogleAuth, isEnvMsAuth, isEnvSSOAuth, isEnvSignup } from '../../../constants/enviroment';
@@ -84,6 +84,13 @@ export function Login({ loading, error, loginUser, setRedirectUrl }: ILoginProps
           <MicrosoftButton
             label={formatMessage({ id: 'user.sign-up-microsoft' })}
             onClick={handleOAuthSignInClick(EOAuthType.Microsoft)}
+            className={styles['oauth__button']}
+          />
+        )}
+        {isEnvSSOAuth && (
+          <SSOButton
+            label={formatMessage({ id: 'user.sign-up-sso' })}
+            onClick={handleOAuthSignInClick(EOAuthType.SSO)}
             className={styles['oauth__button']}
           />
         )}
