@@ -20,7 +20,7 @@ import { getBrowserConfigEnv } from '../../../utils/getConfig';
 import { setLandingTemplate } from '../../../utils/landingTemplate';
 import { setTemplateName } from './utils/templateName';
 import { Button, Header, InputField } from '../../../components/UI';
-import { GoogleButton, MicrosoftButton } from '../../../components/OAuthButtons';
+import { GoogleButton, MicrosoftButton, SSOButton } from '../../../components/OAuthButtons';
 import { getErrorsObject } from '../../../utils/formik/getErrorsObject';
 import { Phone } from '../../../components/UI/FormikFields';
 import { isEnvCaptcha, isEnvGoogleAuth, isEnvMsAuth, isEnvSSOAuth } from '../../../constants/enviroment';
@@ -119,6 +119,13 @@ export function Register({ registerUser }: IRegisterProps) {
           <MicrosoftButton
             label={formatMessage({ id: 'user.sign-up-microsoft' })}
             onClick={handleOAuthSignUpClick(EOAuthType.Microsoft)}
+            className={styles['oauth__button']}
+          />
+        )}
+        {isEnvSSOAuth && (
+          <SSOButton
+            label={formatMessage({ id: 'user.sign-up-sso' })}
+            onClick={handleOAuthSignUpClick(EOAuthType.SSO)}
             className={styles['oauth__button']}
           />
         )}
