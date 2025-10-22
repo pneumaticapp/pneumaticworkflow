@@ -42,7 +42,7 @@ def test_token__partner__ok(
         return_value=token_data,
     )
     tenants_accessed_mock = mocker.patch(
-        'src.analytics.services.AnalyticService.'
+        'src.analysis.services.AnalyticService.'
         'tenants_accessed',
     )
     api_client.token_authenticate(master_account_owner)
@@ -99,7 +99,7 @@ def test_token__any_premium_plan__ok(
         return_value=token_data,
     )
     tenants_accessed_mock = mocker.patch(
-        'src.analytics.services.AnalyticService.'
+        'src.analysis.services.AnalyticService.'
         'tenants_accessed',
     )
 
@@ -149,7 +149,7 @@ def test_token__tenant__permission_denied(
         '.get_auth_token',
     )
     tenants_accessed_mock = mocker.patch(
-        'src.analytics.services.AnalyticService.'
+        'src.analysis.services.AnalyticService.'
         'tenants_accessed',
     )
 
@@ -191,7 +191,7 @@ def test_token__free_plan__ok(
         return_value=token_data,
     )
     tenants_accessed_mock = mocker.patch(
-        'src.analytics.services.AnalyticService.'
+        'src.analysis.services.AnalyticService.'
         'tenants_accessed',
     )
 

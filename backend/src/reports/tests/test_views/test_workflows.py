@@ -1565,7 +1565,7 @@ class TestWorkflowBreakdownByTasks:
 
         template_task = template.tasks.get()
         mocker.patch(
-            'src.analytics.services.AnalyticService.'
+            'src.analysis.services.AnalyticService.'
             'workflows_terminated',
         )
 

@@ -1,20 +1,20 @@
 from datetime import timedelta
 from typing import List, Optional
 
+import analytics
 from django.conf import settings
 from django.contrib.auth import get_user_model
 
-import analytics
 from src.accounts.enums import SourceType
 from src.accounts.models import (
     Account,
     UserGroup,
 )
-from src.analytics import exceptions
-from src.analytics.actions import (
+from src.analysis import exceptions
+from src.analysis.actions import (
     WorkflowActions,
 )
-from src.analytics.events import (
+from src.analysis.events import (
     AccountAnalyticsEvent,
     AttachmentAnalyticsEvent,
     CommentAnalyticsEvent,
@@ -30,7 +30,7 @@ from src.analytics.events import (
     UserAnalyticsEvent,
     WorkflowAnalyticsEvent,
 )
-from src.analytics.labels import Label
+from src.analysis.labels import Label
 from src.authentication.enums import AuthTokenType
 from src.processes.enums import TemplateIntegrationType
 from src.processes.models.templates.conditions import ConditionTemplate
@@ -694,7 +694,7 @@ class AnalyticService:
         if not user.is_authenticated and not anonymous_id:
             raise exceptions.InvalidUserCredentials
 
-        analytics_data = {
+        analysis_data = {
             'event': AttachmentAnalyticsEvent.uploaded,
             'is_superuser': is_superuser,
             'properties': {
@@ -711,13 +711,13 @@ class AnalyticService:
             },
         }
         if user.is_authenticated:
-            analytics_data['user_id'] = user.id
-            analytics_data['properties']['email'] = user.email
-            analytics_data['properties']['first_name'] = user.first_name
-            analytics_data['properties']['last_name'] = user.last_name
+            analysis_data['user_id'] = user.id
+            analysis_data['properties']['email'] = user.email
+            analysis_data['properties']['first_name'] = user.first_name
+            analysis_data['properties']['last_name'] = user.last_name
         else:
-            analytics_data['anonymous_id'] = anonymous_id
-        return cls._track(**analytics_data)
+            analysis_data['anonymous_id'] = anonymous_id
+        return cls._track(**analysis_data)
 
     @classmethod
     def templates_integrated(

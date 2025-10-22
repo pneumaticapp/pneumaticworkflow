@@ -8,7 +8,7 @@ from rest_framework.generics import (
 from src.accounts.tokens import (
     VerificationToken,
 )
-from src.analytics.mixins import BaseIdentifyMixin
+from src.analysis.mixins import BaseIdentifyMixin
 from src.authentication.permissions import (
     PrivateApiPermission,
     SignupPermission,

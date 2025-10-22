@@ -1,18 +1,18 @@
 from rest_framework.serializers import ValidationError
 from rest_framework.views import APIView
 
-from src.analytics.customerio.exceptions import (
+from src.analysis.customerio.exceptions import (
     UnsupportedMetric,
     WebHookException,
     WebhookUserNotFound,
 )
-from src.analytics.customerio.permissions import (
+from src.analysis.customerio.permissions import (
     WebhookAPIPermission,
 )
-from src.analytics.customerio.serializers import (
+from src.analysis.customerio.serializers import (
     WebHookSerializer,
 )
-from src.analytics.customerio.services import WebHookService
+from src.analysis.customerio.services import WebHookService
 from src.generics.mixins.views import BaseResponseMixin
 from src.utils import logging
 

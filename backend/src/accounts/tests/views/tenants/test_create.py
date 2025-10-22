@@ -106,7 +106,7 @@ def test_create__premium_plan__increase_master_acc_subscription(
         'tenants.increase_plan_users.delay',
     )
     tenants_added_mock = mocker.patch(
-        'src.analytics.services.AnalyticService.'
+        'src.analysis.services.AnalyticService.'
         'tenants_added',
     )
     api_client.token_authenticate(master_account_owner)
@@ -243,7 +243,7 @@ def test_create__premium_plan__billing_disabled__not_increase_master_acc_subs(
         'tenants.increase_plan_users.delay',
     )
     tenants_added_mock = mocker.patch(
-        'src.analytics.services.AnalyticService.'
+        'src.analysis.services.AnalyticService.'
         'tenants_added',
     )
     api_client.token_authenticate(master_account_owner)
@@ -368,7 +368,7 @@ def test_create__unlimited_plan__buy_subscription(
         'tenants.increase_plan_users.delay',
     )
     tenants_added_mock = mocker.patch(
-        'src.analytics.services.AnalyticService.'
+        'src.analysis.services.AnalyticService.'
         'tenants_added',
     )
     api_client.token_authenticate(master_account_owner)
@@ -506,7 +506,7 @@ def test_create__free_plan__not_buy_subscription(
         'create_off_session_subscription',
     )
     tenants_added_mock = mocker.patch(
-        'src.analytics.services.AnalyticService.'
+        'src.analysis.services.AnalyticService.'
         'tenants_added',
     )
     api_client.token_authenticate(master_account_owner)
@@ -589,7 +589,7 @@ def test_create__blank_tenant_name__validation_error(
         'create_off_session_subscription',
     )
     tenants_added_mock = mocker.patch(
-        'src.analytics.services.AnalyticService.'
+        'src.analysis.services.AnalyticService.'
         'tenants_added',
     )
     api_client.token_authenticate(master_account_owner)
@@ -744,7 +744,7 @@ def test_create__stripe_service_exception__validation_error(
         side_effect=StripeServiceException(message),
     )
     tenants_added_mock = mocker.patch(
-        'src.analytics.services.AnalyticService.'
+        'src.analysis.services.AnalyticService.'
         'tenants_added',
     )
     api_client.token_authenticate(master_account_owner)

@@ -27,7 +27,7 @@ class TestFinishWorkflow:
         self,
         mocker,
         api_client,
-        analytics_mock,
+        analysis_mock,
     ):
 
         # arrange
@@ -60,7 +60,7 @@ class TestFinishWorkflow:
         assert response.status_code == 204
         assert workflow.status == WorkflowStatus.DONE
         assert workflow.date_completed
-        analytics_mock.workflows_ended.assert_called_once_with(
+        analysis_mock.workflows_ended.assert_called_once_with(
             user=user,
             workflow=workflow,
             auth_type=AuthTokenType.USER,
@@ -81,7 +81,7 @@ class TestFinishWorkflow:
     def test_finish__legacy_template__ok(
         self,
         mocker,
-        analytics_mock,
+        analysis_mock,
         api_client,
     ):
 
@@ -115,7 +115,7 @@ class TestFinishWorkflow:
         # assert
         assert response.status_code == 204
         assert workflow.status == WorkflowStatus.DONE
-        analytics_mock.workflows_ended.assert_called_once_with(
+        analysis_mock.workflows_ended.assert_called_once_with(
             user=user,
             workflow=workflow,
             auth_type=AuthTokenType.USER,
@@ -126,7 +126,7 @@ class TestFinishWorkflow:
         self,
         mocker,
         api_client,
-        analytics_mock,
+        analysis_mock,
     ):
 
         # arrange
@@ -203,7 +203,7 @@ class TestFinishWorkflow:
     def test_finish__already_finished__validation_error(
         self,
         api_client,
-        analytics_mock,
+        analysis_mock,
     ):
 
         # arrange
@@ -233,7 +233,7 @@ class TestFinishWorkflow:
     def test_finish__not_finalizable__validation_error(
         self,
         api_client,
-        analytics_mock,
+        analysis_mock,
     ):
 
         # arrange
@@ -259,7 +259,7 @@ class TestFinishWorkflow:
     def test_finish__user_can_not_finish_workflow__validation_error(
         self,
         api_client,
-        analytics_mock,
+        analysis_mock,
     ):
 
         # arrange

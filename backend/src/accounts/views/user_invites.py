@@ -33,7 +33,7 @@ from src.accounts.throttling import (
 from src.accounts.tokens import (
     InviteToken,
 )
-from src.analytics.mixins import (
+from src.analysis.mixins import (
     BaseIdentifyMixin,
 )
 from src.authentication.enums import AuthTokenType

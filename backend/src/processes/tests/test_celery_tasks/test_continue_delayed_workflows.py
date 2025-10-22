@@ -31,7 +31,7 @@ def test_continue_delayed_workflows__ok(mocker):
 
     # arrange
     periodic_lock_mock = mocker.patch(
-        'src.celery.periodic_lock',
+        'src.celery_app.periodic_lock',
     )
     periodic_lock_mock.__enter__.return_value = True
     resume_delayed_workflows_mock = mocker.patch(

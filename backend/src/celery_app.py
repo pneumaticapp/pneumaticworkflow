@@ -4,12 +4,11 @@ from datetime import timedelta
 from typing import Optional
 
 import firebase_admin
+from celery import Celery
 from configurations import importer
 from django.conf import settings
 from django.core.cache import cache
 from django.utils import timezone
-
-from celery import Celery
 
 configuration = os.getenv('ENVIRONMENT', 'Development').title()
 os.environ.setdefault('DJANGO_CONFIGURATION', configuration)
@@ -47,12 +46,9 @@ if configuration in (
         firebase_admin.initialize_app(cred)
     celery_config['broker'] = settings.CELERY_BROKER_URL
 
-celery_app = Celery(
-    'src',
-    **celery_config,
-)
-celery_app.conf.setdefault('broker_login_method', 'PLAIN')
-celery_app.config_from_object('django.conf:settings')
+app = Celery('src', **celery_config)
+app.conf.setdefault('broker_login_method', 'PLAIN')
+app.config_from_object('django.conf:settings')
 
 
 default_lock_expire = 60 * 10  # Lock expires in 10 minutes
@@ -69,7 +65,7 @@ def periodic_lock(
 
     lock_expire = lock_expire or default_lock_expire
     timeout_at = timezone.now() + timedelta(seconds=lock_expire)
-    status = cache.add(lock_id, celery_app.oid, lock_expire)
+    status = cache.add(lock_id, app.oid, lock_expire)
     try:
         yield status
     finally:

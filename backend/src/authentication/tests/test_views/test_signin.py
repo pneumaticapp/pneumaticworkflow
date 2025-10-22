@@ -44,7 +44,7 @@ class TestTokenObtainView:
             'username': username,
             'password': '12345',
         }
-        analytics_mock = mocker.patch(
+        analysis_mock = mocker.patch(
             'src.authentication.views.signin.'
             'AnalyticService.users_logged_in',
         )
@@ -56,7 +56,7 @@ class TestTokenObtainView:
         assert response.status_code == 200
         assert response.data['token']
         identify_mock.assert_called_once_with(user)
-        analytics_mock.assert_called_once_with(
+        analysis_mock.assert_called_once_with(
             user=user,
             auth_type=AuthTokenType.USER,
             source=SourceType.EMAIL,
@@ -77,7 +77,7 @@ class TestTokenObtainView:
             'username': user.email,
             'password': 'YouShallNotPass',
         }
-        analytics_mock = mocker.patch(
+        analysis_mock = mocker.patch(
             'src.authentication.views.signin.'
             'AnalyticService.users_logged_in',
         )
@@ -89,7 +89,7 @@ class TestTokenObtainView:
         assert response.status_code == 403
         assert response.data['detail'] == messages.MSG_AU_0003
         identify_mock.assert_not_called()
-        analytics_mock.assert_not_called()
+        analysis_mock.assert_not_called()
 
     def test_user_not_verified(
         self,
@@ -112,7 +112,7 @@ class TestTokenObtainView:
             'username': user.email,
             'password': '12345',
         }
-        analytics_mock = mocker.patch(
+        analysis_mock = mocker.patch(
             'src.authentication.views.signin.'
             'AnalyticService.users_logged_in',
         )
@@ -122,7 +122,7 @@ class TestTokenObtainView:
 
         assert response.status_code == 403
         assert response.data['detail'] == messages.MSG_AU_0002(user.email)
-        analytics_mock.assert_not_called()
+        analysis_mock.assert_not_called()
         identify_mock.assert_not_called()
 
 

@@ -1,7 +1,7 @@
 from django.contrib.auth import get_user_model
 
 from src.accounts.models import UserGroup
-from src.analytics.services import AnalyticService
+from src.analysis.services import AnalyticService
 from src.authentication.enums import AuthTokenType
 from src.notifications.tasks import (
     send_new_task_notification,

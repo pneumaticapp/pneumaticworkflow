@@ -680,7 +680,7 @@ class TemplateSerializer(
             self.instance.save(update_fields=['is_active'])
             self._update_draft(data=self.data)
 
-    def get_analytics_counters(self) -> dict:
+    def get_analysis_counters(self) -> dict:
         data = self.initial_data
         tasks = data.get('tasks', [])
         tasks_fields_count = sum([

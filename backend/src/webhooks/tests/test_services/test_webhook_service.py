@@ -161,8 +161,8 @@ def test_subscribe_event__create__ok(mocker):
     events_mock = mocker.patch(
         'src.webhooks.services.WebhookService._validate_event',
     )
-    analytics_mock = mocker.patch(
-        'src.analytics.services.AnalyticService.'
+    analysis_mock = mocker.patch(
+        'src.analysis.services.AnalyticService.'
         'accounts_webhooks_subscribed',
     )
     url = 'http://test_2.test'
@@ -197,7 +197,7 @@ def test_subscribe_event__create__ok(mocker):
         user=user,
     )
     webhooks_subscribed_mock.assert_called_once_with()
-    analytics_mock.assert_called_once_with(
+    analysis_mock.assert_called_once_with(
         user=user,
         is_superuser=False,
     )
@@ -225,8 +225,8 @@ def test_subscribe_event__update__ok(mocker):
         'src.processes.services.templates.'
         'integrations.TemplateIntegrationsService.webhooks_subscribed',
     )
-    analytics_mock = mocker.patch(
-        'src.analytics.services.AnalyticService.'
+    analysis_mock = mocker.patch(
+        'src.analysis.services.AnalyticService.'
         'accounts_webhooks_subscribed',
     )
     service = WebhookService(user=user)
@@ -247,7 +247,7 @@ def test_subscribe_event__update__ok(mocker):
         user=user,
     )
     webhooks_subscribed_mock.assert_called_once_with()
-    analytics_mock.assert_not_called()
+    analysis_mock.assert_not_called()
 
 
 def test_get_event_url__existent__ok(mocker):
@@ -363,8 +363,8 @@ def test_subscribe__create__ok(mocker):
         'src.processes.services.templates.'
         'integrations.TemplateIntegrationsService.webhooks_subscribed',
     )
-    analytics_mock = mocker.patch(
-        'src.analytics.services.AnalyticService.'
+    analysis_mock = mocker.patch(
+        'src.analysis.services.AnalyticService.'
         'accounts_webhooks_subscribed',
     )
     service = WebhookService(user=user)
@@ -393,7 +393,7 @@ def test_subscribe__create__ok(mocker):
         user=user,
     )
     webhooks_subscribed_mock.assert_called_once_with()
-    analytics_mock.assert_called_once_with(
+    analysis_mock.assert_called_once_with(
         user=user,
         is_superuser=False,
     )
@@ -420,8 +420,8 @@ def test_subscribe__recreate__ok(mocker):
         'src.processes.services.templates.'
         'integrations.TemplateIntegrationsService.webhooks_subscribed',
     )
-    analytics_mock = mocker.patch(
-        'src.analytics.services.AnalyticService.'
+    analysis_mock = mocker.patch(
+        'src.analysis.services.AnalyticService.'
         'accounts_webhooks_subscribed',
     )
     service = WebhookService(user=user)
@@ -444,7 +444,7 @@ def test_subscribe__recreate__ok(mocker):
         user=user,
     )
     webhooks_subscribed_mock.assert_called_once_with()
-    analytics_mock.assert_called_once_with(
+    analysis_mock.assert_called_once_with(
         user=user,
         is_superuser=False,
     )

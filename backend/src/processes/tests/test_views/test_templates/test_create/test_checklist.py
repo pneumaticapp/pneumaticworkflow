@@ -22,8 +22,8 @@ def test_create__ok(api_client, mocker):
     # arrange
     user = create_test_user()
     api_client.token_authenticate(user)
-    analytics_mock = mocker.patch(
-        'src.analytics.services.AnalyticService'
+    analysis_mock = mocker.patch(
+        'src.analysis.services.AnalyticService'
         '.checklist_created',
     )
     checklists_data = [
@@ -87,7 +87,7 @@ def test_create__ok(api_client, mocker):
     assert checklist.api_name == 'checklist-1'
     template = Template.objects.get(id=template_id)
     task = template.tasks.first()
-    analytics_mock.assert_called_once_with(
+    analysis_mock.assert_called_once_with(
         user=user,
         template=template,
         task=task,
@@ -111,7 +111,7 @@ def test_create__generate_api_name__ok(
         return_value=api_name,
     )
     mocker.patch(
-        'src.analytics.services.AnalyticService'
+        'src.analysis.services.AnalyticService'
         '.checklist_created',
     )
     checklists_data = [
@@ -170,8 +170,8 @@ def test_create__draft__ok(api_client, mocker):
     # arrange
     user = create_test_user()
     api_client.token_authenticate(user)
-    analytics_mock = mocker.patch(
-        'src.analytics.services.AnalyticService'
+    analysis_mock = mocker.patch(
+        'src.analysis.services.AnalyticService'
         '.checklist_created',
     )
     checklists_data = [
@@ -221,7 +221,7 @@ def test_create__draft__ok(api_client, mocker):
     data = response.data['tasks'][0]['checklists'][0]
     assert data.get('id') is None
     assert data['api_name'] == 'checklist-1'
-    analytics_mock.assert_not_called()
+    analysis_mock.assert_not_called()
 
 
 def test_create__fields_with_equal_api_names__validation_error(
@@ -233,7 +233,7 @@ def test_create__fields_with_equal_api_names__validation_error(
     user = create_test_user()
     api_client.token_authenticate(user)
     mocker.patch(
-        'src.analytics.services.AnalyticService'
+        'src.analysis.services.AnalyticService'
         '.checklist_created',
     )
     checklist_api_name = 'checklist-1'

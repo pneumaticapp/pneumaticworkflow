@@ -28,14 +28,14 @@ def expire_tokens_mock(mocker):
 @pytest.fixture
 def identify_mock(mocker):
     return mocker.patch(
-        'src.analytics.mixins.BaseIdentifyMixin.identify',
+        'src.analysis.mixins.BaseIdentifyMixin.identify',
     )
 
 
 @pytest.fixture
 def group_mock(mocker):
     return mocker.patch(
-        'src.analytics.mixins.BaseIdentifyMixin.group',
+        'src.analysis.mixins.BaseIdentifyMixin.group',
     )
 
 

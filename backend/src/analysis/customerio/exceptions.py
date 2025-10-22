@@ -1,9 +1,9 @@
 from abc import abstractmethod
 
-from src.analytics.customerio.entities import (
+from src.analysis.customerio.entities import (
     WebHookData,
 )
-from src.analytics.messages import (
+from src.analysis.messages import (
     MSG_AS_0002,
     MSG_AS_0003,
     MSG_AS_0004,

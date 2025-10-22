@@ -1,9 +1,9 @@
 import pytest
 
-from src.analytics import messages
-from src.analytics.customerio import exceptions
-from src.analytics.customerio.enums import MetricType
-from src.analytics.customerio.services import (
+from src.analysis import messages
+from src.analysis.customerio import exceptions
+from src.analysis.customerio.enums import MetricType
+from src.analysis.customerio.services import (
     WebHookService,
 )
 from src.processes.tests.fixtures import (
@@ -41,7 +41,7 @@ class TestWebHookService:
             },
         }
         mocker.patch(
-            'src.analytics.customerio.services.configuration',
+            'src.analysis.customerio.services.configuration',
             'Production',
         )
 
@@ -63,7 +63,7 @@ class TestWebHookService:
             },
         }
         mocker.patch(
-            'src.analytics.customerio.services.configuration',
+            'src.analysis.customerio.services.configuration',
             'Staging',
         )
 
@@ -86,7 +86,7 @@ class TestWebHookService:
             'data': metric_data,
         }
         subscribe_handler_mock = mocker.patch(
-            'src.analytics.customerio.services'
+            'src.analysis.customerio.services'
             '.WebHookService._subscribe_handler',
         )
 
@@ -111,7 +111,7 @@ class TestWebHookService:
             'data': metric_data,
         }
         unsubscribe_handler_mock = mocker.patch(
-            'src.analytics.customerio.services'
+            'src.analysis.customerio.services'
             '.WebHookService._unsubscribe_handler',
         )
 
@@ -132,7 +132,7 @@ class TestWebHookService:
             'data': {},
         }
         unsubscribe_handler_mock = mocker.patch(
-            'src.analytics.customerio.services'
+            'src.analysis.customerio.services'
             '.WebHookService._unsubscribe_handler',
         )
 
@@ -175,7 +175,7 @@ class TestWebHookService:
             },
         }
         get_user_mock = mocker.patch(
-            'src.analytics.customerio.services'
+            'src.analysis.customerio.services'
             '.WebHookService._get_webhook_user',
             return_value=user,
         )
@@ -197,7 +197,7 @@ class TestWebHookService:
             },
         }
         get_user_mock = mocker.patch(
-            'src.analytics.customerio.services'
+            'src.analysis.customerio.services'
             '.WebHookService._get_webhook_user',
             return_value=None,
         )
@@ -217,7 +217,7 @@ class TestWebHookService:
             },
         }
         get_user_mock = mocker.patch(
-            'src.analytics.customerio.services'
+            'src.analysis.customerio.services'
             '.WebHookService._get_webhook_user',
             return_value=None,
         )
@@ -238,7 +238,7 @@ class TestWebHookService:
             },
         }
         get_user_mock = mocker.patch(
-            'src.analytics.customerio.services'
+            'src.analysis.customerio.services'
             '.WebHookService._get_webhook_user',
             return_value=user,
         )

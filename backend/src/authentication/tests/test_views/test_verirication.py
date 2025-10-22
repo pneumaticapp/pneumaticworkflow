@@ -22,7 +22,7 @@ class TestTokenVerificationView:
         account.is_verified = False
         account.save()
         token = str(VerificationToken.for_user(user))
-        analytics_mock = mocker.patch(
+        analysis_mock = mocker.patch(
             'src.accounts.services.user.'
             'AnalyticService.account_verified',
         )
@@ -34,7 +34,7 @@ class TestTokenVerificationView:
         # assert
         assert response.status_code == 204
         assert account.is_verified is True
-        analytics_mock.assert_called_once_with(
+        analysis_mock.assert_called_once_with(
             user=user,
             is_superuser=False,
             auth_type=AuthTokenType.USER,
@@ -52,7 +52,7 @@ class TestTokenVerificationView:
         account = user.account
         account.is_verified = False
         account.save()
-        analytics_mock = mocker.patch(
+        analysis_mock = mocker.patch(
             'src.accounts.services.user.'
             'AnalyticService.account_verified',
         )
@@ -67,7 +67,7 @@ class TestTokenVerificationView:
         assert response.data['code'] == ErrorCode.VALIDATION_ERROR
         assert response.data['message'] == message
         assert account.is_verified is False
-        analytics_mock.assert_not_called()
+        analysis_mock.assert_not_called()
 
     @pytest.mark.parametrize('token', ('', '?'))
     def test_user_checking__token_missing__validation_error(
@@ -81,7 +81,7 @@ class TestTokenVerificationView:
         account = user.account
         account.is_verified = False
         account.save()
-        analytics_mock = mocker.patch(
+        analysis_mock = mocker.patch(
             'src.accounts.services.user.'
             'AnalyticService.account_verified',
         )
@@ -96,9 +96,9 @@ class TestTokenVerificationView:
         assert response.data['code'] == ErrorCode.VALIDATION_ERROR
         assert response.data['message'] == message
         assert account.is_verified is False
-        analytics_mock.assert_not_called()
+        analysis_mock.assert_not_called()
 
-    def test_double_user_checking__analytics_sent_once(
+    def test_double_user_checking__analysis_sent_once(
         self,
         mocker,
         api_client,
@@ -109,7 +109,7 @@ class TestTokenVerificationView:
         account.is_verified = False
         account.save()
         token = str(VerificationToken.for_user(user))
-        analytics_mock = mocker.patch(
+        analysis_mock = mocker.patch(
             'src.accounts.services.user.'
             'AnalyticService.account_verified',
         )
@@ -123,7 +123,7 @@ class TestTokenVerificationView:
         assert response.status_code == 204
         assert response_2.status_code == 204
         assert account.is_verified is True
-        analytics_mock.assert_called_once_with(
+        analysis_mock.assert_called_once_with(
             user=user,
             is_superuser=False,
             auth_type=AuthTokenType.USER,
@@ -137,7 +137,7 @@ class TestTokenVerificationView:
         account.is_verified = False
         account.save()
         token = '12345'
-        analytics_mock = mocker.patch(
+        analysis_mock = mocker.patch(
             'src.accounts.services.user.'
             'AnalyticService.account_verified',
         )
@@ -150,7 +150,7 @@ class TestTokenVerificationView:
         assert response.status_code == 400
         assert response.data['code'] == ErrorCode.VALIDATION_ERROR
         assert response.data['message'] == messages.MSG_AU_0008
-        analytics_mock.assert_not_called()
+        analysis_mock.assert_not_called()
 
 
 class TestVerificationTokenResendView:

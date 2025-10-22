@@ -134,7 +134,7 @@ def test_partial_update__tenant__name__ok(
     api_client.token_authenticate(user)
     new_name = 'New name'
     group_mock = mocker.patch(
-        'src.analytics.mixins.BaseIdentifyMixin.group',
+        'src.analysis.mixins.BaseIdentifyMixin.group',
     )
 
     # act

@@ -5,7 +5,7 @@ from django.contrib.auth import get_user_model
 from django.utils import timezone
 
 from src.accounts.models import Account
-from src.analytics.services import AnalyticService
+from src.analysis.services import AnalyticService
 from src.generics.mixins.services import ClsCacheMixin
 from src.processes.entities import (
     PrivateTemplateIntegrationsData,

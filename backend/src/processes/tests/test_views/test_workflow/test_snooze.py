@@ -4,7 +4,7 @@ import pytest
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 
-from src.analytics.customerio.tests.fixtures import create_test_account
+from src.analysis.customerio.tests.fixtures import create_test_account
 from src.generics.messages import MSG_GE_0007
 from src.processes.enums import (
     OwnerType,

@@ -678,11 +678,11 @@ def test__user_invite_actions__ok(mocker):
         return_value=invite_token_str,
     )
     users_invited_mock = mocker.patch(
-        'src.analytics.services.AnalyticService.'
+        'src.analysis.services.AnalyticService.'
         'users_invited',
     )
     users_invite_sent_mock = mocker.patch(
-        'src.analytics.services.AnalyticService.'
+        'src.analysis.services.AnalyticService.'
         'users_invite_sent',
     )
     email_message_log = mocker.patch(
@@ -733,11 +733,11 @@ def test__user_invite_actions__enable_logging__create_event(mocker):
         return_value=invite_token_str,
     )
     users_invited_mock = mocker.patch(
-        'src.analytics.services.AnalyticService.'
+        'src.analysis.services.AnalyticService.'
         'users_invited',
     )
     users_invite_sent_mock = mocker.patch(
-        'src.analytics.services.AnalyticService.'
+        'src.analysis.services.AnalyticService.'
         'users_invite_sent',
     )
     email_message_log = mocker.patch(
@@ -788,11 +788,11 @@ def test__user_transfer_actions__ok(mocker):
         return_value=invite_token_str,
     )
     users_invited_mock = mocker.patch(
-        'src.analytics.services.AnalyticService.'
+        'src.analysis.services.AnalyticService.'
         'users_invited',
     )
     users_invite_sent_mock = mocker.patch(
-        'src.analytics.services.AnalyticService.'
+        'src.analysis.services.AnalyticService.'
         'users_invite_sent',
     )
     service = UserInviteService(

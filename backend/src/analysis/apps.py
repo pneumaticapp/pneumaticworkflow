@@ -2,5 +2,5 @@ from django.apps import AppConfig
 
 
 class AccountsConfig(AppConfig):
-    name = 'src.analytics'
+    name = 'src.analysis'
     verbose_name = 'Analytics'

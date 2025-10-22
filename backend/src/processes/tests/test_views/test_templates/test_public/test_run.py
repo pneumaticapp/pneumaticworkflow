@@ -275,7 +275,7 @@ class TestRunPublicTemplate:
             return_value=template,
         )
         mocker.patch(
-            'src.analytics.services.AnalyticService.'
+            'src.analysis.services.AnalyticService.'
             'workflows_started',
         )
         mocker.patch(
@@ -1085,7 +1085,7 @@ class TestRunPublicTemplate:
             return_value=template,
         )
         mocker.patch(
-            'src.analytics.services.AnalyticService.'
+            'src.analysis.services.AnalyticService.'
             'workflows_started',
         )
         mocker.patch(
@@ -1168,7 +1168,7 @@ class TestRunPublicTemplate:
             return_value=template,
         )
         mocker.patch(
-            'src.analytics.services.AnalyticService.'
+            'src.analysis.services.AnalyticService.'
             'workflows_started',
         )
         mocker.patch(
@@ -1282,7 +1282,7 @@ class TestRunPublicTemplate:
             return_value=template,
         )
         mocker.patch(
-            'src.analytics.services.AnalyticService.'
+            'src.analysis.services.AnalyticService.'
             'workflows_started',
         )
         mocker.patch(
@@ -1371,7 +1371,7 @@ class TestRunPublicTemplate:
             return_value=template,
         )
         mocker.patch(
-            'src.analytics.services.AnalyticService.'
+            'src.analysis.services.AnalyticService.'
             'workflows_started',
         )
         mocker.patch(
@@ -1575,7 +1575,7 @@ class TestRunEmbedTemplate:
             return_value=template,
         )
         mocker.patch(
-            'src.analytics.services.AnalyticService.'
+            'src.analysis.services.AnalyticService.'
             'workflows_started',
         )
         mocker.patch(
@@ -1749,7 +1749,7 @@ class TestRunEmbedTemplate:
             return_value=template,
         )
         mocker.patch(
-            'src.analytics.services.AnalyticService.'
+            'src.analysis.services.AnalyticService.'
             'workflows_started',
         )
         mocker.patch(
@@ -1833,7 +1833,7 @@ class TestRunEmbedTemplate:
             return_value=template,
         )
         mocker.patch(
-            'src.analytics.services.AnalyticService.'
+            'src.analysis.services.AnalyticService.'
             'workflows_started',
         )
         mocker.patch(
@@ -1938,7 +1938,7 @@ class TestRunEmbedTemplate:
             return_value=template,
         )
         mocker.patch(
-            'src.analytics.services.AnalyticService.'
+            'src.analysis.services.AnalyticService.'
             'workflows_started',
         )
         mocker.patch(
@@ -2024,7 +2024,7 @@ class TestRunEmbedTemplate:
             return_value=template,
         )
         mocker.patch(
-            'src.analytics.services.AnalyticService.'
+            'src.analysis.services.AnalyticService.'
             'workflows_started',
         )
         mocker.patch(

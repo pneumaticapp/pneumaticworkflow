@@ -14,8 +14,8 @@ from src.accounts.permissions import (
     UserIsAdminOrAccountOwner,
     UsersOverlimitedPermission,
 )
-from src.analytics.actions import WorkflowActions
-from src.analytics.services import AnalyticService
+from src.analysis.actions import WorkflowActions
+from src.analysis.services import AnalyticService
 from src.generics.filters import PneumaticFilterBackend
 from src.generics.mixins.views import CustomViewSetMixin
 from src.generics.paginations import DefaultPagination

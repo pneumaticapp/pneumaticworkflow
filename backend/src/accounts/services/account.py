@@ -20,8 +20,8 @@ from src.accounts.serializers.accounts import (
 from src.accounts.services.exceptions import (
     AccountServiceException,
 )
-from src.analytics.mixins import BaseIdentifyMixin
-from src.analytics.tasks import identify_users
+from src.analysis.mixins import BaseIdentifyMixin
+from src.analysis.tasks import identify_users
 from src.generics.base.service import BaseModelService
 from src.generics.mixins.services import ClsCacheMixin
 from src.utils.logging import (

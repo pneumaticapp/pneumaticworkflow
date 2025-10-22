@@ -45,8 +45,8 @@ def test_update__create__ok(api_client, mocker):
         'src.processes.services.templates.'
         'integrations.TemplateIntegrationsService.template_updated',
     )
-    analytics_mock = mocker.patch(
-        'src.analytics.services.AnalyticService'
+    analysis_mock = mocker.patch(
+        'src.analysis.services.AnalyticService'
         '.checklist_created',
     )
     checklists_data = [
@@ -119,7 +119,7 @@ def test_update__create__ok(api_client, mocker):
         api_name='checklist-2',
         task=task_template,
     ).exists()
-    analytics_mock.assert_called_once_with(
+    analysis_mock.assert_called_once_with(
         user=user,
         template=template,
         task=task,
@@ -165,8 +165,8 @@ def test_update__delete__ok(api_client, mocker):
         'src.processes.services.templates.'
         'integrations.TemplateIntegrationsService.template_updated',
     )
-    analytics_mock = mocker.patch(
-        'src.analytics.services.AnalyticService'
+    analysis_mock = mocker.patch(
+        'src.analysis.services.AnalyticService'
         '.checklist_created',
     )
     checklists_data = [
@@ -219,7 +219,7 @@ def test_update__delete__ok(api_client, mocker):
     checklist_1_data = response.data['tasks'][0]['checklists'][0]
     assert checklist_1_data['api_name'] == checklist.api_name
     assert not ChecklistTemplate.objects.filter(id=checklist_2.id).exists()
-    analytics_mock.assert_not_called()
+    analysis_mock.assert_not_called()
 
 
 def test_update__fields_with_equal_api_names__validation_error(
@@ -229,7 +229,7 @@ def test_update__fields_with_equal_api_names__validation_error(
 
     # arrange
     mocker.patch(
-        'src.analytics.services.AnalyticService'
+        'src.analysis.services.AnalyticService'
         '.checklist_created',
     )
     mocker.patch(

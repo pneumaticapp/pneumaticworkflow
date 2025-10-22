@@ -6,7 +6,7 @@ from django.contrib.auth import get_user_model
 from rest_framework.serializers import ValidationError
 
 from src.accounts.models import UserGroup
-from src.analytics.services import AnalyticService
+from src.analysis.services import AnalyticService
 from src.generics.base.service import BaseModelService
 from src.processes.enums import (
     OwnerType,

@@ -1,7 +1,7 @@
 import hmac
 from hashlib import sha256
 
-from src.analytics.customerio.utils import (
+from src.analysis.customerio.utils import (
     check_webhook_hash,
     get_webhook_hash,
 )
@@ -23,7 +23,7 @@ def test__get_webhook_hash__ok(mocker):
         b'"email","timestamp":1646141357}'
     )
     mocker.patch(
-        'src.analytics.customerio.utils.settings',
+        'src.analysis.customerio.utils.settings',
         CUSTOMERIO_WEBHOOK_API_KEY=key,
         CUSTOMERIO_WEBHOOK_API_VERSION=api_version,
     )
@@ -52,7 +52,7 @@ def test__check_webhook_hash__ok(mocker):
     request_hash = '123sa'
     timestamp = '1613063089'
     mocker.patch(
-        'src.analytics.customerio.utils.settings',
+        'src.analysis.customerio.utils.settings',
         CUSTOMERIO_WEBHOOK_API_KEY=key,
         CUSTOMERIO_WEBHOOK_API_VERSION=api_version,
     )
@@ -73,7 +73,7 @@ def test__check_webhook_hash__ok(mocker):
         body=request_body_bytes,
     )
     get_webhook_hash_mock = mocker.patch(
-        'src.analytics.customerio.utils.get_webhook_hash',
+        'src.analysis.customerio.utils.get_webhook_hash',
         return_value=request_hash,
     )
 

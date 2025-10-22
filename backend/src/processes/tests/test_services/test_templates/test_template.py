@@ -51,8 +51,8 @@ def test_create_template_by_steps__ok(mocker):
             'description': 'description 2',
         },
     ]
-    analytics_mock = mocker.patch(
-        'src.analytics.services.AnalyticService.'
+    analysis_mock = mocker.patch(
+        'src.analysis.services.AnalyticService.'
         'template_generated_from_landing',
     )
 
@@ -70,7 +70,7 @@ def test_create_template_by_steps__ok(mocker):
     task = template.tasks.order_by('number').first()
     assert task.name == 'Step 1'
     assert task.description == 'description 1'
-    analytics_mock.assert_called_once_with(
+    analysis_mock.assert_called_once_with(
         template=template,
         user=user,
         is_superuser=False,
@@ -109,8 +109,8 @@ def test_create_template_by_steps__validation_error__ok(mocker):
         'src.processes.services.templates.template.'
         'capture_sentry_message',
     )
-    analytics_mock = mocker.patch(
-        'src.analytics.services.AnalyticService.'
+    analysis_mock = mocker.patch(
+        'src.analysis.services.AnalyticService.'
         'template_generated_from_landing',
     )
 
@@ -131,7 +131,7 @@ def test_create_template_by_steps__validation_error__ok(mocker):
         },
     )
     logging_mock.assert_called_once()
-    analytics_mock.assert_not_called()
+    analysis_mock.assert_not_called()
 
 
 def test_get_from_sys_template__ok(mocker):
@@ -163,8 +163,8 @@ def test_get_from_sys_template__ok(mocker):
         'TemplateService.fill_template_data',
         return_value=data_mock,
     )
-    analytics_mock = mocker.patch(
-        'src.analytics.services.AnalyticService.'
+    analysis_mock = mocker.patch(
+        'src.analysis.services.AnalyticService.'
         'library_template_opened',
     )
 
@@ -176,7 +176,7 @@ def test_get_from_sys_template__ok(mocker):
     fill_template_data_mock.assert_called_once_with(
         initial_data=sys_template.template,
     )
-    analytics_mock.assert_called_once_with(
+    analysis_mock.assert_called_once_with(
         user=user,
         sys_template=sys_template,
         auth_type=auth_type,
@@ -689,8 +689,8 @@ def test_create_template_from_library_template__ok(mocker):
         'TemplateService.create_template_from_sys_template',
         return_value=template_mock,
     )
-    analytics_mock = mocker.patch(
-        'src.analytics.services.AnalyticService.'
+    analysis_mock = mocker.patch(
+        'src.analysis.services.AnalyticService.'
         'template_created_from_landing_library',
     )
     auth_type = AuthTokenType.API
@@ -711,7 +711,7 @@ def test_create_template_from_library_template__ok(mocker):
     create_template_from_sys_template_mock.assert_called_once_with(
         system_template=system_template,
     )
-    analytics_mock.assert_called_once_with(
+    analysis_mock.assert_called_once_with(
         user=user,
         template=template_mock,
         auth_type=auth_type,

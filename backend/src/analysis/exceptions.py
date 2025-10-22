@@ -1,4 +1,4 @@
-from src.analytics.messages import MSG_AS_0001
+from src.analysis.messages import MSG_AS_0001
 from src.generics.exceptions import BaseServiceException
 
 

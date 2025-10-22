@@ -24,8 +24,8 @@ from src.accounts.services.exceptions import (
     UserIsPerformerException,
 )
 from src.accounts.validators import user_is_last_performer
-from src.analytics.mixins import BaseIdentifyMixin
-from src.analytics.services import AnalyticService
+from src.analysis.mixins import BaseIdentifyMixin
+from src.analysis.services import AnalyticService
 from src.authentication.tokens import PneumaticToken
 from src.generics.base.service import BaseModelService
 from src.notifications.tasks import send_user_deleted_notification

@@ -8,8 +8,8 @@ from src.accounts.enums import (
 )
 from src.accounts.models import Account
 from src.accounts.services.account import AccountService
-from src.analytics.mixins import BaseIdentifyMixin
-from src.analytics.services import AnalyticService
+from src.analysis.mixins import BaseIdentifyMixin
+from src.analysis.services import AnalyticService
 from src.authentication.enums import AuthTokenType
 from src.payment.entities import (
     SubscriptionDetails,

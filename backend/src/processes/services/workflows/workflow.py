@@ -4,10 +4,10 @@ from typing import Optional
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 
-from src.analytics.actions import (
+from src.analysis.actions import (
     WorkflowActions,
 )
-from src.analytics.services import AnalyticService
+from src.analysis.services import AnalyticService
 from src.authentication.enums import AuthTokenType
 from src.processes.consts import WORKFLOW_NAME_LENGTH
 from src.processes.models.templates.template import Template

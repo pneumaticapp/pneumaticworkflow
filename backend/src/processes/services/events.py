@@ -6,7 +6,7 @@ from django.db import transaction
 from django.utils import timezone
 
 from src.accounts.models import UserGroup
-from src.analytics.services import AnalyticService
+from src.analysis.services import AnalyticService
 from src.generics.base.service import BaseModelService
 from src.notifications.tasks import (
     send_comment_notification,

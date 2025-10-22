@@ -4,7 +4,7 @@ from urllib.parse import unquote
 from django.contrib.auth import get_user_model
 
 from src.accounts.models import Account
-from src.analytics.services import AnalyticService
+from src.analysis.services import AnalyticService
 from src.authentication.enums import AuthTokenType
 from src.processes.models.workflows.attachment import FileAttachment
 from src.processes.services import exceptions

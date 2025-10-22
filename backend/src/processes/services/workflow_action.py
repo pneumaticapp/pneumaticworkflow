@@ -6,7 +6,7 @@ from django.db import transaction
 from django.db.models import Q
 from django.utils import timezone
 
-from src.analytics.services import AnalyticService
+from src.analysis.services import AnalyticService
 from src.authentication.enums import AuthTokenType
 from src.authentication.services.guest_auth import GuestJWTAuthService
 from src.notifications.tasks import (

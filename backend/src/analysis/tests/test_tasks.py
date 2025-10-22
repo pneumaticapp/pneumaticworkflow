@@ -4,8 +4,8 @@ from src.accounts.enums import UserStatus
 from src.accounts.models import (
     AccountSignupData,
 )
-from src.analytics.events import GroupsAnalyticsEvent
-from src.analytics.tasks import (
+from src.analysis.events import GroupsAnalyticsEvent
+from src.analysis.tasks import (
     _identify_users,
     track_group_analytics,
 )
@@ -46,7 +46,7 @@ def test_identify_users__ok(identify_mock):
     identify_mock.assert_called_once_with(user)
 
 
-def test_track_group_analytics__create_group_all_fields__ok(
+def test_track_group_analysis__create_group_all_fields__ok(
     mocker,
 ):
     # arrange
@@ -54,8 +54,8 @@ def test_track_group_analytics__create_group_all_fields__ok(
     group = create_test_group(user.account)
     is_superuser = False
     photo = 'photo.jpg'
-    analytics_service_mock = mocker.patch(
-        'src.analytics.tasks.AnalyticService',
+    analysis_service_mock = mocker.patch(
+        'src.analysis.tasks.AnalyticService',
     )
 
     # act
@@ -77,7 +77,7 @@ def test_track_group_analytics__create_group_all_fields__ok(
     )
 
     # assert
-    analytics_service_mock.groups_created.assert_called_once_with(
+    analysis_service_mock.groups_created.assert_called_once_with(
         text=f"{group.name} (id: {group.id}).",
         user_id=user.id,
         user_email=user.email,
@@ -91,8 +91,8 @@ def test_track_group_analytics__create_group_all_fields__ok(
         auth_type=AuthTokenType.USER,
         is_superuser=is_superuser,
     )
-    assert analytics_service_mock.groups_updated.call_count == 2
-    analytics_service_mock.groups_updated.assert_has_calls([
+    assert analysis_service_mock.groups_updated.call_count == 2
+    analysis_service_mock.groups_updated.assert_has_calls([
         mocker.call(
             text=(
                 f"{group.name} (id: {group.id}). "
@@ -127,14 +127,14 @@ def test_track_group_analytics__create_group_all_fields__ok(
     ])
 
 
-def test_track_group_analytics__create_group_required_fields__ok(mocker):
+def test_track_group_analysis__create_group_required_fields__ok(mocker):
     # arrange
     user = create_test_user()
     group = create_test_group(user.account)
     is_superuser = False
 
-    analytics_service_mock = mocker.patch(
-        'src.analytics.tasks.AnalyticService',
+    analysis_service_mock = mocker.patch(
+        'src.analysis.tasks.AnalyticService',
     )
 
     # act
@@ -154,7 +154,7 @@ def test_track_group_analytics__create_group_required_fields__ok(mocker):
     )
 
     # assert
-    analytics_service_mock.groups_created.assert_called_once_with(
+    analysis_service_mock.groups_created.assert_called_once_with(
         text=f"{group.name} (id: {group.id}).",
         user_id=user.id,
         user_email=user.email,
@@ -170,14 +170,14 @@ def test_track_group_analytics__create_group_required_fields__ok(mocker):
     )
 
 
-def test_track_group_analytics__create_group_with_photo__ok(mocker):
+def test_track_group_analysis__create_group_with_photo__ok(mocker):
     # arrange
     user = create_test_user()
     group = create_test_group(user.account)
     is_superuser = False
     photo = 'photo.jpg'
-    analytics_service_mock = mocker.patch(
-        'src.analytics.tasks.AnalyticService',
+    analysis_service_mock = mocker.patch(
+        'src.analysis.tasks.AnalyticService',
     )
 
     # act
@@ -198,7 +198,7 @@ def test_track_group_analytics__create_group_with_photo__ok(mocker):
     )
 
     # assert
-    analytics_service_mock.groups_created.assert_called_once_with(
+    analysis_service_mock.groups_created.assert_called_once_with(
         text=f"{group.name} (id: {group.id}).",
         user_id=user.id,
         user_email=user.email,
@@ -212,7 +212,7 @@ def test_track_group_analytics__create_group_with_photo__ok(mocker):
         auth_type=AuthTokenType.USER,
         is_superuser=is_superuser,
     )
-    analytics_service_mock.groups_updated.assert_called_once_with(
+    analysis_service_mock.groups_updated.assert_called_once_with(
         text=(
             f"{group.name} (id: {group.id}). Added group photo (url: {photo})."
         ),
@@ -230,15 +230,15 @@ def test_track_group_analytics__create_group_with_photo__ok(mocker):
     )
 
 
-def test_track_group_analytics__create_group_with_user__ok(
+def test_track_group_analysis__create_group_with_user__ok(
     mocker,
 ):
     # arrange
     user = create_test_user()
     group = create_test_group(user.account)
     is_superuser = False
-    analytics_service_mock = mocker.patch(
-        'src.analytics.tasks.AnalyticService',
+    analysis_service_mock = mocker.patch(
+        'src.analysis.tasks.AnalyticService',
     )
 
     # act
@@ -259,7 +259,7 @@ def test_track_group_analytics__create_group_with_user__ok(
     )
 
     # assert
-    analytics_service_mock.groups_created.assert_called_once_with(
+    analysis_service_mock.groups_created.assert_called_once_with(
         text=f"{group.name} (id: {group.id}).",
         user_id=user.id,
         user_email=user.email,
@@ -273,7 +273,7 @@ def test_track_group_analytics__create_group_with_user__ok(
         auth_type=AuthTokenType.USER,
         is_superuser=is_superuser,
     )
-    analytics_service_mock.groups_updated.assert_called_once_with(
+    analysis_service_mock.groups_updated.assert_called_once_with(
         text=f"{group.name} (id: {group.id}). Added user: {user.email}.",
         user_id=user.id,
         user_email=user.email,
@@ -289,14 +289,14 @@ def test_track_group_analytics__create_group_with_user__ok(
     )
 
 
-def test_track_group_analytics__update_group_name__ok(mocker):
+def test_track_group_analysis__update_group_name__ok(mocker):
     # arrange
     user = create_test_user()
     group = create_test_group(user.account)
     is_superuser = False
     new_name = "New Group Name"
-    analytics_service_mock = mocker.patch(
-        'src.analytics.tasks.AnalyticService',
+    analysis_service_mock = mocker.patch(
+        'src.analysis.tasks.AnalyticService',
     )
 
     # act
@@ -317,7 +317,7 @@ def test_track_group_analytics__update_group_name__ok(mocker):
     )
 
     # assert
-    analytics_service_mock.groups_updated.assert_called_once_with(
+    analysis_service_mock.groups_updated.assert_called_once_with(
         text=(
             f'{group.name} (id: {group.id}). '
             f'Changed the group name to "{new_name}".'
@@ -336,14 +336,14 @@ def test_track_group_analytics__update_group_name__ok(mocker):
     )
 
 
-def test_track_group_analytics__update_group_photo__ok(mocker):
+def test_track_group_analysis__update_group_photo__ok(mocker):
     # arrange
     user = create_test_user()
     group = create_test_group(user.account)
     is_superuser = False
     new_photo = 'photo.jpg'
-    analytics_service_mock = mocker.patch(
-        'src.analytics.tasks.AnalyticService',
+    analysis_service_mock = mocker.patch(
+        'src.analysis.tasks.AnalyticService',
     )
 
     # act
@@ -364,7 +364,7 @@ def test_track_group_analytics__update_group_photo__ok(mocker):
     )
 
     # assert
-    analytics_service_mock.groups_updated.assert_called_once_with(
+    analysis_service_mock.groups_updated.assert_called_once_with(
         text=(
             f'{group.name} (id: {group.id}). '
             f'Added group photo (url: {new_photo}).'
@@ -383,13 +383,13 @@ def test_track_group_analytics__update_group_photo__ok(mocker):
     )
 
 
-def test_track_group_analytics__delete_group_photo__ok(mocker):
+def test_track_group_analysis__delete_group_photo__ok(mocker):
     # arrange
     user = create_test_user()
     group = create_test_group(user.account, photo='url')
     is_superuser = False
-    analytics_service_mock = mocker.patch(
-        'src.analytics.tasks.AnalyticService',
+    analysis_service_mock = mocker.patch(
+        'src.analysis.tasks.AnalyticService',
     )
     delete_photo = ''
 
@@ -411,7 +411,7 @@ def test_track_group_analytics__delete_group_photo__ok(mocker):
     )
 
     # assert
-    analytics_service_mock.groups_updated.assert_called_once_with(
+    analysis_service_mock.groups_updated.assert_called_once_with(
         text=(
             f'{group.name} (id: {group.id}). '
             f'Delete group photo.'
@@ -430,15 +430,15 @@ def test_track_group_analytics__delete_group_photo__ok(mocker):
     )
 
 
-def test_track_group_analytics__update_group_add_users__ok(mocker):
+def test_track_group_analysis__update_group_add_users__ok(mocker):
     # arrange
     user = create_test_user()
     group = create_test_group(user.account)
     is_superuser = False
     new_users_ids = [user.id]
 
-    analytics_service_mock = mocker.patch(
-        'src.analytics.tasks.AnalyticService',
+    analysis_service_mock = mocker.patch(
+        'src.analysis.tasks.AnalyticService',
     )
 
     # act
@@ -459,7 +459,7 @@ def test_track_group_analytics__update_group_add_users__ok(mocker):
     )
 
     # assert
-    analytics_service_mock.groups_updated.assert_called_once_with(
+    analysis_service_mock.groups_updated.assert_called_once_with(
         text=f"{group.name} (id: {group.id}). Added user: {user.email}.",
         user_id=user.id,
         user_email=user.email,
@@ -475,15 +475,15 @@ def test_track_group_analytics__update_group_add_users__ok(mocker):
     )
 
 
-def test_track_group_analytics__remove_users__ok(mocker):
+def test_track_group_analysis__remove_users__ok(mocker):
     # arrange
     user = create_test_user()
     group = create_test_group(user.account)
     is_superuser = False
     removed_users_ids = [user.id]
 
-    analytics_service_mock = mocker.patch(
-        'src.analytics.tasks.AnalyticService',
+    analysis_service_mock = mocker.patch(
+        'src.analysis.tasks.AnalyticService',
     )
 
     # act
@@ -504,7 +504,7 @@ def test_track_group_analytics__remove_users__ok(mocker):
     )
 
     # assert
-    analytics_service_mock.groups_updated.assert_called_once_with(
+    analysis_service_mock.groups_updated.assert_called_once_with(
         text=f"{group.name} (id: {group.id}). Remove user: {user.email}.",
         user_id=user.id,
         user_email=user.email,
@@ -520,13 +520,13 @@ def test_track_group_analytics__remove_users__ok(mocker):
     )
 
 
-def test_track_group_analytics__delete_group__ok(mocker):
+def test_track_group_analysis__delete_group__ok(mocker):
     # arrange
     user = create_test_user()
     group = create_test_group(user.account)
     is_superuser = False
-    analytics_service_mock = mocker.patch(
-        'src.analytics.tasks.AnalyticService',
+    analysis_service_mock = mocker.patch(
+        'src.analysis.tasks.AnalyticService',
     )
 
     # act
@@ -546,7 +546,7 @@ def test_track_group_analytics__delete_group__ok(mocker):
     )
 
     # assert
-    analytics_service_mock.groups_deleted.assert_called_once_with(
+    analysis_service_mock.groups_deleted.assert_called_once_with(
         text=f"{group.name} (id: {group.id}).",
         user_id=user.id,
         user_email=user.email,

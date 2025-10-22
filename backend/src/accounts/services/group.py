@@ -10,8 +10,8 @@ from src.accounts.queries import (
 from src.accounts.serializers.group import (
     GroupWebsocketSerializer,
 )
-from src.analytics.events import GroupsAnalyticsEvent
-from src.analytics.tasks import track_group_analytics
+from src.analysis.events import GroupsAnalyticsEvent
+from src.analysis.tasks import track_group_analytics
 from src.executor import RawSqlExecutor
 from src.generics.base.service import BaseModelService
 from src.notifications.tasks import (

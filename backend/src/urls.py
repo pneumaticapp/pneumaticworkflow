@@ -65,7 +65,7 @@ urlpatterns = [
     path('accounts/', include('src.accounts.urls', 'accounts')),
     path(
         'analytics/',
-        include('src.analytics.urls'),
+        include('src.analysis.urls'),
     ),
     path('v2/accounts/plan', AccountPlanView.as_view()),
     path('applications/', include('src.applications.urls')),
