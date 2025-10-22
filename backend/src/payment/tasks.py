@@ -1,6 +1,6 @@
-from celery import shared_task
 from django.contrib.auth import get_user_model
 
+from celery import shared_task
 from src.accounts.enums import BillingPlanType
 from src.accounts.models import Account
 from src.authentication.enums import AuthTokenType

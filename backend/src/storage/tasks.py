@@ -1,10 +1,10 @@
 from contextlib import contextmanager
 
-from celery import shared_task
 from celery.task import Task as TaskCelery
 from django.contrib.auth import get_user_model
 from django.db import transaction
 
+from celery import shared_task
 from src.accounts.enums import NotificationType
 from src.accounts.models import Account, Contact, Notification, UserGroup
 from src.logs.enums import AccountEventStatus

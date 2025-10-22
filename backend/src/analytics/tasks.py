@@ -1,9 +1,9 @@
 import time
 from typing import List, Optional
 
-from celery import shared_task
 from django.contrib.auth import get_user_model
 
+from celery import shared_task
 from src.analytics.events import GroupsAnalyticsEvent
 from src.analytics.mixins import BaseIdentifyMixin
 from src.analytics.services import AnalyticService
