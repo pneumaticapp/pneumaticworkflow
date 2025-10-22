@@ -358,8 +358,8 @@ class TestListTemplate:
         create_test_template(user)
         search_text = 'some text'
 
-        analytics_mock = mocker.patch(
-            'src.analytics.services.AnalyticService.'
+        analysis_mock = mocker.patch(
+            'src.analysis.services.AnalyticService.'
             'search_search',
         )
         api_client.token_authenticate(user)
@@ -369,7 +369,7 @@ class TestListTemplate:
 
         # assert
         assert response.status_code == 200
-        analytics_mock.assert_called_once_with(
+        analysis_mock.assert_called_once_with(
             user=user,
             page='templates',
             search_text=search_text,

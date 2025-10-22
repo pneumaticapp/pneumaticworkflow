@@ -4,11 +4,11 @@ import pytest
 from django.contrib.auth.models import AnonymousUser
 
 from src.accounts.enums import BillingPlanType, SourceType
-from src.analytics import messages
-from src.analytics.actions import (
+from src.analysis import messages
+from src.analysis.actions import (
     WorkflowActions,
 )
-from src.analytics.events import (
+from src.analysis.events import (
     AccountAnalyticsEvent,
     AttachmentAnalyticsEvent,
     CommentAnalyticsEvent,
@@ -24,8 +24,8 @@ from src.analytics.events import (
     UserAnalyticsEvent,
     WorkflowAnalyticsEvent,
 )
-from src.analytics.labels import Label
-from src.analytics.services import (
+from src.analysis.labels import Label
+from src.analysis.services import (
     AnalyticService,
     exceptions,
 )
@@ -58,7 +58,7 @@ class TestAnalyticService:
         # arrange
         data = {'is_superuser': False}
         settings_mock = mocker.patch(
-            'src.analytics.services.settings',
+            'src.analysis.services.settings',
         )
         settings_mock.PROJECT_CONF = {'ANALYTICS': True}
 
@@ -73,7 +73,7 @@ class TestAnalyticService:
         # arrange
         data = {'is_superuser': True}
         settings_mock = mocker.patch(
-            'src.analytics.services.settings',
+            'src.analysis.services.settings',
         )
         settings_mock.PROJECT_CONF = {'ANALYTICS': True}
 
@@ -83,11 +83,11 @@ class TestAnalyticService:
         # assert
         assert result is True
 
-    def test__skip__disable_project_analytics__skip(self, mocker):
+    def test__skip__disable_project_analysis__skip(self, mocker):
 
         # arrange
         settings_mock = mocker.patch(
-            'src.analytics.services.settings',
+            'src.analysis.services.settings',
         )
         settings_mock.PROJECT_CONF = {
             'ANALYTICS': False,
@@ -99,11 +99,11 @@ class TestAnalyticService:
         # assert
         assert result is True
 
-    def test__skip__enable_project_analytics__ok(self, mocker):
+    def test__skip__enable_project_analysis__ok(self, mocker):
 
         # arrange
         settings_mock = mocker.patch(
-            'src.analytics.services.settings',
+            'src.analysis.services.settings',
         )
         settings_mock.PROJECT_CONF = {
             'ANALYTICS': True,
@@ -120,11 +120,11 @@ class TestAnalyticService:
         # arrange
         data = {'value': 'test'}
         skip_mock = mocker.patch(
-            'src.analytics.services.AnalyticService._skip',
+            'src.analysis.services.AnalyticService._skip',
             return_value=False,
         )
         track_mock = mocker.patch(
-            'src.analytics.services.analytics.track',
+            'src.analysis.services.analytics.track',
         )
 
         # act
@@ -143,11 +143,11 @@ class TestAnalyticService:
         # arrange
         data = {'value': 'test'}
         skip_mock = mocker.patch(
-            'src.analytics.services.AnalyticService._skip',
+            'src.analysis.services.AnalyticService._skip',
             return_value=True,
         )
         track_mock = mocker.patch(
-            'src.analytics.services.analytics.track',
+            'src.analysis.services.analytics.track',
         )
 
         # act
@@ -164,7 +164,7 @@ class TestAnalyticService:
         data = {'value': 'test'}
         value = 'value'
         private_track_mock = mocker.patch(
-            'src.analytics.services.AnalyticService._track',
+            'src.analysis.services.AnalyticService._track',
             return_value=value,
         )
 
@@ -188,7 +188,7 @@ class TestAnalyticService:
         is_superuser = False
 
         private_track_mock = mocker.patch(
-            'src.analytics.services.AnalyticService._track',
+            'src.analysis.services.AnalyticService._track',
             return_value=value,
         )
 
@@ -227,7 +227,7 @@ class TestAnalyticService:
         invite_token = '123'
 
         private_track_mock = mocker.patch(
-            'src.analytics.services.AnalyticService._track',
+            'src.analysis.services.AnalyticService._track',
             return_value=value,
         )
 
@@ -264,7 +264,7 @@ class TestAnalyticService:
         return_value = True
         source = SourceType.GOOGLE
         private_track_mock = mocker.patch(
-            'src.analytics.services.AnalyticService._track',
+            'src.analysis.services.AnalyticService._track',
             return_value=return_value,
         )
 
@@ -304,7 +304,7 @@ class TestAnalyticService:
         return_value = True
 
         private_track_mock = mocker.patch(
-            'src.analytics.services.AnalyticService._track',
+            'src.analysis.services.AnalyticService._track',
             return_value=return_value,
         )
         kickoff_fields_count = 1
@@ -366,7 +366,7 @@ class TestAnalyticService:
         return_value = True
 
         private_track_mock = mocker.patch(
-            'src.analytics.services.AnalyticService._track',
+            'src.analysis.services.AnalyticService._track',
             return_value=return_value,
         )
         kickoff_fields_count = 1
@@ -428,7 +428,7 @@ class TestAnalyticService:
         return_value = True
 
         private_track_mock = mocker.patch(
-            'src.analytics.services.AnalyticService._track',
+            'src.analysis.services.AnalyticService._track',
             return_value=return_value,
         )
 
@@ -471,7 +471,7 @@ class TestAnalyticService:
         return_value = True
 
         private_track_mock = mocker.patch(
-            'src.analytics.services.AnalyticService._track',
+            'src.analysis.services.AnalyticService._track',
             return_value=return_value,
         )
 
@@ -520,7 +520,7 @@ class TestAnalyticService:
         condition = mocker.Mock(id=cond_id)
 
         private_track_mock = mocker.patch(
-            'src.analytics.services.AnalyticService._track',
+            'src.analysis.services.AnalyticService._track',
             return_value=return_value,
         )
 
@@ -568,7 +568,7 @@ class TestAnalyticService:
         return_value = True
 
         private_track_mock = mocker.patch(
-            'src.analytics.services.AnalyticService._track',
+            'src.analysis.services.AnalyticService._track',
             return_value=return_value,
         )
 
@@ -610,7 +610,7 @@ class TestAnalyticService:
         return_value = True
 
         private_track_mock = mocker.patch(
-            'src.analytics.services.AnalyticService._track',
+            'src.analysis.services.AnalyticService._track',
             return_value=return_value,
         )
 
@@ -652,7 +652,7 @@ class TestAnalyticService:
         return_value = True
 
         private_track_mock = mocker.patch(
-            'src.analytics.services.AnalyticService._track',
+            'src.analysis.services.AnalyticService._track',
             return_value=return_value,
         )
 
@@ -695,7 +695,7 @@ class TestAnalyticService:
         return_value = True
 
         private_track_mock = mocker.patch(
-            'src.analytics.services.AnalyticService._track',
+            'src.analysis.services.AnalyticService._track',
             return_value=return_value,
         )
 
@@ -741,7 +741,7 @@ class TestAnalyticService:
         is_superuser = False
 
         private_track_mock = mocker.patch(
-            'src.analytics.services.AnalyticService._track',
+            'src.analysis.services.AnalyticService._track',
             return_value=value,
         )
         task_id = 31
@@ -784,7 +784,7 @@ class TestAnalyticService:
 
         # arrange
         private_track_mock = mocker.patch(
-            'src.analytics.services.AnalyticService._track',
+            'src.analysis.services.AnalyticService._track',
             return_value=True,
         )
         user = create_test_user()
@@ -826,7 +826,7 @@ class TestAnalyticService:
         return_value = True
 
         private_track_mock = mocker.patch(
-            'src.analytics.services.AnalyticService._track',
+            'src.analysis.services.AnalyticService._track',
             return_value=return_value,
         )
 
@@ -865,7 +865,7 @@ class TestAnalyticService:
         workflow = create_test_workflow(user, tasks_count=1)
 
         private_track_mock = mocker.patch(
-            'src.analytics.services.AnalyticService._track',
+            'src.analysis.services.AnalyticService._track',
             return_value=return_value,
         )
 
@@ -911,7 +911,7 @@ class TestAnalyticService:
         workflow = create_test_workflow(user, tasks_count=1, is_external=True)
 
         private_track_mock = mocker.patch(
-            'src.analytics.services.AnalyticService._track',
+            'src.analysis.services.AnalyticService._track',
             return_value=return_value,
         )
 
@@ -956,7 +956,7 @@ class TestAnalyticService:
         auth_type = AuthTokenType.GUEST
         workflow = create_test_workflow(user, tasks_count=1, is_external=True)
         private_track_mock = mocker.patch(
-            'src.analytics.services.AnalyticService._track',
+            'src.analysis.services.AnalyticService._track',
         )
 
         # act
@@ -982,7 +982,7 @@ class TestAnalyticService:
         workflow = create_test_workflow(user, tasks_count=1)
 
         private_track_mock = mocker.patch(
-            'src.analytics.services.AnalyticService._track',
+            'src.analysis.services.AnalyticService._track',
             return_value=return_value,
         )
 
@@ -1029,7 +1029,7 @@ class TestAnalyticService:
         page = 'some page'
 
         private_track_mock = mocker.patch(
-            'src.analytics.services.AnalyticService._track',
+            'src.analysis.services.AnalyticService._track',
             return_value=return_value,
         )
 
@@ -1070,7 +1070,7 @@ class TestAnalyticService:
         return_value = True
         attachment = create_test_attachment(account=user.account)
         private_track_mock = mocker.patch(
-            'src.analytics.services.AnalyticService._track',
+            'src.analysis.services.AnalyticService._track',
             return_value=return_value,
         )
 
@@ -1112,7 +1112,7 @@ class TestAnalyticService:
         anonymous_id = '168.192.0.1'
         attachment = create_test_attachment(account=account)
         private_track_mock = mocker.patch(
-            'src.analytics.services.AnalyticService._track',
+            'src.analysis.services.AnalyticService._track',
             return_value=return_value,
         )
 
@@ -1153,7 +1153,7 @@ class TestAnalyticService:
         token_type = AuthTokenType.API
         attachment = create_test_attachment(account=account)
         private_track_mock = mocker.patch(
-            'src.analytics.services.AnalyticService._track',
+            'src.analysis.services.AnalyticService._track',
         )
 
         # act
@@ -1176,7 +1176,7 @@ class TestAnalyticService:
         return_value = True
 
         private_track_mock = mocker.patch(
-            'src.analytics.services.AnalyticService._track',
+            'src.analysis.services.AnalyticService._track',
             return_value=return_value,
         )
 
@@ -1218,7 +1218,7 @@ class TestAnalyticService:
         anonymous_id = '192.168.0.1'
 
         private_track_mock = mocker.patch(
-            'src.analytics.services.AnalyticService._track',
+            'src.analysis.services.AnalyticService._track',
             return_value=return_value,
         )
 
@@ -1260,7 +1260,7 @@ class TestAnalyticService:
         user = create_test_user()
         template = create_test_template(user)
         private_track_mock = mocker.patch(
-            'src.analytics.services.AnalyticService._track',
+            'src.analysis.services.AnalyticService._track',
         )
 
         # act
@@ -1282,7 +1282,7 @@ class TestAnalyticService:
         return_value = True
 
         private_track_mock = mocker.patch(
-            'src.analytics.services.AnalyticService._track',
+            'src.analysis.services.AnalyticService._track',
             return_value=return_value,
         )
 
@@ -1317,7 +1317,7 @@ class TestAnalyticService:
         auth_type = AuthTokenType.API
         workflow = create_test_workflow(user, tasks_count=1)
         private_track_mock = mocker.patch(
-            'src.analytics.services.AnalyticService._track',
+            'src.analysis.services.AnalyticService._track',
             return_value=return_value,
         )
         duration = timedelta(days=10)
@@ -1371,7 +1371,7 @@ class TestAnalyticService:
         )
         workflow.refresh_from_db()
         private_track_mock = mocker.patch(
-            'src.analytics.services.AnalyticService._track',
+            'src.analysis.services.AnalyticService._track',
             return_value=return_value,
         )
         duration = timedelta(days=10)
@@ -1420,7 +1420,7 @@ class TestAnalyticService:
         user = create_test_user(account=account)
 
         private_track_mock = mocker.patch(
-            'src.analytics.services.AnalyticService._track',
+            'src.analysis.services.AnalyticService._track',
             return_value=return_value,
         )
 
@@ -1459,7 +1459,7 @@ class TestAnalyticService:
         user = create_test_user(account=account)
 
         private_track_mock = mocker.patch(
-            'src.analytics.services.AnalyticService._track',
+            'src.analysis.services.AnalyticService._track',
             return_value=return_value,
         )
 
@@ -1498,7 +1498,7 @@ class TestAnalyticService:
         user = create_test_user(account=account)
 
         private_track_mock = mocker.patch(
-            'src.analytics.services.AnalyticService._track',
+            'src.analysis.services.AnalyticService._track',
             return_value=return_value,
         )
 
@@ -1535,7 +1535,7 @@ class TestAnalyticService:
         user = create_test_user(account=account)
 
         private_track_mock = mocker.patch(
-            'src.analytics.services.AnalyticService._track',
+            'src.analysis.services.AnalyticService._track',
             return_value=return_value,
         )
 
@@ -1570,7 +1570,7 @@ class TestAnalyticService:
         user = create_test_user(account=account)
 
         private_track_mock = mocker.patch(
-            'src.analytics.services.AnalyticService._track',
+            'src.analysis.services.AnalyticService._track',
             return_value=return_value,
         )
 
@@ -1607,7 +1607,7 @@ class TestAnalyticService:
         user = create_test_user(account=account)
 
         private_track_mock = mocker.patch(
-            'src.analytics.services.AnalyticService._track',
+            'src.analysis.services.AnalyticService._track',
             return_value=return_value,
         )
 
@@ -1643,7 +1643,7 @@ class TestAnalyticService:
         user = create_test_user(account=account)
         return_value = True
         private_track_mock = mocker.patch(
-            'src.analytics.services.AnalyticService._track',
+            'src.analysis.services.AnalyticService._track',
             return_value=return_value,
         )
         workflow = create_test_workflow(user=user, tasks_count=1)
@@ -1688,7 +1688,7 @@ class TestAnalyticService:
         return_value = True
         description = 's0me description'
         private_track_mock = mocker.patch(
-            'src.analytics.services.AnalyticService._track',
+            'src.analysis.services.AnalyticService._track',
             return_value=return_value,
         )
 
@@ -1730,7 +1730,7 @@ class TestAnalyticService:
         return_value = True
         auth_type = AuthTokenType.USER
         private_track_mock = mocker.patch(
-            'src.analytics.services.AnalyticService._track',
+            'src.analysis.services.AnalyticService._track',
             return_value=return_value,
         )
         workflow = create_test_workflow(user=user, tasks_count=1)
@@ -1777,7 +1777,7 @@ class TestAnalyticService:
         auth_type = AuthTokenType.API
         return_value = True
         private_track_mock = mocker.patch(
-            'src.analytics.services.AnalyticService._track',
+            'src.analysis.services.AnalyticService._track',
             return_value=return_value,
         )
         category = SystemTemplateCategory.objects.create(
@@ -1845,7 +1845,7 @@ class TestAnalyticService:
         auth_type = AuthTokenType.API
         return_value = True
         private_track_mock = mocker.patch(
-            'src.analytics.services.AnalyticService._track',
+            'src.analysis.services.AnalyticService._track',
             return_value=return_value,
         )
 
@@ -1902,7 +1902,7 @@ class TestAnalyticService:
         auth_type = AuthTokenType.API
         return_value = True
         private_track_mock = mocker.patch(
-            'src.analytics.services.AnalyticService._track',
+            'src.analysis.services.AnalyticService._track',
             return_value=return_value,
         )
 
@@ -1947,7 +1947,7 @@ class TestAnalyticService:
         tenant_account = create_test_account()
 
         private_track_mock = mocker.patch(
-            'src.analytics.services.AnalyticService._track',
+            'src.analysis.services.AnalyticService._track',
             return_value=return_value,
         )
 
@@ -1991,7 +1991,7 @@ class TestAnalyticService:
         tenant_account = create_test_account()
 
         private_track_mock = mocker.patch(
-            'src.analytics.services.AnalyticService._track',
+            'src.analysis.services.AnalyticService._track',
             return_value=return_value,
         )
 
@@ -2033,7 +2033,7 @@ class TestAnalyticService:
         user = create_test_user()
         template = create_test_template(user=user)
         private_track_mock = mocker.patch(
-            'src.analytics.services.AnalyticService._track',
+            'src.analysis.services.AnalyticService._track',
             return_value=return_value,
         )
 
@@ -2073,7 +2073,7 @@ class TestAnalyticService:
         user = create_test_user()
         template = create_test_template(user=user)
         private_track_mock = mocker.patch(
-            'src.analytics.services.AnalyticService._track',
+            'src.analysis.services.AnalyticService._track',
             return_value=return_value,
         )
 
@@ -2113,7 +2113,7 @@ class TestAnalyticService:
         user = create_test_user()
         workflow = create_test_workflow(user=user, tasks_count=1)
         private_track_mock = mocker.patch(
-            'src.analytics.services.AnalyticService._track',
+            'src.analysis.services.AnalyticService._track',
             return_value=return_value,
         )
         text = 'comment text'
@@ -2158,7 +2158,7 @@ class TestAnalyticService:
         user = create_test_user()
         workflow = create_test_workflow(user=user, tasks_count=1)
         private_track_mock = mocker.patch(
-            'src.analytics.services.AnalyticService._track',
+            'src.analysis.services.AnalyticService._track',
             return_value=return_value,
         )
         text = 'comment text'
@@ -2203,7 +2203,7 @@ class TestAnalyticService:
         user = create_test_user()
         workflow = create_test_workflow(user=user, tasks_count=1)
         private_track_mock = mocker.patch(
-            'src.analytics.services.AnalyticService._track',
+            'src.analysis.services.AnalyticService._track',
             return_value=return_value,
         )
         text = 'comment text'
@@ -2249,7 +2249,7 @@ class TestAnalyticService:
         user = create_test_user()
         workflow = create_test_workflow(user=user, tasks_count=1)
         private_track_mock = mocker.patch(
-            'src.analytics.services.AnalyticService._track',
+            'src.analysis.services.AnalyticService._track',
             return_value=return_value,
         )
         text = 'comment text'
@@ -2295,7 +2295,7 @@ class TestAnalyticService:
         user = create_test_user()
         workflow = create_test_workflow(user=user, tasks_count=1)
         private_track_mock = mocker.patch(
-            'src.analytics.services.AnalyticService._track',
+            'src.analysis.services.AnalyticService._track',
             return_value=return_value,
         )
         reaction = '=D'
@@ -2340,7 +2340,7 @@ class TestAnalyticService:
         user = create_test_user()
         workflow = create_test_workflow(user=user, tasks_count=1)
         private_track_mock = mocker.patch(
-            'src.analytics.services.AnalyticService._track',
+            'src.analysis.services.AnalyticService._track',
             return_value=return_value,
         )
         reaction = '=D'
@@ -2385,7 +2385,7 @@ class TestAnalyticService:
         return_value = True
         auth_type = AuthTokenType.USER
         private_track_mock = mocker.patch(
-            'src.analytics.services.AnalyticService._track',
+            'src.analysis.services.AnalyticService._track',
             return_value=return_value,
         )
         workflow = create_test_workflow(user=user, tasks_count=1)
@@ -2436,7 +2436,7 @@ class TestAnalyticService:
         return_value = True
         auth_type = AuthTokenType.USER
         private_track_mock = mocker.patch(
-            'src.analytics.services.AnalyticService._track',
+            'src.analysis.services.AnalyticService._track',
             return_value=return_value,
         )
         workflow = create_test_workflow(user=user, tasks_count=1)
@@ -2487,7 +2487,7 @@ class TestAnalyticService:
         auth_type = AuthTokenType.USER
         return_value = True
         private_track_mock = mocker.patch(
-            'src.analytics.services.AnalyticService._track',
+            'src.analysis.services.AnalyticService._track',
             return_value=return_value,
         )
         workflow = create_test_workflow(user=user, tasks_count=1)
@@ -2538,7 +2538,7 @@ class TestAnalyticService:
         return_value = True
         auth_type = AuthTokenType.USER
         private_track_mock = mocker.patch(
-            'src.analytics.services.AnalyticService._track',
+            'src.analysis.services.AnalyticService._track',
             return_value=return_value,
         )
         workflow = create_test_workflow(user=user, tasks_count=1)
@@ -2594,7 +2594,7 @@ class TestAnalyticService:
         users = [user.id]
         text = f'{group.name} (id: {group.id}).'
         private_track_mock = mocker.patch(
-            'src.analytics.services.AnalyticService._track',
+            'src.analysis.services.AnalyticService._track',
             return_value=return_value,
         )
 
@@ -2649,7 +2649,7 @@ class TestAnalyticService:
         users = [user.id]
         text = f'{group.name} (id: {group.id}).'
         private_track_mock = mocker.patch(
-            'src.analytics.services.AnalyticService._track',
+            'src.analysis.services.AnalyticService._track',
             return_value=return_value,
         )
 
@@ -2714,7 +2714,7 @@ class TestAnalyticService:
             f'Added user(s): {user.email}.'
         )
         private_track_mock = mocker.patch(
-            'src.analytics.services.AnalyticService._track',
+            'src.analysis.services.AnalyticService._track',
             return_value=return_value,
         )
 

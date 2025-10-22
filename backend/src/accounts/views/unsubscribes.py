@@ -12,7 +12,7 @@ from src.accounts.tokens import (
     DigestUnsubscribeToken,
     UnsubscribeEmailToken,
 )
-from src.analytics.services import AnalyticService
+from src.analysis.services import AnalyticService
 from src.authentication.enums import AuthTokenType
 from src.generics.mixins.views import (
     BaseResponseMixin,

@@ -3,13 +3,13 @@ from typing import Optional
 
 from django.contrib.auth import get_user_model
 
-from src.analytics.customerio import exceptions
-from src.analytics.customerio.entities import (
+from src.analysis.customerio import exceptions
+from src.analysis.customerio.entities import (
     WebHookData,
     WebHookMetricData,
 )
-from src.analytics.customerio.enums import MetricType
-from src.analytics.enums import MailoutType
+from src.analysis.customerio.enums import MetricType
+from src.analysis.enums import MailoutType
 
 configuration = os.getenv('ENVIRONMENT', 'development').title()
 UserModel = get_user_model()

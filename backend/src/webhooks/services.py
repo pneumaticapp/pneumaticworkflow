@@ -5,7 +5,7 @@ import requests
 from django.contrib.auth import get_user_model
 from django.db import transaction
 
-from src.analytics.services import AnalyticService
+from src.analysis.services import AnalyticService
 from src.generics.mixins.services import DefaultClsCacheMixin
 from src.logs.enums import (
     AccountEventStatus,

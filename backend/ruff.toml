@@ -92,7 +92,6 @@ ignore = [
     "RUF012",
     "S101",    # Allow asserts
     "Q000",    # Add later
-    "I001",    # Add later (Organize imports)
 ]
 extend-select = [
     "E501", # maximum line length

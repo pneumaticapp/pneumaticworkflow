@@ -102,7 +102,7 @@ class TestCopyTemplateTask:
     ):
 
         # arrange
-        analytics_mock = mocker.patch(
+        analysis_mock = mocker.patch(
             'src.processes.serializers.templates.task.'
             'AnalyticService.templates_task_due_date_created',
         )
@@ -153,7 +153,7 @@ class TestCopyTemplateTask:
         assert response.status_code == 200
         task_data = response.data['tasks'][0]
         assert task_data['raw_due_date']['duration'] == duration
-        analytics_mock.assert_called_once_with(
+        analysis_mock.assert_called_once_with(
             user=user,
             template=template,
             task=template.tasks.get(number=1),
