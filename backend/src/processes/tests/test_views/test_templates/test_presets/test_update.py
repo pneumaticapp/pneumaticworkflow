@@ -1,13 +1,14 @@
 import pytest
-from src.utils.validation import ErrorCode
+
+from src.authentication.enums import AuthTokenType
+from src.processes.enums import PresetType
 from src.processes.tests.fixtures import (
-    create_test_admin,
     create_test_account,
+    create_test_admin,
     create_test_template,
     create_test_template_preset,
 )
-from src.processes.enums import PresetType
-from src.authentication.enums import AuthTokenType
+from src.utils.validation import ErrorCode
 
 pytestmark = pytest.mark.django_db
 
@@ -23,7 +24,7 @@ class TestTemplatePresetUpdateView:
             template=template,
             author=user,
             name='Old Name',
-            type=PresetType.PERSONAL
+            type=PresetType.PERSONAL,
         )
 
         api_client.token_authenticate(user)
@@ -36,9 +37,9 @@ class TestTemplatePresetUpdateView:
                 {
                     'api_name': 'new_field',
                     'order': 1,
-                    'width': 300
-                }
-            ]
+                    'width': 300,
+                },
+            ],
         }
 
         updated_preset = create_test_template_preset(
@@ -46,7 +47,7 @@ class TestTemplatePresetUpdateView:
             author=user,
             name=data['name'],
             is_default=data['is_default'],
-            type=data['type']
+            type=data['type'],
         )
 
         mock_service = mocker.MagicMock()
@@ -54,13 +55,13 @@ class TestTemplatePresetUpdateView:
 
         service_class_mock = mocker.patch(
             'src.processes.views.template_preset.TemplatePresetService',
-            return_value=mock_service
+            return_value=mock_service,
         )
 
         # act
         response = api_client.put(
             f'/templates/presets/{preset.id}',
-            data=data
+            data=data,
         )
 
         # assert
@@ -68,11 +69,11 @@ class TestTemplatePresetUpdateView:
             user=user,
             instance=preset,
             is_superuser=False,
-            auth_type=AuthTokenType.USER
+            auth_type=AuthTokenType.USER,
         )
         mock_service.partial_update.assert_called_once_with(
             force_save=True,
-            **data
+            **data,
         )
         assert response.status_code == 200
         response_data = response.data
@@ -92,7 +93,7 @@ class TestTemplatePresetUpdateView:
         preset = create_test_template_preset(
             template=template,
             author=user,
-            type=PresetType.PERSONAL
+            type=PresetType.PERSONAL,
         )
 
         api_client.token_authenticate(user)
@@ -101,17 +102,17 @@ class TestTemplatePresetUpdateView:
             'name': 'New Name',
             'is_default': False,
             'type': 'invalid_type',
-            'fields': []
+            'fields': [],
         }
 
         service_class_mock = mocker.patch(
-            'src.processes.views.template_preset.TemplatePresetService'
+            'src.processes.views.template_preset.TemplatePresetService',
         )
 
         # act
         response = api_client.put(
             f'/templates/presets/{preset.id}',
-            data=data
+            data=data,
         )
 
         # assert
@@ -131,17 +132,17 @@ class TestTemplatePresetUpdateView:
             'name': 'New Name',
             'is_default': False,
             'type': PresetType.PERSONAL,
-            'fields': []
+            'fields': [],
         }
 
         service_class_mock = mocker.patch(
-            'src.processes.views.template_preset.TemplatePresetService'
+            'src.processes.views.template_preset.TemplatePresetService',
         )
 
         # act
         response = api_client.put(
             f'/templates/presets/{fake_preset_id}',
-            data=data
+            data=data,
         )
 
         # assert
@@ -155,17 +156,17 @@ class TestTemplatePresetUpdateView:
             'name': 'New Name',
             'is_default': False,
             'type': PresetType.PERSONAL,
-            'fields': []
+            'fields': [],
         }
 
         service_class_mock = mocker.patch(
-            'src.processes.views.template_preset.TemplatePresetService'
+            'src.processes.views.template_preset.TemplatePresetService',
         )
 
         # act
         response = api_client.put(
             f'/templates/presets/{fake_preset_id}',
-            data=data
+            data=data,
         )
 
         # assert
@@ -181,7 +182,7 @@ class TestTemplatePresetUpdateView:
         preset = create_test_template_preset(
             template=template,
             author=user1,
-            type=PresetType.PERSONAL
+            type=PresetType.PERSONAL,
         )
 
         api_client.token_authenticate(user2)
@@ -190,17 +191,17 @@ class TestTemplatePresetUpdateView:
             'name': 'New Name',
             'is_default': False,
             'type': PresetType.PERSONAL,
-            'fields': []
+            'fields': [],
         }
 
         service_class_mock = mocker.patch(
-            'src.processes.views.template_preset.TemplatePresetService'
+            'src.processes.views.template_preset.TemplatePresetService',
         )
 
         # act
         response = api_client.put(
             f'/templates/presets/{preset.id}',
-            data=data
+            data=data,
         )
 
         # assert
@@ -210,7 +211,7 @@ class TestTemplatePresetUpdateView:
     def test_update__different_account____permission_denied(
         self,
         api_client,
-        mocker
+        mocker,
     ):
         # arrange
         account1 = create_test_account()
@@ -222,7 +223,7 @@ class TestTemplatePresetUpdateView:
         preset = create_test_template_preset(
             template=template,
             author=user1,
-            type=PresetType.PERSONAL
+            type=PresetType.PERSONAL,
         )
 
         api_client.token_authenticate(user2)
@@ -231,17 +232,17 @@ class TestTemplatePresetUpdateView:
             'name': 'New Name',
             'is_default': False,
             'type': PresetType.PERSONAL,
-            'fields': []
+            'fields': [],
         }
 
         service_class_mock = mocker.patch(
-            'src.processes.views.template_preset.TemplatePresetService'
+            'src.processes.views.template_preset.TemplatePresetService',
         )
 
         # act
         response = api_client.put(
             f'/templates/presets/{preset.id}',
-            data=data
+            data=data,
         )
 
         # assert

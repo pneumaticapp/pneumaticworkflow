@@ -1,10 +1,10 @@
-# pylint: disable=attribute-defined-outside-init
+import contextlib
 import json
-from websockets.exceptions import ConnectionClosedError
+
 from channels.exceptions import DenyConnection
 from channels.generic.websocket import AsyncWebsocketConsumer
 from django.contrib.auth import get_user_model
-
+from websockets.exceptions import ConnectionClosedError
 
 UserModel = get_user_model()
 
@@ -16,7 +16,7 @@ class PneumaticBaseConsumer(AsyncWebsocketConsumer):
 
     async def validate_connection(self):
         if self.scope['user'].is_anonymous:
-            raise DenyConnection()
+            raise DenyConnection
 
     async def connect(self):
         await self.validate_connection()
@@ -43,16 +43,13 @@ class PneumaticBaseConsumer(AsyncWebsocketConsumer):
     async def notification(self, event):
         await self.send(
             text_data=json.dumps(
-                event['notification']
-            )
+                event['notification'],
+            ),
         )
 
     async def receive(self, text_data=None, bytes_data=None):
         if text_data == self.HEARTBEAT_PING_MESSAGE:
-            try:
+            with contextlib.suppress(ConnectionClosedError):
                 await self.send(text_data=self.HEARTBEAT_PONG_MESSAGE)
-            except ConnectionClosedError:
-                # The connection was broken by a network failure
-                pass
         else:
             await super().receive(text_data=text_data, bytes_data=bytes_data)

@@ -1,11 +1,12 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
+
 from src.processes.enums import (
-    FieldType
+    FieldType,
 )
-from src.processes.models import (
-    TaskField,
+from src.processes.models.workflows.fields import (
     FieldSelection,
+    TaskField,
 )
 from src.processes.serializers.file_attachment import (
     FileAttachmentSerializer,
@@ -21,7 +22,7 @@ class FieldSelectionListSerializer(serializers.ModelSerializer):
             'id',
             'value',
             'is_selected',
-            'api_name'
+            'api_name',
         )
 
 
@@ -55,10 +56,8 @@ class TaskFieldSerializer(serializers.ModelSerializer):
         if instance.type == FieldType.USER:
             if instance.user_id:
                 return str(instance.user_id)
-            else:
-                return ''
-        else:
-            return instance.value
+            return ''
+        return instance.value
 
 
 class TaskFieldListSerializer(serializers.ModelSerializer):

@@ -1,51 +1,51 @@
-from src.authentication.permissions import (
-    StaffPermission
+from rest_framework.decorators import action
+from rest_framework.mixins import (
+    ListModelMixin,
 )
+from rest_framework.pagination import LimitOffsetPagination
+from rest_framework.viewsets import GenericViewSet
+
 from src.accounts.permissions import (
     BillingPlanPermission,
+    ExpiredSubscriptionPermission,
     UserIsAdminOrAccountOwner,
     UsersOverlimitedPermission,
-    ExpiredSubscriptionPermission,
+)
+from src.authentication.permissions import (
+    StaffPermission,
+)
+from src.generics.filters import PneumaticFilterBackend
+from src.generics.mixins.views import (
+    CustomViewSetMixin,
 )
 from src.generics.permissions import (
     UserIsAuthenticated,
 )
 from src.processes.filters import (
-    SystemTemplateFilter
+    SystemTemplateFilter,
 )
-from src.processes.models import (
+from src.processes.models.templates.system_template import (
     SystemTemplate,
     SystemTemplateCategory,
 )
-from rest_framework.mixins import (
-    ListModelMixin
-)
-from rest_framework.decorators import action
-from rest_framework.viewsets import GenericViewSet
-from rest_framework.pagination import LimitOffsetPagination
-
-from src.generics.mixins.views import (
-    CustomViewSetMixin,
-)
+from src.processes.parsers import ImportSystemTemplateParser
 from src.processes.serializers.templates.system_template import (
-        SystemTemplateSerializer,
-        SystemTemplateCategorySerializer,
-        LibraryTemplateImportSerializer,
-    )
-from src.processes.services.templates.template import (
-    TemplateService,
+    LibraryTemplateImportSerializer,
+    SystemTemplateCategorySerializer,
+    SystemTemplateSerializer,
 )
 from src.processes.services.system_template import (
     SystemTemplateService,
 )
-from src.processes.parsers import ImportSystemTemplateParser
-from src.generics.filters import PneumaticFilterBackend
+from src.processes.services.templates.template import (
+    TemplateService,
+)
 
 
 class SystemTemplateViewSet(
     CustomViewSetMixin,
     ListModelMixin,
-    GenericViewSet
+    GenericViewSet,
 ):
     pagination_class = LimitOffsetPagination
     filter_backends = (PneumaticFilterBackend, )
@@ -65,14 +65,12 @@ class SystemTemplateViewSet(
     def get_queryset(self):
         if self.action == 'categories':
             return SystemTemplateCategory.objects.active()
-        else:
-            return SystemTemplate.objects.library().active()
+        return SystemTemplate.objects.library().active()
 
     def get_serializer_class(self):
         if self.action == 'categories':
             return SystemTemplateCategorySerializer
-        else:
-            return SystemTemplateSerializer
+        return SystemTemplateSerializer
 
     def list(self, request, *args, **kwargs):
         qst = self.get_queryset()
@@ -85,7 +83,7 @@ class SystemTemplateViewSet(
         service = TemplateService(
             user=request.user,
             is_superuser=request.is_superuser,
-            auth_type=request.token_type
+            auth_type=request.token_type,
         )
         data = service.get_from_sys_template(system_template)
         return self.response_ok(data)
@@ -98,7 +96,7 @@ class SystemTemplateViewSet(
 
 class SystemTemplatesImportViewSet(
     CustomViewSetMixin,
-    GenericViewSet
+    GenericViewSet,
 ):
     parser_classes = [ImportSystemTemplateParser]
     permission_classes = (
@@ -112,7 +110,7 @@ class SystemTemplatesImportViewSet(
     def create(self, request, *args, **kwargs):
         slz = self.get_serializer(
             data=request.data.get('templates'),
-            many=True
+            many=True,
         )
         slz.is_valid(raise_exception=True)
         service = SystemTemplateService(

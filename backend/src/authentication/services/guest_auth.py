@@ -1,29 +1,30 @@
 import json
 from typing import Optional, Tuple
-from django.core.cache import cache as default_cache
+
 from django.contrib.auth import get_user_model
+from django.core.cache import cache as default_cache
 from rest_framework import HTTP_HEADER_ENCODING
 from rest_framework_simplejwt.authentication import (
-    JWTAuthentication
+    JWTAuthentication,
 )
 from rest_framework_simplejwt.exceptions import (
     AuthenticationFailed,
     InvalidToken,
-    TokenError
+    TokenError,
 )
+
 from src.authentication.enums import (
-    GuestCachedStatus,
     AuthTokenType,
+    GuestCachedStatus,
 )
-from src.authentication.tokens import GuestToken
-from src.authentication.queries import GetGuestQuery
 from src.authentication.messages import (
     MSG_AU_0007,
     MSG_AU_0009,
     MSG_AU_0010,
     MSG_AU_0011,
 )
-
+from src.authentication.queries import GetGuestQuery
+from src.authentication.tokens import GuestToken
 
 UserModel = get_user_model()
 
@@ -59,8 +60,8 @@ class GuestJWTAuthService(JWTAuthentication):
             cls.get_token(
                 user_id=user_id,
                 task_id=task_id,
-                account_id=account_id
-            )
+                account_id=account_id,
+            ),
         )
 
     def get_header(self, request):
@@ -70,7 +71,7 @@ class GuestJWTAuthService(JWTAuthentication):
         """
         header = request.headers.get(
             'X-Guest-Authorization',
-            request.META.get('X-Guest-Authorization')
+            request.META.get('X-Guest-Authorization'),
         )
         if isinstance(header, str):
             header = header.encode(HTTP_HEADER_ENCODING)
@@ -98,8 +99,8 @@ class GuestJWTAuthService(JWTAuthentication):
         """
         try:
             return GuestToken(raw_token)
-        except TokenError:
-            raise InvalidToken(MSG_AU_0010)
+        except TokenError as ex:
+            raise InvalidToken(MSG_AU_0010) from ex
 
     def get_user(self, validated_token: GuestToken) -> UserModel:
         """
@@ -109,18 +110,18 @@ class GuestJWTAuthService(JWTAuthentication):
             user_id = validated_token['user_id']
             account_id = validated_token['account_id']
             task_id = validated_token['task_id']
-        except KeyError:
-            raise InvalidToken(MSG_AU_0011)
+        except KeyError as ex:
+            raise InvalidToken(MSG_AU_0011) from ex
         try:
             user = UserModel.objects.execute_raw(
                 GetGuestQuery(
                     user_id=user_id,
                     account_id=account_id,
-                    task_id=task_id
-                )
+                    task_id=task_id,
+                ),
             )[0]
-        except IndexError:
-            raise AuthenticationFailed(MSG_AU_0009)
+        except IndexError as ex:
+            raise AuthenticationFailed(MSG_AU_0009) from ex
         else:
             return user
 
@@ -156,7 +157,7 @@ class GuestJWTAuthService(JWTAuthentication):
         cls,
         task_id: int,
         status: GuestCachedStatus,
-        user_id: Optional[int] = None
+        user_id: Optional[int] = None,
     ):
 
         """ Store in cache guests status for task.
@@ -173,7 +174,7 @@ class GuestJWTAuthService(JWTAuthentication):
         if user_id:
             value[str(user_id)] = status
         else:
-            for elem in value.keys():
+            for elem in value:
                 value[elem] = status
         cls.cache.set(key, json.dumps(value), cls.CACHE_TIMEOUT)
 
@@ -181,7 +182,7 @@ class GuestJWTAuthService(JWTAuthentication):
     def deactivate_task_guest_cache(
         cls,
         task_id: int,
-        user_id: Optional[int] = None
+        user_id: Optional[int] = None,
     ):
         """ Set the guest status active in cache
             It means that guest user will receive and permission denied error
@@ -190,14 +191,14 @@ class GuestJWTAuthService(JWTAuthentication):
         cls._set_guest_cache(
             task_id=task_id,
             user_id=user_id,
-            status=GuestCachedStatus.INACTIVE
+            status=GuestCachedStatus.INACTIVE,
         )
 
     @classmethod
     def activate_task_guest_cache(
         cls,
         task_id: int,
-        user_id: Optional[int] = None
+        user_id: Optional[int] = None,
     ):
         """ Set the guest status active in cache
             It means that the guest will be authenticated quickly
@@ -206,13 +207,13 @@ class GuestJWTAuthService(JWTAuthentication):
         cls._set_guest_cache(
             task_id=task_id,
             user_id=user_id,
-            status=GuestCachedStatus.ACTIVE
+            status=GuestCachedStatus.ACTIVE,
         )
 
     @classmethod
     def delete_task_guest_cache(
         cls,
-        task_id: int
+        task_id: int,
     ):
         key = cls._get_cache_key(task_id)
         cls.cache.delete(key)
@@ -239,10 +240,10 @@ class GuestJWTAuthService(JWTAuthentication):
         if guest_status == GuestCachedStatus.ACTIVE:
             try:
                 user = UserModel.guests_objects.get(id=user_id)
-            except UserModel.DoesNotExist:
+            except UserModel.DoesNotExist as ex:
                 value[user_id] = GuestCachedStatus.INACTIVE
                 self.cache.set(key, json.dumps(value), self.CACHE_TIMEOUT)
-                raise AuthenticationFailed(MSG_AU_0009)
+                raise AuthenticationFailed(MSG_AU_0009) from ex
         elif guest_status == GuestCachedStatus.INACTIVE:
             raise AuthenticationFailed(MSG_AU_0009)
         else:

@@ -1,33 +1,24 @@
 from os import environ
+
 from django.contrib.auth import get_user_model
-from src.processes.models import Task
-from src.processes.services.tasks.exceptions import (
-    PerformersServiceException
-)
-from src.processes.services.tasks.base import (
-    BasePerformersService,
-)
+
 from src.accounts.services.guests import GuestService
+from src.analytics.services import AnalyticService
+from src.authentication.enums import AuthTokenType
+from src.authentication.services.guest_auth import GuestJWTAuthService
+from src.notifications.tasks import send_guest_new_task
+from src.processes.enums import PerformerType
 from src.processes.messages.workflow import (
     MSG_PW_0014,
     MSG_PW_0015,
 )
-from src.processes.enums import PerformerType
-from src.authentication.services import (
-    GuestJWTAuthService
-)
-from src.analytics.services import AnalyticService
-from src.notifications.tasks import (
-    send_guest_new_task,
-)
-from src.authentication.enums import AuthTokenType
+from src.processes.models.workflows.task import Task
+from src.processes.services.tasks.base import BasePerformersService
+from src.processes.services.tasks.exceptions import PerformersServiceException
 from src.processes.services.workflow_action import (
+    WorkflowActionService,
     WorkflowEventService,
 )
-from src.processes.services.workflow_action import (
-    WorkflowActionService
-)
-
 
 UserModel = get_user_model()
 
@@ -37,7 +28,7 @@ class GuestPerformersService(BasePerformersService):
     """ Service describes methods for change
         task performers with type 'GUEST' """
 
-    MAX_GUEST_PERFORMERS = environ.get('MAX_GUEST_PERFORMERS', 30)
+    MAX_GUEST_PERFORMERS = int(environ.get('MAX_GUEST_PERFORMERS', '30'))
 
     @classmethod
     def _get_user_for_create(
@@ -47,7 +38,7 @@ class GuestPerformersService(BasePerformersService):
     ) -> UserModel:
         return GuestService.get_or_create(
             email=user_key,
-            account_id=account_id
+            account_id=account_id,
         )
 
     @classmethod
@@ -59,10 +50,10 @@ class GuestPerformersService(BasePerformersService):
         try:
             user = UserModel.guests_objects.get(
                 email=user_key,
-                account_id=account_id
+                account_id=account_id,
             )
-        except UserModel.DoesNotExist:
-            raise PerformersServiceException(MSG_PW_0014)
+        except UserModel.DoesNotExist as ex:
+            raise PerformersServiceException(MSG_PW_0014) from ex
         else:
             return user
 
@@ -72,16 +63,16 @@ class GuestPerformersService(BasePerformersService):
         task: Task,
         user: UserModel,
         request_user: UserModel,
-        **kwargs
+        **kwargs,
     ):
         WorkflowEventService.performer_deleted_event(
             user=request_user,
             task=task,
-            performer=user
+            performer=user,
         )
         GuestJWTAuthService.deactivate_task_guest_cache(
             task_id=task.id,
-            user_id=user.id
+            user_id=user.id,
         )
         if task.can_be_completed():
             first_completed_user = (
@@ -103,7 +94,7 @@ class GuestPerformersService(BasePerformersService):
                 workflow=task.workflow,
                 user=first_completed_user,
                 is_superuser=False,
-                auth_type=AuthTokenType.USER
+                auth_type=AuthTokenType.USER,
             )
             service.complete_task(task=task)
 
@@ -111,7 +102,7 @@ class GuestPerformersService(BasePerformersService):
     def _validate_create(
         cls,
         task: Task,
-        request_user: UserModel
+        request_user: UserModel,
     ):
         guest_performers = task.taskperformer_set.guests(
         ).exclude_directly_deleted()
@@ -126,7 +117,7 @@ class GuestPerformersService(BasePerformersService):
         request_user: UserModel,
         current_url: str,
         is_superuser: bool,
-        **kwargs
+        **kwargs,
     ):
         WorkflowEventService.performer_created_event(
             user=request_user,
@@ -138,7 +129,7 @@ class GuestPerformersService(BasePerformersService):
             token=GuestJWTAuthService.get_str_token(
                 task_id=task.id,
                 user_id=user.id,
-                account_id=user.account.id
+                account_id=user.account.id,
             ),
             sender_name=request_user.get_full_name(),
             user_id=user.id,
@@ -148,21 +139,21 @@ class GuestPerformersService(BasePerformersService):
             task_description=task.description,
             task_due_date=task.due_date,
             logo_lg=user.account.logo_lg,
-            account_id=user.account_id
+            account_id=user.account_id,
         )
         GuestJWTAuthService.activate_task_guest_cache(
             task_id=task.id,
-            user_id=user.id
+            user_id=user.id,
         )
         AnalyticService.users_guest_invite_sent(
             task=task,
             invite_from=request_user,
             invite_to=user,
             current_url=current_url,
-            is_superuser=is_superuser
+            is_superuser=is_superuser,
         )
         AnalyticService.users_guest_invited(
             invite_from=request_user,
             invite_to=user,
-            is_superuser=is_superuser
+            is_superuser=is_superuser,
         )

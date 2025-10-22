@@ -1,19 +1,20 @@
-import pytz
 from datetime import datetime
-from typing import Union
+
+import pytz
 from django.conf import settings
-from rest_framework.utils import html
-from rest_framework.fields import empty
-from rest_framework.exceptions import ValidationError
 from rest_framework import serializers
+from rest_framework.exceptions import ValidationError
+from rest_framework.fields import empty
+from rest_framework.utils import html
+
+from src.accounts.enums import (
+    UserDateFormat,
+)
 from src.accounts.models import Account
 from src.generics.messages import (
     MSG_GE_0002,
     MSG_GE_0007,
     MSG_GE_0020,
-)
-from src.accounts.enums import (
-    UserDateFormat,
 )
 
 
@@ -27,7 +28,7 @@ class AccountPrimaryKeyRelatedField(serializers.PrimaryKeyRelatedField):
                 account = request.user.account
         if not account:
             raise Exception(
-                'Account not provided for AccountPrimaryKeyRelatedField'
+                'Account not provided for AccountPrimaryKeyRelatedField',
             )
         return account
 
@@ -63,9 +64,11 @@ class RelatedListField(serializers.ListField):
 class CommaSeparatedListField(serializers.ListField):
 
     def get_value(self, dictionary):
-        if self.field_name not in dictionary:
-            if getattr(self.root, 'partial', False):
-                return empty
+        if (
+            self.field_name not in dictionary
+            and getattr(self.root, 'partial', False)
+        ):
+            return empty
         if html.is_html_input(dictionary):
             val = dictionary.get(self.field_name, '')
             # Split result by comma
@@ -75,7 +78,7 @@ class CommaSeparatedListField(serializers.ListField):
             return html.parse_html_list(
                 dictionary,
                 prefix=self.field_name,
-                default=empty
+                default=empty,
             )
         return dictionary.get(self.field_name, empty)
 
@@ -87,19 +90,19 @@ class TimeStampField(serializers.DateTimeField):
             return None
         return value.timestamp()
 
-    def to_internal_value(self, value: Union[float, int]):
+    def to_internal_value(self, value: float):
         if isinstance(value, str):
             try:
                 value = float(value)
-            except ValueError:
-                raise ValidationError(detail=MSG_GE_0007)
+            except ValueError as ex:
+                raise ValidationError(detail=MSG_GE_0007) from ex
         elif not isinstance(value, int) and not isinstance(value, float):
             raise ValidationError(detail=MSG_GE_0007)
         tz = pytz.timezone(settings.TIME_ZONE)
         try:
             return datetime.fromtimestamp(value, tz=tz)
-        except (OverflowError, OSError, ValueError):
-            raise ValidationError(detail=MSG_GE_0020)
+        except (OverflowError, OSError, ValueError) as ex:
+            raise ValidationError(detail=MSG_GE_0020) from ex
 
 
 class DateFormatField(serializers.ChoiceField):
@@ -107,7 +110,7 @@ class DateFormatField(serializers.ChoiceField):
     def __init__(self, **kwargs):
         super().__init__(
             choices=UserDateFormat.API_CHOICES,
-            **kwargs
+            **kwargs,
         )
 
     def to_internal_value(self, data):

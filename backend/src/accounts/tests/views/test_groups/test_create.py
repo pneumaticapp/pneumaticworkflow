@@ -1,27 +1,29 @@
-import pytest
 import datetime
+
+import pytest
 from django.utils import timezone
-from src.utils.validation import ErrorCode
-from src.accounts.services.group import UserGroupService
-from src.accounts.messages import (
-    MSG_A_0024,
-    MSG_A_0039,
-)
-from src.processes.tests.fixtures import (
-    create_test_user,
-    create_test_group,
-    create_test_account,
-    create_invited_user,
-    create_test_guest
-)
+
 from src.accounts.enums import (
     BillingPlanType,
     UserStatus,
 )
-from src.authentication.enums import AuthTokenType
-from src.accounts.services.exceptions import (
-    UserGroupServiceException
+from src.accounts.messages import (
+    MSG_A_0024,
+    MSG_A_0039,
 )
+from src.accounts.services.exceptions import (
+    UserGroupServiceException,
+)
+from src.accounts.services.group import UserGroupService
+from src.authentication.enums import AuthTokenType
+from src.processes.tests.fixtures import (
+    create_invited_user,
+    create_test_account,
+    create_test_group,
+    create_test_guest,
+    create_test_user,
+)
+from src.utils.validation import ErrorCode
 
 pytestmark = pytest.mark.django_db
 
@@ -33,7 +35,7 @@ def test_create__all_fields__ok(api_client, mocker):
     user = create_test_user(account=account)
     another_user = create_test_user(
         email='another@pneumatic.app',
-        account=account
+        account=account,
     )
     api_client.token_authenticate(user)
     request_data = {
@@ -44,28 +46,28 @@ def test_create__all_fields__ok(api_client, mocker):
     service_init_mock = mocker.patch.object(
         UserGroupService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     group = create_test_group(account, users=request_data['users'])
     create_group_mock = mocker.patch(
         'src.accounts.services.group.UserGroupService.create',
-        return_value=group
+        return_value=group,
     )
 
     # act
     response = api_client.post(
         path='/accounts/groups',
-        data=request_data
+        data=request_data,
     )
 
     # assert
     service_init_mock.assert_called_once_with(
         user=user,
         auth_type=AuthTokenType.USER,
-        is_superuser=False
+        is_superuser=False,
     )
     create_group_mock.assert_called_once_with(
-        **request_data
+        **request_data,
     )
     assert response.status_code == 200
     data = response.data
@@ -81,38 +83,38 @@ def test_create__required_fields__ok(api_client, mocker):
     user = create_test_user(account=account)
     create_test_user(
         email='another@pneumatic.app',
-        account=account
+        account=account,
     )
     api_client.token_authenticate(user)
     request_data = {
         'name': 'Group',
-        'photo': ''
+        'photo': '',
     }
     service_init_mock = mocker.patch.object(
         UserGroupService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     group = create_test_group(account)
     create_group_mock = mocker.patch(
         'src.accounts.services.group.UserGroupService.create',
-        return_value=group
+        return_value=group,
     )
 
     # act
     response = api_client.post(
         path='/accounts/groups',
-        data=request_data
+        data=request_data,
     )
 
     # assert
     service_init_mock.assert_called_once_with(
         user=user,
         auth_type=AuthTokenType.USER,
-        is_superuser=False
+        is_superuser=False,
     )
     create_group_mock.assert_called_once_with(
-        **request_data
+        **request_data,
     )
     assert response.status_code == 200
     data = response.data
@@ -123,14 +125,14 @@ def test_create__required_fields__ok(api_client, mocker):
 
 def test_create__user_from_another_account__validation_error(
     api_client,
-    mocker
+    mocker,
 ):
 
     # arrange
     account = create_test_account(plan=BillingPlanType.UNLIMITED)
     user = create_test_user(account=account)
     another_user = create_test_user(
-        email='another@pneumatic.app'
+        email='another@pneumatic.app',
     )
     api_client.token_authenticate(user)
     request_data = {
@@ -141,17 +143,17 @@ def test_create__user_from_another_account__validation_error(
     service_init_mock = mocker.patch.object(
         UserGroupService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     create_test_group(account, users=request_data['users'])
     create_group_mock = mocker.patch(
-        'src.accounts.services.group.UserGroupService.create'
+        'src.accounts.services.group.UserGroupService.create',
     )
 
     # act
     response = api_client.post(
         path='/accounts/groups',
-        data=request_data
+        data=request_data,
     )
 
     # assert
@@ -178,16 +180,16 @@ def test_create__fake_user_id__validation_error(api_client, mocker):
     service_init_mock = mocker.patch.object(
         UserGroupService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     create_group_mock = mocker.patch(
-        'src.accounts.services.group.UserGroupService.create'
+        'src.accounts.services.group.UserGroupService.create',
     )
 
     # act
     response = api_client.post(
         path='/accounts/groups',
-        data=request_data
+        data=request_data,
     )
 
     # assert
@@ -218,28 +220,28 @@ def test_create__invited_user__ok(api_client, mocker):
     service_init_mock = mocker.patch.object(
         UserGroupService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     group = create_test_group(account, users=request_data['users'])
     create_group_mock = mocker.patch(
         'src.accounts.services.group.UserGroupService.create',
-        return_value=group
+        return_value=group,
     )
 
     # act
     response = api_client.post(
         path='/accounts/groups',
-        data=request_data
+        data=request_data,
     )
 
     # assert
     service_init_mock.assert_called_once_with(
         user=user,
         auth_type=AuthTokenType.USER,
-        is_superuser=False
+        is_superuser=False,
     )
     create_group_mock.assert_called_once_with(
-        **request_data
+        **request_data,
     )
     assert response.status_code == 200
     data = response.data
@@ -266,17 +268,17 @@ def test_create__user_inactive__validation_error(api_client, mocker):
     service_init_mock = mocker.patch.object(
         UserGroupService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     create_test_group(account, users=request_data['users'])
     create_group_mock = mocker.patch(
-        'src.accounts.services.group.UserGroupService.create'
+        'src.accounts.services.group.UserGroupService.create',
     )
 
     # act
     response = api_client.post(
         path='/accounts/groups',
-        data=request_data
+        data=request_data,
     )
 
     # assert
@@ -306,17 +308,17 @@ def test_create__guest__validation_error(api_client, mocker):
     service_init_mock = mocker.patch.object(
         UserGroupService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     create_test_group(account, users=request_data['users'])
     create_group_mock = mocker.patch(
-        'src.accounts.services.group.UserGroupService.create'
+        'src.accounts.services.group.UserGroupService.create',
     )
 
     # act
     response = api_client.post(
         path='/accounts/groups',
-        data=request_data
+        data=request_data,
     )
 
     # assert
@@ -342,16 +344,16 @@ def test_create__not_name__validation_error(api_client, mocker):
     service_init_mock = mocker.patch.object(
         UserGroupService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     create_group_mock = mocker.patch(
-        'src.accounts.services.group.UserGroupService.create'
+        'src.accounts.services.group.UserGroupService.create',
     )
 
     # act
     response = api_client.post(
         path='/accounts/groups',
-        data=request_data
+        data=request_data,
     )
 
     # assert
@@ -378,28 +380,28 @@ def test_create__users_empty_list__ok(api_client, mocker):
     service_init_mock = mocker.patch.object(
         UserGroupService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     group = create_test_group(account, users=request_data['users'])
     create_group_mock = mocker.patch(
         'src.accounts.services.group.UserGroupService.create',
-        return_value=group
+        return_value=group,
     )
 
     # act
     response = api_client.post(
         path='/accounts/groups',
-        data=request_data
+        data=request_data,
     )
 
     # assert
     service_init_mock.assert_called_once_with(
         user=user,
         auth_type=AuthTokenType.USER,
-        is_superuser=False
+        is_superuser=False,
     )
     create_group_mock.assert_called_once_with(
-        **request_data
+        **request_data,
     )
     assert response.status_code == 200
     data = response.data
@@ -408,7 +410,7 @@ def test_create__users_empty_list__ok(api_client, mocker):
 
 def test_create__invalid_list_users__validation_error(
     api_client,
-    mocker
+    mocker,
 ):
 
     # arrange
@@ -423,16 +425,16 @@ def test_create__invalid_list_users__validation_error(
     service_init_mock = mocker.patch.object(
         UserGroupService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     create_group_mock = mocker.patch(
-        'src.accounts.services.group.UserGroupService.create'
+        'src.accounts.services.group.UserGroupService.create',
     )
 
     # act
     response = api_client.post(
         path='/accounts/groups',
-        data=request_data
+        data=request_data,
     )
 
     # assert
@@ -453,7 +455,7 @@ def test_create__not_admin__permission_denied(api_client, mocker):
         account=account,
         email='no_admin@test.com',
         is_admin=False,
-        is_account_owner=False
+        is_account_owner=False,
     )
     api_client.token_authenticate(no_admin_user)
     request_data = {
@@ -463,16 +465,16 @@ def test_create__not_admin__permission_denied(api_client, mocker):
     service_init_mock = mocker.patch.object(
         UserGroupService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     create_group_mock = mocker.patch(
-        'src.accounts.services.group.UserGroupService.create'
+        'src.accounts.services.group.UserGroupService.create',
     )
 
     # act
     response = api_client.post(
         path='/accounts/groups',
-        data=request_data
+        data=request_data,
     )
 
     # assert
@@ -491,16 +493,16 @@ def test_create__not_auth__permission_denied(api_client, mocker):
     service_init_mock = mocker.patch.object(
         UserGroupService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     create_group_mock = mocker.patch(
-        'src.accounts.services.group.UserGroupService.create'
+        'src.accounts.services.group.UserGroupService.create',
     )
 
     # act
     response = api_client.post(
         path='/accounts/groups',
-        data=request_data
+        data=request_data,
     )
 
     # assert
@@ -513,7 +515,7 @@ def test_create__expired_subscription__permission_denied(api_client, mocker):
     # arrange
     account = create_test_account(
         plan=BillingPlanType.UNLIMITED,
-        plan_expiration=timezone.now() - datetime.timedelta(hours=1)
+        plan_expiration=timezone.now() - datetime.timedelta(hours=1),
     )
     user = create_test_user(account=account)
     api_client.token_authenticate(user)
@@ -524,16 +526,16 @@ def test_create__expired_subscription__permission_denied(api_client, mocker):
     service_init_mock = mocker.patch.object(
         UserGroupService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     create_group_mock = mocker.patch(
-        'src.accounts.services.group.UserGroupService.create'
+        'src.accounts.services.group.UserGroupService.create',
     )
 
     # act
     response = api_client.post(
         path='/accounts/groups',
-        data=request_data
+        data=request_data,
     )
 
     # assert
@@ -555,25 +557,25 @@ def test_create__service_exception__validation_error(api_client, mocker):
     service_init_mock = mocker.patch.object(
         UserGroupService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     message = 'some message'
     create_group_mock = mocker.patch(
         'src.accounts.services.group.UserGroupService.create',
-        side_effect=UserGroupServiceException(message)
+        side_effect=UserGroupServiceException(message),
     )
 
     # act
     response = api_client.post(
         path='/accounts/groups',
-        data=request_data
+        data=request_data,
     )
 
     # assert
     service_init_mock.assert_called_once_with(
         user=user,
         auth_type=AuthTokenType.USER,
-        is_superuser=False
+        is_superuser=False,
     )
     create_group_mock.assert_called_once()
     assert response.status_code == 400

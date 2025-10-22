@@ -1,4 +1,3 @@
-# pylint: disable=attribute-defined-outside-init
 # All about this file only exists because original AsgiHandler from
 # channels doesn't works propertly, and does things, that developers could have
 # avoided (sync_to_async decorator, for example). If we use a parent handler,
@@ -28,8 +27,8 @@ class AsgiHandler(ChannelsAsgiHandler):
     async def __call__(self, scope, receive, send):
         if scope["type"] != "http":
             raise ValueError(
-                "The AsgiHandler can only handle HTTP connections, not %s"
-                % scope["type"]
+                f'The AsgiHandler can only handle HTTP connections, '
+                f'not {scope["type"]}',
             )
         self.scope = scope
         self.send = send
@@ -58,7 +57,7 @@ class AsgiHandler(ChannelsAsgiHandler):
         except RequestTimeout:
             response = HttpResponse(
                 "408 Request Timeout (upload too slow)",
-                status=408
+                status=408,
             )
         except RequestAborted:
             return
