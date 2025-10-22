@@ -76,9 +76,9 @@ export function KickoffOutputs({
 
     return outputs?.map((output, index) => {
       const OutputComponent = outputsMap[output.type];
-      // check userField.value: id => userField.value = user email / group name
+      const value = output.type === EExtraFieldType.User ? output.userId || output.groupId : output.value;
       const isEmpty = !(
-        output.value ||
+        value ||
         output.attachments?.length ||
         output.selections?.findIndex((selection) => selection.isSelected) !== -1
       );
