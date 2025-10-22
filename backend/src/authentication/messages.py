@@ -28,3 +28,5 @@ MSG_AU_0011 = _('Token contained no recognizable user identification.')
 # Translators: Change password from profile
 MSG_AU_0012 = _('The current password is incorrect.')
 MSG_AU_0013 = _('The new password and its confirmation don\'t match.')
+# Translators: Auth0 organization members request failed
+MSG_AU_0015 = _('Failed to fetch organization members.')

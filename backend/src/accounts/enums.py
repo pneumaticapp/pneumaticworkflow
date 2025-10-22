@@ -207,6 +207,7 @@ class SourceType:
         (EMAIL, EMAIL),
         (MICROSOFT, MICROSOFT),
         (GOOGLE, GOOGLE),
+        (AUTH0, AUTH0),
     )
 
     LITERALS = Literal[
