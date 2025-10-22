@@ -8,17 +8,12 @@ import { EXTERNAL_USER } from '../../../../../../../utils/users';
 
 import styles from './StarterColumn.css';
 
-type TProps = React.PropsWithChildren<CellProps<TableColumns, TableColumns['starter']>>;
+type TProps = React.PropsWithChildren<CellProps<TableColumns, TableColumns['system-column-starter']>>;
 
-export function StarterColumn({
-  value: {
-    workflowStarter,
-    isExternal,
-  }
-}: TProps) {
+export function StarterColumn({ value: { workflowStarter, isExternal } }: TProps) {
   return (
     <UserData userId={workflowStarter}>
-      {user => {
+      {(user) => {
         let currentUser = user;
 
         if (!currentUser) {
@@ -29,10 +24,8 @@ export function StarterColumn({
           currentUser = EXTERNAL_USER;
         }
 
-        return (
-          <Avatar user={currentUser} size="sm" withTooltip containerClassName={styles['starter']} />
-        )
+        return <Avatar user={currentUser} size="sm" withTooltip containerClassName={styles['starter']} />;
       }}
     </UserData>
-  )
+  );
 }
