@@ -18,7 +18,7 @@ from src.accounts.services.exceptions import (
     AlreadyRegisteredException,
     InvalidOrExpiredToken,
 )
-from src.analytics.enums import MailoutType
+from src.analysis.enums import MailoutType
 
 UserModel = get_user_model()
 

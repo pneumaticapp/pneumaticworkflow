@@ -1124,7 +1124,7 @@ class TestCreateTemplateTask:
         api_client,
     ):
         # arrange
-        analytics_mock = mocker.patch(
+        analysis_mock = mocker.patch(
             'src.processes.serializers.templates.task.'
             'AnalyticService.templates_task_due_date_created',
         )
@@ -1173,7 +1173,7 @@ class TestCreateTemplateTask:
         task_data = response.data['tasks'][0]
         assert task_data['raw_due_date']['duration'] == duration
         template = Template.objects.get(id=response.data['id'])
-        analytics_mock.assert_called_once_with(
+        analysis_mock.assert_called_once_with(
             user=user,
             template=template,
             task=template.tasks.get(number=1),
@@ -1187,7 +1187,7 @@ class TestCreateTemplateTask:
         api_client,
     ):
         # arrange
-        analytics_mock = mocker.patch(
+        analysis_mock = mocker.patch(
             'src.processes.serializers.templates.task.'
             'AnalyticService.templates_task_due_date_created',
         )
@@ -1235,7 +1235,7 @@ class TestCreateTemplateTask:
         assert response.status_code == 200
         task_data = response.data['tasks'][0]
         assert task_data['raw_due_date']['duration'] == duration
-        analytics_mock.assert_not_called()
+        analysis_mock.assert_not_called()
 
     def test_create__equal_api_names__save_last(
         self,

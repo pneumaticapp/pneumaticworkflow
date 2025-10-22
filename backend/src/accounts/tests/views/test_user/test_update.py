@@ -30,7 +30,7 @@ pytestmark = pytest.mark.django_db
 def test_update__all_fields__ok(mocker, api_client):
 
     # arrange
-    analytics_mock = mocker.patch(
+    analysis_mock = mocker.patch(
         'src.accounts.views.user.AnalyticService.'
         'users_digest',
     )
@@ -146,7 +146,7 @@ def test_update__all_fields__ok(mocker, api_client):
         request_data['is_special_offers_subscriber']
     )
     identify_mock.assert_called_once_with(user)
-    analytics_mock.assert_called_once_with(
+    analysis_mock.assert_called_once_with(
         user=user,
         auth_type=AuthTokenType.USER,
         is_superuser=False,
@@ -188,7 +188,7 @@ def test_update__partial__update_request_fields(mocker, api_client):
     is_newsletters_subscriber = False
     is_special_offers_subscriber = False
 
-    analytics_mock = mocker.patch(
+    analysis_mock = mocker.patch(
         'src.accounts.views.user.AnalyticService.'
         'users_digest',
     )
@@ -281,7 +281,7 @@ def test_update__partial__update_request_fields(mocker, api_client):
         is_special_offers_subscriber
     )
     identify_mock.assert_called_once_with(user)
-    analytics_mock.assert_called_once_with(
+    analysis_mock.assert_called_once_with(
         user=user,
         auth_type=AuthTokenType.USER,
         is_superuser=False,
@@ -307,10 +307,10 @@ def test_update__partial__update_request_fields(mocker, api_client):
     )
 
 
-def test_update__no_call_analytics__ok(mocker, api_client):
+def test_update__no_call_analysis__ok(mocker, api_client):
 
     # arrange
-    analytics_mock = mocker.patch(
+    analysis_mock = mocker.patch(
         'src.accounts.views.user.AnalyticService'
         '.users_digest',
     )
@@ -347,7 +347,7 @@ def test_update__no_call_analytics__ok(mocker, api_client):
     user.refresh_from_db()
     assert user.is_digest_subscriber is True
     identify_mock.assert_called_once_with(user)
-    analytics_mock.assert_not_called()
+    analysis_mock.assert_not_called()
     send_user_updated_mock.assert_called_once_with(
         logging=user.account.log_api_requests,
         account_id=user.account_id,
@@ -366,7 +366,7 @@ def test_update__no_call_analytics__ok(mocker, api_client):
 def test_update__only_date_fmt__ok(mocker, api_client):
 
     # arrange
-    analytics_mock = mocker.patch(
+    analysis_mock = mocker.patch(
         'src.accounts.views.user.AnalyticService.'
         'users_digest',
     )
@@ -407,7 +407,7 @@ def test_update__only_date_fmt__ok(mocker, api_client):
     user.refresh_from_db()
     assert user.date_fmt == UserDateFormat.PY_EUROPE_24
     identify_mock.assert_called_once_with(user)
-    analytics_mock.assert_not_called()
+    analysis_mock.assert_not_called()
     stripe_service_init_mock.assert_called_once_with(
         user=user,
         auth_type=AuthTokenType.USER,
@@ -432,7 +432,7 @@ def test_update__only_date_fmt__ok(mocker, api_client):
 def test_update__only_date_fdw__ok(mocker, api_client):
 
     # arrange
-    analytics_mock = mocker.patch(
+    analysis_mock = mocker.patch(
         'src.accounts.views.user.AnalyticService.'
         'users_digest',
     )
@@ -473,7 +473,7 @@ def test_update__only_date_fdw__ok(mocker, api_client):
     user.refresh_from_db()
     assert user.date_fdw == UserFirstDayWeek.THURSDAY
     identify_mock.assert_called_once_with(user)
-    analytics_mock.assert_not_called()
+    analysis_mock.assert_not_called()
     stripe_service_init_mock.assert_called_once_with(
         user=user,
         auth_type=AuthTokenType.USER,
@@ -509,7 +509,7 @@ def test_update__invalid_date_fmt__validation_error(
 ):
 
     # arrange
-    analytics_mock = mocker.patch(
+    analysis_mock = mocker.patch(
         'src.accounts.views.user.AnalyticService.'
         'users_digest',
     )
@@ -550,7 +550,7 @@ def test_update__invalid_date_fmt__validation_error(
     assert response.data['details']['name'] == 'date_fmt'
     assert response.data['details']['reason'].endswith(message)
     identify_mock.assert_not_called()
-    analytics_mock.assert_not_called()
+    analysis_mock.assert_not_called()
     stripe_service_init_mock.assert_not_called()
     update_customer_mock.assert_not_called()
     send_user_updated_mock.assert_not_called()
@@ -569,7 +569,7 @@ def test_update__invalid_date_fdw__validation_error(
 ):
 
     # arrange
-    analytics_mock = mocker.patch(
+    analysis_mock = mocker.patch(
         'src.accounts.views.user.AnalyticService.'
         'users_digest',
     )
@@ -610,7 +610,7 @@ def test_update__invalid_date_fdw__validation_error(
     assert response.data['details']['name'] == 'date_fdw'
     assert response.data['details']['reason'].endswith(message)
     identify_mock.assert_not_called()
-    analytics_mock.assert_not_called()
+    analysis_mock.assert_not_called()
     stripe_service_init_mock.assert_not_called()
     update_customer_mock.assert_not_called()
     send_user_updated_mock.assert_not_called()
@@ -622,7 +622,7 @@ def test_update__invalid_photo__validation_error(
 ):
 
     # arrange
-    analytics_mock = mocker.patch(
+    analysis_mock = mocker.patch(
         'src.accounts.views.user.AnalyticService'
         '.users_digest',
     )
@@ -663,7 +663,7 @@ def test_update__invalid_photo__validation_error(
     assert response.data['details']['name'] == 'photo'
     assert response.data['details']['reason'] == message
     identify_mock.assert_not_called()
-    analytics_mock.assert_not_called()
+    analysis_mock.assert_not_called()
     stripe_service_init_mock.assert_not_called()
     update_customer_mock.assert_not_called()
     send_user_updated_mock.assert_not_called()
@@ -849,7 +849,7 @@ def test_update__is_digest_subscriber__anaytics_call(
 ):
 
     # arrange
-    analytics_mock = mocker.patch(
+    analysis_mock = mocker.patch(
         'src.accounts.views.user.AnalyticService'
         '.users_digest',
     )
@@ -890,7 +890,7 @@ def test_update__is_digest_subscriber__anaytics_call(
     user.refresh_from_db()
     assert user.is_digest_subscriber == data['is_digest_subscriber']
     identify_mock.assert_called_once_with(user)
-    analytics_mock.assert_called_once_with(
+    analysis_mock.assert_called_once_with(
         user=user,
         auth_type=AuthTokenType.USER,
         is_superuser=False,
@@ -984,7 +984,7 @@ def test_update__system_euro_language_not_allow_ru__validation_error(
 ):
 
     # arrange
-    analytics_mock = mocker.patch(
+    analysis_mock = mocker.patch(
         'src.accounts.views.user.AnalyticService'
         '.users_digest',
     )
@@ -1030,7 +1030,7 @@ def test_update__system_euro_language_not_allow_ru__validation_error(
     assert response.data['code'] == ErrorCode.VALIDATION_ERROR
     assert response.data['details']['name'] == 'language'
     identify_mock.assert_not_called()
-    analytics_mock.assert_not_called()
+    analysis_mock.assert_not_called()
     stripe_service_init_mock.assert_not_called()
     update_customer_mock.assert_not_called()
     send_user_updated_mock.assert_not_called()
@@ -1108,7 +1108,7 @@ def test_update__unsupported_language__validation_error(
 ):
 
     # arrange
-    analytics_mock = mocker.patch(
+    analysis_mock = mocker.patch(
         'src.accounts.views.user.AnalyticService'
         '.users_digest',
     )
@@ -1147,7 +1147,7 @@ def test_update__unsupported_language__validation_error(
     assert response.data['code'] == ErrorCode.VALIDATION_ERROR
     assert response.data['details']['name'] == 'language'
     identify_mock.assert_not_called()
-    analytics_mock.assert_not_called()
+    analysis_mock.assert_not_called()
     stripe_service_init_mock.assert_not_called()
     update_customer_mock.assert_not_called()
     send_user_updated_mock.assert_not_called()
@@ -1219,7 +1219,7 @@ def test_update__invalid_timezone__validation_error(
 ):
 
     # arrange
-    analytics_mock = mocker.patch(
+    analysis_mock = mocker.patch(
         'src.accounts.views.user.AnalyticService'
         '.users_digest',
     )
@@ -1259,7 +1259,7 @@ def test_update__invalid_timezone__validation_error(
     assert response.data['code'] == ErrorCode.VALIDATION_ERROR
     assert response.data['details']['name'] == 'timezone'
     identify_mock.assert_not_called()
-    analytics_mock.assert_not_called()
+    analysis_mock.assert_not_called()
     stripe_service_init_mock.assert_not_called()
     update_customer_mock.assert_not_called()
     send_user_updated_mock.assert_not_called()
@@ -1268,7 +1268,7 @@ def test_update__invalid_timezone__validation_error(
 def test_update__not_authenticated__unauthorized(mocker, api_client):
 
     # arrange
-    analytics_mock = mocker.patch(
+    analysis_mock = mocker.patch(
         'src.accounts.views.user.AnalyticService.'
         'users_digest',
     )
@@ -1299,7 +1299,7 @@ def test_update__not_authenticated__unauthorized(mocker, api_client):
     # assert
     assert response.status_code == 401
     identify_mock.assert_not_called()
-    analytics_mock.assert_not_called()
+    analysis_mock.assert_not_called()
     stripe_service_init_mock.assert_not_called()
     update_customer_mock.assert_not_called()
     send_user_updated_mock.assert_not_called()
@@ -1308,7 +1308,7 @@ def test_update__not_authenticated__unauthorized(mocker, api_client):
 def test_update__guest__permission_denied(mocker, api_client):
 
     # arrange
-    analytics_mock = mocker.patch(
+    analysis_mock = mocker.patch(
         'src.accounts.views.user.AnalyticService.'
         'users_digest',
     )
@@ -1354,7 +1354,7 @@ def test_update__guest__permission_denied(mocker, api_client):
     # assert
     assert response.status_code == 403
     identify_mock.assert_not_called()
-    analytics_mock.assert_not_called()
+    analysis_mock.assert_not_called()
     stripe_service_init_mock.assert_not_called()
     update_customer_mock.assert_not_called()
     send_user_updated_mock.assert_not_called()
@@ -1366,7 +1366,7 @@ def test_update__expired_subscription__permission_denied(
 ):
 
     # arrange
-    analytics_mock = mocker.patch(
+    analysis_mock = mocker.patch(
         'src.accounts.views.user.AnalyticService.'
         'users_digest',
     )
@@ -1403,7 +1403,7 @@ def test_update__expired_subscription__permission_denied(
     # assert
     assert response.status_code == 403
     identify_mock.assert_not_called()
-    analytics_mock.assert_not_called()
+    analysis_mock.assert_not_called()
     stripe_service_init_mock.assert_not_called()
     update_customer_mock.assert_not_called()
     send_user_updated_mock.assert_not_called()

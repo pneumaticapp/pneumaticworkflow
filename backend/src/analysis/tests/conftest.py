@@ -11,5 +11,5 @@ def api_client():
 @pytest.fixture
 def identify_mock(mocker):
     return mocker.patch(
-        'src.analytics.mixins.BaseIdentifyMixin.identify',
+        'src.analysis.mixins.BaseIdentifyMixin.identify',
     )

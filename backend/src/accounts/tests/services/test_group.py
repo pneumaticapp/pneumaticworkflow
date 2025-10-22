@@ -3,7 +3,7 @@ from django.contrib.auth import get_user_model
 from django.utils import timezone
 
 from src.accounts.services.group import UserGroupService
-from src.analytics.events import GroupsAnalyticsEvent
+from src.analysis.events import GroupsAnalyticsEvent
 from src.authentication.enums import AuthTokenType
 from src.notifications.tasks import (
     send_new_task_websocket,
@@ -158,8 +158,8 @@ class TestUserGroupService:
             auth_type=auth_type,
         )
 
-        analytics_mock = mocker.patch(
-            'src.analytics.tasks.track_group_analytics.delay',
+        analysis_mock = mocker.patch(
+            'src.analysis.tasks.track_group_analytics.delay',
         )
         send_group_created_mock = mocker.patch(
             'src.notifications.tasks.'
@@ -170,7 +170,7 @@ class TestUserGroupService:
         service._create_actions()
 
         # assert
-        analytics_mock.assert_called_once_with(
+        analysis_mock.assert_called_once_with(
             event=GroupsAnalyticsEvent.created,
             user_id=user.id,
             user_email=user.email,
@@ -254,8 +254,8 @@ class TestUserGroupService:
             'src.accounts.services.group.'
             'update_workflow_owners.delay',
         )
-        analytics_mock = mocker.patch(
-            'src.analytics.tasks.track_group_analytics.delay',
+        analysis_mock = mocker.patch(
+            'src.analysis.tasks.track_group_analytics.delay',
         )
         send_added_users_notifications_mock = mocker.patch(
             'src.accounts.services.group.'
@@ -286,7 +286,7 @@ class TestUserGroupService:
         group.refresh_from_db()
         assert group.users.all().count() == 1
         assert group.users.get(id=user.id)
-        analytics_mock.assert_called_once_with(
+        analysis_mock.assert_called_once_with(
             event=GroupsAnalyticsEvent.updated,
             user_id=user.id,
             user_email=user.email,
@@ -328,8 +328,8 @@ class TestUserGroupService:
             'src.accounts.services.group.'
             'update_workflow_owners.delay',
         )
-        analytics_mock = mocker.patch(
-            'src.analytics.tasks.track_group_analytics.delay',
+        analysis_mock = mocker.patch(
+            'src.analysis.tasks.track_group_analytics.delay',
         )
         send_added_users_notifications_mock = mocker.patch(
             'src.accounts.services.group.'
@@ -360,7 +360,7 @@ class TestUserGroupService:
         group.refresh_from_db()
         assert group.users.all().count() == 1
         assert group.users.get(id=user.id)
-        analytics_mock.assert_called_once_with(
+        analysis_mock.assert_called_once_with(
             event=GroupsAnalyticsEvent.updated,
             user_id=user.id,
             user_email=user.email,
@@ -405,8 +405,8 @@ class TestUserGroupService:
             'src.accounts.services.group.'
             'update_workflow_owners.delay',
         )
-        analytics_mock = mocker.patch(
-            'src.analytics.tasks.track_group_analytics.delay',
+        analysis_mock = mocker.patch(
+            'src.analysis.tasks.track_group_analytics.delay',
         )
         send_added_users_notifications_mock = mocker.patch(
             'src.accounts.services.group.'
@@ -442,7 +442,7 @@ class TestUserGroupService:
         assert group.users.all().count() == 1
         assert group.users.get(id=user_2.id)
         assert group.name == new_name
-        analytics_mock.assert_called_once_with(
+        analysis_mock.assert_called_once_with(
             event=GroupsAnalyticsEvent.updated,
             user_id=user.id,
             user_email=user.email,
@@ -501,8 +501,8 @@ class TestUserGroupService:
             'src.accounts.services.group.'
             'update_workflow_owners.delay',
         )
-        analytics_mock = mocker.patch(
-            'src.analytics.tasks.track_group_analytics.delay',
+        analysis_mock = mocker.patch(
+            'src.analysis.tasks.track_group_analytics.delay',
         )
         send_added_users_notifications_mock = mocker.patch(
             'src.accounts.services.group.'
@@ -533,7 +533,7 @@ class TestUserGroupService:
         group.refresh_from_db()
         assert group.users.all().count() == 1
         assert group.users.get(id=user.id)
-        analytics_mock.assert_called_once_with(
+        analysis_mock.assert_called_once_with(
             event=GroupsAnalyticsEvent.updated,
             user_id=user.id,
             user_email=user.email,
@@ -575,8 +575,8 @@ class TestUserGroupService:
             'src.accounts.services.group.'
             'update_workflow_owners.delay',
         )
-        analytics_mock = mocker.patch(
-            'src.analytics.tasks.track_group_analytics.delay',
+        analysis_mock = mocker.patch(
+            'src.analysis.tasks.track_group_analytics.delay',
         )
         send_group_updated_mock = mocker.patch(
             'src.notifications.tasks.'
@@ -596,7 +596,7 @@ class TestUserGroupService:
         update_workflow_owners_mock.assert_not_called()
         group.refresh_from_db()
         assert group.users.all().count() == 0
-        analytics_mock.assert_called_once_with(
+        analysis_mock.assert_called_once_with(
             event=GroupsAnalyticsEvent.updated,
             user_id=user.id,
             user_email=user.email,
@@ -646,8 +646,8 @@ class TestUserGroupService:
             'src.accounts.services.group.'
             'update_workflow_owners.delay',
         )
-        analytics_mock = mocker.patch(
-            'src.analytics.tasks.track_group_analytics.delay',
+        analysis_mock = mocker.patch(
+            'src.analysis.tasks.track_group_analytics.delay',
         )
         send_added_users_notifications_mock = mocker.patch(
             'src.accounts.services.group.'
@@ -676,7 +676,7 @@ class TestUserGroupService:
         send_removed_users_notifications_mock.assert_not_called()
         group.refresh_from_db()
         assert group.name == new_name
-        analytics_mock.assert_called_once_with(
+        analysis_mock.assert_called_once_with(
             event=GroupsAnalyticsEvent.updated,
             user_id=user.id,
             user_email=user.email,
@@ -728,8 +728,8 @@ class TestUserGroupService:
             'src.accounts.services.group.'
             'update_workflow_owners.delay',
         )
-        analytics_mock = mocker.patch(
-            'src.analytics.tasks.track_group_analytics.delay',
+        analysis_mock = mocker.patch(
+            'src.analysis.tasks.track_group_analytics.delay',
         )
         send_added_users_notifications_mock = mocker.patch(
             'src.accounts.services.group.'
@@ -756,7 +756,7 @@ class TestUserGroupService:
         update_workflow_owners_mock.assert_not_called()
         send_added_users_notifications_mock.assert_not_called()
         send_removed_users_notifications_mock.assert_not_called()
-        analytics_mock.assert_called_once_with(
+        analysis_mock.assert_called_once_with(
             event=GroupsAnalyticsEvent.updated,
             user_id=user.id,
             user_email=user.email,
@@ -799,8 +799,8 @@ class TestUserGroupService:
             'src.accounts.services.group.'
             'update_workflow_owners.delay',
         )
-        analytics_mock = mocker.patch(
-            'src.analytics.tasks.track_group_analytics.delay',
+        analysis_mock = mocker.patch(
+            'src.analysis.tasks.track_group_analytics.delay',
         )
         send_added_users_notifications_mock = mocker.patch(
             'src.accounts.services.group.'
@@ -827,7 +827,7 @@ class TestUserGroupService:
         update_workflow_owners_mock.assert_not_called()
         send_added_users_notifications_mock.assert_not_called()
         send_removed_users_notifications_mock.assert_not_called()
-        analytics_mock.assert_called_once_with(
+        analysis_mock.assert_called_once_with(
             event=GroupsAnalyticsEvent.updated,
             user_id=user.id,
             user_email=user.email,
@@ -869,8 +869,8 @@ class TestUserGroupService:
             'src.accounts.services.group.'
             'update_workflow_owners.delay',
         )
-        analytics_mock = mocker.patch(
-            'src.analytics.tasks.track_group_analytics.delay',
+        analysis_mock = mocker.patch(
+            'src.analysis.tasks.track_group_analytics.delay',
         )
         send_added_users_notifications_mock = mocker.patch(
             'src.accounts.services.group.'
@@ -899,7 +899,7 @@ class TestUserGroupService:
         send_removed_users_notifications_mock.assert_not_called()
         group.refresh_from_db()
         assert group.users.all().count() == 0
-        analytics_mock.assert_not_called()
+        analysis_mock.assert_not_called()
         send_group_updated_mock.assert_called_once()
 
     def test_partial_update__empty_list_users__ok(self, mocker):
@@ -929,8 +929,8 @@ class TestUserGroupService:
             'src.accounts.services.group.'
             'update_workflow_owners.delay',
         )
-        analytics_mock = mocker.patch(
-            'src.analytics.tasks.track_group_analytics.delay',
+        analysis_mock = mocker.patch(
+            'src.analysis.tasks.track_group_analytics.delay',
         )
         send_added_users_notifications_mock = mocker.patch(
             'src.accounts.services.group.'
@@ -959,7 +959,7 @@ class TestUserGroupService:
         send_removed_users_notifications_mock.assert_not_called()
         group.refresh_from_db()
         assert group.users.all().count() == 0
-        analytics_mock.assert_not_called()
+        analysis_mock.assert_not_called()
         send_group_updated_mock.assert_called_once()
 
     def test_delete__with_template__ok(self, mocker):
@@ -992,8 +992,8 @@ class TestUserGroupService:
             'src.accounts.services.group.'
             'update_workflow_owners.delay',
         )
-        analytics_mock = mocker.patch(
-            'src.analytics.tasks.track_group_analytics.delay',
+        analysis_mock = mocker.patch(
+            'src.analysis.tasks.track_group_analytics.delay',
         )
         send_removed_users_notifications_mock = mocker.patch(
             'src.accounts.services.group.'
@@ -1013,7 +1013,7 @@ class TestUserGroupService:
         )
         get_list_template_ids_for_delete_group_mock.assert_called_once_with()
         update_workflow_owners_mock.assert_called_once_with([template.id])
-        analytics_mock.assert_called_once_with(
+        analysis_mock.assert_called_once_with(
             event=GroupsAnalyticsEvent.deleted,
             user_id=user.id,
             user_email=user.email,
@@ -1069,8 +1069,8 @@ class TestUserGroupService:
             'src.accounts.services.group.'
             'update_workflow_owners.delay',
         )
-        analytics_mock = mocker.patch(
-            'src.analytics.tasks.track_group_analytics.delay',
+        analysis_mock = mocker.patch(
+            'src.analysis.tasks.track_group_analytics.delay',
         )
         send_removed_users_notifications_mock = mocker.patch(
             'src.accounts.services.group.'
@@ -1090,7 +1090,7 @@ class TestUserGroupService:
         )
         get_list_template_ids_for_delete_group_mock.assert_called_once_with()
         update_workflow_owners_mock.assert_not_called()
-        analytics_mock.assert_called_once_with(
+        analysis_mock.assert_called_once_with(
             event=GroupsAnalyticsEvent.deleted,
             user_id=user.id,
             user_email=user.email,
@@ -1146,8 +1146,8 @@ class TestUserGroupService:
             'src.accounts.services.group.'
             'update_workflow_owners.delay',
         )
-        analytics_mock = mocker.patch(
-            'src.analytics.tasks.track_group_analytics.delay',
+        analysis_mock = mocker.patch(
+            'src.analysis.tasks.track_group_analytics.delay',
         )
         send_removed_users_notifications_mock = mocker.patch(
             'src.accounts.services.group.'
@@ -1163,7 +1163,7 @@ class TestUserGroupService:
         )
         get_list_template_ids_for_delete_group_mock.assert_called_once_with()
         update_workflow_owners_mock.assert_not_called()
-        analytics_mock.assert_called_once_with(
+        analysis_mock.assert_called_once_with(
             event=GroupsAnalyticsEvent.deleted,
             user_id=user.id,
             user_email=user.email,
@@ -1201,8 +1201,8 @@ class TestUserGroupService:
             'src.accounts.services.group.'
             'update_workflow_owners.delay',
         )
-        analytics_mock = mocker.patch(
-            'src.analytics.tasks.track_group_analytics.delay',
+        analysis_mock = mocker.patch(
+            'src.analysis.tasks.track_group_analytics.delay',
         )
         send_removed_users_notifications_mock = mocker.patch(
             'src.accounts.services.group.'
@@ -1216,7 +1216,7 @@ class TestUserGroupService:
         send_removed_users_notifications_mock.assert_not_called()
         get_list_template_ids_for_delete_group_mock.assert_called_once_with()
         update_workflow_owners_mock.assert_not_called()
-        analytics_mock.assert_called_once_with(
+        analysis_mock.assert_called_once_with(
             event=GroupsAnalyticsEvent.deleted,
             user_id=user.id,
             user_email=user.email,

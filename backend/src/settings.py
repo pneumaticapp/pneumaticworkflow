@@ -141,7 +141,7 @@ class Common(Configuration):
         'src.reports',
         'src.generics',
         'src.webhooks',
-        'src.analytics',
+        'src.analysis',
         'src.navigation',
         'src.pages',
         'src.faq',
@@ -341,7 +341,7 @@ class Common(Configuration):
         'src.processes.tasks.webhooks',
         'src.reports.tasks',
         'src.services.tasks',
-        'src.analytics.tasks',
+        'src.analysis.tasks',
         'src.storage.tasks',
     ]
 

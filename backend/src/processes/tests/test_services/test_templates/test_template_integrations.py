@@ -930,7 +930,7 @@ def test_update_instance_attr__first_activation__ok(mocker):
         account_id=template.account_id,
         template_id=template.id,
     )
-    analytics_mock = mocker.patch(
+    analysis_mock = mocker.patch(
         'src.processes.services.templates.'
         'integrations.AnalyticService.templates_integrated',
     )
@@ -949,7 +949,7 @@ def test_update_instance_attr__first_activation__ok(mocker):
     # assert
     assert result.api is True
     assert result.api_date is not None
-    analytics_mock.assert_called_once_with(
+    analysis_mock.assert_called_once_with(
         template_id=template.id,
         account_id=user.account_id,
         integration_type=TemplateIntegrationType.API,
@@ -970,7 +970,7 @@ def test_update_instance_attr__second_activation__ok(mocker):
         webhooks=True,
         webhooks_date=timezone.now(),
     )
-    analytics_mock = mocker.patch(
+    analysis_mock = mocker.patch(
         'src.processes.services.templates.'
         'integrations.AnalyticService.templates_integrated',
     )
@@ -986,7 +986,7 @@ def test_update_instance_attr__second_activation__ok(mocker):
     # assert
     assert result.webhooks is True
     assert result.webhooks_date is not None
-    analytics_mock.assert_not_called()
+    analysis_mock.assert_not_called()
 
 
 def test_update_instance_attr__deactivation__ok(mocker):
@@ -1000,7 +1000,7 @@ def test_update_instance_attr__deactivation__ok(mocker):
         webhooks=True,
         webhooks_date=timezone.now(),
     )
-    analytics_mock = mocker.patch(
+    analysis_mock = mocker.patch(
         'src.processes.services.templates.'
         'integrations.AnalyticService.templates_integrated',
     )
@@ -1016,10 +1016,10 @@ def test_update_instance_attr__deactivation__ok(mocker):
     # assert
     assert result.webhooks is False
     assert result.webhooks_date is not None
-    analytics_mock.assert_not_called()
+    analysis_mock.assert_not_called()
 
 
-def test_update_instance_attr__webhooks__analytics_not_called(mocker):
+def test_update_instance_attr__webhooks__analysis_not_called(mocker):
 
     # arrange
     user = create_test_user()
@@ -1028,7 +1028,7 @@ def test_update_instance_attr__webhooks__analytics_not_called(mocker):
         account_id=template.account_id,
         template_id=template.id,
     )
-    analytics_mock = mocker.patch(
+    analysis_mock = mocker.patch(
         'src.processes.services.templates.'
         'integrations.AnalyticService.templates_integrated',
     )
@@ -1047,4 +1047,4 @@ def test_update_instance_attr__webhooks__analytics_not_called(mocker):
     # assert
     assert result.webhooks is True
     assert result.webhooks_date is not None
-    analytics_mock.assert_not_called()
+    analysis_mock.assert_not_called()

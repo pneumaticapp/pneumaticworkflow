@@ -33,7 +33,7 @@ class TestCreateConditionTemplate:
         api_client,
     ):
         # arrange
-        condition_create_analytics_mock = mocker.patch(
+        condition_create_analysis_mock = mocker.patch(
             'src.processes.serializers.templates.'
             'condition.AnalyticService.templates_task_condition_created',
         )
@@ -91,7 +91,7 @@ class TestCreateConditionTemplate:
         assert response.data['details']['api_name'] == 'task-55'
         assert response.data['details']['reason'] == message
         assert 'name' not in response.data['details']
-        condition_create_analytics_mock.assert_not_called()
+        condition_create_analysis_mock.assert_not_called()
 
     def test_create__conditions_in_second_task_is_null__validation_error(
         self,
@@ -99,7 +99,7 @@ class TestCreateConditionTemplate:
         api_client,
     ):
         # arrange
-        condition_create_analytics_mock = mocker.patch(
+        condition_create_analysis_mock = mocker.patch(
             'src.processes.serializers.templates.'
             'condition.AnalyticService.templates_task_condition_created',
         )
@@ -158,7 +158,7 @@ class TestCreateConditionTemplate:
         assert response.data['details']['api_name'] == 'task-55'
         assert response.data['details']['reason'] == message
         assert 'name' not in response.data['details']
-        condition_create_analytics_mock.assert_not_called()
+        condition_create_analysis_mock.assert_not_called()
 
     def test_create__conditions_second_is_null__validation_error(
         self,
@@ -167,7 +167,7 @@ class TestCreateConditionTemplate:
     ):
 
         # arrange
-        condition_create_analytics_mock = mocker.patch(
+        condition_create_analysis_mock = mocker.patch(
             'src.processes.serializers.templates.'
             'condition.AnalyticService.templates_task_condition_created',
         )
@@ -242,7 +242,7 @@ class TestCreateConditionTemplate:
         assert response.data['details']['api_name'] == 'task-66'
         assert response.data['details']['reason'] == message
         assert 'name' not in response.data['details']
-        condition_create_analytics_mock.assert_not_called()
+        condition_create_analysis_mock.assert_not_called()
 
     def test_create__conditions_two_errors__validation_error(
         self,
@@ -251,7 +251,7 @@ class TestCreateConditionTemplate:
     ):
 
         # arrange
-        condition_create_analytics_mock = mocker.patch(
+        condition_create_analysis_mock = mocker.patch(
             'src.processes.serializers.templates.'
             'condition.AnalyticService.templates_task_condition_created',
         )
@@ -318,7 +318,7 @@ class TestCreateConditionTemplate:
         assert response.data['details']['api_name'] == 'task-66'
         assert response.data['details']['reason'] in message
         assert 'name' not in response.data['details']
-        condition_create_analytics_mock.assert_not_called()
+        condition_create_analysis_mock.assert_not_called()
 
     def test_create__conditions_is_string__validation_error(
         self,
@@ -326,7 +326,7 @@ class TestCreateConditionTemplate:
         api_client,
     ):
         # arrange
-        condition_create_analytics_mock = mocker.patch(
+        condition_create_analysis_mock = mocker.patch(
             'src.processes.serializers.templates.'
             'condition.AnalyticService.templates_task_condition_created',
         )
@@ -384,7 +384,7 @@ class TestCreateConditionTemplate:
         assert response.data['details']['api_name'] == 'task-55'
         assert response.data['details']['reason'] == message
         assert 'name' not in response.data['details']
-        condition_create_analytics_mock.assert_not_called()
+        condition_create_analysis_mock.assert_not_called()
 
     def test_create__conditions_is_integer__validation_error(
         self,
@@ -392,7 +392,7 @@ class TestCreateConditionTemplate:
         api_client,
     ):
         # arrange
-        condition_create_analytics_mock = mocker.patch(
+        condition_create_analysis_mock = mocker.patch(
             'src.processes.serializers.templates.'
             'condition.AnalyticService.templates_task_condition_created',
         )
@@ -450,7 +450,7 @@ class TestCreateConditionTemplate:
         assert response.data['details']['api_name'] == 'task-55'
         assert response.data['details']['reason'] == message
         assert 'name' not in response.data['details']
-        condition_create_analytics_mock.assert_not_called()
+        condition_create_analysis_mock.assert_not_called()
 
     def test_create__without_rules__validation_error(
         self,
@@ -458,7 +458,7 @@ class TestCreateConditionTemplate:
         api_client,
     ):
         # arrange
-        condition_create_analytics_mock = mocker.patch(
+        condition_create_analysis_mock = mocker.patch(
             'src.processes.serializers.templates.'
             'condition.AnalyticService.templates_task_condition_created',
         )
@@ -520,7 +520,7 @@ class TestCreateConditionTemplate:
         assert response.data['message'] == 'Rules: this list may not be empty.'
         assert response.data['details']['api_name'] == 'condition-66'
         assert 'name' not in response.data['details']
-        condition_create_analytics_mock.assert_not_called()
+        condition_create_analysis_mock.assert_not_called()
 
     def test_create__ok(
         self,
@@ -528,7 +528,7 @@ class TestCreateConditionTemplate:
         api_client,
     ):
         # arrange
-        condition_create_analytics_mock = mocker.patch(
+        condition_create_analysis_mock = mocker.patch(
             'src.processes.serializers.templates.'
             'condition.AnalyticService.templates_task_condition_created',
         )
@@ -604,7 +604,7 @@ class TestCreateConditionTemplate:
         condition = ConditionTemplate.objects.get(
             api_name=condition_data['api_name'],
         )
-        condition_create_analytics_mock.assert_called_once_with(
+        condition_create_analysis_mock.assert_called_once_with(
             user=user,
             template=template,
             task=template.tasks.get(number=1),
@@ -709,7 +709,7 @@ class TestCreateConditionTemplate:
         value,
     ):
         # arrange
-        condition_create_analytics_mock = mocker.patch(
+        condition_create_analysis_mock = mocker.patch(
             'src.processes.serializers.templates.'
             'condition.AnalyticService.templates_task_condition_created',
         )
@@ -784,7 +784,7 @@ class TestCreateConditionTemplate:
         assert response.data['message'] == message
         assert response.data['details']['api_name'] == api_name
         assert response.data['details']['reason'] == message
-        condition_create_analytics_mock.assert_not_called()
+        condition_create_analysis_mock.assert_not_called()
 
     @pytest.mark.parametrize(
         ('field_type', 'value'),
@@ -805,7 +805,7 @@ class TestCreateConditionTemplate:
         value,
     ):
         # arrange
-        condition_create_analytics_mock = mocker.patch(
+        condition_create_analysis_mock = mocker.patch(
             'src.processes.serializers.templates.'
             'condition.AnalyticService.templates_task_condition_created',
         )
@@ -887,7 +887,7 @@ class TestCreateConditionTemplate:
         assert response.data['message'] == message
         assert response.data['details']['api_name'] == predicate_api_name
         assert response.data['details']['reason'] == message
-        condition_create_analytics_mock.assert_not_called()
+        condition_create_analysis_mock.assert_not_called()
 
     @pytest.mark.parametrize(
         ('field_type', 'operator'),
@@ -911,7 +911,7 @@ class TestCreateConditionTemplate:
         operator,
     ):
         # arrange
-        condition_create_analytics_mock = mocker.patch(
+        condition_create_analysis_mock = mocker.patch(
             'src.processes.serializers.templates.'
             'condition.AnalyticService.templates_task_condition_created',
         )
@@ -995,7 +995,7 @@ class TestCreateConditionTemplate:
         assert response.data['message'] == message
         assert response.data['details']['api_name'] == predicate_api_name
         assert response.data['details']['reason'] == message
-        condition_create_analytics_mock.assert_not_called()
+        condition_create_analysis_mock.assert_not_called()
 
     def test_create__with_non_existing_field__validation_error(
         self,
@@ -1003,7 +1003,7 @@ class TestCreateConditionTemplate:
         api_client,
     ):
         # arrange
-        condition_create_analytics_mock = mocker.patch(
+        condition_create_analysis_mock = mocker.patch(
             'src.processes.serializers.templates.'
             'condition.AnalyticService.templates_task_condition_created',
         )
@@ -1063,7 +1063,7 @@ class TestCreateConditionTemplate:
         error_message = messages.MSG_PT_0004(name=task_name)
         assert response.data['code'] == ErrorCode.VALIDATION_ERROR
         assert response.data['message'] == error_message
-        condition_create_analytics_mock.assert_not_called()
+        condition_create_analysis_mock.assert_not_called()
 
     def test_create__field_and_condition_together__ok(
         self,
@@ -1949,7 +1949,7 @@ class TestCreateConditionTemplate:
         value, error_message = value
         account = create_test_account(plan=BillingPlanType.UNLIMITED)
         user = create_test_user(account=account)
-        condition_create_analytics_mock = mocker.patch(
+        condition_create_analysis_mock = mocker.patch(
             'src.processes.serializers.templates.'
             'condition.AnalyticService.templates_task_condition_created',
         )
@@ -2019,7 +2019,7 @@ class TestCreateConditionTemplate:
         assert response.data['details']['api_name'] == predicate_api_name
         assert response.data['details']['reason'] == error_message
         assert 'name' not in response.data['details']
-        condition_create_analytics_mock.assert_not_called()
+        condition_create_analysis_mock.assert_not_called()
 
     def test_create__cyclic_dependency__validation_error(
         self,
