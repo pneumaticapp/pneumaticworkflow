@@ -2127,11 +2127,11 @@ class TestGuestPerformersService:
             'src.notifications.tasks.send_guest_new_task.delay',
         )
         users_guest_invite_sent_mock = mocker.patch(
-            'src.analytics.services.AnalyticService.'
+            'src.analysis.services.AnalyticService.'
             'users_guest_invite_sent',
         )
         users_guest_invited_mock = mocker.patch(
-            'src.analytics.services.AnalyticService.'
+            'src.analysis.services.AnalyticService.'
             'users_guest_invited',
         )
         activate_cache_mock = mocker.patch(

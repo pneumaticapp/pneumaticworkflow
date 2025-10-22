@@ -4,9 +4,9 @@ from typing import List, Optional
 from django.contrib.auth import get_user_model
 
 from celery import shared_task
-from src.analytics.events import GroupsAnalyticsEvent
-from src.analytics.mixins import BaseIdentifyMixin
-from src.analytics.services import AnalyticService
+from src.analysis.events import GroupsAnalyticsEvent
+from src.analysis.mixins import BaseIdentifyMixin
+from src.analysis.services import AnalyticService
 from src.authentication.enums import AuthTokenType
 
 UserModel = get_user_model()
