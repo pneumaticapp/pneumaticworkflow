@@ -4,12 +4,11 @@ from datetime import timedelta
 from typing import Optional
 
 import firebase_admin
+from celery import Celery
 from configurations import importer
 from django.conf import settings
 from django.core.cache import cache
 from django.utils import timezone
-
-from celery import Celery
 
 configuration = os.getenv('ENVIRONMENT', 'Development').title()
 os.environ.setdefault('DJANGO_CONFIGURATION', configuration)
