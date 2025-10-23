@@ -1,6 +1,5 @@
 from django.core.management.base import BaseCommand
 from django.db import transaction
-
 from src.accounts.services.account import AccountService
 from src.accounts.services.user import UserService
 from src.reports.serializers import UserModel
