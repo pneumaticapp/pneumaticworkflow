@@ -22,6 +22,8 @@ describe('getClonedTask', () => {
           apiName: 'large-text-field-8622',
           selections: [],
           order: 0,
+          userId: null,
+          groupId: null,
         },
       ],
       rawPerformers: [],

@@ -21,6 +21,17 @@ export interface IUnsavedUser {
   dateFdw: string;
 }
 
+export enum EUserDropdownOptionType {
+  User = 'user',
+  UserGroup = 'group',
+}
+
+export type TGoogleAuthUserInfo = Partial<
+  Pick<IUnsavedUser, 'email' | 'firstName' | 'lastName' | 'phone' | 'photo'>
+> & {
+  companyName?: string;
+};
+
 export type TUserListItem = Pick<
   IUnsavedUser,
   'email' | 'isAdmin' | 'isAccountOwner' | 'firstName' | 'lastName' | 'phone' | 'photo' | 'invite' | 'isAdmin' | 'type'

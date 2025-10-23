@@ -4,22 +4,24 @@ import { useSelector } from 'react-redux';
 import { useIntl } from 'react-intl';
 import AutosizeInput from 'react-input-autosize';
 
-import { EOptionTypes, TUsersDropdownOption, UsersDropdown } from '../../../UI/form/UsersDropdown';
+import { EOptionTypes, UsersDropdown } from '../../../UI/form/UsersDropdown';
 import { getUsers } from '../../../../redux/selectors/user';
-import { TUserListItem } from '../../../../types/user';
+import { EUserDropdownOptionType, TUserListItem } from '../../../../types/user';
 import { trackInviteTeamInPage } from '../../../../utils/analytics';
 import { fitInputWidth } from '../utils/fitInputWidth';
 import { getInputNameBackground } from '../utils/getInputNameBackground';
 import { ArrowDropdownIcon } from '../../../icons';
 import { FieldWithName } from '../utils/FieldWithName';
 import { getFieldValidator } from '../utils/getFieldValidator';
-import { EExtraFieldMode } from '../../../../types/template';
+import { EExtraFieldMode, ETaskPerformerType } from '../../../../types/template';
 import { isArrayWithItems } from '../../../../utils/helpers';
 import { IWorkflowExtraFieldProps } from '..';
 import { getNotDeletedUsers, getUserFullName } from '../../../../utils/users';
 
 import styles from '../../KickoffRedux/KickoffRedux.css';
 import inputStyles from './ExtraFieldUser.css';
+import { IApplicationState } from '../../../../types/redux';
+import { IGroupDropdownOption } from '../../../../redux/team/types';
 
 const DEFAULT_FIELD_INPUT_WIDTH = 120;
 
@@ -96,7 +98,8 @@ export function ExtraFieldUser({
 
   const renderSelectableView = () => {
     const users: ReturnType<typeof getUsers> = getNotDeletedUsers(useSelector(getUsers));
-    const selectionsDropdownOption = users.map((item) => {
+    const groups = useSelector((state: IApplicationState) => state.groups.list);
+    const usersDropdownOption = users.map((item) => {
       return {
         ...item,
         optionType: EOptionTypes.User,
@@ -104,6 +107,16 @@ export function ExtraFieldUser({
         value: String(item.id),
       };
     });
+    const groupsDropdownOption = groups.map((item) => {
+      return {
+        ...item,
+        optionType: EOptionTypes.Group,
+        label: item.name,
+        value: String(item.id),
+        type: ETaskPerformerType.UserGroup,
+      };
+    });
+    const selectionsDropdownOption = [...groupsDropdownOption, ...usersDropdownOption];
 
     const onUsersInvited = (invitedUsers: TUserListItem[]) => {
       if (!isArrayWithItems(invitedUsers)) return;
@@ -112,8 +125,14 @@ export function ExtraFieldUser({
       editField({ value });
     };
 
-    const handleUserDropdownChange = ({ id }: TUsersDropdownOption) => {
-      editField({ value: String(id) });
+    const handleUserDropdownChange = (option: TUserListItem | IGroupDropdownOption) => {
+      if (option.type === EUserDropdownOptionType.User) {
+        editField({ value: (option as TUserListItem).email });
+        return;
+      }
+      if (option.type === EUserDropdownOptionType.UserGroup) {
+        editField({ value: (option as IGroupDropdownOption).name });
+      }
     };
 
     return (
@@ -123,7 +142,9 @@ export function ExtraFieldUser({
           onChange={handleUserDropdownChange}
           placeholder={description}
           isDisabled={isDisabled}
-          value={selectionsDropdownOption.find((item) => item.value === field.value)}
+          value={selectionsDropdownOption.find(
+            (item) => item.value === String(field.userId) || item.value === String(field.groupId),
+          )}
           onClickInvite={() => trackInviteTeamInPage('From users field')}
           inviteLabel={formatMessage({ id: 'template.invite-team-member' })}
           onUsersInvited={onUsersInvited}
