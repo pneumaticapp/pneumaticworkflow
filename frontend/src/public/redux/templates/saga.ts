@@ -197,7 +197,6 @@ export function* fetchIsTemplateOwner() {
     const { results } = yield getTemplates({
       limit: 1,
       isActive: true,
-      isTemplateOwner: true,
     });
 
     yield put(setIsTemplateOwner(results.length > 0));

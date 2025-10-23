@@ -18,10 +18,9 @@ export interface IGetTemplatesConfig {
   sorting: ETemplatesSorting;
   searchText: string;
   isActive: boolean | undefined;
-  isTemplateOwner: boolean | undefined;
 }
 
-const QS_BY_SORTING: {[key in ETemplatesSorting]: string} = {
+const QS_BY_SORTING: { [key in ETemplatesSorting]: string } = {
   [ETemplatesSorting.DateAsc]: 'ordering=date',
   [ETemplatesSorting.DateDesc]: 'ordering=-date',
   [ETemplatesSorting.NameAsc]: 'ordering=name',
@@ -36,34 +35,30 @@ export function getTemplates({
   sorting = ETemplatesSorting.DateDesc,
   searchText = '',
   isActive,
-  isTemplateOwner,
 }: Partial<IGetTemplatesConfig>) {
-  const { api: { urls }} = getBrowserConfigEnv();
+  const {
+    api: { urls },
+  } = getBrowserConfigEnv();
 
-  const queryString = getTemplatesQueryString(
-    { limit, offset, sorting, searchText, isActive, isTemplateOwner },
-  );
+  const queryString = getTemplatesQueryString({
+    limit,
+    offset,
+    sorting,
+    searchText,
+    isActive,
+  });
 
-  return commonRequest<IGetTemplatesResponse>(
-    `${urls.templates}?${queryString}`,
-    {}, {shouldThrow: true},
-  );
+  return commonRequest<IGetTemplatesResponse>(`${urls.templates}?${queryString}`, {}, { shouldThrow: true });
 }
 
-export function getTemplatesQueryString({
-  limit,
-  offset,
-  sorting,
-  searchText,
-  isActive,
-  isTemplateOwner,
-}: IGetTemplatesConfig) {
+export function getTemplatesQueryString({ limit, offset, sorting, searchText, isActive }: IGetTemplatesConfig) {
   return [
     limit !== undefined && `limit=${limit}`,
     offset !== undefined && `offset=${offset}`,
     isActive !== undefined && `is_active=${Boolean(isActive)}`,
-    isTemplateOwner !== undefined && `is_template_owner=${Boolean(isTemplateOwner)}`,
     searchText && `search=${searchText}`,
     QS_BY_SORTING[sorting],
-  ].filter(Boolean).join('&');
+  ]
+    .filter(Boolean)
+    .join('&');
 }

@@ -5,10 +5,7 @@ import { all, fork, put, select, takeEvery } from 'redux-saga/effects';
 import { logger } from '../../utils/logger';
 import { NotificationManager } from '../../components/UI/Notifications';
 
-import {
-  ESelectTemplateModalActions,
-  setSelectTemplateModalTemplates,
-} from './actions';
+import { ESelectTemplateModalActions, setSelectTemplateModalTemplates } from './actions';
 
 import { getTemplates } from '../../api/getTemplates';
 import { ETemplatesSorting } from '../../types/workflow';
@@ -21,12 +18,11 @@ function* fetchSelectTemplateModalTemplates() {
     const templates: ITemplateListItem[] = yield getTemplates({
       sorting: ETemplatesSorting.UsageDesc,
       isActive: true,
-      isTemplateOwner: true,
     });
 
     const templatesIdsFilter: ReturnType<typeof getTemplatesModalFilter> = yield select(getTemplatesModalFilter);
     const filteredTemplates = isArrayWithItems(templatesIdsFilter)
-      ? templates.filter(template => templatesIdsFilter.some(templateId => templateId === template.id))
+      ? templates.filter((template) => templatesIdsFilter.some((templateId) => templateId === template.id))
       : templates;
 
     yield put(setSelectTemplateModalTemplates(filteredTemplates));
@@ -41,7 +37,5 @@ export function* watchFetchSelectTemplateModalTemplates() {
 }
 
 export function* rootSaga() {
-  yield all([
-    fork(watchFetchSelectTemplateModalTemplates),
-  ]);
+  yield all([fork(watchFetchSelectTemplateModalTemplates)]);
 }
