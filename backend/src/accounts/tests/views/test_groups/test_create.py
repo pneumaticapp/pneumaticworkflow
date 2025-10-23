@@ -10,6 +10,7 @@ from src.accounts.enums import (
 from src.accounts.messages import (
     MSG_A_0024,
     MSG_A_0039,
+    MSG_A_0045,
 )
 from src.accounts.services.exceptions import (
     UserGroupServiceException,
@@ -22,6 +23,7 @@ from src.processes.tests.fixtures import (
     create_test_group,
     create_test_guest,
     create_test_user,
+    create_test_owner,
 )
 from src.utils.validation import ErrorCode
 
@@ -121,6 +123,79 @@ def test_create__required_fields__ok(api_client, mocker):
     assert data['name'] == request_data['name']
     assert data['photo'] == request_data['photo']
     assert 'users' not in data
+
+
+def test_create__name_not_unique__validation_error(api_client, mocker):
+
+    # arrange
+    user = create_test_owner()
+    request_data = {'name': 'Group'}
+    create_test_group(user.account, name='Group')
+    service_init_mock = mocker.patch.object(
+        UserGroupService,
+        attribute='__init__',
+        return_value=None,
+    )
+    create_group_mock = mocker.patch(
+        'src.accounts.services.group.UserGroupService.create',
+    )
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.post(
+        path='/accounts/groups',
+        data=request_data,
+    )
+
+    # assert
+    service_init_mock.assert_not_called()
+    create_group_mock.assert_not_called()
+    assert response.status_code == 400
+    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
+    assert response.data['message'] == MSG_A_0045
+    assert response.data['details']['reason'] == MSG_A_0045
+    assert response.data['details']['name'] == 'name'
+
+
+def test_create__same_name_another_account__ok(api_client, mocker):
+
+    # arrange
+    user = create_test_owner()
+    another_account = create_test_account()
+    create_test_group(another_account, name='Group')
+    request_data = {
+        'name': 'Group',
+        'photo': '',
+    }
+    service_init_mock = mocker.patch.object(
+        UserGroupService,
+        attribute='__init__',
+        return_value=None,
+    )
+    create_group_mock = mocker.patch(
+        'src.accounts.services.group.UserGroupService.create',
+    )
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.post(
+        path='/accounts/groups',
+        data=request_data,
+    )
+
+    # assert
+    service_init_mock.assert_called_once_with(
+        user=user,
+        auth_type=AuthTokenType.USER,
+        is_superuser=False,
+    )
+    create_group_mock.assert_called_once_with(
+        **request_data,
+    )
+    assert response.status_code == 200
+    data = response.data
+    assert data['name'] == request_data['name']
+    assert data['photo'] == request_data['photo']
 
 
 def test_create__user_from_another_account__validation_error(
