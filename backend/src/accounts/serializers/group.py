@@ -11,7 +11,10 @@ from rest_framework.serializers import (
 from src.accounts.enums import (
     UserStatus,
 )
-from src.accounts.messages import MSG_A_0039
+from src.accounts.messages import (
+    MSG_A_0039,
+    MSG_A_0045,
+)
 from src.accounts.models import UserGroup
 from src.generics.fields import CommaSeparatedListField, RelatedListField
 from src.generics.mixins.serializers import (
@@ -49,6 +52,19 @@ class GroupSerializer(
     def validate_photo(self, value):
         if value is None:
             return ""
+        return value
+
+    def validate_name(self, value):
+        account = self.context['account']
+        queryset = UserGroup.objects.filter(
+            name=value,
+            account=account,
+            is_deleted=False,
+        )
+        if self.instance:
+            queryset = queryset.exclude(id=self.instance.id)
+        if queryset.exists():
+            raise ValidationError(MSG_A_0045)
         return value
 
     def validate_users(self, value):
