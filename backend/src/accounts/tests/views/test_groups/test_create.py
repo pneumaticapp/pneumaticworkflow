@@ -10,7 +10,6 @@ from src.accounts.enums import (
 from src.accounts.messages import (
     MSG_A_0024,
     MSG_A_0039,
-    MSG_A_0045,
 )
 from src.accounts.services.exceptions import (
     UserGroupServiceException,
@@ -148,12 +147,13 @@ def test_create__name_not_unique__validation_error(api_client, mocker):
     )
 
     # assert
+    message = 'Group with the name "Group" already exists.'
     service_init_mock.assert_not_called()
     create_group_mock.assert_not_called()
     assert response.status_code == 400
     assert response.data['code'] == ErrorCode.VALIDATION_ERROR
-    assert response.data['message'] == MSG_A_0045
-    assert response.data['details']['reason'] == MSG_A_0045
+    assert response.data['message'] == message
+    assert response.data['details']['reason'] == message
     assert response.data['details']['name'] == 'name'
 
 
