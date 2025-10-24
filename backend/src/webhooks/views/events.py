@@ -1,29 +1,30 @@
 from django.http import Http404
 from rest_framework.decorators import action
 from rest_framework.viewsets import GenericViewSet
+
+from src.accounts.permissions import (
+    BillingPlanPermission,
+    ExpiredSubscriptionPermission,
+    UserIsAdminOrAccountOwner,
+)
 from src.generics.mixins.views import (
     CustomViewSetMixin,
 )
-from src.accounts.permissions import (
-    UserIsAdminOrAccountOwner,
-    BillingPlanPermission,
-    ExpiredSubscriptionPermission
-)
-from src.webhooks.services import (
-    WebhookService,
+from src.generics.permissions import (
+    UserIsAuthenticated,
 )
 from src.webhooks import exceptions
 from src.webhooks.serializers import (
     WebHookSubscribeSerializer,
 )
-from src.generics.permissions import (
-    UserIsAuthenticated,
+from src.webhooks.services import (
+    WebhookService,
 )
 
 
 class WebHookEventViewSet(
     CustomViewSetMixin,
-    GenericViewSet
+    GenericViewSet,
 ):
     lookup_field = 'event'
     permission_classes = (
@@ -36,7 +37,7 @@ class WebHookEventViewSet(
     def list(self, request, *args, **kwargs):
         service = WebhookService(
             user=request.user,
-            is_superuser=request.is_superuser
+            is_superuser=request.is_superuser,
         )
         data = service.get_events()
         return self.response_ok(data)
@@ -45,11 +46,11 @@ class WebHookEventViewSet(
         try:
             service = WebhookService(
                 user=request.user,
-                is_superuser=request.is_superuser
+                is_superuser=request.is_superuser,
             )
             url = service.get_event_url(event=event)
-        except exceptions.InvalidEventException:
-            raise Http404
+        except exceptions.InvalidEventException as ex:
+            raise Http404 from ex
         return self.response_ok({'url': url})
 
     @action(methods=('POST',), detail=True)
@@ -59,14 +60,14 @@ class WebHookEventViewSet(
         try:
             service = WebhookService(
                 user=request.user,
-                is_superuser=request.is_superuser
+                is_superuser=request.is_superuser,
             )
             service.subscribe_event(
                 event=event,
-                **slz.validated_data
+                **slz.validated_data,
             )
-        except exceptions.InvalidEventException:
-            raise Http404
+        except exceptions.InvalidEventException as ex:
+            raise Http404 from ex
         return self.response_ok()
 
     @action(methods=('POST',), detail=True)
@@ -74,9 +75,9 @@ class WebHookEventViewSet(
         try:
             service = WebhookService(
                 user=request.user,
-                is_superuser=request.is_superuser
+                is_superuser=request.is_superuser,
             )
             service.unsubscribe_event(event=event)
-        except exceptions.InvalidEventException:
-            raise Http404
+        except exceptions.InvalidEventException as ex:
+            raise Http404 from ex
         return self.response_ok()

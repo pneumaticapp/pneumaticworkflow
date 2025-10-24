@@ -38,3 +38,7 @@
 .field-column__url:hover {
   color: var(--pneumatic-color-link-hover);
 }
+
+.field-column__avatar {
+  width: fit-content;
+}
