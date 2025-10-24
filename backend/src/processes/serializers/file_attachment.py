@@ -40,3 +40,10 @@ class FileAttachmentSerializer(serializers.ModelSerializer):
             'thumbnail_url',
             'size',
         )
+
+
+class FileAttachmentCheckPermissionSerializer(
+    CustomValidationErrorMixin,
+    serializers.Serializer
+):
+    file_id = serializers.CharField(required=True, max_length=255)

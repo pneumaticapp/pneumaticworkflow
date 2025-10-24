@@ -633,3 +633,13 @@ class PresetType:
         (PERSONAL, 'Personal'),
         (ACCOUNT, 'Account'),
     )
+
+
+class FileAttachmentAccessType:
+    ACCOUNT = 'account'
+    RESTRICTED = 'restricted'
+
+    CHOICES = (
+        (ACCOUNT, 'account'),
+        (RESTRICTED, 'restricted'),
+    )
