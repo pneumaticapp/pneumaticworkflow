@@ -59,12 +59,11 @@ class GroupSerializer(
         queryset = UserGroup.objects.filter(
             name=value,
             account=account,
-            is_deleted=False,
         )
         if self.instance:
             queryset = queryset.exclude(id=self.instance.id)
         if queryset.exists():
-            raise ValidationError(MSG_A_0045)
+            raise ValidationError(MSG_A_0045(name=value))
         return value
 
     def validate_users(self, value):
