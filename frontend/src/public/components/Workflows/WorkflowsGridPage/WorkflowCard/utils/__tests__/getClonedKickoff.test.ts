@@ -232,6 +232,8 @@ const expectedKickoff = {
       selections: [],
       attachments: [],
       order: 7,
+      userId: null,
+      groupId: null,
     },
     {
       id: 60845,
@@ -244,6 +246,8 @@ const expectedKickoff = {
       selections: [],
       attachments: [],
       order: 6,
+      userId: null,
+      groupId: null,
     },
     {
       id: 60846,
@@ -256,6 +260,8 @@ const expectedKickoff = {
       selections: [],
       attachments: [],
       order: 5,
+      userId: null,
+      groupId: null,
     },
     {
       id: 60847,
@@ -268,6 +274,8 @@ const expectedKickoff = {
       selections: [],
       attachments: [],
       order: 4,
+      userId: null,
+      groupId: null,
     },
     {
       id: 60848,
@@ -293,6 +301,8 @@ const expectedKickoff = {
       ],
       attachments: [],
       order: 3,
+      userId: null,
+      groupId: null,
     },
     {
       id: 60849,
@@ -318,6 +328,8 @@ const expectedKickoff = {
       ],
       attachments: [],
       order: 2,
+      userId: null,
+      groupId: null,
     },
   ],
 };
