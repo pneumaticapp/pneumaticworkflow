@@ -380,6 +380,8 @@ class Task(
             for field in user_fields:
                 if field.user_id:
                     user_ids[field.user_id].extend(api_names[field.api_name])
+                elif field.group_id:
+                    group_ids[field.group_id].extend(api_names[field.api_name])
 
         raw_performers_for_update = []
         created_performers_user_ids = []

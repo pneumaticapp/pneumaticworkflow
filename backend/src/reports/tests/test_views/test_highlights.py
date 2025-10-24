@@ -1095,7 +1095,7 @@ def test__kickoff_field_type_user__ok(api_client):
         data={
             'name': 'Test name',
             'kickoff': {
-                field_template.api_name: user.id,
+                field_template.api_name: user.email,
             },
         },
     )
@@ -1115,7 +1115,7 @@ def test__kickoff_field_type_user__ok(api_client):
     assert field_data['description'] == field.description
     assert field_data['api_name'] == field.api_name
     # TODO Replace in https://my.pneumatic.app/workflows/18137/
-    assert field_data['value'] == str(user.id)  # user.get_full_name()
+    assert field_data['value'] == user.get_full_name()
     assert field_data['selections'] == []
     assert field_data['attachments'] == []
     assert field_data['user_id'] == user.id

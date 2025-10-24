@@ -1,6 +1,6 @@
+from celery import shared_task
 from django.db import transaction
 
-from celery import shared_task
 from src.accounts.models import (
     Notification,
     SystemMessage,

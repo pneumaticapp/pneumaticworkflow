@@ -5,13 +5,17 @@ from django.db import transaction
 
 from src.accounts.models import UserGroup
 from src.accounts.queries import (
+    DeleteGroupFromConditionsQuery,
     DeleteGroupFromRawPerformerQuery,
     DeleteGroupFromRawPerformerTemplateQuery,
     DeleteGroupFromTaskPerformerQuery,
+    DeleteGroupFromTemplateConditionsQuery,
     DeleteGroupFromTemplateOwnerQuery,
+    DeleteGroupUserFromConditionsQuery,
     DeleteGroupUserFromRawPerformerQuery,
     DeleteGroupUserFromRawPerformerTemplateQuery,
     DeleteGroupUserFromTaskPerformerQuery,
+    DeleteGroupUserFromTemplateConditionsQuery,
     DeleteGroupUserFromTemplateOwnerQuery,
     DeleteUserFromConditionsQuery,
     DeleteUserFromRawPerformerQuery,
@@ -20,18 +24,20 @@ from src.accounts.queries import (
     DeleteUserFromTemplateConditionsQuery,
     DeleteUserFromTemplateOwnerQuery,
     DeleteUserFromWorkflowMembersQuery,
+    DeleteUserGroupFromConditionsQuery,
     DeleteUserGroupFromRawPerformerQuery,
     DeleteUserGroupFromRawPerformerTemplateQuery,
     DeleteUserGroupFromTaskPerformerQuery,
+    DeleteUserGroupFromTemplateConditionsQuery,
     DeleteUserGroupFromTemplateOwnerQuery,
 )
 from src.accounts.services import exceptions
 from src.authentication.enums import AuthTokenType
 from src.executor import RawSqlExecutor
 from src.processes.enums import (
-    FieldType,
     OwnerType,
     PerformerType,
+    PredicateType,
     TaskStatus,
 )
 from src.processes.models.templates.conditions import PredicateTemplate
@@ -362,28 +368,112 @@ class ReassignService:
                 RawSqlExecutor.execute(*query.insert_sql())
 
     def _reassign_in_template_conditions(self):
-        if self.old_user and self.new_user:
-            delete_query = DeleteUserFromTemplateConditionsQuery(
-                user_to_delete=str(self.old_user.id),
-                user_to_substitution=str(self.new_user.id),
-            )
-            RawSqlExecutor.execute(*delete_query.get_sql())
-            PredicateTemplate.objects.filter(
-                field_type=FieldType.USER,
-                value=self.old_user.id,
-            ).update(value=self.new_user.id)
+        if self.old_group:
+            if self.new_group:
+                delete_query = DeleteGroupFromTemplateConditionsQuery(
+                    delete_id=self.old_group.id,
+                    substitution_id=self.new_group.id,
+                )
+                RawSqlExecutor.execute(*delete_query.get_sql())
+                PredicateTemplate.objects.filter(
+                    field_type=PredicateType.GROUP,
+                    group=self.old_group,
+                ).update(
+                    group=self.new_group,
+                )
+            elif self.new_user:
+                delete_query = DeleteGroupUserFromTemplateConditionsQuery(
+                    delete_id=self.old_group.id,
+                    substitution_id=self.new_user.id,
+                )
+                RawSqlExecutor.execute(*delete_query.get_sql())
+                PredicateTemplate.objects.filter(
+                    field_type=PredicateType.GROUP,
+                    group=self.old_group,
+                ).update(
+                    field_type=PredicateType.USER,
+                    user=self.new_user,
+                    group=None,
+                )
+        elif self.old_user:
+            if self.new_group:
+                delete_query = DeleteUserGroupFromTemplateConditionsQuery(
+                    delete_id=self.old_user.id,
+                    substitution_id=self.new_group.id,
+                )
+                RawSqlExecutor.execute(*delete_query.get_sql())
+                PredicateTemplate.objects.filter(
+                    field_type=PredicateType.USER,
+                    user=self.old_user,
+                ).update(
+                    field_type=PredicateType.GROUP,
+                    group=self.new_group,
+                    user=None,
+                )
+            elif self.new_user:
+                delete_query = DeleteUserFromTemplateConditionsQuery(
+                    delete_id=self.old_user.id,
+                    substitution_id=self.new_user.id,
+                )
+                RawSqlExecutor.execute(*delete_query.get_sql())
+                PredicateTemplate.objects.filter(
+                    field_type=PredicateType.USER,
+                    user=self.old_user,
+                ).update(user=self.new_user)
 
     def _reassign_in_conditions(self):
-        if self.old_user and self.new_user:
-            delete_query = DeleteUserFromConditionsQuery(
-                user_to_delete=str(self.old_user.id),
-                user_to_substitution=str(self.new_user.id),
-            )
-            RawSqlExecutor.execute(*delete_query.get_sql())
-            Predicate.objects.filter(
-                field_type=FieldType.USER,
-                value=self.old_user.id,
-            ).update(value=self.new_user.id)
+        if self.old_group:
+            if self.new_group:
+                delete_query = DeleteGroupFromConditionsQuery(
+                    delete_id=self.old_group.id,
+                    substitution_id=self.new_group.id,
+                )
+                RawSqlExecutor.execute(*delete_query.get_sql())
+                Predicate.objects.filter(
+                    field_type=PredicateType.GROUP,
+                    group=self.old_group,
+                ).update(
+                    group=self.new_group,
+                )
+            elif self.new_user:
+                delete_query = DeleteGroupUserFromConditionsQuery(
+                    delete_id=self.old_group.id,
+                    substitution_id=self.new_user.id,
+                )
+                RawSqlExecutor.execute(*delete_query.get_sql())
+                Predicate.objects.filter(
+                    field_type=PredicateType.GROUP,
+                    group=self.old_group,
+                ).update(
+                    field_type=PredicateType.USER,
+                    user=self.new_user,
+                    group=None,
+                )
+        elif self.old_user:
+            if self.new_group:
+                delete_query = DeleteUserGroupFromConditionsQuery(
+                    delete_id=self.old_user.id,
+                    substitution_id=self.new_group.id,
+                )
+                RawSqlExecutor.execute(*delete_query.get_sql())
+                Predicate.objects.filter(
+                    field_type=PredicateType.USER,
+                    user=self.old_user,
+                ).update(
+                    field_type=PredicateType.GROUP,
+                    group=self.new_group,
+                    user=None,
+                )
+            elif self.new_user:
+                delete_query = DeleteUserFromConditionsQuery(
+                    delete_id=self.old_user.id,
+                    substitution_id=self.new_user.id,
+                )
+                RawSqlExecutor.execute(*delete_query.get_sql())
+                Predicate.objects.filter(
+                    field_type=PredicateType.USER,
+                    user=self.old_user,
+                ).update(user=self.new_user)
 
     def reassign_everywhere(self):
         with transaction.atomic():
