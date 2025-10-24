@@ -1235,7 +1235,7 @@ class TestUpdateTemplate:
         )
         user_2 = create_test_user(account=user.account, email='test@test.ru')
         group = create_test_group(user.account, users=[user_2])
-        group_2 = create_test_group(user.account)
+        group_2 = create_test_group(user.account, name='group 2')
         template = workflow.template
         task_template = template.tasks.first()
         mocker.patch(

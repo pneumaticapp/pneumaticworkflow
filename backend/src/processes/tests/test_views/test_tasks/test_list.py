@@ -133,7 +133,7 @@ def test_list__task_performer_group_empty__ok(api_client):
         email='another@pneumatic.app',
     )
     group = create_test_group(user.account, users=[another_user])
-    create_test_group(user.account)
+    create_test_group(user.account, name='group 2')
     api_client.token_authenticate(user=another_user)
     workflow_1 = create_test_workflow(user, tasks_count=1)
     task_11 = workflow_1.tasks.get(number=1)

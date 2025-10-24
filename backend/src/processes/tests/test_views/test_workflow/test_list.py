@@ -1762,7 +1762,7 @@ def test_list__filter__multiple_current_performer_group_ids__ok(api_client):
     )
     workflow = create_test_workflow(user=user, template=template)
     group1 = create_test_group(account, users=[user])
-    group2 = create_test_group(account, users=[another_user])
+    group2 = create_test_group(account, name='group 2', users=[another_user])
     task = workflow.tasks.get(number=1)
     TaskPerformer.objects.filter(
         task=task,
