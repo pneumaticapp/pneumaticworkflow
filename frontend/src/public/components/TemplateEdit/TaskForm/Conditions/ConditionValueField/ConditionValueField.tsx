@@ -26,7 +26,7 @@ interface IConditionValueFieldProps {
   users: TUserListItem[];
   operator?: EConditionOperators | null;
   isDisabled: boolean;
-  changeRuleValue(value: TConditionRule[keyof TConditionRule]): void;
+  changeRuleValue(value: TConditionRule[keyof TConditionRule], kind?: 'user' | 'group'): void;
 }
 
 export function ConditionValueField({
@@ -121,8 +121,8 @@ export function ConditionValueField({
     }
 
     const activeUsers = users.filter((user) => user.status === EUserStatus.Active);
-    const labelUsers = activeUsers.map((user) => ({ ...user, label: getUserFullName(user) }));
-    const labelGroups = groups.map((group) => ({ ...group, label: group.name }));
+    const labelUsers = activeUsers.map((user) => ({ ...user, label: getUserFullName(user), entityType: 'user' }));
+    const labelGroups = groups.map((group) => ({ ...group, label: group.name, entityType: 'group' }));
     const dropdownEntities = [...labelGroups, ...labelUsers];
     const selectedEntity = dropdownEntities.find((user) => user.id === Number(rule.value)) || null;
 
@@ -133,7 +133,8 @@ export function ConditionValueField({
         placeholder={formatMessage({ id: 'templates.conditions.value-placeholder' })}
         value={selectedEntity}
         onChange={(option: IDropdownUser) => {
-          changeRuleValue(option.id);
+          const kind = (option as any).entityType === 'user' ? 'user' : 'group';
+          changeRuleValue(option.id, kind);
         }}
         isClearable={false}
         options={dropdownEntities}
