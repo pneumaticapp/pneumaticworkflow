@@ -90,8 +90,7 @@ export interface ITemplateTaskPerformer {
   label: string;
   type: ETaskPerformerType;
   sourceId: string | null;
-  apiName?: string;
-  id?: number;
+  apiName: string;
 }
 
 export enum ETemplateOwnerType {
