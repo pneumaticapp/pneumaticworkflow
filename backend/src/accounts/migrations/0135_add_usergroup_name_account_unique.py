@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('accounts', '0133_1_rename_usergroup_duplicates'),
+        ('accounts', '0134_rename_usergroup_duplicates'),
     ]
 
     operations = [
