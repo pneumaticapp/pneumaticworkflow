@@ -9,7 +9,7 @@ from src.accounts.services.account import AccountService
 from src.ai.models import (
     OpenAiPrompt,
 )
-from src.analytics.services import AnalyticService
+from src.analysis.services import AnalyticService
 from src.authentication.enums import AuthTokenType
 from src.processes.consts import TEMPLATE_NAME_LENGTH
 from src.processes.enums import (

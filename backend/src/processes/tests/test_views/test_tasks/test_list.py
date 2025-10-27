@@ -205,8 +205,8 @@ def test_list__search__ok(api_client, mocker):
     task.save(update_fields=['name'])
 
     api_client.token_authenticate(user)
-    analytics_mock = mocker.patch(
-        'src.analytics.services.AnalyticService.'
+    analysis_mock = mocker.patch(
+        'src.analysis.services.AnalyticService.'
         'search_search',
     )
 
@@ -218,7 +218,7 @@ def test_list__search__ok(api_client, mocker):
     assert len(response.data) == 1
     assert response.data[0]['id'] == task.id
 
-    analytics_mock.assert_called_once_with(
+    analysis_mock.assert_called_once_with(
         user=user,
         page='tasks',
         search_text=clear_search_text,
@@ -235,8 +235,8 @@ def test_list__search__not_found__ok(api_client, mocker):
     user = create_test_user()
     create_test_workflow(user)
     api_client.token_authenticate(user)
-    analytics_mock = mocker.patch(
-        'src.analytics.services.AnalyticService.'
+    analysis_mock = mocker.patch(
+        'src.analysis.services.AnalyticService.'
         'search_search',
     )
     search_text = 'DROP TABLE accounts_account'
@@ -248,7 +248,7 @@ def test_list__search__not_found__ok(api_client, mocker):
     assert response.status_code == 200
     assert len(response.data) == 0
 
-    analytics_mock.assert_called_once_with(
+    analysis_mock.assert_called_once_with(
         user=user,
         page='tasks',
         search_text=search_text,
@@ -278,8 +278,8 @@ def test_list__search__comment__ok(api_client, mocker):
     )
 
     api_client.token_authenticate(user)
-    analytics_mock = mocker.patch(
-        'src.analytics.services.AnalyticService.'
+    analysis_mock = mocker.patch(
+        'src.analysis.services.AnalyticService.'
         'search_search',
     )
 
@@ -291,7 +291,7 @@ def test_list__search__comment__ok(api_client, mocker):
     assert len(response.data) == 1
     task = workflow.tasks.get(number=1)
     assert response.data[0]['id'] == task.id
-    analytics_mock.assert_called_once_with(
+    analysis_mock.assert_called_once_with(
         user=user,
         page='tasks',
         search_text=search_text,
@@ -315,8 +315,8 @@ def test_list__search__comment__url_as_text__ok(api_client, mocker):
     )
     search_text = 'pneumo.app'
     api_client.token_authenticate(user)
-    analytics_mock = mocker.patch(
-        'src.analytics.services.AnalyticService.'
+    analysis_mock = mocker.patch(
+        'src.analysis.services.AnalyticService.'
         'search_search',
     )
 
@@ -328,7 +328,7 @@ def test_list__search__comment__url_as_text__ok(api_client, mocker):
     assert len(response.data) == 1
     task = workflow.tasks.get(number=1)
     assert response.data[0]['id'] == task.id
-    analytics_mock.assert_called_once_with(
+    analysis_mock.assert_called_once_with(
         user=user,
         page='tasks',
         search_text=search_text,
@@ -352,8 +352,8 @@ def test_list__search__comment__markdown__ok(api_client, mocker):
     )
     search_text = 'file'
     api_client.token_authenticate(user)
-    analytics_mock = mocker.patch(
-        'src.analytics.services.AnalyticService.'
+    analysis_mock = mocker.patch(
+        'src.analysis.services.AnalyticService.'
         'search_search',
     )
 
@@ -365,7 +365,7 @@ def test_list__search__comment__markdown__ok(api_client, mocker):
     assert len(response.data) == 1
     task = workflow.tasks.get(number=1)
     assert response.data[0]['id'] == task.id
-    analytics_mock.assert_called_once_with(
+    analysis_mock.assert_called_once_with(
         user=user,
         page='tasks',
         search_text=search_text,
@@ -389,8 +389,8 @@ def test_list__search__not_comment_event__not_found(api_client, mocker):
     event.save()
 
     api_client.token_authenticate(user)
-    analytics_mock = mocker.patch(
-        'src.analytics.services.AnalyticService.'
+    analysis_mock = mocker.patch(
+        'src.analysis.services.AnalyticService.'
         'search_search',
     )
 
@@ -400,7 +400,7 @@ def test_list__search__not_comment_event__not_found(api_client, mocker):
     # assert
     assert response.status_code == 200
     assert len(response.data) == 0
-    analytics_mock.assert_called_once_with(
+    analysis_mock.assert_called_once_with(
         user=user,
         page='tasks',
         search_text=search_text,
@@ -428,8 +428,8 @@ def test_list__search__another_task_comment__not_found(api_client, mocker):
     )
     search_text = 'com tex'
     api_client.token_authenticate(user)
-    analytics_mock = mocker.patch(
-        'src.analytics.services.AnalyticService.'
+    analysis_mock = mocker.patch(
+        'src.analysis.services.AnalyticService.'
         'search_search',
     )
 
@@ -439,7 +439,7 @@ def test_list__search__another_task_comment__not_found(api_client, mocker):
     # assert
     assert response.status_code == 200
     assert len(response.data) == 0
-    analytics_mock.assert_called_once_with(
+    analysis_mock.assert_called_once_with(
         user=user,
         page='tasks',
         search_text=search_text,
@@ -470,7 +470,7 @@ def test_list__search__comment_attachment__ok(api_client, mocker):
 
     api_client.token_authenticate(user)
     mocker.patch(
-        'src.analytics.services.AnalyticService.'
+        'src.analysis.services.AnalyticService.'
         'search_search',
     )
     search_text = 'cena'
@@ -514,7 +514,7 @@ def test_list__search__another_task_comment_attachment__not_found(
 
     api_client.token_authenticate(user)
     mocker.patch(
-        'src.analytics.services.AnalyticService.'
+        'src.analysis.services.AnalyticService.'
         'search_search',
     )
     search_text = 'cen'
@@ -557,7 +557,7 @@ def test_list__search__completed_prev_task_output_attachment__not_found(
 
     api_client.token_authenticate(user)
     mocker.patch(
-        'src.analytics.services.AnalyticService.'
+        'src.analysis.services.AnalyticService.'
         'search_search',
     )
     search_text = 'cena'
@@ -596,7 +596,7 @@ def test_list__search__active_task_field_attachment__ok(
 
     api_client.token_authenticate(user)
     mocker.patch(
-        'src.analytics.services.AnalyticService.'
+        'src.analysis.services.AnalyticService.'
         'search_search',
     )
     search_text = 'fred'
@@ -625,7 +625,7 @@ def test_list__search__active_task_description__ok(
     task_1.save()
     api_client.token_authenticate(user)
     mocker.patch(
-        'src.analytics.services.AnalyticService.search_search',
+        'src.analysis.services.AnalyticService.search_search',
     )
     search_text = 'file.here'
 
@@ -662,7 +662,7 @@ def test_list__search__not_active_task_description__not_found(
     create_test_workflow(user)
     search_text = 'file'
     mocker.patch(
-        'src.analytics.services.AnalyticService.search_search',
+        'src.analysis.services.AnalyticService.search_search',
     )
     api_client.token_authenticate(user)
 
@@ -689,7 +689,7 @@ def test_list__search__kickoff_description__ok(api_client, mocker):
     search_text = 'file'
     api_client.token_authenticate(user)
     mocker.patch(
-        'src.analytics.services.AnalyticService.search_search',
+        'src.analysis.services.AnalyticService.search_search',
     )
     # act
     response = api_client.get(f'/v3/tasks?search={search_text}')
@@ -734,7 +734,7 @@ def test_list__search__in_active_task_field_value__ok(
     )
     api_client.token_authenticate(user)
     mocker.patch(
-        'src.analytics.services.AnalyticService.'
+        'src.analysis.services.AnalyticService.'
         'search_search',
     )
     search_text = 'fred'
@@ -782,7 +782,7 @@ def test_list__search__in_kickoff_field_value__ok(
     )
     api_client.token_authenticate(user)
     mocker.patch(
-        'src.analytics.services.AnalyticService.'
+        'src.analysis.services.AnalyticService.'
         'search_search',
     )
     search_text = 'fred'
@@ -823,7 +823,7 @@ def test_list__search__in_excluded_field_value__not_found(
     )
     api_client.token_authenticate(user)
     mocker.patch(
-        'src.analytics.services.AnalyticService.'
+        'src.analysis.services.AnalyticService.'
         'search_search',
     )
     search_text = 'fred'
@@ -856,7 +856,7 @@ def test_list__search___full_uri_in_field___ok(
     )
     api_client.token_authenticate(user)
     mocker.patch(
-        'src.analytics.services.AnalyticService.'
+        'src.analysis.services.AnalyticService.'
         'search_search',
     )
 
@@ -892,7 +892,7 @@ def test_list__search___partional_uri_in_field___ok(
     )
     api_client.token_authenticate(user)
     mocker.patch(
-        'src.analytics.services.AnalyticService.'
+        'src.analysis.services.AnalyticService.'
         'search_search',
     )
     search_text = 'https://translate.com/some-page'
@@ -931,7 +931,7 @@ def test_list__search__markdown_filename_in_text_field__ok(
 
     api_client.token_authenticate(user)
     mocker.patch(
-        'src.analytics.services.AnalyticService.'
+        'src.analysis.services.AnalyticService.'
         'search_search',
     )
     search_text = 'somefile'
@@ -968,7 +968,7 @@ def test_list__search__url_in_text_field__ok(
 
     api_client.token_authenticate(user)
     mocker.patch(
-        'src.analytics.services.AnalyticService.'
+        'src.analysis.services.AnalyticService.'
         'search_search',
     )
     search_text = 'search'
@@ -1005,7 +1005,7 @@ def test_list__search__email_in_text_field__ok(
 
     api_client.token_authenticate(user)
     mocker.patch(
-        'src.analytics.services.AnalyticService.'
+        'src.analysis.services.AnalyticService.'
         'search_search',
     )
     search_text = 'master'
@@ -1048,7 +1048,7 @@ def test_list__search__prev_task_markdown_filename_in_text__not_found(
 
     api_client.token_authenticate(user)
     mocker.patch(
-        'src.analytics.services.AnalyticService.'
+        'src.analysis.services.AnalyticService.'
         'search_search',
     )
     search_text = 'somefile.txt'
