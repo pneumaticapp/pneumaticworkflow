@@ -22,10 +22,12 @@ from src.notifications.tasks import (
     send_removed_task_notification,
 )
 from src.processes.enums import (
+    FieldType,
     OwnerType,
     PerformerType,
 )
 from src.processes.models.templates.owner import TemplateOwner
+from src.processes.models.workflows.fields import TaskField
 from src.processes.models.workflows.task import TaskPerformer
 from src.processes.tasks.update_workflow import (
     update_workflow_owners,
@@ -179,6 +181,12 @@ class UserGroupService(BaseModelService):
                 template_ids = self._get_template_ids()
                 if template_ids:
                     update_workflow_owners.delay(template_ids)
+
+        if new_name is not None and new_name != self.instance.name:
+            TaskField.objects.filter(
+                type=FieldType.USER,
+                group_id=self.instance.id,
+            ).update(value=new_name)
 
         if (
             added_users_ids or

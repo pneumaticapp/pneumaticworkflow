@@ -11,6 +11,7 @@ from src.notifications.tasks import (
 )
 from src.processes.enums import (
     DirectlyStatus,
+    FieldType,
     OwnerType,
     PerformerType,
     TaskStatus,
@@ -254,6 +255,11 @@ class TestUserGroupService:
             'src.accounts.services.group.'
             'update_workflow_owners.delay',
         )
+        task_field_filter_mock = mocker.patch(
+            'src.accounts.services.group'
+            '.TaskField.objects.filter',
+            return_value=mocker.Mock(update=mocker.Mock(return_value=None)),
+        )
         analysis_mock = mocker.patch(
             'src.analysis.tasks.track_group_analytics.delay',
         )
@@ -281,6 +287,8 @@ class TestUserGroupService:
         # assert
         get_template_ids_mock.assert_called_once_with()
         update_workflow_owners_mock.assert_called_once_with([template.id])
+        task_field_filter_mock.assert_not_called()
+        task_field_filter_mock.return_value.update.assert_not_called()
         send_added_users_notifications_mock.assert_called_once_with([user.id])
         send_removed_users_notifications_mock.assert_not_called()
         group.refresh_from_db()
@@ -328,6 +336,11 @@ class TestUserGroupService:
             'src.accounts.services.group.'
             'update_workflow_owners.delay',
         )
+        task_field_filter_mock = mocker.patch(
+            'src.accounts.services.group'
+            '.TaskField.objects.filter',
+            return_value=mocker.Mock(update=mocker.Mock(return_value=None)),
+        )
         analysis_mock = mocker.patch(
             'src.analysis.tasks.track_group_analytics.delay',
         )
@@ -357,6 +370,8 @@ class TestUserGroupService:
         update_workflow_owners_mock.assert_not_called()
         send_added_users_notifications_mock.assert_called_once_with([user.id])
         send_removed_users_notifications_mock.assert_not_called()
+        task_field_filter_mock.assert_not_called()
+        task_field_filter_mock.return_value.update.assert_not_called()
         group.refresh_from_db()
         assert group.users.all().count() == 1
         assert group.users.get(id=user.id)
@@ -405,6 +420,11 @@ class TestUserGroupService:
             'src.accounts.services.group.'
             'update_workflow_owners.delay',
         )
+        task_field_filter_mock = mocker.patch(
+            'src.accounts.services.group'
+            '.TaskField.objects.filter',
+            return_value=mocker.Mock(update=mocker.Mock(return_value=None)),
+        )
         analysis_mock = mocker.patch(
             'src.analysis.tasks.track_group_analytics.delay',
         )
@@ -437,6 +457,13 @@ class TestUserGroupService:
         )
         send_removed_users_notifications_mock.assert_called_once_with(
             [user.id],
+        )
+        task_field_filter_mock.assert_called_once_with(
+            type=FieldType.USER,
+            group_id=group.id,
+        )
+        task_field_filter_mock.return_value.update.assert_called_once_with(
+            value=new_name,
         )
         group.refresh_from_db()
         assert group.users.all().count() == 1
@@ -501,6 +528,11 @@ class TestUserGroupService:
             'src.accounts.services.group.'
             'update_workflow_owners.delay',
         )
+        task_field_filter_mock = mocker.patch(
+            'src.accounts.services.group'
+            '.TaskField.objects.filter',
+            return_value=mocker.Mock(update=mocker.Mock(return_value=None)),
+        )
         analysis_mock = mocker.patch(
             'src.analysis.tasks.track_group_analytics.delay',
         )
@@ -530,6 +562,8 @@ class TestUserGroupService:
         update_workflow_owners_mock.assert_not_called()
         send_added_users_notifications_mock.assert_called_once_with([user.id])
         send_removed_users_notifications_mock.assert_not_called()
+        task_field_filter_mock.assert_not_called()
+        task_field_filter_mock.return_value.update.assert_not_called()
         group.refresh_from_db()
         assert group.users.all().count() == 1
         assert group.users.get(id=user.id)
@@ -575,6 +609,11 @@ class TestUserGroupService:
             'src.accounts.services.group.'
             'update_workflow_owners.delay',
         )
+        task_field_filter_mock = mocker.patch(
+            'src.accounts.services.group'
+            '.TaskField.objects.filter',
+            return_value=mocker.Mock(update=mocker.Mock(return_value=None)),
+        )
         analysis_mock = mocker.patch(
             'src.analysis.tasks.track_group_analytics.delay',
         )
@@ -594,6 +633,8 @@ class TestUserGroupService:
         # assert
         get_template_ids_mock.assert_called_once_with()
         update_workflow_owners_mock.assert_not_called()
+        task_field_filter_mock.assert_not_called()
+        task_field_filter_mock.return_value.update.assert_not_called()
         group.refresh_from_db()
         assert group.users.all().count() == 0
         analysis_mock.assert_called_once_with(
@@ -646,6 +687,11 @@ class TestUserGroupService:
             'src.accounts.services.group.'
             'update_workflow_owners.delay',
         )
+        task_field_filter_mock = mocker.patch(
+            'src.accounts.services.group'
+            '.TaskField.objects.filter',
+            return_value=mocker.Mock(update=mocker.Mock(return_value=None)),
+        )
         analysis_mock = mocker.patch(
             'src.analysis.tasks.track_group_analytics.delay',
         )
@@ -674,6 +720,13 @@ class TestUserGroupService:
         update_workflow_owners_mock.assert_not_called()
         send_added_users_notifications_mock.assert_not_called()
         send_removed_users_notifications_mock.assert_not_called()
+        task_field_filter_mock.assert_called_once_with(
+            type=FieldType.USER,
+            group_id=group.id,
+        )
+        task_field_filter_mock.return_value.update.assert_called_once_with(
+            value=new_name,
+        )
         group.refresh_from_db()
         assert group.name == new_name
         analysis_mock.assert_called_once_with(
@@ -728,6 +781,11 @@ class TestUserGroupService:
             'src.accounts.services.group.'
             'update_workflow_owners.delay',
         )
+        task_field_filter_mock = mocker.patch(
+            'src.accounts.services.group'
+            '.TaskField.objects.filter',
+            return_value=mocker.Mock(update=mocker.Mock(return_value=None)),
+        )
         analysis_mock = mocker.patch(
             'src.analysis.tasks.track_group_analytics.delay',
         )
@@ -756,6 +814,8 @@ class TestUserGroupService:
         update_workflow_owners_mock.assert_not_called()
         send_added_users_notifications_mock.assert_not_called()
         send_removed_users_notifications_mock.assert_not_called()
+        task_field_filter_mock.assert_not_called()
+        task_field_filter_mock.return_value.update.assert_not_called()
         analysis_mock.assert_called_once_with(
             event=GroupsAnalyticsEvent.updated,
             user_id=user.id,
@@ -799,6 +859,11 @@ class TestUserGroupService:
             'src.accounts.services.group.'
             'update_workflow_owners.delay',
         )
+        task_field_filter_mock = mocker.patch(
+            'src.accounts.services.group'
+            '.TaskField.objects.filter',
+            return_value=mocker.Mock(update=mocker.Mock(return_value=None)),
+        )
         analysis_mock = mocker.patch(
             'src.analysis.tasks.track_group_analytics.delay',
         )
@@ -827,6 +892,8 @@ class TestUserGroupService:
         update_workflow_owners_mock.assert_not_called()
         send_added_users_notifications_mock.assert_not_called()
         send_removed_users_notifications_mock.assert_not_called()
+        task_field_filter_mock.assert_not_called()
+        task_field_filter_mock.return_value.update.assert_not_called()
         analysis_mock.assert_called_once_with(
             event=GroupsAnalyticsEvent.updated,
             user_id=user.id,
@@ -869,6 +936,11 @@ class TestUserGroupService:
             'src.accounts.services.group.'
             'update_workflow_owners.delay',
         )
+        task_field_filter_mock = mocker.patch(
+            'src.accounts.services.group'
+            '.TaskField.objects.filter',
+            return_value=mocker.Mock(update=mocker.Mock(return_value=None)),
+        )
         analysis_mock = mocker.patch(
             'src.analysis.tasks.track_group_analytics.delay',
         )
@@ -897,6 +969,8 @@ class TestUserGroupService:
         update_workflow_owners_mock.assert_not_called()
         send_added_users_notifications_mock.assert_not_called()
         send_removed_users_notifications_mock.assert_not_called()
+        task_field_filter_mock.assert_not_called()
+        task_field_filter_mock.return_value.update.assert_not_called()
         group.refresh_from_db()
         assert group.users.all().count() == 0
         analysis_mock.assert_not_called()
@@ -929,6 +1003,11 @@ class TestUserGroupService:
             'src.accounts.services.group.'
             'update_workflow_owners.delay',
         )
+        task_field_filter_mock = mocker.patch(
+            'src.accounts.services.group'
+            '.TaskField.objects.filter',
+            return_value=mocker.Mock(update=mocker.Mock(return_value=None)),
+        )
         analysis_mock = mocker.patch(
             'src.analysis.tasks.track_group_analytics.delay',
         )
@@ -955,6 +1034,8 @@ class TestUserGroupService:
         # assert
         get_template_ids_mock.assert_not_called()
         update_workflow_owners_mock.assert_not_called()
+        task_field_filter_mock.assert_not_called()
+        task_field_filter_mock.return_value.update.assert_not_called()
         send_added_users_notifications_mock.assert_not_called()
         send_removed_users_notifications_mock.assert_not_called()
         group.refresh_from_db()

@@ -344,7 +344,7 @@ def get_kickoff_fields_values__user_field__set_current_user():
     )
 
     # assert
-    assert result[api_name] == user.id
+    assert result[api_name] == user.email
 
 
 def get_kickoff_fields_values__existent_field_value__ok():
