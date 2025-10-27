@@ -621,7 +621,7 @@ def test_run__performer_type_field_not_reused__ok(mocker, api_client):
         data={
             'name': 'Test name',
             'kickoff': {
-                field_template.api_name: user1.id,
+                field_template.api_name: user1.email,
             },
         },
     )
@@ -630,7 +630,7 @@ def test_run__performer_type_field_not_reused__ok(mocker, api_client):
         data={
             'name': 'Test name',
             'kickoff': {
-                field_template.api_name: user2.id,
+                field_template.api_name: user2.email,
             },
         },
     )
@@ -2344,7 +2344,7 @@ def test_run__user_field_invited_transfer__ok(
         data={
             'name': 'Wf',
             'kickoff': {
-                'user-field-1': str(account_2_new_user.id),
+                'user-field-1': str(account_2_new_user.email),
             },
         },
     )
@@ -2356,6 +2356,62 @@ def test_run__user_field_invited_transfer__ok(
     task = workflow.tasks.get(number=1)
     assert TaskPerformer.objects.filter(
         user_id=account_2_new_user.id,
+        task_id=task.id,
+    ).exclude_directly_deleted().exists()
+
+
+def test_update__user_field_with_group__ok(mocker, api_client):
+
+    # arrange
+    mocker.patch(
+        'src.processes.tasks.webhooks.'
+        'send_workflow_started_webhook.delay',
+    )
+    mocker.patch(
+        'src.processes.tasks.webhooks.'
+        'send_task_completed_webhook.delay',
+    )
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    group = create_test_group(account=account)
+
+    field_api_name = 'user-field-1'
+    template = create_test_template(
+        user=user,
+        tasks_count=1,
+        is_active=True,
+    )
+    field = FieldTemplate.objects.create(
+        name='Performer',
+        type=FieldType.USER,
+        kickoff=template.kickoff_instance,
+        template=template,
+        api_name=field_api_name,
+    )
+    template_task_1 = template.tasks.get(number=1)
+    template_task_1.raw_performers.all().delete()
+    template_task_1.add_raw_performer(
+        field=field,
+        performer_type=PerformerType.FIELD,
+    )
+    api_client.token_authenticate(user)
+
+    # act
+    response_run = api_client.post(
+        path=f'/templates/{template.id}/run',
+        data={
+            'kickoff': {
+                field_api_name: group.name,
+            },
+        },
+    )
+
+    # assert
+    assert response_run.status_code == 200
+    workflow = Workflow.objects.get(pk=response_run.data['id'])
+    task = workflow.tasks.get(number=1)
+    assert TaskPerformer.objects.filter(
+        group_id=group.id,
         task_id=task.id,
     ).exclude_directly_deleted().exists()
 
@@ -3206,7 +3262,7 @@ def test_run__task_name_with_field_2__ok(mocker, api_client):
                     str(selection_2.api_name),
                 ],
                 api_name_2: 1726012800,
-                api_name_3: str(user.id),
+                api_name_3: str(user.email),
             },
         },
     )
@@ -3326,7 +3382,7 @@ def test_run__wf_name_template_with_system_and_kickoff_vars__ok(
         path=f'/templates/{template.id}/run',
         data={
             'kickoff': {
-                field_api_name: str(user.id),
+                field_api_name: str(user.email),
             },
         },
     )
@@ -3409,7 +3465,7 @@ def test_run__name_with_kickoff_vars_only__ok(
         data={
             'kickoff': {
                 field_api_name_1: feedback,
-                field_api_name_2: str(user.id),
+                field_api_name_2: str(user.email),
             },
         },
     )
