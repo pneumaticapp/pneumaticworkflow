@@ -32,8 +32,9 @@ class GooglePeopleApiMixin:
         'people/me?personFields=names,emailAddresses,photos,organizations'
     )
     connections_path = (
-        'people/me/connections?personFields=names,emailAddresses,photos,'
-        'organizations&pageSize=1000'
+        'people:listDirectoryPeople?readMask=names,emailAddresses,photos,'
+        'organizations&sources=DIRECTORY_SOURCE_TYPE_DOMAIN_CONTACT&'
+        'sources=DIRECTORY_SOURCE_TYPE_DOMAIN_PROFILE&pageSize=1000'
     )
 
     def _people_api_request(
@@ -122,7 +123,7 @@ class GooglePeopleApiMixin:
 
     def _get_user_connections(self, access_token: str) -> list:
         """
-        Gets user contacts list via Google People API
+        Gets user directory contacts list via Google People API
         """
 
         response = self._people_api_request(
@@ -134,7 +135,7 @@ class GooglePeopleApiMixin:
         if response.ok:
             try:
                 data = response.json()
-                return data.get('connections', [])
+                return data.get('people', [])
             except json.decoder.JSONDecodeError:
                 return []
         return []
@@ -190,11 +191,11 @@ class GoogleAuthService(
     cache_key_prefix = 'g_flow'
     cache_timeout = 600  # 10 min
 
-    # Scopes for reading contacts and user profile
+    # Scopes for reading directory and user profile
     scopes = [
         'https://www.googleapis.com/auth/userinfo.profile',
         'https://www.googleapis.com/auth/userinfo.email',
-        'https://www.googleapis.com/auth/contacts.readonly',
+        'https://www.googleapis.com/auth/directory.readonly',
     ]
 
     def __init__(self):
@@ -329,7 +330,7 @@ class GoogleAuthService(
             'state': state,
             'access_type': 'offline',
             'prompt': 'consent',
-            'include_granted_scopes': 'true',
+            'include_granted_scopes': 'false',
         }
 
         query_string = urllib.parse.urlencode(params)
