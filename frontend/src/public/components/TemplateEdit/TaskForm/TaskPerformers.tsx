@@ -96,7 +96,7 @@ export function TaskPerformers({ task, users, variables, setCurrentTask }: ITask
       <ul className={styles['task-performers']}>
         {selectedPerformerOption.map((performer) => {
           return (
-            <li className={styles['task-performers__item']}>
+            <li className={styles['task-performers__item']} key={performer.apiName}>
               <UserPerformer
                 user={performer}
                 bgColor={EBgColorTypes.Light}
