@@ -754,7 +754,7 @@ class TestUpdateTemplateTask:
             data={
                 'name': 'Test workflow',
                 'kickoff': {
-                    field_template_kickoff.api_name: user.id,
+                    field_template_kickoff.api_name: user.email,
                 },
             },
         )
@@ -766,7 +766,7 @@ class TestUpdateTemplateTask:
             f'/v2/tasks/{task.id}/complete',
             data={
                 'output': {
-                    field_template_first_task.api_name: user2.id,
+                    field_template_first_task.api_name: user2.email,
                 },
             },
         )
@@ -915,8 +915,8 @@ class TestUpdateTemplateTask:
             data={
                 'name': 'Test workflow',
                 'kickoff': {
-                    field_template_1.api_name: user2.id,
-                    field_template_2.api_name: user2_new.id,
+                    field_template_1.api_name: user2.email,
+                    field_template_2.api_name: user2_new.email,
                 },
             },
         )
@@ -1058,8 +1058,8 @@ class TestUpdateTemplateTask:
             data={
                 'name': 'Test workflow',
                 'kickoff': {
-                    field_template_1.api_name: user2.id,
-                    field_template_2.api_name: user2_new.id,
+                    field_template_1.api_name: user2.email,
+                    field_template_2.api_name: user2_new.email,
                 },
             },
         )
@@ -1201,7 +1201,7 @@ class TestUpdateTemplateTask:
             data={
                 'name': 'Test workflow',
                 'kickoff': {
-                    field_template.api_name: user2.id,
+                    field_template.api_name: user2.email,
                 },
             },
         )
@@ -1324,7 +1324,7 @@ class TestUpdateTemplateTask:
             data={
                 'name': 'Test workflow 1',
                 'kickoff': {
-                    field_template.api_name: user2.id,
+                    field_template.api_name: user2.email,
                 },
             },
         )
@@ -1335,7 +1335,7 @@ class TestUpdateTemplateTask:
             data={
                 'name': 'Test workflow 2',
                 'kickoff': {
-                    field_template.api_name: user3.id,
+                    field_template.api_name: user3.email,
                 },
             },
         )
@@ -2789,7 +2789,7 @@ class TestUpdateTemplateRawPerformer:
             data={
                 'name': 'Test template',
                 'kickoff': {
-                    field_template.api_name: user.id,
+                    field_template.api_name: user.email,
                 },
             },
         )

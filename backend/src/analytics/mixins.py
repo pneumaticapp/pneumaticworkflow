@@ -1,8 +1,7 @@
 from typing import Optional
 
-from django.conf import settings
-
 import analytics
+from django.conf import settings
 
 
 class BaseIdentifyMixin:

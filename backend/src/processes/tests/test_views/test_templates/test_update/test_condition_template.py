@@ -21,6 +21,7 @@ from src.processes.models.templates.fields import (
 from src.processes.models.templates.template import Template
 from src.processes.tests.fixtures import (
     create_test_account,
+    create_test_group,
     create_test_owner,
     create_test_template,
     create_test_user,
@@ -68,7 +69,7 @@ class TestUpdateConditionTemplate:
         PredicateTemplate.objects.create(
             rule=rule,
             operator=PredicateOperator.EXIST,
-            field_type=FieldType.USER,
+            field_type=PredicateType.USER,
             field=field.api_name,
             template=template,
         )
@@ -171,7 +172,7 @@ class TestUpdateConditionTemplate:
         PredicateTemplate.objects.create(
             rule=first_rule,
             operator=PredicateOperator.EXIST,
-            field_type=FieldType.USER,
+            field_type=PredicateType.USER,
             field=field.api_name,
             template=template,
         )
@@ -182,7 +183,7 @@ class TestUpdateConditionTemplate:
         second_predicate = PredicateTemplate.objects.create(
             rule=second_rule,
             operator=PredicateOperator.EXIST,
-            field_type=FieldType.USER,
+            field_type=PredicateType.USER,
             field=field.api_name,
             template=template,
         )
@@ -290,7 +291,7 @@ class TestUpdateConditionTemplate:
         predicate = PredicateTemplate.objects.create(
             rule=rule,
             operator=PredicateOperator.EXIST,
-            field_type=FieldType.USER,
+            field_type=PredicateType.USER,
             field=field.api_name,
             template=template,
         )
@@ -619,14 +620,14 @@ class TestUpdateConditionTemplate:
         predicate = PredicateTemplate.objects.create(
             rule=rule,
             operator=PredicateOperator.EXIST,
-            field_type=FieldType.USER,
+            field_type=PredicateType.USER,
             field=field.api_name,
             template=template,
         )
         second_predicate = PredicateTemplate.objects.create(
             rule=rule,
             operator=PredicateOperator.EXIST,
-            field_type=FieldType.USER,
+            field_type=PredicateType.USER,
             field=field.api_name,
             template=template,
         )
@@ -757,7 +758,7 @@ class TestUpdateConditionTemplate:
         predicate = PredicateTemplate.objects.create(
             rule=rule,
             operator=PredicateOperator.EXIST,
-            field_type=FieldType.USER,
+            field_type=PredicateType.USER,
             field=field.api_name,
             template=template,
         )
@@ -870,7 +871,7 @@ class TestUpdateConditionTemplate:
         predicate = PredicateTemplate.objects.create(
             rule=rule,
             operator=PredicateOperator.EQUAL,
-            field_type=FieldType.USER,
+            field_type=PredicateType.USER,
             field=field.api_name,
             template=template,
         )
@@ -993,7 +994,7 @@ class TestUpdateConditionTemplate:
         predicate = PredicateTemplate.objects.create(
             rule=rule,
             operator=PredicateOperator.EQUAL,
-            field_type=FieldType.USER,
+            field_type=PredicateType.USER,
             field=field.api_name,
             value=user.id,
             template=template,
@@ -1123,7 +1124,7 @@ class TestUpdateConditionTemplate:
         predicate = PredicateTemplate.objects.create(
             rule=rule,
             operator=PredicateOperator.EXIST,
-            field_type=FieldType.USER,
+            field_type=PredicateType.USER,
             field=field.api_name,
             template=template,
         )
@@ -1243,7 +1244,7 @@ class TestUpdateConditionTemplate:
         predicate = PredicateTemplate.objects.create(
             rule=rule,
             operator=PredicateOperator.EXIST,
-            field_type=FieldType.USER,
+            field_type=PredicateType.USER,
             field=field.api_name,
             template=template,
         )
@@ -1339,7 +1340,7 @@ class TestUpdateConditionTemplate:
         assert new_rule.predicates.all().count() == 1
         assert new_rule.predicates.get(
             operator=PredicateOperator.EXIST,
-            field_type=FieldType.USER,
+            field_type=PredicateType.USER,
             field=field.api_name,
             template=template,
             api_name=predicate.api_name,
@@ -1383,7 +1384,7 @@ class TestUpdateConditionTemplate:
         predicate = PredicateTemplate.objects.create(
             rule=rule,
             operator=PredicateOperator.EXIST,
-            field_type=FieldType.USER,
+            field_type=PredicateType.USER,
             field=field.api_name,
             template=template,
         )
@@ -1477,7 +1478,7 @@ class TestUpdateConditionTemplate:
         assert new_rule.predicates.all().count() == 1
         assert new_rule.predicates.get(
             operator=PredicateOperator.EXIST,
-            field_type=FieldType.USER,
+            field_type=PredicateType.USER,
             field=field.api_name,
             template=template,
             api_name=predicate.api_name,
@@ -1521,7 +1522,7 @@ class TestUpdateConditionTemplate:
         predicate = PredicateTemplate.objects.create(
             rule=rule,
             operator=PredicateOperator.EXIST,
-            field_type=FieldType.USER,
+            field_type=PredicateType.USER,
             field=field.api_name,
             template=template,
         )
@@ -1606,7 +1607,7 @@ class TestUpdateConditionTemplate:
         assert new_rule.predicates.all().count() == 1
         assert new_rule.predicates.filter(
             operator=PredicateOperator.EXIST,
-            field_type=FieldType.USER,
+            field_type=PredicateType.USER,
             field=field.api_name,
             template=template,
             api_name=predicate.api_name,
@@ -1650,7 +1651,7 @@ class TestUpdateConditionTemplate:
         predicate = PredicateTemplate.objects.create(
             rule=rule,
             operator=PredicateOperator.EXIST,
-            field_type=FieldType.USER,
+            field_type=PredicateType.USER,
             field=field.api_name,
             template=template,
         )
@@ -1732,7 +1733,7 @@ class TestUpdateConditionTemplate:
         assert new_rule.predicates.all().count() == 1
         assert new_rule.predicates.filter(
             operator=PredicateOperator.EXIST,
-            field_type=FieldType.USER,
+            field_type=PredicateType.USER,
             field=field.api_name,
             template=template,
             api_name=predicate.api_name,
@@ -1776,7 +1777,7 @@ class TestUpdateConditionTemplate:
         predicate = PredicateTemplate.objects.create(
             rule=rule,
             operator=PredicateOperator.EXIST,
-            field_type=FieldType.USER,
+            field_type=PredicateType.USER,
             field=field.api_name,
             template=template,
         )
@@ -1857,7 +1858,7 @@ class TestUpdateConditionTemplate:
         assert rule.predicates.get(
             api_name=new_api_name,
             operator=PredicateOperator.EXIST,
-            field_type=FieldType.USER,
+            field_type=PredicateType.USER,
             field=field.api_name,
             template=template,
         )
@@ -1900,7 +1901,7 @@ class TestUpdateConditionTemplate:
         predicate = PredicateTemplate.objects.create(
             rule=rule,
             operator=PredicateOperator.EXIST,
-            field_type=FieldType.USER,
+            field_type=PredicateType.USER,
             field=field.api_name,
             template=template,
         )
@@ -1978,7 +1979,7 @@ class TestUpdateConditionTemplate:
         assert rule.predicates.all().count() == 1
         assert rule.predicates.get(
             operator=PredicateOperator.EXIST,
-            field_type=FieldType.USER,
+            field_type=PredicateType.USER,
             field=field.api_name,
             template=template,
         )
@@ -1989,7 +1990,7 @@ class TestUpdateConditionTemplate:
         api_client,
     ):
         # arrange
-        account = create_test_account(plan=BillingPlanType.PREMIUM)
+        account = create_test_account()
         user = create_test_user(account=account)
         create_test_user(account=account, email='t@t.t')
         api_client.token_authenticate(user)
@@ -2158,7 +2159,7 @@ class TestUpdateConditionTemplate:
         predicate = PredicateTemplate.objects.create(
             rule=rule,
             operator=PredicateOperator.EXIST,
-            field_type=FieldType.USER,
+            field_type=PredicateType.USER,
             field=field.api_name,
             template=template,
         )
@@ -2304,7 +2305,7 @@ class TestUpdateConditionTemplate:
         predicate = PredicateTemplate.objects.create(
             rule=rule,
             operator=PredicateOperator.EXIST,
-            field_type=FieldType.USER,
+            field_type=PredicateType.USER,
             field=field.api_name,
             template=template,
         )
@@ -2449,7 +2450,7 @@ class TestUpdateConditionTemplate:
         predicate = PredicateTemplate.objects.create(
             rule=rule,
             operator=PredicateOperator.EXIST,
-            field_type=FieldType.USER,
+            field_type=PredicateType.USER,
             field=field.api_name,
             template=template,
             api_name=predicate_api_name,
@@ -2864,3 +2865,229 @@ class TestUpdateConditionTemplate:
         assert response.data['details']['reason'] == error_message
         assert response.data['details']['api_name'] == predicate.api_name
         assert response.data['message'] == error_message
+
+    def test_update__predicate_to_type_group__ok(
+        self,
+        mocker,
+        api_client,
+    ):
+        # arrange
+        account = create_test_account()
+        user = create_test_owner(account=account)
+        group = create_test_group(account=account)
+        mocker.patch(
+            'src.processes.services.templates.'
+            'integrations.TemplateIntegrationsService.template_updated',
+        )
+        template = create_test_template(
+            user=user,
+            tasks_count=3,
+            is_active=True,
+        )
+        first_task = template.tasks.order_by('number').first()
+        condition = ConditionTemplate.objects.create(
+            action=ConditionAction.SKIP_TASK,
+            order=1,
+            task=first_task,
+            template=template,
+        )
+        rule = RuleTemplate.objects.create(
+            condition=condition,
+            template=template,
+        )
+        predicate_api_name = 'predicate-1'
+        predicate = PredicateTemplate.objects.create(
+            rule=rule,
+            field_type=PredicateType.KICKOFF,
+            operator=PredicateOperator.COMPLETED,
+            field=None,
+            template=template,
+            api_name=predicate_api_name,
+        )
+        field_api_name = 'group-field-1'
+        value = str(group.id)
+        request_data = {
+            'api_name': condition.api_name,
+            'order': condition.order,
+            'action': ConditionAction.END_WORKFLOW,
+            'rules': [
+                {
+                    'api_name': rule.api_name,
+                    'predicates': [
+                        {
+                            'api_name': predicate_api_name,
+                            'field_type': PredicateType.GROUP,
+                            'operator': PredicateOperator.EQUAL,
+                            'field': field_api_name,
+                            'value': value,
+                        },
+                    ],
+                },
+            ],
+        }
+        api_client.token_authenticate(user)
+
+        # act
+        response = api_client.put(
+            path=f'/templates/{template.id}',
+            data={
+                'id': template.id,
+                'name': template.name,
+                'is_active': True,
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id,
+                    },
+                ],
+                'kickoff': {
+                    'fields': [
+                        {
+                            'order': 1,
+                            'name': 'Name',
+                            'type': FieldType.USER,
+                            'api_name': field_api_name,
+                            'is_required': True,
+                        },
+                    ],
+                },
+                'tasks': [
+                    {
+                        'id': first_task.id,
+                        'number': first_task.number,
+                        'name': first_task.name,
+                        'api_name': first_task.api_name,
+                        'conditions': [request_data],
+                        'raw_performers': [
+                            {
+                                'type': PerformerType.USER,
+                                'source_id': user.id,
+                            },
+                        ],
+                    },
+                ],
+            },
+        )
+
+        # assert
+        assert response.status_code == 200
+        condition_data = response.data['tasks'][0]['conditions'][0]
+        predicate_data = condition_data['rules'][0]['predicates'][0]
+        assert predicate_data['field_type'] == PredicateType.GROUP
+        assert predicate_data['api_name'] == predicate_api_name
+        assert predicate_data['operator'] == PredicateOperator.EQUAL
+        assert predicate_data['value'] == value
+        assert predicate_data['field'] == field_api_name
+
+        predicate.refresh_from_db()
+        assert predicate.field_type == PredicateType.GROUP
+        assert predicate.operator == PredicateOperator.EQUAL
+        assert predicate.field == field_api_name
+        assert predicate.value == value
+        assert predicate.group_id == group.id
+
+    def test_update__group_field_incorrect_value__validation_error(
+        self,
+        mocker,
+        api_client,
+    ):
+        # arrange
+        account = create_test_account()
+        user = create_test_owner(account=account)
+        create_test_group(account=account)
+        mocker.patch(
+            'src.processes.services.templates.'
+            'integrations.TemplateIntegrationsService.template_updated',
+        )
+        template = create_test_template(
+            user=user,
+            tasks_count=3,
+            is_active=True,
+        )
+        first_task = template.tasks.order_by('number').first()
+        condition = ConditionTemplate.objects.create(
+            action=ConditionAction.SKIP_TASK,
+            order=1,
+            task=first_task,
+            template=template,
+        )
+        rule = RuleTemplate.objects.create(
+            condition=condition,
+            template=template,
+        )
+        predicate_api_name = 'predicate-1'
+        field_api_name = 'group-field-1'
+        invalid_value = 'invalid-group-id'
+        request_data = {
+            'api_name': condition.api_name,
+            'order': condition.order,
+            'action': ConditionAction.END_WORKFLOW,
+            'rules': [
+                {
+                    'api_name': rule.api_name,
+                    'predicates': [
+                        {
+                            'api_name': predicate_api_name,
+                            'field_type': PredicateType.GROUP,
+                            'operator': PredicateOperator.EQUAL,
+                            'field': field_api_name,
+                            'value': invalid_value,
+                        },
+                    ],
+                },
+            ],
+        }
+        api_client.token_authenticate(user)
+
+        # act
+        response = api_client.put(
+            path=f'/templates/{template.id}',
+            data={
+                'id': template.id,
+                'name': template.name,
+                'is_active': True,
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id,
+                    },
+                ],
+                'kickoff': {
+                    'fields': [
+                        {
+                            'order': 1,
+                            'name': 'Name',
+                            'type': FieldType.USER,
+                            'api_name': field_api_name,
+                            'is_required': True,
+                        },
+                    ],
+                },
+                'tasks': [
+                    {
+                        'id': first_task.id,
+                        'number': first_task.number,
+                        'name': first_task.name,
+                        'api_name': first_task.api_name,
+                        'conditions': [request_data],
+                        'raw_performers': [
+                            {
+                                'type': PerformerType.USER,
+                                'source_id': user.id,
+                            },
+                        ],
+                    },
+                ],
+            },
+        )
+
+        # assert
+        assert response.status_code == 400
+        message = messages.MSG_PT_0062(
+            task=first_task.name,
+            group_id=invalid_value,
+        )
+        assert response.data['code'] == ErrorCode.VALIDATION_ERROR
+        assert response.data['message'] == message
+        assert response.data['details']['api_name'] == predicate_api_name
+        assert response.data['details']['reason'] == message
