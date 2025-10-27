@@ -1746,7 +1746,7 @@ class TestUpdateTemplateTask:
             'src.processes.services.templates.'
             'integrations.TemplateIntegrationsService.template_updated',
         )
-        analytics_mock = mocker.patch(
+        analysis_mock = mocker.patch(
             'src.processes.serializers.templates.task.'
             'AnalyticService.templates_task_due_date_created',
         )
@@ -1796,7 +1796,7 @@ class TestUpdateTemplateTask:
         assert response.status_code == 200
         task_data = response.data['tasks'][0]
         assert task_data['raw_due_date']['duration'] == duration
-        analytics_mock.assert_called_once_with(
+        analysis_mock.assert_called_once_with(
             user=user,
             template=template,
             task=template.tasks.first(),
@@ -1810,7 +1810,7 @@ class TestUpdateTemplateTask:
         api_client,
     ):
         # arrange
-        analytics_mock = mocker.patch(
+        analysis_mock = mocker.patch(
             'src.processes.serializers.templates.task.'
             'AnalyticService.templates_task_due_date_created',
         )
@@ -1859,7 +1859,7 @@ class TestUpdateTemplateTask:
         assert response.status_code == 200
         task_data = response.data['tasks'][0]
         assert task_data['raw_due_date']['duration'] == duration
-        analytics_mock.assert_not_called()
+        analysis_mock.assert_not_called()
 
     def test_update__with_equal_api_names__save_last(
         self,

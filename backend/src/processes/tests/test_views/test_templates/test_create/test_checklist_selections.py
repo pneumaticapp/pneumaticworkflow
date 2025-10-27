@@ -32,7 +32,7 @@ def test_create__ok(api_client, mocker):
         },
     ]
     mocker.patch(
-        'src.analytics.services.AnalyticService'
+        'src.analysis.services.AnalyticService'
         '.checklist_created',
     )
 
@@ -106,7 +106,7 @@ def test_create__generate_api_name__ok(
         return_value=api_name,
     )
     mocker.patch(
-        'src.analytics.services.AnalyticService'
+        'src.analysis.services.AnalyticService'
         '.checklist_created',
     )
     selections_data = [
@@ -233,7 +233,7 @@ def test_create__with_equal_api_names_in_one_checklist__create_last(
     api_client.token_authenticate(user)
     api_name = 'cl-selection-1'
     mocker.patch(
-        'src.analytics.services.AnalyticService'
+        'src.analysis.services.AnalyticService'
         '.checklist_created',
     )
     selections_data = [
@@ -298,7 +298,7 @@ def test_create__equal_api_names_in_different_checklists__validation_error(
     step = 'First step'
     checklist_item_api_name = 'cl-selection-1'
     mocker.patch(
-        'src.analytics.services.AnalyticService'
+        'src.analysis.services.AnalyticService'
         '.checklist_created',
     )
 
@@ -373,7 +373,7 @@ def test_create__limit_exceeded__ok(api_client, mocker):
         },
     ]
     mocker.patch(
-        'src.analytics.services.AnalyticService'
+        'src.analysis.services.AnalyticService'
         '.checklist_created',
     )
 
