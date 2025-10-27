@@ -35,6 +35,7 @@ from src.processes.tests.fixtures import (
     create_invited_user,
     create_test_account,
     create_test_group,
+    create_test_owner,
     create_test_user,
     create_test_workflow,
 )
@@ -684,6 +685,9 @@ def test__user_invite_actions__ok(mocker):
         'src.analytics.services.AnalyticService.'
         'users_invite_sent',
     )
+    email_message_log = mocker.patch(
+        'src.logs.service.AccountLogService.email_message',
+    )
     service = UserInviteService(
         current_url=current_url,
         is_superuser=is_superuser,
@@ -701,6 +705,62 @@ def test__user_invite_actions__ok(mocker):
         is_superuser=is_superuser,
         invite_token=invite_token_str,
     )
+    email_message_log.assert_not_called()
+    users_invite_sent_mock.assert_called_once_with(
+        invite_from=request_user,
+        invite_to=invited_user,
+        current_url=current_url,
+        is_superuser=is_superuser,
+    )
+
+
+def test__user_invite_actions__enable_logging__create_event(mocker):
+
+    # arrange
+    account = create_test_account(log_api_requests=True)
+    request_user = create_test_owner(account=account)
+    invited_user = create_invited_user(user=request_user)
+    current_url = 'http://current.test'
+    is_superuser = False
+    invite_token_str = '!@#wweqasd'
+    identify_mock = mocker.patch(
+        'src.accounts.services.user_invite.UserInviteService.'
+        'identify',
+    )
+    invite_token_mock = mocker.patch(
+        'src.accounts.services.user_invite.UserInviteService.'
+        '_get_invite_token',
+        return_value=invite_token_str,
+    )
+    users_invited_mock = mocker.patch(
+        'src.analytics.services.AnalyticService.'
+        'users_invited',
+    )
+    users_invite_sent_mock = mocker.patch(
+        'src.analytics.services.AnalyticService.'
+        'users_invite_sent',
+    )
+    email_message_log = mocker.patch(
+        'src.logs.service.AccountLogService.email_message',
+    )
+    service = UserInviteService(
+        current_url=current_url,
+        is_superuser=is_superuser,
+        request_user=request_user,
+    )
+
+    # act
+    service._user_invite_actions(user=invited_user)
+
+    # assert
+    identify_mock.assert_called_once_with(invited_user)
+    invite_token_mock.assert_called_once_with(invited_user)
+    users_invited_mock.assert_called_once_with(
+        invite_to=invited_user,
+        is_superuser=is_superuser,
+        invite_token=invite_token_str,
+    )
+    email_message_log.assert_called_once()
     users_invite_sent_mock.assert_called_once_with(
         invite_from=request_user,
         invite_to=invited_user,
