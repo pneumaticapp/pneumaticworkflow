@@ -122,7 +122,7 @@ class AccountLogService(BaseModelService):
         request_data: dict,
         account_id: int,
         contractor: str,
-        status: AccountEventStatus,
+        status: AccountEventStatus.LITERALS,
         response_data: Optional[dict] = None,
     ):
         self.create(

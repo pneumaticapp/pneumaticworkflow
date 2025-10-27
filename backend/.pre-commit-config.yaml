@@ -10,7 +10,7 @@ repos:
         name: ruff
         types: [python]
         language: system
-        entry: ruff check --fix --config backend/ruff.toml
+        entry: ruff check --config backend/ruff.toml
         exclude: 'migrations|settings.py|messages.py|wsgi.py|asgi.py'
 
   - repo: local
@@ -19,5 +19,5 @@ repos:
         name: py_codestyle
         types: [python]
         language: system
-        entry: pycodestyle --config backend/pycodestyle.ini
+        entry: pycodestyle backend/ --config backend/pycodestyle.ini
         exclude: 'migrations|settings.py|messages.py|wsgi.py|asgi.py'

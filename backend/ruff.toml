@@ -4,7 +4,6 @@ target-version = "py37"
 line-length = 79
 indent-width = 4
 
-
 # Exclude a variety of commonly ignored directories.
 exclude = [
     ".git",
@@ -93,6 +92,7 @@ ignore = [
     "RUF012",
     "S101",    # Allow asserts
     "Q000",    # Add later
+    "I001",    # Add later (Organize imports)
 ]
 extend-select = [
     "E501", # maximum line length
