@@ -6,7 +6,7 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('accounts', '0133_account_bucket_is_public'),
+        ('accounts', '0134_add_external_id_to_account'),
     ]
 
     operations = [
