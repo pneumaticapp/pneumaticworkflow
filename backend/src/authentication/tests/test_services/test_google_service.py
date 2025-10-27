@@ -105,7 +105,7 @@ class TestGoogleAuthService:
         assert 'scope=' in auth_uri
         assert 'userinfo.profile' in auth_uri
         assert 'userinfo.email' in auth_uri
-        assert 'contacts.readonly' in auth_uri
+        assert 'directory.readonly' in auth_uri
         assert 'response_type=code' in auth_uri
         assert 'state=' in auth_uri
         assert 'access_type=offline' in auth_uri
@@ -755,11 +755,11 @@ class TestGoogleAuthService:
 
         sentry_mock.assert_called_once()
 
-    def test_get_user_connections__no_connections_key__return_empty(
+    def test_get_user_connections__no_people_key__return_empty(
         self,
         mocker,
     ):
-        """Test handling response without connections key"""
+        """Test handling response without people key"""
         # arrange
         access_token = 'test_token'
         response_mock = mocker.Mock(
@@ -935,11 +935,11 @@ class TestGoogleAuthService:
         )
 
     def test_get_user_connections__ok(self, mocker):
-        """Test getting user connections from People API"""
+        """Test getting user directory contacts from People API"""
         # arrange
         access_token = 'test_token'
-        connections_data = [{'name': 'John'}, {'name': 'Jane'}]
-        json_data = {'connections': connections_data}
+        people_data = [{'name': 'John'}, {'name': 'Jane'}]
+        json_data = {'people': people_data}
         response_mock = mocker.Mock(
             ok=True,
             json=mocker.Mock(return_value=json_data),
@@ -955,18 +955,20 @@ class TestGoogleAuthService:
         result = service._get_user_connections(access_token)
 
         # assert
-        assert result == connections_data
+        assert result == people_data
         people_api_request_mock.assert_called_once_with(
             path=(
-                'people/me/connections?personFields='
-                'names,emailAddresses,photos,organizations&pageSize=1000'
+                'people:listDirectoryPeople?readMask='
+                'names,emailAddresses,photos,organizations&'
+                'sources=DIRECTORY_SOURCE_TYPE_DOMAIN_CONTACT&'
+                'sources=DIRECTORY_SOURCE_TYPE_DOMAIN_PROFILE&pageSize=1000'
             ),
             access_token=access_token,
             raise_exception=False,
         )
 
     def test_get_user_connections__decode_error__return_empty(self, mocker):
-        """Test handling JSON decode error for connections"""
+        """Test handling JSON decode error for directory people"""
         # arrange
         access_token = 'test_token'
         response_mock = mocker.Mock(
@@ -1441,9 +1443,10 @@ class TestGoogleAuthService:
         log_mock.assert_called_once_with(
             user=user,
             path=(
-                'https://people.googleapis.com/v1/people/me/connections'
-                '?personFields=names,emailAddresses,'
-                'photos,organizations&pageSize=1000'
+                'https://people.googleapis.com/v1/people:listDirectoryPeople'
+                '?readMask=names,emailAddresses,photos,organizations&'
+                'sources=DIRECTORY_SOURCE_TYPE_DOMAIN_CONTACT&'
+                'sources=DIRECTORY_SOURCE_TYPE_DOMAIN_PROFILE&pageSize=1000'
             ),
             title=f'Google contacts request: {user.email}',
             http_status=400,
