@@ -2,7 +2,6 @@ from datetime import datetime
 from unittest.mock import AsyncMock, Mock
 
 import pytest
-
 from src.application.dto.file_dtos import (
     DownloadFileQuery,
     UploadFileCommand,
@@ -22,7 +21,9 @@ class TestUploadFileUseCase:
 
     @pytest.mark.asyncio
     async def test_upload_file__valid_command__return_response(
-        self, mock_storage_service, mock_repository
+        self,
+        mock_storage_service,
+        mock_repository,
     ):
         """Test successful file upload"""
         # Arrange
@@ -83,7 +84,9 @@ class TestUploadFileUseCase:
 
     @pytest.mark.asyncio
     async def test_upload_file__storage_error__raise_storage_error(
-        self, mock_storage_service, mock_repository
+        self,
+        mock_storage_service,
+        mock_repository,
     ):
         """Test upload with storage error"""
         # Arrange
@@ -125,7 +128,9 @@ class TestDownloadFileUseCase:
 
     @pytest.mark.asyncio
     async def test_download_file__valid_query__return_file_and_stream(
-        self, mock_storage_service, mock_repository
+        self,
+        mock_storage_service,
+        mock_repository,
     ):
         """Test successful file download"""
         # Arrange
@@ -151,7 +156,7 @@ class TestDownloadFileUseCase:
             yield b'test content'
 
         mock_storage_service.download_file = Mock(
-            return_value=mock_download_generator()
+            return_value=mock_download_generator(),
         )
 
         use_case = DownloadFileUseCase(
@@ -174,7 +179,9 @@ class TestDownloadFileUseCase:
 
     @pytest.mark.asyncio
     async def test_download_file__file_not_found__raise_file_not_found_error(
-        self, mock_storage_service, mock_repository
+        self,
+        mock_storage_service,
+        mock_repository,
     ):
         """Test download with file not found"""
         # Arrange

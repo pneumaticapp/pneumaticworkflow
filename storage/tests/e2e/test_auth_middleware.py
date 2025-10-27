@@ -2,7 +2,9 @@ class TestAuthenticationMiddleware:
     """Test authentication middleware"""
 
     def test_auth_check__valid_token__passes_authentication(
-        self, e2e_client, mock_auth_middleware
+        self,
+        e2e_client,
+        mock_auth_middleware,
     ):
         """Test valid token authentication"""
         # Arrange
@@ -26,7 +28,9 @@ class TestAuthenticationMiddleware:
         assert response.status_code == 401
 
     def test_auth_check__valid_session_token__passes_authentication(
-        self, e2e_client, mock_auth_middleware
+        self,
+        e2e_client,
+        mock_auth_middleware,
     ):
         """Test valid session token authentication"""
         # Arrange

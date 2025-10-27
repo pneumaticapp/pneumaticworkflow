@@ -1,47 +1,29 @@
 repos:
   - repo: local
     hooks:
-      - id: trailing-whitespace
-        name: trim trailing whitespace
-        entry: powershell -Command "cd file_service; Get-ChildItem -Recurse -Include *.py | ForEach-Object { (Get-Content $_.FullName) -replace '\\s+$', '' | Set-Content $_.FullName }"
-        language: system
-        types: [text]
-        files: ^file_service/
-        require_serial: true
-        pass_filenames: false
-
-      - id: end-of-file-fixer
-        name: fix end of files
-        entry: powershell -Command "cd file_service; Get-ChildItem -Recurse -Include *.py | ForEach-Object { $content = Get-Content $_.FullName -Raw; if ($content -and -not $content.EndsWith([Environment]::NewLine)) { $content + [Environment]::NewLine | Set-Content $_.FullName -NoNewline } }"
-        language: system
-        types: [text]
-        files: ^file_service/
-        require_serial: true
-        pass_filenames: false
-
       - id: ruff-check
         name: ruff check
-        entry: powershell -Command "cd file_service; ruff check --fix --show-fixes --exit-non-zero-on-fix ."
+        entry: ruff check --config storage/ruff.toml --no-cache
         language: system
         types: [python]
-        files: ^file_service/
+        files: ^storage/
         require_serial: true
-        pass_filenames: false
+        exclude: 'alembic|migrations|tests'
 
       - id: ruff-format
         name: ruff format
-        entry: powershell -Command "cd file_service; ruff format ."
+        entry: ruff format --config storage/ruff.toml --no-cache
         language: system
         types: [python]
-        files: ^file_service/
+        files: ^storage/
         require_serial: true
-        pass_filenames: false
+        exclude: 'alembic|migrations|tests'
 
       - id: mypy-check
         name: mypy
-        entry: powershell -Command "cd file_service; mypy src/"
+        entry: mypy --config-file storage/mypy.ini storage/src/
         language: system
         types: [python]
-        files: ^file_service/src/
-        require_serial: true
+        files: ^storage/
         pass_filenames: false
+        exclude: 'alembic|migrations|tests'

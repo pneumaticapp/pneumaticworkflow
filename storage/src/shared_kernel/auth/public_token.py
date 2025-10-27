@@ -2,7 +2,6 @@
 
 import secrets
 from abc import ABC, abstractmethod
-from typing import Optional
 
 
 class PublicBaseToken(ABC):
@@ -12,9 +11,8 @@ class PublicBaseToken(ABC):
     @abstractmethod
     def token_length(self) -> int:
         """Token length"""
-        pass
 
-    def __init__(self, token: Optional[str] = None):
+    def __init__(self, token: str | None = None) -> None:
         if token:
             self._validate_length(token)
             self.token = token
@@ -28,7 +26,8 @@ class PublicBaseToken(ABC):
     def _validate_length(self, token: str) -> None:
         """Validate token length"""
         if len(token) != self.token_length:
-            raise ValueError(f'Incorrect token length: {len(token)}')
+            error_msg = f'Incorrect token length: {len(token)}'
+            raise ValueError(error_msg)
 
     def _generate_token(self) -> str:
         """Generate random token"""

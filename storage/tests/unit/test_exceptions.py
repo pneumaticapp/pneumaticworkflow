@@ -3,7 +3,6 @@
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
-
 from src.shared_kernel.exceptions import (
     AuthenticationError,
     BaseAppException,
@@ -331,5 +330,5 @@ class TestExceptionHandlerIntegration:
         # This test is skipped because FastAPI intercepts standard exceptions
         # before our handler, which is normal behavior
         pytest.skip(
-            'FastAPI intercepts standard exceptions before our handler'
+            'FastAPI intercepts standard exceptions before our handler',
         )

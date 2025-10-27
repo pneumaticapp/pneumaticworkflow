@@ -1,0 +1,28 @@
+target-version = "py311"
+line-length = 79
+indent-width = 4
+
+
+[lint]
+select = ["ALL"]
+
+ignore = [
+    "D",
+    "Q000",
+    "Q001",
+    "Q002",
+    "Q003",
+    "COM812",
+]
+fixable = ["ALL"]
+unfixable = []
+
+[lint.pylint]
+max-args = 8
+
+
+[format]
+quote-style = "single"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"

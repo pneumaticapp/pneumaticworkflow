@@ -1,7 +1,7 @@
 """Permission classes"""
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING
 
 from src.shared_kernel.auth.user_types import UserType
 from src.shared_kernel.exceptions import (
@@ -18,7 +18,6 @@ class BasePermission(ABC):
     @abstractmethod
     async def has_permission(self, request: 'Request') -> bool:
         """Check if request has permission"""
-        pass
 
     def get_error_message(self) -> str:
         """Get error message"""
@@ -61,7 +60,8 @@ class DenyPublicToken(BasePermission):
 
 
 async def check_permissions(
-    request: 'Request', permissions: list[BasePermission]
+    request: 'Request',
+    permissions: list[BasePermission],
 ) -> None:
     """Check all permissions for request"""
     for permission in permissions:
@@ -77,7 +77,7 @@ deny_public_token = DenyPublicToken()
 class CombinedPermissions(BasePermission):
     """Combines multiple permissions"""
 
-    def __init__(self, permissions: List[BasePermission]):
+    def __init__(self, permissions: list[BasePermission]) -> None:
         self.permissions = permissions
 
     async def has_permission(self, request: 'Request') -> bool:
@@ -96,5 +96,5 @@ authenticated_no_public = CombinedPermissions(
     [
         IsAuthenticated(),
         DenyPublicToken(),
-    ]
+    ],
 )

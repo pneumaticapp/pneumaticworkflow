@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, Optional
+from typing import Any
 
 
 class ErrorType(str, Enum):
@@ -25,7 +25,7 @@ class ErrorCode:
     message: str
     error_type: ErrorType
     http_status: int
-    details: Optional[str] = None
+    details: str | None = None
 
 
 @dataclass
@@ -35,11 +35,11 @@ class ErrorResponse:
     error_code: str
     message: str
     error_type: str
-    details: Optional[str] = None
-    timestamp: Optional[str] = None
-    request_id: Optional[str] = None
+    details: str | None = None
+    timestamp: str | None = None
+    request_id: str | None = None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary"""
         result = {
             'error_code': self.error_code,
@@ -55,9 +55,8 @@ class ErrorResponse:
         return result
 
 
-class BaseAppException(Exception):
-    """
-    Base application exception
+class BaseAppError(Exception):
+    """Base application exception
 
     All application exceptions should inherit from this class
     """
@@ -65,8 +64,8 @@ class BaseAppException(Exception):
     def __init__(
         self,
         error_code: ErrorCode,
-        details: Optional[str] = None,
-        **kwargs: Any,
+        details: str | None = None,
+        **kwargs: str | int | None,
     ) -> None:
         self.error_code = error_code
         self.details = details
@@ -83,14 +82,19 @@ class BaseAppException(Exception):
         """Get error type"""
         return self.error_code.error_type
 
-    def to_response(self, **kwargs: Any) -> ErrorResponse:
+    def to_response(self, **kwargs: str | int | None) -> ErrorResponse:
         """Convert to error response"""
+        # Convert all kwargs values to strings for ErrorResponse
+        str_kwargs = {
+            key: str(value) if value is not None else None
+            for key, value in kwargs.items()
+        }
         return ErrorResponse(
             error_code=self.error_code.code,
             message=self.error_code.message,
             error_type=self.error_type.value,
             details=self.details,
-            **kwargs,
+            **str_kwargs,
         )
 
     def __str__(self) -> str:

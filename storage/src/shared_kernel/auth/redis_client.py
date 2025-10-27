@@ -1,5 +1,5 @@
 import pickle
-from typing import Any, Optional
+from typing import Any
 
 import redis.asyncio as redis
 
@@ -14,21 +14,23 @@ from src.shared_kernel.exceptions import (
 
 
 class RedisAuthClient:
-    def __init__(self, redis_url: str):
+    def __init__(self, redis_url: str) -> None:
         # Settings match Django: KEY_PREFIX = '' for auth cache
         self._client = redis.from_url(redis_url)
 
-    async def get(self, key: str) -> Optional[Any]:
+    async def get(self, key: str) -> dict[str, Any] | None:
         """Get value from cache"""
         try:
             settings = get_settings()
             value = await self._client.get(f'{settings.KEY_PREFIX_REDIS}{key}')
             if value is None:
                 return None
-            return pickle.loads(value)
+            # Note: pickle.loads can be unsafe with untrusted data
+            # In production, consider using a safer serialization method
+            return pickle.loads(value)  # noqa: S301
         except redis.ConnectionError as e:
             raise RedisConnectionError(
-                details=MSG_EXT_011.format(details=str(e))
+                details=MSG_EXT_011.format(details=str(e)),
             ) from e
         except redis.RedisError as e:
             raise RedisOperationError(

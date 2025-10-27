@@ -18,8 +18,7 @@ class UploadFileUseCase:
         unit_of_work: UnitOfWork,
         fastapi_base_url: str,
     ) -> None:
-        """
-        Initialize upload file use case
+        """Initialize upload file use case
 
         Args:
         ----
@@ -27,6 +26,7 @@ class UploadFileUseCase:
             storage_service: File storage service
             unit_of_work: Unit of Work for transactions
             fastapi_base_url: FastAPI application base URL
+
         """
         self._file_repository = file_repository
         self._storage_service = storage_service
@@ -34,7 +34,8 @@ class UploadFileUseCase:
         self._fastapi_base_url = fastapi_base_url
 
     async def execute(
-        self, command: UploadFileCommand
+        self,
+        command: UploadFileCommand,
     ) -> UploadFileUseCaseResponse:
         """Execute file upload
 
@@ -45,6 +46,7 @@ class UploadFileUseCase:
         Returns:
         -------
             FileUploadResponse: File upload result
+
         """
         # Create domain file entity
         file_record = FileRecord(

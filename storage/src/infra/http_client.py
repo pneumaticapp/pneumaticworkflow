@@ -1,5 +1,5 @@
 from http import HTTPStatus
-from typing import TYPE_CHECKING, Dict, Optional, Union
+from typing import TYPE_CHECKING, Union
 
 import httpx
 
@@ -16,13 +16,11 @@ if TYPE_CHECKING:
 
 
 class HttpClient:
-    """
-    HTTP client for Django backend requests
-    """
+    """HTTP client for Django backend requests"""
 
-    def __init__(self, base_url: str):
+    def __init__(self, base_url: str) -> None:
         self.base_url = base_url
-        self._client: Optional[httpx.AsyncClient] = None
+        self._client: httpx.AsyncClient | None = None
 
     @property
     def client(self) -> httpx.AsyncClient:
@@ -32,13 +30,13 @@ class HttpClient:
         return self._client
 
     async def check_file_permission(
-        self, user: Union['AuthUser', 'AuthenticatedUser'], file_id: str
+        self,
+        user: Union['AuthUser', 'AuthenticatedUser'],
+        file_id: str,
     ) -> bool:
-        """
-        Check file permission based on user type and token
-        """
+        """Check file permission based on user type and token"""
         # Form headers based on user type
-        headers: Dict[str, str] = {}
+        headers: dict[str, str] = {}
 
         if user.auth_type == UserType.AUTHENTICATED and user.token:
             headers['Authorization'] = f'Bearer {user.token}'
@@ -53,10 +51,6 @@ class HttpClient:
                 data={'file_id': file_id},
                 headers=headers,
             )
-
-            # 204 - access granted, 403 - access denied
-            return response.status_code == HTTPStatus.NO_CONTENT
-
         except httpx.TimeoutException as e:
             raise HttpTimeoutError(
                 url=self.base_url,
@@ -65,8 +59,12 @@ class HttpClient:
             ) from e
         except httpx.RequestError as e:
             raise HttpClientError(
-                url=self.base_url, details=MSG_EXT_014.format(details=str(e))
+                url=self.base_url,
+                details=MSG_EXT_014.format(details=str(e)),
             ) from e
+        else:
+            # 204 - access granted, 403 - access denied
+            return response.status_code == HTTPStatus.NO_CONTENT
 
     async def close(self) -> None:
         """Close HTTP client"""

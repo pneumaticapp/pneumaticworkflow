@@ -41,7 +41,8 @@ class TestAPIEndpoints:
 
         # Act
         response = e2e_client.post(
-            '/upload', files={'file': ('test.txt', file_content, 'text/plain')}
+            '/upload',
+            files={'file': ('test.txt', file_content, 'text/plain')},
         )
 
         # Assert
@@ -57,7 +58,10 @@ class TestAPIEndpoints:
         assert response.status_code == 401
 
     def test_upload_endpoint__no_file_with_auth__return_422(
-        self, e2e_client, mock_auth_middleware, auth_headers
+        self,
+        e2e_client,
+        mock_auth_middleware,
+        auth_headers,
     ):
         """Test upload endpoint without file but with authentication"""
         # Act
@@ -89,7 +93,7 @@ class TestAPIEndpoints:
         response = e2e_client.post(
             '/upload',
             files={
-                'file': ('large.txt', sample_large_file_content, 'text/plain')
+                'file': ('large.txt', sample_large_file_content, 'text/plain'),
             },
             headers=auth_headers,
         )
@@ -146,7 +150,7 @@ class TestAPIEndpoints:
         from src.shared_kernel.exceptions import FileNotFoundError
 
         mock_download_use_case_execute.side_effect = FileNotFoundError(
-            'nonexistent-file-id'
+            'nonexistent-file-id',
         )
 
         # Act

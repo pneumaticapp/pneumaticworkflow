@@ -1,11 +1,10 @@
 import asyncio
+from collections.abc import Generator
 from datetime import UTC, datetime
-from typing import Generator
 from unittest.mock import AsyncMock, MagicMock, Mock
 
 import pytest
 from fastapi.testclient import TestClient
-
 from src.application.dto import DownloadFileQuery, UploadFileCommand
 from src.domain.entities import FileRecord
 from src.main import app

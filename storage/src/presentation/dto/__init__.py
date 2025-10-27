@@ -6,6 +6,6 @@ from .api_dtos import (
 )
 
 __all__ = [
-    'FileUploadResponse',
     'FileInfoResponse',
+    'FileUploadResponse',
 ]

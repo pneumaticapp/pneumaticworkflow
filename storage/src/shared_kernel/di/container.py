@@ -1,6 +1,7 @@
 """Dependency injection"""
 
-from typing import AsyncGenerator
+from collections.abc import AsyncGenerator
+from typing import Annotated
 
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -33,9 +34,9 @@ async def get_storage_service() -> AsyncGenerator[StorageService, None]:
 
 
 async def get_upload_use_case(
-    session: AsyncSession = Depends(get_db_session),
-    settings: Settings = Depends(get_settings_dep),
-    storage_service: StorageService = Depends(get_storage_service),
+    session: Annotated[AsyncSession, Depends(get_db_session)],
+    settings: Annotated[Settings, Depends(get_settings_dep)],
+    storage_service: Annotated[StorageService, Depends(get_storage_service)],
 ) -> UploadFileUseCase:
     """Get upload use case"""
     file_repository = FileRecordRepository(session=session)
@@ -50,8 +51,8 @@ async def get_upload_use_case(
 
 
 async def get_download_use_case(
-    session: AsyncSession = Depends(get_db_session),
-    storage_service: StorageService = Depends(get_storage_service),
+    session: Annotated[AsyncSession, Depends(get_db_session)],
+    storage_service: Annotated[StorageService, Depends(get_storage_service)],
 ) -> DownloadFileUseCase:
     """Get download use case"""
     file_repository = FileRecordRepository(session=session)

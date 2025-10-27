@@ -46,7 +46,7 @@ from .fixtures.integration import (
 def mock_upload_use_case_execute(mocker):
     """Mock for UploadFileUseCase.execute"""
     return mocker.patch(
-        'src.application.use_cases.file_upload.UploadFileUseCase.execute'
+        'src.application.use_cases.file_upload.UploadFileUseCase.execute',
     )
 
 
@@ -54,7 +54,7 @@ def mock_upload_use_case_execute(mocker):
 def mock_download_use_case_execute(mocker):
     """Mock for DownloadFileUseCase.execute"""
     return mocker.patch(
-        'src.application.use_cases.file_download.DownloadFileUseCase.execute'
+        'src.application.use_cases.file_download.DownloadFileUseCase.execute',
     )
 
 
@@ -62,7 +62,7 @@ def mock_download_use_case_execute(mocker):
 def mock_pneumatic_token_data(mocker):
     """Mock for PneumaticToken.data"""
     return mocker.patch(
-        'src.shared_kernel.auth.token_auth.PneumaticToken.data'
+        'src.shared_kernel.auth.token_auth.PneumaticToken.data',
     )
 
 
@@ -70,7 +70,7 @@ def mock_pneumatic_token_data(mocker):
 def mock_http_client_check_permission(mocker):
     """Mock for HttpClient.check_file_permission"""
     return mocker.patch(
-        'src.infra.http_client.HttpClient.check_file_permission'
+        'src.infra.http_client.HttpClient.check_file_permission',
     )
 
 
@@ -108,7 +108,7 @@ def mock_redis_from_url(mocker):
 def mock_redis_auth_client_get(mocker):
     """Mock for RedisAuthClient.get"""
     return mocker.patch(
-        'src.shared_kernel.auth.redis_client.RedisAuthClient.get'
+        'src.shared_kernel.auth.redis_client.RedisAuthClient.get',
     )
 
 
@@ -138,7 +138,7 @@ def mock_auth_middleware_authenticate_token(mocker):
 def mock_auth_middleware_pneumatic_token_data(mocker):
     """Mock for PneumaticToken.data in auth middleware"""
     return mocker.patch(
-        'src.shared_kernel.middleware.auth_middleware.PneumaticToken.data'
+        'src.shared_kernel.middleware.auth_middleware.PneumaticToken.data',
     )
 
 

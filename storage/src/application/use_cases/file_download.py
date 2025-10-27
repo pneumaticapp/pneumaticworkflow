@@ -1,11 +1,15 @@
 """File download use case"""
 
-from typing import Any, AsyncIterator, Tuple
+from collections.abc import AsyncIterator
+from typing import TYPE_CHECKING
 
 from src.application.dto import DownloadFileQuery
 from src.domain.entities import FileRecord
 from src.infra.repositories import FileRecordRepository
-from src.shared_kernel.exceptions import FileNotFoundError
+from src.shared_kernel.exceptions import DomainFileNotFoundError
+
+if TYPE_CHECKING:
+    from src.infra.repositories import StorageService
 
 
 class DownloadFileUseCase:
@@ -14,7 +18,7 @@ class DownloadFileUseCase:
     def __init__(
         self,
         file_repository: FileRecordRepository,
-        storage_service: Any,  # StorageService
+        storage_service: 'StorageService',
     ) -> None:
         """Initialize download file use case
 
@@ -22,6 +26,7 @@ class DownloadFileUseCase:
         ----
             file_repository: File repository
             storage_service: File storage service
+
         """
         self._file_repository = file_repository
         self._storage_service = storage_service
@@ -29,9 +34,8 @@ class DownloadFileUseCase:
     async def execute(
         self,
         query: DownloadFileQuery,
-    ) -> Tuple[FileRecord, AsyncIterator[bytes]]:
-        """
-        Execute file download with file info
+    ) -> tuple[FileRecord, AsyncIterator[bytes]]:
+        """Execute file download with file info
 
         Args:
         ----
@@ -43,12 +47,13 @@ class DownloadFileUseCase:
 
         Raises:
         ------
-            FileNotFoundError: If file not found
+            DomainFileNotFoundError: If file not found
+
         """
         # Get file information from database
         file_record = await self._file_repository.get_by_id(query.file_id)
         if not file_record:
-            raise FileNotFoundError(query.file_id)
+            raise DomainFileNotFoundError(query.file_id)
 
         # Get S3 download paths from StorageService
         bucket_name, file_path = self._storage_service.get_storage_path(

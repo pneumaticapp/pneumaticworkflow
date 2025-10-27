@@ -1,8 +1,6 @@
 """External service exceptions"""
 
-from typing import Any, Optional
-
-from .base_exceptions import BaseAppException
+from .base_exceptions import BaseAppError
 from .error_codes import EXTERNAL_SERVICE_ERROR_CODES
 from .error_messages import (
     MSG_EXT_004,
@@ -12,14 +10,14 @@ from .error_messages import (
 )
 
 
-class ExternalServiceError(BaseAppException):
+class ExternalServiceError(BaseAppError):
     """Base external service error"""
 
     def __init__(
         self,
         error_code_key: str,
-        details: Optional[str] = None,
-        **kwargs: Any,
+        details: str | None = None,
+        **kwargs: str | int | None,
     ) -> None:
         error_code = EXTERNAL_SERVICE_ERROR_CODES[error_code_key]
         super().__init__(error_code, details, **kwargs)
@@ -30,8 +28,8 @@ class RedisConnectionError(ExternalServiceError):
 
     def __init__(
         self,
-        details: Optional[str] = None,
-        **kwargs: Any,
+        details: str | None = None,
+        **kwargs: str | int | None,
     ) -> None:
         super().__init__('REDIS_CONNECTION_ERROR', details, **kwargs)
 
@@ -42,8 +40,8 @@ class RedisOperationError(ExternalServiceError):
     def __init__(
         self,
         operation: str,
-        details: Optional[str] = None,
-        **kwargs: Any,
+        details: str | None = None,
+        **kwargs: str | int | None,
     ) -> None:
         custom_details = MSG_EXT_004.format(operation=operation)
         if details:
@@ -57,9 +55,9 @@ class HttpClientError(ExternalServiceError):
     def __init__(
         self,
         url: str,
-        status_code: Optional[int] = None,
-        details: Optional[str] = None,
-        **kwargs: Any,
+        status_code: int | None = None,
+        details: str | None = None,
+        **kwargs: str | int | None,
     ) -> None:
         custom_details = MSG_EXT_006.format(url=url)
         if status_code:
@@ -76,8 +74,8 @@ class HttpTimeoutError(ExternalServiceError):
         self,
         url: str,
         timeout: float,
-        details: Optional[str] = None,
-        **kwargs: Any,
+        details: str | None = None,
+        **kwargs: str | int | None,
     ) -> None:
         custom_details = MSG_EXT_008.format(url=url, timeout=timeout)
         if details:
@@ -91,12 +89,14 @@ class ExternalServiceUnavailableError(ExternalServiceError):
     def __init__(
         self,
         service_name: str,
-        details: Optional[str] = None,
-        **kwargs: Any,
+        details: str | None = None,
+        **kwargs: str | int | None,
     ) -> None:
         custom_details = MSG_EXT_010.format(service_name=service_name)
         if details:
             custom_details += f': {details}'
         super().__init__(
-            'EXTERNAL_SERVICE_UNAVAILABLE', custom_details, **kwargs
+            'EXTERNAL_SERVICE_UNAVAILABLE',
+            custom_details,
+            **kwargs,
         )

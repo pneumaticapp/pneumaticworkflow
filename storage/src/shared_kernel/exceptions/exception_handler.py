@@ -1,14 +1,14 @@
 """Universal exception handler"""
 
 import logging
-from datetime import datetime
-from typing import Any, Dict, Optional
+from datetime import UTC, datetime
+from typing import Any
 
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from pydantic import ValidationError
 
-from .base_exceptions import BaseAppException, ErrorResponse
+from .base_exceptions import BaseAppError, ErrorResponse
 from .error_codes import INFRA_ERROR_CODES, VALIDATION_ERROR_CODES
 
 logger = logging.getLogger(__name__)
@@ -17,17 +17,17 @@ logger = logging.getLogger(__name__)
 def register_exception_handlers(app: FastAPI) -> None:
     """Register universal exception handlers"""
 
-    @app.exception_handler(BaseAppException)
+    @app.exception_handler(BaseAppError)
     async def base_app_exception_handler(
         request: Request,
-        exc: BaseAppException,
+        exc: BaseAppError,
     ) -> JSONResponse:
         """Handle base application exceptions"""
-
         # Log error
         logger.error(
-            f'Application exception: {exc.error_code.code} - '
-            f'{exc.error_code.message}',
+            'Application exception: %s - %s',
+            exc.error_code.code,
+            exc.error_code.message,
             extra={
                 'error_code': exc.error_code.code,
                 'error_type': exc.error_type.value,
@@ -39,7 +39,7 @@ def register_exception_handlers(app: FastAPI) -> None:
 
         # Create error response
         error_response = exc.to_response(
-            timestamp=datetime.utcnow().isoformat(),
+            timestamp=datetime.now(tz=UTC).isoformat(),
             request_id=getattr(request.state, 'request_id', None),
         )
 
@@ -54,12 +54,12 @@ def register_exception_handlers(app: FastAPI) -> None:
         exc: ValidationError,
     ) -> JSONResponse:
         """Handle Pydantic validation errors"""
-
         error_code = VALIDATION_ERROR_CODES['MISSING_REQUIRED_FIELD']
         details = str(exc.errors())
 
         logger.warning(
-            f'Validation error: {details}',
+            'Validation error: %s',
+            details,
             extra={
                 'error_code': error_code.code,
                 'request_path': request.url.path,
@@ -72,7 +72,7 @@ def register_exception_handlers(app: FastAPI) -> None:
             message=error_code.message,
             error_type=error_code.error_type.value,
             details=details,
-            timestamp=datetime.utcnow().isoformat(),
+            timestamp=datetime.now(tz=UTC).isoformat(),
             request_id=getattr(request.state, 'request_id', None),
         )
 
@@ -87,13 +87,12 @@ def register_exception_handlers(app: FastAPI) -> None:
         exc: Exception,
     ) -> JSONResponse:
         """Handle general exceptions"""
-
         error_code = INFRA_ERROR_CODES['INTERNAL_SERVER_ERROR']
 
         # Log unexpected error
         logger.error(
-            f'Unexpected error: {str(exc)}',
-            exc_info=True,
+            'Unexpected error: %s',
+            exc,
             extra={
                 'error_code': error_code.code,
                 'request_path': request.url.path,
@@ -109,7 +108,7 @@ def register_exception_handlers(app: FastAPI) -> None:
             message=error_code.message,
             error_type=error_code.error_type.value,
             details=str(exc) if debug_mode else None,
-            timestamp=datetime.utcnow().isoformat(),
+            timestamp=datetime.now(tz=UTC).isoformat(),
             request_id=getattr(request.state, 'request_id', None),
         )
 
@@ -123,11 +122,10 @@ def create_error_response(
     error_code: str,
     message: str,
     error_type: str,
-    details: Optional[str] = None,
-    **kwargs: Any,
-) -> Dict[str, Any]:
+    details: str | None = None,
+    **kwargs: str | int | None,
+) -> dict[str, Any]:
     """Create standardized error response"""
-
     response = {
         'error_code': error_code,
         'message': message,
@@ -137,6 +135,13 @@ def create_error_response(
     if details:
         response['details'] = details
 
-    response.update(kwargs)
+    # Convert kwargs values to strings for response
+    str_kwargs = {
+        key: str(value) if value is not None else None
+        for key, value in kwargs.items()
+    }
+    # Filter out None values for response.update
+    filtered_kwargs = {k: v for k, v in str_kwargs.items() if v is not None}
+    response.update(filtered_kwargs)
 
     return response

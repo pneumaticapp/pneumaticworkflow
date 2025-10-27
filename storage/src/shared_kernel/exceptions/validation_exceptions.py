@@ -1,8 +1,6 @@
 """Validation exceptions"""
 
-from typing import Any, List, Optional, Union
-
-from .base_exceptions import BaseAppException
+from .base_exceptions import BaseAppError
 from .error_codes import VALIDATION_ERROR_CODES
 from .error_messages import (
     MSG_VAL_002,
@@ -11,14 +9,14 @@ from .error_messages import (
 )
 
 
-class ValidationError(BaseAppException):
+class ValidationError(BaseAppError):
     """Base validation error"""
 
     def __init__(
         self,
         error_code_key: str,
-        details: Optional[str] = None,
-        **kwargs: Any,
+        details: str | None = None,
+        **kwargs: str | int | None,
     ) -> None:
         error_code = VALIDATION_ERROR_CODES[error_code_key]
         super().__init__(error_code, details, **kwargs)
@@ -31,8 +29,8 @@ class InvalidFileSizeError(ValidationError):
         self,
         size: int,
         max_size: int,
-        details: Optional[str] = None,
-        **kwargs: Any,
+        details: str | None = None,
+        **kwargs: str | int | None,
     ) -> None:
         custom_details = MSG_VAL_002.format(size=size, max_size=max_size)
         if details:
@@ -46,12 +44,13 @@ class InvalidFileTypeError(ValidationError):
     def __init__(
         self,
         file_type: str,
-        allowed_types: List[str],
-        details: Optional[str] = None,
-        **kwargs: Any,
+        allowed_types: list[str],
+        details: str | None = None,
+        **kwargs: str | int | None,
     ) -> None:
         custom_details = MSG_VAL_004.format(
-            file_type=file_type, allowed_types=', '.join(allowed_types)
+            file_type=file_type,
+            allowed_types=', '.join(allowed_types),
         )
         if details:
             custom_details += f': {details}'
@@ -64,8 +63,8 @@ class InvalidTokenFormatError(ValidationError):
     def __init__(
         self,
         token_type: str,
-        details: Optional[str] = None,
-        **kwargs: Any,
+        details: str | None = None,
+        **kwargs: str | int | None,
     ) -> None:
         custom_details = f'Invalid {token_type} token format'
         if details:
@@ -79,8 +78,8 @@ class MissingRequiredFieldError(ValidationError):
     def __init__(
         self,
         field_name: str,
-        details: Optional[str] = None,
-        **kwargs: Any,
+        details: str | None = None,
+        **kwargs: str | int | None,
     ) -> None:
         custom_details = MSG_VAL_008.format(field_name=field_name)
         if details:
@@ -95,9 +94,9 @@ class InvalidInputFormatError(ValidationError):
         self,
         field_name: str,
         expected_format: str,
-        actual_value: Union[str, int, float, None] = None,
-        details: Optional[str] = None,
-        **kwargs: Any,
+        actual_value: str | float | None = None,
+        details: str | None = None,
+        **kwargs: str | int | None,
     ) -> None:
         custom_details = (
             f"Field '{field_name}' has invalid format. "
@@ -115,9 +114,9 @@ class ValidationFailedError(ValidationError):
 
     def __init__(
         self,
-        validation_errors: List[str],
-        details: Optional[str] = None,
-        **kwargs: Any,
+        validation_errors: list[str],
+        details: str | None = None,
+        **kwargs: str | int | None,
     ) -> None:
         custom_details = f'Validation failed: {"; ".join(validation_errors)}'
         if details:
