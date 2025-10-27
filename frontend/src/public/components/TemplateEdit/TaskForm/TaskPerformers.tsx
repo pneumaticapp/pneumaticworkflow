@@ -16,6 +16,7 @@ import { IApplicationState } from '../../../types/redux';
 
 import styles from '../TemplateEdit.css';
 import stylesTaskForm from './TaskForm.css';
+import { createPerformerApiName } from '../../../utils/createId';
 
 export interface ITaskPerformersProps {
   task: ITemplateTask;
@@ -63,13 +64,16 @@ export function TaskPerformers({ task, users, variables, setCurrentTask }: ITask
         type: ETaskPerformerType.User,
         sourceId: String(user.id),
         label: getUserFullName(user),
+        apiName: createPerformerApiName(),
       }));
 
     setCurrentTask({ rawPerformers: [...rawPerformers, ...invitedPeformers] });
   };
 
   const handleAddPerformer = (performer: ITemplateTaskPerformer) => {
-    setCurrentTask({ rawPerformers: [...rawPerformers, performer] as unknown as ITemplateTaskPerformer[] });
+    const normalizedPerformer = { ...performer, apiName: createPerformerApiName() };
+    delete (normalizedPerformer as any).id;
+    setCurrentTask({ rawPerformers: [...rawPerformers, normalizedPerformer] as ITemplateTaskPerformer[] });
   };
 
   const handleRemovePerformer = (removingPerformer: ITemplateTaskPerformer) => {
