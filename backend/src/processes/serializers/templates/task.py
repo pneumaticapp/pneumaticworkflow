@@ -11,7 +11,7 @@ from rest_framework.serializers import (
     Serializer,
 )
 
-from src.analytics.services import AnalyticService
+from src.analysis.services import AnalyticService
 from src.generics.mixins.serializers import (
     AdditionalValidationMixin,
     CustomValidationErrorMixin,

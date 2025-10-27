@@ -11,10 +11,14 @@ from src.processes.enums import (
     PredicateType,
 )
 from src.processes.messages import template as messages
-from src.processes.models.templates.conditions import ConditionTemplate
+from src.processes.models.templates.conditions import (
+    ConditionTemplate,
+    PredicateTemplate,
+)
 from src.processes.models.templates.template import Template
 from src.processes.tests.fixtures import (
     create_test_account,
+    create_test_group,
     create_test_owner,
     create_test_user,
 )
@@ -33,13 +37,12 @@ class TestCreateConditionTemplate:
         api_client,
     ):
         # arrange
-        condition_create_analytics_mock = mocker.patch(
+        condition_create_analysis_mock = mocker.patch(
             'src.processes.serializers.templates.'
             'condition.AnalyticService.templates_task_condition_created',
         )
         user = create_test_user()
         account = user.account
-        account.billing_plan = BillingPlanType.PREMIUM
         account.save()
         api_client.token_authenticate(user)
 
@@ -91,7 +94,7 @@ class TestCreateConditionTemplate:
         assert response.data['details']['api_name'] == 'task-55'
         assert response.data['details']['reason'] == message
         assert 'name' not in response.data['details']
-        condition_create_analytics_mock.assert_not_called()
+        condition_create_analysis_mock.assert_not_called()
 
     def test_create__conditions_in_second_task_is_null__validation_error(
         self,
@@ -99,13 +102,12 @@ class TestCreateConditionTemplate:
         api_client,
     ):
         # arrange
-        condition_create_analytics_mock = mocker.patch(
+        condition_create_analysis_mock = mocker.patch(
             'src.processes.serializers.templates.'
             'condition.AnalyticService.templates_task_condition_created',
         )
         user = create_test_user()
         account = user.account
-        account.billing_plan = BillingPlanType.PREMIUM
         account.save()
         api_client.token_authenticate(user)
 
@@ -158,7 +160,7 @@ class TestCreateConditionTemplate:
         assert response.data['details']['api_name'] == 'task-55'
         assert response.data['details']['reason'] == message
         assert 'name' not in response.data['details']
-        condition_create_analytics_mock.assert_not_called()
+        condition_create_analysis_mock.assert_not_called()
 
     def test_create__conditions_second_is_null__validation_error(
         self,
@@ -167,11 +169,11 @@ class TestCreateConditionTemplate:
     ):
 
         # arrange
-        condition_create_analytics_mock = mocker.patch(
+        condition_create_analysis_mock = mocker.patch(
             'src.processes.serializers.templates.'
             'condition.AnalyticService.templates_task_condition_created',
         )
-        account = create_test_account(plan=BillingPlanType.PREMIUM)
+        account = create_test_account()
         user = create_test_user(account=account)
         api_client.token_authenticate(user)
         conditions = [
@@ -242,7 +244,7 @@ class TestCreateConditionTemplate:
         assert response.data['details']['api_name'] == 'task-66'
         assert response.data['details']['reason'] == message
         assert 'name' not in response.data['details']
-        condition_create_analytics_mock.assert_not_called()
+        condition_create_analysis_mock.assert_not_called()
 
     def test_create__conditions_two_errors__validation_error(
         self,
@@ -251,11 +253,11 @@ class TestCreateConditionTemplate:
     ):
 
         # arrange
-        condition_create_analytics_mock = mocker.patch(
+        condition_create_analysis_mock = mocker.patch(
             'src.processes.serializers.templates.'
             'condition.AnalyticService.templates_task_condition_created',
         )
-        account = create_test_account(plan=BillingPlanType.PREMIUM)
+        account = create_test_account()
         user = create_test_user(account=account)
         api_client.token_authenticate(user)
         conditions = [
@@ -318,7 +320,7 @@ class TestCreateConditionTemplate:
         assert response.data['details']['api_name'] == 'task-66'
         assert response.data['details']['reason'] in message
         assert 'name' not in response.data['details']
-        condition_create_analytics_mock.assert_not_called()
+        condition_create_analysis_mock.assert_not_called()
 
     def test_create__conditions_is_string__validation_error(
         self,
@@ -326,13 +328,12 @@ class TestCreateConditionTemplate:
         api_client,
     ):
         # arrange
-        condition_create_analytics_mock = mocker.patch(
+        condition_create_analysis_mock = mocker.patch(
             'src.processes.serializers.templates.'
             'condition.AnalyticService.templates_task_condition_created',
         )
         user = create_test_user()
         account = user.account
-        account.billing_plan = BillingPlanType.PREMIUM
         account.save()
         api_client.token_authenticate(user)
 
@@ -384,7 +385,7 @@ class TestCreateConditionTemplate:
         assert response.data['details']['api_name'] == 'task-55'
         assert response.data['details']['reason'] == message
         assert 'name' not in response.data['details']
-        condition_create_analytics_mock.assert_not_called()
+        condition_create_analysis_mock.assert_not_called()
 
     def test_create__conditions_is_integer__validation_error(
         self,
@@ -392,13 +393,12 @@ class TestCreateConditionTemplate:
         api_client,
     ):
         # arrange
-        condition_create_analytics_mock = mocker.patch(
+        condition_create_analysis_mock = mocker.patch(
             'src.processes.serializers.templates.'
             'condition.AnalyticService.templates_task_condition_created',
         )
         user = create_test_user()
         account = user.account
-        account.billing_plan = BillingPlanType.PREMIUM
         account.save()
         api_client.token_authenticate(user)
 
@@ -450,7 +450,7 @@ class TestCreateConditionTemplate:
         assert response.data['details']['api_name'] == 'task-55'
         assert response.data['details']['reason'] == message
         assert 'name' not in response.data['details']
-        condition_create_analytics_mock.assert_not_called()
+        condition_create_analysis_mock.assert_not_called()
 
     def test_create__without_rules__validation_error(
         self,
@@ -458,13 +458,12 @@ class TestCreateConditionTemplate:
         api_client,
     ):
         # arrange
-        condition_create_analytics_mock = mocker.patch(
+        condition_create_analysis_mock = mocker.patch(
             'src.processes.serializers.templates.'
             'condition.AnalyticService.templates_task_condition_created',
         )
         user = create_test_user()
         account = user.account
-        account.billing_plan = BillingPlanType.PREMIUM
         account.save()
         api_client.token_authenticate(user)
         request_data = {
@@ -520,7 +519,7 @@ class TestCreateConditionTemplate:
         assert response.data['message'] == 'Rules: this list may not be empty.'
         assert response.data['details']['api_name'] == 'condition-66'
         assert 'name' not in response.data['details']
-        condition_create_analytics_mock.assert_not_called()
+        condition_create_analysis_mock.assert_not_called()
 
     def test_create__ok(
         self,
@@ -528,13 +527,12 @@ class TestCreateConditionTemplate:
         api_client,
     ):
         # arrange
-        condition_create_analytics_mock = mocker.patch(
+        condition_create_analysis_mock = mocker.patch(
             'src.processes.serializers.templates.'
             'condition.AnalyticService.templates_task_condition_created',
         )
         user = create_test_user()
         account = user.account
-        account.billing_plan = BillingPlanType.PREMIUM
         account.save()
         api_client.token_authenticate(user)
         request_data = {
@@ -599,12 +597,25 @@ class TestCreateConditionTemplate:
         assert condition_data['api_name']
         assert condition_data['rules'][0]['api_name']
         assert condition_data['rules'][0]['predicates'][0]['api_name']
+        predicate_data = condition_data['rules'][0]['predicates'][0]
+        assert predicate_data['field_type'] == PredicateType.USER
+        assert predicate_data['operator'] == PredicateOperator.EQUAL
+        assert predicate_data['value'] == str(user.id)
+        assert predicate_data['field'] == 'user-field-1'
 
         template = Template.objects.get(id=response.data['id'])
         condition = ConditionTemplate.objects.get(
             api_name=condition_data['api_name'],
         )
-        condition_create_analytics_mock.assert_called_once_with(
+        predicate = PredicateTemplate.objects.get(
+            rule__condition=condition,
+            field_type=PredicateType.USER,
+            operator=PredicateOperator.EQUAL,
+            value=str(user.id),
+            field='user-field-1',
+        )
+        assert predicate.user_id == user.id
+        condition_create_analysis_mock.assert_called_once_with(
             user=user,
             template=template,
             task=template.tasks.get(number=1),
@@ -633,7 +644,6 @@ class TestCreateConditionTemplate:
         )
         user = create_test_user()
         account = user.account
-        account.billing_plan = BillingPlanType.PREMIUM
         account.save()
         api_client.token_authenticate(user)
         request_data = {
@@ -697,6 +707,10 @@ class TestCreateConditionTemplate:
         assert condition['api_name']
         assert condition['rules'][0]['api_name']
         assert condition['rules'][0]['predicates'][0]['api_name']
+        predicate_data = condition['rules'][0]['predicates'][0]
+        assert predicate_data['field_type'] == data[1]
+        assert predicate_data['operator'] == data[0]
+        assert predicate_data['value'] is None
 
     @pytest.mark.parametrize(
         'value',
@@ -709,13 +723,12 @@ class TestCreateConditionTemplate:
         value,
     ):
         # arrange
-        condition_create_analytics_mock = mocker.patch(
+        condition_create_analysis_mock = mocker.patch(
             'src.processes.serializers.templates.'
             'condition.AnalyticService.templates_task_condition_created',
         )
         user = create_test_user()
         account = user.account
-        account.billing_plan = BillingPlanType.PREMIUM
         account.save()
         api_client.token_authenticate(user)
         api_name = 'predicate-api-name'
@@ -784,7 +797,199 @@ class TestCreateConditionTemplate:
         assert response.data['message'] == message
         assert response.data['details']['api_name'] == api_name
         assert response.data['details']['reason'] == message
+        condition_create_analysis_mock.assert_not_called()
+
+    @pytest.mark.parametrize(
+        'value',
+        ['123', 'not integer'],
+    )
+    def test_create__group_field_incorrect_value__validation_error(
+        self,
+        mocker,
+        api_client,
+        value,
+    ):
+        # arrange
+        condition_create_analytics_mock = mocker.patch(
+            'src.processes.serializers.templates.'
+            'condition.AnalyticService.templates_task_condition_created',
+        )
+        user = create_test_owner()
+        account = user.account
+        account.save()
+        api_client.token_authenticate(user)
+        api_name = 'predicate-api-name'
+        task_name = 'First step'
+        request_data = {
+            'rules': [
+                {
+                    'predicates': [
+                        {
+                            'field': 'group-field-1',
+                            'field_type': PredicateType.GROUP,
+                            'operator': PredicateOperator.EQUAL,
+                            'value': value,
+                            'api_name': api_name,
+                        },
+                    ],
+                },
+            ],
+            'order': 1,
+            'action': 'skip_task',
+        }
+
+        # act
+        response = api_client.post(
+            path='/templates',
+            data={
+                'name': 'Template',
+                'is_active': True,
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id,
+                    },
+                ],
+                'kickoff': {
+                    'fields': [
+                        {
+                            'order': 1,
+                            'name': 'First step performer',
+                            'type': FieldType.USER,
+                            'api_name': 'group-field-1',
+                            'is_required': True,
+                        },
+                    ],
+                },
+                'tasks': [
+                    {
+                        'number': 1,
+                        'name': task_name,
+                        'conditions': [request_data],
+                        'raw_performers': [
+                            {
+                                'type': PerformerType.USER,
+                                'source_id': user.id,
+                            },
+                        ],
+                    },
+                ],
+            },
+        )
+
+        # assert
+        assert response.status_code == 400
+        message = messages.MSG_PT_0062(task=task_name, group_id=value)
+        assert response.data['code'] == ErrorCode.VALIDATION_ERROR
+        assert response.data['message'] == message
+        assert response.data['details']['api_name'] == api_name
+        assert response.data['details']['reason'] == message
         condition_create_analytics_mock.assert_not_called()
+
+    def test_create__group_field_valid_value__ok(
+        self,
+        mocker,
+        api_client,
+    ):
+        # arrange
+        condition_create_analytics_mock = mocker.patch(
+            'src.processes.serializers.templates.'
+            'condition.AnalyticService.templates_task_condition_created',
+        )
+        user = create_test_owner()
+        account = user.account
+        account.save()
+        group = create_test_group(account=account)
+        api_client.token_authenticate(user)
+        api_name = 'predicate-api-name'
+        task_name = 'First step'
+        request_data = {
+            'rules': [
+                {
+                    'predicates': [
+                        {
+                            'field': 'group-field-1',
+                            'field_type': PredicateType.GROUP,
+                            'operator': PredicateOperator.EQUAL,
+                            'value': str(group.id),
+                            'api_name': api_name,
+                        },
+                    ],
+                },
+            ],
+            'order': 1,
+            'action': 'skip_task',
+        }
+
+        # act
+        response = api_client.post(
+            path='/templates',
+            data={
+                'name': 'Template',
+                'is_active': True,
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id,
+                    },
+                ],
+                'kickoff': {
+                    'fields': [
+                        {
+                            'order': 1,
+                            'name': 'First step performer',
+                            'type': FieldType.USER,
+                            'api_name': 'group-field-1',
+                            'is_required': True,
+                        },
+                    ],
+                },
+                'tasks': [
+                    {
+                        'number': 1,
+                        'name': task_name,
+                        'conditions': [request_data],
+                        'raw_performers': [
+                            {
+                                'type': PerformerType.USER,
+                                'source_id': user.id,
+                            },
+                        ],
+                    },
+                ],
+            },
+        )
+
+        # assert
+        assert response.status_code == 200
+        condition_data = response.data['tasks'][0]['conditions'][0]
+        predicate_data = condition_data['rules'][0]['predicates'][0]
+        assert predicate_data['field_type'] == PredicateType.GROUP
+        assert predicate_data['operator'] == PredicateOperator.EQUAL
+        assert predicate_data['value'] == str(group.id)
+        assert predicate_data['field'] == 'group-field-1'
+        assert predicate_data['api_name'] == api_name
+
+        template = Template.objects.get(id=response.data['id'])
+        condition = ConditionTemplate.objects.get(
+            api_name=condition_data['api_name'],
+        )
+        predicate = PredicateTemplate.objects.get(
+            rule__condition=condition,
+            field_type=PredicateType.GROUP,
+            operator=PredicateOperator.EQUAL,
+            value=str(group.id),
+            field='group-field-1',
+        )
+        assert predicate.group_id == group.id
+        condition_create_analytics_mock.assert_called_once_with(
+            user=user,
+            template=template,
+            task=template.tasks.get(number=1),
+            condition=condition,
+            auth_type=AuthTokenType.USER,
+            is_superuser=False,
+        )
 
     @pytest.mark.parametrize(
         ('field_type', 'value'),
@@ -805,14 +1010,13 @@ class TestCreateConditionTemplate:
         value,
     ):
         # arrange
-        condition_create_analytics_mock = mocker.patch(
+        condition_create_analysis_mock = mocker.patch(
             'src.processes.serializers.templates.'
             'condition.AnalyticService.templates_task_condition_created',
         )
         field = 'selection-field-1'
         user = create_test_user()
         account = user.account
-        account.billing_plan = BillingPlanType.PREMIUM
         account.save()
         api_client.token_authenticate(user)
         predicate_api_name = 'predicate-api-name'
@@ -887,7 +1091,7 @@ class TestCreateConditionTemplate:
         assert response.data['message'] == message
         assert response.data['details']['api_name'] == predicate_api_name
         assert response.data['details']['reason'] == message
-        condition_create_analytics_mock.assert_not_called()
+        condition_create_analysis_mock.assert_not_called()
 
     @pytest.mark.parametrize(
         ('field_type', 'operator'),
@@ -911,14 +1115,13 @@ class TestCreateConditionTemplate:
         operator,
     ):
         # arrange
-        condition_create_analytics_mock = mocker.patch(
+        condition_create_analysis_mock = mocker.patch(
             'src.processes.serializers.templates.'
             'condition.AnalyticService.templates_task_condition_created',
         )
         field = 'selection-field-1'
         user = create_test_user()
         account = user.account
-        account.billing_plan = BillingPlanType.PREMIUM
         account.save()
         api_client.token_authenticate(user)
         predicate_api_name = 'predicate-api-name'
@@ -995,7 +1198,7 @@ class TestCreateConditionTemplate:
         assert response.data['message'] == message
         assert response.data['details']['api_name'] == predicate_api_name
         assert response.data['details']['reason'] == message
-        condition_create_analytics_mock.assert_not_called()
+        condition_create_analysis_mock.assert_not_called()
 
     def test_create__with_non_existing_field__validation_error(
         self,
@@ -1003,7 +1206,7 @@ class TestCreateConditionTemplate:
         api_client,
     ):
         # arrange
-        condition_create_analytics_mock = mocker.patch(
+        condition_create_analysis_mock = mocker.patch(
             'src.processes.serializers.templates.'
             'condition.AnalyticService.templates_task_condition_created',
         )
@@ -1063,7 +1266,7 @@ class TestCreateConditionTemplate:
         error_message = messages.MSG_PT_0004(name=task_name)
         assert response.data['code'] == ErrorCode.VALIDATION_ERROR
         assert response.data['message'] == error_message
-        condition_create_analytics_mock.assert_not_called()
+        condition_create_analysis_mock.assert_not_called()
 
     def test_create__field_and_condition_together__ok(
         self,
@@ -1155,7 +1358,6 @@ class TestCreateConditionTemplate:
         condition_api_name = 'cond-1'
         user = create_test_user()
         account = user.account
-        account.billing_plan = BillingPlanType.PREMIUM
         account.save()
         api_client.token_authenticate(user)
         condition_1 = {
@@ -1253,7 +1455,7 @@ class TestCreateConditionTemplate:
         assert response.data['details']['reason'] == message
         assert response.data['details']['api_name'] == condition_api_name
 
-    def test_create__rules_with_equal_api_names__rename_create(
+    def test_create__rules_with_equal_api_names__validation_error(
         self,
         mocker,
         api_client,
@@ -1267,7 +1469,6 @@ class TestCreateConditionTemplate:
         step = 'First step'
         user = create_test_user()
         account = user.account
-        account.billing_plan = BillingPlanType.PREMIUM
         account.save()
         api_client.token_authenticate(user)
         condition_1 = {
@@ -1342,7 +1543,7 @@ class TestCreateConditionTemplate:
                     },
                     {
                         'number': 2,
-                        'name': 'First step',
+                        'name': step,
                         'conditions': [condition_2],
                         'raw_performers': [
                             {
@@ -1379,7 +1580,6 @@ class TestCreateConditionTemplate:
         step = 'First step'
         user = create_test_user()
         account = user.account
-        account.billing_plan = BillingPlanType.PREMIUM
         account.save()
         api_client.token_authenticate(user)
         condition_1 = {
@@ -1949,7 +2149,7 @@ class TestCreateConditionTemplate:
         value, error_message = value
         account = create_test_account(plan=BillingPlanType.UNLIMITED)
         user = create_test_user(account=account)
-        condition_create_analytics_mock = mocker.patch(
+        condition_create_analysis_mock = mocker.patch(
             'src.processes.serializers.templates.'
             'condition.AnalyticService.templates_task_condition_created',
         )
@@ -2019,7 +2219,7 @@ class TestCreateConditionTemplate:
         assert response.data['details']['api_name'] == predicate_api_name
         assert response.data['details']['reason'] == error_message
         assert 'name' not in response.data['details']
-        condition_create_analytics_mock.assert_not_called()
+        condition_create_analysis_mock.assert_not_called()
 
     def test_create__cyclic_dependency__validation_error(
         self,

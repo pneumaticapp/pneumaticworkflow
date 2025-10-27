@@ -138,7 +138,9 @@ export function Predicate({
               operator={selectedOperator?.operator}
               rule={rule}
               users={users || []}
-              changeRuleValue={(value) => changeCurrentRule({ value })}
+              changeRuleValue={(value, kind) =>
+                changeCurrentRule({ value, ...(kind ? { fieldType: kind as any } : {}) })
+              }
             />
           )}
           <button
