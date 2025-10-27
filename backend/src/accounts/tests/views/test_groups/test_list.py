@@ -34,7 +34,11 @@ def test_list__ok(api_client):
     )
     create_test_user(email='3@test.com', account=account)
     api_client.token_authenticate(user_1)
-    group_1 = create_test_group(account, users=[user_4, user_1, user_3])
+    group_1 = create_test_group(
+        account,
+        name='group 1',
+        users=[user_4, user_1, user_3],
+    )
     group_2 = create_test_group(account, name='group 2', users=[user_2])
 
     # act
@@ -45,11 +49,11 @@ def test_list__ok(api_client):
     # assert
     assert response.status_code == 200
     assert len(response.data) == 2
-    data_group_1 = response.data[1]
+    data_group_1 = response.data[0]
     assert data_group_1['name'] == group_1.name
     assert data_group_1['photo'] == group_1.photo
     assert data_group_1['users'] == [user_3.id, user_4.id, user_1.id]
-    data_group_2 = response.data[0]
+    data_group_2 = response.data[1]
     assert data_group_2['name'] == group_2.name
     assert data_group_2['photo'] == group_2.photo
     assert data_group_2['users'] == [user_2.id]
