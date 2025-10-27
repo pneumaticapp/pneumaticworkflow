@@ -196,6 +196,8 @@ export interface IExtraField {
   selections?: IExtraFieldSelection[];
   attachments?: TUploadedFile[];
   order: number;
+  userId: number | null;
+  groupId: number | null;
 }
 
 export type TExtraFieldValue = TExtraFieldSingleValue | TExtraFieldMultipleValue | TExtraFieldTimestampValue | null;

@@ -21,7 +21,7 @@ from src.accounts.serializers.notifications import (
     NotificationWorkflowSerializer,
 )
 from src.authentication.services.guest_auth import GuestJWTAuthService
-from src.celery import periodic_lock
+from src.celery_app import periodic_lock
 from src.executor import RawSqlExecutor
 from src.notifications.enums import (
     NotificationMethod,

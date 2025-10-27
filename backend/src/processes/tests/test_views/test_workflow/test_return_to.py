@@ -298,7 +298,7 @@ def test_return_to__ok(mocker, api_client):
         'src.processes.services.workflow_action.'
         'WorkflowEventService.task_started_event',
     )
-    analytics_return_workflow_mock = mocker.patch(
+    analysis_return_workflow_mock = mocker.patch(
         'src.processes.services.workflow_action.'
         'AnalyticService.workflow_returned',
     )
@@ -319,7 +319,7 @@ def test_return_to__ok(mocker, api_client):
     assert task_2.is_pending
     send_removed_task_notification_mock.assert_called_once()
     send_new_task_notification_mock.assert_called_once()
-    analytics_return_workflow_mock.assert_called_once_with(
+    analysis_return_workflow_mock.assert_called_once_with(
         user=user,
         task=task_1,
         workflow=workflow,
@@ -469,7 +469,7 @@ def test_return_to__skip_condition__validation_error(
         f'/templates/{template.id}/run',
         data={
             'kickoff': {
-                field_template.api_name: user.id,
+                field_template.api_name: user.email,
             },
         },
     )

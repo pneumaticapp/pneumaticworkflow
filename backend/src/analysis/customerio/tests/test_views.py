@@ -1,7 +1,7 @@
 import pytest
 
-from src.analytics.customerio.enums import MetricType
-from src.analytics.customerio.exceptions import (
+from src.analysis.customerio.enums import MetricType
+from src.analysis.customerio.exceptions import (
     WebhookInvalidData,
     WebhookUserNotFound,
 )
@@ -17,12 +17,12 @@ class TestWebhooksView:
         # arrange
         user = create_test_user()
         check_permission_mock = mocker.patch(
-            'src.analytics.customerio'
+            'src.analysis.customerio'
             '.permissions.WebhookAPIPermission.has_permission',
             return_value=True,
         )
         handler_mock = mocker.patch(
-            'src.analytics.customerio.services.WebHookService'
+            'src.analysis.customerio.services.WebHookService'
             '.handle',
         )
         data = {
@@ -50,12 +50,12 @@ class TestWebhooksView:
         # arrange
         user = create_test_user()
         check_permission_mock = mocker.patch(
-            'src.analytics.customerio'
+            'src.analysis.customerio'
             '.permissions.WebhookAPIPermission.has_permission',
             return_value=False,
         )
         handler_mock = mocker.patch(
-            'src.analytics.customerio.services.WebHookService'
+            'src.analysis.customerio.services.WebHookService'
             '.handle',
         )
         data = {
@@ -82,12 +82,12 @@ class TestWebhooksView:
 
         # arrange
         check_permission_mock = mocker.patch(
-            'src.analytics.customerio'
+            'src.analysis.customerio'
             '.permissions.WebhookAPIPermission.has_permission',
             return_value=True,
         )
         handler_mock = mocker.patch(
-            'src.analytics.customerio.services.WebHookService'
+            'src.analysis.customerio.services.WebHookService'
             '.handle',
         )
         data = {
@@ -115,12 +115,12 @@ class TestWebhooksView:
 
         # arrange
         check_permission_mock = mocker.patch(
-            'src.analytics.customerio'
+            'src.analysis.customerio'
             '.permissions.WebhookAPIPermission.has_permission',
             return_value=True,
         )
         handler_mock = mocker.patch(
-            'src.analytics.customerio.services.WebHookService'
+            'src.analysis.customerio.services.WebHookService'
             '.handle',
             side_effect=WebhookUserNotFound({}),
         )
@@ -161,12 +161,12 @@ class TestWebhooksView:
             },
         }
         check_permission_mock = mocker.patch(
-            'src.analytics.customerio'
+            'src.analysis.customerio'
             '.permissions.WebhookAPIPermission.has_permission',
             return_value=True,
         )
         handler_mock = mocker.patch(
-            'src.analytics.customerio.services.WebHookService'
+            'src.analysis.customerio.services.WebHookService'
             '.handle',
             side_effect=WebhookInvalidData(data=data, details='error'),
         )

@@ -5,7 +5,7 @@ from django.conf import settings
 
 from src.accounts.models import User
 from src.accounts.tokens import UnsubscribeEmailToken
-from src.analytics.enums import MailoutType
+from src.analysis.enums import MailoutType
 from src.notifications.enums import EmailTemplate
 from src.services.tasks import send_email_via_customerio
 
