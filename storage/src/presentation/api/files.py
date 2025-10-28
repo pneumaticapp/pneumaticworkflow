@@ -1,3 +1,5 @@
+"""File API endpoints."""
+
 from collections.abc import AsyncGenerator
 from typing import Annotated
 
@@ -52,6 +54,18 @@ async def upload_file(
     use_case: Annotated[UploadFileUseCase, Depends(get_upload_use_case)],
     settings: Annotated[Settings, Depends(get_settings_dep)],
 ) -> FileUploadResponse:
+    """Upload file to storage.
+
+    Args:
+        file: Uploaded file.
+        current_user: Current authenticated user.
+        use_case: Upload use case dependency.
+        settings: Application settings.
+
+    Returns:
+        FileUploadResponse: Upload result with file ID and public URL.
+
+    """
     # Read file content
     file_content = await file.read()
     file_size = len(file_content)
@@ -84,6 +98,18 @@ async def download_file(
     use_case: Annotated[DownloadFileUseCase, Depends(get_download_use_case)],
     http_client: Annotated[HttpClient, Depends(get_http_client)],
 ) -> StreamingResponse:
+    """Download file from storage.
+
+    Args:
+        file_id: File identifier.
+        current_user: Current authenticated user.
+        use_case: Download use case dependency.
+        http_client: HTTP client for permission checks.
+
+    Returns:
+        StreamingResponse: File stream with appropriate headers.
+
+    """
     # Check file access permissions (fail fast)
     has_access = await http_client.check_file_permission(
         user=current_user,

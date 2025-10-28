@@ -1,4 +1,4 @@
-"""Middleware module"""
+"""Middleware module."""
 
 from .auth_middleware import (
     AuthenticationMiddleware,

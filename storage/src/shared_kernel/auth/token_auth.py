@@ -1,4 +1,4 @@
-"""Token authentication classes"""
+"""Token authentication classes."""
 
 import hashlib
 from typing import Any
@@ -8,17 +8,23 @@ from src.shared_kernel.config import get_settings
 
 
 class PneumaticToken:
-    """PneumaticToken implementation for FastAPI microservice
+    """PneumaticToken implementation for FastAPI microservice.
 
-    Based on Django implementation with Redis cache
+    Based on Django implementation with Redis cache.
     """
 
     def __init__(self, key: str) -> None:
+        """Initialize PneumaticToken.
+
+        Args:
+            key: Token key for encryption.
+
+        """
         self.key = key
 
     @classmethod
     async def encrypt(cls, token: str) -> str:
-        """Encrypt token using PBKDF2"""
+        """Encrypt token using PBKDF2."""
         settings = get_settings()
         encrypted_token = hashlib.pbkdf2_hmac(
             'sha256',
@@ -30,7 +36,7 @@ class PneumaticToken:
 
     @classmethod
     async def data(cls, token: str) -> dict[str, Any] | None:
-        """Get cached token data"""
+        """Get cached token data."""
         try:
             encrypted_token = await cls.encrypt(token)
             redis_client = get_redis_client()

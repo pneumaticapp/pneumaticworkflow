@@ -1,3 +1,5 @@
+"""Dependency injection container."""
+
 from .container import (
     get_download_use_case,
     get_http_client,

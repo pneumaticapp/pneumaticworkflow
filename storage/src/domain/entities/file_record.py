@@ -1,10 +1,12 @@
+"""Domain entities for file management."""
+
 from dataclasses import dataclass
 from datetime import datetime
 
 
 @dataclass(frozen=True)
 class FileRecord:
-    """File record entity"""
+    """File record entity."""
 
     file_id: str
     size: int

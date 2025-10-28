@@ -1,10 +1,10 @@
-"""User types enum"""
+"""User types enum."""
 
 from enum import Enum
 
 
 class UserType(str, Enum):
-    """User authentication types"""
+    """User authentication types."""
 
     AUTHENTICATED = 'authenticated'  # Regular authorized user
     ANONYMOUS = 'anonymous'  # Anonymous user

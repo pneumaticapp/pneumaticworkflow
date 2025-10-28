@@ -1,4 +1,4 @@
-"""Authentication services"""
+"""Authentication services."""
 
 from typing import ClassVar
 
@@ -7,7 +7,7 @@ from src.shared_kernel.auth.redis_client import get_redis_client
 
 
 class PublicAuthService:
-    """Public authentication service"""
+    """Public authentication service."""
 
     HEADER_PREFIX = 'Token'
     HEADER_PARTS = 2
@@ -21,7 +21,7 @@ class PublicAuthService:
         cls,
         header: str,
     ) -> PublicToken | EmbedToken | None:
-        """Get token from header"""
+        """Get token from header."""
         if not header or not isinstance(header, str):
             return None
 
@@ -45,7 +45,7 @@ class PublicAuthService:
         cls,
         token: PublicToken | EmbedToken,
     ) -> dict | None:
-        """Authenticate public token"""
+        """Authenticate public token."""
         if not token:
             return None
 

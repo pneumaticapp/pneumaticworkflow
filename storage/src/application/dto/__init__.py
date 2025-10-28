@@ -1,4 +1,4 @@
-"""Application DTOs"""
+"""Application DTOs."""
 
 from .file_dtos import (
     DownloadFileQuery,

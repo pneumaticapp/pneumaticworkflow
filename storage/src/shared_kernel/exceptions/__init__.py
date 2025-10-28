@@ -1,4 +1,4 @@
-"""Centralized exception system"""
+"""Centralized exception system."""
 
 from .auth_exceptions import (
     AuthenticationError,

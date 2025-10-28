@@ -1,3 +1,5 @@
+"""Redis client for authentication."""
+
 import pickle
 from typing import Any
 
@@ -14,12 +16,20 @@ from src.shared_kernel.exceptions import (
 
 
 class RedisAuthClient:
+    """Redis client for authentication operations."""
+
     def __init__(self, redis_url: str) -> None:
+        """Initialize Redis client.
+
+        Args:
+            redis_url: Redis connection URL.
+
+        """
         # Settings match Django: KEY_PREFIX = '' for auth cache
         self._client = redis.from_url(redis_url)
 
     async def get(self, key: str) -> dict[str, Any] | None:
-        """Get value from cache"""
+        """Get value from cache."""
         try:
             settings = get_settings()
             value = await self._client.get(f'{settings.KEY_PREFIX_REDIS}{key}')
@@ -45,6 +55,6 @@ class RedisAuthClient:
 
 
 def get_redis_client() -> RedisAuthClient:
-    """Get or create Redis client"""
+    """Get or create Redis client."""
     settings = get_settings()
     return RedisAuthClient(settings.AUTH_REDIS_URL)

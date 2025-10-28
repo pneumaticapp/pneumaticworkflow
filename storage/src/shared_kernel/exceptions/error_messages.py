@@ -1,4 +1,4 @@
-"""Error messages constants"""
+"""Error messages constants."""
 
 # Domain errors - File operations
 MSG_FILE_001 = 'File not found'

@@ -1,4 +1,4 @@
-"""Presentation DTOs"""
+"""Presentation DTOs."""
 
 from .api_dtos import (
     FileInfoResponse,

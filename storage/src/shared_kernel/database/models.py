@@ -1,3 +1,5 @@
+"""Database ORM models."""
+
 from sqlalchemy import BigInteger, Column, DateTime, Integer, String
 from sqlalchemy.sql import func
 
@@ -5,6 +7,8 @@ from .base import Base
 
 
 class FileRecordORM(Base):
+    """File record ORM model."""
+
     __tablename__ = 'files'
 
     file_id = Column(

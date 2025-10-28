@@ -1,4 +1,4 @@
-"""Dependency injection"""
+"""Dependency injection."""
 
 from collections.abc import AsyncGenerator
 from typing import Annotated
@@ -18,18 +18,18 @@ from src.shared_kernel.uow import UnitOfWork
 
 
 def get_settings_dep() -> Settings:
-    """Get settings"""
+    """Get settings."""
     return get_settings()
 
 
 async def get_db_session() -> AsyncGenerator[AsyncSession, None]:
-    """Get database session"""
+    """Get database session."""
     async for session in get_async_session():
         yield session
 
 
 async def get_storage_service() -> AsyncGenerator[StorageService, None]:
-    """Get storage service"""
+    """Get storage service."""
     yield StorageService()
 
 
@@ -38,7 +38,7 @@ async def get_upload_use_case(
     settings: Annotated[Settings, Depends(get_settings_dep)],
     storage_service: Annotated[StorageService, Depends(get_storage_service)],
 ) -> UploadFileUseCase:
-    """Get upload use case"""
+    """Get upload use case."""
     file_repository = FileRecordRepository(session=session)
     unit_of_work = UnitOfWork(session=session)
 
@@ -54,7 +54,7 @@ async def get_download_use_case(
     session: Annotated[AsyncSession, Depends(get_db_session)],
     storage_service: Annotated[StorageService, Depends(get_storage_service)],
 ) -> DownloadFileUseCase:
-    """Get download use case"""
+    """Get download use case."""
     file_repository = FileRecordRepository(session=session)
 
     return DownloadFileUseCase(
@@ -64,7 +64,7 @@ async def get_download_use_case(
 
 
 async def get_http_client() -> AsyncGenerator[HttpClient, None]:
-    """Get HTTP client"""
+    """Get HTTP client."""
     settings = get_settings()
     client = HttpClient(base_url=settings.CHECK_PERMISSION_URL)
     try:

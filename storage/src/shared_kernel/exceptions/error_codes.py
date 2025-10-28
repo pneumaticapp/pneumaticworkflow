@@ -1,4 +1,4 @@
-"""Error codes catalog"""
+"""Error codes catalog."""
 
 from .base_exceptions import ErrorCode, ErrorType
 from .error_messages import (

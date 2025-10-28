@@ -1,4 +1,4 @@
-"""Universal exception handler"""
+"""Universal exception handler."""
 
 import logging
 from datetime import UTC, datetime
@@ -15,14 +15,14 @@ logger = logging.getLogger(__name__)
 
 
 def register_exception_handlers(app: FastAPI) -> None:
-    """Register universal exception handlers"""
+    """Register universal exception handlers."""
 
     @app.exception_handler(BaseAppError)
     async def base_app_exception_handler(
         request: Request,
         exc: BaseAppError,
     ) -> JSONResponse:
-        """Handle base application exceptions"""
+        """Handle base application exceptions."""
         # Log error
         logger.error(
             'Application exception: %s - %s',
@@ -53,7 +53,7 @@ def register_exception_handlers(app: FastAPI) -> None:
         request: Request,
         exc: ValidationError,
     ) -> JSONResponse:
-        """Handle Pydantic validation errors"""
+        """Handle Pydantic validation errors."""
         error_code = VALIDATION_ERROR_CODES['MISSING_REQUIRED_FIELD']
         details = str(exc.errors())
 
@@ -86,7 +86,7 @@ def register_exception_handlers(app: FastAPI) -> None:
         request: Request,
         exc: Exception,
     ) -> JSONResponse:
-        """Handle general exceptions"""
+        """Handle general exceptions."""
         error_code = INFRA_ERROR_CODES['INTERNAL_SERVER_ERROR']
 
         # Log unexpected error
@@ -125,7 +125,7 @@ def create_error_response(
     details: str | None = None,
     **kwargs: str | int | None,
 ) -> dict[str, Any]:
-    """Create standardized error response"""
+    """Create standardized error response."""
     response = {
         'error_code': error_code,
         'message': message,

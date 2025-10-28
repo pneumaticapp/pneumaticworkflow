@@ -1,4 +1,4 @@
-"""Authentication middleware"""
+"""Authentication middleware."""
 
 from collections.abc import Awaitable, Callable
 from typing import TYPE_CHECKING
@@ -20,7 +20,7 @@ from src.shared_kernel.exceptions import AuthenticationError
 
 
 class AuthUser:
-    """Unified user class"""
+    """Unified user class."""
 
     def __init__(
         self,
@@ -29,6 +29,15 @@ class AuthUser:
         account_id: int | None = None,
         token: str | None = None,
     ) -> None:
+        """Initialize authenticated user.
+
+        Args:
+            auth_type: Type of authentication.
+            user_id: Optional user ID.
+            account_id: Optional account ID.
+            token: Optional authentication token.
+
+        """
         self.auth_type = auth_type
         self.user_id = user_id
         self.account_id = account_id
@@ -36,29 +45,40 @@ class AuthUser:
 
     @property
     def is_anonymous(self) -> bool:
+        """Check if user is anonymous."""
         return self.auth_type == UserType.ANONYMOUS
 
     @property
     def is_public_token(self) -> bool:
+        """Check if user has public token."""
         return self.auth_type == UserType.PUBLIC_TOKEN
 
     @property
     def is_authenticated(self) -> bool:
+        """Check if user is authenticated."""
         return self.auth_type == UserType.AUTHENTICATED
 
     @property
     def is_guest_token(self) -> bool:
+        """Check if user has guest token."""
         return self.auth_type == UserType.GUEST_TOKEN
 
 
 class AuthenticationMiddleware(BaseHTTPMiddleware):
-    """Authentication middleware for token and session auth
+    """Authentication middleware for token and session auth.
 
     Adds to request:
     - request.user: AuthUser
     """
 
     def __init__(self, app: 'FastAPI', *, require_auth: bool = True) -> None:
+        """Initialize authentication middleware.
+
+        Args:
+            app: FastAPI application instance.
+            require_auth: Whether authentication is required.
+
+        """
         super().__init__(app)
         self.security = HTTPBearer(auto_error=False)
         self.require_auth = require_auth
@@ -77,7 +97,7 @@ class AuthenticationMiddleware(BaseHTTPMiddleware):
         ]
 
     async def authenticate_token(self, token: str) -> AuthUser | None:
-        """Authenticate using token"""
+        """Authenticate using token."""
         try:
             token_data = await PneumaticToken.data(token)
             if token_data:
@@ -93,7 +113,7 @@ class AuthenticationMiddleware(BaseHTTPMiddleware):
         return None
 
     async def authenticate_guest_token(self, token: str) -> AuthUser | None:
-        """Authenticate guest token"""
+        """Authenticate guest token."""
         try:
             # This would need a function to get user data from Django
             # For now, we'll return None and implement later
@@ -118,7 +138,7 @@ class AuthenticationMiddleware(BaseHTTPMiddleware):
         self,
         raw_token: str,
     ) -> AuthUser | None:
-        """Authenticate public token"""
+        """Authenticate public token."""
         try:
             token = PublicAuthService.get_token(raw_token)
             if token:
@@ -138,7 +158,7 @@ class AuthenticationMiddleware(BaseHTTPMiddleware):
         return None
 
     async def try_authenticate(self, request: Request) -> AuthUser | None:
-        """Try to authenticate user using all available strategies"""
+        """Try to authenticate user using all available strategies."""
         for key, source, auth_func in self.auth_strategies:
             token = None
             if source == 'cookie':
@@ -160,7 +180,7 @@ class AuthenticationMiddleware(BaseHTTPMiddleware):
         request: Request,
         call_next: Callable[[Request], Awaitable[Response]],
     ) -> Response:
-        """Process request with token or session authentication"""
+        """Process request with token or session authentication."""
         request.state.user = AuthUser(auth_type=UserType.ANONYMOUS)
 
         user = await self.try_authenticate(request)

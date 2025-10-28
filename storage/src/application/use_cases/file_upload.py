@@ -1,3 +1,5 @@
+"""File upload use case."""
+
 from datetime import UTC, datetime
 from uuid import uuid4
 
@@ -9,7 +11,7 @@ from src.shared_kernel.uow import UnitOfWork
 
 
 class UploadFileUseCase:
-    """File upload use case"""
+    """File upload use case."""
 
     def __init__(
         self,
@@ -18,14 +20,13 @@ class UploadFileUseCase:
         unit_of_work: UnitOfWork,
         fastapi_base_url: str,
     ) -> None:
-        """Initialize upload file use case
+        """Initialize upload file use case.
 
         Args:
-        ----
-            file_repository: File repository
-            storage_service: File storage service
-            unit_of_work: Unit of Work for transactions
-            fastapi_base_url: FastAPI application base URL
+            file_repository: File repository.
+            storage_service: File storage service.
+            unit_of_work: Unit of Work for transactions.
+            fastapi_base_url: FastAPI application base URL.
 
         """
         self._file_repository = file_repository
@@ -37,15 +38,13 @@ class UploadFileUseCase:
         self,
         command: UploadFileCommand,
     ) -> UploadFileUseCaseResponse:
-        """Execute file upload
+        """Execute file upload.
 
         Args:
-        ----
-            command: File upload command
+            command: File upload command.
 
         Returns:
-        -------
-            FileUploadResponse: File upload result
+            FileUploadResponse: File upload result.
 
         """
         # Create domain file entity

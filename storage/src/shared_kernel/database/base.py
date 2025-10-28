@@ -1,3 +1,5 @@
+"""Database base configuration and session management."""
+
 from collections.abc import AsyncGenerator
 
 from sqlalchemy.ext.asyncio import (
@@ -30,7 +32,7 @@ Base = declarative_base()
 
 
 async def get_async_session() -> AsyncGenerator[AsyncSession, None]:
-    """Get async database session"""
+    """Get async database session."""
     async with AsyncSessionLocal() as session:
         try:
             yield session

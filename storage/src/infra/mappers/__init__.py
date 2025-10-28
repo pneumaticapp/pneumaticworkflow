@@ -1,4 +1,4 @@
-"""Data mappers"""
+"""Data mappers."""
 
 from .file_record_mapper import FileRecordMapper
 

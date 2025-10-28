@@ -1,4 +1,4 @@
-"""Base exception classes"""
+"""Base exception classes."""
 
 from dataclasses import dataclass
 from enum import Enum
@@ -6,7 +6,7 @@ from typing import Any
 
 
 class ErrorType(str, Enum):
-    """Error types"""
+    """Error types."""
 
     VALIDATION = 'validation'
     AUTHENTICATION = 'authentication'
@@ -19,7 +19,7 @@ class ErrorType(str, Enum):
 
 @dataclass
 class ErrorCode:
-    """Error code structure"""
+    """Error code structure."""
 
     code: str
     message: str
@@ -30,7 +30,7 @@ class ErrorCode:
 
 @dataclass
 class ErrorResponse:
-    """Standard error response"""
+    """Standard error response."""
 
     error_code: str
     message: str
@@ -40,7 +40,7 @@ class ErrorResponse:
     request_id: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
-        """Convert to dictionary"""
+        """Convert to dictionary."""
         result = {
             'error_code': self.error_code,
             'message': self.message,
@@ -56,9 +56,9 @@ class ErrorResponse:
 
 
 class BaseAppError(Exception):
-    """Base application exception
+    """Base application exception.
 
-    All application exceptions should inherit from this class
+    All application exceptions should inherit from this class.
     """
 
     def __init__(
@@ -67,6 +67,14 @@ class BaseAppError(Exception):
         details: str | None = None,
         **kwargs: str | int | None,
     ) -> None:
+        """Initialize base application error.
+
+        Args:
+            error_code: Error code instance.
+            details: Optional error details.
+            **kwargs: Additional error parameters.
+
+        """
         self.error_code = error_code
         self.details = details
         self.kwargs = kwargs
@@ -74,16 +82,16 @@ class BaseAppError(Exception):
 
     @property
     def http_status(self) -> int:
-        """Get HTTP status code"""
+        """Get HTTP status code."""
         return self.error_code.http_status
 
     @property
     def error_type(self) -> ErrorType:
-        """Get error type"""
+        """Get error type."""
         return self.error_code.error_type
 
     def to_response(self, **kwargs: str | int | None) -> ErrorResponse:
-        """Convert to error response"""
+        """Convert to error response."""
         # Convert all kwargs values to strings for ErrorResponse
         str_kwargs = {
             key: str(value) if value is not None else None
@@ -98,5 +106,5 @@ class BaseAppError(Exception):
         )
 
     def __str__(self) -> str:
-        """String representation"""
+        """Return string representation."""
         return f'{self.error_code.code}: {self.error_code.message}'

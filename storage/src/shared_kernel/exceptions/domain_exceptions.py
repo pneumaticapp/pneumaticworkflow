@@ -1,4 +1,4 @@
-"""Domain exceptions"""
+"""Domain exceptions."""
 
 from .base_exceptions import BaseAppError
 from .error_codes import DOMAIN_ERROR_CODES
@@ -16,7 +16,7 @@ from .error_messages import (
 
 
 class DomainFileNotFoundError(BaseAppError):
-    """File not found error"""
+    """File not found error."""
 
     def __init__(
         self,
@@ -24,6 +24,14 @@ class DomainFileNotFoundError(BaseAppError):
         account_id: int | None = None,
         details: str | None = None,
     ) -> None:
+        """Initialize file not found error.
+
+        Args:
+            file_id: ID of the file that was not found.
+            account_id: Optional account ID for context.
+            details: Optional error details.
+
+        """
         error_code = DOMAIN_ERROR_CODES['FILE_NOT_FOUND']
         if account_id:
             message = MSG_FILE_003.format(
@@ -50,7 +58,7 @@ class DomainFileNotFoundError(BaseAppError):
 
 
 class FileAccessDeniedError(BaseAppError):
-    """File access denied error"""
+    """File access denied error."""
 
     def __init__(
         self,
@@ -58,6 +66,14 @@ class FileAccessDeniedError(BaseAppError):
         user_id: int,
         details: str | None = None,
     ) -> None:
+        """Initialize file access denied error.
+
+        Args:
+            file_id: ID of the file access was denied for.
+            user_id: ID of the user who was denied access.
+            details: Optional error details.
+
+        """
         error_code = DOMAIN_ERROR_CODES['FILE_ACCESS_DENIED']
         message = MSG_FILE_005.format(user_id=user_id, file_id=file_id)
 
@@ -77,7 +93,7 @@ class FileAccessDeniedError(BaseAppError):
 
 
 class FileSizeExceededError(BaseAppError):
-    """File size exceeded error"""
+    """File size exceeded error."""
 
     def __init__(
         self,
@@ -85,6 +101,14 @@ class FileSizeExceededError(BaseAppError):
         max_size: int,
         details: str | None = None,
     ) -> None:
+        """Initialize file size exceeded error.
+
+        Args:
+            size: Actual file size in bytes.
+            max_size: Maximum allowed file size in bytes.
+            details: Optional error details.
+
+        """
         error_code = DOMAIN_ERROR_CODES['FILE_SIZE_EXCEEDED']
         message = MSG_FILE_007.format(size=size, max_size=max_size)
 
@@ -104,13 +128,20 @@ class FileSizeExceededError(BaseAppError):
 
 
 class FileAlreadyExistsError(BaseAppError):
-    """File already exists error"""
+    """File already exists error."""
 
     def __init__(
         self,
         file_id: str,
         details: str | None = None,
     ) -> None:
+        """Initialize file already exists error.
+
+        Args:
+            file_id: ID of the file that already exists.
+            details: Optional error details.
+
+        """
         error_code = DOMAIN_ERROR_CODES['FILE_ALREADY_EXISTS']
         message = MSG_FILE_009.format(file_id=file_id)
 
@@ -125,7 +156,7 @@ class FileAlreadyExistsError(BaseAppError):
 
 
 class StorageError(BaseAppError):
-    """Storage operation error"""
+    """Storage operation error."""
 
     def __init__(
         self,
@@ -133,12 +164,20 @@ class StorageError(BaseAppError):
         details: str | None = None,
         **kwargs: str | int | None,
     ) -> None:
+        """Initialize storage operation error.
+
+        Args:
+            error_code_key: Error code key from DOMAIN_ERROR_CODES.
+            details: Optional error details.
+            **kwargs: Additional error parameters.
+
+        """
         error_code = DOMAIN_ERROR_CODES[error_code_key]
         super().__init__(error_code, details, **kwargs)
 
     @classmethod
     def upload_failed(cls, details: str | None = None) -> 'StorageError':
-        """Create upload failed error"""
+        """Create upload failed error."""
         custom_details = MSG_STORAGE_002.format(
             details=details or 'Unknown error',
         )
@@ -146,7 +185,7 @@ class StorageError(BaseAppError):
 
     @classmethod
     def download_failed(cls, details: str | None = None) -> 'StorageError':
-        """Create download failed error"""
+        """Create download failed error."""
         custom_details = MSG_STORAGE_004.format(
             details=details or 'Unknown error',
         )
@@ -157,7 +196,7 @@ class StorageError(BaseAppError):
         cls,
         details: str | None = None,
     ) -> 'StorageError':
-        """Create bucket creation failed error"""
+        """Create bucket creation failed error."""
         custom_details = MSG_STORAGE_006.format(
             details=details or 'Unknown error',
         )
@@ -170,7 +209,7 @@ class StorageError(BaseAppError):
         bucket_name: str,
         details: str | None = None,
     ) -> 'StorageError':
-        """Create file not found in storage error"""
+        """Create file not found in storage error."""
         custom_details = MSG_STORAGE_008.format(
             file_path=file_path,
             bucket_name=bucket_name,

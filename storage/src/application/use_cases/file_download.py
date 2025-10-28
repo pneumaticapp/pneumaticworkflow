@@ -1,4 +1,4 @@
-"""File download use case"""
+"""File download use case."""
 
 from collections.abc import AsyncIterator
 from typing import TYPE_CHECKING
@@ -13,19 +13,18 @@ if TYPE_CHECKING:
 
 
 class DownloadFileUseCase:
-    """File download use case"""
+    """File download use case."""
 
     def __init__(
         self,
         file_repository: FileRecordRepository,
         storage_service: 'StorageService',
     ) -> None:
-        """Initialize download file use case
+        """Initialize download file use case.
 
         Args:
-        ----
-            file_repository: File repository
-            storage_service: File storage service
+            file_repository: File repository.
+            storage_service: File storage service.
 
         """
         self._file_repository = file_repository
@@ -35,19 +34,16 @@ class DownloadFileUseCase:
         self,
         query: DownloadFileQuery,
     ) -> tuple[FileRecord, AsyncIterator[bytes]]:
-        """Execute file download with file info
+        """Execute file download with file info.
 
         Args:
-        ----
-            query: File download query
+            query: File download query.
 
         Returns:
-        -------
-            Tuple[FileRecord, AsyncIterator[bytes]]: File info and byte stream
+            Tuple[FileRecord, AsyncIterator[bytes]]: File info and byte stream.
 
         Raises:
-        ------
-            DomainFileNotFoundError: If file not found
+            DomainFileNotFoundError: If file not found.
 
         """
         # Get file information from database

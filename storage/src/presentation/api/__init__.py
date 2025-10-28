@@ -1,4 +1,4 @@
-"""API endpoints"""
+"""API endpoints."""
 
 from .files import router as files_router
 

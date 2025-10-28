@@ -1,7 +1,7 @@
+"""File record repository implementation."""
+
 from sqlalchemy.exc import (
     DatabaseError as SQLAlchemyDatabaseError,
-)
-from sqlalchemy.exc import (
     IntegrityError,
     OperationalError,
 )
@@ -21,12 +21,20 @@ from src.shared_kernel.exceptions import (
 
 
 class FileRecordRepository:
+    """File record repository for database operations."""
+
     def __init__(self, session: AsyncSession) -> None:
+        """Initialize file record repository.
+
+        Args:
+            session: Database session.
+
+        """
         self.session = session
         self.mapper = FileRecordMapper()
 
     async def create(self, file_record: FileRecord) -> None:
-        """Create file record"""
+        """Create file record."""
         try:
             orm_record = self.mapper.entity_to_orm(file_record)
             self.session.add(orm_record)
@@ -46,7 +54,7 @@ class FileRecordRepository:
             ) from e
 
     async def get_by_id(self, file_id: str) -> FileRecord | None:
-        """Get file record by ID"""
+        """Get file record by ID."""
         try:
             stmt = select(FileRecordORM).where(
                 FileRecordORM.file_id == file_id,

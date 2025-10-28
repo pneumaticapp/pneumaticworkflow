@@ -1,4 +1,4 @@
-"""API DTOs"""
+"""API DTOs."""
 
 from datetime import datetime
 
@@ -6,14 +6,14 @@ from pydantic import BaseModel
 
 
 class FileUploadResponse(BaseModel):
-    """File upload response"""
+    """File upload response."""
 
     public_url: str  # Public URL with unique file identifier
     file_id: str  # Unique file identifier (UUID)
 
 
 class FileInfoResponse(BaseModel):
-    """File information response"""
+    """File information response."""
 
     id: int
     file_id: str
@@ -25,4 +25,6 @@ class FileInfoResponse(BaseModel):
     created_at: datetime
 
     class Config:
+        """Pydantic configuration."""
+
         from_attributes = True

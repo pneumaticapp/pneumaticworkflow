@@ -2,27 +2,113 @@ target-version = "py311"
 line-length = 79
 indent-width = 4
 
+exclude = [
+    ".git",
+    ".venv",
+    ".dockerignore",
+    ".gitignore",
+    "venv",
+    "build",
+    "dist",
+    ".env",
+    "staticfiles",
+    "__pychache__",
+    ".mypy_cache",
+    ".ruff_cache",
+    "migrations",
+    "alembic",
+    "tests",
+]
 
 [lint]
-select = ["ALL"]
+select = [
+    "E", "W",  # flake8
+    "F",       # Pyflakes
+    "FAST",    # FastAPI
+    "I",       # isort
+    "D",       # pydocstyle
+    "S",       # bandit
+    "B",       # bugbear
+    "A",       # builtins
+    "ASYNC",   # async
+    "C4",      # comprehensions
+    "COM",     # commas
+    "EM",      # errmsg
+    "FA",      # future-annotations
+    "T10",     # debugger
+    "ISC",     # implicit string concat
+    "ICN",     # import conventions
+    "PIE",     # misc lints
+    "PYI",     # pyi files
+    "RUF",     # ruff-specific
+    "UP",      # pyupgrade
+    "ANN",     # type annotations
+    "BLE",     # blind except
+    "FBT",     # boolean traps
+    "C90",     # McCabe complexity
+    "N",       # pep8-naming
+    "PLC",     # pylint convention
+    "PLE",     # pylint error
+    "PLR",     # pylint refactor
+    "PLW",     # pylint warning
+    "ARG",     # unused arguments
+    "PTH",     # pathlib
+    "PT",      # pytest
+    "ERA",     # commented out code
+    "PD",      # pandas-vet
+    "PGH",     # pygrep hooks
+    "FLY",     # f-string lint
+    "NPY",     # numpy
+    "PERF",    # performance
+    "FURB",    # refurb
+    "LOG",     # logging
+    "G",       # logging format
+    "SLOT",    # slots
+    "T20",     # print
+    "RSE",     # raise
+    "RET",     # return
+    "SIM",     # simplify
+    "TID",     # tidy imports
+    "TD",      # todos
+    "TC",      # type-checking
+    "TRY",     # tryceratops
+]
 
 ignore = [
-    "D",
-    "Q000",
-    "Q001",
-    "Q002",
-    "Q003",
+    "D203",
+    "D213",
     "COM812",
+    "ISC001",
+    "D104",
 ]
 fixable = ["ALL"]
 unfixable = []
 
-[lint.pylint]
-max-args = 8
+[lint.per-file-ignores]
+"tests/**/*.py" = [
+    "S101",    # assert
+    "ANN",     # type annotations
+    "ARG",     # unused args
+    "D",       # docstrings
+    "S603",    # subprocess
+]
 
+[lint.pylint]
+max-args = 5
+max-returns = 4
+max-branches = 8
+
+[lint.mccabe]
+max-complexity = 10
+
+[lint.isort]
+known-first-party = ["storage"]
+combine-as-imports = true
+force-wrap-aliases = true
 
 [format]
 quote-style = "single"
 indent-style = "space"
 skip-magic-trailing-comma = false
 line-ending = "auto"
+docstring-code-format = true

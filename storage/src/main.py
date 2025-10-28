@@ -1,3 +1,5 @@
+"""FastAPI application entry point."""
+
 import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -7,10 +9,10 @@ from src.shared_kernel.config import get_settings
 from src.shared_kernel.exceptions import register_exception_handlers
 from src.shared_kernel.middleware import AuthenticationMiddleware
 
-# Получаем настройки / Get settings
+# Get settings
 settings = get_settings()
 
-# Создаем приложение / Create application
+# Create application
 app = FastAPI(
     title='Pneumatic Files Service',
     description='File proxy microservice with Google Cloud Storage',
@@ -29,7 +31,7 @@ app.add_middleware(
     allow_headers=['*'],
 )
 
-# Authentication middleware (добавляем перед роутерами)
+# Authentication middleware
 app.add_middleware(
     lambda app: AuthenticationMiddleware(app, require_auth=True)
 )

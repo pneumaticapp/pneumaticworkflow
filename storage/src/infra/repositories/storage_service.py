@@ -1,3 +1,5 @@
+"""Storage service for file operations."""
+
 from collections.abc import AsyncGenerator
 
 import aioboto3
@@ -14,10 +16,10 @@ from src.shared_kernel.exceptions import (
 
 
 class StorageService:
-    """Storage service supporting both S3 and Google Cloud Storage"""
+    """Storage service supporting both S3 and Google Cloud Storage."""
 
     def __init__(self) -> None:
-        """Initialize storage service"""
+        """Initialize storage service."""
         self._settings = get_settings()
         self._bucket_prefix = self._settings.BUCKET_PREFIX
         self._storage_type = self._settings.STORAGE_TYPE
@@ -58,7 +60,7 @@ class StorageService:
             }
 
     def _get_session(self) -> aioboto3.Session:
-        """Get or create aioboto3 session"""
+        """Get or create aioboto3 session."""
         if self._session is None:
             self._session = aioboto3.Session()
         return self._session
@@ -68,14 +70,15 @@ class StorageService:
         account_id: int,
         file_id: str,
     ) -> tuple[str, str]:
-        """Generate storage path
+        """Generate storage path.
 
         Args:
-            account_id: Account ID
-            file_id: File ID
+            account_id: Account ID.
+            file_id: File ID.
 
         Returns:
-            tuple: (bucket_name, file_path)
+            tuple: (bucket_name, file_path).
+
         """
         bucket_name = f'{self._bucket_prefix}-{account_id}'
         file_path = file_id
@@ -88,18 +91,17 @@ class StorageService:
         file_content: bytes,
         content_type: str | None,
     ) -> None:
-        """Upload file to storage
+        """Upload file to storage.
 
         Args:
-        ----
-            bucket_name: Bucket name
-            file_path: File path in bucket
-            file_content: File content
-            content_type: File MIME type
+            bucket_name: Bucket name.
+            file_path: File path in bucket.
+            file_content: File content.
+            content_type: File MIME type.
 
         Returns:
-        -------
-            None
+            None.
+
         """
         session = self._get_session()
 
@@ -135,17 +137,18 @@ class StorageService:
         bucket_name: str,
         file_path: str,
     ) -> AsyncGenerator[bytes, None]:
-        """Download file as stream
+        """Download file as stream.
 
         Args:
-            bucket_name: Bucket name
-            file_path: File path in storage
+            bucket_name: Bucket name.
+            file_path: File path in storage.
 
         Yields:
-            bytes: File chunks
+            bytes: File chunks.
 
         Raises:
-            StorageError: On download error
+            StorageError: On download error.
+
         """
         chunk_size = self._settings.CHUNK_SIZE
         session = self._get_session()

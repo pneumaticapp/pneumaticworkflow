@@ -1,4 +1,4 @@
-"""Authentication module"""
+"""Authentication module."""
 
 from .guest_token import GuestToken
 from .public_token import EmbedToken, PublicBaseToken, PublicToken

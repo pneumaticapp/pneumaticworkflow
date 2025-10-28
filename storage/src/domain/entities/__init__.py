@@ -1,4 +1,4 @@
-"""Domain entities"""
+"""Domain entities."""
 
 from .file_record import FileRecord
 

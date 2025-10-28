@@ -1,4 +1,4 @@
-"""Authentication dependencies"""
+"""Authentication dependencies."""
 
 from typing import TYPE_CHECKING
 
@@ -15,9 +15,15 @@ if TYPE_CHECKING:
 
 
 class AuthenticatedUser:
-    """Authenticated user with guaranteed non-null fields"""
+    """Authenticated user with guaranteed non-null fields."""
 
     def __init__(self, auth_user: 'AuthUser') -> None:
+        """Initialize authenticated user.
+
+        Args:
+            auth_user: Base authenticated user.
+
+        """
         if auth_user.is_anonymous or auth_user.account_id is None:
             raise MissingAccountIdError
 
@@ -28,25 +34,29 @@ class AuthenticatedUser:
 
     @property
     def is_anonymous(self) -> bool:
+        """Check if user is anonymous."""
         return False
 
     @property
     def is_public_token(self) -> bool:
+        """Check if user has public token."""
         return self.auth_type == UserType.PUBLIC_TOKEN
 
     @property
     def is_authenticated(self) -> bool:
+        """Check if user is authenticated."""
         return self.auth_type == UserType.AUTHENTICATED
 
     @property
     def is_guest_token(self) -> bool:
+        """Check if user has guest token."""
         return self.auth_type == UserType.GUEST_TOKEN
 
 
 async def get_current_user(request: Request) -> AuthenticatedUser:
-    """Get current authenticated user from request state
+    """Get current authenticated user from request state.
 
-    Note: only be used in endpoints with authentication requirements
+    Note: only be used in endpoints with authentication requirements.
     """
     user = getattr(request.state, 'user', None)
 

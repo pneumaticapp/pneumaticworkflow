@@ -1,10 +1,12 @@
+"""Application DTOs for file operations."""
+
 from dataclasses import dataclass
 from datetime import datetime
 
 
 @dataclass(frozen=True)
 class UploadFileCommand:
-    """Command to upload file"""
+    """Command to upload file."""
 
     file_content: bytes
     filename: str | None
@@ -16,7 +18,7 @@ class UploadFileCommand:
 
 @dataclass(frozen=True)
 class UploadFileUseCaseResponse:
-    """Response for file upload"""
+    """Response for file upload."""
 
     public_url: str  # Public URL with unique file identifier
     file_id: str  # Unique file identifier (UUID)
@@ -24,7 +26,7 @@ class UploadFileUseCaseResponse:
 
 @dataclass(frozen=True)
 class DownloadFileQuery:
-    """Query to download file"""
+    """Query to download file."""
 
     file_id: str  # Unique file identifier
     user_id: int | None
@@ -32,7 +34,7 @@ class DownloadFileQuery:
 
 @dataclass(frozen=True)
 class FileInfoResponse:
-    """File information response"""
+    """File information response."""
 
     id: int
     file_id: str

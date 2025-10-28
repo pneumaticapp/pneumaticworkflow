@@ -1,3 +1,5 @@
+"""HTTP client for external service requests."""
+
 from http import HTTPStatus
 from typing import TYPE_CHECKING, Union
 
@@ -16,15 +18,21 @@ if TYPE_CHECKING:
 
 
 class HttpClient:
-    """HTTP client for Django backend requests"""
+    """HTTP client for Django backend requests."""
 
     def __init__(self, base_url: str) -> None:
+        """Initialize HTTP client.
+
+        Args:
+            base_url: Base URL for HTTP requests.
+
+        """
         self.base_url = base_url
         self._client: httpx.AsyncClient | None = None
 
     @property
     def client(self) -> httpx.AsyncClient:
-        """Lazy client initialization"""
+        """Lazy client initialization."""
         if self._client is None:
             self._client = httpx.AsyncClient()
         return self._client
@@ -34,7 +42,7 @@ class HttpClient:
         user: Union['AuthUser', 'AuthenticatedUser'],
         file_id: str,
     ) -> bool:
-        """Check file permission based on user type and token"""
+        """Check file permission based on user type and token."""
         # Form headers based on user type
         headers: dict[str, str] = {}
 
@@ -67,7 +75,7 @@ class HttpClient:
             return response.status_code == HTTPStatus.NO_CONTENT
 
     async def close(self) -> None:
-        """Close HTTP client"""
+        """Close HTTP client."""
         if self._client is not None:
             await self._client.aclose()
             self._client = None

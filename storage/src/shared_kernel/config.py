@@ -1,3 +1,5 @@
+"""Application configuration settings."""
+
 from functools import lru_cache
 from typing import Literal
 
@@ -5,7 +7,7 @@ from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
-    """Application settings"""
+    """Application settings."""
 
     # Application
     DEBUG: bool = True
@@ -65,7 +67,7 @@ class Settings(BaseSettings):
 
     @property
     def database_url(self) -> str:
-        """Generate database URL"""
+        """Generate database URL."""
         return (
             f'postgresql+asyncpg://'
             f'{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@'
@@ -73,10 +75,13 @@ class Settings(BaseSettings):
         )
 
     class Config:
+        """Pydantic configuration."""
+
         env_file = ('.env',)
         extra = 'ignore'
 
 
 @lru_cache
 def get_settings() -> Settings:
+    """Get application settings."""
     return Settings()

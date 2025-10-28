@@ -1,4 +1,4 @@
-"""Unit of Work pattern"""
+"""Unit of Work pattern."""
 
 from .unit_of_work import UnitOfWork
 
