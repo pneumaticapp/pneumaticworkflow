@@ -44,6 +44,6 @@ class FileAttachmentSerializer(serializers.ModelSerializer):
 
 class FileAttachmentCheckPermissionSerializer(
     CustomValidationErrorMixin,
-    serializers.Serializer
+    serializers.Serializer,
 ):
     file_id = serializers.CharField(required=True, max_length=255)

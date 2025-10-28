@@ -171,5 +171,7 @@ class AttachmentService:
         if attachment.access_type == FileAttachmentAccessType.ACCOUNT:
             return account_id == attachment.account_id
 
-        elif attachment.access_type == FileAttachmentAccessType.RESTRICTED:
+        if attachment.access_type == FileAttachmentAccessType.RESTRICTED:
             return attachment.permissions.filter(user_id=user_id).exists()
+
+        return False

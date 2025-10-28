@@ -25,7 +25,7 @@ def test_check_permission__has_permission__ok(api_client, mocker):
         '/attachments/check-permission',
         data={
             'file_id': 'test123.pdf',
-        }
+        },
     )
 
     # assert
@@ -54,7 +54,7 @@ def test_check_permission__no_permission__forbidden(api_client, mocker):
         '/attachments/check-permission',
         data={
             'file_id': 'test123.pdf',
-        }
+        },
     )
 
     # assert
@@ -76,7 +76,7 @@ def test_check_permission__invalid_data__bad_request(api_client):
         '/attachments/check-permission',
         data={
             'file_id': '',
-        }
+        },
     )
 
     # assert
@@ -92,7 +92,7 @@ def test_check_permission__missing_file_id__bad_request(api_client):
     # act
     response = api_client.post(
         '/attachments/check-permission',
-        data={}
+        data={},
     )
 
     # assert
@@ -106,7 +106,7 @@ def test_check_permission__not_authenticated__unauthorized(api_client):
         '/attachments/check-permission',
         data={
             'file_id': 'test.pdf',
-        }
+        },
     )
 
     # assert

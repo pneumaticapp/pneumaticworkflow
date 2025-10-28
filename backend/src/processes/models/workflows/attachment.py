@@ -33,7 +33,7 @@ class FileAttachment(
         max_length=64,
         unique=True,
         null=True,
-        blank=True
+        blank=True,
     )
     event = models.ForeignKey(
         WorkflowEvent,
@@ -56,7 +56,7 @@ class FileAttachment(
     access_type = models.CharField(
         max_length=20,
         choices=FileAttachmentAccessType.CHOICES,
-        default=FileAttachmentAccessType.ACCOUNT
+        default=FileAttachmentAccessType.ACCOUNT,
     )
     search_content = SearchVectorField(null=True)
 
@@ -101,10 +101,10 @@ class FileAttachmentPermission(
     user = models.ForeignKey(
         UserModel,
         on_delete=models.CASCADE,
-        related_name='file_permissions'
+        related_name='file_permissions',
     )
     attachment = models.ForeignKey(
         FileAttachment,
         on_delete=models.CASCADE,
-        related_name='permissions'
+        related_name='permissions',
     )
