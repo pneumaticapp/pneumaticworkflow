@@ -279,7 +279,9 @@ export const reducer = (state = INIT_STATE, action: TWorkflowsActions | TGeneral
       return produce(state, (draftState) => {
         draftState.workflowsSettings.templateList.items.forEach((template) => {
           template.steps.forEach((step) => {
-            const stepCountInfo = action.payload.find(({ templateTaskId }) => templateTaskId === step.id);
+            const stepCountInfo = action.payload.find(
+              ({ templateTaskApiName }) => templateTaskApiName === step.apiName,
+            );
             step.count = stepCountInfo ? stepCountInfo.workflowsCount : 0;
           });
         });
