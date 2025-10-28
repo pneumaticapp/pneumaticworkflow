@@ -126,7 +126,10 @@ services:
       - ./config/project.env
       - ./config/frontend.env
     command: >
-      sh -c "npm run build-client:prod && pm2-runtime start pm2.json"
+      sh -c "
+        npm ci --legacy-peer-deps && 
+        npm run build-client:prod && 
+        pm2-runtime start pm2.json"
     expose:
       - 8000
     volumes:
