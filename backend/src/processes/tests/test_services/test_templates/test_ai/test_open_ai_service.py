@@ -36,7 +36,7 @@ UserModel = get_user_model()
 pytestmark = pytest.mark.django_db
 
 
-def test_get_response__ci_configuration__return_test_response(mocker, conf):
+def test_get_response__ci_configuration__return_test_response(mocker):
 
     # arrange
     description = 'some description'
