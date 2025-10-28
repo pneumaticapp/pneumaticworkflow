@@ -255,14 +255,17 @@ class TestUserGroupService:
             'src.accounts.services.group.'
             'update_workflow_owners.delay',
         )
-        analysis_mock = mocker.patch(
-            'src.analysis.tasks.track_group_analytics.delay',
-        )
+
         task_field_filter_mock = mocker.patch(
             'src.accounts.services.group'
             '.TaskField.objects.filter',
             return_value=mocker.Mock(update=mocker.Mock(return_value=None)),
         )
+
+        analysis_mock = mocker.patch(
+            'src.analysis.tasks.track_group_analytics.delay',
+        )
+
         send_added_users_notifications_mock = mocker.patch(
             'src.accounts.services.group.'
             'UserGroupService._send_added_users_notifications',
