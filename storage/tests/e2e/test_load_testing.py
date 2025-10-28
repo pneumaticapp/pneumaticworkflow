@@ -2,6 +2,8 @@ import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from unittest.mock import MagicMock
 
+import httpx
+
 from tests.fixtures.e2e import AsyncIteratorMock
 
 
@@ -45,7 +47,7 @@ class TestLoadTesting:
                 results.append(
                     (i, response.status_code, time.time() - start_time),
                 )
-            except Exception as e:
+            except httpx.HTTPError as e:
                 errors.append((i, str(e), time.time() - start_time))
 
         # Act
@@ -111,7 +113,7 @@ class TestLoadTesting:
                 results.append(
                     (i, response.status_code, time.time() - start_time),
                 )
-            except Exception as e:
+            except httpx.HTTPError as e:
                 errors.append((i, str(e), time.time() - start_time))
 
         # Act
@@ -213,7 +215,7 @@ class TestLoadTesting:
                         time.time() - start_time,
                     ),
                 )
-            except Exception as e:
+            except httpx.HTTPError as e:
                 errors.append((i, str(e), time.time() - start_time))
 
         # Act
@@ -287,7 +289,7 @@ class TestStressTesting:
                 results.append(
                     (i, response.status_code, time.time() - start_time),
                 )
-            except Exception as e:
+            except httpx.HTTPError as e:
                 errors.append((i, str(e), time.time() - start_time))
 
         # Act

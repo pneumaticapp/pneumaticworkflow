@@ -11,7 +11,7 @@ from src.application.use_cases.file_download import DownloadFileUseCase
 from src.application.use_cases.file_upload import UploadFileUseCase
 from src.domain.entities.file_record import FileRecord
 from src.shared_kernel.exceptions import (
-    FileNotFoundError,
+    DomainFileNotFoundError,
     StorageError,
 )
 
@@ -195,5 +195,5 @@ class TestDownloadFileUseCase:
         )
 
         # Act & Assert
-        with pytest.raises(FileNotFoundError):
+        with pytest.raises(DomainFileNotFoundError):
             await use_case.execute(query)

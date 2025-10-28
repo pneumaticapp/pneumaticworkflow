@@ -8,7 +8,7 @@ repos:
         types: [python]
         files: ^storage/
         require_serial: true
-        exclude: 'alembic|migrations|tests'
+        exclude: 'alembic|migrations'
 
       - id: ruff-format
         name: ruff format
@@ -17,7 +17,7 @@ repos:
         types: [python]
         files: ^storage/
         require_serial: true
-        exclude: 'alembic|migrations|tests'
+        exclude: 'alembic|migrations'
 
       - id: mypy-check
         name: mypy
@@ -26,4 +26,4 @@ repos:
         types: [python]
         files: ^storage/
         pass_filenames: false
-        exclude: 'alembic|migrations|tests'
+        exclude: 'alembic|migrations'

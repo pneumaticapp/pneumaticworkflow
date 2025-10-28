@@ -19,15 +19,13 @@ class TestRedisAuthClient:
     @pytest.fixture
     def mock_redis_client(self):
         """Mock Redis client"""
-        mock_client = AsyncMock()
-        return mock_client
+        return AsyncMock()
 
     @pytest.fixture
     def redis_auth_client(self, mock_redis_client, mock_redis_from_url):
         """RedisAuthClient instance with mocked Redis"""
         mock_redis_from_url.return_value = mock_redis_client
-        client = RedisAuthClient('redis://localhost:6379')
-        return client
+        return RedisAuthClient('redis://localhost:6379')
 
     @pytest.mark.asyncio
     async def test_get__valid_key__return_data(

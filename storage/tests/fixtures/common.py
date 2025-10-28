@@ -138,5 +138,4 @@ def mock_storage_service():
 @pytest.fixture
 def mock_repository():
     """Mock file repository"""
-    mock = AsyncMock()
-    return mock
+    return AsyncMock()

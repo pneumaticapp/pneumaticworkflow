@@ -17,7 +17,6 @@ exclude = [
     ".ruff_cache",
     "migrations",
     "alembic",
-    "tests",
 ]
 
 [lint]
@@ -85,12 +84,15 @@ fixable = ["ALL"]
 unfixable = []
 
 [lint.per-file-ignores]
-"tests/**/*.py" = [
-    "S101",    # assert
-    "ANN",     # type annotations
-    "ARG",     # unused args
-    "D",       # docstrings
-    "S603",    # subprocess
+"storage/tests/**/*.py" = [
+    "S101",
+    "S105",
+    "S113",
+    "ANN",
+    "ARG",
+    "D",
+    "S603",
+    "PLR",
 ]
 
 [lint.pylint]

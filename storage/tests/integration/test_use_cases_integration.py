@@ -8,7 +8,7 @@ from src.application.use_cases.file_upload import UploadFileUseCase
 from src.domain.entities.file_record import FileRecord
 from src.infra.repositories.file_record_repository import FileRecordRepository
 from src.infra.repositories.storage_service import StorageService
-from src.shared_kernel.exceptions import FileNotFoundError
+from src.shared_kernel.exceptions import DomainFileNotFoundError
 from src.shared_kernel.uow import UnitOfWork
 
 
@@ -67,7 +67,7 @@ class TestUploadFileUseCaseIntegration:
         assert file_record.account_id == 1
 
     @pytest.mark.parametrize(
-        'content_type,filename,content',
+        ('content_type', 'filename', 'content'),
         [
             ('text/plain', 'document.txt', b'This is a text file with some'),
             ('image/png', 'image.png', b'\x89PNG\r\n\x1a\n' + b'x' * 1000),
@@ -212,5 +212,5 @@ class TestDownloadFileUseCaseIntegration:
         query = DownloadFileQuery(file_id='nonexistent-file-id', user_id=1)
 
         # Act & Assert
-        with pytest.raises(FileNotFoundError):
+        with pytest.raises(DomainFileNotFoundError):
             await use_case.execute(query)

@@ -1,4 +1,4 @@
-from ..fixtures.common import (
+from tests.fixtures.common import (
     mock_anonymous_user,
     mock_auth_user,
     mock_http_client,
@@ -11,7 +11,7 @@ from ..fixtures.common import (
     sample_large_file_content,
     sample_upload_command,
 )
-from ..fixtures.integration import (
+from tests.fixtures.integration import (
     async_session,
     test_engine,
     test_session_factory,

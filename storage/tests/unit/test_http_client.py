@@ -38,11 +38,12 @@ class TestHttpClient:
         """Test successful file permission check"""
         # Arrange
         file_id = 'test-file-id'
+        token = 'valid-token'
         user = AuthUser(
             auth_type=UserType.AUTHENTICATED,
             user_id=1,
             account_id=1,
-            token='valid-token',
+            token=token,
         )
 
         mock_response = AsyncMock()
@@ -66,11 +67,12 @@ class TestHttpClient:
         """Test file permission check denied"""
         # Arrange
         file_id = 'test-file-id'
+        token = 'valid-token'
         user = AuthUser(
             auth_type=UserType.AUTHENTICATED,
             user_id=1,
             account_id=1,
-            token='valid-token',
+            token=token,
         )
 
         mock_response = AsyncMock()
@@ -94,11 +96,12 @@ class TestHttpClient:
         """Test file permission check with HTTP error"""
         # Arrange
         file_id = 'test-file-id'
+        token = 'valid-token'
         user = AuthUser(
             auth_type=UserType.AUTHENTICATED,
             user_id=1,
             account_id=1,
-            token='valid-token',
+            token=token,
         )
 
         mock_httpx_post.side_effect = httpx.RequestError('HTTP error')
@@ -117,11 +120,12 @@ class TestHttpClient:
         """Test file permission check with timeout error"""
         # Arrange
         file_id = 'test-file-id'
+        token = 'valid-token'
         user = AuthUser(
             auth_type=UserType.AUTHENTICATED,
             user_id=1,
             account_id=1,
-            token='valid-token',
+            token=token,
         )
 
         mock_httpx_post.side_effect = httpx.TimeoutException('Timeout')
@@ -140,11 +144,12 @@ class TestHttpClient:
         """Test file permission check with cookie token"""
         # Arrange
         file_id = 'test-file-id'
+        token = 'session-token'
         user = AuthUser(
             auth_type=UserType.GUEST_TOKEN,
             user_id=None,
             account_id=None,
-            token='session-token',
+            token=token,
         )
 
         mock_response = AsyncMock()
@@ -196,11 +201,12 @@ class TestHttpClient:
         """Test file permission check with 500 response"""
         # Arrange
         file_id = 'test-file-id'
+        token = 'valid-token'
         user = AuthUser(
             auth_type=UserType.AUTHENTICATED,
             user_id=1,
             account_id=1,
-            token='valid-token',
+            token=token,
         )
 
         mock_response = AsyncMock()

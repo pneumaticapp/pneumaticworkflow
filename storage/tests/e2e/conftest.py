@@ -1,8 +1,8 @@
-from ..fixtures.common import (
+from tests.fixtures.common import (
     sample_file_content,
     sample_large_file_content,
 )
-from ..fixtures.e2e import (
+from tests.fixtures.e2e import (
     AsyncIteratorMock,
     auth_headers,
     e2e_client,

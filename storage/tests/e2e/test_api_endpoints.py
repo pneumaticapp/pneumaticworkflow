@@ -1,6 +1,7 @@
 from unittest.mock import MagicMock
 
 import pytest
+from src.shared_kernel.exceptions import DomainFileNotFoundError
 
 
 class TestAPIEndpoints:
@@ -147,9 +148,7 @@ class TestAPIEndpoints:
     ):
         """Test download nonexistent file endpoint"""
         # Arrange
-        from src.shared_kernel.exceptions import FileNotFoundError
-
-        mock_download_use_case_execute.side_effect = FileNotFoundError(
+        mock_download_use_case_execute.side_effect = DomainFileNotFoundError(
             'nonexistent-file-id',
         )
 
@@ -178,7 +177,7 @@ class TestAPIEndpoints:
         assert response.status_code == 403
 
     @pytest.mark.parametrize(
-        'filename,content,content_type',
+        ('filename', 'content', 'content_type'),
         [
             ('text.txt', b'This is a text file', 'text/plain'),
             ('image.jpg', b'fake-jpeg-data', 'image/jpeg'),

@@ -2,7 +2,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from ..fixtures.e2e import AsyncIteratorMock
+from tests.fixtures.e2e import AsyncIteratorMock
 
 
 class TestCompleteUploadDownloadWorkflow:
@@ -57,7 +57,7 @@ class TestCompleteUploadDownloadWorkflow:
         assert 'content-disposition' in download_response.headers
 
     @pytest.mark.parametrize(
-        'filename,content,content_type',
+        ('filename', 'content', 'content_type'),
         [
             ('text.txt', b'This is a text file', 'text/plain'),
             ('image.jpg', b'fake-jpeg-data', 'image/jpeg'),

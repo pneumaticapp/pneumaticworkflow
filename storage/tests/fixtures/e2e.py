@@ -144,7 +144,7 @@ class AsyncIteratorMock:
         try:
             return next(self._iter)
         except StopIteration:
-            raise StopAsyncIteration
+            raise StopAsyncIteration from None
 
 
 @pytest.fixture

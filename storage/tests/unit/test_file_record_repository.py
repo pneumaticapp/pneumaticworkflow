@@ -18,8 +18,7 @@ class TestFileRecordRepository:
     @pytest.fixture
     def mock_session(self):
         """Mock database session"""
-        session = AsyncMock()
-        return session
+        return AsyncMock()
 
     @pytest.fixture
     def repository(self, mock_session):

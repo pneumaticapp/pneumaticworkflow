@@ -32,8 +32,7 @@ class TestAuthenticationMiddleware:
     @pytest.fixture
     def mock_app(self):
         """Mock FastAPI app"""
-        app = Mock()
-        return app
+        return Mock()
 
     @pytest.fixture
     def middleware(self, mock_app):
@@ -70,7 +69,7 @@ class TestAuthenticationMiddleware:
         """Test successful token authentication"""
         # Arrange
         token = 'valid-token'
-        expected_user = AuthUser(
+        AuthUser(
             auth_type=UserType.AUTHENTICATED,
             user_id=1,
             account_id=2,

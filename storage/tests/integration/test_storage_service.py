@@ -117,9 +117,7 @@ class TestStorageService:
         content_generator = service.download_file(bucket_name, file_path)
 
         # Assert
-        chunks = []
-        async for chunk in content_generator:
-            chunks.append(chunk)
+        chunks = [chunk async for chunk in content_generator]
 
         assert chunks == [b'chunk1', b'chunk2']
         mock_s3_client.get_object.assert_called_once()

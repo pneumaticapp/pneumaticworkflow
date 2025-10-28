@@ -5,13 +5,13 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from src.shared_kernel.exceptions import (
     AuthenticationError,
-    BaseAppException,
+    BaseAppError,
+    DomainFileNotFoundError,
     ErrorCode,
     ErrorResponse,
     ErrorType,
     FileAccessDeniedError,
     FileAlreadyExistsError,
-    FileNotFoundError,
     FileSizeExceededError,
     InvalidTokenError,
     MissingAccountIdError,
@@ -104,7 +104,7 @@ class TestErrorResponse:
 
 
 class TestBaseAppException:
-    """Test BaseAppException class"""
+    """Test BaseAppError class"""
 
     def test_base_app_exception_creation(self):
         """Test base app exception creation"""
@@ -115,7 +115,7 @@ class TestBaseAppException:
             http_status=400,
         )
 
-        exception = BaseAppException(error_code, details='Test details')
+        exception = BaseAppError(error_code, details='Test details')
 
         assert exception.error_code == error_code
         assert exception.details == 'Test details'
@@ -132,7 +132,7 @@ class TestBaseAppException:
             http_status=400,
         )
 
-        exception = BaseAppException(error_code, details='Test details')
+        exception = BaseAppError(error_code, details='Test details')
         response = exception.to_response(
             timestamp='2023-01-01T00:00:00',
             request_id='test-123',
@@ -283,7 +283,7 @@ class TestExceptionHandlers:
 
         # Check for main handlers
         handlers = list(app.exception_handlers.keys())
-        assert BaseAppException in handlers
+        assert BaseAppError in handlers
         assert Exception in handlers
 
 
@@ -297,7 +297,8 @@ class TestExceptionHandlerIntegration:
 
         @app.get('/test')
         async def test_endpoint():
-            raise FileNotFoundError('test-file-id')
+            file_id = 'test-file-id'
+            raise DomainFileNotFoundError(file_id)
 
         client = TestClient(app)
         response = client.get('/test')
@@ -315,7 +316,7 @@ class TestExceptionHandlerIntegration:
 
         @app.get('/test')
         async def test_endpoint():
-            raise AuthenticationError()
+            raise AuthenticationError
 
         client = TestClient(app)
         response = client.get('/test')
