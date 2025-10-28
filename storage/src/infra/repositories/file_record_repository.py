@@ -1,5 +1,3 @@
-from typing import Optional
-
 from sqlalchemy.exc import (
     DatabaseError as SQLAlchemyDatabaseError,
 )
@@ -23,7 +21,7 @@ from src.shared_kernel.exceptions import (
 
 
 class FileRecordRepository:
-    def __init__(self, session: AsyncSession):
+    def __init__(self, session: AsyncSession) -> None:
         self.session = session
         self.mapper = FileRecordMapper()
 
@@ -39,18 +37,19 @@ class FileRecordRepository:
             ) from e
         except OperationalError as e:
             raise DatabaseConnectionError(
-                details=MSG_DB_009.format(operation='create', details=str(e))
+                details=MSG_DB_009.format(operation='create', details=str(e)),
             ) from e
         except SQLAlchemyDatabaseError as e:
             raise DatabaseOperationError(
-                operation='create_file_record', details=str(e)
+                operation='create_file_record',
+                details=str(e),
             ) from e
 
-    async def get_by_id(self, file_id: str) -> Optional[FileRecord]:
+    async def get_by_id(self, file_id: str) -> FileRecord | None:
         """Get file record by ID"""
         try:
             stmt = select(FileRecordORM).where(
-                FileRecordORM.file_id == file_id
+                FileRecordORM.file_id == file_id,
             )
             result = await self.session.execute(stmt)
             orm_record = result.scalar_one_or_none()
@@ -62,10 +61,12 @@ class FileRecordRepository:
         except OperationalError as e:
             raise DatabaseConnectionError(
                 details=MSG_DB_009.format(
-                    operation='get_by_id', details=str(e)
-                )
+                    operation='get_by_id',
+                    details=str(e),
+                ),
             ) from e
         except SQLAlchemyDatabaseError as e:
             raise DatabaseOperationError(
-                operation='get_file_record_by_id', details=str(e)
+                operation='get_file_record_by_id',
+                details=str(e),
             ) from e

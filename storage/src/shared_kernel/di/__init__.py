@@ -8,6 +8,6 @@ from .container import (
 __all__ = [
     'get_download_use_case',
     'get_http_client',
-    'get_upload_use_case',
     'get_settings_dep',
+    'get_upload_use_case',
 ]

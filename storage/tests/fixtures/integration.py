@@ -1,10 +1,9 @@
-from typing import AsyncGenerator
+from collections.abc import AsyncGenerator
 
 import pytest_asyncio
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
-
 from src.shared_kernel.database.base import Base
 
 
@@ -28,7 +27,9 @@ async def test_engine():
 async def test_session_factory(test_engine):
     """Create session factory once per session"""
     session_factory = sessionmaker(
-        test_engine, class_=AsyncSession, expire_on_commit=False
+        test_engine,
+        class_=AsyncSession,
+        expire_on_commit=False,
     )
 
     return session_factory

@@ -2,7 +2,6 @@ from unittest.mock import AsyncMock, Mock
 
 import pytest
 from fastapi import Request, Response
-
 from src.shared_kernel.auth.user_types import UserType
 from src.shared_kernel.exceptions import AuthenticationError
 from src.shared_kernel.middleware.auth_middleware import (
@@ -17,7 +16,9 @@ class TestAuthUser:
     def test_create__valid_data__ok(self):
         """Test user creation"""
         user = AuthUser(
-            auth_type=UserType.AUTHENTICATED, user_id=1, account_id=2
+            auth_type=UserType.AUTHENTICATED,
+            user_id=1,
+            account_id=2,
         )
 
         assert user.user_id == 1
@@ -63,13 +64,16 @@ class TestAuthenticationMiddleware:
 
     @pytest.mark.asyncio
     async def test_authenticate_token__valid_token__return_user(
-        self, middleware
+        self,
+        middleware,
     ):
         """Test successful token authentication"""
         # Arrange
         token = 'valid-token'
         expected_user = AuthUser(
-            auth_type=UserType.AUTHENTICATED, user_id=1, account_id=2
+            auth_type=UserType.AUTHENTICATED,
+            user_id=1,
+            account_id=2,
         )
 
         # Mock PneumaticToken.data
@@ -90,7 +94,8 @@ class TestAuthenticationMiddleware:
 
     @pytest.mark.asyncio
     async def test_authenticate_token__invalid_token__return_none(
-        self, middleware
+        self,
+        middleware,
     ):
         """Test failed token authentication"""
         # Arrange
@@ -112,7 +117,8 @@ class TestAuthenticationMiddleware:
 
     @pytest.mark.asyncio
     async def test_authenticate_token__exception_occurred__return_none(
-        self, middleware
+        self,
+        middleware,
     ):
         """Test authentication with exception"""
         # Arrange
@@ -134,7 +140,10 @@ class TestAuthenticationMiddleware:
 
     @pytest.mark.asyncio
     async def test_dispatch__valid_token__return_success_response(
-        self, middleware, mock_request, mock_call_next
+        self,
+        middleware,
+        mock_request,
+        mock_call_next,
     ):
         """Test dispatch with valid token"""
         # Arrange
@@ -157,7 +166,10 @@ class TestAuthenticationMiddleware:
 
     @pytest.mark.asyncio
     async def test_dispatch__session_token__return_success_response(
-        self, middleware, mock_request, mock_call_next
+        self,
+        middleware,
+        mock_request,
+        mock_call_next,
     ):
         """Test dispatch with session token"""
         # Arrange
@@ -181,7 +193,10 @@ class TestAuthenticationMiddleware:
 
     @pytest.mark.asyncio
     async def test_dispatch__no_auth_required__return_anonymous_user(
-        self, middleware_no_auth, mock_request, mock_call_next
+        self,
+        middleware_no_auth,
+        mock_request,
+        mock_call_next,
     ):
         """Test dispatch without required authentication"""
         # Arrange
@@ -190,7 +205,8 @@ class TestAuthenticationMiddleware:
 
         # Act
         response = await middleware_no_auth.dispatch(
-            mock_request, mock_call_next
+            mock_request,
+            mock_call_next,
         )
 
         # Assert
@@ -199,7 +215,10 @@ class TestAuthenticationMiddleware:
 
     @pytest.mark.asyncio
     async def test_dispatch__auth_required_no_token__return_401(
-        self, middleware, mock_request, mock_call_next
+        self,
+        middleware,
+        mock_request,
+        mock_call_next,
     ):
         """Test dispatch with required auth but no token"""
         # Arrange

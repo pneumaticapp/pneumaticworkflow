@@ -15,13 +15,11 @@ if TYPE_CHECKING:
 
 
 class AuthenticatedUser:
-    """
-    Authenticated user with guaranteed non-null fields
-    """
+    """Authenticated user with guaranteed non-null fields"""
 
-    def __init__(self, auth_user: 'AuthUser'):
+    def __init__(self, auth_user: 'AuthUser') -> None:
         if auth_user.is_anonymous or auth_user.account_id is None:
-            raise MissingAccountIdError()
+            raise MissingAccountIdError
 
         self.auth_type = auth_user.auth_type
         self.user_id = auth_user.user_id
@@ -46,12 +44,10 @@ class AuthenticatedUser:
 
 
 async def get_current_user(request: Request) -> AuthenticatedUser:
-    """
-    Get current authenticated user from request state
+    """Get current authenticated user from request state
 
     Note: only be used in endpoints with authentication requirements
     """
-
     user = getattr(request.state, 'user', None)
 
     if not user or user.is_anonymous or user.account_id is None:

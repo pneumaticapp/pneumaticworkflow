@@ -6,6 +6,6 @@ from .auth_middleware import (
 )
 
 __all__ = [
-    'AuthenticationMiddleware',
     'AuthUser',
+    'AuthenticationMiddleware',
 ]

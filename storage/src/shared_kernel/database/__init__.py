@@ -5,7 +5,7 @@ from .models import FileRecordORM
 
 __all__ = [
     'Base',
+    'FileRecordORM',
     'engine',
     'get_async_session',
-    'FileRecordORM',
 ]

@@ -1,8 +1,6 @@
 """Database exceptions"""
 
-from typing import Any, Optional
-
-from .base_exceptions import BaseAppException
+from .base_exceptions import BaseAppError
 from .error_codes import DATABASE_ERROR_CODES
 from .error_messages import (
     MSG_DB_004,
@@ -10,14 +8,14 @@ from .error_messages import (
 )
 
 
-class DatabaseError(BaseAppException):
+class DatabaseError(BaseAppError):
     """Base database error"""
 
     def __init__(
         self,
         error_code_key: str,
-        details: Optional[str] = None,
-        **kwargs: Any,
+        details: str | None = None,
+        **kwargs: str | int | None,
     ) -> None:
         error_code = DATABASE_ERROR_CODES[error_code_key]
         super().__init__(error_code, details, **kwargs)
@@ -28,8 +26,8 @@ class DatabaseConnectionError(DatabaseError):
 
     def __init__(
         self,
-        details: Optional[str] = None,
-        **kwargs: Any,
+        details: str | None = None,
+        **kwargs: str | int | None,
     ) -> None:
         super().__init__('DATABASE_CONNECTION_ERROR', details, **kwargs)
 
@@ -40,8 +38,8 @@ class DatabaseOperationError(DatabaseError):
     def __init__(
         self,
         operation: str,
-        details: Optional[str] = None,
-        **kwargs: Any,
+        details: str | None = None,
+        **kwargs: str | int | None,
     ) -> None:
         custom_details = MSG_DB_004.format(operation=operation)
         if details:
@@ -54,8 +52,8 @@ class DatabaseTransactionError(DatabaseError):
 
     def __init__(
         self,
-        details: Optional[str] = None,
-        **kwargs: Any,
+        details: str | None = None,
+        **kwargs: str | int | None,
     ) -> None:
         super().__init__('DATABASE_TRANSACTION_ERROR', details, **kwargs)
 
@@ -66,10 +64,11 @@ class DatabaseConstraintError(DatabaseError):
     def __init__(
         self,
         constraint: str,
-        details: Optional[str] = None,
-        **kwargs: Any,
+        details: str | None = None,
+        **kwargs: str | int | None,
     ) -> None:
         custom_details = MSG_DB_008.format(
-            constraint=constraint, details=details or 'Unknown error'
+            constraint=constraint,
+            details=details or 'Unknown error',
         )
         super().__init__('DATABASE_CONSTRAINT_ERROR', custom_details, **kwargs)

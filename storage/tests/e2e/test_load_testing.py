@@ -38,12 +38,12 @@ class TestLoadTesting:
                             f'load_test_{i}.txt',
                             f'load test content {i}'.encode(),
                             'text/plain',
-                        )
+                        ),
                     },
                     headers=auth_headers,
                 )
                 results.append(
-                    (i, response.status_code, time.time() - start_time)
+                    (i, response.status_code, time.time() - start_time),
                 )
             except Exception as e:
                 errors.append((i, str(e), time.time() - start_time))
@@ -105,10 +105,11 @@ class TestLoadTesting:
                 )
 
                 response = e2e_client.get(
-                    f'/load-test-download-id-{i}', headers=auth_headers
+                    f'/load-test-download-id-{i}',
+                    headers=auth_headers,
                 )
                 results.append(
-                    (i, response.status_code, time.time() - start_time)
+                    (i, response.status_code, time.time() - start_time),
                 )
             except Exception as e:
                 errors.append((i, str(e), time.time() - start_time))
@@ -173,7 +174,7 @@ class TestLoadTesting:
                             f'mixed_test_{i}.txt',
                             f'mixed workload content {i}'.encode(),
                             'text/plain',
-                        )
+                        ),
                     },
                     headers=auth_headers,
                 )
@@ -184,7 +185,7 @@ class TestLoadTesting:
                             i,
                             f'Upload failed: {upload_response.status_code}',
                             time.time() - start_time,
-                        )
+                        ),
                     )
                     return
 
@@ -200,7 +201,8 @@ class TestLoadTesting:
                 )
 
                 download_response = e2e_client.get(
-                    f'/mixed-workload-id-{i}', headers=auth_headers
+                    f'/mixed-workload-id-{i}',
+                    headers=auth_headers,
                 )
 
                 results.append(
@@ -209,7 +211,7 @@ class TestLoadTesting:
                         upload_response.status_code,
                         download_response.status_code,
                         time.time() - start_time,
-                    )
+                    ),
                 )
             except Exception as e:
                 errors.append((i, str(e), time.time() - start_time))
@@ -278,12 +280,12 @@ class TestStressTesting:
                             f'extreme_test_{i}.txt',
                             f'extreme content {i}'.encode(),
                             'text/plain',
-                        )
+                        ),
                     },
                     headers=auth_headers,
                 )
                 results.append(
-                    (i, response.status_code, time.time() - start_time)
+                    (i, response.status_code, time.time() - start_time),
                 )
             except Exception as e:
                 errors.append((i, str(e), time.time() - start_time))

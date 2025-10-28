@@ -1,7 +1,7 @@
 """Token authentication classes"""
 
 import hashlib
-from typing import Any, Optional
+from typing import Any
 
 from src.shared_kernel.auth.redis_client import get_redis_client
 from src.shared_kernel.config import get_settings
@@ -13,7 +13,7 @@ class PneumaticToken:
     Based on Django implementation with Redis cache
     """
 
-    def __init__(self, key: str):
+    def __init__(self, key: str) -> None:
         self.key = key
 
     @classmethod
@@ -29,11 +29,12 @@ class PneumaticToken:
         return encrypted_token.hex()
 
     @classmethod
-    async def data(cls, token: str) -> Optional[dict[str, Any]]:
+    async def data(cls, token: str) -> dict[str, Any] | None:
         """Get cached token data"""
         try:
             encrypted_token = await cls.encrypt(token)
             redis_client = get_redis_client()
             return await redis_client.get(encrypted_token)
-        except Exception:
+        except (ValueError, KeyError, TypeError):
+            # Handle specific token/redis errors
             return None

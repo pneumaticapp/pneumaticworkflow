@@ -2,7 +2,6 @@ from unittest.mock import AsyncMock
 
 import pytest
 import redis.asyncio as redis
-
 from src.shared_kernel.auth.token_auth import PneumaticToken
 
 
@@ -11,7 +10,9 @@ class TestPneumaticToken:
 
     @pytest.mark.asyncio
     async def test_data__valid_token__return_data(
-        self, mock_get_redis_client, mocker
+        self,
+        mock_get_redis_client,
+        mocker,
     ):
         """Test successful token data retrieval"""
         # Arrange
@@ -39,7 +40,9 @@ class TestPneumaticToken:
 
     @pytest.mark.asyncio
     async def test_data__no_data_found__return_none(
-        self, mock_get_redis_client, mocker
+        self,
+        mock_get_redis_client,
+        mocker,
     ):
         """Test token data retrieval when no data found"""
         # Arrange
@@ -66,7 +69,9 @@ class TestPneumaticToken:
 
     @pytest.mark.asyncio
     async def test_data__redis_error__return_none(
-        self, mock_get_redis_client, mocker
+        self,
+        mock_get_redis_client,
+        mocker,
     ):
         """Test token data retrieval with Redis error"""
         # Arrange

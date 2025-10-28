@@ -1,10 +1,14 @@
 """Authentication middleware"""
 
-from typing import Any, Awaitable, Callable, Optional
+from collections.abc import Awaitable, Callable
+from typing import TYPE_CHECKING
 
 from fastapi import Request, Response
 from fastapi.security import HTTPBearer
 from starlette.middleware.base import BaseHTTPMiddleware
+
+if TYPE_CHECKING:
+    from fastapi import FastAPI
 
 from src.shared_kernel.auth import (
     PneumaticToken,
@@ -21,9 +25,9 @@ class AuthUser:
     def __init__(
         self,
         auth_type: UserType,
-        user_id: Optional[int] = None,
-        account_id: Optional[int] = None,
-        token: Optional[str] = None,
+        user_id: int | None = None,
+        account_id: int | None = None,
+        token: str | None = None,
     ) -> None:
         self.auth_type = auth_type
         self.user_id = user_id
@@ -48,14 +52,13 @@ class AuthUser:
 
 
 class AuthenticationMiddleware(BaseHTTPMiddleware):
-    """
-    Authentication middleware for token and session auth
+    """Authentication middleware for token and session auth
 
     Adds to request:
     - request.user: AuthUser
     """
 
-    def __init__(self, app: Any, require_auth: bool = True) -> None:
+    def __init__(self, app: 'FastAPI', *, require_auth: bool = True) -> None:
         super().__init__(app)
         self.security = HTTPBearer(auto_error=False)
         self.require_auth = require_auth
@@ -73,7 +76,7 @@ class AuthenticationMiddleware(BaseHTTPMiddleware):
             ),
         ]
 
-    async def authenticate_token(self, token: str) -> Optional[AuthUser]:
+    async def authenticate_token(self, token: str) -> AuthUser | None:
         """Authenticate using token"""
         try:
             token_data = await PneumaticToken.data(token)
@@ -84,11 +87,12 @@ class AuthenticationMiddleware(BaseHTTPMiddleware):
                     account_id=token_data['account_id'],
                     token=token,
                 )
-            return None
-        except Exception:
-            return None
+        except (ValueError, KeyError, TypeError):
+            # Handle specific authentication errors
+            pass
+        return None
 
-    async def authenticate_guest_token(self, token: str) -> Optional[AuthUser]:
+    async def authenticate_guest_token(self, token: str) -> AuthUser | None:
         """Authenticate guest token"""
         try:
             # This would need a function to get user data from Django
@@ -97,17 +101,23 @@ class AuthenticationMiddleware(BaseHTTPMiddleware):
             if guest_token.payload:
                 return AuthUser(
                     auth_type=UserType.GUEST_TOKEN,
-                    user_id=guest_token['user_id'],
-                    account_id=guest_token['account_id'],
+                    user_id=int(guest_token['user_id'])
+                    if guest_token['user_id']
+                    else None,
+                    account_id=int(guest_token['account_id'])
+                    if guest_token['account_id']
+                    else None,
                     token=token,
                 )
-            return None
-        except Exception:
-            return None
+        except (ValueError, KeyError, TypeError):
+            # Handle specific guest token errors
+            pass
+        return None
 
     async def authenticate_public_token(
-        self, raw_token: str
-    ) -> Optional[AuthUser]:
+        self,
+        raw_token: str,
+    ) -> AuthUser | None:
         """Authenticate public token"""
         try:
             token = PublicAuthService.get_token(raw_token)
@@ -122,11 +132,12 @@ class AuthenticationMiddleware(BaseHTTPMiddleware):
                         account_id=auth_data['account_id'],
                         token=str(token),
                     )
-            return None
-        except Exception:
-            return None
+        except (ValueError, KeyError, TypeError):
+            # Handle specific public token errors
+            pass
+        return None
 
-    async def try_authenticate(self, request: Request) -> Optional[AuthUser]:
+    async def try_authenticate(self, request: Request) -> AuthUser | None:
         """Try to authenticate user using all available strategies"""
         for key, source, auth_func in self.auth_strategies:
             token = None
@@ -158,6 +169,6 @@ class AuthenticationMiddleware(BaseHTTPMiddleware):
 
         # If authentication is required and user is anonymous
         if self.require_auth and request.state.user.is_anonymous:
-            raise AuthenticationError()
+            raise AuthenticationError
 
         return await call_next(request)

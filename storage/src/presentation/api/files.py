@@ -1,4 +1,5 @@
-from typing import AsyncGenerator
+from collections.abc import AsyncGenerator
+from typing import Annotated
 
 from fastapi import (
     APIRouter,
@@ -43,14 +44,13 @@ router = APIRouter(prefix='', tags=['files'])
 
 @router.post(
     '/upload',
-    response_model=FileUploadResponse,
     dependencies=[Depends(is_authenticated)],
 )
 async def upload_file(
-    file: UploadFile = File(...),
-    current_user: AuthenticatedUser = Depends(get_current_user),
-    use_case: UploadFileUseCase = Depends(get_upload_use_case),
-    settings: Settings = Depends(get_settings_dep),
+    file: Annotated[UploadFile, File(...)],
+    current_user: Annotated[AuthenticatedUser, Depends(get_current_user)],
+    use_case: Annotated[UploadFileUseCase, Depends(get_upload_use_case)],
+    settings: Annotated[Settings, Depends(get_settings_dep)],
 ) -> FileUploadResponse:
     # Read file content
     file_content = await file.read()
@@ -72,16 +72,17 @@ async def upload_file(
     # Execute command
     response = await use_case.execute(command)
     return FileUploadResponse(
-        public_url=response.public_url, file_id=response.file_id
+        public_url=response.public_url,
+        file_id=response.file_id,
     )
 
 
 @router.get('/{file_id}', dependencies=[Depends(authenticated_no_public)])
 async def download_file(
     file_id: str,
-    current_user: AuthenticatedUser = Depends(get_current_user),
-    use_case: DownloadFileUseCase = Depends(get_download_use_case),
-    http_client: HttpClient = Depends(get_http_client),
+    current_user: Annotated[AuthenticatedUser, Depends(get_current_user)],
+    use_case: Annotated[DownloadFileUseCase, Depends(get_download_use_case)],
+    http_client: Annotated[HttpClient, Depends(get_http_client)],
 ) -> StreamingResponse:
     # Check file access permissions (fail fast)
     has_access = await http_client.check_file_permission(

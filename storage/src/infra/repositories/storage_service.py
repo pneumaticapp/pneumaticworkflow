@@ -1,4 +1,4 @@
-from typing import AsyncGenerator, Optional
+from collections.abc import AsyncGenerator
 
 import aioboto3
 from aiobotocore.config import AioConfig
@@ -21,7 +21,7 @@ class StorageService:
         self._settings = get_settings()
         self._bucket_prefix = self._settings.BUCKET_PREFIX
         self._storage_type = self._settings.STORAGE_TYPE
-        self._session: Optional[aioboto3.Session] = None
+        self._session: aioboto3.Session | None = None
 
         # Configuration for increasing connection pool
         # GCS requires signature_version='s3' (legacy), not 's3v4'!
@@ -68,8 +68,7 @@ class StorageService:
         account_id: int,
         file_id: str,
     ) -> tuple[str, str]:
-        """
-        Generate storage path
+        """Generate storage path
 
         Args:
             account_id: Account ID
@@ -87,10 +86,9 @@ class StorageService:
         bucket_name: str,
         file_path: str,
         file_content: bytes,
-        content_type: Optional[str],  # Fix
+        content_type: str | None,
     ) -> None:
-        """
-        Upload file to storage
+        """Upload file to storage
 
         Args:
         ----
@@ -117,8 +115,8 @@ class StorageService:
                         'BucketAlreadyOwnedByYou',
                     ):
                         raise StorageError(
-                            MSG_STORAGE_009.format(details=str(e))
-                        )
+                            MSG_STORAGE_009.format(details=str(e)),
+                        ) from e
 
                 # Upload file
                 await s3.put_object(
@@ -128,7 +126,9 @@ class StorageService:
                     ContentType=content_type,
                 )
             except ClientError as e:
-                raise StorageError(MSG_STORAGE_010.format(details=str(e)))
+                raise StorageError(
+                    MSG_STORAGE_010.format(details=str(e))
+                ) from e
 
     async def download_file(
         self,
@@ -154,7 +154,8 @@ class StorageService:
             try:
                 # Get object
                 response = await s3.get_object(
-                    Bucket=bucket_name, Key=file_path
+                    Bucket=bucket_name,
+                    Key=file_path,
                 )
 
                 body = response['Body']
@@ -164,7 +165,10 @@ class StorageService:
             except ClientError as e:
                 error_code = e.response['Error']['Code']
                 if error_code == 'NoSuchKey':
-                    raise StorageError(
+                    error_msg = (
                         f'File {file_path} not found in bucket {bucket_name}'
                     )
-                raise StorageError(MSG_STORAGE_011.format(details=str(e)))
+                    raise StorageError(error_msg) from e
+                raise StorageError(
+                    MSG_STORAGE_011.format(details=str(e))
+                ) from e

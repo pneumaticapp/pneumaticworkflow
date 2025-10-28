@@ -1,7 +1,6 @@
 from unittest.mock import AsyncMock
 
 import pytest
-
 from src.infra.repositories.storage_service import StorageService
 
 
@@ -15,7 +14,8 @@ class TestStorageService:
 
         # Act
         bucket_name, file_path = service.get_storage_path(
-            account_id=1, file_id='test-file-id'
+            account_id=1,
+            file_id='test-file-id',
         )
 
         # Assert
@@ -24,7 +24,8 @@ class TestStorageService:
 
     @pytest.mark.asyncio
     async def test_upload_file__valid_data__upload_successfully(
-        self, mock_aioboto3_session
+        self,
+        mock_aioboto3_session,
     ):
         """Test successful file upload"""
         # Arrange
@@ -41,7 +42,10 @@ class TestStorageService:
 
         # Act
         await service.upload_file(
-            bucket_name, file_path, file_content, content_type
+            bucket_name,
+            file_path,
+            file_content,
+            content_type,
         )
 
         # Assert
@@ -49,7 +53,8 @@ class TestStorageService:
 
     @pytest.mark.asyncio
     async def test_download_file__valid_file__return_content_generator(
-        self, mock_aioboto3_session
+        self,
+        mock_aioboto3_session,
     ):
         """Test successful file download"""
         # Arrange
@@ -84,7 +89,8 @@ class TestStorageService:
 
     @pytest.mark.asyncio
     async def test_download_file__chunked_content__return_all_chunks(
-        self, mock_aioboto3_session
+        self,
+        mock_aioboto3_session,
     ):
         """Test chunked file download"""
         # Arrange

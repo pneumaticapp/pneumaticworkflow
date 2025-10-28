@@ -1,6 +1,5 @@
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Optional
 
 
 @dataclass(frozen=True)
@@ -9,8 +8,8 @@ class FileRecord:
 
     file_id: str
     size: int
-    content_type: Optional[str]  # Fix
-    filename: Optional[str]  # Fix
-    user_id: Optional[int]
+    content_type: str | None
+    filename: str | None
+    user_id: int | None
     account_id: int
     created_at: datetime

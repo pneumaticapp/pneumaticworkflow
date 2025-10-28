@@ -1,4 +1,4 @@
-from typing import AsyncGenerator
+from collections.abc import AsyncGenerator
 
 from sqlalchemy.ext.asyncio import (
     AsyncSession,
@@ -13,7 +13,7 @@ settings = get_settings()
 
 # Create async engine
 engine = create_async_engine(
-    settings.DATABASE_URL,
+    settings.database_url,
     echo=settings.DEBUG,
     future=True,
 )

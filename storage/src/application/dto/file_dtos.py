@@ -1,6 +1,5 @@
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Optional
 
 
 @dataclass(frozen=True)
@@ -8,10 +7,10 @@ class UploadFileCommand:
     """Command to upload file"""
 
     file_content: bytes
-    filename: Optional[str]  # Fix
-    content_type: Optional[str]  # Fix
+    filename: str | None
+    content_type: str | None
     size: int
-    user_id: Optional[int]
+    user_id: int | None
     account_id: int
 
 
@@ -28,7 +27,7 @@ class DownloadFileQuery:
     """Query to download file"""
 
     file_id: str  # Unique file identifier
-    user_id: Optional[int]  # User ID for permission check
+    user_id: int | None
 
 
 @dataclass(frozen=True)
@@ -40,6 +39,6 @@ class FileInfoResponse:
     filename: str
     size: int
     content_type: str
-    user_id: Optional[int]
+    user_id: int | None
     account_id: int
     created_at: datetime

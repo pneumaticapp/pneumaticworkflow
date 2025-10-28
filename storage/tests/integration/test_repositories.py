@@ -1,7 +1,6 @@
 from datetime import datetime
 
 import pytest
-
 from src.domain.entities.file_record import FileRecord
 from src.infra.repositories.file_record_repository import FileRecordRepository
 
@@ -11,7 +10,8 @@ class TestFileRecordRepository:
 
     @pytest.mark.asyncio
     async def test_create_and_get__valid_record__return_record(
-        self, async_session
+        self,
+        async_session,
     ):
         """Test create and get file record"""
         # Arrange

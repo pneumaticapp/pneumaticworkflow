@@ -3,7 +3,6 @@ from unittest.mock import AsyncMock, Mock
 import httpx
 import pytest
 from fastapi import Request
-
 from src.infra.http_client import HttpClient
 from src.shared_kernel.auth.user_types import UserType
 from src.shared_kernel.exceptions import (
@@ -31,7 +30,10 @@ class TestHttpClient:
 
     @pytest.mark.asyncio
     async def test_check_file_permission__valid_token__return_true(
-        self, http_client, mock_request, mock_httpx_post
+        self,
+        http_client,
+        mock_request,
+        mock_httpx_post,
     ):
         """Test successful file permission check"""
         # Arrange
@@ -56,7 +58,10 @@ class TestHttpClient:
 
     @pytest.mark.asyncio
     async def test_check_file_permission__access_denied__return_false(
-        self, http_client, mock_request, mock_httpx_post
+        self,
+        http_client,
+        mock_request,
+        mock_httpx_post,
     ):
         """Test file permission check denied"""
         # Arrange
@@ -81,7 +86,10 @@ class TestHttpClient:
 
     @pytest.mark.asyncio
     async def test_check_file_permission__http_error__return_false(
-        self, http_client, mock_request, mock_httpx_post
+        self,
+        http_client,
+        mock_request,
+        mock_httpx_post,
     ):
         """Test file permission check with HTTP error"""
         # Arrange
@@ -101,7 +109,10 @@ class TestHttpClient:
 
     @pytest.mark.asyncio
     async def test_check_file_permission__timeout_error__raise_timeout_error(
-        self, http_client, mock_request, mock_httpx_post
+        self,
+        http_client,
+        mock_request,
+        mock_httpx_post,
     ):
         """Test file permission check with timeout error"""
         # Arrange
@@ -121,7 +132,10 @@ class TestHttpClient:
 
     @pytest.mark.asyncio
     async def test_check_file_permission__cookie_token__return_true(
-        self, http_client, mock_request, mock_httpx_post
+        self,
+        http_client,
+        mock_request,
+        mock_httpx_post,
     ):
         """Test file permission check with cookie token"""
         # Arrange
@@ -146,7 +160,10 @@ class TestHttpClient:
 
     @pytest.mark.asyncio
     async def test_check_file_permission__no_auth__return_false(
-        self, http_client, mock_request, mock_httpx_post
+        self,
+        http_client,
+        mock_request,
+        mock_httpx_post,
     ):
         """Test file permission check without auth"""
         # Arrange
@@ -171,7 +188,10 @@ class TestHttpClient:
 
     @pytest.mark.asyncio
     async def test_check_file_permission__server_error__return_false(
-        self, http_client, mock_request, mock_httpx_post
+        self,
+        http_client,
+        mock_request,
+        mock_httpx_post,
     ):
         """Test file permission check with 500 response"""
         # Arrange

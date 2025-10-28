@@ -3,7 +3,6 @@ from unittest.mock import AsyncMock, Mock
 
 import pytest
 from sqlalchemy.exc import IntegrityError, OperationalError
-
 from src.domain.entities.file_record import FileRecord
 from src.infra.repositories.file_record_repository import FileRecordRepository
 from src.shared_kernel.database.models import FileRecordORM
@@ -55,7 +54,10 @@ class TestFileRecordRepository:
 
     @pytest.mark.asyncio
     async def test_create__valid_record__ok(
-        self, repository, mock_session, sample_file_record
+        self,
+        repository,
+        mock_session,
+        sample_file_record,
     ):
         """Test successful file record creation"""
         # Arrange
@@ -69,12 +71,15 @@ class TestFileRecordRepository:
 
     @pytest.mark.asyncio
     async def test_create__integrity_error__raise_constraint_error(
-        self, repository, mock_session, sample_file_record
+        self,
+        repository,
+        mock_session,
+        sample_file_record,
     ):
         """Test file record creation with integrity error"""
         # Arrange
         mock_session.add = Mock(
-            side_effect=IntegrityError('UNIQUE constraint failed', None, None)
+            side_effect=IntegrityError('UNIQUE constraint failed', None, None),
         )
 
         # Act & Assert
@@ -83,12 +88,15 @@ class TestFileRecordRepository:
 
     @pytest.mark.asyncio
     async def test_create__operational_error__raise_connection_error(
-        self, repository, mock_session, sample_file_record
+        self,
+        repository,
+        mock_session,
+        sample_file_record,
     ):
         """Test file record creation with operational error"""
         # Arrange
         mock_session.add = Mock(
-            side_effect=OperationalError('Connection lost', None, None)
+            side_effect=OperationalError('Connection lost', None, None),
         )
 
         # Act & Assert
@@ -97,7 +105,10 @@ class TestFileRecordRepository:
 
     @pytest.mark.asyncio
     async def test_get_by_id__existing_record__return_record(
-        self, repository, mock_session, sample_file_record_orm
+        self,
+        repository,
+        mock_session,
+        sample_file_record_orm,
     ):
         """Test successful get by id"""
         # Arrange
@@ -116,7 +127,9 @@ class TestFileRecordRepository:
 
     @pytest.mark.asyncio
     async def test_get_by_id__non_existent_record__return_none(
-        self, repository, mock_session
+        self,
+        repository,
+        mock_session,
     ):
         """Test get by id when not found"""
         # Arrange
@@ -134,12 +147,14 @@ class TestFileRecordRepository:
 
     @pytest.mark.asyncio
     async def test_get_by_id__operational_error__raise_connection_error(
-        self, repository, mock_session
+        self,
+        repository,
+        mock_session,
     ):
         """Test get by id with operational error"""
         # Arrange
         mock_session.execute = AsyncMock(
-            side_effect=OperationalError('Connection lost', None, None)
+            side_effect=OperationalError('Connection lost', None, None),
         )
 
         # Act & Assert

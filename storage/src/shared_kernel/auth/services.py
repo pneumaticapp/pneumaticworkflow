@@ -1,6 +1,6 @@
 """Authentication services"""
 
-from typing import Optional, Type, Union
+from typing import ClassVar
 
 from src.shared_kernel.auth.public_token import EmbedToken, PublicToken
 from src.shared_kernel.auth.redis_client import get_redis_client
@@ -11,15 +11,16 @@ class PublicAuthService:
 
     HEADER_PREFIX = 'Token'
     HEADER_PARTS = 2
-    TOKEN_TYPES: list[Type[Union[PublicToken, EmbedToken]]] = [
+    TOKEN_TYPES: ClassVar[list[type[PublicToken | EmbedToken]]] = [
         PublicToken,
         EmbedToken,
     ]
 
     @classmethod
     def get_token(
-        cls, header: str
-    ) -> Optional[Union[PublicToken, EmbedToken]]:
+        cls,
+        header: str,
+    ) -> PublicToken | EmbedToken | None:
         """Get token from header"""
         if not header or not isinstance(header, str):
             return None
@@ -42,8 +43,8 @@ class PublicAuthService:
     @classmethod
     async def authenticate_public_token(
         cls,
-        token: Union[PublicToken, EmbedToken],
-    ) -> Optional[dict]:
+        token: PublicToken | EmbedToken,
+    ) -> dict | None:
         """Authenticate public token"""
         if not token:
             return None

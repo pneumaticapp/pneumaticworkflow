@@ -3,7 +3,6 @@ from unittest.mock import AsyncMock
 
 import pytest
 import redis.asyncio as redis
-
 from src.shared_kernel.auth.redis_client import (
     RedisAuthClient,
     get_redis_client,
@@ -32,7 +31,10 @@ class TestRedisAuthClient:
 
     @pytest.mark.asyncio
     async def test_get__valid_key__return_data(
-        self, redis_auth_client, mock_redis_client, mock_get_settings
+        self,
+        redis_auth_client,
+        mock_redis_client,
+        mock_get_settings,
     ):
         """Test successful get operation"""
         # Arrange
@@ -54,7 +56,10 @@ class TestRedisAuthClient:
 
     @pytest.mark.asyncio
     async def test_get__none_value__return_none(
-        self, redis_auth_client, mock_redis_client, mock_get_settings
+        self,
+        redis_auth_client,
+        mock_redis_client,
+        mock_get_settings,
     ):
         """Test get operation with None value"""
         # Arrange
@@ -74,7 +79,10 @@ class TestRedisAuthClient:
 
     @pytest.mark.asyncio
     async def test_get__redis_error__raise_operation_error(
-        self, redis_auth_client, mock_redis_client, mock_get_settings
+        self,
+        redis_auth_client,
+        mock_redis_client,
+        mock_get_settings,
     ):
         """Test get operation with Redis error"""
         # Arrange
@@ -82,7 +90,7 @@ class TestRedisAuthClient:
 
         mock_get_settings.return_value.KEY_PREFIX_REDIS = 'auth:'
         mock_redis_client.get.side_effect = redis.RedisError(
-            'Redis connection error'
+            'Redis connection error',
         )
 
         # Act & Assert
@@ -91,7 +99,10 @@ class TestRedisAuthClient:
 
     @pytest.mark.asyncio
     async def test_get__connection_error__raise_connection_error(
-        self, redis_auth_client, mock_redis_client, mock_get_settings
+        self,
+        redis_auth_client,
+        mock_redis_client,
+        mock_get_settings,
     ):
         """Test get operation with Redis connection error"""
         # Arrange
@@ -99,7 +110,7 @@ class TestRedisAuthClient:
 
         mock_get_settings.return_value.KEY_PREFIX_REDIS = 'auth:'
         mock_redis_client.get.side_effect = redis.ConnectionError(
-            'Connection failed'
+            'Connection failed',
         )
 
         # Act & Assert
@@ -108,7 +119,10 @@ class TestRedisAuthClient:
 
     @pytest.mark.asyncio
     async def test_get__unpickling_error__raise_operation_error(
-        self, redis_auth_client, mock_redis_client, mock_get_settings
+        self,
+        redis_auth_client,
+        mock_redis_client,
+        mock_get_settings,
     ):
         """Test get operation with unpacking error"""
         # Arrange
@@ -128,7 +142,9 @@ class TestGetRedisClient:
 
     @pytest.mark.asyncio
     async def test_get_redis_client__default_url__return_client(
-        self, mock_get_settings, mock_redis_from_url
+        self,
+        mock_get_settings,
+        mock_redis_from_url,
     ):
         """Test get_redis_client function"""
         # Arrange

@@ -30,7 +30,9 @@ app.add_middleware(
 )
 
 # Authentication middleware (добавляем перед роутерами)
-app.add_middleware(AuthenticationMiddleware, require_auth=True)
+app.add_middleware(
+    lambda app: AuthenticationMiddleware(app, require_auth=True)
+)
 
 # Register exception handlers
 register_exception_handlers(app)
@@ -43,7 +45,7 @@ if __name__ == '__main__':
     app_ref = 'src.main:app' if settings.CONFIG != 'Production' else app
     uvicorn.run(
         app_ref,
-        host='0.0.0.0',
+        host='127.0.0.1',
         port=settings.PORT,
         reload=settings.CONFIG != 'Production',
         workers=1 if settings.CONFIG != 'Production' else settings.WORKERS,

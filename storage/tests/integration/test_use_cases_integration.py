@@ -2,7 +2,6 @@ from datetime import datetime
 from unittest.mock import AsyncMock
 
 import pytest
-
 from src.application.dto.file_dtos import DownloadFileQuery, UploadFileCommand
 from src.application.use_cases.file_download import DownloadFileUseCase
 from src.application.use_cases.file_upload import UploadFileUseCase
@@ -18,7 +17,9 @@ class TestUploadFileUseCaseIntegration:
 
     @pytest.mark.asyncio
     async def test_upload_file__full_integration__ok(
-        self, async_session, mock_aioboto3_session
+        self,
+        async_session,
+        mock_aioboto3_session,
     ):
         """Test full upload file integration"""
         # Arrange
@@ -135,7 +136,9 @@ class TestDownloadFileUseCaseIntegration:
 
     @pytest.mark.asyncio
     async def test_download_file__full_integration__ok(
-        self, async_session, mock_aioboto3_session
+        self,
+        async_session,
+        mock_aioboto3_session,
     ):
         """Test full download file integration"""
         # Arrange
@@ -193,7 +196,9 @@ class TestDownloadFileUseCaseIntegration:
 
     @pytest.mark.asyncio
     async def test_download_file__file_not_found__raise_file_not_found_error(
-        self, async_session, mock_aioboto3_session
+        self,
+        async_session,
+        mock_aioboto3_session,
     ):
         """Test download nonexistent file"""
         # Arrange
