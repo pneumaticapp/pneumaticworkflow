@@ -11,10 +11,10 @@ from src.shared_kernel.middleware.auth_middleware import (
 
 
 class TestAuthUser:
-    """Test AuthUser class"""
+    """Test AuthUser class."""
 
     def test_create__valid_data__ok(self):
-        """Test user creation"""
+        """Test user creation."""
         user = AuthUser(
             auth_type=UserType.AUTHENTICATED,
             user_id=1,
@@ -27,26 +27,26 @@ class TestAuthUser:
 
 
 class TestAuthenticationMiddleware:
-    """Test AuthenticationMiddleware"""
+    """Test AuthenticationMiddleware."""
 
     @pytest.fixture
     def mock_app(self):
-        """Mock FastAPI app"""
+        """Mock FastAPI app."""
         return Mock()
 
     @pytest.fixture
     def middleware(self, mock_app):
-        """Authentication middleware instance"""
+        """Authenticate middleware instance."""
         return AuthenticationMiddleware(mock_app, require_auth=True)
 
     @pytest.fixture
     def middleware_no_auth(self, mock_app):
-        """Middleware without required auth"""
+        """Middleware without required auth."""
         return AuthenticationMiddleware(mock_app, require_auth=False)
 
     @pytest.fixture
     def mock_request(self):
-        """Mock request"""
+        """Mock request."""
         request = Mock(spec=Request)
         request.state = Mock()
         request.cookies = {}
@@ -54,7 +54,7 @@ class TestAuthenticationMiddleware:
 
     @pytest.fixture
     def mock_call_next(self):
-        """Mock call_next function"""
+        """Mock call_next function."""
 
         async def mock_call_next(request):
             return Response(content='OK', status_code=200)
@@ -66,7 +66,7 @@ class TestAuthenticationMiddleware:
         self,
         middleware,
     ):
-        """Test successful token authentication"""
+        """Test successful token authentication."""
         # Arrange
         token = 'valid-token'
         AuthUser(
@@ -96,7 +96,7 @@ class TestAuthenticationMiddleware:
         self,
         middleware,
     ):
-        """Test failed token authentication"""
+        """Test failed token authentication."""
         # Arrange
         token = 'invalid-token'
 
@@ -119,7 +119,7 @@ class TestAuthenticationMiddleware:
         self,
         middleware,
     ):
-        """Test authentication with exception"""
+        """Test authentication with exception."""
         # Arrange
         token = 'error-token'
 
@@ -144,7 +144,7 @@ class TestAuthenticationMiddleware:
         mock_request,
         mock_call_next,
     ):
-        """Test dispatch with valid token"""
+        """Test dispatch with valid token."""
         # Arrange
         mock_request.headers = {'Authorization': 'Bearer valid-token'}
 
@@ -170,7 +170,7 @@ class TestAuthenticationMiddleware:
         mock_request,
         mock_call_next,
     ):
-        """Test dispatch with session token"""
+        """Test dispatch with session token."""
         # Arrange
         mock_request.headers = {}
         mock_request.cookies = {'token': 'session-token'}
@@ -197,7 +197,7 @@ class TestAuthenticationMiddleware:
         mock_request,
         mock_call_next,
     ):
-        """Test dispatch without required authentication"""
+        """Test dispatch without required authentication."""
         # Arrange
         mock_request.headers = {}
         mock_request.cookies = {}
@@ -219,7 +219,7 @@ class TestAuthenticationMiddleware:
         mock_request,
         mock_call_next,
     ):
-        """Test dispatch with required auth but no token"""
+        """Test dispatch with required auth but no token."""
         # Arrange
         mock_request.headers = {}
         mock_request.cookies = {}

@@ -87,12 +87,14 @@ unfixable = []
 "storage/tests/**/*.py" = [
     "S101",
     "S105",
-    "S113",
     "ANN",
     "ARG",
-    "D",
+    "D100",
+    "D105",
+    "D107",
     "S603",
-    "PLR",
+    "PLR0913",
+    "PLR2004",
 ]
 
 [lint.pylint]

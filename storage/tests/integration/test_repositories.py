@@ -6,14 +6,14 @@ from src.infra.repositories.file_record_repository import FileRecordRepository
 
 
 class TestFileRecordRepository:
-    """Test FileRecordRepository integration"""
+    """Test FileRecordRepository integration."""
 
     @pytest.mark.asyncio
     async def test_create_and_get__valid_record__return_record(
         self,
         async_session,
     ):
-        """Test create and get file record"""
+        """Test create and get file record."""
         # Arrange
         repository = FileRecordRepository(async_session)
         file_record = FileRecord(
@@ -43,7 +43,7 @@ class TestFileRecordRepository:
 
     @pytest.mark.asyncio
     async def test_get__nonexistent_record__return_none(self, async_session):
-        """Test get nonexistent file record"""
+        """Test get nonexistent file record."""
         # Arrange
         repository = FileRecordRepository(async_session)
 

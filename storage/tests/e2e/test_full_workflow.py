@@ -6,7 +6,7 @@ from tests.fixtures.e2e import AsyncIteratorMock
 
 
 class TestCompleteUploadDownloadWorkflow:
-    """Test complete upload and download workflow"""
+    """Test complete upload and download workflow."""
 
     def test_workflow__basic_upload_download__return_success_responses(
         self,
@@ -21,7 +21,7 @@ class TestCompleteUploadDownloadWorkflow:
         mock_upload_use_case_execute,
         mock_download_use_case_execute,
     ):
-        """Test basic upload and download workflow"""
+        """Test basic upload and download workflow."""
         # Arrange
         filename = 'workflow_test.txt'
         content_type = 'text/plain'
@@ -79,7 +79,7 @@ class TestCompleteUploadDownloadWorkflow:
         mock_upload_use_case_execute,
         mock_download_use_case_execute,
     ):
-        """Test workflow with different file types"""
+        """Test workflow with different file types."""
         # Mock upload
         mock_response = MagicMock()
         mock_response.file_id = f'test-file-id-{filename}'

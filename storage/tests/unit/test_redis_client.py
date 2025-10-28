@@ -14,16 +14,16 @@ from src.shared_kernel.exceptions import (
 
 
 class TestRedisAuthClient:
-    """Test RedisAuthClient"""
+    """Test RedisAuthClient."""
 
     @pytest.fixture
     def mock_redis_client(self):
-        """Mock Redis client"""
+        """Mock Redis client."""
         return AsyncMock()
 
     @pytest.fixture
     def redis_auth_client(self, mock_redis_client, mock_redis_from_url):
-        """RedisAuthClient instance with mocked Redis"""
+        """RedisAuthClient instance with mocked Redis."""
         mock_redis_from_url.return_value = mock_redis_client
         return RedisAuthClient('redis://localhost:6379')
 
@@ -34,7 +34,7 @@ class TestRedisAuthClient:
         mock_redis_client,
         mock_get_settings,
     ):
-        """Test successful get operation"""
+        """Test successful get operation."""
         # Arrange
         key = 'test-key'
         expected_data = {'user_id': 1, 'account_id': 2}
@@ -59,7 +59,7 @@ class TestRedisAuthClient:
         mock_redis_client,
         mock_get_settings,
     ):
-        """Test get operation with None value"""
+        """Test get operation with None value."""
         # Arrange
         key = 'test-key'
 
@@ -82,7 +82,7 @@ class TestRedisAuthClient:
         mock_redis_client,
         mock_get_settings,
     ):
-        """Test get operation with Redis error"""
+        """Test get operation with Redis error."""
         # Arrange
         key = 'test-key'
 
@@ -102,7 +102,7 @@ class TestRedisAuthClient:
         mock_redis_client,
         mock_get_settings,
     ):
-        """Test get operation with Redis connection error"""
+        """Test get operation with Redis connection error."""
         # Arrange
         key = 'test-key'
 
@@ -122,7 +122,7 @@ class TestRedisAuthClient:
         mock_redis_client,
         mock_get_settings,
     ):
-        """Test get operation with unpacking error"""
+        """Test get operation with unpacking error."""
         # Arrange
         key = 'test-key'
         invalid_data = b'invalid-pickle-data'
@@ -136,7 +136,7 @@ class TestRedisAuthClient:
 
 
 class TestGetRedisClient:
-    """Test get_redis_client function"""
+    """Test get_redis_client function."""
 
     @pytest.mark.asyncio
     async def test_get_redis_client__default_url__return_client(
@@ -144,7 +144,7 @@ class TestGetRedisClient:
         mock_get_settings,
         mock_redis_from_url,
     ):
-        """Test get_redis_client function"""
+        """Test get_redis_client function."""
         # Arrange
         expected_url = 'redis://localhost:6379/1'
 

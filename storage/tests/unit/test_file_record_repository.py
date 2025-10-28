@@ -13,21 +13,21 @@ from src.shared_kernel.exceptions import (
 
 
 class TestFileRecordRepository:
-    """Test FileRecordRepository"""
+    """Test FileRecordRepository."""
 
     @pytest.fixture
     def mock_session(self):
-        """Mock database session"""
+        """Mock database session."""
         return AsyncMock()
 
     @pytest.fixture
     def repository(self, mock_session):
-        """FileRecordRepository instance"""
+        """FileRecordRepository instance."""
         return FileRecordRepository(mock_session)
 
     @pytest.fixture
     def sample_file_record(self):
-        """Sample file record"""
+        """Sample file record."""
         return FileRecord(
             file_id='test-file-id',
             filename='test.txt',
@@ -40,7 +40,7 @@ class TestFileRecordRepository:
 
     @pytest.fixture
     def sample_file_record_orm(self):
-        """Sample file record ORM"""
+        """Sample file record ORM."""
         return FileRecordORM(
             file_id='test-file-id',
             filename='test.txt',
@@ -58,7 +58,7 @@ class TestFileRecordRepository:
         mock_session,
         sample_file_record,
     ):
-        """Test successful file record creation"""
+        """Test successful file record creation."""
         # Arrange
         mock_session.add = Mock()
 
@@ -75,7 +75,7 @@ class TestFileRecordRepository:
         mock_session,
         sample_file_record,
     ):
-        """Test file record creation with integrity error"""
+        """Test file record creation with integrity error."""
         # Arrange
         mock_session.add = Mock(
             side_effect=IntegrityError('UNIQUE constraint failed', None, None),
@@ -92,7 +92,7 @@ class TestFileRecordRepository:
         mock_session,
         sample_file_record,
     ):
-        """Test file record creation with operational error"""
+        """Test file record creation with operational error."""
         # Arrange
         mock_session.add = Mock(
             side_effect=OperationalError('Connection lost', None, None),
@@ -109,7 +109,7 @@ class TestFileRecordRepository:
         mock_session,
         sample_file_record_orm,
     ):
-        """Test successful get by id"""
+        """Test successful get by id."""
         # Arrange
         mock_session.execute = AsyncMock()
         mock_result = Mock()
@@ -130,7 +130,7 @@ class TestFileRecordRepository:
         repository,
         mock_session,
     ):
-        """Test get by id when not found"""
+        """Test get by id when not found."""
         # Arrange
         mock_session.execute = AsyncMock()
         mock_result = Mock()
@@ -150,7 +150,7 @@ class TestFileRecordRepository:
         repository,
         mock_session,
     ):
-        """Test get by id with operational error"""
+        """Test get by id with operational error."""
         # Arrange
         mock_session.execute = AsyncMock(
             side_effect=OperationalError('Connection lost', None, None),

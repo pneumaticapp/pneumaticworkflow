@@ -6,13 +6,13 @@ import pytest
 
 @pytest.fixture
 def e2e_client(test_client):
-    """E2E test client"""
+    """E2E test client."""
     return test_client
 
 
 @pytest.fixture
 def mock_auth_middleware(mocker) -> Iterator[MagicMock]:
-    """Mock authentication middleware"""
+    """Mock authentication middleware."""
     mock = mocker.patch(
         'src.shared_kernel.auth.token_auth.PneumaticToken.data',
     )
@@ -22,7 +22,7 @@ def mock_auth_middleware(mocker) -> Iterator[MagicMock]:
 
 @pytest.fixture
 def mock_http_client(mocker) -> Iterator[MagicMock]:
-    """Mock HTTP client"""
+    """Mock HTTP client."""
     mock = mocker.patch(
         'src.infra.http_client.HttpClient.check_file_permission',
     )
@@ -32,7 +32,7 @@ def mock_http_client(mocker) -> Iterator[MagicMock]:
 
 @pytest.fixture
 def mock_storage_service(mocker) -> Iterator[AsyncMock]:
-    """Mock storage service"""
+    """Mock storage service."""
     mock_session = mocker.patch('aioboto3.Session')
     mock_s3_client = AsyncMock()
     mock_session.return_value.client.return_value.__aenter__.return_value = (
@@ -43,7 +43,7 @@ def mock_storage_service(mocker) -> Iterator[AsyncMock]:
 
 @pytest.fixture
 def mock_redis_client(mocker) -> Iterator[MagicMock]:
-    """Mock Redis client"""
+    """Mock Redis client."""
     mock = mocker.patch(
         'src.shared_kernel.auth.redis_client.RedisAuthClient.get',
     )
@@ -53,7 +53,7 @@ def mock_redis_client(mocker) -> Iterator[MagicMock]:
 
 @pytest.fixture
 def mock_db_session(mocker) -> Iterator[AsyncMock]:
-    """Mock database session"""
+    """Mock database session."""
     mock = mocker.patch('src.shared_kernel.di.container.get_db_session')
     mock_session = AsyncMock()
     mock.return_value = mock_session
@@ -62,7 +62,7 @@ def mock_db_session(mocker) -> Iterator[AsyncMock]:
 
 @pytest.fixture
 def mock_unit_of_work(mocker) -> Iterator[AsyncMock]:
-    """Mock unit of work"""
+    """Mock unit of work."""
     mock = mocker.patch('src.shared_kernel.uow.unit_of_work.UnitOfWork')
     mock_uow = AsyncMock()
     mock.return_value = mock_uow
@@ -71,7 +71,7 @@ def mock_unit_of_work(mocker) -> Iterator[AsyncMock]:
 
 @pytest.fixture
 def mock_upload_use_case(mocker) -> Iterator[AsyncMock]:
-    """Mock upload use case"""
+    """Mock upload use case."""
     mock = mocker.patch(
         'src.application.use_cases.file_upload.UploadFileUseCase.execute',
     )
@@ -84,7 +84,7 @@ def mock_upload_use_case(mocker) -> Iterator[AsyncMock]:
 
 @pytest.fixture
 def mock_download_use_case(mocker) -> Iterator[AsyncMock]:
-    """Mock download use case"""
+    """Mock download use case."""
     mock = mocker.patch(
         'src.application.use_cases.file_download.DownloadFileUseCase.execute',
     )
@@ -100,19 +100,19 @@ def mock_download_use_case(mocker) -> Iterator[AsyncMock]:
 
 @pytest.fixture
 def auth_headers() -> dict[str, str]:
-    """Authentication headers"""
+    """Authenticate headers."""
     return {'Authorization': 'Bearer valid-token'}
 
 
 @pytest.fixture
 def session_cookies() -> dict[str, str]:
-    """Session cookies"""
+    """Session cookies."""
     return {'token': 'session-token'}
 
 
 @pytest.fixture
 def mock_upload_response() -> MagicMock:
-    """Mock upload response"""
+    """Mock upload response."""
     response = MagicMock()
     response.file_id = 'test-file-id-123'
     response.public_url = 'http://localhost:8000/test-file-id-123'
@@ -121,7 +121,7 @@ def mock_upload_response() -> MagicMock:
 
 @pytest.fixture
 def mock_file_record() -> MagicMock:
-    """Mock file record"""
+    """Mock file record."""
     record = MagicMock()
     record.file_id = 'test-file-id-123'
     record.filename = 'test_file.txt'
@@ -131,7 +131,7 @@ def mock_file_record() -> MagicMock:
 
 
 class AsyncIteratorMock:
-    """Async iterator mock for file streams"""
+    """Async iterator mock for file streams."""
 
     def __init__(self, content: bytes):
         self.content = content
@@ -149,7 +149,7 @@ class AsyncIteratorMock:
 
 @pytest.fixture
 def mock_download_response() -> tuple[MagicMock, AsyncIteratorMock]:
-    """Mock download response"""
+    """Mock download response."""
     record = MagicMock()
     record.file_id = 'test-file-id-123'
     record.filename = 'test_file.txt'

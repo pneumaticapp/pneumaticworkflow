@@ -9,7 +9,7 @@ from src.shared_kernel.database.base import Base
 
 @pytest_asyncio.fixture(scope='session')
 async def test_engine():
-    """Create test database engine once per session"""
+    """Create test database engine once per session."""
     database_url = 'sqlite+aiosqlite:///:memory:'
     engine = create_async_engine(database_url, echo=False, future=True)
 
@@ -25,7 +25,7 @@ async def test_engine():
 
 @pytest_asyncio.fixture(scope='session')
 async def test_session_factory(test_engine):
-    """Create session factory once per session"""
+    """Create session factory once per session."""
     return sessionmaker(
         test_engine,
         class_=AsyncSession,
@@ -37,7 +37,7 @@ async def test_session_factory(test_engine):
 async def async_session(
     test_session_factory,
 ) -> AsyncGenerator[AsyncSession, None]:
-    """Create isolated database session for each test"""
+    """Create isolated database session for each test."""
     async with test_session_factory() as session:
         yield session
         # Rollback changes after each test

@@ -13,16 +13,16 @@ from src.shared_kernel.middleware.auth_middleware import AuthUser
 
 
 class TestHttpClient:
-    """Test HttpClient"""
+    """Test HttpClient."""
 
     @pytest.fixture
     def http_client(self):
-        """HTTP client instance"""
+        """HTTP client instance."""
         return HttpClient(base_url='http://test.example.com')
 
     @pytest.fixture
     def mock_request(self):
-        """Mock request"""
+        """Mock request."""
         request = Mock(spec=Request)
         request.headers = {}
         request.cookies = {}
@@ -35,7 +35,7 @@ class TestHttpClient:
         mock_request,
         mock_httpx_post,
     ):
-        """Test successful file permission check"""
+        """Test successful file permission check."""
         # Arrange
         file_id = 'test-file-id'
         token = 'valid-token'
@@ -64,7 +64,7 @@ class TestHttpClient:
         mock_request,
         mock_httpx_post,
     ):
-        """Test file permission check denied"""
+        """Test file permission check denied."""
         # Arrange
         file_id = 'test-file-id'
         token = 'valid-token'
@@ -93,7 +93,7 @@ class TestHttpClient:
         mock_request,
         mock_httpx_post,
     ):
-        """Test file permission check with HTTP error"""
+        """Test file permission check with HTTP error."""
         # Arrange
         file_id = 'test-file-id'
         token = 'valid-token'
@@ -117,7 +117,7 @@ class TestHttpClient:
         mock_request,
         mock_httpx_post,
     ):
-        """Test file permission check with timeout error"""
+        """Test file permission check with timeout error."""
         # Arrange
         file_id = 'test-file-id'
         token = 'valid-token'
@@ -141,7 +141,7 @@ class TestHttpClient:
         mock_request,
         mock_httpx_post,
     ):
-        """Test file permission check with cookie token"""
+        """Test file permission check with cookie token."""
         # Arrange
         file_id = 'test-file-id'
         token = 'session-token'
@@ -170,7 +170,7 @@ class TestHttpClient:
         mock_request,
         mock_httpx_post,
     ):
-        """Test file permission check without auth"""
+        """Test file permission check without auth."""
         # Arrange
         file_id = 'test-file-id'
         user = AuthUser(
@@ -198,7 +198,7 @@ class TestHttpClient:
         mock_request,
         mock_httpx_post,
     ):
-        """Test file permission check with 500 response"""
+        """Test file permission check with 500 response."""
         # Arrange
         file_id = 'test-file-id'
         token = 'valid-token'
@@ -222,7 +222,7 @@ class TestHttpClient:
 
     @pytest.mark.asyncio
     async def test_close__valid_client__close_successfully(self, http_client):
-        """Test client close"""
+        """Test client close."""
         # Arrange
         mock_client = AsyncMock()
         http_client._client = mock_client
@@ -236,7 +236,7 @@ class TestHttpClient:
 
     @pytest.mark.asyncio
     async def test_close__client_none__do_nothing(self, http_client):
-        """Test client close when client is None"""
+        """Test client close when client is None."""
         # Arrange
         http_client._client = None
 

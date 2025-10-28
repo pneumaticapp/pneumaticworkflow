@@ -21,7 +21,7 @@ def event_loop() -> Generator:
 
 @pytest.fixture
 def test_settings() -> Settings:
-    """Test settings"""
+    """Test settings."""
     return Settings(
         DEBUG=True,
         CONFIG='Test',
@@ -36,25 +36,25 @@ def test_settings() -> Settings:
 
 @pytest.fixture
 def test_client() -> TestClient:
-    """Test client"""
+    """Test client."""
     return TestClient(app)
 
 
 @pytest.fixture
 def sample_file_content() -> bytes:
-    """Sample file content"""
+    """Sample file content."""
     return b'test file content'
 
 
 @pytest.fixture
 def sample_large_file_content() -> bytes:
-    """Sample large file content"""
+    """Sample large file content."""
     return b'x' * (256 * 1024)  # 256KB
 
 
 @pytest.fixture
 def sample_file_record() -> FileRecord:
-    """Sample file record"""
+    """Sample file record."""
     return FileRecord(
         file_id='test-file-id-123',
         filename='test_file.txt',
@@ -68,7 +68,7 @@ def sample_file_record() -> FileRecord:
 
 @pytest.fixture
 def sample_upload_command() -> UploadFileCommand:
-    """Sample upload command"""
+    """Sample upload command."""
     return UploadFileCommand(
         file_content=b'test file content',
         filename='test_file.txt',
@@ -81,7 +81,7 @@ def sample_upload_command() -> UploadFileCommand:
 
 @pytest.fixture
 def sample_download_query() -> DownloadFileQuery:
-    """Sample download query"""
+    """Sample download query."""
     return DownloadFileQuery(
         file_id='test-file-id-123',
         user_id=1,
@@ -90,7 +90,7 @@ def sample_download_query() -> DownloadFileQuery:
 
 @pytest.fixture
 def mock_user() -> MagicMock:
-    """Mock user"""
+    """Mock user."""
     mock = MagicMock()
     mock.user_id = 1
     mock.account_id = 1
@@ -100,7 +100,7 @@ def mock_user() -> MagicMock:
 
 @pytest.fixture
 def mock_auth_user():
-    """Mock authenticated user"""
+    """Mock authenticated user."""
     mock = MagicMock()
     mock.user_id = 1
     mock.account_id = 1
@@ -110,7 +110,7 @@ def mock_auth_user():
 
 @pytest.fixture
 def mock_anonymous_user():
-    """Mock anonymous user"""
+    """Mock anonymous user."""
     mock = MagicMock()
     mock.user_id = None
     mock.account_id = None
@@ -120,7 +120,7 @@ def mock_anonymous_user():
 
 @pytest.fixture
 def mock_http_client() -> AsyncMock:
-    """Mock HTTP client"""
+    """Mock HTTP client."""
     mock = AsyncMock()
     mock.check_file_permission.return_value = True
     return mock
@@ -128,7 +128,7 @@ def mock_http_client() -> AsyncMock:
 
 @pytest.fixture
 def mock_storage_service():
-    """Mock storage service"""
+    """Mock storage service."""
     mock = AsyncMock()
     # get_storage_path - synchronous method, not AsyncMock
     mock.get_storage_path = Mock(return_value=('test-bucket', 'test-file-id'))
@@ -137,5 +137,5 @@ def mock_storage_service():
 
 @pytest.fixture
 def mock_repository():
-    """Mock file repository"""
+    """Mock file repository."""
     return AsyncMock()

@@ -5,10 +5,10 @@ from src.infra.repositories.storage_service import StorageService
 
 
 class TestStorageService:
-    """Test StorageService"""
+    """Test StorageService."""
 
     def test_get_storage_path__valid_account__return_bucket_and_path(self):
-        """Test storage path generation"""
+        """Test storage path generation."""
         # Arrange
         service = StorageService()
 
@@ -27,7 +27,7 @@ class TestStorageService:
         self,
         mock_aioboto3_session,
     ):
-        """Test successful file upload"""
+        """Test successful file upload."""
         # Arrange
         service = StorageService()
         bucket_name = 'test-bucket'
@@ -56,7 +56,7 @@ class TestStorageService:
         self,
         mock_aioboto3_session,
     ):
-        """Test successful file download"""
+        """Test successful file download."""
         # Arrange
         service = StorageService()
         bucket_name = 'test-bucket'
@@ -92,7 +92,7 @@ class TestStorageService:
         self,
         mock_aioboto3_session,
     ):
-        """Test chunked file download"""
+        """Test chunked file download."""
         # Arrange
         service = StorageService()
         bucket_name = 'test-bucket'

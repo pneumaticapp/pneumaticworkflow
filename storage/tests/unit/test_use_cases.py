@@ -17,7 +17,7 @@ from src.shared_kernel.exceptions import (
 
 
 class TestUploadFileUseCase:
-    """Test UploadFileUseCase"""
+    """Test UploadFileUseCase."""
 
     @pytest.mark.asyncio
     async def test_upload_file__valid_command__return_response(
@@ -25,7 +25,7 @@ class TestUploadFileUseCase:
         mock_storage_service,
         mock_repository,
     ):
-        """Test successful file upload"""
+        """Test successful file upload."""
         # Arrange
         command = UploadFileCommand(
             file_content=b'test content',
@@ -88,7 +88,7 @@ class TestUploadFileUseCase:
         mock_storage_service,
         mock_repository,
     ):
-        """Test upload with storage error"""
+        """Test upload with storage error."""
         # Arrange
         command = UploadFileCommand(
             file_content=b'test content',
@@ -124,7 +124,7 @@ class TestUploadFileUseCase:
 
 
 class TestDownloadFileUseCase:
-    """Test DownloadFileUseCase"""
+    """Test DownloadFileUseCase."""
 
     @pytest.mark.asyncio
     async def test_download_file__valid_query__return_file_and_stream(
@@ -132,7 +132,7 @@ class TestDownloadFileUseCase:
         mock_storage_service,
         mock_repository,
     ):
-        """Test successful file download"""
+        """Test successful file download."""
         # Arrange
         query = DownloadFileQuery(file_id='test-file-id', user_id=1)
 
@@ -183,7 +183,7 @@ class TestDownloadFileUseCase:
         mock_storage_service,
         mock_repository,
     ):
-        """Test download with file not found"""
+        """Test download with file not found."""
         # Arrange
         query = DownloadFileQuery(file_id='missing-file-id', user_id=1)
 

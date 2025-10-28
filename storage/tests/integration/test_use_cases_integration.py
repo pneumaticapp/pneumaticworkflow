@@ -13,7 +13,7 @@ from src.shared_kernel.uow import UnitOfWork
 
 
 class TestUploadFileUseCaseIntegration:
-    """Test UploadFileUseCase integration"""
+    """Test UploadFileUseCase integration."""
 
     @pytest.mark.asyncio
     async def test_upload_file__full_integration__ok(
@@ -21,7 +21,7 @@ class TestUploadFileUseCaseIntegration:
         async_session,
         mock_aioboto3_session,
     ):
-        """Test full upload file integration"""
+        """Test full upload file integration."""
         # Arrange
         repository = FileRecordRepository(async_session)
         storage_service = StorageService()
@@ -88,7 +88,7 @@ class TestUploadFileUseCaseIntegration:
         async_session,
         mock_aioboto3_session,
     ):
-        """Test upload file with different content types"""
+        """Test upload file with different content types."""
         # Arrange
         repository = FileRecordRepository(async_session)
         storage_service = StorageService()
@@ -132,7 +132,7 @@ class TestUploadFileUseCaseIntegration:
 
 
 class TestDownloadFileUseCaseIntegration:
-    """Test DownloadFileUseCase integration"""
+    """Test DownloadFileUseCase integration."""
 
     @pytest.mark.asyncio
     async def test_download_file__full_integration__ok(
@@ -140,7 +140,7 @@ class TestDownloadFileUseCaseIntegration:
         async_session,
         mock_aioboto3_session,
     ):
-        """Test full download file integration"""
+        """Test full download file integration."""
         # Arrange
         repository = FileRecordRepository(async_session)
         storage_service = StorageService()
@@ -200,7 +200,7 @@ class TestDownloadFileUseCaseIntegration:
         async_session,
         mock_aioboto3_session,
     ):
-        """Test download nonexistent file"""
+        """Test download nonexistent file."""
         # Arrange
         repository = FileRecordRepository(async_session)
         storage_service = StorageService()

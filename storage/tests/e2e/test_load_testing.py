@@ -8,7 +8,7 @@ from tests.fixtures.e2e import AsyncIteratorMock
 
 
 class TestLoadTesting:
-    """Load testing scenarios"""
+    """Load testing scenarios."""
 
     def test_concurrent_uploads__100_requests__complete_within_30_seconds(
         self,
@@ -19,7 +19,7 @@ class TestLoadTesting:
         auth_headers,
         mock_upload_use_case_execute,
     ):
-        """Test 100 concurrent uploads"""
+        """Test 100 concurrent uploads."""
         # Arrange
         num_requests = 100
         results = []
@@ -87,7 +87,7 @@ class TestLoadTesting:
         auth_headers,
         mock_download_use_case_execute,
     ):
-        """Test 50 concurrent downloads"""
+        """Test 50 concurrent downloads."""
         # Arrange
         num_requests = 50
         results = []
@@ -154,7 +154,7 @@ class TestLoadTesting:
         mock_upload_use_case_execute,
         mock_download_use_case_execute,
     ):
-        """Test mixed upload-download load"""
+        """Test mixed upload-download load."""
         # Arrange
         num_cycles = 100
         results = []
@@ -250,7 +250,7 @@ class TestLoadTesting:
 
 
 class TestStressTesting:
-    """Stress testing scenarios"""
+    """Stress testing scenarios."""
 
     def test_extreme_concurrency__500_requests__system_remains_stable(
         self,
@@ -261,7 +261,7 @@ class TestStressTesting:
         auth_headers,
         mock_upload_use_case_execute,
     ):
-        """Test extreme concurrency"""
+        """Test extreme concurrency."""
         # Arrange
         num_requests = 500
         results = []

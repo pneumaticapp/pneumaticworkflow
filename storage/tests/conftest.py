@@ -44,7 +44,7 @@ pytest_plugins = ['pytest_mock']
 
 @pytest.fixture
 def mock_upload_use_case_execute(mocker):
-    """Mock for UploadFileUseCase.execute"""
+    """Mock for UploadFileUseCase.execute."""
     return mocker.patch(
         'src.application.use_cases.file_upload.UploadFileUseCase.execute',
     )
@@ -52,7 +52,7 @@ def mock_upload_use_case_execute(mocker):
 
 @pytest.fixture
 def mock_download_use_case_execute(mocker):
-    """Mock for DownloadFileUseCase.execute"""
+    """Mock for DownloadFileUseCase.execute."""
     return mocker.patch(
         'src.application.use_cases.file_download.DownloadFileUseCase.execute',
     )
@@ -60,7 +60,7 @@ def mock_download_use_case_execute(mocker):
 
 @pytest.fixture
 def mock_pneumatic_token_data(mocker):
-    """Mock for PneumaticToken.data"""
+    """Mock for PneumaticToken.data."""
     return mocker.patch(
         'src.shared_kernel.auth.token_auth.PneumaticToken.data',
     )
@@ -68,7 +68,7 @@ def mock_pneumatic_token_data(mocker):
 
 @pytest.fixture
 def mock_http_client_check_permission(mocker):
-    """Mock for HttpClient.check_file_permission"""
+    """Mock for HttpClient.check_file_permission."""
     return mocker.patch(
         'src.infra.http_client.HttpClient.check_file_permission',
     )
@@ -76,37 +76,37 @@ def mock_http_client_check_permission(mocker):
 
 @pytest.fixture
 def mock_get_settings(mocker):
-    """Mock for get_settings"""
+    """Mock for get_settings."""
     return mocker.patch('src.shared_kernel.auth.token_auth.get_settings')
 
 
 @pytest.fixture
 def mock_get_redis_client(mocker):
-    """Mock for get_redis_client"""
+    """Mock for get_redis_client."""
     return mocker.patch('src.shared_kernel.auth.token_auth.get_redis_client')
 
 
 @pytest.fixture
 def mock_httpx_post(mocker):
-    """Mock for httpx.AsyncClient.post"""
+    """Mock for httpx.AsyncClient.post."""
     return mocker.patch('httpx.AsyncClient.post')
 
 
 @pytest.fixture
 def mock_aioboto3_session(mocker):
-    """Mock for aioboto3.Session"""
+    """Mock for aioboto3.Session."""
     return mocker.patch('aioboto3.Session')
 
 
 @pytest.fixture
 def mock_redis_from_url(mocker):
-    """Mock for redis.asyncio.from_url"""
+    """Mock for redis.asyncio.from_url."""
     return mocker.patch('redis.asyncio.from_url')
 
 
 @pytest.fixture
 def mock_redis_auth_client_get(mocker):
-    """Mock for RedisAuthClient.get"""
+    """Mock for RedisAuthClient.get."""
     return mocker.patch(
         'src.shared_kernel.auth.redis_client.RedisAuthClient.get',
     )
@@ -114,13 +114,13 @@ def mock_redis_auth_client_get(mocker):
 
 @pytest.fixture
 def mock_get_db_session(mocker):
-    """Mock for get_db_session"""
+    """Mock for get_db_session."""
     return mocker.patch('src.shared_kernel.di.container.get_db_session')
 
 
 @pytest.fixture
 def mock_auth_middleware_authenticate_token(mocker):
-    """Mock for AuthenticationMiddleware.authenticate_token"""
+    """Mock for AuthenticationMiddleware.authenticate_token."""
     return mocker.patch(
         'src.shared_kernel.middleware.auth_middleware'
         '.AuthenticationMiddleware.authenticate_token',
@@ -130,7 +130,7 @@ def mock_auth_middleware_authenticate_token(mocker):
 
 @pytest.fixture
 def mock_auth_middleware_pneumatic_token_data(mocker):
-    """Mock for PneumaticToken.data in auth middleware"""
+    """Mock for PneumaticToken.data in auth middleware."""
     return mocker.patch(
         'src.shared_kernel.middleware.auth_middleware.PneumaticToken.data',
     )

@@ -5,7 +5,7 @@ from src.shared_kernel.exceptions import DomainFileNotFoundError
 
 
 class TestAPIEndpoints:
-    """Test API endpoints"""
+    """Test API endpoints."""
 
     def test_upload_endpoint__valid_file_with_auth__return_success_response(
         self,
@@ -18,7 +18,7 @@ class TestAPIEndpoints:
         mock_upload_response,
         mock_upload_use_case_execute,
     ):
-        """Test successful file upload endpoint"""
+        """Test successful file upload endpoint."""
         # Arrange
         mock_upload_use_case_execute.return_value = mock_upload_response
 
@@ -36,7 +36,7 @@ class TestAPIEndpoints:
         assert 'file_id' in data
 
     def test_upload_endpoint__no_auth__return_401(self, e2e_client):
-        """Test upload endpoint without authentication"""
+        """Test upload endpoint without authentication."""
         # Arrange
         file_content = b'test file content'
 
@@ -50,7 +50,7 @@ class TestAPIEndpoints:
         assert response.status_code == 401
 
     def test_upload_endpoint__no_file__return_401(self, e2e_client):
-        """Test upload endpoint without file"""
+        """Test upload endpoint without file."""
         # Act
         response = e2e_client.post('/upload')
 
@@ -64,7 +64,7 @@ class TestAPIEndpoints:
         mock_auth_middleware,
         auth_headers,
     ):
-        """Test upload endpoint without file but with authentication"""
+        """Test upload endpoint without file but with authentication."""
         # Act
         response = e2e_client.post('/upload', headers=auth_headers)
 
@@ -83,7 +83,7 @@ class TestAPIEndpoints:
         auth_headers,
         mock_upload_use_case_execute,
     ):
-        """Test upload endpoint with large file"""
+        """Test upload endpoint with large file."""
         # Arrange
         mock_upload_use_case_execute.return_value = MagicMock(
             file_id='large-file-id',
@@ -116,7 +116,7 @@ class TestAPIEndpoints:
         mock_download_response,
         mock_download_use_case_execute,
     ):
-        """Test successful file download endpoint"""
+        """Test successful file download endpoint."""
         # Arrange
         mock_download_use_case_execute.return_value = mock_download_response
 
@@ -131,7 +131,7 @@ class TestAPIEndpoints:
         )
 
     def test_download_endpoint__no_auth__return_401(self, e2e_client):
-        """Test download endpoint without authentication"""
+        """Test download endpoint without authentication."""
         # Act
         response = e2e_client.get('/test-file-id')
 
@@ -146,7 +146,7 @@ class TestAPIEndpoints:
         auth_headers,
         mock_download_use_case_execute,
     ):
-        """Test download nonexistent file endpoint"""
+        """Test download nonexistent file endpoint."""
         # Arrange
         mock_download_use_case_execute.side_effect = DomainFileNotFoundError(
             'nonexistent-file-id',
@@ -166,7 +166,7 @@ class TestAPIEndpoints:
         auth_headers,
         mock_http_client_check_permission,
     ):
-        """Test download endpoint without permission"""
+        """Test download endpoint without permission."""
         # Arrange
         mock_http_client_check_permission.return_value = False
 
@@ -198,7 +198,7 @@ class TestAPIEndpoints:
         auth_headers,
         mock_upload_use_case_execute,
     ):
-        """Test upload endpoint with different content types"""
+        """Test upload endpoint with different content types."""
         # Arrange
         mock_upload_use_case_execute.return_value = MagicMock(
             file_id='test-file-id',

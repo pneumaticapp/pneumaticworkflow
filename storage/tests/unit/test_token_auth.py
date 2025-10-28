@@ -6,7 +6,7 @@ from src.shared_kernel.auth.token_auth import PneumaticToken
 
 
 class TestPneumaticToken:
-    """Test PneumaticToken"""
+    """Test PneumaticToken."""
 
     @pytest.mark.asyncio
     async def test_data__valid_token__return_data(
@@ -14,7 +14,7 @@ class TestPneumaticToken:
         mock_get_redis_client,
         mocker,
     ):
-        """Test successful token data retrieval"""
+        """Test successful token data retrieval."""
         # Arrange
         token = 'test-token'
         expected_data = {'user_id': 1, 'account_id': 2}
@@ -44,7 +44,7 @@ class TestPneumaticToken:
         mock_get_redis_client,
         mocker,
     ):
-        """Test token data retrieval when no data found"""
+        """Test token data retrieval when no data found."""
         # Arrange
         token = 'test-token'
         encrypted_token = 'encrypted-token-hash'
@@ -73,7 +73,7 @@ class TestPneumaticToken:
         mock_get_redis_client,
         mocker,
     ):
-        """Test token data retrieval with Redis error"""
+        """Test token data retrieval with Redis error."""
         # Arrange
         token = 'test-token'
         encrypted_token = 'encrypted-token-hash'
