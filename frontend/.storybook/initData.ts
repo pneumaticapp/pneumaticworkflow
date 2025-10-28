@@ -86,7 +86,6 @@ window['__pneumaticConfig'] = {
         revertTask: '/v2/tasks/:id/revert',
         workflowLog: '/workflows/:id/events',
         taskWorkflowLog: '/v2/tasks/:id/events',
-        deleteWorkflow: '/workflows/:id/close',
         finishWorkflow: '/workflows/:id/finish',
         continueWorkflow: '/workflows/:id/resume',
         returnWorkflowToTask: '/workflows/:id/return-to',
