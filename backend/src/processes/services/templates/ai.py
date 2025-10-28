@@ -77,10 +77,7 @@ class BaseAiService:
         user_description: str,
     ) -> str:
 
-        if settings.CONFIGURATION_CURRENT not in (
-            settings.CONFIGURATION_PROD,
-            settings.CONFIGURATION_STAGING,
-        ):
+        if not(settings.OPENAI_API_KEY and openai.organization):
             return self._test_response()
         openai.api_key = settings.OPENAI_API_KEY
         openai.organization = settings.OPENAI_API_ORG
