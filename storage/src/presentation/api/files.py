@@ -44,10 +44,7 @@ from src.shared_kernel.permissions import (
 router = APIRouter(prefix='', tags=['files'])
 
 
-@router.post(
-    '/upload',
-    dependencies=[Depends(is_authenticated)],
-)
+@router.post('/upload', dependencies=[Depends(is_authenticated)])
 async def upload_file(
     file: Annotated[UploadFile, File(...)],
     current_user: Annotated[AuthenticatedUser, Depends(get_current_user)],

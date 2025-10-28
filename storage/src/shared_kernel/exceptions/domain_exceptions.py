@@ -7,7 +7,6 @@ from .error_messages import (
     MSG_FILE_003,
     MSG_FILE_005,
     MSG_FILE_007,
-    MSG_FILE_009,
     MSG_STORAGE_002,
     MSG_STORAGE_004,
     MSG_STORAGE_006,
@@ -125,34 +124,6 @@ class FileSizeExceededError(BaseAppError):
             size=size,
             max_size=max_size,
         )
-
-
-class FileAlreadyExistsError(BaseAppError):
-    """File already exists error."""
-
-    def __init__(
-        self,
-        file_id: str,
-        details: str | None = None,
-    ) -> None:
-        """Initialize file already exists error.
-
-        Args:
-            file_id: ID of the file that already exists.
-            details: Optional error details.
-
-        """
-        error_code = DOMAIN_ERROR_CODES['FILE_ALREADY_EXISTS']
-        message = MSG_FILE_009.format(file_id=file_id)
-
-        custom_error_code = error_code.__class__(
-            code=error_code.code,
-            message=message,
-            error_type=error_code.error_type,
-            http_status=error_code.http_status,
-        )
-
-        super().__init__(custom_error_code, details, file_id=file_id)
 
 
 class StorageError(BaseAppError):

@@ -64,28 +64,11 @@ class DatabaseOperationError(DatabaseError):
             **kwargs: Additional error parameters.
 
         """
-        custom_details = MSG_DB_004.format(operation=operation)
-        if details:
-            custom_details += f': {details}'
+        custom_details = MSG_DB_004.format(
+            operation=operation,
+            details=details or 'Unknown error',
+        )
         super().__init__('DATABASE_OPERATION_ERROR', custom_details, **kwargs)
-
-
-class DatabaseTransactionError(DatabaseError):
-    """Database transaction error."""
-
-    def __init__(
-        self,
-        details: str | None = None,
-        **kwargs: str | int | None,
-    ) -> None:
-        """Initialize database transaction error.
-
-        Args:
-            details: Optional error details.
-            **kwargs: Additional error parameters.
-
-        """
-        super().__init__('DATABASE_TRANSACTION_ERROR', details, **kwargs)
 
 
 class DatabaseConstraintError(DatabaseError):

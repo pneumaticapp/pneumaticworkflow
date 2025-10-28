@@ -13,11 +13,19 @@ def e2e_client(test_client):
 @pytest.fixture
 def mock_auth_middleware(mocker) -> Iterator[MagicMock]:
     """Mock authentication middleware."""
-    mock = mocker.patch(
+    # Mock PneumaticToken.data to return valid token data
+    mock_token_data = mocker.patch(
         'src.shared_kernel.auth.token_auth.PneumaticToken.data',
     )
-    mock.return_value = {'user_id': 1, 'account_id': 1}
-    return mock
+    mock_token_data.return_value = {'user_id': 1, 'account_id': 1}
+
+    # Mock Redis client to avoid connection issues
+    mock_redis_get = mocker.patch(
+        'src.shared_kernel.auth.redis_client.RedisAuthClient.get',
+    )
+    mock_redis_get.return_value = {'user_id': 1, 'account_id': 1}
+
+    return mock_token_data
 
 
 @pytest.fixture

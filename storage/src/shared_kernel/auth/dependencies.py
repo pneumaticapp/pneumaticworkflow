@@ -7,7 +7,6 @@ from fastapi import Request
 from src.shared_kernel.auth.user_types import UserType
 from src.shared_kernel.exceptions import (
     AuthenticationError,
-    MissingAccountIdError,
 )
 
 if TYPE_CHECKING:
@@ -24,12 +23,9 @@ class AuthenticatedUser:
             auth_user: Base authenticated user.
 
         """
-        if auth_user.is_anonymous or auth_user.account_id is None:
-            raise MissingAccountIdError
-
         self.auth_type = auth_user.auth_type
         self.user_id = auth_user.user_id
-        self.account_id: int = auth_user.account_id
+        self.account_id: int = auth_user.account_id  # type: ignore[assignment]
         self.token = auth_user.token
 
     @property

@@ -8,8 +8,14 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from pydantic import ValidationError
 
-from .base_exceptions import BaseAppError, ErrorResponse
-from .error_codes import INFRA_ERROR_CODES, VALIDATION_ERROR_CODES
+from src.shared_kernel.exceptions.base_exceptions import (
+    BaseAppError,
+    ErrorResponse,
+)
+from src.shared_kernel.exceptions.error_codes import (
+    INFRA_ERROR_CODES,
+    VALIDATION_ERROR_CODES,
+)
 
 logger = logging.getLogger(__name__)
 

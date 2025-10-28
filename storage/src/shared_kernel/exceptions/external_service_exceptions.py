@@ -6,7 +6,6 @@ from .error_messages import (
     MSG_EXT_004,
     MSG_EXT_006,
     MSG_EXT_008,
-    MSG_EXT_010,
 )
 
 
@@ -122,30 +121,3 @@ class HttpTimeoutError(ExternalServiceError):
         if details:
             custom_details += f': {details}'
         super().__init__('HTTP_TIMEOUT_ERROR', custom_details, **kwargs)
-
-
-class ExternalServiceUnavailableError(ExternalServiceError):
-    """External service unavailable error."""
-
-    def __init__(
-        self,
-        service_name: str,
-        details: str | None = None,
-        **kwargs: str | int | None,
-    ) -> None:
-        """Initialize external service unavailable error.
-
-        Args:
-            service_name: Name of the unavailable service.
-            details: Optional error details.
-            **kwargs: Additional error parameters.
-
-        """
-        custom_details = MSG_EXT_010.format(service_name=service_name)
-        if details:
-            custom_details += f': {details}'
-        super().__init__(
-            'EXTERNAL_SERVICE_UNAVAILABLE',
-            custom_details,
-            **kwargs,
-        )

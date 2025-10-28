@@ -1,23 +1,27 @@
 """Tests for exception system."""
 
-import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from src.shared_kernel.exceptions import (
     AuthenticationError,
     BaseAppError,
+    DatabaseConnectionError,
+    DatabaseConstraintError,
+    DatabaseError,
+    DatabaseOperationError,
     DomainFileNotFoundError,
     ErrorCode,
     ErrorResponse,
     ErrorType,
+    ExternalServiceError,
     FileAccessDeniedError,
-    FileAlreadyExistsError,
     FileSizeExceededError,
-    InvalidTokenError,
-    MissingAccountIdError,
+    HttpClientError,
+    HttpTimeoutError,
+    PermissionDeniedError,
+    RedisConnectionError,
+    RedisOperationError,
     StorageError,
-    TokenExpiredError,
-    TokenIdentificationError,
     create_error_response,
     register_exception_handlers,
 )
@@ -151,11 +155,10 @@ class TestDomainExceptions:
 
     def test_file_not_found_error(self):
         """Test file not found error."""
-        exception = FileNotFoundError('test-file-id', account_id=123)
+        exception = DomainFileNotFoundError('test-file-id')
 
         assert exception.error_code.code == 'FILE_001'
         assert 'test-file-id' in exception.error_code.message
-        assert '123' in exception.error_code.message
         assert exception.http_status == 404
         assert exception.error_type == ErrorType.DOMAIN
 
@@ -179,15 +182,6 @@ class TestDomainExceptions:
         assert exception.http_status == 413
         assert exception.error_type == ErrorType.VALIDATION
 
-    def test_file_already_exists_error(self):
-        """Test file already exists error."""
-        exception = FileAlreadyExistsError('test-file-id')
-
-        assert exception.error_code.code == 'FILE_004'
-        assert 'test-file-id' in exception.error_code.message
-        assert exception.http_status == 409
-        assert exception.error_type == ErrorType.DOMAIN
-
     def test_storage_error(self):
         """Test storage error."""
         exception = StorageError.upload_failed('Upload failed')
@@ -201,6 +195,126 @@ class TestDomainExceptions:
         assert exception.error_type == ErrorType.INFRASTRUCTURE
 
 
+class TestDatabaseExceptions:
+    """Test database exceptions."""
+
+    def test_database_connection_error(self):
+        """Test database connection error."""
+        exception = DatabaseConnectionError('Connection failed')
+
+        assert exception.error_code.code == 'DB_001'
+        assert exception.error_code.message == 'Database connection failed'
+        assert exception.details == 'Connection failed'
+        assert exception.http_status == 503
+        assert exception.error_type == ErrorType.INFRASTRUCTURE
+
+    def test_database_operation_error(self):
+        """Test database operation error."""
+        exception = DatabaseOperationError('SELECT', 'Query failed')
+
+        assert exception.error_code.code == 'DB_002'
+        assert exception.error_code.message == 'Database operation failed'
+        assert "Database operation 'SELECT' failed" in exception.details
+        assert 'Query failed' in exception.details
+        assert exception.http_status == 500
+        assert exception.error_type == ErrorType.INFRASTRUCTURE
+
+    def test_database_constraint_error(self):
+        """Test database constraint error."""
+        exception = DatabaseConstraintError(
+            'unique_constraint', 'Duplicate key'
+        )
+
+        assert exception.error_code.code == 'DB_004'
+        assert exception.error_code.message == 'Database constraint violation'
+        assert 'unique_constraint' in exception.details
+        assert 'Duplicate key' in exception.details
+        assert exception.http_status == 409
+        assert exception.error_type == ErrorType.DOMAIN
+
+    def test_database_error_base_class(self):
+        """Test database error base class."""
+        exception = DatabaseError('DATABASE_CONNECTION_ERROR', 'Test error')
+
+        assert exception.error_code.code == 'DB_001'
+        assert exception.details == 'Test error'
+        assert exception.http_status == 503
+
+
+class TestExternalServiceExceptions:
+    """Test external service exceptions."""
+
+    def test_redis_connection_error(self):
+        """Test Redis connection error."""
+        exception = RedisConnectionError('Redis unavailable')
+
+        assert exception.error_code.code == 'EXT_001'
+        assert exception.error_code.message == 'Redis connection failed'
+        assert exception.details == 'Redis unavailable'
+        assert exception.http_status == 503
+        assert exception.error_type == ErrorType.EXTERNAL_SERVICE
+
+    def test_redis_operation_error(self):
+        """Test Redis operation error."""
+        exception = RedisOperationError('GET', 'Operation failed')
+
+        assert exception.error_code.code == 'EXT_002'
+        assert exception.error_code.message == 'Redis operation failed'
+        assert "Redis operation 'GET' failed" in exception.details
+        assert exception.http_status == 500
+        assert exception.error_type == ErrorType.EXTERNAL_SERVICE
+
+    def test_http_client_error(self):
+        """Test HTTP client error."""
+        exception = HttpClientError('http://example.com', 'Request failed')
+
+        assert exception.error_code.code == 'EXT_003'
+        assert exception.error_code.message == 'HTTP client request failed'
+        assert 'http://example.com' in exception.details
+        assert 'Request failed' in exception.details
+        assert exception.http_status == 502
+        assert exception.error_type == ErrorType.EXTERNAL_SERVICE
+
+    def test_http_timeout_error(self):
+        """Test HTTP timeout error."""
+        exception = HttpTimeoutError(
+            'http://example.com',
+            30,
+            'Timeout occurred',
+        )
+
+        assert exception.error_code.code == 'EXT_004'
+        assert exception.error_code.message == 'HTTP request timeout'
+        assert 'http://example.com' in exception.details
+        assert '30s' in exception.details
+        assert exception.http_status == 504
+        assert exception.error_type == ErrorType.EXTERNAL_SERVICE
+
+    def test_external_service_error_base_class(self):
+        """Test external service error base class."""
+        exception = ExternalServiceError(
+            'REDIS_CONNECTION_ERROR', 'Test error'
+        )
+
+        assert exception.error_code.code == 'EXT_001'
+        assert exception.details == 'Test error'
+        assert exception.http_status == 503
+
+
+class TestPermissionExceptions:
+    """Test permission exceptions."""
+
+    def test_permission_denied_error(self):
+        """Test permission denied error."""
+        exception = PermissionDeniedError('Access denied')
+
+        assert exception.error_code.code == 'PERM_001'
+        assert exception.error_code.message == 'Permission denied'
+        assert exception.details == 'Access denied'
+        assert exception.http_status == 403
+        assert exception.error_type == ErrorType.AUTHORIZATION
+
+
 class TestAuthExceptions:
     """Test authentication exceptions."""
 
@@ -211,45 +325,6 @@ class TestAuthExceptions:
         assert exception.error_code.code == 'AUTH_001'
         assert exception.error_code.message == 'Authentication failed'
         assert exception.details == 'Auth failed'
-        assert exception.http_status == 401
-        assert exception.error_type == ErrorType.AUTHENTICATION
-
-    def test_token_expired_error(self):
-        """Test token expired error."""
-        exception = TokenExpiredError()
-
-        assert exception.error_code.code == 'AUTH_002'
-        assert exception.error_code.message == 'Token is expired'
-        assert exception.http_status == 401
-        assert exception.error_type == ErrorType.AUTHENTICATION
-
-    def test_invalid_token_error(self):
-        """Test invalid token error."""
-        exception = InvalidTokenError()
-
-        assert exception.error_code.code == 'AUTH_003'
-        assert exception.error_code.message == 'Invalid token'
-        assert exception.http_status == 401
-        assert exception.error_type == ErrorType.AUTHENTICATION
-
-    def test_token_identification_error(self):
-        """Test token identification error."""
-        exception = TokenIdentificationError()
-
-        assert exception.error_code.code == 'AUTH_004'
-        assert exception.error_code.message == 'Token identification error'
-        assert exception.http_status == 401
-        assert exception.error_type == ErrorType.AUTHENTICATION
-
-    def test_missing_account_id_error(self):
-        """Test missing account ID error."""
-        exception = MissingAccountIdError()
-
-        assert exception.error_code.code == 'AUTH_005'
-        assert (
-            exception.error_code.message
-            == 'User must be authenticated with account_id'
-        )
         assert exception.http_status == 401
         assert exception.error_type == ErrorType.AUTHENTICATION
 
@@ -325,11 +400,3 @@ class TestExceptionHandlerIntegration:
         data = response.json()
         assert data['error_code'] == 'AUTH_001'
         assert data['error_type'] == 'authentication'
-
-    def test_general_exception_handler_integration(self):
-        """Test general exception handler integration."""
-        # This test is skipped because FastAPI intercepts standard exceptions
-        # before our handler, which is normal behavior
-        pytest.skip(
-            'FastAPI intercepts standard exceptions before our handler',
-        )

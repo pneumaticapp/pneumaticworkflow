@@ -1,9 +1,11 @@
 """Authentication middleware."""
 
 from collections.abc import Awaitable, Callable
+from datetime import UTC, datetime
 from typing import TYPE_CHECKING
 
 from fastapi import Request, Response
+from fastapi.responses import JSONResponse
 from fastapi.security import HTTPBearer
 from starlette.middleware.base import BaseHTTPMiddleware
 
@@ -181,14 +183,25 @@ class AuthenticationMiddleware(BaseHTTPMiddleware):
         call_next: Callable[[Request], Awaitable[Response]],
     ) -> Response:
         """Process request with token or session authentication."""
-        request.state.user = AuthUser(auth_type=UserType.ANONYMOUS)
+        try:
+            request.state.user = AuthUser(auth_type=UserType.ANONYMOUS)
 
-        user = await self.try_authenticate(request)
-        if user:
-            request.state.user = user
+            user = await self.try_authenticate(request)
+            if user:
+                request.state.user = user
 
-        # If authentication is required and user is anonymous
-        if self.require_auth and request.state.user.is_anonymous:
-            raise AuthenticationError
+            # If authentication is required and user is anonymous
+            if self.require_auth and request.state.user.is_anonymous:
+                raise AuthenticationError  # noqa: TRY301
 
-        return await call_next(request)
+            return await call_next(request)
+        except AuthenticationError as exc:
+            # Convert exception to HTTP response using existing logic
+            error_response = exc.to_response(
+                timestamp=datetime.now(tz=UTC).isoformat(),
+                request_id=getattr(request.state, 'request_id', None),
+            )
+            return JSONResponse(
+                status_code=exc.http_status,
+                content=error_response.to_dict(),
+            )

@@ -68,7 +68,7 @@ class TestPneumaticToken:
         mock_redis_client.get.assert_called_once_with(encrypted_token)
 
     @pytest.mark.asyncio
-    async def test_data__redis_error__return_none(
+    async def test_data__redis_error__raise_exception(
         self,
         mock_get_redis_client,
         mocker,
@@ -88,10 +88,9 @@ class TestPneumaticToken:
 
         mock_get_redis_client.return_value = mock_redis_client
 
-        # Act
-        result = await PneumaticToken.data(token)
+        # Act & Assert
+        with pytest.raises(redis.RedisError):
+            await PneumaticToken.data(token)
 
-        # Assert
-        assert result is None
         encrypt_mock.assert_called_once_with(token)
         mock_redis_client.get.assert_called_once_with(encrypted_token)

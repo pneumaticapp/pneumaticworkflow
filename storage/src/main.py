@@ -33,7 +33,8 @@ app.add_middleware(
 
 # Authentication middleware
 app.add_middleware(
-    lambda app: AuthenticationMiddleware(app, require_auth=True)
+    AuthenticationMiddleware,  # type: ignore[arg-type]
+    require_auth=True,
 )
 
 # Register exception handlers

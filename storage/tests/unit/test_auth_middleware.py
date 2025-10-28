@@ -1,9 +1,9 @@
+import json
 from unittest.mock import AsyncMock, Mock
 
 import pytest
 from fastapi import Request, Response
 from src.shared_kernel.auth.user_types import UserType
-from src.shared_kernel.exceptions import AuthenticationError
 from src.shared_kernel.middleware.auth_middleware import (
     AuthenticationMiddleware,
     AuthUser,
@@ -48,7 +48,7 @@ class TestAuthenticationMiddleware:
     def mock_request(self):
         """Mock request."""
         request = Mock(spec=Request)
-        request.state = Mock()
+        request.state = type('State', (), {})()
         request.cookies = {}
         return request
 
@@ -123,12 +123,12 @@ class TestAuthenticationMiddleware:
         # Arrange
         token = 'error-token'
 
-        # Mock PneumaticToken.data to raise exception
+        # Mock PneumaticToken.data to raise ValueError (which is caught)
         with pytest.MonkeyPatch().context() as m:
             m.setattr(
                 'src.shared_kernel.middleware.auth_middleware'
                 '.PneumaticToken.data',
-                AsyncMock(side_effect=Exception('Token error')),
+                AsyncMock(side_effect=ValueError('Token error')),
             )
 
             # Act
@@ -197,7 +197,7 @@ class TestAuthenticationMiddleware:
         mock_request,
         mock_call_next,
     ):
-        """Test dispatch without required authentication."""
+        """Test dispatch without token sets anonymous user."""
         # Arrange
         mock_request.headers = {}
         mock_request.cookies = {}
@@ -224,8 +224,11 @@ class TestAuthenticationMiddleware:
         mock_request.headers = {}
         mock_request.cookies = {}
 
-        # Act & Assert
-        with pytest.raises(AuthenticationError) as exc_info:
-            await middleware.dispatch(mock_request, mock_call_next)
+        # Act
+        response = await middleware.dispatch(mock_request, mock_call_next)
 
-        assert exc_info.value.error_code.code == 'AUTH_001'
+        # Assert
+        assert response.status_code == 401
+        response_data = json.loads(response.body.decode())
+        assert response_data['error_code'] == 'AUTH_001'
+        assert response_data['error_type'] == 'authentication'
