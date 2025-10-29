@@ -5,7 +5,6 @@ from django.core.exceptions import ObjectDoesNotExist
 from rest_framework.serializers import (
     CharField,
     ChoiceField,
-    IntegerField,
     Serializer,
 )
 
@@ -42,7 +41,6 @@ class RawPerformerSerializer(
         model = RawPerformerTemplate
         api_primary_field = 'api_name'
         fields = (
-            'id',
             'source_id',
             'type',
             'label',
@@ -61,7 +59,6 @@ class RawPerformerSerializer(
             'group_id',
         }
 
-    id = IntegerField(required=False)
     api_name = CharField(max_length=200, required=False)
     source_id = CharField(allow_null=True)
     type = ChoiceField(choices=PerformerType.choices)
