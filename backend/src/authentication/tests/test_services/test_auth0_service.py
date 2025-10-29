@@ -1,18 +1,18 @@
 import pytest
-from src.authentication import messages
+
 from src.accounts.enums import (
     SourceType,
 )
+from src.authentication import messages
+from src.authentication.models import AccessToken
+from src.authentication.services import exceptions
 from src.authentication.services.auth0 import (
     Auth0Service,
 )
-from src.authentication.models import AccessToken
-from src.authentication.services import exceptions
-from src.utils.logging import SentryLogLevel
 from src.processes.tests.fixtures import (
     create_test_user,
 )
-
+from src.utils.logging import SentryLogLevel
 
 pytestmark = pytest.mark.django_db
 
@@ -23,17 +23,17 @@ def test__get_auth_uri__ok(mocker):
     state = 'YrtkHpALzeTDnliK'
     get_state_mock = mocker.patch(
         'src.authentication.services.auth0.uuid4',
-        return_value=state
+        return_value=state,
     )
     set_cache_mock = mocker.patch(
         'src.authentication.services.auth0.'
-        'Auth0Service._set_cache'
+        'Auth0Service._set_cache',
     )
     query_params = 'urlencoded-params'
     urlencode_mock = mocker.patch(
         'src.authentication.services.auth0.'
         'requests.compat.urlencode',
-        return_value=query_params
+        return_value=query_params,
     )
 
     domain = 'test_client_domain'
@@ -42,7 +42,7 @@ def test__get_auth_uri__ok(mocker):
     redirect_uri = 'https://some.redirect/uri'
 
     settings_mock = mocker.patch(
-        'src.authentication.services.auth0.settings'
+        'src.authentication.services.auth0.settings',
     )
     settings_mock.AUTH0_CLIENT_ID = client_id
     settings_mock.AUTH0_CLIENT_SECRET = client_secret
@@ -62,11 +62,11 @@ def test__get_auth_uri__ok(mocker):
             'scope': 'openid email profile',
             'state': state,
             'response_type': 'code',
-        }
+        },
     )
     set_cache_mock.assert_called_once_with(
         value=True,
-        key=state
+        key=state,
     )
     assert result == f'https://{domain}/authorize?{query_params}'
 
@@ -78,7 +78,7 @@ def test_get_user_data__ok(mocker):
     get_access_token_mock = mocker.patch(
         'src.authentication.services.auth0.'
         'Auth0Service._get_first_access_token',
-        return_value=access_token
+        return_value=access_token,
     )
     email = 'test@test.test'
     first_name = 'Fa'
@@ -88,12 +88,12 @@ def test_get_user_data__ok(mocker):
         'email': email,
         'given_name': first_name,
         'family_name': last_name,
-        'picture': photo_url
+        'picture': photo_url,
     }
     get_user_mock = mocker.patch(
         'src.authentication.services.auth0.'
         'Auth0Service._get_user_profile',
-        return_value=profile_data
+        return_value=profile_data,
     )
     auth_response = mocker.Mock()
     service = Auth0Service()
@@ -119,7 +119,7 @@ def test_get_user_data__not_first_name__set_default(mocker):
     get_access_token_mock = mocker.patch(
         'src.authentication.services.auth0.'
         'Auth0Service._get_first_access_token',
-        return_value=access_token
+        return_value=access_token,
     )
     email = 'username@domain.com'
     first_name = None
@@ -129,12 +129,12 @@ def test_get_user_data__not_first_name__set_default(mocker):
         'email': email,
         'given_name': first_name,
         'family_name': last_name,
-        'picture': photo_url
+        'picture': photo_url,
     }
     get_user_mock = mocker.patch(
         'src.authentication.services.auth0.'
         'Auth0Service._get_user_profile',
-        return_value=profile_data
+        return_value=profile_data,
     )
     auth_response = mocker.Mock()
     service = Auth0Service()
@@ -155,7 +155,7 @@ def test_get_user_data__email_not_found__raise_exception(mocker):
     get_access_token_mock = mocker.patch(
         'src.authentication.services.auth0.'
         'Auth0Service._get_first_access_token',
-        return_value=access_token
+        return_value=access_token,
     )
     email = 'test@test.test'
     first_name = 'Fa'
@@ -165,12 +165,12 @@ def test_get_user_data__email_not_found__raise_exception(mocker):
         'email': email,
         'given_name': first_name,
         'family_name': last_name,
-        'picture': photo_url
+        'picture': photo_url,
     }
     get_user_mock = mocker.patch(
         'src.authentication.services.auth0.'
         'Auth0Service._get_user_profile',
-        return_value=profile_data
+        return_value=profile_data,
     )
     auth_response = mocker.Mock()
     service = Auth0Service()
@@ -199,19 +199,19 @@ def test_get_first_access_token__ok(mocker):
     get_cache_mock = mocker.patch(
         'src.authentication.services.auth0.'
         'Auth0Service._get_cache',
-        return_value=cache_value
+        return_value=cache_value,
     )
     response = {
         'token_type': 'Bearer',
-        'access_token': '!@#wad123'
+        'access_token': '!@#wad123',
     }
     response_mock = mocker.Mock(
-        json=mocker.Mock(return_value=response)
+        json=mocker.Mock(return_value=response),
     )
     request_mock = mocker.patch(
         'src.authentication.services.auth0.'
         'requests.post',
-        return_value=response_mock
+        return_value=response_mock,
     )
 
     domain = 'test_client_domain'
@@ -219,7 +219,7 @@ def test_get_first_access_token__ok(mocker):
     client_secret = 'test_client_secret'
     redirect_uri = 'https://some.redirect/uri'
     settings_mock = mocker.patch(
-        'src.authentication.services.auth0.settings'
+        'src.authentication.services.auth0.settings',
     )
     settings_mock.AUTH0_CLIENT_ID = client_id
     settings_mock.AUTH0_CLIENT_SECRET = client_secret
@@ -242,7 +242,7 @@ def test_get_first_access_token__ok(mocker):
             'client_secret': client_secret,
             'code': code,
             'redirect_uri': redirect_uri,
-        }
+        },
     )
 
 
@@ -255,19 +255,19 @@ def test_get_first_access_token__clear_cache__raise_exception(mocker):
     get_cache_mock = mocker.patch(
         'src.authentication.services.auth0.'
         'Auth0Service._get_cache',
-        return_value=None
+        return_value=None,
     )
     response = {
         'token_type': 'Bearer',
-        'access_token': '!@#wad123'
+        'access_token': '!@#wad123',
     }
     response_mock = mocker.Mock(
-        json=mocker.Mock(return_value=response)
+        json=mocker.Mock(return_value=response),
     )
     request_mock = mocker.patch(
         'src.authentication.services.auth0.'
         'requests.post',
-        return_value=response_mock
+        return_value=response_mock,
     )
 
     service = Auth0Service()
@@ -291,11 +291,11 @@ def test_get_first_access_token__request_return_error__raise_exception(mocker):
     get_cache_mock = mocker.patch(
         'src.authentication.services.auth0.'
         'Auth0Service._get_cache',
-        return_value=True
+        return_value=True,
     )
     response_data = {
         'token_type': 'Bearer',
-        'access_token': '!@#wad123'
+        'access_token': '!@#wad123',
     }
     response_mock = mocker.Mock(ok=False)
     response_content_mock = mocker.Mock()
@@ -303,18 +303,18 @@ def test_get_first_access_token__request_return_error__raise_exception(mocker):
     response_mock.content = response_content_mock
     request_mock = mocker.patch(
         'src.authentication.services.auth0.requests.post',
-        return_value=response_mock
+        return_value=response_mock,
     )
     sentry_mock = mocker.patch(
         'src.authentication.services.auth0.'
-        'capture_sentry_message'
+        'capture_sentry_message',
     )
     domain = 'test_client_domain'
     client_id = 'test_client_id'
     client_secret = 'test_client_secret'
     redirect_uri = 'https://some.redirect/uri'
     settings_mock = mocker.patch(
-        'src.authentication.services.auth0.settings'
+        'src.authentication.services.auth0.settings',
     )
     settings_mock.AUTH0_CLIENT_ID = client_id
     settings_mock.AUTH0_CLIENT_SECRET = client_secret
@@ -338,12 +338,12 @@ def test_get_first_access_token__request_return_error__raise_exception(mocker):
             'client_secret': client_secret,
             'code': code,
             'redirect_uri': redirect_uri,
-        }
+        },
     )
     sentry_mock.assert_called_once_with(
         message='Get Auth0 access token return an error',
         data={'content': response_content_mock},
-        level=SentryLogLevel.ERROR
+        level=SentryLogLevel.ERROR,
     )
 
 
@@ -355,12 +355,12 @@ def test_get_user_profile__ok(mocker):
     response_mock.json = mocker.Mock(return_value=response_data)
     request_mock = mocker.patch(
         'src.authentication.services.auth0.requests.get',
-        return_value=response_mock
+        return_value=response_mock,
     )
     access_token = 'Q@#!@adad123'
     domain = 'test_client_domain'
     settings_mock = mocker.patch(
-        'src.authentication.services.auth0.settings'
+        'src.authentication.services.auth0.settings',
     )
     settings_mock.AUTH0_DOMAIN = domain
     service = Auth0Service()
@@ -372,7 +372,7 @@ def test_get_user_profile__ok(mocker):
     assert result == response_data
     request_mock.assert_called_once_with(
         f'https://{domain}/userinfo',
-        headers={'Authorization': f'Bearer {access_token}'}
+        headers={'Authorization': f'Bearer {access_token}'},
     )
 
 
@@ -386,16 +386,16 @@ def test_get_user_profile__response_error__raise_exception(mocker):
     response_mock.content = response_content_mock
     request_mock = mocker.patch(
         'src.authentication.services.auth0.requests.get',
-        return_value=response_mock
+        return_value=response_mock,
     )
     access_token = 'Q@#!@adad123'
     domain = 'test_client_domain'
     settings_mock = mocker.patch(
-        'src.authentication.services.auth0.settings'
+        'src.authentication.services.auth0.settings',
     )
     sentry_mock = mocker.patch(
         'src.authentication.services.auth0.'
-        'capture_sentry_message'
+        'capture_sentry_message',
     )
     settings_mock.AUTH0_DOMAIN = domain
     service = Auth0Service()
@@ -408,12 +408,12 @@ def test_get_user_profile__response_error__raise_exception(mocker):
     assert ex.value.message == messages.MSG_AU_0009
     request_mock.assert_called_once_with(
         f'https://{domain}/userinfo',
-        headers={'Authorization': f'Bearer {access_token}'}
+        headers={'Authorization': f'Bearer {access_token}'},
     )
     sentry_mock.assert_called_once_with(
         message='Get Auth0 user profile return an error',
         data={'content': response_content_mock},
-        level=SentryLogLevel.ERROR
+        level=SentryLogLevel.ERROR,
     )
 
 
@@ -457,13 +457,13 @@ def test_save_tokens_for_user__update__ok(mocker):
         user=user,
         refresh_token='ahsdsdasd23ggfn',
         access_token=f'{token_type} !@#asas',
-        expires_in=360
+        expires_in=360,
     )
     new_tokens_data = {
         'refresh_token': 'new refresh',
         'access_token': 'new access token',
         'token_type': token_type,
-        'expires_in': 400
+        'expires_in': 400,
     }
     service = Auth0Service()
     service.tokens = new_tokens_data

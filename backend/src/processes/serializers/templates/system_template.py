@@ -1,16 +1,18 @@
 import re
+
 from rest_framework import serializers
+
+from src.generics.serializers import CustomValidationErrorMixin
 from src.processes.entities import LibraryTemplateData
 from src.processes.enums import (
     DueDateRule,
     FieldType,
 )
-from src.processes.models import (
+from src.processes.models.templates.system_template import (
     SystemTemplate,
     SystemTemplateCategory,
-    TaskTemplate,
 )
-from src.generics.serializers import CustomValidationErrorMixin
+from src.processes.models.templates.task import TaskTemplate
 from src.processes.utils.common import create_api_name
 
 
@@ -42,7 +44,7 @@ class SystemTemplateCategorySerializer(serializers.ModelSerializer):
 
 class DueInSerializer(
     CustomValidationErrorMixin,
-    serializers.Serializer
+    serializers.Serializer,
 ):
 
     days = serializers.IntegerField(min_value=0)
@@ -52,7 +54,7 @@ class DueInSerializer(
 
 class StepSerializer(
     CustomValidationErrorMixin,
-    serializers.Serializer
+    serializers.Serializer,
 ):
 
     step_name = serializers.CharField(max_length=280)
@@ -62,7 +64,7 @@ class StepSerializer(
 
 class LibraryTemplateImportSerializer(
     CustomValidationErrorMixin,
-    serializers.Serializer
+    serializers.Serializer,
 ):
 
     title = serializers.CharField(max_length=64)
@@ -72,7 +74,7 @@ class LibraryTemplateImportSerializer(
         required=True,
         allow_null=False,
         allow_empty=False,
-        many=True
+        many=True,
     )
     kickoff = serializers.DictField(
         required=False,
@@ -84,8 +86,8 @@ class LibraryTemplateImportSerializer(
                 ('largeText', 'largeText'),
                 ('user', 'user'),
                 ('date', 'date'),
-            )
-        )
+            ),
+        ),
     )
 
     def validate(self, attrs) -> LibraryTemplateData:
@@ -101,12 +103,12 @@ class LibraryTemplateImportSerializer(
                 'text': FieldType.STRING,
                 'largeText': FieldType.TEXT,
                 'date': FieldType.DATE,
-                'user': FieldType.USER
+                'user': FieldType.USER,
             }
             attrs['kickoff'] = {'fields': []}
             # Normalize camelCase field names
             for order, (field, value) in enumerate(
-                kickoff_fields.items(), start=1
+                kickoff_fields.items(), start=1,
             ):
                 name = re.sub(r'(?<!^)(?=[A-Z])', ' ', field)
                 name = re.sub(r'\s\s+', ' ', name).lower().capitalize()
@@ -115,19 +117,19 @@ class LibraryTemplateImportSerializer(
                     "order": order,
                     "name": name,
                     "type": field_type,
-                    "is_required": field_type == FieldType.USER
+                    "is_required": field_type == FieldType.USER,
                 })
 
         tasks = []
         for number, step in enumerate(attrs['steps'], start=1):
             task_api_name = create_api_name(
-                prefix=TaskTemplate.api_name_prefix
+                prefix=TaskTemplate.api_name_prefix,
             )
             task_data = {
                 'number': number,
                 'name': step['step_name'],
                 'description': step['step_description'],
-                'api_name': task_api_name
+                'api_name': task_api_name,
             }
             due_in = step.get('due_in')
             if due_in:
@@ -138,7 +140,7 @@ class LibraryTemplateImportSerializer(
                     'rule':  DueDateRule.AFTER_TASK_STARTED,
                     'duration_months': 0,
                     'duration': f'{days} {hours}:{minutes}:00',
-                    'source_id': task_api_name
+                    'source_id': task_api_name,
                 }
             tasks.append(task_data)
 

@@ -1,38 +1,42 @@
 from typing import Dict
+
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from firebase_admin import messaging
 from firebase_admin.exceptions import (
-    InvalidArgumentError,
     FirebaseError,
+    InvalidArgumentError,
+)
+from firebase_admin.messaging import (
+    APNSConfig as Config,
+)
+from firebase_admin.messaging import (
+    APNSPayload,
+    Aps,
+    SenderIdMismatchError,
+    UnregisteredError,
 )
 from firebase_admin.messaging import (
     Notification as PushNotification,
-    UnregisteredError,
-    SenderIdMismatchError,
-    Aps,
-    APNSPayload,
-    APNSConfig as Config,
 )
 
 from src.accounts.enums import UserType
+from src.logs.enums import (
+    AccountEventStatus,
+)
+from src.logs.service import AccountLogService
+from src.notifications import messages
 from src.notifications.enums import (
     NotificationMethod,
 )
-from src.notifications import messages
 from src.notifications.models import Device, UserNotifications
 from src.notifications.services.base import (
     NotificationService,
 )
 from src.utils.logging import (
-    capture_sentry_message,
     SentryLogLevel,
+    capture_sentry_message,
 )
-from src.logs.service import AccountLogService
-from src.logs.enums import (
-    AccountEventStatus,
-)
-
 
 UserModel = get_user_model()
 
@@ -71,7 +75,7 @@ class PushNotificationService(NotificationService):
             message = messaging.Message(
                 notification=PushNotification(
                     title=title,
-                    body=body
+                    body=body,
                 ),
                 data=data,
                 token=device_token,
@@ -85,7 +89,7 @@ class PushNotificationService(NotificationService):
                     user_id=user_id,
                     user_email=user_email,
                     data=data,
-                    device='browser'
+                    device='browser',
                 )
             else:
                 if self.logging:
@@ -120,7 +124,7 @@ class PushNotificationService(NotificationService):
             message = messaging.Message(
                 notification=PushNotification(
                     title=title,
-                    body=body
+                    body=body,
                 ),
                 data=data,
                 token=device_token,
@@ -128,10 +132,10 @@ class PushNotificationService(NotificationService):
                     payload=APNSPayload(
                         aps=Aps(
                             sound='default',
-                            badge=counter.count_unread_push_in_ios_app
-                        )
-                    )
-                )
+                            badge=counter.count_unread_push_in_ios_app,
+                        ),
+                    ),
+                ),
             )
             try:
                 messaging.send(message)
@@ -142,7 +146,7 @@ class PushNotificationService(NotificationService):
                     user_id=user_id,
                     user_email=user_email,
                     data=data,
-                    device='app'
+                    device='app',
                 )
             else:
                 if self.logging:
@@ -171,21 +175,21 @@ class PushNotificationService(NotificationService):
             'method': method_name,
             'title': title,
             'body': body,
-            **extra_data
+            **extra_data,
         }
         self._send_to_browsers(
             title=title,
             body=body,
             user_id=user_id,
             user_email=user_email,
-            data=data
+            data=data,
         )
         self._send_to_apps(
             title=title,
             body=body,
             user_id=user_id,
             user_email=user_email,
-            data=data
+            data=data,
         )
 
     def _handle_error(
@@ -212,7 +216,7 @@ class PushNotificationService(NotificationService):
                     'code': str(exception.code),
                     'cause': str(exception.cause),
                     'http_response': str(exception.http_response),
-                }
+                },
             )
         if (
             isinstance(
@@ -221,7 +225,7 @@ class PushNotificationService(NotificationService):
                     InvalidArgumentError,
                     UnregisteredError,
                     SenderIdMismatchError,
-                )
+                ),
             )
         ):
             Device.objects.delete_by_token(token=token)
@@ -248,7 +252,7 @@ class PushNotificationService(NotificationService):
         workflow_name: str,
         user_id: int,
         user_email: str,
-        **kwargs
+        **kwargs,
     ):
         self._send(
             method_name=NotificationMethod.new_task,
@@ -266,7 +270,7 @@ class PushNotificationService(NotificationService):
         workflow_name: str,
         user_id: int,
         user_email: str,
-        **kwargs
+        **kwargs,
     ):
         self._send(
             method_name=NotificationMethod.complete_task,
@@ -284,7 +288,7 @@ class PushNotificationService(NotificationService):
         workflow_name: str,
         user_id: int,
         user_email: str,
-        **kwargs
+        **kwargs,
     ):
         self._send(
             title=str(messages.MSG_NF_0003),
@@ -303,7 +307,7 @@ class PushNotificationService(NotificationService):
         task_id: int,
         task_name: str,
         workflow_name: str,
-        **kwargs
+        **kwargs,
     ):
         if user_type == UserType.USER:
             self._send(
@@ -320,7 +324,7 @@ class PushNotificationService(NotificationService):
         task_id: int,
         user_id: int,
         user_email: str,
-        **kwargs
+        **kwargs,
     ):
         self._send(
             title=str(messages.MSG_NF_0005),
@@ -336,7 +340,7 @@ class PushNotificationService(NotificationService):
         task_id: int,
         user_id: int,
         user_email: str,
-        **kwargs
+        **kwargs,
     ):
         self._send(
             title=str(messages.MSG_NF_0006),
@@ -354,7 +358,7 @@ class PushNotificationService(NotificationService):
         workflow_name: str,
         author_id: int,
         user_email: str,
-        **kwargs
+        **kwargs,
     ):
 
         self._send(
@@ -376,7 +380,7 @@ class PushNotificationService(NotificationService):
         task_id: int,
         workflow_name: str,
         author_id: int,
-        **kwargs
+        **kwargs,
     ):
         self._send(
             title=str(messages.MSG_NF_0008),
@@ -397,7 +401,7 @@ class PushNotificationService(NotificationService):
         workflow_name: str,
         user_id: int,
         user_email: str,
-        **kwargs
+        **kwargs,
     ):
         self._send(
             title=str(messages.MSG_NF_0009),
@@ -416,7 +420,7 @@ class PushNotificationService(NotificationService):
         author_name: str,
         workflow_name: str,
         text: str,
-        **kwargs
+        **kwargs,
     ):
         self._send(
             title=author_name,

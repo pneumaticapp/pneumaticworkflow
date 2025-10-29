@@ -1,15 +1,15 @@
-from typing import Dict, Any
-from rest_framework.serializers import (
-    ModelSerializer,
-    CharField
-)
+from typing import Any, Dict
+
 from django.contrib.auth import get_user_model
-from src.processes.models import (
-    Template,
+from rest_framework.serializers import (
+    CharField,
+    ModelSerializer,
 )
+
+from src.processes.models.templates.template import Template
 from src.processes.serializers.templates.public.kickoff import (
-        PublicKickoffSerializer
-    )
+    PublicKickoffSerializer,
+)
 
 UserModel = get_user_model()
 
@@ -21,7 +21,7 @@ class PublicTemplateSerializer(ModelSerializer):
         fields = (
             'name',
             'description',
-            'kickoff'
+            'kickoff',
         )
 
     description = CharField(allow_blank=True, default='')
@@ -37,7 +37,7 @@ class PublicTemplateSerializer(ModelSerializer):
         # because the Template related with Kickoff by foreign key
         # instead of one to one relation. Getting the object manually:
         kickoff_slz = PublicKickoffSerializer(
-            instance=self.instance.kickoff_instance
+            instance=self.instance.kickoff_instance,
         )
         data['kickoff'] = kickoff_slz.data
         return data

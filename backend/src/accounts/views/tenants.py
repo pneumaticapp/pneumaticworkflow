@@ -1,52 +1,50 @@
-from django.contrib.auth import get_user_model
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.db import transaction
-from rest_framework.mixins import (
-    ListModelMixin,
-    DestroyModelMixin,
-)
 from rest_framework.decorators import action
+from rest_framework.mixins import (
+    DestroyModelMixin,
+    ListModelMixin,
+)
 from rest_framework.viewsets import GenericViewSet
 
-from src.analytics.services import AnalyticService
+from src.accounts.enums import (
+    BillingPlanType,
+)
+from src.accounts.filters import TenantsFilterSet
+from src.accounts.models import Account
 from src.accounts.permissions import (
-    UserIsAdminOrAccountOwner,
-    MasterAccountPermission,
-    MasterAccountAccessPermission,
-    ExpiredSubscriptionPermission,
     BillingPlanPermission,
+    ExpiredSubscriptionPermission,
+    MasterAccountAccessPermission,
+    MasterAccountPermission,
+    UserIsAdminOrAccountOwner,
+)
+from src.accounts.serializers.tenant import TenantSerializer
+from src.accounts.services.account import AccountService
+from src.accounts.services.exceptions import (
+    AccountServiceException,
+    UserServiceException,
+)
+from src.accounts.services.user import UserService
+from src.analysis.services import AnalyticService
+from src.authentication.services.user_auth import AuthService
+from src.generics.filters import PneumaticFilterBackend
+from src.generics.mixins.views import (
+    CustomViewSetMixin,
 )
 from src.generics.permissions import (
     UserIsAuthenticated,
 )
-from src.generics.mixins.views import (
-    CustomViewSetMixin,
-)
-from src.accounts.models import Account
-from src.accounts.enums import (
-    BillingPlanType,
-)
-from src.accounts.serializers.tenant import TenantSerializer
-from src.accounts.filters import TenantsFilterSet
-from src.authentication.services import AuthService
-from src.generics.filters import PneumaticFilterBackend
-from src.accounts.services import (
-    AccountService,
-    UserService,
-)
-from src.accounts.services.exceptions import (
-    AccountServiceException,
-    UserServiceException
-)
-from src.utils.validation import raise_validation_error
-from src.processes.services.system_workflows import (
-    SystemWorkflowService
-)
-from src.payment.stripe.service import StripeService
 from src.payment.stripe.exceptions import StripeServiceException
+from src.payment.stripe.service import StripeService
 from src.payment.tasks import (
     increase_plan_users,
 )
+from src.processes.services.system_workflows import (
+    SystemWorkflowService,
+)
+from src.utils.validation import raise_validation_error
 
 UserModel = get_user_model()
 
@@ -55,11 +53,11 @@ class TenantsViewSet(
     CustomViewSetMixin,
     DestroyModelMixin,
     ListModelMixin,
-    GenericViewSet
+    GenericViewSet,
 ):
     filter_backends = [PneumaticFilterBackend]
     action_filterset_classes = {
-        'list': TenantsFilterSet
+        'list': TenantsFilterSet,
     }
     serializer_class = TenantSerializer
 
@@ -72,21 +70,20 @@ class TenantsViewSet(
                 MasterAccountPermission(),
                 UserIsAdminOrAccountOwner(),
             )
-        elif self.action in ('list', 'count'):
+        if self.action in ('list', 'count'):
             return (
                 UserIsAuthenticated(),
                 ExpiredSubscriptionPermission(),
                 MasterAccountPermission(),
                 UserIsAdminOrAccountOwner(),
             )
-        else:
-            return (
-                UserIsAuthenticated(),
-                BillingPlanPermission(),
-                ExpiredSubscriptionPermission(),
-                MasterAccountAccessPermission(),
-                UserIsAdminOrAccountOwner(),
-            )
+        return (
+            UserIsAuthenticated(),
+            BillingPlanPermission(),
+            ExpiredSubscriptionPermission(),
+            MasterAccountAccessPermission(),
+            UserIsAdminOrAccountOwner(),
+        )
 
     def get_queryset(self):
         return self.request.user.account.tenants.only_tenants()
@@ -134,12 +131,12 @@ class TenantsViewSet(
         serializer = self.get_serializer(
             instance=instance,
             data=request.data,
-            partial=True
+            partial=True,
         )
         serializer.is_valid(raise_exception=True)
         new_tenant_name = serializer.validated_data.get('tenant_name')
         old_tenant_name = instance.tenant_name
-        with (transaction.atomic()):
+        with transaction.atomic():
             instance = serializer.save()
             if (
                 new_tenant_name is not None
@@ -179,7 +176,7 @@ class TenantsViewSet(
                 )
                 tenant_user = user_service.create_tenant_account_owner(
                     tenant_account=tenant_account,
-                    master_account=master_account
+                    master_account=master_account,
                 )
                 account_service.user = tenant_user
                 account_service.update_users_counts()
@@ -214,9 +211,9 @@ class TenantsViewSet(
                             products=[
                                 {
                                     'code': 'unlimited_month',
-                                    'quantity': 1
-                                }
-                            ]
+                                    'quantity': 1,
+                                },
+                            ],
                         )
                     except StripeServiceException as ex:
                         raise_validation_error(message=ex.message)
@@ -225,7 +222,7 @@ class TenantsViewSet(
                     master_user=request.user,
                     tenant_account=tenant_account,
                     is_superuser=request.is_superuser,
-                    auth_type=request.token_type
+                    auth_type=request.token_type,
                 )
         response_slz = self.serializer_class(instance=tenant_account)
         return self.response_ok(response_slz.data)
@@ -238,7 +235,7 @@ class TenantsViewSet(
             user=account_owner,
             user_agent=request.headers.get(
                 'User-Agent',
-                request.META.get('HTTP_USER_AGENT')
+                request.META.get('HTTP_USER_AGENT'),
             ),
             user_ip=request.META.get('HTTP_X_REAL_IP'),
             superuser_mode=True,
@@ -247,12 +244,12 @@ class TenantsViewSet(
             master_user=request.user,
             tenant_account=tenant_account,
             is_superuser=request.is_superuser,
-            auth_type=request.token_type
+            auth_type=request.token_type,
         )
         return self.response_ok({'token': token})
 
     @action(methods=('GET',), detail=False)
     def count(self, request, **kwargs):
         return self.response_ok({
-            'count': self.get_queryset().count()
+            'count': self.get_queryset().count(),
         })

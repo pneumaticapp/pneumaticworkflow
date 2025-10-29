@@ -1,62 +1,57 @@
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.http import Http404
-from rest_framework.serializers import ValidationError
 from rest_framework.decorators import action
 from rest_framework.generics import get_object_or_404
+from rest_framework.mixins import ListModelMixin, RetrieveModelMixin
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.permissions import AllowAny
+from rest_framework.serializers import ValidationError
 from rest_framework.viewsets import GenericViewSet
-from rest_framework.mixins import RetrieveModelMixin, ListModelMixin
-from src.accounts.services import (
-    UserService,
+
+from src.accounts.enums import (
+    UserInviteStatus,
 )
-from src.accounts.filters import (
-    UsersListFilterSet,
-)
-from src.accounts.services import AccountService
+from src.accounts.filters import UsersListFilterSet
 from src.accounts.models import UserInvite
 from src.accounts.permissions import (
-    UserIsAdminOrAccountOwner,
-    ExpiredSubscriptionPermission,
-    BillingPlanPermission,
     AccountOwnerPermission,
+    BillingPlanPermission,
+    ExpiredSubscriptionPermission,
+    UserIsAdminOrAccountOwner,
 )
-from src.accounts.queries import (
-    CountTemplatesByUserQuery,
-)
+from src.accounts.queries import CountTemplatesByUserQuery
 from src.accounts.serializers.user import (
-    UserSerializer,
     UserPrivilegesSerializer,
+    UserSerializer,
 )
 from src.accounts.serializers.users import (
-    ReassignSerializer,
     AcceptTransferSerializer,
+    ReassignSerializer,
 )
+from src.accounts.services.account import AccountService
+from src.accounts.services.exceptions import (
+    AlreadyAcceptedInviteException,
+    InvalidTransferTokenException,
+    ReassignServiceException,
+    UserIsPerformerException,
+)
+from src.accounts.services.reassign import (
+    ReassignService,
+)
+from src.accounts.services.user import UserService
 from src.accounts.services.user_transfer import (
     UserTransferService,
 )
+from src.analysis.mixins import BaseIdentifyMixin
 from src.executor import RawSqlExecutor
 from src.generics.filters import PneumaticFilterBackend
 from src.generics.mixins.views import (
     CustomViewSetMixin,
 )
-from src.analytics.mixins import BaseIdentifyMixin
-from src.accounts.services.reassign import (
-    ReassignService
-)
 from src.generics.permissions import (
-    UserIsAuthenticated,
     IsAuthenticated,
-)
-from src.accounts.services.exceptions import (
-    AlreadyAcceptedInviteException,
-    InvalidTransferTokenException,
-    UserIsPerformerException,
-    ReassignServiceException,
-)
-from src.accounts.enums import (
-    UserInviteStatus
+    UserIsAuthenticated,
 )
 from src.utils.validation import raise_validation_error
 
@@ -85,24 +80,23 @@ class UsersViewSet(
     def get_permissions(self):
         if self.action == 'transfer':
             return (AllowAny(),)
-        elif self.action in {'list', 'active_count'}:
+        if self.action in {'list', 'active_count'}:
             return (
                 IsAuthenticated(),
                 BillingPlanPermission(),
             )
-        elif self.action == 'privileges':
+        if self.action == 'privileges':
             return (
                 AccountOwnerPermission(),
                 ExpiredSubscriptionPermission(),
                 BillingPlanPermission(),
             )
-        else:
-            return (
-                UserIsAuthenticated(),
-                BillingPlanPermission(),
-                ExpiredSubscriptionPermission(),
-                UserIsAdminOrAccountOwner(),
-            )
+        return (
+            UserIsAuthenticated(),
+            BillingPlanPermission(),
+            ExpiredSubscriptionPermission(),
+            UserIsAdminOrAccountOwner(),
+        )
 
     def get_serializer_context(self, **kwargs):
         context = super().get_serializer_context(**kwargs)
@@ -124,7 +118,7 @@ class UsersViewSet(
 
         return super().prefetch_queryset(
             queryset=queryset,
-            extra_fields=extra_fields
+            extra_fields=extra_fields,
         )
 
     def get_queryset(self):
@@ -133,17 +127,16 @@ class UsersViewSet(
         elif self.action in {'list', 'privileges'}:
             account_id = self.request.user.account_id
             queryset = UserModel.include_inactive.all_account_users(
-                account_id
+                account_id,
             )
         elif self.action == 'toggle_admin':
             account = self.request.user.account
             queryset = UserModel.objects.on_account(account.id).exclude(
-                is_account_owner=True
+                is_account_owner=True,
             ).exclude(id=self.request.user.id)
         else:
             queryset = self.request.user.account.users
-        queryset = self.prefetch_queryset(queryset)
-        return queryset
+        return self.prefetch_queryset(queryset)
 
     @action(detail=False, methods=('get',))
     def privileges(self, request, *args, **kwargs):
@@ -181,7 +174,7 @@ class UsersViewSet(
             service = ReassignService(
                 is_superuser=request.is_superuser,
                 auth_type=request.token_type,
-                **serializer.validated_data
+                **serializer.validated_data,
             )
             service.reassign_everywhere()
         except ReassignServiceException as ex:
@@ -212,7 +205,7 @@ class UsersViewSet(
     #     except InvalidTransferTokenException as ex:
     #         raise_validation_error(message=ex.message)
     #     else:
-    #         from src.authentication.services import AuthService
+    #         from src.authentication.services.user_auth import AuthService
     #         token = AuthService.get_auth_token(
     #             user=service.get_user(),
     #             user_agent=request.headers.get(
@@ -230,7 +223,7 @@ class UsersViewSet(
             data={
                 'user_id': pk,
                 'token': request.GET.get('token'),
-            }
+            },
         )
         try:
             slz.is_valid(raise_exception=True)
@@ -242,7 +235,7 @@ class UsersViewSet(
         try:
             service.accept_transfer(
                 token_str=slz.validated_data['token'],
-                user_id=slz.validated_data['user_id']
+                user_id=slz.validated_data['user_id'],
             )
         except AlreadyAcceptedInviteException:
             return self.redirect(host)
@@ -269,15 +262,15 @@ class UsersViewSet(
 
         try:
             user = self.get_queryset().get(id=pk)
-        except UserModel.DoesNotExist:
+        except UserModel.DoesNotExist as ex:
             if UserInvite.objects.filter(
                 status=UserInviteStatus.PENDING,
                 account=request.user.account,
-                invited_user_id=pk
+                invited_user_id=pk,
             ).exists():
                 user = UserModel.objects.get(id=pk)
             else:
-                raise Http404
+                raise Http404 from ex
         query = CountTemplatesByUserQuery(
             user_id=user.id,
             account_id=request.user.account_id,
@@ -285,16 +278,16 @@ class UsersViewSet(
         result = list(RawSqlExecutor.fetch(*query.get_sql()))
         count = sum(item['count'] for item in result)
         return self.response_ok(
-            data={'count': count}
+            data={'count': count},
         )
 
     @action(
         detail=False,
         methods=('get',),
-        url_path='active-count'
+        url_path='active-count',
     )
     def active_count(self, request, *args, **kwargs):
         account_data = AccountService.get_cached_data(
-            request.user.account_id
+            request.user.account_id,
         )
         return self.response_ok(data=account_data)

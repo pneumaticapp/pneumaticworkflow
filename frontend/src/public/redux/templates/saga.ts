@@ -36,6 +36,7 @@ import { isArrayWithItems } from '../../utils/helpers';
 import { getTemplatesSystemCategories } from '../../api/getSystemTemplatesCategories';
 import { ITemplatesSystemCategories } from '../../types/redux';
 import { LIMIT_LOAD_SYSTEMS_TEMPLATES, LIMIT_LOAD_TEMPLATES, varibleIdRegex } from '../../constants/defaultValues';
+import { SYSTEM_FIELDS } from '../../components/Workflows/WorkflowsTablePage/WorkflowsTable/constants';
 
 function* fetchTemplatesSystem() {
   try {
@@ -125,6 +126,7 @@ export function* handleLoadTemplateVariables(templateId: number) {
 
     yield put(loadTemplateVariablesSuccess({ templateId, variables }));
     const transformedTasks: TTransformedTask[] = [
+      ...[{ apiName: '-2', name: 'System', needSteName: null, fields: SYSTEM_FIELDS }],
       ...(kickoff.fields.length > 0 ? [{ apiName: '-1', name: 'Kick-off', fields: kickoff.fields }] : []),
       ...tasks
         .filter((task) => task.fields.length > 0)
@@ -195,7 +197,6 @@ export function* fetchIsTemplateOwner() {
     const { results } = yield getTemplates({
       limit: 1,
       isActive: true,
-      isTemplateOwner: true,
     });
 
     yield put(setIsTemplateOwner(results.length > 0));

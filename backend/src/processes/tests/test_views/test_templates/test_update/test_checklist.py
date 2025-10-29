@@ -1,20 +1,20 @@
 import pytest
-from src.processes.tests.fixtures import (
-    create_test_user,
-    create_test_template
+
+from src.authentication.enums import AuthTokenType
+from src.processes.enums import (
+    OwnerType,
+    PerformerType,
 )
-from src.processes.models import (
+from src.processes.messages import template as messages
+from src.processes.models.templates.checklist import (
     ChecklistTemplate,
     ChecklistTemplateSelection,
-    TaskTemplate,
 )
-from src.processes.enums import (
-    PerformerType,
-    OwnerType
+from src.processes.models.templates.task import TaskTemplate
+from src.processes.tests.fixtures import (
+    create_test_template,
+    create_test_user,
 )
-from src.authentication.enums import AuthTokenType
-from src.processes.messages import template as messages
-
 
 pytestmark = pytest.mark.django_db
 
@@ -27,27 +27,27 @@ def test_update__create__ok(api_client, mocker):
     template = create_test_template(
         user=user,
         tasks_count=1,
-        is_active=True
+        is_active=True,
     )
     task = template.tasks.first()
     checklist = ChecklistTemplate.objects.create(
         template=template,
         task=task,
-        api_name='checklist-1'
+        api_name='checklist-1',
     )
     checklist_selection = ChecklistTemplateSelection.objects.create(
         checklist=checklist,
         template=template,
         value='some value',
-        api_name='cl-selection-1'
+        api_name='cl-selection-1',
     )
     mocker.patch(
         'src.processes.services.templates.'
-        'integrations.TemplateIntegrationsService.template_updated'
+        'integrations.TemplateIntegrationsService.template_updated',
     )
-    analytics_mock = mocker.patch(
-        'src.analytics.services.AnalyticService'
-        '.checklist_created'
+    analysis_mock = mocker.patch(
+        'src.analysis.services.AnalyticService'
+        '.checklist_created',
     )
     checklists_data = [
         {
@@ -55,19 +55,19 @@ def test_update__create__ok(api_client, mocker):
             'selections': [
                 {
                     'api_name': checklist_selection.api_name,
-                    'value': checklist_selection.value
-                }
-            ]
+                    'value': checklist_selection.value,
+                },
+            ],
         },
         {
             'api_name': 'checklist-2',
             'selections': [
                 {
                     'api_name': 'cl-selection-2',
-                    'value': 'some value 2'
-                }
-            ]
-        }
+                    'value': 'some value 2',
+                },
+            ],
+        },
     ]
 
     # act
@@ -80,7 +80,7 @@ def test_update__create__ok(api_client, mocker):
             'owners': [
                 {
                     'type': OwnerType.USER,
-                    'source_id': user.id
+                    'source_id': user.id,
                 },
             ],
             'kickoff': {},
@@ -93,13 +93,13 @@ def test_update__create__ok(api_client, mocker):
                     'raw_performers': [
                         {
                             'type': PerformerType.USER,
-                            'source_id': user.id
-                        }
+                            'source_id': user.id,
+                        },
                     ],
-                    'checklists': checklists_data
-                }
-            ]
-        }
+                    'checklists': checklists_data,
+                },
+            ],
+        },
     )
 
     # assert
@@ -119,12 +119,12 @@ def test_update__create__ok(api_client, mocker):
         api_name='checklist-2',
         task=task_template,
     ).exists()
-    analytics_mock.assert_called_once_with(
+    analysis_mock.assert_called_once_with(
         user=user,
         template=template,
         task=task,
         is_superuser=False,
-        auth_type=AuthTokenType.USER
+        auth_type=AuthTokenType.USER,
     )
 
 
@@ -136,38 +136,38 @@ def test_update__delete__ok(api_client, mocker):
     template = create_test_template(
         user=user,
         tasks_count=1,
-        is_active=True
+        is_active=True,
     )
     task = template.tasks.first()
     checklist = ChecklistTemplate.objects.create(
         template=template,
         task=task,
-        api_name='checklist-1'
+        api_name='checklist-1',
     )
     checklist_selection = ChecklistTemplateSelection.objects.create(
         checklist=checklist,
         template=template,
         value='some value',
-        api_name='cl-selection-1'
+        api_name='cl-selection-1',
     )
     checklist_2 = ChecklistTemplate.objects.create(
         template=template,
         task=task,
-        api_name='checklist-2'
+        api_name='checklist-2',
     )
     ChecklistTemplateSelection.objects.create(
         checklist=checklist_2,
         template=template,
         value='some value 2',
-        api_name='cl-selection-21'
+        api_name='cl-selection-21',
     )
     mocker.patch(
         'src.processes.services.templates.'
-        'integrations.TemplateIntegrationsService.template_updated'
+        'integrations.TemplateIntegrationsService.template_updated',
     )
-    analytics_mock = mocker.patch(
-        'src.analytics.services.AnalyticService'
-        '.checklist_created'
+    analysis_mock = mocker.patch(
+        'src.analysis.services.AnalyticService'
+        '.checklist_created',
     )
     checklists_data = [
         {
@@ -175,10 +175,10 @@ def test_update__delete__ok(api_client, mocker):
             'selections': [
                 {
                     'api_name': checklist_selection.api_name,
-                    'value': checklist_selection.value
-                }
-            ]
-        }
+                    'value': checklist_selection.value,
+                },
+            ],
+        },
     ]
 
     # act
@@ -191,7 +191,7 @@ def test_update__delete__ok(api_client, mocker):
             'owners': [
                 {
                     'type': OwnerType.USER,
-                    'source_id': user.id
+                    'source_id': user.id,
                 },
             ],
             'kickoff': {},
@@ -204,13 +204,13 @@ def test_update__delete__ok(api_client, mocker):
                     'raw_performers': [
                         {
                             'type': PerformerType.USER,
-                            'source_id': user.id
-                        }
+                            'source_id': user.id,
+                        },
                     ],
-                    'checklists': checklists_data
-                }
-            ]
-        }
+                    'checklists': checklists_data,
+                },
+            ],
+        },
     )
 
     # assert
@@ -219,7 +219,7 @@ def test_update__delete__ok(api_client, mocker):
     checklist_1_data = response.data['tasks'][0]['checklists'][0]
     assert checklist_1_data['api_name'] == checklist.api_name
     assert not ChecklistTemplate.objects.filter(id=checklist_2.id).exists()
-    analytics_mock.assert_not_called()
+    analysis_mock.assert_not_called()
 
 
 def test_update__fields_with_equal_api_names__validation_error(
@@ -229,18 +229,18 @@ def test_update__fields_with_equal_api_names__validation_error(
 
     # arrange
     mocker.patch(
-        'src.analytics.services.AnalyticService'
-        '.checklist_created'
+        'src.analysis.services.AnalyticService'
+        '.checklist_created',
     )
     mocker.patch(
         'src.processes.services.templates.'
-        'integrations.TemplateIntegrationsService.template_updated'
+        'integrations.TemplateIntegrationsService.template_updated',
     )
     user = create_test_user()
     template = create_test_template(
         user=user,
         tasks_count=1,
-        is_active=True
+        is_active=True,
     )
     task = template.tasks.first()
     checklist_api_name = 'checklist-1'
@@ -248,13 +248,13 @@ def test_update__fields_with_equal_api_names__validation_error(
     checklist = ChecklistTemplate.objects.create(
         template=template,
         task=task,
-        api_name=checklist_api_name
+        api_name=checklist_api_name,
     )
     checklist_selection = ChecklistTemplateSelection.objects.create(
         checklist=checklist,
         template=template,
         value='some value',
-        api_name='cl-selection-1'
+        api_name='cl-selection-1',
     )
     api_client.token_authenticate(user)
 
@@ -268,7 +268,7 @@ def test_update__fields_with_equal_api_names__validation_error(
             'owners': [
                 {
                     'type': OwnerType.USER,
-                    'source_id': user.id
+                    'source_id': user.id,
                 },
             ],
             'kickoff': {},
@@ -281,8 +281,8 @@ def test_update__fields_with_equal_api_names__validation_error(
                     'raw_performers': [
                         {
                             'type': PerformerType.USER,
-                            'source_id': user.id
-                        }
+                            'source_id': user.id,
+                        },
                     ],
                     'checklists': [
                         {
@@ -290,11 +290,11 @@ def test_update__fields_with_equal_api_names__validation_error(
                             'selections': [
                                 {
                                     'api_name': checklist_selection.api_name,
-                                    'value': checklist_selection.value
-                                }
-                            ]
-                        }
-                    ]
+                                    'value': checklist_selection.value,
+                                },
+                            ],
+                        },
+                    ],
                 },
                 {
                     'number': 2,
@@ -303,8 +303,8 @@ def test_update__fields_with_equal_api_names__validation_error(
                     'raw_performers': [
                         {
                             'type': PerformerType.USER,
-                            'source_id': user.id
-                        }
+                            'source_id': user.id,
+                        },
                     ],
                     'checklists': [
                         {
@@ -312,21 +312,21 @@ def test_update__fields_with_equal_api_names__validation_error(
                             'selections': [
                                 {
                                     'api_name': 'cl-selection-2',
-                                    'value': 'Some option'
-                                }
-                            ]
-                        }
-                    ]
-                }
-            ]
-        }
+                                    'value': 'Some option',
+                                },
+                            ],
+                        },
+                    ],
+                },
+            ],
+        },
     )
 
     # assert
     assert response.status_code == 400
     message = messages.MSG_PT_0047(
         name=step,
-        api_name=checklist_api_name
+        api_name=checklist_api_name,
     )
     assert response.data['message'] == message
     assert response.data['details']['reason'] == message

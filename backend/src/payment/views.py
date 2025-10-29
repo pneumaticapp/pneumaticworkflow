@@ -1,61 +1,62 @@
 from django.db.models import Prefetch
 from rest_framework.decorators import action
 from rest_framework.viewsets import GenericViewSet
-from src.payment.permissions import (
-    ProjectBillingPermission
-)
+
 from src.accounts.permissions import (
     AccountOwnerPermission,
-    UserIsAdminOrAccountOwner
+    DisallowForTenantPermission,
+    UserIsAdminOrAccountOwner,
 )
 from src.generics.mixins.views import (
     CustomViewSetMixin,
 )
-from src.payment.serializers import (
-    PurchaseSerializer,
-    ConfirmSerializer,
-    CardSetupSerializer,
-    ProductSerializer,
-    CustomerPortalSerializer,
-)
-from src.utils.validation import raise_validation_error
 from src.generics.permissions import UserIsAuthenticated
-from src.accounts.permissions import DisallowForTenantPermission
+from src.payment import messages
 from src.payment.models import (
     Price,
-    Product
+    Product,
 )
-from src.payment.tasks import handle_webhook
-from src.payment.stripe.service import StripeService
+from src.payment.permissions import (
+    ProjectBillingPermission,
+)
+from src.payment.serializers import (
+    CardSetupSerializer,
+    ConfirmSerializer,
+    CustomerPortalSerializer,
+    ProductSerializer,
+    PurchaseSerializer,
+)
 from src.payment.stripe.exceptions import (
     StripeServiceException,
 )
-from src.payment import messages
+from src.payment.stripe.permissions import (
+    StripeWebhookPermission,
+)
+from src.payment.stripe.service import StripeService
+from src.payment.tasks import handle_webhook
 from src.payment.throttling import (
     PurchaseApiThrottle,
-    PurchaseTokenThrottle
+    PurchaseTokenThrottle,
 )
-from src.payment.stripe.permissions import (
-    StripeWebhookPermission
-)
+from src.utils.validation import raise_validation_error
 
 
 class PaymentViewSet(
     CustomViewSetMixin,
-    GenericViewSet
+    GenericViewSet,
 ):
     action_serializer_classes = {
         'purchase': PurchaseSerializer,
         'confirm': ConfirmSerializer,
         'card_setup': CardSetupSerializer,
         'customer_portal': CustomerPortalSerializer,
-        'products': ProductSerializer
+        'products': ProductSerializer,
     }
 
     def get_permissions(self):
         if self.action == 'confirm':
             return (ProjectBillingPermission(),)
-        elif self.action in {
+        if self.action in {
             'purchase',
             'card_setup',
             'default_payment_method',
@@ -67,23 +68,21 @@ class PaymentViewSet(
                 AccountOwnerPermission(),
                 DisallowForTenantPermission(),
             )
-        else:
-            return (
-                ProjectBillingPermission(),
-                UserIsAuthenticated(),
-                UserIsAdminOrAccountOwner(),
-                DisallowForTenantPermission(),
-            )
+        return (
+            ProjectBillingPermission(),
+            UserIsAuthenticated(),
+            UserIsAdminOrAccountOwner(),
+            DisallowForTenantPermission(),
+        )
 
     @property
     def throttle_classes(self):
         if self.action == 'purchase':
             return (
                 PurchaseApiThrottle,
-                PurchaseTokenThrottle
+                PurchaseTokenThrottle,
             )
-        else:
-            return ()
+        return ()
 
     @action(methods=('POST',), detail=False)
     def purchase(self, request):
@@ -94,7 +93,7 @@ class PaymentViewSet(
         service = StripeService(
             user=request.user,
             auth_type=request.token_type,
-            is_superuser=request.is_superuser
+            is_superuser=request.is_superuser,
         )
         try:
             payment_link = service.create_purchase(**slz.validated_data)
@@ -115,7 +114,7 @@ class PaymentViewSet(
         service = StripeService(
             auth_type=token['auth_type'],
             is_superuser=token['is_superuser'],
-            user=token.user
+            user=token.user,
         )
         try:
             service.confirm(subscription_data=token.get_subscription_data())
@@ -130,11 +129,11 @@ class PaymentViewSet(
         service = StripeService(
             user=request.user,
             auth_type=request.token_type,
-            is_superuser=request.is_superuser
+            is_superuser=request.is_superuser,
         )
         try:
             setup_link = service.get_payment_method_checkout_link(
-                **slz.validated_data
+                **slz.validated_data,
             )
         except StripeServiceException as ex:
             raise_validation_error(message=ex.message)
@@ -146,8 +145,8 @@ class PaymentViewSet(
         qst = Product.objects.prefetch_related(
             Prefetch(
                 lookup='prices',
-                queryset=Price.objects.active_or_archived()
-            )
+                queryset=Price.objects.active_or_archived(),
+            ),
         ).active()
         slz = self.get_serializer(qst, many=True)
         return self.response_ok(slz.data)
@@ -157,7 +156,7 @@ class PaymentViewSet(
         service = StripeService(
             user=request.user,
             auth_type=request.token_type,
-            is_superuser=request.is_superuser
+            is_superuser=request.is_superuser,
         )
         method_details = service.get_payment_method()
         if method_details:
@@ -171,11 +170,11 @@ class PaymentViewSet(
         service = StripeService(
             user=request.user,
             auth_type=request.token_type,
-            is_superuser=request.is_superuser
+            is_superuser=request.is_superuser,
         )
         try:
             link = service.get_customer_portal_link(
-                cancel_url=slz.validated_data['cancel_url']
+                cancel_url=slz.validated_data['cancel_url'],
             )
         except StripeServiceException as ex:
             raise_validation_error(message=ex.message)
@@ -185,7 +184,7 @@ class PaymentViewSet(
 
 class SubscriptionViewSet(
     CustomViewSetMixin,
-    GenericViewSet
+    GenericViewSet,
 ):
 
     permission_classes = (
@@ -202,7 +201,7 @@ class SubscriptionViewSet(
         service = StripeService(
             user=request.user,
             auth_type=request.token_type,
-            is_superuser=request.is_superuser
+            is_superuser=request.is_superuser,
         )
         try:
             service.cancel_subscription()
@@ -214,7 +213,7 @@ class SubscriptionViewSet(
 
 class StripeViewSet(
     CustomViewSetMixin,
-    GenericViewSet
+    GenericViewSet,
 ):
 
     action_permission_classes = {

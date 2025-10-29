@@ -54,6 +54,8 @@ const templateResponseMock: ITemplateResponse = {
           isRequired: false,
           order: 0,
           apiName: 'field-27fb3d',
+          userId: null,
+          groupId: null,
         },
       ],
       conditions: [],

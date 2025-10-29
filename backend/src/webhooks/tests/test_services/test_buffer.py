@@ -1,6 +1,6 @@
 import pytest
-from src.webhooks.services import WebhookBufferService
 
+from src.webhooks.services import WebhookBufferService
 
 pytestmark = pytest.mark.django_db
 
@@ -13,10 +13,10 @@ def test_push__add_to_existent_list__ok(mocker):
     cached_value = [webhook_data_1]
     get_cache_mock = mocker.patch(
         'src.webhooks.services.WebhookBufferService._get_cache',
-        return_value=cached_value
+        return_value=cached_value,
     )
     set_cache_mock = mocker.patch(
-        'src.webhooks.services.WebhookBufferService._set_cache'
+        'src.webhooks.services.WebhookBufferService._set_cache',
     )
 
     # act
@@ -25,7 +25,7 @@ def test_push__add_to_existent_list__ok(mocker):
     # assert
     get_cache_mock.assert_called_once_with(default=[])
     set_cache_mock.assert_called_once_with(
-        [webhook_data_1, webhook_data_2]
+        [webhook_data_1, webhook_data_2],
     )
 
 
@@ -35,10 +35,10 @@ def test_push___ok(mocker):
     webhook_data = {'more': 'values'}
     get_cache_mock = mocker.patch(
         'src.webhooks.services.WebhookBufferService._get_cache',
-        return_value=[]
+        return_value=[],
     )
     set_cache_mock = mocker.patch(
-        'src.webhooks.services.WebhookBufferService._set_cache'
+        'src.webhooks.services.WebhookBufferService._set_cache',
     )
 
     # act
@@ -54,11 +54,11 @@ def test_get_list__ok(mocker):
     # arrange
     cached_data = [
         {'first': 'value'},
-        {'last': 'value'}
+        {'last': 'value'},
     ]
     get_cache_mock = mocker.patch(
         'src.webhooks.services.WebhookBufferService._get_cache',
-        return_value=cached_data
+        return_value=cached_data,
     )
 
     # act
@@ -68,7 +68,7 @@ def test_get_list__ok(mocker):
     get_cache_mock.assert_called_once_with(default=[])
     assert value == [
         {'last': 'value'},
-        {'first': 'value'}
+        {'first': 'value'},
     ]
 
 
@@ -78,7 +78,7 @@ def test_get_list__null_value_in_cache__ok(mocker):
     cached_data = None
     get_cache_mock = mocker.patch(
         'src.webhooks.services.WebhookBufferService._get_cache',
-        return_value=cached_data
+        return_value=cached_data,
     )
 
     # act
@@ -94,7 +94,7 @@ def test_clear__ok(mocker):
     # arrange
     delete_cache_mock = mocker.patch(
         'src.webhooks.services.WebhookBufferService.'
-        '_delete_cache'
+        '_delete_cache',
     )
 
     # act

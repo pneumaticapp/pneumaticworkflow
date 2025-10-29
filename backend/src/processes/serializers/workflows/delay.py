@@ -1,7 +1,7 @@
 from rest_framework import serializers
 
-from src.processes.models import Delay
 from src.generics.fields import TimeStampField
+from src.processes.models.workflows.task import Delay
 
 
 class DelayInfoSerializer(serializers.ModelSerializer):

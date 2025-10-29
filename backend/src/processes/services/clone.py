@@ -1,4 +1,5 @@
-from typing import Dict, Any, List
+from typing import Any, Dict, List
+
 from src.processes.consts import TEMPLATE_NAME_LENGTH
 from src.processes.utils.common import (
     string_abbreviation,
@@ -32,7 +33,7 @@ class CloneService:
     @classmethod
     def get_template_draft_clone(
         cls,
-        draft: Dict[str, Any]
+        draft: Dict[str, Any],
     ) -> Dict[str, Any]:
 
         """ Return clone of all template data.

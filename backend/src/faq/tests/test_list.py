@@ -1,9 +1,9 @@
 import pytest
+
+from src.faq.models import FaqItem
 from src.processes.tests.fixtures import (
     create_test_user,
 )
-from src.faq.models import FaqItem
-
 
 pytestmark = pytest.mark.django_db
 

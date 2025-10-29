@@ -1,27 +1,30 @@
 import pytest
 from django.contrib.auth import get_user_model
 
-from src.processes.models import (
+from src.processes.enums import (
+    ConditionAction,
+    FieldType,
+    PredicateOperator,
+    PredicateType,
+    TaskStatus,
+)
+from src.processes.models.workflows.attachment import FileAttachment
+from src.processes.models.workflows.conditions import (
     Condition,
-    Rule,
     Predicate,
-    TaskField,
+    Rule,
+)
+from src.processes.models.workflows.fields import (
     FieldSelection,
-    FileAttachment,
+    TaskField,
 )
 from src.processes.services.condition_check.service import (
     ConditionCheckService,
 )
 from src.processes.tests.fixtures import (
+    create_test_owner,
     create_test_user,
     create_test_workflow,
-)
-from src.processes.enums import (
-    FieldType,
-    PredicateType,
-    PredicateOperator,
-    TaskStatus,
-    ConditionAction,
 )
 
 UserModel = get_user_model()
@@ -55,7 +58,7 @@ class TestConditionCheckService:
             (PredicateOperator.LESS_THAN, '2.0', '2', False),
             (PredicateOperator.LESS_THAN, '', '22', False),
             (PredicateOperator.LESS_THAN, '22', '', False),
-        ]
+        ],
     )
     def test_check__number(
         self,
@@ -75,7 +78,7 @@ class TestConditionCheckService:
             task=first_task,
             type=FieldType.NUMBER,
             value=field_value,
-            workflow=workflow
+            workflow=workflow,
         )
         condition = Condition.objects.create(
             task=second_task,
@@ -104,11 +107,11 @@ class TestConditionCheckService:
         [
             (
                 PredicateOperator.EQUAL,
-                'Captain Marvel', 'Captain Marvel', True
+                'Captain Marvel', 'Captain Marvel', True,
             ),
             (
                 PredicateOperator.EQUAL,
-                'Captain Marvel', 'CaptainMarvel', False
+                'Captain Marvel', 'CaptainMarvel', False,
             ),
             (PredicateOperator.EQUAL, None, 'Captain Marvel', False),
             (PredicateOperator.NOT_EQUAL, 'Captain Marvel', '', True),
@@ -122,9 +125,9 @@ class TestConditionCheckService:
             (PredicateOperator.NOT_CONTAIN, None, 'Captain Marvel', False),
             (
                     PredicateOperator.NOT_CONTAIN,
-                    'Captain Marvel', 'Iran Many', True
+                    'Captain Marvel', 'Iran Many', True,
             ),
-        ]
+        ],
     )
     def test_check__string(
         self,
@@ -144,7 +147,7 @@ class TestConditionCheckService:
             task=first_task,
             type=FieldType.STRING,
             value=field_value,
-            workflow=workflow
+            workflow=workflow,
         )
         condition = Condition.objects.create(
             task=second_task,
@@ -175,7 +178,7 @@ class TestConditionCheckService:
             (PredicateOperator.EXIST, None, '', False),
             (PredicateOperator.NOT_EXIST, None, '', True),
             (PredicateOperator.NOT_EXIST, None, 'Captain Marvel', False),
-        ]
+        ],
     )
     def test_check__file(
         self,
@@ -195,7 +198,7 @@ class TestConditionCheckService:
             task=first_task,
             type=FieldType.FILE,
             value=field_value,
-            workflow=workflow
+            workflow=workflow,
         )
         FileAttachment.objects.create(
             name='john.cena',
@@ -243,7 +246,7 @@ class TestConditionCheckService:
             (PredicateOperator.EXIST, None, True, False, True),
             (PredicateOperator.EXIST, None, False, False, False),
             (PredicateOperator.NOT_EXIST, None, True, False, False),
-        ]
+        ],
     )
     def test_check__dropdown(
         self,
@@ -264,7 +267,7 @@ class TestConditionCheckService:
             task=first_task,
             type=FieldType.DROPDOWN,
             value='',
-            workflow=workflow
+            workflow=workflow,
         )
         FieldSelection.objects.create(
             field=first_field,
@@ -324,7 +327,7 @@ class TestConditionCheckService:
             (PredicateOperator.CONTAIN, None, False, True, False),
             (PredicateOperator.NOT_CONTAIN, None, False, True, False),
             (PredicateOperator.NOT_CONTAIN, 'select-1', True, True, False),
-        ]
+        ],
     )
     def test_check__checkbox(
         self,
@@ -345,7 +348,7 @@ class TestConditionCheckService:
             task=first_task,
             type=FieldType.CHECKBOX,
             value='',
-            workflow=workflow
+            workflow=workflow,
         )
         FieldSelection.objects.create(
             field=first_field,
@@ -399,7 +402,7 @@ class TestConditionCheckService:
             (PredicateOperator.MORE_THAN, '1740087999', '1740077999', False),
             (PredicateOperator.LESS_THAN, '1740087999', '1740097999', False),
             (PredicateOperator.LESS_THAN, '1740087999', '1740077999', True),
-        ]
+        ],
     )
     def test_check__date(
         self,
@@ -419,7 +422,7 @@ class TestConditionCheckService:
             task=first_task,
             type=FieldType.DATE,
             value=field_value,
-            workflow=workflow
+            workflow=workflow,
         )
         condition = Condition.objects.create(
             task=second_task,
@@ -462,7 +465,7 @@ class TestConditionCheckService:
             (PredicateOperator.NOT_EQUAL, 'Captain Marvel', '', False),
             (PredicateOperator.NOT_EQUAL, '03/23/2021', '03/23/2021', False),
             (PredicateOperator.EXIST, None, 'test@pneumatic.app', True),
-        ]
+        ],
     )
     def test_check__user(
         self,
@@ -483,7 +486,7 @@ class TestConditionCheckService:
         second_task = workflow.tasks.last()
         selected_user = UserModel.objects.filter(email=field_value).first()
         predicate_user = UserModel.objects.filter(
-            email=predicate_value
+            email=predicate_value,
         ).first()
         first_field = TaskField.objects.create(
             name='Hero',
@@ -508,6 +511,63 @@ class TestConditionCheckService:
             field_type=first_field.type,
             field=first_field.api_name,
             value=predicate_user.id if predicate_user else None,
+        )
+
+        # act
+        response = ConditionCheckService.check(condition, workflow.id)
+
+        # assert
+        assert response is result
+
+    @pytest.mark.parametrize(
+        ('operator', 'predicate_value', 'field_value', 'result'),
+        [
+            (PredicateOperator.EQUAL, '1', 1, True),
+            (PredicateOperator.EQUAL, '1', 2, False),
+            (PredicateOperator.EQUAL, None, 1, False),
+            (PredicateOperator.NOT_EQUAL, '1', 2, True),
+            (PredicateOperator.NOT_EQUAL, '1', 1, False),
+            (PredicateOperator.EXIST, None, 1, True),
+            (PredicateOperator.EXIST, None, None, False),
+            (PredicateOperator.NOT_EXIST, None, None, True),
+            (PredicateOperator.NOT_EXIST, None, 1, False),
+        ],
+    )
+    def test_check__group(
+        self,
+        operator,
+        predicate_value,
+        field_value,
+        result,
+    ):
+        # arrange
+        user = create_test_owner()
+        workflow = create_test_workflow(user, tasks_count=2)
+        first_task = workflow.tasks.get(number=1)
+        second_task = workflow.tasks.get(number=2)
+        first_field = TaskField.objects.create(
+            name='Group',
+            api_name='group-1',
+            task=first_task,
+            type=FieldType.USER,
+            value=str(field_value) if field_value else '',
+            workflow=workflow,
+            group_id=field_value,
+        )
+        condition = Condition.objects.create(
+            task=second_task,
+            action=ConditionAction.SKIP_TASK,
+            order=1,
+        )
+        first_rule = Rule.objects.create(
+            condition=condition,
+        )
+        Predicate.objects.create(
+            rule=first_rule,
+            operator=operator,
+            field_type=PredicateType.GROUP,
+            field=first_field.api_name,
+            value=predicate_value,
         )
 
         # act

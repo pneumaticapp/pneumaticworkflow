@@ -14,10 +14,10 @@ class RawSqlExecutor:
         with connections[db].cursor() as cursor:
             cursor.execute(query, params)
             columns = [col[0] for col in cursor.description]
-            return [
+            return next(
                 dict(zip(columns, row))
                 for row in cursor.fetchall()
-            ][0]
+            )
 
     @staticmethod
     def execute(query, params, db='default'):

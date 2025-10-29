@@ -1,38 +1,43 @@
-import openai
 from abc import abstractmethod
 from typing import Optional, Union
+
+import openai
 from django.conf import settings
 from django.contrib.auth import get_user_model
+
+from src.accounts.services.account import AccountService
+from src.ai.models import (
+    OpenAiPrompt,
+)
+from src.analysis.services import AnalyticService
 from src.authentication.enums import AuthTokenType
-from src.processes.enums import PerformerType, ConditionAction, \
-    PredicateType, PredicateOperator
+from src.processes.consts import TEMPLATE_NAME_LENGTH
+from src.processes.enums import (
+    ConditionAction,
+    PerformerType,
+    PredicateOperator,
+    PredicateType,
+)
+from src.processes.models.templates.task import TaskTemplate
 from src.processes.services.exceptions import (
-    OpenAiServiceUnavailable,
-    OpenAiServiceFailed,
     OpenAiLimitTemplateGenerations,
-    OpenAiTemplateStepsNotExist,
-    OpenAiStepsPromptNotExist,
     OpenAiServiceException,
+    OpenAiServiceFailed,
+    OpenAiServiceUnavailable,
+    OpenAiStepsPromptNotExist,
+    OpenAiTemplateStepsNotExist,
+)
+from src.processes.services.templates.template import (
+    TemplateService,
+)
+from src.processes.utils.common import (
+    create_api_name,
+    insert_fields_values_to_text,
 )
 from src.utils.logging import (
     SentryLogLevel,
     capture_sentry_message,
 )
-from src.processes.models.templates.task import (
-    TaskTemplate,
-)
-from src.accounts.services.account import AccountService
-from src.analytics.services import AnalyticService
-from src.processes.services.templates.template import (
-    TemplateService
-)
-from src.ai.models import (
-    OpenAiPrompt
-)
-from src.processes.utils.common import (
-    insert_fields_values_to_text, create_api_name
-)
-from src.processes.consts import TEMPLATE_NAME_LENGTH
 
 UserModel = get_user_model()
 
@@ -69,13 +74,10 @@ class BaseAiService:
     def _get_response(
         self,
         prompt: OpenAiPrompt,
-        user_description: str
+        user_description: str,
     ) -> str:
 
-        if settings.CONFIGURATION_CURRENT not in (
-            settings.CONFIGURATION_PROD,
-            settings.CONFIGURATION_STAGING
-        ):
+        if not(settings.OPENAI_API_KEY and settings.OPENAI_API_ORG):
             return self._test_response()
         openai.api_key = settings.OPENAI_API_KEY
         openai.organization = settings.OPENAI_API_ORG
@@ -86,9 +88,9 @@ class BaseAiService:
                     "role": elem.role,
                     "content": insert_fields_values_to_text(
                         text=elem.content,
-                        fields_values={'user_description': user_description}
-                    )
-                }
+                        fields_values={'user_description': user_description},
+                    ),
+                },
             )
         try:
             completion = openai.ChatCompletion.create(
@@ -104,17 +106,17 @@ class BaseAiService:
             self._log_exception(
                 ex=ex,
                 prompt=prompt,
-                user_description=user_description
+                user_description=user_description,
             )
-            raise OpenAiServiceUnavailable()
+            raise OpenAiServiceUnavailable from ex
         else:
             if not completion.choices:
                 self._log(
                     user_description=user_description,
                     message='Response has no choices',
-                    prompt=prompt
+                    prompt=prompt,
                 )
-                raise OpenAiServiceFailed()
+                raise OpenAiServiceFailed
             choice = completion.choices[0]
             finish_reason = getattr(choice.message, 'finish_reason', None)
             if finish_reason:
@@ -124,7 +126,7 @@ class BaseAiService:
                     message='Response has finish reason',
                     response_text=finish_reason,
                 )
-                raise OpenAiServiceFailed()
+                raise OpenAiServiceFailed
             return choice.message.content
 
     def _test_response(self):
@@ -182,9 +184,9 @@ class BaseAiService:
             'rules': [
                 {
                     'api_name': create_api_name('rule'),
-                    'predicates': [predicate]
-                }
-            ]
+                    'predicates': [predicate],
+                },
+            ],
         }
 
     @abstractmethod
@@ -193,7 +195,7 @@ class BaseAiService:
         number: int,
         name: str,
         description: str,
-        prev_task_api_name: Optional[str]
+        prev_task_api_name: Optional[str],
     ) -> dict:
         pass
 
@@ -207,15 +209,14 @@ class BaseAiService:
         for number, step in enumerate(steps_data):
             if len(step) != 2:
                 continue
-            else:
-                limit = TaskTemplate.NAME_MAX_LENGTH
-                name = step[0].strip()[:limit]
-                description = step[1].strip()
+            limit = TaskTemplate.NAME_MAX_LENGTH
+            name = step[0].strip()[:limit]
+            description = step[1].strip()
             task_data = self._get_step_data_from_text(
                 number=number + 1,
                 name=name,
                 description=description,
-                prev_task_api_name=prev_task_api_name
+                prev_task_api_name=prev_task_api_name,
             )
             prev_task_api_name = task_data['api_name']
             tasks_data.append(task_data)
@@ -228,7 +229,7 @@ class OpenAiService(BaseAiService):
         self,
         user: UserModel,
         ident: Union[str, int],
-        auth_type: AuthTokenType,
+        auth_type: AuthTokenType.LITERALS,
         is_superuser: bool = False,
     ):
         self.user = user
@@ -261,10 +262,10 @@ class OpenAiService(BaseAiService):
                 },
                 'request': {
                     'user_description': user_description,
-                    'prompt': prompt.as_dict()
-                }
+                    'prompt': prompt.as_dict(),
+                },
             },
-            level=level
+            level=level,
         )
 
     def _log(
@@ -283,14 +284,14 @@ class OpenAiService(BaseAiService):
                 'account_id': self.account.id,
                 'message': message,
                 'response': {
-                    'text': response_text
+                    'text': response_text,
                 },
                 'request': {
                     'user_description': user_description,
-                    'prompt': prompt.as_dict()
-                }
+                    'prompt': prompt.as_dict(),
+                },
             },
-            level=level
+            level=level,
         )
 
     def _get_step_data_from_text(
@@ -298,7 +299,7 @@ class OpenAiService(BaseAiService):
         number: int,
         name: str,
         description: str,
-        prev_task_api_name: Optional[str]
+        prev_task_api_name: Optional[str],
     ) -> dict:
         return {
             'number': number,
@@ -309,18 +310,18 @@ class OpenAiService(BaseAiService):
                 {
                     'type': PerformerType.USER,
                     'source_id': self.user.id,
-                    'label': self.user.name
-                }
+                    'label': self.user.name,
+                },
             ],
             'conditions': [
-                self._get_start_task_condition(prev_task_api_name)
-            ]
+                self._get_start_task_condition(prev_task_api_name),
+            ],
         }
 
     def _post_template_generation_actions(self, user_description: str):
         account_service = AccountService(
             user=self.user,
-            instance=self.account
+            instance=self.account,
         )
         account_service.inc_template_generations_count()
 
@@ -329,14 +330,14 @@ class OpenAiService(BaseAiService):
         """ Generate template data dict from user description """
 
         if self.account.ai_template_generations_limit_exceeded:
-            raise OpenAiLimitTemplateGenerations()
+            raise OpenAiLimitTemplateGenerations
         prompt = OpenAiPrompt.objects.active().target_steps().first()
         if not prompt or not prompt.messages.active().exists():
-            raise OpenAiStepsPromptNotExist()
+            raise OpenAiStepsPromptNotExist
 
         response_text = self._get_response(
             prompt=prompt,
-            user_description=user_description
+            user_description=user_description,
         )
         initial_tasks_data = self._get_steps_data_from_text(response_text)
         if not initial_tasks_data:
@@ -344,17 +345,17 @@ class OpenAiService(BaseAiService):
                 prompt=prompt,
                 user_description=user_description,
                 message='Template steps not found',
-                response_text=response_text
+                response_text=response_text,
             )
-            raise OpenAiTemplateStepsNotExist()
+            raise OpenAiTemplateStepsNotExist
         initial_data = {
             'name': user_description[:TEMPLATE_NAME_LENGTH],
-            'tasks': initial_tasks_data
+            'tasks': initial_tasks_data,
         }
         template_service = TemplateService(
             user=self.user,
             is_superuser=self.is_superuser,
-            auth_type=self.auth_type
+            auth_type=self.auth_type,
         )
 
         data = template_service.fill_template_data(initial_data)
@@ -376,7 +377,7 @@ class OpenAiService(BaseAiService):
                 auth_type=self.auth_type,
                 is_superuser=self.is_superuser,
                 description=user_description,
-                success=success
+                success=success,
             )
 
 
@@ -416,10 +417,10 @@ class AnonOpenAiService(BaseAiService):
                 },
                 'request': {
                     'user_description': user_description,
-                    'prompt': prompt.as_dict()
-                }
+                    'prompt': prompt.as_dict(),
+                },
             },
-            level=level
+            level=level,
         )
 
     def _log(
@@ -437,14 +438,14 @@ class AnonOpenAiService(BaseAiService):
                 'user-agent': self.user_agent,
                 'message': message,
                 'response': {
-                    'text': response_text
+                    'text': response_text,
                 },
                 'request': {
                     'user_description': user_description,
-                    'prompt': prompt.as_dict()
-                }
+                    'prompt': prompt.as_dict(),
+                },
             },
-            level=level
+            level=level,
         )
 
     def _get_step_data_from_text(
@@ -452,7 +453,7 @@ class AnonOpenAiService(BaseAiService):
         number: int,
         name: str,
         description: str,
-        prev_task_api_name: Optional[str]
+        prev_task_api_name: Optional[str],
     ) -> dict:
         return {
             'number': number,
@@ -460,24 +461,24 @@ class AnonOpenAiService(BaseAiService):
             'api_name': create_api_name(prefix='task'),
             'description': description,
             'conditions': [
-                self._get_start_task_condition(prev_task_api_name)
-            ]
+                self._get_start_task_condition(prev_task_api_name),
+            ],
         }
 
     def get_short_template_data(
         self,
-        user_description: str
+        user_description: str,
     ):
 
         """ Generate minimal template data dict from description """
 
         prompt = OpenAiPrompt.objects.active().target_steps().first()
         if not prompt or not prompt.messages.active().exists():
-            raise OpenAiStepsPromptNotExist()
+            raise OpenAiStepsPromptNotExist
 
         response_text = self._get_response(
             prompt=prompt,
-            user_description=user_description
+            user_description=user_description,
         )
         initial_tasks_data = self._get_steps_data_from_text(response_text)
         if not initial_tasks_data:
@@ -485,10 +486,10 @@ class AnonOpenAiService(BaseAiService):
                 prompt=prompt,
                 user_description=user_description,
                 message='Template steps not found',
-                response_text=response_text
+                response_text=response_text,
             )
-            raise OpenAiTemplateStepsNotExist()
+            raise OpenAiTemplateStepsNotExist
         return {
             'name': user_description[:TEMPLATE_NAME_LENGTH],
-            'tasks': initial_tasks_data
+            'tasks': initial_tasks_data,
         }
