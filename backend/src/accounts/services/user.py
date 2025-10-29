@@ -59,6 +59,8 @@ class UserService(
         timezone: Optional[str] = None,
         date_fmt: UserDateFormat = None,
         date_fdw: UserFirstDayWeek = None,
+        is_superuser: bool = False,
+        is_staff: bool = False,
         **kwargs,
     ) -> UserModel:
 
@@ -86,6 +88,9 @@ class UserService(
             if timezone is None:
                 timezone = account.get_owner().timezone
 
+        if not UserModel.objects.exists():
+            is_superuser = True
+            is_staff = True
         try:
             self.instance = UserModel.objects.create(
                 email=email,
@@ -102,6 +107,8 @@ class UserService(
                 timezone=timezone,
                 date_fmt=date_fmt,
                 date_fdw=date_fdw,
+                is_superuser=is_superuser,
+                is_staff=is_staff,
             )
         except IntegrityError as ex:
             raise AlreadyRegisteredException from ex

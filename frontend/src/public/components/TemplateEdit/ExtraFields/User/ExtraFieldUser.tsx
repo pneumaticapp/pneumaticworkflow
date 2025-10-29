@@ -17,11 +17,11 @@ import { EExtraFieldMode, ETaskPerformerType } from '../../../../types/template'
 import { isArrayWithItems } from '../../../../utils/helpers';
 import { IWorkflowExtraFieldProps } from '..';
 import { getNotDeletedUsers, getUserFullName } from '../../../../utils/users';
+import { IApplicationState } from '../../../../types/redux';
+import { IGroupDropdownOption } from '../../../../redux/team/types';
 
 import styles from '../../KickoffRedux/KickoffRedux.css';
 import inputStyles from './ExtraFieldUser.css';
-import { IApplicationState } from '../../../../types/redux';
-import { IGroupDropdownOption } from '../../../../redux/team/types';
 
 const DEFAULT_FIELD_INPUT_WIDTH = 120;
 
