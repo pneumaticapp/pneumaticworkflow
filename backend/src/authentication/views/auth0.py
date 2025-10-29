@@ -1,36 +1,36 @@
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db.models import ObjectDoesNotExist
-from django.conf import settings
-from rest_framework.viewsets import GenericViewSet
 from rest_framework.decorators import action
 from rest_framework.exceptions import AuthenticationFailed
-from src.generics.mixins.views import CustomViewSetMixin
+from rest_framework.viewsets import GenericViewSet
+
+from src.analysis.mixins import BaseIdentifyMixin
+from src.authentication.messages import MSG_AU_0003
 from src.authentication.permissions import Auth0Permission
-from src.analytics.mixins import BaseIdentifyMixin
-from src.authentication.services.user_auth import (
-    AuthService
-)
-from src.authentication.services.exceptions import (
-    AuthException
-)
-from src.authentication.services.auth0 import (
-    Auth0Service
-)
 from src.authentication.serializers import (
     Auth0TokenSerializer,
 )
-from src.authentication.views.mixins import SignUpMixin
-from src.utils.validation import raise_validation_error
+from src.authentication.services.auth0 import (
+    Auth0Service,
+)
+from src.authentication.services.exceptions import (
+    AuthException,
+)
+from src.authentication.services.user_auth import (
+    AuthService,
+)
 from src.authentication.throttling import (
     Auth0AuthUriThrottle,
     Auth0TokenThrottle,
 )
+from src.authentication.views.mixins import SignUpMixin
+from src.generics.mixins.views import CustomViewSetMixin
 from src.utils.logging import (
-    capture_sentry_message,
     SentryLogLevel,
+    capture_sentry_message,
 )
-from src.authentication.messages import MSG_AU_0003
-
+from src.utils.validation import raise_validation_error
 
 UserModel = get_user_model()
 
@@ -39,7 +39,7 @@ class Auth0ViewSet(
     SignUpMixin,
     CustomViewSetMixin,
     BaseIdentifyMixin,
-    GenericViewSet
+    GenericViewSet,
 ):
     permission_classes = (Auth0Permission,)
     serializer_class = Auth0TokenSerializer
@@ -48,7 +48,7 @@ class Auth0ViewSet(
     def throttle_classes(self):
         if self.action == 'token':
             return (Auth0TokenThrottle,)
-        elif self.action == 'auth_uri':
+        if self.action == 'auth_uri':
             return (Auth0AuthUriThrottle,)
         return ()
 
@@ -62,7 +62,7 @@ class Auth0ViewSet(
                 auth_response={
                     'code': slz.validated_data['code'],
                     'state': slz.validated_data['state'],
-                }
+                },
             )
         except AuthException as ex:
             raise_validation_error(message=ex.message)
@@ -73,11 +73,11 @@ class Auth0ViewSet(
                     user=user,
                     user_agent=request.headers.get(
                         'User-Agent',
-                        request.META.get('HTTP_USER_AGENT')
+                        request.META.get('HTTP_USER_AGENT'),
                     ),
                     user_ip=request.META.get('HTTP_X_REAL_IP'),
                 )
-            except ObjectDoesNotExist:
+            except ObjectDoesNotExist as ex:
                 if settings.PROJECT_CONF['SIGNUP']:
                     user, token = self.signup(
                         **user_data,
@@ -89,7 +89,7 @@ class Auth0ViewSet(
                         gclid=slz.validated_data.get('gclid'),
                     )
                 else:
-                    raise AuthenticationFailed(MSG_AU_0003)
+                    raise AuthenticationFailed(MSG_AU_0003) from ex
             service.save_tokens_for_user(user)
             return self.response_ok({'token': token})
 
@@ -102,7 +102,7 @@ class Auth0ViewSet(
             raise_validation_error(message=ex.message)
         else:
             return self.response_ok({
-                'auth_uri': auth_uri
+                'auth_uri': auth_uri,
             })
 
     @action(methods=('GET',), detail=False)
@@ -110,6 +110,6 @@ class Auth0ViewSet(
         capture_sentry_message(
             message='Auth0 logout request',
             data=self.request.GET,
-            level=SentryLogLevel.INFO
+            level=SentryLogLevel.INFO,
         )
         return self.response_ok()

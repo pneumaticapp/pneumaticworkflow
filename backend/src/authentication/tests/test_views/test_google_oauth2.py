@@ -1,10 +1,10 @@
 import pytest
+
+from src.authentication.entities import UserData
 from src.authentication.services.exceptions import AuthException
 from src.authentication.services.google import GoogleAuthService
-from src.authentication.entities import UserData
 from src.processes.tests.fixtures import create_test_user
 from src.utils.validation import ErrorCode
-
 
 pytestmark = pytest.mark.django_db
 
@@ -20,12 +20,12 @@ def test_token__existent_user__authenticate(
     mocker.patch(
         'src.authentication.views.google.GoogleAuthPermission.'
         'has_permission',
-        return_value=True
+        return_value=True,
     )
     google_service_init_mock = mocker.patch.object(
         GoogleAuthService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     email = 'test@test.test'
     user = create_test_user(email=email)
@@ -35,12 +35,12 @@ def test_token__existent_user__authenticate(
         last_name='Doe',
         company_name='',
         photo='https://example.com/photo.jpg',
-        job_title=''
+        job_title='',
     )
     google_get_user_data_mock = mocker.patch(
         'src.authentication.services.google.'
         'GoogleAuthService.get_user_data',
-        return_value=user_data
+        return_value=user_data,
     )
     user_agent = 'Some/Mozilla'
     user_ip = '128.18.0.99'
@@ -48,19 +48,19 @@ def test_token__existent_user__authenticate(
     auth_service_get_token_mock = mocker.patch(
         'src.authentication.services.user_auth.'
         'AuthService.get_auth_token',
-        return_value=token
+        return_value=token,
     )
     save_tokens_mock = mocker.patch(
         'src.authentication.services.google.'
-        'GoogleAuthService.save_tokens_for_user'
+        'GoogleAuthService.save_tokens_for_user',
     )
     identify_mock = mocker.patch(
         'src.authentication.views.google.'
-        'GoogleAuthViewSet.identify'
+        'GoogleAuthViewSet.identify',
     )
     update_contacts_mock = mocker.patch(
         'src.authentication.tasks.'
-        'update_google_contacts.delay'
+        'update_google_contacts.delay',
     )
 
     # act
@@ -68,7 +68,7 @@ def test_token__existent_user__authenticate(
         path='/auth/google/token',
         data={
             'code': '4/0AbUR2VMeHxU...',
-            'state': 'random_state_string'
+            'state': 'random_state_string',
         },
         HTTP_USER_AGENT=user_agent,
         HTTP_X_REAL_IP=user_ip,
@@ -82,13 +82,13 @@ def test_token__existent_user__authenticate(
     google_get_user_data_mock.assert_called_once_with(
         auth_response={
             'code': '4/0AbUR2VMeHxU...',
-            'state': 'random_state_string'
-        }
+            'state': 'random_state_string',
+        },
     )
     auth_service_get_token_mock.assert_called_once_with(
         user=user,
         user_agent=user_agent,
-        user_ip=user_ip
+        user_ip=user_ip,
     )
     save_tokens_mock.assert_called_once_with(user)
     identify_mock.assert_not_called()
@@ -106,12 +106,12 @@ def test_token__new_user__signup(
     mocker.patch(
         'src.authentication.views.google.GoogleAuthPermission.'
         'has_permission',
-        return_value=True
+        return_value=True,
     )
     mocker.patch(
         'src.authentication.services.google.'
         'GoogleAuthService.__init__',
-        return_value=None
+        return_value=None,
     )
     email = 'new_user@test.test'
     user_data = UserData(
@@ -120,17 +120,17 @@ def test_token__new_user__signup(
         last_name='Smith',
         company_name='Test Company',
         photo='https://example.com/photo.jpg',
-        job_title=''
+        job_title='',
     )
     mocker.patch(
         'src.authentication.services.google.'
         'GoogleAuthService.get_user_data',
-        return_value=user_data
+        return_value=user_data,
     )
 
     mocker.patch(
         'src.authentication.views.google.settings.PROJECT_CONF',
-        {'SIGNUP': True}
+        {'SIGNUP': True},
     )
 
     user = create_test_user(email='different@email.com', first_name='Jane')
@@ -138,15 +138,15 @@ def test_token__new_user__signup(
     signup_mock = mocker.patch(
         'src.authentication.views.google.'
         'GoogleAuthViewSet.signup',
-        return_value=(user, token)
+        return_value=(user, token),
     )
     save_tokens_mock = mocker.patch(
         'src.authentication.services.google.'
-        'GoogleAuthService.save_tokens_for_user'
+        'GoogleAuthService.save_tokens_for_user',
     )
     update_contacts_mock = mocker.patch(
         'src.authentication.tasks.'
-        'update_google_contacts.delay'
+        'update_google_contacts.delay',
     )
 
     # act
@@ -156,8 +156,8 @@ def test_token__new_user__signup(
             'code': '4/0AbUR2VMeHxU...',
             'state': 'random_state_string',
             'utm_source': 'google',
-            'utm_medium': 'social'
-        }
+            'utm_medium': 'social',
+        },
     )
 
     # assert
@@ -176,7 +176,7 @@ def test_token__new_user__signup(
         utm_campaign=None,
         utm_term=None,
         utm_content=None,
-        gclid=None
+        gclid=None,
     )
     save_tokens_mock.assert_called_once_with(user)
     update_contacts_mock.assert_called_once_with(user.id)
@@ -193,18 +193,18 @@ def test_token__invalid_code__validation_error(
     mocker.patch(
         'src.authentication.views.google.GoogleAuthPermission.'
         'has_permission',
-        return_value=True
+        return_value=True,
     )
     mocker.patch(
         'src.authentication.services.google.'
         'GoogleAuthService.__init__',
-        return_value=None
+        return_value=None,
     )
     auth_exception = AuthException(message='Invalid authorization code')
     mocker.patch(
         'src.authentication.services.google.'
         'GoogleAuthService.get_user_data',
-        side_effect=auth_exception
+        side_effect=auth_exception,
     )
 
     # act
@@ -212,8 +212,8 @@ def test_token__invalid_code__validation_error(
         path='/auth/google/token',
         data={
             'code': 'invalid_code',
-            'state': 'random_state_string'
-        }
+            'state': 'random_state_string',
+        },
     )
 
     # assert
@@ -233,12 +233,12 @@ def test_auth_uri__ok(
     mocker.patch(
         'src.authentication.views.google.GoogleAuthPermission.'
         'has_permission',
-        return_value=True
+        return_value=True,
     )
     mocker.patch(
         'src.authentication.services.google.'
         'GoogleAuthService.__init__',
-        return_value=None
+        return_value=None,
     )
     auth_uri = (
         'https://accounts.google.com/o/oauth2/v2/auth?'
@@ -249,7 +249,7 @@ def test_auth_uri__ok(
     mocker.patch(
         'src.authentication.services.google.'
         'GoogleAuthService.get_auth_uri',
-        return_value=auth_uri
+        return_value=auth_uri,
     )
 
     # act
@@ -271,18 +271,18 @@ def test_auth_uri__service_error__validation_error(
     mocker.patch(
         'src.authentication.views.google.GoogleAuthPermission.'
         'has_permission',
-        return_value=True
+        return_value=True,
     )
     mocker.patch(
         'src.authentication.services.google.'
         'GoogleAuthService.__init__',
-        return_value=None
+        return_value=None,
     )
     auth_exception = AuthException(message='Configuration error')
     mocker.patch(
         'src.authentication.services.google.'
         'GoogleAuthService.get_auth_uri',
-        side_effect=auth_exception
+        side_effect=auth_exception,
     )
 
     # act
@@ -305,17 +305,17 @@ def test_logout__ok(
     mocker.patch(
         'src.authentication.views.google.GoogleAuthPermission.'
         'has_permission',
-        return_value=True
+        return_value=True,
     )
     capture_message_mock = mocker.patch(
         'src.authentication.views.google.'
-        'capture_sentry_message'
+        'capture_sentry_message',
     )
 
     # act
     response = api_client.get(
         path='/auth/google/logout',
-        data={'some_param': 'some_value'}
+        data={'some_param': 'some_value'},
     )
 
     # assert
@@ -334,13 +334,13 @@ def test_token__missing_required_params__validation_error(
     mocker.patch(
         'src.authentication.views.google.GoogleAuthPermission.'
         'has_permission',
-        return_value=True
+        return_value=True,
     )
 
     # act
     response = api_client.get(
         path='/auth/google/token',
-        data={}
+        data={},
     )
 
     # assert
@@ -360,12 +360,12 @@ def test_token__disable_google_auth__permission_denied(
     mocker.patch(
         'src.authentication.views.google.GoogleAuthPermission.'
         'has_permission',
-        return_value=False
+        return_value=False,
     )
     google_service_init_mock = mocker.patch.object(
         GoogleAuthService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     email = 'test@test.test'
     create_test_user(email=email)
@@ -375,12 +375,12 @@ def test_token__disable_google_auth__permission_denied(
         last_name='',
         company_name='',
         photo=None,
-        job_title=''
+        job_title='',
     )
     google_get_user_data_mock = mocker.patch(
         'src.authentication.services.google.'
         'GoogleAuthService.get_user_data',
-        return_value=user_data
+        return_value=user_data,
     )
     user_agent = 'Some/Mozilla'
     user_ip = '128.18.0.99'
@@ -388,7 +388,7 @@ def test_token__disable_google_auth__permission_denied(
     authenticate_mock = mocker.patch(
         'src.authentication.services.user_auth.'
         'AuthService.get_auth_token',
-        return_value=token
+        return_value=token,
     )
     save_tokens_mock = mocker.patch(
         'src.authentication.services.google.'
@@ -396,11 +396,11 @@ def test_token__disable_google_auth__permission_denied(
     )
     update_contacts_mock = mocker.patch(
         'src.authentication.tasks.'
-        'update_google_contacts.delay'
+        'update_google_contacts.delay',
     )
     auth_response = {
         'code': '4/0AbUR2VMeHxU...',
-        'state': 'random_state_string'
+        'state': 'random_state_string',
     }
 
     # act
@@ -408,7 +408,7 @@ def test_token__disable_google_auth__permission_denied(
         path='/auth/google/token',
         data=auth_response,
         HTTP_USER_AGENT=user_agent,
-        HTTP_X_REAL_IP=user_ip
+        HTTP_X_REAL_IP=user_ip,
     )
 
     # assert
@@ -431,16 +431,16 @@ def test_token__user_not_found_and_signup_disabled__authentication_error(
     mocker.patch(
         'src.authentication.views.google.GoogleAuthPermission.'
         'has_permission',
-        return_value=True
+        return_value=True,
     )
     settings_mock = mocker.patch(
-        'src.authentication.views.google.settings'
+        'src.authentication.views.google.settings',
     )
     settings_mock.PROJECT_CONF = {'SIGNUP': False}
     mocker.patch(
         'src.authentication.services.google.'
         'GoogleAuthService.__init__',
-        return_value=None
+        return_value=None,
     )
     email = 'nonexistent@test.test'
     user_data = UserData(
@@ -449,22 +449,22 @@ def test_token__user_not_found_and_signup_disabled__authentication_error(
         last_name='Smith',
         company_name='',
         photo=None,
-        job_title=''
+        job_title='',
     )
     mocker.patch(
         'src.authentication.services.google.'
         'GoogleAuthService.get_user_data',
-        return_value=user_data
+        return_value=user_data,
     )
     user_agent = 'Some/Mozilla'
     user_ip = '128.18.0.99'
     authenticate_mock = mocker.patch(
         'src.authentication.services.user_auth.'
-        'AuthService.get_auth_token'
+        'AuthService.get_auth_token',
     )
     signup_mock = mocker.patch(
         'src.authentication.views.google.'
-        'GoogleAuthViewSet.signup'
+        'GoogleAuthViewSet.signup',
     )
     save_tokens_mock = mocker.patch(
         'src.authentication.services.google.'
@@ -472,11 +472,11 @@ def test_token__user_not_found_and_signup_disabled__authentication_error(
     )
     update_contacts_mock = mocker.patch(
         'src.authentication.tasks.'
-        'update_google_contacts.delay'
+        'update_google_contacts.delay',
     )
     auth_response = {
         'code': '4/0AbUR2VMeHxU...',
-        'state': 'random_state_string'
+        'state': 'random_state_string',
     }
 
     # act
@@ -484,7 +484,7 @@ def test_token__user_not_found_and_signup_disabled__authentication_error(
         path='/auth/google/token',
         data=auth_response,
         HTTP_USER_AGENT=user_agent,
-        HTTP_X_REAL_IP=user_ip
+        HTTP_X_REAL_IP=user_ip,
     )
 
     # assert
@@ -506,12 +506,12 @@ def test_auth_uri__disable_google_auth__permission_denied(
     mocker.patch(
         'src.authentication.views.google.GoogleAuthPermission.'
         'has_permission',
-        return_value=False
+        return_value=False,
     )
     google_service_init_mock = mocker.patch.object(
         GoogleAuthService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     auth_uri = (
         'https://accounts.google.com/o/oauth2/v2/auth?'
@@ -520,7 +520,7 @@ def test_auth_uri__disable_google_auth__permission_denied(
     google_get_auth_uri_mock = mocker.patch(
         'src.authentication.services.google.'
         'GoogleAuthService.get_auth_uri',
-        return_value=auth_uri
+        return_value=auth_uri,
     )
 
     # act
@@ -543,33 +543,33 @@ def test_token__skip_code__validation_error(
     mocker.patch(
         'src.authentication.views.google.GoogleAuthPermission.'
         'has_permission',
-        return_value=True
+        return_value=True,
     )
     google_service_init_mock = mocker.patch.object(
         GoogleAuthService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     google_get_user_data_mock = mocker.patch(
         'src.authentication.services.google.'
-        'GoogleAuthService.get_user_data'
+        'GoogleAuthService.get_user_data',
     )
     authenticate_mock = mocker.patch(
         'src.authentication.services.user_auth.'
-        'AuthService.get_auth_token'
+        'AuthService.get_auth_token',
     )
     signup_mock = mocker.patch(
         'src.authentication.views.google.'
-        'GoogleAuthViewSet.signup'
+        'GoogleAuthViewSet.signup',
     )
     auth_response = {
-        'state': 'random_state_string'
+        'state': 'random_state_string',
     }
 
     # act
     response = api_client.get(
         path='/auth/google/token',
-        data=auth_response
+        data=auth_response,
     )
 
     # assert
@@ -594,34 +594,34 @@ def test_token__code_blank__validation_error(
     mocker.patch(
         'src.authentication.views.google.GoogleAuthPermission.'
         'has_permission',
-        return_value=True
+        return_value=True,
     )
     google_service_init_mock = mocker.patch.object(
         GoogleAuthService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     google_get_user_data_mock = mocker.patch(
         'src.authentication.services.google.'
-        'GoogleAuthService.get_user_data'
+        'GoogleAuthService.get_user_data',
     )
     authenticate_mock = mocker.patch(
         'src.authentication.services.user_auth.'
-        'AuthService.get_auth_token'
+        'AuthService.get_auth_token',
     )
     signup_mock = mocker.patch(
         'src.authentication.views.google.'
-        'GoogleAuthViewSet.signup'
+        'GoogleAuthViewSet.signup',
     )
     auth_response = {
         'code': '',
-        'state': 'random_state_string'
+        'state': 'random_state_string',
     }
 
     # act
     response = api_client.get(
         path='/auth/google/token',
-        data=auth_response
+        data=auth_response,
     )
 
     # assert
@@ -646,34 +646,34 @@ def test_token__skip_state__validation_error(
     mocker.patch(
         'src.authentication.views.google.GoogleAuthPermission.'
         'has_permission',
-        return_value=True
+        return_value=True,
     )
     google_service_init_mock = mocker.patch.object(
         GoogleAuthService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     google_get_user_data_mock = mocker.patch(
         'src.authentication.services.google.'
-        'GoogleAuthService.get_user_data'
+        'GoogleAuthService.get_user_data',
     )
     authenticate_mock = mocker.patch(
         'src.authentication.services.user_auth.'
-        'AuthService.get_auth_token'
+        'AuthService.get_auth_token',
     )
     signup_mock = mocker.patch(
         'src.authentication.views.google.'
-        'GoogleAuthViewSet.signup'
+        'GoogleAuthViewSet.signup',
     )
     auth_response = {
-        'code': '4/0AbUR2VMeHxU...'
+        'code': '4/0AbUR2VMeHxU...',
         # Missing state parameter
     }
 
     # act
     response = api_client.get(
         path='/auth/google/token',
-        data=auth_response
+        data=auth_response,
     )
 
     # assert
@@ -698,34 +698,34 @@ def test_token__state_blank__validation_error(
     mocker.patch(
         'src.authentication.views.google.GoogleAuthPermission.'
         'has_permission',
-        return_value=True
+        return_value=True,
     )
     google_service_init_mock = mocker.patch.object(
         GoogleAuthService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     google_get_user_data_mock = mocker.patch(
         'src.authentication.services.google.'
-        'GoogleAuthService.get_user_data'
+        'GoogleAuthService.get_user_data',
     )
     authenticate_mock = mocker.patch(
         'src.authentication.services.user_auth.'
-        'AuthService.get_auth_token'
+        'AuthService.get_auth_token',
     )
     signup_mock = mocker.patch(
         'src.authentication.views.google.'
-        'GoogleAuthViewSet.signup'
+        'GoogleAuthViewSet.signup',
     )
     auth_response = {
         'code': '4/0AbUR2VMeHxU...',
-        'state': ''  # Blank state parameter
+        'state': '',  # Blank state parameter
     }
 
     # act
     response = api_client.get(
         path='/auth/google/token',
-        data=auth_response
+        data=auth_response,
     )
 
     # assert
@@ -750,12 +750,12 @@ def test_token__utm_parameters__passed_to_signup(
     mocker.patch(
         'src.authentication.views.google.GoogleAuthPermission.'
         'has_permission',
-        return_value=True
+        return_value=True,
     )
     mocker.patch(
         'src.authentication.services.google.'
         'GoogleAuthService.__init__',
-        return_value=None
+        return_value=None,
     )
     email = 'new_user@test.test'
     user_data = UserData(
@@ -764,17 +764,17 @@ def test_token__utm_parameters__passed_to_signup(
         last_name='Smith',
         company_name='Test Company',
         photo='https://example.com/photo.jpg',
-        job_title='Developer'
+        job_title='Developer',
     )
     mocker.patch(
         'src.authentication.services.google.'
         'GoogleAuthService.get_user_data',
-        return_value=user_data
+        return_value=user_data,
     )
 
     mocker.patch(
         'src.authentication.views.google.settings.PROJECT_CONF',
-        {'SIGNUP': True}
+        {'SIGNUP': True},
     )
 
     user = create_test_user(email='different@email.com')
@@ -782,15 +782,15 @@ def test_token__utm_parameters__passed_to_signup(
     signup_mock = mocker.patch(
         'src.authentication.views.google.'
         'GoogleAuthViewSet.signup',
-        return_value=(user, token)
+        return_value=(user, token),
     )
     mocker.patch(
         'src.authentication.services.google.'
-        'GoogleAuthService.save_tokens_for_user'
+        'GoogleAuthService.save_tokens_for_user',
     )
     mocker.patch(
         'src.authentication.tasks.'
-        'update_google_contacts.delay'
+        'update_google_contacts.delay',
     )
 
     utm_params = {
@@ -799,7 +799,7 @@ def test_token__utm_parameters__passed_to_signup(
         'utm_campaign': 'spring_sale',
         'utm_term': 'oauth',
         'utm_content': 'button_top',
-        'gclid': 'Cj0KCQjw...'
+        'gclid': 'Cj0KCQjw...',
     }
 
     # act
@@ -808,8 +808,8 @@ def test_token__utm_parameters__passed_to_signup(
         data={
             'code': '4/0AbUR2VMeHxU...',
             'state': 'random_state_string',
-            **utm_params
-        }
+            **utm_params,
+        },
     )
 
     # assert
@@ -823,5 +823,5 @@ def test_token__utm_parameters__passed_to_signup(
         company_name='Test Company',
         photo='https://example.com/photo.jpg',
         job_title='Developer',
-        **utm_params
+        **utm_params,
     )

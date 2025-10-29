@@ -1,19 +1,19 @@
 import pytest
+
+from src.accounts.enums import (
+    SourceType,
+    UserInviteStatus,
+)
 from src.accounts.models import User, UserInvite
+from src.accounts.services.user import UserService
 from src.accounts.tokens import (
     AuthToken,
 )
-from src.accounts.enums import (
-    UserInviteStatus,
-)
-from src.processes.tests.fixtures import (
-    create_test_user,
-    create_invited_user,
-)
-from src.accounts.enums import SourceType
-from src.accounts.services.user import UserService
 from src.authentication.enums import AuthTokenType
-
+from src.processes.tests.fixtures import (
+    create_invited_user,
+    create_test_user,
+)
 
 pytestmark = pytest.mark.django_db
 
@@ -36,17 +36,17 @@ class TestSignInWithGoogleView:
         mocker.patch(
             'src.authentication.views.google.'
             'GoogleAuthPermission.has_permission',
-            return_value=True
+            return_value=True,
         )
-        analytics_mock = mocker.patch(
+        analysis_mock = mocker.patch(
             'src.authentication.views.signin.'
-            'AnalyticService.users_logged_in'
+            'AnalyticService.users_logged_in',
         )
 
         # act
         response = api_client.post(
             '/auth/signin-google',
-            data={'email': user.email}
+            data={'email': user.email},
         )
 
         # assert
@@ -54,11 +54,11 @@ class TestSignInWithGoogleView:
         assert response.status_code == 200
         assert response.data['token']
         assert user.invite.status == UserInviteStatus.ACCEPTED
-        analytics_mock.assert_called_once_with(
+        analysis_mock.assert_called_once_with(
             user=user,
             auth_type=AuthTokenType.USER,
             source=SourceType.GOOGLE,
-            is_superuser=False
+            is_superuser=False,
         )
         identify_mock.assert_called_once_with(user)
 
@@ -78,22 +78,22 @@ class TestSignInWithGoogleView:
         mocker.patch(
             'src.authentication.views.google.'
             'GoogleAuthPermission.has_permission',
-            return_value=False
+            return_value=False,
         )
-        analytics_mock = mocker.patch(
+        analysis_mock = mocker.patch(
             'src.authentication.views.signin.'
-            'AnalyticService.users_logged_in'
+            'AnalyticService.users_logged_in',
         )
 
         # act
         response = api_client.post(
             '/auth/signin-google',
-            data={'email': user.email}
+            data={'email': user.email},
         )
 
         # assert
         assert response.status_code == 401
-        analytics_mock.assert_not_called()
+        analysis_mock.assert_not_called()
         identify_mock.assert_not_called()
 
     def test_create__invited_and_active_user__ok(
@@ -107,32 +107,32 @@ class TestSignInWithGoogleView:
         another_account_owner = create_test_user(email='ao@t.t')
         create_invited_user(
             user=another_account_owner,
-            email=user.email
+            email=user.email,
         )
         mocker.patch(
             'src.authentication.views.google.'
             'GoogleAuthPermission.has_permission',
-            return_value=True
+            return_value=True,
         )
-        analytics_mock = mocker.patch(
+        analysis_mock = mocker.patch(
             'src.authentication.views.signin.'
-            'AnalyticService.users_logged_in'
+            'AnalyticService.users_logged_in',
         )
 
         # act
         response = api_client.post(
             '/auth/signin-google',
-            data={'email': user.email}
+            data={'email': user.email},
         )
 
         # assert
         assert response.status_code == 200
         assert response.data['token']
-        analytics_mock.assert_called_once_with(
+        analysis_mock.assert_called_once_with(
             user=user,
             auth_type=AuthTokenType.USER,
             source=SourceType.GOOGLE,
-            is_superuser=False
+            is_superuser=False,
         )
 
 
@@ -141,12 +141,12 @@ class TestGoogleAuthViewSet:
     def test_create__ok(self, api_client, mocker):
         # arrange
         data = {
-            'email': 'test@pneumatic.app'
+            'email': 'test@pneumatic.app',
         }
         mocker.patch(
             'src.authentication.views.google.'
             'GoogleAuthPermission.has_permission',
-            return_value=True
+            return_value=True,
         )
 
         # act
@@ -159,16 +159,16 @@ class TestGoogleAuthViewSet:
     def test_create__disable_google_auth__auth_error(
         self,
         api_client,
-        mocker
+        mocker,
     ):
         # arrange
         data = {
-            'email': 'test@pneumatic.app'
+            'email': 'test@pneumatic.app',
         }
         mocker.patch(
             'src.authentication.views.google.'
             'GoogleAuthPermission.has_permission',
-            return_value=False
+            return_value=False,
         )
 
         # act
@@ -190,7 +190,7 @@ class TestGoogleAuthViewSet:
         mocker.patch(
             'src.authentication.views.google.'
             'GoogleAuthPermission.has_permission',
-            return_value=True
+            return_value=True,
         )
 
         # act
@@ -212,12 +212,12 @@ class TestGoogleAuthViewSet:
         user = create_test_user()
         jwt_token = str(AuthToken.for_auth_data(email=user.email))
         group_mock = mocker.patch(
-            'src.analytics.mixins.BaseIdentifyMixin.group'
+            'src.analysis.mixins.BaseIdentifyMixin.group',
         )
         mocker.patch(
             'src.authentication.views.google.'
             'GoogleAuthPermission.has_permission',
-            return_value=True
+            return_value=True,
         )
 
         # act
@@ -238,7 +238,7 @@ class TestGoogleAuthViewSet:
         mocker.patch(
             'src.authentication.views.google.'
             'GoogleAuthPermission.has_permission',
-            return_value=True
+            return_value=True,
         )
 
         # act
@@ -259,17 +259,17 @@ class TestGoogleAuthViewSet:
         # arrange
         user = create_test_user()
         another_account_user = create_test_user(
-            email='another@test.test'
+            email='another@test.test',
         )
         create_invited_user(
             user=another_account_user,
-            email=user.email
+            email=user.email,
         )
         jwt_token = str(AuthToken.for_auth_data(email=user.email))
         mocker.patch(
             'src.authentication.views.google.'
             'GoogleAuthPermission.has_permission',
-            return_value=True
+            return_value=True,
         )
 
         # act

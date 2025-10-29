@@ -31,6 +31,10 @@ import { EColumnWidthMinWidth, ETableViewFieldsWidth } from './Columns/Cells/Wor
 import { WorkflowsTableActions } from './WorkflowsTableActions';
 import { useCheckDevice } from '../../../../hooks/useCheckDevice';
 import { createResizeHandler } from './utils/resizeUtils';
+import { ALL_SYSTEM_FIELD_NAMES, SKELETON_ROWS } from './constants';
+import { defaultSystemSkeletonTable } from './Columns/Cells';
+import { SkeletonDefaultCell80 } from './Columns/Cells/SystemDefaultColumns';
+import { Skeleton } from '../../../UI/Skeleton';
 
 type CustomHeaderGroup<T extends object> = HeaderGroup<T> & {
   columnType: keyof typeof EColumnWidthMinWidth;
@@ -93,9 +97,15 @@ export function WorkflowsTable({
 }: IWorkflowsTableProps) {
   const { formatMessage } = useIntl();
   const { isDesktop } = useCheckDevice();
+
   const groups = useSelector((state: IApplicationState) => state.groups.list);
   const currentUser = useSelector((state: IApplicationState) => state.authUser);
-  const [searchQuery, setSearchQuery] = useState(searchText);
+  const selectedFields = useSelector((state: IApplicationState) => state.workflows.workflowsSettings.selectedFields);
+  const lastLoadedTemplateIdForTable = useSelector(
+    (state: IApplicationState) => state.workflows.workflowsSettings.lastLoadedTemplateIdForTable,
+  );
+
+  const selectedFieldsSet = useMemo(() => new Set(selectedFields), [selectedFields]);
 
   const savedGlobalWidths = JSON.parse(
     localStorage.getItem(`workflow-column-widths-${currentUser?.id}-global`) || '{}',
@@ -106,13 +116,17 @@ export function WorkflowsTable({
 
   const tableWrapperRef = React.useRef<HTMLDivElement | null>(null);
   const tableRef = useRef<HTMLTableElement>(null);
+  const cashTableStructureRef = useRef<Column<TableColumns>[]>([]);
 
   const tableViewContainerRef = useWorkflowsTableRef();
   const isTableWiderThanScreen = useIsTableWiderThanScreen();
   const debounceOnSearch = useCallback(debounce(500, onSearch), []);
 
+  const currentTemplateId = templatesIdsFilter.length === 1 ? templatesIdsFilter[0] : null;
+  const [searchQuery, setSearchQuery] = useState(searchText);
   const [tableHeight, setTableHeight] = useState<number>(0);
   const [colWidths, setColWidths] = useState<Record<string, number>>({});
+  const [isСhangeTemplateId, setIsСhangeTemplateId] = useState(false);
 
   useEffect(() => {
     const appContainer = document.getElementById('app-container');
@@ -148,6 +162,14 @@ export function WorkflowsTable({
       observer.disconnect();
     };
   }, []);
+
+  useEffect(() => {
+    if (String(lastLoadedTemplateIdForTable) !== String(currentTemplateId)) {
+      setIsСhangeTemplateId(true);
+    } else {
+      setIsСhangeTemplateId(false);
+    }
+  }, [currentTemplateId]);
 
   const workflowStartersOptions = useMemo(() => {
     const usersWithExternal = [EXTERNAL_USER, ...users];
@@ -361,73 +383,148 @@ export function WorkflowsTable({
       minWidth: EColumnWidthMinWidth[field.type],
     })) || [];
 
-  const columns: Column<TableColumns>[] = React.useMemo(
-    () => [
-      {
-        Header: renderSearch(),
-        accessor: 'workflow',
-        Cell: renderWorkflowColumn,
-        width: savedGlobalWidths.workflow || ETableViewFieldsWidth.workflow,
-        minWidth: EColumnWidthMinWidth.workflow,
-        columnType: 'workflow',
-      },
-      {
-        Header: renderWorkflowStarterFilter(),
-        accessor: 'starter',
-        Cell: ColumnCells.StarterColumn,
-        width: savedGlobalWidths.starter || ETableViewFieldsWidth.starter,
-        minWidth: EColumnWidthMinWidth.starter,
-        columnType: 'starter',
-      },
-      {
-        Header: formatMessage({ id: 'workflows.filter-column-progress' }),
-        accessor: 'progress',
-        Cell: ColumnCells.ProgressColumn,
-        width: savedGlobalWidths.progress || ETableViewFieldsWidth.progress,
-        minWidth: EColumnWidthMinWidth.progress,
-        columnType: 'progress',
-      },
-      {
-        Header: renderStepFilter(),
-        accessor: 'step',
-        Cell: ColumnCells.StepColumn,
-        width: savedGlobalWidths.step || ETableViewFieldsWidth.step,
-        minWidth: EColumnWidthMinWidth.step,
-        columnType: 'step',
-      },
-      {
-        Header: renderPerformersFilter(),
-        accessor: 'performer',
-        Cell: ColumnCells.PerformerColumn,
-        width: savedGlobalWidths.performer || ETableViewFieldsWidth.performer,
-        minWidth: EColumnWidthMinWidth.performer,
-        columnType: 'performer',
-      },
-      ...fieldsColumns,
-    ],
-    [
-      searchQuery,
-      users.length,
-      workflowStartersIdsFilter.length,
-      templatesIdsFilter.length,
-      filterTemplates,
-      stepsIdsFilter.length,
-      performersIdsFilter.length,
-      statusFilter,
-      performersCounters,
-      workflowStartersCounters,
-      fieldsColumns.length,
-    ],
-  );
+  const shouldSkeletonDefaultTable =
+    (workflowsLoadingStatus === EWorkflowsLoadingStatus.LoadingList || selectedFields.length === 0) &&
+    cashTableStructureRef.current.length === 0;
+
+  const shouldSkeletonOptionalTable =
+    workflowsLoadingStatus === EWorkflowsLoadingStatus.LoadingList && isСhangeTemplateId;
+
+  const shouldSkeletonBody =
+    workflowsLoadingStatus === EWorkflowsLoadingStatus.LoadingList &&
+    String(lastLoadedTemplateIdForTable) === String(currentTemplateId);
+
+  const isWorkflowEmptyList =
+    workflowsLoadingStatus === EWorkflowsLoadingStatus.EmptyList ||
+    (workflowsLoadingStatus === EWorkflowsLoadingStatus.LoadingList &&
+      workflowsList.items.length === 0 &&
+      String(lastLoadedTemplateIdForTable) === String(currentTemplateId));
+
+  const columns: Column<TableColumns>[] = React.useMemo(() => {
+    if (shouldSkeletonOptionalTable) {
+      return cashTableStructureRef.current;
+    }
+
+    const systemColumns = [
+      ...(selectedFieldsSet.has('system-column-workflow')
+        ? [
+            {
+              Header: renderSearch(),
+              accessor: 'system-column-workflow',
+              Cell: renderWorkflowColumn,
+              width: savedGlobalWidths['system-column-workflow'] || ETableViewFieldsWidth['system-column-workflow'],
+              minWidth: EColumnWidthMinWidth['system-column-workflow'],
+              columnType: 'system-column-workflow',
+            },
+          ]
+        : []),
+      ...(selectedFieldsSet.has('system-column-templateName')
+        ? [
+            {
+              Header: (
+                <div className={styles['column-header__template-name']}>
+                  {formatMessage({ id: 'workflows.filter-column-template-name' })}
+                </div>
+              ),
+              accessor: 'system-column-templateName',
+              Cell: ColumnCells.TemplateNameColumn,
+              width:
+                savedGlobalWidths['system-column-templateName'] || ETableViewFieldsWidth['system-column-templateName'],
+              minWidth: EColumnWidthMinWidth['system-column-templateName'],
+              columnType: 'system-column-templateName',
+            },
+          ]
+        : []),
+      ...(selectedFieldsSet.has('system-column-starter')
+        ? [
+            {
+              Header: renderWorkflowStarterFilter(),
+              accessor: 'system-column-starter',
+              Cell: ColumnCells.StarterColumn,
+              width: savedGlobalWidths['system-column-starter'] || ETableViewFieldsWidth['system-column-starter'],
+              minWidth: EColumnWidthMinWidth['system-column-starter'],
+              columnType: 'system-column-starter',
+            },
+          ]
+        : []),
+      ...(selectedFieldsSet.has('system-column-progress')
+        ? [
+            {
+              Header: formatMessage({ id: 'workflows.filter-column-progress' }),
+              accessor: 'system-column-progress',
+              Cell: ColumnCells.ProgressColumn,
+              width: savedGlobalWidths['system-column-progress'] || ETableViewFieldsWidth['system-column-progress'],
+              minWidth: EColumnWidthMinWidth['system-column-progress'],
+              columnType: 'system-column-progress',
+            },
+          ]
+        : []),
+      ...(selectedFieldsSet.has('system-column-step')
+        ? [
+            {
+              Header: renderStepFilter(),
+              accessor: 'system-column-step',
+              Cell: ColumnCells.StepColumn,
+              width: savedGlobalWidths['system-column-step'] || ETableViewFieldsWidth['system-column-step'],
+              minWidth: EColumnWidthMinWidth['system-column-step'],
+              columnType: 'system-column-step',
+            },
+          ]
+        : []),
+      ...(selectedFieldsSet.has('system-column-performer')
+        ? [
+            {
+              Header: renderPerformersFilter(),
+              accessor: 'system-column-performer',
+              Cell: ColumnCells.PerformerColumn,
+              width: savedGlobalWidths['system-column-performer'] || ETableViewFieldsWidth['system-column-performer'],
+              minWidth: EColumnWidthMinWidth['system-column-performer'],
+              columnType: 'system-column-performer',
+            },
+          ]
+        : []),
+    ];
+
+    const optionalColumns = isWorkflowEmptyList
+      ? cashTableStructureRef.current.filter((col) => !new Set(ALL_SYSTEM_FIELD_NAMES).has(col.accessor as string))
+      : fieldsColumns;
+
+    const newColumns = [...systemColumns, ...optionalColumns];
+
+    if (
+      workflowsLoadingStatus === EWorkflowsLoadingStatus.Loaded ||
+      workflowsLoadingStatus === EWorkflowsLoadingStatus.EmptyList
+    ) {
+      cashTableStructureRef.current = newColumns;
+      setIsСhangeTemplateId(false);
+    }
+
+    return newColumns;
+  }, [
+    workflowsLoadingStatus,
+    searchQuery,
+    users.length,
+    workflowStartersIdsFilter.length,
+    templatesIdsFilter.length,
+    filterTemplates,
+    stepsIdsFilter.length,
+    performersIdsFilter.length,
+    statusFilter,
+    performersCounters,
+    workflowStartersCounters,
+    fieldsColumns.length,
+    selectedFieldsSet,
+  ]);
 
   const data = useMemo((): TableColumns[] => {
     return workflowsList.items.map((workflow) => {
       const baseData: TableColumns = {
-        workflow,
-        starter: workflow,
-        progress: workflow,
-        step: workflow,
-        performer: workflow,
+        'system-column-workflow': workflow,
+        'system-column-templateName': workflow,
+        'system-column-starter': workflow,
+        'system-column-progress': workflow,
+        'system-column-step': workflow,
+        'system-column-performer': workflow,
       } as TableColumns;
 
       workflow.fields?.forEach((field: ITableViewFields) => {
@@ -444,95 +541,151 @@ export function WorkflowsTable({
   };
 
   useEffect(() => {
-    setColWidths((prev) => {
-      const newWidths = { ...prev };
+    if (workflowsLoadingStatus === EWorkflowsLoadingStatus.Loaded) {
+      setColWidths((prev) => {
+        const newWidths = { ...prev };
 
-      columns.forEach((col) => {
-        const id = col.accessor as string;
-        if (!newWidths[id]) {
-          newWidths[id] = col.width as number;
-        }
+        columns.forEach((col) => {
+          const id = col.accessor as string;
+          if (!newWidths[id]) {
+            newWidths[id] = col.width as number;
+          }
+        });
+
+        return newWidths;
       });
-
-      return newWidths;
-    });
-  }, [columns.length]);
+    }
+  }, [columns.length, workflowsLoadingStatus]);
 
   const handleMouseDown = createResizeHandler(colWidths, setColWidths, currentUser?.id, templatesIdsFilter[0]);
 
   const { getTableProps, getTableBodyProps, headerGroups, rows, prepareRow } = useTable<TableColumns>(options);
 
+  const getTableBodyContent = () => {
+    if (shouldSkeletonDefaultTable) {
+      return SKELETON_ROWS.map((row) => (
+        <tr className={styles['row']} key={row}>
+          {defaultSystemSkeletonTable.map((column) => (
+            <td key={column.accessor as string} className={styles['column']}>
+              {(column as any).Cell({})}
+            </td>
+          ))}
+        </tr>
+      ));
+    }
+    if (workflowsList.items.length === 0 && (shouldSkeletonBody || shouldSkeletonOptionalTable)) {
+      return SKELETON_ROWS.map((row) => (
+        <tr className={styles['row']} key={row}>
+          {columns.map((column) => {
+            return (
+              <td key={column.accessor as string} className={styles['column']} aria-label="Loading">
+                <Skeleton
+                  width={`${(column as any).width ? Math.max((column as any).width * 0.7, 80) : 80}px`}
+                  height="2rem"
+                />
+              </td>
+            );
+          })}
+        </tr>
+      ));
+    }
+
+    return rows.map((row) => {
+      prepareRow(row);
+      const workflowId = row.original['system-column-workflow'].id;
+      return (
+        <tr {...row.getRowProps()} className={styles['row']} key={workflowId}>
+          {row.cells.map((cell) => {
+            return (
+              <td
+                {...cell.getCellProps({
+                  style: {
+                    width: colWidths[cell.column.id],
+                    maxWidth: colWidths[cell.column.id],
+                    minWidth: colWidths[cell.column.id],
+                  },
+                })}
+                className={styles['column']}
+              >
+                {shouldSkeletonOptionalTable || shouldSkeletonBody ? (
+                  <Skeleton
+                    width={`${
+                      cell.column.id && colWidths[cell.column.id] ? Math.max(colWidths[cell.column.id] * 0.7, 80) : 80
+                    }px`}
+                    height="2rem"
+                  />
+                ) : (
+                  cell.render('Cell')
+                )}
+              </td>
+            );
+          })}
+        </tr>
+      );
+    });
+  };
+
   const renderTable = () => {
     return (
       <table {...getTableProps()} className={styles['table']} ref={tableRef}>
         <thead className={styles['thead']}>
-          {headerGroups.map((headerGroup) => (
-            <tr {...headerGroup.getHeaderGroupProps()}>
-              {headerGroup.headers.map((column: CustomHeaderGroup<TableColumns>) => (
+          {shouldSkeletonDefaultTable ? (
+            <tr>
+              {defaultSystemSkeletonTable.map((column) => (
                 <th
-                  {...column.getHeaderProps({
-                    style: {
-                      position: 'relative',
-                      width: colWidths[column.id],
-                      maxWidth: colWidths[column.id],
-                      minWidth: colWidths[column.id],
-                    },
-                  })}
+                  key={column.accessor as string}
+                  style={{
+                    position: 'relative',
+                    width: (column as any).width,
+                    maxWidth: (column as any).width,
+                    minWidth: (column as any).width,
+                  }}
                   className={classNames(styles['column-header'], styles['column'])}
                 >
-                  {column.render('Header')}
-                  <div className={styles['column-header__hover-zone']} style={{ height: tableHeight }}>
-                    <div
-                      className={styles['column-header__resize']}
-                      style={{ height: tableHeight }}
-                      onMouseDown={(e) => handleMouseDown(e, column.id, column.minWidth)}
-                      role="button"
-                      aria-label={`Resize column ${column.id}`}
-                      tabIndex={0}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' || e.key === ' ') {
-                          e.preventDefault();
-                        }
-                      }}
-                    >
-                      <div className={styles['column-header__dashed-line']} style={{ height: tableHeight }}></div>
-                    </div>
-                  </div>
+                  {(column as any).Header}
                 </th>
               ))}
             </tr>
-          ))}
-        </thead>
-        <tbody {...getTableBodyProps()}>
-          {workflowsLoadingStatus === EWorkflowsLoadingStatus.LoadingList
-            ? renderLoader()
-            : rows.map((row) => {
-                prepareRow(row);
-
-                const workflowId = row.original.workflow.id;
-
-                return (
-                  <tr {...row.getRowProps()} className={styles['row']} key={workflowId}>
-                    {row.cells.map((cell) => {
-                      return (
-                        <td
-                          {...cell.getCellProps({
-                            style: {
-                              width: colWidths[cell.column.id],
-                              maxWidth: colWidths[cell.column.id],
-                              minWidth: colWidths[cell.column.id],
-                            },
-                          })}
-                          className={styles['column']}
-                        >
-                          {cell.render('Cell')}
-                        </td>
-                      );
+          ) : (
+            headerGroups.map((headerGroup) => (
+              <tr {...headerGroup.getHeaderGroupProps()}>
+                {headerGroup.headers.map((column: CustomHeaderGroup<TableColumns>) => (
+                  <th
+                    {...column.getHeaderProps({
+                      style: {
+                        position: 'relative',
+                        width: colWidths[column.id],
+                        maxWidth: colWidths[column.id],
+                        minWidth: colWidths[column.id],
+                      },
                     })}
-                  </tr>
-                );
-              })}
-        </tbody>
+                    className={classNames(styles['column-header'], styles['column'])}
+                  >
+                    {shouldSkeletonOptionalTable ? <SkeletonDefaultCell80 /> : column.render('Header')}
+                    <div className={styles['column-header__hover-zone']} style={{ height: tableHeight }}>
+                      <div
+                        className={styles['column-header__resize']}
+                        style={{ height: tableHeight }}
+                        onMouseDown={(e) => handleMouseDown(e, column.id, column.minWidth)}
+                        role="button"
+                        aria-label={`Resize column ${column.id}`}
+                        tabIndex={0}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                          }
+                        }}
+                      >
+                        <div className={styles['column-header__dashed-line']} style={{ height: tableHeight }}></div>
+                      </div>
+                    </div>
+                  </th>
+                ))}
+              </tr>
+            ))
+          )}
+        </thead>
+        <tbody {...getTableBodyProps()}>{getTableBodyContent()}</tbody>
       </table>
     );
   };

@@ -1,7 +1,8 @@
-# pylint: disable=super-init-not-called,attribute-defined-outside-init
 from typing import Optional
-from rest_framework.throttling import SimpleRateThrottle
+
 from django.core.exceptions import ImproperlyConfigured
+from rest_framework.throttling import SimpleRateThrottle
+
 from src.authentication.enums import AuthTokenType
 
 
@@ -25,9 +26,8 @@ class CustomSimpleRateThrottle(SimpleRateThrottle):
         """
         if not getattr(self, 'scope', None):
             msg = (
-                "You must set either `.scope` or "
-                "`.rate` for '%s' throttle" %
-                self.__class__.__name__
+                f"You must set either `.scope` or "
+                f"`.rate` for '{self.__class__.__name__}' throttle"
             )
             raise ImproperlyConfigured(msg)
 
@@ -36,7 +36,7 @@ class CustomSimpleRateThrottle(SimpleRateThrottle):
     def get_cache_key(self, request, *args, **kwargs) -> str:
         return self.cache_format % {
             'scope': self.scope,
-            'ident': self.get_ident(request)
+            'ident': self.get_ident(request),
         }
 
     def throttle_success(self):
@@ -49,6 +49,7 @@ class CustomSimpleRateThrottle(SimpleRateThrottle):
 
         if self.get_rate() is None:
             return True
+        return None
 
     def _get_period(self):
         num_requests, duration = self.parse_rate(self.rate)
@@ -114,10 +115,7 @@ class BaseAuthThrottle(CustomSimpleRateThrottle):
         user = request.user
         if not user.is_authenticated:
             return True
-        elif self.skip_for_paid_accounts and user.account.is_paid:
-            return True
-        else:
-            return False
+        return bool(self.skip_for_paid_accounts and user.account.is_paid)
 
 
 class TokenThrottle(BaseAuthThrottle):
@@ -132,10 +130,7 @@ class TokenThrottle(BaseAuthThrottle):
 
         if super().skip_condition(request):
             return True
-        elif request.token_type != AuthTokenType.USER:
-            return True
-        else:
-            return False
+        return request.token_type != AuthTokenType.USER
 
 
 class ApiKeyThrottle(BaseAuthThrottle):
@@ -145,14 +140,10 @@ class ApiKeyThrottle(BaseAuthThrottle):
 
     def get_ident(self, request) -> str:
         auth_header = request.META.get('HTTP_AUTHORIZATION')
-        token = auth_header.split()[1]
-        return token
+        return auth_header.split()[1]
 
     def skip_condition(self, request) -> bool:
 
         if super().skip_condition(request):
             return True
-        elif request.token_type != AuthTokenType.API:
-            return True
-        else:
-            return False
+        return request.token_type != AuthTokenType.API

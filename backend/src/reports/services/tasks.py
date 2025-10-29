@@ -13,18 +13,17 @@ from src.processes.utils.common import (
     insert_fields_values_to_text,
 )
 from src.reports.entities import (
+    TaskForTasksDigest,
     TasksDigest,
     TemplateForTasksDigest,
-    TaskForTasksDigest,
-)
-from src.reports.services.base import (
-    SendDigest,
 )
 from src.reports.queries.tasks import (
     TasksDigestQuery,
 )
+from src.reports.services.base import (
+    SendDigest,
+)
 from src.services.email import EmailService
-
 
 UserModel = get_user_model()
 
@@ -46,14 +45,13 @@ class SendTasksDigest(SendDigest):
             force=self._force,
         )
         sql, params = query.get_sql()
-        data = RawSqlExecutor.fetch(
+        return RawSqlExecutor.fetch(
             sql,
             params,
             stream=True,
             fetch_size=self._fetch_size,
             db=settings.REPLICA,
         )
-        return data
 
     def _replace_api_name(
         self,
@@ -64,7 +62,7 @@ class SendTasksDigest(SendDigest):
         if api_name:
             task_name = insert_fields_values_to_text(
                 text=task_name,
-                fields_values={api_name[0]: template.fields[api_name[0]]}
+                fields_values={api_name[0]: template.fields[api_name[0]]},
             )
         return task_name
 
@@ -98,7 +96,7 @@ class SendTasksDigest(SendDigest):
                 in_progress=row['in_progress'],
                 overdue=row['overdue'],
                 completed=row['completed'],
-            )
+            ),
         )
 
     def _add_user_data(self, user_digest: TasksDigest, row):
@@ -110,7 +108,7 @@ class SendTasksDigest(SendDigest):
 
     def _send_emails(self, digests: Dict[int, TasksDigest]):
         users = UserModel.objects.select_related(
-            'account'
+            'account',
         ).by_ids(list(digests.keys()))
         for user in users:
             digest = digests.get(user.id)
@@ -121,7 +119,7 @@ class SendTasksDigest(SendDigest):
                     date_to=self._date_to - timedelta(days=1),
                     date_from=self._date_from,
                     digest=asdict(digest),
-                    logo_lg=user.account.logo_lg
+                    logo_lg=user.account.logo_lg,
                 )
                 user.last_tasks_digest_send_time = self._now
                 user.save(update_fields=['last_tasks_digest_send_time'])

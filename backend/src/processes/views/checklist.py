@@ -1,35 +1,26 @@
 from django.contrib.auth import get_user_model
 from rest_framework.decorators import action
 from rest_framework.viewsets import GenericViewSet
-from src.generics.permissions import (
-    IsAuthenticated,
-)
-from src.processes.permissions import (
-    GuestTaskPermission,
-)
+
+from src.accounts.enums import UserType
 from src.accounts.permissions import (
-    ExpiredSubscriptionPermission,
     BillingPlanPermission,
+    ExpiredSubscriptionPermission,
 )
-from src.generics.mixins.views import (
-    CustomViewSetMixin,
+from src.analysis.mixins import BaseIdentifyMixin
+from src.generics.mixins.views import CustomViewSetMixin
+from src.generics.permissions import IsAuthenticated
+from src.processes.models.workflows.checklist import Checklist
+from src.processes.permissions import GuestTaskPermission
+from src.processes.serializers.workflows.checklist import (
+    CheckListRequestSerializer,
+    CheckListSerializer,
 )
-from src.processes.models import (
-    Checklist
-)
+from src.processes.services.tasks.checklist import ChecklistService
 from src.processes.services.tasks.exceptions import (
     ChecklistServiceException,
 )
 from src.utils.validation import raise_validation_error
-from src.analytics.mixins import BaseIdentifyMixin
-from src.processes.services.tasks.checklist import (
-    ChecklistService
-)
-from src.processes.serializers.workflows.checklist import (
-    CheckListSerializer,
-    CheckListRequestSerializer
-)
-from src.accounts.enums import UserType
 
 UserModel = get_user_model()
 
@@ -55,7 +46,7 @@ class CheckListViewSet(
 
     def get_queryset(self):
         qst = Checklist.objects.filter(
-            task__account_id=self.request.user.account_id
+            task__account_id=self.request.user.account_id,
         )
         user = self.request.user
         skip_member_access = (
@@ -83,7 +74,7 @@ class CheckListViewSet(
                 auth_type=request.token_type,
             )
             checklist_service.mark(
-                selection_id=request_slz.validated_data['selection_id']
+                selection_id=request_slz.validated_data['selection_id'],
             )
         except ChecklistServiceException as ex:
             raise_validation_error(message=ex.message)
@@ -104,7 +95,7 @@ class CheckListViewSet(
                 auth_type=request.token_type,
             )
             checklist_service.unmark(
-                selection_id=request_slz.validated_data['selection_id']
+                selection_id=request_slz.validated_data['selection_id'],
             )
         except ChecklistServiceException as ex:
             raise_validation_error(message=ex.message)

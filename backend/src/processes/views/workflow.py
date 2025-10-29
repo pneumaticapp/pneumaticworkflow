@@ -1,80 +1,64 @@
 from rest_framework.decorators import action
 from rest_framework.generics import (
-    get_object_or_404
+    get_object_or_404,
 )
 from rest_framework.mixins import ListModelMixin, UpdateModelMixin
-from rest_framework.viewsets import GenericViewSet
 from rest_framework.pagination import LimitOffsetPagination
-from src.analytics.services import AnalyticService
-from src.utils.validation import raise_validation_error
-from src.accounts.permissions import (
-    UsersOverlimitedPermission,
-    UserIsAdminOrAccountOwner,
-    ExpiredSubscriptionPermission,
-    BillingPlanPermission,
-    AccountOwnerPermission,
-)
-from src.analytics.actions import (
-    WorkflowActions
-)
-from src.generics.filters import PneumaticFilterBackend
-from src.processes.paginations import WorkflowListPagination
-from src.generics.paginations import DefaultPagination
+from rest_framework.viewsets import GenericViewSet
 
-from src.processes.models import (
-    Workflow,
-    WorkflowEvent,
-)
-from src.processes.permissions import (
-    WorkflowOwnerPermission,
-    WorkflowMemberPermission,
-    GuestWorkflowPermission,
-    GuestWorkflowEventsPermission,
-)
-from src.processes.serializers.comments import (
-    CommentCreateSerializer,
-)
-from src.processes.serializers.workflows.workflow import (
-    WorkflowDetailsSerializer,
-    WorkflowTaskCompleteSerializer,
-    WorkflowReturnToTaskSerializer,
-    WorkflowFinishSerializer,
-    WorkflowUpdateSerializer,
-    WorkflowListSerializer,
-    WorkflowListFilterSerializer,
-    WorkflowFieldsSerializer,
-    WorkflowSnoozeSerializer,
-    WorkflowFieldsFilterSerializer,
-)
-from src.processes.serializers.workflows.events import (
-    WorkflowEventSerializer,
-)
 from src.accounts.enums import UserType
-from src.generics.mixins.views import CustomViewSetMixin
-from src.generics.permissions import (
-    UserIsAuthenticated,
-    IsAuthenticated,
+from src.accounts.permissions import (
+    AccountOwnerPermission,
+    BillingPlanPermission,
+    ExpiredSubscriptionPermission,
+    UserIsAdminOrAccountOwner,
+    UsersOverlimitedPermission,
 )
+from src.analysis.actions import WorkflowActions
+from src.analysis.services import AnalyticService
+from src.generics.filters import PneumaticFilterBackend
+from src.generics.mixins.views import CustomViewSetMixin
+from src.generics.paginations import DefaultPagination
+from src.generics.permissions import (
+    IsAuthenticated,
+    UserIsAuthenticated,
+)
+from src.processes.enums import WorkflowEventType
 from src.processes.filters import (
     WorkflowEventFilter,
     WorkflowWebhookFilterSet,
 )
+from src.processes.models.workflows.event import WorkflowEvent
+from src.processes.models.workflows.workflow import Workflow
+from src.processes.paginations import WorkflowListPagination
+from src.processes.permissions import (
+    GuestWorkflowEventsPermission,
+    GuestWorkflowPermission,
+    WorkflowMemberPermission,
+    WorkflowOwnerPermission,
+)
+from src.processes.serializers.comments import CommentCreateSerializer
+from src.processes.serializers.workflows.events import WorkflowEventSerializer
+from src.processes.serializers.workflows.workflow import (
+    WorkflowDetailsSerializer,
+    WorkflowFieldsFilterSerializer,
+    WorkflowFieldsSerializer,
+    WorkflowFinishSerializer,
+    WorkflowListFilterSerializer,
+    WorkflowListSerializer,
+    WorkflowReturnToTaskSerializer,
+    WorkflowSnoozeSerializer,
+    WorkflowTaskCompleteSerializer,
+    WorkflowUpdateSerializer,
+)
+from src.processes.services.events import CommentService
 from src.processes.services.exceptions import (
-    WorkflowActionServiceException
+    CommentServiceException,
+    WorkflowActionServiceException,
 )
-from src.processes.services.workflow_action import (
-    WorkflowActionService
-)
-from src.processes.services.events import (
-    CommentService,
-)
-from src.processes.services.exceptions import (
-    CommentServiceException
-)
-from src.processes.services.tasks.exceptions import (
-    TaskFieldException
-)
-from src.processes.enums import WorkflowEventType
+from src.processes.services.tasks.exceptions import TaskFieldException
+from src.processes.services.workflow_action import WorkflowActionService
+from src.utils.validation import raise_validation_error
 from src.webhooks.enums import HookEvent
 
 
@@ -82,7 +66,7 @@ class WorkflowViewSet(
     CustomViewSetMixin,
     ListModelMixin,
     UpdateModelMixin,
-    GenericViewSet
+    GenericViewSet,
 ):
 
     filter_backends = (PneumaticFilterBackend, )
@@ -127,7 +111,7 @@ class WorkflowViewSet(
             queryset = queryset.with_member(user)
         elif self.action == 'webhook_example':
             queryset = queryset.filter(
-                owners=user.id
+                owners=user.id,
             ).order_by('-date_created')
         return self.prefetch_queryset(queryset)
 
@@ -138,10 +122,11 @@ class WorkflowViewSet(
         queryset = self.get_queryset()
         lookup_url_kwarg = self.lookup_url_kwarg or self.lookup_field
         assert lookup_url_kwarg in self.kwargs, (
-            'Expected view %s to be called with a URL keyword argument '
-            'named "%s". Fix your URL conf, or set the `.lookup_field` '
-            'attribute on the view correctly.' %
-            (self.__class__.__name__, lookup_url_kwarg)
+            f'Expected view {self.__class__.__name__} '
+            f'to be called with a URL keyword argument '
+            f'named "{lookup_url_kwarg}". '
+            f'Fix your URL conf, or set the `.lookup_field` '
+            f'attribute on the view correctly.'
         )
         filter_kwargs = {self.lookup_field: self.kwargs[lookup_url_kwarg]}
         obj = get_object_or_404(queryset, **filter_kwargs)
@@ -156,20 +141,20 @@ class WorkflowViewSet(
                 ExpiredSubscriptionPermission(),
                 UserIsAdminOrAccountOwner(),
             )
-        elif self.action == 'fields':
+        if self.action == 'fields':
             return (
                 AccountOwnerPermission(),
                 BillingPlanPermission(),
                 ExpiredSubscriptionPermission(),
             )
-        elif self.action == 'retrieve':
+        if self.action == 'retrieve':
             return (
                 UserIsAuthenticated(),
                 BillingPlanPermission(),
                 ExpiredSubscriptionPermission(),
                 WorkflowMemberPermission(),
             )
-        elif self.action in (
+        if self.action in (
             'destroy',
             'terminate',
             'resume',
@@ -185,7 +170,7 @@ class WorkflowViewSet(
                 WorkflowOwnerPermission(),
                 UsersOverlimitedPermission(),
             )
-        elif self.action == 'partial_update':
+        if self.action == 'partial_update':
             return (
                 UserIsAuthenticated(),
                 BillingPlanPermission(),
@@ -193,7 +178,7 @@ class WorkflowViewSet(
                 WorkflowOwnerPermission(),
                 UsersOverlimitedPermission(),
             )
-        elif self.action == 'comment':
+        if self.action == 'comment':
             return (
                 IsAuthenticated(),
                 BillingPlanPermission(),
@@ -202,7 +187,7 @@ class WorkflowViewSet(
                 GuestWorkflowPermission(),
                 WorkflowMemberPermission(),
             )
-        elif self.action == 'complete':
+        if self.action == 'complete':
             return (
                 IsAuthenticated(),
                 BillingPlanPermission(),
@@ -210,7 +195,7 @@ class WorkflowViewSet(
                 UsersOverlimitedPermission(),
                 GuestWorkflowPermission(),
             )
-        elif self.action == 'events':
+        if self.action == 'events':
             return (
                 IsAuthenticated(),
                 BillingPlanPermission(),
@@ -218,7 +203,7 @@ class WorkflowViewSet(
                 GuestWorkflowEventsPermission(),
                 WorkflowMemberPermission(),
             )
-        elif self.action == 'webhook_example':
+        if self.action == 'webhook_example':
             return (
                 UserIsAuthenticated(),
                 ExpiredSubscriptionPermission(),
@@ -248,7 +233,7 @@ class WorkflowViewSet(
 
         serializer = self.get_serializer(
             instance=workflow,
-            data=request.data
+            data=request.data,
         )
         serializer.is_valid(raise_exception=True)
         is_urgent = serializer.validated_data.get('is_urgent')
@@ -271,10 +256,10 @@ class WorkflowViewSet(
                 action=(
                     WorkflowActions.marked if is_urgent else
                     WorkflowActions.unmarked
-                )
+                ),
             )
         return self.response_ok(
-            WorkflowDetailsSerializer(instance=workflow).data
+            WorkflowDetailsSerializer(instance=workflow).data,
         )
 
     @action(methods=['post'], detail=True)
@@ -282,24 +267,24 @@ class WorkflowViewSet(
         workflow = self.get_object()
         slz = self.get_serializer(
             data=request.data,
-            extra_fields={'workflow': workflow}
+            extra_fields={'workflow': workflow},
         )
         slz.is_valid(raise_exception=True)
         service = CommentService(
             user=request.user,
             auth_type=request.token_type,
-            is_superuser=request.is_superuser
+            is_superuser=request.is_superuser,
         )
         task = workflow.tasks.active_or_delayed().order_by('-number').first()
         try:
             event = service.create(
                 task=task,
-                **slz.validated_data
+                **slz.validated_data,
             )
         except CommentServiceException as ex:
             raise_validation_error(message=ex.message)
         return self.response_ok(
-            WorkflowEventSerializer(instance=event).data
+            WorkflowEventSerializer(instance=event).data,
         )
 
     @action(methods=['post'], detail=True, url_path='task-complete')
@@ -307,26 +292,26 @@ class WorkflowViewSet(
         workflow = self.get_object()
         serializer = self.get_serializer(
             data=request.data,
-            extra_fields={'workflow': workflow}
+            extra_fields={'workflow': workflow},
         )
         serializer.is_valid(raise_exception=True)
         service = WorkflowActionService(
             workflow=workflow,
             user=request.user,
             auth_type=request.token_type,
-            is_superuser=request.is_superuser
+            is_superuser=request.is_superuser,
         )
         try:
             service.complete_task_for_user(
                 task=serializer.validated_data['task'],
-                fields_values=serializer.validated_data.get('output')
+                fields_values=serializer.validated_data.get('output'),
             )
         except WorkflowActionServiceException as ex:
             raise_validation_error(message=ex.message)
         except TaskFieldException as ex:
             raise_validation_error(
                 message=ex.message,
-                api_name=ex.api_name
+                api_name=ex.api_name,
             )
         return self.response_ok()
 
@@ -335,18 +320,18 @@ class WorkflowViewSet(
         workflow = self.get_object()
         serializer = self.get_serializer(
             data=request.data,
-            extra_fields={'workflow': workflow}
+            extra_fields={'workflow': workflow},
         )
         serializer.is_valid(raise_exception=True)
         service = WorkflowActionService(
             workflow=workflow,
             user=request.user,
             auth_type=request.token_type,
-            is_superuser=request.is_superuser
+            is_superuser=request.is_superuser,
         )
         try:
             service.return_to(
-                revert_to_task=serializer.validated_data['task']
+                revert_to_task=serializer.validated_data['task'],
             )
         except WorkflowActionServiceException as ex:
             raise_validation_error(message=ex.message)
@@ -357,7 +342,7 @@ class WorkflowViewSet(
             workflow=self.get_object(),
             user=request.user,
             auth_type=request.token_type,
-            is_superuser=request.is_superuser
+            is_superuser=request.is_superuser,
         )
         try:
             service.terminate_workflow()
@@ -372,7 +357,7 @@ class WorkflowViewSet(
             workflow=self.get_object(),
             user=request.user,
             auth_type=request.token_type,
-            is_superuser=request.is_superuser
+            is_superuser=request.is_superuser,
         )
         try:
             service.terminate_workflow()
@@ -387,7 +372,7 @@ class WorkflowViewSet(
             workflow=workflow,
             user=request.user,
             auth_type=request.token_type,
-            is_superuser=request.is_superuser
+            is_superuser=request.is_superuser,
         )
         try:
             service.force_resume_workflow()
@@ -408,14 +393,14 @@ class WorkflowViewSet(
             workflow=workflow,
             user=request.user,
             auth_type=request.token_type,
-            is_superuser=request.is_superuser
+            is_superuser=request.is_superuser,
         )
         service.force_complete_workflow()
         AnalyticService.workflows_ended(
             user=request.user,
             workflow=workflow,
             auth_type=request.token_type,
-            is_superuser=request.is_superuser
+            is_superuser=request.is_superuser,
         )
         return self.response_ok()
 
@@ -438,11 +423,11 @@ class WorkflowViewSet(
             workflow=workflow,
             user=request.user,
             auth_type=request.token_type,
-            is_superuser=request.is_superuser
+            is_superuser=request.is_superuser,
         )
         try:
             service.force_delay_workflow(
-                date=request_slz.validated_data['date']
+                date=request_slz.validated_data['date'],
             )
         except WorkflowActionServiceException as ex:
             raise_validation_error(message=ex.message)
@@ -455,11 +440,11 @@ class WorkflowViewSet(
         qst = WorkflowEvent.objects.prefetch_related(
             'attachments',
         ).on_workflow(
-            workflow.id
+            workflow.id,
         ).exclude_type(WorkflowEventType.RUN)
         if self.request.user.type == UserType.GUEST:
             qst = qst.by_task(
-                self.request.task_id
+                self.request.task_id,
             ).exclude(type=WorkflowEventType.TASK_START)
         qst = self.filter_queryset(qst)
         return self.paginated_response(qst)
@@ -477,8 +462,8 @@ class WorkflowViewSet(
                         else HookEvent.WORKFLOW_STARTED
                     ),
                     'id': 123,
-                    "target": 'https://example.com/webhooks/'
+                    "target": 'https://example.com/webhooks/',
                 },
-                **workflow.webhook_payload()
-            }
+                **workflow.webhook_payload(),
+            },
         )

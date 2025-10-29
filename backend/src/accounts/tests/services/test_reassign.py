@@ -1,24 +1,33 @@
 import pytest
-from src.processes.tests.fixtures import (
-    create_test_template,
-    create_test_workflow,
-    create_test_user,
-    create_test_account,
-    create_test_group
-)
-from src.accounts.services.reassign import ReassignService
-from src.accounts.services import exceptions
-from src.processes.enums import (
-    PerformerType,
-    OwnerType
-)
-from src.processes.enums import FieldType
-from src.processes.models import (
-    Predicate,
-    PredicateTemplate,
-    Workflow
-)
 
+from src.accounts.services import exceptions
+from src.accounts.services.reassign import ReassignService
+from src.processes.enums import (
+    ConditionAction,
+    OwnerType,
+    PerformerType,
+    PredicateOperator,
+    PredicateType,
+)
+from src.processes.models.templates.conditions import (
+    ConditionTemplate,
+    PredicateTemplate,
+    RuleTemplate,
+)
+from src.processes.models.workflows.conditions import (
+    Condition,
+    Predicate,
+    Rule,
+)
+from src.processes.models.workflows.workflow import Workflow
+from src.processes.tests.fixtures import (
+    create_test_account,
+    create_test_admin,
+    create_test_group,
+    create_test_template,
+    create_test_user,
+    create_test_workflow,
+)
 
 pytestmark = pytest.mark.django_db
 
@@ -91,57 +100,57 @@ class TestReassignService:
         new_user = create_test_user(
             account=account,
             email='test@test.test',
-            is_account_owner=False
+            is_account_owner=False,
         )
         deleted_user = create_test_user(
             account=account,
             email='deleted@test.test',
-            is_account_owner=True
+            is_account_owner=True,
         )
         reassign_in_raw_performer_templates_mock = mocker.patch(
             'src.accounts.services.reassign.ReassignService.'
-            '_reassign_in_raw_performer_templates'
+            '_reassign_in_raw_performer_templates',
         )
         reassign_in_template_owners_mock = mocker.patch(
             'src.accounts.services.reassign.ReassignService.'
-            '_reassign_in_template_owners'
+            '_reassign_in_template_owners',
         )
         reassign_in_raw_performers_mock = mocker.patch(
             'src.accounts.services.reassign.ReassignService.'
-            '_reassign_in_raw_performers'
+            '_reassign_in_raw_performers',
         )
         reassign_in_performers_mock = mocker.patch(
             'src.accounts.services.reassign.ReassignService.'
-            '_reassign_in_performers'
+            '_reassign_in_performers',
         )
         affected_template_ids_mock = mocker.patch(
             'src.accounts.services.reassign.ReassignService.'
-            '_affected_template_ids'
+            '_affected_template_ids',
         )
         affected_template_ids_mock.return_value = [1, 2]
         reassign_in_workflow_members_mock = mocker.patch(
             'src.accounts.services.reassign.ReassignService.'
-            '_reassign_in_workflow_members'
+            '_reassign_in_workflow_members',
         )
         reassign_in_workflow_owners_mock = mocker.patch(
             'src.accounts.services.reassign.ReassignService.'
-            '_reassign_in_workflow_owners'
+            '_reassign_in_workflow_owners',
         )
         reassign_in_template_conditions_mock = mocker.patch(
             'src.accounts.services.reassign.ReassignService.'
-            '_reassign_in_template_conditions'
+            '_reassign_in_template_conditions',
         )
         reassign_in_conditions_mock = mocker.patch(
             'src.accounts.services.reassign.ReassignService.'
-            '_reassign_in_conditions'
+            '_reassign_in_conditions',
         )
         complete_tasks_mock = mocker.patch(
             'src.processes.tasks.tasks.'
-            'complete_tasks.delay'
+            'complete_tasks.delay',
         )
         service = ReassignService(
             old_user=deleted_user,
-            new_user=new_user
+            new_user=new_user,
         )
 
         # act
@@ -160,7 +169,7 @@ class TestReassignService:
         complete_tasks_mock.assert_called_once_with(
             user_id=new_user.id,
             is_superuser=False,
-            auth_type='User'
+            auth_type='User',
         )
 
     def test_reassign_everywhere__call_services_new_group__ok(self, mocker):
@@ -171,58 +180,58 @@ class TestReassignService:
         new_user = create_test_user(
             account=account,
             email='test@test.test',
-            is_account_owner=False
+            is_account_owner=False,
         )
         group = create_test_group(account, users=[new_user])
         deleted_user = create_test_user(
             account=account,
             email='deleted@test.test',
-            is_account_owner=True
+            is_account_owner=True,
         )
         reassign_in_raw_performer_templates_mock = mocker.patch(
             'src.accounts.services.reassign.ReassignService.'
-            '_reassign_in_raw_performer_templates'
+            '_reassign_in_raw_performer_templates',
         )
         reassign_in_template_owners_mock = mocker.patch(
             'src.accounts.services.reassign.ReassignService.'
-            '_reassign_in_template_owners'
+            '_reassign_in_template_owners',
         )
         reassign_in_raw_performers_mock = mocker.patch(
             'src.accounts.services.reassign.ReassignService.'
-            '_reassign_in_raw_performers'
+            '_reassign_in_raw_performers',
         )
         reassign_in_performers_mock = mocker.patch(
             'src.accounts.services.reassign.ReassignService.'
-            '_reassign_in_performers'
+            '_reassign_in_performers',
         )
         affected_template_ids_mock = mocker.patch(
             'src.accounts.services.reassign.ReassignService.'
-            '_affected_template_ids'
+            '_affected_template_ids',
         )
         affected_template_ids_mock.return_value = [1, 2]
         reassign_in_workflow_members_mock = mocker.patch(
             'src.accounts.services.reassign.ReassignService.'
-            '_reassign_in_workflow_members'
+            '_reassign_in_workflow_members',
         )
         reassign_in_workflow_owners_mock = mocker.patch(
             'src.accounts.services.reassign.ReassignService.'
-            '_reassign_in_workflow_owners'
+            '_reassign_in_workflow_owners',
         )
         reassign_in_template_conditions_mock = mocker.patch(
             'src.accounts.services.reassign.ReassignService.'
-            '_reassign_in_template_conditions'
+            '_reassign_in_template_conditions',
         )
         reassign_in_conditions_mock = mocker.patch(
             'src.accounts.services.reassign.ReassignService.'
-            '_reassign_in_conditions'
+            '_reassign_in_conditions',
         )
         complete_tasks_mock = mocker.patch(
             'src.processes.tasks.tasks.'
-            'complete_tasks.delay'
+            'complete_tasks.delay',
         )
         service = ReassignService(
             old_user=deleted_user,
-            new_group=group
+            new_group=group,
         )
 
         # act
@@ -241,12 +250,12 @@ class TestReassignService:
         complete_tasks_mock.assert_called_once_with(
             user_id=new_user.id,
             is_superuser=False,
-            auth_type='User'
+            auth_type='User',
         )
 
     def test_reassign_everywhere__call_services_new_group_users_null__ok(
         self,
-        mocker
+        mocker,
     ):
         # arrange
         account = create_test_account(
@@ -260,52 +269,52 @@ class TestReassignService:
         deleted_user = create_test_user(
             account=account,
             email='deleted@test.test',
-            is_account_owner=True
+            is_account_owner=True,
         )
         reassign_in_raw_performer_templates_mock = mocker.patch(
             'src.accounts.services.reassign.ReassignService.'
-            '_reassign_in_raw_performer_templates'
+            '_reassign_in_raw_performer_templates',
         )
         reassign_in_template_owners_mock = mocker.patch(
             'src.accounts.services.reassign.ReassignService.'
-            '_reassign_in_template_owners'
+            '_reassign_in_template_owners',
         )
         reassign_in_raw_performers_mock = mocker.patch(
             'src.accounts.services.reassign.ReassignService.'
-            '_reassign_in_raw_performers'
+            '_reassign_in_raw_performers',
         )
         reassign_in_performers_mock = mocker.patch(
             'src.accounts.services.reassign.ReassignService.'
-            '_reassign_in_performers'
+            '_reassign_in_performers',
         )
         affected_template_ids_mock = mocker.patch(
             'src.accounts.services.reassign.ReassignService.'
-            '_affected_template_ids'
+            '_affected_template_ids',
         )
         affected_template_ids_mock.return_value = [1, 2]
         reassign_in_workflow_members_mock = mocker.patch(
             'src.accounts.services.reassign.ReassignService.'
-            '_reassign_in_workflow_members'
+            '_reassign_in_workflow_members',
         )
         reassign_in_workflow_owners_mock = mocker.patch(
             'src.accounts.services.reassign.ReassignService.'
-            '_reassign_in_workflow_owners'
+            '_reassign_in_workflow_owners',
         )
         reassign_in_template_conditions_mock = mocker.patch(
             'src.accounts.services.reassign.ReassignService.'
-            '_reassign_in_template_conditions'
+            '_reassign_in_template_conditions',
         )
         reassign_in_conditions_mock = mocker.patch(
             'src.accounts.services.reassign.ReassignService.'
-            '_reassign_in_conditions'
+            '_reassign_in_conditions',
         )
         complete_tasks_mock = mocker.patch(
             'src.processes.tasks.tasks.'
-            'complete_tasks.delay'
+            'complete_tasks.delay',
         )
         service = ReassignService(
             old_user=deleted_user,
-            new_group=group
+            new_group=group,
         )
 
         # act
@@ -324,12 +333,12 @@ class TestReassignService:
         complete_tasks_mock.assert_called_once_with(
             user_id=new_user.id,
             is_superuser=False,
-            auth_type='User'
+            auth_type='User',
         )
 
     def test_reassign_in_raw_performer_templates__group_to_group__ok(
         self,
-        mocker
+        mocker,
     ):
         # arrange
         account = create_test_account(name='test_account')
@@ -341,23 +350,23 @@ class TestReassignService:
         task.raw_performers.all().delete()
         task.add_raw_performer(
             performer_type=PerformerType.GROUP,
-            group=old_group
+            group=old_group,
         )
 
         query_mock = mocker.patch(
             'src.accounts.services.reassign.'
-            'DeleteGroupFromRawPerformerTemplateQuery'
+            'DeleteGroupFromRawPerformerTemplateQuery',
         )
         query_mock.return_value.get_sql.return_value = (
-            'SQL_QUERY', {'params': 'values'}
+            'SQL_QUERY', {'params': 'values'},
         )
         sql_execute_mock = mocker.patch(
             'src.accounts.services.reassign.'
-            'RawSqlExecutor.execute'
+            'RawSqlExecutor.execute',
         )
         filter_mock = mocker.patch(
             'src.accounts.services.reassign.'
-            'RawPerformerTemplate.objects.filter'
+            'RawPerformerTemplate.objects.filter',
         )
         update_mock = filter_mock.return_value.update
 
@@ -369,21 +378,21 @@ class TestReassignService:
         # assert
         query_mock.assert_called_once_with(
             delete_id=old_group.id,
-            substitution_id=new_group.id
+            substitution_id=new_group.id,
         )
         query_mock.return_value.get_sql.assert_called_once_with()
         sql_execute_mock.assert_called_once_with(
-            'SQL_QUERY', {'params': 'values'}
+            'SQL_QUERY', {'params': 'values'},
         )
         filter_mock.assert_called_once_with(
             group_id=old_group.id,
-            account=account
+            account=account,
         )
         update_mock.assert_called_once_with(group_id=new_group.id)
 
     def test_reassign_in_raw_performer_templates__group_to_user__ok(
         self,
-        mocker
+        mocker,
     ):
         # arrange
         account = create_test_account(name='test_account')
@@ -392,18 +401,18 @@ class TestReassignService:
 
         query_mock = mocker.patch(
             'src.accounts.services.reassign.'
-            'DeleteGroupUserFromRawPerformerTemplateQuery'
+            'DeleteGroupUserFromRawPerformerTemplateQuery',
         )
         query_mock.return_value.get_sql.return_value = (
-            'SQL_QUERY', {'params': 'values'}
+            'SQL_QUERY', {'params': 'values'},
         )
         sql_execute_mock = mocker.patch(
             'src.accounts.services.reassign.'
-            'RawSqlExecutor.execute'
+            'RawSqlExecutor.execute',
         )
         filter_mock = mocker.patch(
             'src.accounts.services.reassign.'
-            'RawPerformerTemplate.objects.filter'
+            'RawPerformerTemplate.objects.filter',
         )
         update_mock = filter_mock.return_value.update
 
@@ -415,25 +424,25 @@ class TestReassignService:
         # assert
         query_mock.assert_called_once_with(
             delete_id=old_group.id,
-            substitution_id=new_user.id
+            substitution_id=new_user.id,
         )
         query_mock.return_value.get_sql.assert_called_once_with()
         sql_execute_mock.assert_called_once_with(
-            'SQL_QUERY', {'params': 'values'}
+            'SQL_QUERY', {'params': 'values'},
         )
         filter_mock.assert_called_once_with(
             group_id=old_group.id,
-            account=account
+            account=account,
         )
         update_mock.assert_called_once_with(
             type=PerformerType.USER,
             user_id=new_user.id,
-            group_id=None
+            group_id=None,
         )
 
     def test_reassign_in_raw_performer_templates__user_to_group__ok(
         self,
-        mocker
+        mocker,
     ):
         # arrange
         account = create_test_account(name='test_account')
@@ -442,18 +451,18 @@ class TestReassignService:
 
         query_mock = mocker.patch(
             'src.accounts.services.reassign.'
-            'DeleteUserGroupFromRawPerformerTemplateQuery'
+            'DeleteUserGroupFromRawPerformerTemplateQuery',
         )
         query_mock.return_value.get_sql.return_value = (
-            'SQL_QUERY', {'params': 'values'}
+            'SQL_QUERY', {'params': 'values'},
         )
         sql_execute_mock = mocker.patch(
             'src.accounts.services.reassign.'
-            'RawSqlExecutor.execute'
+            'RawSqlExecutor.execute',
         )
         filter_mock = mocker.patch(
             'src.accounts.services.reassign.'
-            'RawPerformerTemplate.objects.filter'
+            'RawPerformerTemplate.objects.filter',
         )
         update_mock = filter_mock.return_value.update
 
@@ -465,25 +474,25 @@ class TestReassignService:
         # assert
         query_mock.assert_called_once_with(
             delete_id=old_user.id,
-            substitution_id=new_group.id
+            substitution_id=new_group.id,
         )
         query_mock.return_value.get_sql.assert_called_once_with()
         sql_execute_mock.assert_called_once_with(
-            'SQL_QUERY', {'params': 'values'}
+            'SQL_QUERY', {'params': 'values'},
         )
         filter_mock.assert_called_once_with(
             user_id=old_user.id,
-            account=account
+            account=account,
         )
         update_mock.assert_called_once_with(
             type=PerformerType.GROUP,
             group_id=new_group.id,
-            user_id=None
+            user_id=None,
         )
 
     def test_reassign_in_raw_performer_templates__user_to_user__ok(
         self,
-        mocker
+        mocker,
     ):
         # arrange
         account = create_test_account(name='test_account')
@@ -492,18 +501,18 @@ class TestReassignService:
 
         query_mock = mocker.patch(
             'src.accounts.services.reassign.'
-            'DeleteUserFromRawPerformerTemplateQuery'
+            'DeleteUserFromRawPerformerTemplateQuery',
         )
         query_mock.return_value.get_sql.return_value = (
-            'SQL_QUERY', {'params': 'values'}
+            'SQL_QUERY', {'params': 'values'},
         )
         sql_execute_mock = mocker.patch(
             'src.accounts.services.reassign.'
-            'RawSqlExecutor.execute'
+            'RawSqlExecutor.execute',
         )
         filter_mock = mocker.patch(
             'src.accounts.services.reassign.'
-            'RawPerformerTemplate.objects.filter'
+            'RawPerformerTemplate.objects.filter',
         )
         update_mock = filter_mock.return_value.update
 
@@ -515,21 +524,21 @@ class TestReassignService:
         # assert
         query_mock.assert_called_once_with(
             delete_id=old_user.id,
-            substitution_id=new_user.id
+            substitution_id=new_user.id,
         )
         query_mock.return_value.get_sql.assert_called_once_with()
         sql_execute_mock.assert_called_once_with(
-            'SQL_QUERY', {'params': 'values'}
+            'SQL_QUERY', {'params': 'values'},
         )
         filter_mock.assert_called_once_with(
             user_id=old_user.id,
-            account=account
+            account=account,
         )
         update_mock.assert_called_once_with(user_id=new_user.id)
 
     def test_reassign_in_raw_performers__group_to_group__ok(
         self,
-        mocker
+        mocker,
     ):
         # arrange
         account = create_test_account(name='test_account')
@@ -538,18 +547,18 @@ class TestReassignService:
 
         query_mock = mocker.patch(
             'src.accounts.services.reassign.'
-            'DeleteGroupFromRawPerformerQuery'
+            'DeleteGroupFromRawPerformerQuery',
         )
         query_mock.return_value.get_sql.return_value = (
-            'SQL_QUERY', {'params': 'values'}
+            'SQL_QUERY', {'params': 'values'},
         )
         sql_execute_mock = mocker.patch(
             'src.accounts.services.reassign.'
-            'RawSqlExecutor.execute'
+            'RawSqlExecutor.execute',
         )
         filter_mock = mocker.patch(
             'src.accounts.services.reassign.'
-            'RawPerformer.objects.filter'
+            'RawPerformer.objects.filter',
         )
         update_mock = filter_mock.return_value.update
 
@@ -561,21 +570,21 @@ class TestReassignService:
         # assert
         query_mock.assert_called_once_with(
             delete_id=old_group.id,
-            substitution_id=new_group.id
+            substitution_id=new_group.id,
         )
         query_mock.return_value.get_sql.assert_called_once_with()
         sql_execute_mock.assert_called_once_with(
-            'SQL_QUERY', {'params': 'values'}
+            'SQL_QUERY', {'params': 'values'},
         )
         filter_mock.assert_called_once_with(
             group_id=old_group.id,
-            account=account
+            account=account,
         )
         update_mock.assert_called_once_with(group_id=new_group.id)
 
     def test_reassign_in_raw_performers__group_to_user__ok(
         self,
-        mocker
+        mocker,
     ):
         # arrange
         account = create_test_account(name='test_account')
@@ -588,23 +597,23 @@ class TestReassignService:
         task.raw_performers.all().delete()
         task.add_raw_performer(
             performer_type=PerformerType.GROUP,
-            group_id=old_group.id
+            group_id=old_group.id,
         )
 
         query_mock = mocker.patch(
             'src.accounts.services.reassign.'
-            'DeleteGroupUserFromRawPerformerQuery'
+            'DeleteGroupUserFromRawPerformerQuery',
         )
         query_mock.return_value.get_sql.return_value = (
-            'SQL_QUERY', {'params': 'values'}
+            'SQL_QUERY', {'params': 'values'},
         )
         sql_execute_mock = mocker.patch(
             'src.accounts.services.reassign.'
-            'RawSqlExecutor.execute'
+            'RawSqlExecutor.execute',
         )
         filter_mock = mocker.patch(
             'src.accounts.services.reassign.'
-            'RawPerformer.objects.filter'
+            'RawPerformer.objects.filter',
         )
         update_mock = filter_mock.return_value.update
 
@@ -616,20 +625,20 @@ class TestReassignService:
         # assert
         query_mock.assert_called_once_with(
             delete_id=old_group.id,
-            substitution_id=new_user.id
+            substitution_id=new_user.id,
         )
         query_mock.return_value.get_sql.assert_called_once_with()
         sql_execute_mock.assert_called_once_with(
-            'SQL_QUERY', {'params': 'values'}
+            'SQL_QUERY', {'params': 'values'},
         )
         filter_mock.assert_called_once_with(
             group_id=old_group.id,
-            account=account
+            account=account,
         )
         update_mock.assert_called_once_with(
             type=PerformerType.USER,
             user_id=new_user.id,
-            group_id=None
+            group_id=None,
         )
 
     def test_reassign_in_raw_performers__user_to_group__ok(self, mocker):
@@ -640,18 +649,18 @@ class TestReassignService:
 
         query_mock = mocker.patch(
             'src.accounts.services.reassign.'
-            'DeleteUserGroupFromRawPerformerQuery'
+            'DeleteUserGroupFromRawPerformerQuery',
         )
         query_mock.return_value.get_sql.return_value = (
-            'SQL_QUERY', {'params': 'values'}
+            'SQL_QUERY', {'params': 'values'},
         )
         sql_execute_mock = mocker.patch(
             'src.accounts.services.reassign.'
-            'RawSqlExecutor.execute'
+            'RawSqlExecutor.execute',
         )
         filter_mock = mocker.patch(
             'src.accounts.services.reassign.'
-            'RawPerformer.objects.filter'
+            'RawPerformer.objects.filter',
         )
         update_mock = filter_mock.return_value.update
 
@@ -663,20 +672,20 @@ class TestReassignService:
         # assert
         query_mock.assert_called_once_with(
             delete_id=old_user.id,
-            substitution_id=new_group.id
+            substitution_id=new_group.id,
         )
         query_mock.return_value.get_sql.assert_called_once_with()
         sql_execute_mock.assert_called_once_with(
-            'SQL_QUERY', {'params': 'values'}
+            'SQL_QUERY', {'params': 'values'},
         )
         filter_mock.assert_called_once_with(
             user_id=old_user.id,
-            account=account
+            account=account,
         )
         update_mock.assert_called_once_with(
             type=PerformerType.GROUP,
             group_id=new_group.id,
-            user_id=None
+            user_id=None,
         )
 
     def test_reassign_in_raw_performers__user_to_user__ok(self, mocker):
@@ -687,18 +696,18 @@ class TestReassignService:
 
         query_mock = mocker.patch(
             'src.accounts.services.reassign.'
-            'DeleteUserFromRawPerformerQuery'
+            'DeleteUserFromRawPerformerQuery',
         )
         query_mock.return_value.get_sql.return_value = (
-            'SQL_QUERY', {'params': 'values'}
+            'SQL_QUERY', {'params': 'values'},
         )
         sql_execute_mock = mocker.patch(
             'src.accounts.services.reassign.'
-            'RawSqlExecutor.execute'
+            'RawSqlExecutor.execute',
         )
         filter_mock = mocker.patch(
             'src.accounts.services.reassign.'
-            'RawPerformer.objects.filter'
+            'RawPerformer.objects.filter',
         )
         update_mock = filter_mock.return_value.update
 
@@ -710,15 +719,15 @@ class TestReassignService:
         # assert
         query_mock.assert_called_once_with(
             delete_id=old_user.id,
-            substitution_id=new_user.id
+            substitution_id=new_user.id,
         )
         query_mock.return_value.get_sql.assert_called_once_with()
         sql_execute_mock.assert_called_once_with(
-            'SQL_QUERY', {'params': 'values'}
+            'SQL_QUERY', {'params': 'values'},
         )
         filter_mock.assert_called_once_with(
             user_id=old_user.id,
-            account=account
+            account=account,
         )
         update_mock.assert_called_once_with(user_id=new_user.id)
 
@@ -730,18 +739,18 @@ class TestReassignService:
 
         query_mock = mocker.patch(
             'src.accounts.services.reassign.'
-            'DeleteGroupFromTaskPerformerQuery'
+            'DeleteGroupFromTaskPerformerQuery',
         )
         query_mock.return_value.get_sql.return_value = (
-            'SQL_QUERY', {'params': 'values'}
+            'SQL_QUERY', {'params': 'values'},
         )
         sql_execute_mock = mocker.patch(
             'src.accounts.services.reassign.'
-            'RawSqlExecutor.execute'
+            'RawSqlExecutor.execute',
         )
         filter_mock = mocker.patch(
             'src.accounts.services.reassign.'
-            'TaskPerformer.objects.filter'
+            'TaskPerformer.objects.filter',
         )
         exclude_mock = filter_mock.return_value.exclude
         update_mock = exclude_mock.return_value.update
@@ -754,21 +763,21 @@ class TestReassignService:
         # assert
         query_mock.assert_called_once_with(
             delete_id=old_group.id,
-            substitution_id=new_group.id
+            substitution_id=new_group.id,
         )
         query_mock.return_value.get_sql.assert_called_once_with()
         sql_execute_mock.assert_called_once_with(
-            'SQL_QUERY', {'params': 'values'}
+            'SQL_QUERY', {'params': 'values'},
         )
         filter_mock.assert_called_once_with(
             group_id=old_group.id,
-            task__account=account
+            task__account=account,
         )
         exclude_mock.assert_called_once_with(
-            task__status='completed'
+            task__status='completed',
         )
         update_mock.assert_called_once_with(
-            group_id=new_group.id
+            group_id=new_group.id,
         )
 
     def test_reassign_in_performers__group_to_user__ok(self, mocker):
@@ -779,18 +788,18 @@ class TestReassignService:
 
         query_mock = mocker.patch(
             'src.accounts.services.reassign.'
-            'DeleteGroupUserFromTaskPerformerQuery'
+            'DeleteGroupUserFromTaskPerformerQuery',
         )
         query_mock.return_value.get_sql.return_value = (
-            'SQL_QUERY', {'params': 'values'}
+            'SQL_QUERY', {'params': 'values'},
         )
         sql_execute_mock = mocker.patch(
             'src.accounts.services.reassign.'
-            'RawSqlExecutor.execute'
+            'RawSqlExecutor.execute',
         )
         filter_mock = mocker.patch(
             'src.accounts.services.reassign.'
-            'TaskPerformer.objects.filter'
+            'TaskPerformer.objects.filter',
         )
         exclude_mock = filter_mock.return_value.exclude
         update_mock = exclude_mock.return_value.update
@@ -803,23 +812,23 @@ class TestReassignService:
         # assert
         query_mock.assert_called_once_with(
             delete_id=old_group.id,
-            substitution_id=new_user.id
+            substitution_id=new_user.id,
         )
         query_mock.return_value.get_sql.assert_called_once_with()
         sql_execute_mock.assert_called_once_with(
-            'SQL_QUERY', {'params': 'values'}
+            'SQL_QUERY', {'params': 'values'},
         )
         filter_mock.assert_called_once_with(
             group_id=old_group.id,
-            task__account=account
+            task__account=account,
         )
         exclude_mock.assert_called_once_with(
-            task__status='completed'
+            task__status='completed',
         )
         update_mock.assert_called_once_with(
             type=PerformerType.USER,
             user_id=new_user.id,
-            group_id=None
+            group_id=None,
         )
 
     def test_reassign_in_performers__user_to_group__ok(self, mocker):
@@ -830,18 +839,18 @@ class TestReassignService:
 
         query_mock = mocker.patch(
             'src.accounts.services.reassign.'
-            'DeleteUserGroupFromTaskPerformerQuery'
+            'DeleteUserGroupFromTaskPerformerQuery',
         )
         query_mock.return_value.get_sql.return_value = (
-            'SQL_QUERY', {'params': 'values'}
+            'SQL_QUERY', {'params': 'values'},
         )
         sql_execute_mock = mocker.patch(
             'src.accounts.services.reassign.'
-            'RawSqlExecutor.execute'
+            'RawSqlExecutor.execute',
         )
         filter_mock = mocker.patch(
             'src.accounts.services.reassign.'
-            'TaskPerformer.objects.filter'
+            'TaskPerformer.objects.filter',
         )
         exclude_mock = filter_mock.return_value.exclude
         update_mock = exclude_mock.return_value.update
@@ -854,23 +863,23 @@ class TestReassignService:
         # assert
         query_mock.assert_called_once_with(
             delete_id=old_user.id,
-            substitution_id=new_group.id
+            substitution_id=new_group.id,
         )
         query_mock.return_value.get_sql.assert_called_once_with()
         sql_execute_mock.assert_called_once_with(
-            'SQL_QUERY', {'params': 'values'}
+            'SQL_QUERY', {'params': 'values'},
         )
         filter_mock.assert_called_once_with(
             user_id=old_user.id,
-            task__account=account
+            task__account=account,
         )
         exclude_mock.assert_called_once_with(
-            task__status='completed'
+            task__status='completed',
         )
         update_mock.assert_called_once_with(
             type=PerformerType.GROUP,
             group_id=new_group.id,
-            user_id=None
+            user_id=None,
         )
 
     def test_reassign_in_performers__user_to_user__ok(self, mocker):
@@ -881,18 +890,18 @@ class TestReassignService:
 
         query_mock = mocker.patch(
             'src.accounts.services.reassign.'
-            'DeleteUserFromTaskPerformerQuery'
+            'DeleteUserFromTaskPerformerQuery',
         )
         query_mock.return_value.get_sql.return_value = (
-            'SQL_QUERY', {'params': 'values'}
+            'SQL_QUERY', {'params': 'values'},
         )
         sql_execute_mock = mocker.patch(
             'src.accounts.services.reassign.'
-            'RawSqlExecutor.execute'
+            'RawSqlExecutor.execute',
         )
         filter_mock = mocker.patch(
             'src.accounts.services.reassign.'
-            'TaskPerformer.objects.filter'
+            'TaskPerformer.objects.filter',
         )
         exclude_mock = filter_mock.return_value.exclude
         update_mock = exclude_mock.return_value.update
@@ -905,21 +914,21 @@ class TestReassignService:
         # assert
         query_mock.assert_called_once_with(
             delete_id=old_user.id,
-            substitution_id=new_user.id
+            substitution_id=new_user.id,
         )
         query_mock.return_value.get_sql.assert_called_once_with()
         sql_execute_mock.assert_called_once_with(
-            'SQL_QUERY', {'params': 'values'}
+            'SQL_QUERY', {'params': 'values'},
         )
         filter_mock.assert_called_once_with(
             user_id=old_user.id,
-            task__account=account
+            task__account=account,
         )
         exclude_mock.assert_called_once_with(
-            task__status='completed'
+            task__status='completed',
         )
         update_mock.assert_called_once_with(
-            user_id=new_user.id
+            user_id=new_user.id,
         )
 
     def test_reassign_in_template_owners__group_to_group__ok(self, mocker):
@@ -930,18 +939,18 @@ class TestReassignService:
 
         query_mock = mocker.patch(
             'src.accounts.services.reassign.'
-            'DeleteGroupFromTemplateOwnerQuery'
+            'DeleteGroupFromTemplateOwnerQuery',
         )
         query_mock.return_value.get_sql.return_value = (
-            'SQL_QUERY', {'params': 'values'}
+            'SQL_QUERY', {'params': 'values'},
         )
         sql_execute_mock = mocker.patch(
             'src.accounts.services.reassign.'
-            'RawSqlExecutor.execute'
+            'RawSqlExecutor.execute',
         )
         filter_mock = mocker.patch(
             'src.accounts.services.reassign.'
-            'TemplateOwner.objects.filter'
+            'TemplateOwner.objects.filter',
         )
         update_mock = filter_mock.return_value.update
 
@@ -953,18 +962,18 @@ class TestReassignService:
         # assert
         query_mock.assert_called_once_with(
             delete_id=old_group.id,
-            substitution_id=new_group.id
+            substitution_id=new_group.id,
         )
         query_mock.return_value.get_sql.assert_called_once_with()
         sql_execute_mock.assert_called_once_with(
-            'SQL_QUERY', {'params': 'values'}
+            'SQL_QUERY', {'params': 'values'},
         )
         filter_mock.assert_called_once_with(
             group_id=old_group.id,
-            template__account=account
+            template__account=account,
         )
         update_mock.assert_called_once_with(
-            group_id=new_group.id
+            group_id=new_group.id,
         )
 
     def test_reassign_in_template_owners__group_to_user__ok(self, mocker):
@@ -975,18 +984,18 @@ class TestReassignService:
 
         query_mock = mocker.patch(
             'src.accounts.services.reassign.'
-            'DeleteGroupUserFromTemplateOwnerQuery'
+            'DeleteGroupUserFromTemplateOwnerQuery',
         )
         query_mock.return_value.get_sql.return_value = (
-            'SQL_QUERY', {'params': 'values'}
+            'SQL_QUERY', {'params': 'values'},
         )
         sql_execute_mock = mocker.patch(
             'src.accounts.services.reassign.'
-            'RawSqlExecutor.execute'
+            'RawSqlExecutor.execute',
         )
         filter_mock = mocker.patch(
             'src.accounts.services.reassign.'
-            'TemplateOwner.objects.filter'
+            'TemplateOwner.objects.filter',
         )
         update_mock = filter_mock.return_value.update
 
@@ -998,20 +1007,20 @@ class TestReassignService:
         # assert
         query_mock.assert_called_once_with(
             delete_id=old_group.id,
-            substitution_id=new_user.id
+            substitution_id=new_user.id,
         )
         query_mock.return_value.get_sql.assert_called_once_with()
         sql_execute_mock.assert_called_once_with(
-            'SQL_QUERY', {'params': 'values'}
+            'SQL_QUERY', {'params': 'values'},
         )
         filter_mock.assert_called_once_with(
             group_id=old_group.id,
-            template__account=account
+            template__account=account,
         )
         update_mock.assert_called_once_with(
             type=PerformerType.USER,
             user_id=new_user.id,
-            group_id=None
+            group_id=None,
         )
 
     def test_reassign_in_template_owners__user_to_group__ok(self, mocker):
@@ -1022,18 +1031,18 @@ class TestReassignService:
 
         query_mock = mocker.patch(
             'src.accounts.services.reassign.'
-            'DeleteUserGroupFromTemplateOwnerQuery'
+            'DeleteUserGroupFromTemplateOwnerQuery',
         )
         query_mock.return_value.get_sql.return_value = (
-            'SQL_QUERY', {'params': 'values'}
+            'SQL_QUERY', {'params': 'values'},
         )
         sql_execute_mock = mocker.patch(
             'src.accounts.services.reassign.'
-            'RawSqlExecutor.execute'
+            'RawSqlExecutor.execute',
         )
         filter_mock = mocker.patch(
             'src.accounts.services.reassign.'
-            'TemplateOwner.objects.filter'
+            'TemplateOwner.objects.filter',
         )
         update_mock = filter_mock.return_value.update
 
@@ -1045,20 +1054,20 @@ class TestReassignService:
         # assert
         query_mock.assert_called_once_with(
             delete_id=old_user.id,
-            substitution_id=new_group.id
+            substitution_id=new_group.id,
         )
         query_mock.return_value.get_sql.assert_called_once_with()
         sql_execute_mock.assert_called_once_with(
-            'SQL_QUERY', {'params': 'values'}
+            'SQL_QUERY', {'params': 'values'},
         )
         filter_mock.assert_called_once_with(
             user=old_user,
-            template__account=account
+            template__account=account,
         )
         update_mock.assert_called_once_with(
             type=PerformerType.GROUP,
             group_id=new_group.id,
-            user_id=None
+            user_id=None,
         )
 
     def test_reassign_in_template_owners__user_to_user__ok(self, mocker):
@@ -1069,18 +1078,18 @@ class TestReassignService:
 
         query_mock = mocker.patch(
             'src.accounts.services.reassign.'
-            'DeleteUserFromTemplateOwnerQuery'
+            'DeleteUserFromTemplateOwnerQuery',
         )
         query_mock.return_value.get_sql.return_value = (
-            'SQL_QUERY', {'params': 'values'}
+            'SQL_QUERY', {'params': 'values'},
         )
         sql_execute_mock = mocker.patch(
             'src.accounts.services.reassign.'
-            'RawSqlExecutor.execute'
+            'RawSqlExecutor.execute',
         )
         filter_mock = mocker.patch(
             'src.accounts.services.reassign.'
-            'TemplateOwner.objects.filter'
+            'TemplateOwner.objects.filter',
         )
         update_mock = filter_mock.return_value.update
 
@@ -1092,18 +1101,18 @@ class TestReassignService:
         # assert
         query_mock.assert_called_once_with(
             delete_id=old_user.id,
-            substitution_id=new_user.id
+            substitution_id=new_user.id,
         )
         query_mock.return_value.get_sql.assert_called_once_with()
         sql_execute_mock.assert_called_once_with(
-            'SQL_QUERY', {'params': 'values'}
+            'SQL_QUERY', {'params': 'values'},
         )
         filter_mock.assert_called_once_with(
             user=old_user,
-            template__account=account
+            template__account=account,
         )
         update_mock.assert_called_once_with(
-            user=new_user
+            user=new_user,
         )
 
     def test_reassign_in_workflow_owners__with_template_ids__ok(self, mocker):
@@ -1115,8 +1124,8 @@ class TestReassignService:
         template = create_test_template(user, tasks_count=1, is_active=True)
 
         workflow_owners_filter_mock = mocker.patch(
-            'src.processes.models.'
-            'Workflow.owners.through.objects.filter'
+            'src.processes.models.workflows.workflow.'
+            'Workflow.owners.through.objects.filter',
         )
         workflow_owners_delete_mock = (
             workflow_owners_filter_mock.return_value.delete
@@ -1124,16 +1133,16 @@ class TestReassignService:
         update_query_mock = mocker.patch(
             'src.accounts.services.reassign.'
             'UpdateWorkflowOwnersQuery.__init__',
-            return_value=None
+            return_value=None,
         )
         query_insert_sql_mock = mocker.patch(
             'src.accounts.services.reassign.'
             'UpdateWorkflowOwnersQuery.insert_sql',
-            return_value=('SQL_QUERY', {'params': 'values'})
+            return_value=('SQL_QUERY', {'params': 'values'}),
         )
         sql_execute_mock = mocker.patch(
             'src.accounts.services.reassign.'
-            'RawSqlExecutor.execute'
+            'RawSqlExecutor.execute',
         )
 
         service = ReassignService(old_user=old_user, new_user=new_user)
@@ -1145,18 +1154,18 @@ class TestReassignService:
         # assert
         workflow_owners_filter_mock.assert_called_once_with(
             workflow__template_id__in=affected_template_ids,
-            workflow__account=account
+            workflow__account=account,
         )
         workflow_owners_delete_mock.assert_called_once()
         update_query_mock.assert_called_once_with(template_id=template.id)
         query_insert_sql_mock.assert_called_once_with()
         sql_execute_mock.assert_called_once_with(
-            'SQL_QUERY', {'params': 'values'}
+            'SQL_QUERY', {'params': 'values'},
         )
 
     def test_reassign_in_workflow_owners_with__empty_template_ids__ok(
         self,
-        mocker
+        mocker,
     ):
         # arrange
         account = create_test_account(name='test_account')
@@ -1164,8 +1173,8 @@ class TestReassignService:
         new_user = create_test_user(account=account, email='new@example.com')
 
         workflow_owners_filter_mock = mocker.patch(
-            'src.processes.models.'
-            'Workflow.owners.through.objects.filter'
+            'src.processes.models.workflows.workflow.'
+            'Workflow.owners.through.objects.filter',
         )
         workflow_owners_delete_mock = (
             workflow_owners_filter_mock.return_value.delete
@@ -1173,11 +1182,11 @@ class TestReassignService:
         query_mock = mocker.patch(
             'src.accounts.services.reassign.'
             'UpdateWorkflowOwnersQuery.insert_sql',
-            return_value=('SQL_QUERY', {'params': 'values'})
+            return_value=('SQL_QUERY', {'params': 'values'}),
         )
         sql_execute_mock = mocker.patch(
             'src.accounts.services.reassign.'
-            'RawSqlExecutor.execute'
+            'RawSqlExecutor.execute',
         )
 
         service = ReassignService(old_user=old_user, new_user=new_user)
@@ -1200,7 +1209,7 @@ class TestReassignService:
         template1 = create_test_template(
             old_user,
             tasks_count=1,
-            is_active=True
+            is_active=True,
         )
 
         filter_mock = mocker.patch(
@@ -1221,7 +1230,7 @@ class TestReassignService:
         filter_mock.assert_called_once_with(
             owners__user=old_user,
             owners__type=OwnerType.USER,
-            account=account
+            account=account,
         )
         filter_mock.return_value.distinct.assert_called_once()
         values_list_mock.assert_called_once_with('id', flat=True)
@@ -1252,14 +1261,14 @@ class TestReassignService:
         filter_mock.assert_called_once_with(
             owners__group=old_group,
             owners__type=OwnerType.GROUP,
-            account=account
+            account=account,
         )
         filter_mock.return_value.distinct.assert_called_once()
         values_list_mock.assert_called_once_with('id', flat=True)
 
     def test_reassign_in_workflow_members__with_old_and_new_user__ok(
         self,
-        mocker
+        mocker,
     ):
         # arrange
         account = create_test_account(name='test_account')
@@ -1269,24 +1278,24 @@ class TestReassignService:
         query_init_mock = mocker.patch(
             'src.accounts.services.reassign.'
             'DeleteUserFromWorkflowMembersQuery.__init__',
-            return_value=None
+            return_value=None,
         )
         query_get_sql_mock = mocker.patch(
             'src.accounts.services.reassign.'
             'DeleteUserFromWorkflowMembersQuery.get_sql',
-            return_value=('SQL_QUERY', {'params': 'values'})
+            return_value=('SQL_QUERY', {'params': 'values'}),
         )
         sql_execute_mock = mocker.patch(
             'src.accounts.services.reassign.'
-            'RawSqlExecutor.execute'
+            'RawSqlExecutor.execute',
         )
         filter_mock = mocker.patch(
             'src.accounts.services.reassign.'
             'Workflow.members.through.objects.filter',
-            return_value=Workflow.members.through.objects.none()
+            return_value=Workflow.members.through.objects.none(),
         )
         update_mock = mocker.patch.object(
-            filter_mock.return_value, 'update'
+            filter_mock.return_value, 'update',
         )
 
         service = ReassignService(old_user=old_user, new_user=new_user)
@@ -1297,49 +1306,46 @@ class TestReassignService:
         # assert
         query_init_mock.assert_called_once_with(
             user_to_delete=old_user.id,
-            user_to_substitution=new_user.id
+            user_to_substitution=new_user.id,
         )
         query_get_sql_mock.assert_called_once()
         sql_execute_mock.assert_called_once_with(
-            'SQL_QUERY', {'params': 'values'}
+            'SQL_QUERY', {'params': 'values'},
         )
         filter_mock.assert_called_once_with(
             user_id=old_user.id,
-            workflow__account=account
+            workflow__account=account,
         )
         update_mock.assert_called_once_with(user_id=new_user.id)
 
-    def test_reassign_in_template_conditions__with_old_and_new_user__ok(
-        self,
-        mocker
-    ):
+    def test_reassign_in_template_conditions__with_old_and_new_user__ok(self):
         # arrange
         account = create_test_account(name='test_account')
-        old_user = create_test_user(account=account, email='old@example.com')
-        new_user = create_test_user(account=account, email='new@example.com')
-
-        query_init_mock = mocker.patch(
-            'src.accounts.services.reassign.'
-            'DeleteUserFromTemplateConditionsQuery.__init__',
-            return_value=None
+        old_user = create_test_admin(account=account, email='old@example.com')
+        new_user = create_test_admin(account=account, email='new@example.com')
+        template = create_test_template(
+            old_user,
+            is_active=True,
+            tasks_count=1,
         )
-        query_get_sql_mock = mocker.patch(
-            'src.accounts.services.reassign.'
-            'DeleteUserFromTemplateConditionsQuery.get_sql',
-            return_value=('SQL_QUERY', {'params': 'values'})
+        task = template.tasks.get(number=1)
+        condition_template = ConditionTemplate.objects.create(
+            task=task,
+            action=ConditionAction.SKIP_TASK,
+            order=0,
+            template=template,
         )
-        sql_execute_mock = mocker.patch(
-            'src.accounts.services.reassign.'
-            'RawSqlExecutor.execute'
+        rule_template = RuleTemplate.objects.create(
+            condition=condition_template,
+            template=template,
         )
-
-        filter_mock = mocker.patch(
-            'src.accounts.services.reassign.'
-            'PredicateTemplate.objects.filter',
-            return_value=PredicateTemplate.objects.none()
-        )
-        update_mock = mocker.patch.object(
-            filter_mock.return_value, 'update'
+        PredicateTemplate.objects.create(
+            rule=rule_template,
+            operator=PredicateOperator.EQUAL,
+            field_type=PredicateType.USER,
+            field='user_field',
+            user=old_user,
+            template=template,
         )
 
         service = ReassignService(old_user=old_user, new_user=new_user)
@@ -1348,51 +1354,205 @@ class TestReassignService:
         service._reassign_in_template_conditions()
 
         # assert
-        query_init_mock.assert_called_once_with(
-            user_to_delete=str(old_user.id),
-            user_to_substitution=str(new_user.id)
+        predicates = PredicateTemplate.objects.filter(
+            rule=rule_template,
+            field_type=PredicateType.USER,
+            field='user_field',
+            user=new_user,
         )
-        query_get_sql_mock.assert_called_once()
-        sql_execute_mock.assert_called_once_with(
-            'SQL_QUERY', {'params': 'values'}
-        )
-        filter_mock.assert_called_once_with(
-            field_type=FieldType.USER,
-            value=old_user.id
-        )
-        update_mock.assert_called_once_with(value=new_user.id)
+        assert predicates.count() == 1
+        updated_predicate = predicates.first()
+        assert updated_predicate.group is None
+        assert not PredicateTemplate.objects.filter(
+            rule=rule_template,
+            field_type=PredicateType.USER,
+            field='user_field',
+            user=old_user,
+        ).exists()
 
-    def test_reassign_in_conditions__with_old_and_new_user__ok(
+    def test_reassign_in_template_conditions__with_old_and_new_group__ok(self):
+        # arrange
+        account = create_test_account(name='test_account')
+        user = create_test_admin(account=account, email='user@example.com')
+        old_group = create_test_group(account, name='old_group')
+        new_group = create_test_group(account, name='new_group')
+        template = create_test_template(
+            user,
+            is_active=True,
+            tasks_count=1,
+        )
+        task = template.tasks.get(number=1)
+        condition_template = ConditionTemplate.objects.create(
+            task=task,
+            action=ConditionAction.SKIP_TASK,
+            order=0,
+            template=template,
+        )
+        rule_template = RuleTemplate.objects.create(
+            condition=condition_template,
+            template=template,
+        )
+        PredicateTemplate.objects.create(
+            rule=rule_template,
+            operator=PredicateOperator.EQUAL,
+            field_type=PredicateType.GROUP,
+            field='group_field',
+            group=old_group,
+            template=template,
+        )
+
+        service = ReassignService(old_group=old_group, new_group=new_group)
+
+        # act
+        service._reassign_in_template_conditions()
+
+        # assert
+        predicates = PredicateTemplate.objects.filter(
+            rule=rule_template,
+            field_type=PredicateType.GROUP,
+            field='group_field',
+            group=new_group,
+        )
+        assert predicates.count() == 1
+        updated_predicate = predicates.first()
+        assert updated_predicate.user is None
+        assert not PredicateTemplate.objects.filter(
+            rule=rule_template,
+            field_type=PredicateType.GROUP,
+            field='group_field',
+            group=old_group,
+        ).exists()
+
+    def test_reassign_in_template_conditions__with_old_group_and_new_user__ok(
         self,
-        mocker
     ):
         # arrange
         account = create_test_account(name='test_account')
-        old_user = create_test_user(account=account, email='old@example.com')
-        new_user = create_test_user(account=account, email='new@example.com')
+        user = create_test_admin(account=account, email='user@example.com')
+        old_group = create_test_group(account, name='old_group')
+        new_user = create_test_admin(account=account, email='new@example.com')
+        template = create_test_template(
+            user,
+            is_active=True,
+            tasks_count=1,
+        )
+        task = template.tasks.get(number=1)
+        condition_template = ConditionTemplate.objects.create(
+            task=task,
+            action=ConditionAction.SKIP_TASK,
+            order=0,
+            template=template,
+        )
+        rule_template = RuleTemplate.objects.create(
+            condition=condition_template,
+            template=template,
+        )
+        PredicateTemplate.objects.create(
+            rule=rule_template,
+            operator=PredicateOperator.EQUAL,
+            field_type=PredicateType.GROUP,
+            field='group_field',
+            group=old_group,
+            template=template,
+        )
 
-        query_init_mock = mocker.patch(
-            'src.accounts.services.reassign.'
-            'DeleteUserFromConditionsQuery.__init__',
-            return_value=None
+        service = ReassignService(old_group=old_group, new_user=new_user)
+
+        # act
+        service._reassign_in_template_conditions()
+
+        # assert
+        predicates = PredicateTemplate.objects.filter(
+            rule=rule_template,
+            field_type=PredicateType.USER,
+            field='group_field',
+            user=new_user,
         )
-        query_get_sql_mock = mocker.patch(
-            'src.accounts.services.reassign.'
-            'DeleteUserFromConditionsQuery.get_sql',
-            return_value=('SQL_QUERY', {'params': 'values'})
+        assert predicates.count() == 1
+        updated_predicate = predicates.first()
+        assert updated_predicate.group is None
+        assert not PredicateTemplate.objects.filter(
+            rule=rule_template,
+            field_type=PredicateType.GROUP,
+            field='group_field',
+            group=old_group,
+        ).exists()
+
+    def test_reassign_in_template_conditions__with_old_user_and_new_group__ok(
+        self,
+    ):
+        # arrange
+        account = create_test_account(name='test_account')
+        old_user = create_test_admin(account=account, email='old@example.com')
+        new_group = create_test_group(account, name='new_group')
+        template = create_test_template(
+            old_user,
+            is_active=True,
+            tasks_count=1,
         )
-        sql_execute_mock = mocker.patch(
-            'src.accounts.services.reassign.'
-            'RawSqlExecutor.execute'
+        task = template.tasks.get(number=1)
+        condition_template = ConditionTemplate.objects.create(
+            task=task,
+            action=ConditionAction.SKIP_TASK,
+            order=0,
+            template=template,
+        )
+        rule_template = RuleTemplate.objects.create(
+            condition=condition_template,
+            template=template,
+        )
+        PredicateTemplate.objects.create(
+            rule=rule_template,
+            operator=PredicateOperator.EQUAL,
+            field_type=PredicateType.USER,
+            field='user_field',
+            user=old_user,
+            template=template,
         )
 
-        filter_mock = mocker.patch(
-            'src.accounts.services.reassign.'
-            'Predicate.objects.filter',
-            return_value=Predicate.objects.none()
+        service = ReassignService(old_user=old_user, new_group=new_group)
+
+        # act
+        service._reassign_in_template_conditions()
+
+        # assert
+        predicates = PredicateTemplate.objects.filter(
+            rule=rule_template,
+            field_type=PredicateType.GROUP,
+            field='user_field',
+            group=new_group,
         )
-        update_mock = mocker.patch.object(
-            filter_mock.return_value, 'update'
+        assert predicates.count() == 1
+        updated_predicate = predicates.first()
+        assert updated_predicate.user is None
+        assert not PredicateTemplate.objects.filter(
+            rule=rule_template,
+            field_type=PredicateType.USER,
+            field='user_field',
+            user=old_user,
+        ).exists()
+
+    def test_reassign_in_conditions__with_old_and_new_user__ok(self):
+        # arrange
+        account = create_test_account(name='test_account')
+        old_user = create_test_admin(account=account, email='old@example.com')
+        new_user = create_test_admin(account=account, email='new@example.com')
+        workflow = create_test_workflow(old_user, tasks_count=1)
+        task = workflow.tasks.get(number=1)
+        condition = Condition.objects.create(
+            task=task,
+            action=ConditionAction.SKIP_TASK,
+            order=0,
+        )
+        rule = Rule.objects.create(
+            condition=condition,
+        )
+        Predicate.objects.create(
+            rule=rule,
+            operator=PredicateOperator.EQUAL,
+            field_type=PredicateType.USER,
+            field='user_field',
+            user=old_user,
         )
 
         service = ReassignService(old_user=old_user, new_user=new_user)
@@ -1401,16 +1561,155 @@ class TestReassignService:
         service._reassign_in_conditions()
 
         # assert
-        query_init_mock.assert_called_once_with(
-            user_to_delete=str(old_user.id),
-            user_to_substitution=str(new_user.id)
+        predicates = Predicate.objects.filter(
+            rule=rule,
+            field_type=PredicateType.USER,
+            field='user_field',
+            user=new_user,
         )
-        query_get_sql_mock.assert_called_once()
-        sql_execute_mock.assert_called_once_with(
-            'SQL_QUERY', {'params': 'values'}
+        assert predicates.count() == 1
+        updated_predicate = predicates.first()
+        assert updated_predicate.group is None
+        assert not Predicate.objects.filter(
+            rule=rule,
+            field_type=PredicateType.USER,
+            field='user_field',
+            user=old_user,
+        ).exists()
+
+    def test_reassign_in_conditions__with_old_and_new_group__ok(self):
+        # arrange
+        account = create_test_account(name='test_account')
+        user = create_test_admin(account=account, email='user@example.com')
+        old_group = create_test_group(account, name='old_group')
+        new_group = create_test_group(account, name='new_group')
+        workflow = create_test_workflow(user, tasks_count=1)
+        task = workflow.tasks.get(number=1)
+        condition = Condition.objects.create(
+            task=task,
+            action=ConditionAction.SKIP_TASK,
+            order=0,
         )
-        filter_mock.assert_called_once_with(
-            field_type=FieldType.USER,
-            value=old_user.id
+        rule = Rule.objects.create(
+            condition=condition,
         )
-        update_mock.assert_called_once_with(value=new_user.id)
+        Predicate.objects.create(
+            rule=rule,
+            operator=PredicateOperator.EQUAL,
+            field_type=PredicateType.GROUP,
+            field='group_field',
+            group=old_group,
+        )
+
+        service = ReassignService(old_group=old_group, new_group=new_group)
+
+        # act
+        service._reassign_in_conditions()
+
+        # assert
+        predicates = Predicate.objects.filter(
+            rule=rule,
+            field_type=PredicateType.GROUP,
+            field='group_field',
+            group=new_group,
+        )
+        assert predicates.count() == 1
+        updated_predicate = predicates.first()
+        assert updated_predicate.user is None
+        assert not Predicate.objects.filter(
+            rule=rule,
+            field_type=PredicateType.GROUP,
+            field='group_field',
+            group=old_group,
+        ).exists()
+
+    def test_reassign_in_conditions__with_old_group_and_new_user__ok(self):
+        # arrange
+        account = create_test_account(name='test_account')
+        user = create_test_admin(account=account, email='user@example.com')
+        old_group = create_test_group(account, name='old_group')
+        new_user = create_test_admin(account=account, email='new@example.com')
+        workflow = create_test_workflow(user, tasks_count=1)
+        task = workflow.tasks.get(number=1)
+        condition = Condition.objects.create(
+            task=task,
+            action=ConditionAction.SKIP_TASK,
+            order=0,
+        )
+        rule = Rule.objects.create(
+            condition=condition,
+        )
+        Predicate.objects.create(
+            rule=rule,
+            operator=PredicateOperator.EQUAL,
+            field_type=PredicateType.GROUP,
+            field='group_field',
+            group=old_group,
+        )
+
+        service = ReassignService(old_group=old_group, new_user=new_user)
+
+        # act
+        service._reassign_in_conditions()
+
+        # assert
+        predicates = Predicate.objects.filter(
+            rule=rule,
+            field_type=PredicateType.USER,
+            field='group_field',
+            user=new_user,
+        )
+        assert predicates.count() == 1
+        updated_predicate = predicates.first()
+        assert updated_predicate.group is None
+        assert not Predicate.objects.filter(
+            rule=rule,
+            field_type=PredicateType.GROUP,
+            field='group_field',
+            group=old_group,
+        ).exists()
+
+    def test_reassign_in_conditions__with_old_user_and_new_group__ok(self):
+        # arrange
+        account = create_test_account(name='test_account')
+        old_user = create_test_admin(account=account, email='old@example.com')
+        new_group = create_test_group(account, name='new_group')
+        workflow = create_test_workflow(old_user, tasks_count=1)
+        task = workflow.tasks.get(number=1)
+        condition = Condition.objects.create(
+            task=task,
+            action=ConditionAction.SKIP_TASK,
+            order=0,
+        )
+        rule = Rule.objects.create(
+            condition=condition,
+        )
+        Predicate.objects.create(
+            rule=rule,
+            operator=PredicateOperator.EQUAL,
+            field_type=PredicateType.USER,
+            field='user_field',
+            user=old_user,
+        )
+
+        service = ReassignService(old_user=old_user, new_group=new_group)
+
+        # act
+        service._reassign_in_conditions()
+
+        # assert
+        predicates = Predicate.objects.filter(
+            rule=rule,
+            field_type=PredicateType.GROUP,
+            field='user_field',
+            group=new_group,
+        )
+        assert predicates.count() == 1
+        updated_predicate = predicates.first()
+        assert updated_predicate.user is None
+        assert not Predicate.objects.filter(
+            rule=rule,
+            field_type=PredicateType.USER,
+            field='user_field',
+            user=old_user,
+        ).exists()

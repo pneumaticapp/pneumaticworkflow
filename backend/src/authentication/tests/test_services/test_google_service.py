@@ -1,25 +1,22 @@
-import pytest
 import json
 from datetime import timedelta
-from django.utils import timezone
 from unittest.mock import Mock
+
+import pytest
+from django.utils import timezone
 
 from src.accounts.enums import SourceType, UserStatus
 from src.accounts.models import Contact
 from src.authentication import messages
 from src.authentication.models import AccessToken
-from src.authentication.services.google import GoogleAuthService
 from src.authentication.services.exceptions import (
-    TokenInvalidOrExpired,
+    AccessTokenNotFound,
     EmailNotExist,
     PeopleApiRequestError,
-    AccessTokenNotFound
+    TokenInvalidOrExpired,
 )
-from src.processes.tests.fixtures import (
-    create_test_user,
-    create_test_account
-)
-
+from src.authentication.services.google import GoogleAuthService
+from src.processes.tests.fixtures import create_test_account, create_test_user
 
 pytestmark = pytest.mark.django_db
 
@@ -34,7 +31,7 @@ class TestGoogleAuthService:
         items = [
             {'metadata': {'primary': False}, 'value': 'secondary'},
             {'metadata': {'primary': True}, 'value': 'primary'},
-            {'metadata': {'primary': False}, 'value': 'third'}
+            {'metadata': {'primary': False}, 'value': 'third'},
         ]
 
         # act
@@ -49,7 +46,7 @@ class TestGoogleAuthService:
         service = GoogleAuthService()
         items = [
             {'metadata': {'primary': False}, 'value': 'first'},
-            {'metadata': {'primary': False}, 'value': 'second'}
+            {'metadata': {'primary': False}, 'value': 'second'},
         ]
 
         # act
@@ -75,7 +72,7 @@ class TestGoogleAuthService:
         # arrange
         service = GoogleAuthService()
         items = [
-            {'metadata': {'primary': True}, 'value': 'test', 'name': 'John'}
+            {'metadata': {'primary': True}, 'value': 'test', 'name': 'John'},
         ]
 
         # act
@@ -83,14 +80,14 @@ class TestGoogleAuthService:
 
         # assert
         assert result == {
-            'metadata': {'primary': True}, 'value': 'test', 'name': 'John'
+            'metadata': {'primary': True}, 'value': 'test', 'name': 'John',
         }
 
     def test_get_auth_uri__ok(self, mocker):
         """Test URL generation for authorization"""
         # arrange
         mock_settings = mocker.patch(
-            'src.authentication.services.google.settings'
+            'src.authentication.services.google.settings',
         )
         mock_settings.GOOGLE_OAUTH2_CLIENT_ID = 'test_client_id'
         mock_settings.GOOGLE_OAUTH2_REDIRECT_URI = 'https://test.com/callback'
@@ -108,7 +105,7 @@ class TestGoogleAuthService:
         assert 'scope=' in auth_uri
         assert 'userinfo.profile' in auth_uri
         assert 'userinfo.email' in auth_uri
-        assert 'contacts.readonly' in auth_uri
+        assert 'directory.readonly' in auth_uri
         assert 'response_type=code' in auth_uri
         assert 'state=' in auth_uri
         assert 'access_type=offline' in auth_uri
@@ -123,20 +120,20 @@ class TestGoogleAuthService:
             'names': [{
                 'metadata': {'primary': True},
                 'givenName': 'John',
-                'familyName': 'Doe'
+                'familyName': 'Doe',
             }],
             'emailAddresses': [{
                 'metadata': {'primary': True},
-                'value': 'john.doe@example.com'
+                'value': 'john.doe@example.com',
             }],
             'photos': [{
                 'metadata': {'primary': True},
-                'url': 'https://photo.url'
+                'url': 'https://photo.url',
             }],
             'organizations': [{
                 'metadata': {'primary': True},
-                'title': 'Software Engineer'
-            }]
+                'title': 'Software Engineer',
+            }],
         }
 
         # act
@@ -172,20 +169,20 @@ class TestGoogleAuthService:
             'names': [{
                 'metadata': {'primary': False},
                 'givenName': 'Jane',
-                'familyName': 'Smith'
+                'familyName': 'Smith',
             }],
             'emailAddresses': [{
                 'metadata': {'primary': False},
-                'value': 'jane.smith@example.com'
+                'value': 'jane.smith@example.com',
             }],
             'photos': [{
                 'metadata': {'primary': False},
-                'url': 'https://photo2.url'
+                'url': 'https://photo2.url',
             }],
             'organizations': [{
                 'metadata': {'primary': False},
-                'title': 'Manager'
-            }]
+                'title': 'Manager',
+            }],
         }
 
         # act
@@ -201,7 +198,7 @@ class TestGoogleAuthService:
         """Test getting user data with valid response"""
         # arrange
         mock_settings = mocker.patch(
-            'src.authentication.services.google.settings'
+            'src.authentication.services.google.settings',
         )
         mock_settings.GOOGLE_OAUTH2_CLIENT_ID = 'test_client_id'
         mock_settings.GOOGLE_OAUTH2_CLIENT_SECRET = 'test_client_secret'
@@ -212,7 +209,7 @@ class TestGoogleAuthService:
         get_cache_mock = mocker.patch.object(
             service,
             '_get_cache',
-            return_value=True
+            return_value=True,
         )
         mock_response = Mock()
         mock_response.ok = True
@@ -220,11 +217,11 @@ class TestGoogleAuthService:
             'access_token': 'test_access_token',
             'expires_in': 3600,
             'refresh_token': 'test_refresh_token',
-            'token_type': 'Bearer'
+            'token_type': 'Bearer',
         }
         mocker.patch(
             'src.authentication.services.google.requests.post',
-            return_value=mock_response
+            return_value=mock_response,
         )
 
         user_profile_response = {
@@ -232,30 +229,30 @@ class TestGoogleAuthService:
                 'metadata': {'primary': True},
                 'givenName': 'John',
                 'familyName': 'Doe',
-                'displayName': 'John Doe'
+                'displayName': 'John Doe',
             }],
             'emailAddresses': [{
                 'metadata': {'primary': True},
-                'value': 'john.doe@example.com'
+                'value': 'john.doe@example.com',
             }],
             'photos': [{
                 'metadata': {'primary': True},
-                'url': 'https://example.com/photo.jpg'
+                'url': 'https://example.com/photo.jpg',
             }],
             'organizations': [{
                 'metadata': {'primary': True},
-                'title': 'Senior Developer'
-            }]
+                'title': 'Senior Developer',
+            }],
         }
         get_user_profile_mock = mocker.patch.object(
             service,
             '_get_user_profile',
-            return_value=user_profile_response
+            return_value=user_profile_response,
         )
 
         auth_response = {
             'code': '4/0AbUR2VMeHxU...',
-            'state': 'test_state'
+            'state': 'test_state',
         }
 
         # act
@@ -276,7 +273,7 @@ class TestGoogleAuthService:
         """Test handling missing email in profile"""
         # arrange
         mock_settings = mocker.patch(
-            'src.authentication.services.google.settings'
+            'src.authentication.services.google.settings',
         )
         mock_settings.GOOGLE_OAUTH2_CLIENT_ID = 'test_client_id'
         mock_settings.GOOGLE_OAUTH2_CLIENT_SECRET = 'test_client_secret'
@@ -290,30 +287,30 @@ class TestGoogleAuthService:
         mock_response.json.return_value = {
             'access_token': 'test_access_token',
             'expires_in': 3600,
-            'refresh_token': 'test_refresh_token'
+            'refresh_token': 'test_refresh_token',
         }
         mocker.patch(
             'src.authentication.services.google.requests.post',
-            return_value=mock_response
+            return_value=mock_response,
         )
 
         user_profile_response = {
             'names': [{
                 'metadata': {'primary': True},
                 'givenName': 'John',
-                'familyName': 'Doe'
+                'familyName': 'Doe',
             }],
-            'emailAddresses': []
+            'emailAddresses': [],
         }
         mocker.patch.object(
             service,
             '_get_user_profile',
-            return_value=user_profile_response
+            return_value=user_profile_response,
         )
 
         auth_response = {
             'code': '4/0AbUR2VMeHxU...',
-            'state': 'test_state'
+            'state': 'test_state',
         }
 
         # act & assert
@@ -322,7 +319,7 @@ class TestGoogleAuthService:
 
     def test_get_first_access_token__invalid_state__raises_token_invalid(
         self,
-        mocker
+        mocker,
     ):
         """Test handling invalid state"""
         # arrange
@@ -331,7 +328,7 @@ class TestGoogleAuthService:
 
         auth_response = {
             'code': '4/0AbUR2VMeHxU...',
-            'state': 'invalid_state'
+            'state': 'invalid_state',
         }
 
         # act & assert
@@ -340,12 +337,12 @@ class TestGoogleAuthService:
 
     def test_get_first_access_token__google_error__raises_token_invalid(
         self,
-        mocker
+        mocker,
     ):
         """Test handling Google error when exchanging code for token"""
         # arrange
         mock_settings = mocker.patch(
-            'src.authentication.services.google.settings'
+            'src.authentication.services.google.settings',
         )
         mock_settings.GOOGLE_OAUTH2_CLIENT_ID = 'test_client_id'
         mock_settings.GOOGLE_OAUTH2_CLIENT_SECRET = 'test_client_secret'
@@ -362,12 +359,12 @@ class TestGoogleAuthService:
         mock_response.json.return_value = {"error": "invalid_grant"}
         mocker.patch(
             'src.authentication.services.google.requests.post',
-            return_value=mock_response
+            return_value=mock_response,
         )
 
         auth_response = {
             'code': 'invalid_code',
-            'state': 'test_state'
+            'state': 'test_state',
         }
 
         # act & assert
@@ -381,7 +378,7 @@ class TestGoogleAuthService:
         service.tokens = {
             'access_token': 'test_access_token',
             'refresh_token': 'test_refresh',
-            'expires_in': 3600
+            'expires_in': 3600,
         }
 
         user = create_test_user()
@@ -389,7 +386,7 @@ class TestGoogleAuthService:
         # Mock AccessToken.objects.update_or_create
         update_or_create_mock = mocker.patch(
             'src.authentication.services.google.'
-            'AccessToken.objects.update_or_create'
+            'AccessToken.objects.update_or_create',
         )
 
         # act
@@ -414,7 +411,7 @@ class TestGoogleAuthService:
         mocker.patch.object(
             service,
             '_get_access_token',
-            return_value='test_token'
+            return_value='test_token',
         )
 
         # Mock getting contacts
@@ -424,31 +421,31 @@ class TestGoogleAuthService:
                 'names': [{
                     'metadata': {'primary': True},
                     'givenName': 'Jane',
-                    'familyName': 'Smith'
+                    'familyName': 'Smith',
                 }],
                 'emailAddresses': [{
                     'metadata': {'verified': True},
-                    'value': 'jane.smith@example.com'
-                }]
-            }
+                    'value': 'jane.smith@example.com',
+                }],
+            },
         ]
         mocker.patch.object(
             service,
             '_get_user_connections',
-            return_value=connections
+            return_value=connections,
         )
 
         # Mock Contact.objects.update_or_create
         update_or_create_mock = mocker.patch(
             'src.authentication.services.google.'
             'Contact.objects.update_or_create',
-            return_value=(Mock(), True)
+            return_value=(Mock(), True),
         )
 
         # Mock AccountLogService
         mocker.patch(
             'src.authentication.services.google.'
-            'AccountLogService.contacts_request'
+            'AccountLogService.contacts_request',
         )
 
         # act
@@ -468,7 +465,7 @@ class TestGoogleAuthService:
         """Test setting default first name when givenName is missing"""
         # arrange
         mock_settings = mocker.patch(
-            'src.authentication.services.google.settings'
+            'src.authentication.services.google.settings',
         )
         mock_settings.GOOGLE_OAUTH2_CLIENT_ID = 'test_client_id'
         mock_settings.GOOGLE_OAUTH2_CLIENT_SECRET = 'test_client_secret'
@@ -482,11 +479,11 @@ class TestGoogleAuthService:
         mock_response.json.return_value = {
             'access_token': 'test_access_token',
             'expires_in': 3600,
-            'refresh_token': 'test_refresh_token'
+            'refresh_token': 'test_refresh_token',
         }
         mocker.patch(
             'src.authentication.services.google.requests.post',
-            return_value=mock_response
+            return_value=mock_response,
         )
 
         email = 'username@domain.com'
@@ -494,24 +491,24 @@ class TestGoogleAuthService:
             'names': [{
                 'metadata': {'primary': True},
                 'familyName': 'Doe',
-                'displayName': 'username@domain.com'
+                'displayName': 'username@domain.com',
                 # No givenName - should use email prefix
             }],
             'emailAddresses': [{
                 'metadata': {'primary': True},
-                'value': email
+                'value': email,
             }],
-            'photos': []
+            'photos': [],
         }
         mocker.patch.object(
             service,
             '_get_user_profile',
-            return_value=user_profile_response
+            return_value=user_profile_response,
         )
 
         auth_response = {
             'code': '4/0AbUR2VMeHxU...',
-            'state': 'test_state'
+            'state': 'test_state',
         }
 
         # act
@@ -524,7 +521,7 @@ class TestGoogleAuthService:
         """Test converting uppercase email to lowercase"""
         # arrange
         mock_settings = mocker.patch(
-            'src.authentication.services.google.settings'
+            'src.authentication.services.google.settings',
         )
         mock_settings.GOOGLE_OAUTH2_CLIENT_ID = 'test_client_id'
         mock_settings.GOOGLE_OAUTH2_CLIENT_SECRET = 'test_client_secret'
@@ -538,11 +535,11 @@ class TestGoogleAuthService:
         mock_response.json.return_value = {
             'access_token': 'test_access_token',
             'expires_in': 3600,
-            'refresh_token': 'test_refresh_token'
+            'refresh_token': 'test_refresh_token',
         }
         mocker.patch(
             'src.authentication.services.google.requests.post',
-            return_value=mock_response
+            return_value=mock_response,
         )
 
         user_profile_response = {
@@ -550,22 +547,22 @@ class TestGoogleAuthService:
                 'metadata': {'primary': True},
                 'givenName': 'John',
                 'familyName': 'Doe',
-                'displayName': 'John Doe'
+                'displayName': 'John Doe',
             }],
             'emailAddresses': [{
                 'metadata': {'primary': True},
-                'value': 'John.Doe@Example.COM'
-            }]
+                'value': 'John.Doe@Example.COM',
+            }],
         }
         mocker.patch.object(
             service,
             '_get_user_profile',
-            return_value=user_profile_response
+            return_value=user_profile_response,
         )
 
         auth_response = {
             'code': '4/0AbUR2VMeHxU...',
-            'state': 'test_state'
+            'state': 'test_state',
         }
 
         # act
@@ -578,7 +575,7 @@ class TestGoogleAuthService:
         """Test getting user data with job title from organizations"""
         # arrange
         mock_settings = mocker.patch(
-            'src.authentication.services.google.settings'
+            'src.authentication.services.google.settings',
         )
         mock_settings.GOOGLE_OAUTH2_CLIENT_ID = 'test_client_id'
         mock_settings.GOOGLE_OAUTH2_CLIENT_SECRET = 'test_client_secret'
@@ -593,40 +590,40 @@ class TestGoogleAuthService:
             'access_token': 'test_access_token',
             'expires_in': 3600,
             'refresh_token': 'test_refresh_token',
-            'token_type': 'Bearer'
+            'token_type': 'Bearer',
         }
         mocker.patch(
             'src.authentication.services.google.requests.post',
-            return_value=mock_response
+            return_value=mock_response,
         )
 
         user_profile_response = {
             'names': [{
                 'metadata': {'primary': True},
                 'givenName': 'Jane',
-                'familyName': 'Smith'
+                'familyName': 'Smith',
             }],
             'emailAddresses': [{
                 'metadata': {'primary': True},
-                'value': 'jane.smith@example.com'
+                'value': 'jane.smith@example.com',
             }],
             'organizations': [{
                 'metadata': {'primary': False},
-                'title': 'Junior Developer'
+                'title': 'Junior Developer',
             }, {
                 'metadata': {'primary': True},
-                'title': 'Senior Product Manager'
-            }]
+                'title': 'Senior Product Manager',
+            }],
         }
         mocker.patch.object(
             service,
             '_get_user_profile',
-            return_value=user_profile_response
+            return_value=user_profile_response,
         )
 
         auth_response = {
             'code': '4/0AbUR2VMeHxU...',
-            'state': 'test_state'
+            'state': 'test_state',
         }
 
         # act
@@ -641,7 +638,7 @@ class TestGoogleAuthService:
 
     def test_people_api_request__with_raise_exception_false__no_exception(
         self,
-        mocker
+        mocker,
     ):
         """Test API request with raise_exception=False"""
         # arrange
@@ -649,11 +646,11 @@ class TestGoogleAuthService:
         path = 'people/me'
         response_mock = mocker.Mock(
             ok=False,
-            status_code=404
+            status_code=404,
         )
         mocker.patch(
             'src.authentication.services.google.requests.get',
-            return_value=response_mock
+            return_value=response_mock,
         )
         service = GoogleAuthService()
 
@@ -661,7 +658,7 @@ class TestGoogleAuthService:
         result = service._people_api_request(
             access_token=access_token,
             path=path,
-            raise_exception=False
+            raise_exception=False,
         )
 
         # assert
@@ -669,7 +666,7 @@ class TestGoogleAuthService:
 
     def test_refresh_access_token__no_refresh_token_in_response__keep_old(
         self,
-        mocker
+        mocker,
     ):
         """Test token refresh when new refresh_token is not returned"""
         # arrange
@@ -684,7 +681,7 @@ class TestGoogleAuthService:
         )
 
         mock_settings = mocker.patch(
-            'src.authentication.services.google.settings'
+            'src.authentication.services.google.settings',
         )
         mock_settings.GOOGLE_OAUTH2_CLIENT_ID = 'test_client_id'
         mock_settings.GOOGLE_OAUTH2_CLIENT_SECRET = 'test_client_secret'
@@ -696,11 +693,11 @@ class TestGoogleAuthService:
         }
         refresh_response_mock = mocker.Mock(
             ok=True,
-            json=mocker.Mock(return_value=token_new_data)
+            json=mocker.Mock(return_value=token_new_data),
         )
         mocker.patch(
             'src.authentication.services.google.requests.post',
-            return_value=refresh_response_mock
+            return_value=refresh_response_mock,
         )
 
         service = GoogleAuthService()
@@ -716,7 +713,7 @@ class TestGoogleAuthService:
 
     def test_refresh_access_token__failed_request__raise_exception(
         self,
-        mocker
+        mocker,
     ):
         """Test token refresh failure"""
         # arrange
@@ -730,7 +727,7 @@ class TestGoogleAuthService:
         )
 
         mock_settings = mocker.patch(
-            'src.authentication.services.google.settings'
+            'src.authentication.services.google.settings',
         )
         mock_settings.GOOGLE_OAUTH2_CLIENT_ID = 'test_client_id'
         mock_settings.GOOGLE_OAUTH2_CLIENT_SECRET = 'test_client_secret'
@@ -738,16 +735,16 @@ class TestGoogleAuthService:
         refresh_response_mock = mocker.Mock(
             ok=False,
             status_code=400,
-            text='{"error": "invalid_grant"}'
+            text='{"error": "invalid_grant"}',
         )
         mocker.patch(
             'src.authentication.services.google.requests.post',
-            return_value=refresh_response_mock
+            return_value=refresh_response_mock,
         )
 
         sentry_mock = mocker.patch(
             'src.authentication.services.google.'
-            'capture_sentry_message'
+            'capture_sentry_message',
         )
 
         service = GoogleAuthService()
@@ -758,22 +755,22 @@ class TestGoogleAuthService:
 
         sentry_mock.assert_called_once()
 
-    def test_get_user_connections__no_connections_key__return_empty(
+    def test_get_user_connections__no_people_key__return_empty(
         self,
-        mocker
+        mocker,
     ):
-        """Test handling response without connections key"""
+        """Test handling response without people key"""
         # arrange
         access_token = 'test_token'
         response_mock = mocker.Mock(
             ok=True,
-            json=mocker.Mock(return_value={'some_other_key': 'value'})
+            json=mocker.Mock(return_value={'some_other_key': 'value'}),
         )
         service = GoogleAuthService()
         people_api_request_mock = mocker.patch.object(
             service,
             '_people_api_request',
-            return_value=response_mock
+            return_value=response_mock,
         )
 
         # act
@@ -792,7 +789,7 @@ class TestGoogleAuthService:
         people_api_request_mock = mocker.patch.object(
             service,
             '_people_api_request',
-            return_value=response_mock
+            return_value=response_mock,
         )
 
         # act
@@ -809,15 +806,15 @@ class TestGoogleAuthService:
         path = 'people/me'
         response_mock = mocker.Mock(
             ok=True,
-            json=mocker.Mock()
+            json=mocker.Mock(),
         )
         request_mock = mocker.patch(
             'src.authentication.services.google.requests.get',
-            return_value=response_mock
+            return_value=response_mock,
         )
         sentry_mock = mocker.patch(
             'src.authentication.services.google.'
-            'capture_sentry_message'
+            'capture_sentry_message',
         )
         service = GoogleAuthService()
 
@@ -831,7 +828,7 @@ class TestGoogleAuthService:
         assert result == response_mock
         request_mock.assert_called_once_with(
             url=f'https://people.googleapis.com/v1/{path}',
-            headers={'Authorization': f'Bearer {access_token}'}
+            headers={'Authorization': f'Bearer {access_token}'},
         )
         sentry_mock.assert_not_called()
 
@@ -842,18 +839,18 @@ class TestGoogleAuthService:
         path = 'people/me'
         response_mock = mocker.Mock(
             ok=False,
-            status_code=400
+            status_code=400,
         )
         response_mock.json = mocker.Mock(
-            return_value={'error': {'code': 400, 'message': 'Bad Request'}}
+            return_value={'error': {'code': 400, 'message': 'Bad Request'}},
         )
         request_mock = mocker.patch(
             'src.authentication.services.google.requests.get',
-            return_value=response_mock
+            return_value=response_mock,
         )
         sentry_mock = mocker.patch(
             'src.authentication.services.google.'
-            'capture_sentry_message'
+            'capture_sentry_message',
         )
         service = GoogleAuthService()
 
@@ -866,11 +863,11 @@ class TestGoogleAuthService:
 
         # assert
         assert 'Error while retrieving Google profile data' in str(
-            ex.value.message
+            ex.value.message,
         )
         request_mock.assert_called_once_with(
             url=f'https://people.googleapis.com/v1/{path}',
-            headers={'Authorization': f'Bearer {access_token}'}
+            headers={'Authorization': f'Bearer {access_token}'},
         )
         sentry_mock.assert_called_once()
 
@@ -881,18 +878,18 @@ class TestGoogleAuthService:
         path = 'people/me'
         response_mock = mocker.Mock(
             ok=False,
-            status_code=401
+            status_code=401,
         )
         response_mock.json = mocker.Mock(
-            return_value={'error': {'code': 401, 'message': 'Unauthorized'}}
+            return_value={'error': {'code': 401, 'message': 'Unauthorized'}},
         )
         request_mock = mocker.patch(
             'src.authentication.services.google.requests.get',
-            return_value=response_mock
+            return_value=response_mock,
         )
         sentry_mock = mocker.patch(
             'src.authentication.services.google.'
-            'capture_sentry_message'
+            'capture_sentry_message',
         )
         service = GoogleAuthService()
 
@@ -905,7 +902,7 @@ class TestGoogleAuthService:
 
         # assert
         assert 'Error while retrieving Google profile data' in str(
-            ex.value.message
+            ex.value.message,
         )
         request_mock.assert_called_once()
         sentry_mock.assert_not_called()
@@ -921,7 +918,7 @@ class TestGoogleAuthService:
         people_api_request_mock = mocker.patch.object(
             service,
             '_people_api_request',
-            return_value=response_mock
+            return_value=response_mock,
         )
 
         # act
@@ -934,56 +931,58 @@ class TestGoogleAuthService:
                 'people/me?personFields=names,'
                 'emailAddresses,photos,organizations'
             ),
-            access_token=access_token
+            access_token=access_token,
         )
 
     def test_get_user_connections__ok(self, mocker):
-        """Test getting user connections from People API"""
+        """Test getting user directory contacts from People API"""
         # arrange
         access_token = 'test_token'
-        connections_data = [{'name': 'John'}, {'name': 'Jane'}]
-        json_data = {'connections': connections_data}
+        people_data = [{'name': 'John'}, {'name': 'Jane'}]
+        json_data = {'people': people_data}
         response_mock = mocker.Mock(
             ok=True,
-            json=mocker.Mock(return_value=json_data)
+            json=mocker.Mock(return_value=json_data),
         )
         service = GoogleAuthService()
         people_api_request_mock = mocker.patch.object(
             service,
             '_people_api_request',
-            return_value=response_mock
+            return_value=response_mock,
         )
 
         # act
         result = service._get_user_connections(access_token)
 
         # assert
-        assert result == connections_data
+        assert result == people_data
         people_api_request_mock.assert_called_once_with(
             path=(
-                'people/me/connections?personFields='
-                'names,emailAddresses,photos,organizations&pageSize=1000'
+                'people:listDirectoryPeople?readMask='
+                'names,emailAddresses,photos,organizations&'
+                'sources=DIRECTORY_SOURCE_TYPE_DOMAIN_CONTACT&'
+                'sources=DIRECTORY_SOURCE_TYPE_DOMAIN_PROFILE&pageSize=1000'
             ),
             access_token=access_token,
-            raise_exception=False
+            raise_exception=False,
         )
 
     def test_get_user_connections__decode_error__return_empty(self, mocker):
-        """Test handling JSON decode error for connections"""
+        """Test handling JSON decode error for directory people"""
         # arrange
         access_token = 'test_token'
         response_mock = mocker.Mock(
             json=mocker.Mock(side_effect=json.decoder.JSONDecodeError(
                 msg='msg',
                 doc='doc',
-                pos=1
-            ))
+                pos=1,
+            )),
         )
         service = GoogleAuthService()
         people_api_request_mock = mocker.patch.object(
             service,
             '_people_api_request',
-            return_value=response_mock
+            return_value=response_mock,
         )
 
         # act
@@ -1002,7 +1001,7 @@ class TestGoogleAuthService:
             source=SourceType.GOOGLE,
             access_token='test_access_token',
             refresh_token='test_refresh_token',
-            expires_in=3600
+            expires_in=3600,
         )
         service = GoogleAuthService()
 
@@ -1028,7 +1027,7 @@ class TestGoogleAuthService:
         old_date_updated = token.date_updated
 
         mock_settings = mocker.patch(
-            'src.authentication.services.google.settings'
+            'src.authentication.services.google.settings',
         )
         mock_settings.GOOGLE_OAUTH2_CLIENT_ID = 'test_client_id'
         mock_settings.GOOGLE_OAUTH2_CLIENT_SECRET = 'test_client_secret'
@@ -1040,16 +1039,16 @@ class TestGoogleAuthService:
         }
         refresh_response_mock = mocker.Mock(
             ok=True,
-            json=mocker.Mock(return_value=token_new_data)
+            json=mocker.Mock(return_value=token_new_data),
         )
         requests_post_mock = mocker.patch(
             'src.authentication.services.google.requests.post',
-            return_value=refresh_response_mock
+            return_value=refresh_response_mock,
         )
 
         # Use update to avoid triggering auto_now on date_updated
         AccessToken.objects.filter(id=token.id).update(
-            date_updated=timezone.now() - timedelta(seconds=expires_in + 120)
+            date_updated=timezone.now() - timedelta(seconds=expires_in + 120),
         )
         token.refresh_from_db()
 
@@ -1072,7 +1071,7 @@ class TestGoogleAuthService:
                 'client_secret': 'test_client_secret',
                 'refresh_token': old_refresh_token,
                 'grant_type': 'refresh_token',
-            }
+            },
         )
 
         assert result == token_new_data['access_token']
@@ -1090,11 +1089,11 @@ class TestGoogleAuthService:
             source=SourceType.MICROSOFT,
             access_token='ms_token',
             refresh_token='ms_refresh',
-            expires_in=3600
+            expires_in=3600,
         )
         sentry_mock = mocker.patch(
             'src.authentication.services.google.'
-            'capture_sentry_message'
+            'capture_sentry_message',
         )
         service = GoogleAuthService()
 
@@ -1142,13 +1141,13 @@ class TestGoogleAuthService:
             user=user,
             refresh_token='old_refresh',
             access_token='old_access',
-            expires_in=360
+            expires_in=360,
         )
 
         new_tokens_data = {
             'refresh_token': 'new_refresh',
             'access_token': 'new_access_token',
-            'expires_in': 7200
+            'expires_in': 7200,
         }
         service = GoogleAuthService()
         service.tokens = new_tokens_data
@@ -1173,43 +1172,43 @@ class TestGoogleAuthService:
         get_access_token_mock = mocker.patch.object(
             service,
             '_get_access_token',
-            return_value=access_token
+            return_value=access_token,
         )
 
         connection_profile = {
             'resourceName': 'people/123',
             'names': [{
                 'metadata': {'primary': True},
-                'displayName': 'login@domain.com'
+                'displayName': 'login@domain.com',
             }],
             'emailAddresses': [{
                 'metadata': {'verified': True},
-                'value': 'login@domain.com'
-            }]
+                'value': 'login@domain.com',
+            }],
         }
         get_connections_response = [connection_profile]
         get_connections_mock = mocker.patch.object(
             service,
             '_get_user_connections',
-            return_value=get_connections_response
+            return_value=get_connections_response,
         )
 
         log_mock = mocker.patch(
             'src.authentication.services.google.'
-            'AccountLogService.contacts_request'
+            'AccountLogService.contacts_request',
         )
 
         google_contact = Contact.objects.create(
             account=user.account,
             user_id=user.id,
             source=SourceType.GOOGLE,
-            email='test@test.test'
+            email='test@test.test',
         )
         google_contact_2 = Contact.objects.create(
             account=user.account,
             user_id=user.id,
             source=SourceType.GOOGLE,
-            email='test@test.test'
+            email='test@test.test',
         )
 
         # act
@@ -1257,7 +1256,7 @@ class TestGoogleAuthService:
         mocker.patch.object(
             service,
             '_get_access_token',
-            return_value=access_token
+            return_value=access_token,
         )
 
         connection_profile = {
@@ -1266,27 +1265,27 @@ class TestGoogleAuthService:
                 'metadata': {'primary': True},
                 'givenName': 'John',
                 'familyName': 'Doe',
-                'displayName': 'John Doe'
+                'displayName': 'John Doe',
             }],
             'emailAddresses': [{
                 'metadata': {'verified': True},
-                'value': email
+                'value': email,
             }],
             'photos': [{
                 'metadata': {'primary': True},
-                'url': 'https://example.com/photo.jpg'
-            }]
+                'url': 'https://example.com/photo.jpg',
+            }],
         }
         get_connections_response = [connection_profile]
         mocker.patch.object(
             service,
             '_get_user_connections',
-            return_value=get_connections_response
+            return_value=get_connections_response,
         )
 
         log_mock = mocker.patch(
             'src.authentication.services.google.'
-            'AccountLogService.contacts_request'
+            'AccountLogService.contacts_request',
         )
 
         # act
@@ -1311,7 +1310,7 @@ class TestGoogleAuthService:
         mocker.patch.object(
             service,
             '_get_access_token',
-            return_value=access_token
+            return_value=access_token,
         )
 
         connection_profile = {
@@ -1319,33 +1318,33 @@ class TestGoogleAuthService:
             'names': [{
                 'metadata': {'primary': True},
                 'givenName': 'John',
-                'familyName': 'Doe'
+                'familyName': 'Doe',
             }],
-            'emailAddresses': []
+            'emailAddresses': [],
         }
         get_connections_response = [connection_profile]
         mocker.patch.object(
             service,
             '_get_user_connections',
-            return_value=get_connections_response
+            return_value=get_connections_response,
         )
 
         log_mock = mocker.patch(
             'src.authentication.services.google.'
-            'AccountLogService.contacts_request'
+            'AccountLogService.contacts_request',
         )
 
         google_contact = Contact.objects.create(
             account=user.account,
             user_id=user.id,
             source=SourceType.GOOGLE,
-            email='test@test.test'
+            email='test@test.test',
         )
         google_contact_2 = Contact.objects.create(
             account=user.account,
             user_id=user.id,
             source=SourceType.GOOGLE,
-            email='test@test.test'
+            email='test@test.test',
         )
 
         # act
@@ -1368,30 +1367,30 @@ class TestGoogleAuthService:
         mocker.patch.object(
             service,
             '_get_access_token',
-            return_value=access_token
+            return_value=access_token,
         )
 
         connection_profile = {
             'resourceName': 'people/123',
             'names': [{
                 'metadata': {'primary': True},
-                'displayName': user.email
+                'displayName': user.email,
             }],
             'emailAddresses': [{
                 'metadata': {'verified': True},
-                'value': user.email
-            }]
+                'value': user.email,
+            }],
         }
         get_connections_response = [connection_profile]
         mocker.patch.object(
             service,
             '_get_user_connections',
-            return_value=get_connections_response
+            return_value=get_connections_response,
         )
 
         log_mock = mocker.patch(
             'src.authentication.services.google.'
-            'AccountLogService.contacts_request'
+            'AccountLogService.contacts_request',
         )
 
         # act
@@ -1417,24 +1416,24 @@ class TestGoogleAuthService:
         mocker.patch.object(
             service,
             '_get_access_token',
-            return_value=access_token
+            return_value=access_token,
         )
 
         error_message = 'API Error'
         error_details = {'error_details': 'Rate limit exceeded'}
         ex = PeopleApiRequestError(
             message=error_message,
-            details=error_details
+            details=error_details,
         )
         mocker.patch.object(
             service,
             '_get_user_connections',
-            side_effect=ex
+            side_effect=ex,
         )
 
         log_mock = mocker.patch(
             'src.authentication.services.google.'
-            'AccountLogService.contacts_request'
+            'AccountLogService.contacts_request',
         )
 
         # act
@@ -1444,9 +1443,10 @@ class TestGoogleAuthService:
         log_mock.assert_called_once_with(
             user=user,
             path=(
-                'https://people.googleapis.com/v1/people/me/connections'
-                '?personFields=names,emailAddresses,'
-                'photos,organizations&pageSize=1000'
+                'https://people.googleapis.com/v1/people:listDirectoryPeople'
+                '?readMask=names,emailAddresses,photos,organizations&'
+                'sources=DIRECTORY_SOURCE_TYPE_DOMAIN_CONTACT&'
+                'sources=DIRECTORY_SOURCE_TYPE_DOMAIN_PROFILE&pageSize=1000'
             ),
             title=f'Google contacts request: {user.email}',
             http_status=400,
@@ -1455,13 +1455,13 @@ class TestGoogleAuthService:
                 'updated_contacts': [],
                 'message': error_message,
                 'details': error_details,
-                'exception_type': 'PeopleApiRequestError'
+                'exception_type': 'PeopleApiRequestError',
             },
             contractor='Google People API',
         )
 
     def test_update_user_contacts__with_photo_and_job_title__saves_correctly(
-        self, mocker
+        self, mocker,
     ):
         """
         Test updating contacts with photo and job_title from organizations
@@ -1475,7 +1475,7 @@ class TestGoogleAuthService:
         mocker.patch.object(
             service,
             '_get_access_token',
-            return_value=access_token
+            return_value=access_token,
         )
 
         connection_profile = {
@@ -1483,31 +1483,31 @@ class TestGoogleAuthService:
             'names': [{
                 'metadata': {'primary': True},
                 'givenName': 'Alice',
-                'familyName': 'Johnson'
+                'familyName': 'Johnson',
             }],
             'emailAddresses': [{
                 'metadata': {'verified': True},
-                'value': 'alice.johnson@example.com'
+                'value': 'alice.johnson@example.com',
             }],
             'photos': [{
                 'metadata': {'primary': True},
-                'url': 'https://photos.googleapis.com/alice.jpg'
+                'url': 'https://photos.googleapis.com/alice.jpg',
             }],
             'organizations': [{
                 'metadata': {'primary': True},
-                'title': 'UI/UX Designer'
-            }]
+                'title': 'UI/UX Designer',
+            }],
         }
         get_connections_response = [connection_profile]
         mocker.patch.object(
             service,
             '_get_user_connections',
-            return_value=get_connections_response
+            return_value=get_connections_response,
         )
 
         mocker.patch(
             'src.authentication.services.google.'
-            'AccountLogService.contacts_request'
+            'AccountLogService.contacts_request',
         )
 
         # act

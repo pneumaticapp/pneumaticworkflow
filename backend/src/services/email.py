@@ -1,11 +1,13 @@
 from datetime import datetime
-from typing import Optional, Dict, Any
+from typing import Any, Dict, Optional
+
 from django.conf import settings
+
 from src.accounts.models import User
-from src.services.tasks import send_email_via_customerio
 from src.accounts.tokens import UnsubscribeEmailToken
-from src.analytics.enums import MailoutType
+from src.analysis.enums import MailoutType
 from src.notifications.enums import EmailTemplate
+from src.services.tasks import send_email_via_customerio
 
 
 class EmailService:
@@ -16,17 +18,17 @@ class EmailService:
     def _send_email_to_console(
         recipient_email: str,
         template_code: str,
-        data: dict
+        data: dict,
     ):
-        print(
-            f'''
+        print(  # noqa: T201
+            f"""
             -------------------------
             ------EMAIL-MESSAGE------
             To email: {recipient_email}
             Template name: {template_code}
             Message args: {data}
             -------------------------
-            '''
+            """,
         )
 
     @staticmethod
@@ -34,7 +36,7 @@ class EmailService:
         user_id: int,
         recipient_email: str,
         template_code: EmailTemplate.LITERALS,
-        data: Optional[Dict[str, Any]] = None
+        data: Optional[Dict[str, Any]] = None,
     ):
 
         if not settings.PROJECT_CONF['EMAIL']:
@@ -65,7 +67,7 @@ class EmailService:
             template_code=EmailTemplate.USER_DEACTIVATED,
             data={
                 'logo_lg': user.account.logo_lg,
-            }
+            },
         )
 
     @staticmethod
@@ -120,7 +122,7 @@ class EmailService:
             UnsubscribeEmailToken.create_token(
                 user_id=user.id,
                 email_type=MailoutType.WF_DIGEST,
-            )
+            ),
         )
 
         data = {
@@ -149,7 +151,7 @@ class EmailService:
             UnsubscribeEmailToken.create_token(
                 user_id=user.id,
                 email_type=MailoutType.TASKS_DIGEST,
-            )
+            ),
         )
         data = {
             'date_from': date_from.strftime('%d %b'),
