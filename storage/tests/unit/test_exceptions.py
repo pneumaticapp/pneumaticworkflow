@@ -3,6 +3,7 @@
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from src.shared_kernel.exceptions import (
+    VALIDATION_ERROR_CODES,
     AuthenticationError,
     BaseAppError,
     DatabaseConnectionError,
@@ -158,7 +159,20 @@ class TestDomainExceptions:
         exception = DomainFileNotFoundError('test-file-id')
 
         assert exception.error_code.code == 'FILE_001'
-        assert 'test-file-id' in exception.error_code.message
+        assert exception.error_code.message == (
+            "File with ID 'test-file-id' not found"
+        )
+        assert exception.http_status == 404
+        assert exception.error_type == ErrorType.DOMAIN
+
+    def test_file_not_found_error_with_account(self):
+        """Test file not found error with account ID."""
+        exception = DomainFileNotFoundError('test-file-id', account_id=123)
+
+        assert exception.error_code.code == 'FILE_001'
+        assert exception.error_code.message == (
+            "File with ID 'test-file-id' not found in account 123"
+        )
         assert exception.http_status == 404
         assert exception.error_type == ErrorType.DOMAIN
 
@@ -167,8 +181,9 @@ class TestDomainExceptions:
         exception = FileAccessDeniedError('test-file-id', user_id=456)
 
         assert exception.error_code.code == 'FILE_002'
-        assert 'test-file-id' in exception.error_code.message
-        assert '456' in exception.error_code.message
+        assert exception.error_code.message == (
+            "User 456 has no access to file 'test-file-id'"
+        )
         assert exception.http_status == 403
         assert exception.error_type == ErrorType.AUTHORIZATION
 
@@ -177,21 +192,64 @@ class TestDomainExceptions:
         exception = FileSizeExceededError(1000, 500)
 
         assert exception.error_code.code == 'FILE_003'
-        assert '1000' in exception.error_code.message
-        assert '500' in exception.error_code.message
+        assert exception.error_code.message == (
+            'File size 1000 bytes exceeds limit 500 bytes'
+        )
         assert exception.http_status == 413
         assert exception.error_type == ErrorType.VALIDATION
 
-    def test_storage_error(self):
-        """Test storage error."""
-        exception = StorageError.upload_failed('Upload failed')
+    def test_storage_error_upload_failed(self):
+        """Test storage upload failed error."""
+        exception = StorageError.upload_failed('Connection timeout')
 
         assert exception.error_code.code == 'STORAGE_002'
-        assert (
-            exception.error_code.message == 'Failed to upload file to storage'
+        assert exception.error_code.message == (
+            'Failed to upload file to storage'
         )
-        assert exception.details == 'Upload failed: Upload failed'
+        assert exception.details == 'Upload failed: Connection timeout'
         assert exception.http_status == 503
+        assert exception.error_type == ErrorType.INFRASTRUCTURE
+
+    def test_storage_error_download_failed(self):
+        """Test storage download failed error."""
+        exception = StorageError.download_failed('File corrupted')
+
+        assert exception.error_code.code == 'STORAGE_003'
+        assert exception.error_code.message == (
+            'Failed to download file from storage'
+        )
+        assert exception.details == 'Download failed: File corrupted'
+        assert exception.http_status == 503
+        assert exception.error_type == ErrorType.INFRASTRUCTURE
+
+    def test_storage_error_bucket_create_failed(self):
+        """Test storage bucket creation failed error."""
+        exception = StorageError.bucket_create_failed(
+            'Insufficient permissions'
+        )
+
+        assert exception.error_code.code == 'STORAGE_004'
+        assert exception.error_code.message == (
+            'Failed to create storage bucket'
+        )
+        assert exception.details == (
+            'Bucket creation failed: Insufficient permissions'
+        )
+        assert exception.http_status == 503
+        assert exception.error_type == ErrorType.INFRASTRUCTURE
+
+    def test_storage_error_file_not_found_in_storage(self):
+        """Test storage file not found error."""
+        exception = StorageError.file_not_found_in_storage(
+            'path/to/file.txt', 'my-bucket'
+        )
+
+        assert exception.error_code.code == 'STORAGE_005'
+        assert exception.error_code.message == 'File not found in storage'
+        assert exception.details == (
+            "File 'path/to/file.txt' not found in bucket 'my-bucket'"
+        )
+        assert exception.http_status == 404
         assert exception.error_type == ErrorType.INFRASTRUCTURE
 
 
@@ -260,18 +318,38 @@ class TestExternalServiceExceptions:
 
         assert exception.error_code.code == 'EXT_002'
         assert exception.error_code.message == 'Redis operation failed'
-        assert "Redis operation 'GET' failed" in exception.details
+        assert exception.details == (
+            "Redis operation 'GET' failed: Operation failed"
+        )
         assert exception.http_status == 500
         assert exception.error_type == ErrorType.EXTERNAL_SERVICE
 
     def test_http_client_error(self):
         """Test HTTP client error."""
-        exception = HttpClientError('http://example.com', 'Request failed')
+        exception = HttpClientError(
+            'http://example.com', details='Request failed'
+        )
 
         assert exception.error_code.code == 'EXT_003'
         assert exception.error_code.message == 'HTTP client request failed'
-        assert 'http://example.com' in exception.details
-        assert 'Request failed' in exception.details
+        assert exception.details == (
+            "HTTP request to 'http://example.com' failed: Request failed"
+        )
+        assert exception.http_status == 502
+        assert exception.error_type == ErrorType.EXTERNAL_SERVICE
+
+    def test_http_client_error_with_status_code(self):
+        """Test HTTP client error with status code."""
+        exception = HttpClientError(
+            'http://example.com', status_code=404, details='Not found'
+        )
+
+        assert exception.error_code.code == 'EXT_003'
+        assert exception.error_code.message == 'HTTP client request failed'
+        assert exception.details == (
+            "HTTP request to 'http://example.com' "
+            'failed with status 404: Not found'
+        )
         assert exception.http_status == 502
         assert exception.error_type == ErrorType.EXTERNAL_SERVICE
 
@@ -285,8 +363,10 @@ class TestExternalServiceExceptions:
 
         assert exception.error_code.code == 'EXT_004'
         assert exception.error_code.message == 'HTTP request timeout'
-        assert 'http://example.com' in exception.details
-        assert '30s' in exception.details
+        assert exception.details == (
+            "HTTP request to 'http://example.com' "
+            'timed out after 30s: Timeout occurred'
+        )
         assert exception.http_status == 504
         assert exception.error_type == ErrorType.EXTERNAL_SERVICE
 
@@ -313,6 +393,22 @@ class TestPermissionExceptions:
         assert exception.details == 'Access denied'
         assert exception.http_status == 403
         assert exception.error_type == ErrorType.AUTHORIZATION
+
+
+class TestValidationExceptions:
+    """Test validation exceptions."""
+
+    def test_invalid_file_size_error(self):
+        """Test invalid file size validation error."""
+        # Create validation error manually since we don't have a specific class
+        error_code = VALIDATION_ERROR_CODES['INVALID_FILE_SIZE']
+        exception = BaseAppError(error_code, 'File size must be positive')
+
+        assert exception.error_code.code == 'VAL_001'
+        assert exception.error_code.message == 'Invalid file size'
+        assert exception.details == 'File size must be positive'
+        assert exception.http_status == 400
+        assert exception.error_type.value == 'validation'
 
 
 class TestAuthExceptions:

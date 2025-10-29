@@ -2,15 +2,11 @@
 
 from collections.abc import Awaitable, Callable
 from datetime import UTC, datetime
-from typing import TYPE_CHECKING
 
-from fastapi import Request, Response
+from fastapi import FastAPI, Request, Response
 from fastapi.responses import JSONResponse
 from fastapi.security import HTTPBearer
 from starlette.middleware.base import BaseHTTPMiddleware
-
-if TYPE_CHECKING:
-    from fastapi import FastAPI
 
 from src.shared_kernel.auth import (
     PneumaticToken,
@@ -73,7 +69,7 @@ class AuthenticationMiddleware(BaseHTTPMiddleware):
     - request.user: AuthUser
     """
 
-    def __init__(self, app: 'FastAPI', *, require_auth: bool = True) -> None:
+    def __init__(self, app: FastAPI, *, require_auth: bool = True) -> None:
         """Initialize authentication middleware.
 
         Args:

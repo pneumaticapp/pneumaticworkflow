@@ -155,30 +155,6 @@ VALIDATION_ERROR_CODES = {
 
 # Infrastructure error codes
 INFRA_ERROR_CODES = {
-    'DATABASE_CONNECTION_ERROR': ErrorCode(
-        code='INFRA_001',
-        message='Database connection error',
-        error_type=ErrorType.INFRASTRUCTURE,
-        http_status=503,
-    ),
-    'DATABASE_OPERATION_FAILED': ErrorCode(
-        code='INFRA_002',
-        message='Database operation failed',
-        error_type=ErrorType.INFRASTRUCTURE,
-        http_status=503,
-    ),
-    'REDIS_CONNECTION_ERROR': ErrorCode(
-        code='INFRA_003',
-        message='Redis connection error',
-        error_type=ErrorType.INFRASTRUCTURE,
-        http_status=503,
-    ),
-    'EXTERNAL_SERVICE_ERROR': ErrorCode(
-        code='INFRA_004',
-        message='External service error',
-        error_type=ErrorType.EXTERNAL_SERVICE,
-        http_status=503,
-    ),
     'INTERNAL_SERVER_ERROR': ErrorCode(
         code='INFRA_005',
         message='Internal server error',
