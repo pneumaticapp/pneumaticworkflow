@@ -3,7 +3,7 @@ from os import environ
 from django.contrib.auth import get_user_model
 
 from src.accounts.services.guests import GuestService
-from src.analytics.services import AnalyticService
+from src.analysis.services import AnalyticService
 from src.authentication.enums import AuthTokenType
 from src.authentication.services.guest_auth import GuestJWTAuthService
 from src.notifications.tasks import send_guest_new_task

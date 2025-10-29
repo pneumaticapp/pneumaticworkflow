@@ -411,10 +411,6 @@ msgstr "Pièce jointe introuvable."
 msgid "The value must be the ID of an existing account user."
 msgstr "La valeur doit être l'identifiant d'un utilisateur de compte existant."
 
-#: src/processes/messages/workflow.py:76
-msgid "Account user with given id does not exist."
-msgstr "Utilisateur de compte avec l'identifiant donné n'existe pas."
-
 #: src/processes/messages/workflow.py:77
 msgid "Save attachments failed. Service unavailable."
 msgstr "Échec de l'enregistrement des pièces jointes. Service indisponible."

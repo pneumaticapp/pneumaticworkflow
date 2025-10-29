@@ -10,7 +10,7 @@ repos:
         name: ruff
         types: [python]
         language: system
-        entry: ruff check --fix --config backend/ruff.toml
+        entry: ruff check --config backend/ruff.toml
         exclude: 'migrations|settings.py|messages.py|wsgi.py|asgi.py'
 
   - repo: local
