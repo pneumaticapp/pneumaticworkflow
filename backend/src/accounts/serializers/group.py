@@ -1,28 +1,29 @@
+# ruff: noqa: PLC0415
+from django.contrib.auth import get_user_model
+from rest_framework import serializers
 from rest_framework.serializers import (
-    ModelSerializer,
-    IntegerField,
     CharField,
+    IntegerField,
+    ModelSerializer,
     ValidationError,
 )
-from django.contrib.auth import get_user_model
-from src.generics.mixins.serializers import (
-    CustomValidationErrorMixin
-)
-from src.accounts.messages import MSG_A_0039
-from src.accounts.models import UserGroup
+
 from src.accounts.enums import (
     UserStatus,
 )
-from src.generics.fields import RelatedListField
-from rest_framework import serializers
-from src.generics.fields import CommaSeparatedListField
+from src.accounts.messages import MSG_A_0039
+from src.accounts.models import UserGroup
+from src.generics.fields import CommaSeparatedListField, RelatedListField
+from src.generics.mixins.serializers import (
+    CustomValidationErrorMixin,
+)
 
 UserModel = get_user_model()
 
 
 class GroupSerializer(
     CustomValidationErrorMixin,
-    ModelSerializer
+    ModelSerializer,
 ):
     class Meta:
         model = UserGroup
@@ -55,7 +56,7 @@ class GroupSerializer(
             users = UserModel.objects.filter(
                 id__in=value,
                 status__in=(UserStatus.ACTIVE, UserStatus.INVITED),
-                account=self.context['account']
+                account=self.context['account'],
             )
             if users.count() != len(value):
                 raise ValidationError(MSG_A_0039)
@@ -64,7 +65,7 @@ class GroupSerializer(
 
 class GroupRequestSerializer(
     CustomValidationErrorMixin,
-    serializers.Serializer
+    serializers.Serializer,
 ):
 
     ordering = CommaSeparatedListField(
@@ -77,8 +78,8 @@ class GroupRequestSerializer(
             choices=(
                 ('-name', '-name'),
                 ('name', 'name'),
-            )
-        )
+            ),
+        ),
     )
 
 
@@ -87,7 +88,7 @@ class GroupNameSerializer(serializers.ModelSerializer):
         model = UserGroup
         fields = (
             'id',
-            'name'
+            'name',
         )
 
 
@@ -106,6 +107,6 @@ class GroupWebsocketSerializer(serializers.ModelSerializer):
 
     def get_users(self, obj):
         from src.accounts.serializers.user import (
-            UserWebsocketSerializer
+            UserWebsocketSerializer,
         )
         return UserWebsocketSerializer(obj.users.all(), many=True).data

@@ -1,41 +1,41 @@
 from django.conf import settings
-from django.db import transaction
 from django.contrib.auth import get_user_model
+from django.db import transaction
 from rest_framework_simplejwt.exceptions import TokenError
 
-from src.authentication.enums import AuthTokenType
+from src.accounts.enums import (
+    BillingPlanType,
+    UserInviteStatus,
+    UserStatus,
+)
 from src.accounts.models import UserInvite
-from src.accounts.tokens import TransferToken
 from src.accounts.serializers.user import UserWebsocketSerializer
+from src.accounts.services.account import AccountService
 from src.accounts.services.exceptions import (
-    InvalidTransferTokenException,
     AlreadyAcceptedInviteException,
     ExpiredTransferTokenException,
-)
-from src.payment.stripe.service import StripeService
-from src.accounts.enums import (
-    UserStatus,
-    UserInviteStatus,
-    BillingPlanType,
+    InvalidTransferTokenException,
 )
 from src.accounts.services.reassign import (
-    ReassignService
+    ReassignService,
 )
+from src.accounts.services.user import UserService
+from src.accounts.tokens import TransferToken
+from src.analysis.mixins import BaseIdentifyMixin
+from src.analysis.services import AnalyticService
+from src.authentication.enums import AuthTokenType
+from src.notifications.tasks import send_user_updated_notification
+from src.payment.stripe.service import StripeService
+from src.payment.tasks import increase_plan_users
 from src.processes.services.remove_user_from_draft import (
     remove_user_from_draft,
 )
-from src.analytics.mixins import BaseIdentifyMixin
-from src.analytics.services import AnalyticService
-from src.accounts.services.user import UserService
-from src.payment.tasks import increase_plan_users
-from src.accounts.services import AccountService
-from src.notifications.tasks import send_user_updated_notification
 
 UserModel = get_user_model()
 
 
 class UserTransferService(
-    BaseIdentifyMixin
+    BaseIdentifyMixin,
 ):
 
     def __init__(self):
@@ -46,35 +46,35 @@ class UserTransferService(
     def _get_valid_user(self, user_id: int) -> UserModel:
         try:
             user = UserModel.objects.get(id=user_id)
-        except UserModel.DoesNotExist:
-            raise InvalidTransferTokenException()
+        except UserModel.DoesNotExist as ex:
+            raise InvalidTransferTokenException from ex
         else:
             if self.token['new_user_id'] != user.id:
-                raise InvalidTransferTokenException()
+                raise InvalidTransferTokenException
             if user.status == UserStatus.ACTIVE:
-                raise AlreadyAcceptedInviteException()
+                raise AlreadyAcceptedInviteException
             return user
 
     def _get_valid_prev_user(self) -> UserModel:
         try:
             return UserModel.objects.exclude(
-                id=self.user.id
+                id=self.user.id,
             ).get(
                 email=self.user.email,
                 id=self.token['prev_user_id'],
-                status=UserStatus.ACTIVE
+                status=UserStatus.ACTIVE,
             )
-        except UserModel.DoesNotExist:
-            raise ExpiredTransferTokenException()
+        except UserModel.DoesNotExist as ex:
+            raise ExpiredTransferTokenException from ex
 
     def _get_valid_token(self, token_str: str) -> TransferToken:
         try:
             token = TransferToken(token=token_str)
-        except TokenError:
-            raise InvalidTransferTokenException()
+        except TokenError as ex:
+            raise InvalidTransferTokenException from ex
         else:
             if not token.get('new_user_id') or not token.get('prev_user_id'):
-                raise InvalidTransferTokenException()
+                raise InvalidTransferTokenException
             return token
 
     def _after_transfer_actions(self):
@@ -87,7 +87,7 @@ class UserTransferService(
             increase_plan_users.delay(
                 account_id=self.user.account_id,
                 is_superuser=False,
-                auth_type=AuthTokenType.USER
+                auth_type=AuthTokenType.USER,
             )
         self.identify(self.user)
         self.group(self.prev_user)
@@ -101,18 +101,18 @@ class UserTransferService(
 
     def _delete_prev_user_pending_invites(self):
         UserInvite.objects.on_account(
-            self.prev_user.account.id
+            self.prev_user.account.id,
         ).filter(
             status=UserInviteStatus.PENDING,
-            invited_user=self.prev_user
+            invited_user=self.prev_user,
         ).delete()
 
     def _accept_user_pending_invite(self):
         UserInvite.objects.on_account(
-            self.user.account.id
+            self.user.account.id,
         ).filter(
             status=UserInviteStatus.PENDING,
-            invited_user=self.prev_user
+            invited_user=self.prev_user,
         ).delete()
 
     def _deactivate_prev_user(self):
@@ -125,12 +125,12 @@ class UserTransferService(
         if new_user:
             service = ReassignService(
                 old_user=self.prev_user,
-                new_user=new_user
+                new_user=new_user,
             )
             service.reassign_everywhere()
         remove_user_from_draft(
             account_id=self.prev_user.account.id,
-            user_id=self.prev_user.id
+            user_id=self.prev_user.id,
         )
         self._delete_prev_user_pending_invites()
         if (
@@ -143,7 +143,7 @@ class UserTransferService(
             service = StripeService(
                 user=self.prev_user,
                 is_superuser=False,
-                auth_type=AuthTokenType.USER
+                auth_type=AuthTokenType.USER,
             )
             service.cancel_subscription()
 
@@ -156,11 +156,11 @@ class UserTransferService(
         self.user.last_name = self.prev_user.last_name
         self.user.status = UserStatus.ACTIVE
         self.user.save(update_fields=[
-            'status', 'is_active', 'first_name', 'last_name'
+            'status', 'is_active', 'first_name', 'last_name',
         ])
         service = AccountService(
             instance=self.user.account,
-            user=self.user
+            user=self.user,
         )
         service.update_users_counts()
 

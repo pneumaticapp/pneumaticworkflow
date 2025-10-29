@@ -2,7 +2,7 @@ import React from 'react';
 
 export const ShortArrowIcon = ({ fill = 'currentColor' }: React.SVGAttributes<SVGElement>) => {
   return (
-    <svg width="8" height="6" viewBox="0 0 8 6" fill={fill} xmlns="http://www.w3.org/2000/svg">
+    <svg width="8" height="6" viewBox="0 0 8 6" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
       <path
         fillRule="evenodd"
         clipRule="evenodd"

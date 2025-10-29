@@ -15,10 +15,9 @@ from src.authentication.services import exceptions
 from src.generics.mixins.services import CacheMixin
 from src.logs.service import AccountLogService
 from src.utils.logging import (
-    capture_sentry_message,
     SentryLogLevel,
+    capture_sentry_message,
 )
-
 
 UserModel = get_user_model()
 
@@ -33,21 +32,22 @@ class GooglePeopleApiMixin:
         'people/me?personFields=names,emailAddresses,photos,organizations'
     )
     connections_path = (
-        'people/me/connections?personFields=names,emailAddresses,photos,'
-        'organizations&pageSize=1000'
+        'people:listDirectoryPeople?readMask=names,emailAddresses,photos,'
+        'organizations&sources=DIRECTORY_SOURCE_TYPE_DOMAIN_CONTACT&'
+        'sources=DIRECTORY_SOURCE_TYPE_DOMAIN_PROFILE&pageSize=1000'
     )
 
     def _people_api_request(
         self,
         access_token: str,
         path: str,
-        raise_exception=True
+        raise_exception=True,
     ) -> requests.Response:
         """Performs request to Google People API"""
 
         response = requests.get(
             url=f'{self.people_api_url}{path}',
-            headers={'Authorization': f'Bearer {access_token}'}
+            headers={'Authorization': f'Bearer {access_token}'},
         )
         if not response.ok and raise_exception:
             data = response.json() if response.content else {}
@@ -57,11 +57,11 @@ class GooglePeopleApiMixin:
                     data={
                         'response_data': data,
                         'status_code': response.status_code,
-                        'uri': f'{self.people_api_url}{path}'
+                        'uri': f'{self.people_api_url}{path}',
                     },
-                    level=SentryLogLevel.ERROR
+                    level=SentryLogLevel.ERROR,
                 )
-            raise exceptions.PeopleApiRequestError()
+            raise exceptions.PeopleApiRequestError
         return response
 
     def _get_user_profile(self, access_token: str) -> dict:
@@ -117,25 +117,25 @@ class GooglePeopleApiMixin:
 
         response = self._people_api_request(
             path=self.profile_path,
-            access_token=access_token
+            access_token=access_token,
         )
         return response.json()
 
     def _get_user_connections(self, access_token: str) -> list:
         """
-        Gets user contacts list via Google People API
+        Gets user directory contacts list via Google People API
         """
 
         response = self._people_api_request(
             path=self.connections_path,
             access_token=access_token,
-            raise_exception=False
+            raise_exception=False,
         )
 
         if response.ok:
             try:
                 data = response.json()
-                return data.get('connections', [])
+                return data.get('people', [])
             except json.decoder.JSONDecodeError:
                 return []
         return []
@@ -150,7 +150,7 @@ class GooglePeopleApiMixin:
                 for item in items
                 if item.get('metadata', {}).get('primary')
             ),
-            None
+            None,
         )
         if primary is None and items:
             primary = items[0]
@@ -191,11 +191,11 @@ class GoogleAuthService(
     cache_key_prefix = 'g_flow'
     cache_timeout = 600  # 10 min
 
-    # Scopes for reading contacts and user profile
+    # Scopes for reading directory and user profile
     scopes = [
         'https://www.googleapis.com/auth/userinfo.profile',
         'https://www.googleapis.com/auth/userinfo.email',
-        'https://www.googleapis.com/auth/contacts.readonly',
+        'https://www.googleapis.com/auth/directory.readonly',
     ]
 
     def __init__(self):
@@ -243,11 +243,11 @@ class GoogleAuthService(
                 'state_from_cache': state,
                 'cache_key_prefix': self.cache_key_prefix,
             },
-            level=SentryLogLevel.INFO
+            level=SentryLogLevel.INFO,
         )
 
         if not state:
-            raise exceptions.TokenInvalidOrExpired()
+            raise exceptions.TokenInvalidOrExpired
 
         token_url = 'https://oauth2.googleapis.com/token'
         data = {
@@ -265,7 +265,7 @@ class GoogleAuthService(
                 'client_id': self.client_id,
                 'code_length': len(auth_response['code']),
             },
-            level=SentryLogLevel.INFO
+            level=SentryLogLevel.INFO,
         )
 
         response = requests.post(token_url, data=data)
@@ -280,9 +280,9 @@ class GoogleAuthService(
                     'redirect_uri': self.redirect_uri,
                     'client_id': self.client_id,
                 },
-                level=SentryLogLevel.WARNING
+                level=SentryLogLevel.WARNING,
             )
-            raise exceptions.TokenInvalidOrExpired()
+            raise exceptions.TokenInvalidOrExpired
 
         self.tokens = response.json()
         return self.tokens['access_token']
@@ -295,8 +295,8 @@ class GoogleAuthService(
             defaults={
                 'expires_in': self.tokens['expires_in'],
                 'refresh_token': self.tokens.get('refresh_token', ''),
-                'access_token': self.tokens['access_token']
-            }
+                'access_token': self.tokens['access_token'],
+            },
         )
 
     def get_auth_uri(self) -> str:
@@ -318,7 +318,7 @@ class GoogleAuthService(
                 'cache_timeout': self.cache_timeout,
                 'cache': self.cache,
             },
-            level=SentryLogLevel.INFO
+            level=SentryLogLevel.INFO,
         )
 
         auth_url = 'https://accounts.google.com/o/oauth2/v2/auth'
@@ -330,7 +330,7 @@ class GoogleAuthService(
             'state': state,
             'access_type': 'offline',
             'prompt': 'consent',
-            'include_granted_scopes': 'true'
+            'include_granted_scopes': 'false',
         }
 
         query_string = urllib.parse.urlencode(params)
@@ -353,8 +353,8 @@ class GoogleAuthService(
             raise exceptions.EmailNotExist(
                 details={
                     'user_profile': user_profile,
-                    'email': primary_email
-                }
+                    'email': primary_email,
+                },
             )
 
         first_name = (
@@ -373,7 +373,7 @@ class GoogleAuthService(
                 'email': primary_email,
                 'job_title': job_title,
             },
-            level=SentryLogLevel.INFO
+            level=SentryLogLevel.INFO,
         )
 
         return UserData(
@@ -436,19 +436,19 @@ class GoogleAuthService(
                             'last_name': last_name,
                             'job_title': job_title,
                             'source_id': connection.get('resourceName', ''),
-                        }
+                        },
                     )
 
                     if created:
                         response_data['created_contacts'].append(
-                            primary_email
+                            primary_email,
                         )
                     else:
                         response_data['updated_contacts'].append(
-                            primary_email
+                            primary_email,
                         )
 
-        except Exception as ex:  # pylint: disable=broad-except
+        except Exception as ex:  # noqa: BLE001
             http_status = 400
             response_data['message'] = str(ex)
             response_data['exception_type'] = type(ex).__name__
@@ -471,15 +471,15 @@ class GoogleAuthService(
         try:
             token = AccessToken.objects.get(
                 user_id=user_id,
-                source=SourceType.GOOGLE
+                source=SourceType.GOOGLE,
             )
-        except AccessToken.DoesNotExist:
+        except AccessToken.DoesNotExist as ex:
             capture_sentry_message(
                 message='Google access token not found',
                 data={'user_id': user_id},
-                level=SentryLogLevel.ERROR
+                level=SentryLogLevel.ERROR,
             )
-            raise exceptions.AccessTokenNotFound()
+            raise exceptions.AccessTokenNotFound from ex
 
         if token.is_expired:
             self._refresh_access_token(token)
@@ -497,7 +497,7 @@ class GoogleAuthService(
                 'client_secret': self.client_secret,
                 'refresh_token': token.refresh_token,
                 'grant_type': 'refresh_token',
-            }
+            },
         )
 
         if response.ok:
@@ -513,8 +513,8 @@ class GoogleAuthService(
                 data={
                     'user_id': token.user_id,
                     'status_code': response.status_code,
-                    'response': response.text
+                    'response': response.text,
                 },
-                level=SentryLogLevel.ERROR
+                level=SentryLogLevel.ERROR,
             )
-            raise exceptions.TokenInvalidOrExpired()
+            raise exceptions.TokenInvalidOrExpired

@@ -1,21 +1,21 @@
 import pytest
-from src.processes.tests.fixtures import (
-    create_test_user
-)
-from src.processes.models import (
-    ChecklistTemplateSelection,
-    ChecklistTemplate
-)
+
 from src.processes.enums import (
+    OwnerType,
     PerformerType,
-    OwnerType
 )
-from src.utils.validation import ErrorCode
+from src.processes.messages import template as messages
 from src.processes.messages.workflow import (
     MSG_PW_0056,
 )
-from src.processes.messages import template as messages
-
+from src.processes.models.templates.checklist import (
+    ChecklistTemplate,
+    ChecklistTemplateSelection,
+)
+from src.processes.tests.fixtures import (
+    create_test_user,
+)
+from src.utils.validation import ErrorCode
 
 pytestmark = pytest.mark.django_db
 
@@ -28,12 +28,12 @@ def test_create__ok(api_client, mocker):
     selections_data = [
         {
             'api_name': 'cl-selection-1',
-            'value': 'some value 1'
-        }
+            'value': 'some value 1',
+        },
     ]
     mocker.patch(
-        'src.analytics.services.AnalyticService'
-        '.checklist_created'
+        'src.analysis.services.AnalyticService'
+        '.checklist_created',
     )
 
     # act
@@ -44,7 +44,7 @@ def test_create__ok(api_client, mocker):
             'owners': [
                 {
                     'type': OwnerType.USER,
-                    'source_id': user.id
+                    'source_id': user.id,
                 },
             ],
             'is_active': True,
@@ -56,18 +56,18 @@ def test_create__ok(api_client, mocker):
                     'checklists': [
                         {
                             'api_name': 'checklist-1',
-                            'selections': selections_data
-                        }
+                            'selections': selections_data,
+                        },
                     ],
                     'raw_performers': [
                         {
                             'type': PerformerType.USER,
-                            'source_id': user.id
-                        }
-                    ]
-                }
-            ]
-        }
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+            ],
+        },
     )
 
     # assert
@@ -81,19 +81,19 @@ def test_create__ok(api_client, mocker):
     template_id = response.data['id']
     checklist = ChecklistTemplate.objects.get(
         api_name=checklist_data['api_name'],
-        template_id=template_id
+        template_id=template_id,
     )
     assert ChecklistTemplateSelection.objects.filter(
         api_name='cl-selection-1',
         value='some value 1',
         template_id=template_id,
-        checklist=checklist
+        checklist=checklist,
     ).exists()
 
 
 def test_create__generate_api_name__ok(
     mocker,
-    api_client
+    api_client,
 ):
 
     # arrange
@@ -103,16 +103,16 @@ def test_create__generate_api_name__ok(
     mocker.patch(
         'src.processes.models.templates.'
         'checklist.ChecklistTemplateSelection._create_api_name',
-        return_value=api_name
+        return_value=api_name,
     )
     mocker.patch(
-        'src.analytics.services.AnalyticService'
-        '.checklist_created'
+        'src.analysis.services.AnalyticService'
+        '.checklist_created',
     )
     selections_data = [
         {
-            'value': 'some value 1'
-        }
+            'value': 'some value 1',
+        },
     ]
 
     # act
@@ -123,7 +123,7 @@ def test_create__generate_api_name__ok(
             'owners': [
                 {
                     'type': OwnerType.USER,
-                    'source_id': user.id
+                    'source_id': user.id,
                 },
             ],
             'is_active': True,
@@ -135,18 +135,18 @@ def test_create__generate_api_name__ok(
                     'checklists': [
                         {
                             'api_name': 'checklist-1',
-                            'selections': selections_data
-                        }
+                            'selections': selections_data,
+                        },
                     ],
                     'raw_performers': [
                         {
                             'type': PerformerType.USER,
-                            'source_id': user.id
-                        }
-                    ]
-                }
-            ]
-        }
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+            ],
+        },
     )
 
     # assert
@@ -158,13 +158,13 @@ def test_create__generate_api_name__ok(
     assert data['api_name'] == api_name
     checklist = ChecklistTemplate.objects.get(
         api_name=checklist_data['api_name'],
-        template_id=template_id
+        template_id=template_id,
     )
     assert ChecklistTemplateSelection.objects.filter(
         api_name=api_name,
         value='some value 1',
         template_id=template_id,
-        checklist=checklist
+        checklist=checklist,
     ).exists()
 
 
@@ -176,8 +176,8 @@ def test_create__draft__ok(api_client, mocker):
     selections_data = [
         {
             'api_name': 'cl-selection-1',
-            'value': 'some value 1'
-        }
+            'value': 'some value 1',
+        },
     ]
 
     # act
@@ -188,7 +188,7 @@ def test_create__draft__ok(api_client, mocker):
             'owners': [
                 {
                     'type': OwnerType.USER,
-                    'source_id': user.id
+                    'source_id': user.id,
                 },
             ],
             'is_active': False,
@@ -200,18 +200,18 @@ def test_create__draft__ok(api_client, mocker):
                     'checklists': [
                         {
                             'api_name': 'checklist-1',
-                            'selections': selections_data
-                        }
+                            'selections': selections_data,
+                        },
                     ],
                     'raw_performers': [
                         {
                             'type': PerformerType.USER,
-                            'source_id': user.id
-                        }
-                    ]
-                }
-            ]
-        }
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+            ],
+        },
     )
 
     # assert
@@ -233,18 +233,18 @@ def test_create__with_equal_api_names_in_one_checklist__create_last(
     api_client.token_authenticate(user)
     api_name = 'cl-selection-1'
     mocker.patch(
-        'src.analytics.services.AnalyticService'
-        '.checklist_created'
+        'src.analysis.services.AnalyticService'
+        '.checklist_created',
     )
     selections_data = [
         {
             'api_name': api_name,
-            'value': 'some value 1'
+            'value': 'some value 1',
         },
         {
             'api_name': api_name,
-            'value': 'some value 2'
-        }
+            'value': 'some value 2',
+        },
     ]
 
     # act
@@ -255,7 +255,7 @@ def test_create__with_equal_api_names_in_one_checklist__create_last(
             'owners': [
                 {
                     'type': OwnerType.USER,
-                    'source_id': user.id
+                    'source_id': user.id,
                 },
             ],
             'is_active': True,
@@ -267,18 +267,18 @@ def test_create__with_equal_api_names_in_one_checklist__create_last(
                     'raw_performers': [
                         {
                             'type': PerformerType.USER,
-                            'source_id': user.id
-                        }
+                            'source_id': user.id,
+                        },
                     ],
                     'checklists': [
                         {
                             'api_name': 'checklist-1',
-                            'selections': selections_data
-                        }
-                    ]
-                }
-            ]
-        }
+                            'selections': selections_data,
+                        },
+                    ],
+                },
+            ],
+        },
     )
 
     # assert
@@ -298,8 +298,8 @@ def test_create__equal_api_names_in_different_checklists__validation_error(
     step = 'First step'
     checklist_item_api_name = 'cl-selection-1'
     mocker.patch(
-        'src.analytics.services.AnalyticService'
-        '.checklist_created'
+        'src.analysis.services.AnalyticService'
+        '.checklist_created',
     )
 
     # act
@@ -310,7 +310,7 @@ def test_create__equal_api_names_in_different_checklists__validation_error(
             'owners': [
                 {
                     'type': OwnerType.USER,
-                    'source_id': user.id
+                    'source_id': user.id,
                 },
             ],
             'is_active': True,
@@ -322,8 +322,8 @@ def test_create__equal_api_names_in_different_checklists__validation_error(
                     'raw_performers': [
                         {
                             'type': PerformerType.USER,
-                            'source_id': user.id
-                        }
+                            'source_id': user.id,
+                        },
                     ],
                     'checklists': [
                         {
@@ -331,30 +331,30 @@ def test_create__equal_api_names_in_different_checklists__validation_error(
                             'selections': [
                                 {
                                     'api_name': checklist_item_api_name,
-                                    'value': 'some value 1'
-                                }
-                            ]
+                                    'value': 'some value 1',
+                                },
+                            ],
                         },
                         {
                             'api_name': 'checklist-2',
                             'selections': [
                                 {
                                     'api_name': checklist_item_api_name,
-                                    'value': 'some value 2'
-                                }
-                            ]
-                        }
-                    ]
-                }
-            ]
-        }
+                                    'value': 'some value 2',
+                                },
+                            ],
+                        },
+                    ],
+                },
+            ],
+        },
     )
 
     # assert
     assert response.status_code == 400
     message = messages.MSG_PT_0048(
         name=step,
-        api_name=checklist_item_api_name
+        api_name=checklist_item_api_name,
     )
     assert response.data['message'] == message
     assert response.data['details']['reason'] == message
@@ -369,12 +369,12 @@ def test_create__limit_exceeded__ok(api_client, mocker):
     selections_data = [
         {
             'api_name': 'cl-selection-1',
-            'value': 'a' * 2001
-        }
+            'value': 'a' * 2001,
+        },
     ]
     mocker.patch(
-        'src.analytics.services.AnalyticService'
-        '.checklist_created'
+        'src.analysis.services.AnalyticService'
+        '.checklist_created',
     )
 
     # act
@@ -385,7 +385,7 @@ def test_create__limit_exceeded__ok(api_client, mocker):
             'owners': [
                 {
                     'type': OwnerType.USER,
-                    'source_id': user.id
+                    'source_id': user.id,
                 },
             ],
             'is_active': True,
@@ -397,18 +397,18 @@ def test_create__limit_exceeded__ok(api_client, mocker):
                     'checklists': [
                         {
                             'api_name': 'checklist-1',
-                            'selections': selections_data
-                        }
+                            'selections': selections_data,
+                        },
                     ],
                     'raw_performers': [
                         {
                             'type': PerformerType.USER,
-                            'source_id': user.id
-                        }
-                    ]
-                }
-            ]
-        }
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+            ],
+        },
     )
 
     # assert

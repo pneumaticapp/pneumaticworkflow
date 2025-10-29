@@ -1,27 +1,30 @@
-import pytest
 from datetime import timedelta
+
+import pytest
 from django.utils import timezone
-from src.processes.tests.fixtures import (
-    create_test_user,
-    create_test_account,
-    create_test_guest,
-    create_test_workflow,
-)
-from src.processes.models import TaskPerformer
-from src.utils.validation import ErrorCode
+
 from src.accounts.enums import (
-    LeaseLevel,
+    BillingPlanType,
     Language,
+    LeaseLevel,
     UserDateFormat,
     UserFirstDayWeek,
-    BillingPlanType,
 )
 from src.authentication.enums import AuthTokenType
-from src.payment.stripe.service import StripeService
+from src.authentication.services.guest_auth import GuestJWTAuthService
 from src.payment.stripe.exceptions import StripeServiceException
-from src.authentication.services import GuestJWTAuthService
+from src.payment.stripe.service import StripeService
+from src.processes.enums import FieldType
+from src.processes.models.workflows.task import TaskPerformer
+from src.processes.tests.fixtures import (
+    create_test_account,
+    create_test_admin,
+    create_test_guest,
+    create_test_owner,
+    create_test_workflow,
+)
 from src.utils.dates import date_format
-
+from src.utils.validation import ErrorCode
 
 pytestmark = pytest.mark.django_db
 
@@ -29,15 +32,15 @@ pytestmark = pytest.mark.django_db
 def test_update__all_fields__ok(mocker, api_client):
 
     # arrange
-    analytics_mock = mocker.patch(
+    analysis_mock = mocker.patch(
         'src.accounts.views.user.AnalyticService.'
-        'users_digest'
+        'users_digest',
     )
     identify_mock = mocker.patch(
         'src.accounts.views.user'
-        '.UserViewSet.identify'
+        '.UserViewSet.identify',
     )
-    user = create_test_user(is_account_owner=True)
+    user = create_test_owner()
     request_data = {
         'first_name': 'First',
         'last_name': 'Last',
@@ -58,15 +61,19 @@ def test_update__all_fields__ok(mocker, api_client):
     stripe_service_init_mock = mocker.patch.object(
         StripeService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     update_customer_mock = mocker.patch(
         'src.payment.stripe.service.StripeService.'
-        'update_customer'
+        'update_customer',
+    )
+    task_field_filter_mock = mocker.patch(
+        'src.processes.models.workflows.fields.TaskField.objects.filter',
+        return_value=mocker.Mock(update=mocker.Mock(return_value=None)),
     )
     send_user_updated_mock = mocker.patch(
         'src.notifications.tasks.'
-        'send_user_updated_notification.delay'
+        'send_user_updated_notification.delay',
     )
     api_client.token_authenticate(user)
 
@@ -145,15 +152,15 @@ def test_update__all_fields__ok(mocker, api_client):
         request_data['is_special_offers_subscriber']
     )
     identify_mock.assert_called_once_with(user)
-    analytics_mock.assert_called_once_with(
+    analysis_mock.assert_called_once_with(
         user=user,
         auth_type=AuthTokenType.USER,
-        is_superuser=False
+        is_superuser=False,
     )
     stripe_service_init_mock.assert_called_once_with(
         user=user,
         auth_type=AuthTokenType.USER,
-        is_superuser=False
+        is_superuser=False,
     )
     update_customer_mock.assert_called_once()
     send_user_updated_mock.assert_called_once_with(
@@ -166,8 +173,15 @@ def test_update__all_fields__ok(mocker, api_client):
             'email': user.email,
             'photo': user.photo,
             'is_admin': user.is_admin,
-            'is_account_owner': user.is_account_owner
-        }
+            'is_account_owner': user.is_account_owner,
+        },
+    )
+    task_field_filter_mock.assert_called_once_with(
+        type=FieldType.USER,
+        user_id=user.id,
+    )
+    task_field_filter_mock.return_value.update.assert_called_once_with(
+        value=user.name,
     )
 
 
@@ -187,16 +201,15 @@ def test_update__partial__update_request_fields(mocker, api_client):
     is_newsletters_subscriber = False
     is_special_offers_subscriber = False
 
-    analytics_mock = mocker.patch(
+    analysis_mock = mocker.patch(
         'src.accounts.views.user.AnalyticService.'
-        'users_digest'
+        'users_digest',
     )
     identify_mock = mocker.patch(
         'src.accounts.views.user'
-        '.UserViewSet.identify'
+        '.UserViewSet.identify',
     )
-    user = create_test_user(
-        is_account_owner=True,
+    user = create_test_owner(
         tz=tz,
         language='en',
         first_name=first_name,
@@ -217,15 +230,19 @@ def test_update__partial__update_request_fields(mocker, api_client):
     stripe_service_init_mock = mocker.patch.object(
         StripeService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     update_customer_mock = mocker.patch(
         'src.payment.stripe.service.StripeService.'
-        'update_customer'
+        'update_customer',
+    )
+    task_field_filter_mock = mocker.patch(
+        'src.processes.models.workflows.fields.TaskField.objects.filter',
+        return_value=mocker.Mock(update=mocker.Mock(return_value=None)),
     )
     send_user_updated_mock = mocker.patch(
         'src.notifications.tasks.'
-        'send_user_updated_notification.delay'
+        'send_user_updated_notification.delay',
     )
     api_client.token_authenticate(user)
 
@@ -280,15 +297,15 @@ def test_update__partial__update_request_fields(mocker, api_client):
         is_special_offers_subscriber
     )
     identify_mock.assert_called_once_with(user)
-    analytics_mock.assert_called_once_with(
+    analysis_mock.assert_called_once_with(
         user=user,
         auth_type=AuthTokenType.USER,
-        is_superuser=False
+        is_superuser=False,
     )
     stripe_service_init_mock.assert_called_once_with(
         user=user,
         auth_type=AuthTokenType.USER,
-        is_superuser=False
+        is_superuser=False,
     )
     update_customer_mock.assert_called_once()
     send_user_updated_mock.assert_called_once_with(
@@ -301,36 +318,41 @@ def test_update__partial__update_request_fields(mocker, api_client):
             'email': user.email,
             'photo': user.photo,
             'is_admin': user.is_admin,
-            'is_account_owner': user.is_account_owner
-        }
+            'is_account_owner': user.is_account_owner,
+        },
     )
+    task_field_filter_mock.assert_not_called()
 
 
-def test_update__no_call_analytics__ok(mocker, api_client):
+def test_update__no_call_analysis__ok(mocker, api_client):
 
     # arrange
-    analytics_mock = mocker.patch(
+    analysis_mock = mocker.patch(
         'src.accounts.views.user.AnalyticService'
-        '.users_digest'
+        '.users_digest',
     )
     identify_mock = mocker.patch(
         'src.accounts.views.user'
-        '.UserViewSet.identify'
+        '.UserViewSet.identify',
     )
-    user = create_test_user()
+    user = create_test_owner()
     api_client.token_authenticate(user)
     mocker.patch.object(
         StripeService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     mocker.patch(
         'src.payment.stripe.service.StripeService.'
-        'update_customer'
+        'update_customer',
+    )
+    task_field_filter_mock = mocker.patch(
+        'src.processes.models.workflows.fields.TaskField.objects.filter',
+        return_value=mocker.Mock(update=mocker.Mock(return_value=None)),
     )
     send_user_updated_mock = mocker.patch(
         'src.notifications.tasks.'
-        'send_user_updated_notification.delay'
+        'send_user_updated_notification.delay',
     )
 
     # act
@@ -338,7 +360,7 @@ def test_update__no_call_analytics__ok(mocker, api_client):
         path='/accounts/user',
         data={
             'is_digest_subscriber': True,
-        }
+        },
     )
 
     # assert
@@ -346,7 +368,7 @@ def test_update__no_call_analytics__ok(mocker, api_client):
     user.refresh_from_db()
     assert user.is_digest_subscriber is True
     identify_mock.assert_called_once_with(user)
-    analytics_mock.assert_not_called()
+    analysis_mock.assert_not_called()
     send_user_updated_mock.assert_called_once_with(
         logging=user.account.log_api_requests,
         account_id=user.account_id,
@@ -357,41 +379,226 @@ def test_update__no_call_analytics__ok(mocker, api_client):
             'email': user.email,
             'photo': user.photo,
             'is_admin': user.is_admin,
-            'is_account_owner': user.is_account_owner
-        }
+            'is_account_owner': user.is_account_owner,
+        },
+    )
+    task_field_filter_mock.assert_not_called()
+
+
+def test_update__only_first_name__ok(mocker, api_client):
+    # arrange
+    analytics_mock = mocker.patch(
+        'src.accounts.views.user.AnalyticService'
+        '.users_digest',
+    )
+    identify_mock = mocker.patch(
+        'src.accounts.views.user'
+        '.UserViewSet.identify',
+    )
+    user = create_test_owner(
+        first_name='OldFirst',
+        last_name='Last',
+    )
+    data = {
+        'first_name': 'NewFirst',
+        'last_name': 'Last',
+    }
+    stripe_service_init_mock = mocker.patch.object(
+        StripeService,
+        attribute='__init__',
+        return_value=None,
+    )
+    update_customer_mock = mocker.patch(
+        'src.payment.stripe.service.StripeService.'
+        'update_customer',
+    )
+    task_field_filter_mock = mocker.patch(
+        'src.processes.models.workflows.fields.TaskField.objects.filter',
+        return_value=mocker.Mock(update=mocker.Mock(return_value=None)),
+    )
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.put(
+        path='/accounts/user',
+        data=data,
+    )
+
+    # assert
+    assert response.status_code == 200
+    user.refresh_from_db()
+    assert user.first_name == data['first_name']
+    assert user.last_name == data['last_name']
+    identify_mock.assert_called_once_with(user)
+    analytics_mock.assert_not_called()
+    stripe_service_init_mock.assert_called_once_with(
+        user=user,
+        auth_type=AuthTokenType.USER,
+        is_superuser=False,
+    )
+    update_customer_mock.assert_called_once()
+    task_field_filter_mock.assert_called_once_with(
+        type=FieldType.USER,
+        user_id=user.id,
+    )
+    task_field_filter_mock.return_value.update.assert_called_once_with(
+        value=user.name,
+    )
+
+
+def test_update__only_last_name__ok(mocker, api_client):
+    # arrange
+    analytics_mock = mocker.patch(
+        'src.accounts.views.user.AnalyticService'
+        '.users_digest',
+    )
+    identify_mock = mocker.patch(
+        'src.accounts.views.user'
+        '.UserViewSet.identify',
+    )
+    user = create_test_owner(
+        first_name='First',
+        last_name='OldLast',
+    )
+    data = {
+        'first_name': 'First',
+        'last_name': 'NewLast',
+    }
+    stripe_service_init_mock = mocker.patch.object(
+        StripeService,
+        attribute='__init__',
+        return_value=None,
+    )
+    update_customer_mock = mocker.patch(
+        'src.payment.stripe.service.StripeService.'
+        'update_customer',
+    )
+    task_field_filter_mock = mocker.patch(
+        'src.processes.models.workflows.fields.TaskField.objects.filter',
+        return_value=mocker.Mock(update=mocker.Mock(return_value=None)),
+    )
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.put(
+        path='/accounts/user',
+        data=data,
+    )
+
+    # assert
+    assert response.status_code == 200
+    user.refresh_from_db()
+    assert user.first_name == data['first_name']
+    assert user.last_name == data['last_name']
+    identify_mock.assert_called_once_with(user)
+    analytics_mock.assert_not_called()
+    stripe_service_init_mock.assert_called_once_with(
+        user=user,
+        auth_type=AuthTokenType.USER,
+        is_superuser=False,
+    )
+    update_customer_mock.assert_called_once()
+    task_field_filter_mock.assert_called_once_with(
+        type=FieldType.USER,
+        user_id=user.id,
+    )
+    task_field_filter_mock.return_value.update.assert_called_once_with(
+        value=user.name,
+    )
+
+
+def test_update__both_first_and_last_name__ok(mocker, api_client):
+    # arrange
+    analytics_mock = mocker.patch(
+        'src.accounts.views.user.AnalyticService'
+        '.users_digest',
+    )
+    identify_mock = mocker.patch(
+        'src.accounts.views.user'
+        '.UserViewSet.identify',
+    )
+    user = create_test_owner(
+        first_name='OldFirst',
+        last_name='OldLast',
+    )
+    data = {
+        'first_name': 'NewFirst',
+        'last_name': 'NewLast',
+    }
+    stripe_service_init_mock = mocker.patch.object(
+        StripeService,
+        attribute='__init__',
+        return_value=None,
+    )
+    update_customer_mock = mocker.patch(
+        'src.payment.stripe.service.StripeService.'
+        'update_customer',
+    )
+    task_field_filter_mock = mocker.patch(
+        'src.processes.models.workflows.fields.TaskField.objects.filter',
+        return_value=mocker.Mock(update=mocker.Mock(return_value=None)),
+    )
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.put(
+        path='/accounts/user',
+        data=data,
+    )
+
+    # assert
+    assert response.status_code == 200
+    user.refresh_from_db()
+    assert user.first_name == data['first_name']
+    assert user.last_name == data['last_name']
+    identify_mock.assert_called_once_with(user)
+    analytics_mock.assert_not_called()
+    stripe_service_init_mock.assert_called_once_with(
+        user=user,
+        auth_type=AuthTokenType.USER,
+        is_superuser=False,
+    )
+    update_customer_mock.assert_called_once()
+    task_field_filter_mock.assert_called_once_with(
+        type=FieldType.USER,
+        user_id=user.id,
+    )
+    task_field_filter_mock.return_value.update.assert_called_once_with(
+        value=user.name,
     )
 
 
 def test_update__only_date_fmt__ok(mocker, api_client):
 
     # arrange
-    analytics_mock = mocker.patch(
+    analysis_mock = mocker.patch(
         'src.accounts.views.user.AnalyticService.'
-        'users_digest'
+        'users_digest',
     )
     identify_mock = mocker.patch(
         'src.accounts.views.user'
-        '.UserViewSet.identify'
+        '.UserViewSet.identify',
     )
-    user = create_test_user(
-        is_account_owner=True,
-        date_fmt=UserDateFormat.API_USA_24,
-    )
+    user = create_test_owner(date_fmt=UserDateFormat.API_USA_24)
     data = {
         'date_fmt': UserDateFormat.API_EUROPE_24,
     }
     stripe_service_init_mock = mocker.patch.object(
         StripeService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     update_customer_mock = mocker.patch(
         'src.payment.stripe.service.StripeService.'
-        'update_customer'
+        'update_customer',
     )
     send_user_updated_mock = mocker.patch(
         'src.notifications.tasks.'
-        'send_user_updated_notification.delay'
+        'send_user_updated_notification.delay',
+    )
+    task_field_filter_mock = mocker.patch(
+        'src.processes.models.workflows.fields.TaskField.objects.filter',
+        return_value=mocker.Mock(update=mocker.Mock(return_value=None)),
     )
     api_client.token_authenticate(user)
 
@@ -406,13 +613,14 @@ def test_update__only_date_fmt__ok(mocker, api_client):
     user.refresh_from_db()
     assert user.date_fmt == UserDateFormat.PY_EUROPE_24
     identify_mock.assert_called_once_with(user)
-    analytics_mock.assert_not_called()
+    analysis_mock.assert_not_called()
     stripe_service_init_mock.assert_called_once_with(
         user=user,
         auth_type=AuthTokenType.USER,
-        is_superuser=False
+        is_superuser=False,
     )
     update_customer_mock.assert_called_once()
+    task_field_filter_mock.assert_not_called()
     send_user_updated_mock.assert_called_once_with(
         logging=user.account.log_api_requests,
         account_id=user.account_id,
@@ -423,41 +631,42 @@ def test_update__only_date_fmt__ok(mocker, api_client):
             'email': user.email,
             'photo': user.photo,
             'is_admin': user.is_admin,
-            'is_account_owner': user.is_account_owner
-        }
+            'is_account_owner': user.is_account_owner,
+        },
     )
 
 
 def test_update__only_date_fdw__ok(mocker, api_client):
 
     # arrange
-    analytics_mock = mocker.patch(
+    analysis_mock = mocker.patch(
         'src.accounts.views.user.AnalyticService.'
-        'users_digest'
+        'users_digest',
     )
     identify_mock = mocker.patch(
         'src.accounts.views.user'
-        '.UserViewSet.identify'
+        '.UserViewSet.identify',
     )
-    user = create_test_user(
-        is_account_owner=True,
-        date_fdw=UserFirstDayWeek.FRIDAY,
-    )
+    user = create_test_owner(date_fdw=UserFirstDayWeek.FRIDAY)
     data = {
         'date_fdw': UserFirstDayWeek.THURSDAY,
     }
     stripe_service_init_mock = mocker.patch.object(
         StripeService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     update_customer_mock = mocker.patch(
         'src.payment.stripe.service.StripeService.'
-        'update_customer'
+        'update_customer',
+    )
+    task_field_filter_mock = mocker.patch(
+        'src.processes.models.workflows.fields.TaskField.objects.filter',
+        return_value=mocker.Mock(update=mocker.Mock(return_value=None)),
     )
     send_user_updated_mock = mocker.patch(
         'src.notifications.tasks.'
-        'send_user_updated_notification.delay'
+        'send_user_updated_notification.delay',
     )
     api_client.token_authenticate(user)
 
@@ -472,13 +681,14 @@ def test_update__only_date_fdw__ok(mocker, api_client):
     user.refresh_from_db()
     assert user.date_fdw == UserFirstDayWeek.THURSDAY
     identify_mock.assert_called_once_with(user)
-    analytics_mock.assert_not_called()
+    analysis_mock.assert_not_called()
     stripe_service_init_mock.assert_called_once_with(
         user=user,
         auth_type=AuthTokenType.USER,
-        is_superuser=False
+        is_superuser=False,
     )
     update_customer_mock.assert_called_once()
+    task_field_filter_mock.assert_not_called()
     send_user_updated_mock.assert_called_once_with(
         logging=user.account.log_api_requests,
         account_id=user.account_id,
@@ -489,8 +699,8 @@ def test_update__only_date_fdw__ok(mocker, api_client):
             'email': user.email,
             'photo': user.photo,
             'is_admin': user.is_admin,
-            'is_account_owner': user.is_account_owner
-        }
+            'is_account_owner': user.is_account_owner,
+        },
     )
 
 
@@ -504,34 +714,38 @@ def test_update__only_date_fdw__ok(mocker, api_client):
 def test_update__invalid_date_fmt__validation_error(
     mocker,
     api_client,
-    date_fmt
+    date_fmt,
 ):
 
     # arrange
-    analytics_mock = mocker.patch(
+    analysis_mock = mocker.patch(
         'src.accounts.views.user.AnalyticService.'
-        'users_digest'
+        'users_digest',
     )
     identify_mock = mocker.patch(
         'src.accounts.views.user'
-        '.UserViewSet.identify'
+        '.UserViewSet.identify',
     )
-    user = create_test_user(is_account_owner=True)
+    user = create_test_owner()
     data = {
         'date_fmt': date_fmt,
     }
     stripe_service_init_mock = mocker.patch.object(
         StripeService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     update_customer_mock = mocker.patch(
         'src.payment.stripe.service.StripeService.'
-        'update_customer'
+        'update_customer',
+    )
+    task_field_filter_mock = mocker.patch(
+        'src.processes.models.workflows.fields.TaskField.objects.filter',
+        return_value=mocker.Mock(update=mocker.Mock(return_value=None)),
     )
     send_user_updated_mock = mocker.patch(
         'src.notifications.tasks.'
-        'send_user_updated_notification.delay'
+        'send_user_updated_notification.delay',
     )
     api_client.token_authenticate(user)
 
@@ -549,9 +763,10 @@ def test_update__invalid_date_fmt__validation_error(
     assert response.data['details']['name'] == 'date_fmt'
     assert response.data['details']['reason'].endswith(message)
     identify_mock.assert_not_called()
-    analytics_mock.assert_not_called()
+    analysis_mock.assert_not_called()
     stripe_service_init_mock.assert_not_called()
     update_customer_mock.assert_not_called()
+    task_field_filter_mock.assert_not_called()
     send_user_updated_mock.assert_not_called()
 
 
@@ -564,34 +779,38 @@ def test_update__invalid_date_fmt__validation_error(
 def test_update__invalid_date_fdw__validation_error(
     mocker,
     api_client,
-    date_fdw
+    date_fdw,
 ):
 
     # arrange
-    analytics_mock = mocker.patch(
+    analysis_mock = mocker.patch(
         'src.accounts.views.user.AnalyticService.'
-        'users_digest'
+        'users_digest',
     )
     identify_mock = mocker.patch(
         'src.accounts.views.user'
-        '.UserViewSet.identify'
+        '.UserViewSet.identify',
     )
-    user = create_test_user(is_account_owner=True)
+    user = create_test_owner()
     data = {
         'date_fdw': date_fdw,
     }
     stripe_service_init_mock = mocker.patch.object(
         StripeService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     update_customer_mock = mocker.patch(
         'src.payment.stripe.service.StripeService.'
-        'update_customer'
+        'update_customer',
+    )
+    task_field_filter_mock = mocker.patch(
+        'src.processes.models.workflows.fields.TaskField.objects.filter',
+        return_value=mocker.Mock(update=mocker.Mock(return_value=None)),
     )
     send_user_updated_mock = mocker.patch(
         'src.notifications.tasks.'
-        'send_user_updated_notification.delay'
+        'send_user_updated_notification.delay',
     )
     api_client.token_authenticate(user)
 
@@ -609,27 +828,28 @@ def test_update__invalid_date_fdw__validation_error(
     assert response.data['details']['name'] == 'date_fdw'
     assert response.data['details']['reason'].endswith(message)
     identify_mock.assert_not_called()
-    analytics_mock.assert_not_called()
+    analysis_mock.assert_not_called()
     stripe_service_init_mock.assert_not_called()
     update_customer_mock.assert_not_called()
+    task_field_filter_mock.assert_not_called()
     send_user_updated_mock.assert_not_called()
 
 
 def test_update__invalid_photo__validation_error(
     mocker,
-    api_client
+    api_client,
 ):
 
     # arrange
-    analytics_mock = mocker.patch(
+    analysis_mock = mocker.patch(
         'src.accounts.views.user.AnalyticService'
-        '.users_digest'
+        '.users_digest',
     )
     identify_mock = mocker.patch(
         'src.accounts.views.user'
-        '.UserViewSet.identify'
+        '.UserViewSet.identify',
     )
-    user = create_test_user()
+    user = create_test_owner()
     data = {
         'photo': 'invalid_url',
     }
@@ -637,15 +857,19 @@ def test_update__invalid_photo__validation_error(
     stripe_service_init_mock = mocker.patch.object(
         StripeService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     update_customer_mock = mocker.patch(
         'src.payment.stripe.service.StripeService.'
-        'update_customer'
+        'update_customer',
+    )
+    task_field_filter_mock = mocker.patch(
+        'src.processes.models.workflows.fields.TaskField.objects.filter',
+        return_value=mocker.Mock(update=mocker.Mock(return_value=None)),
     )
     send_user_updated_mock = mocker.patch(
         'src.notifications.tasks.'
-        'send_user_updated_notification.delay'
+        'send_user_updated_notification.delay',
     )
 
     # act
@@ -662,48 +886,49 @@ def test_update__invalid_photo__validation_error(
     assert response.data['details']['name'] == 'photo'
     assert response.data['details']['reason'] == message
     identify_mock.assert_not_called()
-    analytics_mock.assert_not_called()
+    analysis_mock.assert_not_called()
     stripe_service_init_mock.assert_not_called()
     update_customer_mock.assert_not_called()
+    task_field_filter_mock.assert_not_called()
     send_user_updated_mock.assert_not_called()
 
 
 def test_update__not_account_owner__not_update_customer(
     mocker,
-    api_client
+    api_client,
 ):
 
     # arrange
     mocker.patch(
         'src.accounts.views.user.AnalyticService'
-        '.users_digest'
+        '.users_digest',
     )
     mocker.patch(
         'src.accounts.views.user'
-        '.UserViewSet.identify'
+        '.UserViewSet.identify',
     )
     account = create_test_account(lease_level=LeaseLevel.STANDARD)
-    create_test_user(
+    create_test_owner(
         account=account,
-        is_account_owner=True,
-        email='owner@test.test'
+        email='owner@test.test',
     )
-    user = create_test_user(
-        account=account,
-        is_account_owner=False
-    )
+    user = create_test_admin(account=account)
     stripe_service_init_mock = mocker.patch.object(
         StripeService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     update_customer_mock = mocker.patch(
         'src.payment.stripe.service.StripeService.'
-        'update_customer'
+        'update_customer',
     )
     send_user_updated_mock = mocker.patch(
         'src.notifications.tasks.'
-        'send_user_updated_notification.delay'
+        'send_user_updated_notification.delay',
+    )
+    task_field_filter_mock = mocker.patch(
+        'src.processes.models.workflows.fields.TaskField.objects.filter',
+        return_value=mocker.Mock(update=mocker.Mock(return_value=None)),
     )
     api_client.token_authenticate(user)
 
@@ -715,8 +940,16 @@ def test_update__not_account_owner__not_update_customer(
 
     # assert
     assert response.status_code == 200
+    user.refresh_from_db()
     stripe_service_init_mock.assert_not_called()
     update_customer_mock.assert_not_called()
+    task_field_filter_mock.assert_called_once_with(
+        type=FieldType.USER,
+        user_id=user.id,
+    )
+    task_field_filter_mock.return_value.update.assert_called_once_with(
+        value=user.name,
+    )
     send_user_updated_mock.assert_called_once_with(
         logging=user.account.log_api_requests,
         account_id=user.account_id,
@@ -727,42 +960,43 @@ def test_update__not_account_owner__not_update_customer(
             'email': user.email,
             'photo': user.photo,
             'is_admin': user.is_admin,
-            'is_account_owner': user.is_account_owner
-        }
+            'is_account_owner': user.is_account_owner,
+        },
     )
 
 
 def test_update__tenant_account__not_update_customer(
     mocker,
-    api_client
+    api_client,
 ):
 
     # arrange
     mocker.patch(
         'src.accounts.views.user.AnalyticService'
-        '.users_digest'
+        '.users_digest',
     )
     mocker.patch(
         'src.accounts.views.user'
-        '.UserViewSet.identify'
+        '.UserViewSet.identify',
     )
     account = create_test_account(lease_level=LeaseLevel.TENANT)
-    user = create_test_user(
-        account=account,
-        is_account_owner=True
-    )
+    user = create_test_owner(account=account)
     stripe_service_init_mock = mocker.patch.object(
         StripeService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     update_customer_mock = mocker.patch(
         'src.payment.stripe.service.StripeService.'
-        'update_customer'
+        'update_customer',
+    )
+    task_field_filter_mock = mocker.patch(
+        'src.processes.models.workflows.fields.TaskField.objects.filter',
+        return_value=mocker.Mock(update=mocker.Mock(return_value=None)),
     )
     send_user_updated_mock = mocker.patch(
         'src.notifications.tasks.'
-        'send_user_updated_notification.delay'
+        'send_user_updated_notification.delay',
     )
     api_client.token_authenticate(user)
 
@@ -774,8 +1008,16 @@ def test_update__tenant_account__not_update_customer(
 
     # assert
     assert response.status_code == 200
+    user.refresh_from_db()
     stripe_service_init_mock.assert_not_called()
     update_customer_mock.assert_not_called()
+    task_field_filter_mock.assert_called_once_with(
+        type=FieldType.USER,
+        user_id=user.id,
+    )
+    task_field_filter_mock.return_value.update.assert_called_once_with(
+        value=user.name,
+    )
     send_user_updated_mock.assert_called_once_with(
         logging=user.account.log_api_requests,
         account_id=user.account_id,
@@ -786,40 +1028,44 @@ def test_update__tenant_account__not_update_customer(
             'email': user.email,
             'photo': user.photo,
             'is_admin': user.is_admin,
-            'is_account_owner': user.is_account_owner
-        }
+            'is_account_owner': user.is_account_owner,
+        },
     )
 
 
 def test_update__stripe_exception__validation_error(
     mocker,
-    api_client
+    api_client,
 ):
 
     # arrange
     mocker.patch(
         'src.accounts.views.user.AnalyticService'
-        '.users_digest'
+        '.users_digest',
     )
     mocker.patch(
         'src.accounts.views.user'
-        '.UserViewSet.identify'
+        '.UserViewSet.identify',
     )
-    user = create_test_user(is_account_owner=True)
+    user = create_test_owner()
     stripe_service_init_mock = mocker.patch.object(
         StripeService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     message = 'Some error'
     update_customer_mock = mocker.patch(
         'src.payment.stripe.service.StripeService.'
         'update_customer',
-        side_effect=StripeServiceException(message)
+        side_effect=StripeServiceException(message),
+    )
+    task_field_filter_mock = mocker.patch(
+        'src.processes.models.workflows.fields.TaskField.objects.filter',
+        return_value=mocker.Mock(update=mocker.Mock(return_value=None)),
     )
     send_user_updated_mock = mocker.patch(
         'src.notifications.tasks.'
-        'send_user_updated_notification.delay'
+        'send_user_updated_notification.delay',
     )
     api_client.token_authenticate(user)
 
@@ -836,42 +1082,54 @@ def test_update__stripe_exception__validation_error(
     stripe_service_init_mock.assert_called_once_with(
         user=user,
         auth_type=AuthTokenType.USER,
-        is_superuser=False
+        is_superuser=False,
     )
+    user.refresh_from_db()
     update_customer_mock.assert_called_once()
     send_user_updated_mock.assert_not_called()
+    task_field_filter_mock.assert_called_once_with(
+        type=FieldType.USER,
+        user_id=user.id,
+    )
+    task_field_filter_mock.return_value.update.assert_called_once_with(
+        value=user.name,
+    )
 
 
 def test_update__is_digest_subscriber__anaytics_call(
     mocker,
-    api_client
+    api_client,
 ):
 
     # arrange
-    analytics_mock = mocker.patch(
+    analysis_mock = mocker.patch(
         'src.accounts.views.user.AnalyticService'
-        '.users_digest'
+        '.users_digest',
     )
     identify_mock = mocker.patch(
         'src.accounts.views.user'
-        '.UserViewSet.identify'
+        '.UserViewSet.identify',
     )
-    user = create_test_user()
+    user = create_test_owner()
     data = {
         'is_digest_subscriber': False,
     }
     mocker.patch.object(
         StripeService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     mocker.patch(
         'src.payment.stripe.service.StripeService.'
-        'update_customer'
+        'update_customer',
+    )
+    task_field_filter_mock = mocker.patch(
+        'src.processes.models.workflows.fields.TaskField.objects.filter',
+        return_value=mocker.Mock(update=mocker.Mock(return_value=None)),
     )
     send_user_updated_mock = mocker.patch(
         'src.notifications.tasks.'
-        'send_user_updated_notification.delay'
+        'send_user_updated_notification.delay',
     )
     api_client.token_authenticate(user)
 
@@ -889,11 +1147,12 @@ def test_update__is_digest_subscriber__anaytics_call(
     user.refresh_from_db()
     assert user.is_digest_subscriber == data['is_digest_subscriber']
     identify_mock.assert_called_once_with(user)
-    analytics_mock.assert_called_once_with(
+    analysis_mock.assert_called_once_with(
         user=user,
         auth_type=AuthTokenType.USER,
-        is_superuser=False
+        is_superuser=False,
     )
+    task_field_filter_mock.assert_not_called()
     send_user_updated_mock.assert_called_once_with(
         logging=user.account.log_api_requests,
         account_id=user.account_id,
@@ -904,8 +1163,8 @@ def test_update__is_digest_subscriber__anaytics_call(
             'email': user.email,
             'photo': user.photo,
             'is_admin': user.is_admin,
-            'is_account_owner': user.is_account_owner
-        }
+            'is_account_owner': user.is_account_owner,
+        },
     )
 
 
@@ -913,30 +1172,34 @@ def test_update__is_digest_subscriber__anaytics_call(
 def test_update__euro_languages__ok(
     mocker,
     language,
-    api_client
+    api_client,
 ):
 
     # arrange
     mocker.patch(
         'src.accounts.views.user.AnalyticService'
-        '.users_digest'
+        '.users_digest',
     )
     mocker.patch(
         'src.accounts.views.user'
-        '.UserViewSet.identify'
+        '.UserViewSet.identify',
     )
-    user = create_test_user()
+    user = create_test_owner()
     mocker.patch.object(
         StripeService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     mocker.patch(
         'src.payment.stripe.service.StripeService.'
-        'update_customer'
+        'update_customer',
+    )
+    task_field_filter_mock = mocker.patch(
+        'src.processes.models.workflows.fields.TaskField.objects.filter',
+        return_value=mocker.Mock(update=mocker.Mock(return_value=None)),
     )
     settings_mock = mocker.patch(
-        'src.accounts.serializers.user.settings'
+        'src.accounts.serializers.user.settings',
     )
     settings_mock.LANGUAGE_CODE = Language.en
 
@@ -945,7 +1208,7 @@ def test_update__euro_languages__ok(
     }
     send_user_updated_mock = mocker.patch(
         'src.notifications.tasks.'
-        'send_user_updated_notification.delay'
+        'send_user_updated_notification.delay',
     )
     api_client.token_authenticate(user)
 
@@ -960,6 +1223,7 @@ def test_update__euro_languages__ok(
     assert response.data['language'] == language
     user.refresh_from_db()
     assert user.language == language
+    task_field_filter_mock.assert_not_called()
     send_user_updated_mock.assert_called_once_with(
         logging=user.account.log_api_requests,
         account_id=user.account_id,
@@ -970,8 +1234,8 @@ def test_update__euro_languages__ok(
             'email': user.email,
             'photo': user.photo,
             'is_admin': user.is_admin,
-            'is_account_owner': user.is_account_owner
-        }
+            'is_account_owner': user.is_account_owner,
+        },
     )
 
 
@@ -979,36 +1243,40 @@ def test_update__euro_languages__ok(
 def test_update__system_euro_language_not_allow_ru__validation_error(
     mocker,
     language,
-    api_client
+    api_client,
 ):
 
     # arrange
-    analytics_mock = mocker.patch(
+    analysis_mock = mocker.patch(
         'src.accounts.views.user.AnalyticService'
-        '.users_digest'
+        '.users_digest',
     )
     identify_mock = mocker.patch(
         'src.accounts.views.user'
-        '.UserViewSet.identify'
+        '.UserViewSet.identify',
     )
     settings_mock = mocker.patch(
-        'src.accounts.serializers.user.settings'
+        'src.accounts.serializers.user.settings',
     )
     settings_mock.LANGUAGE_CODE = language
 
-    user = create_test_user()
+    user = create_test_owner()
     stripe_service_init_mock = mocker.patch.object(
         StripeService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     update_customer_mock = mocker.patch(
         'src.payment.stripe.service.StripeService.'
-        'update_customer'
+        'update_customer',
+    )
+    task_field_filter_mock = mocker.patch(
+        'src.processes.models.workflows.fields.TaskField.objects.filter',
+        return_value=mocker.Mock(update=mocker.Mock(return_value=None)),
     )
     send_user_updated_mock = mocker.patch(
         'src.notifications.tasks.'
-        'send_user_updated_notification.delay'
+        'send_user_updated_notification.delay',
     )
     data = {
         'language': Language.ru,
@@ -1029,9 +1297,10 @@ def test_update__system_euro_language_not_allow_ru__validation_error(
     assert response.data['code'] == ErrorCode.VALIDATION_ERROR
     assert response.data['details']['name'] == 'language'
     identify_mock.assert_not_called()
-    analytics_mock.assert_not_called()
+    analysis_mock.assert_not_called()
     stripe_service_init_mock.assert_not_called()
     update_customer_mock.assert_not_called()
+    task_field_filter_mock.assert_not_called()
     send_user_updated_mock.assert_not_called()
 
 
@@ -1039,34 +1308,38 @@ def test_update__system_euro_language_not_allow_ru__validation_error(
 def test_update__system_ru_language_allow_all__ok(
     mocker,
     language,
-    api_client
+    api_client,
 ):
 
     # arrange
     mocker.patch(
         'src.accounts.views.user.AnalyticService'
-        '.users_digest'
+        '.users_digest',
     )
     mocker.patch(
         'src.accounts.views.user'
-        '.UserViewSet.identify'
+        '.UserViewSet.identify',
     )
-    user = create_test_user()
+    user = create_test_owner()
     mocker.patch.object(
         StripeService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     mocker.patch(
         'src.payment.stripe.service.StripeService.'
-        'update_customer'
+        'update_customer',
+    )
+    task_field_filter_mock = mocker.patch(
+        'src.processes.models.workflows.fields.TaskField.objects.filter',
+        return_value=mocker.Mock(update=mocker.Mock(return_value=None)),
     )
     settings_mock = mocker.patch(
-        'src.accounts.serializers.user.settings'
+        'src.accounts.serializers.user.settings',
     )
     send_user_updated_mock = mocker.patch(
         'src.notifications.tasks.'
-        'send_user_updated_notification.delay'
+        'send_user_updated_notification.delay',
     )
     settings_mock.LANGUAGE_CODE = Language.ru
 
@@ -1086,6 +1359,7 @@ def test_update__system_ru_language_allow_all__ok(
     assert response.data['language'] == language
     user.refresh_from_db()
     assert user.language == language
+    task_field_filter_mock.assert_not_called()
     send_user_updated_mock.assert_called_once_with(
         logging=user.account.log_api_requests,
         account_id=user.account_id,
@@ -1096,39 +1370,43 @@ def test_update__system_ru_language_allow_all__ok(
             'email': user.email,
             'photo': user.photo,
             'is_admin': user.is_admin,
-            'is_account_owner': user.is_account_owner
-        }
+            'is_account_owner': user.is_account_owner,
+        },
     )
 
 
 def test_update__unsupported_language__validation_error(
     mocker,
-    api_client
+    api_client,
 ):
 
     # arrange
-    analytics_mock = mocker.patch(
+    analysis_mock = mocker.patch(
         'src.accounts.views.user.AnalyticService'
-        '.users_digest'
+        '.users_digest',
     )
     identify_mock = mocker.patch(
         'src.accounts.views.user'
-        '.UserViewSet.identify'
+        '.UserViewSet.identify',
     )
     send_user_updated_mock = mocker.patch(
         'src.notifications.tasks.'
-        'send_user_updated_notification.delay'
+        'send_user_updated_notification.delay',
     )
     language = 'po'
-    user = create_test_user()
+    user = create_test_owner()
     stripe_service_init_mock = mocker.patch.object(
         StripeService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     update_customer_mock = mocker.patch(
         'src.payment.stripe.service.StripeService.'
-        'update_customer'
+        'update_customer',
+    )
+    task_field_filter_mock = mocker.patch(
+        'src.processes.models.workflows.fields.TaskField.objects.filter',
+        return_value=mocker.Mock(update=mocker.Mock(return_value=None)),
     )
     api_client.token_authenticate(user)
 
@@ -1146,43 +1424,48 @@ def test_update__unsupported_language__validation_error(
     assert response.data['code'] == ErrorCode.VALIDATION_ERROR
     assert response.data['details']['name'] == 'language'
     identify_mock.assert_not_called()
-    analytics_mock.assert_not_called()
+    analysis_mock.assert_not_called()
     stripe_service_init_mock.assert_not_called()
     update_customer_mock.assert_not_called()
+    task_field_filter_mock.assert_not_called()
     send_user_updated_mock.assert_not_called()
 
 
 def test_update__timezone__ok(
     mocker,
-    api_client
+    api_client,
 ):
 
     # arrange
     mocker.patch(
         'src.accounts.views.user.AnalyticService'
-        '.users_digest'
+        '.users_digest',
     )
     mocker.patch(
         'src.accounts.views.user'
-        '.UserViewSet.identify'
+        '.UserViewSet.identify',
     )
-    user = create_test_user()
+    task_field_filter_mock = mocker.patch(
+        'src.processes.models.workflows.fields.TaskField.objects.filter',
+        return_value=mocker.Mock(update=mocker.Mock(return_value=None)),
+    )
+    user = create_test_owner()
     mocker.patch.object(
         StripeService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     mocker.patch(
         'src.payment.stripe.service.StripeService.'
-        'update_customer'
+        'update_customer',
     )
     send_user_updated_mock = mocker.patch(
         'src.notifications.tasks.'
-        'send_user_updated_notification.delay'
+        'send_user_updated_notification.delay',
     )
     tz = 'America/Anchorage'
     data = {
-        'timezone': tz
+        'timezone': tz,
     }
     api_client.token_authenticate(user)
 
@@ -1197,6 +1480,7 @@ def test_update__timezone__ok(
     assert response.data['timezone'] == tz
     user.refresh_from_db()
     assert user.timezone == tz
+    task_field_filter_mock.assert_not_called()
     send_user_updated_mock.assert_called_once_with(
         logging=user.account.log_api_requests,
         account_id=user.account_id,
@@ -1207,42 +1491,46 @@ def test_update__timezone__ok(
             'email': user.email,
             'photo': user.photo,
             'is_admin': user.is_admin,
-            'is_account_owner': user.is_account_owner
-        }
+            'is_account_owner': user.is_account_owner,
+        },
     )
 
 
 def test_update__invalid_timezone__validation_error(
     mocker,
-    api_client
+    api_client,
 ):
 
     # arrange
-    analytics_mock = mocker.patch(
+    analysis_mock = mocker.patch(
         'src.accounts.views.user.AnalyticService'
-        '.users_digest'
+        '.users_digest',
     )
     identify_mock = mocker.patch(
         'src.accounts.views.user'
-        '.UserViewSet.identify'
+        '.UserViewSet.identify',
     )
-    user = create_test_user()
+    task_field_filter_mock = mocker.patch(
+        'src.processes.models.workflows.fields.TaskField.objects.filter',
+        return_value=mocker.Mock(update=mocker.Mock(return_value=None)),
+    )
+    user = create_test_owner()
     stripe_service_init_mock = mocker.patch.object(
         StripeService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     update_customer_mock = mocker.patch(
         'src.payment.stripe.service.StripeService.'
-        'update_customer'
+        'update_customer',
     )
     send_user_updated_mock = mocker.patch(
         'src.notifications.tasks.'
-        'send_user_updated_notification.delay'
+        'send_user_updated_notification.delay',
     )
     tz = 'What/Ever'
     data = {
-        'timezone': tz
+        'timezone': tz,
     }
     api_client.token_authenticate(user)
 
@@ -1258,138 +1546,153 @@ def test_update__invalid_timezone__validation_error(
     assert response.data['code'] == ErrorCode.VALIDATION_ERROR
     assert response.data['details']['name'] == 'timezone'
     identify_mock.assert_not_called()
-    analytics_mock.assert_not_called()
+    analysis_mock.assert_not_called()
     stripe_service_init_mock.assert_not_called()
     update_customer_mock.assert_not_called()
+    task_field_filter_mock.assert_not_called()
     send_user_updated_mock.assert_not_called()
 
 
 def test_update__not_authenticated__unauthorized(mocker, api_client):
 
     # arrange
-    analytics_mock = mocker.patch(
+    analysis_mock = mocker.patch(
         'src.accounts.views.user.AnalyticService.'
-        'users_digest'
+        'users_digest',
     )
     identify_mock = mocker.patch(
         'src.accounts.views.user'
-        '.UserViewSet.identify'
+        '.UserViewSet.identify',
+    )
+    task_field_filter_mock = mocker.patch(
+        'src.processes.models.workflows.fields.TaskField.objects.filter',
+        return_value=mocker.Mock(update=mocker.Mock(return_value=None)),
     )
     stripe_service_init_mock = mocker.patch.object(
         StripeService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     update_customer_mock = mocker.patch(
         'src.payment.stripe.service.StripeService.'
-        'update_customer'
+        'update_customer',
     )
     send_user_updated_mock = mocker.patch(
         'src.notifications.tasks.'
-        'send_user_updated_notification.delay'
+        'send_user_updated_notification.delay',
     )
 
     # act
     response = api_client.put(
         path='/accounts/user',
-        data={'phone': '79999999990'}
+        data={'phone': '79999999990'},
     )
 
     # assert
     assert response.status_code == 401
     identify_mock.assert_not_called()
-    analytics_mock.assert_not_called()
+    analysis_mock.assert_not_called()
     stripe_service_init_mock.assert_not_called()
     update_customer_mock.assert_not_called()
+    task_field_filter_mock.assert_not_called()
     send_user_updated_mock.assert_not_called()
 
 
 def test_update__guest__permission_denied(mocker, api_client):
 
     # arrange
-    analytics_mock = mocker.patch(
+    analysis_mock = mocker.patch(
         'src.accounts.views.user.AnalyticService.'
-        'users_digest'
+        'users_digest',
     )
     identify_mock = mocker.patch(
         'src.accounts.views.user'
-        '.UserViewSet.identify'
+        '.UserViewSet.identify',
+    )
+    task_field_filter_mock = mocker.patch(
+        'src.processes.models.workflows.fields.TaskField.objects.filter',
+        return_value=mocker.Mock(update=mocker.Mock(return_value=None)),
     )
     account = create_test_account()
-    owner = create_test_user(is_account_owner=True, account=account)
+    owner = create_test_owner(account=account)
     guest = create_test_guest(account=account)
     workflow = create_test_workflow(owner, tasks_count=1)
     task = workflow.tasks.first()
     TaskPerformer.objects.create(
         task_id=task.id,
-        user_id=guest.id
+        user_id=guest.id,
     )
     stripe_service_init_mock = mocker.patch.object(
         StripeService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     update_customer_mock = mocker.patch(
         'src.payment.stripe.service.StripeService.'
-        'update_customer'
+        'update_customer',
     )
     send_user_updated_mock = mocker.patch(
         'src.notifications.tasks.'
-        'send_user_updated_notification.delay'
+        'send_user_updated_notification.delay',
     )
     str_token = GuestJWTAuthService.get_str_token(
         task_id=task.id,
         user_id=guest.id,
-        account_id=account.id
+        account_id=account.id,
     )
 
     # act
     response = api_client.put(
         path='/accounts/user',
         data={'date_fdw': UserFirstDayWeek.THURSDAY},
-        **{'X-Guest-Authorization': str_token}
+        **{'X-Guest-Authorization': str_token},
     )
 
     # assert
     assert response.status_code == 403
     identify_mock.assert_not_called()
-    analytics_mock.assert_not_called()
+    analysis_mock.assert_not_called()
     stripe_service_init_mock.assert_not_called()
     update_customer_mock.assert_not_called()
+    task_field_filter_mock.assert_not_called()
     send_user_updated_mock.assert_not_called()
 
 
 def test_update__expired_subscription__permission_denied(
     mocker,
-    api_client
+    api_client,
 ):
 
     # arrange
-    analytics_mock = mocker.patch(
+    analysis_mock = mocker.patch(
         'src.accounts.views.user.AnalyticService.'
-        'users_digest'
+        'users_digest',
     )
     identify_mock = mocker.patch(
         'src.accounts.views.user'
-        '.UserViewSet.identify'
+        '.UserViewSet.identify',
+    )
+    task_field_filter_mock = mocker.patch(
+        'src.processes.models.workflows.fields.TaskField.objects.filter',
+        return_value=mocker.Mock(update=mocker.Mock(return_value=None)),
     )
     account = create_test_account(
         plan=BillingPlanType.UNLIMITED,
-        plan_expiration=timezone.now() - timedelta(days=1)
+        plan_expiration=timezone.now() - timedelta(days=1),
     )
-    user = create_test_user(is_account_owner=True, account=account)
+    user = create_test_owner(account=account)
     stripe_service_init_mock = mocker.patch.object(
         StripeService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     update_customer_mock = mocker.patch(
         'src.payment.stripe.service.StripeService.'
-        'update_customer'
+        'update_customer',
     )
     send_user_updated_mock = mocker.patch(
         'src.notifications.tasks.'
-        'send_user_updated_notification.delay'
+        'send_user_updated_notification.delay',
     )
     api_client.token_authenticate(user)
 
@@ -1402,7 +1705,8 @@ def test_update__expired_subscription__permission_denied(
     # assert
     assert response.status_code == 403
     identify_mock.assert_not_called()
-    analytics_mock.assert_not_called()
+    analysis_mock.assert_not_called()
     stripe_service_init_mock.assert_not_called()
     update_customer_mock.assert_not_called()
+    task_field_filter_mock.assert_not_called()
     send_user_updated_mock.assert_not_called()

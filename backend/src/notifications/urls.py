@@ -15,7 +15,7 @@ router.register(
 router.register(
     'ios',
     viewset=IosViewSet,
-    basename='ios'
+    basename='ios',
 )
 
 urlpatterns = router.urls

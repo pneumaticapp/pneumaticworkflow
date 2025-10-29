@@ -1,10 +1,12 @@
-from typing import Dict, Any
+from typing import Any, Dict
+
 from celery import shared_task
-from customerio import SendEmailRequest, APIClient
+from customerio import APIClient, SendEmailRequest
 from django.conf import settings
+
 from src.notifications.enums import (
-    cio_template_ids,
     EmailTemplate,
+    cio_template_ids,
 )
 
 
@@ -24,6 +26,6 @@ def send_email_via_customerio(
         message_data=dynamic_data or {},
         identifiers={
             'id': user_id,
-        }
+        },
     )
     client.send_email(request)

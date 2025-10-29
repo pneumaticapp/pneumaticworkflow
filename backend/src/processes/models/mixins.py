@@ -1,18 +1,20 @@
 from abc import abstractmethod
 from typing import Dict, Optional
+
 from django.contrib.auth import get_user_model
 from django.contrib.postgres.fields import ArrayField
-from django.db.models.query import QuerySet
 from django.core.validators import MinValueValidator
 from django.db import models
-from src.accounts.models import UserGroup
-from src.processes.enums import PerformerType, ConditionAction
-from src.processes.enums import (
-    FieldType,
-    PredicateType,
-    PredicateOperator
-)
+from django.db.models.query import QuerySet
 
+from src.accounts.models import UserGroup
+from src.processes.enums import (
+    ConditionAction,
+    FieldType,
+    PerformerType,
+    PredicateOperator,
+    PredicateType,
+)
 
 UserModel = get_user_model()
 
@@ -24,17 +26,17 @@ class RawPerformerMixin(models.Model):
 
     type = models.CharField(
         max_length=100,
-        choices=PerformerType.choices
+        choices=PerformerType.choices,
     )
     user = models.ForeignKey(
         UserModel,
         on_delete=models.CASCADE,
-        null=True
+        null=True,
     )
     group = models.ForeignKey(
         UserGroup,
         on_delete=models.CASCADE,
-        null=True
+        null=True,
     )
 
 
@@ -51,7 +53,7 @@ class WorkflowMixin(models.Model):
     @abstractmethod
     def get_kickoff_output_fields(
         self,
-        fields_filter_kwargs: Optional[Dict] = None
+        fields_filter_kwargs: Optional[Dict] = None,
     ) -> QuerySet:
 
         """ Return the output fields from kickoff """
@@ -61,7 +63,7 @@ class WorkflowMixin(models.Model):
         self,
         tasks_filter_kwargs: Optional[Dict] = None,
         tasks_exclude_kwargs: Optional[Dict] = None,
-        fields_filter_kwargs: Optional[Dict] = None
+        fields_filter_kwargs: Optional[Dict] = None,
     ) -> QuerySet:
 
         """ Return the output fields from tasks """
@@ -70,18 +72,18 @@ class WorkflowMixin(models.Model):
         self,
         tasks_filter_kwargs: Optional[Dict] = None,
         tasks_exclude_kwargs: Optional[Dict] = None,
-        fields_filter_kwargs: Optional[Dict] = None
+        fields_filter_kwargs: Optional[Dict] = None,
     ) -> QuerySet:
 
         """ Return the output fields from kickoff and tasks """
 
         kickoff_fields_qst = self.get_kickoff_output_fields(
-            fields_filter_kwargs=fields_filter_kwargs
+            fields_filter_kwargs=fields_filter_kwargs,
         )
         tasks_fields_qst = self.get_tasks_output_fields(
             tasks_filter_kwargs=tasks_filter_kwargs,
             tasks_exclude_kwargs=tasks_exclude_kwargs,
-            fields_filter_kwargs=fields_filter_kwargs
+            fields_filter_kwargs=fields_filter_kwargs,
         )
         return kickoff_fields_qst.union(tasks_fields_qst)
 
@@ -90,7 +92,7 @@ class WorkflowMixin(models.Model):
         tasks_filter_kwargs: Optional[Dict] = None,
         tasks_exclude_kwargs: Optional[Dict] = None,
         fields_filter_kwargs: Optional[Dict] = None,
-        dict_key: Optional[str] = None
+        dict_key: Optional[str] = None,
     ) -> dict:
 
         """ Returns fields mapped by field attribute
@@ -99,7 +101,7 @@ class WorkflowMixin(models.Model):
         fields = self.get_fields(
             tasks_filter_kwargs=tasks_filter_kwargs,
             tasks_exclude_kwargs=tasks_exclude_kwargs,
-            fields_filter_kwargs=fields_filter_kwargs
+            fields_filter_kwargs=fields_filter_kwargs,
         )
         result = {}
         for field in fields:
@@ -112,14 +114,13 @@ class WorkflowMixin(models.Model):
             {field.api_name: str} """
 
         fields = self.get_kickoff_output_fields()
-        values = {field.api_name: field.markdown_value for field in fields}
-        return values
+        return {field.api_name: field.markdown_value for field in fields}
 
     def get_fields_markdown_values(
         self,
         tasks_filter_kwargs: Optional[Dict] = None,
         tasks_exclude_kwargs: Optional[Dict] = None,
-        fields_filter_kwargs: Optional[Dict] = None
+        fields_filter_kwargs: Optional[Dict] = None,
     ) -> Dict[str, str]:
 
         """ Returns fields markdown representations mapped by field api_name
@@ -128,20 +129,20 @@ class WorkflowMixin(models.Model):
         fields = self.get_fields(
             tasks_filter_kwargs=tasks_filter_kwargs,
             tasks_exclude_kwargs=tasks_exclude_kwargs,
-            fields_filter_kwargs=fields_filter_kwargs
+            fields_filter_kwargs=fields_filter_kwargs,
         )
         return {field.api_name: field.markdown_value for field in fields}
 
     def get_kickoff_fields_markdown_values(
         self,
-        fields_filter_kwargs: Optional[Dict] = None
+        fields_filter_kwargs: Optional[Dict] = None,
     ) -> Dict[str, str]:
 
         """ Returns kickoff fields markdown representations
             mapped by field api_name {field.api_name: str} """
 
         fields = self.get_kickoff_output_fields(
-            fields_filter_kwargs=fields_filter_kwargs
+            fields_filter_kwargs=fields_filter_kwargs,
         )
         return {field.api_name: field.markdown_value for field in fields}
 
@@ -154,19 +155,19 @@ class TaskMixin(models.Model):
     description = models.TextField(null=True, blank=True)
     number = models.PositiveIntegerField(
         default=1,
-        validators=[MinValueValidator(1)]
+        validators=[MinValueValidator(1)],
     )
     require_completion_by_all = models.BooleanField(default=False)
     revert_task = models.CharField(
         max_length=255,
         null=True,
         blank=True,
-        help_text='Api name task to revert'
+        help_text='Api name task to revert',
     )
     parents = ArrayField(
         base_field=models.CharField(max_length=200),
         default=list,
-        help_text='Api names of task parents'
+        help_text='Api names of task parents',
     )
 
 
@@ -178,7 +179,7 @@ class FieldMixin(models.Model):
     name = models.CharField(max_length=120)
     type = models.CharField(
         choices=FieldType.CHOICES,
-        max_length=10
+        max_length=10,
     )
     description = models.TextField(null=True, blank=True)
     is_required = models.BooleanField(default=False)
@@ -222,6 +223,16 @@ class PredicateMixin(models.Model):
         null=True,
         max_length=200,
     )
+    user = models.ForeignKey(
+        UserModel,
+        on_delete=models.CASCADE,
+        null=True,
+    )
+    group = models.ForeignKey(
+        UserGroup,
+        on_delete=models.CASCADE,
+        null=True,
+    )
 
 
 class TaskRawPerformersMixin:
@@ -235,7 +246,7 @@ class TaskRawPerformersMixin:
         group: Optional[UserGroup] = None,
         user_id: Optional[int] = None,
         field=None,
-        **kwargs
+        **kwargs,
     ):
 
         """ Returns new a raw performer object with given data """
@@ -249,7 +260,7 @@ class TaskRawPerformersMixin:
         field=None,
         api_name: Optional[str] = None,
         performer_type: PerformerType = PerformerType.USER,
-        **kwargs
+        **kwargs,
     ) -> object:
 
         """ Creates and returns a raw performer for a task with given data """
@@ -259,23 +270,25 @@ class TaskRawPerformersMixin:
         user: Optional[UserModel] = None,
         group: Optional[UserGroup] = None,
         field=None,
-        performer_type: PerformerType = PerformerType.USER
+        performer_type: PerformerType = PerformerType.USER,
     ) -> int:
 
         """ Delete a raw_performer
             and returns the number of objects deleted """
 
-        if performer_type != PerformerType.WORKFLOW_STARTER:
-            if user is None and group is None and field is None:
-                raise Exception(
-                    'Raw performer should be linked with field or user'
-                )
+        if (
+            performer_type != PerformerType.WORKFLOW_STARTER
+            and user is None and group is None and field is None
+        ):
+            raise Exception(
+                'Raw performer should be linked with field or user',
+            )
 
         return self.raw_performers.filter(
             type=performer_type,
             user=user,
             group=group,
-            field=field
+            field=field,
         ).delete()[0]
 
     def delete_raw_performers(self):

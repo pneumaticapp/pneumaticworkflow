@@ -1,3 +1,5 @@
+import { EOptionTypes } from '../../components/UI/form/UsersDropdown';
+import { ETaskPerformerType } from '../../types/template';
 
 export enum InvitesType {
   Google = 'google',
@@ -41,3 +43,10 @@ export type TInviteUsersPayload = {
   onEndUploading?(): void;
   onError?(): void;
 };
+
+export interface IGroupDropdownOption extends IGroup {
+  optionType: EOptionTypes.Group;
+  label: string;
+  value: string;
+  type: ETaskPerformerType.UserGroup;
+}

@@ -1,26 +1,26 @@
 import pytest
 from django.utils import timezone
-from src.processes.enums import (
-    WorkflowEventActionType
-)
-from src.processes.models import (
-    WorkflowEventAction,
-)
-from src.processes.tests.fixtures import (
-    create_test_workflow,
-    create_test_user,
-    create_test_account,
-)
+
 from src.notifications.tasks import (
-    _send_workflow_comment_watched
+    _send_workflow_comment_watched,
+)
+from src.processes.enums import (
+    WorkflowEventActionType,
+)
+from src.processes.models.workflows.event import (
+    WorkflowEventAction,
 )
 from src.processes.serializers.workflows.events import (
     WorkflowEventSerializer,
 )
 from src.processes.services.events import (
-    WorkflowEventService
+    WorkflowEventService,
 )
-
+from src.processes.tests.fixtures import (
+    create_test_account,
+    create_test_user,
+    create_test_workflow,
+)
 
 pytestmark = pytest.mark.django_db
 
@@ -35,10 +35,10 @@ def test_send_workflow_comment_watched__not_watched__skip(mocker):
         user=account_owner,
         task=workflow.tasks.get(number=1),
         text='text',
-        after_create_actions=False
+        after_create_actions=False,
     )
     send_workflow_event_mock = mocker.patch(
-        'src.notifications.tasks._send_workflow_event'
+        'src.notifications.tasks._send_workflow_event',
     )
 
     # act
@@ -60,23 +60,23 @@ def test_send_workflow_comment_watched__first_watched__ok(mocker):
     user = create_test_user(
         email='test@test.test',
         account=account,
-        is_account_owner=False
+        is_account_owner=False,
     )
     workflow = create_test_workflow(account_owner, tasks_count=1)
     comment_event = WorkflowEventService.comment_created_event(
         user=account_owner,
         task=workflow.tasks.get(number=1),
         text='text',
-        after_create_actions=False
+        after_create_actions=False,
     )
 
     event_action = WorkflowEventAction.objects.create(
         user=user,
         event=comment_event,
-        type=WorkflowEventActionType.WATCHED
+        type=WorkflowEventActionType.WATCHED,
     )
     send_workflow_event_mock = mocker.patch(
-        'src.notifications.tasks._send_workflow_event'
+        'src.notifications.tasks._send_workflow_event',
     )
 
     # act
@@ -96,7 +96,7 @@ def test_send_workflow_comment_watched__first_watched__ok(mocker):
     send_workflow_event_mock.assert_called_once_with(
         data=data,
         account_id=account.id,
-        logo_lg=account.logo_lg
+        logo_lg=account.logo_lg,
     )
 
 
@@ -108,36 +108,36 @@ def test_send_workflow_comment_watched__second_watched__ok(mocker):
     user = create_test_user(
         email='test@test.test',
         account=account,
-        is_account_owner=False
+        is_account_owner=False,
     )
     user_2 = create_test_user(
         email='test2@test.test',
         account=account,
-        is_account_owner=False
+        is_account_owner=False,
     )
     workflow = create_test_workflow(account_owner, tasks_count=1)
     comment_event = WorkflowEventService.comment_created_event(
         user=account_owner,
         task=workflow.tasks.get(number=1),
         text='text',
-        after_create_actions=False
+        after_create_actions=False,
     )
     comment_event.watched = [
         {
             'date':  timezone.now().strftime('%Y-%m-%dT%H:%M'),
             'date_tsp':  timezone.now().timestamp(),
-            'user_id': user_2.id
-        }
+            'user_id': user_2.id,
+        },
     ]
     comment_event.save()
 
     event_action = WorkflowEventAction.objects.create(
         user=user,
         event=comment_event,
-        type=WorkflowEventActionType.WATCHED
+        type=WorkflowEventActionType.WATCHED,
     )
     send_workflow_event_mock = mocker.patch(
-        'src.notifications.tasks._send_workflow_event'
+        'src.notifications.tasks._send_workflow_event',
     )
 
     # act
@@ -158,5 +158,5 @@ def test_send_workflow_comment_watched__second_watched__ok(mocker):
     send_workflow_event_mock.assert_called_once_with(
         data=data,
         account_id=account.id,
-        logo_lg=account.logo_lg
+        logo_lg=account.logo_lg,
     )

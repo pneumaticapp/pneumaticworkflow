@@ -1,16 +1,14 @@
 import pytest
-from src.processes.tests.fixtures import (
-    create_test_user
-)
-from src.processes.models import (
-    FieldTemplate
-)
-from src.processes.enums import (
-    PerformerType,
-    FieldType,
-    OwnerType
-)
 
+from src.processes.enums import (
+    FieldType,
+    OwnerType,
+    PerformerType,
+)
+from src.processes.models.templates.fields import FieldTemplate
+from src.processes.tests.fixtures import (
+    create_test_user,
+)
 
 pytestmark = pytest.mark.django_db
 
@@ -19,7 +17,7 @@ class TestCreateKickoffFields:
 
     def test_create__only_required_fields__defaults_ok(
         self,
-        api_client
+        api_client,
     ):
 
         # arrange
@@ -29,7 +27,7 @@ class TestCreateKickoffFields:
             'type': FieldType.TEXT,
             'name': 'Text field',
             'order': 1,
-            'api_name': 'text-field-1'
+            'api_name': 'text-field-1',
         }
 
         # act
@@ -40,12 +38,12 @@ class TestCreateKickoffFields:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'is_active': True,
                 'kickoff': {
-                    'fields': [request_data]
+                    'fields': [request_data],
                 },
                 'tasks': [
                     {
@@ -54,12 +52,12 @@ class TestCreateKickoffFields:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': user.id
-                            }
-                        ]
-                    }
-                ]
-            }
+                                'source_id': user.id,
+                            },
+                        ],
+                    },
+                ],
+            },
         )
         # assert
         assert response.status_code == 200
@@ -88,7 +86,7 @@ class TestCreateKickoffFields:
 
     def test_create__all_fields__ok(
         self,
-        api_client
+        api_client,
     ):
 
         # arrange
@@ -101,7 +99,7 @@ class TestCreateKickoffFields:
             'order': 1,
             'is_required': True,
             'api_name': 'text-field-1',
-            'default': 'default value'
+            'default': 'default value',
         }
 
         # act
@@ -113,11 +111,11 @@ class TestCreateKickoffFields:
                 'owners': [
                     {
                         'type': OwnerType.USER,
-                        'source_id': user.id
+                        'source_id': user.id,
                     },
                 ],
                 'kickoff': {
-                    'fields': [request_data]
+                    'fields': [request_data],
                 },
                 'tasks': [
                     {
@@ -126,12 +124,12 @@ class TestCreateKickoffFields:
                         'raw_performers': [
                             {
                                 'type': PerformerType.USER,
-                                'source_id': user.id
-                            }
-                        ]
-                    }
-                ]
-            }
+                                'source_id': user.id,
+                            },
+                        ],
+                    },
+                ],
+            },
         )
         # assert
         assert response.status_code == 200
@@ -172,7 +170,7 @@ class TestCreateKickoffFields:
             'order': 1,
             'name': field_name,
             'is_required': True,
-            'api_name': field_api_name
+            'api_name': field_api_name,
         }
 
         # act
@@ -181,7 +179,7 @@ class TestCreateKickoffFields:
             'owners': [
                 {
                     'type': OwnerType.USER,
-                    'source_id': user.id
+                    'source_id': user.id,
                 },
             ],
             'is_active': True,
@@ -189,7 +187,7 @@ class TestCreateKickoffFields:
                 'fields': [
                     request_data,
                     request_data,
-                ]
+                ],
             },
             'tasks': [
                 {
@@ -198,11 +196,11 @@ class TestCreateKickoffFields:
                     'raw_performers': [
                         {
                             'type': PerformerType.USER,
-                            'source_id': user.id
-                        }
+                            'source_id': user.id,
+                        },
                     ],
                 },
-            ]
+            ],
         })
         # assert
         assert response.status_code == 200

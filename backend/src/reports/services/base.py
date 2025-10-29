@@ -1,6 +1,6 @@
-from abc import abstractmethod, ABC
-from django.contrib.auth import get_user_model
+from abc import ABC, abstractmethod
 
+from django.contrib.auth import get_user_model
 
 UserModel = get_user_model()
 

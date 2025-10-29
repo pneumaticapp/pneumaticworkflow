@@ -1,14 +1,15 @@
 import json
+
 from django.contrib import admin
 from django.utils.safestring import mark_safe
-from src.logs.models import AccountEvent
-from src.logs.enums import AccountEventStatus
-from src.utils.dates import date_to_user_fmt
-from src.logs.filters import AccountAdminFilter
 from pygments import highlight
-from pygments.lexers import get_lexer_by_name
 from pygments.formatters import get_formatter_by_name
+from pygments.lexers import get_lexer_by_name
 
+from src.logs.enums import AccountEventStatus
+from src.logs.filters import AccountAdminFilter
+from src.logs.models import AccountEvent
+from src.utils.dates import date_to_user_fmt
 
 json_lexer = get_lexer_by_name('json')
 formatter = get_formatter_by_name('html', style='colorful')
@@ -55,8 +56,8 @@ class AccountEventAdmin(admin.ModelAdmin):
                     'event_type',
                     'direction',
                     'contractor',
-                )
-            }
+                ),
+            },
         ),
         (
             'Request', {
@@ -66,9 +67,9 @@ class AccountEventAdmin(admin.ModelAdmin):
                     'path',
                     'formatted_request_data',
                     'http_status',
-                    'formatted_response_data'
-                )
-            }
+                    'formatted_response_data',
+                ),
+            },
         ),
         (
             'User', {
@@ -76,10 +77,10 @@ class AccountEventAdmin(admin.ModelAdmin):
                     'user',
                     'ip',
                     'auth_token',
-                    'user_agent'
-                )
-            }
-        )
+                    'user_agent',
+                ),
+            },
+        ),
     )
 
     readonly_fields = (
@@ -110,7 +111,7 @@ class AccountEventAdmin(admin.ModelAdmin):
     def date_created_tz(self, obj):
         return date_to_user_fmt(
             date=obj.date_created,
-            user=self.user
+            user=self.user,
         )
 
     date_created_tz.short_description = 'date_created'
@@ -118,7 +119,7 @@ class AccountEventAdmin(admin.ModelAdmin):
     def colored_status(self, obj):
         if obj.status == AccountEventStatus.SUCCESS:
             return '✔️'
-        elif obj.status == AccountEventStatus.FAILED:
+        if obj.status == AccountEventStatus.FAILED:
             return '🔴'
         return '🔵'
     colored_status.short_description = 'status'
@@ -135,13 +136,12 @@ class AccountEventAdmin(admin.ModelAdmin):
                 instance.request_data,
                 sort_keys=True,
                 indent=2,
-                ensure_ascii=False
+                ensure_ascii=False,
             )
             response = highlight(response, json_lexer, formatter)
             style = "<style>" + formatter.get_style_defs() + "</style><br>"
             return mark_safe(style + response)
-        else:
-            return '-'
+        return '-'
     formatted_request_data.short_description = 'request_data'
 
     def formatted_response_data(self, instance):
@@ -150,11 +150,10 @@ class AccountEventAdmin(admin.ModelAdmin):
                 instance.response_data,
                 sort_keys=True,
                 indent=2,
-                ensure_ascii=False
+                ensure_ascii=False,
             )
             response = highlight(response, json_lexer, formatter)
             style = "<style>" + formatter.get_style_defs() + "</style><br>"
             return mark_safe(style + response)
-        else:
-            return '-'
+        return '-'
     formatted_response_data.short_description = 'response_data'

@@ -1,32 +1,33 @@
-import pytest
 from copy import deepcopy
+
+import pytest
 from django.contrib.auth import get_user_model
 from rest_framework.serializers import ValidationError
-from src.processes.tests.fixtures import (
-    create_test_user,
-    create_test_account,
-    create_test_template,
-)
-from src.processes.serializers.templates.template import (
-    TemplateSerializer
-)
-from src.processes.services.templates.template import (
-    TemplateService
-)
+
 from src.accounts.enums import BillingPlanType
+from src.authentication.enums import AuthTokenType
 from src.processes.enums import (
-    SysTemplateType,
+    OwnerType,
     PerformerType,
+    SysTemplateType,
     TemplateType,
-    OwnerType
 )
-from src.processes.models import (
-    Template,
+from src.processes.models.templates.system_template import (
     SystemTemplate,
     SystemTemplateCategory,
 )
-from src.authentication.enums import AuthTokenType
-
+from src.processes.models.templates.template import Template
+from src.processes.serializers.templates.template import (
+    TemplateSerializer,
+)
+from src.processes.services.templates.template import (
+    TemplateService,
+)
+from src.processes.tests.fixtures import (
+    create_test_account,
+    create_test_template,
+    create_test_user,
+)
 
 UserModel = get_user_model()
 pytestmark = pytest.mark.django_db
@@ -48,17 +49,17 @@ def test_create_template_by_steps__ok(mocker):
             'number': 2,
             'name': 'Step 2',
             'description': 'description 2',
-        }
+        },
     ]
-    analytics_mock = mocker.patch(
-        'src.analytics.services.AnalyticService.'
-        'template_generated_from_landing'
+    analysis_mock = mocker.patch(
+        'src.analysis.services.AnalyticService.'
+        'template_generated_from_landing',
     )
 
     # act
     template = service.create_template_by_steps(
         name=name,
-        tasks=tasks
+        tasks=tasks,
     )
 
     # assert
@@ -69,11 +70,11 @@ def test_create_template_by_steps__ok(mocker):
     task = template.tasks.order_by('number').first()
     assert task.name == 'Step 1'
     assert task.description == 'description 1'
-    analytics_mock.assert_called_once_with(
+    analysis_mock.assert_called_once_with(
         template=template,
         user=user,
         is_superuser=False,
-        auth_type=AuthTokenType.USER
+        auth_type=AuthTokenType.USER,
     )
 
 
@@ -93,31 +94,31 @@ def test_create_template_by_steps__validation_error__ok(mocker):
             'number': 1,
             'name': 'Step 2',
             'description': 'description 2',
-        }
+        },
     ]
     filled_data = {
         'name': name,
-        'tasks': tasks
+        'tasks': tasks,
     }
     fill_template_data_mock = mocker.patch(
         'src.processes.services.templates.template.'
         'TemplateService.fill_template_data',
-        return_value=filled_data
+        return_value=filled_data,
     )
     logging_mock = mocker.patch(
         'src.processes.services.templates.template.'
-        'capture_sentry_message'
+        'capture_sentry_message',
     )
-    analytics_mock = mocker.patch(
-        'src.analytics.services.AnalyticService.'
-        'template_generated_from_landing'
+    analysis_mock = mocker.patch(
+        'src.analysis.services.AnalyticService.'
+        'template_generated_from_landing',
     )
 
     # act
     with pytest.raises(ValidationError):
         service.create_template_by_steps(
             name=name,
-            tasks=tasks
+            tasks=tasks,
         )
 
     # assert
@@ -126,11 +127,11 @@ def test_create_template_by_steps__validation_error__ok(mocker):
         initial_data={
             'name': name,
             'is_active': True,
-            'tasks': tasks
-        }
+            'tasks': tasks,
+        },
     )
     logging_mock.assert_called_once()
-    analytics_mock.assert_not_called()
+    analysis_mock.assert_not_called()
 
 
 def test_get_from_sys_template__ok(mocker):
@@ -142,7 +143,7 @@ def test_get_from_sys_template__ok(mocker):
     service = TemplateService(
         user=user,
         is_superuser=is_superuser,
-        auth_type=auth_type
+        auth_type=auth_type,
     )
     name = 'Template name'
     category = SystemTemplateCategory.objects.create(
@@ -154,17 +155,17 @@ def test_get_from_sys_template__ok(mocker):
         type=SysTemplateType.LIBRARY,
         template={},
         category=category,
-        is_active=True
+        is_active=True,
     )
     data_mock = mocker.Mock()
     fill_template_data_mock = mocker.patch(
         'src.processes.services.templates.template.'
         'TemplateService.fill_template_data',
-        return_value=data_mock
+        return_value=data_mock,
     )
-    analytics_mock = mocker.patch(
-        'src.analytics.services.AnalyticService.'
-        'library_template_opened'
+    analysis_mock = mocker.patch(
+        'src.analysis.services.AnalyticService.'
+        'library_template_opened',
     )
 
     # act
@@ -173,26 +174,26 @@ def test_get_from_sys_template__ok(mocker):
     # assert
     assert result is data_mock
     fill_template_data_mock.assert_called_once_with(
-        initial_data=sys_template.template
+        initial_data=sys_template.template,
     )
-    analytics_mock.assert_called_once_with(
+    analysis_mock.assert_called_once_with(
         user=user,
         sys_template=sys_template,
         auth_type=auth_type,
-        is_superuser=is_superuser
+        is_superuser=is_superuser,
     )
 
 
 def test_create_template_from_sys_template__ok(
     mocker,
-    api_client
+    api_client,
 ):
 
     # arrange
     account = create_test_account(plan=BillingPlanType.PREMIUM)
     account_owner = create_test_user(
         account=account,
-        is_account_owner=True
+        is_account_owner=True,
     )
     user = create_test_user(
         account=account,
@@ -217,9 +218,9 @@ def test_create_template_from_sys_template__ok(
                         "type": "user",
                         "order": 1,
                         "api_name": "performer",
-                        "is_required": True
+                        "is_required": True,
                     },
-                ]
+                ],
             },
             "tasks": [
                 {
@@ -230,28 +231,28 @@ def test_create_template_from_sys_template__ok(
                     'raw_performers': [
                         {
                             'type': PerformerType.FIELD,
-                            'source_id': 'performer'
-                        }
-                    ]
-                }
-            ]
+                            'source_id': 'performer',
+                        },
+                    ],
+                },
+            ],
         },
-        is_active=True
+        is_active=True,
     )
     template = create_test_template(user=user, tasks_count=1)
     template_slz_init_mock = mocker.patch.object(
         TemplateSerializer,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     template_slz_validate_mock = mocker.patch(
         'src.processes.serializers.templates.template.'
-        'TemplateSerializer.is_valid'
+        'TemplateSerializer.is_valid',
     )
     template_slz_save_mock = mocker.patch(
         'src.processes.serializers.templates.template.'
         'TemplateSerializer.save',
-        return_value=template
+        return_value=template,
     )
     service = TemplateService(user=user)
     template_data = deepcopy(system_template.template)
@@ -262,11 +263,11 @@ def test_create_template_from_sys_template__ok(
     owners = [
         {
             'type': OwnerType.USER,
-            'source_id': account_owner.id
+            'source_id': account_owner.id,
         },
         {
             'type': OwnerType.USER,
-            'source_id': user.id
+            'source_id': user.id,
         },
     ]
     template_data['owners'] = owners
@@ -275,7 +276,7 @@ def test_create_template_from_sys_template__ok(
 
     # act
     result = service.create_template_from_sys_template(
-        system_template=system_template
+        system_template=system_template,
     )
 
     # assert
@@ -289,7 +290,7 @@ def test_create_template_from_sys_template__ok(
             'generic_name': None,
             'is_superuser': False,
             'automatically_created': True,
-        }
+        },
     )
     template_slz_validate_mock.assert_called_once_with(raise_exception=True)
     template_slz_save_mock.assert_called_once()
@@ -299,7 +300,7 @@ def test_create_template_from_sys_template__ok(
 
 def test_create_template_from_sys_template__default_task_performer__ok(
     mocker,
-    api_client
+    api_client,
 ):
 
     # arrange
@@ -322,44 +323,44 @@ def test_create_template_from_sys_template__default_task_performer__ok(
                     "number": 1,
                     "description": "some desc",
                     "api_name": "task-1",
-                }
-            ]
+                },
+            ],
         },
-        is_active=True
+        is_active=True,
     )
 
     template_slz_init_mock = mocker.patch.object(
         TemplateSerializer,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     template_slz_validate_mock = mocker.patch(
         'src.processes.serializers.templates.template.'
-        'TemplateSerializer.is_valid'
+        'TemplateSerializer.is_valid',
     )
     template_slz_save_mock = mocker.patch(
         'src.processes.serializers.templates.template.'
-        'TemplateSerializer.save'
+        'TemplateSerializer.save',
     )
     template_data = deepcopy(system_template.template)
     template_data['owners'] = [
         {
             'type': OwnerType.USER,
-            'source_id': user.id
+            'source_id': user.id,
         },
     ]
     template_data['tasks'][0]['raw_performers'] = [
         {
             'type': PerformerType.USER,
-            'source_id': user.id
-        }
+            'source_id': user.id,
+        },
     ]
     template_data['is_active'] = True
     service = TemplateService(user=user)
 
     # act
     service.create_template_from_sys_template(
-        system_template=system_template
+        system_template=system_template,
     )
 
     # assert
@@ -373,7 +374,7 @@ def test_create_template_from_sys_template__default_task_performer__ok(
             'generic_name': None,
             'is_superuser': False,
             'automatically_created': True,
-        }
+        },
     )
     template_slz_validate_mock.assert_called_once_with(raise_exception=True)
     template_slz_save_mock.assert_called_once()
@@ -381,7 +382,7 @@ def test_create_template_from_sys_template__default_task_performer__ok(
 
 def test_create_template_from_sys_template__create_task_api_name__ok(
     mocker,
-    api_client
+    api_client,
 ):
     # arrange
     account = create_test_account()
@@ -403,9 +404,9 @@ def test_create_template_from_sys_template__create_task_api_name__ok(
                         "type": "user",
                         "order": 3,
                         "api_name": "performer",
-                        "is_required": True
-                    }
-                ]
+                        "is_required": True,
+                    },
+                ],
             },
             "tasks": [
                 {
@@ -415,39 +416,39 @@ def test_create_template_from_sys_template__create_task_api_name__ok(
                     "raw_performers": [
                         {
                             'type': PerformerType.FIELD,
-                            'source_id': 'performer'
-                        }
-                    ]
-                }
-            ]
+                            'source_id': 'performer',
+                        },
+                    ],
+                },
+            ],
         },
-        is_active=True
+        is_active=True,
     )
     template_data = deepcopy(system_template.template)
 
     template_slz_init_mock = mocker.patch.object(
         TemplateSerializer,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     template_slz_validate_mock = mocker.patch(
         'src.processes.serializers.templates.template.'
-        'TemplateSerializer.is_valid'
+        'TemplateSerializer.is_valid',
     )
     template_slz_save_mock = mocker.patch(
         'src.processes.serializers.templates.template.'
-        'TemplateSerializer.save'
+        'TemplateSerializer.save',
     )
     task_api_name = 'some-api-name'
     create_api_name_mock = mocker.patch(
         'src.processes.services.templates.template.'
         'create_api_name',
-        return_value=task_api_name
+        return_value=task_api_name,
     )
     template_data['owners'] = [
         {
             'type': OwnerType.USER,
-            'source_id': user.id
+            'source_id': user.id,
         },
     ]
     template_data['tasks'][0]['api_name'] = task_api_name
@@ -456,7 +457,7 @@ def test_create_template_from_sys_template__create_task_api_name__ok(
 
     # act
     service.create_template_from_sys_template(
-        system_template=system_template
+        system_template=system_template,
     )
 
     # assert
@@ -471,7 +472,7 @@ def test_create_template_from_sys_template__create_task_api_name__ok(
             'generic_name': None,
             'is_superuser': False,
             'automatically_created': True,
-        }
+        },
     )
     template_slz_validate_mock.assert_called_once_with(raise_exception=True)
     template_slz_save_mock.assert_called_once()
@@ -479,7 +480,7 @@ def test_create_template_from_sys_template__create_task_api_name__ok(
 
 def test_create_template_from_sys_template__validation_error__save_draft(
     mocker,
-    api_client
+    api_client,
 ):
     # arrange
     account = create_test_account()
@@ -503,23 +504,23 @@ def test_create_template_from_sys_template__validation_error__save_draft(
                     "raw_performers": [
                         {
                             'type': PerformerType.FIELD,
-                            'source_id': 'performer'
-                        }
-                    ]
-                }
-            ]
+                            'source_id': 'performer',
+                        },
+                    ],
+                },
+            ],
         },
-        is_active=True
+        is_active=True,
     )
     template_slz_init_mock = mocker.patch.object(
         TemplateSerializer,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     template_slz_validate_mock = mocker.patch(
         'src.processes.serializers.templates.template.'
         'TemplateSerializer.is_valid',
-        side_effect=ValidationError()
+        side_effect=ValidationError(),
 
     )
     template_slz_save_mock = mocker.patch(
@@ -530,13 +531,13 @@ def test_create_template_from_sys_template__validation_error__save_draft(
     template_slz_save_as_draft_mock = mocker.patch(
         'src.processes.serializers.templates.template.'
         'TemplateSerializer.save_as_draft',
-        return_value=template_mock
+        return_value=template_mock,
     )
     template_data = deepcopy(system_template.template)
     template_data['owners'] = [
         {
             'type': OwnerType.USER,
-            'source_id': user.id
+            'source_id': user.id,
         },
     ]
     template_data['is_active'] = True
@@ -545,7 +546,7 @@ def test_create_template_from_sys_template__validation_error__save_draft(
 
     # act
     template = service.create_template_from_sys_template(
-        system_template=system_template
+        system_template=system_template,
     )
 
     # assert
@@ -559,7 +560,7 @@ def test_create_template_from_sys_template__validation_error__save_draft(
             'generic_name': None,
             'is_superuser': False,
             'automatically_created': True,
-        }
+        },
     )
     template_slz_validate_mock.assert_called_once_with(raise_exception=True)
     template_slz_save_mock.assert_not_called()
@@ -569,7 +570,7 @@ def test_create_template_from_sys_template__validation_error__save_draft(
 
 def test_create_template_from_sys_template__save_validation_error__save_draft(
     mocker,
-    api_client
+    api_client,
 ):
     # arrange
     account = create_test_account()
@@ -593,39 +594,39 @@ def test_create_template_from_sys_template__save_validation_error__save_draft(
                     "raw_performers": [
                         {
                             'type': PerformerType.FIELD,
-                            'source_id': 'performer'
-                        }
-                    ]
-                }
-            ]
+                            'source_id': 'performer',
+                        },
+                    ],
+                },
+            ],
         },
-        is_active=True
+        is_active=True,
     )
     template_slz_init_mock = mocker.patch.object(
         TemplateSerializer,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     template_slz_validate_mock = mocker.patch(
         'src.processes.serializers.templates.template.'
-        'TemplateSerializer.is_valid'
+        'TemplateSerializer.is_valid',
     )
     template_slz_save_mock = mocker.patch(
         'src.processes.serializers.templates.template.'
         'TemplateSerializer.save',
-        side_effect=ValidationError()
+        side_effect=ValidationError(),
     )
     template_mock = mocker.Mock()
     template_slz_save_as_draft_mock = mocker.patch(
         'src.processes.serializers.templates.template.'
         'TemplateSerializer.save_as_draft',
-        return_value=template_mock
+        return_value=template_mock,
     )
     template_data = deepcopy(system_template.template)
     template_data['owners'] = [
         {
             'type': OwnerType.USER,
-            'source_id': user.id
+            'source_id': user.id,
         },
     ]
     template_data['is_active'] = True
@@ -634,7 +635,7 @@ def test_create_template_from_sys_template__save_validation_error__save_draft(
 
     # act
     template = service.create_template_from_sys_template(
-        system_template=system_template
+        system_template=system_template,
     )
 
     # assert
@@ -648,7 +649,7 @@ def test_create_template_from_sys_template__save_validation_error__save_draft(
             'generic_name': None,
             'is_superuser': False,
             'automatically_created': True,
-        }
+        },
     )
     template_slz_validate_mock.assert_called_once_with(raise_exception=True)
     template_slz_save_mock.assert_called_once()
@@ -675,44 +676,44 @@ def test_create_template_from_library_template__ok(mocker):
                     "raw_performers": [
                         {
                             'type': PerformerType.FIELD,
-                            'source_id': 'performer'
-                        }
-                    ]
-                }
-            ]
-        }
+                            'source_id': 'performer',
+                        },
+                    ],
+                },
+            ],
+        },
     )
     template_mock = mocker.Mock()
     create_template_from_sys_template_mock = mocker.patch(
         'src.processes.services.templates.template.'
         'TemplateService.create_template_from_sys_template',
-        return_value=template_mock
+        return_value=template_mock,
     )
-    analytics_mock = mocker.patch(
-        'src.analytics.services.AnalyticService.'
-        'template_created_from_landing_library'
+    analysis_mock = mocker.patch(
+        'src.analysis.services.AnalyticService.'
+        'template_created_from_landing_library',
     )
     auth_type = AuthTokenType.API
     is_superuser = True
     service = TemplateService(
         user=user,
         auth_type=auth_type,
-        is_superuser=is_superuser
+        is_superuser=is_superuser,
     )
 
     # act
     template = service.create_template_from_library_template(
-        system_template=system_template
+        system_template=system_template,
     )
 
     # assert
     assert template is template_mock
     create_template_from_sys_template_mock.assert_called_once_with(
-        system_template=system_template
+        system_template=system_template,
     )
-    analytics_mock.assert_called_once_with(
+    analysis_mock.assert_called_once_with(
         user=user,
         template=template_mock,
         auth_type=auth_type,
-        is_superuser=is_superuser
+        is_superuser=is_superuser,
     )
