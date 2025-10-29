@@ -1,49 +1,55 @@
-import pytest
 from datetime import timedelta
+
+import pytest
 from django.utils import timezone
+
 from src.authentication.enums import AuthTokenType
+from src.authentication.services.guest_auth import GuestJWTAuthService
+from src.processes.enums import (
+    CommentStatus,
+    ConditionAction,
+    DirectlyStatus,
+    FieldType,
+    PerformerType,
+    PredicateOperator,
+    PredicateType,
+    TaskStatus,
+    WorkflowEventType,
+)
+from src.processes.models.templates.conditions import (
+    ConditionTemplate,
+    PredicateTemplate,
+    RuleTemplate,
+)
+from src.processes.models.templates.fields import (
+    FieldTemplate,
+    FieldTemplateSelection,
+)
+from src.processes.models.workflows.attachment import FileAttachment
+from src.processes.models.workflows.event import WorkflowEvent
+from src.processes.models.workflows.task import (
+    Delay,
+    TaskPerformer,
+)
+from src.processes.models.workflows.workflow import Workflow
 from src.processes.services.events import (
     WorkflowEventService,
 )
 from src.processes.services.tasks.groups import (
-    GroupPerformerService
-)
-from src.processes.models import (
-    Workflow,
-    Delay,
-    FileAttachment,
-    TaskPerformer,
-    FieldTemplate,
-    FieldTemplateSelection,
-    ConditionTemplate,
-    RuleTemplate,
-    PredicateTemplate,
-    WorkflowEvent,
-)
-from src.processes.tests.fixtures import (
-    create_test_user,
-    create_test_template,
-    create_test_workflow,
-    create_test_account,
-    create_test_guest,
-    create_test_group,
-    create_test_owner,
-)
-from src.processes.enums import (
-    PerformerType,
-    DirectlyStatus,
-    FieldType,
-    WorkflowEventType,
-    CommentStatus,
-    TaskStatus,
-    ConditionAction,
-    PredicateOperator,
-    PredicateType,
+    GroupPerformerService,
 )
 from src.processes.services.tasks.performers import (
-    TaskPerformersService
+    TaskPerformersService,
 )
-from src.authentication.services import GuestJWTAuthService
+from src.processes.tests.fixtures import (
+    create_test_account,
+    create_test_group,
+    create_test_guest,
+    create_test_owner,
+    create_test_template,
+    create_test_user,
+    create_test_workflow,
+)
 
 pytestmark = pytest.mark.django_db
 datetime_format = '%Y-%m-%dT%H:%M:%S.%fZ'
@@ -62,7 +68,7 @@ def test_events__ordering_date__ok(api_client):
 
     WorkflowEventService.task_complete_event(
         task=task_1,
-        user=user
+        user=user,
     )
     task_2 = workflow.tasks.get(number=2)
     WorkflowEventService.task_started_event(task_2)
@@ -73,13 +79,13 @@ def test_events__ordering_date__ok(api_client):
         task=task_2,
         user=user,
         text=comment,
-        clear_text=comment
+        clear_text=comment,
     )
     api_client.token_authenticate(user)
 
     # act
     response = api_client.get(
-        f'/workflows/{workflow.id}/events?ordering=created'
+        f'/workflows/{workflow.id}/events?ordering=created',
     )
 
     # assert
@@ -109,13 +115,13 @@ def test_events__ordering_date_inverted__ok(api_client):
         task=task_2,
         user=user,
         text='Test',
-        after_create_actions=False
+        after_create_actions=False,
     )
     api_client.token_authenticate(user)
 
     # act
     response = api_client.get(
-        f'/workflows/{workflow.id}/events?ordering=-created'
+        f'/workflows/{workflow.id}/events?ordering=-created',
     )
 
     # assert
@@ -138,7 +144,7 @@ def test_events__include_comments_false__ok(api_client):
 
     WorkflowEventService.task_complete_event(
         task=task_1,
-        user=user
+        user=user,
     )
     task_2 = workflow.tasks.get(number=2)
     WorkflowEventService.task_skip_event(task_2)
@@ -148,12 +154,12 @@ def test_events__include_comments_false__ok(api_client):
         text='No attachments',
         task=task_2,
         user=user,
-        after_create_actions=False
+        after_create_actions=False,
     )
     api_client.token_authenticate(user)
 
     response = api_client.get(
-        f'/workflows/{workflow.id}/events?include_comments=false'
+        f'/workflows/{workflow.id}/events?include_comments=false',
     )
 
     assert response.status_code == 200
@@ -182,7 +188,7 @@ def test_events__only_attachments_true__ok(api_client):
         task=task,
         user=user,
         attachments=[attachment.id],
-        after_create_actions=False
+        after_create_actions=False,
     )
     attachment.event = event
     attachment.save()
@@ -190,13 +196,13 @@ def test_events__only_attachments_true__ok(api_client):
         text='There is no attachments here',
         task=task,
         user=user,
-        after_create_actions=False
+        after_create_actions=False,
     )
     api_client.token_authenticate(user)
 
     # act
     response = api_client.get(
-        f'/workflows/{workflow.id}/events?only_attachments=true'
+        f'/workflows/{workflow.id}/events?only_attachments=true',
     )
 
     # assert
@@ -215,7 +221,7 @@ def test_events__not_admin_user__ok(api_client):
         account=owner.account,
         is_account_owner=False,
         is_admin=False,
-        email='no@admin.com'
+        email='no@admin.com',
     )
     workflow = create_test_workflow(owner)
     workflow.members.add(user)
@@ -235,7 +241,7 @@ def test_events__not_admin_user__ok(api_client):
         text='No attachments',
         task=task_2,
         user=user,
-        after_create_actions=False
+        after_create_actions=False,
     )
     api_client.token_authenticate(user)
 
@@ -265,20 +271,20 @@ def test_events__guest__ok(api_client):
     task_1 = workflow.tasks.get(number=1)
 
     TaskPerformer.objects.by_task(
-        task_1.id
+        task_1.id,
     ).by_user(
-        account_owner.id
+        account_owner.id,
     ).update(directly_status=DirectlyStatus.DELETED)
 
     TaskPerformer.objects.create(
         task_id=task_1.id,
-        user_id=guest.id
+        user_id=guest.id,
     )
 
     str_token = GuestJWTAuthService.get_str_token(
         task_id=task_1.id,
         user_id=guest.id,
-        account_id=account.id
+        account_id=account.id,
     )
 
     WorkflowEventService.task_started_event(task_1)
@@ -286,7 +292,7 @@ def test_events__guest__ok(api_client):
         text='Comment 1',
         task=task_1,
         user=account_owner,
-        after_create_actions=False
+        after_create_actions=False,
     )
     task_2 = workflow.tasks.get(number=2)
     task_2.status = TaskStatus.COMPLETED
@@ -296,13 +302,13 @@ def test_events__guest__ok(api_client):
         text='Comment 2',
         task=task_2,
         user=account_owner,
-        after_create_actions=False
+        after_create_actions=False,
     )
 
     # act
     response = api_client.get(
         f'/workflows/{workflow.id}/events',
-        **{'X-Guest-Authorization': str_token}
+        **{'X-Guest-Authorization': str_token},
     )
 
     # assert
@@ -317,7 +323,7 @@ def test_events__guest__ok(api_client):
             'type': 'user',
             'is_completed': False,
             'date_completed_tsp': None,
-        }
+        },
     ]
 
 
@@ -335,34 +341,34 @@ def test_events__guest_another_workflow__permission_denied(api_client):
     guest_1 = create_test_guest(account=account)
     TaskPerformer.objects.create(
         task_id=task_1.id,
-        user_id=guest_1.id
+        user_id=guest_1.id,
     )
     GuestJWTAuthService.get_str_token(
         task_id=task_1.id,
         user_id=guest_1.id,
-        account_id=account.id
+        account_id=account.id,
     )
 
     workflow_2 = create_test_workflow(account_owner, tasks_count=1)
     task_2 = workflow_2.tasks.get(number=1)
     guest_2 = create_test_guest(
         account=account,
-        email='guest2@test.test'
+        email='guest2@test.test',
     )
     TaskPerformer.objects.create(
         task_id=task_2.id,
-        user_id=guest_2.id
+        user_id=guest_2.id,
     )
     str_token_2 = GuestJWTAuthService.get_str_token(
         task_id=task_2.id,
         user_id=guest_2.id,
-        account_id=account.id
+        account_id=account.id,
     )
 
     # act
     response = api_client.get(
         f'/workflows/{workflow_1.id}/events',
-        **{'X-Guest-Authorization': str_token_2}
+        **{'X-Guest-Authorization': str_token_2},
     )
 
     # assert
@@ -385,16 +391,16 @@ def test_retrieve__external_workflow__ok(
     token = f'Token {template.public_id}'
     mocker.patch(
         'src.processes.services.templates.'
-        'integrations.TemplateIntegrationsService.public_api_request'
+        'integrations.TemplateIntegrationsService.public_api_request',
     )
 
     # act
     run_response = api_client.post(
-        path=f'/templates/public/run',
+        path='/templates/public/run',
         data={
-            'captcha': 'skip'
+            'captcha': 'skip',
         },
-        **{'X-Public-Authorization': token}
+        **{'X-Public-Authorization': token},
     )
 
     workflow = Workflow.objects.get(template=template)
@@ -422,16 +428,16 @@ def test_retrieve__paginated__ok(api_client):
         text='Comment 1',
         task=task,
         user=user,
-        after_create_actions=False
+        after_create_actions=False,
     )
     WorkflowEventService.comment_created_event(
         text='Comment 2',
         task=task,
         user=user,
-        after_create_actions=False
+        after_create_actions=False,
     )
     response = api_client.get(
-        path=f'/workflows/{workflow.id}/events?limit=1&offset=1'
+        path=f'/workflows/{workflow.id}/events?limit=1&offset=1',
     )
 
     # assert
@@ -497,7 +503,7 @@ def test_retrieve__task_started__ok(api_client):
             'type': 'user',
             'is_completed': False,
             'date_completed_tsp': None,
-        }
+        },
     ]
     assert task_data['due_date_tsp'] == due_date.timestamp()
 
@@ -511,7 +517,7 @@ def test_retrieve__not_urgent_workflow__ok(api_client):
     event = WorkflowEventService.workflow_urgent_event(
         event_type=WorkflowEventType.NOT_URGENT,
         workflow=workflow,
-        user=user
+        user=user,
     )
 
     # act
@@ -560,7 +566,7 @@ def test_retrieve__performer_created__ok(api_client):
     user = create_test_user()
     user_performer = create_test_user(
         email='t@t.t',
-        account=user.account
+        account=user.account,
     )
     api_client.token_authenticate(user)
     workflow = create_test_workflow(user=user, tasks_count=1)
@@ -577,7 +583,7 @@ def test_retrieve__performer_created__ok(api_client):
     event = WorkflowEventService.performer_created_event(
         user=user,
         task=task,
-        performer=user_performer
+        performer=user_performer,
     )
 
     # act
@@ -615,7 +621,7 @@ def test_retrieve__performer_group_created__ok(api_client):
     user = create_test_user()
     user_performer = create_test_user(
         email='t@t.t',
-        account=user.account
+        account=user.account,
     )
     group = create_test_group(user.account, users=[user_performer])
     api_client.token_authenticate(user)
@@ -625,7 +631,7 @@ def test_retrieve__performer_group_created__ok(api_client):
         user=user,
         task=task,
         is_superuser=False,
-        auth_type=AuthTokenType.USER
+        auth_type=AuthTokenType.USER,
     )
     service.create_performer(
         group_id=group.id,
@@ -634,7 +640,7 @@ def test_retrieve__performer_group_created__ok(api_client):
     event = WorkflowEventService.performer_group_created_event(
         user=user,
         task=task,
-        performer=group
+        performer=group,
     )
 
     # act
@@ -680,7 +686,7 @@ def test_retrieve__performer_deleted__ok(api_client):
     user = create_test_user()
     user_performer = create_test_user(
         email='t@t.t',
-        account=user.account
+        account=user.account,
     )
     api_client.token_authenticate(user)
     workflow = create_test_workflow(user=user, tasks_count=1)
@@ -705,7 +711,7 @@ def test_retrieve__performer_deleted__ok(api_client):
     event = WorkflowEventService.performer_deleted_event(
         user=user,
         task=task,
-        performer=user_performer
+        performer=user_performer,
     )
 
     # act
@@ -738,7 +744,7 @@ def test_retrieve__performer_deleted__ok(api_client):
             'type': 'user',
             'is_completed': False,
             'date_completed_tsp': None,
-        }
+        },
     ]
 
 
@@ -748,7 +754,7 @@ def test_retrieve__performer_group_deleted__ok(api_client):
     user = create_test_user()
     user_performer = create_test_user(
         email='t@t.t',
-        account=user.account
+        account=user.account,
     )
     group = create_test_group(user.account, users=[user_performer])
     api_client.token_authenticate(user)
@@ -758,7 +764,7 @@ def test_retrieve__performer_group_deleted__ok(api_client):
         user=user,
         task=task,
         is_superuser=False,
-        auth_type=AuthTokenType.USER
+        auth_type=AuthTokenType.USER,
     )
     service.create_performer(
         group_id=group.id,
@@ -771,7 +777,7 @@ def test_retrieve__performer_group_deleted__ok(api_client):
     event = WorkflowEventService.performer_group_deleted_event(
         user=user,
         task=task,
-        performer=group
+        performer=group,
     )
 
     # act
@@ -804,7 +810,7 @@ def test_retrieve__performer_group_deleted__ok(api_client):
             'type': 'user',
             'is_completed': False,
             'date_completed_tsp': None,
-        }
+        },
     ]
 
 
@@ -818,11 +824,11 @@ def test_retrieve__workflow_delay_event__ok(api_client):
         task=task,
         start_date=timezone.now(),
         duration=timedelta(days=1),
-        workflow=workflow
+        workflow=workflow,
     )
     event = WorkflowEventService.workflow_delay_event(
         workflow=workflow,
-        delay=delay
+        delay=delay,
     )
 
     api_client.token_authenticate(user)
@@ -867,7 +873,7 @@ def test_retrieve__force_delay_workflow_event__ok(api_client):
         task=task,
         start_date=timezone.now(),
         duration=timedelta(days=1),
-        workflow=workflow
+        workflow=workflow,
     )
     event = WorkflowEventService.force_delay_workflow_event(
         workflow=workflow,
@@ -945,7 +951,7 @@ def test_retrieve__complete_task__field_user__ok(api_client):
     template = create_test_template(
         user=user,
         is_active=True,
-        tasks_count=1
+        tasks_count=1,
     )
     template_task = template.tasks.first()
     FieldTemplate.objects.create(
@@ -991,7 +997,7 @@ def test_retrieve__complete_task__field_user__ok(api_client):
             'type': 'user',
             'is_completed': False,
             'date_completed_tsp': None,
-        }
+        },
     ]
 
     assert len(task_data['output']) == 1
@@ -1003,7 +1009,7 @@ def test_retrieve__complete_task__field_user__ok(api_client):
     assert field_data['description'] == field.description
     assert field_data['api_name'] == field.api_name
     # TODO Replace in https://my.pneumatic.app/workflows/18137/
-    assert field_data['value'] == str(user.id)  # user.get_full_name()
+    assert field_data['value'] == user.get_full_name()
     assert field_data['selections'] == []
     assert field_data['attachments'] == []
     assert field_data['order'] == field.order
@@ -1011,7 +1017,7 @@ def test_retrieve__complete_task__field_user__ok(api_client):
 
 
 def test_retrieve__complete_task__field_with_selections__ok(
-    api_client
+    api_client,
 ):
 
     # arrange
@@ -1021,11 +1027,11 @@ def test_retrieve__complete_task__field_with_selections__ok(
     template = create_test_template(
         user=user,
         is_active=True,
-        tasks_count=1
+        tasks_count=1,
     )
     template_task = template.tasks.first()
     template_task.add_raw_performer(
-        performer_type=PerformerType.WORKFLOW_STARTER
+        performer_type=PerformerType.WORKFLOW_STARTER,
     )
     template_task.add_raw_performer(user2)
     field_template = FieldTemplate.objects.create(
@@ -1085,7 +1091,7 @@ def test_retrieve__complete_task__field_date__ok(api_client):
     template = create_test_template(
         user=user,
         is_active=True,
-        tasks_count=1
+        tasks_count=1,
     )
     template_task = template.tasks.first()
     FieldTemplate.objects.create(
@@ -1130,7 +1136,7 @@ def test_retrieve__complete_task__field_date__ok(api_client):
             'type': 'user',
             'is_completed': False,
             'date_completed_tsp': None,
-        }
+        },
     ]
     assert len(task_data['output']) == 1
     field_data = task_data['output'][0]
@@ -1147,7 +1153,7 @@ def test_retrieve__complete_task__field_date__ok(api_client):
 
 
 def test_retrieve__complete_task__field_with_attachments__ok(
-    api_client
+    api_client,
 ):
 
     # arrange
@@ -1157,11 +1163,11 @@ def test_retrieve__complete_task__field_with_attachments__ok(
     template = create_test_template(
         user=user,
         is_active=True,
-        tasks_count=1
+        tasks_count=1,
     )
     template_task = template.tasks.first()
     template_task.add_raw_performer(
-        performer_type=PerformerType.WORKFLOW_STARTER
+        performer_type=PerformerType.WORKFLOW_STARTER,
     )
     template_task.add_raw_performer(user2)
     template_task.save()
@@ -1182,7 +1188,7 @@ def test_retrieve__complete_task__field_with_attachments__ok(
         url='https://john.cena/john.cena',
         size=1488,
         account_id=user.account_id,
-        output=field
+        output=field,
     )
     field.value = attachment.url
     field.save(update_fields=['value'])
@@ -1262,7 +1268,7 @@ def test_retrieve__comment__updated__ok(api_client):
         task=task,
         user=user,
         text=text,
-        after_create_actions=False
+        after_create_actions=False,
     )
     event.updated = timezone.now() + timedelta(minutes=1)
     event.save()
@@ -1304,7 +1310,7 @@ def test_retrieve__comment__with_attachment__ok(api_client):
         user=user,
         text=text,
         attachments=[attachment.id],
-        after_create_actions=False
+        after_create_actions=False,
     )
     attachment.event = event
     attachment.save()
@@ -1337,7 +1343,7 @@ def test_retrieve__comment__with_attachment__ok(api_client):
             'type': 'user',
             'is_completed': False,
             'date_completed_tsp': None,
-        }
+        },
     ]
     assert data['task']['output'] is None
     assert len(data['attachments']) == 1
@@ -1360,13 +1366,13 @@ def test_retrieve__comment__with_watched__ok(api_client):
         task=task,
         user=user,
         text='Some comment',
-        after_create_actions=False
+        after_create_actions=False,
     )
     event.watched = [
         {
             'date':  timezone.now().strftime('%Y-%m-%dT%H:%M'),
-            'user_id': user.id
-        }
+            'user_id': user.id,
+        },
     ]
     event.save()
     api_client.token_authenticate(user)
@@ -1392,7 +1398,7 @@ def test_retrieve__comment__with_reaction__ok(api_client):
         task=task,
         user=user,
         text='Some comment',
-        after_create_actions=False
+        after_create_actions=False,
     )
     reaction = '=D'
     event.reactions = {
@@ -1418,7 +1424,7 @@ def test_retrieve__run_sub_workflow__ok(api_client):
     workflow = create_test_workflow(
         name='Parent workflow',
         user=user,
-        tasks_count=1
+        tasks_count=1,
     )
     ancestor_task = workflow.tasks.get(number=1)
     ancestor_task.name = 'Ancestor task name'
@@ -1436,13 +1442,13 @@ def test_retrieve__run_sub_workflow__ok(api_client):
         name='New sub workflow',
         ancestor_task=ancestor_task,
         is_urgent=True,
-        due_date=timezone.now() + timedelta(days=30)
+        due_date=timezone.now() + timedelta(days=30),
     )
     event = WorkflowEventService.sub_workflow_run_event(
         user=user,
         workflow=workflow,
         sub_workflow=sub_workflow,
-        after_create_actions=False
+        after_create_actions=False,
     )
     api_client.token_authenticate(user)
 
@@ -1471,7 +1477,7 @@ def test_retrieve__run_sub_workflow__ok(api_client):
             'type': 'user',
             'is_completed': False,
             'date_completed_tsp': None,
-        }
+        },
     ]
     assert task_data['sub_workflow']['id'] == sub_workflow.id
     assert task_data['sub_workflow']['name'] == sub_workflow.name
@@ -1498,7 +1504,7 @@ def test_retrieve__all_tasks_skipped__only_one_end_workflow_event(api_client):
     template = create_test_template(
         user=owner,
         tasks_count=1,
-        is_active=True
+        is_active=True,
     )
     template_task = template.tasks.get(number=1)
     condition_template = ConditionTemplate.objects.create(
@@ -1527,7 +1533,7 @@ def test_retrieve__all_tasks_skipped__only_one_end_workflow_event(api_client):
     workflow_id = response.data['id']
     assert WorkflowEvent.objects.filter(
         workflow_id=workflow_id,
-        type=WorkflowEventType.ENDED
+        type=WorkflowEventType.ENDED,
     ).count() == 1
 
 
@@ -1539,7 +1545,7 @@ def test_retrieve__two_tasks_delayed__get_two_delay_events(api_client):
     template = create_test_template(
         user=owner,
         tasks_count=2,
-        is_active=True
+        is_active=True,
     )
     template_task_1 = template.tasks.get(number=1)
     template_task_1.delay = '01:00:00'
@@ -1579,14 +1585,14 @@ def test_retrieve__two_tasks_delayed__get_two_delay_events(api_client):
     assert WorkflowEvent.objects.get(
         workflow_id=workflow_id,
         task_id=task_1.id,
-        type=WorkflowEventType.TASK_DELAY
+        type=WorkflowEventType.TASK_DELAY,
     )
     task_2 = workflow.tasks.get(number=2)
     assert task_2.is_delayed
     assert WorkflowEvent.objects.get(
         workflow_id=workflow_id,
         task_id=task_2.id,
-        type=WorkflowEventType.TASK_DELAY
+        type=WorkflowEventType.TASK_DELAY,
     )
 
 
@@ -1598,7 +1604,7 @@ def test_retrieve__return_workflow_to_task__one_event(api_client):
     template = create_test_template(
         user=owner,
         tasks_count=3,
-        is_active=True
+        is_active=True,
     )
     template_task_1 = template.tasks.get(number=1)
     template_task_1.conditions.all().delete()
@@ -1619,7 +1625,7 @@ def test_retrieve__return_workflow_to_task__one_event(api_client):
     # act
     response_return = api_client.post(
         f'/workflows/{workflow.id}/return-to',
-        data={'task_api_name': task_1.api_name}
+        data={'task_api_name': task_1.api_name},
     )
 
     # assert
@@ -1628,5 +1634,5 @@ def test_retrieve__return_workflow_to_task__one_event(api_client):
     assert response_return.status_code == 204
     assert WorkflowEvent.objects.filter(
         workflow_id=workflow_id,
-        type=WorkflowEventType.REVERT
+        type=WorkflowEventType.REVERT,
     ).count() == 1

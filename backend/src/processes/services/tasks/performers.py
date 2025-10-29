@@ -1,28 +1,27 @@
 from django.contrib.auth import get_user_model
+
 from src.accounts.enums import UserStatus
-from src.analytics.services import AnalyticService
-from src.processes.models import Task
-from src.processes.messages.workflow import (
-    MSG_PW_0014
-)
-from src.processes.enums import PerformerType
+from src.analysis.services import AnalyticService
+from src.authentication.enums import AuthTokenType
 from src.notifications.tasks import (
     send_new_task_notification,
+    send_new_task_websocket,
     send_removed_task_notification,
-    send_new_task_websocket
 )
+from src.processes.enums import PerformerType
+from src.processes.messages.workflow import (
+    MSG_PW_0014,
+)
+from src.processes.models.workflows.task import Task
 from src.processes.services.tasks.base import (
     BasePerformersService,
 )
 from src.processes.services.tasks.exceptions import (
-    PerformersServiceException
-)
-from src.authentication.enums import AuthTokenType
-from src.processes.services.workflow_action import (
-    WorkflowEventService
+    PerformersServiceException,
 )
 from src.processes.services.workflow_action import (
-    WorkflowActionService
+    WorkflowActionService,
+    WorkflowEventService,
 )
 
 UserModel = get_user_model()
@@ -43,10 +42,10 @@ class TaskPerformersService(BasePerformersService):
             return UserModel.objects.get(
                 account_id=account_id,
                 id=user_key,
-                status__in=(UserStatus.ACTIVE, UserStatus.INVITED)
+                status__in=(UserStatus.ACTIVE, UserStatus.INVITED),
             )
-        except UserModel.DoesNotExist:
-            raise PerformersServiceException(MSG_PW_0014)
+        except UserModel.DoesNotExist as ex:
+            raise PerformersServiceException(MSG_PW_0014) from ex
 
     @classmethod
     def _get_user_for_delete(
@@ -56,10 +55,10 @@ class TaskPerformersService(BasePerformersService):
     ) -> UserModel:
         try:
             return UserModel.include_inactive.on_account(
-                account_id
+                account_id,
             ).type_user().by_id(user_key).get()
-        except UserModel.DoesNotExist:
-            raise PerformersServiceException(MSG_PW_0014)
+        except UserModel.DoesNotExist as ex:
+            raise PerformersServiceException(MSG_PW_0014) from ex
 
     @classmethod
     def _delete_actions(
@@ -68,19 +67,19 @@ class TaskPerformersService(BasePerformersService):
         user: UserModel,
         request_user: UserModel,
         is_superuser: bool,
-        auth_type: AuthTokenType
+        auth_type: AuthTokenType,
     ):
         WorkflowEventService.performer_deleted_event(
             user=request_user,
             task=task,
-            performer=user
+            performer=user,
         )
         AnalyticService.task_performer_deleted(
             user=request_user,
             performer=user,
             task=task,
             auth_type=auth_type,
-            is_superuser=is_superuser
+            is_superuser=is_superuser,
         )
         if task.can_be_completed():
             first_completed_user = (
@@ -102,7 +101,7 @@ class TaskPerformersService(BasePerformersService):
                 workflow=task.workflow,
                 user=first_completed_user,
                 is_superuser=False,
-                auth_type=AuthTokenType.USER
+                auth_type=AuthTokenType.USER,
             )
             service.complete_task(task=task)
         else:
@@ -126,19 +125,19 @@ class TaskPerformersService(BasePerformersService):
         request_user: UserModel,
         is_superuser: bool,
         auth_type: AuthTokenType,
-        **kwargs
+        **kwargs,
     ):
         WorkflowEventService.performer_created_event(
             user=request_user,
             task=task,
-            performer=user
+            performer=user,
         )
         AnalyticService.task_performer_created(
             user=request_user,
             performer=user,
             task=task,
             auth_type=auth_type,
-            is_superuser=is_superuser
+            is_superuser=is_superuser,
         )
         if not task.get_active_delay():
             task.workflow.members.add(user)
@@ -159,8 +158,8 @@ class TaskPerformersService(BasePerformersService):
                             (
                                 user.id,
                                 user.email,
-                                user.is_new_tasks_subscriber
-                            )
+                                user.is_new_tasks_subscriber,
+                            ),
                         ],
                         account_id=task.account_id,
                     )
@@ -172,7 +171,7 @@ class TaskPerformersService(BasePerformersService):
                     recipients = [(
                         user.id,
                         user.email,
-                        user.is_new_tasks_subscriber
+                        user.is_new_tasks_subscriber,
                     )]
                     send_new_task_notification.delay(
                         logging=request_user.account.log_api_requests,

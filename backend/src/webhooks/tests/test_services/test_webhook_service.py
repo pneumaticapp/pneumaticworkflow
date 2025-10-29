@@ -1,15 +1,16 @@
 import pytest
+
 from src.processes.tests.fixtures import create_test_user
-from src.webhooks.tests.fixtures import (
-    create_test_webhooks,
-    create_test_webhook,
+from src.processes.views.template import (
+    TemplateIntegrationsService,
 )
-from src.webhooks.models import WebHook
-from src.webhooks.services import WebhookService
 from src.webhooks import exceptions
 from src.webhooks.messages import MSG_WH_0001
-from src.processes.views.template import (
-    TemplateIntegrationsService
+from src.webhooks.models import WebHook
+from src.webhooks.services import WebhookService
+from src.webhooks.tests.fixtures import (
+    create_test_webhook,
+    create_test_webhooks,
 )
 
 pytestmark = pytest.mark.django_db
@@ -22,7 +23,7 @@ def test_validate_event__ok(mocker):
     event = 'event'
     events_mock = mocker.patch(
         'src.webhooks.services.WebhookService._get_events',
-        return_value=(event,)
+        return_value=(event,),
     )
     service = WebhookService(user=user)
 
@@ -40,7 +41,7 @@ def test_validate_event__invalid_event__raise_exception(mocker):
     not_existent_event = 'not_existent_event'
     events_mock = mocker.patch(
         'src.webhooks.services.WebhookService._get_events',
-        return_value=(event,)
+        return_value=(event,),
     )
     user = create_test_user()
     service = WebhookService(user=user)
@@ -66,11 +67,11 @@ def test_unsubscribe__ok(mocker):
     service_init_mock = mocker.patch.object(
         TemplateIntegrationsService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     webhooks_unsubscribed_mock = mocker.patch(
         'src.processes.services.templates.'
-        'integrations.TemplateIntegrationsService.webhooks_unsubscribed'
+        'integrations.TemplateIntegrationsService.webhooks_unsubscribed',
     )
     service = WebhookService(user=user)
 
@@ -83,7 +84,7 @@ def test_unsubscribe__ok(mocker):
     service_init_mock.assert_called_once_with(
         account=user.account,
         is_superuser=False,
-        user=user
+        user=user,
     )
     webhooks_unsubscribed_mock.assert_called_once_with()
 
@@ -99,11 +100,11 @@ def test_unsubscribe_event__ok(mocker):
     hook_2 = create_test_webhook(user=user, event=event_2)
     hook_3 = create_test_webhook(user=user_2, event=event_1)
     events_mock = mocker.patch(
-        'src.webhooks.services.WebhookService._validate_event'
+        'src.webhooks.services.WebhookService._validate_event',
     )
     webhooks_unsubscribed_mock = mocker.patch(
         'src.processes.services.templates.'
-        'integrations.TemplateIntegrationsService.webhooks_unsubscribed'
+        'integrations.TemplateIntegrationsService.webhooks_unsubscribed',
     )
     service = WebhookService(user=user)
 
@@ -125,16 +126,16 @@ def test_unsubscribe_event__last_event__ok(mocker):
     event_1 = 'event_1'
     hook_1 = create_test_webhook(user=user, event=event_1)
     events_mock = mocker.patch(
-        'src.webhooks.services.WebhookService._validate_event'
+        'src.webhooks.services.WebhookService._validate_event',
     )
     service_init_mock = mocker.patch.object(
         TemplateIntegrationsService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     webhooks_unsubscribed_mock = mocker.patch(
         'src.processes.services.templates.'
-        'integrations.TemplateIntegrationsService.webhooks_unsubscribed'
+        'integrations.TemplateIntegrationsService.webhooks_unsubscribed',
     )
     service = WebhookService(user=user)
 
@@ -147,7 +148,7 @@ def test_unsubscribe_event__last_event__ok(mocker):
     service_init_mock.assert_called_once_with(
         account=user.account,
         is_superuser=False,
-        user=user
+        user=user,
     )
     webhooks_unsubscribed_mock.assert_called_once_with()
 
@@ -158,28 +159,28 @@ def test_subscribe_event__create__ok(mocker):
     user = create_test_user()
     event_1 = 'event_1'
     events_mock = mocker.patch(
-        'src.webhooks.services.WebhookService._validate_event'
+        'src.webhooks.services.WebhookService._validate_event',
     )
-    analytics_mock = mocker.patch(
-        'src.analytics.services.AnalyticService.'
-        'accounts_webhooks_subscribed'
+    analysis_mock = mocker.patch(
+        'src.analysis.services.AnalyticService.'
+        'accounts_webhooks_subscribed',
     )
     url = 'http://test_2.test'
     service_init_mock = mocker.patch.object(
         TemplateIntegrationsService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     webhooks_subscribed_mock = mocker.patch(
         'src.processes.services.templates.'
-        'integrations.TemplateIntegrationsService.webhooks_subscribed'
+        'integrations.TemplateIntegrationsService.webhooks_subscribed',
     )
     service = WebhookService(user=user)
 
     # act
     service.subscribe_event(
         url=url,
-        event=event_1
+        event=event_1,
     )
 
     # assert
@@ -188,17 +189,17 @@ def test_subscribe_event__create__ok(mocker):
         event=event_1,
         target=url,
         user=user,
-        account=user.account
+        account=user.account,
     ).exists()
     service_init_mock.assert_called_once_with(
         account=user.account,
         is_superuser=False,
-        user=user
+        user=user,
     )
     webhooks_subscribed_mock.assert_called_once_with()
-    analytics_mock.assert_called_once_with(
+    analysis_mock.assert_called_once_with(
         user=user,
-        is_superuser=False
+        is_superuser=False,
     )
 
 
@@ -208,32 +209,32 @@ def test_subscribe_event__update__ok(mocker):
     user = create_test_user()
     event_1 = 'event_1'
     events_mock = mocker.patch(
-        'src.webhooks.services.WebhookService._validate_event'
+        'src.webhooks.services.WebhookService._validate_event',
     )
     url = 'http://test_2.test'
     hook = create_test_webhook(
         user=user,
-        event=event_1
+        event=event_1,
     )
     service_init_mock = mocker.patch.object(
         TemplateIntegrationsService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     webhooks_subscribed_mock = mocker.patch(
         'src.processes.services.templates.'
-        'integrations.TemplateIntegrationsService.webhooks_subscribed'
+        'integrations.TemplateIntegrationsService.webhooks_subscribed',
     )
-    analytics_mock = mocker.patch(
-        'src.analytics.services.AnalyticService.'
-        'accounts_webhooks_subscribed'
+    analysis_mock = mocker.patch(
+        'src.analysis.services.AnalyticService.'
+        'accounts_webhooks_subscribed',
     )
     service = WebhookService(user=user)
 
     # act
     service.subscribe_event(
         url=url,
-        event=event_1
+        event=event_1,
     )
 
     # assert
@@ -243,10 +244,10 @@ def test_subscribe_event__update__ok(mocker):
     service_init_mock.assert_called_once_with(
         account=user.account,
         is_superuser=False,
-        user=user
+        user=user,
     )
     webhooks_subscribed_mock.assert_called_once_with()
-    analytics_mock.assert_not_called()
+    analysis_mock.assert_not_called()
 
 
 def test_get_event_url__existent__ok(mocker):
@@ -255,11 +256,11 @@ def test_get_event_url__existent__ok(mocker):
     user = create_test_user()
     event_1 = 'event_1'
     events_mock = mocker.patch(
-        'src.webhooks.services.WebhookService._validate_event'
+        'src.webhooks.services.WebhookService._validate_event',
     )
     hook = create_test_webhook(
         user=user,
-        event=event_1
+        event=event_1,
     )
     service = WebhookService(user=user)
 
@@ -278,11 +279,11 @@ def test_get_event_url__not_existent__return_none(mocker):
     event_1 = 'event_1'
     event_2 = 'event_2'
     events_mock = mocker.patch(
-        'src.webhooks.services.WebhookService._validate_event'
+        'src.webhooks.services.WebhookService._validate_event',
     )
     create_test_webhook(
         user=user,
-        event=event_1
+        event=event_1,
     )
     service = WebhookService(user=user)
 
@@ -302,11 +303,11 @@ def test_get_events__ok(mocker):
     event_2 = 'event_2'
     events_mock = mocker.patch(
         'src.webhooks.services.WebhookService._get_events',
-        return_value={event_1, event_2}
+        return_value={event_1, event_2},
     )
     hook = create_test_webhook(
         user=user,
-        event=event_1
+        event=event_1,
     )
     service = WebhookService(user=user)
 
@@ -337,7 +338,7 @@ def test_get_private_events__ok():
         'workflow_completed',
         'workflow_started',
         'task_completed',
-        'task_returned'
+        'task_returned',
     }
 
 
@@ -351,20 +352,20 @@ def test_subscribe__create__ok(mocker):
     event_2 = 'event_2'
     events_mock = mocker.patch(
         'src.webhooks.services.WebhookService._get_events',
-        return_value=(event_1, event_2)
+        return_value=(event_1, event_2),
     )
     service_init_mock = mocker.patch.object(
         TemplateIntegrationsService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     webhooks_subscribed_mock = mocker.patch(
         'src.processes.services.templates.'
-        'integrations.TemplateIntegrationsService.webhooks_subscribed'
+        'integrations.TemplateIntegrationsService.webhooks_subscribed',
     )
-    analytics_mock = mocker.patch(
-        'src.analytics.services.AnalyticService.'
-        'accounts_webhooks_subscribed'
+    analysis_mock = mocker.patch(
+        'src.analysis.services.AnalyticService.'
+        'accounts_webhooks_subscribed',
     )
     service = WebhookService(user=user)
 
@@ -377,24 +378,24 @@ def test_subscribe__create__ok(mocker):
         account_id=account.id,
         user_id=user.id,
         event=event_1,
-        target=url
+        target=url,
     ).exists()
     assert account.webhook_set.filter(
         account_id=account.id,
         user_id=user.id,
         event=event_2,
-        target=url
+        target=url,
     ).exists()
     events_mock.assert_called_once()
     service_init_mock.assert_called_once_with(
         account=user.account,
         is_superuser=False,
-        user=user
+        user=user,
     )
     webhooks_subscribed_mock.assert_called_once_with()
-    analytics_mock.assert_called_once_with(
+    analysis_mock.assert_called_once_with(
         user=user,
-        is_superuser=False
+        is_superuser=False,
     )
 
 
@@ -408,20 +409,20 @@ def test_subscribe__recreate__ok(mocker):
     event = 'event'
     events_mock = mocker.patch(
         'src.webhooks.services.WebhookService._get_events',
-        return_value=(event,)
+        return_value=(event,),
     )
     service_init_mock = mocker.patch.object(
         TemplateIntegrationsService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     webhooks_subscribed_mock = mocker.patch(
         'src.processes.services.templates.'
-        'integrations.TemplateIntegrationsService.webhooks_subscribed'
+        'integrations.TemplateIntegrationsService.webhooks_subscribed',
     )
-    analytics_mock = mocker.patch(
-        'src.analytics.services.AnalyticService.'
-        'accounts_webhooks_subscribed'
+    analysis_mock = mocker.patch(
+        'src.analysis.services.AnalyticService.'
+        'accounts_webhooks_subscribed',
     )
     service = WebhookService(user=user)
 
@@ -434,16 +435,16 @@ def test_subscribe__recreate__ok(mocker):
         account_id=account.id,
         user_id=user.id,
         event=event,
-        target=url
+        target=url,
     ).exists()
     events_mock.assert_called_once()
     service_init_mock.assert_called_once_with(
         account=user.account,
         is_superuser=False,
-        user=user
+        user=user,
     )
     webhooks_subscribed_mock.assert_called_once_with()
-    analytics_mock.assert_called_once_with(
+    analysis_mock.assert_called_once_with(
         user=user,
-        is_superuser=False
+        is_superuser=False,
     )

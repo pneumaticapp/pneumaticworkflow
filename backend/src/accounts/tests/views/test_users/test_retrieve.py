@@ -1,12 +1,12 @@
 import pytest
+
 from src.accounts.enums import (
     UserDateFormat,
 )
 from src.processes.tests.fixtures import (
-    create_test_user,
     create_test_group,
+    create_test_user,
 )
-
 
 pytestmark = pytest.mark.django_db
 date_format = '%Y-%m-%dT%H:%M:%S.%fZ'
@@ -19,12 +19,12 @@ def test_retrieve__ok(api_client):
     group_1 = create_test_group(
         user.account,
         name='group_1',
-        users=[user]
+        users=[user],
     )
     group_2 = create_test_group(
         user.account,
         name='group_2',
-        users=[user]
+        users=[user],
     )
     api_client.token_authenticate(user)
 

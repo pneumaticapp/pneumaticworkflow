@@ -1,4 +1,5 @@
 import pytest
+
 from src.generics.tests.clients import PneumaticApiClient
 
 
@@ -20,21 +21,21 @@ def session_mock(mocker):
 def expire_tokens_mock(mocker):
     return mocker.patch(
         'src.authentication.tokens.PneumaticToken.'
-        'expire_all_tokens'
+        'expire_all_tokens',
     )
 
 
 @pytest.fixture
 def identify_mock(mocker):
     return mocker.patch(
-        'src.analytics.mixins.BaseIdentifyMixin.identify'
+        'src.analysis.mixins.BaseIdentifyMixin.identify',
     )
 
 
 @pytest.fixture
 def group_mock(mocker):
     return mocker.patch(
-        'src.analytics.mixins.BaseIdentifyMixin.group'
+        'src.analysis.mixins.BaseIdentifyMixin.group',
     )
 
 

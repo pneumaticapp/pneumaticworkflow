@@ -1,6 +1,6 @@
 import json
-from hashlib import sha1
 from datetime import datetime
+from hashlib import sha1
 from typing import Optional, Tuple
 
 import pytz
@@ -8,23 +8,23 @@ import stripe
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db.models import ObjectDoesNotExist
+
 from src.accounts.enums import BillingPlanType
-from src.payment.enums import PriceType, PriceStatus
+from src.accounts.models import Account
 from src.payment.entities import (
     SubscriptionDetails,
 )
+from src.payment.enums import PriceStatus, PriceType
 from src.payment.models import (
-    Product,
     Price,
+    Product,
 )
-from src.accounts.models import Account
-from src.utils.salt import get_salt
 from src.payment.stripe import exceptions
 from src.utils.logging import (
+    SentryLogLevel,
     capture_sentry_message,
-    SentryLogLevel
 )
-
+from src.utils.salt import get_salt
 
 UserModel = get_user_model()
 
@@ -54,13 +54,13 @@ class StripeMixin:
 
     def _get_account(self, stripe_id: str) -> Optional[Account]:
         return Account.objects.filter(
-            stripe_id=stripe_id
+            stripe_id=stripe_id,
         ).exclude_tenants().first()
 
     def _get_subscription_for_account(
         self,
         customer: stripe.Customer,
-        subscription_account: Account
+        subscription_account: Account,
     ) -> Optional[stripe.Subscription]:
 
         """ Return subscription for a given account """
@@ -75,7 +75,7 @@ class StripeMixin:
                 ):
                     # Main account subscription without metadata
                     return elem
-                elif (
+                if (
                     int(account_id) == subscription_account.id
                     and elem.status in self.active_subscription_status
                 ):
@@ -90,8 +90,8 @@ class StripeMixin:
                         'sub_id': elem.id,
                         'is_tenant': subscription_account.is_tenant,
                         'status': elem.status,
-                        'account_id': elem.metadata.get('account_id')
-                    }
+                        'account_id': elem.metadata.get('account_id'),
+                    },
                 )
                 continue
         return None
@@ -99,7 +99,7 @@ class StripeMixin:
     def _get_account_for_subscription(
         self,
         account: Account,
-        subscription: stripe.Subscription
+        subscription: stripe.Subscription,
     ) -> Account:
 
         """ Return account for a given subscription """
@@ -108,36 +108,34 @@ class StripeMixin:
             account_id = subscription.metadata.get('account_id')
             if account_id is None:
                 return account
-            else:
-                account_id = int(account_id)
-                if account_id == account.id:
-                    return account
-                else:
-                    return account.tenants.only_tenants().get(id=account_id)
-        except (ValueError, TypeError, ObjectDoesNotExist):
+            account_id = int(account_id)
+            if account_id == account.id:
+                return account
+            return account.tenants.only_tenants().get(id=account_id)
+        except (ValueError, TypeError, ObjectDoesNotExist) as ex:
             raise exceptions.NotFoundAccountForSubscription(
                 account_id=account.id,
-                subs_metadata=subscription.metadata
-            )
+                subs_metadata=subscription.metadata,
+            ) from ex
 
     def get_subscription_details(
         self,
-        subscription: stripe.Subscription
+        subscription: stripe.Subscription,
     ) -> Optional[SubscriptionDetails]:
 
         trial_start = self._get_aware_datetime_from_timestamp(
-            subscription['trial_start']
+            subscription['trial_start'],
         )
         trial_end = self._get_aware_datetime_from_timestamp(
-            subscription['trial_end']
+            subscription['trial_end'],
         )
         plan_expiration = self._get_aware_datetime_from_timestamp(
-            subscription['current_period_end']
+            subscription['current_period_end'],
         )
         price_data = subscription['items'].data[0].price
         try:
             price = Price.objects.select_related('product').get(
-                stripe_id=price_data.id
+                stripe_id=price_data.id,
             )
         except Price.DoesNotExist:
             price = self._create_price(price_data)
@@ -158,7 +156,7 @@ class StripeMixin:
     def _set_default_payment_method(
         self,
         customer: stripe.Customer,
-        method: Optional[stripe.PaymentMethod] = None
+        method: Optional[stripe.PaymentMethod] = None,
     ) -> Optional[stripe.PaymentMethod]:
 
         if not method:
@@ -192,7 +190,7 @@ class StripeMixin:
 
     def _get_aware_datetime_from_timestamp(
         self,
-        value: Optional[int] = None
+        value: Optional[int] = None,
     ) -> Optional[datetime]:
         if not value:
             return None
@@ -211,7 +209,7 @@ class StripeMixin:
             trial_days = data.recurring['trial_period_days']
             code = self._get_price_code(
                 stripe_id=price_stripe_id,
-                code_parts=(product.name, billing_period)
+                code_parts=(product.name, billing_period),
             )
         else:
             billing_period = None
@@ -221,12 +219,9 @@ class StripeMixin:
             trial_days = None
             code = self._get_price_code(
                 stripe_id=price_stripe_id,
-                code_parts=(product.name,)
+                code_parts=(product.name,),
             )
-        if data.active:
-            status = PriceStatus.ACTIVE
-        else:
-            status = PriceStatus.INACTIVE
+        status = PriceStatus.ACTIVE if data.active else PriceStatus.INACTIVE
 
         return Price.objects.create(
             product=product,
@@ -240,13 +235,13 @@ class StripeMixin:
             price=data.unit_amount,
             trial_days=trial_days,
             billing_period=billing_period,
-            currency=data.currency
+            currency=data.currency,
         )
 
     def _get_price_code(
         self,
         stripe_id: str,
-        code_parts: Tuple
+        code_parts: Tuple,
     ) -> str:
 
         """ Not change code for existent prices.
@@ -255,17 +250,16 @@ class StripeMixin:
         instance = Price.objects.filter(stripe_id=stripe_id).first()
         if instance:
             return instance.code
-        else:
-            code = self._get_normalized_code('_'.join(code_parts))
-            another_price = Price.objects.filter(code=code).first()
-            if another_price:
-                code = f'{code}_{get_salt(6, exclude=("upper",))}'
-            return code
+        code = self._get_normalized_code('_'.join(code_parts))
+        another_price = Price.objects.filter(code=code).first()
+        if another_price:
+            code = f'{code}_{get_salt(6, exclude=("upper",))}'
+        return code
 
     def _get_product_code(
         self,
         stripe_id: str,
-        name: str
+        name: str,
     ) -> str:
 
         """ Not change code for existent product.
@@ -274,13 +268,11 @@ class StripeMixin:
         instance = Product.objects.filter(stripe_id=stripe_id).first()
         if instance:
             return instance.code
-        else:
-            code = self._get_normalized_code(name)
-            another_product = Product.objects.filter(code=code).first()
-            if another_product:
-                return f'{code}_{get_salt(6, exclude=("upper",))}'
-            else:
-                return code
+        code = self._get_normalized_code(name)
+        another_product = Product.objects.filter(code=code).first()
+        if another_product:
+            return f'{code}_{get_salt(6, exclude=("upper",))}'
+        return code
 
     def _get_idempotency_key(self, **kwargs) -> str:
         str_value = json.dumps(kwargs, sort_keys=True, ensure_ascii=True)

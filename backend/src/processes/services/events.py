@@ -1,48 +1,51 @@
 import re
-from typing import Optional, List, Tuple
-from django.db import transaction
+from typing import List, Optional, Tuple
+
 from django.contrib.auth import get_user_model
+from django.db import transaction
 from django.utils import timezone
+
 from src.accounts.models import UserGroup
-from src.processes.models import (
-    WorkflowEvent,
-    Task,
-    Workflow,
-    Delay,
-    FileAttachment,
-    WorkflowEventAction,
-)
+from src.analysis.services import AnalyticService
+from src.generics.base.service import BaseModelService
 from src.notifications.tasks import (
-    send_mention_notification,
     send_comment_notification,
+    send_mention_notification,
     send_reaction_notification,
+    send_workflow_event,
 )
 from src.processes.enums import (
-    WorkflowEventType,
-    WorkflowEventActionType,
     CommentStatus,
+    WorkflowEventActionType,
+    WorkflowEventType,
 )
-from src.processes.services.exceptions import (
-    AttachmentNotFound,
-    CommentTextRequired,
-    CommentedWorkflowNotRunning,
-    CommentIsDeleted,
-    CommentedTaskNotActive,
-    CommentedNotTask
+from src.processes.models.workflows.attachment import FileAttachment
+from src.processes.models.workflows.event import (
+    WorkflowEvent,
+    WorkflowEventAction,
 )
+from src.processes.models.workflows.task import (
+    Delay,
+    Task,
+)
+from src.processes.models.workflows.workflow import Workflow
 from src.processes.serializers.workflows.events import (
     DelayEventJsonSerializer,
     TaskEventJsonSerializer,
     WorkflowEventSerializer,
 )
-from src.analytics.services import AnalyticService
-from src.generics.base.service import BaseModelService
-from src.notifications.tasks import send_workflow_event
-from src.services.markdown import (
-    MarkdownService,
-    MarkdownPatterns
+from src.processes.services.exceptions import (
+    AttachmentNotFound,
+    CommentedNotTask,
+    CommentedTaskNotActive,
+    CommentedWorkflowNotRunning,
+    CommentIsDeleted,
+    CommentTextRequired,
 )
-
+from src.services.markdown import (
+    MarkdownPatterns,
+    MarkdownService,
+)
 
 UserModel = get_user_model()
 
@@ -59,7 +62,7 @@ class WorkflowEventService:
             logging=event.account.log_api_requests,
             logo_lg=event.account.logo_lg,
             account_id=event.account_id,
-            data=data
+            data=data,
         )
 
     @classmethod
@@ -67,7 +70,7 @@ class WorkflowEventService:
         cls,
         user: UserModel,
         task: Task,
-        after_create_actions: bool = True
+        after_create_actions: bool = True,
     ) -> WorkflowEvent:
 
         with_attachments = task.output.with_attachments().exists()
@@ -77,11 +80,11 @@ class WorkflowEventService:
             task=task,
             task_json=TaskEventJsonSerializer(
                 instance=task,
-                context={'event_type': WorkflowEventType.TASK_COMPLETE}
+                context={'event_type': WorkflowEventType.TASK_COMPLETE},
             ).data,
             with_attachments=with_attachments,
             workflow=task.workflow,
-            user=user
+            user=user,
         )
         if after_create_actions:
             cls._after_create_actions(event)
@@ -105,10 +108,10 @@ class WorkflowEventService:
             task=task,
             task_json=TaskEventJsonSerializer(
                 instance=task,
-                context={'event_type': WorkflowEventType.TASK_REVERT}
+                context={'event_type': WorkflowEventType.TASK_REVERT},
             ).data,
             workflow=task.workflow,
-            user=user
+            user=user,
         )
         if after_create_actions:
             cls._after_create_actions(event)
@@ -120,7 +123,7 @@ class WorkflowEventService:
         user: UserModel,
         task: Task,
         delay: Delay,
-        after_create_actions: bool = True
+        after_create_actions: bool = True,
     ) -> WorkflowEvent:
 
         event = WorkflowEvent.objects.create(
@@ -129,7 +132,7 @@ class WorkflowEventService:
             task=task,
             task_json=TaskEventJsonSerializer(
                 instance=task,
-                context={'event_type': WorkflowEventType.TASK_DELAY}
+                context={'event_type': WorkflowEventType.TASK_DELAY},
             ).data,
             workflow=task.workflow,
             delay_json=DelayEventJsonSerializer(delay).data,
@@ -143,7 +146,7 @@ class WorkflowEventService:
         cls,
         user: UserModel,
         workflow: Workflow,
-        after_create_actions: bool = True
+        after_create_actions: bool = True,
     ) -> WorkflowEvent:
 
         event = WorkflowEvent.objects.create(
@@ -162,7 +165,7 @@ class WorkflowEventService:
         user: UserModel,
         workflow: Workflow,
         delay: Delay,
-        after_create_actions: bool = True
+        after_create_actions: bool = True,
     ) -> WorkflowEvent:
 
         event = WorkflowEvent.objects.create(
@@ -181,7 +184,7 @@ class WorkflowEventService:
         cls,
         user: UserModel,
         workflow: Workflow,
-        after_create_actions: bool = True
+        after_create_actions: bool = True,
     ) -> WorkflowEvent:
 
         event = WorkflowEvent.objects.create(
@@ -199,7 +202,7 @@ class WorkflowEventService:
         cls,
         user: UserModel,
         task: Task,
-        after_create_actions: bool = True
+        after_create_actions: bool = True,
     ) -> WorkflowEvent:
 
         event = WorkflowEvent.objects.create(
@@ -210,7 +213,7 @@ class WorkflowEventService:
             task=task,
             task_json=TaskEventJsonSerializer(
                 instance=task,
-                context={'event_type': WorkflowEventType.REVERT}
+                context={'event_type': WorkflowEventType.REVERT},
             ).data,
         )
         if after_create_actions:
@@ -225,7 +228,7 @@ class WorkflowEventService:
         text: Optional[str],
         clear_text: Optional[str] = None,
         attachments: Optional[List[int]] = None,
-        after_create_actions: bool = True
+        after_create_actions: bool = True,
     ) -> WorkflowEvent:
 
         event = WorkflowEvent.objects.create(
@@ -236,7 +239,7 @@ class WorkflowEventService:
             task=task,
             task_json=TaskEventJsonSerializer(
                 instance=task,
-                context={'event_type': WorkflowEventType.COMMENT}
+                context={'event_type': WorkflowEventType.COMMENT},
             ).data,
             with_attachments=bool(attachments),
             workflow=task.workflow,
@@ -252,7 +255,7 @@ class WorkflowEventService:
         user: UserModel,
         event_type: WorkflowEventType.URGENT_TYPES,
         workflow: Workflow,
-        after_create_actions: bool = True
+        after_create_actions: bool = True,
     ) -> WorkflowEvent:
 
         event = WorkflowEvent.objects.create(
@@ -271,7 +274,7 @@ class WorkflowEventService:
         user: UserModel,
         task: Task,
         performer: UserModel,
-        after_create_actions: bool = True
+        after_create_actions: bool = True,
     ) -> WorkflowEvent:
 
         event = WorkflowEvent.objects.create(
@@ -281,8 +284,8 @@ class WorkflowEventService:
             task_json=TaskEventJsonSerializer(
                 instance=task,
                 context={
-                    'event_type': WorkflowEventType.TASK_PERFORMER_CREATED
-                }
+                    'event_type': WorkflowEventType.TASK_PERFORMER_CREATED,
+                },
             ).data,
             workflow=task.workflow,
             user=user,
@@ -298,7 +301,7 @@ class WorkflowEventService:
         user: UserModel,
         task: Task,
         performer: UserGroup,
-        after_create_actions: bool = True
+        after_create_actions: bool = True,
     ) -> WorkflowEvent:
 
         event = WorkflowEvent.objects.create(
@@ -309,8 +312,8 @@ class WorkflowEventService:
                 instance=task,
                 context={
                     'event_type':
-                        WorkflowEventType.TASK_PERFORMER_GROUP_CREATED
-                }
+                        WorkflowEventType.TASK_PERFORMER_GROUP_CREATED,
+                },
             ).data,
             workflow=task.workflow,
             user=user,
@@ -326,7 +329,7 @@ class WorkflowEventService:
         user: UserModel,
         task: Task,
         performer: UserModel,
-        after_create_actions: bool = True
+        after_create_actions: bool = True,
     ) -> WorkflowEvent:
 
         event = WorkflowEvent.objects.create(
@@ -336,8 +339,8 @@ class WorkflowEventService:
             task_json=TaskEventJsonSerializer(
                 instance=task,
                 context={
-                    'event_type': WorkflowEventType.TASK_PERFORMER_DELETED
-                }
+                    'event_type': WorkflowEventType.TASK_PERFORMER_DELETED,
+                },
             ).data,
             workflow=task.workflow,
             user=user,
@@ -353,7 +356,7 @@ class WorkflowEventService:
         user: UserModel,
         task: Task,
         performer: UserGroup,
-        after_create_actions: bool = True
+        after_create_actions: bool = True,
     ) -> WorkflowEvent:
 
         event = WorkflowEvent.objects.create(
@@ -364,8 +367,8 @@ class WorkflowEventService:
                 instance=task,
                 context={
                     'event_type':
-                        WorkflowEventType.TASK_PERFORMER_GROUP_DELETED
-                }
+                        WorkflowEventType.TASK_PERFORMER_GROUP_DELETED,
+                },
             ).data,
             workflow=task.workflow,
             user=user,
@@ -380,7 +383,7 @@ class WorkflowEventService:
         cls,
         user: UserModel,
         task: Task,
-        after_create_actions: bool = True
+        after_create_actions: bool = True,
     ) -> WorkflowEvent:
 
         event = WorkflowEvent.objects.create(
@@ -391,7 +394,7 @@ class WorkflowEventService:
             task=task,
             task_json=TaskEventJsonSerializer(
                 instance=task,
-                context={'event_type': WorkflowEventType.DUE_DATE_CHANGED}
+                context={'event_type': WorkflowEventType.DUE_DATE_CHANGED},
             ).data,
         )
         if after_create_actions:
@@ -402,7 +405,7 @@ class WorkflowEventService:
     def task_skip_event(
         cls,
         task: Task,
-        after_create_actions: bool = True
+        after_create_actions: bool = True,
     ) -> WorkflowEvent:
 
         event = WorkflowEvent.objects.create(
@@ -412,7 +415,7 @@ class WorkflowEventService:
             task=task,
             task_json=TaskEventJsonSerializer(
                 instance=task,
-                context={'event_type': WorkflowEventType.TASK_SKIP}
+                context={'event_type': WorkflowEventType.TASK_SKIP},
             ).data,
         )
         if after_create_actions:
@@ -439,7 +442,7 @@ class WorkflowEventService:
         workflow: Workflow,
         sub_workflow: Workflow,
         user: UserModel,
-        after_create_actions: bool = True
+        after_create_actions: bool = True,
     ) -> WorkflowEvent:
 
         event = WorkflowEvent.objects.create(
@@ -452,8 +455,8 @@ class WorkflowEventService:
                 instance=sub_workflow.ancestor_task,
                 context={
                     'event_type': WorkflowEventType.SUB_WORKFLOW_RUN,
-                    'sub_workflow': sub_workflow
-                }
+                    'sub_workflow': sub_workflow,
+                },
             ).data,
         )
         if after_create_actions:
@@ -466,7 +469,7 @@ class WorkflowEventService:
         workflow: Workflow,
         task: Task,
         user: Optional[UserModel] = None,
-        after_create_actions: bool = True
+        after_create_actions: bool = True,
     ) -> WorkflowEvent:
 
         event = WorkflowEvent.objects.create(
@@ -475,7 +478,7 @@ class WorkflowEventService:
             task=task,
             task_json=TaskEventJsonSerializer(
                 instance=task,
-                context={'event_type': WorkflowEventType.COMPLETE}
+                context={'event_type': WorkflowEventType.COMPLETE},
             ).data,
             workflow=workflow,
             user=user,  # For highlights
@@ -490,7 +493,7 @@ class WorkflowEventService:
         workflow: Workflow,
         task: Task,
         user: Optional[UserModel] = None,
-        after_create_actions: bool = True
+        after_create_actions: bool = True,
     ) -> WorkflowEvent:
 
         event = WorkflowEvent.objects.create(
@@ -499,7 +502,7 @@ class WorkflowEventService:
             task=task,
             task_json=TaskEventJsonSerializer(
                 instance=task,
-                context={'event_type': WorkflowEventType.ENDED_BY_CONDITION}
+                context={'event_type': WorkflowEventType.ENDED_BY_CONDITION},
             ).data,
             workflow=workflow,
             user=user,  # Only for highlights
@@ -513,7 +516,7 @@ class WorkflowEventService:
         cls,
         workflow: Workflow,
         delay: Delay,
-        after_create_actions: bool = True
+        after_create_actions: bool = True,
     ) -> WorkflowEvent:
 
         event = WorkflowEvent.objects.create(
@@ -530,7 +533,7 @@ class WorkflowEventService:
     def task_started_event(
         cls,
         task: Task,
-        after_create_actions: bool = True
+        after_create_actions: bool = True,
     ) -> WorkflowEvent:
 
         event = WorkflowEvent.objects.create(
@@ -539,7 +542,7 @@ class WorkflowEventService:
             task=task,
             task_json=TaskEventJsonSerializer(
                 instance=task,
-                context={'event_type': WorkflowEventType.TASK_START}
+                context={'event_type': WorkflowEventType.TASK_START},
             ).data,
             workflow=task.workflow,
         )
@@ -551,7 +554,7 @@ class WorkflowEventService:
     def task_skip_no_performers_event(
         cls,
         task: Task,
-        after_create_actions: bool = True
+        after_create_actions: bool = True,
     ) -> WorkflowEvent:
 
         event = WorkflowEvent.objects.create(
@@ -562,8 +565,8 @@ class WorkflowEventService:
             task_json=TaskEventJsonSerializer(
                 instance=task,
                 context={
-                    'event_type': WorkflowEventType.TASK_SKIP_NO_PERFORMERS
-                }
+                    'event_type': WorkflowEventType.TASK_SKIP_NO_PERFORMERS,
+                },
             ).data,
         )
         if after_create_actions:
@@ -586,11 +589,11 @@ class CommentService(BaseModelService):
     ) -> Tuple[int]:
         list_of_ids = re.findall(r'\[.*?\|\s*([0-9]+)\]', text)
         if not list_of_ids:
-            return tuple()
+            return ()
         return UserModel.objects.filter(
-            id__in=list_of_ids
+            id__in=list_of_ids,
         ).exclude(id__in=exclude_ids).on_account(
-            self.account.id
+            self.account.id,
         ).only_ids()
 
     def _update_attachments(self, ids: Optional[List[int]] = None):
@@ -600,35 +603,35 @@ class CommentService(BaseModelService):
         if ids:
             self.instance.attachments.exclude(id__in=ids).delete()
             qst = FileAttachment.objects.on_account(
-                self.account.id
+                self.account.id,
             ).with_event_or_not_attached(self.instance.id).by_ids(ids)
 
             if qst.count() < len(ids):
-                raise AttachmentNotFound()
+                raise AttachmentNotFound
             qst.update(
                 event=self.instance,
-                workflow=self.instance.workflow
+                workflow=self.instance.workflow,
             )
         else:
             self.instance.attachments.all().delete()
 
     def _get_new_comment_recipients(
         self,
-        task: Task
+        task: Task,
     ) -> Tuple[Tuple[int], Tuple[int]]:
 
         """ Return mentioned users and comment notification receipenes """
 
-        mentioned_users_ids = tuple()
+        mentioned_users_ids = ()
         notify_users_ids = task.taskperformer_set.exclude_directly_deleted(
         ).exclude(user_id=self.user.id).user_ids()
         if self.instance.text:
             mentioned_users_ids = self._get_mentioned_users_ids(
                 text=self.instance.text,
-                exclude_ids=notify_users_ids
+                exclude_ids=notify_users_ids,
             )
         notify_users_ids = tuple(
-            set(notify_users_ids) - set(mentioned_users_ids)
+            set(notify_users_ids) - set(mentioned_users_ids),
         )
         return mentioned_users_ids, notify_users_ids
 
@@ -637,12 +640,12 @@ class CommentService(BaseModelService):
         """ Return only new mentioned users """
 
         workflow = self.instance.workflow
-        mentioned_users_ids = tuple()
+        mentioned_users_ids = ()
         if self.instance.text:
             # Only new mentioned users
             mentioned_users_ids = self._get_mentioned_users_ids(
                 text=self.instance.text,
-                exclude_ids=workflow.members.values_list('id', flat=True)
+                exclude_ids=workflow.members.values_list('id', flat=True),
             )
         return mentioned_users_ids
 
@@ -657,9 +660,9 @@ class CommentService(BaseModelService):
 
     def _validate_comment_action(self):
         if self.instance.status == CommentStatus.DELETED:
-            raise CommentIsDeleted()
+            raise CommentIsDeleted
         if self.instance.workflow.is_completed:
-            raise CommentedWorkflowNotRunning()
+            raise CommentedWorkflowNotRunning
 
     def create(
         self,
@@ -672,14 +675,14 @@ class CommentService(BaseModelService):
             then only a notification about a new comment
             will be sent to him """
         if task is None:
-            raise CommentedNotTask()
+            raise CommentedNotTask
         if not (task.is_active or task.is_delayed):
-            raise CommentedTaskNotActive()
+            raise CommentedTaskNotActive
         workflow = task.workflow
         if workflow.is_completed:
-            raise CommentedWorkflowNotRunning()
+            raise CommentedWorkflowNotRunning
         if not text and not attachments:
-            raise CommentTextRequired()
+            raise CommentTextRequired
         clear_text = MarkdownService.clear(text) if text else None
         if not attachments:
             # find attachment ids in the text
@@ -693,7 +696,7 @@ class CommentService(BaseModelService):
                 task=task,
                 text=text,
                 clear_text=clear_text,
-                attachments=attachments
+                attachments=attachments,
             )
             if not task.contains_comments:
                 task.contains_comments = True
@@ -712,14 +715,14 @@ class CommentService(BaseModelService):
                     event_id=self.instance.id,
                     account_id=self.user.account.id,
                     users_ids=mentioned_users_ids,
-                    text=self.instance.text
+                    text=self.instance.text,
                 )
                 AnalyticService.mentions_created(
                     text=clear_text,
                     user=self.user,
                     is_superuser=self.is_superuser,
                     auth_type=self.auth_type,
-                    workflow=workflow
+                    workflow=workflow,
                 )
             if notify_users_ids:
                 send_comment_notification.delay(
@@ -729,14 +732,14 @@ class CommentService(BaseModelService):
                     event_id=self.instance.id,
                     account_id=self.account.id,
                     users_ids=notify_users_ids,
-                    text=self.instance.text
+                    text=self.instance.text,
                 )
                 AnalyticService.comment_added(
                     text=clear_text,
                     user=self.user,
                     is_superuser=self.is_superuser,
                     auth_type=self.auth_type,
-                    workflow=workflow
+                    workflow=workflow,
                 )
             return self.instance
 
@@ -750,9 +753,9 @@ class CommentService(BaseModelService):
         self._validate_comment_action()
         task = self.instance.task
         if task is not None and not (task.is_active or task.is_delayed):
-            raise CommentedTaskNotActive()
+            raise CommentedTaskNotActive
         if not text and not attachments:
-            raise CommentTextRequired()
+            raise CommentTextRequired
         clear_text = MarkdownService.clear(text) if text else None
         if not attachments:
             # find attachment ids in the text
@@ -765,13 +768,13 @@ class CommentService(BaseModelService):
             'updated': timezone.now(),
             'with_attachments': bool(attachments),
             'text': text,
-            'clear_text': clear_text
+            'clear_text': clear_text,
         }
 
         with transaction.atomic():
             self.instance = self.partial_update(
                 force_save=force_save,
-                **kwargs
+                **kwargs,
             )
             if attachments:
                 self._update_attachments(attachments)
@@ -785,7 +788,7 @@ class CommentService(BaseModelService):
                     event_id=self.instance.id,
                     account_id=self.user.account.id,
                     users_ids=new_mentioned_users_ids,
-                    text=self.instance.text
+                    text=self.instance.text,
                 )
 
         self._send_workflow_event()
@@ -794,7 +797,7 @@ class CommentService(BaseModelService):
             user=self.user,
             is_superuser=self.is_superuser,
             auth_type=self.auth_type,
-            workflow=self.instance.workflow
+            workflow=self.instance.workflow,
         )
 
         return self.instance
@@ -804,7 +807,7 @@ class CommentService(BaseModelService):
         self._validate_comment_action()
         task = self.instance.task
         if task is not None and not (task.is_active or task.is_delayed):
-            raise CommentedTaskNotActive()
+            raise CommentedTaskNotActive
         self.instance.attachments.delete()
         super().partial_update(
             status=CommentStatus.DELETED,
@@ -818,7 +821,7 @@ class CommentService(BaseModelService):
             user=self.user,
             is_superuser=self.is_superuser,
             auth_type=self.auth_type,
-            workflow=self.instance.workflow
+            workflow=self.instance.workflow,
         )
         return self.instance
 
@@ -827,7 +830,7 @@ class CommentService(BaseModelService):
         """ The value is not entered directly to avoid concurrent entry """
 
         self._validate_comment_action()
-        if not self.user == self.instance.user:
+        if self.user != self.instance.user:
             watched = {el['user_id'] for el in self.instance.watched}
             if self.user.id not in watched:
                 WorkflowEventAction.objects.get_or_create(
@@ -847,14 +850,14 @@ class CommentService(BaseModelService):
             self.instance.reactions.setdefault(value, []).append(self.user.id)
             self.partial_update(
                 reactions=self.instance.reactions,
-                force_save=True
+                force_save=True,
             )
             AnalyticService.comment_reaction_added(
                 text=value,
                 user=self.user,
                 workflow=self.instance.workflow,
                 is_superuser=self.is_superuser,
-                auth_type=self.auth_type
+                auth_type=self.auth_type,
             )
             self._send_workflow_event()
             # Don't send reactions to yourself
@@ -884,13 +887,13 @@ class CommentService(BaseModelService):
                 self.instance.reactions.pop(value)
             self.partial_update(
                 reactions=self.instance.reactions,
-                force_save=True
+                force_save=True,
             )
             AnalyticService.comment_reaction_deleted(
                 text=value,
                 user=self.user,
                 workflow=self.instance.workflow,
                 is_superuser=self.is_superuser,
-                auth_type=self.auth_type
+                auth_type=self.auth_type,
             )
             self._send_workflow_event()

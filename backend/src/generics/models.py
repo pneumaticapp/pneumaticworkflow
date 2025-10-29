@@ -1,4 +1,5 @@
 from django.db import models, transaction
+
 from src.generics.mixins.models import SoftDeleteMixin
 
 

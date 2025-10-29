@@ -1,9 +1,5 @@
-from src.processes.services.base import (
-    BaseWorkflowService,
-)
-from src.processes.models import (
-    KickoffValue,
-)
+from src.processes.models.workflows.kickoff import KickoffValue
+from src.processes.services.base import BaseWorkflowService
 
 
 class KickoffService(BaseWorkflowService):
@@ -11,7 +7,7 @@ class KickoffService(BaseWorkflowService):
     def _create_instance(
         self,
         instance_template: KickoffValue,
-        **kwargs
+        **kwargs,
     ):
 
         # TODO move from KickoffCreateSerializer
@@ -21,6 +17,6 @@ class KickoffService(BaseWorkflowService):
     def _create_related(
         self,
         instance_template: KickoffValue,
-        **kwargs
+        **kwargs,
     ):
         pass

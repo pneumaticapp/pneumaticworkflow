@@ -1,0 +1,117 @@
+# Support Python 3.7+.
+target-version = "py37"
+# Set the maximum line length to 79.
+line-length = 79
+indent-width = 4
+
+# Exclude a variety of commonly ignored directories.
+exclude = [
+    ".git",
+    ".pyenv",
+    ".pytest_cache",
+    ".dockerignore",
+    ".gitignore",
+    ".ruff_cache",
+    ".vscode",
+    "__pypackages__",
+    "_build",
+    "site-packages",
+    "venv",
+    ".env",
+    "staticfiles",
+    "migrations"
+]
+
+[lint]
+# Enable Pyflakes (`F`) and a subset of the pycodestyle (`E`) codes by default.
+# Unlike Flake8, Ruff doesn't enable pycodestyle warnings (`W`) or
+# McCabe complexity (`C901`) by default.
+select = [
+    "A",
+    # "ARG", Maybe add later
+    "COM",
+    "ASYNC",
+    "B",
+    "BLE",
+    "C4",
+    # "C90",  Maybe add later
+    "DJ",
+    "DTZ",
+    # "EM", Add later
+    "E",
+    "EXE",
+    "E4",
+    "E7",
+    "E9",
+    "I",
+    "F",
+    "FURB",
+    # "FA", Maybe add later
+    # "FBT", Maybe add later
+    "G",
+    "INT",
+    "ISC",
+    "ICN",
+    "INP",
+    "Q",
+    "LOG",
+    "FAST",
+    "FLY",
+    "N",
+    "PL",
+    "PLE",
+    # "PTH", Add later
+    # "PT", Add later
+    "PYI",
+    # "PERF", Maybe add later
+    "PLR",
+    "PLW",
+    "RSE",
+    "RET",
+    "RUF",
+    # "S", Maybe add later
+    "SIM",
+    "T20",
+    "TC",
+    # "TD", Maybe add later
+    "TID",
+    # "TRY", Maybe add later
+    "UP",
+    "W",
+]
+ignore = [
+    "DJ001",   # Maybe add later
+    "DJ012",   # Maybe add later
+    "E731",    # Lambda expressions used in the messages
+    "N818",
+    "PLR2004", # Maybe add later
+    "PLR0915", # Too many statements
+    "PLR0912", # Too many branches
+    "PLR0911", # Too many return statements
+    "PLR0913", # Too many arguments in function definition
+    "RUF012",
+    "S101",    # Allow asserts
+    "Q000",    # Add later
+    "I001",
+]
+extend-select = [
+    "E501", # maximum line length
+    "UP",   # pyupgrade
+]
+
+# Allow fix for all enabled rules (when `--fix`) is provided.
+fixable = ["ALL"]
+unfixable = []
+
+# Allow unused variables when underscore-prefixed.
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+
+[format]
+# Use a single quotes for strings.
+quote-style = "single"
+# Like Black, indent with spaces, rather than tabs.
+indent-style = "space"
+# Like Black, respect magic trailing commas.
+skip-magic-trailing-comma = false
+# Like Black, automatically detect the appropriate line ending.
+line-ending = "auto"

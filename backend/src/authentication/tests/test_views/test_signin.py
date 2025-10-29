@@ -1,16 +1,17 @@
-import pytest
 from datetime import timedelta
-from src.accounts.models import UserInvite
-from src.authentication.enums import AuthTokenType
+
+import pytest
+
 from src.accounts.enums import (
+    SourceType,
     UserStatus,
 )
+from src.accounts.models import UserInvite
+from src.authentication import messages
+from src.authentication.enums import AuthTokenType
 from src.processes.tests.fixtures import (
     create_test_user,
 )
-from src.accounts.enums import SourceType
-from src.authentication import messages
-
 
 pytestmark = pytest.mark.django_db
 
@@ -21,7 +22,7 @@ class TestTokenObtainView:
         'username', [
             'test@pneumatic.app',
             'tESt@pneumatic.app',
-        ]
+        ],
     )
     def test_correct_data(
         self,
@@ -41,11 +42,11 @@ class TestTokenObtainView:
         user.save(update_fields=['password'])
         data = {
             'username': username,
-            'password': '12345'
+            'password': '12345',
         }
-        analytics_mock = mocker.patch(
+        analysis_mock = mocker.patch(
             'src.authentication.views.signin.'
-            'AnalyticService.users_logged_in'
+            'AnalyticService.users_logged_in',
         )
 
         # act
@@ -55,11 +56,11 @@ class TestTokenObtainView:
         assert response.status_code == 200
         assert response.data['token']
         identify_mock.assert_called_once_with(user)
-        analytics_mock.assert_called_once_with(
+        analysis_mock.assert_called_once_with(
             user=user,
             auth_type=AuthTokenType.USER,
             source=SourceType.EMAIL,
-            is_superuser=False
+            is_superuser=False,
         )
 
     def test_incorrect_data(
@@ -74,11 +75,11 @@ class TestTokenObtainView:
         user.save(update_fields=['password'])
         data = {
             'username': user.email,
-            'password': 'YouShallNotPass'
+            'password': 'YouShallNotPass',
         }
-        analytics_mock = mocker.patch(
+        analysis_mock = mocker.patch(
             'src.authentication.views.signin.'
-            'AnalyticService.users_logged_in'
+            'AnalyticService.users_logged_in',
         )
 
         # act
@@ -88,7 +89,7 @@ class TestTokenObtainView:
         assert response.status_code == 403
         assert response.data['detail'] == messages.MSG_AU_0003
         identify_mock.assert_not_called()
-        analytics_mock.assert_not_called()
+        analysis_mock.assert_not_called()
 
     def test_user_not_verified(
         self,
@@ -109,11 +110,11 @@ class TestTokenObtainView:
 
         data = {
             'username': user.email,
-            'password': '12345'
+            'password': '12345',
         }
-        analytics_mock = mocker.patch(
+        analysis_mock = mocker.patch(
             'src.authentication.views.signin.'
-            'AnalyticService.users_logged_in'
+            'AnalyticService.users_logged_in',
         )
 
         # act
@@ -121,7 +122,7 @@ class TestTokenObtainView:
 
         assert response.status_code == 403
         assert response.data['detail'] == messages.MSG_AU_0002(user.email)
-        analytics_mock.assert_not_called()
+        analysis_mock.assert_not_called()
         identify_mock.assert_not_called()
 
 
@@ -141,14 +142,14 @@ class TestSuperuserView:
         get_token_mock = mocker.patch(
             'src.authentication.views.signin.AuthService.'
             'get_superuser_auth_token',
-            return_value=token
+            return_value=token,
         )
 
         response = api_client.post(
             '/auth/superuser/token',
             data={
                 'email': user.email,
-            }
+            },
         )
 
         assert response.status_code == 200
@@ -164,7 +165,7 @@ class TestSuperuserView:
             '/auth/superuser/token',
             data={
                 'email': another_user.email,
-            }
+            },
         )
 
         assert response.status_code == 403

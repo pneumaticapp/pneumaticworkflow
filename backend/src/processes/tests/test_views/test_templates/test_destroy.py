@@ -1,16 +1,17 @@
 import pytest
-from src.processes.models import Template
-from src.processes.tests.fixtures import (
-    create_test_user,
-    create_test_template,
-    create_test_workflow,
-    create_test_account
-)
+
 from src.authentication.enums import AuthTokenType
-from src.processes.views.template import (
-    TemplateIntegrationsService
-)
 from src.processes.enums import TemplateType
+from src.processes.models.templates.template import Template
+from src.processes.tests.fixtures import (
+    create_test_account,
+    create_test_template,
+    create_test_user,
+    create_test_workflow,
+)
+from src.processes.views.template import (
+    TemplateIntegrationsService,
+)
 
 pytestmark = pytest.mark.django_db
 
@@ -29,15 +30,15 @@ class TestDestroyTemplate:
         template = create_test_template(user)
         workflow = create_test_workflow(
             user=user,
-            template=template
+            template=template,
         )
         api_request_mock = mocker.patch(
             'src.processes.services.templates.'
             'integrations.TemplateIntegrationsService.api_request',
         )
-        analytics_mock = mocker.patch(
-            'src.analytics.services.AnalyticService'
-            '.templates_deleted'
+        analysis_mock = mocker.patch(
+            'src.analysis.services.AnalyticService'
+            '.templates_deleted',
         )
 
         api_client.token_authenticate(user)
@@ -53,7 +54,7 @@ class TestDestroyTemplate:
         assert workflow.is_legacy_template is True
         assert workflow.legacy_template_name == template.name
         template.refresh_from_db()
-        analytics_mock.assert_called_once_with(
+        analysis_mock.assert_called_once_with(
             user=user,
             template=template,
             is_superuser=False,
@@ -71,11 +72,11 @@ class TestDestroyTemplate:
         user = create_test_user()
         template = create_test_template(
             user=user,
-            type_=TemplateType.ONBOARDING_ADMIN
+            type_=TemplateType.ONBOARDING_ADMIN,
         )
-        analytics_mock = mocker.patch(
-            'src.analytics.services.AnalyticService'
-            '.templates_deleted'
+        analysis_mock = mocker.patch(
+            'src.analysis.services.AnalyticService'
+            '.templates_deleted',
         )
         api_client.token_authenticate(user)
 
@@ -84,7 +85,7 @@ class TestDestroyTemplate:
 
         # assert
         assert response.status_code == 404
-        analytics_mock.assert_not_called()
+        analysis_mock.assert_not_called()
 
     def test_destroy__api_request__ok(
         self,
@@ -98,12 +99,12 @@ class TestDestroyTemplate:
         user_agent = 'Mozilla'
         get_user_agent_mock = mocker.patch(
             'src.processes.views.template.get_user_agent',
-            return_value=user_agent
+            return_value=user_agent,
         )
         service_init_mock = mocker.patch.object(
             TemplateIntegrationsService,
             attribute='__init__',
-            return_value=None
+            return_value=None,
         )
         api_request_mock = mocker.patch(
             'src.processes.services.templates.'
@@ -111,7 +112,7 @@ class TestDestroyTemplate:
         )
         api_client.token_authenticate(
             user=user,
-            token_type=AuthTokenType.API
+            token_type=AuthTokenType.API,
         )
 
         # act
@@ -122,10 +123,10 @@ class TestDestroyTemplate:
         get_user_agent_mock.assert_called_once()
         api_request_mock.assert_called_once_with(
             template=template,
-            user_agent=user_agent
+            user_agent=user_agent,
         )
         service_init_mock.assert_called_once_with(
             account=user.account,
             is_superuser=False,
-            user=user
+            user=user,
         )

@@ -1,4 +1,5 @@
 import pytest
+
 from src.generics.tests.clients import PneumaticApiClient
 
 
@@ -8,7 +9,7 @@ def api_client():
 
 
 @pytest.fixture
-def analytics_mock(mocker):
+def analysis_mock(mocker):
     return mocker.patch(
-        'src.processes.views.workflow.AnalyticService'
+        'src.processes.views.workflow.AnalyticService',
     )
