@@ -6,7 +6,7 @@ import { LogoCircle, LogoWide, UserIcon } from '../../components/icons';
 import { Header } from '../../components/UI';
 import { history } from '../../utils/history';
 import { ERoutes } from '../../constants/routes';
-import { IPages } from '../../types/page';
+import { IPages } from '../../redux/pages/types';
 
 import styles from './UserLayout.css';
 
