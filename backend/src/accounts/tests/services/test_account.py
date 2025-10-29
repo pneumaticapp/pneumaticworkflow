@@ -806,7 +806,7 @@ def test_partial_update__ok(mocker):
     )
     settings_mock.PROJECT_CONF = {'BILLING': True}
     group_mock = mocker.patch(
-        'src.analytics.mixins.BaseIdentifyMixin.group',
+        'src.analysis.mixins.BaseIdentifyMixin.group',
     )
     update_stripe_account_mock = mocker.patch(
         'src.accounts.services.account.'
@@ -865,7 +865,7 @@ def test_partial_update__disabled_billing_sync__ok(mocker):
     )
     settings_mock.PROJECT_CONF = {'BILLING': True}
     group_mock = mocker.patch(
-        'src.analytics.mixins.BaseIdentifyMixin.group',
+        'src.analysis.mixins.BaseIdentifyMixin.group',
     )
     update_stripe_account_mock = mocker.patch(
         'src.accounts.services.account.'
@@ -917,7 +917,7 @@ def test_partial_update__disabled_billing__ok(mocker):
     )
     settings_mock.PROJECT_CONF = {'BILLING': False}
     group_mock = mocker.patch(
-        'src.analytics.mixins.BaseIdentifyMixin.group',
+        'src.analysis.mixins.BaseIdentifyMixin.group',
     )
     update_stripe_account_mock = mocker.patch(
         'src.accounts.services.account.'
@@ -1179,7 +1179,7 @@ def test_identify_users__premium__ok(mocker):
     )
 
     identify_users_mock = mocker.patch(
-        'src.analytics.tasks.identify_users.delay',
+        'src.analysis.tasks.identify_users.delay',
     )
     service = AccountService(
         instance=account,
@@ -1251,7 +1251,7 @@ def test_identify_users__lease_level_partner__ok(mocker):
     )
 
     identify_users_mock = mocker.patch(
-        'src.analytics.tasks.identify_users.delay',
+        'src.analysis.tasks.identify_users.delay',
     )
     service = AccountService(
         instance=account,
@@ -1321,7 +1321,7 @@ def test_identify_users__expired_subscription__not_identify_tenants(mocker):
     )
 
     identify_users_mock = mocker.patch(
-        'src.analytics.tasks.identify_users.delay',
+        'src.analysis.tasks.identify_users.delay',
     )
     service = AccountService(
         instance=account,
@@ -1390,7 +1390,7 @@ def test_identify_users__free_plan__not_identify_tenants(mocker):
     )
 
     identify_users_mock = mocker.patch(
-        'src.analytics.tasks.identify_users.delay',
+        'src.analysis.tasks.identify_users.delay',
     )
     service = AccountService(
         instance=account,

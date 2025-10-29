@@ -5,7 +5,7 @@ from django.conf import settings
 from django.utils import timezone
 
 from src.accounts.enums import UserType
-from src.analytics.enums import MailoutType
+from src.analysis.enums import MailoutType
 from src.logs.enums import AccountEventStatus
 from src.notifications import messages
 from src.notifications.enums import (

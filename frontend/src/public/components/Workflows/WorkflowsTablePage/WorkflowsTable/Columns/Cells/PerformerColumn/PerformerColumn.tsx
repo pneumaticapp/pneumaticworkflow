@@ -4,7 +4,7 @@ import { WorkflowCardUsers } from '../../../../../../WorkflowCardUsers';
 import { TableColumns } from '../../../types';
 import styles from './PerformerColumns.css';
 
-type TProps = React.PropsWithChildren<CellProps<TableColumns, TableColumns['performer']>>;
+type TProps = React.PropsWithChildren<CellProps<TableColumns, TableColumns['system-column-performer']>>;
 
 export function PerformerColumn({ value: { selectedUsers } }: TProps) {
   return (

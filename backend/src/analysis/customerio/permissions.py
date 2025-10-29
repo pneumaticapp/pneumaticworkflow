@@ -1,6 +1,6 @@
 from rest_framework.permissions import BasePermission
 
-from src.analytics.customerio.utils import check_webhook_hash
+from src.analysis.customerio.utils import check_webhook_hash
 from src.utils import logging
 
 

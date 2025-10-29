@@ -312,7 +312,7 @@ def test_after_transfer_actions__premium__ok(mocker):
     user = create_test_user(account=account)
     prev_user = create_test_user(email='prev@test.test')
     users_transferred_mock = mocker.patch(
-        'src.analytics.services.AnalyticService.'
+        'src.analysis.services.AnalyticService.'
         'users_transferred',
     )
     identify_mock = mocker.patch(
@@ -378,7 +378,7 @@ def test_after_transfer_actions__unlimited__ok(mocker):
     user = create_test_user(account=account)
     prev_user = create_test_user(email='prev@test.test')
     users_transferred_mock = mocker.patch(
-        'src.analytics.services.AnalyticService.'
+        'src.analysis.services.AnalyticService.'
         'users_transferred',
     )
     identify_mock = mocker.patch(
@@ -444,7 +444,7 @@ def test_after_transfer_actions__disable_billing__ok(mocker, plan):
     user = create_test_user(account=account, is_account_owner=True)
     prev_user = create_test_user(email='prev@test.test')
     users_transferred_mock = mocker.patch(
-        'src.analytics.services.AnalyticService.'
+        'src.analysis.services.AnalyticService.'
         'users_transferred',
     )
     identify_mock = mocker.patch(
