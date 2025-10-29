@@ -248,6 +248,8 @@ class Common(Configuration):
             '09_auth0__token': env.get('THROTTLE_09'),
             '10_auth0__auth_uri': env.get('THROTTLE_10'),
             '11_auth__reset_password': env.get('THROTTLE_11'),
+            '12_auth_google__token': env.get('THROTTLE_12'),
+            '13_auth_google__auth_uri': env.get('THROTTLE_13'),
         },
     }
 
@@ -363,6 +365,11 @@ class Common(Configuration):
     MS_CLIENT_ID = env.get('MS_CLIENT_ID')
     MS_CLIENT_SECRET = env.get('MS_CLIENT_SECRET')
     MS_AUTHORITY = env.get('MS_AUTHORITY')
+
+    # Google auth
+    GOOGLE_OAUTH2_CLIENT_ID = env.get('GOOGLE_OAUTH2_CLIENT_ID')
+    GOOGLE_OAUTH2_CLIENT_SECRET = env.get('GOOGLE_OAUTH2_CLIENT_SECRET')
+    GOOGLE_OAUTH2_REDIRECT_URI = env.get('GOOGLE_OAUTH2_REDIRECT_URI')
 
     # SSO Auth0
     AUTH0_CLIENT_ID = env.get('AUTH0_CLIENT_ID')
