@@ -5,7 +5,7 @@ from rest_framework.decorators import action
 from rest_framework.exceptions import AuthenticationFailed
 from rest_framework.viewsets import GenericViewSet
 
-from src.analytics.mixins import BaseIdentifyMixin
+from src.analysis.mixins import BaseIdentifyMixin
 from src.authentication.messages import MSG_AU_0003
 from src.authentication.permissions import MSAuthPermission
 from src.authentication.serializers import (

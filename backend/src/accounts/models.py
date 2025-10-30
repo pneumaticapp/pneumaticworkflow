@@ -612,7 +612,7 @@ class Contact(
 
     first_name = models.CharField(max_length=150, blank=True, null=True)
     last_name = models.CharField(max_length=150, blank=True, null=True)
-    photo = models.URLField(max_length=1024, null=True, blank=True)
+    photo = models.URLField(max_length=1500, null=True, blank=True)
     job_title = models.CharField(max_length=150, blank=True, null=True)
     source = models.CharField(
         max_length=255,

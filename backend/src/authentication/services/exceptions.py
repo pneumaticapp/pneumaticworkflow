@@ -6,6 +6,7 @@ from src.authentication.messages import (
     MSG_AU_0005,
     MSG_AU_0008,
     MSG_AU_0009,
+    MSG_AU_0014,
 )
 from src.generics.exceptions import BaseServiceException
 
@@ -44,3 +45,8 @@ class GraphApiRequestError(AuthException):
 class AuthenticationFailed(BaseServiceException):
 
     default_message = MSG_AU_0008
+
+
+class PeopleApiRequestError(AuthException):
+
+    default_message = MSG_AU_0014

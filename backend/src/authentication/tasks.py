@@ -1,12 +1,15 @@
 import contextlib
 
+from celery import shared_task
 from django.conf import settings
 from slack import WebClient
 
-from celery import shared_task
 from src.accounts.models import Account, User
 from src.authentication.services.exceptions import (
     AuthException,
+)
+from src.authentication.services.google import (
+    GoogleAuthService,
 )
 from src.authentication.services.microsoft import (
     MicrosoftAuthService,
@@ -53,5 +56,13 @@ def send_new_signup_notification(account_id: int):
 def update_microsoft_contacts(user_id: int):
     user = User.objects.get(id=user_id)
     service = MicrosoftAuthService()
+    with contextlib.suppress(AuthException):
+        service.update_user_contacts(user)
+
+
+@shared_task(ignore_result=True)
+def update_google_contacts(user_id: int):
+    user = User.objects.get(id=user_id)
+    service = GoogleAuthService()
     with contextlib.suppress(AuthException):
         service.update_user_contacts(user)

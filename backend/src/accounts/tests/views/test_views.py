@@ -24,7 +24,7 @@ from src.accounts.tokens import (
     DigestUnsubscribeToken,
     UnsubscribeEmailToken,
 )
-from src.analytics.enums import MailoutType
+from src.analysis.enums import MailoutType
 from src.authentication.enums import AuthTokenType
 from src.authentication.tokens import PneumaticToken
 from src.processes.models.workflows.task import (
@@ -70,7 +70,7 @@ class TestUnsubscribeDigestView:
         </script>
         {MSG_A_0014}
         """
-        analytics_mock = mocker.patch(
+        analysis_mock = mocker.patch(
             'src.accounts.views.unsubscribes.'
             'AnalyticService.users_digest',
         )
@@ -85,7 +85,7 @@ class TestUnsubscribeDigestView:
 
         user.refresh_from_db()
         assert user.is_digest_subscriber is False
-        analytics_mock.assert_called_with(
+        analysis_mock.assert_called_with(
             user=user,
             is_superuser=False,
             auth_type=AuthTokenType.USER,
