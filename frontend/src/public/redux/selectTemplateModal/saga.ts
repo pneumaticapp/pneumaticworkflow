@@ -3,18 +3,15 @@
 import { all, fork, put, select, takeEvery } from 'redux-saga/effects';
 
 import { logger } from '../../utils/logger';
-import { NotificationManager } from '../../components/UI/Notifications';
 
-import {
-  ESelectTemplateModalActions,
-  setSelectTemplateModalTemplates,
-} from './actions';
+import { ESelectTemplateModalActions, setSelectTemplateModalTemplates } from './actions';
 
 import { getTemplates } from '../../api/getTemplates';
 import { ETemplatesSorting } from '../../types/workflow';
 import { ITemplateListItem } from '../../types/template';
 import { getTemplatesModalFilter } from '../selectors/selectTemplateModal';
 import { isArrayWithItems } from '../../utils/helpers';
+import { notifyApiError } from '../../utils/notifyApiError';
 
 function* fetchSelectTemplateModalTemplates() {
   try {
@@ -26,12 +23,12 @@ function* fetchSelectTemplateModalTemplates() {
 
     const templatesIdsFilter: ReturnType<typeof getTemplatesModalFilter> = yield select(getTemplatesModalFilter);
     const filteredTemplates = isArrayWithItems(templatesIdsFilter)
-      ? templates.filter(template => templatesIdsFilter.some(templateId => templateId === template.id))
+      ? templates.filter((template) => templatesIdsFilter.some((templateId) => templateId === template.id))
       : templates;
 
     yield put(setSelectTemplateModalTemplates(filteredTemplates));
   } catch (error) {
-    NotificationManager.error({ id: 'select-template.failed-to-fetch-templates' });
+    notifyApiError(error, { id: 'select-template.failed-to-fetch-templates' });
     logger.error(error);
   }
 }
@@ -41,7 +38,5 @@ export function* watchFetchSelectTemplateModalTemplates() {
 }
 
 export function* rootSaga() {
-  yield all([
-    fork(watchFetchSelectTemplateModalTemplates),
-  ]);
+  yield all([fork(watchFetchSelectTemplateModalTemplates)]);
 }

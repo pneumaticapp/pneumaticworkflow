@@ -20,6 +20,7 @@ import {
   loadApiKeySuccess,
   loadApiKeyFailed,
 } from './actions';
+import { notifyApiError } from '../../utils/notifyApiError';
 
 function* fetchIntegrationsList() {
   try {
@@ -66,10 +67,10 @@ export function* fetchApiKey() {
 
     const { token } = yield getApiKey();
     yield put(loadApiKeySuccess(token));
-  } catch (e) {
+  } catch (error) {
     yield put(loadApiKeyFailed());
-    NotificationManager.error({ message: 'integrations.fetch-api-key-error' });
-    logger.error(e);
+    notifyApiError(error, { message: 'integrations.fetch-api-key-error' });
+    logger.error(error);
   }
 }
 
@@ -86,9 +87,5 @@ export function* watchFetchApiKey() {
 }
 
 export function* rootSaga() {
-  yield all([
-    fork(watchFetchApiKey),
-    fork(watchLoadIntegrationsList),
-    fork(watchLoadIntegrationDetails),
-  ]);
+  yield all([fork(watchFetchApiKey), fork(watchLoadIntegrationsList), fork(watchLoadIntegrationDetails)]);
 }
