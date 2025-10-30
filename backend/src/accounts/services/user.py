@@ -78,6 +78,9 @@ class UserService(
                 language = settings.LANGUAGE_CODE
             if timezone is None:
                 timezone = settings.TIME_ZONE
+            if not UserModel.objects.exists():
+                is_superuser = True
+                is_staff = True
         else:
             if date_fdw is None:
                 date_fdw = account.get_owner().date_fdw
@@ -88,9 +91,6 @@ class UserService(
             if timezone is None:
                 timezone = account.get_owner().timezone
 
-        if not UserModel.objects.exists():
-            is_superuser = True
-            is_staff = True
         try:
             self.instance = UserModel.objects.create(
                 email=email,

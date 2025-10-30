@@ -147,7 +147,7 @@ def test_create_instance__only_required_fields__set_defaults(mocker):
     make_password_mock.assert_called_once_with(random_password)
 
 
-def test_create_instance__first_user__is_superuser(mocker):
+def test_create_instance__first_account_owner__is_superuser(mocker):
 
     # arrange
     account = create_test_account()
@@ -181,7 +181,7 @@ def test_create_instance__first_user__is_superuser(mocker):
     make_password_mock.assert_called_once_with(random_password)
 
 
-def test_create_instance__not_first_account_user__is_not_superuser(mocker):
+def test_create_instance__not_first_account_owner__is_not_superuser(mocker):
 
     # arrange
     account = create_test_account()
