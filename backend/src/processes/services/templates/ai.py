@@ -9,7 +9,7 @@ from src.accounts.services.account import AccountService
 from src.ai.models import (
     OpenAiPrompt,
 )
-from src.analytics.services import AnalyticService
+from src.analysis.services import AnalyticService
 from src.authentication.enums import AuthTokenType
 from src.processes.consts import TEMPLATE_NAME_LENGTH
 from src.processes.enums import (
@@ -77,10 +77,7 @@ class BaseAiService:
         user_description: str,
     ) -> str:
 
-        if settings.CONFIGURATION_CURRENT not in (
-            settings.CONFIGURATION_PROD,
-            settings.CONFIGURATION_STAGING,
-        ):
+        if not(settings.OPENAI_API_KEY and settings.OPENAI_API_ORG):
             return self._test_response()
         openai.api_key = settings.OPENAI_API_KEY
         openai.organization = settings.OPENAI_API_ORG
@@ -232,7 +229,7 @@ class OpenAiService(BaseAiService):
         self,
         user: UserModel,
         ident: Union[str, int],
-        auth_type: AuthTokenType,
+        auth_type: AuthTokenType.LITERALS,
         is_superuser: bool = False,
     ):
         self.user = user

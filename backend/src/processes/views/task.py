@@ -14,8 +14,8 @@ from src.accounts.permissions import (
     UsersOverlimitedPermission,
 )
 from src.accounts.serializers.user import UserSerializer
-from src.analytics.mixins import BaseIdentifyMixin
-from src.analytics.services import AnalyticService
+from src.analysis.mixins import BaseIdentifyMixin
+from src.analysis.services import AnalyticService
 from src.generics.filters import PneumaticFilterBackend
 from src.generics.mixins.views import (
     CustomViewSetMixin,
