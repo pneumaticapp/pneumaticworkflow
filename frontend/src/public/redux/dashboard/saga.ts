@@ -16,18 +16,16 @@ import {
 import { setGeneralLoaderVisibility } from '../general/actions';
 
 import { logger } from '../../utils/logger';
-import { NotificationManager } from '../../components/UI/Notifications';
-import { getDashboardWorkflowOverviewApi, IGetDashboardOverviewResponse } from '../../api/dashboard/getDashboardWorkflowOverview';
+import {
+  getDashboardWorkflowOverviewApi,
+  IGetDashboardOverviewResponse,
+} from '../../api/dashboard/getDashboardWorkflowOverview';
 import { getDashboardTasksOverview } from '../../api/dashboard/getDashboardTasksOverview';
 import { getDashboardWorkflowBreakdown } from '../../api/dashboard/getDashboardWorkflowBreakdown';
 import { getDashboardTasksBreakdown } from '../../api/dashboard/getDashboardTasksBreakdown';
 import { getDashboardWorkflowsTasks } from '../../api/dashboard/getDashboardWorkflowsTasks';
 import { getDashboardTasksBySteps } from '../../api/dashboard/getDashboardTasks';
-import {
-  EDashboardModes,
-  IDashboardTask,
-  TDashboardBreakdownItemResponse,
-} from '../../types/redux';
+import { EDashboardModes, IDashboardTask, TDashboardBreakdownItemResponse } from '../../types/redux';
 import { getIsAdmin } from '../selectors/user';
 import {
   getDashboardBreakdownItems,
@@ -50,18 +48,16 @@ import { getGettingStartedChecklist } from '../../api/getGettingStartedChecklist
 import { IGettingStartedChecklist } from '../../types/dashboard';
 import { loadTemplateIntegrationsStats } from '../actions';
 import { isObject } from '../../utils/mappers';
+import { notifyApiError } from '../../utils/notifyApiError';
 
 function* fetchDashboardData() {
   yield put(setIsDasboardLoaderVisible(true));
-  yield all([
-    fetchDashboardCounters(),
-    fetchDashboardBreakdownItems(),
-  ]);
+  yield all([fetchDashboardCounters(), fetchDashboardBreakdownItems()]);
   yield put(setIsDasboardLoaderVisible(false));
 
   const breakdownItems: ReturnType<typeof getDashboardBreakdownItems> = yield select(getDashboardBreakdownItems);
   if (isArrayWithItems(breakdownItems)) {
-    yield put(loadTemplateIntegrationsStats({ templates: breakdownItems.map(i => i.templateId) }));
+    yield put(loadTemplateIntegrationsStats({ templates: breakdownItems.map((i) => i.templateId) }));
   }
 }
 
@@ -72,35 +68,32 @@ function* fetchDashboardCounters() {
     const dashboardMode: EDashboardModes = yield isAdmin ? select(getDashboardMode) : EDashboardModes.Tasks;
     const timeRangeDates = getRangeDates(timeRange);
 
-    const getCounters = dashboardMode === EDashboardModes.Workflows
-      ? getDashboardWorkflowOverviewApi
-      : getDashboardTasksOverview;
+    const getCounters =
+      dashboardMode === EDashboardModes.Workflows ? getDashboardWorkflowOverviewApi : getDashboardTasksOverview;
 
     const countersResponse: IGetDashboardOverviewResponse = yield call(getCounters, timeRangeDates);
 
     yield put(setDashboardCounters(countersResponse));
   } catch (error) {
     logger.info('fetch dashboard stats error : ', error);
-    NotificationManager.error({ message: 'dashboard.error-fetch' });
+    notifyApiError(error, { message: 'dashboard.error-fetch' });
   }
 }
 
 function* fetchDashboardBreakdownItems() {
   try {
     const isAdmin: boolean = yield select(getIsAdmin);
-    const { timeRange, mode }: ReturnType<typeof getDashboardStore> =
-      yield select(getDashboardStore);
+    const { timeRange, mode }: ReturnType<typeof getDashboardStore> = yield select(getDashboardStore);
     const rangeDates = getRangeDates(timeRange);
 
-    const getBreakdown = (isAdmin && mode === EDashboardModes.Workflows)
-      ? getDashboardWorkflowBreakdown
-      : getDashboardTasksBreakdown;
+    const getBreakdown =
+      isAdmin && mode === EDashboardModes.Workflows ? getDashboardWorkflowBreakdown : getDashboardTasksBreakdown;
     const breakdownItems: TDashboardBreakdownItemResponse[] = yield getBreakdown(rangeDates);
     const normalizedBreakdownItems = normalizeBreakdownItems(breakdownItems);
     yield put(setBreakdownItems(normalizedBreakdownItems));
   } catch (error) {
     logger.info('fetch breakdown items error : ', error);
-    NotificationManager.error({ message: getErrorMessage(error) });
+    notifyApiError(error, { message: getErrorMessage(error) });
   }
 }
 
@@ -113,7 +106,7 @@ export function* fetchBreakdownTasks({ payload: { templateId } }: TLoadBreakdown
   }: ReturnType<typeof getDashboardStore> = yield select(getDashboardStore);
   const { endDate, startDate, now } = getRangeDates(timeRange);
 
-  const breakdown = breakdownItems.find(breakdown => breakdown.templateId === templateId);
+  const breakdown = breakdownItems.find((breakdown) => breakdown.templateId === templateId);
   if (isArrayWithItems(breakdown?.tasks)) {
     return;
   }
@@ -121,9 +114,8 @@ export function* fetchBreakdownTasks({ payload: { templateId } }: TLoadBreakdown
   try {
     yield put(patchBreakdownItem({ templateId, changedFields: { areTasksLoading: true } }));
 
-    const getBreakdownTasks = (isAdmin && dashboardMode === EDashboardModes.Workflows)
-      ? getDashboardWorkflowsTasks
-      : getDashboardTasksBySteps;
+    const getBreakdownTasks =
+      isAdmin && dashboardMode === EDashboardModes.Workflows ? getDashboardWorkflowsTasks : getDashboardTasksBySteps;
 
     const [tasks]: [IDashboardTask[]] = yield all([
       call(getBreakdownTasks, {
@@ -138,7 +130,7 @@ export function* fetchBreakdownTasks({ payload: { templateId } }: TLoadBreakdown
     yield put(patchBreakdownItem({ templateId, changedFields: { tasks } }));
   } catch (error) {
     logger.info('fetch dashboard breakdown tasks error: ', error);
-    NotificationManager.error({ message: getErrorMessage(error) });
+    notifyApiError(error, { message: getErrorMessage(error) });
   } finally {
     yield put(patchBreakdownItem({ templateId, changedFields: { areTasksLoading: false } }));
   }
@@ -155,20 +147,22 @@ export function* openRunWorflowSaga({ payload: { templateId, ancestorTaskId } }:
     }
   } catch (error) {
     logger.info('fetch template error : ', error);
-    NotificationManager.error({ message: getErrorMessage(error) });
+    notifyApiError(error, { message: getErrorMessage(error) });
   } finally {
     yield put(setGeneralLoaderVisibility(false));
   }
 }
 
-export function* openRunWorflowByTemplateDataSaga({ payload: { templateData, ancestorTaskId } }: TOpenRunWorkflowModalSideMenu) {
+export function* openRunWorflowByTemplateDataSaga({
+  payload: { templateData, ancestorTaskId },
+}: TOpenRunWorkflowModalSideMenu) {
   try {
     yield put(setGeneralLoaderVisibility(true));
 
     yield put(openRunWorkflowModal({ ...templateData, ancestorTaskId }));
   } catch (error) {
     logger.info('fetch template error : ', error);
-    NotificationManager.error({ message: getErrorMessage(error) });
+    notifyApiError(error, { message: getErrorMessage(error) });
   } finally {
     yield put(setGeneralLoaderVisibility(false));
   }
@@ -184,7 +178,7 @@ function* loadChecklistSaga() {
   } catch (error) {
     yield put(loadGettingStartedChecklistFailed());
     logger.info('fetch getting started checklist: ', error);
-    NotificationManager.error({ message: getErrorMessage(error) });
+    notifyApiError(error, { message: getErrorMessage(error) });
   }
 }
 
