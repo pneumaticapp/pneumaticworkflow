@@ -181,7 +181,6 @@ class RawPerformerSerializer(
             elif instance.type == PerformerType.GROUP:
                 data['source_id'] = str(instance.group_id)
                 data['label'] = instance.group.name
-            data['id'] = instance.id
         return data
 
     def create(self, validated_data):
