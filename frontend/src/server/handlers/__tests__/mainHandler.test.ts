@@ -41,7 +41,7 @@ describe('handlers', () => {
         config: JSON.stringify(mockConfig),
         env,
         invitedUser: '{}',
-        isBuildAnalytics: true,
+        isBuildAnalytics: false,
         pages: "{}",
         user: '{}',
       });
