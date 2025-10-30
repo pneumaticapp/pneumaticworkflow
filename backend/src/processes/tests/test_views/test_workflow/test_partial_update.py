@@ -11,7 +11,7 @@ from src.accounts.enums import (
 )
 from src.accounts.models import Notification
 from src.accounts.services.user_invite import UserInviteService
-from src.analytics.actions import (
+from src.analysis.actions import (
     WorkflowActions,
 )
 from src.authentication.enums import AuthTokenType
@@ -66,8 +66,8 @@ class TestPartialUpdateWorkflow:
         workflow = create_test_workflow(user)
         api_client.token_authenticate(user)
         name = f'{workflow.name} edited'
-        analytics_mock = mocker.patch(
-            'src.analytics.services.AnalyticService.'
+        analysis_mock = mocker.patch(
+            'src.analysis.services.AnalyticService.'
             'workflows_updated',
         )
 
@@ -80,7 +80,7 @@ class TestPartialUpdateWorkflow:
         # assert
         assert response.status_code == 200
         assert response.data['name'] == name
-        analytics_mock.assert_called_once_with(
+        analysis_mock.assert_called_once_with(
             workflow=workflow,
             auth_type=AuthTokenType.USER,
             is_superuser=False,
@@ -536,7 +536,7 @@ class TestPartialUpdateWorkflow:
             data={
                 'kickoff': {
                     not_required_field.api_name: 'text',
-                    required_field.api_name: str(user.id),
+                    required_field.api_name: str(user.email),
                 },
             },
         )
@@ -919,12 +919,12 @@ class TestPartialUpdateWorkflow:
             'src.notifications.tasks.'
             'send_urgent_notification.delay',
         )
-        analytics_mock = mocker.patch(
-            'src.analytics.services.AnalyticService.'
+        analysis_mock = mocker.patch(
+            'src.analysis.services.AnalyticService.'
             'workflows_updated',
         )
-        analytics_urgent_mock = mocker.patch(
-            'src.analytics.services.AnalyticService.'
+        analysis_urgent_mock = mocker.patch(
+            'src.analysis.services.AnalyticService.'
             'workflows_urgent',
         )
         user = create_test_owner()
@@ -948,13 +948,13 @@ class TestPartialUpdateWorkflow:
         assert workflow.is_urgent is True
         task = workflow.tasks.get(number=1)
         assert task.is_urgent is True
-        analytics_mock.assert_called_once_with(
+        analysis_mock.assert_called_once_with(
             workflow=workflow,
             auth_type=AuthTokenType.USER,
             is_superuser=False,
             user=user,
         )
-        analytics_urgent_mock.assert_called_once_with(
+        analysis_urgent_mock.assert_called_once_with(
             workflow=workflow,
             auth_type=AuthTokenType.USER,
             is_superuser=False,
@@ -988,12 +988,12 @@ class TestPartialUpdateWorkflow:
             'src.notifications.tasks.'
             'send_not_urgent_notification.delay',
         )
-        analytics_mock = mocker.patch(
-            'src.analytics.services.AnalyticService.'
+        analysis_mock = mocker.patch(
+            'src.analysis.services.AnalyticService.'
             'workflows_updated',
         )
-        analytics_urgent_mock = mocker.patch(
-            'src.analytics.services.AnalyticService.'
+        analysis_urgent_mock = mocker.patch(
+            'src.analysis.services.AnalyticService.'
             'workflows_urgent',
         )
         user = create_test_owner()
@@ -1013,13 +1013,13 @@ class TestPartialUpdateWorkflow:
         assert workflow.is_urgent is False
         task = workflow.tasks.get(number=1)
         assert task.is_urgent is False
-        analytics_mock.assert_called_once_with(
+        analysis_mock.assert_called_once_with(
             workflow=workflow,
             auth_type=AuthTokenType.USER,
             is_superuser=False,
             user=user,
         )
-        analytics_urgent_mock.assert_called_once_with(
+        analysis_urgent_mock.assert_called_once_with(
             workflow=workflow,
             auth_type=AuthTokenType.USER,
             is_superuser=False,
@@ -1056,8 +1056,8 @@ class TestPartialUpdateWorkflow:
             'src.notifications.tasks.'
             'send_urgent_notification.delay',
         )
-        analytics_urgent_mock = mocker.patch(
-            'src.analytics.services.AnalyticService.'
+        analysis_urgent_mock = mocker.patch(
+            'src.analysis.services.AnalyticService.'
             'workflows_urgent',
         )
 
@@ -1072,7 +1072,7 @@ class TestPartialUpdateWorkflow:
         assert response.status_code == 200
         assert response.data['is_urgent'] is False
         assert workflow.is_urgent is False
-        analytics_urgent_mock.assert_not_called()
+        analysis_urgent_mock.assert_not_called()
         workflow_urgent_event_mock.assert_not_called()
         send_urgent_task_notification_mock.assert_not_called()
 
@@ -1544,7 +1544,7 @@ class TestPartialUpdateWorkflow:
             f'/templates/{template.id}/run',
             data={
                 'kickoff': {
-                    field.api_name: str(user.id),
+                    field.api_name: str(user.email),
                 },
             },
         )
@@ -1555,7 +1555,7 @@ class TestPartialUpdateWorkflow:
             f'/workflows/{workflow.id}',
             data={
                 'kickoff': {
-                    field.api_name: str(user_2.id),
+                    field.api_name: str(user_2.email),
                 },
             },
         )
@@ -1625,7 +1625,7 @@ class TestPartialUpdateWorkflow:
             data={
                 'kickoff': {
                     field_api_name_1: feedback,
-                    field_api_name_2: str(user.id),
+                    field_api_name_2: str(user.email),
                 },
             },
         )
@@ -1638,7 +1638,7 @@ class TestPartialUpdateWorkflow:
             data={
                 'kickoff': {
                     field_api_name_1: feedback_2,
-                    field_api_name_2: str(user_2.id),
+                    field_api_name_2: str(user_2.email),
                 },
             },
         )
@@ -1711,7 +1711,7 @@ class TestUpdatePerformer:
             f'/templates/{template.id}/run',
             data={
                 'kickoff': {
-                    field_api_name: user.id,
+                    field_api_name: user.email,
                 },
             },
         )
@@ -1724,7 +1724,7 @@ class TestUpdatePerformer:
             path=f'/workflows/{workflow.id}',
             data={
                 'kickoff': {
-                    field_api_name: user2.id,
+                    field_api_name: user2.email,
                 },
             },
         )
@@ -1814,7 +1814,7 @@ class TestUpdatePerformer:
             f'/templates/{template.id}/run',
             data={
                 'kickoff': {
-                    field_api_name: user.id,
+                    field_api_name: user.email,
                 },
             },
         )
@@ -1823,7 +1823,7 @@ class TestUpdatePerformer:
             path=f'/workflows/{workflow.id}',
             data={
                 'kickoff': {
-                    field_api_name: user2.id,
+                    field_api_name: user2.email,
                 },
             },
         )
@@ -1905,7 +1905,7 @@ class TestUpdatePerformer:
             f'/templates/{template.id}/run',
             data={
                 'kickoff': {
-                    field_api_name: user.id,
+                    field_api_name: user.email,
                 },
             },
         )
@@ -1918,7 +1918,7 @@ class TestUpdatePerformer:
             path=f'/workflows/{workflow.id}',
             data={
                 'kickoff': {
-                    field_api_name: user2.id,
+                    field_api_name: user2.email,
                 },
             },
         )
@@ -1982,7 +1982,7 @@ class TestUpdatePerformer:
             path=f'/templates/{template.id}/run',
             data={
                 'kickoff': {
-                    'user-field-1': str(account_1_owner.id),
+                    'user-field-1': str(account_1_owner.email),
                 },
             },
         )
@@ -2003,7 +2003,7 @@ class TestUpdatePerformer:
             path=f'/workflows/{workflow.id}',
             data={
                 'kickoff': {
-                    'user-field-1': str(account_1_new_user.id),
+                    'user-field-1': str(account_1_new_user.email),
                 },
             },
         )

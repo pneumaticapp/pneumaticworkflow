@@ -20,6 +20,7 @@ from src.processes.messages.template import (
     MSG_PT_0045,
     MSG_PT_0046,
     MSG_PT_0051,
+    MSG_PT_0062,
     MSG_PT_0063,
     MSG_PT_0064,
     MSG_PT_0065,
@@ -61,6 +62,8 @@ class PredicateTemplateSerializer(
             'api_name',
             'rule',
             'template',
+            'user_id',
+            'group_id',
         }
 
     api_name = CharField(max_length=200, required=False)
@@ -166,6 +169,27 @@ class PredicateTemplateSerializer(
                     api_name=data.get('api_name'),
                  )
 
+    def _validate_group(
+        self,
+        account,
+        group_id: str,
+        predicate_api_name: Optional[str] = None,
+    ):
+        task_name = self.context['task'].name
+        try:
+            group_id = int(group_id)
+            if not account.user_groups.filter(id=group_id).exists():
+                raise_validation_error(
+                    message=MSG_PT_0062(group_id=group_id, task=task_name),
+                    api_name=predicate_api_name,
+                )
+        except ValueError:
+            raise_validation_error(
+                message=MSG_PT_0062(group_id=group_id, task=task_name),
+                api_name=predicate_api_name,
+            )
+        return group_id
+
     def _validate_selection(
         self,
         field_api_name: str,
@@ -204,13 +228,18 @@ class PredicateTemplateSerializer(
             value=value,
             predicate_api_name=api_name,
         ) is not None:
-            if field_type == FieldType.USER:
+            if field_type == PredicateType.USER:
                 self._validate_user(
                     account=account,
                     user_id=value,
                     predicate_api_name=api_name,
                 )
-
+            elif field_type == PredicateType.GROUP:
+                self._validate_group(
+                    account=account,
+                    group_id=value,
+                    predicate_api_name=api_name,
+                )
             elif field_type in FieldType.TYPES_WITH_SELECTIONS:
                 self._validate_selection(
                     field_api_name=field,
@@ -228,12 +257,19 @@ class PredicateTemplateSerializer(
 
     def create(self, validated_data):
         self.additional_validate(validated_data)
+        predicate_data = {
+            'template': self.context['template'],
+            'rule': self.context.get('rule'),
+            **validated_data,
+        }
+
+        if validated_data["field_type"] == PredicateType.USER:
+            predicate_data["user_id"] = validated_data.get("value")
+        elif validated_data["field_type"] == PredicateType.GROUP:
+            predicate_data["group_id"] = validated_data.get("value")
+
         return self.create_or_update_instance(
-            validated_data={
-                'template': self.context['template'],
-                'rule':  self.context.get('rule'),
-                **validated_data,
-            },
+            validated_data=predicate_data,
             not_unique_exception_msg=MSG_PT_0051(
                 name=self.context['task'].name,
                 api_name=validated_data.get('api_name'),
@@ -242,13 +278,20 @@ class PredicateTemplateSerializer(
 
     def update(self, instance, validated_data):
         self.additional_validate(validated_data)
+        predicate_data = {
+            'template': self.context['template'],
+            'rule': self.context.get('rule'),
+            **validated_data,
+        }
+
+        if validated_data["field_type"] == PredicateType.USER:
+            predicate_data["user_id"] = validated_data.get("value")
+        elif validated_data["field_type"] == PredicateType.GROUP:
+            predicate_data["group_id"] = validated_data.get("value")
+
         return self.create_or_update_instance(
             instance=instance,
-            validated_data={
-                'template': self.context['template'],
-                'rule':  self.context.get('rule'),
-                **validated_data,
-            },
+            validated_data=predicate_data,
             not_unique_exception_msg=MSG_PT_0051(
                 name=self.context['task'].name,
                 api_name=validated_data.get('api_name'),

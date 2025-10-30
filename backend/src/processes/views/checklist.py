@@ -7,7 +7,7 @@ from src.accounts.permissions import (
     BillingPlanPermission,
     ExpiredSubscriptionPermission,
 )
-from src.analytics.mixins import BaseIdentifyMixin
+from src.analysis.mixins import BaseIdentifyMixin
 from src.generics.mixins.views import CustomViewSetMixin
 from src.generics.permissions import IsAuthenticated
 from src.processes.models.workflows.checklist import Checklist

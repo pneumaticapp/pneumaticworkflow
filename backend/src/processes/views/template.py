@@ -14,7 +14,7 @@ from src.accounts.permissions import (
     UserIsAdminOrAccountOwner,
     UsersOverlimitedPermission,
 )
-from src.analytics.services import AnalyticService
+from src.analysis.services import AnalyticService
 from src.authentication.enums import AuthTokenType
 from src.executor import RawSqlExecutor
 from src.generics.filters import PneumaticFilterBackend
@@ -310,7 +310,7 @@ class TemplateViewSet(
             template=template,
             is_superuser=request.is_superuser,
             auth_type=request.token_type,
-            **serializer.get_analytics_counters(),
+            **serializer.get_analysis_counters(),
         )
         if self.request.token_type == AuthTokenType.API:
             service = TemplateIntegrationsService(
@@ -366,7 +366,7 @@ class TemplateViewSet(
                 template=template,
                 is_superuser=request.is_superuser,
                 auth_type=request.token_type,
-                **serializer.get_analytics_counters(),
+                **serializer.get_analysis_counters(),
             )
         return self.response_ok(serializer.get_response_data())
 
@@ -399,7 +399,6 @@ class TemplateViewSet(
         queryset = Template.objects.raw_list_query(
             user_id=user.id,
             account_id=user.account_id,
-            is_account_owner=user.is_account_owner,
             ordering=data.get('ordering'),
             search=search_text,
             is_active=data.get('is_active'),

@@ -1,5 +1,4 @@
 import { ESubscriptionPlan } from './account';
-import { IUserInviteItem } from './team';
 
 export type TUserType = 'user' | 'guest' | 'group';
 export interface IUnsavedUser {
@@ -13,7 +12,7 @@ export interface IUnsavedUser {
   phone: string;
   photo: string;
   status?: EUserStatus;
-  invite?: IUserInviteItem;
+  invite?: UserInvite;
   isAdmin?: boolean;
   type: TUserType;
   language: string;
@@ -22,11 +21,10 @@ export interface IUnsavedUser {
   dateFdw: string;
 }
 
-export type TGoogleAuthUserInfo = Partial<
-  Pick<IUnsavedUser, 'email' | 'firstName' | 'lastName' | 'phone' | 'photo'>
-> & {
-  companyName?: string;
-};
+export enum EUserDropdownOptionType {
+  User = 'user',
+  UserGroup = 'group',
+}
 
 export type TUserListItem = Pick<
   IUnsavedUser,
@@ -55,6 +53,14 @@ export interface IAccount {
   logoLg: string | null;
   trialEnded: boolean;
   trialIsActive: boolean;
+}
+
+interface UserInvite {
+  id: string;
+  byUsername: string;
+  dateCreated: string;
+  invitedBy: number | null;
+  invitedFrom: string;
 }
 
 export type TUserInvited = Pick<IUnsavedUser, 'firstName' | 'lastName' | 'timezone'> & {
