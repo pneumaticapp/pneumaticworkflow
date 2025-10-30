@@ -18,6 +18,8 @@ const mockWorkflowDetailKickoff: IWorkflowDetailsKickoff = {
       selections: [],
       attachments: [],
       order: 7,
+      userId: null,
+      groupId: null,
     },
     {
       id: 60845,
@@ -30,6 +32,8 @@ const mockWorkflowDetailKickoff: IWorkflowDetailsKickoff = {
       selections: [],
       attachments: [],
       order: 6,
+      userId: null,
+      groupId: null,
     },
     {
       id: 60846,
@@ -42,6 +46,8 @@ const mockWorkflowDetailKickoff: IWorkflowDetailsKickoff = {
       selections: [],
       attachments: [],
       order: 5,
+      userId: null,
+      groupId: null,
     },
     {
       id: 60847,
@@ -54,6 +60,8 @@ const mockWorkflowDetailKickoff: IWorkflowDetailsKickoff = {
       selections: [],
       attachments: [],
       order: 4,
+      userId: null,
+      groupId: null,
     },
     {
       id: 60848,
@@ -79,6 +87,8 @@ const mockWorkflowDetailKickoff: IWorkflowDetailsKickoff = {
       ],
       attachments: [],
       order: 3,
+      userId: null,
+      groupId: null,
     },
     {
       id: 60849,
@@ -104,6 +114,8 @@ const mockWorkflowDetailKickoff: IWorkflowDetailsKickoff = {
       ],
       attachments: [],
       order: 2,
+      userId: null,
+      groupId: null,
     },
   ],
 };
@@ -120,6 +132,8 @@ const templateKickoffMock: IKickoff = {
       isRequired: false,
       order: 7,
       apiName: 'string-985',
+      userId: null,
+      groupId: null,
     },
     {
       id: 20771,
@@ -129,6 +143,8 @@ const templateKickoffMock: IKickoff = {
       isRequired: false,
       order: 6,
       apiName: 'textarea-986',
+      userId: null,
+      groupId: null,
     },
     {
       id: 20772,
@@ -138,6 +154,8 @@ const templateKickoffMock: IKickoff = {
       isRequired: false,
       order: 5,
       apiName: 'link-987',
+      userId: null,
+      groupId: null,
     },
     {
       id: 20773,
@@ -147,6 +165,8 @@ const templateKickoffMock: IKickoff = {
       isRequired: false,
       order: 4,
       apiName: 'date-988',
+      userId: null,
+      groupId: null,
     },
     {
       id: 20774,
@@ -168,6 +188,8 @@ const templateKickoffMock: IKickoff = {
       ],
       order: 3,
       apiName: 'checkboxes-989',
+      userId: null,
+      groupId: null,
     },
     {
       id: 20775,
@@ -189,6 +211,8 @@ const templateKickoffMock: IKickoff = {
       ],
       order: 2,
       apiName: 'radios-990',
+      userId: null,
+      groupId: null,
     },
   ],
 };
@@ -208,6 +232,8 @@ const expectedKickoff = {
       selections: [],
       attachments: [],
       order: 7,
+      userId: null,
+      groupId: null,
     },
     {
       id: 60845,
@@ -220,6 +246,8 @@ const expectedKickoff = {
       selections: [],
       attachments: [],
       order: 6,
+      userId: null,
+      groupId: null,
     },
     {
       id: 60846,
@@ -232,6 +260,8 @@ const expectedKickoff = {
       selections: [],
       attachments: [],
       order: 5,
+      userId: null,
+      groupId: null,
     },
     {
       id: 60847,
@@ -244,6 +274,8 @@ const expectedKickoff = {
       selections: [],
       attachments: [],
       order: 4,
+      userId: null,
+      groupId: null,
     },
     {
       id: 60848,
@@ -269,6 +301,8 @@ const expectedKickoff = {
       ],
       attachments: [],
       order: 3,
+      userId: null,
+      groupId: null,
     },
     {
       id: 60849,
@@ -294,6 +328,8 @@ const expectedKickoff = {
       ],
       attachments: [],
       order: 2,
+      userId: null,
+      groupId: null,
     },
   ],
 };

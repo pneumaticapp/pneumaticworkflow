@@ -19,7 +19,6 @@ export const checkSomeRouteMatchesLocation = (location: string, routes: ERoutes[
   return getRoutesRegExps(...routes).some(route => route.test(location));
 };
 
-export const isGoogleAuth = () => history.location.pathname.includes(ERoutes.SignUpGoogle);
 export const isCreateTemplate = () => history.location.pathname.includes(ERoutes.TemplatesCreate);
 export const isAccountProfile = () => history.location.pathname.includes(ERoutes.Profile);
 export const isAccountSettings = () => history.location.pathname.includes(ERoutes.AccountSettings);

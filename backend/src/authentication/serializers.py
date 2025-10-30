@@ -269,6 +269,11 @@ class Auth0TokenSerializer(AuthTokenSerializer):
     pass
 
 
+class GoogleTokenSerializer(AuthTokenSerializer):
+
+    pass
+
+
 class TokenSerializer(
     CustomValidationErrorMixin,
     serializers.Serializer,

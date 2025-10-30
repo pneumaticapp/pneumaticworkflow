@@ -2,7 +2,6 @@ import { EUserStatus } from '../../../types/user';
 
 jest.mock('../../../utils/getConfig', () => ({
   getBrowserConfig: () => ({
-    googleAuthUserInfo: {},
     invitedUser: {},
   }),
 }));
@@ -12,7 +11,6 @@ import {
   authUserSuccess,
   loginUser,
   registerUserSuccess,
-  removeGoogleUser,
   TAuthActions,
   EAuthUserFailType,
 } from '../actions';
@@ -66,14 +64,5 @@ describe('auth reducer', () => {
     const result = reducer(state, action);
 
     expect(result).toEqual({ ...state, loading: false, ...mockUser });
-  });
-  it('when deleting data about a Google user, Google authentication data is also removed', () => {
-    const action = removeGoogleUser();
-    const googleAuthUserInfo = { email: 'ex@gmail.com', firstName: 'Ex', lastName: 'Fed' };
-    const state = { ...INIT_STATE, googleAuthUserInfo };
-
-    const result = reducer(state, action);
-
-    expect(result).toEqual({ ...state, googleAuthUserInfo: {} });
   });
 });

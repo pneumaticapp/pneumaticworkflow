@@ -31,10 +31,10 @@ from src.accounts.tokens import (
     InviteToken,
     TransferToken,
 )
-from src.analytics.mixins import (
+from src.analysis.mixins import (
     BaseIdentifyMixin,
 )
-from src.analytics.services import AnalyticService
+from src.analysis.services import AnalyticService
 from src.authentication.enums import AuthTokenType
 from src.authentication.tokens import PneumaticToken
 from src.logs.enums import AccountEventStatus

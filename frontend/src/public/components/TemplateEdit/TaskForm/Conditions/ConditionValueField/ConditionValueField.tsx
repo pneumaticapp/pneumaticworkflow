@@ -1,5 +1,6 @@
 /* eslint-disable indent */
 import React, { useState, ReactNode, ChangeEvent } from 'react';
+import { useSelector } from 'react-redux';
 import classnames from 'classnames';
 import { useIntl } from 'react-intl';
 
@@ -17,6 +18,7 @@ import { toTspDate } from '../../../../../utils/dateTime';
 import { getFormattedDropdownOption } from '../utils/getFormattedDropdownOption';
 import styles from '../Conditions.css';
 import { EStartingType } from '../utils/getDropdownOperators';
+import { IApplicationState } from '../../../../../types/redux';
 
 interface IConditionValueFieldProps {
   variable: TTaskVariable | null;
@@ -24,7 +26,7 @@ interface IConditionValueFieldProps {
   users: TUserListItem[];
   operator?: EConditionOperators | null;
   isDisabled: boolean;
-  changeRuleValue(value: TConditionRule[keyof TConditionRule]): void;
+  changeRuleValue(value: TConditionRule[keyof TConditionRule], kind?: 'user' | 'group'): void;
 }
 
 export function ConditionValueField({
@@ -36,7 +38,7 @@ export function ConditionValueField({
   changeRuleValue,
 }: IConditionValueFieldProps) {
   if (!variable || !operator) return null;
-
+  const groups = useSelector((state: IApplicationState) => state.groups.list);
   const isNoValueOperator = OPERATORS_WITHOUT_VALUE.includes(operator);
 
   if (isNoValueOperator) return null;
@@ -119,20 +121,23 @@ export function ConditionValueField({
     }
 
     const activeUsers = users.filter((user) => user.status === EUserStatus.Active);
-    const dropdownUsers = activeUsers.map((user) => ({ ...user, label: getUserFullName(user) }));
-    const selectedUser = dropdownUsers.find((user) => user.id === Number(rule.value)) || null;
+    const labelUsers = activeUsers.map((user) => ({ ...user, label: getUserFullName(user), entityType: 'user' }));
+    const labelGroups = groups.map((group) => ({ ...group, label: group.name, entityType: 'group' }));
+    const dropdownEntities = [...labelGroups, ...labelUsers];
+    const selectedEntity = dropdownEntities.find((user) => user.id === Number(rule.value)) || null;
 
     return (
       <DropdownList
         isDisabled={isDisabled}
         isSearchable={false}
         placeholder={formatMessage({ id: 'templates.conditions.value-placeholder' })}
-        value={selectedUser}
+        value={selectedEntity}
         onChange={(option: IDropdownUser) => {
-          changeRuleValue(option.id);
+          const kind = (option as any).entityType === 'user' ? 'user' : 'group';
+          changeRuleValue(option.id, kind);
         }}
         isClearable={false}
-        options={dropdownUsers}
+        options={dropdownEntities}
         formatOptionLabel={(option: IDropdownUser, { context }) =>
           context === 'menu'
             ? getFormattedDropdownOption({

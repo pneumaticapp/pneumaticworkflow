@@ -2,7 +2,7 @@ import * as request from 'request';
 import { Request, Response } from 'express';
 
 import { parseCookies } from '../../../public/utils/cookie';
-import { apiProxy } from '../apiProxy';
+import { apiProxy } from '../';
 import { serverApi } from '../../utils';
 import { getAuthHeader } from '../../utils/getAuthHeader';
 import { logger } from '../../../public/utils/logger';

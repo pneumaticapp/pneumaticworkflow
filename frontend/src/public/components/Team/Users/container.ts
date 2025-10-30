@@ -1,16 +1,16 @@
 import { connect } from 'react-redux';
-import { IUsersProps, Users } from './Users';
+import { Users } from './Users';
+import { IUsersProps } from './types';
 import { IApplicationState } from '../../../types/redux';
 import { getIsUserSubsribed } from '../../../redux/selectors/user';
 import {
   teamFetchStarted,
   loadChangeUserAdmin,
   openDeleteUserModal,
-  openTeamInvitesPopup,
   setGeneralLoaderVisibility,
-  loadMicrosoftInvites,
   changeUserListSorting,
 } from '../../../redux/actions';
+import { openTeamInvitesPopup, loadInvitesUsers } from '../../../redux/team/slice';
 import { EUserListSorting } from '../../../types/user';
 import { withSyncedQueryString } from '../../../HOCs/withSyncedQueryString';
 
@@ -32,7 +32,7 @@ type TTeamDispatchProps = Pick<
   | 'openModal'
   | 'openTeamInvitesPopup'
   | 'setGeneralLoaderVisibility'
-  | 'loadMicrosoftInvites'
+  | 'loadInvitesUsers'
 >;
 
 export function mapStateToProps(state: IApplicationState): TTeamProps {
@@ -42,7 +42,7 @@ export function mapStateToProps(state: IApplicationState): TTeamProps {
     accounts: {
       planInfo: { trialEnded },
     },
-    teamInvites: { isInvitesPopupOpen: isTeamInvitesOpened },
+    team: { isInvitesPopupOpen: isTeamInvitesOpened },
   } = state;
   const isSubscribed = getIsUserSubsribed(state);
 
@@ -64,7 +64,7 @@ export const mapDispatchToProps: TTeamDispatchProps = {
   openModal: openDeleteUserModal,
   openTeamInvitesPopup,
   setGeneralLoaderVisibility,
-  loadMicrosoftInvites,
+  loadInvitesUsers,
 };
 
 const SyncedUsers = withSyncedQueryString<TTeamProps>([
