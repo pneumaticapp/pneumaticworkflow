@@ -390,7 +390,7 @@ class TasksDigestQuery(
           au.id AS user_id,
           ptmp.id AS template_id,
           ptmp.name AS template_name,
-          tt.api_name AS template_task_api_name,
+          tt.id AS template_task_id,
           tt.number,
           tt.name AS template_task_name,
           COUNT(DISTINCT pt.id) FILTER (

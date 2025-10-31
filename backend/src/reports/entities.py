@@ -7,7 +7,7 @@ from src.processes.models.templates.fields import FieldTemplate
 
 @dataclass
 class TaskForTasksDigest:
-    task_api_name: str
+    task_id: int
     task_name: str
     started: int = 0
     in_progress: int = 0

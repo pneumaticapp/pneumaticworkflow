@@ -90,7 +90,7 @@ class SendTasksDigest(SendDigest):
         )
         user_digest.tmp.tasks.append(
             TaskForTasksDigest(
-                task_api_name=row['template_task_api_name'],
+                task_id=row['template_task_id'],
                 task_name=task_name,
                 started=row['started'],
                 in_progress=row['in_progress'],
