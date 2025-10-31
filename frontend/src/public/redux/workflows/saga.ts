@@ -124,8 +124,9 @@ import {
   formatDueDateToEditWorkflow,
   mapWorkflowsToISOStringToRedux,
   mapWorkflowsAddComputedPropsToRedux,
+  getNormalizeOutputUsersToEmails,
 } from '../../utils/mappers';
-import { getUserTimezone, getAuthUser } from '../selectors/user';
+import { getUserTimezone, getAuthUser, getUsers } from '../selectors/user';
 import { getCurrentTask } from '../selectors/task';
 import { formatDateToISOInWorkflow, toTspDate } from '../../utils/dateTime';
 import { getWorkflowAddComputedPropsToRedux } from '../../components/Workflows/utils/getWorfkflowClientProperties';
@@ -134,6 +135,7 @@ import { getCorrectPresetFields } from '../../components/Workflows/utils/getCorr
 import { updateTemplatePresets } from '../../api/updateTemplatePresets';
 import { addTemplatePreset } from '../../api/addTemplatePreset';
 import { ALL_SYSTEM_FIELD_NAMES } from '../../components/Workflows/WorkflowsTablePage/WorkflowsTable/constants';
+import { TUserListItem } from '../../types/user';
 
 function* handleLoadWorkflow({ workflowId, showLoader = true }: { workflowId: number; showLoader?: boolean }) {
   const {
@@ -397,7 +399,21 @@ function* editWorkflowInWork({ payload }: TEditWorkflow) {
     );
 
     const formattedPayload = formatDueDateToEditWorkflow(payload);
-    const editedWorkflow: IEditWorkflowResponse = yield editWorkflow(formattedPayload);
+
+    const usersList: TUserListItem[] = yield select(getUsers);
+    const setUsers = new Map<number, string>(usersList.map((user) => [user.id, user.email]));
+    const normalizedOutputs = getNormalizeOutputUsersToEmails(formattedPayload.kickoff?.fields || [], setUsers);
+    const normalizedPayload = formattedPayload.kickoff
+      ? {
+        ...formattedPayload,
+        kickoff: {
+          ...formattedPayload.kickoff,
+          fields: normalizedOutputs,
+        },
+      }
+      : formattedPayload;
+
+    const editedWorkflow: IEditWorkflowResponse = yield editWorkflow(normalizedPayload);
     const formattedEditedWorkflow = formatDateToISOInWorkflow(editedWorkflow);
     const formattedWorkflow = getWorkflowAddComputedPropsToRedux(formattedEditedWorkflow) as IWorkflowDetailsClient;
 
