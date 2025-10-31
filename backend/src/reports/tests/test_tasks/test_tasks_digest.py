@@ -140,7 +140,7 @@ class TestSendTasksDigest:
                         'template_id': template_2.id,
                         'tasks': [
                             {
-                                'task_id': st_first_task.id,
+                                'task_api_name': st_first_task.api_name,
                                 'task_name': 'First Test',
                                 'started': 2,
                                 'in_progress': 2,
@@ -148,7 +148,7 @@ class TestSendTasksDigest:
                                 'completed': 1,
                             },
                             {
-                                'task_id': st_second_task.id,
+                                'task_api_name': st_second_task.api_name,
                                 'task_name': 'Second',
                                 'started': 1,
                                 'in_progress': 1,
@@ -156,7 +156,7 @@ class TestSendTasksDigest:
                                 'completed': 1,
                             },
                             {
-                                'task_id': st_third_task.id,
+                                'task_api_name': st_third_task.api_name,
                                 'task_name': 'Third',
                                 'started': 1,
                                 'in_progress': 1,
@@ -174,7 +174,7 @@ class TestSendTasksDigest:
                         'template_id': template_1.id,
                         'tasks': [
                             {
-                                'task_id': ft_first_task.id,
+                                'task_api_name': ft_first_task.api_name,
                                 'task_name': 'First Test',
                                 'started': 1,
                                 'in_progress': 1,
@@ -261,7 +261,7 @@ class TestSendTasksDigest:
                         'completed': 0,
                         'tasks': [
                             {
-                                'task_id': task_template.id,
+                                'task_api_name': task_template.api_name,
                                 'task_name': task_template.name,
                                 'started': 1,
                                 'in_progress': 1,
@@ -417,7 +417,7 @@ class TestSendTasksDigest:
                         'template_id': template_2.id,
                         'tasks': [
                             {
-                                'task_id': task_1.id,
+                                'task_api_name': task_1.api_name,
                                 'task_name': 'First Test',
                                 'started': 1,
                                 'in_progress': 1,
@@ -582,7 +582,7 @@ class TestSendTasksDigest:
                         'template_id': template_2.id,
                         'tasks': [
                             {
-                                'task_id': task_1.id,
+                                'task_api_name': task_1.api_name,
                                 'task_name': 'First Test',
                                 'started': 2,
                                 'in_progress': 2,
@@ -590,7 +590,7 @@ class TestSendTasksDigest:
                                 'completed': 1,
                             },
                             {
-                                'task_id': task_2.id,
+                                'task_api_name': task_2.api_name,
                                 'task_name': 'Second',
                                 'started': 1,
                                 'in_progress': 1,
@@ -598,7 +598,7 @@ class TestSendTasksDigest:
                                 'completed': 1,
                             },
                             {
-                                'task_id': task_3.id,
+                                'task_api_name': task_3.api_name,
                                 'task_name': 'Third',
                                 'started': 1,
                                 'in_progress': 1,
@@ -671,7 +671,7 @@ class TestSendTasksDigest:
                         'template_id': template.id,
                         'tasks': [
                             {
-                                'task_id': task.id,
+                                'task_api_name': task.api_name,
                                 'task_name': task.name,
                                 'started': 1,
                                 'in_progress': 1,
@@ -689,7 +689,7 @@ class TestSendTasksDigest:
                         'template_id': template_2.id,
                         'tasks': [
                             {
-                                'task_id': task_2.id,
+                                'task_api_name': task_2.api_name,
                                 'task_name': task_2.name,
                                 'started': 1,
                                 'in_progress': 1,
