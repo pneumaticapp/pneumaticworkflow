@@ -22,8 +22,9 @@ from src.utils.salt import get_salt
 VAR_PATTERN = re.compile(r'{{\s*([^\{\}\s]+)\s*}}')
 VAR_PATTERN_TEMPLATE = r'\{\{(\s*?)%s(\s*?)\}\}'
 VAR_PATTERN_FIELD = re.compile(
-    r'\{\{(\s*?)((?!date|template-name).)+(\s*?)\}\}',
+    r'\{\{(\s*?)((?!date|template-name|workflow-id).)+(\s*?)\}\}',
 )
+VAR_PATTERN_WORKFLOW_ID = re.compile(r'\{\{\s*workflow-id\s*\}\}')
 
 
 def is_tasks_ordering_correct(tasks: List[int]) -> bool:
@@ -96,6 +97,14 @@ def contains_fields_vars(value: Optional[str] = None) -> bool:
     if not value:
         return False
     return bool(VAR_PATTERN_FIELD.search(value))
+
+
+def contains_workflow_id_var(value: Optional[str] = None) -> bool:
+    """ Checks for the presence of {{ workflow-id }}. """
+
+    if not value:
+        return False
+    return bool(VAR_PATTERN_WORKFLOW_ID.search(value))
 
 
 def contains_vars(value: Optional[str] = None) -> bool:
