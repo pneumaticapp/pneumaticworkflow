@@ -1526,7 +1526,10 @@ class TestPartialUpdateWorkflow:
             template=template,
             api_name=field_api_name,
         )
-        wf_name_template = 'Feedback from {{%s}} {{ date }}' % field_api_name
+        wf_name_template = (
+            'Feedback from {{%s}} {{ date }} {{ workflow-id }}'
+            % field_api_name
+        )
         template.wf_name_template = wf_name_template
         template.save()
 
@@ -1564,9 +1567,12 @@ class TestPartialUpdateWorkflow:
         assert response.status_code == 200
         workflow.refresh_from_db()
         formatted_date = 'Aug 28, 2024, 10:41AM'
-        assert workflow.name == f'Feedback from {user_2.name} {formatted_date}'
+        assert workflow.name == (
+            f'Feedback from {user_2.name} {formatted_date} {workflow.id}'
+        )
         assert workflow.name_template == (
-            "Feedback from {{%s}} %s" % (field_api_name, formatted_date)
+            "Feedback from {{%s}} %s %s"
+            % (field_api_name, formatted_date, workflow.id)
         )
 
     def test_update__name_with_kickoff_vars_only__ok(
