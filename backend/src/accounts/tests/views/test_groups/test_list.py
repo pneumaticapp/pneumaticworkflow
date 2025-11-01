@@ -34,8 +34,12 @@ def test_list__ok(api_client):
     )
     create_test_user(email='3@test.com', account=account)
     api_client.token_authenticate(user_1)
-    group_1 = create_test_group(account, users=[user_4, user_1, user_3])
-    group_2 = create_test_group(account, users=[user_2])
+    group_1 = create_test_group(
+        account,
+        name='group 1',
+        users=[user_4, user_1, user_3],
+    )
+    group_2 = create_test_group(account, name='group 2', users=[user_2])
 
     # act
     response = api_client.get(

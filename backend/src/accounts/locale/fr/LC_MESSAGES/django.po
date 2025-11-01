@@ -203,3 +203,7 @@ msgstr "Vous devez spécifier old_user ou old_group"
 #: accounts/messages.py:93
 msgid "You need to pass in new_user or new_group"
 msgstr "Vous devez spécifier new_user ou new_group"
+
+#: accounts/messages.py:95
+msgid "Group with the name \"{name}\" already exists."
+msgstr "Un groupe portant le nom \"{name}\" existe déjà."

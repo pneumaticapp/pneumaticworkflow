@@ -2065,7 +2065,11 @@ class TestUserGroupService:
         user = create_test_admin(account=account)
 
         group1 = create_test_group(account, users=[user])
-        group2 = create_test_group(account, users=[user, owner])
+        group2 = create_test_group(
+            account=account,
+            name='group 2',
+            users=[user, owner],
+        )
 
         workflow = create_test_workflow(owner, tasks_count=2)
         task = workflow.tasks.get(number=1)
@@ -2118,11 +2122,17 @@ class TestUserGroupService:
         user = create_test_admin(account=account)
         user2 = create_test_admin(account=account, email='user2@test.test')
         user3 = create_test_admin(account=account, email='user3@test.test')
-        other_user = create_test_admin(account=account,
-                                       email='other@test.test')
+        other_user = create_test_admin(
+            account=account,
+            email='other@test.test',
+        )
 
         group1 = create_test_group(account, users=[user, user2])
-        group2 = create_test_group(account, users=[user, user3])
+        group2 = create_test_group(
+            account=account,
+            name='group 2',
+            users=[user, user3],
+        )
 
         template = create_test_template(other_user, tasks_count=1)
         workflow = create_test_workflow(other_user, template=template)

@@ -216,7 +216,7 @@ def test__delete_one_group_owner_user_owner_persists_empty_group__ok():
         tasks_count=1,
     )
     group_to_delete = create_test_group(account, users=[user_2, user_3])
-    group = create_test_group(account)
+    group = create_test_group(name='group 2', account=account)
     TemplateOwner.objects.create(
         template=template,
         account=account,
@@ -258,7 +258,11 @@ def test__delete_one_group_owner_other_group_owner_persists__ok():
     )
     TemplateOwner.objects.filter(user_id=user.id).delete()
     group = create_test_group(account, users=[user])
-    group_to_delete = create_test_group(account, users=[user_2])
+    group_to_delete = create_test_group(
+        name='group 2',
+        account=account,
+        users=[user_2],
+    )
     TemplateOwner.objects.create(
         template=template,
         account=account,
@@ -310,7 +314,7 @@ def test__delete_group_owner_other_template_unchanged__ok():
         type=OwnerType.GROUP,
         group_id=group.id,
     )
-    group_to_delete = create_test_group(account, users=[user])
+    group_to_delete = create_test_group(account, name='group 2', users=[user])
     TemplateOwner.objects.create(
         template=template_2,
         account=account,
@@ -379,6 +383,7 @@ def test__delete_group_owner_different_account_unchanged__ok():
     ).delete()
     group_to_delete = create_test_group(
         account,
+        name='group 2',
         users=[user_account_another],
     )
     TemplateOwner.objects.create(
