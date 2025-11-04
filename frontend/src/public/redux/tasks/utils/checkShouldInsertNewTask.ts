@@ -8,14 +8,17 @@ export function checkShouldInsertNewTask(
   searchText: string,
 ): boolean {
   const normalizedSearchText = searchText.toLocaleLowerCase();
-  const { filterValues: { templateIdFilter, stepIdFilter } } = tasksSettings;
+  const {
+    filterValues: { templateIdFilter, stepIdFilter },
+  } = tasksSettings;
 
   return [
-    newTask.name.toLocaleLowerCase().includes(normalizedSearchText)
-    || newTask.workflowName.toLocaleLowerCase().includes(normalizedSearchText),
+    newTask.name.toLocaleLowerCase().includes(normalizedSearchText) ||
+      newTask.workflowName.toLocaleLowerCase().includes(normalizedSearchText),
 
     !templateIdFilter || templateIdFilter === newTask.templateId,
 
-    !stepIdFilter || stepIdFilter === newTask.templateTaskId,
+    !stepIdFilter || stepIdFilter === newTask.templateTaskId, // remove with templateTaskId
+    // !stepIdFilter || stepIdFilter === newTask.templateTaskApiName, // add with templateTaskApiName
   ].every(Boolean);
 }

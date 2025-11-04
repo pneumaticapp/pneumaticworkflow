@@ -113,7 +113,8 @@ export interface ITaskListItem {
   dueDate: string | null;
   dateCompleted: string | null;
   templateId: number;
-  templateTaskId: number;
+  templateTaskId: number; // remove
+  templateTaskApiName: string;
 }
 
 export enum ETaskListSorting {
