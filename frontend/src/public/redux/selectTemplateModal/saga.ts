@@ -3,7 +3,6 @@
 import { all, fork, put, select, takeEvery } from 'redux-saga/effects';
 
 import { logger } from '../../utils/logger';
-import { NotificationManager } from '../../components/UI/Notifications';
 
 import { ESelectTemplateModalActions, setSelectTemplateModalTemplates } from './actions';
 
@@ -12,6 +11,7 @@ import { ETemplatesSorting } from '../../types/workflow';
 import { ITemplateListItem } from '../../types/template';
 import { getTemplatesModalFilter } from '../selectors/selectTemplateModal';
 import { isArrayWithItems } from '../../utils/helpers';
+import { notifyApiError } from '../../utils/notifyApiError';
 
 function* fetchSelectTemplateModalTemplates() {
   try {
@@ -27,7 +27,7 @@ function* fetchSelectTemplateModalTemplates() {
 
     yield put(setSelectTemplateModalTemplates(filteredTemplates));
   } catch (error) {
-    NotificationManager.error({ id: 'select-template.failed-to-fetch-templates' });
+    notifyApiError(error, { id: 'select-template.failed-to-fetch-templates' });
     logger.error(error);
   }
 }

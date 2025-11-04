@@ -11,16 +11,19 @@ import { EWebhooksSubscriberStatus, EWebhooksTypeEvent } from '../../types/webho
 import { loadWebhooks, TLoadWebhooksResponse } from '../../api/loadWebhooks';
 import { getWebhooks } from '../selectors/webhooks';
 import { IWebhookStore } from '../../types/redux';
+import { notifyApiError } from '../../utils/notifyApiError';
 
 function* updateWebhooksStatus(status: EWebhooksSubscriberStatus) {
   const webhooks: IWebhookStore = yield select(getWebhooks);
 
   // tslint:disable-next-line: forin
   for (const event in webhooks) {
-    yield put(setWebhooksStatus({
-      event: event as EWebhooksTypeEvent,
-      status,
-    }));
+    yield put(
+      setWebhooksStatus({
+        event: event as EWebhooksTypeEvent,
+        status,
+      }),
+    );
   }
 }
 
@@ -31,24 +34,25 @@ function* loadWebhooksSaga() {
     const webhooksResponse: TLoadWebhooksResponse[] = yield call(loadWebhooks);
 
     for (const event of webhooksResponse) {
-      yield put(setWebhooksUrl({
-        event: event.event,
-        url: event.url,
-      }));
+      yield put(
+        setWebhooksUrl({
+          event: event.event,
+          url: event.url,
+        }),
+      );
 
-      const status = event.url ?
-        EWebhooksSubscriberStatus.Subscribed :
-        EWebhooksSubscriberStatus.NotSubscribed;
+      const status = event.url ? EWebhooksSubscriberStatus.Subscribed : EWebhooksSubscriberStatus.NotSubscribed;
 
-      yield put(setWebhooksStatus({
-        event: event.event,
-        status,
-      }));
+      yield put(
+        setWebhooksStatus({
+          event: event.event,
+          status,
+        }),
+      );
     }
-
   } catch (error) {
     logger.info('add webooks subscriber error: ', error);
-    NotificationManager.error({ message: getErrorMessage(error) });
+    notifyApiError(error, { message: getErrorMessage(error) });
     yield updateWebhooksStatus(EWebhooksSubscriberStatus.Unknown);
   }
 }
@@ -58,33 +62,41 @@ function* addWebhooksSaga({ payload }: TAddWebhook) {
   const prevStatus: EWebhooksSubscriberStatus = webhooks[payload.event].status;
 
   try {
-    yield put(setWebhooksStatus({
-      event: payload.event,
-      status: EWebhooksSubscriberStatus.Subscribing,
-    }));
+    yield put(
+      setWebhooksStatus({
+        event: payload.event,
+        status: EWebhooksSubscriberStatus.Subscribing,
+      }),
+    );
 
     if (payload.url !== null) {
       yield call(subscribeToWebhooks, payload.event, payload.url);
 
-      yield put(setWebhooksUrl({
-        event: payload.event,
-        url: payload.url,
-      }));
+      yield put(
+        setWebhooksUrl({
+          event: payload.event,
+          url: payload.url,
+        }),
+      );
 
-      yield put(setWebhooksStatus({
-        event: payload.event,
-        status: EWebhooksSubscriberStatus.Subscribed,
-      }));
+      yield put(
+        setWebhooksStatus({
+          event: payload.event,
+          status: EWebhooksSubscriberStatus.Subscribed,
+        }),
+      );
 
       NotificationManager.success({ message: 'template.intergrations-webhook-subscribe-success' });
     }
   } catch (error) {
     logger.info('add webooks subscriber error: ', error);
-    NotificationManager.error({ message: getErrorMessage(error) });
-    yield put(setWebhooksStatus({
-      event: payload.event,
-      status: prevStatus,
-    }));
+    notifyApiError(error, { message: getErrorMessage(error) });
+    yield put(
+      setWebhooksStatus({
+        event: payload.event,
+        status: prevStatus,
+      }),
+    );
   }
 }
 
@@ -93,32 +105,39 @@ function* removeWebhooksSaga({ payload: { event } }: TRemoveWebhook) {
   const prevStatus: EWebhooksSubscriberStatus = webhooks[event].status;
 
   try {
-    yield put(setWebhooksStatus({
-      event,
-      status: EWebhooksSubscriberStatus.Unsubscribing,
-    }));
+    yield put(
+      setWebhooksStatus({
+        event,
+        status: EWebhooksSubscriberStatus.Unsubscribing,
+      }),
+    );
 
     yield call(unsubscribeFromWebhooks, event);
 
-    yield put(setWebhooksUrl({
-      event,
-      url: null,
-    }));
+    yield put(
+      setWebhooksUrl({
+        event,
+        url: null,
+      }),
+    );
 
-    yield put(setWebhooksStatus({
-      event,
-      status: EWebhooksSubscriberStatus.NotSubscribed,
-    }));
+    yield put(
+      setWebhooksStatus({
+        event,
+        status: EWebhooksSubscriberStatus.NotSubscribed,
+      }),
+    );
 
     NotificationManager.success({ message: 'template.intergrations-webhook-unsubscribe-success' });
-
   } catch (error) {
     logger.info('remove webooks subscriber error: ', error);
-    NotificationManager.error({ message: getErrorMessage(error) });
-    yield put(setWebhooksStatus({
-      event,
-      status: prevStatus,
-    }));
+    notifyApiError(error, { message: getErrorMessage(error) });
+    yield put(
+      setWebhooksStatus({
+        event,
+        status: prevStatus,
+      }),
+    );
   }
 }
 
@@ -135,9 +154,5 @@ export function* watchRemoveWebhooks() {
 }
 
 export function* rootSaga() {
-  yield all([
-    fork(watchLoadWebhooks),
-    fork(watchAddWebhooks),
-    fork(watchRemoveWebhooks),
-  ]);
+  yield all([fork(watchLoadWebhooks), fork(watchAddWebhooks), fork(watchRemoveWebhooks)]);
 }
