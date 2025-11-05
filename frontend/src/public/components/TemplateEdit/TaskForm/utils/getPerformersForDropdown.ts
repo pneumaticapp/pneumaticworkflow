@@ -12,7 +12,7 @@ export function getPerformersForDropdown(
   variables: TTaskVariable[],
   formatMessage: IntlShape['formatMessage'],
 ): TUsersDropdownOption[] {
-  const userPeformers: (ITemplateTaskPerformer & TUsersDropdownOption)[] = users.map((user) => ({
+  const userPeformers: (Omit<ITemplateTaskPerformer, 'apiName'> & TUsersDropdownOption)[] = users.map((user) => ({
     id: user.id,
     optionType: EOptionTypes.User,
     firstName: '',
@@ -36,7 +36,7 @@ export function getPerformersForDropdown(
       value: apiName,
     }));
 
-  const groupsPerformers: (ITemplateTaskPerformer & TUsersDropdownOption)[] = groups.map((group) => ({
+  const groupsPerformers: (Omit<ITemplateTaskPerformer, 'apiName'> & TUsersDropdownOption)[] = groups.map((group) => ({
     id: group.id,
     optionType: EOptionTypes.Group,
     firstName: '',
@@ -47,7 +47,7 @@ export function getPerformersForDropdown(
     value: String(group.id),
   }));
 
-  const workflowStarterPerformers: ITemplateTaskPerformer & TUsersDropdownOption = {
+  const workflowStarterPerformers: Omit<ITemplateTaskPerformer, 'apiName'> & TUsersDropdownOption = {
     id: 0,
     optionType: EOptionTypes.Field,
     firstName: '',
