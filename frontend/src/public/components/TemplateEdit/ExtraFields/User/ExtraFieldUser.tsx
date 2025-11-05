@@ -127,11 +127,13 @@ export function ExtraFieldUser({
 
     const handleUserDropdownChange = (option: TUserListItem | IGroupDropdownOption) => {
       if (option.type === EUserDropdownOptionType.User) {
-        editField({ value: (option as TUserListItem).email });
+        const user = option as TUserListItem;
+        editField({ value: user.email, userId: user.id, groupId: null });
         return;
       }
       if (option.type === EUserDropdownOptionType.UserGroup) {
-        editField({ value: (option as IGroupDropdownOption).name });
+        const group = option as IGroupDropdownOption;
+        editField({ value: group.name, groupId: option.id, userId: null });
       }
     };
 
