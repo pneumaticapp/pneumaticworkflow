@@ -20,7 +20,7 @@ import { KickoffReduxContainer } from './KickoffRedux';
 import { moveTask } from '../../utils/workflows';
 import { NotificationManager } from '../UI/Notifications';
 import { isArrayWithItems } from '../../utils/helpers';
-import { createOwnerApiName, createTaskApiName, createUUID } from '../../utils/createId';
+import { createOwnerApiName, createPerformerApiName, createTaskApiName, createUUID } from '../../utils/createId';
 import { EMoveDirections } from '../../types/workflow';
 import { ETaskPerformerType, ETemplateOwnerType, ITemplate, ITemplateTask } from '../../types/template';
 import { TLoadTemplateVariablesSuccessPayload } from '../../redux/actions';
@@ -193,7 +193,7 @@ export function TemplateEdit({
       fields: [],
       rawPerformers: [
         {
-          id: authUser.id,
+          apiName: createPerformerApiName(),
           label: getUserFullName(authUser),
           type: ETaskPerformerType.User,
           sourceId: String(authUser.id),
