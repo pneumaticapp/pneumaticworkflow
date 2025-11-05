@@ -27,7 +27,7 @@ from src.accounts.services.exceptions import (
     UserServiceException,
 )
 from src.accounts.services.user import UserService
-from src.analytics.services import AnalyticService
+from src.analysis.services import AnalyticService
 from src.authentication.services.user_auth import AuthService
 from src.generics.filters import PneumaticFilterBackend
 from src.generics.mixins.views import (

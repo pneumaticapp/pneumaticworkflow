@@ -19,8 +19,8 @@ from src.accounts.serializers.user import (
     UserSerializer,
     UserWebsocketSerializer,
 )
-from src.analytics.mixins import BaseIdentifyMixin
-from src.analytics.services import AnalyticService
+from src.analysis.mixins import BaseIdentifyMixin
+from src.analysis.services import AnalyticService
 from src.generics.filters import PneumaticFilterBackend
 from src.generics.mixins.views import (
     CustomViewSetMixin,
@@ -32,6 +32,8 @@ from src.generics.permissions import (
 from src.notifications.tasks import send_user_updated_notification
 from src.payment.stripe.exceptions import StripeServiceException
 from src.payment.stripe.service import StripeService
+from src.processes.enums import FieldType
+from src.processes.models.workflows.fields import TaskField
 from src.processes.models.workflows.task import Task
 from src.utils.validation import raise_validation_error
 
@@ -109,7 +111,21 @@ class UserViewSet(
             partial=False,
         )
         slz.is_valid(raise_exception=True)
+
+        old_first_name = request.user.first_name
+        old_last_name = request.user.last_name
+
         user = slz.save()
+
+        if (
+            old_first_name != user.first_name or
+            old_last_name != user.last_name
+        ):
+            TaskField.objects.filter(
+                type=FieldType.USER,
+                user_id=user.id,
+            ).update(value=user.name)
+
         if (
             not user.account.is_tenant
             and user.is_account_owner

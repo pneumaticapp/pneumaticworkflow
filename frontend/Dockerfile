@@ -6,8 +6,5 @@ FROM node:18-bookworm-slim
 RUN apt-get update
 RUN apt-get install -y sudo curl nano
 RUN npm install pm2 -g
-EXPOSE 80 443 43554
 
 WORKDIR /pneumatic_frontend
-ADD package-lock.json package.json /tmp
-RUN npm --prefix /tmp ci --legacy-peer-deps
