@@ -892,7 +892,6 @@ class WorkflowCountsByTemplateTaskQuery(
           )
 
         SELECT
-          tt.id AS template_task_id,
           tt.api_name AS template_task_api_name,
           COALESCE(result.workflows_count, 0) AS workflows_count
         FROM template_tasks tt
@@ -1049,7 +1048,6 @@ class TaskListQuery(
         return result
 
     def _get_inner_sql(self):
-        # TODO Remove in https://my.pneumatic.app/workflows/36988/
         return f"""
             SELECT DISTINCT ON (pt.id) pt.id,
                 pt.name,
@@ -1067,7 +1065,6 @@ class TaskListQuery(
                   EPOCH FROM pt.date_completed AT TIME ZONE 'UTC'
                 ) AS date_completed_tsp,
                 pw.template_id as template_id,
-                pt.id as template_task_id,
                 pt.api_name as template_task_api_name,
                 pt.api_name,
                 pt.is_urgent,
