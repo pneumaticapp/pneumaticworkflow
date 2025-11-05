@@ -1,7 +1,7 @@
 import { all, fork, put, select, takeEvery } from 'redux-saga/effects';
-import { mapWorkflowToRunProcess } from '../../utils/mappers';
+import { getNormalizeOutputUsersToEmails, mapWorkflowToRunProcess } from '../../utils/mappers';
 import { runProcess, TRunProcessResponse } from '../../api/runProcess';
-import { getAuthUser, getIsAdmin } from '../selectors/user';
+import { getAuthUser, getIsAdmin, getUsers } from '../selectors/user';
 import { ERoutes } from '../../constants/routes';
 import { closeSelectTemplateModal, loadCurrentTask } from '../actions';
 import { ERunWorkflowModalActions, runWorkflowFailed, runWorkflowSuccess, TRunWorkflow } from './actions';
@@ -12,13 +12,25 @@ import { logger } from '../../utils/logger';
 import { deleteRemovedFilesFromFields } from '../../api/deleteRemovedFilesFromFields';
 import { EWorkflowTaskStatus } from '../../types/workflow';
 import { RawPerformer } from '../../types/template';
+import { TUserListItem } from '../../types/user';
 
 function* runWorkflow({ payload: workflow }: TRunWorkflow) {
   yield deleteRemovedFilesFromFields(workflow.kickoff.fields);
 
   try {
+    const usersList: TUserListItem[] = yield select(getUsers);
+    const setUsers = new Map<number, string>(usersList.map((user) => [user.id, user.email]));
+
+    const normalizedOutputs = getNormalizeOutputUsersToEmails(workflow.kickoff.fields, setUsers);
+    const normalizedWorkflow = {
+      ...workflow,
+      kickoff: {
+        ...workflow.kickoff,
+        fields: normalizedOutputs,
+      },
+    };
     const isAdmin: ReturnType<typeof getIsAdmin> = yield select(getIsAdmin);
-    const mappedWorkflow = mapWorkflowToRunProcess(workflow);
+    const mappedWorkflow = mapWorkflowToRunProcess(normalizedWorkflow);
 
     const { tasks, name }: TRunProcessResponse = yield runProcess(mappedWorkflow);
 
