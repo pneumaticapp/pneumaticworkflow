@@ -21,7 +21,8 @@ export const enum EGroupsActions {
   LoadGroup = 'LOAD_GROUP',
   LoadGroupSuccess = 'LOAD_GROUP_SUCCESS',
   ResetGroup = 'RESET_GROUP',
-  CreateOrUpdateGroupFailed = 'CREATE_OR_UPDATE_GROUP_FAILED',
+  CreateGroupFailed = 'CREATE_GROUP_FAILED',
+  UpdateGroupFailed = 'UPDATE_GROUP_FAILED',
 }
 
 export type TLoadGroups = ITypedReduxAction<EGroupsActions.LoadGroups, void>;
@@ -40,9 +41,15 @@ export const createGroup: (payload: IGroup) => TCreateGroup = actionGenerator<EG
   EGroupsActions.CreateGroup,
 );
 
-export type TCreateOrUpdateGroupFailed = ITypedReduxAction<EGroupsActions.CreateOrUpdateGroupFailed, void>;
-export const createOrUpdateGroupFailed: () => TCreateOrUpdateGroupFailed =
-  actionGenerator<EGroupsActions.CreateOrUpdateGroupFailed>(EGroupsActions.CreateOrUpdateGroupFailed);
+export type TCreateGroupFailed = ITypedReduxAction<EGroupsActions.CreateGroupFailed, void>;
+export const createGroupFailed: () => TCreateGroupFailed = actionGenerator<EGroupsActions.CreateGroupFailed>(
+  EGroupsActions.CreateGroupFailed,
+);
+
+export type TUpdateGroupFailed = ITypedReduxAction<EGroupsActions.UpdateGroupFailed, void>;
+export const updateGroupFailed: () => TUpdateGroupFailed = actionGenerator<EGroupsActions.UpdateGroupFailed>(
+  EGroupsActions.UpdateGroupFailed,
+);
 
 export type TUpdateGroup = ITypedReduxAction<EGroupsActions.UpdateGroup, IGroup>;
 export const updateGroup: (payload: IGroup) => TUpdateGroup = actionGenerator<EGroupsActions.UpdateGroup, IGroup>(
@@ -141,4 +148,5 @@ export type TGroupsActions =
   | TResetGroup
   | TUpdateUsersGroupSuccess
   | TEditModalClose
-  | TCreateOrUpdateGroupFailed;
+  | TCreateGroupFailed
+  | TUpdateGroupFailed;
