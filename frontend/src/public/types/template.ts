@@ -205,7 +205,6 @@ export type TExtraFieldSingleValue = string;
 export type TExtraFieldMultipleValue = string[];
 export type TExtraFieldTimestampValue = number;
 export interface IExtraFieldSelection {
-  id?: number;
   apiName: string;
   isSelected?: boolean;
   value: string;
