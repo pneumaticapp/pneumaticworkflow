@@ -66,6 +66,16 @@ class NotificationManagerCreator extends EventEmitter {
 
   public error = this.notificationCreator(Constants.ERROR);
 
+  public notifyApiError = (error: any, notification: Partial<INotification>) => {
+    const status = error?.status;
+    const isServerError = status && status >= 500 && status < 600;
+    if (isServerError) {
+      this.error(notification);
+    } else {
+      this.warning(notification);
+    }
+  };
+
   public remove = (notification: INotification) => {
     this.listNotify = this.listNotify.filter((n) => notification.id !== n.id);
     this.emitChange();

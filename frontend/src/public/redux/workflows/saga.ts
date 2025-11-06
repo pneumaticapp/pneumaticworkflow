@@ -134,7 +134,6 @@ import { getCorrectPresetFields } from '../../components/Workflows/utils/getCorr
 import { updateTemplatePresets } from '../../api/updateTemplatePresets';
 import { addTemplatePreset } from '../../api/addTemplatePreset';
 import { ALL_SYSTEM_FIELD_NAMES } from '../../components/Workflows/WorkflowsTablePage/WorkflowsTable/constants';
-import { notifyApiError } from '../../utils/notifyApiError';
 
 function* handleLoadWorkflow({ workflowId, showLoader = true }: { workflowId: number; showLoader?: boolean }) {
   const {
@@ -178,7 +177,7 @@ function* fetchWorkflow({ payload: id }: TLoadWorkflow) {
   try {
     yield fork(handleLoadWorkflow, { workflowId: id });
   } catch (error) {
-    notifyApiError(error, { message: getErrorMessage(error) });
+    NotificationManager.notifyApiError(error, { message: getErrorMessage(error) });
   }
 }
 
@@ -203,7 +202,7 @@ function* handleOpenWorkflowLogPopup({
     if (shouldSetWorkflowDetailUrl) {
       history.push(ERoutes.Workflows);
     }
-    notifyApiError(error, { message: getErrorMessage(error) });
+    NotificationManager.notifyApiError(error, { message: getErrorMessage(error) });
   }
 }
 
@@ -225,7 +224,7 @@ function* fetchWorkflowLog({
     yield put(changeWorkflowLog({ workflowId: id, items: formattedFetchedProcessLog }));
   } catch (error) {
     logger.info('fetch process log error : ', error);
-    notifyApiError(error, { message: 'workflows.fetch-in-work-process-log-fail' });
+    NotificationManager.notifyApiError(error, { message: 'workflows.fetch-in-work-process-log-fail' });
   } finally {
     yield put(changeWorkflowLog({ isLoading: false }));
   }
@@ -320,7 +319,7 @@ function* fetchWorkflowsList({ payload: offset = 0 }: TLoadWorkflowsList) {
   } catch (error) {
     logger.info('fetch workflows list error : ', error);
     yield put(loadWorkflowsListFailed());
-    notifyApiError(error, { message: 'workflows.fetch-processes-list-fail' });
+    NotificationManager.notifyApiError(error, { message: 'workflows.fetch-processes-list-fail' });
   }
 }
 
@@ -355,7 +354,7 @@ function* saveWorkflowLogComment({ payload: { text, attachments } }: TSendWorkfl
     yield put(changeWorkflowLog({ items: preLoadedProcessLog }));
   } catch (error) {
     logger.info('send process log comment error:', error);
-    notifyApiError(error, { message: 'workflows.send-process-log-comment-fail' });
+    NotificationManager.notifyApiError(error, { message: 'workflows.send-process-log-comment-fail' });
     yield put(changeWorkflowLog({ items }));
   } finally {
     yield put(setGeneralLoaderVisibility(false));
@@ -511,7 +510,7 @@ export function* fetchFilterTemplates() {
   } catch (err) {
     yield put(loadWorkflowsFilterTemplatesFailed());
     logger.info('fetch workflow titles error : ', err);
-    notifyApiError(err, { message: 'workflows.load-tasks-count-fail' });
+    NotificationManager.notifyApiError(err, { message: 'workflows.load-tasks-count-fail' });
   }
 }
 
@@ -582,7 +581,7 @@ export function* cloneWorkflowSaga({ payload: { workflowId, workflowName, templa
     );
   } catch (error) {
     logger.info('clone workflow error : ', error);
-    notifyApiError(error, { title: 'workflows.fail-copy' });
+    NotificationManager.notifyApiError(error, { title: 'workflows.fail-copy' });
   } finally {
     yield put(setGeneralLoaderVisibility(false));
   }
@@ -601,7 +600,7 @@ export function* fetchFilterSteps({ payload: { templateId, onAfterLoaded } }: TL
   } catch (error) {
     yield put(loadWorkflowsFilterStepsFailed({ templateId }));
     logger.info('fetch tasks filter steps error : ', error);
-    notifyApiError(error, { message: getErrorMessage(error) });
+    NotificationManager.notifyApiError(error, { message: getErrorMessage(error) });
   }
 }
 
@@ -773,7 +772,7 @@ export function* deleteCommentSaga({ payload: { id } }: TDeleteComment) {
     yield put(updateWorkflowLogItem(updateComment));
     yield put(updateTaskWorkflowLogItem(updateComment));
   } catch (error) {
-    notifyApiError(error, { message: getErrorMessage(error) });
+    NotificationManager.notifyApiError(error, { message: getErrorMessage(error) });
   } finally {
     yield put(setGeneralLoaderVisibility(false));
   }
@@ -786,7 +785,7 @@ export function* editCommentSaga({ payload: { id, text, attachments } }: TEditCo
     yield put(updateWorkflowLogItem(updateComment));
     yield put(updateTaskWorkflowLogItem(updateComment));
   } catch (error) {
-    notifyApiError(error, { message: getErrorMessage(error) });
+    NotificationManager.notifyApiError(error, { message: getErrorMessage(error) });
   } finally {
     yield put(setGeneralLoaderVisibility(false));
   }
@@ -821,7 +820,7 @@ export function* watchedCommentSaga({ payload: { id } }: TWatchedComment) {
   try {
     yield watchedComment({ id });
   } catch (error) {
-    notifyApiError(error, { message: getErrorMessage(error) });
+    NotificationManager.notifyApiError(error, { message: getErrorMessage(error) });
   }
 }
 
@@ -830,7 +829,7 @@ export function* deleteReactionCommentSaga({ payload: { id, value } }: TDeleteRe
     yield put(setGeneralLoaderVisibility(true));
     yield deleteReactionComment({ id, value });
   } catch (error) {
-    notifyApiError(error, { message: getErrorMessage(error) });
+    NotificationManager.notifyApiError(error, { message: getErrorMessage(error) });
   } finally {
     yield put(setGeneralLoaderVisibility(false));
   }
@@ -841,7 +840,7 @@ export function* createReactionCommentSaga({ payload: { id, value } }: TCreateRe
     yield put(setGeneralLoaderVisibility(true));
     yield createReactionComment({ id, value });
   } catch (error) {
-    notifyApiError(error, { message: getErrorMessage(error) });
+    NotificationManager.notifyApiError(error, { message: getErrorMessage(error) });
   } finally {
     yield put(setGeneralLoaderVisibility(false));
   }
@@ -876,7 +875,7 @@ function* saveWorkflowsPresetSaga({ payload: { orderedFields, type, templateId }
     }
   } catch (error) {
     logger.error('saveWorkflowsPresetSaga: Failed to save preset:', { orderedFields, type, templateId, error });
-    notifyApiError(error, { message: getErrorMessage(error) });
+    NotificationManager.notifyApiError(error, { message: getErrorMessage(error) });
   }
 
   yield put(loadWorkflowsList(0));

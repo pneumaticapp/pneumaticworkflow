@@ -17,7 +17,7 @@ import {
 import { getHighlightsTitles } from '../../api/getHighlightsTitles';
 import { mapWorkflowsForSetHighlights } from '../../utils/mappers';
 import { getUserTimezone } from '../selectors/user';
-import { notifyApiError } from '../../utils/notifyApiError';
+import { NotificationManager } from '../../components/UI/Notifications';
 
 function* fetchTemplatesTitles({ payload: { eventDateFrom, eventDateTo } }: TLoadHighlightsTemplatesTitles) {
   try {
@@ -27,7 +27,7 @@ function* fetchTemplatesTitles({ payload: { eventDateFrom, eventDateTo } }: TLoa
     });
     yield put(setSetHighlightsTemplatesTitles(templatesTitles));
   } catch (error) {
-    notifyApiError(error, { message: 'workflow-highlights.fetch-filters-fail' });
+    NotificationManager.notifyApiError(error, { message: 'workflow-highlights.fetch-filters-fail' });
     yield put(loadHighlightsTemplatesTitlesFailed());
     logger.error(error);
   }
@@ -77,7 +77,7 @@ export function* fetchHighlights({ payload: { limit, offset, onScroll } }: TLoad
       yield put(setHighlights({ count, next, previous, results: formattedResults }));
     }
   } catch (error) {
-    notifyApiError(error, { id: 'process-highlights.fetch-failed' });
+    NotificationManager.notifyApiError(error, { id: 'process-highlights.fetch-failed' });
     logger.error(error);
   }
 }
