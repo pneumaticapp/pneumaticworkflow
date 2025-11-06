@@ -37,7 +37,10 @@ export const reducer = (state = INIT_STATE, action: TGroupsActions): IGroupsStor
     case EGroupsActions.CreateGroup:
       return { ...state, isLoading: true };
 
-    case EGroupsActions.CreateOrUpdateGroupFailed:
+    case EGroupsActions.CreateGroupFailed:
+      return { ...state, isLoading: false };
+
+    case EGroupsActions.UpdateGroupFailed:
       return { ...state, isLoading: false };
 
     case EGroupsActions.UpdateGroup:
