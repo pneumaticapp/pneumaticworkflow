@@ -28,7 +28,7 @@ import {
 } from './actions';
 import { getUnreadNotificationsCount } from '../../api/getUnreadNotificationsCount';
 import { envWssURL } from '../../constants/enviroment';
-import { notifyApiError } from '../../utils/notifyApiError';
+import { NotificationManager } from '../../components/UI/Notifications';
 
 function* fetchNotificationsAsRead() {
   const { items: notificationsList, unreadItemsCount }: ReturnType<typeof getNotificationsStore> = yield select(
@@ -72,7 +72,7 @@ function* fetchNotifications({ payload: { offset } = { offset: 0 } }: TLoadNotif
 
     yield put(changeNotificationsList(newNotificationsList));
   } catch (error) {
-    notifyApiError(error, { title: 'notifications.fetch-error', message: getErrorMessage(error) });
+    NotificationManager.notifyApiError(error, { title: 'notifications.fetch-error', message: getErrorMessage(error) });
     console.info('fetch notifications error : ', error);
     yield put(loadNotificationsListFailed());
   }
@@ -101,7 +101,10 @@ function* handleRemoveNotification({ payload: { notificationId } }: TRemoveNotif
   try {
     yield call(removeNotificationItem, { notificationId });
   } catch (error) {
-    notifyApiError(error, { title: 'notifications.failed-to-remove-notification', message: getErrorMessage(error) });
+    NotificationManager.notifyApiError(error, {
+      title: 'notifications.failed-to-remove-notification',
+      message: getErrorMessage(error),
+    });
   }
 }
 

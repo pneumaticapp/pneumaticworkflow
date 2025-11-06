@@ -20,7 +20,6 @@ import {
   loadApiKeySuccess,
   loadApiKeyFailed,
 } from './actions';
-import { notifyApiError } from '../../utils/notifyApiError';
 
 function* fetchIntegrationsList() {
   try {
@@ -69,7 +68,7 @@ export function* fetchApiKey() {
     yield put(loadApiKeySuccess(token));
   } catch (error) {
     yield put(loadApiKeyFailed());
-    notifyApiError(error, { message: 'integrations.fetch-api-key-error' });
+    NotificationManager.notifyApiError(error, { message: 'integrations.fetch-api-key-error' });
     logger.error(error);
   }
 }

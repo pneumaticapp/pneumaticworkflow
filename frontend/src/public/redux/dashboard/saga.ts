@@ -48,7 +48,7 @@ import { getGettingStartedChecklist } from '../../api/getGettingStartedChecklist
 import { IGettingStartedChecklist } from '../../types/dashboard';
 import { loadTemplateIntegrationsStats } from '../actions';
 import { isObject } from '../../utils/mappers';
-import { notifyApiError } from '../../utils/notifyApiError';
+import { NotificationManager } from '../../components/UI/Notifications';
 
 function* fetchDashboardData() {
   yield put(setIsDasboardLoaderVisible(true));
@@ -76,7 +76,7 @@ function* fetchDashboardCounters() {
     yield put(setDashboardCounters(countersResponse));
   } catch (error) {
     logger.info('fetch dashboard stats error : ', error);
-    notifyApiError(error, { message: 'dashboard.error-fetch' });
+    NotificationManager.notifyApiError(error, { message: 'dashboard.error-fetch' });
   }
 }
 
@@ -93,7 +93,7 @@ function* fetchDashboardBreakdownItems() {
     yield put(setBreakdownItems(normalizedBreakdownItems));
   } catch (error) {
     logger.info('fetch breakdown items error : ', error);
-    notifyApiError(error, { message: getErrorMessage(error) });
+    NotificationManager.notifyApiError(error, { message: getErrorMessage(error) });
   }
 }
 
@@ -130,7 +130,7 @@ export function* fetchBreakdownTasks({ payload: { templateId } }: TLoadBreakdown
     yield put(patchBreakdownItem({ templateId, changedFields: { tasks } }));
   } catch (error) {
     logger.info('fetch dashboard breakdown tasks error: ', error);
-    notifyApiError(error, { message: getErrorMessage(error) });
+    NotificationManager.notifyApiError(error, { message: getErrorMessage(error) });
   } finally {
     yield put(patchBreakdownItem({ templateId, changedFields: { areTasksLoading: false } }));
   }
@@ -147,7 +147,7 @@ export function* openRunWorflowSaga({ payload: { templateId, ancestorTaskId } }:
     }
   } catch (error) {
     logger.info('fetch template error : ', error);
-    notifyApiError(error, { message: getErrorMessage(error) });
+    NotificationManager.notifyApiError(error, { message: getErrorMessage(error) });
   } finally {
     yield put(setGeneralLoaderVisibility(false));
   }
@@ -162,7 +162,7 @@ export function* openRunWorflowByTemplateDataSaga({
     yield put(openRunWorkflowModal({ ...templateData, ancestorTaskId }));
   } catch (error) {
     logger.info('fetch template error : ', error);
-    notifyApiError(error, { message: getErrorMessage(error) });
+    NotificationManager.notifyApiError(error, { message: getErrorMessage(error) });
   } finally {
     yield put(setGeneralLoaderVisibility(false));
   }
@@ -178,7 +178,7 @@ function* loadChecklistSaga() {
   } catch (error) {
     yield put(loadGettingStartedChecklistFailed());
     logger.info('fetch getting started checklist: ', error);
-    notifyApiError(error, { message: getErrorMessage(error) });
+    NotificationManager.notifyApiError(error, { message: getErrorMessage(error) });
   }
 }
 

@@ -50,7 +50,6 @@ import { sortUsersByStatus, sortUsersByNameAsc, sortUsersByNameDesc } from '../.
 import { getAccountPlan } from '../selectors/accounts';
 import { getAbsolutePath } from '../../utils/getAbsolutePath';
 import { getTenantsCountStore } from '../selectors/tenants';
-import { notifyApiError } from '../../utils/notifyApiError';
 
 export function* fetchUsers(
   action: TUsersFetchStarted = {
@@ -85,7 +84,7 @@ export function* fetchUsers(
     yield put(usersFetchFinished(sortedUsers));
   } catch (error) {
     if (showErrorNotification) {
-      notifyApiError(error, { title: 'users.faied-fetch', message: getErrorMessage(error) });
+      NotificationManager.notifyApiError(error, { title: 'users.faied-fetch', message: getErrorMessage(error) });
     }
 
     console.info('fetch users error : ', error);
@@ -110,7 +109,7 @@ export function* fetchPlan() {
     const currentPlan: TGetPlanResponse = yield call(getPlan);
     yield put(setCurrentPlan(currentPlan));
   } catch (error) {
-    notifyApiError(error, { title: 'plan.fetch-error', message: getErrorMessage(error) });
+    NotificationManager.notifyApiError(error, { title: 'plan.fetch-error', message: getErrorMessage(error) });
     console.info('fetch plan error : ', error);
     yield put(fetchCurrentPlanFailed());
     yield put(
@@ -250,7 +249,7 @@ function* startTrialSubscriptionSaga() {
     );
   } catch (error) {
     const message = getErrorMessage(error);
-    notifyApiError(error, { message });
+    NotificationManager.notifyApiError(error, { message });
     logger.error(`failed to start trial subscription: ${message}`);
   } finally {
     yield put(setGeneralLoaderVisibility(false));
@@ -268,7 +267,7 @@ function* startFreeSubscriptionSaga() {
     NotificationManager.success({ message: 'pricing.switched-to-free-plan' });
   } catch (error) {
     const message = getErrorMessage(error);
-    notifyApiError(error, { message });
+    NotificationManager.notifyApiError(error, { message });
     logger.error(`failed to start free subscription: ${message}`);
   } finally {
     yield put(setGeneralLoaderVisibility(false));

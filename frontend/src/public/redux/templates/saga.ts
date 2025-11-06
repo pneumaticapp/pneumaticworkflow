@@ -36,7 +36,7 @@ import { getTemplatesSystemCategories } from '../../api/getSystemTemplatesCatego
 import { ITemplatesSystemCategories } from '../../types/redux';
 import { LIMIT_LOAD_SYSTEMS_TEMPLATES, LIMIT_LOAD_TEMPLATES, varibleIdRegex } from '../../constants/defaultValues';
 import { SYSTEM_FIELDS } from '../../components/Workflows/WorkflowsTablePage/WorkflowsTable/constants';
-import { notifyApiError } from '../../utils/notifyApiError';
+import { NotificationManager } from '../../components/UI/Notifications';
 
 function* fetchTemplatesSystem() {
   try {
@@ -64,7 +64,7 @@ function* fetchTemplatesSystem() {
   } catch (error) {
     yield put(loadTemplatesSystemFailed());
     logger.info('fetch system templates failed : ', error);
-    notifyApiError(error, { message: getErrorMessage(error) });
+    NotificationManager.notifyApiError(error, { message: getErrorMessage(error) });
   }
 }
 
@@ -78,7 +78,7 @@ function* fetchTemplatesSystemCategories() {
   } catch (error) {
     logger.info('fetch system templates categories failed : ', error);
 
-    notifyApiError(error, { message: getErrorMessage(error) });
+    NotificationManager.notifyApiError(error, { message: getErrorMessage(error) });
   }
 }
 
@@ -105,7 +105,7 @@ function* fetchTemplates({ payload: offset = 0 }: TLoadTemplates) {
     logger.info('fetch templates error : ', error);
     yield put(loadTemplatesFailed());
 
-    notifyApiError(error, { message: 'templates.fetch-fail' });
+    NotificationManager.notifyApiError(error, { message: 'templates.fetch-fail' });
     history.replace(ERoutes.Templates);
   }
 }
@@ -144,7 +144,7 @@ export function* handleLoadTemplateVariables(templateId: number) {
     yield put(saveTemplateTasks({ templateId, transformedTasks }));
   } catch (error) {
     logger.info('fetch template fields error: ', error);
-    notifyApiError(error, { message: getErrorMessage(error) });
+    NotificationManager.notifyApiError(error, { message: getErrorMessage(error) });
   }
 }
 

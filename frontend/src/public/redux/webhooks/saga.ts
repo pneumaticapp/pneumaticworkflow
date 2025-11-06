@@ -11,7 +11,6 @@ import { EWebhooksSubscriberStatus, EWebhooksTypeEvent } from '../../types/webho
 import { loadWebhooks, TLoadWebhooksResponse } from '../../api/loadWebhooks';
 import { getWebhooks } from '../selectors/webhooks';
 import { IWebhookStore } from '../../types/redux';
-import { notifyApiError } from '../../utils/notifyApiError';
 
 function* updateWebhooksStatus(status: EWebhooksSubscriberStatus) {
   const webhooks: IWebhookStore = yield select(getWebhooks);
@@ -52,7 +51,7 @@ function* loadWebhooksSaga() {
     }
   } catch (error) {
     logger.info('add webooks subscriber error: ', error);
-    notifyApiError(error, { message: getErrorMessage(error) });
+    NotificationManager.notifyApiError(error, { message: getErrorMessage(error) });
     yield updateWebhooksStatus(EWebhooksSubscriberStatus.Unknown);
   }
 }
@@ -90,7 +89,7 @@ function* addWebhooksSaga({ payload }: TAddWebhook) {
     }
   } catch (error) {
     logger.info('add webooks subscriber error: ', error);
-    notifyApiError(error, { message: getErrorMessage(error) });
+    NotificationManager.notifyApiError(error, { message: getErrorMessage(error) });
     yield put(
       setWebhooksStatus({
         event: payload.event,
@@ -131,7 +130,7 @@ function* removeWebhooksSaga({ payload: { event } }: TRemoveWebhook) {
     NotificationManager.success({ message: 'template.intergrations-webhook-unsubscribe-success' });
   } catch (error) {
     logger.info('remove webooks subscriber error: ', error);
-    notifyApiError(error, { message: getErrorMessage(error) });
+    NotificationManager.notifyApiError(error, { message: getErrorMessage(error) });
     yield put(
       setWebhooksStatus({
         event,
