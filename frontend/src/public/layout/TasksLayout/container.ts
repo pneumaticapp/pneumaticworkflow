@@ -11,36 +11,27 @@ import {
   changeTasksSorting,
   changeTasksCompleteStatus,
 } from '../../redux/actions';
-import {
-  ITasksLayoutDispatchProps,
-  ITasksLayoutStoreProps,
-  TasksLayoutComponent,
-} from './TasksLayout';
+import { ITasksLayoutDispatchProps, ITasksLayoutStoreProps, TasksLayoutComponent } from './TasksLayout';
 
 const mapStateToProps = ({
   tasks: {
-    tasksSettings:
-    {
+    tasksSettings: {
       sorting,
       isHasFilter,
       completionStatus,
-      filterValues: {
-        templateIdFilter,
-        stepIdFilter,
-      },
+      filterValues: { templateIdFilter, taskApiNameFilter },
       templateList,
       templateStepList,
     },
   },
 }: IApplicationState): ITasksLayoutStoreProps => {
-
   return {
     isHasFilter,
     sorting,
     filterTemplates: templateList.items,
     filterSteps: templateStepList.items,
     templateIdFilter,
-    stepIdFilter,
+    taskApiNameFilter,
     completionStatus,
   };
 };
@@ -56,5 +47,7 @@ const mapDispatchToProps: ITasksLayoutDispatchProps = {
   changeTasksSorting,
 };
 
-export const TasksLayoutContainer = connect<ITasksLayoutStoreProps, ITasksLayoutDispatchProps>
-(mapStateToProps, mapDispatchToProps)(TasksLayoutComponent);
+export const TasksLayoutContainer = connect<ITasksLayoutStoreProps, ITasksLayoutDispatchProps>(
+  mapStateToProps,
+  mapDispatchToProps,
+)(TasksLayoutComponent);

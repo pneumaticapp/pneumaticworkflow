@@ -1,10 +1,4 @@
-import {
-  EGroupsListSorting,
-  EUserListSorting,
-  EUserStatus,
-  IUnsavedUser,
-  TUserListItem,
-} from './user';
+import { EGroupsListSorting, EUserListSorting, EUserStatus, IUnsavedUser, TUserListItem } from './user';
 import { TNotificationsListItem } from './notifications';
 import { IAccountGenericTemplate } from './genericTemplates';
 import {
@@ -381,6 +375,7 @@ export interface IDashboardCounters {
 
 export interface IDashboardTask {
   id: number;
+  apiName: string;
   number: number;
   name: string;
   started: number | null;

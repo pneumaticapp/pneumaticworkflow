@@ -113,7 +113,6 @@ export interface ITaskListItem {
   dueDate: string | null;
   dateCompleted: string | null;
   templateId: number;
-  templateTaskId: number; // remove
   templateTaskApiName: string;
 }
 
@@ -139,7 +138,7 @@ export interface ITasksSettings {
   sorting: ETaskListSorting | ETaskListCompleteSorting;
   filterValues: {
     templateIdFilter: number | null;
-    stepIdFilter: number | null;
+    taskApiNameFilter: string | null;
   };
   templateStepList: {
     items: ITemplateStep[];
@@ -155,4 +154,5 @@ export interface ITemplateStep {
   id: number;
   name: string;
   number: number;
+  apiName: string;
 }

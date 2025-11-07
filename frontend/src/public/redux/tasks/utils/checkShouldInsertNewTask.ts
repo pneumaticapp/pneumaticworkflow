@@ -9,7 +9,7 @@ export function checkShouldInsertNewTask(
 ): boolean {
   const normalizedSearchText = searchText.toLocaleLowerCase();
   const {
-    filterValues: { templateIdFilter, stepIdFilter },
+    filterValues: { templateIdFilter, taskApiNameFilter },
   } = tasksSettings;
 
   return [
@@ -17,8 +17,6 @@ export function checkShouldInsertNewTask(
       newTask.workflowName.toLocaleLowerCase().includes(normalizedSearchText),
 
     !templateIdFilter || templateIdFilter === newTask.templateId,
-
-    !stepIdFilter || stepIdFilter === newTask.templateTaskId, // remove with templateTaskId
-    // !stepIdFilter || stepIdFilter === newTask.templateTaskApiName, // add with templateTaskApiName
+    !taskApiNameFilter || taskApiNameFilter === newTask.templateTaskApiName,
   ].every(Boolean);
 }

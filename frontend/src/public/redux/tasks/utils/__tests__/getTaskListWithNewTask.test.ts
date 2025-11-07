@@ -13,7 +13,6 @@ const createMockTask = (task: Partial<ITaskListItem>): ITaskListItem => {
     name: 'Task name',
     workflowName: 'Wokrflow name',
     templateId: 1,
-    templateTaskId: 1, // remove
     templateTaskApiName: 'task-880abb',
     isUrgent: false,
     ...task,
