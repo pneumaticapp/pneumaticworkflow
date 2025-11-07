@@ -25,7 +25,7 @@ export function* confirmPaymentDetailsProvided() {
     showSuccessMessage();
   } catch (error) {
     logger.error(error);
-    NotificationManager.error({ message: getErrorMessage(error) });
+    NotificationManager.notifyApiError(error, { message: getErrorMessage(error) });
     history.push(ERoutes.Tasks);
   }
 }

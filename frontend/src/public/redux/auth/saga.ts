@@ -218,7 +218,7 @@ export function* registerWithEmailPassword({ payload: { user, captcha, onStart, 
       yield call(authenticateUser, undefined, true);
     } else {
       console.info('register failed :', registerUser.message);
-      NotificationManager.error({
+      NotificationManager.warning({
         title: 'Register failed',
         message: registerUser.message,
       });
@@ -258,7 +258,7 @@ export function* registerWithInvite({ payload }: TRegisterUserInvited) {
       yield call(authenticateUser, ERoutes.Main);
     } else {
       console.info('register failed :', user.message);
-      NotificationManager.error({
+      NotificationManager.warning({
         title: 'Register failed',
         message: user.message,
       });
@@ -348,7 +348,7 @@ export function* editCurrentAccount({ payload }: TEditAccount) {
     const result: IUpdateAccountResponse | void = yield call(editAccount, payload, leaseLevel);
     if (!result) {
       yield put(accountEditFailed());
-      NotificationManager.error({
+      NotificationManager.warning({
         message: 'user-account.edit-account-fail',
       });
 

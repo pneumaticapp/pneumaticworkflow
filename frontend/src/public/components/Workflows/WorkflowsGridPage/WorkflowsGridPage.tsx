@@ -116,7 +116,7 @@ export const WorkflowsGridPage = function Workflows({
       openRunWorkflowModal(runnableWorkflow);
     } catch (error) {
       logger.error('failed to run new workflow', error);
-      NotificationManager.error({ message: getErrorMessage(error) });
+      NotificationManager.notifyApiError(error, { message: getErrorMessage(error) });
     } finally {
       setIsRunningNewWorkflow(false);
     }

@@ -34,7 +34,7 @@ const EMPTY_USER_DATA: IUnsavedUser = {
     trialEnded: false,
     trialIsActive: false,
     isSubscribed: false,
-    billingSync: true
+    billingSync: true,
   },
   photo: '',
   type: 'user',
@@ -80,7 +80,7 @@ class AuthCreator {
       const result = await registerUser(user, utmParams, captcha);
 
       if (!result) {
-        NotificationManager.error({ message: ERR_REGISTER_MSG });
+        NotificationManager.warning({ message: ERR_REGISTER_MSG });
         throw new Error(ERR_REGISTER_MSG);
       }
 
@@ -121,9 +121,9 @@ class AuthCreator {
       }
 
       return result;
-    } catch (err) {
-      logger.error('failed to fetch user data ', err);
-      NotificationManager.error({ message: 'user.fetch-failed' });
+    } catch (error) {
+      logger.error('failed to fetch user data ', error);
+      NotificationManager.notifyApiError(error, { message: 'user.fetch-failed' });
 
       throw new Error('failed to fetch user data');
     }
