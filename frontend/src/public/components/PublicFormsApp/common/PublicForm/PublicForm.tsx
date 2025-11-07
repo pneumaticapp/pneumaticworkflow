@@ -104,7 +104,7 @@ export function PublicForm({ type }: IPublicFormsAppProps) {
 
       setFormState(EPublicFormState.Submitted);
     } catch (error) {
-      NotificationManager.error({ message: 'public-form.submit-failed' });
+      NotificationManager.notifyApiError(error, { message: 'public-form.submit-failed' });
       logger.error('Failed to run public form', error);
       setFormState(EPublicFormState.WaitingForAction);
     }
