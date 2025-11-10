@@ -79,6 +79,7 @@ import {
   formatTaskDatesForRedux,
   mapBackendWorkflowToRedux,
   mapOutputToCompleteTask,
+  getNormalizeOutputUsersToEmails,
 } from '../../utils/mappers';
 import { formatDateToISOInWorkflow, toTspDate } from '../../utils/dateTime';
 
@@ -304,7 +305,12 @@ export function* setTaskCompleted({ payload: { taskId, output, viewMode } }: TSe
     yield deleteRemovedFilesFromFields(output);
 
     const mappedOutput = mapOutputToCompleteTask(output);
-    yield completeTask(taskId, mappedOutput);
+
+    const usersList: TUserListItem[] = yield select(getUsers);
+    const setUsers = new Map<number, string>(usersList.map((user) => [user.id, user.email]));
+    const normalizedOutputs = getNormalizeOutputUsersToEmails(mappedOutput, setUsers);
+
+    yield completeTask(taskId, normalizedOutputs);
     NotificationManager.success({ title: 'tasks.task-success-complete' });
 
     removeOutputFromLocalStorage(taskId);

@@ -297,7 +297,7 @@ class TemplateSerializer(
         if not api_names_in_name:
             return
 
-        sys_vars = {'template-name', 'date'}
+        sys_vars = {'template-name', 'date', 'workflow-id'}
         sys_vars_is_used = bool(api_names_in_name & sys_vars)
         api_names_in_name -= sys_vars
         available_fields = self._get_raw_fields_from_kickoff(data)

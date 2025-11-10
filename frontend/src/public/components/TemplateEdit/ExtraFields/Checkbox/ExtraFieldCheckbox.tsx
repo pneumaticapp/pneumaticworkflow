@@ -199,11 +199,11 @@ export function ExtraFieldCheckbox({
     editField({ selections: newOptions });
   };
 
-  const renderProcessRunOption = ({ id: optionId, value, apiName }: IExtraFieldSelection) => {
+  const renderProcessRunOption = ({ value, apiName }: IExtraFieldSelection) => {
     const isChecked = selectedOptions && selectedOptions.includes(apiName);
 
     return (
-      <li key={optionId} className={fieldStyles['kickoff-set-field-option']}>
+      <li key={apiName} className={fieldStyles['kickoff-set-field-option']}>
         <Checkbox id={String(apiName)} title={value} onChange={handleToggleOption(apiName)} checked={isChecked} />
       </li>
     );
