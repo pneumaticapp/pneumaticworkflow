@@ -11,10 +11,7 @@ export interface ICustomError {
 export const DEFAULT_ERROR_CODE = 'error__unknown_code';
 export const UNKNOWN_ERROR = 'Something Went Wrong';
 
-const paidFeaturesErrors = [
-  'error__conditions__paid_feature',
-  'error__template__public_is_paid_feature',
-];
+const paidFeaturesErrors = ['error__conditions__paid_feature', 'error__template__public_is_paid_feature'];
 
 const errorMapper: { [key: string]: string } = {
   [DEFAULT_ERROR_CODE]: UNKNOWN_ERROR,
@@ -44,7 +41,11 @@ export const getErrorMessage = (error?: ICustomError) => {
     return errorMapper[detail] || detail || UNKNOWN_ERROR;
   }
 
-  const errorDetails = details?.name && details?.reason && `${details.name}: ${details.reason}`;
+  const reasonLower = details?.reason?.trim()?.toLowerCase();
+  const messageLower = message?.trim()?.toLowerCase() || '';
+  const shouldAppendDetails = Boolean(reasonLower && reasonLower !== messageLower);
+
+  const errorDetails = details?.name && details?.reason && shouldAppendDetails && `${details.name}: ${details.reason}`;
   const errorMessage = [message, errorDetails].filter(Boolean).join('\n');
 
   return errorMessage || UNKNOWN_ERROR;
