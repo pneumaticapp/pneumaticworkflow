@@ -4614,3 +4614,100 @@ def test_run__skip_and_start_condition_not_passed__not_start_task(
     assert workflow.tasks.get(number=1).is_active
     assert workflow.tasks.get(number=2).is_pending
     assert workflow.tasks.get(number=3).is_pending
+
+
+def test_run__wf_name_template_with_workflow_id__ok(
+    mocker,
+    api_client,
+):
+
+    # arrange
+    mocker.patch(
+        'src.notifications.tasks'
+        '.send_new_task_notification.delay',
+    )
+    mocker.patch(
+        'src.analysis.services.AnalyticService.'
+        'workflows_started',
+    )
+    mocker.patch(
+        'src.processes.services.workflow_action.'
+        'WorkflowEventService.workflow_run_event',
+    )
+    user = create_test_user()
+    api_client.token_authenticate(user)
+    template_name = 'Test Template'
+    wf_name_template = '{{ workflow-id }}'
+    template = create_test_template(
+        user=user,
+        is_active=True,
+        tasks_count=1,
+        name=template_name,
+        wf_name_template=wf_name_template,
+    )
+
+    # act
+    response = api_client.post(
+        path=f'/templates/{template.id}/run',
+    )
+
+    # assert
+    assert response.status_code == 200
+    workflow = Workflow.objects.get(id=response.data['id'])
+    expected_name = str(workflow.id)
+    assert workflow.name == expected_name
+    assert workflow.name_template == expected_name
+
+
+def test_run__wf_name_template_with_workflow_id_and_other_vars__ok(
+    mocker,
+    api_client,
+):
+
+    # arrange
+    mocker.patch(
+        'src.notifications.tasks'
+        '.send_new_task_notification.delay',
+    )
+    mocker.patch(
+        'src.analysis.services.AnalyticService.'
+        'workflows_started',
+    )
+    mocker.patch(
+        'src.processes.services.workflow_action.'
+        'WorkflowEventService.workflow_run_event',
+    )
+    user = create_test_user()
+    api_client.token_authenticate(user)
+    template_name = 'Test Template'
+    wf_name_template = '{{ template-name }} #{{ workflow-id }} - {{ date }}'
+    template = create_test_template(
+        user=user,
+        is_active=True,
+        tasks_count=1,
+        name=template_name,
+        wf_name_template=wf_name_template,
+    )
+
+    date = timezone.datetime(
+        year=2024,
+        month=8,
+        day=28,
+        hour=10,
+        minute=41,
+        tzinfo=pytz.timezone('UTC'),
+    )
+    mocker.patch('django.utils.timezone.now', return_value=date)
+
+    # act
+    response = api_client.post(
+        path=f'/templates/{template.id}/run',
+    )
+
+    # assert
+    assert response.status_code == 200
+    workflow = Workflow.objects.get(id=response.data['id'])
+    formatted_date = 'Aug 28, 2024, 10:41AM'
+    expected_name = f'{template_name} #{workflow.id} - {formatted_date}'
+    assert workflow.name == expected_name
+    assert workflow.name_template == expected_name
