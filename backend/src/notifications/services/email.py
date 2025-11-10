@@ -12,7 +12,7 @@ from src.accounts.tokens import (
     ResetPasswordToken,
     UnsubscribeEmailToken,
 )
-from src.analytics.enums import MailoutType
+from src.analysis.enums import MailoutType
 from src.logs.enums import (
     AccountEventStatus,
 )

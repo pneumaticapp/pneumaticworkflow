@@ -305,12 +305,12 @@ def test_create__freemium_to_trial__ok(mocker, identify_mock):
         'src.accounts.services.account.'
         'AccountService.partial_update',
     )
-    analytics_trial_subscription_created_mock = mocker.patch(
-        'src.analytics.services.AnalyticService.'
+    analysis_trial_subscription_created_mock = mocker.patch(
+        'src.analysis.services.AnalyticService.'
         'trial_subscription_created',
     )
-    analytics_subscription_created_mock = mocker.patch(
-        'src.analytics.services.AnalyticService.'
+    analysis_subscription_created_mock = mocker.patch(
+        'src.analysis.services.AnalyticService.'
         'subscription_created',
     )
     trial_start = timezone.now() - timedelta(minutes=1)
@@ -355,8 +355,8 @@ def test_create__freemium_to_trial__ok(mocker, identify_mock):
         tmp_subscription=False,
         force_save=True,
     )
-    analytics_subscription_created_mock.assert_called_once_with(user)
-    analytics_trial_subscription_created_mock.assert_called_once_with(user)
+    analysis_subscription_created_mock.assert_called_once_with(user)
+    analysis_trial_subscription_created_mock.assert_called_once_with(user)
     identify_mock.assert_called_once_with(user)
 
 
@@ -377,12 +377,12 @@ def test_create__trial_ended__not_trial(mocker, identify_mock):
         'src.accounts.services.account.'
         'AccountService.partial_update',
     )
-    analytics_trial_subscription_created_mock = mocker.patch(
-        'src.analytics.services.AnalyticService.'
+    analysis_trial_subscription_created_mock = mocker.patch(
+        'src.analysis.services.AnalyticService.'
         'trial_subscription_created',
     )
-    analytics_subscription_created_mock = mocker.patch(
-        'src.analytics.services.AnalyticService.'
+    analysis_subscription_created_mock = mocker.patch(
+        'src.analysis.services.AnalyticService.'
         'subscription_created',
     )
     trial_start = timezone.now() - timedelta(minutes=1)
@@ -425,8 +425,8 @@ def test_create__trial_ended__not_trial(mocker, identify_mock):
         tmp_subscription=False,
         force_save=True,
     )
-    analytics_subscription_created_mock.assert_called_once_with(user)
-    analytics_trial_subscription_created_mock.assert_not_called()
+    analysis_subscription_created_mock.assert_called_once_with(user)
+    analysis_trial_subscription_created_mock.assert_not_called()
     identify_mock.assert_called_once_with(user)
 
 
@@ -446,12 +446,12 @@ def test_create__freemium_to_premium__ok(mocker, identify_mock):
         'src.accounts.services.account.'
         'AccountService.partial_update',
     )
-    analytics_subscription_created_mock = mocker.patch(
-        'src.analytics.services.AnalyticService.'
+    analysis_subscription_created_mock = mocker.patch(
+        'src.analysis.services.AnalyticService.'
         'subscription_created',
     )
-    analytics_trial_subscription_created_mock = mocker.patch(
-        'src.analytics.services.AnalyticService.'
+    analysis_trial_subscription_created_mock = mocker.patch(
+        'src.analysis.services.AnalyticService.'
         'trial_subscription_created',
     )
     plan_expiration = timezone.now() + timedelta(days=30)
@@ -495,8 +495,8 @@ def test_create__freemium_to_premium__ok(mocker, identify_mock):
         tmp_subscription=False,
         force_save=True,
     )
-    analytics_subscription_created_mock.assert_called_once_with(user)
-    analytics_trial_subscription_created_mock.assert_not_called()
+    analysis_subscription_created_mock.assert_called_once_with(user)
+    analysis_trial_subscription_created_mock.assert_not_called()
     identify_mock.assert_called_once_with(user)
 
 
@@ -519,12 +519,12 @@ def test_create__tmp_subscription_to_premium_trial__ok(mocker, identify_mock):
         'src.accounts.services.account.'
         'AccountService.partial_update',
     )
-    analytics_subscription_created_mock = mocker.patch(
-        'src.analytics.services.AnalyticService.'
+    analysis_subscription_created_mock = mocker.patch(
+        'src.analysis.services.AnalyticService.'
         'subscription_created',
     )
-    analytics_trial_subscription_created_mock = mocker.patch(
-        'src.analytics.services.AnalyticService.'
+    analysis_trial_subscription_created_mock = mocker.patch(
+        'src.analysis.services.AnalyticService.'
         'trial_subscription_created',
     )
     trial_start = timezone.now()
@@ -569,8 +569,8 @@ def test_create__tmp_subscription_to_premium_trial__ok(mocker, identify_mock):
         tmp_subscription=False,
         force_save=True,
     )
-    analytics_subscription_created_mock.assert_called_once_with(user)
-    analytics_trial_subscription_created_mock.assert_called_once_with(user)
+    analysis_subscription_created_mock.assert_called_once_with(user)
+    analysis_trial_subscription_created_mock.assert_called_once_with(user)
     identify_mock.assert_called_once_with(user)
 
 
@@ -670,8 +670,8 @@ def test_update__trial_to_premium__ok(mocker, identify_mock):
         'src.accounts.services.account.'
         'AccountService.partial_update',
     )
-    analytics_subscription_converted_mock = mocker.patch(
-        'src.analytics.services.AnalyticService.'
+    analysis_subscription_converted_mock = mocker.patch(
+        'src.analysis.services.AnalyticService.'
         'subscription_converted',
     )
     is_superuser = True
@@ -711,7 +711,7 @@ def test_update__trial_to_premium__ok(mocker, identify_mock):
         tmp_subscription=False,
         force_save=True,
     )
-    analytics_subscription_converted_mock.assert_called_once_with(user)
+    analysis_subscription_converted_mock.assert_called_once_with(user)
     identify_mock.assert_called_once_with(user)
 
 
@@ -733,8 +733,8 @@ def test_update__premium_to_premium__ok(mocker, identify_mock):
         'src.accounts.services.account.'
         'AccountService.partial_update',
     )
-    analytics_subscription_updated_mock = mocker.patch(
-        'src.analytics.services.AnalyticService.'
+    analysis_subscription_updated_mock = mocker.patch(
+        'src.analysis.services.AnalyticService.'
         'subscription_updated',
     )
     is_superuser = True
@@ -775,7 +775,7 @@ def test_update__premium_to_premium__ok(mocker, identify_mock):
         trial_ended=True,
         force_save=True,
     )
-    analytics_subscription_updated_mock.assert_called_once_with(user)
+    analysis_subscription_updated_mock.assert_called_once_with(user)
     identify_mock.assert_called_once_with(user)
 
 
@@ -898,8 +898,8 @@ def test_cancel__ok(mocker):
     # arrange
     account = create_test_account(plan=BillingPlanType.PREMIUM)
     user = create_test_user(account=account)
-    analytics_subscription_canceled_created_mock = mocker.patch(
-        'src.analytics.services.AnalyticService.'
+    analysis_subscription_canceled_created_mock = mocker.patch(
+        'src.analysis.services.AnalyticService.'
         'subscription_canceled',
     )
     expired_mock = mocker.patch(
@@ -921,4 +921,4 @@ def test_cancel__ok(mocker):
 
     # arrange
     expired_mock.assert_called_once_with(plan_expiration)
-    analytics_subscription_canceled_created_mock.assert_called_once_with(user)
+    analysis_subscription_canceled_created_mock.assert_called_once_with(user)

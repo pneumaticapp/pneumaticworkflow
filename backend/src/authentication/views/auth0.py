@@ -2,7 +2,7 @@ from django.contrib.auth import get_user_model
 from rest_framework.decorators import action
 from rest_framework.viewsets import GenericViewSet
 
-from src.analytics.mixins import BaseIdentifyMixin
+from src.analysis.mixins import BaseIdentifyMixin
 from src.authentication.permissions import Auth0Permission
 from src.authentication.serializers import (
     Auth0TokenSerializer,

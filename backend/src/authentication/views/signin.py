@@ -12,8 +12,8 @@ from src.accounts.enums import SourceType
 from src.accounts.tokens import (
     VerificationToken,
 )
-from src.analytics.mixins import BaseIdentifyMixin
-from src.analytics.services import AnalyticService
+from src.analysis.mixins import BaseIdentifyMixin
+from src.analysis.services import AnalyticService
 from src.authentication.enums import AuthTokenType
 from src.authentication.messages import (
     MSG_AU_0002,
