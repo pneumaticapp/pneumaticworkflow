@@ -78,18 +78,16 @@ class AuthCreator {
   ): Promise<Partial<IAuthUser>> => {
     try {
       const result = await registerUser(user, utmParams, captcha);
-
-      if (!result) {
-        NotificationManager.warning({ message: ERR_REGISTER_MSG });
-        throw new Error(ERR_REGISTER_MSG);
-      }
-
       return {
         loading: false,
         token: result.token,
       };
-    } catch (err) {
-      throw new Error(getErrorMessage(err));
+    } catch (error) {
+      NotificationManager.notifyApiError(error, {
+        title: ERR_REGISTER_MSG,
+        message: getErrorMessage(error),
+      });
+      throw new Error(getErrorMessage(error));
     }
   };
 
