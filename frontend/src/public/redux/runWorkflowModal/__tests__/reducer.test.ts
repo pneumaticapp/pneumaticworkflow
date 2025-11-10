@@ -95,13 +95,11 @@ describe('runWorkflowModal reducer', () => {
           value: [],
           selections: [
             {
-              id: 7227,
               value: 'value1',
               isSelected: false,
               apiName: 'selection-vin9ak',
             },
             {
-              id: 7228,
               value: 'value2',
               isSelected: false,
               apiName: 'selection-6r2pcy',
@@ -122,13 +120,11 @@ describe('runWorkflowModal reducer', () => {
           value: null,
           selections: [
             {
-              id: 7229,
               value: '1',
               isSelected: false,
               apiName: 'selection-33cchr',
             },
             {
-              id: 7230,
               value: '2',
               isSelected: false,
               apiName: 'selection-709cjo',

@@ -73,13 +73,11 @@ const mockWorkflowDetailKickoff: IWorkflowDetailsKickoff = {
       value: '',
       selections: [
         {
-          id: 27659,
           value: 'value1',
           isSelected: false,
           apiName: 'selection-vin9ak',
         },
         {
-          id: 27660,
           value: 'value2',
           isSelected: false,
           apiName: 'selection-6r2pcy',
@@ -100,13 +98,11 @@ const mockWorkflowDetailKickoff: IWorkflowDetailsKickoff = {
       value: '',
       selections: [
         {
-          id: 27661,
           value: '1',
           isSelected: false,
           apiName: 'selection-33cchr',
         },
         {
-          id: 27662,
           value: '2',
           isSelected: false,
           apiName: 'selection-709cjo',
@@ -176,12 +172,10 @@ const templateKickoffMock: IKickoff = {
       isRequired: false,
       selections: [
         {
-          id: 7227,
           value: 'value1',
           apiName: 'selection-vin9ak',
         },
         {
-          id: 7228,
           value: 'value2',
           apiName: 'selection-6r2pcy',
         },
@@ -199,12 +193,10 @@ const templateKickoffMock: IKickoff = {
       isRequired: false,
       selections: [
         {
-          id: 7229,
           value: '1',
           apiName: 'selection-33cchr',
         },
         {
-          id: 7230,
           value: '2',
           apiName: 'selection-709cjo',
         },
@@ -287,13 +279,11 @@ const expectedKickoff = {
       value: [],
       selections: [
         {
-          id: 27659,
           value: 'value1',
           isSelected: false,
           apiName: 'selection-vin9ak',
         },
         {
-          id: 27660,
           value: 'value2',
           isSelected: false,
           apiName: 'selection-6r2pcy',
@@ -314,13 +304,11 @@ const expectedKickoff = {
       value: null,
       selections: [
         {
-          id: 27661,
           value: '1',
           isSelected: false,
           apiName: 'selection-33cchr',
         },
         {
-          id: 27662,
           value: '2',
           isSelected: false,
           apiName: 'selection-709cjo',

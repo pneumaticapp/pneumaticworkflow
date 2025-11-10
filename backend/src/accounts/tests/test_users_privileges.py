@@ -283,7 +283,7 @@ def test_privileges__group_multiple_values__ok(api_client):
         email='additional@test.test',
     )
     group_1 = create_test_group(account=account, users=[another_user])
-    group_2 = create_test_group(account=account, users=[user])
+    group_2 = create_test_group(account=account, name='group 2', users=[user])
     api_client.token_authenticate(user)
 
     # act
