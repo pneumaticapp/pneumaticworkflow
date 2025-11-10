@@ -22,9 +22,11 @@ export function editAccount(settings: IUpdateAccountRequest, leaseLevel: TAccoun
     {
       data: mapRequestBody({
         name: settings.name,
-        ...(leaseLevel !== "tenant" && {logoSm: settings.logoSm || null}),
-        ...(leaseLevel !== "tenant" && {logoLg: settings.logoLg || null}),
+        ...(leaseLevel !== 'tenant' && { logoSm: settings.logoSm || null }),
+        ...(leaseLevel !== 'tenant' && { logoLg: settings.logoLg || null }),
       }),
       method: 'PUT',
-    });
+    },
+    { shouldThrow: true },
+  );
 }

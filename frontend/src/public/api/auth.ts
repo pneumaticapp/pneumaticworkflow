@@ -105,8 +105,12 @@ class AuthCreator {
         loading: false,
         token: result.token,
       };
-    } catch (err) {
-      throw new Error(getErrorMessage(err));
+    } catch (error) {
+      NotificationManager.notifyApiError(error, {
+        title: ERR_REGISTER_MSG,
+        message: getErrorMessage(error),
+      });
+      throw new Error(getErrorMessage(error));
     }
   };
 
