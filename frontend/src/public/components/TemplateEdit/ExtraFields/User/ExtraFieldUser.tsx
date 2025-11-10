@@ -46,13 +46,6 @@ export function ExtraFieldUser({
   const fieldNameInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
-    const initialSelection = field.selections?.find((selection) => selection.isSelected)?.id;
-    const shouldSetInitialValue = Number.isFinite(initialSelection) && mode === EExtraFieldMode.ProcessRun;
-
-    if (shouldSetInitialValue) {
-      editField({ value: String(initialSelection) });
-    }
-
     fitInputWidth(fieldNameInputRef.current, DEFAULT_FIELD_INPUT_WIDTH);
   }, []);
 
