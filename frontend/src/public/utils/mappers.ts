@@ -165,6 +165,20 @@ export const getNormalizedKickoff = (kickoff: IKickoff): { [key: string]: string
   return mappedKickoff;
 };
 
+export const getNormalizeOutputUsersToEmails = (
+  outputs: IExtraField[],
+  setUsers: Map<number, string>,
+): IExtraField[] => {
+  return outputs.map((output) => {
+    const { value, type, userId } = output;
+    if (type === 'user' && userId !== null) {
+      return { ...output, value: setUsers.get(userId as number) || value };
+    } 
+      return output;
+    
+  });
+};
+
 export const mapTasksToISOStringToRedux = <T extends TaskWithTspFields>(
   tasks: T[],
 ): (Omit<T, keyof TaskWithTspFields> & TaskWithDateFields)[] => {
