@@ -254,10 +254,6 @@ export function* registerWithInvite({ payload }: TRegisterUserInvited) {
       yield call(authenticateUser, ERoutes.Main);
     } else {
       console.info('register failed :', user.message);
-      NotificationManager.warning({
-        title: 'Register failed',
-        message: user.message,
-      });
       yield put(authUserFail());
     }
   } catch (error) {
@@ -341,15 +337,7 @@ export function* editCurrentAccount({ payload }: TEditAccount) {
       },
     }: ReturnType<typeof getAuthUser> = yield select(getAuthUser);
 
-    const result: IUpdateAccountResponse | void = yield call(editAccount, payload, leaseLevel);
-    if (!result) {
-      yield put(accountEditFailed());
-      NotificationManager.warning({
-        message: 'user-account.edit-account-fail',
-      });
-
-      return;
-    }
+    const result: IUpdateAccountResponse = yield call(editAccount, payload, leaseLevel);
 
     NotificationManager.success({
       message: 'user-account.edit-account-success',
@@ -358,6 +346,7 @@ export function* editCurrentAccount({ payload }: TEditAccount) {
   } catch (error) {
     NotificationManager.notifyApiError(error, { message: 'user-account.edit-account-fail' });
     logger.error('account edit error', error);
+    yield put(accountEditFailed());
   }
 }
 
