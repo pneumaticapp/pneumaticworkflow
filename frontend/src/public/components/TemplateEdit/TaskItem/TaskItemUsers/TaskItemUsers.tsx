@@ -71,7 +71,9 @@ export function TaskItemUsers({ task, maxUsers = MAX_SHOW_USERS, onClick }: ITas
 
   return (
     <div className={styles['card-users']} onClick={onClick}>
-      {rawPerformers.slice(0, maxUsers).map(renderPerformer)}
+      {rawPerformers.slice(0, maxUsers).map((performer) => (
+        <React.Fragment key={performer.apiName}>{renderPerformer(performer)}</React.Fragment>
+      ))}
       {Boolean(usersLeft) && <span className={styles['card-users__more']}>+{usersLeft}</span>}
     </div>
   );

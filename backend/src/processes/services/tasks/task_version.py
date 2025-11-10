@@ -142,6 +142,8 @@ class TaskUpdateVersionService(
                         value=predicate_template['value'],
                         field=predicate_template['field'],
                         api_name=predicate_template['api_name'],
+                        user_id=predicate_template['user_id'],
+                        group_id=predicate_template['group_id'],
                     ))
                 rules_tree.append((
                     Rule(api_name=rule_template['api_name']),

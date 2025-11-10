@@ -754,7 +754,7 @@ class TestUpdateTemplateTask:
             data={
                 'name': 'Test workflow',
                 'kickoff': {
-                    field_template_kickoff.api_name: user.id,
+                    field_template_kickoff.api_name: user.email,
                 },
             },
         )
@@ -766,7 +766,7 @@ class TestUpdateTemplateTask:
             f'/v2/tasks/{task.id}/complete',
             data={
                 'output': {
-                    field_template_first_task.api_name: user2.id,
+                    field_template_first_task.api_name: user2.email,
                 },
             },
         )
@@ -915,8 +915,8 @@ class TestUpdateTemplateTask:
             data={
                 'name': 'Test workflow',
                 'kickoff': {
-                    field_template_1.api_name: user2.id,
-                    field_template_2.api_name: user2_new.id,
+                    field_template_1.api_name: user2.email,
+                    field_template_2.api_name: user2_new.email,
                 },
             },
         )
@@ -1058,8 +1058,8 @@ class TestUpdateTemplateTask:
             data={
                 'name': 'Test workflow',
                 'kickoff': {
-                    field_template_1.api_name: user2.id,
-                    field_template_2.api_name: user2_new.id,
+                    field_template_1.api_name: user2.email,
+                    field_template_2.api_name: user2_new.email,
                 },
             },
         )
@@ -1201,7 +1201,7 @@ class TestUpdateTemplateTask:
             data={
                 'name': 'Test workflow',
                 'kickoff': {
-                    field_template.api_name: user2.id,
+                    field_template.api_name: user2.email,
                 },
             },
         )
@@ -1324,7 +1324,7 @@ class TestUpdateTemplateTask:
             data={
                 'name': 'Test workflow 1',
                 'kickoff': {
-                    field_template.api_name: user2.id,
+                    field_template.api_name: user2.email,
                 },
             },
         )
@@ -1335,7 +1335,7 @@ class TestUpdateTemplateTask:
             data={
                 'name': 'Test workflow 2',
                 'kickoff': {
-                    field_template.api_name: user3.id,
+                    field_template.api_name: user3.email,
                 },
             },
         )
@@ -1746,7 +1746,7 @@ class TestUpdateTemplateTask:
             'src.processes.services.templates.'
             'integrations.TemplateIntegrationsService.template_updated',
         )
-        analytics_mock = mocker.patch(
+        analysis_mock = mocker.patch(
             'src.processes.serializers.templates.task.'
             'AnalyticService.templates_task_due_date_created',
         )
@@ -1796,7 +1796,7 @@ class TestUpdateTemplateTask:
         assert response.status_code == 200
         task_data = response.data['tasks'][0]
         assert task_data['raw_due_date']['duration'] == duration
-        analytics_mock.assert_called_once_with(
+        analysis_mock.assert_called_once_with(
             user=user,
             template=template,
             task=template.tasks.first(),
@@ -1810,7 +1810,7 @@ class TestUpdateTemplateTask:
         api_client,
     ):
         # arrange
-        analytics_mock = mocker.patch(
+        analysis_mock = mocker.patch(
             'src.processes.serializers.templates.task.'
             'AnalyticService.templates_task_due_date_created',
         )
@@ -1859,7 +1859,7 @@ class TestUpdateTemplateTask:
         assert response.status_code == 200
         task_data = response.data['tasks'][0]
         assert task_data['raw_due_date']['duration'] == duration
-        analytics_mock.assert_not_called()
+        analysis_mock.assert_not_called()
 
     def test_update__with_equal_api_names__save_last(
         self,
@@ -2789,7 +2789,7 @@ class TestUpdateTemplateRawPerformer:
             data={
                 'name': 'Test template',
                 'kickoff': {
-                    field_template.api_name: user.id,
+                    field_template.api_name: user.email,
                 },
             },
         )

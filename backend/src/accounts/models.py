@@ -618,7 +618,7 @@ class Contact(
 
     first_name = models.CharField(max_length=150, blank=True, null=True)
     last_name = models.CharField(max_length=150, blank=True, null=True)
-    photo = models.URLField(max_length=1024, null=True, blank=True)
+    photo = models.URLField(max_length=1500, null=True, blank=True)
     job_title = models.CharField(max_length=150, blank=True, null=True)
     source = models.CharField(
         max_length=255,
@@ -653,6 +653,13 @@ class Contact(
 class UserGroup(SoftDeleteModel):
     class Meta:
         ordering = ['name']
+        constraints = [
+            UniqueConstraint(
+                fields=['name', 'account'],
+                condition=Q(is_deleted=False),
+                name='usergroup_name_account_unique',
+            ),
+        ]
 
     name = models.CharField(max_length=255)
     photo = models.URLField(max_length=1024, null=True, blank=True)

@@ -90,7 +90,7 @@ services:
     volumes:
       - ../backend:/pneumatic_backend
     command: >
-      sh -c "celery -A src worker -l warning"
+      sh -c "celery --app src.celery_app:app worker -l warning"
     depends_on:
       - postgres
       - rabbitmq
@@ -109,7 +109,7 @@ services:
       - ../config/backend.env
     volumes:
       - ../backend:/pneumatic_backend
-    command: celery --pidfile= -A src beat -l warning -S django
+    command: celery --pidfile= --app src.celery_app:app beat -l warning -S django
     depends_on:
       - postgres
       - rabbitmq
