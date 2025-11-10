@@ -91,3 +91,7 @@ MSG_A_0042 = _(
 )
 MSG_A_0043 = _('You need to pass in old_user or old_group')
 MSG_A_0044 = _('You need to pass in new_user or new_group')
+MSG_A_0045 = lambda name: format_lazy(
+    _('Group with the name "{name}" already exists.'),
+    name=name,
+)

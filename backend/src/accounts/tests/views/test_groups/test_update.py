@@ -43,6 +43,10 @@ def test_update__ok(api_client, mocker):
         'photo': 'https://foeih.com/image.jpg',
         'users': [another_user.id],
     }
+    mocker.patch(
+        'src.accounts.serializers.group.GroupSerializer.validate_name',
+        return_value='Groups',
+    )
     service_init_mock = mocker.patch.object(
         UserGroupService,
         attribute='__init__',
@@ -96,6 +100,10 @@ def test_update__yourself__ok(api_client, mocker):
         'photo': 'https://foeih.com/image.jpg',
         'users': [user.id],
     }
+    mocker.patch(
+        'src.accounts.serializers.group.GroupSerializer.validate_name',
+        return_value='Groups',
+    )
     service_init_mock = mocker.patch.object(
         UserGroupService,
         attribute='__init__',
@@ -264,6 +272,10 @@ def test_update__service_exception__validation_error(api_client, mocker):
         users=[user.id, another_user.id],
     )
     message = 'some message'
+    mocker.patch(
+        'src.accounts.serializers.group.GroupSerializer.validate_name',
+        return_value='Groups',
+    )
     update_group_mock = mocker.patch(
         'src.accounts.services.group.UserGroupService.'
         'partial_update',
@@ -353,6 +365,10 @@ def test_update__invited_user__ok(api_client, mocker):
         UserGroupService,
         attribute='__init__',
         return_value=None,
+    )
+    mocker.patch(
+        'src.accounts.serializers.group.GroupSerializer.validate_name',
+        return_value='Groups',
     )
     group_update = create_test_group(
         account,
