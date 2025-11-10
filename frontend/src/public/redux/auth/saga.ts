@@ -218,10 +218,6 @@ export function* registerWithEmailPassword({ payload: { user, captcha, onStart, 
       yield call(authenticateUser, undefined, true);
     } else {
       console.info('register failed :', registerUser.message);
-      NotificationManager.warning({
-        title: 'Register failed',
-        message: registerUser.message,
-      });
       yield put(authUserFail());
     }
   } catch (error) {
