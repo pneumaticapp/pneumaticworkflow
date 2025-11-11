@@ -37,6 +37,7 @@ interface IFilterSelectCommonProps<
   isSearchShown?: boolean;
   noValueLabel?: string;
   placeholderText: string;
+  searchPlaceholder?: string;
   toggleClassName?: string;
   arrowClassName?: string;
   menuClassName?: string;
@@ -83,6 +84,7 @@ export function FilterSelect<
     isSearchShown,
     noValueLabel,
     placeholderText,
+    searchPlaceholder,
     toggleClassName,
     arrowClassName,
     menuClassName,
@@ -141,6 +143,7 @@ export function FilterSelect<
             onClear={handleClearSearchText}
             fieldSize="md"
             autoFocus
+            placeholder={searchPlaceholder}
           />
         </div>
         <hr className={styles['search__separator']} />

@@ -215,7 +215,7 @@ export function WorkflowsLayoutComponent({
             }}
           />
 
-          {workflowsView === EWorkflowsView.Table && renderFilters()}
+          {renderFilters()}
         </div>
       </div>
     );
@@ -229,6 +229,7 @@ export function WorkflowsLayoutComponent({
             isSearchShown
             noValueLabel={formatMessage({ id: 'sorting.all-templates' })}
             placeholderText={formatMessage({ id: 'sorting.no-template-found' })}
+            searchPlaceholder={formatMessage({ id: 'sorting.search-placeholder' })}
             selectedOption={templateIdFilter}
             options={filterTemplates}
             optionIdKey="id"

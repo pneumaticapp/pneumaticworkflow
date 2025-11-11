@@ -947,6 +947,7 @@ export const enMessages = {
   'sorting.all-statuses': 'All Statuses',
   'sorting.all-steps': 'All Steps',
   'sorting.no-template-found': 'No templates found',
+  'sorting.search-placeholder': 'Search',
   'sorting.no-step-found': 'No steps found',
   'sorting.attachments': 'Attachments',
   'sorting.timeline': 'Timeline',
