@@ -1,11 +1,11 @@
-import React from 'react';
+import React, { ReactNode } from 'react';
 import classnames from 'classnames';
 
 import styles from './Tabs.css';
 
 type TOptionBase = {
   id: number | string;
-  label: string;
+  label: string | ReactNode;
 };
 
 export interface ITabsProps<TOption extends TOptionBase> {

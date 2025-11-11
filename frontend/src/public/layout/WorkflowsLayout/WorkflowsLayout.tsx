@@ -10,7 +10,7 @@ import { history } from '../../utils/history';
 import { WorkflowModalContainer } from '../../components/Workflows/WorkflowModal';
 import { FilterSelect, SelectMenu, Tabs } from '../../components/UI';
 import { EWorkflowsSorting, EWorkflowsStatus, EWorkflowsView } from '../../types/workflow';
-import { FilterIcon } from '../../components/icons';
+import { BoxesIcon, FilterIcon, TableViewIcon } from '../../components/icons';
 import { IWorkflowsFiltersProps } from '../../components/Workflows/types';
 import {
   canFilterByCurrentPerformer,
@@ -28,7 +28,6 @@ import { WorkflowsTableProvider } from '../../components/Workflows/WorkflowsTabl
 import { IApplicationState } from '../../types/redux';
 import { useCheckDevice } from '../../hooks/useCheckDevice';
 import styles from './WorkflowsLayout.css';
-// import { updateQueryFields } from './utils';
 
 export interface IWorkflowsLayoutComponentProps extends IWorkflowsFiltersProps {
   workflowId: number | null;
@@ -197,14 +196,15 @@ export function WorkflowsLayoutComponent({
         <div className={styles['filters']}>
           <Tabs
             activeValueId={workflowsView}
+            tabClassName={styles['view-switch-tab']}
             values={[
               {
                 id: EWorkflowsView.Table,
-                label: formatMessage({ id: 'workflows.table-view' }),
+                label: <TableViewIcon />,
               },
               {
                 id: EWorkflowsView.Grid,
-                label: formatMessage({ id: 'workflows.grid-view' }),
+                label: <BoxesIcon />,
               },
             ]}
             onChange={(view) => {

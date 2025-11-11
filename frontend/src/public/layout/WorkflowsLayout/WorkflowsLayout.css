@@ -59,3 +59,7 @@
     white-space: nowrap;
   }
 }
+
+.view-switch-tab {
+  padding: 6px 16px;
+}
