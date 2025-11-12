@@ -265,10 +265,7 @@ class Auth0Service(SignUpMixin, CacheMixin):
         except requests.RequestException as ex:
             capture_sentry_message(
                 message=f'Auth0 organization members request failed: {ex}',
-                data={
-                    'org_id': org_id,
-                    'status_code': getattr(response, 'status_code', None),
-                },
+                data={'org_id': org_id},
                 level=SentryLogLevel.ERROR,
             )
             raise exceptions.FailedFetchMembers from ex
@@ -298,10 +295,7 @@ class Auth0Service(SignUpMixin, CacheMixin):
         except requests.RequestException as ex:
             capture_sentry_message(
                 message=f'Auth0 user organizations request failed: {ex}',
-                data={
-                    'user_id': user_id,
-                    'status_code': getattr(response, 'status_code', None),
-                },
+                data={'user_id': user_id},
                 level=SentryLogLevel.ERROR,
             )
             return []
