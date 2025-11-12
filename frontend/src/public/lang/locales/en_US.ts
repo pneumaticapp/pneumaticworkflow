@@ -944,6 +944,7 @@ export const enMessages = {
   'sorting.settings': 'Settings',
   'sorting.show-all': 'Show all',
   'sorting.all-templates': 'All Templates',
+  'sorting.several-templates': '{count} templates',
   'sorting.all-statuses': 'All Statuses',
   'sorting.all-steps': 'All Steps',
   'sorting.no-template-found': 'No templates found',

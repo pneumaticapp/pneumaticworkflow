@@ -69,6 +69,7 @@
 .dropdown-item-check__label {
   width: 100%;
   cursor: pointer;
+  align-items: center;
 }
 
 .dropdown-item-check__title {

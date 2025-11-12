@@ -181,12 +181,6 @@ export function WorkflowsLayoutComponent({
     }
   }, [sorting, statusFilter]);
 
-  const templateIdFilter = React.useMemo(() => {
-    const [firstTemplate] = templatesIdsFilter;
-
-    return firstTemplate || null;
-  }, [templatesIdsFilter[0]]);
-
   const statusTitles = React.useMemo(() => Object.values(EWorkflowsStatus), []);
   const sortingTitles = React.useMemo(() => getSortingsByStatus(statusFilter), [statusFilter]);
 
@@ -226,18 +220,19 @@ export function WorkflowsLayoutComponent({
       <>
         <div className={styles['template-filter']}>
           <FilterSelect
+            isMultiple
             isSearchShown
             noValueLabel={formatMessage({ id: 'sorting.all-templates' })}
             placeholderText={formatMessage({ id: 'sorting.no-template-found' })}
             searchPlaceholder={formatMessage({ id: 'sorting.search-placeholder' })}
-            selectedOption={templateIdFilter}
-            options={filterTemplates}
+            selectedOptions={templatesIdsFilter}
+            options={filterTemplates} // add numbers!
             optionIdKey="id"
             optionLabelKey="name"
-            onChange={(templateId: number) => {
+            onChange={(templateIds: number[]) => {
               sessionStorage.setItem('isInternalNavigation', 'true');
-              setStepsFilter([]);
-              setTemplatesFilter([templateId]);
+              setStepsFilter([]); // change after addiing the new task filter
+              setTemplatesFilter(templateIds);
             }}
             resetFilter={() => {
               sessionStorage.setItem('isInternalNavigation', 'true');
@@ -246,8 +241,14 @@ export function WorkflowsLayoutComponent({
             }}
             Icon={FilterIcon}
             renderPlaceholder={() => {
-              const selectedTemplate = filterTemplates.find((t) => t.id === templateIdFilter);
-              return selectedTemplate?.name || formatMessage({ id: 'sorting.all-templates' });
+              if (templatesIdsFilter.length === 1) {
+                const selectedTemplate = filterTemplates.find((t) => t.id === templatesIdsFilter[0]);
+                return selectedTemplate?.name || '';
+              } if (templatesIdsFilter.length > 1) {
+                return formatMessage({ id: 'sorting.several-templates' }, { count: templatesIdsFilter.length });
+              } 
+              return formatMessage({ id: 'sorting.all-templates' });
+              
             }}
           />
         </div>
