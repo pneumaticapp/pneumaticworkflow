@@ -131,26 +131,34 @@ class OktaService(SignUpMixin, CacheMixin):
         }
         """
 
-        userinfo_url = f'https://{self.domain}/oauth2/default/v1/userinfo'
-        response = requests.get(
-            userinfo_url,
-            headers={'Authorization': f'Bearer {access_token}'},
-        )
+        cache_key = f'user_profile_{access_token}'
+        cached_profile = self._get_cache(key=cache_key)
+        if cached_profile:
+            return cached_profile
 
-        if not response.ok:
-            data = response.json() if response.content else {}
+        url = f'https://{self.domain}/oauth2/default/v1/userinfo'
+        headers = {'Authorization': f'Bearer {access_token}'}
+        try:
+            response = requests.get(url, headers=headers, timeout=10)
+            if response.status_code != 200:
+                capture_sentry_message(
+                    message='Okta user profile request failed',
+                    data={
+                        'status_code': response.status_code,
+                        'response': response.text,
+                    },
+                    level=SentryLogLevel.ERROR,
+                )
+                raise exceptions.TokenInvalidOrExpired
+            profile = response.json()
+            self._set_cache(value=profile, key=cache_key)
+            return profile
+        except requests.RequestException as ex:
             capture_sentry_message(
-                message='Okta userinfo request returned an error',
-                data={
-                    'response_data': data,
-                    'status_code': response.status_code,
-                    'userinfo_url': userinfo_url,
-                },
+                message=f'Okta user profile request failed: {ex}',
                 level=SentryLogLevel.ERROR,
             )
-            raise exceptions.TokenInvalidOrExpired
-
-        return response.json()
+            raise exceptions.TokenInvalidOrExpired from ex
 
     def get_auth_uri(self) -> str:
 
@@ -178,20 +186,13 @@ class OktaService(SignUpMixin, CacheMixin):
         query = urllib.parse.urlencode(query_params)
         return f'https://{self.domain}/oauth2/default/v1/authorize?{query}'
 
-    def get_user_data(self, auth_response: dict) -> UserData:
-
-        access_token = self._get_first_access_token(auth_response)
-        user_profile = self._get_user_profile(access_token)
-
+    def get_user_data(self, user_profile: dict) -> UserData:
+        """Retrieve user details during signin / signup process"""
         email = user_profile.get('email')
         if not email:
             raise exceptions.EmailNotExist(
-                details={
-                    'user_profile': user_profile,
-                    'email': email,
-                },
+                details={'user_profile': user_profile},
             )
-
         first_name = (
             user_profile.get('given_name') or
             email.split('@')[0]
@@ -239,7 +240,10 @@ class OktaService(SignUpMixin, CacheMixin):
         utm_campaign: Optional[str] = None,
         gclid: Optional[str] = None,
     ) -> Tuple[UserModel, PneumaticToken]:
-        user_data = self.get_user_data(auth_response)
+        """Authenticate user via Okta and return user with token"""
+        access_token = self._get_first_access_token(auth_response)
+        user_profile = self._get_user_profile(access_token)
+        user_data = self.get_user_data(user_profile)
 
         try:
             user = UserModel.objects.active().get(email=user_data['email'])
@@ -251,7 +255,6 @@ class OktaService(SignUpMixin, CacheMixin):
                 ),
                 user_ip=self.request.META.get('HTTP_X_REAL_IP'),
             )
-            self.save_tokens_for_user(user)
         except UserModel.DoesNotExist as exc:
             if not settings.PROJECT_CONF['SIGNUP']:
                 raise AuthenticationFailed(MSG_AU_0003) from exc
@@ -266,7 +269,8 @@ class OktaService(SignUpMixin, CacheMixin):
                 gclid=gclid,
                 request=self.request,
             )
-            self.save_tokens_for_user(user)
+
+        self.save_tokens_for_user(user)
 
         AnalyticService.users_logged_in(
             user=user,
