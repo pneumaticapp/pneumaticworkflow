@@ -11,7 +11,7 @@ import { ETemplatesSorting } from '../../types/workflow';
 import { ITemplateListItem } from '../../types/template';
 import { getTemplatesModalFilter } from '../selectors/selectTemplateModal';
 import { isArrayWithItems } from '../../utils/helpers';
-import { notifyApiError } from '../../utils/notifyApiError';
+import { NotificationManager } from '../../components/UI/Notifications';
 
 function* fetchSelectTemplateModalTemplates() {
   try {
@@ -27,7 +27,7 @@ function* fetchSelectTemplateModalTemplates() {
 
     yield put(setSelectTemplateModalTemplates(filteredTemplates));
   } catch (error) {
-    notifyApiError(error, { id: 'select-template.failed-to-fetch-templates' });
+    NotificationManager.notifyApiError(error, { id: 'select-template.failed-to-fetch-templates' });
     logger.error(error);
   }
 }

@@ -90,7 +90,6 @@ import { ITemplate } from '../../types/template';
 import { watchNewWorkflowsEvent } from '../workflows/saga';
 import { removeLocalStorage } from '../../utils/localStorage';
 import { isEnvBilling } from '../../constants/enviroment';
-import { notifyApiError } from '../../utils/notifyApiError';
 
 export function* authenticateUser(redirectUrl?: string, isRegister: boolean = false) {
   try {
@@ -142,7 +141,7 @@ export function* loginWithEmailPassword({ payload }: TLoginUser) {
     const isVerificationError = err.includes('Your account has not been verified');
 
     if (isVerificationError) {
-      notifyApiError(err, { title: 'Login failed', message: err });
+      NotificationManager.notifyApiError(err, { title: 'Login failed', message: err });
       yield put(authUserFail(EAuthUserFailType.NotVerified));
     } else {
       yield put(authUserFail(EAuthUserFailType.Common));
@@ -160,7 +159,7 @@ export function* loginSuperuser({ payload }: TLoginSuperuser) {
     setSuperuserToken(loginUser.token);
     yield authenticateUser(ERoutes.Main);
   } catch (error) {
-    notifyApiError(error, { title: 'Login failed', message: getErrorMessage(error) });
+    NotificationManager.notifyApiError(error, { title: 'Login failed', message: getErrorMessage(error) });
     yield put(authUserFail(EAuthUserFailType.Common));
   }
 }
@@ -175,7 +174,7 @@ export function* loginPartnerSuperuser({ payload: { tenantId } }: TLoginPartnerS
     setSuperuserReturnRoute(history.location.pathname);
     yield authenticateUser(ERoutes.Main);
   } catch (error) {
-    notifyApiError(error, { title: 'Login failed', message: getErrorMessage(error) });
+    NotificationManager.notifyApiError(error, { title: 'Login failed', message: getErrorMessage(error) });
   } finally {
     yield put(setGeneralLoaderVisibility(false));
   }
@@ -189,7 +188,7 @@ export function* retrunFromSupermodeSaga() {
     yield authenticateUser(returnRoute);
     resetSuperuserReturnRoute();
   } catch (error) {
-    notifyApiError(error, { title: 'Login failed', message: getErrorMessage(error) });
+    NotificationManager.notifyApiError(error, { title: 'Login failed', message: getErrorMessage(error) });
   } finally {
     yield put(setGeneralLoaderVisibility(false));
   }
@@ -219,10 +218,6 @@ export function* registerWithEmailPassword({ payload: { user, captcha, onStart, 
       yield call(authenticateUser, undefined, true);
     } else {
       console.info('register failed :', registerUser.message);
-      NotificationManager.error({
-        title: 'Register failed',
-        message: registerUser.message,
-      });
       yield put(authUserFail());
     }
   } catch (error) {
@@ -259,10 +254,6 @@ export function* registerWithInvite({ payload }: TRegisterUserInvited) {
       yield call(authenticateUser, ERoutes.Main);
     } else {
       console.info('register failed :', user.message);
-      NotificationManager.error({
-        title: 'Register failed',
-        message: user.message,
-      });
       yield put(authUserFail());
     }
   } catch (error) {
@@ -333,7 +324,7 @@ export function* editCurrentProfile({ payload }: TEditUser) {
     yield put(editCurrentUserSuccess(mapToCamelCase(result) as TUpdateUserMappedResponse));
   } catch (err) {
     yield put(profileEditFailed());
-    notifyApiError(err, { message: 'user-account.edit-account-fail' });
+    NotificationManager.notifyApiError(err, { message: 'user-account.edit-account-fail' });
     logger.error('edit profile error', err);
   }
 }
@@ -346,23 +337,16 @@ export function* editCurrentAccount({ payload }: TEditAccount) {
       },
     }: ReturnType<typeof getAuthUser> = yield select(getAuthUser);
 
-    const result: IUpdateAccountResponse | void = yield call(editAccount, payload, leaseLevel);
-    if (!result) {
-      yield put(accountEditFailed());
-      NotificationManager.error({
-        message: 'user-account.edit-account-fail',
-      });
-
-      return;
-    }
+    const result: IUpdateAccountResponse = yield call(editAccount, payload, leaseLevel);
 
     NotificationManager.success({
       message: 'user-account.edit-account-success',
     });
     yield put(editCurrentAccountSuccess(result));
   } catch (error) {
-    notifyApiError(error, { message: 'user-account.edit-account-fail' });
+    NotificationManager.notifyApiError(error, { message: 'user-account.edit-account-fail' });
     logger.error('account edit error', error);
+    yield put(accountEditFailed());
   }
 }
 
@@ -376,7 +360,7 @@ export function* sendPasswordReset({ payload }: TSendForgotPassword) {
   } catch (error) {
     const message = getErrorMessage(error);
     logger.error(message, error);
-    notifyApiError(error, { message });
+    NotificationManager.notifyApiError(error, { message });
     yield put(sendForgotPasswordFail());
   }
 }
@@ -392,7 +376,7 @@ export function* sendPasswordChange({ payload }: TSendChangePassword) {
   } catch (error) {
     const errorMessages = getErrorMessage(error);
     logger.error(errorMessages, error);
-    notifyApiError(error, { message: errorMessages });
+    NotificationManager.notifyApiError(error, { message: errorMessages });
     yield put(sendChangePasswordFail());
   }
 }
@@ -424,7 +408,7 @@ export function* fetchResendVerification() {
     NotificationManager.success({ message: 'dashboard.resend-verification' });
   } catch (error) {
     logger.error(error);
-    notifyApiError(error, { message: getErrorMessage(error) });
+    NotificationManager.notifyApiError(error, { message: getErrorMessage(error) });
   }
 }
 
@@ -445,7 +429,7 @@ export function* handleUploadUserPhoto({ payload: { photo, onComplete } }: TUplo
     }
   } catch (error) {
     logger.error('failed to upload user photo', error);
-    notifyApiError(error, { message: getErrorMessage(error) });
+    NotificationManager.notifyApiError(error, { message: getErrorMessage(error) });
   } finally {
     yield put(setGeneralLoaderVisibility(false));
   }
@@ -458,7 +442,7 @@ export function* handleDeleteUserPhoto() {
     yield put(setUserPhoto(''));
   } catch (error) {
     logger.error('failed to delete user photo', error);
-    notifyApiError(error, { message: getErrorMessage(error) });
+    NotificationManager.notifyApiError(error, { message: getErrorMessage(error) });
   } finally {
     yield put(setGeneralLoaderVisibility(false));
   }
@@ -501,7 +485,7 @@ export function* changePaymentDetailsSaga() {
     yield put(setGeneralLoaderVisibility(false));
   } catch (error) {
     logger.error(error);
-    notifyApiError(error, { message: getErrorMessage(error) });
+    NotificationManager.notifyApiError(error, { message: getErrorMessage(error) });
   }
 }
 
@@ -540,7 +524,7 @@ export function* makeStripePaymentSaga({
     }
 
     logger.error(error);
-    notifyApiError(error, { message: getErrorMessage(error) });
+    NotificationManager.notifyApiError(error, { message: getErrorMessage(error) });
   }
 }
 
@@ -598,7 +582,7 @@ function* redirectToCustomerPortalSaga() {
   } catch (error) {
     yield put(setGeneralLoaderVisibility(false));
     logger.error(error);
-    notifyApiError(error, { message: getErrorMessage(error) });
+    NotificationManager.notifyApiError(error, { message: getErrorMessage(error) });
   }
 }
 

@@ -70,7 +70,7 @@ import { setCurrentTask } from '../actions';
 import { getCurrentTask } from '../selectors/task';
 import { envWssURL } from '../../constants/enviroment';
 import { mapTasksToISOStringToRedux } from '../../utils/mappers';
-import { notifyApiError } from '../../utils/notifyApiError';
+import { NotificationManager } from '../../components/UI/Notifications';
 
 export function* setDetailedTask(taskId: number) {
   yield put(setTaskListDetailedTaskId(taskId));
@@ -163,7 +163,7 @@ function* fetchTaskList(offset: number, nextStatus: ETaskListStatus) {
   } catch (error) {
     logger.info('fetch process task list error : ', error);
     yield put(setTaskListStatus(ETaskListStatus.WaitingForAction));
-    notifyApiError(error, { message: 'workflows.fetch-tasks-fail' });
+    NotificationManager.notifyApiError(error, { message: 'workflows.fetch-tasks-fail' });
     history.replace(ERoutes.Tasks);
   }
 }
@@ -177,7 +177,7 @@ function* fetchTasksCount() {
     }
   } catch (error) {
     logger.info('fetch tasks count error : ', error);
-    notifyApiError(error, { message: 'workflows.load-tasks-count-fail' });
+    NotificationManager.notifyApiError(error, { message: 'workflows.load-tasks-count-fail' });
   }
 }
 
@@ -217,7 +217,7 @@ export function* fetchTasksFilterTemplates() {
   } catch (error) {
     yield put(loadTasksFilterTemplatesFailed());
     logger.info('fetch tasks filter templates error : ', error);
-    notifyApiError(error, { message: getErrorMessage(error) });
+    NotificationManager.notifyApiError(error, { message: getErrorMessage(error) });
   }
 }
 
@@ -237,7 +237,7 @@ function* fetchTasksFilterSteps({ payload: { templateId } }: TLoadTasksFilterSte
   } catch (error) {
     put(loadTasksFilterStepsFailed());
     logger.info('fetch tasks filter steps error : ', error);
-    notifyApiError(error, { message: getErrorMessage(error) });
+    NotificationManager.notifyApiError(error, { message: getErrorMessage(error) });
   }
 }
 

@@ -81,7 +81,9 @@ axiosInstance.interceptors.response.use(
       logger.error('Error:', error.message);
     }
 
-    return Promise.reject(Object.assign(new Error(), error.response?.data || {}, { status: error.response?.status }));
+    const data = error.response?.data;
+    const payload = typeof data === 'string' ? { error: data } : data ?? {};
+    return Promise.reject(Object.assign(new Error(), payload, { status: error.response?.status }));
   },
 );
 
