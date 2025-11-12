@@ -77,6 +77,7 @@ class BaseAiService:
         user_description: str,
     ) -> str:
 
+
         if not(settings.OPENAI_API_KEY and settings.OPENAI_API_ORG):
             return self._test_response()
         openai.api_key = settings.OPENAI_API_KEY
