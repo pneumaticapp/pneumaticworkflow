@@ -72,6 +72,9 @@ You can grab your own copy of Pneumatic by cloning this repository and self-host
 * Operating System: Linux(Ubuntu/Debian), macOS or Windows(install and run at your own risk)
 * Docker version 2.27 or above
 * Docker compose version 27.0 or above
+* At least 8GB of RAM
+* At least 50GB of diskspace
+* Ports 80, 443, and 8001 must be open and not in use by any other process(like apache or nginx)
 
 
 ### Get the files
@@ -83,6 +86,13 @@ git clone https://github.com/pneumaticapp/pneumaticworkflow.git
 ```
 or, you can simply download the [project's master folder](https://github.com/pneumaticapp/pneumaticworkflow/archive/refs/heads/master.zip) and unzip it
 
+### Edit the configuration files if necessary
+
+If you want to be accessing Pneumatic over the Internet and the machine you plan to be running it on has an external IP address/domain name, you need to replace all references to localhost in config/project.env and config/frontend.env with your machine's IP address/domain name.
+
+project.env and frontend.env are to be found in the config directory within the Pneumatic project directory.
+Open them with an editor of your choice and find-and-replace all references to localhost with your machine's IP address/domain name.
+
 ### Run Pneumatic
 
 To run Pneumatic cd into the project's directory and run the command
@@ -90,6 +100,7 @@ To run Pneumatic cd into the project's directory and run the command
 ```
 docker compose up -d
 ```
+This will run it in detached mode, if you want to see what's happening omit the -d flag.
 
 Alternatively, you can run the Pneumatic containers from Docker Desktop.
 
