@@ -1,5 +1,5 @@
 /* eslint-disable consistent-return */
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useIntl } from 'react-intl';
 import { useDispatch, useSelector } from 'react-redux';
 
@@ -72,6 +72,12 @@ export function WorkflowsLayoutComponent({
   const [isTableWiderThanScreen, setIsTableWiderThanScreen] = useState(false);
   const workflowsMainRef = useRef<HTMLDivElement>(null);
   const tableViewContainerRef = useRef<TableViewContainerRef>(null);
+  const templatesOptions = useMemo(() => {
+    return filterTemplates.map((template) => ({
+      ...template,
+      ...(template.workflowsCount > 0 && { count: template.workflowsCount }),
+    }));
+  }, [filterTemplates]);
 
   useEffect(() => {
     if (workflowsView !== EWorkflowsView.Table) {
@@ -226,7 +232,7 @@ export function WorkflowsLayoutComponent({
             placeholderText={formatMessage({ id: 'sorting.no-template-found' })}
             searchPlaceholder={formatMessage({ id: 'sorting.search-placeholder' })}
             selectedOptions={templatesIdsFilter}
-            options={filterTemplates} // add numbers!
+            options={templatesOptions}
             optionIdKey="id"
             optionLabelKey="name"
             onChange={(templateIds: number[]) => {
@@ -244,11 +250,11 @@ export function WorkflowsLayoutComponent({
               if (templatesIdsFilter.length === 1) {
                 const selectedTemplate = filterTemplates.find((t) => t.id === templatesIdsFilter[0]);
                 return selectedTemplate?.name || '';
-              } if (templatesIdsFilter.length > 1) {
+              }
+              if (templatesIdsFilter.length > 1) {
                 return formatMessage({ id: 'sorting.several-templates' }, { count: templatesIdsFilter.length });
-              } 
+              }
               return formatMessage({ id: 'sorting.all-templates' });
-              
             }}
           />
         </div>

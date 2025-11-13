@@ -107,7 +107,7 @@
 
 .dropdown-item-content__count {
   margin-left: auto;
-  padding: 0 0.4rem;
+  padding: 0 0 0 1.2rem;
   display: flex;
   min-width: 2rem;
   height: 2rem;
@@ -116,7 +116,6 @@
   line-height: 1.6rem;
   letter-spacing: 0.05em;
   color: var(--pneumatic-color-black48);
-  background: var(--pneumatic-color-black4);
   border-radius: 1.2rem;
   align-items: center;
   justify-content: center;
