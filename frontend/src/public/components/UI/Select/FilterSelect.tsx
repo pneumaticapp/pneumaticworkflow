@@ -217,13 +217,27 @@ export function FilterSelect<
         }
       };
 
+      const areAllSelected =
+        props.isMultiple &&
+        Array.isArray(props.selectedOptions) &&
+        options.length > 0 &&
+        props.selectedOptions.length === options.length;
+
       return (
         <DropdownItem
           className={classnames('dropdown-item-sm', styles['value-item'], styles['value-item__select-all'])}
           onClick={handleSelectAll}
           toggle={false}
         >
-          <span>{selectAllLabel}</span>
+          <Checkbox
+            checked={isSelectAll || areAllSelected}
+            title={<span>{selectAllLabel}</span>}
+            onClick={(e) => e.stopPropagation()}
+            onChange={() => {}}
+            containerClassName={styles['dropdown-item-check']}
+            labelClassName={styles['dropdown-item-check__label']}
+            titleClassName={styles['dropdown-item-check__title']}
+          />
         </DropdownItem>
       );
     };

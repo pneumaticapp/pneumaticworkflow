@@ -72,6 +72,7 @@ export function WorkflowsLayoutComponent({
   const [isTableWiderThanScreen, setIsTableWiderThanScreen] = useState(false);
   const workflowsMainRef = useRef<HTMLDivElement>(null);
   const tableViewContainerRef = useRef<TableViewContainerRef>(null);
+
   const templatesOptions = useMemo(() => {
     return filterTemplates.map((template) => ({
       ...template,
@@ -256,6 +257,7 @@ export function WorkflowsLayoutComponent({
               }
               return formatMessage({ id: 'sorting.all-templates' });
             }}
+            selectAllLabel={formatMessage({ id: 'workflows.filter-all-templates' })}
           />
         </div>
         <SelectMenu values={statusTitles} activeValue={statusFilter} onChange={setStatusFilter} Icon={FilterIcon} />
