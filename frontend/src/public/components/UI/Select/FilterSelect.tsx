@@ -230,6 +230,9 @@ export function FilterSelect<
           toggle={false}
         >
           <Checkbox
+            // Required improvements:
+            //1. Clarify the desynchronization issue with the default
+            //2. Identical backend request when working with a checkbox
             checked={isSelectAll || areAllSelected}
             title={<span>{selectAllLabel}</span>}
             onClick={(e) => e.stopPropagation()}

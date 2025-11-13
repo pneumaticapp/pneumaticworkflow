@@ -63,3 +63,19 @@
 .view-switch-tab {
   padding: 6px 16px;
 }
+/*  move it into a getStarterFilter function (?) */
+.user {
+  display: flex;
+  align-items: center;
+}
+
+.user-avatar {
+  flex-shrink: 0;
+}
+
+.user-name {
+  margin: 0 0.8rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* /// */
