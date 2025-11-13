@@ -329,8 +329,7 @@ class GoogleAuthService(
             'response_type': 'code',
             'state': state,
             'access_type': 'offline',
-            'prompt': 'consent',
-            'include_granted_scopes': 'false',
+            'include_granted_scopes': 'true',
         }
 
         query_string = urllib.parse.urlencode(params)
