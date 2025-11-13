@@ -3,16 +3,12 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useIntl } from 'react-intl';
 import { useDispatch, useSelector } from 'react-redux';
 
-import {
-  loadWorkflowsList,
-  TRemoveWorkflowFromListPayload,
-  setWorkflowsFilterWorkflowStarters,
-} from '../../redux/actions';
+import { loadWorkflowsList, TRemoveWorkflowFromListPayload } from '../../redux/actions';
 import { TopNavContainer } from '../../components/TopNav';
 import { ERoutes } from '../../constants/routes';
 import { history } from '../../utils/history';
 import { WorkflowModalContainer } from '../../components/Workflows/WorkflowModal';
-import { Avatar, FilterSelect, SelectMenu, Tabs } from '../../components/UI';
+import { FilterSelect, SelectMenu, Tabs } from '../../components/UI';
 import { EWorkflowsSorting, EWorkflowsStatus, EWorkflowsView } from '../../types/workflow';
 import { BoxesIcon, FilterIcon, TableViewIcon } from '../../components/icons';
 import { IWorkflowsFiltersProps } from '../../components/Workflows/types';
@@ -32,7 +28,8 @@ import { WorkflowsTableProvider } from '../../components/Workflows/WorkflowsTabl
 import { IApplicationState } from '../../types/redux';
 import { useCheckDevice } from '../../hooks/useCheckDevice';
 import styles from './WorkflowsLayout.css';
-import { EXTERNAL_USER, getActiveUsers, getUserFullName } from '../../utils/users';
+import { StarterFilterSelect } from './StarterFilterSelect';
+import { ERenderPlaceholderType, getRenderPlaceholder } from './utils';
 
 export interface IWorkflowsLayoutComponentProps extends IWorkflowsFiltersProps {
   workflowId: number | null;
@@ -84,36 +81,6 @@ export function WorkflowsLayoutComponent({
       ...(template.workflowsCount > 0 && { count: template.workflowsCount }),
     }));
   }, [filterTemplates]);
-
-  /// ///////////////// move it into a getStarterFilter function (?)
-  const { users } = useSelector((state: IApplicationState) => state.accounts);
-  const activeUsers = getActiveUsers(users);
-  const { workflowStartersCounters } = useSelector(
-    (state: IApplicationState) => state.workflows.workflowsSettings.counters,
-  );
-
-  const workflowStartersOptions = useMemo(() => {
-    const usersWithExternal = [EXTERNAL_USER, ...activeUsers];
-
-    const normalizedUsers = usersWithExternal.map((user) => {
-      const userFullName = getUserFullName(user);
-      const workflowsCount = workflowStartersCounters.find(({ sourceId }) => sourceId === user.id)?.workflowsCount || 0;
-      return {
-        ...user,
-        displayName: (
-          <div className={styles['user']}>
-            <Avatar user={user} className={styles['user-avatar']} size="sm" />
-            <span className={styles['user-name']}>{userFullName}</span>
-          </div>
-        ),
-        ...(workflowsCount > 0 && { count: workflowsCount }),
-        searchByText: userFullName,
-      };
-    });
-
-    return normalizedUsers;
-  }, [users.length, workflowStartersCounters]);
-  /// ////////////////
 
   useEffect(() => {
     if (workflowsView !== EWorkflowsView.Table) {
@@ -282,51 +249,21 @@ export function WorkflowsLayoutComponent({
               setTemplatesFilter([]);
             }}
             Icon={FilterIcon}
-            renderPlaceholder={() => {
-              if (templatesIdsFilter.length === 1) {
-                const selectedTemplate = filterTemplates.find((t) => t.id === templatesIdsFilter[0]);
-                return selectedTemplate?.name || '';
-              }
-              if (templatesIdsFilter.length > 1) {
-                return formatMessage({ id: 'sorting.several-templates' }, { count: templatesIdsFilter.length });
-              }
-              return formatMessage({ id: 'sorting.all-templates' });
-            }}
+            renderPlaceholder={() =>
+              getRenderPlaceholder({
+                filterIds: templatesIdsFilter,
+                options: templatesOptions,
+                formatMessage,
+                type: ERenderPlaceholderType.Template,
+                severalOptionPlaceholder: 'sorting.several-templates',
+                defaultPlaceholder: 'sorting.all-templates',
+              })
+            }
             selectAllLabel={formatMessage({ id: 'workflows.filter-all-templates' })}
           />
         </div>
-        <div className={styles['starter-filter']}>
-          {/* // move it into a separate function (?) */}
-          <FilterSelect
-            isMultiple
-            isSearchShown
-            noValueLabel={formatMessage({ id: 'sorting.all-starters' })}
-            placeholderText={formatMessage({ id: 'workflows.filter-no-starter' })}
-            searchPlaceholder={formatMessage({ id: 'sorting.search-placeholder' })}
-            selectedOptions={workflowStartersIdsFilter}
-            options={workflowStartersOptions}
-            optionIdKey="id"
-            optionLabelKey="displayName"
-            onChange={(workflowStarters: number[]) => dispatch(setWorkflowsFilterWorkflowStarters(workflowStarters))}
-            resetFilter={() => dispatch(setWorkflowsFilterWorkflowStarters([]))}
-            Icon={FilterIcon}
-            renderPlaceholder={() => {
-              // move it into a separate function
-              if (workflowStartersIdsFilter.length === 1) {
-                const selectedStarter = workflowStartersOptions.find(
-                  (option) => option.id === workflowStartersIdsFilter[0],
-                );
-                const userFullName = getUserFullName(selectedStarter);
-                return userFullName;
-              }
-              if (workflowStartersIdsFilter.length > 1) {
-                return formatMessage({ id: 'sorting.several-starters' }, { count: workflowStartersIdsFilter.length });
-              }
-              return formatMessage({ id: 'sorting.all-starters' });
-            }}
-            selectAllLabel={formatMessage({ id: 'workflows.filter-all-starters' })}
-          />
-        </div>
+
+        <StarterFilterSelect />
         <SelectMenu values={statusTitles} activeValue={statusFilter} onChange={setStatusFilter} Icon={FilterIcon} />
         <SelectMenu values={sortingTitles} activeValue={sorting} onChange={changeWorkflowsSorting} />
         {areFiltersChanged && (

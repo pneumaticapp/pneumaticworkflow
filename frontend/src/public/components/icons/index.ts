@@ -170,3 +170,4 @@ export * from './WorkflowMinimize';
 export * from './TuneViewIcon';
 export * from './TeamPlaceholderNoUsersIcon';
 export * from './TableViewIcon';
+export * from './StarterFilterIcon';
