@@ -8,14 +8,14 @@ import { Checkbox } from '../UI/Fields/Checkbox';
 import { IntlMessages } from '../IntlMessages';
 import { isArrayWithItems } from '../../utils/helpers';
 import { ShowMore } from '../UI/ShowMore';
-import { ITemplateTitle } from '../../types/template';
+import { ITemplateTitleBaseWithCount } from '../../types/template';
 
 import styles from './Filters.css';
 
 export interface ITemplatesFilterProps {
   searchText: string;
   selectedTemplates: number[];
-  templatesTitles: ITemplateTitle[];
+  templatesTitles: ITemplateTitleBaseWithCount[];
   isFiltersLoading: boolean;
   changeTemplatesSearchText(e: React.ChangeEvent<HTMLInputElement>): void;
   changeTemplatesFilter(templateId: number): (e: React.ChangeEvent<HTMLInputElement>) => void;
@@ -48,15 +48,9 @@ export function TemplatesFilter({
     );
   };
 
-  const isTemplatesNumberExceeded = useMemo(
-    () => templatesTitles.length > MAX_SHOW_TEMPLATES,
-    [templatesTitles],
-  );
+  const isTemplatesNumberExceeded = useMemo(() => templatesTitles.length > MAX_SHOW_TEMPLATES, [templatesTitles]);
 
-  const isSearchFilled = useMemo(
-    () => searchText.length > 1,
-    [searchText],
-  );
+  const isSearchFilled = useMemo(() => searchText.length > 1, [searchText]);
 
   const [isShowAllVisibleState, setShowAllVisibleState] = useState(isTemplatesNumberExceeded);
 
@@ -65,10 +59,7 @@ export function TemplatesFilter({
     [isTemplatesNumberExceeded, isSearchFilled],
   );
 
-  const handleShowAll = useCallback(
-    () => setShowAllVisibleState(!isShowAllVisibleState),
-    [isShowAllVisibleState],
-  );
+  const handleShowAll = useCallback(() => setShowAllVisibleState(!isShowAllVisibleState), [isShowAllVisibleState]);
 
   const truncatedTemplates = useMemo(() => {
     if (!isShowAllVisibleState && !isSearchFilled) {
@@ -80,7 +71,7 @@ export function TemplatesFilter({
     }
 
     const templatesToShow = templatesTitles.slice(0, MAX_SHOW_TEMPLATES);
-    const isSelectedWorkflowsHidden = selectedTemplates.some(id => !templatesToShow.map(({ id }) => id).includes(id));
+    const isSelectedWorkflowsHidden = selectedTemplates.some((id) => !templatesToShow.map(({ id }) => id).includes(id));
 
     if (isSelectedWorkflowsHidden) {
       handleShowAll();
@@ -99,7 +90,7 @@ export function TemplatesFilter({
       isInitiallyVisible={isPanelExpanded}
     >
       {renderWorkflowsPlaceholder()}
-      {isTemplatesNumberExceeded &&
+      {isTemplatesNumberExceeded && (
         <input
           className={styles['filter__input']}
           disabled={isFiltersLoading}
@@ -108,13 +99,10 @@ export function TemplatesFilter({
           onChange={changeTemplatesSearchText}
           autoFocus
         />
-      }
+      )}
       {isFiltersLoading && <div className={classnames('loading', styles['filter__spinner'])} />}
       <div
-        className={classnames(
-          styles['filter__checkboxes'],
-          isFiltersLoading && styles['filter__checkboxes_disabled'],
-        )}
+        className={classnames(styles['filter__checkboxes'], isFiltersLoading && styles['filter__checkboxes_disabled'])}
       >
         {truncatedTemplates.map((template, idx) => (
           <Checkbox
@@ -127,7 +115,7 @@ export function TemplatesFilter({
           />
         ))}
       </div>
-      {isShowAllVisibleState &&
+      {isShowAllVisibleState && (
         <button
           className={classnames('mb-4', styles['filter__button-show-all'])}
           onClick={handleShowAll}
@@ -135,7 +123,7 @@ export function TemplatesFilter({
         >
           <IntlMessages id="process-highlights.show-all-workflows" />
         </button>
-      }
+      )}
     </ShowMore>
   );
 }

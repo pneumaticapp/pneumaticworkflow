@@ -12,13 +12,12 @@ import { TITLES } from '../../constants/titles';
 import { history } from '../../utils/history';
 import { PROCESS_HIGHLIGHTS_DATE_RANGE_MAP } from '../../utils/dateTime';
 import { UsersFilter } from './UsersFilter';
-import { IGetTemplatesTitlesRequesConfig } from '../../api/getTemplatesTitles';
 import { ILoadHighlightsConfig } from '../../redux/highlights/actions';
 import { IHighlightsFilters } from '../../types/redux';
 import { INIT_FILTERS } from '../../redux/highlights/reducer';
 import { isArrayWithItems } from '../../utils/helpers';
 import { TUserListItem } from '../../types/user';
-import { ITemplateTitle } from '../../types/template';
+import { ITemplateTitleBaseWithCount } from '../../types/template';
 import { Placeholder, Button } from '../UI';
 import { TOpenWorkflowLogPopupPayload } from '../../redux/actions';
 
@@ -29,6 +28,7 @@ import { FeedItem } from './FeedItem';
 import styles from './HighlightsFeed.css';
 import { EPageTitle } from '../../constants/defaultValues';
 import { PageTitle } from '../PageTitle/PageTitle';
+import { IGetHighlightsTitlesRequestConfig } from '../../api/getHighlightsTitles';
 
 export interface IHighlightsFeedProps {
   count: number;
@@ -38,7 +38,7 @@ export interface IHighlightsFeedProps {
   items: IHighlightsItem[];
   workflowId: number | null;
   users: TUserListItem[];
-  templatesTitles: ITemplateTitle[];
+  templatesTitles: ITemplateTitleBaseWithCount[];
   timeRange: EHighlightsDateFilter;
   startDate: Date;
   endDate: Date;
@@ -48,7 +48,7 @@ export interface IHighlightsFeedProps {
   loadHighlights({ limit, offset, onScroll }: ILoadHighlightsConfig): void;
   openWorkflowLogPopup(payload: TOpenWorkflowLogPopupPayload): void;
   resetHightlightsStore(): void;
-  loadTemplatesTitles({ eventDateFrom, eventDateTo }: IGetTemplatesTitlesRequesConfig): void;
+  loadTemplatesTitles({ eventDateFrom, eventDateTo }: IGetHighlightsTitlesRequestConfig): void;
   setFilters(value: Partial<IHighlightsFilters>): void;
   setFiltersChanged(): void;
 }
