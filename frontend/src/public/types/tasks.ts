@@ -1,5 +1,5 @@
 import { IWorkflow, IWorkflowClient, WorkflowWithTsp } from './workflow';
-import { IExtraField, ITemplateTitle, RawPerformer } from './template';
+import { IExtraField, ITemplateTitleBaseWithCount, RawPerformer } from './template';
 
 export type TTaskWorkflow = Pick<IWorkflow, 'id' | 'name' | 'status' | 'dateCompleted'> & {
   templateName: string;
@@ -145,7 +145,7 @@ export interface ITasksSettings {
     isLoading: boolean;
   };
   templateList: {
-    items: ITemplateTitle[];
+    items: ITemplateTitleBaseWithCount[];
     isLoading: boolean;
   };
 }

@@ -243,6 +243,12 @@ export interface ITemplateTitle {
   workflowsCount: number;
 }
 
+export interface ITemplateTitleBaseWithCount {
+  id: number;
+  name: string;
+  count: number;
+}
+
 export enum ETemplateTitleWorkflowStatuses {
   running = 'running',
   delayed = 'delayed',

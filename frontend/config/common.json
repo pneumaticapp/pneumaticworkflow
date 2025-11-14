@@ -73,6 +73,7 @@
       "systemTemplate": "/templates/system/:id/fill",
       "copyTemplate": "/templates/:id/clone",
       "templatesTitles": "templates/titles",
+      "templatesTitlesByTasks": "templates/titles-by-tasks",
       "workflows": "/workflows",
       "workflow": "/workflows/:id",
       "taskComment": "/v2/tasks/:id/comment",
