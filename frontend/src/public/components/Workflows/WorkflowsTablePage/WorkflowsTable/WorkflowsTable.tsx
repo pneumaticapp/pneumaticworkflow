@@ -22,7 +22,7 @@ import { IWorkflowsFiltersProps } from '../../types';
 import { isArrayWithItems } from '../../../../utils/helpers';
 import { canFilterByTemplateStep } from '../../../../utils/workflows/filters';
 import { StepName } from '../../../StepName';
-import { EXTERNAL_USER, getUserFullName } from '../../../../utils/users';
+import { getUserFullName } from '../../../../utils/users';
 import { ETemplateOwnerType, ITableViewFields } from '../../../../types/template';
 import { useIsTableWiderThanScreen, useWorkflowsTableRef } from './WorkflowsTableContext';
 
@@ -86,7 +86,6 @@ export function WorkflowsTable({
   performersGroupIdsFilter,
   performersCounters,
   statusFilter,
-  setWorkflowStartersFilter,
   setStepsFilter,
   onSearch,
   loadWorkflowsList,
@@ -171,28 +170,6 @@ export function WorkflowsTable({
     }
   }, [currentTemplateId]);
 
-  const workflowStartersOptions = useMemo(() => {
-    const usersWithExternal = [EXTERNAL_USER, ...users];
-
-    const normalizedUsers = usersWithExternal.map((user) => {
-      const userFullName = getUserFullName(user);
-
-      return {
-        ...user,
-        displayName: (
-          <div className={styles['user']}>
-            <Avatar user={user} className={styles['user-avatar']} size="sm" />
-            <span className={styles['user-name']}>{userFullName}</span>
-          </div>
-        ),
-        count: workflowStartersCounters.find(({ sourceId }) => sourceId === user.id)?.workflowsCount || 0,
-        searchByText: userFullName,
-      };
-    });
-
-    return normalizedUsers;
-  }, [users.length, workflowStartersCounters]);
-
   const performersOptions = React.useMemo(
     () =>
       users.map((user) => {
@@ -245,28 +222,6 @@ export function WorkflowsTable({
           onClear={() => setSearchQuery('')}
         />
       </div>
-    );
-  };
-
-  const renderWorkflowStarterFilter = () => {
-    return (
-      <FilterSelect
-        isMultiple
-        isSearchShown
-        placeholderText={formatMessage({ id: 'workflows.filter-no-user' })}
-        selectedOptions={workflowStartersIdsFilter}
-        optionIdKey="id"
-        optionLabelKey="displayName"
-        options={workflowStartersOptions}
-        onChange={(workflowStarters: number[]) => setWorkflowStartersFilter(workflowStarters)}
-        resetFilter={() => setWorkflowStartersFilter([])}
-        renderPlaceholder={() => (
-          <span className={styles['header-filter']}>{formatMessage({ id: 'workflows.filter-column-starter' })}</span>
-        )}
-        containerClassname={styles['filter-container']}
-        arrowClassName={styles['header-filter__arrow']}
-        selectAllLabel={formatMessage({ id: 'workflows.filter-all-users' })}
-      />
     );
   };
 
@@ -438,7 +393,11 @@ export function WorkflowsTable({
       ...(selectedFieldsSet.has('system-column-starter')
         ? [
             {
-              Header: renderWorkflowStarterFilter(),
+              Header: (
+                <div className={styles['column-header__starter-name']}>
+                  {formatMessage({ id: 'workflows.filter-column-starter' })}
+                </div>
+              ),
               accessor: 'system-column-starter',
               Cell: ColumnCells.StarterColumn,
               width: savedGlobalWidths['system-column-starter'] || ETableViewFieldsWidth['system-column-starter'],
