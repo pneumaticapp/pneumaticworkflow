@@ -37,6 +37,7 @@ interface IFilterSelectCommonProps<
   isSearchShown?: boolean;
   noValueLabel?: string;
   placeholderText: string;
+  searchPlaceholder?: string;
   toggleClassName?: string;
   arrowClassName?: string;
   menuClassName?: string;
@@ -83,6 +84,7 @@ export function FilterSelect<
     isSearchShown,
     noValueLabel,
     placeholderText,
+    searchPlaceholder,
     toggleClassName,
     arrowClassName,
     menuClassName,
@@ -141,6 +143,7 @@ export function FilterSelect<
             onClear={handleClearSearchText}
             fieldSize="md"
             autoFocus
+            placeholder={searchPlaceholder}
           />
         </div>
         <hr className={styles['search__separator']} />
@@ -214,13 +217,30 @@ export function FilterSelect<
         }
       };
 
+      const areAllSelected =
+        props.isMultiple &&
+        Array.isArray(props.selectedOptions) &&
+        options.length > 0 &&
+        props.selectedOptions.length === options.length;
+
       return (
         <DropdownItem
           className={classnames('dropdown-item-sm', styles['value-item'], styles['value-item__select-all'])}
           onClick={handleSelectAll}
           toggle={false}
         >
-          <span>{selectAllLabel}</span>
+          <Checkbox
+            // Required improvements:
+            //1. Clarify the desynchronization issue with the default
+            //2. Identical backend request when working with a checkbox
+            checked={isSelectAll || areAllSelected}
+            title={<span>{selectAllLabel}</span>}
+            onClick={(e) => e.stopPropagation()}
+            onChange={() => {}}
+            containerClassName={styles['dropdown-item-check']}
+            labelClassName={styles['dropdown-item-check__label']}
+            titleClassName={styles['dropdown-item-check__title']}
+          />
         </DropdownItem>
       );
     };

@@ -8,9 +8,9 @@ import { TopNavContainer } from '../../components/TopNav';
 import { ERoutes } from '../../constants/routes';
 import { history } from '../../utils/history';
 import { WorkflowModalContainer } from '../../components/Workflows/WorkflowModal';
-import { FilterSelect, SelectMenu, Tabs } from '../../components/UI';
+import { SelectMenu, Tabs } from '../../components/UI';
 import { EWorkflowsSorting, EWorkflowsStatus, EWorkflowsView } from '../../types/workflow';
-import { FilterIcon } from '../../components/icons';
+import { BoxesIcon, FilterIcon, TableViewIcon } from '../../components/icons';
 import { IWorkflowsFiltersProps } from '../../components/Workflows/types';
 import {
   canFilterByCurrentPerformer,
@@ -27,8 +27,9 @@ import { WorkflowsTableProvider } from '../../components/Workflows/WorkflowsTabl
 
 import { IApplicationState } from '../../types/redux';
 import { useCheckDevice } from '../../hooks/useCheckDevice';
+import { StarterFilterSelect } from './StarterFilterSelect';
+import { TemplateFilterSelect } from './TemplateFilterSelect';
 import styles from './WorkflowsLayout.css';
-// import { updateQueryFields } from './utils';
 
 export interface IWorkflowsLayoutComponentProps extends IWorkflowsFiltersProps {
   workflowId: number | null;
@@ -57,7 +58,6 @@ export function WorkflowsLayoutComponent({
   setStatusFilter,
   applyFilters,
   loadTemplatesTitles,
-  setTemplatesFilter,
   setStepsFilter,
   removeWorkflowFromList,
   loadTemplateSteps,
@@ -182,12 +182,6 @@ export function WorkflowsLayoutComponent({
     }
   }, [sorting, statusFilter]);
 
-  const templateIdFilter = React.useMemo(() => {
-    const [firstTemplate] = templatesIdsFilter;
-
-    return firstTemplate || null;
-  }, [templatesIdsFilter[0]]);
-
   const statusTitles = React.useMemo(() => Object.values(EWorkflowsStatus), []);
   const sortingTitles = React.useMemo(() => getSortingsByStatus(statusFilter), [statusFilter]);
 
@@ -197,14 +191,15 @@ export function WorkflowsLayoutComponent({
         <div className={styles['filters']}>
           <Tabs
             activeValueId={workflowsView}
+            tabClassName={styles['view-switch-tab']}
             values={[
               {
                 id: EWorkflowsView.Table,
-                label: formatMessage({ id: 'workflows.table-view' }),
+                label: <TableViewIcon />,
               },
               {
                 id: EWorkflowsView.Grid,
-                label: formatMessage({ id: 'workflows.grid-view' }),
+                label: <BoxesIcon />,
               },
             ]}
             onChange={(view) => {
@@ -215,7 +210,7 @@ export function WorkflowsLayoutComponent({
             }}
           />
 
-          {workflowsView === EWorkflowsView.Table && renderFilters()}
+          {renderFilters()}
         </div>
       </div>
     );
@@ -224,32 +219,8 @@ export function WorkflowsLayoutComponent({
   const renderFilters = () => {
     return (
       <>
-        <div className={styles['template-filter']}>
-          <FilterSelect
-            isSearchShown
-            noValueLabel={formatMessage({ id: 'sorting.all-templates' })}
-            placeholderText={formatMessage({ id: 'sorting.no-template-found' })}
-            selectedOption={templateIdFilter}
-            options={filterTemplates}
-            optionIdKey="id"
-            optionLabelKey="name"
-            onChange={(templateId: number) => {
-              sessionStorage.setItem('isInternalNavigation', 'true');
-              setStepsFilter([]);
-              setTemplatesFilter([templateId]);
-            }}
-            resetFilter={() => {
-              sessionStorage.setItem('isInternalNavigation', 'true');
-              setStepsFilter([]);
-              setTemplatesFilter([]);
-            }}
-            Icon={FilterIcon}
-            renderPlaceholder={() => {
-              const selectedTemplate = filterTemplates.find((t) => t.id === templateIdFilter);
-              return selectedTemplate?.name || formatMessage({ id: 'sorting.all-templates' });
-            }}
-          />
-        </div>
+        <TemplateFilterSelect />
+        <StarterFilterSelect />
         <SelectMenu values={statusTitles} activeValue={statusFilter} onChange={setStatusFilter} Icon={FilterIcon} />
         <SelectMenu values={sortingTitles} activeValue={sorting} onChange={changeWorkflowsSorting} />
         {areFiltersChanged && (
