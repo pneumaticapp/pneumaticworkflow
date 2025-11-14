@@ -3,17 +3,16 @@ from rest_framework.decorators import action
 from rest_framework.viewsets import GenericViewSet
 
 from src.analysis.mixins import BaseIdentifyMixin
-from src.authentication.permissions import Auth0Permission
+from src.authentication.permissions import OktaPermission
 from src.authentication.serializers import (
-    Auth0TokenSerializer,
-)
-from src.authentication.services.auth0 import (
-    Auth0Service,
+    OktaTokenSerializer,
 )
 from src.authentication.services.exceptions import (
     AuthException,
 )
-from src.authentication.tasks import update_auth0_contacts
+from src.authentication.services.okta import (
+    OktaService,
+)
 from src.authentication.throttling import (
     Auth0AuthUriThrottle,
     Auth0TokenThrottle,
@@ -28,13 +27,13 @@ from src.utils.validation import raise_validation_error
 UserModel = get_user_model()
 
 
-class Auth0ViewSet(
+class OktaViewSet(
     CustomViewSetMixin,
     BaseIdentifyMixin,
     GenericViewSet,
 ):
-    permission_classes = (Auth0Permission,)
-    serializer_class = Auth0TokenSerializer
+    permission_classes = (OktaPermission,)
+    serializer_class = OktaTokenSerializer
 
     @property
     def throttle_classes(self):
@@ -49,7 +48,7 @@ class Auth0ViewSet(
         slz = self.get_serializer(data=request.GET)
         slz.is_valid(raise_exception=True)
         try:
-            service = Auth0Service(request=request)
+            service = OktaService(request=request)
             user, token = service.authenticate_user(
                 auth_response={
                     'code': slz.validated_data['code'],
@@ -65,13 +64,13 @@ class Auth0ViewSet(
         except AuthException as ex:
             raise_validation_error(message=ex.message)
         else:
-            update_auth0_contacts.delay(user.id)
+            self.identify(user)
             return self.response_ok({'token': token})
 
     @action(methods=('GET',), detail=False, url_path='auth-uri')
     def auth_uri(self, request, *args, **kwargs):
         try:
-            service = Auth0Service()
+            service = OktaService()
             auth_uri = service.get_auth_uri()
         except AuthException as ex:
             raise_validation_error(message=ex.message)
@@ -83,7 +82,7 @@ class Auth0ViewSet(
     @action(methods=('GET',), detail=False)
     def logout(self, *args, **kwargs):
         capture_sentry_message(
-            message='Auth0 logout request',
+            message='Okta logout request',
             data=self.request.GET,
             level=SentryLogLevel.INFO,
         )

@@ -377,6 +377,12 @@ class Common(Configuration):
     AUTH0_DOMAIN = env.get('AUTH0_DOMAIN')
     AUTH0_REDIRECT_URI = env.get('AUTH0_REDIRECT_URI')
 
+    # SSO Okta
+    OKTA_CLIENT_ID = env.get('OKTA_CLIENT_ID')
+    OKTA_CLIENT_SECRET = env.get('OKTA_CLIENT_SECRET')
+    OKTA_DOMAIN = env.get('OKTA_DOMAIN')
+    OKTA_REDIRECT_URI = env.get('OKTA_REDIRECT_URI')
+
     REPLICA = 'replica'
     DATABASES = {
         'default': {
@@ -398,6 +404,7 @@ class Common(Configuration):
         'MS_AUTH': env.get('MS_AUTH') == 'yes',
         'GOOGLE_AUTH': env.get('GOOGLE_AUTH') == 'yes',
         'SSO_AUTH': env.get('SSO_AUTH') == 'yes',
+        'OKTA_AUTH': env.get('OKTA_AUTH', 'yes') == 'yes',
         'EMAIL': env.get('EMAIL') == 'yes',
         'EMAIL_PROVIDER': env.get('EMAIL_PROVIDER'),
         'AI': env.get('AI') == 'yes',

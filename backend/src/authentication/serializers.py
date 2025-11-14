@@ -274,6 +274,11 @@ class GoogleTokenSerializer(AuthTokenSerializer):
     pass
 
 
+class OktaTokenSerializer(AuthTokenSerializer):
+
+    pass
+
+
 class TokenSerializer(
     CustomValidationErrorMixin,
     serializers.Serializer,
