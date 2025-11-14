@@ -52,6 +52,7 @@ services:
   backend:
     build:
       context: ./backend
+    image: pneumaticworkflow/pneumatic-backend:${TAG:-stable}
     container_name: pneumatic-backend
     command: >
       sh -c "python manage.py migrate &&
@@ -82,6 +83,7 @@ services:
   celery:
     build:
       context: ./backend
+    image: pneumaticworkflow/pneumatic-celery:${TAG:-stable}
     container_name: pneumatic-celery
     env_file:
       - ./config/project.env
@@ -102,6 +104,7 @@ services:
   celery-beat:
     build:
       context: ./backend
+    image: pneumaticworkflow/pneumatic-celery-beat:${TAG:-stable}
     container_name: pneumatic-celery-beat
     env_file:
       - ./config/project.env
@@ -121,6 +124,7 @@ services:
   frontend:
     build:
       context: ./frontend
+    image: pneumaticworkflow/pneumatic-frontend:${TAG:-stable}
     container_name: pneumatic-frontend
     env_file:
       - ./config/project.env
@@ -139,8 +143,7 @@ services:
     restart: always
 
   nginx:
-    build:
-      context: ./nginx
+    image: nginx:1.25.4
     container_name: pneumatic-nginx
     env_file:
       - ./config/project.env
