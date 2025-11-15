@@ -29,16 +29,16 @@ export function TaskItem({ task, index, mode, templateId }: ITaskItemProps) {
   const getRoute = useCallback(
     (counterType: EDashboardCounterType) => {
       const tasksRouteMap = {
-        [EDashboardCounterType.Started]: getLinkToTasks({ templateId, stepId: task.id }),
-        [EDashboardCounterType.InProgress]: getLinkToTasks({ templateId, stepId: task.id }),
+        [EDashboardCounterType.Started]: getLinkToTasks({ templateId, taskApiNAme: task.apiName }),
+        [EDashboardCounterType.InProgress]: getLinkToTasks({ templateId, taskApiNAme: task.apiName }),
         [EDashboardCounterType.Overdue]: getLinkToTasks({
           templateId,
-          stepId: task.id,
+          taskApiNAme: task.apiName,
           sorting: ETaskListSorting.Overdue,
         }),
         [EDashboardCounterType.Completed]: getLinkToTasks({
           templateId,
-          stepId: task.id,
+          taskApiNAme: task.apiName,
           status: ETaskListCompletionStatus.Completed,
         }),
       };
@@ -106,7 +106,7 @@ export function TaskItem({ task, index, mode, templateId }: ITaskItemProps) {
 
   const taskLink =
     mode === EDashboardModes.Tasks
-      ? getLinkToTasks({ templateId, stepId: task.id })
+      ? getLinkToTasks({ templateId, taskApiNAme: task.apiName })
       : getLinkToWorkflows({
           templateId,
           stepId: task.id,
