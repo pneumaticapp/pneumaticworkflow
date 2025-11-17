@@ -226,8 +226,9 @@ export function WorkflowsLayoutComponent({
           activeValue={statusFilter}
           onChange={setStatusFilter}
           Icon={StatusTitlesIcon}
+          withRadio
         />
-        <SelectMenu values={sortingTitles} activeValue={sorting} onChange={changeWorkflowsSorting} />
+        <SelectMenu values={sortingTitles} activeValue={sorting} onChange={changeWorkflowsSorting} withRadio />
         {areFiltersChanged && (
           <button type="button" onClick={clearFilters} className="cancel-button">
             {formatMessage({ id: 'workflows.clear-table-filters' })}
