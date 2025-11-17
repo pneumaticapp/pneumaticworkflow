@@ -599,7 +599,7 @@ class Notification(
     )()
 
     def __str__(self):
-        return self.text
+        return self.text or ''
 
 
 class Contact(
