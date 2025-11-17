@@ -240,7 +240,7 @@ export interface ISystemTemplate {
 export interface ITemplateTitle {
   id: number;
   name: string;
-  workflowsCount: number;
+  count: number;
 }
 
 export interface ITemplateTitleBaseWithCount {

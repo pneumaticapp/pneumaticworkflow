@@ -72,7 +72,7 @@ window['__pneumaticConfig'] = {
         systemTemplatesCategories: '/templates/system/categories',
         systemTemplate: '/templates/system/:id/fill',
         copyTemplate: '/templates/:id/clone',
-        templatesTitles: 'templates/titles',
+        templatesTitles: '/templates/titles-by-workflows',
         templatesTitlesByTasks: 'templates/titles-by-tasks',
         workflows: '/workflows',
         workflow: '/workflows/:id',

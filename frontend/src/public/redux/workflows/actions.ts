@@ -12,7 +12,7 @@ import {
   IWorkflowClient,
   IWorkflowDetailsClient,
 } from '../../types/workflow';
-import { ITemplateTitle, IKickoff, TTemplatePreset, TOrderedFields } from '../../types/template';
+import { IKickoff, TTemplatePreset, TOrderedFields, ITemplateTitleBaseWithCount } from '../../types/template';
 import { TUploadedFile } from '../../utils/uploadFiles';
 import { ITemplateStep } from '../../types/tasks';
 import { IDeleteComment } from '../../api/workflows/deleteComment';
@@ -280,12 +280,14 @@ export const loadWorkflowsFilterTemplates: (payload?: void) => TLoadWorkflowsFil
 
 export type TLoadWorkflowsFilterTemplatesSuccess = ITypedReduxAction<
   EWorkflowsActions.LoadFilterTemplatesSuccess,
-  ITemplateTitle[]
+  ITemplateTitleBaseWithCount[]
 >;
-export const loadWorkflowsFilterTemplatesSuccess: (payload: ITemplateTitle[]) => TLoadWorkflowsFilterTemplatesSuccess =
-  actionGenerator<EWorkflowsActions.LoadFilterTemplatesSuccess, ITemplateTitle[]>(
-    EWorkflowsActions.LoadFilterTemplatesSuccess,
-  );
+export const loadWorkflowsFilterTemplatesSuccess: (
+  payload: ITemplateTitleBaseWithCount[],
+) => TLoadWorkflowsFilterTemplatesSuccess = actionGenerator<
+  EWorkflowsActions.LoadFilterTemplatesSuccess,
+  ITemplateTitleBaseWithCount[]
+>(EWorkflowsActions.LoadFilterTemplatesSuccess);
 
 export type TLoadWorkflowsFilterTemplatesFailed = ITypedReduxAction<EWorkflowsActions.LoadFilterTemplatesFailed, void>;
 export const loadWorkflowsFilterTemplatesFailed: (payload?: void) => TLoadWorkflowsFilterTemplatesFailed =

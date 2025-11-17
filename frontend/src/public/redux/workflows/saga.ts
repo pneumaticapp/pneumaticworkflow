@@ -63,8 +63,8 @@ import { NotificationManager } from '../../components/UI/Notifications';
 import { sendWorkflowComment } from '../../api/sendWorkflowComment';
 import { finishWorkflow } from '../../api/finishWorkflow';
 import { editWorkflow, IEditWorkflowResponse } from '../../api/editWorkflow';
-import { getTemplatesTitles } from '../../api/getTemplatesTitles';
-import { IKickoff, ITemplateResponse, ITemplateTitle, TTemplatePreset } from '../../types/template';
+import { getTemplatesTitles, TGetTemplatesTitlesResponse } from '../../api/getTemplatesTitles';
+import { IKickoff, ITemplateResponse, TTemplatePreset } from '../../types/template';
 import { getWorkflowLogStore } from '../selectors/workflowLog';
 import { deleteRemovedFilesFromFields } from '../../api/deleteRemovedFilesFromFields';
 import { TChannelAction } from '../tasks/saga';
@@ -519,9 +519,7 @@ export function* setWorkflowFinishedSaga({ payload: { workflowId, onWorkflowEnde
 export function* fetchFilterTemplates() {
   try {
     const workflowStatus: EWorkflowsStatus = yield select(getWorkflowsStatus);
-    const templatesTitles: ITemplateTitle[] = yield getTemplatesTitles({
-      workflowStatus,
-    });
+    const templatesTitles: TGetTemplatesTitlesResponse = yield getTemplatesTitles(workflowStatus);
     yield put(loadWorkflowsFilterTemplatesSuccess(templatesTitles));
   } catch (err) {
     yield put(loadWorkflowsFilterTemplatesFailed());

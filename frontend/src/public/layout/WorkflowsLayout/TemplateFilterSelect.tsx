@@ -16,10 +16,11 @@ export function TemplateFilterSelect() {
   const { items: filterTemplates } = useSelector(
     (state: IApplicationState) => state.workflows.workflowsSettings.templateList,
   );
+
   const templatesOptions = useMemo(() => {
-    return filterTemplates.map((template) => ({
-      ...template,
-      ...(template.workflowsCount > 0 && { count: template.workflowsCount }),
+    return filterTemplates.map(({ count, ...rest }) => ({
+      ...rest,
+      ...(count > 0 && { count }),
     }));
   }, [filterTemplates]);
 
