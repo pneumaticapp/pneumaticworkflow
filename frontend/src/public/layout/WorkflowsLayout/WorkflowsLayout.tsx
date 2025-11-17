@@ -29,6 +29,7 @@ import { IApplicationState } from '../../types/redux';
 import { useCheckDevice } from '../../hooks/useCheckDevice';
 import { StarterFilterSelect } from './StarterFilterSelect';
 import { TemplateFilterSelect } from './TemplateFilterSelect';
+import { PerformerFilterSelect } from './PerformerFilterSelect';
 import styles from './WorkflowsLayout.css';
 
 export interface IWorkflowsLayoutComponentProps extends IWorkflowsFiltersProps {
@@ -228,6 +229,7 @@ export function WorkflowsLayoutComponent({
           Icon={StatusTitlesIcon}
           withRadio
         />
+        <PerformerFilterSelect />
         <SelectMenu values={sortingTitles} activeValue={sorting} onChange={changeWorkflowsSorting} withRadio />
         {areFiltersChanged && (
           <button type="button" onClick={clearFilters} className="cancel-button">
