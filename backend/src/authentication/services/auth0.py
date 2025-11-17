@@ -54,6 +54,17 @@ class Auth0Service(SignUpMixin, CacheMixin):
     ):
         if not settings.PROJECT_CONF['SSO_AUTH']:
             raise exceptions.Auth0ServiceException(MSG_AU_0017)
+
+        sso_provider = settings.PROJECT_CONF.get('SSO_PROVIDER', '')
+        if sso_provider and sso_provider != 'auth0':
+            raise exceptions.Auth0ServiceException(MSG_AU_0017)
+
+        self.config = self._get_config(domain)
+        self.tokens: Optional[Dict] = None
+        self.scope = 'openid email profile offline_access'
+        self.request = request
+
+    def _get_config(self, domain: Optional[str] = None) -> SSOConfigData:
         if domain:
             try:
                 sso_config = SSOConfig.objects.get(
@@ -61,7 +72,7 @@ class Auth0Service(SignUpMixin, CacheMixin):
                     provider=SSOProvider.AUTH0,
                     is_active=True,
                 )
-                self.config = SSOConfigData(
+                return SSOConfigData(
                     client_id=sso_config.client_id,
                     client_secret=sso_config.client_secret,
                     domain=sso_config.domain,
@@ -74,16 +85,12 @@ class Auth0Service(SignUpMixin, CacheMixin):
         else:
             if not settings.AUTH0_CLIENT_SECRET:
                 raise exceptions.Auth0ServiceException(MSG_AU_0019)
-            self.config = SSOConfigData(
+            return SSOConfigData(
                 client_id=settings.AUTH0_CLIENT_ID,
                 client_secret=settings.AUTH0_CLIENT_SECRET,
                 domain=settings.AUTH0_DOMAIN,
                 redirect_uri=settings.AUTH0_REDIRECT_URI,
             )
-
-        self.tokens: Optional[Dict] = None
-        self.scope = 'openid email profile offline_access'
-        self.request = request
 
     def _serialize_value(self, value: Union[str, dict]) -> str:
         return json.dumps(value, ensure_ascii=False)

@@ -54,6 +54,17 @@ class OktaService(SignUpMixin, CacheMixin):
     ):
         if not settings.PROJECT_CONF['SSO_AUTH']:
             raise exceptions.OktaServiceException(MSG_AU_0017)
+
+        sso_provider = settings.PROJECT_CONF.get('SSO_PROVIDER', '')
+        if sso_provider and sso_provider != 'okta':
+            raise exceptions.OktaServiceException(MSG_AU_0017)
+
+        self.config = self._get_config(domain)
+        self.tokens: Optional[Dict] = None
+        self.scope = 'openid email profile'
+        self.request = request
+
+    def _get_config(self, domain: Optional[str] = None) -> SSOConfigData:
         if domain:
             try:
                 sso_config = SSOConfig.objects.get(
@@ -61,7 +72,7 @@ class OktaService(SignUpMixin, CacheMixin):
                     provider=SSOProvider.OKTA,
                     is_active=True,
                 )
-                self.config = SSOConfigData(
+                return SSOConfigData(
                     client_id=sso_config.client_id,
                     client_secret=sso_config.client_secret,
                     domain=sso_config.domain,
@@ -74,16 +85,12 @@ class OktaService(SignUpMixin, CacheMixin):
         else:
             if not settings.OKTA_CLIENT_SECRET:
                 raise exceptions.OktaServiceException(MSG_AU_0019)
-            self.config = SSOConfigData(
+            return SSOConfigData(
                 client_id=settings.OKTA_CLIENT_ID,
                 client_secret=settings.OKTA_CLIENT_SECRET,
                 domain=settings.OKTA_DOMAIN,
                 redirect_uri=settings.OKTA_REDIRECT_URI,
             )
-
-        self.tokens: Optional[Dict] = None
-        self.scope = 'openid email profile'
-        self.request = request
 
     def _serialize_value(self, value: Union[str, dict]) -> str:
         return json.dumps(value, ensure_ascii=False)
@@ -176,7 +183,7 @@ class OktaService(SignUpMixin, CacheMixin):
         if cached_profile:
             return cached_profile
 
-        url = f'https://{self.domain}/oauth2/default/v1/userinfo'
+        url = f'https://{self.config.domain}/oauth2/default/v1/userinfo'
         headers = {'Authorization': f'Bearer {access_token}'}
         try:
             response = requests.get(url, headers=headers, timeout=10)
@@ -213,8 +220,8 @@ class OktaService(SignUpMixin, CacheMixin):
         # Cache code_verifier for later validation
         self._set_cache(value=code_verifier, key=state)
         query_params = {
-            'client_id': self.client_id,
-            'redirect_uri': self.redirect_uri,
+            'client_id': self.config.client_id,
+            'redirect_uri': self.config.redirect_uri,
             'scope': self.scope,
             'state': state,
             'code_challenge': code_challenge,
@@ -224,7 +231,9 @@ class OktaService(SignUpMixin, CacheMixin):
         }
 
         query = urllib.parse.urlencode(query_params)
-        return f'https://{self.domain}/oauth2/default/v1/authorize?{query}'
+        return (
+            f'https://{self.config.domain}/oauth2/default/v1/authorize?{query}'
+        )
 
     def get_user_data(self, user_profile: dict) -> UserData:
         """Retrieve user details during signin / signup process"""
