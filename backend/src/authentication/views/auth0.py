@@ -3,13 +3,12 @@ from rest_framework.decorators import action
 from rest_framework.viewsets import GenericViewSet
 
 from src.analysis.mixins import BaseIdentifyMixin
-from src.authentication.permissions import Auth0Permission
+from src.authentication.permissions import SSOPermission
 from src.authentication.serializers import (
     Auth0TokenSerializer,
+    AuthUriSerializer,
 )
-from src.authentication.services.auth0 import (
-    Auth0Service,
-)
+from src.authentication.services.auth0 import Auth0Service
 from src.authentication.services.exceptions import (
     AuthException,
 )
@@ -33,7 +32,7 @@ class Auth0ViewSet(
     BaseIdentifyMixin,
     GenericViewSet,
 ):
-    permission_classes = (Auth0Permission,)
+    permission_classes = (SSOPermission,)
     serializer_class = Auth0TokenSerializer
 
     @property
@@ -70,8 +69,10 @@ class Auth0ViewSet(
 
     @action(methods=('GET',), detail=False, url_path='auth-uri')
     def auth_uri(self, request, *args, **kwargs):
+        slz = AuthUriSerializer(data=request.GET)
+        slz.is_valid(raise_exception=True)
         try:
-            service = Auth0Service()
+            service = Auth0Service(**slz.validated_data)
             auth_uri = service.get_auth_uri()
         except AuthException as ex:
             raise_validation_error(message=ex.message)

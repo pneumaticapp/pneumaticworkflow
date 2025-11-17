@@ -56,3 +56,13 @@ class AuthenticationFailed(BaseServiceException):
 class PeopleApiRequestError(AuthException):
 
     default_message = MSG_AU_0014
+
+
+class Auth0ServiceException(AuthException):
+
+    pass
+
+
+class OktaServiceException(AuthException):
+
+    pass

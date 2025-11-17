@@ -3,7 +3,7 @@ import hashlib
 import secrets
 import json
 import urllib.parse
-from typing import Optional, Tuple, Union
+from typing import Dict, Optional, Tuple, Union
 from uuid import uuid4
 
 import requests
@@ -14,10 +14,21 @@ from rest_framework.exceptions import AuthenticationFailed
 
 from src.accounts.enums import SourceType
 from src.analysis.services import AnalyticService
-from src.authentication.entities import UserData
-from src.authentication.enums import AuthTokenType
-from src.authentication.messages import MSG_AU_0003
-from src.authentication.models import AccessToken
+from src.authentication.entities import UserData, SSOConfigData
+from src.authentication.enums import (
+    AuthTokenType,
+    SSOProvider,
+)
+from src.authentication.messages import (
+    MSG_AU_0003,
+    MSG_AU_0017,
+    MSG_AU_0018,
+    MSG_AU_0019,
+)
+from src.authentication.models import (
+    AccessToken,
+    SSOConfig,
+)
 from src.authentication.services import exceptions
 from src.authentication.services.user_auth import AuthService
 from src.authentication.tokens import PneumaticToken
@@ -36,12 +47,41 @@ class OktaService(SignUpMixin, CacheMixin):
     cache_key_prefix = 'okta_flow'
     cache_timeout = 600  # 10 min
 
-    def __init__(self, request: Optional[HttpRequest] = None):
-        self.tokens = None
-        self.client_id = settings.OKTA_CLIENT_ID
-        self.client_secret = settings.OKTA_CLIENT_SECRET
-        self.domain = settings.OKTA_DOMAIN
-        self.redirect_uri = settings.OKTA_REDIRECT_URI
+    def __init__(
+        self,
+        domain: Optional[str] = None,
+        request: Optional[HttpRequest] = None,
+    ):
+        if not settings.PROJECT_CONF['SSO_AUTH']:
+            raise exceptions.OktaServiceException(MSG_AU_0017)
+        if domain:
+            try:
+                sso_config = SSOConfig.objects.get(
+                    domain=domain,
+                    provider=SSOProvider.OKTA,
+                    is_active=True,
+                )
+                self.config = SSOConfigData(
+                    client_id=sso_config.client_id,
+                    client_secret=sso_config.client_secret,
+                    domain=sso_config.domain,
+                    redirect_uri=settings.OKTA_REDIRECT_URI,
+                )
+            except SSOConfig.DoesNotExist as exc:
+                raise exceptions.OktaServiceException(
+                    MSG_AU_0018(domain),
+                ) from exc
+        else:
+            if not settings.OKTA_CLIENT_SECRET:
+                raise exceptions.OktaServiceException(MSG_AU_0019)
+            self.config = SSOConfigData(
+                client_id=settings.OKTA_CLIENT_ID,
+                client_secret=settings.OKTA_CLIENT_SECRET,
+                domain=settings.OKTA_DOMAIN,
+                redirect_uri=settings.OKTA_REDIRECT_URI,
+            )
+
+        self.tokens: Optional[Dict] = None
         self.scope = 'openid email profile'
         self.request = request
 
@@ -82,13 +122,13 @@ class OktaService(SignUpMixin, CacheMixin):
 
         try:
             response = requests.post(
-                f'https://{self.domain}/oauth2/default/v1/token',
+                f'https://{self.config.domain}/oauth2/default/v1/token',
                 data={
                     'grant_type': 'authorization_code',
-                    'client_id': self.client_id,
-                    'client_secret': self.client_secret,
+                    'client_id': self.config.client_id,
+                    'client_secret': self.config.client_secret,
                     'code': auth_response['code'],
-                    'redirect_uri': self.redirect_uri,
+                    'redirect_uri': self.config.redirect_uri,
                     'code_verifier': code_verifier,
                 },
                 timeout=10,
@@ -233,12 +273,6 @@ class OktaService(SignUpMixin, CacheMixin):
     def authenticate_user(
         self,
         auth_response: dict,
-        utm_source: Optional[str] = None,
-        utm_medium: Optional[str] = None,
-        utm_term: Optional[str] = None,
-        utm_content: Optional[str] = None,
-        utm_campaign: Optional[str] = None,
-        gclid: Optional[str] = None,
     ) -> Tuple[UserModel, PneumaticToken]:
         """Authenticate user via Okta and return user with token"""
         access_token = self._get_first_access_token(auth_response)
@@ -256,19 +290,7 @@ class OktaService(SignUpMixin, CacheMixin):
                 user_ip=self.request.META.get('HTTP_X_REAL_IP'),
             )
         except UserModel.DoesNotExist as exc:
-            if not settings.PROJECT_CONF['SIGNUP']:
-                raise AuthenticationFailed(MSG_AU_0003) from exc
-
-            user, token = self.signup(
-                **user_data,
-                utm_source=utm_source,
-                utm_medium=utm_medium,
-                utm_campaign=utm_campaign,
-                utm_term=utm_term,
-                utm_content=utm_content,
-                gclid=gclid,
-                request=self.request,
-            )
+            raise AuthenticationFailed(MSG_AU_0003) from exc
 
         self.save_tokens_for_user(user)
 

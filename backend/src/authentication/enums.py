@@ -1,6 +1,22 @@
 from typing_extensions import Literal
 
 
+class SSOProvider:
+
+    AUTH0 = 'auth0'
+    OKTA = 'okta'
+
+    CHOICES = (
+        (AUTH0, 'Auth0'),
+        (OKTA, 'Okta'),
+    )
+
+    LITERALS = Literal[
+        AUTH0,
+        OKTA,
+    ]
+
+
 class GuestCachedStatus:
 
     ACTIVE = 1

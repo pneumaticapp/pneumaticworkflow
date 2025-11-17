@@ -57,16 +57,10 @@ class MSAuthPermission(BasePermission):
         return settings.PROJECT_CONF['MS_AUTH']
 
 
-class Auth0Permission(BasePermission):
+class SSOPermission(BasePermission):
 
     def has_permission(self, request, view):
         return settings.PROJECT_CONF['SSO_AUTH']
-
-
-class OktaPermission(BasePermission):
-
-    def has_permission(self, request, view):
-        return settings.PROJECT_CONF.get('OKTA_AUTH', True)
 
 
 class SignupPermission(BasePermission):

@@ -404,7 +404,7 @@ class Common(Configuration):
         'MS_AUTH': env.get('MS_AUTH') == 'yes',
         'GOOGLE_AUTH': env.get('GOOGLE_AUTH') == 'yes',
         'SSO_AUTH': env.get('SSO_AUTH') == 'yes',
-        'OKTA_AUTH': env.get('OKTA_AUTH', 'yes') == 'yes',
+        'SSO_PROVIDER': env.get('SSO_PROVIDER'),
         'EMAIL': env.get('EMAIL') == 'yes',
         'EMAIL_PROVIDER': env.get('EMAIL_PROVIDER'),
         'AI': env.get('AI') == 'yes',

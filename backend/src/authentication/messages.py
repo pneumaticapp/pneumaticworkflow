@@ -32,3 +32,13 @@ MSG_AU_0013 = _('The new password and its confirmation don\'t match.')
 MSG_AU_0014 = _('Error while retrieving Google profile data.')
 # Translators: Auth0 organization members request failed
 MSG_AU_0015 = _('Failed to fetch organization members.')
+MSG_AU_0016 = _(
+    'This account uses SSO authentication. '
+    'Please use your organization\'s SSO login.',
+)
+MSG_AU_0017 = _('SSO authentication is disabled in project configuration.')
+MSG_AU_0018 = lambda domain: format_lazy(
+    _('Active configuration SSO not found for domain: {domain}.'),
+    domain=domain,
+)
+MSG_AU_0019 = _('SSO settings are not configured properly.')
