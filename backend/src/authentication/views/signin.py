@@ -24,6 +24,7 @@ from src.authentication.permissions import (
     PrivateApiPermission,
 )
 from src.authentication.services.user_auth import AuthService
+from src.authentication.mixins import SSORestrictionMixin
 from src.generics.mixins.views import (
     BaseResponseMixin,
 )
@@ -33,6 +34,7 @@ UserModel = get_user_model()
 
 
 class TokenObtainPairCustomView(
+    SSORestrictionMixin,
     CreateAPIView,
     BaseIdentifyMixin,
     BaseResponseMixin,
@@ -41,6 +43,7 @@ class TokenObtainPairCustomView(
     authentication_classes = []
 
     def post(self, request, *args, **kwargs):
+        self.check_sso_restrictions()
         user = authenticate(**request.data)
 
         if not user:

@@ -1,5 +1,5 @@
 import json
-from typing import Optional, Tuple, Union
+from typing import Dict, Optional, Tuple, Union
 from uuid import uuid4
 
 import requests
@@ -10,9 +10,22 @@ from rest_framework.exceptions import AuthenticationFailed
 
 from src.accounts.enums import SourceType
 from src.accounts.models import Account, Contact
-from src.authentication.entities import UserData
-from src.authentication.messages import MSG_AU_0003
-from src.authentication.models import AccessToken
+from src.analysis.services import AnalyticService
+from src.authentication.entities import UserData, SSOConfigData
+from src.authentication.enums import (
+    AuthTokenType,
+    SSOProvider,
+)
+from src.authentication.messages import (
+    MSG_AU_0003,
+    MSG_AU_0017,
+    MSG_AU_0018,
+    MSG_AU_0019,
+)
+from src.authentication.models import (
+    AccessToken,
+    SSOConfig,
+)
 from src.authentication.services import exceptions
 from src.authentication.services.user_auth import AuthService
 from src.authentication.tokens import PneumaticToken
@@ -34,12 +47,41 @@ class Auth0Service(SignUpMixin, CacheMixin):
     TOKEN_EXPIRY = 86400  # 24 hour
     source = SourceType.AUTH0
 
-    def __init__(self, request: Optional[HttpRequest] = None):
-        self.tokens = None
-        self.client_id = settings.AUTH0_CLIENT_ID
-        self.client_secret = settings.AUTH0_CLIENT_SECRET
-        self.domain = settings.AUTH0_DOMAIN
-        self.redirect_uri = settings.AUTH0_REDIRECT_URI
+    def __init__(
+        self,
+        domain: Optional[str] = None,
+        request: Optional[HttpRequest] = None,
+    ):
+        if not settings.PROJECT_CONF['SSO_AUTH']:
+            raise exceptions.Auth0ServiceException(MSG_AU_0017)
+        if domain:
+            try:
+                sso_config = SSOConfig.objects.get(
+                    domain=domain,
+                    provider=SSOProvider.AUTH0,
+                    is_active=True,
+                )
+                self.config = SSOConfigData(
+                    client_id=sso_config.client_id,
+                    client_secret=sso_config.client_secret,
+                    domain=sso_config.domain,
+                    redirect_uri=settings.AUTH0_REDIRECT_URI,
+                )
+            except SSOConfig.DoesNotExist as exc:
+                raise exceptions.Auth0ServiceException(
+                    MSG_AU_0018(domain),
+                ) from exc
+        else:
+            if not settings.AUTH0_CLIENT_SECRET:
+                raise exceptions.Auth0ServiceException(MSG_AU_0019)
+            self.config = SSOConfigData(
+                client_id=settings.AUTH0_CLIENT_ID,
+                client_secret=settings.AUTH0_CLIENT_SECRET,
+                domain=settings.AUTH0_DOMAIN,
+                redirect_uri=settings.AUTH0_REDIRECT_URI,
+            )
+
+        self.tokens: Optional[Dict] = None
         self.scope = 'openid email profile offline_access'
         self.request = request
 
@@ -80,13 +122,13 @@ class Auth0Service(SignUpMixin, CacheMixin):
             raise exceptions.TokenInvalidOrExpired
         try:
             response = requests.post(
-                f'https://{self.domain}/oauth/token',
+                f'https://{self.config.domain}/oauth/token',
                 data={
                     'grant_type': 'authorization_code',
-                    'client_id': self.client_id,
-                    'client_secret': self.client_secret,
+                    'client_id': self.config.client_id,
+                    'client_secret': self.config.client_secret,
                     'code': auth_response['code'],
-                    'redirect_uri': self.redirect_uri,
+                    'redirect_uri': self.config.redirect_uri,
                 },
                 timeout=10,
             )
@@ -132,7 +174,7 @@ class Auth0Service(SignUpMixin, CacheMixin):
         if cached_profile:
             return cached_profile
 
-        url = f'https://{self.domain}/userinfo'
+        url = f'https://{self.config.domain}/userinfo'
         headers = {'Authorization': f'Bearer {access_token}'}
         try:
             response = requests.get(url, headers=headers, timeout=10)
@@ -161,15 +203,15 @@ class Auth0Service(SignUpMixin, CacheMixin):
         state = str(uuid4())
         self._set_cache(value=True, key=state)
         query_params = {
-            'client_id': self.client_id,
-            'redirect_uri': self.redirect_uri,
+            'client_id': self.config.client_id,
+            'redirect_uri': self.config.redirect_uri,
             'scope': self.scope,
             'state': state,
             'response_type': 'code',
         }
 
         query = requests.compat.urlencode(query_params)
-        return f'https://{self.domain}/authorize?{query}'
+        return f'https://{self.config.domain}/authorize?{query}'
 
     def get_user_data(self, user_profile: dict) -> UserData:
         """ Retrieve user details during signin / signup process """
@@ -243,7 +285,10 @@ class Auth0Service(SignUpMixin, CacheMixin):
     def _get_users(self, org_id: str) -> dict:
         """ Get organization members from Auth0 """
         access_token = self._get_management_api_token()
-        url = f'https://{self.domain}/api/v2/organizations/{org_id}/members'
+        url = (
+            f'https://{self.config.domain}/'
+            f'api/v2/organizations/{org_id}/members'
+        )
         headers = {
             'Authorization': f'Bearer {access_token}',
             'Content-Type': 'application/json',
@@ -273,7 +318,10 @@ class Auth0Service(SignUpMixin, CacheMixin):
     def _get_user_organizations(self, user_id: str) -> list:
         """ Get user's organizations from Auth0 """
         access_token = self._get_management_api_token()
-        url = f'https://{self.domain}/api/v2/users/{user_id}/organizations'
+        url = (
+            f'https://{self.config.domain}/'
+            f'api/v2/users/{user_id}/organizations'
+        )
         headers = {
             'Authorization': f'Bearer {access_token}',
             'Content-Type': 'application/json',
@@ -352,11 +400,11 @@ class Auth0Service(SignUpMixin, CacheMixin):
         cached_token = self._get_cache(key=self.MGMT_TOKEN_CACHE_KEY)
         if cached_token:
             return cached_token
-        url = f'https://{self.domain}/oauth/token'
+        url = f'https://{self.config.domain}/oauth/token'
         data = {
-            'client_id': self.client_id,
-            'client_secret': self.client_secret,
-            'audience': f'https://{self.domain}/api/v2/',
+            'client_id': self.config.client_id,
+            'client_secret': self.config.client_secret,
+            'audience': f'https://{self.config.domain}/api/v2/',
             'grant_type': 'client_credentials',
         }
         try:
@@ -457,4 +505,12 @@ class Auth0Service(SignUpMixin, CacheMixin):
                         user.account.save(update_fields=['external_id'])
 
             self.save_tokens_for_user(user)
+
+            AnalyticService.users_logged_in(
+                user=user,
+                is_superuser=False,
+                auth_type=AuthTokenType.USER,
+                source=SourceType.OKTA,
+            )
+
             return user, token

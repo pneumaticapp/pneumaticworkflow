@@ -3,16 +3,15 @@ from rest_framework.decorators import action
 from rest_framework.viewsets import GenericViewSet
 
 from src.analysis.mixins import BaseIdentifyMixin
-from src.authentication.permissions import OktaPermission
+from src.authentication.permissions import SSOPermission
 from src.authentication.serializers import (
+    AuthUriSerializer,
     OktaTokenSerializer,
 )
 from src.authentication.services.exceptions import (
     AuthException,
 )
-from src.authentication.services.okta import (
-    OktaService,
-)
+from src.authentication.services.okta import OktaService
 from src.authentication.throttling import (
     Auth0AuthUriThrottle,
     Auth0TokenThrottle,
@@ -32,7 +31,7 @@ class OktaViewSet(
     BaseIdentifyMixin,
     GenericViewSet,
 ):
-    permission_classes = (OktaPermission,)
+    permission_classes = (SSOPermission,)
     serializer_class = OktaTokenSerializer
 
     @property
@@ -54,12 +53,6 @@ class OktaViewSet(
                     'code': slz.validated_data['code'],
                     'state': slz.validated_data['state'],
                 },
-                utm_source=slz.validated_data.get('utm_source'),
-                utm_medium=slz.validated_data.get('utm_medium'),
-                utm_term=slz.validated_data.get('utm_term'),
-                utm_content=slz.validated_data.get('utm_content'),
-                gclid=slz.validated_data.get('gclid'),
-                utm_campaign=slz.validated_data.get('utm_campaign'),
             )
         except AuthException as ex:
             raise_validation_error(message=ex.message)
@@ -69,8 +62,10 @@ class OktaViewSet(
 
     @action(methods=('GET',), detail=False, url_path='auth-uri')
     def auth_uri(self, request, *args, **kwargs):
+        slz = AuthUriSerializer(data=request.GET)
+        slz.is_valid(raise_exception=True)
         try:
-            service = OktaService()
+            service = OktaService(**slz.validated_data)
             auth_uri = service.get_auth_uri()
         except AuthException as ex:
             raise_validation_error(message=ex.message)
