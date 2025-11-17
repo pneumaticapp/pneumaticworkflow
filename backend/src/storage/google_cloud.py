@@ -172,5 +172,7 @@ class GoogleCloudService:
 
         blob = self.bucket.blob(filepath)
         blob.upload_from_string(data=binary, content_type=content_type)
+        if self.account and not self.account.bucket_is_public:
+            return self.get_authenticated_url(filepath)
         blob.make_public()
         return blob.public_url
