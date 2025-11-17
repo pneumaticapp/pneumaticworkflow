@@ -7,7 +7,6 @@ import uniqBy from 'lodash.uniqby';
 import { getNotifications, TGetNotificationsResponse } from '../../api/getNotifications';
 import { removeNotificationItem } from '../../api/removeNotificationItem';
 import { markNotificationsAsRead } from '../../api/markNotificationsAsRead';
-import { NotificationManager } from '../../components/UI/Notifications';
 import { parseCookies } from '../../utils/cookie';
 import { getBrowserConfigEnv } from '../../utils/getConfig';
 import { getErrorMessage } from '../../utils/getErrorMessage';
@@ -29,12 +28,12 @@ import {
 } from './actions';
 import { getUnreadNotificationsCount } from '../../api/getUnreadNotificationsCount';
 import { envWssURL } from '../../constants/enviroment';
+import { NotificationManager } from '../../components/UI/Notifications';
 
 function* fetchNotificationsAsRead() {
-  const {
-    items: notificationsList,
-    unreadItemsCount,
-  }: ReturnType<typeof getNotificationsStore> = yield select(getNotificationsStore);
+  const { items: notificationsList, unreadItemsCount }: ReturnType<typeof getNotificationsStore> = yield select(
+    getNotificationsStore,
+  );
   const newNotificationsIds = notificationsList.filter(({ status }) => status === 'new').map(({ id }) => id);
 
   if (!isArrayWithItems(newNotificationsIds)) {
@@ -48,7 +47,7 @@ function* fetchNotificationsAsRead() {
 function* markAllNotificationsAsRead() {
   const { items: notificationsList }: ReturnType<typeof getNotificationsStore> = yield select(getNotificationsStore);
 
-  const normalizedNotfications: TNotificationsListItem[] = notificationsList.map(notification => {
+  const normalizedNotfications: TNotificationsListItem[] = notificationsList.map((notification) => {
     return { ...notification, status: 'read' };
   });
 
@@ -60,10 +59,7 @@ function* fetchNotifications({ payload: { offset } = { offset: 0 } }: TLoadNotif
   const isEmptyList = offset === 0;
 
   try {
-    const {
-      results: newItems,
-      count: totalItemsCount,
-    }: TGetNotificationsResponse = yield getNotifications({ offset });
+    const { results: newItems, count: totalItemsCount }: TGetNotificationsResponse = yield getNotifications({ offset });
 
     if (isEmptyList) {
       const { count: unreadItemsCount } = yield getUnreadNotificationsCount();
@@ -76,18 +72,16 @@ function* fetchNotifications({ payload: { offset } = { offset: 0 } }: TLoadNotif
 
     yield put(changeNotificationsList(newNotificationsList));
   } catch (error) {
-    NotificationManager.error({ title: 'notifications.fetch-error', message: getErrorMessage(error) });
+    NotificationManager.notifyApiError(error, { title: 'notifications.fetch-error', message: getErrorMessage(error) });
     console.info('fetch notifications error : ', error);
     yield put(loadNotificationsListFailed());
   }
 }
 
 function* handleRemoveNotification({ payload: { notificationId } }: TRemoveNotificationItem) {
-  const {
-    items,
-    totalItemsCount,
-    unreadItemsCount,
-  }: ReturnType<typeof getNotificationsStore> = yield select(getNotificationsStore);
+  const { items, totalItemsCount, unreadItemsCount }: ReturnType<typeof getNotificationsStore> = yield select(
+    getNotificationsStore,
+  );
   const newItems = items.filter(({ id }) => id !== notificationId);
   const deletingItem = items.find(({ id }) => id === notificationId);
   if (!deletingItem || items.length === newItems.length) {
@@ -107,7 +101,7 @@ function* handleRemoveNotification({ payload: { notificationId } }: TRemoveNotif
   try {
     yield call(removeNotificationItem, { notificationId });
   } catch (error) {
-    NotificationManager.error({
+    NotificationManager.notifyApiError(error, {
       title: 'notifications.failed-to-remove-notification',
       message: getErrorMessage(error),
     });
@@ -141,7 +135,9 @@ function* watchChangeList() {
 }
 
 export function* watchNewNotifications() {
-  const { api: { wsPublicUrl, urls }} = getBrowserConfigEnv();
+  const {
+    api: { wsPublicUrl, urls },
+  } = getBrowserConfigEnv();
 
   const apiUrl = `${urls.wsNotifications}?auth_token=${parseCookies(document.cookie).token}`;
   const url = mergePaths(envWssURL || wsPublicUrl, apiUrl);

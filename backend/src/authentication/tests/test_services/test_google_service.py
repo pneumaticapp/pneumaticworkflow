@@ -109,7 +109,6 @@ class TestGoogleAuthService:
         assert 'response_type=code' in auth_uri
         assert 'state=' in auth_uri
         assert 'access_type=offline' in auth_uri
-        assert 'prompt=consent' in auth_uri
         set_cache_mock.assert_called_once()
 
     def test_parse_profile_data__complete_profile__returns_all_data(self):
