@@ -1,0 +1,37 @@
+/* eslint-disable */
+/* prettier-ignore */
+import * as React from 'react';
+
+export type TStatusTitlesIconProps = React.SVGAttributes<SVGElement>;
+
+export function StatusTitlesIcon({ className, fill = 'currentColor', ...rest }: TStatusTitlesIconProps) {
+  return (
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 20 20"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      className={className}
+    >
+      <path
+        fill-rule="evenodd"
+        clip-rule="evenodd"
+        d="M2 4C2 2.89543 2.89543 2 4 2H9C10.6569 2 12 3.34315 12 5V11C12 12.1046 11.1046 13 10 13H4C2.89543 13 2 12.1046 2 11V4ZM9 4H4V11H10V5C10 4.44772 9.55228 4 9 4Z"
+        fill="#262522"
+      />
+      <path
+        fill-rule="evenodd"
+        clip-rule="evenodd"
+        d="M10 6C10 4.89543 10.8954 4 12 4H15C16.6569 4 18 5.34315 18 7V12C18 13.6569 16.6569 15 15 15H13C11.3431 15 10 13.6569 10 12V6ZM15 6H12V12C12 12.5523 12.4477 13 13 13H15C15.5523 13 16 12.5523 16 12V7C16 6.44772 15.5523 6 15 6Z"
+        fill="#262522"
+      />
+      <path
+        fill-rule="evenodd"
+        clip-rule="evenodd"
+        d="M3 10C3.55228 10 4 10.4477 4 11V17C4 17.5523 3.55228 18 3 18C2.44772 18 2 17.5523 2 17V11C2 10.4477 2.44772 10 3 10Z"
+        fill="#262522"
+      />
+    </svg>
+  );
+}

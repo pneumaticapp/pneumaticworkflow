@@ -199,7 +199,7 @@ export function FilterSelect<
       );
     };
 
-    const rendeSelectAllOption = () => {
+    const renderSelectAllOption = () => {
       if (!props.isMultiple || !selectAllLabel) {
         return null;
       }
@@ -248,7 +248,7 @@ export function FilterSelect<
     return (
       <>
         {props.selectedOption && renderResetOption()}
-        {rendeSelectAllOption()}
+        {renderSelectAllOption()}
         {foundValues.map((option) => {
           const label = (
             <div className={styles['dropdown-item-content']}>

@@ -10,7 +10,7 @@ import { history } from '../../utils/history';
 import { WorkflowModalContainer } from '../../components/Workflows/WorkflowModal';
 import { SelectMenu, Tabs } from '../../components/UI';
 import { EWorkflowsSorting, EWorkflowsStatus, EWorkflowsView } from '../../types/workflow';
-import { BoxesIcon, FilterIcon, TableViewIcon } from '../../components/icons';
+import { BoxesIcon, StatusTitlesIcon, TableViewIcon } from '../../components/icons';
 import { IWorkflowsFiltersProps } from '../../components/Workflows/types';
 import {
   canFilterByCurrentPerformer,
@@ -221,7 +221,12 @@ export function WorkflowsLayoutComponent({
       <>
         <TemplateFilterSelect />
         <StarterFilterSelect />
-        <SelectMenu values={statusTitles} activeValue={statusFilter} onChange={setStatusFilter} Icon={FilterIcon} />
+        <SelectMenu
+          values={statusTitles}
+          activeValue={statusFilter}
+          onChange={setStatusFilter}
+          Icon={StatusTitlesIcon}
+        />
         <SelectMenu values={sortingTitles} activeValue={sorting} onChange={changeWorkflowsSorting} />
         {areFiltersChanged && (
           <button type="button" onClick={clearFilters} className="cancel-button">
