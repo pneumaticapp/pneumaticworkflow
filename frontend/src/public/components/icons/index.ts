@@ -172,3 +172,4 @@ export * from './TeamPlaceholderNoUsersIcon';
 export * from './TableViewIcon';
 export * from './StarterFilterIcon';
 export * from './StatusTitlesIcon';
+export * from './PerformerFilterIcon';

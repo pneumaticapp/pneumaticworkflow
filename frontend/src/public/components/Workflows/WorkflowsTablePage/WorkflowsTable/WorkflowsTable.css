@@ -248,6 +248,7 @@
 }
 
 .column-header__template-name,
-.column-header__starter-name {
+.column-header__starter-name,
+.column-header__performer-name {
   @mixin text-truncate;
 }

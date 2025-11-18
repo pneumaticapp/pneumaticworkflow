@@ -13,17 +13,16 @@ import { TableColumns } from './types';
 import * as ColumnCells from './Columns/Cells';
 
 import { WorkflowsPlaceholderIcon } from '../../WorkflowsPlaceholderIcon';
-import { Avatar, FilterSelect, InputField, Loader, Placeholder } from '../../../UI';
+import { FilterSelect, InputField, Loader, Placeholder } from '../../../UI';
 import { IApplicationState, IWorkflowsList } from '../../../../types/redux';
 import { TOpenWorkflowLogPopupPayload, TRemoveWorkflowFromListPayload } from '../../../../redux/actions';
 import { SearchMediumIcon } from '../../../icons';
-import { EWorkflowsLoadingStatus, EWorkflowsStatus } from '../../../../types/workflow';
+import { EWorkflowsLoadingStatus } from '../../../../types/workflow';
 import { IWorkflowsFiltersProps } from '../../types';
 import { isArrayWithItems } from '../../../../utils/helpers';
 import { canFilterByTemplateStep } from '../../../../utils/workflows/filters';
 import { StepName } from '../../../StepName';
-import { getUserFullName } from '../../../../utils/users';
-import { ETemplateOwnerType, ITableViewFields } from '../../../../types/template';
+import { ITableViewFields } from '../../../../types/template';
 import { useIsTableWiderThanScreen, useWorkflowsTableRef } from './WorkflowsTableContext';
 
 import styles from './WorkflowsTable.css';
@@ -83,7 +82,6 @@ export function WorkflowsTable({
   stepsIdsFilter,
   filterTemplates,
   performersIdsFilter,
-  performersGroupIdsFilter,
   performersCounters,
   statusFilter,
   setStepsFilter,
@@ -91,13 +89,10 @@ export function WorkflowsTable({
   loadWorkflowsList,
   removeWorkflowFromList,
   openWorkflowLogPopup,
-  setPerformersFilter,
-  setPerformersGroupFilter,
 }: IWorkflowsTableProps) {
   const { formatMessage } = useIntl();
   const { isDesktop } = useCheckDevice();
 
-  const groups = useSelector((state: IApplicationState) => state.groups.list);
   const currentUser = useSelector((state: IApplicationState) => state.authUser);
   const selectedFields = useSelector((state: IApplicationState) => state.workflows.workflowsSettings.selectedFields);
   const lastLoadedTemplateIdForTable = useSelector(
@@ -170,45 +165,6 @@ export function WorkflowsTable({
     }
   }, [currentTemplateId]);
 
-  const performersOptions = React.useMemo(
-    () =>
-      users.map((user) => {
-        const userFullName = getUserFullName(user);
-
-        return {
-          ...user,
-          displayName: (
-            <div className={styles['user']}>
-              <Avatar user={user} size="sm" />
-              <span className={styles['user-name']}>{userFullName}</span>
-            </div>
-          ),
-          count: performersCounters.find(({ sourceId }) => sourceId === user.id)?.workflowsCount || 0,
-          searchByText: userFullName,
-        };
-      }),
-    [users.length, performersCounters],
-  );
-
-  const performersGroupOptions = React.useMemo(
-    () =>
-      groups.map((group) => {
-        return {
-          ...group,
-          type: ETemplateOwnerType.UserGroup,
-          displayName: (
-            <div className={styles['user']}>
-              <Avatar user={{ type: ETemplateOwnerType.UserGroup }} size="sm" />
-              <span className={styles['user-name']}>{group.name}</span>
-            </div>
-          ),
-          count: performersCounters.find(({ sourceId }) => sourceId === group.id)?.workflowsCount || 0,
-          searchByText: group.name,
-        };
-      }),
-    [users.length, performersCounters],
-  );
-
   const renderSearch = () => {
     return (
       <div className={styles['search']}>
@@ -267,45 +223,6 @@ export function WorkflowsTable({
         containerClassname={styles['filter-container']}
         arrowClassName={styles['header-filter__arrow']}
         selectAllLabel={formatMessage({ id: 'workflows.filter-all-steps' })}
-      />
-    );
-  };
-
-  const renderPerformersFilter = () => {
-    if (statusFilter === EWorkflowsStatus.Snoozed || statusFilter === EWorkflowsStatus.Completed) {
-      return formatMessage({ id: 'workflows.filter-column-performers' });
-    }
-
-    return (
-      <FilterSelect
-        isMultiple
-        isSearchShown
-        placeholderText={formatMessage({ id: 'workflows.filter-no-user' })}
-        selectedOptions={[...performersGroupIdsFilter, ...performersIdsFilter]}
-        optionIdKey="id"
-        optionLabelKey="displayName"
-        options={[...performersGroupOptions, ...performersOptions]}
-        onChange={(_, options: any) => {
-          const performers = options
-            .filter((item: any) => item.type === ETemplateOwnerType.User)
-            .map((lItem: any) => lItem.id);
-          const selectedGroups = options
-            .filter((item: any) => item.type === ETemplateOwnerType.UserGroup)
-            .map((lItem: any) => lItem.id);
-
-          setPerformersFilter(performers);
-          setPerformersGroupFilter(selectedGroups);
-        }}
-        resetFilter={() => {
-          setPerformersFilter([]);
-          setPerformersGroupFilter([]);
-        }}
-        renderPlaceholder={() => (
-          <span className={styles['header-filter']}>{formatMessage({ id: 'workflows.filter-column-performers' })}</span>
-        )}
-        containerClassname={styles['filter-container']}
-        arrowClassName={styles['header-filter__arrow']}
-        selectAllLabel={formatMessage({ id: 'workflows.filter-all-users' })}
       />
     );
   };
@@ -433,7 +350,11 @@ export function WorkflowsTable({
       ...(selectedFieldsSet.has('system-column-performer')
         ? [
             {
-              Header: renderPerformersFilter(),
+              Header: (
+                <div className={styles['column-header__performer-name']}>
+                  {formatMessage({ id: 'workflows.filter-column-performers' })}
+                </div>
+              ),
               accessor: 'system-column-performer',
               Cell: ColumnCells.PerformerColumn,
               width: savedGlobalWidths['system-column-performer'] || ETableViewFieldsWidth['system-column-performer'],

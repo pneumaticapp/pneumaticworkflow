@@ -4,13 +4,19 @@ import { useIntl } from 'react-intl';
 import { useDispatch, useSelector } from 'react-redux';
 import { setWorkflowsFilterPerfomers, setWorkflowsFilterPerfomersGroup } from '../../redux/workflows/actions';
 
+import { IGroup } from '../../redux/team/types';
 import { IApplicationState } from '../../types/redux';
+import { TUserListItem } from '../../types/user';
 import { ETemplateOwnerType } from '../../types/template';
+import { EWorkflowsStatus } from '../../types/workflow';
+
+import { getActiveUsers, getUserFullName } from '../../utils/users';
 
 import { Avatar, FilterSelect } from '../../components/UI';
 
 import styles from './WorkflowsLayout.css';
-import { getActiveUsers, getUserFullName } from '../../utils/users';
+import { PerformerFilterIcon } from '../../components/icons';
+import { ERenderPlaceholderType, getRenderPlaceholder } from './utils';
 
 export function PerformerFilterSelect() {
   const { formatMessage } = useIntl();
@@ -18,9 +24,11 @@ export function PerformerFilterSelect() {
   const { performersGroupIdsFilter, performersIdsFilter } = useSelector(
     (state: IApplicationState) => state.workflows.workflowsSettings.values,
   );
-  const groups = useSelector((state: IApplicationState) => state.groups.list);
-  const { users } = useSelector((state: IApplicationState) => state.accounts);
+  const groups: IGroup[] = useSelector((state: IApplicationState) => state.groups.list);
+  const { users }: { users: TUserListItem[] } = useSelector((state: IApplicationState) => state.accounts);
   const { performersCounters } = useSelector((state: IApplicationState) => state.workflows.workflowsSettings.counters);
+  const { statusFilter } = useSelector((state: IApplicationState) => state.workflows.workflowsSettings.values);
+  const mustDisableFilter = statusFilter === EWorkflowsStatus.Snoozed || statusFilter === EWorkflowsStatus.Completed;
 
   const performersCountersMap = useMemo(
     () => new Map(performersCounters.map((counter) => [counter.sourceId, counter.workflowsCount])),
@@ -68,10 +76,14 @@ export function PerformerFilterSelect() {
       }),
     [activeUsers, performersCounters],
   );
+  const filterIds = [...performersGroupIdsFilter, ...performersIdsFilter];
+  const isOneFilterId = filterIds.length === 1;
+  const filterType = isOneFilterId && performersIdsFilter.length === 1 ? 'userType' : 'groupType';
 
   return (
     <div className={styles['performer-filter']}>
       <FilterSelect
+        isDisabled={mustDisableFilter}
         isMultiple
         isSearchShown
         placeholderText={formatMessage({ id: 'workflows.filter-no-user' })}
@@ -94,9 +106,19 @@ export function PerformerFilterSelect() {
           dispatch(setWorkflowsFilterPerfomers([]));
           dispatch(setWorkflowsFilterPerfomersGroup([]));
         }}
-        renderPlaceholder={() => (
-          <span className={styles['header-filter']}>{formatMessage({ id: 'workflows.filter-column-performers' })}</span>
-        )}
+        Icon={PerformerFilterIcon}
+        renderPlaceholder={() =>
+          getRenderPlaceholder({
+            isDisabled: mustDisableFilter,
+            filterType,
+            filterIds,
+            options: filterType === 'userType' ? performersOptions : performersGroupOptions,
+            formatMessage,
+            type: ERenderPlaceholderType.Performer,
+            severalOptionPlaceholder: 'sorting.several-performers',
+            defaultPlaceholder: 'sorting.all-performers',
+          })
+        }
         containerClassname={styles['filter-container']}
         arrowClassName={styles['header-filter__arrow']}
         selectAllLabel={formatMessage({ id: 'workflows.filter-all-users' })}

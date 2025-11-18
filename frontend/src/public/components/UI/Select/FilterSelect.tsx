@@ -35,6 +35,7 @@ interface IFilterSelectCommonProps<
   isLoading?: boolean;
   options: TOption[];
   isSearchShown?: boolean;
+  isDisabled?: boolean;
   noValueLabel?: string;
   placeholderText: string;
   searchPlaceholder?: string;
@@ -82,6 +83,7 @@ export function FilterSelect<
     optionLabelKey,
     isLoading,
     isSearchShown,
+    isDisabled,
     noValueLabel,
     placeholderText,
     searchPlaceholder,
@@ -288,6 +290,9 @@ export function FilterSelect<
   };
 
   const handleToggleDropdown = () => {
+    if (isDisabled) {
+      return;
+    }
     setIsDropdownOpen(!isDropdownOpen);
   };
 
@@ -308,13 +313,19 @@ export function FilterSelect<
   return (
     <OutsideClickHandler disabled={!isDropdownOpen} onOutsideClick={handleToggleDropdown}>
       <Dropdown
-        className={classnames('dropdown-menu-right dropdown', styles['container'], containerClassname)}
+        className={classnames(
+          'dropdown-menu-right dropdown',
+          styles['container'],
+          containerClassname,
+          isDisabled && styles['filter-select_disabled'],
+        )}
         toggle={handleToggleDropdown}
         isOpen={isDropdownOpen}
         onClick={(event) => event.stopPropagation()}
       >
         <DropdownToggle
           tag="button"
+          disabled={!!isDisabled}
           className={classnames(
             styles['active-value'],
             toggleClassName,
@@ -325,7 +336,11 @@ export function FilterSelect<
           <span className={styles['active-value__text']}>{props.renderPlaceholder(options)}</span>
           {props.isMultiple && isArrayWithItems(props.selectedOptions) ? (
             <span
+              aria-disabled={!!isDisabled}
               onClick={(e) => {
+                if (isDisabled) {
+                  return;
+                }
                 e.stopPropagation();
                 resetFilter();
               }}
@@ -335,6 +350,9 @@ export function FilterSelect<
               role="button"
               tabIndex={0}
               onKeyDown={(e) => {
+                if (isDisabled) {
+                  return;
+                }
                 if (e.key === 'Enter' || e.key === ' ') {
                   e.preventDefault();
                   e.stopPropagation();
