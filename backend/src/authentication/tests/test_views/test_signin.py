@@ -48,6 +48,10 @@ class TestTokenObtainView:
             'src.authentication.views.signin.'
             'AnalyticService.users_logged_in',
         )
+        mock_settings_mixins = mocker.patch(
+            'src.authentication.mixins.settings',
+        )
+        mock_settings_mixins.PROJECT_CONF = {'SSO_AUTH': False}
 
         # act
         response = api_client.post('/auth/token/obtain', data=data)
@@ -81,6 +85,10 @@ class TestTokenObtainView:
             'src.authentication.views.signin.'
             'AnalyticService.users_logged_in',
         )
+        mock_settings_mixins = mocker.patch(
+            'src.authentication.mixins.settings',
+        )
+        mock_settings_mixins.PROJECT_CONF = {'SSO_AUTH': False}
 
         # act
         response = api_client.post('/auth/token/obtain', data=data)
@@ -116,6 +124,10 @@ class TestTokenObtainView:
             'src.authentication.views.signin.'
             'AnalyticService.users_logged_in',
         )
+        mock_settings_mixins = mocker.patch(
+            'src.authentication.mixins.settings',
+        )
+        mock_settings_mixins.PROJECT_CONF = {'SSO_AUTH': False}
 
         # act
         response = api_client.post('/auth/token/obtain', data=data)

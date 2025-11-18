@@ -36,6 +36,7 @@ def test__get_auth_uri__ok(mocker):
     settings_mock.AUTH0_DOMAIN = domain
     settings_mock.AUTH0_CLIENT_ID = client_id
     settings_mock.AUTH0_REDIRECT_URI = redirect_uri
+    settings_mock.PROJECT_CONF = {'SSO_AUTH': True}
     set_cache_mock = mocker.patch(
         'src.authentication.services.auth0.Auth0Service._set_cache',
     )
@@ -72,6 +73,10 @@ def test_get_user_data__ok(mocker):
     capture_sentry_mock = mocker.patch(
         'src.authentication.services.auth0.capture_sentry_message',
     )
+    settings_mock = mocker.patch(
+        'src.authentication.services.auth0.settings',
+    )
+    settings_mock.PROJECT_CONF = {'SSO_AUTH': True}
     service = Auth0Service()
 
     # act
@@ -108,6 +113,10 @@ def test_get_user_data__not_first_name__set_default(mocker):
     capture_sentry_mock = mocker.patch(
         'src.authentication.services.auth0.capture_sentry_message',
     )
+    settings_mock = mocker.patch(
+        'src.authentication.services.auth0.settings',
+    )
+    settings_mock.PROJECT_CONF = {'SSO_AUTH': True}
     service = Auth0Service()
 
     # act
@@ -143,6 +152,10 @@ def test_get_user_data__email_not_found__raise_exception(mocker):
     capture_sentry_mock = mocker.patch(
         'src.authentication.services.auth0.capture_sentry_message',
     )
+    settings_mock = mocker.patch(
+        'src.authentication.services.auth0.settings',
+    )
+    settings_mock.PROJECT_CONF = {'SSO_AUTH': True}
     service = Auth0Service()
 
     # act
@@ -189,6 +202,7 @@ def test_get_first_access_token__ok(mocker):
     settings_mock.AUTH0_CLIENT_ID = client_id
     settings_mock.AUTH0_CLIENT_SECRET = client_secret
     settings_mock.AUTH0_REDIRECT_URI = redirect_uri
+    settings_mock.PROJECT_CONF = {'SSO_AUTH': True}
     service = Auth0Service()
 
     # act
@@ -227,6 +241,10 @@ def test_get_first_access_token__clear_cache__raise_exception(mocker):
     sentry_mock = mocker.patch(
         'src.authentication.services.auth0.capture_sentry_message',
     )
+    settings_mock = mocker.patch(
+        'src.authentication.services.auth0.settings',
+    )
+    settings_mock.PROJECT_CONF = {'SSO_AUTH': True}
     service = Auth0Service()
 
     # act
@@ -267,6 +285,7 @@ def test_get_first_access_token__request_return_error__raise_exception(mocker):
     settings_mock.AUTH0_CLIENT_ID = client_id
     settings_mock.AUTH0_CLIENT_SECRET = client_secret
     settings_mock.AUTH0_REDIRECT_URI = redirect_uri
+    settings_mock.PROJECT_CONF = {'SSO_AUTH': True}
     service = Auth0Service()
 
     # act
@@ -324,6 +343,7 @@ def test_get_user_profile__ok(mocker):
         'src.authentication.services.auth0.settings',
     )
     settings_mock.AUTH0_DOMAIN = domain
+    settings_mock.PROJECT_CONF = {'SSO_AUTH': True}
     service = Auth0Service()
 
     # act
@@ -366,6 +386,7 @@ def test_get_user_profile__response_error__raise_exception(mocker):
         'src.authentication.services.auth0.settings',
     )
     settings_mock.AUTH0_DOMAIN = domain
+    settings_mock.PROJECT_CONF = {'SSO_AUTH': True}
     service = Auth0Service()
 
     # act
@@ -386,7 +407,7 @@ def test_get_user_profile__response_error__raise_exception(mocker):
     )
 
 
-def test_save_tokens_for_user__create__ok():
+def test_save_tokens_for_user__create__ok(mocker):
 
     # arrange
     user = create_test_user()
@@ -400,6 +421,10 @@ def test_save_tokens_for_user__create__ok():
         'token_type': token_type,
         'expires_in': expires_in,
     }
+    settings_mock = mocker.patch(
+        'src.authentication.services.auth0.settings',
+    )
+    settings_mock.PROJECT_CONF = {'SSO_AUTH': True}
     service = Auth0Service()
     service.tokens = tokens_data
 
@@ -416,7 +441,7 @@ def test_save_tokens_for_user__create__ok():
     assert token.expires_in == expires_in
 
 
-def test_save_tokens_for_user__update__ok():
+def test_save_tokens_for_user__update__ok(mocker):
     # arrange
     user = create_test_user()
     token_type = 'Bearer'
@@ -433,6 +458,10 @@ def test_save_tokens_for_user__update__ok():
         'token_type': token_type,
         'expires_in': 400,
     }
+    settings_mock = mocker.patch(
+        'src.authentication.services.auth0.settings',
+    )
+    settings_mock.PROJECT_CONF = {'SSO_AUTH': True}
     service = Auth0Service()
     service.tokens = new_tokens_data
 
@@ -459,6 +488,10 @@ def test_get_access_token__not_expired__ok(mocker):
     sentry_mock = mocker.patch(
         'src.authentication.services.auth0.capture_sentry_message',
     )
+    settings_mock = mocker.patch(
+        'src.authentication.services.auth0.settings',
+    )
+    settings_mock.PROJECT_CONF = {'SSO_AUTH': True}
     service = Auth0Service()
 
     # act
@@ -475,6 +508,10 @@ def test_get_access_token__not_found__raise_exception(mocker):
     sentry_mock = mocker.patch(
         'src.authentication.services.auth0.capture_sentry_message',
     )
+    settings_mock = mocker.patch(
+        'src.authentication.services.auth0.settings',
+    )
+    settings_mock.PROJECT_CONF = {'SSO_AUTH': True}
 
     service = Auth0Service()
 
@@ -518,6 +555,7 @@ def test_get_management_api_token__ok(mocker):
     settings_mock.AUTH0_DOMAIN = domain
     settings_mock.AUTH0_CLIENT_ID = client_id
     settings_mock.AUTH0_CLIENT_SECRET = client_secret
+    settings_mock.PROJECT_CONF = {'SSO_AUTH': True}
     service = Auth0Service()
 
     # act
@@ -548,6 +586,10 @@ def test_get_management_api_token__cached__ok(mocker):
         'src.authentication.services.auth0.Auth0Service._get_cache',
         return_value=cached_token,
     )
+    settings_mock = mocker.patch(
+        'src.authentication.services.auth0.settings',
+    )
+    settings_mock.PROJECT_CONF = {'SSO_AUTH': True}
     service = Auth0Service()
 
     # act
@@ -584,6 +626,7 @@ def test_get_users__ok(mocker):
         'src.authentication.services.auth0.settings',
     )
     settings_mock.AUTH0_DOMAIN = domain
+    settings_mock.PROJECT_CONF = {'SSO_AUTH': True}
     service = Auth0Service()
 
     # act
@@ -628,6 +671,7 @@ def test_private_get_user_organizations__ok(mocker):
         'src.authentication.services.auth0.settings',
     )
     settings_mock.AUTH0_DOMAIN = domain
+    settings_mock.PROJECT_CONF = {'SSO_AUTH': True}
     service = Auth0Service()
 
     # act
@@ -677,6 +721,10 @@ def test_update_user_contacts__ok(mocker):
     capture_sentry_mock = mocker.patch(
         'src.authentication.services.auth0.capture_sentry_message',
     )
+    settings_mock = mocker.patch(
+        'src.authentication.services.auth0.settings',
+    )
+    settings_mock.PROJECT_CONF = {'SSO_AUTH': True}
     service = Auth0Service()
 
     # act
@@ -713,6 +761,10 @@ def test_update_user_contacts__exception__not_handled(mocker):
         'src.authentication.services.auth0.Auth0Service._get_access_token',
         side_effect=Exception('API Error'),
     )
+    settings_mock = mocker.patch(
+        'src.authentication.services.auth0.settings',
+    )
+    settings_mock.PROJECT_CONF = {'SSO_AUTH': True}
     service = Auth0Service()
 
     # act
@@ -773,6 +825,10 @@ def test_update_user_contacts__multiple_contacts__ok(mocker):
     capture_sentry_mock = mocker.patch(
         'src.authentication.services.auth0.capture_sentry_message',
     )
+    settings_mock = mocker.patch(
+        'src.authentication.services.auth0.settings',
+    )
+    settings_mock.PROJECT_CONF = {'SSO_AUTH': True}
     service = Auth0Service()
 
     # act
@@ -863,6 +919,10 @@ def test_authenticate_user__existing_user__ok(mocker):
     save_tokens_mock = mocker.patch(
         'src.authentication.services.auth0.Auth0Service.save_tokens_for_user',
     )
+    settings_mock = mocker.patch(
+        'src.authentication.services.auth0.settings',
+    )
+    settings_mock.PROJECT_CONF = {'SSO_AUTH': True}
 
     service = Auth0Service(request=request_mock)
 
@@ -924,7 +984,7 @@ def test_authenticate_user__new_user_signup_disabled__raise_exception(
     settings_mock = mocker.patch(
         'src.authentication.services.auth0.settings',
     )
-    settings_mock.PROJECT_CONF = {'SIGNUP': False}
+    settings_mock.PROJECT_CONF = {'SIGNUP': False, 'SSO_AUTH': True}
     service = Auth0Service(request=request_mock)
 
     # act
@@ -1001,7 +1061,7 @@ def test_authenticate_user__new_user_create_account__ok(mocker):
     settings_mock = mocker.patch(
         'src.authentication.services.auth0.settings',
     )
-    settings_mock.PROJECT_CONF = {'SIGNUP': True}
+    settings_mock.PROJECT_CONF = {'SIGNUP': True, 'SSO_AUTH': True}
 
     service = Auth0Service(request=request_mock)
     service.tokens = {'access_token': 'test_token'}
@@ -1100,7 +1160,7 @@ def test_authenticate_user__join_existing_account__ok(mocker):
     settings_mock = mocker.patch(
         'src.authentication.services.auth0.settings',
     )
-    settings_mock.PROJECT_CONF = {'SIGNUP': True}
+    settings_mock.PROJECT_CONF = {'SIGNUP': True, 'SSO_AUTH': True}
     service = Auth0Service(request=request_mock)
     service.tokens = {'access_token': 'test_token'}
 
