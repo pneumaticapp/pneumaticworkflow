@@ -84,9 +84,6 @@ def test_get_user_data__ok(mocker):
     assert result['email'] == 'john.doe@example.com'
     assert result['first_name'] == 'John'
     assert result['last_name'] == 'Doe'
-    assert result['job_title'] is None
-    assert result['photo'] is None
-    assert result['company_name'] is None
 
     capture_sentry_mock.assert_called_once_with(
         message='Okta user profile john.doe@example.com',
@@ -152,8 +149,8 @@ def test_get_user_data__email_not_found__raise_exception(mocker):
 def test_get_first_access_token__ok(mocker):
     # arrange
     state = 'test_state'
+    code = 'test_code'
     code_verifier = 'test_code_verifier'
-    auth_response = {'code': 'test_code', 'state': state}
     domain = 'dev-123456.okta.com'
     client_id = 'test_client_id'
     client_secret = 'test_client_secret'
@@ -185,7 +182,7 @@ def test_get_first_access_token__ok(mocker):
     service = OktaService()
 
     # act
-    result = service._get_first_access_token(auth_response)
+    result = service._get_first_access_token(code, state)
 
     # assert
     assert result == 'test_access_token'
@@ -208,7 +205,7 @@ def test_get_first_access_token__ok(mocker):
 def test_get_first_access_token__clear_cache__raise_exception(mocker):
     # arrange
     state = 'test_state'
-    auth_response = {'code': 'test_code', 'state': state}
+    code = 'test_code'
     get_cache_mock = mocker.patch(
         'src.authentication.services.okta.OktaService._get_cache',
         return_value=None,
@@ -220,7 +217,7 @@ def test_get_first_access_token__clear_cache__raise_exception(mocker):
 
     # act
     with pytest.raises(exceptions.TokenInvalidOrExpired):
-        service._get_first_access_token(auth_response)
+        service._get_first_access_token(code, state)
 
     # assert
     get_cache_mock.assert_called_once_with(key=state)
@@ -230,8 +227,8 @@ def test_get_first_access_token__clear_cache__raise_exception(mocker):
 def test_get_first_access_token__request_error__raise_exception(mocker):
     # arrange
     state = 'test_state'
+    code = 'test_code'
     code_verifier = 'test_code_verifier'
-    auth_response = {'code': 'test_code', 'state': state}
     domain = 'dev-123456.okta.com'
     client_id = 'test_client_id'
     client_secret = 'test_client_secret'
@@ -260,7 +257,7 @@ def test_get_first_access_token__request_error__raise_exception(mocker):
 
     # act
     with pytest.raises(exceptions.TokenInvalidOrExpired):
-        service._get_first_access_token(auth_response)
+        service._get_first_access_token(code, state)
 
     # assert
     get_cache_mock.assert_called_once_with(key=state)
@@ -410,7 +407,10 @@ def test_authenticate_user__existing_user__ok(mocker):
     user = create_test_user(email='test@example.com')
     token = 'test_token'
     access_token = 'okta_access_token'
-    auth_response = {'code': 'test_code', 'state': 'test_state'}
+    code = 'test_code'
+    state = 'test_state'
+    user_agent = 'Test-Agent'
+    user_ip = '127.0.0.1'
     user_profile = {
         'sub': '00uid4BxXw6I6TV4m0g3',
         'email': 'test@example.com',
@@ -421,13 +421,7 @@ def test_authenticate_user__existing_user__ok(mocker):
         'email': 'test@example.com',
         'first_name': 'Test',
         'last_name': 'User',
-        'job_title': None,
-        'photo': None,
-        'company_name': None,
     }
-    request_mock = Mock()
-    request_mock.headers.get.return_value = 'Test-Agent'
-    request_mock.META.get.return_value = '127.0.0.1'
 
     get_first_access_token_mock = mocker.patch(
         'src.authentication.services.okta.'
@@ -458,15 +452,20 @@ def test_authenticate_user__existing_user__ok(mocker):
         'src.authentication.services.okta.AnalyticService.users_logged_in',
     )
 
-    service = OktaService(request=request_mock)
+    service = OktaService()
 
     # act
-    result_user, result_token = service.authenticate_user(auth_response)
+    result_user, result_token = service.authenticate_user(
+        code,
+        state,
+        user_agent,
+        user_ip,
+    )
 
     # assert
     assert result_user == user
     assert result_token == token
-    get_first_access_token_mock.assert_called_once_with(auth_response)
+    get_first_access_token_mock.assert_called_once_with(code, state)
     get_user_profile_mock.assert_called_once_with(access_token)
     get_user_data_mock.assert_called_once_with(user_profile)
     user_get_mock.return_value.get.assert_called_once_with(
@@ -474,8 +473,8 @@ def test_authenticate_user__existing_user__ok(mocker):
     )
     get_auth_token_mock.assert_called_once_with(
         user=user,
-        user_agent='Test-Agent',
-        user_ip='127.0.0.1',
+        user_agent=user_agent,
+        user_ip=user_ip,
     )
     save_tokens_mock.assert_called_once_with(user)
     analytics_mock.assert_called_once()
@@ -483,7 +482,8 @@ def test_authenticate_user__existing_user__ok(mocker):
 
 def test_authenticate_user__new_user_signup_disabled__raise_exception(mocker):
     # arrange
-    auth_response = {'code': 'test_code', 'state': 'test_state'}
+    code = 'test_code'
+    state = 'test_state'
     access_token = 'test_access_token'
     user_profile = {
         'sub': '00uid4BxXw6I6TV4m0g3',
@@ -496,7 +496,6 @@ def test_authenticate_user__new_user_signup_disabled__raise_exception(mocker):
         'first_name': 'New',
         'last_name': 'User',
     }
-    request_mock = Mock()
 
     get_first_access_token_mock = mocker.patch(
         'src.authentication.services.okta.'
@@ -521,14 +520,14 @@ def test_authenticate_user__new_user_signup_disabled__raise_exception(mocker):
     )
     settings_mock.PROJECT_CONF = {'SIGNUP': False}
     settings_mock.PROJECT_CONF = {'SSO_AUTH': True}
-    service = OktaService(request=request_mock)
+    service = OktaService()
 
     # act
     with pytest.raises(AuthenticationFailed):
-        service.authenticate_user(auth_response)
+        service.authenticate_user(code, state)
 
     # assert
-    get_first_access_token_mock.assert_called_once_with(auth_response)
+    get_first_access_token_mock.assert_called_once_with(code, state)
     get_user_profile_mock.assert_called_once_with(access_token)
     get_user_data_mock.assert_called_once_with(user_profile)
     user_get_mock.return_value.get.assert_called_once_with(

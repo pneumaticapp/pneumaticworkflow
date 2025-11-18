@@ -8,7 +8,6 @@ from rest_framework.exceptions import AuthenticationFailed
 from src.accounts.enums import (
     SourceType,
 )
-from src.accounts.models import Account
 from src.authentication.entities import SSOConfigData
 from src.authentication.models import AccessToken
 from src.authentication.services import exceptions
@@ -17,6 +16,7 @@ from src.authentication.services.auth0 import (
 )
 from src.processes.tests.fixtures import (
     create_test_user,
+    create_test_account,
 )
 from src.utils.logging import SentryLogLevel
 
@@ -89,7 +89,6 @@ def test_get_user_data__ok(mocker):
     assert result['last_name'] == user_profile['family_name']
     assert result['job_title'] == user_profile['job_title']
     assert result['photo'] == user_profile['picture']
-    assert result['company_name'] is None
 
     capture_sentry_mock.assert_called_once_with(
         message=f'Auth0 user profile {user_profile["email"]}',
@@ -129,7 +128,6 @@ def test_get_user_data__not_first_name__set_default(mocker):
     assert result['last_name'] == ''
     assert result['job_title'] == user_profile['job_title']
     assert result['photo'] == user_profile['picture']
-    assert result['company_name'] is None
     capture_sentry_mock.assert_called_once_with(
         message=f'Auth0 user profile {user_profile["email"]}',
         data={
@@ -171,7 +169,7 @@ def test_get_first_access_token__ok(mocker):
 
     # arrange
     state = 'ASDSDasd12'
-    auth_response = {'code': 'test_code', 'state': state}
+    code = 'test_code'
     domain = 'test_client_domain'
     client_id = 'test_client_id'
     client_secret = 'test_client_secret'
@@ -207,7 +205,7 @@ def test_get_first_access_token__ok(mocker):
     service = Auth0Service()
 
     # act
-    result = service._get_first_access_token(auth_response)
+    result = service._get_first_access_token(code, state)
 
     # assert
     assert result == 'test_access_token'
@@ -231,7 +229,7 @@ def test_get_first_access_token__clear_cache__raise_exception(mocker):
 
     # arrange
     state = 'ASDSDasd12'
-    auth_response = {'code': 'test_code', 'state': state}
+    code = 'test_code'
     get_cache_mock = mocker.patch(
         'src.authentication.services.auth0.Auth0Service._get_cache',
         return_value=None,
@@ -250,7 +248,7 @@ def test_get_first_access_token__clear_cache__raise_exception(mocker):
 
     # act
     with pytest.raises(exceptions.TokenInvalidOrExpired):
-        service._get_first_access_token(auth_response)
+        service._get_first_access_token(code, state)
 
     # assert
     get_cache_mock.assert_called_once_with(key=state)
@@ -262,7 +260,7 @@ def test_get_first_access_token__request_return_error__raise_exception(mocker):
 
     # arrange
     state = 'ASDSDasd12'
-    auth_response = {'code': 'test_code', 'state': state}
+    code = 'test_code'
     domain = 'test_client_domain'
     client_id = 'test_client_id'
     client_secret = 'test_client_secret'
@@ -291,7 +289,7 @@ def test_get_first_access_token__request_return_error__raise_exception(mocker):
 
     # act
     with pytest.raises(exceptions.TokenInvalidOrExpired):
-        service._get_first_access_token(auth_response)
+        service._get_first_access_token(code, state)
 
     # assert
     get_cache_mock.assert_called_once_with(key=state)
@@ -529,7 +527,10 @@ def test_authenticate_user__existing_user__ok(mocker):
     user = create_test_user(email='test@example.com')
     token = 'test_token'
     access_token = 'auth0_access_token'
-    auth_response = {'code': 'test_code', 'state': 'test_state'}
+    code = 'test_code'
+    state = 'test_state'
+    user_agent = 'Test-Agent'
+    user_ip = '127.0.0.1'
     user_profile = {
         'sub': 'auth0|123456',
         'email': 'test@example.com',
@@ -541,9 +542,6 @@ def test_authenticate_user__existing_user__ok(mocker):
         'first_name': 'Test',
         'last_name': 'User',
     }
-    request_mock = Mock()
-    request_mock.headers.get.return_value = 'Test-Agent'
-    request_mock.META.get.return_value = '127.0.0.1'
     get_first_access_token_mock = mocker.patch(
         'src.authentication.services.auth0.'
         'Auth0Service._get_first_access_token',
@@ -573,15 +571,20 @@ def test_authenticate_user__existing_user__ok(mocker):
     )
     settings_mock.PROJECT_CONF = {'SSO_AUTH': True}
 
-    service = Auth0Service(request=request_mock)
+    service = Auth0Service()
 
     # act
-    result_user, result_token = service.authenticate_user(auth_response)
+    result_user, result_token = service.authenticate_user(
+        code,
+        state,
+        user_agent,
+        user_ip,
+    )
 
     # assert
     assert result_user == user
     assert result_token == token
-    get_first_access_token_mock.assert_called_once_with(auth_response)
+    get_first_access_token_mock.assert_called_once_with(code, state)
     get_user_profile_mock.assert_called_once_with(access_token)
     get_user_data_mock.assert_called_once_with(user_profile)
     user_get_mock.return_value.get.assert_called_once_with(
@@ -599,7 +602,10 @@ def test_authenticate_user__new_user_signup_disabled__raise_exception(
     mocker,
 ):
     # arrange
-    auth_response = {'code': 'test_code', 'state': 'test_state'}
+    code = 'test_code'
+    state = 'test_state'
+    user_agent = 'Test-Agent'
+    user_ip = '127.0.0.1'
     access_token = 'test_access_token'
     user_profile = {
         'sub': 'auth0|123456',
@@ -612,7 +618,6 @@ def test_authenticate_user__new_user_signup_disabled__raise_exception(
         'first_name': 'New',
         'last_name': 'User',
     }
-    request_mock = Mock()
     get_first_access_token_mock = mocker.patch(
         'src.authentication.services.auth0.'
         'Auth0Service._get_first_access_token',
@@ -634,14 +639,19 @@ def test_authenticate_user__new_user_signup_disabled__raise_exception(
         'src.authentication.services.auth0.settings',
     )
     settings_mock.PROJECT_CONF = {'SIGNUP': False, 'SSO_AUTH': True}
-    service = Auth0Service(request=request_mock)
+    service = Auth0Service()
 
     # act
     with pytest.raises(AuthenticationFailed):
-        service.authenticate_user(auth_response)
+        service.authenticate_user(
+            code,
+            state,
+            user_agent,
+            user_ip,
+        )
 
     # assert
-    get_first_access_token_mock.assert_called_once_with(auth_response)
+    get_first_access_token_mock.assert_called_once_with(code, state)
     get_user_profile_mock.assert_called_once_with(access_token)
     get_user_data_mock.assert_called_once_with(user_profile)
     user_get_mock.return_value.get.assert_called_once_with(
@@ -654,7 +664,10 @@ def test_authenticate_user__join_existing_account__ok(mocker):
     user = create_test_user(email='newuser@example.com')
     token = 'test_token'
     access_token = 'test_access_token'
-    auth_response = {'code': 'test_code', 'state': 'test_state'}
+    code = 'test_code'
+    state = 'test_state'
+    user_agent = 'Test-Agent'
+    user_ip = '127.0.0.1'
     user_profile = {
         'sub': 'auth0|123456',
         'email': 'newuser@example.com',
@@ -665,15 +678,8 @@ def test_authenticate_user__join_existing_account__ok(mocker):
         'email': 'newuser@example.com',
         'first_name': 'New',
         'last_name': 'User',
-        'job_title': None,
-        'photo': None,
-        'company_name': None,
     }
-    existing_account = Account.objects.create(
-        name='Existing Account',
-    )
-    request_mock = Mock()
-
+    existing_account = create_test_account()
     get_first_access_token_mock = mocker.patch(
         'src.authentication.services.auth0.'
         'Auth0Service._get_first_access_token',
@@ -691,6 +697,12 @@ def test_authenticate_user__join_existing_account__ok(mocker):
         'src.authentication.services.auth0.UserModel.objects.active',
     )
     user_get_mock.return_value.get.side_effect = UserModel.DoesNotExist()
+    sso_config_mock = mocker.patch(
+        'src.authentication.services.auth0.SSOConfig.objects.get',
+    )
+    sso_config_obj = Mock()
+    sso_config_obj.account = existing_account
+    sso_config_mock.return_value = sso_config_obj
     join_existing_account_mock = mocker.patch(
         'src.authentication.services.auth0.Auth0Service.join_existing_account',
         return_value=(user, token),
@@ -711,16 +723,21 @@ def test_authenticate_user__join_existing_account__ok(mocker):
         domain='example.com',
         redirect_uri='http://localhost/oauth/auth0',
     )
-    service = Auth0Service(request=request_mock)
+    service = Auth0Service()
     service.tokens = {'access_token': 'test_token'}
 
     # act
-    result_user, result_token = service.authenticate_user(auth_response)
+    result_user, result_token = service.authenticate_user(
+        code,
+        state,
+        user_agent,
+        user_ip,
+    )
 
     # assert
     assert result_user == user
     assert result_token == token
-    get_first_access_token_mock.assert_called_once_with(auth_response)
+    get_first_access_token_mock.assert_called_once_with(code, state)
     get_user_profile_mock.assert_called_once_with(access_token)
     get_user_data_mock.assert_called_once_with(user_profile)
     user_get_mock.return_value.get.assert_called_once_with(

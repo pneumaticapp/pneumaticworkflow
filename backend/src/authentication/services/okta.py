@@ -9,7 +9,6 @@ from uuid import uuid4
 import requests
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.http import HttpRequest
 from rest_framework.exceptions import AuthenticationFailed
 
 from src.accounts.enums import SourceType
@@ -50,21 +49,17 @@ class OktaService(SignUpMixin, CacheMixin):
     def __init__(
         self,
         domain: Optional[str] = None,
-        request: Optional[HttpRequest] = None,
     ):
-        if not settings.PROJECT_CONF['SSO_AUTH']:
-            raise exceptions.OktaServiceException(MSG_AU_0017)
-
-        sso_provider = settings.PROJECT_CONF.get('SSO_PROVIDER', '')
-        if sso_provider and sso_provider != 'okta':
-            raise exceptions.OktaServiceException(MSG_AU_0017)
-
         self.config = self._get_config(domain)
         self.tokens: Optional[Dict] = None
         self.scope = 'openid email profile'
-        self.request = request
 
     def _get_config(self, domain: Optional[str] = None) -> SSOConfigData:
+        if not settings.PROJECT_CONF['SSO_AUTH']:
+            raise exceptions.OktaServiceException(MSG_AU_0017)
+        sso_provider = settings.PROJECT_CONF.get('SSO_PROVIDER', '')
+        if sso_provider and sso_provider != SSOProvider.OKTA:
+            raise exceptions.OktaServiceException(MSG_AU_0017)
         if domain:
             try:
                 sso_config = SSOConfig.objects.get(
@@ -101,14 +96,9 @@ class OktaService(SignUpMixin, CacheMixin):
     ) -> Union[str, dict, None]:
         return json.loads(value) if value else None
 
-    def _get_first_access_token(self, auth_response: dict) -> str:
+    def _get_first_access_token(self, code: str, state: str) -> str:
         """
         Gets access token during initial authorization
-
-        Example auth_response = {
-            'code': '4/0AbUR2VMeHxU...',
-            'state': 'random_state_string',
-        }
 
         Example successful response:
         {
@@ -126,7 +116,7 @@ class OktaService(SignUpMixin, CacheMixin):
         }
         """
 
-        code_verifier = self._get_cache(key=auth_response['state'])
+        code_verifier = self._get_cache(key=state)
         if not code_verifier:
             raise exceptions.TokenInvalidOrExpired
 
@@ -137,30 +127,30 @@ class OktaService(SignUpMixin, CacheMixin):
                     'grant_type': 'authorization_code',
                     'client_id': self.config.client_id,
                     'client_secret': self.config.client_secret,
-                    'code': auth_response['code'],
+                    'code': code,
                     'redirect_uri': self.config.redirect_uri,
                     'code_verifier': code_verifier,
                 },
                 timeout=10,
             )
-            if response.status_code != 200:
-                capture_sentry_message(
-                    message='Get Okta access token failed',
-                    data={
-                        'status_code': response.status_code,
-                        'response': response.text,
-                    },
-                    level=SentryLogLevel.ERROR,
-                )
-                raise exceptions.TokenInvalidOrExpired
-            self.tokens = response.json()
-            return self.tokens['access_token']
         except requests.RequestException as ex:
             capture_sentry_message(
                 message=f'Get Okta access token return an error: {ex}',
                 level=SentryLogLevel.ERROR,
             )
             raise exceptions.TokenInvalidOrExpired from ex
+        if not response.ok:
+            capture_sentry_message(
+                message='Get Okta access token failed',
+                data={
+                    'status_code': response.status_code,
+                    'response': response.text,
+                },
+                level=SentryLogLevel.ERROR,
+            )
+            raise exceptions.TokenInvalidOrExpired
+        self.tokens = response.json()
+        return self.tokens['access_token']
 
     def _get_user_profile(self, access_token: str) -> dict:
         """
@@ -190,25 +180,25 @@ class OktaService(SignUpMixin, CacheMixin):
         headers = {'Authorization': f'Bearer {access_token}'}
         try:
             response = requests.get(url, headers=headers, timeout=10)
-            if response.status_code != 200:
-                capture_sentry_message(
-                    message='Okta user profile request failed',
-                    data={
-                        'status_code': response.status_code,
-                        'response': response.text,
-                    },
-                    level=SentryLogLevel.ERROR,
-                )
-                raise exceptions.TokenInvalidOrExpired
-            profile = response.json()
-            self._set_cache(value=profile, key=cache_key)
-            return profile
         except requests.RequestException as ex:
             capture_sentry_message(
                 message=f'Okta user profile request failed: {ex}',
                 level=SentryLogLevel.ERROR,
             )
             raise exceptions.TokenInvalidOrExpired from ex
+        if not response.ok:
+            capture_sentry_message(
+                message='Okta user profile request failed',
+                data={
+                    'status_code': response.status_code,
+                    'response': response.text,
+                },
+                level=SentryLogLevel.ERROR,
+            )
+            raise exceptions.TokenInvalidOrExpired
+        profile = response.json()
+        self._set_cache(value=profile, key=cache_key)
+        return profile
 
     def get_auth_uri(self) -> str:
 
@@ -266,9 +256,6 @@ class OktaService(SignUpMixin, CacheMixin):
             email=email.lower(),
             first_name=first_name,
             last_name=last_name,
-            job_title=None,
-            photo=None,
-            company_name=None,
         )
 
     def save_tokens_for_user(self, user: UserModel):
@@ -284,10 +271,14 @@ class OktaService(SignUpMixin, CacheMixin):
 
     def authenticate_user(
         self,
-        auth_response: dict,
+        code: str,
+        state: str,
+        user_agent: Optional[str] = None,
+        user_ip: Optional[str] = None,
+        **kwargs,
     ) -> Tuple[UserModel, PneumaticToken]:
         """Authenticate user via Okta and auto-create user if needed"""
-        access_token = self._get_first_access_token(auth_response)
+        access_token = self._get_first_access_token(code, state)
         user_profile = self._get_user_profile(access_token)
         user_data = self.get_user_data(user_profile)
 
@@ -295,11 +286,8 @@ class OktaService(SignUpMixin, CacheMixin):
             user = UserModel.objects.active().get(email=user_data['email'])
             token = AuthService.get_auth_token(
                 user=user,
-                user_agent=self.request.headers.get(
-                    'User-Agent',
-                    self.request.META.get('HTTP_USER_AGENT'),
-                ),
-                user_ip=self.request.META.get('HTTP_X_REAL_IP'),
+                user_agent=user_agent,
+                user_ip=user_ip,
             )
         except UserModel.DoesNotExist as exc:
             try:

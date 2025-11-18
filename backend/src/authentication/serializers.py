@@ -264,8 +264,20 @@ class MSTokenSerializer(AuthTokenSerializer):
     )
 
 
-class Auth0TokenSerializer(AuthTokenSerializer):
-
+class SSOTokenSerializer(
+    CustomValidationErrorMixin,
+    serializers.Serializer,
+):
+    code = serializers.CharField(
+        allow_null=False,
+        allow_blank=False,
+        required=True,
+    )
+    state = serializers.CharField(
+        allow_null=False,
+        allow_blank=False,
+        required=True,
+    )
     domain = serializers.CharField(
         required=False,
         allow_null=True,
@@ -276,15 +288,6 @@ class Auth0TokenSerializer(AuthTokenSerializer):
 class GoogleTokenSerializer(AuthTokenSerializer):
 
     pass
-
-
-class OktaTokenSerializer(AuthTokenSerializer):
-
-    domain = serializers.CharField(
-        required=False,
-        allow_null=True,
-        allow_blank=True,
-    )
 
 
 class AuthUriSerializer(

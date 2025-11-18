@@ -6,7 +6,7 @@ from src.analysis.mixins import BaseIdentifyMixin
 from src.authentication.permissions import SSOPermission
 from src.authentication.serializers import (
     AuthUriSerializer,
-    OktaTokenSerializer,
+    SSOTokenSerializer,
 )
 from src.authentication.services.exceptions import (
     AuthException,
@@ -16,7 +16,10 @@ from src.authentication.throttling import (
     Auth0AuthUriThrottle,
     Auth0TokenThrottle,
 )
-from src.generics.mixins.views import CustomViewSetMixin
+from src.generics.mixins.views import (
+    AnonymousMixin,
+    CustomViewSetMixin,
+)
 from src.utils.logging import (
     SentryLogLevel,
     capture_sentry_message,
@@ -27,12 +30,12 @@ UserModel = get_user_model()
 
 
 class OktaViewSet(
+    AnonymousMixin,
     CustomViewSetMixin,
     BaseIdentifyMixin,
     GenericViewSet,
 ):
     permission_classes = (SSOPermission,)
-    serializer_class = OktaTokenSerializer
 
     @property
     def throttle_classes(self):
@@ -44,15 +47,16 @@ class OktaViewSet(
 
     @action(methods=('GET',), detail=False)
     def token(self, request, *args, **kwargs):
-        slz = self.get_serializer(data=request.GET)
+        slz = SSOTokenSerializer(data=request.GET)
         slz.is_valid(raise_exception=True)
         try:
-            service = OktaService(request=request)
+            service = OktaService(
+                domain=slz.validated_data.get('domain'),
+            )
             user, token = service.authenticate_user(
-                auth_response={
-                    'code': slz.validated_data['code'],
-                    'state': slz.validated_data['state'],
-                },
+                **slz.validated_data,
+                user_agent=self.get_user_agent(request),
+                user_ip=self.get_user_ip(request),
             )
         except AuthException as ex:
             raise_validation_error(message=ex.message)

@@ -5,7 +5,6 @@ from uuid import uuid4
 import requests
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.http import HttpRequest
 from rest_framework.exceptions import AuthenticationFailed
 
 from src.accounts.enums import SourceType
@@ -47,21 +46,18 @@ class Auth0Service(SignUpMixin, CacheMixin):
     def __init__(
         self,
         domain: Optional[str] = None,
-        request: Optional[HttpRequest] = None,
     ):
+        self.config = self._get_config(domain)
+        self.tokens: Optional[Dict] = None
+        self.scope = 'openid email profile offline_access'
+
+    def _get_config(self, domain: Optional[str] = None) -> SSOConfigData:
         if not settings.PROJECT_CONF['SSO_AUTH']:
             raise exceptions.Auth0ServiceException(MSG_AU_0017)
 
         sso_provider = settings.PROJECT_CONF.get('SSO_PROVIDER', '')
-        if sso_provider and sso_provider != 'auth0':
+        if sso_provider and sso_provider != SSOProvider.AUTH0:
             raise exceptions.Auth0ServiceException(MSG_AU_0017)
-
-        self.config = self._get_config(domain)
-        self.tokens: Optional[Dict] = None
-        self.scope = 'openid email profile offline_access'
-        self.request = request
-
-    def _get_config(self, domain: Optional[str] = None) -> SSOConfigData:
         if domain:
             try:
                 sso_config = SSOConfig.objects.get(
@@ -95,15 +91,10 @@ class Auth0Service(SignUpMixin, CacheMixin):
     def _deserialize_value(self, value: Optional[str]) -> dict:
         return json.loads(value) if value else None
 
-    def _get_first_access_token(self, auth_response: dict) -> str:
+    def _get_first_access_token(self, code: str, state: str) -> str:
 
         """
         Receive an access token for the first time on an authorization flow
-
-        Example auth_response = {
-            'code': '0.Ab0Aa_jrV8Qkv...9UWtS972sufQ',
-            'state': 'KvpfgTSUmwtOaPny',
-        }
 
         Example success response:
         {
@@ -121,8 +112,8 @@ class Auth0Service(SignUpMixin, CacheMixin):
         }
         """
 
-        state = self._get_cache(key=auth_response['state'])
-        if not state:
+        cached_state = self._get_cache(key=state)
+        if not cached_state:
             raise exceptions.TokenInvalidOrExpired
         try:
             response = requests.post(
@@ -131,29 +122,30 @@ class Auth0Service(SignUpMixin, CacheMixin):
                     'grant_type': 'authorization_code',
                     'client_id': self.config.client_id,
                     'client_secret': self.config.client_secret,
-                    'code': auth_response['code'],
+                    'code': code,
                     'redirect_uri': self.config.redirect_uri,
                 },
                 timeout=10,
             )
-            if response.status_code != 200:
-                capture_sentry_message(
-                    message='Get Auth0 access token failed',
-                    data={
-                        'status_code': response.status_code,
-                        'response': response.text,
-                    },
-                    level=SentryLogLevel.ERROR,
-                )
-                raise exceptions.TokenInvalidOrExpired
-            self.tokens = response.json()
-            return self.tokens["access_token"]
         except requests.RequestException as ex:
             capture_sentry_message(
                 message=f'Get Auth0 access token return an error: {ex}',
                 level=SentryLogLevel.ERROR,
             )
             raise exceptions.TokenInvalidOrExpired from ex
+
+        if not response.ok:
+            capture_sentry_message(
+                message='Get Auth0 access token failed',
+                data={
+                    'status_code': response.status_code,
+                    'response': response.text,
+                },
+                level=SentryLogLevel.ERROR,
+            )
+            raise exceptions.TokenInvalidOrExpired
+        self.tokens = response.json()
+        return self.tokens["access_token"]
 
     def _get_user_profile(self, access_token: str) -> dict:
 
@@ -182,25 +174,25 @@ class Auth0Service(SignUpMixin, CacheMixin):
         headers = {'Authorization': f'Bearer {access_token}'}
         try:
             response = requests.get(url, headers=headers, timeout=10)
-            if response.status_code != 200:
-                capture_sentry_message(
-                    message='Auth0 user profile request failed',
-                    data={
-                        'status_code': response.status_code,
-                        'response': response.text,
-                    },
-                    level=SentryLogLevel.ERROR,
-                )
-                raise exceptions.TokenInvalidOrExpired
-            profile = response.json()
-            self._set_cache(value=profile, key=cache_key)
-            return profile
         except requests.RequestException as ex:
             capture_sentry_message(
                 message=f'Auth0 user profile request failed: {ex}',
                 level=SentryLogLevel.ERROR,
             )
             raise exceptions.TokenInvalidOrExpired from ex
+        if not response.ok:
+            capture_sentry_message(
+                message='Auth0 user profile request failed',
+                data={
+                    'status_code': response.status_code,
+                    'response': response.text,
+                },
+                level=SentryLogLevel.ERROR,
+            )
+            raise exceptions.TokenInvalidOrExpired
+        profile = response.json()
+        self._set_cache(value=profile, key=cache_key)
+        return profile
 
     def get_auth_uri(self) -> str:
 
@@ -251,7 +243,6 @@ class Auth0Service(SignUpMixin, CacheMixin):
             last_name=last_name,
             job_title=job_title,
             photo=photo,
-            company_name=None,
         )
 
     def save_tokens_for_user(self, user: UserModel):
@@ -288,10 +279,14 @@ class Auth0Service(SignUpMixin, CacheMixin):
 
     def authenticate_user(
         self,
-        auth_response: dict,
+        code: str,
+        state: str,
+        user_agent: Optional[str] = None,
+        user_ip: Optional[str] = None,
+        **kwargs,
     ) -> Tuple[UserModel, PneumaticToken]:
         """Authenticate user via Auth0 and auto-create user if needed"""
-        access_token = self._get_first_access_token(auth_response)
+        access_token = self._get_first_access_token(code, state)
         user_profile = self._get_user_profile(access_token)
         user_data = self.get_user_data(user_profile)
 
@@ -299,11 +294,8 @@ class Auth0Service(SignUpMixin, CacheMixin):
             user = UserModel.objects.active().get(email=user_data['email'])
             token = AuthService.get_auth_token(
                 user=user,
-                user_agent=self.request.headers.get(
-                    'User-Agent',
-                    self.request.META.get('HTTP_USER_AGENT'),
-                ),
-                user_ip=self.request.META.get('HTTP_X_REAL_IP'),
+                user_agent=user_agent,
+                user_ip=user_ip,
             )
         except UserModel.DoesNotExist as exc:
             try:
