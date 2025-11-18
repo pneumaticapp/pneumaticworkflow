@@ -95,7 +95,10 @@ class OktaService(SignUpMixin, CacheMixin):
     def _serialize_value(self, value: Union[str, dict]) -> str:
         return json.dumps(value, ensure_ascii=False)
 
-    def _deserialize_value(self, value: Optional[str]) -> dict:
+    def _deserialize_value(
+        self,
+        value: Optional[str],
+    ) -> Union[str, dict, None]:
         return json.loads(value) if value else None
 
     def _get_first_access_token(self, auth_response: dict) -> str:

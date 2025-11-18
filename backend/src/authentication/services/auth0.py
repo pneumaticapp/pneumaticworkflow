@@ -517,7 +517,7 @@ class Auth0Service(SignUpMixin, CacheMixin):
                 user=user,
                 is_superuser=False,
                 auth_type=AuthTokenType.USER,
-                source=SourceType.OKTA,
+                source=SourceType.AUTH0,
             )
 
             return user, token
