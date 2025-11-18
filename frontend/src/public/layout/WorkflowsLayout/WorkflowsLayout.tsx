@@ -30,6 +30,8 @@ import { useCheckDevice } from '../../hooks/useCheckDevice';
 import { StarterFilterSelect } from './StarterFilterSelect';
 import { TemplateFilterSelect } from './TemplateFilterSelect';
 import { PerformerFilterSelect } from './PerformerFilterSelect';
+import { TaskFilterSelect } from './TaskFilterSelect';
+
 import styles from './WorkflowsLayout.css';
 
 export interface IWorkflowsLayoutComponentProps extends IWorkflowsFiltersProps {
@@ -229,6 +231,7 @@ export function WorkflowsLayoutComponent({
           Icon={StatusTitlesIcon}
           withRadio
         />
+        <TaskFilterSelect />
         <PerformerFilterSelect />
         <SelectMenu values={sortingTitles} activeValue={sorting} onChange={changeWorkflowsSorting} withRadio />
         {areFiltersChanged && (

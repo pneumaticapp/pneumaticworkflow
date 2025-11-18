@@ -87,6 +87,7 @@ export function PerformerFilterSelect() {
         isMultiple
         isSearchShown
         placeholderText={formatMessage({ id: 'workflows.filter-no-user' })}
+        searchPlaceholder={formatMessage({ id: 'sorting.search-placeholder' })}
         selectedOptions={[...performersGroupIdsFilter, ...performersIdsFilter]}
         optionIdKey="id"
         optionLabelKey="displayName"
