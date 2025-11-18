@@ -52,10 +52,9 @@ class ContactAdminForm(ModelForm):
         storage = GoogleCloudService(
             account=self.instance.account,
         )
-        public_url = storage.upload_from_binary(
+        self.instance.photo = storage.upload_from_binary(
             filepath=file_path,
             binary=photo_file.file.getvalue(),
             content_type=photo_file.content_type,
         )
-        self.instance.photo = public_url
         return super().save(commit=commit)

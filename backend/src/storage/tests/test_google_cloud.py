@@ -8,6 +8,7 @@ pytestmark = pytest.mark.django_db
 
 
 class TestGoogleCloudService:
+
     def test_init__without_account__ok(self, mocker, settings):
         # arrange
         settings.GCLOUD_DEFAULT_BUCKET_NAME = 'default-bucket'
@@ -246,7 +247,7 @@ class TestGoogleCloudService:
         )
         assert result == bucket_mock
 
-    def test_upload_from_binary__ok(self, mocker):
+    def test_upload_from_binary__not_account_and_public_url__ok(self, mocker):
 
         # arrange
         binary_file = bytes('123456', 'UTF-8')
@@ -279,3 +280,89 @@ class TestGoogleCloudService:
         )
         blob_mock.make_public.assert_called_once()
         assert result == public_url
+
+    def test_upload_from_binary__account_and_public_url__ok(self, mocker):
+
+        # arrange
+        account = create_test_account()
+        account.bucket_is_public = True
+        account.bucket_name = 'test_bucket'
+        account.save()
+        binary_file = bytes('123456', 'UTF-8')
+        filepath = 'filename.svg'
+        content_type = 'image/svg+xml'
+        public_url = 'http://google.cloud/image.svg'
+        blob_mock = mocker.Mock(public_url=public_url)
+        bucket_mock = mocker.Mock()
+        bucket_mock.blob = mocker.Mock(return_value=blob_mock)
+        client_mock = mocker.Mock()
+        client_mock.get_bucket = mocker.Mock(return_value=bucket_mock)
+        mocker.patch(
+            'src.storage.google_cloud.storage.Client',
+            return_value=client_mock,
+        )
+        storage = GoogleCloudService(account=account)
+
+        # act
+        result = storage.upload_from_binary(
+            binary=binary_file,
+            filepath=filepath,
+            content_type=content_type,
+        )
+
+        # assert
+        bucket_mock.blob.assert_called_once_with(filepath)
+        blob_mock.upload_from_string.assert_called_once_with(
+            data=binary_file,
+            content_type=content_type,
+        )
+        blob_mock.make_public.assert_called_once()
+        assert result == public_url
+
+    def test_upload_from_binary__account_and_authenticated_url__ok(
+        self,
+        mocker,
+    ):
+
+        # arrange
+        account = create_test_account()
+        account.bucket_is_public = False
+        account.bucket_name = 'test_bucket'
+        account.save()
+        binary_file = bytes('123456', 'UTF-8')
+        filepath = 'filename.svg'
+        content_type = 'image/svg+xml'
+        authenticated_url = 'http://google.authenticated/image.svg'
+        public_url = 'http://google.cloud/image.svg'
+        blob_mock = mocker.Mock(public_url=public_url)
+        bucket_mock = mocker.Mock()
+        bucket_mock.blob = mocker.Mock(return_value=blob_mock)
+        client_mock = mocker.Mock()
+        client_mock.get_bucket = mocker.Mock(return_value=bucket_mock)
+        mocker.patch(
+            'src.storage.google_cloud.storage.Client',
+            return_value=client_mock,
+        )
+        get_authenticated_url_mock = mocker.patch(
+            'src.storage.google_cloud.GoogleCloudService.'
+            'get_authenticated_url',
+            return_value=authenticated_url,
+        )
+        storage = GoogleCloudService(account=account)
+
+        # act
+        result = storage.upload_from_binary(
+            binary=binary_file,
+            filepath=filepath,
+            content_type=content_type,
+        )
+
+        # assert
+        bucket_mock.blob.assert_called_once_with(filepath)
+        blob_mock.upload_from_string.assert_called_once_with(
+            data=binary_file,
+            content_type=content_type,
+        )
+        blob_mock.make_public.assert_not_called()
+        get_authenticated_url_mock.assert_called_once_with(filepath)
+        assert result == authenticated_url
