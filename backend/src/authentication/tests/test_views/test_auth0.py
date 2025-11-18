@@ -20,7 +20,7 @@ def test_token__existent_user__authenticate(
 ):
     # arrange
     mocker.patch(
-        'src.authentication.views.auth0.Auth0Permission.'
+        'src.authentication.views.auth0.SSOPermission.'
         'has_permission',
         return_value=True,
     )
@@ -80,7 +80,7 @@ def test_token__disable_auth0_auth__permission_denied(
 ):
     # arrange
     mocker.patch(
-        'src.authentication.views.auth0.Auth0Permission.'
+        'src.authentication.views.auth0.SSOPermission.'
         'has_permission',
         return_value=False,
     )
@@ -124,7 +124,7 @@ def test_token__service_exception__validation_error(
 ):
     # arrange
     mocker.patch(
-        'src.authentication.views.auth0.Auth0Permission.'
+        'src.authentication.views.auth0.SSOPermission.'
         'has_permission',
         return_value=True,
     )
@@ -176,7 +176,7 @@ def test_token__skip__code__validation_error(
 ):
     # arrange
     mocker.patch(
-        'src.authentication.views.auth0.Auth0Permission.'
+        'src.authentication.views.auth0.SSOPermission.'
         'has_permission',
         return_value=True,
     )
@@ -218,7 +218,7 @@ def test_token__code_blank__validation_error(
 ):
     # arrange
     mocker.patch(
-        'src.authentication.views.auth0.Auth0Permission.'
+        'src.authentication.views.auth0.SSOPermission.'
         'has_permission',
         return_value=True,
     )
@@ -261,7 +261,7 @@ def test_auth_uri__ok(
 ):
     # arrange
     mocker.patch(
-        'src.authentication.views.auth0.Auth0Permission.'
+        'src.authentication.views.auth0.SSOPermission.'
         'has_permission',
         return_value=True,
     )
@@ -293,7 +293,7 @@ def test_auth_uri__disable_auth0_auth__permission_denied(
 ):
     # arrange
     mocker.patch(
-        'src.authentication.views.auth0.Auth0Permission.'
+        'src.authentication.views.auth0.SSOPermission.'
         'has_permission',
         return_value=False,
     )
@@ -322,7 +322,7 @@ def test_auth_uri__service_exception__validation_error(
 ):
     # arrange
     mocker.patch(
-        'src.authentication.views.auth0.Auth0Permission.'
+        'src.authentication.views.auth0.SSOPermission.'
         'has_permission',
         return_value=True,
     )

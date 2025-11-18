@@ -29,7 +29,7 @@ def test_get_auth_uri__ok(mocker):
     settings_mock.OKTA_DOMAIN = domain
     settings_mock.OKTA_CLIENT_ID = client_id
     settings_mock.OKTA_REDIRECT_URI = redirect_uri
-
+    settings_mock.PROJECT_CONF = {'SSO_AUTH': True}
     set_cache_mock = mocker.patch(
         'src.authentication.services.okta.OktaService._set_cache',
     )
@@ -181,6 +181,7 @@ def test_get_first_access_token__ok(mocker):
     settings_mock.OKTA_CLIENT_ID = client_id
     settings_mock.OKTA_CLIENT_SECRET = client_secret
     settings_mock.OKTA_REDIRECT_URI = redirect_uri
+    settings_mock.PROJECT_CONF = {'SSO_AUTH': True}
     service = OktaService()
 
     # act
@@ -254,6 +255,7 @@ def test_get_first_access_token__request_error__raise_exception(mocker):
     settings_mock.OKTA_CLIENT_ID = client_id
     settings_mock.OKTA_CLIENT_SECRET = client_secret
     settings_mock.OKTA_REDIRECT_URI = redirect_uri
+    settings_mock.PROJECT_CONF = {'SSO_AUTH': True}
     service = OktaService()
 
     # act
@@ -297,6 +299,7 @@ def test_get_user_profile__ok(mocker):
         'src.authentication.services.okta.settings',
     )
     settings_mock.OKTA_DOMAIN = domain
+    settings_mock.PROJECT_CONF = {'SSO_AUTH': True}
     service = OktaService()
 
     # act
@@ -334,6 +337,7 @@ def test_get_user_profile__request_error__raise_exception(mocker):
         'src.authentication.services.okta.settings',
     )
     settings_mock.OKTA_DOMAIN = domain
+    settings_mock.PROJECT_CONF = {'SSO_AUTH': True}
     service = OktaService()
 
     # act
@@ -516,6 +520,7 @@ def test_authenticate_user__new_user_signup_disabled__raise_exception(mocker):
         'src.authentication.services.okta.settings',
     )
     settings_mock.PROJECT_CONF = {'SIGNUP': False}
+    settings_mock.PROJECT_CONF = {'SSO_AUTH': True}
     service = OktaService(request=request_mock)
 
     # act
