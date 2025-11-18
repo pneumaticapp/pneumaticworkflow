@@ -138,9 +138,9 @@ class MicrosoftGraphApiMixin:
 
         """ Save photo in the storage and return public URL """
 
-        public_url = None
+        file_url = None
         if not settings.PROJECT_CONF['STORAGE']:
-            return public_url
+            return file_url
         response = self._graph_api_request(
             path=self.photo_path.format(user_id=user_id),
             access_token=access_token,
@@ -155,12 +155,12 @@ class MicrosoftGraphApiMixin:
             else:
                 filepath = f'{get_salt(30)}_photo_96x96'
             storage = GoogleCloudService(account=account)
-            public_url = storage.upload_from_binary(
+            file_url = storage.upload_from_binary(
                 binary=binary_photo,
                 filepath=filepath,
                 content_type=content_type,
             )
-        return public_url
+        return file_url
 
 
 class MicrosoftAuthService(
