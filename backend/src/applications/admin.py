@@ -60,13 +60,13 @@ class IntegrationCreateForm(ModelForm):
 
         file_path = image.name.replace(' ', '_')
         storage = GoogleCloudService()
-        public_url = storage.upload_from_binary(
+        file_url = storage.upload_from_binary(
             filepath=file_path,
             binary=image.file.getvalue(),
             content_type='image/svg+xml',
         )
         integration = super().save(commit=commit)
-        integration.logo = public_url
+        integration.logo = file_url
         integration.save()
         return integration
 
