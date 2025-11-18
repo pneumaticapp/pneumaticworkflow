@@ -49,16 +49,19 @@ def test_token__existent_user__authenticate(
         '/auth/auth0/token',
         data=auth_response,
         HTTP_USER_AGENT=user_agent,
-        HTTP_X_REAL_IP=user_ip,
+        REMOTE_ADDR=user_ip,
     )
 
     # assert
     assert response.status_code == 200
     assert response.data['token'] == token
-    auth0_service_init_mock.assert_called_once_with(
-        request=mocker.ANY,
+    auth0_service_init_mock.assert_called_once_with(domain=None)
+    authenticate_user_mock.assert_called_once_with(
+        code=auth_response['code'],
+        state=auth_response['state'],
+        user_agent=user_agent,
+        user_ip=user_ip,
     )
-    authenticate_user_mock.assert_called_once_with(auth_response=auth_response)
 
 
 def test_token__disable_auth0_auth__permission_denied(
@@ -92,7 +95,7 @@ def test_token__disable_auth0_auth__permission_denied(
         '/auth/auth0/token',
         data=auth_response,
         HTTP_USER_AGENT=user_agent,
-        HTTP_X_REAL_IP=user_ip,
+        REMOTE_ADDR=user_ip,
     )
 
     # assert
@@ -137,8 +140,13 @@ def test_token__service_exception__validation_error(
     assert response.status_code == 400
     assert response.data['code'] == ErrorCode.VALIDATION_ERROR
     assert response.data['message'] == message
-    auth0_service_init_mock.assert_called_once_with(request=mocker.ANY)
-    authenticate_user_mock.assert_called_once_with(auth_response=auth_response)
+    auth0_service_init_mock.assert_called_once_with(domain=None)
+    authenticate_user_mock.assert_called_once_with(
+        code=auth_response['code'],
+        state=auth_response['state'],
+        user_agent=mocker.ANY,
+        user_ip=mocker.ANY,
+    )
 
 
 def test_token__skip__code__validation_error(
