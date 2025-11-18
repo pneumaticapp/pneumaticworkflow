@@ -12,7 +12,6 @@ from src.authentication.services.auth0 import Auth0Service
 from src.authentication.services.exceptions import (
     AuthException,
 )
-from src.authentication.tasks import update_auth0_contacts
 from src.authentication.throttling import (
     Auth0AuthUriThrottle,
     Auth0TokenThrottle,
@@ -54,17 +53,11 @@ class Auth0ViewSet(
                     'code': slz.validated_data['code'],
                     'state': slz.validated_data['state'],
                 },
-                utm_source=slz.validated_data.get('utm_source'),
-                utm_medium=slz.validated_data.get('utm_medium'),
-                utm_term=slz.validated_data.get('utm_term'),
-                utm_content=slz.validated_data.get('utm_content'),
-                gclid=slz.validated_data.get('gclid'),
-                utm_campaign=slz.validated_data.get('utm_campaign'),
             )
         except AuthException as ex:
             raise_validation_error(message=ex.message)
         else:
-            update_auth0_contacts.delay(user.id)
+            self.identify(user)
             return self.response_ok({'token': token})
 
     @action(methods=('GET',), detail=False, url_path='auth-uri')

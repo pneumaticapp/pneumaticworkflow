@@ -44,10 +44,6 @@ def test_token__existent_user__authenticate(
         'state': 'KvpfgTSUmwtOaPny',
     }
 
-    update_auth0_contacts_mock = mocker.patch(
-        'src.authentication.tasks.update_auth0_contacts.delay',
-    )
-
     # act
     response = api_client.get(
         '/auth/auth0/token',
@@ -62,16 +58,7 @@ def test_token__existent_user__authenticate(
     auth0_service_init_mock.assert_called_once_with(
         request=mocker.ANY,
     )
-    authenticate_user_mock.assert_called_once_with(
-        auth_response=auth_response,
-        utm_source=None,
-        utm_medium=None,
-        utm_term=None,
-        utm_content=None,
-        gclid=None,
-        utm_campaign=None,
-    )
-    update_auth0_contacts_mock.assert_called_once_with(user.id)
+    authenticate_user_mock.assert_called_once_with(auth_response=auth_response)
 
 
 def test_token__disable_auth0_auth__permission_denied(
@@ -93,9 +80,6 @@ def test_token__disable_auth0_auth__permission_denied(
         'src.authentication.services.auth0.'
         'Auth0Service.authenticate_user',
     )
-    update_auth0_contacts_mock = mocker.patch(
-        'src.authentication.tasks.update_auth0_contacts.delay',
-    )
     user_agent = 'Some/Mozilla'
     user_ip = '128.18.0.99'
     auth_response = {
@@ -115,7 +99,6 @@ def test_token__disable_auth0_auth__permission_denied(
     assert response.status_code == 401
     auth0_service_init_mock.assert_not_called()
     authenticate_user_mock.assert_not_called()
-    update_auth0_contacts_mock.assert_not_called()
 
 
 def test_token__service_exception__validation_error(
@@ -139,9 +122,6 @@ def test_token__service_exception__validation_error(
         'Auth0Service.authenticate_user',
         side_effect=AuthException(message),
     )
-    update_auth0_contacts_mock = mocker.patch(
-        'src.authentication.tasks.update_auth0_contacts.delay',
-    )
     auth_response = {
         'code': '0.Ab0Aa_jrV8Qkv...9UWtS972sufQ',
         'state': 'KvpfgTSUmwtOaPny',
@@ -158,16 +138,7 @@ def test_token__service_exception__validation_error(
     assert response.data['code'] == ErrorCode.VALIDATION_ERROR
     assert response.data['message'] == message
     auth0_service_init_mock.assert_called_once_with(request=mocker.ANY)
-    authenticate_user_mock.assert_called_once_with(
-        auth_response=auth_response,
-        utm_source=None,
-        utm_medium=None,
-        utm_term=None,
-        utm_content=None,
-        gclid=None,
-        utm_campaign=None,
-    )
-    update_auth0_contacts_mock.assert_not_called()
+    authenticate_user_mock.assert_called_once_with(auth_response=auth_response)
 
 
 def test_token__skip__code__validation_error(
@@ -189,9 +160,6 @@ def test_token__skip__code__validation_error(
         'src.authentication.services.auth0.'
         'Auth0Service.authenticate_user',
     )
-    update_auth0_contacts_mock = mocker.patch(
-        'src.authentication.tasks.update_auth0_contacts.delay',
-    )
     auth_response = {
         'state': 'KvpfgTSUmwtOaPny',
     }
@@ -209,7 +177,6 @@ def test_token__skip__code__validation_error(
     assert response.data['message'] == message
     auth0_service_init_mock.assert_not_called()
     authenticate_user_mock.assert_not_called()
-    update_auth0_contacts_mock.assert_not_called()
 
 
 def test_token__code_blank__validation_error(
@@ -231,9 +198,6 @@ def test_token__code_blank__validation_error(
         'src.authentication.services.auth0.'
         'Auth0Service.authenticate_user',
     )
-    update_auth0_contacts_mock = mocker.patch(
-        'src.authentication.tasks.update_auth0_contacts.delay',
-    )
     auth_response = {
         'code': '',
         'state': 'KvpfgTSUmwtOaPny',
@@ -252,7 +216,6 @@ def test_token__code_blank__validation_error(
     assert response.data['message'] == message
     auth0_service_init_mock.assert_not_called()
     authenticate_user_mock.assert_not_called()
-    update_auth0_contacts_mock.assert_not_called()
 
 
 def test_auth_uri__ok(

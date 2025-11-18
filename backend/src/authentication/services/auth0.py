@@ -9,7 +9,6 @@ from django.http import HttpRequest
 from rest_framework.exceptions import AuthenticationFailed
 
 from src.accounts.enums import SourceType
-from src.accounts.models import Account, Contact
 from src.analysis.services import AnalyticService
 from src.authentication.entities import UserData, SSOConfigData
 from src.authentication.enums import (
@@ -43,8 +42,6 @@ class Auth0Service(SignUpMixin, CacheMixin):
 
     cache_key_prefix = 'auth0'
     cache_timeout = 600  # 10 min
-    MGMT_TOKEN_CACHE_KEY = 'mgmt_token'
-    TOKEN_EXPIRY = 86400  # 24 hour
     source = SourceType.AUTH0
 
     def __init__(
@@ -289,171 +286,11 @@ class Auth0Service(SignUpMixin, CacheMixin):
                 raise exceptions.TokenInvalidOrExpired
             return token.access_token
 
-    def _get_users(self, org_id: str) -> dict:
-        """ Get organization members from Auth0 """
-        access_token = self._get_management_api_token()
-        url = (
-            f'https://{self.config.domain}/'
-            f'api/v2/organizations/{org_id}/members'
-        )
-        headers = {
-            'Authorization': f'Bearer {access_token}',
-            'Content-Type': 'application/json',
-        }
-        try:
-            response = requests.get(url, headers=headers, timeout=10)
-            if response.status_code != 200:
-                capture_sentry_message(
-                    message='Auth0 organization members request failed',
-                    data={
-                        'org_id': org_id,
-                        'status_code': response.status_code,
-                        'response': response.text,
-                    },
-                    level=SentryLogLevel.ERROR,
-                )
-                raise exceptions.FailedFetchMembers
-            return response.json()
-        except requests.RequestException as ex:
-            capture_sentry_message(
-                message=f'Auth0 organization members request failed: {ex}',
-                data={'org_id': org_id},
-                level=SentryLogLevel.ERROR,
-            )
-            raise exceptions.FailedFetchMembers from ex
-
-    def _get_user_organizations(self, user_id: str) -> list:
-        """ Get user's organizations from Auth0 """
-        access_token = self._get_management_api_token()
-        url = (
-            f'https://{self.config.domain}/'
-            f'api/v2/users/{user_id}/organizations'
-        )
-        headers = {
-            'Authorization': f'Bearer {access_token}',
-            'Content-Type': 'application/json',
-        }
-        try:
-            response = requests.get(url, headers=headers, timeout=10)
-            if response.status_code != 200:
-                capture_sentry_message(
-                    message='Auth0 user organizations request failed',
-                    data={
-                        'user_id': user_id,
-                        'status_code': response.status_code,
-                        'response': response.text,
-                    },
-                    level=SentryLogLevel.ERROR,
-                )
-                return []
-            return response.json()
-        except requests.RequestException as ex:
-            capture_sentry_message(
-                message=f'Auth0 user organizations request failed: {ex}',
-                data={'user_id': user_id},
-                level=SentryLogLevel.ERROR,
-            )
-            return []
-
-    def update_user_contacts(self, user: UserModel) -> dict:
-        """ Save all organization users in contacts """
-        response_data = {'created_contacts': [], 'updated_contacts': []}
-        access_token = self._get_access_token(user.id)
-        user_profile = self._get_user_profile(access_token)
-        user_id = user_profile.get('sub')
-        if not user_id:
-            capture_sentry_message(
-                message='Auth0 user ID not found in profile',
-                data={'user_email': user.email},
-                level=SentryLogLevel.WARNING,
-            )
-            return response_data
-        organizations = self._get_user_organizations(user_id)
-        for org in organizations:
-            org_id = org.get('id')
-            if not org_id:
-                continue
-            # Get organization members
-            members_data = self._get_users(org_id)
-            for member in members_data:
-                try:
-                    member_data = self.get_user_data(member)
-                except exceptions.EmailNotExist:
-                    continue
-                email = member_data['email']
-                if email == user.email:
-                    continue
-                _, created = Contact.objects.update_or_create(
-                    account=user.account,
-                    user=user,
-                    source=SourceType.AUTH0,
-                    email=email,
-                    defaults={
-                        'photo': member_data['photo'],
-                        'first_name': member_data['first_name'],
-                        'last_name': member_data['last_name'],
-                        'job_title': member_data['job_title'],
-                        'source_id': member.get('user_id'),
-                    },
-                )
-                if created:
-                    response_data['created_contacts'].append(email)
-                else:
-                    response_data['updated_contacts'].append(email)
-        return response_data
-
-    def _get_management_api_token(self) -> str:
-        """ Get Management API token for Auth0 """
-        cached_token = self._get_cache(key=self.MGMT_TOKEN_CACHE_KEY)
-        if cached_token:
-            return cached_token
-        url = f'https://{self.config.domain}/oauth/token'
-        data = {
-            'client_id': self.config.client_id,
-            'client_secret': self.config.client_secret,
-            'audience': f'https://{self.config.domain}/api/v2/',
-            'grant_type': 'client_credentials',
-        }
-        try:
-            response = requests.post(url, json=data, timeout=10)
-            if response.status_code != 200:
-                capture_sentry_message(
-                    message='Failed to get Management API token',
-                    data={
-                        'status_code': response.status_code,
-                        'response': response.text,
-                    },
-                    level=SentryLogLevel.ERROR,
-                )
-                raise exceptions.TokenInvalidOrExpired
-            token_data = response.json()
-            access_token = token_data['access_token']
-            cache_timeout = (
-                token_data.get('expires_in', self.TOKEN_EXPIRY) - 60
-            )
-            original_timeout = self.cache_timeout
-            self.cache_timeout = cache_timeout
-            self._set_cache(key=self.MGMT_TOKEN_CACHE_KEY, value=access_token)
-            self.cache_timeout = original_timeout
-            return access_token
-        except requests.RequestException as ex:
-            capture_sentry_message(
-                message=f'Failed to get Management API token: {ex}',
-                level=SentryLogLevel.ERROR,
-            )
-            raise exceptions.TokenInvalidOrExpired from ex
-
     def authenticate_user(
         self,
         auth_response: dict,
-        utm_source: Optional[str] = None,
-        utm_medium: Optional[str] = None,
-        utm_term: Optional[str] = None,
-        utm_content: Optional[str] = None,
-        utm_campaign: Optional[str] = None,
-        gclid: Optional[str] = None,
     ) -> Tuple[UserModel, PneumaticToken]:
-        """Authenticate user via Auth0 and create/join account"""
+        """Authenticate user via Auth0 and auto-create user if needed"""
         access_token = self._get_first_access_token(auth_response)
         user_profile = self._get_user_profile(access_token)
         user_data = self.get_user_data(user_profile)
@@ -468,56 +305,27 @@ class Auth0Service(SignUpMixin, CacheMixin):
                 ),
                 user_ip=self.request.META.get('HTTP_X_REAL_IP'),
             )
-            self.save_tokens_for_user(user)
-            return user, token
         except UserModel.DoesNotExist as exc:
-            if not settings.PROJECT_CONF['SIGNUP']:
+            try:
+                sso_config = SSOConfig.objects.get(
+                    domain=self.config.domain,
+                    provider=SSOProvider.AUTH0,
+                    is_active=True,
+                )
+                existing_account = sso_config.account
+            except SSOConfig.DoesNotExist:
                 raise AuthenticationFailed(MSG_AU_0003) from exc
 
-            user_id = user_profile.get('sub')
-            organizations = (
-                self._get_user_organizations(user_id) if user_id else []
-            )
-            existing_account = None
-            if organizations:
-                org_ids = [
-                    org.get('id') for org in organizations if org.get('id')
-                ]
-                if org_ids:
-                    existing_account = Account.objects.filter(
-                        external_id__in=org_ids,
-                        is_deleted=False,
-                    ).order_by('date_created').first()
-            if existing_account:
-                # Join existing account
-                user, token = self.join_existing_account(
-                    account=existing_account,
-                    **user_data,
-                )
-            else:
-                # Create new account
-                user, token = self.signup(
-                    **user_data,
-                    utm_source=utm_source,
-                    utm_medium=utm_medium,
-                    utm_term=utm_term,
-                    utm_content=utm_content,
-                    gclid=gclid,
-                    utm_campaign=utm_campaign,
-                )
-                if organizations:
-                    first_org_id = organizations[0].get('id')
-                    if first_org_id:
-                        user.account.external_id = first_org_id
-                        user.account.save(update_fields=['external_id'])
-
-            self.save_tokens_for_user(user)
-
-            AnalyticService.users_logged_in(
-                user=user,
-                is_superuser=False,
-                auth_type=AuthTokenType.USER,
-                source=SourceType.AUTH0,
+            user, token = self.join_existing_account(
+                account=existing_account,
+                **user_data,
             )
 
-            return user, token
+        self.save_tokens_for_user(user)
+        AnalyticService.users_logged_in(
+            user=user,
+            is_superuser=False,
+            auth_type=AuthTokenType.USER,
+            source=SourceType.AUTH0,
+        )
+        return user, token

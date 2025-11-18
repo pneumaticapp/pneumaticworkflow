@@ -286,7 +286,7 @@ class OktaService(SignUpMixin, CacheMixin):
         self,
         auth_response: dict,
     ) -> Tuple[UserModel, PneumaticToken]:
-        """Authenticate user via Okta and return user with token"""
+        """Authenticate user via Okta and auto-create user if needed"""
         access_token = self._get_first_access_token(auth_response)
         user_profile = self._get_user_profile(access_token)
         user_data = self.get_user_data(user_profile)
@@ -302,7 +302,21 @@ class OktaService(SignUpMixin, CacheMixin):
                 user_ip=self.request.META.get('HTTP_X_REAL_IP'),
             )
         except UserModel.DoesNotExist as exc:
-            raise AuthenticationFailed(MSG_AU_0003) from exc
+            try:
+                sso_config = SSOConfig.objects.get(
+                    domain=self.config.domain,
+                    provider=SSOProvider.OKTA,
+                    is_active=True,
+                )
+                existing_account = sso_config.account
+            except SSOConfig.DoesNotExist:
+                raise AuthenticationFailed(MSG_AU_0003) from exc
+
+            # Auto-create user in existing account
+            user, token = self.join_existing_account(
+                account=existing_account,
+                **user_data,
+            )
 
         self.save_tokens_for_user(user)
 

@@ -85,12 +85,6 @@ class Account(SoftDeleteModel):
     trial_start = models.DateTimeField(null=True, blank=True)
     trial_end = models.DateTimeField(null=True, blank=True)
     stripe_id = models.CharField(max_length=255, null=True)
-    external_id = models.CharField(
-        max_length=255,
-        null=True,
-        blank=True,
-        help_text='External organization ID (e.g., Okta organization ID)',
-    )
     system_templates = models.ManyToManyField(
         'processes.SystemTemplate',
         related_name='account_system_template',
