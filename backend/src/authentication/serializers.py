@@ -1,7 +1,9 @@
+import base64
 from django.contrib.auth import authenticate, get_user_model
 from django.core.validators import RegexValidator
 from drf_recaptcha.fields import ReCaptchaV2Field
 from rest_framework import serializers
+from typing import Any, Dict, Optional
 
 from src.accounts.enums import Language
 from src.accounts.models import Account
@@ -278,11 +280,24 @@ class SSOTokenSerializer(
         allow_blank=False,
         required=True,
     )
-    domain = serializers.CharField(
-        required=False,
-        allow_null=True,
-        allow_blank=True,
-    )
+    domain = serializers.CharField(read_only=True)
+
+    @staticmethod
+    def _extract_domain_from_state(state: str) -> Optional[str]:
+        if len(state) <= 8:
+            return None
+
+        encoded = state[8:]
+        padding = (4 - len(encoded) % 4) % 4
+        try:
+            domain_bytes = base64.urlsafe_b64decode(encoded + ("=" * padding))
+            return domain_bytes.decode("utf-8").strip()
+        except (ValueError, UnicodeDecodeError, TypeError):
+            return None
+
+    def validate(self, attrs: Dict[str, Any]) -> Dict[str, Any]:
+        attrs['domain'] = self._extract_domain_from_state(attrs['state'])
+        return attrs
 
 
 class GoogleTokenSerializer(AuthTokenSerializer):

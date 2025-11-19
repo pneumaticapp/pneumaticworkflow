@@ -24,6 +24,7 @@ from src.authentication.serializers import (
     ResetPasswordSerializer,
     TokenSerializer,
 )
+from src.authentication.mixins import SSORestrictionMixin
 from src.authentication.services.user_auth import AuthService
 from src.authentication.throttling import (
     AuthResetPasswordThrottle,
@@ -44,6 +45,7 @@ UserModel = get_user_model()
 
 
 class ResetPasswordViewSet(
+    SSORestrictionMixin,
     CustomViewSetMixin,
     GenericViewSet,
 ):
@@ -61,6 +63,7 @@ class ResetPasswordViewSet(
     def create(self, request):
         slz = self.get_serializer(data=request.data)
         slz.is_valid(raise_exception=True)
+        self.check_sso_restrictions(slz.validated_data['email'])
         user = UserModel.objects.select_related('account').filter(
             email=slz.validated_data['email'],
         ).active().only('id', 'email', 'account__logo_lg').first()
@@ -94,6 +97,7 @@ class ResetPasswordViewSet(
             UserModel.objects.active(),
             id=token_data['user_id'],
         )
+        self.check_sso_restrictions(user.email)
         service = UserService(user=user)
         service.change_password(password=slz.validated_data['new_password'])
         PneumaticToken.expire_all_tokens(user)
@@ -109,6 +113,7 @@ class ResetPasswordViewSet(
 
 
 class ChangePasswordView(
+    SSORestrictionMixin,
     CreateAPIView,
     BaseResponseMixin,
 ):
@@ -124,6 +129,7 @@ class ChangePasswordView(
         return context
 
     def create(self, request, *args, **kwargs):
+        self.check_sso_restrictions(request.user.email)
         slz = self.get_serializer(data=request.data)
         slz.is_valid(raise_exception=True)
         service = UserService(user=request.user)

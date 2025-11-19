@@ -13,8 +13,8 @@ from src.authentication.services.exceptions import (
     AuthException,
 )
 from src.authentication.throttling import (
-    Auth0AuthUriThrottle,
-    Auth0TokenThrottle,
+    SSOAuthUriThrottle,
+    SSOTokenThrottle,
 )
 from src.generics.mixins.views import (
     AnonymousMixin,
@@ -40,9 +40,9 @@ class Auth0ViewSet(
     @property
     def throttle_classes(self):
         if self.action == 'token':
-            return (Auth0TokenThrottle,)
+            return (SSOTokenThrottle,)
         if self.action == 'auth_uri':
-            return (Auth0AuthUriThrottle,)
+            return (SSOAuthUriThrottle,)
         return ()
 
     @action(methods=('GET',), detail=False)

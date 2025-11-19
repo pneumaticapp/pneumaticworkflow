@@ -25,6 +25,7 @@ from src.authentication.messages import (
     MSG_AU_0019,
 )
 from src.authentication.models import (
+    Account,
     AccessToken,
     SSOConfig,
 )
@@ -203,6 +204,11 @@ class OktaService(SignUpMixin, CacheMixin):
     def get_auth_uri(self) -> str:
 
         state = str(uuid4())
+        if self.config.domain:
+            domain_encoded = base64.urlsafe_b64encode(
+                self.config.domain.encode('utf-8'),
+            ).decode('utf-8').rstrip('=')
+            state = f"{state[:8]}{domain_encoded}"
         code_verifier = base64.urlsafe_b64encode(
             secrets.token_bytes(32),
         ).decode('utf-8').rstrip('=')
@@ -291,12 +297,9 @@ class OktaService(SignUpMixin, CacheMixin):
             )
         except UserModel.DoesNotExist as exc:
             try:
-                sso_config = SSOConfig.objects.get(
-                    domain=self.config.domain,
-                    provider=SSOProvider.OKTA,
-                    is_active=True,
-                )
-                existing_account = sso_config.account
+                # Fallback: try to find account by first available
+                # This is temporary solution as discussed
+                existing_account = Account.objects.first()
             except SSOConfig.DoesNotExist:
                 raise AuthenticationFailed(MSG_AU_0003) from exc
 

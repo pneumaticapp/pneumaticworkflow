@@ -1,3 +1,4 @@
+import base64
 import pytest
 
 from src.authentication.services.exceptions import AuthException
@@ -33,9 +34,15 @@ def test_token__existent_user__authenticate(
         'OktaService.authenticate_user',
         return_value=(user, token),
     )
+    domain = 'dev-123456.okta.com'
+    state_uuid = 'YrtkHpALzeTDnliK'
+    domain_encoded = base64.urlsafe_b64encode(
+        domain.encode('utf-8'),
+    ).decode('utf-8').rstrip('=')
+    state = f"{state_uuid[:8]}{domain_encoded}"
     auth_response = {
         'code': '4/0AbUR2VMeHxU...',
-        'state': 'KvpfgTSUmwtOaPny',
+        'state': state,
     }
     identify_mock = mocker.patch(
         'src.authentication.views.okta.'
@@ -53,10 +60,11 @@ def test_token__existent_user__authenticate(
     # assert
     assert response.status_code == 200
     assert response.data['token'] == token
-    okta_service_init_mock.assert_called_once_with(domain=None)
+    okta_service_init_mock.assert_called_once_with(domain=domain)
     authenticate_user_mock.assert_called_once_with(
         code=auth_response['code'],
         state=auth_response['state'],
+        domain=domain,
         user_agent=user_agent,
         user_ip=user_ip,
     )
@@ -124,9 +132,15 @@ def test_token__service_exception__validation_error(
         'OktaService.authenticate_user',
         side_effect=AuthException(message),
     )
+    domain = 'dev-123456.okta.com'
+    state_uuid = 'YrtkHpALzeTDnliK'
+    domain_encoded = base64.urlsafe_b64encode(
+        domain.encode('utf-8'),
+    ).decode('utf-8').rstrip('=')
+    state = f"{state_uuid[:8]}{domain_encoded}"
     auth_response = {
         'code': '4/0AbUR2VMeHxU...',
-        'state': 'KvpfgTSUmwtOaPny',
+        'state': state,
     }
 
     # act
@@ -139,10 +153,11 @@ def test_token__service_exception__validation_error(
     assert response.status_code == 400
     assert response.data['code'] == ErrorCode.VALIDATION_ERROR
     assert response.data['message'] == message
-    okta_service_init_mock.assert_called_once_with(domain=None)
+    okta_service_init_mock.assert_called_once_with(domain=domain)
     authenticate_user_mock.assert_called_once_with(
         code=auth_response['code'],
         state=auth_response['state'],
+        domain=domain,
         user_agent=mocker.ANY,
         user_ip=mocker.ANY,
     )

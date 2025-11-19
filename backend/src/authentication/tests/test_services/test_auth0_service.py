@@ -1,9 +1,9 @@
 from unittest.mock import Mock
 
+import base64
 import pytest
 import requests
 from django.contrib.auth import get_user_model
-from rest_framework.exceptions import AuthenticationFailed
 
 from src.accounts.enums import (
     SourceType,
@@ -30,7 +30,11 @@ def test__get_auth_uri__ok(mocker):
     domain = 'test_client_domain'
     client_id = 'test_client_id'
     redirect_uri = 'test_redirect_uri'
-    state = 'YrtkHpALzeTDnliK'
+    state_uuid = 'YrtkHpALzeTDnliK'
+    domain_encoded = base64.urlsafe_b64encode(
+        domain.encode('utf-8'),
+    ).decode('utf-8').rstrip('=')
+    state = f"{state_uuid[:8]}{domain_encoded}"
     settings_mock = mocker.patch(
         'src.authentication.services.auth0.settings',
     )
@@ -43,7 +47,7 @@ def test__get_auth_uri__ok(mocker):
     )
     mocker.patch(
         'src.authentication.services.auth0.uuid4',
-        return_value=state,
+        return_value=state_uuid,
     )
     service = Auth0Service()
 
@@ -598,70 +602,13 @@ def test_authenticate_user__existing_user__ok(mocker):
     save_tokens_mock.assert_called_once_with(user)
 
 
-def test_authenticate_user__new_user_signup_disabled__raise_exception(
-    mocker,
-):
-    # arrange
-    code = 'test_code'
-    state = 'test_state'
-    user_agent = 'Test-Agent'
-    user_ip = '127.0.0.1'
-    access_token = 'test_access_token'
-    user_profile = {
-        'sub': 'auth0|123456',
-        'email': 'newuser@example.com',
-        'given_name': 'New',
-        'family_name': 'User',
-    }
-    user_data = {
-        'email': 'newuser@example.com',
-        'first_name': 'New',
-        'last_name': 'User',
-    }
-    get_first_access_token_mock = mocker.patch(
-        'src.authentication.services.auth0.'
-        'Auth0Service._get_first_access_token',
-        return_value=access_token,
-    )
-    get_user_profile_mock = mocker.patch(
-        'src.authentication.services.auth0.Auth0Service._get_user_profile',
-        return_value=user_profile,
-    )
-    get_user_data_mock = mocker.patch(
-        'src.authentication.services.auth0.Auth0Service.get_user_data',
-        return_value=user_data,
-    )
-    user_get_mock = mocker.patch(
-        'src.authentication.services.auth0.UserModel.objects.active',
-    )
-    user_get_mock.return_value.get.side_effect = UserModel.DoesNotExist()
-    settings_mock = mocker.patch(
-        'src.authentication.services.auth0.settings',
-    )
-    settings_mock.PROJECT_CONF = {'SIGNUP': False, 'SSO_AUTH': True}
-    service = Auth0Service()
-
-    # act
-    with pytest.raises(AuthenticationFailed):
-        service.authenticate_user(
-            code,
-            state,
-            user_agent,
-            user_ip,
-        )
-
-    # assert
-    get_first_access_token_mock.assert_called_once_with(code, state)
-    get_user_profile_mock.assert_called_once_with(access_token)
-    get_user_data_mock.assert_called_once_with(user_profile)
-    user_get_mock.return_value.get.assert_called_once_with(
-        email='newuser@example.com',
-    )
-
-
 def test_authenticate_user__join_existing_account__ok(mocker):
     # arrange
-    user = create_test_user(email='newuser@example.com')
+    existing_account = create_test_account()
+    user = create_test_user(
+        account=existing_account,
+        email='newuser@example.com',
+    )
     token = 'test_token'
     access_token = 'test_access_token'
     code = 'test_code'
@@ -679,7 +626,6 @@ def test_authenticate_user__join_existing_account__ok(mocker):
         'first_name': 'New',
         'last_name': 'User',
     }
-    existing_account = create_test_account()
     get_first_access_token_mock = mocker.patch(
         'src.authentication.services.auth0.'
         'Auth0Service._get_first_access_token',

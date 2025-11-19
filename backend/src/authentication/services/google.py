@@ -201,7 +201,6 @@ class GoogleAuthService(
     ]
 
     def __init__(self):
-        self.check_sso_restrictions()
         self.tokens = None
         self.client_id = settings.GOOGLE_OAUTH2_CLIENT_ID
         self.client_secret = settings.GOOGLE_OAUTH2_CLIENT_SECRET
@@ -358,6 +357,8 @@ class GoogleAuthService(
                     'email': primary_email,
                 },
             )
+
+        self.check_sso_restrictions(primary_email)
 
         first_name = (
             primary_name.get('givenName')
