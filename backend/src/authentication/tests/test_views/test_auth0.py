@@ -1,3 +1,4 @@
+import base64
 import pytest
 
 from src.authentication.services.auth0 import (
@@ -34,6 +35,12 @@ def test_token__existent_user__authenticate(
     user_agent = 'Some/Mozilla'
     user_ip = '128.18.0.99'
     token = '!@#E213'
+    domain = 'dev-123456.okta.com'
+    state_uuid = 'YrtkHpALzeTDnliK'
+    domain_encoded = base64.urlsafe_b64encode(
+        domain.encode('utf-8'),
+    ).decode('utf-8').rstrip('=')
+    state = f"{state_uuid[:8]}{domain_encoded}"
     authenticate_user_mock = mocker.patch(
         'src.authentication.services.auth0.'
         'Auth0Service.authenticate_user',
@@ -41,7 +48,7 @@ def test_token__existent_user__authenticate(
     )
     auth_response = {
         'code': '0.Ab0Aa_jrV8Qkv...9UWtS972sufQ',
-        'state': 'KvpfgTSUmwtOaPny',
+        'state': state,
     }
 
     # act
@@ -55,9 +62,10 @@ def test_token__existent_user__authenticate(
     # assert
     assert response.status_code == 200
     assert response.data['token'] == token
-    auth0_service_init_mock.assert_called_once_with(domain=None)
+    auth0_service_init_mock.assert_called_once_with(domain=domain)
     authenticate_user_mock.assert_called_once_with(
         code=auth_response['code'],
+        domain=domain,
         state=auth_response['state'],
         user_agent=user_agent,
         user_ip=user_ip,
@@ -125,9 +133,15 @@ def test_token__service_exception__validation_error(
         'Auth0Service.authenticate_user',
         side_effect=AuthException(message),
     )
+    domain = 'dev-123456.okta.com'
+    state_uuid = 'YrtkHpALzeTDnliK'
+    domain_encoded = base64.urlsafe_b64encode(
+        domain.encode('utf-8'),
+    ).decode('utf-8').rstrip('=')
+    state = f"{state_uuid[:8]}{domain_encoded}"
     auth_response = {
         'code': '0.Ab0Aa_jrV8Qkv...9UWtS972sufQ',
-        'state': 'KvpfgTSUmwtOaPny',
+        'state': state,
     }
 
     # act
@@ -140,10 +154,11 @@ def test_token__service_exception__validation_error(
     assert response.status_code == 400
     assert response.data['code'] == ErrorCode.VALIDATION_ERROR
     assert response.data['message'] == message
-    auth0_service_init_mock.assert_called_once_with(domain=None)
+    auth0_service_init_mock.assert_called_once_with(domain=domain)
     authenticate_user_mock.assert_called_once_with(
         code=auth_response['code'],
         state=auth_response['state'],
+        domain=domain,
         user_agent=mocker.ANY,
         user_ip=mocker.ANY,
     )

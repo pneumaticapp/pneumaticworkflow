@@ -188,7 +188,6 @@ class MicrosoftAuthService(
     """
 
     def __init__(self):
-        self.check_sso_restrictions()
         self.auth_client = self._build_msal_app()
         self.tokens = None
 
@@ -416,6 +415,8 @@ class MicrosoftAuthService(
                     'email': email,
                 },
             )
+
+        self.check_sso_restrictions(email)
         # account exists if signin
         account = (
             Account.objects.filter(

@@ -16,6 +16,12 @@ class SSORestrictionMixin:
     """
 
     @staticmethod
-    def check_sso_restrictions() -> None:
-        if settings.PROJECT_CONF['SSO_AUTH']:
-            raise ValidationError(MSG_AU_0016)
+    def check_sso_restrictions(user_email: str) -> None:
+        if not settings.PROJECT_CONF.get('SSO_AUTH', False):
+            return
+        try:
+            user = UserModel.objects.active().get(email=user_email)
+            if not user.is_account_owner:
+                raise ValidationError(MSG_AU_0016)
+        except UserModel.DoesNotExist:
+            pass

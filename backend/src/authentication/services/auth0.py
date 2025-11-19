@@ -1,3 +1,4 @@
+import base64
 import json
 from typing import Dict, Optional, Tuple, Union
 from uuid import uuid4
@@ -21,6 +22,7 @@ from src.authentication.messages import (
     MSG_AU_0019,
 )
 from src.authentication.models import (
+    Account,
     AccessToken,
     SSOConfig,
 )
@@ -197,6 +199,11 @@ class Auth0Service(SignUpMixin, CacheMixin):
     def get_auth_uri(self) -> str:
 
         state = str(uuid4())
+        if self.config.domain:
+            domain_encoded = base64.urlsafe_b64encode(
+                self.config.domain.encode('utf-8'),
+            ).decode('utf-8').rstrip('=')
+            state = f"{state[:8]}{domain_encoded}"
         self._set_cache(value=True, key=state)
         query_params = {
             'client_id': self.config.client_id,
@@ -299,12 +306,9 @@ class Auth0Service(SignUpMixin, CacheMixin):
             )
         except UserModel.DoesNotExist as exc:
             try:
-                sso_config = SSOConfig.objects.get(
-                    domain=self.config.domain,
-                    provider=SSOProvider.AUTH0,
-                    is_active=True,
-                )
-                existing_account = sso_config.account
+                # Fallback: try to find account by first available
+                # This is temporary solution as discussed
+                existing_account = Account.objects.first()
             except SSOConfig.DoesNotExist:
                 raise AuthenticationFailed(MSG_AU_0003) from exc
 

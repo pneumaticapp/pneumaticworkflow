@@ -43,7 +43,9 @@ class TokenObtainPairCustomView(
     authentication_classes = []
 
     def post(self, request, *args, **kwargs):
-        self.check_sso_restrictions()
+        user_email = request.data.get('email')
+        if user_email:
+            self.check_sso_restrictions(user_email)
         user = authenticate(**request.data)
 
         if not user:

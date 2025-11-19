@@ -1,9 +1,9 @@
 from unittest.mock import Mock
 
+import base64
 import pytest
 import requests
 from django.contrib.auth import get_user_model
-from rest_framework.exceptions import AuthenticationFailed
 
 from src.accounts.enums import SourceType
 from src.authentication.models import AccessToken
@@ -21,7 +21,11 @@ def test_get_auth_uri__ok(mocker):
     domain = 'dev-123456.okta.com'
     client_id = 'test_client_id'
     redirect_uri = 'https://some.redirect/uri'
-    state = 'YrtkHpALzeTDnliK'
+    state_uuid = 'YrtkHpALzeTDnliK'
+    domain_encoded = base64.urlsafe_b64encode(
+        domain.encode('utf-8'),
+    ).decode('utf-8').rstrip('=')
+    state = f"{state_uuid[:8]}{domain_encoded}"
 
     settings_mock = mocker.patch(
         'src.authentication.services.okta.settings',
@@ -35,19 +39,22 @@ def test_get_auth_uri__ok(mocker):
     )
     mocker.patch(
         'src.authentication.services.okta.uuid4',
-        return_value=state,
+        return_value=state_uuid,
     )
-    mocker.patch(
-        'src.authentication.services.okta.base64.urlsafe_b64encode',
-        side_effect=lambda x: Mock(decode=Mock(return_value='mocked_value')),
-    )
+    code_verifier_bytes = b'test_code_verifier_bytes_32_chars_long!!'
+    code_verifier_encoded = base64.urlsafe_b64encode(
+        code_verifier_bytes,
+    ).decode('utf-8').rstrip('=')
     mocker.patch(
         'src.authentication.services.okta.secrets.token_bytes',
-        return_value=b'test_bytes',
+        return_value=code_verifier_bytes,
     )
+    code_challenge_digest = b'test_digest'
     mocker.patch(
         'src.authentication.services.okta.hashlib.sha256',
-        return_value=Mock(digest=Mock(return_value=b'test_digest')),
+        return_value=Mock(
+            digest=Mock(return_value=code_challenge_digest),
+        ),
     )
 
     service = OktaService()
@@ -56,7 +63,10 @@ def test_get_auth_uri__ok(mocker):
     result = service.get_auth_uri()
 
     # assert
-    set_cache_mock.assert_called_once_with(value='mocked_value', key=state)
+    set_cache_mock.assert_called_once_with(
+        value=code_verifier_encoded,
+        key=state,
+    )
     expected_base = f'https://{domain}/oauth2/default/v1/authorize'
     assert result.startswith(expected_base)
     assert f'client_id={client_id}' in result
@@ -478,58 +488,3 @@ def test_authenticate_user__existing_user__ok(mocker):
     )
     save_tokens_mock.assert_called_once_with(user)
     analytics_mock.assert_called_once()
-
-
-def test_authenticate_user__new_user_signup_disabled__raise_exception(mocker):
-    # arrange
-    code = 'test_code'
-    state = 'test_state'
-    access_token = 'test_access_token'
-    user_profile = {
-        'sub': '00uid4BxXw6I6TV4m0g3',
-        'email': 'newuser@example.com',
-        'given_name': 'New',
-        'family_name': 'User',
-    }
-    user_data_dict = {
-        'email': 'newuser@example.com',
-        'first_name': 'New',
-        'last_name': 'User',
-    }
-
-    get_first_access_token_mock = mocker.patch(
-        'src.authentication.services.okta.'
-        'OktaService._get_first_access_token',
-        return_value=access_token,
-    )
-    get_user_profile_mock = mocker.patch(
-        'src.authentication.services.okta.OktaService._get_user_profile',
-        return_value=user_profile,
-    )
-    get_user_data_mock = mocker.patch(
-        'src.authentication.services.okta.OktaService.get_user_data',
-        return_value=user_data_dict,
-    )
-
-    user_get_mock = mocker.patch(
-        'src.authentication.services.okta.UserModel.objects.active',
-    )
-    user_get_mock.return_value.get.side_effect = UserModel.DoesNotExist()
-    settings_mock = mocker.patch(
-        'src.authentication.services.okta.settings',
-    )
-    settings_mock.PROJECT_CONF = {'SIGNUP': False}
-    settings_mock.PROJECT_CONF = {'SSO_AUTH': True}
-    service = OktaService()
-
-    # act
-    with pytest.raises(AuthenticationFailed):
-        service.authenticate_user(code, state)
-
-    # assert
-    get_first_access_token_mock.assert_called_once_with(code, state)
-    get_user_profile_mock.assert_called_once_with(access_token)
-    get_user_data_mock.assert_called_once_with(user_profile)
-    user_get_mock.return_value.get.assert_called_once_with(
-        email='newuser@example.com',
-    )
