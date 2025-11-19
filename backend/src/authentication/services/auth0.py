@@ -305,11 +305,10 @@ class Auth0Service(SignUpMixin, CacheMixin):
                 user_ip=user_ip,
             )
         except UserModel.DoesNotExist as exc:
-            try:
-                # Fallback: try to find account by first available
-                # This is temporary solution as discussed
-                existing_account = Account.objects.first()
-            except SSOConfig.DoesNotExist:
+            # Fallback: try to find account by first available
+            # This is temporary solution as discussed
+            existing_account = Account.objects.first()
+            if existing_account is None:
                 raise AuthenticationFailed(MSG_AU_0003) from exc
 
             user, token = self.join_existing_account(
