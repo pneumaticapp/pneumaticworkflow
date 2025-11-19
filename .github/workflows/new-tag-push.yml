@@ -1,0 +1,65 @@
+name: Build and push a new stable version
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  push_to_registry:
+    name: Push Docker image to Docker Hub
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - image: pneumaticworkflow/pneumatic-frontend
+            dockerfile: frontend/Dockerfile
+            build_context: frontend
+          - image: pneumaticworkflow/pneumatic-backend
+            dockerfile: backend/Dockerfile
+            build_context: backend
+          - image: pneumaticworkflow/pneumatic-celery
+            dockerfile: backend/Dockerfile
+            build_context: backend
+          - image: pneumaticworkflow/pneumatic-celery-beat
+            dockerfile: backend/Dockerfile
+            build_context: backend
+    permissions:
+      packages: write
+      contents: read
+      attestations: write
+      id-token: write
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v5
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PAT }}
+
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ matrix.image }}
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver: cloud
+          endpoint: "pneumaticworkflow/pneumatic-release-builder"
+
+      - name: Build and push ${{ matrix.image }}
+        uses: docker/build-push-action@v6
+        with:
+          platforms: linux/amd64,linux/arm64
+          context: ${{ matrix.build_context }}
+          file: ${{ matrix.dockerfile }}
+          push: true
+          tags: "${{ steps.meta.outputs.tags }},${{ matrix.image }}:stable"
+          labels: ${{ steps.meta.outputs.labels }}
