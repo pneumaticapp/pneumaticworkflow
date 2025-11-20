@@ -25,6 +25,7 @@ type TOptionBase<IdKey extends string, LabelKey extends string> = {
   count?: number;
   subTitle?: string;
   searchByText?: string;
+  isTitle?: boolean;
 };
 
 interface IFilterSelectCommonProps<
@@ -34,6 +35,7 @@ interface IFilterSelectCommonProps<
 > {
   isLoading?: boolean;
   options: TOption[];
+  groupedOptions?: any;
   isSearchShown?: boolean;
   isDisabled?: boolean;
   noValueLabel?: string;
@@ -91,12 +93,13 @@ export function FilterSelect<
     arrowClassName,
     menuClassName,
     options,
+    groupedOptions,
     containerClassname,
     selectAllLabel,
     resetFilter,
     Icon,
   } = props;
-
+  console.log(222, { groupedOptions });
   const [searchText, setSearchText] = useState('');
   const [isSelectAll, setIsSelectAll] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
