@@ -99,9 +99,9 @@ In the **backend.env** file, add your machine's external address(IP or domain na
 </pre>
 In the **frontend.env**, replace all references to localhost with references to your machine's address. Specifically, you need to edit these lines:
  <pre>
- BACKEND_URL=http://<strong>your-address</strong>:8001/          # Deprecated
- WSS_URL=ws://<strong>your-address</strong>:8001/                # Deprecated. After enabling SSL, you need to change "ws" to "wss"
- FORM_DOMAIN=form.<strong>your-address</strong>                  # Deprecated
+ BACKEND_URL=http://<strong>your-address</strong>:8001/          
+ WSS_URL=ws://<strong>your-address</strong>:8001/                
+ FORM_DOMAIN=form.<strong>your-address</strong>                 
 </pre>
 And last, but not least, in the **project.env**, you also want to replace all references to localhost with your address:
 
