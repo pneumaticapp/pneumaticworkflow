@@ -27,36 +27,23 @@ export interface IGroupedStepsValue {
 
 type IGroupedStepsMap = Map<number, IGroupedStepsValue>;
 
-export function TaskFilterSelect() {
+export function TaskFilterSelect({ selectedTemplates }: { selectedTemplates: ITemplateFilterItem[] }) {
   const { formatMessage } = useIntl();
   const dispatch = useDispatch();
 
   const {
     stepsIdsFilter,
-    // statusFilter
-    templatesIdsFilter,
-  }: {
+  }: // statusFilter
+  {
     stepsIdsFilter: number[];
     // statusFilter
     templatesIdsFilter: number[];
   } = useSelector((state: IApplicationState) => state.workflows.workflowsSettings.values);
 
-  const filterTemplates: ITemplateFilterItem[] = useSelector(
-    (state: IApplicationState) => state.workflows.workflowsSettings.templateList.items,
-  );
-
   const groupedSteps: IGroupedStepsMap | null = useMemo(() => {
-    if (templatesIdsFilter.length === 0) {
+    if (selectedTemplates.length === 0) {
       return null;
     }
-    const filterTemplatesMap: Map<number, ITemplateFilterItem> = new Map(
-      filterTemplates.map((template) => [template.id, template]),
-    );
-
-    const selectedTemplates: ITemplateFilterItem[] = templatesIdsFilter
-      .map((templateId) => filterTemplatesMap.get(templateId))
-      .filter(Boolean) as ITemplateFilterItem[];
-
     return new Map(
       selectedTemplates.map((template) => [
         template.id,
@@ -72,7 +59,7 @@ export function TaskFilterSelect() {
         },
       ]),
     );
-  }, [templatesIdsFilter, filterTemplates]);
+  }, [selectedTemplates]);
 
   const STEP_HEADER_NAME = formatMessage({ id: 'workflows.filter-column-step' });
   //   if (!isArrayWithItems(templatesIdsFilter) || !canFilterByTemplateStep(statusFilter)) {

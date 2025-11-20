@@ -57,7 +57,6 @@ export function TemplateFilterSelect() {
             defaultPlaceholder: 'sorting.all-templates',
           })
         }
-        selectAllLabel={formatMessage({ id: 'workflows.filter-all-templates' })}
       />
     </div>
   );

@@ -70,7 +70,6 @@ export function StarterFilterSelect() {
             defaultPlaceholder: 'sorting.all-starters',
           })
         }
-        selectAllLabel={formatMessage({ id: 'workflows.filter-all-starters' })}
       />
     </div>
   );

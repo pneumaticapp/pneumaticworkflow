@@ -122,7 +122,6 @@ export function PerformerFilterSelect() {
         }
         containerClassname={styles['filter-container']}
         arrowClassName={styles['header-filter__arrow']}
-        selectAllLabel={formatMessage({ id: 'workflows.filter-all-users' })}
       />
     </div>
   );
