@@ -1,8 +1,9 @@
-import base64
 import pytest
+from uuid import uuid4
 
 from src.authentication.services.exceptions import AuthException
 from src.authentication.services.okta import OktaService
+from src.generics.mixins.services import EncryptionMixin
 from src.processes.tests.fixtures import create_test_owner
 from src.utils.validation import ErrorCode
 
@@ -35,11 +36,9 @@ def test_token__existent_user__authenticate(
         return_value=(user, token),
     )
     domain = 'dev-123456.okta.com'
-    state_uuid = 'YrtkHpALzeTDnliK'
-    domain_encoded = base64.urlsafe_b64encode(
-        domain.encode('utf-8'),
-    ).decode('utf-8').rstrip('=')
-    state = f"{state_uuid[:8]}{domain_encoded}"
+    state_uuid = str(uuid4())
+    encrypted_domain = EncryptionMixin.encrypt(domain)
+    state = f"{state_uuid}{encrypted_domain}"
     auth_response = {
         'code': '4/0AbUR2VMeHxU...',
         'state': state,
@@ -133,11 +132,9 @@ def test_token__service_exception__validation_error(
         side_effect=AuthException(message),
     )
     domain = 'dev-123456.okta.com'
-    state_uuid = 'YrtkHpALzeTDnliK'
-    domain_encoded = base64.urlsafe_b64encode(
-        domain.encode('utf-8'),
-    ).decode('utf-8').rstrip('=')
-    state = f"{state_uuid[:8]}{domain_encoded}"
+    state_uuid = str(uuid4())
+    encrypted_domain = EncryptionMixin.encrypt(domain)
+    state = f"{state_uuid}{encrypted_domain}"
     auth_response = {
         'code': '4/0AbUR2VMeHxU...',
         'state': state,
