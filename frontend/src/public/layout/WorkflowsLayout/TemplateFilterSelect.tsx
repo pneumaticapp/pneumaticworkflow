@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { useIntl } from 'react-intl';
 import { useDispatch, useSelector } from 'react-redux';
-import { setWorkflowsFilterSteps, setWorkflowsFilterTemplate } from '../../redux/actions';
+import { setWorkflowsFilterTemplate } from '../../redux/actions';
 import { IApplicationState } from '../../types/redux';
 
 import { FilterSelect } from '../../components/UI';
@@ -38,12 +38,10 @@ export function TemplateFilterSelect() {
         optionLabelKey="name"
         onChange={(templateIds: number[]) => {
           sessionStorage.setItem('isInternalNavigation', 'true');
-          dispatch(setWorkflowsFilterSteps([])); // change after addiing the new task filter
           dispatch(setWorkflowsFilterTemplate(templateIds));
         }}
         resetFilter={() => {
           sessionStorage.setItem('isInternalNavigation', 'true');
-          dispatch(setWorkflowsFilterSteps([]));
           dispatch(setWorkflowsFilterTemplate([]));
         }}
         Icon={FilterIcon}

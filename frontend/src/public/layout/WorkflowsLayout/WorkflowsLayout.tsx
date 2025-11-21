@@ -86,6 +86,8 @@ export function WorkflowsLayoutComponent({
       .filter(Boolean) as ITemplateFilterItem[];
   }, [templatesIdsFilter, filterTemplates]);
 
+  const prevTemplatesIdsFilterRef = React.useRef<number[]>([]);
+
   useEffect(() => {
     if (workflowsView !== EWorkflowsView.Table) {
       return;
@@ -122,24 +124,38 @@ export function WorkflowsLayoutComponent({
   useEffect(() => {
     if (templatesIdsFilter.length === 0) {
       setStepsFilter([]);
+      prevTemplatesIdsFilterRef.current = [];
       return;
     }
 
-    selectedTemplates.forEach((template) => {
+    const prevTemplatesIdsSet = new Set(prevTemplatesIdsFilterRef.current);
+
+    const currentTemplateTaskIdsSet = new Set(
+      selectedTemplates.flatMap((template) => template.steps.map((step) => step.id)),
+    );
+    const prevTemplatesActualTaskIds = stepsIdsFilter.filter((id) => currentTemplateTaskIdsSet.has(id));
+
+    const addedTemplates = selectedTemplates.filter((template) => !prevTemplatesIdsSet.has(template.id));
+    addedTemplates.forEach((template) => {
       const hasTasks = template.steps.length > 0;
       if (!hasTasks && !template.areStepsLoading) {
         loadTemplateSteps({ templateId: template.id });
       }
     });
 
-    const allTemplatesTasksLoaded = selectedTemplates.every((template) => template.steps.length > 0);
-    if (allTemplatesTasksLoaded) {
-      const allStepIds = selectedTemplates.flatMap((template) => template.steps.map((steps) => steps.id));
+    const allNewTemplatesTasksLoaded = addedTemplates.every((template) => template.steps.length > 0);
+    if (allNewTemplatesTasksLoaded) {
+      const allStepIds = [
+        ...prevTemplatesActualTaskIds,
+        ...addedTemplates.flatMap((template) => template.steps.map((steps) => steps.id)),
+      ];
       setStepsFilter(allStepIds);
       if (canFilterByTemplateStep(statusFilter)) {
         updateWorkflowsTemplateStepsCounters();
       }
     }
+
+    prevTemplatesIdsFilterRef.current = templatesIdsFilter;
   }, [templatesIdsFilter, selectedTemplates, statusFilter]);
 
   useEffect(() => {
