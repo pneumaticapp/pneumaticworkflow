@@ -9,7 +9,6 @@ from django.contrib.auth import get_user_model
 from src.accounts.enums import SourceType, UserType
 from src.accounts.models import Account, Contact
 from src.authentication.entities import UserData
-from src.authentication.mixins import SSORestrictionMixin
 from src.authentication.models import AccessToken
 from src.authentication.services import exceptions
 from src.generics.mixins.services import CacheMixin
@@ -167,7 +166,6 @@ class MicrosoftGraphApiMixin:
 class MicrosoftAuthService(
     CacheMixin,
     MicrosoftGraphApiMixin,
-    SSORestrictionMixin,
 ):
 
     cache_key_prefix = 'ms_flow'
@@ -416,7 +414,6 @@ class MicrosoftAuthService(
                 },
             )
 
-        self.check_sso_restrictions(email)
         # account exists if signin
         account = (
             Account.objects.filter(

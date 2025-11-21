@@ -24,7 +24,7 @@ from src.authentication.serializers import (
     ResetPasswordSerializer,
     TokenSerializer,
 )
-from src.authentication.mixins import SSORestrictionMixin
+from src.authentication.views.mixins import SSORestrictionMixin
 from src.authentication.services.user_auth import AuthService
 from src.authentication.throttling import (
     AuthResetPasswordThrottle,
@@ -63,11 +63,23 @@ class ResetPasswordViewSet(
     def create(self, request):
         slz = self.get_serializer(data=request.data)
         slz.is_valid(raise_exception=True)
-        self.check_sso_restrictions(slz.validated_data['email'])
-        user = UserModel.objects.select_related('account').filter(
-            email=slz.validated_data['email'],
-        ).active().only('id', 'email', 'account__logo_lg').first()
+        user = (
+            UserModel.objects
+            .select_related('account')
+            .filter(email=slz.validated_data['email'])
+            .active()
+            .only(
+                'id',
+                'email',
+                'is_account_owner',
+                'account__logo_lg',
+                'account_id',
+                'account__log_api_requests',
+            )
+            .first()
+        )
         if user:
+            self.check_sso_restrictions(user)
             send_reset_password_notification.delay(
                 user_id=user.id,
                 user_email=user.email,
@@ -97,7 +109,7 @@ class ResetPasswordViewSet(
             UserModel.objects.active(),
             id=token_data['user_id'],
         )
-        self.check_sso_restrictions(user.email)
+        self.check_sso_restrictions(user)
         service = UserService(user=user)
         service.change_password(password=slz.validated_data['new_password'])
         PneumaticToken.expire_all_tokens(user)
@@ -129,7 +141,7 @@ class ChangePasswordView(
         return context
 
     def create(self, request, *args, **kwargs):
-        self.check_sso_restrictions(request.user.email)
+        self.check_sso_restrictions(request.user)
         slz = self.get_serializer(data=request.data)
         slz.is_valid(raise_exception=True)
         service = UserService(user=request.user)
