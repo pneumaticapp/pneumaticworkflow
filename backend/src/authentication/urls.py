@@ -6,7 +6,6 @@ from src.authentication.views.auth0 import Auth0ViewSet
 from src.authentication.views.context import ContextUserView
 from src.authentication.views.google import (
     GoogleAuthViewSet,
-    SignInWithGoogleView,
 )
 from src.authentication.views.microsoft import MSAuthViewSet
 from src.authentication.views.password import (
@@ -31,11 +30,6 @@ urlpatterns = [
         'context',
         ContextUserView.as_view(),
         name='auth-context',
-    ),
-    path(
-        'signin-google',
-        SignInWithGoogleView.as_view(),
-        name='auth-signin-google',
     ),
 
     # JSON Web Tokens
