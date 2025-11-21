@@ -1,36 +1,26 @@
-import base64
-import json
-from typing import Dict, Optional, Tuple, Union
+from typing import Optional, Tuple
 from uuid import uuid4
 
 import requests
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from rest_framework.exceptions import AuthenticationFailed
 
 from src.accounts.enums import SourceType
-from src.analysis.services import AnalyticService
 from src.authentication.entities import UserData, SSOConfigData
 from src.authentication.enums import (
-    AuthTokenType,
     SSOProvider,
 )
 from src.authentication.messages import (
-    MSG_AU_0003,
-    MSG_AU_0017,
     MSG_AU_0018,
     MSG_AU_0019,
 )
 from src.authentication.models import (
-    Account,
     AccessToken,
     SSOConfig,
 )
 from src.authentication.services import exceptions
-from src.authentication.services.user_auth import AuthService
+from src.authentication.services.base_sso import BaseSSOService
 from src.authentication.tokens import PneumaticToken
-from src.authentication.views.mixins import SignUpMixin
-from src.generics.mixins.services import CacheMixin
 from src.utils.logging import (
     SentryLogLevel,
     capture_sentry_message,
@@ -39,59 +29,47 @@ from src.utils.logging import (
 UserModel = get_user_model()
 
 
-class Auth0Service(SignUpMixin, CacheMixin):
+class Auth0Service(BaseSSOService):
 
     cache_key_prefix = 'auth0'
     cache_timeout = 600  # 10 min
     source = SourceType.AUTH0
+    sso_provider = SSOProvider.AUTH0
+    exception_class = exceptions.Auth0ServiceException
 
     def __init__(
         self,
         domain: Optional[str] = None,
     ):
-        self.config = self._get_config(domain)
-        self.tokens: Optional[Dict] = None
+        super().__init__(domain)
         self.scope = 'openid email profile offline_access'
 
-    def _get_config(self, domain: Optional[str] = None) -> SSOConfigData:
-        if not settings.PROJECT_CONF['SSO_AUTH']:
-            raise exceptions.Auth0ServiceException(MSG_AU_0017)
-
-        sso_provider = settings.PROJECT_CONF.get('SSO_PROVIDER', '')
-        if sso_provider and sso_provider != SSOProvider.AUTH0:
-            raise exceptions.Auth0ServiceException(MSG_AU_0017)
-        if domain:
-            try:
-                sso_config = SSOConfig.objects.get(
-                    domain=domain,
-                    provider=SSOProvider.AUTH0,
-                    is_active=True,
-                )
-                return SSOConfigData(
-                    client_id=sso_config.client_id,
-                    client_secret=sso_config.client_secret,
-                    domain=sso_config.domain,
-                    redirect_uri=settings.AUTH0_REDIRECT_URI,
-                )
-            except SSOConfig.DoesNotExist as exc:
-                raise exceptions.Auth0ServiceException(
-                    MSG_AU_0018(domain),
-                ) from exc
-        else:
-            if not settings.AUTH0_CLIENT_SECRET:
-                raise exceptions.Auth0ServiceException(MSG_AU_0019)
+    def _get_domain_config(self, domain: str) -> SSOConfigData:
+        """Gets configuration for a specific domain."""
+        try:
+            sso_config = SSOConfig.objects.get(
+                domain=domain,
+                provider=SSOProvider.AUTH0,
+                is_active=True,
+            )
             return SSOConfigData(
-                client_id=settings.AUTH0_CLIENT_ID,
-                client_secret=settings.AUTH0_CLIENT_SECRET,
-                domain=settings.AUTH0_DOMAIN,
+                client_id=sso_config.client_id,
+                client_secret=sso_config.client_secret,
+                domain=sso_config.domain,
                 redirect_uri=settings.AUTH0_REDIRECT_URI,
             )
+        except SSOConfig.DoesNotExist as exc:
+            raise self.exception_class(MSG_AU_0018(domain)) from exc
 
-    def _serialize_value(self, value: Union[str, dict]) -> str:
-        return json.dumps(value, ensure_ascii=False)
-
-    def _deserialize_value(self, value: Optional[str]) -> dict:
-        return json.loads(value) if value else None
+    def _get_default_config(self) -> SSOConfigData:
+        if not settings.AUTH0_CLIENT_SECRET:
+            raise self.exception_class(MSG_AU_0019)
+        return SSOConfigData(
+            client_id=settings.AUTH0_CLIENT_ID,
+            client_secret=settings.AUTH0_CLIENT_SECRET,
+            domain=settings.AUTH0_DOMAIN,
+            redirect_uri=settings.AUTH0_REDIRECT_URI,
+        )
 
     def _get_first_access_token(self, code: str, state: str) -> str:
 
@@ -197,13 +175,9 @@ class Auth0Service(SignUpMixin, CacheMixin):
         return profile
 
     def get_auth_uri(self) -> str:
-
         state = str(uuid4())
-        if self.config.domain:
-            domain_encoded = base64.urlsafe_b64encode(
-                self.config.domain.encode('utf-8'),
-            ).decode('utf-8').rstrip('=')
-            state = f"{state[:8]}{domain_encoded}"
+        encrypted_domain = self.encrypt(self.config.domain)
+        state = f"{state}{encrypted_domain}"
         self._set_cache(value=True, key=state)
         query_params = {
             'client_id': self.config.client_id,
@@ -254,7 +228,7 @@ class Auth0Service(SignUpMixin, CacheMixin):
 
     def save_tokens_for_user(self, user: UserModel):
         AccessToken.objects.update_or_create(
-            source=SourceType.AUTH0,
+            source=self.source,
             user=user,
             defaults={
                 'expires_in': self.tokens['expires_in'],
@@ -262,27 +236,6 @@ class Auth0Service(SignUpMixin, CacheMixin):
                 'access_token': self.tokens['access_token'],
             },
         )
-
-    def _get_access_token(self, user_id: int) -> str:
-        """ Use existent access token and refresh if expired """
-        try:
-            token = AccessToken.objects.get(
-                user_id=user_id,
-                source=SourceType.AUTH0,
-            )
-        except AccessToken.DoesNotExist as exc:
-            capture_sentry_message(
-                message='Auth0 Access token not found for the user',
-                data={'user_id': user_id},
-                level=SentryLogLevel.ERROR,
-            )
-            raise exceptions.AccessTokenNotFound from exc
-        else:
-            if token.is_expired:
-                # Auth0 token refresh logic would go here
-                # For now, raise exception if token is expired
-                raise exceptions.TokenInvalidOrExpired
-            return token.access_token
 
     def authenticate_user(
         self,
@@ -296,31 +249,4 @@ class Auth0Service(SignUpMixin, CacheMixin):
         access_token = self._get_first_access_token(code, state)
         user_profile = self._get_user_profile(access_token)
         user_data = self.get_user_data(user_profile)
-
-        try:
-            user = UserModel.objects.active().get(email=user_data['email'])
-            token = AuthService.get_auth_token(
-                user=user,
-                user_agent=user_agent,
-                user_ip=user_ip,
-            )
-        except UserModel.DoesNotExist as exc:
-            # Fallback: try to find account by first available
-            # This is temporary solution as discussed
-            existing_account = Account.objects.first()
-            if existing_account is None:
-                raise AuthenticationFailed(MSG_AU_0003) from exc
-
-            user, token = self.join_existing_account(
-                account=existing_account,
-                **user_data,
-            )
-
-        self.save_tokens_for_user(user)
-        AnalyticService.users_logged_in(
-            user=user,
-            is_superuser=False,
-            auth_type=AuthTokenType.USER,
-            source=SourceType.AUTH0,
-        )
-        return user, token
+        return self._complete_authentication(user_data, **kwargs)

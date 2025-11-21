@@ -44,7 +44,10 @@ from src.authentication.throttling import (
     AuthGoogleAuthUriThrottle,
     AuthGoogleTokenThrottle,
 )
-from src.authentication.views.mixins import SignUpMixin
+from src.authentication.views.mixins import (
+    SignUpMixin,
+    SSORestrictionMixin,
+)
 from src.generics.mixins.views import (
     BaseResponseMixin,
     CustomViewSetMixin,
@@ -60,6 +63,7 @@ UserModel = get_user_model()
 
 
 class GoogleAuthViewSet(
+    SSORestrictionMixin,
     SignUpMixin,
     CustomViewSetMixin,
     BaseIdentifyMixin,
@@ -130,6 +134,7 @@ class GoogleAuthViewSet(
         else:
             try:
                 user = UserModel.objects.active().get(email=user_data['email'])
+                self.check_sso_restrictions(user)
                 token = AuthService.get_auth_token(
                     user=user,
                     user_agent=request.headers.get(

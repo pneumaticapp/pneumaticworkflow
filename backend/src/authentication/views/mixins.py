@@ -4,6 +4,7 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db import transaction
 from django.http import HttpRequest
+from rest_framework.exceptions import ValidationError
 
 from src.accounts.enums import Language
 from src.accounts.models import Account
@@ -16,6 +17,7 @@ from src.accounts.services.exceptions import (
 )
 from src.accounts.services.user import UserService
 from src.authentication.enums import AuthTokenType
+from src.authentication.messages import MSG_AU_0016
 from src.authentication.services.user_auth import AuthService
 from src.authentication.tokens import PneumaticToken
 from src.logs.service import AccountLogService
@@ -185,3 +187,11 @@ class SignUpMixin:
                     user_ip=request.META.get('HTTP_X_REAL_IP'),
                 )
         return account_owner, token
+
+
+class SSORestrictionMixin:
+
+    @staticmethod
+    def check_sso_restrictions(user: UserModel):
+        if settings.PROJECT_CONF['SSO_AUTH'] and not user.is_account_owner:
+            raise ValidationError(MSG_AU_0016)

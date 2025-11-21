@@ -24,7 +24,7 @@ from src.authentication.permissions import (
     PrivateApiPermission,
 )
 from src.authentication.services.user_auth import AuthService
-from src.authentication.mixins import SSORestrictionMixin
+from src.authentication.views.mixins import SSORestrictionMixin
 from src.generics.mixins.views import (
     BaseResponseMixin,
 )
@@ -43,13 +43,12 @@ class TokenObtainPairCustomView(
     authentication_classes = []
 
     def post(self, request, *args, **kwargs):
-        user_email = request.data.get('email')
-        if user_email:
-            self.check_sso_restrictions(user_email)
         user = authenticate(**request.data)
 
         if not user:
             raise AuthenticationFailed(MSG_AU_0003)
+
+        self.check_sso_restrictions(user)
 
         if user.account.is_verification_timed_out():
             owner = user.account.users.get(is_account_owner=True)

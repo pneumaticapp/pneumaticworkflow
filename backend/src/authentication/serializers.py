@@ -1,4 +1,3 @@
-import base64
 from django.contrib.auth import authenticate, get_user_model
 from django.core.validators import RegexValidator
 from drf_recaptcha.fields import ReCaptchaV2Field
@@ -13,6 +12,7 @@ from src.authentication.messages import (
     MSG_AU_0013,
 )
 from src.generics.fields import DateFormatField, TimeStampField
+from src.generics.mixins.services import EncryptionMixin
 from src.generics.serializers import CustomValidationErrorMixin
 
 UserModel = get_user_model()
@@ -267,6 +267,7 @@ class MSTokenSerializer(AuthTokenSerializer):
 
 
 class SSOTokenSerializer(
+    EncryptionMixin,
     CustomValidationErrorMixin,
     serializers.Serializer,
 ):
@@ -280,19 +281,13 @@ class SSOTokenSerializer(
         allow_blank=False,
         required=True,
     )
-    domain = serializers.CharField(read_only=True)
 
-    @staticmethod
-    def _extract_domain_from_state(state: str) -> Optional[str]:
-        if len(state) <= 8:
+    def _extract_domain_from_state(self, state: str) -> Optional[str]:
+        if len(state) <= 36:
             return None
-
-        encoded = state[8:]
-        padding = (4 - len(encoded) % 4) % 4
         try:
-            domain_bytes = base64.urlsafe_b64decode(encoded + ("=" * padding))
-            return domain_bytes.decode("utf-8").strip()
-        except (ValueError, UnicodeDecodeError, TypeError):
+            return self.decrypt(state[36:])
+        except ValueError:
             return None
 
     def validate(self, attrs: Dict[str, Any]) -> Dict[str, Any]:

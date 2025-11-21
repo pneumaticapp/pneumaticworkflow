@@ -10,7 +10,6 @@ from django.contrib.auth import get_user_model
 from src.accounts.enums import SourceType
 from src.accounts.models import Contact
 from src.authentication.entities import UserData
-from src.authentication.mixins import SSORestrictionMixin
 from src.authentication.models import AccessToken
 from src.authentication.services import exceptions
 from src.generics.mixins.services import CacheMixin
@@ -183,7 +182,6 @@ class GooglePeopleApiMixin:
 class GoogleAuthService(
     CacheMixin,
     GooglePeopleApiMixin,
-    SSORestrictionMixin,
 ):
     """
     Service for authorization via Google OAuth2 using
@@ -357,8 +355,6 @@ class GoogleAuthService(
                     'email': primary_email,
                 },
             )
-
-        self.check_sso_restrictions(primary_email)
 
         first_name = (
             primary_name.get('givenName')

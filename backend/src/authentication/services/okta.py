@@ -1,39 +1,26 @@
-import base64
-import hashlib
-import secrets
-import json
-import urllib.parse
-from typing import Dict, Optional, Tuple, Union
+from typing import Optional, Tuple
 from uuid import uuid4
 
 import requests
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from rest_framework.exceptions import AuthenticationFailed
 
 from src.accounts.enums import SourceType
-from src.analysis.services import AnalyticService
 from src.authentication.entities import UserData, SSOConfigData
 from src.authentication.enums import (
-    AuthTokenType,
     SSOProvider,
 )
 from src.authentication.messages import (
-    MSG_AU_0003,
-    MSG_AU_0017,
     MSG_AU_0018,
     MSG_AU_0019,
 )
 from src.authentication.models import (
-    Account,
     AccessToken,
     SSOConfig,
 )
 from src.authentication.services import exceptions
-from src.authentication.services.user_auth import AuthService
+from src.authentication.services.base_sso import BaseSSOService
 from src.authentication.tokens import PneumaticToken
-from src.authentication.views.mixins import SignUpMixin
-from src.generics.mixins.services import CacheMixin
 from src.utils.logging import (
     SentryLogLevel,
     capture_sentry_message,
@@ -42,60 +29,46 @@ from src.utils.logging import (
 UserModel = get_user_model()
 
 
-class OktaService(SignUpMixin, CacheMixin):
+class OktaService(BaseSSOService):
 
     cache_key_prefix = 'okta_flow'
     cache_timeout = 600  # 10 min
+    source = SourceType.OKTA
+    sso_provider = SSOProvider.OKTA
+    exception_class = exceptions.OktaServiceException
 
     def __init__(
         self,
         domain: Optional[str] = None,
     ):
-        self.config = self._get_config(domain)
-        self.tokens: Optional[Dict] = None
+        super().__init__(domain)
         self.scope = 'openid email profile'
 
-    def _get_config(self, domain: Optional[str] = None) -> SSOConfigData:
-        if not settings.PROJECT_CONF['SSO_AUTH']:
-            raise exceptions.OktaServiceException(MSG_AU_0017)
-        sso_provider = settings.PROJECT_CONF.get('SSO_PROVIDER', '')
-        if sso_provider and sso_provider != SSOProvider.OKTA:
-            raise exceptions.OktaServiceException(MSG_AU_0017)
-        if domain:
-            try:
-                sso_config = SSOConfig.objects.get(
-                    domain=domain,
-                    provider=SSOProvider.OKTA,
-                    is_active=True,
-                )
-                return SSOConfigData(
-                    client_id=sso_config.client_id,
-                    client_secret=sso_config.client_secret,
-                    domain=sso_config.domain,
-                    redirect_uri=settings.OKTA_REDIRECT_URI,
-                )
-            except SSOConfig.DoesNotExist as exc:
-                raise exceptions.OktaServiceException(
-                    MSG_AU_0018(domain),
-                ) from exc
-        else:
-            if not settings.OKTA_CLIENT_SECRET:
-                raise exceptions.OktaServiceException(MSG_AU_0019)
+    def _get_domain_config(self, domain: str) -> SSOConfigData:
+        try:
+            sso_config = SSOConfig.objects.get(
+                domain=domain,
+                provider=SSOProvider.OKTA,
+                is_active=True,
+            )
             return SSOConfigData(
-                client_id=settings.OKTA_CLIENT_ID,
-                client_secret=settings.OKTA_CLIENT_SECRET,
-                domain=settings.OKTA_DOMAIN,
+                client_id=sso_config.client_id,
+                client_secret=sso_config.client_secret,
+                domain=sso_config.domain,
                 redirect_uri=settings.OKTA_REDIRECT_URI,
             )
+        except SSOConfig.DoesNotExist as exc:
+            raise self.exception_class(MSG_AU_0018(domain)) from exc
 
-    def _serialize_value(self, value: Union[str, dict]) -> str:
-        return json.dumps(value, ensure_ascii=False)
-
-    def _deserialize_value(
-        self,
-        value: Optional[str],
-    ) -> Union[str, dict, None]:
-        return json.loads(value) if value else None
+    def _get_default_config(self) -> SSOConfigData:
+        if not settings.OKTA_CLIENT_SECRET:
+            raise self.exception_class(MSG_AU_0019)
+        return SSOConfigData(
+            client_id=settings.OKTA_CLIENT_ID,
+            client_secret=settings.OKTA_CLIENT_SECRET,
+            domain=settings.OKTA_DOMAIN,
+            redirect_uri=settings.OKTA_REDIRECT_URI,
+        )
 
     def _get_first_access_token(self, code: str, state: str) -> str:
         """
@@ -120,7 +93,6 @@ class OktaService(SignUpMixin, CacheMixin):
         code_verifier = self._get_cache(key=state)
         if not code_verifier:
             raise exceptions.TokenInvalidOrExpired
-
         try:
             response = requests.post(
                 f'https://{self.config.domain}/oauth2/default/v1/token',
@@ -155,9 +127,7 @@ class OktaService(SignUpMixin, CacheMixin):
 
     def _get_user_profile(self, access_token: str) -> dict:
         """
-        Gets user profile via Okta userinfo endpoint
-
-        Example response:
+        Response example:
         {
             "sub": "00uid4BxXw6I6TV4m0g3",
             "name": "John Doe",
@@ -202,21 +172,10 @@ class OktaService(SignUpMixin, CacheMixin):
         return profile
 
     def get_auth_uri(self) -> str:
-
         state = str(uuid4())
-        if self.config.domain:
-            domain_encoded = base64.urlsafe_b64encode(
-                self.config.domain.encode('utf-8'),
-            ).decode('utf-8').rstrip('=')
-            state = f"{state[:8]}{domain_encoded}"
-        code_verifier = base64.urlsafe_b64encode(
-            secrets.token_bytes(32),
-        ).decode('utf-8').rstrip('=')
-        code_challenge = base64.urlsafe_b64encode(
-            hashlib.sha256(code_verifier.encode('utf-8')).digest(),
-        ).decode('utf-8').rstrip('=')
-
-        # Cache code_verifier for later validation
+        encrypted_domain = self.encrypt(self.config.domain)
+        state = f"{state}{encrypted_domain}"
+        code_verifier, code_challenge = self._generate_pkce()
         self._set_cache(value=code_verifier, key=state)
         query_params = {
             'client_id': self.config.client_id,
@@ -229,7 +188,7 @@ class OktaService(SignUpMixin, CacheMixin):
             'response_mode': 'query',
         }
 
-        query = urllib.parse.urlencode(query_params)
+        query = requests.compat.urlencode(query_params)
         return (
             f'https://{self.config.domain}/oauth2/default/v1/authorize?{query}'
         )
@@ -266,7 +225,7 @@ class OktaService(SignUpMixin, CacheMixin):
 
     def save_tokens_for_user(self, user: UserModel):
         AccessToken.objects.update_or_create(
-            source=SourceType.OKTA,
+            source=self.source,
             user=user,
             defaults={
                 'expires_in': self.tokens['expires_in'],
@@ -287,34 +246,4 @@ class OktaService(SignUpMixin, CacheMixin):
         access_token = self._get_first_access_token(code, state)
         user_profile = self._get_user_profile(access_token)
         user_data = self.get_user_data(user_profile)
-
-        try:
-            user = UserModel.objects.active().get(email=user_data['email'])
-            token = AuthService.get_auth_token(
-                user=user,
-                user_agent=user_agent,
-                user_ip=user_ip,
-            )
-        except UserModel.DoesNotExist as exc:
-            # Fallback: try to find account by first available
-            # This is temporary solution as discussed
-            existing_account = Account.objects.first()
-            if existing_account is None:
-                raise AuthenticationFailed(MSG_AU_0003) from exc
-
-            # Auto-create user in existing account
-            user, token = self.join_existing_account(
-                account=existing_account,
-                **user_data,
-            )
-
-        self.save_tokens_for_user(user)
-
-        AnalyticService.users_logged_in(
-            user=user,
-            is_superuser=False,
-            auth_type=AuthTokenType.USER,
-            source=SourceType.OKTA,
-        )
-
-        return user, token
+        return self._complete_authentication(user_data, **kwargs)
