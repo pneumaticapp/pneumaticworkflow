@@ -1,7 +1,13 @@
-from typing import Optional, Union
+from typing import Optional, Tuple, Union
+import base64
+import hashlib
+import secrets
 
+from cryptography.fernet import Fernet, InvalidToken
+from django.conf import settings
 from django.core.cache import caches
 from django.db.models import Model
+from django.utils.encoding import force_bytes
 from rest_framework.serializers import ModelSerializer
 
 
@@ -266,3 +272,44 @@ class CacheMixin(BaseClsCache):
         return self._delete_cache_value(
             key=self._get_cache_key(key),
         )
+
+
+class EncryptionMixin:
+
+    @staticmethod
+    def _generate_pkce() -> Tuple[str, str]:
+        code_verifier = base64.urlsafe_b64encode(
+            secrets.token_bytes(64),
+        ).decode().rstrip('=')
+        code_challenge = base64.urlsafe_b64encode(
+            hashlib.sha256(code_verifier.encode()).digest(),
+        ).decode().rstrip('=')
+        return code_verifier, code_challenge
+
+    @staticmethod
+    def _get_fernet_key() -> bytes:
+        if not hasattr(EncryptionMixin, "_fernet_key"):
+            raw_key = hashlib.sha256(
+                force_bytes(settings.SECRET_KEY + "sso_state_encryption"),
+            ).digest()
+            EncryptionMixin._fernet_key = base64.urlsafe_b64encode(raw_key)
+        return EncryptionMixin._fernet_key
+
+    @classmethod
+    def _fernet(cls) -> Fernet:
+        if not hasattr(cls, "_fernet_instance"):
+            cls._fernet_instance = Fernet(cls._get_fernet_key())
+        return cls._fernet_instance
+
+    @classmethod
+    def encrypt(cls, value: str) -> str:
+        token = cls._fernet().encrypt(value.encode('utf-8'))
+        return token.decode('utf-8')
+
+    @classmethod
+    def decrypt(cls, token: str, ttl: int = 600) -> str:
+        try:
+            data = cls._fernet().decrypt(token.encode('utf-8'), ttl=ttl)
+            return data.decode('utf-8')
+        except InvalidToken as exc:
+            raise ValueError("Invalid or expired encrypted value") from exc

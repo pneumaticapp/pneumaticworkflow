@@ -74,3 +74,7 @@ msgstr "Введен неправильный текущий пароль."
 #: authentication/messages.py:31
 msgid "The new password and its confirmation don't match."
 msgstr "Новый пароль и его подтверждение не совпадают."
+
+#: authentication/messages.py:32
+msgid "Failed to fetch organization members."
+msgstr "Не удалось получить участников организации."

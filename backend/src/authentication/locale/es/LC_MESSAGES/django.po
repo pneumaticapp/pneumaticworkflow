@@ -74,3 +74,7 @@ msgstr "La contraseña actual es incorrecta."
 #: authentication/messages.py:31
 msgid "The new password and its confirmation don't match."
 msgstr "La nueva contraseña y su confirmación no coinciden."
+
+#: authentication/messages.py:32
+msgid "Failed to fetch organization members."
+msgstr "Error al obtener los miembros de la organización."
