@@ -9,9 +9,10 @@ import { setWorkflowsFilterSteps } from '../../redux/actions';
 import { FilterSelect } from '../../components/UI';
 import { StepName } from '../../components/StepName';
 import { TaskFilterIcon } from '../../components/icons';
-import { ITemplateFilterItem, TTemplateStepFilter } from '../../types/workflow';
-// import { isArrayWithItems } from '../../utils/helpers';
-// import { canFilterByTemplateStep } from '../../utils/workflows/filters';
+import { EWorkflowsStatus, ITemplateFilterItem, TTemplateStepFilter } from '../../types/workflow';
+import { ERenderPlaceholderType, getRenderPlaceholder } from './utils';
+import { isArrayWithItems } from '../../utils/helpers';
+import { canFilterByTemplateStep } from '../../utils/workflows/filters';
 
 interface TStepOptionFilter extends Omit<TTemplateStepFilter, 'name' | 'number'> {
   name: ReactNode;
@@ -33,12 +34,15 @@ export function TaskFilterSelect({ selectedTemplates }: { selectedTemplates: ITe
 
   const {
     stepsIdsFilter,
-  }: // statusFilter
-  {
+    templatesIdsFilter,
+    statusFilter,
+  }: {
     stepsIdsFilter: number[];
-    // statusFilter
+    statusFilter: EWorkflowsStatus;
     templatesIdsFilter: number[];
   } = useSelector((state: IApplicationState) => state.workflows.workflowsSettings.values);
+
+  const mustDisableFilter = !isArrayWithItems(templatesIdsFilter) || !canFilterByTemplateStep(statusFilter);
 
   const groupedSteps: IGroupedStepsMap | null = useMemo(() => {
     if (selectedTemplates.length === 0) {
@@ -61,13 +65,13 @@ export function TaskFilterSelect({ selectedTemplates }: { selectedTemplates: ITe
     );
   }, [selectedTemplates]);
 
-  const STEP_HEADER_NAME = formatMessage({ id: 'workflows.filter-column-step' });
-  //   if (!isArrayWithItems(templatesIdsFilter) || !canFilterByTemplateStep(statusFilter)) {
-  //     return STEP_HEADER_NAME;
-  //   }
+  const flatOptions = useMemo(() => {
+    return groupedSteps ? Array.from(groupedSteps.values()).flatMap((group) => group.options) : [];
+  }, [groupedSteps]);
 
   return (
     <FilterSelect
+      isDisabled={mustDisableFilter}
       isMultiple
       isSearchShown
       placeholderText={formatMessage({ id: 'workflows.filter-no-step' })}
@@ -77,14 +81,24 @@ export function TaskFilterSelect({ selectedTemplates }: { selectedTemplates: ITe
       optionLabelKey="name"
       options={[]}
       groupedOptions={groupedSteps}
-      onChange={(steps: number[]) => {
-        dispatch(setWorkflowsFilterSteps(steps));
+      onChange={(taskIds: number[]) => {
+        dispatch(setWorkflowsFilterSteps(taskIds));
       }}
       resetFilter={() => {
         dispatch(setWorkflowsFilterSteps([]));
       }}
       Icon={TaskFilterIcon}
-      renderPlaceholder={() => <span className={styles['header-filter']}>{STEP_HEADER_NAME}</span>}
+      renderPlaceholder={() =>
+        getRenderPlaceholder({
+          isDisabled: mustDisableFilter,
+          filterIds: stepsIdsFilter,
+          options: flatOptions,
+          formatMessage,
+          type: ERenderPlaceholderType.Task,
+          severalOptionPlaceholder: 'sorting.several-tasks',
+          defaultPlaceholder: 'sorting.all-tasks',
+        })
+      }
       containerClassname={styles['filter-container']}
       arrowClassName={styles['header-filter__arrow']}
     />
