@@ -14,10 +14,6 @@ from src.accounts.serializers.notifications import (
 )
 from src.notifications.consumers import (
     EventsConsumer,
-    NewTaskConsumer,
-    NotificationsConsumer,
-    RemovedTaskConsumer,
-    WorkflowEventConsumer,
 )
 from src.notifications.enums import NotificationMethod
 from src.notifications.services.base import (
@@ -50,6 +46,11 @@ class WebSocketService(NotificationService):
         NotificationMethod.user_created,
         NotificationMethod.user_updated,
         NotificationMethod.user_deleted,
+        NotificationMethod.task_created,
+        NotificationMethod.task_deleted,
+        NotificationMethod.event_created,
+        NotificationMethod.event_updated,
+        NotificationMethod.notification_created,
     }
 
     def _get_serialized_notification(
@@ -104,6 +105,7 @@ class WebSocketService(NotificationService):
         self,
         method_name: NotificationMethod,
         group_name: str,
+        message_type: str,
         data: Dict[str, str],
         sync: bool = False,
     ):
@@ -111,13 +113,20 @@ class WebSocketService(NotificationService):
         #  Use "handle_error" method
         self._validate_send(method_name)
 
+        message = {
+            'id': str(uuid.uuid4()),
+            'date_created_tsp': timezone.now().timestamp(),
+            'type': message_type,
+            'data': data,
+        }
+
         if sync:
             try:
-                self._sync_send(group_name=group_name, data=data)
+                self._sync_send(group_name=group_name, data=message)
             except RuntimeError:
-                self._async_send(group_name=group_name, data=data)
+                self._async_send(group_name=group_name, data=message)
         else:
-            self._async_send(group_name=group_name, data=data)
+            self._async_send(group_name=group_name, data=message)
 
     def _handle_error(self, *args, **kwargs):
         pass
@@ -134,7 +143,8 @@ class WebSocketService(NotificationService):
         if user_type == UserType.USER:
             self._send(
                 method_name=NotificationMethod.overdue_task,
-                group_name=f'{NotificationsConsumer.classname}_{user_id}',
+                group_name=f'{EventsConsumer.classname}_{user_id}',
+                message_type=NotificationMethod.notification_created,
                 data=self._get_serialized_notification(notification),
                 sync=sync,
             )
@@ -148,7 +158,8 @@ class WebSocketService(NotificationService):
     ):
         self._send(
             method_name=NotificationMethod.complete_task,
-            group_name=f'{NotificationsConsumer.classname}_{user_id}',
+            group_name=f'{EventsConsumer.classname}_{user_id}',
+            message_type=NotificationMethod.complete_task,
             data=self._get_serialized_notification(notification),
             sync=sync,
         )
@@ -163,7 +174,8 @@ class WebSocketService(NotificationService):
 
         self._send(
             method_name=NotificationMethod.resume_workflow,
-            group_name=f'{NotificationsConsumer.classname}_{user_id}',
+            group_name=f'{EventsConsumer.classname}_{user_id}',
+            message_type=NotificationMethod.notification_created,
             data=self._get_serialized_notification(notification),
             sync=sync,
         )
@@ -178,7 +190,8 @@ class WebSocketService(NotificationService):
 
         self._send(
             method_name=NotificationMethod.delay_workflow,
-            group_name=f'{NotificationsConsumer.classname}_{user_id}',
+            group_name=f'{EventsConsumer.classname}_{user_id}',
+            message_type=NotificationMethod.notification_created,
             data=self._get_serialized_notification(notification),
             sync=sync,
         )
@@ -195,7 +208,8 @@ class WebSocketService(NotificationService):
         if user_type == UserType.USER:
             self._send(
                 method_name=NotificationMethod.due_date_changed,
-                group_name=f'{NotificationsConsumer.classname}_{user_id}',
+                group_name=f'{EventsConsumer.classname}_{user_id}',
+                message_type=NotificationMethod.notification_created,
                 data=self._get_serialized_notification(notification),
                 sync=sync,
             )
@@ -209,7 +223,8 @@ class WebSocketService(NotificationService):
     ):
         self._send(
             method_name=NotificationMethod.system,
-            group_name=f'{NotificationsConsumer.classname}_{user_id}',
+            group_name=f'{EventsConsumer.classname}_{user_id}',
+            message_type=NotificationMethod.notification_created,
             data=self._get_serialized_notification(notification),
             sync=sync,
         )
@@ -223,7 +238,8 @@ class WebSocketService(NotificationService):
     ):
         self._send(
             method_name=NotificationMethod.urgent,
-            group_name=f'{NotificationsConsumer.classname}_{user_id}',
+            group_name=f'{EventsConsumer.classname}_{user_id}',
+            message_type=NotificationMethod.notification_created,
             data=self._get_serialized_notification(notification),
             sync=sync,
         )
@@ -237,7 +253,8 @@ class WebSocketService(NotificationService):
     ):
         self._send(
             method_name=NotificationMethod.not_urgent,
-            group_name=f'{NotificationsConsumer.classname}_{user_id}',
+            group_name=f'{EventsConsumer.classname}_{user_id}',
+            message_type=NotificationMethod.notification_created,
             data=self._get_serialized_notification(notification),
             sync=sync,
         )
@@ -251,7 +268,8 @@ class WebSocketService(NotificationService):
     ):
         self._send(
             method_name=NotificationMethod.mention,
-            group_name=f'{NotificationsConsumer.classname}_{user_id}',
+            group_name=f'{EventsConsumer.classname}_{user_id}',
+            message_type=NotificationMethod.notification_created,
             data=self._get_serialized_notification(notification),
             sync=sync,
         )
@@ -265,7 +283,8 @@ class WebSocketService(NotificationService):
     ):
         self._send(
             method_name=NotificationMethod.comment,
-            group_name=f'{NotificationsConsumer.classname}_{user_id}',
+            group_name=f'{EventsConsumer.classname}_{user_id}',
+            message_type=NotificationMethod.notification_created,
             data=self._get_serialized_notification(notification),
             sync=sync,
         )
@@ -275,11 +294,17 @@ class WebSocketService(NotificationService):
         user_id: int,
         data: dict,
         sync: bool,
+        is_updated: bool = False,
         **kwargs,
     ):
+        if is_updated:
+            message_type = NotificationMethod.event_updated
+        else:
+            message_type = NotificationMethod.event_created
         self._send(
             method_name=NotificationMethod.workflow_event,
-            group_name=f'{WorkflowEventConsumer.classname}_{user_id}',
+            group_name=f'{EventsConsumer.classname}_{user_id}',
+            message_type=message_type,
             data=data,
             sync=sync,
         )
@@ -293,7 +318,8 @@ class WebSocketService(NotificationService):
     ):
         self._send(
             method_name=NotificationMethod.reaction,
-            group_name=f'{NotificationsConsumer.classname}_{user_id}',
+            group_name=f'{EventsConsumer.classname}_{user_id}',
+            message_type=NotificationMethod.notification_created,
             data=self._get_serialized_notification(notification),
             sync=sync,
         )
@@ -306,8 +332,9 @@ class WebSocketService(NotificationService):
         **kwargs,
     ):
         self._send(
-            method_name=NotificationMethod.new_task_websocket,
-            group_name=f'{NewTaskConsumer.classname}_{user_id}',
+            method_name=NotificationMethod.task_created,
+            group_name=f'{EventsConsumer.classname}_{user_id}',
+            message_type=NotificationMethod.task_created,
             data=task_data,
             sync=sync,
         )
@@ -317,11 +344,17 @@ class WebSocketService(NotificationService):
         user_id: int,
         task_data: dict,
         sync: bool,
+        is_completed: bool = False,
         **kwargs,
     ):
+        if is_completed:
+            message_type = NotificationMethod.task_completed
+        else:
+            message_type = NotificationMethod.task_deleted
         self._send(
             method_name=NotificationMethod.removed_task,
-            group_name=f'{RemovedTaskConsumer.classname}_{user_id}',
+            group_name=f'{EventsConsumer.classname}_{user_id}',
+            message_type=message_type,
             data=task_data,
             sync=sync,
         )
@@ -336,12 +369,8 @@ class WebSocketService(NotificationService):
         self._send(
             method_name=NotificationMethod.group_created,
             group_name=f'{EventsConsumer.classname}_{user_id}',
-            data={
-                'id': str(uuid.uuid4()),
-                'date_created_tsp': timezone.now().timestamp(),
-                'type': NotificationMethod.group_created,
-                'data': group_data,
-            },
+            message_type=NotificationMethod.group_created,
+            data=group_data,
             sync=sync,
         )
 
@@ -355,12 +384,8 @@ class WebSocketService(NotificationService):
         self._send(
             method_name=NotificationMethod.group_updated,
             group_name=f'{EventsConsumer.classname}_{user_id}',
-            data={
-                'id': str(uuid.uuid4()),
-                'date_created_tsp': timezone.now().timestamp(),
-                'type': NotificationMethod.group_updated,
-                'data': group_data,
-            },
+            message_type=NotificationMethod.group_updated,
+            data=group_data,
             sync=sync,
         )
 
@@ -374,12 +399,8 @@ class WebSocketService(NotificationService):
         self._send(
             method_name=NotificationMethod.group_deleted,
             group_name=f'{EventsConsumer.classname}_{user_id}',
-            data={
-                'id': str(uuid.uuid4()),
-                'date_created_tsp': timezone.now().timestamp(),
-                'type': NotificationMethod.group_deleted,
-                'data': group_data,
-            },
+            message_type=NotificationMethod.group_deleted,
+            data=group_data,
             sync=sync,
         )
 
@@ -393,12 +414,8 @@ class WebSocketService(NotificationService):
         self._send(
             method_name=NotificationMethod.user_created,
             group_name=f'{EventsConsumer.classname}_{user_id}',
-            data={
-                'id': str(uuid.uuid4()),
-                'date_created_tsp': timezone.now().timestamp(),
-                'type': NotificationMethod.user_created,
-                'data': user_data,
-            },
+            message_type=NotificationMethod.user_created,
+            data=user_data,
             sync=sync,
         )
 
@@ -412,12 +429,8 @@ class WebSocketService(NotificationService):
         self._send(
             method_name=NotificationMethod.user_updated,
             group_name=f'{EventsConsumer.classname}_{user_id}',
-            data={
-                'id': str(uuid.uuid4()),
-                'date_created_tsp': timezone.now().timestamp(),
-                'type': NotificationMethod.user_updated,
-                'data': user_data,
-            },
+            message_type=NotificationMethod.user_updated,
+            data=user_data,
             sync=sync,
         )
 
@@ -431,11 +444,7 @@ class WebSocketService(NotificationService):
         self._send(
             method_name=NotificationMethod.user_deleted,
             group_name=f'{EventsConsumer.classname}_{user_id}',
-            data={
-                'id': str(uuid.uuid4()),
-                'date_created_tsp': timezone.now().timestamp(),
-                'type': NotificationMethod.user_deleted,
-                'data': user_data,
-            },
+            message_type=NotificationMethod.user_deleted,
+            data=user_data,
             sync=sync,
         )

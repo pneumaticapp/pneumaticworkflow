@@ -115,6 +115,7 @@ class TaskPerformersService(BasePerformersService):
                     task_id=task.id,
                     recipients=[(user.id, user.email)],
                     account_id=task.account_id,
+                    is_completed=False,
                 )
 
     @classmethod

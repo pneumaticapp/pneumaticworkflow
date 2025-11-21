@@ -230,6 +230,7 @@ def _send_removed_task_notification(
     recipients: List[Tuple[int, str]],
     account_id: int,
     task_data: Optional[dict] = None,
+    is_completed: bool = False,
     **kwargs,
 ):
 
@@ -244,6 +245,7 @@ def _send_removed_task_notification(
             user_email=user_email,
             account_id=account_id,
             task_data=task_data,
+            is_completed=is_completed,
             sync=True,
         )
 
@@ -763,6 +765,7 @@ def _send_workflow_event(
     account_id: int,
     logo_lg: Optional[str],
     data: dict,
+    is_updated: bool = False,
 ):
 
     """ Send ws when workflow event created/updated """
@@ -784,6 +787,7 @@ def _send_workflow_event(
             user_email=user_email,
             account_id=account_id,
             logo_lg=logo_lg,
+            is_updated=is_updated,
             sync=True,
         )
 
@@ -804,6 +808,7 @@ def _send_workflow_event(
                 user_email=guest_email,
                 account_id=account_id,
                 logo_lg=logo_lg,
+                is_updated=is_updated,
                 sync=True,
             )
 
@@ -837,6 +842,7 @@ def _send_workflow_comment_watched():
                 account_id=event.account_id,
                 logo_lg=event.account.logo_lg,
                 logging=event.account.log_api_requests,
+                is_updated=True,
             )
 
 

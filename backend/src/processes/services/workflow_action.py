@@ -140,6 +140,7 @@ class WorkflowActionService:
                     account_id=self.account.id,
                     task_id=task.id,
                     recipients=recipients,
+                    is_completed=False,
                 )
             WorkflowEventService.force_delay_workflow_event(
                 workflow=self.workflow,
@@ -206,6 +207,7 @@ class WorkflowActionService:
                 task_data=task.get_data_for_list(),
                 recipients=recipients,
                 account_id=task.account_id,
+                is_completed=False,
             )
         for task_id in self.workflow.tasks.only_ids():
             GuestJWTAuthService.deactivate_task_guest_cache(
@@ -267,6 +269,7 @@ class WorkflowActionService:
                 task_id=task.id,
                 recipients=recipients,
                 account_id=task.account_id,
+                is_completed=False,
             )
 
     def end_process(
@@ -689,6 +692,7 @@ class WorkflowActionService:
             task_id=task.id,
             recipients=recipients,
             account_id=task.account_id,
+            is_completed=True,
         )
         notification_recipients = (
             UserModel.objects
@@ -826,6 +830,7 @@ class WorkflowActionService:
                             task_id=task.id,
                             recipients=[(self.user.id, self.user.email)],
                             account_id=task.account_id,
+                            is_completed=True,
                         )
             elif self.user.is_account_owner:
                 # account owner force completion
@@ -944,6 +949,7 @@ class WorkflowActionService:
                         task_id=task.id,
                         recipients=recipients,
                         account_id=task.account_id,
+                        is_completed=False,
                     )
                 task.date_started = None
                 task.date_completed = None
