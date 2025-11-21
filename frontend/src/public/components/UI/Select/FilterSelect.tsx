@@ -25,6 +25,7 @@ type TOptionBase<IdKey extends string, LabelKey extends string> = {
   count?: number;
   subTitle?: string;
   searchByText?: string;
+  isTitle?: boolean;
 };
 
 interface IFilterSelectCommonProps<
@@ -34,9 +35,12 @@ interface IFilterSelectCommonProps<
 > {
   isLoading?: boolean;
   options: TOption[];
+  groupedOptions?: any;
   isSearchShown?: boolean;
+  isDisabled?: boolean;
   noValueLabel?: string;
   placeholderText: string;
+  searchPlaceholder?: string;
   toggleClassName?: string;
   arrowClassName?: string;
   menuClassName?: string;
@@ -81,18 +85,21 @@ export function FilterSelect<
     optionLabelKey,
     isLoading,
     isSearchShown,
+    isDisabled,
     noValueLabel,
     placeholderText,
+    searchPlaceholder,
     toggleClassName,
     arrowClassName,
     menuClassName,
     options,
+    groupedOptions,
     containerClassname,
     selectAllLabel,
     resetFilter,
     Icon,
   } = props;
-
+  console.log(222, { groupedOptions });
   const [searchText, setSearchText] = useState('');
   const [isSelectAll, setIsSelectAll] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -141,6 +148,7 @@ export function FilterSelect<
             onClear={handleClearSearchText}
             fieldSize="md"
             autoFocus
+            placeholder={searchPlaceholder}
           />
         </div>
         <hr className={styles['search__separator']} />
@@ -196,7 +204,7 @@ export function FilterSelect<
       );
     };
 
-    const rendeSelectAllOption = () => {
+    const renderSelectAllOption = () => {
       if (!props.isMultiple || !selectAllLabel) {
         return null;
       }
@@ -214,13 +222,30 @@ export function FilterSelect<
         }
       };
 
+      const areAllSelected =
+        props.isMultiple &&
+        Array.isArray(props.selectedOptions) &&
+        options.length > 0 &&
+        props.selectedOptions.length === options.length;
+
       return (
         <DropdownItem
           className={classnames('dropdown-item-sm', styles['value-item'], styles['value-item__select-all'])}
           onClick={handleSelectAll}
           toggle={false}
         >
-          <span>{selectAllLabel}</span>
+          <Checkbox
+            // Required improvements:
+            //1. Clarify the desynchronization issue with the default
+            //2. Identical backend request when working with a checkbox
+            checked={isSelectAll || areAllSelected}
+            title={<span>{selectAllLabel}</span>}
+            onClick={(e) => e.stopPropagation()}
+            onChange={() => {}}
+            containerClassName={styles['dropdown-item-check']}
+            labelClassName={styles['dropdown-item-check__label']}
+            titleClassName={styles['dropdown-item-check__title']}
+          />
         </DropdownItem>
       );
     };
@@ -228,7 +253,7 @@ export function FilterSelect<
     return (
       <>
         {props.selectedOption && renderResetOption()}
-        {rendeSelectAllOption()}
+        {renderSelectAllOption()}
         {foundValues.map((option) => {
           const label = (
             <div className={styles['dropdown-item-content']}>
@@ -268,6 +293,9 @@ export function FilterSelect<
   };
 
   const handleToggleDropdown = () => {
+    if (isDisabled) {
+      return;
+    }
     setIsDropdownOpen(!isDropdownOpen);
   };
 
@@ -288,13 +316,19 @@ export function FilterSelect<
   return (
     <OutsideClickHandler disabled={!isDropdownOpen} onOutsideClick={handleToggleDropdown}>
       <Dropdown
-        className={classnames('dropdown-menu-right dropdown', styles['container'], containerClassname)}
+        className={classnames(
+          'dropdown-menu-right dropdown',
+          styles['container'],
+          containerClassname,
+          isDisabled && styles['filter-select_disabled'],
+        )}
         toggle={handleToggleDropdown}
         isOpen={isDropdownOpen}
         onClick={(event) => event.stopPropagation()}
       >
         <DropdownToggle
           tag="button"
+          disabled={!!isDisabled}
           className={classnames(
             styles['active-value'],
             toggleClassName,
@@ -305,7 +339,11 @@ export function FilterSelect<
           <span className={styles['active-value__text']}>{props.renderPlaceholder(options)}</span>
           {props.isMultiple && isArrayWithItems(props.selectedOptions) ? (
             <span
+              aria-disabled={!!isDisabled}
               onClick={(e) => {
+                if (isDisabled) {
+                  return;
+                }
                 e.stopPropagation();
                 resetFilter();
               }}
@@ -315,6 +353,9 @@ export function FilterSelect<
               role="button"
               tabIndex={0}
               onKeyDown={(e) => {
+                if (isDisabled) {
+                  return;
+                }
                 if (e.key === 'Enter' || e.key === ' ') {
                   e.preventDefault();
                   e.stopPropagation();

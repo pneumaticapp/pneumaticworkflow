@@ -40,6 +40,7 @@ const inputContainerSizeClassMap: { [key in TInputFieldSize]: string } = {
 };
 
 export function InputField({
+  placeholder,
   type = 'text',
   icon,
   ref,
@@ -93,6 +94,7 @@ export function InputField({
         disabled={disabled}
         data-testid="input-field"
         onBlur={() => setTouched(true)}
+        placeholder={placeholder}
         {...props}
       />
     );
