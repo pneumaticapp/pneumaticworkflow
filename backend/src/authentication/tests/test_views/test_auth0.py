@@ -1,5 +1,5 @@
-import base64
 import pytest
+from uuid import uuid4
 
 from src.authentication.services.auth0 import (
     Auth0Service,
@@ -7,6 +7,7 @@ from src.authentication.services.auth0 import (
 from src.authentication.services.exceptions import (
     AuthException,
 )
+from src.generics.mixins.services import EncryptionMixin
 from src.processes.tests.fixtures import (
     create_test_owner,
 )
@@ -36,11 +37,9 @@ def test_token__existent_user__authenticate(
     user_ip = '128.18.0.99'
     token = '!@#E213'
     domain = 'dev-123456.okta.com'
-    state_uuid = 'YrtkHpALzeTDnliK'
-    domain_encoded = base64.urlsafe_b64encode(
-        domain.encode('utf-8'),
-    ).decode('utf-8').rstrip('=')
-    state = f"{state_uuid[:8]}{domain_encoded}"
+    state_uuid = str(uuid4())
+    encrypted_domain = EncryptionMixin.encrypt(domain)
+    state = f"{state_uuid}{encrypted_domain}"
     authenticate_user_mock = mocker.patch(
         'src.authentication.services.auth0.'
         'Auth0Service.authenticate_user',
@@ -134,11 +133,9 @@ def test_token__service_exception__validation_error(
         side_effect=AuthException(message),
     )
     domain = 'dev-123456.okta.com'
-    state_uuid = 'YrtkHpALzeTDnliK'
-    domain_encoded = base64.urlsafe_b64encode(
-        domain.encode('utf-8'),
-    ).decode('utf-8').rstrip('=')
-    state = f"{state_uuid[:8]}{domain_encoded}"
+    state_uuid = str(uuid4())
+    encrypted_domain = EncryptionMixin.encrypt(domain)
+    state = f"{state_uuid}{encrypted_domain}"
     auth_response = {
         'code': '0.Ab0Aa_jrV8Qkv...9UWtS972sufQ',
         'state': state,

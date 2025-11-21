@@ -16,7 +16,7 @@ from src.authentication.services.exceptions import (
     TokenInvalidOrExpired,
 )
 from src.authentication.services.google import GoogleAuthService
-from src.processes.tests.fixtures import create_test_account, create_test_user
+from src.processes.tests.fixtures import create_test_account, create_test_admin
 
 pytestmark = pytest.mark.django_db
 
@@ -28,7 +28,7 @@ class TestGoogleAuthService:
         """Test _find_primary returns primary item when available"""
         # arrange
         mock_settings_mixins = mocker.patch(
-            'src.authentication.mixins.settings',
+            'src.authentication.views.mixins.settings',
         )
         mock_settings_mixins.PROJECT_CONF = {'SSO_AUTH': False}
         service = GoogleAuthService()
@@ -48,7 +48,7 @@ class TestGoogleAuthService:
         """Test _find_primary returns first item when no primary"""
         # arrange
         mock_settings_mixins = mocker.patch(
-            'src.authentication.mixins.settings',
+            'src.authentication.views.mixins.settings',
         )
         mock_settings_mixins.PROJECT_CONF = {'SSO_AUTH': False}
         service = GoogleAuthService()
@@ -67,7 +67,7 @@ class TestGoogleAuthService:
         """Test _find_primary returns None for empty list"""
         # arrange
         mock_settings_mixins = mocker.patch(
-            'src.authentication.mixins.settings',
+            'src.authentication.views.mixins.settings',
         )
         mock_settings_mixins.PROJECT_CONF = {'SSO_AUTH': False}
         service = GoogleAuthService()
@@ -83,7 +83,7 @@ class TestGoogleAuthService:
         """Test _find_primary returns whole item when no value_key"""
         # arrange
         mock_settings_mixins = mocker.patch(
-            'src.authentication.mixins.settings',
+            'src.authentication.views.mixins.settings',
         )
         mock_settings_mixins.PROJECT_CONF = {'SSO_AUTH': False}
         service = GoogleAuthService()
@@ -103,7 +103,7 @@ class TestGoogleAuthService:
         """Test URL generation for authorization"""
         # arrange
         mock_settings_mixins = mocker.patch(
-            'src.authentication.mixins.settings',
+            'src.authentication.views.mixins.settings',
         )
         mock_settings_mixins.PROJECT_CONF = {'SSO_AUTH': False}
         mock_settings = mocker.patch(
@@ -138,7 +138,7 @@ class TestGoogleAuthService:
         """Test _parse_profile_data with complete profile data"""
         # arrange
         mock_settings_mixins = mocker.patch(
-            'src.authentication.mixins.settings',
+            'src.authentication.views.mixins.settings',
         )
         mock_settings_mixins.PROJECT_CONF = {'SSO_AUTH': False}
         service = GoogleAuthService()
@@ -179,7 +179,7 @@ class TestGoogleAuthService:
         """Test _parse_profile_data with empty profile"""
         # arrange
         mock_settings_mixins = mocker.patch(
-            'src.authentication.mixins.settings',
+            'src.authentication.views.mixins.settings',
         )
         mock_settings_mixins.PROJECT_CONF = {'SSO_AUTH': False}
         service = GoogleAuthService()
@@ -198,7 +198,7 @@ class TestGoogleAuthService:
         """Test _parse_profile_data uses first items when no primary"""
         # arrange
         mock_settings_mixins = mocker.patch(
-            'src.authentication.mixins.settings',
+            'src.authentication.views.mixins.settings',
         )
         mock_settings_mixins.PROJECT_CONF = {'SSO_AUTH': False}
         service = GoogleAuthService()
@@ -235,7 +235,7 @@ class TestGoogleAuthService:
         """Test getting user data with valid response"""
         # arrange
         mock_settings_mixins = mocker.patch(
-            'src.authentication.mixins.settings',
+            'src.authentication.views.mixins.settings',
         )
         mock_settings_mixins.PROJECT_CONF = {'SSO_AUTH': False}
         mock_settings = mocker.patch(
@@ -314,7 +314,7 @@ class TestGoogleAuthService:
         """Test handling missing email in profile"""
         # arrange
         mock_settings_mixins = mocker.patch(
-            'src.authentication.mixins.settings',
+            'src.authentication.views.mixins.settings',
         )
         mock_settings_mixins.PROJECT_CONF = {'SSO_AUTH': False}
         mock_settings = mocker.patch(
@@ -369,7 +369,7 @@ class TestGoogleAuthService:
         """Test handling invalid state"""
         # arrange
         mock_settings_mixins = mocker.patch(
-            'src.authentication.mixins.settings',
+            'src.authentication.views.mixins.settings',
         )
         mock_settings_mixins.PROJECT_CONF = {'SSO_AUTH': False}
         service = GoogleAuthService()
@@ -391,7 +391,7 @@ class TestGoogleAuthService:
         """Test handling Google error when exchanging code for token"""
         # arrange
         mock_settings_mixins = mocker.patch(
-            'src.authentication.mixins.settings',
+            'src.authentication.views.mixins.settings',
         )
         mock_settings_mixins.PROJECT_CONF = {'SSO_AUTH': False}
         mock_settings = mocker.patch(
@@ -428,7 +428,7 @@ class TestGoogleAuthService:
         """Test saving tokens for user"""
         # arrange
         mock_settings_mixins = mocker.patch(
-            'src.authentication.mixins.settings',
+            'src.authentication.views.mixins.settings',
         )
         mock_settings_mixins.PROJECT_CONF = {'SSO_AUTH': False}
         service = GoogleAuthService()
@@ -438,7 +438,7 @@ class TestGoogleAuthService:
             'expires_in': 3600,
         }
 
-        user = create_test_user()
+        user = create_test_admin()
 
         # Mock AccessToken.objects.update_or_create
         update_or_create_mock = mocker.patch(
@@ -462,11 +462,11 @@ class TestGoogleAuthService:
         """Test contacts synchronization"""
         # arrange
         mock_settings_mixins = mocker.patch(
-            'src.authentication.mixins.settings',
+            'src.authentication.views.mixins.settings',
         )
         mock_settings_mixins.PROJECT_CONF = {'SSO_AUTH': False}
         service = GoogleAuthService()
-        user = create_test_user()
+        user = create_test_admin()
 
         # Mock getting token
         mocker.patch.object(
@@ -526,7 +526,7 @@ class TestGoogleAuthService:
         """Test setting default first name when givenName is missing"""
         # arrange
         mock_settings_mixins = mocker.patch(
-            'src.authentication.mixins.settings',
+            'src.authentication.views.mixins.settings',
         )
         mock_settings_mixins.PROJECT_CONF = {'SSO_AUTH': False}
         mock_settings = mocker.patch(
@@ -586,7 +586,7 @@ class TestGoogleAuthService:
         """Test converting uppercase email to lowercase"""
         # arrange
         mock_settings_mixins = mocker.patch(
-            'src.authentication.mixins.settings',
+            'src.authentication.views.mixins.settings',
         )
         mock_settings_mixins.PROJECT_CONF = {'SSO_AUTH': False}
         mock_settings = mocker.patch(
@@ -644,7 +644,7 @@ class TestGoogleAuthService:
         """Test getting user data with job title from organizations"""
         # arrange
         mock_settings_mixins = mocker.patch(
-            'src.authentication.mixins.settings',
+            'src.authentication.views.mixins.settings',
         )
         mock_settings_mixins.PROJECT_CONF = {'SSO_AUTH': False}
         mock_settings = mocker.patch(
@@ -726,7 +726,7 @@ class TestGoogleAuthService:
             return_value=response_mock,
         )
         mock_settings_mixins = mocker.patch(
-            'src.authentication.mixins.settings',
+            'src.authentication.views.mixins.settings',
         )
         mock_settings_mixins.PROJECT_CONF = {'SSO_AUTH': False}
         service = GoogleAuthService()
@@ -747,7 +747,7 @@ class TestGoogleAuthService:
     ):
         """Test token refresh when new refresh_token is not returned"""
         # arrange
-        user = create_test_user()
+        user = create_test_admin()
         old_refresh_token = 'old_refresh_token'
         token = AccessToken.objects.create(
             user=user,
@@ -758,7 +758,7 @@ class TestGoogleAuthService:
         )
 
         mock_settings_mixins = mocker.patch(
-            'src.authentication.mixins.settings',
+            'src.authentication.views.mixins.settings',
         )
         mock_settings_mixins.PROJECT_CONF = {'SSO_AUTH': False}
         mock_settings = mocker.patch(
@@ -781,7 +781,7 @@ class TestGoogleAuthService:
             return_value=refresh_response_mock,
         )
         mock_settings_mixins = mocker.patch(
-            'src.authentication.mixins.settings',
+            'src.authentication.views.mixins.settings',
         )
         mock_settings_mixins.PROJECT_CONF = {'SSO_AUTH': False}
 
@@ -802,7 +802,7 @@ class TestGoogleAuthService:
     ):
         """Test token refresh failure"""
         # arrange
-        user = create_test_user()
+        user = create_test_admin()
         token = AccessToken.objects.create(
             user=user,
             source=SourceType.GOOGLE,
@@ -812,7 +812,7 @@ class TestGoogleAuthService:
         )
 
         mock_settings_mixins = mocker.patch(
-            'src.authentication.mixins.settings',
+            'src.authentication.views.mixins.settings',
         )
         mock_settings_mixins.PROJECT_CONF = {'SSO_AUTH': False}
         mock_settings = mocker.patch(
@@ -836,7 +836,7 @@ class TestGoogleAuthService:
             'capture_sentry_message',
         )
         mock_settings_mixins = mocker.patch(
-            'src.authentication.mixins.settings',
+            'src.authentication.views.mixins.settings',
         )
         mock_settings_mixins.PROJECT_CONF = {'SSO_AUTH': False}
 
@@ -860,7 +860,7 @@ class TestGoogleAuthService:
             json=mocker.Mock(return_value={'some_other_key': 'value'}),
         )
         mock_settings_mixins = mocker.patch(
-            'src.authentication.mixins.settings',
+            'src.authentication.views.mixins.settings',
         )
         mock_settings_mixins.PROJECT_CONF = {'SSO_AUTH': False}
         service = GoogleAuthService()
@@ -883,7 +883,7 @@ class TestGoogleAuthService:
         access_token = 'test_token'
         response_mock = mocker.Mock(ok=False)
         mock_settings_mixins = mocker.patch(
-            'src.authentication.mixins.settings',
+            'src.authentication.views.mixins.settings',
         )
         mock_settings_mixins.PROJECT_CONF = {'SSO_AUTH': False}
         service = GoogleAuthService()
@@ -918,7 +918,7 @@ class TestGoogleAuthService:
             'capture_sentry_message',
         )
         mock_settings_mixins = mocker.patch(
-            'src.authentication.mixins.settings',
+            'src.authentication.views.mixins.settings',
         )
         mock_settings_mixins.PROJECT_CONF = {'SSO_AUTH': False}
         service = GoogleAuthService()
@@ -958,7 +958,7 @@ class TestGoogleAuthService:
             'capture_sentry_message',
         )
         mock_settings_mixins = mocker.patch(
-            'src.authentication.mixins.settings',
+            'src.authentication.views.mixins.settings',
         )
         mock_settings_mixins.PROJECT_CONF = {'SSO_AUTH': False}
         service = GoogleAuthService()
@@ -1001,7 +1001,7 @@ class TestGoogleAuthService:
             'capture_sentry_message',
         )
         mock_settings_mixins = mocker.patch(
-            'src.authentication.mixins.settings',
+            'src.authentication.views.mixins.settings',
         )
         mock_settings_mixins.PROJECT_CONF = {'SSO_AUTH': False}
         service = GoogleAuthService()
@@ -1028,7 +1028,7 @@ class TestGoogleAuthService:
         response_mock = mocker.Mock()
         response_mock.json = mocker.Mock(return_value=json_mock)
         mock_settings_mixins = mocker.patch(
-            'src.authentication.mixins.settings',
+            'src.authentication.views.mixins.settings',
         )
         mock_settings_mixins.PROJECT_CONF = {'SSO_AUTH': False}
         service = GoogleAuthService()
@@ -1062,7 +1062,7 @@ class TestGoogleAuthService:
             json=mocker.Mock(return_value=json_data),
         )
         mock_settings_mixins = mocker.patch(
-            'src.authentication.mixins.settings',
+            'src.authentication.views.mixins.settings',
         )
         mock_settings_mixins.PROJECT_CONF = {'SSO_AUTH': False}
         service = GoogleAuthService()
@@ -1100,7 +1100,7 @@ class TestGoogleAuthService:
             )),
         )
         mock_settings_mixins = mocker.patch(
-            'src.authentication.mixins.settings',
+            'src.authentication.views.mixins.settings',
         )
         mock_settings_mixins.PROJECT_CONF = {'SSO_AUTH': False}
         service = GoogleAuthService()
@@ -1120,7 +1120,7 @@ class TestGoogleAuthService:
     def test_get_access_token__not_expired__ok(self, mocker):
         """Test getting non-expired access token"""
         # arrange
-        user = create_test_user()
+        user = create_test_admin()
         token = AccessToken.objects.create(
             user=user,
             source=SourceType.GOOGLE,
@@ -1129,7 +1129,7 @@ class TestGoogleAuthService:
             expires_in=3600,
         )
         mock_settings_mixins = mocker.patch(
-            'src.authentication.mixins.settings',
+            'src.authentication.views.mixins.settings',
         )
         mock_settings_mixins.PROJECT_CONF = {'SSO_AUTH': False}
         service = GoogleAuthService()
@@ -1143,7 +1143,7 @@ class TestGoogleAuthService:
     def test_get_access_token__expired__update(self, mocker):
         """Test refreshing expired access token"""
         # arrange
-        user = create_test_user()
+        user = create_test_admin()
         old_refresh_token = 'old_refresh_token'
         expires_in = 3600
         token = AccessToken.objects.create(
@@ -1156,7 +1156,7 @@ class TestGoogleAuthService:
         old_date_updated = token.date_updated
 
         mock_settings_mixins = mocker.patch(
-            'src.authentication.mixins.settings',
+            'src.authentication.views.mixins.settings',
         )
         mock_settings_mixins.PROJECT_CONF = {'SSO_AUTH': False}
         mock_settings = mocker.patch(
@@ -1185,7 +1185,7 @@ class TestGoogleAuthService:
         )
         token.refresh_from_db()
         mock_settings_mixins = mocker.patch(
-            'src.authentication.mixins.settings',
+            'src.authentication.views.mixins.settings',
         )
         mock_settings_mixins.PROJECT_CONF = {'SSO_AUTH': False}
 
@@ -1220,7 +1220,7 @@ class TestGoogleAuthService:
     def test_get_access_token__not_found__raise_exception(self, mocker):
         """Test access token not found exception"""
         # arrange
-        user = create_test_user()
+        user = create_test_admin()
         AccessToken.objects.create(
             user=user,
             source=SourceType.MICROSOFT,
@@ -1233,7 +1233,7 @@ class TestGoogleAuthService:
             'capture_sentry_message',
         )
         mock_settings_mixins = mocker.patch(
-            'src.authentication.mixins.settings',
+            'src.authentication.views.mixins.settings',
         )
         mock_settings_mixins.PROJECT_CONF = {'SSO_AUTH': False}
         service = GoogleAuthService()
@@ -1249,7 +1249,7 @@ class TestGoogleAuthService:
     def test_save_tokens_for_user__create__ok(self, mocker):
         """Test creating new tokens for user"""
         # arrange
-        user = create_test_user()
+        user = create_test_admin()
         refresh_token = 'some_refresh'
         access_token = 'some_access'
         expires_in = 3600
@@ -1259,7 +1259,7 @@ class TestGoogleAuthService:
             'expires_in': expires_in,
         }
         mock_settings_mixins = mocker.patch(
-            'src.authentication.mixins.settings',
+            'src.authentication.views.mixins.settings',
         )
         mock_settings_mixins.PROJECT_CONF = {'SSO_AUTH': False}
         service = GoogleAuthService()
@@ -1281,10 +1281,10 @@ class TestGoogleAuthService:
         """Test updating existing tokens for user"""
         # arrange
         mock_settings_mixins = mocker.patch(
-            'src.authentication.mixins.settings',
+            'src.authentication.views.mixins.settings',
         )
         mock_settings_mixins.PROJECT_CONF = {'SSO_AUTH': False}
-        user = create_test_user()
+        user = create_test_admin()
         token = AccessToken.objects.create(
             source=SourceType.GOOGLE,
             user=user,
@@ -1299,7 +1299,7 @@ class TestGoogleAuthService:
             'expires_in': 7200,
         }
         mock_settings_mixins = mocker.patch(
-            'src.authentication.mixins.settings',
+            'src.authentication.views.mixins.settings',
         )
         mock_settings_mixins.PROJECT_CONF = {'SSO_AUTH': False}
         service = GoogleAuthService()
@@ -1318,9 +1318,9 @@ class TestGoogleAuthService:
         """Test updating contacts with default first name"""
         # arrange
         account = create_test_account(log_api_requests=True)
-        user = create_test_user(account=account)
+        user = create_test_admin(account=account)
         mock_settings_mixins = mocker.patch(
-            'src.authentication.mixins.settings',
+            'src.authentication.views.mixins.settings',
         )
         mock_settings_mixins.PROJECT_CONF = {'SSO_AUTH': False}
         service = GoogleAuthService()
@@ -1394,7 +1394,7 @@ class TestGoogleAuthService:
         """Test updating existing contact"""
         # arrange
         account = create_test_account(log_api_requests=True)
-        user = create_test_user(account=account)
+        user = create_test_admin(account=account)
         email = 'test_1@test.test'
         contact = Contact.objects.create(
             account=user.account,
@@ -1408,7 +1408,7 @@ class TestGoogleAuthService:
             source_id='people/old_id',
         )
         mock_settings_mixins = mocker.patch(
-            'src.authentication.mixins.settings',
+            'src.authentication.views.mixins.settings',
         )
         mock_settings_mixins.PROJECT_CONF = {'SSO_AUTH': False}
 
@@ -1464,9 +1464,9 @@ class TestGoogleAuthService:
     def test_update_user_contacts__email_not_found__skip(self, mocker):
         """Test skipping contacts without email"""
         # arrange
-        user = create_test_user()
+        user = create_test_admin()
         mock_settings_mixins = mocker.patch(
-            'src.authentication.mixins.settings',
+            'src.authentication.views.mixins.settings',
         )
         mock_settings_mixins.PROJECT_CONF = {'SSO_AUTH': False}
         service = GoogleAuthService()
@@ -1525,9 +1525,9 @@ class TestGoogleAuthService:
     def test_update_user_contacts__exclude_current_user__ok(self, mocker):
         """Test excluding current user from contacts"""
         # arrange
-        user = create_test_user()
+        user = create_test_admin()
         mock_settings_mixins = mocker.patch(
-            'src.authentication.mixins.settings',
+            'src.authentication.views.mixins.settings',
         )
         mock_settings_mixins.PROJECT_CONF = {'SSO_AUTH': False}
         service = GoogleAuthService()
@@ -1578,9 +1578,9 @@ class TestGoogleAuthService:
         """Test handling service exception during contacts update"""
         # arrange
         account = create_test_account(log_api_requests=True)
-        user = create_test_user(account=account)
+        user = create_test_admin(account=account)
         mock_settings_mixins = mocker.patch(
-            'src.authentication.mixins.settings',
+            'src.authentication.views.mixins.settings',
         )
         mock_settings_mixins.PROJECT_CONF = {'SSO_AUTH': False}
         service = GoogleAuthService()
@@ -1641,9 +1641,9 @@ class TestGoogleAuthService:
         """
         # arrange
         account = create_test_account(log_api_requests=True)
-        user = create_test_user(account=account)
+        user = create_test_admin(account=account)
         mock_settings_mixins = mocker.patch(
-            'src.authentication.mixins.settings',
+            'src.authentication.views.mixins.settings',
         )
         mock_settings_mixins.PROJECT_CONF = {'SSO_AUTH': False}
         service = GoogleAuthService()

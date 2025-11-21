@@ -246,4 +246,8 @@ class OktaService(BaseSSOService):
         access_token = self._get_first_access_token(code, state)
         user_profile = self._get_user_profile(access_token)
         user_data = self.get_user_data(user_profile)
-        return self._complete_authentication(user_data, **kwargs)
+        return self._complete_authentication(
+            user_data,
+            user_agent=user_agent,
+            user_ip=user_ip,
+        )

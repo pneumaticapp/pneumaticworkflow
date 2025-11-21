@@ -480,7 +480,7 @@ class TestMicrosoftAuthService:
             'MicrosoftAuthService._set_cache',
         )
         mock_settings_mixins = mocker.patch(
-            'src.authentication.mixins.settings',
+            'src.authentication.views.mixins.settings',
         )
         mock_settings_mixins.PROJECT_CONF = {'SSO_AUTH': False}
         service = MicrosoftAuthService()
@@ -547,7 +547,7 @@ class TestMicrosoftAuthService:
         )
         auth_response = mocker.Mock()
         mock_settings_mixins = mocker.patch(
-            'src.authentication.mixins.settings',
+            'src.authentication.views.mixins.settings',
         )
         mock_settings_mixins.PROJECT_CONF = {'SSO_AUTH': False}
         service = MicrosoftAuthService()
@@ -617,7 +617,7 @@ class TestMicrosoftAuthService:
         )
         auth_response = mocker.Mock()
         mock_settings_mixins = mocker.patch(
-            'src.authentication.mixins.settings',
+            'src.authentication.views.mixins.settings',
         )
         mock_settings_mixins.PROJECT_CONF = {'SSO_AUTH': False}
         service = MicrosoftAuthService()
@@ -668,7 +668,7 @@ class TestMicrosoftAuthService:
         )
         auth_response = mocker.Mock()
         mock_settings_mixins = mocker.patch(
-            'src.authentication.mixins.settings',
+            'src.authentication.views.mixins.settings',
         )
         mock_settings_mixins.PROJECT_CONF = {'SSO_AUTH': False}
         service = MicrosoftAuthService()
@@ -712,7 +712,7 @@ class TestMicrosoftAuthService:
             return_value=flow_data,
         )
         mock_settings_mixins = mocker.patch(
-            'src.authentication.mixins.settings',
+            'src.authentication.views.mixins.settings',
         )
         mock_settings_mixins.PROJECT_CONF = {'SSO_AUTH': False}
         service = MicrosoftAuthService()
@@ -753,7 +753,7 @@ class TestMicrosoftAuthService:
             return_value=None,
         )
         mock_settings_mixins = mocker.patch(
-            'src.authentication.mixins.settings',
+            'src.authentication.views.mixins.settings',
         )
         mock_settings_mixins.PROJECT_CONF = {'SSO_AUTH': False}
         service = MicrosoftAuthService()
@@ -797,7 +797,7 @@ class TestMicrosoftAuthService:
             'capture_sentry_message',
         )
         mock_settings_mixins = mocker.patch(
-            'src.authentication.mixins.settings',
+            'src.authentication.views.mixins.settings',
         )
         mock_settings_mixins.PROJECT_CONF = {'SSO_AUTH': False}
         service = MicrosoftAuthService()
@@ -843,7 +843,7 @@ class TestMicrosoftAuthService:
             'capture_sentry_message',
         )
         mock_settings_mixins = mocker.patch(
-            'src.authentication.mixins.settings',
+            'src.authentication.views.mixins.settings',
         )
         mock_settings_mixins.PROJECT_CONF = {'SSO_AUTH': False}
         service = MicrosoftAuthService()
@@ -896,7 +896,7 @@ class TestMicrosoftAuthService:
             return_value=date,
         )
         mock_settings_mixins = mocker.patch(
-            'src.authentication.mixins.settings',
+            'src.authentication.views.mixins.settings',
         )
         mock_settings_mixins.PROJECT_CONF = {'SSO_AUTH': False}
         service = MicrosoftAuthService()
@@ -944,7 +944,7 @@ class TestMicrosoftAuthService:
             'capture_sentry_message',
         )
         mock_settings_mixins = mocker.patch(
-            'src.authentication.mixins.settings',
+            'src.authentication.views.mixins.settings',
         )
         mock_settings_mixins.PROJECT_CONF = {'SSO_AUTH': False}
         service = MicrosoftAuthService()
@@ -970,7 +970,7 @@ class TestMicrosoftAuthService:
         )
         email = 'some@email.test'
         mock_settings_mixins = mocker.patch(
-            'src.authentication.mixins.settings',
+            'src.authentication.views.mixins.settings',
         )
         mock_settings_mixins.PROJECT_CONF = {'SSO_AUTH': False}
         service = MicrosoftAuthService()
@@ -999,7 +999,7 @@ class TestMicrosoftAuthService:
             'some.boomer_outlook.com#EXT#@pneumaticapp.onmicrosoft.com'
         )
         mock_settings_mixins = mocker.patch(
-            'src.authentication.mixins.settings',
+            'src.authentication.views.mixins.settings',
         )
         mock_settings_mixins.PROJECT_CONF = {'SSO_AUTH': False}
         service = MicrosoftAuthService()
@@ -1027,7 +1027,7 @@ class TestMicrosoftAuthService:
             'some.boomer.outlook.com#EXT#@pneumaticapp.onmicrosoft.com'
         )
         mock_settings_mixins = mocker.patch(
-            'src.authentication.mixins.settings',
+            'src.authentication.views.mixins.settings',
         )
         mock_settings_mixins.PROJECT_CONF = {'SSO_AUTH': False}
         service = MicrosoftAuthService()
@@ -1063,7 +1063,7 @@ class TestMicrosoftAuthService:
             'capture_sentry_message',
         )
         mock_settings_mixins = mocker.patch(
-            'src.authentication.mixins.settings',
+            'src.authentication.views.mixins.settings',
         )
         mock_settings_mixins.PROJECT_CONF = {'SSO_AUTH': False}
         service = MicrosoftAuthService()
@@ -1104,7 +1104,7 @@ class TestMicrosoftAuthService:
             'capture_sentry_message',
         )
         mock_settings_mixins = mocker.patch(
-            'src.authentication.mixins.settings',
+            'src.authentication.views.mixins.settings',
         )
         mock_settings_mixins.PROJECT_CONF = {'SSO_AUTH': False}
         service = MicrosoftAuthService()
@@ -1149,7 +1149,7 @@ class TestMicrosoftAuthService:
             'capture_sentry_message',
         )
         mock_settings_mixins = mocker.patch(
-            'src.authentication.mixins.settings',
+            'src.authentication.views.mixins.settings',
         )
         mock_settings_mixins.PROJECT_CONF = {'SSO_AUTH': False}
         service = MicrosoftAuthService()
@@ -1189,7 +1189,7 @@ class TestMicrosoftAuthService:
             'capture_sentry_message',
         )
         mock_settings_mixins = mocker.patch(
-            'src.authentication.mixins.settings',
+            'src.authentication.views.mixins.settings',
         )
         mock_settings_mixins.PROJECT_CONF = {'SSO_AUTH': False}
         service = MicrosoftAuthService()
@@ -1224,7 +1224,7 @@ class TestMicrosoftAuthService:
             'expires_in': expires_in,
         }
         mock_settings_mixins = mocker.patch(
-            'src.authentication.mixins.settings',
+            'src.authentication.views.mixins.settings',
         )
         mock_settings_mixins.PROJECT_CONF = {'SSO_AUTH': False}
         service = MicrosoftAuthService()
@@ -1268,7 +1268,7 @@ class TestMicrosoftAuthService:
             'expires_in': 400,
         }
         mock_settings_mixins = mocker.patch(
-            'src.authentication.mixins.settings',
+            'src.authentication.views.mixins.settings',
         )
         mock_settings_mixins.PROJECT_CONF = {'SSO_AUTH': False}
         service = MicrosoftAuthService()
@@ -1351,7 +1351,7 @@ class TestMicrosoftAuthService:
             email='test@test.test',
         )
         mock_settings_mixins = mocker.patch(
-            'src.authentication.mixins.settings',
+            'src.authentication.views.mixins.settings',
         )
         mock_settings_mixins.PROJECT_CONF = {'SSO_AUTH': False}
         service = MicrosoftAuthService()
@@ -1467,7 +1467,7 @@ class TestMicrosoftAuthService:
             'AccountLogService.contacts_request',
         )
         mock_settings_mixins = mocker.patch(
-            'src.authentication.mixins.settings',
+            'src.authentication.views.mixins.settings',
         )
         mock_settings_mixins.PROJECT_CONF = {'SSO_AUTH': False}
         service = MicrosoftAuthService()
@@ -1564,7 +1564,7 @@ class TestMicrosoftAuthService:
             email='test@test.test',
         )
         mock_settings_mixins = mocker.patch(
-            'src.authentication.mixins.settings',
+            'src.authentication.views.mixins.settings',
         )
         mock_settings_mixins.PROJECT_CONF = {'SSO_AUTH': False}
         service = MicrosoftAuthService()
@@ -1630,7 +1630,7 @@ class TestMicrosoftAuthService:
             'AccountLogService.contacts_request',
         )
         mock_settings_mixins = mocker.patch(
-            'src.authentication.mixins.settings',
+            'src.authentication.views.mixins.settings',
         )
         mock_settings_mixins.PROJECT_CONF = {'SSO_AUTH': False}
         service = MicrosoftAuthService()
@@ -1701,7 +1701,7 @@ class TestMicrosoftAuthService:
             'AccountLogService.contacts_request',
         )
         mock_settings_mixins = mocker.patch(
-            'src.authentication.mixins.settings',
+            'src.authentication.views.mixins.settings',
         )
         mock_settings_mixins.PROJECT_CONF = {'SSO_AUTH': False}
         service = MicrosoftAuthService()

@@ -49,7 +49,7 @@ class TestTokenObtainView:
             'AnalyticService.users_logged_in',
         )
         mock_settings_mixins = mocker.patch(
-            'src.authentication.mixins.settings',
+            'src.authentication.views.mixins.settings',
         )
         mock_settings_mixins.PROJECT_CONF = {'SSO_AUTH': False}
 
@@ -86,7 +86,7 @@ class TestTokenObtainView:
             'AnalyticService.users_logged_in',
         )
         mock_settings_mixins = mocker.patch(
-            'src.authentication.mixins.settings',
+            'src.authentication.views.mixins.settings',
         )
         mock_settings_mixins.PROJECT_CONF = {'SSO_AUTH': False}
 
@@ -125,7 +125,7 @@ class TestTokenObtainView:
             'AnalyticService.users_logged_in',
         )
         mock_settings_mixins = mocker.patch(
-            'src.authentication.mixins.settings',
+            'src.authentication.views.mixins.settings',
         )
         mock_settings_mixins.PROJECT_CONF = {'SSO_AUTH': False}
 
