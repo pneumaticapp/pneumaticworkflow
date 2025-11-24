@@ -286,30 +286,20 @@ class EncryptionMixin:
         ).decode().rstrip('=')
         return code_verifier, code_challenge
 
-    @staticmethod
-    def _get_fernet_key() -> bytes:
-        if not hasattr(EncryptionMixin, "_fernet_key"):
-            raw_key = hashlib.sha256(
-                force_bytes(settings.SECRET_KEY + "sso_state_encryption"),
-            ).digest()
-            EncryptionMixin._fernet_key = base64.urlsafe_b64encode(raw_key)
-        return EncryptionMixin._fernet_key
-
     @classmethod
     def _fernet(cls) -> Fernet:
         if not hasattr(cls, "_fernet_instance"):
-            cls._fernet_instance = Fernet(cls._get_fernet_key())
+            raw_key = hashlib.sha256(force_bytes(settings.SECRET_KEY)).digest()
+            cls._fernet_instance = Fernet(base64.urlsafe_b64encode(raw_key))
         return cls._fernet_instance
 
     @classmethod
     def encrypt(cls, value: str) -> str:
-        token = cls._fernet().encrypt(value.encode('utf-8'))
-        return token.decode('utf-8')
+        return cls._fernet().encrypt(value.encode('utf-8')).decode('utf-8')
 
     @classmethod
-    def decrypt(cls, token: str, ttl: int = 600) -> str:
+    def decrypt(cls, token: str) -> str:
         try:
-            data = cls._fernet().decrypt(token.encode('utf-8'), ttl=ttl)
-            return data.decode('utf-8')
+            return cls._fernet().decrypt(token.encode('utf-8')).decode('utf-8')
         except InvalidToken as exc:
-            raise ValueError("Invalid or expired encrypted value") from exc
+            raise ValueError from exc
