@@ -44,7 +44,7 @@ class Auth0Service(BaseSSOService):
         super().__init__(domain)
         self.scope = 'openid email profile offline_access'
 
-    def _get_domain_config(self, domain: str) -> SSOConfigData:
+    def _get_config_by_domain(self, domain: str) -> SSOConfigData:
         """Gets configuration for a specific domain."""
         try:
             sso_config = SSOConfig.objects.get(

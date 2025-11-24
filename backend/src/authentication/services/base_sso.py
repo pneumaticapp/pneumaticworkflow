@@ -43,7 +43,7 @@ class BaseSSOService(SignUpMixin, CacheMixin, EncryptionMixin, ABC):
     - _complete_authentication: Handles user lookup/creation and token
 
     Abstract Methods (must be implemented in subclasses):
-    - _get_domain_config: Provider-specific domain configuration retrieval
+    - _get_config_by_domain: Provider-specific domain configuration retrieval
     - _get_default_config: Provider default configuration from settings
     - _get_first_access_token: OAuth token exchange implementation
     - _get_user_profile: User profile retrieval from provider API
@@ -100,11 +100,11 @@ class BaseSSOService(SignUpMixin, CacheMixin, EncryptionMixin, ABC):
             raise self.exception_class(MSG_AU_0015)
 
         if domain:
-            return self._get_domain_config(domain)
+            return self._get_config_by_domain(domain)
         return self._get_default_config()
 
     @abstractmethod
-    def _get_domain_config(self, domain: str) -> SSOConfigData:
+    def _get_config_by_domain(self, domain: str) -> SSOConfigData:
         """
         Gets SSO configuration for a specific domain from the database.
 
