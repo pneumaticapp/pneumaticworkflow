@@ -15,7 +15,7 @@ import OutsideClickHandler from 'react-outside-click-handler';
 const ScrollBar = PerfectScrollbar as unknown as Function;
 
 type TOptionId = number | string | null;
-type TOptionBase<IdKey extends string, LabelKey extends string> = {
+export type TOptionBase<IdKey extends string, LabelKey extends string> = {
   [key in IdKey]: TOptionId;
 } & {
   [key in LabelKey]: string | ReactNode;
@@ -35,7 +35,7 @@ interface IFilterSelectCommonProps<
 > {
   isLoading?: boolean;
   options: TOption[];
-  groupedOptions?: any;
+  groupedOptions?: Map<number, { title: string; options: TOption[] }>;
   isSearchShown?: boolean;
   isDisabled?: boolean;
   noValueLabel?: string;
@@ -99,7 +99,7 @@ export function FilterSelect<
     resetFilter,
     Icon,
   } = props;
-  console.log(222, { groupedOptions });
+
   const [searchText, setSearchText] = useState('');
   const [isSelectAll, setIsSelectAll] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -156,10 +156,8 @@ export function FilterSelect<
     );
   };
 
-  const getFilteredValues = () => {
-    const normalizedSearchText = searchText.toLowerCase();
-
-    if (!searchText) {
+  function getFilteredOptions(options: TOption[], normalizedSearchText: string): TOption[] {
+    if (!normalizedSearchText) {
       return options;
     }
 
@@ -175,6 +173,34 @@ export function FilterSelect<
 
       return (optionLabel as string).toLowerCase().includes(normalizedSearchText);
     });
+  }
+
+  const getFilteredValues = () => {
+    const normalizedSearchText = searchText.toLowerCase();
+
+    if (!groupedOptions) {
+      if (!searchText) {
+        return options;
+      }
+      return getFilteredOptions(options, normalizedSearchText);
+    }
+
+    const filteredValues: (TOption | string)[] = [];
+
+    Array.from(groupedOptions.entries()).forEach(([_, group]) => {
+      if (!searchText) {
+        filteredValues.push(group.title, ...group.options);
+      } else {
+        const filteredOptions: TOption[] = getFilteredOptions(group.options, normalizedSearchText);
+        if (filteredOptions.length === 0) {
+          return;
+        }
+
+        filteredValues.push(group.title, ...filteredOptions);
+      }
+    });
+
+    return filteredValues;
   };
 
   const renderDropdownList = () => {
@@ -212,6 +238,7 @@ export function FilterSelect<
       const handleSelectAll = () => {
         if (!isSelectAll) {
           setIsSelectAll(true);
+          // add groupedOptions logics
           props.onChange(
             options.map((option) => option[optionIdKey]),
             options,
@@ -255,24 +282,30 @@ export function FilterSelect<
         {props.selectedOption && renderResetOption()}
         {renderSelectAllOption()}
         {foundValues.map((option) => {
-          const label = (
-            <div className={styles['dropdown-item-content']}>
-              <div className={styles['dropdown-item-content__text']}>{option[optionLabelKey]}</div>
+          let label: ReactNode | null = null;
 
-              {typeof option.count !== 'undefined' && (
-                <span className={styles['dropdown-item-content__count']}>{option.count}</span>
-              )}
-            </div>
-          );
+          if (typeof option !== 'string') {
+            label = (
+              <div className={styles['dropdown-item-content']}>
+                <div className={styles['dropdown-item-content__text']}>{option[optionLabelKey]}</div>
+
+                {typeof option.count !== 'undefined' && (
+                  <span className={styles['dropdown-item-content__count']}>{option.count}</span>
+                )}
+              </div>
+            );
+          } else {
+            label = option;
+          }
 
           return (
             <DropdownItem
-              key={option[optionIdKey]}
+              key={typeof option !== 'string' ? option[optionIdKey] : option}
               className={classnames('dropdown-item-sm', styles['value-item'])}
-              onClick={handleChange(option)}
+              onClick={typeof option !== 'string' ? handleChange(option) : () => {}}
               toggle={!props.isMultiple}
             >
-              {props.isMultiple ? (
+              {props.isMultiple && typeof option !== 'string' ? (
                 <Checkbox
                   checked={props.selectedOptions.includes(option[optionIdKey])}
                   title={label}

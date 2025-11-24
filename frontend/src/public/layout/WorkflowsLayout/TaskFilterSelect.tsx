@@ -1,4 +1,4 @@
-import React, { ReactNode, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { useIntl } from 'react-intl';
 
 import { useDispatch, useSelector } from 'react-redux';
@@ -6,7 +6,7 @@ import { IApplicationState } from '../../types/redux';
 
 import styles from './WorkflowsLayout.css';
 import { setWorkflowsFilterSteps } from '../../redux/actions';
-import { FilterSelect } from '../../components/UI';
+import { FilterSelect, TOptionBase } from '../../components/UI';
 import { StepName } from '../../components/StepName';
 import { TaskFilterIcon } from '../../components/icons';
 import { EWorkflowsStatus, ITemplateFilterItem, TTemplateStepFilter } from '../../types/workflow';
@@ -14,19 +14,13 @@ import { ERenderPlaceholderType, getRenderPlaceholder } from './utils';
 import { isArrayWithItems } from '../../utils/helpers';
 import { canFilterByTemplateStep } from '../../utils/workflows/filters';
 
-interface TStepOptionFilter extends Omit<TTemplateStepFilter, 'name' | 'number'> {
-  name: ReactNode;
-  subTitle: string;
-  searchByText: string;
-  count?: number;
-}
-
-export interface IGroupedStepsValue {
+export interface IGroupedStepsValue<TOption extends TOptionBase<'id', 'name'>> {
   title: string;
-  options: TStepOptionFilter[];
+  options: TOption[];
 }
 
-type IGroupedStepsMap = Map<number, IGroupedStepsValue>;
+export type IGroupedStepsOption = TOptionBase<'id', 'name'> | string;
+export type IGroupedStepsMap = Map<number, IGroupedStepsValue<TOptionBase<'id', 'name'>>>;
 
 export function TaskFilterSelect({ selectedTemplates }: { selectedTemplates: ITemplateFilterItem[] }) {
   const { formatMessage } = useIntl();
@@ -46,7 +40,7 @@ export function TaskFilterSelect({ selectedTemplates }: { selectedTemplates: ITe
 
   const groupedSteps: IGroupedStepsMap | null = useMemo(() => {
     if (selectedTemplates.length === 0) {
-      return null;
+      return new Map();
     }
     return new Map(
       selectedTemplates.map((template) => [

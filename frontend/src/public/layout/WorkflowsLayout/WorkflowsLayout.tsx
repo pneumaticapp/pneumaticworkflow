@@ -149,6 +149,7 @@ export function WorkflowsLayoutComponent({
         ...prevTemplatesActualTaskIds,
         ...addedTemplates.flatMap((template) => template.steps.map((steps) => steps.id)),
       ];
+      console.log(111, { allStepIds, addedTemplates, selectedTemplates, prevTemplatesIdsSet }); // ???
       setStepsFilter(allStepIds);
       if (canFilterByTemplateStep(statusFilter)) {
         updateWorkflowsTemplateStepsCounters();
