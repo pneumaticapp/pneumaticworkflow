@@ -44,7 +44,7 @@ class OktaService(BaseSSOService):
         super().__init__(domain)
         self.scope = 'openid email profile'
 
-    def _get_domain_config(self, domain: str) -> SSOConfigData:
+    def _get_config_by_domain(self, domain: str) -> SSOConfigData:
         try:
             sso_config = SSOConfig.objects.get(
                 domain=domain,

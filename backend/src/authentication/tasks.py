@@ -68,7 +68,6 @@ def update_microsoft_contacts(user_id: int):
     autoretry_for=(User.DoesNotExist,),
     retry_kwargs={'max_retries': 3},
     retry_backoff=True,
-    ignore_result=True,
 )
 def update_google_contacts(user_id: int):
     user = User.objects.get(id=user_id)
