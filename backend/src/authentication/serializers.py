@@ -283,10 +283,8 @@ class SSOTokenSerializer(
     )
 
     def _extract_domain_from_state(self, state: str) -> Optional[str]:
-        if len(state) <= 36:
-            return None
         try:
-            return self.decrypt(state[36:])
+            return self.decrypt(state[36:]) or None
         except ValueError:
             return None
 
