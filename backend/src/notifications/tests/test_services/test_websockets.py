@@ -574,7 +574,7 @@ async def test_consumer_send_notification__received(mocker, api_client):
     )
     communicator = WebsocketCommunicator(
         application,
-        f'/ws/events/?auth_token={token}',
+        f'/ws/events?auth_token={token}',
     )
     await communicator.connect()
 
@@ -611,7 +611,7 @@ async def test_consumer__connection__ok(mocker):
     user_patch.return_value = user
     communicator = WebsocketCommunicator(
         application,
-        '/ws/events/?auth_token=123456',
+        '/ws/events?auth_token=123456',
     )
 
     connected, _ = await communicator.connect()
@@ -631,7 +631,7 @@ async def test_consumer__incorrect_token__deny_connection(mocker):
     user_patch.side_effect = ObjectDoesNotExist()
     communicator = WebsocketCommunicator(
         application,
-        '/ws/events/?auth_token=123456',
+        '/ws/events?auth_token=123456',
     )
 
     connected, _ = await communicator.connect()
@@ -649,7 +649,7 @@ async def test_consumer__without_token__deny_connection(mocker):
     )
     communicator = WebsocketCommunicator(
         application,
-        '/ws/events/',
+        '/ws/events',
     )
 
     connected, _ = await communicator.connect()
@@ -671,7 +671,7 @@ async def test_consumer__ping_pong__ok(mocker, api_client):
     user_patch.return_value = user
     communicator = WebsocketCommunicator(
         application,
-        '/ws/events/?auth_token=123456',
+        '/ws/events?auth_token=123456',
     )
     await communicator.connect()
 

@@ -81,5 +81,5 @@ urlpatterns += router.urls
 
 
 websocket_urlpatterns = [
-    path('ws/events/', EventsConsumer.as_asgi()),
+    path('ws/events', EventsConsumer.as_asgi()),
 ]
