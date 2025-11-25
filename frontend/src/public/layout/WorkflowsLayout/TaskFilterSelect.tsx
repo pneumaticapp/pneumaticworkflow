@@ -59,7 +59,7 @@ export function TaskFilterSelect({ selectedTemplates }: { selectedTemplates: ITe
     );
   }, [selectedTemplates]);
 
-  const flatOptions = useMemo(() => {
+  const flatGroupedOptions = useMemo(() => {
     return groupedSteps ? Array.from(groupedSteps.values()).flatMap((group) => group.options) : [];
   }, [groupedSteps]);
 
@@ -75,6 +75,7 @@ export function TaskFilterSelect({ selectedTemplates }: { selectedTemplates: ITe
       optionLabelKey="name"
       options={[]}
       groupedOptions={groupedSteps}
+      flatGroupedOptions={flatGroupedOptions}
       onChange={(taskIds: number[]) => {
         dispatch(setWorkflowsFilterSteps(taskIds));
       }}
@@ -86,7 +87,7 @@ export function TaskFilterSelect({ selectedTemplates }: { selectedTemplates: ITe
         getRenderPlaceholder({
           isDisabled: mustDisableFilter,
           filterIds: stepsIdsFilter,
-          options: flatOptions,
+          options: flatGroupedOptions,
           formatMessage,
           type: ERenderPlaceholderType.Task,
           severalOptionPlaceholder: 'sorting.several-tasks',

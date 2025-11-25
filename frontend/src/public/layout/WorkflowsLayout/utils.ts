@@ -28,7 +28,7 @@ export const getRenderPlaceholder = ({
   severalOptionPlaceholder,
   defaultPlaceholder,
 }: IGetRenderPlaceholder) => {
-  if (filterIds.length === 0 || isDisabled) {
+  if (filterIds.length === 0 || isDisabled || options.length === 0) {
     return formatMessage({ id: defaultPlaceholder });
   }
   if (filterIds.length > 1) {

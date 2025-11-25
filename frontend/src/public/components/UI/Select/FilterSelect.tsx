@@ -36,6 +36,7 @@ interface IFilterSelectCommonProps<
   isLoading?: boolean;
   options: TOption[];
   groupedOptions?: Map<number, { title: string; options: TOption[] }>;
+  flatGroupedOptions?: TOption[];
   isSearchShown?: boolean;
   isDisabled?: boolean;
   noValueLabel?: string;
@@ -94,12 +95,13 @@ export function FilterSelect<
     menuClassName,
     options,
     groupedOptions,
+    flatGroupedOptions,
     containerClassname,
     selectAllLabel,
     resetFilter,
     Icon,
   } = props;
-
+  const allOptions = flatGroupedOptions ? flatGroupedOptions : options;
   const [searchText, setSearchText] = useState('');
   const [isSelectAll, setIsSelectAll] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -128,7 +130,7 @@ export function FilterSelect<
       ? [...props.selectedOptions, optionId]
       : props.selectedOptions.filter((selectedOption) => selectedOption !== optionId);
 
-    const mapSelectedOption = options.filter((item) => newSelectedOptions.includes(item[optionIdKey]));
+    const mapSelectedOption = allOptions.filter((item) => newSelectedOptions.includes(item[optionIdKey]));
 
     props.onChange(newSelectedOptions, mapSelectedOption);
   };
@@ -238,10 +240,9 @@ export function FilterSelect<
       const handleSelectAll = () => {
         if (!isSelectAll) {
           setIsSelectAll(true);
-          // add groupedOptions logics
           props.onChange(
-            options.map((option) => option[optionIdKey]),
-            options,
+            allOptions.map((option) => option[optionIdKey]),
+            allOptions,
           );
         } else {
           setIsSelectAll(false);
@@ -252,8 +253,8 @@ export function FilterSelect<
       const areAllSelected =
         props.isMultiple &&
         Array.isArray(props.selectedOptions) &&
-        options.length > 0 &&
-        props.selectedOptions.length === options.length;
+        allOptions.length > 0 &&
+        props.selectedOptions.length === allOptions.length;
 
       return (
         <DropdownItem
@@ -369,7 +370,7 @@ export function FilterSelect<
           )}
         >
           {Icon && <Icon className={styles['icon']} />}
-          <span className={styles['active-value__text']}>{props.renderPlaceholder(options)}</span>
+          <span className={styles['active-value__text']}>{props.renderPlaceholder(allOptions)}</span>
           {props.isMultiple && isArrayWithItems(props.selectedOptions) ? (
             <span
               aria-disabled={!!isDisabled}
