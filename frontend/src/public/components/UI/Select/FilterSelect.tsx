@@ -296,7 +296,7 @@ export function FilterSelect<
               </div>
             );
           } else {
-            label = option;
+            label = <div className={styles['dropdown-item-content__title']}>{option}</div>;
           }
 
           return (

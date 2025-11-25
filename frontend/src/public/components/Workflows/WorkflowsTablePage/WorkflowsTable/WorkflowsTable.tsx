@@ -13,15 +13,12 @@ import { TableColumns } from './types';
 import * as ColumnCells from './Columns/Cells';
 
 import { WorkflowsPlaceholderIcon } from '../../WorkflowsPlaceholderIcon';
-import { FilterSelect, InputField, Loader, Placeholder } from '../../../UI';
+import { InputField, Loader, Placeholder } from '../../../UI';
 import { IApplicationState, IWorkflowsList } from '../../../../types/redux';
 import { TOpenWorkflowLogPopupPayload, TRemoveWorkflowFromListPayload } from '../../../../redux/actions';
 import { SearchMediumIcon } from '../../../icons';
 import { EWorkflowsLoadingStatus } from '../../../../types/workflow';
 import { IWorkflowsFiltersProps } from '../../types';
-import { isArrayWithItems } from '../../../../utils/helpers';
-import { canFilterByTemplateStep } from '../../../../utils/workflows/filters';
-import { StepName } from '../../../StepName';
 import { ITableViewFields } from '../../../../types/template';
 import { useIsTableWiderThanScreen, useWorkflowsTableRef } from './WorkflowsTableContext';
 
@@ -181,52 +178,6 @@ export function WorkflowsTable({
     );
   };
 
-  const renderStepFilter = () => {
-    const STEP_HEADER_NAME = formatMessage({ id: 'workflows.filter-column-step' });
-    if (!isArrayWithItems(templatesIdsFilter) || !canFilterByTemplateStep(statusFilter)) {
-      return STEP_HEADER_NAME;
-    }
-
-    const [templateIdFilter] = templatesIdsFilter;
-    const currentTemplate = filterTemplates.find((t) => t.id === templateIdFilter);
-    if (!currentTemplate) {
-      return STEP_HEADER_NAME;
-    }
-
-    const stepsOptions = currentTemplate.steps
-      .map((step) => {
-        return {
-          ...step,
-          name: <StepName initialStepName={step.name} templateId={currentTemplate.id} />,
-          subTitle: String(step.number).padStart(2, '0'),
-          searchByText: step.name,
-        };
-      })
-      .filter((step) => step.count);
-
-    return (
-      <FilterSelect
-        isMultiple
-        isSearchShown
-        placeholderText={formatMessage({ id: 'workflows.filter-no-step' })}
-        selectedOptions={stepsIdsFilter}
-        optionIdKey="id"
-        optionLabelKey="name"
-        options={stepsOptions}
-        onChange={(steps: number[]) => {
-          setStepsFilter(steps);
-        }}
-        resetFilter={() => {
-          setStepsFilter([]);
-        }}
-        renderPlaceholder={() => <span className={styles['header-filter']}>{STEP_HEADER_NAME}</span>}
-        containerClassname={styles['filter-container']}
-        arrowClassName={styles['header-filter__arrow']}
-        selectAllLabel={formatMessage({ id: 'workflows.filter-all-steps' })}
-      />
-    );
-  };
-
   const renderWorkflowColumn = useCallback(
     (props) => (
       <ColumnCells.WorkflowColumn
@@ -338,7 +289,11 @@ export function WorkflowsTable({
       ...(selectedFieldsSet.has('system-column-step')
         ? [
             {
-              Header: renderStepFilter(),
+              Header: (
+                <div className={styles['column-header__task-name']}>
+                  {formatMessage({ id: 'workflows.filter-column-tasks' })}
+                </div>
+              ),
               accessor: 'system-column-step',
               Cell: ColumnCells.StepColumn,
               width: savedGlobalWidths['system-column-step'] || ETableViewFieldsWidth['system-column-step'],

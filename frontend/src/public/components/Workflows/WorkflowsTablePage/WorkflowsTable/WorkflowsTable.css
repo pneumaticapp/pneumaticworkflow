@@ -249,6 +249,7 @@
 
 .column-header__template-name,
 .column-header__starter-name,
-.column-header__performer-name {
+.column-header__performer-name,
+.column-header__task-name {
   @mixin text-truncate;
 }

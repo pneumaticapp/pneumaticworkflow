@@ -252,3 +252,12 @@
     color: var(--pneumatic-color-link-hover);
   }
 }
+
+.dropdown-item-content__title {
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--pneumatic-color-black48);
+
+  @mixin text-small-extra bold;
+  @mixin text-truncate;
+}

@@ -876,6 +876,7 @@ export const enMessages = {
   'workflows.filter-column-template-name': 'Template name',
   'workflows.filter-column-step': 'Step',
   'workflows.filter-column-performers': 'Performers',
+  'workflows.filter-column-tasks': 'Tasks',
   'workflows.comment-edit': 'Edit',
   'workflows.comment-delete': 'Delete',
   'workflows.comment-deleted': 'Deleted comment',
