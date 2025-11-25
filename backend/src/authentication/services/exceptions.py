@@ -7,7 +7,6 @@ from src.authentication.messages import (
     MSG_AU_0008,
     MSG_AU_0009,
     MSG_AU_0014,
-    MSG_AU_0015,
 )
 from src.generics.exceptions import BaseServiceException
 
@@ -38,11 +37,6 @@ class EmailNotExist(AuthException):
     default_message = MSG_AU_0004
 
 
-class FailedFetchMembers(AuthException):
-
-    default_message = MSG_AU_0015
-
-
 class GraphApiRequestError(AuthException):
 
     default_message = MSG_AU_0005
@@ -56,3 +50,13 @@ class AuthenticationFailed(BaseServiceException):
 class PeopleApiRequestError(AuthException):
 
     default_message = MSG_AU_0014
+
+
+class Auth0ServiceException(AuthException):
+
+    pass
+
+
+class OktaServiceException(AuthException):
+
+    pass
