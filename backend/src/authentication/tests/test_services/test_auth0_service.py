@@ -604,10 +604,15 @@ def test_authenticate_user__existing_user__ok(mocker):
     settings_mock = mocker.patch(
         'src.authentication.services.base_sso.settings',
     )
+    mocker.patch(
+        'src.authentication.services.auth0.settings',
+        new=settings_mock,
+    )
     settings_mock.PROJECT_CONF = {
         'SSO_AUTH': True,
         'SSO_PROVIDER': 'auth0',
     }
+    settings_mock.AUTH0_CLIENT_SECRET = 'test_secret'
 
     service = Auth0Service()
 

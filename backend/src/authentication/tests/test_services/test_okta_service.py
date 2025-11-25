@@ -95,6 +95,18 @@ def test_get_user_data__ok(mocker):
     capture_sentry_mock = mocker.patch(
         'src.authentication.services.okta.capture_sentry_message',
     )
+    settings_mock = mocker.patch(
+        'src.authentication.services.base_sso.settings',
+    )
+    mocker.patch(
+        'src.authentication.services.okta.settings',
+        new=settings_mock,
+    )
+    settings_mock.PROJECT_CONF = {
+        'SSO_AUTH': True,
+        'SSO_PROVIDER': 'okta',
+    }
+    settings_mock.OKTA_CLIENT_SECRET = 'test_secret'
     service = OktaService()
 
     # act
@@ -126,6 +138,18 @@ def test_get_user_data__no_first_name__set_default(mocker):
     capture_sentry_mock = mocker.patch(
         'src.authentication.services.okta.capture_sentry_message',
     )
+    settings_mock = mocker.patch(
+        'src.authentication.services.base_sso.settings',
+    )
+    mocker.patch(
+        'src.authentication.services.okta.settings',
+        new=settings_mock,
+    )
+    settings_mock.PROJECT_CONF = {
+        'SSO_AUTH': True,
+        'SSO_PROVIDER': 'okta',
+    }
+    settings_mock.OKTA_CLIENT_SECRET = 'test_secret'
     service = OktaService()
 
     # act
@@ -156,6 +180,18 @@ def test_get_user_data__email_not_found__raise_exception(mocker):
     capture_sentry_mock = mocker.patch(
         'src.authentication.services.okta.capture_sentry_message',
     )
+    settings_mock = mocker.patch(
+        'src.authentication.services.base_sso.settings',
+    )
+    mocker.patch(
+        'src.authentication.services.okta.settings',
+        new=settings_mock,
+    )
+    settings_mock.PROJECT_CONF = {
+        'SSO_AUTH': True,
+        'SSO_PROVIDER': 'okta',
+    }
+    settings_mock.OKTA_CLIENT_SECRET = 'test_secret'
     service = OktaService()
 
     # act
@@ -240,6 +276,18 @@ def test_get_first_access_token__clear_cache__raise_exception(mocker):
     request_mock = mocker.patch(
         'src.authentication.services.okta.requests.post',
     )
+    settings_mock = mocker.patch(
+        'src.authentication.services.base_sso.settings',
+    )
+    mocker.patch(
+        'src.authentication.services.okta.settings',
+        new=settings_mock,
+    )
+    settings_mock.PROJECT_CONF = {
+        'SSO_AUTH': True,
+        'SSO_PROVIDER': 'okta',
+    }
+    settings_mock.OKTA_CLIENT_SECRET = 'test_secret'
     service = OktaService()
 
     # act
@@ -398,7 +446,7 @@ def test_get_user_profile__request_error__raise_exception(mocker):
     )
 
 
-def test_save_tokens_for_user__create__ok():
+def test_save_tokens_for_user__create__ok(mocker):
     # arrange
     user = create_test_admin()
     access_token = 'test_access_token'
@@ -407,6 +455,18 @@ def test_save_tokens_for_user__create__ok():
         'access_token': access_token,
         'expires_in': expires_in,
     }
+    settings_mock = mocker.patch(
+        'src.authentication.services.base_sso.settings',
+    )
+    mocker.patch(
+        'src.authentication.services.okta.settings',
+        new=settings_mock,
+    )
+    settings_mock.PROJECT_CONF = {
+        'SSO_AUTH': True,
+        'SSO_PROVIDER': 'okta',
+    }
+    settings_mock.OKTA_CLIENT_SECRET = 'test_secret'
     service = OktaService()
     service.tokens = tokens_data
 
@@ -423,7 +483,7 @@ def test_save_tokens_for_user__create__ok():
     assert token.expires_in == expires_in
 
 
-def test_save_tokens_for_user__update__ok():
+def test_save_tokens_for_user__update__ok(mocker):
     # arrange
     user = create_test_admin()
     old_token = AccessToken.objects.create(
@@ -437,6 +497,18 @@ def test_save_tokens_for_user__update__ok():
         'access_token': 'new_access_token',
         'expires_in': 3600,
     }
+    settings_mock = mocker.patch(
+        'src.authentication.services.base_sso.settings',
+    )
+    mocker.patch(
+        'src.authentication.services.okta.settings',
+        new=settings_mock,
+    )
+    settings_mock.PROJECT_CONF = {
+        'SSO_AUTH': True,
+        'SSO_PROVIDER': 'okta',
+    }
+    settings_mock.OKTA_CLIENT_SECRET = 'test_secret'
     service = OktaService()
     service.tokens = new_tokens_data
 
@@ -499,6 +571,18 @@ def test_authenticate_user__existing_user__ok(mocker):
     analytics_mock = mocker.patch(
         'src.authentication.services.base_sso.AnalyticService.users_logged_in',
     )
+    settings_mock = mocker.patch(
+        'src.authentication.services.base_sso.settings',
+    )
+    mocker.patch(
+        'src.authentication.services.okta.settings',
+        new=settings_mock,
+    )
+    settings_mock.PROJECT_CONF = {
+        'SSO_AUTH': True,
+        'SSO_PROVIDER': 'okta',
+    }
+    settings_mock.OKTA_CLIENT_SECRET = 'test_secret'
 
     service = OktaService()
 
