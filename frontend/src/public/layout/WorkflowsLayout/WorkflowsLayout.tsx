@@ -75,6 +75,7 @@ export function WorkflowsLayoutComponent({
   const [isTableWiderThanScreen, setIsTableWiderThanScreen] = useState(false);
   const workflowsMainRef = useRef<HTMLDivElement>(null);
   const tableViewContainerRef = useRef<TableViewContainerRef>(null);
+  const loadingTaskRef = React.useRef<Set<number>>(new Set());
 
   const selectedTemplates: ITemplateFilterItem[] = useMemo(() => {
     const filterTemplatesMap: Map<number, ITemplateFilterItem> = new Map(
@@ -133,30 +134,38 @@ export function WorkflowsLayoutComponent({
     const currentTemplateTaskIdsSet = new Set(
       selectedTemplates.flatMap((template) => template.steps.map((step) => step.id)),
     );
-    const prevTemplatesActualTaskIds = stepsIdsFilter.filter((id) => currentTemplateTaskIdsSet.has(id));
+    const prevTemplatesActualTaskIds =
+      currentTemplateTaskIdsSet.size === 0
+        ? stepsIdsFilter
+        : stepsIdsFilter.filter((id) => currentTemplateTaskIdsSet.has(id));
 
-    const addedTemplates = selectedTemplates.filter((template) => !prevTemplatesIdsSet.has(template.id));
-    addedTemplates.forEach((template) => {
+    selectedTemplates.forEach((template) => {
       const hasTasks = template.steps.length > 0;
-      if (!hasTasks && !template.areStepsLoading) {
+      const isAlreadyLoading = loadingTaskRef.current.has(template.id);
+      if (!hasTasks && !template.areStepsLoading && !isAlreadyLoading) {
+        loadingTaskRef.current.add(template.id);
         loadTemplateSteps({ templateId: template.id });
+      }
+      if (hasTasks) {
+        loadingTaskRef.current.delete(template.id);
       }
     });
 
-    const allNewTemplatesTasksLoaded = addedTemplates.every((template) => template.steps.length > 0);
+    const allNewTemplatesTasksLoaded = selectedTemplates.every((template) => template.steps.length > 0);
+
+    const addedTemplates = selectedTemplates.filter((template) => !prevTemplatesIdsSet.has(template.id));
     if (allNewTemplatesTasksLoaded) {
       const allStepIds = [
         ...prevTemplatesActualTaskIds,
         ...addedTemplates.flatMap((template) => template.steps.map((steps) => steps.id)),
       ];
-      console.log(111, { allStepIds, addedTemplates, selectedTemplates, prevTemplatesIdsSet }); // ???
+
       setStepsFilter(allStepIds);
       if (canFilterByTemplateStep(statusFilter)) {
         updateWorkflowsTemplateStepsCounters();
       }
+      prevTemplatesIdsFilterRef.current = templatesIdsFilter;
     }
-
-    prevTemplatesIdsFilterRef.current = templatesIdsFilter;
   }, [templatesIdsFilter, selectedTemplates, statusFilter]);
 
   useEffect(() => {
