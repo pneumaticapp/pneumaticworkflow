@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('accounts', '0137_add_external_id_to_account'),
+        ('accounts', '0137_auto_20251027_2214'),
     ]
 
     operations = [
