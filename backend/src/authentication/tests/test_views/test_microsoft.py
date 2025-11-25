@@ -8,7 +8,7 @@ from src.authentication.services.microsoft import (
     MicrosoftAuthService,
 )
 from src.processes.tests.fixtures import (
-    create_test_user,
+    create_test_user, create_test_admin, create_test_owner,
 )
 from src.utils.validation import ErrorCode
 
@@ -620,3 +620,120 @@ def test_auth_uri__service_exception__validation_error(
     assert response.data['message'] == message
     ms_service_init_mock.assert_called_once()
     ms_get_auth_uri_mock.assert_called_once()
+
+
+def test_token__sso_enabled_not_owner__raise_exception(
+    mocker,
+    api_client,
+):
+    # arrange
+    mocker.patch(
+        'src.authentication.views.microsoft.MSAuthPermission.'
+        'has_permission',
+        return_value=True,
+    )
+    user = create_test_admin()
+    user_data = UserData(
+        email=user.email,
+        first_name='Test',
+        last_name='User',
+        company_name='',
+        photo=None,
+        job_title='',
+    )
+    ms_service_init_mock = mocker.patch.object(
+        MicrosoftAuthService,
+        attribute='__init__',
+        return_value=None,
+    )
+    ms_get_user_data_mock = mocker.patch(
+        'src.authentication.services.microsoft.'
+        'MicrosoftAuthService.get_user_data',
+        return_value=user_data,
+    )
+    settings_mock = mocker.patch(
+        'src.authentication.views.mixins.settings',
+    )
+    settings_mock.PROJECT_CONF = {'SSO_AUTH': True}
+
+    auth_response = {
+        'code': '0.Ab0Aa_jrV8Qkv...9UWtS972sufQ',
+        'client_info': 'eyJ1aWQi...0YjY2ZGFkIn0',
+        'state': 'KvpfgTSUmwtOaPny',
+        'session_state': '0d046a4b-061a-4de5-be04-472a06763149',
+    }
+
+    # act
+    response = api_client.get(
+        '/auth/microsoft/token',
+        data=auth_response,
+    )
+
+    # assert
+    assert response.status_code == 400
+    ms_service_init_mock.assert_called_once()
+    ms_get_user_data_mock.assert_called_once()
+
+
+def test_token__sso_enabled_owner__ok(
+    mocker,
+    api_client,
+):
+    # arrange
+    mocker.patch(
+        'src.authentication.views.microsoft.MSAuthPermission.'
+        'has_permission',
+        return_value=True,
+    )
+    user = create_test_owner()
+    user_data = UserData(
+        email=user.email,
+        first_name='Test',
+        last_name='User',
+        company_name='',
+        photo=None,
+        job_title='',
+    )
+    ms_service_init_mock = mocker.patch.object(
+        MicrosoftAuthService,
+        attribute='__init__',
+        return_value=None,
+    )
+    ms_get_user_data_mock = mocker.patch(
+        'src.authentication.services.microsoft.'
+        'MicrosoftAuthService.get_user_data',
+        return_value=user_data,
+    )
+    save_tokens_mock = mocker.patch(
+        'src.authentication.services.microsoft.'
+        'MicrosoftAuthService.save_tokens_for_user',
+    )
+    update_contacts_mock = mocker.patch(
+        'src.authentication.views.microsoft.'
+        'update_microsoft_contacts.delay',
+    )
+    settings_mock = mocker.patch(
+        'src.authentication.views.mixins.settings',
+    )
+    settings_mock.PROJECT_CONF = {'SSO_AUTH': True}
+
+    auth_response = {
+        'code': '0.Ab0Aa_jrV8Qkv...9UWtS972sufQ',
+        'client_info': 'eyJ1aWQi...0YjY2ZGFkIn0',
+        'state': 'KvpfgTSUmwtOaPny',
+        'session_state': '0d046a4b-061a-4de5-be04-472a06763149',
+    }
+
+    # act
+    response = api_client.get(
+        '/auth/microsoft/token',
+        data=auth_response,
+    )
+
+    # assert
+    assert response.status_code == 200
+    assert 'token' in response.data
+    ms_service_init_mock.assert_called_once()
+    ms_get_user_data_mock.assert_called_once()
+    save_tokens_mock.assert_called_once()
+    update_contacts_mock.assert_called_once_with(user.id)
