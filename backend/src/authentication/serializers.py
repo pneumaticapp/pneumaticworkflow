@@ -208,10 +208,6 @@ class BaseAuthSerializerMeta:
     }
 
 
-class SignInWithGoogleSerializer(serializers.Serializer):
-    email = serializers.EmailField()
-
-
 class UserResetPasswordSerializer(serializers.ModelSerializer):
     new_password = serializers.CharField()
 
