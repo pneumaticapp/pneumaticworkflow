@@ -27,7 +27,7 @@ class WebSocketService(NotificationService):
 
     ALLOWED_METHODS = {
         NotificationMethod.overdue_task,
-        NotificationMethod.complete_task,
+        NotificationMethod.task_completed,
         NotificationMethod.delay_workflow,
         NotificationMethod.resume_workflow,
         NotificationMethod.due_date_changed,
@@ -37,9 +37,11 @@ class WebSocketService(NotificationService):
         NotificationMethod.comment,
         NotificationMethod.mention,
         NotificationMethod.workflow_event,
+        NotificationMethod.event_created,
+        NotificationMethod.event_updated,
         NotificationMethod.reaction,
         NotificationMethod.new_task_websocket,
-        NotificationMethod.removed_task,
+        NotificationMethod.task_deleted,
         NotificationMethod.group_created,
         NotificationMethod.group_updated,
         NotificationMethod.group_deleted,
@@ -47,9 +49,6 @@ class WebSocketService(NotificationService):
         NotificationMethod.user_updated,
         NotificationMethod.user_deleted,
         NotificationMethod.task_created,
-        NotificationMethod.task_deleted,
-        NotificationMethod.event_created,
-        NotificationMethod.event_updated,
         NotificationMethod.notification_created,
     }
 
@@ -149,7 +148,7 @@ class WebSocketService(NotificationService):
                 sync=sync,
             )
 
-    def send_complete_task(
+    def send_task_completed(
         self,
         user_id: int,
         sync: bool,
@@ -157,9 +156,9 @@ class WebSocketService(NotificationService):
         **kwargs,
     ):
         self._send(
-            method_name=NotificationMethod.complete_task,
+            method_name=NotificationMethod.task_completed,
             group_name=f'{EventsConsumer.classname}_{user_id}',
-            message_type=NotificationMethod.complete_task,
+            message_type=NotificationMethod.task_completed,
             data=self._get_serialized_notification(notification),
             sync=sync,
         )
@@ -289,22 +288,32 @@ class WebSocketService(NotificationService):
             sync=sync,
         )
 
-    def send_workflow_event(
+    def send_event_created(
         self,
         user_id: int,
         data: dict,
         sync: bool,
-        is_updated: bool = False,
         **kwargs,
     ):
-        if is_updated:
-            message_type = NotificationMethod.event_updated
-        else:
-            message_type = NotificationMethod.event_created
         self._send(
-            method_name=NotificationMethod.workflow_event,
+            method_name=NotificationMethod.event_created,
             group_name=f'{EventsConsumer.classname}_{user_id}',
-            message_type=message_type,
+            message_type=NotificationMethod.event_created,
+            data=data,
+            sync=sync,
+        )
+
+    def send_event_updated(
+        self,
+        user_id: int,
+        data: dict,
+        sync: bool,
+        **kwargs,
+    ):
+        self._send(
+            method_name=NotificationMethod.event_updated,
+            group_name=f'{EventsConsumer.classname}_{user_id}',
+            message_type=NotificationMethod.event_updated,
             data=data,
             sync=sync,
         )
@@ -339,22 +348,17 @@ class WebSocketService(NotificationService):
             sync=sync,
         )
 
-    def send_removed_task(
+    def send_task_deleted(
         self,
         user_id: int,
         task_data: dict,
         sync: bool,
-        is_completed: bool = False,
         **kwargs,
     ):
-        if is_completed:
-            message_type = NotificationMethod.task_completed
-        else:
-            message_type = NotificationMethod.task_deleted
         self._send(
-            method_name=NotificationMethod.removed_task,
+            method_name=NotificationMethod.task_deleted,
             group_name=f'{EventsConsumer.classname}_{user_id}',
-            message_type=message_type,
+            message_type=NotificationMethod.task_deleted,
             data=task_data,
             sync=sync,
         )

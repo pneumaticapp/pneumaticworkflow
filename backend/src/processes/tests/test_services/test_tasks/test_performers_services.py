@@ -1678,9 +1678,9 @@ class TestTaskPerformersService:
             'src.processes.services.events.'
             'WorkflowEventService.performer_deleted_event',
         )
-        send_removed_task_notification_mock = mocker.patch(
+        send_task_deleted_notification_mock = mocker.patch(
             'src.notifications.tasks'
-            '.send_removed_task_notification.delay',
+            '.send_removed_task_deleted_notification.delay',
         )
         is_superuser = False
         auth_type = AuthTokenType.USER
@@ -1702,7 +1702,7 @@ class TestTaskPerformersService:
             task=task,
             performer=deleted_performer,
         )
-        send_removed_task_notification_mock.assert_not_called()
+        send_task_deleted_notification_mock.assert_not_called()
 
     def test_delete_actions_not_last_completed__not_complete_task(
         self,
@@ -1754,9 +1754,9 @@ class TestTaskPerformersService:
             'src.processes.services.events.'
             'WorkflowEventService.performer_deleted_event',
         )
-        send_removed_task_notification_mock = mocker.patch(
+        send_task_deleted_notification_mock = mocker.patch(
             'src.notifications.tasks'
-            '.send_removed_task_notification.delay',
+            '.send_removed_task_deleted_notification.delay',
         )
         is_superuser = False
         auth_type = AuthTokenType.USER
@@ -1778,7 +1778,7 @@ class TestTaskPerformersService:
             task=task,
             performer=deleted_performer,
         )
-        send_removed_task_notification_mock.assert_called_once_with(
+        send_task_deleted_notification_mock.assert_called_once_with(
             task_id=task.id,
             recipients=[(deleted_performer.id, deleted_performer.email)],
             account_id=account.id,
@@ -1835,9 +1835,9 @@ class TestTaskPerformersService:
             'src.processes.services.events.'
             'WorkflowEventService.performer_deleted_event',
         )
-        send_removed_task_notification_mock = mocker.patch(
+        send_task_deleted_notification_mock = mocker.patch(
             'src.notifications.tasks'
-            '.send_removed_task_notification.delay',
+            '.send_removed_task_deleted_notification.delay',
         )
         is_superuser = False
         auth_type = AuthTokenType.USER
@@ -1864,7 +1864,7 @@ class TestTaskPerformersService:
             task=task,
             performer=deleted_performer,
         )
-        send_removed_task_notification_mock.assert_not_called()
+        send_task_deleted_notification_mock.assert_not_called()
 
     def test_delete_actions__rcba_last_completed_performer__complete_task(
         self,
@@ -1922,9 +1922,9 @@ class TestTaskPerformersService:
             'src.processes.services.events.'
             'WorkflowEventService.performer_deleted_event',
         )
-        send_removed_task_notification_mock = mocker.patch(
+        send_task_deleted_notification_mock = mocker.patch(
             'src.notifications.tasks'
-            '.send_removed_task_notification.delay',
+            '.send_removed_task_deleted_notification.delay',
         )
         is_superuser = False
         auth_type = AuthTokenType.USER
@@ -1951,7 +1951,7 @@ class TestTaskPerformersService:
             task=task,
             performer=deleted_performer,
         )
-        send_removed_task_notification_mock.assert_not_called()
+        send_task_deleted_notification_mock.assert_not_called()
 
     def test_delete_actions__with_deleted_group_taskperformer__ok(
         self,
@@ -2008,9 +2008,9 @@ class TestTaskPerformersService:
             'src.processes.services.events.'
             'WorkflowEventService.performer_deleted_event',
         )
-        send_removed_task_notification_mock = mocker.patch(
+        send_task_deleted_notification_mock = mocker.patch(
             'src.notifications.tasks'
-            '.send_removed_task_notification.delay',
+            '.send_removed_task_deleted_notification.delay',
         )
         is_superuser = False
         auth_type = AuthTokenType.USER
@@ -2032,7 +2032,7 @@ class TestTaskPerformersService:
             task=task,
             performer=deleted_performer,
         )
-        send_removed_task_notification_mock.assert_not_called()
+        send_task_deleted_notification_mock.assert_not_called()
 
 
 class TestGuestPerformersService:
@@ -3362,9 +3362,9 @@ class TestGroupPerformerService:
             'src.processes.services.events.'
             'WorkflowEventService.performer_group_deleted_event',
         )
-        send_removed_task_notification_mock = mocker.patch(
+        send_task_deleted_notification_mock = mocker.patch(
             'src.notifications.tasks'
-            '.send_removed_task_notification.delay',
+            '.send_removed_task_deleted_notification.delay',
         )
         workflow_action_service_init_mock = mocker.patch.object(
             WorkflowActionService,
@@ -3391,7 +3391,7 @@ class TestGroupPerformerService:
             task=task,
             performer=group,
         )
-        send_removed_task_notification_mock.assert_not_called()
+        send_task_deleted_notification_mock.assert_not_called()
         complete_task_mock.assert_called_once_with(task=task)
 
     def test_delete_group_actions__task_completed__ok(self, mocker):
@@ -3422,9 +3422,9 @@ class TestGroupPerformerService:
             'src.processes.services.events.'
             'WorkflowEventService.performer_group_deleted_event',
         )
-        send_removed_task_notification_mock = mocker.patch(
+        send_task_deleted_notification_mock = mocker.patch(
             'src.notifications.tasks'
-            '.send_removed_task_notification.delay',
+            '.send_removed_task_deleted_notification.delay',
         )
         workflow_action_service_init_mock = mocker.patch.object(
             WorkflowActionService,
@@ -3445,7 +3445,7 @@ class TestGroupPerformerService:
             task=task,
             performer=group,
         )
-        send_removed_task_notification_mock.assert_called_once_with(
+        send_task_deleted_notification_mock.assert_called_once_with(
             task_id=task.id,
             recipients=[(user2.id, user2.email)],
             account_id=account.id,
@@ -3483,9 +3483,9 @@ class TestGroupPerformerService:
             'src.processes.services.events.'
             'WorkflowEventService.performer_group_deleted_event',
         )
-        send_removed_task_notification_mock = mocker.patch(
+        send_task_deleted_notification_mock = mocker.patch(
             'src.notifications.tasks'
-            '.send_removed_task_notification.delay',
+            '.send_removed_task_deleted_notification.delay',
         )
         workflow_action_service_init_mock = mocker.patch.object(
             WorkflowActionService,
@@ -3506,6 +3506,6 @@ class TestGroupPerformerService:
             task=task,
             performer=group,
         )
-        send_removed_task_notification_mock.assert_not_called()
+        send_task_deleted_notification_mock.assert_not_called()
         workflow_action_service_init_mock.assert_not_called()
         complete_task_mock.assert_not_called()

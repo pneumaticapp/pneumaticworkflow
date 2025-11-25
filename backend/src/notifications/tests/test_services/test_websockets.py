@@ -214,14 +214,20 @@ def test_send__sync__ok(mocker):
         sync=True,
         group_name=group_name,
         method_name=NotificationMethod.overdue_task,
+        message_type=NotificationMethod.notification_created,
         data=data,
     )
 
     # assert
-    sync_send_mock.assert_called_once_with(
-        group_name=group_name,
-        data=data,
+    sync_send_mock.assert_called_once()
+    call_args = sync_send_mock.call_args
+    assert call_args[1]['group_name'] == group_name
+    assert 'id' in call_args[1]['data']
+    assert 'date_created_tsp' in call_args[1]['data']
+    assert call_args[1]['data']['type'] == (
+        NotificationMethod.notification_created
     )
+    assert call_args[1]['data']['data'] == data
 
 
 def test_send__async__ok(mocker):
@@ -244,14 +250,20 @@ def test_send__async__ok(mocker):
     service._send(
         group_name=group_name,
         method_name=NotificationMethod.overdue_task,
+        message_type=NotificationMethod.notification_created,
         data=data,
     )
 
     # assert
-    async_send_mock.assert_called_once_with(
-        group_name=group_name,
-        data=data,
+    async_send_mock.assert_called_once()
+    call_args = async_send_mock.call_args
+    assert call_args[1]['group_name'] == group_name
+    assert 'id' in call_args[1]['data']
+    assert 'date_created_tsp' in call_args[1]['data']
+    assert call_args[1]['data']['type'] == (
+        NotificationMethod.notification_created
     )
+    assert call_args[1]['data']['data'] == data
 
 
 def test_send__not_allowed_method__raise_exception(mocker):
@@ -284,6 +296,7 @@ def test_send__not_allowed_method__raise_exception(mocker):
         service._send(
             group_name=group_name,
             method_name=NotificationMethod.overdue_task,
+            message_type=NotificationMethod.notification_created,
             data=data,
         )
 
@@ -329,7 +342,8 @@ def test_send_overdue_task__type_user__ok(mocker):
     # assert
     send_mock.assert_called_once_with(
         method_name=NotificationMethod.overdue_task,
-        group_name=f'notifications_{user_id}',
+        group_name=f'events_{user_id}',
+        message_type=NotificationMethod.notification_created,
         data=data,
         sync=True,
     )
@@ -397,7 +411,8 @@ def test_send_resume_workflow__ok(mocker):
     # assert
     send_mock.assert_called_once_with(
         method_name=NotificationMethod.resume_workflow,
-        group_name=f'notifications_{user_id}',
+        group_name=f'events_{user_id}',
+        message_type=NotificationMethod.notification_created,
         data=data,
         sync=True,
     )
@@ -436,7 +451,8 @@ def test_send_delay_workflow__ok(mocker):
     # assert
     send_mock.assert_called_once_with(
         method_name=NotificationMethod.delay_workflow,
-        group_name=f'notifications_{user_id}',
+        group_name=f'events_{user_id}',
+        message_type=NotificationMethod.notification_created,
         data=data,
         sync=False,
     )
@@ -477,7 +493,8 @@ def test_send_due_date_changed__type_user__ok(mocker):
     # assert
     send_mock.assert_called_once_with(
         method_name=NotificationMethod.due_date_changed,
-        group_name=f'notifications_{user_id}',
+        group_name=f'events_{user_id}',
+        message_type=NotificationMethod.notification_created,
         data=data,
         sync=True,
     )
@@ -557,7 +574,7 @@ async def test_consumer_send_notification__received(mocker, api_client):
     )
     communicator = WebsocketCommunicator(
         application,
-        f'/ws/notifications/?auth_token={token}',
+        f'/ws/events/?auth_token={token}',
     )
     await communicator.connect()
 
@@ -571,10 +588,14 @@ async def test_consumer_send_notification__received(mocker, api_client):
     response = await communicator.receive_json_from()
 
     # assert
-    assert response['id'] == notification.id
-    assert response['text'] == notification.text
-    assert response['author'] == invited.id
-    assert response['workflow']['id'] == workflow.id
+    assert 'id' in response
+    assert 'date_created_tsp' in response
+    assert response['type'] == NotificationMethod.notification_created
+    assert 'data' in response
+    assert response['data']['id'] == notification.id
+    assert response['data']['text'] == notification.text
+    assert response['data']['author'] == invited.id
+    assert response['data']['workflow']['id'] == workflow.id
 
     await communicator.disconnect()
     ws_auth_patch.assert_called_once_with(token)
@@ -590,7 +611,7 @@ async def test_consumer__connection__ok(mocker):
     user_patch.return_value = user
     communicator = WebsocketCommunicator(
         application,
-        '/ws/notifications/?auth_token=123456',
+        '/ws/events/?auth_token=123456',
     )
 
     connected, _ = await communicator.connect()
@@ -610,7 +631,7 @@ async def test_consumer__incorrect_token__deny_connection(mocker):
     user_patch.side_effect = ObjectDoesNotExist()
     communicator = WebsocketCommunicator(
         application,
-        '/ws/notifications/?auth_token=123456',
+        '/ws/events/?auth_token=123456',
     )
 
     connected, _ = await communicator.connect()
@@ -628,7 +649,7 @@ async def test_consumer__without_token__deny_connection(mocker):
     )
     communicator = WebsocketCommunicator(
         application,
-        '/ws/notifications/',
+        '/ws/events/',
     )
 
     connected, _ = await communicator.connect()
@@ -650,7 +671,7 @@ async def test_consumer__ping_pong__ok(mocker, api_client):
     user_patch.return_value = user
     communicator = WebsocketCommunicator(
         application,
-        '/ws/notifications/?auth_token=123456',
+        '/ws/events/?auth_token=123456',
     )
     await communicator.connect()
 
@@ -697,7 +718,8 @@ def test_send_urgent__ok(mocker):
     # assert
     send_mock.assert_called_once_with(
         method_name=NotificationMethod.urgent,
-        group_name=f'notifications_{user_id}',
+        group_name=f'events_{user_id}',
+        message_type=NotificationMethod.notification_created,
         data=data,
         sync=True,
     )
@@ -736,7 +758,8 @@ def test_send_not_urgent__ok(mocker):
     # assert
     send_mock.assert_called_once_with(
         method_name=NotificationMethod.not_urgent,
-        group_name=f'notifications_{user_id}',
+        group_name=f'events_{user_id}',
+        message_type=NotificationMethod.notification_created,
         data=data,
         sync=True,
     )
@@ -775,7 +798,8 @@ def test_send_mention__ok(mocker):
     # assert
     send_mock.assert_called_once_with(
         method_name=NotificationMethod.mention,
-        group_name=f'notifications_{user_id}',
+        group_name=f'events_{user_id}',
+        message_type=NotificationMethod.notification_created,
         data=data,
         sync=True,
     )
@@ -814,7 +838,8 @@ def test_send_comment__ok(mocker):
     # assert
     send_mock.assert_called_once_with(
         method_name=NotificationMethod.comment,
-        group_name=f'notifications_{user_id}',
+        group_name=f'events_{user_id}',
+        message_type=NotificationMethod.notification_created,
         data=data,
         sync=True,
     )
@@ -853,7 +878,8 @@ def test_send_system__ok(mocker):
     # assert
     send_mock.assert_called_once_with(
         method_name=NotificationMethod.system,
-        group_name=f'notifications_{user_id}',
+        group_name=f'events_{user_id}',
+        message_type=NotificationMethod.notification_created,
         data=data,
         sync=True,
     )
@@ -892,14 +918,15 @@ def test_send_reaction__ok(mocker):
     # assert
     send_mock.assert_called_once_with(
         method_name=NotificationMethod.reaction,
-        group_name=f'notifications_{user_id}',
+        group_name=f'events_{user_id}',
+        message_type=NotificationMethod.notification_created,
         data=data,
         sync=True,
     )
     slz_mock.assert_called_once_with(notification)
 
 
-def test_send_complete_task__ok(mocker):
+def test_send_task_completed__ok(mocker):
 
     # arrange
     user_id = 12
@@ -921,7 +948,7 @@ def test_send_complete_task__ok(mocker):
     )
 
     # act
-    service.send_complete_task(
+    service.send_task_completed(
         user_id=user_id,
         notification=notification,
         sync=True,
@@ -929,8 +956,9 @@ def test_send_complete_task__ok(mocker):
 
     # assert
     send_mock.assert_called_once_with(
-        method_name=NotificationMethod.complete_task,
-        group_name=f'notifications_{user_id}',
+        method_name=NotificationMethod.task_completed,
+        group_name=f'events_{user_id}',
+        message_type=NotificationMethod.task_completed,
         data=data,
         sync=True,
     )

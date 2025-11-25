@@ -10,7 +10,6 @@ class NotificationMethod:
     returned_task = 'returned_task'
     removed_task = 'removed_task'
     overdue_task = 'overdue_task'
-    complete_task = 'complete_task'
     mention = 'mention'
     comment = 'comment'
     delay_workflow = 'delay_workflow'
@@ -30,6 +29,7 @@ class NotificationMethod:
     user_created = 'user_created'
     user_updated = 'user_updated'
     user_deleted = 'user_deleted'
+    task_completed = 'task_completed'
     task_created = 'task_created'
     task_deleted = 'task_deleted'
     event_created = 'event_created'
@@ -61,6 +61,7 @@ class NotificationMethod:
         user_created,
         user_updated,
         user_deleted,
+        task_completed,
         task_created,
         task_deleted,
         event_created,

@@ -60,9 +60,10 @@ UserModel = get_user_model()
 
 __all__ = [
     'send_comment_notification',
-    'send_complete_task_notification',
     'send_delayed_workflow_notification',
     'send_due_date_changed',
+    'send_event_created',
+    'send_event_updated',
     'send_group_created_notification',
     'send_group_deleted_notification',
     'send_group_updated_notification',
@@ -73,16 +74,17 @@ __all__ = [
     'send_not_urgent_notification',
     'send_overdue_task_notification',
     'send_reaction_notification',
-    'send_removed_task_notification',
+    'send_removed_task_completed_notification',
+    'send_removed_task_deleted_notification',
     'send_reset_password_notification',
     'send_resumed_workflow_notification',
+    'send_task_completed_notification',
     'send_unread_notifications',
     'send_urgent_notification',
     'send_user_created_notification',
     'send_user_deleted_notification',
     'send_user_updated_notification',
     'send_workflow_comment_watched',
-    'send_workflow_event',
 ]
 
 
@@ -225,12 +227,11 @@ def send_new_task_websocket(**kwargs):
     _send_new_task_websocket(**kwargs)
 
 
-def _send_removed_task_notification(
+def _send_removed_task_deleted_notification(
     task_id: int,
     recipients: List[Tuple[int, str]],
     account_id: int,
     task_data: Optional[dict] = None,
-    is_completed: bool = False,
     **kwargs,
 ):
 
@@ -240,22 +241,49 @@ def _send_removed_task_notification(
 
     for (user_id, user_email) in recipients:
         _send_notification(
-            method_name=NotificationMethod.removed_task,
+            method_name=NotificationMethod.task_deleted,
             user_id=user_id,
             user_email=user_email,
             account_id=account_id,
             task_data=task_data,
-            is_completed=is_completed,
             sync=True,
         )
 
 
 @shared_task(base=NotificationTask)
-def send_removed_task_notification(**kwargs):
-    _send_removed_task_notification(**kwargs)
+def send_removed_task_deleted_notification(**kwargs):
+    _send_removed_task_deleted_notification(**kwargs)
 
 
-def _send_complete_task_notification(
+def _send_removed_task_completed_notification(
+    task_id: int,
+    recipients: List[Tuple[int, str]],
+    account_id: int,
+    task_data: Optional[dict] = None,
+    **kwargs,
+):
+
+    if task_data is None:
+        task = Task.objects.select_related('workflow').get(id=task_id)
+        task_data = task.get_data_for_list()
+
+    for (user_id, user_email) in recipients:
+        _send_notification(
+            method_name=NotificationMethod.task_deleted,
+            user_id=user_id,
+            user_email=user_email,
+            account_id=account_id,
+            task_data=task_data,
+            sync=True,
+        )
+
+
+@shared_task(base=NotificationTask)
+def send_removed_task_completed_notification(**kwargs):
+    _send_removed_task_completed_notification(**kwargs)
+
+
+def _send_task_completed_notification(
     logging: bool,
     author_id: int,
     account_id: int,
@@ -286,7 +314,7 @@ def _send_complete_task_notification(
             user_email=user_email,
             account_id=account_id,
             notification=notification,
-            method_name=NotificationMethod.complete_task,
+            method_name=NotificationMethod.task_completed,
             workflow_name=task.workflow.name,
             task_id=task.id,
             task_name=task.name,
@@ -295,8 +323,8 @@ def _send_complete_task_notification(
 
 
 @shared_task(base=NotificationTask)
-def send_complete_task_notification(**kwargs):
-    _send_complete_task_notification(**kwargs)
+def send_task_completed_notification(**kwargs):
+    _send_task_completed_notification(**kwargs)
 
 
 def _send_overdue_task_notification():
@@ -760,15 +788,14 @@ def send_mention_notification(**kwargs):
     _send_mention_notification(**kwargs)
 
 
-def _send_workflow_event(
+def _send_event_created(
     logging: bool,
     account_id: int,
     logo_lg: Optional[str],
     data: dict,
-    is_updated: bool = False,
 ):
 
-    """ Send ws when workflow event created/updated """
+    """ Send ws when workflow event created """
 
     users = (
         Workflow.members.through.objects.filter(
@@ -781,13 +808,12 @@ def _send_workflow_event(
     for (user_id, user_email) in users:
         _send_notification(
             logging=logging,
-            method_name=NotificationMethod.workflow_event,
+            method_name=NotificationMethod.event_created,
             data=data,
             user_id=user_id,
             user_email=user_email,
             account_id=account_id,
             logo_lg=logo_lg,
-            is_updated=is_updated,
             sync=True,
         )
 
@@ -802,20 +828,74 @@ def _send_workflow_event(
         for (guest_id, guest_email) in guests:
             _send_notification(
                 logging=logging,
-                method_name=NotificationMethod.workflow_event,
+                method_name=NotificationMethod.event_created,
                 data=data,
                 user_id=guest_id,
                 user_email=guest_email,
                 account_id=account_id,
                 logo_lg=logo_lg,
-                is_updated=is_updated,
                 sync=True,
             )
 
 
 @shared_task(base=NotificationTask)
-def send_workflow_event(**kwargs):
-    _send_workflow_event(**kwargs)
+def send_event_created(**kwargs):
+    _send_event_created(**kwargs)
+
+
+def _send_event_updated(
+    logging: bool,
+    account_id: int,
+    logo_lg: Optional[str],
+    data: dict,
+):
+
+    """ Send ws when workflow event updated """
+
+    users = (
+        Workflow.members.through.objects.filter(
+            workflow_id=data['workflow_id'],
+            user__status=UserStatus.ACTIVE,
+        )
+        .order_by('user_id')
+        .values_list('user_id', 'user__email')
+    )
+    for (user_id, user_email) in users:
+        _send_notification(
+            logging=logging,
+            method_name=NotificationMethod.event_updated,
+            data=data,
+            user_id=user_id,
+            user_email=user_email,
+            account_id=account_id,
+            logo_lg=logo_lg,
+            sync=True,
+        )
+
+    if data.get('task'):
+        guests = (
+            TaskPerformer.objects
+            .by_task(data['task']['id'])
+            .guests()
+            .exclude_directly_deleted()
+            .values_list('user_id', 'user__email')
+        )
+        for (guest_id, guest_email) in guests:
+            _send_notification(
+                logging=logging,
+                method_name=NotificationMethod.event_updated,
+                data=data,
+                user_id=guest_id,
+                user_email=guest_email,
+                account_id=account_id,
+                logo_lg=logo_lg,
+                sync=True,
+            )
+
+
+@shared_task(base=NotificationTask)
+def send_event_updated(**kwargs):
+    _send_event_updated(**kwargs)
 
 
 def _send_workflow_comment_watched():
@@ -837,12 +917,11 @@ def _send_workflow_comment_watched():
         )
         for event in events:
             data = WorkflowEventSerializer(instance=event).data
-            _send_workflow_event(
+            _send_event_updated(
                 data=data,
                 account_id=event.account_id,
                 logo_lg=event.account.logo_lg,
                 logging=event.account.log_api_requests,
-                is_updated=True,
             )
 
 

@@ -6,7 +6,7 @@ from src.authentication.enums import AuthTokenType
 from src.notifications.tasks import (
     send_new_task_notification,
     send_new_task_websocket,
-    send_removed_task_notification,
+    send_removed_task_deleted_notification,
 )
 from src.processes.enums import DirectlyStatus, PerformerType
 from src.processes.messages.workflow import MSG_PW_0082
@@ -118,7 +118,7 @@ class GroupPerformerService(BasePerformerService2):
             )
             recipients = list(group_users - task_performers)
             if recipients:
-                send_removed_task_notification.delay(
+                send_removed_task_deleted_notification.delay(
                     task_id=self.task.id,
                     recipients=recipients,
                     account_id=self.task.account_id,

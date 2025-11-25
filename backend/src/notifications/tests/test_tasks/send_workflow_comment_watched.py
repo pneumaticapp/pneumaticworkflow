@@ -38,7 +38,7 @@ def test_send_workflow_comment_watched__not_watched__skip(mocker):
         after_create_actions=False,
     )
     send_workflow_event_mock = mocker.patch(
-        'src.notifications.tasks._send_workflow_event',
+        'src.notifications.tasks._send_event_updated',
     )
 
     # act
@@ -76,7 +76,7 @@ def test_send_workflow_comment_watched__first_watched__ok(mocker):
         type=WorkflowEventActionType.WATCHED,
     )
     send_workflow_event_mock = mocker.patch(
-        'src.notifications.tasks._send_workflow_event',
+        'src.notifications.tasks._send_event_updated',
     )
 
     # act
@@ -137,7 +137,7 @@ def test_send_workflow_comment_watched__second_watched__ok(mocker):
         type=WorkflowEventActionType.WATCHED,
     )
     send_workflow_event_mock = mocker.patch(
-        'src.notifications.tasks._send_workflow_event',
+        'src.notifications.tasks._send_event_updated',
     )
 
     # act

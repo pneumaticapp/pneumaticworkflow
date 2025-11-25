@@ -10,11 +10,12 @@ from src.analysis.services import AnalyticService
 from src.authentication.enums import AuthTokenType
 from src.authentication.services.guest_auth import GuestJWTAuthService
 from src.notifications.tasks import (
-    send_complete_task_notification,
+    send_task_completed_notification,
+    send_removed_task_completed_notification,
     send_delayed_workflow_notification,
     send_new_task_notification,
     send_new_task_websocket,
-    send_removed_task_notification,
+    send_removed_task_deleted_notification,
     send_resumed_workflow_notification,
 )
 from src.processes.enums import (
@@ -136,11 +137,10 @@ class WorkflowActionService:
                         account_id=self.account.id,
                         task_id=task.id,
                     )
-                send_removed_task_notification.delay(
+                send_removed_task_deleted_notification.delay(
                     account_id=self.account.id,
                     task_id=task.id,
                     recipients=recipients,
-                    is_completed=False,
                 )
             WorkflowEventService.force_delay_workflow_event(
                 workflow=self.workflow,
@@ -202,12 +202,11 @@ class WorkflowActionService:
                 .not_completed()
                 .get_user_emails_and_ids_set(),
             )
-            send_removed_task_notification.delay(
+            send_removed_task_deleted_notification.delay(
                 task_id=task.id,
                 task_data=task.get_data_for_list(),
                 recipients=recipients,
                 account_id=task.account_id,
-                is_completed=False,
             )
         for task_id in self.workflow.tasks.only_ids():
             GuestJWTAuthService.deactivate_task_guest_cache(
@@ -265,11 +264,10 @@ class WorkflowActionService:
                 .not_completed()
                 .get_user_emails_and_ids_set(),
             )
-            send_removed_task_notification.delay(
+            send_removed_task_deleted_notification.delay(
                 task_id=task.id,
                 recipients=recipients,
                 account_id=task.account_id,
-                is_completed=False,
             )
 
     def end_process(
@@ -688,11 +686,10 @@ class WorkflowActionService:
             .order_by('id')
             .user_ids_emails_list()
         )
-        send_removed_task_notification.delay(
+        send_removed_task_completed_notification.delay(
             task_id=task.id,
             recipients=recipients,
             account_id=task.account_id,
-            is_completed=True,
         )
         notification_recipients = (
             UserModel.objects
@@ -703,7 +700,7 @@ class WorkflowActionService:
             .user_ids_emails_list()
         )
         if notification_recipients:
-            send_complete_task_notification.delay(
+            send_task_completed_notification.delay(
                 logging=self.account.log_api_requests,
                 author_id=self.user.id,
                 account_id=task.account_id,
@@ -826,11 +823,10 @@ class WorkflowActionService:
                     )
                     if not self.user.is_guest:
                         # Websocket notification
-                        send_removed_task_notification.delay(
+                        send_removed_task_completed_notification.delay(
                             task_id=task.id,
                             recipients=[(self.user.id, self.user.email)],
                             account_id=task.account_id,
-                            is_completed=True,
                         )
             elif self.user.is_account_owner:
                 # account owner force completion
@@ -945,11 +941,10 @@ class WorkflowActionService:
                         .not_completed()
                         .get_user_emails_and_ids_set(),
                     )
-                    send_removed_task_notification.delay(
+                    send_removed_task_deleted_notification.delay(
                         task_id=task.id,
                         recipients=recipients,
                         account_id=task.account_id,
-                        is_completed=False,
                     )
                 task.date_started = None
                 task.date_completed = None

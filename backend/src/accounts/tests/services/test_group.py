@@ -7,7 +7,7 @@ from src.analysis.events import GroupsAnalyticsEvent
 from src.authentication.enums import AuthTokenType
 from src.notifications.tasks import (
     send_new_task_websocket,
-    send_removed_task_notification,
+    send_removed_task_deleted_notification,
 )
 from src.processes.enums import (
     DirectlyStatus,
@@ -1619,19 +1619,19 @@ class TestUserGroupService:
             instance=group,
             auth_type=AuthTokenType.USER,
         )
-        send_removed_task_notification_mock = mocker.patch(
+        send_removed_task_deleted_notification_mock = mocker.patch(
             'src.notifications.tasks'
-            '.send_removed_task_notification.delay',
+            '.send_removed_task_deleted_notification.delay',
         )
 
         # act
         service._send_users_notification(
             [user_removed.id],
-            send_removed_task_notification,
+            send_removed_task_deleted_notification,
         )
 
         # assert
-        send_removed_task_notification_mock.assert_called_once_with(
+        send_removed_task_deleted_notification_mock.assert_called_once_with(
             logging=account.log_api_requests,
             task_id=task.id,
             recipients=[(user_removed.id, user_removed.email)],
@@ -1660,19 +1660,19 @@ class TestUserGroupService:
             instance=group,
             auth_type=AuthTokenType.USER,
         )
-        send_removed_task_notification_mock = mocker.patch(
+        send_removed_task_deleted_notification_mock = mocker.patch(
             'src.notifications.tasks'
-            '.send_removed_task_notification.delay',
+            '.send_removed_task_deleted_notification.delay',
         )
 
         # act
         service._send_users_notification(
             [user.id],
-            send_removed_task_notification,
+            send_removed_task_deleted_notification,
         )
 
         # assert
-        send_removed_task_notification_mock.assert_not_called()
+        send_removed_task_deleted_notification_mock.assert_not_called()
 
     def test_send_removed_users_notifications__no_tasks__not_send(
         self,
@@ -1689,19 +1689,19 @@ class TestUserGroupService:
             instance=group,
             auth_type=AuthTokenType.USER,
         )
-        send_removed_task_notification_mock = mocker.patch(
+        send_task_deleted_notification_mock = mocker.patch(
             'src.notifications.tasks.'
-            'send_removed_task_notification',
+            'send_removed_task_deleted_notification',
         )
 
         # act
         service._send_users_notification(
             [user.id],
-            send_removed_task_notification,
+            send_removed_task_deleted_notification,
         )
 
         # assert
-        send_removed_task_notification_mock.assert_not_called()
+        send_task_deleted_notification_mock.assert_not_called()
 
     def test_send_removed_users_notifications__single_workflow__send(
         self,
@@ -1741,13 +1741,13 @@ class TestUserGroupService:
         )
         send_notification_mock = mocker.patch(
             'src.notifications.tasks'
-            '.send_removed_task_notification.delay',
+            '.send_removed_task_deleted_notification.delay',
         )
 
         # act
         service._send_users_notification(
             [user_to_notify.id],
-            send_removed_task_notification,
+            send_removed_task_deleted_notification,
         )
 
         # assert
@@ -1796,13 +1796,13 @@ class TestUserGroupService:
         )
         send_notification_mock = mocker.patch(
             'src.notifications.tasks'
-            '.send_removed_task_notification.delay',
+            '.send_removed_task_deleted_notification.delay',
         )
 
         # act
         service._send_users_notification(
             [user_to_notify.id],
-            send_removed_task_notification,
+            send_removed_task_deleted_notification,
         )
 
         # assert
@@ -1862,13 +1862,13 @@ class TestUserGroupService:
         )
         send_notification_mock = mocker.patch(
             'src.notifications.tasks'
-            '.send_removed_task_notification.delay',
+            '.send_removed_task_deleted_notification.delay',
         )
 
         # act
         service._send_users_notification(
             [user_to_notify.id],
-            send_removed_task_notification,
+            send_removed_task_deleted_notification,
         )
 
         # assert

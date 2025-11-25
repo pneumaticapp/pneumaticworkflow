@@ -43,9 +43,9 @@ class TestFinishWorkflow:
             'src.authentication.services.guest_auth.'
             'GuestJWTAuthService.deactivate_task_guest_cache',
         )
-        send_removed_task_notification_mock = mocker.patch(
+        send_task_deleted_notification_mock = mocker.patch(
             'src.notifications.tasks'
-            '.send_removed_task_notification.delay',
+            '.send_removed_task_deleted_notification.delay',
         )
         api_client.token_authenticate(user)
 
@@ -72,7 +72,7 @@ class TestFinishWorkflow:
                 mocker.call(task_id=task_2.id),
             ],
         )
-        send_removed_task_notification_mock.assert_called_once_with(
+        send_task_deleted_notification_mock.assert_called_once_with(
             task_id=task_1.id,
             recipients=[(user.id, user.email)],
             account_id=task_1.account_id,
@@ -101,7 +101,7 @@ class TestFinishWorkflow:
         api_client.delete(f'/templates/{template.id}')
         mocker.patch(
             'src.notifications.tasks'
-            '.send_removed_task_notification.delay',
+            '.send_removed_task_deleted_notification.delay',
         )
 
         # act
@@ -178,9 +178,9 @@ class TestFinishWorkflow:
             'src.authentication.services.guest_auth.'
             'GuestJWTAuthService.deactivate_task_guest_cache',
         )
-        send_removed_task_notification_mock = mocker.patch(
+        send_task_deleted_notification_mock = mocker.patch(
             'src.notifications.tasks'
-            '.send_removed_task_notification.delay',
+            '.send_removed_task_deleted_notification.delay',
         )
         api_client.token_authenticate(user)
 
@@ -194,8 +194,8 @@ class TestFinishWorkflow:
         # assert
         assert response.status_code == 204
         expected_user_ids = {(user.id, user.email), (user_4.id, user_4.email)}
-        send_removed_task_notification_mock.assert_called_once()
-        call_args = send_removed_task_notification_mock.call_args[1]
+        send_task_deleted_notification_mock.assert_called_once()
+        call_args = send_task_deleted_notification_mock.call_args[1]
         assert set(call_args['recipients']) == expected_user_ids
         assert call_args['task_id'] == task_1.id
         assert call_args['account_id'] == task_1.account_id
