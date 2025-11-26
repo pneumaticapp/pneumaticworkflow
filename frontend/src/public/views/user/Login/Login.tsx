@@ -15,10 +15,13 @@ import { Button, FormikCheckbox, Header, InputField } from '../../../components/
 import { GoogleButton, MicrosoftButton, SSOButton } from '../../../components/OAuthButtons';
 import { saveUTMParams } from '../utils/utmParams';
 import { getErrorsObject } from '../../../utils/formik/getErrorsObject';
-import { isEnvGoogleAuth, isEnvMsAuth, isEnvSSOAuth, isEnvSignup } from '../../../constants/enviroment';
+import { isEnvGoogleAuth, isEnvMsAuth, isEnvSSOAuth, isEnvSignup, envSSOProvider } from '../../../constants/enviroment';
 import { ILoginProps, TLoginValues } from './types';
+import { SSOProvider } from '../../../../server/types';
 
 import styles from '../User.css';
+
+
 
 const INITIAL_VALUES_FORMIK: TLoginValues = {
   email: '',
@@ -28,6 +31,7 @@ const INITIAL_VALUES_FORMIK: TLoginValues = {
 
 export function Login({ loading, error, loginUser, setRedirectUrl }: ILoginProps) {
   const { formatMessage } = useIntl();
+  const typeSSOProvider = envSSOProvider === SSOProvider.Auth0 ? EOAuthType.SSOAuth0 : EOAuthType.SSOOkta;
 
   useEffect(() => {
     const queryString = history.location.search;
@@ -54,10 +58,11 @@ export function Login({ loading, error, loginUser, setRedirectUrl }: ILoginProps
     e.preventDefault();
 
     const result = await getOAuthUrl(type);
+    console.log('result', result);
 
-    if (result && 'redirectUri' in result) {
-      window.location.assign(result.redirectUri);
-    }
+    // if (result && 'redirectUri' in result) {
+    //   window.location.assign(result.redirectUri);
+    // }
   };
 
   const handleSubmitForm: FormikConfig<TLoginValues>['onSubmit'] = (values) => {
@@ -90,7 +95,7 @@ export function Login({ loading, error, loginUser, setRedirectUrl }: ILoginProps
         {isEnvSSOAuth && (
           <SSOButton
             label={formatMessage({ id: 'user.sign-up-sso' })}
-            onClick={handleOAuthSignInClick(EOAuthType.SSO)}
+            onClick={handleOAuthSignInClick(typeSSOProvider)}
             className={styles['oauth__button']}
           />
         )}
