@@ -1,7 +1,6 @@
 from datetime import datetime, timedelta
 from typing import Any, Dict, Optional, Union
 
-from customerio import APIClient, SendEmailRequest
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.utils import timezone
@@ -18,10 +17,10 @@ from src.logs.enums import (
 )
 from src.logs.service import AccountLogService
 from src.notifications import messages
+from src.notifications.clients.factory import get_email_client
 from src.notifications.enums import (
     EmailTemplate,
     NotificationMethod,
-    cio_template_ids,
 )
 from src.notifications.services.base import (
     NotificationService,
@@ -65,7 +64,7 @@ class EmailService(NotificationService):
             """,
         )
 
-    def _send_email_via_customerio(
+    def _send_email_via_client(
         self,
         title: str,
         user_id: int,
@@ -73,22 +72,25 @@ class EmailService(NotificationService):
         template_code: str,
         data: Dict[str, Any],
     ):
-        client = APIClient(settings.CUSTOMERIO_TRANSACTIONAL_API_KEY)
-        message_id = cio_template_ids[template_code]
-        request = SendEmailRequest(
+        email_client = get_email_client()
+        email_client.send_email(
             to=user_email,
-            transactional_message_id=message_id,
+            template_code=template_code,
             message_data=data,
-            identifiers={'id': user_id},
+            user_id=user_id,
         )
-        client.send_email(request)
         if self.logging:
+            client_name = getattr(
+                settings,
+                'EMAIL_CLIENT_TYPE',
+                'customerio',
+            ).upper()
             AccountLogService().email_message(
                 title=f'Email to: {user_email}: {title}',
                 request_data=data,
                 account_id=self.account_id,
                 status=AccountEventStatus.SUCCESS,
-                contractor='Customer.io',
+                contractor=client_name,
             )
 
     def _send(
@@ -116,7 +118,7 @@ class EmailService(NotificationService):
                 data=data,
             )
         else:
-            self._send_email_via_customerio(
+            self._send_email_via_client(
                 title=title,
                 user_id=user_id,
                 user_email=user_email,

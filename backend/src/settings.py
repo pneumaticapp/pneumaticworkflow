@@ -267,8 +267,21 @@ class Common(Configuration):
         'DEFAULT_FROM_EMAIL',
         'Pneumatic <no-reply@pneumatic.app>',
     )
-    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
     EMAIL_DATE_FORMAT = '%a, %d %b %Y %I:%M:%S %p UTC'
+    EMAIL_CLIENT_TYPE = env.get('EMAIL_CLIENT_TYPE', 'customerio')
+
+    if EMAIL_CLIENT_TYPE == 'smtp':
+        EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+    else:
+        EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+    EMAIL_HOST = env.get('EMAIL_HOST')
+    EMAIL_PORT = int(env.get('EMAIL_PORT'))
+    EMAIL_HOST_USER = env.get('EMAIL_HOST_USER')
+    EMAIL_HOST_PASSWORD = env.get('EMAIL_HOST_PASSWORD')
+    EMAIL_USE_TLS = env.get('EMAIL_USE_TLS')
+    EMAIL_USE_SSL = env.get('EMAIL_USE_SSL')
+    EMAIL_TIMEOUT = int(env.get('EMAIL_TIMEOUT'))
 
     # Customer.io
     CUSTOMERIO_WEBHOOK_API_VERSION = env.get('CIO_WEBHOOK_API_VERSION')

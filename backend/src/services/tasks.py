@@ -1,13 +1,9 @@
 from typing import Any, Dict
 
 from celery import shared_task
-from customerio import APIClient, SendEmailRequest
-from django.conf import settings
 
-from src.notifications.enums import (
-    EmailTemplate,
-    cio_template_ids,
-)
+from src.notifications.clients.factory import get_email_client
+from src.notifications.enums import EmailTemplate
 
 
 # TODO: remove in https://my.pneumatic.app/workflows/15592
@@ -18,14 +14,10 @@ def send_email_via_customerio(
     template_code: EmailTemplate.LITERALS,
     dynamic_data: Dict[str, Any],
 ):
-    client = APIClient(settings.CUSTOMERIO_TRANSACTIONAL_API_KEY)
-    message_id = cio_template_ids[template_code]
-    request = SendEmailRequest(
+    email_client = get_email_client()
+    email_client.send_email(
         to=email,
-        transactional_message_id=message_id,
+        template_code=template_code,
         message_data=dynamic_data or {},
-        identifiers={
-            'id': user_id,
-        },
+        user_id=user_id,
     )
-    client.send_email(request)
