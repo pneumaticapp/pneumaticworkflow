@@ -121,15 +121,56 @@ services:
   frontend:
     build:
       context: ./frontend
+      args:
+        - MCS_RUN_ENV=${MCS_RUN_ENV}
+        - NODE_OPTIONS=${NODE_OPTIONS}
+        - BACKEND_PRIVATE_URL=${BACKEND_PRIVATE_URL}
+        - BACKEND_URL=${BACKEND_URL}
+        - WSS_URL=${WSS_URL}
+        - FORM_DOMAIN=${FORM_DOMAIN}
+        - ENVIRONMENT=${ENVIRONMENT}
+        - LANGUAGE_CODE=${LANGUAGE_CODE}
+        - CAPTCHA=${CAPTCHA}
+        - ANALYTICS=${ANALYTICS}
+        - BILLING=${BILLING}
+        - SIGNUP=${SIGNUP}
+        - MS_AUTH=${MS_AUTH}
+        - GOOGLE_AUTH=${GOOGLE_AUTH}
+        - SSO_AUTH=${SSO_AUTH}
+        - EMAIL=${EMAIL}
+        - EMAIL_PROVIDER=${EMAIL_PROVIDER}
+        - AI=${AI}
+        - AI_PROVIDER=${AI_PROVIDER}
+        - PUSH=${PUSH}
+        - PUSH_PROVIDER=${PUSH_PROVIDER}
+        - STORAGE=${STORAGE}
+        - STORAGE_PROVIDER=${STORAGE_PROVIDER}
+    environment:
+      - MCS_RUN_ENV=${MCS_RUN_ENV}
+      - NODE_OPTIONS=${NODE_OPTIONS}
+      - BACKEND_PRIVATE_URL=${BACKEND_PRIVATE_URL}
+      - BACKEND_URL=${BACKEND_URL}
+      - WSS_URL=${WSS_URL}
+      - FORM_DOMAIN=${FORM_DOMAIN}
+      - ENVIRONMENT=${ENVIRONMENT}
+      - LANGUAGE_CODE=${LANGUAGE_CODE}
+      - CAPTCHA=${CAPTCHA}
+      - ANALYTICS=${ANALYTICS}
+      - BILLING=${BILLING}
+      - SIGNUP=${SIGNUP}
+      - MS_AUTH=${MS_AUTH}
+      - GOOGLE_AUTH=${GOOGLE_AUTH}
+      - SSO_AUTH=${SSO_AUTH}
+      - EMAIL=${EMAIL}
+      - EMAIL_PROVIDER=${EMAIL_PROVIDER}
+      - AI=${AI}
+      - AI_PROVIDER=${AI_PROVIDER}
+      - PUSH=${PUSH}
+      - PUSH_PROVIDER=${PUSH_PROVIDER}
+      - STORAGE=${STORAGE}
+      - STORAGE_PROVIDER=${STORAGE_PROVIDER}
     container_name: pneumatic-frontend
-    env_file:
-      - ./config/project.env
-      - ./config/frontend.env
-    command: >
-      sh -c "
-        npm ci --legacy-peer-deps && 
-        npm run build-client:prod && 
-        pm2-runtime start pm2.json"
+    command: pm2-runtime start pm2.json
     expose:
       - 8000
     volumes:
