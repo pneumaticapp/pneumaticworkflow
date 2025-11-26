@@ -87,8 +87,6 @@ export function WorkflowsLayoutComponent({
       .filter(Boolean) as ITemplateFilterItem[];
   }, [templatesIdsFilter, filterTemplates]);
 
-  const prevTemplatesIdsFilterRef = React.useRef<number[]>([]);
-
   useEffect(() => {
     if (workflowsView !== EWorkflowsView.Table) {
       return;
@@ -125,11 +123,8 @@ export function WorkflowsLayoutComponent({
   useEffect(() => {
     if (templatesIdsFilter.length === 0) {
       setStepsFilter([]);
-      prevTemplatesIdsFilterRef.current = [];
       return;
     }
-
-    const prevTemplatesIdsSet = new Set(prevTemplatesIdsFilterRef.current);
 
     const currentTemplateTaskIdsSet = new Set(
       selectedTemplates.flatMap((template) => template.steps.map((step) => step.id)),
@@ -153,18 +148,12 @@ export function WorkflowsLayoutComponent({
 
     const allNewTemplatesTasksLoaded = selectedTemplates.every((template) => template.steps.length > 0);
 
-    const addedTemplates = selectedTemplates.filter((template) => !prevTemplatesIdsSet.has(template.id));
     if (allNewTemplatesTasksLoaded) {
-      const allStepIds = [
-        ...prevTemplatesActualTaskIds,
-        ...addedTemplates.flatMap((template) => template.steps.map((steps) => steps.id)),
-      ];
+      setStepsFilter(prevTemplatesActualTaskIds);
 
-      setStepsFilter(allStepIds);
       if (canFilterByTemplateStep(statusFilter)) {
         updateWorkflowsTemplateStepsCounters();
       }
-      prevTemplatesIdsFilterRef.current = templatesIdsFilter;
     }
   }, [templatesIdsFilter, selectedTemplates, statusFilter]);
 
