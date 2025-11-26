@@ -57,7 +57,7 @@ class MSAuthPermission(BasePermission):
         return settings.PROJECT_CONF['MS_AUTH']
 
 
-class Auth0Permission(BasePermission):
+class SSOPermission(BasePermission):
 
     def has_permission(self, request, view):
         return settings.PROJECT_CONF['SSO_AUTH']

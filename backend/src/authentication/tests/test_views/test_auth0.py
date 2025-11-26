@@ -1,4 +1,5 @@
 import pytest
+from uuid import uuid4
 
 from src.authentication.services.auth0 import (
     Auth0Service,
@@ -6,6 +7,7 @@ from src.authentication.services.auth0 import (
 from src.authentication.services.exceptions import (
     AuthException,
 )
+from src.generics.mixins.services import EncryptionMixin
 from src.processes.tests.fixtures import (
     create_test_owner,
 )
@@ -20,7 +22,7 @@ def test_token__existent_user__authenticate(
 ):
     # arrange
     mocker.patch(
-        'src.authentication.views.auth0.Auth0Permission.'
+        'src.authentication.views.auth0.SSOPermission.'
         'has_permission',
         return_value=True,
     )
@@ -34,6 +36,10 @@ def test_token__existent_user__authenticate(
     user_agent = 'Some/Mozilla'
     user_ip = '128.18.0.99'
     token = '!@#E213'
+    domain = 'dev-123456.okta.com'
+    state_uuid = str(uuid4())
+    encrypted_domain = EncryptionMixin.encrypt(domain)
+    state = f"{state_uuid}{encrypted_domain}"
     authenticate_user_mock = mocker.patch(
         'src.authentication.services.auth0.'
         'Auth0Service.authenticate_user',
@@ -41,37 +47,28 @@ def test_token__existent_user__authenticate(
     )
     auth_response = {
         'code': '0.Ab0Aa_jrV8Qkv...9UWtS972sufQ',
-        'state': 'KvpfgTSUmwtOaPny',
+        'state': state,
     }
-
-    update_auth0_contacts_mock = mocker.patch(
-        'src.authentication.tasks.update_auth0_contacts.delay',
-    )
 
     # act
     response = api_client.get(
         '/auth/auth0/token',
         data=auth_response,
         HTTP_USER_AGENT=user_agent,
-        HTTP_X_REAL_IP=user_ip,
+        REMOTE_ADDR=user_ip,
     )
 
     # assert
     assert response.status_code == 200
     assert response.data['token'] == token
-    auth0_service_init_mock.assert_called_once_with(
-        request=mocker.ANY,
-    )
+    auth0_service_init_mock.assert_called_once_with(domain=domain)
     authenticate_user_mock.assert_called_once_with(
-        auth_response=auth_response,
-        utm_source=None,
-        utm_medium=None,
-        utm_term=None,
-        utm_content=None,
-        gclid=None,
-        utm_campaign=None,
+        code=auth_response['code'],
+        domain=domain,
+        state=auth_response['state'],
+        user_agent=user_agent,
+        user_ip=user_ip,
     )
-    update_auth0_contacts_mock.assert_called_once_with(user.id)
 
 
 def test_token__disable_auth0_auth__permission_denied(
@@ -80,7 +77,7 @@ def test_token__disable_auth0_auth__permission_denied(
 ):
     # arrange
     mocker.patch(
-        'src.authentication.views.auth0.Auth0Permission.'
+        'src.authentication.views.auth0.SSOPermission.'
         'has_permission',
         return_value=False,
     )
@@ -92,9 +89,6 @@ def test_token__disable_auth0_auth__permission_denied(
     authenticate_user_mock = mocker.patch(
         'src.authentication.services.auth0.'
         'Auth0Service.authenticate_user',
-    )
-    update_auth0_contacts_mock = mocker.patch(
-        'src.authentication.tasks.update_auth0_contacts.delay',
     )
     user_agent = 'Some/Mozilla'
     user_ip = '128.18.0.99'
@@ -108,14 +102,13 @@ def test_token__disable_auth0_auth__permission_denied(
         '/auth/auth0/token',
         data=auth_response,
         HTTP_USER_AGENT=user_agent,
-        HTTP_X_REAL_IP=user_ip,
+        REMOTE_ADDR=user_ip,
     )
 
     # assert
     assert response.status_code == 401
     auth0_service_init_mock.assert_not_called()
     authenticate_user_mock.assert_not_called()
-    update_auth0_contacts_mock.assert_not_called()
 
 
 def test_token__service_exception__validation_error(
@@ -124,7 +117,7 @@ def test_token__service_exception__validation_error(
 ):
     # arrange
     mocker.patch(
-        'src.authentication.views.auth0.Auth0Permission.'
+        'src.authentication.views.auth0.SSOPermission.'
         'has_permission',
         return_value=True,
     )
@@ -139,12 +132,13 @@ def test_token__service_exception__validation_error(
         'Auth0Service.authenticate_user',
         side_effect=AuthException(message),
     )
-    update_auth0_contacts_mock = mocker.patch(
-        'src.authentication.tasks.update_auth0_contacts.delay',
-    )
+    domain = 'dev-123456.okta.com'
+    state_uuid = str(uuid4())
+    encrypted_domain = EncryptionMixin.encrypt(domain)
+    state = f"{state_uuid}{encrypted_domain}"
     auth_response = {
         'code': '0.Ab0Aa_jrV8Qkv...9UWtS972sufQ',
-        'state': 'KvpfgTSUmwtOaPny',
+        'state': state,
     }
 
     # act
@@ -157,17 +151,14 @@ def test_token__service_exception__validation_error(
     assert response.status_code == 400
     assert response.data['code'] == ErrorCode.VALIDATION_ERROR
     assert response.data['message'] == message
-    auth0_service_init_mock.assert_called_once_with(request=mocker.ANY)
+    auth0_service_init_mock.assert_called_once_with(domain=domain)
     authenticate_user_mock.assert_called_once_with(
-        auth_response=auth_response,
-        utm_source=None,
-        utm_medium=None,
-        utm_term=None,
-        utm_content=None,
-        gclid=None,
-        utm_campaign=None,
+        code=auth_response['code'],
+        state=auth_response['state'],
+        domain=domain,
+        user_agent=mocker.ANY,
+        user_ip=mocker.ANY,
     )
-    update_auth0_contacts_mock.assert_not_called()
 
 
 def test_token__skip__code__validation_error(
@@ -176,7 +167,7 @@ def test_token__skip__code__validation_error(
 ):
     # arrange
     mocker.patch(
-        'src.authentication.views.auth0.Auth0Permission.'
+        'src.authentication.views.auth0.SSOPermission.'
         'has_permission',
         return_value=True,
     )
@@ -188,9 +179,6 @@ def test_token__skip__code__validation_error(
     authenticate_user_mock = mocker.patch(
         'src.authentication.services.auth0.'
         'Auth0Service.authenticate_user',
-    )
-    update_auth0_contacts_mock = mocker.patch(
-        'src.authentication.tasks.update_auth0_contacts.delay',
     )
     auth_response = {
         'state': 'KvpfgTSUmwtOaPny',
@@ -209,7 +197,6 @@ def test_token__skip__code__validation_error(
     assert response.data['message'] == message
     auth0_service_init_mock.assert_not_called()
     authenticate_user_mock.assert_not_called()
-    update_auth0_contacts_mock.assert_not_called()
 
 
 def test_token__code_blank__validation_error(
@@ -218,7 +205,7 @@ def test_token__code_blank__validation_error(
 ):
     # arrange
     mocker.patch(
-        'src.authentication.views.auth0.Auth0Permission.'
+        'src.authentication.views.auth0.SSOPermission.'
         'has_permission',
         return_value=True,
     )
@@ -230,9 +217,6 @@ def test_token__code_blank__validation_error(
     authenticate_user_mock = mocker.patch(
         'src.authentication.services.auth0.'
         'Auth0Service.authenticate_user',
-    )
-    update_auth0_contacts_mock = mocker.patch(
-        'src.authentication.tasks.update_auth0_contacts.delay',
     )
     auth_response = {
         'code': '',
@@ -252,7 +236,6 @@ def test_token__code_blank__validation_error(
     assert response.data['message'] == message
     auth0_service_init_mock.assert_not_called()
     authenticate_user_mock.assert_not_called()
-    update_auth0_contacts_mock.assert_not_called()
 
 
 def test_auth_uri__ok(
@@ -261,7 +244,7 @@ def test_auth_uri__ok(
 ):
     # arrange
     mocker.patch(
-        'src.authentication.views.auth0.Auth0Permission.'
+        'src.authentication.views.auth0.SSOPermission.'
         'has_permission',
         return_value=True,
     )
@@ -293,7 +276,7 @@ def test_auth_uri__disable_auth0_auth__permission_denied(
 ):
     # arrange
     mocker.patch(
-        'src.authentication.views.auth0.Auth0Permission.'
+        'src.authentication.views.auth0.SSOPermission.'
         'has_permission',
         return_value=False,
     )
@@ -322,7 +305,7 @@ def test_auth_uri__service_exception__validation_error(
 ):
     # arrange
     mocker.patch(
-        'src.authentication.views.auth0.Auth0Permission.'
+        'src.authentication.views.auth0.SSOPermission.'
         'has_permission',
         return_value=True,
     )

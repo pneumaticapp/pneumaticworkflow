@@ -90,8 +90,7 @@ export interface ITemplateTaskPerformer {
   label: string;
   type: ETaskPerformerType;
   sourceId: string | null;
-  apiName?: string;
-  id?: number;
+  apiName: string;
 }
 
 export enum ETemplateOwnerType {
@@ -196,6 +195,8 @@ export interface IExtraField {
   selections?: IExtraFieldSelection[];
   attachments?: TUploadedFile[];
   order: number;
+  userId: number | null;
+  groupId: number | null;
 }
 
 export type TExtraFieldValue = TExtraFieldSingleValue | TExtraFieldMultipleValue | TExtraFieldTimestampValue | null;
@@ -204,7 +205,6 @@ export type TExtraFieldSingleValue = string;
 export type TExtraFieldMultipleValue = string[];
 export type TExtraFieldTimestampValue = number;
 export interface IExtraFieldSelection {
-  id?: number;
   apiName: string;
   isSelected?: boolean;
   value: string;

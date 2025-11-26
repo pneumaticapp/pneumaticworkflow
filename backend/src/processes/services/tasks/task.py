@@ -187,6 +187,8 @@ class TaskService(
                             value=predicate_template.value,
                             field=predicate_template.field,
                             api_name=predicate_template.api_name,
+                            user=predicate_template.user,
+                            group=predicate_template.group,
                         ))
                     rules_tree.append((
                         Rule(api_name=rule_template.api_name),

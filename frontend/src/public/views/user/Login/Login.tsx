@@ -7,7 +7,7 @@ import { ERoutes } from '../../../constants/routes';
 import { TITLES } from '../../../constants/titles';
 import { getOAuthUrl } from '../../../api/getGoogleAuthUrl';
 import { IntlMessages } from '../../../components/IntlMessages';
-import { IUserCredentials, EAuthUserFailType } from '../../../redux/actions';
+import { EAuthUserFailType } from '../../../redux/actions';
 import { NavLink } from '../../../components/NavLink';
 import { validateEmail, validatePassword } from '../../../utils/validators';
 import { getQueryStringParams, history } from '../../../utils/history';
@@ -16,6 +16,7 @@ import { GoogleButton, MicrosoftButton, SSOButton } from '../../../components/OA
 import { saveUTMParams } from '../utils/utmParams';
 import { getErrorsObject } from '../../../utils/formik/getErrorsObject';
 import { isEnvGoogleAuth, isEnvMsAuth, isEnvSSOAuth, isEnvSignup } from '../../../constants/enviroment';
+import { ILoginProps, TLoginValues } from './types';
 
 import styles from '../User.css';
 
@@ -182,16 +183,3 @@ export function Login({ loading, error, loginUser, setRedirectUrl }: ILoginProps
     </>
   );
 }
-
-export interface ILoginProps {
-  loading?: boolean;
-  error?: EAuthUserFailType;
-  loginUser(payload: IUserCredentials): void;
-  setRedirectUrl(payload: string): void;
-}
-
-export type TLoginValues = {
-  email: string;
-  password: string;
-  rememberMe: boolean;
-};

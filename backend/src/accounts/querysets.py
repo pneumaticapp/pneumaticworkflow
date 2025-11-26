@@ -308,7 +308,7 @@ class SystemMessageQuerySet(BaseQuerySet):
 class ContactQuerySet(AccountBaseQuerySet):
 
     def active(self):
-        return self.filter(status=UserStatus.ACTIVE)
+        return self.filter(status__in=(UserStatus.ACTIVE, UserStatus.INVITED))
 
     def by_user(self, user_id):
         return self.filter(user_id=user_id)

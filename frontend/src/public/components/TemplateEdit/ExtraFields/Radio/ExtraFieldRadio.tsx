@@ -195,12 +195,12 @@ export function ExtraFieldRadio({
     editField({ selections: newOptions });
   };
 
-  const renderProcessRunOption = ({ id: optionId, value, apiName }: IExtraFieldSelection) => {
+  const renderProcessRunOption = ({ value, apiName }: IExtraFieldSelection) => {
     const isChecked = apiName === selectedOption;
 
     return (
-      <li key={optionId} className={fieldStyles['kickoff-set-field-option']}>
-        <RadioButton id={String(optionId)} title={value} onChange={handleToggleOption(apiName)} checked={isChecked} />
+      <li key={apiName} className={fieldStyles['kickoff-set-field-option']}>
+        <RadioButton id={apiName} title={value} onChange={handleToggleOption(apiName)} checked={isChecked} />
       </li>
     );
   };

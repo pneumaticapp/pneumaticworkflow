@@ -311,82 +311,6 @@ class TestListTemplate:
         assert template_two.date_created > template_one.date_created
         assert template_three.date_created > template_two.date_created
 
-    def test_list__is_template_owner__ok(self, api_client):
-
-        # arrange
-        user = create_test_user(is_admin=False)
-        another_user = create_test_user(email='another@pneumatic.app')
-        template = create_test_template(
-            user=user,
-            is_active=True,
-        )
-        create_test_template(
-            user=user,
-            is_active=False,
-        )
-        create_test_template(
-            user=another_user,
-            is_active=True,
-        )
-        api_client.token_authenticate(user)
-
-        # act
-        response = api_client.get(
-            '/templates?is_active=true&is_template_owner=true',
-        )
-
-        # assert
-        assert response.status_code == 200
-        assert len(response.data) == 1
-        assert response.data[0]['id'] == template.id
-
-    def test_list__not_account_owner_is_template_owner__ok(self, api_client):
-
-        # arrange
-        user = create_test_user(is_admin=False)
-        user_not_account_owner = create_test_user(
-            is_account_owner=False,
-            account=user.account,
-            email='aaher@pneumatic.app',
-        )
-        template = create_test_template(
-            user=user,
-            is_active=True,
-        )
-        TemplateOwner.objects.create(
-            template=template,
-            account=user.account,
-            type=OwnerType.USER,
-            user_id=user_not_account_owner.id,
-        )
-        template_2 = create_test_template(
-            user=user,
-            is_active=False,
-        )
-        TemplateOwner.objects.create(
-            template=template_2,
-            account=user.account,
-            type=OwnerType.USER,
-            user_id=user_not_account_owner.id,
-        )
-
-        another_user = create_test_user(email='another@pneumatic.app')
-        create_test_template(
-            user=another_user,
-            is_active=True,
-        )
-        api_client.token_authenticate(user_not_account_owner)
-
-        # act
-        response = api_client.get(
-            '/templates?is_active=true&is_template_owner=true',
-        )
-
-        # assert
-        assert response.status_code == 200
-        assert len(response.data) == 1
-        assert response.data[0]['id'] == template.id
-
     def test_list__search(self, api_client):
         user = create_test_user()
         template = create_test_template(user)
@@ -434,8 +358,8 @@ class TestListTemplate:
         create_test_template(user)
         search_text = 'some text'
 
-        analytics_mock = mocker.patch(
-            'src.analytics.services.AnalyticService.'
+        analysis_mock = mocker.patch(
+            'src.analysis.services.AnalyticService.'
             'search_search',
         )
         api_client.token_authenticate(user)
@@ -445,7 +369,7 @@ class TestListTemplate:
 
         # assert
         assert response.status_code == 200
-        analytics_mock.assert_called_once_with(
+        analysis_mock.assert_called_once_with(
             user=user,
             page='templates',
             search_text=search_text,

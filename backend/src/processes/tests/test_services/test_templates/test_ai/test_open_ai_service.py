@@ -1,6 +1,5 @@
 import openai.error
 import pytest
-from django.conf import settings
 from django.contrib.auth import get_user_model
 
 from src.ai.enums import (
@@ -37,21 +36,18 @@ UserModel = get_user_model()
 pytestmark = pytest.mark.django_db
 
 
-@pytest.mark.parametrize(
-    'conf', (
-        settings.CONFIGURATION_TESTING,
-        settings.CONFIGURATION_DEV,
-    ),
-)
-def test_get_response__ci_configuration__return_test_response(mocker, conf):
+def test_get_response__ci_configuration__return_test_response(mocker):
 
     # arrange
     description = 'some description'
     prompt = create_test_prompt()
     mocker.patch(
-        'src.processes.services.templates.'
-        'ai.settings.CONFIGURATION_CURRENT',
-        conf,
+        'src.processes.services.templates.ai.settings.OPENAI_API_KEY',
+        None,
+    )
+    mocker.patch(
+        'src.processes.services.templates.ai.settings.OPENAI_API_ORG',
+        None,
     )
     user = create_test_user()
     service = OpenAiService(
@@ -89,9 +85,12 @@ def test_get_response__ok(mocker):
     message_2.save()
 
     mocker.patch(
-        'src.processes.services.templates.'
-        'ai.settings.CONFIGURATION_CURRENT',
-        settings.CONFIGURATION_PROD,
+        'src.processes.services.templates.ai.settings.OPENAI_API_KEY',
+        'some_key',
+    )
+    mocker.patch(
+        'src.processes.services.templates.ai.settings.OPENAI_API_ORG',
+        'some_org',
     )
     user = create_test_user()
     service = OpenAiService(
@@ -150,9 +149,12 @@ def test_get_response__openai_error__raise_exception(mocker):
     description = 'some description'
     prompt = create_test_prompt()
     mocker.patch(
-        'src.processes.services.templates.'
-        'ai.settings.CONFIGURATION_CURRENT',
-        settings.CONFIGURATION_PROD,
+        'src.processes.services.templates.ai.settings.OPENAI_API_KEY',
+        'some_key',
+    )
+    mocker.patch(
+        'src.processes.services.templates.ai.settings.OPENAI_API_ORG',
+        'some_org',
     )
     user = create_test_user()
     service = OpenAiService(
@@ -207,9 +209,12 @@ def test_get_response__not_completion_choices__raise_exception(mocker):
     description = 'some description'
     prompt = create_test_prompt()
     mocker.patch(
-        'src.processes.services.templates.'
-        'ai.settings.CONFIGURATION_CURRENT',
-        settings.CONFIGURATION_PROD,
+        'src.processes.services.templates.ai.settings.OPENAI_API_KEY',
+        'some_key',
+    )
+    mocker.patch(
+        'src.processes.services.templates.ai.settings.OPENAI_API_ORG',
+        'some_org',
     )
     user = create_test_user()
     service = OpenAiService(
@@ -253,9 +258,12 @@ def test_get_response__finish_reason__raise_exception(mocker):
     description = 'some description'
     prompt = create_test_prompt()
     mocker.patch(
-        'src.processes.services.templates.'
-        'ai.settings.CONFIGURATION_CURRENT',
-        settings.CONFIGURATION_PROD,
+        'src.processes.services.templates.ai.settings.OPENAI_API_KEY',
+        'some_key',
+    )
+    mocker.patch(
+        'src.processes.services.templates.ai.settings.OPENAI_API_ORG',
+        'some_org',
     )
     user = create_test_user()
     service = OpenAiService(
@@ -305,9 +313,12 @@ def test_get_steps_data_from_text__ok(mocker):
 
     # arrange
     mocker.patch(
-        'src.processes.services.templates.'
-        'ai.settings.CONFIGURATION_CURRENT',
-        settings.CONFIGURATION_PROD,
+        'src.processes.services.templates.ai.settings.OPENAI_API_KEY',
+        'some_key',
+    )
+    mocker.patch(
+        'src.processes.services.templates.ai.settings.OPENAI_API_ORG',
+        'some_org',
     )
     user = create_test_user()
     service = OpenAiService(
@@ -350,9 +361,12 @@ def test_get_steps_data_from_text__limit_task_name__ok(mocker):
     # arrange
     user = create_test_user()
     mocker.patch(
-        'src.processes.services.templates.'
-        'ai.settings.CONFIGURATION_CURRENT',
-        settings.CONFIGURATION_PROD,
+        'src.processes.services.templates.ai.settings.OPENAI_API_KEY',
+        'some_key',
+    )
+    mocker.patch(
+        'src.processes.services.templates.ai.settings.OPENAI_API_ORG',
+        'some_org',
     )
     limit = TaskTemplate.NAME_MAX_LENGTH
     task_name = 'o' * (limit + 1)
@@ -375,9 +389,12 @@ def test_get_steps_data_from_text__not_delimiter__skip(mocker):
 
     # arrange
     mocker.patch(
-        'src.processes.services.templates.'
-        'ai.settings.CONFIGURATION_CURRENT',
-        settings.CONFIGURATION_PROD,
+        'src.processes.services.templates.ai.settings.OPENAI_API_KEY',
+        'some_key',
+    )
+    mocker.patch(
+        'src.processes.services.templates.ai.settings.OPENAI_API_ORG',
+        'some_org',
     )
     user = create_test_user()
     service = OpenAiService(

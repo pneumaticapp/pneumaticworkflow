@@ -1,13 +1,15 @@
 import contextlib
 
+from celery import shared_task
 from django.conf import settings
 from slack import WebClient
 
-from celery import shared_task
 from src.accounts.models import Account, User
-from src.authentication.services.auth0 import Auth0Service
 from src.authentication.services.exceptions import (
     AuthException,
+)
+from src.authentication.services.google import (
+    GoogleAuthService,
 )
 from src.authentication.services.microsoft import (
     MicrosoftAuthService,
@@ -67,8 +69,8 @@ def update_microsoft_contacts(user_id: int):
     retry_kwargs={'max_retries': 3},
     retry_backoff=True,
 )
-def update_auth0_contacts(user_id: int):
+def update_google_contacts(user_id: int):
     user = User.objects.get(id=user_id)
-    service = Auth0Service()
+    service = GoogleAuthService()
     with contextlib.suppress(AuthException):
         service.update_user_contacts(user)

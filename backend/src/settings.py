@@ -136,12 +136,12 @@ class Common(Configuration):
         'src.authentication',
         'src.applications',
         'src.notifications',
-        'src.celery',
+        'src.celery_app',
         'src.processes',
         'src.reports',
         'src.generics',
         'src.webhooks',
-        'src.analytics',
+        'src.analysis',
         'src.navigation',
         'src.pages',
         'src.faq',
@@ -245,9 +245,11 @@ class Common(Configuration):
             '06_payment__purchase__api': env.get('THROTTLE_06'),
             '07_auth_ms__token': env.get('THROTTLE_07'),
             '08_auth_ms__auth_uri': env.get('THROTTLE_08'),
-            '09_auth0__token': env.get('THROTTLE_09'),
-            '10_auth0__auth_uri': env.get('THROTTLE_10'),
+            '09_sso__token': env.get('THROTTLE_09'),
+            '10_sso__auth_uri': env.get('THROTTLE_10'),
             '11_auth__reset_password': env.get('THROTTLE_11'),
+            '12_auth_google__token': env.get('THROTTLE_12'),
+            '13_auth_google__auth_uri': env.get('THROTTLE_13'),
         },
     }
 
@@ -341,7 +343,7 @@ class Common(Configuration):
         'src.processes.tasks.webhooks',
         'src.reports.tasks',
         'src.services.tasks',
-        'src.analytics.tasks',
+        'src.analysis.tasks',
         'src.storage.tasks',
     ]
 
@@ -364,11 +366,22 @@ class Common(Configuration):
     MS_CLIENT_SECRET = env.get('MS_CLIENT_SECRET')
     MS_AUTHORITY = env.get('MS_AUTHORITY')
 
+    # Google auth
+    GOOGLE_OAUTH2_CLIENT_ID = env.get('GOOGLE_OAUTH2_CLIENT_ID')
+    GOOGLE_OAUTH2_CLIENT_SECRET = env.get('GOOGLE_OAUTH2_CLIENT_SECRET')
+    GOOGLE_OAUTH2_REDIRECT_URI = env.get('GOOGLE_OAUTH2_REDIRECT_URI')
+
     # SSO Auth0
     AUTH0_CLIENT_ID = env.get('AUTH0_CLIENT_ID')
     AUTH0_CLIENT_SECRET = env.get('AUTH0_CLIENT_SECRET')
     AUTH0_DOMAIN = env.get('AUTH0_DOMAIN')
     AUTH0_REDIRECT_URI = env.get('AUTH0_REDIRECT_URI')
+
+    # SSO Okta
+    OKTA_CLIENT_ID = env.get('OKTA_CLIENT_ID')
+    OKTA_CLIENT_SECRET = env.get('OKTA_CLIENT_SECRET')
+    OKTA_DOMAIN = env.get('OKTA_DOMAIN')
+    OKTA_REDIRECT_URI = env.get('OKTA_REDIRECT_URI')
 
     REPLICA = 'replica'
     DATABASES = {
@@ -391,6 +404,7 @@ class Common(Configuration):
         'MS_AUTH': env.get('MS_AUTH') == 'yes',
         'GOOGLE_AUTH': env.get('GOOGLE_AUTH') == 'yes',
         'SSO_AUTH': env.get('SSO_AUTH') == 'yes',
+        'SSO_PROVIDER': env.get('SSO_PROVIDER'),
         'EMAIL': env.get('EMAIL') == 'yes',
         'EMAIL_PROVIDER': env.get('EMAIL_PROVIDER'),
         'AI': env.get('AI') == 'yes',

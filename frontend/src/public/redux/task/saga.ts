@@ -79,6 +79,7 @@ import {
   formatTaskDatesForRedux,
   mapBackendWorkflowToRedux,
   mapOutputToCompleteTask,
+  getNormalizeOutputUsersToEmails,
 } from '../../utils/mappers';
 import { formatDateToISOInWorkflow, toTspDate } from '../../utils/dateTime';
 
@@ -212,7 +213,7 @@ function* loadTaskWorkflowLog({
     yield put(changeTaskWorkflowLog({ workflowId: id, items: formattedFetchedProcessLog }));
   } catch (error) {
     logger.info('fetch process log error : ', error);
-    NotificationManager.error({ message: 'workflows.fetch-in-work-process-log-fail' });
+    NotificationManager.notifyApiError(error, { message: 'workflows.fetch-in-work-process-log-fail' });
   } finally {
     yield put(changeTaskWorkflowLog({ isLoading: false }));
   }
@@ -247,7 +248,7 @@ function* saveWorkflowLogComment({ payload: { text, attachments, taskId } }: TSe
     yield put(changeTaskWorkflowLog({ items: preLoadedProcessLog }));
   } catch (error) {
     logger.info('send process log comment error:', error);
-    NotificationManager.error({ message: error.message });
+    NotificationManager.notifyApiError(error, { message: error.message });
     yield put(changeTaskWorkflowLog({ items }));
   } finally {
     yield put(setGeneralLoaderVisibility(false));
@@ -304,7 +305,12 @@ export function* setTaskCompleted({ payload: { taskId, output, viewMode } }: TSe
     yield deleteRemovedFilesFromFields(output);
 
     const mappedOutput = mapOutputToCompleteTask(output);
-    yield completeTask(taskId, mappedOutput);
+
+    const usersList: TUserListItem[] = yield select(getUsers);
+    const setUsers = new Map<number, string>(usersList.map((user) => [user.id, user.email]));
+    const normalizedOutputs = getNormalizeOutputUsersToEmails(mappedOutput, setUsers);
+
+    yield completeTask(taskId, normalizedOutputs);
     NotificationManager.success({ title: 'tasks.task-success-complete' });
 
     removeOutputFromLocalStorage(taskId);
@@ -465,7 +471,7 @@ export function* updatePerformersSaga({ type, payload: { taskId, userId } }: TUp
     yield fetchMethod();
   } catch (error) {
     yield recoverListAction([userId]);
-    NotificationManager.error({ message: getErrorMessage(error) });
+    NotificationManager.notifyApiError(error, { message: getErrorMessage(error) });
     logger.info('failed to update task performers: ', error);
   }
 }

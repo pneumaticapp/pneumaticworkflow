@@ -4,10 +4,10 @@ from typing import Optional
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 
-from src.analytics.actions import (
+from src.analysis.actions import (
     WorkflowActions,
 )
-from src.analytics.services import AnalyticService
+from src.analysis.services import AnalyticService
 from src.authentication.enums import AuthTokenType
 from src.processes.consts import WORKFLOW_NAME_LENGTH
 from src.processes.models.templates.template import Template
@@ -24,6 +24,7 @@ from src.processes.services.templates.integrations import (
 )
 from src.processes.utils.common import (
     contains_fields_vars,
+    contains_workflow_id_var,
     insert_fields_values_to_text,
     string_abbreviation,
 )
@@ -115,6 +116,16 @@ class WorkflowService(
             ancestor_task=kwargs.get('ancestor_task'),
         )
 
+        name_changed = False
+        name_template_changed = False
+        if contains_workflow_id_var(self.instance.name_template):
+            self.instance.name = insert_fields_values_to_text(
+                text=self.instance.name_template,
+                fields_values={'workflow-id': str(self.instance.id)},
+            )
+            self.instance.name_template = self.instance.name
+            name_changed, name_template_changed = True, True
+
         # TODO replace KickoffValueSerializer to KickoffValueService
         kickoff = instance_template.kickoff_instance
         kickoff_value_slz = KickoffValueSerializer(
@@ -130,7 +141,6 @@ class WorkflowService(
         kickoff_value_slz.save()
 
         # insert kickoff fields values
-        name_changed = False
         if contains_fields_vars(self.instance.name):
             fields_values = self.instance.get_kickoff_fields_values()
             self.instance.name = insert_fields_values_to_text(
@@ -146,8 +156,14 @@ class WorkflowService(
                 length=WORKFLOW_NAME_LENGTH,
             )
             name_changed = True
-        if name_changed:
-            self.instance.save(update_fields=['name'])
+
+        if name_changed or name_template_changed:
+            update_fields = []
+            if name_changed:
+                update_fields.append('name')
+            if name_template_changed:
+                update_fields.append('name_template')
+            self.instance.save(update_fields=update_fields)
         return self.instance
 
     def _create_related(

@@ -24,7 +24,6 @@ import { getTemplatesSystem } from '../../api/getSystemTemplates';
 import { getTemplatesIntegrationsStats } from '../../api/getTemplatesIntegrationsStats';
 import { TTemplateIntegrationStatsApi, TTransformedTask } from '../../types/template';
 import { logger } from '../../utils/logger';
-import { NotificationManager } from '../../components/UI/Notifications';
 import { getErrorMessage } from '../../utils/getErrorMessage';
 import { getTemplatesStore, getTemplatesSystemList } from '../selectors/templates';
 import { getTemplates } from '../../api/getTemplates';
@@ -37,6 +36,7 @@ import { getTemplatesSystemCategories } from '../../api/getSystemTemplatesCatego
 import { ITemplatesSystemCategories } from '../../types/redux';
 import { LIMIT_LOAD_SYSTEMS_TEMPLATES, LIMIT_LOAD_TEMPLATES, varibleIdRegex } from '../../constants/defaultValues';
 import { SYSTEM_FIELDS } from '../../components/Workflows/WorkflowsTablePage/WorkflowsTable/constants';
+import { NotificationManager } from '../../components/UI/Notifications';
 
 function* fetchTemplatesSystem() {
   try {
@@ -64,7 +64,7 @@ function* fetchTemplatesSystem() {
   } catch (error) {
     yield put(loadTemplatesSystemFailed());
     logger.info('fetch system templates failed : ', error);
-    NotificationManager.error({ message: getErrorMessage(error) });
+    NotificationManager.notifyApiError(error, { message: getErrorMessage(error) });
   }
 }
 
@@ -78,7 +78,7 @@ function* fetchTemplatesSystemCategories() {
   } catch (error) {
     logger.info('fetch system templates categories failed : ', error);
 
-    NotificationManager.error({ message: getErrorMessage(error) });
+    NotificationManager.notifyApiError(error, { message: getErrorMessage(error) });
   }
 }
 
@@ -104,7 +104,8 @@ function* fetchTemplates({ payload: offset = 0 }: TLoadTemplates) {
   } catch (error) {
     logger.info('fetch templates error : ', error);
     yield put(loadTemplatesFailed());
-    NotificationManager.error({ message: 'templates.fetch-fail' });
+
+    NotificationManager.notifyApiError(error, { message: 'templates.fetch-fail' });
     history.replace(ERoutes.Templates);
   }
 }
@@ -143,7 +144,7 @@ export function* handleLoadTemplateVariables(templateId: number) {
     yield put(saveTemplateTasks({ templateId, transformedTasks }));
   } catch (error) {
     logger.info('fetch template fields error: ', error);
-    NotificationManager.error({ message: getErrorMessage(error) });
+    NotificationManager.notifyApiError(error, { message: getErrorMessage(error) });
   }
 }
 
@@ -197,7 +198,6 @@ export function* fetchIsTemplateOwner() {
     const { results } = yield getTemplates({
       limit: 1,
       isActive: true,
-      isTemplateOwner: true,
     });
 
     yield put(setIsTemplateOwner(results.length > 0));

@@ -19,14 +19,12 @@ const templateResponseMock: ITemplateResponse = {
       apiName: 'task-059819',
       rawPerformers: [
         {
-          id: 10057,
           sourceId: '306',
           type: ETaskPerformerType.User,
           label: 'Yevgeniy Tsymbalyuk',
           apiName: 'raw-performer-024t43',
         },
         {
-          id: 10060,
           sourceId: null,
           type: ETaskPerformerType.WorkflowStarter,
           label: 'Workflow starter',
@@ -54,13 +52,14 @@ const templateResponseMock: ITemplateResponse = {
           isRequired: false,
           order: 0,
           apiName: 'field-27fb3d',
+          userId: null,
+          groupId: null,
         },
       ],
       conditions: [],
       apiName: 'task-4e99a7',
       rawPerformers: [
         {
-          id: 10058,
           sourceId: '306',
           type: ETaskPerformerType.User,
           label: 'Yevgeniy Tsymbalyuk',
@@ -84,7 +83,6 @@ const templateResponseMock: ITemplateResponse = {
       apiName: 'task-a889d4',
       rawPerformers: [
         {
-          id: 10066,
           sourceId: '306',
           type: ETaskPerformerType.User,
           label: 'Yevgeniy Tsymbalyuk',
@@ -108,7 +106,6 @@ const templateResponseMock: ITemplateResponse = {
       apiName: 'task-1e9ba6',
       rawPerformers: [
         {
-          id: 10067,
           sourceId: '306',
           type: ETaskPerformerType.User,
           label: 'Yevgeniy Tsymbalyuk',
@@ -133,7 +130,6 @@ const templateResponseMock: ITemplateResponse = {
       apiName: 'task-05a887',
       rawPerformers: [
         {
-          id: 10068,
           sourceId: '306',
           type: ETaskPerformerType.User,
           label: 'Yevgeniy Tsymbalyuk',

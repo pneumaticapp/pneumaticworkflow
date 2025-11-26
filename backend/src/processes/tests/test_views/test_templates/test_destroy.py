@@ -36,8 +36,8 @@ class TestDestroyTemplate:
             'src.processes.services.templates.'
             'integrations.TemplateIntegrationsService.api_request',
         )
-        analytics_mock = mocker.patch(
-            'src.analytics.services.AnalyticService'
+        analysis_mock = mocker.patch(
+            'src.analysis.services.AnalyticService'
             '.templates_deleted',
         )
 
@@ -54,7 +54,7 @@ class TestDestroyTemplate:
         assert workflow.is_legacy_template is True
         assert workflow.legacy_template_name == template.name
         template.refresh_from_db()
-        analytics_mock.assert_called_once_with(
+        analysis_mock.assert_called_once_with(
             user=user,
             template=template,
             is_superuser=False,
@@ -74,8 +74,8 @@ class TestDestroyTemplate:
             user=user,
             type_=TemplateType.ONBOARDING_ADMIN,
         )
-        analytics_mock = mocker.patch(
-            'src.analytics.services.AnalyticService'
+        analysis_mock = mocker.patch(
+            'src.analysis.services.AnalyticService'
             '.templates_deleted',
         )
         api_client.token_authenticate(user)
@@ -85,7 +85,7 @@ class TestDestroyTemplate:
 
         # assert
         assert response.status_code == 404
-        analytics_mock.assert_not_called()
+        analysis_mock.assert_not_called()
 
     def test_destroy__api_request__ok(
         self,

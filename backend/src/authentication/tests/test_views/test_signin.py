@@ -10,7 +10,7 @@ from src.accounts.models import UserInvite
 from src.authentication import messages
 from src.authentication.enums import AuthTokenType
 from src.processes.tests.fixtures import (
-    create_test_user,
+    create_test_user, create_test_admin, create_test_owner,
 )
 
 pytestmark = pytest.mark.django_db
@@ -44,10 +44,14 @@ class TestTokenObtainView:
             'username': username,
             'password': '12345',
         }
-        analytics_mock = mocker.patch(
+        analysis_mock = mocker.patch(
             'src.authentication.views.signin.'
             'AnalyticService.users_logged_in',
         )
+        mock_settings_mixins = mocker.patch(
+            'src.authentication.views.mixins.settings',
+        )
+        mock_settings_mixins.PROJECT_CONF = {'SSO_AUTH': False}
 
         # act
         response = api_client.post('/auth/token/obtain', data=data)
@@ -56,7 +60,7 @@ class TestTokenObtainView:
         assert response.status_code == 200
         assert response.data['token']
         identify_mock.assert_called_once_with(user)
-        analytics_mock.assert_called_once_with(
+        analysis_mock.assert_called_once_with(
             user=user,
             auth_type=AuthTokenType.USER,
             source=SourceType.EMAIL,
@@ -77,10 +81,14 @@ class TestTokenObtainView:
             'username': user.email,
             'password': 'YouShallNotPass',
         }
-        analytics_mock = mocker.patch(
+        analysis_mock = mocker.patch(
             'src.authentication.views.signin.'
             'AnalyticService.users_logged_in',
         )
+        mock_settings_mixins = mocker.patch(
+            'src.authentication.views.mixins.settings',
+        )
+        mock_settings_mixins.PROJECT_CONF = {'SSO_AUTH': False}
 
         # act
         response = api_client.post('/auth/token/obtain', data=data)
@@ -89,7 +97,7 @@ class TestTokenObtainView:
         assert response.status_code == 403
         assert response.data['detail'] == messages.MSG_AU_0003
         identify_mock.assert_not_called()
-        analytics_mock.assert_not_called()
+        analysis_mock.assert_not_called()
 
     def test_user_not_verified(
         self,
@@ -112,18 +120,126 @@ class TestTokenObtainView:
             'username': user.email,
             'password': '12345',
         }
-        analytics_mock = mocker.patch(
+        analysis_mock = mocker.patch(
             'src.authentication.views.signin.'
             'AnalyticService.users_logged_in',
         )
+        mock_settings_mixins = mocker.patch(
+            'src.authentication.views.mixins.settings',
+        )
+        mock_settings_mixins.PROJECT_CONF = {'SSO_AUTH': False}
 
         # act
         response = api_client.post('/auth/token/obtain', data=data)
 
         assert response.status_code == 403
         assert response.data['detail'] == messages.MSG_AU_0002(user.email)
-        analytics_mock.assert_not_called()
+        analysis_mock.assert_not_called()
         identify_mock.assert_not_called()
+
+    def test_signin__sso_enabled_not_owner__raise_exception(
+        self,
+        mocker,
+        api_client,
+    ):
+        # arrange
+        user = create_test_admin()
+        user.set_password('12345')
+        user.save()
+        settings_mock = mocker.patch(
+            'src.authentication.views.mixins.settings',
+        )
+        settings_mock.PROJECT_CONF = {'SSO_AUTH': True}
+
+        # act
+        response = api_client.post(
+            '/auth/token/obtain',
+            {
+                'username': user.email,
+                'password': '12345',
+            },
+        )
+
+        # assert
+        assert response.status_code == 400
+
+    def test_signin__sso_enabled_owner__success(
+        self,
+        mocker,
+        api_client,
+        identify_mock,
+    ):
+        # arrange
+        user = create_test_owner()
+        user.set_password('12345')
+        user.save()
+        settings_mock = mocker.patch(
+            'src.authentication.views.mixins.settings',
+        )
+        settings_mock.PROJECT_CONF = {'SSO_AUTH': True}
+        analysis_mock = mocker.patch(
+            'src.authentication.views.signin.'
+            'AnalyticService.users_logged_in',
+        )
+
+        # act
+        response = api_client.post(
+            '/auth/token/obtain',
+            {
+                'username': user.email,
+                'password': '12345',
+            },
+        )
+
+        # assert
+        assert response.status_code == 200
+        assert response.data['token']
+        identify_mock.assert_called_once_with(user)
+        analysis_mock.assert_called_once_with(
+            user=user,
+            auth_type=AuthTokenType.USER,
+            source=SourceType.EMAIL,
+            is_superuser=False,
+        )
+
+    def test_signin__sso_disabled__no_restriction(
+        self,
+        mocker,
+        api_client,
+        identify_mock,
+    ):
+        # arrange
+        user = create_test_admin()
+        user.set_password('12345')
+        user.save()
+        settings_mock = mocker.patch(
+            'src.authentication.views.mixins.settings',
+        )
+        settings_mock.PROJECT_CONF = {'SSO_AUTH': False}
+        analysis_mock = mocker.patch(
+            'src.authentication.views.signin.'
+            'AnalyticService.users_logged_in',
+        )
+
+        # act
+        response = api_client.post(
+            '/auth/token/obtain',
+            {
+                'username': user.email,
+                'password': '12345',
+            },
+        )
+
+        # assert
+        assert response.status_code == 200
+        assert response.data['token']
+        identify_mock.assert_called_once_with(user)
+        analysis_mock.assert_called_once_with(
+            user=user,
+            auth_type=AuthTokenType.USER,
+            source=SourceType.EMAIL,
+            is_superuser=False,
+        )
 
 
 class TestSuperuserView:

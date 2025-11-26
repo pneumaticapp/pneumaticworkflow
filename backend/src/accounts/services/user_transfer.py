@@ -21,8 +21,8 @@ from src.accounts.services.reassign import (
 )
 from src.accounts.services.user import UserService
 from src.accounts.tokens import TransferToken
-from src.analytics.mixins import BaseIdentifyMixin
-from src.analytics.services import AnalyticService
+from src.analysis.mixins import BaseIdentifyMixin
+from src.analysis.services import AnalyticService
 from src.authentication.enums import AuthTokenType
 from src.notifications.tasks import send_user_updated_notification
 from src.payment.stripe.service import StripeService

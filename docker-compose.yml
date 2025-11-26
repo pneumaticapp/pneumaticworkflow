@@ -52,6 +52,7 @@ services:
   backend:
     build:
       context: ./backend
+    image: pneumaticworkflow/pneumatic-backend:${TAG:-stable}
     container_name: pneumatic-backend
     command: >
       sh -c "python manage.py migrate &&
@@ -82,6 +83,7 @@ services:
   celery:
     build:
       context: ./backend
+    image: pneumaticworkflow/pneumatic-celery:${TAG:-stable}
     container_name: pneumatic-celery
     env_file:
       - ./config/project.env
@@ -90,7 +92,7 @@ services:
     volumes:
       - ./backend:/pneumatic_backend
     command: >
-      sh -c "celery -A src worker -l warning"
+      sh -c "celery --app src.celery_app:app worker -l warning"
     depends_on:
       - postgres
       - rabbitmq
@@ -102,6 +104,7 @@ services:
   celery-beat:
     build:
       context: ./backend
+    image: pneumaticworkflow/pneumatic-celery-beat:${TAG:-stable}
     container_name: pneumatic-celery-beat
     env_file:
       - ./config/project.env
@@ -109,7 +112,7 @@ services:
       - ./config/backend.env
     volumes:
       - ./backend:/pneumatic_backend
-    command: celery --pidfile= -A src beat -l warning -S django
+    command: celery --pidfile= --app src.celery_app:app beat -l warning -S django
     depends_on:
       - postgres
       - rabbitmq
@@ -121,12 +124,16 @@ services:
   frontend:
     build:
       context: ./frontend
+    image: pneumaticworkflow/pneumatic-frontend:${TAG:-stable}
     container_name: pneumatic-frontend
     env_file:
       - ./config/project.env
       - ./config/frontend.env
     command: >
-      sh -c "npm run build-client:prod && pm2-runtime start pm2.json"
+      sh -c "
+        npm ci --legacy-peer-deps && 
+        npm run build-client:prod && 
+        pm2-runtime start pm2.json"
     expose:
       - 8000
     volumes:
@@ -136,8 +143,7 @@ services:
     restart: always
 
   nginx:
-    build:
-      context: ./nginx
+    image: nginx:1.25.4
     container_name: pneumatic-nginx
     env_file:
       - ./config/project.env
