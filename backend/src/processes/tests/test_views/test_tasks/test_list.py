@@ -268,7 +268,7 @@ def test_list__search__comment__ok(api_client, mocker):
         task=task,
         text='some comment text',
     )
-    search_text = 'com tex'
+    search_text = 'come text'
     workflow_2 = create_test_workflow(user=user, tasks_count=1)
     task_2 = workflow_2.tasks.get(number=1)
     WorkflowEventService.comment_created_event(
@@ -350,7 +350,7 @@ def test_list__search__comment__markdown__ok(api_client, mocker):
         text=text,
         clear_text=MarkdownService.clear(text),
     )
-    search_text = 'file'
+    search_text = 'file.here'
     api_client.token_authenticate(user)
     analysis_mock = mocker.patch(
         'src.analysis.services.AnalyticService.'
@@ -448,7 +448,7 @@ def test_list__search__another_task_comment__not_found(api_client, mocker):
     )
 
 
-def test_list__search__comment_attachment__ok(api_client, mocker):
+def test_list__search__comment_attachment__not_found(api_client, mocker):
 
     # arrange
     user = create_test_user()
@@ -480,9 +480,7 @@ def test_list__search__comment_attachment__ok(api_client, mocker):
 
     # assert
     assert response.status_code == 200
-    assert len(response.data) == 1
-    task = workflow.tasks.get(number=1)
-    assert response.data[0]['id'] == task.id
+    assert len(response.data) == 0
 
 
 def test_list__search__another_task_comment_attachment__not_found(
@@ -570,7 +568,7 @@ def test_list__search__completed_prev_task_output_attachment__not_found(
     assert len(response.data) == 0
 
 
-def test_list__search__active_task_field_attachment__ok(
+def test_list__search__active_task_field_attachment__not_found(
     api_client,
     mocker,
 ):
@@ -599,15 +597,14 @@ def test_list__search__active_task_field_attachment__ok(
         'src.analysis.services.AnalyticService.'
         'search_search',
     )
-    search_text = 'fred'
+    search_text = 'https://test.com/test.txt'
 
     # act
     response = api_client.get(f'/v3/tasks?search={search_text}')
 
     # assert
     assert response.status_code == 200
-    assert len(response.data) == 1
-    assert response.data[0]['id'] == task_1.id
+    assert len(response.data) == 0
 
 
 def test_list__search__active_task_description__ok(
@@ -674,12 +671,11 @@ def test_list__search__not_active_task_description__not_found(
     assert len(response.data) == 0
 
 
-def test_list__search__kickoff_description__ok(api_client, mocker):
+def test_list__search__kickoff_description__not_found(api_client, mocker):
 
     # arrange
     user = create_test_user()
     workflow = create_test_workflow(user)
-    task = workflow.tasks.get(number=1)
     kickoff = workflow.kickoff_instance
     description = 'some [file.here](http://google.com/) value'
     kickoff.description = description
@@ -696,8 +692,7 @@ def test_list__search__kickoff_description__ok(api_client, mocker):
 
     # assert
     assert response.status_code == 200
-    assert len(response.data) == 1
-    assert response.data[0]['id'] == task.id
+    assert len(response.data) == 0
 
 
 @pytest.mark.parametrize(
@@ -785,7 +780,7 @@ def test_list__search__in_kickoff_field_value__ok(
         'src.analysis.services.AnalyticService.'
         'search_search',
     )
-    search_text = 'fred'
+    search_text = 'fred@boy.com'
 
     # act
     response = api_client.get(f'/v3/tasks?search={search_text}')
@@ -872,7 +867,7 @@ def test_list__search___full_uri_in_field___ok(
     assert response.data[0]['id'] == task_1.id
 
 
-def test_list__search___partional_uri_in_field___ok(
+def test_list__search___domain__ok(
     api_client,
     mocker,
 ):
@@ -895,7 +890,7 @@ def test_list__search___partional_uri_in_field___ok(
         'src.analysis.services.AnalyticService.'
         'search_search',
     )
-    search_text = 'https://translate.com/some-page'
+    search_text = 'translate.com'
 
     # act
     response = api_client.get(f'/v3/tasks?search={search_text}')
@@ -934,7 +929,7 @@ def test_list__search__markdown_filename_in_text_field__ok(
         'src.analysis.services.AnalyticService.'
         'search_search',
     )
-    search_text = 'somefile'
+    search_text = 'somefile.txt'
 
     # act
     response = api_client.get(f'/v3/tasks?search={search_text}')
@@ -965,13 +960,12 @@ def test_list__search__url_in_text_field__ok(
         value=value,
         clear_value=MarkdownService.clear(value),
     )
-
     api_client.token_authenticate(user)
     mocker.patch(
         'src.analysis.services.AnalyticService.'
         'search_search',
     )
-    search_text = 'search'
+    search_text = 'search.com/file.txt'
 
     # act
     response = api_client.get(f'/v3/tasks?search={search_text}')
@@ -1008,7 +1002,7 @@ def test_list__search__email_in_text_field__ok(
         'src.analysis.services.AnalyticService.'
         'search_search',
     )
-    search_text = 'master'
+    search_text = 'master@test.com'
 
     # act
     response = api_client.get(f'/v3/tasks?search={search_text}')

@@ -95,10 +95,7 @@ class WorkflowListQuery(
               {self._search_in(table='pt', tsquery=tsquery)}
               OR {self._search_in(table='pw', tsquery=tsquery)}
               OR {self._search_in(table='we', tsquery=tsquery)}
-              OR {self._search_in(table='t', tsquery=tsquery)}
-              OR {self._search_in(table='fa', tsquery=tsquery)}
               OR {self._search_in(table='ptf', tsquery=tsquery)}
-              OR {self._search_in(table='kv', tsquery=tsquery)}
             )
         """
 
@@ -244,24 +241,16 @@ class WorkflowListQuery(
 
         if self.search_text:
             result += """
-                LEFT JOIN processes_template t ON (
-                    t.id = pw.template_id AND
-                    t.is_deleted IS FALSE
-                )
-                LEFT JOIN processes_kickoffvalue kv ON pw.id = kv.workflow_id
                 LEFT JOIN processes_workflowevent we ON (
                     pw.id = we.workflow_id AND
                     we.is_deleted IS FALSE AND
                     we.status != 'deleted' AND
                     we.type = 5
                 )
-                LEFT JOIN processes_fileattachment fa ON (
-                    pw.id=fa.workflow_id AND
-                    fa.is_deleted is FALSE
-                )
                 LEFT JOIN processes_taskfield ptf ON (
                     ptf.workflow_id = pw.id AND
-                    ptf.is_deleted IS FALSE
+                    ptf.is_deleted IS FALSE AND
+                    ptf.kickoff_id IS NOT NULL
                 )
             """
         return result
@@ -945,17 +934,9 @@ class TaskListQuery(
             OR
             {self._search_in(table='pw', tsquery=tsquery)}
             OR
-            {self._search_in(table='au', tsquery=tsquery)}
-            OR
             {self._search_in(table='we', tsquery=tsquery)}
             OR
-            {self._search_in(table='t', tsquery=tsquery)}
-            OR
-            {self._search_in(table='fa', tsquery=tsquery)}
-            OR
             {self._search_in(table='ptf', tsquery=tsquery)}
-            OR
-            {self._search_in(table='kv', tsquery=tsquery)}
             )
         """
 
