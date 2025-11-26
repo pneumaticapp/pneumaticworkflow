@@ -58,11 +58,10 @@ export function Login({ loading, error, loginUser, setRedirectUrl }: ILoginProps
     e.preventDefault();
 
     const result = await getOAuthUrl(type);
-    console.log('result', result);
 
-    // if (result && 'redirectUri' in result) {
-    //   window.location.assign(result.redirectUri);
-    // }
+    if (result && 'redirectUri' in result) {
+      window.location.assign(result.redirectUri);
+    }
   };
 
   const handleSubmitForm: FormikConfig<TLoginValues>['onSubmit'] = (values) => {
