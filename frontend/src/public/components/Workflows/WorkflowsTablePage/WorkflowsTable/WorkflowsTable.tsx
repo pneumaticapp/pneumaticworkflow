@@ -12,7 +12,7 @@ import classNames from 'classnames';
 import { TableColumns } from './types';
 import * as ColumnCells from './Columns/Cells';
 
-import { WorkflowsPlaceholderIcon } from '../../WorkflowsPlaceholderIcon';
+import { createWorkflowsPlaceholderIcon } from '../../WorkflowsPlaceholderIcon';
 import { InputField, Loader, Placeholder } from '../../../UI';
 import { IApplicationState, IWorkflowsList } from '../../../../types/redux';
 import { TOpenWorkflowLogPopupPayload, TRemoveWorkflowFromListPayload } from '../../../../redux/actions';
@@ -118,7 +118,7 @@ export function WorkflowsTable({
   const [tableHeight, setTableHeight] = useState<number>(0);
   const [colWidths, setColWidths] = useState<Record<string, number>>({});
   const [isСhangeTemplateId, setIsСhangeTemplateId] = useState(false);
-
+  const { isMobile } = useCheckDevice();
   useEffect(() => {
     const appContainer = document.getElementById('app-container');
     if (appContainer) {
@@ -568,7 +568,7 @@ export function WorkflowsTable({
           <Placeholder
             title={formatMessage({ id: 'workflows.empty-placeholder-title' })}
             description={formatMessage({ id: 'workflows.empty-placeholder-description' })}
-            Icon={WorkflowsPlaceholderIcon}
+            Icon={() => createWorkflowsPlaceholderIcon(isMobile)}
             mood="neutral"
             containerClassName={classNames(
               styles['empty-list-placeholder'],

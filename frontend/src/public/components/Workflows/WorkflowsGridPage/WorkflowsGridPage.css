@@ -66,7 +66,7 @@
   max-width: 35.2rem;
 
   @media (--mobile) {
-    margin: 0 0 3.2rem;
+    margin: 0 0 1.6rem;
     width: 100%;
     max-width: 100%;
   }
@@ -386,6 +386,10 @@ button.dropdown-resume {
 .title {
   margin-top: 0.4rem;
   margin-bottom: 3.2rem;
+
+  @media (--mobile) {
+    margin-top: 0.2rem;
+  }
 }
 
 .user-filter-option {

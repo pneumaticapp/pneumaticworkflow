@@ -23,7 +23,8 @@ import { WorkflowCardContainer } from './WorkflowCard';
 import { WorkflowCardLoader } from './WorkflowCardLoader';
 
 import styles from './WorkflowsGridPage.css';
-import { WorkflowsPlaceholderIcon } from '../WorkflowsPlaceholderIcon';
+import { createWorkflowsPlaceholderIcon } from '../WorkflowsPlaceholderIcon';
+import { useCheckDevice } from '../../../hooks/useCheckDevice';
 
 const useSearchWithDebounce = (initialSearchText: string, onSearch: (query: string) => void, debounceTime = 800) => {
   const [searchQuery, setSearchQuery] = useState(initialSearchText);
@@ -69,7 +70,7 @@ export const WorkflowsGridPage = function Workflows({
   const { formatMessage } = useIntl();
   const { searchQuery, handleSearch } = useSearchWithDebounce(searchText, onSearch);
   const [isRunningNewWorkflow, setIsRunningNewWorkflow] = useState(false);
-
+  const { isMobile } = useCheckDevice();
   useEffect(() => {
     loadTemplatesTitles();
   }, []);
@@ -170,7 +171,7 @@ export const WorkflowsGridPage = function Workflows({
           <Placeholder
             title={formatMessage({ id: 'workflows.empty-placeholder-title' })}
             description={formatMessage({ id: 'workflows.empty-placeholder-description' })}
-            Icon={WorkflowsPlaceholderIcon}
+            Icon={() => createWorkflowsPlaceholderIcon(isMobile)}
             containerClassName={styles['empty-list-placeholder-container']}
           />
         )}

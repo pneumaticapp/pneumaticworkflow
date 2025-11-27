@@ -1,9 +1,9 @@
 /* eslint-disable max-len */
 import React from 'react';
 
-export function WorkflowsPlaceholderIcon() {
+export function WorkflowsPlaceholderIcon({ width, height }: { width: number; height: number }) {
   return (
-    <svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <svg width={width} height={height} viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
       <path
         d="M6 36C6 29.3726 11.3726 24 18 24H102C108.627 24 114 29.3726 114 36V87C114 93.6274 108.627 99 102 99H18C11.3726 99 6 93.6274 6 87V36Z"
         fill="white"
@@ -38,3 +38,7 @@ export function WorkflowsPlaceholderIcon() {
     </svg>
   );
 }
+
+export const createWorkflowsPlaceholderIcon = (isMobile: boolean) => (
+  <WorkflowsPlaceholderIcon {...(isMobile ? { width: 80, height: 80 } : { width: 120, height: 120 })} />
+);
