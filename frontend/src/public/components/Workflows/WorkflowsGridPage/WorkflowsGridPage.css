@@ -3,10 +3,10 @@
 /* stylelint-disable declaration-no-important */
 .container {
   margin: 0 auto;
-  display: flex;
   max-width: 108.8rem;
 
   @media (--mobile) {
+    display: flex;
     flex-direction: column;
     justify-content: center;
   }
@@ -41,7 +41,7 @@
 }
 
 .search-field {
-  margin-bottom: 3.2rem;
+  margin-bottom: 1.6rem;
 }
 
 .search-field__input {
@@ -50,7 +50,7 @@
 }
 
 .cards {
-  margin: 0 -1.6rem;
+  margin: 0 -0.8rem;
   display: flex;
   overflow: visible !important;
   flex-wrap: wrap;
@@ -61,9 +61,9 @@
 }
 
 .card-wrapper {
-  margin: 0 1.6rem 3.2rem;
+  margin: 0 0.8rem 1.6rem;
   width: calc(50% - 3.2rem);
-  max-width: 36rem;
+  max-width: 35.2rem;
 
   @media (--mobile) {
     margin: 0 0 3.2rem;
@@ -300,8 +300,7 @@
   min-height: 23.2rem;
   align-items: center;
   color: var(--pneumatic-color-link-dark);
-  background-color: var(--pneumatic-color-white);
-  border: 0;
+  border: 1px solid var(--pneumatic-color-link-dark);
   border-radius: 2.4rem;
   transition: all 0.1s ease-in-out;
 
@@ -385,7 +384,8 @@ button.dropdown-resume {
 }
 
 .title {
-  margin-bottom: 1.6rem;
+  margin-top: 0.4rem;
+  margin-bottom: 3.2rem;
 }
 
 .user-filter-option {
@@ -403,4 +403,8 @@ button.dropdown-resume {
 
 .card-multiple-tasks-title {
   width: fit-content;
+}
+
+.empty-list-placeholder-container {
+  margin: 1.6rem auto;
 }
