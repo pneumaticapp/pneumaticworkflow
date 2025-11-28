@@ -32,7 +32,7 @@ from src.notifications.tasks import send_user_deleted_notification
 from src.processes.services.remove_user_from_draft import (
     remove_user_from_draft,
 )
-from src.services.email import EmailService
+from src.notifications.services.email import EmailService
 
 UserModel = get_user_model()
 

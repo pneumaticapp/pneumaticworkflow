@@ -18,7 +18,7 @@ from src.reports.queries.workflows import (
 from src.reports.services.base import (
     SendDigest,
 )
-from src.services.email import EmailService
+from src.notifications.services.email import EmailService
 
 UserModel = get_user_model()
 

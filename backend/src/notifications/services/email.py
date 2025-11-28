@@ -1,7 +1,6 @@
 from datetime import datetime, timedelta
 from typing import Any, Dict, Optional, Union
 
-from customerio import APIClient, SendEmailRequest
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.utils import timezone
@@ -18,10 +17,10 @@ from src.logs.enums import (
 )
 from src.logs.service import AccountLogService
 from src.notifications import messages
+from src.notifications.clients import get_email_client
 from src.notifications.enums import (
     EmailTemplate,
     NotificationMethod,
-    cio_template_ids,
 )
 from src.notifications.services.base import (
     NotificationService,
@@ -65,7 +64,7 @@ class EmailService(NotificationService):
             """,
         )
 
-    def _send_email_via_customerio(
+    def _send_email_via_client(
         self,
         title: str,
         user_id: int,
@@ -73,36 +72,30 @@ class EmailService(NotificationService):
         template_code: str,
         data: Dict[str, Any],
     ):
-        client = APIClient(settings.CUSTOMERIO_TRANSACTIONAL_API_KEY)
-        message_id = cio_template_ids[template_code]
-        request = SendEmailRequest(
+        get_email_client().send_email(
             to=user_email,
-            transactional_message_id=message_id,
+            template_code=template_code,
             message_data=data,
-            identifiers={'id': user_id},
+            user_id=user_id,
         )
-        client.send_email(request)
         if self.logging:
             AccountLogService().email_message(
                 title=f'Email to: {user_email}: {title}',
                 request_data=data,
                 account_id=self.account_id,
                 status=AccountEventStatus.SUCCESS,
-                contractor='Customer.io',
+                contractor=settings.EMAIL_PROVIDER,
             )
 
-    def _send(
+    def _dispatch_email(
         self,
         title: str,
         user_id: int,
         user_email: str,
         template_code: str,
-        method_name: NotificationMethod,
-        data: Dict[str, str],
+        data: Dict[str, Any],
     ):
-
-        self._validate_send(method_name)
-
+        """Dispatch email based on configuration (console or client)."""
         if not settings.PROJECT_CONF['EMAIL']:
             return
 
@@ -116,13 +109,48 @@ class EmailService(NotificationService):
                 data=data,
             )
         else:
-            self._send_email_via_customerio(
+            self._send_email_via_client(
                 title=title,
                 user_id=user_id,
                 user_email=user_email,
                 template_code=template_code,
                 data=data,
             )
+
+    def _send(
+        self,
+        title: str,
+        user_id: int,
+        user_email: str,
+        template_code: str,
+        method_name: NotificationMethod,
+        data: Dict[str, str],
+    ):
+        self._validate_send(method_name)
+        self._dispatch_email(
+            title=title,
+            user_id=user_id,
+            user_email=user_email,
+            template_code=template_code,
+            data=data,
+        )
+
+    def _send_simple_email(
+        self,
+        title: str,
+        user_id: int,
+        user_email: str,
+        template_code: str,
+        data: Dict[str, Any],
+    ):
+        """Send email without NotificationMethod validation."""
+        self._dispatch_email(
+            title=title,
+            user_id=user_id,
+            user_email=user_email,
+            template_code=template_code,
+            data=data,
+        )
 
     def _handle_error(self, *args, **kwargs):
         pass
@@ -362,4 +390,146 @@ class EmailService(NotificationService):
                 'user_first_name': user_first_name,
                 'task_id': task_id,
             },
+        )
+
+    @classmethod
+    def send_user_deactivated_email(cls, user):
+        """Send user deactivated email."""
+        service = cls(
+            account_id=user.account_id,
+            logo_lg=user.account.logo_lg,
+        )
+        service._send_simple_email(
+            title='User Deactivated',
+            user_id=user.id,
+            user_email=user.email,
+            template_code=EmailTemplate.USER_DEACTIVATED,
+            data={
+                'logo_lg': user.account.logo_lg,
+            },
+        )
+
+    @classmethod
+    def send_user_transfer_email(
+        cls,
+        email: str,
+        invited_by,
+        token: str,
+        user_id: int,
+        logo_lg: Optional[str] = None,
+    ):
+        """Send user transfer email."""
+        service = cls(
+            account_id=invited_by.account_id,
+            logo_lg=logo_lg,
+        )
+        data = {
+            'token': token,
+            'sender_name': invited_by.get_full_name(),
+            'company_name': invited_by.account.name,
+            'user_id': user_id,
+            'logo_lg': logo_lg,
+        }
+        service._send_simple_email(
+            title='User Transfer',
+            user_id=user_id,
+            user_email=email,
+            template_code=EmailTemplate.USER_TRANSFER,
+            data=data,
+        )
+
+    @classmethod
+    def send_verification_email(
+        cls,
+        user,
+        token: str,
+        logo_lg: Optional[str] = None,
+    ):
+        """Send account verification email."""
+        service = cls(
+            account_id=user.account_id,
+            logo_lg=logo_lg,
+        )
+        data = {
+            'token': token,
+            'first_name': user.first_name,
+            'logo_lg': logo_lg,
+        }
+        service._send_simple_email(
+            title='Account Verification',
+            user_id=user.id,
+            user_email=user.email,
+            template_code=EmailTemplate.ACCOUNT_VERIFICATION,
+            data=data,
+        )
+
+    @classmethod
+    def send_workflows_digest_email(
+        cls,
+        user,
+        date_from,
+        date_to,
+        digest: Dict[str, Any],
+        logo_lg: Optional[str] = None,
+    ):
+        """Send workflows digest email."""
+        service = cls(
+            account_id=user.account_id,
+            logo_lg=logo_lg,
+        )
+        unsubscribe_token = str(
+            UnsubscribeEmailToken.create_token(
+                user_id=user.id,
+                email_type=MailoutType.WF_DIGEST,
+            ),
+        )
+
+        data = {
+            'date_from': date_from.strftime('%d %b'),
+            'date_to': date_to.strftime('%d %b, %Y'),
+            'unsubscribe_token': unsubscribe_token,
+            'logo_lg': logo_lg,
+            **digest,
+        }
+        service._send_simple_email(
+            title='Workflows Digest',
+            user_id=user.id,
+            user_email=user.email,
+            template_code=EmailTemplate.WORKFLOWS_DIGEST,
+            data=data,
+        )
+
+    @classmethod
+    def send_tasks_digest_email(
+        cls,
+        user,
+        date_from,
+        date_to,
+        digest: Dict[str, Any],
+        logo_lg: Optional[str] = None,
+    ):
+        """Send tasks digest email."""
+        service = cls(
+            account_id=user.account_id,
+            logo_lg=logo_lg,
+        )
+        unsubscribe_token = str(
+            UnsubscribeEmailToken.create_token(
+                user_id=user.id,
+                email_type=MailoutType.TASKS_DIGEST,
+            ),
+        )
+        data = {
+            'date_from': date_from.strftime('%d %b'),
+            'date_to': date_to.strftime('%d %b, %Y'),
+            'unsubscribe_token': unsubscribe_token,
+            'logo_lg': logo_lg,
+            **digest,
+        }
+        service._send_simple_email(
+            title='Tasks Digest',
+            user_id=user.id,
+            user_email=user.email,
+            template_code=EmailTemplate.TASKS_DIGEST,
+            data=data,
         )

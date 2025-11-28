@@ -1323,7 +1323,7 @@ def test_deactivate_actions__ok(mocker):
     # arrange
     user = create_test_user(status=UserStatus.INACTIVE)
     send_user_deactivated_email_mock = mocker.patch(
-        'src.services.email.EmailService.'
+        'src.notifications.services.email.EmailService.'
         'send_user_deactivated_email',
     )
 

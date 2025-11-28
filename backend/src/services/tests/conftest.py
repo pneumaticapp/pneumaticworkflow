@@ -5,7 +5,7 @@ from src.generics.tests.clients import PneumaticApiClient
 
 @pytest.fixture(autouse=True)
 def customerio_client(mocker):
-    return mocker.patch('src.services.tasks.APIClient')
+    return mocker.patch('customerio.APIClient')
 
 
 @pytest.fixture

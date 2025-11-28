@@ -776,7 +776,7 @@ def test_create_after_signup__need_verification__ok(mocker):
         return_value=verification_token,
     )
     send_verification_email_mock = mocker.patch(
-        'src.services.email.EmailService.'
+        'src.notifications.services.email.EmailService.'
         'send_verification_email',
     )
     inc_anonymous_user_account_counter = mocker.patch(
@@ -821,7 +821,7 @@ def test_create_after_signup__skip_verification__ok(mocker):
     )
     settings_mock.VERIFICATION_CHECK = False
     send_verification_email_mock = mocker.patch(
-        'src.services.email.EmailService.'
+        'src.notifications.services.email.EmailService.'
         'send_verification_email',
     )
     inc_anonymous_user_account_counter = mocker.patch(
