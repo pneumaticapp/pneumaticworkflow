@@ -2,7 +2,7 @@ from typing import Any, Dict
 
 from celery import shared_task
 
-from src.notifications.clients.factory import get_email_client
+from src.notifications.clients import get_email_client
 from src.notifications.enums import EmailTemplate
 
 

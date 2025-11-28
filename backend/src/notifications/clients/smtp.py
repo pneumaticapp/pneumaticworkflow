@@ -6,7 +6,7 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.mail import EmailMessage
 
-from src.notifications.clients.base import EmailClient
+from src.notifications.clients import EmailClient
 from src.notifications.enums import EmailTemplate
 from src.notifications.models import EmailTemplateModel
 
@@ -14,10 +14,6 @@ UserModel = get_user_model()
 
 
 class SMTPEmailClient(EmailClient):
-
-    def __init__(self):
-        if not settings.EMAIL_BACKEND:
-            raise ValueError('EMAIL_BACKEND error')
 
     def send_email(
         self,
@@ -27,21 +23,22 @@ class SMTPEmailClient(EmailClient):
         user_id: int,
     ) -> None:
         user = UserModel.objects.select_related('account').get(id=user_id)
-        account = user.account
 
         # Find template that includes this template_code in template_types
         template = EmailTemplateModel.objects.filter(
-            account=account,
+            account=user.account,
             template_types__contains=[template_code],
             is_active=True,
         ).first()
 
         if template:
             subject = self._render_template_string(
-                template.subject, message_data,
+                template.subject,
+                message_data,
             )
             html_content = self._render_template_string(
-                template.content, message_data,
+                template.content,
+                message_data,
             )
         else:
             subject, html_content = self._get_default_template(

@@ -14,6 +14,7 @@ from os import environ as env
 
 from configurations import Configuration, values
 from corsheaders.defaults import default_headers
+from src.notifications.enums import EmailClientProvider
 
 
 class Common(Configuration):
@@ -268,25 +269,23 @@ class Common(Configuration):
         'Pneumatic <no-reply@pneumatic.app>',
     )
     EMAIL_DATE_FORMAT = '%a, %d %b %Y %I:%M:%S %p UTC'
-    EMAIL_CLIENT_TYPE = env.get('EMAIL_CLIENT_TYPE', 'customerio')
+    EMAIL_PROVIDER = env.get('EMAIL_PROVIDER')
 
-    if EMAIL_CLIENT_TYPE == 'smtp':
-        EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-    else:
+    if EMAIL_PROVIDER == EmailClientProvider.CUSTOMERIO:
         EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+        CUSTOMERIO_WEBHOOK_API_VERSION = env.get('CIO_WEBHOOK_API_VERSION')
+        CUSTOMERIO_WEBHOOK_API_KEY = env.get('CIO_WEBHOOK_API_KEY')
+        CUSTOMERIO_TRANSACTIONAL_API_KEY = env.get('CIO_TRANSACTIONAL_API_KEY')
+    else:
+        EMAIL_HOST = env.get('EMAIL_HOST')
+        EMAIL_PORT = int(env.get('EMAIL_PORT', '587'))
+        EMAIL_HOST_USER = env.get('EMAIL_HOST_USER')
+        EMAIL_HOST_PASSWORD = env.get('EMAIL_HOST_PASSWORD')
+        EMAIL_USE_TLS = env.get('EMAIL_USE_TLS')
+        EMAIL_USE_SSL = env.get('EMAIL_USE_SSL')
+        EMAIL_TIMEOUT = int(env.get('EMAIL_TIMEOUT', '60'))
 
-    EMAIL_HOST = env.get('EMAIL_HOST')
-    EMAIL_PORT = int(env.get('EMAIL_PORT', '587'))
-    EMAIL_HOST_USER = env.get('EMAIL_HOST_USER')
-    EMAIL_HOST_PASSWORD = env.get('EMAIL_HOST_PASSWORD')
-    EMAIL_USE_TLS = env.get('EMAIL_USE_TLS')
-    EMAIL_USE_SSL = env.get('EMAIL_USE_SSL')
-    EMAIL_TIMEOUT = int(env.get('EMAIL_TIMEOUT', '60'))
 
-    # Customer.io
-    CUSTOMERIO_WEBHOOK_API_VERSION = env.get('CIO_WEBHOOK_API_VERSION')
-    CUSTOMERIO_WEBHOOK_API_KEY = env.get('CIO_WEBHOOK_API_KEY')
-    CUSTOMERIO_TRANSACTIONAL_API_KEY = env.get('CIO_TRANSACTIONAL_API_KEY')
 
     # Environments
     CONFIGURATION_DEV = 'Development'
@@ -412,7 +411,6 @@ class Common(Configuration):
         'GOOGLE_AUTH': env.get('GOOGLE_AUTH') == 'yes',
         'SSO_AUTH': env.get('SSO_AUTH') == 'yes',
         'EMAIL': env.get('EMAIL') == 'yes',
-        'EMAIL_PROVIDER': env.get('EMAIL_PROVIDER'),
         'AI': env.get('AI') == 'yes',
         'AI_PROVIDER': env.get('AI_PROVIDER'),
         'PUSH': env.get('PUSH') == 'yes',

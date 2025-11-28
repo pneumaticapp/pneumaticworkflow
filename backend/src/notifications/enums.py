@@ -59,6 +59,17 @@ class NotificationMethod:
     ]
 
 
+class EmailClientProvider:
+
+    CUSTOMERIO = 'customerio'
+    SMTP = 'smtp'
+
+    LITERALS = Literal[
+        CUSTOMERIO,
+        SMTP,
+    ]
+
+
 class EmailTemplate:
 
     RESET_PASSWORD = 'reset_password'

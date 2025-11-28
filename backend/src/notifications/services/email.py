@@ -17,7 +17,7 @@ from src.logs.enums import (
 )
 from src.logs.service import AccountLogService
 from src.notifications import messages
-from src.notifications.clients.factory import get_email_client
+from src.notifications.clients import get_email_client
 from src.notifications.enums import (
     EmailTemplate,
     NotificationMethod,
@@ -72,25 +72,19 @@ class EmailService(NotificationService):
         template_code: str,
         data: Dict[str, Any],
     ):
-        email_client = get_email_client()
-        email_client.send_email(
+        get_email_client().send_email(
             to=user_email,
             template_code=template_code,
             message_data=data,
             user_id=user_id,
         )
         if self.logging:
-            client_name = getattr(
-                settings,
-                'EMAIL_CLIENT_TYPE',
-                'customerio',
-            ).upper()
             AccountLogService().email_message(
                 title=f'Email to: {user_email}: {title}',
                 request_data=data,
                 account_id=self.account_id,
                 status=AccountEventStatus.SUCCESS,
-                contractor=client_name,
+                contractor=settings.EMAIL_PROVIDER,
             )
 
     def _send(

@@ -3,7 +3,7 @@ from typing import Any, Dict
 from customerio import APIClient, SendEmailRequest
 from django.conf import settings
 
-from src.notifications.clients.base import EmailClient
+from src.notifications.clients import EmailClient
 from src.notifications.enums import cio_template_ids
 
 
