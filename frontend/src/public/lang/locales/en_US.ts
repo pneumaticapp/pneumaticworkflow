@@ -791,6 +791,7 @@ export const enMessages = {
     ' Filter them by workflow template, step and performer, click on a workflow to see its detailed log including all comments.',
   'workflows.run-workflow': 'Run Workflow',
   'workflows.run-workflows': 'Run',
+  'workflows.run-workflow-extra-text': "You'll need to choose which template to run a new workflow from.",
   'workflows.title': 'Workflows',
   'workflows.search': 'Search workflow',
   'workflows.finished': 'Completed {date}',

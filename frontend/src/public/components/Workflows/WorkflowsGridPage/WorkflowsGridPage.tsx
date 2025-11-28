@@ -14,7 +14,11 @@ import { getRunnableWorkflow } from '../../TemplateEdit/utils/getRunnableWorkflo
 import { logger } from '../../../utils/logger';
 import { NotificationManager } from '../../UI/Notifications';
 import { getErrorMessage } from '../../../utils/getErrorMessage';
-import { InputField, Loader, Placeholder } from '../../UI';
+import {
+  InputField,
+  Loader,
+  //  Placeholder
+} from '../../UI';
 import { PageTitle } from '../../PageTitle/PageTitle';
 import { IWorkflowsProps } from '../types';
 import { EWorkflowsLoadingStatus } from '../../../types/workflow';
@@ -23,8 +27,8 @@ import { WorkflowCardContainer } from './WorkflowCard';
 import { WorkflowCardLoader } from './WorkflowCardLoader';
 
 import styles from './WorkflowsGridPage.css';
-import { createWorkflowsPlaceholderIcon } from '../WorkflowsPlaceholderIcon';
-import { useCheckDevice } from '../../../hooks/useCheckDevice';
+// import { createWorkflowsPlaceholderIcon } from '../WorkflowsPlaceholderIcon';
+// import { useCheckDevice } from '../../../hooks/useCheckDevice';
 
 const useSearchWithDebounce = (initialSearchText: string, onSearch: (query: string) => void, debounceTime = 800) => {
   const [searchQuery, setSearchQuery] = useState(initialSearchText);
@@ -70,7 +74,7 @@ export const WorkflowsGridPage = function Workflows({
   const { formatMessage } = useIntl();
   const { searchQuery, handleSearch } = useSearchWithDebounce(searchText, onSearch);
   const [isRunningNewWorkflow, setIsRunningNewWorkflow] = useState(false);
-  const { isMobile } = useCheckDevice();
+  // const { isMobile } = useCheckDevice();
   useEffect(() => {
     loadTemplatesTitles();
   }, []);
@@ -130,7 +134,7 @@ export const WorkflowsGridPage = function Workflows({
         className={classnames(styles['card-wrapper'], styles['run-workflow-card'])}
       >
         <Loader isLoading={isRunningNewWorkflow} />
-        <StartRoundIcon />
+
         <Header size="6" tag="p" className={styles['run-workflow-card__text']}>
           {templatesFilter.length !== 1
             ? formatMessage({ id: 'workflows.run-workflow' })
@@ -139,6 +143,12 @@ export const WorkflowsGridPage = function Workflows({
                 .join(', ')
                 .trim()}`}
         </Header>
+        {templatesFilter.length !== 1 && (
+          <div className={styles['run-workflow-card__extra-text']}>
+            {formatMessage({ id: 'workflows.run-workflow-extra-text' })}
+          </div>
+        )}
+        <StartRoundIcon className={styles['run-workflow-card__icon']} />
       </button>
     );
   };
@@ -165,7 +175,8 @@ export const WorkflowsGridPage = function Workflows({
         className={styles['cards']}
         scrollableTarget="app-container"
       >
-        {items.length !== 0 ? (
+        {renderRunWorkflowButton()}
+        {/* {items.length !== 0 ? (
           renderRunWorkflowButton()
         ) : (
           <Placeholder
@@ -174,8 +185,7 @@ export const WorkflowsGridPage = function Workflows({
             Icon={() => createWorkflowsPlaceholderIcon(isMobile)}
             containerClassName={styles['empty-list-placeholder-container']}
           />
-        )}
-
+        )} */}
         {items.map((item) => (
           <WorkflowCardContainer
             key={item.id}

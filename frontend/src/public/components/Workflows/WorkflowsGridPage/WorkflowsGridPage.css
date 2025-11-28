@@ -296,9 +296,9 @@
   padding: 3.2rem;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start;
   min-height: 23.2rem;
-  align-items: center;
+  align-items: flex-start;
   color: var(--pneumatic-color-link-dark);
   border: 1px solid var(--pneumatic-color-link-dark);
   border-radius: 2.4rem;
@@ -306,13 +306,12 @@
 
   &:hover {
     color: var(--pneumatic-color-link-hover);
+    border-color: var(--pneumatic-color-link-hover);
     box-shadow: 0 0.8rem 24rem rgba(98, 98, 95, 0.08);
   }
 }
 
 .run-workflow-card__text {
-  margin: 0.8rem 0 0;
-
   @supports (-webkit-line-clamp: 2) {
     display: -webkit-box;
     overflow: hidden;
@@ -322,9 +321,12 @@
     -webkit-box-orient: vertical;
   }
 }
+.run-workflow-card__extra-text {
+  margin-top: 0.8rem;
+  text-align: left;
+  color: var(--pneumatic-color-black72);
 
-.card-urgent {
-  border: 0.1rem solid var(--pneumatic-notification-1);
+  @mixin text-small normal;
 }
 
 .dropdown-delete {
@@ -411,4 +413,10 @@ button.dropdown-resume {
 
 .empty-list-placeholder-container {
   margin: 1.6rem auto;
+}
+
+.run-workflow-card__icon {
+  position: absolute;
+  right: 3.2rem;
+  bottom: 3.2rem;
 }
