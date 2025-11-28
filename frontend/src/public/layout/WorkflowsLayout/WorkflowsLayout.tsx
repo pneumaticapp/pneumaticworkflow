@@ -254,7 +254,9 @@ export function WorkflowsLayoutComponent({
     <main
       ref={workflowsMainRef}
       id="workflows-main"
-      className={workflowsView === EWorkflowsView.Table ? styles['workflows-main'] : ''}
+      className={
+        workflowsView === EWorkflowsView.Table ? styles['workflows-main-table'] : styles['workflows-main-grid']
+      }
     >
       <TopNavContainer leftContent={renderLeftContent()} isFromWorkflowsLayout workflowsView={workflowsView} />
       <WorkflowsTableProvider value={{ ref: tableViewContainerRef, isTableWiderThanScreen }}>

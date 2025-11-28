@@ -12,27 +12,28 @@
   }
 }
 
-.workflows-main {
+.workflows-main-table {
   margin-right: 0 !important;
   margin-bottom: 0 !important;
   margin-left: 7.1rem;
   overflow: scroll;
+  transition: margin-left 0.2s ease-out;
 
   @media (--mobile) {
     margin: 0 !important;
   }
 }
+.workflows-main-grid {
+  transition: margin-left 0.2s ease-out;
 
+  @media (--mobile) {
+    margin: 0 !important;
+  }
+}
 .filters {
   display: flex;
   width: 100%;
   align-items: center;
-
-  @media (--mobile) {
-    flex-direction: column;
-    align-items: stretch;
-    width: 100%;
-  }
 
   .template-filter {
     flex: 1 1 16.9rem;

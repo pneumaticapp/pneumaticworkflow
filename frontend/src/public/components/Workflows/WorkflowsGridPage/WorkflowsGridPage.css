@@ -6,6 +6,8 @@
   max-width: 108.8rem;
 
   @media (--mobile) {
+    margin-right: 1.6rem;
+    margin-left: 1.6rem;
     display: flex;
     flex-direction: column;
     justify-content: center;
