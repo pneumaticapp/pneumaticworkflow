@@ -136,8 +136,6 @@ services:
         pm2-runtime start pm2.json"
     expose:
       - 8000
-    volumes:
-      - ./frontend:/pneumatic_frontend
     networks:
       - pneumatic
     restart: always
