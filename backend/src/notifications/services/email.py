@@ -87,18 +87,15 @@ class EmailService(NotificationService):
                 contractor=settings.EMAIL_PROVIDER,
             )
 
-    def _send(
+    def _dispatch_email(
         self,
         title: str,
         user_id: int,
         user_email: str,
         template_code: str,
-        method_name: NotificationMethod,
-        data: Dict[str, str],
+        data: Dict[str, Any],
     ):
-
-        self._validate_send(method_name)
-
+        """Dispatch email based on configuration (console or client)."""
         if not settings.PROJECT_CONF['EMAIL']:
             return
 
@@ -119,6 +116,41 @@ class EmailService(NotificationService):
                 template_code=template_code,
                 data=data,
             )
+
+    def _send(
+        self,
+        title: str,
+        user_id: int,
+        user_email: str,
+        template_code: str,
+        method_name: NotificationMethod,
+        data: Dict[str, str],
+    ):
+        self._validate_send(method_name)
+        self._dispatch_email(
+            title=title,
+            user_id=user_id,
+            user_email=user_email,
+            template_code=template_code,
+            data=data,
+        )
+
+    def _send_simple_email(
+        self,
+        title: str,
+        user_id: int,
+        user_email: str,
+        template_code: str,
+        data: Dict[str, Any],
+    ):
+        """Send email without NotificationMethod validation."""
+        self._dispatch_email(
+            title=title,
+            user_id=user_id,
+            user_email=user_email,
+            template_code=template_code,
+            data=data,
+        )
 
     def _handle_error(self, *args, **kwargs):
         pass
@@ -360,20 +392,26 @@ class EmailService(NotificationService):
             },
         )
 
-    @staticmethod
-    def send_user_deactivated_email(user):
+    @classmethod
+    def send_user_deactivated_email(cls, user):
         """Send user deactivated email."""
-        get_email_client().send_email(
-            to=user.email,
+        service = cls(
+            account_id=user.account_id,
+            logo_lg=user.account.logo_lg,
+        )
+        service._send_simple_email(
+            title='User Deactivated',
+            user_id=user.id,
+            user_email=user.email,
             template_code=EmailTemplate.USER_DEACTIVATED,
-            message_data={
+            data={
                 'logo_lg': user.account.logo_lg,
             },
-            user_id=user.id,
         )
 
-    @staticmethod
+    @classmethod
     def send_user_transfer_email(
+        cls,
         email: str,
         invited_by,
         token: str,
@@ -381,6 +419,10 @@ class EmailService(NotificationService):
         logo_lg: Optional[str] = None,
     ):
         """Send user transfer email."""
+        service = cls(
+            account_id=invited_by.account_id,
+            logo_lg=logo_lg,
+        )
         data = {
             'token': token,
             'sender_name': invited_by.get_full_name(),
@@ -388,34 +430,42 @@ class EmailService(NotificationService):
             'user_id': user_id,
             'logo_lg': logo_lg,
         }
-        get_email_client().send_email(
-            to=email,
-            template_code=EmailTemplate.USER_TRANSFER,
-            message_data=data,
+        service._send_simple_email(
+            title='User Transfer',
             user_id=user_id,
+            user_email=email,
+            template_code=EmailTemplate.USER_TRANSFER,
+            data=data,
         )
 
-    @staticmethod
+    @classmethod
     def send_verification_email(
+        cls,
         user,
         token: str,
         logo_lg: Optional[str] = None,
     ):
         """Send account verification email."""
+        service = cls(
+            account_id=user.account_id,
+            logo_lg=logo_lg,
+        )
         data = {
             'token': token,
             'first_name': user.first_name,
             'logo_lg': logo_lg,
         }
-        get_email_client().send_email(
-            to=user.email,
-            template_code=EmailTemplate.ACCOUNT_VERIFICATION,
-            message_data=data,
+        service._send_simple_email(
+            title='Account Verification',
             user_id=user.id,
+            user_email=user.email,
+            template_code=EmailTemplate.ACCOUNT_VERIFICATION,
+            data=data,
         )
 
-    @staticmethod
+    @classmethod
     def send_workflows_digest_email(
+        cls,
         user,
         date_from,
         date_to,
@@ -423,6 +473,10 @@ class EmailService(NotificationService):
         logo_lg: Optional[str] = None,
     ):
         """Send workflows digest email."""
+        service = cls(
+            account_id=user.account_id,
+            logo_lg=logo_lg,
+        )
         unsubscribe_token = str(
             UnsubscribeEmailToken.create_token(
                 user_id=user.id,
@@ -437,15 +491,17 @@ class EmailService(NotificationService):
             'logo_lg': logo_lg,
             **digest,
         }
-        get_email_client().send_email(
-            to=user.email,
-            template_code=EmailTemplate.WORKFLOWS_DIGEST,
-            message_data=data,
+        service._send_simple_email(
+            title='Workflows Digest',
             user_id=user.id,
+            user_email=user.email,
+            template_code=EmailTemplate.WORKFLOWS_DIGEST,
+            data=data,
         )
 
-    @staticmethod
+    @classmethod
     def send_tasks_digest_email(
+        cls,
         user,
         date_from,
         date_to,
@@ -453,6 +509,10 @@ class EmailService(NotificationService):
         logo_lg: Optional[str] = None,
     ):
         """Send tasks digest email."""
+        service = cls(
+            account_id=user.account_id,
+            logo_lg=logo_lg,
+        )
         unsubscribe_token = str(
             UnsubscribeEmailToken.create_token(
                 user_id=user.id,
@@ -466,9 +526,10 @@ class EmailService(NotificationService):
             'logo_lg': logo_lg,
             **digest,
         }
-        get_email_client().send_email(
-            to=user.email,
-            template_code=EmailTemplate.TASKS_DIGEST,
-            message_data=data,
+        service._send_simple_email(
+            title='Tasks Digest',
             user_id=user.id,
+            user_email=user.email,
+            template_code=EmailTemplate.TASKS_DIGEST,
+            data=data,
         )
