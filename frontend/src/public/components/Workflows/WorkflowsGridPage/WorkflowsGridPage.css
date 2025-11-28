@@ -227,7 +227,11 @@
   font-family: Nunito, sans-serif;
   font-size: 1.5rem;
   line-height: 2rem;
-  color: var(--pneumatic-color-black72);
+  color: var(--pneumatic-color-black100);
+}
+
+.card-extra-text {
+  color: var(--pneumatic-color-black32);
 }
 
 .progress-bar-container {
