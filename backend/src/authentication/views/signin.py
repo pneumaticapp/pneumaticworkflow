@@ -27,7 +27,7 @@ from src.authentication.services.user_auth import AuthService
 from src.generics.mixins.views import (
     BaseResponseMixin,
 )
-from src.services.email import EmailService
+from src.notifications.services.email import EmailService
 
 UserModel = get_user_model()
 

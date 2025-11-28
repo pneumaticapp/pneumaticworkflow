@@ -47,7 +47,7 @@ from src.payment.tasks import increase_plan_users
 from src.processes.services.system_workflows import (
     SystemWorkflowService,
 )
-from src.services.email import EmailService
+from src.notifications.services.email import EmailService
 
 UserModel = get_user_model()
 

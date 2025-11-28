@@ -359,3 +359,116 @@ class EmailService(NotificationService):
                 'task_id': task_id,
             },
         )
+
+    @staticmethod
+    def send_user_deactivated_email(user):
+        """Send user deactivated email."""
+        get_email_client().send_email(
+            to=user.email,
+            template_code=EmailTemplate.USER_DEACTIVATED,
+            message_data={
+                'logo_lg': user.account.logo_lg,
+            },
+            user_id=user.id,
+        )
+
+    @staticmethod
+    def send_user_transfer_email(
+        email: str,
+        invited_by,
+        token: str,
+        user_id: int,
+        logo_lg: Optional[str] = None,
+    ):
+        """Send user transfer email."""
+        data = {
+            'token': token,
+            'sender_name': invited_by.get_full_name(),
+            'company_name': invited_by.account.name,
+            'user_id': user_id,
+            'logo_lg': logo_lg,
+        }
+        get_email_client().send_email(
+            to=email,
+            template_code=EmailTemplate.USER_TRANSFER,
+            message_data=data,
+            user_id=user_id,
+        )
+
+    @staticmethod
+    def send_verification_email(
+        user,
+        token: str,
+        logo_lg: Optional[str] = None,
+    ):
+        """Send account verification email."""
+        data = {
+            'token': token,
+            'first_name': user.first_name,
+            'logo_lg': logo_lg,
+        }
+        get_email_client().send_email(
+            to=user.email,
+            template_code=EmailTemplate.ACCOUNT_VERIFICATION,
+            message_data=data,
+            user_id=user.id,
+        )
+
+    @staticmethod
+    def send_workflows_digest_email(
+        user,
+        date_from,
+        date_to,
+        digest: Dict[str, Any],
+        logo_lg: Optional[str] = None,
+    ):
+        """Send workflows digest email."""
+        unsubscribe_token = str(
+            UnsubscribeEmailToken.create_token(
+                user_id=user.id,
+                email_type=MailoutType.WF_DIGEST,
+            ),
+        )
+
+        data = {
+            'date_from': date_from.strftime('%d %b'),
+            'date_to': date_to.strftime('%d %b, %Y'),
+            'unsubscribe_token': unsubscribe_token,
+            'logo_lg': logo_lg,
+            **digest,
+        }
+        get_email_client().send_email(
+            to=user.email,
+            template_code=EmailTemplate.WORKFLOWS_DIGEST,
+            message_data=data,
+            user_id=user.id,
+        )
+
+    @staticmethod
+    def send_tasks_digest_email(
+        user,
+        date_from,
+        date_to,
+        digest: Dict[str, Any],
+        logo_lg: Optional[str] = None,
+    ):
+        """Send tasks digest email."""
+        unsubscribe_token = str(
+            UnsubscribeEmailToken.create_token(
+                user_id=user.id,
+                email_type=MailoutType.TASKS_DIGEST,
+            ),
+        )
+        data = {
+            'date_from': date_from.strftime('%d %b'),
+            'date_to': date_to.strftime('%d %b, %Y'),
+            'unsubscribe_token': unsubscribe_token,
+            'logo_lg': logo_lg,
+            **digest,
+        }
+        get_email_client().send_email(
+            to=user.email,
+            template_code=EmailTemplate.TASKS_DIGEST,
+            message_data=data,
+            user_id=user.id,
+        )

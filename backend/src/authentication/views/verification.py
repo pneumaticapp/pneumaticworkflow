@@ -24,7 +24,7 @@ from src.generics.mixins.views import (
 from src.generics.permissions import (
     UserIsAuthenticated,
 )
-from src.services.email import EmailService
+from src.notifications.services.email import EmailService
 from src.utils.validation import raise_validation_error
 
 UserModel = get_user_model()
