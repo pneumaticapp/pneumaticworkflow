@@ -15,7 +15,7 @@ import OutsideClickHandler from 'react-outside-click-handler';
 const ScrollBar = PerfectScrollbar as unknown as Function;
 
 type TOptionId = number | string | null;
-type TOptionBase<IdKey extends string, LabelKey extends string> = {
+export type TOptionBase<IdKey extends string, LabelKey extends string> = {
   [key in IdKey]: TOptionId;
 } & {
   [key in LabelKey]: string | ReactNode;
@@ -25,6 +25,7 @@ type TOptionBase<IdKey extends string, LabelKey extends string> = {
   count?: number;
   subTitle?: string;
   searchByText?: string;
+  isTitle?: boolean;
 };
 
 interface IFilterSelectCommonProps<
@@ -34,9 +35,13 @@ interface IFilterSelectCommonProps<
 > {
   isLoading?: boolean;
   options: TOption[];
+  groupedOptions?: Map<number, { title: string; options: TOption[] }>;
+  flatGroupedOptions?: TOption[];
   isSearchShown?: boolean;
+  isDisabled?: boolean;
   noValueLabel?: string;
   placeholderText: string;
+  searchPlaceholder?: string;
   toggleClassName?: string;
   arrowClassName?: string;
   menuClassName?: string;
@@ -81,18 +86,22 @@ export function FilterSelect<
     optionLabelKey,
     isLoading,
     isSearchShown,
+    isDisabled,
     noValueLabel,
     placeholderText,
+    searchPlaceholder,
     toggleClassName,
     arrowClassName,
     menuClassName,
     options,
+    groupedOptions,
+    flatGroupedOptions,
     containerClassname,
     selectAllLabel,
     resetFilter,
     Icon,
   } = props;
-
+  const allOptions = flatGroupedOptions ? flatGroupedOptions : options;
   const [searchText, setSearchText] = useState('');
   const [isSelectAll, setIsSelectAll] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -121,7 +130,7 @@ export function FilterSelect<
       ? [...props.selectedOptions, optionId]
       : props.selectedOptions.filter((selectedOption) => selectedOption !== optionId);
 
-    const mapSelectedOption = options.filter((item) => newSelectedOptions.includes(item[optionIdKey]));
+    const mapSelectedOption = allOptions.filter((item) => newSelectedOptions.includes(item[optionIdKey]));
 
     props.onChange(newSelectedOptions, mapSelectedOption);
   };
@@ -141,6 +150,7 @@ export function FilterSelect<
             onClear={handleClearSearchText}
             fieldSize="md"
             autoFocus
+            placeholder={searchPlaceholder}
           />
         </div>
         <hr className={styles['search__separator']} />
@@ -148,10 +158,8 @@ export function FilterSelect<
     );
   };
 
-  const getFilteredValues = () => {
-    const normalizedSearchText = searchText.toLowerCase();
-
-    if (!searchText) {
+  function getFilteredOptions(options: TOption[], normalizedSearchText: string): TOption[] {
+    if (!normalizedSearchText) {
       return options;
     }
 
@@ -167,6 +175,34 @@ export function FilterSelect<
 
       return (optionLabel as string).toLowerCase().includes(normalizedSearchText);
     });
+  }
+
+  const getFilteredValues = () => {
+    const normalizedSearchText = searchText.toLowerCase();
+
+    if (!groupedOptions) {
+      if (!searchText) {
+        return options;
+      }
+      return getFilteredOptions(options, normalizedSearchText);
+    }
+
+    const filteredValues: (TOption | string)[] = [];
+
+    Array.from(groupedOptions.entries()).forEach(([_, group]) => {
+      if (!searchText) {
+        filteredValues.push(group.title, ...group.options);
+      } else {
+        const filteredOptions: TOption[] = getFilteredOptions(group.options, normalizedSearchText);
+        if (filteredOptions.length === 0) {
+          return;
+        }
+
+        filteredValues.push(group.title, ...filteredOptions);
+      }
+    });
+
+    return filteredValues;
   };
 
   const renderDropdownList = () => {
@@ -196,7 +232,7 @@ export function FilterSelect<
       );
     };
 
-    const rendeSelectAllOption = () => {
+    const renderSelectAllOption = () => {
       if (!props.isMultiple || !selectAllLabel) {
         return null;
       }
@@ -205,8 +241,8 @@ export function FilterSelect<
         if (!isSelectAll) {
           setIsSelectAll(true);
           props.onChange(
-            options.map((option) => option[optionIdKey]),
-            options,
+            allOptions.map((option) => option[optionIdKey]),
+            allOptions,
           );
         } else {
           setIsSelectAll(false);
@@ -214,13 +250,30 @@ export function FilterSelect<
         }
       };
 
+      const areAllSelected =
+        props.isMultiple &&
+        Array.isArray(props.selectedOptions) &&
+        allOptions.length > 0 &&
+        props.selectedOptions.length === allOptions.length;
+
       return (
         <DropdownItem
           className={classnames('dropdown-item-sm', styles['value-item'], styles['value-item__select-all'])}
           onClick={handleSelectAll}
           toggle={false}
         >
-          <span>{selectAllLabel}</span>
+          <Checkbox
+            // Required improvements:
+            //1. Clarify the desynchronization issue with the default
+            //2. Identical backend request when working with a checkbox
+            checked={isSelectAll || areAllSelected}
+            title={<span>{selectAllLabel}</span>}
+            onClick={(e) => e.stopPropagation()}
+            onChange={() => {}}
+            containerClassName={styles['dropdown-item-check']}
+            labelClassName={styles['dropdown-item-check__label']}
+            titleClassName={styles['dropdown-item-check__title']}
+          />
         </DropdownItem>
       );
     };
@@ -228,26 +281,32 @@ export function FilterSelect<
     return (
       <>
         {props.selectedOption && renderResetOption()}
-        {rendeSelectAllOption()}
+        {renderSelectAllOption()}
         {foundValues.map((option) => {
-          const label = (
-            <div className={styles['dropdown-item-content']}>
-              <div className={styles['dropdown-item-content__text']}>{option[optionLabelKey]}</div>
+          let label: ReactNode | null = null;
 
-              {typeof option.count !== 'undefined' && (
-                <span className={styles['dropdown-item-content__count']}>{option.count}</span>
-              )}
-            </div>
-          );
+          if (typeof option !== 'string') {
+            label = (
+              <div className={styles['dropdown-item-content']}>
+                <div className={styles['dropdown-item-content__text']}>{option[optionLabelKey]}</div>
+
+                {typeof option.count !== 'undefined' && (
+                  <span className={styles['dropdown-item-content__count']}>{option.count}</span>
+                )}
+              </div>
+            );
+          } else {
+            label = <div className={styles['dropdown-item-content__title']}>{option}</div>;
+          }
 
           return (
             <DropdownItem
-              key={option[optionIdKey]}
+              key={typeof option !== 'string' ? option[optionIdKey] : option}
               className={classnames('dropdown-item-sm', styles['value-item'])}
-              onClick={handleChange(option)}
+              onClick={typeof option !== 'string' ? handleChange(option) : () => {}}
               toggle={!props.isMultiple}
             >
-              {props.isMultiple ? (
+              {props.isMultiple && typeof option !== 'string' ? (
                 <Checkbox
                   checked={props.selectedOptions.includes(option[optionIdKey])}
                   title={label}
@@ -268,6 +327,9 @@ export function FilterSelect<
   };
 
   const handleToggleDropdown = () => {
+    if (isDisabled) {
+      return;
+    }
     setIsDropdownOpen(!isDropdownOpen);
   };
 
@@ -288,13 +350,19 @@ export function FilterSelect<
   return (
     <OutsideClickHandler disabled={!isDropdownOpen} onOutsideClick={handleToggleDropdown}>
       <Dropdown
-        className={classnames('dropdown-menu-right dropdown', styles['container'], containerClassname)}
+        className={classnames(
+          'dropdown-menu-right dropdown',
+          styles['container'],
+          containerClassname,
+          isDisabled && styles['filter-select_disabled'],
+        )}
         toggle={handleToggleDropdown}
         isOpen={isDropdownOpen}
         onClick={(event) => event.stopPropagation()}
       >
         <DropdownToggle
           tag="button"
+          disabled={!!isDisabled}
           className={classnames(
             styles['active-value'],
             toggleClassName,
@@ -302,10 +370,14 @@ export function FilterSelect<
           )}
         >
           {Icon && <Icon className={styles['icon']} />}
-          <span className={styles['active-value__text']}>{props.renderPlaceholder(options)}</span>
+          <span className={styles['active-value__text']}>{props.renderPlaceholder(allOptions)}</span>
           {props.isMultiple && isArrayWithItems(props.selectedOptions) ? (
             <span
+              aria-disabled={!!isDisabled}
               onClick={(e) => {
+                if (isDisabled) {
+                  return;
+                }
                 e.stopPropagation();
                 resetFilter();
               }}
@@ -315,6 +387,9 @@ export function FilterSelect<
               role="button"
               tabIndex={0}
               onKeyDown={(e) => {
+                if (isDisabled) {
+                  return;
+                }
                 if (e.key === 'Enter' || e.key === ' ') {
                   e.preventDefault();
                   e.stopPropagation();

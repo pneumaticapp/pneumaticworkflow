@@ -159,10 +159,6 @@
   align-items: center;
 }
 
-.user-avatar {
-  flex-shrink: 0;
-}
-
 .user-name {
   margin: 0 0.8rem;
   overflow: hidden;
@@ -251,6 +247,9 @@
   text-align: center;
 }
 
-.column-header__template-name {
+.column-header__template-name,
+.column-header__starter-name,
+.column-header__performer-name,
+.column-header__task-name {
   @mixin text-truncate;
 }

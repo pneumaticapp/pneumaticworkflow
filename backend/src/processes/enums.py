@@ -411,6 +411,14 @@ class TaskStatus:
         (SKIPPED, SKIPPED),
     )
 
+    LITERALS = Literal[
+        PENDING,
+        ACTIVE,
+        COMPLETED,
+        DELAYED,
+        SKIPPED,
+    ]
+
 
 class TemplateIntegrationType:
 
