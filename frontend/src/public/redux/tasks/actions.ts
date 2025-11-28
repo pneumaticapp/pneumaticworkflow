@@ -1,7 +1,4 @@
-import {
-  ITaskList,
-  ITypedReduxAction,
-} from '../../types/redux';
+import { ITaskList, ITypedReduxAction } from '../../types/redux';
 import { actionGenerator } from '../../utils/redux';
 import { ETaskListCompletionStatus, ETaskListSorting, ITaskListItem, ITemplateStep } from '../../types/tasks';
 import { ITemplateTitle } from '../../types/template';
@@ -40,121 +37,168 @@ export const enum ETaskListActions {
 }
 
 export type TChangeTaskListSorting = ITypedReduxAction<ETaskListActions.ChangeTaskListSorting, ETaskListSorting>;
-export const changeTasksSorting: (payload: ETaskListSorting) => TChangeTaskListSorting =
-  actionGenerator<ETaskListActions.ChangeTaskListSorting, ETaskListSorting>(ETaskListActions.ChangeTaskListSorting);
+export const changeTasksSorting: (payload: ETaskListSorting) => TChangeTaskListSorting = actionGenerator<
+  ETaskListActions.ChangeTaskListSorting,
+  ETaskListSorting
+>(ETaskListActions.ChangeTaskListSorting);
 
-export type TChangeTaskListCompletionStatus =
-  ITypedReduxAction<ETaskListActions.ChangeTaskListCompletionStatus, ETaskListCompletionStatus>;
+export type TChangeTaskListCompletionStatus = ITypedReduxAction<
+  ETaskListActions.ChangeTaskListCompletionStatus,
+  ETaskListCompletionStatus
+>;
 export const changeTasksCompleteStatus: (payload: ETaskListCompletionStatus) => TChangeTaskListCompletionStatus =
-  actionGenerator<ETaskListActions.ChangeTaskListCompletionStatus, ETaskListCompletionStatus>
-  (ETaskListActions.ChangeTaskListCompletionStatus);
+  actionGenerator<ETaskListActions.ChangeTaskListCompletionStatus, ETaskListCompletionStatus>(
+    ETaskListActions.ChangeTaskListCompletionStatus,
+  );
 
 export type TResetTasks = ITypedReduxAction<ETaskListActions.ResetTasks, void>;
-export const resetTasks: (payload?: void) => TResetTasks =
-  actionGenerator<ETaskListActions.ResetTasks, void>(ETaskListActions.ResetTasks);
+export const resetTasks: (payload?: void) => TResetTasks = actionGenerator<ETaskListActions.ResetTasks, void>(
+  ETaskListActions.ResetTasks,
+);
 
 export type TResetTasksFilters = ITypedReduxAction<ETaskListActions.ResetTasksFilters, void>;
-export const resetTasksFilters: (payload?: void) => TResetTasksFilters =
-  actionGenerator<ETaskListActions.ResetTasksFilters, void>(ETaskListActions.ResetTasksFilters);
+export const resetTasksFilters: (payload?: void) => TResetTasksFilters = actionGenerator<
+  ETaskListActions.ResetTasksFilters,
+  void
+>(ETaskListActions.ResetTasksFilters);
 
 type TChangeTaskListPayload = {
   taskList: ITaskList;
   emptyListStatus?: ETaskListStatus;
 };
 export type TChangeTaskList = ITypedReduxAction<ETaskListActions.ChangeTaskList, TChangeTaskListPayload>;
-export const changeTaskList: (payload: TChangeTaskListPayload) => TChangeTaskList =
-  actionGenerator<ETaskListActions.ChangeTaskList, TChangeTaskListPayload>
-  (ETaskListActions.ChangeTaskList);
+export const changeTaskList: (payload: TChangeTaskListPayload) => TChangeTaskList = actionGenerator<
+  ETaskListActions.ChangeTaskList,
+  TChangeTaskListPayload
+>(ETaskListActions.ChangeTaskList);
 
 type TPatchTaskInListPayload = {
   taskId: number;
-  task: Partial<ITaskListItem>
+  task: Partial<ITaskListItem>;
 };
 
 export type TPatchTaskInList = ITypedReduxAction<ETaskListActions.PatchTaskInList, TPatchTaskInListPayload>;
-export const patchTaskInList: (payload: TPatchTaskInListPayload) => TPatchTaskInList =
-  actionGenerator<ETaskListActions.PatchTaskInList, TPatchTaskInListPayload>
-  (ETaskListActions.PatchTaskInList);
+export const patchTaskInList: (payload: TPatchTaskInListPayload) => TPatchTaskInList = actionGenerator<
+  ETaskListActions.PatchTaskInList,
+  TPatchTaskInListPayload
+>(ETaskListActions.PatchTaskInList);
 
 export type TSetTaskListDetailedTaskId = ITypedReduxAction<ETaskListActions.SetTaskListDetailedTaskId, number>;
-export const setTaskListDetailedTaskId: (payload: number) => TSetTaskListDetailedTaskId =
-  actionGenerator<ETaskListActions.SetTaskListDetailedTaskId, number>
-  (ETaskListActions.SetTaskListDetailedTaskId);
+export const setTaskListDetailedTaskId: (payload: number) => TSetTaskListDetailedTaskId = actionGenerator<
+  ETaskListActions.SetTaskListDetailedTaskId,
+  number
+>(ETaskListActions.SetTaskListDetailedTaskId);
 
 export type TChangeTasksSearchText = ITypedReduxAction<ETaskListActions.ChangeTasksSearchText, string>;
-export const changeTasksSearchText: (payload: string) => TChangeTasksSearchText =
-  actionGenerator<ETaskListActions.ChangeTasksSearchText, string>
-  (ETaskListActions.ChangeTasksSearchText);
+export const changeTasksSearchText: (payload: string) => TChangeTasksSearchText = actionGenerator<
+  ETaskListActions.ChangeTasksSearchText,
+  string
+>(ETaskListActions.ChangeTasksSearchText);
 
 export type TLoadTasksCount = ITypedReduxAction<ETaskListActions.LoadTasksCount, void>;
-export const loadTasksCount: (payload?: void) => TLoadTasksCount =
-  actionGenerator<ETaskListActions.LoadTasksCount, void>(ETaskListActions.LoadTasksCount);
+export const loadTasksCount: (payload?: void) => TLoadTasksCount = actionGenerator<
+  ETaskListActions.LoadTasksCount,
+  void
+>(ETaskListActions.LoadTasksCount);
 
 export type TChangeTasksCount = ITypedReduxAction<ETaskListActions.ChangeTasksCount, number>;
-export const changeTasksCount: (payload: number) => TChangeTasksCount =
-  actionGenerator<ETaskListActions.ChangeTasksCount, number>(ETaskListActions.ChangeTasksCount);
+export const changeTasksCount: (payload: number) => TChangeTasksCount = actionGenerator<
+  ETaskListActions.ChangeTasksCount,
+  number
+>(ETaskListActions.ChangeTasksCount);
 
 export type TLoadTaskList = ITypedReduxAction<ETaskListActions.LoadTaskList, number>;
-export const loadTaskList: (payload: number) => TLoadTaskList =
-  actionGenerator<ETaskListActions.LoadTaskList, number>(ETaskListActions.LoadTaskList);
+export const loadTaskList: (payload: number) => TLoadTaskList = actionGenerator<ETaskListActions.LoadTaskList, number>(
+  ETaskListActions.LoadTaskList,
+);
 
 export type TLoadTasksFilterTemplates = ITypedReduxAction<ETaskListActions.LoadFilterTemplates, void>;
-export const loadTasksFilterTemplates: (payload?: void) => TLoadTasksFilterTemplates =
-  actionGenerator<ETaskListActions.LoadFilterTemplates, void>(ETaskListActions.LoadFilterTemplates);
+export const loadTasksFilterTemplates: (payload?: void) => TLoadTasksFilterTemplates = actionGenerator<
+  ETaskListActions.LoadFilterTemplates,
+  void
+>(ETaskListActions.LoadFilterTemplates);
 
-export type TLoadTasksFilterTemplatesSuccess = ITypedReduxAction<ETaskListActions.LoadFilterTemplatesSuccess, ITemplateTitle[]>;
+export type TLoadTasksFilterTemplatesSuccess = ITypedReduxAction<
+  ETaskListActions.LoadFilterTemplatesSuccess,
+  ITemplateTitle[]
+>;
 export const loadTasksFilterTemplatesSuccess: (payload: ITemplateTitle[]) => TLoadTasksFilterTemplatesSuccess =
-  actionGenerator<ETaskListActions.LoadFilterTemplatesSuccess, ITemplateTitle[]>(ETaskListActions.LoadFilterTemplatesSuccess);
+  actionGenerator<ETaskListActions.LoadFilterTemplatesSuccess, ITemplateTitle[]>(
+    ETaskListActions.LoadFilterTemplatesSuccess,
+  );
 
 export type TLoadTasksFilterTemplatesFailed = ITypedReduxAction<ETaskListActions.LoadFilterTemplatesFailed, void>;
-export const loadTasksFilterTemplatesFailed: (payload?: void) => TLoadTasksFilterTemplatesFailed =
-  actionGenerator<ETaskListActions.LoadFilterTemplatesFailed, void>(ETaskListActions.LoadFilterTemplatesFailed);
+export const loadTasksFilterTemplatesFailed: (payload?: void) => TLoadTasksFilterTemplatesFailed = actionGenerator<
+  ETaskListActions.LoadFilterTemplatesFailed,
+  void
+>(ETaskListActions.LoadFilterTemplatesFailed);
 
 export type TSetTasksFilterTemplate = ITypedReduxAction<ETaskListActions.SetFilterTemplate, number | null>;
-export const setTasksFilterTemplate: (payload: number | null) => TSetTasksFilterTemplate =
-  actionGenerator<ETaskListActions.SetFilterTemplate, number | null>(ETaskListActions.SetFilterTemplate);
+export const setTasksFilterTemplate: (payload: number | null) => TSetTasksFilterTemplate = actionGenerator<
+  ETaskListActions.SetFilterTemplate,
+  number | null
+>(ETaskListActions.SetFilterTemplate);
 
 export type TLoadTasksFilterStepsPayload = { templateId: number };
 export type TLoadTasksFilterSteps = ITypedReduxAction<ETaskListActions.LoadFilterSteps, TLoadTasksFilterStepsPayload>;
-export const loadTasksFilterSteps: (payload: TLoadTasksFilterStepsPayload) => TLoadTasksFilterSteps =
-  actionGenerator<ETaskListActions.LoadFilterSteps, TLoadTasksFilterStepsPayload>(ETaskListActions.LoadFilterSteps);
+export const loadTasksFilterSteps: (payload: TLoadTasksFilterStepsPayload) => TLoadTasksFilterSteps = actionGenerator<
+  ETaskListActions.LoadFilterSteps,
+  TLoadTasksFilterStepsPayload
+>(ETaskListActions.LoadFilterSteps);
 
 export type TLoadTasksFilterStepsSuccess = ITypedReduxAction<ETaskListActions.LoadFilterStepsSuccess, ITemplateStep[]>;
-export const loadTasksFilterStepsSuccess: (payload: ITemplateStep[]) => TLoadTasksFilterStepsSuccess =
-  actionGenerator<ETaskListActions.LoadFilterStepsSuccess, ITemplateStep[]>(ETaskListActions.LoadFilterStepsSuccess);
+export const loadTasksFilterStepsSuccess: (payload: ITemplateStep[]) => TLoadTasksFilterStepsSuccess = actionGenerator<
+  ETaskListActions.LoadFilterStepsSuccess,
+  ITemplateStep[]
+>(ETaskListActions.LoadFilterStepsSuccess);
 
 export type TLoadTasksFilterStepsFailed = ITypedReduxAction<ETaskListActions.LoadFilterStepsFailed, void>;
-export const loadTasksFilterStepsFailed: (payload?: void) => TLoadTasksFilterStepsFailed =
-  actionGenerator<ETaskListActions.LoadFilterStepsFailed, void>(ETaskListActions.LoadFilterStepsFailed);
+export const loadTasksFilterStepsFailed: (payload?: void) => TLoadTasksFilterStepsFailed = actionGenerator<
+  ETaskListActions.LoadFilterStepsFailed,
+  void
+>(ETaskListActions.LoadFilterStepsFailed);
 
-export type TSetTasksFilterStep = ITypedReduxAction<ETaskListActions.SetFilterStep, number | null>;
-export const setTasksFilterStep: (payload: number | null) => TSetTasksFilterStep =
-  actionGenerator<ETaskListActions.SetFilterStep, number | null>(ETaskListActions.SetFilterStep);
+export type TSetTasksFilterStep = ITypedReduxAction<ETaskListActions.SetFilterStep, string | null>;
+export const setTasksFilterStep: (payload: string | null) => TSetTasksFilterStep = actionGenerator<
+  ETaskListActions.SetFilterStep,
+  string | null
+>(ETaskListActions.SetFilterStep);
 
 export type TShowNewTasksNotification = ITypedReduxAction<ETaskListActions.ShowNewTasksNotification, boolean>;
-export const showNewTasksNotification: (payload: boolean) => TShowNewTasksNotification =
-  actionGenerator<ETaskListActions.ShowNewTasksNotification, boolean>(ETaskListActions.ShowNewTasksNotification);
+export const showNewTasksNotification: (payload: boolean) => TShowNewTasksNotification = actionGenerator<
+  ETaskListActions.ShowNewTasksNotification,
+  boolean
+>(ETaskListActions.ShowNewTasksNotification);
 
 export type TInsertNewTask = ITypedReduxAction<ETaskListActions.InsertNewTask, ITaskListItem>;
-export const insertNewTask: (payload: ITaskListItem) => TInsertNewTask =
-  actionGenerator<ETaskListActions.InsertNewTask, ITaskListItem>(ETaskListActions.InsertNewTask);
+export const insertNewTask: (payload: ITaskListItem) => TInsertNewTask = actionGenerator<
+  ETaskListActions.InsertNewTask,
+  ITaskListItem
+>(ETaskListActions.InsertNewTask);
 
 export type TClearTasksFilters = ITypedReduxAction<ETaskListActions.ClearFilters, void>;
-export const clearTasksFilters: (payload?: void) => TClearTasksFilters =
-  actionGenerator<ETaskListActions.ClearFilters, void>(ETaskListActions.ClearFilters);
+export const clearTasksFilters: (payload?: void) => TClearTasksFilters = actionGenerator<
+  ETaskListActions.ClearFilters,
+  void
+>(ETaskListActions.ClearFilters);
 
 export type TSetTaskListStatus = ITypedReduxAction<ETaskListActions.SetTaskListStatus, ETaskListStatus>;
-export const setTaskListStatus: (payload: ETaskListStatus) => TSetTaskListStatus =
-  actionGenerator<ETaskListActions.SetTaskListStatus, ETaskListStatus>(ETaskListActions.SetTaskListStatus);
+export const setTaskListStatus: (payload: ETaskListStatus) => TSetTaskListStatus = actionGenerator<
+  ETaskListActions.SetTaskListStatus,
+  ETaskListStatus
+>(ETaskListActions.SetTaskListStatus);
 
 export type TSearchTasks = ITypedReduxAction<ETaskListActions.SearchTasks, void>;
-export const searchTasks: (payload?: void) => TSearchTasks =
-  actionGenerator<ETaskListActions.SearchTasks, void>(ETaskListActions.SearchTasks);
+export const searchTasks: (payload?: void) => TSearchTasks = actionGenerator<ETaskListActions.SearchTasks, void>(
+  ETaskListActions.SearchTasks,
+);
 
 export type TShiftTaskListPayload = { currentTaskId: number };
 export type TShiftTaskList = ITypedReduxAction<ETaskListActions.ShiftTaskList, TShiftTaskListPayload>;
-export const shiftTaskList: (payload: TShiftTaskListPayload) => TShiftTaskList =
-  actionGenerator<ETaskListActions.ShiftTaskList, TShiftTaskListPayload>(ETaskListActions.ShiftTaskList);
+export const shiftTaskList: (payload: TShiftTaskListPayload) => TShiftTaskList = actionGenerator<
+  ETaskListActions.ShiftTaskList,
+  TShiftTaskListPayload
+>(ETaskListActions.ShiftTaskList);
 
 export type TTaskListActions =
   | TChangeTaskListSorting
