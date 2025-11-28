@@ -111,7 +111,7 @@ class TestSendDigest:
         second_workflow.date_completed = date_to - timedelta(days=1)
         second_workflow.save()
         email_service_digest = mocker.patch(
-            'src.services.email.EmailService.'
+            'src.notifications.services.email.EmailService.'
             'send_workflows_digest_email',
         )
 
@@ -213,7 +213,7 @@ class TestSendDigest:
                 },
             )
         email_service_digest = mocker.patch(
-            'src.services.email.EmailService.'
+            'src.notifications.services.email.EmailService.'
             'send_workflows_digest_email',
         )
 
@@ -265,7 +265,7 @@ class TestSendDigest:
             date_created=date_from + timedelta(days=2),
         )
         email_service_digest = mocker.patch(
-            'src.services.email.EmailService.'
+            'src.notifications.services.email.EmailService.'
             'send_workflows_digest_email',
         )
 
@@ -319,7 +319,7 @@ class TestSendDigest:
         template_data['is_active'] = True
         api_client.post('/templates', data=template_data)
         email_service_digest = mocker.patch(
-            'src.services.email.EmailService.'
+            'src.notifications.services.email.EmailService.'
             'send_workflows_digest_email',
         )
 
@@ -419,7 +419,7 @@ class TestSendDigest:
         second_workflow.date_completed = date_to - timedelta(days=1)
         second_workflow.save()
         email_service_digest = mocker.patch(
-            'src.services.email.EmailService.'
+            'src.notifications.services.email.EmailService.'
             'send_workflows_digest_email',
         )
 
@@ -474,7 +474,7 @@ class TestSendDigest:
             date_created=date_from + timedelta(days=2),
         )
         email_service_digest = mocker.patch(
-            'src.services.email.EmailService.'
+            'src.notifications.services.email.EmailService.'
             'send_workflows_digest_email',
         )
         token_patch = mocker.patch(

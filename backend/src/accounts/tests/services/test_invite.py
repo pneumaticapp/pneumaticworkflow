@@ -498,7 +498,7 @@ def test_send_transfer_email__ok(mocker):
         return_value=transfer_token_str,
     )
     send_user_transfer_email_mock = mocker.patch(
-        'src.services.email.EmailService.'
+        'src.notifications.services.email.EmailService.'
         'send_user_transfer_email',
     )
     service = UserInviteService(

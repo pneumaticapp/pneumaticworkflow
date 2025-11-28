@@ -9,6 +9,7 @@ from src.analysis.enums import MailoutType
 from src.logs.enums import AccountEventStatus
 from src.notifications import messages
 from src.notifications.enums import (
+    EmailClientProvider,
     EmailTemplate,
     NotificationMethod,
 )
@@ -22,31 +23,44 @@ from src.notifications.services.exceptions import (
 pytestmark = pytest.mark.django_db
 
 
-def test_send_email_via_customerio__ok(mocker):
+def test_send_email_via_client__ok(mocker):
 
     # arrange
     template_id = 1
     template_code = 'new_task'
     mocker.patch(
-        'src.notifications.services.email.cio_template_ids',
+        'src.notifications.clients.customerio.cio_template_ids',
         {template_code: template_id},
     )
+    api_key = '!@#'
+
+    customerio_settings_mock = mocker.patch(
+        'src.notifications.clients.customerio.settings',
+    )
+    customerio_settings_mock.CUSTOMERIO_TRANSACTIONAL_API_KEY = api_key
+
     settings_mock = mocker.patch(
         'src.notifications.services.email.settings',
     )
-    api_key = '!@#'
     settings_mock.CUSTOMERIO_TRANSACTIONAL_API_KEY = api_key
+    settings_mock.EMAIL_PROVIDER = 'Customer.io'
 
     client_mock = mocker.Mock()
     api_client_mock = mocker.patch(
-        'src.notifications.services.email.APIClient',
+        'src.notifications.clients.customerio.APIClient',
         return_value=client_mock,
     )
     request_mock = mocker.Mock()
     send_email_request_mock = mocker.patch(
-        'src.notifications.services.email.SendEmailRequest',
+        'src.notifications.clients.customerio.SendEmailRequest',
         return_value=request_mock,
     )
+
+    clients_settings_mock = mocker.patch(
+        'src.notifications.clients.utils.settings',
+    )
+    clients_settings_mock.EMAIL_PROVIDER = EmailClientProvider.CUSTOMERIO
+
     user_id = 1
     email = 'test@pneumatic.app'
     data = {'test': 'data'}
@@ -66,7 +80,7 @@ def test_send_email_via_customerio__ok(mocker):
     )
 
     # act
-    service._send_email_via_customerio(
+    service._send_email_via_client(
         title=title,
         user_id=user_id,
         user_email=email,
@@ -87,31 +101,44 @@ def test_send_email_via_customerio__ok(mocker):
     create_account_log_mock.assert_not_called()
 
 
-def test_send_email_via_customerio__enable_logging__ok(mocker):
+def test_send_email_via_client__enable_logging__ok(mocker):
 
     # arrange
     template_id = 1
     template_code = 'new_task'
     mocker.patch(
-        'src.notifications.services.email.cio_template_ids',
+        'src.notifications.clients.customerio.cio_template_ids',
         {template_code: template_id},
     )
+    api_key = '!@#'
+
+    customerio_settings_mock = mocker.patch(
+        'src.notifications.clients.customerio.settings',
+    )
+    customerio_settings_mock.CUSTOMERIO_TRANSACTIONAL_API_KEY = api_key
+
     settings_mock = mocker.patch(
         'src.notifications.services.email.settings',
     )
-    api_key = '!@#'
     settings_mock.CUSTOMERIO_TRANSACTIONAL_API_KEY = api_key
+    settings_mock.EMAIL_PROVIDER = 'Customer.io'
 
     client_mock = mocker.Mock()
     api_client_mock = mocker.patch(
-        'src.notifications.services.email.APIClient',
+        'src.notifications.clients.customerio.APIClient',
         return_value=client_mock,
     )
     request_mock = mocker.Mock()
     send_email_request_mock = mocker.patch(
-        'src.notifications.services.email.SendEmailRequest',
+        'src.notifications.clients.customerio.SendEmailRequest',
         return_value=request_mock,
     )
+
+    clients_settings_mock = mocker.patch(
+        'src.notifications.clients.utils.settings',
+    )
+    clients_settings_mock.EMAIL_PROVIDER = EmailClientProvider.CUSTOMERIO
+
     create_account_log_mock = mocker.patch(
         'src.notifications.services.email.AccountLogService'
         '.email_message',
@@ -132,7 +159,7 @@ def test_send_email_via_customerio__enable_logging__ok(mocker):
     )
 
     # act
-    service._send_email_via_customerio(
+    service._send_email_via_client(
         title=title,
         user_id=user_id,
         user_email=email,
@@ -168,11 +195,10 @@ def test_send__dev_environment__console_print(mocker):
         'src.notifications.services.email.'
         'EmailService._send_email_to_console',
     )
-    send_via_customerio_mock = mocker.patch(
+    send_email_via_client_mock = mocker.patch(
         'src.notifications.services.email.EmailService.'
-        '_send_email_via_customerio',
+        '_send_email_via_client',
     )
-    title = 'Test title'
     user_id = 1
     email = 'john@cena.com'
     data = {'some': 'data'}
@@ -207,7 +233,7 @@ def test_send__dev_environment__console_print(mocker):
         template_code=EmailTemplate.OVERDUE_TASK,
         data=data,
     )
-    send_via_customerio_mock.assert_not_called()
+    send_email_via_client_mock.assert_not_called()
 
 
 def test_send__prod_environment__send_email(mocker):
@@ -220,9 +246,9 @@ def test_send__prod_environment__send_email(mocker):
         'src.notifications.services.email.'
         'EmailService._send_email_to_console',
     )
-    send_via_customerio_mock = mocker.patch(
+    send_email_via_client_mock = mocker.patch(
         'src.notifications.services.email.EmailService.'
-        '_send_email_via_customerio',
+        '_send_email_via_client',
     )
     user_id = 1
     email = 'john@cena.com'
@@ -253,7 +279,7 @@ def test_send__prod_environment__send_email(mocker):
 
     # assert
     send_to_console_mock.assert_not_called()
-    send_via_customerio_mock.assert_called_with(
+    send_email_via_client_mock.assert_called_with(
         title=title,
         user_id=user_id,
         user_email=email,
@@ -274,9 +300,9 @@ def test_send__not_allowed_method__raise_exception(mocker):
         'src.notifications.services.email.'
         'EmailService._send_email_to_console',
     )
-    send_via_customerio_mock = mocker.patch(
+    send_email_via_client_mock = mocker.patch(
         'src.notifications.services.email.EmailService.'
-        '_send_email_via_customerio',
+        '_send_email_via_client',
     )
     settings_mock = mocker.patch(
         'src.notifications.services.email.settings',
@@ -312,7 +338,7 @@ def test_send__not_allowed_method__raise_exception(mocker):
         f'{NotificationMethod.overdue_task} is not allowed notification'
     )
     send_to_console_mock.assert_not_called()
-    send_via_customerio_mock.assert_not_called()
+    send_email_via_client_mock.assert_not_called()
 
 
 def test_send__disable_email__skip(mocker):
@@ -325,9 +351,9 @@ def test_send__disable_email__skip(mocker):
         'src.notifications.services.email.'
         'EmailService._send_email_to_console',
     )
-    send_via_customerio_mock = mocker.patch(
+    send_email_via_client_mock = mocker.patch(
         'src.notifications.services.email.EmailService.'
-        '_send_email_via_customerio',
+        '_send_email_via_client',
     )
     user_id = 1
     email = 'john@cena.com'
@@ -358,7 +384,7 @@ def test_send__disable_email__skip(mocker):
 
     # assert
     send_to_console_mock.assert_not_called()
-    send_via_customerio_mock.assert_not_called()
+    send_email_via_client_mock.assert_not_called()
 
 
 def test_send_overdue_task__type_user__ok(mocker):
