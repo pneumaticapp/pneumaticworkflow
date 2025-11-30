@@ -93,7 +93,8 @@ class EmailTemplateAdmin(admin.ModelAdmin):
         'subject',
         'template_types',
     )
-    readonly_fields = ()
+    list_editable = ('is_active',)
+    list_per_page = 25
 
     fieldsets = (
         (None, {
@@ -112,3 +113,7 @@ class EmailTemplateAdmin(admin.ModelAdmin):
         """Display template types in list view."""
         return obj.get_template_types_display()
     get_template_types_display.short_description = 'Template Types'
+
+    def get_queryset(self, request):
+        """Optimize queryset with select_related."""
+        return super().get_queryset(request).select_related('account')

@@ -277,12 +277,13 @@ class Common(Configuration):
         CUSTOMERIO_WEBHOOK_API_KEY = env.get('CIO_WEBHOOK_API_KEY')
         CUSTOMERIO_TRANSACTIONAL_API_KEY = env.get('CIO_TRANSACTIONAL_API_KEY')
     else:
+        EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
         EMAIL_HOST = env.get('EMAIL_HOST')
         EMAIL_PORT = int(env.get('EMAIL_PORT', '587'))
         EMAIL_HOST_USER = env.get('EMAIL_HOST_USER')
         EMAIL_HOST_PASSWORD = env.get('EMAIL_HOST_PASSWORD')
-        EMAIL_USE_TLS = env.get('EMAIL_USE_TLS')
-        EMAIL_USE_SSL = env.get('EMAIL_USE_SSL')
+        EMAIL_USE_TLS = env.get('EMAIL_USE_TLS') == 'yes'
+        EMAIL_USE_SSL = env.get('EMAIL_USE_SSL') == 'yes'
         EMAIL_TIMEOUT = int(env.get('EMAIL_TIMEOUT', '60'))
 
 
