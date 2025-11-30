@@ -1,6 +1,6 @@
 from django.conf import settings
 from django.contrib import admin
-from django.urls import include, path, re_path
+from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
 from src import views
@@ -9,10 +9,6 @@ from src.accounts.views.tenants import TenantsViewSet
 from src.faq.views import FaqViewSet
 from src.notifications.consumers import (
     EventsConsumer,
-    NewTaskConsumer,
-    NotificationsConsumer,
-    RemovedTaskConsumer,
-    WorkflowEventConsumer,
 )
 from src.payment.views import (
     PaymentViewSet,
@@ -85,9 +81,5 @@ urlpatterns += router.urls
 
 
 websocket_urlpatterns = [
-    re_path('ws/notifications', NotificationsConsumer.as_asgi()),
-    path('ws/workflows/new-task', NewTaskConsumer.as_asgi()),
-    path('ws/workflows/removed-task', RemovedTaskConsumer.as_asgi()),
-    path('ws/workflows/events', WorkflowEventConsumer.as_asgi()),
     path('ws/events', EventsConsumer.as_asgi()),
 ]

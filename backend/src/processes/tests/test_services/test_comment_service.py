@@ -1618,7 +1618,7 @@ def test_update__text__ok(mocker):
     )
     send_workflow_event_mock = mocker.patch(
         'src.processes.services.events.'
-        'CommentService._send_workflow_event',
+        'CommentService._send_event_updated',
     )
     clear_text = 'clear text'
     clear_text_mock = mocker.patch(
@@ -1723,7 +1723,7 @@ def test_update__task_delete__ok(mocker):
     )
     send_workflow_event_mock = mocker.patch(
         'src.processes.services.events.'
-        'CommentService._send_workflow_event',
+        'CommentService._send_event_updated',
     )
     clear_text = 'clear text'
     clear_text_mock = mocker.patch(
@@ -1825,7 +1825,7 @@ def test_update__attachments__ok(mocker):
     )
     send_workflow_event_mock = mocker.patch(
         'src.processes.services.events.'
-        'CommentService._send_workflow_event',
+        'CommentService._send_event_updated',
     )
     date_updated = timezone.now()
     mocker.patch(
@@ -1959,7 +1959,7 @@ def test_update__find_attachments_in_text__ok(data, mocker):
     )
     send_workflow_event_mock = mocker.patch(
         'src.processes.services.events.'
-        'CommentService._send_workflow_event',
+        'CommentService._send_event_updated',
     )
     date_updated = timezone.now()
     mocker.patch(
@@ -2069,7 +2069,7 @@ def test_update__not_found_attachments_in_text__ok(text, mocker):
     )
     send_workflow_event_mock = mocker.patch(
         'src.processes.services.events.'
-        'CommentService._send_workflow_event',
+        'CommentService._send_event_updated',
     )
     date_updated = timezone.now()
     mocker.patch(
@@ -2183,7 +2183,7 @@ def test_update__notified_users__ok(mocker):
     )
     send_workflow_event_mock = mocker.patch(
         'src.processes.services.events.'
-        'CommentService._send_workflow_event',
+        'CommentService._send_event_updated',
     )
     date_updated = timezone.now()
     mocker.patch(
@@ -2305,7 +2305,7 @@ def test_update__mentioned_users__ok(mocker):
     )
     send_workflow_event_mock = mocker.patch(
         'src.processes.services.events.'
-        'CommentService._send_workflow_event',
+        'CommentService._send_event_updated',
     )
     date_updated = timezone.now()
     mocker.patch(
@@ -2401,7 +2401,7 @@ def test_update__remove_text__ok(mocker):
     )
     send_workflow_event_mock = mocker.patch(
         'src.processes.services.events.'
-        'CommentService._send_workflow_event',
+        'CommentService._send_event_updated',
     )
     date_updated = timezone.now()
     mocker.patch(
@@ -2491,7 +2491,7 @@ def test_update__remove_attachments__ok(mocker):
     )
     send_workflow_event_mock = mocker.patch(
         'src.processes.services.events.'
-        'CommentService._send_workflow_event',
+        'CommentService._send_event_updated',
     )
     date_updated = timezone.now()
     mocker.patch(
@@ -2582,7 +2582,7 @@ def test_update__remove_text__raise_exception(mocker):
     )
     send_workflow_event_mock = mocker.patch(
         'src.processes.services.events.'
-        'CommentService._send_workflow_event',
+        'CommentService._send_event_updated',
     )
     partial_update_mock = mocker.patch(
         'src.processes.services.events.'
@@ -2651,7 +2651,7 @@ def test_update__remove_attachment__raise_exception(mocker):
     )
     send_workflow_event_mock = mocker.patch(
         'src.processes.services.events.'
-        'CommentService._send_workflow_event',
+        'CommentService._send_event_updated',
     )
     partial_update_mock = mocker.patch(
         'src.processes.services.events.'
@@ -2726,7 +2726,7 @@ def test_update_inactive_task__raise_exception(status, mocker):
     )
     send_workflow_event_mock = mocker.patch(
         'src.processes.services.events.'
-        'CommentService._send_workflow_event',
+        'CommentService._send_event_updated',
     )
     partial_update_mock = mocker.patch(
         'src.processes.services.events.'
@@ -2803,7 +2803,7 @@ def test_delete__ok(mocker):
     )
     send_workflow_event_mock = mocker.patch(
         'src.processes.services.events.'
-        'CommentService._send_workflow_event',
+        'CommentService._send_event_updated',
     )
 
     service = CommentService(
@@ -2874,7 +2874,7 @@ def test_delete__task_delete__ok(mocker):
     )
     send_workflow_event_mock = mocker.patch(
         'src.processes.services.events.'
-        'CommentService._send_workflow_event',
+        'CommentService._send_event_updated',
     )
 
     service = CommentService(
@@ -2949,7 +2949,7 @@ def test_delete_inactive_task__raise_exception(status, mocker):
     )
     send_workflow_event_mock = mocker.patch(
         'src.processes.services.events.'
-        'CommentService._send_workflow_event',
+        'CommentService._send_event_updated',
     )
 
     service = CommentService(
@@ -3131,7 +3131,7 @@ def test_create_reaction__first__ok(mocker):
     )
     send_workflow_event_mock = mocker.patch(
         'src.processes.services.events.'
-        'CommentService._send_workflow_event',
+        'CommentService._send_event_updated',
     )
     reaction = ':dumb face:'
     is_superuser = True
@@ -3207,7 +3207,7 @@ def test_create_reaction__long_comment__cut_off(mocker):
     )
     send_workflow_event_mock = mocker.patch(
         'src.processes.services.events.'
-        'CommentService._send_workflow_event',
+        'CommentService._send_event_updated',
     )
     reaction = ':dumb face:'
     is_superuser = True
@@ -3281,7 +3281,7 @@ def test_create_reaction__not_comment_text__ok(mocker):
     )
     send_workflow_event_mock = mocker.patch(
         'src.processes.services.events.'
-        'CommentService._send_workflow_event',
+        'CommentService._send_event_updated',
     )
     reaction = ':dumb face:'
     is_superuser = True
@@ -3361,7 +3361,7 @@ def test_create_reaction__second__ok(mocker):
     )
     send_workflow_event_mock = mocker.patch(
         'src.processes.services.events.'
-        'CommentService._send_workflow_event',
+        'CommentService._send_event_updated',
     )
     is_superuser = True
     auth_type = AuthTokenType.API
@@ -3435,7 +3435,7 @@ def test_create_reaction__duplicate__skip(mocker):
     )
     send_workflow_event_mock = mocker.patch(
         'src.processes.services.events.'
-        'CommentService._send_workflow_event',
+        'CommentService._send_event_updated',
     )
     send_reaction_notification_mock = mocker.patch(
         'src.processes.services.events.'
@@ -3497,7 +3497,7 @@ def test_delete_reaction__last__remove_reaction(mocker):
     )
     send_workflow_event_mock = mocker.patch(
         'src.processes.services.events.'
-        'CommentService._send_workflow_event',
+        'CommentService._send_event_updated',
     )
     is_superuser = True
     auth_type = AuthTokenType.API
@@ -3560,7 +3560,7 @@ def test_delete_reaction__not_last__remove_only_user_id(mocker):
     )
     send_workflow_event_mock = mocker.patch(
         'src.processes.services.events.'
-        'CommentService._send_workflow_event',
+        'CommentService._send_event_updated',
     )
     is_superuser = True
     auth_type = AuthTokenType.API
@@ -3621,7 +3621,7 @@ def test_delete_reaction__not_exist_reaction__skip(mocker):
     )
     send_workflow_event_mock = mocker.patch(
         'src.processes.services.events.'
-        'CommentService._send_workflow_event',
+        'CommentService._send_event_updated',
     )
     is_superuser = True
     auth_type = AuthTokenType.API
@@ -3676,7 +3676,7 @@ def test_delete_reaction__not_exist_user_id__skip(mocker):
     )
     send_workflow_event_mock = mocker.patch(
         'src.processes.services.events.'
-        'CommentService._send_workflow_event',
+        'CommentService._send_event_updated',
     )
     is_superuser = True
     auth_type = AuthTokenType.API
@@ -3734,7 +3734,7 @@ def test_create_reaction__to_yourself_comment__ok(mocker):
     )
     send_workflow_event_mock = mocker.patch(
         'src.processes.services.events.'
-        'CommentService._send_workflow_event',
+        'CommentService._send_event_updated',
     )
     reaction = ':dumb face:'
     is_superuser = True

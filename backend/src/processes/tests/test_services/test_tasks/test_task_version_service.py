@@ -1027,9 +1027,9 @@ class TestTaskUpdateVersionService:
             'src.processes.services.tasks.task_version.'
             'send_new_task_notification.delay',
         )
-        send_removed_task_notification_mock = mocker.patch(
+        send_task_deleted_notification_mock = mocker.patch(
             'src.processes.services.tasks.task_version.'
-            'send_removed_task_notification.delay',
+            'send_task_deleted_notification.delay',
         )
         service = TaskUpdateVersionService(
             user=owner,
@@ -1075,7 +1075,7 @@ class TestTaskUpdateVersionService:
             logo_lg=account.logo_lg,
             is_returned=False,
         )
-        send_removed_task_notification_mock.assert_not_called()
+        send_task_deleted_notification_mock.assert_not_called()
 
     def test_update_performers__add_new_group_performers__ok(self, mocker):
 
@@ -1112,9 +1112,9 @@ class TestTaskUpdateVersionService:
             'src.processes.services.tasks.task_version.'
             'send_new_task_notification.delay',
         )
-        send_removed_task_notification_mock = mocker.patch(
+        send_task_deleted_notification_mock = mocker.patch(
             'src.processes.services.tasks.task_version.'
-            'send_removed_task_notification.delay',
+            'send_task_deleted_notification.delay',
         )
         service = TaskUpdateVersionService(
             user=owner,
@@ -1160,7 +1160,7 @@ class TestTaskUpdateVersionService:
             logo_lg=account.logo_lg,
             is_returned=False,
         )
-        send_removed_task_notification_mock.assert_not_called()
+        send_task_deleted_notification_mock.assert_not_called()
 
     def test_update_performers__remove_user_performers__ok(self, mocker):
 
@@ -1196,9 +1196,9 @@ class TestTaskUpdateVersionService:
             'src.processes.services.tasks.task_version.'
             'send_new_task_notification.delay',
         )
-        send_removed_task_notification_mock = mocker.patch(
+        send_task_deleted_notification_mock = mocker.patch(
             'src.processes.services.tasks.task_version.'
-            'send_removed_task_notification.delay',
+            'send_task_deleted_notification.delay',
         )
         service = TaskUpdateVersionService(
             user=owner,
@@ -1225,7 +1225,7 @@ class TestTaskUpdateVersionService:
         add_raw_performer_mock.assert_not_called()
         get_data_for_list_mock.assert_called_once()
         send_new_task_notification_mock.assert_not_called()
-        send_removed_task_notification_mock.assert_called_once_with(
+        send_task_deleted_notification_mock.assert_called_once_with(
             task_id=task.id,
             recipients=[(performer.id, performer.email)],
             account_id=account.id,
@@ -1267,9 +1267,9 @@ class TestTaskUpdateVersionService:
             'src.processes.services.tasks.task_version.'
             'send_new_task_notification.delay',
         )
-        send_removed_task_notification_mock = mocker.patch(
+        send_task_deleted_notification_mock = mocker.patch(
             'src.processes.services.tasks.task_version.'
-            'send_removed_task_notification.delay',
+            'send_task_deleted_notification.delay',
         )
         service = TaskUpdateVersionService(
             user=owner,
@@ -1296,7 +1296,7 @@ class TestTaskUpdateVersionService:
         add_raw_performer_mock.assert_not_called()
         get_data_for_list_mock.assert_called_once()
         send_new_task_notification_mock.assert_not_called()
-        send_removed_task_notification_mock.assert_called_once_with(
+        send_task_deleted_notification_mock.assert_called_once_with(
             task_id=task.id,
             recipients=[(performer.id, performer.email)],
             account_id=account.id,
@@ -1341,9 +1341,9 @@ class TestTaskUpdateVersionService:
             'src.processes.services.tasks.task_version.'
             'send_new_task_notification.delay',
         )
-        send_removed_task_notification_mock = mocker.patch(
+        send_task_deleted_notification_mock = mocker.patch(
             'src.processes.services.tasks.task_version.'
-            'send_removed_task_notification.delay',
+            'send_task_deleted_notification.delay',
         )
         service = TaskUpdateVersionService(
             user=owner,
@@ -1392,7 +1392,7 @@ class TestTaskUpdateVersionService:
             logo_lg=account.logo_lg,
             is_returned=False,
         )
-        send_removed_task_notification_mock.assert_not_called()
+        send_task_deleted_notification_mock.assert_not_called()
 
     def test_update_performers__set_default_performer__workflow_starter__ok(
         self,
@@ -1433,9 +1433,9 @@ class TestTaskUpdateVersionService:
             'src.processes.services.tasks.task_version.'
             'send_new_task_notification.delay',
         )
-        send_removed_task_notification_mock = mocker.patch(
+        send_task_deleted_notification_mock = mocker.patch(
             'src.processes.services.tasks.task_version.'
-            'send_removed_task_notification.delay',
+            'send_task_deleted_notification.delay',
         )
         service = TaskUpdateVersionService(
             user=user,
@@ -1484,7 +1484,7 @@ class TestTaskUpdateVersionService:
             logo_lg=account.logo_lg,
             is_returned=False,
         )
-        send_removed_task_notification_mock.assert_not_called()
+        send_task_deleted_notification_mock.assert_not_called()
 
     def test_update_performers__new_user_already_performer__not_sent(
         self,
@@ -1526,9 +1526,9 @@ class TestTaskUpdateVersionService:
             'src.processes.services.tasks.task_version.'
             'send_new_task_notification.delay',
         )
-        send_removed_task_notification_mock = mocker.patch(
+        send_task_deleted_notification_mock = mocker.patch(
             'src.processes.services.tasks.task_version.'
-            'send_removed_task_notification.delay',
+            'send_task_deleted_notification.delay',
         )
         service = TaskUpdateVersionService(
             user=owner,
@@ -1555,7 +1555,7 @@ class TestTaskUpdateVersionService:
         add_raw_performer_mock.assert_not_called()
         get_data_for_list_mock.assert_not_called()
         send_new_task_notification_mock.assert_not_called()
-        send_removed_task_notification_mock.assert_not_called()
+        send_task_deleted_notification_mock.assert_not_called()
 
     def test_update_performers__new_group_user_already_performer__not_sent(
         self,
@@ -1602,9 +1602,9 @@ class TestTaskUpdateVersionService:
             'src.processes.services.tasks.task_version.'
             'send_new_task_notification.delay',
         )
-        send_removed_task_notification_mock = mocker.patch(
+        send_task_deleted_notification_mock = mocker.patch(
             'src.processes.services.tasks.task_version.'
-            'send_removed_task_notification.delay',
+            'send_task_deleted_notification.delay',
         )
         service = TaskUpdateVersionService(
             user=owner,
@@ -1631,7 +1631,7 @@ class TestTaskUpdateVersionService:
         add_raw_performer_mock.assert_not_called()
         get_data_for_list_mock.assert_not_called()
         send_new_task_notification_mock.assert_not_called()
-        send_removed_task_notification_mock.assert_not_called()
+        send_task_deleted_notification_mock.assert_not_called()
 
     def test_update_performers__removed_user_already_performer__not_sent(
         self,
@@ -1677,9 +1677,9 @@ class TestTaskUpdateVersionService:
             'src.processes.services.tasks.task_version.'
             'send_new_task_notification.delay',
         )
-        send_removed_task_notification_mock = mocker.patch(
+        send_task_deleted_notification_mock = mocker.patch(
             'src.processes.services.tasks.task_version.'
-            'send_removed_task_notification.delay',
+            'send_task_deleted_notification.delay',
         )
         service = TaskUpdateVersionService(
             user=owner,
@@ -1706,7 +1706,7 @@ class TestTaskUpdateVersionService:
         add_raw_performer_mock.assert_not_called()
         get_data_for_list_mock.assert_not_called()
         send_new_task_notification_mock.assert_not_called()
-        send_removed_task_notification_mock.assert_not_called()
+        send_task_deleted_notification_mock.assert_not_called()
 
     def test_update_performers__removed_group_user_already_performer__not_sent(
         self,
@@ -1748,9 +1748,9 @@ class TestTaskUpdateVersionService:
             'src.processes.services.tasks.task_version.'
             'send_new_task_notification.delay',
         )
-        send_removed_task_notification_mock = mocker.patch(
+        send_task_deleted_notification_mock = mocker.patch(
             'src.processes.services.tasks.task_version.'
-            'send_removed_task_notification.delay',
+            'send_task_deleted_notification.delay',
         )
         service = TaskUpdateVersionService(
             user=owner,
@@ -1777,4 +1777,4 @@ class TestTaskUpdateVersionService:
         add_raw_performer_mock.assert_not_called()
         get_data_for_list_mock.assert_not_called()
         send_new_task_notification_mock.assert_not_called()
-        send_removed_task_notification_mock.assert_not_called()
+        send_task_deleted_notification_mock.assert_not_called()
