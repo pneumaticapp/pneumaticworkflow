@@ -45,7 +45,7 @@ class TestFinishWorkflow:
         )
         send_task_deleted_notification_mock = mocker.patch(
             'src.notifications.tasks'
-            '.send_removed_task_deleted_notification.delay',
+            '.send_task_deleted_notification.delay',
         )
         api_client.token_authenticate(user)
 
@@ -101,7 +101,7 @@ class TestFinishWorkflow:
         api_client.delete(f'/templates/{template.id}')
         mocker.patch(
             'src.notifications.tasks'
-            '.send_removed_task_deleted_notification.delay',
+            '.send_task_deleted_notification.delay',
         )
 
         # act
@@ -180,7 +180,7 @@ class TestFinishWorkflow:
         )
         send_task_deleted_notification_mock = mocker.patch(
             'src.notifications.tasks'
-            '.send_removed_task_deleted_notification.delay',
+            '.send_task_deleted_notification.delay',
         )
         api_client.token_authenticate(user)
 

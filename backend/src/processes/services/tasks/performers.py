@@ -6,7 +6,7 @@ from src.authentication.enums import AuthTokenType
 from src.notifications.tasks import (
     send_new_task_notification,
     send_new_task_websocket,
-    send_removed_task_deleted_notification,
+    send_task_deleted_notification,
 )
 from src.processes.enums import PerformerType
 from src.processes.messages.workflow import (
@@ -111,7 +111,7 @@ class TaskPerformersService(BasePerformersService):
                 .user_ids_set()
             )
             if user.id not in task_performers:
-                send_removed_task_deleted_notification.delay(
+                send_task_deleted_notification.delay(
                     task_id=task.id,
                     recipients=[(user.id, user.email)],
                     account_id=task.account_id,

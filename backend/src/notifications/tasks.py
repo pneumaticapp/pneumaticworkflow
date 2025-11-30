@@ -74,11 +74,11 @@ __all__ = [
     'send_not_urgent_notification',
     'send_overdue_task_notification',
     'send_reaction_notification',
-    'send_removed_task_completed_notification',
-    'send_removed_task_deleted_notification',
     'send_reset_password_notification',
     'send_resumed_workflow_notification',
     'send_task_completed_notification',
+    'send_task_completed_websocket',
+    'send_task_deleted_notification',
     'send_unread_notifications',
     'send_urgent_notification',
     'send_user_created_notification',
@@ -227,7 +227,7 @@ def send_new_task_websocket(**kwargs):
     _send_new_task_websocket(**kwargs)
 
 
-def _send_removed_task_deleted_notification(
+def _send_task_deleted_notification(
     task_id: int,
     recipients: List[Tuple[int, str]],
     account_id: int,
@@ -251,11 +251,11 @@ def _send_removed_task_deleted_notification(
 
 
 @shared_task(base=NotificationTask)
-def send_removed_task_deleted_notification(**kwargs):
-    _send_removed_task_deleted_notification(**kwargs)
+def send_task_deleted_notification(**kwargs):
+    _send_task_deleted_notification(**kwargs)
 
 
-def _send_removed_task_completed_notification(
+def _send_task_completed_websocket(
     task_id: int,
     recipients: List[Tuple[int, str]],
     account_id: int,
@@ -269,7 +269,7 @@ def _send_removed_task_completed_notification(
 
     for (user_id, user_email) in recipients:
         _send_notification(
-            method_name=NotificationMethod.task_deleted,
+            method_name=NotificationMethod.task_completed_websocket,
             user_id=user_id,
             user_email=user_email,
             account_id=account_id,
@@ -279,8 +279,8 @@ def _send_removed_task_completed_notification(
 
 
 @shared_task(base=NotificationTask)
-def send_removed_task_completed_notification(**kwargs):
-    _send_removed_task_completed_notification(**kwargs)
+def send_task_completed_websocket(**kwargs):
+    _send_task_completed_websocket(**kwargs)
 
 
 def _send_task_completed_notification(

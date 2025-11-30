@@ -6,7 +6,7 @@ from django.utils.dateparse import parse_duration
 
 from src.notifications.tasks import (
     send_new_task_notification,
-    send_removed_task_deleted_notification,
+    send_task_deleted_notification,
 )
 from src.processes.enums import TaskStatus
 from src.processes.models.workflows.checklist import (
@@ -373,7 +373,7 @@ class TaskUpdateVersionService(
             )
         if send_removed_task_recipients:
             task_data = task_data or self.instance.get_data_for_list()
-            send_removed_task_deleted_notification.delay(
+            send_task_deleted_notification.delay(
                 task_id=self.instance.id,
                 recipients=list(send_removed_task_recipients),
                 account_id=account.id,

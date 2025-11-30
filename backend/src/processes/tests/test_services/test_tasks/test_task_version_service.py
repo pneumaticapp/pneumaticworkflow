@@ -1029,7 +1029,7 @@ class TestTaskUpdateVersionService:
         )
         send_task_deleted_notification_mock = mocker.patch(
             'src.processes.services.tasks.task_version.'
-            'send_removed_task_deleted_notification.delay',
+            'send_task_deleted_notification.delay',
         )
         service = TaskUpdateVersionService(
             user=owner,
@@ -1114,7 +1114,7 @@ class TestTaskUpdateVersionService:
         )
         send_task_deleted_notification_mock = mocker.patch(
             'src.processes.services.tasks.task_version.'
-            'send_removed_task_deleted_notification.delay',
+            'send_task_deleted_notification.delay',
         )
         service = TaskUpdateVersionService(
             user=owner,
@@ -1198,7 +1198,7 @@ class TestTaskUpdateVersionService:
         )
         send_task_deleted_notification_mock = mocker.patch(
             'src.processes.services.tasks.task_version.'
-            'send_removed_task_deleted_notification.delay',
+            'send_task_deleted_notification.delay',
         )
         service = TaskUpdateVersionService(
             user=owner,
@@ -1269,7 +1269,7 @@ class TestTaskUpdateVersionService:
         )
         send_task_deleted_notification_mock = mocker.patch(
             'src.processes.services.tasks.task_version.'
-            'send_removed_task_deleted_notification.delay',
+            'send_task_deleted_notification.delay',
         )
         service = TaskUpdateVersionService(
             user=owner,
@@ -1343,7 +1343,7 @@ class TestTaskUpdateVersionService:
         )
         send_task_deleted_notification_mock = mocker.patch(
             'src.processes.services.tasks.task_version.'
-            'send_removed_task_deleted_notification.delay',
+            'send_task_deleted_notification.delay',
         )
         service = TaskUpdateVersionService(
             user=owner,
@@ -1435,7 +1435,7 @@ class TestTaskUpdateVersionService:
         )
         send_task_deleted_notification_mock = mocker.patch(
             'src.processes.services.tasks.task_version.'
-            'send_removed_task_deleted_notification.delay',
+            'send_task_deleted_notification.delay',
         )
         service = TaskUpdateVersionService(
             user=user,
@@ -1528,7 +1528,7 @@ class TestTaskUpdateVersionService:
         )
         send_task_deleted_notification_mock = mocker.patch(
             'src.processes.services.tasks.task_version.'
-            'send_removed_task_deleted_notification.delay',
+            'send_task_deleted_notification.delay',
         )
         service = TaskUpdateVersionService(
             user=owner,
@@ -1604,7 +1604,7 @@ class TestTaskUpdateVersionService:
         )
         send_task_deleted_notification_mock = mocker.patch(
             'src.processes.services.tasks.task_version.'
-            'send_removed_task_deleted_notification.delay',
+            'send_task_deleted_notification.delay',
         )
         service = TaskUpdateVersionService(
             user=owner,
@@ -1679,7 +1679,7 @@ class TestTaskUpdateVersionService:
         )
         send_task_deleted_notification_mock = mocker.patch(
             'src.processes.services.tasks.task_version.'
-            'send_removed_task_deleted_notification.delay',
+            'send_task_deleted_notification.delay',
         )
         service = TaskUpdateVersionService(
             user=owner,
@@ -1750,7 +1750,7 @@ class TestTaskUpdateVersionService:
         )
         send_task_deleted_notification_mock = mocker.patch(
             'src.processes.services.tasks.task_version.'
-            'send_removed_task_deleted_notification.delay',
+            'send_task_deleted_notification.delay',
         )
         service = TaskUpdateVersionService(
             user=owner,

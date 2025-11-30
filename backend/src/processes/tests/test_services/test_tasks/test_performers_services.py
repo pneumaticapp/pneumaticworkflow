@@ -1680,7 +1680,7 @@ class TestTaskPerformersService:
         )
         send_task_deleted_notification_mock = mocker.patch(
             'src.notifications.tasks'
-            '.send_removed_task_deleted_notification.delay',
+            '.send_task_deleted_notification.delay',
         )
         is_superuser = False
         auth_type = AuthTokenType.USER
@@ -1756,7 +1756,7 @@ class TestTaskPerformersService:
         )
         send_task_deleted_notification_mock = mocker.patch(
             'src.notifications.tasks'
-            '.send_removed_task_deleted_notification.delay',
+            '.send_task_deleted_notification.delay',
         )
         is_superuser = False
         auth_type = AuthTokenType.USER
@@ -1837,7 +1837,7 @@ class TestTaskPerformersService:
         )
         send_task_deleted_notification_mock = mocker.patch(
             'src.notifications.tasks'
-            '.send_removed_task_deleted_notification.delay',
+            '.send_task_deleted_notification.delay',
         )
         is_superuser = False
         auth_type = AuthTokenType.USER
@@ -1924,7 +1924,7 @@ class TestTaskPerformersService:
         )
         send_task_deleted_notification_mock = mocker.patch(
             'src.notifications.tasks'
-            '.send_removed_task_deleted_notification.delay',
+            '.send_task_deleted_notification.delay',
         )
         is_superuser = False
         auth_type = AuthTokenType.USER
@@ -2010,7 +2010,7 @@ class TestTaskPerformersService:
         )
         send_task_deleted_notification_mock = mocker.patch(
             'src.notifications.tasks'
-            '.send_removed_task_deleted_notification.delay',
+            '.send_task_deleted_notification.delay',
         )
         is_superuser = False
         auth_type = AuthTokenType.USER
@@ -3364,7 +3364,7 @@ class TestGroupPerformerService:
         )
         send_task_deleted_notification_mock = mocker.patch(
             'src.notifications.tasks'
-            '.send_removed_task_deleted_notification.delay',
+            '.send_task_deleted_notification.delay',
         )
         workflow_action_service_init_mock = mocker.patch.object(
             WorkflowActionService,
@@ -3424,7 +3424,7 @@ class TestGroupPerformerService:
         )
         send_task_deleted_notification_mock = mocker.patch(
             'src.notifications.tasks'
-            '.send_removed_task_deleted_notification.delay',
+            '.send_task_deleted_notification.delay',
         )
         workflow_action_service_init_mock = mocker.patch.object(
             WorkflowActionService,
@@ -3485,7 +3485,7 @@ class TestGroupPerformerService:
         )
         send_task_deleted_notification_mock = mocker.patch(
             'src.notifications.tasks'
-            '.send_removed_task_deleted_notification.delay',
+            '.send_task_deleted_notification.delay',
         )
         workflow_action_service_init_mock = mocker.patch.object(
             WorkflowActionService,

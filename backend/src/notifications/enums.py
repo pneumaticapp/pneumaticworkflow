@@ -30,11 +30,11 @@ class NotificationMethod:
     user_updated = 'user_updated'
     user_deleted = 'user_deleted'
     task_completed = 'task_completed'
+    task_completed_websocket = 'task_completed_websocket'
     task_created = 'task_created'
     task_deleted = 'task_deleted'
     event_created = 'event_created'
     event_updated = 'event_updated'
-    notification_created = 'notification_created'
 
     LITERALS = Literal[
         new_task,
@@ -62,11 +62,11 @@ class NotificationMethod:
         user_updated,
         user_deleted,
         task_completed,
+        task_completed_websocket,
         task_created,
         task_deleted,
         event_created,
         event_updated,
-        notification_created,
     ]
 
 

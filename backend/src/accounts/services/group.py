@@ -19,7 +19,7 @@ from src.notifications.tasks import (
     send_group_deleted_notification,
     send_group_updated_notification,
     send_new_task_websocket,
-    send_removed_task_deleted_notification,
+    send_task_deleted_notification,
 )
 from src.processes.enums import (
     FieldType,
@@ -118,7 +118,7 @@ class UserGroupService(BaseModelService):
         )
         recipients_query = list(RawSqlExecutor.fetch(*query.get_sql()))
         is_removed_task = (
-            send_notification_task is send_removed_task_deleted_notification
+            send_notification_task is send_task_deleted_notification
         )
         notifications = defaultdict(list)
         for recipient in recipients_query:
@@ -151,7 +151,7 @@ class UserGroupService(BaseModelService):
     def _send_removed_users_notifications(self, user_ids: List[int]):
         self._send_users_notification(
             user_ids=user_ids,
-            send_notification_task=send_removed_task_deleted_notification,
+            send_notification_task=send_task_deleted_notification,
         )
 
     def partial_update(

@@ -262,7 +262,7 @@ def test_return_to__ok(mocker, api_client):
 
     send_task_deleted_notification_mock = mocker.patch(
         'src.notifications.tasks'
-        '.send_removed_task_deleted_notification.delay',
+        '.send_task_deleted_notification.delay',
     )
     delete_task_guest_cache_mock = mocker.patch(
         'src.authentication.services.guest_auth.'
@@ -521,7 +521,7 @@ def test_return_to__force_snooze_and_return_to__snooze_not_running_again(
 
     mocker.patch(
         'src.notifications.tasks'
-        '.send_removed_task_deleted_notification.delay',
+        '.send_task_deleted_notification.delay',
     )
     mocker.patch(
         'src.processes.services.workflow_action.'
@@ -581,7 +581,7 @@ def test_return_to__force_snooze_and_resume__snooze_not_running_again(
 
     mocker.patch(
         'src.notifications.tasks'
-        '.send_removed_task_deleted_notification.delay',
+        '.send_task_deleted_notification.delay',
     )
     mocker.patch(
         'src.processes.services.workflow_action.'
@@ -639,7 +639,7 @@ def test_return_to__task_skipped_by_kickoff_field__update_status_to_pending(
     )
     mocker.patch(
         'src.notifications.tasks'
-        '.send_removed_task_deleted_notification.delay',
+        '.send_task_deleted_notification.delay',
     )
     mocker.patch(
         'src.authentication.services.guest_auth.'
@@ -777,7 +777,7 @@ def test_return_to__completed_workflow__ok(
     )
     send_task_deleted_notification_mock = mocker.patch(
         'src.notifications.tasks'
-        '.send_removed_task_deleted_notification.delay',
+        '.send_task_deleted_notification.delay',
     )
 
     # act
