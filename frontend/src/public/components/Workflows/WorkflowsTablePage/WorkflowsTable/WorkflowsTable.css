@@ -231,6 +231,10 @@
 
 .title {
   margin-bottom: 1.6rem;
+
+  @media (--mobile) {
+    margin-bottom: 3.2rem;
+  }
 }
 
 .tune-view-button {

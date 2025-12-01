@@ -138,6 +138,7 @@
   min-height: 4rem;
   text-align: right;
   white-space: nowrap;
+  align-self: flex-start;
 
   @media (--mobile) {
     margin-top: 1.6rem;

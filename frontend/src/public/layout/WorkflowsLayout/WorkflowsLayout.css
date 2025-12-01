@@ -34,26 +34,15 @@
   display: flex;
   width: 100%;
   align-items: center;
+  flex-wrap: wrap;
+  gap: 0.8rem;
 
-  .template-filter {
-    flex: 1 1 16.9rem;
-    width: max(16.9rem, max-content);
-    min-width: 9.5rem;
-    max-width: min-content;
-
-    @media (--mobile) {
-      max-width: 100%;
-      flex: 1 1 auto;
-    }
+  @media (--mobile) {
+    flex-wrap: unset;
   }
 
-  & > *:not(:last-child) {
-    margin-right: 0.8rem;
-
-    @media (--mobile) {
-      margin-right: 0;
-      margin-bottom: 0.8rem;
-    }
+  > * {
+    max-width: 52.4rem;
   }
 
   button {
@@ -64,7 +53,7 @@
 .view-switch-tab {
   padding: 6px 16px;
 }
-/*  move it into a getStarterFilter function (?) */
+
 .user {
   display: flex;
   align-items: center;
@@ -79,4 +68,3 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
-/* /// */
