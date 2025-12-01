@@ -14,8 +14,6 @@ import { urlWithProtocolRegex } from '../../../../../../../constants/defaultValu
 
 import styles from './OptionalFieldColumn.css';
 
-const IMAGE_FILE_ICON_COLOR = 'rgb(254, 195, 54)';
-
 type TProps = React.PropsWithChildren<CellProps<TableColumns, ITableViewFields>>;
 
 export function OptionalFieldColumn({ value }: TProps) {
@@ -74,7 +72,7 @@ export function OptionalFieldColumn({ value }: TProps) {
     return (
       <a key={fileName} href={fileUrl} target="_blank" rel="noreferrer" className={styles['field-column__file-item']}>
         {fileType === 'image' ? (
-          <ImageFileIcon fill={IMAGE_FILE_ICON_COLOR} className={styles['field-column__image-icon']} />
+          <ImageFileIcon className={styles['field-column__image-icon']} />
         ) : (
           <DocumentInfoIcon className={styles['field-column__document-icon']} />
         )}
