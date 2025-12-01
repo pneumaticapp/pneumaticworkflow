@@ -15,7 +15,7 @@ from src.authentication.enums import (
 from src.authentication.messages import (
     MSG_AU_0015,
     MSG_AU_0017,
-    MSG_AU_0020,
+    MSG_AU_0019,
 )
 from src.authentication.models import (
     Account,
@@ -99,9 +99,7 @@ class BaseSSOService(SignUpMixin, CacheMixin, EncryptionMixin, ABC):
         if sso_provider and sso_provider != self.sso_provider:
             raise self.exception_class(MSG_AU_0015)
 
-        if domain:
-            return self._get_config_by_domain(domain)
-        return self._get_default_config()
+        return self._get_default_config() or self._get_config_by_domain(domain)
 
     @abstractmethod
     def _get_config_by_domain(self, domain: str) -> SSOConfigData:
@@ -277,7 +275,7 @@ class BaseSSOService(SignUpMixin, CacheMixin, EncryptionMixin, ABC):
             # This is temporary solution as discussed
             existing_account = Account.objects.first()
             if not existing_account:
-                raise AuthenticationFailed(MSG_AU_0020) from exc
+                raise AuthenticationFailed(MSG_AU_0019) from exc
             user, token = self.join_existing_account(
                 account=existing_account,
                 **user_data,
