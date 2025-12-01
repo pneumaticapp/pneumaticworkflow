@@ -111,14 +111,14 @@
   border-color: var(--pneumatic-color-white);
 }
 
-.tune-view-modal__label:hover .tune-view-modal__label-class-name input:checked + div {
+.tune-view-modal__label:hover .tune-view-modal__label-class-name input:not(:disabled):checked + div {
   background-color: var(--pneumatic-color-white);
 }
 
-.tune-view-modal__label-class-name:hover input:checked + div {
+.tune-view-modal__label-class-name:hover input:not(:disabled):checked + div {
   background-color: var(--pneumatic-color-white) !important;
 }
 
-.tune-view-modal__label-class-name:hover input:checked + div::before {
+.tune-view-modal__label-class-name:hover input:not(:disabled):checked + div::before {
   background-image: url("data:image/svg+xml,%0A%3Csvg width='16' height='16' viewBox='0 0 16 16' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M5.81818 10.7166L2.95455 7.79121L2 8.76633L5.81818 12.6668L14 4.30862L13.0455 3.3335L5.81818 10.7166Z' fill='%23262522'/%3E%3C/svg%3E%0A") !important;
 }

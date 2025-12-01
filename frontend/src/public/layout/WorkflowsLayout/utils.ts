@@ -42,7 +42,7 @@ export const getRenderPlaceholder = ({
     type === ERenderPlaceholderType.Template ||
     (type === ERenderPlaceholderType.Performer && filterType === 'groupType')
   ) {
-    return selectedOption?.name || '';
+    return selectedOption?.name || `${formatMessage({ id: 'sorting.unknown-filter-value' })} ${type}`;
   }
 
   if (

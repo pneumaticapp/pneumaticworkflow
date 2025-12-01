@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useIntl } from 'react-intl';
 
@@ -29,10 +29,10 @@ export function WorkflowsTableActions({
   const templatesIdsFilter = useSelector(
     (state: IApplicationState) => state.workflows.workflowsSettings.values.templatesIdsFilter,
   );
-  const isDisabled =
-    templatesIdsFilter.length !== 1 &&
-    (workflowsLoadingStatus === EWorkflowsLoadingStatus.Loaded ||
-      workflowsLoadingStatus === EWorkflowsLoadingStatus.EmptyList);
+  const isDisabled = useMemo(
+    () => templatesIdsFilter.length !== 1 || workflowsLoadingStatus === EWorkflowsLoadingStatus.LoadingList,
+    [templatesIdsFilter.length, workflowsLoadingStatus],
+  );
 
   const handleTuneViewClick = () => {
     dispatch(openTuneViewModal());
