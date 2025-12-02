@@ -228,15 +228,7 @@ def test_send__dev_environment__console_print(mocker):
     send_to_console_mock.assert_called_with(
         user_email=email,
         template_code=EmailType.OVERDUE_TASK,
-        data={
-            'some': 'data',
-            'backend_url': settings.BACKEND_URL,
-            'frontend_url': settings.FRONTEND_URL,
-            'date': fixed_now.strftime('%d %b, %Y'),
-            'year': fixed_now.strftime('%Y'),
-            'logo_lg': logo_lg,
-            'logo_sm': '',
-        },
+        data={'some': 'data'},
     )
     send_email_via_client_mock.assert_not_called()
 
@@ -296,15 +288,7 @@ def test_send__prod_environment__send_email(mocker):
         user_id=user_id,
         user_email=email,
         template_code=EmailType.OVERDUE_TASK,
-        data={
-            'some': 'data',
-            'backend_url': settings.BACKEND_URL,
-            'frontend_url': settings.FRONTEND_URL,
-            'date': fixed_now.strftime('%d %b, %Y'),
-            'year': fixed_now.strftime('%Y'),
-            'logo_lg': logo_lg,
-            'logo_sm': '',
-        },
+        data={'some': 'data'},
     )
 
 
@@ -478,12 +462,7 @@ def test_send_overdue_task__type_user__ok(mocker):
             'workflow_starter_last_name': workflow_starter_last_name,
             'user_type': UserType.USER,
             'token': None,
-            'backend_url': settings.BACKEND_URL,
-            'frontend_url': settings.FRONTEND_URL,
-            'date': fixed_now.strftime('%d %b, %Y'),
-            'year': fixed_now.strftime('%Y'),
             'logo_lg': logo_lg,
-            'logo_sm': '',
         },
     )
 
@@ -561,12 +540,7 @@ def test_send_overdue_task__type_guest__ok(mocker):
             'workflow_starter_last_name': workflow_starter_last_name,
             'user_type': UserType.GUEST,
             'token': token,
-            'backend_url': settings.BACKEND_URL,
-            'frontend_url': settings.FRONTEND_URL,
-            'date': fixed_now.strftime('%d %b, %Y'),
-            'year': fixed_now.strftime('%Y'),
             'logo_lg': logo_lg,
-            'logo_sm': '',
         },
     )
 
@@ -647,11 +621,6 @@ def test_send_guest_new_task__due_in__ok(mocker):
             'sender_name': sender_name,
             'logo_lg': logo_lg,
             'due_in': formatted_task_due_in,
-            'backend_url': settings.BACKEND_URL,
-            'frontend_url': settings.FRONTEND_URL,
-            'date': fixed_now.strftime('%d %b, %Y'),
-            'year': fixed_now.strftime('%Y'),
-            'logo_sm': '',
         },
     )
 
@@ -732,11 +701,6 @@ def test_send_guest_new_task__overdue__ok(mocker):
             'sender_name': sender_name,
             'logo_lg': None,
             'overdue': formatted_task_due_in,
-            'backend_url': settings.BACKEND_URL,
-            'frontend_url': settings.FRONTEND_URL,
-            'date': fixed_now.strftime('%d %b, %Y'),
-            'year': fixed_now.strftime('%Y'),
-            'logo_sm': '',
         },
     )
 
@@ -825,11 +789,6 @@ def test_send_guest_new_task__task_due_date__is_str__ok(
             'sender_name': sender_name,
             'logo_lg': logo_lg,
             'overdue': formatted_task_due_in,
-            'backend_url': settings.BACKEND_URL,
-            'frontend_url': settings.FRONTEND_URL,
-            'date': fixed_now.strftime('%d %b, %Y'),
-            'year': fixed_now.strftime('%Y'),
-            'logo_sm': '',
         },
     )
 
@@ -896,11 +855,6 @@ def test_send_unread_notifications__ok(mocker):
             'unsubscribe_link': unsubscribe_link,
             'notifications_link': notifications_link,
             'logo_lg': None,
-            'backend_url': settings.BACKEND_URL,
-            'frontend_url': settings.FRONTEND_URL,
-            'date': fixed_now.strftime('%d %b, %Y'),
-            'year': fixed_now.strftime('%Y'),
-            'logo_sm': '',
         },
     )
 
@@ -991,12 +945,7 @@ def test_send_new_task__ok(mocker):
                 'name': wf_starter_name,
                 'avatar': wf_starter_photo,
             },
-            'backend_url': settings.BACKEND_URL,
-            'frontend_url': settings.FRONTEND_URL,
-            'date': fixed_now.strftime('%d %b, %Y'),
-            'year': fixed_now.strftime('%Y'),
             'logo_lg': logo_lg,
-            'logo_sm': '',
         },
     )
     create_unsubscribe_token_mock.assert_called_once_with(
@@ -1091,12 +1040,7 @@ def test_send_returned_task__ok(mocker):
                 'name': wf_starter_name,
                 'avatar': wf_starter_photo,
             },
-            'backend_url': settings.BACKEND_URL,
-            'frontend_url': settings.FRONTEND_URL,
-            'date': fixed_now.strftime('%d %b, %Y'),
-            'year': fixed_now.strftime('%Y'),
             'logo_lg': logo_lg,
-            'logo_sm': '',
         },
     )
     create_unsubscribe_token_mock.assert_called_once_with(
@@ -1167,11 +1111,6 @@ def test_send_reset_password__ok(mocker):
             'link': reset_link,
             'reset_link': reset_link,
             'logo_lg': logo_lg,
-            'backend_url': settings.BACKEND_URL,
-            'frontend_url': settings.FRONTEND_URL,
-            'date': fixed_now.strftime('%d %b, %Y'),
-            'year': fixed_now.strftime('%Y'),
-            'logo_sm': '',
         },
     )
 
@@ -1226,10 +1165,5 @@ def test_send_mention__ok(mocker):
             'task_id': task_id,
             'task_link': task_link,
             'link': task_link,
-            'backend_url': settings.BACKEND_URL,
-            'frontend_url': settings.FRONTEND_URL,
-            'date': fixed_now.strftime('%d %b, %Y'),
-            'year': fixed_now.strftime('%Y'),
-            'logo_sm': '',
         },
     )

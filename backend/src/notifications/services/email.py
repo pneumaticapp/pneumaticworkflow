@@ -136,23 +136,6 @@ class EmailService(NotificationService):
                 data=data,
             )
 
-    def _add_standard_variables(
-        self,
-        data: Dict[str, Any],
-    ) -> Dict[str, Any]:
-        """Add standard variables to email data."""
-        now = timezone.now()
-
-        standard_vars = {
-            'backend_url': settings.BACKEND_URL,
-            'frontend_url': settings.FRONTEND_URL,
-            'date': now.strftime('%d %b, %Y'),
-            'year': now.strftime('%Y'),
-            'logo_lg': data.get('logo_lg', self.logo_lg),
-            'logo_sm': data.get('logo_sm', ''),
-        }
-        return {**standard_vars, **data}
-
     def _send(
         self,
         title: str,
@@ -163,7 +146,6 @@ class EmailService(NotificationService):
         data: Dict[str, str],
     ):
         self._validate_send(method_name)
-        data = self._add_standard_variables(data)
         self._dispatch_email(
             title=title,
             user_id=user_id,
@@ -181,7 +163,6 @@ class EmailService(NotificationService):
         data: Dict[str, Any],
     ):
         """Send email without NotificationMethod validation."""
-        data = self._add_standard_variables(data)
         self._dispatch_email(
             title=title,
             user_id=user_id,
@@ -234,6 +215,7 @@ class EmailService(NotificationService):
             'task_link': task_link,
             'unsubscribe_token': unsubscribe_token,
             'unsubscribe_link': unsubscribe_link,
+            'logo_lg': self.logo_lg,
             'started_by': {
                 'name': wf_starter_name,
                 'avatar': wf_starter_photo,
@@ -288,6 +270,7 @@ class EmailService(NotificationService):
             'task_link': task_link,
             'unsubscribe_token': unsubscribe_token,
             'unsubscribe_link': unsubscribe_link,
+            'logo_lg': self.logo_lg,
             'started_by': {
                 'name': wf_starter_name,
                 'avatar': wf_starter_photo,
@@ -349,6 +332,7 @@ class EmailService(NotificationService):
                 'workflow_starter_last_name': workflow_starter_last_name,
                 'user_type': user_type,
                 'token': token,
+                'logo_lg': self.logo_lg,
             },
         )
 
@@ -646,6 +630,7 @@ class EmailService(NotificationService):
             'unsubscribe_token': unsubscribe_token,
             'unsubscribe_link': unsubscribe_link,
             'workflows_link': workflows_link,
+            'logo_lg': service.logo_lg,
             **digest,
         }
         service._send_simple_email(
@@ -692,6 +677,7 @@ class EmailService(NotificationService):
             'unsubscribe_token': unsubscribe_token,
             'unsubscribe_link': unsubscribe_link,
             'tasks_link': tasks_link,
+            'logo_lg': service.logo_lg,
             **digest,
         }
         service._send_simple_email(
