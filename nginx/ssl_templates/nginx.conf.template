@@ -27,6 +27,13 @@ http {
     default_type application/octet-stream;
 
     ##
+    # SSL Settings
+    ##
+
+    ssl_protocols TLSv1 TLSv1.1 TLSv1.2;
+    ssl_prefer_server_ciphers on;
+
+    ##
     # Logging Settings
     ##
     log_format main '[$time_local] $remote_addr [Request: $status $request]';
@@ -59,7 +66,10 @@ http {
     }
 
     server {
-        listen 8001;
+        listen 8001 ssl;
+        ssl_certificate     /etc/keys/${BACKEND_DOMAIN}.crt;
+        ssl_certificate_key /etc/keys/${BACKEND_DOMAIN}.key;
+
         root /var/www/html;
         index index.html index.nginx-debian.html;
 
@@ -121,7 +131,10 @@ http {
         ~image/ 30d;
     }
     server {
-        listen 80;
+        listen 443 ssl;
+        ssl_certificate     /etc/keys/${FRONTEND_DOMAIN}.crt;
+        ssl_certificate_key /etc/keys/${FRONTEND_DOMAIN}.key;
+
         root /var/www/html;
         index index.html index.nginx-debian.html;
 
@@ -153,7 +166,10 @@ http {
     ##
 
     server {
-        listen 80;
+        listen 443 ssl;
+        ssl_certificate     /etc/keys/${FORM_DOMAIN}.crt;
+        ssl_certificate_key /etc/keys/${FORM_DOMAIN}.key;
+
         root /var/www/html;
         index index.html index.nginx-debian.html;
 
