@@ -9,8 +9,8 @@ from src.analysis.enums import MailoutType
 from src.logs.enums import AccountEventStatus
 from src.notifications import messages
 from src.notifications.enums import (
-    EmailClientProvider,
-    EmailTemplate,
+    EmailProvider,
+    EmailType,
     NotificationMethod,
 )
 from src.notifications.services.email import (
@@ -43,7 +43,7 @@ def test_send_email_via_client__ok(mocker):
         'src.notifications.services.email.settings',
     )
     settings_mock.CUSTOMERIO_TRANSACTIONAL_API_KEY = api_key
-    settings_mock.EMAIL_PROVIDER = 'Customer.io'
+    settings_mock.EMAIL_PROVIDER = EmailProvider.CUSTOMERIO
 
     client_mock = mocker.Mock()
     api_client_mock = mocker.patch(
@@ -55,11 +55,6 @@ def test_send_email_via_client__ok(mocker):
         'src.notifications.clients.customerio.SendEmailRequest',
         return_value=request_mock,
     )
-
-    clients_settings_mock = mocker.patch(
-        'src.notifications.clients.utils.settings',
-    )
-    clients_settings_mock.EMAIL_PROVIDER = EmailClientProvider.CUSTOMERIO
 
     user_id = 1
     email = 'test@pneumatic.app'
@@ -121,7 +116,7 @@ def test_send_email_via_client__enable_logging__ok(mocker):
         'src.notifications.services.email.settings',
     )
     settings_mock.CUSTOMERIO_TRANSACTIONAL_API_KEY = api_key
-    settings_mock.EMAIL_PROVIDER = 'Customer.io'
+    settings_mock.EMAIL_PROVIDER = EmailProvider.CUSTOMERIO
 
     client_mock = mocker.Mock()
     api_client_mock = mocker.patch(
@@ -133,11 +128,6 @@ def test_send_email_via_client__enable_logging__ok(mocker):
         'src.notifications.clients.customerio.SendEmailRequest',
         return_value=request_mock,
     )
-
-    clients_settings_mock = mocker.patch(
-        'src.notifications.clients.utils.settings',
-    )
-    clients_settings_mock.EMAIL_PROVIDER = EmailClientProvider.CUSTOMERIO
 
     create_account_log_mock = mocker.patch(
         'src.notifications.services.email.AccountLogService'
@@ -181,16 +171,23 @@ def test_send_email_via_client__enable_logging__ok(mocker):
         request_data=data,
         account_id=account_id,
         status=AccountEventStatus.SUCCESS,
-        contractor='Customer.io',
+        contractor=EmailProvider.CUSTOMERIO,
     )
 
 
 def test_send__dev_environment__console_print(mocker):
 
     # arrange
+    fixed_now = timezone.now()
+    mocker.patch(
+        'src.notifications.services.email.timezone.now',
+        return_value=fixed_now,
+    )
     settings_mock = mocker.patch(
         'src.notifications.services.email.settings',
     )
+    settings_mock.BACKEND_URL = settings.BACKEND_URL
+    settings_mock.FRONTEND_URL = settings.FRONTEND_URL
     send_to_console_mock = mocker.patch(
         'src.notifications.services.email.'
         'EmailService._send_email_to_console',
@@ -222,7 +219,7 @@ def test_send__dev_environment__console_print(mocker):
         title=title,
         user_id=user_id,
         user_email=email,
-        template_code=EmailTemplate.OVERDUE_TASK,
+        template_code=EmailType.OVERDUE_TASK,
         method_name=NotificationMethod.overdue_task,
         data=data,
     )
@@ -230,8 +227,16 @@ def test_send__dev_environment__console_print(mocker):
     # assert
     send_to_console_mock.assert_called_with(
         user_email=email,
-        template_code=EmailTemplate.OVERDUE_TASK,
-        data=data,
+        template_code=EmailType.OVERDUE_TASK,
+        data={
+            'some': 'data',
+            'backend_url': settings.BACKEND_URL,
+            'frontend_url': settings.FRONTEND_URL,
+            'date': fixed_now.strftime('%d %b, %Y'),
+            'year': fixed_now.strftime('%Y'),
+            'logo_lg': logo_lg,
+            'logo_sm': '',
+        },
     )
     send_email_via_client_mock.assert_not_called()
 
@@ -239,9 +244,16 @@ def test_send__dev_environment__console_print(mocker):
 def test_send__prod_environment__send_email(mocker):
 
     # arrange
+    fixed_now = timezone.now()
+    mocker.patch(
+        'src.notifications.services.email.timezone.now',
+        return_value=fixed_now,
+    )
     settings_mock = mocker.patch(
         'src.notifications.services.email.settings',
     )
+    settings_mock.BACKEND_URL = settings.BACKEND_URL
+    settings_mock.FRONTEND_URL = settings.FRONTEND_URL
     send_to_console_mock = mocker.patch(
         'src.notifications.services.email.'
         'EmailService._send_email_to_console',
@@ -272,7 +284,7 @@ def test_send__prod_environment__send_email(mocker):
         title=title,
         user_id=user_id,
         user_email=email,
-        template_code=EmailTemplate.OVERDUE_TASK,
+        template_code=EmailType.OVERDUE_TASK,
         method_name=NotificationMethod.overdue_task,
         data=data,
     )
@@ -283,8 +295,16 @@ def test_send__prod_environment__send_email(mocker):
         title=title,
         user_id=user_id,
         user_email=email,
-        template_code=EmailTemplate.OVERDUE_TASK,
-        data=data,
+        template_code=EmailType.OVERDUE_TASK,
+        data={
+            'some': 'data',
+            'backend_url': settings.BACKEND_URL,
+            'frontend_url': settings.FRONTEND_URL,
+            'date': fixed_now.strftime('%d %b, %Y'),
+            'year': fixed_now.strftime('%Y'),
+            'logo_lg': logo_lg,
+            'logo_sm': '',
+        },
     )
 
 
@@ -328,7 +348,7 @@ def test_send__not_allowed_method__raise_exception(mocker):
             title=title,
             user_id=user_id,
             user_email=email,
-            template_code=EmailTemplate.OVERDUE_TASK,
+            template_code=EmailType.OVERDUE_TASK,
             method_name=NotificationMethod.overdue_task,
             data=data,
         )
@@ -377,7 +397,7 @@ def test_send__disable_email__skip(mocker):
         title=title,
         user_id=user_id,
         user_email=email,
-        template_code=EmailTemplate.OVERDUE_TASK,
+        template_code=EmailType.OVERDUE_TASK,
         method_name=NotificationMethod.overdue_task,
         data=data,
     )
@@ -390,9 +410,14 @@ def test_send__disable_email__skip(mocker):
 def test_send_overdue_task__type_user__ok(mocker):
 
     # arrange
+    fixed_now = timezone.now()
+    mocker.patch(
+        'src.notifications.services.email.timezone.now',
+        return_value=fixed_now,
+    )
     send_mock = mocker.patch(
         'src.notifications.services.email.'
-        'EmailService._send',
+        'EmailService._dispatch_email',
     )
     user_id = 12
     task_id = 11
@@ -435,20 +460,30 @@ def test_send_overdue_task__type_user__ok(mocker):
         title=str(messages.MSG_NF_0004),
         user_id=user_id,
         user_email=user_email,
-        template_code=EmailTemplate.OVERDUE_TASK,
-        method_name=NotificationMethod.overdue_task,
+        template_code=EmailType.OVERDUE_TASK,
         data={
-            'task_id': str(task_id),
-            'task_name': task_name,
+            'title': 'Task is overdue',
+            'template': template_name,
             'workflow_id': workflow_id,
             'workflow_name': workflow_name,
+            'task_id': str(task_id),
+            'task_name': task_name,
+            'task_link': (
+                f'{settings.FRONTEND_URL}/tasks/{task_id}'
+                f'?utm_source=email&utm_campaign=overdue_task'
+            ),
+            'template_name': template_name,
             'workflow_starter_id': workflow_starter_id,
             'workflow_starter_first_name': workflow_starter_first_name,
             'workflow_starter_last_name': workflow_starter_last_name,
-            'template_name': template_name,
-            'logo_lg': logo_lg,
             'user_type': UserType.USER,
             'token': None,
+            'backend_url': settings.BACKEND_URL,
+            'frontend_url': settings.FRONTEND_URL,
+            'date': fixed_now.strftime('%d %b, %Y'),
+            'year': fixed_now.strftime('%Y'),
+            'logo_lg': logo_lg,
+            'logo_sm': '',
         },
     )
 
@@ -456,9 +491,14 @@ def test_send_overdue_task__type_user__ok(mocker):
 def test_send_overdue_task__type_guest__ok(mocker):
 
     # arrange
+    fixed_now = timezone.now()
+    mocker.patch(
+        'src.notifications.services.email.timezone.now',
+        return_value=fixed_now,
+    )
     send_mock = mocker.patch(
         'src.notifications.services.email.'
-        'EmailService._send',
+        'EmailService._dispatch_email',
     )
     user_id = 12
     task_id = 11
@@ -503,20 +543,30 @@ def test_send_overdue_task__type_guest__ok(mocker):
         title=str(messages.MSG_NF_0004),
         user_id=user_id,
         user_email=user_email,
-        template_code=EmailTemplate.OVERDUE_TASK,
-        method_name=NotificationMethod.overdue_task,
+        template_code=EmailType.OVERDUE_TASK,
         data={
-            'task_id': str(task_id),
-            'task_name': task_name,
+            'title': 'Task is overdue',
+            'template': template_name,
             'workflow_id': workflow_id,
             'workflow_name': workflow_name,
+            'task_id': str(task_id),
+            'task_name': task_name,
+            'task_link': (
+                f'{settings.FRONTEND_URL}/tasks/{task_id}'
+                f'?token={token}&utm_source=email&utm_campaign=overdue_task'
+            ),
+            'template_name': template_name,
             'workflow_starter_id': workflow_starter_id,
             'workflow_starter_first_name': workflow_starter_first_name,
             'workflow_starter_last_name': workflow_starter_last_name,
-            'template_name': template_name,
-            'logo_lg': logo_lg,
             'user_type': UserType.GUEST,
             'token': token,
+            'backend_url': settings.BACKEND_URL,
+            'frontend_url': settings.FRONTEND_URL,
+            'date': fixed_now.strftime('%d %b, %Y'),
+            'year': fixed_now.strftime('%Y'),
+            'logo_lg': logo_lg,
+            'logo_sm': '',
         },
     )
 
@@ -524,6 +574,11 @@ def test_send_overdue_task__type_guest__ok(mocker):
 def test_send_guest_new_task__due_in__ok(mocker):
 
     # arrange
+    fixed_now = timezone.now()
+    mocker.patch(
+        'src.notifications.services.email.timezone.now',
+        return_value=fixed_now,
+    )
     token = '!@#sadd1'
     sender_name = 'Joe'
     recipient_id = 1233
@@ -532,7 +587,7 @@ def test_send_guest_new_task__due_in__ok(mocker):
     task_name = 'Task name'
     task_description = 'Some markdown description'
     duration = timedelta(hours=1)
-    task_due_date = timezone.now() + duration
+    task_due_date = fixed_now + duration
 
     html_description = '<div>text</div>'
     html_service_mock = mocker.patch(
@@ -541,7 +596,7 @@ def test_send_guest_new_task__due_in__ok(mocker):
     )
     send_mock = mocker.patch(
         'src.notifications.services.email.'
-        'EmailService._send',
+        'EmailService._dispatch_email',
     )
     formatted_task_due_in = '1 hour'
     get_duration_format_mock = mocker.patch(
@@ -573,21 +628,30 @@ def test_send_guest_new_task__due_in__ok(mocker):
     # assert
     html_service_mock.assert_called_once_with(task_description)
     get_duration_format_mock.assert_called_once()
+    task_link = (
+        f'{settings.FRONTEND_URL}/tasks/{task_id}'
+        f'?token={token}&utm_source=email&utm_campaign=guest_new_task'
+    )
     send_mock.assert_called_once_with(
         title=str(messages.MSG_NF_0002),
         user_id=recipient_id,
         user_email=user_email,
-        template_code=EmailTemplate.GUEST_NEW_TASK,
-        method_name=NotificationMethod.guest_new_task,
+        template_code=EmailType.GUEST_NEW_TASK,
         data={
             'token': token,
-            'user_id': recipient_id,
+            'link': task_link,
+            'task_link': task_link,
             'task_id': task_id,
             'task_name': task_name,
             'task_description': html_description,
             'sender_name': sender_name,
             'logo_lg': logo_lg,
             'due_in': formatted_task_due_in,
+            'backend_url': settings.BACKEND_URL,
+            'frontend_url': settings.FRONTEND_URL,
+            'date': fixed_now.strftime('%d %b, %Y'),
+            'year': fixed_now.strftime('%Y'),
+            'logo_sm': '',
         },
     )
 
@@ -595,6 +659,11 @@ def test_send_guest_new_task__due_in__ok(mocker):
 def test_send_guest_new_task__overdue__ok(mocker):
 
     # arrange
+    fixed_now = timezone.now()
+    mocker.patch(
+        'src.notifications.services.email.timezone.now',
+        return_value=fixed_now,
+    )
     token = '!@#sadd1'
     sender_name = 'Joe'
     recipient_id = 1233
@@ -603,7 +672,7 @@ def test_send_guest_new_task__overdue__ok(mocker):
     task_name = 'Task name'
     task_description = 'Some markdown description'
     due_in = timedelta(hours=1)
-    task_due_date = timezone.now() - due_in
+    task_due_date = fixed_now - due_in
 
     html_description = '<div>text</div>'
     html_service_mock = mocker.patch(
@@ -612,7 +681,7 @@ def test_send_guest_new_task__overdue__ok(mocker):
     )
     send_mock = mocker.patch(
         'src.notifications.services.email.'
-        'EmailService._send',
+        'EmailService._dispatch_email',
     )
     formatted_task_due_in = '1 hour'
     get_duration_format_mock = mocker.patch(
@@ -644,21 +713,30 @@ def test_send_guest_new_task__overdue__ok(mocker):
     # assert
     html_service_mock.assert_called_once_with(task_description)
     get_duration_format_mock.assert_called_once()
+    task_link = (
+        f'{settings.FRONTEND_URL}/tasks/{task_id}'
+        f'?token={token}&utm_source=email&utm_campaign=guest_new_task'
+    )
     send_mock.assert_called_once_with(
         title=str(messages.MSG_NF_0002),
         user_id=recipient_id,
         user_email=user_email,
-        template_code=EmailTemplate.GUEST_NEW_TASK,
-        method_name=NotificationMethod.guest_new_task,
+        template_code=EmailType.GUEST_NEW_TASK,
         data={
             'token': token,
-            'user_id': recipient_id,
+            'link': task_link,
+            'task_link': task_link,
             'task_id': task_id,
             'task_name': task_name,
             'task_description': html_description,
             'sender_name': sender_name,
             'logo_lg': None,
             'overdue': formatted_task_due_in,
+            'backend_url': settings.BACKEND_URL,
+            'frontend_url': settings.FRONTEND_URL,
+            'date': fixed_now.strftime('%d %b, %Y'),
+            'year': fixed_now.strftime('%Y'),
+            'logo_sm': '',
         },
     )
 
@@ -676,6 +754,11 @@ def test_send_guest_new_task__task_due_date__is_str__ok(
 ):
 
     # arrange
+    fixed_now = timezone.now()
+    mocker.patch(
+        'src.notifications.services.email.timezone.now',
+        return_value=fixed_now,
+    )
     token = '!@#sadd1'
     sender_name = 'Joe'
     recipient_id = 1233
@@ -691,7 +774,7 @@ def test_send_guest_new_task__task_due_date__is_str__ok(
     )
     send_mock = mocker.patch(
         'src.notifications.services.email.'
-        'EmailService._send',
+        'EmailService._dispatch_email',
     )
     formatted_task_due_in = '1 hour'
     get_duration_format_mock = mocker.patch(
@@ -723,21 +806,30 @@ def test_send_guest_new_task__task_due_date__is_str__ok(
     # assert
     html_service_mock.assert_called_once_with(task_description)
     get_duration_format_mock.assert_called_once()
+    task_link = (
+        f'{settings.FRONTEND_URL}/tasks/{task_id}'
+        f'?token={token}&utm_source=email&utm_campaign=guest_new_task'
+    )
     send_mock.assert_called_once_with(
         title=str(messages.MSG_NF_0002),
         user_id=recipient_id,
         user_email=user_email,
-        template_code=EmailTemplate.GUEST_NEW_TASK,
-        method_name=NotificationMethod.guest_new_task,
+        template_code=EmailType.GUEST_NEW_TASK,
         data={
             'token': token,
-            'user_id': recipient_id,
+            'link': task_link,
+            'task_link': task_link,
             'task_id': task_id,
             'task_name': task_name,
             'task_description': html_description,
             'sender_name': sender_name,
             'logo_lg': logo_lg,
             'overdue': formatted_task_due_in,
+            'backend_url': settings.BACKEND_URL,
+            'frontend_url': settings.FRONTEND_URL,
+            'date': fixed_now.strftime('%d %b, %Y'),
+            'year': fixed_now.strftime('%Y'),
+            'logo_sm': '',
         },
     )
 
@@ -745,13 +837,18 @@ def test_send_guest_new_task__task_due_date__is_str__ok(
 def test_send_unread_notifications__ok(mocker):
 
     # arrange
+    fixed_now = timezone.now()
+    mocker.patch(
+        'src.notifications.services.email.timezone.now',
+        return_value=fixed_now,
+    )
     recipient_id = 1233
     user_email = 'guest@guest.guest'
     recipient_first_name = 'John'
 
     send_mock = mocker.patch(
         'src.notifications.services.email.'
-        'EmailService._send',
+        'EmailService._dispatch_email',
     )
     unsubscribe_token = '!@#sadd1'
     unsubscribe_token_mock = mocker.patch(
@@ -781,16 +878,29 @@ def test_send_unread_notifications__ok(mocker):
         user_id=recipient_id,
         email_type=MailoutType.COMMENTS,
     )
+    unsubscribe_link = (
+        f'{settings.BACKEND_URL}/accounts/unsubscribe/{unsubscribe_token}'
+    )
+    notifications_link = (
+        f'{settings.FRONTEND_URL}'
+        f'/notifications?utm_source=email&utm_campaign=unread'
+    )
     send_mock.assert_called_once_with(
         title=str(messages.MSG_NF_0013),
         user_id=recipient_id,
         user_email=user_email,
-        template_code=EmailTemplate.UNREAD_NOTIFICATIONS,
-        method_name=NotificationMethod.unread_notifications,
+        template_code=EmailType.UNREAD_NOTIFICATIONS,
         data={
             'user_name': recipient_first_name,
             'unsubscribe_token': unsubscribe_token,
-            'logo_lg': logo_lg,
+            'unsubscribe_link': unsubscribe_link,
+            'notifications_link': notifications_link,
+            'logo_lg': None,
+            'backend_url': settings.BACKEND_URL,
+            'frontend_url': settings.FRONTEND_URL,
+            'date': fixed_now.strftime('%d %b, %Y'),
+            'year': fixed_now.strftime('%Y'),
+            'logo_sm': '',
         },
     )
 
@@ -798,6 +908,11 @@ def test_send_unread_notifications__ok(mocker):
 def test_send_new_task__ok(mocker):
 
     # arrange
+    fixed_now = timezone.now()
+    mocker.patch(
+        'src.notifications.services.email.timezone.now',
+        return_value=fixed_now,
+    )
     recipient_id = 1233
     user_email = 'guest@guest.guest'
     task_id = 11
@@ -818,7 +933,7 @@ def test_send_new_task__ok(mocker):
     )
     send_mock = mocker.patch(
         'src.notifications.services.email.'
-        'EmailService._send',
+        'EmailService._dispatch_email',
     )
     logo_lg = 'https://logo.jpg'
     logging = False
@@ -848,13 +963,20 @@ def test_send_new_task__ok(mocker):
     )
 
     # assert
+    task_link = (
+        f'{settings.FRONTEND_URL}'
+        f'/tasks/{task_id}?utm_source=email&utm_campaign=new_task'
+    )
+    unsubscribe_link = (
+        f'{settings.BACKEND_URL}/accounts/unsubscribe/{unsubscribe_token}'
+    )
     send_mock.assert_called_once_with(
         title=str(messages.MSG_NF_0002),
         user_id=recipient_id,
         user_email=user_email,
-        template_code=EmailTemplate.NEW_TASK,
-        method_name=NotificationMethod.new_task,
+        template_code=EmailType.NEW_TASK,
         data={
+            'title': "You've been assigned a task",
             'template': template_name,
             'workflow_name': workflow_name,
             'task_name': task_name,
@@ -862,12 +984,19 @@ def test_send_new_task__ok(mocker):
             'overdue': overdue,
             'task_description': html_description,
             'task_id': task_id,
+            'task_link': task_link,
             'unsubscribe_token': unsubscribe_token,
-            'logo_lg': logo_lg,
+            'unsubscribe_link': unsubscribe_link,
             'started_by': {
                 'name': wf_starter_name,
                 'avatar': wf_starter_photo,
             },
+            'backend_url': settings.BACKEND_URL,
+            'frontend_url': settings.FRONTEND_URL,
+            'date': fixed_now.strftime('%d %b, %Y'),
+            'year': fixed_now.strftime('%Y'),
+            'logo_lg': logo_lg,
+            'logo_sm': '',
         },
     )
     create_unsubscribe_token_mock.assert_called_once_with(
@@ -879,6 +1008,11 @@ def test_send_new_task__ok(mocker):
 def test_send_returned_task__ok(mocker):
 
     # arrange
+    fixed_now = timezone.now()
+    mocker.patch(
+        'src.notifications.services.email.timezone.now',
+        return_value=fixed_now,
+    )
     recipient_id = 1233
     user_email = 'guest@guest.guest'
     task_id = 11
@@ -899,7 +1033,7 @@ def test_send_returned_task__ok(mocker):
     )
     send_mock = mocker.patch(
         'src.notifications.services.email.'
-        'EmailService._send',
+        'EmailService._dispatch_email',
     )
     logo_lg = 'https://logo.jpg'
     logging = False
@@ -929,13 +1063,20 @@ def test_send_returned_task__ok(mocker):
     )
 
     # assert
+    task_link = (
+        f'{settings.FRONTEND_URL}'
+        f'/tasks/{task_id}?utm_source=email&utm_campaign=returned_task'
+    )
+    unsubscribe_link = (
+        f'{settings.BACKEND_URL}/accounts/unsubscribe/{unsubscribe_token}'
+    )
     send_mock.assert_called_once_with(
         title=str(messages.MSG_NF_0003),
         user_id=recipient_id,
         user_email=user_email,
-        template_code=EmailTemplate.TASK_RETURNED,
-        method_name=NotificationMethod.returned_task,
+        template_code=EmailType.TASK_RETURNED,
         data={
+            'title': 'Task has been returned',
             'template': template_name,
             'workflow_name': workflow_name,
             'task_name': task_name,
@@ -943,12 +1084,19 @@ def test_send_returned_task__ok(mocker):
             'overdue': overdue,
             'task_description': html_description,
             'task_id': task_id,
+            'task_link': task_link,
             'unsubscribe_token': unsubscribe_token,
-            'logo_lg': logo_lg,
+            'unsubscribe_link': unsubscribe_link,
             'started_by': {
                 'name': wf_starter_name,
                 'avatar': wf_starter_photo,
             },
+            'backend_url': settings.BACKEND_URL,
+            'frontend_url': settings.FRONTEND_URL,
+            'date': fixed_now.strftime('%d %b, %Y'),
+            'year': fixed_now.strftime('%Y'),
+            'logo_lg': logo_lg,
+            'logo_sm': '',
         },
     )
     create_unsubscribe_token_mock.assert_called_once_with(
@@ -960,6 +1108,11 @@ def test_send_returned_task__ok(mocker):
 def test_send_reset_password__ok(mocker):
 
     # arrange
+    fixed_now = timezone.now()
+    mocker.patch(
+        'src.notifications.services.email.timezone.now',
+        return_value=fixed_now,
+    )
     recipient_id = 1233
     user_email = 'test@user.com'
     token = '!@#sadd1'
@@ -970,7 +1123,7 @@ def test_send_reset_password__ok(mocker):
     )
     send_mock = mocker.patch(
         'src.notifications.services.email.'
-        'EmailService._send',
+        'EmailService._dispatch_email',
     )
     logo_lg = 'https://logo.jpg'
     logging = False
@@ -990,15 +1143,35 @@ def test_send_reset_password__ok(mocker):
 
     # assert
     reset_password_token_mock.assert_called_once_with(recipient_id)
+    reset_link = (
+        f'{settings.FRONTEND_URL}/auth/reset-password'
+        f'?token={token}&utm_source=email&utm_campaign=reset_password'
+    )
     send_mock.assert_called_once_with(
         title=str(messages.MSG_NF_0014),
         user_id=recipient_id,
         user_email=user_email,
-        template_code=EmailTemplate.RESET_PASSWORD,
-        method_name=NotificationMethod.reset_password,
+        template_code=EmailType.RESET_PASSWORD,
         data={
+            'title': 'Forgot Your Password?',
+            'content': (
+                '<h2><strong>We got a request to reset your '
+                'Pneumatic account password.</strong></h2>'
+                '<p>A strong password includes eight or more '
+                'characters and a combination of uppercase and '
+                'lowercase letters, numbers and symbols, and is not '
+                'based on words in the dictionary.</p>'
+            ),
+            'button_text': 'Reset my password',
             'token': token,
+            'link': reset_link,
+            'reset_link': reset_link,
             'logo_lg': logo_lg,
+            'backend_url': settings.BACKEND_URL,
+            'frontend_url': settings.FRONTEND_URL,
+            'date': fixed_now.strftime('%d %b, %Y'),
+            'year': fixed_now.strftime('%Y'),
+            'logo_sm': '',
         },
     )
 
@@ -1006,13 +1179,18 @@ def test_send_reset_password__ok(mocker):
 def test_send_mention__ok(mocker):
 
     # arrange
+    fixed_now = timezone.now()
+    mocker.patch(
+        'src.notifications.services.email.timezone.now',
+        return_value=fixed_now,
+    )
     user_id = 1233
     task_id = 3321
     user_email = 'test@user.com'
     user_first_name = 'John'
     send_mock = mocker.patch(
         'src.notifications.services.email.'
-        'EmailService._send',
+        'EmailService._dispatch_email',
     )
     logo_lg = 'https://logo.jpg'
     logging = False
@@ -1033,15 +1211,25 @@ def test_send_mention__ok(mocker):
     )
 
     # assert
+    task_link = (
+        f'{settings.FRONTEND_URL}/tasks/{task_id}'
+        f'?utm_source=email&utm_campaign=mention'
+    )
     send_mock.assert_called_once_with(
         title=str(messages.MSG_NF_0005),
         user_id=user_id,
         user_email=user_email,
-        template_code=EmailTemplate.MENTION,
-        method_name=NotificationMethod.mention,
+        template_code=EmailType.MENTION,
         data={
-            'task_id': task_id,
             'logo_lg': logo_lg,
             'user_first_name': user_first_name,
+            'task_id': task_id,
+            'task_link': task_link,
+            'link': task_link,
+            'backend_url': settings.BACKEND_URL,
+            'frontend_url': settings.FRONTEND_URL,
+            'date': fixed_now.strftime('%d %b, %Y'),
+            'year': fixed_now.strftime('%Y'),
+            'logo_sm': '',
         },
     )
