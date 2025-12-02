@@ -10,10 +10,7 @@ from src.authentication.entities import UserData, SSOConfigData
 from src.authentication.enums import (
     SSOProvider,
 )
-from src.authentication.messages import (
-    MSG_AU_0018,
-    MSG_AU_0019,
-)
+from src.authentication.messages import MSG_AU_0018
 from src.authentication.models import (
     AccessToken,
     SSOConfig,
@@ -45,11 +42,10 @@ class Auth0Service(BaseSSOService):
         self.scope = 'openid email profile offline_access'
 
     def _get_config_by_domain(self, domain: str) -> SSOConfigData:
-        """Gets configuration for a specific domain."""
         try:
             sso_config = SSOConfig.objects.get(
                 domain=domain,
-                provider=SSOProvider.AUTH0,
+                provider=self.sso_provider,
                 is_active=True,
             )
             return SSOConfigData(
@@ -59,11 +55,15 @@ class Auth0Service(BaseSSOService):
                 redirect_uri=settings.AUTH0_REDIRECT_URI,
             )
         except SSOConfig.DoesNotExist as exc:
+            capture_sentry_message(
+                message=str(MSG_AU_0018(domain)),
+                level=SentryLogLevel.ERROR,
+            )
             raise self.exception_class(MSG_AU_0018(domain)) from exc
 
-    def _get_default_config(self) -> SSOConfigData:
+    def _get_default_config(self) -> Optional[SSOConfigData]:
         if not settings.AUTH0_CLIENT_SECRET:
-            raise self.exception_class(MSG_AU_0019)
+            return None
         return SSOConfigData(
             client_id=settings.AUTH0_CLIENT_ID,
             client_secret=settings.AUTH0_CLIENT_SECRET,

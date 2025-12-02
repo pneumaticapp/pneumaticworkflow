@@ -8,6 +8,7 @@ from src.accounts.enums import (
     SourceType,
 )
 from src.authentication.entities import SSOConfigData
+from src.authentication.messages import MSG_AU_0018
 from src.authentication.models import AccessToken
 from src.authentication.services import exceptions
 from src.authentication.services.auth0 import (
@@ -41,6 +42,7 @@ def test__get_auth_uri__ok(mocker):
     )
     settings_mock.AUTH0_DOMAIN = domain
     settings_mock.AUTH0_CLIENT_ID = client_id
+    settings_mock.AUTH0_CLIENT_SECRET = 'test_secret'
     settings_mock.AUTH0_REDIRECT_URI = redirect_uri
     settings_mock.PROJECT_CONF = {
         'SSO_AUTH': True,
@@ -94,6 +96,7 @@ def test_get_user_data__ok(mocker):
         'src.authentication.services.auth0.settings',
         new=settings_mock,
     )
+    settings_mock.AUTH0_CLIENT_SECRET = 'test_secret'
     settings_mock.PROJECT_CONF = {
         'SSO_AUTH': True,
         'SSO_PROVIDER': 'auth0',
@@ -140,6 +143,7 @@ def test_get_user_data__not_first_name__set_default(mocker):
         'src.authentication.services.auth0.settings',
         new=settings_mock,
     )
+    settings_mock.AUTH0_CLIENT_SECRET = 'test_secret'
     settings_mock.PROJECT_CONF = {
         'SSO_AUTH': True,
         'SSO_PROVIDER': 'auth0',
@@ -185,6 +189,7 @@ def test_get_user_data__email_not_found__raise_exception(mocker):
         'src.authentication.services.auth0.settings',
         new=settings_mock,
     )
+    settings_mock.AUTH0_CLIENT_SECRET = 'test_secret'
     settings_mock.PROJECT_CONF = {
         'SSO_AUTH': True,
         'SSO_PROVIDER': 'auth0',
@@ -288,6 +293,7 @@ def test_get_first_access_token__clear_cache__raise_exception(mocker):
         'src.authentication.services.auth0.settings',
         new=settings_mock,
     )
+    settings_mock.AUTH0_CLIENT_SECRET = 'test_secret'
     settings_mock.PROJECT_CONF = {
         'SSO_AUTH': True,
         'SSO_PROVIDER': 'auth0',
@@ -401,6 +407,7 @@ def test_get_user_profile__ok(mocker):
         new=settings_mock,
     )
     settings_mock.AUTH0_DOMAIN = domain
+    settings_mock.AUTH0_CLIENT_SECRET = 'test_secret'
     settings_mock.PROJECT_CONF = {
         'SSO_AUTH': True,
         'SSO_PROVIDER': 'auth0',
@@ -451,6 +458,7 @@ def test_get_user_profile__response_error__raise_exception(mocker):
         new=settings_mock,
     )
     settings_mock.AUTH0_DOMAIN = domain
+    settings_mock.AUTH0_CLIENT_SECRET = 'test_secret'
     settings_mock.PROJECT_CONF = {
         'SSO_AUTH': True,
         'SSO_PROVIDER': 'auth0',
@@ -496,6 +504,7 @@ def test_save_tokens_for_user__create__ok(mocker):
         'src.authentication.services.auth0.settings',
         new=settings_mock,
     )
+    settings_mock.AUTH0_CLIENT_SECRET = 'test_secret'
     settings_mock.PROJECT_CONF = {
         'SSO_AUTH': True,
         'SSO_PROVIDER': 'auth0',
@@ -540,6 +549,7 @@ def test_save_tokens_for_user__update__ok(mocker):
         'src.authentication.services.auth0.settings',
         new=settings_mock,
     )
+    settings_mock.AUTH0_CLIENT_SECRET = 'test_secret'
     settings_mock.PROJECT_CONF = {
         'SSO_AUTH': True,
         'SSO_PROVIDER': 'auth0',
@@ -639,6 +649,69 @@ def test_authenticate_user__existing_user__ok(mocker):
         user_ip='127.0.0.1',
     )
     save_tokens_mock.assert_called_once_with(user)
+
+
+def test_get_config__domain_not_found_fallback_to_default__ok(mocker):
+    """If domain configuration is not found, default configuration is used."""
+    # arrange
+    domain = 'nonexistent.domain.com'
+    default_client_id = 'default_client_id'
+    default_client_secret = 'default_client_secret'
+    default_domain = 'dev-default.auth0.com'
+    default_redirect_uri = 'https://default.redirect/uri'
+    settings_mock = mocker.patch(
+        'src.authentication.services.base_sso.settings',
+    )
+    mocker.patch(
+        'src.authentication.services.auth0.settings',
+        new=settings_mock,
+    )
+    settings_mock.AUTH0_CLIENT_ID = default_client_id
+    settings_mock.AUTH0_CLIENT_SECRET = default_client_secret
+    settings_mock.AUTH0_DOMAIN = default_domain
+    settings_mock.AUTH0_REDIRECT_URI = default_redirect_uri
+    settings_mock.PROJECT_CONF = {
+        'SSO_AUTH': True,
+        'SSO_PROVIDER': 'auth0',
+    }
+
+    # act
+    service = Auth0Service(domain=domain)
+
+    # assert
+    assert service.config.client_id == default_client_id
+    assert service.config.client_secret == default_client_secret
+    assert service.config.domain == default_domain
+    assert service.config.redirect_uri == default_redirect_uri
+
+
+def test_get_config__domain_not_found_and_no_default__raise_exception(mocker):
+    """
+    If domain configuration is not found
+    and default configuration is also unavailable, an exception is raised
+    with a message about incorrect SSO configuration.
+    """
+    # arrange
+    domain = 'nonexistent.domain.com'
+    settings_mock = mocker.patch(
+        'src.authentication.services.base_sso.settings',
+    )
+    mocker.patch(
+        'src.authentication.services.auth0.settings',
+        new=settings_mock,
+    )
+    settings_mock.AUTH0_CLIENT_SECRET = None
+    settings_mock.PROJECT_CONF = {
+        'SSO_AUTH': True,
+        'SSO_PROVIDER': 'auth0',
+    }
+
+    # act
+    with pytest.raises(exceptions.Auth0ServiceException) as exc_info:
+        Auth0Service(domain=domain)
+
+    # assert
+    assert str(exc_info.value) == MSG_AU_0018(domain)
 
 
 def test_authenticate_user__join_existing_account__ok(mocker):

@@ -96,9 +96,5 @@ msgid "No active SSO configuration found for the domain: \"{domain}\"."
 msgstr "Активная конфигурация SSO не найдена для домена: «{domain}»."
 
 #: authentication/messages.py:46
-msgid "SSO settings are not properly configured. Please contact your administrator."
-msgstr "Настройки SSO указаны некорректно. Пожалуйста, свяжитесь с администратором."
-
-#: authentication/messages.py:49
 msgid "This account does not use SSO authentication. Please contact support."
 msgstr "Этот аккаунт не использует аутентификацию SSO. Пожалуйста, свяжитесь со службой поддержки."

@@ -6,6 +6,7 @@ import requests
 from django.contrib.auth import get_user_model
 
 from src.accounts.enums import SourceType
+from src.authentication.messages import MSG_AU_0018
 from src.authentication.models import AccessToken
 from src.authentication.services import exceptions
 from src.authentication.services.okta import OktaService
@@ -382,6 +383,7 @@ def test_get_user_profile__ok(mocker):
         new=settings_mock,
     )
     settings_mock.OKTA_DOMAIN = domain
+    settings_mock.OKTA_CLIENT_SECRET = 'test_secret'
     settings_mock.PROJECT_CONF = {
         'SSO_AUTH': True,
         'SSO_PROVIDER': 'okta',
@@ -427,6 +429,7 @@ def test_get_user_profile__request_error__raise_exception(mocker):
         new=settings_mock,
     )
     settings_mock.OKTA_DOMAIN = domain
+    settings_mock.OKTA_CLIENT_SECRET = 'test_secret'
     settings_mock.PROJECT_CONF = {
         'SSO_AUTH': True,
         'SSO_PROVIDER': 'okta',
@@ -444,6 +447,69 @@ def test_get_user_profile__request_error__raise_exception(mocker):
         message='Okta user profile request failed: HTTP Error',
         level=SentryLogLevel.ERROR,
     )
+
+
+def test_get_config__domain_not_found_fallback_to_default__ok(mocker):
+    """If domain configuration is not found, default configuration is used."""
+    # arrange
+    domain = 'nonexistent.domain.com'
+    default_client_id = 'default_client_id'
+    default_client_secret = 'default_client_secret'
+    default_domain = 'dev-default.okta.com'
+    default_redirect_uri = 'https://default.redirect/uri'
+    settings_mock = mocker.patch(
+        'src.authentication.services.base_sso.settings',
+    )
+    mocker.patch(
+        'src.authentication.services.okta.settings',
+        new=settings_mock,
+    )
+    settings_mock.OKTA_CLIENT_ID = default_client_id
+    settings_mock.OKTA_CLIENT_SECRET = default_client_secret
+    settings_mock.OKTA_DOMAIN = default_domain
+    settings_mock.OKTA_REDIRECT_URI = default_redirect_uri
+    settings_mock.PROJECT_CONF = {
+        'SSO_AUTH': True,
+        'SSO_PROVIDER': 'okta',
+    }
+
+    # act
+    service = OktaService(domain=domain)
+
+    # assert
+    assert service.config.client_id == default_client_id
+    assert service.config.client_secret == default_client_secret
+    assert service.config.domain == default_domain
+    assert service.config.redirect_uri == default_redirect_uri
+
+
+def test_get_config__domain_not_found_and_no_default__raise_exception(mocker):
+    """
+    If domain configuration is not found
+    and default configuration is also unavailable, an exception is raised
+    with a message about incorrect SSO configuration.
+    """
+    # arrange
+    domain = 'nonexistent.domain.com'
+    settings_mock = mocker.patch(
+        'src.authentication.services.base_sso.settings',
+    )
+    mocker.patch(
+        'src.authentication.services.okta.settings',
+        new=settings_mock,
+    )
+    settings_mock.OKTA_CLIENT_SECRET = None
+    settings_mock.PROJECT_CONF = {
+        'SSO_AUTH': True,
+        'SSO_PROVIDER': 'okta',
+    }
+
+    # act
+    with pytest.raises(exceptions.OktaServiceException) as exc_info:
+        OktaService(domain=domain)
+
+    # assert
+    assert str(exc_info.value) == MSG_AU_0018(domain)
 
 
 def test_save_tokens_for_user__create__ok(mocker):

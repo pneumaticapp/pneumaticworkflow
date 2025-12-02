@@ -10,10 +10,7 @@ from src.authentication.entities import UserData, SSOConfigData
 from src.authentication.enums import (
     SSOProvider,
 )
-from src.authentication.messages import (
-    MSG_AU_0018,
-    MSG_AU_0019,
-)
+from src.authentication.messages import MSG_AU_0018
 from src.authentication.models import (
     AccessToken,
     SSOConfig,
@@ -48,7 +45,7 @@ class OktaService(BaseSSOService):
         try:
             sso_config = SSOConfig.objects.get(
                 domain=domain,
-                provider=SSOProvider.OKTA,
+                provider=self.sso_provider,
                 is_active=True,
             )
             return SSOConfigData(
@@ -58,11 +55,15 @@ class OktaService(BaseSSOService):
                 redirect_uri=settings.OKTA_REDIRECT_URI,
             )
         except SSOConfig.DoesNotExist as exc:
+            capture_sentry_message(
+                message=str(MSG_AU_0018(domain)),
+                level=SentryLogLevel.ERROR,
+            )
             raise self.exception_class(MSG_AU_0018(domain)) from exc
 
-    def _get_default_config(self) -> SSOConfigData:
+    def _get_default_config(self) -> Optional[SSOConfigData]:
         if not settings.OKTA_CLIENT_SECRET:
-            raise self.exception_class(MSG_AU_0019)
+            return None
         return SSOConfigData(
             client_id=settings.OKTA_CLIENT_ID,
             client_secret=settings.OKTA_CLIENT_SECRET,
