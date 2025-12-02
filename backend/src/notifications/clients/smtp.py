@@ -1,19 +1,25 @@
-import os
-import re
 from typing import Any, Dict, Optional, Tuple
 
 from django.conf import settings
-from django.contrib.auth import get_user_model
-from django.core.mail import EmailMessage
+from django.core.mail import EmailMessage, get_connection
+from django.template import Context, Template
+from django.template.loader import get_template
 
 from src.notifications.clients import EmailClient
-from src.notifications.enums import EmailTemplate
+from src.notifications.enums import EmailType
 from src.notifications.models import EmailTemplateModel
-
-UserModel = get_user_model()
 
 
 class SMTPEmailClient(EmailClient):
+
+    def __init__(self, account_id: int):
+        super().__init__(account_id)
+        self.connection = get_connection(fail_silently=False)
+
+    def __del__(self):
+        """Close connection when instance is destroyed."""
+        if hasattr(self, 'connection') and self.connection:
+            self.connection.close()
 
     def send_email(
         self,
@@ -22,12 +28,10 @@ class SMTPEmailClient(EmailClient):
         message_data: Dict[str, Any],
         user_id: int,
     ) -> None:
-        user = UserModel.objects.select_related('account').get(id=user_id)
-
-        # Find template that includes this template_code in template_types
+        # Find template that includes this template_code in email_types
         template = EmailTemplateModel.objects.filter(
-            account=user.account,
-            template_types__contains=[template_code],
+            account_id=self.account_id,
+            email_types__contains=[template_code],
             is_active=True,
         ).first()
 
@@ -51,6 +55,7 @@ class SMTPEmailClient(EmailClient):
             body=html_content,
             from_email=settings.DEFAULT_FROM_EMAIL,
             to=[to],
+            connection=self.connection,
         )
         email.content_subtype = 'html'
         email.send()
@@ -60,11 +65,8 @@ class SMTPEmailClient(EmailClient):
         template_string: str,
         context: Dict[str, Any],
     ) -> str:
-        def replace_var(match):
-            var_name = match.group(1).strip()
-            return str(context.get(var_name, f'{{{{{var_name}}}}}'))
-
-        return re.sub(r'\{\{\s*(\w+)\s*\}\}', replace_var, template_string)
+        template = Template(template_string)
+        return template.render(Context(context))
 
     def _get_default_template(
         self,
@@ -72,87 +74,74 @@ class SMTPEmailClient(EmailClient):
         message_data: Dict[str, Any],
     ) -> Tuple[str, str]:
         """Get default template from files or simple fallback."""
-        template_file = self._get_template_file_for_code(template_code)
+        template_name = self._get_template_name_for_code(template_code)
 
-        if template_file and os.path.exists(template_file):
+        if template_name:
             try:
-                with open(template_file, encoding='utf-8') as f:
-                    html_content = f.read()
-
-                # Set default subject based on template type
+                # Use Django template loader for proper inheritance support
+                template = get_template(template_name)
                 subject = self._get_default_subject(template_code)
-
-                # Render template with data
-                html_content = self._render_template_string(
-                    html_content, message_data,
-                )
-
+                html_content = template.render(message_data)
                 return subject, html_content
-            except OSError:
-                # File reading failed, use fallback
+            except Exception:  # noqa: BLE001
+                # Template loading or rendering failed, use fallback
                 pass
 
         # Simple fallback
         return self._get_fallback_template(template_code)
 
-    def _get_template_file_for_code(
+    def _get_template_name_for_code(
         self,
         template_code: str,
     ) -> Optional[str]:
-        """Map template code to template file."""
-        base_path = os.path.join(
-            os.path.dirname(__file__),
-            '..',
-            'templates',
-        )
-
+        """Map template code to template name."""
         # Group templates by type
         task_templates = [
-            EmailTemplate.NEW_TASK,
-            EmailTemplate.TASK_RETURNED,
-            EmailTemplate.COMPLETE_TASK,
-            EmailTemplate.OVERDUE_TASK,
-            EmailTemplate.GUEST_NEW_TASK,
-            EmailTemplate.MENTION,
+            EmailType.NEW_TASK,
+            EmailType.TASK_RETURNED,
+            EmailType.COMPLETE_TASK,
+            EmailType.OVERDUE_TASK,
+            EmailType.GUEST_NEW_TASK,
+            EmailType.MENTION,
         ]
 
         auth_templates = [
-            EmailTemplate.RESET_PASSWORD,
-            EmailTemplate.ACCOUNT_VERIFICATION,
-            EmailTemplate.USER_DEACTIVATED,
-            EmailTemplate.USER_TRANSFER,
+            EmailType.RESET_PASSWORD,
+            EmailType.ACCOUNT_VERIFICATION,
+            EmailType.USER_DEACTIVATED,
+            EmailType.USER_TRANSFER,
         ]
 
         digest_templates = [
-            EmailTemplate.WORKFLOWS_DIGEST,
-            EmailTemplate.TASKS_DIGEST,
-            EmailTemplate.UNREAD_NOTIFICATIONS,
+            EmailType.WORKFLOWS_DIGEST,
+            EmailType.TASKS_DIGEST,
+            EmailType.UNREAD_NOTIFICATIONS,
         ]
 
         if template_code in task_templates:
-            return os.path.join(base_path, 'task_notifications.html')
+            return 'tasks.html'
         if template_code in auth_templates:
-            return os.path.join(base_path, 'auth_notifications.html')
+            return 'auth.html'
         if template_code in digest_templates:
-            return os.path.join(base_path, 'digest_notifications.html')
-        return os.path.join(base_path, 'base.html')
+            return 'digests.html'
+        return 'base.html'
 
     def _get_default_subject(self, template_code: str) -> str:
         """Get default subject for template code."""
         subjects = {
-            EmailTemplate.NEW_TASK: 'New Task Assigned',
-            EmailTemplate.TASK_RETURNED: 'Task Returned',
-            EmailTemplate.COMPLETE_TASK: 'Task Completed',
-            EmailTemplate.OVERDUE_TASK: 'Task Overdue',
-            EmailTemplate.GUEST_NEW_TASK: 'New Task Assigned',
-            EmailTemplate.MENTION: 'You were mentioned',
-            EmailTemplate.RESET_PASSWORD: 'Password Reset Request',
-            EmailTemplate.ACCOUNT_VERIFICATION: 'Account Verification',
-            EmailTemplate.USER_DEACTIVATED: 'Account Deactivated',
-            EmailTemplate.USER_TRANSFER: 'Account Transfer',
-            EmailTemplate.WORKFLOWS_DIGEST: 'Workflow Digest',
-            EmailTemplate.TASKS_DIGEST: 'Tasks Digest',
-            EmailTemplate.UNREAD_NOTIFICATIONS: 'Unread Notifications',
+            EmailType.NEW_TASK: 'New Task Assigned',
+            EmailType.TASK_RETURNED: 'Task Returned',
+            EmailType.COMPLETE_TASK: 'Task Completed',
+            EmailType.OVERDUE_TASK: 'Task Overdue',
+            EmailType.GUEST_NEW_TASK: 'New Task Assigned',
+            EmailType.MENTION: 'You were mentioned',
+            EmailType.RESET_PASSWORD: 'Password Reset Request',
+            EmailType.ACCOUNT_VERIFICATION: 'Account Verification',
+            EmailType.USER_DEACTIVATED: 'Account Deactivated',
+            EmailType.USER_TRANSFER: 'Account Transfer',
+            EmailType.WORKFLOWS_DIGEST: 'Workflow Digest',
+            EmailType.TASKS_DIGEST: 'Tasks Digest',
+            EmailType.UNREAD_NOTIFICATIONS: 'Unread Notifications',
         }
 
         return subjects.get(template_code, f'Pneumatic - {template_code}')

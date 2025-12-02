@@ -1,8 +1,7 @@
-from django import forms
 from django.contrib import admin
 from django.contrib.admin import ModelAdmin
 
-from src.notifications.enums import EmailTemplate
+from src.notifications.forms import EmailTemplateAdminForm
 from src.notifications.models import Device, EmailTemplateModel
 
 
@@ -44,33 +43,6 @@ class DeviceAdmin(ModelAdmin):
         return False
 
 
-class EmailTemplateAdminForm(forms.ModelForm):
-    """Custom form for EmailTemplate admin with multiple select."""
-
-    template_types = forms.MultipleChoiceField(
-        choices=[
-            (choice, choice) for choice in EmailTemplate.LITERALS.__args__
-        ],
-        widget=forms.CheckboxSelectMultiple,
-        help_text='Select email types that will use this template',
-    )
-
-    class Meta:
-        model = EmailTemplateModel
-        fields = [
-            'account',
-            'name',
-            'template_types',
-            'subject',
-            'content',
-            'is_active',
-        ]
-        widgets = {
-            'content': forms.Textarea(attrs={'rows': 20, 'cols': 80}),
-            'subject': forms.TextInput(attrs={'size': 80}),
-        }
-
-
 @admin.register(EmailTemplateModel)
 class EmailTemplateAdmin(admin.ModelAdmin):
     form = EmailTemplateAdminForm
@@ -78,12 +50,12 @@ class EmailTemplateAdmin(admin.ModelAdmin):
     list_display = (
         'account',
         'name',
-        'get_template_types_display',
+        'get_email_types_display',
         'subject',
         'is_active',
     )
     list_filter = (
-        'template_types',
+        'email_types',
         'is_active',
         'account',
     )
@@ -91,28 +63,56 @@ class EmailTemplateAdmin(admin.ModelAdmin):
         'account__name',
         'name',
         'subject',
-        'template_types',
+        'email_types',
     )
     list_editable = ('is_active',)
     list_per_page = 25
 
     fieldsets = (
         (None, {
-            'fields': ('account', 'name', 'template_types', 'is_active'),
+            'fields': ('account', 'name', 'email_types', 'is_active'),
         }),
         ('Content', {
             'fields': ('subject', 'content'),
             'description': (
-                'Use {{variable_name}} for variables. '
-                'Available variables depend on email type.'
+                'Templates support Django template syntax with '
+                '{{variable_name}}.\n\n'
+                'STANDARD VARIABLES (available in all templates):\n'
+                '  {{backend_url}}, {{frontend_url}}, {{logo_lg}}, '
+                '{{logo_sm}}, {{date}}, {{year}}\n\n'
+                'AUTH TEMPLATES (Reset password, Verification, Transfer, '
+                'Deactivated):\n'
+                '  {{title}} - email title\n'
+                '  {{content}} - email content (HTML)\n'
+                '  {{button_text}} - button text\n'
+                '  {{link}} - action link (full URL)\n'
+                '  {{token}} - security token\n'
+                '  {{first_name}}, {{sender_name}}, {{company_name}}\n\n'
+                'TASK TEMPLATES (New, Returned, Overdue, Mention):\n'
+                '  {{title}} - email title\n'
+                '  {{template}} - workflow template name\n'
+                '  {{workflow_name}}, {{task_name}}, {{task_id}}\n'
+                '  {{task_description}} - HTML content\n'
+                '  {{task_link}} - link to task (full URL)\n'
+                '  {{due_in}}, {{overdue}} - formatted time\n'
+                '  {{started_by}} - {name, avatar} dict\n'
+                '  {{unsubscribe_link}} - full URL\n'
+                '  {{user_first_name}}\n\n'
+                'DIGEST TEMPLATES (Workflows, Tasks, Notifications):\n'
+                '  {{title}} - digest title\n'
+                '  {{date_from}}, {{date_to}} - formatted dates\n'
+                '  {{workflows_link}}, {{tasks_link}}, '
+                '{{notifications_link}} - full URLs\n'
+                '  {{unsubscribe_link}} - full URL\n'
+                '  + custom digest data from context\n'
             ),
         }),
     )
 
-    def get_template_types_display(self, obj):
-        """Display template types in list view."""
-        return obj.get_template_types_display()
-    get_template_types_display.short_description = 'Template Types'
+    def get_email_types_display(self, obj):
+        """Display email types in list view."""
+        return obj.get_email_types_display()
+    get_email_types_display.short_description = 'Email Types'
 
     def get_queryset(self, request):
         """Optimize queryset with select_related."""

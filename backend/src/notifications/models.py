@@ -6,7 +6,7 @@ from django.db.models import Q, UniqueConstraint
 from src.accounts.models import Account
 from src.generics.managers import BaseSoftDeleteManager
 from src.generics.models import SoftDeleteModel
-from src.notifications.enums import EmailTemplate
+from src.notifications.enums import EmailType
 from src.notifications.querysets import DeviceQuerySet
 
 UserModel = get_user_model()
@@ -81,14 +81,12 @@ class EmailTemplateModel(models.Model):
         max_length=100,
         verbose_name='Template name',
     )
-    template_types = ArrayField(
+    email_types = ArrayField(
         models.CharField(
             max_length=50,
-            choices=[
-                (choice, choice) for choice in EmailTemplate.LITERALS.__args__
-            ],
+            choices=EmailType.CHOICES,
         ),
-        verbose_name='Template types',
+        verbose_name='Email types',
         help_text='Email types that use this template',
     )
     subject = models.CharField(
@@ -113,6 +111,6 @@ class EmailTemplateModel(models.Model):
     def __str__(self):
         return f'{self.account.name} - {self.name}'
 
-    def get_template_types_display(self):
-        """Return comma-separated list of template types."""
-        return ', '.join(self.template_types) if self.template_types else ''
+    def get_email_types_display(self):
+        """Return comma-separated list of email types."""
+        return ', '.join(self.email_types) if self.email_types else ''

@@ -59,7 +59,7 @@ class NotificationMethod:
     ]
 
 
-class EmailClientProvider:
+class EmailProvider:
 
     CUSTOMERIO = 'customerio'
     SMTP = 'smtp'
@@ -70,7 +70,7 @@ class EmailClientProvider:
     ]
 
 
-class EmailTemplate:
+class EmailType:
 
     RESET_PASSWORD = 'reset_password'
     USER_DEACTIVATED = 'user_deactivated'
@@ -102,22 +102,38 @@ class EmailTemplate:
         MENTION,
     ]
 
+    CHOICES = [
+        (RESET_PASSWORD, 'Reset Password'),
+        (USER_DEACTIVATED, 'User Deactivated'),
+        (NEW_TASK, 'New Task'),
+        (COMPLETE_TASK, 'Complete Task'),
+        (TASK_RETURNED, 'Task Returned'),
+        (ACCOUNT_VERIFICATION, 'Account Verification'),
+        (WORKFLOWS_DIGEST, 'Workflows Digest'),
+        (TASKS_DIGEST, 'Tasks Digest'),
+        (USER_TRANSFER, 'User Transfer'),
+        (UNREAD_NOTIFICATIONS, 'Unread Notifications'),
+        (GUEST_NEW_TASK, 'Guest New Task'),
+        (OVERDUE_TASK, 'Overdue Task'),
+        (MENTION, 'Mention'),
+    ]
+
 
 cio_template_ids = {
-    EmailTemplate.RESET_PASSWORD: env.get('CIO_TEMPLATE__RESET_PASSWORD'),
-    EmailTemplate.USER_DEACTIVATED: env.get('CIO_TEMPLATE__USER_DEACTIVATED'),
-    EmailTemplate.NEW_TASK: env.get('CIO_TEMPLATE__NEW_TASK'),
-    EmailTemplate.TASK_RETURNED: env.get('CIO_TEMPLATE__TASK_RETURNED'),
-    EmailTemplate.ACCOUNT_VERIFICATION: env.get(
+    EmailType.RESET_PASSWORD: env.get('CIO_TEMPLATE__RESET_PASSWORD'),
+    EmailType.USER_DEACTIVATED: env.get('CIO_TEMPLATE__USER_DEACTIVATED'),
+    EmailType.NEW_TASK: env.get('CIO_TEMPLATE__NEW_TASK'),
+    EmailType.TASK_RETURNED: env.get('CIO_TEMPLATE__TASK_RETURNED'),
+    EmailType.ACCOUNT_VERIFICATION: env.get(
         'CIO_TEMPLATE__ACCOUNT_VERIFICATION',
     ),
-    EmailTemplate.WORKFLOWS_DIGEST: env.get('CIO_TEMPLATE__WORKFLOWS_DIGEST'),
-    EmailTemplate.TASKS_DIGEST: env.get('CIO_TEMPLATE__TASKS_DIGEST'),
-    EmailTemplate.USER_TRANSFER: env.get('CIO_TEMPLATE__USER_TRANSFER'),
-    EmailTemplate.UNREAD_NOTIFICATIONS: env.get(
+    EmailType.WORKFLOWS_DIGEST: env.get('CIO_TEMPLATE__WORKFLOWS_DIGEST'),
+    EmailType.TASKS_DIGEST: env.get('CIO_TEMPLATE__TASKS_DIGEST'),
+    EmailType.USER_TRANSFER: env.get('CIO_TEMPLATE__USER_TRANSFER'),
+    EmailType.UNREAD_NOTIFICATIONS: env.get(
         'CIO_TEMPLATE__UNREAD_NOTIFICATIONS',
     ),
-    EmailTemplate.GUEST_NEW_TASK: env.get('CIO_TEMPLATE__GUEST_NEW_TASK'),
-    EmailTemplate.OVERDUE_TASK: env.get('CIO_TEMPLATE__OVERDUE_TASK'),
-    EmailTemplate.MENTION: env.get('CIO_TEMPLATE__MENTION'),
+    EmailType.GUEST_NEW_TASK: env.get('CIO_TEMPLATE__GUEST_NEW_TASK'),
+    EmailType.OVERDUE_TASK: env.get('CIO_TEMPLATE__OVERDUE_TASK'),
+    EmailType.MENTION: env.get('CIO_TEMPLATE__MENTION'),
 }

@@ -4,6 +4,9 @@ from typing import Any, Dict
 
 class EmailClient(ABC):
 
+    def __init__(self, account_id: int):
+        self.account_id = account_id
+
     @abstractmethod
     def send_email(
         self,

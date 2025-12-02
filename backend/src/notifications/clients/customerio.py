@@ -9,7 +9,8 @@ from src.notifications.enums import cio_template_ids
 
 class CustomerIOEmailClient(EmailClient):
 
-    def __init__(self):
+    def __init__(self, account_id: int):
+        super().__init__(account_id)
         self.client = APIClient(settings.CUSTOMERIO_TRANSACTIONAL_API_KEY)
 
     def send_email(

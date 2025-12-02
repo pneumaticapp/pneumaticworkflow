@@ -14,7 +14,7 @@ from os import environ as env
 
 from configurations import Configuration, values
 from corsheaders.defaults import default_headers
-from src.notifications.enums import EmailClientProvider
+from src.notifications.enums import EmailProvider
 
 
 class Common(Configuration):
@@ -271,7 +271,7 @@ class Common(Configuration):
     EMAIL_DATE_FORMAT = '%a, %d %b %Y %I:%M:%S %p UTC'
     EMAIL_PROVIDER = env.get('EMAIL_PROVIDER')
 
-    if EMAIL_PROVIDER == EmailClientProvider.CUSTOMERIO:
+    if EMAIL_PROVIDER == EmailProvider.CUSTOMERIO:
         EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
         CUSTOMERIO_WEBHOOK_API_VERSION = env.get('CIO_WEBHOOK_API_VERSION')
         CUSTOMERIO_WEBHOOK_API_KEY = env.get('CIO_WEBHOOK_API_KEY')

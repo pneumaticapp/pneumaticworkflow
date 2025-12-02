@@ -17,9 +17,14 @@ from src.logs.enums import (
 )
 from src.logs.service import AccountLogService
 from src.notifications import messages
-from src.notifications.clients import get_email_client
+from src.notifications.clients import (
+    CustomerIOEmailClient,
+    EmailClient,
+    SMTPEmailClient,
+)
 from src.notifications.enums import (
-    EmailTemplate,
+    EmailProvider,
+    EmailType,
     NotificationMethod,
 )
 from src.notifications.services.base import (
@@ -32,6 +37,20 @@ UserModel = get_user_model()
 
 
 class EmailService(NotificationService):
+
+    def __init__(
+        self,
+        account_id: int,
+        logging: bool = False,
+        logo_lg: Optional[str] = None,
+    ):
+        super().__init__(account_id, logging, logo_lg)
+        client_cls = (
+            CustomerIOEmailClient
+            if settings.EMAIL_PROVIDER == EmailProvider.CUSTOMERIO
+            else SMTPEmailClient
+        )
+        self.client: EmailClient = client_cls(account_id=account_id)
 
     ALLOWED_METHODS = {
         NotificationMethod.new_task,
@@ -72,7 +91,7 @@ class EmailService(NotificationService):
         template_code: str,
         data: Dict[str, Any],
     ):
-        get_email_client().send_email(
+        self.client.send_email(
             to=user_email,
             template_code=template_code,
             message_data=data,
@@ -117,6 +136,23 @@ class EmailService(NotificationService):
                 data=data,
             )
 
+    def _add_standard_variables(
+        self,
+        data: Dict[str, Any],
+    ) -> Dict[str, Any]:
+        """Add standard variables to email data."""
+        now = timezone.now()
+
+        standard_vars = {
+            'backend_url': settings.BACKEND_URL,
+            'frontend_url': settings.FRONTEND_URL,
+            'date': now.strftime('%d %b, %Y'),
+            'year': now.strftime('%Y'),
+            'logo_lg': data.get('logo_lg', self.logo_lg),
+            'logo_sm': data.get('logo_sm', ''),
+        }
+        return {**standard_vars, **data}
+
     def _send(
         self,
         title: str,
@@ -127,6 +163,7 @@ class EmailService(NotificationService):
         data: Dict[str, str],
     ):
         self._validate_send(method_name)
+        data = self._add_standard_variables(data)
         self._dispatch_email(
             title=title,
             user_id=user_id,
@@ -144,6 +181,7 @@ class EmailService(NotificationService):
         data: Dict[str, Any],
     ):
         """Send email without NotificationMethod validation."""
+        data = self._add_standard_variables(data)
         self._dispatch_email(
             title=title,
             user_id=user_id,
@@ -175,8 +213,17 @@ class EmailService(NotificationService):
             user_id=user_id,
             email_type=MailoutType.NEW_TASK,
         ).__str__()
+        task_link = (
+            f'{settings.FRONTEND_URL}'
+            f'/tasks/{task_id}?utm_source=email&utm_campaign=new_task'
+        )
+        unsubscribe_link = (
+            f'{settings.BACKEND_URL}/accounts/unsubscribe/'
+            f'{unsubscribe_token}'
+        )
 
         data = {
+            'title': "You've been assigned a task",
             'template': template_name,
             'workflow_name': workflow_name,
             'task_name': task_name,
@@ -184,8 +231,9 @@ class EmailService(NotificationService):
             'overdue': overdue,
             'task_description': html_description,
             'task_id': task_id,
+            'task_link': task_link,
             'unsubscribe_token': unsubscribe_token,
-            'logo_lg': self.logo_lg,
+            'unsubscribe_link': unsubscribe_link,
             'started_by': {
                 'name': wf_starter_name,
                 'avatar': wf_starter_photo,
@@ -195,7 +243,7 @@ class EmailService(NotificationService):
             title=str(messages.MSG_NF_0002),
             user_id=user_id,
             user_email=user_email,
-            template_code=EmailTemplate.NEW_TASK,
+            template_code=EmailType.NEW_TASK,
             method_name=NotificationMethod.new_task,
             data=data,
         )
@@ -215,13 +263,21 @@ class EmailService(NotificationService):
         overdue: Optional[str] = None,
         **kwargs,
     ):
-
         unsubscribe_token = UnsubscribeEmailToken.create_token(
             user_id=user_id,
             email_type=MailoutType.NEW_TASK,
         ).__str__()
+        task_link = (
+            f'{settings.FRONTEND_URL}'
+            f'/tasks/{task_id}?utm_source=email&utm_campaign=returned_task'
+        )
+        unsubscribe_link = (
+            f'{settings.BACKEND_URL}/accounts/unsubscribe/'
+            f'{unsubscribe_token}'
+        )
 
         data = {
+            'title': 'Task has been returned',
             'template': template_name,
             'workflow_name': workflow_name,
             'task_name': task_name,
@@ -229,8 +285,9 @@ class EmailService(NotificationService):
             'overdue': overdue,
             'task_description': html_description,
             'task_id': task_id,
+            'task_link': task_link,
             'unsubscribe_token': unsubscribe_token,
-            'logo_lg': self.logo_lg,
+            'unsubscribe_link': unsubscribe_link,
             'started_by': {
                 'name': wf_starter_name,
                 'avatar': wf_starter_photo,
@@ -240,7 +297,7 @@ class EmailService(NotificationService):
             title=str(messages.MSG_NF_0003),
             user_id=user_id,
             user_email=user_email,
-            template_code=EmailTemplate.TASK_RETURNED,
+            template_code=EmailType.TASK_RETURNED,
             method_name=NotificationMethod.returned_task,
             data=data,
         )
@@ -261,22 +318,35 @@ class EmailService(NotificationService):
         token: Optional[str] = None,
         **kwargs,
     ):
+        if token:
+            task_link = (
+                f'{settings.FRONTEND_URL}/tasks/{task_id}'
+                f'?token={token}&utm_source=email&utm_campaign=overdue_task'
+            )
+        else:
+            task_link = (
+                f'{settings.FRONTEND_URL}/tasks/{task_id}'
+                f'?utm_source=email&utm_campaign=overdue_task'
+            )
+
         self._send(
             title=str(messages.MSG_NF_0004),
             user_id=user_id,
             user_email=user_email,
-            template_code=EmailTemplate.OVERDUE_TASK,
+            template_code=EmailType.OVERDUE_TASK,
             method_name=NotificationMethod.overdue_task,
             data={
+                'title': 'Task is overdue',
+                'template': template_name,
                 'workflow_id': workflow_id,
                 'workflow_name': workflow_name,
                 'task_id': str(task_id),
                 'task_name': task_name,
+                'task_link': task_link,
                 'template_name': template_name,
                 'workflow_starter_id': workflow_starter_id,
                 'workflow_starter_first_name': workflow_starter_first_name,
                 'workflow_starter_last_name': workflow_starter_last_name,
-                'logo_lg': self.logo_lg,
                 'user_type': user_type,
                 'token': token,
             },
@@ -298,9 +368,15 @@ class EmailService(NotificationService):
             convert_text_to_html(task_description)
             if task_description else None
         )
+        task_link = (
+            f'{settings.FRONTEND_URL}/tasks/{task_id}'
+            f'?token={token}&utm_source=email&utm_campaign=guest_new_task'
+        )
+
         data = {
             'token': token,
-            'user_id': user_id,
+            'link': task_link,
+            'task_link': task_link,
             'task_id': task_id,
             'task_name': task_name,
             'task_description': description,
@@ -322,7 +398,7 @@ class EmailService(NotificationService):
             title=str(messages.MSG_NF_0002),
             user_id=user_id,
             user_email=user_email,
-            template_code=EmailTemplate.GUEST_NEW_TASK,
+            template_code=EmailType.GUEST_NEW_TASK,
             method_name=NotificationMethod.guest_new_task,
             data=data,
         )
@@ -338,15 +414,26 @@ class EmailService(NotificationService):
             user_id=user_id,
             email_type=MailoutType.COMMENTS,
         ).__str__()
+        unsubscribe_link = (
+            f'{settings.BACKEND_URL}/accounts/unsubscribe/'
+            f'{unsubscribe_token}'
+        )
+        notifications_link = (
+            f'{settings.FRONTEND_URL}'
+            f'/notifications?utm_source=email&utm_campaign=unread'
+        )
+
         self._send(
             title=str(messages.MSG_NF_0013),
             user_id=user_id,
             user_email=user_email,
-            template_code=EmailTemplate.UNREAD_NOTIFICATIONS,
+            template_code=EmailType.UNREAD_NOTIFICATIONS,
             method_name=NotificationMethod.unread_notifications,
             data={
                 'user_name': user_first_name,
                 'unsubscribe_token': unsubscribe_token,
+                'unsubscribe_link': unsubscribe_link,
+                'notifications_link': notifications_link,
                 'logo_lg': self.logo_lg,
             },
         )
@@ -357,16 +444,32 @@ class EmailService(NotificationService):
         user_email: str,
         **kwargs,
     ):
-
         token = ResetPasswordToken.for_user_id(user_id).__str__()
+        reset_link = (
+            f'{settings.FRONTEND_URL}/auth/reset-password'
+            f'?token={token}&utm_source=email&utm_campaign=reset_password'
+        )
+
         self._send(
             title=str(messages.MSG_NF_0014),
             user_id=user_id,
             user_email=user_email,
-            template_code=EmailTemplate.RESET_PASSWORD,
+            template_code=EmailType.RESET_PASSWORD,
             method_name=NotificationMethod.reset_password,
             data={
+                'title': 'Forgot Your Password?',
+                'content': (
+                    '<h2><strong>We got a request to reset your '
+                    'Pneumatic account password.</strong></h2>'
+                    '<p>A strong password includes eight or more '
+                    'characters and a combination of uppercase and '
+                    'lowercase letters, numbers and symbols, and is not '
+                    'based on words in the dictionary.</p>'
+                ),
+                'button_text': 'Reset my password',
                 'token': token,
+                'link': reset_link,
+                'reset_link': reset_link,
                 'logo_lg': self.logo_lg,
             },
         )
@@ -379,16 +482,23 @@ class EmailService(NotificationService):
         user_first_name: str,
         **kwargs,
     ):
+        task_link = (
+            f'{settings.FRONTEND_URL}/tasks/{task_id}'
+            f'?utm_source=email&utm_campaign=mention'
+        )
+
         self._send(
             title=str(messages.MSG_NF_0005),
             user_id=user_id,
             user_email=user_email,
-            template_code=EmailTemplate.MENTION,
+            template_code=EmailType.MENTION,
             method_name=NotificationMethod.mention,
             data={
                 'logo_lg': self.logo_lg,
                 'user_first_name': user_first_name,
                 'task_id': task_id,
+                'task_link': task_link,
+                'link': task_link,
             },
         )
 
@@ -399,13 +509,24 @@ class EmailService(NotificationService):
             account_id=user.account_id,
             logo_lg=user.account.logo_lg,
         )
+        support_link = f'{settings.FRONTEND_URL}/support'
+
         service._send_simple_email(
             title='User Deactivated',
             user_id=user.id,
             user_email=user.email,
-            template_code=EmailTemplate.USER_DEACTIVATED,
+            template_code=EmailType.USER_DEACTIVATED,
             data={
+                'title': 'Account Deactivated',
+                'content': (
+                    '<p>Your Pneumatic account has been deactivated.</p>'
+                    '<p>If you believe this was done in error, please '
+                    'contact support.</p>'
+                ),
+                'button_text': 'Contact Support',
+                'link': support_link,
                 'logo_lg': user.account.logo_lg,
+                'support_link': support_link,
             },
         )
 
@@ -423,18 +544,31 @@ class EmailService(NotificationService):
             account_id=invited_by.account_id,
             logo_lg=logo_lg,
         )
+        transfer_link = (
+            f'{settings.BACKEND_URL}/accounts/users/{user_id}/transfer'
+            f'?token={token}&utm_source=invite&utm_campaign=transfer'
+        )
+
         data = {
+            'title': 'You have been invited!',
+            'content': (
+                f'<p>{invited_by.get_full_name()} has invited you to '
+                f'join {invited_by.account.name} on Pneumatic.</p>'
+                '<p>Click the button below to accept the invitation.</p>'
+            ),
+            'button_text': 'Accept Invitation',
             'token': token,
+            'link': transfer_link,
+            'transfer_link': transfer_link,
             'sender_name': invited_by.get_full_name(),
             'company_name': invited_by.account.name,
-            'user_id': user_id,
             'logo_lg': logo_lg,
         }
         service._send_simple_email(
             title='User Transfer',
             user_id=user_id,
             user_email=email,
-            template_code=EmailTemplate.USER_TRANSFER,
+            template_code=EmailType.USER_TRANSFER,
             data=data,
         )
 
@@ -450,8 +584,21 @@ class EmailService(NotificationService):
             account_id=user.account_id,
             logo_lg=logo_lg,
         )
+        verification_link = (
+            f'{settings.FRONTEND_URL}/auth/verify'
+            f'?token={token}&utm_source=email&utm_campaign=verification'
+        )
+
         data = {
+            'title': f'Welcome, {user.first_name}!',
+            'content': (
+                '<p>Thank you for signing up for Pneumatic. '
+                'Please verify your email address to get started.</p>'
+            ),
+            'button_text': 'Verify Email',
             'token': token,
+            'link': verification_link,
+            'verification_link': verification_link,
             'first_name': user.first_name,
             'logo_lg': logo_lg,
         }
@@ -459,7 +606,7 @@ class EmailService(NotificationService):
             title='Account Verification',
             user_id=user.id,
             user_email=user.email,
-            template_code=EmailTemplate.ACCOUNT_VERIFICATION,
+            template_code=EmailType.ACCOUNT_VERIFICATION,
             data=data,
         )
 
@@ -483,19 +630,29 @@ class EmailService(NotificationService):
                 email_type=MailoutType.WF_DIGEST,
             ),
         )
+        unsubscribe_link = (
+            f'{settings.BACKEND_URL}/accounts/unsubscribe/'
+            f'{unsubscribe_token}'
+        )
+        workflows_link = (
+            f'{settings.FRONTEND_URL}'
+            f'/workflows?utm_source=email&utm_campaign=digest'
+        )
 
         data = {
+            'title': 'Workflows Digest',
             'date_from': date_from.strftime('%d %b'),
             'date_to': date_to.strftime('%d %b, %Y'),
             'unsubscribe_token': unsubscribe_token,
-            'logo_lg': logo_lg,
+            'unsubscribe_link': unsubscribe_link,
+            'workflows_link': workflows_link,
             **digest,
         }
         service._send_simple_email(
             title='Workflows Digest',
             user_id=user.id,
             user_email=user.email,
-            template_code=EmailTemplate.WORKFLOWS_DIGEST,
+            template_code=EmailType.WORKFLOWS_DIGEST,
             data=data,
         )
 
@@ -519,17 +676,28 @@ class EmailService(NotificationService):
                 email_type=MailoutType.TASKS_DIGEST,
             ),
         )
+        unsubscribe_link = (
+            f'{settings.BACKEND_URL}/accounts/unsubscribe/'
+            f'{unsubscribe_token}'
+        )
+        tasks_link = (
+            f'{settings.FRONTEND_URL}'
+            f'/tasks?utm_source=email&utm_campaign=tasks_digest'
+        )
+
         data = {
+            'title': 'Tasks Digest',
             'date_from': date_from.strftime('%d %b'),
             'date_to': date_to.strftime('%d %b, %Y'),
             'unsubscribe_token': unsubscribe_token,
-            'logo_lg': logo_lg,
+            'unsubscribe_link': unsubscribe_link,
+            'tasks_link': tasks_link,
             **digest,
         }
         service._send_simple_email(
             title='Tasks Digest',
             user_id=user.id,
             user_email=user.email,
-            template_code=EmailTemplate.TASKS_DIGEST,
+            template_code=EmailType.TASKS_DIGEST,
             data=data,
         )

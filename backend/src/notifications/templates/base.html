@@ -1,8 +1,87 @@
-<!DOCTYPE html><html xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office" lang="en">
+<!DOCTYPE html>
+<html xmlns:v="urn:schemas-microsoft-com:vml"
+      xmlns:o="urn:schemas-microsoft-com:office:office"
+      lang="en">
 <head>
-  <title></title><meta http-equiv="Content-Type" content="text/html; charset=utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><!--[if mso]><xml><o:OfficeDocumentSettings><o:PixelsPerInch>96</o:PixelsPerInch><o:AllowPNG/></o:OfficeDocumentSettings></xml><![endif]--><!--[if !mso]><!--><!--<![endif]-->
+  <title>{% block title %}Pneumatic{% endblock %}</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <!--[if mso]>
+  <xml>
+    <o:OfficeDocumentSettings>
+      <o:PixelsPerInch>96</o:PixelsPerInch>
+      <o:AllowPNG/>
+    </o:OfficeDocumentSettings>
+  </xml>
+  <![endif]-->
   <style>
-*{box-sizing:border-box}body{margin:0;padding:0}a[x-apple-data-detectors]{color:inherit!important;text-decoration:inherit!important}#MessageViewBody a{color:inherit;text-decoration:none}p{line-height:inherit}.desktop_hide,.desktop_hide table{mso-hide:all;display:none;max-height:0;overflow:hidden}.image_block img+div{display:none}@media (max-width:660px){.social_block.desktop_hide .social-table{display:inline-block!important}.row-content{width:100%!important}.mobile_hide{display:none}.stack .column{width:100%;display:block}.mobile_hide{min-height:0;max-height:0;max-width:0;overflow:hidden;font-size:0}.desktop_hide,.desktop_hide table{display:table!important;max-height:none!important}}
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #fff;
+      -webkit-text-size-adjust: none;
+      text-size-adjust: none;
+    }
+
+    a[x-apple-data-detectors] {
+      color: inherit !important;
+      text-decoration: inherit !important;
+    }
+
+    #MessageViewBody a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    p {
+      line-height: inherit;
+    }
+
+    .desktop_hide,
+    .desktop_hide table {
+      mso-hide: all;
+      display: none;
+      max-height: 0;
+      overflow: hidden;
+    }
+
+    .image_block img+div {
+      display: none;
+    }
+
+    @media (max-width:660px) {
+      .social_block.desktop_hide .social-table {
+        display: inline-block !important;
+      }
+
+      .row-content {
+        width: 100% !important;
+      }
+
+      .mobile_hide {
+        display: none;
+        min-height: 0;
+        max-height: 0;
+        max-width: 0;
+        overflow: hidden;
+        font-size: 0;
+      }
+
+      .stack .column {
+        width: 100%;
+        display: block;
+      }
+
+      .desktop_hide,
+      .desktop_hide table {
+        display: table !important;
+        max-height: none !important;
+      }
+    }
 
 .dynamic-content table {
   margin-top: 16px;
@@ -31,6 +110,7 @@
   width: 50%;
   text-align: left;
 }
+
 .dynamic-content table thead tr th + th {
   color: #62625f;
 }
@@ -55,84 +135,314 @@
 .dynamic-content ul,
 .dynamic-content ol,
 .dynamic-content p {
-  font-size:16px;
+      font-size: 16px;
   line-height: 19px;
   word-break: break-word;
 }
+
 .dynamic-content img {
   box-sizing: border-box;
-  display:block;
-  height:auto;
+      display: block;
+      height: auto;
   width: auto;
   max-height: 320px;
   max-width: 590px;
-  border:0;
+      border: 0;
   margin-bottom: 20px;
   margin-top: 0px;
   margin-right: auto;
   margin-left: auto;
 }
 
+    {% block extra_styles %}{% endblock %}
 </style>
 </head>
-<body style="background-color:#fff;margin:0;padding:0;-webkit-text-size-adjust:none;text-size-adjust:none"><table class="nl-container" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace:0;mso-table-rspace:0;background-color:#fff"><tbody><tr><td><table class="row row-1" align="center" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation"
-style="mso-table-lspace:0;mso-table-rspace:0;background-color:#f6f6f6;background-size:auto"><tbody><tr><td><table class="row-content stack" align="center" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace:0;mso-table-rspace:0;background-size:auto;background-color:#f6f6f6;color:#000;border-radius:0;width:640px" width="640"><tbody><tr><td class="column column-1" width="100%"
-style="mso-table-lspace:0;mso-table-rspace:0;font-weight:400;text-align:left;padding-bottom:5px;padding-top:5px;vertical-align:top;border-top:0;border-right:0;border-bottom:0;border-left:0"><table class="image_block block-1" width="100%" border="0" cellpadding="20" cellspacing="0" role="presentation" style="mso-table-lspace:0;mso-table-rspace:0"><tr><td class="pad"><div class="alignment" align="center" style="line-height:10px">
-<a href="https://www.pneumatic.app" target="_blank" style="outline:none" tabindex="-1"><img src="{% if trigger.logo_lg %}{{ trigger.logo_lg }}{% else %}{{ snippets.logo_lg }}{% endif %}" style="display:block;height:auto;border:0;width:160px;max-width:100%" width="160" alt="Image" title="Image"></a></div></td></tr></table></td></tr></tbody></table></td></tr></tbody></table><table class="row row-2" align="center" width="100%" border="0" cellpadding="0" cellspacing="0"
-role="presentation" style="mso-table-lspace:0;mso-table-rspace:0;background-color:#f6f6f6"><tbody><tr><td><table class="row-content stack" align="center" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace:0;mso-table-rspace:0;color:#333;width:640px" width="640"><tbody><tr><td class="column column-1" width="100%"
-style="mso-table-lspace:0;mso-table-rspace:0;font-weight:400;text-align:left;background-color:#fff;vertical-align:top;border-top:0;border-right:0;border-bottom:0;border-left:0"><table class="heading_block block-1" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace:0;mso-table-rspace:0"><tr><td class="pad" style="padding-bottom:32px;padding-left:48px;padding-right:48px;padding-top:48px;text-align:center;width:100%"><h1
-style="margin:0;color:#262522;direction:ltr;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:28px;font-weight:400;letter-spacing:normal;line-height:120%;text-align:center;margin-top:0;margin-bottom:0"><strong>You’ve been assigned a task</strong></h1></td></tr></table><table class="text_block block-2" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace:0;mso-table-rspace:0;word-break:break-word"><tr><td class="pad"
-style="padding-bottom:16px;padding-left:48px;padding-right:48px"><div style="font-family:Arial,sans-serif"><div class style="font-size:12px;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;mso-line-height-alt:14.399999999999999px;color:#262522;line-height:1.2"><p style="margin:0;font-size:16px;mso-line-height-alt:19.2px"><span style="font-size:16px;"><strong><span style>Template:</span></strong></span></p><p style="margin:0;font-size:16px;mso-line-height-alt:19.2px">
-<span style="font-size:16px;">{{trigger.template}}</span></p></div></div></td></tr></table><table class="html_block block-3" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace:0;mso-table-rspace:0"><tr><td class="pad"><div style="font-family:Helvetica Neue,Helvetica,Arial,sans-serif;text-align:center" align="center"><div style="color:#262522;font-family:'Helvetica Neue', Helvetica, Arial, sans-serif;line-height:1.8;padding-top:0px;padding-right:48px;padding-bottom:16px;padding-left:48px;">
-  <div class="txtTinyMce-wrapper" style="font-size: 12px; line-height: 1.8; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #262522; mso-line-height-alt: 22px;text-align:left">
-    <p style="margin: 0; font-size: 12px; line-height: 1; word-break: break-word; mso-line-height-alt: 22px; margin-top: 0; margin-bottom: 0;"><strong><span style="font-size: 15px;">Started by:</span></strong></p>
-    {% if trigger.started_by.avatar %}<div>
-      <div style="margin-right: 8px; display:inline-block;"><img src="{{trigger.started_by.avatar}}" width="20px" height="20px" style="border-radius: 50%; vertical-align: middle;text-align:left;" /></div><span style="font-size: 15px;line-height:20px;vertical-align:middle;">{{trigger.started_by.name}}</span>
+<body style="background-color:#fff;margin:0;padding:0;">
+  <table class="nl-container"
+         width="100%"
+         border="0"
+         cellpadding="0"
+         cellspacing="0"
+         role="presentation"
+         style="mso-table-lspace:0;mso-table-rspace:0;background-color:#fff">
+    <tbody>
+      <tr>
+        <td>
+          <!-- Header -->
+          <table class="row row-1"
+                 align="center"
+                 width="100%"
+                 border="0"
+                 cellpadding="0"
+                 cellspacing="0"
+                 role="presentation"
+                 style="mso-table-lspace:0;mso-table-rspace:0;background-color:#f6f6f6">
+            <tbody>
+              <tr>
+                <td>
+                  <table class="row-content stack"
+                         align="center"
+                         border="0"
+                         cellpadding="0"
+                         cellspacing="0"
+                         role="presentation"
+                         style="mso-table-lspace:0;mso-table-rspace:0;background-color:#f6f6f6;color:#000;width:640px;margin:0 auto"
+                         width="640">
+                    <tbody>
+                      <tr>
+                        <td class="column column-1"
+                            width="100%"
+                            style="mso-table-lspace:0;mso-table-rspace:0;font-weight:400;text-align:left;padding-bottom:5px;padding-top:5px;vertical-align:top;">
+                          <table class="image_block block-1"
+                                 width="100%"
+                                 border="0"
+                                 cellpadding="20"
+                                 cellspacing="0"
+                                 role="presentation"
+                                 style="mso-table-lspace:0;mso-table-rspace:0">
+                            <tr>
+                              <td class="pad">
+                                <div class="alignment" align="center" style="line-height:10px">
+                                  <a href="https://www.pneumatic.app"
+                                     target="_blank"
+                                     style="outline:none"
+                                     tabindex="-1">
+                                    <img src="{{ logo_lg }}"
+                                         style="display:block;height:auto;border:0;max-width:160px;width:100%"
+                                         width="160"
+                                         alt="Pneumatic"
+                                         title="Pneumatic">
+                                  </a>
     </div>
-    {% else %}
-    <div>
-      <div style="margin-right:8px;display:inline-block;vertical-align:middle;">
-        <div style="width:20px;height:20px;border-radius: 50%; background-color: #4CAF50;
-"></div>
-      </div><span style="font-size: 15px;line-height:20px;vertical-align:middle;">{{trigger.started_by.name}}</span>
+                              </td>
+                            </tr>
+                          </table>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          
+          <!-- Content -->
+          {% block content %}{% endblock %}
+          
+          <!-- Footer -->
+          <table class="row row-footer"
+                 align="center"
+                 width="100%"
+                 border="0"
+                 cellpadding="0"
+                 cellspacing="0"
+                 role="presentation"
+                 style="mso-table-lspace:0;mso-table-rspace:0;background-color:#f6f6f6">
+            <tbody>
+              <tr>
+                <td>
+                  <table class="row-content stack"
+                         align="center"
+                         border="0"
+                         cellpadding="0"
+                         cellspacing="0"
+                         role="presentation"
+                         style="mso-table-lspace:0;mso-table-rspace:0;background-color:#f6f6f6;color:#000;width:640px;margin:0 auto"
+                         width="640">
+                    <tbody>
+                      <tr>
+                        <td class="column column-1"
+                            width="100%"
+                            style="mso-table-lspace:0;mso-table-rspace:0;font-weight:400;text-align:left;padding-bottom:5px;padding-top:5px;vertical-align:top;">
+                          <!-- Mobile Apps -->
+                          <table class="social_block block-1"
+                                 width="100%"
+                                 border="0"
+                                 cellpadding="0"
+                                 cellspacing="0"
+                                 role="presentation"
+                                 style="mso-table-lspace:0;mso-table-rspace:0">
+                            <tr>
+                              <td class="pad"
+                                  style="padding-bottom:10px;padding-left:10px;padding-right:10px;padding-top:20px;text-align:center">
+                                <div class="alignment" align="center">
+                                  <table class="social-table"
+                                         width="288px"
+                                         border="0"
+                                         cellpadding="0"
+                                         cellspacing="0"
+                                         role="presentation"
+                                         style="mso-table-lspace:0;mso-table-rspace:0;display:inline-block">
+                                    <tr>
+                                      <td style="padding:0 10px 0 10px">
+                                        <a href="https://apps.apple.com/app/pneumatic-workflow/id1618369634"
+                                           target="_blank">
+                                          <img src="https://userimg-assets.customeriomail.com/images/client-env-93177/1679411433462_Button%20App%20Store_01GW2BHM5X7KD71CV7J3EWV26B.png"
+                                               width="124"
+                                               height="32"
+                                               alt="Get Pneumatic Mobile App"
+                                               title="Get Pneumatic Mobile App"
+                                               style="display:block;height:auto;border:0">
+                                        </a>
+                                      </td>
+                                      <td style="padding:0 10px 0 10px">
+                                        <a href="https://play.google.com/store/apps/details?id=com.pneumatic.workflow"
+                                           target="_blank">
+                                          <img src="https://userimg-assets.customeriomail.com/images/client-env-93177/1679411434740_Button%20Google%20Play_01GW2BHNDT95MDEXVJ8YM93M2F.png"
+                                               width="124"
+                                               height="32"
+                                               alt="Get Pneumatic Mobile App"
+                                               title="Get Pneumatic Mobile App"
+                                               style="display:block;height:auto;border:0">
+                                        </a>
+                                      </td>
+                                    </tr>
+                                  </table>
     </div>
-    {% endif %}
+                              </td>
+                            </tr>
+                          </table>
 
+                          <!-- Social Links -->
+                          <table class="social_block block-2"
+                                 width="100%"
+                                 border="0"
+                                 cellpadding="10"
+                                 cellspacing="0"
+                                 role="presentation"
+                                 style="mso-table-lspace:0;mso-table-rspace:0">
+                            <tr>
+                              <td class="pad">
+                                <div class="alignment" align="center">
+                                  <table class="social-table"
+                                         width="126px"
+                                         border="0"
+                                         cellpadding="0"
+                                         cellspacing="0"
+                                         role="presentation"
+                                         style="mso-table-lspace:0;mso-table-rspace:0;display:inline-block">
+                                    <tr>
+                                      <td style="padding:0 5px 0 5px">
+                                        <a href="https://twitter.com/pneumaticapp"
+                                           target="_blank">
+                                          <img src="https://app-rsrc.getbee.io/public/resources/social-networks-icon-sets/t-only-logo-dark-gray/twitter@2x.png"
+                                               width="32"
+                                               height="32"
+                                               alt="Twitter"
+                                               title="Twitter"
+                                               style="display:block;height:auto;border:0">
+                                        </a>
+                                      </td>
+                                      <td style="padding:0 5px 0 5px">
+                                        <a href="https://www.linkedin.com/company/pneumaticapp"
+                                           target="_blank">
+                                          <img src="https://app-rsrc.getbee.io/public/resources/social-networks-icon-sets/t-only-logo-dark-gray/linkedin@2x.png"
+                                               width="32"
+                                               height="32"
+                                               alt="LinkedIn"
+                                               title="LinkedIn"
+                                               style="display:block;height:auto;border:0">
+                                        </a>
+                                      </td>
+                                      <td style="padding:0 5px 0 5px">
+                                        <a href="https://www.youtube.com/channel/UCrN4W1ThP7FKxuxySg5u6ww/"
+                                           target="_blank">
+                                          <img src="https://app-rsrc.getbee.io/public/resources/social-networks-icon-sets/t-only-logo-dark-gray/youtube@2x.png"
+                                               width="32"
+                                               height="32"
+                                               alt="YouTube"
+                                               title="YouTube"
+                                               style="display:block;height:auto;border:0">
+                                        </a>
+                                      </td>
+                                    </tr>
+                                  </table>
   </div>
-</div></div></td></tr></table><table class="text_block block-4" width="100%" border="0" cellpadding="0" cellspacing="0"
-role="presentation" style="mso-table-lspace:0;mso-table-rspace:0;word-break:break-word"><tr><td class="pad" style="padding-bottom:16px;padding-left:48px;padding-right:48px"><div style="font-family:Arial,sans-serif"><div class style="font-size:12px;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;mso-line-height-alt:14.399999999999999px;color:#262522;line-height:1.2"><p style="margin:0;font-size:16px;mso-line-height-alt:19.2px">
-<span style="font-size:16px;"><strong><span style>Workflow:</span></strong></span></p><p style="margin:0;font-size:16px;mso-line-height-alt:19.2px"><span style="font-size:16px;">{{trigger.workflow_name}}</span></p></div></div></td></tr></table><table class="text_block block-5" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace:0;mso-table-rspace:0;word-break:break-word"><tr><td class="pad"
-style="padding-bottom:16px;padding-left:48px;padding-right:48px"><div style="font-family:Arial,sans-serif"><div class style="font-size:12px;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;mso-line-height-alt:14.399999999999999px;color:#262522;line-height:1.2"><p style="margin:0;font-size:16px;mso-line-height-alt:19.2px"><span style="font-size:16px;"><strong><span style>Task:</span></strong></span></p><p style="margin:0;font-size:16px;mso-line-height-alt:19.2px">
-<span style="font-size:16px;">{{trigger.task_name}}</span></p></div></div></td></tr></table><table class="text_block block-6" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace:0;mso-table-rspace:0;word-break:break-word"><tr><td class="pad" style="padding-bottom:16px;padding-left:48px;padding-right:48px"><div style="font-family:Arial,sans-serif"><div class
-style="font-size:12px;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;mso-line-height-alt:14.399999999999999px;color:#262522;line-height:1.2"><p style="margin:0;font-size:16px;mso-line-height-alt:19.2px"><span style="font-size:16px;"><strong><span style>Description:</span></strong></span></p>
+                              </td>
+                            </tr>
+                          </table>
 
-<p style="margin:0;font-size:16px;mso-line-height-alt:19.2px" class="dynamic-content">
-  <span style="font-size:16px;">{{trigger.task_description}}</span>
-</p>
+                          <!-- Links -->
+                          <table class="text_block block-3"
+                                 width="100%"
+                                 border="0"
+                                 cellpadding="0"
+                                 cellspacing="0"
+                                 role="presentation"
+                                 style="mso-table-lspace:0;mso-table-rspace:0;word-break:break-word">
+                            <tr>
+                              <td class="pad"
+                                  style="padding-left:10px;padding-right:10px;padding-top:10px">
+                                <div style="font-family:sans-serif">
+                                  <div style="font-size:14px;font-family:Helvetica Neue,Helvetica,Arial,sans-serif;color:#262522;line-height:1.8">
+                                    <p style="margin:0;text-align:center;">
+                                      <a href="https://zapier.com/apps/pneumatic/integrations"
+                                         target="_blank"
+                                         style="text-decoration:underline;color:#262522;">
+                                        Zapier Integration
+                                      </a>
+                                      &nbsp;
+                                      <a href="https://api-docs.pneumatic.app/#introduction"
+                                         target="_blank"
+                                         style="text-decoration:underline;color:#262522;">
+                                        API
+                                      </a>
+                                      &nbsp;
+                                      <a href="https://www.capterra.com/p/205883/Pneumatic/"
+                                         target="_blank"
+                                         style="text-decoration:underline;color:#262522;">
+                                        Review us on Capterra
+                                      </a>
+                                    </p>
+                                  </div>
+                                </div>
+                              </td>
+                            </tr>
+                          </table>
 
-<p style="margin:0;font-size:16px;mso-line-height-alt:19.2px">
-<span style="font-size:16px;">{% if trigger.due_in %}</span></p></div></div></td></tr></table><table class="text_block block-7" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace:0;mso-table-rspace:0;word-break:break-word"><tr><td class="pad" style="padding-left:48px;padding-right:48px"><div style="font-family:Arial,sans-serif"><div class
-style="font-size:12px;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;mso-line-height-alt:14.399999999999999px;color:#262522;line-height:1.2"><p style="margin:0;font-size:12px;mso-line-height-alt:14.399999999999999px"><span style="font-size:16px;"><strong><span style>Due in:</span></strong></span></p></div></div></td></tr></table><table class="text_block block-8" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation"
-style="mso-table-lspace:0;mso-table-rspace:0;word-break:break-word"><tr><td class="pad" style="padding-bottom:16px;padding-left:48px;padding-right:48px"><div style="font-family:Arial,sans-serif"><div class style="font-size:12px;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;mso-line-height-alt:14.399999999999999px;color:#4caf50;line-height:1.2"><p style="margin:0;font-size:16px;mso-line-height-alt:19.2px"><span style="font-size:16px;">{{trigger.due_in}}</span></p><p
-style="margin:0;font-size:16px;mso-line-height-alt:19.2px"><span style="font-size:16px;">{% elsif trigger.overdue %}</span></p></div></div></td></tr></table><table class="text_block block-9" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace:0;mso-table-rspace:0;word-break:break-word"><tr><td class="pad" style="padding-left:48px;padding-right:48px"><div style="font-family:Arial,sans-serif"><div class
-style="font-size:12px;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;mso-line-height-alt:14.399999999999999px;color:#262522;line-height:1.2"><p style="margin:0;font-size:12px;mso-line-height-alt:14.399999999999999px"><span style="font-size:16px;"><strong><span style>Overdue:</span></strong></span></p></div></div></td></tr></table><table class="text_block block-10" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation"
-style="mso-table-lspace:0;mso-table-rspace:0;word-break:break-word"><tr><td class="pad" style="padding-bottom:16px;padding-left:48px;padding-right:48px"><div style="font-family:Arial,sans-serif"><div class style="font-size:12px;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;mso-line-height-alt:14.399999999999999px;color:#f44336;line-height:1.2"><p style="margin:0;font-size:12px;mso-line-height-alt:14.399999999999999px"><span style="font-size:16px;">{{trigger.overdue}}</span></p></div>
-</div></td></tr></table><table class="text_block block-11" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace:0;mso-table-rspace:0;word-break:break-word"><tr><td class="pad" style="padding-left:48px;padding-right:48px"><div style="font-family:Arial,sans-serif"><div class style="font-size:12px;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;mso-line-height-alt:14.399999999999999px;color:#262522;line-height:1.2"><p
-style="margin:0;font-size:12px;mso-line-height-alt:14.399999999999999px"><span style="font-size:16px;">{% endif %}</span></p></div></div></td></tr></table><table class="button_block block-12" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace:0;mso-table-rspace:0"><tr><td class="pad" style="padding-bottom:24px;padding-left:48px;padding-right:48px;padding-top:24px;text-align:center"><div class="alignment" align="center">
-<!--[if mso]><v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="{{snippets.frontend_host}}tasks/{{trigger.task_id}}" style="height:48px;width:544px;v-text-anchor:middle;" arcsize="50%" stroke="false" fillcolor="#fec336"><w:anchorlock/><v:textbox inset="0px,0px,0px,0px"><center style="color:#262522; font-family:Arial, sans-serif; font-size:16px"><![endif]-->
-<a href="{{snippets.frontend_host}}tasks/{{trigger.task_id}}" target="_blank" style="text-decoration:none;display:block;color:#262522;background-color:#fec336;border-radius:24px;width:100%;border-top:0px solid transparent;font-weight:400;border-right:0px solid transparent;border-bottom:0px solid transparent;border-left:0px solid transparent;padding-top:08px;padding-bottom:8px;font-family:Helvetica Neue, Helvetica, Arial, sans-serif;font-size:16px;text-align:center;mso-border-alt:none;word-break:keep-all;"><span style="padding-left:32px;padding-right:32px;font-size:16px;display:inline-block;letter-spacing:normal;"><span style="word-break: break-word; line-height: 32px;"><strong>View Task</strong></span></span></a>
-<!--[if mso]></center></v:textbox></v:roundrect><![endif]--></div></td></tr></table><table class="divider_block block-13" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace:0;mso-table-rspace:0"><tr><td class="pad" style="padding-bottom:24px;padding-left:48px;padding-right:48px;padding-top:24px"><div class="alignment" align="center"><table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%"
-style="mso-table-lspace:0;mso-table-rspace:0"><tr><td class="divider_inner" style="font-size:1px;line-height:1px;border-top:1px solid #bbb"><span>&#8202;</span></td></tr></table></div></td></tr></table><table class="text_block block-14" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace:0;mso-table-rspace:0;word-break:break-word"><tr><td class="pad" style="padding-left:48px;padding-right:48px;padding-top:24px"><div
-style="font-family:Arial,sans-serif"><div class style="font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:12px;mso-line-height-alt:18px;color:#979795;line-height:1.5"><p style="margin:0;font-size:12px;mso-line-height-alt:24px"><span style="font-size:16px;"><span style>If you’re having trouble with the button above, copy and paste the URL below into you web browser:</span><span style><br></span></span></p></div></div></td></tr></table><table class="text_block block-15"
-width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace:0;mso-table-rspace:0;word-break:break-word"><tr><td class="pad" style="padding-bottom:48px;padding-left:48px;padding-right:48px"><div style="font-family:Arial,sans-serif"><div class style="font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:12px;mso-line-height-alt:18px;color:#262522;line-height:1.5"><p style="margin:0;font-size:12px;mso-line-height-alt:24px">
-<span style="font-size:16px;"><span style>https://my.pneumatic.app/tasks/{{trigger.task_id}}</span><span style><br></span></span></p></div></div></td></tr></table></td></tr></tbody></table></td></tr></tbody></table><table class="row row-3" align="center" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace:0;mso-table-rspace:0;background-color:#f6f6f6"><tbody><tr><td><table class="row-content stack" align="center" border="0" cellpadding="0"
-cellspacing="0" role="presentation" style="mso-table-lspace:0;mso-table-rspace:0;background-color:#f6f6f6;color:#000;width:640px" width="640"><tbody><tr><td class="column column-1" width="100%" style="mso-table-lspace:0;mso-table-rspace:0;font-weight:400;text-align:left;padding-bottom:5px;padding-top:5px;vertical-align:top;border-top:0;border-right:0;border-bottom:0;border-left:0"><table class="social_block block-1" width="100%" border="0" cellpadding="10" cellspacing="0" role="presentation"
-style="mso-table-lspace:0;mso-table-rspace:0"><tr><td class="pad"><div class="alignment" align="center"><table class="social-table" width="126px" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace:0;mso-table-rspace:0;display:inline-block"><tr><td style="padding:0 5px 0 5px"><a href="https://twitter.com/pneumaticapp" target="_blank"><img
-src="https://app-rsrc.getbee.io/public/resources/social-networks-icon-sets/t-only-logo-dark-gray/twitter@2x.png" width="32" height="32" alt="Twitter" title="Twitter" style="display:block;height:auto;border:0"></a></td><td style="padding:0 5px 0 5px"><a href="https://www.linkedin.com/company/pneumaticapp" target="_blank"><img src="https://app-rsrc.getbee.io/public/resources/social-networks-icon-sets/t-only-logo-dark-gray/linkedin@2x.png" width="32" height="32" alt="LinkedIn"
-title="LinkedIn" style="display:block;height:auto;border:0"></a></td><td style="padding:0 5px 0 5px"><a href="https://www.youtube.com/channel/UCrN4W1ThP7FKxuxySg5u6ww/" target="_blank"><img src="https://app-rsrc.getbee.io/public/resources/social-networks-icon-sets/t-only-logo-dark-gray/youtube@2x.png" width="32" height="32" alt="YouTube" title="YouTube" style="display:block;height:auto;border:0"></a></td></tr></table></div></td></tr></table><table class="text_block block-2" width="100%" border="0"
-cellpadding="15" cellspacing="0" role="presentation" style="mso-table-lspace:0;mso-table-rspace:0;word-break:break-word"><tr><td class="pad"><div style="font-family:sans-serif"><div class style="font-size:14px;mso-line-height-alt:16.8px;color:#262522;line-height:1.2;font-family:Helvetica Neue,Helvetica,Arial,sans-serif"><p style="margin:0;font-size:14px;text-align:center;mso-line-height-alt:16.8px">
-<span style="color:#000000;"><a style="text-decoration:underline;color:#000000;" title="Zapier Integration" href="https://zapier.com/apps/pneumatic/integrations" target="_blank" rel="noopener">Zapier Integration |</a> <a style="text-decoration:underline;color:#000000;" title="API" href="https://api-docs.pneumatic.app/#introduction" target="_blank" rel="noopener">API </a>| <a style="text-decoration:underline;color:#000000;" href="https://www.capterra.com/p/205883/Pneumatic/" target="_blank" rel="noopener">Review us on Capterra</a></span>
-</p></div></div></td></tr></table><table class="text_block block-3" width="100%" border="0" cellpadding="15" cellspacing="0" role="presentation" style="mso-table-lspace:0;mso-table-rspace:0;word-break:break-word"><tr><td class="pad"><div style="font-family:sans-serif"><div class style="font-size:14px;mso-line-height-alt:28px;color:#999;line-height:2;font-family:Helvetica Neue,Helvetica,Arial,sans-serif"><p style="margin:0;text-align:center;mso-line-height-alt:28px">
-© {{ "now" | date:"%Y" }} &nbsp; Pneumatic Software, Inc.<br>8350 N Central Expy, Suite 1900, Dallas, TX 75206</p></div></div></td></tr></table><table class="text_block block-4" width="100%" border="0" cellpadding="15" cellspacing="0" role="presentation" style="mso-table-lspace:0;mso-table-rspace:0;word-break:break-word"><tr><td class="pad"><div style="font-family:sans-serif"><div class
-style="font-size:12px;mso-line-height-alt:14.399999999999999px;color:#999;line-height:1.2;font-family:Helvetica Neue,Helvetica,Arial,sans-serif"><div style="font-size:14px;text-align:center">To no longer receive these emails, <a href="{{snippets.backend_host}}accounts/emails/unsubscribe?token={{trigger.unsubscribe_token}}" target="_blank" style="text-decoration: underline; color: #0728ff;" rel="noopener">unsubscribe</a>&nbsp;here.</div></div></div></td></tr></table></td></tr></tbody></table></td></tr></tbody></table></td></tr>
-</tbody></table><!-- End --></body></html>
+                          <!-- Copyright and Unsubscribe -->
+                          <table class="text_block block-4"
+                                 width="100%"
+                                 border="0"
+                                 cellpadding="0"
+                                 cellspacing="0"
+                                 role="presentation"
+                                 style="mso-table-lspace:0;mso-table-rspace:0;word-break:break-word">
+                            <tr>
+                              <td class="pad"
+                                  style="padding-bottom:20px;padding-left:10px;padding-right:10px">
+                                <div style="font-family:sans-serif">
+                                  <div style="font-size:14px;font-family:Helvetica Neue,Helvetica,Arial,sans-serif;color:#999;line-height:1.8">
+                                    <p style="margin:0;text-align:center;">
+                                      © {{ year }} Pneumatic Software, Inc.<br>
+                                      8350 N Central Expy, Suite 1900,
+                                      Dallas, TX 75206
+                                    </p>
+                                    {% if unsubscribe_link %}
+                                    <p style="margin:0;text-align:center;">
+                                      <a href="{{ unsubscribe_link }}"
+                                         target="_blank"
+                                         style="text-decoration:underline;color:#999;">
+                                        Unsubscribe
+                                      </a>
+                                    </p>
+                                    {% endif %}
+                                  </div>
+                                </div>
+                              </td>
+                            </tr>
+                          </table>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</body>
+</html>
