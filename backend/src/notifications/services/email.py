@@ -68,9 +68,9 @@ class EmailService(NotificationService):
         template_code: str,
         data: dict,
     ):
-        message_vars = ''
-        for key, val in data.items():
-            '\n'.join(f'- {key}: {val}')
+        message_vars = (
+            '\n'.join(f'- {key}: {val}' for key, val in data.items())
+        )
         print(  # noqa: T201
             f"""
             -------------------------

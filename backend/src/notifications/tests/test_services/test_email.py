@@ -1167,3 +1167,633 @@ def test_send_mention__ok(mocker):
             'link': task_link,
         },
     )
+
+
+def test_send_user_deactivated_email__ok(mocker):
+
+    # arrange
+    user_mock = mocker.Mock()
+    user_mock.id = 123
+    user_mock.email = 'test@user.com'
+    user_mock.account_id = 456
+    user_mock.account.logo_lg = 'https://logo.jpg'
+
+    settings_mock = mocker.patch(
+        'src.notifications.services.email.settings',
+    )
+    settings_mock.FRONTEND_URL = settings.FRONTEND_URL
+
+    send_simple_email_mock = mocker.patch(
+        'src.notifications.services.email.'
+        'EmailService._send_simple_email',
+    )
+
+    # act
+    EmailService.send_user_deactivated_email(user=user_mock)
+
+    # assert
+    support_link = f'{settings.FRONTEND_URL}/support'
+    send_simple_email_mock.assert_called_once_with(
+        title='User Deactivated',
+        user_id=user_mock.id,
+        user_email=user_mock.email,
+        template_code=EmailType.USER_DEACTIVATED,
+        data={
+            'title': 'Account Deactivated',
+            'content': (
+                '<p>Your Pneumatic account has been deactivated.</p>'
+                '<p>If you believe this was done in error, please '
+                'contact support.</p>'
+            ),
+            'button_text': 'Contact Support',
+            'link': support_link,
+            'logo_lg': user_mock.account.logo_lg,
+            'support_link': support_link,
+        },
+    )
+
+
+def test_send_user_transfer_email__ok(mocker):
+
+    # arrange
+    email = 'transfer@test.com'
+    token = 'transfer_token_123'
+    user_id = 789
+    logo_lg = 'https://company-logo.jpg'
+
+    invited_by_mock = mocker.Mock()
+    invited_by_mock.get_full_name.return_value = 'John Doe'
+    invited_by_mock.account.name = 'Test Company'
+
+    settings_mock = mocker.patch(
+        'src.notifications.services.email.settings',
+    )
+    settings_mock.BACKEND_URL = settings.BACKEND_URL
+
+    send_simple_email_mock = mocker.patch(
+        'src.notifications.services.email.'
+        'EmailService._send_simple_email',
+    )
+
+    # act
+    EmailService.send_user_transfer_email(
+        email=email,
+        invited_by=invited_by_mock,
+        token=token,
+        user_id=user_id,
+        logo_lg=logo_lg,
+    )
+
+    # assert
+    transfer_link = (
+        f'{settings.BACKEND_URL}/accounts/users/{user_id}'
+        f'/transfer?token={token}&utm_source=invite&utm_campaign=transfer'
+    )
+    send_simple_email_mock.assert_called_once_with(
+        title='User Transfer',
+        user_id=user_id,
+        user_email=email,
+        template_code=EmailType.USER_TRANSFER,
+        data={
+            'title': 'You have been invited!',
+            'content': (
+                f'<p>{invited_by_mock.get_full_name()} has invited you to '
+                f'join {invited_by_mock.account.name} on Pneumatic.</p>'
+                '<p>Click the button below to accept the invitation.</p>'
+            ),
+            'button_text': 'Accept Invitation',
+            'token': token,
+            'link': transfer_link,
+            'transfer_link': transfer_link,
+            'sender_name': invited_by_mock.get_full_name(),
+            'company_name': invited_by_mock.account.name,
+            'logo_lg': logo_lg,
+        },
+    )
+
+
+def test_send_verification_email__ok(mocker):
+
+    # arrange
+    user_mock = mocker.Mock()
+    user_mock.id = 456
+    user_mock.email = 'verify@test.com'
+    user_mock.first_name = 'Jane'
+
+    token = 'verification_token_456'
+    logo_lg = 'https://verify-logo.jpg'
+
+    settings_mock = mocker.patch(
+        'src.notifications.services.email.settings',
+    )
+    settings_mock.FRONTEND_URL = settings.FRONTEND_URL
+
+    send_simple_email_mock = mocker.patch(
+        'src.notifications.services.email.'
+        'EmailService._send_simple_email',
+    )
+
+    # act
+    EmailService.send_verification_email(
+        user=user_mock,
+        token=token,
+        logo_lg=logo_lg,
+    )
+
+    # assert
+    verification_link = (
+        f'{settings.FRONTEND_URL}/auth/verify'
+        f'?token={token}&utm_source=email&utm_campaign=verification'
+    )
+    send_simple_email_mock.assert_called_once_with(
+        title='Account Verification',
+        user_id=user_mock.id,
+        user_email=user_mock.email,
+        template_code=EmailType.ACCOUNT_VERIFICATION,
+        data={
+            'title': f'Welcome, {user_mock.first_name}!',
+            'content': (
+                '<p>Thank you for signing up for Pneumatic. '
+                'Please verify your email address to get started.</p>'
+            ),
+            'button_text': 'Verify Email',
+            'token': token,
+            'link': verification_link,
+            'verification_link': verification_link,
+            'first_name': user_mock.first_name,
+            'logo_lg': logo_lg,
+        },
+    )
+
+
+def test_send_workflows_digest_email__ok(mocker):
+
+    # arrange
+    user_mock = mocker.Mock()
+    user_mock.id = 789
+    user_mock.email = 'digest@test.com'
+    user_mock.account_id = 123
+
+    logo_lg = 'https://digest-logo.jpg'
+
+    date_from = timezone.now().date() - timedelta(days=7)
+    date_to = timezone.now().date()
+    digest_data = {
+        'workflows_count': 5,
+        'completed_workflows': 3,
+        'active_workflows': 2,
+    }
+
+    unsubscribe_token = 'unsubscribe_token_123'
+    create_unsubscribe_token_mock = mocker.patch(
+        'src.notifications.services.email.'
+        'UnsubscribeEmailToken.create_token',
+        return_value=unsubscribe_token,
+    )
+
+    settings_mock = mocker.patch(
+        'src.notifications.services.email.settings',
+    )
+    settings_mock.BACKEND_URL = settings.BACKEND_URL
+    settings_mock.FRONTEND_URL = settings.FRONTEND_URL
+
+    send_simple_email_mock = mocker.patch(
+        'src.notifications.services.email.'
+        'EmailService._send_simple_email',
+    )
+
+    # act
+    EmailService.send_workflows_digest_email(
+        user=user_mock,
+        date_from=date_from,
+        date_to=date_to,
+        digest=digest_data,
+        logo_lg=logo_lg,
+    )
+
+    # assert
+    unsubscribe_link = (
+        f'{settings.BACKEND_URL}/accounts/unsubscribe/{unsubscribe_token}'
+    )
+    workflows_link = (
+        f'{settings.FRONTEND_URL}'
+        f'/workflows?utm_source=email&utm_campaign=digest'
+    )
+
+    create_unsubscribe_token_mock.assert_called_once_with(
+        user_id=user_mock.id,
+        email_type=MailoutType.WF_DIGEST,
+    )
+
+    send_simple_email_mock.assert_called_once_with(
+        title='Workflows Digest',
+        user_id=user_mock.id,
+        user_email=user_mock.email,
+        template_code=EmailType.WORKFLOWS_DIGEST,
+        data={
+            'title': 'Workflows Digest',
+            'date_from': date_from.strftime('%d %b'),
+            'date_to': date_to.strftime('%d %b, %Y'),
+            'unsubscribe_token': unsubscribe_token,
+            'unsubscribe_link': unsubscribe_link,
+            'workflows_link': workflows_link,
+            'logo_lg': logo_lg,
+            'workflows_count': 5,
+            'completed_workflows': 3,
+            'active_workflows': 2,
+        },
+    )
+
+
+def test_send_tasks_digest_email__ok(mocker):
+
+    # arrange
+    user_mock = mocker.Mock()
+    user_mock.id = 456
+    user_mock.email = 'tasks@test.com'
+    user_mock.account_id = 789
+
+    logo_lg = 'https://tasks-logo.jpg'
+
+    date_from = timezone.now().date() - timedelta(days=7)
+    date_to = timezone.now().date()
+    digest_data = {
+        'tasks_count': 10,
+        'completed_tasks': 7,
+        'overdue_tasks': 1,
+    }
+
+    unsubscribe_token = 'tasks_unsubscribe_456'
+    create_unsubscribe_token_mock = mocker.patch(
+        'src.notifications.services.email.'
+        'UnsubscribeEmailToken.create_token',
+        return_value=unsubscribe_token,
+    )
+
+    settings_mock = mocker.patch(
+        'src.notifications.services.email.settings',
+    )
+    settings_mock.BACKEND_URL = settings.BACKEND_URL
+    settings_mock.FRONTEND_URL = settings.FRONTEND_URL
+
+    send_simple_email_mock = mocker.patch(
+        'src.notifications.services.email.'
+        'EmailService._send_simple_email',
+    )
+
+    # act
+    EmailService.send_tasks_digest_email(
+        user=user_mock,
+        date_from=date_from,
+        date_to=date_to,
+        digest=digest_data,
+        logo_lg=logo_lg,
+    )
+
+    # assert
+    unsubscribe_link = (
+        f'{settings.BACKEND_URL}/accounts/unsubscribe/{unsubscribe_token}'
+    )
+    tasks_link = (
+        f'{settings.FRONTEND_URL}'
+        f'/tasks?utm_source=email&utm_campaign=tasks_digest'
+    )
+
+    create_unsubscribe_token_mock.assert_called_once_with(
+        user_id=user_mock.id,
+        email_type=MailoutType.TASKS_DIGEST,
+    )
+
+    send_simple_email_mock.assert_called_once_with(
+        title='Tasks Digest',
+        user_id=user_mock.id,
+        user_email=user_mock.email,
+        template_code=EmailType.TASKS_DIGEST,
+        data={
+            'title': 'Tasks Digest',
+            'date_from': date_from.strftime('%d %b'),
+            'date_to': date_to.strftime('%d %b, %Y'),
+            'unsubscribe_token': unsubscribe_token,
+            'unsubscribe_link': unsubscribe_link,
+            'tasks_link': tasks_link,
+            'logo_lg': logo_lg,
+            'tasks_count': 10,
+            'completed_tasks': 7,
+            'overdue_tasks': 1,
+        },
+    )
+
+
+def test_send_user_transfer_email__no_logo__ok(mocker):
+
+    # arrange
+    email = 'transfer@test.com'
+    token = 'transfer_token_123'
+    user_id = 789
+    logo_lg = None
+
+    invited_by_mock = mocker.Mock()
+    invited_by_mock.get_full_name.return_value = 'John Doe'
+    invited_by_mock.account.name = 'Test Company'
+
+    settings_mock = mocker.patch(
+        'src.notifications.services.email.settings',
+    )
+    settings_mock.BACKEND_URL = settings.BACKEND_URL
+
+    send_simple_email_mock = mocker.patch(
+        'src.notifications.services.email.'
+        'EmailService._send_simple_email',
+    )
+
+    # act
+    EmailService.send_user_transfer_email(
+        email=email,
+        invited_by=invited_by_mock,
+        token=token,
+        user_id=user_id,
+        logo_lg=logo_lg,
+    )
+
+    # assert
+    transfer_link = (
+        f'{settings.BACKEND_URL}/accounts/users/{user_id}'
+        f'/transfer?token={token}&utm_source=invite&utm_campaign=transfer'
+    )
+    send_simple_email_mock.assert_called_once_with(
+        title='User Transfer',
+        user_id=user_id,
+        user_email=email,
+        template_code=EmailType.USER_TRANSFER,
+        data={
+            'title': 'You have been invited!',
+            'content': (
+                f'<p>{invited_by_mock.get_full_name()} has invited you to '
+                f'join {invited_by_mock.account.name} on Pneumatic.</p>'
+                '<p>Click the button below to accept the invitation.</p>'
+            ),
+            'button_text': 'Accept Invitation',
+            'token': token,
+            'link': transfer_link,
+            'transfer_link': transfer_link,
+            'sender_name': invited_by_mock.get_full_name(),
+            'company_name': invited_by_mock.account.name,
+            'logo_lg': None,
+        },
+    )
+
+
+def test_send_verification_email__no_logo__ok(mocker):
+
+    # arrange
+    user_mock = mocker.Mock()
+    user_mock.id = 456
+    user_mock.email = 'verify@test.com'
+    user_mock.first_name = 'Jane'
+
+    token = 'verification_token_456'
+    logo_lg = None
+
+    settings_mock = mocker.patch(
+        'src.notifications.services.email.settings',
+    )
+    settings_mock.FRONTEND_URL = settings.FRONTEND_URL
+
+    send_simple_email_mock = mocker.patch(
+        'src.notifications.services.email.'
+        'EmailService._send_simple_email',
+    )
+
+    # act
+    EmailService.send_verification_email(
+        user=user_mock,
+        token=token,
+        logo_lg=logo_lg,
+    )
+
+    # assert
+    verification_link = (
+        f'{settings.FRONTEND_URL}/auth/verify'
+        f'?token={token}&utm_source=email&utm_campaign=verification'
+    )
+    send_simple_email_mock.assert_called_once_with(
+        title='Account Verification',
+        user_id=user_mock.id,
+        user_email=user_mock.email,
+        template_code=EmailType.ACCOUNT_VERIFICATION,
+        data={
+            'title': f'Welcome, {user_mock.first_name}!',
+            'content': (
+                '<p>Thank you for signing up for Pneumatic. '
+                'Please verify your email address to get started.</p>'
+            ),
+            'button_text': 'Verify Email',
+            'token': token,
+            'link': verification_link,
+            'verification_link': verification_link,
+            'first_name': user_mock.first_name,
+            'logo_lg': None,
+        },
+    )
+
+
+def test_send_workflows_digest_email__empty_digest__ok(mocker):
+
+    # arrange
+    user_mock = mocker.Mock()
+    user_mock.id = 789
+    user_mock.email = 'digest@test.com'
+    user_mock.account_id = 123
+
+    logo_lg = 'https://digest-logo.jpg'
+
+    date_from = timezone.now().date() - timedelta(days=7)
+    date_to = timezone.now().date()
+    digest_data = {}
+
+    unsubscribe_token = 'unsubscribe_token_123'
+    mocker.patch(
+        'src.notifications.services.email.'
+        'UnsubscribeEmailToken.create_token',
+        return_value=unsubscribe_token,
+    )
+
+    settings_mock = mocker.patch(
+        'src.notifications.services.email.settings',
+    )
+    settings_mock.BACKEND_URL = settings.BACKEND_URL
+    settings_mock.FRONTEND_URL = settings.FRONTEND_URL
+
+    send_simple_email_mock = mocker.patch(
+        'src.notifications.services.email.'
+        'EmailService._send_simple_email',
+    )
+
+    # act
+    EmailService.send_workflows_digest_email(
+        user=user_mock,
+        date_from=date_from,
+        date_to=date_to,
+        digest=digest_data,
+        logo_lg=logo_lg,
+    )
+
+    # assert
+    unsubscribe_link = (
+        f'{settings.BACKEND_URL}/accounts/unsubscribe/{unsubscribe_token}'
+    )
+    workflows_link = (
+        f'{settings.FRONTEND_URL}'
+        f'/workflows?utm_source=email&utm_campaign=digest'
+    )
+
+    send_simple_email_mock.assert_called_once_with(
+        title='Workflows Digest',
+        user_id=user_mock.id,
+        user_email=user_mock.email,
+        template_code=EmailType.WORKFLOWS_DIGEST,
+        data={
+            'title': 'Workflows Digest',
+            'date_from': date_from.strftime('%d %b'),
+            'date_to': date_to.strftime('%d %b, %Y'),
+            'unsubscribe_token': unsubscribe_token,
+            'unsubscribe_link': unsubscribe_link,
+            'workflows_link': workflows_link,
+            'logo_lg': logo_lg,
+        },
+    )
+
+
+def test_send_tasks_digest_email__empty_digest__ok(mocker):
+
+    # arrange
+    user_mock = mocker.Mock()
+    user_mock.id = 456
+    user_mock.email = 'tasks@test.com'
+    user_mock.account_id = 789
+
+    logo_lg = None
+
+    date_from = timezone.now().date() - timedelta(days=7)
+    date_to = timezone.now().date()
+    digest_data = {}
+
+    unsubscribe_token = 'tasks_unsubscribe_456'
+    mocker.patch(
+        'src.notifications.services.email.'
+        'UnsubscribeEmailToken.create_token',
+        return_value=unsubscribe_token,
+    )
+
+    settings_mock = mocker.patch(
+        'src.notifications.services.email.settings',
+    )
+    settings_mock.BACKEND_URL = settings.BACKEND_URL
+    settings_mock.FRONTEND_URL = settings.FRONTEND_URL
+
+    send_simple_email_mock = mocker.patch(
+        'src.notifications.services.email.'
+        'EmailService._send_simple_email',
+    )
+
+    # act
+    EmailService.send_tasks_digest_email(
+        user=user_mock,
+        date_from=date_from,
+        date_to=date_to,
+        digest=digest_data,
+        logo_lg=logo_lg,
+    )
+
+    # assert
+    unsubscribe_link = (
+        f'{settings.BACKEND_URL}/accounts/unsubscribe/{unsubscribe_token}'
+    )
+    tasks_link = (
+        f'{settings.FRONTEND_URL}'
+        f'/tasks?utm_source=email&utm_campaign=tasks_digest'
+    )
+
+    send_simple_email_mock.assert_called_once_with(
+        title='Tasks Digest',
+        user_id=user_mock.id,
+        user_email=user_mock.email,
+        template_code=EmailType.TASKS_DIGEST,
+        data={
+            'title': 'Tasks Digest',
+            'date_from': date_from.strftime('%d %b'),
+            'date_to': date_to.strftime('%d %b, %Y'),
+            'unsubscribe_token': unsubscribe_token,
+            'unsubscribe_link': unsubscribe_link,
+            'tasks_link': tasks_link,
+            'logo_lg': None,
+        },
+    )
+
+
+def test_send_simple_email__ok(mocker):
+
+    # arrange
+    title = 'Test Email'
+    user_id = 123
+    user_email = 'test@example.com'
+    template_code = EmailType.RESET_PASSWORD
+    data = {'test': 'data'}
+
+    mocker.patch(
+        'src.notifications.services.email.'
+        'EmailService._dispatch_email',
+    )
+
+    logo_lg = 'https://logo.jpg'
+    logging = False
+    account_id = 456
+
+    service = EmailService(
+        logo_lg=logo_lg,
+        logging=logging,
+        account_id=account_id,
+    )
+
+    # act
+    service._send_simple_email(
+        title=title,
+        user_id=user_id,
+        user_email=user_email,
+        template_code=template_code,
+        data=data,
+    )
+
+
+def test_send_email_to_console__ok(mocker):
+
+    # arrange
+    user_email = 'console@test.com'
+    template_code = EmailType.NEW_TASK
+    data = {'task_name': 'Test Task', 'workflow_name': 'Test Workflow'}
+
+    print_mock = mocker.patch('builtins.print')
+
+    logo_lg = 'https://logo.jpg'
+    logging = False
+    account_id = 123
+
+    service = EmailService(
+        logo_lg=logo_lg,
+        logging=logging,
+        account_id=account_id,
+    )
+
+    # act
+    service._send_email_to_console(
+        user_email=user_email,
+        template_code=template_code,
+        data=data,
+    )
+
+    # assert
+    print_mock.assert_called_once()
+    call_args = print_mock.call_args[0][0]
+    assert 'EMAIL-MESSAGE' in call_args
+    assert user_email in call_args
+    assert template_code in call_args
