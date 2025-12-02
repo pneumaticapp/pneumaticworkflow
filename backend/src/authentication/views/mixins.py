@@ -53,6 +53,8 @@ class SignUpMixin:
     def join_existing_account(
         self,
         account: Account,
+        user_agent: str,
+        user_ip: str,
         email: str,
         company_name: Optional[str] = None,
         phone: Optional[str] = None,
@@ -90,11 +92,8 @@ class SignUpMixin:
             else:
                 token = AuthService.get_auth_token(
                     user=user,
-                    user_agent=request.headers.get(
-                        'User-Agent',
-                        request.META.get('HTTP_USER_AGENT'),
-                    ),
-                    user_ip=request.META.get('HTTP_X_REAL_IP'),
+                    user_agent=user_agent,
+                    user_ip=user_ip,
                 )
                 self.after_signup(user)
                 return user, token
