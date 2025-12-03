@@ -811,6 +811,8 @@ def test_authenticate_user__join_existing_account__ok(mocker):
     )
     join_existing_account_mock.assert_called_once_with(
         account=existing_account,
+        user_agent=user_agent,
+        user_ip=user_ip,
         **user_data,
     )
     save_tokens_mock.assert_called_once_with(user)

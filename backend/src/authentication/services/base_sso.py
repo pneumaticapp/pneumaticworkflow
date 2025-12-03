@@ -278,6 +278,8 @@ class BaseSSOService(SignUpMixin, CacheMixin, EncryptionMixin, ABC):
                 raise AuthenticationFailed(MSG_AU_0019) from exc
             user, token = self.join_existing_account(
                 account=existing_account,
+                user_agent=user_agent,
+                user_ip=user_ip,
                 **user_data,
             )
         else:
