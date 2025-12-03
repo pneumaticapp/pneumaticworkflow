@@ -36,6 +36,9 @@ http {
     access_log /var/log/nginx/access-extended.log extended_fmt;
     error_log /var/log/nginx/error.log error;
 
+    # Global definition for 502 error page
+    error_page 502 /502.html;
+
     ##
     # Gzip Settings
     ##
@@ -81,6 +84,9 @@ http {
         }
         location /robots.txt {
             alias /var/www/robots.txt;
+        }
+        location = /502.html {
+            alias /var/www/html/502.html;
         }
     }
 
@@ -141,6 +147,9 @@ http {
         location /robots.txt {
             alias /var/www/robots.txt;
         }
+        location = /502.html {
+            alias /var/www/html/502.html;
+        }
 
         expires $expires;
         gzip on;
@@ -172,6 +181,10 @@ http {
 
         location /robots.txt {
             alias /var/www/robots.txt;
+        }
+
+        location = /502.html {
+            alias /var/www/html/502.html;
         }
 
         expires $expires;

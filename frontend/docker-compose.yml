@@ -111,7 +111,7 @@ services:
       POSTGRES_REPLICA_PASSWORD: ${POSTGRES_REPLICA_PASSWORD:-postgres_password}
       POSTGRES_REPLICA_DB: ${POSTGRES_REPLICA_DB:-postgres_db}
       DJANGO_DEBUG: ${DJANGO_DEBUG:-no}
-      ADMIN_PATH: ${ADMIN_PATH:-'admin'}
+      ADMIN_PATH: ${ADMIN_PATH:-admin}
       DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:-django_secret_django_secret_django_secret}
       DJANGO_SETTINGS_MODULE: src.settings
       AUTH_REDIS_URL: "redis://:${REDIS_PASSWORD:-redis_password}@redis:6379/1"
@@ -123,7 +123,7 @@ services:
       VERIFICATION_CHECK: no
       CORS_ORIGIN_ALLOW_ALL: no
       CORS_ALLOW_CREDENTIALS: yes
-      CORS_ORIGIN_WHITELIST: "http://localhost:8000 ${FRONTEND_URL:-http://localhost}"
+      CORS_ORIGIN_WHITELIST: "http://localhost:8000 ${FRONTEND_URL:-http://doc}"
       ENABLE_LOGGING: ${ENABLE_LOGGING:-no}
     volumes:
       - ../backend:/pneumatic_backend
@@ -186,7 +186,7 @@ services:
       POSTGRES_REPLICA_PASSWORD: ${POSTGRES_REPLICA_PASSWORD:-postgres_password}
       POSTGRES_REPLICA_DB: ${POSTGRES_REPLICA_DB:-postgres_db}
       DJANGO_DEBUG: ${DJANGO_DEBUG:-no}
-      ADMIN_PATH: ${ADMIN_PATH:-'admin'}
+      ADMIN_PATH: ${ADMIN_PATH:-admin}
       DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:-django_secret_django_secret_django_secret}
       DJANGO_SETTINGS_MODULE: src.settings
       AUTH_REDIS_URL: "redis://:${REDIS_PASSWORD:-redis_password}@redis:6379/1"
@@ -258,7 +258,7 @@ services:
       POSTGRES_REPLICA_PASSWORD: ${POSTGRES_REPLICA_PASSWORD:-postgres_password}
       POSTGRES_REPLICA_DB: ${POSTGRES_REPLICA_DB:-postgres_db}
       DJANGO_DEBUG: ${DJANGO_DEBUG:-no}
-      ADMIN_PATH: ${ADMIN_PATH:-'admin'}
+      ADMIN_PATH: ${ADMIN_PATH:-admin}
       DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:-django_secret_django_secret_django_secret}
       DJANGO_SETTINGS_MODULE: src.settings
       AUTH_REDIS_URL: "redis://:${REDIS_PASSWORD:-redis_password}@redis:6379/1"

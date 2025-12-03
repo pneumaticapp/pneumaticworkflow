@@ -3,39 +3,13 @@
 ### Configuration
 Create a file ".env" with the following values in "frontend" directory:
 ```shell
-# Frontend settings
 MCS_RUN_ENV=prod
 NODE_OPTIONS=--max-old-space-size=3072
-BACKEND_PRIVATE_URL=http://localhost:8001/
-BACKEND_URL=http://localhost:8001/
-FRONTEND_URL=http://localhost/
-WSS_URL=ws://localhost:8001/
+BACKEND_PRIVATE_URL=http://localhost:8001
+BACKEND_URL=http://localhost:8001
+FRONTEND_URL=http://localhost
+WSS_URL=ws://localhost:8001
 FORM_DOMAIN=form.localhost
-
-# Project settings
-LANGUAGE_CODE=en # Allowed langs: en, fr, de, es, ru
-CAPTCHA=no   # Disable using captcha in forms
-ANALYTICS=no # Disable any analytics integrations
-BILLING=no   # Disable stripe integration
-SIGNUP=yes   # Disable signup page
-MS_AUTH=no   # Disable Microsoft auth
-GOOGLE_AUTH=no # Disable Google auth
-SSO_AUTH=no   # Disable SSO Auth0 auth
-SSO_PROVIDER=
-EMAIL=no      # Disable send emails
-AI=no         # Disable AI template generation
-PUSH=no       # Disable push notifications
-STORAGE=no    # Disable file storage
-SENTRY_DSN=
-FIREBASE_VAPID_KEY=
-FIREBASE_API_KEY=
-FIREBASE_AUTH_DOMAIN=
-FIREBASE_PROJECT_ID=
-FIREBASE_STORAGE_BUCKET=
-FIREBASE_SENDER_ID=
-FIREBASE_APP_ID=
-FIREBASE_MEASUREMENT_ID=
-RECAPTCHA_SITE_KEY=
 ```
 
 ### Installation
