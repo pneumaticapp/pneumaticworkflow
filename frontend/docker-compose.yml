@@ -66,7 +66,7 @@ services:
       sh -c "python manage.py migrate &&
              python manage.py collectstatic --no-input &&
              python manage.py compilemessages &&
-             gunicorn src.asgi:application --workers 2 -k uvicorn.workers.UvicornWorker --worker-tmp-dir /dev/shm --bind 0.0.0.0:8001"
+             gunicorn src.asgi:application --workers ${WORKERS_COUNT:-2} -k uvicorn.workers.UvicornWorker --worker-tmp-dir /dev/shm --bind 0.0.0.0:8001"
     ports:
       - 8001:8001
     environment:
@@ -83,6 +83,14 @@ services:
       GOOGLE_AUTH: ${GOOGLE_AUTH:-no}
       SSO_AUTH: ${SSO_AUTH:-no}
       SSO_PROVIDER: ${SSO_PROVIDER} # Allowed values: okta, auth0
+      OKTA_DOMAIN: ${OKTA_DOMAIN}
+      OKTA_CLIENT_ID: ${OKTA_CLIENT_ID}
+      OKTA_CLIENT_SECRET: ${OKTA_CLIENT_SECRET}
+      OKTA_REDIRECT_URI: ${OKTA_REDIRECT_URI}
+      AUTH0_CLIENT_ID: ${AUTH0_CLIENT_ID}
+      AUTH0_CLIENT_SECRET: ${AUTH0_CLIENT_SECRET}
+      AUTH0_DOMAIN: ${AUTH0_DOMAIN}
+      AUTH0_REDIRECT_URI: ${AUTH0_REDIRECT_URI}
       EMAIL: ${EMAIL:-no}           # Disable send emails
       EMAIL_PROVIDER: ${EMAIL_PROVIDER}
       CIO_WEBHOOK_API_VERSION: ${CIO_WEBHOOK_API_VERSION}
@@ -158,6 +166,14 @@ services:
       GOOGLE_AUTH: ${GOOGLE_AUTH:-no}
       SSO_AUTH: ${SSO_AUTH:-no}
       SSO_PROVIDER: ${SSO_PROVIDER} # Allowed values: okta, auth0
+      OKTA_DOMAIN: ${OKTA_DOMAIN}
+      OKTA_CLIENT_ID: ${OKTA_CLIENT_ID}
+      OKTA_CLIENT_SECRET: ${OKTA_CLIENT_SECRET}
+      OKTA_REDIRECT_URI: ${OKTA_REDIRECT_URI}
+      AUTH0_CLIENT_ID: ${AUTH0_CLIENT_ID}
+      AUTH0_CLIENT_SECRET: ${AUTH0_CLIENT_SECRET}
+      AUTH0_DOMAIN: ${AUTH0_DOMAIN}
+      AUTH0_REDIRECT_URI: ${AUTH0_REDIRECT_URI}
       EMAIL: ${EMAIL:-no}           # Disable send emails
       EMAIL_PROVIDER: ${EMAIL_PROVIDER}
       CIO_WEBHOOK_API_VERSION: ${CIO_WEBHOOK_API_VERSION}
@@ -230,6 +246,14 @@ services:
       GOOGLE_AUTH: ${GOOGLE_AUTH:-no}
       SSO_AUTH: ${SSO_AUTH:-no}
       SSO_PROVIDER: ${SSO_PROVIDER} # Allowed values: okta, auth0
+      OKTA_DOMAIN: ${OKTA_DOMAIN}
+      OKTA_CLIENT_ID: ${OKTA_CLIENT_ID}
+      OKTA_CLIENT_SECRET: ${OKTA_CLIENT_SECRET}
+      OKTA_REDIRECT_URI: ${OKTA_REDIRECT_URI}
+      AUTH0_CLIENT_ID: ${AUTH0_CLIENT_ID}
+      AUTH0_CLIENT_SECRET: ${AUTH0_CLIENT_SECRET}
+      AUTH0_DOMAIN: ${AUTH0_DOMAIN}
+      AUTH0_REDIRECT_URI: ${AUTH0_REDIRECT_URI}
       EMAIL: ${EMAIL:-no}           # Disable send emails
       EMAIL_PROVIDER: ${EMAIL_PROVIDER}
       CIO_WEBHOOK_API_VERSION: ${CIO_WEBHOOK_API_VERSION}
