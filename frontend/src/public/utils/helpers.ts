@@ -278,12 +278,21 @@ export const areObjectsEqual = (originalObj: object, updatedObj: object): boolea
   return isObjectEmpty(diffProps);
 };
 
-export function deepCompareDep(ref: React.MutableRefObject<string>, dependence: React.DependencyList): boolean {
-  const currentKey = JSON.stringify(dependence);
-  if (ref.current !== currentKey) {
-    ref.current = currentKey;
-    return true;
-  }
+export function checkFilterDependenciesChanged(
+  refsMap: Map<string, React.MutableRefObject<string>>,
+  dependencies: Record<string, string | number[]>,
+): boolean {
+  for (const [key, value] of Object.entries(dependencies)) {
+    const ref = refsMap.get(key);
+    if (!ref) {
+      continue;
+    }
+    const filterKey = typeof value === 'string' ? value : JSON.stringify(value);
 
+    if (ref.current !== filterKey) {
+      ref.current = filterKey;
+      return true;
+    }
+  }
   return false;
 }

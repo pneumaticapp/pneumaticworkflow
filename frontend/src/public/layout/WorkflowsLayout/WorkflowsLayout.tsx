@@ -31,7 +31,7 @@ import { StarterFilterSelect } from './StarterFilterSelect';
 import { TemplateFilterSelect } from './TemplateFilterSelect';
 import { PerformerFilterSelect } from './PerformerFilterSelect';
 import { TaskFilterSelect } from './TaskFilterSelect';
-import { deepCompareDep } from '../../utils/helpers';
+import { checkFilterDependenciesChanged } from '../../utils/helpers';
 
 import styles from './WorkflowsLayout.css';
 
@@ -79,9 +79,25 @@ export function WorkflowsLayoutComponent({
   const tableViewContainerRef = useRef<TableViewContainerRef>(null);
   const loadingTaskRef = React.useRef<Set<number>>(new Set());
 
-  const prevTemplatesIdsFilterRef = useRef<string>('');
-  const prevStepsIdsFilterRef = useRef<string>('');
-  const prevWorkflowStartersIdsFilterRef = useRef<string>('');
+  const prevStatusFilterRef = useRef<string>(EWorkflowsStatus.Running);
+  const prevSortingRef = useRef<string>(EWorkflowsSorting.DateDesc);
+  const prevTemplatesIdsFilterRef = useRef<string>('[]');
+  const prevStepsIdsFilterRef = useRef<string>('[]');
+  const prevWorkflowStartersIdsFilterRef = useRef<string>('[]');
+  const prevPerformersIdsFilterRef = useRef<string>('[]');
+
+  const dependenciesRefs = useMemo(
+    () =>
+      new Map([
+        ['statusFilter', prevStatusFilterRef],
+        ['sorting', prevSortingRef],
+        ['templatesIdsFilter', prevTemplatesIdsFilterRef],
+        ['stepsIdsFilter', prevStepsIdsFilterRef],
+        ['workflowStartersIdsFilter', prevWorkflowStartersIdsFilterRef],
+        ['performersIdsFilter', prevPerformersIdsFilterRef],
+      ]),
+    [],
+  );
 
   const selectedTemplates: ITemplateFilterItem[] = useMemo(() => {
     const filterTemplatesMap: Map<number, ITemplateFilterItem> = new Map(
@@ -168,10 +184,14 @@ export function WorkflowsLayoutComponent({
   }, [statusFilter]);
 
   useEffect(() => {
-    const startersIdsChanged = deepCompareDep(prevWorkflowStartersIdsFilterRef, workflowStartersIdsFilter);
-    const templatesIdChanged = deepCompareDep(prevTemplatesIdsFilterRef, templatesIdsFilter);
-    const tasksIdsChanged = deepCompareDep(prevStepsIdsFilterRef, stepsIdsFilter);
-    if (!startersIdsChanged && !templatesIdChanged && !tasksIdsChanged) {
+    const hasChanges = checkFilterDependenciesChanged(dependenciesRefs, {
+      statusFilter,
+      templatesIdsFilter,
+      stepsIdsFilter,
+      workflowStartersIdsFilter,
+    });
+
+    if (!hasChanges) {
       return;
     }
 
@@ -191,6 +211,18 @@ export function WorkflowsLayoutComponent({
   }, [statusFilter, templatesIdsFilter, performersIdsFilter]);
 
   useEffect(() => {
+    const hasChanges = checkFilterDependenciesChanged(dependenciesRefs, {
+      statusFilter,
+      templatesIdsFilter,
+      stepsIdsFilter,
+      performersIdsFilter,
+      workflowStartersIdsFilter,
+      sorting,
+    });
+
+    if (!hasChanges) {
+      return;
+    }
     applyFilters();
   }, [statusFilter, templatesIdsFilter, stepsIdsFilter, performersIdsFilter, workflowStartersIdsFilter, sorting]);
 
