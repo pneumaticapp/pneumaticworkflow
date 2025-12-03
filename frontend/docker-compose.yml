@@ -123,7 +123,7 @@ services:
       VERIFICATION_CHECK: no
       CORS_ORIGIN_ALLOW_ALL: no
       CORS_ALLOW_CREDENTIALS: yes
-      CORS_ORIGIN_WHITELIST: "http://localhost:8000 ${FRONTEND_URL:-http://doc}"
+      CORS_ORIGIN_WHITELIST: "http://localhost:8000 ${FRONTEND_URL:-http://localhost}"
       ENABLE_LOGGING: ${ENABLE_LOGGING:-no}
     volumes:
       - ../backend:/pneumatic_backend
