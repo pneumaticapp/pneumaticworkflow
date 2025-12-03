@@ -67,7 +67,7 @@ services:
       sh -c "python manage.py migrate &&
              python manage.py collectstatic --no-input &&
              python manage.py compilemessages &&
-             gunicorn src.asgi:application --workers 2 -k uvicorn.workers.UvicornWorker --worker-tmp-dir /dev/shm --bind unix:/tmp/gunicorn/pneumatic-backend.sock --timeout 200"
+             gunicorn src.asgi:application --workers ${WORKERS_COUNT:-2} -k uvicorn.workers.UvicornWorker --worker-tmp-dir /dev/shm --bind unix:/tmp/gunicorn/pneumatic-backend.sock --timeout 200"
     environment:
       BACKEND_URL: ${BACKEND_URL:-http://localhost:8001}
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost}
@@ -82,6 +82,14 @@ services:
       GOOGLE_AUTH: ${GOOGLE_AUTH:-no}
       SSO_AUTH: ${SSO_AUTH:-no}
       SSO_PROVIDER: ${SSO_PROVIDER} # Allowed values: okta, auth0
+      OKTA_DOMAIN: ${OKTA_DOMAIN}
+      OKTA_CLIENT_ID: ${OKTA_CLIENT_ID}
+      OKTA_CLIENT_SECRET: ${OKTA_CLIENT_SECRET}
+      OKTA_REDIRECT_URI: ${OKTA_REDIRECT_URI}
+      AUTH0_CLIENT_ID: ${AUTH0_CLIENT_ID}
+      AUTH0_CLIENT_SECRET: ${AUTH0_CLIENT_SECRET}
+      AUTH0_DOMAIN: ${AUTH0_DOMAIN}
+      AUTH0_REDIRECT_URI: ${AUTH0_REDIRECT_URI}
       EMAIL: ${EMAIL:-no}           # Disable send emails
       EMAIL_PROVIDER: ${EMAIL_PROVIDER}
       CIO_WEBHOOK_API_VERSION: ${CIO_WEBHOOK_API_VERSION}
@@ -160,6 +168,14 @@ services:
       GOOGLE_AUTH: ${GOOGLE_AUTH:-no}
       SSO_AUTH: ${SSO_AUTH:-no}
       SSO_PROVIDER: ${SSO_PROVIDER} # Allowed values: okta, auth0
+      OKTA_DOMAIN: ${OKTA_DOMAIN}
+      OKTA_CLIENT_ID: ${OKTA_CLIENT_ID}
+      OKTA_CLIENT_SECRET: ${OKTA_CLIENT_SECRET}
+      OKTA_REDIRECT_URI: ${OKTA_REDIRECT_URI}
+      AUTH0_CLIENT_ID: ${AUTH0_CLIENT_ID}
+      AUTH0_CLIENT_SECRET: ${AUTH0_CLIENT_SECRET}
+      AUTH0_DOMAIN: ${AUTH0_DOMAIN}
+      AUTH0_REDIRECT_URI: ${AUTH0_REDIRECT_URI}
       EMAIL: ${EMAIL:-no}           # Disable send emails
       EMAIL_PROVIDER: ${EMAIL_PROVIDER}
       CIO_WEBHOOK_API_VERSION: ${CIO_WEBHOOK_API_VERSION}
@@ -233,6 +249,14 @@ services:
       GOOGLE_AUTH: ${GOOGLE_AUTH:-no}
       SSO_AUTH: ${SSO_AUTH:-no}
       SSO_PROVIDER: ${SSO_PROVIDER} # Allowed values: okta, auth0
+      OKTA_DOMAIN: ${OKTA_DOMAIN}
+      OKTA_CLIENT_ID: ${OKTA_CLIENT_ID}
+      OKTA_CLIENT_SECRET: ${OKTA_CLIENT_SECRET}
+      OKTA_REDIRECT_URI: ${OKTA_REDIRECT_URI}
+      AUTH0_CLIENT_ID: ${AUTH0_CLIENT_ID}
+      AUTH0_CLIENT_SECRET: ${AUTH0_CLIENT_SECRET}
+      AUTH0_DOMAIN: ${AUTH0_DOMAIN}
+      AUTH0_REDIRECT_URI: ${AUTH0_REDIRECT_URI}
       EMAIL: ${EMAIL:-no}           # Disable send emails
       EMAIL_PROVIDER: ${EMAIL_PROVIDER}
       CIO_WEBHOOK_API_VERSION: ${CIO_WEBHOOK_API_VERSION}
@@ -293,9 +317,9 @@ services:
     container_name: pneumatic-frontend
     environment:
       BACKEND_PRIVATE_URL: ${BACKEND_PRIVATE_URL:-http://pneumatic-nginx/}
-      BACKEND_URL: ${BACKEND_URL:-http://localhost:8001/}
+      BACKEND_URL: ${BACKEND_URL:-http://localhost:8001}
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost}
-      WSS_URL: ${WSS_URL:-ws://localhost:8001/}
+      WSS_URL: ${WSS_URL:-ws://localhost:8001}
       FORM_DOMAIN: ${FORM_DOMAIN:-form.localhost}
       MCS_RUN_ENV: ${MCS_RUN_ENV:-prod}
       NODE_OPTIONS: ${NODE_OPTIONS:---max-old-space-size=3072}
@@ -335,7 +359,6 @@ services:
     image: nginx:1.25.4
     container_name: pneumatic-nginx
     environment:
-      SSL: ${SSL:-no}
       BACKEND_DOMAIN: ${BACKEND_DOMAIN:-localhost}
       FRONTEND_DOMAIN: ${FRONTEND_DOMAIN:-localhost}
       FORM_DOMAIN: ${FORM_DOMAIN:-form.localhost}
