@@ -72,6 +72,63 @@
                 </table>
                 {% endif %}
 
+                <!-- Started By -->
+                {% if started_by %}
+                <table class="text_block"
+                       width="100%"
+                       border="0"
+                       cellpadding="0"
+                       cellspacing="0"
+                       role="presentation"
+                       style="mso-table-lspace:0;mso-table-rspace:0;word-break:break-word">
+                  <tr>
+                    <td class="pad"
+                        style="padding-bottom:16px;padding-left:48px;padding-right:48px">
+                      <div style="font-family:Arial,sans-serif">
+                        <div style="font-size:12px;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;color:#262522;line-height:1.2">
+                          <p style="margin:0;font-size:15px;">
+                            <strong>Started by:</strong>
+                          </p>
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                </table>
+                <table class="html_block"
+                       width="100%"
+                       border="0"
+                       cellpadding="0"
+                       cellspacing="0"
+                       role="presentation"
+                       style="mso-table-lspace:0;mso-table-rspace:0">
+                  <tr>
+                    <td class="pad">
+                      <div style="font-family:Helvetica Neue,Helvetica,Arial,sans-serif;text-align:center" align="center">
+                        <div style="color:#262522;font-family:'Helvetica Neue', Helvetica, Arial, sans-serif;line-height:1.8;padding-top:0px;padding-right:48px;padding-bottom:16px;padding-left:48px;">
+                          <div style="font-size: 12px; line-height: 1.8; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #262522; text-align:left">
+                            {% if started_by.avatar %}
+                            <div>
+                              <div style="margin-right: 8px; display:inline-block;">
+                                <img src="{{ started_by.avatar }}" width="20px" height="20px" style="border-radius: 50%; vertical-align: middle;text-align:left;" />
+                              </div>
+                              <span style="font-size: 15px;line-height:20px;vertical-align:middle;">{{ started_by.name }}</span>
+                            </div>
+                            {% else %}
+                            <div>
+                              <div style="margin-right:8px;display:inline-block;vertical-align:middle;">
+                                <div style="width:20px;height:20px;border-radius: 50%; background-color: #4CAF50;"></div>
+                              </div>
+                              <span style="font-size: 15px;line-height:20px;vertical-align:middle;">{{ started_by.name }}</span>
+                            </div>
+                            {% endif %}
+                          </div>
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                </table>
+                {% endif %}
+
                 <!-- Workflow & Task Name -->
                 {% if workflow_name %}
                 <table class="text_block"
@@ -179,10 +236,37 @@
                     </td>
                   </tr>
                 </table>
-                {% endif %}
 
-                <!-- Started By -->
-                {% if started_by %}
+                <!-- Divider -->
+                <table class="divider_block"
+                       width="100%"
+                       border="0"
+                       cellpadding="24"
+                       cellspacing="0"
+                       role="presentation"
+                       style="mso-table-lspace:0;mso-table-rspace:0">
+                  <tr>
+                    <td class="pad">
+                      <div class="alignment" align="center">
+                        <table border="0"
+                               cellpadding="0"
+                               cellspacing="0"
+                               role="presentation"
+                               width="100%"
+                               style="mso-table-lspace:0;mso-table-rspace:0">
+                          <tr>
+                            <td class="divider_inner"
+                                style="font-size:1px;line-height:1px;border-top:1px solid #bbb">
+                              <span>&#8202;</span>
+                            </td>
+                          </tr>
+                        </table>
+                      </div>
+                    </td>
+                  </tr>
+                </table>
+
+                <!-- Help Text -->
                 <table class="text_block"
                        width="100%"
                        border="0"
@@ -192,11 +276,33 @@
                        style="mso-table-lspace:0;mso-table-rspace:0;word-break:break-word">
                   <tr>
                     <td class="pad"
-                        style="padding-bottom:24px;padding-left:48px;padding-right:48px">
+                        style="padding-left:48px;padding-right:48px;padding-top:24px">
                       <div style="font-family:Arial,sans-serif">
-                        <div style="font-size:16px;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;color:#262522;line-height:1.8">
-                          <p style="margin:0;">
-                            <strong>Started by:</strong> {{ started_by.name }}
+                        <div style="font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:12px;color:#979795;line-height:1.5">
+                          <p style="margin:0;font-size:16px;">
+                            If you're having trouble with the button above, copy and paste the URL below into your web browser:
+                          </p>
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                </table>
+
+                <!-- URL Text -->
+                <table class="text_block"
+                       width="100%"
+                       border="0"
+                       cellpadding="0"
+                       cellspacing="0"
+                       role="presentation"
+                       style="mso-table-lspace:0;mso-table-rspace:0;word-break:break-word">
+                  <tr>
+                    <td class="pad"
+                        style="padding-bottom:48px;padding-left:48px;padding-right:48px">
+                      <div style="font-family:Arial,sans-serif">
+                        <div style="font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:12px;color:#262522;line-height:1.5">
+                          <p style="margin:0;font-size:16px;">
+                            {{ task_link }}
                           </p>
                         </div>
                       </div>
@@ -213,4 +319,3 @@
   </tbody>
 </table>
 {% endblock %}
-

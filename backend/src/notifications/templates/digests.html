@@ -69,8 +69,141 @@
                 </table>
                 {% endif %}
 
-                <!-- Content -->
+                <!-- Summary Stats -->
                 <table class="text_block block-3"
+                       width="100%"
+                       border="0"
+                       cellpadding="24"
+                       cellspacing="0"
+                       role="presentation"
+                       style="mso-table-lspace:0;mso-table-rspace:0;word-break:break-word">
+                  <tr>
+                    <td class="pad">
+                      <div style="font-family:Arial,sans-serif">
+                        <div style="margin: 0; margin-bottom:16px; padding: 32px;border: 0;outline: 0;font-weight: inherit;font-style: inherit;font-size: 100%;font-family: inherit;vertical-align: baseline;background: white;border-radius: 23px; position: relative;">
+                          <div style="margin-bottom: 16px; line-height: 24px;">
+                            <div style="display:inline-block;width:74%;">
+                              <span style="margin: 0;padding: 0;border: 0;outline: 0;font-weight: bold;font-style: inherit;font-size: 20px;vertical-align: baseline;color: #2196F3;">
+                                Started
+                              </span>
+                            </div>
+                            <div style="display:inline-block;width:25%;text-align:right;">
+                              <span style="margin: 0;padding: 0;border: 0;outline: 0;font-weight: bold;font-style: inherit;font-size: 20px;font-family: inherit;vertical-align: baseline;text-align: center;letter-spacing: -0.01em;color: #2196F3;display: inline-block;">
+                                {{ started|default:0 }}
+                              </span>
+                            </div>
+                          </div>
+                          <div style="margin-bottom: 16px;line-height:24px">
+                            <div style="display:inline-block;width:74%;">
+                              <span style="margin: 0;padding: 0;border: 0;outline: 0;font-weight: bold;font-style: inherit;font-size: 20px;vertical-align: baseline;color: #FFC107;">
+                                In Progress
+                              </span>
+                            </div>
+                            <div style="display:inline-block;width:25%;text-align:right;">
+                              <span style="margin: 0;padding: 0;border: 0;outline: 0;font-weight: bold;font-style: inherit;font-size: 20px;font-family: inherit;vertical-align: baseline;text-align: center;letter-spacing: -0.01em;color: #FFC107;display: inline-block;">
+                                {{ in_progress|default:0 }}
+                              </span>
+                            </div>
+                          </div>
+                          <div style="margin-bottom: 16px;line-height:24px;">
+                            <div style="display:inline-block;width:74%;">
+                              <span style="margin: 0;padding: 0;border: 0;outline: 0;font-weight: bold;font-style: inherit;font-size: 20px;vertical-align: baseline;color: #F44336;">
+                                Overdue
+                              </span>
+                            </div>
+                            <div style="display:inline-block;width:25%;text-align:right;">
+                              <span style="margin: 0;padding: 0;border: 0;outline: 0;font-weight: bold;font-style: inherit;font-size: 20px;font-family: inherit;vertical-align: baseline;text-align: center;letter-spacing: -0.01em;color: #F44336;display: inline-block;">
+                                {{ overdue|default:0 }}
+                              </span>
+                            </div>
+                          </div>
+                          <div style="margin-bottom: 0px;line-height: 24px;">
+                            <div style="display: inline-block;width:74%">
+                              <span style="margin: 0;padding: 0;border: 0;outline: 0;font-weight: bold;font-style: inherit;font-size: 20px;vertical-align: baseline;color: #4CAF50;">
+                                Completed
+                              </span>
+                            </div>
+                            <div style="display:inline-block;width:25%;text-align:right;">
+                              <span style="margin: 0;padding: 0;border: 0;outline: 0;font-weight: bold;font-style: inherit;font-size: 20px;vertical-align: baseline;text-align: center;letter-spacing: -0.01em;color: #4CAF50;display: inline-block;">
+                                {{ completed|default:0 }}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                </table>
+
+                <!-- Templates List -->
+                {% if templates %}
+                {% for template in templates %}
+                <table class="text_block"
+                       width="100%"
+                       border="0"
+                       cellpadding="0"
+                       cellspacing="0"
+                       role="presentation"
+                       style="mso-table-lspace:0;mso-table-rspace:0;word-break:break-word;margin: 0 auto;padding: 24px 20px 24px 32px;width: 100%;max-width: 640px;margin-top: 8px;background: white;border-radius: 23px;">
+                  <tr>
+                    <td class="pad" style="padding: 24px;">
+                      <div style="font-family:Arial,sans-serif">
+                        <div style="width:64%;display:inline-block;vertical-align:middle;">
+                          <span style="margin: 0;padding: 0;border: 0;outline: 0;font-weight: 800;font-style: inherit;font-size: 20px;font-family:'Times New Roman', serif;line-height: 24px;color: #262522;display: block;">
+                            {{ template.template_name }}
+                          </span>
+                        </div>
+                        <div style="width:35%;display:inline-block;vertical-align:middle;text-align:right;">
+                          <div style="text-align:center;width:40px;height:24px;padding-top:8px;padding-bottom:8px;font-weight: 800;font-size: 20px;line-height: 24px;border-radius: 8px;background-color:#E9F5FE;color:#2196F3;border-left:4px solid white;border-right:4px solid white;font-family:inherit;display:inline-block;margin-right:4px;">
+                            {{ template.started|default:0 }}
+                          </div>
+                          <div style="text-align:center;width:40px;height:24px;padding-top:8px;padding-bottom:8px;font-weight: 800;font-size: 20px;line-height: 24px;border-radius: 8px;background-color:#FFF9E7;color:#FFC107;border-left:4px solid white;border-right:4px solid white;font-family:inherit;display:inline-block;margin-right:4px;">
+                            {{ template.in_progress|default:0 }}
+                          </div>
+                          <div style="text-align:center;width:40px;height:24px;padding-top:8px;padding-bottom:8px;font-weight: 800;font-size: 20px;line-height: 24px;border-radius: 8px;background-color:#FEEDEB;color:#F44336;border-left:4px solid white;border-right:4px solid white;font-family:inherit;display:inline-block;margin-right:4px;">
+                            {{ template.overdue|default:0 }}
+                          </div>
+                          <div style="text-align:center;width:40px;height:24px;padding-top:8px;padding-bottom:8px;font-weight: 800;font-size: 20px;line-height: 24px;border-radius: 8px;background-color:#EEF7EE;color:#4CAF50;border-left:4px solid white;border-right:4px solid white;font-family:inherit;display:inline-block;">
+                            {{ template.completed|default:0 }}
+                          </div>
+                        </div>
+                        
+                        <!-- Tasks for Tasks Digest -->
+                        {% if template.tasks %}
+                        {% for task in template.tasks %}
+                        <div style="margin-top: 16px; border-top: 1px solid #f0f0f0; padding-top: 16px;">
+                          <div style="width:64%;display:inline-block;vertical-align:middle;">
+                            <span style="margin: 0;padding: 0;border: 0;outline: 0;font-weight: 800;font-style: inherit;font-size: 15px;font-family:'Arial', sans-serif;line-height: 20px;color: #262522;display: block;">
+                              {{ task.task_name }}
+                            </span>
+                          </div>
+                          <div style="width:35%;display:inline-block;vertical-align:middle;text-align:right;">
+                            <div style="text-align:center;width:40px;height:24px;font-size: 15px;line-height: 20px;border-radius: 8px;background-color:white;color:#2196F3;border-left:4px solid white;border-right:4px solid white;font-family:'Arial', sans-serif;font-weight: bold;display:inline-block;margin-right:4px;">
+                              {{ task.started|default:0 }}
+                            </div>
+                            <div style="text-align:center;width:40px;height:24px;font-size: 15px;line-height: 20px;border-radius: 8px;background-color:white;color:#FFC107;border-left:4px solid white;border-right:4px solid white;font-family:'Arial', sans-serif;font-weight: bold;display:inline-block;margin-right:4px;">
+                              {{ task.in_progress|default:0 }}
+                            </div>
+                            <div style="text-align:center;width:40px;height:24px;font-size: 15px;line-height: 20px;border-radius: 8px;background-color:white;color:#F44336;border-left:4px solid white;border-right:4px solid white;font-family:'Arial', sans-serif;font-weight: bold;display:inline-block;margin-right:4px;">
+                              {{ task.overdue|default:0 }}
+                            </div>
+                            <div style="text-align:center;width:40px;height:24px;font-size: 15px;line-height: 20px;border-radius: 8px;background-color:white;color:#4CAF50;border-left:4px solid white;border-right:4px solid white;font-family:'Arial', sans-serif;font-weight: bold;display:inline-block;">
+                              {{ task.completed|default:0 }}
+                            </div>
+                          </div>
+                        </div>
+                        {% endfor %}
+                        {% endif %}
+                      </div>
+                    </td>
+                  </tr>
+                </table>
+                {% endfor %}
+                {% endif %}
+
+                <!-- Custom Content (if provided) -->
+                {% if content %}
+                <table class="text_block"
                        width="100%"
                        border="0"
                        cellpadding="24"
@@ -89,6 +222,7 @@
                     </td>
                   </tr>
                 </table>
+                {% endif %}
 
                 <!-- Button -->
                 {% if workflows_link or tasks_link or notifications_link %}

@@ -46,6 +46,7 @@
                 </table>
 
                 <!-- Content -->
+                {% if content %}
                 <table class="text_block block-2"
                        width="100%"
                        border="0"
@@ -63,9 +64,32 @@
                     </td>
                   </tr>
                 </table>
+                {% endif %}
 
-                {% if link %}
+                <!-- Image (e.g., for deactivated user) -->
+                {% if image_url %}
+                <table class="image_block"
+                       width="100%"
+                       border="0"
+                       cellpadding="24"
+                       cellspacing="0"
+                       role="presentation"
+                       style="mso-table-lspace:0;mso-table-rspace:0">
+                  <tr>
+                    <td class="pad">
+                      <div class="alignment" align="center" style="line-height:10px">
+                        <img src="{{ image_url }}"
+                             style="display:block;height:auto;border:0;max-width:120px;width:100%"
+                             width="120"
+                             alt="Icon">
+                      </div>
+                    </td>
+                  </tr>
+                </table>
+                {% endif %}
+
                 <!-- Button -->
+                {% if link %}
                 <table class="button_block block-3"
                        width="100%"
                        border="0"
@@ -88,7 +112,30 @@
                   </tr>
                 </table>
 
-                <!-- Link Text -->
+                <!-- Additional Content (e.g., password tips) -->
+                {% if additional_content %}
+                <table class="text_block"
+                       width="100%"
+                       border="0"
+                       cellpadding="24"
+                       cellspacing="0"
+                       role="presentation"
+                       style="mso-table-lspace:0;mso-table-rspace:0;word-break:break-word">
+                  <tr>
+                    <td class="pad">
+                      <div style="font-family:Arial,sans-serif">
+                        <div style="font-size:12px;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;color:#262522;line-height:1.8">
+                          <p style="margin:0;font-size:16px;">
+                            {{ additional_content|safe }}
+                          </p>
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                </table>
+                {% endif %}
+
+                <!-- Divider -->
                 <table class="divider_block block-4"
                        width="100%"
                        border="0"
@@ -117,6 +164,7 @@
                   </tr>
                 </table>
 
+                <!-- Help Text -->
                 <table class="text_block block-5"
                        width="100%"
                        border="0"
@@ -128,10 +176,9 @@
                     <td class="pad"
                         style="padding-left:24px;padding-right:24px;padding-top:24px">
                       <div style="font-family:Arial,sans-serif">
-                        <div style="font-size:16px;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;color:#979795;line-height:1.8">
-                          <p style="margin:0;">
-                            If you're having trouble with the button above,
-                            copy and paste the URL below into your web browser.
+                        <div style="font-size:12px;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;color:#979795;line-height:1.5">
+                          <p style="margin:0;font-size:16px;">
+                            If you're having trouble with the button above, copy and paste the URL below into your web browser.
                           </p>
                         </div>
                       </div>
@@ -139,6 +186,7 @@
                   </tr>
                 </table>
 
+                <!-- URL Text -->
                 <table class="text_block block-6"
                        width="100%"
                        border="0"
@@ -150,8 +198,8 @@
                     <td class="pad"
                         style="padding-bottom:24px;padding-left:24px;padding-right:24px">
                       <div style="font-family:Arial,sans-serif">
-                        <div style="font-size:16px;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;color:#262522;line-height:1.8">
-                          <p style="margin:0;word-break:break-all;">
+                        <div style="font-size:12px;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;color:#262522;line-height:1.5">
+                          <p style="margin:0;font-size:16px;word-break:break-all;">
                             {{ link }}
                           </p>
                         </div>
