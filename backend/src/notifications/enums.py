@@ -30,6 +30,11 @@ class NotificationMethod:
     user_created = 'user_created'
     user_updated = 'user_updated'
     user_deleted = 'user_deleted'
+    workflows_digest = 'workflows_digest'
+    tasks_digest = 'tasks_digest'
+    user_deactivated = 'user_deactivated'
+    user_transfer = 'user_transfer'
+    verification = 'verification'
 
     LITERALS = Literal[
         new_task,
@@ -37,6 +42,7 @@ class NotificationMethod:
         returned_task,
         removed_task,
         overdue_task,
+        complete_task,
         mention,
         comment,
         delay_workflow,
@@ -56,6 +62,11 @@ class NotificationMethod:
         user_created,
         user_updated,
         user_deleted,
+        workflows_digest,
+        tasks_digest,
+        user_deactivated,
+        user_transfer,
+        verification,
     ]
 
 

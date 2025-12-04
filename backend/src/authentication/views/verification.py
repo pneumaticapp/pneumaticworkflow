@@ -24,7 +24,7 @@ from src.generics.mixins.views import (
 from src.generics.permissions import (
     UserIsAuthenticated,
 )
-from src.notifications.services.email import EmailService
+from src.notifications.tasks import send_verification_notification
 from src.utils.validation import raise_validation_error
 
 UserModel = get_user_model()
@@ -74,8 +74,11 @@ class VerificationTokenResendView(
         user = request.user.account.users.get(is_account_owner=True)
 
         if settings.VERIFICATION_CHECK and not user.account.is_verified:
-            EmailService.send_verification_email(
-                user=user,
+            send_verification_notification.delay(
+                user_id=user.id,
+                user_email=user.email,
+                account_id=user.account_id,
+                user_first_name=user.first_name,
                 token=str(VerificationToken.for_user(user)),
                 logo_lg=user.account.logo_lg,
             )

@@ -47,7 +47,7 @@ from src.payment.tasks import increase_plan_users
 from src.processes.services.system_workflows import (
     SystemWorkflowService,
 )
-from src.notifications.services.email import EmailService
+from src.notifications.tasks import send_user_transfer_notification
 
 UserModel = get_user_model()
 
@@ -198,11 +198,13 @@ class UserInviteService(
             current_account_user=current_account_user,
             another_account_user=another_account_user,
         )
-        EmailService.send_user_transfer_email(
-            email=another_account_user.email,
-            invited_by=self.request_user,
-            token=transfer_token_str,
+        send_user_transfer_notification.delay(
             user_id=current_account_user.id,
+            user_email=another_account_user.email,
+            account_id=self.request_user.account_id,
+            invited_by_name=self.request_user.get_full_name(),
+            company_name=self.request_user.account.name,
+            token=transfer_token_str,
             logo_lg=current_account_user.account.logo_lg,
         )
 

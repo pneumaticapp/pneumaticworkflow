@@ -52,6 +52,23 @@ class EmailService(NotificationService):
         )
         self.client: EmailClient = client_cls(account_id=account_id)
 
+    TITLES = {
+        NotificationMethod.new_task: "You've been assigned a task",
+        NotificationMethod.returned_task: 'Task has been returned',
+        NotificationMethod.overdue_task: 'Task is overdue',
+        NotificationMethod.guest_new_task: "You've been assigned a task",
+        NotificationMethod.unread_notifications: (
+            'You have unread notifications'
+        ),
+        NotificationMethod.reset_password: 'Forgot Your Password?',
+        NotificationMethod.mention: 'You were mentioned',
+        NotificationMethod.workflows_digest: 'Workflows Digest',
+        NotificationMethod.tasks_digest: 'Tasks Digest',
+        NotificationMethod.user_deactivated: 'Account Deactivated',
+        NotificationMethod.user_transfer: 'You have been invited!',
+        NotificationMethod.verification: 'Welcome',
+    }
+
     ALLOWED_METHODS = {
         NotificationMethod.new_task,
         NotificationMethod.returned_task,
@@ -60,6 +77,11 @@ class EmailService(NotificationService):
         NotificationMethod.unread_notifications,
         NotificationMethod.reset_password,
         NotificationMethod.mention,
+        NotificationMethod.workflows_digest,
+        NotificationMethod.tasks_digest,
+        NotificationMethod.user_deactivated,
+        NotificationMethod.user_transfer,
+        NotificationMethod.verification,
     }
 
     def _send_email_to_console(
@@ -106,15 +128,18 @@ class EmailService(NotificationService):
                 contractor=settings.EMAIL_PROVIDER,
             )
 
-    def _dispatch_email(
+    def _send(
         self,
         title: str,
         user_id: int,
         user_email: str,
-        template_code: str,
-        data: Dict[str, Any],
+        template_code: EmailType.LITERALS,
+        method_name: NotificationMethod,
+        data: Dict[str, str],
     ):
-        """Dispatch email based on configuration (console or client)."""
+
+        self._validate_send(method_name)
+
         if not settings.PROJECT_CONF['EMAIL']:
             return
 
@@ -135,41 +160,6 @@ class EmailService(NotificationService):
                 template_code=template_code,
                 data=data,
             )
-
-    def _send(
-        self,
-        title: str,
-        user_id: int,
-        user_email: str,
-        template_code: str,
-        method_name: NotificationMethod,
-        data: Dict[str, str],
-    ):
-        self._validate_send(method_name)
-        self._dispatch_email(
-            title=title,
-            user_id=user_id,
-            user_email=user_email,
-            template_code=template_code,
-            data=data,
-        )
-
-    def _send_simple_email(
-        self,
-        title: str,
-        user_id: int,
-        user_email: str,
-        template_code: str,
-        data: Dict[str, Any],
-    ):
-        """Send email without NotificationMethod validation."""
-        self._dispatch_email(
-            title=title,
-            user_id=user_id,
-            user_email=user_email,
-            template_code=template_code,
-            data=data,
-        )
 
     def _handle_error(self, *args, **kwargs):
         pass
@@ -204,7 +194,7 @@ class EmailService(NotificationService):
         )
 
         data = {
-            'title': "You've been assigned a task",
+            'title': self.TITLES[NotificationMethod.new_task],
             'template': template_name,
             'workflow_name': workflow_name,
             'task_name': task_name,
@@ -259,7 +249,7 @@ class EmailService(NotificationService):
         )
 
         data = {
-            'title': 'Task has been returned',
+            'title': self.TITLES[NotificationMethod.returned_task],
             'template': template_name,
             'workflow_name': workflow_name,
             'task_name': task_name,
@@ -319,7 +309,7 @@ class EmailService(NotificationService):
             template_code=EmailType.OVERDUE_TASK,
             method_name=NotificationMethod.overdue_task,
             data={
-                'title': 'Task is overdue',
+                'title': self.TITLES[NotificationMethod.overdue_task],
                 'template': template_name,
                 'workflow_id': workflow_id,
                 'workflow_name': workflow_name,
@@ -441,14 +431,16 @@ class EmailService(NotificationService):
             template_code=EmailType.RESET_PASSWORD,
             method_name=NotificationMethod.reset_password,
             data={
-                'title': 'Forgot Your Password?',
+                'title': self.TITLES[NotificationMethod.reset_password],
+                'sub_title': (
+                    'We got a request to reset your Pneumatic account '
+                    'password.'
+                ),
                 'content': (
-                    '<h2><strong>We got a request to reset your '
-                    'Pneumatic account password.</strong></h2>'
-                    '<p>A strong password includes eight or more '
-                    'characters and a combination of uppercase and '
-                    'lowercase letters, numbers and symbols, and is not '
-                    'based on words in the dictionary.</p>'
+                    'A strong password includes eight or more characters '
+                    'and a combination of uppercase and lowercase letters, '
+                    'numbers and symbols, and is not based on words in the '
+                    'dictionary.'
                 ),
                 'button_text': 'Reset my password',
                 'token': token,
@@ -486,131 +478,127 @@ class EmailService(NotificationService):
             },
         )
 
-    @classmethod
-    def send_user_deactivated_email(cls, user):
-        """Send user deactivated email."""
-        service = cls(
-            account_id=user.account_id,
-            logo_lg=user.account.logo_lg,
-        )
+    def send_user_deactivated(
+        self,
+        user_id: int,
+        user_email: str,
+        **kwargs,
+    ):
+        """Send user deactivated notification."""
         support_link = f'{settings.FRONTEND_URL}/support'
 
-        service._send_simple_email(
-            title='User Deactivated',
-            user_id=user.id,
-            user_email=user.email,
+        self._send(
+            title=self.TITLES[NotificationMethod.user_deactivated],
+            user_id=user_id,
+            user_email=user_email,
             template_code=EmailType.USER_DEACTIVATED,
+            method_name=NotificationMethod.user_deactivated,
             data={
-                'title': 'Account Deactivated',
-                'content': (
-                    '<p>Your Pneumatic account has been deactivated.</p>'
-                    '<p>If you believe this was done in error, please '
-                    'contact support.</p>'
+                'title': self.TITLES[NotificationMethod.user_deactivated],
+                'content': 'Your Pneumatic account has been deactivated.',
+                'sub_content': (
+                    'If you believe this was done in error, please '
+                    'contact support.'
                 ),
                 'button_text': 'Contact Support',
                 'link': support_link,
-                'logo_lg': user.account.logo_lg,
+                'logo_lg': self.logo_lg,
                 'support_link': support_link,
             },
         )
 
-    @classmethod
-    def send_user_transfer_email(
-        cls,
-        email: str,
-        invited_by,
-        token: str,
+    def send_user_transfer(
+        self,
         user_id: int,
-        logo_lg: Optional[str] = None,
+        user_email: str,
+        invited_by_name: str,
+        company_name: str,
+        token: str,
+        **kwargs,
     ):
-        """Send user transfer email."""
-        service = cls(
-            account_id=invited_by.account_id,
-            logo_lg=logo_lg,
-        )
+        """Send user transfer notification."""
         transfer_link = (
             f'{settings.BACKEND_URL}/accounts/users/{user_id}/transfer'
             f'?token={token}&utm_source=invite&utm_campaign=transfer'
         )
 
-        data = {
-            'title': 'You have been invited!',
-            'content': (
-                f'<p>{invited_by.get_full_name()} has invited you to '
-                f'join {invited_by.account.name} on Pneumatic.</p>'
-                '<p>Click the button below to accept the invitation.</p>'
-            ),
-            'button_text': 'Accept Invitation',
-            'token': token,
-            'link': transfer_link,
-            'transfer_link': transfer_link,
-            'sender_name': invited_by.get_full_name(),
-            'company_name': invited_by.account.name,
-            'logo_lg': logo_lg,
-        }
-        service._send_simple_email(
-            title='User Transfer',
+        self._send(
+            title=self.TITLES[NotificationMethod.user_transfer],
             user_id=user_id,
-            user_email=email,
+            user_email=user_email,
             template_code=EmailType.USER_TRANSFER,
-            data=data,
+            method_name=NotificationMethod.user_transfer,
+            data={
+                'title': self.TITLES[NotificationMethod.user_transfer],
+                'content': (
+                    f'{invited_by_name} has invited you to '
+                    f'join {company_name} on Pneumatic.'
+                ),
+                'sub_content': (
+                    'Click the button below to accept the invitation.'
+                ),
+                'button_text': 'Accept Invitation',
+                'token': token,
+                'link': transfer_link,
+                'transfer_link': transfer_link,
+                'sender_name': invited_by_name,
+                'company_name': company_name,
+                'logo_lg': self.logo_lg,
+            },
         )
 
-    @classmethod
-    def send_verification_email(
-        cls,
-        user,
+    def send_verification(
+        self,
+        user_id: int,
+        user_email: str,
+        user_first_name: str,
         token: str,
-        logo_lg: Optional[str] = None,
+        **kwargs,
     ):
-        """Send account verification email."""
-        service = cls(
-            account_id=user.account_id,
-            logo_lg=logo_lg,
-        )
+        """Send verification notification."""
         verification_link = (
             f'{settings.FRONTEND_URL}/auth/verify'
             f'?token={token}&utm_source=email&utm_campaign=verification'
         )
-
-        data = {
-            'title': f'Welcome, {user.first_name}!',
-            'content': (
-                '<p>Thank you for signing up for Pneumatic. '
-                'Please verify your email address to get started.</p>'
-            ),
-            'button_text': 'Verify Email',
-            'token': token,
-            'link': verification_link,
-            'verification_link': verification_link,
-            'first_name': user.first_name,
-            'logo_lg': logo_lg,
-        }
-        service._send_simple_email(
-            title='Account Verification',
-            user_id=user.id,
-            user_email=user.email,
-            template_code=EmailType.ACCOUNT_VERIFICATION,
-            data=data,
+        title = (
+            f'{self.TITLES[NotificationMethod.verification]}, '
+            f'{user_first_name}!'
         )
 
-    @classmethod
-    def send_workflows_digest_email(
-        cls,
-        user,
+        self._send(
+            title=title,
+            user_id=user_id,
+            user_email=user_email,
+            template_code=EmailType.ACCOUNT_VERIFICATION,
+            method_name=NotificationMethod.verification,
+            data={
+                'title': title,
+                'content': (
+                    'Thank you for signing up for Pneumatic. '
+                    'Please verify your email address to get started.'
+                ),
+                'button_text': 'Verify Email',
+                'token': token,
+                'link': verification_link,
+                'verification_link': verification_link,
+                'first_name': user_first_name,
+                'logo_lg': self.logo_lg,
+            },
+        )
+
+    def send_workflows_digest(
+        self,
+        user_id: int,
+        user_email: str,
         date_from,
         date_to,
         digest: Dict[str, Any],
-        logo_lg: Optional[str] = None,
+        **kwargs,
     ):
-        """Send workflows digest email."""
-        service = cls(
-            account_id=user.account_id,
-            logo_lg=logo_lg,
-        )
+        """Send workflows digest notification."""
         unsubscribe_token = str(
             UnsubscribeEmailToken.create_token(
-                user_id=user.id,
+                user_id=user_id,
                 email_type=MailoutType.WF_DIGEST,
             ),
         )
@@ -624,40 +612,37 @@ class EmailService(NotificationService):
         )
 
         data = {
-            'title': 'Workflows Digest',
+            'title': self.TITLES[NotificationMethod.workflows_digest],
             'date_from': date_from.strftime('%d %b'),
             'date_to': date_to.strftime('%d %b, %Y'),
             'unsubscribe_token': unsubscribe_token,
             'unsubscribe_link': unsubscribe_link,
             'workflows_link': workflows_link,
-            'logo_lg': service.logo_lg,
+            'logo_lg': self.logo_lg,
             **digest,
         }
-        service._send_simple_email(
-            title='Workflows Digest',
-            user_id=user.id,
-            user_email=user.email,
+        self._send(
+            title=self.TITLES[NotificationMethod.workflows_digest],
+            user_id=user_id,
+            user_email=user_email,
             template_code=EmailType.WORKFLOWS_DIGEST,
+            method_name=NotificationMethod.workflows_digest,
             data=data,
         )
 
-    @classmethod
-    def send_tasks_digest_email(
-        cls,
-        user,
+    def send_tasks_digest(
+        self,
+        user_id: int,
+        user_email: str,
         date_from,
         date_to,
         digest: Dict[str, Any],
-        logo_lg: Optional[str] = None,
+        **kwargs,
     ):
-        """Send tasks digest email."""
-        service = cls(
-            account_id=user.account_id,
-            logo_lg=logo_lg,
-        )
+        """Send tasks digest notification."""
         unsubscribe_token = str(
             UnsubscribeEmailToken.create_token(
-                user_id=user.id,
+                user_id=user_id,
                 email_type=MailoutType.TASKS_DIGEST,
             ),
         )
@@ -671,19 +656,20 @@ class EmailService(NotificationService):
         )
 
         data = {
-            'title': 'Tasks Digest',
+            'title': self.TITLES[NotificationMethod.tasks_digest],
             'date_from': date_from.strftime('%d %b'),
             'date_to': date_to.strftime('%d %b, %Y'),
             'unsubscribe_token': unsubscribe_token,
             'unsubscribe_link': unsubscribe_link,
             'tasks_link': tasks_link,
-            'logo_lg': service.logo_lg,
+            'logo_lg': self.logo_lg,
             **digest,
         }
-        service._send_simple_email(
-            title='Tasks Digest',
-            user_id=user.id,
-            user_email=user.email,
+        self._send(
+            title=self.TITLES[NotificationMethod.tasks_digest],
+            user_id=user_id,
+            user_email=user_email,
             template_code=EmailType.TASKS_DIGEST,
+            method_name=NotificationMethod.tasks_digest,
             data=data,
         )

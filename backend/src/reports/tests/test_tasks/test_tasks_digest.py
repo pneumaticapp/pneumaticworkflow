@@ -109,8 +109,8 @@ class TestSendTasksDigest:
         second_workflow.date_completed = date_to - timedelta(days=1)
         second_workflow.save()
         email_service_tasks_digest = mocker.patch(
-            'src.notifications.services.email.EmailService.'
-            'send_tasks_digest_email',
+            'src.notifications.tasks.'
+            'send_tasks_digest_notification.delay',
         )
 
         # act
@@ -233,8 +233,8 @@ class TestSendTasksDigest:
             auth_type=AuthTokenType.USER,
         )
         email_service_tasks_digest = mocker.patch(
-            'src.notifications.services.email.EmailService.'
-            'send_tasks_digest_email',
+            'src.notifications.tasks.'
+            'send_tasks_digest_notification.delay',
         )
 
         # act
@@ -339,8 +339,8 @@ class TestSendTasksDigest:
                 },
             )
         email_service_tasks_digest = mocker.patch(
-            'src.notifications.services.email.EmailService.'
-            'send_tasks_digest_email',
+            'src.notifications.tasks.'
+            'send_tasks_digest_notification.delay',
         )
 
         # act
@@ -389,8 +389,8 @@ class TestSendTasksDigest:
             date_created=date_from + timedelta(days=2),
         )
         email_service_tasks_digest = mocker.patch(
-            'src.notifications.services.email.EmailService.'
-            'send_tasks_digest_email',
+            'src.notifications.tasks.'
+            'send_tasks_digest_notification.delay',
         )
 
         # act
@@ -449,8 +449,8 @@ class TestSendTasksDigest:
         template_data['is_active'] = True
         api_client.post('/templates', data=template_data)
         email_service_tasks_digest = mocker.patch(
-            'src.notifications.services.email.EmailService.'
-            'send_tasks_digest_email',
+            'src.notifications.tasks.'
+            'send_tasks_digest_notification.delay',
         )
 
         # act
@@ -552,8 +552,8 @@ class TestSendTasksDigest:
         second_workflow.date_completed = date_to - timedelta(days=1)
         second_workflow.save()
         email_service_tasks_digest = mocker.patch(
-            'src.notifications.services.email.EmailService.'
-            'send_tasks_digest_email',
+            'src.notifications.tasks.'
+            'send_tasks_digest_notification.delay',
         )
 
         # act
@@ -643,8 +643,8 @@ class TestSendTasksDigest:
             date_created=date_from + timedelta(days=2),
         )
         email_service_tasks_digest = mocker.patch(
-            'src.notifications.services.email.EmailService.'
-            'send_tasks_digest_email',
+            'src.notifications.tasks.'
+            'send_tasks_digest_notification.delay',
         )
         api_client.token_authenticate(user)
 

@@ -1,4 +1,4 @@
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, Tuple
 
 from django.conf import settings
 from django.core.mail import EmailMessage, get_connection
@@ -12,6 +12,26 @@ from src.notifications.models import EmailTemplateModel
 
 class SMTPEmailClient(EmailClient):
 
+    DEFAULT_TEMPLATE_TASKS = 'tasks.html'
+    DEFAULT_TEMPLATE_AUTH = 'auth.html'
+    DEFAULT_TEMPLATE_DIGESTS = 'digests.html'
+
+    DEFAULT_TEMPLATE_BY_TYPE = {
+        EmailType.NEW_TASK: DEFAULT_TEMPLATE_TASKS,
+        EmailType.TASK_RETURNED: DEFAULT_TEMPLATE_TASKS,
+        EmailType.COMPLETE_TASK: DEFAULT_TEMPLATE_TASKS,
+        EmailType.OVERDUE_TASK: DEFAULT_TEMPLATE_TASKS,
+        EmailType.GUEST_NEW_TASK: DEFAULT_TEMPLATE_TASKS,
+        EmailType.MENTION: DEFAULT_TEMPLATE_TASKS,
+        EmailType.RESET_PASSWORD: DEFAULT_TEMPLATE_AUTH,
+        EmailType.ACCOUNT_VERIFICATION: DEFAULT_TEMPLATE_AUTH,
+        EmailType.USER_DEACTIVATED: DEFAULT_TEMPLATE_AUTH,
+        EmailType.USER_TRANSFER: DEFAULT_TEMPLATE_AUTH,
+        EmailType.WORKFLOWS_DIGEST: DEFAULT_TEMPLATE_DIGESTS,
+        EmailType.TASKS_DIGEST: DEFAULT_TEMPLATE_DIGESTS,
+        EmailType.UNREAD_NOTIFICATIONS: DEFAULT_TEMPLATE_DIGESTS,
+    }
+
     def __init__(self, account_id: int):
         super().__init__(account_id)
         self.connection = get_connection(fail_silently=False)
@@ -24,7 +44,7 @@ class SMTPEmailClient(EmailClient):
     def send_email(
         self,
         to: str,
-        template_code: str,
+        template_code: EmailType.LITERALS,
         message_data: Dict[str, Any],
         user_id: int,
     ) -> None:
@@ -47,6 +67,7 @@ class SMTPEmailClient(EmailClient):
         else:
             subject, html_content = self._get_default_template(
                 template_code,
+                self.DEFAULT_TEMPLATE_BY_TYPE.get(template_code),
                 message_data,
             )
 
@@ -70,63 +91,23 @@ class SMTPEmailClient(EmailClient):
 
     def _get_default_template(
         self,
-        template_code: str,
+        template_code: EmailType.LITERALS,
+        template_name: str,
         message_data: Dict[str, Any],
     ) -> Tuple[str, str]:
-        """Get default template from files or simple fallback."""
-        template_name = self._get_template_name_for_code(template_code)
-
-        if template_name:
-            try:
-                # Use Django template loader for proper inheritance support
-                template = get_template(template_name)
-                subject = self._get_default_subject(template_code)
-                html_content = template.render(message_data)
-                return subject, html_content
-            except Exception:  # noqa: BLE001
-                # Template loading or rendering failed, use fallback
-                pass
-
-        # Simple fallback
+        """Get default template from files."""
+        try:
+            # Use Django template loader for proper inheritance support
+            template = get_template(template_name)
+            subject = self._get_default_subject(template_code)
+            html_content = template.render(message_data)
+            return subject, html_content
+        except Exception:  # noqa: BLE001
+            # Template loading or rendering failed, use fallback
+            pass
         return self._get_fallback_template(template_code)
 
-    def _get_template_name_for_code(
-        self,
-        template_code: str,
-    ) -> Optional[str]:
-        """Map template code to template name."""
-        # Group templates by type
-        task_templates = [
-            EmailType.NEW_TASK,
-            EmailType.TASK_RETURNED,
-            EmailType.COMPLETE_TASK,
-            EmailType.OVERDUE_TASK,
-            EmailType.GUEST_NEW_TASK,
-            EmailType.MENTION,
-        ]
-
-        auth_templates = [
-            EmailType.RESET_PASSWORD,
-            EmailType.ACCOUNT_VERIFICATION,
-            EmailType.USER_DEACTIVATED,
-            EmailType.USER_TRANSFER,
-        ]
-
-        digest_templates = [
-            EmailType.WORKFLOWS_DIGEST,
-            EmailType.TASKS_DIGEST,
-            EmailType.UNREAD_NOTIFICATIONS,
-        ]
-
-        if template_code in task_templates:
-            return 'tasks.html'
-        if template_code in auth_templates:
-            return 'auth.html'
-        if template_code in digest_templates:
-            return 'digests.html'
-        return 'base.html'
-
-    def _get_default_subject(self, template_code: str) -> str:
+    def _get_default_subject(self, template_code: EmailType.LITERALS) -> str:
         """Get default subject for template code."""
         subjects = {
             EmailType.NEW_TASK: 'New Task Assigned',
@@ -146,16 +127,19 @@ class SMTPEmailClient(EmailClient):
 
         return subjects.get(template_code, f'Pneumatic - {template_code}')
 
-    def _get_fallback_template(self, template_code: str) -> Tuple[str, str]:
+    def _get_fallback_template(
+            self,
+            template_code: EmailType.LITERALS,
+    ) -> Tuple[str, str]:
         """Get simple fallback template when no file template exists."""
         subject = self._get_default_subject(template_code)
         html_content = f"""
         <html>
         <body>
             <h2>Pneumatic</h2>
+            <p>Email notification</p>
             <p>Template: {template_code}</p>
         </body>
         </html>
         """
-
         return subject, html_content
