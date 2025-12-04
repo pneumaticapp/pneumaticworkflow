@@ -86,7 +86,6 @@ class EmailType:
     RESET_PASSWORD = 'reset_password'
     USER_DEACTIVATED = 'user_deactivated'
     NEW_TASK = 'new_task'
-    COMPLETE_TASK = 'complete_task'
     TASK_RETURNED = 'task_returned'
     ACCOUNT_VERIFICATION = 'account_verification'
     WORKFLOWS_DIGEST = 'digest'
@@ -101,7 +100,6 @@ class EmailType:
         RESET_PASSWORD,
         USER_DEACTIVATED,
         NEW_TASK,
-        COMPLETE_TASK,
         TASK_RETURNED,
         ACCOUNT_VERIFICATION,
         WORKFLOWS_DIGEST,
@@ -117,7 +115,6 @@ class EmailType:
         (RESET_PASSWORD, 'Reset Password'),
         (USER_DEACTIVATED, 'User Deactivated'),
         (NEW_TASK, 'New Task'),
-        (COMPLETE_TASK, 'Complete Task'),
         (TASK_RETURNED, 'Task Returned'),
         (ACCOUNT_VERIFICATION, 'Account Verification'),
         (WORKFLOWS_DIGEST, 'Workflows Digest'),

@@ -19,7 +19,6 @@ class SMTPEmailClient(EmailClient):
     DEFAULT_TEMPLATE_BY_TYPE = {
         EmailType.NEW_TASK: DEFAULT_TEMPLATE_TASKS,
         EmailType.TASK_RETURNED: DEFAULT_TEMPLATE_TASKS,
-        EmailType.COMPLETE_TASK: DEFAULT_TEMPLATE_TASKS,
         EmailType.OVERDUE_TASK: DEFAULT_TEMPLATE_TASKS,
         EmailType.GUEST_NEW_TASK: DEFAULT_TEMPLATE_TASKS,
         EmailType.MENTION: DEFAULT_TEMPLATE_TASKS,
@@ -112,7 +111,6 @@ class SMTPEmailClient(EmailClient):
         subjects = {
             EmailType.NEW_TASK: 'New Task Assigned',
             EmailType.TASK_RETURNED: 'Task Returned',
-            EmailType.COMPLETE_TASK: 'Task Completed',
             EmailType.OVERDUE_TASK: 'Task Overdue',
             EmailType.GUEST_NEW_TASK: 'New Task Assigned',
             EmailType.MENTION: 'You were mentioned',
