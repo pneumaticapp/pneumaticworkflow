@@ -1,5 +1,5 @@
 /* eslint-disable consistent-return */
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useIntl } from 'react-intl';
 import { useDispatch, useSelector } from 'react-redux';
 
@@ -73,6 +73,7 @@ export function WorkflowsLayoutComponent({
   const { formatMessage } = useIntl();
   const { isMobile } = useCheckDevice();
   const workflowsLoadingStatus = useSelector((state: IApplicationState) => state.workflows.workflowsLoadingStatus);
+
   const [isTableWiderThanScreen, setIsTableWiderThanScreen] = useState(false);
 
   const workflowsMainRef = useRef<HTMLDivElement>(null);
@@ -85,6 +86,17 @@ export function WorkflowsLayoutComponent({
   const prevStepsIdsFilterRef = useRef<string>('[]');
   const prevWorkflowStartersIdsFilterRef = useRef<string>('[]');
   const prevPerformersIdsFilterRef = useRef<string>('[]');
+
+  const currentFiltersValuesRef = useRef({
+    statusFilter,
+    templatesIdsFilter,
+    stepsIdsFilter,
+    workflowStartersIdsFilter,
+    performersIdsFilter,
+    sorting,
+  });
+
+  const changedFiltersRef = useRef<Set<string>>(new Set());
 
   const dependenciesRefs = useMemo(
     () =>
@@ -184,7 +196,7 @@ export function WorkflowsLayoutComponent({
   }, [statusFilter]);
 
   useEffect(() => {
-    const hasChanges = checkFilterDependenciesChanged(dependenciesRefs, {
+    const hasChanges = checkFilterDependenciesChanged(changedFiltersRef, dependenciesRefs, {
       statusFilter,
       templatesIdsFilter,
       stepsIdsFilter,
@@ -211,7 +223,7 @@ export function WorkflowsLayoutComponent({
   }, [statusFilter, templatesIdsFilter, performersIdsFilter]);
 
   useEffect(() => {
-    const hasChanges = checkFilterDependenciesChanged(dependenciesRefs, {
+    const hasChanges = checkFilterDependenciesChanged(changedFiltersRef, dependenciesRefs, {
       statusFilter,
       templatesIdsFilter,
       stepsIdsFilter,
@@ -223,6 +235,7 @@ export function WorkflowsLayoutComponent({
     if (!hasChanges) {
       return;
     }
+
     applyFilters();
   }, [statusFilter, templatesIdsFilter, stepsIdsFilter, performersIdsFilter, workflowStartersIdsFilter, sorting]);
 
@@ -231,6 +244,33 @@ export function WorkflowsLayoutComponent({
       changeWorkflowsSorting(EWorkflowsSorting.DateDesc);
     }
   }, [sorting, statusFilter]);
+
+  useEffect(() => {
+    currentFiltersValuesRef.current = {
+      statusFilter,
+      templatesIdsFilter,
+      stepsIdsFilter,
+      workflowStartersIdsFilter,
+      performersIdsFilter,
+      sorting,
+    };
+  }, [statusFilter, templatesIdsFilter, stepsIdsFilter, workflowStartersIdsFilter, performersIdsFilter, sorting]);
+
+  useLayoutEffect(() => {
+    if (changedFiltersRef.current.size === 0) return;
+
+    changedFiltersRef.current.forEach((filter) => {
+      const ref = dependenciesRefs.get(filter);
+      if (ref) {
+        const filterValue = currentFiltersValuesRef.current[filter as keyof typeof currentFiltersValuesRef.current];
+        ref.current = typeof filterValue === 'string' ? filterValue : JSON.stringify(filterValue);
+      }
+    });
+
+    if (changedFiltersRef.current.size > 0) {
+      changedFiltersRef.current = new Set();
+    }
+  }, [changedFiltersRef.current.size]);
 
   const statusTitles = React.useMemo(() => Object.values(EWorkflowsStatus), []);
   const sortingTitles = React.useMemo(() => getSortingsByStatus(statusFilter), [statusFilter]);
