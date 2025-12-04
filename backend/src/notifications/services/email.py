@@ -295,6 +295,14 @@ class EmailService(NotificationService):
         else:
             task_link = f'{settings.FRONTEND_URL}/tasks/{task_id}'
 
+        started_by = {
+            'name': (
+                f'{workflow_starter_first_name} {workflow_starter_last_name}'
+                .strip()
+            ),
+            'avatar': None,
+        }
+
         self._send(
             title=str(messages.MSG_NF_0004),
             user_id=user_id,
@@ -313,6 +321,7 @@ class EmailService(NotificationService):
                 'workflow_starter_id': workflow_starter_id,
                 'workflow_starter_first_name': workflow_starter_first_name,
                 'workflow_starter_last_name': workflow_starter_last_name,
+                'started_by': started_by,
                 'user_type': user_type,
                 'token': token,
                 'logo_lg': self.logo_lg,

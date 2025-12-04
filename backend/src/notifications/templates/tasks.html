@@ -266,6 +266,44 @@
                   </tr>
                 </table>
 
+                <!-- Guest User Instructions -->
+                {% if sender_name %}
+                <table class="text_block"
+                       width="100%"
+                       border="0"
+                       cellpadding="0"
+                       cellspacing="0"
+                       role="presentation"
+                       style="mso-table-lspace:0;mso-table-rspace:0;word-break:break-word">
+                  <tr>
+                    <td class="pad"
+                        style="padding-left:48px;padding-right:48px;padding-top:24px;padding-bottom:16px">
+                      <div style="font-family:Arial,sans-serif">
+                        <div style="font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:16px;color:#262522;line-height:1.5">
+                          <p style="margin:0;margin-bottom:16px;">
+                            Please read your task description carefully. In each task you can:
+                          </p>
+                          <ul style="margin:0;padding-left:20px;">
+                            <li style="margin-bottom:8px;">
+                              comment and mention {{ sender_name }} or other task performers
+                            </li>
+                            <li style="margin-bottom:8px;">
+                              attach files, images or videos
+                            </li>
+                            <li style="margin-bottom:8px;">
+                              complete the task
+                            </li>
+                          </ul>
+                          <p style="margin:16px 0 0 0;">
+                            Once you complete your task, you don't have to worry about handing the process off to the next stage, Pneumatic Workflow takes care of that for you.
+                          </p>
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                </table>
+                {% endif %}
+
                 <!-- Help Text -->
                 <table class="text_block"
                        width="100%"
