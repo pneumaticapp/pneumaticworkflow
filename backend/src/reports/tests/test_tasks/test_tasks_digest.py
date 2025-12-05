@@ -122,7 +122,9 @@ class TestSendTasksDigest:
         st_second_task = template_2.tasks.get(number=2)
         st_third_task = template_2.tasks.get(number=3)
         email_service_tasks_digest.assert_called_with(
-            user=user,
+            user_id=user.id,
+            user_email=user.email,
+            account_id=user.account_id,
             date_to=date_to - timedelta(days=1),
             date_from=date_from,
             digest={
@@ -243,7 +245,9 @@ class TestSendTasksDigest:
         # assert
         datetime_patch.assert_called()
         email_service_tasks_digest.assert_called_once_with(
-            user=template_owner,
+            user_id=template_owner.id,
+            user_email=template_owner.email,
+            account_id=template_owner.account_id,
             date_to=date_to - timedelta(days=1),
             date_from=date_from,
             digest={
@@ -399,7 +403,9 @@ class TestSendTasksDigest:
         # assert
         task_1 = template_2.tasks.get(number=1)
         email_service_tasks_digest.assert_called_with(
-            user=user,
+            user_id=user.id,
+            user_email=user.email,
+            account_id=user.account_id,
             date_to=date_to - timedelta(days=1),
             date_from=date_from,
             digest={
@@ -564,7 +570,9 @@ class TestSendTasksDigest:
         task_2 = template_2.tasks.get(number=2)
         task_3 = template_2.tasks.get(number=3)
         email_service_tasks_digest.assert_called_with(
-            user=user,
+            user_id=user.id,
+            user_email=user.email,
+            account_id=user.account_id,
             date_to=date_to - timedelta(days=1),
             date_from=date_from,
             digest={
@@ -653,7 +661,9 @@ class TestSendTasksDigest:
 
         # assert
         email_service_tasks_digest.assert_called_with(
-            user=user,
+            user_id=user.id,
+            user_email=user.email,
+            account_id=user.account_id,
             date_to=date_to - timedelta(days=1),
             date_from=date_from,
             digest={

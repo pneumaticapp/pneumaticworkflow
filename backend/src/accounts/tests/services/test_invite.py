@@ -497,9 +497,8 @@ def test_send_transfer_email__ok(mocker):
         '_get_transfer_token',
         return_value=transfer_token_str,
     )
-    send_user_transfer_email_mock = mocker.patch(
-        'src.notifications.services.email.EmailService.'
-        'send_user_transfer_email',
+    send_user_transfer_notification_mock = mocker.patch(
+        'src.notifications.tasks.send_user_transfer_notification.delay',
     )
     service = UserInviteService(
         current_url=current_url,
@@ -518,11 +517,13 @@ def test_send_transfer_email__ok(mocker):
         current_account_user=invited_user,
         another_account_user=user_to_transfer,
     )
-    send_user_transfer_email_mock.assert_called_once_with(
-        email=user_to_transfer.email,
-        invited_by=request_user,
-        token=transfer_token_str,
+    send_user_transfer_notification_mock.assert_called_once_with(
         user_id=invited_user.id,
+        user_email=user_to_transfer.email,
+        account_id=request_user.account_id,
+        invited_by_name=request_user.get_full_name(),
+        company_name=request_user.account.name,
+        token=transfer_token_str,
         logo_lg=account.logo_lg,
     )
 

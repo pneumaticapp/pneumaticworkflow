@@ -120,7 +120,9 @@ class TestSendDigest:
 
         # assert
         email_service_digest.assert_called_with(
-            user=user,
+            user_id=user.id,
+            user_email=user.email,
+            account_id=user.account_id,
             date_to=date_to - timedelta(days=1),
             date_from=date_from,
             digest={
@@ -274,7 +276,9 @@ class TestSendDigest:
 
         # assert
         email_service_digest.assert_called_with(
-            user=user,
+            user_id=user.id,
+            user_email=user.email,
+            account_id=user.account_id,
             date_to=date_to - timedelta(days=1),
             date_from=date_from,
             digest={
@@ -428,7 +432,9 @@ class TestSendDigest:
 
         # assert
         email_service_digest.assert_called_with(
-            user=user,
+            user_id=user.id,
+            user_email=user.email,
+            account_id=user.account_id,
             date_to=date_to - timedelta(days=1),
             date_from=date_from,
             digest={
@@ -488,7 +494,9 @@ class TestSendDigest:
 
         # assert
         email_service_digest.assert_called_with(
-            user=user,
+            user_id=user.id,
+            user_email=user.email,
+            account_id=user.account_id,
             date_to=date_to - timedelta(days=1),
             date_from=date_from,
             digest={
