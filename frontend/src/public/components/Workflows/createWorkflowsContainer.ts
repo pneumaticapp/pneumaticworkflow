@@ -1,4 +1,4 @@
-import { ComponentType, useEffect, createElement } from 'react';
+import { ComponentType, createElement } from 'react';
 import { connect } from 'react-redux';
 
 import { IApplicationState } from '../../types/redux';
@@ -17,12 +17,7 @@ import {
 
 type TStoreProps = Pick<
   IWorkflowsProps,
-  'workflowsLoadingStatus' |
-  'workflowsList' |
-  'templatesFilter' |
-  'searchText' |
-  'stepsIdsFilter' |
-  'view'
+  'workflowsLoadingStatus' | 'workflowsList' | 'templatesFilter' | 'searchText' | 'stepsIdsFilter' | 'view'
 >;
 
 type TDispatchProps = Pick<
@@ -45,10 +40,7 @@ export function mapStateToProps({
     workflowsList,
     workflowsSettings: {
       view,
-      values: {
-        templatesIdsFilter,
-        stepsIdsFilter
-      },
+      values: { templatesIdsFilter, stepsIdsFilter },
       templateList,
     },
   },
@@ -81,10 +73,6 @@ export const mapDispatchToProps: TDispatchProps = {
 
 export const createWorkflowsContainer = (Component: ComponentType<IWorkflowsProps>) => {
   const WorkflowsContainer = ({ loadWorkflowsList, loadTemplatesTitles, ...restProps }: IWorkflowsProps) => {
-    useEffect(() => {
-      loadTemplatesTitles();
-    }, [loadWorkflowsList, loadTemplatesTitles]);
-
     return createElement(Component, { loadWorkflowsList, loadTemplatesTitles, ...restProps });
   };
 

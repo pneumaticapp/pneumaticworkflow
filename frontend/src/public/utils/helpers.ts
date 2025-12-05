@@ -277,3 +277,25 @@ export const areObjectsEqual = (originalObj: object, updatedObj: object): boolea
 
   return isObjectEmpty(diffProps);
 };
+
+export function checkFilterDependenciesChanged(
+  changedFiltersRef: React.MutableRefObject<Set<string>>,
+  dependenciesRefs: Map<string, React.MutableRefObject<string>>,
+  dependencies: Record<string, string | number[]>,
+): boolean {
+  let hasChanges = false;
+  for (const [key, value] of Object.entries(dependencies)) {
+    const ref = dependenciesRefs.get(key);
+    if (!ref) {
+      continue;
+    }
+    const filterKey = typeof value === 'string' ? value : JSON.stringify(value);
+    if (ref.current !== filterKey) {
+      if (!hasChanges) {
+        hasChanges = true;
+      }
+      changedFiltersRef.current.add(key);
+    }
+  }
+  return hasChanges;
+}

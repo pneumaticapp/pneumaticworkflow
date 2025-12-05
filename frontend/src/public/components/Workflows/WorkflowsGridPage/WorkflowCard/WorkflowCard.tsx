@@ -89,7 +89,9 @@ export const WorkflowCard = ({
       [EWorkflowStatus.Aborted]: '',
     };
 
-    return <div className={classnames(styles['card-task'], 'truncate')}>{subtitlesMap[status]}</div>;
+    const extraTextStyle =
+      status === EWorkflowStatus.Snoozed || status === EWorkflowStatus.Finished ? styles['card-extra-text'] : '';
+    return <div className={classnames(styles['card-task'], 'truncate', extraTextStyle)}>{subtitlesMap[status]}</div>;
   };
 
   return (
