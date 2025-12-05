@@ -280,12 +280,12 @@ export const areObjectsEqual = (originalObj: object, updatedObj: object): boolea
 
 export function checkFilterDependenciesChanged(
   changedFiltersRef: React.MutableRefObject<Set<string>>,
-  refsMap: Map<string, React.MutableRefObject<string>>,
+  dependenciesRefs: Map<string, React.MutableRefObject<string>>,
   dependencies: Record<string, string | number[]>,
 ): boolean {
   let hasChanges = false;
   for (const [key, value] of Object.entries(dependencies)) {
-    const ref = refsMap.get(key);
+    const ref = dependenciesRefs.get(key);
     if (!ref) {
       continue;
     }

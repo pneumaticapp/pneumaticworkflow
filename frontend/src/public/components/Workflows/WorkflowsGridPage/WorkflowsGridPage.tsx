@@ -69,15 +69,11 @@ export const WorkflowsGridPage = function Workflows({
   openSelectTemplateModal,
   openRunWorkflowModal,
   removeWorkflowFromList,
-  loadTemplatesTitles,
 }: IWorkflowsProps) {
   const { formatMessage } = useIntl();
   const { searchQuery, handleSearch } = useSearchWithDebounce(searchText, onSearch);
   const [isRunningNewWorkflow, setIsRunningNewWorkflow] = useState(false);
   // const { isMobile } = useCheckDevice();
-  useEffect(() => {
-    loadTemplatesTitles();
-  }, []);
 
   React.useEffect(() => {
     if (workflowsLoadingStatus === EWorkflowsLoadingStatus.EmptyList && stepsIdsFilter.length) {

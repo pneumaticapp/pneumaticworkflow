@@ -184,10 +184,6 @@ export function WorkflowsLayoutComponent({
 
     if (allNewTemplatesTasksLoaded) {
       setStepsFilter(prevTemplatesActualTaskIds);
-
-      if (canFilterByTemplateStep(statusFilter)) {
-        updateWorkflowsTemplateStepsCounters();
-      }
     }
   }, [templatesIdsFilter, selectedTemplates, statusFilter]);
 
@@ -216,7 +212,7 @@ export function WorkflowsLayoutComponent({
     if (canFilterByTemplateStep(statusFilter)) {
       updateWorkflowsTemplateStepsCounters();
     }
-  }, [statusFilter, templatesIdsFilter, performersIdsFilter, workflowStartersIdsFilter]);
+  }, [statusFilter, performersIdsFilter, workflowStartersIdsFilter]);
 
   useEffect(() => {
     updateWorkflowStartersCounters();
