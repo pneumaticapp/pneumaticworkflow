@@ -61,10 +61,12 @@ class EmailService(NotificationService):
             'You have unread notifications'
         ),
         NotificationMethod.reset_password: 'Forgot Your Password?',
-        NotificationMethod.mention: 'You were mentioned',
+        NotificationMethod.mention: 'You have been mentioned',
         NotificationMethod.workflows_digest: 'Workflows Weekly Digest',
         NotificationMethod.tasks_digest: 'Tasks Weekly Digest',
-        NotificationMethod.user_deactivated: 'Account Deactivated',
+        NotificationMethod.user_deactivated: (
+            'Your Pneumatic profile was deactivated.'
+        ),
         NotificationMethod.user_transfer: (
             'invited you to join team on Pneumatic!'
         ),
@@ -188,7 +190,7 @@ class EmailService(NotificationService):
         ).__str__()
         task_link = f'{settings.FRONTEND_URL}/tasks/{task_id}'
         unsubscribe_link = (
-            f'{settings.BACKEND_URL}accounts/emails/unsubscribe?token='
+            f'{settings.BACKEND_URL}/accounts/emails/unsubscribe?token='
             f'{unsubscribe_token}'
         )
 
@@ -240,7 +242,7 @@ class EmailService(NotificationService):
         ).__str__()
         task_link = f'{settings.FRONTEND_URL}/tasks/{task_id}'
         unsubscribe_link = (
-            f'{settings.BACKEND_URL}accounts/emails/unsubscribe?token='
+            f'{settings.BACKEND_URL}/accounts/emails/unsubscribe?token='
             f'{unsubscribe_token}'
         )
 
@@ -346,7 +348,7 @@ class EmailService(NotificationService):
         )
         task_link = (
             f'{settings.FRONTEND_URL}/guest-task/{task_id}'
-            f'?token={token}&amp;utm_campaign=guestUser&amp;utm_term={user_id}'
+            f'?token={token}&utm_campaign=guestUser&utm_term={user_id}'
         )
         title = (
             f'{sender_name} {self.TITLES[NotificationMethod.guest_new_task]} '
@@ -361,7 +363,7 @@ class EmailService(NotificationService):
             'task_id': task_id,
             'task_name': task_name,
             'task_description': description,
-            'sender_name': sender_name,
+            'guest_sender_name': sender_name,
             'logo_lg': self.logo_lg,
         }
         if task_due_date:
@@ -396,12 +398,16 @@ class EmailService(NotificationService):
             email_type=MailoutType.COMMENTS,
         ).__str__()
         unsubscribe_link = (
-            f'{settings.BACKEND_URL}/accounts/unsubscribe/'
+            f'{settings.BACKEND_URL}/accounts/emails/unsubscribe?token='
             f'{unsubscribe_token}'
         )
         notifications_link = (
             f'{settings.FRONTEND_URL}'
-            f'/notifications?utm_source=email&utm_campaign=unread'
+            '?utm_source=notifications&utm_campaign=unread_notifications'
+        )
+        content = (
+            f'{user_first_name}, work in your company is in full swing. '
+            f'Check your recent notifications to be up to date.'
         )
 
         self._send(
@@ -412,7 +418,9 @@ class EmailService(NotificationService):
             method_name=NotificationMethod.unread_notifications,
             data={
                 'title': self.TITLES[NotificationMethod.unread_notifications],
+                'content': content,
                 'user_name': user_first_name,
+                'button_text': 'View Notifications',
                 'unsubscribe_token': unsubscribe_token,
                 'unsubscribe_link': unsubscribe_link,
                 'notifications_link': notifications_link,
@@ -429,8 +437,13 @@ class EmailService(NotificationService):
     ):
         token = ResetPasswordToken.for_user_id(user_id).__str__()
         reset_link = (
-            f'{settings.FRONTEND_URL}/auth/reset-password'
-            f'?token={token}&utm_source=email&utm_campaign=reset_password'
+            f'{settings.FRONTEND_URL}/auth/reset-password?token={token}'
+        )
+        content = 'We got a request to reset your Pneumatic account password.'
+        additional_content = (
+            'A strong password includes eight or more characters '
+            'and a combination of uppercase and lowercase letters, '
+            'numbers and symbols, and is not based on words in the dictionary.'
         )
 
         self._send(
@@ -441,16 +454,8 @@ class EmailService(NotificationService):
             method_name=NotificationMethod.reset_password,
             data={
                 'title': self.TITLES[NotificationMethod.reset_password],
-                'content': (
-                    'We got a request to reset your Pneumatic account '
-                    'password.'
-                ),
-                'additional_content': (
-                    'A strong password includes eight or more characters '
-                    'and a combination of uppercase and lowercase letters, '
-                    'numbers and symbols, and is not based on words in the '
-                    'dictionary.'
-                ),
+                'content': content,
+                'additional_content': additional_content,
                 'button_text': 'Reset my password',
                 'token': token,
                 'link': reset_link,
@@ -467,9 +472,10 @@ class EmailService(NotificationService):
         user_first_name: str,
         **kwargs,
     ):
-        task_link = (
-            f'{settings.FRONTEND_URL}/tasks/{task_id}'
-            f'?utm_source=email&utm_campaign=mention'
+        task_link = f'{settings.FRONTEND_URL}/tasks/{task_id}'
+        content = (
+            f"{user_first_name}, there's some activity happening. "
+            f"Check your mentions to stay updated on your tasks right away."
         )
 
         self._send(
@@ -480,7 +486,9 @@ class EmailService(NotificationService):
             method_name=NotificationMethod.mention,
             data={
                 'title': self.TITLES[NotificationMethod.mention],
+                'content': content,
                 'logo_lg': self.logo_lg,
+                'button_text': 'View Mentions',
                 'user_first_name': user_first_name,
                 'task_id': task_id,
                 'link': task_link,
@@ -493,8 +501,6 @@ class EmailService(NotificationService):
         user_email: str,
         **kwargs,
     ):
-        """Send user deactivated notification."""
-        support_link = f'{settings.FRONTEND_URL}/support'
 
         self._send(
             title=self.TITLES[NotificationMethod.user_deactivated],
@@ -504,15 +510,7 @@ class EmailService(NotificationService):
             method_name=NotificationMethod.user_deactivated,
             data={
                 'title': self.TITLES[NotificationMethod.user_deactivated],
-                'content': 'Your Pneumatic account has been deactivated.',
-                'additional_content': (
-                    'If you believe this was done in error, please '
-                    'contact support.'
-                ),
-                'button_text': 'Contact Support',
-                'link': support_link,
                 'logo_lg': self.logo_lg,
-                'support_link': support_link,
             },
         )
 
@@ -530,6 +528,12 @@ class EmailService(NotificationService):
             f'{settings.BACKEND_URL}/accounts/users/{user_id}/transfer'
             f'?token={token}&utm_source=invite&utm_campaign=transfer'
         )
+        content = (
+            "Your User Profile is associated with another Pneumatic account. "
+            "By agreeing to this invitation, you permit us to transfer your "
+            "User Profile to an invitee's account. This transfer will revoke "
+            "your access to your old account."
+        )
 
         self._send(
             title=self.TITLES[NotificationMethod.user_transfer],
@@ -542,14 +546,8 @@ class EmailService(NotificationService):
                     f'{invited_by_name} '
                     f'{self.TITLES[NotificationMethod.user_transfer]}'
                 ),
-                'content': (
-                    f'{invited_by_name} has invited you to '
-                    f'join {company_name} on Pneumatic.'
-                ),
-                'additional_content': (
-                    'Click the button below to accept the invitation.'
-                ),
-                'button_text': 'Accept Invitation',
+                'content': content,
+                'button_text': 'Transfer My Profile',
                 'token': token,
                 'link': transfer_link,
                 'transfer_link': transfer_link,
@@ -570,8 +568,11 @@ class EmailService(NotificationService):
     ):
         """Send verification notification."""
         verification_link = (
-            f'{settings.FRONTEND_URL}/auth/verify'
-            f'?token={token}&utm_source=email&utm_campaign=verification'
+            f'{settings.FRONTEND_URL}/auth/verification?token={token}'
+        )
+        content = (
+            'Thank you for signing up for Pneumatic. '
+            'Please verify your email address to get started.'
         )
 
         self._send(
@@ -582,14 +583,10 @@ class EmailService(NotificationService):
             method_name=NotificationMethod.verification,
             data={
                 'title': self.TITLES[NotificationMethod.verification],
-                'content': (
-                    'Thank you for signing up for Pneumatic. '
-                    'Please verify your email address to get started.'
-                ),
-                'button_text': 'Verify Email',
+                'content': content,
+                'button_text': 'Get Started',
                 'token': token,
                 'link': verification_link,
-                'verification_link': verification_link,
                 'first_name': user_first_name,
                 'logo_lg': self.logo_lg,
             },

@@ -173,7 +173,7 @@
                       <div style="font-family:Arial,sans-serif">
                         <div style="font-size:16px;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;color:#262522;line-height:1.8">
                           <div class="dynamic-content">
-                            {{ task_description|safe }}
+                            {{ task_description }}
                           </div>
                         </div>
                       </div>
@@ -267,7 +267,7 @@
                 </table>
 
                 <!-- Guest User Instructions -->
-                {% if sender_name %}
+                {% if guest_sender_name %}
                 <table class="text_block"
                        width="100%"
                        border="0"
@@ -285,7 +285,7 @@
                           </p>
                           <ul style="margin:0;padding-left:20px;">
                             <li style="margin-bottom:8px;">
-                              comment and mention {{ sender_name }} or other task performers
+                              comment and mention {{ guest_sender_name }} or other task performers
                             </li>
                             <li style="margin-bottom:8px;">
                               attach files, images or videos

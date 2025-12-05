@@ -57,8 +57,13 @@
                   <tr>
                     <td class="pad">
                       <div style="font-family:Arial,sans-serif">
-                        <div style="font-size:16px;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;color:#262522;line-height:1.8">
-                          {{ content|safe }}
+                        <div class="" style="font-size:12px;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;mso-line-height-alt:21.6px;color:#262522;line-height:1.8">
+                          <p style="margin:0;font-size:12px;mso-line-height-alt:28.8px">
+                            <span style="font-size:16px;">
+                              <span style="">{{ content }}</span>
+                              <span style=""><br></span>
+                            </span>
+                          </p>
                         </div>
                       </div>
                     </td>
@@ -78,7 +83,7 @@
                   <tr>
                     <td class="pad">
                       <div class="alignment" align="center" style="line-height:10px">
-                        <img src="{{ image_url }}"
+                        <img src="https://userimg-bee.customeriomail.com/images/client-env-93177/Icon_Paper_Bad.png"
                              style="display:block;height:auto;border:0;max-width:120px;width:100%"
                              width="120"
                              alt="Icon">
@@ -124,9 +129,12 @@
                   <tr>
                     <td class="pad">
                       <div style="font-family:Arial,sans-serif">
-                        <div style="font-size:12px;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;color:#262522;line-height:1.8">
-                          <p style="margin:0;font-size:16px;">
-                            {{ additional_content|safe }}
+                        <div class="" style="font-size:12px;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;mso-line-height-alt:21.6px;color:#262522;line-height:1.8">
+                          <p style="margin:0;font-size:12px;mso-line-height-alt:28.8px">
+                            <span style="font-size:16px;">
+                              <span style="">{{ additional_content }}</span>
+                              <span style=""><br></span>
+                            </span>
                           </p>
                         </div>
                       </div>
@@ -217,4 +225,3 @@
   </tbody>
 </table>
 {% endblock %}
-
