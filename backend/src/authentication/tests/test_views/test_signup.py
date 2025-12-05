@@ -775,9 +775,9 @@ def test_create_after_signup__need_verification__ok(mocker):
         'src.accounts.tokens.VerificationToken.for_user',
         return_value=verification_token,
     )
-    send_verification_email_mock = mocker.patch(
-        'src.services.email.EmailService.'
-        'send_verification_email',
+    send_verification_notification_mock = mocker.patch(
+        'src.authentication.views.signup.'
+        'send_verification_notification.delay',
     )
     inc_anonymous_user_account_counter = mocker.patch(
         'src.authentication.views.signup.'
@@ -800,9 +800,12 @@ def test_create_after_signup__need_verification__ok(mocker):
 
     # assert
     get_verification_token_mock.assert_called_once_with(user)
-    send_verification_email_mock.assert_called_once_with(
-        user=user,
-        token=verification_token,
+    send_verification_notification_mock.assert_called_once_with(
+        user_id=user.id,
+        user_email=user.email,
+        account_id=account.id,
+        user_first_name=user.first_name,
+        token=str(verification_token),
         logo_lg=account.logo_lg,
     )
     inc_anonymous_user_account_counter.assert_called_once()
@@ -820,9 +823,9 @@ def test_create_after_signup__skip_verification__ok(mocker):
         'src.authentication.views.signup.settings',
     )
     settings_mock.VERIFICATION_CHECK = False
-    send_verification_email_mock = mocker.patch(
-        'src.services.email.EmailService.'
-        'send_verification_email',
+    send_verification_notification_mock = mocker.patch(
+        'src.authentication.views.signup.'
+        'send_verification_notification.delay',
     )
     inc_anonymous_user_account_counter = mocker.patch(
         'src.authentication.views.signup.'
@@ -840,7 +843,7 @@ def test_create_after_signup__skip_verification__ok(mocker):
     view.after_signup(user)
 
     # assert
-    send_verification_email_mock.assert_not_called()
+    send_verification_notification_mock.assert_not_called()
     inc_anonymous_user_account_counter.assert_called_once()
 
 

@@ -1322,16 +1322,20 @@ def test_deactivate_actions__ok(mocker):
 
     # arrange
     user = create_test_user(status=UserStatus.INACTIVE)
-    send_user_deactivated_email_mock = mocker.patch(
-        'src.services.email.EmailService.'
-        'send_user_deactivated_email',
+    send_user_deactivated_notification_mock = mocker.patch(
+        'src.notifications.tasks.send_user_deactivated_notification.delay',
     )
 
     # act
     UserService._deactivate_actions(user)
 
     # assert
-    send_user_deactivated_email_mock.assert_called_once_with(user=user)
+    send_user_deactivated_notification_mock.assert_called_once_with(
+        user_id=user.id,
+        user_email=user.email,
+        account_id=user.account_id,
+        logo_lg=user.account.logo_lg,
+    )
 
 
 def test_change_password__ok():
