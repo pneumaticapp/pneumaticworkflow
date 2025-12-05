@@ -609,7 +609,7 @@ class EmailService(NotificationService):
             ),
         )
         unsubscribe_link = (
-            f'{settings.BACKEND_URL}/accounts/unsubscribe/'
+            f'{settings.BACKEND_URL}/accounts/emails/unsubscribe?token='
             f'{unsubscribe_token}'
         )
         workflows_link = (
@@ -626,6 +626,21 @@ class EmailService(NotificationService):
             'workflows_link': workflows_link,
             'link': workflows_link,
             'logo_lg': self.logo_lg,
+            'is_tasks_digest': False,
+            'status_labels': {
+                'started': 'Started',
+                'in_progress': 'In Progress',
+                'overdue': 'Overdue',
+                'completed': 'Completed',
+            },
+            'base_link': f'{settings.FRONTEND_URL}/workflows',
+            'status_queries': {
+                'started': '?type=running',
+                'in_progress': '?type=running',
+                'overdue': '?type=running&sorting=overdue',
+                'completed': '?type=done',
+            },
+            'template_query_param': 'templates',
             **digest,
         }
         self._send(
@@ -671,6 +686,21 @@ class EmailService(NotificationService):
             'tasks_link': tasks_link,
             'link': tasks_link,
             'logo_lg': self.logo_lg,
+            'is_tasks_digest': True,
+            'status_labels': {
+                'started': 'Launched',
+                'in_progress': 'Ongoing',
+                'overdue': 'Overdue',
+                'completed': 'Completed',
+            },
+            'base_link': f'{settings.FRONTEND_URL}/tasks',
+            'status_queries': {
+                'started': '',
+                'in_progress': '',
+                'overdue': '?sorting=overdue',
+                'completed': '',
+            },
+            'template_query_param': 'template',
             **digest,
         }
         self._send(

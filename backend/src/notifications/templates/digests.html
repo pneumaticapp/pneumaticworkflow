@@ -83,50 +83,66 @@
                         <div style="margin: 0; margin-bottom:16px; padding: 32px;border: 0;outline: 0;font-weight: inherit;font-style: inherit;font-size: 100%;font-family: inherit;vertical-align: baseline;background: white;border-radius: 23px; position: relative;">
                           <div style="margin-bottom: 16px; line-height: 24px;">
                             <div style="display:inline-block;width:74%;">
-                              <span style="margin: 0;padding: 0;border: 0;outline: 0;font-weight: bold;font-style: inherit;font-size: 20px;vertical-align: baseline;color: #2196F3;">
-                                Started
-                              </span>
+                              <a href="{{ base_link }}{{ status_queries.started }}" style="text-decoration: none;">
+                                <span style="margin: 0;padding: 0;border: 0;outline: 0;font-weight: bold;font-style: inherit;font-size: 20px;vertical-align: baseline;color: #2196F3;">
+                                  {{ status_labels.started }}
+                                </span>
+                              </a>
                             </div>
                             <div style="display:inline-block;width:25%;text-align:right;">
-                              <span style="margin: 0;padding: 0;border: 0;outline: 0;font-weight: bold;font-style: inherit;font-size: 20px;font-family: inherit;vertical-align: baseline;text-align: center;letter-spacing: -0.01em;color: #2196F3;display: inline-block;">
-                                {{ started|default:0 }}
-                              </span>
+                              <a href="{{ base_link }}{{ status_queries.started }}" style="text-decoration: none;">
+                                <span style="margin: 0;padding: 0;border: 0;outline: 0;font-weight: bold;font-style: inherit;font-size: 20px;font-family: inherit;vertical-align: baseline;text-align: center;letter-spacing: -0.01em;color: #2196F3;display: inline-block;">
+                                  {{ started|default:0 }}
+                                </span>
+                              </a>
                             </div>
                           </div>
                           <div style="margin-bottom: 16px;line-height:24px">
                             <div style="display:inline-block;width:74%;">
-                              <span style="margin: 0;padding: 0;border: 0;outline: 0;font-weight: bold;font-style: inherit;font-size: 20px;vertical-align: baseline;color: #FFC107;">
-                                In Progress
-                              </span>
+                              <a href="{{ base_link }}{{ status_queries.in_progress }}" style="text-decoration: none;">
+                                <span style="margin: 0;padding: 0;border: 0;outline: 0;font-weight: bold;font-style: inherit;font-size: 20px;vertical-align: baseline;color: #FFC107;">
+                                  {{ status_labels.in_progress }}
+                                </span>
+                              </a>
                             </div>
                             <div style="display:inline-block;width:25%;text-align:right;">
-                              <span style="margin: 0;padding: 0;border: 0;outline: 0;font-weight: bold;font-style: inherit;font-size: 20px;font-family: inherit;vertical-align: baseline;text-align: center;letter-spacing: -0.01em;color: #FFC107;display: inline-block;">
-                                {{ in_progress|default:0 }}
-                              </span>
+                              <a href="{{ base_link }}{{ status_queries.in_progress }}" style="text-decoration: none;">
+                                <span style="margin: 0;padding: 0;border: 0;outline: 0;font-weight: bold;font-style: inherit;font-size: 20px;font-family: inherit;vertical-align: baseline;text-align: center;letter-spacing: -0.01em;color: #FFC107;display: inline-block;">
+                                  {{ in_progress|default:0 }}
+                                </span>
+                              </a>
                             </div>
                           </div>
                           <div style="margin-bottom: 16px;line-height:24px;">
                             <div style="display:inline-block;width:74%;">
-                              <span style="margin: 0;padding: 0;border: 0;outline: 0;font-weight: bold;font-style: inherit;font-size: 20px;vertical-align: baseline;color: #F44336;">
-                                Overdue
-                              </span>
+                              <a href="{{ base_link }}{{ status_queries.overdue }}" style="text-decoration: none;">
+                                <span style="margin: 0;padding: 0;border: 0;outline: 0;font-weight: bold;font-style: inherit;font-size: 20px;vertical-align: baseline;color: #F44336;">
+                                  {{ status_labels.overdue }}
+                                </span>
+                              </a>
                             </div>
                             <div style="display:inline-block;width:25%;text-align:right;">
-                              <span style="margin: 0;padding: 0;border: 0;outline: 0;font-weight: bold;font-style: inherit;font-size: 20px;font-family: inherit;vertical-align: baseline;text-align: center;letter-spacing: -0.01em;color: #F44336;display: inline-block;">
-                                {{ overdue|default:0 }}
-                              </span>
+                              <a href="{{ base_link }}{{ status_queries.overdue }}" style="text-decoration: none;">
+                                <span style="margin: 0;padding: 0;border: 0;outline: 0;font-weight: bold;font-style: inherit;font-size: 20px;font-family: inherit;vertical-align: baseline;text-align: center;letter-spacing: -0.01em;color: #F44336;display: inline-block;">
+                                  {{ overdue|default:0 }}
+                                </span>
+                              </a>
                             </div>
                           </div>
                           <div style="margin-bottom: 0px;line-height: 24px;">
                             <div style="display: inline-block;width:74%">
-                              <span style="margin: 0;padding: 0;border: 0;outline: 0;font-weight: bold;font-style: inherit;font-size: 20px;vertical-align: baseline;color: #4CAF50;">
-                                Completed
-                              </span>
+                              <a href="{{ base_link }}{{ status_queries.completed }}" style="text-decoration: none;">
+                                <span style="margin: 0;padding: 0;border: 0;outline: 0;font-weight: bold;font-style: inherit;font-size: 20px;vertical-align: baseline;color: #4CAF50;">
+                                  {{ status_labels.completed }}
+                                </span>
+                              </a>
                             </div>
                             <div style="display:inline-block;width:25%;text-align:right;">
-                              <span style="margin: 0;padding: 0;border: 0;outline: 0;font-weight: bold;font-style: inherit;font-size: 20px;vertical-align: baseline;text-align: center;letter-spacing: -0.01em;color: #4CAF50;display: inline-block;">
-                                {{ completed|default:0 }}
-                              </span>
+                              <a href="{{ base_link }}{{ status_queries.completed }}" style="text-decoration: none;">
+                                <span style="margin: 0;padding: 0;border: 0;outline: 0;font-weight: bold;font-style: inherit;font-size: 20px;vertical-align: baseline;text-align: center;letter-spacing: -0.01em;color: #4CAF50;display: inline-block;">
+                                  {{ completed|default:0 }}
+                                </span>
+                              </a>
                             </div>
                           </div>
                         </div>
@@ -149,9 +165,11 @@
                     <td class="pad" style="padding: 24px;">
                       <div style="font-family:Arial,sans-serif">
                         <div style="width:64%;display:inline-block;vertical-align:middle;">
-                          <span style="margin: 0;padding: 0;border: 0;outline: 0;font-weight: 800;font-style: inherit;font-size: 20px;font-family:'Times New Roman', serif;line-height: 24px;color: #262522;display: block;">
-                            {{ template.template_name }}
-                          </span>
+                          <a href="{{ base_link }}?{{ template_query_param }}={{ template.template_id }}" style="text-decoration: none;">
+                            <span style="margin: 0;padding: 0;border: 0;outline: 0;font-weight: 800;font-style: inherit;font-size: 20px;font-family:'Times New Roman', serif;line-height: 24px;color: #262522;display: block;">
+                              {{ template.template_name }}
+                            </span>
+                          </a>
                         </div>
                         <div style="width:35%;display:inline-block;vertical-align:middle;text-align:right;">
                           <div style="text-align:center;width:40px;height:24px;padding-top:8px;padding-bottom:8px;font-weight: 800;font-size: 20px;line-height: 24px;border-radius: 8px;background-color:#E9F5FE;color:#2196F3;border-left:4px solid white;border-right:4px solid white;font-family:inherit;display:inline-block;margin-right:4px;">
@@ -173,9 +191,11 @@
                         {% for task in template.tasks %}
                         <div style="margin-top: 16px; border-top: 1px solid #f0f0f0; padding-top: 16px;">
                           <div style="width:64%;display:inline-block;vertical-align:middle;">
-                            <span style="margin: 0;padding: 0;border: 0;outline: 0;font-weight: 800;font-style: inherit;font-size: 15px;font-family:'Arial', sans-serif;line-height: 20px;color: #262522;display: block;">
-                              {{ task.task_name }}
-                            </span>
+                            <a href="{{ base_link }}?{{ template_query_param }}={{ template.template_id }}&template-step={{ task.task_id }}" style="text-decoration: none;">
+                              <span style="margin: 0;padding: 0;border: 0;outline: 0;font-weight: 800;font-style: inherit;font-size: 15px;font-family:'Arial', sans-serif;line-height: 20px;color: #262522;display: block;">
+                                {{ task.task_name }}
+                              </span>
+                            </a>
                           </div>
                           <div style="width:35%;display:inline-block;vertical-align:middle;text-align:right;">
                             <div style="text-align:center;width:40px;height:24px;font-size: 15px;line-height: 20px;border-radius: 8px;background-color:white;color:#2196F3;border-left:4px solid white;border-right:4px solid white;font-family:'Arial', sans-serif;font-weight: bold;display:inline-block;margin-right:4px;">
@@ -277,4 +297,3 @@
   </tbody>
 </table>
 {% endblock %}
-
