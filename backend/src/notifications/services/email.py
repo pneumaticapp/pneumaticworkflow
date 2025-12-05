@@ -26,6 +26,7 @@ from src.notifications.enums import (
     EmailProvider,
     EmailType,
     NotificationMethod,
+    email_titles,
 )
 from src.notifications.services.base import (
     NotificationService,
@@ -51,27 +52,6 @@ class EmailService(NotificationService):
             else SMTPEmailClient
         )
         self.client: EmailClient = client_cls(account_id=account_id)
-
-    TITLES = {
-        NotificationMethod.new_task: "You've been assigned a task",
-        NotificationMethod.returned_task: 'A task was returned to you',
-        NotificationMethod.overdue_task: 'You Have an Overdue Task',
-        NotificationMethod.guest_new_task: "Has Invited You to the",
-        NotificationMethod.unread_notifications: (
-            'You have unread notifications'
-        ),
-        NotificationMethod.reset_password: 'Forgot Your Password?',
-        NotificationMethod.mention: 'You have been mentioned',
-        NotificationMethod.workflows_digest: 'Workflows Weekly Digest',
-        NotificationMethod.tasks_digest: 'Tasks Weekly Digest',
-        NotificationMethod.user_deactivated: (
-            'Your Pneumatic profile was deactivated.'
-        ),
-        NotificationMethod.user_transfer: (
-            'invited you to join team on Pneumatic!'
-        ),
-        NotificationMethod.verification: 'Welcome to Pneumatic!',
-    }
 
     ALLOWED_METHODS = {
         NotificationMethod.new_task,
@@ -195,7 +175,7 @@ class EmailService(NotificationService):
         )
 
         data = {
-            'title': self.TITLES[NotificationMethod.new_task],
+            'title': email_titles[NotificationMethod.new_task],
             'template': template_name,
             'workflow_name': workflow_name,
             'task_name': task_name,
@@ -247,7 +227,7 @@ class EmailService(NotificationService):
         )
 
         data = {
-            'title': self.TITLES[NotificationMethod.returned_task],
+            'title': email_titles[NotificationMethod.returned_task],
             'template': template_name,
             'workflow_name': workflow_name,
             'task_name': task_name,
@@ -312,7 +292,7 @@ class EmailService(NotificationService):
             template_code=EmailType.OVERDUE_TASK,
             method_name=NotificationMethod.overdue_task,
             data={
-                'title': self.TITLES[NotificationMethod.overdue_task],
+                'title': email_titles[NotificationMethod.overdue_task],
                 'template': template_name,
                 'workflow_id': workflow_id,
                 'workflow_name': workflow_name,
@@ -351,7 +331,7 @@ class EmailService(NotificationService):
             f'?token={token}&utm_campaign=guestUser&utm_term={user_id}'
         )
         title = (
-            f'{sender_name} {self.TITLES[NotificationMethod.guest_new_task]} '
+            f'{sender_name} {email_titles[NotificationMethod.guest_new_task]} '
             f'{task_name} Task'
         )
 
@@ -417,7 +397,7 @@ class EmailService(NotificationService):
             template_code=EmailType.UNREAD_NOTIFICATIONS,
             method_name=NotificationMethod.unread_notifications,
             data={
-                'title': self.TITLES[NotificationMethod.unread_notifications],
+                'title': email_titles[NotificationMethod.unread_notifications],
                 'content': content,
                 'user_name': user_first_name,
                 'button_text': 'View Notifications',
@@ -453,7 +433,7 @@ class EmailService(NotificationService):
             template_code=EmailType.RESET_PASSWORD,
             method_name=NotificationMethod.reset_password,
             data={
-                'title': self.TITLES[NotificationMethod.reset_password],
+                'title': email_titles[NotificationMethod.reset_password],
                 'content': content,
                 'additional_content': additional_content,
                 'button_text': 'Reset my password',
@@ -485,7 +465,7 @@ class EmailService(NotificationService):
             template_code=EmailType.MENTION,
             method_name=NotificationMethod.mention,
             data={
-                'title': self.TITLES[NotificationMethod.mention],
+                'title': email_titles[NotificationMethod.mention],
                 'content': content,
                 'logo_lg': self.logo_lg,
                 'button_text': 'View Mentions',
@@ -503,13 +483,13 @@ class EmailService(NotificationService):
     ):
 
         self._send(
-            title=self.TITLES[NotificationMethod.user_deactivated],
+            title=str(messages.MSG_NF_0015),
             user_id=user_id,
             user_email=user_email,
             template_code=EmailType.USER_DEACTIVATED,
             method_name=NotificationMethod.user_deactivated,
             data={
-                'title': self.TITLES[NotificationMethod.user_deactivated],
+                'title': email_titles[NotificationMethod.user_deactivated],
                 'logo_lg': self.logo_lg,
             },
         )
@@ -536,7 +516,7 @@ class EmailService(NotificationService):
         )
 
         self._send(
-            title=self.TITLES[NotificationMethod.user_transfer],
+            title=str(messages.MSG_NF_0016),
             user_id=user_id,
             user_email=user_email,
             template_code=EmailType.USER_TRANSFER,
@@ -544,7 +524,7 @@ class EmailService(NotificationService):
             data={
                 'title': (
                     f'{invited_by_name} '
-                    f'{self.TITLES[NotificationMethod.user_transfer]}'
+                    f'{email_titles[NotificationMethod.user_transfer]}'
                 ),
                 'content': content,
                 'button_text': 'Transfer My Profile',
@@ -576,13 +556,13 @@ class EmailService(NotificationService):
         )
 
         self._send(
-            title=self.TITLES[NotificationMethod.verification],
+            title=str(messages.MSG_NF_0017),
             user_id=user_id,
             user_email=user_email,
             template_code=EmailType.ACCOUNT_VERIFICATION,
             method_name=NotificationMethod.verification,
             data={
-                'title': self.TITLES[NotificationMethod.verification],
+                'title': email_titles[NotificationMethod.verification],
                 'content': content,
                 'button_text': 'Get Started',
                 'token': token,
@@ -618,7 +598,7 @@ class EmailService(NotificationService):
         )
 
         data = {
-            'title': self.TITLES[NotificationMethod.workflows_digest],
+            'title': email_titles[NotificationMethod.workflows_digest],
             'date_from': date_from.strftime('%d %b'),
             'date_to': date_to.strftime('%d %b, %Y'),
             'unsubscribe_token': unsubscribe_token,
@@ -644,7 +624,7 @@ class EmailService(NotificationService):
             **digest,
         }
         self._send(
-            title=self.TITLES[NotificationMethod.workflows_digest],
+            title=str(messages.MSG_NF_0018),
             user_id=user_id,
             user_email=user_email,
             template_code=EmailType.WORKFLOWS_DIGEST,
@@ -678,7 +658,7 @@ class EmailService(NotificationService):
         )
 
         data = {
-            'title': self.TITLES[NotificationMethod.tasks_digest],
+            'title': email_titles[NotificationMethod.tasks_digest],
             'date_from': date_from.strftime('%d %b'),
             'date_to': date_to.strftime('%d %b, %Y'),
             'unsubscribe_token': unsubscribe_token,
@@ -704,7 +684,7 @@ class EmailService(NotificationService):
             **digest,
         }
         self._send(
-            title=self.TITLES[NotificationMethod.tasks_digest],
+            title=str(messages.MSG_NF_0019),
             user_id=user_id,
             user_email=user_email,
             template_code=EmailType.TASKS_DIGEST,

@@ -145,3 +145,20 @@ cio_template_ids = {
     EmailType.OVERDUE_TASK: env.get('CIO_TEMPLATE__OVERDUE_TASK'),
     EmailType.MENTION: env.get('CIO_TEMPLATE__MENTION'),
 }
+
+email_titles = {
+    NotificationMethod.new_task: "You've been assigned a task",
+    NotificationMethod.returned_task: 'A task was returned to you',
+    NotificationMethod.overdue_task: 'You Have an Overdue Task',
+    NotificationMethod.guest_new_task: "Has Invited You to the",
+    NotificationMethod.unread_notifications: 'You have unread notifications',
+    NotificationMethod.reset_password: 'Forgot Your Password?',
+    NotificationMethod.mention: 'You have been mentioned',
+    NotificationMethod.workflows_digest: 'Workflows Weekly Digest',
+    NotificationMethod.tasks_digest: 'Tasks Weekly Digest',
+    NotificationMethod.user_deactivated: (
+        'Your Pneumatic profile was deactivated.'
+    ),
+    NotificationMethod.user_transfer: 'invited you to join team on Pneumatic!',
+    NotificationMethod.verification: 'Welcome to Pneumatic!',
+}
