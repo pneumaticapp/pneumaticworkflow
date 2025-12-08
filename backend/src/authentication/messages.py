@@ -48,10 +48,6 @@ MSG_AU_0018 = lambda domain: format_lazy(
     domain=domain,
 )
 MSG_AU_0019 = _(
-    'SSO settings are not properly configured. '
-    'Please contact your administrator.',
-)
-MSG_AU_0020 = _(
     'This account does not use SSO authentication. '
     'Please contact support.',
 )

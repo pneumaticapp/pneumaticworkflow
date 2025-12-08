@@ -5,11 +5,23 @@ import pytest
 import requests
 from django.contrib.auth import get_user_model
 
-from src.accounts.enums import SourceType
-from src.authentication.models import AccessToken
+from src.accounts.enums import (
+    UserStatus,
+    UserInviteStatus,
+    SourceType,
+)
+from src.accounts.models import UserInvite
+from src.authentication.messages import MSG_AU_0018
+from src.authentication.models import (
+    Account,
+    AccessToken,
+)
 from src.authentication.services import exceptions
 from src.authentication.services.okta import OktaService
-from src.processes.tests.fixtures import create_test_admin
+from src.processes.tests.fixtures import (
+    create_test_admin,
+    create_test_account,
+)
 from src.utils.logging import SentryLogLevel
 
 pytestmark = pytest.mark.django_db
@@ -382,6 +394,7 @@ def test_get_user_profile__ok(mocker):
         new=settings_mock,
     )
     settings_mock.OKTA_DOMAIN = domain
+    settings_mock.OKTA_CLIENT_SECRET = 'test_secret'
     settings_mock.PROJECT_CONF = {
         'SSO_AUTH': True,
         'SSO_PROVIDER': 'okta',
@@ -427,6 +440,7 @@ def test_get_user_profile__request_error__raise_exception(mocker):
         new=settings_mock,
     )
     settings_mock.OKTA_DOMAIN = domain
+    settings_mock.OKTA_CLIENT_SECRET = 'test_secret'
     settings_mock.PROJECT_CONF = {
         'SSO_AUTH': True,
         'SSO_PROVIDER': 'okta',
@@ -444,6 +458,69 @@ def test_get_user_profile__request_error__raise_exception(mocker):
         message='Okta user profile request failed: HTTP Error',
         level=SentryLogLevel.ERROR,
     )
+
+
+def test_get_config__domain_not_found_fallback_to_default__ok(mocker):
+    """If domain configuration is not found, default configuration is used."""
+    # arrange
+    domain = 'nonexistent.domain.com'
+    default_client_id = 'default_client_id'
+    default_client_secret = 'default_client_secret'
+    default_domain = 'dev-default.okta.com'
+    default_redirect_uri = 'https://default.redirect/uri'
+    settings_mock = mocker.patch(
+        'src.authentication.services.base_sso.settings',
+    )
+    mocker.patch(
+        'src.authentication.services.okta.settings',
+        new=settings_mock,
+    )
+    settings_mock.OKTA_CLIENT_ID = default_client_id
+    settings_mock.OKTA_CLIENT_SECRET = default_client_secret
+    settings_mock.OKTA_DOMAIN = default_domain
+    settings_mock.OKTA_REDIRECT_URI = default_redirect_uri
+    settings_mock.PROJECT_CONF = {
+        'SSO_AUTH': True,
+        'SSO_PROVIDER': 'okta',
+    }
+
+    # act
+    service = OktaService(domain=domain)
+
+    # assert
+    assert service.config.client_id == default_client_id
+    assert service.config.client_secret == default_client_secret
+    assert service.config.domain == default_domain
+    assert service.config.redirect_uri == default_redirect_uri
+
+
+def test_get_config__domain_not_found_and_no_default__raise_exception(mocker):
+    """
+    If domain configuration is not found
+    and default configuration is also unavailable, an exception is raised
+    with a message about incorrect SSO configuration.
+    """
+    # arrange
+    domain = 'nonexistent.domain.com'
+    settings_mock = mocker.patch(
+        'src.authentication.services.base_sso.settings',
+    )
+    mocker.patch(
+        'src.authentication.services.okta.settings',
+        new=settings_mock,
+    )
+    settings_mock.OKTA_CLIENT_SECRET = None
+    settings_mock.PROJECT_CONF = {
+        'SSO_AUTH': True,
+        'SSO_PROVIDER': 'okta',
+    }
+
+    # act
+    with pytest.raises(exceptions.OktaServiceException) as exc_info:
+        OktaService(domain=domain)
+
+    # assert
+    assert str(exc_info.value) == MSG_AU_0018(domain)
 
 
 def test_save_tokens_for_user__create__ok(mocker):
@@ -561,10 +638,10 @@ def test_authenticate_user__existing_user__ok(mocker):
         'src.authentication.services.user_auth.AuthService.get_auth_token',
         return_value=token,
     )
-    user_get_mock = mocker.patch(
-        'src.authentication.services.okta.UserModel.objects.active',
+    user_filter_mock = mocker.patch(
+        'src.authentication.services.base_sso.UserModel.objects.filter',
     )
-    user_get_mock.return_value.get.return_value = user
+    user_filter_mock.return_value.first.return_value = user
     save_tokens_mock = mocker.patch(
         'src.authentication.services.okta.OktaService.save_tokens_for_user',
     )
@@ -600,9 +677,8 @@ def test_authenticate_user__existing_user__ok(mocker):
     get_first_access_token_mock.assert_called_once_with(code, state)
     get_user_profile_mock.assert_called_once_with(access_token)
     get_user_data_mock.assert_called_once_with(user_profile)
-    user_get_mock.return_value.get.assert_called_once_with(
-        email='test@example.com',
-    )
+    user_filter_mock.assert_called_once_with(email='test@example.com')
+    user_filter_mock.return_value.first.assert_called_once()
     get_auth_token_mock.assert_called_once_with(
         user=user,
         user_agent=user_agent,
@@ -610,3 +686,245 @@ def test_authenticate_user__existing_user__ok(mocker):
     )
     save_tokens_mock.assert_called_once_with(user)
     analytics_mock.assert_called_once()
+
+
+def test_authenticate_user__invited_user_activated__ok(mocker):
+    """Test that invited user is activated using UserInviteService."""
+    # arrange
+    account = create_test_account()
+    invited_user = create_test_admin(
+        email='invited@example.com',
+        account=account,
+        status=UserStatus.INVITED,
+    )
+    invited_user.is_active = False
+    invited_user.save()
+    UserInvite.objects.create(
+        invited_user=invited_user,
+        account=account,
+        email=invited_user.email,
+    )
+    token = 'test_token'
+    access_token = 'okta_access_token'
+    code = 'test_code'
+    state = 'test_state'
+    user_agent = 'Test-Agent'
+    user_ip = '127.0.0.1'
+    user_profile = {
+        'sub': '00uid4BxXw6I6TV4m0g3',
+        'email': 'invited@example.com',
+        'given_name': 'Updated',
+        'family_name': 'Name',
+    }
+    user_data = {
+        'email': 'invited@example.com',
+        'first_name': 'Updated',
+        'last_name': 'Name',
+    }
+    get_first_access_token_mock = mocker.patch(
+        'src.authentication.services.okta.'
+        'OktaService._get_first_access_token',
+        return_value=access_token,
+    )
+    get_user_profile_mock = mocker.patch(
+        'src.authentication.services.okta.OktaService._get_user_profile',
+        return_value=user_profile,
+    )
+    get_user_data_mock = mocker.patch(
+        'src.authentication.services.okta.OktaService.get_user_data',
+        return_value=user_data,
+    )
+    get_auth_token_mock = mocker.patch(
+        'src.authentication.services.user_auth.AuthService.get_auth_token',
+        return_value=token,
+    )
+    save_tokens_mock = mocker.patch(
+        'src.authentication.services.okta.OktaService.save_tokens_for_user',
+    )
+    mocker.patch(
+        'src.processes.services.system_workflows.SystemWorkflowService'
+        '.create_onboarding_workflows',
+    )
+    mocker.patch(
+        'src.processes.services.system_workflows.SystemWorkflowService'
+        '.create_activated_workflows',
+    )
+    mocker.patch(
+        'src.accounts.services.account.AccountService.update_users_counts',
+    )
+    mocker.patch(
+        'src.notifications.tasks.send_user_updated_notification.delay',
+    )
+    mocker.patch(
+        'src.payment.tasks.increase_plan_users.delay',
+    )
+    mocker.patch(
+        'src.analysis.services.AnalyticService.users_joined',
+    )
+    mocker.patch(
+        'src.accounts.services.user_invite.UserInviteService.identify',
+    )
+    mocker.patch(
+        'src.accounts.services.user_invite.UserInviteService.group',
+    )
+    users_logged_in_mock = mocker.patch(
+        'src.analysis.services.AnalyticService.users_logged_in',
+    )
+    settings_mock = mocker.patch(
+        'src.authentication.services.base_sso.settings',
+    )
+    mocker.patch(
+        'src.authentication.services.okta.settings',
+        new=settings_mock,
+    )
+    settings_mock.PROJECT_CONF = {
+        'SSO_AUTH': True,
+        'SSO_PROVIDER': 'okta',
+        'BILLING': False,
+    }
+    settings_mock.OKTA_CLIENT_SECRET = 'test_secret'
+    service = OktaService()
+
+    # act
+    result_user, result_token = service.authenticate_user(
+        code,
+        state,
+        user_agent,
+        user_ip,
+    )
+
+    # assert
+    invited_user.refresh_from_db()
+    assert invited_user.status == UserStatus.ACTIVE
+    assert invited_user.is_active is True
+    assert invited_user.first_name == 'Updated'
+    assert invited_user.last_name == 'Name'
+    invite = UserInvite.objects.get(invited_user=invited_user)
+    assert invite.status == UserInviteStatus.ACCEPTED
+    assert result_user == invited_user
+    assert result_token == token
+    get_first_access_token_mock.assert_called_once_with(code, state)
+    get_user_profile_mock.assert_called_once_with(access_token)
+    get_user_data_mock.assert_called_once_with(user_profile)
+    get_auth_token_mock.assert_called_once_with(
+        user=invited_user,
+        user_agent=user_agent,
+        user_ip=user_ip,
+    )
+    save_tokens_mock.assert_called_once_with(invited_user)
+    users_logged_in_mock.assert_called_once()
+
+
+def test_authenticate_user__inactive_user_creates_new__ok(mocker):
+    """Inactive user is treated as non-existent and new user is created."""
+    # arrange
+    account = create_test_account()
+    inactive_user = create_test_admin(
+        email='inactive@example.com',
+        account=account,
+        status=UserStatus.INACTIVE,
+    )
+    new_user = create_test_admin(
+        email='inactive@example.com',
+        account=account,
+    )
+    token = 'test_token'
+    access_token = 'okta_access_token'
+    code = 'test_code'
+    state = 'test_state'
+    user_agent = 'Test-Agent'
+    user_ip = '127.0.0.1'
+    user_profile = {
+        'sub': '00uid4BxXw6I6TV4m0g3',
+        'email': 'inactive@example.com',
+        'given_name': 'New',
+        'family_name': 'User',
+    }
+    user_data = {
+        'email': 'inactive@example.com',
+        'first_name': 'New',
+        'last_name': 'User',
+    }
+    get_first_access_token_mock = mocker.patch(
+        'src.authentication.services.okta.'
+        'OktaService._get_first_access_token',
+        return_value=access_token,
+    )
+    get_user_profile_mock = mocker.patch(
+        'src.authentication.services.okta.OktaService._get_user_profile',
+        return_value=user_profile,
+    )
+    get_user_data_mock = mocker.patch(
+        'src.authentication.services.okta.OktaService.get_user_data',
+        return_value=user_data,
+    )
+    get_auth_token_mock = mocker.patch(
+        'src.authentication.services.user_auth.AuthService.get_auth_token',
+        return_value=token,
+    )
+    save_tokens_mock = mocker.patch(
+        'src.authentication.services.okta.OktaService.save_tokens_for_user',
+    )
+    user_filter_mock = mocker.patch(
+        'src.authentication.services.base_sso.UserModel.objects.filter',
+    )
+    user_filter_mock.return_value.first.return_value = inactive_user
+    join_existing_account_mock = mocker.patch(
+        'src.authentication.services.base_sso.BaseSSOService'
+        '.join_existing_account',
+        return_value=new_user,
+    )
+    update_users_counts_mock = mocker.patch(
+        'src.accounts.services.account.AccountService.update_users_counts',
+    )
+    users_logged_in_mock = mocker.patch(
+        'src.analysis.services.AnalyticService.users_logged_in',
+    )
+    account_first_mock = mocker.patch.object(
+        Account.objects,
+        'first',
+        return_value=account,
+    )
+    settings_mock = mocker.patch(
+        'src.authentication.services.base_sso.settings',
+    )
+    mocker.patch(
+        'src.authentication.services.okta.settings',
+        new=settings_mock,
+    )
+    settings_mock.PROJECT_CONF = {
+        'SSO_AUTH': True,
+        'SSO_PROVIDER': 'okta',
+        'BILLING': False,
+    }
+    settings_mock.OKTA_CLIENT_SECRET = 'test_secret'
+    service = OktaService()
+
+    # act
+    result_user, result_token = service.authenticate_user(
+        code,
+        state,
+        user_agent,
+        user_ip,
+    )
+
+    # assert
+    assert result_user == new_user
+    assert result_token == token
+    get_first_access_token_mock.assert_called_once_with(code, state)
+    get_user_profile_mock.assert_called_once_with(access_token)
+    get_user_data_mock.assert_called_once_with(user_profile)
+    user_filter_mock.assert_called_once_with(email='inactive@example.com')
+    account_first_mock.assert_called_once()
+    join_existing_account_mock.assert_called_once_with(
+        account=account,
+        **user_data,
+    )
+    update_users_counts_mock.assert_called_once()
+    get_auth_token_mock.assert_called_once_with(
+        user=new_user,
+        user_agent=user_agent,
+        user_ip=user_ip,
+    )
+    save_tokens_mock.assert_called_once_with(new_user)
+    users_logged_in_mock.assert_called_once()

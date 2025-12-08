@@ -2,10 +2,15 @@ import json
 from abc import ABC, abstractmethod
 from typing import Dict, Optional, Tuple, Union
 
+from django.db import transaction
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from rest_framework.exceptions import AuthenticationFailed
 
+from src.accounts.enums import UserStatus
+from src.accounts.models import UserInvite
+from src.accounts.services.account import AccountService
+from src.accounts.services.user_invite import UserInviteService
 from src.analysis.services import AnalyticService
 from src.authentication.entities import UserData, SSOConfigData
 from src.authentication.enums import (
@@ -15,7 +20,7 @@ from src.authentication.enums import (
 from src.authentication.messages import (
     MSG_AU_0015,
     MSG_AU_0017,
-    MSG_AU_0020,
+    MSG_AU_0019,
 )
 from src.authentication.models import (
     Account,
@@ -99,9 +104,7 @@ class BaseSSOService(SignUpMixin, CacheMixin, EncryptionMixin, ABC):
         if sso_provider and sso_provider != self.sso_provider:
             raise self.exception_class(MSG_AU_0015)
 
-        if domain:
-            return self._get_config_by_domain(domain)
-        return self._get_default_config()
+        return self._get_default_config() or self._get_config_by_domain(domain)
 
     @abstractmethod
     def _get_config_by_domain(self, domain: str) -> SSOConfigData:
@@ -270,27 +273,22 @@ class BaseSSOService(SignUpMixin, CacheMixin, EncryptionMixin, ABC):
         user_agent: Optional[str],
         user_ip: Optional[str],
     ) -> Tuple[UserModel, PneumaticToken]:
-        try:
-            user = UserModel.objects.active().get(email=user_data['email'])
-        except UserModel.DoesNotExist as exc:
-            # Fallback: try to find account by first available
-            # This is temporary solution as discussed
-            existing_account = Account.objects.first()
-            if not existing_account:
-                raise AuthenticationFailed(MSG_AU_0020) from exc
-            user, token = self.join_existing_account(
-                account=existing_account,
-                **user_data,
-            )
+        existing_user = (
+            UserModel.objects.filter(email=user_data['email']).first()
+        )
+        if existing_user and existing_user.status != UserStatus.INACTIVE:
+            if existing_user.status == UserStatus.ACTIVE:
+                user = existing_user
+            else:
+                user = self._activate_invited_user(existing_user, user_data)
         else:
-            token = AuthService.get_auth_token(
-                user=user,
-                user_agent=user_agent,
-                user_ip=user_ip,
-            )
-
+            user = self._create_new_user(user_data)
+        token = AuthService.get_auth_token(
+            user=user,
+            user_agent=user_agent,
+            user_ip=user_ip,
+        )
         self.save_tokens_for_user(user)
-
         AnalyticService.users_logged_in(
             user=user,
             is_superuser=False,
@@ -298,3 +296,46 @@ class BaseSSOService(SignUpMixin, CacheMixin, EncryptionMixin, ABC):
             source=self.source,
         )
         return user, token
+
+    def _activate_invited_user(
+        self,
+        invited_user: UserModel,
+        user_data: UserData,
+    ) -> UserModel:
+        invite = UserInvite.objects.get(invited_user=invited_user)
+        invite_service = UserInviteService(
+            current_url='',
+            auth_type=AuthTokenType.USER,
+            send_email=False,
+        )
+        with transaction.atomic():
+            user = invite_service.accept(
+                invite=invite,
+                first_name=user_data.get(
+                    'first_name',
+                    invited_user.first_name,
+                ),
+                last_name=user_data.get('last_name', invited_user.last_name),
+            )
+            if user_data.get('photo'):
+                user.photo = user_data['photo']
+                user.save(update_fields=['photo'])
+        return user
+
+    def _create_new_user(
+        self,
+        user_data: UserData,
+    ) -> UserModel:
+        existing_account = Account.objects.first()
+        if not existing_account:
+            raise AuthenticationFailed(MSG_AU_0019)
+        user = self.join_existing_account(
+            account=existing_account,
+            **user_data,
+        )
+        account_service = AccountService(
+            instance=user.account,
+            user=user,
+        )
+        account_service.update_users_counts()
+        return user
