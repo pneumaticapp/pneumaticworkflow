@@ -19,7 +19,7 @@ import { isArrayWithItems } from '../../utils/helpers';
 import { TUserListItem } from '../../types/user';
 import { ITemplateTitleBaseWithCount } from '../../types/template';
 import { Placeholder, Button } from '../UI';
-import { TOpenWorkflowLogPopupPayload } from '../../redux/actions';
+import { TOpenWorkflowLogPopupPayload } from '../../redux/workflows/types';
 
 import { HighlightsPlaceholderIcon } from './HighlightsPlaceholderIcon';
 import { TemplatesFilter } from './TemplatesFilter';

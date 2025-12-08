@@ -13,7 +13,7 @@ import {
 } from '../../types/workflow';
 import { IKickoff } from '../../types/template';
 import { isDesktop } from '../../utils/media';
-import { isArrayWithItems, isObjectChanged } from '../../utils/helpers';
+import { isObjectChanged } from '../../utils/helpers';
 import { EGeneralActions, TGeneralActions } from '../actions';
 import { getWorkflowViewStorageState, setWorkflowViewStorageState } from '../../utils/workflows/filters';
 
@@ -83,69 +83,6 @@ export const INIT_STATE: IStoreWorkflows = {
 
 export const reducer = (state = INIT_STATE, action: TWorkflowsActions | TGeneralActions): IStoreWorkflows => {
   switch (action.type) {
-    case EWorkflowsActions.OpenWorkflowLogPopup:
-      return produce(state, (draftState) => {
-        draftState.workflowLog.isOpen = true;
-        draftState.workflowLog.workflowId = action.payload.workflowId;
-      });
-    case EWorkflowsActions.CloseWorkflowLogPopup:
-      return produce(state, (draftState) => {
-        draftState.workflowLog.isOpen = false;
-        draftState.workflowLog.isOnlyAttachmentsShown = false;
-      });
-    case EWorkflowsActions.ChangeWorkflowsSorting:
-      return produce(state, (draftState) => {
-        draftState.workflowsSettings.sorting = action.payload;
-      });
-    case EWorkflowsActions.ChangeWorkflow:
-      return produce(state, (draftState) => {
-        draftState.workflow = action.payload;
-      });
-    case EWorkflowsActions.ChangeWorkflowsList:
-      return produce(state, (draftState) => {
-        draftState.workflowsList = action.payload;
-        draftState.workflowsLoadingStatus = isArrayWithItems(action.payload.items)
-          ? EWorkflowsLoadingStatus.Loaded
-          : EWorkflowsLoadingStatus.EmptyList;
-      });
-    case EWorkflowsActions.ChangeWorkflowLog:
-      return produce(state, (draftState) => {
-        draftState.workflowLog = { ...state.workflowLog, ...action.payload };
-      });
-
-    case EWorkflowsActions.UpdateWorkflowLogItem:
-      return produce(state, (draftState) => {
-        const index = draftState.workflowLog.items.findIndex((item) => item.id === action.payload.id);
-
-        if (index !== -1) {
-          draftState.workflowLog.items[index] = action.payload;
-        } else {
-          draftState.workflowLog.items = [action.payload, ...draftState.workflowLog.items];
-        }
-      });
-
-    case EWorkflowsActions.ChangeWorkflowLogViewSettings:
-      return produce(state, (draftState) => {
-        draftState.workflowLog.isCommentsShown = action.payload.comments;
-        draftState.workflowLog.isOnlyAttachmentsShown = action.payload.isOnlyAttachmentsShown;
-        draftState.workflowLog.sorting = action.payload.sorting;
-      });
-    case EWorkflowsActions.ChangeWorkflowsSearchText:
-      return {
-        ...state,
-        workflowsLoadingStatus: EWorkflowsLoadingStatus.LoadingList,
-        workflowsSearchText: action.payload,
-      };
-    case EWorkflowsActions.SetWorkflowIsLoading:
-      return produce(state, (draftState) => {
-        draftState.isWorkflowLoading = action.payload;
-      });
-    case EWorkflowsActions.LoadWorkflowsList:
-      return {
-        ...state,
-        workflowsLoadingStatus:
-          action.payload === 0 ? EWorkflowsLoadingStatus.LoadingList : EWorkflowsLoadingStatus.LoadingNextPage,
-      };
     case EWorkflowsActions.LoadWorkflow:
       return produce(state, (draftState) => {
         draftState.workflowLog.workflowId = action.payload;

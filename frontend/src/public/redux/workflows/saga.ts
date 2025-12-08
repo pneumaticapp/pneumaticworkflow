@@ -2,16 +2,10 @@ import uniqBy from 'lodash.uniqby';
 import { all, fork, put, takeEvery, select, takeLatest, call, delay, take, takeLeading } from 'redux-saga/effects';
 import { EventChannel } from 'redux-saga';
 
+import { PayloadAction } from '@reduxjs/toolkit';
 import {
-  changeWorkflowsList,
-  changeWorkflow,
-  changeWorkflowLog,
   loadWorkflowsListFailed,
-  setWorkflowIsLoading,
-  TChangeWorkflowLogViewSettings,
-  TLoadWorkflowsList,
   TLoadWorkflow,
-  loadWorkflowsList,
   TWorkflowFinished,
   TEditWorkflow,
   TSendWorkflowLogComment,
@@ -32,7 +26,16 @@ import {
   patchTaskInList,
   updateTaskWorkflowLogItem,
 } from '../actions';
-
+import {
+  changeWorkflow,
+  changeWorkflowsList,
+  changeWorkflowLog,
+  changeWorkflowLogViewSettings,
+  changeWorkflowsSearchText,
+  setWorkflowIsLoading,
+  loadWorkflowsList,
+  openWorkflowLogPopup, closeWorkflowLogPopup, updateWorkflowLogItem } from './slice';
+import { IChangeWorkflowLogViewSettingsPayload , TOpenWorkflowLogPopupPayload } from './types';
 import {
   IWorkflowLogItem,
   EWorkflowsLogSorting,
@@ -74,8 +77,6 @@ import {
   loadWorkflowsFilterStepsFailed,
   TCloneWorkflow,
   TReturnWorkflowToTask,
-  closeWorkflowLogPopup,
-  TOpenWorkflowLogPopup,
   setCurrentPerformersCounters,
   setWorkflowStartersCounters,
   TWorkflowResumed,
@@ -86,7 +87,6 @@ import {
   patchWorkflowDetailed,
   EWorkflowsActions,
   TDeleteComment,
-  updateWorkflowLogItem,
   TEditComment,
   TWatchedComment,
   TDeleteReactionComment,
@@ -96,6 +96,10 @@ import {
   setWorkflowsPresetsRedux,
   TSaveWorkflowsPreset,
 } from './actions';
+
+
+
+
 import { handleLoadTemplateVariables } from '../templates/saga';
 
 import { deleteWorkflow } from '../../api/deleteWorkflow';
@@ -185,7 +189,7 @@ function* fetchWorkflow({ payload: id }: TLoadWorkflow) {
 
 function* handleOpenWorkflowLogPopup({
   payload: { workflowId, shouldSetWorkflowDetailUrl, redirectTo404IfNotFound },
-}: TOpenWorkflowLogPopup) {
+}: PayloadAction<TOpenWorkflowLogPopupPayload>) {
   try {
     if (shouldSetWorkflowDetailUrl) {
       const newUrl = ERoutes.WorkflowDetail.replace(':id', String(workflowId)) + history.location.search;
@@ -210,7 +214,7 @@ function* handleOpenWorkflowLogPopup({
 
 function* fetchWorkflowLog({
   payload: { id, sorting, comments, isOnlyAttachmentsShown },
-}: TChangeWorkflowLogViewSettings) {
+}: PayloadAction<IChangeWorkflowLogViewSettingsPayload>) {
   yield put(changeWorkflowLog({ isLoading: true }));
 
   try {
@@ -232,7 +236,7 @@ function* fetchWorkflowLog({
   }
 }
 
-function* fetchWorkflowsList({ payload: offset = 0 }: TLoadWorkflowsList) {
+function* fetchWorkflowsList({ payload: offset = 0 }: PayloadAction<number>) {
   const {
     workflowsList,
     workflowsSettings: {
@@ -741,15 +745,15 @@ export function* handleApplyFilters() {
 }
 
 export function* watchFetchWorkflowsList() {
-  yield takeLeading(EWorkflowsActions.LoadWorkflowsList, fetchWorkflowsList);
+  yield takeLeading(loadWorkflowsList.type, fetchWorkflowsList);
 }
 
 export function* watchChangeWorkflowLogViewSettings() {
-  yield takeLatest(EWorkflowsActions.ChangeWorkflowLogViewSettings, fetchWorkflowLog);
+  yield takeLatest(changeWorkflowLogViewSettings.type, fetchWorkflowLog);
 }
 
 export function* watchOpenWorkflowLogPopup() {
-  yield takeEvery(EWorkflowsActions.OpenWorkflowLogPopup, handleOpenWorkflowLogPopup);
+  yield takeEvery(openWorkflowLogPopup.type, handleOpenWorkflowLogPopup);
 }
 
 export function* watchFetchWorkflow() {
@@ -948,7 +952,7 @@ export function* watchUpdateWorkflowStartersCounters() {
 }
 
 export function* watchSearchTextChanged() {
-  yield takeLatest(EWorkflowsActions.ChangeWorkflowsSearchText, handleSearchTextChanged);
+  yield takeLatest(changeWorkflowsSearchText.type, handleSearchTextChanged);
 }
 
 export function* watchUpdateWorkflowsTemplateStepsCounters() {

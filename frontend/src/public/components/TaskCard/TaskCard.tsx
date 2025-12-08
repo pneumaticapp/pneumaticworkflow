@@ -15,12 +15,12 @@ import {
   ISendWorkflowLogComment,
   TAddTaskPerformerPayload,
   TOpenModalPayload,
-  TOpenWorkflowLogPopupPayload,
   TRemoveTaskPerformerPayload,
   TSetTaskCompletedPayload,
   TSetTaskRevertedPayload,
   TSetWorkflowFinishedPayload,
 } from '../../redux/actions';
+import { TOpenWorkflowLogPopupPayload } from '../../redux/workflows/types';
 import { ExtraFieldsHelper } from '../TemplateEdit/ExtraFields/utils/ExtraFieldsHelper';
 import { getTaskDetailRoute, getWorkflowDetailedRoute, isTaskDetailRoute } from '../../utils/routes';
 import { Header } from '../UI/Typeography/Header';

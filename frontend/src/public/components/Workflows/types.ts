@@ -2,9 +2,9 @@ import { IWorkflowsList } from '../../types/redux';
 import {
   openSelectTemplateModal,
   TLoadWorkflowsFilterStepsPayload,
-  TOpenWorkflowLogPopupPayload,
   TRemoveWorkflowFromListPayload,
 } from '../../redux/actions';
+import { TOpenWorkflowLogPopupPayload } from '../../redux/workflows/types';
 import { IRunWorkflow } from '../WorkflowEditPopup/types';
 import { ITemplateTitle } from '../../types/template';
 import {

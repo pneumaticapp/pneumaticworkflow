@@ -6,7 +6,6 @@ import {
   setWorkflowsFilterStatus,
   loadWorkflowsFilterTemplates,
   setWorkflowsFilterTemplate,
-  changeWorkflowsSorting,
   setWorkflowsFilterPerfomers,
   setWorkflowsFilterWorkflowStarters,
   applyWorkflowsFilters,
@@ -18,6 +17,7 @@ import {
   updateWorkflowsTemplateStepsCounters,
   setWorkflowsFilterPerfomersGroup,
 } from '../../redux/workflows/actions';
+import { changeWorkflowsSorting } from '../../redux/workflows/slice';
 import { getActiveUsers } from '../../utils/users';
 import { getIsUserSubsribed } from '../../redux/selectors/user';
 import { IWorkflowsFiltersProps } from './types';

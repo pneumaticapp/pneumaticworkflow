@@ -9,7 +9,6 @@ import {
   clearWorkflow,
   addTaskPerformer,
   removeTaskPerformer,
-  openWorkflowLogPopup,
   setCurrentTaskDueDate,
   deleteCurrentTaskDueDate,
   openSelectTemplateModal,
@@ -17,6 +16,7 @@ import {
   changeTaskWorkflowLog,
   sendTaskWorkflowLogComments,
 } from '../../redux/actions';
+import { openWorkflowLogPopup } from '../../redux/workflows/slice';
 import { IApplicationState } from '../../types/redux';
 import { getNotDeletedUsers } from '../../utils/users';
 

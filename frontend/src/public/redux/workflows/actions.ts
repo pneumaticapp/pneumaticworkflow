@@ -1,14 +1,12 @@
-import { IWorkflowsList, ITypedReduxAction, IWorkflowLog } from '../../types/redux';
+import { ITypedReduxAction } from '../../types/redux';
 import { actionGenerator } from '../../utils/redux';
 import {
   EWorkflowsLogSorting,
-  EWorkflowsSorting,
   IWorkflowEditData,
   EWorkflowsStatus,
   TUserCounter,
   TTemplateStepCounter,
   EWorkflowsView,
-  IWorkflowLogItem,
   IWorkflowClient,
   IWorkflowDetailsClient,
 } from '../../types/workflow';
@@ -22,21 +20,11 @@ import { ICreateReaction } from '../../api/workflows/createReactionComment';
 import { IDeleteReaction } from '../../api/workflows/deleteReactionComment';
 
 export const enum EWorkflowsActions {
-  OpenWorkflowLogPopup = 'OPEN_WORKFLOW_LOG_POPUP',
-  CloseWorkflowLogPopup = 'CLOSE_WORKFLOW_LOG_POPUP',
-  ChangeWorkflowsList = 'CHANGE_WORKFLOWS_LIST',
   SetFilterStatus = 'CHANGE_WORKFLOWS_TYPE_SORTING',
-  ChangeWorkflow = 'CHANGE_WORKFLOW',
-  ChangeWorkflowLog = 'CHANGE_WORKFLOW_LOG',
-  ChangeWorkflowsSearchText = 'CHANGE_WORKFLOWS_SEARCH_TEXT',
   ResetWorkflows = 'RESET_WORKFLOWS',
   ResetWorkflowsList = 'RESET_WORKFLOWS_LIST',
-  ChangeWorkflowLogViewSettings = 'CHANGE_WORKFLOW_LOG_VIEW_SETTINGS',
-  ChangeWorkflowsSorting = 'CHANGE_WORKFLOWS_SORTING',
-  LoadWorkflowsList = 'LOAD_WORKFLOWS_LIST',
   LoadWorkflowsListFailed = 'LOAD_WORKFLOWS_LIST_FAILED',
   LoadWorkflow = 'LOAD_WORKFLOW',
-  SetWorkflowIsLoading = 'SET_WORKFLOW_IS_LOADING',
   SetWorkflowFinished = 'SET_WORKFLOW_FINISHED',
   SetWorkflowResumed = 'SET_WORKFLOW_RESUMED',
   EditWorkflow = 'EDIT_WORKFLOW',
@@ -66,7 +54,6 @@ export const enum EWorkflowsActions {
   PatchWorkflowDetailed = 'PATCH_WORKFLOW_DETAILED',
   RemoveWorkflowFromList = 'REMOVE_WORKFLOW_FROM_LIST',
   SetWorkflowsView = 'SET_WORKFLOWS_VIEW',
-  UpdateWorkflowLogItem = 'UPDATE_WORKFLOW_LOG_ITEM',
 
   SetFilterPerformers = 'SET_WORKFLOWS_FILTER_PERFORMERS',
   SetFilterPerformersGroup = 'SET_WORKFLOWS_FILTER_PERFORMERS_GROUP',
@@ -125,12 +112,6 @@ export interface IStartWorkflowPayload {
   dueDateTsp?: number | null;
 }
 
-export type TSetWorkflowIsLoading = ITypedReduxAction<EWorkflowsActions.SetWorkflowIsLoading, boolean>;
-export const setWorkflowIsLoading: (payload: boolean) => TSetWorkflowIsLoading = actionGenerator<
-  EWorkflowsActions.SetWorkflowIsLoading,
-  boolean
->(EWorkflowsActions.SetWorkflowIsLoading);
-
 export type TEditWorkflowSuccess = ITypedReduxAction<EWorkflowsActions.EditWorkflowSuccess, void>;
 export const editWorkflowSuccess: (payload?: void) => TEditWorkflowSuccess = actionGenerator<
   EWorkflowsActions.EditWorkflowSuccess,
@@ -152,62 +133,12 @@ export const editWorkflow: (payload: TEditWorkflowPayload) => TEditWorkflow = ac
   TEditWorkflowPayload
 >(EWorkflowsActions.EditWorkflow);
 
-export type TOpenWorkflowLogPopupPayload = {
-  workflowId: number;
-  redirectTo404IfNotFound?: boolean;
-  shouldSetWorkflowDetailUrl?: boolean;
-};
-
-export type TOpenWorkflowLogPopup = ITypedReduxAction<
-  EWorkflowsActions.OpenWorkflowLogPopup,
-  TOpenWorkflowLogPopupPayload
->;
-export const openWorkflowLogPopup: (payload: TOpenWorkflowLogPopupPayload) => TOpenWorkflowLogPopup = actionGenerator<
-  EWorkflowsActions.OpenWorkflowLogPopup,
-  TOpenWorkflowLogPopupPayload
->(EWorkflowsActions.OpenWorkflowLogPopup);
-
-export type TCloseWorkflowLogPopup = ITypedReduxAction<EWorkflowsActions.CloseWorkflowLogPopup, void>;
-export const closeWorkflowLogPopup: (payload?: void) => TCloseWorkflowLogPopup = actionGenerator<
-  EWorkflowsActions.CloseWorkflowLogPopup,
-  void
->(EWorkflowsActions.CloseWorkflowLogPopup);
-
-export type TChangeWorkflow = ITypedReduxAction<EWorkflowsActions.ChangeWorkflow, IWorkflowDetailsClient>;
-export const changeWorkflow: (payload: IWorkflowDetailsClient) => TChangeWorkflow = actionGenerator<
-  EWorkflowsActions.ChangeWorkflow,
-  IWorkflowDetailsClient
->(EWorkflowsActions.ChangeWorkflow);
-
-export type TChangeWorkflowLog = ITypedReduxAction<EWorkflowsActions.ChangeWorkflowLog, Partial<IWorkflowLog>>;
-export const changeWorkflowLog: (payload: Partial<IWorkflowLog>) => TChangeWorkflowLog = actionGenerator<
-  EWorkflowsActions.ChangeWorkflowLog,
-  Partial<IWorkflowLog>
->(EWorkflowsActions.ChangeWorkflowLog);
-
-export type TChangeWorkflowsSorting = ITypedReduxAction<EWorkflowsActions.ChangeWorkflowsSorting, EWorkflowsSorting>;
-export const changeWorkflowsSorting: (payload: EWorkflowsSorting) => TChangeWorkflowsSorting = actionGenerator<
-  EWorkflowsActions.ChangeWorkflowsSorting,
-  EWorkflowsSorting
->(EWorkflowsActions.ChangeWorkflowsSorting);
-
 export interface IChangeWorkflowLogViewSettingsPayload {
   id: number;
   sorting: EWorkflowsLogSorting;
   comments: boolean;
   isOnlyAttachmentsShown: boolean;
 }
-
-export type TChangeWorkflowLogViewSettings = ITypedReduxAction<
-  EWorkflowsActions.ChangeWorkflowLogViewSettings,
-  IChangeWorkflowLogViewSettingsPayload
->;
-export const changeWorkflowLogViewSettings: (
-  payload: IChangeWorkflowLogViewSettingsPayload,
-) => TChangeWorkflowLogViewSettings = actionGenerator<
-  EWorkflowsActions.ChangeWorkflowLogViewSettings,
-  IChangeWorkflowLogViewSettingsPayload
->(EWorkflowsActions.ChangeWorkflowLogViewSettings);
 
 export type TResetWorkflows = ITypedReduxAction<EWorkflowsActions.ResetWorkflows, void>;
 export const resetWorkflows: (payload?: void) => TResetWorkflows = actionGenerator<
@@ -220,29 +151,11 @@ export const loadWorkflow: (payload: number) => TLoadWorkflow = actionGenerator<
   EWorkflowsActions.LoadWorkflow,
 );
 
-export type TChangeWorkflowsList = ITypedReduxAction<EWorkflowsActions.ChangeWorkflowsList, IWorkflowsList>;
-export const changeWorkflowsList: (payload: IWorkflowsList) => TChangeWorkflowsList = actionGenerator<
-  EWorkflowsActions.ChangeWorkflowsList,
-  IWorkflowsList
->(EWorkflowsActions.ChangeWorkflowsList);
-
-export type TLoadWorkflowsList = ITypedReduxAction<EWorkflowsActions.LoadWorkflowsList, number>;
-export const loadWorkflowsList: (payload: number) => TLoadWorkflowsList = actionGenerator<
-  EWorkflowsActions.LoadWorkflowsList,
-  number
->(EWorkflowsActions.LoadWorkflowsList);
-
 export type TLoadWorkflowsListFailed = ITypedReduxAction<EWorkflowsActions.LoadWorkflowsListFailed, void>;
 export const loadWorkflowsListFailed: (payload?: void) => TLoadWorkflowsListFailed = actionGenerator<
   EWorkflowsActions.LoadWorkflowsListFailed,
   void
 >(EWorkflowsActions.LoadWorkflowsListFailed);
-
-export type TChangeWorkflowsSearchText = ITypedReduxAction<EWorkflowsActions.ChangeWorkflowsSearchText, string>;
-export const changeWorkflowsSearchText: (payload: string) => TChangeWorkflowsSearchText = actionGenerator<
-  EWorkflowsActions.ChangeWorkflowsSearchText,
-  string
->(EWorkflowsActions.ChangeWorkflowsSearchText);
 
 export type TSetWorkflowsFilterStatus = ITypedReduxAction<EWorkflowsActions.SetFilterStatus, EWorkflowsStatus>;
 export const setWorkflowsFilterStatus: (payload: EWorkflowsStatus) => TSetWorkflowsFilterStatus = actionGenerator<
@@ -575,16 +488,6 @@ export const deleteComment: (payload: TDeleteCommentPayload) => TDeleteComment =
   TDeleteCommentPayload
 >(EWorkflowsActions.DeleteComment);
 
-export type TUpdateWorkflowLogItemPayload = IWorkflowLogItem;
-export type TUpdateWorkflowLogItem = ITypedReduxAction<
-  EWorkflowsActions.UpdateWorkflowLogItem,
-  TUpdateWorkflowLogItemPayload
->;
-export const updateWorkflowLogItem: (payload: TUpdateWorkflowLogItemPayload) => TUpdateWorkflowLogItem =
-  actionGenerator<EWorkflowsActions.UpdateWorkflowLogItem, TUpdateWorkflowLogItemPayload>(
-    EWorkflowsActions.UpdateWorkflowLogItem,
-  );
-
 export type TEditCommentPayload = IEditComment;
 export type TEditComment = ITypedReduxAction<EWorkflowsActions.EditComment, TEditCommentPayload>;
 export const editComment: (payload: TEditCommentPayload) => TEditComment = actionGenerator<
@@ -637,19 +540,9 @@ export const saveWorkflowsPreset: (payload: {
 >(EWorkflowsActions.SaveWorkflowsPreset);
 
 export type TWorkflowsActions =
-  | TOpenWorkflowLogPopup
-  | TChangeWorkflowsList
   | TSetWorkflowsFilterStatus
-  | TChangeWorkflow
-  | TChangeWorkflowLog
-  | TChangeWorkflowsSearchText
-  | TChangeWorkflowLogViewSettings
-  | TCloseWorkflowLogPopup
-  | TLoadWorkflowsList
   | TLoadWorkflowsListFailed
   | TLoadWorkflow
-  | TChangeWorkflowsSorting
-  | TSetWorkflowIsLoading
   | TWorkflowFinished
   | TEditWorkflow
   | TEditWorkflowSuccess
@@ -689,7 +582,6 @@ export type TWorkflowsActions =
   | TRemoveWorkflowFromList
   | TSetWorkflowsView
   | TDeleteComment
-  | TUpdateWorkflowLogItem
   | TWatchedComment
   | TCreateReactionComment
   | TDeleteReactionComment

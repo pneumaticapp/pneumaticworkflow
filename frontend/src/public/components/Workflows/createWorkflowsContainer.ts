@@ -4,16 +4,18 @@ import { connect } from 'react-redux';
 import { IApplicationState } from '../../types/redux';
 import { IWorkflowsProps } from './types';
 import {
-  loadWorkflowsList as loadWorkflowsListAction,
-  openWorkflowLogPopup,
   loadWorkflowsFilterTemplates,
   resetWorkflows,
   openSelectTemplateModal,
   openRunWorkflowModal,
-  changeWorkflowsSearchText,
   removeWorkflowFromList,
   setWorkflowsFilterSteps,
 } from '../../redux/actions';
+import {
+  openWorkflowLogPopup,
+  changeWorkflowsSearchText,
+  loadWorkflowsList as loadWorkflowsListAction,
+} from '../../redux/workflows/slice';
 
 type TStoreProps = Pick<
   IWorkflowsProps,

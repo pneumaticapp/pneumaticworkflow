@@ -3,7 +3,8 @@ import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 're
 import { useIntl } from 'react-intl';
 import { useDispatch, useSelector } from 'react-redux';
 
-import { loadWorkflowsList, TRemoveWorkflowFromListPayload } from '../../redux/actions';
+import { TRemoveWorkflowFromListPayload } from '../../redux/actions';
+import { loadWorkflowsList } from '../../redux/workflows/slice';
 import { TopNavContainer } from '../../components/TopNav';
 import { ERoutes } from '../../constants/routes';
 import { history } from '../../utils/history';

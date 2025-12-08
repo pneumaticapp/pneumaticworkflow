@@ -4,7 +4,8 @@ import { useIntl } from 'react-intl';
 import { useDispatch } from 'react-redux';
 
 import { TasksSortingContainer } from './TasksSortingContainer';
-import { loadWorkflowsList, TLoadTasksFilterStepsPayload } from '../../redux/actions';
+import { TLoadTasksFilterStepsPayload } from '../../redux/actions';
+import { loadWorkflowsList } from '../../redux/workflows/slice';
 import { TopNavContainer } from '../../components/TopNav';
 import { ERoutes } from '../../constants/routes';
 import { FilterIcon } from '../../components/icons';
