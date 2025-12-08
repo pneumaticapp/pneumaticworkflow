@@ -14,6 +14,7 @@ from os import environ as env
 
 from configurations import Configuration, values
 from corsheaders.defaults import default_headers
+from src.notifications.enums import EmailProvider
 
 
 class Common(Configuration):
@@ -267,13 +268,25 @@ class Common(Configuration):
         'DEFAULT_FROM_EMAIL',
         'Pneumatic <no-reply@pneumatic.app>',
     )
-    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
     EMAIL_DATE_FORMAT = '%a, %d %b %Y %I:%M:%S %p UTC'
+    EMAIL_PROVIDER = env.get('EMAIL_PROVIDER')
 
-    # Customer.io
-    CUSTOMERIO_WEBHOOK_API_VERSION = env.get('CIO_WEBHOOK_API_VERSION')
-    CUSTOMERIO_WEBHOOK_API_KEY = env.get('CIO_WEBHOOK_API_KEY')
-    CUSTOMERIO_TRANSACTIONAL_API_KEY = env.get('CIO_TRANSACTIONAL_API_KEY')
+    if EMAIL_PROVIDER == EmailProvider.CUSTOMERIO:
+        EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+        CUSTOMERIO_WEBHOOK_API_VERSION = env.get('CIO_WEBHOOK_API_VERSION')
+        CUSTOMERIO_WEBHOOK_API_KEY = env.get('CIO_WEBHOOK_API_KEY')
+        CUSTOMERIO_TRANSACTIONAL_API_KEY = env.get('CIO_TRANSACTIONAL_API_KEY')
+    else:
+        EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+        EMAIL_HOST = env.get('EMAIL_HOST')
+        EMAIL_PORT = int(env.get('EMAIL_PORT', '587'))
+        EMAIL_HOST_USER = env.get('EMAIL_HOST_USER')
+        EMAIL_HOST_PASSWORD = env.get('EMAIL_HOST_PASSWORD')
+        EMAIL_USE_TLS = env.get('EMAIL_USE_TLS') == 'yes'
+        EMAIL_USE_SSL = env.get('EMAIL_USE_SSL') == 'yes'
+        EMAIL_TIMEOUT = int(env.get('EMAIL_TIMEOUT', '60'))
+
+
 
     # Environments
     CONFIGURATION_DEV = 'Development'
@@ -342,7 +355,6 @@ class Common(Configuration):
         'src.processes.tasks.update_workflow',
         'src.processes.tasks.webhooks',
         'src.reports.tasks',
-        'src.services.tasks',
         'src.analysis.tasks',
         'src.storage.tasks',
     ]
@@ -406,7 +418,6 @@ class Common(Configuration):
         'SSO_AUTH': env.get('SSO_AUTH') == 'yes',
         'SSO_PROVIDER': env.get('SSO_PROVIDER'),
         'EMAIL': env.get('EMAIL') == 'yes',
-        'EMAIL_PROVIDER': env.get('EMAIL_PROVIDER'),
         'AI': env.get('AI') == 'yes',
         'AI_PROVIDER': env.get('AI_PROVIDER'),
         'PUSH': env.get('PUSH') == 'yes',
