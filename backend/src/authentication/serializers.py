@@ -2,6 +2,7 @@ from django.contrib.auth import authenticate, get_user_model
 from django.core.validators import RegexValidator
 from drf_recaptcha.fields import ReCaptchaV2Field
 from rest_framework import serializers
+from typing import Any, Dict, Optional
 
 from src.accounts.enums import Language
 from src.accounts.models import Account
@@ -11,6 +12,7 @@ from src.authentication.messages import (
     MSG_AU_0013,
 )
 from src.generics.fields import DateFormatField, TimeStampField
+from src.generics.mixins.services import EncryptionMixin
 from src.generics.serializers import CustomValidationErrorMixin
 
 UserModel = get_user_model()
@@ -260,14 +262,47 @@ class MSTokenSerializer(AuthTokenSerializer):
     )
 
 
-class Auth0TokenSerializer(AuthTokenSerializer):
+class SSOTokenSerializer(
+    EncryptionMixin,
+    CustomValidationErrorMixin,
+    serializers.Serializer,
+):
+    code = serializers.CharField(
+        allow_null=False,
+        allow_blank=False,
+        required=True,
+    )
+    state = serializers.CharField(
+        allow_null=False,
+        allow_blank=False,
+        required=True,
+    )
 
-    pass
+    def _extract_domain_from_state(self, state: str) -> Optional[str]:
+        try:
+            return self.decrypt(state[36:]) or None
+        except ValueError:
+            return None
+
+    def validate(self, attrs: Dict[str, Any]) -> Dict[str, Any]:
+        attrs['domain'] = self._extract_domain_from_state(attrs['state'])
+        return attrs
 
 
 class GoogleTokenSerializer(AuthTokenSerializer):
 
     pass
+
+
+class AuthUriSerializer(
+    CustomValidationErrorMixin,
+    serializers.Serializer,
+):
+    domain = serializers.CharField(
+        required=False,
+        allow_null=True,
+        allow_blank=True,
+    )
 
 
 class TokenSerializer(

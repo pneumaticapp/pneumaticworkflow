@@ -12,12 +12,12 @@ class AuthMSAuthUriThrottle(CustomSimpleRateThrottle):
     scope = '08_auth_ms__auth_uri'
 
 
-class Auth0TokenThrottle(CustomSimpleRateThrottle):
-    scope = '09_auth0__token'
+class SSOTokenThrottle(CustomSimpleRateThrottle):
+    scope = '09_sso__token'
 
 
-class Auth0AuthUriThrottle(CustomSimpleRateThrottle):
-    scope = '10_auth0__auth_uri'
+class SSOAuthUriThrottle(CustomSimpleRateThrottle):
+    scope = '10_sso__auth_uri'
 
 
 class AuthResetPasswordThrottle(AnonThrottle):

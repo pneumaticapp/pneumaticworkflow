@@ -74,3 +74,27 @@ msgstr "Das aktuelle Passwort ist falsch."
 #: authentication/messages.py:31
 msgid "The new password and its confirmation don't match."
 msgstr "Das neue Passwort und dessen Bestätigung stimmen nicht überein."
+
+#: authentication/messages.py:32
+msgid "Failed to fetch organization members."
+msgstr "Fehler beim Abrufen der Organisationsmitglieder."
+
+#: authentication/messages.py:34
+msgid "The system is configured to use a different SSO provider. Please contact your administrator."
+msgstr "Das System ist so konfiguriert, dass ein anderer SSO-Anbieter verwendet wird. Bitte wenden Sie sich an Ihren Administrator."
+
+#: authentication/messages.py:37
+msgid "This account uses SSO authentication. Please sign in through your organization's SSO portal."
+msgstr "Dieses Konto verwendet SSO-Authentifizierung. Bitte melden Sie sich über das SSO-Portal Ihrer Organisation an."
+
+#: authentication/messages.py:41
+msgid "SSO authentication is currently unavailable. Please contact support."
+msgstr "Die SSO-Authentifizierung ist derzeit nicht verfügbar. Bitte wenden Sie sich an den Support."
+
+#: authentication/messages.py:43
+msgid "No active SSO configuration found for the domain: \"{domain}\"."
+msgstr "Für die Domain „{domain}“ wurde keine aktive SSO-Konfiguration gefunden."
+
+#: authentication/messages.py:46
+msgid "This account does not use SSO authentication. Please contact support."
+msgstr "Dieses Konto verwendet keine SSO-Authentifizierung. Bitte wenden Sie sich an den Support."
